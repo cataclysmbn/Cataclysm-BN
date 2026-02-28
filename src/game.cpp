@@ -1023,7 +1023,7 @@ bool game::start_game()
     update_map( u );
     // Profession pets
     for( const mtype_id &elem : u.starting_pets ) {
-        if( monster *const mon = place_critter_around( elem, u.pos(), 60 ) ) {
+        if( monster *const mon = place_critter_around( elem, u.pos(), g_max_view_distance ) ) {
             mon->friendly = -1;
             mon->add_effect( effect_pet, 1_turns );
         } else {
@@ -3967,8 +3967,7 @@ character_id game::assign_npc_id()
 
 Creature *game::is_hostile_nearby()
 {
-    int distance = ( get_option<int>( "SAFEMODEPROXIMITY" ) <= 0 ) ? g_max_view_distance :
-                   get_option<int>( "SAFEMODEPROXIMITY" );
+    auto distance = ( safe_mode_proximity <= 0 ) ? g_max_view_distance : safe_mode_proximity;
     return is_hostile_within( distance );
 }
 
@@ -4206,9 +4205,7 @@ void game::mon_info_update( )
     ZoneScoped;
 
     int newseen = 0;
-    const int safe_proxy_dist = get_option<int>( "SAFEMODEPROXIMITY" );
-    const int iProxyDist = ( safe_proxy_dist <= 0 ) ? g_max_view_distance :
-                           safe_proxy_dist;
+    const auto iProxyDist = ( safe_mode_proximity <= 0 ) ? g_max_view_distance : safe_mode_proximity;
 
     monster_visible_info &mon_visible = u.get_mon_visible();
     auto &new_seen_mon = mon_visible.new_seen_mon;
@@ -8974,8 +8971,8 @@ void game::list_items_monsters()
 
     std::vector<Creature *> mons = u.get_visible_creatures( current_daylight_level( calendar::turn ) );
     // whole reality bubble
-    const std::vector<map_item_stack> items = find_nearby_items( 60 );
-    const vehicle_list_t vehicles = find_visible_vehicles( viewer, here, 60 );
+    const std::vector<map_item_stack> items = find_nearby_items( g_max_view_distance );
+    const vehicle_list_t vehicles = find_visible_vehicles( viewer, here, g_max_view_distance );
 
     if( mons.empty() && items.empty() && vehicles.empty() ) {
         add_msg( m_info, _( "You don't see any items, monsters, or vehicles around you!" ) );

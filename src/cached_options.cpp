@@ -31,6 +31,7 @@ int  lod_coarse_scent_interval = 3;
 int  lod_group_morale_max_tier = 0;
 
 bool out_of_bubble_fire_spread = false;
+int  safe_mode_proximity = 0;
 
 bool parallel_enabled = true;
 bool parallel_monster_planning = true;

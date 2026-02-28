@@ -3033,9 +3033,17 @@ void npc::advance_job_progress( int n )
     if( n <= 0 ) {
         return;
     }
-    // Grant move points proportional to elapsed turns for ongoing activities,
-    // mirroring the on_load() pattern used for NPCs with destinations or activities.
-    if( has_destination() || activity ) {
+    if( activity && *activity ) {
+        // Directly reduce moves_left by n turns' worth (100 moves per turn).
+        // The mod_moves() approach is wrong here: activity->do_turn() unconditionally
+        // sets p.moves = 0 after each step, so any extra moves granted via mod_moves()
+        // are zeroed on the very first step and the catchup never happens.
+        // Direct reduction is speed-independent, matching the design intent.
+        activity->moves_left = std::max( 0, activity->moves_left - n * 100 );
+    } else if( has_destination() ) {
+        // Destination movement: grant extra moves so the NPC takes additional path
+        // steps toward its goal.  mod_moves() is correct here because path-following
+        // does consume moves one step at a time without zeroing the full pool.
         mod_moves( to_moves<int>( time_duration::from_turns( n ) ) );
     }
 }

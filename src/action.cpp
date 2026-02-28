@@ -772,7 +772,7 @@ action_id handle_action_menu()
     std::map<action_id, int> action_weightings;
 
     // Check if we're in a potential combat situation, if so, sort a few actions to the top.
-    if( !g->u.get_hostile_creatures( 60 ).empty() ) {
+    if( !g->u.get_hostile_creatures( g_max_view_distance ).empty() ) {
         // Only prioritize movement options if we're not driving.
         if( !g->u.controlling_vehicle ) {
             action_weightings[ACTION_CYCLE_MOVE] = 400;

@@ -2441,10 +2441,9 @@ void options_manager::add_options_performance()
              translate_marker( "Controls whether fire in loaded submaps can spread into adjacent "
                                "unloaded submaps.  'None': fire only decays, never spreads beyond "
                                "the loaded set.  'Adjacent': fire requests one extra layer of "
-        "loaded submaps at each boundary to preserve correct spread behavior." ), {
-            { "none", translate_marker( "None (pause spread)" ) },
-            { "adjacent", translate_marker( "Adjacent (one layer)" ) }
-        },
+                               "loaded submaps at each boundary to preserve correct spread behavior." ),
+        { { "none", translate_marker( "None (pause spread)" ) },
+          { "adjacent", translate_marker( "Adjacent (one layer)" ) } },
         "adjacent"
            );
         add( "REALITY_BUBBLE_SIZE", page_id,
@@ -2454,7 +2453,8 @@ void options_manager::add_options_performance()
                                "Maximum player sight range = 12 × (2 × size + 1).  "
                                "Larger values increase loaded area and memory usage; "
                                "smaller values reduce both.  "
-                               "Requires a new game or reload to take effect." ),
+                               "REQUIRES A GAME RESTART to take effect — "
+                               "changing this mid-session will NOT resize caches or the loaded map." ),
              1, REALITY_BUBBLE_SIZE_MAX, 2 );
     } );
 }
@@ -4070,6 +4070,8 @@ void options_manager::cache_to_globals()
 
     out_of_bubble_fire_spread =
         ::get_option<std::string>( "OUT_OF_BUBBLE_FIRE_SPREAD" ) == "adjacent";
+
+    safe_mode_proximity = ::get_option<int>( "SAFEMODEPROXIMITY" );
 
     parallel_enabled          = ::get_option<bool>( "MULTITHREADING_ENABLED" );
     parallel_monster_planning = ::get_option<bool>( "PARALLEL_MONSTER_PLANNING" );

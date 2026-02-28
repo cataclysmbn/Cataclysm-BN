@@ -96,7 +96,15 @@ extern int  lod_macro_interval;
 extern int  lod_coarse_scent_interval;
 extern int  lod_group_morale_max_tier;
 
+/** Out-of-bubble world-tick options. */
 extern bool out_of_bubble_fire_spread;
+
+/**
+ * Cached value of the SAFEMODEPROXIMITY option.
+ * 0 means "use g_max_view_distance" (the option's own zero-sentinel).
+ * Any positive value is the distance in tiles.
+ */
+extern int safe_mode_proximity;
 
 /** Multithreading options — all require restart to take effect. */
 extern bool parallel_enabled;
