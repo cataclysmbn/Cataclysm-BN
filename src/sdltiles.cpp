@@ -17,6 +17,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <stack>
 #include <stdexcept>
@@ -63,6 +64,7 @@
 #include "overmap_special.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
+#include "mongroup.h"
 #include "path_info.h"
 #include "point.h"
 #include "rng.h"
@@ -999,45 +1001,80 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 if( blink && uistate.overmap_debug_mongroup ) {
                     const std::vector<mongroup *> mgroups = overmap_buffer.monsters_at( omp );
                     if( !mgroups.empty() ) {
-                        auto mgroup_iter = mgroups.begin();
-                        std::advance( mgroup_iter, rng( 0, mgroups.size() - 1 ) );
-                        const tile_search_params tile {( *mgroup_iter )->type->defaultMonster.str(), C_NONE, empty_string, 0, 0};
-                        draw_from_id_string( tile, omp.raw(), std::nullopt,
-                                             std::nullopt, lit_level::LIT, false, 0, false );
-                    }
-                }
-                const int horde_size = overmap_buffer.get_horde_size( omp );
-                if( showhordes && los && horde_size >= HORDE_VISIBILITY_SIZE ) {
-                    // a little bit of hardcoded fallbacks for hordes
-                    std::string horde_id;
-                    if( find_tile_with_season( id ) ) {
-                        horde_id = string_format( "overmap_horde_%d", horde_size );
-                    } else {
-                        switch( horde_size ) {
-                            case HORDE_VISIBILITY_SIZE:
-                                horde_id = "mon_zombie";
-                                break;
-                            case HORDE_VISIBILITY_SIZE + 1:
-                                horde_id = "mon_zombie_tough";
-                                break;
-                            case HORDE_VISIBILITY_SIZE + 2:
-                                horde_id = "mon_zombie_brute";
-                                break;
-                            case HORDE_VISIBILITY_SIZE + 3:
-                                horde_id = "mon_zombie_hulk";
-                                break;
-                            case HORDE_VISIBILITY_SIZE + 4:
-                                horde_id = "mon_zombie_necro";
-                                break;
-                            default:
-                                horde_id = "mon_zombie_master";
-                                break;
+                        const auto horde_it = std::ranges::find_if( mgroups, []( const mongroup * mgp ) {
+                            return mgp != nullptr && mgp->horde;
+                        } );
+                        const mongroup *chosen = horde_it != mgroups.end() ? *horde_it : mgroups.front();
+                        if( chosen != nullptr ) {
+                            const tile_search_params tile { chosen->type->defaultMonster.str(), C_NONE, empty_string, 0, 0};
+                            draw_from_id_string( tile, omp.raw(), std::nullopt,
+                                                 std::nullopt, lit_level::LIT, false, 0, false );
                         }
                     }
-                    const tile_search_params tile { horde_id, C_NONE, empty_string, 0, 0};
-                    draw_from_id_string(
-                        tile, omp.raw(), std::nullopt, std::nullopt,
-                        lit_level::LIT, false, 0, false );
+                }
+                const auto fallback_horde_id = [&]( const tripoint_abs_omt & pos ) -> std::string {
+                    const auto groups = overmap_buffer.monsters_at( pos );
+                    const auto horde_it = std::ranges::find_if( groups, []( const mongroup * mgp )
+                    {
+                        return mgp != nullptr && mgp->horde && mgp->type.is_valid();
+                    } );
+                    if( horde_it == groups.end() )
+                    {
+                        return "mon_zombie";
+                    }
+
+                    const mongroup *mgp = *horde_it;
+                    const MonsterGroup &group = mgp->type.obj();
+                    const auto default_id = group.defaultMonster.is_valid() ? group.defaultMonster.str() : std::string( "mon_zombie" );
+                    if( group.monsters.empty() )
+                    {
+                        return default_id;
+                    }
+
+                    const auto best_entry = std::ranges::max_element( group.monsters, []( const auto & lhs,
+                            const auto & rhs )
+                    {
+                        return lhs.frequency < rhs.frequency;
+                    } );
+                    if( best_entry == group.monsters.end() )
+                    {
+                        return default_id;
+                    }
+                    return best_entry->name.is_valid() ? best_entry->name.str() : default_id;
+                };
+
+                const int horde_size = overmap_buffer.get_horde_size( omp );
+                if( showhordes && los && horde_size >= HORDE_VISIBILITY_SIZE ) {
+                    // Prefer overmap horde sprites; fall back to a zombie monster sprite if missing.
+                    const int clamped_size = std::clamp( horde_size, 1, 90 );
+                    const std::string horde_id = string_format( "overmap_horde_%d", clamped_size );
+                    if( find_tile_with_season( horde_id ) ) {
+                        const tile_search_params tile { horde_id, C_NONE, empty_string, 0, 0};
+                        draw_from_id_string(
+                            tile, omp.raw(), std::nullopt, std::nullopt,
+                            lit_level::LIT, false, 0, false );
+                    } else {
+                        auto fallback_id = fallback_horde_id( omp );
+                        if( !find_tile_with_season( fallback_id ) ) {
+                            const auto groups = overmap_buffer.monsters_at( omp );
+                            const auto horde_it = std::ranges::find_if( groups, []( const mongroup * mgp ) {
+                                return mgp != nullptr && mgp->horde && mgp->type.is_valid();
+                            } );
+                            if( horde_it != groups.end() && ( *horde_it ) != nullptr ) {
+                                const MonsterGroup &group = ( *horde_it )->type.obj();
+                                if( group.defaultMonster.is_valid() ) {
+                                    fallback_id = group.defaultMonster.str();
+                                }
+                            }
+                            if( !find_tile_with_season( fallback_id ) ) {
+                                fallback_id = "mon_zombie";
+                            }
+                        }
+                        const tile_search_params tile { fallback_id, C_NONE, empty_string, 0, 0};
+                        draw_from_id_string(
+                            tile, omp.raw(), std::nullopt, std::nullopt,
+                            lit_level::LIT, false, 0, false );
+                    }
                 }
             }
 

@@ -10,6 +10,7 @@
 #include <optional>
 #include <queue>
 #include <future>
+#include <ranges>
 
 #include "avatar.h"
 #include "calendar.h"
@@ -627,6 +628,26 @@ void overmapbuffer::remove_nemesis()
             break;
         }
     }
+}
+
+mongroup *overmapbuffer::create_horde( const mongroup &group )
+{
+    point_abs_om omp;
+    point_om_sm sm_within_om;
+    std::tie( omp, sm_within_om ) = project_remain<coords::om>( group.abs_pos.xy() );
+
+    overmap &om = get( omp );
+    auto copy = group;
+    copy.pos = tripoint_om_sm( sm_within_om, group.abs_pos.z() );
+    om.add_mon_group( copy );
+
+    auto groups_range = om.zg.equal_range( copy.pos );
+    auto match = std::ranges::find_if( std::ranges::subrange( groups_range.first, groups_range.second ),
+    [&]( const std::pair<tripoint_om_sm, mongroup> &entry ) {
+        const mongroup &stored = entry.second;
+        return stored.type == copy.type && stored.horde == copy.horde;
+    } );
+    return match == groups_range.second ? nullptr : &match->second;
 }
 
 std::vector<mongroup *> overmapbuffer::monsters_at( const tripoint_abs_omt &p )

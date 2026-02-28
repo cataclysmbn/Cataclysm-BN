@@ -981,6 +981,8 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_mission_type( lua );
     reg_recipe( lua );
     reg_coords_library( lua );
+    reg_monster_type_ids( lua );
+    reg_monster_groups( lua );
     reg_overmap( lua );
     reg_constants( lua );
     reg_hooks_examples( lua );
