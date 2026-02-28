@@ -851,9 +851,16 @@ int Character::sight_range( int light_level ) const
     return clamp( range, 1, sight_max );
 }
 
-int Character::unimpaired_range() const
+auto Character::unimpaired_range() const -> int
 {
-    return std::min( sight_max, g_max_view_distance );
+    // Cap at MAX_VIEW_DISTANCE rather than the runtime g_max_view_distance.
+    // The old g_max_view_distance cap prevented the Beer–Lambert grey zone
+    // (tiles at 61–87 tiles in full daylight) from ever being visible at the
+    // default bubble size, because apparent_light_at would return DARK for
+    // those tiles even when castLight had set a non-zero seen_cache value.
+    // MAX_VIEW_DISTANCE is safe because castLight's map-bounds check prevents
+    // any tile outside the loaded area from receiving a non-zero seen_cache.
+    return std::min( sight_max, MAX_VIEW_DISTANCE );
 }
 
 bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )

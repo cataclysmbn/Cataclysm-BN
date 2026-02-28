@@ -149,6 +149,10 @@ extern int g_half_mapsize_x;
 extern int g_half_mapsize_y;
 /// Maximum player sight range = SEEX * g_half_mapsize.
 extern int g_max_view_distance;
+/// Visibility threshold at max view distance for "obstructed" determination.
+/// Computed as 1/exp(LIGHT_TRANSPARENCY_OPEN_AIR * g_max_view_distance).
+/// Scales with bubble size so vision cutoff matches g_max_view_distance.
+extern float g_visible_threshold;
 
 // Accuracy levels which a shots tangent must be below.
 constexpr double accuracy_headshot = 0.1;

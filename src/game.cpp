@@ -233,6 +233,9 @@ int g_mapsize_y = 132;
 int g_half_mapsize_x = 60;
 int g_half_mapsize_y = 60;
 int g_max_view_distance = 60;
+// Visibility threshold at max view distance. Computed as 1/exp(LIGHT_TRANSPARENCY_OPEN_AIR * g_max_view_distance).
+// Default matches the old hardcoded 0.1 threshold for g_max_view_distance=60.
+float g_visible_threshold = 0.1f;
 
 /// Read REALITY_BUBBLE_SIZE from options and update all runtime globals.
 /// Must be called before map construction (game::setup) and after each load.
@@ -252,6 +255,10 @@ static void init_bubble_config()
     g_half_mapsize_x      = SEEX * g_half_mapsize;
     g_half_mapsize_y      = SEEY * g_half_mapsize;
     g_max_view_distance   = SEEX * g_half_mapsize;
+    // Compute visibility threshold so the "obstructed" cutoff scales with view distance.
+    // At g_max_view_distance tiles through clear air, visibility = 1/exp(t*d) = g_visible_threshold.
+    // This replaces the old hardcoded 0.1 threshold (which assumed g_max_view_distance=60).
+    g_visible_threshold   = 1.0f / std::exp( LIGHT_TRANSPARENCY_OPEN_AIR * g_max_view_distance );
 }
 
 static constexpr int DANGEROUS_PROXIMITY = 5;

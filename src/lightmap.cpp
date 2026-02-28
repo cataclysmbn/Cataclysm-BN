@@ -19,6 +19,7 @@
 #include "field.h"
 #include "fragment_cloud.h" // IWYU pragma: keep
 #include "game.h"
+#include "game_constants.h"
 #include "int_id.h"
 #include "item.h"
 #include "item_stack.h"
@@ -80,9 +81,11 @@ struct transparency_exp_lookup {
 };
 
 //These are used for shadowcasting fast paths, openair is constant, weather is replaced every time the weather changes.
-//They are 90 entries large to comfortably account for shadowcasting's limit of 60*sqrt(2).
-const transparency_exp_lookup<90> openair_transparency_lookup( LIGHT_TRANSPARENCY_OPEN_AIR );
-transparency_exp_lookup<90> weather_transparency_lookup( LIGHT_TRANSPARENCY_OPEN_AIR * 1.1 );
+// Sized for MAX_VIEW_DISTANCE * sqrt(2) worst-case diagonal, with 2x headroom so the array is safe
+// at all runtime bubble sizes (g_max_view_distance <= MAX_VIEW_DISTANCE).
+static constexpr int LIGHTMAP_LOOKUP_SIZE = MAX_VIEW_DISTANCE * 2;
+const transparency_exp_lookup<LIGHTMAP_LOOKUP_SIZE> openair_transparency_lookup( LIGHT_TRANSPARENCY_OPEN_AIR );
+transparency_exp_lookup<LIGHTMAP_LOOKUP_SIZE> weather_transparency_lookup( LIGHT_TRANSPARENCY_OPEN_AIR * 1.1 );
 
 void map::add_light_from_items( const tripoint &p, const item_stack::iterator &begin,
                                 const item_stack::iterator &end )
@@ -764,7 +767,18 @@ map::apparent_light_info map::apparent_light_helper( const level_cache &map_cach
 {
     const float vis = std::max( map_cache.seen_cache[map_cache.idx( p.x, p.y )],
                                 map_cache.camera_cache[map_cache.idx( p.x, p.y )] );
-    const bool obstructed = vis <= LIGHT_TRANSPARENCY_SOLID + 0.1;
+    // Use g_visible_threshold which scales with g_max_view_distance.
+    // This replaces the old hardcoded 0.1 (which assumed g_max_view_distance=60).
+    const bool obstructed = vis <= LIGHT_TRANSPARENCY_SOLID + g_visible_threshold;
+
+    // Scale vis so that the LIT/LOW transition happens at g_max_view_distance instead of 60.
+    // The raw vis decays as 1/exp(t*d) where t=LIGHT_TRANSPARENCY_OPEN_AIR, reaching 0.1 at d=60.
+    // By raising vis to the power (60/g_max_view_distance), we stretch the decay curve so that
+    // the same proportional falloff occurs over g_max_view_distance tiles instead of 60.
+    // Formula derivation: if vis = 1/exp(t*d), then vis^(60/g_max) = 1/exp(t*d*60/g_max),
+    // which equals 0.1 when d = g_max_view_distance.
+    const float scale_factor = 60.0f / static_cast<float>( g_max_view_distance );
+    const float scaled_vis = ( vis > 0.0f ) ? std::pow( vis, scale_factor ) : 0.0f;
 
     auto is_opaque = [&map_cache]( point  p ) {
         return map_cache.transparency_cache[map_cache.idx( p.x, p.y )] <= LIGHT_TRANSPARENCY_SOLID &&
@@ -774,7 +788,7 @@ map::apparent_light_info map::apparent_light_helper( const level_cache &map_cach
     const bool p_opaque = is_opaque( p.xy() );
     float apparent_light;
 
-    if( p_opaque && vis > 0 ) {
+    if( p_opaque && scaled_vis > 0 ) {
         // This is the complicated case.  We want to check which quadrants the
         // player can see the tile from, and only count light values from those
         // quadrants.
@@ -810,15 +824,15 @@ map::apparent_light_info map::apparent_light_helper( const level_cache &map_cach
                 continue;
             }
             // This is a non-opaque visible neighbour, so count visibility from the relevant
-            // quadrants
-            seen_from[oq.quadrants[0]] = vis;
-            seen_from[oq.quadrants[1]] = vis;
+            // quadrants. Use scaled_vis to stretch the falloff over g_max_view_distance.
+            seen_from[oq.quadrants[0]] = scaled_vis;
+            seen_from[oq.quadrants[1]] = scaled_vis;
         }
         apparent_light = ( seen_from * map_cache.lm[map_cache.idx( p.x, p.y )] ).max();
     } else {
         // This is the simple case, for a non-opaque tile light from all
-        // directions is equivalent
-        apparent_light = vis * map_cache.lm[map_cache.idx( p.x, p.y )].max();
+        // directions is equivalent. Use scaled_vis for the brightness calculation.
+        apparent_light = scaled_vis * map_cache.lm[map_cache.idx( p.x, p.y )].max();
     }
     return { obstructed, apparent_light };
 }
@@ -853,6 +867,10 @@ lit_level map::apparent_light_at( const tripoint &p, const visibility_variables 
                 // If it's not brighter than the surroundings, it just ends up shadowy.
                 return lit_level::LOW;
             }
+        } else if( a.apparent_light >= cache.vision_threshold ) {
+            // Tile is hazy but still within the player's actual vision capability
+            // (e.g. extended night-vision range pushes the perceptible horizon past 60 tiles).
+            return lit_level::LOW;
         } else {
             return lit_level::BLANK;
         }
@@ -928,6 +946,12 @@ static inline int fast_rl_dist( tripoint to )
         a = ( a + b ) / 2;
     }
 
+    // Newton's integer method can oscillate between floor(sqrt) and ceil(sqrt).
+    // rl_dist/trig_dist truncates (= floor for positive values), so match that.
+    if( a * a > val ) {
+        --a;
+    }
+
     return a;
 }
 
@@ -1001,7 +1025,7 @@ void cast_zlight_segment(
         cata::unreachable();
     };
 
-    int radius = 60 - offset_distance;
+    int radius = g_max_view_distance - offset_distance;
 
     constexpr int min_z = -OVERMAP_DEPTH;
     constexpr int max_z = OVERMAP_HEIGHT;
@@ -1257,7 +1281,7 @@ template<int xx, int xy, int yx, int yy, typename T, typename Out,
          bool( *check )( const T &, const T & ),
          void( *update_output )( Out &, const T &, quadrant ),
          T( *accumulate )( const T &, const T &, const int & ),
-         const transparency_exp_lookup<90> *lookup,
+         const transparency_exp_lookup<LIGHTMAP_LOOKUP_SIZE> *lookup,
          T( *lookup_calc )( const T &, const T &, const int & )>
 void castLight( Out *output_cache, const T *input_array,
                 const diagonal_blocks *blocked_array, int sx, int sy,
@@ -1273,7 +1297,7 @@ template<int xx, int xy, int yx, int yy, typename T, typename Out,
          bool( *check )( const T &, const T & ),
          void( *update_output )( Out &, const T &, quadrant ),
          T( *accumulate )( const T &, const T &, const int & ),
-         const transparency_exp_lookup<90> *lookup,
+         const transparency_exp_lookup<LIGHTMAP_LOOKUP_SIZE> *lookup,
          T( *lookup_calc )( const T &, const T &, const int & )>
 void castLight( Out *output_cache, const T *input_array,
                 const diagonal_blocks *blocked_array, int sx, int sy,
@@ -1300,7 +1324,7 @@ void castLight( Out *output_cache, const T *input_array,
         cata::unreachable();
     };
 
-    int radius = 60 - offsetDistance;
+    int radius = g_max_view_distance - offsetDistance;
     if( start < end ) {
         return;
     }
@@ -1338,7 +1362,8 @@ void castLight( Out *output_cache, const T *input_array,
             }
             if( !eq_nullptr_gcc_hack( lookup ) ) {
                 //Only use fast dist on fast paths, it's slower otherwise. Floating point conversion thing maybe?
-                const int dist = fast_rl_dist<21, 4>( delta ) + offsetDistance;
+                //Use trig_dist for large reality bubble sizes
+                const int dist = ( g_max_view_distance > 60 ? rl_dist( tripoint_zero, delta ) : fast_rl_dist<21, 4>( delta ) ) + offsetDistance;
                 last_intensity = lookup_calc( numerator, lookup->values[dist], dist );
             } else {
                 const int dist = rl_dist( tripoint_zero, delta ) + offsetDistance;
@@ -1736,9 +1761,10 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         const tripoint mirror_pos = vp.pos();
         // We can utilize the current state of the seen cache to determine
         // if the player can see the mirror from their position.
+        // Use g_visible_threshold for consistency with apparent_light_helper.
         if( !vp.info().has_flag( "CAMERA" ) &&
             target_cache.seen_cache[target_cache.idx( mirror_pos.x,
-                                                      mirror_pos.y )] < LIGHT_TRANSPARENCY_SOLID + 0.1 ) {
+                                                      mirror_pos.y )] < LIGHT_TRANSPARENCY_SOLID + g_visible_threshold ) {
             continue;
         } else if( !vp.info().has_flag( "CAMERA_CONTROL" ) ) {
             mirrors.emplace_back( static_cast<int>( vp.part_index() ) );
@@ -1763,7 +1789,7 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         if( !is_camera ) {
             offsetDistance = rl_dist( origin, mirror_pos );
         } else {
-            offsetDistance = 60 - veh->part_info( mirror ).bonus *
+            offsetDistance = g_max_view_distance - veh->part_info( mirror ).bonus *
                              veh->part( mirror ).hp() / veh->part_info( mirror ).durability;
             target_cache.camera_cache[target_cache.idx( mirror_pos.x,
                                                         mirror_pos.y )] = LIGHT_TRANSPARENCY_OPEN_AIR;
