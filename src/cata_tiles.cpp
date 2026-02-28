@@ -2037,7 +2037,7 @@ std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_searc
             const weather_type_id weather_type_id( id );
             if( weather_type_id.is_valid() ) {
                 sym = weather_type_id->symbol;
-                col = weather_type_id->map_color;
+                col = weather_type_id->color;
             }
         } else if( category == C_OVERMAP_NOTE ) {
             sym = id[5];
