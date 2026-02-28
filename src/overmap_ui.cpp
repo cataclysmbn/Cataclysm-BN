@@ -79,6 +79,7 @@
 #include "vpart_position.h"
 #include "weather.h"
 #include "weather_gen.h"
+#include "world_type.h"
 
 static const activity_id ACT_TRAVELLING( "ACT_TRAVELLING" );
 
@@ -1560,6 +1561,15 @@ static void draw_om_sidebar(
         print_hint( "HELP_KEYBINDINGS" );
         print_hint( "QUIT" );
     }
+
+    // Display dimension name above the coordinate line
+    // Prefer the pocket dimension name from the iuse JSON definition if available
+    std::string dim_name = g->get_pocket_dimension_name();
+    if( dim_name.empty() ) {
+        const world_type &wt = g->get_current_world_type().obj();
+        dim_name = wt.name.translated();
+    }
+    mvwprintz( wbar, point( 1, getmaxy( wbar ) - 2 ), c_cyan, dim_name );
 
     mvwprintz( wbar, point( 1, getmaxy( wbar ) - 1 ), c_red, _( "LEVEL %i, %s" ), center.z(),
                fmt_omt_coords( center ) );

@@ -171,7 +171,7 @@ void scent_map::update( const tripoint &center, map &m )
 
     //the block and reduce scent properties are folded into a single scent_transfer value here
     //block=0 reduce=1 normal=5
-    scent_array<char> scent_transfer;
+    scent_array<char> scent_transfer{};
 
     std::array < std::array < int, 3 + SCENT_RADIUS * 2 >, 1 + SCENT_RADIUS * 2 > new_scent;
     std::array < std::array < int, 3 + SCENT_RADIUS * 2 >, 1 + SCENT_RADIUS * 2 > sum_3_scent_y;

@@ -358,6 +358,13 @@ bool map_memory::save( const tripoint &pos )
     return result;
 }
 
+void map_memory::clear()
+{
+    clear_cache();
+    submaps.clear();
+    dbg( DL::Info ) << "[CLEAR] Done.";
+}
+
 void map_memory::clear_cache()
 {
     cached.clear();

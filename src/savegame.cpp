@@ -45,6 +45,8 @@
 #include "translations.h"
 #include "ui_manager.h"
 #include "weather.h"
+#include "world_type.h"
+#include "dimension_bounds.h"
 
 #if defined(__ANDROID__)
 #include "input.h"
@@ -100,6 +102,38 @@ void game::serialize( std::ostream &fout )
     json.member( "levz", pos_sm.z );
     json.member( "om_x", pos_om.x );
     json.member( "om_y", pos_om.y );
+
+    // Save the current world type (dimension)
+    json.member( "world_type", get_current_world_type() );
+    // Save pocket dimension instance ID (empty string for non-pocket dimensions)
+    json.member( "pocket_instance_id", get_pocket_instance_id() );
+
+    // Save pocket origin position and display name (when inside a pocket)
+    if( !get_pocket_instance_id().empty() ) {
+        tripoint_abs_sm origin = get_pocket_origin_position();
+        json.member( "pocket_origin_x", origin.x() );
+        json.member( "pocket_origin_y", origin.y() );
+        json.member( "pocket_origin_z", origin.z() );
+        json.member( "pocket_dimension_name", get_pocket_dimension_name() );
+    }
+
+    // Save dimension bounds for bounded dimensions (pocket dimensions)
+    if( m.has_dimension_bounds() ) {
+        std::optional<dimension_bounds> bounds = m.get_dimension_bounds();
+        if( bounds ) {
+            json.member( "dimension_bounds" );
+            json.start_object();
+            json.member( "min_x", bounds->min_bound.x() );
+            json.member( "min_y", bounds->min_bound.y() );
+            json.member( "min_z", bounds->min_bound.z() );
+            json.member( "max_x", bounds->max_bound.x() );
+            json.member( "max_y", bounds->max_bound.y() );
+            json.member( "max_z", bounds->max_bound.z() );
+            json.member( "boundary_terrain", bounds->boundary_terrain.str() );
+            json.member( "boundary_overmap_terrain", bounds->boundary_overmap_terrain.str() );
+            json.end_object();
+        }
+    }
 
     json.member( "grscent", scent.serialize() );
     json.member( "typescent", scent.serialize( true ) );
@@ -214,6 +248,53 @@ void game::unserialize( std::istream &fin )
         data.read( "levz", lev.z );
         data.read( "om_x", com.x );
         data.read( "om_y", com.y );
+
+        // Load the current world type (dimension) before load_map
+        // so get_dimension_prefix() returns the correct value
+        if( data.has_member( "world_type" ) ) {
+            world_type_id wt;
+            data.read( "world_type", wt );
+            set_current_world_type( wt );
+        }
+        // Load pocket instance ID if present
+        if( data.has_member( "pocket_instance_id" ) ) {
+            std::string pocket_id;
+            data.read( "pocket_instance_id", pocket_id );
+            set_pocket_instance_id( pocket_id );
+        }
+
+        // Load pocket origin position and display name if present
+        if( data.has_member( "pocket_origin_x" ) ) {
+            set_pocket_origin_position( tripoint_abs_sm(
+                                            data.get_int( "pocket_origin_x" ),
+                                            data.get_int( "pocket_origin_y" ),
+                                            data.get_int( "pocket_origin_z" ) ) );
+        }
+        if( data.has_member( "pocket_dimension_name" ) ) {
+            std::string pdname;
+            data.read( "pocket_dimension_name", pdname );
+            set_pocket_dimension_name( pdname );
+        }
+
+        // Load dimension bounds BEFORE load_map so loadn() can generate
+        // boundary submaps for out-of-bounds areas
+        if( data.has_object( "dimension_bounds" ) ) {
+            JsonObject bounds_obj = data.get_object( "dimension_bounds" );
+            dimension_bounds bounds;
+            bounds.min_bound = tripoint_abs_sm(
+                                   bounds_obj.get_int( "min_x" ),
+                                   bounds_obj.get_int( "min_y" ),
+                                   bounds_obj.get_int( "min_z" ) );
+            bounds.max_bound = tripoint_abs_sm(
+                                   bounds_obj.get_int( "max_x" ),
+                                   bounds_obj.get_int( "max_y" ),
+                                   bounds_obj.get_int( "max_z" ) );
+            bounds.boundary_terrain = ter_str_id( bounds_obj.get_string( "boundary_terrain" ) );
+            bounds.boundary_overmap_terrain = oter_str_id(
+                                                  bounds_obj.get_string( "boundary_overmap_terrain" ) );
+            m.set_dimension_bounds( bounds );
+            overmap_buffer.set_dimension_bounds( bounds );
+        }
 
         load_map(
             tripoint( lev.x + com.x * OMAPX * 2, lev.y + com.y * OMAPY * 2, lev.z ),
@@ -1277,6 +1358,38 @@ void game::unserialize_master( std::istream &fin )
     }
 }
 
+void game::unserialize_dimension_data( std::istream &fin )
+{
+    savegame_loading_version = 0;
+    chkversion( fin );
+    if( savegame_loading_version < 11 ) {
+        std::unique_ptr<static_popup>popup = std::make_unique<static_popup>();
+        popup->message(
+            _( "Cannot find loader for save data in old version %d, attempting to load as current version %d." ),
+            savegame_loading_version, savegame_version );
+        ui_manager::redraw();
+        refresh_display();
+    }
+    try {
+        // Parse dimension-specific data from JSON
+        JsonIn jsin( fin );
+        jsin.start_object();
+        while( !jsin.end_object() ) {
+            std::string name = jsin.get_member_name();
+            if( name == "region_type" ) {
+                // Load the region type for this dimension
+                jsin.read( overmap_buffer.current_region_type );
+            } else {
+                // Skip unknown members for forward/backward compatibility
+                // (e.g., DDA's "overmapbuffer", "weather", "placed_unique_specials")
+                jsin.skip_value();
+            }
+        }
+    } catch( const JsonError &e ) {
+        debugmsg( "error loading %s: %s", SAVE_DIMENSION_DATA, e.c_str() );
+    }
+}
+
 void mission::serialize_all( JsonOut &json )
 {
     json.start_array();
@@ -1313,6 +1426,27 @@ void game::serialize_master( std::ostream &fout )
         json.end_object();
     } catch( const JsonError &e ) {
         debugmsg( "error saving to %s: %s", SAVE_MASTER, e.c_str() );
+    }
+}
+
+void game::serialize_dimension_data( std::ostream &fout )
+{
+    fout << "# version " << savegame_version << '\n';
+
+    try {
+        JsonOut json( fout, true ); // pretty-print
+        json.start_object();
+
+        // Save the region type for this dimension
+        // This allows different dimensions to have different regional settings
+        json.member( "region_type", overmap_buffer.current_region_type );
+
+        // Note: BN doesn't use DDA's global_state or weather_manager
+        // Those are stored differently in BN's architecture
+
+        json.end_object();
+    } catch( const JsonError &e ) {
+        debugmsg( "error saving to %s: %s", SAVE_DIMENSION_DATA, e.c_str() );
     }
 }
 

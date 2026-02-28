@@ -479,7 +479,18 @@ int64_t world::commit_save_tx()
 static std::string get_quad_dirname( const tripoint &om_addr )
 {
     const tripoint segment_addr = omt_to_seg_copy( om_addr );
-    return string_format( "maps/%d.%d.%d", segment_addr.x, segment_addr.y, segment_addr.z );
+
+    // Add dimension prefix support for dimension travel
+    std::string dimension_dir = "maps";
+    if( g != nullptr ) {
+        const std::string dim_prefix = g->get_dimension_prefix();
+        if( !dim_prefix.empty() ) {
+            dimension_dir = "maps_" + dim_prefix;
+        }
+    }
+
+    return string_format( "%s/%d.%d.%d", dimension_dir, segment_addr.x, segment_addr.y,
+                          segment_addr.z );
 }
 
 static std::string get_quad_filename( const tripoint &om_addr )
@@ -533,11 +544,25 @@ bool world::write_map_quad( const tripoint &om_addr, file_write_fn writer ) cons
 
 std::string world::overmap_terrain_filename( const point_abs_om &p ) const
 {
+    // Add dimension prefix to overmap filenames for dimension separation
+    if( g != nullptr ) {
+        const std::string dim_prefix = g->get_dimension_prefix();
+        if( !dim_prefix.empty() ) {
+            return string_format( "o_%s.%d.%d", dim_prefix, p.x(), p.y() );
+        }
+    }
     return string_format( "o.%d.%d", p.x(), p.y() );
 }
 
 std::string world::overmap_player_filename( const point_abs_om &p ) const
 {
+    // Add dimension prefix to player overmap filenames for dimension separation
+    if( g != nullptr ) {
+        const std::string dim_prefix = g->get_dimension_prefix();
+        if( !dim_prefix.empty() ) {
+            return string_format( ".seen_%s.%d.%d", dim_prefix, p.x(), p.y() );
+        }
+    }
     return string_format( ".seen.%d.%d", p.x(), p.y() );
 }
 
@@ -595,6 +620,13 @@ bool world::write_overmap_player_visibility( const point_abs_om &p, file_write_f
  */
 static std::string get_mm_filename( const tripoint &p )
 {
+    // Add dimension prefix to map memory filenames for dimension separation
+    if( g != nullptr ) {
+        const std::string dim_prefix = g->get_dimension_prefix();
+        if( !dim_prefix.empty() ) {
+            return string_format( "%s.%d.%d.%d.mmr", dim_prefix, p.x, p.y, p.z );
+        }
+    }
     return string_format( "%d.%d.%d.mmr", p.x, p.y, p.z );
 }
 

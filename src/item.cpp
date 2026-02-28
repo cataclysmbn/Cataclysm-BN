@@ -7793,6 +7793,32 @@ bool item::is_craft() const
     return craft_data_ != nullptr;
 }
 
+bool item::is_pocket_dimension_key() const
+{
+    return pocket_dim.has_value();
+}
+
+item::pocket_dimension_data *item::get_pocket_dimension_data()
+{
+    if( pocket_dim.has_value() ) {
+        return &pocket_dim.value();
+    }
+    return nullptr;
+}
+
+const item::pocket_dimension_data *item::get_pocket_dimension_data() const
+{
+    if( pocket_dim.has_value() ) {
+        return &pocket_dim.value();
+    }
+    return nullptr;
+}
+
+void item::set_pocket_dimension_data( pocket_dimension_data &&data )
+{
+    pocket_dim = std::move( data );
+}
+
 bool item::is_funnel_container( units::volume &bigger_than ) const
 {
     if( !is_bucket() && !is_watertight_container() ) {
@@ -9837,6 +9863,15 @@ detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoin
                                         temperature_flag temperature,
                                         const weather_manager &weather )
 {
+    // Guard against null or invalid items that can survive save/load cycles
+    // during dimension transitions (e.g. zombie items from deferred arena cleanup).
+    if( !self || !self->type || self->type == nullitem() ) {
+        if( self ) {
+            debugmsg( "actualize_rot: skipping item with %s type at %s",
+                      self->type ? "null-type" : "null", pnt.to_string() );
+        }
+        return std::move( self );
+    }
     if( self->goes_bad() ) {
         return process_rot( std::move( self ), false, pnt, nullptr, temperature, weather );
     } else if( self->type->container && self->type->container->preserves ) {
@@ -9845,6 +9880,9 @@ detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoin
     } else if( self->type->container && self->type->container->seals ) {
         // Items inside rot but do not vanish as the container seals them in.
         self->contents.remove_top_items_with( [&pnt, &temperature, &weather]( detached_ptr<item> &&it ) {
+            if( !it || !it->type || it->type == nullitem() ) {
+                return std::move( it );
+            }
             if( it->goes_bad() ) {
                 it = process_rot( std::move( it ), true, pnt, nullptr, temperature, weather );
             }

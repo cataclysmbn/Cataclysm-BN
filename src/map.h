@@ -21,6 +21,7 @@
 #include "calendar.h"
 #include "coordinate_conversions.h"
 #include "coordinates.h"
+#include "dimension_bounds.h"
 #include "enums.h"
 #include "filter_utils.h"
 #include "game_constants.h"
@@ -397,6 +398,41 @@ class map
 
         map &operator=( const map & ) = delete;
         map &operator=( map && ) noexcept ;
+
+        // Dimension Bounds (for bounded pocket dimensions)
+        /**
+         * Set the dimension bounds for this map.
+         * Out-of-bounds areas will be rendered as boundary terrain and are impassable.
+         */
+        void set_dimension_bounds( const dimension_bounds &bounds );
+        /**
+         * Clear the dimension bounds (for infinite dimensions).
+         */
+        void clear_dimension_bounds();
+        /**
+         * Clear all grid submap pointers (set to nullptr).
+         * Must be called before clearing MAPBUFFER to prevent dangling pointers.
+         */
+        void clear_grid();
+        /**
+         * Check if the map has dimension bounds set.
+         */
+        bool has_dimension_bounds() const;
+        /**
+         * Check if a local tripoint is out of dimension bounds.
+         * Returns false if no bounds are set (infinite dimension).
+         */
+        bool is_out_of_bounds( const tripoint &p ) const;
+        /**
+         * Get the boundary terrain ID for out-of-bounds areas.
+         * Only valid if has_dimension_bounds() is true.
+         */
+        ter_id get_boundary_terrain() const;
+        /**
+         * Get the current dimension bounds (if any).
+         * Returns the full bounds structure for secondary world capture.
+         */
+        std::optional<dimension_bounds> get_dimension_bounds() const;
 
         /**
          * Sets a dirty flag on the a given cache.
@@ -2096,6 +2132,9 @@ class map
         // caches the highest zlevel above which all zlevels are uniform
         // !value || value->first != map::abs_sub means cache is invalid
         std::optional<std::pair<tripoint, int>> max_populated_zlev = std::nullopt;
+
+        // Dimension bounds for bounded pocket dimensions (nullopt for infinite dimensions)
+        std::optional<dimension_bounds> current_bounds_;
 
     public:
         bool has_rope_at( tripoint pt ) const;

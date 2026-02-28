@@ -3009,6 +3009,22 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
+    add( "POCKET_SIMULATION_LEVEL", world_default, translate_marker( "Pocket Dimension Simulation" ),
+         translate_marker( "How to handle the last visited pocket dimension. "
+                           "'Off' unloads normally. 'None' keeps loaded but frozen for fast travel. "
+                           "'Minimal' simulates fields only (fire, gas). "
+                           "'Moderate' adds vehicle systems (solar charging). "
+    "'Full' simulates everything including off-screen combat." ), {
+        { "off", translate_marker( "Off" ) },
+        { "none", translate_marker( "None (Fast Travel)" ) },
+        { "minimal", translate_marker( "Minimal (Fields)" ) },
+        { "moderate", translate_marker( "Moderate (Fields + Vehicles)" ) },
+        { "full", translate_marker( "Full (Everything)" ) }
+    },
+    "off" );
+
+    add_empty_line();
+
     add( "CHARACTER_POINT_POOLS", world_default, translate_marker( "Character point pools" ),
          translate_marker( "Allowed point pools for character generation." ),
     { { "any", translate_marker( "Any" ) }, { "multi_pool", translate_marker( "Multi-pool only" ) }, { "no_freeform", translate_marker( "No freeform" ) } },

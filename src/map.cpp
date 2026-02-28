@@ -219,6 +219,48 @@ map::map( int mapsize, bool zlev )
 map::~map() = default;
 map &map::operator=( map && )  noexcept = default;
 
+void map::set_dimension_bounds( const dimension_bounds &bounds )
+{
+    current_bounds_ = bounds;
+}
+
+void map::clear_dimension_bounds()
+{
+    current_bounds_.reset();
+}
+
+void map::clear_grid()
+{
+    std::fill( grid.begin(), grid.end(), nullptr );
+}
+
+bool map::has_dimension_bounds() const
+{
+    return current_bounds_.has_value();
+}
+
+bool map::is_out_of_bounds( const tripoint &p ) const
+{
+    if( !current_bounds_ ) {
+        return false;  // No bounds means infinite dimension
+    }
+    return !current_bounds_->contains_local( p, tripoint_abs_sm( abs_sub ) );
+}
+
+ter_id map::get_boundary_terrain() const
+{
+    if( current_bounds_ && current_bounds_->boundary_terrain.is_valid() ) {
+        return current_bounds_->boundary_terrain.id();
+    }
+    // Fallback to t_null if no boundary terrain is set
+    return t_null;
+}
+
+std::optional<dimension_bounds> map::get_dimension_bounds() const
+{
+    return current_bounds_;
+}
+
 void map::set_transparency_cache_dirty( const int zlev )
 {
     if( inbounds_z( zlev ) ) {
@@ -301,6 +343,9 @@ maptile map::maptile_at_internal( const tripoint &p ) const
 {
     point l;
     submap *const sm = get_submap_at( p, l );
+    if( sm == nullptr ) {
+        return maptile( &null_submap, point_zero );
+    }
 
     return maptile( sm, l );
 }
@@ -309,6 +354,9 @@ maptile map::maptile_at_internal( const tripoint &p )
 {
     point l;
     submap *const sm = get_submap_at( p, l );
+    if( sm == nullptr ) {
+        return maptile( &null_submap, point_zero );
+    }
 
     return maptile( sm, l );
 }
@@ -433,6 +481,9 @@ void map::clear_vehicle_list( const int zlev )
 
 void map::update_vehicle_list( const submap *const to, const int zlev )
 {
+    if( to == nullptr ) {
+        return;
+    }
     // Update vehicle data
     level_cache &ch = get_cache( zlev );
     for( const auto &elem : to->vehicles ) {
@@ -1236,6 +1287,9 @@ VehicleList map::get_vehicles( const tripoint &start, const tripoint &end )
         for( int cy = chunk_sy; cy <= chunk_ey; ++cy ) {
             for( int cz = chunk_sz; cz <= chunk_ez; ++cz ) {
                 submap *current_submap = get_submap_at_grid( { cx, cy, cz } );
+                if( current_submap == nullptr ) {
+                    continue;
+                }
                 for( const auto &elem : current_submap->vehicles ) {
                     // Ensure the vehicle z-position is correct
                     elem->sm_pos.z = cz;
@@ -1599,7 +1653,7 @@ bool map::has_furn( const tripoint &p ) const
 
 furn_id map::furn( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         return f_null;
     }
 
@@ -1612,7 +1666,7 @@ furn_id map::furn( const tripoint &p ) const
 void map::furn_set( const tripoint &p, const furn_id &new_furniture,
                     const cata::poly_serialized<active_tile_data> &new_active )
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         return;
     }
 
@@ -1759,6 +1813,11 @@ std::string map::furnname( const tripoint &p )
  */
 ter_id map::ter( const tripoint &p ) const
 {
+    // Check dimension bounds first - out-of-bounds areas show boundary terrain
+    if( is_out_of_bounds( p ) ) {
+        return get_boundary_terrain();
+    }
+
     if( !inbounds( p ) ) {
         return t_null;
     }
@@ -1954,7 +2013,7 @@ bool map::is_harvestable( const tripoint &pos ) const
  */
 bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         return false;
     }
 
@@ -2104,6 +2163,11 @@ bool map::is_wall_adjacent( const tripoint &center ) const
 
 int map::move_cost( const tripoint &p, const vehicle *ignored_vehicle ) const
 {
+    // Dimension bounds are always impassable
+    if( is_out_of_bounds( p ) ) {
+        return 0;
+    }
+
     if( !inbounds( p ) ) {
         return 0;
     }
@@ -3000,6 +3064,10 @@ void map::decay_fields_and_scent( const time_duration &amount )
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto cur_submap = get_submap_at_grid( { smx, smy, smz } );
+            if( cur_submap == nullptr ) {
+                get_cache( smz ).field_cache.reset( smx + ( smy * MAPSIZE ) );
+                continue;
+            }
             int to_proc = cur_submap->field_count;
             if( to_proc < 1 ) {
                 if( to_proc < 0 ) {
@@ -3955,6 +4023,18 @@ bash_results map::bash( const tripoint &p, const int str,
         str, silent, destroy, bash_floor, static_cast<float>( rng_float( 0, 1.0f ) ), false, true
     };
     bash_results result;
+
+    // Dimension bounds cannot be bashed - show message from boundary terrain
+    if( is_out_of_bounds( p ) ) {
+        if( !silent && current_bounds_ ) {
+            const ter_t &boundary_ter = current_bounds_->boundary_terrain.obj();
+            if( !boundary_ter.bash.sound_fail.empty() ) {
+                add_msg( m_info, boundary_ter.bash.sound_fail.translated() );
+            }
+        }
+        return result;  // Cannot bash dimension boundary
+    }
+
     if( !inbounds( p ) ) {
         return result;
     }
@@ -4061,6 +4141,11 @@ bash_results &bash_results::operator|=( const bash_results &other )
 
 void map::destroy( const tripoint &p, const bool silent )
 {
+    // Dimension bounds cannot be destroyed
+    if( is_out_of_bounds( p ) ) {
+        return;
+    }
+
     // Break if it takes more than 25 destructions to remove to prevent infinite loops
     // Example: A bashes to B, B bashes to A leads to A->B->A->...
 
@@ -4768,20 +4853,28 @@ void map::adjust_radiation( const tripoint &p, const int delta )
 
 int map::get_temperature( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         return 0;
     }
 
-    return get_submap_at( p )->get_temperature();
+    const submap *sm = get_submap_at( p );
+    if( !sm ) {
+        return 0;
+    }
+    return sm->get_temperature();
 }
 
 void map::set_temperature( const tripoint &p, int new_temperature )
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         return;
     }
 
-    get_submap_at( p )->set_temperature( new_temperature );
+    submap *sm = get_submap_at( p );
+    if( !sm ) {
+        return;
+    }
+    sm->set_temperature( new_temperature );
 }
 // Items: 3D
 
@@ -4928,6 +5021,12 @@ void map::spawn_item( const tripoint &p, const itype_id &type_id,
     if( item_is_blacklisted( type_id ) ) {
         return;
     }
+
+    // Skip spawning items in dimension-bounded out-of-bounds areas
+    if( is_out_of_bounds( p ) ) {
+        return;
+    }
+
     for( size_t i = 0; i < quantity; i++ ) {
         // spawn the item
         detached_ptr<item> new_item = item::spawn( type_id, birthday );
@@ -4970,6 +5069,11 @@ detached_ptr<item> map::add_item_or_charges( const tripoint &pos, detached_ptr<i
             // should never happen
             debugmsg( "add_item_or_charges: %s is out of bounds (adding item '%s' [%d])",
                       e.to_string(), obj->typeId().c_str(), obj->charges );
+            return false;
+        }
+
+        // Cannot add items to dimension-bounded out-of-bounds areas
+        if( is_out_of_bounds( e ) ) {
             return false;
         }
 
@@ -5280,6 +5384,9 @@ std::vector<tripoint> map::check_submap_active_item_consistency()
             for( int y = 0; y < MAPSIZE; ++y ) {
                 tripoint p( x, y, z );
                 submap *s = get_submap_at_grid( p );
+                if( s == nullptr ) {
+                    continue;
+                }
                 bool has_active_items = !s->active_items.get().empty();
                 bool map_has_active_items = submaps_with_active_items.contains( p + abs_sub.xy() );
                 if( has_active_items != map_has_active_items ) {
@@ -5312,6 +5419,9 @@ void map::process_items()
         }
         for( const tripoint &pos : submaps_with_vehicles ) {
             submap *const current_submap = get_submap_at_grid( pos );
+            if( current_submap == nullptr ) {
+                continue;
+            }
             // Vehicles first in case they get blown up and drop active items on the map.
             process_items_in_vehicles( *current_submap );
         }
@@ -5328,6 +5438,9 @@ void map::process_items()
     for( const tripoint &abs_pos : submaps_with_active_items_copy ) {
         const tripoint local_pos = abs_pos - abs_sub.xy();
         submap *const current_submap = get_submap_at_grid( local_pos );
+        if( current_submap == nullptr ) {
+            continue;
+        }
         if( !current_submap->active_items.empty() ) {
             process_items_in_submap( *current_submap, local_pos );
         }
@@ -5798,12 +5911,16 @@ bool map::can_see_trap_at( const tripoint &p, const Character &c ) const
 
 const trap &map::tr_at( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         return tr_null.obj();
     }
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+
+    if( current_submap == nullptr ) {
+        return tr_null.obj();
+    }
 
     if( current_submap->get_ter( l ).obj().trap != tr_null ) {
         return current_submap->get_ter( l ).obj().trap.obj();
@@ -5814,7 +5931,7 @@ const trap &map::tr_at( const tripoint &p ) const
 
 partial_con *map::partial_con_at( const tripoint &p )
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         return nullptr;
     }
     point l;
@@ -5828,7 +5945,7 @@ partial_con *map::partial_con_at( const tripoint &p )
 
 void map::partial_con_remove( const tripoint &p )
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         return;
     }
     point l;
@@ -5838,7 +5955,7 @@ void map::partial_con_remove( const tripoint &p )
 
 void map::partial_con_set( const tripoint &p, std::unique_ptr<partial_con> con )
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         return;
     }
     point l;
@@ -5959,13 +6076,18 @@ void map::remove_trap( const tripoint &p )
  */
 const field &map::field_at( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         nulfield = field();
         return nulfield;
     }
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+
+    if( current_submap == nullptr ) {
+        nulfield = field();
+        return nulfield;
+    }
 
     return current_submap->get_field( l );
 }
@@ -5975,13 +6097,18 @@ const field &map::field_at( const tripoint &p ) const
  */
 field &map::field_at( const tripoint &p )
 {
-    if( !inbounds( p ) ) {
+    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
         nulfield = field();
         return nulfield;
     }
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+
+    if( current_submap == nullptr ) {
+        nulfield = field();
+        return nulfield;
+    }
 
     return current_submap->get_field( l );
 }
@@ -7266,6 +7393,7 @@ void map::save()
 
 void map::load( const tripoint &w, const bool update_vehicle, const bool pump_events )
 {
+    std::fill( grid.begin(), grid.end(), nullptr );
     for( auto &traps : traplocs ) {
         traps.clear();
     }
@@ -7595,6 +7723,15 @@ void map::vertical_shift( const int newz )
 void map::saven( const tripoint &grid )
 {
     dbg( DL::Debug ) << "map::saven( world=" << abs_sub << ", grid=" << grid << " )";
+
+    // Skip saving submaps outside dimension bounds - they are generated on load
+    if( current_bounds_ ) {
+        const tripoint grid_abs_sub = abs_sub.xy() + grid;
+        if( !current_bounds_->contains( tripoint_abs_sm( grid_abs_sub ) ) ) {
+            return;
+        }
+    }
+
     const int gridn = get_nonant( grid );
     submap *submap_to_save = getsubmap( gridn );
     if( submap_to_save == nullptr || submap_to_save->get_ter( point_zero ) == t_null ) {
@@ -7656,10 +7793,41 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
     const tripoint grid_abs_sub = abs_sub.xy() + grid;
     const size_t gridn = get_nonant( grid );
 
+    // For out-of-bounds areas in bounded dimensions, use uniform boundary terrain submaps
+    // instead of nullptr, to prevent null submap access crashes in grid iteration code.
+    // IMPORTANT: We check the in-memory submap map directly instead of calling
+    // MAPBUFFER.lookup_submap(), because lookup_submap() queries the SQLite database
+    // on cache miss. For pocket dimensions, ~2400 of ~2541 submaps are out-of-bounds,
+    // so avoiding those DB queries is a major performance win.
+    if( current_bounds_ && !current_bounds_->contains( tripoint_abs_sm( grid_abs_sub ) ) ) {
+        submap *bsub = MAPBUFFER.lookup_submap_in_memory( grid_abs_sub );
+        // Diagnostic: log boundary submap creation for dimension debugging
+        if( bsub == nullptr ) {
+            add_msg( m_debug, "[DIM-DIAG] loadn: creating boundary submap at (%d,%d,%d)",
+                     grid_abs_sub.x, grid_abs_sub.y, grid_abs_sub.z );
+            auto sm = std::make_unique<submap>( sm_to_ms_copy( grid_abs_sub ) );
+            sm->is_uniform = true;
+            sm->set_all_ter( get_boundary_terrain() );
+            sm->last_touched = calendar::turn;
+            MAPBUFFER.add_submap( grid_abs_sub, sm );
+            bsub = MAPBUFFER.lookup_submap_in_memory( grid_abs_sub );
+        }
+        if( bsub != nullptr ) {
+            setsubmap( gridn, bsub );
+        }
+        return;
+    }
+
     const int old_abs_z = abs_sub.z; // Ugly, but necessary at the moment
     abs_sub.z = grid.z;
 
     submap *tmpsub = MAPBUFFER.lookup_submap( grid_abs_sub );
+    // Diagnostic: log in-bounds submap loading for dimension transition debugging
+    if( current_bounds_ ) {
+        add_msg( m_debug, "[DIM-DIAG] loadn: in-bounds submap at (%d,%d,%d) %s",
+                 grid_abs_sub.x, grid_abs_sub.y, grid_abs_sub.z,
+                 tmpsub ? "found" : "MISSING - will generate" );
+    }
     if( tmpsub == nullptr ) {
         // It doesn't exist; we must generate it!
         dbg( DL::Info ) << "map::loadn: Missing mapbuffer data.  Regenerating.";
@@ -7749,6 +7917,16 @@ void map::remove_rotten_items( Container &items, const tripoint &pnt, temperatur
 {
     std::vector<item *> corpses_handle;
     items.remove_with( [this, &pnt, &temperature, &corpses_handle]( detached_ptr<item> &&it ) {
+        // Validate item pointer before access to catch use-after-free corruption
+        // from stale pointers surviving dimension transitions.
+        if( !it ) {
+            debugmsg( "remove_rotten_items: null item pointer at %s", pnt.to_string() );
+            return std::move( it );
+        }
+        if( !it->type ) {
+            debugmsg( "remove_rotten_items: item with null type at %s", pnt.to_string() );
+            return std::move( it );
+        }
         item &obj = *it;
         it = item::actualize_rot( std::move( it ), pnt, temperature, get_weather() );
         // When !it, that means the item was removed from the world, ie: has rotted.
@@ -8156,6 +8334,15 @@ void map::actualize( const tripoint &grid )
         return;
     }
 
+    // Skip uniform boundary submaps - they have no items or meaningful state to actualize
+    // and accessing their tile data through map accessors could hit invalid state during
+    // dimension transitions.
+    const tripoint grid_abs = abs_sub.xy() + grid;
+    if( tmpsub->is_uniform && current_bounds_ &&
+        !current_bounds_->contains( tripoint_abs_sm( grid_abs ) ) ) {
+        return;
+    }
+
     const time_duration time_since_last_actualize = calendar::turn - tmpsub->last_touched;
     const bool do_funnels = ( grid.z >= 0 );
 
@@ -8213,8 +8400,11 @@ void map::add_roofs( const tripoint &grid )
 
     submap *const sub_here = get_submap_at_grid( grid );
     if( sub_here == nullptr ) {
-        debugmsg( "Tried to add roofs/floors on null submap on %d,%d,%d",
-                  grid.x, grid.y, grid.z );
+        // Null submaps are expected for out-of-bounds areas in bounded pocket dimensions
+        if( !has_dimension_bounds() ) {
+            debugmsg( "Tried to add roofs/floors on null submap on %d,%d,%d",
+                      grid.x, grid.y, grid.z );
+        }
         return;
     }
 
@@ -8223,8 +8413,10 @@ void map::add_roofs( const tripoint &grid )
     submap *const sub_below = check_roof ? get_submap_at_grid( grid + tripoint_below ) : nullptr;
 
     if( check_roof && sub_below == nullptr ) {
-        debugmsg( "Tried to add roofs to sm at %d,%d,%d, but sm below doesn't exist",
-                  grid.x, grid.y, grid.z );
+        if( !has_dimension_bounds() ) {
+            debugmsg( "Tried to add roofs to sm at %d,%d,%d, but sm below doesn't exist",
+                      grid.x, grid.y, grid.z );
+        }
         return;
     }
 
@@ -8254,6 +8446,9 @@ void map::copy_grid( const tripoint &to, const tripoint &from )
 {
     const auto smap = get_submap_at_grid( from );
     setsubmap( get_nonant( to ), smap );
+    if( smap == nullptr ) {
+        return;
+    }
     for( auto &it : smap->vehicles ) {
         it->sm_pos = to;
     }
@@ -8287,6 +8482,9 @@ void map::spawn_monsters_submap_group( const tripoint &gp, mongroup &group, bool
 
     // If the submap is uniform, we can skip many checks
     const submap *current_submap = get_submap_at_grid( gp );
+    if( current_submap == nullptr ) {
+        return;
+    }
     bool ignore_terrain_checks = false;
     bool ignore_inside_checks = gp.z < 0;
     if( current_submap->is_uniform ) {
@@ -8407,6 +8605,9 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
     }
 
     submap *const current_submap = get_submap_at_grid( gp );
+    if( current_submap == nullptr ) {
+        return;
+    }
     const tripoint gp_ms = sm_to_ms_copy( gp );
 
     for( auto &i : current_submap->spawns ) {
@@ -8686,6 +8887,9 @@ void map::build_outside_cache( const int zlev )
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto cur_submap = get_submap_at_grid( { smx, smy, zlev } );
+            if( cur_submap == nullptr ) {
+                continue;
+            }
 
             for( int sx = 0; sx < SEEX; ++sx ) {
                 for( int sy = 0; sy < SEEY; ++sy ) {
@@ -8728,6 +8932,14 @@ void map::build_obstacle_cache( const tripoint &start, const tripoint &end,
     for( int smx = min_submap.x; smx <= max_submap.x; ++smx ) {
         for( int smy = min_submap.y; smy <= max_submap.y; ++smy ) {
             const auto cur_submap = get_submap_at_grid( { smx, smy, start.z } );
+            if( cur_submap == nullptr ) {
+                for( int sx = 0; sx < SEEX; ++sx ) {
+                    for( int sy = 0; sy < SEEY; ++sy ) {
+                        obstacle_cache[sx + smx * SEEX][sy + smy * SEEY] = 1000.0f;
+                    }
+                }
+                continue;
+            }
 
             // TODO: Init indices to prevent iterating over unused submap sections.
             for( int sx = 0; sx < SEEX; ++sx ) {
@@ -8786,12 +8998,16 @@ bool map::build_floor_cache( const int zlev )
             const submap *below_submap = !lowest_z_lev ? get_submap_at_grid( { smx, smy, zlev - 1 } ) : nullptr;
 
             if( cur_submap == nullptr ) {
-                debugmsg( "Tried to build floor cache at (%d,%d,%d) but the submap is not loaded", smx, smy, zlev );
+                if( !has_dimension_bounds() ) {
+                    debugmsg( "Tried to build floor cache at (%d,%d,%d) but the submap is not loaded", smx, smy, zlev );
+                }
                 continue;
             }
             if( !lowest_z_lev && below_submap == nullptr ) {
-                debugmsg( "Tried to build floor cache at (%d,%d,%d) but the submap is not loaded", smx, smy,
-                          zlev - 1 );
+                if( !has_dimension_bounds() ) {
+                    debugmsg( "Tried to build floor cache at (%d,%d,%d) but the submap is not loaded", smx, smy,
+                              zlev - 1 );
+                }
                 continue;
             }
 
@@ -8840,8 +9056,10 @@ void map::update_suspension_cache( const int &z )
                 const submap *cur_submap = get_submap_at_grid( { smx, smy, z } );
 
                 if( cur_submap == nullptr ) {
-                    debugmsg( "Tried to run suspension check at (%d,%d,%d) but the submap is not loaded", smx, smy,
-                              z );
+                    if( !has_dimension_bounds() ) {
+                        debugmsg( "Tried to run suspension check at (%d,%d,%d) but the submap is not loaded", smx, smy,
+                                  z );
+                    }
                     continue;
                 }
 
@@ -9218,9 +9436,6 @@ void map::setsubmap( const size_t grididx, submap *const smap )
     if( grididx >= grid.size() ) {
         debugmsg( "Tried to access invalid grid index %d", grididx );
         return;
-    } else if( smap == nullptr ) {
-        debugmsg( "Tried to set NULL submap pointer at index %d", grididx );
-        return;
     }
     grid[grididx] = smap;
 }
@@ -9436,6 +9651,11 @@ void map::function_over( const tripoint &start, const tripoint &end, Functor fun
         for( smx = min_sm.x; smx <= max_sm.x; smx++ ) {
             for( smy = min_sm.y; smy <= max_sm.y; smy++ ) {
                 submap const *cur_submap = get_submap_at_grid( { smx, smy, z } );
+                if( cur_submap == nullptr ) {
+                    // This can happen in pocket dimensions where out-of-bounds
+                    // submaps are intentionally set to null
+                    continue;
+                }
                 // Bounds on the submap coordinates
                 const point sm_min( smx > min_sm.x ? 0 : min.x % SEEX, smy > min_sm.y ? 0 : min.y % SEEY );
                 const point sm_max( smx < max_sm.x ? SEEX - 1 : max.x % SEEX,
@@ -9582,6 +9802,9 @@ std::vector<item *> map::get_active_items_in_radius( const tripoint &center, int
         const point sm_offset( submap_loc.x * SEEX, submap_loc.y * SEEY );
 
         submap *sm = get_submap_at_grid( submap_loc );
+        if( sm == nullptr ) {
+            continue;
+        }
         std::vector<item *> items = type == special_item_type::none ? sm->active_items.get() :
                                     sm->active_items.get_special( type );
         for( const auto &elem : items ) {
@@ -9960,7 +10183,7 @@ int map::calc_max_populated_zlev()
         for( int sx = 0; sx < my_MAPSIZE; sx++ ) {
             for( int sy = 0; sy < my_MAPSIZE; sy++ ) {
                 const submap *sm = get_submap_at_grid( tripoint( sx, sy, sz ) );
-                if( !sm->is_uniform ) {
+                if( sm == nullptr || !sm->is_uniform ) {
                     max_z = sz;
                     level_done = true;
                     break;

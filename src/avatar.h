@@ -65,6 +65,7 @@ class avatar : public player
         void deserialize( JsonIn &jsin ) override;
         bool save_map_memory();
         void load_map_memory();
+        void clear_map_memory();
 
         // newcharacter.cpp
         bool create( character_type type, const std::string &tempname = "" );
