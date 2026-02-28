@@ -6163,7 +6163,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
 
         // Because we don't actually model insulation very well at the moment, clothes are oppressive in Summer
         // So we make them half as effective at making you uncomfortably hot as they are at making you not-cold
-        if (bp_conv >= BODYTEMP_HOT) {
+        if( bp_conv >= BODYTEMP_HOT ) {
             bp_conv -= clothing_warmth_adjustment / 2;
         }
 
@@ -6181,7 +6181,8 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
         static const double change_mult_water = std::exp( -0.008 );
         const double change_mult = submerged_bp ? change_mult_water : change_mult_air;
         if( bp_stats.get_temp_cur() != bp_conv ) {
-            bp_stats.set_temp_cur( static_cast<int>( temp_difference * change_mult ) + bp_conv + rounding_error );
+            bp_stats.set_temp_cur( static_cast<int>( temp_difference * change_mult ) + bp_conv +
+                                   rounding_error );
         }
         int temp_after = bp_stats.get_temp_cur();
         // PENALTIES
