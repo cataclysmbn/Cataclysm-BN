@@ -347,7 +347,6 @@ game::game() :
     events().subscribe( &*kill_tracker_ptr );
     events().subscribe( &*stats_tracker_ptr );
     events().subscribe( &*memorial_logger_ptr );
-    events().subscribe( &*achievements_tracker_ptr );
     events().subscribe( &*spell_events_ptr );
     world_generator = std::make_unique<worldfactory>();
     // do nothing, everything that was in here is moved to init_data() which is called immediately after g = new game; in main.cpp

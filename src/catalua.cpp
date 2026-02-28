@@ -43,6 +43,34 @@ std::string get_lapi_version_string()
     return string_format( "%d", get_lua_api_version() );
 }
 
+std::string get_lua_achievements_text()
+{
+    const auto fallback = std::string( "This game has no valid achievements.\n" );
+    lua_state *state_ptr = DynamicDataLoader::get_instance().lua.get();
+    if( !state_ptr ) {
+        return fallback;
+    }
+
+    sol::state &lua = state_ptr->lua;
+    const auto maybe_fn = lua.globals()["game"]["cata_internal"]["get_lua_achievements_text"]
+                          .get<sol::optional<sol::protected_function>>();
+    if( !maybe_fn ) {
+        return fallback;
+    }
+
+    try {
+        sol::protected_function_result res = ( *maybe_fn )();
+        check_func_result( res );
+        if( res.valid() && res.get_type() == sol::type::string ) {
+            return res.get<std::string>();
+        }
+    } catch( const std::runtime_error &e ) {
+        debugmsg( "Failed to get Lua achievements text: %s", e.what() );
+    }
+
+    return fallback;
+}
+
 void startup_lua_test()
 {
     sol::state lua = make_lua_state();

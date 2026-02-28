@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "achievement.h"
+#include "catalua.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "event_statistics.h"
@@ -23,32 +24,8 @@
 
 static std::string get_achievements_text( const achievements_tracker &achievements )
 {
-    std::string os;
-    std::vector<const achievement *> valid_achievements = achievements.valid_achievements();
-    valid_achievements.erase(
-        std::remove_if( valid_achievements.begin(), valid_achievements.end(),
-    [&]( const achievement * a ) {
-        return achievements.is_hidden( a );
-    } ), valid_achievements.end() );
-    using sortable_achievement =
-        std::tuple<achievement_completion, std::string, const achievement *>;
-    std::vector<sortable_achievement> sortable_achievements;
-    std::transform( valid_achievements.begin(), valid_achievements.end(),
-                    std::back_inserter( sortable_achievements ),
-    [&]( const achievement * ach ) {
-        achievement_completion comp = achievements.is_completed( ach->id );
-        return std::make_tuple( comp, ach->name().translated(), ach );
-    } );
-    std::sort( sortable_achievements.begin(), sortable_achievements.end(), localized_compare );
-    for( const sortable_achievement &ach : sortable_achievements ) {
-        os += achievements.ui_text_for( std::get<const achievement *>( ach ) ) + "\n";
-    }
-    if( valid_achievements.empty() ) {
-        os += _( "This game has no valid achievements.\n" );
-    }
-    os += _( "Note that only achievements that existed when you started this game and still "
-             "exist now will appear here." );
-    return os;
+    ( void )achievements;
+    return cata::get_lua_achievements_text();
 }
 
 static std::string get_scores_text( stats_tracker &stats )
