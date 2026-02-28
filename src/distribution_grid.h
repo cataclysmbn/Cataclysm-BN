@@ -1,15 +1,16 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
-#include <vector>
 #include <map>
 #include <unordered_set>
+#include <vector>
 
 #include "calendar.h"
 #include "coordinates.h"
-#include "cuboid_rectangle.h"
 #include "memory_fast.h"
 #include "point.h"
+#include "submap_load_manager.h"
 #include "type_id.h"
 
 class Character;
@@ -67,6 +68,12 @@ class distribution_grid
         }
         /// Calculate total power generation (W) and consumption (W) in the grid
         auto get_power_stat() const -> power_stat;
+        /**
+         * Apply a net power delta (in watt-turns) to this grid's batteries.
+         * Positive @p delta_w charges, negative discharges.  Clamps to int
+         * before forwarding to mod_resource() to handle large batch values.
+         */
+        void apply_net_power( int64_t delta_w );
 };
 
 class distribution_grid_tracker;
@@ -117,8 +124,12 @@ class grid_furn_transform_queue
 
 /**
  * Contains and manages all the active distribution grids.
+ *
+ * Implements submap_load_listener to receive per-submap load/unload events.
+ * Registered with submap_load_manager so that grids are built incrementally
+ * as submaps enter and leave memory rather than on every map shift.
  */
-class distribution_grid_tracker
+class distribution_grid_tracker : public submap_load_listener
 {
     private:
         /**
@@ -127,14 +138,16 @@ class distribution_grid_tracker
         std::map<tripoint_abs_sm, shared_ptr_fast<distribution_grid>> parent_distribution_grids;
 
         /**
-         * @param omt_pos Absolute submap position of one of the tiles of the grid.
+         * @param sm_pos Absolute submap position of one of the tiles of the grid.
          */
         distribution_grid &make_distribution_grid_at( const tripoint_abs_sm &sm_pos );
 
         /**
-         * In submap coords, to mirror @ref map
+         * Set of submap positions currently tracked by this instance.
+         * Populated by on_submap_loaded() / on_submap_unloaded() events.
+         * Replaces the old half_open_rectangle<point_abs_sm> bounds member.
          */
-        half_open_rectangle<point_abs_sm> bounds;
+        std::unordered_set<tripoint_abs_sm> tracked_submaps_;
 
         mapbuffer &mb;
 
@@ -144,6 +157,19 @@ class distribution_grid_tracker
          * Most grids are empty or idle, this contains the rest.
          */
         std::unordered_set<shared_ptr_fast<distribution_grid>> grids_requiring_updates;
+
+        /**
+         * Returns the 4 submap positions that make up the given OMT.
+         * An OMT at omt_pos contains submaps at:
+         *   project_to<coords::sm>(omt_pos) + (0,0), (1,0), (0,1), (1,1)
+         */
+        static std::array<tripoint_abs_sm, 4> get_submaps_for_omt( tripoint_abs_omt omt_pos );
+
+        /**
+         * Returns the OMT itself and its 4 cardinal neighbors (5 total).
+         * Diagonal neighbors are excluded: electrical connections run along cardinal axes only.
+         */
+        static std::array<tripoint_abs_omt, 5> get_omt_and_cardinal_neighbors( tripoint_abs_omt omt_pos );
 
     public:
         distribution_grid_tracker();
@@ -170,20 +196,39 @@ class distribution_grid_tracker
         }
 
         /**
-         * Loads grids in an area given by submap coords.
+         * submap_load_listener overrides.
+         * Called when a submap at @p pos in dimension @p dim_id becomes resident.
+         * Inserts the position into tracked_submaps_ and builds the grid cluster.
          */
-        void load( half_open_rectangle<point_abs_sm> area );
+        void on_submap_loaded( const tripoint_abs_sm &pos,
+                               const std::string &dim_id ) override;
+
         /**
-         * Loads grids in the same area as a given map.
+         * Called just before the submap at @p pos in dimension @p dim_id is evicted.
+         * Removes from tracked_submaps_ and invalidates all 4 submaps of the affected OMT.
          */
-        void load( const map &m );
+        void on_submap_unloaded( const tripoint_abs_sm &pos,
+                                 const std::string &dim_id ) override;
 
         /**
          * Updates grid at given global map square coordinate.
+         * Only rebuilds grids in the 5-OMT cluster affected by the change.
          */
         void on_changed( const tripoint_abs_ms &p );
-        void on_saved();
         void on_options_changed();
+
+        /**
+         * Clears all grids and tracked submaps. Used when changing dimensions.
+         */
+        void clear();
+
+        /**
+         * Returns true if this tracker has at least one tracked submap.
+         * Used by game to decide when a non-primary dimension's tracker can be destroyed.
+         */
+        bool has_tracked_submaps() const {
+            return !tracked_submaps_.empty();
+        }
 };
 
 class vehicle;

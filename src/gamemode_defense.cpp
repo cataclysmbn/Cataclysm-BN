@@ -174,10 +174,10 @@ void defense_game::pre_action( action_id &act )
         case ACTION_MOVE_LEFT:
         case ACTION_MOVE_FORTH_LEFT: {
             const point delta = get_delta_from_movement_action( act, iso_rotate::yes );
-            if( ( delta.y < 0 && g->u.posy() == HALF_MAPSIZE_Y && g->get_levy() <= 93 )
-                || ( delta.y > 0 && g->u.posy() == HALF_MAPSIZE_Y + SEEY - 1 && g->get_levy() >= 98 )
-                || ( delta.x < 0 && g->u.posx() == HALF_MAPSIZE_X && g->get_levx() <= 93 )
-                || ( delta.x > 0 && g->u.posx() == HALF_MAPSIZE_X + SEEX - 1 && g->get_levx() >= 98 ) ) {
+            if( ( delta.y < 0 && g->u.posy() == g_half_mapsize_y && g->get_levy() <= 93 )
+                || ( delta.y > 0 && g->u.posy() == g_half_mapsize_y + SEEY - 1 && g->get_levy() >= 98 )
+                || ( delta.x < 0 && g->u.posx() == g_half_mapsize_x && g->get_levx() <= 93 )
+                || ( delta.x > 0 && g->u.posx() == g_half_mapsize_x + SEEX - 1 && g->get_levx() >= 98 ) ) {
                 action_error_message = string_format( _( "You cannot leave the %s behind!" ),
                                                       defense_location_name( location ) );
             }
@@ -270,12 +270,12 @@ void defense_game::init_map()
 
     // Init the map
     int old_percent = 0;
-    for( int i = 0; i <= MAPSIZE * 2; i += 2 ) {
-        for( int j = 0; j <= MAPSIZE * 2; j += 2 ) {
-            int mx = 100 - MAPSIZE + i;
-            int my = 100 - MAPSIZE + j;
-            int percent = 100 * ( ( j / 2 + MAPSIZE * ( i / 2 ) ) ) /
-                          ( ( MAPSIZE ) * ( MAPSIZE + 1 ) );
+    for( int i = 0; i <= g_mapsize * 2; i += 2 ) {
+        for( int j = 0; j <= g_mapsize * 2; j += 2 ) {
+            int mx = 100 - g_mapsize + i;
+            int my = 100 - g_mapsize + j;
+            int percent = 100 * ( ( j / 2 + g_mapsize * ( i / 2 ) ) ) /
+                          ( ( g_mapsize ) * ( g_mapsize + 1 ) );
             if( percent >= old_percent + 1 ) {
                 popup.message( _( "Please wait as the map generates [%2d%%]" ), percent );
                 ui_manager::redraw();
@@ -1361,16 +1361,16 @@ void defense_game::spawn_wave_monster( const mtype_id &type )
         point pnt;
         if( location == DEFLOC_HOSPITAL || location == DEFLOC_MALL ) {
             // Always spawn to the north!
-            pnt = point( rng( HALF_MAPSIZE_X, HALF_MAPSIZE_X + SEEX ), SEEY );
+            pnt = point( rng( g_half_mapsize_x, g_half_mapsize_x + SEEX ), SEEY );
         } else if( one_in( 2 ) ) {
-            pnt = point( rng( HALF_MAPSIZE_X, HALF_MAPSIZE_X + SEEX ), rng( 1, SEEY ) );
+            pnt = point( rng( g_half_mapsize_x, g_half_mapsize_x + SEEX ), rng( 1, SEEY ) );
             if( one_in( 2 ) ) {
-                pnt = point( pnt.x, -pnt.y ) + point( 0, MAPSIZE_Y - 1 );
+                pnt = point( pnt.x, -pnt.y ) + point( 0, g_mapsize_y - 1 );
             }
         } else {
-            pnt = point( rng( 1, SEEX ), rng( HALF_MAPSIZE_Y, HALF_MAPSIZE_Y + SEEY ) );
+            pnt = point( rng( 1, SEEX ), rng( g_half_mapsize_y, g_half_mapsize_y + SEEY ) );
             if( one_in( 2 ) ) {
-                pnt = point( -pnt.x, pnt.y ) + point( MAPSIZE_X - 1, 0 );
+                pnt = point( -pnt.x, pnt.y ) + point( g_mapsize_x - 1, 0 );
             }
         }
         monster *const mon = g->place_critter_at( type, tripoint( pnt, g->get_levz() ) );

@@ -3,6 +3,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include "coordinates.h"
@@ -23,8 +24,17 @@ class mapbuffer
         /** Store all submaps in this instance into savefiles.
          * @param delete_after_save If true, the saved submaps are removed
          * from the mapbuffer (and deleted).
+         * @param notify_tracker If true, fire on_submap_unloaded() on the
+         * distribution_grid_tracker for each submap evicted during save.
+         * Pass false when saving a non-primary dimension's mapbuffer so that
+         * the primary tracker is not spuriously updated.
+         * @param show_progress If true (default), show a UI progress popup
+         * during Phase 1 collection. Pass false when save() is called from a
+         * worker thread (e.g. via mapbuffer_registry::save_all parallel path)
+         * because UI functions must only be called on the main thread.
          **/
-        void save( bool delete_after_save = false );
+        void save( bool delete_after_save = false, bool notify_tracker = true,
+                   bool show_progress = true );
 
         /** Delete all buffered submaps. **/
         void clear();
@@ -56,8 +66,59 @@ class mapbuffer
             return lookup_submap( p.raw() );
         }
 
+        /** Get a submap only if it's already loaded in memory.
+         * Unlike lookup_submap(), this does NOT query the database for missing submaps.
+         * Use this for out-of-bounds positions where we know there's no DB entry,
+         * to avoid ~2400 wasted SQLite queries per pocket dimension map load.
+         *
+         * Thread-safe: may be called from background worker threads (under gen_mutex).
+         */
+        submap *lookup_submap_in_memory( const tripoint &p ) {
+            std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+            const auto iter = submaps.find( p );
+            return iter != submaps.end() ? iter->second.get() : nullptr;
+        }
+
+        /**
+         * Load a submap from disk (if not already in memory) and return it.
+         * This is the public disk-read counterpart to the internal lookup path,
+         * intended for use by submap_load_manager and related systems.
+         * Returns nullptr if the submap does not exist on disk.
+         */
+        submap *load_submap( const tripoint_abs_sm &pos );
+
+        /**
+         * Conditionally save and then remove the submap at @p pos from the buffer.
+         * The containing OMT quad is saved to disk first (unless it is fully uniform),
+         * then the submap is erased from memory.  Does nothing if @p pos is not loaded.
+         */
+        void unload_submap( const tripoint_abs_sm &pos );
+
+        /**
+         * Save and evict all submaps in the OMT quad at @p om_addr in one shot.
+         * This is the correct way to evict a quad: calling unload_submap() per-submap
+         * repeatedly overwrites the quad file without the previously-removed siblings,
+         * causing data loss and "file did not contain expected submap" errors on reload.
+         * Does nothing for quads that are fully uniform (they regenerate on demand).
+         */
+        void unload_quad( const tripoint &om_addr );
+
+        /**
+         * Move all submaps from this buffer into @p dest, leaving this buffer empty.
+         * Used by the dimension-transition system to migrate submaps between registry slots
+         * without a disk round-trip.
+         */
+        void transfer_all_to( mapbuffer &dest );
+
     private:
         using submap_map_t = std::map<tripoint, std::unique_ptr<submap>>;
+
+        /// Guards all accesses to `submaps` that may overlap with background
+        /// worker threads calling add_submap().  std::recursive_mutex is used
+        /// so that the main-thread call chain
+        ///   lookup_submap → unserialize_submaps → add_submap
+        /// can re-acquire the mutex without deadlocking.
+        mutable std::recursive_mutex submaps_mutex_;
 
     public:
         submap_map_t::iterator begin() {
@@ -71,6 +132,11 @@ class mapbuffer
             return submaps.contains( p );
         }
 
+        /** Return true if no submaps are currently held in this buffer. */
+        bool is_empty() const {
+            return submaps.empty();
+        }
+
     private:
         // There's a very good reason this is private,
         // if not handled carefully, this can erase in-use submaps and crash the game.
@@ -82,6 +148,12 @@ class mapbuffer
         submap_map_t submaps;
 };
 
-extern mapbuffer MAPBUFFER;
-
-
+// mapbuffer_registry.h provides the MAPBUFFER backward-compatibility macro and the
+// MAPBUFFER_REGISTRY global.  It is included at the end of this header (after the
+// full mapbuffer class definition) so that mapbuffer_registry.h can forward-declare
+// mapbuffer without a circular-header dependency.
+// Side-effect: any translation unit that includes mapbuffer.h also gets the MAPBUFFER
+// macro and MAPBUFFER_REGISTRY without explicitly including mapbuffer_registry.h.
+// This is intentional — the macro is needed wherever mapbuffer objects are used — but
+// be aware of it when auditing include chains.
+#include "mapbuffer_registry.h"

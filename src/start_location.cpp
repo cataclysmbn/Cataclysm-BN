@@ -290,23 +290,23 @@ void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
  */
 static int rate_location( map &m, const tripoint &p, const bool must_be_inside,
                           const int bash_str, const int attempt,
-                          int ( &checked )[MAPSIZE_X][MAPSIZE_Y] )
+                          std::vector<int> &checked, int checked_sy )
 {
     if( ( must_be_inside && m.is_outside( p ) ) ||
         m.impassable( p ) ||
-        checked[p.x][p.y] > 0 ) {
+        checked[p.x * checked_sy + p.y] > 0 ) {
         return 0;
     }
 
     // Vector that will be used as a stack
     std::vector<tripoint> st;
-    st.reserve( MAPSIZE_X * MAPSIZE_Y );
+    st.reserve( checked.size() );
     st.push_back( p );
 
     // If not checked yet and either can be moved into, can be bashed down or opened,
     // add it on the top of the stack.
     const auto maybe_add = [&]( const tripoint & pt, const tripoint & from ) {
-        if( checked[pt.x][pt.y] >= attempt ) {
+        if( checked[pt.x * checked_sy + pt.y] >= attempt ) {
             return;
         }
 
@@ -323,9 +323,9 @@ static int rate_location( map &m, const tripoint &p, const bool must_be_inside,
         const tripoint cur = st.back();
         st.pop_back();
 
-        checked[cur.x][cur.y] = attempt;
-        if( cur.x == 0 || cur.x == MAPSIZE_X - 1 ||
-            cur.y == 0 || cur.y == MAPSIZE_Y - 1 ||
+        checked[cur.x * checked_sy + cur.y] = attempt;
+        if( cur.x == 0 || cur.x == g_mapsize_x - 1 ||
+            cur.y == 0 || cur.y == g_mapsize_y - 1 ||
             m.has_flag( "GOES_UP", cur ) ) {
             return INT_MAX;
         }
@@ -345,8 +345,8 @@ void start_location::place_player( player &u ) const
     // Need the "real" map with it's inside/outside cache and the like.
     map &m = g->m;
     // Start us off somewhere in the center of the map
-    u.setx( HALF_MAPSIZE_X );
-    u.sety( HALF_MAPSIZE_Y );
+    u.setx( g_half_mapsize_x );
+    u.sety( g_half_mapsize_y );
     u.setz( g->get_levz() );
     m.invalidate_map_cache( m.get_abs_sub().z );
     m.build_map_cache( m.get_abs_sub().z );
@@ -361,8 +361,9 @@ void start_location::place_player( player &u ) const
     int best_rate = 0;
     // In which attempt did this area get checked?
     // We can overwrite earlier attempts, but not start in them
-    int checked[MAPSIZE_X][MAPSIZE_Y];
-    std::fill_n( &checked[0][0], MAPSIZE_X * MAPSIZE_Y, 0 );
+    auto &start_lc = m.access_cache( g->get_levz() );
+    const int checked_sy = start_lc.cache_y;
+    auto checked = std::vector<int>( static_cast<size_t>( start_lc.cache_x ) * checked_sy, 0 );
 
     bool found_good_spot = false;
     // Try some random points at start
@@ -370,7 +371,7 @@ void start_location::place_player( player &u ) const
     int tries = 0;
     const auto check_spot = [&]( const tripoint & pt ) {
         tries++;
-        const int rate = rate_location( m, pt, must_be_inside, bash, tries, checked );
+        const int rate = rate_location( m, pt, must_be_inside, bash, tries, checked, checked_sy );
         if( best_rate < rate ) {
             best_rate = rate;
             u.setpos( pt );
@@ -381,8 +382,8 @@ void start_location::place_player( player &u ) const
     };
 
     while( !found_good_spot && tries < 100 ) {
-        tripoint rand_point( HALF_MAPSIZE_X + rng( 0, SEEX * 2 - 1 ),
-                             HALF_MAPSIZE_Y + rng( 0, SEEY * 2 - 1 ),
+        tripoint rand_point( g_half_mapsize_x + rng( 0, SEEX * 2 - 1 ),
+                             g_half_mapsize_y + rng( 0, SEEY * 2 - 1 ),
                              u.posz() );
         check_spot( rand_point );
     }
@@ -392,8 +393,8 @@ void start_location::place_player( player &u ) const
         tripoint tmp = u.pos();
         int &x = tmp.x;
         int &y = tmp.y;
-        for( x = 0; x < MAPSIZE_X; x++ ) {
-            for( y = 0; y < MAPSIZE_Y; y++ ) {
+        for( x = 0; x < g_mapsize_x; x++ ) {
+            for( y = 0; y < g_mapsize_y; y++ ) {
                 check_spot( tmp );
             }
         }
@@ -411,7 +412,7 @@ void start_location::burn( const tripoint_abs_omt &omtstart, const size_t count,
     tinymap m;
     m.load( player_location, false );
     m.build_outside_cache( m.get_abs_sub().z );
-    const point u( g->u.posx() % HALF_MAPSIZE_X, g->u.posy() % HALF_MAPSIZE_Y );
+    const point u( g->u.posx() % g_half_mapsize_x, g->u.posy() % g_half_mapsize_y );
     std::vector<tripoint> valid;
     for( const tripoint &p : m.points_on_zlevel() ) {
         if( !( m.has_flag_ter( "DOOR", p ) ||

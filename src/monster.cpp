@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 #include "avatar.h"
+#include "batch_turns.h"
 #include "bodypart.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
@@ -2817,6 +2818,25 @@ void monster::process_turn()
     Creature::process_turn();
 }
 
+void monster::batch_turns( int n )
+{
+    if( n <= 0 || is_dead_state() ) {
+        return;
+    }
+    n = std::min( n, MAX_CATCHUP_MONSTER );
+
+    for( int i = 0; i < n; ++i ) {
+        if( is_dead_state() ) {
+            break;
+        }
+        process_turn();
+    }
+    // One reproduction check at the end rather than per-turn to avoid
+    // O(n) spawns for high-fecundity species catching up after long absence.
+    try_reproduce();
+    moves = 0;
+}
+
 void monster::die( Creature *nkiller )
 {
     if( dead ) {
@@ -2911,7 +2931,7 @@ void monster::die( Creature *nkiller )
         // submap coordinates.
         const tripoint abssub = ms_to_sm_copy( g->m.getabs( pos() ) );
         // Do it for overmap above/below too
-        for( const tripoint &p : points_in_radius( abssub, HALF_MAPSIZE, 1 ) ) {
+        for( const tripoint &p : points_in_radius( abssub, g_half_mapsize, 1 ) ) {
             // TODO: fix point types
             for( auto &mgp : overmap_buffer.groups_at( tripoint_abs_sm( p ) ) ) {
                 if( MonsterGroupManager::IsMonsterInGroup( mgp->type, type->id ) ) {

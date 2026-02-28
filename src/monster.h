@@ -506,6 +506,8 @@ class monster : public Creature, public location_visitable<monster>
         int shortest_special_cooldown() const;
 
         void process_turn() override;
+        /** Batch catchup: simulate up to MAX_CATCHUP_MONSTER missed turns. */
+        void batch_turns( int n ) override;
         /** Resets the value of all bonus fields to 0, clears special effect flags. */
         void reset_bonuses() override;
         /** Resets stats, and applies effects in an idempotent manner */
@@ -656,6 +658,15 @@ class monster : public Creature, public location_visitable<monster>
         void init_from_item( const item &itm );
 
         time_point last_updated = calendar::turn_zero;
+
+        // ID of the dimension this monster belongs to.  Empty string = primary dimension.
+        // Set when the monster is spawned or loaded from a non-primary dimension submap.
+        // Persisted across saves so cross-dimension LOD assignment survives reload.
+        std::string dimension_id_;
+        const std::string &get_dimension() const {
+            return dimension_id_;
+        }
+
         /**
          * Do some cleanup and caching as monster is being unloaded from map.
          */

@@ -11,6 +11,7 @@
 
 #include "auto_pickup.h"
 #include "avatar.h"
+#include "batch_turns.h"
 #include "bodypart.h"
 #include "character.h"
 #include "character_id.h"
@@ -2996,6 +2997,55 @@ void npc::process_turn()
 
     // TODO: Add decreasing trust/value/etc. here when player doesn't provide food
     // TODO: Make NPCs leave the player if there's a path out of map and player is sleeping/unseen/etc.
+}
+
+void npc::batch_turns( int n )
+{
+    if( n <= 0 || is_dead_state() ) {
+        return;
+    }
+    n = std::min( n, MAX_CATCHUP_NPC );
+
+    // Biological catchup (hunger, thirst, healing, etc.) in one coarse pass.
+    // Call update_body directly (bypassing the once_every throttle used in
+    // npc_update_body) since we're doing a deliberate catch-up pass.
+    if( last_updated < calendar::turn ) {
+        update_body( last_updated, calendar::turn );
+        last_updated = calendar::turn;
+    }
+
+    // Per-turn effect/bonus processing.
+    for( int i = 0; i < n; ++i ) {
+        if( is_dead_state() ) {
+            break;
+        }
+        process_turn();
+    }
+
+    // Fast-forward any ongoing activity.
+    advance_job_progress( n );
+
+    moves = 0;
+}
+
+void npc::advance_job_progress( int n )
+{
+    if( n <= 0 ) {
+        return;
+    }
+    if( activity && *activity ) {
+        // Directly reduce moves_left by n turns' worth (100 moves per turn).
+        // The mod_moves() approach is wrong here: activity->do_turn() unconditionally
+        // sets p.moves = 0 after each step, so any extra moves granted via mod_moves()
+        // are zeroed on the very first step and the catchup never happens.
+        // Direct reduction is speed-independent, matching the design intent.
+        activity->moves_left = std::max( 0, activity->moves_left - n * 100 );
+    } else if( has_destination() ) {
+        // Destination movement: grant extra moves so the NPC takes additional path
+        // steps toward its goal.  mod_moves() is correct here because path-following
+        // does consume moves one step at a time without zeroing the full pool.
+        mod_moves( to_moves<int>( time_duration::from_turns( n ) ) );
+    }
 }
 
 bool npc::invoke_item( item *used, const tripoint &pt )

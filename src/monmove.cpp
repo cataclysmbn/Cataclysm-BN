@@ -529,6 +529,25 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                     }
                 } );
             }
+            if( angers_cub_threatened > 0 ) {
+                for_each_monster( [&]( monster & tmp ) {
+                    if( type->baby_monster == tmp.type->id ) {
+                        // Mirrors original plan(): dist is updated so subsequent
+                        // target selection uses the baby-player distance.
+                        dist = tmp.rate_target( g->u, dist, smart_planning );
+                        if( dist <= 3 ) {
+                            if( has_flag( MF_FACTION_MEMORY ) ) {
+                                result.faction_angers.push_back(
+                                { mfaction_id( "player" ), angers_cub_threatened } );
+                            } else {
+                                local_anger += angers_cub_threatened;
+                            }
+                            local_morale += angers_cub_threatened / 2;
+                            result.aggro_triggers.push_back( "threatening cub" );
+                        }
+                    }
+                } );
+            }
         }
     } else if( local_friendly != 0 && !docile && !waiting ) {
         for_each_monster( [&]( monster & tmp ) {

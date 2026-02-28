@@ -736,6 +736,21 @@ class item : public location_visitable<item>, public game_object<item>
         int get_counter() const;
 
         /**
+         * Returns true if this item is currently active and uses an explicit
+         * per-turn integer countdown counter (itype::countdown_interval > 0).
+         * Used by batch_turns_items() to identify items that need timer advance.
+         */
+        bool has_explicit_turn_timer() const;
+
+        /**
+         * Advance the item's countdown counter by @p n turns (batch catchup).
+         * Clamps the counter at 0; does NOT fire the countdown_action — that
+         * happens on the next normal in-bubble process_items() call.
+         * No-op if has_explicit_turn_timer() is false.
+         */
+        void advance_timer( int n );
+
+        /**
          * Consumes specified charges (or fewer) from this and any contained items
          * @param what specific type of charge required, e.g. 'battery'
          * @param qty maximum charges to consume. On return set to number of charges not found (or zero)
@@ -1288,6 +1303,7 @@ class item : public location_visitable<item>, public game_object<item>
         bool is_transformable() const;
         bool is_artifact() const;
         bool is_relic() const;
+        bool is_pocket_dimension_key() const;
         bool is_bucket() const;
         bool is_bucket_nonempty() const;
 
@@ -2285,6 +2301,46 @@ class item : public location_visitable<item>, public game_object<item>
         bool has_tools_to_continue() const;
         void set_cached_tool_selections( const std::vector<comp_selection<tool_comp>> &selections );
         const std::vector<comp_selection<tool_comp>> &get_cached_tool_selections() const;
+
+        /**
+         * Data for items that act as keys to pocket dimensions.
+         */
+        struct pocket_dimension_data {
+            pocket_dimension_data() {}
+            std::string instance_id;              // Unique identifier (UUID-like)
+            world_type_id dimension_type;         // Which world_type to use
+            tripoint_abs_omt entry_point;         // Where player spawns on entry
+            tripoint_abs_omt bounds_min;          // Minimum bounds (OMT coords)
+            tripoint_abs_omt bounds_max;          // Maximum bounds (OMT coords)
+            bool is_initialized = false;          // Has the pocket data been set up?
+            bool terrain_generated = false;       // Has the terrain been generated?
+
+            // Return tracking - where to go when exiting this pocket
+            world_type_id return_dimension;       // Which dimension to return to
+            std::string return_instance_id;       // If returning to another pocket (empty for base)
+            tripoint_abs_omt return_point;        // Where to place player on exit
+
+            void serialize( JsonOut &jsout ) const;
+            void deserialize( JsonIn &jsin );
+
+            bool operator==( const pocket_dimension_data &rhs ) const;
+        };
+
+        std::optional<pocket_dimension_data> pocket_dim;
+
+
+        /**
+         * Get the pocket dimension data for this item.
+         * Returns nullptr if this item is not a pocket dimension key.
+         */
+        pocket_dimension_data *get_pocket_dimension_data();
+        const pocket_dimension_data *get_pocket_dimension_data() const;
+
+        /**
+         * Initialize pocket dimension data for this item.
+         * Should only be called once when the pocket is first used.
+         */
+        void set_pocket_dimension_data( pocket_dimension_data &&data );
 
         const std::vector<enchantment> &get_enchantments() const;
 

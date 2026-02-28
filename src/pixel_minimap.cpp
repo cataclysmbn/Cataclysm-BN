@@ -41,7 +41,17 @@ extern void set_displaybuffer_rendertarget();
 namespace
 {
 
-const point total_tiles_count = { ( MAPSIZE - 2 ) *SEEX, ( MAPSIZE - 2 ) *SEEY };
+// Updated each frame in draw() to reflect the runtime g_mapsize.
+static point total_tiles_count = { ( 11 - 2 ) *SEEX, ( 11 - 2 ) *SEEY }; // default size=2
+
+// The actual tile grid rendered by the projector. May be smaller than total_tiles_count
+// (clipped to keep tile_size >= 2 so dots always have a 1-pixel gap) or larger
+// (minimum 60-tile radius = 120 tiles, padding with black beyond the bubble edge).
+static auto view_tiles_count = total_tiles_count;
+// The view_tiles_count that the current projector / main_tex were built from.
+// Updated whenever set_screen_rect actually rebuilds; used to detect stale projectors
+// whose tile_size happens to match even though view_tiles_count changed.
+static auto built_view_tiles_count = point {0, 0};
 
 point get_pixel_size( point tile_size, pixel_minimap_mode mode )
 {
@@ -132,7 +142,7 @@ class pixel_minimap::shared_texture_pool
 {
     public:
         shared_texture_pool( const std::function<SDL_Texture_Ptr()> &generator ) {
-            const size_t pool_size = ( MAPSIZE + 1 ) * ( MAPSIZE + 1 );
+            const size_t pool_size = static_cast<size_t>( g_mapsize + 1 ) * ( g_mapsize + 1 );
 
             texture_pool.reserve( pool_size );
             inactive_index.reserve( pool_size );
@@ -316,7 +326,7 @@ void pixel_minimap::update_cache_at( const tripoint &sm_pos )
     for( int y = 0; y < SEEY; ++y ) {
         for( int x = 0; x < SEEX; ++x ) {
             const tripoint p = ms_pos + tripoint{ x, y, 0 };
-            const lit_level lighting = access_cache.visibility_cache[p.x][p.y];
+            const lit_level lighting = access_cache.visibility_cache[access_cache.idx( p.x, p.y )];
 
             SDL_Color color;
 
@@ -363,10 +373,13 @@ pixel_minimap::submap_cache &pixel_minimap::get_cache_at( const tripoint &abs_sm
 
 void pixel_minimap::process_cache( const tripoint &center )
 {
+    // Refresh the tile count to match the current runtime map size.
+    total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) *SEEY };
+
     prepare_cache_for_updates( center );
 
-    for( int y = 0; y < MAPSIZE; ++y ) {
-        for( int x = 0; x < MAPSIZE; ++x ) {
+    for( int y = 0; y < g_mapsize; ++y ) {
+        for( int x = 0; x < g_mapsize; ++x ) {
             update_cache_at( { x, y, center.z } );
         }
     }
@@ -377,7 +390,8 @@ void pixel_minimap::process_cache( const tripoint &center )
 
 void pixel_minimap::set_screen_rect( const SDL_Rect &screen_rect )
 {
-    if( this->screen_rect == screen_rect && main_tex && tex_pool && projector ) {
+    if( this->screen_rect == screen_rect && main_tex && tex_pool && projector
+        && built_view_tiles_count == view_tiles_count ) {
         return;
     }
 
@@ -386,7 +400,7 @@ void pixel_minimap::set_screen_rect( const SDL_Rect &screen_rect )
     projector = create_projector( screen_rect );
     pixel_size = get_pixel_size( projector->get_tile_size(), settings.mode );
 
-    const point size_on_screen = projector->get_tiles_size( total_tiles_count );
+    const auto size_on_screen = projector->get_tiles_size( view_tiles_count );
 
     if( settings.scale_to_fit ) {
         main_tex_clip_rect = SDL_Rect{ 0, 0, size_on_screen.x, size_on_screen.y };
@@ -427,6 +441,7 @@ void pixel_minimap::set_screen_rect( const SDL_Rect &screen_rect )
     };
 
     tex_pool = std::make_unique<shared_texture_pool>( chunk_texture_generator );
+    built_view_tiles_count = view_tiles_count;
 }
 
 void pixel_minimap::reset()
@@ -456,9 +471,9 @@ void pixel_minimap::render( const tripoint &center )
 void pixel_minimap::render_cache( const tripoint &center )
 {
     const tripoint sm_center = get_map().get_abs_sub() + ms_to_sm_copy( center );
-    const tripoint sm_offset = tripoint{
-        total_tiles_count.x / SEEX / 2,
-        total_tiles_count.y / SEEY / 2, 0
+    const auto sm_offset = tripoint{
+        view_tiles_count.x / SEEX / 2,
+        view_tiles_count.y / SEEY / 2, 0
     };
 
     point ms_offset = center.xy();
@@ -506,8 +521,8 @@ void pixel_minimap::render_critters( const tripoint &center )
 
     const level_cache &access_cache = get_map().access_cache( center.z );
 
-    const int start_x = center.x - total_tiles_count.x / 2;
-    const int start_y = center.y - total_tiles_count.y / 2;
+    const auto start_x = center.x - view_tiles_count.x / 2;
+    const auto start_y = center.y - view_tiles_count.y / 2;
     const point beacon_size = {
         std::max<int>( projector->get_tile_size().x *settings.beacon_size / 2, 2 ),
         std::max<int>( projector->get_tile_size().y *settings.beacon_size / 2, 2 )
@@ -517,7 +532,7 @@ void pixel_minimap::render_critters( const tripoint &center )
     for( int y = 0; y < total_tiles_count.y; y++ ) {
         for( int x = 0; x < total_tiles_count.x; x++ ) {
             const tripoint p = tripoint{ start_x + x, start_y + y, center.z };
-            const lit_level lighting = access_cache.visibility_cache[p.x][p.y];
+            const lit_level lighting = access_cache.visibility_cache[access_cache.idx( p.x, p.y )];
 
             if( lighting == lit_level::DARK || lighting == lit_level::BLANK ) {
                 continue;
@@ -550,6 +565,29 @@ void pixel_minimap::draw( const SDL_Rect &screen_rect, const tripoint &center )
         return;
     }
 
+    // Update the tile count from the current runtime bubble size BEFORE set_screen_rect
+    // so the projector is always built with the correct grid dimensions.
+    total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) *SEEY };
+
+    // view_tiles_count is the geographic tile grid the projector and renderer use.
+    // The two cases are handled separately to avoid them fighting each other:
+    //
+    // Large bubble (> 60-tile radius): clip to screen/2 so tile_size >= 2, giving
+    //   a 1-pixel gap between dots. Outer bubble tiles are simply not rendered.
+    //
+    // Small bubble (<= 60-tile radius): show screen/3 tiles at tile_size >= 3,
+    //   giving a 2-pixel gap. The bubble is centered and out-of-bubble area is black.
+    constexpr auto min_view_radius = 60;
+    constexpr auto min_view_diameter = 2 * min_view_radius;
+    view_tiles_count = {
+        total_tiles_count.x > min_view_diameter
+        ? std::min( total_tiles_count.x, screen_rect.w / 2 )
+        : screen_rect.w / 3,
+        total_tiles_count.y > min_view_diameter
+        ? std::min( total_tiles_count.y, screen_rect.h / 2 )
+        : screen_rect.h / 3
+    };
+
     set_screen_rect( screen_rect );
     process_cache( center );
     render( center );
@@ -579,12 +617,12 @@ const
     switch( type ) {
         case pixel_minimap_type::ortho:
             return std::unique_ptr<pixel_minimap_projector> {
-                new pixel_minimap_ortho_projector( total_tiles_count, max_screen_rect, settings.square_pixels )
+                new pixel_minimap_ortho_projector( view_tiles_count, max_screen_rect, settings.square_pixels )
             };
 
         case pixel_minimap_type::iso:
             return std::unique_ptr<pixel_minimap_projector> {
-                new pixel_minimap_iso_projector( total_tiles_count, max_screen_rect, settings.square_pixels )
+                new pixel_minimap_iso_projector( view_tiles_count, max_screen_rect, settings.square_pixels )
             };
     }
 

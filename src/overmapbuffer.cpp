@@ -12,6 +12,7 @@
 #include <future>
 
 #include "avatar.h"
+#include "batch_turns.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "character_id.h"
@@ -39,6 +40,7 @@
 #include "popup.h"
 #include "rng.h"
 #include "simple_pathfinding.h"
+#include "thread_pool.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
@@ -55,8 +57,6 @@ template<typename _Mutex>
 using write_lock = std::unique_lock< _Mutex >;
 template<typename _Mutex>
 using read_lock = std::shared_lock< _Mutex >;
-
-overmapbuffer overmap_buffer;
 
 overmapbuffer::overmapbuffer()
 {
@@ -120,37 +120,56 @@ void overmapbuffer::create_custom_overmap( const point_abs_om &p, overmap_specia
 
 void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
 {
-    using overmap_loc = std::pair<point_abs_om, std::unique_ptr<overmap>>;
+    struct pending {
+        point_abs_om                          loc;
+        std::future<std::unique_ptr<overmap>> future;
+    };
+    std::vector<pending> futures;
+    futures.reserve( locs.size() );
 
-    std::vector<std::future<overmap_loc>> async_data;
-    for( auto &loc : locs ) {
-        if( overmap_buffer.has( loc ) ) {
-            continue;
+    for( const point_abs_om &loc : locs ) {
+        {
+            std::shared_lock lock( mutex );
+            if( overmaps.count( loc ) ) {
+                continue;
+            }
         }
-
-        auto gen_func = [&]() {
-            auto map = std::make_unique<overmap>( loc );
-            map->populate();
-            fix_mongroups( *map );
-            fix_npcs( *map );
-            return std::make_pair( loc, std::move( map ) );
-        };
-        async_data.push_back( std::async( std::launch::async, gen_func ) );
+        // Capture loc by value — [&] would reference the loop variable, which
+        // advances each iteration, creating a latent race if threads outlive the loop.
+        // fix_mongroups / fix_nemesis / fix_npcs access shared overmap state and must
+        // run inside the write lock below, NOT inside the async lambda.
+        futures.push_back( { loc, get_thread_pool().submit_returning( [loc] {
+                auto om = std::make_unique<overmap>( loc );
+                om->populate();
+                return om;
+            } ) } );
     }
 
+    // Non-blocking scan: insert each overmap as soon as its future is ready rather
+    // than waiting for all futures to complete before any insertion occurs.
+    // This reduces peak memory (overmaps are freed as inserted) and allows early
+    // results to be visible to subsequent generate() calls.
     auto popup = make_shared_fast<throbber_popup>( _( "Please wait..." ) );
-    for( auto &f : async_data ) {
-        while( f.wait_for( std::chrono::milliseconds( 10 ) ) != std::future_status::ready ) {
-            popup->refresh();
-        }
-    }
-
-    {
-        write_lock<std::shared_mutex> _l( mutex );
-        for( auto &m : async_data ) {
-            auto result = m.get();
-            overmaps[result.first] = std::move( result.second );
-        }
+    while( !futures.empty() ) {
+        futures.erase( std::remove_if( futures.begin(), futures.end(), [&]( pending & p ) {
+            if( p.future.wait_for( std::chrono::milliseconds( 0 ) ) !=
+                std::future_status::ready ) {
+                return false;
+            }
+            auto om = p.future.get();
+            {
+                write_lock<std::shared_mutex> _l( mutex );
+                // fix_mongroups, fix_nemesis, and fix_npcs all access shared overmap
+                // state (iterating / relocating mongroups and NPCs across overmaps).
+                // Running them inside the write lock prevents data races with readers.
+                fix_mongroups( *om );
+                fix_nemesis( *om );  // was absent in the original; added here
+                fix_npcs( *om );
+                overmaps.emplace( p.loc, std::move( om ) );
+            }
+            return true;
+        } ), futures.end() );
+        popup->refresh();
     }
 }
 
@@ -283,6 +302,7 @@ void overmapbuffer::clear()
     overmaps.clear();
     known_non_existing.clear();
     placed_unique_specials.clear();
+    current_bounds_.reset();
     fluid_grid::clear();
 }
 
@@ -583,7 +603,7 @@ void overmapbuffer::process_mongroups()
 {
     ZoneScoped;
     // arbitrary radius to include nearby overmaps (aside from the current one)
-    const auto radius = MAPSIZE * 2;
+    const auto radius = g_mapsize * 2;
     // TODO: fix point types
     const tripoint_abs_sm center( get_player_character().global_sm_location() );
     for( auto &om : get_overmaps_near( center, radius ) ) {
@@ -596,7 +616,7 @@ void overmapbuffer::move_hordes()
     ZoneScoped;
 
     // arbitrary radius to include nearby overmaps (aside from the current one)
-    const auto radius = MAPSIZE * 2;
+    const auto radius = g_mapsize * 2;
     // TODO: fix point types
     const tripoint_abs_sm center( get_player_character().global_sm_location() );
     for( auto &om : get_overmaps_near( center, radius ) ) {
@@ -738,8 +758,22 @@ void overmapbuffer::add_vehicle( vehicle *veh )
     veh->om_id = id;
 }
 
+void overmapbuffer::set_dimension_bounds( const dimension_bounds &bounds )
+{
+    current_bounds_ = bounds;
+    bounds_oter_id_ = bounds.boundary_overmap_terrain.id();
+}
+
+void overmapbuffer::clear_dimension_bounds()
+{
+    current_bounds_.reset();
+}
+
 bool overmapbuffer::seen( const tripoint_abs_omt &p )
 {
+    if( current_bounds_ && !current_bounds_->contains_omt( p ) ) {
+        return true;
+    }
     if( const overmap_with_local_coords om_loc = get_existing_om_global( p ) ) {
         return om_loc.om->seen( om_loc.local );
     }
@@ -758,12 +792,18 @@ void overmapbuffer::set_seen( const tripoint_abs_omt &p, bool seen )
 
 const oter_id &overmapbuffer::ter( const tripoint_abs_omt &p )
 {
+    if( current_bounds_ && !current_bounds_->contains_omt( p ) ) {
+        return bounds_oter_id_;
+    }
     const overmap_with_local_coords om_loc = get_om_global( p );
     return om_loc.om->ter( om_loc.local );
 }
 
 const oter_id &overmapbuffer::ter_existing( const tripoint_abs_omt &p )
 {
+    if( current_bounds_ && !current_bounds_->contains_omt( p ) ) {
+        return bounds_oter_id_;
+    }
     static const oter_id ot_null;
     const overmap_with_local_coords om_loc = get_existing_om_global( p );
     if( !om_loc.om ) {
@@ -1371,7 +1411,7 @@ std::vector<tripoint_abs_omt> overmapbuffer::find_all_async( const tripoint_abs_
             return result;
         };
 
-        auto task = std::async( std::launch::async, task_func, task_om, std::move( task_omts ) );
+        auto task = get_thread_pool().submit_returning( task_func, task_om, std::move( task_omts ) );
 
         tasks.push_back( std::move( task ) );
 
@@ -1780,6 +1820,15 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         monster *const placed = g->place_critter_at( make_shared_fast<monster>( this_monster ),
                                 local );
         if( placed ) {
+            // Phase 6: batch-advance AI state for turns missed while despawned.
+            // Only applies to monsters with a valid (non-zero) last_updated timestamp.
+            // batch_turns() does NOT update last_updated so on_load() can still
+            // perform its biological catchup and sanity checks.
+            if( placed->last_updated > calendar::turn_zero &&
+                placed->last_updated < calendar::turn ) {
+                const int missed = to_turns<int>( calendar::turn - placed->last_updated );
+                placed->batch_turns( missed );
+            }
             placed->on_load();
         }
     } );

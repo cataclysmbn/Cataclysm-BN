@@ -1978,19 +1978,6 @@ void options_manager::add_options_graphics()
          true
        );
 
-    add( "NIGHT_VISION_DEFAULT_COLOR", graphics, translate_marker( "Night Vision Default Colors" ),
-    translate_marker( "Choose from default night vision colors." ), {
-        { "#2eab01", translate_marker( "Green" ) },
-        { "#ff141c", translate_marker( "Red" ) },
-        { "#888888", translate_marker( "Gray" ) },
-        { "custom", translate_marker( "Custom" ) }
-    }, "#2eab01" );
-
-    add( "NIGHT_VISION_COLOR", graphics, translate_marker( "Night Vision Color" ),
-         translate_marker( "Sets custom night vision color." ), "#2eab01", 60 );
-
-    get_option( "NIGHT_VISION_COLOR" ).setPrerequisite( "NIGHT_VISION_DEFAULT_COLOR", "custom" );
-
     add_empty_line();
 
     add( "TERMINAL_X", graphics, translate_marker( "Terminal width" ),
@@ -2436,6 +2423,41 @@ void options_manager::add_options_performance()
     get_option( "MONSTER_PLAN_CHUNK_SIZE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_MAP_CACHE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_SCENT_UPDATE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
+
+    add_empty_line();
+
+    add_option_group( performance, Group( "out_of_bubble", to_translation( "Out-of-Bubble Simulation" ),
+                                          to_translation( "Configure how submaps outside the player's reality bubble are simulated." ) ),
+    [&]( auto & page_id ) {
+        add( "OUT_OF_BUBBLE_TICK_INTERVAL", page_id,
+             translate_marker( "World Tick Interval" ),
+             translate_marker( "How many turns elapse between out-of-bubble world ticks.  "
+                               "1 processes every loaded submap outside the player's reality bubble "
+                               "each turn at full fidelity.  Higher values amortize cost by batching "
+                               "N turns of simulation into a single pass — useful on slow hardware." ),
+             1, 10, 1 );
+        add( "OUT_OF_BUBBLE_FIRE_SPREAD", page_id,
+             translate_marker( "Out-of-Bubble Fire Spread" ),
+             translate_marker( "Controls whether fire in loaded submaps can spread into adjacent "
+                               "unloaded submaps.  'None': fire only decays, never spreads beyond "
+                               "the loaded set.  'Adjacent': fire requests one extra layer of "
+        "loaded submaps at each boundary to preserve correct spread behavior." ), {
+            { "none", translate_marker( "None (pause spread)" ) },
+            { "adjacent", translate_marker( "Adjacent (one layer)" ) }
+        },
+        "adjacent"
+           );
+        add( "REALITY_BUBBLE_SIZE", page_id,
+             translate_marker( "Reality Bubble Size" ),
+             translate_marker( "Size of the reality bubble.  "
+                               "MAPSIZE = 4 × size + 3 (size 2 → 11×11 submaps, the original default).  "
+                               "Maximum player sight range = 12 × (2 × size + 1).  "
+                               "Larger values increase loaded area and memory usage; "
+                               "smaller values reduce both.  "
+                               "REQUIRES A GAME RESTART to take effect — "
+                               "changing this mid-session will NOT resize caches or the loaded map." ),
+             1, REALITY_BUBBLE_SIZE_MAX, 2 );
+    } );
 }
 
 void options_manager::add_options_debug()
@@ -3006,6 +3028,22 @@ void options_manager::add_options_world_default()
          translate_marker( "If true, radiation causes the player to mutate." ),
          true
        );
+
+    add_empty_line();
+
+    add( "POCKET_SIMULATION_LEVEL", world_default, translate_marker( "Pocket Dimension Simulation" ),
+         translate_marker( "How to handle the last visited pocket dimension. "
+                           "'Off' unloads normally. 'None' keeps loaded but frozen for fast travel. "
+                           "'Minimal' simulates fields only (fire, gas). "
+                           "'Moderate' adds vehicle systems (solar charging). "
+    "'Full' simulates everything including off-screen combat." ), {
+        { "off", translate_marker( "Off" ) },
+        { "none", translate_marker( "None (Fast Travel)" ) },
+        { "minimal", translate_marker( "Minimal (Fields)" ) },
+        { "moderate", translate_marker( "Moderate (Fields + Vehicles)" ) },
+        { "full", translate_marker( "Full (Everything)" ) }
+    },
+    "off" );
 
     add_empty_line();
 
@@ -3852,11 +3890,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
                 pixel_minimap_changed = true;
 
             } else if( iter.first == "TILES" || iter.first == "USE_TILES" || iter.first == "STATICZEFFECT" ||
-                       iter.first == "MEMORY_MAP_MODE" || iter.first == "OVERMAP_TILES" ||
-                       iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ) {
+                       iter.first == "MEMORY_MAP_MODE" || iter.first == "OVERMAP_TILES" ) {
                 used_tiles_changed = true;
-                if( iter.first == "STATICZEFFECT" || iter.first == "MEMORY_MAP_MODE" ||
-                    iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ) {
+                if( iter.first == "STATICZEFFECT" || iter.first == "MEMORY_MAP_MODE" ) {
                     force_tile_change = true;
                 }
             } else if( iter.first == "USE_LANG" ) {
@@ -4032,6 +4068,11 @@ void options_manager::cache_to_globals()
     lod_macro_interval        = ::get_option<int>( "LOD_MACRO_INTERVAL" );
     lod_coarse_scent_interval = ::get_option<int>( "LOD_COARSE_SCENT_INTERVAL" );
     lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
+
+    out_of_bubble_fire_spread =
+        ::get_option<std::string>( "OUT_OF_BUBBLE_FIRE_SPREAD" ) == "adjacent";
+
+    safe_mode_proximity = ::get_option<int>( "SAFEMODEPROXIMITY" );
 
     parallel_enabled          = ::get_option<bool>( "MULTITHREADING_ENABLED" );
     parallel_monster_planning = ::get_option<bool>( "PARALLEL_MONSTER_PLANNING" );

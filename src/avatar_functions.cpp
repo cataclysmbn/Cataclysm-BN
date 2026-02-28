@@ -854,7 +854,7 @@ std::vector<npc *> list_potential_theft_witnesses( avatar &you, const faction_id
         // Only owners care about theft of their property
         if( guy.get_faction() &&
             guy.get_faction()->id == owners &&
-            rl_dist( guy.pos(), you.pos() ) < MAX_VIEW_DISTANCE &&
+            rl_dist( guy.pos(), you.pos() ) < g_max_view_distance &&
             guy.sees( you.pos() )
           ) {
             witnesses.push_back( &guy );

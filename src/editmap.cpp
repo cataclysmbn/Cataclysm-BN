@@ -1,5 +1,6 @@
 #include "editmap.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
@@ -56,11 +57,11 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
-static constexpr tripoint editmap_boundary_min( 0, 0, -OVERMAP_DEPTH );
-static constexpr tripoint editmap_boundary_max( MAPSIZE_X, MAPSIZE_Y, OVERMAP_HEIGHT + 1 );
-
-static constexpr half_open_cuboid<tripoint> editmap_boundaries(
-    editmap_boundary_min, editmap_boundary_max );
+static auto editmap_boundaries() -> half_open_cuboid<tripoint>
+{
+    return { tripoint( 0, 0, -OVERMAP_DEPTH ),
+             tripoint( g_mapsize_x, g_mapsize_y, OVERMAP_HEIGHT + 1 ) };
+}
 
 static const ter_id undefined_ter_id( -1 );
 
@@ -458,7 +459,7 @@ void editmap::uber_draw_ter( const catacurses::window &w, map *m )
         bool draw_veh=true;
     */
     bool game_map = m == &get_map() || w == g->w_terrain;
-    const int msize = MAPSIZE_X;
+    const int msize = g_mapsize_x;
     if( refresh_mplans ) {
         hilights["mplan"].points.clear();
     }
@@ -741,9 +742,9 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
                player_character.sight_range( g->light_level( player_character.posz() ) ),
                player_character.sight_range( current_daylight_level( calendar::turn ) ) );
     mvwprintw( w_info, point( 1, off++ ), _( "cache{transp:%.4f seen:%.4f cam:%.4f}" ),
-               map_cache.transparency_cache[target.x][target.y],
-               map_cache.seen_cache[target.x][target.y],
-               map_cache.camera_cache[target.x][target.y]
+               map_cache.transparency_cache[map_cache.idx( target.x, target.y )],
+               map_cache.seen_cache[map_cache.idx( target.x, target.y )],
+               map_cache.camera_cache[map_cache.idx( target.x, target.y )]
              );
     map::apparent_light_info al = map::apparent_light_helper( map_cache, target );
     int apparent_light = static_cast<int>(
@@ -754,7 +755,7 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
                static_cast<int>( here.has_floor( target ) )
              );
     mvwprintw( w_info, point( 1, off++ ), _( "light_at: %s" ),
-               map_cache.lm[target.x][target.y].to_string() );
+               map_cache.lm[map_cache.idx( target.x, target.y )].to_string() );
     mvwprintw( w_info, point( 1, off++ ), _( "apparent light: %.5f (%d)" ),
                al.apparent_light, apparent_light );
     std::string extras;
@@ -1541,7 +1542,7 @@ void editmap::recalc_target( shapetype shape )
             map &here = get_map();
             for( const tripoint &p : here.points_in_radius( origin, radius ) ) {
                 if( rl_dist( p, origin ) <= radius ) {
-                    if( editmap_boundaries.contains( p ) ) {
+                    if( editmap_boundaries().contains( p ) ) {
                         target_list.push_back( p );
                     }
                 }
@@ -1572,7 +1573,7 @@ void editmap::recalc_target( shapetype shape )
                 for( int y = sy; y <= ey; y++ ) {
                     if( shape == editmap_rect_filled || x == sx || x == ex || y == sy || y == ey ) {
                         const tripoint p( x, y, z );
-                        if( editmap_boundaries.contains( p ) ) {
+                        if( editmap_boundaries().contains( p ) ) {
                             target_list.push_back( p );
                         }
                     }
@@ -1611,8 +1612,8 @@ bool editmap::move_target( const std::string &action, int moveorigin )
     bool move_origin = moveorigin == 1 ? true :
                        moveorigin == 0 ? false : moveall;
     if( eget_direction( mp, action ) ) {
-        target.x = limited_shift( target.x, mp.x, 0, MAPSIZE_X );
-        target.y = limited_shift( target.y, mp.y, 0, MAPSIZE_Y );
+        target.x = limited_shift( target.x, mp.x, 0, g_mapsize_x );
+        target.y = limited_shift( target.y, mp.y, 0, g_mapsize_y );
         target.z = limited_shift( target.z, mp.z, -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
         if( move_origin ) {
             origin += mp;
@@ -2040,8 +2041,8 @@ void editmap::mapgen_retarget()
         if( const std::optional<tripoint> vec = ctxt.get_direction( action ) ) {
             point vec_ms = omt_to_ms_copy( vec->xy() );
             tripoint ptarget = target + vec_ms;
-            if( editmap_boundaries.contains( ptarget ) &&
-                editmap_boundaries.contains( ptarget + point( SEEX, SEEY ) ) ) {
+            if( editmap_boundaries().contains( ptarget ) &&
+                editmap_boundaries().contains( ptarget + point( SEEX, SEEY ) ) ) {
                 target = ptarget;
 
                 target_list.clear();
@@ -2157,7 +2158,7 @@ void editmap::cleartmpmap( tinymap &tmpmap )
     }
 
     auto &ch = tmpmap.get_cache( target.z );
-    std::memset( ch.veh_exists_at, 0, sizeof( ch.veh_exists_at ) );
+    std::fill( ch.veh_exists_at.begin(), ch.veh_exists_at.end(), false );
     ch.veh_cached_parts.clear();
     ch.vehicle_list.clear();
     ch.zone_vehicles.clear();

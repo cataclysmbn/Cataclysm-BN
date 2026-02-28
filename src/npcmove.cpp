@@ -298,7 +298,7 @@ std::vector<sphere> npc::find_dangerous_explosives() const
 {
     std::vector<sphere> result;
 
-    const auto active_items = get_map().get_active_items_in_radius( pos(), MAX_VIEW_DISTANCE,
+    const auto active_items = get_map().get_active_items_in_radius( pos(), g_max_view_distance,
                               special_item_type::explosive );
 
     for( const auto &elem : active_items ) {
@@ -4101,8 +4101,8 @@ void npc::look_for_player( const Character &sought )
         path.clear();
     }
     std::vector<point> possibilities;
-    for (int x = 1; x < MAPSIZE_X; x += 11) { // 1, 12, 23, 34
-        for (int y = 1; y < MAPSIZE_Y; y += 11) {
+    for (int x = 1; x < g_mapsize_x; x += 11) { // 1, 12, 23, 34
+        for (int y = 1; y < g_mapsize_y; y += 11) {
             if( sees( x, y ) ) {
                 possibilities.push_back(point(x, y));
             }

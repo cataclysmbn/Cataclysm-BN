@@ -6689,7 +6689,7 @@ void map::rotate( int turns, const bool setpos_safe )
     rc.fromabs( point( abs_sub.x * SEEX, abs_sub.y * SEEY ) );
 
     // TODO: This radius can be smaller - how small?
-    const int radius = HALF_MAPSIZE + 3;
+    const int radius = g_half_mapsize + 3;
     // uses submap coordinates
     // TODO: fix point types
     const std::vector<shared_ptr_fast<npc>> npcs =
