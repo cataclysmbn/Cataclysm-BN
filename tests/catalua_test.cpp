@@ -929,3 +929,130 @@ TEST_CASE( "lua_hooks_exit_early", "[lua]" )
     CHECK( results_tbl.get<bool>( "allowed" ) == false );
     CHECK( log_tbl.get<sol::optional<std::string>>( 2 ) == sol::nullopt );
 }
+
+TEST_CASE( "lua_achievements_runtime", "[lua][achievements]" )
+{
+    sol::state lua = make_lua_state();
+
+    auto stat_value = 0;
+    auto message_count = 0;
+    auto fake_turn = 0;
+
+    lua.script( R"(
+        MsgType = { good = 1, bad = 2 }
+        locale = { gettext = function( s ) return s end }
+
+        local function mk_td( v )
+          return setmetatable( { v = v }, {
+            __index = {
+              to_turns = function( self ) return self.v end
+            }
+          } )
+        end
+
+        TimeDuration = {
+          from_turns = function( v ) return mk_td( v ) end,
+          from_minutes = function( v ) return mk_td( v * 60 ) end,
+          from_hours = function( v ) return mk_td( v * 3600 ) end
+        }
+    )" );
+
+    sol::table gapi = lua.create_table();
+    gapi.set_function( "get_event_statistic", [&]( const std::string & ) {
+        return stat_value;
+    } );
+    gapi.set_function( "get_avatar_skill_level", []( const std::string & ) {
+        return 0;
+    } );
+    gapi.set_function( "get_monster_kill_count", []( const std::string & ) {
+        return 0;
+    } );
+    gapi.set_function( "get_species_kill_count", []( const std::string & ) {
+        return 0;
+    } );
+    gapi.set_function( "get_total_monster_kill_count", []() {
+        return 0;
+    } );
+    gapi.set_function( "current_turn", [&]( sol::this_state ts ) {
+        sol::state_view l( ts );
+        sol::table turn = l.create_table();
+        turn.set_function( "to_turn", [&]() {
+            return fake_turn;
+        } );
+        return turn;
+    } );
+    gapi.set_function( "add_msg", [&]( int, const std::string & ) {
+        ++message_count;
+    } );
+    gapi.set_function( "rng", []( int from, int ) {
+        return from;
+    } );
+
+    gapi.set_function( "get_achievement_definitions", [&]( sol::this_state ts ) {
+        sol::state_view l( ts );
+        sol::table out = l.create_table();
+        sol::table ach = l.create_table();
+        ach["id"] = "achievement_test";
+        ach["name"] = "Test Achievement";
+        ach["description"] = "";
+        ach["hidden_by"] = l.create_table();
+
+        sol::table requirements = l.create_table();
+        sol::table req = l.create_table();
+        req["event_statistic"] = "test_stat";
+        req["comparison"] = ">=";
+        req["target"] = 1;
+        req["becomes_false"] = false;
+        requirements[1] = req;
+        ach["requirements"] = requirements;
+        ach["kill_requirements"] = l.create_table();
+        ach["skill_requirements"] = l.create_table();
+        out[1] = ach;
+        return out;
+    } );
+
+    lua.globals()["gapi"] = gapi;
+
+    const auto load_res = lua.load_file( "data/json/achievements.lua" );
+    REQUIRE( load_res.valid() );
+    sol::protected_function achievements_loader = load_res;
+    sol::protected_function_result achievements_result = achievements_loader();
+    REQUIRE( achievements_result.valid() );
+    sol::table achievements = achievements_result;
+    lua.globals()["achievements"] = achievements;
+
+    sol::table mod = lua.create_table();
+    mod["storage"] = lua.create_table();
+    lua.globals()["mod"] = mod;
+
+    sol::protected_function register_fn = achievements["register"];
+    REQUIRE( register_fn.valid() );
+    sol::protected_function_result register_res = register_fn( mod );
+    REQUIRE( register_res.valid() );
+
+    sol::protected_function on_game_started = lua["mod"]["on_achievements_game_started"];
+    sol::protected_function on_tick = lua["mod"]["on_achievements_tick"];
+    REQUIRE( on_game_started.valid() );
+    REQUIRE( on_tick.valid() );
+
+    on_game_started();
+
+    sol::table state_tbl = lua["mod"]["storage"]["lua_achievements"]["states"]["achievement_test"];
+    REQUIRE( state_tbl.valid() );
+    CHECK( state_tbl.get<std::string>( "completion" ) == "pending" );
+    CHECK( message_count == 0 );
+
+    stat_value = 1;
+    fake_turn = 10;
+    on_tick();
+
+    CHECK( state_tbl.get<std::string>( "completion" ) == "completed" );
+    CHECK( message_count == 1 );
+
+    sol::protected_function get_ui_text = lua["achievements"]["get_ui_text"];
+    REQUIRE( get_ui_text.valid() );
+    sol::protected_function_result ui_res = get_ui_text( lua["mod"] );
+    REQUIRE( ui_res.valid() );
+    const std::string ui_text = ui_res.get<std::string>();
+    CHECK( ui_text.find( "[completed] Test Achievement" ) != std::string::npos );
+}

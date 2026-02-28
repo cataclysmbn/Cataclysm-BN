@@ -15,3 +15,8 @@ gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...)
 end)
 
 game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)
+game.add_hook("on_game_started", function(...) return mod.on_achievements_game_started(...) end)
+game.add_hook("on_game_load", function(...) return mod.on_achievements_game_load(...) end)
+game.add_hook("on_mon_death", function(...) return mod.on_achievements_mon_death(...) end)
+
+gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...) return mod.on_achievements_tick(...) end)
