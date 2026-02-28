@@ -253,8 +253,8 @@ void timed_event::per_turn()
                 if( g->u.sees( tripoint( place, g->u.posz() ) ) ) {
                     add_msg( m_warning, _( "An eyebot swoops down nearby!" ) );
                 }
-                // One eyebot per trigger is enough, really
-                when = calendar::turn;
+                // Don't expire immediately - let the full 30 minute timer run
+                // to prevent spamming alarms for more eyebots
             }
         }
         break;
