@@ -359,7 +359,8 @@ static inline Mix_Chunk *get_sfx_resource( int resource_id )
     return resource.chunk.get();
 }
 
-static auto resolve_sound_path( const std::string &path, const std::string &base_path ) -> std::string
+static auto resolve_sound_path( const std::string &path,
+                                const std::string &base_path ) -> std::string
 {
     auto candidate = std::filesystem::path( path );
     if( !candidate.is_absolute() ) {
