@@ -1979,7 +1979,7 @@ void options_manager::add_options_graphics()
        );
 
     add( "NIGHT_VISION_DEFAULT_COLOR", graphics, translate_marker( "Night Vision Default Colors" ),
-        translate_marker( "Choose from default night vision colors." ), {
+    translate_marker( "Choose from default night vision colors." ), {
         { "#2eab01", translate_marker( "Green" ) },
         { "#ff141c", translate_marker( "Red" ) },
         { "#888888", translate_marker( "Gray" ) },

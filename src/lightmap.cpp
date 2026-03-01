@@ -84,8 +84,10 @@ struct transparency_exp_lookup {
 // Sized for MAX_VIEW_DISTANCE * sqrt(2) worst-case diagonal, with 2x headroom so the array is safe
 // at all runtime bubble sizes (g_max_view_distance <= MAX_VIEW_DISTANCE).
 static constexpr int LIGHTMAP_LOOKUP_SIZE = MAX_VIEW_DISTANCE * 2;
-const transparency_exp_lookup<LIGHTMAP_LOOKUP_SIZE> openair_transparency_lookup( LIGHT_TRANSPARENCY_OPEN_AIR );
-transparency_exp_lookup<LIGHTMAP_LOOKUP_SIZE> weather_transparency_lookup( LIGHT_TRANSPARENCY_OPEN_AIR * 1.1 );
+const transparency_exp_lookup<LIGHTMAP_LOOKUP_SIZE> openair_transparency_lookup(
+    LIGHT_TRANSPARENCY_OPEN_AIR );
+transparency_exp_lookup<LIGHTMAP_LOOKUP_SIZE> weather_transparency_lookup(
+    LIGHT_TRANSPARENCY_OPEN_AIR * 1.1 );
 
 void map::add_light_from_items( const tripoint &p, const item_stack::iterator &begin,
                                 const item_stack::iterator &end )
@@ -1363,7 +1365,8 @@ void castLight( Out *output_cache, const T *input_array,
             if( !eq_nullptr_gcc_hack( lookup ) ) {
                 //Only use fast dist on fast paths, it's slower otherwise. Floating point conversion thing maybe?
                 //Use trig_dist for large reality bubble sizes
-                const int dist = ( g_max_view_distance > 60 ? rl_dist( tripoint_zero, delta ) : fast_rl_dist<21, 4>( delta ) ) + offsetDistance;
+                const int dist = ( g_max_view_distance > 60 ? rl_dist( tripoint_zero,
+                                   delta ) : fast_rl_dist<21, 4>( delta ) ) + offsetDistance;
                 last_intensity = lookup_calc( numerator, lookup->values[dist], dist );
             } else {
                 const int dist = rl_dist( tripoint_zero, delta ) + offsetDistance;
