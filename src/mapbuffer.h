@@ -137,6 +137,20 @@ class mapbuffer
             return submaps.empty();
         }
 
+        /**
+         * Return the dimension ID this buffer belongs to.
+         * Set by mapbuffer_registry::get() at construction time.
+         * Empty string ("") = the overworld (primary dimension, legacy path).
+         */
+        const std::string &get_dimension_id() const {
+            return dimension_id_;
+        }
+
+        /** Set the dimension ID — called only by mapbuffer_registry. */
+        void set_dimension_id( const std::string &id ) {
+            dimension_id_ = id;
+        }
+
     private:
         // There's a very good reason this is private,
         // if not handled carefully, this can erase in-use submaps and crash the game.
@@ -146,6 +160,10 @@ class mapbuffer
         void save_quad( const tripoint &om_addr, std::list<tripoint> &submaps_to_delete,
                         bool delete_after_save );
         submap_map_t submaps;
+
+        /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
+        /// Used to construct the correct save/load path without querying global state.
+        std::string dimension_id_;
 };
 
 // mapbuffer_registry.h provides the MAPBUFFER backward-compatibility macro and the

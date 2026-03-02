@@ -30,6 +30,30 @@ void for_each_overmapbuffer(
 /** Return the primary dimension's overmapbuffer. */
 overmapbuffer &get_primary_overmapbuffer();
 
-// Backwards-compatibility macro: replaces the old `extern overmapbuffer overmap_buffer;`
+/**
+ * The dimension ID of the dimension the player is currently in.
+ * Updated by game::travel_to_dimension() on the main thread.
+ *
+ * THREADING: This is a main-thread-only global.  Background thread-pool tasks
+ * must capture the dimension ID **by value** at submission time rather than
+ * reading this variable at execution time — the active dimension can change
+ * between task submission and task execution.  Use get_overmapbuffer(captured_id)
+ * directly inside worker lambdas; never call get_active_overmapbuffer() from a
+ * background thread.
+ */
+extern std::string g_active_dimension_id;
+
+/**
+ * Return the overmapbuffer for the player's current dimension.
+ * Equivalent to get_overmapbuffer(g_active_dimension_id).
+ *
+ * Do NOT call this from background threads; see g_active_dimension_id comment above.
+ */
+overmapbuffer &get_active_overmapbuffer();
+
+// Backwards-compatibility macro: previously expanded to get_primary_overmapbuffer().
+// Now expands to get_active_overmapbuffer() so that all overmap_buffer.* call sites
+// automatically resolve to the correct dimension without any per-call changes.
+// When g_active_dimension_id == "" (the default), behaviour is identical to primary.
 // NOLINTNEXTLINE(cata-text-style)
-#define overmap_buffer ( get_primary_overmapbuffer() )
+#define overmap_buffer ( get_active_overmapbuffer() )

@@ -108,16 +108,66 @@ class world
          * lay out files differently, so centralize file placement logic here rather than
          * scattering it throughout the codebase.
          */
+        // ---------------------------------------------------------------------------
+        // Dimension-aware overloads.
+        //
+        // Each function accepts an explicit @p dim_id string that selects the save
+        // subdirectory for the given dimension:
+        //   dim_id == ""   → legacy primary path (e.g. "maps/", "o.x.y")
+        //   dim_id != ""   → "dimensions/<dim_id>/maps/", "dimensions/<dim_id>/o.x.y"
+        //
+        // Callers should obtain the dim_id from the owning mapbuffer or overmapbuffer
+        // rather than from the global game state.  This avoids a dependency on the
+        // currently-active player dimension and makes save/load safe when multiple
+        // dimensions are simultaneously in memory.
+        // ---------------------------------------------------------------------------
+
+        bool read_map_quad( const std::string &dim_id, const tripoint &om_addr,
+                            file_read_json_fn reader ) const;
+        bool write_map_quad( const std::string &dim_id, const tripoint &om_addr,
+                             file_write_fn writer ) const;
+
+        bool overmap_exists( const std::string &dim_id, const point_abs_om &p ) const;
+        bool read_overmap( const std::string &dim_id, const point_abs_om &p,
+                           file_read_fn reader ) const;
+        bool read_overmap_player_visibility( const std::string &dim_id, const point_abs_om &p,
+                                             file_read_fn reader );
+        bool write_overmap( const std::string &dim_id, const point_abs_om &p,
+                            file_write_fn writer ) const;
+        bool write_overmap_player_visibility( const std::string &dim_id, const point_abs_om &p,
+                                              file_write_fn writer );
+
+        bool read_player_mm_quad( const std::string &dim_id, const tripoint &p,
+                                  file_read_json_fn reader );
+        bool write_player_mm_quad( const std::string &dim_id, const tripoint &p,
+                                   file_write_fn writer );
+
+        // ---------------------------------------------------------------------------
+        // Legacy overloads without dim_id — delegate to the dim-aware versions using
+        // g->get_dimension_prefix() for backwards compatibility.  These are retained
+        // only for call sites not yet migrated to the dimension-aware API and MUST NOT
+        // be called from background threads.  Prefer the dim_id overloads above.
+        // ---------------------------------------------------------------------------
+
+        /** @deprecated Use read_map_quad(dim_id, ...) */ // NOLINT(cata-text-style)
         bool read_map_quad( const tripoint &om_addr, file_read_json_fn reader ) const;
+        /** @deprecated Use write_map_quad(dim_id, ...) */ // NOLINT(cata-text-style)
         bool write_map_quad( const tripoint &om_addr, file_write_fn writer ) const;
 
+        /** @deprecated Use overmap_exists(dim_id, ...) */ // NOLINT(cata-text-style)
         bool overmap_exists( const point_abs_om &p ) const;
+        /** @deprecated Use read_overmap(dim_id, ...) */ // NOLINT(cata-text-style)
         bool read_overmap( const point_abs_om &p, file_read_fn reader ) const;
+        /** @deprecated Use read_overmap_player_visibility(dim_id, ...) */ // NOLINT(cata-text-style)
         bool read_overmap_player_visibility( const point_abs_om &p, file_read_fn reader );
+        /** @deprecated Use write_overmap(dim_id, ...) */ // NOLINT(cata-text-style)
         bool write_overmap( const point_abs_om &p, file_write_fn writer ) const;
+        /** @deprecated Use write_overmap_player_visibility(dim_id, ...) */ // NOLINT(cata-text-style)
         bool write_overmap_player_visibility( const point_abs_om &p, file_write_fn writer );
 
+        /** @deprecated Use read_player_mm_quad(dim_id, ...) */ // NOLINT(cata-text-style)
         bool read_player_mm_quad( const tripoint &p, file_read_json_fn reader );
+        /** @deprecated Use write_player_mm_quad(dim_id, ...) */ // NOLINT(cata-text-style)
         bool write_player_mm_quad( const tripoint &p, file_write_fn writer );
 
         /*

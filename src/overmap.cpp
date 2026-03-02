@@ -3370,11 +3370,12 @@ void overmap::generate( const overmap *north, const overmap *east,
         return;
     }
 
-    const world_type_id &current_wt = g->get_current_world_type();
-    if( current_wt.is_valid() && !current_wt.obj().generate_overmap ) {
-        dbg( DL::Info ) << "overmap::generate skipped for world_type '" << current_wt.str()
-                        << "' (generate_overmap=false)";
-        return;
+    if( const dimension_info *dim = g->get_current_dimension_info() ) {
+        if( dim->world_type.is_valid() && !dim->world_type.obj().generate_overmap ) {
+            dbg( DL::Info ) << "overmap::generate skipped for world_type '"
+                            << dim->world_type.str() << "' (generate_overmap=false)";
+            return;
+        }
     }
 
     dbg( DL::Info ) << "overmap::generate start";

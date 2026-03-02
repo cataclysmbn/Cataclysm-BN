@@ -11,7 +11,9 @@ mapbuffer_registry::mapbuffer_registry()
 {
     // Eagerly create the primary dimension slot so that code which holds
     // references/pointers to MAPBUFFER.primary() never observes a dangling state.
-    buffers_.emplace( PRIMARY_DIMENSION_ID, std::make_unique<mapbuffer>() );
+    auto &primary = *buffers_.emplace( PRIMARY_DIMENSION_ID,
+                                       std::make_unique<mapbuffer>() ).first->second;
+    primary.set_dimension_id( PRIMARY_DIMENSION_ID );
 }
 
 mapbuffer &mapbuffer_registry::get( const std::string &dim_id )
@@ -19,6 +21,7 @@ mapbuffer &mapbuffer_registry::get( const std::string &dim_id )
     auto it = buffers_.find( dim_id );
     if( it == buffers_.end() ) {
         auto result = buffers_.emplace( dim_id, std::make_unique<mapbuffer>() );
+        result.first->second->set_dimension_id( dim_id );
         it = result.first;
     }
     return *it->second;

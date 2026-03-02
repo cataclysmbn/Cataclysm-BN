@@ -112,3 +112,15 @@ overmapbuffer &get_primary_overmapbuffer()
 {
     return registry().primary();
 }
+
+// ---------------------------------------------------------------------------
+// Active dimension tracking — main-thread-only global.
+// See overmapbuffer_registry.h for threading constraints.
+// ---------------------------------------------------------------------------
+
+std::string g_active_dimension_id;  // default "" = overworld (primary)
+
+overmapbuffer &get_active_overmapbuffer()
+{
+    return registry().get( g_active_dimension_id );
+}

@@ -47,6 +47,7 @@
 #include "weather.h"
 #include "world_type.h"
 #include "dimension_bounds.h"
+#include "overmapbuffer_registry.h"
 
 #if defined(__ANDROID__)
 #include "input.h"
@@ -103,19 +104,8 @@ void game::serialize( std::ostream &fout )
     json.member( "om_x", pos_om.x );
     json.member( "om_y", pos_om.y );
 
-    // Save the current world type (dimension)
-    json.member( "world_type", get_current_world_type() );
-    // Save pocket dimension instance ID (empty string for non-pocket dimensions)
-    json.member( "pocket_instance_id", get_pocket_instance_id() );
-
-    // Save pocket origin position and display name (when inside a pocket)
-    if( !get_pocket_instance_id().empty() ) {
-        tripoint_abs_sm origin = get_pocket_origin_position();
-        json.member( "pocket_origin_x", origin.x() );
-        json.member( "pocket_origin_y", origin.y() );
-        json.member( "pocket_origin_z", origin.z() );
-        json.member( "pocket_dimension_name", get_pocket_dimension_name() );
-    }
+    // Save the current dimension ID (replaces the old world_type + pocket_instance_id pair)
+    json.member( "current_dimension_id", current_dimension_id_ );
 
     // Save dimension bounds for bounded dimensions (pocket dimensions)
     if( m.has_dimension_bounds() ) {
@@ -247,32 +237,25 @@ void game::unserialize( std::istream &fin )
         data.read( "om_x", com.x );
         data.read( "om_y", com.y );
 
-        // Load the current world type (dimension) before load_map
-        // so get_dimension_prefix() returns the correct value
-        if( data.has_member( "world_type" ) ) {
+        // Load the current dimension ID before load_map so get_dimension_prefix()
+        // returns the correct value.  Fall back to reconstructing it from legacy
+        // world_type + pocket_instance_id fields for old saves.
+        if( data.has_member( "current_dimension_id" ) ) {
+            data.read( "current_dimension_id", current_dimension_id_ );
+        } else if( data.has_member( "world_type" ) ) {
+            // Legacy compat: reconstruct dimension_id from world_type + instance_id
             world_type_id wt;
             data.read( "world_type", wt );
-            set_current_world_type( wt );
-        }
-        // Load pocket instance ID if present
-        if( data.has_member( "pocket_instance_id" ) ) {
             std::string pocket_id;
             data.read( "pocket_instance_id", pocket_id );
-            set_pocket_instance_id( pocket_id );
+            if( wt.is_valid() ) {
+                current_dimension_id_ = wt.obj().save_prefix + pocket_id;
+                if( !pocket_id.empty() && !current_dimension_id_.ends_with( "_" ) ) {
+                    current_dimension_id_ += "_";
+                }
+            }
         }
-
-        // Load pocket origin position and display name if present
-        if( data.has_member( "pocket_origin_x" ) ) {
-            set_pocket_origin_position( tripoint_abs_sm(
-                                            data.get_int( "pocket_origin_x" ),
-                                            data.get_int( "pocket_origin_y" ),
-                                            data.get_int( "pocket_origin_z" ) ) );
-        }
-        if( data.has_member( "pocket_dimension_name" ) ) {
-            std::string pdname;
-            data.read( "pocket_dimension_name", pdname );
-            set_pocket_dimension_name( pdname );
-        }
+        g_active_dimension_id = current_dimension_id_;
 
         // Load dimension bounds BEFORE load_map so loadn() can generate
         // boundary submaps for out-of-bounds areas

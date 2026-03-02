@@ -7833,12 +7833,13 @@ void map::shift( point sp )
     {
         const tripoint cur_abs = get_abs_sub();
         const std::string &dim = get_bound_dimension();
+        mapbuffer &dim_buf = MAPBUFFER_REGISTRY.get( dim );
         for( int gridz = zmin; gridz <= zmax; gridz++ ) {
             if( sp.x > 0 ) {
                 for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
                     const tripoint_abs_sm pos( tripoint( cur_abs.x + my_MAPSIZE,
                                                          cur_abs.y + gridy, gridz ) );
-                    if( !MAPBUFFER.lookup_submap_in_memory( pos.raw() ) ) {
+                    if( !dim_buf.lookup_submap_in_memory( pos.raw() ) ) {
                         submap_streamer.request_load( dim, pos );
                     }
                 }
@@ -7846,7 +7847,7 @@ void map::shift( point sp )
                 for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
                     const tripoint_abs_sm pos( tripoint( cur_abs.x - 1,
                                                          cur_abs.y + gridy, gridz ) );
-                    if( !MAPBUFFER.lookup_submap_in_memory( pos.raw() ) ) {
+                    if( !dim_buf.lookup_submap_in_memory( pos.raw() ) ) {
                         submap_streamer.request_load( dim, pos );
                     }
                 }
@@ -7855,7 +7856,7 @@ void map::shift( point sp )
                 for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
                     const tripoint_abs_sm pos( tripoint( cur_abs.x + gridx,
                                                          cur_abs.y + my_MAPSIZE, gridz ) );
-                    if( !MAPBUFFER.lookup_submap_in_memory( pos.raw() ) ) {
+                    if( !dim_buf.lookup_submap_in_memory( pos.raw() ) ) {
                         submap_streamer.request_load( dim, pos );
                     }
                 }
@@ -7863,7 +7864,7 @@ void map::shift( point sp )
                 for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
                     const tripoint_abs_sm pos( tripoint( cur_abs.x + gridx,
                                                          cur_abs.y - 1, gridz ) );
-                    if( !MAPBUFFER.lookup_submap_in_memory( pos.raw() ) ) {
+                    if( !dim_buf.lookup_submap_in_memory( pos.raw() ) ) {
                         submap_streamer.request_load( dim, pos );
                     }
                 }

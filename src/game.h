@@ -23,6 +23,7 @@
 #include "coordinates.h"
 #include "creature.h"
 #include "dimension_bounds.h"
+#include "dimension_info.h"
 #include "cursesdef.h"
 #include "distribution_grid.h"
 #include "enums.h"
@@ -39,7 +40,6 @@ class Character;
 class Creature_tracker;
 class item;
 class monster;
-class secondary_world;
 class spell_events;
 class drop_token_provider;
 class submap;
@@ -247,83 +247,47 @@ class game
         void start_hauling( const tripoint &pos );
         /**
         * Moves the player to an alternate dimension.
-        * @param new_world_type identifies the dimension and its properties.
-        * @param pocket_instance_id optional instance ID for pocket dimensions (empty for non-pockets)
-        * @param bounds optional dimension bounds to set before loading the map
-        * @param load_pos optional submap position to center the map load on.
-        *        If not provided, the map loads at the player's current position.
-        * @param pre_load_callback optional callback invoked after dimension setup
-        *        but before load_map(). Use this to place overmap specials so that
-        *        submap generation uses the correct overmap terrain types.
+        *
+        * @param dim_id      Fully-qualified dimension ID string (e.g. "nether",
+        *                    "pocket_dungeon_a1b2c3d4_").  Empty string = overworld.
+        * @param world_type  The world-type metadata (region settings, boundary terrain).
+        *                    Looked up from loaded_dimensions_ if the dimension already
+        *                    exists; used to initialise dimension_info on first visit.
+        * @param bounds      Optional spatial bounds for bounded (pocket) dimensions.
+        *                    nullopt = infinite.
+        * @param load_pos    Optional submap position to center the map load on.
+        *                    If not provided, the map loads at the player's current position.
+        * @param pre_load_callback  Optional callback invoked after dimension setup but
+        *                    before load_map(). Use this to place overmap specials so that
+        *                    submap generation uses the correct overmap terrain types.
         */
-        bool travel_to_dimension( const world_type_id &new_world_type,
-                                  const std::string &pocket_instance_id = "",
+        bool travel_to_dimension( const std::string &dim_id,
+                                  const world_type_id &world_type,
                                   const std::optional<dimension_bounds> &bounds = std::nullopt,
                                   const std::optional<tripoint_abs_sm> &load_pos = std::nullopt,
                                   const std::function<void()> &pre_load_callback = nullptr );
+
         /**
-         * Retrieve the identifier of the current dimension.
+         * Return the dimension ID the player is currently in.
+         * Empty string = overworld (primary dimension).
          */
-        world_type_id get_current_world_type() const;
+        const std::string &get_current_dimension_id() const {
+            return current_dimension_id_;
+        }
+
         /**
-         * Set the current world type (for save/load only).
-         * For gameplay, use travel_to_dimension() instead.
+         * Return the dimension_info for the current dimension, or nullptr if not tracked
+         * (e.g. overworld on a fresh game before any travel).
          */
-        void set_current_world_type( const world_type_id &wt );
-        /**
-         * Get the pocket instance ID for the current dimension.
-         * Returns empty string if not in a pocket dimension.
-         */
-        std::string get_pocket_instance_id() const;
-        /**
-         * Set the pocket instance ID (for save/load only).
-         */
-        void set_pocket_instance_id( const std::string &id );
-        /**
-         * Get the player's overworld position from before entering a pocket dimension.
-         * Only meaningful when inside a pocket dimension.
-         */
-        tripoint_abs_sm get_pocket_origin_position() const;
-        /**
-         * Set the player's overworld position (for save/load and dimension travel).
-         */
-        void set_pocket_origin_position( const tripoint_abs_sm &pos );
-        /**
-         * Get the display name of the current pocket dimension.
-         * Returns empty string if not in a pocket or no name was set.
-         */
-        std::string get_pocket_dimension_name() const;
-        /**
-         * Set the display name of the current pocket dimension.
-         */
-        void set_pocket_dimension_name( const std::string &name );
-        /**
-         * Get the kept (secondary) pocket dimension, if any.
-         * Returns nullptr if no pocket is kept loaded.
-         */
-        secondary_world *get_kept_pocket() const;
-        /**
-         * Check if we have a kept pocket matching the given instance ID.
-         */
-        bool has_kept_pocket( const std::string &instance_id ) const;
-        /**
-         * Clear and destroy the kept pocket dimension.
-         */
-        void clear_kept_pocket();
-        /**
-         * Check if we have a kept origin matching the given world type and instance ID.
-         */
-        bool has_kept_origin( const world_type_id &world_type,
-                              const std::string &instance_id ) const;
-        /**
-         * Clear and destroy the kept origin dimension.
-         */
-        void clear_kept_origin();
+        const dimension_info *get_current_dimension_info() const;
+
         /**
          * Retrieve the save prefix for the current dimension.
-         * Used for file naming (maps, overmaps, etc.)
+         * Equivalent to current_dimension_id_.
+         * @deprecated Callers should use current_dimension_id_ or get_current_dimension_id().
          */
         std::string get_dimension_prefix() const;
+
         /**
         /** Returns the other end of the stairs (if any). May query, affect u etc.  */
         std::optional<tripoint> find_stairs( map &mp, int z_after, bool peeking );
@@ -1202,13 +1166,18 @@ class game
         // accessing partially-loaded map data. Reset to false at the start of the next turn.
         bool swapping_dimensions = false;
     private:
-        world_type_id current_world_type_;
-        std::string pocket_instance_id_;  // Instance ID for pocket dimensions (empty if not in pocket)
-        tripoint_abs_sm pocket_origin_position_;  // Player's overworld position before entering a pocket
-        std::string pocket_dimension_name_;  // Display name of the current pocket dimension
-        std::unique_ptr<secondary_world> kept_pocket_;  // Last visited pocket dimension (if kept loaded)
-        std::unique_ptr<secondary_world>
-        kept_origin_;  // Origin dimension when inside a pocket (if kept loaded)
+        /// Dimension ID the player is currently in.  "" = overworld (primary).
+        /// Updated by travel_to_dimension(); also written to g_active_dimension_id.
+        std::string current_dimension_id_;
+
+        /// Metadata for all dimensions that currently have at least one submap loaded.
+        /// Keyed by dimension_id.  The overworld ("") may be absent on fresh games.
+        std::unordered_map<std::string, dimension_info> loaded_dimensions_;
+
+        /// The dimension ID of the single "kept alive" pocket dimension (§2.1).
+        /// Empty = no pocket is kept.  When the player enters a new bounded pocket this
+        /// slot is evicted (saved + removed from registry) and replaced with the new one.
+        std::string kept_pocket_dimension_id_;
 
         // Handle for the reality bubble's submap_load_manager request.
         // 0 means no request has been issued yet.

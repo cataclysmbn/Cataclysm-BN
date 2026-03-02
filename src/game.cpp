@@ -166,7 +166,6 @@
 #include "salvage.h"
 #include "scenario.h"
 #include "scent_map.h"
-#include "secondary_world.h"
 #include "scores_ui.h"
 #include "sdltiles.h"
 #include "sounds.h"
@@ -391,6 +390,8 @@ game::game() :
     // Create the primary dimension's grid tracker and register it as a listener
     // with the submap load manager so it receives per-submap events.
     // The primary dimension key is "" (mapbuffer_registry::PRIMARY_DIMENSION_ID).
+    // MAPBUFFER == MAPBUFFER_REGISTRY.primary() — correct for this initialization;
+    // trackers for other dimensions are constructed lazily on first use.
     grid_trackers_[""] = std::make_unique<distribution_grid_tracker>( MAPBUFFER );
     submap_loader.add_listener( grid_trackers_[""].get() );
 
@@ -838,6 +839,8 @@ bool game::start_game()
         omtstart = start_loc.find_player_initial_location();
         if( omtstart == overmap::invalid_tripoint ) {
             if( query_gen_failed() ) {
+                // New-game generation only: the player is always in the overworld at
+                // this point; no dimension travel has occurred, so primary == active.
                 MAPBUFFER.clear();
                 overmap_buffer.clear();
             } else {
@@ -854,6 +857,7 @@ bool game::start_game()
             if( veh ) {
                 veh->set_owner( u );
             } else if( query_gen_failed() ) {
+                // Same new-game context — primary is always the active dimension here.
                 MAPBUFFER.clear();
                 overmap_buffer.clear();
                 omtstart = overmap::invalid_tripoint;
@@ -1543,18 +1547,20 @@ bool game::cleanup_at_end()
     sfx::fade_audio_group( sfx::group::context_themes, 300 );
     sfx::fade_audio_group( sfx::group::fatigue, 300 );
 
-    // Clear kept dimension worlds before clearing MAPBUFFER and item types.
-    // These hold submaps with items whose itype* pointers will become dangling
-    // once DynamicDataLoader::unload_data() calls item_controller->reset().
-    clear_kept_pocket();
-    clear_kept_origin();
+    // Clear dimension tracking state before clearing MAPBUFFER and item types.
+    // In the no-swap model all submaps live in their MAPBUFFER_REGISTRY slots;
+    // the MAPBUFFER_REGISTRY.for_each() call below frees them all.  We just need
+    // to clear the metadata so stale pointers are not accessed after unload_data().
+    kept_pocket_dimension_id_.clear();
+    loaded_dimensions_.clear();
 
-    // Phase 6: Clear the current dimension's slot first, then primary for safety.
-    const std::string cur_dim = m.get_bound_dimension();
-    if( !cur_dim.empty() ) {
-        MAPBUFFER_REGISTRY.get( cur_dim ).clear();
-    }
-    MAPBUFFER.clear();
+    // Clear all registered dimension slots.  With multiple simultaneous dimensions
+    // (overworld + pocket + nether, etc.) there may be more than two active buffers,
+    // so clearing only primary and the player's current dimension would leave orphaned
+    // submap data in memory and potentially dangling itype* pointers after unload_data().
+    MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer &buf ) {
+        buf.clear();
+    } );
     overmap_buffer.clear();
 
     avatar &player_character = get_avatar();
@@ -12424,98 +12430,19 @@ void game::vertical_move( int movez, bool force, bool peeking )
     cata_event_dispatch::avatar_moves( u, m, u.pos() );
 }
 
-world_type_id game::get_current_world_type() const
+const dimension_info *game::get_current_dimension_info() const
 {
-    if( current_world_type_.is_valid() ) {
-        return current_world_type_;
-    }
-    return world_types::get_default();
+    auto it = loaded_dimensions_.find( current_dimension_id_ );
+    return it != loaded_dimensions_.end() ? &it->second : nullptr;
 }
 
 std::string game::get_dimension_prefix() const
 {
-    if( current_world_type_.is_valid() ) {
-        std::string prefix = current_world_type_.obj().save_prefix;
-        // For pocket dimensions, append instance ID to make unique save directories
-        if( !pocket_instance_id_.empty() ) {
-            prefix += pocket_instance_id_ + "_";
-        }
-        return prefix;
-    }
-    return "";
+    return current_dimension_id_;
 }
 
-void game::set_current_world_type( const world_type_id &wt )
-{
-    current_world_type_ = wt;
-}
-
-std::string game::get_pocket_instance_id() const
-{
-    return pocket_instance_id_;
-}
-
-void game::set_pocket_instance_id( const std::string &id )
-{
-    pocket_instance_id_ = id;
-}
-
-tripoint_abs_sm game::get_pocket_origin_position() const
-{
-    return pocket_origin_position_;
-}
-
-void game::set_pocket_origin_position( const tripoint_abs_sm &pos )
-{
-    pocket_origin_position_ = pos;
-}
-
-std::string game::get_pocket_dimension_name() const
-{
-    return pocket_dimension_name_;
-}
-
-void game::set_pocket_dimension_name( const std::string &name )
-{
-    pocket_dimension_name_ = name;
-}
-
-secondary_world *game::get_kept_pocket() const
-{
-    return kept_pocket_.get();
-}
-
-bool game::has_kept_pocket( const std::string &instance_id ) const
-{
-    return kept_pocket_ && kept_pocket_->get_instance_id() == instance_id;
-}
-
-void game::clear_kept_pocket()
-{
-    if( kept_pocket_ ) {
-        kept_pocket_->unload();
-        kept_pocket_.reset();
-    }
-}
-
-bool game::has_kept_origin( const world_type_id &world_type,
-                            const std::string &instance_id ) const
-{
-    return kept_origin_ &&
-           kept_origin_->get_world_type() == world_type &&
-           kept_origin_->get_instance_id() == instance_id;
-}
-
-void game::clear_kept_origin()
-{
-    if( kept_origin_ ) {
-        kept_origin_->unload();
-        kept_origin_.reset();
-    }
-}
-
-bool game::travel_to_dimension( const world_type_id &new_world_type,
-                                const std::string &pocket_instance_id,
+bool game::travel_to_dimension( const std::string &dim_id,
+                                const world_type_id &world_type,
                                 const std::optional<dimension_bounds> &bounds,
                                 const std::optional<tripoint_abs_sm> &load_pos,
                                 const std::function<void()> &pre_load_callback )
@@ -12526,183 +12453,42 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
     // dimension's submaps are actualized (e.g. in remove_rotten_items).
     cleanup_arenas();
 
-    if( !new_world_type.is_valid() ) {
-        debugmsg( "travel_to_dimension: invalid world_type_id '%s'", new_world_type.str() );
-        return false;
-    }
-
-    const world_type &target_type = new_world_type.obj();
-    map &here = get_map();
-    avatar &player = get_avatar();
-
-    // Check if we can use a fast path via kept pocket or kept origin
-    bool fast_to_pocket = has_kept_pocket( pocket_instance_id );
-    bool fast_to_origin = has_kept_origin( new_world_type, pocket_instance_id );
-
-    if( fast_to_pocket || fast_to_origin ) {
-        if( fast_to_pocket ) {
-            add_msg( m_debug, "[DIM] Fast path: returning to kept pocket '%s'", pocket_instance_id );
-        } else {
-            add_msg( m_debug, "[DIM] Fast path: returning to kept origin '%s'",
-                     new_world_type.str() );
-        }
-
-        // Determine if this is a nested pocket-to-pocket transition
-        bool old_is_pocket = !pocket_instance_id_.empty();
-        bool new_is_pocket = !pocket_instance_id.empty();
-        bool nested = old_is_pocket && new_is_pocket;
-
-        // Unload NPCs and monsters from current dimension
-        unload_npcs();
-        for( monster &critter : all_monsters() ) {
-            despawn_monster( critter );
-        }
-        if( player.in_vehicle ) {
-            here.unboard_vehicle( player.pos() );
-        }
-
-        // Save current dimension's map memory
-        player.save_map_memory();
-
-        // Save current position before swapping
-        tripoint_abs_sm current_abs_sm( here.get_abs_sub() );
-
-        // Clear vehicle caches
-        for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-            here.clear_vehicle_list( z );
-        }
-        here.reset_vehicle_cache();
-
-        // Save and clear current buffers, wrapped in a transaction for performance
-        // Flush background streamer tasks first to avoid a concurrent read+write race
-        // between save_quad workers (submaps.find, no mutex) and submap_stream workers
-        // (add_submap, with mutex).
-        submap_streamer.flush_all();
-        world *active_world = get_active_world();
-        if( active_world ) {
-            active_world->start_save_tx();
-        }
-        here.save();
-        overmap_buffer.save();
-        // Phase 6: Save the dimension-aware mapbuffer slot, not always primary.
-        MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).save();
-        if( active_world ) {
-            active_world->commit_save_tx();
-        }
-
-        // Prevent temperature/weather code from accessing the grid while it's being
-        // cleared and rebuilt.  Must be set BEFORE clear_grid() to close the window.
-        swapping_dimensions = true;
-
-        // Phase 6: With dimension-aware generation, submaps are already in their
-        // own registry slots. capture_from_primary() / restore_to_primary() are
-        // now no-ops that just track "kept" state.  The secondary_world objects
-        // serve as metadata markers for which dimensions are kept loaded.
-        if( !nested ) {
-            std::optional<dimension_bounds> current_bounds = here.get_dimension_bounds();
-            if( fast_to_pocket ) {
-                // Leaving origin to enter pocket: capture origin into kept_origin_
-                clear_kept_origin();
-                kept_origin_ = std::make_unique<secondary_world>( current_world_type_,
-                               pocket_instance_id_ );
-                here.clear_grid();
-                kept_origin_->capture_from_primary( current_bounds, current_abs_sm );
-                grid_trackers_[""]->clear();
-                add_msg( m_debug, "[DIM] Keeping origin loaded" );
-            } else {
-                // Leaving pocket to enter origin: capture pocket into kept_pocket_
-                clear_kept_pocket();
-                kept_pocket_ = std::make_unique<secondary_world>( current_world_type_,
-                               pocket_instance_id_ );
-                here.clear_grid();
-                kept_pocket_->capture_from_primary( current_bounds, current_abs_sm );
-                grid_trackers_[""]->clear();
-                add_msg( m_debug, "[DIM] Keeping pocket loaded" );
-            }
-        } else {
-            // Nested pocket-to-pocket: clear everything normally
-            add_msg( m_debug, "[DIM] Nested pocket transition: clearing all kept worlds" );
-            clear_kept_pocket();
-            clear_kept_origin();
-            overmap_buffer.clear();
-            here.clear_grid();
-            // Phase 6: Clear the current dimension's slot, not primary.
-            MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).clear();
-            grid_trackers_[""]->clear();
-        }
-
-        // Restore from the appropriate kept world
-        if( fast_to_pocket ) {
-            kept_pocket_->restore_to_primary();
-            kept_pocket_.reset();
-        } else {
-            kept_origin_->restore_to_primary();
-            kept_origin_.reset();
-        }
-
-        // Update dimension state
-        current_world_type_ = new_world_type;
-        pocket_instance_id_ = pocket_instance_id;
-
-        // Track origin position for pocket dimensions
-        if( fast_to_pocket ) {
-            // Entering pocket from origin: save current overworld position
-            pocket_origin_position_ = current_abs_sm;
-        } else if( fast_to_origin ) {
-            // Exiting pocket to origin: clear saved position
-            pocket_origin_position_ = tripoint_abs_sm();
-        }
-
-        // Set region type
-        const std::string &region_type = target_type.region_settings_id;
-        if( !region_type.empty() ) {
-            overmap_buffer.current_region_type = region_type;
-        }
-
-        // Load dimension data and map
-        load_dimension_data();
-
-        // Clear stale bounds and set new ones before load_map
-        here.clear_dimension_bounds();
-        overmap_buffer.clear_dimension_bounds();
-        if( bounds ) {
-            here.set_dimension_bounds( *bounds );
-            overmap_buffer.set_dimension_bounds( *bounds );
-        }
-
-        // Invoke pre-load callback (e.g. place overmap specials) before loading submaps,
-        // so that submap generation uses the correct overmap terrain types.
-        if( pre_load_callback ) {
-            pre_load_callback();
-        }
-
-        load_map( load_pos.value_or( current_abs_sm ), false );
-
-        // Clear and load map memory for restored dimension
-        player.clear_map_memory();
-        player.load_map_memory();
-
-        // Reset caches
-        int const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z;
-        int const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z;
-        for( int z = zmin; z <= zmax; z++ ) {
-            here.access_cache( z ).map_memory_seen_cache.reset();
-            here.invalidate_map_cache( z );
-        }
-        here.build_map_cache( here.get_abs_sub().z );
-
-        load_npcs();
-        here.spawn_monsters( true );
-        get_weather().weather_override = weather_type_id::NULL_ID();
-        get_weather().set_nextweather( calendar::turn );
-        update_overmap_seen();
-
+    if( dim_id == current_dimension_id_ ) {
+        add_msg( m_debug, "[DIM] Already in dimension '%s', no-op", dim_id );
         return true;
     }
 
-    // Unload all NPCs (they don't travel between dimensions)
-    unload_npcs();
+    // Resolve effective world_type: use the passed value if valid; otherwise try
+    // to look it up from already-loaded dimensions.  The overworld (dim_id == "")
+    // is a special case — it has no explicit world_type and that is fine.
+    auto effective_wt = world_type;
+    if( !effective_wt.is_valid() ) {
+        if( auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+            effective_wt = it->second.world_type;
+        }
+    }
+    if( !effective_wt.is_valid() && !dim_id.empty() ) {
+        debugmsg( "travel_to_dimension: cannot resolve world_type for unknown dim '%s'", dim_id );
+        return false;
+    }
 
+    // For the overworld, effective_wt may still be null; guard all uses below.
+    const struct world_type *target_type = effective_wt.is_valid() ? &effective_wt.obj() : nullptr;
+    map &here = get_map();
+    avatar &player = get_avatar();
+
+    // ── No-swap model ─────────────────────────────────────────────────────────
+    // Each dimension lives in its own MAPBUFFER_REGISTRY slot permanently.
+    // There is no "primary slot swap" — we save the current slot, rebind the map
+    // to the target slot, and load.  kept_pocket_dimension_id_ only marks which
+    // bounded pocket to avoid evicting when memory pressure calls for cleanup.
+
+    // Snapshot the old dimension state before any mutation.
+    const std::string old_dim_id = here.get_bound_dimension();
+    const tripoint_abs_sm current_abs_sm( here.get_abs_sub() );
+
+    // ── 1. Unload NPCs and monsters from the current dimension ────────────────
+    unload_npcs();
     for( monster &critter : all_monsters() ) {
         despawn_monster( critter );
     }
@@ -12710,12 +12496,10 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
         here.unboard_vehicle( player.pos() );
     }
 
-    // Save current dimension's data BEFORE changing current_world_type_
-    // This includes overmap, MAPBUFFER, and dimension_data
-    // All saved with CURRENT save_prefix
-    // Wrap in a transaction so all DB writes are batched into a single commit,
-    // avoiding individual fsync per write which is extremely slow.
-    // Flush background streamer tasks first — see save_maps() comment for rationale.
+    // ── 2. Flush and save the current dimension before leaving ────────────────
+    // Flush background streamer tasks first to avoid a concurrent read+write race
+    // between save_quad workers (submaps.find, no mutex) and submap_stream workers
+    // (add_submap, with mutex).
     submap_streamer.flush_all();
     world *active_world = get_active_world();
     try {
@@ -12723,9 +12507,8 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
             active_world->start_save_tx();
         }
         here.save();
-        overmap_buffer.save();  // Save with current save_prefix
-        // Phase 6: Save the dimension-aware mapbuffer slot, not always primary.
-        MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).save();
+        overmap_buffer.save();
+        MAPBUFFER_REGISTRY.get( old_dim_id ).save();
         if( !save_dimension_data() ) {
             if( active_world ) {
                 active_world->commit_save_tx();
@@ -12740,135 +12523,86 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
         return false;
     }
 
-    add_msg( m_debug, "[DIM] Saved maps, overmaps, and dimension data" );
+    add_msg( m_debug, "[DIM] Saved dimension '%s' before leaving", old_dim_id );
 
-    // Save current dimension's map memory BEFORE changing current_world_type_
     player.save_map_memory();
-
-    add_msg( m_debug, "[DIM] Saved current dimension map memory" );
 
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
         here.clear_vehicle_list( z );
     }
     here.reset_vehicle_cache();
 
-    add_msg( m_debug, "[DIM] Reset vehicle cache" );
-
-    // Store old world type for debug logging and keep-loaded check
-    world_type_id old_world_type = current_world_type_;
-    std::string old_pocket_instance = pocket_instance_id_;
-
-    // Store current absolute submap position BEFORE clearing anything
-    tripoint_abs_sm current_abs_sm( here.get_abs_sub() );
-
-    // Determine transition type for keep-loaded logic
-    bool old_is_pocket = !old_pocket_instance.empty();
-    bool new_is_pocket = !pocket_instance_id.empty();
-    bool nested = old_is_pocket && new_is_pocket;
-
-    // Check if we should keep the old dimension loaded.
-    // The old POCKET_SIMULATION_LEVEL "off" gate is removed: keeping a dimension
-    // loaded now has no simulation cost (submaps stay in the registry).
-    // The infinite_bounds check below is the correct constraint.
-    bool should_keep_old = false;
-    enum class keep_target { none, as_pocket, as_origin };
-    keep_target keep_as = keep_target::none;
-
-    if( old_world_type.is_valid() && !nested ) {
-        if( !old_is_pocket && new_is_pocket ) {
-            // Entering pocket from non-pocket: keep origin
-            should_keep_old = true;
-            keep_as = keep_target::as_origin;
-        } else if( old_is_pocket && !new_is_pocket ) {
-            // Exiting pocket to non-pocket: keep pocket if bounded
-            const world_type &old_type = old_world_type.obj();
-            should_keep_old = !old_type.infinite_bounds;
-            keep_as = keep_target::as_pocket;
+    // ── 3. Update kept-pocket tracking ───────────────────────────────────────
+    // In the no-swap model every dimension's submaps live in their own registry
+    // slot and are never evicted by the transition itself.  kept_pocket_dimension_id_
+    // merely marks which bounded pocket to preserve against future memory-pressure
+    // eviction.  When entering a new pocket the marker is cleared (the new pocket
+    // will set it on the next exit).
+    {
+        const bool old_is_bounded = !old_dim_id.empty() &&
+                                    loaded_dimensions_.count( old_dim_id ) &&
+                                    loaded_dimensions_.at( old_dim_id ).bounds.has_value();
+        if( old_is_bounded && !bounds.has_value() ) {
+            // Exiting a bounded pocket → remember it.
+            kept_pocket_dimension_id_ = old_dim_id;
+            add_msg( m_debug, "[DIM] Marking pocket '%s' as kept", old_dim_id );
+        } else if( bounds.has_value() ) {
+            // Entering any pocket → forget the previous kept marker.
+            kept_pocket_dimension_id_.clear();
         }
     }
 
-    // Clear both kept worlds before capturing a new one (at-most-one invariant)
-    if( should_keep_old ) {
-        clear_kept_pocket();
-        clear_kept_origin();
-    } else if( nested ) {
-        // Nested pocket-to-pocket: disable all keeping
-        add_msg( m_debug, "[DIM] Nested pocket transition: clearing all kept worlds" );
-        clear_kept_pocket();
-        clear_kept_origin();
-    }
-
-    // CRITICAL: Change current_world_type_ and pocket_instance_id_ BEFORE clearing buffers
-    // This way, when load_map() is called, it will load from the new dimension's files
-    // instead of trying to use the old dimension's cleared data
-    current_world_type_ = new_world_type;
-    pocket_instance_id_ = pocket_instance_id;
-
-    // Track origin position for pocket dimensions
-    if( !old_is_pocket && new_is_pocket ) {
-        // Entering pocket from origin: save current overworld position
-        pocket_origin_position_ = current_abs_sm;
-    } else if( old_is_pocket && !new_is_pocket ) {
-        // Exiting pocket to origin: clear saved position
-        pocket_origin_position_ = tripoint_abs_sm();
-    }
-
-    add_msg( m_debug, "[DIM] Changed world type from '%s' to '%s' (pocket: '%s' -> '%s')",
-             old_world_type.is_valid() ? old_world_type.str() : "default",
-             current_world_type_.str(),
-             old_pocket_instance.c_str(),
-             pocket_instance_id_.c_str() );
-
-    // Prevent temperature/weather code from accessing the grid while it's being
-    // cleared and rebuilt.  Must be set BEFORE clear_grid() to close the window.
+    // ── 4. Commit dimension switch ────────────────────────────────────────────
+    // Prevent temperature/weather code from accessing the grid while it's
+    // being cleared and rebuilt.  Must be set BEFORE clear_grid().
     swapping_dimensions = true;
 
-    // Either capture to secondary_world or clear buffers
-    if( should_keep_old ) {
-        // Get current dimension bounds if set
-        std::optional<dimension_bounds> current_bounds = here.get_dimension_bounds();
+    current_dimension_id_ = dim_id;
+    g_active_dimension_id = dim_id;
 
-        if( keep_as == keep_target::as_origin ) {
-            add_msg( m_debug, "[DIM] Keeping origin loaded" );
-            kept_origin_ = std::make_unique<secondary_world>( old_world_type, old_pocket_instance );
-            here.clear_grid();
-            kept_origin_->capture_from_primary( current_bounds, current_abs_sm );
-        } else {
-            add_msg( m_debug, "[DIM] Keeping old pocket '%s' loaded", old_pocket_instance );
-            kept_pocket_ = std::make_unique<secondary_world>( old_world_type, old_pocket_instance );
-            here.clear_grid();
-            kept_pocket_->capture_from_primary( current_bounds, current_abs_sm );
-        }
+    add_msg( m_debug, "[DIM] Switched active dimension: '%s' → '%s'", old_dim_id, dim_id );
 
-        // Grid tracker still needs to be cleared
-        grid_trackers_[""]->clear();
-    } else {
-        // Normal clear behavior
-        overmap_buffer.clear();
-        here.clear_grid();
-        // Phase 6: Clear the current dimension's slot, not primary.
-        MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).clear();
-        grid_trackers_[""]->clear();
+    // Clear the old dimension's distribution-grid tracker.
+    if( grid_trackers_.count( old_dim_id ) ) {
+        grid_trackers_[old_dim_id]->clear();
     }
 
-    add_msg( m_debug, "[DIM] Cleared/captured buffers (kept=%s)", should_keep_old ? "yes" : "no" );
+    // ── 5. Rebind map and clear the render area ───────────────────────────────
+    // bind_dimension() redirects all subsequent loadn() / generation calls to
+    // the target MAPBUFFER_REGISTRY slot.  Submaps for old_dim_id stay in their
+    // slot — nothing is lost.
+    here.bind_dimension( dim_id );
+    overmap_buffer.clear();
+    here.clear_grid();
 
-    // Set region_type BEFORE loading dimension data
-    // This ensures new dimensions use the correct region settings
-    const std::string &region_type = target_type.region_settings_id;
-    if( !region_type.empty() ) {
-        overmap_buffer.current_region_type = region_type;
+    // ── 6. Register new dimension metadata if not already loaded ─────────────
+    if( !loaded_dimensions_.count( dim_id ) ) {
+        loaded_dimensions_[dim_id] = dimension_info{
+            .dimension_id        = dim_id,
+            .world_type          = effective_wt,
+            .display_name        = target_type ? target_type->name.translated() : dim_id,
+            .bounds              = bounds,
+            .origin_pos          = current_abs_sm,
+            .parent_dimension_id = old_dim_id
+        };
+    }
+
+    // ── 7. Configure and load the new dimension ───────────────────────────────
+    if( target_type && !target_type->region_settings_id.empty() ) {
+        overmap_buffer.current_region_type = target_type->region_settings_id;
+    } else if( !target_type ) {
+        // Overworld: region type is preserved from initial game setup.
     } else {
         debugmsg( "travel_to_dimension: world_type '%s' has empty region_settings_id!",
-                  new_world_type.str() );
+                  effective_wt.str() );
     }
 
-    // Load in data specific to the dimension (like weather)
-    // This will override current_region_type if dimension data file exists
+    // Load saved dimension-specific data (weather, etc.).  This may override
+    // current_region_type if a dimension_data file already exists.
     load_dimension_data();
 
-    // Clear any stale dimension bounds, then set new ones if entering a bounded dimension.
-    // This must happen before load_map so loadn() knows which submaps are out-of-bounds.
+    // Clear stale bounds then install the new ones before load_map() so that
+    // loadn() knows which submaps are out-of-bounds for bounded dimensions.
     here.clear_dimension_bounds();
     overmap_buffer.clear_dimension_bounds();
     if( bounds ) {
@@ -12876,57 +12610,41 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
         overmap_buffer.set_dimension_bounds( *bounds );
     }
 
-    // Invoke pre-load callback (e.g. place overmap specials) before loading submaps,
+    // Invoke pre-load callback (e.g. place overmap specials) before loading submaps
     // so that submap generation uses the correct overmap terrain types.
     if( pre_load_callback ) {
         pre_load_callback();
     }
 
-    // Load the new dimension's map at the destination position if provided,
-    // otherwise fall back to the current position. Loading at the destination
-    // avoids a costly incremental map shift in update_map() when the destination
-    // is far from the current position (e.g. entering/exiting pocket dimensions).
+    // Load at the destination position if provided; fall back to the old position.
+    // Loading at the destination avoids a costly incremental map shift in update_map()
+    // when the destination is far from the current position.
     load_map( load_pos.value_or( current_abs_sm ), false );
 
-    add_msg( m_debug, "[DIM] Loaded new dimension map" );
+    add_msg( m_debug, "[DIM] Loaded new dimension '%s' map", dim_id );
 
-    // CRITICAL: Clear old dimension's map memory and load new dimension's memory
-    // This must happen BEFORE building caches, so the cache reflects the correct memory state
+    // ── 8. Restore map memory and rebuild caches ──────────────────────────────
     player.clear_map_memory();
     player.load_map_memory();
 
-    add_msg( m_debug, "[DIM] Loaded dimension map memory" );
-
-    // Reset the map memory seen cache so tiles can be re-memorized in this dimension
-    // This is critical for allowing memory updates after dimension travel
-    int const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z;
-    int const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z;
-    for( int z = zmin; z <= zmax; z++ ) {
-        here.access_cache( z ).map_memory_seen_cache.reset();
+    {
+        auto const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z;
+        auto const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z;
+        for( auto z = zmin; z <= zmax; z++ ) {
+            here.access_cache( z ).map_memory_seen_cache.reset();
+            here.invalidate_map_cache( z );
+        }
     }
-
-    add_msg( m_debug, "[DIM] Reset map memory seen cache" );
-
-    // Now invalidate and rebuild caches WITH the correct map memory loaded
-    for( int z = zmin; z <= zmax; z++ ) {
-        here.invalidate_map_cache( z );
-    }
-
-    // Rebuild the map cache - this will update based on loaded map memory
     here.build_map_cache( here.get_abs_sub().z );
 
     load_npcs();
-
-    // Spawn static monsters in the new dimension
     here.spawn_monsters( true );
 
-    // Update weather for the new dimension
     get_weather().weather_override = weather_type_id::NULL_ID();
     get_weather().set_nextweather( calendar::turn );
 
     update_overmap_seen();
 
-    // Save dimension data to persist the new region_type
     if( !save_dimension_data() ) {
         debugmsg( "Failed to save dimension data after dimension travel" );
     }
@@ -13274,14 +12992,25 @@ point game::update_map( int &x, int &y )
     // in the direction the player was moving even on turns with no map shift.
     last_move_delta_ = tripoint( shift, 0 );
 
-    // Repopulate the primary tracker after map shift (incremental via load manager
-    // in Phase 6; for now, clear and reload from current mapbuffer contents).
+    // Repopulate the active dimension's tracker after map shift.
+    // A map shift only moves submaps within the bound dimension, so only that
+    // dimension's tracker needs rebuilding.  Using MAPBUFFER (always primary) here
+    // was wrong when the player is in a non-primary dimension.
+    // TODO: make this incremental via on_submap_loaded / on_submap_unloaded callbacks
+    // from submap_load_manager; the full-rebuild is a transitional approach.
     {
-        auto &tracker = *grid_trackers_[""];
+        const std::string &cur_dim = m.get_bound_dimension();
+        // Lazy tracker construction mirrors the pattern in the reality_bubble block below.
+        if( grid_trackers_.find( cur_dim ) == grid_trackers_.end() ) {
+            grid_trackers_[cur_dim] = std::make_unique<distribution_grid_tracker>(
+                                         MAPBUFFER_REGISTRY.get( cur_dim ) );
+            submap_loader.add_listener( grid_trackers_[cur_dim].get() );
+        }
+        auto &tracker = *grid_trackers_[cur_dim];
         tracker.clear();
-        for( auto &[raw_pos, sm_ptr] : MAPBUFFER ) {
+        for( auto &[raw_pos, sm_ptr] : MAPBUFFER_REGISTRY.get( cur_dim ) ) {
             if( sm_ptr ) {
-                tracker.on_submap_loaded( tripoint_abs_sm( raw_pos ), "" );
+                tracker.on_submap_loaded( tripoint_abs_sm( raw_pos ), cur_dim );
             }
         }
     }
@@ -13949,12 +13678,11 @@ void game::quickload()
     }
 
     if( active_world->info->save_exists( save_t::from_save_id( u.get_save_id() ) ) ) {
-        // Phase 6: Clear the current dimension's slot first, then primary.
-        const std::string cur_dim = m.get_bound_dimension();
-        if( !cur_dim.empty() ) {
-            MAPBUFFER_REGISTRY.get( cur_dim ).clear();
-        }
-        MAPBUFFER.clear();
+        // Clear all registered dimension slots before reloading (see the same pattern in
+        // game::unload_ui_state() for rationale — multiple dimensions may be active).
+        MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer &buf ) {
+            buf.clear();
+        } );
         overmap_buffer.clear();
         try {
             // Doesn't need to load mod files again for the same world

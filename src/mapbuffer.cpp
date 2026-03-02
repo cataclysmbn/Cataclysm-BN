@@ -276,7 +276,7 @@ void mapbuffer::save_quad( const tripoint &om_addr, std::list<tripoint> &submaps
         return;
     }
 
-    g->get_active_world()->write_map_quad( om_addr, [&]( std::ostream & fout ) {
+    g->get_active_world()->write_map_quad( dimension_id_, om_addr, [&]( std::ostream & fout ) {
         JsonOut jsout( fout );
         jsout.start_array();
         for( const tripoint &submap_addr : submap_addrs ) {
@@ -322,8 +322,8 @@ submap *mapbuffer::unserialize_submaps( const tripoint &p )
     const tripoint om_addr = sm_to_omt_copy( p );
 
     using namespace std::placeholders;
-    if( !g->get_active_world()->read_map_quad( om_addr, std::bind( &mapbuffer::deserialize,
-            this, _1 ) ) ) {
+    if( !g->get_active_world()->read_map_quad( dimension_id_, om_addr,
+            std::bind( &mapbuffer::deserialize, this, _1 ) ) ) {
         // If it doesn't exist, trigger generating it.
         return nullptr;
     }

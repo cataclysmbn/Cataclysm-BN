@@ -40,6 +40,7 @@
 #include "creature.h"
 #include "debug.h"
 #include "dimension_bounds.h"
+#include "dimension_info.h"
 #include "effect.h"
 #include "enum_conversions.h"
 #include "enums.h"
@@ -7081,11 +7082,11 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
 
     // Debug: Show current and target dimensions
     add_msg( m_debug, "[DIM_TRAVEL] Current region_type: %s", overmap_buffer.current_region_type );
-    add_msg( m_debug, "[DIM_TRAVEL] Current world_type: %s", g->get_current_world_type().str() );
+    add_msg( m_debug, "[DIM_TRAVEL] Current dim_id: '%s'", g->get_current_dimension_id() );
     add_msg( m_debug, "[DIM_TRAVEL] Target destination: %s", destination.str() );
 
     // Check if already in target dimension
-    if( g->get_current_world_type() == destination ) {
+    if( g->get_current_dimension_id() == destination.str() ) {
         p.add_msg_if_player( m_info, _( "You are already in that dimension." ) );
         add_msg( m_debug, "[DIM_TRAVEL] Already in target dimension" );
         return;
@@ -7110,15 +7111,17 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
         p.add_msg_if_player( m_good, "%s", _( success_message ) );
     }
 
-    // Travel to the destination world type
-    // NPCs and vehicles do not travel between dimensions
-    // When traveling from a pocket dimension, use the saved origin position
-    // so the destination loads at the player's original overworld coordinates
+    // Travel to the destination world type.
+    // NPCs and vehicles do not travel between dimensions.
+    // When leaving a bounded pocket, use the saved origin position so the
+    // destination loads at the player's original overworld coordinates.
     std::optional<tripoint_abs_sm> load_pos;
-    if( !g->get_pocket_instance_id().empty() ) {
-        load_pos = g->get_pocket_origin_position();
+    if( const dimension_info *info = g->get_current_dimension_info() ) {
+        if( info->bounds.has_value() ) {
+            load_pos = info->origin_pos;
+        }
     }
-    g->travel_to_dimension( destination, "", std::nullopt, load_pos );
+    g->travel_to_dimension( destination.str(), destination, std::nullopt, load_pos );
 }
 
 // -------------------
@@ -7159,15 +7162,13 @@ int iuse_pocket_dimension::use( player &p, item &it, bool, const tripoint & ) co
     }
 
     // Determine if we're inside this pocket or outside
-    const world_type_id current_dim = g->get_current_world_type();
-    const std::string current_instance = g->get_pocket_instance_id();
+    const std::string &current_dim_id = g->get_current_dimension_id();
 
     // Check if we're inside THIS pocket dimension
-    if( current_dim == pd->dimension_type && current_instance == pd->instance_id ) {
+    if( current_dim_id == pd->dimension_id ) {
         // We're inside - exit to return point
         exit_pocket( p, it );
-    } else if( current_dim == pd->return_dimension &&
-               current_instance == pd->return_instance_id ) {
+    } else if( current_dim_id == pd->return_dimension_id ) {
         // We're at the dimension this pocket exits to - we can enter
         enter_pocket( p, it );
     } else {
@@ -7198,14 +7199,21 @@ void iuse_pocket_dimension::initialize_pocket( item &it ) const
 
     item::pocket_dimension_data pd;
 
-    // Generate unique instance ID (timestamp + random)
-    pd.instance_id = string_format( "%d_%d", to_turn<int>( calendar::turn ), rng( 0, 99999 ) );
-    pd.dimension_type = pocket_type;
+    // Build a fully-qualified dimension_id from the pocket_type's save_prefix + a unique suffix.
+    const std::string instance_suffix = string_format( "%d_%d", to_turn<int>( calendar::turn ),
+                                        rng( 0, 99999 ) );
+    pd.dimension_id = pocket_type.obj().save_prefix + instance_suffix + "_";
+    pd.world_type = pocket_type;
     pd.is_initialized = true;
 
-    // Set initial return dimension to current dimension (base reality typically)
-    pd.return_dimension = g->get_current_world_type();
-    pd.return_instance_id = g->get_pocket_instance_id();
+    // Record the dimension the pocket returns to when exiting.
+    pd.return_dimension_id = g->get_current_dimension_id();
+    if( const dimension_info *info = g->get_current_dimension_info() ) {
+        pd.return_world_type = info->world_type;
+    } else {
+        // Currently in the overworld; no explicit world_type needed.
+        pd.return_world_type = world_type_id{};
+    }
 
     // The return point will be set when entering
 
@@ -7289,8 +7297,12 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     }
 
     // Store return information
-    pd->return_dimension = g->get_current_world_type();
-    pd->return_instance_id = g->get_pocket_instance_id();
+    pd->return_dimension_id = g->get_current_dimension_id();
+    if( const dimension_info *info = g->get_current_dimension_info() ) {
+        pd->return_world_type = info->world_type;
+    } else {
+        pd->return_world_type = world_type_id{};
+    }
     pd->return_point = p.global_omt_location();
 
     // Set dimension bounds on map
@@ -7330,12 +7342,10 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
         };
     }
 
-    // Set the pocket dimension display name for the overmap sidebar
-    g->set_pocket_dimension_name( pocket_name );
-
     // Travel to the pocket dimension, passing bounds, destination position,
-    // and the pre-load callback to place the overmap special before map generation
-    g->travel_to_dimension( pd->dimension_type, pd->instance_id, bounds, dest_sm, pre_load );
+    // and the pre-load callback to place the overmap special before map generation.
+    // The display name is stored in dimension_info.display_name via travel_to_dimension().
+    g->travel_to_dimension( pd->dimension_id, pd->world_type, bounds, dest_sm, pre_load );
 
     // Teleport player to entry point
     // Convert entry_point (OMT coords) to absolute map squares, then to local
@@ -7361,16 +7371,13 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
 
     p.add_msg_if_player( m_good, _( "You exit the pocket dimension." ) );
 
-    // Clear the pocket dimension display name
-    g->set_pocket_dimension_name( "" );
-
     // Compute destination submap position from return point so the map loads centered
     // on the destination, avoiding a costly incremental shift in update_map()
     tripoint_abs_sm dest_sm = project_to<coords::sm>( pd->return_point );
 
-    // Travel back to the return dimension (no bounds = infinite dimension)
-    // travel_to_dimension clears stale bounds before loading the map
-    g->travel_to_dimension( pd->return_dimension, pd->return_instance_id, std::nullopt, dest_sm );
+    // Travel back to the return dimension (no bounds = infinite dimension).
+    // travel_to_dimension clears stale bounds before loading the map.
+    g->travel_to_dimension( pd->return_dimension_id, pd->return_world_type, std::nullopt, dest_sm );
 
     // Teleport player to return point
     // Convert return_point (OMT coords) to absolute map squares, then to local

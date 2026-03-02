@@ -89,7 +89,11 @@ void submap_load_manager::update()
     for( const desired_key &key : new_desired ) {
         if( prev_desired_.count( key ) == 0 ) {
             const tripoint_abs_sm pos( key.second );
-            // Ensure the submap is loaded in the appropriate mapbuffer
+            // TODO(async-load): load_submap() runs synchronously on the main thread.
+            // Truly async load requires dispatching via submit_returning(), collecting
+            // futures into a pending set, and tolerating a frame where the submap is
+            // not yet resident (treat as not-yet-loaded, never null).  Deferred to
+            // a future PR — the synchronous path is acceptable for now.
             MAPBUFFER_REGISTRY.get( key.first ).load_submap( pos );
             for( submap_load_listener *listener : listeners_ ) {
                 listener->on_submap_loaded( pos, key.first );

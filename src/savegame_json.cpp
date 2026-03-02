@@ -64,6 +64,7 @@
 #include "int_id.h"
 #include "inventory.h"
 #include "item.h"
+#include "world_type.h"
 #include "item_contents.h"
 #include "item_factory.h"
 #include "itype.h"
@@ -2247,15 +2248,15 @@ void item::craft_data::deserialize( const JsonObject &obj )
 void item::pocket_dimension_data::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
-    jsout.member( "instance_id", instance_id );
-    jsout.member( "dimension_type", dimension_type );
+    jsout.member( "dimension_id", dimension_id );
+    jsout.member( "world_type", world_type );
     jsout.member( "entry_point", entry_point );
     jsout.member( "bounds_min", bounds_min );
     jsout.member( "bounds_max", bounds_max );
     jsout.member( "is_initialized", is_initialized );
     jsout.member( "terrain_generated", terrain_generated );
-    jsout.member( "return_dimension", return_dimension );
-    jsout.member( "return_instance_id", return_instance_id );
+    jsout.member( "return_dimension_id", return_dimension_id );
+    jsout.member( "return_world_type", return_world_type );
     jsout.member( "return_point", return_point );
     jsout.end_object();
 }
@@ -2264,30 +2265,59 @@ void item::pocket_dimension_data::deserialize( JsonIn &jsin )
 {
     JsonObject obj = jsin.get_object();
     obj.allow_omitted_members();
-    obj.read( "instance_id", instance_id );
-    obj.read( "dimension_type", dimension_type );
+
+    // New format: dimension_id is the primary key.
+    // Legacy compat: reconstruct dimension_id from dimension_type + instance_id.
+    if( obj.has_member( "dimension_id" ) ) {
+        obj.read( "dimension_id", dimension_id );
+        obj.read( "world_type", world_type );
+        obj.read( "return_dimension_id", return_dimension_id );
+        obj.read( "return_world_type", return_world_type );
+    } else {
+        // Old format: reconstruct dimension_id and return_dimension_id
+        world_type_id old_dim_type;
+        std::string old_instance_id;
+        obj.read( "dimension_type", old_dim_type );
+        obj.read( "instance_id", old_instance_id );
+        world_type = old_dim_type;
+        if( old_dim_type.is_valid() && !old_instance_id.empty() ) {
+            dimension_id = old_dim_type.obj().save_prefix + old_instance_id + "_";
+        }
+        // Old return fields
+        world_type_id old_return_dim;
+        std::string old_return_instance;
+        obj.read( "return_dimension", old_return_dim );
+        obj.read( "return_instance_id", old_return_instance );
+        return_world_type = old_return_dim;
+        if( old_return_dim.is_valid() ) {
+            return_dimension_id = old_return_dim.obj().save_prefix + old_return_instance + "_";
+        }
+        // Trim trailing "_" for the return if instance was empty (overworld return)
+        if( return_dimension_id.ends_with( "_" ) && old_return_instance.empty() ) {
+            return_dimension_id = old_return_dim.obj().save_prefix;
+        }
+    }
+
     obj.read( "entry_point", entry_point );
     obj.read( "bounds_min", bounds_min );
     obj.read( "bounds_max", bounds_max );
     is_initialized = obj.get_bool( "is_initialized", false );
     terrain_generated = obj.get_bool( "terrain_generated", false );
-    obj.read( "return_dimension", return_dimension );
-    obj.read( "return_instance_id", return_instance_id );
     obj.read( "return_point", return_point );
 }
 
 // Full equivalence. Consider only checking identifying data.
 bool item::pocket_dimension_data::operator==( const pocket_dimension_data &rhs ) const
 {
-    return instance_id == rhs.instance_id &&
-           dimension_type == rhs.dimension_type &&
+    return dimension_id == rhs.dimension_id &&
+           world_type == rhs.world_type &&
            entry_point == rhs.entry_point &&
            bounds_min == rhs.bounds_min &&
            bounds_max == rhs.bounds_max &&
            is_initialized == rhs.is_initialized &&
            terrain_generated == rhs.terrain_generated &&
-           return_dimension == rhs.return_dimension &&
-           return_instance_id == rhs.return_instance_id &&
+           return_dimension_id == rhs.return_dimension_id &&
+           return_world_type == rhs.return_world_type &&
            return_point == rhs.return_point;
 }
 

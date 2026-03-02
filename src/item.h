@@ -2307,8 +2307,8 @@ class item : public location_visitable<item>, public game_object<item>
          */
         struct pocket_dimension_data {
             pocket_dimension_data() {}
-            std::string instance_id;              // Unique identifier (UUID-like)
-            world_type_id dimension_type;         // Which world_type to use
+            std::string dimension_id;             // Fully-qualified dim ID (e.g. "pocket_dungeon_a1b2c3d4_")
+            world_type_id world_type;             // World type metadata for this pocket
             tripoint_abs_omt entry_point;         // Where player spawns on entry
             tripoint_abs_omt bounds_min;          // Minimum bounds (OMT coords)
             tripoint_abs_omt bounds_max;          // Maximum bounds (OMT coords)
@@ -2316,8 +2316,8 @@ class item : public location_visitable<item>, public game_object<item>
             bool terrain_generated = false;       // Has the terrain been generated?
 
             // Return tracking - where to go when exiting this pocket
-            world_type_id return_dimension;       // Which dimension to return to
-            std::string return_instance_id;       // If returning to another pocket (empty for base)
+            std::string return_dimension_id;      // Which dimension to return to (empty = overworld)
+            world_type_id return_world_type;      // World type of the return dimension (may be null for overworld)
             tripoint_abs_omt return_point;        // Where to place player on exit
 
             void serialize( JsonOut &jsout ) const;

@@ -1563,11 +1563,11 @@ static void draw_om_sidebar(
     }
 
     // Display dimension name above the coordinate line
-    // Prefer the pocket dimension name from the iuse JSON definition if available
-    std::string dim_name = g->get_pocket_dimension_name();
-    if( dim_name.empty() ) {
-        const world_type &wt = g->get_current_world_type().obj();
-        dim_name = wt.name.translated();
+    std::string dim_name;
+    if( const dimension_info *dim = g->get_current_dimension_info() ) {
+        dim_name = dim->display_name.empty()
+                   ? ( dim->world_type.is_valid() ? dim->world_type.obj().name.translated() : dim->dimension_id )
+                   : dim->display_name;
     }
     mvwprintz( wbar, point( 1, getmaxy( wbar ) - 2 ), c_cyan, dim_name );
 
