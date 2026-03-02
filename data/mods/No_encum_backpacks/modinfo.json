@@ -5,7 +5,7 @@
     "name": "No encumbrance backpacks",
     "authors": [ "Sai/Fentanylreactor" ],
     "description": "If you don't want to bother backpacks every fight because it's annoying, this is the mod for you.",
-    "category": "items",
+    "category": "rebalance",
     "version": "2/3/2026",
     "dependencies": [ "bn" ]
   }
