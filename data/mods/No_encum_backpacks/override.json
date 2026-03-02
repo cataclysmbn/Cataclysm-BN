@@ -1,5 +1,4 @@
 [
-
   {
     "id": "backpack",
     "type": "ARMOR",
@@ -7,7 +6,7 @@
     "copy-from": "backpack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "backpack_hiking",
     "type": "ARMOR",
@@ -15,7 +14,7 @@
     "copy-from": "backpack_hiking",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "backpack_giant",
     "type": "ARMOR",
@@ -23,7 +22,7 @@
     "copy-from": "backpack_giant",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "backpack_leather",
     "type": "ARMOR",
@@ -31,7 +30,7 @@
     "copy-from": "backpack_leather",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "backpack_tactical_large",
     "type": "ARMOR",
@@ -39,7 +38,7 @@
     "copy-from": "backpack_tactical_large",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "basket_laundry",
     "type": "ARMOR",
@@ -47,7 +46,7 @@
     "copy-from": "basket_laundry",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "bigback",
     "type": "ARMOR",
@@ -55,7 +54,7 @@
     "copy-from": "bigback",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "bindle",
     "type": "ARMOR",
@@ -63,7 +62,7 @@
     "copy-from": "bindle",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "boxpack",
     "type": "ARMOR",
@@ -71,7 +70,7 @@
     "copy-from": "boxpack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "briefcase",
     "type": "ARMOR",
@@ -79,7 +78,7 @@
     "copy-from": "briefcase",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "case_violin",
     "type": "ARMOR",
@@ -87,7 +86,7 @@
     "copy-from": "case_violin",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "daypack",
     "type": "ARMOR",
@@ -95,7 +94,7 @@
     "copy-from": "daypack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "dive_bag",
     "type": "ARMOR",
@@ -103,7 +102,7 @@
     "copy-from": "dive_bag",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "duffelbag",
     "type": "ARMOR",
@@ -111,15 +110,15 @@
     "copy-from": "duffelbag",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "dump_pouch",
     "type": "ARMOR",
-        "name": { "str": "tactical dump pouch", "str_pl": "tactical dump pouches" },
+    "name": { "str": "tactical dump pouch", "str_pl": "tactical dump pouches" },
     "copy-from": "dump_pouch",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "fanny",
     "type": "ARMOR",
@@ -127,7 +126,7 @@
     "copy-from": "fanny",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "golf_bag",
     "type": "ARMOR",
@@ -135,7 +134,7 @@
     "copy-from": "golf_bag",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "hide_bag",
     "type": "ARMOR",
@@ -143,7 +142,7 @@
     "copy-from": "hide_bag",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "hide_tainted_bag",
     "type": "ARMOR",
@@ -151,7 +150,7 @@
     "copy-from": "hide_tainted_bag",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "jerrypack",
     "type": "ARMOR",
@@ -159,7 +158,7 @@
     "copy-from": "jerrypack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "leather_pouch",
     "type": "ARMOR",
@@ -167,15 +166,15 @@
     "copy-from": "leather_pouch",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "legrig",
     "type": "ARMOR",
-"name": { "str": "pair of drop leg pouches", "str_pl": "pairs of drop leg pouches" },
+    "name": { "str": "pair of drop leg pouches", "str_pl": "pairs of drop leg pouches" },
     "copy-from": "legrig",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "makeshift_knapsack",
     "type": "ARMOR",
@@ -183,7 +182,7 @@
     "copy-from": "makeshift_knapsack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "makeshift_sling",
     "type": "ARMOR",
@@ -191,7 +190,7 @@
     "copy-from": "makeshift_sling",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "mbag",
     "type": "ARMOR",
@@ -199,7 +198,7 @@
     "copy-from": "mbag",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "molle_pack",
     "type": "ARMOR",
@@ -207,7 +206,7 @@
     "copy-from": "molle_pack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "petpack",
     "type": "ARMOR",
@@ -215,7 +214,7 @@
     "copy-from": "petpack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "plastic_shopping_bag",
     "type": "ARMOR",
@@ -223,7 +222,7 @@
     "copy-from": "plastic_shopping_bag",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "purse",
     "type": "ARMOR",
@@ -231,7 +230,7 @@
     "copy-from": "purse",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "ragpouch",
     "type": "ARMOR",
@@ -239,7 +238,7 @@
     "copy-from": "ragpouch",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "rucksack",
     "type": "ARMOR",
@@ -247,7 +246,7 @@
     "copy-from": "rucksack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "runner_bag",
     "type": "ARMOR",
@@ -255,7 +254,7 @@
     "copy-from": "runner_bag",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "slingpack",
     "type": "ARMOR",
@@ -263,7 +262,7 @@
     "copy-from": "slingpack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "straw_basket",
     "type": "ARMOR",
@@ -271,7 +270,7 @@
     "copy-from": "straw_basket",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "pack_basket",
     "type": "ARMOR",
@@ -279,7 +278,7 @@
     "copy-from": "pack_basket",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "suitcase_l",
     "type": "ARMOR",
@@ -287,7 +286,7 @@
     "copy-from": "suitcase_l",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "suitcase_m",
     "type": "ARMOR",
@@ -295,7 +294,7 @@
     "copy-from": "suitcase_m",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "survivor_hiking_backpack",
     "type": "ARMOR",
@@ -303,7 +302,7 @@
     "copy-from": "survivor_hiking_backpack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "survivor_duffel_bag",
     "type": "ARMOR",
@@ -311,7 +310,7 @@
     "copy-from": "survivor_duffel_bag",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "survivor_pack",
     "type": "ARMOR",
@@ -319,7 +318,7 @@
     "copy-from": "survivor_pack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "survivor_rucksack",
     "type": "ARMOR",
@@ -327,7 +326,7 @@
     "copy-from": "survivor_rucksack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "survivor_runner_pack",
     "type": "ARMOR",
@@ -335,7 +334,7 @@
     "copy-from": "survivor_runner_pack",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "swag_bag",
     "type": "ARMOR",
@@ -343,7 +342,7 @@
     "copy-from": "swag_bag",
     "encumbrance": 0,
     "max_encumbrance": 0
-  }, 
+  },
   {
     "id": "travelpack",
     "type": "ARMOR",
@@ -352,5 +351,4 @@
     "encumbrance": 0,
     "max_encumbrance": 0
   }
-  
 ]
