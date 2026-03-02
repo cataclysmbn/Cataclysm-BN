@@ -7085,8 +7085,13 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
     add_msg( m_debug, "[DIM_TRAVEL] Current dim_id: '%s'", g->get_current_dimension_id() );
     add_msg( m_debug, "[DIM_TRAVEL] Target destination: %s", destination.str() );
 
+    // The "default" world_type_id is the base overworld; its canonical dim_id is ""
+    // (empty string) for backward-compat save paths.  Normalize here so callers
+    // that specify destination="default" correctly reach the overworld slot.
+    const auto target_dim_id = destination.str() == "default" ? std::string{} : destination.str();
+
     // Check if already in target dimension
-    if( g->get_current_dimension_id() == destination.str() ) {
+    if( g->get_current_dimension_id() == target_dim_id ) {
         p.add_msg_if_player( m_info, _( "You are already in that dimension." ) );
         add_msg( m_debug, "[DIM_TRAVEL] Already in target dimension" );
         return;
@@ -7121,7 +7126,7 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
             load_pos = info->origin_pos;
         }
     }
-    g->travel_to_dimension( destination.str(), destination, std::nullopt, load_pos );
+    g->travel_to_dimension( target_dim_id, destination, std::nullopt, load_pos );
 }
 
 // -------------------

@@ -60,6 +60,7 @@
 #include "output.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "legacy_pathfinding.h"
 #include "player_activity.h"
 #include "pldata.h"
@@ -724,8 +725,9 @@ void npc::setpos( const tripoint &pos )
     // TODO: fix point types
     const point_abs_om pos_om_new( sm_to_om_copy( submap_coords ) );
     if( !is_fake() && pos_om_old != pos_om_new ) {
-        overmap &om_old = overmap_buffer.get( pos_om_old );
-        overmap &om_new = overmap_buffer.get( pos_om_new );
+        auto &dim_ob = get_overmapbuffer( get_dimension() );
+        overmap &om_old = dim_ob.get( pos_om_old );
+        overmap &om_new = dim_ob.get( pos_om_new );
         if( const auto ptr = om_old.erase_npc( getID() ) ) {
             om_new.insert_npc( ptr );
         } else {
@@ -753,8 +755,9 @@ void npc::travel_overmap( const tripoint &pos )
         reach_omt_destination();
     }
     if( !is_fake() && pos_om_old != pos_om_new ) {
-        overmap &om_old = overmap_buffer.get( pos_om_old );
-        overmap &om_new = overmap_buffer.get( pos_om_new );
+        auto &dim_ob = get_overmapbuffer( get_dimension() );
+        overmap &om_old = dim_ob.get( pos_om_old );
+        overmap &om_new = dim_ob.get( pos_om_new );
         if( const auto ptr = om_old.erase_npc( getID() ) ) {
             om_new.insert_npc( ptr );
         } else {
@@ -2657,7 +2660,7 @@ void npc::erase()
     }
     dead = true;
     g->remove_npc_follower( getID() );
-    overmap_buffer.remove_npc( getID() );
+    get_overmapbuffer( get_dimension() ).remove_npc( getID() );
     g->cleanup_dead();
 }
 

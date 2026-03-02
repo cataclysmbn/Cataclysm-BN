@@ -56,6 +56,7 @@
 #include "overmap.h"
 #include "overmap_location.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "projectile.h"
@@ -2891,7 +2892,7 @@ void npc::find_item()
         }
         std::vector<npc *> followers;
         for( auto &elem : g->get_follower_list() ) {
-            shared_ptr_fast<npc> npc_to_get = overmap_buffer.find_npc( elem );
+            shared_ptr_fast<npc> npc_to_get = get_overmapbuffer( get_dimension() ).find_npc( elem );
             if( !npc_to_get ) {
                 continue;
             }
@@ -4247,14 +4248,16 @@ void npc::set_omt_destination()
             find_params.search_range = { 0, 75 };
             find_params.search_layers = omt_find_all_layers;
 
-            goal = overmap_buffer.find_closest( surface_omt_loc, find_params );
+            auto &dim_ob = get_overmapbuffer( get_dimension() );
+            goal = dim_ob.find_closest( surface_omt_loc, find_params );
             npc_need_goal_cache &cache = goal_cache[fulfill];
             cache.goal = goal;
             cache.omt_loc = surface_omt_loc;
         }
         omt_path.clear();
         if( goal != overmap::invalid_tripoint ) {
-            omt_path = overmap_buffer.get_travel_path( surface_omt_loc, goal, overmap_path_params::for_npc() );
+            omt_path = get_overmapbuffer( get_dimension() ).get_travel_path( surface_omt_loc, goal,
+                       overmap_path_params::for_npc() );
         }
         if( !omt_path.empty() ) {
             break;
@@ -4263,12 +4266,13 @@ void npc::set_omt_destination()
 
     // couldn't find any places to go, so go somewhere.
     if( goal == overmap::invalid_tripoint || omt_path.empty() ) {
+        auto &dim_ob = get_overmapbuffer( get_dimension() );
         goal = surface_omt_loc + point( rng( -90, 90 ), rng( -90, 90 ) );
-        omt_path = overmap_buffer.get_travel_path( surface_omt_loc, goal, overmap_path_params::for_npc() );
+        omt_path = dim_ob.get_travel_path( surface_omt_loc, goal, overmap_path_params::for_npc() );
         // try one more time
         if( omt_path.empty() ) {
             goal = surface_omt_loc + point( rng( -90, 90 ), rng( -90, 90 ) );
-            omt_path = overmap_buffer.get_travel_path( surface_omt_loc, goal, overmap_path_params::for_npc() );
+            omt_path = dim_ob.get_travel_path( surface_omt_loc, goal, overmap_path_params::for_npc() );
         }
         if( omt_path.empty() ) {
             goal = no_goal_point;

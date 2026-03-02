@@ -52,7 +52,19 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
+#include "overmapbuffer_registry.h"
 #include "profile.h"
+
+static const std::string &creature_dim( const Creature &c )
+{
+    if( const auto *mon = c.as_monster() ) {
+        return mon->get_dimension();
+    }
+    if( const auto *npc_ptr = c.as_npc() ) {
+        return npc_ptr->get_dimension();
+    }
+    return g_active_dimension_id;
+}
 
 static const ammo_effect_str_id ammo_effect_APPLY_SAP( "APPLY_SAP" );
 static const ammo_effect_str_id ammo_effect_BEANBAG( "BEANBAG" );
@@ -296,6 +308,11 @@ bool Creature::sees( const Creature &critter ) const
         return is_player();
     }
 
+    // Creatures in different dimensions cannot see each other.
+    if( creature_dim( *this ) != creature_dim( critter ) ) {
+        return false;
+    }
+
     if( !fov_3d && !debug_mode && posz() != critter.posz() ) {
         return false;
     }
@@ -366,6 +383,11 @@ bool Creature::sees( const tripoint &t, bool is_avatar, int range_mod ) const
     }
 
     map &here = get_map();
+    // A creature in a different dimension from the current render map cannot
+    // perform a valid sight check through that map's terrain data.
+    if( creature_dim( *this ) != here.get_bound_dimension() ) {
+        return false;
+    }
     const int range_cur = sight_range( here.ambient_light_at( t ) );
     const int range_day = sight_range( default_daylight_level() );
     const int range_night = sight_range( 0 );

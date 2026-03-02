@@ -4652,18 +4652,6 @@ void game::world_tick()
     const std::string &player_dim = m.get_bound_dimension();
     const bool fire_spread = out_of_bubble_fire_spread;
 
-    // Fast-path: in normal single-dimension play with no fire-spread-loaded
-    // out-of-bubble submaps, every entry in the primary mapbuffer is inside
-    // the reality bubble and would be skipped anyway.  Avoid the O(MAPBUFFER)
-    // scan entirely by bailing out early.
-    {
-        const auto dim_ids = MAPBUFFER_REGISTRY.active_dimension_ids();
-        const bool only_primary = dim_ids.size() == 1 && dim_ids[0] == player_dim;
-        if( only_primary && fire_loader.loaded_count() == 0 ) {
-            return;
-        }
-    }
-
     MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
         const bool is_player_dim = ( dim == player_dim );
         for( auto &[raw_pos, sm_ptr] : mb ) {
