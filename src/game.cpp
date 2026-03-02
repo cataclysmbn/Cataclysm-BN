@@ -3137,7 +3137,7 @@ bool game::save_maps()
         // std::map concurrent read+write is UB even if the write side is locked.
         submap_streamer.flush_all();
         m.save();
-        overmap_buffer.save(); // can throw
+        save_all_overmapbuffers(); // can throw — saves every loaded dimension's overmapbuffer
         // Phase 6: Save the dimension-aware mapbuffer slot, not always primary.
         MAPBUFFER_REGISTRY.get( m.get_bound_dimension() ).save(); // can throw
         return true;

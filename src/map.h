@@ -1886,6 +1886,16 @@ class map : public submap_load_listener
          */
         void actualize( const tripoint &grid );
         /**
+         * Apply the dimension boundary terrain overlay to the edge tiles of @p sm at
+         * absolute submap position @p pos.  Only operates when the map has active
+         * dimension bounds (@ref current_bounds_).  This is a runtime-only overlay —
+         * the saved submap data is never modified.  Must be called after setsubmap()
+         * so the grid entry is valid, and before actualize() so actualize sees the
+         * correct terrain.
+         */
+        auto apply_boundary_overlay( submap &sm,
+                                     const tripoint_abs_sm &pos ) -> void;
+        /**
          * Hacks in missing roofs. Should be removed when 3D mapgen is done.
          */
         void add_roofs( const tripoint &grid );

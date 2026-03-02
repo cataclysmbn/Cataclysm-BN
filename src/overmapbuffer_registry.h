@@ -27,6 +27,9 @@ void unload_overmapbuffer_dimension( const std::string &dim_id );
 void for_each_overmapbuffer(
     const std::function<void( const std::string &, overmapbuffer & )> &fn );
 
+/** Save every registered overmapbuffer to disk. */
+auto save_all_overmapbuffers() -> void;
+
 /** Return the primary dimension's overmapbuffer. */
 overmapbuffer &get_primary_overmapbuffer();
 

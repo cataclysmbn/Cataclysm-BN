@@ -7966,6 +7966,35 @@ static void generate_uniform( const tripoint &p, const ter_id &terrain_type, map
     }
 }
 
+auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> void
+{
+    if( !current_bounds_ ) {
+        return;
+    }
+    const bool on_min_x = pos.x() == current_bounds_->min_bound.x();
+    const bool on_max_x = pos.x() == current_bounds_->max_bound.x();
+    const bool on_min_y = pos.y() == current_bounds_->min_bound.y();
+    const bool on_max_y = pos.y() == current_bounds_->max_bound.y();
+    if( !on_min_x && !on_max_x && !on_min_y && !on_max_y ) {
+        return;
+    }
+    const auto border = get_boundary_terrain();
+    std::ranges::for_each(
+        std::views::cartesian_product( std::views::iota( 0, SEEX ), std::views::iota( 0, SEEY ) )
+        | std::views::filter( [&]( const auto &tile ) {
+            const auto [x, y] = tile;
+            return ( on_min_y && y == 0 ) ||
+                   ( on_max_y && y == SEEY - 1 ) ||
+                   ( on_min_x && x == 0 ) ||
+                   ( on_max_x && x == SEEX - 1 );
+        } ),
+        [&]( const auto &tile ) {
+            const auto [x, y] = tile;
+            sm.set_ter( { x, y }, border );
+        }
+    );
+}
+
 void map::loadn( const tripoint &grid, const bool update_vehicles )
 {
     // Cache empty overmap types
@@ -8057,6 +8086,12 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
     set_pathfinding_cache_dirty( grid.z );
     set_suspension_cache_dirty( grid.z );
     setsubmap( gridn, tmpsub );
+    // Overlay boundary terrain on the edge tiles of this submap if it sits at the
+    // edge of a bounded dimension.  Must run before actualize() so actualize() sees
+    // the correct terrain.  The underlying saved/generated submap data is not modified.
+    if( current_bounds_ ) {
+        apply_boundary_overlay( *tmpsub, tripoint_abs_sm( grid_abs_sub ) );
+    }
     if( !tmpsub->active_items.empty() ) {
         submaps_with_active_items.emplace( grid_abs_sub );
     }

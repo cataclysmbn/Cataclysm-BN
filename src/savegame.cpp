@@ -106,6 +106,11 @@ void game::serialize( std::ostream &fout )
 
     // Save the current dimension ID (replaces the old world_type + pocket_instance_id pair)
     json.member( "current_dimension_id", current_dimension_id_ );
+    // Save the kept pocket dimension ID so the single preserved pocket survives reload.
+    // The dimension_info metadata is reconstructed on entry from the item's pocket_dimension_data.
+    if( !kept_pocket_dimension_id_.empty() ) {
+        json.member( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
+    }
 
     // Save dimension bounds for bounded dimensions (pocket dimensions)
     if( m.has_dimension_bounds() ) {
@@ -256,6 +261,7 @@ void game::unserialize( std::istream &fin )
             }
         }
         g_active_dimension_id = current_dimension_id_;
+        data.read( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
 
         // Load dimension bounds BEFORE load_map so loadn() can generate
         // boundary submaps for out-of-bounds areas

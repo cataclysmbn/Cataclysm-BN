@@ -124,3 +124,10 @@ overmapbuffer &get_active_overmapbuffer()
 {
     return registry().get( g_active_dimension_id );
 }
+
+auto save_all_overmapbuffers() -> void
+{
+    for_each_overmapbuffer( []( const std::string &, overmapbuffer &buf ) {
+        buf.save();
+    } );
+}
