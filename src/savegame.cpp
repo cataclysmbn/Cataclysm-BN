@@ -130,8 +130,7 @@ void game::serialize( std::ostream &fout )
         }
     }
 
-    json.member( "grscent", scent.serialize() );
-    json.member( "typescent", scent.serialize( true ) );
+    // grscent/typescent removed — scent values live on per-submap arrays (not serialized).
 
     // Then each monster
     json.member( "active_monsters", *critter_tracker );
@@ -156,32 +155,7 @@ void game::serialize( std::ostream &fout )
     json.end_object();
 }
 
-std::string scent_map::serialize( bool is_type ) const
-{
-    std::ostringstream rle_out;
-    rle_out.imbue( std::locale::classic() );
-    if( is_type ) {
-        rle_out << typescent.str();
-    } else {
-        int rle_lastval = -1;
-        int rle_count = 0;
-        for( auto val : grscent ) {
-            if( val == rle_lastval ) {
-                rle_count++;
-            } else {
-                if( rle_count ) {
-                    rle_out << rle_count << " ";
-                }
-                rle_out << val << " ";
-                rle_lastval = val;
-                rle_count = 1;
-            }
-        }
-        rle_out << rle_count;
-    }
-
-    return rle_out.str();
-}
+// scent_map::serialize() moved to scent_map.cpp
 
 static void chkversion( std::istream &fin )
 {
@@ -293,14 +267,13 @@ void game::unserialize( std::istream &fin )
             safe_mode = SAFE_MODE_ON;
         }
 
-        std::string linebuff;
-        std::string linebuf;
-        if( data.read( "grscent", linebuf ) && data.read( "typescent", linebuff ) ) {
-            scent.deserialize( linebuf );
-            scent.deserialize( linebuff, true );
-        } else {
-            scent.reset();
+        // Silently discard old grscent/typescent flat-array data; scent now lives on submaps.
+        {
+            std::string discard;
+            data.read( "grscent", discard );
+            data.read( "typescent", discard );
         }
+        scent.reset();
         data.read( "active_monsters", *critter_tracker );
 
         coming_to_stairs.clear();
@@ -349,26 +322,7 @@ void game::unserialize( std::istream &fin )
     }
 }
 
-void scent_map::deserialize( const std::string &data, bool is_type )
-{
-    std::istringstream buffer( data );
-    buffer.imbue( std::locale::classic() );
-    if( is_type ) {
-        std::string str;
-        buffer >> str;
-        typescent = scenttype_id( str );
-    } else {
-        int stmp = 0;
-        int count = 0;
-        for( auto &val : grscent ) {
-            if( count == 0 ) {
-                buffer >> stmp >> count;
-            }
-            count--;
-            val = stmp;
-        }
-    }
-}
+// scent_map::deserialize() moved to scent_map.cpp
 
 #if defined(__ANDROID__)
 ///// quick shortcuts

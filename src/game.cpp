@@ -363,7 +363,7 @@ static void achievement_attained( const achievement *a )
 // This is the main game set-up process.
 game::game() :
     liveview( *liveview_ptr ),
-    scent_ptr( *this ),
+    scent_ptr( *this, *map_ptr ),
     achievements_tracker_ptr( *stats_tracker_ptr, *kill_tracker_ptr, achievement_attained ),
     m( *map_ptr ),
     u( *u_ptr ),
@@ -13066,7 +13066,8 @@ point game::update_map( int &x, int &y )
         }
     }
 
-    scent.shift( shift_ms );
+    // scent.shift() removed — scent values live on per-submap arrays,
+    // which move with the submap grid automatically on scroll.
 
     // Also ensure the player is on current z-level
     // get_levz() should later be removed, when there is no longer such a thing

@@ -119,22 +119,18 @@ void map::update_weather_transparency_lookup()
     }
 }
 
-// TODO: Consider making this just clear the cache and dynamically fill it in as is_transparent() is called
 bool map::build_transparency_cache( const int zlev )
 {
     ZoneScopedN( "build_transparency_cache" );
     auto &map_cache = get_cache( zlev );
     auto &transparency_cache = map_cache.transparency_cache;
-    auto &outside_cache = map_cache.outside_cache;
 
     if( map_cache.transparency_cache_dirty.none() ) {
         return false;
     }
 
-    std::set<tripoint> vehicles_processed;
-
     // if true, all submaps are invalid (can use batch init)
-    bool rebuild_all = map_cache.transparency_cache_dirty.all();
+    const bool rebuild_all = map_cache.transparency_cache_dirty.all();
 
     if( rebuild_all ) {
         // Default to just barely not transparent.
@@ -142,16 +138,11 @@ bool map::build_transparency_cache( const int zlev )
                    static_cast<float>( LIGHT_TRANSPARENCY_OPEN_AIR ) );
     }
 
-    // weather_transparency_lookup is refreshed once serially by
-    // update_weather_transparency_lookup() before the Phase 1 parallel loop;
-    // reading it here is safe.
-    const float sight_penalty = get_weather().weather_id->sight_penalty;
-
-    // Traverse the submaps in order
+    // Traverse the submaps in order; delegate to per-submap rebuild,
+    // then copy the 12×12 result into the flat render cache.
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-            const auto cur_submap = get_submap_at_grid( {smx, smy, zlev} );
-
+            auto *cur_submap = get_submap_at_grid( {smx, smy, zlev} );
             const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
 
             if( cur_submap == nullptr ) {
@@ -166,40 +157,14 @@ bool map::build_transparency_cache( const int zlev )
                 continue;
             }
 
-            // calculates transparency of a single tile
-            // x,y - coords in map local coords
-            auto calc_transp = [&]( point  p ) {
-                const point sp = p - sm_offset;
-                float value = LIGHT_TRANSPARENCY_OPEN_AIR;
-
-                if( !( cur_submap->get_ter( sp ).obj().transparent &&
-                       cur_submap->get_furn( sp ).obj().transparent ) ) {
-                    return LIGHT_TRANSPARENCY_SOLID;
-                }
-                if( outside_cache[map_cache.idx( p.x, p.y )] ) {
-                    // FIXME: Places inside vehicles haven't been marked as
-                    // inside yet so this is incorrectly penalising for
-                    // weather in vehicles.
-                    value *= sight_penalty;
-                }
-                for( const auto &fld : cur_submap->get_field( sp ) ) {
-                    const field_entry &cur = fld.second;
-                    if( cur.is_transparent() ) {
-                        continue;
-                    }
-                    // Fields are either transparent or not, however we want some to be translucent
-                    value = value * cur.translucency();
-                }
-                // TODO: [lightmap] Have glass reduce light as well
-                return value;
-            };
+            cur_submap->transparency_dirty = true;
+            cur_submap->rebuild_transparency_cache( *this, tripoint( smx, smy, zlev ) );
 
             if( cur_submap->is_uniform ) {
-                float value = calc_transp( sm_offset );
+                const float value = cur_submap->transparency_cache[0][0];
                 // if rebuild_all==true all values were already set to LIGHT_TRANSPARENCY_OPEN_AIR
                 if( !rebuild_all || value != LIGHT_TRANSPARENCY_OPEN_AIR ) {
                     for( int sx = 0; sx < SEEX; ++sx ) {
-                        // init all sy indices in one go
                         std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x + sx, sm_offset.y ),
                                      SEEY, value );
                     }
@@ -209,17 +174,14 @@ bool map::build_transparency_cache( const int zlev )
                     const int x = sx + sm_offset.x;
                     for( int sy = 0; sy < SEEY; ++sy ) {
                         const int y = sy + sm_offset.y;
-                        transparency_cache[map_cache.idx( x, y )] = calc_transp( { x, y } );
-
-                        //Nudge things towards fast paths
-                        if( std::fabs( transparency_cache[map_cache.idx( x,
-                                                                         y )] - openair_transparency_lookup.transparency ) <= 0.0001 ) {
-                            transparency_cache[map_cache.idx( x, y )] = openair_transparency_lookup.transparency;
-                        } else if( std::fabs( transparency_cache[map_cache.idx( x,
-                                                             y )] - weather_transparency_lookup.transparency ) <=
-                                   0.0001 ) {
-                            transparency_cache[map_cache.idx( x, y )] = weather_transparency_lookup.transparency;
+                        auto value = cur_submap->transparency_cache[sx][sy];
+                        // Nudge towards fast paths
+                        if( std::fabs( value - openair_transparency_lookup.transparency ) <= 0.0001f ) {
+                            value = openair_transparency_lookup.transparency;
+                        } else if( std::fabs( value - weather_transparency_lookup.transparency ) <= 0.0001f ) {
+                            value = weather_transparency_lookup.transparency;
                         }
+                        transparency_cache[map_cache.idx( x, y )] = value;
                     }
                 }
             }

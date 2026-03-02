@@ -392,6 +392,11 @@ bool Creature::sees( const tripoint &t, bool is_avatar, int range_mod ) const
             const float player_visibility_factor = g->u.visibility() / 100.0f;
             int adj_range = std::floor( range * player_visibility_factor );
             const auto &_mc = here.get_cache_ref( pos().z );
+            // seen_cache is only valid within the render area; out-of-render entities
+            // are not visible to the player by definition.
+            if( !_mc.inbounds( pos().xy() ) ) {
+                return false;
+            }
             return adj_range >= wanted_range &&
                    _mc.seen_cache[_mc.idx( pos().x, pos().y )] > LIGHT_TRANSPARENCY_SOLID;
         } else {

@@ -139,17 +139,17 @@ bool vertical_move_destination( const map &m, tripoint &t )
     if( start.y < 0 ) {
         start.y = 0;
     }
-    const auto &pf_cache = m.get_pathfinding_cache_ref( t.z );
-    if( end.x >= pf_cache.cache_x ) {
-        end.x = pf_cache.cache_x - 1;
+    const auto &rend_cache = m.get_cache_ref( t.z );
+    if( end.x >= rend_cache.cache_x ) {
+        end.x = rend_cache.cache_x - 1;
     }
-    if( end.y >= pf_cache.cache_y ) {
-        end.y = pf_cache.cache_y - 1;
+    if( end.y >= rend_cache.cache_y ) {
+        end.y = rend_cache.cache_y - 1;
     }
 
     for( int x = start.x; x < end.x; x++ ) {
         for( int y = start.y; y < end.y; y++ ) {
-            if( pf_cache.special[x * pf_cache.cache_y + y] & PF_UPDOWN ) {
+            if( m.get_pf_special( tripoint( x, y, t.z ) ) & PF_UPDOWN ) {
                 const tripoint p( x, y, t.z );
                 if( m.has_flag( flag, p ) ) {
                     t = p;
@@ -216,11 +216,10 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
     static const auto non_normal = PF_SLOW | PF_WALL | PF_VEHICLE | PF_TRAP | PF_SHARP;
     if( f.z == t.z ) {
         const auto line_path = line_to( f, t );
-        const auto &pf_cache = get_pathfinding_cache_ref( f.z );
         // Check all points for any special case (including just hard terrain)
-        if( !( pf_cache.special[f.x * pf_cache.cache_y + f.y] & non_normal ) &&
-        std::ranges::all_of( line_path, [&pf_cache]( const tripoint & p ) {
-        return !( pf_cache.special[p.x * pf_cache.cache_y + p.y] & non_normal );
+        if( !( get_pf_special( f ) & non_normal ) &&
+        std::ranges::all_of( line_path, [this]( const tripoint & p ) {
+            return !( get_pf_special( p ) & non_normal );
         } ) ) {
             const std::set<tripoint> sorted_line( line_path.begin(), line_path.end() );
 
@@ -293,8 +292,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
 
         cur_state = ASL_CLOSED;
 
-        const auto &pf_cache = get_pathfinding_cache_ref( cur.z );
-        const auto cur_special = pf_cache.special[cur.x * pf_cache.cache_y + cur.y];
+        const auto cur_special = get_pf_special( cur );
 
         int cur_part;
         const vehicle *cur_veh = veh_at_internal( cur, cur_part );
@@ -334,7 +332,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
             // Penalize for diagonals or the path will look "unnatural"
             int newg = layer.gscore[parent_index] + ( ( cur.x != p.x && cur.y != p.y ) ? 1 : 0 );
 
-            const auto p_special = pf_cache.special[p.x * pf_cache.cache_y + p.y];
+            const auto p_special = get_pf_special( p );
             // TODO: De-uglify, de-huge-n
             if( !( p_special & non_normal ) ) {
                 // Boring flat dirt - the most common case above the ground

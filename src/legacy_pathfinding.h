@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "game_constants.h"
 
 enum pf_special : int {
@@ -37,21 +35,6 @@ inline pf_special &operator &= ( pf_special &lhs, pf_special rhs )
     lhs = static_cast<pf_special>( static_cast< int >( lhs ) & static_cast< int >( rhs ) );
     return lhs;
 }
-
-struct pathfinding_cache {
-    pathfinding_cache() = default;
-    explicit pathfinding_cache( int mx, int my );
-    ~pathfinding_cache() = default;
-
-    bool dirty = true;
-
-    /// Stride (height) for flat index: special[x * cache_y + y].
-    int cache_x = 0;
-    int cache_y = 0;
-
-    /// Per-tile pathfinding flags, indexed as special[x * cache_y + y].
-    std::vector<pf_special> special;
-};
 
 struct pathfinding_settings {
     int bash_strength = 0;

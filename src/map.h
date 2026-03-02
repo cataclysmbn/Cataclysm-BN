@@ -28,6 +28,7 @@
 #include "game_constants.h"
 #include "item.h"
 #include "item_stack.h"
+#include "legacy_pathfinding.h"
 #include "lightmap.h"
 #include "line.h"
 #include "lru_cache.h"
@@ -90,7 +91,6 @@ using VehicleList = std::vector<wrapped_vehicle>;
 class map;
 
 enum ter_bitflags : int;
-struct pathfinding_cache;
 struct pathfinding_settings;
 template<typename T>
 struct weighted_int_list;
@@ -325,6 +325,10 @@ struct level_cache {
     int bidx( int sx, int sy ) const {
         return sx * cache_mapsize + sy;
     }
+    /// True if the tile-coordinate point is within this cache's rendered area.
+    bool inbounds( point p ) const {
+        return p.x >= 0 && p.x < cache_x && p.y >= 0 && p.y < cache_y;
+    }
 
     // ---- per-submap dirty bitsets (size: cache_mapsize²) ----
     cata_dynamic_bitset transparency_cache_dirty;
@@ -378,9 +382,6 @@ struct level_cache {
 
     // per-tile map-memory seen bitset (size: cache_x * cache_y), indexed [x + y * cache_x]
     cata_dynamic_bitset             map_memory_seen_cache;
-
-    // per-submap field presence bitset (size: cache_mapsize²), indexed [x + y * cache_mapsize]
-    cata_dynamic_bitset             field_cache;
 
     bool veh_in_active_range = false;
     std::vector<bool>               veh_exists_at;
@@ -522,6 +523,7 @@ class map : public submap_load_listener
 
         void set_suspension_cache_dirty( const int zlev );
 
+        /// Mark the per-submap pf_cache dirty for the submap containing p.
         void set_pathfinding_cache_dirty( int zlev );
         /*@}*/
 
@@ -1123,6 +1125,9 @@ class map : public submap_load_listener
         bool is_outside( point p ) const {
             return is_outside( tripoint( p, abs_sub.z ) );
         }
+        /// Per-submap terrain transparency for game logic (works at any loaded position).
+        auto get_transparency( const tripoint &p ) const -> float;
+
         /**
          * Returns whether or not the terrain at the given location can be dived into
          * (by monsters that can swim or are aquatic or non-breathing).
@@ -2166,7 +2171,6 @@ class map : public submap_load_listener
          */
         std::array< std::unique_ptr<level_cache>, OVERMAP_LAYERS > caches;
 
-        mutable std::array< std::unique_ptr<pathfinding_cache>, OVERMAP_LAYERS > pathfinding_caches;
         /**
          * Set of submaps that contain active items in absolute coordinates.
          */
@@ -2195,8 +2199,6 @@ class map : public submap_load_listener
             return *caches[zlev + OVERMAP_DEPTH];
         }
 
-        pathfinding_cache &get_pathfinding_cache( int zlev ) const;
-
         visibility_variables visibility_variables_cache;
 
         // caches the highest zlevel above which all zlevels are uniform
@@ -2217,9 +2219,9 @@ class map : public submap_load_listener
             return *caches[zlev + OVERMAP_DEPTH];
         }
 
-        const pathfinding_cache &get_pathfinding_cache_ref( int zlev ) const;
-
-        void update_pathfinding_cache( int zlev ) const;
+        /// Return the pathfinding flags for a single tile, rebuilding the per-submap
+        /// pf_cache if it has been marked dirty.  Works for any loaded position.
+        auto get_pf_special( const tripoint &p ) const -> pf_special;
 
         void update_visibility_cache( int zlev );
         const visibility_variables &get_visibility_variables_cache() const;
