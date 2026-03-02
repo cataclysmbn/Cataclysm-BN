@@ -122,7 +122,7 @@ struct cache_grid_ref {
     int sx   = 0;  ///< tile width  = cache_x = SEEX * g_mapsize
     int sy   = 0;  ///< tile height = cache_y = SEEY * g_mapsize
     /// Element access: grid[x][y] equivalent.
-    auto at( int x, int y ) const -> T& { return data[x * sy + y]; }
+    auto at( int x, int y ) const -> T & { return data[x * sy + y]; }
 };
 
 template<typename T>
