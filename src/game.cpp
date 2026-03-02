@@ -1558,7 +1558,7 @@ bool game::cleanup_at_end()
     // (overworld + pocket + nether, etc.) there may be more than two active buffers,
     // so clearing only primary and the player's current dimension would leave orphaned
     // submap data in memory and potentially dangling itype* pointers after unload_data().
-    MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer &buf ) {
+    MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer & buf ) {
         buf.clear();
     } );
     overmap_buffer.clear();
@@ -13003,7 +13003,7 @@ point game::update_map( int &x, int &y )
         // Lazy tracker construction mirrors the pattern in the reality_bubble block below.
         if( grid_trackers_.find( cur_dim ) == grid_trackers_.end() ) {
             grid_trackers_[cur_dim] = std::make_unique<distribution_grid_tracker>(
-                                         MAPBUFFER_REGISTRY.get( cur_dim ) );
+                                          MAPBUFFER_REGISTRY.get( cur_dim ) );
             submap_loader.add_listener( grid_trackers_[cur_dim].get() );
         }
         auto &tracker = *grid_trackers_[cur_dim];
@@ -13680,7 +13680,7 @@ void game::quickload()
     if( active_world->info->save_exists( save_t::from_save_id( u.get_save_id() ) ) ) {
         // Clear all registered dimension slots before reloading (see the same pattern in
         // game::unload_ui_state() for rationale — multiple dimensions may be active).
-        MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer &buf ) {
+        MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer & buf ) {
             buf.clear();
         } );
         overmap_buffer.clear();

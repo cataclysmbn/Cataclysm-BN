@@ -2317,7 +2317,8 @@ class item : public location_visitable<item>, public game_object<item>
 
             // Return tracking - where to go when exiting this pocket
             std::string return_dimension_id;      // Which dimension to return to (empty = overworld)
-            world_type_id return_world_type;      // World type of the return dimension (may be null for overworld)
+            world_type_id
+            return_world_type;      // World type of the return dimension (may be null for overworld)
             tripoint_abs_omt return_point;        // Where to place player on exit
 
             void serialize( JsonOut &jsout ) const;
