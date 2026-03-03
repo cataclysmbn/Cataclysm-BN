@@ -1498,7 +1498,8 @@ void monster::execute_action( const monster_action_t &action )
         if( !anchored_on_wall_then && g->u.sees( *this ) ) {
             const auto support_name = [&here, this]() -> std::string {
                 const auto support = get_wall_support( here, pos() );
-                if( support.has_value() ) {
+                if( support.has_value() )
+                {
                     return here.disp_name( *support );
                 }
                 return std::string( _( "the wall" ) );
