@@ -45,15 +45,15 @@ static int compute_field_decay( int current_intensity, int half_life_turns,
 // ---------------------------------------------------------------------------
 // batch_turns_field
 // ---------------------------------------------------------------------------
-// NOTE: Divergence from tick_submap (intentional approximation)
-// ---------------------------------------------------------------
-// tick_submap (world_tick_interval_ == 1) uses the canonical stochastic
-// dice-roll decay from map::process_fields_in_submap():
+// NOTE: Divergence from process_fields_in_submap (intentional approximation)
+// -------------------------------------------------------------------------------
+// process_fields_in_submap (the canonical per-turn path) uses the stochastic
+// dice-roll decay:
 //
 //   if( fdata.half_life > 0 && dice(2, age) > half_life )
 //       intensity--;
 //
-// batch_turns_field (world_tick_interval_ > 1) uses compute_field_decay(),
+// batch_turns_field (catch-up on submap load) uses compute_field_decay(),
 // a deterministic linear approximation: one intensity drop per half_life
 // turns elapsed.  Over large N the expected number of drops is the same,
 // but individual fields will not follow the exact probabilistic curve.

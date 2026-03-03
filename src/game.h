@@ -917,8 +917,6 @@ class game
         int  tier_assign_all(); // LOD tier assignment, O(M), called from monmove(); returns Tier 0 count
         // Out-of-bubble world simulation
         void world_tick();       // Tick all loaded submaps outside the player's reality bubble
-        // Per-submap tick.  fire_spread=true requests adjacent submaps for fire spread.
-        void tick_submap( submap &sm, tripoint_abs_sm pos, const std::string &dim, bool fire_spread );
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process
         void process_activity(); // Processes and enacts the player's activity

@@ -32,7 +32,7 @@ class fire_spread_loader
         fire_spread_loader &operator=( const fire_spread_loader & ) = delete;
 
         /**
-         * Called from game::tick_submap() when fire is present on a loaded
+         * Called from game::world_tick() when fire is present on a loaded
          * submap and an adjacent submap position is not properly loaded.
          *
          * Does nothing if:

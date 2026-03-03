@@ -634,14 +634,7 @@ class map : public submap_load_listener
         maptile maptile_at_internal( const tripoint &p ) const;
         maptile maptile_at_internal( const tripoint &p );
     private:
-        // Versions of the above that don't do bounds checks
-        std::pair<tripoint, maptile> maptile_has_bounds( const tripoint &p, bool bounds_checked );
-        std::array<std::pair<tripoint, maptile>, 8> get_neighbors( const tripoint &p );
-        void spread_gas( field_entry &cur, const tripoint &p, int percent_spread,
-                         const time_duration &outdoor_age_speedup, scent_block &sblk );
         void create_hot_air( const tripoint &p, int intensity );
-        bool gas_can_spread_to( field_entry &cur, const tripoint &src, const tripoint &dst );
-        void gas_spread_to( field_entry &cur, maptile &dst, const tripoint &p );
         int burn_body_part( player &u, field_entry &cur, body_part bp, int scale );
     public:
 
@@ -1544,12 +1537,6 @@ class map : public submap_load_listener
         const std::vector<tripoint> &get_furn_field_locations() const;
         const std::vector<tripoint> &trap_locations( const trap_id &type ) const;
 
-        // Adds to a list of byproducts from items destroyed in fire.
-        void create_burnproducts( std::vector<detached_ptr<item>> &out, const item &fuel,
-                                  const units::mass &burned_mass );
-        // See fields.cpp
-        void process_fields();
-        void process_fields_in_submap( submap *current_submap, const tripoint &submap_pos );
         /**
          * Apply field effects to the creature when it's on a square with fields.
          */

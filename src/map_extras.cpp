@@ -31,6 +31,7 @@
 #include "json.h"
 #include "line.h"
 #include "map.h"
+#include "submap_fields.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "mapgen.h"
@@ -1901,7 +1902,7 @@ static void burned_ground_parser( map &m, const tripoint &loc )
         std::vector<detached_ptr<item>> products;
         for( auto it = stack.begin(); it != stack.end(); ) {
             if( ( *it )->flammable() ) {
-                m.create_burnproducts( products, **it, ( *it )->weight() );
+                create_burnproducts( products, **it, ( *it )->weight() );
                 it = stack.erase( it );
             } else {
                 it++;

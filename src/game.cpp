@@ -176,6 +176,7 @@
 #include "string_input_popup.h"
 #include "fire_spread_loader.h"
 #include "submap.h"
+#include "submap_fields.h"
 #include "submap_stream.h"
 #include "type_id.h"
 #include "tileray.h"
@@ -1861,7 +1862,6 @@ bool game::do_turn()
         autopilot_vehicles();
         m.vehmove();
     }
-    m.process_fields();
     m.process_items();
     m.creature_in_field( u );
     for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
@@ -1976,7 +1976,7 @@ bool game::do_turn()
     // reset player noise
     u.volume = 0;
 
-    // Process out-of-bubble submaps (fields, items, vehicles) for all loaded dimensions.
+    // Tick all loaded submaps: fields for every submap, items/vehicles for batch-eligible ones.
     world_tick();
 
     // Finally, clear pathfinding cache
@@ -4557,116 +4557,42 @@ int game::tier_assign_all()
 }
 
 // ---------------------------------------------------------------------------
-// Out-of-bubble world tick
+// World tick — processes ALL loaded submaps every turn.
 // ---------------------------------------------------------------------------
-
-/**
- * Tick a single submap outside the player's reality bubble.
- *
- * Currently performs:
- *   • Field aging / half-life decay (no spreading; the in-bubble map handles
- *     spreading for loaded submaps; fire_spread_loader handles requests for
- *     adjacent unloaded submaps).
- *   • Fire-spread boundary requests when OUT_OF_BUBBLE_FIRE_SPREAD == "adjacent".
- *
- * Item rot and vehicle ticks are deferred to Phase 6 (they are time-delta
- * correcting and self-heal on reload, so deferral is safe).
- */
-void game::tick_submap( submap &sm, tripoint_abs_sm pos, const std::string &dim,
-                        bool fire_spread )
-{
-    bool has_fire = false;
-
-    // --- Field decay ---
-    for( int x = 0; x < SEEX; ++x ) {
-        for( int y = 0; y < SEEY; ++y ) {
-            field &curfield = sm.get_field( { x, y } );
-            if( !curfield.displayed_field_type() ) {
-                continue;
-            }
-            for( auto it = curfield.begin(); it != curfield.end(); ) {
-                field_entry &cur = it->second;
-
-                if( !cur.is_field_alive() ) {
-                    --sm.field_count;
-                    curfield.remove_field( it++ );
-                    continue;
-                }
-
-                cur.mod_field_age( 1_turns );
-                const field_type &fdata = cur.get_field_type().obj();
-                if( fdata.half_life > 0_turns && cur.get_field_age() > 0_turns &&
-                    dice( 2, to_turns<int>( cur.get_field_age() ) ) >
-                    to_turns<int>( fdata.half_life ) ) {
-                    cur.set_field_age( 0_turns );
-                    cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                }
-
-                if( !cur.is_field_alive() ) {
-                    --sm.field_count;
-                    curfield.remove_field( it++ );
-                } else {
-                    if( fdata.has_fire ) {
-                        has_fire = true;
-                    }
-                    ++it;
-                }
-            }
-        }
-    }
-
-    // --- Fire-spread boundary requests ---
-    // When fire is present and the option is enabled, request adjacent submaps
-    // so that fire spread is correctly resolved during the next in-bubble
-    // map::process_fields() or when the player approaches.
-    if( fire_spread && has_fire ) {
-        static const std::array<tripoint, 4> card = {{
-                tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
-                tripoint{ 0, 1, 0 }, tripoint{ 0, -1, 0 }
-            }
-        };
-        for( const tripoint &delta : card ) {
-            const tripoint_abs_sm nbr{ pos.raw() + delta };
-            if( !submap_loader.is_requested( dim, nbr ) ) {
-                fire_loader.request_for_fire( dim, nbr );
-            }
-        }
-    }
-
-    // Item rot: time-delta based, self-corrects on reload — no per-turn pass needed.
-    // Vehicle updates: deferred to Phase 6 (batch_turns).
-}
 
 void game::world_tick()
 {
     ZoneScoped;
 
-    // Check interval: only run every world_tick_interval_ turns.
-    if( world_tick_interval_ > 1 ) {
-        const int elapsed = to_turns<int>( calendar::turn - calendar::turn_zero );
-        if( elapsed % world_tick_interval_ != 0 ) {
-            return;
+    const auto  fire_spread = out_of_bubble_fire_spread;
+
+    // Cardinal neighbours used for fire-spread boundary requests.
+    static const std::array<tripoint, 4> card = {{
+            tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
+            tripoint{ 0, 1, 0 }, tripoint{ 0, -1, 0 }
         }
-    }
+    };
 
-    const std::string &player_dim = m.get_bound_dimension();
-    const bool fire_spread = out_of_bubble_fire_spread;
-
-    MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
-        const bool is_player_dim = ( dim == player_dim );
-        for( auto &[raw_pos, sm_ptr] : mb ) {
+    MAPBUFFER_REGISTRY.for_each( [&]( const std::string &dim, mapbuffer &mb ) {
+        std::ranges::for_each( mb, [&]( auto &entry ) {
+            auto &[raw_pos, sm_ptr] = entry;
             if( !sm_ptr ) {
-                continue;
+                return;
             }
             const tripoint_abs_sm pos_sm( raw_pos );
-            // Skip submaps inside the player's reality bubble — already processed
-            // each turn by map::process_fields() and map::process_items().
-            if( is_player_dim && m.contains_abs_sm( pos_sm ) ) {
-                continue;
-            }
-            tick_submap( *sm_ptr, pos_sm, dim, fire_spread );
+
+            const auto has_fire = process_fields_in_submap( *sm_ptr, pos_sm, mb );
             sm_ptr->last_touched = calendar::turn;
-        }
+
+            if( fire_spread && has_fire ) {
+                std::ranges::for_each( card, [&]( const tripoint &delta ) {
+                    const tripoint_abs_sm nbr{ pos_sm.raw() + delta };
+                    if( !submap_loader.is_requested( dim, nbr ) ) {
+                        fire_loader.request_for_fire( dim, nbr );
+                    }
+                } );
+            }
+        } );
     } );
 
     // Prune fire-spread load requests that are no longer connected or lack fire.
