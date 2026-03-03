@@ -219,7 +219,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
         // Check all points for any special case (including just hard terrain)
         if( !( get_pf_special( f ) & non_normal ) &&
         std::ranges::all_of( line_path, [this]( const tripoint & p ) {
-            return !( get_pf_special( p ) & non_normal );
+        return !( get_pf_special( p ) & non_normal );
         } ) ) {
             const std::set<tripoint> sorted_line( line_path.begin(), line_path.end() );
 

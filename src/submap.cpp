@@ -562,7 +562,8 @@ auto submap::rebuild_outside_cache( const map &m, tripoint grid_pos ) -> void
         for( int sy = 0; sy < SEEY; ++sy ) {
             const int y = grid_pos.y * SEEY + sy;
             auto any_indoors = [&]() -> bool {
-                for( int dx = -1; dx <= 1; ++dx ) {
+                for( int dx = -1; dx <= 1; ++dx )
+                {
                     for( int dy = -1; dy <= 1; ++dy ) {
                         if( m.has_flag( TFLAG_INDOORS, tripoint( x + dx, y + dy, grid_pos.z ) ) ) {
                             return true;

@@ -4573,8 +4573,8 @@ void game::world_tick()
         }
     };
 
-    MAPBUFFER_REGISTRY.for_each( [&]( const std::string &dim, mapbuffer &mb ) {
-        std::ranges::for_each( mb, [&]( auto &entry ) {
+    MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
+        std::ranges::for_each( mb, [&]( auto & entry ) {
             auto &[raw_pos, sm_ptr] = entry;
             if( !sm_ptr ) {
                 return;
@@ -4585,7 +4585,7 @@ void game::world_tick()
             sm_ptr->last_touched = calendar::turn;
 
             if( fire_spread && has_fire ) {
-                std::ranges::for_each( card, [&]( const tripoint &delta ) {
+                std::ranges::for_each( card, [&]( const tripoint & delta ) {
                     const tripoint_abs_sm nbr{ pos_sm.raw() + delta };
                     if( !submap_loader.is_requested( dim, nbr ) ) {
                         fire_loader.request_for_fire( dim, nbr );

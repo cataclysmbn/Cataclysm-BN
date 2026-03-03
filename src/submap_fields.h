@@ -43,5 +43,5 @@ void create_burnproducts( std::vector<detached_ptr<item>> &out, const item &fuel
  *          world_tick() uses this to request adjacent submap loading.
  */
 auto process_fields_in_submap( submap &sm,
-                                const tripoint_abs_sm &pos,
-                                mapbuffer &mb ) -> bool;
+                               const tripoint_abs_sm &pos,
+                               mapbuffer &mb ) -> bool;

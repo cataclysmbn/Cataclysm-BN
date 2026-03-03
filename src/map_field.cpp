@@ -105,8 +105,8 @@ void create_burnproducts( std::vector<detached_ptr<item>> &out, const item &fuel
         return;
     }
     const auto by_weight = burned_mass / all_mats.size();
-    std::ranges::for_each( all_mats, [&]( material_id &mat ) {
-        std::ranges::for_each( mat->burn_products(), [&]( const auto &bp ) {
+    std::ranges::for_each( all_mats, [&]( material_id & mat ) {
+        std::ranges::for_each( mat->burn_products(), [&]( const auto & bp ) {
             const auto id = bp.first;
             if( fuel.typeId() == id ) {
                 return;
@@ -1008,7 +1008,7 @@ struct SubTile {
     [[nodiscard]] auto get_field()  const -> field                 & { return sm->get_field( local ); }
     [[nodiscard]] auto get_ter_t()  const -> const ter_t           & { return sm->get_ter( local ).obj(); }
     [[nodiscard]] auto get_furn_t() const -> const furn_t          & { return sm->get_furn( local ).obj(); }
-    [[nodiscard]] auto get_items()  const -> location_vector<item> & { return sm->get_items( local ); }
+    [[nodiscard]] auto get_items()  const -> location_vector<item>& { return sm->get_items( local ); }
 };
 
 // Resolve `local + delta` crossing submap boundaries via mapbuffer.
@@ -1109,14 +1109,15 @@ auto gas_spread_sub( field_entry &cur, SubTile &dst ) -> void
 } // anonymous namespace
 
 static const std::array<point, 8> eight_dirs_sm = {{
-    { -1, -1 }, {  0, -1 }, {  1, -1 },
-    { -1,  0 },             {  1,  0 },
-    { -1,  1 }, {  0,  1 }, {  1,  1 }
-}};
+        { -1, -1 }, {  0, -1 }, {  1, -1 },
+        { -1,  0 },             {  1,  0 },
+        { -1,  1 }, {  0,  1 }, {  1,  1 }
+    }
+};
 
 auto process_fields_in_submap( submap &sm,
-                                const tripoint_abs_sm &pos,
-                                mapbuffer &mb ) -> bool
+                               const tripoint_abs_sm &pos,
+                               mapbuffer &mb ) -> bool
 {
     auto has_fire = false;
 
@@ -1178,9 +1179,9 @@ auto process_fields_in_submap( submap &sm,
                     const auto can_spread = !ter_furn_has_flag( ter, frn, TFLAG_FIRE_CONTAINER );
                     const auto no_floor   = ter.has_flag( TFLAG_NO_FLOOR );
                     const auto can_burn   = !no_floor && can_spread &&
-                                           ( check_flammable( ter ) || check_flammable( frn ) );
+                                            ( check_flammable( ter ) || check_flammable( frn ) );
                     const auto is_sealed  = ter_furn_has_flag( ter, frn, TFLAG_SEALED ) &&
-                                           !ter_furn_has_flag( ter, frn, TFLAG_ALLOW_FIELD_EFFECT );
+                                            !ter_furn_has_flag( ter, frn, TFLAG_ALLOW_FIELD_EFFECT );
 
                     auto time_added = 0_turns;
 
@@ -1282,7 +1283,7 @@ auto process_fields_in_submap( submap &sm,
                     }
 
                     // --- Neighbor scan for flashpoint / intensity growth / spreading ---
-                    const auto get_nb = [&]( const point &d ) {
+                    const auto get_nb = [&]( const point & d ) {
                         return neighbor_tile( &sm, pos, local, d, mb );
                     };
                     const auto in_pit = can_spread && ter.id.id() == t_pit;
@@ -1321,7 +1322,7 @@ auto process_fields_in_submap( submap &sm,
                         if( cur.get_field_age() < -500_minutes ) {
                             maximum_intensity = 3;
                         } else {
-                            std::ranges::for_each( eight_dirs_sm, [&]( const point &d ) {
+                            std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
                                 auto dst = get_nb( d );
                                 if( dst.valid() && dst.get_field().find_field( fd_fire ) ) {
                                     ++adjacent_fires;
@@ -1335,7 +1336,7 @@ auto process_fields_in_submap( submap &sm,
                         if( cur.get_field_intensity() < maximum_intensity ) {
                             cur.set_field_intensity( cur.get_field_intensity() + 1 );
                             cur.set_field_age( cur.get_field_age() +
-                                              10_minutes * cur.get_field_intensity() );
+                                               10_minutes * cur.get_field_intensity() );
                         }
                     }
 
@@ -1364,8 +1365,8 @@ auto process_fields_in_submap( submap &sm,
                                 spread_chance = 50 + spread_chance / 2;
                             }
                             const auto dst_has_flammable_items = std::ranges::any_of(
-                                dst.get_items().as_vector(),
-                                []( const item *i ) { return i && i->flammable(); } );
+                                    dst.get_items().as_vector(),
+                            []( const item * i ) { return i && i->flammable(); } );
                             const auto power = cur.get_field_intensity() + ( one_in( 5 ) ? 1 : 0 );
                             const auto can_ignite =
                                 rng( 1, 100 ) < spread_chance &&
@@ -1494,7 +1495,7 @@ auto process_fields_in_submap( submap &sm,
                         }
                     } else {
                         std::vector<point> grounded;
-                        std::ranges::for_each( eight_dirs_sm, [&]( const point &d ) {
+                        std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
                             auto dst = neighbor_tile( &sm, pos, local, d, mb );
                             if( dst.valid() && !sub_passable( dst ) ) {
                                 grounded.push_back( d );
@@ -1561,8 +1562,8 @@ auto process_fields_in_submap( submap &sm,
                             sub_add_field( dst, fd_fire, 1, 0_turns );
                         }
                         const auto dst_has_flammable = std::ranges::any_of(
-                            dst.get_items().as_vector(),
-                            []( const item *i ) { return i && i->flammable(); } );
+                                                           dst.get_items().as_vector(),
+                        []( const item * i ) { return i && i->flammable(); } );
                         if( dst_has_flammable ) {
                             sub_add_field( dst, fd_fire, 1, 0_turns );
                         }
@@ -1650,7 +1651,7 @@ auto process_fields_in_submap( submap &sm,
                         }
                         it->set_age( 0_turns );
                         std::vector<point> valid_dirs;
-                        std::ranges::for_each( eight_dirs_sm, [&]( const point &d ) {
+                        std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
                             auto dst = neighbor_tile( &sm, pos, local, d, mb );
                             if( dst.valid() && dst.get_field().find_field( fd_push_items ) ) {
                                 valid_dirs.push_back( d );
@@ -1674,14 +1675,15 @@ auto process_fields_in_submap( submap &sm,
                 // ---- fd_bees ------------------------------------------------
                 if( !is_newborn && cur_fd_type_id == fd_bees ) {
                     static const std::array<field_type_id, 18> bee_killers = {{
-                        fd_web, fd_fire, fd_smoke, fd_toxic_gas, fd_tear_gas,
-                        fd_relax_gas, fd_nuke_gas, fd_gas_vent, fd_smoke_vent,
-                        fd_fungicidal_gas, fd_insecticidal_gas, fd_fire_vent,
-                        fd_flame_burst, fd_electricity, fd_fatigue, fd_shock_vent,
-                        fd_plasma, fd_laser
-                    }};
+                            fd_web, fd_fire, fd_smoke, fd_toxic_gas, fd_tear_gas,
+                            fd_relax_gas, fd_nuke_gas, fd_gas_vent, fd_smoke_vent,
+                            fd_fungicidal_gas, fd_insecticidal_gas, fd_fire_vent,
+                            fd_flame_burst, fd_electricity, fd_fatigue, fd_shock_vent,
+                            fd_plasma, fd_laser
+                        }
+                    };
                     const auto killed = std::ranges::any_of( bee_killers,
-                    [&]( const field_type_id &k ) {
+                    [&]( const field_type_id & k ) {
                         return curfield.find_field( k ) != nullptr;
                     } );
                     if( killed ) {

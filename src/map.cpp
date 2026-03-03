@@ -342,7 +342,7 @@ void map::set_transparency_cache_dirty( const int zlev )
         for( int smx = 0; smx < my_MAPSIZE; ++smx )
             for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
                 auto *sm = get_submap_at_grid( { smx, smy, zlev } );
-                if( sm ) sm->transparency_dirty = true;
+                if( sm ) { sm->transparency_dirty = true; }
             }
     }
 }
@@ -368,7 +368,7 @@ void map::set_outside_cache_dirty( const int zlev )
         for( int smx = 0; smx < my_MAPSIZE; ++smx )
             for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
                 auto *sm = get_submap_at_grid( { smx, smy, zlev } );
-                if( sm ) sm->outside_dirty = true;
+                if( sm ) { sm->outside_dirty = true; }
             }
     }
 }
@@ -387,7 +387,7 @@ void map::set_floor_cache_dirty( const int zlev )
         for( int smx = 0; smx < my_MAPSIZE; ++smx )
             for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
                 auto *sm = get_submap_at_grid( { smx, smy, zlev } );
-                if( sm ) sm->floor_dirty = true;
+                if( sm ) { sm->floor_dirty = true; }
             }
     }
 }
@@ -407,7 +407,7 @@ void map::set_transparency_cache_dirty( const tripoint &p )
         level_cache &ch = get_cache( smp.z );
         ch.transparency_cache_dirty.set( static_cast<size_t>( ch.bidx( smp.x, smp.y ) ) );
         auto *sm = get_submap_at_grid( { smp.x, smp.y, smp.z } );
-        if( sm ) sm->transparency_dirty = true;
+        if( sm ) { sm->transparency_dirty = true; }
     }
 }
 
@@ -8023,17 +8023,17 @@ auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> vo
     const auto border = get_boundary_terrain();
     std::ranges::for_each(
         std::views::cartesian_product( std::views::iota( 0, SEEX ), std::views::iota( 0, SEEY ) )
-        | std::views::filter( [&]( const auto &tile ) {
-            const auto [x, y] = tile;
-            return ( on_min_y && y == 0 ) ||
-                   ( on_max_y && y == SEEY - 1 ) ||
-                   ( on_min_x && x == 0 ) ||
-                   ( on_max_x && x == SEEX - 1 );
-        } ),
-        [&]( const auto &tile ) {
-            const auto [x, y] = tile;
-            sm.set_ter( { x, y }, border );
-        }
+    | std::views::filter( [&]( const auto & tile ) {
+        const auto [x, y] = tile;
+        return ( on_min_y && y == 0 ) ||
+               ( on_max_y && y == SEEY - 1 ) ||
+               ( on_min_x && x == 0 ) ||
+               ( on_max_x && x == SEEX - 1 );
+    } ),
+    [&]( const auto & tile ) {
+        const auto [x, y] = tile;
+        sm.set_ter( { x, y }, border );
+    }
     );
 }
 
@@ -9166,8 +9166,8 @@ void map::build_outside_cache( const int zlev )
             for( int sx = 0; sx < SEEX; ++sx ) {
                 for( int sy = 0; sy < SEEY; ++sy ) {
                     outside_cache[static_cast<size_t>( ch.idx( sm_offset.x + sx,
-                                                               sm_offset.y + sy ) )] =
-                        cur_submap->outside_cache[sx][sy];
+                                                       sm_offset.y + sy ) )] =
+                                                           cur_submap->outside_cache[sx][sy];
                 }
             }
         }

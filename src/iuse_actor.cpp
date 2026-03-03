@@ -7088,7 +7088,8 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
     // The "default" world_type_id is the base overworld; its canonical dim_id is ""
     // (empty string) for backward-compat save paths.  Normalize here so callers
     // that specify destination="default" correctly reach the overworld slot.
-    const auto target_dim_id = destination.str() == "default" ? std::string{} : destination.str();
+    const auto target_dim_id = destination.str() == "default" ? std::string{} :
+                               destination.str();
 
     // Check if already in target dimension
     if( g->get_current_dimension_id() == target_dim_id ) {

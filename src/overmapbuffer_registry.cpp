@@ -127,7 +127,7 @@ overmapbuffer &get_active_overmapbuffer()
 
 auto save_all_overmapbuffers() -> void
 {
-    for_each_overmapbuffer( []( const std::string &, overmapbuffer &buf ) {
+    for_each_overmapbuffer( []( const std::string &, overmapbuffer & buf ) {
         buf.save();
     } );
 }

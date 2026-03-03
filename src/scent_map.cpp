@@ -111,7 +111,7 @@ void scent_map::decay()
                     continue;
                 }
                 std::ranges::for_each( std::span( &sm->scent_values[0][0], SEEX * SEEY ),
-                                       []( auto &v ) { v = std::max( 0, v - 1 ); } );
+                []( auto & v ) { v = std::max( 0, v - 1 ); } );
             }
         }
     }
