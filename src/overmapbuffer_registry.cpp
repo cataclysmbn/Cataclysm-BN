@@ -6,9 +6,14 @@
 #include "overmap.h"
 
 #include <functional>
+#include <future>
 #include <map>
 #include <memory>
+#include <ranges>
 #include <string>
+#include <vector>
+
+#include "thread_pool.h"
 
 // ---------------------------------------------------------------------------
 // Registry class — defined here, never exposed in a header.
@@ -127,13 +132,30 @@ overmapbuffer &get_active_overmapbuffer()
 
 auto save_all_overmapbuffers() -> void
 {
-    // Each overmapbuffer's overmap::save() uses legacy_dim_id() → g_active_dimension_id
-    // to pick the file path.  Temporarily override the global so every buffer's overmaps
-    // are written to their own dimension's path, not the player's current dimension's path.
-    const auto saved_dim = g_active_dimension_id;
-    for_each_overmapbuffer( []( const std::string & dim_id, overmapbuffer & buf ) {
-        g_active_dimension_id = dim_id;
-        buf.save();
+    // Thread-safety audit (§7.4, task 30):
+    // Each dimension's overmapbuffer writes to a distinct subdirectory:
+    //   overworld  →  <world>/o_X.Y.ovr  (legacy path, no subdirectory)
+    //   other dims →  <world>/dimensions/<dim_id>/o_X.Y.ovr
+    // No two dimensions share a file path, so concurrent saves have zero
+    // file-level contention.  overmap::save(dim_id) uses the dim-aware
+    // world::write_overmap(dim_id, ...) overload — no global state is read
+    // at worker-thread execution time.
+    //
+    // The overmapbuffer::save(dim_id) call holds a read-lock on the buffer's
+    // internal shared_mutex while iterating overmaps.  Multiple dimensions
+    // each hold their own buffer's lock, so there is no cross-dimension
+    // mutex contention.
+    std::vector<std::future<void>> futures;
+    futures.reserve( 8 );  // most games have at most a handful of dimensions
+
+    for_each_overmapbuffer( [&futures]( const std::string & dim_id, overmapbuffer & buf ) {
+        futures.push_back( get_thread_pool().submit_returning(
+        [dim_id, &buf]() {
+            buf.save( dim_id );
+        } ) );
     } );
-    g_active_dimension_id = saved_dim;
+
+    std::ranges::for_each( futures, []( auto &f ) {
+        f.get();
+    } );
 }

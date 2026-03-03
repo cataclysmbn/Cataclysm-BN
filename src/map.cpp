@@ -8094,6 +8094,14 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
         const tripoint_abs_omt grid_abs_omt( sm_to_omt_copy( grid_abs_sub ) );
         const tripoint grid_abs_sub_rounded = omt_to_sm_copy( grid_abs_omt.raw() );
 
+        // TODO(async-gen): This generation path reads overmap_buffer.ter() — which
+        // resolves to get_active_overmapbuffer() via g_active_dimension_id — and
+        // also uses global RNG (now thread-local) and other main-thread singletons.
+        // To parallelise generation across worker threads, every mapgen entry point
+        // must accept explicit (mapbuffer&, overmapbuffer&) parameters instead of
+        // reading these globals.  Until then, generation remains synchronous here on
+        // the main thread.  The parallel disk-read path in submap_load_manager
+        // pre-fetches submaps that exist on disk; generation only fires for new tiles.
         const oter_id terrain_type = overmap_buffer.ter( grid_abs_omt );
 
         // Short-circuit if the map tile is uniform

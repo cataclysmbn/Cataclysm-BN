@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <map>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
@@ -123,6 +124,33 @@ class grid_furn_transform_queue
 };
 
 /**
+ * A stub link from this dimension's electrical grid to a grid in another dimension.
+ *
+ * STUB — full cross-dimension power-transfer mechanics are deferred (§7.5).
+ * This struct defines the API boundary so that the key data structures are in
+ * place before the feature is implemented.
+ *
+ * Extension points (to be filled in by the cross-dimension grids feature PR):
+ *  - add_export_node / remove_export_node on distribution_grid_tracker
+ *  - apply_export( watts ) — forward power to the target dimension's tracker
+ *  - query_import( watts ) — receive power from a remote exporter
+ *  - Power-loss coefficient across the dimensional boundary
+ *  - Cable item definition and install / uninstall UI
+ */
+struct cross_dimension_export_node {
+    /// Cable anchor tile in this (source) dimension.
+    tripoint_abs_ms source_pos;
+    /// The dimension this cable connects to.
+    std::string     target_dim_id;
+    /// Cable anchor tile in the target dimension.
+    tripoint_abs_ms target_pos;
+
+    // STUB: no live power forwarding yet.  Allocated when a cross-dimension
+    // cable is placed; removed when it is destroyed.  All power-transfer calls
+    // are no-ops until the feature is implemented.
+};
+
+/**
  * Contains and manages all the active distribution grids.
  *
  * Implements submap_load_listener to receive per-submap load/unload events.
@@ -159,6 +187,20 @@ class distribution_grid_tracker : public submap_load_listener
         std::unordered_set<shared_ptr_fast<distribution_grid>> grids_requiring_updates;
 
         /**
+         * The dimension this tracker belongs to (matches the key in game::grid_trackers_).
+         * "" means the primary/overworld dimension.
+         * Set at construction time and never changes.
+         */
+        std::string dimension_id_;
+
+        /**
+         * Stub cross-dimension export nodes installed on this tracker.
+         * Each node represents one end of a dimensional electrical cable.
+         * Full mechanics (power forwarding, cable items) are deferred (§7.5).
+         */
+        std::vector<cross_dimension_export_node> export_nodes_;
+
+        /**
          * Returns the 4 submap positions that make up the given OMT.
          * An OMT at omt_pos contains submaps at:
          *   project_to<coords::sm>(omt_pos) + (0,0), (1,0), (0,1), (1,1)
@@ -173,8 +215,33 @@ class distribution_grid_tracker : public submap_load_listener
 
     public:
         distribution_grid_tracker();
-        distribution_grid_tracker( mapbuffer &buffer );
+        distribution_grid_tracker( mapbuffer &buffer, std::string dim_id = {} );
         distribution_grid_tracker( distribution_grid_tracker && ) = default;
+
+        /** The dimension this tracker serves ("" = overworld). */
+        auto get_dimension_id() const -> const std::string & {
+            return dimension_id_;
+        }
+
+        /**
+         * Register a cross-dimension cable endpoint on this tracker.
+         * STUB: no live power forwarding until the feature is implemented.
+         */
+        void add_export_node( cross_dimension_export_node node );
+
+        /**
+         * Remove the cross-dimension cable whose source tile is @p source_pos.
+         * STUB: no-op power-side until the feature is implemented.
+         */
+        void remove_export_node( const tripoint_abs_ms &source_pos );
+
+        /**
+         * Return the export nodes on this tracker (read-only).
+         * Used for save/load and for cross-dimension grid resolution.
+         */
+        auto get_export_nodes() const -> const std::vector<cross_dimension_export_node> & {
+            return export_nodes_;
+        }
         /**
          * Gets grid at given global map square coordinate. @ref map::getabs
          */

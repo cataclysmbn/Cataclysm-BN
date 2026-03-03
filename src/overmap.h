@@ -277,6 +277,16 @@ class overmap
             return loc;
         }
 
+        /**
+         * Save this overmap to the world folder using @p dim_id to determine
+         * the correct dimension subdirectory.  Thread-safe when different overmaps
+         * are saved concurrently: each writes to a distinct file path.
+         */
+        void save( const std::string &dim_id ) const;
+
+        /** Legacy overload — delegates to save(g_active_dimension_id).
+         *  Do NOT call from background threads; see g_active_dimension_id comment
+         *  in overmapbuffer_registry.h. */
         void save() const;
 
         /**

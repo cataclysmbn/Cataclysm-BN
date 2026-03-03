@@ -1,4 +1,5 @@
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 
 #include <algorithm>
 #include <cassert>
@@ -285,14 +286,22 @@ void overmapbuffer::fix_npcs( overmap &new_overmap )
     }
 }
 
-void overmapbuffer::save()
+void overmapbuffer::save( const std::string &dim_id )
 {
     read_lock<std::shared_mutex> _l( mutex );
 
     for( auto &omp : overmaps ) {
         // Note: this may throw io errors from std::ofstream
-        omp.second->save();
+        omp.second->save( dim_id );
     }
+}
+
+void overmapbuffer::save()
+{
+    // Legacy overload: routes through g_active_dimension_id.
+    // save_all_overmapbuffers() calls save(dim_id) directly to avoid needing
+    // to mutate the global and to allow parallel execution.
+    save( g_active_dimension_id );
 }
 
 void overmapbuffer::clear()

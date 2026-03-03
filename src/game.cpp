@@ -393,7 +393,7 @@ game::game() :
     // The primary dimension key is "" (mapbuffer_registry::PRIMARY_DIMENSION_ID).
     // MAPBUFFER == MAPBUFFER_REGISTRY.primary() — correct for this initialization;
     // trackers for other dimensions are constructed lazily on first use.
-    grid_trackers_[""] = std::make_unique<distribution_grid_tracker>( MAPBUFFER );
+    grid_trackers_[""] = std::make_unique<distribution_grid_tracker>( MAPBUFFER, "" );
     submap_loader.add_listener( grid_trackers_[""].get() );
 
     first_redraw_since_waiting_started = true;
@@ -692,7 +692,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
         // Ensure a tracker exists for this dimension.
         if( grid_trackers_.find( new_dim_id ) == grid_trackers_.end() ) {
             grid_trackers_[new_dim_id] = std::make_unique<distribution_grid_tracker>(
-                                             MAPBUFFER_REGISTRY.get( new_dim_id ) );
+                                             MAPBUFFER_REGISTRY.get( new_dim_id ), new_dim_id );
             submap_loader.add_listener( grid_trackers_[new_dim_id].get() );
         }
         auto &tracker = *grid_trackers_[new_dim_id];
@@ -738,7 +738,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     for( const auto &dim_id : submap_loader.active_dimensions() ) {
         if( grid_trackers_.find( dim_id ) == grid_trackers_.end() ) {
             grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
-                                         MAPBUFFER_REGISTRY.get( dim_id ) );
+                                         MAPBUFFER_REGISTRY.get( dim_id ), dim_id );
             submap_loader.add_listener( grid_trackers_[dim_id].get() );
         }
     }
@@ -12977,7 +12977,7 @@ point game::update_map( int &x, int &y )
         // Lazy tracker construction mirrors the pattern in the reality_bubble block below.
         if( grid_trackers_.find( cur_dim ) == grid_trackers_.end() ) {
             grid_trackers_[cur_dim] = std::make_unique<distribution_grid_tracker>(
-                                          MAPBUFFER_REGISTRY.get( cur_dim ) );
+                                          MAPBUFFER_REGISTRY.get( cur_dim ), cur_dim );
             submap_loader.add_listener( grid_trackers_[cur_dim].get() );
         }
         auto &tracker = *grid_trackers_[cur_dim];
@@ -12999,7 +12999,7 @@ point game::update_map( int &x, int &y )
         for( const auto &dim_id : submap_loader.active_dimensions() ) {
             if( grid_trackers_.find( dim_id ) == grid_trackers_.end() ) {
                 grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
-                                             MAPBUFFER_REGISTRY.get( dim_id ) );
+                                             MAPBUFFER_REGISTRY.get( dim_id ), dim_id );
                 submap_loader.add_listener( grid_trackers_[dim_id].get() );
             }
         }

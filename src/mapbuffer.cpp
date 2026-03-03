@@ -335,7 +335,9 @@ submap *mapbuffer::unserialize_submaps( const tripoint &p )
     return submaps[ p ].get();
 }
 
-void mapbuffer::deserialize( JsonIn &jsin )
+void mapbuffer::deserialize_into_vec(
+    JsonIn &jsin,
+    std::vector<std::pair<tripoint, std::unique_ptr<submap>>> &out )
 {
     jsin.start_array();
     while( !jsin.end_array() ) {
@@ -363,15 +365,45 @@ void mapbuffer::deserialize( JsonIn &jsin )
                 sm->load( jsin, submap_member_name, version, multiply_xy( submap_coordinates, 12 ) );
             }
         }
+        out.emplace_back( submap_coordinates, std::move( sm ) );
+    }
+}
 
-        if( !add_submap( submap_coordinates, sm ) ) {
+void mapbuffer::deserialize( JsonIn &jsin )
+{
+    std::vector<std::pair<tripoint, std::unique_ptr<submap>>> loaded;
+    deserialize_into_vec( jsin, loaded );
+    for( auto &[pos, sm] : loaded ) {
+        if( !add_submap( pos, sm ) ) {
             // In-memory version takes precedence; the disk entry is stale.
             // This can happen legitimately when a quad is partially reloaded after
             // unload_submap() broke quad consistency (pre-unload_quad fix).
             // With quad-level eviction (unload_quad) this should not occur in normal play.
             DebugLog( DL::Warn, DC::Map ) << string_format(
                                               "submap %d,%d,%d was already loaded; keeping in-memory version",
-                                              submap_coordinates.x, submap_coordinates.y, submap_coordinates.z );
+                                              pos.x, pos.y, pos.z );
+        }
+    }
+}
+
+void mapbuffer::preload_quad( const tripoint &om_addr )
+{
+    // Phase 1: disk I/O and JSON parsing — runs outside submaps_mutex_ so
+    // different quads can be prefetched concurrently on worker threads.
+    std::vector<std::pair<tripoint, std::unique_ptr<submap>>> loaded;
+    using namespace std::placeholders;
+    g->get_active_world()->read_map_quad( dimension_id_, om_addr,
+    [this, &loaded]( JsonIn & jsin ) {
+        deserialize_into_vec( jsin, loaded );
+    } );
+
+    // Phase 2: add parsed submaps to the in-memory buffer under submaps_mutex_.
+    // add_submap() handles concurrent duplicate-add gracefully (keeps in-memory version).
+    for( auto &[pos, sm] : loaded ) {
+        if( !add_submap( pos, sm ) ) {
+            DebugLog( DL::Warn, DC::Map ) << string_format(
+                                              "preload_quad: submap %d,%d,%d already loaded; keeping in-memory version",
+                                              pos.x, pos.y, pos.z );
         }
     }
 }

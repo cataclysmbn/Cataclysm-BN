@@ -232,6 +232,10 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
         const point iRand{ rng( iStart.x, iEnd.x - 1 ), rng( iStart.y, iEnd.y - 1 ) };
         const point map( iRand + offset );
 
+        if( !map_cache.inbounds( map ) ) {
+            continue;
+        }
+
         const tripoint mapp( map, u.posz() );
 
         const lit_level lighting = visibility_cache[map_cache.idx( mapp.x, mapp.y )];

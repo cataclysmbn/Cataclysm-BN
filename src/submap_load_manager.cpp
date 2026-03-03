@@ -1,13 +1,17 @@
 #include "submap_load_manager.h"
 
 #include <algorithm>
+#include <future>
+#include <ranges>
 #include <set>
 #include <utility>
+#include <vector>
 
 #include "coordinate_conversions.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
 #include "point.h"
+#include "thread_pool.h"
 
 submap_load_manager submap_loader;
 
@@ -85,16 +89,48 @@ void submap_load_manager::update()
 {
     std::set<desired_key> new_desired = compute_desired_set();
 
-    // Positions that are newly desired
+    // Collect the unique (dim_id, om_addr) quad addresses that are newly desired.
+    // Multiple submap positions map to the same quad; deduplicate here so each
+    // quad file is read exactly once.
+    using quad_key = std::pair<std::string, tripoint>;
+    std::set<quad_key> new_quads;
+    for( const desired_key &key : new_desired ) {
+        if( prev_desired_.count( key ) == 0 ) {
+            new_quads.emplace( key.first, sm_to_omt_copy( key.second ) );
+        }
+    }
+
+    // Dispatch all new quad disk reads to the thread pool in parallel.
+    // mapbuffer::preload_quad() performs the slow I/O phase outside its internal
+    // lock, allowing different quads to be read concurrently.  After all futures
+    // complete, every newly-desired submap that existed on disk is resident.
+    //
+    // TODO(async-gen): generation (for submaps that have no disk file) still
+    // runs synchronously in map::loadn() because it calls overmap_buffer.ter()
+    // — which reads g_active_dimension_id — and various other game globals that
+    // are not worker-thread-safe.  Async generation requires passing the
+    // overmapbuffer explicitly to all mapgen entry points and removing all
+    // global reads from the generation path.
+    std::vector<std::future<void>> load_futures;
+    load_futures.reserve( new_quads.size() );
+    for( const auto &[dim_id, om_addr] : new_quads ) {
+        auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
+        load_futures.push_back( get_thread_pool().submit_returning(
+        [&mb, om_addr]() {
+            mb.preload_quad( om_addr );
+        } ) );
+    }
+    // Block until all disk reads complete before notifying listeners.
+    // Listeners (e.g. distribution_grid_tracker) may call lookup_submap_in_memory();
+    // the submap must be present at that point.
+    std::ranges::for_each( load_futures, []( auto &f ) {
+        f.get();
+    } );
+
+    // Notify listeners for all newly-desired positions.
     for( const desired_key &key : new_desired ) {
         if( prev_desired_.count( key ) == 0 ) {
             const tripoint_abs_sm pos( key.second );
-            // TODO(async-load): load_submap() runs synchronously on the main thread.
-            // Truly async load requires dispatching via submit_returning(), collecting
-            // futures into a pending set, and tolerating a frame where the submap is
-            // not yet resident (treat as not-yet-loaded, never null).  Deferred to
-            // a future PR — the synchronous path is acceptable for now.
-            MAPBUFFER_REGISTRY.get( key.first ).load_submap( pos );
             for( submap_load_listener *listener : listeners_ ) {
                 listener->on_submap_loaded( pos, key.first );
             }

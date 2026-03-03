@@ -169,7 +169,18 @@ class overmapbuffer
          * compared with the position of the overmap.
          */
         overmap &get( const point_abs_om & );
+
+        /**
+         * Save every loaded overmap to disk using @p dim_id for path resolution.
+         * Thread-safe when different dimensions save concurrently: distinct paths
+         * guarantee no file-level contention.
+         */
+        void save( const std::string &dim_id );
+
+        /** Legacy overload — delegates to save(g_active_dimension_id).
+         *  Do NOT call from background threads. */
         void save();
+
         void clear();
         void create_custom_overmap( const point_abs_om &, overmap_special_batch &specials );
 

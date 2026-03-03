@@ -221,12 +221,29 @@ void distribution_grid::apply_net_power( int64_t delta_w )
 }
 
 distribution_grid_tracker::distribution_grid_tracker()
-    : distribution_grid_tracker( MAPBUFFER )
+    : distribution_grid_tracker( MAPBUFFER, {} )
 {}
 
-distribution_grid_tracker::distribution_grid_tracker( mapbuffer &buffer )
+distribution_grid_tracker::distribution_grid_tracker( mapbuffer &buffer, std::string dim_id )
     : mb( buffer )
+    , dimension_id_( std::move( dim_id ) )
 {
+}
+
+void distribution_grid_tracker::add_export_node( cross_dimension_export_node node )
+{
+    // STUB: record the node.  Power-forwarding mechanics are deferred (§7.5).
+    export_nodes_.push_back( std::move( node ) );
+}
+
+void distribution_grid_tracker::remove_export_node( const tripoint_abs_ms &source_pos )
+{
+    // STUB: remove the node whose source tile matches.
+    auto new_end = std::ranges::remove_if( export_nodes_,
+    [&]( const cross_dimension_export_node &n ) {
+        return n.source_pos == source_pos;
+    } ).begin();
+    export_nodes_.erase( new_end, export_nodes_.end() );
 }
 
 distribution_grid &distribution_grid_tracker::make_distribution_grid_at(

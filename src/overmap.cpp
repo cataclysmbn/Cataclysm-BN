@@ -58,6 +58,7 @@
 #include "overmap_noise.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "fluid_grid.h"
 #include "regional_settings.h"
 #include "rng.h"
@@ -6364,15 +6365,23 @@ void overmap::open( overmap_special_batch &enabled_specials )
 }
 
 // Note: this may throw io errors from std::ofstream
-void overmap::save() const
+void overmap::save( const std::string &dim_id ) const
 {
-    g->get_active_world()->write_overmap_player_visibility( loc, [&]( std::ostream & stream ) {
+    g->get_active_world()->write_overmap_player_visibility( dim_id, loc, [&]( std::ostream & stream ) {
         serialize_view( stream );
     } );
 
-    g->get_active_world()->write_overmap( loc, [&]( std::ostream & stream ) {
+    g->get_active_world()->write_overmap( dim_id, loc, [&]( std::ostream & stream ) {
         serialize( stream );
     } );
+}
+
+void overmap::save() const
+{
+    // Legacy overload: delegates to the dim-aware version using the
+    // currently-active dimension.  Not safe for background threads; use
+    // save(dim_id) instead when calling from worker contexts.
+    save( g_active_dimension_id );
 }
 
 void overmap::add_mon_group( const mongroup &group )

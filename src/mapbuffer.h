@@ -5,6 +5,8 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "coordinates.h"
 #include "point.h"
@@ -88,6 +90,26 @@ class mapbuffer
         submap *load_submap( const tripoint_abs_sm &pos );
 
         /**
+         * Parallel-safe quad prefetch: reads all submaps in the OMT quad at
+         * @p om_addr from disk and adds them to the in-memory buffer.
+         *
+         * May be called concurrently from worker threads for different quad
+         * addresses.  The disk I/O phase runs outside @c submaps_mutex_; the
+         * add phase acquires the mutex briefly per submap.
+         *
+         * If the quad file does not exist (submaps need generation), this is a
+         * no-op; the caller must fall back to the synchronous generation path in
+         * map::loadn().
+         *
+         * Thread-safety note: the dim-aware @c world::read_map_quad overload is
+         * used, so no global (g_active_dimension_id) is read at worker-thread
+         * execution time.  For SQLite-backed saves, the connection must be opened
+         * in SQLITE_THREADSAFE ≥ 1 (serialised or multi-thread) mode — the
+         * default for all supported SQLite builds.
+         */
+        void preload_quad( const tripoint &om_addr );
+
+        /**
          * Conditionally save and then remove the submap at @p pos from the buffer.
          * The containing OMT quad is saved to disk first (unless it is fully uniform),
          * then the submap is erased from memory.  Does nothing if @p pos is not loaded.
@@ -157,6 +179,14 @@ class mapbuffer
         void remove_submap( tripoint addr );
         submap *unserialize_submaps( const tripoint &p );
         void deserialize( JsonIn &jsin );
+        /**
+         * Parse the quad JSON stream into @p out without acquiring @c submaps_mutex_
+         * or touching the in-memory map.  Called by both @c deserialize() (which then
+         * adds under the lock) and @c preload_quad() (which runs on a worker thread).
+         */
+        void deserialize_into_vec(
+            JsonIn &jsin,
+            std::vector<std::pair<tripoint, std::unique_ptr<submap>>> &out );
         void save_quad( const tripoint &om_addr, std::list<tripoint> &submaps_to_delete,
                         bool delete_after_save );
         submap_map_t submaps;
