@@ -7,6 +7,7 @@
 
 #include "catacharset.h"
 #include "game.h"
+#include "overmapbuffer_registry.h"
 #include "avatar.h"
 #include "debug.h"
 #include "cata_utility.h"
@@ -656,12 +657,11 @@ bool world::read_player_mm_quad( const std::string &dim_id, const tripoint &p,
 
 static std::string legacy_dim_id()
 {
-    // Reads the active dimension ID from the game instance.
-    // Returns "" (primary) if g is nullptr or no dimension is active.
-    if( g == nullptr ) {
-        return {};
-    }
-    return g->get_dimension_prefix();
+    // Use the overmapbuffer-registry global rather than g->get_dimension_prefix().
+    // Both are kept in sync during normal gameplay, but save_all_overmapbuffers()
+    // temporarily overrides g_active_dimension_id so that each dimension's overmaps
+    // are written to their own path.  Reading the global here makes that override work.
+    return g_active_dimension_id;
 }
 
 bool world::read_map_quad( const tripoint &om_addr, file_read_json_fn reader ) const

@@ -578,6 +578,15 @@ void game::setup( bool load_world_modfiles )
 {
     loading_ui ui( true );
 
+    // Clear all dimension overmapbuffers before reloading JSON data.
+    // Each overmapbuffer holds raw `settings` pointers into region_settings_map,
+    // which is wiped by load_world_modfiles → unload_data below.
+    // Leaving stale overmaps in the registry after that wipe causes dangling-pointer
+    // crashes (settings->id) in save_all_overmapbuffers() on the next session.
+    for_each_overmapbuffer( []( const std::string &, overmapbuffer &buf ) {
+        buf.clear();
+    } );
+
     if( load_world_modfiles ) {
         init::load_world_modfiles( ui, get_active_world(), SAVE_ARTIFACTS );
     }
@@ -824,7 +833,21 @@ bool game::start_game()
     refresh_display();
 
     load_master();
-    overmap_buffer.current_region_type = "default";
+
+    // Populate the overworld dimension_info so get_current_dimension_info() is valid
+    // from the very start of a new game.  Use the "default" world_type from JSON so
+    // mods can override the name and region settings without touching this code.
+    {
+        const auto default_wt = world_types::get_default();
+        const struct world_type *wt_ptr = default_wt.is_valid() ? &default_wt.obj() : nullptr;
+        loaded_dimensions_[""] = dimension_info{
+            .dimension_id = "",
+            .world_type   = default_wt,
+            .display_name = wt_ptr ? wt_ptr->name.translated() : std::string{},
+        };
+        overmap_buffer.current_region_type = wt_ptr ? wt_ptr->region_settings_id : "default";
+    }
+
     u.setID( assign_npc_id() ); // should be as soon as possible, but *after* load_master
 
     const start_location &start_loc = u.random_start_location ? scen->random_start_location().obj() :
@@ -1562,7 +1585,13 @@ bool game::cleanup_at_end()
     MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer & buf ) {
         buf.clear();
     } );
-    overmap_buffer.clear();
+    // Clear ALL dimension overmapbuffers, not just the active one.
+    // Without this, dimensions the player visited (e.g. pocket dimensions) leave
+    // live overmaps in the registry whose settings pointers dangle after
+    // the unload_data() call below clears region_settings_map.
+    for_each_overmapbuffer( []( const std::string &, overmapbuffer &buf ) {
+        buf.clear();
+    } );
 
     avatar &player_character = get_avatar();
     player_character = avatar();
@@ -2981,6 +3010,37 @@ bool game::load( const save_t &name )
             std::bind( &game::unserialize, this, _1 ) ) ) {
         return false;
     }
+
+    // Restore per-dimension data (region type, etc.) for the dimension the player
+    // was in when they saved.  travel_to_dimension() normally does this on first
+    // visit; replicate it here because travel_to_dimension() is never invoked during
+    // a plain game::load().
+    load_dimension_data();
+
+    // Reconstruct the dimension_info entry for the current dimension so that
+    // get_current_dimension_info() returns a valid pointer.
+    // travel_to_dimension() populates loaded_dimensions_ on first visit; on load
+    // we must do it explicitly.  The world_type is recovered by matching save_prefix.
+    if( !loaded_dimensions_.count( current_dimension_id_ ) ) {
+        auto effective_wt = world_types::get_default();
+        if( !current_dimension_id_.empty() ) {
+            std::ranges::for_each( world_types::get_all(),
+                                   [&]( const world_type &wt ) {
+                if( !wt.save_prefix.empty() &&
+                    current_dimension_id_.starts_with( wt.save_prefix ) ) {
+                    effective_wt = wt.id;
+                }
+            } );
+        }
+        const struct world_type *target_type = effective_wt.is_valid() ? &effective_wt.obj() :
+                                               nullptr;
+        loaded_dimensions_[current_dimension_id_] = dimension_info{
+            .dimension_id = current_dimension_id_,
+            .world_type   = effective_wt,
+            .display_name = target_type ? target_type->name.translated() : current_dimension_id_,
+        };
+    }
+
     // This needs to be here for some reason for quickload() to work.
     // Prevent underlying game UI from drawing while we're still in the loading popup.
     {
