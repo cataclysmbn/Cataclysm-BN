@@ -219,7 +219,7 @@ class distribution_grid_tracker : public submap_load_listener
         distribution_grid_tracker( distribution_grid_tracker && ) = default;
 
         /** The dimension this tracker serves ("" = overworld). */
-        auto get_dimension_id() const -> const std::string & {
+        auto get_dimension_id() const -> const std::string& {
             return dimension_id_;
         }
 
@@ -239,7 +239,7 @@ class distribution_grid_tracker : public submap_load_listener
          * Return the export nodes on this tracker (read-only).
          * Used for save/load and for cross-dimension grid resolution.
          */
-        auto get_export_nodes() const -> const std::vector<cross_dimension_export_node> & {
+        auto get_export_nodes() const -> const std::vector<cross_dimension_export_node>& {
             return export_nodes_;
         }
         /**

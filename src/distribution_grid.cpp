@@ -240,7 +240,7 @@ void distribution_grid_tracker::remove_export_node( const tripoint_abs_ms &sourc
 {
     // STUB: remove the node whose source tile matches.
     auto new_end = std::ranges::remove_if( export_nodes_,
-    [&]( const cross_dimension_export_node &n ) {
+    [&]( const cross_dimension_export_node & n ) {
         return n.source_pos == source_pos;
     } ).begin();
     export_nodes_.erase( new_end, export_nodes_.end() );

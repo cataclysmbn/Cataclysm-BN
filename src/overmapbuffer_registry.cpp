@@ -155,7 +155,7 @@ auto save_all_overmapbuffers() -> void
         } ) );
     } );
 
-    std::ranges::for_each( futures, []( auto &f ) {
+    std::ranges::for_each( futures, []( auto & f ) {
         f.get();
     } );
 }

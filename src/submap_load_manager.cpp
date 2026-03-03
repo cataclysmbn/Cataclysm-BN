@@ -123,7 +123,7 @@ void submap_load_manager::update()
     // Block until all disk reads complete before notifying listeners.
     // Listeners (e.g. distribution_grid_tracker) may call lookup_submap_in_memory();
     // the submap must be present at that point.
-    std::ranges::for_each( load_futures, []( auto &f ) {
+    std::ranges::for_each( load_futures, []( auto & f ) {
         f.get();
     } );
 
