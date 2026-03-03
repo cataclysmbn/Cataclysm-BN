@@ -583,7 +583,7 @@ void game::setup( bool load_world_modfiles )
     // which is wiped by load_world_modfiles → unload_data below.
     // Leaving stale overmaps in the registry after that wipe causes dangling-pointer
     // crashes (settings->id) in save_all_overmapbuffers() on the next session.
-    for_each_overmapbuffer( []( const std::string &, overmapbuffer &buf ) {
+    for_each_overmapbuffer( []( const std::string &, overmapbuffer & buf ) {
         buf.clear();
     } );
 
@@ -1589,7 +1589,7 @@ bool game::cleanup_at_end()
     // Without this, dimensions the player visited (e.g. pocket dimensions) leave
     // live overmaps in the registry whose settings pointers dangle after
     // the unload_data() call below clears region_settings_map.
-    for_each_overmapbuffer( []( const std::string &, overmapbuffer &buf ) {
+    for_each_overmapbuffer( []( const std::string &, overmapbuffer & buf ) {
         buf.clear();
     } );
 
@@ -3025,7 +3025,7 @@ bool game::load( const save_t &name )
         auto effective_wt = world_types::get_default();
         if( !current_dimension_id_.empty() ) {
             std::ranges::for_each( world_types::get_all(),
-                                   [&]( const world_type &wt ) {
+            [&]( const world_type & wt ) {
                 if( !wt.save_prefix.empty() &&
                     current_dimension_id_.starts_with( wt.save_prefix ) ) {
                     effective_wt = wt.id;

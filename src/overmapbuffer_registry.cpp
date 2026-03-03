@@ -131,7 +131,7 @@ auto save_all_overmapbuffers() -> void
     // to pick the file path.  Temporarily override the global so every buffer's overmaps
     // are written to their own dimension's path, not the player's current dimension's path.
     const auto saved_dim = g_active_dimension_id;
-    for_each_overmapbuffer( []( const std::string &dim_id, overmapbuffer &buf ) {
+    for_each_overmapbuffer( []( const std::string & dim_id, overmapbuffer & buf ) {
         g_active_dimension_id = dim_id;
         buf.save();
     } );
