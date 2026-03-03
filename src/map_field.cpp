@@ -1008,7 +1008,7 @@ struct SubTile {
     [[nodiscard]] auto get_field()  const -> field                 & { return sm->get_field( local ); }
     [[nodiscard]] auto get_ter_t()  const -> const ter_t           & { return sm->get_ter( local ).obj(); }
     [[nodiscard]] auto get_furn_t() const -> const furn_t          & { return sm->get_furn( local ).obj(); }
-    [[nodiscard]] auto get_items()  const -> location_vector<item>& { return sm->get_items( local ); }
+    [[nodiscard]] auto get_items()  const -> location_vector<item> & { return sm->get_items( local ); } // *NOPAD*
 };
 
 // Resolve `local + delta` crossing submap boundaries via mapbuffer.
