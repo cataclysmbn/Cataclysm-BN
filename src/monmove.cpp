@@ -110,15 +110,15 @@ auto wall_support_count( const map &here, const tripoint &anchor ) -> int
     const auto neighbor_range = points_in_radius( anchor, 1 );
     auto neighbors = std::vector<tripoint>( neighbor_range.begin(), neighbor_range.end() );
 
-    const auto is_cardinal_support = [&here]( const tripoint &center,
-    const tripoint &pt ) {
+    const auto is_cardinal_support = [&here]( const tripoint & center,
+    const tripoint & pt ) {
         const bool same_level = pt.z == center.z;
         const bool cardinal = pt.x == center.x || pt.y == center.y;
         return same_level && cardinal && here.impassable_ter_furn( pt );
     };
 
     const auto same_level_supports = std::ranges::count_if( neighbors,
-    [&anchor, &is_cardinal_support]( const tripoint &pt ) {
+    [&anchor, &is_cardinal_support]( const tripoint & pt ) {
         return is_cardinal_support( anchor, pt );
     } );
 
@@ -131,7 +131,7 @@ auto wall_support_count( const map &here, const tripoint &anchor ) -> int
     neighbors.assign( below_range.begin(), below_range.end() );
 
     const auto below_supports = std::ranges::count_if( neighbors,
-    [&below, &is_cardinal_support]( const tripoint &pt ) {
+    [&below, &is_cardinal_support]( const tripoint & pt ) {
         return is_cardinal_support( below, pt );
     } );
 

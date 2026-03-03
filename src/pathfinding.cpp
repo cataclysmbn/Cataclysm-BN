@@ -65,15 +65,15 @@ auto has_cardinal_wall_support( const map &here, const tripoint &anchor ) -> boo
     const auto neighbor_range = points_in_radius( anchor, 1 );
     auto neighbors = std::vector<tripoint>( neighbor_range.begin(), neighbor_range.end() );
 
-    const auto is_cardinal_support = [&here]( const tripoint &center,
-    const tripoint &pt ) {
+    const auto is_cardinal_support = [&here]( const tripoint & center,
+    const tripoint & pt ) {
         const bool same_level = pt.z == center.z;
         const bool cardinal = pt.x == center.x || pt.y == center.y;
         return same_level && cardinal && here.impassable_ter_furn( pt );
     };
 
     const auto same_level_support = std::ranges::any_of( neighbors,
-    [&anchor, &is_cardinal_support]( const tripoint &pt ) {
+    [&anchor, &is_cardinal_support]( const tripoint & pt ) {
         return pt != anchor && is_cardinal_support( anchor, pt );
     } );
 
@@ -89,7 +89,7 @@ auto has_cardinal_wall_support( const map &here, const tripoint &anchor ) -> boo
     const auto below_range = points_in_radius( below, 1 );
     neighbors.assign( below_range.begin(), below_range.end() );
 
-    return std::ranges::any_of( neighbors, [&below, &is_cardinal_support]( const tripoint &pt ) {
+    return std::ranges::any_of( neighbors, [&below, &is_cardinal_support]( const tripoint & pt ) {
         return is_cardinal_support( below, pt );
     } );
 }
@@ -954,7 +954,7 @@ std::vector<tripoint> Pathfinding::get_route_3d(
 
     Pathfinding::update_z_caches( path_settings.can_fly );
 
-    const auto can_wall_cling_to_change = [&here]( const Pathfinding::ZLevelChange &change,
+    const auto can_wall_cling_to_change = [&here]( const Pathfinding::ZLevelChange & change,
     const bool we_go_up ) {
         const tripoint &anchor = we_go_up ? change.from : change.to;
         if( here.climb_difficulty( anchor ) > max_wall_climb_difficulty ) {
