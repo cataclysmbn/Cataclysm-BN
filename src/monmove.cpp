@@ -108,13 +108,34 @@ auto get_wall_support( const map &here, const tripoint &anchor ) -> std::optiona
 auto wall_support_count( const map &here, const tripoint &anchor ) -> int
 {
     const auto neighbor_range = points_in_radius( anchor, 1 );
-    const std::vector<tripoint> neighbors( neighbor_range.begin(), neighbor_range.end() );
+    auto neighbors = std::vector<tripoint>( neighbor_range.begin(), neighbor_range.end() );
 
-    return std::ranges::count_if( neighbors, [&anchor, &here]( const tripoint & pt ) {
-        const bool same_level = pt.z == anchor.z;
-        const bool cardinal = pt.x == anchor.x || pt.y == anchor.y;
-        return same_level && cardinal && pt != anchor && here.impassable_ter_furn( pt );
+    const auto is_cardinal_support = [&here]( const tripoint &center,
+    const tripoint &pt ) {
+        const bool same_level = pt.z == center.z;
+        const bool cardinal = pt.x == center.x || pt.y == center.y;
+        return same_level && cardinal && here.impassable_ter_furn( pt );
+    };
+
+    const auto same_level_supports = std::ranges::count_if( neighbors,
+    [&anchor, &is_cardinal_support]( const tripoint &pt ) {
+        return is_cardinal_support( anchor, pt );
     } );
+
+    if( !here.has_flag( TFLAG_NO_FLOOR, anchor ) ) {
+        return same_level_supports;
+    }
+
+    const auto below = anchor + tripoint_below;
+    const auto below_range = points_in_radius( below, 1 );
+    neighbors.assign( below_range.begin(), below_range.end() );
+
+    const auto below_supports = std::ranges::count_if( neighbors,
+    [&below, &is_cardinal_support]( const tripoint &pt ) {
+        return is_cardinal_support( below, pt );
+    } );
+
+    return same_level_supports + below_supports;
 }
 
 auto has_wall_support( const map &here, const tripoint &anchor ) -> bool

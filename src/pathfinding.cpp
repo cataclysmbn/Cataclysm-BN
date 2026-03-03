@@ -63,21 +63,35 @@ constexpr auto max_wall_climb_difficulty = 10;
 auto has_cardinal_wall_support( const map &here, const tripoint &anchor ) -> bool
 {
     const auto neighbor_range = points_in_radius( anchor, 1 );
-    return std::ranges::any_of( neighbor_range, [&anchor, &here]( const tripoint & pt ) {
-        const bool same_level = pt.z == anchor.z;
-        const bool cardinal = pt != anchor && ( pt.x == anchor.x || pt.y == anchor.y );
-        return same_level && cardinal && here.impassable_ter_furn( pt );
-    } );
-}
+    auto neighbors = std::vector<tripoint>( neighbor_range.begin(), neighbor_range.end() );
 
-auto can_wall_cling_to_change( const map &here, const Pathfinding::ZLevelChange &change,
-                               bool we_go_up ) -> bool
-{
-    const tripoint &anchor = we_go_up ? change.from : change.to;
-    if( here.climb_difficulty( anchor ) > max_wall_climb_difficulty ) {
+    const auto is_cardinal_support = [&here]( const tripoint &center,
+    const tripoint &pt ) {
+        const bool same_level = pt.z == center.z;
+        const bool cardinal = pt.x == center.x || pt.y == center.y;
+        return same_level && cardinal && here.impassable_ter_furn( pt );
+    };
+
+    const auto same_level_support = std::ranges::any_of( neighbors,
+    [&anchor, &is_cardinal_support]( const tripoint &pt ) {
+        return pt != anchor && is_cardinal_support( anchor, pt );
+    } );
+
+    if( same_level_support ) {
+        return true;
+    }
+
+    if( !here.has_flag( TFLAG_NO_FLOOR, anchor ) ) {
         return false;
     }
-    return has_cardinal_wall_support( here, anchor );
+
+    const auto below = anchor + tripoint_below;
+    const auto below_range = points_in_radius( below, 1 );
+    neighbors.assign( below_range.begin(), below_range.end() );
+
+    return std::ranges::any_of( neighbors, [&below, &is_cardinal_support]( const tripoint &pt ) {
+        return is_cardinal_support( below, pt );
+    } );
 }
 
 } // namespace
@@ -940,6 +954,15 @@ std::vector<tripoint> Pathfinding::get_route_3d(
 
     Pathfinding::update_z_caches( path_settings.can_fly );
 
+    const auto can_wall_cling_to_change = [&here]( const Pathfinding::ZLevelChange &change,
+    const bool we_go_up ) {
+        const tripoint &anchor = we_go_up ? change.from : change.to;
+        if( here.climb_difficulty( anchor ) > max_wall_climb_difficulty ) {
+            return false;
+        }
+        return has_cardinal_wall_support( here, anchor );
+    };
+
     // Determine our Z-path
     std::vector<ZLevelChange> z_path;
     {
@@ -1043,7 +1066,7 @@ std::vector<tripoint> Pathfinding::get_route_3d(
                         }
 
                         if( path_settings.needs_wall_cling &&
-                            !can_wall_cling_to_change( here, *candidate, we_go_up ) ) {
+                            !can_wall_cling_to_change( *candidate, we_go_up ) ) {
                             continue;
                         }
 
