@@ -130,6 +130,38 @@ void game::serialize( std::ostream &fout )
         }
     }
 
+    // Serialize all tracked dimension metadata so kept (non-active) pocket dimensions
+    // retain their bounds, origin, and parent chain across save/load.  Without this,
+    // only the current dimension's info is reconstructed after reload.  See F3-2.
+    json.member( "loaded_dimensions" );
+    json.start_array();
+    std::ranges::for_each( loaded_dimensions_, [&]( const auto &kv ) {
+        const dimension_info &info = kv.second;
+        json.start_object();
+        json.member( "dimension_id", info.dimension_id );
+        json.member( "world_type", info.world_type.str() );
+        json.member( "display_name", info.display_name );
+        json.member( "origin_pos_x", info.origin_pos.x() );
+        json.member( "origin_pos_y", info.origin_pos.y() );
+        json.member( "origin_pos_z", info.origin_pos.z() );
+        json.member( "parent_dimension_id", info.parent_dimension_id );
+        if( info.bounds ) {
+            json.member( "bounds" );
+            json.start_object();
+            json.member( "min_x", info.bounds->min_bound.x() );
+            json.member( "min_y", info.bounds->min_bound.y() );
+            json.member( "min_z", info.bounds->min_bound.z() );
+            json.member( "max_x", info.bounds->max_bound.x() );
+            json.member( "max_y", info.bounds->max_bound.y() );
+            json.member( "max_z", info.bounds->max_bound.z() );
+            json.member( "boundary_terrain", info.bounds->boundary_terrain.str() );
+            json.member( "boundary_overmap_terrain", info.bounds->boundary_overmap_terrain.str() );
+            json.end_object();
+        }
+        json.end_object();
+    } );
+    json.end_array();
+
     // grscent/typescent removed — scent values live on per-submap arrays (not serialized).
 
     // Then each monster
@@ -236,6 +268,45 @@ void game::unserialize( std::istream &fin )
         }
         g_active_dimension_id = current_dimension_id_;
         data.read( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
+
+        // Restore all dimension metadata.  The current dimension is also included
+        // in this array, so the explicit reconstruction below becomes a fallback
+        // for old saves that don't have the "loaded_dimensions" key.  See F3-2.
+        loaded_dimensions_.clear();
+        if( data.has_array( "loaded_dimensions" ) ) {
+            for( JsonObject dim_data : data.get_array( "loaded_dimensions" ) ) {
+                dimension_info info;
+                dim_data.read( "dimension_id", info.dimension_id );
+                std::string wt_str;
+                dim_data.read( "world_type", wt_str );
+                info.world_type = world_type_id( wt_str );
+                dim_data.read( "display_name", info.display_name );
+                int ox = 0, oy = 0, oz = 0;
+                dim_data.read( "origin_pos_x", ox );
+                dim_data.read( "origin_pos_y", oy );
+                dim_data.read( "origin_pos_z", oz );
+                info.origin_pos = tripoint_abs_sm( ox, oy, oz );
+                dim_data.read( "parent_dimension_id", info.parent_dimension_id );
+                if( dim_data.has_object( "bounds" ) ) {
+                    JsonObject bounds_obj = dim_data.get_object( "bounds" );
+                    dimension_bounds bounds;
+                    bounds.min_bound = tripoint_abs_sm(
+                                           bounds_obj.get_int( "min_x" ),
+                                           bounds_obj.get_int( "min_y" ),
+                                           bounds_obj.get_int( "min_z" ) );
+                    bounds.max_bound = tripoint_abs_sm(
+                                           bounds_obj.get_int( "max_x" ),
+                                           bounds_obj.get_int( "max_y" ),
+                                           bounds_obj.get_int( "max_z" ) );
+                    bounds.boundary_terrain = ter_str_id(
+                                                 bounds_obj.get_string( "boundary_terrain" ) );
+                    bounds.boundary_overmap_terrain = oter_str_id(
+                                                         bounds_obj.get_string( "boundary_overmap_terrain" ) );
+                    info.bounds = bounds;
+                }
+                loaded_dimensions_[info.dimension_id] = info;
+            }
+        }
 
         // Load dimension bounds BEFORE load_map so loadn() can generate
         // boundary submaps for out-of-bounds areas

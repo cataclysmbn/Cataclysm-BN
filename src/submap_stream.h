@@ -58,10 +58,14 @@ class submap_stream
          *  1. Check if the submap is already in the mapbuffer (early-out).
          *  2. Try to load from disk (mb.load_submap).
          *  3. If the file does not exist, fall back to tinymap generation.
-         *     Generation is serialised under a static generation mutex because
-         *     tinymap::generate() currently writes into the global MAPBUFFER,
-         *     which is not thread-safe for concurrent writes.  Phase 6 will
-         *     relax this by making loadn() dimension-aware.
+         *     Generation calls tinymap::bind_dimension(dim) so all mapgen reads
+         *     use get_overmapbuffer(dim) rather than the active-dimension global
+         *     g_active_dimension_id.  gen_mutex_ serialises the dedup re-check
+         *     and NPC write operations (insert_npc / remove_npc) within this
+         *     submap_stream instance; concurrent workers across different
+         *     submap_stream instances (future per-dimension streams) are unblocked.
+         *     Full removal of gen_mutex_ requires auditing overmapbuffer read
+         *     thread-safety; see F2-3 in Map Overhaul Plan.
          */
         void request_load( const std::string &dim, tripoint_abs_sm pos );
 
@@ -116,10 +120,12 @@ class submap_stream
         std::vector<pending_load> pending_;
         mutable std::mutex mutex_;
 
-        // Serialises submap generation (step 3 of request_load) across all
-        // worker threads of this instance.  Using a member rather than a
-        // static local prevents workers for separate submap_stream instances
-        // (e.g. different dimensions) from blocking each other unnecessarily.
+        // Serialises the dedup re-check (step 3 double-check in request_load)
+        // and NPC write operations (insert_npc / remove_npc in generate()) across
+        // all worker threads of this instance.  Per-member rather than static so
+        // separate submap_stream instances (e.g. future per-dimension streams)
+        // do not block each other.  Removal of this mutex requires confirming
+        // that overmapbuffer reads are concurrency-safe; see F2-3.
         std::mutex gen_mutex_;
 };
 

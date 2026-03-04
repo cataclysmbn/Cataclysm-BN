@@ -142,19 +142,22 @@ void map::generate( const tripoint &p, const time_point &when )
     // x, and y are submap coordinates, convert to overmap terrain coordinates
     // TODO: fix point types
     tripoint_abs_omt abs_omt( sm_to_omt_copy( p ) );
-    oter_id terrain_type = overmap_buffer.ter( abs_omt );
+    // Use the dimension-specific overmapbuffer so worker threads do not read the
+    // active-dimension global (g_active_dimension_id).  See F2-2 in Map Overhaul Plan.
+    overmapbuffer &omap = get_overmapbuffer( bound_dimension_ );
+    oter_id terrain_type = omap.ter( abs_omt );
 
     // This attempts to scale density of zombies inversely with distance from the nearest city.
     // In other words, make city centers dense and perimeters sparse.
     float density = 0.0;
     for( int i = -MON_RADIUS; i <= MON_RADIUS; i++ ) {
         for( int j = -MON_RADIUS; j <= MON_RADIUS; j++ ) {
-            density += overmap_buffer.ter( abs_omt + point( i, j ) )->get_mondensity();
+            density += omap.ter( abs_omt + point( i, j ) )->get_mondensity();
         }
     }
     density = density / 100;
 
-    mapgendata dat( abs_omt, *this, density, when, nullptr );
+    mapgendata dat( abs_omt, *this, density, when, nullptr, omap );
     draw_map( dat );
 
     // At some point, we should add region information so we can grab the appropriate extras
@@ -1694,7 +1697,7 @@ class jmapgen_sign : public jmapgen_piece
                 std::string cityname = "illegible city name";
                 tripoint abs_sub = dat.m.get_abs_sub();
                 // TODO: fix point types
-                const city *c = overmap_buffer.closest_city( tripoint_abs_sm( abs_sub ) ).city;
+                const city *c = dat.get_overmapbuffer().closest_city( tripoint_abs_sm( abs_sub ) ).city;
                 if( c != nullptr ) {
                     cityname = c->name;
                 }
@@ -1747,7 +1750,7 @@ class jmapgen_graffiti : public jmapgen_piece
                 std::string cityname = "illegible city name";
                 tripoint abs_sub = dat.m.get_abs_sub();
                 // TODO: fix point types
-                const city *c = overmap_buffer.closest_city( tripoint_abs_sm( abs_sub ) ).city;
+                const city *c = dat.get_overmapbuffer().closest_city( tripoint_abs_sm( abs_sub ) ).city;
                 if( c != nullptr ) {
                     cityname = c->name;
                 }
@@ -6172,7 +6175,7 @@ void map::place_spawns( const mongroup_id &group, const int chance,
     if( !group.is_valid() ) {
         // TODO: fix point types
         const tripoint_abs_omt omt( sm_to_omt_copy( get_abs_sub() ) );
-        const oter_id &oid = overmap_buffer.ter( omt );
+        const oter_id &oid = get_overmapbuffer( bound_dimension_ ).ter( omt );
         debugmsg( "place_spawns: invalid mongroup '%s', om_terrain = '%s' (%s)", group.c_str(),
                   oid.id().c_str(), oid->get_mapgen_id().c_str() );
         return;
@@ -6265,7 +6268,7 @@ character_id map::place_npc( point p, const string_id<npc_template> &type, bool 
     temp->load_npc_template( type );
     temp->spawn_at_precise( { abs_sub.xy() }, { p, abs_sub.z } );
     temp->toggle_trait( trait_NPC_STATIC_NPC );
-    overmap_buffer.insert_npc( temp );
+    get_overmapbuffer( bound_dimension_ ).insert_npc( temp );
     cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
         params["creature"] = temp.get();
     } );
@@ -6312,7 +6315,7 @@ std::vector<item *> map::place_items( const item_group_id &loc, const int chance
         if( !it.is_valid() ) {
             // TODO: fix point types
             const tripoint_abs_omt omt( sm_to_omt_copy( get_abs_sub() ) );
-            const oter_id &oid = overmap_buffer.ter( omt );
+            const oter_id &oid = get_overmapbuffer( bound_dimension_ ).ter( omt );
             debugmsg( "place_items: invalid item group / item '%s', om_terrain = '%s' (%s)",
                       loc.c_str(), oid.id().c_str(), oid->get_mapgen_id().c_str() );
             return res;
@@ -6692,8 +6695,9 @@ void map::rotate( int turns, const bool setpos_safe )
     const int radius = g_half_mapsize + 3;
     // uses submap coordinates
     // TODO: fix point types
+    overmapbuffer &omap = get_overmapbuffer( bound_dimension_ );
     const std::vector<shared_ptr_fast<npc>> npcs =
-            overmap_buffer.get_npcs_near( tripoint_abs_sm( abs_sub ), radius );
+            omap.get_npcs_near( tripoint_abs_sm( abs_sub ), radius );
     for( const shared_ptr_fast<npc> &i : npcs ) {
         npc &np = *i;
         const tripoint sq = np.global_square_location();
@@ -6729,9 +6733,9 @@ void map::rotate( int turns, const bool setpos_safe )
             // OK, this is ugly: we remove the NPC from the whole map
             // Then we place it back from scratch
             // It could be rewritten to utilize the fact that rotation shouldn't cross overmaps
-            shared_ptr_fast<npc> npc_ptr = overmap_buffer.remove_npc( np.getID() );
+            shared_ptr_fast<npc> npc_ptr = omap.remove_npc( np.getID() );
             np.spawn_at_precise( { abs_sub.xy() }, { new_pos, abs_sub.z } );
-            overmap_buffer.insert_npc( npc_ptr );
+            omap.insert_npc( npc_ptr );
         }
     }
 
@@ -7419,7 +7423,8 @@ bool update_mapgen_function_json::update_map( const tripoint_abs_omt &omt_pos, p
     const tripoint sm_pos = project_to<coords::sm>( omt_pos ).raw();
     update_tmap.load( sm_pos, true );
 
-    mapgendata md( omt_pos, update_tmap, 0.0f, calendar::start_of_cataclysm, miss );
+    mapgendata md( omt_pos, update_tmap, 0.0f, calendar::start_of_cataclysm, miss,
+                   get_overmapbuffer( update_tmap.get_bound_dimension() ) );
 
     return update_map( md, offset, verify );
 }

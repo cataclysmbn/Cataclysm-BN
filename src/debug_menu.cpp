@@ -523,7 +523,8 @@ void spawn_nested_mapgen()
         target_map.load( abs_sub, true );
         // TODO: fix point types
         const tripoint local_ms = target_map.getlocal( abs_ms.raw() );
-        mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr );
+        mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr,
+                       get_overmapbuffer( target_map.get_bound_dimension() ) );
         const auto &ptr = nested_mapgen[nest_str[nest_choice]].pick();
         if( ptr == nullptr ) {
             return;
