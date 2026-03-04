@@ -89,6 +89,14 @@ class cata_thread_pool
 cata_thread_pool &get_thread_pool();
 
 /**
+ * Returns true when the calling thread is a pool worker thread.
+ *
+ * Use this to guard main-thread-only APIs (Lua, SDL) that must not be called
+ * from worker threads.  Set via a thread_local flag in worker_loop().
+ */
+bool is_pool_worker_thread();
+
+/**
  * Submit a range of work items and block until all complete.
  *
  * Divides [begin, end) into up to num_workers sub-ranges and dispatches each

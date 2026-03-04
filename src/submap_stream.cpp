@@ -39,13 +39,14 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
         }
     }
 
-    // The generation mutex serialises writes to the mapbuffer from worker threads
-    // so that two workers never race on the same position's add_submap() call.
-    // mapbuffer::add_submap() and lookup_submap_in_memory() are also individually
-    // protected by mapbuffer::submaps_mutex_ (a recursive_mutex), which guards
-    // concurrent access to the underlying std::map between worker threads and the
-    // main thread's lookup_submap() calls in loadn().
+    // Workers load from disk concurrently (mapbuffer::load_submap is internally
+    // synchronised).  When a disk file is absent, per-OMT synchronisation via
+    // gen_in_progress_ ensures only one worker generates each OMT at a time;
+    // workers for *different* OMTs run fully in parallel.  NPC operations
+    // (insert_npc / remove_npc) are protected by overmapbuffer::npc_mutex_.
     auto fut = get_thread_pool().submit_returning( [this, dim, pos]() -> submap * {
+        ZoneScopedN( "async_submap_load" );
+        ZoneText( dim.c_str(), dim.size() );
         mapbuffer &mb = MAPBUFFER_REGISTRY.get( dim );
 
         // Step 1: early-out — submap already present (concurrent read, no lock needed).
@@ -54,35 +55,56 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
             return existing;
         }
 
-        // Steps 2 and 3 write to the mapbuffer and must be serialised.
-        std::lock_guard<std::mutex> lk( gen_mutex_ );
-
-        // Re-check after acquiring lock: another worker may have loaded it already.
-        if( submap *existing = mb.lookup_submap_in_memory( pos.raw() ) )
-        {
-            return existing;
-        }
-
-        // Step 2: try to load from disk.  Returns nullptr if no saved file exists.
-        submap *sm = mb.load_submap( pos );
-        if( sm )
+        // Step 2: try to load from disk.  Concurrent disk reads across workers
+        // are safe; mapbuffer::load_submap() is internally synchronised.
+        if( submap *sm = mb.load_submap( pos ) )
         {
             return sm;
         }
 
-        // Step 3: no disk file — fall back to synchronous tinymap generation.
-        // bind_dimension() ensures loadn() inside generate() writes into the correct
-        // registry slot (MAPBUFFER_REGISTRY.get(dim)) for all dimensions.
-        // drain_to_mapbuffer() is therefore a true no-op.
+        // Step 3: no disk file — fall back to tinymap generation.
         //
-        // Note: generation rounds down to the 2×2 OMT-aligned submap quad origin,
-        // matching the same rounding that map::loadn() applies.
+        // Per-OMT synchronisation: only workers colliding on the same OMT
+        // position block each other.  Workers for different OMTs run fully
+        // concurrently.  A colliding worker waits on gen_in_progress_cv_ until
+        // the owner signals completion, then re-checks the mapbuffer.
+        //
+        // Note: generation rounds down to the 2×2 OMT-aligned submap quad
+        // origin, matching the same rounding that map::loadn() applies.
         const tripoint_abs_omt abs_omt( sm_to_omt_copy( pos.raw() ) );
         const tripoint abs_rounded = omt_to_sm_copy( abs_omt.raw() );
+
+        {
+            std::unique_lock<std::mutex> lk( gen_in_progress_mutex_ );
+            // Wait until no other worker owns the claim for this OMT.
+            gen_in_progress_cv_.wait( lk, [&] {
+                // If the submap appeared in the mapbuffer while we waited
+                // (the owner finished), we can skip generation entirely.
+                if( mb.lookup_submap_in_memory( pos.raw() ) ) {
+                    return true;
+                }
+                return !gen_in_progress_.contains( abs_omt );
+            } );
+            // Re-check after the wait: the owning worker may have completed.
+            if( submap *existing = mb.lookup_submap_in_memory( pos.raw() ) ) {
+                return existing;
+            }
+            // Claim this OMT; lk is released at scope exit.
+            gen_in_progress_.insert( abs_omt );
+        }
+
+        // bind_dimension() ensures generate() writes into the correct registry
+        // slot (MAPBUFFER_REGISTRY.get(dim)).  drain_to_mapbuffer() is a no-op.
         tinymap tm;
         tm.bind_dimension( dim );
         tm.generate( abs_rounded, calendar::turn );
         tm.drain_to_mapbuffer( mb );  // no-op: submaps already in correct registry slot
+
+        {
+            std::lock_guard<std::mutex> lk( gen_in_progress_mutex_ );
+            gen_in_progress_.erase( abs_omt );
+        }
+        gen_in_progress_cv_.notify_all();
 
         return mb.lookup_submap_in_memory( pos.raw() );
     } );

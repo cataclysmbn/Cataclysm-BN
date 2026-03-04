@@ -1,5 +1,7 @@
 #include "map.h"
 
+#include "mapgen_async.h"
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -7788,6 +7790,12 @@ void map::shift( point sp )
         submap_streamer.drain_completed( *this, must_have );
     }
 
+    // Run any Lua on_mapgen_postprocess hooks that were deferred from worker
+    // threads (Lua is not thread-safe).  The submaps are already in the
+    // mapbuffer; run_deferred_mapgen_hooks() loads them into temporary tinymaps
+    // and executes each hook on the main thread.
+    run_deferred_mapgen_hooks();
+
     // Clear vehicle list and rebuild after shift
     clear_vehicle_cache( );
     // Shift the map sx submaps to the right and sy submaps down.
@@ -8125,7 +8133,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
         // worker threads that have bound_dimension_ set via bind_dimension().
         // Reads from the overmapbuffer (ter, get_settings, etc.) are treated as
         // logically read-only; NPC write operations in generate() are serialised by
-        // gen_mutex_ in submap_stream.  See F2-2 in Map Overhaul Plan.
+        // overmapbuffer::npc_mutex_.  See F2-2, F2-3 in Map Overhaul Plan.
         const oter_id terrain_type = get_overmapbuffer( bound_dimension_ ).ter( grid_abs_omt );
 
         // Short-circuit if the map tile is uniform
@@ -9766,6 +9774,16 @@ void tinymap::drain_to_mapbuffer( mapbuffer &dest )
     // to the target dimension via bind_dimension() before calling generate().
     // This function is now a true no-op.
     ( void )dest;
+}
+
+void tinymap::load_from_mapbuffer( const tripoint &sm_base )
+{
+    set_abs_sub( sm_base );
+    for( auto di : std::views::iota( 0, 2 ) ) {
+        for( auto dj : std::views::iota( 0, 2 ) ) {
+            loadn( tripoint( di, dj, sm_base.z ), false );
+        }
+    }
 }
 
 void map::draw_line_ter( const ter_id &type, point p1, point p2 )

@@ -51,9 +51,11 @@
 #include "map_extras.h"
 #include "map_iterator.h"
 #include "mapdata.h"
+#include "mapgen_async.h"
 #include "mapgen_functions.h"
 #include "mapgendata.h"
 #include "mapgenformat.h"
+#include "thread_pool.h"
 #include "memory_fast.h"
 #include "mission.h"
 #include "mod_manager.h"
@@ -206,15 +208,13 @@ void map::generate( const tripoint &p, const time_point &when )
         }
     }
 
-    cata::run_on_mapgen_postprocess_hooks(
-        *DynamicDataLoader::get_instance().lua,
-        *this,
-        sm_to_omt_copy( p ),
-        when
-    );
-
-    // Okay, we know who are neighbors are.  Let's draw!
-    // And finally save used submaps and delete the rest.
+    // Save the 2×2 OMT-aligned submaps into the mapbuffer first.  This must
+    // happen before the Lua postprocess hook so that:
+    //  (a) The hook runs against the same submap objects that are now owned
+    //      by the mapbuffer (modifications persist without an extra save step).
+    //  (b) When generate() is called from a worker thread, the submaps land
+    //      in the mapbuffer before the deferred hook is queued, so the main
+    //      thread can reconstruct a tinymap from the mapbuffer to run it.
     for( int i = 0; i < my_MAPSIZE; i++ ) {
         for( int j = 0; j < my_MAPSIZE; j++ ) {
             dbg( DL::Info ) << "map::generate: submap (" << i << "," << j << ")";
@@ -228,6 +228,28 @@ void map::generate( const tripoint &p, const time_point &when )
                 setsubmap( grid_pos, nullptr );
             }
         }
+    }
+
+    // Run the Lua on_mapgen_postprocess hook.
+    //
+    // On the main thread: run immediately — the tinymap's grid still points
+    // to the same submap objects now in the mapbuffer, so any modifications
+    // the hook makes are automatically persisted.
+    //
+    // On a worker thread: Lua is not thread-safe, so defer the hook to the
+    // main thread.  map::shift() drains the queue after drain_completed() and
+    // runs each hook by loading the saved submaps from the mapbuffer into a
+    // fresh tinymap.  The same submap objects are modified in place.
+    const tripoint_abs_omt omt_pos( sm_to_omt_copy( p ) );
+    if( is_pool_worker_thread() ) {
+        push_deferred_mapgen_hook( { bound_dimension_, omt_pos, when } );
+    } else {
+        cata::run_on_mapgen_postprocess_hooks(
+            *DynamicDataLoader::get_instance().lua,
+            *this,
+            omt_pos.raw(),
+            when
+        );
     }
 }
 

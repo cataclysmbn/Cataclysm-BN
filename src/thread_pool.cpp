@@ -7,6 +7,13 @@
 #include "options.h"
 #include "rng.h"
 
+thread_local bool tl_is_worker_thread = false;
+
+bool is_pool_worker_thread()
+{
+    return tl_is_worker_thread;
+}
+
 cata_thread_pool::cata_thread_pool( unsigned int num_workers )
 {
     workers_.reserve( num_workers );
@@ -31,6 +38,8 @@ cata_thread_pool::~cata_thread_pool()
 
 void cata_thread_pool::worker_loop()
 {
+    tl_is_worker_thread = true;
+
     // Seed this worker's thread-local RNG so compute_plan() calls do not
     // race on the main thread's global engine (P-5).
     // Mix thread ID with current time for a unique-ish seed per worker.

@@ -1523,11 +1523,20 @@ void overmapbuffer::insert_npc( const shared_ptr_fast<npc> &who )
     assert( who );
     const tripoint_abs_omt npc_omt_pos = who->global_omt_location();
     const point_abs_om npc_om_pos = project_to<coords::om>( npc_omt_pos.xy() );
-    get( npc_om_pos ).insert_npc( who );
+    // get() acquires+releases mutex internally (may create the overmap).
+    // Lock npc_mutex_ separately afterwards so we never hold both simultaneously,
+    // preserving the locking order: mutex → npc_mutex_.
+    overmap &om = get( npc_om_pos );
+    std::lock_guard<std::mutex> lk( npc_mutex_ );
+    om.insert_npc( who );
 }
 
 shared_ptr_fast<npc> overmapbuffer::remove_npc( const character_id &id )
 {
+    // Hold a read lock on mutex for safe iteration over overmaps, then
+    // npc_mutex_ for the NPC container write.  Order: mutex → npc_mutex_.
+    read_lock<std::shared_mutex> rl( mutex );
+    std::lock_guard<std::mutex> lk( npc_mutex_ );
     for( auto &it : overmaps ) {
         if( const auto p = it.second->erase_npc( id ) ) {
             return p;
@@ -1602,8 +1611,12 @@ std::vector<shared_ptr_fast<npc>> overmapbuffer::get_companion_mission_npcs( int
 std::vector<shared_ptr_fast<npc>> overmapbuffer::get_npcs_near( const tripoint_abs_sm &p,
                                int radius )
 {
+    // get_overmaps_near() acquires+releases mutex internally; collect the list
+    // first so we hold npc_mutex_ only while reading NPC containers (not mutex).
+    auto nearby = get_overmaps_near( p.xy(), radius );
+    std::lock_guard<std::mutex> lk( npc_mutex_ );
     std::vector<shared_ptr_fast<npc>> result;
-    for( auto &it : get_overmaps_near( p.xy(), radius ) ) {
+    for( auto &it : nearby ) {
         auto temp = it->get_npcs( [&]( const npc & guy ) {
             // Global position of NPC, in submap coordinates
             // TODO: fix point types
@@ -1622,8 +1635,10 @@ std::vector<shared_ptr_fast<npc>> overmapbuffer::get_npcs_near( const tripoint_a
 std::vector<shared_ptr_fast<npc>> overmapbuffer::get_npcs_near_omt( const tripoint_abs_omt &p,
                                int radius )
 {
+    auto nearby = get_overmaps_near( project_to<coords::sm>( p.xy() ), radius );
+    std::lock_guard<std::mutex> lk( npc_mutex_ );
     std::vector<shared_ptr_fast<npc>> result;
-    for( auto &it : get_overmaps_near( project_to<coords::sm>( p.xy() ), radius ) ) {
+    for( auto &it : nearby ) {
         auto temp = it->get_npcs( [&]( const npc & guy ) {
             // Global position of NPC, in submap coordinates
             tripoint_abs_omt pos = guy.global_omt_location();

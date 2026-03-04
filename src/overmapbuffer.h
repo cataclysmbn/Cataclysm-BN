@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <mutex>
 #include <shared_mutex>
 
 #include "coordinates.h"
@@ -549,6 +550,16 @@ class overmapbuffer
 
     private:
         std::shared_mutex mutex;
+        /**
+         * Protects all NPC container reads and writes across every overmap in
+         * this buffer.  Must always be acquired AFTER @ref mutex (if both are
+         * needed).  Held exclusively for insert_npc() / remove_npc() and
+         * shared-equivalently for get_npcs_near() family reads.
+         *
+         * Separate from @ref mutex so that generation workers can call
+         * insert_npc() concurrently without blocking overmapbuffer reads.
+         */
+        mutable std::mutex npc_mutex_;
         /**
          * Common function used by the find_closest/all/random to determine if the location is
          * findable based on the specified criteria.

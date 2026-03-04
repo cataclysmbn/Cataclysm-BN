@@ -240,6 +240,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
 void mapbuffer::save_quad( const tripoint &om_addr, std::list<tripoint> &submaps_to_delete,
                            bool delete_after_save )
 {
+    ZoneScoped;
     // Build the 4 submap addresses that form this OMT quad.
     std::vector<tripoint> submap_addrs;
     submap_addrs.reserve( 4 );

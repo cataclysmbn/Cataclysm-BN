@@ -2301,6 +2301,15 @@ class tinymap : public map
          * future non-trivial transfer steps are serialised.
          */
         void drain_to_mapbuffer( mapbuffer &dest );
+
+        /**
+         * Position this tinymap at @p sm_base (submap coordinates) and load
+         * its 2×2 submaps from the mapbuffer.  The submaps must already be
+         * present in the mapbuffer (e.g. after saven() was called during
+         * generation).  Used by run_deferred_mapgen_hooks() to reconstruct a
+         * live map reference on the main thread.
+         */
+        void load_from_mapbuffer( const tripoint &sm_base );
 };
 
 class fake_map : public tinymap
