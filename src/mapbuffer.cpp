@@ -23,6 +23,7 @@
 #include "map.h"
 #include "output.h"
 #include "popup.h"
+#include "profile.h"
 #include "string_formatter.h"
 #include "submap.h"
 #include "thread_pool.h"
@@ -91,12 +92,14 @@ void mapbuffer::transfer_all_to( mapbuffer &dest )
 
 submap *mapbuffer::load_submap( const tripoint_abs_sm &pos )
 {
+    ZoneScoped;
     // lookup_submap already handles the disk-read path transparently.
     return lookup_submap( pos.raw() );
 }
 
 void mapbuffer::unload_submap( const tripoint_abs_sm &pos )
 {
+    ZoneScoped;
     const tripoint &p = pos.raw();
     if( !submaps.contains( p ) ) {
         return;
@@ -388,6 +391,7 @@ void mapbuffer::deserialize( JsonIn &jsin )
 
 void mapbuffer::preload_quad( const tripoint &om_addr )
 {
+    ZoneScoped;
     // Phase 1: disk I/O and JSON parsing — runs outside submaps_mutex_ so
     // different quads can be prefetched concurrently on worker threads.
     std::vector<std::pair<tripoint, std::unique_ptr<submap>>> loaded;

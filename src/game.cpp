@@ -4658,6 +4658,7 @@ int game::tier_assign_all()
 void game::world_tick()
 {
     ZoneScoped;
+    TracyPlot( "Active Dimensions", static_cast<int64_t>( loaded_dimensions_.size() ) );
 
     const auto  fire_spread = out_of_bubble_fire_spread;
 
@@ -4669,6 +4670,9 @@ void game::world_tick()
     };
 
     MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
+        ZoneScopedN( "world_tick_dimension" );
+        ZoneText( dim.c_str(), dim.size() );
+
         // CO-2: When pocket simulation is disabled, skip all non-primary dimensions.
         // The primary dimension always uses dim == "" (empty string).
         // none/minimal/moderate distinctions are deferred to a future PR —
@@ -4713,7 +4717,10 @@ void game::world_tick()
     } );
 
     // Prune fire-spread load requests that are no longer connected or lack fire.
-    fire_loader.prune_disconnected( submap_loader );
+    {
+        ZoneScopedN( "fire_spread" );
+        fire_loader.prune_disconnected( submap_loader );
+    }
 }
 
 void game::monmove()
@@ -12525,40 +12532,43 @@ bool game::travel_to_dimension( const std::string &dim_id,
     const std::string old_dim_id = here.get_bound_dimension();
     const tripoint_abs_sm current_abs_sm( here.get_abs_sub() );
 
-    // ── 1. Unload NPCs and monsters from the current dimension ────────────────
-    unload_npcs();
-    for( monster &critter : all_monsters() ) {
-        despawn_monster( critter );
-    }
-    if( player.in_vehicle ) {
-        here.unboard_vehicle( player.pos() );
-    }
-
-    // ── 2. Flush and save the current dimension before leaving ────────────────
-    // Flush background streamer tasks first to avoid a concurrent read+write race
-    // between save_quad workers (submaps.find, no mutex) and submap_stream workers
-    // (add_submap, with mutex).
-    submap_streamer.flush_all();
-    world *active_world = get_active_world();
-    try {
-        if( active_world ) {
-            active_world->start_save_tx();
+    {
+        ZoneScopedN( "travel_unload" );
+        // ── 1. Unload NPCs and monsters from the current dimension ────────────────
+        unload_npcs();
+        for( monster &critter : all_monsters() ) {
+            despawn_monster( critter );
         }
-        here.save();
-        overmap_buffer.save();
-        MAPBUFFER_REGISTRY.get( old_dim_id ).save();
-        if( !save_dimension_data() ) {
+        if( player.in_vehicle ) {
+            here.unboard_vehicle( player.pos() );
+        }
+
+        // ── 2. Flush and save the current dimension before leaving ────────────────
+        // Flush background streamer tasks first to avoid a concurrent read+write race
+        // between save_quad workers (submaps.find, no mutex) and submap_stream workers
+        // (add_submap, with mutex).
+        submap_streamer.flush_all();
+        world *active_world = get_active_world();
+        try {
+            if( active_world ) {
+                active_world->start_save_tx();
+            }
+            here.save();
+            overmap_buffer.save();
+            MAPBUFFER_REGISTRY.get( old_dim_id ).save();
+            if( !save_dimension_data() ) {
+                if( active_world ) {
+                    active_world->commit_save_tx();
+                }
+                return false;
+            }
             if( active_world ) {
                 active_world->commit_save_tx();
             }
+        } catch( const std::exception &err ) {
+            popup( _( "Failed to save map data: %s" ), err.what() );
             return false;
         }
-        if( active_world ) {
-            active_world->commit_save_tx();
-        }
-    } catch( const std::exception &err ) {
-        popup( _( "Failed to save map data: %s" ), err.what() );
-        return false;
     }
 
     add_msg( m_debug, "[DIM] Saved dimension '%s' before leaving", old_dim_id );
@@ -12654,34 +12664,37 @@ bool game::travel_to_dimension( const std::string &dim_id,
         pre_load_callback();
     }
 
-    // Load at the destination position if provided; fall back to the old position.
-    // Loading at the destination avoids a costly incremental map shift in update_map()
-    // when the destination is far from the current position.
-    load_map( load_pos.value_or( current_abs_sm ), false );
-
-    add_msg( m_debug, "[DIM] Loaded new dimension '%s' map", dim_id );
-
-    // ── 8. Restore map memory and rebuild caches ──────────────────────────────
-    player.clear_map_memory();
-    player.load_map_memory();
-
     {
-        auto const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z;
-        auto const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z;
-        for( auto z = zmin; z <= zmax; z++ ) {
-            here.access_cache( z ).map_memory_seen_cache.reset();
-            here.invalidate_map_cache( z );
+        ZoneScopedN( "travel_load" );
+        // Load at the destination position if provided; fall back to the old position.
+        // Loading at the destination avoids a costly incremental map shift in update_map()
+        // when the destination is far from the current position.
+        load_map( load_pos.value_or( current_abs_sm ), false );
+
+        add_msg( m_debug, "[DIM] Loaded new dimension '%s' map", dim_id );
+
+        // ── 8. Restore map memory and rebuild caches ──────────────────────────────
+        player.clear_map_memory();
+        player.load_map_memory();
+
+        {
+            auto const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z;
+            auto const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z;
+            for( auto z = zmin; z <= zmax; z++ ) {
+                here.access_cache( z ).map_memory_seen_cache.reset();
+                here.invalidate_map_cache( z );
+            }
         }
+        here.build_map_cache( here.get_abs_sub().z );
+
+        load_npcs();
+        here.spawn_monsters( true );
+
+        get_weather().weather_override = weather_type_id::NULL_ID();
+        get_weather().set_nextweather( calendar::turn );
+
+        update_overmap_seen();
     }
-    here.build_map_cache( here.get_abs_sub().z );
-
-    load_npcs();
-    here.spawn_monsters( true );
-
-    get_weather().weather_override = weather_type_id::NULL_ID();
-    get_weather().set_nextweather( calendar::turn );
-
-    update_overmap_seen();
 
     if( !save_dimension_data() ) {
         debugmsg( "Failed to save dimension data after dimension travel" );
@@ -13030,30 +13043,11 @@ point game::update_map( int &x, int &y )
     // in the direction the player was moving even on turns with no map shift.
     last_move_delta_ = tripoint( shift, 0 );
 
-    // Repopulate the active dimension's tracker after map shift.
-    // A map shift only moves submaps within the bound dimension, so only that
-    // dimension's tracker needs rebuilding.  Using MAPBUFFER (always primary) here
-    // was wrong when the player is in a non-primary dimension.
-    // TODO: make this incremental via on_submap_loaded / on_submap_unloaded callbacks
-    // from submap_load_manager; the full-rebuild is a transitional approach.
-    {
-        const std::string &cur_dim = m.get_bound_dimension();
-        // Lazy tracker construction mirrors the pattern in the reality_bubble block below.
-        if( grid_trackers_.find( cur_dim ) == grid_trackers_.end() ) {
-            grid_trackers_[cur_dim] = std::make_unique<distribution_grid_tracker>(
-                                          MAPBUFFER_REGISTRY.get( cur_dim ), cur_dim );
-            submap_loader.add_listener( grid_trackers_[cur_dim].get() );
-        }
-        auto &tracker = *grid_trackers_[cur_dim];
-        tracker.clear();
-        for( auto &[raw_pos, sm_ptr] : MAPBUFFER_REGISTRY.get( cur_dim ) ) {
-            if( sm_ptr ) {
-                tracker.on_submap_loaded( tripoint_abs_sm( raw_pos ), cur_dim );
-            }
-        }
-    }
-
     // Keep the reality bubble request center in sync with the shifted map.
+    // Distribution-grid tracker updates are now fully incremental: the
+    // submap_load_manager fires on_submap_loaded / on_submap_unloaded for the
+    // exact delta on each update() call below.  The old O(all-loaded-submaps)
+    // full-rebuild that previously ran here has been removed (F1-5).
     if( reality_bubble_handle_ != 0 ) {
         const tripoint &origin = m.get_abs_sub();
         const tripoint_abs_sm new_center(

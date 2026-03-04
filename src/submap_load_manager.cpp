@@ -1,6 +1,7 @@
 #include "submap_load_manager.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <future>
 #include <ranges>
 #include <set>
@@ -11,6 +12,7 @@
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
 #include "point.h"
+#include "profile.h"
 #include "thread_pool.h"
 
 submap_load_manager submap_loader;
@@ -60,6 +62,7 @@ void submap_load_manager::release_load( load_request_handle handle )
 
 std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_set() const
 {
+    ZoneScoped;
     std::set<desired_key> desired;
     for( const auto &kv : requests_ ) {
         const submap_load_request &req = kv.second;
@@ -87,6 +90,10 @@ std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_
 
 void submap_load_manager::update()
 {
+    ZoneScoped;
+    TracyPlot( "Loaded Submaps", static_cast<int64_t>( prev_desired_.size() ) );
+    TracyPlot( "Thread Pool Workers", static_cast<int64_t>( get_thread_pool().num_workers() ) );
+    TracyPlot( "Thread Pool Queue", static_cast<int64_t>( get_thread_pool().queue_size() ) );
     std::set<desired_key> new_desired = compute_desired_set();
 
     // Collect the unique (dim_id, om_addr) quad addresses that are newly desired.

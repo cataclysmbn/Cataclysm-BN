@@ -29,6 +29,16 @@ class submap;
  * executes the load task synchronously via submit_returning()'s zero-worker
  * fallback, so the interface remains correct without a thread pool.
  */
+/**
+ * Maximum number of in-flight background load requests.
+ *
+ * When request_load() is called and the queue is already at this depth, the
+ * new request is silently dropped.  The main thread will load synchronously
+ * via loadn() if the submap is actually needed before a worker delivers it.
+ * This bounds memory usage and flush_all() stall time during rapid movement.
+ */
+inline constexpr std::size_t MAX_PENDING_LOADS = 128;
+
 class submap_stream
 {
     public:

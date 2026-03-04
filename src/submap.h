@@ -227,6 +227,9 @@ class submap : maptile_soa<SEEX, SEEY>
         active_item_cache active_items;
 
         int field_count = 0;
+        // Serialized as "turn_last_touched" (absolute turn number).
+        // Initialized to calendar::turn_zero; legacy saves that predate
+        // serialization will receive the maximum-capped catchup on first load.
         time_point last_touched = calendar::turn_zero;
         std::vector<spawn_point> spawns;
 

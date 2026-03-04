@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -13,6 +14,7 @@
 #include "map.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
+#include "profile.h"
 #include "submap.h"
 #include "thread_pool.h"
 
@@ -20,6 +22,7 @@ submap_stream submap_streamer;
 
 void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
 {
+    ZoneScoped;
     {
         std::lock_guard<std::mutex> lk( mutex_ );
         // Deduplication: skip if an in-flight request already covers this position.
@@ -27,6 +30,12 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
             if( p.dim == dim && p.pos == pos ) {
                 return;
             }
+        }
+        // Capacity cap (F2-3): drop the new request rather than growing the queue
+        // without bound.  The main thread falls back to synchronous loadn() if
+        // the submap is actually needed before a worker delivers it.
+        if( pending_.size() >= MAX_PENDING_LOADS ) {
+            return;
         }
     }
 
@@ -85,6 +94,8 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
 void submap_stream::drain_completed( map &m,
                                      const std::vector<tripoint_abs_sm> &must_have )
 {
+    ZoneScoped;
+    TracyPlot( "Stream Queue Depth", static_cast<int64_t>( pending_.size() ) );
     std::lock_guard<std::mutex> lk( mutex_ );
 
     // First pass: block until each must_have submap's future is ready.

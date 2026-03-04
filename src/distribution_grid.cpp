@@ -316,6 +316,7 @@ std::array<tripoint_abs_omt, 5> distribution_grid_tracker::get_omt_and_cardinal_
 void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
         const std::string &dim_id )
 {
+    ZoneScoped;
     // Each tracker only manages submaps for its own dimension.  Without this guard,
     // all registered trackers (primary + each pocket dimension) would receive every
     // event, causing primary-tracker to insert pocket-dimension coordinates into
@@ -330,6 +331,7 @@ void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
 void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
         const std::string &dim_id )
 {
+    ZoneScoped;
     if( dim_id != dimension_id_ ) {
         return;
     }
@@ -354,6 +356,7 @@ void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
 
 void distribution_grid_tracker::on_changed( const tripoint_abs_ms &p )
 {
+    ZoneScoped;
     const tripoint_abs_sm sm_pos = project_to<coords::sm>( p );
     // 3D check: only process if this submap is actually loaded.
     // The old code used a 2D bounds rectangle which would fire spuriously for

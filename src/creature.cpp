@@ -250,6 +250,7 @@ void Creature::process_turn()
 
 void Creature::batch_turns( int n )
 {
+    ZoneScoped;
     for( int i = 0; i < n; ++i ) {
         if( is_dead_state() ) {
             break;

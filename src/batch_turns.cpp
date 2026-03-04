@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <ranges>
 
+#include "profile.h"
+
 #include "calendar.h"
 #include "distribution_grid.h"
 #include "field.h"
@@ -66,6 +68,7 @@ static int compute_field_decay( int current_intensity, int half_life_turns,
 
 void batch_turns_field( submap &sm, int n )
 {
+    ZoneScoped;
     if( n <= 0 || sm.field_count == 0 ) {
         return;
     }
@@ -137,6 +140,7 @@ void batch_turns_field( submap &sm, int n )
 
 void batch_turns_items( submap &sm, int n )
 {
+    ZoneScoped;
     if( n <= 0 || sm.active_items.empty() ) {
         return;
     }
@@ -158,6 +162,7 @@ void batch_turns_items( submap &sm, int n )
 
 void batch_turns_vehicle( vehicle &veh, int n )
 {
+    ZoneScoped;
     if( n <= 0 ) {
         return;
     }
@@ -188,6 +193,7 @@ void batch_turns_vehicle( vehicle &veh, int n )
 
 void batch_turns_distribution_grid( distribution_grid &grid, int n )
 {
+    ZoneScoped;
     if( n <= 0 ) {
         return;
     }
@@ -211,6 +217,8 @@ void batch_turns_distribution_grid( distribution_grid &grid, int n )
 
 void run_submap_batch_turns( submap &sm, int n )
 {
+    ZoneScoped;
+    TracyPlot( "Batch Turns N", static_cast<int64_t>( n ) );
     if( n <= 0 ) {
         return;
     }

@@ -37,6 +37,11 @@ class cata_thread_pool
             return static_cast<unsigned int>( workers_.size() );
         }
 
+        size_t queue_size() const {
+            std::lock_guard<std::mutex> lk( mutex_ );
+            return queue_.size();
+        }
+
         /** Enqueue a callable for execution on a worker thread. */
         void submit( std::function<void()> task );
 
@@ -75,7 +80,7 @@ class cata_thread_pool
 
         std::vector<std::thread> workers_;
         std::deque<std::function<void()>> queue_;
-        std::mutex mutex_;
+        mutable std::mutex mutex_;
         std::condition_variable cv_;
         bool stop_ = false;
 };

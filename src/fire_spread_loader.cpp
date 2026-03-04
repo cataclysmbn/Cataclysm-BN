@@ -1,6 +1,7 @@
 #include "fire_spread_loader.h"
 
 #include <array>
+#include <cstdint>
 
 #include "cached_options.h"
 #include "field.h"
@@ -8,6 +9,7 @@
 #include "game_constants.h"
 #include "mapbuffer.h"   // also pulls in mapbuffer_registry.h
 #include "point.h"
+#include "profile.h"
 #include "submap.h"
 
 fire_spread_loader fire_loader;
@@ -45,6 +47,7 @@ static bool submap_has_fire( submap &sm )
 
 void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_sm pos )
 {
+    ZoneScoped;
     // Respect the player-configurable ceiling (cached from FIRE_SPREAD_SUBMAP_CAP).
     if( fire_spread_submap_cap <= 0 || loaded_count() >= fire_spread_submap_cap ) {
         return;
@@ -78,6 +81,8 @@ void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_
 
 void fire_spread_loader::prune_disconnected( submap_load_manager &loader )
 {
+    ZoneScoped;
+    TracyPlot( "Fire-Loaded Submaps", static_cast<int64_t>( loaded_count() ) );
     // Cardinal offsets for neighbor checks.
     static const std::array<tripoint, 4> card = {{
             tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
