@@ -987,7 +987,10 @@ class game
         // ########################## DATA ################################
     private:
         // May be a bit hacky, but it's probably better than the header spaghetti
-        pimpl<map> map_ptr;
+        // Constructed with a minimal size-1 sentinel to avoid over-allocating
+        // MAPSIZE×MAPSIZE caches before init_bubble_config() runs.
+        // game::setup() calls m.resize(g_mapsize) to set the real bubble size.
+        pimpl<map> map_ptr{ 1, true };
         pimpl<avatar> u_ptr;
         pimpl<live_view> liveview_ptr;
         live_view &liveview;

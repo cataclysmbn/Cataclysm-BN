@@ -214,8 +214,35 @@ map::map( int mapsize, bool zlev )
     skew_vision_cache_mutex = std::make_unique<std::shared_mutex>();
 }
 
+// Defined out-of-line so we can use g_mapsize (runtime) rather than the
+// compile-time MAPSIZE constant that would be baked in by the delegating-
+// constructor call expression in the header.  See F1-1 in Map Overhaul Plan.
+map::map( bool zlev ) : map( g_mapsize, zlev ) {}
+
 map::~map() = default;
 map &map::operator=( map && )  noexcept = default;
+
+auto map::resize( int new_mapsize ) -> void
+{
+    // Clear any stale pointers before reallocating.  Called at app startup
+    // (game::setup()) and from game::start_game() before the first load_map().
+    // grid.assign() below overwrites everything, so this is just a safety
+    // barrier against accidentally dereferencing any old pointers.
+    std::fill( grid.begin(), grid.end(), nullptr );
+    my_MAPSIZE = new_mapsize;
+    const auto grid_sz = static_cast<size_t>(
+                             zlevels
+                             ? my_MAPSIZE * my_MAPSIZE * OVERMAP_LAYERS
+                             : my_MAPSIZE * my_MAPSIZE );
+    grid.assign( grid_sz, nullptr );
+    for( auto &ptr : caches ) {
+        ptr = std::make_unique<level_cache>( SEEX * new_mapsize, SEEY * new_mapsize );
+    }
+    field_furn_locs.clear();
+    submaps_with_active_items.clear();
+    traplocs.assign( trap::count(), {} );
+    dbg( DL::Info ) << "map::resize(): my_MAPSIZE: " << my_MAPSIZE;
+}
 
 void map::set_dimension_bounds( const dimension_bounds &bounds )
 {
@@ -8182,8 +8209,15 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
 
     // Phase 6: Batch-advance field decay, item timers, and vehicle power for any
     // turns this submap missed while outside the reality bubble.
-    // This runs BEFORE actualize() so that actualize() sees the post-catchup
-    // last_touched and computes rot/funnels for the remaining small delta only.
+    // This runs BEFORE actualize() so that the two passes target disjoint effects:
+    //   - run_submap_batch_turns: field half-life decay, item explicit-turn timers,
+    //     vehicle net battery charge.  Does NOT update last_touched.
+    //   - actualize(): rot/spoilage, funnels, plant growth, cosmetic field ageing.
+    //     Uses the PRE-catchup last_touched (i.e. the original stale timestamp).
+    // The potential overlap: decay_cosmetic_fields() in actualize() may process
+    // cosmetic fields that batch_turns_field() already aged.  This is harmless
+    // because cosmetic fields lack a half-life (batch_turns_field skips them).
+    // See F4-3 in Map Overhaul Plan for full analysis.
     if( tmpsub->last_touched < calendar::turn ) {
         const int missed = to_turns<int>( calendar::turn - tmpsub->last_touched );
         run_submap_batch_turns( *tmpsub, missed );

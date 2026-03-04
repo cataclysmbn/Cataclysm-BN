@@ -853,14 +853,17 @@ int Character::sight_range( int light_level ) const
 
 auto Character::unimpaired_range() const -> int
 {
-    // Cap at MAX_VIEW_DISTANCE rather than the runtime g_max_view_distance.
-    // The old g_max_view_distance cap prevented the Beer–Lambert grey zone
-    // (tiles at 61–87 tiles in full daylight) from ever being visible at the
-    // default bubble size, because apparent_light_at would return DARK for
-    // those tiles even when castLight had set a non-zero seen_cache value.
-    // MAX_VIEW_DISTANCE is safe because castLight's map-bounds check prevents
-    // any tile outside the loaded area from receiving a non-zero seen_cache.
-    return std::min( sight_max, MAX_VIEW_DISTANCE );
+    // Cap at g_max_view_distance (runtime bubble radius in tiles) to produce
+    // a circular visible area.  castLight uses g_max_view_distance as its
+    // row-distance limit (lightmap.cpp, castLight() radius line), so diagonal
+    // tiles at the corners of the loaded grid can be up to
+    // g_max_view_distance*sqrt(2) tiles away from the player.  Using the
+    // compile-time MAX_VIEW_DISTANCE (sized for the largest possible bubble)
+    // lets those corner tiles pass the apparent_light_at distance check for
+    // smaller bubble sizes, producing a square visible-area artifact.
+    // g_max_view_distance gives the tight circular cutoff that matches the
+    // game design intent.  See F1-1 in Map Overhaul Plan.
+    return std::min( sight_max, g_max_view_distance );
 }
 
 bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )

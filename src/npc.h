@@ -1382,8 +1382,12 @@ class npc : public player
 class standard_npc : public npc
 {
     public:
+        // pos defaults to tripoint_min as a sentinel; the constructor body
+        // resolves it to tripoint( g_half_mapsize_x, g_half_mapsize_y, 0 ) at
+        // runtime so that the correct bubble-center is used regardless of the
+        // current REALITY_BUBBLE_SIZE setting.  See F1-1 in Map Overhaul Plan.
         standard_npc( const std::string &name = "",
-                      const tripoint &pos = tripoint( HALF_MAPSIZE_X, HALF_MAPSIZE_Y, 0 ),
+                      const tripoint &pos = tripoint_min,
                       const std::vector<std::string> &clothing = {},
                       int sk_lvl = 4, int s_str = 8, int s_dex = 8, int s_int = 8, int s_per = 8 );
 };

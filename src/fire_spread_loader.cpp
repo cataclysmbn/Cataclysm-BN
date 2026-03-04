@@ -2,6 +2,7 @@
 
 #include <array>
 
+#include "cached_options.h"
 #include "field.h"
 #include "field_type.h"
 #include "game_constants.h"
@@ -44,8 +45,8 @@ static bool submap_has_fire( submap &sm )
 
 void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_sm pos )
 {
-    // Respect the global ceiling.
-    if( loaded_count() >= FIRE_SPREAD_CAP ) {
+    // Respect the player-configurable ceiling (cached from FIRE_SPREAD_SUBMAP_CAP).
+    if( fire_spread_submap_cap <= 0 || loaded_count() >= fire_spread_submap_cap ) {
         return;
     }
 

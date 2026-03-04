@@ -2460,6 +2460,14 @@ void options_manager::add_options_performance()
         },
         "adjacent"
            );
+        add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
+             translate_marker( "Fire Spread Submap Cap" ),
+             translate_marker( "Maximum number of submaps that fire spread may keep loaded "
+                               "simultaneously across all dimensions.  Higher values allow larger "
+                               "out-of-bubble fires to be simulated correctly at the cost of CPU "
+                               "and memory.  0 disables out-of-bubble fire spread loading entirely. "
+                               "Takes effect immediately without restart." ),
+             0, 250, 25 );
         add( "REALITY_BUBBLE_SIZE", page_id,
              translate_marker( "Reality Bubble Size" ),
              translate_marker( "Size of the reality bubble.  "
@@ -2471,6 +2479,8 @@ void options_manager::add_options_performance()
                                "changing this mid-session will NOT resize caches or the loaded map." ),
              1, REALITY_BUBBLE_SIZE_MAX, 2 );
     } );
+
+    get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "OUT_OF_BUBBLE_FIRE_SPREAD", "adjacent" );
 }
 
 void options_manager::add_options_debug()
@@ -4086,6 +4096,22 @@ void options_manager::cache_to_globals()
 
     out_of_bubble_fire_spread =
         ::get_option<std::string>( "OUT_OF_BUBBLE_FIRE_SPREAD" ) == "adjacent";
+    fire_spread_submap_cap = ::get_option<int>( "FIRE_SPREAD_SUBMAP_CAP" );
+
+    {
+        const auto psl_str = ::get_option<std::string>( "POCKET_SIMULATION_LEVEL" );
+        if( psl_str == "off" ) {
+            pocket_simulation_level = pocket_sim_level::off;
+        } else if( psl_str == "none" ) {
+            pocket_simulation_level = pocket_sim_level::none;
+        } else if( psl_str == "minimal" ) {
+            pocket_simulation_level = pocket_sim_level::minimal;
+        } else if( psl_str == "moderate" ) {
+            pocket_simulation_level = pocket_sim_level::moderate;
+        } else {
+            pocket_simulation_level = pocket_sim_level::full;
+        }
+    }
 
     safe_mode_proximity = ::get_option<int>( "SAFEMODEPROXIMITY" );
 

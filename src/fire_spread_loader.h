@@ -15,8 +15,9 @@
  * the fire_spread source.  This preserves physically correct fire spread
  * behavior at the boundary of the loaded set.
  *
- * A global ceiling of FIRE_SPREAD_CAP (25) fire-spread-loaded submaps is
- * enforced across all dimensions combined.
+ * A global ceiling of fire_spread_submap_cap (default 25, player-configurable
+ * via FIRE_SPREAD_SUBMAP_CAP option) fire-spread-loaded submaps is enforced
+ * across all dimensions combined.  See F5-3 in Map Overhaul Plan.
  *
  * The connectivity invariant: a fire-spread-loaded submap is released during
  * prune_disconnected() if it has no cardinal neighbor covered by a
@@ -63,8 +64,7 @@ class fire_spread_loader
         // Handles for each fire-spread load request, keyed by (dimension_id, submap_pos).
         std::map<dim_pos_key, load_request_handle> fire_handles_;
 
-        // Maximum fire-spread-loaded submaps across all dimensions.
-        static constexpr int FIRE_SPREAD_CAP = 25;
+        // (cap is now the cached global fire_spread_submap_cap — see cached_options.h)
 };
 
 extern fire_spread_loader fire_loader;

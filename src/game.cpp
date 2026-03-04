@@ -592,7 +592,7 @@ void game::setup( bool load_world_modfiles )
     }
 
     init_bubble_config();
-    m = map( g_mapsize );
+    m.resize( g_mapsize );
 
     next_npc_id = character_id( 1 );
     next_mission_id = 1;
@@ -901,6 +901,10 @@ bool game::start_game()
     // request uses the correct radius from the very first load.
     world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
     init_bubble_config();
+    // Resize the map grid to match the (possibly changed) bubble-size option.
+    // The grid may hold stale pointers from a previous session; resize() clears
+    // them before reallocating to the new my_MAPSIZE.  See F1-1 Map Overhaul.
+    m.resize( g_mapsize );
     reality_bubble_radius_ = g_half_mapsize;
 
     // TODO: fix point types
@@ -3006,6 +3010,21 @@ bool game::load( const save_t &name )
     u.recalc_hp();
     u.set_save_id( name.decoded_name() );
     u.name = name.decoded_name();
+    // Set the correct bubble radius BEFORE unserialize() → load_map_at() fires,
+    // so the submap_loader request is created with radius = g_half_mapsize.
+    // Without this the stale default (5) is used, and the first update_map() call
+    // shifts the desired-set center from abs_sub+5 to abs_sub+17 while the stored
+    // request radius stays 5.  That causes on_submap_unloaded to null out 2541
+    // grid slots that are still within the active grid, producing the
+    // "map::saven grid (...) null!" warnings on the very next save.
+    init_bubble_config();
+    reality_bubble_radius_ = g_half_mapsize;
+    // If a stale request exists from a previous load in the same session, release
+    // it so load_map_at() recreates it with the correct (possibly changed) radius.
+    if( reality_bubble_handle_ != 0 ) {
+        submap_loader.release_load( reality_bubble_handle_ );
+        reality_bubble_handle_ = 0;
+    }
     if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION,
             std::bind( &game::unserialize, this, _1 ) ) ) {
         return false;
@@ -3038,6 +3057,12 @@ bool game::load( const save_t &name )
             .dimension_id = current_dimension_id_,
             .world_type   = effective_wt,
             .display_name = target_type ? target_type->name.translated() : current_dimension_id_,
+            // Restore bounds so that travel_to_dimension()'s old_is_bounded check
+            // returns the correct result when the player subsequently leaves a
+            // bounded pocket dimension after reload.  Without this, the loaded_
+            // dimensions_ entry has nullopt bounds even though the dimension IS
+            // bounded (F3-4 in Map Overhaul Plan).
+            .bounds = get_map().get_dimension_bounds(),
         };
     }
 
@@ -3088,6 +3113,12 @@ bool game::load( const save_t &name )
     // Read performance options before update_map so the reality bubble request
     // uses the correct radius from the very first submap_loader wiring.
     world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
+    // Re-read the bubble-size option so that reality_bubble_radius_ and the
+    // submap-loader request use the value that was active when this save was
+    // made (or the current value if the player changed it between sessions).
+    // setup() already called init_bubble_config() + m.resize(), and
+    // unserialize() → load_map() → m.load() has already filled the grid;
+    // do NOT call m.resize() here or it would wipe the loaded submaps.
     init_bubble_config();
     reality_bubble_radius_ = g_half_mapsize;
     update_map( u );
@@ -3196,6 +3227,10 @@ bool game::save_maps()
         // submap_stream workers calling add_submap() (which holds the mutex).
         // std::map concurrent read+write is UB even if the write side is locked.
         submap_streamer.flush_all();
+        // Debug invariant: no worker tasks may be in-flight during save.
+        // flush_all() is supposed to drain them all; if this fires, a worker
+        // submitted a new task concurrently with flush_all() — that is a bug.
+        assert( !submap_streamer.has_pending() );
         m.save();
         save_all_overmapbuffers(); // can throw — saves every loaded dimension's overmapbuffer
         // Phase 6: Save the dimension-aware mapbuffer slot, not always primary.
@@ -4634,6 +4669,14 @@ void game::world_tick()
     };
 
     MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
+        // CO-2: When pocket simulation is disabled, skip all non-primary dimensions.
+        // The primary dimension always uses dim == "" (empty string).
+        // none/minimal/moderate distinctions are deferred to a future PR —
+        // for now any setting other than "off" runs the full simulation path.
+        if( pocket_simulation_level == pocket_sim_level::off && !dim.empty() ) {
+            return;
+        }
+
         std::ranges::for_each( mb, [&]( auto & entry ) {
             auto &[raw_pos, sm_ptr] = entry;
             if( !sm_ptr ) {
@@ -4645,8 +4688,22 @@ void game::world_tick()
             sm_ptr->last_touched = calendar::turn;
 
             if( fire_spread && has_fire ) {
+                // F5-1: Look up dimension bounds once per submap so we can
+                // prevent fire from escaping a bounded pocket dimension.
+                const auto dim_it = loaded_dimensions_.find( dim );
+                const std::optional<dimension_bounds> *dim_bounds =
+                    ( dim_it != loaded_dimensions_.end() && dim_it->second.bounds.has_value() )
+                    ? &dim_it->second.bounds
+                    : nullptr;
+
                 std::ranges::for_each( card, [&]( const tripoint & delta ) {
                     const tripoint_abs_sm nbr{ pos_sm.raw() + delta };
+                    // Do not request a fire-spread load outside the dimension's
+                    // spatial bounds.  Fire cannot spread through boundary tiles
+                    // (they are impassable non-terrain markers, not real submaps).
+                    if( dim_bounds && !( *dim_bounds )->contains( nbr ) ) {
+                        return;
+                    }
                     if( !submap_loader.is_requested( dim, nbr ) ) {
                         fire_loader.request_for_fire( dim, nbr );
                     }
@@ -11610,6 +11667,13 @@ void game::on_options_changed()
 #if defined(TILES)
     tilecontext->on_options_changed();
 #endif
+    // Only rebuild distribution grids when an actual game world is loaded.
+    // grid_trackers_ hold stale tracked_submaps_ after quitting to the main
+    // menu, which would cause make_distribution_grid_at() to dereference a
+    // null world::info via overmapbuffer when trying to reload overmap data.
+    if( !world_generator || !world_generator->active_world ) {
+        return;
+    }
     for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
         if( tracker_ptr ) {
             tracker_ptr->on_options_changed();

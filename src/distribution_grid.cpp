@@ -314,15 +314,26 @@ std::array<tripoint_abs_omt, 5> distribution_grid_tracker::get_omt_and_cardinal_
 }
 
 void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
-        const std::string & /*dim_id*/ )
+        const std::string &dim_id )
 {
+    // Each tracker only manages submaps for its own dimension.  Without this guard,
+    // all registered trackers (primary + each pocket dimension) would receive every
+    // event, causing primary-tracker to insert pocket-dimension coordinates into
+    // tracked_submaps_ and call make_distribution_grid_at() against the wrong mapbuffer.
+    if( dim_id != dimension_id_ ) {
+        return;
+    }
     tracked_submaps_.insert( pos );
     make_distribution_grid_at( pos );
 }
 
 void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
-        const std::string & /*dim_id*/ )
+        const std::string &dim_id )
 {
+    if( dim_id != dimension_id_ ) {
+        return;
+    }
+
     tracked_submaps_.erase( pos );
 
     // One OMT spans exactly 4 submaps. When one of the 4 is unloaded, the shared

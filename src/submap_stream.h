@@ -63,8 +63,12 @@ class submap_stream
          *
          * Second pass: non-blocking drain of any futures that are already ready.
          *
-         * For each completed load, calls m.on_submap_loaded(pos, dim) to insert
-         * the submap into the map grid and invalidate the relevant caches.
+         * NOTE: This function does NOT call m.on_submap_loaded(); that is the
+         * responsibility of submap_load_manager (which calls it separately after
+         * drain_completed returns).  Calling on_submap_loaded here would trigger
+         * the grid-duplication bug where the grid-copy loop in shift() propagates
+         * the newly-set pointer so two adjacent slots point to the same submap.
+         * See F2-7 in Map Overhaul Plan.
          */
         void drain_completed( map &m, const std::vector<tripoint_abs_sm> &must_have );
 
@@ -82,6 +86,15 @@ class submap_stream
 
         /** Returns true if an in-flight request exists for (dim, pos). */
         bool is_pending( const std::string &dim, tripoint_abs_sm pos ) const;
+
+        /**
+         * Returns true if there are any in-flight background load tasks.
+         * Used by debug assertions to verify flush_all() was called before
+         * any main-thread mutation of mapbuffer::submaps.  See F2-1.
+         */
+        bool has_pending() const {
+            return !pending_.empty();
+        }
 
     private:
         struct pending_load {

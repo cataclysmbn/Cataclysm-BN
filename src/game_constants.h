@@ -26,12 +26,15 @@ static constexpr int MAX_ITEM_IN_VEHICLE_STORAGE = MAX_ITEM_IN_SQUARE;
 static constexpr int MAX_WORN_PER_TYPE = 2;
 
 // Maximum configurable reality bubble size.  MAPSIZE is sized for this maximum
-// so that all compile-time arrays (shadowcasting, pathfinding, scent) are large
-// enough regardless of the runtime setting.  The option itself is capped to this.
-static constexpr int REALITY_BUBBLE_SIZE_MAX = 4;
+// so that any code using MAPSIZE as an upper bound (e.g. legacy tests, debug tools)
+// is large enough.  The option itself is capped to this.
+// pimpl<map> in game.h is constructed with a minimal size-1 sentinel and resized
+// to g_mapsize by game::setup() so that players running smaller bubbles do not pay
+// the memory cost of the maximum.  See F1-1 in Map Overhaul Plan.
+static constexpr int REALITY_BUBBLE_SIZE_MAX = 8;
 
 // MAPSIZE is the number of submaps in each direction.
-// Formula: 4 * REALITY_BUBBLE_SIZE_MAX + 3 (e.g. size=2 → 11, size=4 → 19).
+// Formula: 4 * REALITY_BUBBLE_SIZE_MAX + 3 (e.g. size=2 → 11, size=4 → 19, size=8 → 35).
 static constexpr int MAPSIZE = 4 * REALITY_BUBBLE_SIZE_MAX + 3;
 static constexpr int HALF_MAPSIZE = static_cast<int>( MAPSIZE / 2 );
 

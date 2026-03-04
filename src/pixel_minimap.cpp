@@ -529,9 +529,16 @@ void pixel_minimap::render_critters( const tripoint &center )
     };
 
     cached_has_animated_beacons = false;
-    for( int y = 0; y < total_tiles_count.y; y++ ) {
-        for( int x = 0; x < total_tiles_count.x; x++ ) {
+    // Loop over view_tiles_count (the clipped view, not total_tiles_count) so that
+    // start_{x,y} + loop index always stays within the loaded cache for large bubbles.
+    // An inbounds() guard handles the opposite case (small bubble, wide screen) where
+    // view_tiles_count can exceed the cache dimensions.
+    for( int y = 0; y < view_tiles_count.y; y++ ) {
+        for( int x = 0; x < view_tiles_count.x; x++ ) {
             const tripoint p = tripoint{ start_x + x, start_y + y, center.z };
+            if( !access_cache.inbounds( p.xy() ) ) {
+                continue;
+            }
             const lit_level lighting = access_cache.visibility_cache[access_cache.idx( p.x, p.y )];
 
             if( lighting == lit_level::DARK || lighting == lit_level::BLANK ) {
@@ -544,7 +551,7 @@ void pixel_minimap::render_critters( const tripoint &center )
                 continue;
             }
 
-            const point critter_pos = projector->get_tile_pos( { x, y }, total_tiles_count );
+            const point critter_pos = projector->get_tile_pos( { x, y }, view_tiles_count );
             const SDL_Rect critter_rect = SDL_Rect{ critter_pos.x, critter_pos.y, beacon_size.x, beacon_size.y };
             const SDL_Color critter_color = get_critter_color( critter, flicker, mixture );
             cached_has_animated_beacons = cached_has_animated_beacons || is_critter_animated( critter );

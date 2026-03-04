@@ -100,6 +100,26 @@ extern int  lod_group_morale_max_tier;
 extern bool out_of_bubble_fire_spread;
 
 /**
+ * Maximum number of fire-spread-loaded submaps allowed across all dimensions
+ * simultaneously.  Cached from the FIRE_SPREAD_SUBMAP_CAP world option.
+ * Read every world_tick() — must be fast.  See F5-3 in Map Overhaul Plan.
+ */
+extern int fire_spread_submap_cap;
+
+/**
+ * How aggressively to simulate the "kept" pocket dimension while the player
+ * is away.  Cached from the POCKET_SIMULATION_LEVEL world option.
+ *
+ * "off"      → skip all non-primary-dimension processing in world_tick().
+ * Any other  → treat as "full" for now (one chunk kept loaded, fully simulated).
+ *              none/minimal/moderate distinctions are deferred to a future PR.
+ *
+ * See CO-2 in Map Overhaul Plan.
+ */
+enum class pocket_sim_level { off, none, minimal, moderate, full };
+extern pocket_sim_level pocket_simulation_level;
+
+/**
  * Cached value of the SAFEMODEPROXIMITY option.
  * 0 means "use g_max_view_distance" (the option's own zero-sentinel).
  * Any positive value is the distance in tiles.

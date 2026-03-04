@@ -87,6 +87,20 @@ void batch_turns_field( submap &sm, int n )
                 }
 
                 const field_type &fdata = cur.get_field_type().obj();
+
+                // Fire fields are never analytically decayed here.
+                // If out_of_bubble_fire_spread is enabled, fire is handled by
+                // fire_spread_loader via real simulation.  If disabled, fire
+                // in unloaded submaps is frozen in time (pre-PR behavior).
+                // Approximating fire decay would cause instant-kill on load,
+                // burned structures that were never simulated, etc.
+                // See F4-1 in Map Overhaul Plan; covers fd_fire, fd_fire_vent,
+                // fd_flame_burst, fd_incendiary, and any future has_fire types.
+                if( fdata.has_fire ) {
+                    ++it;
+                    continue;
+                }
+
                 if( fdata.half_life > 0_turns ) {
                     const int hl           = to_turns<int>( fdata.half_life );
                     const int current_age  = to_turns<int>( cur.get_field_age() );

@@ -424,11 +424,25 @@ class map : public submap_load_listener
 
         // Constructors & Initialization
         map( int mapsize = MAPSIZE, bool zlev = true );
-        explicit map( bool zlev ) : map( MAPSIZE, zlev ) { }
+        // Use a function-body delegation rather than a delegating-constructor
+        // call-expression so that g_mapsize (runtime) is used instead of the
+        // compile-time MAPSIZE constant.  See F1-1 in Map Overhaul Plan.
+        explicit map( bool zlev );
+
         virtual ~map();
 
         map &operator=( const map & ) = delete;
         map &operator=( map && ) noexcept ;
+
+        /**
+         * Resize the map's internal grid and level-caches to @p new_mapsize.
+         *
+         * The map MUST be unloaded (all grid pointers null) before calling.
+         * Called from game::setup() after init_bubble_config() sets g_mapsize
+         * so that pimpl<map>'s lightweight initial allocation is replaced with
+         * the player-configured bubble size.  See F1-1 in Map Overhaul Plan.
+         */
+        auto resize( int new_mapsize ) -> void;
 
         // Dimension Bounds (for bounded pocket dimensions)
         /**
