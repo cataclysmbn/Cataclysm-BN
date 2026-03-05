@@ -213,7 +213,8 @@ TEST_CASE( "shrapnel at huge range", "[grenade][explosion]" )
     REQUIRE( actor->explosion.radius <= 0 );
     REQUIRE( actor->explosion.fragment->range > g_mapsize_x + g_mapsize_y );
 
-    const monster &m = spawn_test_monster( "mon_zombie", tripoint( g_mapsize_x - 1, g_mapsize_y - 1, 0 ) );
+    const monster &m = spawn_test_monster( "mon_zombie", tripoint( g_mapsize_x - 1, g_mapsize_y - 1,
+                                           0 ) );
 
     set_off_explosion( grenade, origin );
 

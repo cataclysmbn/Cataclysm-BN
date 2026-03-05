@@ -135,7 +135,7 @@ void game::serialize( std::ostream &fout )
     // only the current dimension's info is reconstructed after reload.  See F3-2.
     json.member( "loaded_dimensions" );
     json.start_array();
-    std::ranges::for_each( loaded_dimensions_, [&]( const auto &kv ) {
+    std::ranges::for_each( loaded_dimensions_, [&]( const auto & kv ) {
         const dimension_info &info = kv.second;
         json.start_object();
         json.member( "dimension_id", info.dimension_id );
@@ -299,9 +299,9 @@ void game::unserialize( std::istream &fin )
                                            bounds_obj.get_int( "max_y" ),
                                            bounds_obj.get_int( "max_z" ) );
                     bounds.boundary_terrain = ter_str_id(
-                                                 bounds_obj.get_string( "boundary_terrain" ) );
+                                                  bounds_obj.get_string( "boundary_terrain" ) );
                     bounds.boundary_overmap_terrain = oter_str_id(
-                                                         bounds_obj.get_string( "boundary_overmap_terrain" ) );
+                                                          bounds_obj.get_string( "boundary_overmap_terrain" ) );
                     info.bounds = bounds;
                 }
                 loaded_dimensions_[info.dimension_id] = info;

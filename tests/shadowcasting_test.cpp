@@ -262,7 +262,8 @@ static void shadowcasting_runoff( const int iterations, const bool test_bresenha
     const auto start2 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
         // Then the current algorithm.
-        castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>(
+        castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>
+        (
             &seen_squares_experiment[0][0], &transparency_cache[0][0], &blocked_cache[0][0],
             MAPSIZE * SEEX, MAPSIZE * SEEY, offset );
     }
@@ -371,7 +372,8 @@ static void shadowcasting_3d_2d( const int iterations )
     static float seen_squares_control[MAPSIZE * SEEX][MAPSIZE * SEEY];
     static float seen_squares_experiment[MAPSIZE * SEEX][MAPSIZE * SEEY];
     static float transparency_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
-    static bool floor_cache[MAPSIZE * SEEX][MAPSIZE * SEEY]; // zero-initialized once; never written by algorithms.
+    static bool floor_cache[MAPSIZE * SEEX][MAPSIZE *
+                                            SEEY]; // zero-initialized once; never written by algorithms.
     static diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
 
     // Result arrays accumulate light; must be zeroed before each run.
@@ -393,7 +395,8 @@ static void shadowcasting_3d_2d( const int iterations )
     const auto start1 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
         // First the control algorithm.
-        castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>(
+        castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>
+        (
             &seen_squares_control[0][0], &transparency_cache[0][0], &blocked_cache[0][0],
             MAPSIZE * SEEX, MAPSIZE * SEEY, offset.xy() );
     }
@@ -509,7 +512,8 @@ static void run_spot_check( const grid_overlay &test_case, const grid_overlay &e
     }
 
     castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>
-    ( &seen_squares[0][0], &transparency_cache[0][0], &blocked_cache[0][0], MAPSIZE * SEEX, MAPSIZE * SEEY, ORIGIN );
+    ( &seen_squares[0][0], &transparency_cache[0][0], &blocked_cache[0][0], MAPSIZE * SEEX,
+      MAPSIZE * SEEY, ORIGIN );
     // Compares the whole grid, but out-of-bounds compares will de-facto pass.
     for( int y = 0; y < expected_result.height(); ++y ) {
         for( int x = 0; x < expected_result.width(); ++x ) {

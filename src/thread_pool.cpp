@@ -84,11 +84,13 @@ cata_thread_pool &get_thread_pool()
         // Respect the "disable multi-threading" setting.  This is read via
         // get_option<bool>() directly (not the cached parallel_enabled global)
         // because cache_to_globals() has not yet run at pool-init time.
-        if( !get_option<bool>( "MULTITHREADING_ENABLED" ) ) {
+        if( !get_option<bool>( "MULTITHREADING_ENABLED" ) )
+        {
             return 0u;
         }
         const int workers_opt = get_option<int>( "THREAD_POOL_WORKERS" );
-        if( workers_opt > 0 ) {
+        if( workers_opt > 0 )
+        {
             return static_cast<unsigned int>( workers_opt );
         }
         // 0 = auto: hardware_concurrency()-1, leaving one core for the main/SDL thread.

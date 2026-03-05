@@ -80,13 +80,15 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
             gen_in_progress_cv_.wait( lk, [&] {
                 // If the submap appeared in the mapbuffer while we waited
                 // (the owner finished), we can skip generation entirely.
-                if( mb.lookup_submap_in_memory( pos.raw() ) ) {
+                if( mb.lookup_submap_in_memory( pos.raw() ) )
+                {
                     return true;
                 }
                 return !gen_in_progress_.contains( abs_omt );
             } );
             // Re-check after the wait: the owning worker may have completed.
-            if( submap *existing = mb.lookup_submap_in_memory( pos.raw() ) ) {
+            if( submap *existing = mb.lookup_submap_in_memory( pos.raw() ) )
+            {
                 return existing;
             }
             // Claim this OMT; lk is released at scope exit.
