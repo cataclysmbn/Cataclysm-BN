@@ -12,41 +12,40 @@
 namespace
 {
 
-using refs = std::vector<vpart_reference>;
+using refs = std::vector<const vehicle_part *>;
 
 auto grouped_refs( const class vehicle &v ) ->  std::vector<refs>
 {
     std::vector<refs> part_group;
+    std::set<point> locations_checked;
     for( const auto &p : v.get_all_parts() ) {
-        const auto &last = part_group.rbegin();
-        if( last != part_group.rend() && p.mount() == last->begin()->mount() ) {
-            last->emplace_back( p );
-        } else {
-            part_group.emplace_back( refs{ p } );
+        if( locations_checked.contains( p.mount() ) ) {
+            continue;
         }
+        locations_checked.insert( p.mount() );
+        auto parts = v.get_parts_at( v.mount_to_tripoint( p.mount() ), "", part_status_flag::any );
+        part_group.emplace_back( parts );
     }
     return part_group;
 }
 
-auto is_plain_id( const vpart_reference &vpr ) -> bool
+auto is_plain_id( const vehicle_part *p ) -> bool
 {
-    const auto &p = vpr.part();
-    return !p.is_turret() && ( !p.is_tank() || p.ammo_current().is_null() );
+    return !p->is_turret() && ( !p->is_tank() || p->ammo_current().is_null() );
 }
 
-auto json_part_write( JsonOut &json, const vpart_reference &vpr ) -> void
+auto json_part_write( JsonOut &json, const vehicle_part *p ) -> void
 {
-    const auto &p = vpr.part();
-    const auto &id  = p.info().get_id();
-    const auto &ammo_type = p.ammo_current();
+    const auto &id  = p->info().get_id();
+    const auto &ammo_type = p->ammo_current();
 
     json.member( "part", id );
-    if( p.is_tank() ) {
+    if( p->is_tank() ) {
         json.member( "fuel", ammo_type );
-    } else if( p.is_turret() ) {
+    } else if( p->is_turret() ) {
         json.member( "ammo", 50 );
         json.member( "ammo_types", std::array{ ammo_type } );
-        json.member( "ammo_qty", std::array{ 0, p.ammo_capacity() } );
+        json.member( "ammo_qty", std::array{ 0, p->ammo_capacity() } );
     }
 }
 
@@ -59,9 +58,9 @@ auto json_parts_write( JsonOut &json, const refs &parts ) -> void
     } else {
         json.member( "parts" );
         json.start_array();
-        for( const auto &p : parts ) {
+        for( const auto *p : parts ) {
             if( is_plain_id( p ) ) {
-                json.write( p.info().get_id() );
+                json.write( p->info().get_id() );
             } else {
                 json.start_object();
                 json_part_write( json, p );
@@ -78,7 +77,7 @@ auto json_export::vehicle( JsonOut &json, const class vehicle &v ) -> void
 {
     const auto part_group = grouped_refs( v );
 
-    json.start_object();
+    json.start_object( true );
     json.member( "id", v.type );
     json.member( "type", "vehicle" );
     json.member( "name", v.name );
@@ -86,11 +85,11 @@ auto json_export::vehicle( JsonOut &json, const class vehicle &v ) -> void
     // json.member( "blueprint", "wip" );
 
     json.member( "parts" );
-    json.start_array();
+    json.start_array( true );
     for( const auto &parts : part_group ) {
-        const auto [x, y] = parts.begin()->mount();
+        const auto [x, y] = ( *parts.begin() )->mount;
 
-        json.start_object();
+        json.start_object( true );
         json.member( "x",  x );
         json.member( "y", y );
         json_parts_write( json, parts );

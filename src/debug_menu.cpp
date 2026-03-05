@@ -2258,21 +2258,15 @@ void debug()
                 break;
             }
             const vehicle &veh = v_part_pos->vehicle();
-            std::stringstream ss;
+            std::ofstream ss = std::ofstream( PATH_INFO::config_dir() + veh.name + ".json" );
             JsonOut json( ss, true );
+            json.start_array();
             json_export::vehicle( json, veh );
+            json.end_array();
 
             // write to log
-            DebugLog( DL::Info, DC::Main ) << " JSON TEMPLATE EXPORT:\n" << ss.str();
-            std::string popup_msg = _( "JSON template written to debug.log" );
-#if defined(TILES)
-            // copy to clipboard
-            const int clipboard_result = SDL_SetClipboardText( ss.str().c_str() );
-            printErrorIf( clipboard_result != 0, "Error while exporting JSON to the clipboard." );
-            if( clipboard_result == 0 ) {
-                popup_msg += _( " and to the clipboard." );
-            }
-#endif
+            ss.close();
+            std::string popup_msg = _( "JSON template written to " + veh.name + ".json" );
             popup( popup_msg );
             break;
         }
