@@ -124,30 +124,26 @@ class grid_furn_transform_queue
 };
 
 /**
- * A stub link from this dimension's electrical grid to a grid in another dimension.
+ * One end of an active power-portal link between two electrical grids.
  *
- * STUB — full cross-dimension power-transfer mechanics are deferred (§7.5).
- * This struct defines the API boundary so that the key data structures are in
- * place before the feature is implemented.
- *
- * Extension points (to be filled in by the cross-dimension grids feature PR):
- *  - add_export_node / remove_export_node on distribution_grid_tracker
- *  - apply_export( watts ) — forward power to the target dimension's tracker
- *  - query_import( watts ) — receive power from a remote exporter
- *  - Power-loss coefficient across the dimensional boundary
- *  - Cable item definition and install / uninstall UI
+ * Each end of the link holds a node in its dimension's distribution_grid_tracker.
+ * Power equalisation and upkeep are handled by game::tick_portal_links() each turn.
+ * The node is registered when the grid_link_tile active tile is loaded and removed
+ * when it is unloaded or the link is destroyed.
  */
 struct cross_dimension_export_node {
-    /// Cable anchor tile in this (source) dimension.
+    /// Anchor tile in this (source) dimension.
     tripoint_abs_ms source_pos;
-    /// The dimension this cable connects to.
+    /// Dimension of the far-end anchor ("" = primary dimension).
     std::string     target_dim_id;
-    /// Cable anchor tile in the target dimension.
+    /// Absolute position of the far-end anchor tile.
     tripoint_abs_ms target_pos;
-
-    // STUB: no live power forwarding yet.  Allocated when a cross-dimension
-    // cable is placed; removed when it is destroyed.  All power-transfer calls
-    // are no-ops until the feature is implemented.
+    /// True when the link is paused (power failure or manual).
+    /// No power is transferred while paused; upkeep is not charged.
+    bool            paused = false;
+    /// submap_load_manager handle keeping the far end's submap resident.
+    /// 0 when paused or not yet registered.
+    load_request_handle far_load_handle = 0;
 };
 
 /**
@@ -241,15 +237,27 @@ class distribution_grid_tracker : public submap_load_listener
 
         /**
          * Register a cross-dimension cable endpoint on this tracker.
-         * STUB: no live power forwarding until the feature is implemented.
+         * Registers a submap_load_manager request to keep the far end resident.
          */
         void add_export_node( cross_dimension_export_node node );
 
         /**
          * Remove the cross-dimension cable whose source tile is @p source_pos.
-         * STUB: no-op power-side until the feature is implemented.
+         * Releases the associated load request.
          */
         void remove_export_node( const tripoint_abs_ms &source_pos );
+
+        /**
+         * Pause the export node at @p source_pos (e.g. power failure).
+         * Releases the far-end load request; the remote submap may unload.
+         */
+        void pause_export_node( const tripoint_abs_ms &source_pos );
+
+        /**
+         * Resume a previously-paused export node.
+         * Re-registers the far-end load request.
+         */
+        void resume_export_node( const tripoint_abs_ms &source_pos );
 
         /**
          * Return the export nodes on this tracker (read-only).
@@ -356,5 +364,12 @@ constexpr traverse_visitor_result noop_visitor_veh( const vehicle & )
  * TODO: This wouldn't be required in an ideal world
  */
 distribution_grid_tracker &get_distribution_grid_tracker();
+
+/**
+ * Returns the distribution grid tracker for the given dimension, or nullptr if
+ * no tracker exists for @p dim_id.  Used by portal-link code that needs to access
+ * a tracker for a dimension other than the player's current one.
+ */
+distribution_grid_tracker *get_distribution_grid_tracker_for( const std::string &dim_id );
 
 

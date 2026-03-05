@@ -151,6 +151,7 @@ class game
         friend class advanced_inventory;
         friend class main_menu;
         friend distribution_grid_tracker &get_distribution_grid_tracker();
+        friend distribution_grid_tracker *get_distribution_grid_tracker_for( const std::string & );
         friend map &get_map();
         friend Character &get_player_character();
         friend avatar &get_avatar();
@@ -538,6 +539,9 @@ class game
         void validate_linked_vehicles();
         /** process vehicles that are following the player */
         void autopilot_vehicles();
+        /** Tick all active power-portal links: equalise power between linked grids,
+         *  charge upkeep, and pause links that cannot sustain their upkeep cost. */
+        void tick_portal_links();
         /** Picks and spawns a random fish from the remaining fish list when a fish is caught. */
         void catch_a_monster( monster *fish, const tripoint &pos, Character *who,
                               const time_duration &catch_duration );

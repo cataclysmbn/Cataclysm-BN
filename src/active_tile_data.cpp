@@ -51,6 +51,7 @@ template charge_watcher_tile *furn_at<charge_watcher_tile>( const tripoint_abs_m
 template countdown_tile *furn_at<countdown_tile>( const tripoint_abs_ms & );
 template charger_tile *furn_at<charger_tile>( const tripoint_abs_ms & );
 template solar_tile *furn_at<solar_tile>( const tripoint_abs_ms & );
+template grid_link_tile *furn_at<grid_link_tile>( const tripoint_abs_ms & );
 
 void furn_transform::serialize( JsonOut &jsout ) const
 {
@@ -438,6 +439,50 @@ void countdown_tile::load( JsonObject &jo )
     jo.read( "ticks", ticks );
 }
 
+// ---------------------------------------------------------------------------
+// grid_link_tile
+// ---------------------------------------------------------------------------
+
+void grid_link_tile::update_internal( time_point, const tripoint_abs_ms &,
+                                      distribution_grid & )
+{
+    // Power equalisation and upkeep are handled by game::tick_portal_links()
+    // outside the normal per-grid update path.  Nothing to do here.
+}
+
+active_tile_data *grid_link_tile::clone() const
+{
+    return new grid_link_tile( *this );
+}
+
+const std::string &grid_link_tile::get_type() const
+{
+    static const std::string type( "grid_link" );
+    return type;
+}
+
+void grid_link_tile::store( JsonOut &jsout ) const
+{
+    jsout.member( "linked", linked );
+    jsout.member( "paused", paused );
+    if( linked ) {
+        jsout.member( "target_dim_id", target_dim_id );
+        jsout.member( "target_pos", target_pos.raw() );
+    }
+}
+
+void grid_link_tile::load( JsonObject &jo )
+{
+    jo.read( "linked", linked );
+    jo.read( "paused", paused );
+    if( linked ) {
+        jo.read( "target_dim_id", target_dim_id );
+        tripoint raw;
+        jo.read( "target_pos", raw );
+        target_pos = tripoint_abs_ms( raw );
+    }
+}
+
 static std::map<std::string, std::unique_ptr<active_tile_data>> build_type_map()
 {
     std::map<std::string, std::unique_ptr<active_tile_data>> type_map;
@@ -451,6 +496,7 @@ static std::map<std::string, std::unique_ptr<active_tile_data>> build_type_map()
     add_type( new steady_consumer_tile() );
     add_type( new vehicle_connector_tile() );
     add_type( new countdown_tile() );
+    add_type( new grid_link_tile() );
     return type_map;
 }
 

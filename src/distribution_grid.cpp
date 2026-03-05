@@ -232,18 +232,76 @@ distribution_grid_tracker::distribution_grid_tracker( mapbuffer &buffer, std::st
 
 void distribution_grid_tracker::add_export_node( cross_dimension_export_node node )
 {
-    // STUB: record the node.  Power-forwarding mechanics are deferred (§7.5).
+    // Avoid double-registration: if a node for this source already exists
+    // (e.g. from a previous load that wasn't cleaned up), replace it.
+    auto existing = std::ranges::find_if( export_nodes_,
+    [&]( const cross_dimension_export_node &n ) {
+        return n.source_pos == node.source_pos;
+    } );
+    if( existing != export_nodes_.end() ) {
+        submap_loader.release_load( existing->far_load_handle );
+        export_nodes_.erase( existing );
+    }
+
+    if( !node.paused ) {
+        // Register a load request to keep the far end's submap resident.
+        const auto target_sm = project_to<coords::sm>( node.target_pos );
+        const int radius = get_option<int>( "POWER_PORTAL_LOAD_RADIUS" );
+        const int z = target_sm.raw().z;
+        node.far_load_handle = submap_loader.request_load(
+                                   load_request_source::player_base,
+                                   node.target_dim_id,
+                                   target_sm,
+                                   radius,
+                                   z, z );
+    }
+
     export_nodes_.push_back( std::move( node ) );
 }
 
 void distribution_grid_tracker::remove_export_node( const tripoint_abs_ms &source_pos )
 {
-    // STUB: remove the node whose source tile matches.
-    auto new_end = std::ranges::remove_if( export_nodes_,
-    [&]( const cross_dimension_export_node & n ) {
+    auto it = std::ranges::find_if( export_nodes_,
+    [&]( const cross_dimension_export_node &n ) {
         return n.source_pos == source_pos;
-    } ).begin();
-    export_nodes_.erase( new_end, export_nodes_.end() );
+    } );
+    if( it != export_nodes_.end() ) {
+        submap_loader.release_load( it->far_load_handle );
+        export_nodes_.erase( it );
+    }
+}
+
+void distribution_grid_tracker::pause_export_node( const tripoint_abs_ms &source_pos )
+{
+    auto it = std::ranges::find_if( export_nodes_,
+    [&]( const cross_dimension_export_node &n ) {
+        return n.source_pos == source_pos;
+    } );
+    if( it != export_nodes_.end() && !it->paused ) {
+        submap_loader.release_load( it->far_load_handle );
+        it->far_load_handle = 0;
+        it->paused = true;
+    }
+}
+
+void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &source_pos )
+{
+    auto it = std::ranges::find_if( export_nodes_,
+    [&]( const cross_dimension_export_node &n ) {
+        return n.source_pos == source_pos;
+    } );
+    if( it != export_nodes_.end() && it->paused ) {
+        const auto target_sm = project_to<coords::sm>( it->target_pos );
+        const int radius = get_option<int>( "POWER_PORTAL_LOAD_RADIUS" );
+        const int z = target_sm.raw().z;
+        it->far_load_handle = submap_loader.request_load(
+                                  load_request_source::player_base,
+                                  it->target_dim_id,
+                                  target_sm,
+                                  radius,
+                                  z, z );
+        it->paused = false;
+    }
 }
 
 distribution_grid &distribution_grid_tracker::make_distribution_grid_at(
@@ -326,6 +384,26 @@ void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
     }
     tracked_submaps_.insert( pos );
     make_distribution_grid_at( pos );
+
+    // Scan newly-loaded submap for grid_link_tile active furniture and register
+    // their export nodes so the link is live immediately on load.
+    submap *sm = mb.lookup_submap( pos );
+    if( sm == nullptr ) {
+        return;
+    }
+    std::ranges::for_each( sm->active_furniture, [&]( const auto &kv ) {
+        const grid_link_tile *glt = dynamic_cast<const grid_link_tile *>( kv.second.get() );
+        if( glt == nullptr || !glt->linked ) {
+            return;
+        }
+        const tripoint_abs_ms abs_pos = project_combine( pos, kv.first );
+        cross_dimension_export_node node;
+        node.source_pos    = abs_pos;
+        node.target_dim_id = glt->target_dim_id;
+        node.target_pos    = glt->target_pos;
+        node.paused        = glt->paused;
+        add_export_node( std::move( node ) );
+    } );
 }
 
 void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
@@ -334,6 +412,19 @@ void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
     ZoneScoped;
     if( dim_id != dimension_id_ ) {
         return;
+    }
+
+    // Remove export nodes whose source tile is in this submap before eviction.
+    // The submap is still resident at this point so we can scan active_furniture.
+    submap *sm = mb.lookup_submap( pos );
+    if( sm != nullptr ) {
+        std::ranges::for_each( sm->active_furniture, [&]( const auto &kv ) {
+            const grid_link_tile *glt = dynamic_cast<const grid_link_tile *>( kv.second.get() );
+            if( glt != nullptr && glt->linked ) {
+                const tripoint_abs_ms abs_pos = project_combine( pos, kv.first );
+                remove_export_node( abs_pos );
+            }
+        } );
     }
 
     tracked_submaps_.erase( pos );

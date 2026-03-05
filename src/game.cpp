@@ -1903,6 +1903,7 @@ bool game::do_turn()
             tracker_ptr->update( calendar::turn );
         }
     }
+    tick_portal_links();
     fluid_grid::update( calendar::turn );
 
     // Apply sounds from previous turn to monster and NPC AI.
@@ -14497,6 +14498,112 @@ distribution_grid_tracker &get_distribution_grid_tracker()
         return *it->second;
     }
     return *g->grid_trackers_.at( "" );
+}
+
+distribution_grid_tracker *get_distribution_grid_tracker_for( const std::string &dim_id )
+{
+    if( !g ) {
+        return nullptr;
+    }
+    const auto it = g->grid_trackers_.find( dim_id );
+    if( it != g->grid_trackers_.end() && it->second ) {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+void game::tick_portal_links()
+{
+    ZoneScoped;
+    // Upkeep cost charged from each side of a link per turn.
+    // TODO: tune this value; expose via JSON or option as needed.
+    static constexpr int PORTAL_UPKEEP_PER_SIDE = 50; // kJ
+
+    // Collect (tracker_ptr, source_pos) pairs to pause after iteration to
+    // avoid modifying export_nodes_ vectors while we're reading from them.
+    std::vector<std::pair<distribution_grid_tracker *, tripoint_abs_ms>> to_pause;
+
+    std::ranges::for_each( grid_trackers_, [&]( const auto &kv ) {
+        const auto &local_dim_id = kv.first;
+        distribution_grid_tracker *local_tracker = kv.second.get();
+        if( local_tracker == nullptr ) {
+            return;
+        }
+
+        std::ranges::for_each( local_tracker->get_export_nodes(), [&]( const auto &node ) {
+            if( node.paused ) {
+                return;
+            }
+
+            // Canonical ordering: only one side of each pair runs the transfer.
+            // Determined by lexicographic (dim_id, x, y, z) comparison.
+            const auto local_key = std::make_tuple( local_dim_id,
+                                   node.source_pos.raw().x,
+                                   node.source_pos.raw().y,
+                                   node.source_pos.raw().z );
+            const auto remote_key = std::make_tuple( node.target_dim_id,
+                                    node.target_pos.raw().x,
+                                    node.target_pos.raw().y,
+                                    node.target_pos.raw().z );
+            if( local_key >= remote_key ) {
+                // The other end handles this pair.
+                return;
+            }
+
+            // Locate the remote tracker and verify the reverse link exists.
+            const auto remote_it = grid_trackers_.find( node.target_dim_id );
+            if( remote_it == grid_trackers_.end() || !remote_it->second ) {
+                to_pause.emplace_back( local_tracker, node.source_pos );
+                return;
+            }
+            distribution_grid_tracker &remote_tracker = *remote_it->second;
+
+            const bool reverse_ok = std::ranges::any_of(
+                                        remote_tracker.get_export_nodes(),
+            [&]( const cross_dimension_export_node &rn ) {
+                return rn.source_pos    == node.target_pos
+                       && rn.target_dim_id == local_dim_id
+                       && rn.target_pos    == node.source_pos
+                       && !rn.paused;
+            } );
+            if( !reverse_ok ) {
+                // Far end doesn't agree — pause this side.
+                to_pause.emplace_back( local_tracker, node.source_pos );
+                return;
+            }
+
+            // Power equalisation: move half the difference each tick.
+            distribution_grid &local_grid  = local_tracker->grid_at( node.source_pos );
+            distribution_grid &remote_grid = remote_tracker.grid_at( node.target_pos );
+            const int local_power  = local_grid.get_resource();
+            const int remote_power = remote_grid.get_resource();
+            const int transfer     = ( local_power - remote_power ) / 2;
+            if( transfer != 0 ) {
+                const int not_moved = local_grid.mod_resource( -transfer );
+                remote_grid.mod_resource( transfer + not_moved );
+            }
+
+            // Upkeep: each side pays its share.
+            const int local_short  = local_grid.mod_resource(  -PORTAL_UPKEEP_PER_SIDE );
+            const int remote_short = remote_grid.mod_resource( -PORTAL_UPKEEP_PER_SIDE );
+            if( local_short < 0 || remote_short < 0 ) {
+                // Refund partial payments then pause both sides.
+                if( local_short  < 0 ) {
+                    local_grid.mod_resource(  -local_short  );
+                }
+                if( remote_short < 0 ) {
+                    remote_grid.mod_resource( -remote_short );
+                }
+                to_pause.emplace_back( local_tracker, node.source_pos );
+                to_pause.emplace_back( &remote_tracker, node.target_pos );
+            }
+        } );
+    } );
+
+    // Apply deferred pauses outside the read loops.
+    std::ranges::for_each( to_pause, []( const auto &p ) {
+        p.first->pause_export_node( p.second );
+    } );
 }
 
 void cleanup_arenas()

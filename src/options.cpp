@@ -2606,6 +2606,14 @@ void options_manager::add_options_debug()
          true
        );
 
+    add( "POWER_PORTAL_LOAD_RADIUS", debug,
+         translate_marker( "Power portal load radius (submaps)" ),
+         translate_marker( "Radius in submaps around the far end of a power-portal link that is "
+                           "force-loaded while the link is active.  Larger values keep more terrain "
+                           "around a remote portal resident, at the cost of memory." ),
+         0, static_cast<int>( REALITY_BUBBLE_SIZE_MAX ) + 1, 3
+       );
+
     add( "MADE_OF_EXPLODIUM", debug, translate_marker( "Made of explodium" ),
          translate_marker( "Explosive items and traps will detonate when hit by damage exceeding the threshold.  A higher number means more damage is required to detonate.  Set to 0 to disable." ),
          0, 1000, 30 );
