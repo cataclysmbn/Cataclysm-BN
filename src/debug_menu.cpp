@@ -80,6 +80,7 @@
 #include "overmap.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
+#include "path_info.h"
 #include "pimpl.h"
 #include "player.h"
 #include "pldata.h"
