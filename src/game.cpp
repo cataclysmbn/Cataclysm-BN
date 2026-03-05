@@ -3234,8 +3234,10 @@ bool game::save_maps()
         assert( !submap_streamer.has_pending() );
         m.save();
         save_all_overmapbuffers(); // can throw — saves every loaded dimension's overmapbuffer
-        // Phase 6: Save the dimension-aware mapbuffer slot, not always primary.
-        MAPBUFFER_REGISTRY.get( m.get_bound_dimension() ).save(); // can throw
+        // Save mapbuffers for all registered dimensions (active + any kept/non-active).
+        // save_all() dispatches dimension saves in parallel; each slot uses
+        // notify_tracker=is_primary and show_progress=false (worker-thread safe).
+        MAPBUFFER_REGISTRY.save_all(); // can throw
         return true;
     } catch( const std::exception &err ) {
         popup( _( "Failed to save the maps: %s" ), err.what() );

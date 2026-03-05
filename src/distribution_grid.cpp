@@ -365,10 +365,22 @@ void distribution_grid_tracker::on_changed( const tripoint_abs_ms &p )
         return;
     }
     const tripoint_abs_omt omt_pos = project_to<coords::omt>( sm_pos );
-    // Rebuild only the affected OMT cluster (5 OMTs max = 20 submaps).
-    // One submap rebuild per OMT is sufficient since make_distribution_grid_at
-    // covers all 4 submaps of the OMT anyway.
+    // Defer the actual rebuild to flush_dirty_omts() at the start of the next
+    // update() tick.  Multiple on_changed() calls within the same tick that
+    // hit the same 5-OMT cluster will therefore trigger only one rebuild per OMT.
     for( const tripoint_abs_omt &omt : get_omt_and_cardinal_neighbors( omt_pos ) ) {
+        dirty_omts_.insert( omt );
+    }
+}
+
+void distribution_grid_tracker::flush_dirty_omts()
+{
+    if( dirty_omts_.empty() ) {
+        return;
+    }
+    ZoneScoped;
+    TracyPlot( "Dirty OMTs", static_cast<int64_t>( dirty_omts_.size() ) );
+    for( const tripoint_abs_omt &omt : dirty_omts_ ) {
         for( const tripoint_abs_sm &smp : get_submaps_for_omt( omt ) ) {
             if( tracked_submaps_.contains( smp ) ) {
                 make_distribution_grid_at( smp );
@@ -376,6 +388,7 @@ void distribution_grid_tracker::on_changed( const tripoint_abs_ms &p )
             }
         }
     }
+    dirty_omts_.clear();
 }
 
 void distribution_grid_tracker::clear()
@@ -383,13 +396,17 @@ void distribution_grid_tracker::clear()
     tracked_submaps_.clear();
     parent_distribution_grids.clear();
     grids_requiring_updates.clear();
+    dirty_omts_.clear();
 }
 
 void distribution_grid_tracker::on_options_changed()
 {
     // Rebuild all tracked grids from scratch (e.g. ELECTRIC_GRID option toggled).
+    // Clear dirty_omts_ first — the full rebuild makes any pending deferred
+    // changes obsolete.
     parent_distribution_grids.clear();
     grids_requiring_updates.clear();
+    dirty_omts_.clear();
     for( const tripoint_abs_sm &sm_pos : tracked_submaps_ ) {
         make_distribution_grid_at( sm_pos );
     }
@@ -397,6 +414,10 @@ void distribution_grid_tracker::on_options_changed()
 
 distribution_grid &distribution_grid_tracker::grid_at( const tripoint_abs_ms &p )
 {
+    // Flush any deferred on_changed() rebuilds before querying so that callers
+    // always see an up-to-date grid topology.  flush_dirty_omts() returns
+    // immediately when the dirty set is empty, so this is free in the common case.
+    flush_dirty_omts();
     tripoint_abs_sm sm_pos = project_to<coords::sm>( p );
     auto iter = parent_distribution_grids.find( sm_pos );
     if( iter != parent_distribution_grids.end() ) {
@@ -483,6 +504,7 @@ std::string grid_furn_transform_queue::to_string() const
 void distribution_grid_tracker::update( time_point to )
 {
     ZoneScoped;
+    flush_dirty_omts();
     for( const shared_ptr_fast<distribution_grid> &grid : grids_requiring_updates ) {
         grid->update( to );
     }

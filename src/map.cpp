@@ -99,6 +99,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "submap.h"
+#include "submap_load_manager.h"
 #include "submap_stream.h"
 #include "thread_pool.h"
 #include "tileray.h"
@@ -243,6 +244,9 @@ auto map::resize( int new_mapsize ) -> void
     field_furn_locs.clear();
     submaps_with_active_items.clear();
     traplocs.assign( trap::count(), {} );
+    // Recompute the circle-shaped load footprint for the new bubble radius.
+    // Radius = (mapsize - 1) / 2, matching g_half_mapsize.
+    submap_loader.update_load_shape( ( new_mapsize - 1 ) / 2 );
     dbg( DL::Info ) << "map::resize(): my_MAPSIZE: " << my_MAPSIZE;
 }
 

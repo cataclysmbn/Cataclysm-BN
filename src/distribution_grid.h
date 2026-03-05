@@ -177,6 +177,22 @@ class distribution_grid_tracker : public submap_load_listener
          */
         std::unordered_set<tripoint_abs_sm> tracked_submaps_;
 
+        /**
+         * OMTs marked dirty by on_changed() during the current tick.
+         * Rebuilt in batch by flush_dirty_omts() at the start of update(),
+         * so multiple on_changed() calls on the same OMT cluster within one
+         * tick only trigger one make_distribution_grid_at() call per OMT.
+         */
+        std::unordered_set<tripoint_abs_omt> dirty_omts_;
+
+        /**
+         * Rebuild the distribution grid for every OMT accumulated in dirty_omts_
+         * since the last flush, then clear dirty_omts_.
+         * Called at the start of update() so that the power tick always sees
+         * an up-to-date grid topology.
+         */
+        void flush_dirty_omts();
+
         mapbuffer &mb;
 
         grid_furn_transform_queue transform_queue;

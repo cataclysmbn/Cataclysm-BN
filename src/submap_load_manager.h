@@ -61,7 +61,8 @@ struct submap_load_request {
     load_request_source source = load_request_source::reality_bubble;
     std::string dimension_id;
     tripoint_abs_sm center;
-    int radius = 0;  ///< Half-width in submaps; the loaded square is (2*radius+1)^2 per z-level
+    int radius = 0;  ///< Half-width in submaps.  For reality_bubble this defines the circle
+    ///< radius; for other sources a (2*radius+1)^2 square is loaded per z-level.
     int z_min = 0;   ///< Lowest z-level to include (inclusive).  Set to center.z for single-level.
     int z_max = 0;   ///< Highest z-level to include (inclusive).  Set to center.z for single-level.
 };
@@ -170,6 +171,17 @@ class submap_load_manager
          */
         void flush_prev_desired();
 
+        /**
+         * Precompute the set of (dx, dy) offsets that form a filled circle of
+         * the given @p radius and cache them for use in compute_desired_set().
+         *
+         * Must be called whenever the reality-bubble radius changes (i.e. from
+         * map::resize()).  The cached offsets are used for all
+         * load_request_source::reality_bubble requests; other sources continue
+         * to use a square footprint.
+         */
+        auto update_load_shape( int radius ) -> void;
+
         /** Register a listener to receive load/unload notifications. */
         void add_listener( submap_load_listener *listener );
 
@@ -189,6 +201,9 @@ class submap_load_manager
 
         /** Compute the full desired set from all active requests. */
         std::set<desired_key> compute_desired_set() const;
+
+        /** Cached (dx, dy) offsets within the current reality-bubble circle. */
+        std::vector<point> circle_offsets_;
 };
 
 extern submap_load_manager submap_loader;

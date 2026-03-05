@@ -57,6 +57,28 @@ void submap_load_manager::release_load( load_request_handle handle )
 }
 
 // ---------------------------------------------------------------------------
+// load shape cache
+// ---------------------------------------------------------------------------
+
+auto submap_load_manager::update_load_shape( int radius ) -> void
+{
+    const int r2 = radius * radius;
+    const auto axis = std::views::iota( -radius, radius + 1 );
+    auto in_circle = [r2]( auto pair ) {
+        auto [dx, dy] = pair;
+        return dx * dx + dy * dy <= r2;
+    };
+    auto to_point = []( auto pair ) {
+        auto [dx, dy] = pair;
+        return point{ dx, dy };
+    };
+    auto offsets = std::views::cartesian_product( axis, axis )
+                   | std::views::filter( in_circle )
+                   | std::views::transform( to_point );
+    circle_offsets_.assign( offsets.begin(), offsets.end() );
+}
+
+// ---------------------------------------------------------------------------
 // desired-set computation
 // ---------------------------------------------------------------------------
 
@@ -64,23 +86,37 @@ std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_
 {
     ZoneScoped;
     std::set<desired_key> desired;
-    for( const auto &kv : requests_ ) {
+    std::ranges::for_each( requests_, [&]( const auto &kv ) {
         const submap_load_request &req = kv.second;
         const tripoint c = req.center.raw();
-        const int r = req.radius;
-        // Iterate all submaps in the (2r+1)×(2r+1) XY square across all requested
-        // z-levels.  For most sources z_min == z_max == c.z (single level); for
-        // reality_bubble requests in z-level builds z_min and z_max span the full
-        // playable z range so that all loaded z-slices are tracked.
-        for( int z = req.z_min; z <= req.z_max; ++z ) {
-            for( int dx = -r; dx <= r; ++dx ) {
-                for( int dy = -r; dy <= r; ++dy ) {
-                    desired.emplace( req.dimension_id,
-                                     tripoint{ c.x + dx, c.y + dy, z } );
-                }
-            }
+        const auto z_range = std::views::iota( req.z_min, req.z_max + 1 );
+
+        if( req.source == load_request_source::reality_bubble ) {
+            // For reality-bubble requests use the precomputed circle offsets so
+            // that only submaps within Euclidean distance 'radius' are loaded.
+            // circle_offsets_ is populated by update_load_shape() in map::resize().
+            std::ranges::for_each(
+                std::views::cartesian_product( circle_offsets_, z_range ),
+            [&]( auto pair ) {
+                auto [off, z] = pair;
+                desired.emplace( req.dimension_id,
+                                 tripoint{ c.x + off.x, c.y + off.y, z } );
+            } );
+        } else {
+            // Other sources (player_base, script, fire_spread) use the square
+            // footprint.  These requests are typically small-radius and not
+            // performance-critical.
+            const int r = req.radius;
+            const auto axis = std::views::iota( -r, r + 1 );
+            std::ranges::for_each(
+                std::views::cartesian_product( axis, axis, z_range ),
+            [&]( auto tuple ) {
+                auto [dx, dy, z] = tuple;
+                desired.emplace( req.dimension_id,
+                                 tripoint{ c.x + dx, c.y + dy, z } );
+            } );
         }
-    }
+    } );
     return desired;
 }
 
@@ -111,13 +147,10 @@ void submap_load_manager::update()
     // mapbuffer::preload_quad() performs the slow I/O phase outside its internal
     // lock, allowing different quads to be read concurrently.  After all futures
     // complete, every newly-desired submap that existed on disk is resident.
-    //
-    // TODO(async-gen): generation (for submaps that have no disk file) still
-    // runs synchronously in map::loadn() because it calls overmap_buffer.ter()
-    // — which reads g_active_dimension_id — and various other game globals that
-    // are not worker-thread-safe.  Async generation requires passing the
-    // overmapbuffer explicitly to all mapgen entry points and removing all
-    // global reads from the generation path.
+    // Submaps without a disk file are generated asynchronously by submap_stream
+    // workers via submap_streamer.request_load() (called in map::shift()).  Those
+    // workers use tinymap::bind_dimension() and get_overmapbuffer(dim) so no
+    // global state is read at worker-thread execution time.
     std::vector<std::future<void>> load_futures;
     load_futures.reserve( new_quads.size() );
     for( const auto &[dim_id, om_addr] : new_quads ) {
@@ -204,23 +237,21 @@ bool submap_load_manager::is_requested( const std::string &dim_id,
 bool submap_load_manager::is_properly_requested( const std::string &dim_id,
         const tripoint_abs_sm &pos ) const
 {
-    for( const auto &kv : requests_ ) {
+    const tripoint p = pos.raw();
+    return std::ranges::any_of( requests_, [&]( const auto &kv ) {
         const submap_load_request &req = kv.second;
         if( req.source != load_request_source::reality_bubble ) {
-            continue;
+            return false;
         }
         if( req.dimension_id != dim_id ) {
-            continue;
+            return false;
         }
         const tripoint c = req.center.raw();
-        const tripoint p = pos.raw();
-        if( std::abs( p.x - c.x ) <= req.radius &&
-            std::abs( p.y - c.y ) <= req.radius &&
-            p.z >= req.z_min && p.z <= req.z_max ) {
-            return true;
-        }
-    }
-    return false;
+        const int dx = p.x - c.x;
+        const int dy = p.y - c.y;
+        return dx * dx + dy * dy <= req.radius * req.radius
+               && p.z >= req.z_min && p.z <= req.z_max;
+    } );
 }
 
 std::vector<std::string> submap_load_manager::active_dimensions() const
