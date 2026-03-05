@@ -2470,14 +2470,14 @@ void options_manager::add_options_performance()
              0, 250, 25 );
         add( "REALITY_BUBBLE_SIZE", page_id,
              translate_marker( "Reality Bubble Size" ),
-             translate_marker( "Size of the reality bubble.  "
-                               "MAPSIZE = 4 × size + 3 (size 2 → 11×11 submaps, the original default).  "
-                               "Maximum player sight range = 12 × (2 × size + 1).  "
-                               "Larger values increase loaded area and memory usage; "
+             translate_marker( "Submap radius of the reality bubble (submaps visible beyond your position).  "
+                               "Grid size = 2 × size + 3 submaps per side (size 4 → 11×11, the default).  "
+                               "Maximum player sight range = 12 × (size + 1) tiles.  "
+                               "Larger values increase the loaded area and memory usage; "
                                "smaller values reduce both.  "
                                "REQUIRES A GAME RESTART to take effect — "
                                "changing this mid-session will NOT resize caches or the loaded map." ),
-             1, REALITY_BUBBLE_SIZE_MAX, 2 );
+             0, REALITY_BUBBLE_SIZE_MAX, 4 );
     } );
 
     get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "OUT_OF_BUBBLE_FIRE_SPREAD", "adjacent" );

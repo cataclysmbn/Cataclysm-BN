@@ -31,11 +31,15 @@ static constexpr int MAX_WORN_PER_TYPE = 2;
 // pimpl<map> in game.h is constructed with a minimal size-1 sentinel and resized
 // to g_mapsize by game::setup() so that players running smaller bubbles do not pay
 // the memory cost of the maximum.  See F1-1 in Map Overhaul Plan.
-static constexpr int REALITY_BUBBLE_SIZE_MAX = 8;
+static constexpr int REALITY_BUBBLE_SIZE_MAX = 16;
 
 // MAPSIZE is the number of submaps in each direction.
-// Formula: 4 * REALITY_BUBBLE_SIZE_MAX + 3 (e.g. size=2 → 11, size=4 → 19, size=8 → 35).
-static constexpr int MAPSIZE = 4 * REALITY_BUBBLE_SIZE_MAX + 3;
+// Formula: 2 * REALITY_BUBBLE_SIZE_MAX + 3
+//   e.g. size=4  → g_half_mapsize=5  → 11×11 submaps (new default)
+//        size=8  → g_half_mapsize=9  → 19×19 submaps
+//        size=16 → g_half_mapsize=17 → 35×35 submaps (the maximum)
+// g_half_mapsize = size + 1  (center submap is implied; size is the player-visible radius).
+static constexpr int MAPSIZE = 2 * REALITY_BUBBLE_SIZE_MAX + 3;
 static constexpr int HALF_MAPSIZE = static_cast<int>( MAPSIZE / 2 );
 
 // SEEX/SEEY define the size of a nonant, or grid.
@@ -133,14 +137,15 @@ static constexpr int RANGE_HARD_CAP = MAX_VIEW_DISTANCE;
 
 // ---------------------------------------------------------------------------
 // Runtime reality-bubble configuration (set from REALITY_BUBBLE_SIZE option).
-// Defaults match size=2, which gives the original 11×11 submap grid.
+// Defaults match size=4, which gives the original 11×11 submap grid.
 // ---------------------------------------------------------------------------
 
-/// Player-facing size setting (1–REALITY_BUBBLE_SIZE_MAX, default 2).
+/// Player-facing size setting (1–REALITY_BUBBLE_SIZE_MAX, default 4).
+/// Represents the submap radius: how many submaps the player can see beyond the center.
 extern int g_reality_bubble_size;
-/// Submap radius = 2*size+1 (half the loaded grid width).
+/// Submap radius = size+1 (half the loaded grid width; center submap is implied).
 extern int g_half_mapsize;
-/// Total submaps per dimension = 4*size+3.
+/// Total submaps per dimension = 2*size+3.
 extern int g_mapsize;
 /// Tile width of the loaded area = SEEX * g_mapsize.
 extern int g_mapsize_x;

@@ -223,9 +223,9 @@ class computer;
 // ---------------------------------------------------------------------------
 // Runtime reality-bubble configuration globals (declared in game_constants.h).
 // Initialised by init_bubble_config() from the REALITY_BUBBLE_SIZE option.
-// Defaults match size=2, which reproduces the original 11×11 submap grid.
+// Defaults match size=4 (player-facing radius), which reproduces the original 11×11 submap grid.
 // ---------------------------------------------------------------------------
-int g_reality_bubble_size = 2;
+int g_reality_bubble_size = 4;
 int g_half_mapsize = 5;
 int g_mapsize = 11;
 int g_mapsize_x = 132;
@@ -243,12 +243,13 @@ static void init_bubble_config()
 {
     const int size = get_option<int>( "REALITY_BUBBLE_SIZE" );
     g_reality_bubble_size = size;
-    // g_half_mapsize is the radius in submaps from the center to any edge
-    // (matching the historical HALF_MAPSIZE = 5 constant for size=2).
-    // Formula: for REALITY_BUBBLE_SIZE=2 → radius=5, grid=11×11 submaps.
-    //          for REALITY_BUBBLE_SIZE=3 → radius=7, grid=15×15 submaps.
-    //          for REALITY_BUBBLE_SIZE=4 → radius=9, grid=19×19 submaps.
-    g_half_mapsize        = 2 * size + 1;
+    // g_half_mapsize is the radius in submaps from the center to any edge.
+    // "size" is the player-visible radius (submaps beyond the center); the center
+    // submap itself is the implied +1.
+    // Formula: for REALITY_BUBBLE_SIZE=4 → radius=5, grid=11×11 submaps (default).
+    //          for REALITY_BUBBLE_SIZE=8 → radius=9, grid=19×19 submaps.
+    //          for REALITY_BUBBLE_SIZE=16 → radius=17, grid=35×35 submaps (max).
+    g_half_mapsize        = size + 1;
     g_mapsize             = 2 * g_half_mapsize + 1;
     g_mapsize_x           = SEEX * g_mapsize;
     g_mapsize_y           = SEEY * g_mapsize;
