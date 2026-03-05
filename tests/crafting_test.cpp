@@ -656,8 +656,7 @@ TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )
         m.furn_set( start_pos + point( 10, 0 ), furn_str_id( "f_battery" ) );
         m.furn_set( start_pos + point_east, furn_str_id( "f_oven" ) );
 
-        distribution_grid_tracker grid_tracker;
-        grid_tracker.load( m );
+        distribution_grid_tracker &grid_tracker = get_distribution_grid_tracker();
         distribution_grid &grid = grid_tracker.grid_at( start_pos_abs + point( 10, 0 ) );
         REQUIRE( !grid.empty() );
         // We need the grid to be the same for both the oven and the battery

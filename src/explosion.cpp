@@ -450,7 +450,8 @@ void ExplosionProcess::fill_maps()
             continue;
         }
 
-        // Uses this ternany check instead of rl_dist because it converts trig_dist's distance to int implicitly
+        // Uses this ternary check instead of rl_dist to keep the raw float for sorting.
+        // std::lround matches rl_dist's rounding behaviour (round-half-away-from-zero).
         const float distance = (
                                    trigdist ?
                                    trig_dist( center, target ) :
@@ -458,13 +459,12 @@ void ExplosionProcess::fill_maps()
                                );
         const float z_distance = abs( target.z - center.z );
         const float z_aware_distance = distance + ( ExplosionConstants::Z_LEVEL_DIST - 1 ) * z_distance;
-        // We static_cast<int> in order to keep parity with legacy blasts using rl_dist for distance
-        //   which, as stated above, converts trig_dist into int implicitly
-        if( blast_radius > 0 && static_cast<int>( z_aware_distance ) <= blast_radius ) {
+        if( blast_radius > 0 && static_cast<int>( std::lround( z_aware_distance ) ) <= blast_radius ) {
             blast_map.emplace_back( z_aware_distance, target );
         }
 
-        if( shrapnel && static_cast<int>( distance ) <= shrapnel_range && target.z == center.z &&
+        if( shrapnel && static_cast<int>( std::lround( distance ) ) <= shrapnel_range &&
+            target.z == center.z &&
             !is_occluded( center, target ) ) {
             shrapnel_map.emplace_back( distance, target );
         }
