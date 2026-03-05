@@ -3772,6 +3772,22 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
         if( !all_techniques.empty() ) {
             const std::vector<matec_id> all_tec_sorted = sorted_lex( all_techniques );
             insert_separation_line( info );
+            if( has_flag( flag_BLOCK_WHILE_WORN ) ) {
+                matec_id tid;
+                if( has_technique( matec_id( "WBLOCK_3" ) ) ) {
+                    tid = matec_id( "WBLOCK_3" );
+                } else if( has_technique( matec_id( "WBLOCK_2" ) ) ) {
+                    tid = matec_id( "WBLOCK_2" );
+                } else if( has_technique( matec_id( "WBLOCK_1" ) ) ) {
+                    tid = matec_id( "WBLOCK_1" );
+                }
+                if( tid ) {
+                    info.emplace_back( "DESCRIPTION", _( "<bold>Techniques when worn</bold>: " ) +
+                                       string_format( "<stat>%s</stat>: <info>%s</info>", _( tid.obj().name ),
+                                                      _( tid.obj().description ) ) );
+                }
+
+            }
             info.emplace_back( "DESCRIPTION", _( "<bold>Techniques when wielded</bold>: " ) +
             enumerate_as_string( all_tec_sorted.begin(), all_tec_sorted.end(), []( const matec_id & tid ) {
                 return string_format( "<stat>%s</stat>: <info>%s</info>", _( tid.obj().name ),

@@ -360,7 +360,7 @@ void iexamine::nanofab( player &p, const tripoint &examp )
 
     if( new_item->made_of( LIQUID ) ) {
         const int amount = string_input_popup()
-                           .title( "Dispense how many units?" )
+                           .title( _( "Dispense how many units?" ) )
                            .width( 5 )
                            .text( std::to_string( 1 ) )
                            .only_digits( true )
@@ -6260,18 +6260,18 @@ static void cloning_vat_activate( player &p, const tripoint &examp )
         }
     }
     if( carriers.empty() ) {
-        popup( "You need a sterilized artificial womb and DNA to begin incubation." );
+        popup( _( "You need a sterilized artificial womb and DNA to begin incubation." ) );
         return;
     }
     if( ( *carriers.begin() )->has_flag( flag_RADIO_MOD ) ) {
-        popup( "You need to remove the radio mod first." );
+        popup( _( "You need to remove the radio mod first." ) );
         return;
     }
 
     // choose specimen sample
     auto syringes = p.all_items_with_id( itype_dna );
     if( syringes.size() == 0 ) {
-        popup( "You have no valid specimen samples." );
+        popup( _( "You have no valid specimen samples." ) );
         return;
     }
     uilist specimen_menu;
@@ -6883,9 +6883,9 @@ void iexamine::cloning_vat_examine( player &p, const tripoint &examp )
     if( !active ) {
         // handle inactive vat: load or unload
         uilist menu;
-        menu.text = "What to do with the cloning vat?";
+        menu.text = _( "What to do with the cloning vat?" );
         if( items_here.size() > 0 ) {
-            menu.addentry( "Get contents" );
+            menu.addentry( _( "Get contents" ) );
             menu.query();
             if( menu.ret != 0 ) {
                 return;
@@ -6893,7 +6893,7 @@ void iexamine::cloning_vat_examine( player &p, const tripoint &examp )
 
             // get pointer to first item, ask user if they want to wield
             item *it = *items_here.begin();
-            if( !query_yn( string_format( "Take %s from the cloning vat?", it->tname().c_str() ) ) ) {
+            if( !query_yn( string_format( _( "Take %s from the cloning vat?" ), it->tname().c_str() ) ) ) {
                 return;
             }
             // remove from map, store in det
@@ -6904,7 +6904,7 @@ void iexamine::cloning_vat_examine( player &p, const tripoint &examp )
             return;
         }
 
-        menu.addentry( "Begin incubation" );
+        menu.addentry( _( "Begin incubation" ) );
         menu.query();
 
         if( menu.ret != 0 ) {
@@ -6922,7 +6922,7 @@ void iexamine::cloning_vat_examine( player &p, const tripoint &examp )
                                    to_string( time_duration::from_turns( ( *items_here.begin() )->get_counter() ) ) );
 
         uilist menu;
-        menu.text = "What to do with the active cloning vat?";
+        menu.text = _( "What to do with the active cloning vat?" );
         menu.addentry( prompt );
         menu.query();
         if( menu.ret != 0 ) {

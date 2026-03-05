@@ -522,7 +522,7 @@
     "broken_color": "light_blue",
     "damage_modifier": 80,
     "durability": 100,
-    "description": "A small fridge.  When turned on, it will cool the food inside, extended the time until the food spoils.",
+    "description": "A small fridge.  When turned on, it will cool the food inside, delaying spoilage significantly but not completely stopping it.",
     "//": "Use average consumption, not the max on the appliance rating plate. 30W ~ 260kWh per annum",
     "epower": -30,
     "size": "75 L",
@@ -549,6 +549,46 @@
   },
   {
     "type": "vehicle_part",
+    "id": "fridge",
+    "name": { "str": "fridge" },
+    "symbol": "H",
+    "looks_like": "f_fridge",
+    "color": "light_blue",
+    "broken_symbol": "#",
+    "broken_color": "light_blue",
+    "damage_modifier": 80,
+    "durability": 300,
+    "description": "A full-sized fridge.  When turned on, it will cool the food inside, delaying spoilage significantly but not completely stopping it.",
+    "epower": -60,
+    "size": "200 L",
+    "item": "fridge",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FRIDGE", "COVERED", "ENABLED_DRAINS_EPOWER" ],
+    "breaks_into": [
+      { "item": "sheet_metal", "count": [ 1, 3 ] },
+      { "item": "sheet_metal_small", "count": [ 6, 9 ] },
+      { "item": "steel_chunk", "count": [ 0, 3 ] },
+      { "item": "scrap", "count": [ 2, 8 ] },
+      { "item": "cable", "charges": [ 1, 3 ] },
+      { "item": "hose", "count": 1 },
+      { "item": "cu_pipe", "count": [ 1, 4 ] },
+      { "item": "scrap_copper", "count": [ 0, 2 ] },
+      { "item": "glass_shard", "count": [ 2, 4 ] },
+      { "item": "motor_tiny", "prob": 25 }
+    ],
+    "damage_reduction": { "all": 32 }
+  },
+  {
+    "type": "vehicle_part",
     "id": "minifreezer",
     "name": { "str": "minifreezer" },
     "symbol": "H",
@@ -558,6 +598,7 @@
     "looks_like": "minifridge",
     "damage_modifier": 80,
     "durability": 100,
+    "description": "A small freezer.  When turned on, it will freeze the food inside, preventing its spoilage from advancing further.",
     "epower": -45,
     "size": "75 L",
     "item": "minifreezer",
@@ -577,6 +618,46 @@
       { "item": "steel_chunk", "count": [ 8, 13 ] },
       { "item": "scrap", "count": [ 8, 13 ] },
       { "item": "hose", "prob": 50 },
+      { "item": "motor_tiny", "prob": 25 }
+    ],
+    "damage_reduction": { "all": 32 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "freezer",
+    "name": { "str": "freezer" },
+    "symbol": "H",
+    "color": "light_blue",
+    "broken_symbol": "#",
+    "broken_color": "blue",
+    "looks_like": "fridge",
+    "damage_modifier": 80,
+    "durability": 300,
+    "description": "A full-sized freezer.  When turned on, it will freeze the food inside, preventing its spoilage from advancing further.",
+    "epower": -90,
+    "size": "200 L",
+    "item": "freezer",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FREEZER", "COVERED", "ENABLED_DRAINS_EPOWER" ],
+    "breaks_into": [
+      { "item": "sheet_metal", "count": [ 1, 3 ] },
+      { "item": "sheet_metal_small", "count": [ 6, 9 ] },
+      { "item": "steel_chunk", "count": [ 0, 3 ] },
+      { "item": "scrap", "count": [ 2, 8 ] },
+      { "item": "cable", "charges": [ 1, 3 ] },
+      { "item": "hose", "count": 1 },
+      { "item": "cu_pipe", "count": [ 1, 4 ] },
+      { "item": "scrap_copper", "count": [ 0, 2 ] },
+      { "item": "glass_shard", "count": [ 2, 4 ] },
       { "item": "motor_tiny", "prob": 25 }
     ],
     "damage_reduction": { "all": 32 }

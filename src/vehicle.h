@@ -1050,6 +1050,11 @@ class vehicle
         double coeff_air_drag() const;
 
         /**
+         * coefficient of airship balloon drag
+         */
+        double coeff_balloon_drag() const;
+
+        /**
          * coefficient of rolling resistance
          * multiplied by velocity to get the variable part of rolling resistance drag in N
          * multiplied by a constant to get the constant part of rolling resistance drag in N
