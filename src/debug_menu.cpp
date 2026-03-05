@@ -2258,7 +2258,7 @@ void debug()
                 break;
             }
             const vehicle &veh = v_part_pos->vehicle();
-            std::ofstream ss = std::ofstream( PATH_INFO::config_dir() + veh.name + ".json" );
+            auto ss = std::ofstream( PATH_INFO::config_dir() + veh.name + ".json" );
             JsonOut json( ss, true );
             json.start_array();
             json_export::vehicle( json, veh );
