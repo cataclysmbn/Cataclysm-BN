@@ -235,7 +235,7 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
     // Avoid double-registration: if a node for this source already exists
     // (e.g. from a previous load that wasn't cleaned up), replace it.
     auto existing = std::ranges::find_if( export_nodes_,
-    [&]( const cross_dimension_export_node &n ) {
+    [&]( const cross_dimension_export_node & n ) {
         return n.source_pos == node.source_pos;
     } );
     if( existing != export_nodes_.end() ) {
@@ -262,7 +262,7 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
 void distribution_grid_tracker::remove_export_node( const tripoint_abs_ms &source_pos )
 {
     auto it = std::ranges::find_if( export_nodes_,
-    [&]( const cross_dimension_export_node &n ) {
+    [&]( const cross_dimension_export_node & n ) {
         return n.source_pos == source_pos;
     } );
     if( it != export_nodes_.end() ) {
@@ -274,7 +274,7 @@ void distribution_grid_tracker::remove_export_node( const tripoint_abs_ms &sourc
 void distribution_grid_tracker::pause_export_node( const tripoint_abs_ms &source_pos )
 {
     auto it = std::ranges::find_if( export_nodes_,
-    [&]( const cross_dimension_export_node &n ) {
+    [&]( const cross_dimension_export_node & n ) {
         return n.source_pos == source_pos;
     } );
     if( it != export_nodes_.end() && !it->paused ) {
@@ -287,7 +287,7 @@ void distribution_grid_tracker::pause_export_node( const tripoint_abs_ms &source
 void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &source_pos )
 {
     auto it = std::ranges::find_if( export_nodes_,
-    [&]( const cross_dimension_export_node &n ) {
+    [&]( const cross_dimension_export_node & n ) {
         return n.source_pos == source_pos;
     } );
     if( it != export_nodes_.end() && it->paused ) {
@@ -391,7 +391,7 @@ void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
     if( sm == nullptr ) {
         return;
     }
-    std::ranges::for_each( sm->active_furniture, [&]( const auto &kv ) {
+    std::ranges::for_each( sm->active_furniture, [&]( const auto & kv ) {
         const grid_link_tile *glt = dynamic_cast<const grid_link_tile *>( kv.second.get() );
         if( glt == nullptr || !glt->linked ) {
             return;
@@ -418,7 +418,7 @@ void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
     // The submap is still resident at this point so we can scan active_furniture.
     submap *sm = mb.lookup_submap( pos );
     if( sm != nullptr ) {
-        std::ranges::for_each( sm->active_furniture, [&]( const auto &kv ) {
+        std::ranges::for_each( sm->active_furniture, [&]( const auto & kv ) {
             const grid_link_tile *glt = dynamic_cast<const grid_link_tile *>( kv.second.get() );
             if( glt != nullptr && glt->linked ) {
                 const tripoint_abs_ms abs_pos = project_combine( pos, kv.first );

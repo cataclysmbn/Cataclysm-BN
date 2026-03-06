@@ -86,7 +86,7 @@ std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_
 {
     ZoneScoped;
     std::set<desired_key> desired;
-    std::ranges::for_each( requests_, [&]( const auto &kv ) {
+    std::ranges::for_each( requests_, [&]( const auto & kv ) {
         const submap_load_request &req = kv.second;
         const tripoint c = req.center.raw();
         const auto z_range = std::views::iota( req.z_min, req.z_max + 1 );
@@ -254,7 +254,7 @@ bool submap_load_manager::is_properly_requested( const std::string &dim_id,
         const tripoint_abs_sm &pos ) const
 {
     const tripoint p = pos.raw();
-    return std::ranges::any_of( requests_, [&]( const auto &kv ) {
+    return std::ranges::any_of( requests_, [&]( const auto & kv ) {
         const submap_load_request &req = kv.second;
         if( req.source != load_request_source::reality_bubble ) {
             return false;

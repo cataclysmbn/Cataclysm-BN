@@ -85,7 +85,7 @@ struct octant_xform {
 
     // Map octant-local (dx, dy) to actual (x, y) relative to offset.
     constexpr point apply( int dx, int dy ) const noexcept {
-        return { dx * xx + dy * xy, dx * yx + dy * yy };
+        return { dx *xx + dy * xy, dx *yx + dy * yy };
     }
 
     // The quadrant from which light approaches tiles seen via this octant.
@@ -101,9 +101,9 @@ struct octant_xform_3d {
     // Map octant-local (dx, dy, dz) to world offset.
     constexpr tripoint apply( int dx, int dy, int dz ) const noexcept {
         return {
-            dx * xx + dy * xy + dz * xz,
-            dx * yx + dy * yy + dz * yz,
-            dz * zz          // xz == yz == 0 always in current usage
+            dx *xx + dy *xy + dz * xz,
+            dx *yx + dy *yy + dz * yz,
+            dz *zz           // xz == yz == 0 always in current usage
         };
     }
 
@@ -116,37 +116,39 @@ struct octant_xform_3d {
 // The 8 octant transforms for 2D casting.  Bit i of the octant_mask passed to
 // castLightOctants_q selects k_octant_xforms[i].
 static constexpr std::array<octant_xform, 8> k_octant_xforms = {{
-    { 0,  1,  1,  0 },
-    { 1,  0,  0,  1 },
-    { 0, -1,  1,  0 },
-    {-1,  0,  0,  1 },
-    { 0,  1, -1,  0 },
-    { 1,  0,  0, -1 },
-    { 0, -1, -1,  0 },
-    {-1,  0,  0, -1 },
-}};
+        { 0,  1,  1,  0 },
+        { 1,  0,  0,  1 },
+        { 0, -1,  1,  0 },
+        {-1,  0,  0,  1 },
+        { 0,  1, -1,  0 },
+        { 1,  0,  0, -1 },
+        { 0, -1, -1,  0 },
+        {-1,  0,  0, -1 },
+    }
+};
 
 // 16 transforms for 3D casting: 8 down (zz=-1) then 8 up (zz=+1).
 static constexpr std::array<octant_xform_3d, 16> k_zlight_xforms = {{
-    // Down (zz = -1)
-    { 0,  1, 0,  1,  0, 0, -1 },
-    { 1,  0, 0,  0,  1, 0, -1 },
-    { 0, -1, 0,  1,  0, 0, -1 },
-    {-1,  0, 0,  0,  1, 0, -1 },
-    { 0,  1, 0, -1,  0, 0, -1 },
-    { 1,  0, 0,  0, -1, 0, -1 },
-    { 0, -1, 0, -1,  0, 0, -1 },
-    {-1,  0, 0,  0, -1, 0, -1 },
-    // Up (zz = +1)
-    { 0,  1, 0,  1,  0, 0,  1 },
-    { 1,  0, 0,  0,  1, 0,  1 },
-    { 0, -1, 0,  1,  0, 0,  1 },
-    {-1,  0, 0,  0,  1, 0,  1 },
-    { 0,  1, 0, -1,  0, 0,  1 },
-    { 1,  0, 0,  0, -1, 0,  1 },
-    { 0, -1, 0, -1,  0, 0,  1 },
-    {-1,  0, 0,  0, -1, 0,  1 },
-}};
+        // Down (zz = -1)
+        { 0,  1, 0,  1,  0, 0, -1 },
+        { 1,  0, 0,  0,  1, 0, -1 },
+        { 0, -1, 0,  1,  0, 0, -1 },
+        {-1,  0, 0,  0,  1, 0, -1 },
+        { 0,  1, 0, -1,  0, 0, -1 },
+        { 1,  0, 0,  0, -1, 0, -1 },
+        { 0, -1, 0, -1,  0, 0, -1 },
+        {-1,  0, 0,  0, -1, 0, -1 },
+        // Up (zz = +1)
+        { 0,  1, 0,  1,  0, 0,  1 },
+        { 1,  0, 0,  0,  1, 0,  1 },
+        { 0, -1, 0,  1,  0, 0,  1 },
+        {-1,  0, 0,  0,  1, 0,  1 },
+        { 0,  1, 0, -1,  0, 0,  1 },
+        { 1,  0, 0,  0, -1, 0,  1 },
+        { 0, -1, 0, -1,  0, 0,  1 },
+        {-1,  0, 0,  0, -1, 0,  1 },
+    }
+};
 
 // ── Internal 2D cast ──────────────────────────────────────────────────────────
 //
@@ -177,17 +179,18 @@ static void castLight(
     const quadrant quad = xf.source_quadrant();
 
     const auto check_blocked = [&]( point p ) -> bool {
-        switch( quad ) {
+        switch( quad )
+        {
             case quadrant::NW:
                 return blocked_array[p.x * sy + p.y].nw;
             case quadrant::NE:
                 return blocked_array[p.x * sy + p.y].ne;
             case quadrant::SE:
                 return p.x < sx - 1 && p.y < sy - 1 &&
-                       blocked_array[( p.x + 1 ) * sy + p.y + 1].nw;
+                blocked_array[( p.x + 1 ) * sy + p.y + 1].nw;
             case quadrant::SW:
                 return p.x > 1 && p.y < sy - 1 &&
-                       blocked_array[( p.x - 1 ) * sy + p.y + 1].ne;
+                blocked_array[( p.x - 1 ) * sy + p.y + 1].ne;
             default:
                 cata::unreachable();
         }
@@ -205,18 +208,18 @@ static void castLight(
 
         // Trim the x-range to the visible sector.
         delta.x = static_cast<int>( std::ceil(
-                      std::max( static_cast<float>( -distance ),
-                                ( ( -distance - 0.5f ) * start ) - 0.5f ) ) );
+                                        std::max( static_cast<float>( -distance ),
+                                                ( ( -distance - 0.5f ) * start ) - 0.5f ) ) );
         const int x_limit = static_cast<int>( std::floor(
-                                std::min( 0.0f,
-                                          ( ( -distance + 0.5f ) * end ) - 0.5f ) ) ) + 1;
+                std::min( 0.0f,
+                          ( ( -distance + 0.5f ) * end ) - 0.5f ) ) ) + 1;
 
         int last_dist = -1;
 
         for( ; delta.x <= x_limit; ++delta.x ) {
             const point current{
-                offset.x + delta.x * xf.xx + delta.y * xf.xy,
-                offset.y + delta.x * xf.yx + delta.y * xf.yy
+                offset.x + delta.x *xf.xx + delta.y * xf.xy,
+                offset.y + delta.x *xf.yx + delta.y *xf.yy
             };
 
             if( current.x < 0 || current.y < 0 ||
@@ -272,8 +275,8 @@ static void castLight(
             if( model.check( current_transparency, last_intensity ) ) {
                 // The span we just completed was transparent — recurse into it.
                 const float next_cumulative = ( lookup != nullptr )
-                    ? model.accumulate( lookup->transparency, current_transparency, distance )
-                    : model.accumulate( cumulative_transparency, current_transparency, distance );
+                                              ? model.accumulate( lookup->transparency, current_transparency, distance )
+                                              : model.accumulate( cumulative_transparency, current_transparency, distance );
 
                 // Stay on fast path only if current span matched the lookup.
                 const exp_lookup *next_lookup = ( lookup != nullptr &&
@@ -451,19 +454,20 @@ static void cast_zlight_segment(
 
     const quadrant quad = xf.source_quadrant();
 
-    const auto check_blocked = [&]( const tripoint &p ) -> bool {
+    const auto check_blocked = [&]( const tripoint & p ) -> bool {
         const auto &bc = blocked_caches[p.z + OVERMAP_DEPTH];
-        switch( quad ) {
+        switch( quad )
+        {
             case quadrant::NW:
                 return bc.at( p.x, p.y ).nw;
             case quadrant::NE:
                 return bc.at( p.x, p.y ).ne;
             case quadrant::SE:
                 return p.x < bc.sx - 1 && p.y < bc.sy - 1 &&
-                       bc.at( p.x + 1, p.y + 1 ).nw;
+                bc.at( p.x + 1, p.y + 1 ).nw;
             case quadrant::SW:
                 return p.x > 1 && p.y < bc.sy - 1 &&
-                       bc.at( p.x - 1, p.y + 1 ).ne;
+                bc.at( p.x - 1, p.y + 1 ).ne;
             default:
                 cata::unreachable();
         }
@@ -504,8 +508,8 @@ static void cast_zlight_segment(
             const int z_index = current.z + OVERMAP_DEPTH;
 
             const int x_start = ( x_skip != -1 ) ? x_skip :
-                                 std::max( 0, static_cast<int>(
-                                               std::ceil( ( ( distance - 0.5f ) * start_minor ) - 0.5f ) ) );
+                                std::max( 0, static_cast<int>(
+                                              std::ceil( ( ( distance - 0.5f ) * start_minor ) - 0.5f ) ) );
             const int x_limit = std::min( distance,
                                           static_cast<int>(
                                               std::ceil( ( ( distance + 0.5f ) * end_minor ) + 0.5f ) ) - 1 );

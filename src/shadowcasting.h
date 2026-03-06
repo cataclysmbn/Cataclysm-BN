@@ -92,7 +92,7 @@ static constexpr int LIGHTMAP_LOOKUP_SIZE = MAX_VIEW_DISTANCE * 2;
 struct exp_lookup {
     static constexpr int size = LIGHTMAP_LOOKUP_SIZE;
 
-    float values[size]{};
+    float values[size] {};
     float transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
 
     explicit exp_lookup( float t ) noexcept { reset( t ); }

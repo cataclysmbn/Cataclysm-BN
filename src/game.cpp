@@ -14523,14 +14523,14 @@ void game::tick_portal_links()
     // avoid modifying export_nodes_ vectors while we're reading from them.
     std::vector<std::pair<distribution_grid_tracker *, tripoint_abs_ms>> to_pause;
 
-    std::ranges::for_each( grid_trackers_, [&]( const auto &kv ) {
+    std::ranges::for_each( grid_trackers_, [&]( const auto & kv ) {
         const auto &local_dim_id = kv.first;
         distribution_grid_tracker *local_tracker = kv.second.get();
         if( local_tracker == nullptr ) {
             return;
         }
 
-        std::ranges::for_each( local_tracker->get_export_nodes(), [&]( const auto &node ) {
+        std::ranges::for_each( local_tracker->get_export_nodes(), [&]( const auto & node ) {
             if( node.paused ) {
                 return;
             }
@@ -14538,9 +14538,9 @@ void game::tick_portal_links()
             // Canonical ordering: only one side of each pair runs the transfer.
             // Determined by lexicographic (dim_id, x, y, z) comparison.
             const auto local_key = std::make_tuple( local_dim_id,
-                                   node.source_pos.raw().x,
-                                   node.source_pos.raw().y,
-                                   node.source_pos.raw().z );
+                                                    node.source_pos.raw().x,
+                                                    node.source_pos.raw().y,
+                                                    node.source_pos.raw().z );
             const auto remote_key = std::make_tuple( node.target_dim_id,
                                     node.target_pos.raw().x,
                                     node.target_pos.raw().y,
@@ -14560,7 +14560,7 @@ void game::tick_portal_links()
 
             const bool reverse_ok = std::ranges::any_of(
                                         remote_tracker.get_export_nodes(),
-            [&]( const cross_dimension_export_node &rn ) {
+            [&]( const cross_dimension_export_node & rn ) {
                 return rn.source_pos    == node.target_pos
                        && rn.target_dim_id == local_dim_id
                        && rn.target_pos    == node.source_pos
@@ -14584,12 +14584,12 @@ void game::tick_portal_links()
             }
 
             // Upkeep: each side pays its share.
-            const int local_short  = local_grid.mod_resource(  -PORTAL_UPKEEP_PER_SIDE );
+            const int local_short  = local_grid.mod_resource( -PORTAL_UPKEEP_PER_SIDE );
             const int remote_short = remote_grid.mod_resource( -PORTAL_UPKEEP_PER_SIDE );
             if( local_short < 0 || remote_short < 0 ) {
                 // Refund partial payments then pause both sides.
                 if( local_short  < 0 ) {
-                    local_grid.mod_resource(  -local_short  );
+                    local_grid.mod_resource( -local_short );
                 }
                 if( remote_short < 0 ) {
                     remote_grid.mod_resource( -remote_short );
@@ -14601,7 +14601,7 @@ void game::tick_portal_links()
     } );
 
     // Apply deferred pauses outside the read loops.
-    std::ranges::for_each( to_pause, []( const auto &p ) {
+    std::ranges::for_each( to_pause, []( const auto & p ) {
         p.first->pause_export_node( p.second );
     } );
 }

@@ -1422,15 +1422,15 @@ vehicle *vehicle::act_on_map()
                 point sink_sm_min = { INT_MAX, INT_MAX };
                 point sink_sm_max = { INT_MIN, INT_MIN };
                 std::ranges::for_each(
-                    parts | std::views::filter( []( const auto &prt ) { return !prt.removed; } ),
-                    [&]( const auto &prt ) {
-                        const int px = ( gpos.x + prt.precalc[0].x ) / SEEX;
-                        const int py = ( gpos.y + prt.precalc[0].y ) / SEEY;
-                        sink_sm_min.x = std::min( sink_sm_min.x, px );
-                        sink_sm_min.y = std::min( sink_sm_min.y, py );
-                        sink_sm_max.x = std::max( sink_sm_max.x, px );
-                        sink_sm_max.y = std::max( sink_sm_max.y, py );
-                    }
+                parts | std::views::filter( []( const auto & prt ) { return !prt.removed; } ),
+                [&]( const auto & prt ) {
+                    const int px = ( gpos.x + prt.precalc[0].x ) / SEEX;
+                    const int py = ( gpos.y + prt.precalc[0].y ) / SEEY;
+                    sink_sm_min.x = std::min( sink_sm_min.x, px );
+                    sink_sm_min.y = std::min( sink_sm_min.y, py );
+                    sink_sm_max.x = std::max( sink_sm_max.x, px );
+                    sink_sm_max.y = std::max( sink_sm_max.y, py );
+                }
                 );
                 here.on_vehicle_moved( sink_sm_min, sink_sm_max, sm_pos.z );
             }

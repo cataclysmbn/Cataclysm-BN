@@ -452,175 +452,175 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
     std::vector<std::pair<tripoint, float>> lm_override;
     {
         ZoneScopedN( "generate_lightmap_collect" );
-    // Traverse the submaps in order
-    for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
-        for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-            const auto cur_submap = get_submap_at_grid( { smx, smy, zlev } );
-            if( cur_submap == nullptr ) {
-                continue;
-            }
+        // Traverse the submaps in order
+        for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
+            for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
+                const auto cur_submap = get_submap_at_grid( { smx, smy, zlev } );
+                if( cur_submap == nullptr ) {
+                    continue;
+                }
 
-            for( int sx = 0; sx < SEEX; ++sx ) {
-                for( int sy = 0; sy < SEEY; ++sy ) {
-                    const int x = sx + smx * SEEX;
-                    const int y = sy + smy * SEEY;
-                    const tripoint p( x, y, zlev );
-                    // Project light into any openings into buildings.
-                    if( !outside_cache[map_cache.idx( p.x, p.y )] || ( !top_floor &&
-                            prev_floor_cache[map_cache.idx( p.x, p.y )] ) ) {
-                        // Apply light sources for external/internal divide
-                        for( int i = 0; i < 4; ++i ) {
-                            point neighbour = p.xy() + point( dir_x[i], dir_y[i] );
-                            if( neighbour.x >= 0 && neighbour.y >= 0 &&
-                                neighbour.x < map_cache.cache_x && neighbour.y < map_cache.cache_y
-                                && outside_cache[map_cache.idx( neighbour.x, neighbour.y )] &&
-                                ( top_floor || !prev_floor_cache[map_cache.idx( neighbour.x, neighbour.y )] )
-                              ) {
-                                const float source_light =
-                                    std::min( natural_light, lm[map_cache.idx( neighbour.x, neighbour.y )].max() );
-                                if( light_transparency( p ) > LIGHT_TRANSPARENCY_SOLID ) {
-                                    update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, quadrant::default_ );
-                                    apply_directional_light( p, dir_d[i], source_light );
-                                } else {
-                                    update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, dir_quadrants[i][0] );
-                                    update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, dir_quadrants[i][1] );
+                for( int sx = 0; sx < SEEX; ++sx ) {
+                    for( int sy = 0; sy < SEEY; ++sy ) {
+                        const int x = sx + smx * SEEX;
+                        const int y = sy + smy * SEEY;
+                        const tripoint p( x, y, zlev );
+                        // Project light into any openings into buildings.
+                        if( !outside_cache[map_cache.idx( p.x, p.y )] || ( !top_floor &&
+                                prev_floor_cache[map_cache.idx( p.x, p.y )] ) ) {
+                            // Apply light sources for external/internal divide
+                            for( int i = 0; i < 4; ++i ) {
+                                point neighbour = p.xy() + point( dir_x[i], dir_y[i] );
+                                if( neighbour.x >= 0 && neighbour.y >= 0 &&
+                                    neighbour.x < map_cache.cache_x && neighbour.y < map_cache.cache_y
+                                    && outside_cache[map_cache.idx( neighbour.x, neighbour.y )] &&
+                                    ( top_floor || !prev_floor_cache[map_cache.idx( neighbour.x, neighbour.y )] )
+                                  ) {
+                                    const float source_light =
+                                        std::min( natural_light, lm[map_cache.idx( neighbour.x, neighbour.y )].max() );
+                                    if( light_transparency( p ) > LIGHT_TRANSPARENCY_SOLID ) {
+                                        update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, quadrant::default_ );
+                                        apply_directional_light( p, dir_d[i], source_light );
+                                    } else {
+                                        update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, dir_quadrants[i][0] );
+                                        update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, dir_quadrants[i][1] );
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    if( cur_submap->get_lum( { sx, sy } ) && has_items( p ) ) {
-                        auto items = i_at( p );
-                        add_light_from_items( p, items.begin(), items.end() );
-                    }
-
-                    const ter_id terrain = cur_submap->get_ter( { sx, sy } );
-                    if( terrain->light_emitted > 0 ) {
-                        add_light_source( p, terrain->light_emitted );
-                    }
-                    const furn_id furniture = cur_submap->get_furn( {sx, sy } );
-                    if( furniture->light_emitted > 0 ) {
-                        add_light_source( p, furniture->light_emitted );
-                    }
-
-                    for( auto &fld : cur_submap->get_field( { sx, sy } ) ) {
-                        const field_entry *cur = &fld.second;
-                        const int light_emitted = cur->light_emitted();
-                        if( light_emitted > 0 ) {
-                            add_light_source( p, light_emitted );
+                        if( cur_submap->get_lum( { sx, sy } ) && has_items( p ) ) {
+                            auto items = i_at( p );
+                            add_light_from_items( p, items.begin(), items.end() );
                         }
-                        const float light_override = cur->local_light_override();
-                        if( light_override >= 0.0 ) {
-                            lm_override.emplace_back( p, light_override );
+
+                        const ter_id terrain = cur_submap->get_ter( { sx, sy } );
+                        if( terrain->light_emitted > 0 ) {
+                            add_light_source( p, terrain->light_emitted );
+                        }
+                        const furn_id furniture = cur_submap->get_furn( {sx, sy } );
+                        if( furniture->light_emitted > 0 ) {
+                            add_light_source( p, furniture->light_emitted );
+                        }
+
+                        for( auto &fld : cur_submap->get_field( { sx, sy } ) ) {
+                            const field_entry *cur = &fld.second;
+                            const int light_emitted = cur->light_emitted();
+                            if( light_emitted > 0 ) {
+                                add_light_source( p, light_emitted );
+                            }
+                            const float light_override = cur->local_light_override();
+                            if( light_override >= 0.0 ) {
+                                lm_override.emplace_back( p, light_override );
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    // Skip in parallel mode: build_map_cache has already applied monster lights
-    // serially before the parallel_for to avoid racing on weak_ptr_fast::lock().
-    if( !skip_shared_init ) {
-        for( monster &critter : g->all_monsters() ) {
-            if( critter.is_hallucination() ) {
-                continue;
-            }
-            const tripoint &mp = critter.pos();
-            if( inbounds( mp ) ) {
-                if( critter.has_effect( effect_onfire ) ) {
-                    apply_light_source( mp, 8 );
+        // Skip in parallel mode: build_map_cache has already applied monster lights
+        // serially before the parallel_for to avoid racing on weak_ptr_fast::lock().
+        if( !skip_shared_init ) {
+            for( monster &critter : g->all_monsters() ) {
+                if( critter.is_hallucination() ) {
+                    continue;
                 }
-                // TODO: [lightmap] Attach natural light brightness to creatures
-                // TODO: [lightmap] Allow creatures to have light attacks (i.e.: eyebot)
-                // TODO: [lightmap] Allow creatures to have facing and arc lights
-                if( critter.type->luminance > 0 ) {
-                    apply_light_source( mp, critter.type->luminance );
+                const tripoint &mp = critter.pos();
+                if( inbounds( mp ) ) {
+                    if( critter.has_effect( effect_onfire ) ) {
+                        apply_light_source( mp, 8 );
+                    }
+                    // TODO: [lightmap] Attach natural light brightness to creatures
+                    // TODO: [lightmap] Allow creatures to have light attacks (i.e.: eyebot)
+                    // TODO: [lightmap] Allow creatures to have facing and arc lights
+                    if( critter.type->luminance > 0 ) {
+                        apply_light_source( mp, critter.type->luminance );
+                    }
                 }
             }
         }
-    }
 
-    // Apply any vehicle light sources
-    VehicleList vehs = get_vehicles();
-    for( auto &vv : vehs ) {
-        vehicle *v = vv.v;
+        // Apply any vehicle light sources
+        VehicleList vehs = get_vehicles();
+        for( auto &vv : vehs ) {
+            vehicle *v = vv.v;
 
-        auto lights = v->lights( true );
+            auto lights = v->lights( true );
 
-        float veh_luminance = 0.0;
-        float iteration = 1.0;
+            float veh_luminance = 0.0;
+            float iteration = 1.0;
 
-        for( const auto pt : lights ) {
-            const auto &vp = pt->info();
-            if( vp.has_flag( VPFLAG_CONE_LIGHT ) ||
-                vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
-                veh_luminance += vp.bonus / iteration;
-                iteration = iteration * 1.1;
-            }
-        }
-
-        for( const auto pt : lights ) {
-            const auto &vp = pt->info();
-            tripoint src = v->global_part_pos3( *pt );
-
-            if( !inbounds( src ) ) {
-                continue;
-            }
-            // In parallel mode skip parts not on this z-level to avoid
-            // cross-level cache writes.
-            if( skip_shared_init && src.z != zlev ) {
-                continue;
+            for( const auto pt : lights ) {
+                const auto &vp = pt->info();
+                if( vp.has_flag( VPFLAG_CONE_LIGHT ) ||
+                    vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
+                    veh_luminance += vp.bonus / iteration;
+                    iteration = iteration * 1.1;
+                }
             }
 
-            if( vp.has_flag( VPFLAG_CONE_LIGHT ) ) {
-                if( veh_luminance > lit_level::LIT ) {
-                    add_light_source( src, M_SQRT2 ); // Add a little surrounding light
-                    apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
-                                     45_degrees );
+            for( const auto pt : lights ) {
+                const auto &vp = pt->info();
+                tripoint src = v->global_part_pos3( *pt );
+
+                if( !inbounds( src ) ) {
+                    continue;
+                }
+                // In parallel mode skip parts not on this z-level to avoid
+                // cross-level cache writes.
+                if( skip_shared_init && src.z != zlev ) {
+                    continue;
                 }
 
-            } else if( vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
-                if( veh_luminance > lit_level::LIT ) {
+                if( vp.has_flag( VPFLAG_CONE_LIGHT ) ) {
+                    if( veh_luminance > lit_level::LIT ) {
+                        add_light_source( src, M_SQRT2 ); // Add a little surrounding light
+                        apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
+                                         45_degrees );
+                    }
+
+                } else if( vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
+                    if( veh_luminance > lit_level::LIT ) {
+                        add_light_source( src, M_SQRT2 ); // Add a little surrounding light
+                        apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
+                                         90_degrees );
+                    }
+
+                } else if( vp.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
                     add_light_source( src, M_SQRT2 ); // Add a little surrounding light
-                    apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
-                                     90_degrees );
-                }
+                    apply_light_arc( src, v->face.dir() + pt->direction, vp.bonus, 180_degrees );
 
-            } else if( vp.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
-                add_light_source( src, M_SQRT2 ); // Add a little surrounding light
-                apply_light_arc( src, v->face.dir() + pt->direction, vp.bonus, 180_degrees );
+                } else if( vp.has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
+                    const bool odd_turn = calendar::once_every( 2_turns );
+                    if( ( odd_turn && vp.has_flag( VPFLAG_ODDTURN ) ) ||
+                        ( !odd_turn && vp.has_flag( VPFLAG_EVENTURN ) ) ||
+                        ( !( vp.has_flag( VPFLAG_EVENTURN ) || vp.has_flag( VPFLAG_ODDTURN ) ) ) ) {
 
-            } else if( vp.has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
-                const bool odd_turn = calendar::once_every( 2_turns );
-                if( ( odd_turn && vp.has_flag( VPFLAG_ODDTURN ) ) ||
-                    ( !odd_turn && vp.has_flag( VPFLAG_EVENTURN ) ) ||
-                    ( !( vp.has_flag( VPFLAG_EVENTURN ) || vp.has_flag( VPFLAG_ODDTURN ) ) ) ) {
+                        add_light_source( src, vp.bonus );
+                    }
 
+                } else {
                     add_light_source( src, vp.bonus );
                 }
+            }
 
-            } else {
-                add_light_source( src, vp.bonus );
+            for( const vpart_reference &vp : v->get_all_parts() ) {
+                const size_t p = vp.part_index();
+                const tripoint pp = vp.pos();
+                if( !inbounds( pp ) ) {
+                    continue;
+                }
+                // In parallel mode skip parts not on this z-level.
+                if( skip_shared_init && pp.z != zlev ) {
+                    continue;
+                }
+                if( vp.has_feature( VPFLAG_CARGO ) && !vp.has_feature( "COVERED" ) ) {
+                    add_light_from_items( pp, v->get_items( static_cast<int>( p ) ).begin(),
+                                          v->get_items( static_cast<int>( p ) ).end() );
+                }
             }
         }
-
-        for( const vpart_reference &vp : v->get_all_parts() ) {
-            const size_t p = vp.part_index();
-            const tripoint pp = vp.pos();
-            if( !inbounds( pp ) ) {
-                continue;
-            }
-            // In parallel mode skip parts not on this z-level.
-            if( skip_shared_init && pp.z != zlev ) {
-                continue;
-            }
-            if( vp.has_feature( VPFLAG_CARGO ) && !vp.has_feature( "COVERED" ) ) {
-                add_light_from_items( pp, v->get_items( static_cast<int>( p ) ).begin(),
-                                      v->get_items( static_cast<int>( p ) ).end() );
-            }
-        }
-    }
 
     } // ZoneScopedN generate_lightmap_collect
 
