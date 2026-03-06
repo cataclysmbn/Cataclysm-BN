@@ -261,10 +261,10 @@ std::vector<std::string> submap_load_manager::active_dimensions() const
 
 auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load_request>
 {
-    auto is_non_bubble = []( const auto &kv ) {
+    auto is_non_bubble = []( const auto & kv ) {
         return kv.second.source != load_request_source::reality_bubble;
     };
-    auto to_request = []( const auto &kv ) -> const submap_load_request & {
+    auto to_request = []( const auto & kv ) -> const submap_load_request & {
         return kv.second;
     };
     auto view = requests_ | std::views::filter( is_non_bubble )

@@ -1782,7 +1782,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     point veh_sm_min = { INT_MAX, INT_MAX };
     point veh_sm_max = { INT_MIN, INT_MIN };
 
-    auto expand_bounds = [&]( const int base_x, const int base_y, const vehicle_part &prt ) {
+    auto expand_bounds = [&]( const int base_x, const int base_y, const vehicle_part & prt ) {
         const int px = ( base_x + prt.precalc[0].x ) / SEEX;
         const int py = ( base_y + prt.precalc[0].y ) / SEEY;
         veh_sm_min.x = std::min( veh_sm_min.x, px );
