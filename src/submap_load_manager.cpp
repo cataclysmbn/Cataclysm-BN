@@ -62,20 +62,14 @@ void submap_load_manager::release_load( load_request_handle handle )
 
 auto submap_load_manager::update_load_shape( int radius ) -> void
 {
-    const int r2 = radius * radius;
     const auto axis = std::views::iota( -radius, radius + 1 );
-    auto in_circle = [r2]( auto pair ) {
-        auto [dx, dy] = pair;
-        return dx * dx + dy * dy <= r2;
-    };
     auto to_point = []( auto pair ) {
         auto [dx, dy] = pair;
         return point{ dx, dy };
     };
     auto offsets = std::views::cartesian_product( axis, axis )
-                   | std::views::filter( in_circle )
                    | std::views::transform( to_point );
-    circle_offsets_.assign( offsets.begin(), offsets.end() );
+    bubble_offsets_.assign( offsets.begin(), offsets.end() );
 }
 
 // ---------------------------------------------------------------------------
@@ -92,20 +86,18 @@ std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_
         const auto z_range = std::views::iota( req.z_min, req.z_max + 1 );
 
         if( req.source == load_request_source::reality_bubble ) {
-            // For reality-bubble requests use the precomputed circle offsets so
-            // that only submaps within Euclidean distance 'radius' are tracked.
-            // circle_offsets_ is populated by update_load_shape() in map::resize().
+            // Use the precomputed square offsets so all submaps in the full
+            // (2*radius+1)×(2*radius+1) grid are protected from eviction.
+            // bubble_offsets_ is populated by update_load_shape() in map::resize().
             std::ranges::for_each(
-                std::views::cartesian_product( circle_offsets_, z_range ),
+                std::views::cartesian_product( bubble_offsets_, z_range ),
             [&]( auto pair ) {
                 auto [off, z] = pair;
                 desired.emplace( req.dimension_id,
                                  tripoint{ c.x + off.x, c.y + off.y, z } );
             } );
         } else {
-            // Other sources (player_base, script, fire_spread) use the square
-            // footprint.  These requests are typically small-radius and not
-            // performance-critical.
+            // Other sources (player_base, script, fire_spread) also use square.
             const int r = req.radius;
             const auto axis = std::views::iota( -r, r + 1 );
             std::ranges::for_each(
@@ -265,6 +257,19 @@ std::vector<std::string> submap_load_manager::active_dimensions() const
         dims.insert( kv.second.dimension_id );
     }
     return { dims.begin(), dims.end() };
+}
+
+auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load_request>
+{
+    auto is_non_bubble = []( const auto &kv ) {
+        return kv.second.source != load_request_source::reality_bubble;
+    };
+    auto to_request = []( const auto &kv ) -> const submap_load_request & {
+        return kv.second;
+    };
+    auto view = requests_ | std::views::filter( is_non_bubble )
+                | std::views::transform( to_request );
+    return { view.begin(), view.end() };
 }
 
 // ---------------------------------------------------------------------------

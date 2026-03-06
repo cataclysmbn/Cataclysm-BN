@@ -166,9 +166,26 @@ static level_cache        nullcache;         // Dummy cache for z-levels outside
 
 bool disable_mapgen = false;
 
+// Thread-local context stack for get_map().  Null means "use the global g->m."
+// Each thread manages its own pointer independently; worker threads never push
+// a context, so they always fall through to g->m (which they should not be
+// calling get_map() on in any case).
+static thread_local map *tl_map_context = nullptr;
+
 map &get_map()
 {
-    return g->m;
+    return tl_map_context ? *tl_map_context : g->m;
+}
+
+scoped_map_context::scoped_map_context( map &m ) noexcept
+    : prev_( tl_map_context )
+{
+    tl_map_context = &m;
+}
+
+scoped_map_context::~scoped_map_context() noexcept
+{
+    tl_map_context = prev_;
 }
 
 // Map stack methods.
@@ -1670,6 +1687,9 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     size_t our_i = 0;
     bool found = false;
     for( auto &smap : grid ) {
+        if( smap == nullptr ) {
+            continue;
+        }
         for( size_t i = 0; i < smap->vehicles.size(); i++ ) {
             if( smap->vehicles[i].get() == &veh ) {
                 our_i = i;
@@ -1762,7 +1782,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     point veh_sm_min = { INT_MAX, INT_MAX };
     point veh_sm_max = { INT_MIN, INT_MIN };
 
-    auto expand_bounds = [&]( const int base_x, const int base_y, const vehicle_part & prt ) {
+    auto expand_bounds = [&]( const int base_x, const int base_y, const vehicle_part &prt ) {
         const int px = ( base_x + prt.precalc[0].x ) / SEEX;
         const int py = ( base_y + prt.precalc[0].y ) / SEEY;
         veh_sm_min.x = std::min( veh_sm_min.x, px );
@@ -5093,6 +5113,9 @@ std::string map::get_signage( const tripoint &p ) const
     point l;
     submap *const current_submap = get_submap_at( p, l );
 
+    if( current_submap == nullptr ) {
+        return "";
+    }
     return current_submap->get_signage( l );
 }
 void map::set_signage( const tripoint &p, const std::string &message ) const
@@ -5939,6 +5962,9 @@ bool map::has_items( const tripoint &p ) const
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return false;
+    }
 
     return !current_submap->get_items( l ).empty();
 }
@@ -8222,22 +8248,6 @@ auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> vo
 
 void map::loadn( const tripoint &grid, const bool update_vehicles )
 {
-    // Circular load footprint: skip positions outside the Euclidean circle whose
-    // radius equals g_half_mapsize and whose center is the middle of the grid.
-    // This matches the desired set computed by submap_load_manager, so no submap
-    // is ever placed in grid[] without also being protected from eviction.
-    // Corner slots (outside the circle) are explicitly nulled so code that
-    // iterates all grid positions sees nullptr rather than a stale pointer.
-    if( !current_bounds_ ) {
-        const int r = ( my_MAPSIZE - 1 ) / 2;
-        const int dx = grid.x - r;
-        const int dy = grid.y - r;
-        if( dx * dx + dy * dy > r * r ) {
-            setsubmap( get_nonant( grid ), nullptr );
-            return;
-        }
-    }
-
     // Cache empty overmap types
     static const oter_id rock( "empty_rock" );
     static const oter_id air( "open_air" );
@@ -9168,13 +9178,18 @@ void map::spawn_monsters( bool ignore_sight )
 void map::clear_spawns()
 {
     for( auto &smap : grid ) {
-        smap->spawns.clear();
+        if( smap != nullptr ) {
+            smap->spawns.clear();
+        }
     }
 }
 
 void map::clear_traps()
 {
     for( auto &smap : grid ) {
+        if( smap == nullptr ) {
+            continue;
+        }
         for( int x = 0; x < SEEX; x++ ) {
             for( int y = 0; y < SEEY; y++ ) {
                 const point p( x, y );
@@ -9280,6 +9295,10 @@ const std::string &map::graffiti_at( const tripoint &p ) const
     }
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        static const std::string empty_string;
+        return empty_string;
+    }
     return current_submap->get_graffiti( l );
 }
 
@@ -9290,6 +9309,9 @@ bool map::has_graffiti_at( const tripoint &p ) const
     }
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return false;
+    }
     return current_submap->has_graffiti( l );
 }
 

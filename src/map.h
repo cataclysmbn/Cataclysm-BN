@@ -2284,6 +2284,35 @@ class map : public submap_load_listener
 
 map &get_map();
 
+/**
+ * RAII guard that temporarily redirects get_map() to a different map object
+ * for the duration of its lifetime on the calling thread.
+ *
+ * Intended use: bind a tinymap to an out-of-bubble loaded region, push this
+ * guard, then process entities in that region.  All entity AI calls to
+ * get_map() transparently receive the bound tinymap rather than the global
+ * reality bubble.  On destruction, the previous context is restored.
+ *
+ * Thread-safe: each thread maintains an independent context stack via
+ * thread_local storage, so worker threads (which never push a context)
+ * are unaffected.
+ *
+ * Supports nesting: pushing a second guard while one is active works
+ * correctly; the outer context is restored when the inner guard is destroyed.
+ */
+class scoped_map_context
+{
+    public:
+        explicit scoped_map_context( map &m ) noexcept;
+        ~scoped_map_context() noexcept;
+
+        scoped_map_context( const scoped_map_context & ) = delete;
+        scoped_map_context &operator=( const scoped_map_context & ) = delete;
+
+    private:
+        map *prev_;
+};
+
 // Shift a square grid bitset (side length `size`, submap stride `multiplier`) by `s` submaps.
 void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier, point s );
 

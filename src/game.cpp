@@ -707,7 +707,10 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
 
     fluid_grid::load( m );
 
-    // Register the map as a listener (add_listener is idempotent).
+    // Register game and map as listeners (add_listener is idempotent).
+    // game must be added before map so that on_submap_unloaded deactivates
+    // entities before the map's listener clears grid[] pointers.
+    submap_loader.add_listener( this );
     submap_loader.add_listener( &m );
 
     // The load-manager center is the middle of the loaded region, not the
@@ -1185,7 +1188,7 @@ void game::load_npcs()
         add_msg( m_debug, "game::load_npcs: Spawning static NPC, %d:%d:%d (%d:%d:%d)",
                  get_levx(), get_levy(), get_levz(), sm_loc.x, sm_loc.y, sm_loc.z );
         temp->place_on_map();
-        if( !m.inbounds( temp->pos() ) ) {
+        if( !m.inbounds( temp->pos() ) || m.get_submap_at( temp->pos() ) == nullptr ) {
             continue;
         }
         // In the rare case the npc was marked for death while
@@ -1195,6 +1198,47 @@ void game::load_npcs()
         } else {
             active_npc.push_back( temp );
             just_added.push_back( temp );
+        }
+    }
+
+    // Activate NPCs for non-reality-bubble load requests (fire spread, player bases, scripts).
+    // Each request gets a temporary tinymap providing the NPC context for that region.
+    // tinymap disables the circle guard so all square-footprint submaps are loaded.
+    for( const auto &req : submap_loader.non_bubble_requests() ) {
+        const int mapsize = 2 * req.radius + 1;
+        tinymap req_map( mapsize, m.has_zlevels() );
+        req_map.bind_dimension( req.dimension_id );
+        const tripoint top_left{
+            req.center.raw().x - req.radius,
+            req.center.raw().y - req.radius,
+            req.center.raw().z
+        };
+        req_map.load( top_left, false );
+        scoped_map_context ctx( req_map );
+
+        for( auto z : std::views::iota( req.z_min, req.z_max + 1 ) ) {
+            const tripoint_abs_sm center_z( req.center.raw().x, req.center.raw().y, z );
+            for( const auto &temp : overmap_buffer.get_npcs_near( center_z, req.radius ) ) {
+                const auto id = temp->getID();
+                const auto already_active = std::ranges::any_of( active_npc,
+                [id]( const shared_ptr_fast<npc> &n ) {
+                    return n->getID() == id;
+                } );
+                if( already_active || temp->is_active() ) {
+                    continue;
+                }
+                temp->place_on_map();
+                if( !req_map.inbounds( temp->pos() )
+                    || req_map.get_submap_at( temp->pos() ) == nullptr ) {
+                    continue;
+                }
+                if( temp->marked_for_death ) {
+                    temp->die( nullptr );
+                } else {
+                    active_npc.push_back( temp );
+                    just_added.push_back( temp );
+                }
+            }
         }
     }
 
@@ -1219,6 +1263,29 @@ void game::unload_npcs()
     }
 
     active_npc.clear();
+}
+
+void game::on_submap_loaded( const tripoint_abs_sm &/*pos*/, const std::string &/*dim_id*/ )
+{
+    // NPC activation for the reality bubble is driven by load_npcs().
+    // Out-of-bubble activation will be handled there once non_bubble_requests() integration lands.
+}
+
+void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*dim_id*/ )
+{
+    const tripoint raw = pos.raw();
+    // Deactivate any NPCs whose authoritative submap position matches the evicted submap.
+    // npc::global_square_location() uses submap_coords directly (not get_map()), so
+    // ms_to_sm_copy() of that result is context-independent and safe to call here.
+    auto in_evicted = [&raw]( const shared_ptr_fast<npc> &n ) {
+        const tripoint sm = ms_to_sm_copy( n->global_square_location() );
+        return sm.x == raw.x && sm.y == raw.y && sm.z == raw.z;
+    };
+    std::ranges::for_each( active_npc | std::views::filter( in_evicted ),
+    []( const shared_ptr_fast<npc> &n ) {
+        n->on_unload();
+    } );
+    std::erase_if( active_npc, in_evicted );
 }
 
 void game::reload_npcs()
@@ -5881,7 +5948,8 @@ bool game::swap_critters( Creature &a, Creature &b )
 
 bool game::is_empty( const tripoint &p )
 {
-    return ( m.passable( p ) || m.has_flag( "LIQUID", p ) ) &&
+    auto &cur_map = get_map();
+    return ( cur_map.passable( p ) || cur_map.has_flag( "LIQUID", p ) ) &&
            critter_at( p ) == nullptr;
 }
 

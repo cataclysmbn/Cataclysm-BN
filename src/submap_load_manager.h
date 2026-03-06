@@ -159,6 +159,17 @@ class submap_load_manager
         std::vector<std::string> active_dimensions() const;
 
         /**
+         * Return all active load requests whose source is not reality_bubble.
+         *
+         * Used by game-logic processing loops (load_npcs, monmove, etc.) to
+         * find loaded regions that need entity processing outside the player's
+         * reality bubble.  Each returned request describes a region that is
+         * fully resident in its mapbuffer and should receive the same per-turn
+         * game logic as the reality bubble.
+         */
+        auto non_bubble_requests() const -> std::vector<submap_load_request>;
+
+        /**
          * Clear the previous desired set so the next update() call does not
          * evict any submaps based on stale old-dimension entries.
          *
@@ -172,14 +183,13 @@ class submap_load_manager
         void flush_prev_desired();
 
         /**
-         * Precompute the set of (dx, dy) offsets that form a filled circle of
+         * Precompute the set of (dx, dy) offsets that form a filled square of
          * the given @p radius and cache them for use in compute_desired_set().
          *
          * Must be called whenever the reality-bubble radius changes (i.e. from
-         * map::resize()).  The circular footprint means only submaps within
-         * Euclidean distance @p radius of the player are tracked and protected
-         * from eviction.  map::loadn() enforces the same shape so that grid[]
-         * slots outside the circle are explicitly null rather than loaded.
+         * map::resize()).  The square footprint means ALL submaps in the full
+         * (2*radius+1)×(2*radius+1) grid are tracked and protected from eviction,
+         * matching the square grid that map::loadn() loads.
          */
         auto update_load_shape( int radius ) -> void;
 
@@ -203,8 +213,8 @@ class submap_load_manager
         /** Compute the full desired set from all active requests. */
         std::set<desired_key> compute_desired_set() const;
 
-        /** Cached (dx, dy) offsets within the current reality-bubble circle. */
-        std::vector<point> circle_offsets_;
+        /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
+        std::vector<point> bubble_offsets_;
 };
 
 extern submap_load_manager submap_loader;

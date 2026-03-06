@@ -145,7 +145,7 @@ bool is_valid_in_w_terrain( point p );
 // There is only one game instance, so losing a few bytes of memory
 // due to padding is not much of a concern.
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
-class game
+class game : public submap_load_listener
 {
         friend class editmap;
         friend class advanced_inventory;
@@ -160,6 +160,10 @@ class game
     public:
         game();
         ~game();
+
+        // submap_load_listener interface
+        void on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_id ) override;
+        void on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim_id ) override;
 
         /** Loads static data that does not depend on mods or similar. */
         void load_static_data();

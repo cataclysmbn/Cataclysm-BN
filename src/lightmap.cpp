@@ -115,9 +115,13 @@ bool map::build_transparency_cache( const int zlev )
             const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
 
             if( cur_submap == nullptr ) {
-                for( int sx = 0; sx < SEEX; ++sx ) {
-                    std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x + sx, sm_offset.y ),
-                                 SEEY, LIGHT_TRANSPARENCY_SOLID );
+                // Null slots occur at bounded-dimension edges.
+                // Treat as open air so they don't block light propagation.
+                if( !rebuild_all ) {
+                    for( int sx = 0; sx < SEEX; ++sx ) {
+                        std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x + sx, sm_offset.y ),
+                                     SEEY, LIGHT_TRANSPARENCY_OPEN_AIR );
+                    }
                 }
                 continue;
             }
