@@ -635,5 +635,11 @@
     "id": "water_tower",
     "name": "Water Tower",
     "terrain": [ "water_tower_-1zl" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_airport",
+    "name": "Regional Airport",
+    "terrain": [ "waiting_area", "s_air_term_south" ]
   }
 ]

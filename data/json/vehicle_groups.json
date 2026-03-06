@@ -634,8 +634,17 @@
       [ "Medevac1_Wreck", 50 ],
       [ "SmallFlier3", 300 ],
       [ "Medevac2", 150 ],
-      [ "Medevac2_Wreck", 100 ],
-      [ "blimp", 25 ]
+      [ "Medevac2_Wreck", 100 ]
+    ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "runway_large",
+    "//": "Larger planes or blimps that might not fit in normal spawns",
+    "vehicles": [
+      [ "passenger_plane", 500 ],
+      [ "cargo_plane", 500 ],
+      [ "blimp", 500 ]
     ]
   },
   {
@@ -704,6 +713,7 @@
       [ "electric_car", 100 ],
       [ "suv_electric", 70 ],
       [ "rara_x", 40 ],
+      [ "motorcycle_plane", 20 ],
       [ "car_sports", 30 ],
       [ "car_sports_electric", 20 ],
       [ "car_sports_atomic", 5 ]
