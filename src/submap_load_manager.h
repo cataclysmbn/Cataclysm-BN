@@ -176,9 +176,10 @@ class submap_load_manager
          * the given @p radius and cache them for use in compute_desired_set().
          *
          * Must be called whenever the reality-bubble radius changes (i.e. from
-         * map::resize()).  The cached offsets are used for all
-         * load_request_source::reality_bubble requests; other sources continue
-         * to use a square footprint.
+         * map::resize()).  The circular footprint means only submaps within
+         * Euclidean distance @p radius of the player are tracked and protected
+         * from eviction.  map::loadn() enforces the same shape so that grid[]
+         * slots outside the circle are explicitly null rather than loaded.
          */
         auto update_load_shape( int radius ) -> void;
 

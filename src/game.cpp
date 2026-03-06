@@ -13423,13 +13423,16 @@ void game::shift_monsters( const tripoint &shift )
             critter.shift( shift.xy() );
         }
 
-        if( m.inbounds( critter.pos() ) && ( shift.z == 0 || m.has_zlevels() ) ) {
-            // We're inbounds, so don't despawn after all.
-            // No need to shift Z-coordinates, they are absolute
+        if( m.inbounds( critter.pos() ) && ( shift.z == 0 || m.has_zlevels() )
+            && m.get_submap_at( critter.pos() ) != nullptr ) {
+            // We're inbounds on a loaded submap, so don't despawn after all.
+            // No need to shift Z-coordinates, they are absolute.
+            // Corner slots within the grid bounds have null submaps (outside the circular
+            // load footprint); treat them like out-of-bounds — save and despawn.
             continue;
         }
-        // Either a vertical shift or the critter is now outside of the reality bubble,
-        // anyway: it must be saved and removed.
+        // Either a vertical shift, the critter is outside the reality bubble, or it
+        // landed on a null corner slot — save and remove it.
         despawn_monster( critter );
     }
     // The order in which zombies are shifted may cause zombies to briefly exist on

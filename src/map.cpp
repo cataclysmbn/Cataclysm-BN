@@ -244,7 +244,7 @@ auto map::resize( int new_mapsize ) -> void
     field_furn_locs.clear();
     submaps_with_active_items.clear();
     traplocs.assign( trap::count(), {} );
-    // Recompute the circle-shaped load footprint for the new bubble radius.
+    // Recompute the circular load footprint for the new bubble radius.
     // Radius = (mapsize - 1) / 2, matching g_half_mapsize.
     submap_loader.update_load_shape( ( new_mapsize - 1 ) / 2 );
     dbg( DL::Info ) << "map::resize(): my_MAPSIZE: " << my_MAPSIZE;
@@ -5191,6 +5191,10 @@ map_stack map::i_at( const tripoint &p )
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        nulitems.clear();
+        return map_stack{ &nulitems, p, this };
+    }
 
     return map_stack{ &current_submap->get_items( l ), p, this };
 }
@@ -5479,6 +5483,9 @@ void map::add_item( const tripoint &p, detached_ptr<item> &&new_item )
     }
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
 
     // Process foods when they are added to the map, here instead of add_item_at()
     // to avoid double processing food and corpses during active item processing.
@@ -8130,10 +8137,13 @@ void map::saven( const tripoint &grid )
 
     const int gridn = get_nonant( grid );
     submap *submap_to_save = getsubmap( gridn );
-    if( submap_to_save == nullptr || submap_to_save->get_ter( point_zero ) == t_null ) {
+    if( submap_to_save == nullptr ) {
+        // Corner slot outside the circular load footprint — nothing to save.
+        return;
+    }
+    if( submap_to_save->get_ter( point_zero ) == t_null ) {
         // This is a serious error and should be signaled as soon as possible
-        debugmsg( "map::saven grid (%s) %s!", grid.to_string(),
-                  submap_to_save == nullptr ? "null" : "uninitialized" );
+        debugmsg( "map::saven grid (%s) uninitialized!", grid.to_string() );
         return;
     }
 
@@ -8212,6 +8222,22 @@ auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> vo
 
 void map::loadn( const tripoint &grid, const bool update_vehicles )
 {
+    // Circular load footprint: skip positions outside the Euclidean circle whose
+    // radius equals g_half_mapsize and whose center is the middle of the grid.
+    // This matches the desired set computed by submap_load_manager, so no submap
+    // is ever placed in grid[] without also being protected from eviction.
+    // Corner slots (outside the circle) are explicitly nulled so code that
+    // iterates all grid positions sees nullptr rather than a stale pointer.
+    if( !current_bounds_ ) {
+        const int r = ( my_MAPSIZE - 1 ) / 2;
+        const int dx = grid.x - r;
+        const int dy = grid.y - r;
+        if( dx * dx + dy * dy > r * r ) {
+            setsubmap( get_nonant( grid ), nullptr );
+            return;
+        }
+    }
+
     // Cache empty overmap types
     static const oter_id rock( "empty_rock" );
     static const oter_id air( "open_air" );
@@ -8859,11 +8885,8 @@ void map::add_roofs( const tripoint &grid )
 
     submap *const sub_here = get_submap_at_grid( grid );
     if( sub_here == nullptr ) {
-        // Null submaps are expected for out-of-bounds areas in bounded pocket dimensions
-        if( !has_dimension_bounds() ) {
-            debugmsg( "Tried to add roofs/floors on null submap on %d,%d,%d",
-                      grid.x, grid.y, grid.z );
-        }
+        // Null submaps are expected for corner slots outside the circular load footprint
+        // and for out-of-bounds areas in bounded pocket dimensions.
         return;
     }
 
@@ -9455,10 +9478,7 @@ bool map::build_floor_cache( const int zlev )
             }
             submap *cur_submap = get_submap_at_grid( { smx, smy, zlev } );
             if( cur_submap == nullptr ) {
-                if( !has_dimension_bounds() && !( parallel_enabled && parallel_map_cache ) ) {
-                    debugmsg( "Tried to build floor cache at (%d,%d,%d) but the submap is not loaded", smx, smy,
-                              zlev );
-                }
+                // Null expected for circle corners and bounded-dimension edges.
                 continue;
             }
             cur_submap->rebuild_floor_cache( *this, tripoint( smx, smy, zlev ) );
@@ -9512,10 +9532,7 @@ void map::update_suspension_cache( const int &z )
                 const submap *cur_submap = get_submap_at_grid( { smx, smy, z } );
 
                 if( cur_submap == nullptr ) {
-                    if( !has_dimension_bounds() ) {
-                        debugmsg( "Tried to run suspension check at (%d,%d,%d) but the submap is not loaded", smx, smy,
-                                  z );
-                    }
+                    // Null expected for circle corners and bounded-dimension edges.
                     continue;
                 }
 

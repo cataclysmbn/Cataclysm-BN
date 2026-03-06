@@ -93,7 +93,7 @@ std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_
 
         if( req.source == load_request_source::reality_bubble ) {
             // For reality-bubble requests use the precomputed circle offsets so
-            // that only submaps within Euclidean distance 'radius' are loaded.
+            // that only submaps within Euclidean distance 'radius' are tracked.
             // circle_offsets_ is populated by update_load_shape() in map::resize().
             std::ranges::for_each(
                 std::views::cartesian_product( circle_offsets_, z_range ),
@@ -215,23 +215,11 @@ void submap_load_manager::update()
                 }
             }
             if( !any_still_desired ) {
-                // Before evicting, notify listeners for any sibling that was never
-                // tracked in the desired set (e.g. corner submaps loaded into
-                // map::grid by loadn() but outside the circular load footprint).
-                // Without this, their grid[] slots are not cleared by the
-                // "no longer desired" notification loop above, and the eviction
-                // below frees the submap while grid[] still holds the raw pointer,
-                // causing use-after-free reads in generate_lightmap() et al.
-                for( const point &off : { point_zero, point_south, point_east, point_south_east } ) {
-                    const tripoint sibling{ base.x + off.x, base.y + off.y, base.z };
-                    if( prev_desired_.count( { key.first, sibling } ) == 0 ) {
-                        const tripoint_abs_sm sm_pos( sibling );
-                        std::ranges::for_each( listeners_, [&]( submap_load_listener * listener ) {
-                            listener->on_submap_unloaded( sm_pos, key.first );
-                        } );
-                    }
-                }
                 // Safe: save the quad once and evict all 4 members atomically.
+                // Circle members already had on_submap_unloaded fired above (clearing
+                // their grid[] slots).  Corner members outside the circle were never
+                // loaded into grid[] by loadn(), so freeing them is unconditionally
+                // safe — no dangling grid[] pointer exists for them.
                 MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr );
             }
         }
