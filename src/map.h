@@ -296,12 +296,6 @@ struct drawsq_params {
         //@}
 };
 
-//This is included in the global namespace rather than within level_cache as c++ doesn't allow forward declarations within a namespace
-struct diagonal_blocks {
-    bool nw;
-    bool ne;
-};
-
 struct level_cache {
     // Zeros all relevant values.
     // Default constructor creates a zero-sized cache used as a null sentinel only.
@@ -332,8 +326,8 @@ struct level_cache {
 
     // ---- per-submap dirty bitsets (size: cache_mapsize²) ----
     cata_dynamic_bitset transparency_cache_dirty;
-    bool outside_cache_dirty = false;
-    bool floor_cache_dirty = false;
+    cata_dynamic_bitset outside_cache_dirty;
+    cata_dynamic_bitset floor_cache_dirty;
     bool seen_cache_dirty = false;
     bool suspension_cache_initialized = false;
     bool suspension_cache_dirty = false;
@@ -532,8 +526,12 @@ class map : public submap_load_listener
         void set_seen_cache_dirty( const int zlevel );
 
         void set_outside_cache_dirty( const int zlev );
+        // Point-level: marks only the tile's submap + boundary neighbours (max 4).
+        void set_outside_cache_dirty( const tripoint &p );
 
         void set_floor_cache_dirty( const int zlev );
+        // Point-level: marks only the tile's own submap (no horizontal neighbour dependency).
+        void set_floor_cache_dirty( const tripoint &p );
 
         void set_suspension_cache_dirty( const int zlev );
 
@@ -550,8 +548,10 @@ class map : public submap_load_listener
 
         /**
          * Callback invoked when a vehicle has moved.
+         * sm_min/sm_max are the bounding submap grid coords of the vehicle footprint
+         * (union of old and new positions); smz is the z-level.
          */
-        void on_vehicle_moved( int smz );
+        void on_vehicle_moved( point sm_min, point sm_max, int smz );
 
         struct apparent_light_info {
             bool obstructed;
@@ -1987,6 +1987,9 @@ class map : public submap_load_listener
         // matches zlev, avoiding cross-level cache writes for parallel safety.
         void generate_lightmap( int zlev, bool skip_shared_init = false );
         void build_seen_cache( const tripoint &origin, int target_z );
+        // Applies vehicle mirror/camera FOV from @p origin's vehicle.
+        // Separated from build_seen_cache for readability and Tracy granularity.
+        void apply_vehicle_optics( const tripoint &origin, int target_z );
         void apply_character_light( Character &who );
 
         //Adds/removes player specific transparencies
@@ -2001,6 +2004,13 @@ class map : public submap_load_listener
         // stores vision adjustment for the tiles immediately surrounding the player, the order is given by eight_adjacent_offsets in point.h
         // examples of adjustment: crouching
         vision_adjustment vision_transparency_cache[8] = { VISION_ADJUST_NONE };
+
+        // Pre-computed 1/exp(t*i) table for the current weather transparency.
+        // Written once serially by update_weather_transparency_lookup() before
+        // any parallel shadowcasting calls; passed as weather_lookup to
+        // castLightAll / castLightOctants_q so the fast path can match weather
+        // transparency the same way it matches open-air transparency.
+        exp_lookup weather_lookup_{ LIGHT_TRANSPARENCY_OPEN_AIR * 1.1f };
 
         /**
          * Absolute coordinates of first submap (get_submap_at(0,0))

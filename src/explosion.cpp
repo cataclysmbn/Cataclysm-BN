@@ -1215,11 +1215,13 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
     // This is used to limit radius
     // By default, the radius is 60, so negative values can be helpful here
     const int offset_distance = 60 - 1 - fragment.range;
-    castLightAll<float, float, shrapnel_calc, shrapnel_check,
-                 update_fragment_cloud, accumulate_fragment_cloud>
-                 ( visited_cache.data(), obstacle_cache.data(),
-                   _exp_cache.vehicle_obstructed_cache.data(), exp_sx, exp_sy,
-                   src.xy(), offset_distance, fragment.range + 1.0f );
+    static const light_model k_shrapnel_model = {
+        shrapnel_calc, shrapnel_check, update_fragment_cloud, nullptr, nullptr,
+        accumulate_fragment_cloud
+    };
+    castLightAll( visited_cache.data(), obstacle_cache.data(),
+                  _exp_cache.vehicle_obstructed_cache.data(), exp_sx, exp_sy,
+                  src.xy(), offset_distance, fragment.range + 1.0f, k_shrapnel_model );
 
     // Now visited_caches are populated with density and velocity of fragments.
     for( const tripoint &target : area ) {

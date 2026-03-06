@@ -215,6 +215,22 @@ void submap_load_manager::update()
                 }
             }
             if( !any_still_desired ) {
+                // Before evicting, notify listeners for any sibling that was never
+                // tracked in the desired set (e.g. corner submaps loaded into
+                // map::grid by loadn() but outside the circular load footprint).
+                // Without this, their grid[] slots are not cleared by the
+                // "no longer desired" notification loop above, and the eviction
+                // below frees the submap while grid[] still holds the raw pointer,
+                // causing use-after-free reads in generate_lightmap() et al.
+                for( const point &off : { point_zero, point_south, point_east, point_south_east } ) {
+                    const tripoint sibling{ base.x + off.x, base.y + off.y, base.z };
+                    if( prev_desired_.count( { key.first, sibling } ) == 0 ) {
+                        const tripoint_abs_sm sm_pos( sibling );
+                        std::ranges::for_each( listeners_, [&]( submap_load_listener * listener ) {
+                            listener->on_submap_unloaded( sm_pos, key.first );
+                        } );
+                    }
+                }
                 // Safe: save the quad once and evict all 4 members atomically.
                 MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr );
             }
