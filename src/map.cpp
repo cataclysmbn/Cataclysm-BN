@@ -205,9 +205,7 @@ detached_ptr<item> map_stack::remove( item *to_remove )
 
 units::volume map_stack::max_volume() const
 {
-    if( !myorigin->inbounds( location ) ) {
-        return 0_ml;
-    } else if( myorigin->has_furn( location ) ) {
+    if( myorigin->has_furn( location ) ) {
         return myorigin->furn( location ).obj().max_volume;
     }
     return myorigin->ter( location ).obj().max_volume;
@@ -521,19 +519,11 @@ static submap null_submap( tripoint_zero );
 
 maptile map::maptile_at( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return maptile( &null_submap, point_zero );
-    }
-
     return maptile_at_internal( p );
 }
 
 maptile map::maptile_at( const tripoint &p )
 {
-    if( !inbounds( p ) ) {
-        return maptile( &null_submap, point_zero );
-    }
-
     return maptile_at_internal( p );
 }
 
@@ -1930,7 +1920,7 @@ bool map::has_furn( const tripoint &p ) const
 
 furn_id map::furn( const tripoint &p ) const
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         return f_null;
     }
 
@@ -1946,7 +1936,7 @@ furn_id map::furn( const tripoint &p ) const
 void map::furn_set( const tripoint &p, const furn_id &new_furniture,
                     const cata::poly_serialized<active_tile_data> &new_active )
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         return;
     }
 
@@ -2099,10 +2089,6 @@ ter_id map::ter( const tripoint &p ) const
     // Check dimension bounds first - out-of-bounds areas show boundary terrain
     if( is_out_of_bounds( p ) ) {
         return get_boundary_terrain();
-    }
-
-    if( !inbounds( p ) ) {
-        return t_null;
     }
 
     point l;
@@ -2299,7 +2285,7 @@ bool map::is_harvestable( const tripoint &pos ) const
  */
 bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         return false;
     }
 
@@ -2457,10 +2443,6 @@ int map::move_cost( const tripoint &p, const vehicle *ignored_vehicle ) const
         return 0;
     }
 
-    if( !inbounds( p ) ) {
-        return 0;
-    }
-
     const furn_t &furniture = furn( p ).obj();
     const ter_t &terrain = ter( p ).obj();
     const optional_vpart_position vp = veh_at( p );
@@ -2482,12 +2464,11 @@ bool map::passable( const tripoint &p ) const
 
 int map::move_cost_ter_furn( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return 0;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return 0;
+    }
 
     const int tercost = current_submap->get_ter( l ).obj().movecost;
     if( tercost == 0 ) {
@@ -2688,18 +2669,14 @@ bool map::has_floor( const tripoint &p, bool visible_only ) const
         return true;
     }
 
-    if( !inbounds( p ) ) {
-        return true;
-    }
-
     point l;
     submap *sm = get_submap_at( p, l );
     if( !sm ) {
         return true;
     }
     if( sm->floor_dirty ) {
-        const int smx = p.x / SEEX;
-        const int smy = p.y / SEEY;
+        const int smx = divide_round_to_minus_infinity( p.x, SEEX );
+        const int smy = divide_round_to_minus_infinity( p.y, SEEY );
         sm->rebuild_floor_cache( *this, tripoint( smx, smy, p.z ) );
     }
     return sm->floor_cache[l.x][l.y] || ( !visible_only && has_flag( TFLAG_Z_TRANSPARENT, p ) );
@@ -3023,10 +3000,6 @@ bool map::has_flag_furn( const std::string &flag, const tripoint &p ) const
 
 bool map::has_flag_ter_or_furn( const std::string &flag, const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return false;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
 
@@ -3063,10 +3036,6 @@ bool map::has_flag_furn_or_vpart( const std::string &flag, const tripoint &p ) c
 
 bool map::has_flag_ter_or_furn( const ter_bitflags flag, const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return false;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
 
@@ -3126,11 +3095,6 @@ int map::bash_rating_internal( const int str, const furn_t &furniture,
 
 bool map::is_bashable( const tripoint &p, const bool allow_floor ) const
 {
-    if( !inbounds( p ) ) {
-        dbg( DL::Warn ) << "Looking for out-of-bounds is_bashable at " << p;
-        return false;
-    }
-
     if( veh_at( p ).obstacle_at_part() ) {
         return true;
     }
@@ -3190,11 +3154,6 @@ int map::bash_resistance( const tripoint &p, const bool allow_floor ) const
 
 int map::bash_rating( const int str, const tripoint &p, const bool allow_floor ) const
 {
-    if( !inbounds( p ) ) {
-        dbg( DL::Warn ) << "Looking for out-of-bounds is_bashable at " << p;
-        return -1;
-    }
-
     if( str <= 0 ) {
         return -1;
     }
@@ -3250,18 +3209,14 @@ bool map::is_divable( const tripoint &p ) const
 
 bool map::is_outside( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return true;
-    }
-
     point l;
     submap *sm = get_submap_at( p, l );
     if( !sm ) {
         return true;
     }
     if( sm->outside_dirty ) {
-        const int smx = p.x / SEEX;
-        const int smy = p.y / SEEY;
+        const int smx = divide_round_to_minus_infinity( p.x, SEEX );
+        const int smy = divide_round_to_minus_infinity( p.y, SEEY );
         sm->rebuild_outside_cache( *this, tripoint( smx, smy, p.z ) );
     }
     return sm->outside_cache[l.x][l.y];
@@ -3269,17 +3224,14 @@ bool map::is_outside( const tripoint &p ) const
 
 float map::get_transparency( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return LIGHT_TRANSPARENCY_SOLID;
-    }
     point l;
     submap *sm = get_submap_at( p, l );
     if( !sm ) {
         return LIGHT_TRANSPARENCY_SOLID;
     }
     if( sm->transparency_dirty ) {
-        const int smx = p.x / SEEX;
-        const int smy = p.y / SEEY;
+        const int smx = divide_round_to_minus_infinity( p.x, SEEX );
+        const int smy = divide_round_to_minus_infinity( p.y, SEEY );
         sm->rebuild_transparency_cache( *this, tripoint( smx, smy, p.z ) );
     }
     return sm->transparency_cache[l.x][l.y];
@@ -4359,10 +4311,6 @@ bash_results map::bash( const tripoint &p, const int str,
         return result;  // Cannot bash dimension boundary
     }
 
-    if( !inbounds( p ) ) {
-        return result;
-    }
-
     bool bashed_sealed = false;
     if( has_flag( "SEALED", p ) ) {
         result |= bash_ter_furn( p, bsh );
@@ -4736,7 +4684,7 @@ void map::shoot( const tripoint &origin, const tripoint &p, projectile &proj, co
     }
 
     //Projectiles with NO_ITEM_DAMAGE flag won't damage items at all
-    if( !hit_items || !inbounds( p ) ) {
+    if( !hit_items ) {
         return;
     }
 
@@ -5106,10 +5054,6 @@ bool map::close_door( const tripoint &p, const bool inside, const bool check_onl
 
 std::string map::get_signage( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return "";
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
 
@@ -5120,67 +5064,57 @@ std::string map::get_signage( const tripoint &p ) const
 }
 void map::set_signage( const tripoint &p, const std::string &message ) const
 {
-    if( !inbounds( p ) ) {
-        return;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
-
+    if( current_submap == nullptr ) {
+        return;
+    }
     current_submap->set_signage( l, message );
 }
 void map::delete_signage( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
-
+    if( current_submap == nullptr ) {
+        return;
+    }
     current_submap->delete_signage( l );
 }
 
 int map::get_radiation( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return 0;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
-
+    if( current_submap == nullptr ) {
+        return 0;
+    }
     return current_submap->get_radiation( l );
 }
 
 void map::set_radiation( const tripoint &p, const int value )
 {
-    if( !inbounds( p ) ) {
-        return;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
-
+    if( current_submap == nullptr ) {
+        return;
+    }
     current_submap->set_radiation( l, value );
 }
 
 void map::adjust_radiation( const tripoint &p, const int delta )
 {
-    if( !inbounds( p ) ) {
-        return;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
-
+    if( current_submap == nullptr ) {
+        return;
+    }
     int current_radiation = current_submap->get_radiation( l );
     current_submap->set_radiation( l, current_radiation + delta );
 }
 
 int map::get_temperature( const tripoint &p ) const
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         return 0;
     }
 
@@ -5193,7 +5127,7 @@ int map::get_temperature( const tripoint &p ) const
 
 void map::set_temperature( const tripoint &p, int new_temperature )
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         return;
     }
 
@@ -5207,11 +5141,6 @@ void map::set_temperature( const tripoint &p, int new_temperature )
 
 map_stack map::i_at( const tripoint &p )
 {
-    if( !inbounds( p ) ) {
-        nulitems.clear();
-        return map_stack{ &nulitems, p, this };
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
     if( current_submap == nullptr ) {
@@ -5313,7 +5242,7 @@ std::vector<detached_ptr<item>> map::spawn_items( const tripoint &p,
                              std::vector<detached_ptr<item>> new_items )
 {
     std::vector<detached_ptr<item>> ret;
-    if( !inbounds( p ) || has_flag( "DESTROY_ITEM", p ) ) {
+    if( has_flag( "DESTROY_ITEM", p ) ) {
         return ret;
     }
     const bool swimmable = has_flag( "SWIMMABLE", p );
@@ -5396,14 +5325,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint &pos, detached_ptr<i
 
     // Checks if item would not be destroyed if added to this tile
     auto valid_tile = [&]( const tripoint & e ) {
-        if( !inbounds( e ) ) {
-            // should never happen
-            debugmsg( "add_item_or_charges: %s is out of bounds (adding item '%s' [%d])",
-                      e.to_string(), obj->typeId().c_str(), obj->charges );
-            return false;
-        }
-
-        // Cannot add items to dimension-bounded out-of-bounds areas
+        // Cannot add items to dimension-bounded out-of-bounds areas or unloaded submaps
         if( is_out_of_bounds( e ) ) {
             return false;
         }
@@ -5473,7 +5395,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint &pos, detached_ptr<i
         const pathfinding_settings setting( 0, max_dist, max_path_length, 0, false, true, false, false,
                                             false );
         for( const tripoint &e : tiles ) {
-            if( !inbounds( e ) ) {
+            if( is_out_of_bounds( e ) ) {
                 continue;
             }
             //must be a path to the target tile
@@ -5501,7 +5423,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint &pos, detached_ptr<i
 
 void map::add_item( const tripoint &p, detached_ptr<item> &&new_item )
 {
-    if( !inbounds( p ) || !new_item ) {
+    if( !new_item ) {
         return;
     }
     point l;
@@ -5956,10 +5878,6 @@ bool map::could_see_items( const tripoint &p, const tripoint &from ) const
 
 bool map::has_items( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return false;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
     if( current_submap == nullptr ) {
@@ -6248,7 +6166,7 @@ bool map::can_see_trap_at( const tripoint &p, const Character &c ) const
 
 const trap &map::tr_at( const tripoint &p ) const
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         return tr_null.obj();
     }
 
@@ -6268,11 +6186,14 @@ const trap &map::tr_at( const tripoint &p ) const
 
 partial_con *map::partial_con_at( const tripoint &p )
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         return nullptr;
     }
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return nullptr;
+    }
     auto it = current_submap->partial_constructions.find( tripoint( l, p.z ) );
     if( it != current_submap->partial_constructions.end() ) {
         return &*it->second;
@@ -6282,21 +6203,27 @@ partial_con *map::partial_con_at( const tripoint &p )
 
 void map::partial_con_remove( const tripoint &p )
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         return;
     }
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
     current_submap->partial_constructions.erase( tripoint( l, p.z ) );
 }
 
 void map::partial_con_set( const tripoint &p, std::unique_ptr<partial_con> con )
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         return;
     }
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
     if( !current_submap->partial_constructions.emplace( tripoint( l, p.z ),
             std::move( con ) ).second ) {
         debugmsg( "set partial con on top of terrain which already has a partial con" );
@@ -6305,12 +6232,11 @@ void map::partial_con_set( const tripoint &p, std::unique_ptr<partial_con> con )
 
 void map::trap_set( const tripoint &p, const trap_id &type )
 {
-    if( !inbounds( p ) ) {
-        return;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
     const ter_t &ter = current_submap->get_ter( l ).obj();
     if( ter.trap != tr_null ) {
         debugmsg( "set trap %s on top of terrain %s which already has a builit-in trap",
@@ -6387,12 +6313,11 @@ void map::disarm_trap( const tripoint &p )
 
 void map::remove_trap( const tripoint &p )
 {
-    if( !inbounds( p ) ) {
-        return;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
 
     trap_id tid = current_submap->get_trap( l );
     if( tid != tr_null ) {
@@ -6413,7 +6338,7 @@ void map::remove_trap( const tripoint &p )
  */
 const field &map::field_at( const tripoint &p ) const
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         nulfield = field();
         return nulfield;
     }
@@ -6434,7 +6359,7 @@ const field &map::field_at( const tripoint &p ) const
  */
 field &map::field_at( const tripoint &p )
 {
-    if( !inbounds( p ) || is_out_of_bounds( p ) ) {
+    if( is_out_of_bounds( p ) ) {
         nulfield = field();
         return nulfield;
     }
@@ -6510,7 +6435,7 @@ int map::get_field_intensity( const tripoint &p, const field_type_id &type ) con
 
 bool map::has_field_at( const tripoint &p, bool check_bounds )
 {
-    if( check_bounds && !inbounds( p ) ) {
+    if( check_bounds && is_out_of_bounds( p ) ) {
         return false;
     }
     point l;
@@ -6520,7 +6445,7 @@ bool map::has_field_at( const tripoint &p, bool check_bounds )
 
 field_entry *map::get_field( const tripoint &p, const field_type_id &type )
 {
-    if( !inbounds( p ) || !has_field_at( p, false ) ) {
+    if( !has_field_at( p, false ) ) {
         return nullptr;
     }
 
@@ -6544,10 +6469,6 @@ bool map::dangerous_field_at( const tripoint &p )
 bool map::add_field( const tripoint &p, const field_type_id &type_id, int intensity,
                      const time_duration &age, bool hit_player )
 {
-    if( !inbounds( p ) ) {
-        return false;
-    }
-
     if( !type_id ) {
         debugmsg( "Tried to add null field" );
         return false;
@@ -6600,10 +6521,6 @@ bool map::add_field( const tripoint &p, const field_type_id &type_id, int intens
 
 void map::remove_field( const tripoint &p, const field_type_id &field_to_remove )
 {
-    if( !inbounds( p ) ) {
-        return;
-    }
-
     point l;
     submap *const current_submap = get_submap_at( p, l );
     if( current_submap == nullptr ) {
@@ -6689,13 +6606,9 @@ void map::add_splash( const field_type_id &type, const tripoint &center, int rad
 
 computer *map::computer_at( const tripoint &p )
 {
-    if( !inbounds( p ) ) {
-        return nullptr;
-    }
-
     point l;
     submap *const sm = get_submap_at( p, l );
-    return sm->get_computer( l );
+    return sm ? sm->get_computer( l ) : nullptr;
 }
 
 void map::update_submap_active_item_status( const tripoint &p )
@@ -9269,30 +9182,26 @@ fake_map::~fake_map() = default;
 
 void map::set_graffiti( const tripoint &p, const std::string &contents )
 {
-    if( !inbounds( p ) ) {
-        return;
-    }
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
     current_submap->set_graffiti( l, contents );
 }
 
 void map::delete_graffiti( const tripoint &p )
 {
-    if( !inbounds( p ) ) {
-        return;
-    }
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
     current_submap->delete_graffiti( l );
 }
 
 const std::string &map::graffiti_at( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        static const std::string empty_string;
-        return empty_string;
-    }
     point l;
     submap *const current_submap = get_submap_at( p, l );
     if( current_submap == nullptr ) {
@@ -9304,9 +9213,6 @@ const std::string &map::graffiti_at( const tripoint &p ) const
 
 bool map::has_graffiti_at( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        return false;
-    }
     point l;
     submap *const current_submap = get_submap_at( p, l );
     if( current_submap == nullptr ) {
@@ -9933,17 +9839,32 @@ void map::setsubmap( const size_t grididx, submap *const smap )
 
 submap *map::get_submap_at( const tripoint &p ) const
 {
-    if( !inbounds( p ) ) {
-        debugmsg( "Tried to access invalid map position (%d, %d, %d)", p.x, p.y, p.z );
+    if( inbounds( p ) ) {
+        // Fast path: tile is inside the reality bubble grid.
+        return get_submap_at_grid( { p.x / SEEX, p.y / SEEY, p.z } );
+    }
+    if( is_out_of_bounds( p ) ) {
+        // Outside dimension bounds — genuinely invalid position.
         return nullptr;
     }
-    return get_submap_at_grid( { p.x / SEEX, p.y / SEEY, p.z } );
+    // Loaded-but-out-of-bubble fallback: look up from the mapbuffer.
+    // Uses lookup_submap_in_memory to avoid triggering disk loads from query functions.
+    const tripoint abs_sm_pos(
+        abs_sub.x + divide_round_to_minus_infinity( p.x, SEEX ),
+        abs_sub.y + divide_round_to_minus_infinity( p.y, SEEY ),
+        p.z
+    );
+    return MAPBUFFER.lookup_submap_in_memory( abs_sm_pos );
 }
 
 submap *map::get_submap_at( const tripoint &p, point &offset_p ) const
 {
-    offset_p.x = p.x % SEEX;
-    offset_p.y = p.y % SEEY;
+    // Use floor-division so that negative local coords (out-of-bubble) give the
+    // correct submap-local offset in [0, SEEX) rather than a negative value.
+    const int smx = divide_round_to_minus_infinity( p.x, SEEX );
+    const int smy = divide_round_to_minus_infinity( p.y, SEEY );
+    offset_p.x = p.x - smx * SEEX;
+    offset_p.y = p.y - smy * SEEY;
     return get_submap_at( p );
 }
 
@@ -10495,17 +10416,14 @@ void map::set_pathfinding_cache_dirty( const int zlev )
 
 auto map::get_pf_special( const tripoint &p ) const -> pf_special
 {
-    if( !inbounds( p ) ) {
-        return PF_WALL;
-    }
     point l;
     submap *sm = get_submap_at( p, l );
     if( !sm ) {
         return PF_WALL;
     }
     if( sm->pf_dirty ) {
-        const int smx = p.x / SEEX;
-        const int smy = p.y / SEEY;
+        const int smx = divide_round_to_minus_infinity( p.x, SEEX );
+        const int smy = divide_round_to_minus_infinity( p.y, SEEY );
         sm->rebuild_pf_cache( *this, tripoint( smx, smy, p.z ) );
     }
     return sm->pf_special_cache[l.x][l.y];
