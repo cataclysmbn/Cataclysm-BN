@@ -84,6 +84,14 @@
   },
   {
     "type": "GENERIC",
+    "id": "light_emergency_white",
+    "name": { "str": "emergency vehicle light (white)", "str_pl": "emergency vehicle lights (white)" },
+    "description": "One of the white-colored lights from the top of an emergency services vehicle.  When turned on, the lights rotate to shine in all directions.",
+    "color": "white",
+    "copy-from": "light_emergency_red"
+  },
+  {
+    "type": "GENERIC",
     "id": "floodlight",
     "name": { "str": "floodlight" },
     "description": "A large and heavy light designed to illuminate wide areas.",

@@ -196,7 +196,7 @@
     "symbol": "*",
     "broken_symbol": "-",
     "durability": 20,
-    "description": "Emergency lights, like a police car's or ambulance's, mounted on the vehicle's roof.  Flashes between red and blue when turned on, attracting attention without illuminating the area.",
+    "description": "Emergency lights, like a police car's or ambulance's, mounted on the vehicle's roof.  Flashes between red and blue or red and white when turned on, attracting attention without illuminating the area.",
     "//": "essentially a pair of overpowered RGB LED flashlights",
     "epower": -10,
     "bonus": 500,
@@ -240,6 +240,16 @@
     "color": "red",
     "broken_color": "red",
     "extend": { "flags": [ "ODDTURN" ] }
+  },
+  {
+    "id": "light_white",
+    "copy-from": "light_emergency",
+    "type": "vehicle_part",
+    "name": { "str": "white light" },
+    "item": "light_emergency_white",
+    "color": "white",
+    "broken_color": "white",
+    "extend": { "flags": [ "EVENTURN" ] }
   },
   {
     "id": "lit_aisle_horizontal",
