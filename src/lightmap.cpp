@@ -570,7 +570,7 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                             add_light_source( p, furniture->light_emitted );
                         }
 
-                        std::ranges::for_each( cur_submap->get_field( { sx, sy } ), [&]( auto &fld ) {
+                        std::ranges::for_each( cur_submap->get_field( { sx, sy } ), [&]( auto & fld ) {
                             const auto *cur = &fld.second;
                             const int light_emitted = cur->light_emitted();
                             if( light_emitted > 0 ) {
@@ -595,12 +595,12 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
         }
 
         // Merge per-smx accumulators.  Apply deferred shadowcasts serially to avoid lm races.
-        std::ranges::for_each( smx_accs, [&]( auto &local ) {
+        std::ranges::for_each( smx_accs, [&]( auto & local ) {
             lm_override.insert( lm_override.end(), local.lm_override.begin(), local.lm_override.end() );
-            std::ranges::for_each( local.dir_lights, [&]( auto &dl ) {
+            std::ranges::for_each( local.dir_lights, [&]( auto & dl ) {
                 apply_directional_light( dl.p, dl.direction, dl.luminance );
             } );
-            std::ranges::for_each( local.arc_lights, [&]( auto &al ) {
+            std::ranges::for_each( local.arc_lights, [&]( auto & al ) {
                 apply_light_arc( al.p, al.dir, al.luminance, al.width );
             } );
         } );
