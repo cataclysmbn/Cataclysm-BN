@@ -1389,13 +1389,10 @@ vehicle *vehicle::act_on_map()
 {
     const tripoint pt = global_pos3();
     map &here = get_map();
-    if( !here.inbounds( pt ) ) {
-        dbg( DL::Info ) << "stopping out-of-map vehicle at global pos " << pt;
-        stop( false );
-        of_turn = 0;
-        is_falling = false;
-        return this;
-    }
+    // Note: no inbounds() guard here.  Vehicles outside the reality bubble are
+    // valid after D2.  A vehicle driving into an unloaded submap will naturally
+    // stop because map::move_cost() returns 0 for unloaded tiles, which the
+    // collision code classifies as veh_coll_other (solid wall).
     if( decrement_summon_timer() ) {
         return nullptr;
     }

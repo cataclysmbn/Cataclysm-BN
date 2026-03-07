@@ -1548,8 +1548,6 @@ class map : public submap_load_listener
 
         void disarm_trap( const tripoint &p );
         void remove_trap( const tripoint &p );
-        const std::vector<tripoint> &get_furn_field_locations() const;
-        const std::vector<tripoint> &trap_locations( const trap_id &type ) const;
 
         /**
          * Apply field effects to the creature when it's on a square with fields.
@@ -1945,11 +1943,6 @@ class map : public submap_load_listener
 
         void player_in_field( player &u );
         void monster_in_field( monster &z );
-        /**
-         * As part of the map shifting, this shifts the trap locations stored in @ref traplocs.
-         * @param shift The amount shifting in submap, the same as go into @ref shift.
-         */
-        void shift_traps( const tripoint &shift );
 
         void copy_grid( const tripoint &to, const tripoint &from );
         void draw_map( mapgendata &dat );
@@ -2167,17 +2160,6 @@ class map : public submap_load_listener
          */
         std::vector<submap *> grid;
         /**
-         * This vector contains an entry for each trap type, it has therefor the same size
-         * as the traplist vector. Each entry contains a list of all point on the map that
-         * contain a trap of that type. The first entry however is always empty as it denotes the
-         * tr_null trap.
-         */
-        std::vector< std::vector<tripoint> > traplocs;
-        /**
-         * Vector of tripoints containing active field-emitting furniture
-         */
-        std::vector<tripoint> field_furn_locs;
-        /**
          * Holds caches for visibility, light, transparency and vehicles
          */
         std::array< std::unique_ptr<level_cache>, OVERMAP_LAYERS > caches;
@@ -2186,6 +2168,15 @@ class map : public submap_load_listener
          * Set of submaps that contain active items in absolute coordinates.
          */
         std::set<tripoint> submaps_with_active_items;
+
+        /**
+         * Set of submaps that contain vehicles in absolute coordinates.
+         * Maintained by on_submap_loaded/unloaded, loadn(), and vehicle
+         * submap transitions.  Used by vehmove() and process_items() to
+         * iterate all loaded submaps with vehicles without being bounded by
+         * the reality bubble.
+         */
+        std::set<tripoint> submaps_with_vehicles;
 
         /**
          * Cache of coordinate pairs recently checked for visibility.
@@ -2238,6 +2229,13 @@ class map : public submap_load_listener
         const visibility_variables &get_visibility_variables_cache() const;
 
         void update_submap_active_item_status( const tripoint &p );
+
+        /**
+         * Update submaps_with_vehicles for the submap at @p abs_sm_pos (absolute
+         * submap coordinates).  Call this after bulk operations that swap or
+         * replace submap contents without going through the normal load/unload path.
+         */
+        void update_submap_vehicle_status( const tripoint &abs_sm_pos );
 
         // Just exposed for unit test introspection.
         const std::set<tripoint> &get_submaps_with_active_items() const {

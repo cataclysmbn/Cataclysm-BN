@@ -18,6 +18,8 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <ranges>
+#include <span>
 #include <set>
 #include <sstream>
 #include <stack>
@@ -4084,6 +4086,35 @@ void submap::store( JsonOut &jsout ) const
     jsout.write( count );
     jsout.end_array();
 
+    // D5: Serialize scent values using RLE (value, count pairs).
+    // Omitted entirely when all tiles are zero to keep typical saves compact.
+    if( std::ranges::any_of( &scent_values[0][0], &scent_values[0][0] + SEEX * SEEY,
+    []( int v ) { return v != 0; } ) ) {
+        jsout.member( "scent_values" );
+        jsout.start_array();
+        int last_scent = -1;
+        int scent_count = 0;
+        std::ranges::for_each(
+            std::views::cartesian_product( std::views::iota( 0, SEEY ),
+                                           std::views::iota( 0, SEEX ) ),
+            [&]( auto ji ) {
+                auto [j, i] = ji;
+                auto v = scent_values[i][j];
+                if( v == last_scent ) {
+                    scent_count++;
+                } else {
+                    if( scent_count ) {
+                        jsout.write( scent_count );
+                    }
+                    jsout.write( v );
+                    last_scent = v;
+                    scent_count = 1;
+                }
+            } );
+        jsout.write( scent_count );
+        jsout.end_array();
+    }
+
     jsout.member( "furniture" );
     jsout.start_array();
     for( int j = 0; j < SEEY; j++ ) {
@@ -4291,6 +4322,17 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                     set_radiation( { 0 % SEEX, rad_cell / SEEX }, rad_strength );
                     rad_cell++;
                 }
+            }
+        }
+    } else if( member_name == "scent_values" ) {
+        // D5: Load RLE-encoded scent values (value, count pairs).
+        int scent_cell = 0;
+        jsin.start_array();
+        while( !jsin.end_array() ) {
+            const int val = jsin.get_int();
+            const int num = jsin.get_int();
+            for( int i = 0; i < num && scent_cell < SEEX * SEEY; ++i, ++scent_cell ) {
+                scent_values[scent_cell % SEEX][scent_cell / SEEX] = val;
             }
         }
     } else if( member_name == "furniture" ) {

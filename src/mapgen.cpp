@@ -6563,6 +6563,11 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
         ch.vehicle_list.insert( placed_vehicle );
         add_vehicle_to_cache( placed_vehicle );
 
+        const tripoint abs_sm( abs_sub.x + placed_vehicle->sm_pos.x,
+                               abs_sub.y + placed_vehicle->sm_pos.y,
+                               placed_vehicle->sm_pos.z );
+        submaps_with_vehicles.emplace( abs_sm );
+
         //debugmsg ("grid[%d]->vehicles.size=%d veh.parts.size=%d", nonant, grid[nonant]->vehicles.size(),veh.parts.size());
     }
     return placed_vehicle;

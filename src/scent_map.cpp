@@ -15,6 +15,7 @@
 #include "game.h"
 #include "generic_factory.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "options.h"
 #include "output.h"
 #include "profile.h"
@@ -60,15 +61,23 @@ static nc_color sev( const size_t level )
 
 auto scent_map::raw_scent_at( int x, int y, int z ) const -> int
 {
-    const auto *sm = m_.get_submap_at_grid( tripoint( x / SEEX, y / SEEY, z ) );
-    return sm ? sm->scent_values[x % SEEX][y % SEEY] : 0;
+    // D5: use floor division (handles negative extended-local coords) and look up
+    // via the primary mapbuffer so any loaded submap is reachable, not just the bubble.
+    const int gx = divide_round_to_minus_infinity( x, SEEX );
+    const int gy = divide_round_to_minus_infinity( y, SEEY );
+    const tripoint abs_sm( m_.get_abs_sub().x + gx, m_.get_abs_sub().y + gy, z );
+    const auto *sm = MAPBUFFER.lookup_submap_in_memory( abs_sm );
+    return sm ? sm->scent_values[x - gx * SEEX][y - gy * SEEY] : 0;
 }
 
 auto scent_map::raw_scent_set( int x, int y, int z, int value ) -> void
 {
-    auto *sm = m_.get_submap_at_grid( tripoint( x / SEEX, y / SEEY, z ) );
+    const int gx = divide_round_to_minus_infinity( x, SEEX );
+    const int gy = divide_round_to_minus_infinity( y, SEEY );
+    const tripoint abs_sm( m_.get_abs_sub().x + gx, m_.get_abs_sub().y + gy, z );
+    auto *sm = MAPBUFFER.lookup_submap_in_memory( abs_sm );
     if( sm ) {
-        sm->scent_values[x % SEEX][y % SEEY] = value;
+        sm->scent_values[x - gx * SEEX][y - gy * SEEY] = value;
     }
 }
 
@@ -78,43 +87,30 @@ auto scent_map::raw_scent_set( int x, int y, int z, int value ) -> void
 
 void scent_map::reset()
 {
-    const int levz    = gm.get_levz();
-    const int mapsize = m_.get_cache_ref( levz ).cache_x / SEEX;
-    const int zmin    = levz - SCENT_MAP_Z_REACH;
-    const int zmax    = levz + SCENT_MAP_Z_REACH;
-    for( int z = zmin; z <= zmax; ++z ) {
-        for( int smx = 0; smx < mapsize; ++smx ) {
-            for( int smy = 0; smy < mapsize; ++smy ) {
-                auto *sm = m_.get_submap_at_grid( { smx, smy, z } );
-                if( !sm ) {
-                    continue;
-                }
-                std::ranges::fill( std::span( &sm->scent_values[0][0], SEEX * SEEY ), 0 );
-            }
+    // D5: Clear scent from all loaded submaps (not just the bubble).
+    std::ranges::for_each( MAPBUFFER, []( auto &entry ) {
+        auto &[raw_pos, sm_ptr] = entry;
+        if( sm_ptr ) {
+            std::ranges::fill( std::span( &sm_ptr->scent_values[0][0], SEEX * SEEY ), 0 );
         }
-    }
+    } );
     typescent = scenttype_id();
 }
 
 void scent_map::decay()
 {
     ZoneScopedN( "scent_map::decay" );
-    const int levz    = gm.get_levz();
-    const int mapsize = m_.get_cache_ref( levz ).cache_x / SEEX;
-    const int zmin    = levz - SCENT_MAP_Z_REACH;
-    const int zmax    = levz + SCENT_MAP_Z_REACH;
-    for( int z = zmin; z <= zmax; ++z ) {
-        for( int smx = 0; smx < mapsize; ++smx ) {
-            for( int smy = 0; smy < mapsize; ++smy ) {
-                auto *sm = m_.get_submap_at_grid( { smx, smy, z } );
-                if( !sm ) {
-                    continue;
-                }
-                std::ranges::for_each( std::span( &sm->scent_values[0][0], SEEX * SEEY ),
-                []( auto & v ) { v = std::max( 0, v - 1 ); } );
-            }
+    // D5: Decay scent on all loaded submaps within scent z-range of the current level.
+    // Called during precipitation, so rain washes away scent globally.
+    const int levz = gm.get_levz();
+    std::ranges::for_each( MAPBUFFER, [&]( auto &entry ) {
+        auto &[raw_pos, sm_ptr] = entry;
+        if( !sm_ptr || std::abs( raw_pos.z - levz ) > SCENT_MAP_Z_REACH ) {
+            return;
         }
-    }
+        std::ranges::for_each( std::span( &sm_ptr->scent_values[0][0], SEEX * SEEY ),
+        []( auto &v ) { v = std::max( 0, v - 1 ); } );
+    } );
 }
 
 void scent_map::draw( const catacurses::window &win, const int div, const tripoint &center ) const
@@ -178,7 +174,11 @@ bool scent_map::inbounds( const tripoint &p ) const
     if( !scent_map_z_level_inbounds ) {
         return false;
     }
-    return m_.inbounds( p );
+    // D5: check mapbuffer instead of bubble bounds — any loaded submap is accessible.
+    const int gx = divide_round_to_minus_infinity( p.x, SEEX );
+    const int gy = divide_round_to_minus_infinity( p.y, SEEY );
+    const tripoint abs_sm( m_.get_abs_sub().x + gx, m_.get_abs_sub().y + gy, p.z );
+    return MAPBUFFER.lookup_submap_in_memory( abs_sm ) != nullptr;
 }
 
 void scent_map::update( const tripoint &center, map &m )

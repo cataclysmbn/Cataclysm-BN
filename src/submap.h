@@ -233,9 +233,10 @@ class submap : maptile_soa<SEEX, SEEY>
         time_point last_touched = calendar::turn_zero;
         std::vector<spawn_point> spawns;
 
-        // ---- Per-submap simulation caches (NOT serialized) ----
+        // ---- Per-submap simulation caches ----
         // Source of truth for game-logic queries on any loaded submap.
-        // terrain-derived caches carry a dirty flag; scent is simulation state.
+        // terrain-derived caches carry a dirty flag.
+        // scent_values is serialized (D5); the other caches are rebuilt on load.
 
         float  transparency_cache[SEEX][SEEY] = {};
         bool   outside_cache[SEEX][SEEY]      = {};

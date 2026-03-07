@@ -1188,7 +1188,9 @@ void game::load_npcs()
         add_msg( m_debug, "game::load_npcs: Spawning static NPC, %d:%d:%d (%d:%d:%d)",
                  get_levx(), get_levy(), get_levz(), sm_loc.x, sm_loc.y, sm_loc.z );
         temp->place_on_map();
-        if( !m.inbounds( temp->pos() ) || m.get_submap_at( temp->pos() ) == nullptr ) {
+        // Validity guard: skip if the NPC's submap is not resident.
+        // Bubble eviction is handled by on_submap_unloaded(); no inbounds check needed.
+        if( m.get_submap_at( temp->pos() ) == nullptr ) {
             continue;
         }
         // In the rare case the npc was marked for death while
@@ -1990,15 +1992,6 @@ bool game::do_turn()
         overmap_npc_move();
     }
 
-    if( calendar::once_every( 10_seconds ) ) {
-        ZoneScopedN( "field_emits" );
-        for( const tripoint &elem : m.get_furn_field_locations() ) {
-            const auto &furn = m.furn( elem ).obj();
-            for( const emit_id &e : furn.emissions ) {
-                m.emit_field( elem, e );
-            }
-        }
-    }
     update_stair_monsters();
     mon_info_update();
     u.process_turn();
@@ -4732,6 +4725,8 @@ void game::world_tick()
     TracyPlot( "Active Dimensions", static_cast<int64_t>( loaded_dimensions_.size() ) );
 
     const auto  fire_spread = out_of_bubble_fire_spread;
+    const auto  do_emits   = calendar::once_every( 10_seconds );
+    const auto  abs_sub    = m.get_abs_sub();
 
     // Cardinal neighbours used for fire-spread boundary requests.
     static const std::array<tripoint, 4> card = {{
@@ -4761,6 +4756,30 @@ void game::world_tick()
 
             const auto has_fire = process_fields_in_submap( *sm_ptr, pos_sm, mb );
             sm_ptr->last_touched = calendar::turn;
+
+            // D3: Furniture field emitters — covers all loaded submaps, not just the bubble.
+            // Primary dimension only: m.emit_field() operates in primary-map coordinates.
+            if( do_emits && dim.empty() ) {
+                ZoneScopedN( "field_emits" );
+                const tripoint local_sm_origin( ( raw_pos.x - abs_sub.x ) * SEEX,
+                                                ( raw_pos.y - abs_sub.y ) * SEEY,
+                                                raw_pos.z );
+                std::ranges::for_each(
+                    std::views::cartesian_product( std::views::iota( 0, SEEX ),
+                                                   std::views::iota( 0, SEEY ) ),
+                    [&]( auto xy ) {
+                        auto [lx, ly] = xy;
+                        const furn_t &fd = sm_ptr->get_furn( point( lx, ly ) ).obj();
+                        if( fd.has_flag( "EMITTER" ) ) {
+                            const tripoint local_pos( local_sm_origin.x + lx,
+                                                      local_sm_origin.y + ly,
+                                                      raw_pos.z );
+                            std::ranges::for_each( fd.emissions, [&]( const emit_id & e ) {
+                                m.emit_field( local_pos, e );
+                            } );
+                        }
+                    } );
+            }
 
             if( fire_spread && has_fire ) {
                 // F5-1: Look up dimension bounds once per submap so we can

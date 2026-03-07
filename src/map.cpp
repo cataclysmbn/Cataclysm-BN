@@ -228,7 +228,6 @@ map::map( int mapsize, bool zlev )
     }
 
     dbg( DL::Info ) << "map::map(): my_MAPSIZE: " << my_MAPSIZE << " z-levels enabled:" << zlevels;
-    traplocs.resize( trap::count() );
     skew_vision_cache_mutex = std::make_unique<std::shared_mutex>();
 }
 
@@ -256,9 +255,8 @@ auto map::resize( int new_mapsize ) -> void
     for( auto &ptr : caches ) {
         ptr = std::make_unique<level_cache>( SEEX * new_mapsize, SEEY * new_mapsize );
     }
-    field_furn_locs.clear();
     submaps_with_active_items.clear();
-    traplocs.assign( trap::count(), {} );
+    submaps_with_vehicles.clear();
     // Recompute the circular load footprint for the new bubble radius.
     // Radius = (mapsize - 1) / 2, matching g_half_mapsize.
     submap_loader.update_load_shape( ( new_mapsize - 1 ) / 2 );
@@ -332,6 +330,26 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
     if( dim_id != bound_dimension_ ) {
         return;
     }
+
+    // Vehicle sm_pos fixup and tracking: covers all loaded submaps, including
+    // out-of-bubble ones from fire-spread / player-base / script requests.
+    // For in-bubble submaps loadn() already sets sm_pos; this is a no-op for those.
+    {
+        const tripoint &p = pos.raw();
+        submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
+        if( sm == nullptr ) {
+            sm = MAPBUFFER_REGISTRY.primary().lookup_submap_in_memory( p );
+        }
+        if( sm != nullptr && !sm->vehicles.empty() ) {
+            // Extended local grid index: may be outside [0, my_MAPSIZE) for out-of-bubble.
+            const tripoint local_sm( p.x - abs_sub.x, p.y - abs_sub.y, p.z );
+            for( const auto &veh : sm->vehicles ) {
+                veh->sm_pos = local_sm;
+            }
+            submaps_with_vehicles.emplace( p );
+        }
+    }
+
     if( !contains_abs_sm( pos ) ) {
         return;
     }
@@ -368,6 +386,10 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim
     if( dim_id != bound_dimension_ ) {
         return;
     }
+
+    // Vehicle tracking: remove before the submap is evicted, regardless of bubble position.
+    submaps_with_vehicles.erase( pos.raw() );
+
     if( !contains_abs_sm( pos ) ) {
         return;
     }
@@ -716,6 +738,12 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
             reset_vehicle_cache( );
             std::unique_ptr<vehicle> result = std::move( current_submap->vehicles[i] );
             current_submap->vehicles.erase( current_submap->vehicles.begin() + i );
+            if( current_submap->vehicles.empty() ) {
+                const tripoint abs_sm( abs_sub.x + veh->sm_pos.x,
+                                       abs_sub.y + veh->sm_pos.y,
+                                       veh->sm_pos.z );
+                submaps_with_vehicles.erase( abs_sm );
+            }
             if( veh->tracking_on ) {
                 overmap_buffer.remove_vehicle( veh );
             }
@@ -800,12 +828,15 @@ void map::vehmove()
     ZoneScoped;
 
     // give vehicles movement points
+    // Iterate all loaded submaps with vehicles — not just the reality bubble.
     VehicleList vehicle_list;
-    int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
-    int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
-    for( int zlev = minz; zlev <= maxz; ++zlev ) {
-        level_cache &cache = get_cache( zlev );
-        for( vehicle *veh : cache.vehicle_list ) {
+    for( const tripoint &abs_sm : submaps_with_vehicles ) {
+        submap *sm = MAPBUFFER.lookup_submap_in_memory( abs_sm );
+        if( sm == nullptr ) {
+            continue;
+        }
+        for( const auto &veh_ptr : sm->vehicles ) {
+            vehicle *veh = veh_ptr.get();
             veh->gain_moves();
             veh->slow_leak();
             wrapped_vehicle w;
@@ -942,15 +973,18 @@ void map::vehmove()
         }
     }
     dirty_vehicle_list.clear();
-    // The bool tracks whether the vehicles is on the map or not.
+    // Build connected_vehicles from the full loaded-vehicle set.
+    // All vehicles in vehicle_list are loaded (on_map=true); distribution-graph
+    // neighbours reachable but not in the set get on_map=false as before.
+    std::set<vehicle *> all_veh_ptrs;
+    std::ranges::for_each( vehicle_list, [&]( const wrapped_vehicle & w ) {
+        all_veh_ptrs.insert( w.v );
+    } );
     std::map<vehicle *, bool> connected_vehicles;
-    for( int zlev = minz; zlev <= maxz; ++zlev ) {
-        level_cache &cache = get_cache( zlev );
-        vehicle::enumerate_vehicles( connected_vehicles, cache.vehicle_list );
-    }
-    for( std::pair<vehicle *const, bool> &veh_pair : connected_vehicles ) {
+    vehicle::enumerate_vehicles( connected_vehicles, all_veh_ptrs );
+    std::ranges::for_each( connected_vehicles, []( std::pair<vehicle *const, bool> &veh_pair ) {
         veh_pair.first->idle( veh_pair.second );
-    }
+    } );
 }
 
 bool map::vehproceed( VehicleList &vehicle_list )
@@ -1658,14 +1692,7 @@ void map::unboard_vehicle( const tripoint &p, bool dead_passenger )
 bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
 {
     const tripoint src = veh.global_pos3();
-
     tripoint dst = src + dp;
-
-    if( !inbounds( src ) ) {
-        add_msg( m_debug, "map::displace_vehicle: coordinates out of bounds %d,%d,%d->%d,%d,%d",
-                 src.x, src.y, src.z, dst.x, dst.y, dst.z );
-        return false;
-    }
 
     point src_offset;
     point dst_offset;
@@ -1673,22 +1700,21 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     submap *dst_submap = get_submap_at( dst, dst_offset );
     std::set<int> smzs;
 
-    // first, let's find our position in current vehicles vector
+    if( src_submap == nullptr ) {
+        add_msg( m_debug, "map::displace_vehicle: src submap not loaded %d,%d,%d->%d,%d,%d",
+                 src.x, src.y, src.z, dst.x, dst.y, dst.z );
+        return false;
+    }
+
+    // Find the vehicle's index directly in its authoritative source submap.
+    // get_submap_at() handles out-of-bubble positions via the mapbuffer fallback,
+    // so this works for vehicles loaded outside the reality bubble.
     size_t our_i = 0;
     bool found = false;
-    for( auto &smap : grid ) {
-        if( smap == nullptr ) {
-            continue;
-        }
-        for( size_t i = 0; i < smap->vehicles.size(); i++ ) {
-            if( smap->vehicles[i].get() == &veh ) {
-                our_i = i;
-                src_submap = smap;
-                found = true;
-                break;
-            }
-        }
-        if( found ) {
+    for( size_t i = 0; i < src_submap->vehicles.size(); ++i ) {
+        if( src_submap->vehicles[i].get() == &veh ) {
+            our_i = i;
+            found = true;
             break;
         }
     }
@@ -1698,12 +1724,14 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
         return false;
     }
 
-    // move the vehicle
-    // don't let it go off grid
-    if( !inbounds( dst ) ) {
+    // Stop the vehicle if its destination submap is not loaded.
+    // After D0, map queries return t_null / move_cost 0 for unloaded submaps,
+    // so vehicles naturally stop at unloaded-submap edges through the collision
+    // code.  This guard is a safety net for cases where act_on_map already
+    // consumed the movement allowance before the collision check fired.
+    if( dst_submap == nullptr ) {
         veh.stop();
-        // Silent debug
-        dbg( DL::Error ) << "map:displace_vehicle: Stopping vehicle, displaced dp=" << dp;
+        dbg( DL::Error ) << "map::displace_vehicle: dst submap not loaded, stopping vehicle dp=" << dp;
         return true;
     }
 
@@ -1804,6 +1832,19 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
         src_submap->vehicles.erase( src_submap_veh_it );
         dst_submap->is_uniform = false;
         invalidate_max_populated_zlev( dst.z );
+
+        // Maintain submaps_with_vehicles for the src/dst boundary crossing.
+        // Use floor division so negative extended-local coords (out-of-bubble) map correctly.
+        const tripoint src_abs_sm( abs_sub.x + divide_round_to_minus_infinity( src.x, SEEX ),
+                                   abs_sub.y + divide_round_to_minus_infinity( src.y, SEEY ),
+                                   src.z );
+        const tripoint dst_abs_sm( abs_sub.x + divide_round_to_minus_infinity( dst.x, SEEX ),
+                                   abs_sub.y + divide_round_to_minus_infinity( dst.y, SEEY ),
+                                   dst.z );
+        if( src_submap->vehicles.empty() ) {
+            submaps_with_vehicles.erase( src_abs_sm );
+        }
+        submaps_with_vehicles.emplace( dst_abs_sm );
     }
     if( need_update ) {
         g->update_map( g->u );
@@ -1968,9 +2009,6 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
         if( c ) {
             c->remove_effect( effect_crushed );
         }
-    }
-    if( new_t.has_flag( "EMITTER" ) ) {
-        field_furn_locs.push_back( p );
     }
     if( old_t.transparent != new_t.transparent ) {
         set_transparency_cache_dirty( p );
@@ -2305,18 +2343,6 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
     // Set the dirty flags
     const ter_t &old_t = old_id.obj();
     const ter_t &new_t = new_terrain.obj();
-
-    // HACK: Hack around ledges in traplocs or else it gets NASTY in z-level mode
-    if( old_t.trap != tr_null && old_t.trap != tr_ledge ) {
-        auto &traps = traplocs[old_t.trap.to_i()];
-        const auto iter = std::ranges::find( traps, p );
-        if( iter != traps.end() ) {
-            traps.erase( iter );
-        }
-    }
-    if( new_t.trap != tr_null && new_t.trap != tr_ledge ) {
-        traplocs[new_t.trap.to_i()].push_back( p );
-    }
 
     if( old_t.transparent != new_t.transparent ) {
         set_transparency_cache_dirty( p );
@@ -5664,23 +5690,14 @@ std::vector<tripoint> map::check_submap_active_item_consistency()
 void map::process_items()
 {
     ZoneScoped;
-    const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
-    const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
-    for( int gz = minz; gz <= maxz; ++gz ) {
-        level_cache &cache = access_cache( gz );
-        std::set<tripoint> submaps_with_vehicles;
-        for( vehicle *this_vehicle : cache.vehicle_list ) {
-            tripoint pos = this_vehicle->global_pos3();
-            submaps_with_vehicles.emplace( pos.x / SEEX, pos.y / SEEY, pos.z );
+    // Process vehicles across all loaded submaps (not just the reality bubble).
+    for( const tripoint &abs_sm : submaps_with_vehicles ) {
+        submap *const current_submap = MAPBUFFER.lookup_submap_in_memory( abs_sm );
+        if( current_submap == nullptr ) {
+            continue;
         }
-        for( const tripoint &pos : submaps_with_vehicles ) {
-            submap *const current_submap = get_submap_at_grid( pos );
-            if( current_submap == nullptr ) {
-                continue;
-            }
-            // Vehicles first in case they get blown up and drop active items on the map.
-            process_items_in_vehicles( *current_submap );
-        }
+        // Vehicles first in case they get blown up and drop active items on the map.
+        process_items_in_vehicles( *current_submap );
     }
     // Making a copy, in case the original variable gets modified during `process_items_in_submap`
     // PERF-LOSS-3: the previous I-1 distance cull (radius = MAPSIZE) has been
@@ -6250,9 +6267,6 @@ void map::trap_set( const tripoint &p, const trap_id &type )
     }
 
     current_submap->set_trap( l, type );
-    if( type != tr_null ) {
-        traplocs[type.to_i()].push_back( p );
-    }
 }
 
 void map::disarm_trap( const tripoint &p )
@@ -6326,11 +6340,6 @@ void map::remove_trap( const tripoint &p )
         }
 
         current_submap->set_trap( l, tr_null );
-        auto &traps = traplocs[tid.to_i()];
-        const auto iter = std::ranges::find( traps, p );
-        if( iter != traps.end() ) {
-            traps.erase( iter );
-        }
     }
 }
 /*
@@ -6617,6 +6626,17 @@ void map::update_submap_active_item_status( const tripoint &p )
     submap *const current_submap = get_submap_at( p, l );
     if( current_submap->active_items.empty() ) {
         submaps_with_active_items.erase( tripoint( abs_sub.x + p.x / SEEX, abs_sub.y + p.y / SEEY, p.z ) );
+    }
+}
+
+void map::update_submap_vehicle_status( const tripoint &abs_sm_pos )
+{
+    const tripoint local_pos = abs_sm_pos - abs_sub.xy();
+    const submap *sm = get_submap_at_grid( local_pos );
+    if( sm != nullptr && !sm->vehicles.empty() ) {
+        submaps_with_vehicles.emplace( abs_sm_pos );
+    } else {
+        submaps_with_vehicles.erase( abs_sm_pos );
     }
 }
 
@@ -7655,11 +7675,8 @@ void map::save()
 void map::load( const tripoint &w, const bool update_vehicle, const bool pump_events )
 {
     std::fill( grid.begin(), grid.end(), nullptr );
-    for( auto &traps : traplocs ) {
-        traps.clear();
-    }
-    field_furn_locs.clear();
     submaps_with_active_items.clear();
+    submaps_with_vehicles.clear();
     set_abs_sub( w );
     for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
         for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
@@ -7678,34 +7695,6 @@ void map::load( const tripoint_abs_sm &w, const bool update_vehicle, const bool 
     load( w.raw(), update_vehicle, pump_events );
 }
 
-void map::shift_traps( const tripoint &shift )
-{
-    // Offset needs to have sign opposite to shift direction
-    const tripoint offset( -shift.x * SEEX, -shift.y * SEEY, -shift.z );
-    for( auto iter = field_furn_locs.begin(); iter != field_furn_locs.end(); ) {
-        tripoint &pos = *iter;
-        pos += offset;
-        if( inbounds( pos ) ) {
-            ++iter;
-        } else {
-            iter = field_furn_locs.erase( iter );
-        }
-    }
-    for( auto &traps : traplocs ) {
-        for( auto iter = traps.begin(); iter != traps.end(); ) {
-            tripoint &pos = *iter;
-            pos += offset;
-            if( inbounds( pos ) ) {
-                ++iter;
-            } else {
-                // Theoretical enhancement: if this is not the last entry of the vector,
-                // move the last entry into pos and remove the last entry instead of iter.
-                // This would avoid moving all the remaining entries.
-                iter = traps.erase( iter );
-            }
-        }
-    }
-}
 
 void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier, point s )
 {
@@ -7801,6 +7790,17 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
         }
     }
 
+    // Maintain submaps_with_vehicles for the z-level crossing.
+    const tripoint src_abs_sm( abs_sub.x + divide_round_to_minus_infinity( src.x, SEEX ),
+                               abs_sub.y + divide_round_to_minus_infinity( src.y, SEEY ),
+                               src.z );
+    const tripoint dst_abs_sm( abs_sub.x + divide_round_to_minus_infinity( dst.x, SEEX ),
+                               abs_sub.y + divide_round_to_minus_infinity( dst.y, SEEY ),
+                               dst.z );
+    if( src_submap->vehicles.empty() ) {
+        submaps_with_vehicles.erase( src_abs_sm );
+    }
+    submaps_with_vehicles.emplace( dst_abs_sm );
 }
 
 void map::shift( point sp )
@@ -7825,8 +7825,6 @@ void map::shift( point sp )
     }
 
     g->shift_destination_preview( point( -sp.x * SEEX, -sp.y * SEEY ) );
-
-    shift_traps( tripoint( sp, 0 ) );
 
     vehicle *remoteveh = g->remoteveh();
 
@@ -8263,6 +8261,9 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
     }
     if( !tmpsub->active_items.empty() ) {
         submaps_with_active_items.emplace( grid_abs_sub );
+    }
+    if( !tmpsub->vehicles.empty() ) {
+        submaps_with_vehicles.emplace( grid_abs_sub );
     }
     // field_cache removed — field_count is queried directly on each submap
     // Destroy bugged no-part vehicles
@@ -8760,22 +8761,10 @@ void map::actualize( const tripoint &grid )
             const tripoint pnt = sm_to_ms_copy( grid ) + point( x, y );
             const point p( x, y );
             const auto &furn = this->furn( pnt ).obj();
-            if( furn.has_flag( "EMITTER" ) ) {
-                field_furn_locs.push_back( pnt );
-            }
             // plants contain a seed item which must not be removed under any circumstances
             if( !furn.has_flag( "DONT_REMOVE_ROTTEN" ) ) {
                 temperature_flag temperature = temperature_flag_at_point( *this, pnt );
                 remove_rotten_items( tmpsub->get_items( { x, y } ), pnt, temperature );
-            }
-
-            const auto trap_here = tmpsub->get_trap( p );
-            if( trap_here != tr_null ) {
-                traplocs[trap_here.to_i()].push_back( pnt );
-            }
-            const ter_t &ter = tmpsub->get_ter( p ).obj();
-            if( ter.trap != tr_null && ter.trap != tr_ledge ) {
-                traplocs[ter.trap.to_i()].push_back( pnt );
             }
 
             if( do_funnels ) {
@@ -9111,20 +9100,6 @@ void map::clear_traps()
         }
     }
 
-    // Forget about all trap locations.
-    for( auto &i : traplocs ) {
-        i.clear();
-    }
-}
-
-const std::vector<tripoint> &map::get_furn_field_locations() const
-{
-    return field_furn_locs;
-}
-
-const std::vector<tripoint> &map::trap_locations( const trap_id &type ) const
-{
-    return traplocs[type.to_i()];
 }
 
 bool map::inbounds( const tripoint_abs_ms &p ) const
