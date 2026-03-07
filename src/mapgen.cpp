@@ -6564,9 +6564,9 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
         add_vehicle_to_cache( placed_vehicle );
 
         placed_vehicle->abs_sm_pos = tripoint_abs_sm(
-            abs_sub.x + placed_vehicle->sm_pos.x,
-            abs_sub.y + placed_vehicle->sm_pos.y,
-            placed_vehicle->sm_pos.z );
+                                         abs_sub.x + placed_vehicle->sm_pos.x,
+                                         abs_sub.y + placed_vehicle->sm_pos.y,
+                                         placed_vehicle->sm_pos.z );
         loaded_vehicles.insert( placed_vehicle );
 
         //debugmsg ("grid[%d]->vehicles.size=%d veh.parts.size=%d", nonant, grid[nonant]->vehicles.size(),veh.parts.size());

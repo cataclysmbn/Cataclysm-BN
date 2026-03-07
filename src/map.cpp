@@ -396,7 +396,7 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim
             sm = MAPBUFFER_REGISTRY.primary().lookup_submap_in_memory( p );
         }
         if( sm != nullptr ) {
-            std::ranges::for_each( sm->vehicles, [&]( const auto &veh_ptr ) {
+            std::ranges::for_each( sm->vehicles, [&]( const auto & veh_ptr ) {
                 loaded_vehicles.erase( veh_ptr.get() );
             } );
         }
@@ -836,7 +836,7 @@ void map::vehmove()
 
     // give vehicles movement points
     VehicleList vehicle_list;
-    std::ranges::for_each( loaded_vehicles, [&]( vehicle *veh ) {
+    std::ranges::for_each( loaded_vehicles, [&]( vehicle * veh ) {
         veh->gain_moves();
         veh->slow_leak();
         vehicle_list.push_back( wrapped_vehicle{ .v = veh } );
@@ -5685,12 +5685,12 @@ void map::process_items()
     // Derive unique submaps from the flat vehicle registry; multiple vehicles can share a submap.
     // Vehicles first in case they get blown up and drop active items on the map.
     auto veh_submaps = loaded_vehicles
-                       | std::views::transform( [&]( vehicle *veh ) -> submap * {
-                           return MAPBUFFER.lookup_submap_in_memory( veh->abs_sm_pos.raw() );
-                       } )
-                       | std::views::filter( []( submap *sm ) { return sm != nullptr; } )
-                       | std::ranges::to<std::set<submap *>>();
-    std::ranges::for_each( veh_submaps, [&]( submap *sm ) {
+    | std::views::transform( [&]( vehicle * veh ) -> submap * {
+        return MAPBUFFER.lookup_submap_in_memory( veh->abs_sm_pos.raw() );
+    } )
+    | std::views::filter( []( submap * sm ) { return sm != nullptr; } )
+    | std::ranges::to<std::set<submap *>>();
+    std::ranges::for_each( veh_submaps, [&]( submap * sm ) {
         process_items_in_vehicles( *sm );
     } );
     // Making a copy, in case the original variable gets modified during `process_items_in_submap`
