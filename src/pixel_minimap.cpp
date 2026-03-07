@@ -484,8 +484,8 @@ void pixel_minimap::render_cache( const tripoint &center )
     // SEEX — producing a systematic upper-left drift otherwise (most visible at
     // bubble size 4, where view_tiles_count = screen_rect.w / 3).
     const auto ms_offset = point{
-        view_tiles_count.x / 2 - sm_offset.x * SEEX - ms_remain.x,
-        view_tiles_count.y / 2 - sm_offset.y * SEEY - ms_remain.y
+        view_tiles_count.x / 2 - sm_offset.x *SEEX - ms_remain.x,
+        view_tiles_count.y / 2 - sm_offset.y *SEEY - ms_remain.y
     };
 
     for( const auto &elem : cache ) {
