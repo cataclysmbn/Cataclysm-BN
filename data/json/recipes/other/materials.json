@@ -349,19 +349,6 @@
   },
   {
     "type": "recipe",
-    "result": "metal_tank",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_MATERIALS",
-    "skill_used": "fabrication",
-    "difficulty": 1,
-    "time": "2 m",
-    "autolearn": true,
-    "using": [ [ "welding_standard", 5 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "components": [ [ [ "sheet_metal", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
     "result": "it_battery_mount",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_MATERIALS",
