@@ -9710,81 +9710,81 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             dirty_seen_cache_levels.push_back( zlev );
         }
         dirty_seen_cache_levels.erase(
-            std::ranges::remove_if( dirty_seen_cache_levels, [this]( int z ) {
-                return !get_cache( z ).lightmap_dirty;
-            } ).begin(),
-            dirty_seen_cache_levels.end() );
+        std::ranges::remove_if( dirty_seen_cache_levels, [this]( int z ) {
+            return !get_cache( z ).lightmap_dirty;
+        } ).begin(),
+        dirty_seen_cache_levels.end() );
         std::ranges::sort( dirty_seen_cache_levels );
         dirty_seen_cache_levels.erase( std::ranges::unique( dirty_seen_cache_levels ).begin(),
                                        dirty_seen_cache_levels.end() );
 
         if( !dirty_seen_cache_levels.empty() ) {
 
-        if( dirty_seen_cache_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
-            // Multiple dirty levels: hoist shared initialization outside the
-            // parallel loop so worker threads never race on cross-level writes.
-            //
-            // Step 1: Clear sm, light_source_buffer, and lm for every dirty level.
-            // lm must be explicitly zeroed here: build_sunlight_cache only writes
-            // outdoor tiles, leaving interior cells with stale values from last
-            // turn (e.g., a removed torch would leave a ghost-light patch).
-            for( const int z : dirty_seen_cache_levels ) {
-                auto &c = get_cache( z );
-                std::fill( c.sm.begin(), c.sm.end(), 0.0f );
-                std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
-                std::fill( c.lm.begin(), c.lm.end(), four_quadrants( 0.0f ) );
-            }
-            // Step 2: Build sunlight (writes lm for ALL z-levels, top-to-bottom;
-            // must run once and serially before the parallel loop).
-            build_sunlight_cache( zlev );
-            // Step 3: Apply character/NPC lights (each writes to its own z-level;
-            // done serially here so workers don't race on the same level's caches).
-            apply_character_light( get_player_character() );
-            for( npc &guy : g->all_npcs() ) {
-                apply_character_light( guy );
-            }
-            // Step 3b: Apply monster lights serially.  g->all_monsters() iterates
-            // weak_ptr_fast (std::__weak_ptr<T,_S_single>) whose refcount is non-atomic;
-            // calling lock() from worker threads is a data race.  apply_light_source()
-            // uses get_cache(p.z) so each monster writes to its own z-level's buffer.
-            for( monster &critter : g->all_monsters() ) {
-                if( critter.is_hallucination() ) {
-                    continue;
+            if( dirty_seen_cache_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
+                // Multiple dirty levels: hoist shared initialization outside the
+                // parallel loop so worker threads never race on cross-level writes.
+                //
+                // Step 1: Clear sm, light_source_buffer, and lm for every dirty level.
+                // lm must be explicitly zeroed here: build_sunlight_cache only writes
+                // outdoor tiles, leaving interior cells with stale values from last
+                // turn (e.g., a removed torch would leave a ghost-light patch).
+                for( const int z : dirty_seen_cache_levels ) {
+                    auto &c = get_cache( z );
+                    std::fill( c.sm.begin(), c.sm.end(), 0.0f );
+                    std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+                    std::fill( c.lm.begin(), c.lm.end(), four_quadrants( 0.0f ) );
                 }
-                const tripoint &mp = critter.pos();
-                if( inbounds( mp ) ) {
-                    if( critter.has_effect( effect_onfire ) ) {
-                        apply_light_source( mp, 8 );
+                // Step 2: Build sunlight (writes lm for ALL z-levels, top-to-bottom;
+                // must run once and serially before the parallel loop).
+                build_sunlight_cache( zlev );
+                // Step 3: Apply character/NPC lights (each writes to its own z-level;
+                // done serially here so workers don't race on the same level's caches).
+                apply_character_light( get_player_character() );
+                for( npc &guy : g->all_npcs() ) {
+                    apply_character_light( guy );
+                }
+                // Step 3b: Apply monster lights serially.  g->all_monsters() iterates
+                // weak_ptr_fast (std::__weak_ptr<T,_S_single>) whose refcount is non-atomic;
+                // calling lock() from worker threads is a data race.  apply_light_source()
+                // uses get_cache(p.z) so each monster writes to its own z-level's buffer.
+                for( monster &critter : g->all_monsters() ) {
+                    if( critter.is_hallucination() ) {
+                        continue;
                     }
-                    if( critter.type->luminance > 0 ) {
-                        apply_light_source( mp, critter.type->luminance );
+                    const tripoint &mp = critter.pos();
+                    if( inbounds( mp ) ) {
+                        if( critter.has_effect( effect_onfire ) ) {
+                            apply_light_source( mp, 8 );
+                        }
+                        if( critter.type->luminance > 0 ) {
+                            apply_light_source( mp, critter.type->luminance );
+                        }
                     }
                 }
+                // Step 4: Generate per-level dynamic lighting in parallel.
+                // skip_shared_init=true: each worker skips the shared-init steps above
+                // and only processes entities whose position z matches its own level.
+                //
+                // Pre-warm the vehicle list cache once, serially, before workers
+                // enter generate_lightmap().  get_vehicles() writes last_full_vehicle_list
+                // when the dirty flag is set; multiple threads racing on that write
+                // corrupts the allocator heap metadata.  After this call the flag is
+                // cleared and all workers will only read the cached list — safe.
+                get_vehicles();
+                parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
+                    generate_lightmap( dirty_seen_cache_levels[i], /*skip_shared_init=*/true );
+                } );
+            } else {
+                // Single dirty level: run serially using the standard full path.
+                for( const int level : dirty_seen_cache_levels ) {
+                    generate_lightmap( level );
+                }
             }
-            // Step 4: Generate per-level dynamic lighting in parallel.
-            // skip_shared_init=true: each worker skips the shared-init steps above
-            // and only processes entities whose position z matches its own level.
-            //
-            // Pre-warm the vehicle list cache once, serially, before workers
-            // enter generate_lightmap().  get_vehicles() writes last_full_vehicle_list
-            // when the dirty flag is set; multiple threads racing on that write
-            // corrupts the allocator heap metadata.  After this call the flag is
-            // cleared and all workers will only read the cached list — safe.
-            get_vehicles();
-            parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
-                generate_lightmap( dirty_seen_cache_levels[i], /*skip_shared_init=*/true );
-            } );
-        } else {
-            // Single dirty level: run serially using the standard full path.
-            for( const int level : dirty_seen_cache_levels ) {
-                generate_lightmap( level );
-            }
-        }
 
-        // Mark each regenerated level clean so subsequent redraws this turn skip it.
-        std::ranges::for_each( dirty_seen_cache_levels, [this]( int z ) {
-            get_cache( z ).lightmap_dirty = false;
-        } );
+            // Mark each regenerated level clean so subsequent redraws this turn skip it.
+            std::ranges::for_each( dirty_seen_cache_levels, [this]( int z ) {
+                get_cache( z ).lightmap_dirty = false;
+            } );
 
         } // end if( !dirty_seen_cache_levels.empty() )
     }
