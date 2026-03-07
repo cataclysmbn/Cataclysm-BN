@@ -366,8 +366,8 @@
     "type": "vehicle_part",
     "id": "trunk_flat",
     "name": { "str": "flat trunk" },
-	"looks_like": "hatch",
-	"size": "100 L",
+    "looks_like": "hatch",
+    "size": "100 L",
     "flags": [ "OBSTACLE", "HALF_BOARD", "NO_ROOF_NEEDED", "CARGO", "LOCKABLE_CARGO" ]
   },
   {
