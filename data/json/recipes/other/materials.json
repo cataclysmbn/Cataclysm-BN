@@ -363,19 +363,6 @@
   },
   {
     "type": "recipe",
-    "result": "metal_tank_little",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_MATERIALS",
-    "skill_used": "fabrication",
-    "difficulty": 1,
-    "time": "30 s",
-    "autolearn": true,
-    "using": [ [ "welding_standard", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "components": [ [ [ "sheet_metal_small", 3 ] ] ]
-  },
-  {
-    "type": "recipe",
     "result": "scrap_copper",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_MATERIALS",
