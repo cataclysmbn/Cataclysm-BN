@@ -836,11 +836,15 @@ void map::vehmove()
 
     // give vehicles movement points
     VehicleList vehicle_list;
-    std::ranges::for_each( loaded_vehicles, [&]( vehicle * veh ) {
-        veh->gain_moves();
-        veh->slow_leak();
-        vehicle_list.push_back( wrapped_vehicle{ .v = veh } );
-    } );
+    {
+        ZoneScopedN( "veh_gain_moves" );
+        std::ranges::for_each( loaded_vehicles, [&]( vehicle * veh ) {
+            veh->gain_moves();
+            veh->slow_leak();
+            vehicle_list.push_back( wrapped_vehicle{ .v = veh } );
+        } );
+    }
+    TracyPlot( "Vehicles Active", static_cast<int64_t>( vehicle_list.size() ) );
 
     // V-1: Priority queue keyed on of_turn (max-heap) for O(log V) scheduling
     // instead of the previous O(V) linear scan per iteration.
@@ -889,6 +893,7 @@ void map::vehmove()
 
     // 15 equals 3 >50mph vehicles, or up to 15 slow (1 square move) ones
     // But 15 is too low for V12 death-bikes, let's put 100 here
+    auto moved_count = int64_t{0};
     for( int count = 0; count < 100; ++count ) {
         wrapped_vehicle *cur_veh = nullptr;
 
@@ -919,7 +924,11 @@ void map::vehmove()
             break;
         }
 
-        cur_veh->v = cur_veh->v->act_on_map();
+        {
+            ZoneScopedN( "veh_act_on_map" );
+            ++moved_count;
+            cur_veh->v = cur_veh->v->act_on_map();
+        }
 
         if( cur_veh->v == nullptr ) {
             // act_on_map() returns nullptr in two cases:
@@ -957,19 +966,24 @@ void map::vehmove()
             }
         }
     }
+    TracyPlot( "Vehicles Moved", moved_count );
+
     // Process item removal on the vehicles that were modified this turn.
     // Use a copy because part_removal_cleanup can modify the container.
-    auto temp = dirty_vehicle_list;
-    for( const auto &elem : temp ) {
-        auto same_ptr = [ elem ]( const struct wrapped_vehicle & tgt ) {
-            return elem == tgt.v;
-        };
-        if( std::ranges::find_if( vehicle_list, same_ptr ) !=
-            vehicle_list.end() ) {
-            elem->part_removal_cleanup();
+    {
+        ZoneScopedN( "veh_cleanup" );
+        auto temp = dirty_vehicle_list;
+        for( const auto &elem : temp ) {
+            auto same_ptr = [ elem ]( const struct wrapped_vehicle & tgt ) {
+                return elem == tgt.v;
+            };
+            if( std::ranges::find_if( vehicle_list, same_ptr ) !=
+                vehicle_list.end() ) {
+                elem->part_removal_cleanup();
+            }
         }
+        dirty_vehicle_list.clear();
     }
-    dirty_vehicle_list.clear();
     // Build connected_vehicles from the full loaded-vehicle set.
     // All vehicles in vehicle_list are loaded (on_map=true); distribution-graph
     // neighbours reachable but not in the set get on_map=false as before.

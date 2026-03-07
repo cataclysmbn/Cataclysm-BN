@@ -162,7 +162,9 @@ void submap_stream::drain_completed( map &m,
 
 auto submap_stream::flush_all() -> void
 {
+    ZoneScopedN( "submap_stream_flush" );
     std::lock_guard<std::mutex> lk( mutex_ );
+    TracyPlot( "Pending Stream Tasks", static_cast<int64_t>( pending_.size() ) );
     std::ranges::for_each( pending_, []( auto & p ) {
         p.future.wait();
         p.future.get(); // consume result; submap data already in mapbuffer

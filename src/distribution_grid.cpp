@@ -307,6 +307,7 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
 distribution_grid &distribution_grid_tracker::make_distribution_grid_at(
     const tripoint_abs_sm &sm_pos )
 {
+    ZoneScoped;
     if( !get_option<bool>( "ELECTRIC_GRID" ) ) {
         static distribution_grid empty_grid( {}, MAPBUFFER );
         return empty_grid;

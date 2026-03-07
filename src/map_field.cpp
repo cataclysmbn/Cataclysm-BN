@@ -1119,6 +1119,11 @@ auto process_fields_in_submap( submap &sm,
                                const tripoint_abs_sm &pos,
                                mapbuffer &mb ) -> bool
 {
+    ZoneScopedN( "process_fields_in_submap" );
+    if( sm.field_count == 0 ) {
+        return false;
+    }
+
     auto has_fire = false;
 
     std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int lx ) {

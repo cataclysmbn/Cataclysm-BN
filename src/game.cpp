@@ -4768,6 +4768,7 @@ void game::world_tick()
         }
     };
 
+    auto total_field_count = int64_t{0};
     MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
         ZoneScopedN( "world_tick_dimension" );
         ZoneText( dim.c_str(), dim.size() );
@@ -4786,6 +4787,7 @@ void game::world_tick()
                 return;
             }
             const tripoint_abs_sm pos_sm( raw_pos );
+            total_field_count += sm_ptr->field_count;
 
             const auto has_fire = process_fields_in_submap( *sm_ptr, pos_sm, mb );
             sm_ptr->last_touched = calendar::turn;
@@ -4838,6 +4840,8 @@ void game::world_tick()
             }
         } );
     } );
+
+    TracyPlot( "Active Fields", total_field_count );
 
     // Prune fire-spread load requests that are no longer connected or lack fire.
     {
