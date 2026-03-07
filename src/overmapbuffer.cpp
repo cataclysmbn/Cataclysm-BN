@@ -1871,6 +1871,17 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
     om.monster_map->erase( current_submap_loc );
 }
 
+void overmapbuffer::discard_monster_map( const tripoint_abs_sm &p )
+{
+    auto abs_sm = p.xy();
+    point_om_sm sm;
+    point_abs_om omp;
+    std::tie( omp, sm ) = project_remain<coords::om>( abs_sm );
+    overmap &om = get( omp );
+    const tripoint_om_sm submap_loc( sm, p.z() );
+    om.monster_map->erase( submap_loc );
+}
+
 void overmapbuffer::despawn_monster( const monster &critter )
 {
     // Get absolute coordinates of the monster in map squares, translate to submap position

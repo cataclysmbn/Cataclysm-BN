@@ -1846,6 +1846,14 @@ class map : public submap_load_listener
          * If false, monsters are not spawned in view of player character.
          */
         void spawn_monsters( bool ignore_sight );
+        /**
+         * Like spawn_monsters(), but only processes the strip of submaps that
+         * newly entered the reality bubble due to a map shift.  Avoids
+         * re-processing already-loaded submaps and spuriously placing stale
+         * monster_map entries that correspond to already-active monsters.
+         * @param shift_amount The shift that just occurred, in submap units.
+         */
+        void spawn_monsters_new_submaps( point shift_amount );
 
         /**
         * Checks to see if the corpse that is rotting away generates items when it does.

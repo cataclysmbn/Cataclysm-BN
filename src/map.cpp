@@ -9077,6 +9077,38 @@ void map::spawn_monsters( bool ignore_sight )
     }
 }
 
+auto map::spawn_monsters_new_submaps( point shift_amount ) -> void
+{
+    ZoneScoped;
+    const auto sx = shift_amount.x;
+    const auto sy = shift_amount.y;
+
+    // If the shift covers the full map in any dimension every submap is new —
+    // fall back to the full spawn to avoid an empty or degenerate strip.
+    if( std::abs( sx ) >= my_MAPSIZE || std::abs( sy ) >= my_MAPSIZE ) {
+        spawn_monsters( false );
+        return;
+    }
+
+    const auto zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
+    const auto zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
+    const auto z_range = std::views::iota( zmin, zmax + 1 );
+    const auto xy_range = std::views::iota( 0, my_MAPSIZE );
+
+    std::ranges::for_each(
+        std::views::cartesian_product( z_range, xy_range, xy_range ),
+    [&]( auto tup ) {
+        auto [gz, gx, gy] = tup;
+        const auto new_x = ( sx > 0 && gx >= my_MAPSIZE - sx ) ||
+                           ( sx < 0 && gx < -sx );
+        const auto new_y = ( sy > 0 && gy >= my_MAPSIZE - sy ) ||
+                           ( sy < 0 && gy < -sy );
+        if( new_x || new_y ) {
+            spawn_monsters_submap( tripoint{ gx, gy, gz }, false );
+        }
+    } );
+}
+
 void map::clear_spawns()
 {
     for( auto &smap : grid ) {

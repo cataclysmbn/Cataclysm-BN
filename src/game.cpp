@@ -3184,6 +3184,29 @@ bool game::load( const save_t &name )
     init_bubble_config();
     reality_bubble_radius_ = g_half_mapsize;
     update_map( u );
+    // Discard stale monster_map entries for every submap in the initial reality
+    // bubble.  Old saves (made when spawn_monsters() ran only every 2.5 min) can
+    // accumulate monster_map entries for submaps that are currently inside the
+    // bubble: the same monster is then present in critter_tracker *and* in
+    // monster_map (at a slightly different position if it moved between sessions).
+    // Placing those entries via spawn_monsters() would create visible duplicates.
+    // Discarding them here is safe because the corresponding monsters are already
+    // active; any genuine out-of-bubble entries are untouched and will be placed
+    // normally when those submaps enter the bubble during play.
+    {
+        const tripoint &origin = m.get_abs_sub();
+        const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : origin.z;
+        const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : origin.z;
+        const auto z_range = std::views::iota( zmin, zmax + 1 );
+        const auto xy_range = std::views::iota( 0, g_mapsize );
+        std::ranges::for_each(
+            std::views::cartesian_product( z_range, xy_range, xy_range ),
+        [&]( auto tup ) {
+            auto [gz, gx, gy] = tup;
+            overmap_buffer.discard_monster_map(
+                tripoint_abs_sm{ origin.x + gx, origin.y + gy, gz } );
+        } );
+    }
     m.build_floor_cache( get_levz() );
     for( auto &e : u.inv_dump() ) {
         e->set_owner( g->u );
@@ -13213,9 +13236,12 @@ point game::update_map( int &x, int &y )
     }
     m.build_map_cache( get_levz() );
 
-    // Spawn monsters if appropriate
-    // This call will generate new monsters in addition to loading, so it's placed after NPC loading
-    m.spawn_monsters( false ); // Static monsters
+    // Spawn monsters only in the strip of submaps that just entered the bubble.
+    // Using spawn_monsters() for the whole bubble re-processes already-loaded
+    // submaps and spuriously places stale monster_map entries that overlap with
+    // already-active monsters, causing visible duplication on the first shift
+    // after loading an old save.
+    m.spawn_monsters_new_submaps( shift ); // Static monsters
 
     // Update what parts of the world map we can see
     update_overmap_seen();

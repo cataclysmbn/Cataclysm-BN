@@ -487,6 +487,14 @@ class overmapbuffer
          */
         void spawn_monster( const tripoint_abs_sm &p );
         /**
+         * Discard all monster_map entries at submap p without placing them.
+         * Used at load time to purge stale entries for in-bubble submaps that
+         * accumulated across sessions because spawn_monsters() was not called
+         * before saving.  The corresponding monsters are already present in
+         * critter_tracker; placing the stale entries would create duplicates.
+         */
+        void discard_monster_map( const tripoint_abs_sm &p );
+        /**
          * Despawn the monster back onto the overmap. The monsters position
          * (monster::pos()) is interpreted as relative to the main map.
          */
