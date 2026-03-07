@@ -476,9 +476,17 @@ void pixel_minimap::render_cache( const tripoint &center )
         view_tiles_count.y / SEEY / 2, 0
     };
 
-    point ms_offset = center.xy();
-    ms_to_sm_remain( ms_offset );
-    ms_offset = point{ SEEX / 2, SEEY / 2 } - ms_offset;
+    auto ms_remain = center.xy();
+    ms_to_sm_remain( ms_remain );
+    // Compute the tile offset so the player lands exactly at the texture centre
+    // (view_tiles_count / 2).  The old formula used SEEX/2 as an approximation,
+    // which is only correct when view_tiles_count is an exact odd multiple of
+    // SEEX — producing a systematic upper-left drift otherwise (most visible at
+    // bubble size 4, where view_tiles_count = screen_rect.w / 3).
+    const auto ms_offset = point{
+        view_tiles_count.x / 2 - sm_offset.x * SEEX - ms_remain.x,
+        view_tiles_count.y / 2 - sm_offset.y * SEEY - ms_remain.y
+    };
 
     for( const auto &elem : cache ) {
         if( !elem.second.touched ) {
