@@ -6640,6 +6640,7 @@ void map::update_submap_active_item_status( const tripoint &p )
 
 void map::update_visibility_cache( const int zlev )
 {
+    ZoneScopedN( "update_visibility_cache" );
     visibility_variables_cache.variables_set = true; // Not used yet
     visibility_variables_cache.g_light_level = static_cast<int>( g->light_level( zlev ) );
     {
@@ -6662,17 +6663,33 @@ void map::update_visibility_cache( const int zlev )
         level_cache &vc_cache = get_cache( z );
         auto &visibility_cache = vc_cache.visibility_cache;
 
-        tripoint p;
-        p.z = z;
-        int &x = p.x;
-        int &y = p.y;
-        for( x = 0; x < vc_cache.cache_x; x++ ) {
-            for( y = 0; y < vc_cache.cache_y; y++ ) {
-                lit_level ll = apparent_light_at( p, visibility_variables_cache );
-                visibility_cache[vc_cache.idx( x, y )] = ll;
-                if( z == zlev ) {
-                    sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY ] += ( ll == lit_level::BRIGHT ||
-                            ll == lit_level::LIT );
+        // Pass 1: fill visibility_cache.  apparent_light_at is read-only; each
+        // tile writes to a unique index, so the fill is embarrassingly parallel.
+        if( parallel_enabled && parallel_map_cache ) {
+            parallel_for( 0, vc_cache.cache_x, [&]( int x ) {
+                for( int y = 0; y < vc_cache.cache_y; y++ ) {
+                    visibility_cache[vc_cache.idx( x, y )] =
+                        apparent_light_at( tripoint{ x, y, z }, visibility_variables_cache );
+                }
+            } );
+        } else {
+            for( int x = 0; x < vc_cache.cache_x; x++ ) {
+                for( int y = 0; y < vc_cache.cache_y; y++ ) {
+                    visibility_cache[vc_cache.idx( x, y )] =
+                        apparent_light_at( tripoint{ x, y, z }, visibility_variables_cache );
+                }
+            }
+        }
+
+        // Pass 2: accumulate submap visibility counts for overmap discovery.
+        // Serial to avoid write races on sm_squares_seen; runs only for the
+        // player's z-level.  Reading from the already-filled visibility_cache.
+        if( z == zlev ) {
+            for( int x = 0; x < vc_cache.cache_x; x++ ) {
+                for( int y = 0; y < vc_cache.cache_y; y++ ) {
+                    const auto ll = visibility_cache[vc_cache.idx( x, y )];
+                    sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY] +=
+                        ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
                 }
             }
         }

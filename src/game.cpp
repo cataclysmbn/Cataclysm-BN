@@ -3769,29 +3769,39 @@ void game::draw( ui_adaptor &ui )
     if( test_mode ) {
         return;
     }
+    ZoneScopedN( "game_draw" );
 
     //temporary fix for updating visibility for minimap
     ter_view_p.z = ( u.pos() + u.view_offset ).z;
-    if( is_looking && ter_view_p.z != u.posz() ) {
-        // Keep visibility calculations based on the player position while still building the viewed z-level cache.
-        m.build_map_cache( ter_view_p.z );
+    {
+        ZoneScopedN( "game_draw_cache" );
+        if( is_looking && ter_view_p.z != u.posz() ) {
+            // Keep visibility calculations based on the player position while still building the viewed z-level cache.
+            m.build_map_cache( ter_view_p.z );
+        }
+        const auto cache_z = is_looking ? u.posz() : ter_view_p.z;
+        m.build_map_cache( cache_z );
+        m.update_visibility_cache( cache_z );
     }
-    const auto cache_z = is_looking ? u.posz() : ter_view_p.z;
-    m.build_map_cache( cache_z );
-    m.update_visibility_cache( cache_z );
 
     werase( w_terrain );
     draw_ter();
-    for( auto it = draw_callbacks.begin(); it != draw_callbacks.end(); ) {
-        shared_ptr_fast<draw_callback_t> cb = it->lock();
-        if( cb ) {
-            ( *cb )();
-            ++it;
-        } else {
-            it = draw_callbacks.erase( it );
+    {
+        ZoneScopedN( "game_draw_callbacks" );
+        for( auto it = draw_callbacks.begin(); it != draw_callbacks.end(); ) {
+            shared_ptr_fast<draw_callback_t> cb = it->lock();
+            if( cb ) {
+                ( *cb )();
+                ++it;
+            } else {
+                it = draw_callbacks.erase( it );
+            }
         }
     }
-    wnoutrefresh( w_terrain );
+    {
+        ZoneScopedN( "game_draw_wrefresh" );
+        wnoutrefresh( w_terrain );
+    }
 
     draw_panels( true );
 
@@ -3804,6 +3814,7 @@ void game::draw( ui_adaptor &ui )
 
 void game::draw_panels( bool force_draw )
 {
+    ZoneScopedN( "draw_panels" );
     static int previous_turn = -1;
     const int current_turn = to_turns<int>( calendar::turn - calendar::turn_zero );
     const bool draw_this_turn = current_turn > previous_turn || force_draw;
@@ -3924,6 +3935,7 @@ void game::draw_ter( const bool draw_sounds )
 
 void game::draw_ter( const tripoint &center, const bool looking, const bool draw_sounds )
 {
+    ZoneScopedN( "draw_ter" );
     ter_view_p = center;
 
     m.draw( w_terrain, center );
