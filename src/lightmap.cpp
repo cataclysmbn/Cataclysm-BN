@@ -479,8 +479,34 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
     std::vector<std::pair<tripoint, float>> lm_override;
     {
         ZoneScopedN( "generate_lightmap_collect" );
-        // Traverse the submaps in order
-        for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
+
+        // Per-smx deferred accumulators for operations that write to arbitrary lm positions.
+        // apply_directional_light (window boundary logic) and apply_light_arc (directional item
+        // lights) do full shadowcasts — unsafe to call concurrently from multiple threads since
+        // they write to lm at positions across the entire map.  All other per-tile operations
+        // write exclusively to lm[p] or light_source_buffer[p] (unique per tile per smx column)
+        // and are safe to run in parallel.  Deferred calls are merged and applied serially after
+        // the parallel pass to preserve correctness.
+        struct dir_light_def {
+            tripoint p;
+            int direction;
+            float luminance;
+        };
+        struct arc_light_def {
+            tripoint p;
+            units::angle dir;
+            float luminance;
+            units::angle width;
+        };
+        struct smx_acc {
+            std::vector<std::pair<tripoint, float>> lm_override;
+            std::vector<dir_light_def>              dir_lights;
+            std::vector<arc_light_def>              arc_lights;
+        };
+        std::vector<smx_acc> smx_accs( my_MAPSIZE );
+
+        auto process_smx = [&]( int smx ) {
+            auto &local = smx_accs[smx];
             for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
                 const auto cur_submap = get_submap_at_grid( { smx, smy, zlev } );
                 if( cur_submap == nullptr ) {
@@ -507,7 +533,8 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                                         std::min( natural_light, lm[map_cache.idx( neighbour.x, neighbour.y )].max() );
                                     if( light_transparency( p ) > LIGHT_TRANSPARENCY_SOLID ) {
                                         update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, quadrant::default_ );
-                                        apply_directional_light( p, dir_d[i], source_light );
+                                        // apply_directional_light writes to arbitrary lm positions — defer.
+                                        local.dir_lights.push_back( { p, dir_d[i], source_light } );
                                     } else {
                                         update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, dir_quadrants[i][0] );
                                         update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, dir_quadrants[i][1] );
@@ -517,8 +544,21 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                         }
 
                         if( cur_submap->get_lum( { sx, sy } ) && has_items( p ) ) {
+                            // Inline add_light_from_items to split arc (deferred) from point (safe).
                             auto items = i_at( p );
-                            add_light_from_items( p, items.begin(), items.end() );
+                            for( auto itm_it = items.begin(); itm_it != items.end(); ++itm_it ) {
+                                float ilum = 0.0f;
+                                units::angle iwidth = 0_degrees;
+                                units::angle idir = 0_degrees;
+                                if( ( *itm_it )->getlight( ilum, iwidth, idir ) ) {
+                                    if( iwidth > 0_degrees ) {
+                                        // apply_light_arc writes to arbitrary lm positions — defer.
+                                        local.arc_lights.push_back( { p, idir, ilum, iwidth } );
+                                    } else {
+                                        add_light_source( p, ilum );
+                                    }
+                                }
+                            }
                         }
 
                         const ter_id terrain = cur_submap->get_ter( { sx, sy } );
@@ -530,21 +570,40 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                             add_light_source( p, furniture->light_emitted );
                         }
 
-                        for( auto &fld : cur_submap->get_field( { sx, sy } ) ) {
-                            const field_entry *cur = &fld.second;
+                        std::ranges::for_each( cur_submap->get_field( { sx, sy } ), [&]( auto &fld ) {
+                            const auto *cur = &fld.second;
                             const int light_emitted = cur->light_emitted();
                             if( light_emitted > 0 ) {
                                 add_light_source( p, light_emitted );
                             }
                             const float light_override = cur->local_light_override();
                             if( light_override >= 0.0 ) {
-                                lm_override.emplace_back( p, light_override );
+                                local.lm_override.emplace_back( p, light_override );
                             }
-                        }
+                        } );
                     }
                 }
             }
+        };
+
+        if( parallel_enabled && parallel_map_cache && !is_pool_worker_thread() ) {
+            parallel_for( 0, my_MAPSIZE, process_smx );
+        } else {
+            for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
+                process_smx( smx );
+            }
         }
+
+        // Merge per-smx accumulators.  Apply deferred shadowcasts serially to avoid lm races.
+        std::ranges::for_each( smx_accs, [&]( auto &local ) {
+            lm_override.insert( lm_override.end(), local.lm_override.begin(), local.lm_override.end() );
+            std::ranges::for_each( local.dir_lights, [&]( auto &dl ) {
+                apply_directional_light( dl.p, dl.direction, dl.luminance );
+            } );
+            std::ranges::for_each( local.arc_lights, [&]( auto &al ) {
+                apply_light_arc( al.p, al.dir, al.luminance, al.width );
+            } );
+        } );
 
         // Skip in parallel mode: build_map_cache has already applied monster lights
         // serially before the parallel_for to avoid racing on weak_ptr_fast::lock().
