@@ -163,7 +163,7 @@ void submap_load_manager::update()
     // mapbuffer's pending-destroy queue.  Drain them now on the main thread before
     // any game code runs, since safe_reference<T>, cache_reference<T>, and
     // cata_arena<T> are not thread-safe.
-    auto drained_dims = std::set<std::string>{};
+    auto drained_dims = std::set<std::string> {};
     std::ranges::transform( new_quads, std::inserter( drained_dims, drained_dims.end() ),
     []( const auto & qk ) {
         return qk.first;

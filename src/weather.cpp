@@ -333,7 +333,7 @@ static void fill_funnels( int rain_depth_mm_per_hour, bool acid, const trap &tr 
     // D4: Scan all loaded submaps in the primary mapbuffer instead of the bubble-bounded traplocs.
     // This covers funnels at player bases and other loaded-but-out-of-bubble locations.
     const auto abs_sub = g->m.get_abs_sub();
-    std::ranges::for_each( MAPBUFFER, [&]( auto &entry ) {
+    std::ranges::for_each( MAPBUFFER, [&]( auto & entry ) {
         auto &[raw_pos, sm_ptr] = entry;
         if( !sm_ptr ) {
             return;
@@ -341,36 +341,36 @@ static void fill_funnels( int rain_depth_mm_per_hour, bool acid, const trap &tr 
         std::ranges::for_each(
             std::views::cartesian_product( std::views::iota( 0, SEEX ),
                                            std::views::iota( 0, SEEY ) ),
-            [&]( auto xy ) {
-                auto [lx, ly] = xy;
-                if( sm_ptr->get_trap( point( lx, ly ) ) != tr.loadid ) {
-                    return;
-                }
-                const tripoint loc( ( raw_pos.x - abs_sub.x ) * SEEX + lx,
-                                    ( raw_pos.y - abs_sub.y ) * SEEY + ly,
-                                    raw_pos.z );
-                units::volume maxcontains = 0_ml;
-                if( one_in( turns_per_charge ) ) {
-                    // FIXME:
-                    //add_msg("%d mm/h %d tps %.4f: fill",int(calendar::turn),rain_depth_mm_per_hour,turns_per_charge);
-                    // This funnel has collected some rain! Put the rain in the largest
-                    // container here which is either empty or contains some mixture of
-                    // impure water and acid.
-                    map_stack items = g->m.i_at( loc );
-                    auto container = items.end();
-                    for( auto candidate_container = items.begin(); candidate_container != items.end();
-                         ++candidate_container ) {
-                        if( ( *candidate_container )->is_funnel_container( maxcontains ) ) {
-                            container = candidate_container;
-                        }
+        [&]( auto xy ) {
+            auto [lx, ly] = xy;
+            if( sm_ptr->get_trap( point( lx, ly ) ) != tr.loadid ) {
+                return;
+            }
+            const tripoint loc( ( raw_pos.x - abs_sub.x ) * SEEX + lx,
+                                ( raw_pos.y - abs_sub.y ) * SEEY + ly,
+                                raw_pos.z );
+            units::volume maxcontains = 0_ml;
+            if( one_in( turns_per_charge ) ) {
+                // FIXME:
+                //add_msg("%d mm/h %d tps %.4f: fill",int(calendar::turn),rain_depth_mm_per_hour,turns_per_charge);
+                // This funnel has collected some rain! Put the rain in the largest
+                // container here which is either empty or contains some mixture of
+                // impure water and acid.
+                map_stack items = g->m.i_at( loc );
+                auto container = items.end();
+                for( auto candidate_container = items.begin(); candidate_container != items.end();
+                     ++candidate_container ) {
+                    if( ( *candidate_container )->is_funnel_container( maxcontains ) ) {
+                        container = candidate_container;
                     }
+                }
 
-                    if( container != items.end() ) {
-                        ( *container )->add_rain_to_container( acid, 1 );
-                        ( *container )->set_age( 0_turns );
-                    }
+                if( container != items.end() ) {
+                    ( *container )->add_rain_to_container( acid, 1 );
+                    ( *container )->set_age( 0_turns );
                 }
-            } );
+            }
+        } );
     } );
 }
 

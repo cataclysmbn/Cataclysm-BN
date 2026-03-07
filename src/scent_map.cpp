@@ -88,7 +88,7 @@ auto scent_map::raw_scent_set( int x, int y, int z, int value ) -> void
 void scent_map::reset()
 {
     // D5: Clear scent from all loaded submaps (not just the bubble).
-    std::ranges::for_each( MAPBUFFER, []( auto &entry ) {
+    std::ranges::for_each( MAPBUFFER, []( auto & entry ) {
         auto &[raw_pos, sm_ptr] = entry;
         if( sm_ptr ) {
             std::ranges::fill( std::span( &sm_ptr->scent_values[0][0], SEEX * SEEY ), 0 );
@@ -103,13 +103,13 @@ void scent_map::decay()
     // D5: Decay scent on all loaded submaps within scent z-range of the current level.
     // Called during precipitation, so rain washes away scent globally.
     const int levz = gm.get_levz();
-    std::ranges::for_each( MAPBUFFER, [&]( auto &entry ) {
+    std::ranges::for_each( MAPBUFFER, [&]( auto & entry ) {
         auto &[raw_pos, sm_ptr] = entry;
         if( !sm_ptr || std::abs( raw_pos.z - levz ) > SCENT_MAP_Z_REACH ) {
             return;
         }
         std::ranges::for_each( std::span( &sm_ptr->scent_values[0][0], SEEX * SEEY ),
-        []( auto &v ) { v = std::max( 0, v - 1 ); } );
+        []( auto & v ) { v = std::max( 0, v - 1 ); } );
     } );
 }
 

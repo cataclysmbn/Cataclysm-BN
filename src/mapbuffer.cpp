@@ -423,7 +423,7 @@ void mapbuffer::preload_quad( const tripoint &om_addr )
 
 auto mapbuffer::drain_pending_submap_destroy() -> void
 {
-    auto to_destroy = std::vector<std::unique_ptr<submap>>{};
+    auto to_destroy = std::vector<std::unique_ptr<submap>> {};
     {
         auto lk = std::lock_guard( pending_destroy_mutex_ );
         to_destroy = std::move( pending_destroy_submaps_ );

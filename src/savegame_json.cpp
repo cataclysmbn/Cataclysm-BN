@@ -4097,20 +4097,20 @@ void submap::store( JsonOut &jsout ) const
         std::ranges::for_each(
             std::views::cartesian_product( std::views::iota( 0, SEEY ),
                                            std::views::iota( 0, SEEX ) ),
-            [&]( auto ji ) {
-                auto [j, i] = ji;
-                auto v = scent_values[i][j];
-                if( v == last_scent ) {
-                    scent_count++;
-                } else {
-                    if( scent_count ) {
-                        jsout.write( scent_count );
-                    }
-                    jsout.write( v );
-                    last_scent = v;
-                    scent_count = 1;
+        [&]( auto ji ) {
+            auto [j, i] = ji;
+            auto v = scent_values[i][j];
+            if( v == last_scent ) {
+                scent_count++;
+            } else {
+                if( scent_count ) {
+                    jsout.write( scent_count );
                 }
-            } );
+                jsout.write( v );
+                last_scent = v;
+                scent_count = 1;
+            }
+        } );
         jsout.write( scent_count );
         jsout.end_array();
     }

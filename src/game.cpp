@@ -4767,18 +4767,18 @@ void game::world_tick()
                 std::ranges::for_each(
                     std::views::cartesian_product( std::views::iota( 0, SEEX ),
                                                    std::views::iota( 0, SEEY ) ),
-                    [&]( auto xy ) {
-                        auto [lx, ly] = xy;
-                        const furn_t &fd = sm_ptr->get_furn( point( lx, ly ) ).obj();
-                        if( fd.has_flag( "EMITTER" ) ) {
-                            const tripoint local_pos( local_sm_origin.x + lx,
-                                                      local_sm_origin.y + ly,
-                                                      raw_pos.z );
-                            std::ranges::for_each( fd.emissions, [&]( const emit_id & e ) {
-                                m.emit_field( local_pos, e );
-                            } );
-                        }
-                    } );
+                [&]( auto xy ) {
+                    auto [lx, ly] = xy;
+                    const furn_t &fd = sm_ptr->get_furn( point( lx, ly ) ).obj();
+                    if( fd.has_flag( "EMITTER" ) ) {
+                        const tripoint local_pos( local_sm_origin.x + lx,
+                                                  local_sm_origin.y + ly,
+                                                  raw_pos.z );
+                        std::ranges::for_each( fd.emissions, [&]( const emit_id & e ) {
+                            m.emit_field( local_pos, e );
+                        } );
+                    }
+                } );
             }
 
             if( fire_spread && has_fire ) {
