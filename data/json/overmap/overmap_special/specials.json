@@ -26,7 +26,7 @@
     "city_distance": [ 30, -1 ],
     "city_sizes": [ 0, 12 ],
     "occurrences": [ 10, 100 ],
-    "flags": [ "CLASSIC", "WILDERNESS", "MAN_MADE" ]
+    "flags": [ "CLASSIC", "WILDERNESS", "MAN_MADE", "UNIQUE", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -46,7 +46,7 @@
     "city_distance": [ 30, -1 ],
     "city_sizes": [ 0, 12 ],
     "occurrences": [ 0, 1 ],
-    "flags": [ "CLASSIC", "WILDERNESS", "MAN_MADE" ]
+    "flags": [ "CLASSIC", "WILDERNESS", "MAN_MADE", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",
