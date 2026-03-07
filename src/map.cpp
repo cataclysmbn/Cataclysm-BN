@@ -9702,10 +9702,23 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
     if( !skip_lightmap ) {
         ZoneScopedN( "Phase4_lightmap" );
-        dirty_seen_cache_levels.push_back( zlev );
+        // Only include levels whose lightmap is actually stale this redraw.
+        // lightmap_dirty is set for all levels at the start of each game turn and
+        // cleared here after generate_lightmap runs, so subsequent redraws within
+        // the same turn skip the rebuild entirely.
+        if( get_cache( zlev ).lightmap_dirty ) {
+            dirty_seen_cache_levels.push_back( zlev );
+        }
+        dirty_seen_cache_levels.erase(
+            std::ranges::remove_if( dirty_seen_cache_levels, [this]( int z ) {
+                return !get_cache( z ).lightmap_dirty;
+            } ).begin(),
+            dirty_seen_cache_levels.end() );
         std::ranges::sort( dirty_seen_cache_levels );
         dirty_seen_cache_levels.erase( std::ranges::unique( dirty_seen_cache_levels ).begin(),
                                        dirty_seen_cache_levels.end() );
+
+        if( !dirty_seen_cache_levels.empty() ) {
 
         if( dirty_seen_cache_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
             // Multiple dirty levels: hoist shared initialization outside the
@@ -9767,6 +9780,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 generate_lightmap( level );
             }
         }
+
+        // Mark each regenerated level clean so subsequent redraws this turn skip it.
+        std::ranges::for_each( dirty_seen_cache_levels, [this]( int z ) {
+            get_cache( z ).lightmap_dirty = false;
+        } );
+
+        } // end if( !dirty_seen_cache_levels.empty() )
     }
 }
 
@@ -10438,9 +10458,19 @@ void map::invalidate_map_cache( const int zlev )
         ch.floor_cache_dirty.set();
         ch.transparency_cache_dirty.set();
         ch.seen_cache_dirty = true;
+        ch.lightmap_dirty = true;
         ch.outside_cache_dirty.set();
         ch.suspension_cache_dirty = true;
     }
+}
+
+void map::invalidate_lightmap_caches()
+{
+    const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
+    const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
+    std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( int z ) {
+        get_cache( z ).lightmap_dirty = true;
+    } );
 }
 
 void map::set_memory_seen_cache_dirty( const tripoint &p )

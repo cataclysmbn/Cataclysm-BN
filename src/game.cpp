@@ -1830,6 +1830,10 @@ bool game::do_turn()
     // Reset dimension swap flag now that the map is fully loaded and turn is processing
     swapping_dimensions = false;
 
+    // Mark all lightmap caches dirty for this turn.  The first redraw will run
+    // generate_lightmap; subsequent redraws within the same turn skip it.
+    m.invalidate_lightmap_caches();
+
     // starting a new turn, clear out temperature cache
     weather_manager &weather = get_weather();
     weather.clear_temp_cache();

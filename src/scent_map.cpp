@@ -224,6 +224,49 @@ void scent_map::update( const tripoint &center, map &m )
     const bool parallel_scent = parallel_enabled && parallel_scent_update;
     const int cz = center.z;
 
+    // Pre-cache scent values and liquid flags via per-submap bulk copies.
+    // The region covers (scentmap_minx-1 .. scentmap_maxx+1) x (scentmap_miny-1 .. scentmap_maxy+1),
+    // which is exactly CACHE_DIM x CACHE_DIM tiles.
+    // Cache x-index == loop variable x (= abs_x - cache_x_offset);
+    // cache y-index == abs_y - cache_y_offset (i.e. y, y+1, or y+2 in the passes below).
+    constexpr int CACHE_DIM = 3 + SCENT_RADIUS * 2;
+    const int cache_x_offset = scentmap_minx - 1;
+    const int cache_y_offset = scentmap_miny - 1;
+    std::array<std::array<int, CACHE_DIM>, CACHE_DIM> scent_cache = {};
+    std::array<std::array<bool, CACHE_DIM>, CACHE_DIM> liquid_mask = {};
+
+    const int init_sm_x_min = divide_round_to_minus_infinity( cache_x_offset, SEEX );
+    const int init_sm_x_max = divide_round_to_minus_infinity( cache_x_offset + CACHE_DIM - 1, SEEX );
+    const int init_sm_y_min = divide_round_to_minus_infinity( cache_y_offset, SEEY );
+    const int init_sm_y_max = divide_round_to_minus_infinity( cache_y_offset + CACHE_DIM - 1, SEEY );
+    const tripoint abs_sub_base = m_.get_abs_sub();
+
+    for( int smx = init_sm_x_min; smx <= init_sm_x_max; ++smx ) {
+        for( int smy = init_sm_y_min; smy <= init_sm_y_max; ++smy ) {
+            const tripoint abs_sm( abs_sub_base.x + smx, abs_sub_base.y + smy, cz );
+            const auto *sm = MAPBUFFER.lookup_submap_in_memory( abs_sm );
+            if( !sm ) {
+                continue;
+            }
+            const int tile_x0 = smx * SEEX;
+            const int tile_y0 = smy * SEEY;
+            const int ax_min = std::max( tile_x0, cache_x_offset );
+            const int ax_max = std::min( tile_x0 + SEEX - 1, cache_x_offset + CACHE_DIM - 1 );
+            const int ay_min = std::max( tile_y0, cache_y_offset );
+            const int ay_max = std::min( tile_y0 + SEEY - 1, cache_y_offset + CACHE_DIM - 1 );
+            for( int ax = ax_min; ax <= ax_max; ++ax ) {
+                for( int ay = ay_min; ay <= ay_max; ++ay ) {
+                    const int lx = ax - tile_x0;
+                    const int ly = ay - tile_y0;
+                    const int cx = ax - cache_x_offset;
+                    const int cy = ay - cache_y_offset;
+                    scent_cache[cx][cy] = sm->scent_values[lx][ly];
+                    liquid_mask[cx][cy] = sm->get_ter( point( lx, ly ) ).obj().has_flag( TFLAG_LIQUID );
+                }
+            }
+        }
+    }
+
     // Y-pass: each x column is independent — no shared writes.
     if( parallel_scent ) {
         parallel_for( 0, SCENT_RADIUS * 2 + 3, [&]( int x ) {
@@ -235,7 +278,7 @@ void scent_map::update( const tripoint &center, map &m )
                 sum_3_scent_y[y][x] = 0;
                 squares_used_y[y][x] = 0;
                 for( int i = abs.y - 1; i <= abs.y + 1; ++i ) {
-                    sum_3_scent_y[y][x] += scent_transfer[abs.x * st_sy + i] * raw_scent_at( abs.x, i, cz );
+                    sum_3_scent_y[y][x] += scent_transfer[abs.x * st_sy + i] * scent_cache[x][i - cache_y_offset];
                     squares_used_y[y][x] += scent_transfer[abs.x * st_sy + i];
                 }
             }
@@ -250,7 +293,7 @@ void scent_map::update( const tripoint &center, map &m )
                 sum_3_scent_y[y][x] = 0;
                 squares_used_y[y][x] = 0;
                 for( int i = abs.y - 1; i <= abs.y + 1; ++i ) {
-                    sum_3_scent_y[y][x] += scent_transfer[abs.x * st_sy + i] * raw_scent_at( abs.x, i, cz );
+                    sum_3_scent_y[y][x] += scent_transfer[abs.x * st_sy + i] * scent_cache[x][i - cache_y_offset];
                     squares_used_y[y][x] += scent_transfer[abs.x * st_sy + i];
                 }
             }
@@ -272,26 +315,26 @@ void scent_map::update( const tripoint &center, map &m )
                 if( blocked_data[abs.x * st_sy + abs.y].nw &&
                     scent_transfer[( abs.x + 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * raw_scent_at( abs.x + 1, abs.y + 1, cz );
+                    total -= 4 * scent_cache[x + 1][y + 2];
                 }
                 if( blocked_data[abs.x * st_sy + abs.y].ne &&
                     scent_transfer[( abs.x - 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * raw_scent_at( abs.x - 1, abs.y + 1, cz );
+                    total -= 4 * scent_cache[x - 1][y + 2];
                 }
                 if( blocked_data[( abs.x - 1 ) * st_sy + abs.y - 1].nw &&
                     scent_transfer[( abs.x - 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * raw_scent_at( abs.x - 1, abs.y - 1, cz );
+                    total -= 4 * scent_cache[x - 1][y];
                 }
                 if( blocked_data[( abs.x + 1 ) * st_sy + abs.y - 1].ne &&
                     scent_transfer[( abs.x + 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * raw_scent_at( abs.x + 1, abs.y - 1, cz );
+                    total -= 4 * scent_cache[x + 1][y];
                 }
 
                 //Lingering scent
-                const int cur = raw_scent_at( abs.x, abs.y, cz );
+                const int cur = scent_cache[x][y + 1];
                 int temp_scent = cur * ( 250 - squares_used * scent_transfer[abs.x * st_sy + abs.y] );
                 temp_scent -= cur * scent_transfer[abs.x * st_sy + abs.y] * ( 45 - squares_used ) / 5;
 
@@ -310,26 +353,26 @@ void scent_map::update( const tripoint &center, map &m )
                 if( blocked_data[abs.x * st_sy + abs.y].nw &&
                     scent_transfer[( abs.x + 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * raw_scent_at( abs.x + 1, abs.y + 1, cz );
+                    total -= 4 * scent_cache[x + 1][y + 2];
                 }
                 if( blocked_data[abs.x * st_sy + abs.y].ne &&
                     scent_transfer[( abs.x - 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * raw_scent_at( abs.x - 1, abs.y + 1, cz );
+                    total -= 4 * scent_cache[x - 1][y + 2];
                 }
                 if( blocked_data[( abs.x - 1 ) * st_sy + abs.y - 1].nw &&
                     scent_transfer[( abs.x - 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * raw_scent_at( abs.x - 1, abs.y - 1, cz );
+                    total -= 4 * scent_cache[x - 1][y];
                 }
                 if( blocked_data[( abs.x + 1 ) * st_sy + abs.y - 1].ne &&
                     scent_transfer[( abs.x + 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * raw_scent_at( abs.x + 1, abs.y - 1, cz );
+                    total -= 4 * scent_cache[x + 1][y];
                 }
 
                 //Lingering scent
-                const int cur = raw_scent_at( abs.x, abs.y, cz );
+                const int cur = scent_cache[x][y + 1];
                 int temp_scent = cur * ( 250 - squares_used * scent_transfer[abs.x * st_sy + abs.y] );
                 temp_scent -= cur * scent_transfer[abs.x * st_sy + abs.y] * ( 45 - squares_used ) / 5;
 
@@ -337,32 +380,39 @@ void scent_map::update( const tripoint &center, map &m )
             }
         }
     }
-    // implicit barrier; new_scent is fully populated
-    // Write-back: new_scent is read-only here; has_flag is a read-only map query;
-    // each x column writes to a distinct scent column — safe to parallelize.
-    if( parallel_scent ) {
-        parallel_for( 1, SCENT_RADIUS * 2 + 2, [&]( int x ) {
-            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
-                // Don't spread scent into water unless the source is in water.
-                // Keep scent trails in the water when we exit until rain disturbs them.
-                if( ( get_map().has_flag( TFLAG_LIQUID, center ) &&
-                      rl_dist( center, tripoint( point( x + scentmap_minx - 1, y + scentmap_miny ),
-                                                 g->get_levz() ) ) <= 8 ) ||
-                    !get_map().has_flag( TFLAG_LIQUID, point( x + scentmap_minx - 1, y + scentmap_miny ) ) ) {
-                    raw_scent_set( x + scentmap_minx - 1, y + scentmap_miny, cz, new_scent[y][x] );
-                }
+    // implicit barrier; new_scent is fully populated.
+    // Write-back: batch by submap to replace O(SCENT_RADIUS²) MAPBUFFER lookups with O(num_submaps).
+    // liquid_mask was built during the cache-init pass, so no per-tile has_flag calls needed here.
+    const bool center_is_liquid = liquid_mask[center.x - cache_x_offset][center.y - cache_y_offset];
+    const int wb_sm_x_min = divide_round_to_minus_infinity( scentmap_minx, SEEX );
+    const int wb_sm_x_max = divide_round_to_minus_infinity( scentmap_maxx, SEEX );
+    const int wb_sm_y_min = divide_round_to_minus_infinity( scentmap_miny, SEEY );
+    const int wb_sm_y_max = divide_round_to_minus_infinity( scentmap_maxy, SEEY );
+
+    for( int smx = wb_sm_x_min; smx <= wb_sm_x_max; ++smx ) {
+        for( int smy = wb_sm_y_min; smy <= wb_sm_y_max; ++smy ) {
+            const tripoint abs_sm( abs_sub_base.x + smx, abs_sub_base.y + smy, cz );
+            auto *sm = MAPBUFFER.lookup_submap_in_memory( abs_sm );
+            if( !sm ) {
+                continue;
             }
-        } );
-    } else {
-        for( int x = 1; x < SCENT_RADIUS * 2 + 2; ++x ) {
-            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
-                // Don't spread scent into water unless the source is in water.
-                // Keep scent trails in the water when we exit until rain disturbs them.
-                if( ( get_map().has_flag( TFLAG_LIQUID, center ) &&
-                      rl_dist( center, tripoint( point( x + scentmap_minx - 1, y + scentmap_miny ),
-                                                 g->get_levz() ) ) <= 8 ) ||
-                    !get_map().has_flag( TFLAG_LIQUID, point( x + scentmap_minx - 1, y + scentmap_miny ) ) ) {
-                    raw_scent_set( x + scentmap_minx - 1, y + scentmap_miny, cz, new_scent[y][x] );
+            const int tile_x0 = smx * SEEX;
+            const int tile_y0 = smy * SEEY;
+            const int ax_min = std::max( tile_x0, scentmap_minx );
+            const int ax_max = std::min( tile_x0 + SEEX - 1, scentmap_maxx );
+            const int ay_min = std::max( tile_y0, scentmap_miny );
+            const int ay_max = std::min( tile_y0 + SEEY - 1, scentmap_maxy );
+            for( int ax = ax_min; ax <= ax_max; ++ax ) {
+                for( int ay = ay_min; ay <= ay_max; ++ay ) {
+                    // Don't spread scent into water unless the source is in water.
+                    // Keep scent trails in the water when we exit until rain disturbs them.
+                    const int cx = ax - cache_x_offset;
+                    const int cy = ay - cache_y_offset;
+                    if( ( center_is_liquid && rl_dist( center.xy(), point( ax, ay ) ) <= 8 ) ||
+                        !liquid_mask[cx][cy] ) {
+                        sm->scent_values[ax - tile_x0][ay - tile_y0] =
+                            new_scent[ay - scentmap_miny][ax - scentmap_minx + 1];
+                    }
                 }
             }
         }
