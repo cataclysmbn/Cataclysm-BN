@@ -1856,6 +1856,8 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         monster *const placed = g->place_critter_at( make_shared_fast<monster>( this_monster ),
                                 local );
         if( placed ) {
+            // Keep pos_abs in sync with the placed local position.
+            placed->pos_abs = tripoint_abs_ms( ms.x, ms.y, p.z() );
             // Phase 6: batch-advance AI state for turns missed while despawned.
             // Only applies to monsters with a valid (non-zero) last_updated timestamp.
             // batch_turns() does NOT update last_updated so on_load() can still
@@ -1884,9 +1886,8 @@ void overmapbuffer::discard_monster_map( const tripoint_abs_sm &p )
 
 void overmapbuffer::despawn_monster( const monster &critter )
 {
-    // Get absolute coordinates of the monster in map squares, translate to submap position
-    // TODO: fix point types
-    tripoint_abs_sm abs_sm( ms_to_sm_copy( get_map().getabs( critter.pos() ) ) );
+    // pos_abs is stamped by game::despawn_monster() before this call, so no map context needed.
+    const tripoint_abs_sm abs_sm( ms_to_sm_copy( critter.pos_abs.raw() ) );
     // Get the overmap coordinates and get the overmap, sm is now local to that overmap
     point_abs_om omp;
     tripoint_om_sm sm;
@@ -1894,7 +1895,7 @@ void overmapbuffer::despawn_monster( const monster &critter )
     overmap &om = get( omp );
     // Store the monster using coordinates local to the overmap.
     if( critter.is_nemesis() ) {
-        tripoint_abs_omt abs_omt( ms_to_omt_copy( get_map().getabs( critter.pos() ) ) );
+        const tripoint_abs_omt abs_omt( ms_to_omt_copy( critter.pos_abs.raw() ) );
         om.place_nemesis( abs_omt );
     } else {
         om.monster_map->insert( std::make_pair( sm, critter ) );

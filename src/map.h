@@ -2178,13 +2178,13 @@ class map : public submap_load_listener
         std::set<tripoint> submaps_with_active_items;
 
         /**
-         * Set of submaps that contain vehicles in absolute coordinates.
-         * Maintained by on_submap_loaded/unloaded, loadn(), and vehicle
-         * submap transitions.  Used by vehmove() and process_items() to
-         * iterate all loaded submaps with vehicles without being bounded by
-         * the reality bubble.
+         * Flat registry of all vehicles in loaded submaps (both in-bubble and
+         * out-of-bubble).  Populated by loadn() and on_submap_loaded(); pruned
+         * by on_submap_unloaded() and detach_vehicle().  Replaces the old
+         * submaps_with_vehicles set — no manual maintenance at vehicle boundary
+         * crossings or z-level transitions is required.
          */
-        std::set<tripoint> submaps_with_vehicles;
+        std::set<vehicle *> loaded_vehicles;
 
         /**
          * Cache of coordinate pairs recently checked for visibility.
@@ -2237,13 +2237,6 @@ class map : public submap_load_listener
         const visibility_variables &get_visibility_variables_cache() const;
 
         void update_submap_active_item_status( const tripoint &p );
-
-        /**
-         * Update submaps_with_vehicles for the submap at @p abs_sm_pos (absolute
-         * submap coordinates).  Call this after bulk operations that swap or
-         * replace submap contents without going through the normal load/unload path.
-         */
-        void update_submap_vehicle_status( const tripoint &abs_sm_pos );
 
         // Just exposed for unit test introspection.
         const std::set<tripoint> &get_submaps_with_active_items() const {

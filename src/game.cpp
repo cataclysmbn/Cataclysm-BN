@@ -1288,6 +1288,12 @@ void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*
         n->on_unload();
     } );
     std::erase_if( active_npc, in_evicted );
+
+    // Monster eviction: deferred until pos_abs is kept current for active critter_tracker
+    // monsters.  Currently all active monsters are in the reality bubble; non-bubble
+    // monster activation (game::on_submap_loaded) is not yet implemented.  When that
+    // lands, iterate all_monsters() here using critter.pos_abs to identify monsters on
+    // the evicted submap and call despawn_monster() on them.
 }
 
 void game::reload_npcs()
@@ -13514,6 +13520,10 @@ void game::update_stair_monsters()
 
 void game::despawn_monster( monster &critter )
 {
+    // Stamp absolute position while we still have a valid map context.
+    // overmap_buffer.despawn_monster() and on_submap_unloaded() eviction
+    // will use this instead of recomputing via get_map().
+    critter.pos_abs = tripoint_abs_ms( get_map().getabs( critter.pos() ) );
     if( !critter.is_hallucination() ) {
         // hallucinations aren't stored, they come and go as they like,
         overmap_buffer.despawn_monster( critter );

@@ -5913,8 +5913,6 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
                 const tripoint dest_pos = tripoint( x, y, p.z() );
                 const submap *destsm = here.get_submap_at_grid( dest_pos );
                 here.update_vehicle_list( destsm, p.z() ); // update real map's vcaches
-                const tripoint abs_sm( here.get_abs_sub().x + x, here.get_abs_sub().y + y, p.z() );
-                here.update_submap_vehicle_status( abs_sm );
             }
         }
 

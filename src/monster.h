@@ -26,6 +26,7 @@
 #include "location_ptr.h"
 #include "location_vector.h"
 #include "pldata.h"
+#include "coordinates.h"
 #include "point.h"
 #include "type_id.h"
 #include "units.h"
@@ -658,6 +659,10 @@ class monster : public Creature, public location_visitable<monster>
         void init_from_item( const item &itm );
 
         time_point last_updated = calendar::turn_zero;
+        // Absolute map-square position, stamped by game::despawn_monster() immediately before
+        // removal from critter_tracker.  Authoritative while the monster is stored in
+        // overmap::monster_map; stale (or zero-initialised) for active critter_tracker monsters.
+        tripoint_abs_ms pos_abs;
 
         // ID of the dimension this monster belongs to.  Empty string = primary dimension.
         // Set when the monster is spawned or loaded from a non-primary dimension submap.

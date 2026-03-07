@@ -2092,6 +2092,7 @@ void monster::load( const JsonObject &data )
     if( !data.read( "last_updated", last_updated ) ) {
         last_updated = calendar::turn;
     }
+    data.read( "pos_abs", pos_abs );
     data.read( "dimension_id", dimension_id_ );
     data.read( "mounted_player_id", mounted_player_id );
     data.read( "path", path );
@@ -2165,6 +2166,7 @@ void monster::store( JsonOut &json ) const
     json.member( "upgrades", upgrades );
     json.member( "upgrade_time", upgrade_time );
     json.member( "last_updated", last_updated );
+    json.member( "pos_abs", pos_abs );
     if( !dimension_id_.empty() ) {
         json.member( "dimension_id", dimension_id_ );
     }

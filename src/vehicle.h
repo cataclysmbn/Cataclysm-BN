@@ -1719,6 +1719,10 @@ class vehicle
          * not change therefor no call to set_submap_moved is required.
          */
         tripoint sm_pos;
+        // Absolute submap position — set by loadn(), on_submap_loaded(), copy_grid(),
+        // and displace_vehicle()/z-level transitions.  Runtime-only (not serialized).
+        // Always authoritative while the vehicle is in any loaded submap.
+        tripoint_abs_sm abs_sm_pos;
 
         // alternator load as a percentage of engine power, in units of 0.1% so 1000 is 100.0%
         int alternator_load = 0;
