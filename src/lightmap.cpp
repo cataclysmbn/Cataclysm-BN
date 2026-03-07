@@ -37,6 +37,8 @@
 #include "profile.h"
 #include "string_formatter.h"
 #include "submap.h"
+#include "cached_options.h"
+#include "thread_pool.h"
 #include "tileray.h"
 #include "type_id.h"
 #include "veh_type.h"
@@ -107,9 +109,12 @@ bool map::build_transparency_cache( const int zlev )
                    static_cast<float>( LIGHT_TRANSPARENCY_OPEN_AIR ) );
     }
 
-    // Traverse the submaps in order; delegate to per-submap rebuild,
-    // then copy the 12×12 result into the flat render cache.
-    for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
+    // Traverse the submaps; delegate to per-submap rebuild, then copy the
+    // 12×12 result into the flat render cache.
+    //
+    // Each smx column writes to a unique flat-cache region and reads only its
+    // own submap's terrain data, so the smx loop is embarrassingly parallel.
+    const auto process_smx = [&]( int smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             auto *cur_submap = get_submap_at_grid( {smx, smy, zlev} );
             const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
@@ -126,7 +131,8 @@ bool map::build_transparency_cache( const int zlev )
                 continue;
             }
 
-            if( !rebuild_all && !map_cache.transparency_cache_dirty[map_cache.bidx( smx, smy )] ) {
+            if( !rebuild_all && !map_cache.transparency_cache_dirty.test(
+                    static_cast<size_t>( map_cache.bidx( smx, smy ) ) ) ) {
                 continue;
             }
 
@@ -159,8 +165,25 @@ bool map::build_transparency_cache( const int zlev )
                 }
             }
         }
+    };
+
+    if( parallel_enabled && parallel_map_cache && !is_pool_worker_thread() ) {
+        parallel_for( 0, my_MAPSIZE, process_smx );
+    } else {
+        for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
+            process_smx( smx );
+        }
     }
+
     map_cache.transparency_cache_dirty.reset();
+
+    // Cache whether the entire level is open air.  cast_zlight uses this to
+    // skip per-tile transparency reads for pure-air z-levels (e.g. above ground).
+    map_cache.all_transparent = std::ranges::all_of( transparency_cache,
+    []( const float v ) {
+        return v >= LIGHT_TRANSPARENCY_OPEN_AIR - 0.0001f;
+    } );
+
     return true;
 }
 
@@ -1022,8 +1045,14 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         if( origin.z == target_z ) {
             get_cache( origin.z ).seen_cache[get_cache( origin.z ).idx( origin.x, origin.y )] = VISIBILITY_FULL;
         }
+        // Collect per-z-level all_transparent flags so cast_zlight can skip
+        // per-tile transparency reads for pure-air z-levels (e.g. above ground).
+        std::array<bool, OVERMAP_LAYERS> all_transparent_levels;
+        for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+            all_transparent_levels[z + OVERMAP_DEPTH] = get_cache_ref( z ).all_transparent;
+        }
         cast_zlight( seen_caches, transparency_caches, floor_caches, blocked_caches,
-                     origin, 0, 1.0f, k_sight_model );
+                     origin, 0, 1.0f, k_sight_model, &all_transparent_levels );
     }
 
     if( origin.z == target_z ) {

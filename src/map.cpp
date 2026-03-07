@@ -9307,7 +9307,11 @@ void map::build_outside_cache( const int zlev )
 
     // Delegate to per-submap rebuild (handles cross-submap 3×3 dilation),
     // then copy the 12×12 per-submap arrays into the flat render cache.
-    for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
+    //
+    // Each smx column writes to unique flat-cache positions and rebuild_outside_cache
+    // only reads neighbouring submaps' terrain (not their outside_cache), so
+    // concurrent reads of different smx columns are safe.
+    const auto process_smx = [&]( int smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             if( !rebuild_all && !ch.outside_cache_dirty.test(
                     static_cast<size_t>( ch.bidx( smx, smy ) ) ) ) {
@@ -9327,6 +9331,14 @@ void map::build_outside_cache( const int zlev )
                                                            cur_submap->outside_cache[sx][sy];
                 }
             }
+        }
+    };
+
+    if( parallel_enabled && parallel_map_cache && !is_pool_worker_thread() ) {
+        parallel_for( 0, my_MAPSIZE, process_smx );
+    } else {
+        for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
+            process_smx( smx );
         }
     }
 
@@ -9641,14 +9653,27 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     // set and is not thread-safe.  It runs in a dedicated serial pass below.
 
     {
+        ZoneScopedN( "Phase1_outside_transparency" );
+        // Serial over z-levels so each function runs on the main thread.
+        // build_outside_cache and build_transparency_cache use an intra-z
+        // parallel_for over smx columns guarded by !is_pool_worker_thread().
+        // Keeping this loop serial ensures that guard never fires, so the smx
+        // parallelism is always active.  Running them inside Phase1_parallel_caches
+        // (parallel over z-levels) would make every call land on a worker thread,
+        // silently disabling the smx parallel_for via the deadlock guard.
+        for( int z = minz; z <= maxz; ++z ) {
+            build_outside_cache( z );
+            build_transparency_cache( z );
+        }
+    }
+
+    {
         ZoneScopedN( "Phase1_parallel_caches" );
         if( parallel_enabled && parallel_map_cache ) {
             std::mutex dirty_mutex;
             parallel_for( minz, maxz + 1, [&]( int z ) {
                 // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
                 const bool affects_seen_cache = z == zlev || fov_3d;
-                build_outside_cache( z );
-                build_transparency_cache( z );
                 const bool floor_dirty = build_floor_cache( z ) && affects_seen_cache;
 
                 // Guard the 68 KB zero-fills: most z-levels have no vehicles.
@@ -9673,8 +9698,6 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             for( int z = minz; z <= maxz; ++z ) {
                 // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
                 const bool affects_seen_cache = z == zlev || fov_3d;
-                build_outside_cache( z );
-                build_transparency_cache( z );
                 const bool floor_dirty = build_floor_cache( z ) && affects_seen_cache;
 
                 // Guard the 68 KB zero-fills: most z-levels have no vehicles.

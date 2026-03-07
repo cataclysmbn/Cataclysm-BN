@@ -333,6 +333,10 @@ struct level_cache {
     // completes for this level.  Allows subsequent redraws within the same turn
     // to skip the full lightmap rebuild when nothing has changed.
     bool lightmap_dirty = true;
+    // True when every tile in transparency_cache equals LIGHT_TRANSPARENCY_OPEN_AIR.
+    // Computed by build_transparency_cache; used by cast_zlight to skip the
+    // per-tile transparency read for pure-air z-levels (e.g. above ground).
+    bool all_transparent = true;
     bool suspension_cache_initialized = false;
     bool suspension_cache_dirty = false;
     std::list<point> suspension_cache;
