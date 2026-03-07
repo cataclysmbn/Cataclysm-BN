@@ -159,6 +159,19 @@ void submap_load_manager::update()
         f.get();
     } );
 
+    // Workers may have deferred submap destructions (duplicate-add cases) into each
+    // mapbuffer's pending-destroy queue.  Drain them now on the main thread before
+    // any game code runs, since safe_reference<T>, cache_reference<T>, and
+    // cata_arena<T> are not thread-safe.
+    auto drained_dims = std::set<std::string>{};
+    std::ranges::transform( new_quads, std::inserter( drained_dims, drained_dims.end() ),
+    []( const auto & qk ) {
+        return qk.first;
+    } );
+    std::ranges::for_each( drained_dims, []( const std::string & dim_id ) {
+        MAPBUFFER_REGISTRY.get( dim_id ).drain_pending_submap_destroy();
+    } );
+
     // Notify listeners for all newly-desired positions.
     for( const desired_key &key : new_desired ) {
         if( prev_desired_.count( key ) == 0 ) {

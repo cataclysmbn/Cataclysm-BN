@@ -23,6 +23,32 @@
  * Constraints (must not be violated by submitted work):
  *  - No worker thread may call any Lua API (Lua 5.3 is not reentrant).
  *  - No worker thread may call any SDL rendering API (SDL2 renderer is single-threaded).
+ *
+ * Threading boundaries for game systems:
+ *
+ *   cache_reference<T> — reference_map is guarded by reference_map_mutex_ (std::mutex).
+ *     Construction and destruction of cache_reference objects is safe from worker threads.
+ *
+ *   safe_reference<T>  — records_by_pointer / records_by_id are NOT mutex-protected.
+ *     next_id is std::atomic (safe for concurrent serialize() calls from save workers).
+ *     All other safe_reference operations (fill, remove, register_load, mark_destroyed,
+ *     mark_deallocated, cleanup) must run on the main thread only.
+ *
+ *   cata_arena<T>      — pending_deletion is NOT mutex-protected.
+ *     mark_for_destruction() and cleanup() must run on the main thread only.
+ *
+ * In practice:
+ *   • Submaps must not be destroyed on worker threads (destructor calls mark_for_destruction
+ *     and safe_reference::mark_destroyed).  Use mapbuffer::drain_pending_submap_destroy()
+ *     on the main thread after joining all preload_quad() futures.
+ *   • Submap deserialisation (Phase 1 of preload_quad) IS safe from workers because
+ *     active_item_cache constructs cache_reference objects, which are now mutex-guarded.
+ *   • save_quad() serialisation IS safe from workers: safe_reference::serialize() only
+ *     writes to next_id (atomic) and to per-item records that are never shared across quads.
+ *   • overmapbuffer::add_extra() and add_note() ARE safe from generation workers:
+ *     both acquire extras_mutex_ (a per-overmapbuffer std::mutex) after get_om_global() returns.
+ *   • Auto-note discovery (auto_note_settings) and Lua spawn hooks in place_npc() are
+ *     main-thread-only and are skipped on worker threads via is_pool_worker_thread().
  */
 class cata_thread_pool
 {

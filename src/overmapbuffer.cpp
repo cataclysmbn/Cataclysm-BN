@@ -324,6 +324,7 @@ const regional_settings &overmapbuffer::get_settings( const tripoint_abs_omt &p 
 void overmapbuffer::add_note( const tripoint_abs_omt &p, const std::string &message )
 {
     overmap_with_local_coords om_loc = get_om_global( p );
+    auto lk = std::lock_guard( extras_mutex_ );
     om_loc.om->add_note( om_loc.local, message );
 }
 
@@ -345,14 +346,23 @@ void overmapbuffer::mark_note_dangerous( const tripoint_abs_omt &p, int radius, 
 
 void overmapbuffer::add_extra( const tripoint_abs_omt &p, const string_id<map_extra> &id )
 {
+    // get_om_global acquires+releases mutex internally; acquire extras_mutex_ afterwards
+    // so generation workers can add extras concurrently without deadlocking on mutex.
     overmap_with_local_coords om_loc = get_om_global( p );
+    auto lk = std::lock_guard( extras_mutex_ );
     om_loc.om->add_extra( om_loc.local, id );
 }
 
 void overmapbuffer::delete_extra( const tripoint_abs_omt &p )
 {
-    if( has_extra( p ) ) {
-        overmap_with_local_coords om_loc = get_om_global( p );
+    // Consolidate the has_extra check and the delete under a single extras_mutex_ acquisition
+    // to avoid a TOCTOU window between the check and the erase.
+    const overmap_with_local_coords om_loc = get_existing_om_global( p );
+    if( !om_loc ) {
+        return;
+    }
+    auto lk = std::lock_guard( extras_mutex_ );
+    if( om_loc.om->has_extra( om_loc.local ) ) {
         om_loc.om->delete_extra( om_loc.local );
     }
 }
@@ -478,6 +488,7 @@ const std::string &overmapbuffer::note( const tripoint_abs_omt &p )
 bool overmapbuffer::has_extra( const tripoint_abs_omt &p )
 {
     if( const overmap_with_local_coords om_loc = get_existing_om_global( p ) ) {
+        auto lk = std::lock_guard( extras_mutex_ );
         return om_loc.om->has_extra( om_loc.local );
     }
     return false;
@@ -486,6 +497,7 @@ bool overmapbuffer::has_extra( const tripoint_abs_omt &p )
 const string_id<map_extra> &overmapbuffer::extra( const tripoint_abs_omt &p )
 {
     if( const overmap_with_local_coords om_loc = get_existing_om_global( p ) ) {
+        auto lk = std::lock_guard( extras_mutex_ );
         return om_loc.om->extra( om_loc.local );
     }
     static const string_id<map_extra> id;

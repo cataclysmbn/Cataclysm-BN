@@ -48,6 +48,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "text_snippets.h"
+#include "thread_pool.h"
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
@@ -2767,30 +2768,36 @@ void apply_function( const string_id<map_extra> &id, map &m, const tripoint &abs
         return;
     }
 
-    // TODO: fix point types
-    overmap_buffer.add_extra( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), id );
+    overmapbuffer &omap = get_overmapbuffer( m.get_bound_dimension() );
+    omap.add_extra( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), id );
 
-    auto_notes::auto_note_settings &autoNoteSettings = get_auto_notes_settings();
+    // Auto-notes touch the per-character auto_note_settings singleton (unordered_sets with no
+    // mutex) and call overmapbuffer::add_note (notes vector, now guarded by extras_mutex_).
+    // The set_discovered / has_auto_note_enabled calls are not thread-safe, so skip them on
+    // worker threads.  Background generation happens before the player ever sees the cell, so
+    // discovery will be recorded on the main thread when they first explore the area.
+    if( !is_pool_worker_thread() ) {
+        auto_notes::auto_note_settings &autoNoteSettings = get_auto_notes_settings();
 
-    // The player has discovered a map extra of this type.
-    autoNoteSettings.set_discovered( id );
+        // The player has discovered a map extra of this type.
+        autoNoteSettings.set_discovered( id );
 
-    if( get_option<bool>( "AUTO_NOTES" ) && get_option<bool>( "AUTO_NOTES_MAP_EXTRAS" ) ) {
+        if( get_option<bool>( "AUTO_NOTES" ) && get_option<bool>( "AUTO_NOTES_MAP_EXTRAS" ) ) {
 
-        // Only place note if the user has not disabled it via the auto note manager
-        if( autoNoteSettings.has_auto_note_enabled( id ) ) {
-            std::string sprite_prefix;
-            if( extra.looks_like && !extra.looks_like->empty() ) {
-                sprite_prefix = "SPRITE:" + *extra.looks_like + ";";
+            // Only place note if the user has not disabled it via the auto note manager
+            if( autoNoteSettings.has_auto_note_enabled( id ) ) {
+                std::string sprite_prefix;
+                if( extra.looks_like && !extra.looks_like->empty() ) {
+                    sprite_prefix = "SPRITE:" + *extra.looks_like + ";";
+                }
+                const std::string mx_note =
+                    sprite_prefix + string_format( "%s:%s;<color_yellow>%s</color>: <color_white>%s</color>",
+                                                   extra.get_symbol(),
+                                                   get_note_string_from_color( extra.color ),
+                                                   extra.name(),
+                                                   extra.description() );
+                omap.add_note( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), mx_note );
             }
-            const std::string mx_note =
-                sprite_prefix + string_format( "%s:%s;<color_yellow>%s</color>: <color_white>%s</color>",
-                                               extra.get_symbol(),
-                                               get_note_string_from_color( extra.color ),
-                                               extra.name(),
-                                               extra.description() );
-            // TODO: fix point types
-            overmap_buffer.add_note( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), mx_note );
         }
     }
 }

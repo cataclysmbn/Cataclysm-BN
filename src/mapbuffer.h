@@ -110,6 +110,18 @@ class mapbuffer
         void preload_quad( const tripoint &om_addr );
 
         /**
+         * Destroy submaps that were discarded by preload_quad() because the in-memory
+         * version already existed.  Must be called on the main thread after all
+         * preload_quad() futures have been joined.
+         *
+         * safe_reference<T>, cache_reference<T>, and cata_arena<T> all rely on
+         * unsynchronised global statics; destructing submaps (and their items) on
+         * worker threads would race on those statics.  preload_quad() defers such
+         * destruction here instead of letting it happen on the worker.
+         */
+        auto drain_pending_submap_destroy() -> void;
+
+        /**
          * Conditionally save and then remove the submap at @p pos from the buffer.
          * The containing OMT quad is saved to disk first (unless it is fully uniform),
          * then the submap is erased from memory.  Does nothing if @p pos is not loaded.
@@ -141,6 +153,13 @@ class mapbuffer
         ///   lookup_submap → unserialize_submaps → add_submap
         /// can re-acquire the mutex without deadlocking.
         mutable std::recursive_mutex submaps_mutex_;
+
+        /// Submaps that preload_quad() could not add (duplicate already in memory).
+        /// Their destruction is deferred here and drained on the main thread via
+        /// drain_pending_submap_destroy() to avoid racing on the global statics
+        /// inside safe_reference<T>, cache_reference<T>, and cata_arena<T>.
+        mutable std::mutex pending_destroy_mutex_;
+        std::vector<std::unique_ptr<submap>> pending_destroy_submaps_;
 
     public:
         submap_map_t::iterator begin() {

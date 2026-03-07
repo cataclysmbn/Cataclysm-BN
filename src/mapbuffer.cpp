@@ -409,6 +409,24 @@ void mapbuffer::preload_quad( const tripoint &om_addr )
             DebugLog( DL::Warn, DC::Map ) << string_format(
                                               "preload_quad: submap %d,%d,%d already loaded; keeping in-memory version",
                                               pos.x, pos.y, pos.z );
+            // Do NOT let sm destruct here on the worker thread.  Submap/item destruction
+            // touches safe_reference<T>::records_by_pointer, cache_reference<T>::reference_map,
+            // and cata_arena<T>::pending_deletion — all unsynchronised global statics.
+            // Defer to drain_pending_submap_destroy(), called on the main thread after join.
+            if( sm ) {
+                auto lk = std::lock_guard( pending_destroy_mutex_ );
+                pending_destroy_submaps_.push_back( std::move( sm ) );
+            }
         }
     }
+}
+
+auto mapbuffer::drain_pending_submap_destroy() -> void
+{
+    auto to_destroy = std::vector<std::unique_ptr<submap>>{};
+    {
+        auto lk = std::lock_guard( pending_destroy_mutex_ );
+        to_destroy = std::move( pending_destroy_submaps_ );
+    }
+    // unique_ptrs destruct here, on the main thread.
 }

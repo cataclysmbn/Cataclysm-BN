@@ -561,6 +561,17 @@ class overmapbuffer
          */
         mutable std::mutex npc_mutex_;
         /**
+         * Protects overmap layer[z].extras and layer[z].notes writes across every
+         * overmap in this buffer.  Must be acquired AFTER any @ref mutex operation
+         * completes (same ordering rule as npc_mutex_) — in practice both
+         * get_om_global() and get_existing_om_global() acquire+release @ref mutex
+         * internally, so extras_mutex_ is acquired only after those return.
+         *
+         * Separate from @ref mutex so that generation workers can call add_extra()
+         * and add_note() concurrently without blocking unrelated overmapbuffer reads.
+         */
+        mutable std::mutex extras_mutex_;
+        /**
          * Common function used by the find_closest/all/random to determine if the location is
          * findable based on the specified criteria.
          * @param location Location of search

@@ -6291,12 +6291,17 @@ character_id map::place_npc( point p, const string_id<npc_template> &type, bool 
     temp->spawn_at_precise( { abs_sub.xy() }, { p, abs_sub.z } );
     temp->toggle_trait( trait_NPC_STATIC_NPC );
     get_overmapbuffer( bound_dimension_ ).insert_npc( temp );
-    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-        params["creature"] = temp.get();
-    } );
-    cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
-        params["npc"] = temp.get();
-    } );
+    // Lua is not reentrant — skip notification hooks on worker threads.
+    // The NPC is already registered in the overmapbuffer (thread-safe via npc_mutex_);
+    // mods that need on_npc_spawn will see it when the main thread next loads the submap.
+    if( !is_pool_worker_thread() ) {
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = temp.get();
+        } );
+        cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+            params["npc"] = temp.get();
+        } );
+    }
     return temp->getID();
 }
 
