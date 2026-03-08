@@ -6706,6 +6706,12 @@ void map::update_visibility_cache( const int zlev )
             }
         }
     }
+
+    // Mark all z-levels touched by this run as clean so subsequent draws within
+    // the same turn can skip the rebuild entirely.
+    std::ranges::for_each( std::views::iota( min_z, max_z + 1 ), [this]( int z ) {
+        get_cache( z ).visibility_cache_dirty = false;
+    } );
 }
 
 const visibility_variables &map::get_visibility_variables_cache() const
@@ -9836,8 +9842,12 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             }
 
             // Mark each regenerated level clean so subsequent redraws this turn skip it.
+            // Also mark visibility dirty: the lightmap just changed, so any visibility
+            // cache computed before this rebuild (e.g. from handle_action's unconditional
+            // update_visibility_cache call) is now stale and must be rebuilt in game::draw.
             std::ranges::for_each( dirty_seen_cache_levels, [this]( int z ) {
                 get_cache( z ).lightmap_dirty = false;
+                get_cache( z ).visibility_cache_dirty = true;
             } );
 
         } // end if( !dirty_seen_cache_levels.empty() )
@@ -10513,6 +10523,7 @@ void map::invalidate_map_cache( const int zlev )
         ch.transparency_cache_dirty.set();
         ch.seen_cache_dirty = true;
         ch.lightmap_dirty = true;
+        ch.visibility_cache_dirty = true;
         ch.outside_cache_dirty.set();
         ch.suspension_cache_dirty = true;
     }
@@ -10524,6 +10535,15 @@ void map::invalidate_lightmap_caches()
     const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
     std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( int z ) {
         get_cache( z ).lightmap_dirty = true;
+    } );
+}
+
+void map::invalidate_visibility_caches()
+{
+    const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
+    const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
+    std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( int z ) {
+        get_cache( z ).visibility_cache_dirty = true;
     } );
 }
 

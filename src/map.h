@@ -333,6 +333,10 @@ struct level_cache {
     // completes for this level.  Allows subsequent redraws within the same turn
     // to skip the full lightmap rebuild when nothing has changed.
     bool lightmap_dirty = true;
+    // Set to true at the start of each game turn; cleared after update_visibility_cache
+    // completes.  Allows repeated draws within the same turn (animations, UI refreshes)
+    // to skip the full visibility rebuild when nothing has changed.
+    bool visibility_cache_dirty = true;
     // True when every tile in transparency_cache equals LIGHT_TRANSPARENCY_OPEN_AIR.
     // Computed by build_transparency_cache; used by cast_zlight to skip the
     // per-tile transparency read for pure-air z-levels (e.g. above ground).
@@ -554,6 +558,10 @@ class map : public submap_load_listener
         /// Mark lightmap_dirty for every loaded z-level.  Call once per game turn
         /// so that only the first redraw of each turn runs generate_lightmap.
         void invalidate_lightmap_caches();
+
+        /// Mark visibility_cache_dirty for every loaded z-level.  Call once per game turn
+        /// so that only the first redraw of each turn runs update_visibility_cache.
+        void invalidate_visibility_caches();
 
         bool check_seen_cache( const tripoint &p ) const;
         bool check_and_set_seen_cache( const tripoint &p ) const;

@@ -1830,9 +1830,10 @@ bool game::do_turn()
     // Reset dimension swap flag now that the map is fully loaded and turn is processing
     swapping_dimensions = false;
 
-    // Mark all lightmap caches dirty for this turn.  The first redraw will run
-    // generate_lightmap; subsequent redraws within the same turn skip it.
+    // Mark all lightmap and visibility caches dirty for this turn.  The first redraw will run
+    // generate_lightmap / update_visibility_cache; subsequent redraws within the same turn skip them.
     m.invalidate_lightmap_caches();
+    m.invalidate_visibility_caches();
 
     // starting a new turn, clear out temperature cache
     weather_manager &weather = get_weather();
@@ -3781,7 +3782,9 @@ void game::draw( ui_adaptor &ui )
         }
         const auto cache_z = is_looking ? u.posz() : ter_view_p.z;
         m.build_map_cache( cache_z );
-        m.update_visibility_cache( cache_z );
+        if( m.get_cache_ref( cache_z ).visibility_cache_dirty ) {
+            m.update_visibility_cache( cache_z );
+        }
     }
 
     werase( w_terrain );
