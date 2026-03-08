@@ -813,7 +813,6 @@
     "using": [ [ "blacksmithing_advanced", 2 ], [ "steel_tiny", 2 ] ],
     "components": [ [ [ "120mm_case_base", 1 ] ] ]
   },
-  
   {
     "result": "electric_primer_120mm",
     "type": "recipe",
