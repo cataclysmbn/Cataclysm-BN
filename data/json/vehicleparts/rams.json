@@ -165,7 +165,7 @@
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "armor_chitin", 3 ] ] }
     },
-    "damage_reduction": { "all": 80 }
+    "damage_reduction": { "all": 75 }
   },
   {
     "id": "ram_acidchitin",

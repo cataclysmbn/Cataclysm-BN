@@ -37,7 +37,7 @@
     },
     "flags": [ "ARMOR" ],
     "breaks_into": [ { "item": "bone", "count": [ 5, 15 ] } ],
-    "damage_reduction": { "all": 58 }
+    "damage_reduction": { "all": 16, "cut": 8, "stab": 8 }
   },
   {
     "type": "vehicle_part",
