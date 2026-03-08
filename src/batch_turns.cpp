@@ -92,7 +92,7 @@ void batch_turns_field( submap &sm, int n )
                 const field_type &fdata = cur.get_field_type().obj();
 
                 // Fire fields are never analytically decayed here.
-                // If out_of_bubble_fire_spread is enabled, fire is handled by
+                // If reality_bubble_fire_spread is enabled, fire is handled by
                 // fire_spread_loader via real simulation.  If disabled, fire
                 // in unloaded submaps is frozen in time (pre-PR behavior).
                 // Approximating fire decay would cause instant-kill on load,

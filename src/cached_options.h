@@ -97,7 +97,7 @@ extern int  lod_coarse_scent_interval;
 extern int  lod_group_morale_max_tier;
 
 /** Out-of-bubble world-tick options. */
-extern bool out_of_bubble_fire_spread;
+extern bool reality_bubble_fire_spread;
 
 /**
  * Maximum number of fire-spread-loaded submaps allowed across all dimensions

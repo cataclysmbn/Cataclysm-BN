@@ -903,7 +903,7 @@ bool game::start_game()
 
     // Read performance options before the first load_map so the reality bubble
     // request uses the correct radius from the very first load.
-    world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
+    world_tick_interval_ = get_option<int>( "REALITY_BUBBLE_TICK_INTERVAL" );
     init_bubble_config();
     // Resize the map grid to match the (possibly changed) bubble-size option.
     // The grid may hold stale pointers from a previous session; resize() clears
@@ -3184,7 +3184,7 @@ bool game::load( const save_t &name )
     validate_linked_vehicles();
     // Read performance options before update_map so the reality bubble request
     // uses the correct radius from the very first submap_loader wiring.
-    world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
+    world_tick_interval_ = get_option<int>( "REALITY_BUBBLE_TICK_INTERVAL" );
     // Re-read the bubble-size option so that reality_bubble_radius_ and the
     // submap-loader request use the value that was active when this save was
     // made (or the current value if the player changed it between sessions).
@@ -4769,7 +4769,7 @@ void game::world_tick()
     ZoneScoped;
     TracyPlot( "Active Dimensions", static_cast<int64_t>( loaded_dimensions_.size() ) );
 
-    const auto  fire_spread = out_of_bubble_fire_spread;
+    const auto  fire_spread = reality_bubble_fire_spread;
     const auto  do_emits   = calendar::once_every( 10_seconds );
     const auto  abs_sub    = m.get_abs_sub();
 

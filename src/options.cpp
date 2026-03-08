@@ -2439,21 +2439,21 @@ void options_manager::add_options_performance()
 
     add_empty_line();
 
-    add_option_group( performance, Group( "out_of_bubble", to_translation( "Out-of-Bubble Simulation" ),
-                                          to_translation( "Configure how submaps outside the player's reality bubble are simulated." ) ),
+    add_option_group( performance, Group( "reality_bubble", to_translation( "Reality Bubble" ),
+                                          to_translation( "Configure how submaps are loaded and processed." ) ),
     [&]( auto & page_id ) {
-        add( "OUT_OF_BUBBLE_TICK_INTERVAL", page_id,
+        add( "REALITY_BUBBLE_TICK_INTERVAL", page_id,
              translate_marker( "World Tick Interval" ),
              translate_marker( "How many turns elapse between out-of-bubble world ticks.  "
                                "1 processes every loaded submap outside the player's reality bubble "
-                               "each turn at full fidelity.  Higher values amortize cost by batching "
+                               "each turn at full fidelity. Higher values amortize cost by batching "
                                "N turns of simulation into a single pass — useful on slow hardware." ),
              1, 10, 1 );
-        add( "OUT_OF_BUBBLE_FIRE_SPREAD", page_id,
+        add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
              translate_marker( "Out-of-Bubble Fire Spread" ),
              translate_marker( "Controls whether fire in loaded submaps can spread into adjacent "
-                               "unloaded submaps.  'None': fire only decays, never spreads beyond "
-                               "the loaded set.  'Adjacent': fire requests one extra layer of "
+                               "unloaded submaps. 'None': fire only decays, never spreads beyond "
+                               "the loaded set. 'Adjacent': fire requests one extra layer of "
         "loaded submaps at each boundary to preserve correct spread behavior." ), {
             { "none", translate_marker( "None (pause spread)" ) },
             { "adjacent", translate_marker( "Adjacent (one layer)" ) }
@@ -2463,24 +2463,24 @@ void options_manager::add_options_performance()
         add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
              translate_marker( "Fire Spread Submap Cap" ),
              translate_marker( "Maximum number of submaps that fire spread may keep loaded "
-                               "simultaneously across all dimensions.  Higher values allow larger "
-                               "out-of-bubble fires to be simulated correctly at the cost of CPU "
-                               "and memory.  0 disables out-of-bubble fire spread loading entirely. "
+                               "simultaneously across all dimensions. Higher values allow larger "
+                               "fires to be simulated correctly at the cost of CPU "
+                               "and memory. 0 disables out-of-bubble fire spread loading entirely. "
                                "Takes effect immediately without restart." ),
              0, 250, 25 );
         add( "REALITY_BUBBLE_SIZE", page_id,
              translate_marker( "Reality Bubble Size" ),
-             translate_marker( "Submap radius of the reality bubble (submaps visible beyond your position).  "
-                               "Grid size = 2 × size + 3 submaps per side (size 4 → 11×11, the default).  "
+             translate_marker( "Submap radius of the reality bubble (submaps visible beyond your position). "
+                               "Grid size = 2 × size + 3 submaps per side (size 4 → 11×11, the default). "
                                "Maximum player sight range = 12 × (size + 1) tiles.  "
                                "Larger values increase the loaded area and memory usage; "
-                               "smaller values reduce both.  "
+                               "smaller values reduce both. "
                                "REQUIRES A GAME RESTART to take effect — "
                                "changing this mid-session will NOT resize caches or the loaded map." ),
-             0, REALITY_BUBBLE_SIZE_MAX, 4 );
+             0, REALITY_BUBBLE_SIZE_MAX, 8 );
     } );
 
-    get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "OUT_OF_BUBBLE_FIRE_SPREAD", "adjacent" );
+    get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
 }
 
 void options_manager::add_options_debug()
@@ -4102,8 +4102,8 @@ void options_manager::cache_to_globals()
     lod_coarse_scent_interval = ::get_option<int>( "LOD_COARSE_SCENT_INTERVAL" );
     lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
 
-    out_of_bubble_fire_spread =
-        ::get_option<std::string>( "OUT_OF_BUBBLE_FIRE_SPREAD" ) == "adjacent";
+    reality_bubble_fire_spread =
+        ::get_option<std::string>( "REALITY_BUBBLE_FIRE_SPREAD" ) == "adjacent";
     fire_spread_submap_cap = ::get_option<int>( "FIRE_SPREAD_SUBMAP_CAP" );
 
     {

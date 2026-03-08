@@ -1193,7 +1193,7 @@ class game : public submap_load_listener
         load_request_handle reality_bubble_handle_ = 0;
 
         // Turns between world_tick() passes.  1 = every turn (default).
-        // Read from OUT_OF_BUBBLE_TICK_INTERVAL in start_game() / load().
+        // Read from REALITY_BUBBLE_TICK_INTERVAL in start_game() / load().
         int world_tick_interval_ = 1;
 
         // Submap radius of the reality bubble = g_half_mapsize = 2*size+1.
