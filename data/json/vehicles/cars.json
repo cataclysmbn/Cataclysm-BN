@@ -1677,7 +1677,7 @@
       { "x": -2, "y": -1, "part": "spoiler_carbon_external_horizontal" },
       { "x": -2, "y": 1, "part": "spoiler_carbon_external_horizontal" }
     ],
-    "flags": [ "VEHICLE_UNLOCKED" ],
+    "flags": [ "VEHICLE_UNLOCKED", "VEHICLE_NO_LOCKS" ],
     "items": [
       { "x": 0, "y": 0, "chance": 8, "items": [ "sm_extinguisher" ] },
       { "x": 0, "y": 0, "chance": 6, "items": [ "helmet_motor" ] }
