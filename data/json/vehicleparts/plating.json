@@ -19,6 +19,26 @@
     "breaks_into": [ { "item": "chitin_piece", "count": [ 5, 15 ] } ],
     "damage_reduction": { "all": 58 }
   },
+    {
+    "type": "vehicle_part",
+    "id": "bone_plating",
+    "name": { "str": "bone plating" },
+    "symbol": ")",
+    "color": "white",
+    "broken_symbol": ")",
+    "broken_color": "light_gray",
+    "durability": 320,
+    "item": "bone_plate",
+    "location": "armor",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "10 m", "using": [ [ "rope_natural", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m", "using": [ [ "armor_chitin", 3 ] ] }
+    },
+    "flags": [ "ARMOR" ],
+    "breaks_into": [ { "item": "bone", "count": [ 5, 15 ] } ],
+    "damage_reduction": { "all": 58 }
+  },
   {
     "type": "vehicle_part",
     "id": "plating_acidchitin",
