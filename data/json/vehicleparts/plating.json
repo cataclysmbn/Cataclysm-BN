@@ -19,7 +19,7 @@
     "breaks_into": [ { "item": "chitin_piece", "count": [ 5, 15 ] } ],
     "damage_reduction": { "all": 58 }
   },
-    {
+  {
     "type": "vehicle_part",
     "id": "bone_plating",
     "name": { "str": "bone plating" },
