@@ -245,7 +245,18 @@
       { "item": "atgm_launcher", "prob": 3 },
       { "item": "atgm_heat", "prob": 6 },
       { "item": "flamethrower", "prob": 50 },
-      { "item": "rm451_flamethrower", "prob": 40 }
+      { "item": "rm451_flamethrower", "prob": 40 },
+      [ "120mm_usable_ap", 3 ],
+      [ "120mm_usable_heat", 2 ],
+      [ "155mm_frag", 3 ],
+      [ "155mm_heat", 2 ],
+      [ "25mm_apds", 2 ],
+      [ "25mm_hei", 1 ],
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 2 },
+      [ "105mm_heat", 2 ],
+      [ "105mm_ap", 1 ],
+      [ "electric_primer_120mm", 1 ],
+      [ "primer_155mm", 1 ]
     ]
   },
   {
