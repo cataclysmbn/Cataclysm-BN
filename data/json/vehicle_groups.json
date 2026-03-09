@@ -65,6 +65,10 @@
       [ "tatra_truck", 100 ],
       [ "4x4_car", 400 ],
       [ "whillys_mb", 100 ],
+      [ "ifv_m2_bradley", 75 ],
+      [ "tank_m1_abrams", 50 ],
+      [ "tank_m60_patton", 15 ],
+      [ "howitzer_m109", 25 ],
       [ "car_sports_atomic", 15 ],
       [ "bubble_car", 20 ]
     ]
@@ -107,7 +111,8 @@
       [ "sailboat", 125 ],
       [ "pirate_ship", 25 ],
       [ "DUKW", 75 ],
-      [ "hovercraft_motor_single", 25 ]
+      [ "hovercraft_motor_single", 25 ],
+      [ "CG_cutter_25mm", 25 ]
     ]
   },
   {
@@ -246,7 +251,13 @@
       [ "blinkie_van", 5 ],
       [ "tatra_truck", 300 ],
       [ "4x4_car", 300 ],
-      [ "whillys_mb", 100 ]
+      [ "whillys_mb", 100 ],
+      [ "ifv_m2_bradley", 250 ],
+      [ "tank_m1_abrams", 125 ],
+      [ "tank_m60_patton", 25 ],
+      [ "howitzer_m109", 75 ],
+      [ "tank_xm7_elec", 5 ],
+      [ "tractor_bandit", 5 ]
     ]
   },
   {
@@ -347,7 +358,13 @@
       [ "portable_generator", 50 ],
       [ "4x4_car", 175 ],
       [ "whillys_mb", 25 ],
-      [ "bubble_car", 50 ]
+      [ "bubble_car", 50 ],
+      [ "ifv_m2_bradley", 50 ],
+      [ "tank_m1_abrams", 25 ],
+      [ "tank_m60_patton", 5 ],
+      [ "tank_m60_patton_mothballed", 5 ],
+      [ "howitzer_m109", 10 ],
+      [ "tank_xm7_elec", 1 ]
     ]
   },
   {
@@ -399,7 +416,13 @@
       [ "apc-gl", 250 ],
       [ "aapc-mg", 250 ],
       [ "aapc-gl", 125 ],
-      [ "whillys_mb", 50 ]
+      [ "whillys_mb", 50 ],
+      [ "ifv_m2_bradley", 500 ],
+      [ "tank_m1_abrams", 250 ],
+      [ "tank_m60_patton", 25 ],
+      [ "tank_m60_patton_mothballed", 50 ],
+      [ "howitzer_m109", 125 ],
+      [ "tank_xm7_elec", 10 ]
     ]
   },
   {
@@ -412,7 +435,11 @@
       [ "oldtractor", 250 ],
       [ "autotractor", 1000 ],
       [ "excavator", 500 ],
-      [ "helicopter_gyro", 100 ]
+      [ "helicopter_gyro", 100 ],
+      [ "tractor_heavy_plow", 250 ],
+      [ "tractor_heavy_seed", 250 ],
+      [ "tractor_heavy_reaper", 250 ],
+      [ "tractor_bandit", 100 ]
     ]
   },
   {
@@ -428,7 +455,8 @@
       [ "pickup_diesel", 4 ],
       [ "road_roller", 80 ],
       [ "tatra_truck", 20 ],
-      [ "trencher", 40 ]
+      [ "trencher", 40 ],
+      [ "tractor_bandit", 50 ]
     ]
   },
   {
@@ -457,7 +485,8 @@
       [ "quad_bike", 150 ],
       [ "motorcycle", 300 ],
       [ "motorcycle_methcart", 50 ],
-      [ "whillys_mb", 10 ]
+      [ "whillys_mb", 10 ],
+      [ "tractor_bandit", 150 ]
     ]
   },
   {
@@ -480,7 +509,9 @@
       [ "pickup_diesel", 120 ],
       [ "hippie_van", 700 ],
       [ "4x4_car", 400 ],
-      [ "whillys_mb", 100 ]
+      [ "whillys_mb", 100 ],
+      [ "tractor_bandit", 200 ],
+      [ "tank_m60_patton_mothballed", 300 ]
     ]
   },
   {
@@ -504,7 +535,9 @@
       [ "pickup_diesel", 100 ],
       [ "hippie_van", 350 ],
       [ "4x4_car", 400 ],
-      [ "whillys_mb", 100 ]
+      [ "whillys_mb", 100 ],
+      [ "tractor_bandit", 200 ],
+      [ "tank_m60_patton_mothballed", 300 ]
     ]
   },
   {
@@ -540,6 +573,7 @@
       [ "car_anmlcmpt", 100 ],
       [ "suv", 400 ],
       [ "rv", 200 ],
+      [ "tractor_bandit", 250 ],
       [ "car_sports", 300 ],
       [ "cube_van_cheap", 200 ],
       [ "pickup", 400 ],
@@ -867,7 +901,9 @@
       [ "tractor_reaper", 800 ],
       [ "tractor_plow", 800 ],
       [ "cube_van", 800 ],
-      [ "car_mini", 800 ]
+      [ "car_mini", 800 ],
+      [ "tank_m60_patton", 200 ],
+      [ "tank_m60_patton_mothballed", 600 ]
     ]
   },
   {
@@ -992,11 +1028,23 @@
   {
     "id": "military_display_vehicles",
     "type": "vehicle_group",
-    "vehicles": [ [ "whillys_mb_display", 75 ], [ "cannon_3in", 20 ], [ "gatling_carriage", 5 ] ]
+    "vehicles": [ [ "whillys_mb_display", 75 ], [ "cannon_3in", 20 ], [ "gatling_carriage", 5 ], [ "tank_m60_patton_mothballed", 100 ] ]
   },
   {
     "type": "vehicle_group",
     "id": "os_work_vehicles",
     "vehicles": [ [ "wheelbarrow", 60 ], [ "portable_generator", 40 ], [ "oa_work_light", 50 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "tankmod_garage_restoration",
+    "vehicles": [
+      [ "military_cargo_truck", 10 ],
+      [ "humvee", 15 ],
+      [ "whillys_mb", 10 ],
+      [ "whillys_mb_display", 15 ],
+      [ "tank_m60_patton", 25 ],
+      [ "tank_m60_patton_mothballed", 25 ]
+    ]
   }
 ]
