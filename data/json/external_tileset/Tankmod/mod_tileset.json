@@ -4,7 +4,7 @@
     "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockRealXotto", "MSX++DEAD_PEOPLE", "MSXotto+", "UltimateCataclysm", "UltimateCataclysmDemo" ],
     "tiles-new": [
       {
-        "file": "Tankmod_Revived_normal.png",
+        "file": "external_tileset/Tankmod/Tankmod_Revived_normal.png",
         "tiles": [
           { "id": "bg_book_adv", "fg": 1, "rotates": false },
           { "id": "bg_shadow_item", "fg": 2, "rotates": false },
@@ -108,7 +108,7 @@
         "sprite_offset_y": 0
       },
       {
-        "file": "Tankmod_Revived_large.png",
+        "file": "external_tileset/Tankmod/Tankmod_Revived_large.png",
         "tiles": [
           { "id": "broken_uafv_xm246a1", "fg": 49, "rotates": false },
           { "id": "overlay_wielded_broken_uafv_xm246a1", "fg": 49, "rotates": false },
