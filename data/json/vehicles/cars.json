@@ -1598,9 +1598,9 @@
       {
         "x": 2,
         "y": 0,
-        "parts": [ "frame_horizontal", "halfboard_horizontal_front", "battery_car", "engine_v8", "alternator_car" ]
+        "parts": [ "frame_horizontal", "halfboard_cover", "battery_car", "engine_v8", "alternator_car" ]
       },
-      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal_front" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_cover" ] },
       {
         "x": 2,
         "y": -1,
