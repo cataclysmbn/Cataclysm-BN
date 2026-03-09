@@ -36,6 +36,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_cartesian_product.h"
 #include "cata_io.h"
 #include "cata_variant.h"
 #include "cata_utility.h"
@@ -4097,7 +4098,7 @@ void submap::store( JsonOut &jsout ) const
         int last_scent = -1;
         int scent_count = 0;
         std::ranges::for_each(
-            std::views::cartesian_product( std::views::iota( 0, SEEY ),
+            cata::views::cartesian_product( std::views::iota( 0, SEEY ),
                                            std::views::iota( 0, SEEX ) ),
         [&]( auto ji ) {
             auto [j, i] = ji;

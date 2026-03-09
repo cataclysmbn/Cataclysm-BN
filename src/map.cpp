@@ -30,6 +30,7 @@
 #include "calendar.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
+#include "cata_cartesian_product.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_id.h"
@@ -8123,7 +8124,7 @@ auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> vo
     }
     const auto border = get_boundary_terrain();
     std::ranges::for_each(
-        std::views::cartesian_product( std::views::iota( 0, SEEX ), std::views::iota( 0, SEEY ) )
+        cata::views::cartesian_product( std::views::iota( 0, SEEX ), std::views::iota( 0, SEEY ) )
     | std::views::filter( [&]( const auto & tile ) {
         const auto [x, y] = tile;
         return ( on_min_y && y == 0 ) ||
@@ -9064,7 +9065,7 @@ auto map::spawn_monsters_new_submaps( point shift_amount ) -> void
     const auto xy_range = std::views::iota( 0, my_MAPSIZE );
 
     std::ranges::for_each(
-        std::views::cartesian_product( z_range, xy_range, xy_range ),
+        cata::views::cartesian_product( z_range, xy_range, xy_range ),
     [&]( auto tup ) {
         auto [gz, gx, gy] = tup;
         const auto new_x = ( sx > 0 && gx >= my_MAPSIZE - sx ) ||

@@ -12,6 +12,7 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_cartesian_product.h"
 #include "cata_utility.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
@@ -339,7 +340,7 @@ static void fill_funnels( int rain_depth_mm_per_hour, bool acid, const trap &tr 
             return;
         }
         std::ranges::for_each(
-            std::views::cartesian_product( std::views::iota( 0, SEEX ),
+            cata::views::cartesian_product( std::views::iota( 0, SEEX ),
                                            std::views::iota( 0, SEEY ) ),
         [&]( auto xy ) {
             auto [lx, ly] = xy;

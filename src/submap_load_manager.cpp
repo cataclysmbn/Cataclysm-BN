@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "cata_cartesian_product.h"
 #include "coordinate_conversions.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
@@ -59,7 +60,7 @@ auto submap_load_manager::update_load_shape( int radius ) -> void
         auto [dx, dy] = pair;
         return point{ dx, dy };
     };
-    auto offsets = std::views::cartesian_product( axis, axis )
+    auto offsets = cata::views::cartesian_product( axis, axis )
                    | std::views::transform( to_point );
     bubble_offsets_.assign( offsets.begin(), offsets.end() );
 }
@@ -78,7 +79,7 @@ std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_
             // (2*radius+1)×(2*radius+1) grid are protected from eviction.
             // bubble_offsets_ is populated by update_load_shape() in map::resize().
             std::ranges::for_each(
-                std::views::cartesian_product( bubble_offsets_, z_range ),
+                cata::views::cartesian_product( bubble_offsets_, z_range ),
             [&]( auto pair ) {
                 auto [off, z] = pair;
                 desired.emplace( req.dimension_id,
@@ -89,7 +90,7 @@ std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_
             const int r = req.radius;
             const auto axis = std::views::iota( -r, r + 1 );
             std::ranges::for_each(
-                std::views::cartesian_product( axis, axis, z_range ),
+                cata::views::cartesian_product( axis, axis, z_range ),
             [&]( auto tuple ) {
                 auto [dx, dy, z] = tuple;
                 desired.emplace( req.dimension_id,

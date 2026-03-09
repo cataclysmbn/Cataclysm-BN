@@ -47,6 +47,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_cartesian_product.h"
 #include "cata_utility.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
@@ -3173,7 +3174,7 @@ bool game::load( const save_t &name )
         const auto z_range = std::views::iota( zmin, zmax + 1 );
         const auto xy_range = std::views::iota( 0, g_mapsize );
         std::ranges::for_each(
-            std::views::cartesian_product( z_range, xy_range, xy_range ),
+            cata::views::cartesian_product( z_range, xy_range, xy_range ),
         [&]( auto tup ) {
             auto [gz, gx, gy] = tup;
             overmap_buffer.discard_monster_map(
@@ -4772,7 +4773,7 @@ void game::world_tick()
                                                 ( raw_pos.y - abs_sub.y ) * SEEY,
                                                 raw_pos.z );
                 std::ranges::for_each(
-                    std::views::cartesian_product( std::views::iota( 0, SEEX ),
+                    cata::views::cartesian_product( std::views::iota( 0, SEEX ),
                                                    std::views::iota( 0, SEEY ) ),
                 [&]( auto xy ) {
                     auto [lx, ly] = xy;

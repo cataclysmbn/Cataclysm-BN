@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "cata_cartesian_product.h"
 #include "cata_utility.h"
 #include "coordinates.h"
 #include "debug.h"
@@ -63,7 +64,7 @@ struct path_data_layer {
     // for compatibility but is a no-op when the vector is already zeroed.
     void init( point min, point max ) {
         std::ranges::for_each(
-            std::views::cartesian_product(
+            cata::views::cartesian_product(
                 std::views::iota( min.x, max.x + 1 ),
                 std::views::iota( min.y, max.y + 1 ) ),
         [this]( auto xy ) {
