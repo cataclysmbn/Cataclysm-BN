@@ -2334,14 +2334,14 @@ void options_manager::add_options_performance()
              translate_marker( "Chebyshev distance threshold for full-AI (Tier 0) monsters.  "
                                "Monsters within this radius run the complete AI every turn.  "
                                "Must be less than the Coarse AI Radius." ),
-             5, 100, 20 );
+             5, 100, 25 );
         add( "LOD_TIER_COARSE_DIST", page_id,
              translate_marker( "Coarse AI Radius" ),
              translate_marker( "Chebyshev distance threshold for coarse-AI (Tier 1) monsters.  "
                                "Monsters between the Full AI Radius and this distance use cached "
                                "paths and skip expensive faction queries.  Monsters beyond this "
                                "distance are Tier-2 (macro step only)." ),
-             10, 200, 40 );
+             10, 200, 80 );
         add( "LOD_DEMOTION_COOLDOWN", page_id,
              translate_marker( "Demotion Cooldown" ),
              translate_marker( "Turns a monster must wait after being promoted to a higher-fidelity "
@@ -2471,7 +2471,7 @@ void options_manager::add_options_performance()
         add( "REALITY_BUBBLE_SIZE", page_id,
              translate_marker( "Reality Bubble Size" ),
              translate_marker( "Submap radius of the reality bubble (submaps visible beyond your position). "
-                               "Grid size = 2 × size + 3 submaps per side (size 4 → 11×11, the default). "
+                               "Grid size = 2 × size + 3 submaps per side (size 4 → 11×11, legacy default). "
                                "Maximum player sight range = 12 × (size + 1) tiles.  "
                                "Larger values increase the loaded area and memory usage; "
                                "smaller values reduce both. "
