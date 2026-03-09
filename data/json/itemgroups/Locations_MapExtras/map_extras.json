@@ -153,7 +153,24 @@
     "type": "item_group",
     "subtype": "distribution",
     "id": "map_extra_casings",
-    "entries": [ { "item": "rag_bloody" }, { "item": "cigar_butt" }, { "item": "cig_butt" }, { "item": "can_drink_unsealed" } ]
+    "entries": [ { "group": "map_extra_casings_tank" }, { "group": "map_extra_casings_tank_dummy" } ]
+  },
+  {
+    "type": "item_group",
+    "id": "map_extra_casings_tank",
+    "items": [ [ "105mm_casing", 2 ], [ "120mm_case_base", 3 ] ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "map_extra_casings_tank_dummy",
+    "//": "reproduces the normal results of map_extra_casings itemgroup, since the contents lack weights, the list is short, and the desired chance of spawning artillery casings is low.",
+    "entries": [
+      { "item": "rag_bloody" }, 
+      { "item": "cigar_butt" },
+      { "item": "cig_butt" },
+      { "item": "can_drink" }
+    ]
   },
   {
     "type": "item_group",
