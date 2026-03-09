@@ -381,18 +381,12 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim
         return;
     }
 
-    // Vehicle tracking: remove all vehicles in this submap from the global registry.
+    // Vehicle tracking: remove all vehicles whose home submap matches the unloaded position.
     {
-        const tripoint &p = pos.raw();
-        submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
-        if( sm == nullptr ) {
-            sm = MAPBUFFER_REGISTRY.primary().lookup_submap_in_memory( p );
-        }
-        if( sm != nullptr ) {
-            std::ranges::for_each( sm->vehicles, [&]( const auto & veh_ptr ) {
-                loaded_vehicles.erase( veh_ptr.get() );
-            } );
-        }
+        const tripoint p = pos.raw();
+        std::erase_if( loaded_vehicles, [&]( vehicle *veh ) {
+            return veh->abs_sm_pos.raw() == p;
+        } );
     }
 
     if( !contains_abs_sm( pos ) ) {
@@ -827,15 +821,22 @@ void map::vehmove()
 {
     ZoneScoped;
 
-    // give vehicles movement points
+    // Give vehicles movement points.  Use per-z-level vehicle_list caches
+    // (rebuilt from in-bubble grid submaps during shift) rather than
+    // loaded_vehicles, which can hold stale pointers to evicted submaps.
+    // Out-of-bubble vehicles are handled by batch_turns_vehicle().
     VehicleList vehicle_list;
     {
         ZoneScopedN( "veh_gain_moves" );
-        std::ranges::for_each( loaded_vehicles, [&]( vehicle * veh ) {
-            veh->gain_moves();
-            veh->slow_leak();
-            vehicle_list.push_back( wrapped_vehicle{ .v = veh } );
-        } );
+        const int zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
+        const int zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
+        for( int z = zmin; z <= zmax; ++z ) {
+            for( vehicle *veh : get_cache( z ).vehicle_list ) {
+                veh->gain_moves();
+                veh->slow_leak();
+                vehicle_list.push_back( wrapped_vehicle{ .v = veh } );
+            }
+        }
     }
     TracyPlot( "Vehicles Active", static_cast<int64_t>( vehicle_list.size() ) );
 
@@ -5662,18 +5663,24 @@ std::vector<tripoint> map::check_submap_active_item_consistency()
 void map::process_items()
 {
     ZoneScoped;
-    // Process vehicles across all loaded submaps (not just the reality bubble).
-    // Derive unique submaps from the flat vehicle registry; multiple vehicles can share a submap.
-    // Vehicles first in case they get blown up and drop active items on the map.
-    auto veh_submaps = loaded_vehicles
-    | std::views::transform( [&]( vehicle * veh ) -> submap * {
-        return MAPBUFFER.lookup_submap_in_memory( veh->abs_sm_pos.raw() );
-    } )
-    | std::views::filter( []( submap * sm ) { return sm != nullptr; } )
-    | std::ranges::to<std::set<submap *>>();
-    std::ranges::for_each( veh_submaps, [&]( submap * sm ) {
-        process_items_in_vehicles( *sm );
-    } );
+    // Process vehicle items from in-bubble submaps via per-z-level caches.
+    // Out-of-bubble vehicle items are handled by batch_turns_items().
+    {
+        const int zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
+        const int zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
+        std::set<submap *> veh_submaps;
+        for( int z = zmin; z <= zmax; ++z ) {
+            for( vehicle *veh : get_cache( z ).vehicle_list ) {
+                submap *sm = MAPBUFFER.lookup_submap_in_memory( veh->abs_sm_pos.raw() );
+                if( sm != nullptr ) {
+                    veh_submaps.insert( sm );
+                }
+            }
+        }
+        std::ranges::for_each( veh_submaps, [&]( submap *sm ) {
+            process_items_in_vehicles( *sm );
+        } );
+    }
     // Making a copy, in case the original variable gets modified during `process_items_in_submap`
     // PERF-LOSS-3: the previous I-1 distance cull (radius = MAPSIZE) has been
     // removed.  Items outside the loaded bubble are never in
