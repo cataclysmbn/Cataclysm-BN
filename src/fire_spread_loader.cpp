@@ -14,10 +14,6 @@
 
 fire_spread_loader fire_loader;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 /**
  * Return true if the submap at @p abs_sm_pos in @p mb has at least one live
  * fire field (fd_fire intensity >= 1).
@@ -40,10 +36,6 @@ static bool submap_has_fire( submap &sm )
     }
     return false;
 }
-
-// ---------------------------------------------------------------------------
-// fire_spread_loader public API
-// ---------------------------------------------------------------------------
 
 void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_sm pos )
 {

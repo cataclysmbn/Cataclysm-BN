@@ -4088,7 +4088,7 @@ void submap::store( JsonOut &jsout ) const
     jsout.write( count );
     jsout.end_array();
 
-    // D5: Serialize scent values using RLE (value, count pairs).
+    // Serialize scent values using RLE (value, count pairs).
     // Omitted entirely when all tiles are zero to keep typical saves compact.
     if( std::ranges::any_of( &scent_values[0][0], &scent_values[0][0] + SEEX * SEEY,
     []( int v ) { return v != 0; } ) ) {
@@ -4327,7 +4327,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             }
         }
     } else if( member_name == "scent_values" ) {
-        // D5: Load RLE-encoded scent values (value, count pairs).
+        // Load RLE-encoded scent values (value, count pairs).
         int scent_cell = 0;
         jsin.start_array();
         while( !jsin.end_array() ) {

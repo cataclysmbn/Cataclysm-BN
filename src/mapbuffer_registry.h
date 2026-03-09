@@ -86,9 +86,6 @@ class mapbuffer_registry
 
 extern mapbuffer_registry MAPBUFFER_REGISTRY;
 
-// Backwards-compatibility macro — all existing MAPBUFFER.foo() calls remain valid.
-// Take care with &MAPBUFFER: it expands to &(MAPBUFFER_REGISTRY.primary()) which is
-// legal since primary() returns an lvalue reference, but prefer
-// MAPBUFFER_REGISTRY.primary() directly where the address is really needed.
+// Backwards-compatibility macro — resolves to the primary dimension's mapbuffer.
 // NOLINTNEXTLINE(cata-text-style)
 #define MAPBUFFER ( MAPBUFFER_REGISTRY.primary() )

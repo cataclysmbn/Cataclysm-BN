@@ -439,10 +439,6 @@ void countdown_tile::load( JsonObject &jo )
     jo.read( "ticks", ticks );
 }
 
-// ---------------------------------------------------------------------------
-// grid_link_tile
-// ---------------------------------------------------------------------------
-
 void grid_link_tile::update_internal( time_point, const tripoint_abs_ms &,
                                       distribution_grid & )
 {

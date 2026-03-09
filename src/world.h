@@ -108,19 +108,9 @@ class world
          * lay out files differently, so centralize file placement logic here rather than
          * scattering it throughout the codebase.
          */
-        // ---------------------------------------------------------------------------
         // Dimension-aware overloads.
-        //
-        // Each function accepts an explicit @p dim_id string that selects the save
-        // subdirectory for the given dimension:
-        //   dim_id == ""   → legacy primary path (e.g. "maps/", "o.x.y")
-        //   dim_id != ""   → "dimensions/<dim_id>/maps/", "dimensions/<dim_id>/o.x.y"
-        //
-        // Callers should obtain the dim_id from the owning mapbuffer or overmapbuffer
-        // rather than from the global game state.  This avoids a dependency on the
-        // currently-active player dimension and makes save/load safe when multiple
-        // dimensions are simultaneously in memory.
-        // ---------------------------------------------------------------------------
+        // dim_id == "" → primary path; dim_id != "" → "dimensions/<dim_id>/..." subdir.
+        // Obtain dim_id from the owning buffer, not global state.
 
         bool read_map_quad( const std::string &dim_id, const tripoint &om_addr,
                             file_read_json_fn reader ) const;
@@ -142,12 +132,7 @@ class world
         bool write_player_mm_quad( const std::string &dim_id, const tripoint &p,
                                    file_write_fn writer );
 
-        // ---------------------------------------------------------------------------
-        // Legacy overloads without dim_id — delegate to the dim-aware versions using
-        // g->get_dimension_prefix() for backwards compatibility.  These are retained
-        // only for call sites not yet migrated to the dimension-aware API and MUST NOT
-        // be called from background threads.  Prefer the dim_id overloads above.
-        // ---------------------------------------------------------------------------
+        // Legacy overloads without dim_id — do not call from background threads.
 
         /** @deprecated Use read_map_quad(dim_id, ...) */ // NOLINT(cata-text-style)
         bool read_map_quad( const tripoint &om_addr, file_read_json_fn reader ) const;

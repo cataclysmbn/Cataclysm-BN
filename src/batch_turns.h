@@ -18,19 +18,13 @@ class distribution_grid;
 class submap;
 class vehicle;
 
-// ---------------------------------------------------------------------------
 // Catchup caps — keep these conservative; they limit worst-case load time.
-// ---------------------------------------------------------------------------
 inline constexpr int MAX_CATCHUP_FIELDS  = 100000;
 inline constexpr int MAX_CATCHUP_ITEMS   = 100000;
 inline constexpr int MAX_CATCHUP_VEHICLE = 10000;
 inline constexpr int MAX_CATCHUP_MONSTER = 10000;
 inline constexpr int MAX_CATCHUP_NPC    = 10000;
 inline constexpr int MAX_CATCHUP_GRID   = 50000;
-
-// ---------------------------------------------------------------------------
-// Submap-level batch functions
-// ---------------------------------------------------------------------------
 
 /**
  * Analytically advance field intensity/age in @p sm by @p n turns.

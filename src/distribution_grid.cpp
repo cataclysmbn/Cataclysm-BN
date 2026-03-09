@@ -376,10 +376,8 @@ void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
         const std::string &dim_id )
 {
     ZoneScoped;
-    // Each tracker only manages submaps for its own dimension.  Without this guard,
-    // all registered trackers (primary + each pocket dimension) would receive every
-    // event, causing primary-tracker to insert pocket-dimension coordinates into
-    // tracked_submaps_ and call make_distribution_grid_at() against the wrong mapbuffer.
+    // Each tracker only manages submaps for its own dimension.
+    // Without this, trackers would process events for foreign dimensions.
     if( dim_id != dimension_id_ ) {
         return;
     }
@@ -430,10 +428,7 @@ void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
 
     tracked_submaps_.erase( pos );
 
-    // One OMT spans exactly 4 submaps. When one of the 4 is unloaded, the shared
-    // distribution_grid for that OMT must be invalidated for ALL 4 submaps, not just
-    // the one being removed. Otherwise the other 3 tracked submaps keep stale entries
-    // in parent_distribution_grids pointing to a grid that is being torn down.
+    // One OMT spans 4 submaps; invalidate all 4 to avoid stale grid entries.
     const tripoint_abs_omt omt_pos = project_to<coords::omt>( pos );
     for( const tripoint_abs_sm &smp : get_submaps_for_omt( omt_pos ) ) {
         auto it = parent_distribution_grids.find( smp );

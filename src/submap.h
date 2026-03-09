@@ -236,7 +236,7 @@ class submap : maptile_soa<SEEX, SEEY>
         // ---- Per-submap simulation caches ----
         // Source of truth for game-logic queries on any loaded submap.
         // terrain-derived caches carry a dirty flag.
-        // scent_values is serialized (D5); the other caches are rebuilt on load.
+        // scent_values is serialized; the other caches are rebuilt on load.
 
         float  transparency_cache[SEEX][SEEY] = {};
         bool   outside_cache[SEEX][SEEY]      = {};

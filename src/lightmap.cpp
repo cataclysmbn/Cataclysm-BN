@@ -482,13 +482,9 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
     {
         ZoneScopedN( "generate_lightmap_collect" );
 
-        // Per-smx deferred accumulators for operations that write to arbitrary lm positions.
-        // apply_directional_light (window boundary logic) and apply_light_arc (directional item
-        // lights) do full shadowcasts — unsafe to call concurrently from multiple threads since
-        // they write to lm at positions across the entire map.  All other per-tile operations
-        // write exclusively to lm[p] or light_source_buffer[p] (unique per tile per smx column)
-        // and are safe to run in parallel.  Deferred calls are merged and applied serially after
-        // the parallel pass to preserve correctness.
+        // Per-smx deferred accumulators for light operations that write across the map.
+        // apply_directional_light and apply_light_arc are unsafe to run concurrently;
+        // they are collected here and applied serially after the parallel pass.
         struct dir_light_def {
             tripoint p;
             int direction;
@@ -796,15 +792,10 @@ map::apparent_light_info map::apparent_light_helper( const level_cache &map_cach
     const float vis = std::max( map_cache.seen_cache[map_cache.idx( p.x, p.y )],
                                 map_cache.camera_cache[map_cache.idx( p.x, p.y )] );
     // Use g_visible_threshold which scales with g_max_view_distance.
-    // This replaces the old hardcoded 0.1 (which assumed g_max_view_distance=60).
     const bool obstructed = vis <= LIGHT_TRANSPARENCY_SOLID + g_visible_threshold;
 
-    // Scale vis so that the LIT/LOW transition happens at g_max_view_distance instead of 60.
-    // The raw vis decays as 1/exp(t*d) where t=LIGHT_TRANSPARENCY_OPEN_AIR, reaching 0.1 at d=60.
-    // By raising vis to the power (60/g_max_view_distance), we stretch the decay curve so that
-    // the same proportional falloff occurs over g_max_view_distance tiles instead of 60.
-    // Formula derivation: if vis = 1/exp(t*d), then vis^(60/g_max) = 1/exp(t*d*60/g_max),
-    // which equals 0.1 when d = g_max_view_distance.
+    // Scale vis so the LIT/LOW transition happens at g_max_view_distance instead of 60.
+    // vis^(60/g_max) stretches the 1/exp(t*d) decay curve to match the current bubble size.
     const float scale_factor = 60.0f / static_cast<float>( g_max_view_distance );
     const float scaled_vis = ( vis > 0.0f ) ? std::pow( vis, scale_factor ) : 0.0f;
 

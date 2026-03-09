@@ -107,7 +107,7 @@ class submap_stream
         /**
          * Returns true if there are any in-flight background load tasks.
          * Used by debug assertions to verify flush_all() was called before
-         * any main-thread mutation of mapbuffer::submaps.  See F2-1.
+         * any main-thread mutation of mapbuffer::submaps.
          */
         bool has_pending() const {
             return !pending_.empty();

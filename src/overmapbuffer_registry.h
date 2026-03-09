@@ -54,9 +54,6 @@ extern std::string g_active_dimension_id;
  */
 overmapbuffer &get_active_overmapbuffer();
 
-// Backwards-compatibility macro: previously expanded to get_primary_overmapbuffer().
-// Now expands to get_active_overmapbuffer() so that all overmap_buffer.* call sites
-// automatically resolve to the correct dimension without any per-call changes.
-// When g_active_dimension_id == "" (the default), behaviour is identical to primary.
+// Backwards-compatibility macro — resolves to the active dimension's overmapbuffer.
 // NOLINTNEXTLINE(cata-text-style)
 #define overmap_buffer ( get_active_overmapbuffer() )

@@ -195,7 +195,7 @@ standard_npc::standard_npc( const std::string &name, const tripoint &pos,
                             int sk_lvl, int s_str, int s_dex, int s_int, int s_per )
 {
     this->name = name;
-    // Resolve tripoint_min sentinel to the runtime bubble center (see F1-1).
+    // Resolve tripoint_min sentinel to the runtime bubble center.
     position = ( pos == tripoint_min )
                ? tripoint( g_half_mapsize_x, g_half_mapsize_y, 0 )
                : pos;

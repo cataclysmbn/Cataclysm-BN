@@ -585,13 +585,8 @@ void pixel_minimap::draw( const SDL_Rect &screen_rect, const tripoint &center )
     total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) *SEEY };
 
     // view_tiles_count is the geographic tile grid the projector and renderer use.
-    // The two cases are handled separately to avoid them fighting each other:
-    //
-    // Large bubble (> 60-tile radius): clip to screen/2 so tile_size >= 2, giving
-    //   a 1-pixel gap between dots. Outer bubble tiles are simply not rendered.
-    //
-    // Small bubble (<= 60-tile radius): show screen/3 tiles at tile_size >= 3,
-    //   giving a 2-pixel gap. The bubble is centered and out-of-bubble area is black.
+    // Large bubble: clip to screen/2 (tile_size >= 2); small bubble: screen/3 (tile_size >= 3).
+    // Out-of-bubble area is rendered as black.
     constexpr auto min_view_radius = 60;
     constexpr auto min_view_diameter = 2 * min_view_radius;
     view_tiles_count = {

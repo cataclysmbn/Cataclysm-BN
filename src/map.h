@@ -337,11 +337,8 @@ struct level_cache {
     // completes.  Allows repeated draws within the same turn (animations, UI refreshes)
     // to skip the full visibility rebuild when nothing has changed.
     bool visibility_cache_dirty = true;
-    // True when every tile in transparency_cache equals LIGHT_TRANSPARENCY_OPEN_AIR
-    // AND no tile on this level has a floor.  Used by cast_zlight to skip
-    // per-tile transparency/floor reads for pure-air z-levels (e.g. above ground).
-    // Transparency component set by build_transparency_cache; floor component
-    // incorporated after build_floor_cache via has_any_floor.
+    // True when all tiles are open-air transparent and no floor exists.
+    // Used by cast_zlight to skip per-tile reads for pure-air z-levels.
     bool all_transparent = true;
     // Set by build_floor_cache; true when at least one tile has a floor.
     bool has_any_floor = true;
@@ -488,10 +485,6 @@ class map : public submap_load_listener
          * Returns the full bounds structure for secondary world capture.
          */
         std::optional<dimension_bounds> get_dimension_bounds() const;
-
-        // ----------------------------------------------------------------
-        // Dimension binding (for mapbuffer_registry / submap_load_manager)
-        // ----------------------------------------------------------------
 
         /**
          * Return the dimension ID this map is currently bound to.
@@ -2031,10 +2024,7 @@ class map : public submap_load_listener
         vision_adjustment vision_transparency_cache[8] = { VISION_ADJUST_NONE };
 
         // Pre-computed 1/exp(t*i) table for the current weather transparency.
-        // Written once serially by update_weather_transparency_lookup() before
-        // any parallel shadowcasting calls; passed as weather_lookup to
-        // castLightAll / castLightOctants_q so the fast path can match weather
-        // transparency the same way it matches open-air transparency.
+        // Written serially before parallel shadowcasting calls.
         exp_lookup weather_lookup_{ LIGHT_TRANSPARENCY_OPEN_AIR * 1.1f };
 
         /**

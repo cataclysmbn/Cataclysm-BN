@@ -31,7 +31,7 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
                 return;
             }
         }
-        // Capacity cap (F2-3): drop the new request rather than growing the queue
+        // Capacity cap: drop the new request rather than growing the queue
         // without bound.  The main thread falls back to synchronous loadn() if
         // the submap is actually needed before a worker delivers it.
         if( pending_.size() >= MAX_PENDING_LOADS ) {
@@ -49,28 +49,23 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
         ZoneText( dim.c_str(), dim.size() );
         mapbuffer &mb = MAPBUFFER_REGISTRY.get( dim );
 
-        // Step 1: early-out — submap already present (concurrent read, no lock needed).
+        // Early-out — submap already present (concurrent read, no lock needed).
         if( submap *existing = mb.lookup_submap_in_memory( pos.raw() ) )
         {
             return existing;
         }
 
-        // Step 2: try to load from disk.  Concurrent disk reads across workers
+        // Try to load from disk.  Concurrent disk reads across workers
         // are safe; mapbuffer::load_submap() is internally synchronised.
         if( submap *sm = mb.load_submap( pos ) )
         {
             return sm;
         }
 
-        // Step 3: no disk file — fall back to tinymap generation.
-        //
-        // Per-OMT synchronisation: only workers colliding on the same OMT
-        // position block each other.  Workers for different OMTs run fully
-        // concurrently.  A colliding worker waits on gen_in_progress_cv_ until
-        // the owner signals completion, then re-checks the mapbuffer.
-        //
-        // Note: generation rounds down to the 2×2 OMT-aligned submap quad
-        // origin, matching the same rounding that map::loadn() applies.
+        // No disk file — fall back to tinymap generation.
+        // Per-OMT synchronisation via gen_in_progress_ ensures only one worker
+        // generates each OMT at a time; others wait and re-check the mapbuffer.
+        // Generation rounds down to the 2x2 OMT-aligned submap quad origin.
         const tripoint_abs_omt abs_omt( sm_to_omt_copy( pos.raw() ) );
         const tripoint abs_rounded = omt_to_sm_copy( abs_omt.raw() );
 
@@ -134,21 +129,10 @@ void submap_stream::drain_completed( map &m,
     }
 
     // Second pass: non-blocking drain of all futures that are ready right now.
-    // NOTE: we intentionally do NOT call m.on_submap_loaded() here.
-    //
-    // The streamer only ever pre-loads positions for the NEXT shift's new edge
-    // (one step ahead of the current view).  drain_completed() is called at the
-    // START of shift(), before the grid-copy loop that moves existing submaps
-    // and before loadn() fills the new-edge slots.  Calling on_submap_loaded()
-    // at this point writes the new-edge submap into grid[0] (or grid[MAPSIZE-1])
-    // using the already-updated abs_sub.  The copy loop then reads grid[0] and
-    // propagates it to grid[1], making two adjacent slots share the same submap
-    // pointer — producing the visible "left and right halves of the OMT are
-    // identical" duplication bug on every movement step.
-    //
-    // The submap is already in MAPBUFFER after the worker completes.  loadn()
-    // finds it there on the fast in-memory path and calls setsubmap() correctly.
-    // No grid update is needed here.
+    // We do NOT call m.on_submap_loaded() here — the submap is already in
+    // MAPBUFFER and loadn() will find it on the fast in-memory path.
+    // Calling on_submap_loaded() before shift()'s grid-copy loop would alias
+    // adjacent grid slots, producing a duplication bug.
     pending_.erase(
     std::remove_if( pending_.begin(), pending_.end(), [&]( pending_load & p ) {
         if( p.future.wait_for( std::chrono::seconds( 0 ) ) != std::future_status::ready ) {

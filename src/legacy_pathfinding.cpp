@@ -33,9 +33,7 @@ enum astar_state {
 };
 
 // Turns two coordinates into an index into the 1D backing array.
-// stride_y is the total tile height of the loaded map (g_mapsize_y = SEEY * g_mapsize).
-// The compile-time MAPSIZE_Y stride has been replaced
-// by a runtime value stored in path_data_layer::stride_y.
+// stride_y is the total tile height of the loaded map.
 static int flat_index( const tripoint &p, int stride_y )
 {
     return ( p.x * stride_y ) + p.y;

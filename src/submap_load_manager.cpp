@@ -17,10 +17,6 @@
 
 submap_load_manager submap_loader;
 
-// ---------------------------------------------------------------------------
-// request management
-// ---------------------------------------------------------------------------
-
 load_request_handle submap_load_manager::request_load(
     load_request_source source,
     const std::string &dim_id,
@@ -56,10 +52,6 @@ void submap_load_manager::release_load( load_request_handle handle )
     requests_.erase( handle );
 }
 
-// ---------------------------------------------------------------------------
-// load shape cache
-// ---------------------------------------------------------------------------
-
 auto submap_load_manager::update_load_shape( int radius ) -> void
 {
     const auto axis = std::views::iota( -radius, radius + 1 );
@@ -71,10 +63,6 @@ auto submap_load_manager::update_load_shape( int radius ) -> void
                    | std::views::transform( to_point );
     bubble_offsets_.assign( offsets.begin(), offsets.end() );
 }
-
-// ---------------------------------------------------------------------------
-// desired-set computation
-// ---------------------------------------------------------------------------
 
 std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_set() const
 {
@@ -112,10 +100,6 @@ std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_
     return desired;
 }
 
-// ---------------------------------------------------------------------------
-// update
-// ---------------------------------------------------------------------------
-
 void submap_load_manager::update()
 {
     ZoneScoped;
@@ -135,14 +119,9 @@ void submap_load_manager::update()
         }
     }
 
-    // Dispatch all new quad disk reads to the thread pool in parallel.
-    // mapbuffer::preload_quad() performs the slow I/O phase outside its internal
-    // lock, allowing different quads to be read concurrently.  After all futures
-    // complete, every newly-desired submap that existed on disk is resident.
-    // Submaps without a disk file are generated asynchronously by submap_stream
-    // workers via submap_streamer.request_load() (called in map::shift()).  Those
-    // workers use tinymap::bind_dimension() and get_overmapbuffer(dim) so no
-    // global state is read at worker-thread execution time.
+    // Dispatch new quad disk reads to the thread pool in parallel.
+    // preload_quad() runs I/O outside its lock; different quads read concurrently.
+    // Submaps without a disk file are generated asynchronously by submap_stream workers.
     std::vector<std::future<void>> load_futures;
     load_futures.reserve( new_quads.size() );
     for( const auto &[dim_id, om_addr] : new_quads ) {
@@ -233,10 +212,6 @@ void submap_load_manager::update()
     prev_desired_ = std::move( new_desired );
 }
 
-// ---------------------------------------------------------------------------
-// query helpers
-// ---------------------------------------------------------------------------
-
 bool submap_load_manager::is_requested( const std::string &dim_id,
                                         const tripoint_abs_sm &pos ) const
 {
@@ -285,17 +260,10 @@ auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load
     return { view.begin(), view.end() };
 }
 
-// ---------------------------------------------------------------------------
-// flush_prev_desired
-// ---------------------------------------------------------------------------
-
 void submap_load_manager::flush_prev_desired()
 {
     prev_desired_.clear();
 }
-
-// listener management
-// ---------------------------------------------------------------------------
 
 void submap_load_manager::add_listener( submap_load_listener *listener )
 {

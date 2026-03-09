@@ -853,15 +853,8 @@ int Character::sight_range( int light_level ) const
 
 auto Character::unimpaired_range() const -> int
 {
-    // Cap at g_max_view_distance (runtime bubble radius in tiles) to produce
-    // a circular visible area.  castLight uses g_max_view_distance as its
-    // row-distance limit (lightmap.cpp, castLight() radius line), so diagonal
-    // tiles at the corners of the loaded grid can be up to
-    // g_max_view_distance*sqrt(2) tiles away from the player.  Using the
-    // compile-time MAX_VIEW_DISTANCE (sized for the largest possible bubble)
-    // lets those corner tiles pass the apparent_light_at distance check for
-    // smaller bubble sizes, producing a square visible-area artifact.
-    // g_max_view_distance gives the tight circular cutoff.
+    // Cap at g_max_view_distance (runtime bubble radius) so castLight's
+    // row-distance limit produces a circular — not square — visible area.
     return std::min( sight_max, g_max_view_distance );
 }
 

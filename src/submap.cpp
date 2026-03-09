@@ -546,9 +546,6 @@ void submap::rotate( int turns )
     transformer_last_run = rot_transformer_last_run;
 }
 
-// ---------------------------------------------------------------------------
-// Per-submap cache rebuild methods
-// ---------------------------------------------------------------------------
 
 auto submap::rebuild_outside_cache( const map &m, tripoint grid_pos ) -> void
 {

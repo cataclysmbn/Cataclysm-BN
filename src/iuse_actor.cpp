@@ -6414,8 +6414,6 @@ std::unique_ptr<iuse_actor> iuse_reveal_contents::clone() const
     return std::make_unique<iuse_reveal_contents>( *this );
 }
 
-// -------------------
-
 void iuse_flowerpot_plant::load( const JsonObject &jo )
 {
     jo.read( "stages", stages );
@@ -6868,8 +6866,6 @@ auto iuse_flowerpot_plant::empty_pot_selector( const item &it ) -> bool
     return info.stage() ==        empty;
 }
 
-// -------------------
-
 void iuse_flowerpot_collect::load( const JsonObject & )
 {
 
@@ -7032,8 +7028,6 @@ auto iuse_flowerpot_collect::clone() const -> std::unique_ptr<iuse_actor>
     return std::make_unique<iuse_flowerpot_collect>( *this );
 }
 
-// -------------------
-
 std::unique_ptr<iuse_actor> iuse_dimension_travel::clone() const
 {
     return std::make_unique<iuse_dimension_travel>( *this );
@@ -7129,10 +7123,6 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
     }
     g->travel_to_dimension( target_dim_id, destination, std::nullopt, load_pos );
 }
-
-// -------------------
-// iuse_pocket_dimension
-// -------------------
 
 std::unique_ptr<iuse_actor> iuse_pocket_dimension::clone() const
 {
@@ -7348,9 +7338,6 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
         };
     }
 
-    // Travel to the pocket dimension, passing bounds, destination position,
-    // and the pre-load callback to place the overmap special before map generation.
-    // The display name is stored in dimension_info.display_name via travel_to_dimension().
     g->travel_to_dimension( pd->dimension_id, pd->world_type, bounds, dest_sm, pre_load );
 
     // Teleport player to entry point

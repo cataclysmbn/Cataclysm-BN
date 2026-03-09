@@ -132,7 +132,7 @@ void game::serialize( std::ostream &fout )
 
     // Serialize all tracked dimension metadata so kept (non-active) pocket dimensions
     // retain their bounds, origin, and parent chain across save/load.  Without this,
-    // only the current dimension's info is reconstructed after reload.  See F3-2.
+    // only the current dimension's info is reconstructed after reload.
     json.member( "loaded_dimensions" );
     json.start_array();
     std::ranges::for_each( loaded_dimensions_, [&]( const auto & kv ) {
@@ -271,7 +271,7 @@ void game::unserialize( std::istream &fin )
 
         // Restore all dimension metadata.  The current dimension is also included
         // in this array, so the explicit reconstruction below becomes a fallback
-        // for old saves that don't have the "loaded_dimensions" key.  See F3-2.
+        // for old saves that don't have the "loaded_dimensions" key.
         loaded_dimensions_.clear();
         if( data.has_array( "loaded_dimensions" ) ) {
             for( JsonObject dim_data : data.get_array( "loaded_dimensions" ) ) {

@@ -231,15 +231,8 @@ void map::generate( const tripoint &p, const time_point &when )
     }
 
     // Run the Lua on_mapgen_postprocess hook.
-    //
-    // On the main thread: run immediately — the tinymap's grid still points
-    // to the same submap objects now in the mapbuffer, so any modifications
-    // the hook makes are automatically persisted.
-    //
-    // On a worker thread: Lua is not thread-safe, so defer the hook to the
-    // main thread.  map::shift() drains the queue after drain_completed() and
-    // runs each hook by loading the saved submaps from the mapbuffer into a
-    // fresh tinymap.  The same submap objects are modified in place.
+    // Main thread: run immediately.  Worker thread: defer (Lua is not thread-safe).
+    // map::shift() drains deferred hooks after drain_completed().
     const tripoint_abs_omt omt_pos( sm_to_omt_copy( p ) );
     if( is_pool_worker_thread() ) {
         push_deferred_mapgen_hook( { bound_dimension_, omt_pos, when } );

@@ -166,10 +166,8 @@ static level_cache        nullcache;         // Dummy cache for z-levels outside
 
 bool disable_mapgen = false;
 
-// Thread-local context stack for get_map().  Null means "use the global g->m."
-// Each thread manages its own pointer independently; worker threads never push
-// a context, so they always fall through to g->m (which they should not be
-// calling get_map() on in any case).
+// Thread-local context for get_map().  Null means "use the global g->m."
+// Worker threads never push a context, so they always fall through to g->m.
 static thread_local map *tl_map_context = nullptr;
 
 map &get_map()
@@ -241,10 +239,8 @@ map &map::operator=( map && )  noexcept = default;
 
 auto map::resize( int new_mapsize ) -> void
 {
-    // Clear any stale pointers before reallocating.  Called at app startup
-    // (game::setup()) and from game::start_game() before the first load_map().
-    // grid.assign() below overwrites everything, so this is just a safety
-    // barrier against accidentally dereferencing any old pointers.
+    // Clear any stale pointers before reallocating — safety barrier against
+    // dereferencing old pointers before grid.assign() overwrites everything.
     std::fill( grid.begin(), grid.end(), nullptr );
     my_MAPSIZE = new_mapsize;
     const auto grid_sz = static_cast<size_t>(
@@ -364,12 +360,8 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
                          ? ( lx + ly * my_MAPSIZE ) * OVERMAP_LAYERS + ( p.z + OVERMAP_HEIGHT )
                          : lx + ly * my_MAPSIZE;
     if( grid_idx >= 0 && grid_idx < static_cast<int>( grid.size() ) ) {
-        // Look in the dimension's own registry slot first.
-        // Active submaps for non-primary dimensions may still live in the primary
-        // slot (MAPBUFFER) when generate() or restore_to_primary() placed them
-        // there before bind_dimension() moved the logical owner to this slot.
-        // Fall back to primary so we never overwrite a valid grid pointer with
-        // nullptr — loadn() may have already set the slot correctly via setsubmap().
+        // Look in the dimension's own registry slot first; fall back to the
+        // primary slot so we never overwrite a valid grid pointer with nullptr.
         submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
         if( sm == nullptr ) {
             sm = MAPBUFFER_REGISTRY.primary().lookup_submap_in_memory( p );
@@ -1713,10 +1705,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     }
 
     // Stop the vehicle if its destination submap is not loaded.
-    // After D0, map queries return t_null / move_cost 0 for unloaded submaps,
-    // so vehicles naturally stop at unloaded-submap edges through the collision
-    // code.  This guard is a safety net for cases where act_on_map already
-    // consumed the movement allowance before the collision check fired.
+    // Safety net for cases where act_on_map consumed movement before collision fired.
     if( dst_submap == nullptr ) {
         veh.stop();
         dbg( DL::Error ) << "map::displace_vehicle: dst submap not loaded, stopping vehicle dp=" << dp;
@@ -8158,12 +8147,9 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
     const tripoint grid_abs_sub = abs_sub.xy() + grid;
     const size_t gridn = get_nonant( grid );
 
-    // For out-of-bounds areas in bounded dimensions, use uniform boundary terrain submaps
-    // instead of nullptr, to prevent null submap access crashes in grid iteration code.
-    // IMPORTANT: We check the in-memory submap map directly instead of calling
-    // MAPBUFFER.lookup_submap(), because lookup_submap() queries the SQLite database
-    // on cache miss. For pocket dimensions, ~2400 of ~2541 submaps are out-of-bounds,
-    // so avoiding those DB queries is a major performance win.
+    // For out-of-bounds areas in bounded dimensions, use uniform boundary terrain
+    // submaps instead of nullptr.  We check in-memory only (no DB lookup) because
+    // most pocket-dimension submaps are out-of-bounds.
     if( current_bounds_ && !current_bounds_->contains( tripoint_abs_sm( grid_abs_sub ) ) ) {
         mapbuffer &dim_buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
         submap *bsub = dim_buf.lookup_submap_in_memory( grid_abs_sub );
@@ -8291,14 +8277,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
 
     // Batch-advance field decay, item timers, and vehicle power for any
     // turns this submap missed while outside the reality bubble.
-    // This runs BEFORE actualize() so that the two passes target disjoint effects:
-    //   - run_submap_batch_turns: field half-life decay, item explicit-turn timers,
-    //     vehicle net battery charge.  Does NOT update last_touched.
-    //   - actualize(): rot/spoilage, funnels, plant growth, cosmetic field ageing.
-    //     Uses the PRE-catchup last_touched (i.e. the original stale timestamp).
-    // The potential overlap: decay_cosmetic_fields() in actualize() may process
-    // cosmetic fields that batch_turns_field() already aged.  This is harmless
-    // because cosmetic fields lack a half-life (batch_turns_field skips them).
+    // Runs BEFORE actualize(); the two passes target disjoint effects.
     if( tmpsub->last_touched < calendar::turn ) {
         const int missed = to_turns<int>( calendar::turn - tmpsub->last_touched );
         run_submap_batch_turns( *tmpsub, missed );
@@ -9636,13 +9615,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 
     {
         ZoneScopedN( "Phase1_outside_transparency" );
-        // Serial over z-levels so each function runs on the main thread.
-        // build_outside_cache and build_transparency_cache use an intra-z
-        // parallel_for over smx columns guarded by !is_pool_worker_thread().
-        // Keeping this loop serial ensures that guard never fires, so the smx
-        // parallelism is always active.  Running them inside Phase1_parallel_caches
-        // (parallel over z-levels) would make every call land on a worker thread,
-        // silently disabling the smx parallel_for via the deadlock guard.
+        // Serial over z-levels: these caches use intra-z parallel_for guarded by
+        // !is_pool_worker_thread().  Running them inside the parallel-over-z block
+        // would silently disable that inner parallelism.
         for( int z = minz; z <= maxz; ++z ) {
             build_outside_cache( z );
             build_transparency_cache( z );
@@ -9760,29 +9735,23 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 // Multiple dirty levels: hoist shared initialization outside the
                 // parallel loop so worker threads never race on cross-level writes.
                 //
-                // Step 1: Clear sm, light_source_buffer, and lm for every dirty level.
-                // lm must be explicitly zeroed here: build_sunlight_cache only writes
-                // outdoor tiles, leaving interior cells with stale values from last
-                // turn (e.g., a removed torch would leave a ghost-light patch).
+                // Clear sm, light_source_buffer, and lm for every dirty level.
+                // lm must be zeroed because build_sunlight_cache only writes outdoor tiles.
                 for( const int z : dirty_seen_cache_levels ) {
                     auto &c = get_cache( z );
                     std::fill( c.sm.begin(), c.sm.end(), 0.0f );
                     std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
                     std::fill( c.lm.begin(), c.lm.end(), four_quadrants( 0.0f ) );
                 }
-                // Step 2: Build sunlight (writes lm for ALL z-levels, top-to-bottom;
-                // must run once and serially before the parallel loop).
+                // Build sunlight (all z-levels, top-to-bottom; serial).
                 build_sunlight_cache( zlev );
-                // Step 3: Apply character/NPC lights (each writes to its own z-level;
-                // done serially here so workers don't race on the same level's caches).
+                // Apply character/NPC lights serially to avoid racing on per-level caches.
                 apply_character_light( get_player_character() );
                 for( npc &guy : g->all_npcs() ) {
                     apply_character_light( guy );
                 }
-                // Step 3b: Apply monster lights serially.  g->all_monsters() iterates
-                // weak_ptr_fast (std::__weak_ptr<T,_S_single>) whose refcount is non-atomic;
-                // calling lock() from worker threads is a data race.  apply_light_source()
-                // uses get_cache(p.z) so each monster writes to its own z-level's buffer.
+                // Apply monster lights serially (all_monsters() uses non-atomic weak_ptr_fast
+                // refcounts, so iterating from worker threads would be a data race).
                 for( monster &critter : g->all_monsters() ) {
                     if( critter.is_hallucination() ) {
                         continue;
@@ -9797,15 +9766,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                         }
                     }
                 }
-                // Step 4: Generate per-level dynamic lighting in parallel.
-                // skip_shared_init=true: each worker skips the shared-init steps above
-                // and only processes entities whose position z matches its own level.
-                //
-                // Pre-warm the vehicle list cache once, serially, before workers
-                // enter generate_lightmap().  get_vehicles() writes last_full_vehicle_list
-                // when the dirty flag is set; multiple threads racing on that write
-                // corrupts the allocator heap metadata.  After this call the flag is
-                // cleared and all workers will only read the cached list — safe.
+                // Generate per-level dynamic lighting in parallel.
+                // skip_shared_init=true: workers only process entities on their own z-level.
+                // Pre-warm the vehicle list cache serially to avoid heap corruption
+                // from concurrent writes to last_full_vehicle_list.
                 get_vehicles();
                 parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
                     generate_lightmap( dirty_seen_cache_levels[i], /*skip_shared_init=*/true );
@@ -9937,11 +9901,8 @@ tinymap::tinymap( int mapsize, bool zlevels )
 
 void tinymap::drain_to_mapbuffer( mapbuffer &dest )
 {
-    // complete: tinymap::generate() calls loadn() which uses
-    // MAPBUFFER_REGISTRY.get(bound_dimension_), so generated submaps land directly in
-    // the correct registry slot for all dimensions when the caller binds the tinymap
-    // to the target dimension via bind_dimension() before calling generate().
-    // This function is now a true no-op.
+    // No-op: generate() via loadn() already places submaps in the correct
+    // registry slot for the bound dimension.
     ( void )dest;
 }
 

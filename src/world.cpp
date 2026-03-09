@@ -477,21 +477,10 @@ int64_t world::commit_save_tx()
  * DOMAIN SPECIFIC: MAP
  */
 
-// ---------------------------------------------------------------------------
-// Path helpers — dimension-aware
-//
-// Primary dimension (dim_id == ""):
-//   maps/<seg_x>.<seg_y>.<seg_z>/<om_x>.<om_y>.<om_z>.map      (submap quads)
-//   o.<x>.<y>                                                    (overmap terrain)
-//   .seen.<x>.<y>                                               (player visibility)
-//   <x>.<y>.<z>.mmr                                             (map memory)
-//
-// Non-primary dimension (dim_id != ""):
-//   dimensions/<dim_id>/maps/<seg_x>.<seg_y>.<seg_z>/...        (submap quads)
-//   dimensions/<dim_id>/o.<x>.<y>                               (overmap terrain)
-//   dimensions/<dim_id>/.seen.<x>.<y>                           (player visibility)
-//   dimensions/<dim_id>/<x>.<y>.<z>.mmr                         (map memory)
-// ---------------------------------------------------------------------------
+// Path helpers — dimension-aware.
+// Primary dimension (dim_id == ""): maps/<seg>/..., o.<x>.<y>, .seen.<x>.<y>, <x>.<y>.<z>.mmr
+// Non-primary (dim_id != ""):      dimensions/<dim_id>/maps/<seg>/..., etc.
+// dim_prefix_path() prepends "dimensions/<dim_id>/" when dim_id is non-empty.
 
 static std::string dim_prefix_path( const std::string &dim_id )
 {
@@ -531,10 +520,6 @@ static std::string get_mm_filename( const std::string &dim_id, const tripoint &p
     return string_format( "%s%d.%d.%d.mmr", dim_prefix_path( dim_id ), p.x, p.y, p.z );
 }
 
-// ---------------------------------------------------------------------------
-// Dimension-aware map quad functions
-// ---------------------------------------------------------------------------
-
 bool world::read_map_quad( const std::string &dim_id, const tripoint &om_addr,
                            file_read_json_fn reader ) const
 {
@@ -571,10 +556,6 @@ bool world::write_map_quad( const std::string &dim_id, const tripoint &om_addr,
         return write_to_file( quad_path, writer );
     }
 }
-
-// ---------------------------------------------------------------------------
-// Dimension-aware overmap functions
-// ---------------------------------------------------------------------------
 
 bool world::overmap_exists( const std::string &dim_id, const point_abs_om &p ) const
 {
@@ -634,10 +615,6 @@ bool world::write_overmap_player_visibility( const std::string &dim_id, const po
     }
 }
 
-// ---------------------------------------------------------------------------
-// Dimension-aware map memory functions
-// ---------------------------------------------------------------------------
-
 bool world::read_player_mm_quad( const std::string &dim_id, const tripoint &p,
                                  file_read_json_fn reader )
 {
@@ -650,10 +627,7 @@ bool world::read_player_mm_quad( const std::string &dim_id, const tripoint &p,
     }
 }
 
-// ---------------------------------------------------------------------------
-// Legacy overloads — delegate to dim-aware versions using g->current_dimension_id_.
-// Retained for call sites not yet migrated.  Do not call from background threads.
-// ---------------------------------------------------------------------------
+// Legacy overloads — do not call from background threads.
 
 static std::string legacy_dim_id()
 {

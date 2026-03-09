@@ -220,11 +220,9 @@ class computer;
 
 #define dbg(x) DebugLogFL((x),DC::Game)
 
-// ---------------------------------------------------------------------------
 // Runtime reality-bubble configuration globals (declared in game_constants.h).
 // Initialised by init_bubble_config() from the REALITY_BUBBLE_SIZE option.
 // Defaults match size=4 (player-facing radius), which reproduces the original 11×11 submap grid.
-// ---------------------------------------------------------------------------
 int g_reality_bubble_size = 4;
 int g_half_mapsize = 5;
 int g_mapsize = 11;
@@ -243,12 +241,8 @@ static void init_bubble_config()
 {
     const int size = get_option<int>( "REALITY_BUBBLE_SIZE" );
     g_reality_bubble_size = size;
-    // g_half_mapsize is the radius in submaps from the center to any edge.
-    // "size" is the player-visible radius (submaps beyond the center); the center
-    // submap itself is the implied +1.
-    // Formula: for REALITY_BUBBLE_SIZE=4 → radius=5, grid=11×11 submaps (default).
-    //          for REALITY_BUBBLE_SIZE=8 → radius=9, grid=19×19 submaps.
-    //          for REALITY_BUBBLE_SIZE=16 → radius=17, grid=35×35 submaps (max).
+    // g_half_mapsize = size + 1 (the center submap is the implied +1).
+    // Formula: radius = size+1, grid = (2*radius+1)^2 submaps.
     g_half_mapsize        = size + 1;
     g_mapsize             = 2 * g_half_mapsize + 1;
     g_mapsize_x           = SEEX * g_mapsize;
@@ -390,11 +384,8 @@ game::game() :
     // Force thread pool startup before first turn to avoid a latency spike.
     get_thread_pool();
 
-    // Create the primary dimension's grid tracker and register it as a listener
-    // with the submap load manager so it receives per-submap events.
-    // The primary dimension key is "" (mapbuffer_registry::PRIMARY_DIMENSION_ID).
-    // MAPBUFFER == MAPBUFFER_REGISTRY.primary() — correct for this initialization;
-    // trackers for other dimensions are constructed lazily on first use.
+    // Create the primary dimension's grid tracker (key ""); other dimensions
+    // are constructed lazily on first use.
     grid_trackers_[""] = std::make_unique<distribution_grid_tracker>( MAPBUFFER, "" );
     submap_loader.add_listener( grid_trackers_[""].get() );
 
@@ -658,23 +649,14 @@ void game::load_map( const tripoint &pos_sm, const bool pump_events )
 void game::load_map( const tripoint_abs_sm &pos_sm,
                      const bool pump_events )
 {
-    // Determine the target dimension and bind the map BEFORE calling m.load().
-    // loadn() uses bound_dimension_ to select the MAPBUFFER_REGISTRY slot for
-    // both submap lookups and generation (tinymap + generate_uniform).  If
-    // bind_dimension() were called after m.load(), generated submaps would land
-    // in the primary slot while on_submap_loaded() later looks in the dimension
-    // slot — finding nothing — and overwrites every grid pointer with nullptr.
+    // Bind the map to the target dimension BEFORE m.load() so loadn() uses the
+    // correct MAPBUFFER_REGISTRY slot for submap lookups and generation.
     const std::string new_dim_id = get_dimension_prefix();
     const std::string old_dim_id = m.get_bound_dimension();
 
-    // If the dimension has changed, release the old reality-bubble request now,
-    // before the map is rebound and before m.load() fires loadn() events.
-    // Also flush prev_desired_ so that update() does not evict freshly-generated
-    // submaps for the new dimension: the eviction pass compares against the old
-    // desired set keyed by old dim_id, which now overlaps in coordinate space with
-    // newly-generated submaps stored in the primary slot for the new dimension.
-    // Without this flush, unload_quad() frees those submaps while m.grid still
-    // holds raw pointers to them (use-after-free crash in field::begin()).
+    // If the dimension has changed, release the old reality-bubble request and
+    // flush prev_desired_ so update() does not evict freshly-generated submaps
+    // for the new dimension (use-after-free via stale m.grid pointers).
     if( reality_bubble_handle_ != 0 && new_dim_id != old_dim_id ) {
         submap_loader.release_load( reality_bubble_handle_ );
         reality_bubble_handle_ = 0;
@@ -1270,8 +1252,7 @@ void game::unload_npcs()
 
 void game::on_submap_loaded( const tripoint_abs_sm &/*pos*/, const std::string &/*dim_id*/ )
 {
-    // NPC activation for the reality bubble is driven by load_npcs().
-    // Out-of-bubble activation will be handled there once non_bubble_requests() integration lands.
+    // TODO: activate out-of-bubble NPCs once non_bubble_requests() integration lands.
 }
 
 void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*dim_id*/ )
@@ -1290,11 +1271,7 @@ void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*
     } );
     std::erase_if( active_npc, in_evicted );
 
-    // Monster eviction: deferred until pos_abs is kept current for active critter_tracker
-    // monsters.  Currently all active monsters are in the reality bubble; non-bubble
-    // monster activation (game::on_submap_loaded) is not yet implemented.  When that
-    // lands, iterate all_monsters() here using critter.pos_abs to identify monsters on
-    // the evicted submap and call despawn_monster() on them.
+    // TODO: evict monsters from unloaded submaps once on_submap_loaded monster activation lands.
 }
 
 void game::reload_npcs()
@@ -1653,9 +1630,7 @@ bool game::cleanup_at_end()
     sfx::fade_audio_group( sfx::group::fatigue, 300 );
 
     // Clear dimension tracking state before clearing MAPBUFFER and item types.
-    // In the no-swap model all submaps live in their MAPBUFFER_REGISTRY slots;
-    // the MAPBUFFER_REGISTRY.for_each() call below frees them all.  We just need
-    // to clear the metadata so stale pointers are not accessed after unload_data().
+    // Metadata must be cleared so stale pointers are not accessed after unload_data().
     kept_pocket_dimension_id_.clear();
     loaded_dimensions_.clear();
 
@@ -3084,13 +3059,8 @@ bool game::load( const save_t &name )
     u.recalc_hp();
     u.set_save_id( name.decoded_name() );
     u.name = name.decoded_name();
-    // Set the correct bubble radius BEFORE unserialize() → load_map_at() fires,
-    // so the submap_loader request is created with radius = g_half_mapsize.
-    // Without this the stale default (5) is used, and the first update_map() call
-    // shifts the desired-set center from abs_sub+5 to abs_sub+17 while the stored
-    // request radius stays 5.  That causes on_submap_unloaded to null out 2541
-    // grid slots that are still within the active grid, producing the
-    // "map::saven grid (...) null!" warnings on the very next save.
+    // Set the correct bubble radius BEFORE unserialize() so the submap_loader
+    // request uses the right radius and update_map() does not null active grid slots.
     init_bubble_config();
     reality_bubble_radius_ = g_half_mapsize;
     // If a stale request exists from a previous load in the same session, release
@@ -3187,24 +3157,15 @@ bool game::load( const save_t &name )
     // Read performance options before update_map so the reality bubble request
     // uses the correct radius from the very first submap_loader wiring.
     world_tick_interval_ = get_option<int>( "REALITY_BUBBLE_TICK_INTERVAL" );
-    // Re-read the bubble-size option so that reality_bubble_radius_ and the
-    // submap-loader request use the value that was active when this save was
-    // made (or the current value if the player changed it between sessions).
-    // setup() already called init_bubble_config() + m.resize(), and
-    // unserialize() → load_map() → m.load() has already filled the grid;
-    // do NOT call m.resize() here or it would wipe the loaded submaps.
+    // Re-read the bubble-size option for the submap-loader request.
+    // Do NOT call m.resize() here — the grid is already filled by unserialize().
+    // setup() already called init_bubble_config() + m.resize().
     init_bubble_config();
     reality_bubble_radius_ = g_half_mapsize;
     update_map( u );
-    // Discard stale monster_map entries for every submap in the initial reality
-    // bubble.  Old saves (made when spawn_monsters() ran only every 2.5 min) can
-    // accumulate monster_map entries for submaps that are currently inside the
-    // bubble: the same monster is then present in critter_tracker *and* in
-    // monster_map (at a slightly different position if it moved between sessions).
-    // Placing those entries via spawn_monsters() would create visible duplicates.
-    // Discarding them here is safe because the corresponding monsters are already
-    // active; any genuine out-of-bubble entries are untouched and will be placed
-    // normally when those submaps enter the bubble during play.
+    // Discard stale monster_map entries for submaps inside the initial bubble.
+    // Old saves can have duplicates (same monster in critter_tracker and monster_map);
+    // discarding in-bubble entries prevents visible duplication on load.
     {
         const tripoint &origin = m.get_abs_sub();
         const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : origin.z;
@@ -4671,7 +4632,6 @@ void game::cleanup_dead()
     critter_died = false;
 }
 
-// ---------------------------------------------------------------------------
 // LOD tier assignment — called once per monmove() pass, O(M).
 //
 // Tier 0 (Full):   dist ≤ LOD_TIER_FULL_DIST (default 20) or has an active
@@ -4687,7 +4647,6 @@ void game::cleanup_dead()
 // Demotion respects a configurable cooldown (LOD_DEMOTION_COOLDOWN) to prevent
 // boundary oscillation.  Distances are configurable via LOD_TIER_FULL_DIST and
 // LOD_TIER_COARSE_DIST.
-// ---------------------------------------------------------------------------
 int game::tier_assign_all()
 {
     if( !monster_lod_enabled ) {
@@ -4764,10 +4723,7 @@ int game::tier_assign_all()
     return tier_counts[0];
 }
 
-// ---------------------------------------------------------------------------
 // World tick — processes ALL loaded submaps every turn.
-// ---------------------------------------------------------------------------
-
 void game::world_tick()
 {
     ZoneScoped;
@@ -4789,7 +4745,7 @@ void game::world_tick()
         ZoneScopedN( "world_tick_dimension" );
         ZoneText( dim.c_str(), dim.size() );
 
-        // CO-2: When pocket simulation is disabled, skip all non-primary dimensions.
+        // When pocket simulation is disabled, skip all non-primary dimensions.
         // The primary dimension always uses dim == "" (empty string).
         // none/minimal/moderate distinctions are deferred to a future PR —
         // for now any setting other than "off" runs the full simulation path.
@@ -4808,7 +4764,7 @@ void game::world_tick()
             const auto has_fire = process_fields_in_submap( *sm_ptr, pos_sm, mb );
             sm_ptr->last_touched = calendar::turn;
 
-            // D3: Furniture field emitters — covers all loaded submaps, not just the bubble.
+            // Furniture field emitters — covers all loaded submaps, not just the bubble.
             // Primary dimension only: m.emit_field() operates in primary-map coordinates.
             if( do_emits && dim.empty() ) {
                 ZoneScopedN( "field_emits" );
@@ -4833,7 +4789,7 @@ void game::world_tick()
             }
 
             if( fire_spread && has_fire ) {
-                // F5-1: Look up dimension bounds once per submap so we can
+                // Look up dimension bounds once per submap so we can
                 // prevent fire from escaping a bounded pocket dimension.
                 const auto dim_it = loaded_dimensions_.find( dim );
                 const std::optional<dimension_bounds> *dim_bounds =
@@ -12666,7 +12622,6 @@ bool game::travel_to_dimension( const std::string &dim_id,
     map &here = get_map();
     avatar &player = get_avatar();
 
-    // ── No-swap model ─────────────────────────────────────────────────────────
     // Each dimension lives in its own MAPBUFFER_REGISTRY slot permanently.
     // There is no "primary slot swap" — we save the current slot, rebind the map
     // to the target slot, and load.  kept_pocket_dimension_id_ only marks which
@@ -12678,7 +12633,6 @@ bool game::travel_to_dimension( const std::string &dim_id,
 
     {
         ZoneScopedN( "travel_unload" );
-        // ── 1. Unload NPCs and monsters from the current dimension ────────────────
         unload_npcs();
         for( monster &critter : all_monsters() ) {
             despawn_monster( critter );
@@ -12687,7 +12641,6 @@ bool game::travel_to_dimension( const std::string &dim_id,
             here.unboard_vehicle( player.pos() );
         }
 
-        // ── 2. Flush and save the current dimension before leaving ────────────────
         // Flush background streamer tasks first to avoid a concurrent read+write race
         // between save_quad workers (submaps.find, no mutex) and submap_stream workers
         // (add_submap, with mutex).
@@ -12724,12 +12677,8 @@ bool game::travel_to_dimension( const std::string &dim_id,
     }
     here.reset_vehicle_cache();
 
-    // ── 3. Update kept-pocket tracking ───────────────────────────────────────
-    // In the no-swap model every dimension's submaps live in their own registry
-    // slot and are never evicted by the transition itself.  kept_pocket_dimension_id_
-    // merely marks which bounded pocket to preserve against future memory-pressure
-    // eviction.  When entering a new pocket the marker is cleared (the new pocket
-    // will set it on the next exit).
+    // Update kept_pocket_dimension_id_: marks which bounded pocket to preserve
+    // against memory-pressure eviction; cleared when entering a new pocket.
     {
         const bool old_is_bounded = !old_dim_id.empty() &&
                                     loaded_dimensions_.count( old_dim_id ) &&
@@ -12744,7 +12693,6 @@ bool game::travel_to_dimension( const std::string &dim_id,
         }
     }
 
-    // ── 4. Commit dimension switch ────────────────────────────────────────────
     // Prevent temperature/weather code from accessing the grid while it's
     // being cleared and rebuilt.  Must be set BEFORE clear_grid().
     swapping_dimensions = true;
@@ -12759,7 +12707,6 @@ bool game::travel_to_dimension( const std::string &dim_id,
         grid_trackers_[old_dim_id]->clear();
     }
 
-    // ── 5. Rebind map and clear the render area ───────────────────────────────
     // bind_dimension() redirects all subsequent loadn() / generation calls to
     // the target MAPBUFFER_REGISTRY slot.  Submaps for old_dim_id stay in their
     // slot — nothing is lost.
@@ -12767,7 +12714,6 @@ bool game::travel_to_dimension( const std::string &dim_id,
     overmap_buffer.clear();
     here.clear_grid();
 
-    // ── 6. Register new dimension metadata if not already loaded ─────────────
     if( !loaded_dimensions_.count( dim_id ) ) {
         loaded_dimensions_[dim_id] = dimension_info{
             .dimension_id        = dim_id,
@@ -12779,7 +12725,6 @@ bool game::travel_to_dimension( const std::string &dim_id,
         };
     }
 
-    // ── 7. Configure and load the new dimension ───────────────────────────────
     if( target_type && !target_type->region_settings_id.empty() ) {
         overmap_buffer.current_region_type = target_type->region_settings_id;
     } else if( !target_type ) {
@@ -12817,7 +12762,6 @@ bool game::travel_to_dimension( const std::string &dim_id,
 
         add_msg( m_debug, "[DIM] Loaded new dimension '%s' map", dim_id );
 
-        // ── 8. Restore map memory and rebuild caches ──────────────────────────────
         player.clear_map_memory();
         player.load_map_memory();
 
@@ -13188,10 +13132,8 @@ point game::update_map( int &x, int &y )
     last_move_delta_ = tripoint( shift, 0 );
 
     // Keep the reality bubble request center in sync with the shifted map.
-    // Distribution-grid tracker updates are now fully incremental: the
-    // submap_load_manager fires on_submap_loaded / on_submap_unloaded for the
-    // exact delta on each update() call below.  The old O(all-loaded-submaps)
-    // full-rebuild that previously ran here has been removed (F1-5).
+    // Distribution-grid tracker updates are fully incremental via
+    // on_submap_loaded/unloaded; the old full-rebuild has been removed.
     if( reality_bubble_handle_ != 0 ) {
         const tripoint &origin = m.get_abs_sub();
         const tripoint_abs_sm new_center(
@@ -13205,12 +13147,9 @@ point game::update_map( int &x, int &y )
                 submap_loader.add_listener( grid_trackers_[dim_id].get() );
             }
         }
-        // Flush all pending background streamer tasks before submap_loader.update().
-        // Background workers access mapbuffer::submaps (via lookup_submap_in_memory /
-        // add_submap) without a mapbuffer-level mutex.  update() calls unload_quad()
-        // which erases from submaps; concurrent std::map read+write is UB and causes
-        // the access violation seen at submap.h:11 (active_item_cache access through
-        // a corrupted map-tree pointer).
+        // Flush background streamer before update() to prevent concurrent
+        // mapbuffer read+write (UB: update() erases while workers access submaps
+        // without a mutex).
         submap_streamer.flush_all();
         submap_loader.update();
         // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
@@ -13266,11 +13205,8 @@ point game::update_map( int &x, int &y )
     }
     m.build_map_cache( get_levz() );
 
-    // Spawn monsters only in the strip of submaps that just entered the bubble.
-    // Using spawn_monsters() for the whole bubble re-processes already-loaded
-    // submaps and spuriously places stale monster_map entries that overlap with
-    // already-active monsters, causing visible duplication on the first shift
-    // after loading an old save.
+    // Spawn monsters only in the strip of submaps that just entered the bubble
+    // to avoid duplicating already-active monsters from stale monster_map entries.
     m.spawn_monsters_new_submaps( shift ); // Static monsters
 
     // Update what parts of the world map we can see

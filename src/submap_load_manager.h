@@ -10,10 +10,6 @@
 #include "coordinates.h"
 #include "point.h"
 
-// ---------------------------------------------------------------------------
-// submap_load_listener
-// ---------------------------------------------------------------------------
-
 /**
  * Interface for objects that need to react when submaps become resident or
  * are evicted from memory.
@@ -41,10 +37,6 @@ class submap_load_listener
                                          const std::string &dim_id ) = 0;
 };
 
-// ---------------------------------------------------------------------------
-// load_request_source / handle / request
-// ---------------------------------------------------------------------------
-
 /** Identifies the system that created a load request. */
 enum class load_request_source : int {
     reality_bubble,  ///< Player's active reality bubble
@@ -66,10 +58,6 @@ struct submap_load_request {
     int z_min = 0;   ///< Lowest z-level to include (inclusive).  Set to center.z for single-level.
     int z_max = 0;   ///< Highest z-level to include (inclusive).  Set to center.z for single-level.
 };
-
-// ---------------------------------------------------------------------------
-// submap_load_manager
-// ---------------------------------------------------------------------------
 
 /**
  * Tracks which submaps should be resident in memory across all dimensions.

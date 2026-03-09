@@ -1390,7 +1390,7 @@ vehicle *vehicle::act_on_map()
     const tripoint pt = global_pos3();
     map &here = get_map();
     // Note: no inbounds() guard here.  Vehicles outside the reality bubble are
-    // valid after D2.  A vehicle driving into an unloaded submap will naturally
+    // valid for loaded submaps.  A vehicle driving into an unloaded submap will naturally
     // stop because map::move_cost() returns 0 for unloaded tiles, which the
     // collision code classifies as veh_coll_other (solid wall).
     if( decrement_summon_timer() ) {

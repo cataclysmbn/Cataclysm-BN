@@ -55,13 +55,10 @@ static nc_color sev( const size_t level )
     return level < colors.size() ? colors[level] : c_dark_gray;
 }
 
-// ---------------------------------------------------------------------------
-// Private helpers — direct per-submap access, no bounds check overhead.
-// ---------------------------------------------------------------------------
 
 auto scent_map::raw_scent_at( int x, int y, int z ) const -> int
 {
-    // D5: use floor division (handles negative extended-local coords) and look up
+    // Use floor division (handles negative extended-local coords) and look up
     // via the primary mapbuffer so any loaded submap is reachable, not just the bubble.
     const int gx = divide_round_to_minus_infinity( x, SEEX );
     const int gy = divide_round_to_minus_infinity( y, SEEY );
@@ -81,13 +78,10 @@ auto scent_map::raw_scent_set( int x, int y, int z, int value ) -> void
     }
 }
 
-// ---------------------------------------------------------------------------
-// Public interface
-// ---------------------------------------------------------------------------
 
 void scent_map::reset()
 {
-    // D5: Clear scent from all loaded submaps (not just the bubble).
+    // Clear scent from all loaded submaps (not just the bubble).
     std::ranges::for_each( MAPBUFFER, []( auto & entry ) {
         auto &[raw_pos, sm_ptr] = entry;
         if( sm_ptr ) {
@@ -100,7 +94,7 @@ void scent_map::reset()
 void scent_map::decay()
 {
     ZoneScopedN( "scent_map::decay" );
-    // D5: Decay scent on all loaded submaps within scent z-range of the current level.
+    // Decay scent on all loaded submaps within scent z-range of the current level.
     // Called during precipitation, so rain washes away scent globally.
     const int levz = gm.get_levz();
     std::ranges::for_each( MAPBUFFER, [&]( auto & entry ) {
@@ -174,7 +168,7 @@ bool scent_map::inbounds( const tripoint &p ) const
     if( !scent_map_z_level_inbounds ) {
         return false;
     }
-    // D5: check mapbuffer instead of bubble bounds — any loaded submap is accessible.
+    // Check mapbuffer instead of bubble bounds — any loaded submap is accessible.
     const int gx = divide_round_to_minus_infinity( p.x, SEEX );
     const int gy = divide_round_to_minus_infinity( p.y, SEEY );
     const tripoint abs_sm( m_.get_abs_sub().x + gx, m_.get_abs_sub().y + gy, p.z );

@@ -215,12 +215,6 @@ class mapbuffer
         std::string dimension_id_;
 };
 
-// mapbuffer_registry.h provides the MAPBUFFER backward-compatibility macro and the
-// MAPBUFFER_REGISTRY global.  It is included at the end of this header (after the
-// full mapbuffer class definition) so that mapbuffer_registry.h can forward-declare
-// mapbuffer without a circular-header dependency.
-// Side-effect: any translation unit that includes mapbuffer.h also gets the MAPBUFFER
-// macro and MAPBUFFER_REGISTRY without explicitly including mapbuffer_registry.h.
-// This is intentional — the macro is needed wherever mapbuffer objects are used — but
-// be aware of it when auditing include chains.
+// Included after the full mapbuffer definition to avoid circular dependencies.
+// Provides the MAPBUFFER macro and MAPBUFFER_REGISTRY global.
 #include "mapbuffer_registry.h"
