@@ -416,7 +416,7 @@
     "name": "metal spoiler",
     "looks_like": "board_horizontal",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "h"
   },
   {
@@ -426,7 +426,7 @@
     "name": "metal spoiler",
     "looks_like": "board_nw",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "y"
   },
   {
@@ -436,7 +436,7 @@
     "name": "metal spoiler",
     "looks_like": "board_ne",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "u"
   },
   {
@@ -446,7 +446,7 @@
     "name": "external metal spoiler",
     "looks_like": "board_horizontal",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "h"
   },
   {
@@ -456,7 +456,7 @@
     "name": "external metal spoiler",
     "looks_like": "board_nw",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "y"
   },
   {
@@ -466,7 +466,7 @@
     "name": "external metal spoiler",
     "looks_like": "board_ne",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "u"
   },
   {
@@ -476,7 +476,7 @@
     "name": "carbon spoiler",
     "looks_like": "wing_metal_horizontal",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "h"
   },
   {
@@ -486,7 +486,7 @@
     "name": "carbon spoiler",
     "looks_like": "wing_metal_left",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "y"
   },
   {
@@ -496,7 +496,7 @@
     "name": "carbon spoiler",
     "looks_like": "wing_metal_right",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "u"
   },
   {
@@ -506,7 +506,7 @@
     "name": "external carbon spoiler",
     "looks_like": "wing_metal_external_horizontal",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "h"
   },
   {
@@ -516,7 +516,7 @@
     "name": "external carbon spoiler",
     "looks_like": "wing_metal_external_left",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "y"
   },
   {
@@ -526,7 +526,7 @@
     "name": "external carbon spoiler",
     "looks_like": "wing_metal_external_right",
     "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, allowing for better grip at high speed at the cost of lower top speed.",
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
     "symbol": "u"
   }
 ]
