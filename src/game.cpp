@@ -364,6 +364,7 @@ static void achievement_attained( const achievement *a )
 
 // This is the main game set-up process.
 game::game() :
+    map_ptr( 1, true ),
     liveview( *liveview_ptr ),
     scent_ptr( *this, *map_ptr ),
     achievements_tracker_ptr( *stats_tracker_ptr, *kill_tracker_ptr, achievement_attained ),
