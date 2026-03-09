@@ -984,5 +984,19 @@
       "bio_blade",
       "bio_weight"
     ]
+  },
+  {
+    "type": "scenario",
+    "id": "tankmod_armored_warfare",
+    "name": "Armored Apocalypse",
+    "points": 0,
+    "description": "Wandering in search of any other survivors after a disastrous mobilization, your tank and its crew have slowly been worn down by attrition.  After trying to establish communications using an old radio tower, the only other surviving crew member went off in search of supplies and fuel a few days ago.  Now something's stirred up the undead, several are converging on your position.",
+    "vehicle": "tank_m1_abrams",
+    "professions": [ "tankmod_driver", "tankmod_gunner", "tankmod_loader", "tankmod_commander" ],
+    "start_name": "Radio Tower",
+    "allowed_locs": [ "sloc_tankmod_radio_tower" ],
+    "missions": [ "MISSION_TANK_SUPPLY_RUN" ],
+    "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
+    "flags": [ "CITY_START", "LONE_START", "SUM_START" ]
   }
 ]
