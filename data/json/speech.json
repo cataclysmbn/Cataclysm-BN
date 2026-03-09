@@ -3044,5 +3044,35 @@
     "speaker": [ "mon_dermatik_incubator_spider" ],
     "sound": "a quiet chittering",
     "volume": 5
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_uafv_xm246e1",
+    "sound": "hummm!",
+    "volume": 15
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_uafv_xm246e1",
+    "sound": "whirrr!",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_uafv_xm246e1",
+    "sound": "the trundle of machinery.",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_uafv_xm246e1",
+    "sound": "the creaking of steel treads.",
+    "volume": 45
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_uafv_xm246e1",
+    "sound": "the metallic squeal of tank tracks!",
+    "volume": 50
   }
 ]
