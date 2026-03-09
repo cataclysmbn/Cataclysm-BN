@@ -163,7 +163,7 @@
     "breaks_into": [ { "item": "bone", "count": [ 5, 15 ] } ],
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "armor_chitin", 3 ] ] }
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "bone_sturdy", 3 ] ] }
     },
     "damage_reduction": { "all": 75 }
   },

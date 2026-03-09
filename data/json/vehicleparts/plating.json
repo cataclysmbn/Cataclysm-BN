@@ -33,7 +33,7 @@
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "10 m", "using": [ [ "rope_natural", 1 ] ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m", "using": [ [ "armor_chitin", 3 ] ] }
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m", "using": [ [ "bone_sturdy", 3 ] ] }
     },
     "flags": [ "ARMOR" ],
     "breaks_into": [ { "item": "bone", "count": [ 5, 15 ] } ],
