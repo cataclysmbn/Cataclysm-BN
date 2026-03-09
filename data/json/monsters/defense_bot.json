@@ -598,6 +598,22 @@
       }
     ],
     "death_function": [ "EXPLODE", "BROKEN" ],
-    "flags": [ "WARM", "BASHES", "HIT_AND_RUN", "NOHEAD", "PRIORITIZE_TARGETS", "PATH_AVOID_DANGER_2", "DESTROYS", "SEES", "HEARS", "ELECTRONIC", "COLDPROOF", "NO_BREATHE", "PATH_AVOID_DANGER_1", "LOUDMOVES", "DROPS_AMMO" ]
-      }
+    "flags": [
+      "WARM",
+      "BASHES",
+      "HIT_AND_RUN",
+      "NOHEAD",
+      "PRIORITIZE_TARGETS",
+      "PATH_AVOID_DANGER_2",
+      "DESTROYS",
+      "SEES",
+      "HEARS",
+      "ELECTRONIC",
+      "COLDPROOF",
+      "NO_BREATHE",
+      "PATH_AVOID_DANGER_1",
+      "LOUDMOVES",
+      "DROPS_AMMO"
+    ]
+  }
 ]

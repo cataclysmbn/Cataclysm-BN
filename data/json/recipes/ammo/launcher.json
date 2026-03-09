@@ -563,7 +563,7 @@
     "qualities": [ { "id": "HAMMER", "level": 1 } ],
     "tools": [ [ [ "blacksmithing_standard", 1, "LIST" ] ] ],
     "components": [ [ [ "ammo_ballista_wood", 1 ] ], [ [ "steel_tiny", 1, "LIST" ] ] ]
-  }, 
+  },
   {
     "result": "25mm_slug",
     "type": "recipe",
@@ -639,7 +639,7 @@
       [ [ "military_explosive", 5, "LIST" ], [ "stable_explosive", 5, "LIST" ] ],
       [ [ "impact_fuze", 1 ] ]
     ]
-  }, 
+  },
   {
     "type": "recipe",
     "result": "105mm_slug",

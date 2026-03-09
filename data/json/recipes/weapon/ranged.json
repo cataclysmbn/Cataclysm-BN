@@ -1522,7 +1522,7 @@
       [ [ "steel_standard", 2, "LIST" ] ],
       [ [ "nail_glue", 80, "LIST" ] ]
     ]
-  }, 
+  },
   {
     "result": "25mm_autocannon_sawn",
     "type": "recipe",

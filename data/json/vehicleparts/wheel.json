@@ -742,7 +742,7 @@
       }
     },
     "damage_reduction": { "all": 8 }
-  }, 
+  },
   {
     "id": "tread1",
     "type": "vehicle_part",
@@ -834,5 +834,5 @@
       "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_standard", 1 ] ] }
     },
     "flags": [ "WHEEL", "VARIABLE_SIZE", "MULTISQUARE", "TRACKED" ]
-  } 
+  }
 ]

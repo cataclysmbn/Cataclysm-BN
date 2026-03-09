@@ -1,5 +1,5 @@
 [
-{
+  {
     "id": "25mm_autocannon",
     "type": "GUN",
     "reload_noise_volume": 10,
@@ -283,7 +283,7 @@
     "reload": 1200,
     "ups_charges": 75,
     "flags": [ "MOUNTED_GUN", "NEVER_JAMS", "NO_RELOAD", "RELOAD_EJECT", "RELOAD_ONE", "PYROMANIAC_WEAPON" ]
-  }, 
+  },
   {
     "id": "tank_gun_auto_monster",
     "type": "GUN",
@@ -303,4 +303,4 @@
     "clip_size": 5,
     "reload": 450
   }
- ] 
+]

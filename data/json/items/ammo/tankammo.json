@@ -1,5 +1,5 @@
 [
-{
+  {
     "abstract": "artillery_casing",
     "type": "GENERIC",
     "category": "spare_parts",
@@ -646,4 +646,4 @@
     "count": 5,
     "effects": [ "COOKOFF" ]
   }
- ] 
+]

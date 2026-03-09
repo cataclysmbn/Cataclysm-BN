@@ -78,7 +78,7 @@
       { "item": "155mm_frag", "prob": 2 },
       { "item": "155mm_heat", "prob": 1 },
       { "item": "105mm_heat", "prob": 1 },
-      { "item": "105mm_ap", "prob": 1 },
+      { "item": "105mm_ap", "prob": 1 }
     ]
   },
   {
@@ -256,7 +256,7 @@
       { "item": "105mm_heat", "prob": 2 },
       { "item": "105mm_ap", "prob": 1 },
       { "item": "electric_primer_120mm", "prob": 1 },
-      { "item": "primer_155mm", "prob": 1 },
+      { "item": "primer_155mm", "prob": 1 }
     ]
   },
   {

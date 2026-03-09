@@ -1,7 +1,15 @@
 [
   {
     "type": "mod_tileset",
-    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockRealXotto", "MSX++DEAD_PEOPLE", "MSXotto+", "UltimateCataclysm", "UltimateCataclysmDemo" ],
+    "compatibility": [
+      "UNDEAD_PEOPLE_BASE",
+      "UNDEAD_PEOPLE",
+      "MshockRealXotto",
+      "MSX++DEAD_PEOPLE",
+      "MSXotto+",
+      "UltimateCataclysm",
+      "UltimateCataclysmDemo"
+    ],
     "tiles-new": [
       {
         "file": "external_tileset/Tankmod/Tankmod_Revived_normal.png",

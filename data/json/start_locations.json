@@ -641,5 +641,5 @@
     "id": "sloc_tankmod_radio_tower",
     "name": "Radio Tower",
     "terrain": [ "radio_tower_1" ]
-  } 
+  }
 ]

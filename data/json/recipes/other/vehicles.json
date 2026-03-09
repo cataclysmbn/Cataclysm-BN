@@ -2432,7 +2432,7 @@
     "using": [ [ "welding_standard", 10 ] ],
     "qualities": [ { "id": "HAMMER", "level": 2 } ],
     "components": [ [ [ "sheet_metal", 4 ] ], [ [ "scrap", 6 ] ], [ [ "amplifier", 4 ] ], [ [ "e_scrap", 6 ] ] ]
-  }, 
+  },
   {
     "result": "tread1",
     "type": "recipe",

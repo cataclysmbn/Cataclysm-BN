@@ -447,7 +447,7 @@
       { "item": "155mm_frag", "prob": 2 },
       { "item": "155mm_heat", "prob": 1 },
       { "item": "105mm_heat", "prob": 1 },
-      { "item": "105mm_ap", "prob": 1 },
+      { "item": "105mm_ap", "prob": 1 }
     ]
   },
   {
@@ -593,7 +593,7 @@
       { "item": "155mm_frag", "prob": 2 },
       { "item": "155mm_heat", "prob": 1 },
       { "item": "105mm_heat", "prob": 1 },
-      { "item": "105mm_ap", "prob": 1 },
+      { "item": "105mm_ap", "prob": 1 }
     ]
   },
   {
@@ -726,7 +726,7 @@
       { "item": "25mm_hei", "prob": 2 },
       { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 3 },
       { "item": "105mm_heat", "prob": 1 },
-      { "item": "105mm_ap", "prob": 1 },
+      { "item": "105mm_ap", "prob": 1 }
     ]
   },
   {
@@ -918,5 +918,5 @@
       },
       { "item": "25mm_casing", "count": [ 1, 5 ], "prob": 90 }
     ]
-      }
+  }
 ]
