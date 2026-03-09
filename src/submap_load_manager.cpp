@@ -62,7 +62,7 @@ auto submap_load_manager::update_load_shape( int radius ) -> void
     };
     auto offsets = cata::views::cartesian_product( axis, axis )
                    | std::views::transform( to_point );
-    bubble_offsets_.assign( offsets.begin(), offsets.end() );
+    bubble_offsets_ = std::vector<point>( offsets.begin(), offsets.end() );
 }
 
 std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_set() const
