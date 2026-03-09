@@ -434,7 +434,19 @@
       { "item": "effective_emitter", "prob": 1 },
       { "item": "high_density_capacitor", "prob": 1 },
       { "item": "emp_gun", "prob": 1 },
-      { "item": "energy_drink_atomic_syrup", "prob": 5 }
+      { "item": "energy_drink_atomic_syrup", "prob": 5 },
+      [ "electric_primer_120mm", 2 ],
+      [ "primer_155mm", 1 ],
+      [ "atgm_launcher", 1 ],
+      [ "25mm_apds", 1 ],
+      [ "25mm_hei", 1 ],
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 1 },
+      [ "120mm_usable_heat", 3 ],
+      [ "120mm_usable_ap", 1 ],
+      [ "155mm_frag", 2 ],
+      [ "155mm_heat", 1 ],
+      [ "105mm_heat", 1 ],
+      [ "105mm_ap", 1 ]
     ]
   },
   {
@@ -569,7 +581,18 @@
       { "item": "20x66_exp", "prob": 2 },
       { "item": "20x66_frag", "prob": 2 },
       { "item": "20x66_flare", "prob": 4 },
-      { "item": "20x66_inc", "prob": 2 }
+      { "item": "20x66_inc", "prob": 2 },
+      [ "electric_primer_120mm", 2 ],
+      [ "primer_155mm", 1 ],
+      [ "25mm_apds", 1 ],
+      [ "25mm_hei", 1 ],
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 1 },
+      [ "120mm_usable_heat", 3 ],
+      [ "120mm_usable_ap", 1 ],
+      [ "155mm_frag", 2 ],
+      [ "155mm_heat", 1 ],
+      [ "105mm_heat", 1 ],
+      [ "105mm_ap", 1 ]
     ]
   },
   {
