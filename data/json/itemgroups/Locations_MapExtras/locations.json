@@ -57,6 +57,7 @@
       [ "mag_traps", 20 ],
       [ "manual_traps", 12 ],
       [ "trappers_companion", 2 ],
+      [ "textbook_launcher", 5 ],
       [ "mag_guns", 40 ],
       [ "mag_rifle", 40 ],
       [ "mag_shotgun", 15 ],
