@@ -273,13 +273,13 @@ class monster : public Creature, public location_visitable<monster>
         void apply_plan( const monster_plan_t &plan );
 
         /**
-         * Phase 2+ decision pass: reads monster and world state to determine
+         * Decision pass: reads monster and world state to determine
          * the single action this monster intends to take.  const — no mutations
-         * to *this.  Safe to call from a worker thread in Phase 2+ once the
+         * to *this.  Safe to call from a worker thread once the
          * same thread-safety preconditions as compute_plan() are met.
          *
          * Key constraint: must NOT call Pathfinding::route() (d_maps/d_maps_store
-         * are global static, not thread-local; see Phase 3 / Step 10 for the fix).
+         * are global static, not thread-local.
          * Sets needs_repath = true in the returned action when a fresh A* is
          * needed; execute_action() performs the actual repath.
          */
@@ -295,9 +295,9 @@ class monster : public Creature, public location_visitable<monster>
         void prewarm_sight( const Creature &target ) const;
 
         /**
-         * Phase 2+ execution pass: applies the action returned by decide_action().
+         * Execution pass: applies the action returned by decide_action().
          * Must run on the main thread (or a thread that has exclusive access to
-         * this monster's position in the reservation map, Phase 3+).
+         * this monster's position in the reservation map).
          *
          * Also handles the pre-move mutations that cannot be done in the const
          * decide pass (wandf decrement, move_effects, behavior oracle, etc.).

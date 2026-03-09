@@ -126,7 +126,7 @@ class submap_load_manager
          * desired and on_submap_unloaded() for entries that are no longer
          * desired.
          *
-         * **PRECONDITION (Phase 6):** This function must NOT be called until
+         * This function must NOT be called until
          * map::loadn() is updated to use
          *   MAPBUFFER_REGISTRY.get(bound_dimension_)
          * instead of the MAPBUFFER macro for all submap I/O.  Until that
@@ -135,8 +135,7 @@ class submap_load_manager
          * returns, so on_submap_loaded() would look in the wrong registry
          * slot and write nullptr into the grid, crashing the game.
          *
-         * Call site: game::do_turn() — add after Phase 6 integration is
-         * complete.
+         * Call site: game::do_turn()
          */
         void update();
 

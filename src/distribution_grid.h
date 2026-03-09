@@ -208,7 +208,6 @@ class distribution_grid_tracker : public submap_load_listener
         /**
          * Stub cross-dimension export nodes installed on this tracker.
          * Each node represents one end of a dimensional electrical cable.
-         * Full mechanics (power forwarding, cable items) are deferred (§7.5).
          */
         std::vector<cross_dimension_export_node> export_nodes_;
 

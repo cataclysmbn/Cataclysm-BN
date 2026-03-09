@@ -687,7 +687,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
 
     m.load( pos_sm, true, pump_events );
 
-    // Phase 6: Repopulate the distribution-grid tracker for the current dimension.
+    // Repopulate the distribution-grid tracker for the current dimension.
     // With dimension-aware generation, each dimension's submaps live in their own
     // registry slot, so we iterate over the bound dimension's buffer.
     {
@@ -736,7 +736,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     } else {
         submap_loader.update_request( reality_bubble_handle_, bubble_center );
     }
-    // Phase 6: map::loadn() now uses MAPBUFFER_REGISTRY.get(bound_dimension_), so
+    // map::loadn() now uses MAPBUFFER_REGISTRY.get(bound_dimension_), so
     // the load manager can safely fire on_submap_loaded/unloaded events.
     // Ensure a distribution_grid_tracker exists for every active dimension before
     // update() fires on_submap_loaded events.
@@ -908,7 +908,7 @@ bool game::start_game()
     init_bubble_config();
     // Resize the map grid to match the (possibly changed) bubble-size option.
     // The grid may hold stale pointers from a previous session; resize() clears
-    // them before reallocating to the new my_MAPSIZE.  See F1-1 Map Overhaul.
+    // them before reallocating to the new my_MAPSIZE.
     m.resize( g_mapsize );
     reality_bubble_radius_ = g_half_mapsize;
 
@@ -1246,7 +1246,7 @@ void game::load_npcs()
     }
 
     for( const auto &npc : just_added ) {
-        // Phase 6: batch-advance AI state for missed turns before on_load()
+        // batch-advance AI state for missed turns before on_load()
         // does the sanity checks.  batch_turns() updates last_updated so
         // on_load() sees dt=0 and skips the redundant body-update loop.
         if( npc->last_updated < calendar::turn ) {
@@ -3135,7 +3135,7 @@ bool game::load( const save_t &name )
             // returns the correct result when the player subsequently leaves a
             // bounded pocket dimension after reload.  Without this, the loaded_
             // dimensions_ entry has nullopt bounds even though the dimension IS
-            // bounded (F3-4 in Map Overhaul Plan).
+            // bounded.
             .bounds = get_map().get_dimension_bounds(),
         };
     }
@@ -14637,10 +14637,7 @@ event_bus &get_event_bus()
 
 distribution_grid_tracker &get_distribution_grid_tracker()
 {
-    // Return the tracker for the current player dimension.  All active submaps
-    // live in the primary slot until Phase 6 finishes the per-dimension migration,
-    // so the primary tracker ("") handles all grid lookups for now.
-    // If a secondary-dimension tracker exists and the player is in that dimension,
+    // If a dimension tracker exists and the player is in that dimension,
     // prefer it; otherwise fall back to "".
     const std::string &dim = g->m.get_bound_dimension();
     auto it = g->grid_trackers_.find( dim );

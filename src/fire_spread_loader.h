@@ -17,7 +17,7 @@
  *
  * A global ceiling of fire_spread_submap_cap (default 25, player-configurable
  * via FIRE_SPREAD_SUBMAP_CAP option) fire-spread-loaded submaps is enforced
- * across all dimensions combined.  See F5-3 in Map Overhaul Plan.
+ * across all dimensions combined.
  *
  * The connectivity invariant: a fire-spread-loaded submap is released during
  * prune_disconnected() if it has no cardinal neighbor covered by a

@@ -861,8 +861,7 @@ auto Character::unimpaired_range() const -> int
     // compile-time MAX_VIEW_DISTANCE (sized for the largest possible bubble)
     // lets those corner tiles pass the apparent_light_at distance check for
     // smaller bubble sizes, producing a square visible-area artifact.
-    // g_max_view_distance gives the tight circular cutoff that matches the
-    // game design intent.  See F1-1 in Map Overhaul Plan.
+    // g_max_view_distance gives the tight circular cutoff.
     return std::min( sight_max, g_max_view_distance );
 }
 

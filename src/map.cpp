@@ -233,7 +233,7 @@ map::map( int mapsize, bool zlev )
 
 // Defined out-of-line so we can use g_mapsize (runtime) rather than the
 // compile-time MAPSIZE constant that would be baked in by the delegating-
-// constructor call expression in the header.  See F1-1 in Map Overhaul Plan.
+// constructor call expression in the header.
 map::map( bool zlev ) : map( g_mapsize, zlev ) {}
 
 map::~map() = default;
@@ -856,12 +856,10 @@ void map::vehmove()
           decltype( veh_cmp )>;
     VehPQ pq( veh_cmp );
 
-    // V-3: separate list of falling / aircraft-z-change vehicles, built alongside
-    // the PQ.  Phase 2 scans this small list instead of the full vehicle_list,
-    // reducing the Phase 2 fallback from O(V) to O(falling_count) per iteration.
+    // Separate list of falling / aircraft-z-change vehicles, built alongside the PQ.
     std::vector<wrapped_vehicle *> falling_vehicles;
 
-    // (Re)build pq from vehicle_list, applying the V-2 stationary-vehicle filter.
+    // (Re)build pq from vehicle_list, applying the stationary-vehicle filter.
     // Also rebuilds falling_vehicles.
     auto rebuild_pq = [&]() {
         // Use swap-with-empty instead of repeated pop() to clear the queue.
@@ -872,7 +870,7 @@ void map::vehmove()
         { VehPQ tmp( veh_cmp ); std::swap( pq, tmp ); }
         falling_vehicles.clear();
         for( wrapped_vehicle &w : vehicle_list ) {
-            // V-2: gain_moves() sets of_turn=0.001 for velocity==0 non-falling
+            // gain_moves() sets of_turn=0.001 for velocity==0 non-falling
             // non-autopilot vehicles.  Moving and falling vehicles receive
             // of_turn = 1 + carry >= 1.0, so this threshold is unambiguous.
             if( w.v->of_turn >= 1.0f ) {
@@ -885,7 +883,7 @@ void map::vehmove()
     };
     rebuild_pq();
 
-    // PERF-LOSS-2: the update_active_range lambda that previously scanned all
+    // the update_active_range lambda that previously scanned all
     // veh_exists_at cells (up to MAPSIZE_X * MAPSIZE_Y per z-level) after every
     // vehicle move has been removed.  veh_in_active_range is maintained
     // incrementally by the existing update_vehicle_list() / vehicle removal
@@ -897,13 +895,13 @@ void map::vehmove()
     for( int count = 0; count < 100; ++count ) {
         wrapped_vehicle *cur_veh = nullptr;
 
-        // Phase 1: Horizontal movement — pop highest-of_turn vehicle from heap.
+        // Horizontal movement — pop highest-of_turn vehicle from heap.
         if( !pq.empty() ) {
             cur_veh = pq.top();
             pq.pop();
         }
 
-        // Phase 2: Vertical-only fallback (falling / aircraft z-change).
+        // Vertical-only fallback (falling / aircraft z-change).
         // Scan the pre-built falling_vehicles list (O(falling_count)) instead of
         // the full vehicle_list.  Entries are re-checked for staleness — a vehicle
         // may have landed or been destroyed since falling_vehicles was last built.
@@ -940,27 +938,6 @@ void map::vehmove()
             vehicle_list = get_vehicles();
             rebuild_pq();
         } else {
-            // Re-enqueue if the vehicle still has any remaining movement
-            // budget (of_turn > 0).  This mirrors the old vehproceed() loop
-            // which re-selected a vehicle as long as of_turn > 0, allowing a
-            // fast vehicle to make many moves per vehmove() call (e.g. 27
-            // moves at cruise speed with turn_cost ≈ 0.036).
-            //
-            // The original >= 1.0f threshold was too conservative: after one
-            // move at cruise speed, of_turn drops to ~0.964, which is < 1.0
-            // but still enough budget for 26 more moves.  Dropping out of the
-            // PQ here forced those 26 moves to be deferred to future turns,
-            // causing a ~14% efficiency loss and a rail-test positional miss.
-            //
-            // Stationary vehicles (of_turn = 0.001 from gain_moves) are
-            // excluded at rebuild_pq() time and never reach this branch, so
-            // the V-2 stationary-vehicle optimisation is fully preserved.
-            //
-            // When act_on_map() takes its "can't afford this move" early-
-            // return path it explicitly sets of_turn = 0 and saves
-            // of_turn_carry before returning, so the > 0.f guard here
-            // correctly skips re-enqueueing in that case — carry is already
-            // saved inside act_on_map(), no double-write occurs.
             if( cur_veh->v->of_turn > 0.f ) {
                 pq.push( cur_veh );
             }
@@ -7854,7 +7831,7 @@ void map::shift( point sp )
     const half_open_rectangle<point> boundaries_2d( point_zero, point( g_mapsize_x, g_mapsize_y ) );
     const point shift_offset_pt( -sp.x * SEEX, -sp.y * SEEY );
 
-    // Phase 4: Background streaming — block on submaps the main loop is about to need.
+    // Background streaming — block on submaps the main loop is about to need.
     // The previous shift() speculatively enqueued these via submap_streamer.request_load().
     // If the worker finished, MAPBUFFER already has the submap so loadn() hits the fast
     // (in-memory) path.  If not ready yet, drain_completed() blocks until it is.
@@ -8000,7 +7977,7 @@ void map::shift( point sp )
         shift_tripoint_set( support_cache_dirty, shift_offset_pt, boundaries_2d );
     }
 
-    // Phase 4: Speculative next-shift pre-loading.
+    // Speculative next-shift pre-loading.
     // Enqueue async loads for the edge row/column one step beyond the current viewport
     // in the direction we just shifted.  On the next shift() call, drain_completed()
     // (above) will block until they are ready so loadn() hits the MAPBUFFER fast path.
@@ -8120,7 +8097,7 @@ void map::saven( const tripoint &grid )
     }
 
     submap_to_save->last_touched = calendar::turn;
-    // Phase 6: Add to the dimension-aware mapbuffer slot, not always primary.
+    // Add to the dimension-aware mapbuffer slot, not always primary.
     MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( abs, submap_to_save );
 }
 
@@ -8210,7 +8187,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
     const int old_abs_z = abs_sub.z; // Ugly, but necessary at the moment
     abs_sub.z = grid.z;
 
-    // Phase 6: Use the dimension-specific mapbuffer slot so each dimension's submaps
+    // Use the dimension-specific mapbuffer slot so each dimension's submaps
     // live independently and on_submap_loaded() finds them in the correct registry.
     submap *tmpsub = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap( grid_abs_sub );
     // Diagnostic: log in-bounds submap loading for dimension transition debugging
@@ -8233,7 +8210,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
         // worker threads that have bound_dimension_ set via bind_dimension().
         // Reads from the overmapbuffer (ter, get_settings, etc.) are treated as
         // logically read-only; NPC write operations in generate() are serialised by
-        // overmapbuffer::npc_mutex_.  See F2-2, F2-3 in Map Overhaul Plan.
+        // overmapbuffer::npc_mutex_.
         const oter_id terrain_type = get_overmapbuffer( bound_dimension_ ).ter( grid_abs_omt );
 
         // Short-circuit if the map tile is uniform
@@ -8245,14 +8222,12 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
             generate_uniform( grid_abs_sub_rounded, t_rock, dim_buf );
         } else {
             tinymap tmp_map;
-            // Phase 6: bind the tinymap to this map's dimension so generated submaps
+            // Bind the tinymap to this map's dimension so generated submaps
             // land in the correct registry slot via loadn()'s dimension-aware lookup.
             tmp_map.bind_dimension( bound_dimension_ );
             tmp_map.generate( grid_abs_sub_rounded, calendar::turn );
         }
 
-        // Phase 6: All generation paths now bind to bound_dimension_, so submaps
-        // land directly in the correct registry slot.  No fallback to primary needed.
         tmpsub = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap( grid_abs_sub );
         if( tmpsub == nullptr ) {
             debugmsg( "failed to generate a submap at %s", grid_abs_sub.to_string() );
@@ -8314,7 +8289,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
         }
     }
 
-    // Phase 6: Batch-advance field decay, item timers, and vehicle power for any
+    // Batch-advance field decay, item timers, and vehicle power for any
     // turns this submap missed while outside the reality bubble.
     // This runs BEFORE actualize() so that the two passes target disjoint effects:
     //   - run_submap_batch_turns: field half-life decay, item explicit-turn timers,
@@ -8324,7 +8299,6 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
     // The potential overlap: decay_cosmetic_fields() in actualize() may process
     // cosmetic fields that batch_turns_field() already aged.  This is harmless
     // because cosmetic fields lack a half-life (batch_turns_field skips them).
-    // See F4-3 in Map Overhaul Plan for full analysis.
     if( tmpsub->last_touched < calendar::turn ) {
         const int missed = to_turns<int>( calendar::turn - tmpsub->last_touched );
         run_submap_batch_turns( *tmpsub, missed );
@@ -9647,8 +9621,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     bool seen_cache_dirty = false;
     std::vector<int> dirty_seen_cache_levels;
 
-    // RISK-1: Refresh the shared weather-transparency lookup table once, serially,
-    // before the parallel Phase 1 block.  build_transparency_cache() reads the
+    // Refresh the shared weather-transparency lookup table once, serially,
+    // before the parallel block.  build_transparency_cache() reads the
     // table on every call, so updating it here guarantees all workers see a
     // consistent value without a data race.
     update_weather_transparency_lookup();
@@ -9963,7 +9937,7 @@ tinymap::tinymap( int mapsize, bool zlevels )
 
 void tinymap::drain_to_mapbuffer( mapbuffer &dest )
 {
-    // Phase 6 complete: tinymap::generate() calls loadn() which uses
+    // complete: tinymap::generate() calls loadn() which uses
     // MAPBUFFER_REGISTRY.get(bound_dimension_), so generated submaps land directly in
     // the correct registry slot for all dimensions when the caller binds the tinymap
     // to the target dimension via bind_dimension() before calling generate().

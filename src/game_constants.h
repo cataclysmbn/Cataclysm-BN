@@ -30,7 +30,7 @@ static constexpr int MAX_WORN_PER_TYPE = 2;
 // is large enough.  The option itself is capped to this.
 // pimpl<map> in game.h is constructed with a minimal size-1 sentinel and resized
 // to g_mapsize by game::setup() so that players running smaller bubbles do not pay
-// the memory cost of the maximum.  See F1-1 in Map Overhaul Plan.
+// the memory cost of the maximum.
 static constexpr int REALITY_BUBBLE_SIZE_MAX = 16;
 
 // MAPSIZE is the number of submaps in each direction.

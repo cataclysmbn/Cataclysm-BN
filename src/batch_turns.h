@@ -1,8 +1,6 @@
 #pragma once
 
 /**
- * Phase 6 — Batched Turn Interface
- *
  * Free functions for analytically advancing game state by N turns for
  * entities that were outside the reality bubble (or simply not processed)
  * during that period.  These are called from:
@@ -23,12 +21,12 @@ class vehicle;
 // ---------------------------------------------------------------------------
 // Catchup caps — keep these conservative; they limit worst-case load time.
 // ---------------------------------------------------------------------------
-inline constexpr int MAX_CATCHUP_FIELDS  = 1000;
-inline constexpr int MAX_CATCHUP_ITEMS   = 1000;
-inline constexpr int MAX_CATCHUP_VEHICLE = 100;
+inline constexpr int MAX_CATCHUP_FIELDS  = 100000;
+inline constexpr int MAX_CATCHUP_ITEMS   = 100000;
+inline constexpr int MAX_CATCHUP_VEHICLE = 10000;
 inline constexpr int MAX_CATCHUP_MONSTER = 10000;
 inline constexpr int MAX_CATCHUP_NPC    = 10000;
-inline constexpr int MAX_CATCHUP_GRID   = 500;
+inline constexpr int MAX_CATCHUP_GRID   = 50000;
 
 // ---------------------------------------------------------------------------
 // Submap-level batch functions

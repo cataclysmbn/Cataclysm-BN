@@ -1183,7 +1183,7 @@ class game : public submap_load_listener
         /// Keyed by dimension_id.  The overworld ("") may be absent on fresh games.
         std::unordered_map<std::string, dimension_info> loaded_dimensions_;
 
-        /// The dimension ID of the single "kept alive" pocket dimension (§2.1).
+        /// The dimension ID of the single "kept alive" pocket dimension.
         /// Empty = no pocket is kept.  When the player enters a new bounded pocket this
         /// slot is evicted (saved + removed from registry) and replaced with the new one.
         std::string kept_pocket_dimension_id_;

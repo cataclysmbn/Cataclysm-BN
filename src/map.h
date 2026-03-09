@@ -436,7 +436,7 @@ class map : public submap_load_listener
         map( int mapsize = MAPSIZE, bool zlev = true );
         // Use a function-body delegation rather than a delegating-constructor
         // call-expression so that g_mapsize (runtime) is used instead of the
-        // compile-time MAPSIZE constant.  See F1-1 in Map Overhaul Plan.
+        // compile-time MAPSIZE constant.
         explicit map( bool zlev );
 
         virtual ~map();
@@ -450,7 +450,7 @@ class map : public submap_load_listener
          * The map MUST be unloaded (all grid pointers null) before calling.
          * Called from game::setup() after init_bubble_config() sets g_mapsize
          * so that pimpl<map>'s lightweight initial allocation is replaced with
-         * the player-configured bubble size.  See F1-1 in Map Overhaul Plan.
+         * the player-configured bubble size.
          */
         auto resize( int new_mapsize ) -> void;
 
@@ -2356,7 +2356,7 @@ class tinymap : public map
          *
          * Full support for non-primary-dimension generation (where submaps need to be
          * transferred from MAPBUFFER into a different registry slot) is deferred to
-         * Phase 6, which will make loadn() dimension-aware so that each tinymap's
+         * which will make loadn() dimension-aware so that each tinymap's
          * generated submaps land in the correct registry slot from the start.
          *
          * Must be called under mb_write_mutex in the streaming load path so that any

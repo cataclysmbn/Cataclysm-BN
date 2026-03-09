@@ -41,7 +41,7 @@
  *   • Submaps must not be destroyed on worker threads (destructor calls mark_for_destruction
  *     and safe_reference::mark_destroyed).  Use mapbuffer::drain_pending_submap_destroy()
  *     on the main thread after joining all preload_quad() futures.
- *   • Submap deserialisation (Phase 1 of preload_quad) IS safe from workers because
+ *   • Submap deserialisation IS safe from workers because
  *     active_item_cache constructs cache_reference objects, which are now mutex-guarded.
  *   • save_quad() serialisation IS safe from workers: safe_reference::serialize() only
  *     writes to next_id (atomic) and to per-item records that are never shared across quads.

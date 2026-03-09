@@ -155,7 +155,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
     const tripoint map_origin = sm_to_omt_copy( here.get_abs_sub() );
     const bool map_has_zlevels = g != nullptr && here.has_zlevels();
 
-    // Phase 1 — Serial collection of unique OMT quad addresses with per-quad delete flags.
+    // Serial collection of unique OMT quad addresses with per-quad delete flags.
     // The UI progress popup runs here on the main thread only (show_progress=true).
     // When save() is dispatched from a worker thread (show_progress=false), the popup
     // is skipped to avoid calling UI functions off the main thread.
@@ -206,7 +206,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
         }
     }
 
-    // Phase 2 — Write non-uniform quads in parallel. Each write targets a distinct file/key,
+    // Write non-uniform quads in parallel. Each write targets a distinct file/key,
     // so there are no shared-state concerns between concurrent save_quad() calls.
     // save_quad() uses submaps.find() for read-only access (safe for concurrent reads).
     // Per-task local_delete lists are merged into the shared list under a mutex.
@@ -222,7 +222,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
         }
     } );
 
-    // Phase 3 — Evict submaps from memory. std::map mutation is not thread-safe,
+    // Evict submaps from memory. std::map mutation is not thread-safe,
     // so this is done serially after the parallel write phase completes.
     for( const tripoint &pos : submaps_to_delete ) {
         remove_submap( pos );
@@ -393,7 +393,7 @@ void mapbuffer::deserialize( JsonIn &jsin )
 void mapbuffer::preload_quad( const tripoint &om_addr )
 {
     ZoneScoped;
-    // Phase 1: disk I/O and JSON parsing — runs outside submaps_mutex_ so
+    // Disk I/O and JSON parsing — runs outside submaps_mutex_ so
     // different quads can be prefetched concurrently on worker threads.
     std::vector<std::pair<tripoint, std::unique_ptr<submap>>> loaded;
     using namespace std::placeholders;
@@ -402,7 +402,7 @@ void mapbuffer::preload_quad( const tripoint &om_addr )
         deserialize_into_vec( jsin, loaded );
     } );
 
-    // Phase 2: add parsed submaps to the in-memory buffer under submaps_mutex_.
+    // Add parsed submaps to the in-memory buffer under submaps_mutex_.
     // add_submap() handles concurrent duplicate-add gracefully (keeps in-memory version).
     for( auto &[pos, sm] : loaded ) {
         if( !add_submap( pos, sm ) ) {

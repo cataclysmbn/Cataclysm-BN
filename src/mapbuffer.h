@@ -31,7 +31,7 @@ class mapbuffer
          * Pass false when saving a non-primary dimension's mapbuffer so that
          * the primary tracker is not spuriously updated.
          * @param show_progress If true (default), show a UI progress popup
-         * during Phase 1 collection. Pass false when save() is called from a
+         * during collection. Pass false when save() is called from a
          * worker thread (e.g. via mapbuffer_registry::save_all parallel path)
          * because UI functions must only be called on the main thread.
          **/

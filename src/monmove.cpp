@@ -929,9 +929,6 @@ bool monster::die_if_drowning( const tripoint &at_pos, const int chance )
     return false;
 }
 
-// ---------------------------------------------------------------------------
-// Phase 4+: decide_action() — read-only decision pass
-// ---------------------------------------------------------------------------
 // Determines the single action this monster intends to take this tick.
 // Must NOT mutate *this; all writes are deferred to execute_action().
 //
@@ -940,14 +937,11 @@ bool monster::die_if_drowning( const tripoint &at_pos, const int chance )
 //   2) Special attacks
 //   3) Early-exit guard checks (immobile, stunned, harness, etc.)
 //   4) Movement: destination → candidate selection → action kind
-// ---------------------------------------------------------------------------
 monster_action_t monster::decide_action() const
 {
     monster_action_t action;
 
-    // -----------------------------------------------------------------------
     // (1) Hallucination: chance to vanish each tick.
-    // -----------------------------------------------------------------------
     if( is_hallucination() && one_in( 25 ) ) {
         action.kind = monster_action_kind::die;
         return action;
@@ -955,17 +949,13 @@ monster_action_t monster::decide_action() const
 
     const bool pacified = has_effect( effect_pacified );
 
-    // -----------------------------------------------------------------------
     // (2) [Special attacks are detected and fired as a side effect inside
     //     execute_action(), matching the original move() fall-through behaviour.
     //     decide_action() does NOT detect them; doing so caused an infinite loop
     //     because execute_action() returned without consuming moves when the
     //     special failed to fire, leaving moves > 0 for the next iteration.]
-    // -----------------------------------------------------------------------
 
-    // -----------------------------------------------------------------------
     // (3) Early-exit guard conditions — read-only; writes deferred to execute_action.
-    // -----------------------------------------------------------------------
 
     if( moves < 0 ) {
         action.kind      = monster_action_kind::idle;
@@ -1008,9 +998,7 @@ monster_action_t monster::decide_action() const
         return action;
     }
 
-    // -----------------------------------------------------------------------
     // (4) Attitude check — read-only.
-    // -----------------------------------------------------------------------
     monster_attitude current_attitude = attitude( nullptr );
     if( !is_wandering() ) {
         if( goal == g->u.pos() ) {
@@ -1033,11 +1021,9 @@ monster_action_t monster::decide_action() const
         return action;
     }
 
-    // -----------------------------------------------------------------------
     // (5) Destination determination — reads only.
     //     Path trimming (erase of front==pos() elements), path.clear(),
     //     repath_requested flag, and actual A* are all deferred to execute_action.
-    // -----------------------------------------------------------------------
     const map &here = g->m;
     tripoint destination = pos();
 
@@ -1294,13 +1280,10 @@ monster_action_t monster::decide_action() const
     return action;
 }
 
-// ---------------------------------------------------------------------------
-// Phase 4+: execute_action() -- write pass
-// ---------------------------------------------------------------------------
+// execute_action() -- write pass
 // Applies all mutations deferred from decide_action().
 // process_triggers() and map::creature_in_field() are the CALLER'S
 // responsibility; they are NOT invoked here.
-// ---------------------------------------------------------------------------
 void monster::execute_action( const monster_action_t &action )
 {
     // wandf decrement — unconditional, matching the first line of old move().
@@ -1314,10 +1297,8 @@ void monster::execute_action( const monster_action_t &action )
         return;
     }
 
-    // -----------------------------------------------------------------------
     // Pre-move mutations (behavior oracle, special attacks, floor, drowning,
     // move_effects) that happen before the movement execution.
-    // -----------------------------------------------------------------------
     map &here = g->m;
 
     behavior::monster_oracle_t oracle( this );
@@ -1466,9 +1447,7 @@ void monster::execute_action( const monster_action_t &action )
         }
     }
 
-    // -----------------------------------------------------------------------
     // Movement execution phase.
-    // -----------------------------------------------------------------------
 
     // Facing direction update.
     const tripoint dest = action.dest;
@@ -1587,9 +1566,7 @@ void monster::execute_action( const monster_action_t &action )
     }
 }
 
-// ---------------------------------------------------------------------------
-// Phase 4+ move() wrapper: thin shim over decide_action / execute_action.
-// ---------------------------------------------------------------------------
+// move() wrapper: thin shim over decide_action / execute_action.
 // General movement.
 // Currently, priority goes:
 // 1) Special Attack

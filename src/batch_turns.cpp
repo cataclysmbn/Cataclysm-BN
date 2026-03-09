@@ -97,8 +97,7 @@ void batch_turns_field( submap &sm, int n )
                 // in unloaded submaps is frozen in time (pre-PR behavior).
                 // Approximating fire decay would cause instant-kill on load,
                 // burned structures that were never simulated, etc.
-                // See F4-1 in Map Overhaul Plan; covers fd_fire, fd_fire_vent,
-                // fd_flame_burst, fd_incendiary, and any future has_fire types.
+                // Covers fd_fire, fd_fire_vent, fd_flame_burst, fd_incendiary.
                 if( fdata.has_fire ) {
                     ++it;
                     continue;

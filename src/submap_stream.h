@@ -70,7 +70,6 @@ class submap_stream
          *     for different OMTs run fully concurrently.  A colliding worker
          *     waits on gen_in_progress_cv_ until the owner signals completion,
          *     then re-checks the mapbuffer and returns the result.
-         *     See F2-3 in Map Overhaul Plan.
          */
         void request_load( const std::string &dim, tripoint_abs_sm pos );
 
@@ -87,7 +86,6 @@ class submap_stream
          * drain_completed returns).  Calling on_submap_loaded here would trigger
          * the grid-duplication bug where the grid-copy loop in shift() propagates
          * the newly-set pointer so two adjacent slots point to the same submap.
-         * See F2-7 in Map Overhaul Plan.
          */
         void drain_completed( map &m, const std::vector<tripoint_abs_sm> &must_have );
 

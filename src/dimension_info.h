@@ -12,12 +12,7 @@
  *
  * Each active dimension gets one entry in `game::loaded_dimensions_`.  The entry is
  * created when the dimension is first entered and removed when the last of its submaps
- * is evicted from the load manager's desired set (dimension eviction — see §2.1 of the
- * design document).
- *
- * This replaces the `secondary_world` class which used a swap model: submaps stay in
- * their registry slot (`MAPBUFFER_REGISTRY.get(dimension_id)`) at all times; no physical
- * transfer between slots ever occurs.
+ * is evicted from the load manager's desired set
  *
  * All fields are plain value types so that `dimension_info` can be stored in
  * `std::unordered_map` without special ownership semantics.

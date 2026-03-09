@@ -145,7 +145,7 @@ void map::generate( const tripoint &p, const time_point &when )
     // TODO: fix point types
     tripoint_abs_omt abs_omt( sm_to_omt_copy( p ) );
     // Use the dimension-specific overmapbuffer so worker threads do not read the
-    // active-dimension global (g_active_dimension_id).  See F2-2 in Map Overhaul Plan.
+    // active-dimension global (g_active_dimension_id).
     overmapbuffer &omap = get_overmapbuffer( bound_dimension_ );
     oter_id terrain_type = omap.ter( abs_omt );
 

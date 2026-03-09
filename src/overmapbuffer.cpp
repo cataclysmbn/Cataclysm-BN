@@ -1858,7 +1858,7 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         if( placed ) {
             // Keep pos_abs in sync with the placed local position.
             placed->pos_abs = tripoint_abs_ms( ms.x, ms.y, p.z() );
-            // Phase 6: batch-advance AI state for turns missed while despawned.
+            // Batch-advance AI state for turns missed while despawned.
             // Only applies to monsters with a valid (non-zero) last_updated timestamp.
             // batch_turns() does NOT update last_updated so on_load() can still
             // perform its biological catchup and sanity checks.

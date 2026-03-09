@@ -102,7 +102,7 @@ extern bool reality_bubble_fire_spread;
 /**
  * Maximum number of fire-spread-loaded submaps allowed across all dimensions
  * simultaneously.  Cached from the FIRE_SPREAD_SUBMAP_CAP world option.
- * Read every world_tick() — must be fast.  See F5-3 in Map Overhaul Plan.
+ * Read every world_tick() — must be fast.
  */
 extern int fire_spread_submap_cap;
 
@@ -113,8 +113,6 @@ extern int fire_spread_submap_cap;
  * "off"      → skip all non-primary-dimension processing in world_tick().
  * Any other  → treat as "full" for now (one chunk kept loaded, fully simulated).
  *              none/minimal/moderate distinctions are deferred to a future PR.
- *
- * See CO-2 in Map Overhaul Plan.
  */
 enum class pocket_sim_level { off, none, minimal, moderate, full };
 extern pocket_sim_level pocket_simulation_level;
