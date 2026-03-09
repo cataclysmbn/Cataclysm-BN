@@ -1,1 +1,275 @@
-[{"id":"hearse","type":"vehicle","name":"Hearse","blueprint":[["o''-+-o"],["+==|#'|"],["+==|#'|"],["o''-+-o"]],"parts":[{"x":0,"y":0,"parts":["frame_vertical_2","reclining_seat","seatbelt","controls","dashboard","vehicle_clock","vehicle_alarm","horn_car","roof"]},{"x":0,"y":1,"parts":["frame_vertical_2","reclining_seat","seatbelt","roof"]},{"x":0,"y":-1,"parts":["frame_vertical","door_front_left","roof"]},{"x":0,"y":2,"parts":["frame_vertical","door_front_right","roof"]},{"x":-1,"y":0,"parts":["frame_vertical_2","windshield","roof"]},{"x":-1,"y":1,"parts":["frame_vertical_2","windshield","roof"]},{"x":-1,"y":-1,"parts":["frame_vertical","board_vertical_left","roof"]},{"x":-1,"y":2,"parts":["frame_vertical","board_vertical_right","roof"]},{"x":-2,"y":0,"parts":["frame_vertical_2","trunk","roof"]},{"x":-2,"y":1,"parts":["frame_vertical_2","trunk","roof"]},{"x":-2,"y":-1,"parts":["frame_vertical","windshield_vertical_left","v_curtain","roof"]},{"x":-2,"y":2,"parts":["frame_vertical","windshield_vertical_right","v_curtain","roof"]},{"x":1,"y":0,"parts":["frame_horizontal","windshield_horizontal_front"]},{"x":1,"y":1,"parts":["frame_horizontal","windshield_horizontal_front"]},{"x":1,"y":-1,"parts":["frame_vertical","windshield_nw"]},{"x":1,"y":2,"parts":["frame_vertical","windshield_ne"]},{"x":2,"y":0,"parts":["frame_horizontal","halfboard_horizontal","engine_inline4","alternator_car","battery_car"]},{"x":2,"y":1,"parts":["frame_horizontal","halfboard_horizontal"]},{"x":2,"y":-1,"parts":["frame_nw","halfboard_nw","headlight","wheel_mount_medium_steerable","wheel"]},{"x":2,"y":2,"parts":["frame_ne","halfboard_ne","headlight","wheel_mount_medium_steerable","wheel"]},{"x":-3,"y":0,"parts":["frame_vertical","trunk","muffler","roof"]},{"x":-3,"y":1,"parts":["frame_vertical","trunk","roof"]},{"x":-3,"y":-1,"parts":["frame_vertical","windshield_vertical_left","v_curtain",{"part":"tank","fuel":"gasoline"},"roof"]},{"x":-3,"y":2,"parts":["frame_vertical","windshield_vertical_right","v_curtain","roof"]},{"x":-4,"y":-1,"parts":["frame_sw","board_sw","wheel_mount_medium","wheel","roof"]},{"x":-4,"y":0,"parts":["frame_horizontal","door","v_curtain","roof"]},{"x":-4,"y":1,"parts":["frame_horizontal","door","v_curtain","roof"]},{"x":-4,"y":2,"parts":["frame_se","board_se","wheel_mount_medium","wheel","roof"]}],"items":[]},{"id":"pickup_technical","type":"vehicle","name":"Technical","blueprint":[["o--+-ox"],["=='#'|x"],[".#'#'|x"],["o--+-ox"]],"parts":[{"x":0,"y":0,"parts":["frame_vertical_2","seat","seatbelt","controls","dashboard","stereo","horn_car","roof"]},{"x":0,"y":1,"parts":["frame_vertical_2","seat","seatbelt","roof"]},{"x":0,"y":-1,"parts":["frame_vertical","door_front_left"]},{"x":0,"y":2,"parts":["frame_vertical","door_front_right"]},{"x":-1,"y":0,"parts":["frame_vertical_2","windshield_horizontal_front","rebar_plate","roof"]},{"x":-1,"y":1,"parts":["frame_vertical_2","windshield_horizontal_front","rebar_plate","roof"]},{"x":-1,"y":-1,"parts":["frame_vertical","halfboard_vertical_left"]},{"x":-1,"y":2,"parts":["frame_vertical","halfboard_vertical_right"]},{"x":1,"y":0,"parts":["frame_horizontal","windshield_horizontal_front","rebar_plate"]},{"x":1,"y":1,"parts":["frame_horizontal","windshield_horizontal_front","rebar_plate"]},{"x":1,"y":-1,"parts":["frame_vertical","windshield_nw","rebar_plate"]},{"x":1,"y":2,"parts":["frame_vertical","windshield_ne","rebar_plate"]},{"x":2,"y":0,"parts":["frame_horizontal","halfboard_horizontal","engine_v6","alternator_car","battery_car"]},{"x":2,"y":1,"parts":["frame_horizontal","halfboard_horizontal"]},{"x":2,"y":-1,"parts":["frame_nw","halfboard_nw","wheel_mount_medium_steerable","wheel","spring_plate","headlight"]},{"x":2,"y":2,"parts":["frame_ne","halfboard_ne","wheel_mount_medium_steerable","wheel","spring_plate","headlight"]},{"x":3,"y":0,"parts":["ram_spiked"]},{"x":3,"y":1,"parts":["ram_spiked"]},{"x":3,"y":-1,"parts":["ram_spiked"]},{"x":3,"y":2,"parts":["ram_spiked"]},{"x":-2,"y":0,"parts":["frame_vertical","trunk","muffler","roof"]},{"x":-2,"y":1,"parts":["frame_vertical","seat","turret_mount_manual_steel",{"part":"mounted_m60","ammo":80,"ammo_types":null,"ammo_qty":[10,100]},"roof"]},{"x":-2,"y":-1,"parts":["frame_vertical","halfboard_vertical_left",{"part":"tank","fuel":"gasoline"}]},{"x":-2,"y":2,"parts":["frame_vertical","halfboard_vertical_right",{"part":"tank","fuel":"gasoline"}]},{"x":-3,"y":-1,"parts":["frame_horizontal","halfboard_sw","wheel_mount_medium","wheel","spring_plate"]},{"x":-3,"y":0,"parts":["frame_horizontal","trunk"]},{"x":-3,"y":1,"parts":["frame_horizontal","aisle_vertical"]},{"x":-3,"y":2,"parts":["frame_horizontal","halfboard_se","wheel_mount_medium","wheel","spring_plate"]}],"items":[{"x":0,"y":0,"chance":15,"item_groups":"car_misc"},{"x":0,"y":0,"chance":10,"item_groups":"car_misc"},{"x":0,"y":1,"chance":10,"item_groups":"car_misc"},{"x":-3,"y":0,"chance":10,"item_groups":"car_kit"},{"x":-3,"y":0,"chance":8,"item_groups":"fuel_gasoline"},{"x":-2,"y":0,"chance":40,"items":["308"]},{"x":-2,"y":0,"chance":20,"items":["308","308"]},{"x":-2,"y":0,"chance":10,"items":["308","308"]},{"x":-2,"y":0,"chance":5,"items":["308","308"]}]},{"id":"car_roadwarrior","type":"vehicle","name":"Wasteland Interceptor","blueprint":[["o--+-o"],["_=##'|"],["_=#k'|"],["o--+-o"]],"parts":[{"x":0,"y":0,"parts":["frame_vertical_2","seat","seatbelt","controls","dashboard","vehicle_clock","horn_car","roof"]},{"x":0,"y":1,"parts":["frame_vertical_2","animal_compartment","roof"]},{"x":0,"y":-1,"parts":["frame_vertical","door"]},{"x":0,"y":2,"parts":["frame_vertical","door"]},{"x":-1,"y":0,"parts":["frame_vertical_2","seat","seatbelt","roof"]},{"x":-1,"y":1,"parts":["frame_vertical_2","seat","seatbelt","roof"]},{"x":-1,"y":-1,"parts":["frame_vertical","halfboard_vertical"]},{"x":-1,"y":2,"parts":["frame_vertical","halfboard_vertical"]},{"x":1,"y":0,"parts":["frame_horizontal","windshield"]},{"x":1,"y":1,"parts":["frame_horizontal","windshield"]},{"x":1,"y":-1,"parts":["frame_vertical","windshield"]},{"x":1,"y":2,"parts":["frame_vertical","windshield"]},{"x":2,"y":0,"parts":["frame_horizontal","engine_v8","alternator_truck","battery_car","halfboard_horizontal"]},{"x":2,"y":1,"parts":["frame_horizontal","halfboard_horizontal"]},{"x":2,"y":-1,"parts":["frame_nw","halfboard_nw","wheel_mount_medium_steerable","wheel","headlight"]},{"x":2,"y":2,"parts":["frame_ne","halfboard_ne","wheel_mount_medium_steerable","wheel","headlight"]},{"x":-2,"y":0,"parts":["frame_vertical","trunk","medium_storage_battery","roof","afs_small_roof_external_tank"]},{"x":-2,"y":1,"parts":["frame_vertical","trunk","battery_charger","roof","afs_small_roof_external_tank"]},{"x":-2,"y":-1,"parts":["frame_vertical","halfboard_vertical",{"part":"tank","fuel":"gasoline"}]},{"x":-2,"y":2,"parts":["frame_vertical","halfboard_vertical","muffler"]},{"x":-3,"y":-1,"parts":["frame_horizontal","halfboard_sw","wheel_mount_medium","wheel"]},{"x":-3,"y":0,"parts":["frame_horizontal","door_trunk"]},{"x":-3,"y":1,"parts":["frame_horizontal","door_trunk"]},{"x":-3,"y":2,"parts":["frame_horizontal","halfboard_se","wheel_mount_medium","wheel"]}],"items":[{"x":-2,"y":1,"chance":100,"items":["jerrycan"]}]},{"id":"motorcycle_methcart","type":"vehicle","name":"Meth Bike","blueprint":[["o#>o-"],[" #>- "]],"parts":[{"x":0,"y":0,"parts":["frame_vertical_2","saddle_motor","controls","controls_electronic","vehicle_alarm","horn_car","engine_1cyl_large","alternator_motorbike"]},{"x":-1,"y":0,"parts":["frame_vertical","wheel_mount_light","wheel_motorbike_rear","muffler","box"]},{"x":1,"y":0,"parts":["frame_handle",{"part":"tank","fuel":"gasoline"},"headlight"]},{"x":2,"y":0,"parts":["frame_vertical","wheel_mount_light_steerable","wheel_motorbike"]},{"x":3,"y":0,"parts":["ram_spiked"]},{"x":0,"y":1,"parts":["frame_cross","wheel_mount_light","wheel_motorbike","chemlab","medium_storage_battery"]},{"x":1,"y":1,"parts":["frame_handle","box"]},{"x":2,"y":1,"parts":["ram_spiked"]}],"items":[{"x":0,"y":1,"chance":50,"item_groups":["meth_ingredients","meth_ingredients"]}]}]
+[
+  {
+    "id": "hearse",
+    "type": "vehicle",
+    "name": "Hearse",
+    "blueprint": [
+      [ "o''-+-o" ],
+      [ "+==|#'|" ],
+      [ "+==|#'|" ],
+      [ "o''-+-o" ]
+    ],
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "frame_vertical_2",
+          "reclining_seat",
+          "seatbelt",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "vehicle_alarm",
+          "horn_car",
+          "roof"
+        ]
+      },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical_2", "reclining_seat", "seatbelt", "roof" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door_front_left", "roof" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "door_front_right", "roof" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "windshield", "roof" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "windshield", "roof" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_vertical", "board_vertical_left", "roof" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "board_vertical_right", "roof" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_vertical_2", "trunk", "roof" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_vertical_2", "trunk", "roof" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_vertical", "windshield_vertical_left", "v_curtain", "roof" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_vertical", "windshield_vertical_right", "v_curtain", "roof" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield_horizontal_front" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield_horizontal_front" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_vertical", "windshield_nw" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_vertical", "windshield_ne" ] },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [ "frame_horizontal", "halfboard_horizontal", "engine_inline4", "alternator_car", "battery_car" ]
+      },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "frame_nw", "halfboard_nw", "headlight", "wheel_mount_medium_steerable", "wheel" ]
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "parts": [ "frame_ne", "halfboard_ne", "headlight", "wheel_mount_medium_steerable", "wheel" ]
+      },
+      { "x": -3, "y": 0, "parts": [ "frame_vertical", "trunk", "muffler", "roof" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_vertical", "trunk", "roof" ] },
+      {
+        "x": -3,
+        "y": -1,
+        "parts": [ "frame_vertical", "windshield_vertical_left", "v_curtain", { "part": "tank", "fuel": "gasoline" }, "roof" ]
+      },
+      { "x": -3, "y": 2, "parts": [ "frame_vertical", "windshield_vertical_right", "v_curtain", "roof" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_sw", "board_sw", "wheel_mount_medium", "wheel", "roof" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_horizontal", "door", "v_curtain", "roof" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_horizontal", "door", "v_curtain", "roof" ] },
+      { "x": -4, "y": 2, "parts": [ "frame_se", "board_se", "wheel_mount_medium", "wheel", "roof" ] }
+    ],
+    "items": [  ]
+  },
+  {
+    "id": "pickup_technical",
+    "type": "vehicle",
+    "name": "Technical",
+    "blueprint": [
+      [ "o--+-ox" ],
+      [ "=='#'|x" ],
+      [ ".#'#'|x" ],
+      [ "o--+-ox" ]
+    ],
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_vertical_2", "seat", "seatbelt", "controls", "dashboard", "stereo", "horn_car", "roof" ]
+      },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical_2", "seat", "seatbelt", "roof" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door_front_left" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "door_front_right" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "windshield_horizontal_front", "rebar_plate", "roof" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "windshield_horizontal_front", "rebar_plate", "roof" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_vertical", "halfboard_vertical_left" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "halfboard_vertical_right" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield_horizontal_front", "rebar_plate" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield_horizontal_front", "rebar_plate" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_vertical", "windshield_nw", "rebar_plate" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_vertical", "windshield_ne", "rebar_plate" ] },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [ "frame_horizontal", "halfboard_horizontal", "engine_v6", "alternator_car", "battery_car" ]
+      },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_medium_steerable", "wheel", "spring_plate", "headlight" ]
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "parts": [ "frame_ne", "halfboard_ne", "wheel_mount_medium_steerable", "wheel", "spring_plate", "headlight" ]
+      },
+      { "x": 3, "y": 0, "parts": [ "ram_spiked" ] },
+      { "x": 3, "y": 1, "parts": [ "ram_spiked" ] },
+      { "x": 3, "y": -1, "parts": [ "ram_spiked" ] },
+      { "x": 3, "y": 2, "parts": [ "ram_spiked" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_vertical", "trunk", "muffler", "roof" ] },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [
+          "frame_vertical",
+          "seat",
+          "turret_mount_manual_steel",
+          { "part": "mounted_m60", "ammo": 80, "ammo_types": null, "ammo_qty": [ 10, 100 ] },
+          "roof"
+        ]
+      },
+      {
+        "x": -2,
+        "y": -1,
+        "parts": [ "frame_vertical", "halfboard_vertical_left", { "part": "tank", "fuel": "gasoline" } ]
+      },
+      {
+        "x": -2,
+        "y": 2,
+        "parts": [ "frame_vertical", "halfboard_vertical_right", { "part": "tank", "fuel": "gasoline" } ]
+      },
+      {
+        "x": -3,
+        "y": -1,
+        "parts": [ "frame_horizontal", "halfboard_sw", "wheel_mount_medium", "wheel", "spring_plate" ]
+      },
+      { "x": -3, "y": 0, "parts": [ "frame_horizontal", "trunk" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_horizontal", "aisle_vertical" ] },
+      {
+        "x": -3,
+        "y": 2,
+        "parts": [ "frame_horizontal", "halfboard_se", "wheel_mount_medium", "wheel", "spring_plate" ]
+      }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 15, "item_groups": "car_misc" },
+      { "x": 0, "y": 0, "chance": 10, "item_groups": "car_misc" },
+      { "x": 0, "y": 1, "chance": 10, "item_groups": "car_misc" },
+      { "x": -3, "y": 0, "chance": 10, "item_groups": "car_kit" },
+      { "x": -3, "y": 0, "chance": 8, "item_groups": "fuel_gasoline" },
+      { "x": -2, "y": 0, "chance": 40, "items": [ "308" ] },
+      { "x": -2, "y": 0, "chance": 20, "items": [ "308", "308" ] },
+      { "x": -2, "y": 0, "chance": 10, "items": [ "308", "308" ] },
+      { "x": -2, "y": 0, "chance": 5, "items": [ "308", "308" ] }
+    ]
+  },
+  {
+    "id": "car_roadwarrior",
+    "type": "vehicle",
+    "name": "Wasteland Interceptor",
+    "blueprint": [
+      [ "o--+-o" ],
+      [ "_=##'|" ],
+      [ "_=#k'|" ],
+      [ "o--+-o" ]
+    ],
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_vertical_2", "seat", "seatbelt", "controls", "dashboard", "vehicle_clock", "horn_car", "roof" ]
+      },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical_2", "animal_compartment", "roof" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "door" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "seat", "seatbelt", "roof" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "seat", "seatbelt", "roof" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_vertical", "halfboard_vertical" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "halfboard_vertical" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_vertical", "windshield" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_vertical", "windshield" ] },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [ "frame_horizontal", "engine_v8", "alternator_truck", "battery_car", "halfboard_horizontal" ]
+      },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_medium_steerable", "wheel", "headlight" ]
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "parts": [ "frame_ne", "halfboard_ne", "wheel_mount_medium_steerable", "wheel", "headlight" ]
+      },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "frame_vertical", "trunk", "medium_storage_battery", "roof", "afs_small_roof_external_tank" ]
+      },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [ "frame_vertical", "trunk", "battery_charger", "roof", "afs_small_roof_external_tank" ]
+      },
+      {
+        "x": -2,
+        "y": -1,
+        "parts": [ "frame_vertical", "halfboard_vertical", { "part": "tank", "fuel": "gasoline" } ]
+      },
+      { "x": -2, "y": 2, "parts": [ "frame_vertical", "halfboard_vertical", "muffler" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_horizontal", "halfboard_sw", "wheel_mount_medium", "wheel" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_horizontal", "door_trunk" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_horizontal", "door_trunk" ] },
+      { "x": -3, "y": 2, "parts": [ "frame_horizontal", "halfboard_se", "wheel_mount_medium", "wheel" ] }
+    ],
+    "items": [ { "x": -2, "y": 1, "chance": 100, "items": [ "jerrycan" ] } ]
+  },
+  {
+    "id": "motorcycle_methcart",
+    "type": "vehicle",
+    "name": "Meth Bike",
+    "blueprint": [
+      [ "o#>o-" ],
+      [ " #>- " ]
+    ],
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "frame_vertical_2",
+          "saddle_motor",
+          "controls",
+          "controls_electronic",
+          "vehicle_alarm",
+          "horn_car",
+          "engine_1cyl_large",
+          "alternator_motorbike"
+        ]
+      },
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [ "frame_vertical", "wheel_mount_light", "wheel_motorbike_rear", "muffler", "box" ]
+      },
+      { "x": 1, "y": 0, "parts": [ "frame_handle", { "part": "tank", "fuel": "gasoline" }, "headlight" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_vertical", "wheel_mount_light_steerable", "wheel_motorbike" ] },
+      { "x": 3, "y": 0, "parts": [ "ram_spiked" ] },
+      {
+        "x": 0,
+        "y": 1,
+        "parts": [ "frame_cross", "wheel_mount_light", "wheel_motorbike", "chemlab", "medium_storage_battery" ]
+      },
+      { "x": 1, "y": 1, "parts": [ "frame_handle", "box" ] },
+      { "x": 2, "y": 1, "parts": [ "ram_spiked" ] }
+    ],
+    "items": [ { "x": 0, "y": 1, "chance": 50, "item_groups": [ "meth_ingredients", "meth_ingredients" ] } ]
+  }
+]
