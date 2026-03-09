@@ -64,8 +64,7 @@
         { "monster": "mon_turret_medium", "x": 14, "y": 18 },
         { "monster": "mon_turret_medium", "x": 9, "y": 20 },
         { "monster": "mon_turret_medium", "x": 14, "y": 20 }
-      ],
-      "place_vehicles": [ { "vehicle": "howitzer_m109", "x": 10, "y": 8, "chance": 100, "rotation": 0 } ]
+      ]
     }
   },
   {
