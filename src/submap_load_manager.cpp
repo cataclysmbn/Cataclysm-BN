@@ -60,9 +60,12 @@ auto submap_load_manager::update_load_shape( int radius ) -> void
         auto [dx, dy] = pair;
         return point{ dx, dy };
     };
-    auto offsets = cata::views::cartesian_product( axis, axis )
-                   | std::views::transform( to_point );
-    bubble_offsets_ = std::vector<point>( offsets.begin(), offsets.end() );
+    bubble_offsets_.clear();
+    std::ranges::for_each( cata::views::cartesian_product( axis, axis ),
+    [&]( auto pair ) {
+        auto [dx, dy] = pair;
+        bubble_offsets_.emplace_back( dx, dy );
+    } );
 }
 
 std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_set() const
