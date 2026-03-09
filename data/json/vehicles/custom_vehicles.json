@@ -126,7 +126,7 @@
           "frame_vertical",
           "seat",
           "turret_mount_manual_steel",
-          { "part": "mounted_m60", "ammo": 80, "ammo_types": null, "ammo_qty": [ 10, 100 ] },
+          { "part": "mounted_m60", "ammo": 80, "ammo_qty": [ 10, 100 ] },
           "roof"
         ]
       },
