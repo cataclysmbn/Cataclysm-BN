@@ -2062,6 +2062,13 @@ bool game::do_turn()
     // Tick all loaded submaps: fields for every submap, items/vehicles for batch-eligible ones.
     world_tick();
 
+    // Fire-spread (and other non-bubble) requests created during world_tick()
+    // must be realised before the next turn.  Flush background streamer first
+    // to avoid concurrent mapbuffer access, then let the load manager diff
+    // the desired set and load/unload as needed.
+    submap_streamer.flush_all();
+    submap_loader.update();
+
     // Finally, clear pathfinding cache
     Pathfinding::clear_d_maps();
 
@@ -4790,6 +4797,12 @@ void game::world_tick()
             }
 
             if( fire_spread && has_fire ) {
+                // Keep this fire submap loaded even when it leaves the
+                // reality bubble so fire continues to burn and spread.
+                if( !submap_loader.is_properly_requested( dim, pos_sm ) ) {
+                    fire_loader.request_for_fire( dim, pos_sm );
+                }
+
                 // Look up dimension bounds once per submap so we can
                 // prevent fire from escaping a bounded pocket dimension.
                 const auto dim_it = loaded_dimensions_.find( dim );

@@ -135,7 +135,7 @@ class submap_load_manager
 
         /**
          * Return true if @p pos in @p dim_id is covered by a reality_bubble
-         * request (i.e. is inside the player's active view).
+         * request (i.e. is inside the player's loaded square grid).
          */
         bool is_properly_requested( const std::string &dim_id,
                                     const tripoint_abs_sm &pos ) const;

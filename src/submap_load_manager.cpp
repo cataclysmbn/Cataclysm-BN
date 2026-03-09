@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <future>
 #include <ranges>
 #include <set>
@@ -235,9 +236,9 @@ bool submap_load_manager::is_properly_requested( const std::string &dim_id,
             return false;
         }
         const tripoint c = req.center.raw();
-        const int dx = p.x - c.x;
-        const int dy = p.y - c.y;
-        return dx * dx + dy * dy <= req.radius * req.radius
+        const int dx = std::abs( p.x - c.x );
+        const int dy = std::abs( p.y - c.y );
+        return dx <= req.radius && dy <= req.radius
                && p.z >= req.z_min && p.z <= req.z_max;
     } );
 }

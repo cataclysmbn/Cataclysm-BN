@@ -2,6 +2,8 @@
 
 #include <array>
 #include <cstdint>
+#include <set>
+#include <vector>
 
 #include "cached_options.h"
 #include "field.h"
@@ -82,36 +84,61 @@ void fire_spread_loader::prune_disconnected( submap_load_manager &loader )
         }
     };
 
-    std::vector<dim_pos_key> to_release;
-
+    // ---- 1. Remove handles whose submap no longer has fire ----
+    std::vector<dim_pos_key> no_fire;
     for( auto &[key, handle] : fire_handles_ ) {
-        const std::string &dim = key.first;
-        const tripoint_abs_sm &pos = key.second;
-
-        // ---- 1. Check if the submap still has fire ----
-        mapbuffer &mb = MAPBUFFER_REGISTRY.get( dim );
-        submap *sm = mb.lookup_submap_in_memory( pos.raw() );
+        mapbuffer &mb = MAPBUFFER_REGISTRY.get( key.first );
+        submap *sm = mb.lookup_submap_in_memory( key.second.raw() );
         if( sm == nullptr || !submap_has_fire( *sm ) ) {
-            to_release.push_back( key );
-            continue;
+            no_fire.push_back( key );
         }
-
-        // ---- 2. Connectivity invariant ----
-        // The fire-loaded submap must have at least one cardinal neighbour
-        // that is properly requested (reality_bubble / player_base / script).
-        bool connected = false;
-        for( const tripoint &delta : card ) {
-            const tripoint_abs_sm nbr{ pos.raw() + delta };
-            if( loader.is_properly_requested( dim, nbr ) ) {
-                connected = true;
-                break;
-            }
-        }
-        if( !connected ) {
-            to_release.push_back( key );
+    }
+    for( const dim_pos_key &key : no_fire ) {
+        const auto it = fire_handles_.find( key );
+        if( it != fire_handles_.end() ) {
+            loader.release_load( it->second );
+            fire_handles_.erase( it );
         }
     }
 
+    // ---- 2. Connectivity: flood-fill from properly-loaded submaps ----
+    // A fire-loaded submap is reachable if there is a cardinal path
+    // through other fire-loaded submaps back to a properly-loaded one.
+    std::set<dim_pos_key> reachable;
+    std::vector<dim_pos_key> frontier;
+
+    // Seed: fire handles that are directly adjacent to a properly-loaded submap.
+    for( const auto &[key, handle] : fire_handles_ ) {
+        for( const tripoint &delta : card ) {
+            const tripoint_abs_sm nbr{ key.second.raw() + delta };
+            if( loader.is_properly_requested( key.first, nbr ) ) {
+                if( reachable.insert( key ).second ) {
+                    frontier.push_back( key );
+                }
+                break;
+            }
+        }
+    }
+
+    // BFS: expand through cardinal fire-loaded neighbors.
+    while( !frontier.empty() ) {
+        const dim_pos_key cur = frontier.back();
+        frontier.pop_back();
+        for( const tripoint &delta : card ) {
+            const dim_pos_key nbr_key{ cur.first, tripoint_abs_sm{ cur.second.raw() + delta } };
+            if( fire_handles_.count( nbr_key ) && reachable.insert( nbr_key ).second ) {
+                frontier.push_back( nbr_key );
+            }
+        }
+    }
+
+    // Release all fire handles that are not reachable.
+    std::vector<dim_pos_key> to_release;
+    for( const auto &[key, handle] : fire_handles_ ) {
+        if( !reachable.count( key ) ) {
+            to_release.push_back( key );
+        }
+    }
     for( const dim_pos_key &key : to_release ) {
         const auto it = fire_handles_.find( key );
         if( it != fire_handles_.end() ) {

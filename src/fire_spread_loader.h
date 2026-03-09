@@ -20,8 +20,8 @@
  * across all dimensions combined.
  *
  * The connectivity invariant: a fire-spread-loaded submap is released during
- * prune_disconnected() if it has no cardinal neighbor covered by a
- * non-fire_spread (properly-loaded) request.
+ * prune_disconnected() if it is not reachable via cardinal fire-loaded
+ * neighbors from a non-fire_spread (properly-loaded) submap.
  */
 class fire_spread_loader
 {
@@ -48,8 +48,9 @@ class fire_spread_loader
          *
          * Releases any fire-spread request whose submap either:
          *   - No longer has any fire fields, OR
-         *   - Has no cardinal neighbor covered by a non-fire_spread request
-         *     (the connectivity invariant).
+         *   - Is not reachable via cardinal fire-loaded neighbors from a
+         *     properly-loaded (non-fire_spread) submap (the connectivity
+         *     invariant, enforced via BFS flood-fill).
          */
         void prune_disconnected( submap_load_manager &loader );
 
