@@ -933,7 +933,8 @@
     "items": [
       { "group": "guns_launcher_flame", "prob": 20 },
       { "group": "guns_launcher_grenade", "prob": 70 },
-      { "group": "guns_launcher_rocket", "prob": 30 }
+      { "group": "guns_launcher_rocket", "prob": 30 },
+      { "group": "guns_launcher_heavy", "prob": 20 }
     ]
   },
   {
