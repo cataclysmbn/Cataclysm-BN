@@ -384,7 +384,7 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim
     // Vehicle tracking: remove all vehicles whose home submap matches the unloaded position.
     {
         const tripoint p = pos.raw();
-        std::erase_if( loaded_vehicles, [&]( vehicle *veh ) {
+        std::erase_if( loaded_vehicles, [&]( vehicle * veh ) {
             return veh->abs_sm_pos.raw() == p;
         } );
     }
@@ -5677,7 +5677,7 @@ void map::process_items()
                 }
             }
         }
-        std::ranges::for_each( veh_submaps, [&]( submap *sm ) {
+        std::ranges::for_each( veh_submaps, [&]( submap * sm ) {
             process_items_in_vehicles( *sm );
         } );
     }

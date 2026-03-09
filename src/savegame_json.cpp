@@ -4099,7 +4099,7 @@ void submap::store( JsonOut &jsout ) const
         int scent_count = 0;
         std::ranges::for_each(
             cata::views::cartesian_product( std::views::iota( 0, SEEY ),
-                                           std::views::iota( 0, SEEX ) ),
+                                            std::views::iota( 0, SEEX ) ),
         [&]( auto ji ) {
             auto [j, i] = ji;
             auto v = scent_values[i][j];

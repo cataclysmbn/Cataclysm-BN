@@ -341,7 +341,7 @@ static void fill_funnels( int rain_depth_mm_per_hour, bool acid, const trap &tr 
         }
         std::ranges::for_each(
             cata::views::cartesian_product( std::views::iota( 0, SEEX ),
-                                           std::views::iota( 0, SEEY ) ),
+                                            std::views::iota( 0, SEEY ) ),
         [&]( auto xy ) {
             auto [lx, ly] = xy;
             if( sm_ptr->get_trap( point( lx, ly ) ) != tr.loadid ) {

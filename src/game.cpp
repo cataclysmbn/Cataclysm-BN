@@ -4774,7 +4774,7 @@ void game::world_tick()
                                                 raw_pos.z );
                 std::ranges::for_each(
                     cata::views::cartesian_product( std::views::iota( 0, SEEX ),
-                                                   std::views::iota( 0, SEEY ) ),
+                                                    std::views::iota( 0, SEEY ) ),
                 [&]( auto xy ) {
                     auto [lx, ly] = xy;
                     const furn_t &fd = sm_ptr->get_furn( point( lx, ly ) ).obj();
