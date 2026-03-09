@@ -1582,7 +1582,8 @@
       { "item": "bondage_mask", "prob": 1 },
       { "group": "auto_sears", "prob": 20 },
       { "item": "survnote", "prob": 5 },
-      { "item": "thermos", "prob": 25 }
+      { "item": "thermos", "prob": 25 },
+      { "item": "textbook_launcher", "prob": 3 }
     ]
   },
   {
