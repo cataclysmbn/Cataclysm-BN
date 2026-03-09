@@ -2341,7 +2341,7 @@ void options_manager::add_options_performance()
                                "Monsters between the Full AI Radius and this distance use cached "
                                "paths and skip expensive faction queries.  Monsters beyond this "
                                "distance are Tier-2 (macro step only)." ),
-             10, 200, 80 );
+             10, 200, 50 );
         add( "LOD_DEMOTION_COOLDOWN", page_id,
              translate_marker( "Demotion Cooldown" ),
              translate_marker( "Turns a monster must wait after being promoted to a higher-fidelity "
