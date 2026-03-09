@@ -337,10 +337,14 @@ struct level_cache {
     // completes.  Allows repeated draws within the same turn (animations, UI refreshes)
     // to skip the full visibility rebuild when nothing has changed.
     bool visibility_cache_dirty = true;
-    // True when every tile in transparency_cache equals LIGHT_TRANSPARENCY_OPEN_AIR.
-    // Computed by build_transparency_cache; used by cast_zlight to skip the
-    // per-tile transparency read for pure-air z-levels (e.g. above ground).
+    // True when every tile in transparency_cache equals LIGHT_TRANSPARENCY_OPEN_AIR
+    // AND no tile on this level has a floor.  Used by cast_zlight to skip
+    // per-tile transparency/floor reads for pure-air z-levels (e.g. above ground).
+    // Transparency component set by build_transparency_cache; floor component
+    // incorporated after build_floor_cache via has_any_floor.
     bool all_transparent = true;
+    // Set by build_floor_cache; true when at least one tile has a floor.
+    bool has_any_floor = true;
     bool suspension_cache_initialized = false;
     bool suspension_cache_dirty = false;
     std::list<point> suspension_cache;

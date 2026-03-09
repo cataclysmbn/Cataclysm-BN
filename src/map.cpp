@@ -9467,6 +9467,8 @@ bool map::build_floor_cache( const int zlev )
     }
 
     ch.floor_cache_dirty.reset();
+    ch.has_any_floor = std::ranges::any_of( floor_cache,
+    []( char c ) { return c != 0; } );
     return zlevels;
 }
 

@@ -2971,6 +2971,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     }
 #endif
 
+    ZoneScoped;
     {
         //set clipping to prevent drawing over stuff we shouldn't
         SDL_Rect clipRect = {dest.x, dest.y, width, height};
@@ -3254,6 +3255,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
             lit_level ll = lit_level::BLANK;
             int last_vis = center.z + 1;
+            lit_level last_vis_ll = lit_level::BLANK;
             for( int z = center.z; z >= -OVERMAP_DEPTH; z-- ) {
                 const auto &ch = here.access_cache( z );
 
@@ -3274,6 +3276,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                     if( !would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( x, y )],
                                                      cache ) ) ) {
                         last_vis = z;
+                        last_vis_ll = ll;
                     }
                 }
 
@@ -3325,7 +3328,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                             draw_points.emplace_back( pos, height_3d, ll, invisible );
                         } else if( last_vis != center.z + 1 ) {
                             min_z = std::min( last_vis, min_z );
-                            draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d, ll, invisible );
+                            draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d, last_vis_ll, invisible );
                         }
 
                     } else {
