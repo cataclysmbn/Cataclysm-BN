@@ -64,7 +64,7 @@ class cartesian_product_view_2
                 auto operator*() const -> value_type {
                     return { *it1_, *it2_ };
                 }
-                auto operator++() -> iterator& {
+                auto operator++() -> iterator & {
                     ++it2_;
                     if( it2_ == end2_ ) {
                         it2_ = begin2_;
@@ -140,7 +140,7 @@ class cartesian_product_view_3
                 auto operator*() const -> value_type {
                     return { *it1_, *it2_, *it3_ };
                 }
-                auto operator++() -> iterator& {
+                auto operator++() -> iterator & {
                     ++it3_;
                     if( it3_ == end3_ ) {
                         it3_ = begin3_;
