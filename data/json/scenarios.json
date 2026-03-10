@@ -335,6 +335,8 @@
       "unemployed",
       "mutant_patient",
       "mutant_volunteer",
+      "labtech",
+      "bionic_labtech",
       "broken_cyborg",
       "faulty_bionic",
       "cykotic",

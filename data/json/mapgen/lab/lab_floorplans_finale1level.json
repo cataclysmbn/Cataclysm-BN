@@ -286,11 +286,11 @@
         "R  "
       ],
       "palettes": [ "lab_palette" ],
-      "place_loot": [{ "group": "ammo_heavy_batteries_full", "x": 0, "y": 2 }],
       "mapping": {
         "r": { "item": [ { "item": "plut_cell", "chance": 100, "repeat": [ 3, 8 ] } ] },
         "R": {
-          "item": [
+          "items": [
+            { "item": "ammo_heavy_batteries_full", "chance": 100 },
             { "item": "UPS_off", "chance": 100 },
             { "item": "v29", "chance": 100 },
             { "item": "laser_rifle", "chance": 100 },
