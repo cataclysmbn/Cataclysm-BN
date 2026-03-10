@@ -8772,12 +8772,11 @@ void map::actualize( const tripoint &grid )
         return;
     }
 
-    // Skip uniform boundary submaps - they have no items or meaningful state to actualize
-    // and accessing their tile data through map accessors could hit invalid state during
-    // dimension transitions.
-    const tripoint grid_abs = abs_sub.xy() + grid;
-    if( tmpsub->is_uniform && current_bounds_ &&
-        !current_bounds_->contains( tripoint_abs_sm( grid_abs ) ) ) {
+    // Uniform submaps (empty rock, open air, boundary fill) have no items, furniture,
+    // fields, or plants — the entire 144-tile loop is wasted work.  Just stamp the
+    // touch time and return.
+    if( tmpsub->is_uniform ) {
+        tmpsub->last_touched = calendar::turn;
         return;
     }
 
