@@ -5649,7 +5649,7 @@ std::vector<tripoint> map::check_submap_active_item_consistency()
     mapbuffer &buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
 
     // Direction 1: every loaded submap with active items should be in the set.
-    buf.for_each_submap( [&]( const auto &entry ) {
+    buf.for_each_submap( [&]( const auto & entry ) {
         const tripoint &p = entry.first;
         const submap *sm = entry.second.get();
         if( sm != nullptr && !sm->active_items.empty() &&
