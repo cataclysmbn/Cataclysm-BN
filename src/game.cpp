@@ -659,8 +659,16 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     // flush prev_desired_ so update() does not evict freshly-generated submaps
     // for the new dimension (use-after-free via stale m.grid pointers).
     if( reality_bubble_handle_ != 0 && new_dim_id != old_dim_id ) {
+        // Drain any in-flight lazy-border tasks for the old dimension before
+        // releasing handles and switching — workers must not race with the
+        // new dimension's mapbuffer setup.
+        submap_loader.drain_lazy_loads();
         submap_loader.release_load( reality_bubble_handle_ );
         reality_bubble_handle_ = 0;
+        if( lazy_border_handle_ != 0 ) {
+            submap_loader.release_load( lazy_border_handle_ );
+            lazy_border_handle_ = 0;
+        }
         submap_loader.flush_prev_desired();
     }
 
@@ -718,6 +726,24 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
                                      z_lo, z_hi );
     } else {
         submap_loader.update_request( reality_bubble_handle_, bubble_center );
+    }
+
+    // Lazy border: 2-submap (one quad) strip kept in memory but not simulated.
+    // Pre-loaded from disk in the background so map shifts find data already
+    // resident.  Controlled by the LAZY_BORDER cached option.
+    if( lazy_border_enabled ) {
+        if( lazy_border_handle_ == 0 ) {
+            lazy_border_handle_ = submap_loader.request_load(
+                                      load_request_source::lazy_border,
+                                      new_dim_id, bubble_center,
+                                      reality_bubble_radius_ + 2,
+                                      z_lo, z_hi );
+        } else {
+            submap_loader.update_request( lazy_border_handle_, bubble_center );
+        }
+    } else if( lazy_border_handle_ != 0 ) {
+        submap_loader.release_load( lazy_border_handle_ );
+        lazy_border_handle_ = 0;
     }
     // map::loadn() now uses MAPBUFFER_REGISTRY.get(bound_dimension_), so
     // the load manager can safely fire on_submap_loaded/unloaded events.
@@ -3077,6 +3103,10 @@ bool game::load( const save_t &name )
         submap_loader.release_load( reality_bubble_handle_ );
         reality_bubble_handle_ = 0;
     }
+    if( lazy_border_handle_ != 0 ) {
+        submap_loader.release_load( lazy_border_handle_ );
+        lazy_border_handle_ = 0;
+    }
     if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION,
             std::bind( &game::unserialize, this, _1 ) ) ) {
         return false;
@@ -3288,10 +3318,11 @@ bool game::save_artifacts()
 bool game::save_maps()
 {
     try {
-        // Flush background streamer tasks before save so that save_quad workers
-        // (which call submaps.find() without the mutex) do not race with
-        // submap_stream workers calling add_submap() (which holds the mutex).
-        // std::map concurrent read+write is UB even if the write side is locked.
+        // Drain any in-flight lazy-border preload tasks and flush the streamer
+        // before save so that save_quad workers (which call submaps.find()
+        // without the mutex) do not race with background workers calling
+        // add_submap().
+        submap_loader.drain_lazy_loads();
         submap_streamer.flush_all();
         // Debug invariant: no worker tasks may be in-flight during save.
         // flush_all() is supposed to drain them all; if this fires, a worker
@@ -4761,12 +4792,20 @@ void game::world_tick()
             return;
         }
 
-        std::ranges::for_each( mb, [&]( auto & entry ) {
+        mb.for_each_submap( [&]( auto & entry ) {
             auto &[raw_pos, sm_ptr] = entry;
             if( !sm_ptr ) {
                 return;
             }
             const tripoint_abs_sm pos_sm( raw_pos );
+
+            // Only simulate submaps that are actively requested (reality bubble,
+            // fire spread, player base, script).  Skip lazy-border and streamer
+            // pre-loaded submaps that are merely resident in memory.
+            if( !submap_loader.is_simulated( dim, pos_sm ) ) {
+                return;
+            }
+
             total_field_count += sm_ptr->field_count;
 
             const auto has_fire = process_fields_in_submap( *sm_ptr, pos_sm, mb );
@@ -13153,6 +13192,23 @@ point game::update_map( int &x, int &y )
         const tripoint_abs_sm new_center(
             origin.x + reality_bubble_radius_, origin.y + reality_bubble_radius_, origin.z );
         submap_loader.update_request( reality_bubble_handle_, new_center );
+        // Dynamically manage lazy border based on cached option.
+        if( lazy_border_enabled ) {
+            if( lazy_border_handle_ == 0 ) {
+                const int z_lo = m.has_zlevels() ? -OVERMAP_DEPTH : new_center.raw().z;
+                const int z_hi = m.has_zlevels() ? OVERMAP_HEIGHT : new_center.raw().z;
+                lazy_border_handle_ = submap_loader.request_load(
+                                          load_request_source::lazy_border,
+                                          m.get_bound_dimension(), new_center,
+                                          reality_bubble_radius_ + 2,
+                                          z_lo, z_hi );
+            } else {
+                submap_loader.update_request( lazy_border_handle_, new_center );
+            }
+        } else if( lazy_border_handle_ != 0 ) {
+            submap_loader.release_load( lazy_border_handle_ );
+            lazy_border_handle_ = 0;
+        }
         // Ensure trackers exist for all active dimensions before firing events.
         for( const auto &dim_id : submap_loader.active_dimensions() ) {
             if( grid_trackers_.find( dim_id ) == grid_trackers_.end() ) {

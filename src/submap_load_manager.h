@@ -4,8 +4,11 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include <future>
 
 #include "coordinates.h"
 #include "point.h"
@@ -43,6 +46,7 @@ enum class load_request_source : int {
     player_base,     ///< A persistent player base that should stay loaded
     script,          ///< Lua/scripted event that needs a region loaded
     fire_spread,     ///< Fire-spread loader keeping adjacent submaps resident
+    lazy_border,     ///< Kept in memory around the bubble but not simulated
 };
 
 /** Opaque handle returned by request_load(); used to update or release. */
@@ -109,23 +113,29 @@ class submap_load_manager
         /**
          * Process all active requests, fire load/unload events on listeners.
          *
-         * This computes the new desired submap set, diffs it against the
-         * previous set, calls on_submap_loaded() for entries that are newly
-         * desired and on_submap_unloaded() for entries that are no longer
-         * desired.
+         * Simulated positions (reality_bubble, fire_spread, player_base,
+         * script) are loaded synchronously and trigger listener notifications.
+         * Lazy-border positions are submitted to the thread pool for
+         * background disk-only loading (preload_quad) and do NOT trigger
+         * listener notifications.  Eviction protects the full set
+         * (simulated + border).
          *
-         * This function must NOT be called until
-         * map::loadn() is updated to use
-         *   MAPBUFFER_REGISTRY.get(bound_dimension_)
-         * instead of the MAPBUFFER macro for all submap I/O.  Until that
-         * change lands, the active dimension's submaps live in the primary
-         * registry slot ("") regardless of what get_dimension_prefix()
-         * returns, so on_submap_loaded() would look in the wrong registry
-         * slot and write nullptr into the grid, crashing the game.
-         *
-         * Call site: game::do_turn()
+         * Call site: game::do_turn(), game::update_map()
          */
         void update();
+
+        /**
+         * Block until all background lazy-border preload_quad tasks complete.
+         *
+         * Normal gameplay does NOT need this — update() reaps completed
+         * futures non-blockingly, and world_tick() uses for_each_submap()
+         * (locked iteration) for thread safety.
+         *
+         * Use this only when ALL background work must finish before
+         * proceeding: saving the game, switching dimensions, or shutting
+         * down the thread pool.
+         */
+        void drain_lazy_loads();
 
         /**
          * Return true if the submap at @p pos in @p dim_id is covered by any
@@ -139,6 +149,18 @@ class submap_load_manager
          */
         bool is_properly_requested( const std::string &dim_id,
                                     const tripoint_abs_sm &pos ) const;
+
+        /**
+         * Return true if @p pos in @p dim_id is covered by any active load
+         * request whose source is NOT lazy_border.
+         *
+         * Positions that are only in the desired set via a lazy_border request
+         * are kept resident in memory but are not actively simulated (fields,
+         * fire, NPCs, etc.).  Use this to gate per-turn processing in
+         * world_tick() and similar loops.
+         */
+        bool is_simulated( const std::string &dim_id,
+                           const tripoint_abs_sm &pos ) const;
 
         /**
          * Return the set of dimension IDs that have at least one active request.
@@ -188,20 +210,51 @@ class submap_load_manager
 
     private:
         using desired_key = std::pair<std::string, tripoint>;
+        using quad_key = std::pair<std::string, tripoint>;
+
+        /** Hash for pair<string, tripoint> used by unordered containers. */
+        struct pair_hash {
+            auto operator()( const desired_key &k ) const noexcept -> std::size_t {
+                auto h = std::hash<std::string>{}( k.first );
+                h ^= std::hash<tripoint>{}( k.second ) + 0x9e3779b9 + ( h << 6 ) + ( h >> 2 );
+                return h;
+            }
+        };
+
+        using key_set = std::unordered_set<desired_key, pair_hash>;
 
         load_request_handle next_handle_ = 1;
         std::map<load_request_handle, submap_load_request> requests_;
 
-        /** Desired set from the previous update() call. */
-        std::set<desired_key> prev_desired_;
+        /** Full desired set (simulated + border) from the previous update(). */
+        key_set prev_desired_;
+
+        /** Simulated-only subset from the previous update().
+         *  Used for listener notification diffs. */
+        key_set prev_simulated_;
 
         std::vector<submap_load_listener *> listeners_;
 
-        /** Compute the full desired set from all active requests. */
-        std::set<desired_key> compute_desired_set() const;
+        /** Compute the simulated desired set (excludes lazy_border). */
+        key_set compute_desired_set() const;
+
+        /** Add lazy_border positions into @p target. */
+        void compute_border_into( key_set &target ) const;
 
         /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
         std::vector<point> bubble_offsets_;
+
+        /** In-flight preload_quad futures for lazy border positions.
+         *  Each future is paired with the quad key it was submitted for,
+         *  so we can remove it from lazy_in_flight_ when reaped. */
+        std::vector<std::pair<quad_key, std::future<void>>> lazy_futures_;
+
+        /** Quad keys with in-flight lazy futures — prevents duplicate submissions. */
+        std::unordered_set<quad_key, pair_hash> lazy_in_flight_;
+
+        /** Snapshot of all request centers from the previous update().
+         *  Used to detect steady-state and skip expensive recomputation. */
+        std::vector<std::pair<load_request_handle, tripoint>> prev_centers_;
 };
 
 extern submap_load_manager submap_loader;

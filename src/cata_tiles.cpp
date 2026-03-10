@@ -76,6 +76,7 @@
 #include "string_id.h"
 #include "string_utils.h"
 #include "submap.h"
+#include "submap_load_manager.h"
 #include "tileray.h"
 #include "translations.h"
 #include "trap.h"
@@ -3652,6 +3653,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             return MAPBUFFER.is_submap_loaded( p );
         };
 
+        const auto &dim = here.get_bound_dimension();
+
         constexpr int THICC = 1; // line thickness
         for( int sm_x = sm_start.x; sm_x <= sm_end.x; sm_x++ ) {
             for( int sm_y = sm_start.y; sm_y <= sm_end.y; sm_y++ ) {
@@ -3670,11 +3673,17 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                     p1.y += 2;
                 }
 
+                // Green  = in map grid (reality bubble)
+                // Cyan   = actively simulated but not in grid (fire, power cable, etc.)
+                // Red    = in MAPBUFFER but not simulated (lazy border / streamer pre-load)
+                // Blue   = not loaded
                 SDL_Color col;
                 if( is_map( sm_tp ) ) {
                     col = {0, 220, 0, 255};
-                } else if( is_mapbuffer( sm_tp ) ) {
+                } else if( submap_loader.is_simulated( dim, tripoint_abs_sm( sm_tp ) ) ) {
                     col = {0, 180, 180, 255};
+                } else if( is_mapbuffer( sm_tp ) ) {
+                    col = {220, 0, 0, 255};
                 } else {
                     col = {0, 0, 220, 255};
                 }

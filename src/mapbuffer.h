@@ -169,6 +169,21 @@ class mapbuffer
             return submaps.end();
         }
 
+        /**
+         * Iterate all submaps under @c submaps_mutex_, allowing background
+         * preload_quad() workers to run concurrently without UB.
+         *
+         * Use this instead of begin()/end() whenever the caller cannot
+         * guarantee that no worker threads are inserting into the buffer.
+         */
+        template<typename Fn>
+        void for_each_submap( Fn &&fn ) {
+            std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+            for( auto &entry : submaps ) {
+                fn( entry );
+            }
+        }
+
         bool is_submap_loaded( const tripoint &p ) const {
             return submaps.contains( p );
         }

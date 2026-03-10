@@ -31,6 +31,7 @@ int  lod_coarse_scent_interval = 3;
 int  lod_group_morale_max_tier = 0;
 
 bool reality_bubble_fire_spread = false;
+bool lazy_border_enabled        = true;
 int  fire_spread_submap_cap    = 25;
 pocket_sim_level pocket_simulation_level = pocket_sim_level::off;
 int  safe_mode_proximity = 0;

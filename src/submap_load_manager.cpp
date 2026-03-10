@@ -1,6 +1,7 @@
 #include "submap_load_manager.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <future>
@@ -69,12 +70,16 @@ auto submap_load_manager::update_load_shape( int radius ) -> void
     } );
 }
 
-std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_set() const
+auto submap_load_manager::compute_desired_set() const -> key_set
 {
     ZoneScoped;
-    std::set<desired_key> desired;
+    key_set desired;
     std::ranges::for_each( requests_, [&]( const auto & kv ) {
         const submap_load_request &req = kv.second;
+        // lazy_border positions are handled separately by compute_border_into().
+        if( req.source == load_request_source::lazy_border ) {
+            return;
+        }
         const tripoint c = req.center.raw();
         const auto z_range = std::views::iota( req.z_min, req.z_max + 1 );
 
@@ -105,48 +110,156 @@ std::set<submap_load_manager::desired_key> submap_load_manager::compute_desired_
     return desired;
 }
 
+void submap_load_manager::compute_border_into( key_set &target ) const
+{
+    ZoneScoped;
+    std::ranges::for_each( requests_, [&]( const auto & kv ) {
+        const submap_load_request &req = kv.second;
+        if( req.source != load_request_source::lazy_border ) {
+            return;
+        }
+        const tripoint c = req.center.raw();
+        const int r = req.radius;
+
+        // Plain square — no quad-boundary alignment needed.  The eviction
+        // pass already checks all 4 submaps in a quad before evicting, so
+        // partial-quad fringes are handled there.
+        const auto x_range = std::views::iota( c.x - r, c.x + r + 1 );
+        const auto y_range = std::views::iota( c.y - r, c.y + r + 1 );
+        const auto z_range = std::views::iota( req.z_min, req.z_max + 1 );
+        std::ranges::for_each(
+            cata::views::cartesian_product( x_range, y_range, z_range ),
+        [&]( auto tuple ) {
+            auto [x, y, z] = tuple;
+            target.emplace( req.dimension_id, tripoint{ x, y, z } );
+        } );
+    } );
+}
+
+void submap_load_manager::drain_lazy_loads()
+{
+    ZoneScopedN( "drain_lazy_loads" );
+    std::ranges::for_each( lazy_futures_, []( auto & entry ) {
+        entry.second.get();
+    } );
+    lazy_futures_.clear();
+    lazy_in_flight_.clear();
+
+    // preload_quad workers may have deferred submap destructions.
+    // Drain them on the main thread (safe_reference / cata_arena not thread-safe).
+    auto dims_to_drain = std::set<std::string> {};
+    std::ranges::for_each( requests_, [&]( const auto & kv ) {
+        if( kv.second.source == load_request_source::lazy_border ) {
+            dims_to_drain.insert( kv.second.dimension_id );
+        }
+    } );
+    std::ranges::for_each( dims_to_drain, []( const std::string & dim_id ) {
+        MAPBUFFER_REGISTRY.get( dim_id ).drain_pending_submap_destroy();
+    } );
+}
+
 void submap_load_manager::update()
 {
     ZoneScoped;
-    TracyPlot( "Loaded Submaps", static_cast<int64_t>( prev_desired_.size() ) );
+
+    // Non-blocking reap: collect completed lazy futures without stalling on
+    // in-flight ones.  Workers may still be running — that is fine because
+    // mapbuffer iteration in world_tick() now uses for_each_submap() which
+    // holds submaps_mutex_, and preload_quad() only briefly acquires it per
+    // add_submap().  Eviction below also acquires the mutex via unload_quad().
+    {
+        auto it = std::remove_if( lazy_futures_.begin(), lazy_futures_.end(),
+        [this]( auto &entry ) {
+            if( entry.second.wait_for( std::chrono::seconds( 0 ) ) == std::future_status::ready ) {
+                entry.second.get();
+                lazy_in_flight_.erase( entry.first );
+                return true;
+            }
+            return false;
+        } );
+        lazy_futures_.erase( it, lazy_futures_.end() );
+    }
+
+    // Drain deferred submap destructions from completed preload_quad workers.
+    // safe_reference / cata_arena are not thread-safe, so destruction must
+    // happen on the main thread.  This is always safe to call — it only
+    // processes entries already in the queue from finished workers.
+    {
+        auto dims_to_drain = std::set<std::string> {};
+        std::ranges::for_each( requests_, [&]( const auto & kv ) {
+            if( kv.second.source == load_request_source::lazy_border ) {
+                dims_to_drain.insert( kv.second.dimension_id );
+            }
+        } );
+        std::ranges::for_each( dims_to_drain, []( const std::string & dim_id ) {
+            MAPBUFFER_REGISTRY.get( dim_id ).drain_pending_submap_destroy();
+        } );
+    }
+
     TracyPlot( "Thread Pool Workers", static_cast<int64_t>( get_thread_pool().num_workers() ) );
     TracyPlot( "Thread Pool Queue", static_cast<int64_t>( get_thread_pool().queue_size() ) );
-    std::set<desired_key> new_desired = compute_desired_set();
 
-    // Collect the unique (dim_id, om_addr) quad addresses that are newly desired.
-    // Multiple submap positions map to the same quad; deduplicate here so each
-    // quad file is read exactly once.
-    using quad_key = std::pair<std::string, tripoint>;
-    std::set<quad_key> new_quads;
-    for( const desired_key &key : new_desired ) {
-        if( prev_desired_.count( key ) == 0 ) {
+    // Early exit: if no request centers have changed since the last update,
+    // the desired/simulated/border sets are identical — skip the expensive
+    // set construction, diffing, eviction, and lazy submission.
+    {
+        std::vector<std::pair<load_request_handle, tripoint>> cur_centers;
+        cur_centers.reserve( requests_.size() );
+        std::ranges::for_each( requests_, [&]( const auto & kv ) {
+            cur_centers.emplace_back( kv.first, kv.second.center.raw() );
+        } );
+        if( cur_centers == prev_centers_ ) {
+            return;
+        }
+        prev_centers_ = std::move( cur_centers );
+    }
+
+    // Simulated set: positions that need full per-turn processing.
+    auto simulated = compute_desired_set();
+
+    // Full set: simulated + lazy border (eviction protection only).
+    auto all_desired = simulated;
+    compute_border_into( all_desired );
+
+    TracyPlot( "Simulated Submaps", static_cast<int64_t>( simulated.size() ) );
+    TracyPlot( "Border Submaps",
+               static_cast<int64_t>( all_desired.size() - simulated.size() ) );
+    TracyPlot( "Total Desired Submaps", static_cast<int64_t>( all_desired.size() ) );
+
+    // ---- Synchronous loading for newly-simulated positions ----
+    std::unordered_set<quad_key, pair_hash> new_quads;
+    for( const desired_key &key : simulated ) {
+        if( prev_simulated_.count( key ) == 0 ) {
             new_quads.emplace( key.first, sm_to_omt_copy( key.second ) );
         }
     }
 
-    // Dispatch new quad disk reads to the thread pool in parallel.
-    // preload_quad() runs I/O outside its lock; different quads read concurrently.
-    // Submaps without a disk file are generated asynchronously by submap_stream workers.
     std::vector<std::future<void>> load_futures;
     load_futures.reserve( new_quads.size() );
     for( const auto &[dim_id, om_addr] : new_quads ) {
         auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
+        // Skip quads already fully resident (e.g. pre-loaded by lazy border).
+        // preload_quad always hits disk even for duplicates, so this avoids
+        // a redundant disk read + JSON parse.
+        const tripoint base = omt_to_sm_copy( om_addr );
+        const bool all_loaded =
+            mb.lookup_submap_in_memory( base )
+            && mb.lookup_submap_in_memory( { base.x + 1, base.y, base.z } )
+            && mb.lookup_submap_in_memory( { base.x, base.y + 1, base.z } )
+            && mb.lookup_submap_in_memory( { base.x + 1, base.y + 1, base.z } );
+        if( all_loaded ) {
+            continue;
+        }
         load_futures.push_back( get_thread_pool().submit_returning(
         [&mb, om_addr]() {
             mb.preload_quad( om_addr );
         } ) );
     }
-    // Block until all disk reads complete before notifying listeners.
-    // Listeners (e.g. distribution_grid_tracker) may call lookup_submap_in_memory();
-    // the submap must be present at that point.
     std::ranges::for_each( load_futures, []( auto & f ) {
         f.get();
     } );
 
-    // Workers may have deferred submap destructions (duplicate-add cases) into each
-    // mapbuffer's pending-destroy queue.  Drain them now on the main thread before
-    // any game code runs, since safe_reference<T>, cache_reference<T>, and
-    // cata_arena<T> are not thread-safe.
+    // Drain deferred submap destructions from the sync loads.
     auto drained_dims = std::set<std::string> {};
     std::ranges::transform( new_quads, std::inserter( drained_dims, drained_dims.end() ),
     []( const auto & qk ) {
@@ -156,9 +269,9 @@ void submap_load_manager::update()
         MAPBUFFER_REGISTRY.get( dim_id ).drain_pending_submap_destroy();
     } );
 
-    // Notify listeners for all newly-desired positions.
-    for( const desired_key &key : new_desired ) {
-        if( prev_desired_.count( key ) == 0 ) {
+    // ---- Listener notifications (simulated set only) ----
+    for( const desired_key &key : simulated ) {
+        if( prev_simulated_.count( key ) == 0 ) {
             const tripoint_abs_sm pos( key.second );
             for( submap_load_listener *listener : listeners_ ) {
                 listener->on_submap_loaded( pos, key.first );
@@ -166,9 +279,8 @@ void submap_load_manager::update()
         }
     }
 
-    // Positions that are no longer desired — notify listeners per-submap.
-    for( const desired_key &key : prev_desired_ ) {
-        if( new_desired.count( key ) == 0 ) {
+    for( const desired_key &key : prev_simulated_ ) {
+        if( simulated.count( key ) == 0 ) {
             const tripoint_abs_sm pos( key.second );
             for( submap_load_listener *listener : listeners_ ) {
                 listener->on_submap_unloaded( pos, key.first );
@@ -176,16 +288,12 @@ void submap_load_manager::update()
         }
     }
 
-    // Evict mapbuffer entries at OMT-quad granularity.
-    // Only evict when ALL 4 submaps in a quad are absent from new_desired.
-    // Partial eviction (one unload_submap call per member) progressively
-    // overwrites the quad save file without the previously-removed siblings,
-    // causing data loss and spurious "file did not contain expected submap" errors.
+    // ---- Eviction (full set: simulated + border) ----
+    // Only evict when ALL 4 submaps in a quad are absent from all_desired.
     {
-        using quad_key = std::pair<std::string, tripoint>;
-        std::set<quad_key> quads_checked;
+        std::unordered_set<quad_key, pair_hash> quads_checked;
         for( const desired_key &key : prev_desired_ ) {
-            if( new_desired.count( key ) != 0 ) {
+            if( all_desired.count( key ) != 0 ) {
                 continue;  // still desired — skip
             }
             const tripoint om_addr = sm_to_omt_copy( key.second );
@@ -193,28 +301,61 @@ void submap_load_manager::update()
             if( !quads_checked.insert( qk ).second ) {
                 continue;  // already handled this quad in this cycle
             }
-            // Check whether any of the 4 siblings remain in the desired set.
             bool any_still_desired = false;
             const tripoint base = omt_to_sm_copy( om_addr );
             for( const point &off : { point_zero, point_south, point_east, point_south_east } ) {
                 const tripoint sibling{ base.x + off.x, base.y + off.y, base.z };
-                if( new_desired.count( { key.first, sibling } ) ) {
+                if( all_desired.count( { key.first, sibling } ) ) {
                     any_still_desired = true;
                     break;
                 }
             }
             if( !any_still_desired ) {
-                // Safe: save the quad once and evict all 4 members atomically.
-                // Circle members already had on_submap_unloaded fired above (clearing
-                // their grid[] slots).  Corner members outside the circle were never
-                // loaded into grid[] by loadn(), so freeing them is unconditionally
-                // safe — no dangling grid[] pointer exists for them.
                 MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr );
             }
         }
     }
 
-    prev_desired_ = std::move( new_desired );
+    // ---- Async loading for lazy border (disk-only, no generation) ----
+    // Submit preload_quad tasks to the thread pool for border quads not yet
+    // in MAPBUFFER and not already in-flight.  Completed futures are reaped
+    // non-blockingly at the start of the next update().  world_tick() uses
+    // for_each_submap() (locked iteration) so workers can safely insert while
+    // the main thread iterates.  preload_quad only reads from disk (no
+    // generation fallback), so unvisited areas are simply skipped — they'll
+    // be generated synchronously if the bubble reaches them.
+    {
+        std::unordered_set<quad_key, pair_hash> lazy_quads;
+        for( const desired_key &key : all_desired ) {
+            if( simulated.count( key ) ) {
+                continue;
+            }
+            const quad_key qk{ key.first, sm_to_omt_copy( key.second ) };
+            if( lazy_in_flight_.count( qk ) ) {
+                continue;  // already has an in-flight future — don't resubmit
+            }
+            auto &mb = MAPBUFFER_REGISTRY.get( key.first );
+            if( !mb.lookup_submap_in_memory( key.second ) ) {
+                lazy_quads.insert( qk );
+            }
+        }
+        lazy_futures_.reserve( lazy_futures_.size() + lazy_quads.size() );
+        for( const auto &[dim_id, om_addr] : lazy_quads ) {
+            auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
+            lazy_in_flight_.insert( { dim_id, om_addr } );
+            lazy_futures_.emplace_back(
+                quad_key{ dim_id, om_addr },
+                get_thread_pool().submit_returning(
+            [&mb, om_addr]() {
+                mb.preload_quad( om_addr );
+            } ) );
+        }
+    }
+
+    TracyPlot( "Lazy Futures In-Flight", static_cast<int64_t>( lazy_futures_.size() ) );
+
+    prev_simulated_ = std::move( simulated );
+    prev_desired_ = std::move( all_desired );
 }
 
 bool submap_load_manager::is_requested( const std::string &dim_id,
@@ -243,6 +384,31 @@ bool submap_load_manager::is_properly_requested( const std::string &dim_id,
     } );
 }
 
+bool submap_load_manager::is_simulated( const std::string &dim_id,
+        const tripoint_abs_sm &pos ) const
+{
+    // Quick rejection: not in the desired set at all.
+    if( !prev_desired_.count( { dim_id, pos.raw() } ) ) {
+        return false;
+    }
+    // In the desired set — check if any non-lazy_border request covers it.
+    const tripoint p = pos.raw();
+    return std::ranges::any_of( requests_, [&]( const auto & kv ) {
+        const submap_load_request &req = kv.second;
+        if( req.source == load_request_source::lazy_border ) {
+            return false;
+        }
+        if( req.dimension_id != dim_id ) {
+            return false;
+        }
+        const tripoint c = req.center.raw();
+        const int dx = std::abs( p.x - c.x );
+        const int dy = std::abs( p.y - c.y );
+        return dx <= req.radius && dy <= req.radius
+               && p.z >= req.z_min && p.z <= req.z_max;
+    } );
+}
+
 std::vector<std::string> submap_load_manager::active_dimensions() const
 {
     std::set<std::string> dims;
@@ -255,7 +421,8 @@ std::vector<std::string> submap_load_manager::active_dimensions() const
 auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load_request>
 {
     auto is_non_bubble = []( const auto & kv ) {
-        return kv.second.source != load_request_source::reality_bubble;
+        return kv.second.source != load_request_source::reality_bubble
+               && kv.second.source != load_request_source::lazy_border;
     };
     auto to_request = []( const auto & kv ) -> const submap_load_request & {
         return kv.second;
@@ -268,6 +435,8 @@ auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load
 void submap_load_manager::flush_prev_desired()
 {
     prev_desired_.clear();
+    prev_simulated_.clear();
+    prev_centers_.clear();
 }
 
 void submap_load_manager::add_listener( submap_load_listener *listener )

@@ -7828,14 +7828,13 @@ void map::shift( point sp )
     const half_open_rectangle<point> boundaries_2d( point_zero, point( g_mapsize_x, g_mapsize_y ) );
     const point shift_offset_pt( -sp.x * SEEX, -sp.y * SEEY );
 
-    // Background streaming — block on submaps the main loop is about to need.
-    // The previous shift() speculatively enqueued these via submap_streamer.request_load().
-    // If the worker finished, MAPBUFFER already has the submap so loadn() hits the fast
-    // (in-memory) path.  If not ready yet, drain_completed() blocks until it is.
+    // Block on submaps the main loop is about to need.  The previous shift()
+    // speculatively enqueued these via submap_streamer.request_load().  If the
+    // worker finished, MAPBUFFER already has the submap so loadn() hits the
+    // fast (in-memory) path.  If not ready yet, drain_completed() blocks.
     {
         std::vector<tripoint_abs_sm> must_have;
         const tripoint new_abs = get_abs_sub();
-        const std::string &dim = get_bound_dimension();
         for( int gridz = zmin; gridz <= zmax; gridz++ ) {
             if( sp.x > 0 ) {
                 for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
@@ -7975,19 +7974,20 @@ void map::shift( point sp )
     }
 
     // Speculative next-shift pre-loading.
-    // Enqueue async loads for the edge row/column one step beyond the current viewport
-    // in the direction we just shifted.  On the next shift() call, drain_completed()
-    // (above) will block until they are ready so loadn() hits the MAPBUFFER fast path.
+    // Enqueue async loads for the edge row/column one step beyond the current
+    // viewport in the direction we just shifted.  On the next shift() call,
+    // drain_completed() (above) will block until they are ready so loadn()
+    // hits the MAPBUFFER fast path.
     {
         const tripoint cur_abs = get_abs_sub();
         const std::string &dim = get_bound_dimension();
-        mapbuffer &dim_buf = MAPBUFFER_REGISTRY.get( dim );
+        auto &mb = MAPBUFFER_REGISTRY.get( dim );
         for( int gridz = zmin; gridz <= zmax; gridz++ ) {
             if( sp.x > 0 ) {
                 for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
                     const tripoint_abs_sm pos( tripoint( cur_abs.x + my_MAPSIZE,
                                                          cur_abs.y + gridy, gridz ) );
-                    if( !dim_buf.lookup_submap_in_memory( pos.raw() ) ) {
+                    if( !mb.lookup_submap_in_memory( pos.raw() ) ) {
                         submap_streamer.request_load( dim, pos );
                     }
                 }
@@ -7995,7 +7995,7 @@ void map::shift( point sp )
                 for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
                     const tripoint_abs_sm pos( tripoint( cur_abs.x - 1,
                                                          cur_abs.y + gridy, gridz ) );
-                    if( !dim_buf.lookup_submap_in_memory( pos.raw() ) ) {
+                    if( !mb.lookup_submap_in_memory( pos.raw() ) ) {
                         submap_streamer.request_load( dim, pos );
                     }
                 }
@@ -8004,7 +8004,7 @@ void map::shift( point sp )
                 for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
                     const tripoint_abs_sm pos( tripoint( cur_abs.x + gridx,
                                                          cur_abs.y + my_MAPSIZE, gridz ) );
-                    if( !dim_buf.lookup_submap_in_memory( pos.raw() ) ) {
+                    if( !mb.lookup_submap_in_memory( pos.raw() ) ) {
                         submap_streamer.request_load( dim, pos );
                     }
                 }
@@ -8012,7 +8012,7 @@ void map::shift( point sp )
                 for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
                     const tripoint_abs_sm pos( tripoint( cur_abs.x + gridx,
                                                          cur_abs.y - 1, gridz ) );
-                    if( !dim_buf.lookup_submap_in_memory( pos.raw() ) ) {
+                    if( !mb.lookup_submap_in_memory( pos.raw() ) ) {
                         submap_streamer.request_load( dim, pos );
                     }
                 }

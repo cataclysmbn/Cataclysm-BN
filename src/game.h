@@ -1192,6 +1192,10 @@ class game : public submap_load_listener
         // 0 means no request has been issued yet.
         load_request_handle reality_bubble_handle_ = 0;
 
+        // Handle for the lazy border around the reality bubble.
+        // Controlled by LAZY_BORDER cached option.
+        load_request_handle lazy_border_handle_ = 0;
+
         // Turns between world_tick() passes.  1 = every turn (default).
         // Read from REALITY_BUBBLE_TICK_INTERVAL in start_game() / load().
         int world_tick_interval_ = 1;

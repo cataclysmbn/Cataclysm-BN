@@ -99,6 +99,8 @@ extern int  lod_group_morale_max_tier;
 /** Out-of-bubble world-tick options. */
 extern bool reality_bubble_fire_spread;
 
+extern bool lazy_border_enabled;
+
 /**
  * Maximum number of fire-spread-loaded submaps allowed across all dimensions
  * simultaneously.  Cached from the FIRE_SPREAD_SUBMAP_CAP world option.

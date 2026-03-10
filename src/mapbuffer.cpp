@@ -117,6 +117,10 @@ void mapbuffer::unload_submap( const tripoint_abs_sm &pos )
 
 void mapbuffer::unload_quad( const tripoint &om_addr )
 {
+    // Hold the mutex for the entire save+erase so that background lazy-border
+    // preload_quad() workers (which acquire the mutex per add_submap()) cannot
+    // race with our submaps.find()/erase() calls.
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
     // Save the quad once and collect all in-memory submaps for deletion.
     // Using delete_after_save=true ensures save_quad() enumerates what to delete
     // so we don't need to recompute the 4 addresses separately.

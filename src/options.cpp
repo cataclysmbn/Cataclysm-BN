@@ -2468,6 +2468,14 @@ void options_manager::add_options_performance()
                                "and memory. 0 disables out-of-bubble fire spread loading entirely. "
                                "Takes effect immediately without restart." ),
              0, 250, 25 );
+        add( "LAZY_BORDER", page_id,
+             translate_marker( "Pre-load Border" ),
+             translate_marker( "Keep a border of submaps loaded around the reality bubble.  "
+                               "These are pre-loaded from disk in the background so that map "
+                               "shifts are faster (the data is already in memory).  Uses more "
+                               "memory but reduces stalls when the map scrolls.  "
+                               "Takes effect immediately without restart." ),
+             true );
         add( "REALITY_BUBBLE_SIZE", page_id,
              translate_marker( "Reality Bubble Size" ),
              translate_marker( "Submap radius of the reality bubble (submaps visible beyond your position). "
@@ -4105,6 +4113,7 @@ void options_manager::cache_to_globals()
     reality_bubble_fire_spread =
         ::get_option<std::string>( "REALITY_BUBBLE_FIRE_SPREAD" ) == "adjacent";
     fire_spread_submap_cap = ::get_option<int>( "FIRE_SPREAD_SUBMAP_CAP" );
+    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
 
     {
         const auto psl_str = ::get_option<std::string>( "POCKET_SIMULATION_LEVEL" );
