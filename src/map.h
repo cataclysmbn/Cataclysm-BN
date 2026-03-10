@@ -1893,7 +1893,7 @@ class map : public submap_load_listener
 
     protected:
         void saven( const tripoint &grid );
-        void loadn( const tripoint &grid, bool update_vehicles );
+        void loadn( const tripoint &grid, bool update_vehicles, bool incremental = false );
         void loadn( point grid, bool update_vehicles ) {
             if( zlevels ) {
                 for( int gridz = -OVERMAP_DEPTH; gridz <= OVERMAP_HEIGHT; gridz++ ) {

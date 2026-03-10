@@ -7691,6 +7691,37 @@ void map::load( const tripoint_abs_sm &w, const bool update_vehicle, const bool 
 }
 
 
+// Shift a flat tile-coordinate cache array (x-major layout: vec[x * stride_y + y])
+// by `s` submaps.  seex/seey give the tile count per submap in each direction.
+// New edge positions retain stale values — the caller must mark those submaps
+// dirty so the next build_*_cache() pass overwrites them.
+template <typename T>
+static void shift_flat_cache( std::vector<T> &cache, int cache_x, int cache_y,
+                              int seex, int seey, point s )
+{
+    T *data = cache.data();
+    // X shift: each x-column is a contiguous block of cache_y elements.
+    if( s.x > 0 ) {
+        std::memmove( data, data + seex * cache_y,
+                      static_cast<size_t>( cache_x - seex ) * cache_y * sizeof( T ) );
+    } else if( s.x < 0 ) {
+        std::memmove( data + seex * cache_y, data,
+                      static_cast<size_t>( cache_x - seex ) * cache_y * sizeof( T ) );
+    }
+    // Y shift: move within each x-column.
+    if( s.y > 0 ) {
+        for( int x = 0; x < cache_x; ++x ) {
+            T *col = data + x * cache_y;
+            std::memmove( col, col + seey, static_cast<size_t>( cache_y - seey ) * sizeof( T ) );
+        }
+    } else if( s.y < 0 ) {
+        for( int x = 0; x < cache_x; ++x ) {
+            T *col = data + x * cache_y;
+            std::memmove( col + seey, col, static_cast<size_t>( cache_y - seey ) * sizeof( T ) );
+        }
+    }
+}
+
 void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier, point s )
 {
     // sx shifts by MULTIPLIER rows, sy shifts by MULTIPLIER columns.
@@ -7876,7 +7907,14 @@ void map::shift( point sp )
         {
             level_cache &gc = get_cache( gridz );
             shift_bitset_cache( gc.map_memory_seen_cache, gc.cache_x, SEEX, sp );
-            // field_cache removed — per-submap field_count is used directly
+            // Shift per-submap dirty bitsets so retained submaps stay clean.
+            shift_bitset_cache( gc.transparency_cache_dirty, gc.cache_mapsize, 1, sp );
+            shift_bitset_cache( gc.floor_cache_dirty, gc.cache_mapsize, 1, sp );
+            // Shift flat cache data so retained submaps' data stays in the
+            // correct tile position.  New edge submaps get stale values that
+            // will be overwritten by the next build_*_cache() call.
+            shift_flat_cache( gc.transparency_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
+            shift_flat_cache( gc.floor_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
         }
         if( sp.x >= 0 ) {
             for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
@@ -7890,7 +7928,7 @@ void map::shift( point sp )
                                        tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
                             update_vehicle_list( get_submap_at_grid( {gridx, gridy, gridz} ), gridz );
                         } else {
-                            loadn( tripoint( gridx, gridy, gridz ), true );
+                            loadn( tripoint( gridx, gridy, gridz ), true, true );
                         }
                     }
                 } else { // sy < 0; work through it backwards
@@ -7903,7 +7941,7 @@ void map::shift( point sp )
                                        tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
                             update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
                         } else {
-                            loadn( tripoint( gridx, gridy, gridz ), true );
+                            loadn( tripoint( gridx, gridy, gridz ), true, true );
                         }
                     }
                 }
@@ -7920,7 +7958,7 @@ void map::shift( point sp )
                                        tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
                             update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
                         } else {
-                            loadn( tripoint( gridx, gridy, gridz ), true );
+                            loadn( tripoint( gridx, gridy, gridz ), true, true );
                         }
                     }
                 } else { // sy < 0; work through it backwards
@@ -7933,7 +7971,7 @@ void map::shift( point sp )
                                        tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
                             update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
                         } else {
-                            loadn( tripoint( gridx, gridy, gridz ), true );
+                            loadn( tripoint( gridx, gridy, gridz ), true, true );
                         }
                     }
                 }
@@ -8146,7 +8184,8 @@ auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> vo
     );
 }
 
-void map::loadn( const tripoint &grid, const bool update_vehicles )
+void map::loadn( const tripoint &grid, const bool update_vehicles,
+                 const bool incremental )
 {
     // Cache empty overmap types
     static const oter_id rock( "empty_rock" );
@@ -8229,11 +8268,24 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
         }
     }
 
-    // New submap changes the content of the map and all caches must be recalculated
-    set_transparency_cache_dirty( grid.z );
-    set_seen_cache_dirty( grid.z );
+    // New submap changes the content of the map and all caches must be recalculated.
+    // In incremental mode (shift context), transparency and floor caches were
+    // shifted in shift() — only mark this specific submap dirty for those two.
+    // The remaining caches (outside, seen, pathfinding, suspension) are cheap
+    // enough or always-fully-rebuilt that whole-z-level dirty is fine.
+    if( incremental ) {
+        level_cache &ch = get_cache( grid.z );
+        ch.transparency_cache_dirty.set( static_cast<size_t>( ch.bidx( grid.x, grid.y ) ) );
+        ch.floor_cache_dirty.set( static_cast<size_t>( ch.bidx( grid.x, grid.y ) ) );
+        tmpsub->transparency_dirty = true;
+        tmpsub->floor_dirty = true;
+        tmpsub->outside_dirty = true;
+    } else {
+        set_transparency_cache_dirty( grid.z );
+        set_floor_cache_dirty( grid.z );
+    }
     set_outside_cache_dirty( grid.z );
-    set_floor_cache_dirty( grid.z );
+    set_seen_cache_dirty( grid.z );
     set_pathfinding_cache_dirty( grid.z );
     set_suspension_cache_dirty( grid.z );
     setsubmap( gridn, tmpsub );
