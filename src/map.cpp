@@ -7827,6 +7827,7 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
 
 void map::shift( point sp )
 {
+    ZoneScopedN( "map_shift" );
     // Special case of 0-shift; refresh the map
     if( sp == point_zero ) {
         return; // Skip this?
@@ -7866,6 +7867,7 @@ void map::shift( point sp )
     // worker finished, MAPBUFFER already has the submap so loadn() hits the
     // fast (in-memory) path.  If not ready yet, drain_completed() blocks.
     {
+        ZoneScopedN( "shift_drain_preloads" );
         std::vector<tripoint_abs_sm> must_have;
         const tripoint new_abs = get_abs_sub();
         for( int gridz = zmin; gridz <= zmax; gridz++ ) {
@@ -7897,13 +7899,21 @@ void map::shift( point sp )
     // threads (Lua is not thread-safe).  The submaps are already in the
     // mapbuffer; run_deferred_mapgen_hooks() loads them into temporary tinymaps
     // and executes each hook on the main thread.
-    run_deferred_mapgen_hooks();
+    {
+        ZoneScopedN( "shift_mapgen_hooks" );
+        run_deferred_mapgen_hooks();
+    }
 
     // Clear vehicle list and rebuild after shift
-    clear_vehicle_cache( );
+    {
+        ZoneScopedN( "shift_clear_vehicle_cache" );
+        clear_vehicle_cache( );
+    }
     // Shift the map sx submaps to the right and sy submaps down.
     // sx and sy should never be bigger than +/-1.
     // absx and absy are our position in the world, for saving/loading purposes.
+    {
+        ZoneScopedN( "shift_grid_copy_load" );
     for( int gridz = zmin; gridz <= zmax; gridz++ ) {
         clear_vehicle_list( gridz );
         {
@@ -7980,7 +7990,9 @@ void map::shift( point sp )
             }
         }
     }
+    } // shift_grid_copy_load
     if( zlevels ) {
+        ZoneScopedN( "shift_add_roofs" );
         //Go through the generated maps and fill in the roofs
         for( int gridz = zmin; gridz <= zmax; gridz++ ) {
             if( sp.x > 0 ) {
@@ -8005,7 +8017,10 @@ void map::shift( point sp )
         }
     }
 
-    reset_vehicle_cache( );
+    {
+        ZoneScopedN( "shift_reset_vehicle_cache" );
+        reset_vehicle_cache( );
+    }
 
     g->setremoteveh( remoteveh );
 
@@ -8019,6 +8034,7 @@ void map::shift( point sp )
     // drain_completed() (above) will block until they are ready so loadn()
     // hits the MAPBUFFER fast path.
     {
+        ZoneScopedN( "shift_speculative_preload" );
         const tripoint cur_abs = get_abs_sub();
         const std::string &dim = get_bound_dimension();
         auto &mb = MAPBUFFER_REGISTRY.get( dim );
