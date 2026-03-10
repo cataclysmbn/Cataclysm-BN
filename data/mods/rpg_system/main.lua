@@ -262,21 +262,12 @@ mod.on_game_load = function()
   gdebug.log_info("RPG System: Loaded character at level " .. level)
 end
 
-mod.on_monster_killed = function(params)
-  local killer = params.killer
-  local monster = params.mon
-
-  if not killer or not monster then return end
-  if not killer:is_avatar() then return end
-
-  local player = killer:as_character()
-  if not player then return end
-
+local function level_up(player, monster_hp, xp_gain)
   local exp = get_char_value(player, "rpg_exp", 0)
   local old_level = get_char_value(player, "rpg_level", 0)
+  -- only show messages if killer is player-controlled
+  local show_messages = player:is_avatar()
 
-  local monster_hp = monster:get_hp_max()
-  local xp_gain = math.max(1, math.floor(monster_hp / 10))
   exp = exp + xp_gain
   set_char_value(player, "rpg_exp", exp)
 
@@ -289,21 +280,24 @@ mod.on_monster_killed = function(params)
       .. color_good(" ★")
       .. " "
       .. string.format(gettext("You are now %s!"), color_info(gettext("Level") .. " " .. new_level))
-    gapi.add_msg(MsgType.good, level_msg)
 
-    -- Calculate trait slots
-    local old_max_traits = 1 + math.floor(old_level / LEVELS_PER_TRAIT_SLOT)
-    local new_max_traits = 1 + math.floor(new_level / LEVELS_PER_TRAIT_SLOT)
-    set_char_value(player, "rpg_max_traits", new_max_traits)
+    if show_messages then
+      gapi.add_msg(MsgType.good, level_msg)
 
-    if new_max_traits > old_max_traits then
-      local traits_gained = new_max_traits - old_max_traits
-      gapi.add_msg(
-        MsgType.good,
-        color_good(vgettext("New trait slot unlocked!", "New trait slots unlocked!", traits_gained))
-          .. " "
-          .. string.format(gettext("You now have %s trait slots."), color_highlight(new_max_traits))
-      )
+      -- Calculate trait slots
+      local old_max_traits = 1 + math.floor(old_level / LEVELS_PER_TRAIT_SLOT)
+      local new_max_traits = 1 + math.floor(new_level / LEVELS_PER_TRAIT_SLOT)
+      set_char_value(player, "rpg_max_traits", new_max_traits)
+
+      if new_max_traits > old_max_traits then
+        local traits_gained = new_max_traits - old_max_traits
+        gapi.add_msg(
+          MsgType.good,
+          color_good(vgettext("New trait slot unlocked!", "New trait slots unlocked!", traits_gained))
+            .. " "
+            .. string.format(gettext("You now have %s trait slots."), color_highlight(new_max_traits))
+        )
+      end
     end
 
     -- Calculate stat points earned by iterating through levels crossed
@@ -316,20 +310,23 @@ mod.on_monster_killed = function(params)
       local stat_points = get_char_value(player, "rpg_stat_points", 0)
       stat_points = stat_points + stat_points_earned
       set_char_value(player, "rpg_stat_points", stat_points)
-      gapi.add_msg(
-        MsgType.good,
-        color_good(
-          string.format(
-            vgettext("✦ %d stat point earned!", "✦ %d stat points earned!", stat_points_earned),
-            stat_points_earned
+
+      if show_messages then
+        gapi.add_msg(
+          MsgType.good,
+          color_good(
+            string.format(
+              vgettext("✦ %d stat point earned!", "✦ %d stat points earned!", stat_points_earned),
+              stat_points_earned
+            )
           )
+            .. " "
+            .. string.format(
+              vgettext("You have %s unassigned stat point.", "You have %s unassigned stat points.", stat_points),
+              color_highlight(stat_points)
+            )
         )
-          .. " "
-          .. string.format(
-            vgettext("You have %s unassigned stat point.", "You have %s unassigned stat points.", stat_points),
-            color_highlight(stat_points)
-          )
-      )
+      end
     end
   end
 
@@ -352,6 +349,24 @@ mod.on_monster_killed = function(params)
       end
     end
   end
+end
+
+mod.on_monster_killed = function(params)
+  local killer = params.killer
+  local monster = params.mon
+
+  if not killer or not monster then return end
+
+  local player = killer:as_character()
+  if not player then return end
+
+  local monster_hp = monster:get_hp_max()
+  local xp_gain = math.max(1, math.floor(monster_hp / 10))
+
+  level_up(player, monster_hp, xp_gain)
+
+  -- if an NPC kills a monster, the player character gets half the XP
+  if not player:is_avatar() then level_up(gapi.get_avatar(), monster_hp, xp_gain / 2) end
 end
 
 mod.on_character_reset_stats = function(params)
