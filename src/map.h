@@ -2201,11 +2201,19 @@ class map : public submap_load_listener
         std::set<vehicle *> loaded_vehicles;
 
         /**
-         * Cache of coordinate pairs recently checked for visibility.
+         * Direct-mapped cache of coordinate pairs recently checked for visibility.
+         * Each slot stores a packed (key, value) entry.  Hash collisions silently
+         * evict the old entry — no linked list, no heap allocation.
+         *
          * Protected by skew_vision_cache_mutex so that compute_plan() can be
          * called in parallel across monsters (P-6).
          */
-        mutable lru_cache<point, char> skew_vision_cache;
+        struct vision_cache_slot {
+            point key;
+            char  value = -1;  // -1 = empty/miss
+        };
+        static constexpr std::size_t vision_cache_slots = 1 << 17;  // 131072 entries (~1.5 MB)
+        mutable std::vector<vision_cache_slot> skew_vision_cache;
         // PERF-LOSS-1: shared_mutex allows concurrent cache reads (common case)
         // while still serialising inserts.  Use shared_lock for reads and
         // unique_lock for writes in map::sees().

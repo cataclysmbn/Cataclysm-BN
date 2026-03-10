@@ -228,6 +228,7 @@ map::map( int mapsize, bool zlev )
 
     dbg( DL::Info ) << "map::map(): my_MAPSIZE: " << my_MAPSIZE << " z-levels enabled:" << zlevels;
     skew_vision_cache_mutex = std::make_unique<std::shared_mutex>();
+    skew_vision_cache.resize( vision_cache_slots );
 }
 
 // Defined out-of-line so we can use g_mapsize (runtime) rather than the
@@ -7201,11 +7202,12 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
     );
     // P-6 / PERF-LOSS-1: shared_lock for the cache lookup so concurrent readers
     // don't serialize against each other.  The ray trace runs fully unlocked.
+    const auto slot_idx = std::hash<point> {}( key ) & ( vision_cache_slots - 1 );
     {
         std::shared_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
-        char cached = skew_vision_cache.get( key, -1 );
-        if( cached >= 0 ) {
-            return cached > 0;
+        const auto &slot = skew_vision_cache[slot_idx];
+        if( slot.key == key && slot.value >= 0 ) {
+            return slot.value > 0;
         }
     }
 
@@ -7231,7 +7233,7 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
         } );
         {
             std::unique_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
-            skew_vision_cache.insert( get_option<int>( "SKEW_VISION_CACHE_SIZE" ), key, visible ? 1 : 0 );
+            skew_vision_cache[slot_idx] = { key, static_cast<char>( visible ? 1 : 0 ) };
         }
         return visible;
     }
@@ -7267,7 +7269,7 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
     } );
     {
         std::unique_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
-        skew_vision_cache.insert( get_option<int>( "SKEW_VISION_CACHE_SIZE" ), key, visible ? 1 : 0 );
+        skew_vision_cache[slot_idx] = { key, static_cast<char>( visible ? 1 : 0 ) };
     }
     return visible;
 }
@@ -9762,7 +9764,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     seen_cache_dirty |= build_vision_transparency_cache( get_player_character() );
 
     if( seen_cache_dirty ) {
-        skew_vision_cache.clear();
+        skew_vision_cache.assign( vision_cache_slots, vision_cache_slot{} );
     }
     // Initial value is illegal player position.
     const tripoint &p = g->u.pos();

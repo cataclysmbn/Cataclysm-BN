@@ -345,27 +345,35 @@ submap *mapbuffer::unserialize_submaps( const tripoint &p )
 
 void mapbuffer::deserialize_into_vec(
     JsonIn &jsin,
-    std::vector<std::pair<tripoint, std::unique_ptr<submap>>> &out )
+    std::vector<std::pair<tripoint, std::unique_ptr<submap>>> &out,
+    const std::function<bool( const tripoint & )> &skip_if )
 {
     jsin.start_array();
     while( !jsin.end_array() ) {
         std::unique_ptr<submap> sm;
         tripoint submap_coordinates;
         jsin.start_object();
-        int version = 0;
+        auto version = 0;
+        auto skip = false;
         while( !jsin.end_object() ) {
-            std::string submap_member_name = jsin.get_member_name();
+            auto submap_member_name = jsin.get_member_name();
             if( submap_member_name == "version" ) {
                 version = jsin.get_int();
             } else if( submap_member_name == "coordinates" ) {
                 jsin.start_array();
-                int i = jsin.get_int();
-                int j = jsin.get_int();
-                int k = jsin.get_int();
+                auto i = jsin.get_int();
+                auto j = jsin.get_int();
+                auto k = jsin.get_int();
                 tripoint loc{ i, j, k };
                 jsin.end_array();
                 submap_coordinates = loc;
-                sm = std::make_unique<submap>( sm_to_ms_copy( submap_coordinates ) );
+                if( skip_if && skip_if( loc ) ) {
+                    skip = true;
+                } else {
+                    sm = std::make_unique<submap>( sm_to_ms_copy( submap_coordinates ) );
+                }
+            } else if( skip ) {
+                jsin.skip_value();
             } else {
                 if( !sm ) { //This whole thing is a nasty hack that relys on coordinates coming first...
                     debugmsg( "coordinates was not at the top of submap json" );
@@ -373,14 +381,20 @@ void mapbuffer::deserialize_into_vec(
                 sm->load( jsin, submap_member_name, version, multiply_xy( submap_coordinates, 12 ) );
             }
         }
-        out.emplace_back( submap_coordinates, std::move( sm ) );
+        if( !skip ) {
+            out.emplace_back( submap_coordinates, std::move( sm ) );
+        }
     }
 }
 
 void mapbuffer::deserialize( JsonIn &jsin )
 {
     std::vector<std::pair<tripoint, std::unique_ptr<submap>>> loaded;
-    deserialize_into_vec( jsin, loaded );
+    // submaps_mutex_ is already held (recursive_mutex via lookup_submap),
+    // so lookup_submap_in_memory re-acquires safely.
+    deserialize_into_vec( jsin, loaded, [this]( const tripoint & p ) {
+        return lookup_submap_in_memory( p ) != nullptr;
+    } );
     for( auto &[pos, sm] : loaded ) {
         if( !add_submap( pos, sm ) ) {
             // In-memory version takes precedence; the disk entry is stale.
@@ -401,9 +415,15 @@ void mapbuffer::preload_quad( const tripoint &om_addr )
     // different quads can be prefetched concurrently on worker threads.
     std::vector<std::pair<tripoint, std::unique_ptr<submap>>> loaded;
     using namespace std::placeholders;
+    // Skip submaps already resident in memory during deserialization.
+    // This avoids the expensive sm->load() (items, vehicles, terrain construction)
+    // for submaps that were already loaded by a prior lazy-border or sync pass.
+    auto already_loaded = [this]( const tripoint & p ) {
+        return lookup_submap_in_memory( p ) != nullptr;
+    };
     g->get_active_world()->read_map_quad( dimension_id_, om_addr,
-    [this, &loaded]( JsonIn & jsin ) {
-        deserialize_into_vec( jsin, loaded );
+    [this, &loaded, &already_loaded]( JsonIn & jsin ) {
+        deserialize_into_vec( jsin, loaded, already_loaded );
     } );
 
     // Add parsed submaps to the in-memory buffer under submaps_mutex_.

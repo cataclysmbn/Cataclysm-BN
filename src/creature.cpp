@@ -389,21 +389,18 @@ bool Creature::sees( const tripoint &t, bool is_avatar, int range_mod ) const
     if( creature_dim( *this ) != here.get_bound_dimension() ) {
         return false;
     }
-    const int range_cur = sight_range( here.ambient_light_at( t ) );
-    const int range_day = sight_range( default_daylight_level() );
-    const int range_night = sight_range( 0 );
-    const int range_max = std::max( range_day, range_night );
-    const int range_min = std::min( range_cur, range_max );
-    const int wanted_range = rl_dist( pos(), t );
+    const auto ambient = here.ambient_light_at( t );
+    const auto range_cur = sight_range( ambient );
+    const auto range_day = sight_range( default_daylight_level() );
+    const auto range_night = sight_range( 0 );
+    const auto range_max = std::max( range_day, range_night );
+    const auto range_min = std::min( range_cur, range_max );
+    const auto wanted_range = rl_dist( pos(), t );
+    const auto natural_light = g->natural_light_level( t.z );
+    const auto is_lit = ambient > natural_light;
     if( wanted_range <= range_min ||
-        ( wanted_range <= range_max &&
-          here.ambient_light_at( t ) > g->natural_light_level( t.z ) ) ) {
-        int range = 0;
-        if( here.ambient_light_at( t ) > g->natural_light_level( t.z ) ) {
-            range = g_max_view_distance;
-        } else {
-            range = range_min;
-        }
+        ( wanted_range <= range_max && is_lit ) ) {
+        auto range = is_lit ? g_max_view_distance : range_min;
         if( has_effect( effect_no_sight ) ) {
             range = 1;
         }
@@ -412,8 +409,8 @@ bool Creature::sees( const tripoint &t, bool is_avatar, int range_mod ) const
         }
         if( is_avatar ) {
             // Special case monster -> player visibility, forcing it to be symmetric with player vision.
-            const float player_visibility_factor = g->u.visibility() / 100.0f;
-            int adj_range = std::floor( range * player_visibility_factor );
+            const auto player_visibility_factor = g->u.visibility() / 100.0f;
+            const auto adj_range = static_cast<int>( std::floor( range * player_visibility_factor ) );
             const auto &_mc = here.get_cache_ref( pos().z );
             // seen_cache is only valid within the render area; out-of-render entities
             // are not visible to the player by definition.

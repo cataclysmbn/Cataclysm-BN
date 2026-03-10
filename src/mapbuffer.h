@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -220,7 +221,8 @@ class mapbuffer
          */
         void deserialize_into_vec(
             JsonIn &jsin,
-            std::vector<std::pair<tripoint, std::unique_ptr<submap>>> &out );
+            std::vector<std::pair<tripoint, std::unique_ptr<submap>>> &out,
+            const std::function<bool( const tripoint & )> &skip_if = nullptr );
         void save_quad( const tripoint &om_addr, std::list<tripoint> &submaps_to_delete,
                         bool delete_after_save );
         submap_map_t submaps;
