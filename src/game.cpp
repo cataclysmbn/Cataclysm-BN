@@ -4938,7 +4938,7 @@ void game::monmove()
         }
     }
 
-    // OPP-1 (PERF-A fix): Pre-warm both turn_sight_cache_ and skew_vision_cache
+    // Pre-warm both turn_sight_cache_ and skew_vision_cache
     // for (monster → player), (monster → NPC), and faction-hostile (monster → monster)
     // pairs before the parallel phase.  prewarm_sight() calls turn_cached_sees(),
     // which populates turn_sight_cache_ under a unique_lock here (serial, zero
@@ -4993,7 +4993,7 @@ void game::monmove()
     }
     const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap };
 
-    // PERF-LOSS-2 / OPP-5: parallel_for_chunked with a small chunk size gives the
+    // parallel_for_chunked with a small chunk size gives the
     // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
     // (no ray traces) immediately pull the next chunk rather than sitting idle
     // while a thread blocked on a costly monster finishes its oversized slice.

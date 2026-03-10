@@ -730,6 +730,13 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
     }
     veh->invalidate_towing( true );
     submap *const current_submap = get_submap_at_grid( veh->sm_pos );
+    if( current_submap == nullptr ) {
+        debugmsg( "detach_vehicle can't find submap!  name=%s, submap:%d,%d,%d",
+                  veh->name, veh->sm_pos.x, veh->sm_pos.y, veh->sm_pos.z );
+        loaded_vehicles.erase( veh );
+        dirty_vehicle_list.erase( veh );
+        return std::unique_ptr<vehicle>();
+    }
     level_cache &ch = get_cache( z );
     for( size_t i = 0; i < current_submap->vehicles.size(); i++ ) {
         if( current_submap->vehicles[i].get() == veh ) {
@@ -1781,8 +1788,8 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     point veh_sm_max = { INT_MIN, INT_MIN };
 
     auto expand_bounds = [&]( const int base_x, const int base_y, const vehicle_part & prt ) {
-        const int px = ( base_x + prt.precalc[0].x ) / SEEX;
-        const int py = ( base_y + prt.precalc[0].y ) / SEEY;
+        const int px = divide_round_to_minus_infinity( base_x + prt.precalc[0].x, SEEX );
+        const int py = divide_round_to_minus_infinity( base_y + prt.precalc[0].y, SEEY );
         veh_sm_min.x = std::min( veh_sm_min.x, px );
         veh_sm_min.y = std::min( veh_sm_min.y, py );
         veh_sm_max.x = std::max( veh_sm_max.x, px );
@@ -1806,7 +1813,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     }
 
     if( src_submap != dst_submap ) {
-        veh.set_submap_moved( tripoint( dst.x / SEEX, dst.y / SEEY, dst.z ) );
+        veh.set_submap_moved( divide_xy_round_to_minus_infinity( dst, SEEX ) );
         auto src_submap_veh_it = src_submap->vehicles.begin() + our_i;
         dst_submap->vehicles.push_back( std::move( *src_submap_veh_it ) );
         src_submap->vehicles.erase( src_submap_veh_it );
@@ -5683,13 +5690,10 @@ void map::process_items()
         } );
     }
     // Making a copy, in case the original variable gets modified during `process_items_in_submap`
-    // PERF-LOSS-3: the previous I-1 distance cull (radius = MAPSIZE) has been
-    // removed.  Items outside the loaded bubble are never in
-    // submaps_with_active_items, so ITEM_PROCESS_RADIUS_SM == MAPSIZE passed
-    // for every submap in the set — the check added two abs() calls and two
-    // comparisons per submap per turn while skipping nothing.  A category-aware
-    // cull (e.g., skip cosmetic items far from all creatures) remains a future
-    // option if profiling motivates it.
+    // TODO: With chunk-based loading, submaps_with_active_items can now contain
+    // entries outside the reality bubble.  These should be processed (possibly
+    // via the mapbuffer fallback in get_submap_at_grid) rather than silently
+    // skipped.  For now the nullptr / out-of-bounds check below still drops them.
     const std::set<tripoint> submaps_with_active_items_copy = submaps_with_active_items;
     for( const tripoint &abs_pos : submaps_with_active_items_copy ) {
         const tripoint local_pos = abs_pos - abs_sub.xy();
@@ -7200,7 +7204,7 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
         min.x << 16 | min.y << 8 | ( min.z + OVERMAP_DEPTH ),
         max.x << 16 | max.y << 8 | ( max.z + OVERMAP_DEPTH )
     );
-    // P-6 / PERF-LOSS-1: shared_lock for the cache lookup so concurrent readers
+    // shared_lock for the cache lookup so concurrent readers
     // don't serialize against each other.  The ray trace runs fully unlocked.
     const auto slot_idx = std::hash<point> {}( key ) & ( vision_cache_slots - 1 );
     {
@@ -7800,7 +7804,7 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
         prt.part().precalc[0].z -= z_shift;
     }
 
-    veh.set_submap_moved( tripoint( dst.x / SEEX, dst.y / SEEY, dst.z ) );
+    veh.set_submap_moved( divide_xy_round_to_minus_infinity( dst, SEEX ) );
     auto src_submap_veh_it = src_submap->vehicles.begin() + our_i;
     dst_submap->vehicles.push_back( std::move( *src_submap_veh_it ) );
     src_submap->vehicles.erase( src_submap_veh_it );
@@ -9956,7 +9960,14 @@ submap *map::get_submap_at( const tripoint &p, point &offset_p ) const
 
 submap *map::get_submap_at_grid( const tripoint &gridp ) const
 {
-    return getsubmap( get_nonant( gridp ) );
+    if( gridp.x >= 0 && gridp.x < my_MAPSIZE &&
+        gridp.y >= 0 && gridp.y < my_MAPSIZE ) {
+        return getsubmap( get_nonant( gridp ) );
+    }
+    // Out-of-bubble fallback: the submap may still be loaded in the mapbuffer
+    // even though it has no slot in the grid[] array.
+    const tripoint abs_sm( abs_sub.x + gridp.x, abs_sub.y + gridp.y, gridp.z );
+    return MAPBUFFER.lookup_submap_in_memory( abs_sm );
 }
 
 size_t map::get_nonant( const tripoint &gridp ) const

@@ -2066,12 +2066,13 @@ class map : public submap_load_listener
             return get_submap_at( { p, abs_sub.z }, offset_p );
         }
         /**
-         * Get submap pointer in the grid at given grid coordinates. Grid coordinates must
-         * be valid: 0 <= x < my_MAPSIZE, same for y.
-         * z must be between -OVERMAP_DEPTH and OVERMAP_HEIGHT
+         * Get submap pointer at given grid coordinates.  For coordinates
+         * inside the reality bubble grid, returns the grid[] slot directly.
+         * For out-of-bubble coordinates, falls back to a mapbuffer lookup
+         * (may return nullptr if the submap is not loaded in memory).
          */
         submap *get_submap_at_grid( point gridp ) const {
-            return getsubmap( get_nonant( gridp ) );
+            return get_submap_at_grid( tripoint{ gridp, abs_sub.z } );
         }
         submap *get_submap_at_grid( const tripoint &gridp ) const;
     protected:
@@ -2214,7 +2215,7 @@ class map : public submap_load_listener
         };
         static constexpr std::size_t vision_cache_slots = 1 << 17;  // 131072 entries (~1.5 MB)
         mutable std::vector<vision_cache_slot> skew_vision_cache;
-        // PERF-LOSS-1: shared_mutex allows concurrent cache reads (common case)
+        // shared_mutex allows concurrent cache reads (common case)
         // while still serialising inserts.  Use shared_lock for reads and
         // unique_lock for writes in map::sees().
         mutable std::unique_ptr<std::shared_mutex> skew_vision_cache_mutex;

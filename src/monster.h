@@ -237,7 +237,7 @@ class monster : public Creature, public location_visitable<monster>
 
         // How good of a target is given creature (checks for visibility).
         // Pass precalc_dist >= 0 to skip re-computing rl_dist_fast() internally
-        // when the caller already has the distance (PERF-LOSS-4).
+        // when the caller already has the distance.
         float rate_target( Creature &c, float best, bool smart = false,
                            int precalc_dist = -1 ) const;
         void plan();
@@ -290,7 +290,6 @@ class monster : public Creature, public location_visitable<monster>
          * Call serially before the parallel planning phase so that
          * compute_plan() hits the shared_lock read path instead of taking
          * a unique_lock insert for every monster-player/NPC pair.
-         * (PERF-A / GAIN-A: replaces bare mon->sees(target) pre-warm.)
          */
         void prewarm_sight( const Creature &target ) const;
 

@@ -344,8 +344,8 @@ void monster::prewarm_sight( const Creature &target ) const
 
 float monster::rate_target( Creature &c, float best, bool smart, int precalc_dist ) const
 {
-    // PERF-LOSS-4: use caller-supplied distance when available to avoid
-    // recomputing rl_dist_fast() for targets that already passed a P-4 guard.
+    // Use caller-supplied distance when available to avoid
+    // recomputing rl_dist_fast() for targets that already passed a guard.
     const auto d = precalc_dist >= 0 ? precalc_dist
                    : static_cast<int>( rl_dist_fast( pos(), c.pos() ) );
     if( d <= 0 ) {
@@ -1246,7 +1246,7 @@ monster_action_t monster::decide_action() const
 
         // Determine action kind by what occupies next_step.
         // Re-use action.target if set by the hostile-break in the candidate loop —
-        // avoids a redundant critter_at lookup for the attack case (PERF-B).
+        // avoids a redundant critter_at lookup for the attack case.
         const Creature *critter_here = action.target != nullptr
                                        ? action.target
                                        : g->critter_at( next_step, is_hallucination() );
