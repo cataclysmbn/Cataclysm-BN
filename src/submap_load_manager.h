@@ -215,8 +215,8 @@ class submap_load_manager
         /** Hash for pair<string, tripoint> used by unordered containers. */
         struct pair_hash {
             auto operator()( const desired_key &k ) const noexcept -> std::size_t {
-                auto h = std::hash<std::string>{}( k.first );
-                h ^= std::hash<tripoint>{}( k.second ) + 0x9e3779b9 + ( h << 6 ) + ( h >> 2 );
+                auto h = std::hash<std::string> {}( k.first );
+                h ^= std::hash<tripoint> {}( k.second ) + 0x9e3779b9 + ( h << 6 ) + ( h >> 2 );
                 return h;
             }
         };

@@ -169,7 +169,7 @@ void submap_load_manager::update()
     // add_submap().  Eviction below also acquires the mutex via unload_quad().
     {
         auto it = std::remove_if( lazy_futures_.begin(), lazy_futures_.end(),
-        [this]( auto &entry ) {
+        [this]( auto & entry ) {
             if( entry.second.wait_for( std::chrono::seconds( 0 ) ) == std::future_status::ready ) {
                 entry.second.get();
                 lazy_in_flight_.erase( entry.first );
@@ -245,8 +245,8 @@ void submap_load_manager::update()
         const bool all_loaded =
             mb.lookup_submap_in_memory( base )
             && mb.lookup_submap_in_memory( { base.x + 1, base.y, base.z } )
-            && mb.lookup_submap_in_memory( { base.x, base.y + 1, base.z } )
-            && mb.lookup_submap_in_memory( { base.x + 1, base.y + 1, base.z } );
+            &&mb.lookup_submap_in_memory( { base.x, base.y + 1, base.z } )
+            &&mb.lookup_submap_in_memory( { base.x + 1, base.y + 1, base.z } );
         if( all_loaded ) {
             continue;
         }
@@ -385,7 +385,7 @@ bool submap_load_manager::is_properly_requested( const std::string &dim_id,
 }
 
 bool submap_load_manager::is_simulated( const std::string &dim_id,
-        const tripoint_abs_sm &pos ) const
+                                        const tripoint_abs_sm &pos ) const
 {
     // Quick rejection: not in the desired set at all.
     if( !prev_desired_.count( { dim_id, pos.raw() } ) ) {
