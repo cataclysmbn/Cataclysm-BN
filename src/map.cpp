@@ -7914,82 +7914,82 @@ void map::shift( point sp )
     // absx and absy are our position in the world, for saving/loading purposes.
     {
         ZoneScopedN( "shift_grid_copy_load" );
-    for( int gridz = zmin; gridz <= zmax; gridz++ ) {
-        clear_vehicle_list( gridz );
-        {
-            level_cache &gc = get_cache( gridz );
-            shift_bitset_cache( gc.map_memory_seen_cache, gc.cache_x, SEEX, sp );
-            // Shift per-submap dirty bitsets so retained submaps stay clean.
-            shift_bitset_cache( gc.transparency_cache_dirty, gc.cache_mapsize, 1, sp );
-            shift_bitset_cache( gc.floor_cache_dirty, gc.cache_mapsize, 1, sp );
-            // Shift flat cache data so retained submaps' data stays in the
-            // correct tile position.  New edge submaps get stale values that
-            // will be overwritten by the next build_*_cache() call.
-            shift_flat_cache( gc.transparency_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
-            shift_flat_cache( gc.floor_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
-        }
-        if( sp.x >= 0 ) {
-            for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-                if( sp.y >= 0 ) {
-                    for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-                        if( ( sp.x > 0 && gridx == 0 ) || ( sp.y > 0 && gridy == 0 ) ) {
-                            submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
+        for( int gridz = zmin; gridz <= zmax; gridz++ ) {
+            clear_vehicle_list( gridz );
+            {
+                level_cache &gc = get_cache( gridz );
+                shift_bitset_cache( gc.map_memory_seen_cache, gc.cache_x, SEEX, sp );
+                // Shift per-submap dirty bitsets so retained submaps stay clean.
+                shift_bitset_cache( gc.transparency_cache_dirty, gc.cache_mapsize, 1, sp );
+                shift_bitset_cache( gc.floor_cache_dirty, gc.cache_mapsize, 1, sp );
+                // Shift flat cache data so retained submaps' data stays in the
+                // correct tile position.  New edge submaps get stale values that
+                // will be overwritten by the next build_*_cache() call.
+                shift_flat_cache( gc.transparency_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
+                shift_flat_cache( gc.floor_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
+            }
+            if( sp.x >= 0 ) {
+                for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
+                    if( sp.y >= 0 ) {
+                        for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
+                            if( ( sp.x > 0 && gridx == 0 ) || ( sp.y > 0 && gridy == 0 ) ) {
+                                submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
+                            }
+                            if( gridx + sp.x < my_MAPSIZE && gridy + sp.y < my_MAPSIZE ) {
+                                copy_grid( tripoint( gridx, gridy, gridz ),
+                                           tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
+                                update_vehicle_list( get_submap_at_grid( {gridx, gridy, gridz} ), gridz );
+                            } else {
+                                loadn( tripoint( gridx, gridy, gridz ), true, true );
+                            }
                         }
-                        if( gridx + sp.x < my_MAPSIZE && gridy + sp.y < my_MAPSIZE ) {
-                            copy_grid( tripoint( gridx, gridy, gridz ),
-                                       tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
-                            update_vehicle_list( get_submap_at_grid( {gridx, gridy, gridz} ), gridz );
-                        } else {
-                            loadn( tripoint( gridx, gridy, gridz ), true, true );
+                    } else { // sy < 0; work through it backwards
+                        for( int gridy = my_MAPSIZE - 1; gridy >= 0; gridy-- ) {
+                            if( ( sp.x > 0 && gridx == 0 ) || gridy == my_MAPSIZE - 1 ) {
+                                submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
+                            }
+                            if( gridx + sp.x < my_MAPSIZE && gridy + sp.y >= 0 ) {
+                                copy_grid( tripoint( gridx, gridy, gridz ),
+                                           tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
+                                update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
+                            } else {
+                                loadn( tripoint( gridx, gridy, gridz ), true, true );
+                            }
                         }
                     }
-                } else { // sy < 0; work through it backwards
-                    for( int gridy = my_MAPSIZE - 1; gridy >= 0; gridy-- ) {
-                        if( ( sp.x > 0 && gridx == 0 ) || gridy == my_MAPSIZE - 1 ) {
-                            submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
+                }
+            } else { // sx < 0; work through it backwards
+                for( int gridx = my_MAPSIZE - 1; gridx >= 0; gridx-- ) {
+                    if( sp.y >= 0 ) {
+                        for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
+                            if( gridx == my_MAPSIZE - 1 || ( sp.y > 0 && gridy == 0 ) ) {
+                                submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
+                            }
+                            if( gridx + sp.x >= 0 && gridy + sp.y < my_MAPSIZE ) {
+                                copy_grid( tripoint( gridx, gridy, gridz ),
+                                           tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
+                                update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
+                            } else {
+                                loadn( tripoint( gridx, gridy, gridz ), true, true );
+                            }
                         }
-                        if( gridx + sp.x < my_MAPSIZE && gridy + sp.y >= 0 ) {
-                            copy_grid( tripoint( gridx, gridy, gridz ),
-                                       tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
-                            update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
-                        } else {
-                            loadn( tripoint( gridx, gridy, gridz ), true, true );
+                    } else { // sy < 0; work through it backwards
+                        for( int gridy = my_MAPSIZE - 1; gridy >= 0; gridy-- ) {
+                            if( gridx == my_MAPSIZE - 1 || gridy == my_MAPSIZE - 1 ) {
+                                submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
+                            }
+                            if( gridx + sp.x >= 0 && gridy + sp.y >= 0 ) {
+                                copy_grid( tripoint( gridx, gridy, gridz ),
+                                           tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
+                                update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
+                            } else {
+                                loadn( tripoint( gridx, gridy, gridz ), true, true );
+                            }
                         }
                     }
                 }
             }
-        } else { // sx < 0; work through it backwards
-            for( int gridx = my_MAPSIZE - 1; gridx >= 0; gridx-- ) {
-                if( sp.y >= 0 ) {
-                    for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-                        if( gridx == my_MAPSIZE - 1 || ( sp.y > 0 && gridy == 0 ) ) {
-                            submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
-                        }
-                        if( gridx + sp.x >= 0 && gridy + sp.y < my_MAPSIZE ) {
-                            copy_grid( tripoint( gridx, gridy, gridz ),
-                                       tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
-                            update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
-                        } else {
-                            loadn( tripoint( gridx, gridy, gridz ), true, true );
-                        }
-                    }
-                } else { // sy < 0; work through it backwards
-                    for( int gridy = my_MAPSIZE - 1; gridy >= 0; gridy-- ) {
-                        if( gridx == my_MAPSIZE - 1 || gridy == my_MAPSIZE - 1 ) {
-                            submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
-                        }
-                        if( gridx + sp.x >= 0 && gridy + sp.y >= 0 ) {
-                            copy_grid( tripoint( gridx, gridy, gridz ),
-                                       tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
-                            update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
-                        } else {
-                            loadn( tripoint( gridx, gridy, gridz ), true, true );
-                        }
-                    }
-                }
-            }
         }
-    }
     } // shift_grid_copy_load
     if( zlevels ) {
         ZoneScopedN( "shift_add_roofs" );
