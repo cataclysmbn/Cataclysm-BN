@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "calendar.h"
@@ -25,16 +26,14 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
     ZoneScoped;
     {
         std::lock_guard<std::mutex> lk( mutex_ );
-        // Deduplication: skip if an in-flight request already covers this position.
-        for( const auto &p : pending_ ) {
-            if( p.dim == dim && p.pos == pos ) {
-                return;
-            }
-        }
         // Capacity cap: drop the new request rather than growing the queue
         // without bound.  The main thread falls back to synchronous loadn() if
         // the submap is actually needed before a worker delivers it.
         if( pending_.size() >= MAX_PENDING_LOADS ) {
+            return;
+        }
+        // Deduplication: skip if an in-flight request already covers this position.
+        if( pending_positions_.contains( pos ) ) {
             return;
         }
     }
@@ -107,6 +106,7 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
     } );
 
     std::lock_guard<std::mutex> lk( mutex_ );
+    pending_positions_.insert( pos );
     pending_.push_back( { dim, pos, std::move( fut ) } );
 }
 
@@ -119,12 +119,16 @@ void submap_stream::drain_completed( map &m,
 
     // First pass: block until each must_have submap's future is ready.
     // These are the immediately-visible edge submaps that shift() requires.
+    // Build a position→index map for O(1) lookup instead of O(n²) scanning.
+    std::unordered_map<tripoint_abs_sm, std::size_t> pos_to_idx;
+    pos_to_idx.reserve( pending_.size() );
+    for( std::size_t i = 0; i < pending_.size(); ++i ) {
+        pos_to_idx.emplace( pending_[i].pos, i );
+    }
     for( const tripoint_abs_sm &need : must_have ) {
-        for( auto &p : pending_ ) {
-            if( p.dim == m.get_bound_dimension() && p.pos == need ) {
-                p.future.wait();
-                break;
-            }
+        auto it = pos_to_idx.find( need );
+        if( it != pos_to_idx.end() ) {
+            pending_[it->second].future.wait();
         }
     }
 
@@ -134,11 +138,12 @@ void submap_stream::drain_completed( map &m,
     // Calling on_submap_loaded() before shift()'s grid-copy loop would alias
     // adjacent grid slots, producing a duplication bug.
     pending_.erase(
-    std::remove_if( pending_.begin(), pending_.end(), [&]( pending_load & p ) {
+    std::remove_if( pending_.begin(), pending_.end(), [this]( pending_load & p ) {
         if( p.future.wait_for( std::chrono::seconds( 0 ) ) != std::future_status::ready ) {
             return false;
         }
         p.future.get();  // consume the future; submap is already in MAPBUFFER
+        pending_positions_.erase( p.pos );
         return true;
     } ),
     pending_.end() );
@@ -154,15 +159,11 @@ auto submap_stream::flush_all() -> void
         p.future.get(); // consume result; submap data already in mapbuffer
     } );
     pending_.clear();
+    pending_positions_.clear();
 }
 
 bool submap_stream::is_pending( const std::string &dim, tripoint_abs_sm pos ) const
 {
     std::lock_guard<std::mutex> lk( mutex_ );
-    for( const auto &p : pending_ ) {
-        if( p.dim == dim && p.pos == pos ) {
-            return true;
-        }
-    }
-    return false;
+    return pending_positions_.contains( pos );
 }

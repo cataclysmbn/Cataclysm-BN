@@ -121,6 +121,7 @@ class submap_stream
         };
 
         std::vector<pending_load> pending_;
+        std::unordered_set<tripoint_abs_sm> pending_positions_;
         mutable std::mutex mutex_;
 
         // Per-OMT generation synchronisation.
