@@ -329,30 +329,35 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
         return;
     }
 
+    // Submap lookup — shared by vehicle fixup, active-item tracking, and grid update.
+    const tripoint &p = pos.raw();
+    submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
+    if( sm == nullptr ) {
+        sm = MAPBUFFER_REGISTRY.primary().lookup_submap_in_memory( p );
+    }
+
     // Vehicle sm_pos / abs_sm_pos fixup and loaded_vehicles registration.
     // Covers all loaded submaps, including out-of-bubble ones.
     // For in-bubble submaps loadn() has already done this; the set insert is idempotent.
-    {
-        const tripoint &p = pos.raw();
-        submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
-        if( sm == nullptr ) {
-            sm = MAPBUFFER_REGISTRY.primary().lookup_submap_in_memory( p );
+    if( sm != nullptr && !sm->vehicles.empty() ) {
+        // Extended local grid index: may be outside [0, my_MAPSIZE) for out-of-bubble.
+        const tripoint local_sm( p.x - abs_sub.x, p.y - abs_sub.y, p.z );
+        for( const auto &veh : sm->vehicles ) {
+            veh->sm_pos = local_sm;
+            veh->abs_sm_pos = tripoint_abs_sm( p );
+            loaded_vehicles.insert( veh.get() );
         }
-        if( sm != nullptr && !sm->vehicles.empty() ) {
-            // Extended local grid index: may be outside [0, my_MAPSIZE) for out-of-bubble.
-            const tripoint local_sm( p.x - abs_sub.x, p.y - abs_sub.y, p.z );
-            for( const auto &veh : sm->vehicles ) {
-                veh->sm_pos = local_sm;
-                veh->abs_sm_pos = tripoint_abs_sm( p );
-                loaded_vehicles.insert( veh.get() );
-            }
-        }
+    }
+
+    // Track submaps with active items across the full loaded set, not just the
+    // reality bubble.  For in-bubble submaps loadn() also does this; idempotent.
+    if( sm != nullptr && !sm->active_items.empty() ) {
+        submaps_with_active_items.emplace( p );
     }
 
     if( !contains_abs_sm( pos ) ) {
         return;
     }
-    const tripoint &p = pos.raw();
     const int lx = p.x - abs_sub.x;
     const int ly = p.y - abs_sub.y;
     // Index formula must match get_nonant(): in z-level builds the layout is
@@ -362,12 +367,8 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
                          ? ( lx + ly * my_MAPSIZE ) * OVERMAP_LAYERS + ( p.z + OVERMAP_HEIGHT )
                          : lx + ly * my_MAPSIZE;
     if( grid_idx >= 0 && grid_idx < static_cast<int>( grid.size() ) ) {
-        // Look in the dimension's own registry slot first; fall back to the
-        // primary slot so we never overwrite a valid grid pointer with nullptr.
-        submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
-        if( sm == nullptr ) {
-            sm = MAPBUFFER_REGISTRY.primary().lookup_submap_in_memory( p );
-        }
+        // Reuse the submap pointer from the lookup above if available;
+        // it may be null if the submap was not yet in memory at notification time.
         if( sm != nullptr ) {
             grid[grid_idx] = sm;
         }
@@ -389,6 +390,9 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim
             return veh->abs_sm_pos.raw() == p;
         } );
     }
+
+    // Stop tracking active items for this submap.
+    submaps_with_active_items.erase( pos.raw() );
 
     if( !contains_abs_sm( pos ) ) {
         return;
@@ -5642,29 +5646,26 @@ static void process_vehicle_items( vehicle &cur_veh, int part )
 std::vector<tripoint> map::check_submap_active_item_consistency()
 {
     std::vector<tripoint> result;
-    for( int z = -OVERMAP_DEPTH; z < OVERMAP_HEIGHT; ++z ) {
-        for( int x = 0; x < my_MAPSIZE; ++x ) {
-            for( int y = 0; y < my_MAPSIZE; ++y ) {
-                tripoint p( x, y, z );
-                submap *s = get_submap_at_grid( p );
-                if( s == nullptr ) {
-                    continue;
-                }
-                bool has_active_items = !s->active_items.get().empty();
-                bool map_has_active_items = submaps_with_active_items.contains( p + abs_sub.xy() );
-                if( has_active_items != map_has_active_items ) {
-                    result.push_back( p + abs_sub.xy() );
-                }
-            }
+    mapbuffer &buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
+
+    // Direction 1: every loaded submap with active items should be in the set.
+    buf.for_each_submap( [&]( const auto &entry ) {
+        const tripoint &p = entry.first;
+        const submap *sm = entry.second.get();
+        if( sm != nullptr && !sm->active_items.empty() &&
+            !submaps_with_active_items.contains( p ) ) {
+            result.push_back( p );
         }
-    }
+    } );
+
+    // Direction 2: every entry in the set should point to a loaded submap with active items.
     for( const tripoint &p : submaps_with_active_items ) {
-        tripoint rel = p - abs_sub.xy();
-        half_open_rectangle<point> map( point_zero, point( my_MAPSIZE, my_MAPSIZE ) );
-        if( !map.contains( rel.xy() ) ) {
+        submap *s = buf.lookup_submap_in_memory( p );
+        if( s == nullptr || s->active_items.empty() ) {
             result.push_back( p );
         }
     }
+
     return result;
 }
 
@@ -5690,12 +5691,11 @@ void map::process_items()
         } );
     }
     // Making a copy, in case the original variable gets modified during `process_items_in_submap`
-    // TODO: With chunk-based loading, submaps_with_active_items can now contain
-    // entries outside the reality bubble.  These should be processed (possibly
-    // via the mapbuffer fallback in get_submap_at_grid) rather than silently
-    // skipped.  For now the nullptr / out-of-bounds check below still drops them.
     const std::set<tripoint> submaps_with_active_items_copy = submaps_with_active_items;
     for( const tripoint &abs_pos : submaps_with_active_items_copy ) {
+        if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {
+            continue;
+        }
         const tripoint local_pos = abs_pos - abs_sub.xy();
         submap *const current_submap = get_submap_at_grid( local_pos );
         if( current_submap == nullptr ) {
@@ -7204,7 +7204,7 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
         min.x << 16 | min.y << 8 | ( min.z + OVERMAP_DEPTH ),
         max.x << 16 | max.y << 8 | ( max.z + OVERMAP_DEPTH )
     );
-    // shared_lock for the cache lookup so concurrent readers
+    // P-6 / PERF-LOSS-1: shared_lock for the cache lookup so concurrent readers
     // don't serialize against each other.  The ray trace runs fully unlocked.
     const auto slot_idx = std::hash<point> {}( key ) & ( vision_cache_slots - 1 );
     {
