@@ -194,8 +194,18 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
 {
     const int num_total_submaps = static_cast<int>( submaps.size() );
 
+    // Spatial eviction only makes sense for the dimension the player is
+    // currently in — it has a reality bubble whose origin defines which quads
+    // are "near" enough to keep resident.  Non-current dimensions have no
+    // bubble, so their submaps are kept in memory (the submap_load_manager
+    // handles eviction for those independently).
+    const bool is_current_dimension =
+        g != nullptr && dimension_id_ == get_map().get_bound_dimension();
+
     map &here = get_map();
-    const tripoint map_origin = sm_to_omt_copy( here.get_abs_sub() );
+    const tripoint map_origin = is_current_dimension
+                                ? sm_to_omt_copy( here.get_abs_sub() )
+                                : tripoint_zero;
     const bool map_has_zlevels = g != nullptr && here.has_zlevels();
 
     // Serial collection of unique OMT quad addresses with per-quad delete flags.
@@ -236,14 +246,17 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
                 continue;
             }
 
-            // Submaps outside the current map bounds or on wrong z-level
-            // are deleted from memory after saving.
-            const bool zlev_del = !map_has_zlevels && om_addr.z != g->get_levz();
-            const bool quad_delete = delete_after_save || zlev_del ||
-                                     om_addr.x < map_origin.x ||
-                                     om_addr.y < map_origin.y ||
-                                     om_addr.x > map_origin.x + g_half_mapsize ||
-                                     om_addr.y > map_origin.y + g_half_mapsize;
+            bool quad_delete = delete_after_save;
+            if( is_current_dimension ) {
+                // Submaps outside the current map bounds or on wrong z-level
+                // are deleted from memory after saving.
+                const bool zlev_del = !map_has_zlevels && om_addr.z != g->get_levz();
+                quad_delete = quad_delete || zlev_del ||
+                              om_addr.x < map_origin.x ||
+                              om_addr.y < map_origin.y ||
+                              om_addr.x > map_origin.x + g_half_mapsize ||
+                              om_addr.y > map_origin.y + g_half_mapsize;
+            }
 
             quads_to_process.push_back( { om_addr, quad_delete } );
         }
