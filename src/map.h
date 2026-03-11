@@ -422,6 +422,7 @@ struct level_cache {
 class map : public submap_load_listener
 {
         friend class editmap;
+        friend class mapbuffer;
         friend class visitable<map_cursor>;
         friend class location_visitable<map_cursor>;
 

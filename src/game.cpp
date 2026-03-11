@@ -12760,6 +12760,23 @@ bool game::travel_to_dimension( const std::string &dim_id,
         grid_trackers_[old_dim_id]->clear();
     }
 
+    // Release reality-bubble and lazy-border handles BEFORE rebinding the map.
+    // load_map() detects dimension changes by comparing get_dimension_prefix()
+    // vs m.get_bound_dimension(); if we bind first, load_map() sees matching
+    // IDs and skips the release, leaving stale overworld requests alive whose
+    // center gets updated to pocket coordinates — causing eviction of the
+    // wrong dimension's submaps (use-after-free).
+    if( reality_bubble_handle_ != 0 ) {
+        submap_loader.drain_lazy_loads();
+        submap_loader.release_load( reality_bubble_handle_ );
+        reality_bubble_handle_ = 0;
+    }
+    if( lazy_border_handle_ != 0 ) {
+        submap_loader.release_load( lazy_border_handle_ );
+        lazy_border_handle_ = 0;
+    }
+    submap_loader.flush_prev_desired();
+
     // bind_dimension() redirects all subsequent loadn() / generation calls to
     // the target MAPBUFFER_REGISTRY slot.  Submaps for old_dim_id stay in their
     // slot — nothing is lost.

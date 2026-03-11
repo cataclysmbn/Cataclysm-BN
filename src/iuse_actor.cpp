@@ -7318,9 +7318,13 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
 
     p.add_msg_if_player( m_good, _( "You enter the pocket dimension." ) );
 
-    // Compute destination submap position from entry point so the map loads centered
-    // on the destination, avoiding a costly incremental shift in update_map()
-    tripoint_abs_sm dest_sm = project_to<coords::sm>( pd->entry_point );
+    // Compute the map top-left corner so the entry point ends up near the grid center.
+    // load_map() treats pos_sm as the top-left corner; the grid center is at
+    // pos_sm + (g_half_mapsize, g_half_mapsize).  Placing the entry submap there
+    // avoids a large multi-submap shift in update_map() which can trigger
+    // use-after-free via stale grid[] pointers during submap_loader eviction.
+    tripoint_abs_sm entry_sm = project_to<coords::sm>( pd->entry_point );
+    tripoint_abs_sm dest_sm( entry_sm.raw() - tripoint( g_half_mapsize, g_half_mapsize, 0 ) );
 
     // Build a pre-load callback to place the overmap special BEFORE submaps are generated.
     // This ensures submap generation uses the correct overmap terrain types (e.g. "Cave")
@@ -7364,9 +7368,11 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
 
     p.add_msg_if_player( m_good, _( "You exit the pocket dimension." ) );
 
-    // Compute destination submap position from return point so the map loads centered
-    // on the destination, avoiding a costly incremental shift in update_map()
-    tripoint_abs_sm dest_sm = project_to<coords::sm>( pd->return_point );
+    // Compute the map top-left corner so the return point ends up near the grid center.
+    // See enter_pocket() for the rationale — centering avoids a large shift in
+    // update_map() that can trigger use-after-free via submap_loader eviction.
+    tripoint_abs_sm return_sm = project_to<coords::sm>( pd->return_point );
+    tripoint_abs_sm dest_sm( return_sm.raw() - tripoint( g_half_mapsize, g_half_mapsize, 0 ) );
 
     // Travel back to the return dimension (no bounds = infinite dimension).
     // travel_to_dimension clears stale bounds before loading the map.

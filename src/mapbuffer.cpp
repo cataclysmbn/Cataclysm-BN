@@ -70,6 +70,21 @@ void mapbuffer::remove_submap( tripoint addr )
         debugmsg( "Tried to remove non-existing submap %s", addr.to_string() );
         return;
     }
+    // Safety: skip freeing if map::grid[] still references this submap.
+    if( g != nullptr && m_target->second ) {
+        const submap *doomed = m_target->second.get();
+        const map &here = get_map();
+        const auto &grid_vec = here.grid;
+        for( size_t i = 0; i < grid_vec.size(); ++i ) {
+            if( grid_vec[i] == doomed ) {
+                debugmsg( "remove_submap: skipping free of submap at %s (ptr %p) "
+                          "— map::grid[%zu] still references it (dim='%s')",
+                          addr.to_string(), static_cast<const void *>( doomed ),
+                          i, dimension_id_ );
+                return;  // do NOT erase — prevent use-after-free
+            }
+        }
+    }
     submaps.erase( m_target );
 }
 
@@ -126,6 +141,30 @@ void mapbuffer::unload_quad( const tripoint &om_addr )
     // so we don't need to recompute the 4 addresses separately.
     std::list<tripoint> to_delete;
     save_quad( om_addr, to_delete, /*delete_after_save=*/true );
+    // Safety: skip freeing submaps that map::grid[] still references.
+    // This prevents use-after-free when submap_loader eviction races with
+    // map::shift() / copy_grid() during large map shifts (e.g. pocket entry).
+    if( g != nullptr ) {
+        const map &here = get_map();
+        const auto &grid_vec = here.grid;
+        to_delete.remove_if( [&]( const tripoint &p ) {
+            const auto it = submaps.find( p );
+            if( it == submaps.end() || !it->second ) {
+                return false;
+            }
+            const submap *doomed = it->second.get();
+            for( size_t i = 0; i < grid_vec.size(); ++i ) {
+                if( grid_vec[i] == doomed ) {
+                    debugmsg( "unload_quad: skipping free of submap at %s (ptr %p) "
+                              "— map::grid[%zu] still references it (dim='%s')",
+                              p.to_string(), static_cast<const void *>( doomed ),
+                              i, dimension_id_ );
+                    return true;  // remove from to_delete → keep alive
+                }
+            }
+            return false;
+        } );
+    }
     for( const tripoint &p : to_delete ) {
         submaps.erase( p );
     }

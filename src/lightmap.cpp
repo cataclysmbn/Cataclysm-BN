@@ -510,6 +510,16 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                 if( cur_submap == nullptr ) {
                     continue;
                 }
+                if( cur_submap->magic_ != submap::SUBMAP_MAGIC ) {
+                    debugmsg( "generate_lightmap: use-after-free! submap at grid(%d,%d,%d) "
+                              "ptr=%p magic=0x%08X (expected 0x%08X) is_uniform=%d field_count=%d",
+                              smx, smy, zlev,
+                              static_cast<const void *>( cur_submap ),
+                              cur_submap->magic_, submap::SUBMAP_MAGIC,
+                              static_cast<int>( cur_submap->is_uniform ),
+                              cur_submap->field_count );
+                    continue;
+                }
 
                 for( int sx = 0; sx < SEEX; ++sx ) {
                     for( int sy = 0; sy < SEEY; ++sy ) {
@@ -569,6 +579,14 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                         }
 
                         std::ranges::for_each( cur_submap->get_field( { sx, sy } ), [&]( auto & fld ) {
+                            if( !fld.first.is_valid() ) {
+                                debugmsg( "generate_lightmap: invalid field type id %d at "
+                                          "grid(%d,%d,%d) tile(%d,%d) field_count=%d is_uniform=%d",
+                                          fld.first.to_i(), smx, smy, zlev, sx, sy,
+                                          cur_submap->field_count,
+                                          static_cast<int>( cur_submap->is_uniform ) );
+                                return;
+                            }
                             const auto *cur = &fld.second;
                             const int light_emitted = cur->light_emitted();
                             if( light_emitted > 0 ) {

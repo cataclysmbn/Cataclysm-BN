@@ -7,6 +7,7 @@
 #include <span>
 #include <utility>
 
+#include "debug.h"
 #include "int_id.h"
 #include "lightmap.h"
 #include "map.h"
@@ -239,7 +240,10 @@ submap::submap( tripoint offset ) : maptile_soa<SEEX, SEEY>( offset )
     is_uniform = false;
 }
 
-submap::~submap() = default;
+submap::~submap()
+{
+    magic_ = 0;
+}
 
 void submap::update_lum_rem( point p, const item &i )
 {
@@ -687,6 +691,13 @@ auto submap::rebuild_transparency_cache( const map &m, tripoint grid_pos ) -> vo
             }
 
             for( const auto &fld : get_field( sp ) ) {
+                if( !fld.first.is_valid() ) {
+                    debugmsg( "rebuild_transparency_cache: invalid field type id %d at "
+                              "grid(%d,%d,%d) tile(%d,%d) field_count=%d is_uniform=%d",
+                              fld.first.to_i(), grid_pos.x, grid_pos.y, grid_pos.z,
+                              sx, sy, field_count, static_cast<int>( is_uniform ) );
+                    break;
+                }
                 const auto &cur = fld.second;
                 if( !cur.is_transparent() ) {
                     value *= cur.translucency();

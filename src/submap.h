@@ -86,6 +86,9 @@ struct maptile_soa {
 class submap : maptile_soa<SEEX, SEEY>
 {
     public:
+        static constexpr std::uint32_t SUBMAP_MAGIC = 0xDEAD5B4D; // "DEAD SuBMapD"
+        std::uint32_t magic_ = SUBMAP_MAGIC;
+
         submap( tripoint offset );
         ~submap();
 

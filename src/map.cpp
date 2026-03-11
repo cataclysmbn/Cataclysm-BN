@@ -332,9 +332,6 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
     // Submap lookup — shared by vehicle fixup, active-item tracking, and grid update.
     const tripoint &p = pos.raw();
     submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
-    if( sm == nullptr ) {
-        sm = MAPBUFFER_REGISTRY.primary().lookup_submap_in_memory( p );
-    }
 
     // Vehicle sm_pos / abs_sm_pos fixup and loaded_vehicles registration.
     // Covers all loaded submaps, including out-of-bubble ones.
