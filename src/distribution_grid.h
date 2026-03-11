@@ -67,14 +67,20 @@ class distribution_grid
         const std::vector<tripoint_abs_ms> &get_contents() const {
             return flat_contents;
         }
-        /// Calculate total power generation (W) and consumption (W) in the grid
+        /// Calculate total power generation (W) and consumption (W) in the grid,
+        /// including any grids linked via grid_link_tile portals.
         auto get_power_stat() const -> power_stat;
+
         /**
          * Apply a net power delta (in watt-turns) to this grid's batteries.
          * Positive @p delta_w charges, negative discharges.  Clamps to int
          * before forwarding to mod_resource() to handle large batch values.
          */
         void apply_net_power( int64_t delta_w );
+
+    private:
+        /// Local-only stat (no portal chaining). Used internally by get_power_stat().
+        auto get_power_stat_local() const -> power_stat;
 };
 
 class distribution_grid_tracker;
@@ -144,6 +150,14 @@ struct cross_dimension_export_node {
     /// submap_load_manager handle keeping the far end's submap resident.
     /// 0 when paused or not yet registered.
     load_request_handle far_load_handle = 0;
+    /// submap_load_manager handle keeping the LOCAL source submap resident.
+    /// Without this, the source submap would unload when the player leaves,
+    /// which triggers on_submap_unloaded → remove_export_node → releases the
+    /// far_load_handle → far end unloads → mutual collapse after 1 turn.
+    load_request_handle local_load_handle = 0;
+    /// Last time upkeep was charged on this node.  Upkeep is charged every
+    /// PORTAL_UPKEEP_INTERVAL to match the timescale of grid power production.
+    time_point last_upkeep = calendar::turn_zero;
 };
 
 /**
@@ -228,6 +242,7 @@ class distribution_grid_tracker : public submap_load_listener
         distribution_grid_tracker();
         distribution_grid_tracker( mapbuffer &buffer, std::string dim_id = {} );
         distribution_grid_tracker( distribution_grid_tracker && ) = default;
+        ~distribution_grid_tracker();
 
         /** The dimension this tracker serves ("" = overworld). */
         auto get_dimension_id() const -> const std::string & { // *NOPAD*
@@ -237,8 +252,10 @@ class distribution_grid_tracker : public submap_load_listener
         /**
          * Register a cross-dimension cable endpoint on this tracker.
          * Registers a submap_load_manager request to keep the far end resident.
+         * When @p register_reverse is true (default), also ensures the remote
+         * tracker exists and has the matching reverse node.
          */
-        void add_export_node( cross_dimension_export_node node );
+        void add_export_node( cross_dimension_export_node node, bool register_reverse = true );
 
         /**
          * Remove the cross-dimension cable whose source tile is @p source_pos.
@@ -263,6 +280,9 @@ class distribution_grid_tracker : public submap_load_listener
          * Used for save/load and for cross-dimension grid resolution.
          */
         auto get_export_nodes() const -> const std::vector<cross_dimension_export_node> & { // *NOPAD*
+            return export_nodes_;
+        }
+        auto get_export_nodes_mut() -> std::vector<cross_dimension_export_node> & { // *NOPAD*
             return export_nodes_;
         }
         /**
@@ -316,8 +336,8 @@ class distribution_grid_tracker : public submap_load_listener
          * Returns true if this tracker has at least one tracked submap.
          * Used by game to decide when a non-primary dimension's tracker can be destroyed.
          */
-        bool has_tracked_submaps() const {
-            return !tracked_submaps_.empty();
+        auto has_tracked_submaps() const -> bool {
+            return !tracked_submaps_.empty() || !export_nodes_.empty();
         }
 };
 
@@ -371,4 +391,10 @@ distribution_grid_tracker &get_distribution_grid_tracker();
  */
 distribution_grid_tracker *get_distribution_grid_tracker_for( const std::string &dim_id );
 
+/**
+ * Returns the distribution grid tracker for @p dim_id, creating it and
+ * registering it with the submap_load_manager if it doesn't already exist.
+ * Used by add_export_node() to guarantee the remote tracker is available.
+ */
+distribution_grid_tracker &ensure_distribution_grid_tracker_for( const std::string &dim_id );
 

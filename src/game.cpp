@@ -76,6 +76,7 @@
 #include "dependency_tree.h"
 #include "diary.h"
 #include "distraction_manager.h"
+#include "active_tile_data_def.h"
 #include "distribution_grid.h"
 #include "drop_token.h"
 #include "fluid_grid.h"
@@ -748,13 +749,11 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     // map::loadn() now uses MAPBUFFER_REGISTRY.get(bound_dimension_), so
     // the load manager can safely fire on_submap_loaded/unloaded events.
     // Ensure a distribution_grid_tracker exists for every active dimension before
-    // update() fires on_submap_loaded events.
+    // update() fires on_submap_loaded events.  ensure_distribution_grid_tracker_for
+    // replays on_submap_loaded for already-resident submaps so that export nodes
+    // (and their reverse nodes) are properly registered.
     for( const auto &dim_id : submap_loader.active_dimensions() ) {
-        if( grid_trackers_.find( dim_id ) == grid_trackers_.end() ) {
-            grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
-                                         MAPBUFFER_REGISTRY.get( dim_id ), dim_id );
-            submap_loader.add_listener( grid_trackers_[dim_id].get() );
-        }
+        ensure_distribution_grid_tracker_for( dim_id );
     }
     submap_loader.update();
     // Destroy trackers for non-primary dimensions that have no remaining tracked submaps.
@@ -2096,11 +2095,7 @@ bool game::do_turn()
     // Ensure trackers exist for all active dimensions before update() fires
     // on_submap_loaded events (mirrors the logic in load_map / update_map).
     for( const auto &dim_id : submap_loader.active_dimensions() ) {
-        if( grid_trackers_.find( dim_id ) == grid_trackers_.end() ) {
-            grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
-                                         MAPBUFFER_REGISTRY.get( dim_id ), dim_id );
-            submap_loader.add_listener( grid_trackers_[dim_id].get() );
-        }
+        ensure_distribution_grid_tracker_for( dim_id );
     }
     submap_loader.update();
     // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
@@ -13257,11 +13252,7 @@ point game::update_map( int &x, int &y )
         }
         // Ensure trackers exist for all active dimensions before firing events.
         for( const auto &dim_id : submap_loader.active_dimensions() ) {
-            if( grid_trackers_.find( dim_id ) == grid_trackers_.end() ) {
-                grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
-                                             MAPBUFFER_REGISTRY.get( dim_id ), dim_id );
-                submap_loader.add_listener( grid_trackers_[dim_id].get() );
-            }
+            ensure_distribution_grid_tracker_for( dim_id );
         }
         // Flush background streamer before update() to prevent concurrent
         // mapbuffer read+write (UB: update() erases while workers access submaps
@@ -14711,25 +14702,47 @@ distribution_grid_tracker *get_distribution_grid_tracker_for( const std::string 
     return nullptr;
 }
 
+distribution_grid_tracker &ensure_distribution_grid_tracker_for( const std::string &dim_id )
+{
+    auto it = g->grid_trackers_.find( dim_id );
+    if( it != g->grid_trackers_.end() && it->second ) {
+        return *it->second;
+    }
+    g->grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
+                                     MAPBUFFER_REGISTRY.get( dim_id ), dim_id );
+    auto &tracker = *g->grid_trackers_[dim_id];
+    submap_loader.add_listener( &tracker );
+    // Replay on_submap_loaded for all currently-resident submaps of this
+    // dimension so the new tracker picks up existing grid_link_tile nodes.
+    for( auto &[raw_pos, sm_ptr] : MAPBUFFER_REGISTRY.get( dim_id ) ) {
+        if( sm_ptr ) {
+            tracker.on_submap_loaded( tripoint_abs_sm( raw_pos ), dim_id );
+        }
+    }
+    return tracker;
+}
+
 void game::tick_portal_links()
 {
     ZoneScoped;
-    // Upkeep cost charged from each side of a link per turn.
-    // TODO: tune this value; expose via JSON or option as needed.
-    static constexpr int PORTAL_UPKEEP_PER_SIDE = 50; // kJ
+    // Total upkeep for both sides of a link, charged every PORTAL_UPKEEP_INTERVAL.
+    // Matches the timescale of grid power production (steady_consumer consume_every)
+    // so voltmeter readings are on the same scale.
+    static constexpr int PORTAL_TOTAL_UPKEEP = grid_link_tile::upkeep_kj;
+    static const time_duration PORTAL_UPKEEP_INTERVAL = 300_seconds;
 
     // Collect (tracker_ptr, source_pos) pairs to pause after iteration to
     // avoid modifying export_nodes_ vectors while we're reading from them.
     std::vector<std::pair<distribution_grid_tracker *, tripoint_abs_ms>> to_pause;
 
-    std::ranges::for_each( grid_trackers_, [&]( const auto & kv ) {
+    std::ranges::for_each( grid_trackers_, [&]( auto & kv ) {
         const auto &local_dim_id = kv.first;
         distribution_grid_tracker *local_tracker = kv.second.get();
         if( local_tracker == nullptr ) {
             return;
         }
 
-        std::ranges::for_each( local_tracker->get_export_nodes(), [&]( const auto & node ) {
+        std::ranges::for_each( local_tracker->get_export_nodes_mut(), [&]( auto & node ) {
             if( node.paused ) {
                 return;
             }
@@ -14771,30 +14784,23 @@ void game::tick_portal_links()
                 return;
             }
 
-            // Power equalisation: move half the difference each tick.
-            distribution_grid &local_grid  = local_tracker->grid_at( node.source_pos );
-            distribution_grid &remote_grid = remote_tracker.grid_at( node.target_pos );
-            const int local_power  = local_grid.get_resource();
-            const int remote_power = remote_grid.get_resource();
-            const int transfer     = ( local_power - remote_power ) / 2;
-            if( transfer != 0 ) {
-                const int not_moved = local_grid.mod_resource( -transfer );
-                remote_grid.mod_resource( transfer + not_moved );
+            // Upkeep: charged every PORTAL_UPKEEP_INTERVAL, not every turn.
+            if( calendar::turn - node.last_upkeep < PORTAL_UPKEEP_INTERVAL ) {
+                return;
             }
 
-            // Upkeep: each side pays its share.
-            const int local_short  = local_grid.mod_resource( -PORTAL_UPKEEP_PER_SIDE );
-            const int remote_short = remote_grid.mod_resource( -PORTAL_UPKEEP_PER_SIDE );
-            if( local_short < 0 || remote_short < 0 ) {
-                // Refund partial payments then pause both sides.
-                if( local_short  < 0 ) {
-                    local_grid.mod_resource( -local_short );
-                }
-                if( remote_short < 0 ) {
-                    remote_grid.mod_resource( -remote_short );
-                }
+            // get_resource() chains to the remote grid via grid_link_tile, so
+            // this reflects the combined power of both sides of the portal.
+            distribution_grid &local_grid = local_tracker->grid_at( node.source_pos );
+            if( local_grid.get_resource() < PORTAL_TOTAL_UPKEEP ) {
+                // Not enough combined power — pause both sides.
                 to_pause.emplace_back( local_tracker, node.source_pos );
                 to_pause.emplace_back( &remote_tracker, node.target_pos );
+            } else {
+                // mod_resource() also chains to remote, drawing from the
+                // unified pool wherever power is available.
+                local_grid.mod_resource( -PORTAL_TOTAL_UPKEEP );
+                node.last_upkeep = calendar::turn;
             }
         } );
     } );

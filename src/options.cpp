@@ -2489,6 +2489,14 @@ void options_manager::add_options_performance()
     } );
 
     get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
+
+    add( "POWER_PORTAL_LOAD_RADIUS", performance,
+         translate_marker( "Power portal load radius (submaps)" ),
+         translate_marker( "Radius in submaps around each end of a power-portal link that is "
+                           "force-loaded while the link is active.  Larger values keep more terrain "
+                           "around a remote portal resident, at the cost of memory." ),
+         0, static_cast<int>( REALITY_BUBBLE_SIZE_MAX ) + 1, 3
+       );
 }
 
 void options_manager::add_options_debug()
@@ -2612,14 +2620,6 @@ void options_manager::add_options_debug()
     add( "ELECTRIC_GRID", debug, translate_marker( "Electric grid testing" ),
          translate_marker( "If true, enables somewhat unfinished electric grid system that may slow the game down." ),
          true
-       );
-
-    add( "POWER_PORTAL_LOAD_RADIUS", debug,
-         translate_marker( "Power portal load radius (submaps)" ),
-         translate_marker( "Radius in submaps around the far end of a power-portal link that is "
-                           "force-loaded while the link is active.  Larger values keep more terrain "
-                           "around a remote portal resident, at the cost of memory." ),
-         0, static_cast<int>( REALITY_BUBBLE_SIZE_MAX ) + 1, 3
        );
 
     add( "MADE_OF_EXPLODIUM", debug, translate_marker( "Made of explodium" ),

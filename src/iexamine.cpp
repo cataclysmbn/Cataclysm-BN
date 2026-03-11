@@ -7488,6 +7488,8 @@ void iexamine::power_portal( player &p, const tripoint &examp )
                      glt->target_pos.raw().x, glt->target_pos.raw().y, glt->target_pos.raw().z );
     }
 
+
+
     // Find power-portal keycards in the player's inventory.
     static const itype_id itype_portal_key( "power_portal_key" );
     item *keycard = nullptr;
@@ -7547,11 +7549,10 @@ void iexamine::power_portal( player &p, const tripoint &examp )
             node.target_dim_id = target_dim;
             node.target_pos    = target_pos;
             local_tracker.add_export_node( std::move( node ) );
-            // Force-load the remote submap from disk if not already resident.
-            // add_export_node() registered a load request, but update() hasn't
-            // run yet.  We need the remote grid_link_tile updated in-memory NOW
-            // so that on_submap_loaded (which scans active_furniture) will find
-            // linked=true and register the reverse export node.
+            // add_export_node() now auto-registers the reverse node on the
+            // remote tracker (creating the tracker if needed).  We still need
+            // to update the remote grid_link_tile so that it serialises
+            // correctly and on_submap_loaded picks it up on future loads.
             {
                 tripoint_abs_sm rem_sm_abs;
                 point_sm_ms rem_sm_pt;
@@ -7570,18 +7571,6 @@ void iexamine::power_portal( player &p, const tripoint &examp )
                         }
                     }
                 }
-            }
-            // If a remote tracker already exists, register the reverse export
-            // node immediately.  Otherwise the next submap_loader.update() will
-            // create the tracker and on_submap_loaded will pick up the updated
-            // grid_link_tile (linked=true) and register it then.
-            distribution_grid_tracker *remote_tracker = get_distribution_grid_tracker_for( target_dim );
-            if( remote_tracker != nullptr ) {
-                cross_dimension_export_node rnode;
-                rnode.source_pos    = target_pos;
-                rnode.target_dim_id = local_dim;
-                rnode.target_pos    = abs_pos;
-                remote_tracker->add_export_node( std::move( rnode ) );
             }
             add_msg( m_info, _( "Power link established." ) );
             break;
@@ -7614,9 +7603,9 @@ void iexamine::power_portal( player &p, const tripoint &examp )
             glt->linked = false;
             glt->paused = false;
             glt->target_dim_id.clear();
-            // Sever remote side if loaded.
-            distribution_grid_tracker *remote_tracker = get_distribution_grid_tracker_for( old_target_dim_id );
-            if( remote_tracker != nullptr ) {
+            // Always update the remote grid_link_tile (submap may be resident
+            // via load handles even if the remote tracker was destroyed).
+            {
                 tripoint_abs_sm rem_sm_abs;
                 point_sm_ms rem_sm_pt;
                 std::tie( rem_sm_abs, rem_sm_pt ) = project_remain<coords::sm>( old_target_pos );
@@ -7632,6 +7621,10 @@ void iexamine::power_portal( player &p, const tripoint &examp )
                         }
                     }
                 }
+            }
+            // Remove remote export node if the tracker exists.
+            distribution_grid_tracker *remote_tracker = get_distribution_grid_tracker_for( old_target_dim_id );
+            if( remote_tracker != nullptr ) {
                 remote_tracker->remove_export_node( old_target_pos );
             }
             add_msg( m_info, _( "Power link severed." ) );

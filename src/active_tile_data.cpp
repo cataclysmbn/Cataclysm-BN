@@ -53,6 +53,35 @@ template charger_tile *furn_at<charger_tile>( const tripoint_abs_ms & );
 template solar_tile *furn_at<solar_tile>( const tripoint_abs_ms & );
 template grid_link_tile *furn_at<grid_link_tile>( const tripoint_abs_ms & );
 
+template<typename T>
+T *furn_at( const tripoint_abs_ms &p, mapbuffer &buffer )
+{
+    tripoint_abs_sm p_abs_sm;
+    point_sm_ms p_within_sm;
+    std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( p );
+
+    submap *sm = buffer.lookup_submap( p_abs_sm );
+    if( sm == nullptr ) {
+        return nullptr;
+    }
+    auto iter = sm->active_furniture.find( p_within_sm );
+    if( iter == sm->active_furniture.end() ) {
+        return nullptr;
+    }
+
+    return dynamic_cast<T *>( &*iter->second );
+}
+
+template active_tile_data *furn_at<active_tile_data>( const tripoint_abs_ms &, mapbuffer & );
+template vehicle_connector_tile *furn_at<vehicle_connector_tile>( const tripoint_abs_ms &, mapbuffer & );
+template battery_tile *furn_at<battery_tile>( const tripoint_abs_ms &, mapbuffer & );
+template steady_consumer_tile *furn_at<steady_consumer_tile>( const tripoint_abs_ms &, mapbuffer & );
+template charge_watcher_tile *furn_at<charge_watcher_tile>( const tripoint_abs_ms &, mapbuffer & );
+template countdown_tile *furn_at<countdown_tile>( const tripoint_abs_ms &, mapbuffer & );
+template charger_tile *furn_at<charger_tile>( const tripoint_abs_ms &, mapbuffer & );
+template solar_tile *furn_at<solar_tile>( const tripoint_abs_ms &, mapbuffer & );
+template grid_link_tile *furn_at<grid_link_tile>( const tripoint_abs_ms &, mapbuffer & );
+
 void furn_transform::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();

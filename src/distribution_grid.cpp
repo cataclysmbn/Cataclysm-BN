@@ -79,7 +79,7 @@ int distribution_grid::mod_resource( int amt, bool recurse )
     std::vector<vehicle *> connected_vehicles;
     for( const auto &c : contents ) {
         for( const tile_location &loc : c.second ) {
-            battery_tile *battery = active_tiles::furn_at<battery_tile>( loc.absolute );
+            battery_tile *battery = active_tiles::furn_at<battery_tile>( loc.absolute, mb );
             if( battery != nullptr ) {
                 int amt_before_battery = amt;
                 amt = battery->mod_resource( amt );
@@ -96,7 +96,7 @@ int distribution_grid::mod_resource( int amt, bool recurse )
                 continue;
             }
 
-            vehicle_connector_tile *connector = active_tiles::furn_at<vehicle_connector_tile>( loc.absolute );
+            vehicle_connector_tile *connector = active_tiles::furn_at<vehicle_connector_tile>( loc.absolute, mb );
             if( connector != nullptr ) {
                 for( const tripoint_abs_ms &veh_abs : connector->connected_vehicles ) {
                     vehicle *veh = vehicle::find_vehicle( veh_abs );
@@ -120,6 +120,26 @@ int distribution_grid::mod_resource( int amt, bool recurse )
         }
     }
 
+    if( !recurse || amt == 0 ) {
+        return amt;
+    }
+
+    // Chain remaining surplus/deficit to grids linked via grid_link_tile portals.
+    // recurse=false on remote calls prevents infinite loops.
+    std::ranges::for_each( flat_contents, [&]( const tripoint_abs_ms & pos ) {
+        if( amt == 0 ) {
+            return;
+        }
+        auto *glt = active_tiles::furn_at<grid_link_tile>( pos, mb );
+        if( !glt || !glt->linked || glt->paused ) {
+            return;
+        }
+        auto *remote = get_distribution_grid_tracker_for( glt->target_dim_id );
+        if( remote ) {
+            amt = remote->grid_at( glt->target_pos ).mod_resource( amt, false );
+        }
+    } );
+
     return amt;
 }
 
@@ -136,7 +156,7 @@ int distribution_grid::get_resource( bool recurse ) const
     std::vector<vehicle *> connected_vehicles;
     for( const auto &c : contents ) {
         for( const tile_location &loc : c.second ) {
-            battery_tile *battery = active_tiles::furn_at<battery_tile>( loc.absolute );
+            battery_tile *battery = active_tiles::furn_at<battery_tile>( loc.absolute, mb );
             if( battery != nullptr ) {
                 res += battery->get_resource();
                 if( !recurse && cached_amount_here ) {
@@ -149,7 +169,7 @@ int distribution_grid::get_resource( bool recurse ) const
                 continue;
             }
 
-            vehicle_connector_tile *connector = active_tiles::furn_at<vehicle_connector_tile>( loc.absolute );
+            vehicle_connector_tile *connector = active_tiles::furn_at<vehicle_connector_tile>( loc.absolute, mb );
             if( connector != nullptr ) {
                 for( const tripoint_abs_ms &veh_abs : connector->connected_vehicles ) {
                     vehicle *veh = vehicle::find_vehicle( veh_abs );
@@ -170,12 +190,26 @@ int distribution_grid::get_resource( bool recurse ) const
     }
     if( !recurse ) {
         cached_amount_here = res;
+        return res;
     }
+
+    // Chain to grids linked via grid_link_tile portals.
+    // recurse=false on remote calls prevents infinite loops.
+    std::ranges::for_each( flat_contents, [&]( const tripoint_abs_ms & pos ) {
+        auto *glt = active_tiles::furn_at<grid_link_tile>( pos, mb );
+        if( !glt || !glt->linked || glt->paused ) {
+            return;
+        }
+        auto *remote = get_distribution_grid_tracker_for( glt->target_dim_id );
+        if( remote ) {
+            res += remote->grid_at( glt->target_pos ).get_resource( false );
+        }
+    } );
 
     return res;
 }
 
-auto distribution_grid::get_power_stat() const -> power_stat
+auto distribution_grid::get_power_stat_local() const -> power_stat
 {
     constexpr auto to_stat = []( int net ) {
         return ( net > 0 ? power_stat{ .gen_w = net, .use_w = 0 } : power_stat{ .gen_w = 0, .use_w = -net } );
@@ -192,10 +226,10 @@ auto distribution_grid::get_power_stat() const -> power_stat
     auto get_loc_stats = [&]( const tile_location & loc ) -> power_stat {
         const auto &pos = loc.absolute;
 
-        if( auto *s = active_tiles::furn_at<solar_tile>( pos ) ) { return to_stat( s->get_power_w() ); }
-        if( auto *c = active_tiles::furn_at<charger_tile>( pos ) ) { return to_stat( -c->power ); }
-        if( auto *sc = active_tiles::furn_at<steady_consumer_tile>( pos ) ) { return to_stat( -sc->power ); }
-        if( auto *vc = active_tiles::furn_at<vehicle_connector_tile>( pos ) ) { return get_vehicle_stats( vc ); }
+        if( auto *s = active_tiles::furn_at<solar_tile>( pos, mb ) ) { return to_stat( s->get_power_w() ); }
+        if( auto *c = active_tiles::furn_at<charger_tile>( pos, mb ) ) { return to_stat( -c->power ); }
+        if( auto *sc = active_tiles::furn_at<steady_consumer_tile>( pos, mb ) ) { return to_stat( -sc->power ); }
+        if( auto *vc = active_tiles::furn_at<vehicle_connector_tile>( pos, mb ) ) { return get_vehicle_stats( vc ); }
 
         return power_stat{};
     };
@@ -205,6 +239,32 @@ auto distribution_grid::get_power_stat() const -> power_stat
            | std::views::join
            | std::views::transform( get_loc_stats )
            | cata::ranges::fold_left( power_stat{}, std::plus<> {} );
+}
+
+auto distribution_grid::get_power_stat() const -> power_stat
+{
+    auto stat = get_power_stat_local();
+
+    // For each active portal link rooted in this grid:
+    //  - add this side's upkeep cost as consumption (shown once per side)
+    //  - chain to the remote side's local stats (gen/use from remote tiles)
+    // Using get_power_stat_local() on the remote prevents double-counting the
+    // remote portal tile's own upkeep contribution.
+    int portal_upkeep_w = 0;
+    power_stat remote_stat{};
+    std::ranges::for_each( flat_contents, [&]( const tripoint_abs_ms & pos ) {
+        auto *glt = active_tiles::furn_at<grid_link_tile>( pos, mb );
+        if( !glt || !glt->linked || glt->paused ) {
+            return;
+        }
+        portal_upkeep_w += grid_link_tile::upkeep_kj;
+        auto *remote = get_distribution_grid_tracker_for( glt->target_dim_id );
+        if( remote ) {
+            remote_stat = remote_stat + remote->grid_at( glt->target_pos ).get_power_stat_local();
+        }
+    } );
+
+    return stat + remote_stat + power_stat{ .gen_w = 0, .use_w = portal_upkeep_w };
 }
 
 void distribution_grid::apply_net_power( int64_t delta_w )
@@ -231,7 +291,22 @@ distribution_grid_tracker::distribution_grid_tracker( mapbuffer &buffer, std::st
 {
 }
 
-void distribution_grid_tracker::add_export_node( cross_dimension_export_node node )
+distribution_grid_tracker::~distribution_grid_tracker()
+{
+    // Release all outstanding load requests so the submap_load_manager
+    // doesn't hold stale entries after this tracker is destroyed.
+    std::ranges::for_each( export_nodes_, []( const cross_dimension_export_node & n ) {
+        if( n.far_load_handle != 0 ) {
+            submap_loader.release_load( n.far_load_handle );
+        }
+        if( n.local_load_handle != 0 ) {
+            submap_loader.release_load( n.local_load_handle );
+        }
+    } );
+}
+
+void distribution_grid_tracker::add_export_node( cross_dimension_export_node node,
+        bool register_reverse )
 {
     // Avoid double-registration: if a node for this source already exists
     // (e.g. from a previous load that wasn't cleaned up), replace it.
@@ -241,23 +316,68 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
     } );
     if( existing != export_nodes_.end() ) {
         submap_loader.release_load( existing->far_load_handle );
+        submap_loader.release_load( existing->local_load_handle );
         export_nodes_.erase( existing );
     }
 
     if( !node.paused ) {
-        // Register a load request to keep the far end's submap resident.
-        const auto target_sm = project_to<coords::sm>( node.target_pos );
         const int radius = get_option<int>( "POWER_PORTAL_LOAD_RADIUS" );
-        const int z = target_sm.raw().z;
+
+        // Keep the far end's submap resident so the cross-dimension grid works.
+        const auto target_sm = project_to<coords::sm>( node.target_pos );
+        const int tz = target_sm.raw().z;
         node.far_load_handle = submap_loader.request_load(
                                    load_request_source::player_base,
                                    node.target_dim_id,
                                    target_sm,
                                    radius,
-                                   z, z );
+                                   tz, tz );
+
+        // Keep the LOCAL source submap resident too.  Without this the source
+        // submap unloads when the player leaves → on_submap_unloaded removes
+        // the export node → far_load_handle released → far end unloads → the
+        // link collapses after one turn.
+        const auto source_sm = project_to<coords::sm>( node.source_pos );
+        const int sz = source_sm.raw().z;
+        node.local_load_handle = submap_loader.request_load(
+                                     load_request_source::player_base,
+                                     dimension_id_,
+                                     source_sm,
+                                     radius,
+                                     sz, sz );
     }
 
+    // Give the link a grace period before the first upkeep check.
+    if( node.last_upkeep == calendar::turn_zero ) {
+        node.last_upkeep = calendar::turn;
+    }
+
+    // Capture reverse-registration fields before moving node.
+    const auto reverse_target_dim = node.target_dim_id;
+    const auto reverse_target_pos = node.target_pos;
+    const auto reverse_source_pos = node.source_pos;
+    const auto reverse_paused     = node.paused;
+
     export_nodes_.push_back( std::move( node ) );
+
+    // Ensure the remote tracker exists and has the matching reverse node.
+    // Pass register_reverse=false to prevent infinite recursion.
+    if( register_reverse ) {
+        auto &remote_tracker = ensure_distribution_grid_tracker_for( reverse_target_dim );
+        const auto already = std::ranges::any_of( remote_tracker.get_export_nodes(),
+        [&]( const cross_dimension_export_node & n ) {
+            return n.source_pos == reverse_target_pos
+                   && n.target_pos == reverse_source_pos;
+        } );
+        if( !already ) {
+            cross_dimension_export_node rnode;
+            rnode.source_pos    = reverse_target_pos;
+            rnode.target_dim_id = dimension_id_;
+            rnode.target_pos    = reverse_source_pos;
+            rnode.paused        = reverse_paused;
+            remote_tracker.add_export_node( std::move( rnode ), false );
+        }
+    }
 }
 
 void distribution_grid_tracker::remove_export_node( const tripoint_abs_ms &source_pos )
@@ -268,7 +388,28 @@ void distribution_grid_tracker::remove_export_node( const tripoint_abs_ms &sourc
     } );
     if( it != export_nodes_.end() ) {
         submap_loader.release_load( it->far_load_handle );
+        submap_loader.release_load( it->local_load_handle );
         export_nodes_.erase( it );
+    }
+}
+
+/// Sync the grid_link_tile's paused flag with the export node's state.
+static void sync_glt_paused( mapbuffer &buf, const tripoint_abs_ms &pos, bool paused )
+{
+    tripoint_abs_sm sm_abs;
+    point_sm_ms sm_pt;
+    std::tie( sm_abs, sm_pt ) = project_remain<coords::sm>( pos );
+    submap *sm = buf.lookup_submap( sm_abs );
+    if( sm == nullptr ) {
+        return;
+    }
+    const auto it = sm->active_furniture.find( sm_pt );
+    if( it == sm->active_furniture.end() ) {
+        return;
+    }
+    grid_link_tile *glt = dynamic_cast<grid_link_tile *>( it->second.get() );
+    if( glt != nullptr ) {
+        glt->paused = paused;
     }
 }
 
@@ -280,8 +421,11 @@ void distribution_grid_tracker::pause_export_node( const tripoint_abs_ms &source
     } );
     if( it != export_nodes_.end() && !it->paused ) {
         submap_loader.release_load( it->far_load_handle );
+        submap_loader.release_load( it->local_load_handle );
         it->far_load_handle = 0;
+        it->local_load_handle = 0;
         it->paused = true;
+        sync_glt_paused( mb, source_pos, true );
     }
 }
 
@@ -292,16 +436,27 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
         return n.source_pos == source_pos;
     } );
     if( it != export_nodes_.end() && it->paused ) {
-        const auto target_sm = project_to<coords::sm>( it->target_pos );
         const int radius = get_option<int>( "POWER_PORTAL_LOAD_RADIUS" );
-        const int z = target_sm.raw().z;
+
+        const auto target_sm = project_to<coords::sm>( it->target_pos );
+        const int tz = target_sm.raw().z;
         it->far_load_handle = submap_loader.request_load(
                                   load_request_source::player_base,
                                   it->target_dim_id,
                                   target_sm,
                                   radius,
-                                  z, z );
+                                  tz, tz );
+
+        const auto source_sm = project_to<coords::sm>( it->source_pos );
+        const int sz = source_sm.raw().z;
+        it->local_load_handle = submap_loader.request_load(
+                                    load_request_source::player_base,
+                                    dimension_id_,
+                                    source_sm,
+                                    radius,
+                                    sz, sz );
         it->paused = false;
+        sync_glt_paused( mb, source_pos, false );
     }
 }
 
@@ -403,7 +558,11 @@ void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
         node.target_dim_id = glt->target_dim_id;
         node.target_pos    = glt->target_pos;
         node.paused        = glt->paused;
-        add_export_node( std::move( node ) );
+        // register_reverse=false: we may be inside submap_loader iteration,
+        // so we can't safely create new trackers or add listeners.
+        // The reverse node will be registered when the remote tracker is
+        // created/ensured (via ensure_distribution_grid_tracker_for replay).
+        add_export_node( std::move( node ), false );
     } );
 }
 
@@ -482,10 +641,24 @@ void distribution_grid_tracker::flush_dirty_omts()
 
 void distribution_grid_tracker::clear()
 {
+    // Preserve export nodes: they represent persistent cross-dimension links
+    // that must survive dimension switches.  Only the grid topology (tracked
+    // submaps, distribution grids) needs to be reset here.
     tracked_submaps_.clear();
     parent_distribution_grids.clear();
     grids_requiring_updates.clear();
     dirty_omts_.clear();
+
+    // Re-register submaps that export nodes keep loaded.  These submaps are
+    // still resident (held by load handles) but won't receive on_submap_loaded
+    // events since they never left the simulated set.
+    std::ranges::for_each( export_nodes_, [&]( const cross_dimension_export_node & n ) {
+        if( !n.paused ) {
+            const auto sm = project_to<coords::sm>( n.source_pos );
+            tracked_submaps_.insert( sm );
+            make_distribution_grid_at( sm );
+        }
+    } );
 }
 
 void distribution_grid_tracker::on_options_changed()

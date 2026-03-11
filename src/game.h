@@ -152,6 +152,7 @@ class game : public submap_load_listener
         friend class main_menu;
         friend distribution_grid_tracker &get_distribution_grid_tracker();
         friend distribution_grid_tracker *get_distribution_grid_tracker_for( const std::string & );
+        friend distribution_grid_tracker &ensure_distribution_grid_tracker_for( const std::string & );
         friend map &get_map();
         friend Character &get_player_character();
         friend avatar &get_avatar();

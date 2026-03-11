@@ -129,6 +129,11 @@ class countdown_tile : public active_tile_data
 class grid_link_tile : public active_tile_data
 {
     public:
+        /// Total upkeep cost (kJ) for one linked portal pair, charged every
+        /// 300 s.  Expressed in the same kJ-per-300-s unit used by grid
+        /// steady_consumer tiles, so the voltmeter shows it as this many "W".
+        static constexpr int upkeep_kj = 60;
+
         /// True once a link target has been configured.
         bool linked = false;
         /// True when the link is paused (power failure or manual player pause).
