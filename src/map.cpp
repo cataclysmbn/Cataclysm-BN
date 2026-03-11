@@ -8529,7 +8529,8 @@ void map::grow_plant( const tripoint &p )
     if( seed_it == items.end() ) {
         // No seed there anymore, we don't know what kind of plant it was.
         // TODO: Fix point types
-        const oter_id ot = get_overmapbuffer( bound_dimension_ ).ter( project_to<coords::omt>( tripoint_abs_ms( getabs( p ) ) ) );
+        const oter_id ot = get_overmapbuffer( bound_dimension_ ).ter( project_to<coords::omt>
+                           ( tripoint_abs_ms( getabs( p ) ) ) );
         dbg( DL::Error ) << "a planted item at " << p
                          << " (within overmap terrain " << ot.id().str() << ") has no seed data";
         i_clear( p );
@@ -9040,7 +9041,8 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
 
     // Only spawn new monsters after existing monsters are loaded.
     // TODO: fix point types
-    auto groups = get_overmapbuffer( bound_dimension_ ).groups_at( tripoint_abs_sm( gp + abs_sub.xy() ) );
+    auto groups = get_overmapbuffer( bound_dimension_ ).groups_at( tripoint_abs_sm(
+                      gp + abs_sub.xy() ) );
     for( auto &mgp : groups ) {
         spawn_monsters_submap_group( gp, *mgp, ignore_sight );
     }
