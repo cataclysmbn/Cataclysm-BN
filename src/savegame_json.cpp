@@ -3031,6 +3031,7 @@ void vehicle::deserialize( JsonIn &jsin )
         old_owner = faction_id( temp_old_id );
     }
     data.read( "theft_time", theft_time );
+    data.read( "dimension_id", dimension_id_ );
 
     data.read( "parts", parts );
 
@@ -3217,6 +3218,9 @@ void vehicle::serialize( JsonOut &json ) const
     json.member( "is_alarm_on", is_alarm_on );
     json.member( "camera_on", camera_on );
     json.member( "last_update_turn", last_update );
+    if( !dimension_id_.empty() ) {
+        json.member( "dimension_id", dimension_id_ );
+    }
     json.member( "pivot", pivot_anchor[0] );
     json.member( "is_following", is_following );
     json.member( "is_patrolling", is_patrolling );

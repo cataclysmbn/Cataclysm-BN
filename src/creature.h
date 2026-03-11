@@ -250,6 +250,12 @@ class Creature
         virtual const avatar *as_avatar() const {
             return nullptr;
         }
+
+        /** Return the dimension this creature belongs to.
+         *  Default (player/avatar): returns g_active_dimension_id.
+         *  Overridden by npc and monster to return their stored dimension_id_. */
+        virtual const std::string &get_dimension() const;
+
         /** return the direction the creature is facing, for sdl horizontal flip **/
         FacingDirection facing = FD_RIGHT;
         /** Returns true for non-real Creatures used temporarily; i.e. fake NPC's used for turret fire. */

@@ -667,7 +667,7 @@ class monster : public Creature, public location_visitable<monster>
         // Set when the monster is spawned or loaded from a non-primary dimension submap.
         // Persisted across saves so cross-dimension LOD assignment survives reload.
         std::string dimension_id_;
-        const std::string &get_dimension() const {
+        const std::string &get_dimension() const override {
             return dimension_id_;
         }
 

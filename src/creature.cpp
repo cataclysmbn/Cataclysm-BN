@@ -55,14 +55,8 @@
 #include "overmapbuffer_registry.h"
 #include "profile.h"
 
-static const std::string &creature_dim( const Creature &c )
+const std::string &Creature::get_dimension() const
 {
-    if( const auto *mon = c.as_monster() ) {
-        return mon->get_dimension();
-    }
-    if( const auto *npc_ptr = c.as_npc() ) {
-        return npc_ptr->get_dimension();
-    }
     return g_active_dimension_id;
 }
 
@@ -310,7 +304,7 @@ bool Creature::sees( const Creature &critter ) const
     }
 
     // Creatures in different dimensions cannot see each other.
-    if( creature_dim( *this ) != creature_dim( critter ) ) {
+    if( get_dimension() != critter.get_dimension() ) {
         return false;
     }
 
@@ -386,7 +380,7 @@ bool Creature::sees( const tripoint &t, bool is_avatar, int range_mod ) const
     map &here = get_map();
     // A creature in a different dimension from the current render map cannot
     // perform a valid sight check through that map's terrain data.
-    if( creature_dim( *this ) != here.get_bound_dimension() ) {
+    if( get_dimension() != here.get_bound_dimension() ) {
         return false;
     }
     const auto ambient = here.ambient_light_at( t );

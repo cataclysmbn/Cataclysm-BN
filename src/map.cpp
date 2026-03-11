@@ -342,6 +342,7 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
         for( const auto &veh : sm->vehicles ) {
             veh->sm_pos = local_sm;
             veh->abs_sm_pos = tripoint_abs_sm( p );
+            veh->dimension_id_ = dim_id;
             loaded_vehicles.insert( veh.get() );
         }
     }
@@ -8327,6 +8328,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles,
             // Always fix submap coordinates for easier Z-level-related operations
             veh->sm_pos = grid;
             veh->abs_sm_pos = tripoint_abs_sm( grid_abs_sub );
+            veh->dimension_id_ = bound_dimension_;
             loaded_vehicles.insert( veh );
             veh->attach();
             iter++;
