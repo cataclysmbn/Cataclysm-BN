@@ -267,7 +267,7 @@ class overmap
         overmap( const point_abs_om &p, const std::string &dim_id = "" );
         ~overmap();
 
-        auto get_dimension_id() const -> const std::string& {
+        auto get_dimension_id() const -> const std::string & {
             return dimension_id_;
         }
 

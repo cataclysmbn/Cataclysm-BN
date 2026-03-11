@@ -170,7 +170,7 @@ class overmapbuffer
          * registry when creating the slot; used to route I/O to the correct
          * dimension subdirectory without reading global state.
          */
-        auto get_dimension_id() const -> const std::string& {
+        auto get_dimension_id() const -> const std::string & {
             return dimension_id_;
         }
         void set_dimension_id( const std::string &id ) {
