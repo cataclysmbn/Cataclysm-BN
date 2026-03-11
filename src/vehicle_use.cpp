@@ -659,11 +659,11 @@ void vehicle::toggle_autopilot()
 void vehicle::toggle_tracking()
 {
     if( tracking_on ) {
-        overmap_buffer.remove_vehicle( this );
+        get_overmapbuffer( dimension_id_ ).remove_vehicle( this );
         tracking_on = false;
         add_msg( _( "You stop keeping track of the vehicle position." ) );
     } else {
-        overmap_buffer.add_vehicle( this );
+        get_overmapbuffer( dimension_id_ ).add_vehicle( this );
         tracking_on = true;
         add_msg( _( "You start keeping track of this vehicle's position." ) );
     }

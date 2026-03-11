@@ -1064,7 +1064,7 @@ void player::load( const JsonObject &data )
     data.read( "ammo_location", ammo_location );
     if( tmptartyp == +1 ) {
         // Use overmap_buffer because game::active_npc is not filled yet.
-        last_target = overmap_buffer.find_npc( character_id( tmptar ) );
+        last_target = ACTIVE_OVERMAP_BUFFER.find_npc( character_id( tmptar ) );
     } else if( tmptartyp == -1 ) {
         // Need to do this *after* the monsters have been loaded!
         last_target = g->critter_tracker->from_temporary_id( tmptar );

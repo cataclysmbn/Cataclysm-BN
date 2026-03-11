@@ -1050,7 +1050,7 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
 
         // TODO: Why would we need these calls?
         MAPBUFFER.clear();
-        overmap_buffer.clear();
+        ACTIVE_OVERMAP_BUFFER.clear();
     }
 
     return !debug_has_error_been_observed();

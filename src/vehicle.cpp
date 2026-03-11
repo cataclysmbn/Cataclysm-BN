@@ -3756,7 +3756,7 @@ void vehicle::set_submap_moved( const tripoint &p )
     if( !tracking_on ) {
         return;
     }
-    overmap_buffer.move_vehicle( this, old_msp );
+    get_overmapbuffer( dimension_id_ ).move_vehicle( this, old_msp );
 }
 
 units::mass vehicle::total_mass() const
@@ -5432,7 +5432,7 @@ int vehicle::total_solar_epower_w() const
 int vehicle::total_wind_epower_w() const
 {
     map &here = get_map();
-    const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
+    const oter_id &cur_om_ter = get_overmapbuffer( dimension_id_ ).ter( global_omt_location() );
     const weather_manager &weather = get_weather();
     int epower_w = 0;
     for( int part : wind_turbines ) {

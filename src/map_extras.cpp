@@ -41,6 +41,7 @@
 #include "options.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "point.h"
 #include "point_float.h"
 #include "regional_settings.h"
@@ -510,12 +511,13 @@ static bool mx_helicopter( map &m, const tripoint &abs_sub )
 
 static bool mx_roadblock( map &m, const tripoint &abs_sub )
 {
+    auto &omb = get_overmapbuffer( m.get_bound_dimension() );
     // TODO: fix point types
     const tripoint_abs_omt abs_omt( sm_to_omt_copy( abs_sub ) );
-    const oter_id &north = overmap_buffer.ter( abs_omt + point_north );
-    const oter_id &south = overmap_buffer.ter( abs_omt + point_south );
-    const oter_id &west = overmap_buffer.ter( abs_omt + point_west );
-    const oter_id &east = overmap_buffer.ter( abs_omt + point_east );
+    const oter_id &north = omb.ter( abs_omt + point_north );
+    const oter_id &south = omb.ter( abs_omt + point_south );
+    const oter_id &west = omb.ter( abs_omt + point_west );
+    const oter_id &east = omb.ter( abs_omt + point_east );
 
     const bool road_at_north = is_ot_match( "road", north, ot_match_type::type );
     const bool road_at_south = is_ot_match( "road", south, ot_match_type::type );
@@ -693,11 +695,12 @@ static bool mx_marloss_pilgrimage( map &m, const tripoint &abs_sub )
 
 static bool mx_bandits_block( map &m, const tripoint &abs_sub )
 {
+    auto &omb = get_overmapbuffer( m.get_bound_dimension() );
     const tripoint_abs_omt abs_omt( sm_to_omt_copy( abs_sub ) );
-    const oter_id &north = overmap_buffer.ter( abs_omt + point_north );
-    const oter_id &south = overmap_buffer.ter( abs_omt + point_south );
-    const oter_id &west = overmap_buffer.ter( abs_omt + point_west );
-    const oter_id &east = overmap_buffer.ter( abs_omt + point_east );
+    const oter_id &north = omb.ter( abs_omt + point_north );
+    const oter_id &south = omb.ter( abs_omt + point_south );
+    const oter_id &west = omb.ter( abs_omt + point_west );
+    const oter_id &east = omb.ter( abs_omt + point_east );
 
     const bool forest_at_north = is_ot_match( "forest", north, ot_match_type::prefix );
     const bool forest_at_south = is_ot_match( "forest", south, ot_match_type::prefix );
@@ -825,20 +828,21 @@ static bool mx_portal( map &m, const tripoint &abs_sub )
     return true;
 }
 
-static bool mx_minefield( map &/*m_orig*/, const tripoint &abs_sub )
+static bool mx_minefield( map &m_orig, const tripoint &abs_sub )
 {
+    auto &omb = get_overmapbuffer( m_orig.get_bound_dimension() );
     const tripoint_abs_omt abs_omt( sm_to_omt_copy( abs_sub ) );
 
-    const oter_id &center = overmap_buffer.ter( abs_omt );
+    const oter_id &center = omb.ter( abs_omt );
     const bool bridgehead_at_center = center->get_type_id() == oter_type_bridgehead_ground;
     if( !bridgehead_at_center ) {
         return false;
     }
 
-    const oter_id &north = overmap_buffer.ter( abs_omt + point_north );
-    const oter_id &south = overmap_buffer.ter( abs_omt + point_south );
-    const oter_id &west = overmap_buffer.ter( abs_omt + point_west );
-    const oter_id &east = overmap_buffer.ter( abs_omt + point_east );
+    const oter_id &north = omb.ter( abs_omt + point_north );
+    const oter_id &south = omb.ter( abs_omt + point_south );
+    const oter_id &west = omb.ter( abs_omt + point_west );
+    const oter_id &east = omb.ter( abs_omt + point_east );
 
     const bool bridge_at_north = north->get_type_id() == oter_type_bridge_under;
     const bool bridge_at_south = south->get_type_id() == oter_type_bridge_under;
@@ -1975,11 +1979,12 @@ static bool mx_roadworks( map &m, const tripoint &abs_sub )
     // equipment in a box
     // (curved roads & intersections excluded, perhaps TODO)
 
+    auto &omb = get_overmapbuffer( m.get_bound_dimension() );
     const tripoint_abs_omt abs_omt( sm_to_omt_copy( abs_sub ) );
-    const oter_id &north = overmap_buffer.ter( abs_omt + point_north );
-    const oter_id &south = overmap_buffer.ter( abs_omt + point_south );
-    const oter_id &west = overmap_buffer.ter( abs_omt + point_west );
-    const oter_id &east = overmap_buffer.ter( abs_omt + point_east );
+    const oter_id &north = omb.ter( abs_omt + point_north );
+    const oter_id &south = omb.ter( abs_omt + point_south );
+    const oter_id &west = omb.ter( abs_omt + point_west );
+    const oter_id &east = omb.ter( abs_omt + point_east );
 
     const bool road_at_north = is_ot_match( "road", north, ot_match_type::type );
     const bool road_at_south = is_ot_match( "road", south, ot_match_type::type );

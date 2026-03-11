@@ -182,7 +182,7 @@ weather_sum sum_conditions( const time_point &start, const time_point &end,
         const weather_manager &weather = get_weather();
         data.wind_amount += get_local_windpower( weather.windspeed,
                             // TODO: fix point types
-                            overmap_buffer.ter( tripoint_abs_omt( ms_to_omt_copy( location ) ) ),
+                            ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( location ) ) ),
                             location,
                             weather.winddirection, false ) * to_turns<int>( tick_size );
     }
@@ -668,7 +668,7 @@ std::string weather_forecast( const point_abs_sm &abs_sm_pos )
 {
     std::string weather_report;
     // Local conditions
-    const auto cref = overmap_buffer.closest_city( tripoint_abs_sm( abs_sm_pos, 0 ) );
+    const auto cref = ACTIVE_OVERMAP_BUFFER.closest_city( tripoint_abs_sm( abs_sm_pos, 0 ) );
     const std::string city_name = cref ? cref.city->name : std::string( _( "#####" ) );
     // Current time
     const weather_manager &weather = get_weather();
