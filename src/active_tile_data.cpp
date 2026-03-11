@@ -31,7 +31,7 @@ T *furn_at( const tripoint_abs_ms &p )
     point_sm_ms p_within_sm;
     std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( p );
 
-    submap *sm = MAPBUFFER.lookup_submap( p_abs_sm );
+    submap *sm = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() ).lookup_submap( p_abs_sm );
     if( sm == nullptr ) {
         return nullptr;
     }
@@ -271,7 +271,7 @@ void charger_tile::update_internal( time_point to, const tripoint_abs_ms &p,
     point_sm_ms p_within_sm;
     std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( p );
 
-    submap *sm = MAPBUFFER.lookup_submap( p_abs_sm );
+    submap *sm = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() ).lookup_submap( p_abs_sm );
     if( sm == nullptr ) {
         return;
     }

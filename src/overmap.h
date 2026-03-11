@@ -264,8 +264,12 @@ class overmap
 {
     public:
         overmap( overmap && ) noexcept ;
-        overmap( const point_abs_om &p );
+        overmap( const point_abs_om &p, const std::string &dim_id = "" );
         ~overmap();
+
+        auto get_dimension_id() const -> const std::string & {
+            return dimension_id_;
+        }
 
         /**
          * Create content in the overmap.
@@ -435,6 +439,7 @@ class overmap
 
         bool nullbool = false;
         point_abs_om loc;
+        std::string dimension_id_;
 
         std::array<map_layer, OVERMAP_LAYERS> layer;
         std::unordered_map<tripoint_abs_omt, scent_trace> scents;

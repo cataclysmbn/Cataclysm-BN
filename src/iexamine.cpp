@@ -3633,7 +3633,8 @@ void iexamine::keg( player &p, const tripoint &examp )
             auto target_sm = tripoint_abs_sm{};
             auto target_pos = point_sm_ms{};
             std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
-            auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+            auto *target_submap = MAPBUFFER_REGISTRY.get(
+                                      get_map().get_bound_dimension() ).lookup_submap( target_sm );
             if( target_submap == nullptr )
             {
                 return 0;
@@ -3671,7 +3672,8 @@ void iexamine::keg( player &p, const tripoint &examp )
                 auto target_sm = tripoint_abs_sm{};
                 auto target_pos = point_sm_ms{};
                 std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
-                auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+                auto *target_submap = MAPBUFFER_REGISTRY.get(
+                                          get_map().get_bound_dimension() ).lookup_submap( target_sm );
                 if( target_submap == nullptr ) {
                     return;
                 }
@@ -4610,7 +4612,8 @@ auto iexamine::fluid_grid_fixture( player &p, const tripoint &examp ) -> void
     auto target_sm = tripoint_abs_sm{};
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
-    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    auto *target_submap = MAPBUFFER_REGISTRY.get(
+                              get_map().get_bound_dimension() ).lookup_submap( target_sm );
     if( target_submap == nullptr ) {
         return;
     }

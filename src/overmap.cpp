@@ -2876,10 +2876,12 @@ void overmap_special::check() const
 }
 
 // *** BEGIN overmap FUNCTIONS ***
-overmap::overmap( const point_abs_om &p ) : loc( p )
+overmap::overmap( const point_abs_om &p, const std::string &dim_id )
+    : loc( p )
+    , dimension_id_( dim_id )
 {
     // Try to use current_region_type if set, otherwise fall back to DEFAULT_REGION option
-    std::string rsettings_id = overmap_buffer.current_region_type;
+    std::string rsettings_id = get_overmapbuffer( dimension_id_ ).current_region_type;
 
     // If current_region_type is empty or "default", use the DEFAULT_REGION option
     if( rsettings_id.empty() || rsettings_id == "default" ) {
@@ -5667,7 +5669,7 @@ bool overmap::can_place_special( const overmap_special &special, const tripoint_
     }
 
     if( special.has_flag( "GLOBALLY_UNIQUE" ) &&
-        overmap_buffer.contains_unique_special( special.id ) ) {
+        get_overmapbuffer( dimension_id_ ).contains_unique_special( special.id ) ) {
         return false;
     }
 
@@ -5709,7 +5711,7 @@ std::vector<tripoint_om_omt> overmap::place_special(
     }
 
     if( special.has_flag( "GLOBALLY_UNIQUE" ) ) {
-        overmap_buffer.add_unique_special( special.id );
+        get_overmapbuffer( dimension_id_ ).add_unique_special( special.id );
     }
 
     const bool grid = special.has_flag( "ELECTRIC_GRID" );
@@ -5865,12 +5867,13 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         }
         std::string chosen = ores.pick()->c_str();
         std::vector<std::string> directions{"_north", "_east", "_south", "_west"};
-        tripoint_om_omt local_pos = overmap_buffer.get_om_global( p ).local;
+        auto &owning_omb = get_overmapbuffer( dimension_id_ );
+        tripoint_om_omt local_pos = owning_omb.get_om_global( p ).local;
         const tripoint target_sub( omt_to_sm_copy( p.raw() ) );
         std::string note_text( chosen );
         std::ranges::replace( note_text, '_', ' ' );
         add_note( local_pos, string_format( "Signs of %s ore nearby.", note_text ) );
-        if( !( MAPBUFFER.lookup_submap( target_sub ) ) ) {
+        if( !( MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( target_sub ) ) ) {
             // No overmap to replace, set the terrain and bail.
             ter_set( local_pos, oter_id( "omt_ore_vein_" + chosen +
                                          directions[rand() % 4] ) );
@@ -5882,7 +5885,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         */
         tinymap tmp;
         map &here = get_map();
-        overmap_buffer.ter_set( p, oter_id( "omt_ore_vein_" + chosen + directions[rand() % 4] ) );
+        owning_omb.ter_set( p, oter_id( "omt_ore_vein_" + chosen + directions[rand() % 4] ) );
         tmp.generate( target_sub, calendar::turn );
 
         here.set_transparency_cache_dirty( p.z() );
@@ -5901,7 +5904,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
                 const tripoint dest_pos = target_sub + point( x, y );
                 const tripoint src_pos = tripoint{ x, y, p.z() };
 
-                submap *destsm = MAPBUFFER.lookup_submap( dest_pos );
+                submap *destsm = MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( dest_pos );
                 submap *srcsm = tmp.get_submap_at_grid( src_pos );
 
                 submap::swap( *destsm,  *srcsm );
@@ -6233,7 +6236,7 @@ void overmap::place_specials( overmap_special_batch &enabled_specials )
 
             //FINGERS CROSSED EMOGI
             amount_to_place = x_in_y( min, max ) && ( !globally_unique ||
-                              !overmap_buffer.contains_unique_special( id ) ) ? 1 : 0;
+                              !get_overmapbuffer( dimension_id_ ).contains_unique_special( id ) ) ? 1 : 0;
         } else {
             // Number of instances normalized to terrain ratio
             float real_max = std::max( static_cast<float>( min ), max * rate );
@@ -6496,7 +6499,8 @@ bool overmap::is_omt_generated( const tripoint_om_omt &loc ) const
         project_to<coords::sm>( project_combine( pos(), loc ) );
 
     // TODO: fix point types
-    const bool is_generated = MAPBUFFER.lookup_submap( global_sm_loc.raw() ) != nullptr;
+    const bool is_generated =
+        MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( global_sm_loc.raw() ) != nullptr;
 
     return is_generated;
 }
@@ -6508,7 +6512,8 @@ void overmap::set_electric_grid_connections( const tripoint_om_omt &p,
     for( size_t i = 0; i < six_cardinal_directions.size(); i++ ) {
         tripoint_om_omt other_p = p + six_cardinal_directions[i];
         tripoint_abs_omt other_p_global = project_combine( pos(), other_p );
-        overmap_with_local_coords other = overmap_buffer.get_om_global( other_p_global );
+        overmap_with_local_coords other = get_overmapbuffer( dimension_id_ ).get_om_global(
+                                              other_p_global );
         size_t opposite_direction = i + ( ( i % 2 ) ? -1 : 1 );
         other.om->electric_grid_connections[other.local][opposite_direction] = connections[i];
     }

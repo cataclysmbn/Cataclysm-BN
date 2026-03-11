@@ -96,7 +96,7 @@ overmap &overmapbuffer::get( const point_abs_om &p )
 
         // That constructor loads an existing overmap or creates a new one.
         assert( overmaps.find( p ) == overmaps.end() );
-        overmaps[p] = std::make_unique<overmap>( p );
+        overmaps[p] = std::make_unique<overmap>( p, dimension_id_ );
         new_om = overmaps[p].get();
     }
     // Note: fix_mongroups might load other overmaps, so overmaps.back() is not
@@ -113,7 +113,7 @@ void overmapbuffer::create_custom_overmap( const point_abs_om &p, overmap_specia
     overmap *new_om;
     {
         write_lock<std::shared_mutex> _l( mutex );
-        overmaps[p] = std::make_unique<overmap>( p );
+        overmaps[p] = std::make_unique<overmap>( p, dimension_id_ );
         new_om = overmaps[p].get();
     }
     new_om->populate( dimension_id_, specials );
@@ -141,7 +141,7 @@ void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
         // run inside the write lock below, NOT inside the async lambda.
         auto dim_id = dimension_id_;
         futures.push_back( { loc, get_thread_pool().submit_returning( [loc, dim_id] {
-                auto om = std::make_unique<overmap>( loc );
+                auto om = std::make_unique<overmap>( loc, dim_id );
                 om->populate( dim_id );
                 return om;
             } ) } );

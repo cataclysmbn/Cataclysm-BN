@@ -5677,7 +5677,8 @@ void map::process_items()
         std::set<submap *> veh_submaps;
         for( int z = zmin; z <= zmax; ++z ) {
             for( vehicle *veh : get_cache( z ).vehicle_list ) {
-                submap *sm = MAPBUFFER.lookup_submap_in_memory( veh->abs_sm_pos.raw() );
+                submap *sm = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory(
+                                 veh->abs_sm_pos.raw() );
                 if( sm != nullptr ) {
                     veh_submaps.insert( sm );
                 }
@@ -9934,14 +9935,14 @@ submap *map::get_submap_at( const tripoint &p ) const
         // Outside dimension bounds — genuinely invalid position.
         return nullptr;
     }
-    // Loaded-but-out-of-bubble fallback: look up from the mapbuffer.
+    // Loaded-but-out-of-bubble fallback: look up from the bound dimension's mapbuffer.
     // Uses lookup_submap_in_memory to avoid triggering disk loads from query functions.
     const tripoint abs_sm_pos(
         abs_sub.x + divide_round_to_minus_infinity( p.x, SEEX ),
         abs_sub.y + divide_round_to_minus_infinity( p.y, SEEY ),
         p.z
     );
-    return MAPBUFFER.lookup_submap_in_memory( abs_sm_pos );
+    return MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( abs_sm_pos );
 }
 
 submap *map::get_submap_at( const tripoint &p, point &offset_p ) const
@@ -9961,10 +9962,10 @@ submap *map::get_submap_at_grid( const tripoint &gridp ) const
         gridp.y >= 0 && gridp.y < my_MAPSIZE ) {
         return getsubmap( get_nonant( gridp ) );
     }
-    // Out-of-bubble fallback: the submap may still be loaded in the mapbuffer
-    // even though it has no slot in the grid[] array.
+    // Out-of-bubble fallback: the submap may still be loaded in the bound
+    // dimension's mapbuffer even though it has no slot in the grid[] array.
     const tripoint abs_sm( abs_sub.x + gridp.x, abs_sub.y + gridp.y, gridp.z );
-    return MAPBUFFER.lookup_submap_in_memory( abs_sm );
+    return MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( abs_sm );
 }
 
 size_t map::get_nonant( const tripoint &gridp ) const
