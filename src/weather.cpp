@@ -331,12 +331,14 @@ double trap::funnel_turns_per_charge( double rain_depth_mm_per_hour ) const
 static void fill_funnels( int rain_depth_mm_per_hour, bool acid, const trap &tr )
 {
     const double turns_per_charge = tr.funnel_turns_per_charge( rain_depth_mm_per_hour );
-    // Scan all loaded submaps in the primary mapbuffer instead of the bubble-bounded traplocs.
-    // This covers funnels at player bases and other loaded-but-out-of-bubble locations.
+    // Scan all loaded submaps in the current dimension's mapbuffer instead of the
+    // bubble-bounded traplocs.  This covers funnels at player bases and other
+    // loaded-but-out-of-bubble locations.
     const auto abs_sub = g->m.get_abs_sub();
-    std::ranges::for_each( MAPBUFFER, [&]( auto & entry ) {
+    auto &mbuf = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
+    std::ranges::for_each( mbuf, [&]( auto & entry ) {
         auto &[raw_pos, sm_ptr] = entry;
-        if( !sm_ptr ) {
+        if( !sm_ptr || sm_ptr->is_uniform ) {
             return;
         }
         std::ranges::for_each(

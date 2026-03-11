@@ -124,7 +124,8 @@ auto transformer_last_run_at( const tripoint_abs_ms &p ) -> time_point
     auto target_sm = tripoint_abs_sm{};
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
-    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    auto *target_submap = MAPBUFFER_REGISTRY.get(
+                              get_map().get_bound_dimension() ).lookup_submap( target_sm );
     if( target_submap == nullptr ) {
         return calendar::start_of_cataclysm;
     }
@@ -142,7 +143,8 @@ auto set_transformer_last_run_at( const tripoint_abs_ms &p, time_point t ) -> vo
     auto target_sm = tripoint_abs_sm{};
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
-    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    auto *target_submap = MAPBUFFER_REGISTRY.get(
+                              get_map().get_bound_dimension() ).lookup_submap( target_sm );
     if( target_submap == nullptr ) {
         return;
     }
@@ -155,7 +157,8 @@ auto clear_transformer_last_run_at( const tripoint_abs_ms &p ) -> void
     auto target_sm = tripoint_abs_sm{};
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
-    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    auto *target_submap = MAPBUFFER_REGISTRY.get(
+                              get_map().get_bound_dimension() ).lookup_submap( target_sm );
     if( target_submap == nullptr ) {
         return;
     }
@@ -1266,7 +1269,8 @@ auto would_contaminate( const tripoint_abs_omt &p, const itype_id &liquid_type )
 {
     const auto state = get_fluid_grid_tracker().storage_at( p ).get_state();
     const auto grid = grid_at( p );
-    const auto allow_mixed = tank_count_for_grid( grid, MAPBUFFER ) > 1;
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    const auto allow_mixed = tank_count_for_grid( grid, mbuf ) > 1;
     return std::ranges::any_of( state.stored_by_type, [&]( const auto & entry ) {
         if( entry.second <= 0_ml ) {
             return false;
@@ -1308,13 +1312,15 @@ auto seed_liquid_charges_for_mapgen( const tripoint_abs_omt &p, const itype_id &
     }
 
     const auto anchor_abs = anchor_for_grid( grid );
-    auto omc = overmap_buffer.get_om_global( anchor_abs );
+    auto &cur_omb = get_active_overmapbuffer();
+    auto omc = cur_omb.get_om_global( anchor_abs );
     auto &storage = fluid_grid::storage_for( *omc.om );
     auto &state = storage[omc.local];
-    const auto is_transient_mapgen = MAPBUFFER.lookup_submap( project_to<coords::sm>( p ) ) == nullptr;
-    const auto tank_count = is_transient_mapgen ? 1 : tank_count_for_grid( grid, MAPBUFFER );
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    const auto is_transient_mapgen = mbuf.lookup_submap( project_to<coords::sm>( p ) ) == nullptr;
+    const auto tank_count = is_transient_mapgen ? 1 : tank_count_for_grid( grid, mbuf );
     if( !is_transient_mapgen ) {
-        state.capacity = calculate_capacity_for_grid( grid, MAPBUFFER );
+        state.capacity = calculate_capacity_for_grid( grid, mbuf );
         if( state.stored_total() > state.capacity ) {
             reduce_storage( state, state.stored_total() - state.capacity );
         }
@@ -1391,7 +1397,8 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
         return;
     }
 
-    auto transformers = collect_transformers( grid, MAPBUFFER );
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    auto transformers = collect_transformers( grid, mbuf );
     if( transformers.empty() ) {
         return;
     }
@@ -1427,7 +1434,7 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
             if( charges <= 0 ) {
                 return;
             }
-            const auto allow_mixed = tank_count_for_grid( grid, MAPBUFFER ) > 1;
+            const auto allow_mixed = tank_count_for_grid( grid, mbuf ) > 1;
             normalize_water_storage( state, allow_mixed );
             taint_clean_water( state, allow_mixed );
             const auto available_volume = state.capacity - state.stored_total();
@@ -1603,9 +1610,10 @@ auto on_contents_changed( const tripoint_abs_ms &p ) -> void
 auto on_structure_changed( const tripoint_abs_ms &p ) -> void
 {
     const auto sm_pos = project_to<coords::sm>( p );
-    // Mapgen mutates temporary submaps before they are committed to MAPBUFFER.
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    // Mapgen mutates temporary submaps before they are committed to the mapbuffer.
     // Ignore those transient updates so we don't cache zero-capacity grids.
-    if( MAPBUFFER.lookup_submap( sm_pos ) == nullptr ) {
+    if( mbuf.lookup_submap( sm_pos ) == nullptr ) {
         return;
     }
 
@@ -1614,7 +1622,7 @@ auto on_structure_changed( const tripoint_abs_ms &p ) -> void
     invalidate_grid_members_cache_at( omt_pos );
     get_fluid_grid_tracker().rebuild_at( p );
     get_fluid_grid_tracker().update_transformers_at( p );
-    if( has_transformer_at( MAPBUFFER, p ) ) {
+    if( has_transformer_at( mbuf, p ) ) {
         set_transformer_last_run_at( p, calendar::turn );
     } else {
         clear_transformer_last_run_at( p );
@@ -1628,7 +1636,8 @@ auto disconnect_tank( const tripoint_abs_ms &p ) -> void
 
 auto on_tank_removed( const tripoint_abs_ms &p ) -> void
 {
-    const auto tank_capacity = tank_capacity_at( MAPBUFFER, p );
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    const auto tank_capacity = tank_capacity_at( mbuf, p );
     if( !tank_capacity ) {
         return;
     }
@@ -1647,14 +1656,14 @@ auto on_tank_removed( const tripoint_abs_ms &p ) -> void
     auto overflow = reduce_storage( state, overflow_volume );
     state.capacity = new_capacity;
     const auto grid_positions = fluid_grid::grid_at( omt_pos );
-    const auto tank_count = tank_count_for_grid( grid_positions, MAPBUFFER );
+    const auto tank_count = tank_count_for_grid( grid_positions, mbuf );
     enforce_tank_type_limit( state, tank_count );
     grid.set_state( state );
 
     auto target_sm = tripoint_abs_sm{};
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
-    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    auto *target_submap = mbuf.lookup_submap( target_sm );
     if( target_submap == nullptr ) {
         return;
     }
@@ -1761,8 +1770,9 @@ auto remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt
     const auto lhs_grid = grid_at( lhs );
     if( !lhs_grid.contains( rhs ) ) {
         const auto rhs_grid = grid_at( rhs );
-        const auto lhs_capacity = calculate_capacity_for_grid( lhs_grid, MAPBUFFER );
-        const auto rhs_capacity = calculate_capacity_for_grid( rhs_grid, MAPBUFFER );
+        auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+        const auto lhs_capacity = calculate_capacity_for_grid( lhs_grid, mbuf );
+        const auto rhs_capacity = calculate_capacity_for_grid( rhs_grid, mbuf );
         const auto split_state = split_storage_state( old_state, lhs_capacity, rhs_capacity );
 
         auto &storage = fluid_grid::storage_for( *lhs_omc.om );
