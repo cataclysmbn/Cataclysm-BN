@@ -1331,7 +1331,7 @@ auto seed_liquid_charges_for_mapgen( const tripoint_abs_omt &p, const itype_id &
     }
 
     const auto anchor_abs = anchor_for_grid( grid );
-    auto &cur_omb = get_active_overmapbuffer();
+    auto &cur_omb = fluid_omb();
     auto omc = cur_omb.get_om_global( anchor_abs );
     auto &storage = fluid_grid::storage_for( *omc.om );
     auto &state = storage[omc.local];

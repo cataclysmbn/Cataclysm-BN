@@ -650,7 +650,7 @@ TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )
     clear_avatar();
     GIVEN( "player is near an oven on an electric grid with a battery on it" ) {
         // TODO: clear_grids()
-        auto om = overmap_buffer.get_om_global( u.global_omt_location() );
+        auto om = ACTIVE_OVERMAP_BUFFER.get_om_global( u.global_omt_location() );
         om.om->set_electric_grid_connections( om.local, {} );
 
         m.furn_set( start_pos + point( 10, 0 ), furn_str_id( "f_battery" ) );

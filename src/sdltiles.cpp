@@ -970,7 +970,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             } else {
                 const lit_level ll = ACTIVE_OVERMAP_BUFFER.is_explored( omp ) ? lit_level::LOW : lit_level::LIT;
 
-                auto [bgCol, fgCol] = get_overmap_color( overmap_buffer, omp );
+                auto [bgCol, fgCol] = get_overmap_color( ACTIVE_OVERMAP_BUFFER, omp );
 
                 // light level is now used for choosing between grayscale filter and normal lit tiles.
                 const tile_search_params tile { id, category, "overmap_terrain", subtile, rotation };

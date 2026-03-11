@@ -279,7 +279,7 @@ static void guarantee_neutral_weather( const player &p, weather_manager &weather
     REQUIRE( !get_map().veh_at( p.pos() ) );
 
     const w_point &wp = weather.get_precise();
-    const oter_id &cur_om_ter = overmap_buffer.ter( p.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( p.global_omt_location() );
     bool sheltered = g->is_sheltered( p.pos() );
     double total_windpower = get_local_windpower( weather.windspeed, cur_om_ter,
                              p.pos(),

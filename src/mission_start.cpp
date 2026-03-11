@@ -718,7 +718,7 @@ void mission_start::create_lab_console( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, overmap_buffer );
+    mission_util::reveal_road( player_character.global_omt_location(), target, ACTIVE_OVERMAP_BUFFER );
 }
 
 void mission_start::create_hidden_lab_console( mission *miss )
@@ -736,7 +736,7 @@ void mission_start::create_hidden_lab_console( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, overmap_buffer );
+    mission_util::reveal_road( player_character.global_omt_location(), target, ACTIVE_OVERMAP_BUFFER );
 }
 
 void mission_start::create_ice_lab_console( mission *miss )
@@ -758,7 +758,7 @@ void mission_start::create_ice_lab_console( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, overmap_buffer );
+    mission_util::reveal_road( player_character.global_omt_location(), target, ACTIVE_OVERMAP_BUFFER );
 }
 
 void mission_start::reveal_lab_train_depot( mission *miss )
@@ -799,5 +799,5 @@ void mission_start::reveal_lab_train_depot( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, overmap_buffer );
+    mission_util::reveal_road( player_character.global_omt_location(), target, ACTIVE_OVERMAP_BUFFER );
 }

@@ -12809,7 +12809,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
     here.bind_dimension( dim_id );
     // Flush the destination dimension's cached overmaps so they are freshly
     // loaded from disk on demand.  bind_dimension() already switched
-    // g_active_dimension_id, so overmap_buffer resolves to the NEW dimension.
+    // g_active_dimension_id, so ACTIVE_OVERMAP_BUFFER resolves to the NEW dimension.
     ACTIVE_OVERMAP_BUFFER.clear();
     here.clear_grid();
 

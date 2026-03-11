@@ -1063,7 +1063,7 @@ void player::load( const JsonObject &data )
     data.read( "last_target_pos", last_target_pos );
     data.read( "ammo_location", ammo_location );
     if( tmptartyp == +1 ) {
-        // Use overmap_buffer because game::active_npc is not filled yet.
+        // Use ACTIVE_OVERMAP_BUFFER because game::active_npc is not filled yet.
         last_target = ACTIVE_OVERMAP_BUFFER.find_npc( character_id( tmptar ) );
     } else if( tmptartyp == -1 ) {
         // Need to do this *after* the monsters have been loaded!

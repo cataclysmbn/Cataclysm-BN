@@ -56,7 +56,7 @@ void clear_creatures()
 
 void clear_npcs()
 {
-    // Reload to ensure that all active NPCs are in the overmap_buffer.
+    // Reload to ensure that all active NPCs are in the overmapbuffer.
     g->reload_npcs();
     for( npc &n : g->all_npcs() ) {
         n.die( nullptr );
@@ -94,7 +94,7 @@ void clear_items( const int zlevel )
 void clear_overmap()
 {
     MAPBUFFER.clear();
-    overmap_buffer.clear();
+    ACTIVE_OVERMAP_BUFFER.clear();
 }
 
 void clear_map()
