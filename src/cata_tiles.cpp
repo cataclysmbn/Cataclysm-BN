@@ -3650,7 +3650,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
         };
 
         const auto is_mapbuffer = []( const tripoint & p ) {
-            return MAPBUFFER.is_submap_loaded( p );
+            return ACTIVE_MAPBUFFER.is_submap_loaded( p );
         };
 
         const auto &dim = here.get_bound_dimension();

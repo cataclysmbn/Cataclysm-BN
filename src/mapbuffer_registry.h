@@ -63,6 +63,16 @@ class mapbuffer_registry
         mapbuffer &primary();
 
         /**
+         * Return the mapbuffer for the currently active dimension
+         * (g_active_dimension_id).
+         *
+         * **Rendering only** — must NOT be used for gameplay logic that needs
+         * a specific dimension.  Gameplay code should use
+         * MAPBUFFER_REGISTRY.get(dim_id) with an explicit dimension ID.
+         */
+        mapbuffer &active();
+
+        /**
          * Save all registered dimensions in parallel.
          * All dimension saves are dispatched concurrently via parallel_for so that
          * independent file I/O (or SQLite writes) for different dimensions overlap.
@@ -89,3 +99,9 @@ extern mapbuffer_registry MAPBUFFER_REGISTRY;
 // Backwards-compatibility macro — resolves to the primary dimension's mapbuffer.
 // NOLINTNEXTLINE(cata-text-style)
 #define MAPBUFFER ( MAPBUFFER_REGISTRY.primary() )
+
+// Active-dimension macro — resolves to the currently active dimension's mapbuffer.
+// *** RENDERING ONLY *** — must NOT be used for gameplay logic.
+// Gameplay code should use MAPBUFFER_REGISTRY.get(dim_id) with an explicit dimension.
+// NOLINTNEXTLINE(cata-text-style)
+#define ACTIVE_MAPBUFFER ( MAPBUFFER_REGISTRY.active() )

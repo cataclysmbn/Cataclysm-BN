@@ -1230,7 +1230,7 @@ static void draw_ascii( ui_adaptor &ui,
                 }
                 // Highlight areas that already have been generated
                 // TODO: fix point types
-                if( MAPBUFFER.lookup_submap( project_to<coords::sm>( omp ).raw() ) ) {
+                if( ACTIVE_MAPBUFFER.lookup_submap( project_to<coords::sm>( omp ).raw() ) ) {
                     ter_color = red_background( ter_color );
                 }
             }

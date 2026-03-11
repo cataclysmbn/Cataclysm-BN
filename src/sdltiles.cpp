@@ -1040,7 +1040,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             if( uistate.place_terrain || uistate.place_special ) {
                 // Highlight areas that already have been generated
                 // TODO: fix point types
-                if( MAPBUFFER.lookup_submap( project_to<coords::sm>( omp ).raw() ) ) {
+                if( ACTIVE_MAPBUFFER.lookup_submap( project_to<coords::sm>( omp ).raw() ) ) {
                     const tile_search_params tile {"highlight", C_NONE, empty_string, 0, 0};
                     draw_from_id_string(
                         tile, omp.raw(), std::nullopt, std::nullopt,

@@ -12781,6 +12781,9 @@ bool game::travel_to_dimension( const std::string &dim_id,
     // the target MAPBUFFER_REGISTRY slot.  Submaps for old_dim_id stay in their
     // slot — nothing is lost.
     here.bind_dimension( dim_id );
+    // Flush the destination dimension's cached overmaps so they are freshly
+    // loaded from disk on demand.  bind_dimension() already switched
+    // g_active_dimension_id, so overmap_buffer resolves to the NEW dimension.
     overmap_buffer.clear();
     here.clear_grid();
 

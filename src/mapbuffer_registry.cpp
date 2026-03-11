@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "mapbuffer.h"
+#include "overmapbuffer_registry.h" // g_active_dimension_id
 #include "thread_pool.h"
 
 mapbuffer_registry MAPBUFFER_REGISTRY;
@@ -57,6 +58,11 @@ void mapbuffer_registry::for_each(
 mapbuffer &mapbuffer_registry::primary()
 {
     return get( PRIMARY_DIMENSION_ID );
+}
+
+mapbuffer &mapbuffer_registry::active()
+{
+    return get( g_active_dimension_id );
 }
 
 std::vector<std::string> mapbuffer_registry::active_dimension_ids() const
