@@ -8863,7 +8863,8 @@ int iuse::report_grid_charge( player *p, item *, bool, const tripoint &pos )
 int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos )
 {
     tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
-    std::vector<tripoint_rel_omt> connections = ACTIVE_OVERMAP_BUFFER.electric_grid_connectivity_at( pos_abs );
+    std::vector<tripoint_rel_omt> connections = ACTIVE_OVERMAP_BUFFER.electric_grid_connectivity_at(
+                pos_abs );
 
     std::vector<std::string> connection_names;
     connection_names.reserve( connections.size() );
@@ -8930,7 +8931,8 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoin
 int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &pos )
 {
     tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
-    std::vector<tripoint_rel_omt> connections = ACTIVE_OVERMAP_BUFFER.electric_grid_connectivity_at( pos_abs );
+    std::vector<tripoint_rel_omt> connections = ACTIVE_OVERMAP_BUFFER.electric_grid_connectivity_at(
+                pos_abs );
 
     uilist ui;
 
@@ -8960,7 +8962,8 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
         ACTIVE_OVERMAP_BUFFER.remove_grid_connection( pos_abs, destination_pos_abs );
     } else {
         std::set<tripoint_abs_omt> lhs_locations = ACTIVE_OVERMAP_BUFFER.electric_grid_at( pos_abs );
-        std::set<tripoint_abs_omt> rhs_locations = ACTIVE_OVERMAP_BUFFER.electric_grid_at( destination_pos_abs );
+        std::set<tripoint_abs_omt> rhs_locations = ACTIVE_OVERMAP_BUFFER.electric_grid_at(
+                    destination_pos_abs );
         int cost_mult;
         if( lhs_locations == rhs_locations ) {
             cost_mult = 0;

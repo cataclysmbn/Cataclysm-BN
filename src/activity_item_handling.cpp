@@ -418,7 +418,8 @@ void drop_on_map( Character &c, item_drop_reason reason,
             if( !ACTIVE_OVERMAP_BUFFER.has_note( your_pos ) ) {
                 ACTIVE_OVERMAP_BUFFER.add_note( your_pos, sprite_prefix + it->display_name() );
             } else {
-                ACTIVE_OVERMAP_BUFFER.add_note( your_pos, ACTIVE_OVERMAP_BUFFER.note( your_pos ) + "; " + it->display_name() );
+                ACTIVE_OVERMAP_BUFFER.add_note( your_pos,
+                                                ACTIVE_OVERMAP_BUFFER.note( your_pos ) + "; " + it->display_name() );
             }
         }
 
@@ -459,7 +460,8 @@ void drop_on_map( Character &c, item_drop_reason reason,
             if( !ACTIVE_OVERMAP_BUFFER.has_note( your_pos ) ) {
                 ACTIVE_OVERMAP_BUFFER.add_note( your_pos, note_text );
             } else {
-                ACTIVE_OVERMAP_BUFFER.add_note( your_pos, ACTIVE_OVERMAP_BUFFER.note( your_pos ) + "; " + note_text );
+                ACTIVE_OVERMAP_BUFFER.add_note( your_pos,
+                                                ACTIVE_OVERMAP_BUFFER.note( your_pos ) + "; " + note_text );
             }
         }
     }

@@ -159,7 +159,8 @@ tripoint_abs_omt mission_util::target_closest_lab_entrance(
                                find_params );
 
     find_params.types.front().first = "hidden_lab_stairs";
-    tripoint_abs_omt underground = ACTIVE_OVERMAP_BUFFER.find_closest( tripoint_abs_omt( origin.xy(), -1 ),
+    tripoint_abs_omt underground = ACTIVE_OVERMAP_BUFFER.find_closest( tripoint_abs_omt( origin.xy(),
+                                   -1 ),
                                    find_params );
 
     tripoint_abs_omt closest;

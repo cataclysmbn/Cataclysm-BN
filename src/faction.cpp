@@ -815,7 +815,7 @@ void faction_manager::display() const
         followers.clear();
         for( auto &elem : g->get_follower_list() ) {
             shared_ptr_fast<npc> npc_to_get = nullptr;
-            for_each_overmapbuffer( [&]( const std::string &, overmapbuffer &omb ) {
+            for_each_overmapbuffer( [&]( const std::string &, overmapbuffer & omb ) {
                 if( !npc_to_get ) {
                     npc_to_get = omb.find_npc( elem );
                 }

@@ -463,7 +463,8 @@ static void draw_city_labels( const catacurses::window &w, const tripoint_abs_om
 
 static auto get_map_label_text( const tripoint_abs_omt &pos ) -> std::optional<std::string>
 {
-    if( const auto player_label = overmap_label_note::extract_label( ACTIVE_OVERMAP_BUFFER.note( pos ) );
+    if( const auto player_label = overmap_label_note::extract_label( ACTIVE_OVERMAP_BUFFER.note(
+                                      pos ) );
         player_label.has_value() && !player_label->empty() ) {
         return player_label;
     }
@@ -1947,7 +1948,7 @@ static void place_ter_or_special( const ui_adaptor &om_ui, tripoint_abs_omt &cur
                 } else {
                     if( std::optional<std::vector<tripoint_abs_omt>> used_points =
                             ACTIVE_OVERMAP_BUFFER.place_special( *uistate.place_special, curs,
-                                                          uistate.omedit_rotation, false, true ) ) {
+                                    uistate.omedit_rotation, false, true ) ) {
                         for( const tripoint_abs_omt &pos : *used_points ) {
                             ACTIVE_OVERMAP_BUFFER.set_seen( pos, true );
                         }

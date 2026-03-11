@@ -1751,7 +1751,7 @@ class vehicle
         // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
         // Persisted across saves so cross-dimension processing survives reload.
         std::string dimension_id_;
-        auto get_dimension() const -> const std::string & {
+        auto get_dimension() const -> const std::string& {
             return dimension_id_;
         }
         // direction, to which vehicle is turning (player control). will rotate frame on next move

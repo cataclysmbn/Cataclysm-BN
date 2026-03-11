@@ -7075,7 +7075,8 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
     }
 
     // Debug: Show current and target dimensions
-    add_msg( m_debug, "[DIM_TRAVEL] Current region_type: %s", ACTIVE_OVERMAP_BUFFER.current_region_type );
+    add_msg( m_debug, "[DIM_TRAVEL] Current region_type: %s",
+             ACTIVE_OVERMAP_BUFFER.current_region_type );
     add_msg( m_debug, "[DIM_TRAVEL] Current dim_id: '%s'", g->get_current_dimension_id() );
     add_msg( m_debug, "[DIM_TRAVEL] Target destination: %s", destination.str() );
 
