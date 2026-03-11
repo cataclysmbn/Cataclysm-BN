@@ -24,6 +24,7 @@
 #include "messages.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "output.h"
 #include "point.h"
 #include "profile.h"
@@ -51,6 +52,24 @@ using transformer_cache_store = std::map<tripoint_abs_sm, bool>;
 static const itype_id itype_water( "water" );
 static const itype_id itype_water_clean( "water_clean" );
 static constexpr double mm2_per_m2 = 1000.0 * 1000.0;
+
+// Module-level overmapbuffer pointer, set during fluid_grid::load() from the map's
+// bound dimension.  This avoids threading overmapbuffer& through every public
+// fluid_grid:: function signature (which would touch ~40 external call sites for
+// a purely internal data-access concern).
+//
+// The "more correct" approach would be to add an overmapbuffer& parameter to every
+// fluid_grid:: free function that calls get_om_global(), but the churn is high and
+// the fluid grid module already operates within a single dimension context at a time
+// (set by load()).  If multi-dimension fluid grids are ever needed simultaneously,
+// this should be refactored to thread overmapbuffer& explicitly.
+static overmapbuffer *g_fluid_omb = nullptr;
+
+static auto fluid_omb() -> overmapbuffer &
+{
+    assert( g_fluid_omb && "fluid_grid used before load() or after clear()" );
+    return *g_fluid_omb;
+}
 
 auto tank_capacity_for_furn( const furn_t &furn ) -> std::optional<units::volume>
 {
@@ -522,7 +541,7 @@ auto collect_storage_for_grid( const tripoint_abs_omt &anchor_abs,
         return total;
     }
 
-    auto omc = overmap_buffer.get_om_global( anchor_abs );
+    auto omc = fluid_omb().get_om_global( anchor_abs );
     auto &storage = fluid_grid::storage_for( *omc.om );
     auto to_erase = std::vector<tripoint_om_omt> {};
 
@@ -550,7 +569,7 @@ auto invalidate_grid_members_cache( const point_abs_om &om_pos ) -> void
 
 auto invalidate_grid_members_cache_at( const tripoint_abs_omt &p ) -> void
 {
-    const auto omc = overmap_buffer.get_om_global( p );
+    const auto omc = fluid_omb().get_om_global( p );
     invalidate_grid_members_cache( omc.om->pos() );
 }
 
@@ -611,7 +630,7 @@ fluid_grid::liquid_storage_state
         return {};
     }
     const auto anchor_abs = anchor_for_grid( grid );
-    const auto omc = overmap_buffer.get_om_global( anchor_abs );
+    const auto omc = fluid_omb().get_om_global( anchor_abs );
     const auto &storage = fluid_grid::storage_for( *omc.om );
     const auto iter = storage.find( omc.local );
     if( iter == storage.end() ) {
@@ -658,7 +677,7 @@ auto build_grid_members( const overmap &om, const tripoint_om_omt &p ) -> grid_m
 
 auto grid_members_for( const tripoint_abs_omt &p ) -> const grid_member_set & // *NOPAD*
 {
-    const auto omc = overmap_buffer.get_om_global( p );
+    const auto omc = fluid_omb().get_om_global( p );
     auto &cache = grid_members_cache()[omc.om->pos()];
     const auto iter = cache.find( omc.local );
     if( iter != cache.end() ) {
@@ -812,7 +831,7 @@ auto split_storage_state( const fluid_grid::liquid_storage_state &state,
 auto connection_bitset_at( const tripoint_abs_omt &p ) -> const fluid_grid::connection_bitset
 & // *NOPAD*
 {
-    const auto omc = overmap_buffer.get_om_global( p );
+    const auto omc = fluid_omb().get_om_global( p );
     const auto &connections = fluid_grid::connections_for( *omc.om );
     const auto iter = connections.find( omc.local );
     if( iter == connections.end() ) {
@@ -984,7 +1003,7 @@ class fluid_storage_grid
         }
 
         auto sync_storage() -> void {
-            auto omc = overmap_buffer.get_om_global( anchor_abs );
+            auto omc = fluid_omb().get_om_global( anchor_abs );
             auto &storage = fluid_grid::storage_for( *omc.om );
             storage[omc.local] = state;
         }
@@ -1229,7 +1248,7 @@ auto storage_for( const overmap &om ) -> const std::map<tripoint_om_omt, liquid_
 
 auto grid_at( const tripoint_abs_omt &p ) -> std::set<tripoint_abs_omt>
 {
-    const auto omc = overmap_buffer.get_om_global( p );
+    const auto omc = fluid_omb().get_om_global( p );
     const auto &grid_members = grid_members_for( p );
     auto result = std::set<tripoint_abs_omt> {};
     std::ranges::for_each( grid_members, [&]( const tripoint_om_omt & member ) {
@@ -1599,6 +1618,7 @@ auto update( time_point to ) -> void
 
 auto load( const map &m ) -> void
 {
+    g_fluid_omb = &get_overmapbuffer( m.get_bound_dimension() );
     get_fluid_grid_tracker().load( m );
 }
 
@@ -1692,8 +1712,8 @@ auto add_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &r
         return false;
     }
 
-    auto lhs_omc = overmap_buffer.get_om_global( lhs );
-    auto rhs_omc = overmap_buffer.get_om_global( rhs );
+    auto lhs_omc = fluid_omb().get_om_global( lhs );
+    auto rhs_omc = fluid_omb().get_om_global( rhs );
 
     const auto lhs_iter = std::ranges::find( six_cardinal_directions, coord_diff.raw() );
     const auto rhs_iter = std::ranges::find( six_cardinal_directions, -coord_diff.raw() );
@@ -1722,10 +1742,10 @@ auto add_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &r
         invalidate_grid_members_cache_at( lhs );
         const auto merged_grid = grid_at( lhs );
         const auto new_anchor = anchor_for_grid( merged_grid );
-        auto new_omc = overmap_buffer.get_om_global( new_anchor );
+        auto new_omc = fluid_omb().get_om_global( new_anchor );
         auto &storage = fluid_grid::storage_for( *new_omc.om );
-        storage.erase( overmap_buffer.get_om_global( anchor_for_grid( lhs_grid ) ).local );
-        storage.erase( overmap_buffer.get_om_global( anchor_for_grid( rhs_grid ) ).local );
+        storage.erase( fluid_omb().get_om_global( anchor_for_grid( lhs_grid ) ).local );
+        storage.erase( fluid_omb().get_om_global( anchor_for_grid( rhs_grid ) ).local );
         storage[new_omc.local] = merge_storage_states( lhs_state, rhs_state );
     }
 
@@ -1742,8 +1762,8 @@ auto remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt
         return false;
     }
 
-    auto lhs_omc = overmap_buffer.get_om_global( lhs );
-    auto rhs_omc = overmap_buffer.get_om_global( rhs );
+    auto lhs_omc = fluid_omb().get_om_global( lhs );
+    auto rhs_omc = fluid_omb().get_om_global( rhs );
 
     const auto lhs_iter = std::ranges::find( six_cardinal_directions, coord_diff.raw() );
     const auto rhs_iter = std::ranges::find( six_cardinal_directions, -coord_diff.raw() );
@@ -1776,11 +1796,11 @@ auto remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt
         const auto split_state = split_storage_state( old_state, lhs_capacity, rhs_capacity );
 
         auto &storage = fluid_grid::storage_for( *lhs_omc.om );
-        storage.erase( overmap_buffer.get_om_global( old_anchor ).local );
+        storage.erase( fluid_omb().get_om_global( old_anchor ).local );
         const auto lhs_anchor = anchor_for_grid( lhs_grid );
         const auto rhs_anchor = anchor_for_grid( rhs_grid );
-        storage[overmap_buffer.get_om_global( lhs_anchor ).local] = split_state.lhs;
-        storage[overmap_buffer.get_om_global( rhs_anchor ).local] = split_state.rhs;
+        storage[fluid_omb().get_om_global( lhs_anchor ).local] = split_state.lhs;
+        storage[fluid_omb().get_om_global( rhs_anchor ).local] = split_state.rhs;
     }
 
     on_structure_changed( project_to<coords::ms>( lhs ) );
@@ -1796,6 +1816,7 @@ auto clear() -> void
     grid_members_cache().clear();
     submap_tank_cache().clear();
     transformer_cache().clear();
+    g_fluid_omb = nullptr;
 }
 
 } // namespace fluid_grid
