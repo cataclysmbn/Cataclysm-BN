@@ -748,7 +748,7 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
             current_submap->vehicles.erase( current_submap->vehicles.begin() + i );
             loaded_vehicles.erase( veh );
             if( veh->tracking_on ) {
-                overmap_buffer.remove_vehicle( veh );
+                get_overmapbuffer( bound_dimension_ ).remove_vehicle( veh );
             }
             dirty_vehicle_list.erase( veh );
             veh->detach();
@@ -6679,7 +6679,7 @@ void map::update_visibility_cache( const int zlev )
                 const auto abs_sm = map::abs_sub + sm;
                 // TODO: fix point types
                 const tripoint_abs_omt abs_omt( sm_to_omt_copy( abs_sm ) );
-                overmap_buffer.set_seen( abs_omt, true );
+                get_overmapbuffer( bound_dimension_ ).set_seen( abs_omt, true );
             }
         }
     }
@@ -8333,7 +8333,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles,
         } else {
             reset_vehicle_cache();
             if( veh->tracking_on ) {
-                overmap_buffer.remove_vehicle( veh );
+                get_overmapbuffer( bound_dimension_ ).remove_vehicle( veh );
             }
             dirty_vehicle_list.erase( veh );
             iter = veh_vec.erase( iter );
@@ -8529,7 +8529,7 @@ void map::grow_plant( const tripoint &p )
     if( seed_it == items.end() ) {
         // No seed there anymore, we don't know what kind of plant it was.
         // TODO: Fix point types
-        const oter_id ot = overmap_buffer.ter( project_to<coords::omt>( tripoint_abs_ms( getabs( p ) ) ) );
+        const oter_id ot = get_overmapbuffer( bound_dimension_ ).ter( project_to<coords::omt>( tripoint_abs_ms( getabs( p ) ) ) );
         dbg( DL::Error ) << "a planted item at " << p
                          << " (within overmap terrain " << ot.id().str() << ") has no seed data";
         i_clear( p );
@@ -9036,11 +9036,11 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
 {
     // Load unloaded monsters
     // TODO: fix point types
-    overmap_buffer.spawn_monster( tripoint_abs_sm( gp + abs_sub.xy() ) );
+    get_overmapbuffer( bound_dimension_ ).spawn_monster( tripoint_abs_sm( gp + abs_sub.xy() ) );
 
     // Only spawn new monsters after existing monsters are loaded.
     // TODO: fix point types
-    auto groups = overmap_buffer.groups_at( tripoint_abs_sm( gp + abs_sub.xy() ) );
+    auto groups = get_overmapbuffer( bound_dimension_ ).groups_at( tripoint_abs_sm( gp + abs_sub.xy() ) );
     for( auto &mgp : groups ) {
         spawn_monsters_submap_group( gp, *mgp, ignore_sight );
     }

@@ -2093,7 +2093,25 @@ bool game::do_turn()
     // to avoid concurrent mapbuffer access, then let the load manager diff
     // the desired set and load/unload as needed.
     submap_streamer.flush_all();
+    // Ensure trackers exist for all active dimensions before update() fires
+    // on_submap_loaded events (mirrors the logic in load_map / update_map).
+    for( const auto &dim_id : submap_loader.active_dimensions() ) {
+        if( grid_trackers_.find( dim_id ) == grid_trackers_.end() ) {
+            grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
+                                         MAPBUFFER_REGISTRY.get( dim_id ), dim_id );
+            submap_loader.add_listener( grid_trackers_[dim_id].get() );
+        }
+    }
     submap_loader.update();
+    // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
+    for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
+        if( !it->first.empty() && !it->second->has_tracked_submaps() ) {
+            submap_loader.remove_listener( it->second.get() );
+            it = grid_trackers_.erase( it );
+        } else {
+            ++it;
+        }
+    }
 
     // Finally, clear pathfinding cache
     Pathfinding::clear_d_maps();

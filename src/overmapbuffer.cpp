@@ -535,7 +535,7 @@ void overmapbuffer::toggle_path( const tripoint_abs_omt &p )
 
 bool overmapbuffer::has_horde( const tripoint_abs_omt &p )
 {
-    for( const auto &m : overmap_buffer.monsters_at( p ) ) {
+    for( const auto &m : monsters_at( p ) ) {
         if( m->horde ) {
             return true;
         }
@@ -547,7 +547,7 @@ bool overmapbuffer::has_horde( const tripoint_abs_omt &p )
 int overmapbuffer::get_horde_size( const tripoint_abs_omt &p )
 {
     int horde_size = 0;
-    for( const auto &m : overmap_buffer.monsters_at( p ) ) {
+    for( const auto &m : monsters_at( p ) ) {
         if( m->horde ) {
             if( !m->monsters.empty() ) {
                 horde_size += m->monsters.size();
@@ -946,22 +946,23 @@ overmap_path_params overmap_path_params::for_aircraft()
     return ret;
 }
 
-static int get_terrain_cost( const tripoint_abs_omt &omt_pos, const overmap_path_params &params )
+static int get_terrain_cost( const tripoint_abs_omt &omt_pos, const overmap_path_params &params,
+                             overmapbuffer &omb )
 {
-    if( params.only_known_by_player && !overmap_buffer.seen( omt_pos ) ) {
+    if( params.only_known_by_player && !omb.seen( omt_pos ) ) {
         return -1;
     }
-    if( params.avoid_danger && overmap_buffer.is_marked_dangerous( omt_pos ) ) {
+    if( params.avoid_danger && omb.is_marked_dangerous( omt_pos ) ) {
         return -1;
     }
-    const oter_id &oter = overmap_buffer.ter_existing( omt_pos );
+    const oter_id &oter = omb.ter_existing( omt_pos );
     if( is_ot_match( "road", oter, ot_match_type::type ) ||
         is_ot_match( "bridge", oter, ot_match_type::type ) ||
         is_ot_match( "bridge_road", oter, ot_match_type::type ) ||
         is_ot_match( "bridgehead_ground", oter, ot_match_type::type ) ||
         is_ot_match( "bridgehead_ramp", oter, ot_match_type::type ) ||
         is_ot_match( "road_nesw_manhole", oter, ot_match_type::type ) ||
-        overmap_buffer.is_path( omt_pos ) ) {
+        omb.is_path( omt_pos ) ) {
         return params.road_cost;
     } else if( is_ot_match( "field", oter, ot_match_type::type ) ) {
         return params.field_cost;
@@ -998,9 +999,9 @@ static int get_terrain_cost( const tripoint_abs_omt &omt_pos, const overmap_path
     }
 }
 
-static bool is_ramp( const tripoint_abs_omt &omt_pos )
+static bool is_ramp( const tripoint_abs_omt &omt_pos, overmapbuffer &omb )
 {
-    const oter_id &oter = overmap_buffer.ter_existing( omt_pos );
+    const oter_id &oter = omb.ter_existing( omt_pos );
     return is_ot_match( "bridgehead_ground", oter, ot_match_type::type ) ||
            is_ot_match( "bridgehead_ramp", oter, ot_match_type::type );
 }
@@ -1013,11 +1014,11 @@ std::vector<tripoint_abs_omt> overmapbuffer::get_travel_path(
     }
 
     const pf::omt_scoring_fn estimate = [&]( tripoint_abs_omt pos ) {
-        const int cur_cost = pos == src ? 0 : get_terrain_cost( pos, params );
+        const int cur_cost = pos == src ? 0 : get_terrain_cost( pos, params, *this );
         if( cur_cost < 0 ) {
             return pf::omt_score::rejected;
         }
-        return pf::omt_score( cur_cost, is_ramp( pos ) );
+        return pf::omt_score( cur_cost, is_ramp( pos, *this ) );
     };
 
     constexpr int radius = 4 * OMAPX; // radius of search in OMTs = 4 overmaps

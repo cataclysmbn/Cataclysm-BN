@@ -7334,8 +7334,9 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
         pre_load = [&]() {
             overmap_special_id special_id( entry_mapgen );
             if( special_id.is_valid() ) {
-                overmap &om = *overmap_buffer.get_om_global( pd->entry_point ).om;
-                tripoint_om_omt local_pos = overmap_buffer.get_om_global( pd->entry_point ).local;
+                auto &pd_omb = get_overmapbuffer( pd->dimension_id );
+                overmap &om = *pd_omb.get_om_global( pd->entry_point ).om;
+                tripoint_om_omt local_pos = pd_omb.get_om_global( pd->entry_point ).local;
                 om.place_special_forced( special_id, local_pos, om_direction::type::north );
                 pd->terrain_generated = true;
             }

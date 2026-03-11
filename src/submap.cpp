@@ -240,10 +240,7 @@ submap::submap( tripoint offset ) : maptile_soa<SEEX, SEEY>( offset )
     is_uniform = false;
 }
 
-submap::~submap()
-{
-    magic_ = 0;
-}
+submap::~submap() = default;
 
 void submap::update_lum_rem( point p, const item &i )
 {

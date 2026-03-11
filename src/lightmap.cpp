@@ -510,17 +510,6 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                 if( cur_submap == nullptr ) {
                     continue;
                 }
-                if( cur_submap->magic_ != submap::SUBMAP_MAGIC ) {
-                    debugmsg( "generate_lightmap: use-after-free! submap at grid(%d,%d,%d) "
-                              "ptr=%p magic=0x%08X (expected 0x%08X) is_uniform=%d field_count=%d",
-                              smx, smy, zlev,
-                              static_cast<const void *>( cur_submap ),
-                              cur_submap->magic_, submap::SUBMAP_MAGIC,
-                              static_cast<int>( cur_submap->is_uniform ),
-                              cur_submap->field_count );
-                    continue;
-                }
-
                 for( int sx = 0; sx < SEEX; ++sx ) {
                     for( int sy = 0; sy < SEEY; ++sy ) {
                         const int x = sx + smx * SEEX;
