@@ -2908,16 +2908,17 @@ overmap::overmap( const point_abs_om &p ) : loc( p )
 overmap::overmap( overmap && )  noexcept = default;
 overmap::~overmap() = default;
 
-void overmap::populate( overmap_special_batch &enabled_specials )
+void overmap::populate( const std::string &dim_id,
+                        overmap_special_batch &enabled_specials )
 {
     try {
-        open( enabled_specials );
+        open( dim_id, enabled_specials );
     } catch( const std::exception &err ) {
         debugmsg( "overmap %s failed to load: %s", loc.to_string(), err.what() );
     }
 }
 
-void overmap::populate()
+void overmap::populate( const std::string &dim_id )
 {
     overmap_special_batch enabled_specials = overmap_specials::get_default_batch( loc );
     const overmap_feature_flag_settings &overmap_feature_flag = settings->overmap_feature_flag;
@@ -2952,7 +2953,7 @@ void overmap::populate()
         }
     }
 
-    populate( enabled_specials );
+    populate( dim_id, enabled_specials );
 }
 
 oter_id overmap::get_default_terrain( int z ) const
@@ -6342,29 +6343,28 @@ void overmap::place_radios()
     }
 }
 
-void overmap::open( overmap_special_batch &enabled_specials )
+void overmap::open( const std::string &dim_id,
+                    overmap_special_batch &enabled_specials )
 {
-    // const std::string terfilename = overmapbuffer::terrain_filename( loc );
-
     const auto ter_reader = [&]( std::istream & fin ) {
         overmap::unserialize( fin, string_format( "overmap terrain %d.%d", loc.x(), loc.y() ) );
     };
 
-    if( g->get_active_world()->read_overmap( loc, ter_reader ) ) {
-        // const std::string plrfilename = overmapbuffer::player_filename( loc );
+    if( g->get_active_world()->read_overmap( dim_id, loc, ter_reader ) ) {
         const auto plr_reader = [&]( std::istream & fin ) {
             overmap::unserialize_view( fin, string_format( "overmap visibility %d.%d", loc.x(), loc.y() ) );
         };
-        g->get_active_world()->read_overmap_player_visibility( loc, plr_reader );
+        g->get_active_world()->read_overmap_player_visibility( dim_id, loc, plr_reader );
     } else { // No map exists!  Prepare neighbors, and generate one.
+        auto &owning_omb = get_overmapbuffer( dim_id );
         std::vector<const overmap *> pointers;
         // Fetch south and north
         for( int i = -1; i <= 1; i += 2 ) {
-            pointers.push_back( overmap_buffer.get_existing( loc + point( 0, i ) ) );
+            pointers.push_back( owning_omb.get_existing( loc + point( 0, i ) ) );
         }
         // Fetch east and west
         for( int i = -1; i <= 1; i += 2 ) {
-            pointers.push_back( overmap_buffer.get_existing( loc + point( i, 0 ) ) );
+            pointers.push_back( owning_omb.get_existing( loc + point( i, 0 ) ) );
         }
 
         // pointers looks like (north, south, west, east)

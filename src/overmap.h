@@ -270,8 +270,8 @@ class overmap
         /**
          * Create content in the overmap.
          **/
-        void populate( overmap_special_batch &enabled_specials );
-        void populate();
+        void populate( const std::string &dim_id, overmap_special_batch &enabled_specials );
+        void populate( const std::string &dim_id );
 
         const point_abs_om &pos() const {
             return loc;
@@ -461,7 +461,7 @@ class overmap
         // Initialize
         void init_layers();
         // open existing overmap, or generate a new one
-        void open( overmap_special_batch &enabled_specials );
+        void open( const std::string &dim_id, overmap_special_batch &enabled_specials );
     public:
 
         /**

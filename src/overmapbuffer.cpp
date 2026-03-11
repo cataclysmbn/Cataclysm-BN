@@ -101,7 +101,7 @@ overmap &overmapbuffer::get( const point_abs_om &p )
     }
     // Note: fix_mongroups might load other overmaps, so overmaps.back() is not
     // necessarily the overmap at (x,y)
-    new_om->populate();
+    new_om->populate( dimension_id_ );
     fix_mongroups( *new_om );
     fix_npcs( *new_om );
 
@@ -116,7 +116,7 @@ void overmapbuffer::create_custom_overmap( const point_abs_om &p, overmap_specia
         overmaps[p] = std::make_unique<overmap>( p );
         new_om = overmaps[p].get();
     }
-    new_om->populate( specials );
+    new_om->populate( dimension_id_, specials );
 }
 
 void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
@@ -139,9 +139,10 @@ void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
         // advances each iteration, creating a latent race if threads outlive the loop.
         // fix_mongroups / fix_nemesis / fix_npcs access shared overmap state and must
         // run inside the write lock below, NOT inside the async lambda.
-        futures.push_back( { loc, get_thread_pool().submit_returning( [loc] {
+        auto dim_id = dimension_id_;
+        futures.push_back( { loc, get_thread_pool().submit_returning( [loc, dim_id] {
                 auto om = std::make_unique<overmap>( loc );
-                om->populate();
+                om->populate( dim_id );
                 return om;
             } ) } );
     }

@@ -166,6 +166,18 @@ class overmapbuffer
         overmapbuffer();
 
         /**
+         * The dimension this buffer belongs to.  Set by the overmapbuffer
+         * registry when creating the slot; used to route I/O to the correct
+         * dimension subdirectory without reading global state.
+         */
+        auto get_dimension_id() const -> const std::string & {
+            return dimension_id_;
+        }
+        void set_dimension_id( const std::string &id ) {
+            dimension_id_ = id;
+        }
+
+        /**
          * Uses overmap coordinates, that means x and y are directly
          * compared with the position of the overmap.
          */
@@ -557,6 +569,7 @@ class overmapbuffer
                             int min_radius, int max_radius );
 
     private:
+        std::string dimension_id_;
         std::shared_mutex mutex;
         /**
          * Protects all NPC container reads and writes across every overmap in

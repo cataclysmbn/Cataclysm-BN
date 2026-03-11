@@ -30,7 +30,9 @@ class overmapbuffer_registry
     public:
         overmapbuffer_registry() {
             // Eagerly create the primary dimension slot.
-            buffers_.emplace( PRIMARY_DIMENSION_ID, std::make_unique<overmapbuffer>() );
+            auto primary = std::make_unique<overmapbuffer>();
+            primary->set_dimension_id( PRIMARY_DIMENSION_ID );
+            buffers_.emplace( PRIMARY_DIMENSION_ID, std::move( primary ) );
         }
         ~overmapbuffer_registry() = default;
 
@@ -41,7 +43,9 @@ class overmapbuffer_registry
         overmapbuffer &get( const std::string &dim_id ) {
             auto it = buffers_.find( dim_id );
             if( it == buffers_.end() ) {
-                auto result = buffers_.emplace( dim_id, std::make_unique<overmapbuffer>() );
+                auto buf = std::make_unique<overmapbuffer>();
+                buf->set_dimension_id( dim_id );
+                auto result = buffers_.emplace( dim_id, std::move( buf ) );
                 it = result.first;
             }
             return *it->second;
