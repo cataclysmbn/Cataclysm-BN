@@ -4154,7 +4154,7 @@ void cata_tiles::draw_om_tile_recursively( const tripoint_abs_omt omp, const std
 
     auto [bgCol, fgCol] = get_overmap_color( overmap_buffer, omp );
 
-    const lit_level ll = overmap_buffer.is_explored( omp ) ? lit_level::LOW : lit_level::LIT;
+    const lit_level ll = ACTIVE_OVERMAP_BUFFER.is_explored( omp ) ? lit_level::LOW : lit_level::LIT;
     draw_from_id_string(
         tile, omp.raw(), bgCol, fgCol,
         ll, false, base_z_offset, false );

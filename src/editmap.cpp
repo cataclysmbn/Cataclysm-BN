@@ -1791,10 +1791,10 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
     // Coordinates of the overmap terrain that should be generated.
     const point_abs_omt omt_pos2 = tc.abs_omt();
     const tripoint_abs_omt omt_pos( omt_pos2, target.z );
-    const oter_id &omt_ref = overmap_buffer.ter( omt_pos );
+    const oter_id &omt_ref = ACTIVE_OVERMAP_BUFFER.ter( omt_pos );
     // Copy to store the original value, to restore it upon canceling
     const oter_id orig_oters = omt_ref;
-    overmap_buffer.ter_set( omt_pos, oter_id( gmenu.ret ) );
+    ACTIVE_OVERMAP_BUFFER.ter_set( omt_pos, oter_id( gmenu.ret ) );
     tinymap tmpmap;
     // TODO: add a do-not-save-generated-submaps parameter
     // TODO: keep track of generated submaps to delete them properly and to avoid memory leaks
@@ -1841,7 +1841,7 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
     do {
         if( gmenu.selected != lastsel ) {
             lastsel = gmenu.selected;
-            overmap_buffer.ter_set( omt_pos, oter_id( gmenu.selected ) );
+            ACTIVE_OVERMAP_BUFFER.ter_set( omt_pos, oter_id( gmenu.selected ) );
             cleartmpmap( tmpmap );
             // TODO: fix point types
             tmpmap.generate(
@@ -1939,7 +1939,7 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
 
     if( gpmenu.ret != 2 &&  // we didn't apply, so restore the original om_ter
         gpmenu.ret != 3 ) { // chose to change oter_id but not apply mapgen
-        overmap_buffer.ter_set( omt_pos, orig_oters );
+        ACTIVE_OVERMAP_BUFFER.ter_set( omt_pos, orig_oters );
     }
     gmenu.border_color = c_magenta;
     gmenu.hilight_color = h_white;

@@ -54,6 +54,16 @@ extern std::string g_active_dimension_id;
  */
 overmapbuffer &get_active_overmapbuffer();
 
-// Backwards-compatibility macro — resolves to the active dimension's overmapbuffer.
+// Active-dimension macro — resolves to the currently active dimension's overmapbuffer.
+// *** RENDERING / UI ONLY *** — must NOT be used for gameplay logic.
+// Gameplay code should use get_overmapbuffer(dim_id) with an explicit dimension.
+// NOLINTNEXTLINE(cata-text-style)
+#define ACTIVE_OVERMAP_BUFFER ( get_active_overmapbuffer() )
+
+// DEPRECATED — legacy macro, resolves identically to ACTIVE_OVERMAP_BUFFER.
+// All new code must use either:
+//   - get_overmapbuffer(dim_id) for gameplay logic (explicit dimension)
+//   - ACTIVE_OVERMAP_BUFFER     for rendering / UI (active dimension only)
+// This macro will be removed once all usages are converted.
 // NOLINTNEXTLINE(cata-text-style)
 #define overmap_buffer ( get_active_overmapbuffer() )
