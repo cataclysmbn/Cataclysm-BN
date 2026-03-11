@@ -147,7 +147,7 @@ void mapbuffer::unload_quad( const tripoint &om_addr )
     if( g != nullptr ) {
         const map &here = get_map();
         const auto &grid_vec = here.grid;
-        to_delete.remove_if( [&]( const tripoint &p ) {
+        to_delete.remove_if( [&]( const tripoint & p ) {
             const auto it = submaps.find( p );
             if( it == submaps.end() || !it->second ) {
                 return false;
