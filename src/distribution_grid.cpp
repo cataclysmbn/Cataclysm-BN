@@ -96,7 +96,8 @@ int distribution_grid::mod_resource( int amt, bool recurse )
                 continue;
             }
 
-            vehicle_connector_tile *connector = active_tiles::furn_at<vehicle_connector_tile>( loc.absolute, mb );
+            vehicle_connector_tile *connector = active_tiles::furn_at<vehicle_connector_tile>( loc.absolute,
+                                                mb );
             if( connector != nullptr ) {
                 for( const tripoint_abs_ms &veh_abs : connector->connected_vehicles ) {
                     vehicle *veh = vehicle::find_vehicle( veh_abs );
@@ -169,7 +170,8 @@ int distribution_grid::get_resource( bool recurse ) const
                 continue;
             }
 
-            vehicle_connector_tile *connector = active_tiles::furn_at<vehicle_connector_tile>( loc.absolute, mb );
+            vehicle_connector_tile *connector = active_tiles::furn_at<vehicle_connector_tile>( loc.absolute,
+                                                mb );
             if( connector != nullptr ) {
                 for( const tripoint_abs_ms &veh_abs : connector->connected_vehicles ) {
                     vehicle *veh = vehicle::find_vehicle( veh_abs );

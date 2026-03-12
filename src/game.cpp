@@ -14709,7 +14709,7 @@ distribution_grid_tracker &ensure_distribution_grid_tracker_for( const std::stri
         return *it->second;
     }
     g->grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
-                                     MAPBUFFER_REGISTRY.get( dim_id ), dim_id );
+                                    MAPBUFFER_REGISTRY.get( dim_id ), dim_id );
     auto &tracker = *g->grid_trackers_[dim_id];
     submap_loader.add_listener( &tracker );
     // Replay on_submap_loaded for all currently-resident submaps of this

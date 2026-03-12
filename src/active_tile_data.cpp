@@ -73,9 +73,11 @@ T *furn_at( const tripoint_abs_ms &p, mapbuffer &buffer )
 }
 
 template active_tile_data *furn_at<active_tile_data>( const tripoint_abs_ms &, mapbuffer & );
-template vehicle_connector_tile *furn_at<vehicle_connector_tile>( const tripoint_abs_ms &, mapbuffer & );
+template vehicle_connector_tile *furn_at<vehicle_connector_tile>( const tripoint_abs_ms &,
+        mapbuffer & );
 template battery_tile *furn_at<battery_tile>( const tripoint_abs_ms &, mapbuffer & );
-template steady_consumer_tile *furn_at<steady_consumer_tile>( const tripoint_abs_ms &, mapbuffer & );
+template steady_consumer_tile *furn_at<steady_consumer_tile>( const tripoint_abs_ms &,
+        mapbuffer & );
 template charge_watcher_tile *furn_at<charge_watcher_tile>( const tripoint_abs_ms &, mapbuffer & );
 template countdown_tile *furn_at<countdown_tile>( const tripoint_abs_ms &, mapbuffer & );
 template charger_tile *furn_at<charger_tile>( const tripoint_abs_ms &, mapbuffer & );
