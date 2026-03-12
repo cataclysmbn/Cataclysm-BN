@@ -641,11 +641,7 @@
     "type": "vehicle_group",
     "id": "runway_large",
     "//": "Larger planes or blimps that might not fit in normal spawns",
-    "vehicles": [
-      [ "passenger_plane", 500 ],
-      [ "cargo_plane", 500 ],
-      [ "blimp", 500 ]
-    ]
+    "vehicles": [ [ "passenger_plane", 500 ], [ "cargo_plane", 500 ], [ "blimp", 500 ] ]
   },
   {
     "type": "vehicle_group",
