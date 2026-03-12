@@ -244,18 +244,23 @@ class monster : public Creature, public location_visitable<monster>
         /**
          * Snapshot of alive creature pointers passed to compute_plan() so that
          * worker threads never call weak_ptr_fast::lock() (non-atomic, _S_single)
-         * on the main thread's creature collections.  Build both vectors serially
+         * on the main thread's creature collections.  Build all snapshots serially
          * on the main thread before launching the parallel planning pass.
-         * If either pointer is null, compute_plan() falls back to
-         * g->all_monsters() / g->all_npcs() — safe only on the main thread.
+         * If a pointer is null, compute_plan() falls back to the live collections
+         * or faction map — safe only on the main thread.
          */
+        /// faction id → raw monster pointers; avoids weak_ptr_fast::lock() on workers.
+        using faction_snap_t = std::unordered_map<mfaction_id, std::vector<monster *>>;
         struct compute_plan_context {
             const std::vector<monster *> *monsters;
             const std::vector<npc *> *npcs;
-            constexpr compute_plan_context() noexcept : monsters( nullptr ), npcs( nullptr ) {}
+            const faction_snap_t *faction_snap;
+            constexpr compute_plan_context() noexcept
+                : monsters( nullptr ), npcs( nullptr ), faction_snap( nullptr ) {}
             constexpr compute_plan_context( const std::vector<monster *> *m,
-                                            const std::vector<npc *> *n )
-            noexcept : monsters( m ), npcs( n ) {}
+                                            const std::vector<npc *> *n,
+                                            const faction_snap_t *fs )
+            noexcept : monsters( m ), npcs( n ), faction_snap( fs ) {}
         };
 
         /**

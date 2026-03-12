@@ -5016,7 +5016,14 @@ void game::monmove()
     for( npc &n : all_npcs() ) {
         npc_snap.push_back( &n );
     }
-    const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap };
+    // Build faction snapshot: group monster pointers by faction so compute_plan()
+    // can do group-morale/swarm checks on worker threads without calling
+    // weak_ptr_fast::lock() (non-atomic _S_single refcount — data race on Linux).
+    monster::faction_snap_t faction_snap;
+    std::ranges::for_each( mon_snap, [&]( monster *mon_ptr ) {
+        faction_snap[mon_ptr->faction].push_back( mon_ptr );
+    } );
+    const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap, &faction_snap };
 
     // parallel_for_chunked with a small chunk size gives the
     // pool a queue of fine-grained tasks.  Workers that finish a cheap monster

@@ -695,22 +695,17 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
     }
     swarms = swarms && target == nullptr;
     if( group_morale || swarms ) {
-        for( const weak_ptr_fast<monster> &weak : myfaction_iter->second ) {
-            const shared_ptr_fast<monster> shared = weak.lock();
-            if( !shared ) {
-                continue;
-            }
-            monster &mon = *shared;
-
+        // P-FACTION: lambda so both the snapshot path (worker-safe) and the
+        // weak_ptr path (main-thread fallback) share identical inner logic.
+        const auto process_faction_member = [&]( monster &mon ) {
             // P-4: distance cull for swarm/morale checks.
             const int d_swarm = rl_dist( pos(), mon.pos() );
             if( d_swarm > max_sight_range ) {
-                continue;
+                return;
             }
-
-            float rating = rate_target( mon, dist, smart_planning, d_swarm );
+            const float rating = rate_target( mon, dist, smart_planning, d_swarm );
             if( group_morale && rating <= 10 ) {
-                local_morale += 10 - rating;
+                local_morale += 10 - static_cast<int>( rating );
             }
             if( swarms ) {
                 if( rating < 5 ) {
@@ -724,6 +719,25 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                     dist   = rating;
                 }
             }
+        };
+
+        if( ctx.faction_snap != nullptr ) {
+            // Worker-thread path: raw pointer snapshot — no weak_ptr_fast::lock().
+            const auto it = ctx.faction_snap->find( actual_faction );
+            if( it != ctx.faction_snap->end() ) {
+                std::ranges::for_each( it->second, [&]( monster *mon_ptr ) {
+                    process_faction_member( *mon_ptr );
+                } );
+            }
+        } else {
+            // Main-thread fallback: use the live faction map with weak_ptr.
+            std::ranges::for_each( myfaction_iter->second,
+            [&]( const weak_ptr_fast<monster> &weak ) {
+                const shared_ptr_fast<monster> shared = weak.lock();
+                if( shared ) {
+                    process_faction_member( *shared );
+                }
+            } );
         }
     }
 
