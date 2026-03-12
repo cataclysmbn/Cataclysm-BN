@@ -388,20 +388,31 @@ bool submap_load_manager::is_simulated( const std::string &dim_id,
                                         const tripoint_abs_sm &pos ) const
 {
     const tripoint p = pos.raw();
-    return std::ranges::any_of( requests_, [&]( const auto & kv ) {
-        const submap_load_request &req = kv.second;
-        if( req.source == load_request_source::lazy_border ) {
-            return false;
-        }
+    bool covered_by_lazy_only = false;
+    for( const auto &[handle, req] : requests_ ) {
         if( req.dimension_id != dim_id ) {
-            return false;
+            continue;
         }
         const tripoint c = req.center.raw();
         const int dx = std::abs( p.x - c.x );
         const int dy = std::abs( p.y - c.y );
-        return dx <= req.radius && dy <= req.radius
-               && p.z >= req.z_min && p.z <= req.z_max;
-    } );
+        if( !( dx <= req.radius && dy <= req.radius
+               && p.z >= req.z_min && p.z <= req.z_max ) ) {
+            continue;
+        }
+        if( req.source != load_request_source::lazy_border ) {
+            return true;
+        }
+        covered_by_lazy_only = true;
+    }
+    if( covered_by_lazy_only ) {
+        // Only covered by lazy-border requests — not simulated.
+        return false;
+    }
+    // No request covers this position; it was loaded outside the request
+    // system (e.g. direct map::load in tests).  Treat as simulated iff the
+    // submap is actually resident in memory.
+    return MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p ) != nullptr;
 }
 
 std::vector<std::string> submap_load_manager::active_dimensions() const
