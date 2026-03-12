@@ -387,11 +387,6 @@ bool submap_load_manager::is_properly_requested( const std::string &dim_id,
 bool submap_load_manager::is_simulated( const std::string &dim_id,
                                         const tripoint_abs_sm &pos ) const
 {
-    // Quick rejection: not in the desired set at all.
-    if( !prev_desired_.count( { dim_id, pos.raw() } ) ) {
-        return false;
-    }
-    // In the desired set — check if any non-lazy_border request covers it.
     const tripoint p = pos.raw();
     return std::ranges::any_of( requests_, [&]( const auto & kv ) {
         const submap_load_request &req = kv.second;

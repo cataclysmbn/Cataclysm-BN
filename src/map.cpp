@@ -5644,19 +5644,29 @@ static void process_vehicle_items( vehicle &cur_veh, int part )
 std::vector<tripoint> map::check_submap_active_item_consistency()
 {
     std::vector<tripoint> result;
-    mapbuffer &buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
 
-    // Direction 1: every loaded submap with active items should be in the set.
-    buf.for_each_submap( [&]( const auto & entry ) {
-        const tripoint &p = entry.first;
-        const submap *sm = entry.second.get();
-        if( sm != nullptr && !sm->active_items.empty() &&
-            !submaps_with_active_items.contains( p ) ) {
-            result.push_back( p );
+    // Direction 1: every in-grid submap with active items should be in the set.
+    // Lazy-border submaps are intentionally excluded: they are pre-loaded for
+    // shift performance but never registered in submaps_with_active_items.
+    const int zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
+    const int zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
+    for( int x = 0; x < my_MAPSIZE; ++x ) {
+        for( int y = 0; y < my_MAPSIZE; ++y ) {
+            for( int z = zmin; z <= zmax; ++z ) {
+                const submap *sm = getsubmap( get_nonant( { x, y, z } ) );
+                if( sm == nullptr || sm->active_items.empty() ) {
+                    continue;
+                }
+                const tripoint abs_pos( abs_sub.x + x, abs_sub.y + y, z );
+                if( !submaps_with_active_items.contains( abs_pos ) ) {
+                    result.push_back( abs_pos );
+                }
+            }
         }
-    } );
+    }
 
     // Direction 2: every entry in the set should point to a loaded submap with active items.
+    mapbuffer &buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
     for( const tripoint &p : submaps_with_active_items ) {
         submap *s = buf.lookup_submap_in_memory( p );
         if( s == nullptr || s->active_items.empty() ) {
