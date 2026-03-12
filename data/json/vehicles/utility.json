@@ -53,7 +53,7 @@
     "id": "excavator",
     "type": "vehicle",
     "name": "Excavator",
-"//" : "Please replace the wheel mounts and wheels with tank treads when those get mainlined. Please replace the rockwheel with an excavator turret or something if that gets added to the game."
+"//" : "Please replace the wheel mounts and wheels with tank treads when those get mainlined. Please replace the rockwheel with an excavator turret or something if that gets added to the game.",
     "blueprint": [
       [ "o-=o" ],
       [ "|X={" ],
