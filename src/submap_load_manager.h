@@ -149,6 +149,11 @@ class submap_load_manager
          */
         bool is_properly_requested( const std::string &dim_id,
                                     const tripoint_abs_sm &pos ) const;
+        /**
+        * Return true if submap at @p pos in @p dim_id is loaded in memory.
+        */
+        bool is_loaded( const std::string &dim_id,
+                           const tripoint_abs_sm &pos ) const;
 
         /**
          * Return true if @p pos in @p dim_id is covered by any active load

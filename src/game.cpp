@@ -676,6 +676,11 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     // Bind the map to the new dimension so loadn() stores generated submaps in
     // the correct MAPBUFFER_REGISTRY slot and on_submap_loaded() can find them.
     m.bind_dimension( new_dim_id );
+    // Set the fluid grid's active overmapbuffer before m.load() so that any
+    // mapgen triggered during loading (e.g. seed_liquid_charges_for_mapgen)
+    // can access overmap data.  fluid_grid::load() sets it again after m.load()
+    // and also rebuilds the tracker bounds — both calls are required.
+    fluid_grid::bind_dimension( new_dim_id );
 
     m.load( pos_sm, true, pump_events );
 

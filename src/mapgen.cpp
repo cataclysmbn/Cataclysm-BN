@@ -6473,10 +6473,6 @@ void map::add_spawn( const mtype_id &type, int count, const tripoint &p,
                      spawn_disposition disposition,
                      int faction_id, int mission_id, const std::string &name ) const
 {
-    if( p.x < 0 || p.x >= SEEX * my_MAPSIZE || p.y < 0 || p.y >= SEEY * my_MAPSIZE ) {
-        debugmsg( "Bad add_spawn(%s, %d, %d, %d)", type.c_str(), count, p.x, p.y );
-        return;
-    }
     point offset;
     submap *place_on_submap = get_submap_at( p, offset );
 
