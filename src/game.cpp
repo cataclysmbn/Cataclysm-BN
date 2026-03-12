@@ -5020,7 +5020,7 @@ void game::monmove()
     // can do group-morale/swarm checks on worker threads without calling
     // weak_ptr_fast::lock() (non-atomic _S_single refcount — data race on Linux).
     monster::faction_snap_t faction_snap;
-    std::ranges::for_each( mon_snap, [&]( monster *mon_ptr ) {
+    std::ranges::for_each( mon_snap, [&]( monster * mon_ptr ) {
         faction_snap[mon_ptr->faction].push_back( mon_ptr );
     } );
     const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap, &faction_snap };

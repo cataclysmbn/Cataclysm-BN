@@ -697,7 +697,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
     if( group_morale || swarms ) {
         // P-FACTION: lambda so both the snapshot path (worker-safe) and the
         // weak_ptr path (main-thread fallback) share identical inner logic.
-        const auto process_faction_member = [&]( monster &mon ) {
+        const auto process_faction_member = [&]( monster & mon ) {
             // P-4: distance cull for swarm/morale checks.
             const int d_swarm = rl_dist( pos(), mon.pos() );
             if( d_swarm > max_sight_range ) {
@@ -725,7 +725,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             // Worker-thread path: raw pointer snapshot — no weak_ptr_fast::lock().
             const auto it = ctx.faction_snap->find( actual_faction );
             if( it != ctx.faction_snap->end() ) {
-                std::ranges::for_each( it->second, [&]( monster *mon_ptr ) {
+                std::ranges::for_each( it->second, [&]( monster * mon_ptr ) {
                     process_faction_member( *mon_ptr );
                 } );
             }
