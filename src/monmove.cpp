@@ -638,7 +638,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             }
         }
     } );
-    
+
     const auto actual_faction = local_friendly == 0 ? faction : mfaction_str_id( "player" );
     const auto &myfaction_iter = factions.find( actual_faction );
     if( myfaction_iter == factions.end() ) {
@@ -657,7 +657,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 continue;
             }
 
-            const auto process_sight = [&]( monster &mon ) {
+            const auto process_sight = [&]( monster & mon ) {
                 // P-4: distance cull.
                 const int d_mon = rl_dist( pos(), mon.pos() );
                 if( d_mon > max_sight_range ) {
