@@ -6651,8 +6651,7 @@ void map::update_visibility_cache( const int zlev )
         level_cache &vc_cache = get_cache( z );
         auto &visibility_cache = vc_cache.visibility_cache;
 
-        // Pass 1: fill visibility_cache.  apparent_light_at is read-only; each
-        // tile writes to a unique index, so the fill is embarrassingly parallel.
+        // Fill visibility_cache.  apparent_light_at is read-only per tile.
         if( parallel_enabled && parallel_map_cache ) {
             parallel_for( 0, vc_cache.cache_x, [&]( int x ) {
                 for( int y = 0; y < vc_cache.cache_y; y++ ) {
@@ -6660,24 +6659,30 @@ void map::update_visibility_cache( const int zlev )
                         apparent_light_at( tripoint{ x, y, z }, visibility_variables_cache );
                 }
             } );
-        } else {
-            for( int x = 0; x < vc_cache.cache_x; x++ ) {
-                for( int y = 0; y < vc_cache.cache_y; y++ ) {
-                    visibility_cache[vc_cache.idx( x, y )] =
-                        apparent_light_at( tripoint{ x, y, z }, visibility_variables_cache );
+            // Overmap discovery accumulation: serial, reads from the parallel-filled cache.
+            // Kept separate because sm_squares_seen is not thread-safe to write from workers.
+            if( z == zlev ) {
+                for( int x = 0; x < vc_cache.cache_x; x++ ) {
+                    for( int y = 0; y < vc_cache.cache_y; y++ ) {
+                        const auto ll = visibility_cache[vc_cache.idx( x, y )];
+                        sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY] +=
+                            ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
+                    }
                 }
             }
-        }
-
-        // Pass 2: accumulate submap visibility counts for overmap discovery.
-        // Serial to avoid write races on sm_squares_seen; runs only for the
-        // player's z-level.  Reading from the already-filled visibility_cache.
-        if( z == zlev ) {
+        } else {
+            // Serial path: merge visibility fill and overmap discovery into one pass,
+            // avoiding a second full scan of the cache at the player's z-level.
+            const bool count_discovery = ( z == zlev );
             for( int x = 0; x < vc_cache.cache_x; x++ ) {
                 for( int y = 0; y < vc_cache.cache_y; y++ ) {
-                    const auto ll = visibility_cache[vc_cache.idx( x, y )];
-                    sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY] +=
-                        ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
+                    const auto ll =
+                        apparent_light_at( tripoint{ x, y, z }, visibility_variables_cache );
+                    visibility_cache[vc_cache.idx( x, y )] = ll;
+                    if( count_discovery ) {
+                        sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY] +=
+                            ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
+                    }
                 }
             }
         }

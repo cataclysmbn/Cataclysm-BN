@@ -855,6 +855,12 @@ auto Character::unimpaired_range() const -> int
 {
     // Cap at g_max_view_distance (runtime bubble radius) so castLight's
     // row-distance limit produces a circular — not square — visible area.
+    //
+    // NOTE: g_max_view_distance currently equals SEEX * g_half_mapsize — the full
+    // half-extent of the map cache — so this cap never bites for a normal character.
+    // If a future change decouples actual vision range from bubble size (e.g. a hard
+    // cap of ~60 tiles regardless of bubble), update_visibility_cache's inner loops
+    // can be clamped to plr_pos ± unimpaired_range() for a large serial-path win.
     return std::min( sight_max, g_max_view_distance );
 }
 
