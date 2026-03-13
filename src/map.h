@@ -337,9 +337,6 @@ struct level_cache {
     // completes.  Allows repeated draws within the same turn (animations, UI refreshes)
     // to skip the full visibility rebuild when nothing has changed.
     bool visibility_cache_dirty = true;
-    // True when all tiles are open-air transparent and no floor exists.
-    // Used by cast_zlight to skip per-tile reads for pure-air z-levels.
-    bool all_transparent = true;
     // Set by build_floor_cache; true when at least one tile has a floor.
     bool has_any_floor = true;
     bool suspension_cache_initialized = false;

@@ -446,8 +446,7 @@ static void cast_zlight_segment(
     float start_major = 0.0f, float end_major = 1.0f,
     float start_minor = 0.0f, float end_minor = 1.0f,
     float cumulative_transparency = LIGHT_TRANSPARENCY_OPEN_AIR,
-    int x_skip = -1, int z_skip = -1,
-    const std::array<bool, OVERMAP_LAYERS> *all_transparent_levels = nullptr )
+    int x_skip = -1, int z_skip = -1 )
 {
     if( start_major >= end_major || start_minor > end_minor ) {
         return;
@@ -508,13 +507,6 @@ static void cast_zlight_segment(
 
             const int z_index = current.z + OVERMAP_DEPTH;
 
-            // Fast-path: if every tile in this z-level is open air, skip the
-            // per-tile transparency/floor reads.  The transparency is always
-            // LIGHT_TRANSPARENCY_OPEN_AIR and there are no floors, so no split
-            // can originate within this z-level.
-            const bool z_all_transparent = all_transparent_levels != nullptr &&
-                                           ( *all_transparent_levels )[z_index];
-
             const int x_start = ( x_skip != -1 ) ? x_skip :
                                 std::max( 0, static_cast<int>(
                                               std::ceil( ( ( distance - 0.5f ) * start_minor ) - 0.5f ) ) );
@@ -537,11 +529,8 @@ static void cast_zlight_segment(
                     return;
                 }
 
-                const float new_transparency = z_all_transparent
-                                               ? LIGHT_TRANSPARENCY_OPEN_AIR
-                                               : ic.at( current.x, current.y );
-                const bool new_floor = !z_all_transparent &&
-                                       ( ( xf.zz < 0 )
+                const float new_transparency = ic.at( current.x, current.y );
+                const bool new_floor = ( ( xf.zz < 0 )
                                          ? floor_caches[z_index].at( current.x, current.y )
                                          : ( z_index < OVERMAP_LAYERS - 1
                                              ? floor_caches[z_index + 1].at( current.x, current.y )
@@ -587,7 +576,7 @@ static void cast_zlight_segment(
                             start_major, std::min( mid_major, end_major ),
                             start_minor, end_minor,
                             next_cumulative,
-                            -1, -1, all_transparent_levels );
+                            -1, -1 );
                     }
 
                     const float mid_minor = ( current_transparency < new_transparency )
@@ -601,8 +590,7 @@ static void cast_zlight_segment(
                         distance,
                         std::max( mid_major, start_major ), end_major,
                         std::max( mid_minor, start_minor ), end_minor,
-                        cumulative_transparency, delta.x, delta.z,
-                        all_transparent_levels );
+                        cumulative_transparency, delta.x, delta.z );
 
                     // Continue with section B (already-processed x tiles).
                     if( delta.x == x_start ) {
@@ -633,7 +621,7 @@ static void cast_zlight_segment(
                         start_major, top_edge,
                         start_minor, end_minor,
                         next_cumulative,
-                        -1, -1, all_transparent_levels );
+                        -1, -1 );
                 }
                 start_major = ( delta.z + 0.5f ) / ( delta.y - 0.5001f );
                 if( start_major >= end_major ) {
@@ -664,15 +652,13 @@ void cast_zlight(
     const array_of_grids_of<const bool> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
     const tripoint &origin, int offset_distance, float numerator,
-    const light_model &model,
-    const std::array<bool, OVERMAP_LAYERS> *all_transparent_levels )
+    const light_model &model )
 {
     ZoneScoped;
     for( const auto &xf : k_zlight_xforms ) {
         cast_zlight_segment(
             output_caches, input_arrays, floor_caches, blocked_caches,
             origin, offset_distance, numerator, model, xf,
-            1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1,
-            all_transparent_levels );
+            1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
     }
 }

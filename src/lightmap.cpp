@@ -177,15 +177,6 @@ bool map::build_transparency_cache( const int zlev )
 
     map_cache.transparency_cache_dirty.reset();
 
-    // Cache whether the entire level is open air.  cast_zlight uses this to
-    // skip per-tile transparency reads for pure-air z-levels (e.g. above ground).
-    // The floor component (has_any_floor) is incorporated at the call site in
-    // build_seen_cache, after build_floor_cache has run.
-    map_cache.all_transparent = std::ranges::all_of( transparency_cache,
-    []( const float v ) {
-        return v >= LIGHT_TRANSPARENCY_OPEN_AIR - 0.0001f;
-    } );
-
     return true;
 }
 
@@ -1104,17 +1095,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         if( origin.z == target_z ) {
             get_cache( origin.z ).seen_cache[get_cache( origin.z ).idx( origin.x, origin.y )] = VISIBILITY_FULL;
         }
-        // Collect per-z-level all_transparent flags so cast_zlight can skip
-        // per-tile transparency reads for pure-air z-levels (e.g. above ground).
-        // A level qualifies only when it is fully transparent AND has no floors,
-        // since roof tiles are transparent but still block vertical FOV traversal.
-        std::array<bool, OVERMAP_LAYERS> all_transparent_levels;
-        for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-            const auto &ref = get_cache_ref( z );
-            all_transparent_levels[z + OVERMAP_DEPTH] = ref.all_transparent && !ref.has_any_floor;
-        }
         cast_zlight( seen_caches, transparency_caches, floor_caches, blocked_caches,
-                     origin, 0, 1.0f, k_sight_model, &all_transparent_levels );
+                     origin, 0, 1.0f, k_sight_model );
     }
 
     if( origin.z == target_z ) {

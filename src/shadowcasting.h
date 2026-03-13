@@ -243,16 +243,10 @@ void castLightOctants_q(
 /// 3D FOV cast across all z-levels.
 /// Only model.calc, model.check, and model.accumulate are consulted;
 /// update_float, update_quadrants, and lookup_calc are ignored.
-///
-/// @param all_transparent_levels  Optional per-z-level flag array (size OVERMAP_LAYERS,
-///   indexed z+OVERMAP_DEPTH).  When a z-level's flag is true, every tile in that
-///   level has LIGHT_TRANSPARENCY_OPEN_AIR, so the per-tile transparency read is
-///   skipped.  Pass nullptr to use the full path unconditionally.
 void cast_zlight(
     const array_of_grids_of<float> &output_caches,
     const array_of_grids_of<const float> &input_arrays,
     const array_of_grids_of<const bool> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
     const tripoint &origin, int offset_distance, float numerator,
-    const light_model &model,
-    const std::array<bool, OVERMAP_LAYERS> *all_transparent_levels = nullptr );
+    const light_model &model );
