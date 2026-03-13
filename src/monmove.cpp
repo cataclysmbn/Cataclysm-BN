@@ -638,6 +638,16 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             }
         }
     } );
+    
+    const auto actual_faction = local_friendly == 0 ? faction : mfaction_str_id( "player" );
+    const auto &myfaction_iter = factions.find( actual_faction );
+    if( myfaction_iter == factions.end() ) {
+        DebugLog( DL::Error, DC::Game ) << disp_name() << " tried to find faction "
+                                        << actual_faction.id().str()
+                                        << " which wasn't loaded in game::monmove";
+        swarms = false;
+        group_morale = false;
+    }
 
     fleeing = fleeing || ( mood == MATT_FLEE );
     if( local_friendly == 0 ) {
@@ -647,20 +657,14 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 continue;
             }
 
-            for( const weak_ptr_fast<monster> &weak : fac.second ) {
-                const shared_ptr_fast<monster> shared = weak.lock();
-                if( !shared ) {
-                    continue;
-                }
-                monster &mon = *shared;
-
+            const auto process_sight = [&]( monster &mon ) {
                 // P-4: distance cull.
                 const int d_mon = rl_dist( pos(), mon.pos() );
                 if( d_mon > max_sight_range ) {
-                    continue;
+                    return;
                 }
 
-                float rating = rate_target( mon, dist, smart_planning, d_mon );
+                const float rating = rate_target( mon, dist, smart_planning, d_mon );
                 if( rating == dist ) {
                     ++valid_targets;
                     if( one_in( valid_targets ) ) {
@@ -680,19 +684,29 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                     }
                     local_morale -= fears_hostile_near;
                 }
+            };
+
+            if( ctx.faction_snap != nullptr ) {
+                // Worker-thread path: raw pointer snapshot — no weak_ptr_fast::lock().
+                const auto it = ctx.faction_snap->find( actual_faction );
+                if( it != ctx.faction_snap->end() ) {
+                    std::ranges::for_each( it->second, [&]( monster * mon_ptr ) {
+                        process_sight( *mon_ptr );
+                    } );
+                }
+            } else {
+                // Main-thread fallback: use the live faction map with weak_ptr.
+                std::ranges::for_each( myfaction_iter->second,
+                [&]( const weak_ptr_fast<monster> &weak ) {
+                    const shared_ptr_fast<monster> shared = weak.lock();
+                    if( shared ) {
+                        process_sight( *shared );
+                    }
+                } );
             }
         }
     }
 
-    const auto actual_faction = local_friendly == 0 ? faction : mfaction_str_id( "player" );
-    const auto &myfaction_iter = factions.find( actual_faction );
-    if( myfaction_iter == factions.end() ) {
-        DebugLog( DL::Error, DC::Game ) << disp_name() << " tried to find faction "
-                                        << actual_faction.id().str()
-                                        << " which wasn't loaded in game::monmove";
-        swarms = false;
-        group_morale = false;
-    }
     swarms = swarms && target == nullptr;
     if( group_morale || swarms ) {
         // P-FACTION: lambda so both the snapshot path (worker-safe) and the
