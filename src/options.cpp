@@ -2277,7 +2277,11 @@ void options_manager::add_options_performance()
     const auto add_empty_line = [&]() {
         this->add_empty_line( performance );
     };
-
+#if defined(__ANDROID__)
+    const static bool is_android = true;
+#else
+    const static bool is_android = false;
+#endif
     add_option_group( performance, Group( "rem_act_perf", to_translation( "Sleep Boost" ),
                                           to_translation( "Skip expensive processing while the player sleeps." ) ),
     [&]( auto & page_id ) {
@@ -2289,13 +2293,13 @@ void options_manager::add_options_performance()
              false );
         add( "SLEEP_SKIP_MON", page_id, translate_marker( "Skip Monster Movement" ),
              translate_marker( "Monsters do not move while the player is sleeping" ),
-             false );
+             is_android ? false : true );
         add( "SLEEP_SKIP_NPC", page_id, translate_marker( "Skip NPC Movement" ),
              translate_marker( "NPCs are forced to sleep alongside the player, skipping movement "
                                "but still processing rest recovery (fatigue reduction, healing, etc.).  "
                                "NPCs with non-interruptible activities (e.g. surgery) are frozen "
                                "for the turn instead." ),
-             false );
+             is_android ? false : true );
 #if defined(__ANDROID__)
         add( "LOAD_FROM_EXTERNAL", page_id, translate_marker( "External Storage Saving" ),
              translate_marker( "Save in data/catalcysm... instead of Documents/..." ),
@@ -2322,26 +2326,26 @@ void options_manager::add_options_performance()
                                "(full-AI) monster count, so full-AI monsters are never skipped.  "
                                "Higher values process more distant monsters each turn at a CPU cost.  "
                                "0 means only Tier-0 monsters run (no extra Tier-1 budget)." ),
-             32, 2048, 128 );
+             32, 2048, is_android ? 96 : 128 );
         add( "LOD_MACRO_INTERVAL", page_id,
              translate_marker( "Macro Step Interval" ),
              translate_marker( "How many turns elapse between movement steps for Tier-2 (distant wandering) "
                                "monsters.  At 1 they step every turn; at 3 (default) they step once every "
                                "3 turns.  Higher values reduce CPU cost for distant hordes." ),
-             1, 8, 3 );
+             1, 8, is_android ? 3 : 4 );
         add( "LOD_TIER_FULL_DIST", page_id,
              translate_marker( "Full AI Radius" ),
              translate_marker( "Chebyshev distance threshold for full-AI (Tier 0) monsters.  "
                                "Monsters within this radius run the complete AI every turn.  "
                                "Must be less than the Coarse AI Radius." ),
-             5, 100, 25 );
+             5, 208, is_android ? 20 : 30 );
         add( "LOD_TIER_COARSE_DIST", page_id,
              translate_marker( "Coarse AI Radius" ),
              translate_marker( "Chebyshev distance threshold for coarse-AI (Tier 1) monsters.  "
                                "Monsters between the Full AI Radius and this distance use cached "
                                "paths and skip expensive faction queries.  Monsters beyond this "
                                "distance are Tier-2 (macro step only)." ),
-             10, 200, 50 );
+             10, 208, is_android ? 40 : 75 );
         add( "LOD_DEMOTION_COOLDOWN", page_id,
              translate_marker( "Demotion Cooldown" ),
              translate_marker( "Turns a monster must wait after being promoted to a higher-fidelity "
@@ -2353,7 +2357,7 @@ void options_manager::add_options_performance()
              translate_marker( "How many turns elapse between scent-tracking checks for Tier-1 (coarse) "
                                "monsters.  At 1 they check scent every turn (full fidelity); at 3 (default) "
                                "only once every 3 turns.  Higher values reduce CPU cost for mid-range hordes." ),
-             1, 5, 3 );
+             1, 5, is_android ? 3 : 4 );
         add( "LOD_GROUP_MORALE_MAX_TIER", page_id,
              translate_marker( "Group Morale Max Tier" ),
              translate_marker( "Highest LOD tier that participates in group-morale and swarming calculations.  "
@@ -2379,7 +2383,7 @@ void options_manager::add_options_performance()
                            "Higher values reduce redundant ray traces at the cost of more RAM.  "
                            "Reduce if memory is tight; increase on machines with spare RAM and many "
                            "on-screen creatures." ),
-         1000, 500000, 100000 );
+         1000, 500000, is_android ? 64000 : 128000 );
 
     add_empty_line();
 
@@ -2393,7 +2397,7 @@ void options_manager::add_options_performance()
                                "Disable to run everything on the main thread — useful for debugging, "
                                "reproducibility testing, or machines where thread overhead exceeds gain.  "
                                "Requires restart." ),
-             true );
+             !is_android );
         add( "THREAD_POOL_WORKERS", page_id,
              translate_marker( "Thread Pool Worker Count" ),
              translate_marker( "Number of worker threads in the persistent thread pool.  "
@@ -2429,6 +2433,14 @@ void options_manager::add_options_performance()
                                "Disable on machines where the ~70 k-cell work unit is too small to "
                                "amortize dispatch latency.  Requires restart." ),
              true );
+        add( "LAZY_BORDER", page_id,
+             translate_marker( "Pre-load Border" ),
+             translate_marker( "Keep a border of submaps loaded around the reality bubble.  "
+                               "These are pre-loaded from disk in the background so that map "
+                               "shifts are faster (the data is already in memory).  Uses more "
+                               "memory but reduces stalls when the map scrolls.  "
+                               "Takes effect immediately without restart." ),
+             !is_android );
     } );
 
     get_option( "THREAD_POOL_WORKERS" ).setPrerequisite( "MULTITHREADING_ENABLED" );
@@ -2436,6 +2448,7 @@ void options_manager::add_options_performance()
     get_option( "MONSTER_PLAN_CHUNK_SIZE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_MAP_CACHE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_SCENT_UPDATE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
+    get_option( "LAZY_BORDER" ).setPrerequisite( "MULTITHREADING_ENABLED" );
 
     add_empty_line();
 
@@ -2458,7 +2471,7 @@ void options_manager::add_options_performance()
             { "none", translate_marker( "None (pause spread)" ) },
             { "adjacent", translate_marker( "Adjacent (one layer)" ) }
         },
-        "adjacent"
+        is_android ? "none" : "adjacent"
            );
         add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
              translate_marker( "Fire Spread Submap Cap" ),
@@ -2468,14 +2481,6 @@ void options_manager::add_options_performance()
                                "and memory. 0 disables out-of-bubble fire spread loading entirely. "
                                "Takes effect immediately without restart." ),
              0, 250, 25 );
-        add( "LAZY_BORDER", page_id,
-             translate_marker( "Pre-load Border" ),
-             translate_marker( "Keep a border of submaps loaded around the reality bubble.  "
-                               "These are pre-loaded from disk in the background so that map "
-                               "shifts are faster (the data is already in memory).  Uses more "
-                               "memory but reduces stalls when the map scrolls.  "
-                               "Takes effect immediately without restart." ),
-             true );
         add( "REALITY_BUBBLE_SIZE", page_id,
              translate_marker( "Reality Bubble Size" ),
              translate_marker( "Submap radius of the reality bubble (submaps visible beyond your position). "
@@ -2485,7 +2490,7 @@ void options_manager::add_options_performance()
                                "smaller values reduce both. "
                                "REQUIRES A GAME RESTART to take effect — "
                                "changing this mid-session will NOT resize caches or the loaded map." ),
-             0, REALITY_BUBBLE_SIZE_MAX, 8 );
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 8 );
     } );
 
     get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
@@ -2495,7 +2500,7 @@ void options_manager::add_options_performance()
          translate_marker( "Radius in submaps around each end of a power-portal link that is "
                            "force-loaded while the link is active.  Larger values keep more terrain "
                            "around a remote portal resident, at the cost of memory." ),
-         0, static_cast<int>( REALITY_BUBBLE_SIZE_MAX ) + 1, 3
+         0, static_cast<int>( REALITY_BUBBLE_SIZE_MAX ) + 1, is_android ? 2 : 3
        );
 }
 
@@ -4113,7 +4118,6 @@ void options_manager::cache_to_globals()
     reality_bubble_fire_spread =
         ::get_option<std::string>( "REALITY_BUBBLE_FIRE_SPREAD" ) == "adjacent";
     fire_spread_submap_cap = ::get_option<int>( "FIRE_SPREAD_SUBMAP_CAP" );
-    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
 
     {
         const auto psl_str = ::get_option<std::string>( "POCKET_SIMULATION_LEVEL" );
@@ -4137,6 +4141,7 @@ void options_manager::cache_to_globals()
     monster_plan_chunk_size   = ::get_option<int>( "MONSTER_PLAN_CHUNK_SIZE" );
     parallel_map_cache        = ::get_option<bool>( "PARALLEL_MAP_CACHE" );
     parallel_scent_update     = ::get_option<bool>( "PARALLEL_SCENT_UPDATE" );
+    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
 
     merge_comestible_mode = ( [] {
         const auto opt = ::get_option<std::string>( "MERGE_COMESTIBLES" );
