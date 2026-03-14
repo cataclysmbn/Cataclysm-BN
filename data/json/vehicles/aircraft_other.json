@@ -227,55 +227,20 @@
       "O": [ "airship_balloon_external" ],
       "P": [ "propeller_wood" ],
       "t": [ "frame_wood_cross", "wood box", "airship_balloon" ],
-      "X": [ "frame_wood_cross", "door_wood_opaque", "airship_balloon" ]
+      "X": [ "frame_wood_cross", "door_wood_opaque", "airship_balloon" ],
+      "o": [ "frame_wood_cross", "wood box", "roof_wood", { "part": "fuel_bunker", "fuel": "coal_lump" }, "airship_balloon" ],
+      "T": [
+        "frame_wood_cross",
+        "seat_wood",
+        "turret_mount_manual_wood",
+        {
+          "ammo_types": [ "rock", "sling_bullet", "ammo_ballista_wood", "ammo_ballista_iron" ],
+          "part": "mounted_launcher_ballista",
+          "ammo": 75,
+          "ammo_qty": [ 1, 10 ]
+        }
+      ]
     },
-    "parts": [
-      {
-        "x": -9,
-        "y": 0,
-        "parts": [ "frame_wood_cross", "wood box", "roof_wood", { "part": "fuel_bunker", "fuel": "coal_lump" }, "airship_balloon" ]
-      },
-      {
-        "x": -9,
-        "y": 1,
-        "parts": [ "frame_wood_cross", "wood box", "roof_wood", { "part": "fuel_bunker", "fuel": "coal_lump" }, "airship_balloon" ]
-      },
-      {
-        "x": -9,
-        "y": -1,
-        "parts": [ "frame_wood_cross", "wood box", "roof_wood", { "part": "fuel_bunker", "fuel": "coal_lump" }, "airship_balloon" ]
-      },
-      {
-        "x": 2,
-        "y": 2,
-        "parts": [
-          "frame_wood_cross",
-          "seat_wood",
-          "turret_mount_manual_wood",
-          {
-            "ammo_types": [ "rock", "sling_bullet", "ammo_ballista_wood", "ammo_ballista_iron" ],
-            "part": "mounted_launcher_ballista",
-            "ammo": 75,
-            "ammo_qty": [ 1, 10 ]
-          }
-        ]
-      },
-      {
-        "x": 2,
-        "y": -2,
-        "parts": [
-          "frame_wood_cross",
-          "seat_wood",
-          "turret_mount_manual_wood",
-          {
-            "ammo_types": [ "rock", "sling_bullet", "ammo_ballista_wood", "ammo_ballista_iron" ],
-            "part": "mounted_launcher_ballista",
-            "ammo": 75,
-            "ammo_qty": [ 1, 1 ]
-          }
-        ]
-      }
-    ],
     "items": [
       { "x": 1, "y": 2, "chance": 50, "item_groups": [ "supplies_skyfarer_ballista" ] },
       { "x": 1, "y": -2, "chance": 50, "item_groups": [ "supplies_skyfarer_ballista" ] }
@@ -309,35 +274,20 @@
       "E": [ "frame_wood_horizontal", "woodhalfboard_horizontal", "engine_steam_small", "plating_wood", "airship_balloon" ],
       "O": [ "airship_balloon_external" ],
       "P": [ "propeller_wood" ],
-      "t": [ "frame_wood_cross", "wood box", "airship_balloon" ]
+      "t": [ "frame_wood_cross", "wood box", "airship_balloon" ],
+      "o": [ "frame_wood_cross", "wood box", { "part": "fuel_bunker", "fuel": "coal_lump" }, "airship_balloon" ],
+      "T": [
+        "frame_wood_cross",
+        "seat_wood",
+        "turret_mount_manual_wood",
+        {
+          "ammo_types": [ "rock", "sling_bullet", "ammo_ballista_wood", "ammo_ballista_iron" ],
+          "part": "mounted_launcher_ballista",
+          "ammo": 75,
+          "ammo_qty": [ 1, 10 ]
+        }
+      ]
     },
-    "parts": [
-      {
-        "x": -2,
-        "y": 0,
-        "parts": [ "frame_wood_cross", "wood box", { "part": "fuel_bunker", "fuel": "coal_lump" }, "airship_balloon" ]
-      },
-      {
-        "x": -2,
-        "y": 2,
-        "parts": [ "frame_wood_cross", "wood box", { "part": "fuel_bunker", "fuel": "coal_lump" }, "airship_balloon" ]
-      },
-      {
-        "x": 0,
-        "y": 2,
-        "parts": [
-          "frame_wood_cross",
-          "seat_wood",
-          "turret_mount_manual_wood",
-          {
-            "ammo_types": [ "rock", "sling_bullet", "ammo_ballista_wood", "ammo_ballista_iron" ],
-            "part": "mounted_launcher_ballista",
-            "ammo": 75,
-            "ammo_qty": [ 1, 10 ]
-          }
-        ]
-      }
-    ],
     "items": [ { "x": 1, "y": 1, "chance": 75, "item_groups": [ "supplies_skyfarer_ballista" ] } ]
   },
   {

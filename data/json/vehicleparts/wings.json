@@ -408,5 +408,125 @@
     "type": "vehicle_part",
     "looks_like": "lit_wing_metal_external_right",
     "symbol": "u"
+  },
+  {
+    "id": "spoiler_metal_horizontal",
+    "copy-from": "wing_metal",
+    "type": "vehicle_part",
+    "name": "metal spoiler",
+    "looks_like": "board_horizontal",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "h"
+  },
+  {
+    "id": "spoiler_metal_left",
+    "copy-from": "wing_metal",
+    "type": "vehicle_part",
+    "name": "metal spoiler",
+    "looks_like": "board_nw",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "y"
+  },
+  {
+    "id": "spoiler_metal_right",
+    "copy-from": "wing_metal",
+    "type": "vehicle_part",
+    "name": "metal spoiler",
+    "looks_like": "board_ne",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "u"
+  },
+  {
+    "id": "spoiler_metal_external_horizontal",
+    "copy-from": "wing_metal_external",
+    "type": "vehicle_part",
+    "name": "external metal spoiler",
+    "looks_like": "board_horizontal",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "h"
+  },
+  {
+    "id": "spoiler_metal_external_left",
+    "copy-from": "wing_metal_external",
+    "type": "vehicle_part",
+    "name": "external metal spoiler",
+    "looks_like": "board_nw",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "y"
+  },
+  {
+    "id": "spoiler_metal_external_right",
+    "copy-from": "wing_metal_external",
+    "type": "vehicle_part",
+    "name": "external metal spoiler",
+    "looks_like": "board_ne",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "u"
+  },
+  {
+    "id": "spoiler_carbon_horizontal",
+    "copy-from": "wing_carbon",
+    "type": "vehicle_part",
+    "name": "carbon spoiler",
+    "looks_like": "wing_metal_horizontal",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "h"
+  },
+  {
+    "id": "spoiler_carbon_left",
+    "copy-from": "wing_carbon",
+    "type": "vehicle_part",
+    "name": "carbon spoiler",
+    "looks_like": "wing_metal_left",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "y"
+  },
+  {
+    "id": "spoiler_carbon_right",
+    "copy-from": "wing_carbon",
+    "type": "vehicle_part",
+    "name": "carbon spoiler",
+    "looks_like": "wing_metal_right",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "u"
+  },
+  {
+    "id": "spoiler_carbon_external_horizontal",
+    "copy-from": "wing_carbon_external",
+    "type": "vehicle_part",
+    "name": "external carbon spoiler",
+    "looks_like": "wing_metal_external_horizontal",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "h"
+  },
+  {
+    "id": "spoiler_carbon_external_left",
+    "copy-from": "wing_carbon_external",
+    "type": "vehicle_part",
+    "name": "external carbon spoiler",
+    "looks_like": "wing_metal_external_left",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "y"
+  },
+  {
+    "id": "spoiler_carbon_external_right",
+    "copy-from": "wing_carbon_external",
+    "type": "vehicle_part",
+    "name": "external carbon spoiler",
+    "looks_like": "wing_metal_external_right",
+    "lift_coff": -1,
+    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
+    "symbol": "u"
   }
 ]

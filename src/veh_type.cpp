@@ -1133,19 +1133,26 @@ void vehicle_prototype::load( const JsonObject &jo )
         if( jo.has_member( "palette" ) ) {
             std::map< char, JsonArray > string_palette;
             for( const JsonMember member : jo.get_object( "palette" ) ) {
-                std::vector<std::string> members;
-                for( const auto entry : member.get_array() ) {
-                    members.push_back( entry );
-                }
                 string_palette[member.name().at( 0 )] = member.get_array();
             }
-            std::map< char, std::vector<vpart_id> > veh_palette;
-            for( auto const character : string_palette ) {
-                for( std::string part : character.second ) {
-                    if( !veh_palette.contains( character.first ) ) {
-                        veh_palette[character.first] = { vpart_id( part ) };
+            std::map< char, std::vector<part_def> > veh_palette;
+            for( auto const &character : string_palette ) {
+                for( JsonValue part : character.second ) {
+                    part_def pt;
+                    if( part.test_string() ) {
+                        pt.part = vpart_id( part.get_string() );
                     } else {
-                        veh_palette[character.first].push_back( vpart_id( part ) );
+                        JsonObject realpart = part.get_object();
+                        pt.part = vpart_id( realpart.get_string( "part" ) );
+                        assign( realpart, "ammo", pt.with_ammo, true, 0, 100 );
+                        assign( realpart, "ammo_types", pt.ammo_types, true );
+                        assign( realpart, "ammo_qty", pt.ammo_qty, true, 0 );
+                        assign( realpart, "fuel", pt.fuel, true );
+                    }
+                    if( !veh_palette.contains( character.first ) ) {
+                        veh_palette[character.first] = { pt };
+                    } else {
+                        veh_palette[character.first].push_back( pt );
                     }
                 }
             }
@@ -1156,17 +1163,16 @@ void vehicle_prototype::load( const JsonObject &jo )
                 for( char character : row ) {
                     x += 1;
                     if( !veh_palette.contains( character ) ) { continue; }
-                    for( auto const part : veh_palette.at( character ) ) {
-                        part_def pt;
+                    for( auto part : veh_palette.at( character ) ) {
+                        part_def pt = part;
                         pt.pos = point( x, y );
-                        pt.part = part;
                         vproto.parts.push_back( pt );
                     }
                 }
                 y += 1;
             }
         } else {
-            // This still has to be optional in cases where old mods or places are still using it for only display purposes
+            // This still has to be optional in cases where it is used only for display purposes
             jo.get_array( "blueprint" );
         }
     }

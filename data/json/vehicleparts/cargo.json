@@ -363,6 +363,34 @@
   },
   {
     "copy-from": "trunk_abstract",
+    "type": "vehicle_part",
+    "id": "trunk_flat",
+    "name": { "str": "flat trunk" },
+    "looks_like": "hatch",
+    "size": "100 L",
+    "flags": [ "OBSTACLE", "HALF_BOARD", "NO_ROOF_NEEDED", "CARGO", "LOCKABLE_CARGO" ]
+  },
+  {
+    "copy-from": "trunk_flat",
+    "id": "trunk_carbon_flat",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber flat trunk" },
+    "size": "120 L",
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "durability": 420,
+    "damage_reduction": { "all": 34 },
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "extend": { "flags": [ "SHOCK_RESISTANT" ] }
+  },
+  {
+    "copy-from": "trunk_abstract",
     "id": "cargo_space",
     "type": "vehicle_part",
     "name": { "str": "cargo space" },

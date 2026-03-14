@@ -24,9 +24,9 @@
     "connections": [ { "point": [ -1, 0, 0 ], "connection": "local_road", "existing": true, "from": [ 0, 0, 0 ] } ],
     "locations": [ "forest" ],
     "city_distance": [ 30, -1 ],
-    "city_sizes": [ 0, 12 ],
+    "city_sizes": [ 1, 20 ],
     "occurrences": [ 10, 100 ],
-    "flags": [ "CLASSIC", "WILDERNESS", "MAN_MADE" ]
+    "flags": [ "CLASSIC", "MAN_MADE", "UNIQUE", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -44,9 +44,9 @@
     "connections": [ { "point": [ -1, 0, 0 ], "connection": "local_road", "existing": true, "from": [ 0, 0, 0 ] } ],
     "locations": [ "forest" ],
     "city_distance": [ 30, -1 ],
-    "city_sizes": [ 0, 12 ],
+    "city_sizes": [ 1, 20 ],
     "occurrences": [ 0, 1 ],
-    "flags": [ "CLASSIC", "WILDERNESS", "MAN_MADE" ]
+    "flags": [ "CLASSIC", "MAN_MADE", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -2776,12 +2776,14 @@
       { "point": [ 1, 0, 1 ], "overmap": "movietheater_roof_1_0_north" },
       { "point": [ 2, 0, 0 ], "overmap": "movietheater_2_0_north" },
       { "point": [ 2, 0, 1 ], "overmap": "movietheater_roof_2_0_north" },
+      { "point": [ 2, 0, 2 ], "overmap": "movietheater_roof2_2_0_north" },
       { "point": [ 0, 1, 0 ], "overmap": "movietheater_0_1_north" },
       { "point": [ 0, 1, 1 ], "overmap": "movietheater_roof_0_1_north" },
       { "point": [ 1, 1, 0 ], "overmap": "movietheater_1_1_north" },
       { "point": [ 1, 1, 1 ], "overmap": "movietheater_roof_1_1_north" },
       { "point": [ 2, 1, 0 ], "overmap": "movietheater_2_1_north" },
       { "point": [ 2, 1, 1 ], "overmap": "movietheater_roof_2_1_north" },
+      { "point": [ 2, 1, 2 ], "overmap": "movietheater_roof2_2_1_north" },
       { "point": [ 0, 2, 0 ], "overmap": "movietheater_0_2_north" },
       { "point": [ 0, 2, 1 ], "overmap": "movietheater_roof_0_2_north" },
       { "point": [ 1, 2, 0 ], "overmap": "movietheater_1_2_north" },
@@ -2794,7 +2796,7 @@
     "city_distance": [ 0, 6 ],
     "city_sizes": [ 6, -1 ],
     "occurrences": [ 0, 4 ],
-    "flags": [ "CLASSIC", "URBAN" ]
+    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
   },
   {
     "type": "overmap_special",

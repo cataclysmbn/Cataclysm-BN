@@ -151,6 +151,23 @@
     "damage_reduction": { "all": 80 }
   },
   {
+    "id": "ram_bone",
+    "copy-from": "ram_blaze",
+    "type": "vehicle_part",
+    "name": { "str": "bone ram" },
+    "item": "bone_plate",
+    "color": "white",
+    "broken_color": "light_gray",
+    "looks_like": "ram_wood",
+    "durability": 320,
+    "breaks_into": [ { "item": "bone", "count": [ 5, 15 ] } ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "bone_sturdy", 3 ] ] }
+    },
+    "damage_reduction": { "all": 75 }
+  },
+  {
     "id": "ram_acidchitin",
     "copy-from": "ram_chitin",
     "type": "vehicle_part",
