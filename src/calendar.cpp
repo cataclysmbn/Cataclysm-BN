@@ -59,11 +59,6 @@ static constexpr int sunset_equinox = ( sunset_summer + sunset_winter ) / 2;
 // How long, does sunrise/sunset last?
 static const time_duration twilight_duration = 1_hours;
 
-double default_daylight_level()
-{
-    return 100.0;
-}
-
 moon_phase get_moon_phase( const time_point &p )
 {
     // Seasons last 14 days, not 91 like in real life

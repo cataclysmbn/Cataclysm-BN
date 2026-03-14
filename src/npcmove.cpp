@@ -57,8 +57,10 @@
 #include "overmap_location.h"
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
+#include "calendar.h"
 #include "player_activity.h"
 #include "pldata.h"
+#include "profile.h"
 #include "projectile.h"
 #include "ranged.h"
 #include "ret_val.h"
@@ -353,6 +355,7 @@ static bool too_close( const tripoint &critter_pos, const tripoint &ally_pos, co
 
 void npc::assess_danger()
 {
+    ZoneScoped;
     float assessment = 0.0f;
     float highest_priority = 1.0f;
     int def_radius = rules.has_flag( ally_rule::follow_close ) ? follow_distance() : 6;
@@ -458,7 +461,12 @@ void npc::assess_danger()
         }
     }
 
+    {
+    ZoneScopedN( "assess_all_monsters" );
     for( const monster &critter : g->all_monsters() ) {
+        if( rl_dist_fast( pos(), critter.pos() ) > default_daylight_level() ) {
+            continue;
+        }
         auto att = critter.attitude_to( *this );
         if( att == Attitude::A_FRIENDLY ) {
             ai_cache.friends.emplace_back( g->shared_from( critter ) );
@@ -524,6 +532,7 @@ void npc::assess_danger()
             ai_cache.danger = critter_danger;
         }
     }
+    } // assess_all_monsters
 
     if( assessment == 0.0 && hostile_guys.empty() ) {
         ai_cache.danger_assessment = assessment;
@@ -648,6 +657,7 @@ float npc::character_danger( const Character &u ) const
 
 void npc::regen_ai_cache()
 {
+    ZoneScoped;
     map &here = get_map();
     auto i = std::begin( ai_cache.sound_alerts );
     while( i != std::end( ai_cache.sound_alerts ) ) {
@@ -700,6 +710,7 @@ void npc::regen_ai_cache()
 
 void npc::move()
 {
+    ZoneScoped;
     // don't just return from this function without doing something
     // that will eventually subtract moves, or change the NPC to a different type of action.
     // because this will result in an infinite loop
@@ -960,7 +971,10 @@ void npc::move()
     }
 
     add_msg( m_debug, "%s chose action %s.", name, npc_action_name( action ) );
-    execute_action( action );
+    {
+        ZoneScopedN( "npc_execute_action" );
+        execute_action( action );
+    }
 }
 
 void npc::execute_action( npc_action action )
