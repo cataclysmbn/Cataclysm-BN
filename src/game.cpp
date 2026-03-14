@@ -4818,6 +4818,7 @@ void game::world_tick()
         }
 
         mb.for_each_submap( [&]( auto & entry ) {
+            ZoneScopedN( "wtd_submap_body" );
             auto &[raw_pos, sm_ptr] = entry;
             if( !sm_ptr ) {
                 return;
@@ -5023,7 +5024,21 @@ void game::monmove()
     std::ranges::for_each( mon_snap, [&]( monster * mon_ptr ) {
         faction_snap[mon_ptr->faction].push_back( mon_ptr );
     } );
-    const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap, &faction_snap };
+    // Pre-compute per-faction hostile-faction lists once per tick.  compute_plan()
+    // iterates only the hostile entries rather than all factions on every call.
+    monster::hostile_fac_map_t hostile_fac_map;
+    for( const auto &[fac_id, _m] : faction_snap ) {
+        for( const auto &[other_id, _o] : faction_snap ) {
+            if( fac_id == other_id ) {
+                continue;
+            }
+            const auto att = fac_id.obj().attitude( other_id );
+            if( att != MFA_NEUTRAL && att != MFA_FRIENDLY ) {
+                hostile_fac_map[fac_id].push_back( other_id );
+            }
+        }
+    }
+    const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap, &faction_snap, &hostile_fac_map };
 
     // parallel_for_chunked with a small chunk size gives the
     // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
@@ -5262,6 +5277,7 @@ void game::monmove()
 
 void game::npcmove()
 {
+    ZoneScoped;
     // Active NPC processing.  Extracted from monmove() so it can be
     // individually controlled by SLEEP_SKIP_NPC without affecting monsters.
     const std::string &player_dim = m.get_bound_dimension();
@@ -5283,12 +5299,16 @@ void game::npcmove()
             guy.check_mount_is_spooked();
         }
         m.creature_in_field( guy );
-        if( !guy.has_effect( effect_npc_suspend ) ) {
-            guy.process_turn();
+        {
+            ZoneScopedN( "npc_process_turn" );
+            if( !guy.has_effect( effect_npc_suspend ) ) {
+                guy.process_turn();
+            }
         }
         while( !guy.is_dead() && guy.moves > 0 && turns < 10 &&
                ( !guy.in_sleep_state() || guy.activity->id() == ACT_OPERATION )
              ) {
+            ZoneScopedN( "npc_move_iter" );
             int moves = guy.moves;
             guy.move();
             if( moves == guy.moves ) {

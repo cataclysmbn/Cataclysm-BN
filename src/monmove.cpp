@@ -465,6 +465,8 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
     // GAIN-B: call rate_target once (which internally calls turn_cached_sees).
     // The redundant outer turn_cached_sees guard has been removed; player
     // visibility is determined by the rate_target return value (FLT_MAX = not visible).
+    {
+    ZoneScopedN( "cp_initial_target" );
     if( local_friendly == 0 && !waiting ) {
         const float player_dist = rate_target( g->u, dist, smart_planning );
         if( player_dist < FLT_MAX ) {
@@ -565,6 +567,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             }
         } );
     }
+    } // cp_initial_target
 
     if( waiting ) {
         result.goal    = pos();
@@ -575,6 +578,8 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
     }
 
     int valid_targets = ( target == nullptr ) ? 1 : 0;
+    {
+    ZoneScopedN( "cp_npc_targets" );
     for_each_npc( [&]( npc & who ) {
         auto faction_att = faction.obj().attitude( who.get_monster_faction() );
         if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
@@ -638,6 +643,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             }
         }
     } );
+    } // cp_npc_targets
 
     const auto actual_faction = local_friendly == 0 ? faction : mfaction_str_id( "player" );
     const auto &myfaction_iter = factions.find( actual_faction );
@@ -649,54 +655,61 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         group_morale = false;
     }
 
+    {
+    ZoneScopedN( "cp_faction_targets" );
     fleeing = fleeing || ( mood == MATT_FLEE );
     if( local_friendly == 0 ) {
-        for( const auto &fac : factions ) {
-            auto faction_att = faction.obj().attitude( fac.first );
-            if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
-                continue;
+        const auto process_sight = [&]( monster & mon ) {
+            // P-4: distance cull.
+            const int d_mon = rl_dist( pos(), mon.pos() );
+            if( d_mon > max_sight_range ) {
+                return;
             }
 
-            const auto process_sight = [&]( monster & mon ) {
-                // P-4: distance cull.
-                const int d_mon = rl_dist( pos(), mon.pos() );
-                if( d_mon > max_sight_range ) {
-                    return;
+            const float rating = rate_target( mon, dist, smart_planning, d_mon );
+            if( rating == dist ) {
+                ++valid_targets;
+                if( one_in( valid_targets ) ) {
+                    target = &mon;
                 }
+            }
+            if( rating < dist ) {
+                target       = &mon;
+                dist         = rating;
+                valid_targets = 1;
+            }
+            if( rating <= 5 ) {
+                if( has_flag( MF_FACTION_MEMORY ) ) {
+                    result.faction_angers.push_back( { mon.faction, angers_hostile_near } );
+                } else {
+                    local_anger += angers_hostile_near;
+                }
+                local_morale -= fears_hostile_near;
+            }
+        };
 
-                const float rating = rate_target( mon, dist, smart_planning, d_mon );
-                if( rating == dist ) {
-                    ++valid_targets;
-                    if( one_in( valid_targets ) ) {
-                        target = &mon;
+        if( ctx.faction_snap != nullptr && ctx.hostile_fac_map != nullptr ) {
+            // Worker-thread path: pre-built hostile list + raw pointer snapshot.
+            // Iterates only factions hostile to actual_faction; no per-call attitude lookups.
+            const auto hmit = ctx.hostile_fac_map->find( actual_faction );
+            if( hmit != ctx.hostile_fac_map->end() ) {
+                for( const auto &hostile_id : hmit->second ) {
+                    const auto sit = ctx.faction_snap->find( hostile_id );
+                    if( sit != ctx.faction_snap->end() ) {
+                        std::ranges::for_each( sit->second, [&]( monster *mon_ptr ) {
+                            process_sight( *mon_ptr );
+                        } );
                     }
                 }
-                if( rating < dist ) {
-                    target       = &mon;
-                    dist         = rating;
-                    valid_targets = 1;
+            }
+        } else {
+            // Main-thread fallback: iterate live faction map with weak_ptr.
+            for( const auto &fac : factions ) {
+                const auto faction_att = faction.obj().attitude( fac.first );
+                if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
+                    continue;
                 }
-                if( rating <= 5 ) {
-                    if( has_flag( MF_FACTION_MEMORY ) ) {
-                        result.faction_angers.push_back( { mon.faction, angers_hostile_near } );
-                    } else {
-                        local_anger += angers_hostile_near;
-                    }
-                    local_morale -= fears_hostile_near;
-                }
-            };
-
-            if( ctx.faction_snap != nullptr ) {
-                // Worker-thread path: raw pointer snapshot — no weak_ptr_fast::lock().
-                const auto it = ctx.faction_snap->find( actual_faction );
-                if( it != ctx.faction_snap->end() ) {
-                    std::ranges::for_each( it->second, [&]( monster * mon_ptr ) {
-                        process_sight( *mon_ptr );
-                    } );
-                }
-            } else {
-                // Main-thread fallback: use the live faction map with weak_ptr.
-                std::ranges::for_each( myfaction_iter->second,
+                std::ranges::for_each( fac.second,
                 [&]( const weak_ptr_fast<monster> &weak ) {
                     const shared_ptr_fast<monster> shared = weak.lock();
                     if( shared ) {
@@ -706,7 +719,10 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             }
         }
     }
+    } // cp_faction_targets
 
+    {
+    ZoneScopedN( "cp_group_morale" );
     swarms = swarms && target == nullptr;
     if( group_morale || swarms ) {
         // P-FACTION: lambda so both the snapshot path (worker-safe) and the
@@ -754,6 +770,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             } );
         }
     }
+    } // cp_group_morale
 
     if( docile ) {
         target = nullptr;

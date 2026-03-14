@@ -5679,10 +5679,10 @@ std::vector<tripoint> map::check_submap_active_item_consistency()
 
 void map::process_items()
 {
-    ZoneScoped;
     // Process vehicle items from in-bubble submaps via per-z-level caches.
     // Out-of-bubble vehicle items are handled by batch_turns_items().
     {
+        ZoneScopedN( "process_items_vehicles" );
         const int zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
         const int zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
         std::set<submap *> veh_submaps;
@@ -5700,6 +5700,7 @@ void map::process_items()
         } );
     }
     // Making a copy, in case the original variable gets modified during `process_items_in_submap`
+    ZoneScopedN( "process_items_submaps" );
     const std::set<tripoint> submaps_with_active_items_copy = submaps_with_active_items;
     for( const tripoint &abs_pos : submaps_with_active_items_copy ) {
         if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {

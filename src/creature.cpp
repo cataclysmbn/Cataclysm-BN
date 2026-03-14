@@ -373,6 +373,7 @@ bool Creature::sees( const Creature &critter ) const
 
 bool Creature::sees( const tripoint &t, bool is_avatar, int range_mod ) const
 {
+    ZoneScoped;
     if( !fov_3d && posz() != t.z ) {
         return false;
     }
@@ -383,11 +384,27 @@ bool Creature::sees( const tripoint &t, bool is_avatar, int range_mod ) const
     if( get_dimension() != here.get_bound_dimension() ) {
         return false;
     }
+    // range_day and range_night depend only on creature stats, not on the target.
+    // Cache them per-creature per-tick so repeated calls (e.g. from compute_plan)
+    // only pay for sight_range() once.
+    struct range_cache_t {
+        const Creature *creature = nullptr;
+        time_point turn{};
+        int range_day = 0;
+        int range_night = 0;
+        int range_max = 0;
+    };
+    static thread_local range_cache_t tl_range;
+    if( tl_range.creature != this || tl_range.turn != calendar::turn ) {
+        tl_range.creature   = this;
+        tl_range.turn       = calendar::turn;
+        tl_range.range_day  = sight_range( default_daylight_level() );
+        tl_range.range_night = sight_range( 0 );
+        tl_range.range_max  = std::max( tl_range.range_day, tl_range.range_night );
+    }
+    const auto range_max = tl_range.range_max;
     const auto ambient = here.ambient_light_at( t );
     const auto range_cur = sight_range( ambient );
-    const auto range_day = sight_range( default_daylight_level() );
-    const auto range_night = sight_range( 0 );
-    const auto range_max = std::max( range_day, range_night );
     const auto range_min = std::min( range_cur, range_max );
     const auto wanted_range = rl_dist( pos(), t );
     const auto natural_light = g->natural_light_level( t.z );

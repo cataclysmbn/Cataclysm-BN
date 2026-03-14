@@ -251,16 +251,21 @@ class monster : public Creature, public location_visitable<monster>
          */
         /// faction id → raw monster pointers; avoids weak_ptr_fast::lock() on workers.
         using faction_snap_t = std::unordered_map<mfaction_id, std::vector<monster *>>;
+        /// faction id → list of faction ids that are hostile to it (pre-filtered per tick).
+        using hostile_fac_map_t = std::unordered_map<mfaction_id, std::vector<mfaction_id>>;
         struct compute_plan_context {
             const std::vector<monster *> *monsters;
             const std::vector<npc *> *npcs;
             const faction_snap_t *faction_snap;
+            const hostile_fac_map_t *hostile_fac_map;
             constexpr compute_plan_context() noexcept
-                : monsters( nullptr ), npcs( nullptr ), faction_snap( nullptr ) {}
+                : monsters( nullptr ), npcs( nullptr ), faction_snap( nullptr ),
+                  hostile_fac_map( nullptr ) {}
             constexpr compute_plan_context( const std::vector<monster *> *m,
                                             const std::vector<npc *> *n,
-                                            const faction_snap_t *fs )
-            noexcept : monsters( m ), npcs( n ), faction_snap( fs ) {}
+                                            const faction_snap_t *fs,
+                                            const hostile_fac_map_t *hfm )
+            noexcept : monsters( m ), npcs( n ), faction_snap( fs ), hostile_fac_map( hfm ) {}
         };
 
         /**
