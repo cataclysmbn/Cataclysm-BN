@@ -53,39 +53,79 @@
     "id": "excavator",
     "type": "vehicle",
     "name": "Excavator",
+    "//": "Please replace the wheel mounts and wheels with tank treads when those get mainlined. Please replace the rockwheel with an excavator turret or something if that gets added to the game.",
     "blueprint": [
       [ "o-=o" ],
       [ "|X={" ],
       [ "o-=o" ]
     ],
     "parts": [
-      { "x": -1, "y": 1, "parts": [ "frame_se", "roof", "wheel_mount_medium", "wheel", "board_se", "muffler" ] },
-      { "x": 2, "y": -1, "parts": [ "frame_nw", "halfboard_nw", "headlight_reinforced" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_sw", "roof", "wheel_mount_medium", "wheel", "board_sw" ] },
-      {
-        "x": 1,
-        "y": 0,
-        "parts": [ "frame_cross", "roof", "reinforced_windshield", "diesel_engine_i6", "alternator_truck", "battery_car" ]
-      },
-      {
-        "x": 1,
-        "y": 1,
-        "parts": [ "frame_vertical", "roof", "wheel_mount_medium_steerable", "wheel", "reinforced_windshield" ]
-      },
       {
         "x": 0,
         "y": 0,
-        "parts": [ "frame_cross", "roof", "seat", "seatbelt", "floodlight", "controls", "dashboard", "horn_big" ]
+        "parts": [ "hdframe_cross", "seat", "seatbelt", "roof", "controls", "dashboard", "vehicle_alarm", "floodlight", "horn_big" ]
       },
-      { "x": 2, "y": 0, "parts": [ "crane_medium" ] },
-      { "x": -1, "y": 0, "parts": [ "frame_horizontal", "roof", "hatch", { "part": "tank", "fuel": "diesel" } ] },
-      { "x": 0, "y": 1, "parts": [ "frame_vertical", "roof", "door" ] },
-      { "x": 0, "y": -1, "parts": [ "frame_vertical", "roof", "door" ] },
-      { "x": 2, "y": 1, "parts": [ "frame_ne", "halfboard_ne", "headlight_reinforced" ] },
+      { "x": 1, "y": 0, "parts": [ "hdframe_horizontal", "windshield_horizontal_front" ] },
       {
         "x": 1,
         "y": -1,
-        "parts": [ "frame_vertical", "roof", "wheel_mount_medium_steerable", "wheel", "reinforced_windshield" ]
+        "parts": [ "hdframe_nw", "windshield_nw_edge", "wheel_mount_medium_steerable", "wheel_wide_or" ]
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "parts": [ "hdframe_ne", "halfboard_vertical_right", "wheel_mount_medium_steerable", "wheel_wide_or" ]
+      },
+      { "x": 0, "y": 1, "parts": [ "hdframe_cross", { "part": "tank", "fuel": "diesel" }, "board_horizontal_front" ] },
+      {
+        "x": 0,
+        "y": 2,
+        "parts": [ "hdframe_vertical", "halfboard_vertical_right", "wheel_mount_medium_steerable", "wheel_wide_or" ]
+      },
+      { "x": 1, "y": 1, "part": "hdframe_vertical" },
+      { "x": 2, "y": 1, "part": "hdframe_vertical" },
+      { "x": 3, "y": 1, "part": "rockwheel" },
+      { "x": 0, "y": -1, "parts": [ "hdframe_vertical", "door", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
+      {
+        "x": -1,
+        "y": -1,
+        "parts": [
+          "hdframe_vertical",
+          { "part": "tank", "fuel": "diesel" },
+          "halfboard_vertical_left",
+          "wheel_mount_medium_steerable",
+          "wheel_wide_or"
+        ]
+      },
+      {
+        "x": -1,
+        "y": 2,
+        "parts": [ "hdframe_vertical", "halfboard_vertical_right", "wheel_mount_medium_steerable", "wheel_wide_or" ]
+      },
+      { "x": -1, "y": 0, "parts": [ "hdframe_cross", "halfboard_horizontal", { "part": "tank", "fuel": "diesel" } ] },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [
+          "hdframe_cross",
+          "halfboard_cover",
+          "battery_car",
+          "diesel_engine_i6",
+          "alternator_truck",
+          { "part": "tank", "fuel": "diesel" }
+        ]
+      },
+      { "x": -2, "y": 2, "parts": [ "hdframe_se", "halfboard_se", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
+      { "x": -2, "y": -1, "parts": [ "hdframe_sw", "halfboard_sw", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "hdframe_horizontal", { "part": "tank", "fuel": "diesel" }, "halfboard_horizontal_rear" ]
+      },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [ "hdframe_horizontal", { "part": "tank", "fuel": "diesel" }, "halfboard_horizontal_rear" ]
       }
     ],
     "items": [  ]
@@ -219,42 +259,31 @@
       [ "o-=o " ]
     ],
     "parts": [
-      { "x": -1, "y": 1, "parts": [ "frame_se", "roof", "wheel_mount_medium", "wheel_wide_or", "board_se" ] },
-      { "x": 2, "y": -1, "parts": [ "frame_nw", "halfboard_nw", "headlight_reinforced" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_sw", "roof", "wheel_mount_medium", "wheel_wide_or", "board_sw" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_cross", "roof", "reinforced_windshield" ] },
-      { "x": 3, "y": 0, "parts": [ "rockwheel" ] },
+      { "x": 0, "y": 0, "parts": [ "hdframe_cross", "seat", "floodlight", "horn_big", "seatbelt", "dashboard", "controls" ] },
+      { "x": 0, "y": -1, "parts": [ "hdframe_nw", "wheel_mount_medium", "wheel_wide_or" ] },
+      { "x": 0, "y": 1, "parts": [ "hdframe_ne", "wheel_mount_medium", "wheel_wide_or" ] },
       {
-        "x": 1,
-        "y": 1,
-        "parts": [ "frame_vertical", "roof", "wheel_mount_medium_steerable", "wheel_wide_or", "reinforced_windshield" ]
-      },
-      {
-        "x": 0,
+        "x": -1,
         "y": 0,
-        "parts": [
-          "frame_cross",
-          "roof",
-          "seat",
-          "seatbelt",
-          "floodlight",
-          "controls",
-          "dashboard",
-          "horn_big",
-          "engine_electric",
-          "storage_battery"
-        ]
+        "parts": [ "hdframe_cross", "diesel_engine_i6", "battery_car", "halfboard_cover", "alternator_truck" ]
       },
-      { "x": 2, "y": 0, "parts": [ "frame_horizontal" ] },
-      { "x": -1, "y": 0, "parts": [ "frame_horizontal", "roof", "hatch" ] },
-      { "x": 0, "y": 1, "parts": [ "frame_vertical", "roof", "door" ] },
-      { "x": 0, "y": -1, "parts": [ "frame_vertical", "roof", "door" ] },
-      { "x": 2, "y": 1, "parts": [ "frame_ne", "halfboard_ne", "headlight_reinforced" ] },
       {
-        "x": 1,
+        "x": -1,
         "y": -1,
-        "parts": [ "frame_vertical", "roof", "wheel_mount_medium_steerable", "wheel_wide_or", "reinforced_windshield" ]
-      }
+        "parts": [ "hdframe_vertical", { "part": "tank", "fuel": "diesel" }, "halfboard_vertical_left" ]
+      },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [ "hdframe_vertical", { "part": "tank", "fuel": "diesel" }, "halfboard_vertical_right" ]
+      },
+      { "x": -2, "y": 0, "parts": [ "hdframe_cross", "halfboard_horizontal_rear" ] },
+      { "x": -2, "y": -1, "parts": [ "hdframe_sw", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
+      { "x": -2, "y": 1, "parts": [ "hdframe_se", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
+      { "x": -3, "y": -1, "part": "hdframe_horizontal" },
+      { "x": -3, "y": 0, "part": "hdframe_horizontal" },
+      { "x": -3, "y": 1, "part": "hdframe_horizontal" },
+      { "x": 1, "y": 0, "part": "rockwheel" }
     ],
     "items": [  ]
   },

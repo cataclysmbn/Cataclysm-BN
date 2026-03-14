@@ -128,6 +128,7 @@ ignorable = {
     "vehicle_group",
     "vehicle_placement",
     "WORLD_OPTION",
+    "sound_effect",
 }
 
 # these objects can have their strings automatically extracted.
