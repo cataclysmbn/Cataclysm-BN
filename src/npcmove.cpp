@@ -462,76 +462,76 @@ void npc::assess_danger()
     }
 
     {
-    ZoneScopedN( "assess_all_monsters" );
-    for( const monster &critter : g->all_monsters() ) {
-        if( rl_dist_fast( pos(), critter.pos() ) > default_daylight_level() ) {
-            continue;
-        }
-        auto att = critter.attitude_to( *this );
-        if( att == Attitude::A_FRIENDLY ) {
-            ai_cache.friends.emplace_back( g->shared_from( critter ) );
-            continue;
-        }
-        if( att != Attitude::A_HOSTILE && ( critter.friendly || !is_enemy() ) ) {
-            continue;
-        }
-        if( !sees( critter ) ) {
-            continue;
-        }
-        float critter_threat = evaluate_enemy( critter );
-        // warn and consider the odds for distant enemies
-        int dist = rl_dist( pos(), critter.pos() );
-        if( ( is_enemy() || !critter.friendly ) ) {
-            assessment += critter_threat;
-            if( critter_threat > ( 8.0f + personality.bravery + rng( 0, 5 ) ) ) {
-                warn_about( "monster", 10_minutes, critter.type->nname(), dist, critter.pos() );
+        ZoneScopedN( "assess_all_monsters" );
+        for( const monster &critter : g->all_monsters() ) {
+            if( rl_dist_fast( pos(), critter.pos() ) > default_daylight_level() ) {
+                continue;
             }
-        }
-        if( must_retreat || no_fighting ) {
-            continue;
-        }
-        // ignore targets behind glass even if we can see them
-        if( !clear_shot_reach( pos(), critter.pos(), false ) ) {
-            continue;
-        }
+            auto att = critter.attitude_to( *this );
+            if( att == Attitude::A_FRIENDLY ) {
+                ai_cache.friends.emplace_back( g->shared_from( critter ) );
+                continue;
+            }
+            if( att != Attitude::A_HOSTILE && ( critter.friendly || !is_enemy() ) ) {
+                continue;
+            }
+            if( !sees( critter ) ) {
+                continue;
+            }
+            float critter_threat = evaluate_enemy( critter );
+            // warn and consider the odds for distant enemies
+            int dist = rl_dist( pos(), critter.pos() );
+            if( ( is_enemy() || !critter.friendly ) ) {
+                assessment += critter_threat;
+                if( critter_threat > ( 8.0f + personality.bravery + rng( 0, 5 ) ) ) {
+                    warn_about( "monster", 10_minutes, critter.type->nname(), dist, critter.pos() );
+                }
+            }
+            if( must_retreat || no_fighting ) {
+                continue;
+            }
+            // ignore targets behind glass even if we can see them
+            if( !clear_shot_reach( pos(), critter.pos(), false ) ) {
+                continue;
+            }
 
-        float scaled_distance = std::max( 1.0f, dist / critter.speed_rating() );
-        float hp_percent = 1.0f - static_cast<float>( critter.get_hp() ) / critter.get_hp_max();
-        float critter_danger = std::max( critter_threat * ( hp_percent * 0.5f + 0.5f ),
-                                         NPC_DANGER_VERY_LOW );
-        ai_cache.total_danger += critter_danger / scaled_distance;
+            float scaled_distance = std::max( 1.0f, dist / critter.speed_rating() );
+            float hp_percent = 1.0f - static_cast<float>( critter.get_hp() ) / critter.get_hp_max();
+            float critter_danger = std::max( critter_threat * ( hp_percent * 0.5f + 0.5f ),
+                                             NPC_DANGER_VERY_LOW );
+            ai_cache.total_danger += critter_danger / scaled_distance;
 
-        // don't ignore monsters that are too close or too close to an ally if we can move
-        bool is_too_close = dist <= def_radius;
-        for( const weak_ptr_fast<Creature> &guy : ai_cache.friends ) {
-            if( is_too_close || self_defense_only ) {
-                break;
+            // don't ignore monsters that are too close or too close to an ally if we can move
+            bool is_too_close = dist <= def_radius;
+            for( const weak_ptr_fast<Creature> &guy : ai_cache.friends ) {
+                if( is_too_close || self_defense_only ) {
+                    break;
+                }
+                // HACK: Bit of a dirty hack - sometimes shared_from, returns nullptr or bad weak_ptr for
+                // friendly NPC when the NPC is riding a creature - I don't know why.
+                // so this skips the bad weak_ptrs, but this doesn't functionally change the AI Priority
+                // because the horse the NPC is riding is still in the ai_cache.friends vector,
+                // so either one would count as a friendly for this purpose.
+                if( guy.lock() ) {
+                    is_too_close |= too_close( critter.pos(), guy.lock()->pos(), def_radius );
+                }
             }
-            // HACK: Bit of a dirty hack - sometimes shared_from, returns nullptr or bad weak_ptr for
-            // friendly NPC when the NPC is riding a creature - I don't know why.
-            // so this skips the bad weak_ptrs, but this doesn't functionally change the AI Priority
-            // because the horse the NPC is riding is still in the ai_cache.friends vector,
-            // so either one would count as a friendly for this purpose.
-            if( guy.lock() ) {
-                is_too_close |= too_close( critter.pos(), guy.lock()->pos(), def_radius );
+            // ignore distant monsters that our rules prevent us from attacking
+            if( !is_too_close && is_player_ally() && !ok_by_rules( critter, dist, scaled_distance ) ) {
+                continue;
+            }
+            // prioritize the biggest, nearest threats, or the biggest threats that are threatening
+            // us or an ally
+            // critter danger is always at least NPC_DANGER_VERY_LOW
+            float priority = std::max( critter_danger - 2.0f * ( scaled_distance - 1.0f ),
+                                       is_too_close ? critter_danger : 0.0f );
+            cur_threat_map[direction_from( pos(), critter.pos() )] += priority;
+            if( priority > highest_priority ) {
+                highest_priority = priority;
+                ai_cache.target = g->shared_from( critter );
+                ai_cache.danger = critter_danger;
             }
         }
-        // ignore distant monsters that our rules prevent us from attacking
-        if( !is_too_close && is_player_ally() && !ok_by_rules( critter, dist, scaled_distance ) ) {
-            continue;
-        }
-        // prioritize the biggest, nearest threats, or the biggest threats that are threatening
-        // us or an ally
-        // critter danger is always at least NPC_DANGER_VERY_LOW
-        float priority = std::max( critter_danger - 2.0f * ( scaled_distance - 1.0f ),
-                                   is_too_close ? critter_danger : 0.0f );
-        cur_threat_map[direction_from( pos(), critter.pos() )] += priority;
-        if( priority > highest_priority ) {
-            highest_priority = priority;
-            ai_cache.target = g->shared_from( critter );
-            ai_cache.danger = critter_danger;
-        }
-    }
     } // assess_all_monsters
 
     if( assessment == 0.0 && hostile_guys.empty() ) {
