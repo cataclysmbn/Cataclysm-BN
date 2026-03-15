@@ -353,6 +353,29 @@ static bool too_close( const tripoint &critter_pos, const tripoint &ally_pos, co
     return rl_dist( critter_pos, ally_pos ) <= def_radius;
 }
 
+// Per-turn symmetric sight cache wrapper — mirrors turn_cached_sees() in monmove.cpp.
+// Exploits LOS symmetry: if a monster already checked visibility against this NPC during
+// compute_plan(), the result is already cached and this call is a cheap shared_lock read.
+static auto npc_turn_cached_sees( const Creature &seer, const Creature &target ) -> bool
+{
+    const Creature *lo = &seer < &target ? &seer : &target;
+    const Creature *hi = &seer < &target ? &target : &seer;
+    const auto key = std::make_pair( lo, hi );
+    {
+        std::shared_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
+        const auto it = g->turn_sight_cache_.find( key );
+        if( it != g->turn_sight_cache_.end() ) {
+            return it->second;
+        }
+    }
+    const bool result = seer.sees( target );
+    {
+        std::unique_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
+        g->turn_sight_cache_.emplace( key, result );
+    }
+    return result;
+}
+
 void npc::assess_danger()
 {
     ZoneScoped;
@@ -464,7 +487,8 @@ void npc::assess_danger()
     {
         ZoneScopedN( "assess_all_monsters" );
         for( const monster &critter : g->all_monsters() ) {
-            if( rl_dist_fast( pos(), critter.pos() ) > default_daylight_level() ) {
+            const auto dist = rl_dist_fast( pos(), critter.pos() );
+            if( dist > default_daylight_level() ) {
                 continue;
             }
             auto att = critter.attitude_to( *this );
@@ -475,12 +499,11 @@ void npc::assess_danger()
             if( att != Attitude::A_HOSTILE && ( critter.friendly || !is_enemy() ) ) {
                 continue;
             }
-            if( !sees( critter ) ) {
+            if( !npc_turn_cached_sees( *this, critter ) ) {
                 continue;
             }
             float critter_threat = evaluate_enemy( critter );
             // warn and consider the odds for distant enemies
-            int dist = rl_dist( pos(), critter.pos() );
             if( ( is_enemy() || !critter.friendly ) ) {
                 assessment += critter_threat;
                 if( critter_threat > ( 8.0f + personality.bravery + rng( 0, 5 ) ) ) {
