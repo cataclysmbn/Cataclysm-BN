@@ -1,6 +1,5 @@
 # Cataclysm: Bright Nights - Agent Guidelines
 
-- **MUST** RE-READ AGENTS.md BETWEEN subtasks.
 - **MUST** FOLLOW for all code changes.
 
 ## HARD CONSTRAINTS (NEVER VIOLATE)
