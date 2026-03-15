@@ -41,6 +41,12 @@ title: Furniture and Terrain
     "message": "The safe is hacksawed open!",
     "sound": "Gachunk!",
     "byproducts": [{ "item": "scrap", "count": 13 }]
+  },
+  "default_vars": {
+    "CATEGORYIDS": "[ \"CSC_FOOD_MEAT\", \"CSC_FOOD_VEGGI\", \"CSC_FOOD_PASTA\" ]",
+    "CHARGE_PER_MIN": "5",
+    "CHARGE_START": "100",
+    "CRAFTSPEEDMULT": "1.0"
   }
 }
 ```
@@ -170,6 +176,17 @@ it for the purpose of surgery.
 
 (Optional) Dispenses infinite amounts of specified liquid item when interacted. Must be used with
 `"examine_action": "liquid_source"` to work.
+
+#### `default_vars`
+
+(Optional) Default string variables for objects, always a string string pair; Can be used to store arbitrary data or for some data for iuses such as
+
+- Multicooker
+  - "CATEGORYIDS"; String is a json array of categories for applicable recipes
+  - "RECIPEIDS": String is a json array of valid recipes
+  - "CHARGE_PER_MIN": Charges consumed per minute
+  - "CHARGE_START": Charges consumed at start
+  - "CRAFTSPEEDMULT": Multiplier on craft speed
 
 ### Terrain
 

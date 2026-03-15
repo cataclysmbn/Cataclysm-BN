@@ -110,10 +110,10 @@ class submap : maptile_soa<SEEX, SEEY>
             is_uniform = false;
             emitter_cache = -1;
             frn[p.x][p.y] = furn;
+            frn_vars[p].merge( furn->default_vars );
             if( furn != f_null ) {
                 return;
             }
-            // Reset furniture vars on clear
             frn_vars.erase( p );
         }
 

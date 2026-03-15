@@ -33,6 +33,8 @@
 #include "catacharset.h"
 #include "character.h"
 #include "character_functions.h"
+#include "data_vars.h"
+#include "detached_ptr.h"
 #include "flag.h"
 #include "color.h"
 #include "construction.h"
@@ -108,6 +110,7 @@
 #include "uistate.h"
 #include "units.h"
 #include "units_utility.h"
+#include "recipe_dictionary.h"
 #include "value_ptr.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -7678,6 +7681,188 @@ void iexamine::cardreader_plutgen( player &p, const tripoint &examp )
     }
 }
 
+void iexamine::multicooker( player &p, const tripoint &pos )
+{
+    map &here = get_map();
+    const furn_id furniture = here.furn( pos );
+    data_vars::data_set *vars = here.furn_vars( pos );
+    const tripoint_abs_ms abspos( here.getabs( pos ) );
+    auto grid = get_distribution_grid_tracker().grid_at( abspos );
+    int battery = grid.get_resource();
+    enum {
+        mc_start, mc_stop, mc_take, mc_upgrade
+    };
+
+    uilist menu;
+    menu.text = _( "Choose option:" );
+
+    if( vars->get( "ACTIVE", false ) ) {
+        if( vars->contains( "STARTTIME" ) &&
+            vars->get( "STARTTIME", 0 ) + vars->get( "COOKTIME", 0 ) > to_turn<int>( calendar::turn ) ) {
+            menu.addentry( mc_stop, true, 's', _( "Stop crafting" ) );
+        } else {
+            menu.addentry( mc_take, true, 't', _( "Remove Product" ) );
+        }
+    } else {
+        if( battery < vars->get( "CHARGE_START", 0 ) ) {
+            p.add_msg_if_player( _( "Batteries are low." ) );
+            return;
+        }
+        menu.addentry( mc_start, true, 's', _( "Start crafting " ) );
+    }
+
+    menu.query();
+    int choice = menu.ret;
+
+    if( choice < 0 ) {
+        return;
+    }
+
+    if( mc_stop == choice ) {
+        if( query_yn( _( "Really stop?" ) ) ) {
+            vars->erase( "RESULT" );
+            vars->erase( "ACTIVE" );
+            vars->erase( "STARTTIME" );
+            vars->erase( "COOKTIME" );
+            vars->erase( "BATCHCOUNT" );
+            vars->erase( "RECIPE" );
+        }
+        return;
+    }
+
+    if( mc_take == choice ) {
+
+        detached_ptr<item> dish = item::spawn( vars->get( "RESULT" ), calendar::turn,
+                                               vars->get( "BATCHCOUNT", 1 ) );
+
+        const std::string dish_name = dish->tname( dish->charges, false );
+        if( dish->made_of( LIQUID ) ) {
+            if( !p.check_eligible_containers_for_crafting( *recipe_id( vars->get( "RECIPE" ) ), 1 ) ) {
+                p.add_msg_if_player( m_info, _( "You don't have a suitable container to store your %s." ),
+                                     dish_name );
+                return;
+            }
+            liquid_handler::handle_all_liquid( std::move( dish ), PICKUP_RANGE );
+        } else {
+            p.i_add( std::move( dish ) );
+        }
+
+        grid.mod_resource( vars->get( "COOKTIME", 0 ) * vars->get( "CRAFTSPEEDMULT",
+                           1.0 ) / 6000 * vars->get( "CHARGE_PER_MIN", 0.0 ) + vars->get( "CHARGE_START", 0.0 ) );
+        vars->erase( "RESULT" );
+        vars->erase( "ACTIVE" );
+        vars->erase( "STARTTIME" );
+        vars->erase( "COOKTIME" );
+        vars->erase( "BATCHCOUNT" );
+        vars->erase( "RECIPE" );
+        p.add_msg_if_player( m_good, _( "You got the %s from the %s." ),
+                             dish_name, furniture->name() );
+
+        return;
+    }
+
+    if( mc_start == choice ) {
+        uilist dmenu;
+        dmenu.text = _( "Choose desired recipe:" );
+
+        std::vector<const recipe *> dishes;
+
+        inventory crafting_inv = g->u.crafting_inventory();
+
+        for( itype item : furniture->crafting_pseudo_item_types() ) {
+            crafting_inv.add_item( *item::spawn_temporary( item.get_id(), calendar::start_of_cataclysm ),
+                                   false );
+        }
+        crafting_inv.update_quality_cache();
+
+        int counter = 0;
+
+        for( const auto &r : g->u.get_learned_recipes() ) {
+            if( vars->get( "CATEGORYIDS", std::set<std::string>() ).contains( r->subcategory ) ||
+                vars->get( "RECIPEIDS", std::set<std::string>() ).contains( r->result().str() ) ) {
+                dishes.push_back( r );
+                const bool can_make = r->deduped_requirements().can_make_with_inventory(
+                                          crafting_inv, r->get_component_filter() );
+                dmenu.addentry( counter++, can_make, -1, string_format( _( "%s (%1.f charges)" ), r->result_name(),
+                                r->time * vars->get( "CRAFTSPEEDMULT", 1.0 ) / 6000 * vars->get( "CHARGE_PER_MIN",
+                                        0.0 ) + vars->get( "CHARGE_START", 0.0 ) ) );
+            }
+        }
+
+        dmenu.query();
+
+        int choice = dmenu.ret;
+
+        if( choice < 0 ) {
+
+            if( choice == -1024 ) {
+                p.add_msg_if_player( m_warning,
+                                     _( "You don't know of anything you could craft with this." ) );
+            }
+
+            return;
+        } else {
+            const recipe *meal = dishes[choice];
+
+            uilist batchmenu;
+            batchmenu.text = _( "Choose batch count:" );
+            int counter = 0;
+
+            for( int i = 1; i < 51; i++ ) {
+                const bool can_make = meal->deduped_requirements().can_make_with_inventory(
+                                          crafting_inv, meal->get_component_filter(), i );
+                batchmenu.addentry( counter++, can_make, -1, string_format( _( "%s batches (%1.f charges)" ), i,
+                                    meal->batch_time( i, 1, 0 ) * vars->get( "CRAFTSPEEDMULT",
+                                            1.0 ) / 6000 * vars->get( "CHARGE_PER_MIN", 0.0 ) + vars->get( "CHARGE_START", 0.0 ) ) );
+            }
+
+            batchmenu.query();
+
+            int batchcount = batchmenu.ret;
+
+            if( batchcount < 0 ) {
+                return;
+            }
+            batchcount++;
+
+            // Seems to be divided by 100;
+            // See the CHARGE_PER_MIN calc being 6000 instead of 60
+            int mealtime = meal->batch_time( batchcount, 1, 0 ) * vars->get( "CRAFTSPEEDMULT", 1.0 ) / 100;
+            int all_charges = mealtime / 6000 * vars->get( "CHARGE_PER_MIN", 0.0 ) + vars->get( "CHARGE_START",
+                              0.0 );
+
+            if( battery < all_charges ) {
+
+                p.add_msg_if_player( m_warning,
+                                     _( "The %s needs %d charges to create this." ),
+                                     furniture->name(), all_charges );
+                return;
+            }
+
+            const auto filter = is_crafting_component;
+            const requirement_data *reqs =
+                meal->deduped_requirements().select_alternative( p, crafting_inv, filter, batchcount );
+            if( !reqs ) {
+                return;
+            }
+
+            for( const auto &component : reqs->get_components() ) {
+                p.consume_items( component, batchcount, filter );
+            }
+
+            vars->set( "ACTIVE", true );
+            vars->set( "RECIPE", meal->ident().str() );
+            vars->set( "RESULT", meal->result().str() );
+            vars->set( "STARTTIME", to_turn<int>( calendar::turn ) );
+            vars->set( "COOKTIME", mealtime );
+            vars->set( "BATCHCOUNT", meal->makes_amount() * batchcount );
+
+            p.add_msg_if_player( m_good, _( "The %s begins to hum." ), furniture->name() );
+
+            return;
+        }
+    }
+}
 /**
  * Given then name of one of the above functions, returns the matching function
  * pointer. If no match is found, defaults to iexamine::none but prints out a
@@ -7776,6 +7961,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "power_portal", &iexamine::power_portal },
             { "migo_nerve_cluster", &iexamine::migo_nerve_cluster },
             { "cardreader_plutgen", &iexamine::cardreader_plutgen },
+            { "multicooker", &iexamine::multicooker },
         }
     };
 
