@@ -284,10 +284,5 @@
     "id": "SHOCK_RESISTANT",
     "context": [ "vehicle_part" ],
     "type": "json_flag"
-  },
-  {
-    "id": "SHREDDER",
-    "context": [ "vehicle_part" ],
-    "type": "json_flag"
   }
 ]
