@@ -4153,6 +4153,7 @@ void submap::store( JsonOut &jsout ) const
         jsout.write( key );
         jsout.write( value );
     }
+    jsout.end_array();
     jsout.member( "transformer_last_run" );
     jsout.start_array();
     for( const auto &pr : transformer_last_run ) {
