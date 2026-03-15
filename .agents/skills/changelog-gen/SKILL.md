@@ -12,9 +12,10 @@ compatibility: Requires git, gh, internet access, and write access to this repo.
 - Update every language (en, ko, ja...) copy with file name `{order}.stable-{semver}.md`.
 - Follow the style of `docs/en/game/changelog/11.stable-0.11.0.md`.
 - For localized docs, look up every user-visible game term first with `rg -C2 -i '<term>' lang/po/{lang}.po | head`.
-- If `msgstr` exists, use it for game terms in headings and body text. Do not leave the English term in localized docs.
-- Keep markdown structure synced to `docs/en/game/changelog/11.stable-0.11.0.md`; keep structural labels like `## Featured`, `## Bugfixes`, `Credits`, and `screenshots` identical unless the user asks otherwise.
-- Do not use subagents for glossary lookup. Korean title uses `안정판`, not `Stable`.
+- If `msgstr` exists, use it for game terms and user-visible labels in headings/body. Do not leave English in localized docs.
+- Translate every user-visible heading, summary label, table label, and caption in localized docs. `Featured`, `Credits`, `screenshots`, `before`, and `after` must be localized.
+- Keep section order, media blocks, PR grouping, and tables synced to English, but never copy English labels back into localized docs.
+- Do not use subagents for glossary lookup. Korean title is `안정판`, not `Stable`.
 - Group related PRs into one section and link every PR + author in `<details><summary>Credits</summary>`.
 - Crawl PR bodies, comments, and reviews with `gh api`.
 - Crawl every screenshot so the user can curate later.
