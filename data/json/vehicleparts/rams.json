@@ -215,8 +215,8 @@
     "color": "dark_gray",
     "broken_color": "dark_gray",
     "durability": 450,
-    "power": -1750,
-    "damage_modifier": 500,
+    "power": -5000,
+    "damage_modifier": 200,
     "breaks_into": [  ],
     "description": "A circular blade, powered by the vehicle's engine.  It will dramatically increase the damage the vehicle delivers in collisions.  Mount on the edges of the vehicle, preferably the front.",
     "requirements": {
@@ -224,8 +224,8 @@
       "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 6 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "flags": [ "UNMOUNT_ON_DAMAGE", "SHARP", "PROTRUSION" ],
-    "damage_reduction": { "all": 82 }
+    "flags": [ "UNMOUNT_ON_DAMAGE", "SHARP", "PROTRUSION", "SHREDDER", "EXTRA_DRAG" ],
+    "damage_reduction": { "all": 55 }
   },
   {
     "type": "vehicle_part",
