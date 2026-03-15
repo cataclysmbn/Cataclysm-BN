@@ -18,6 +18,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
+#include "data_vars.h"
 
 struct ter_t;
 using ter_str_id = string_id<ter_t>;
@@ -484,6 +485,8 @@ struct map_data_common_t {
         std::string prompt;
 
         iexamine_function examine; // What happens when the terrain/furniture is examined
+
+        data_vars::data_set default_vars;
 
         /**
          * When will this terrain/furniture get harvested and what will drop?

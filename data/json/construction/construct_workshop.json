@@ -261,6 +261,19 @@
   },
   {
     "type": "construction",
+    "id": "constr_multicooker",
+    "group": "install_multicooker",
+    "category": "WORKSHOP",
+    "required_skills": [  ],
+    "time": "10 m",
+    "qualities": [  ],
+    "components": [ [ [ "multi_cooker", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_multicooker"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridfridge",
     "group": "install_refrigerator",
     "category": "WORKSHOP",

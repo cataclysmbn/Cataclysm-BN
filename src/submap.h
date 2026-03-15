@@ -108,10 +108,10 @@ class submap : maptile_soa<SEEX, SEEY>
         void set_furn( point p, furn_id furn ) {
             is_uniform = false;
             frn[p.x][p.y] = furn;
+            frn_vars[p].merge( furn->default_vars );
             if( furn != f_null ) {
                 return;
             }
-            // Reset furniture vars on clear
             frn_vars.erase( p );
         }
 
