@@ -717,7 +717,7 @@
     "copy-from": "shotgun_base",
     "type": "GUN",
     "name": { "str": "BP-12" },
-    "description": "A bullpup, magazine fed, ami-automatic shotgun. The accuracy of a full-length barrel in a compact frame. Recoil absorbing buffer tube absorbs the impact of the powerful 12ga shot.",
+    "description": "A bullpup, magazine fed, semi-automatic shotgun, possessing the accuracy of a full-length barrel in a compact frame.",
     "weight": "3628 g",
     "volume": "3443 ml",
     "price": "325 USD",
