@@ -2105,7 +2105,7 @@
     "subtype": "collection",
     "ammo": 100,
     "entries": [
-      { "item": "bp_12", "ammo-group": "on_hand_shot", "charges": [ 0, 10 ] },
+      { "item": "BP_12", "ammo-group": "on_hand_shot", "charges": [ 0, 10 ] },
       { "group": "nested_saiga_12_mag" },
       { "group": "nested_saiga_12_mag", "prob": 50 },
       { "group": "on_hand_shot" }
