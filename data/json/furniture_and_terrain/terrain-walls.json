@@ -468,7 +468,7 @@
     "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL", "CONNECT_TO_WALL", "MINEABLE", "BLOCK_WIND" ],
     "connects_to": "WALL",
     "bash": {
-      "str_min": 120,
+      "str_min": 225,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -570,7 +570,7 @@
       "byproducts": [ { "item": "steel_plate", "count": [ 2, 3 ] }, { "item": "steel_chunk", "count": [ 12, 20 ] } ]
     },
     "bash": {
-      "str_min": 200,
+      "str_min": 300,
       "str_max": 600,
       "sound": "metal screeching!",
       "sound_fail": "clang!",
@@ -596,7 +596,7 @@
     "roof": "t_metal_flat_roof",
     "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL", "MINEABLE", "BLOCK_WIND" ],
     "bash": {
-      "str_min": 200,
+      "str_min": 300,
       "str_max": 600,
       "sound": "metal screeching!",
       "sound_fail": "clang!",
@@ -622,7 +622,7 @@
     "roof": "t_metal_flat_roof",
     "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL", "MINEABLE", "BLOCK_WIND", "WATER_CUBE" ],
     "bash": {
-      "str_min": 200,
+      "str_min": 300,
       "str_max": 600,
       "sound": "metal screeching!",
       "sound_fail": "clang!",
@@ -1509,7 +1509,7 @@
     "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "MINEABLE", "BLOCK_WIND", "CLIMBABLE" ],
     "roof": "t_rock_floor_no_roof",
     "bash": {
-      "str_min": 100,
+      "str_min": 225,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1537,7 +1537,7 @@
     "coverage": 100,
     "flags": [ "MINEABLE" ],
     "bash": {
-      "str_min": 100,
+      "str_min": 225,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1564,7 +1564,7 @@
     "coverage": 100,
     "flags": [ "MINEABLE" ],
     "bash": {
-      "str_min": 100,
+      "str_min": 225,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1591,7 +1591,7 @@
     "coverage": 100,
     "flags": [ "MINEABLE" ],
     "bash": {
-      "str_min": 100,
+      "str_min": 225,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1617,7 +1617,7 @@
     "color": "brown",
     "looks_like": "t_fault",
     "bash": {
-      "str_min": 100,
+      "str_min": 225,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1644,7 +1644,7 @@
     "color": "brown",
     "looks_like": "t_fault",
     "bash": {
-      "str_min": 100,
+      "str_min": 225,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
