@@ -1723,6 +1723,7 @@ Those flags are added by the game code to specific items (that specific welder, 
   It is damaged by running it over non-`DIGGABLE` surfaces.
 - `PLOW` Tills the soil underneath the part while active. Takes damage from unsuitable terrain at a
   level proportional to the speed of the vehicle.
+- `POWERED_BY_ENGINE` tells the vehicle that the part exerts engine `power` reduction. Does not require the part to be enabled in C++.
 - `POWER_TRANSFER` Transmits power to and from an attached thingy (probably a vehicle).
 - `PROPELLER` Part that is a propeller rotor, needs propeller_diameter field
 - `PROTRUSION` Part sticks out so no other parts can be installed over it.
