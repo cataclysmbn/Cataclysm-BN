@@ -2762,7 +2762,16 @@ void monster::process_turn()
     if( has_flag( MF_ELECTRIC_FIELD ) ) {
         if( has_effect( effect_emp ) ) {
             if( calendar::once_every( 10_turns ) ) {
-                sounds::sound( pos(), 5, sounds::sound_t::combat, _( "hummmmm." ), false, "humming", "electric" );
+                sound_event se;
+                se.origin = pos();
+                se.volume = 50;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "hummmmm." );
+                se.from_monster = true;
+                se.monfaction = faction.id();
+                se.id = "humming";
+                se.variant = "electric";
+                sounds::sound( se );
             }
         } else {
             for( const tripoint &zap : g->m.points_in_radius( pos(), 1 ) ) {
@@ -2771,7 +2780,16 @@ void monster::process_turn()
                 for( const auto &item : items ) {
                     if( item->made_of( LIQUID ) && item->flammable() ) { // start a fire!
                         g->m.add_field( zap, fd_fire, 2, 1_minutes );
-                        sounds::sound( pos(), 30, sounds::sound_t::combat,  _( "fwoosh!" ), false, "fire", "ignition" );
+                        sound_event se;
+                        se.origin = pos();
+                        se.volume = 60;
+                        se.category = sounds::sound_t::combat;
+                        se.description = _( "fwoosh!" );
+                        se.from_monster = true;
+                        se.monfaction = faction.id();
+                        se.id = "fire";
+                        se.variant = "ignition";
+                        sounds::sound( se );
                         break;
                     }
                 }
@@ -2797,10 +2815,22 @@ void monster::process_turn()
             if( get_weather().lightning_active && !has_effect( effect_supercharged ) &&
                 g->m.is_outside( pos() ) ) {
                 get_weather().lightning_active = false; // only one supercharge per strike
-                sounds::sound( pos(), 300, sounds::sound_t::combat, _( "BOOOOOOOM!!!" ), false, "environment",
-                               "thunder_near" );
-                sounds::sound( pos(), 20, sounds::sound_t::combat, _( "vrrrRRRUUMMMMMMMM!" ), false, "explosion",
-                               "default" );
+                sound_event se;
+                se.origin = pos();
+                se.volume = 180;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "BOOOOOOOM!!!" );
+                se.from_monster = true;
+                se.monfaction = faction.id();
+                se.id = "environment";
+                se.variant = "thunder_near";
+                sounds::sound( se );
+
+                se.description = _( "vrrrRRRUUMMMMMMMM!" );
+                se.id = "explosion";
+                se.variant = "default";
+                se.volume = 120;
+                sounds::sound( se );
                 if( g->u.sees( pos() ) ) {
                     add_msg( m_bad, _( "Lightning strikes the %s!" ), name() );
                     add_msg( m_bad, _( "Your vision goes white!" ) );
@@ -2808,8 +2838,16 @@ void monster::process_turn()
                 }
                 add_effect( effect_supercharged, 12_hours );
             } else if( has_effect( effect_supercharged ) && calendar::once_every( 5_turns ) ) {
-                sounds::sound( pos(), 20, sounds::sound_t::combat, _( "VMMMMMMMMM!" ), false, "humming",
-                               "electric" );
+                sound_event se;
+                se.origin = pos();
+                se.volume = 80;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "VMMMMMMMMM!" );
+                se.from_monster = true;
+                se.monfaction = faction.id();
+                se.id = "humming";
+                se.variant = "electric";
+                sounds::sound( se );
             }
         }
     }
@@ -3610,8 +3648,10 @@ float monster::get_mountable_weight_ratio() const
     return type->mountable_weight_ratio;
 }
 
-void monster::hear_sound( const tripoint &source, const int vol, const int dist )
+void monster::hear_sound( const sound_event &source, const short heard_vol, const short ambient,
+                          const bool reinforce_source, const bool afraid_of_source )
 {
+    // Process_sound should normally catch this, but keep this here in case monsters are given the ability to be deafened by noises so that a monster would not hear follow on noises.
     if( !can_hear() ) {
         return;
     }
@@ -3620,43 +3660,67 @@ void monster::hear_sound( const tripoint &source, const int vol, const int dist 
     const bool feral_friend = ( faction == faction_zombie || type->in_species( ZOMBIE ) ) &&
                               g->u.has_trait( trait_PROF_FERAL ) && !g->u.has_effect( effect_feral_infighting_punishment );
 
-    // Hackery: If player is currently a feral and you're a zombie, ignore any sounds close to their position.
-    if( feral_friend && rl_dist( g->u.pos(), source ) <= 10 ) {
+    // Hackery: If player is currently a feral and you're a zombie, ignore any sounds made by the player.
+    if( feral_friend && source.from_player ) {
         return;
     }
 
     const bool goodhearing = has_flag( MF_GOODHEARING );
-    const int volume = goodhearing ? 2 * vol - dist : vol - dist;
-    // Error is based on volume, louder sound = less error
-    if( volume <= 0 ) {
+    // Our "volume" is the difference between the heard volume and the ambient sound. Every 10dB a sound is perceived as about twice as loud.
+    // +20dB is perceived as about 4x as loud, +30dB perceived as about 8x as loud, etc.
+    // We are working with mdB spl, 100ths of a dB spl.
+    const short volume = heard_vol - ambient;
+
+    // if we somehow got passed a volume 30dB+ below ambient, jump out.
+    if( volume < -3000 ) {
         return;
     }
+    // Error is based on volume and goodhearing. Louder sound contributes lightly, goodhearing contributes greatly.
+    // Always some error, with more error if the heard sound is very low.
+    // Getting within a few tiles *should* enable them to get better info, or just see their target.
+    int max_error = ( goodhearing ) ? 0 : 2;
+    if( volume < -1000 ) {
+        // -10dB or greater below ambient
+        max_error = ( goodhearing ) ? 8 : 16;
 
-    int max_error = 0;
-    if( volume < 2 ) {
-        max_error = 10;
-    } else if( volume < 5 ) {
-        max_error = 5;
-    } else if( volume < 10 ) {
-        max_error = 3;
-    } else if( volume < 20 ) {
-        max_error = 1;
+    } else if( volume < 0 ) {
+        // -10 - 0 dB below ambient
+        max_error = ( goodhearing ) ? 6 : 12;
+
+    } else if( volume < 1000 ) {
+        // 0-10dB greater than ambient
+        max_error = ( goodhearing ) ? 4 : 10;
+
+    } else if( volume < 2000 ) {
+        // 10-20dB greater than ambient
+        max_error = ( goodhearing ) ? 3 : 8;
+
+    } else if( volume < 4000 ) {
+        // 20-40dB greater than ambient
+        max_error = ( goodhearing ) ? 2 : 6;
+
+    } else if( volume < 8000 ) {
+        // 40-80dB greater than ambient
+        max_error = ( goodhearing ) ? 1 : 4;
     }
 
-    int target_x = source.x + rng( -max_error, max_error );
-    int target_y = source.y + rng( -max_error, max_error );
-    // target_z will require some special check due to soil muffling sounds
+    int target_x = source.origin.x + rng( -max_error, max_error );
+    int target_y = source.origin.y + rng( -max_error, max_error );
+    // Allowing for z level error would cause consistant issues with monsters trying to path into solid rock.
 
-    int wander_turns = volume * ( goodhearing ? 6 : 1 );
+    // A goodhearing monster will follow a heard_sound of 100dB for 26 turns (10 + 16).
+    // We take in mdB, 100ths of a decibel and divide by 1000 to get our follow for turn value.
+    // If we are reinforcing a sound source, we will follow said sound for an additional 30 turns.
+    const short wander_turns = std::ceil( ( heard_vol * 0.001 ) + ( goodhearing ? 16 : 4 ) ) +
+                               ( reinforce_source ? 30 : 0 );
 
-    process_trigger( mon_trigger::SOUND, volume );
-    if( morale >= 0 && anger >= 10 ) {
-        // TODO: Add a proper check for fleeing attitude
-        // but cache it nicely, because this part is called a lot
-        wander_to( tripoint( target_x, target_y, source.z ), wander_turns );
-    } else if( morale < 0 ) {
+    process_trigger( mon_trigger::SOUND, ( heard_vol * 0.001 ) );
+    if( morale >= 0 && anger >= 10  && !afraid_of_source ) {
+
+        wander_to( tripoint( target_x, target_y, source.origin.z ), wander_turns );
+    } else if( morale < 0 || afraid_of_source ) {
         // Monsters afraid of sound should not go towards sound
-        wander_to( tripoint( 2 * posx() - target_x, 2 * posy() - target_y, 2 * posz() - source.z ),
+        wander_to( tripoint( 2 * posx() - target_x, 2 * posy() - target_y, 2 * posz() - source.origin.z ),
                    wander_turns );
     }
 }

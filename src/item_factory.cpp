@@ -298,10 +298,22 @@ void Item_factory::finalize_pre( itype &obj )
 
     if( obj.ammo ) {
         // for ammo not specifying loudness (or an explicit zero) derive value from other properties
+        // 343 is the speed of sound in atmosphere, but guns are still loud.
+        // Very few firearms have projectiles with speeds lower than 200m/s, so we use that as the cutoff.
+        // For reference, arrows/bolts are sub 140 speed.
         if( obj.ammo->loudness < 0 ) {
-            obj.ammo->loudness = obj.ammo->range * 2;
-            for( const damage_unit &du : obj.ammo->damage ) {
-                obj.ammo->loudness += ( du.amount * 2 ) + du.res_pen;
+            if( obj.ammo->speed > 200 ) {
+                // TODO: Overhaul base noise algorithm. The min/floor/log10 is a stopgap to make firearm noise from tile vol to dB spl.
+                // Basing noise off of range/damage/AP results in wildly varying tile volumes, pistols that cannot deafen the user and .308 rifles that will always deafen all NPCs with no hearing protection in the reality bubble.
+                obj.ammo->loudness = obj.ammo->range * 2;
+                for( const damage_unit &du : obj.ammo->damage ) {
+                    obj.ammo->loudness += ( du.amount * 2 ) + du.res_pen;
+                }
+                obj.ammo->loudness = std::min( 191.0,
+                                               ( 120 + std::floor( 20 * std::log10( obj.ammo->loudness ) ) ) );
+            } else {
+                // 20dB is very quiet.
+                obj.ammo->loudness = 20;
             }
         }
 
@@ -1990,6 +2002,8 @@ void Item_factory::load( islot_armor &slot, const JsonObject &jo, const std::str
     assign( jo, "storage", slot.storage, strict, 0_ml );
     assign( jo, "weight_capacity_modifier", slot.weight_capacity_modifier );
     assign( jo, "weight_capacity_bonus", slot.weight_capacity_bonus, strict, 0_gram );
+    assign( jo, "hearing_protection", slot.hearing_protection, strict, 0 );
+    assign( jo, "adv_hearing_protection", slot.adv_hearing_protection, strict, 0 );
     assign( jo, "valid_mods", slot.valid_mods, strict );
 
     if( jo.has_array( "armor_portion_data" ) ) {

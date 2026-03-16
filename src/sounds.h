@@ -1,13 +1,17 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
+#include "type_id.h"
+#include "point.h"
 
 #include "enum_traits.h"
 #include "units_angle.h"
 
 class Character;
+class npc;
 class Creature;
 class JsonObject;
 class item;
@@ -15,6 +19,7 @@ class monster;
 class player;
 class translation;
 struct tripoint;
+struct sound_event;
 template <typename E> struct enum_traits;
 
 namespace sounds
@@ -35,48 +40,34 @@ enum class sound_t : int {
     _LAST // must always be last
 };
 
-// Methods for recording sound events.
-/**
- * Sound at (p) of intensity (vol)
- *
- * If the description parameter is a non-empty string, then a string message about the
- * sound is generated for the player.
- *
- * @param p position of sound.
- * @param vol Volume of sound.
- * @param category general type of sound for faster parsing
- * @param description Description of the sound for the player
- * @param ambient Sound does not interrupt player activity if this is true
- * @param id Id of sound effect
- * @param variant Variant of sound effect given in id
- * @returns true if the player could hear the sound.
- */
-void sound( const tripoint &p, int vol, sound_t category, const std::string &description,
-            bool ambient = false, const std::string &id = "",
-            const std::string &variant = "default" );
-void sound( const tripoint &p, int vol, sound_t category, const translation &description,
-            bool ambient = false, const std::string &id = "",
-            const std::string &variant = "default" );
-/** Functions identical to sound(..., true). */
-void ambient_sound( const tripoint &p, int vol, sound_t category, const std::string &description );
-/** Creates a list of coordinates at which to draw footsteps. */
-void add_footstep( const tripoint &p, int volume, int distance, monster *source,
-                   const std::string &footstep );
+void sound( const sound_event &soundevent );
+// Legacy sound methods kept as comments for documentation and compatability reference.
+//
+/** Functions identical to sound, but all "from" bools are set to false. */
+//void ambient_sound( const tripoint &p, short vol, sound_t category,
+//                    const std::string &description );
+///** Creates a list of coordinates at which to draw footsteps. */
+//void add_footstep( const tripoint &p, short volume,
+//                   const std::string &footstep, faction_id faction );
+//void add_footstep( const tripoint &p, short volume,
+//                   const std::string &footstep, mfaction_str_id monsterfaction );
 
 /* Make sure the sounds are all reset when we start a new game. */
 void reset_sounds();
 void reset_markers();
 
-// Methods for processing sound events, these
-// process_sounds() applies the sounds since the last turn to monster AI,
+// Methods for processing sound events
+// process_sounds() applies the sounds since the last turn to monster AI
 void process_sounds();
+// Processes sounds for a given NPC at their tripoint and applies the sounds to the NPC's AI
+void process_sounds_npc();
 // process_sound_markers applies sound events to the player and records them for display.
 void process_sound_markers( Character *who );
 
 // Return list of points that have sound events the player can hear.
 std::vector<tripoint> get_footstep_markers();
-// Return list of all sounds and the list of sound cluster centroids.
-std::pair<std::vector<tripoint>, std::vector<tripoint>> get_monster_sounds();
+// Return a vector of all sound events not from monsters, and all sound events from monsters.
+std::pair< std::vector<tripoint>, std::vector<tripoint>> get_monster_sounds();
 // retrieve the sound event(s?) at a location.
 std::string sound_at( const tripoint &location );
 /** Tells us if sound has been enabled in options */
@@ -169,5 +160,202 @@ template<>
 struct enum_traits<sfx::channel> {
     static constexpr auto last = sfx::channel::MAX_CHANNEL;
 };
+/**
+* sound_event to pass to the sounds::sound() to flood fill out the sound or pass ambient noise to the player.
+* How loud a sound is at the source tile (or how loud an ambient sound is), in Decibels Sound Pressure Level (dB spl, or dB) at a reference distance of 1 meter from the sound source.
+* Valid input is 0-191. volume must be atleast 20dB to propagate, volumes louder than 191dB will be reduced to 191dB.
+* See the wall of text below for more context, physics and proper usage if desired.
+* @param volume
+* What is the tripoint position of the sound source?
+* @param origin
+* What enum sound category is this?
+* @param category
+* String description of the sound.
+* @param description
+* Is this sound from movement?
+* @param movement_noise
+* If all three from_xxxx bools are false, a sound qualifies to be ambient noise.
+* Did the player make this noise?
+* @param from_player
+* Did a monster make this noise?
+* @param from_monster
+* Did an NPC make this noise?
+* @param from_npc
+* ID and variant are used to select what SFX audio to play
+* @param id
+* @param variant
+* faction and monfaction are the source creature's NPC and monster factions respectively. Do not set for sounds that are not from a creature.
+* @param faction
+* @param monfaction
+*/
+struct sound_event {
+    // How loud a sound is at a reference distance of 1 meter (or how loud an ambient sound is), in Decibels Sound Pressure Level (dB spl, or just dB from now on), 0 - 191
+    // In real life if the volume of a sound is expressed in dB, it almost certainly is refering to dB spl or its a speaker manufacturer trying to impress with similarly named but unapplicable units.
+    //
+    // 0 dB spl reference is 2x10^-5 Pascals, which is an accademic and industry standard. This is the threshold of human hearing at 1kHz.
+    // As a general rule, 0-40 dB is almost perfectly silent to very quiet,
+    // 40-60 is quiet,
+    // 60-80 dB is noisy,
+    // 100 dB is very noisy,
+    // 120 dB is intolerable and is the low threshold for instantaneous hearing loss and pain,
+    // 140 dB is the high threshold for pain,
+    // 150 dB is garunteed temporary hearing loss,
+    // 160 dB is a general ballpark for how loud unsuppressed gunfire is for the shooter,
+    // 180+ dB will start to knock humans unconscious and cause injury.
+    // Above 191 dB a pressure wave is a supersonic shockwave, and does not get to be a "sound wave" until it ceases being supersonic.
+    // Outside of good conditions humans generally will not notice sounds below 20 dB. The ambient noise level of a quiet room is around 40 dB, a quiet street is around 50 dB.
+    // For a more detailed example list, see https://www.engineeringtoolbox.com/sound-pressure-d_711.html
+    //
+    // Decibels are a relative unit of measurment that expresses the ratio of two values of some quantity on a logarithmic scale.
+    // By itself it is unitless, since it is just a ratio. When expressing something in Decibels, what is being compared must be stated as there are dozens of different units that use Decibels.
+    // It is used because there is such a vast range of technically audible sounds, 0.00002 Pa to above 101000 Pa
+    // dB spl can be used to find the pressure reduction between two distances given a reference distance. A dB spl measurment is meaningless without a reference distance.
+    // In game we take the base reference distance for all dB spl measurments to be 1 meter.
+    // Sound wave pressure loss over distance follows the inverse square law.
+    // Taking 1 tile to be ~1 meters, in an open field 10 tiles distance reduces received dB by 20, 100 tiles distance reduces dB by 40, etc.
+    // Adding dB spl has to be done by the root mean square method (100dB + 100dB + 100 dB = ~104.7 dB spl) as it is itself a rms value of pressure fluctuations.
+    // Adding several dB values together results in something usually almost identical to the largest source, (100 dB + 100 dB + 113 dB = 114.3 dB)
+    // so we will generally just take the largest volume if its 10 greater than other sounds.
+    //
+    // Unfortunantly there are three different accoustic quantities that are expressed in a Decibel ratio.
+    // Each is related to eachother but are very different quantities and are mistaken for one another in almost all non-engineering or non-accademic contexts.
+    // To make it even worse its still not uncommon to find mix ups in technical sources or to just have all three called dB and the authors expect you to just know which one they mean.
+    // It is very common for audio electronics manufacturers especially headset or microphone manufacturers to just call all three properties sound intensity.
+    // Saying someone probably got something wrong is not really an insult here, its just a fact of life with accoustics because of how poorly communicated so much information is.
+    // (Be very, very careful second guessing musicians/sound techs however.)
+    //
+    // *Sound Pressure Level* (sound pressure, dB spl) is the rms (root mean square) pressure deviation due to a pressure wave (sound wave) from a reference pressure at some specific point.
+    //      Proper unit is Pascals. This is what we are using in game. Unless specified, all dB units in game are dB spl. dB spl = 10*Log10(P^2/Pref^2) = 20*Log10(P/Pref).
+    //      When discussing pressure levels in accoustics unless someone explicitly says they are referencing the peak amplitude of a sound wave, what they are refering to is the sound pressure level.
+    //      Sound Pressure level is a root means square value, and is the effective pressure of that sinusoidal pressure wave at some point as it flip flops from positive to negative amplitude upwards of a couple thousand times a second.
+    //      Almost all reference dB values for sounds are in sound pressure level, health regulations/medical figures, and this is what is measured by a point sensor like microphones or decibel meters.
+    //      Doubling the pressure of a sound wave increases the dB value by 6. A difference of 60 dB is a 1024x increase in pressure!
+    //      Maximum dB spl in air is taken at 191 dB, the maximum peak (not rms) dB is 194.
+    //      Pressures of a higher dB rating are not sound pressure waves, they are supersonic blast/shock waves and should be modeled as damaging explosions. 195dB will always rupture human eardrums. 200dB+ tends to be fatal from pressure alone.
+    //
+    //      If a source says that the sound pressure doubles every 3 dB, they gotten something wrong and have likely conflated sound pressure level with sound intensity level.
+    //      This is probably the second most common mistake when discussing sound/accoustics, second only to not listing reference distance for dB spl measurments. dB spl measurments are meaningless without a reference distance.
+    //
+    // Sound Power Level (dB swl) is a the rate at which sound energy changes with time across some surface, and is effectively a vector quantity. This is not perceptible.
+    //      Proper unit is in Watts. dB swl = 10*Log10(W/Wref)
+    //      Very useful from an engineering/physics standpoint and still useful to the end user, as it only depends on the noise source and is independant of the acoustic enviornment.
+    //      But we dont really care about that here, and dont need to deal with all of the extra math and calcs that we would have to add.
+    //
+    // Sound Intensity Level (dB sil) is the power carried by sound waves per unit area in a direction perpendicular to some area. This is not perceptible.
+    //      Proper unit is Watts/meter^2 (I). dB sil = 10*Log10(I/Iref) This is a field quantity and we are not trying to simulate the universe.
+    //      Sound intensity doubles for every 3 dB sil.
+    //      This value cannot really be directly measured, and is only really useful from an engineering/physics standpoint or to professional audio technicians.
+    //      It is very common for electronics manufacturers to either call dB spl metrics this since it sounds cooler, or to substitute the numbers they got in a test chamber for dB spl metrics.
+    //
+    // We are in control of reality, and only really care about the perceived sound of creatures at explicit points in time at explicit distances which we control, so we use sound pressure level.
+    // Thank you for attending my T.E.D. talk.
+    short volume = 0;
 
+    // What is the position of the sound source?
+    tripoint origin;
 
+    // What enum sound category is this?
+    sounds::sound_t category = sounds::sound_t::background;
+
+    // String description of the sound.
+    std::string description = std::string( "" );
+
+    // Is this sound from movement?
+    bool movement_noise = false;
+
+    // If all three froms are false, its ambient noise. Only one should be true.
+    // Did the player make this noise?
+    bool from_player = false;
+
+    // Did a monster make this noise?
+    bool from_monster = false;
+
+    // Did an NPC make this noise?
+    bool from_npc = false;
+
+    // This stuff is for selecting actual sfx to play through an audio device in THE REAL WORLD. (spooky)
+    std::string id = std::string( "" );
+    std::string variant = std::string( "default" );
+    // NPC and monster faction of the source creature, if applicable. Do not set for sounds not from creatures.
+    faction_id faction = faction_id( "no_faction" );
+    mfaction_str_id monfaction = mfaction_str_id( "" );
+};
+
+// Volume loss for moving to a new distance, in 100ths of dB (mdB). Nominal calc is 100 * (20 * Log10( dist / ( dist - 1 )))
+// dist_vol_loss[2] provides the dB loss moving from 1m to 2m, dist_vol_loss[5] provides the dB loss moving from 4m to 5m, etc.
+// Technically we should not have a value for going from 0m to 1m, but we might ask for it with how sound flood filling is handled around corners etc.
+// Mathmatically it should theoretically be somewhere around 20dB, though the rules for calcing sound pressure break down at very small distances
+// And finding the actual answer is the realm of neat pressure calc tricks or L'Hopital's shenanagins. Just take 15dB.
+//
+// Store this so we dont have to calc distance loss every time we floodfill a tile for sound.
+// These values will be used very frequently, probably a couple hundred times per sound cast for anything but very quiet sounds.
+// Doing the calc out every time for those would bog things down.
+// With this, we should be able to do everything with addition/subtraction.
+// Distance 1 only happens at the source of a sound, i.e., the reference volume.
+static constexpr auto dist_vol_loss = std::array<short, 122>
+{
+    0, 1500, 602, 352, 250, 194, 158, 134, 116, 102, 92, 83, 76, 70, 64, 60, 56, 53, 50, 47, 45, 42, 40,
+    39, 37, 35, 34, 33, 32, 30, 29, 28, 28, 27, 26, 25, 24, 24, 23, 23, 22, 21, 21, 20, 20, 20, 19, 19,
+    18, 18, 18, 17, 17, 17, 16, 16, 16, 15, 15, 15, 15, 14, 14, 14, 14, 13, 13, 13, 13, 13, 12, 12, 12,
+    12, 12, 12, 12, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9,
+    9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7
+};
+
+// Given a source tile's sound direction as the index, provides an array of which directions are valid to propagate sound to.
+// Member entries a listed in clockwise order. First and last members are subject to a distance penalty.
+// Direction index and adjacent tile index are set such that direction 0 refers to adjacent tile 0, etc.
+// If a tile's direction is set to 8 for any reason, it is invalid to propagate to.
+// Store this as we iterate through it every time we check a tile's neighboors for update, for potentially hundreds of tiles per sound.
+// We do additional map checking to check for corner invalidation due to walls, but having this stored still helps speed things up.
+// [-1 , 1 ] [ 0 , 1 ] [ 1 , 1 ]   [ 0 ] [ 1 ] [ 2 ]
+// [-1 , 0 ] [ 0 , 0 ] [ 1 , 0 ] = [ 7 ] [ 8 ] [ 3 ]
+// [-1 , -1] [ 0 , -1] [ 1 , -1]   [ 6 ] [ 5 ] [ 4 ]
+static constexpr auto spropagation_tiles_by_sdirection = std::array<std::array<uint8_t, 5>, 8 >
+{
+    { {6, 7, 0, 1, 2}, //Direction "0"
+        {7, 0, 1, 2, 3}, //Direction "1"
+        {0, 1, 2, 3, 4}, //Direction "2"
+        {1, 2, 3, 4, 5}, //Direction "3"
+        {2, 3, 4, 5, 6}, //Direction "4"
+        {3, 4, 5, 6, 7}, //Direction "5"
+        {4, 5, 6, 7, 0}, //Direction "6"
+        {5, 6, 7, 0, 1} //Direction "7"
+    }
+};
+
+// Given a direction index, provides which adjacent tile indexes to check for walls.
+// Only odd direction/adjacent tile indexes are checked for walls, walls directly in the path of travel are not checked for.
+// This means that only two walls are checked for per direction. Walls prevent diagonal sound propagation.
+// Member entries a listed in clockwise order. Direction index and adjacent tile index are set such that direction 0 refers to adjacent tile 0, etc.
+// [-1 , 1 ] [ 0 , 1 ] [ 1 , 1 ]   [ 0 ] [ 1 ] [ 2 ]
+// [-1 , 0 ] [ 0 , 0 ] [ 1 , 0 ] = [ 7 ] [ 8 ] [ 3 ]
+// [-1 , -1] [ 0 , -1] [ 1 , -1]   [ 6 ] [ 5 ] [ 4 ]
+static constexpr auto wall_check_by_sdirection = std::array<std::pair<uint8_t, uint8_t >, 8>
+{
+    { {7, 1}, //Direction "0"
+        {7, 3}, //Direction "1"
+        {1, 3}, //Direction "2"
+        {1, 5}, //Direction "3"
+        {3, 5}, //Direction "4"
+        {3, 7}, //Direction "5"
+        {5, 7}, //Direction "6"
+        {5, 1} //Direction "7"
+    }
+};
+// Conversevly, A wall at the given adjacent tile/direction index invalidates propagation through the listed direction index
+// Only cardinal direction walls apply this behavior, but we keep the array the same size for compatability.
+// [-1 , 1 ] [ 0 , 1 ] [ 1 , 1 ]   [ 0 ] [ 1 ] [ 2 ]
+// [-1 , 0 ] [ 0 , 0 ] [ 1 , 0 ] = [ 7 ] [ 8 ] [ 3 ]
+// [-1 , -1] [ 0 , -1] [ 1 , -1]   [ 6 ] [ 5 ] [ 4 ]
+static constexpr auto wall_sdir_invalidation = std::array<std::pair<uint8_t, uint8_t >, 8>
+{
+    { {7, 1}, //Direction "0"
+        {0, 2}, //Direction "1"
+        {1, 3}, //Direction "2"
+        {2, 4}, //Direction "3"
+        {3, 5}, //Direction "4"
+        {4, 6}, //Direction "5"
+        {5, 7}, //Direction "6"
+        {6, 0} //Direction "7"
+    }
+};

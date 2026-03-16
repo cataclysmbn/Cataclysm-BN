@@ -865,13 +865,21 @@ static int calc_gun_volume( const item &gun )
     // Inherit suppressor modifiers if relevant (e.g. KSG second mag) but still use current ammo
     const item &parent = ( gun.parent_item() != nullptr &&
                            gun.has_flag( flag_USE_PARENT_GUN ) ) ? *gun.parent_item() : gun;
+    // If our ammo is subsonic, loudness mods from the gun and gunmods can reduce noise freely.
+    // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will make a sonic boom.
     int noise = parent.type->gun->loudness;
+    // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
+    if( gun.ammo_data() ) {
+        noise += gun.ammo_data()->ammo->loudness;
+        // Speed of sound at sea level is around 343 meters per second.
+        if( gun.ammo_data()->ammo->speed > 342 ) {
+            noise = std::max( 120, noise );
+        }
+    }
     for( const auto mod : parent.gunmods() ) {
         noise += mod->type->gunmod->loudness;
     }
-    if( gun.ammo_data() ) {
-        noise += gun.ammo_data()->ammo->loudness;
-    }
+
 
     noise = std::max( noise, 0 );
     return noise;
@@ -2034,8 +2042,12 @@ void ranged::make_gun_sound_effect( const Character &who, bool burst, const item
 {
     const item::sound_data data = gun.gun_noise( burst );
     if( data.volume > 0 ) {
-        sounds::sound( who.pos(), data.volume, sounds::sound_t::combat,
-                       data.sound.empty() ? _( "Bang!" ) : data.sound );
+        sound_event se;
+        se.origin = who.pos();
+        se.volume = data.volume;
+        se.category = sounds::sound_t::combat;
+        se.description = data.sound.empty() ? _( "Bang!" ) : data.sound;
+        sounds::sound( se );
     }
     sfx::generate_gun_sound( who.pos(), gun );
 }
@@ -2056,7 +2068,7 @@ item::sound_data item::gun_noise( const bool burst ) const
             return { noise, burst ? _( "tz-tz-tzk!" ) : _( "tzk!" ) };
         } else if( noise < 80 ) {
             return { noise, burst ? _( "Brzzip!" ) : _( "tz-Zing!" ) };
-        } else if( noise < 200 ) {
+        } else if( noise < 160 ) {
             return { noise, burst ? _( "tzz-CR-CR-CRAck!" ) : _( "tz-CRACKck!" ) };
         } else {
             return { noise, burst ? _( "tzz-BOOOM!" ) : _( "tzk-BLAM!" ) };
@@ -2089,11 +2101,11 @@ item::sound_data item::gun_noise( const bool burst ) const
 
     if( type->weapon_category.contains( weapon_cat_ENERGY_WEAPONS ) ) {
         // Lasers and plasma
-        if( noise < 20 ) {
+        if( noise < 40 ) {
             return { noise, _( "Fzzt!" ) };
-        } else if( noise < 40 ) {
-            return { noise, _( "Pew!" ) };
         } else if( noise < 60 ) {
+            return { noise, _( "Pew!" ) };
+        } else if( noise < 80 ) {
             return { noise, _( "Tsewww!" ) };
         } else {
             return { noise, _( "Kra-kow!" ) };
@@ -2103,9 +2115,9 @@ item::sound_data item::gun_noise( const bool burst ) const
     } else if( noise > 0 ) {
         if( noise < 50 ) {
             return { noise, burst ? _( "Brrrip!" ) : _( "plink!" ) };
-        } else if( noise < 150 ) {
+        } else if( noise < 120 ) {
             return { noise, burst ? _( "Brrrap!" ) : _( "bang!" ) };
-        } else if( noise < 175 ) {
+        } else if( noise < 160 ) {
             return { noise, burst ? _( "P-p-p-pow!" ) : _( "blam!" ) };
         } else {
             return { noise, burst ? _( "Kaboom!" ) : _( "kerblam!" ) };

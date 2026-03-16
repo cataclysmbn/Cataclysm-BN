@@ -32,10 +32,44 @@ using overmap_land_use_code_id = string_id<overmap_land_use_code>;
 class JsonObject;
 struct mapgen_arguments;
 
+// Original land use codes seem to be based on the 2005 massachusetts land use codes. Only about 4/5ths of these are really applicable.
+
+static const overmap_land_use_code_id land_use_code_cropland( "cropland" );
+static const overmap_land_use_code_id land_use_code_pasture( "pasture" );
 static const overmap_land_use_code_id land_use_code_forest( "forest" );
 static const overmap_land_use_code_id land_use_code_wetland( "wetland" );
-static const overmap_land_use_code_id land_use_code_wetland_forest( "wetland_forest" );
+static const overmap_land_use_code_id land_use_code_mining( "mining" );
+static const overmap_land_use_code_id land_use_code_open_land( "open_land" );
+static const overmap_land_use_code_id
+land_use_code_recreation_participation( "recreation_participation" );
+static const overmap_land_use_code_id land_use_code_recreation_spectator( "recreation_spectator" );
+static const overmap_land_use_code_id land_use_code_recreation_water( "recreation_water" );
+static const overmap_land_use_code_id land_use_code_residential_multi( "residential_multi" );
+static const overmap_land_use_code_id land_use_code_residential_high( "residential_high" );
+static const overmap_land_use_code_id land_use_code_residential_medium( "residential_medium" );
+static const overmap_land_use_code_id land_use_code_residential_low( "residential_low" );
 static const overmap_land_use_code_id land_use_code_wetland_saltwater( "wetland_saltwater" );
+static const overmap_land_use_code_id land_use_code_commercial( "commercial" );
+static const overmap_land_use_code_id land_use_code_industrial( "industrial" );
+static const overmap_land_use_code_id land_use_code_transitional( "transitional" );
+static const overmap_land_use_code_id land_use_code_transportation( "transportation" );
+static const overmap_land_use_code_id land_use_code_waste_disposal( "waste_disposal" );
+static const overmap_land_use_code_id land_use_code_water( "water" );
+static const overmap_land_use_code_id land_use_code_cranberry_bog( "cranberry_bog" );
+static const overmap_land_use_code_id land_use_code_powerline_utility( "powerline_utility" );
+static const overmap_land_use_code_id
+land_use_code_saltwater_sandy_beach( "saltwater_sandy_beach" );
+static const overmap_land_use_code_id land_use_code_golf_course( "golf_course" );
+static const overmap_land_use_code_id land_use_code_marina( "marina" );
+static const overmap_land_use_code_id
+land_use_code_urban_public_institutional( "urban_public_institutional" );
+static const overmap_land_use_code_id land_use_code_cemetery( "cemetery" );
+static const overmap_land_use_code_id land_use_code_orchard( "orchard" );
+static const overmap_land_use_code_id land_use_code_nursery( "nursery" );
+static const overmap_land_use_code_id land_use_code_wetland_forest( "wetland_forest" );
+static const overmap_land_use_code_id land_use_code_residential_very_low( "residential_very_low" );
+static const overmap_land_use_code_id land_use_code_junkyard( "junkyard" );
+static const overmap_land_use_code_id land_use_code_brushland( "brushland" );
 
 class overmap_land_use_code
 {

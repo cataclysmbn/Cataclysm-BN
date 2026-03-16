@@ -1906,6 +1906,11 @@ class Character : public Creature, public location_visitable<Character>
         int get_armor_type( damage_type dt, bodypart_id bp ) const override;
         std::map<bodypart_id, int> get_all_armor_type( damage_type dt,
                 const std::map<bodypart_id, std::vector<const item *>> &clothing_map ) const;
+        /**
+        * Returns the total normal hearing protection of a characters worn items, in dB spl.
+        * If bool advanced is true, gets the advanced hearing protection.
+        */
+        int get_char_hearing_protection( bool advanced = false ) const;
 
         int get_stim() const;
         void set_stim( int new_stim );

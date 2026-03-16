@@ -430,15 +430,31 @@ inline static void rcdrive( point d )
     tripoint dest( c + d );
     if( here.impassable( dest ) || !here.can_put_items_ter_furn( dest ) ||
         here.has_furn( dest ) ) {
-        sounds::sound( dest, 7, sounds::sound_t::combat,
-                       _( "sound of a collision with an obstacle." ), true, "misc", "rc_car_hits_obstacle" );
+        sound_event se;
+        se.origin = dest;
+        se.volume = 65;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "sound of a collision with an obstacle." );
+        se.id = "misc";
+        se.variant = "rc_car_hits_obstacle";
+
+        sounds::sound( se );
         return;
     } else {
         tripoint src( c );
         detached_ptr<item> det_car = here.i_rem( src, rc_car );
         here.add_item_or_charges( dest, std::move( det_car ) );
         //~ Sound of moving a remote controlled car
-        sounds::sound( src, 6, sounds::sound_t::movement, _( "zzz…" ), true, "misc", "rc_car_drives" );
+        sound_event se;
+        se.origin = src;
+        se.volume = 50;
+        se.category = sounds::sound_t::movement;
+        se.movement_noise = true;
+        se.description = _( "zzz…" );
+        se.id = "misc";
+        se.variant = "rc_car_drives";
+
+        sounds::sound( se );
         u.moves -= 50;
 
         u.set_value( "remote_controlling", serialize_wrapper( [&]( JsonOut & jo ) {
@@ -711,16 +727,30 @@ static void smash()
             add_msg( m_neutral, _( "You don't seem to be damaging the %s." ), fd_to_smsh.first->get_name() );
             return;
         } else if( smashskill >= rng( bash_info.str_min, bash_info.str_max ) ) {
-            sounds::sound( smashp, bash_info.sound_vol.value_or( -1 ),
-                           sounds::sound_t::combat, bash_info.sound, true, "smash", "field" );
+            sound_event se;
+            se.origin = smashp;
+            se.volume = bash_info.sound_vol.value_or( -1 );
+            se.category = sounds::sound_t::combat;
+            se.description = bash_info.sound.translated();
+            se.id = "smash";
+            se.variant = "field";
+
+            sounds::sound( se );
             here.remove_field( smashp, fd_to_smsh.first );
             here.spawn_items( smashp, item_group::items_from( bash_info.drop_group, calendar::turn ) );
             u.mod_moves( - bash_info.fd_bash_move_cost );
             add_msg( m_info, bash_info.field_bash_msg_success.translated() );
             return;
         } else {
-            sounds::sound( smashp, bash_info.sound_fail_vol.value_or( -1 ),
-                           sounds::sound_t::combat, bash_info.sound_fail, true, "smash", "field" );
+            sound_event se;
+            se.origin = smashp;
+            se.volume = bash_info.sound_fail_vol.value_or( -1 );
+            se.category = sounds::sound_t::combat;
+            se.description = bash_info.sound_fail.translated();
+            se.id = "smash";
+            se.variant = "field";
+
+            sounds::sound( se );
             return;
         }
     }
@@ -769,7 +799,15 @@ static void smash()
                 rng( 0, vol + 3 ) < vol ) {
                 add_msg( m_bad, _( "Your %s shatters!" ), weapon.tname() );
                 weapon.spill_contents( u.pos() );
-                sounds::sound( u.pos(), 24, sounds::sound_t::combat, "CRACK!", true, "smash", "glass" );
+                sound_event se;
+                se.origin = u.pos();
+                se.volume = 80;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "CRACK!" );
+                se.id = "smash";
+                se.variant = "glass";
+
+                sounds::sound( se );
                 u.deal_damage( nullptr, bodypart_id( "hand_r" ), damage_instance( DT_CUT, rng( 0, vol ) ) );
                 if( vol > 20 ) {
                     // Hurt left arm too, if it was big

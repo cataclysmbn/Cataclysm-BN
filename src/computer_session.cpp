@@ -348,9 +348,16 @@ void computer_session::action_unlock()
 //Toll is required for the church computer/mechanism to function
 void computer_session::action_toll()
 {
-    sounds::sound( g->u.pos(), 120, sounds::sound_t::music,
-                   //~ the sound of a church bell ringing
-                   _( "Bohm…  Bohm…  Bohm…" ), true, "environment", "church_bells" );
+    sound_event se;
+    se.origin = g->u.pos();
+    se.volume = 130;
+    se.category = sounds::sound_t::music;
+    //~ the sound of a church bell ringing
+    se.description = _( "Bohm…  Bohm…  Bohm…" );
+    se.id = "environment";
+    se.variant = "church_bells";
+
+    sounds::sound( se );
 }
 
 void computer_session::action_sample()
@@ -392,8 +399,14 @@ void computer_session::action_sample()
 void computer_session::action_release()
 {
     g->events().send<event_type::releases_subspace_specimens>();
-    sounds::sound( g->u.pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), false, "environment",
-                   "alarm" );
+    sound_event se;
+    se.origin = g->u.pos();
+    se.volume = 80;
+    se.category = sounds::sound_t::alarm;
+    se.description = _( "an alarm sound!" );
+    se.id = "environment";
+    se.variant = "alarm";
+    sounds::sound( se );
     get_map().translate_radius( t_reinforced_glass, t_thconc_floor, 25.0, g->u.pos(), true );
     query_any( _( "Containment shields opened.  Press any key…" ) );
 }
@@ -406,8 +419,14 @@ void computer_session::action_release_disarm()
 
 void computer_session::action_release_bionics()
 {
-    sounds::sound( g->u.pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), false, "environment",
-                   "alarm" );
+    sound_event se;
+    se.origin = g->u.pos();
+    se.volume = 80;
+    se.category = sounds::sound_t::alarm;
+    se.description = _( "an alarm sound!" );
+    se.id = "environment";
+    se.variant = "alarm";
+    sounds::sound( se );
     get_map().translate_radius( t_reinforced_glass, t_thconc_floor, 3.0, g->u.pos(), true );
     query_any( _( "Containment shields opened.  Press any key…" ) );
 }
@@ -1041,8 +1060,14 @@ void computer_session::action_irradiator()
                         print_error( _( "  >> Radiation spike detected!\n" ) );
                         print_error( _( "WARNING [912]: Catastrophic malfunction!  Contamination detected!" ) );
                         print_error( _( "EMERGENCY PROCEDURE [1]:  Evacuate.  Evacuate.  Evacuate.\n" ) );
-                        sounds::sound( g->u.pos(), 30, sounds::sound_t::alarm, _( "an alarm sound!" ), false, "environment",
-                                       "alarm" );
+                        sound_event se;
+                        se.origin = g->u.pos();
+                        se.volume = 90;
+                        se.category = sounds::sound_t::alarm;
+                        se.description = _( "an alarm sound!" );
+                        se.id = "environment";
+                        se.variant = "alarm";
+                        sounds::sound( se );
                         here.i_rem( dest, it );
                         here.make_rubble( dest );
                         here.propagate_field( dest, fd_nuke_gas, 100, 3 );
@@ -1307,8 +1332,14 @@ void computer_session::failure_shutdown()
 void computer_session::failure_alarm()
 {
     g->events().send<event_type::triggers_alarm>( g->u.getID() );
-    sounds::sound( g->u.pos(), 60, sounds::sound_t::alarm, _( "an alarm sound!" ), false, "environment",
-                   "alarm" );
+    sound_event se;
+    se.origin = g->u.pos();
+    se.volume = 100;
+    se.category = sounds::sound_t::alarm;
+    se.description = _( "an alarm sound!" );
+    se.id = "environment";
+    se.variant = "alarm";
+    sounds::sound( se );
     if( g->get_levz() > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
         g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
                              g->u.global_sm_location() );

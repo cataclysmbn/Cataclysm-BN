@@ -190,8 +190,14 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
             if( gunactor->get_max_range() < distance_to_source ) {
                 continue;
             }
-            sounds::sound( m.pos(), 50, sounds::sound_t::alert,
-                           _( "Detected shots from unseen attacker, return fire mode engaged." ) );
+            sound_event se;
+            se.origin = m.pos();
+            se.volume = 80;
+            se.category = sounds::sound_t::alert;
+            se.description = _( "Detected shots from unseen attacker, return fire mode engaged." );
+            se.from_monster = true;
+            se.monfaction = m.faction.id();
+            sounds::sound( se );
 
             gunactor->shoot( m, fire_point, gun_mode_id( "DEFAULT" ), dispersion );
 

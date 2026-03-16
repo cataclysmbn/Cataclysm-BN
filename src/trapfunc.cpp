@@ -98,7 +98,14 @@ bool trapfunc::bubble( const tripoint &p, Creature *c, item * )
             add_msg( m_warning, _( "Your %s steps on some bubble wrap!" ), c->get_name() );
         }
     }
-    sounds::sound( p, 18, sounds::sound_t::alarm, _( "Pop!" ), false, "trap", "bubble_wrap" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 65;
+    se.category = sounds::sound_t::alarm;
+    se.description = _( "Pop!" );
+    se.id = "trap";
+    se.variant = "bubble_wrap";
+    sounds::sound( se );
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;
 }
@@ -124,7 +131,15 @@ bool trapfunc::glass( const tripoint &p, Creature *c, item * )
             c->check_dead_state();
         }
     }
-    sounds::sound( p, 10, sounds::sound_t::combat, _( "glass cracking!" ), false, "trap", "glass" );
+    add_msg( _( "The shards shatter!" ) );
+    sound_event se;
+    se.origin = p;
+    se.volume = 60;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "glass cracking!" );
+    se.id = "trap";
+    se.variant = "glass";
+    sounds::sound( se );
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;
 }
@@ -149,7 +164,16 @@ bool trapfunc::beartrap( const tripoint &p, Creature *c, item * )
     if( c != nullptr && c->get_size() == creature_size::tiny ) {
         return false;
     }
-    sounds::sound( p, 8, sounds::sound_t::combat, _( "SNAP!" ), false, "trap", "bear_trap" );
+    // Increased volume relative to its origional 8 tile distance, bear traps are actually quite loud.
+    // This helps players hear if a trap they set nearby went off.
+    sound_event se;
+    se.origin = p;
+    se.volume = 80;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "SNAP!" );
+    se.id = "trap";
+    se.variant = "bear_trap";
+    sounds::sound( se );
     if( c != nullptr ) {
         // What got hit?
         const bodypart_id hit = one_in( 2 ) ? bodypart_id( "leg_l" ) : bodypart_id( "leg_r" );
@@ -258,8 +282,14 @@ bool trapfunc::caltrops_glass( const tripoint &p, Creature *c, item * )
     c->check_dead_state();
     if( g->u.sees( p ) ) {
         add_msg( _( "The shards shatter!" ) );
-        sounds::sound( p, 8, sounds::sound_t::combat, _( "glass cracking!" ), false, "trap",
-                       "glass_caltrops" );
+        sound_event se;
+        se.origin = p;
+        se.volume = 60;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "glass cracking!" );
+        se.id = "trap";
+        se.variant = "glass_caltrops";
+        sounds::sound( se );
     }
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;
@@ -421,8 +451,14 @@ bool trapfunc::crossbow( const tripoint &p, Creature *c, item * )
 
 bool trapfunc::shotgun( const tripoint &p, Creature *c, item * )
 {
-    sounds::sound( p, 60, sounds::sound_t::combat, _( "Kerblam!" ), false, "fire_gun",
-                   g->m.tr_at( p ).loadid == tr_shotgun_1 ? "shotgun_s" : "shotgun_d" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 160;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "Kerblam!" );
+    se.id = "fire_gun";
+    se.variant = g->m.tr_at( p ).loadid == tr_shotgun_1 ? "shotgun_s" : "shotgun_d";
+    sounds::sound( se );
     int shots = ( g->m.tr_at( p ).loadid == tr_shotgun_2 ? 2 : 1 );
     if( c != nullptr ) {
         if( c->has_effect( effect_ridden ) ) {
@@ -515,7 +551,14 @@ bool trapfunc::blade( const tripoint &p, Creature *c, item * )
 
 bool trapfunc::snare_light( const tripoint &p, Creature *c, item * )
 {
-    sounds::sound( p, 2, sounds::sound_t::combat, _( "Snap!" ), false, "trap", "snare" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 40;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "Snap!" );
+    se.id = "trap";
+    se.variant = "snare";
+    sounds::sound( se );
     if( c == nullptr ) {
         return false;
     }
@@ -542,7 +585,14 @@ bool trapfunc::snare_light( const tripoint &p, Creature *c, item * )
 
 bool trapfunc::snare_heavy( const tripoint &p, Creature *c, item * )
 {
-    sounds::sound( p, 4, sounds::sound_t::combat, _( "Snap!" ), false, "trap", "snare" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 50;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "Snap!" );
+    se.id = "trap";
+    se.variant = "snare";
+    sounds::sound( se );
     if( c == nullptr ) {
         return false;
     }
@@ -627,7 +677,15 @@ bool trapfunc::boobytrap( const tripoint &p, Creature *c, item * )
 bool trapfunc::telepad( const tripoint &p, Creature *c, item * )
 {
     //~ the sound of a telepad functioning
-    sounds::sound( p, 6, sounds::sound_t::movement, _( "vvrrrRRMM*POP!*" ), false, "trap", "teleport" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 70;
+    se.category = sounds::sound_t::movement;
+    se.description = _( "vvrrrRRMM*POP!*" );
+    se.movement_noise = true;
+    se.id = "trap";
+    se.variant = "teleport";
+    sounds::sound( se );
     if( c == nullptr ) {
         return false;
     }
@@ -698,8 +756,15 @@ bool trapfunc::dissector( const tripoint &p, Creature *c, item * )
         if( z->type->in_species( ROBOT ) ) {
             //The monster is a robot. So the dissector should not try to dissect the monsters flesh.
             //Dissector error sound.
-            sounds::sound( p, 4, sounds::sound_t::electronic_speech,
-                           _( "BEEPBOOP!  Please remove non-organic object." ), false, "speech", "robot" );
+            sound_event se;
+            se.origin = p;
+            se.volume = 60;
+            se.category = sounds::sound_t::electronic_speech;
+            se.description = _( "BEEPBOOP!  Please remove non-organic object." );
+            se.id = "speech";
+            se.variant = "robot";
+
+            sounds::sound( se );
             c->add_msg_player_or_npc( m_bad, _( "The dissector lights up, and shuts down." ),
                                       _( "The dissector lights up, and shuts down." ) );
             return false;
@@ -726,7 +791,14 @@ bool trapfunc::dissector( const tripoint &p, Creature *c, item * )
     }
 
     //~ the sound of a dissector dissecting
-    sounds::sound( p, 10, sounds::sound_t::combat, _( "BRZZZAP!" ), false, "trap", "dissector" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 70;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "BRZZZAP" );
+    se.id = "trap";
+    se.variant = "dissector";
+    sounds::sound( se );
     if( g->u.sees( p ) ) {
         add_msg( m_bad, _( "Electrical beams emit from the floor and slice the %s!" ), c->get_name() );
     }
@@ -1339,7 +1411,7 @@ bool trapfunc::glow( const tripoint &p, Creature *c, item * )
 
 bool trapfunc::hum( const tripoint &p, Creature *, item * )
 {
-    int volume = rng( 1, 200 );
+    int volume = rng( 40, 150 );
     std::string sfx;
     if( volume <= 10 ) {
         //~ a quiet humming sound
@@ -1354,7 +1426,14 @@ bool trapfunc::hum( const tripoint &p, Creature *, item * )
         //~ a very loud humming sound
         sfx = _( "VRMMMMMM" );
     }
-    sounds::sound( p, volume, sounds::sound_t::activity, sfx, false, "humming", "machinery" );
+    sound_event se;
+    se.origin = p;
+    se.volume = volume;
+    se.category = sounds::sound_t::activity;
+    se.description = sfx;
+    se.id = "humming";
+    se.variant = "machinery";
+    sounds::sound( se );
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;
 }
@@ -1439,7 +1518,7 @@ bool trapfunc::cast_spell( const tripoint &p, Creature *critter, item * )
     const spell trap_spell = g->m.tr_at( p ).spell_data.get_spell( 0 );
     npc dummy;
     trap_spell.cast_all_effects( dummy, critter->pos() );
-    trap_spell.make_sound( p );
+    trap_spell.make_sound( p, dummy );
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;
 }
@@ -1447,7 +1526,14 @@ bool trapfunc::cast_spell( const tripoint &p, Creature *critter, item * )
 bool trapfunc::snake( const tripoint &p, Creature *, item * )
 {
     //~ the sound a snake makes
-    sounds::sound( p, 10, sounds::sound_t::movement, _( "ssssssss" ), false, "misc", "snake_hiss" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 40;
+    se.category = sounds::sound_t::movement;
+    se.description = _( "ssssssss" );
+    se.id = "misc";
+    se.variant = "snake_hiss";
+    sounds::sound( se );
     if( one_in( 6 ) ) {
         g->m.remove_trap( p );
     }

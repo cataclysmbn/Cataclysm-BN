@@ -33,6 +33,7 @@
 #include "monster_action.h"
 #include "monster_plan.h"
 #include "visitable.h"
+#include "sounds.h"
 
 class Character;
 class JsonIn;
@@ -548,11 +549,14 @@ class monster : public Creature, public location_visitable<monster>
         /**
          * Makes monster react to heard sound
          *
-         * @param source Location of the sound source
-         * @param vol Volume at the center of the sound source
-         * @param distance Distance to sound source (currently just rl_dist)
+         * @param source Sound event of the source sound.
+         * @param heard_vol Volume in mdB spl heard by the creature
+         * @param ambient Ambient volume in mdB spl
+         * @param reinforce_source Is the monster reinforcing the sound source, or should significantly prioritize heading to this sound over others?
+         * @param afraid_of_source Is the monster afraid of the sound source, fleeing it regardless of moral?
          */
-        void hear_sound( const tripoint &source, int vol, int distance );
+        void hear_sound( const sound_event &source, const short heard_vol, const short ambient,
+                         const bool reinforce_source = false, const bool afraid_of_source = false );
 
         bool is_hallucination() const override;    // true if the monster isn't actually real
 
@@ -593,6 +597,10 @@ class monster : public Creature, public location_visitable<monster>
         units::volume get_carried_volume() const;
 
         // DEFINING VALUES
+        // Is the monster friendly to the player.
+        // 0 = hostile
+        // -1 = Permanantly friendly/pet/allied
+        // >0 = freindly for x turns
         int friendly;
         int anger = 0;
         int morale = 0;

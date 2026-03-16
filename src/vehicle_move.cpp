@@ -914,7 +914,15 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
             if( part_flag( ret.part, "SHARP" ) ) {
                 critter->bleed();
             } else {
-                sounds::sound( p, 20, sounds::sound_t::combat, snd, false, "smash_success", "hit_vehicle" );
+                sound_event se;
+                se.origin = p;
+                se.volume = 70;
+                se.category = sounds::sound_t::combat;
+                se.description = snd;
+                se.id = "smash_success";
+                se.variant = "hit_vehicle";
+
+                sounds::sound( se );
             }
         }
     } else {
@@ -930,8 +938,15 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
             }
         }
 
-        sounds::sound( p, smashed ? 80 : 50, sounds::sound_t::combat, snd, false, "smash_success",
-                       "hit_vehicle" );
+        sound_event se;
+        se.origin = p;
+        se.volume = smashed ? 90 : 70;
+        se.category = sounds::sound_t::combat;
+        se.description = snd;
+        se.id = "smash_success";
+        se.variant = "hit_vehicle";
+
+        sounds::sound( se );
     }
 
     if( smashed && !vert_coll ) {
@@ -994,8 +1009,15 @@ void vehicle::handle_trap( const tripoint &p, int part )
 
     if( veh_data.chance >= rng( 1, 100 ) ) {
         if( veh_data.sound_volume > 0 ) {
-            sounds::sound( p, veh_data.sound_volume, sounds::sound_t::combat, veh_data.sound, false,
-                           veh_data.sound_type, veh_data.sound_variant );
+            sound_event se;
+            se.origin = p;
+            se.volume = veh_data.sound_volume;
+            se.category = sounds::sound_t::combat;
+            se.description = veh_data.sound.translated();
+            se.id = veh_data.sound_type;
+            se.variant = veh_data.sound_variant;
+
+            sounds::sound( se );
         }
         if( veh_data.do_explosion ) {
             explosion_handler::explosion( p, nullptr, veh_data.damage, 0.5f, false, veh_data.shrapnel );

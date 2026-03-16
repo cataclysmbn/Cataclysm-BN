@@ -29,8 +29,15 @@ namespace
 {
 auto make_scraping_noise( const tripoint &pos, const int volume ) -> void
 {
-    sounds::sound( pos, volume, sounds::sound_t::movement,
-                   _( "a scraping noise." ), true, "misc", "scraping" );
+    sound_event se;
+    se.origin = pos;
+    se.volume = volume;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "a scraping noise." );
+    se.id = "misc";
+    se.variant = "scraping";
+    sounds::sound( se );
 }
 
 // vehicle movement: strength check. very strong humans can move about 2,000 kg in a wheelbarrow.

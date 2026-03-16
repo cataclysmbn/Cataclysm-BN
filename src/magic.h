@@ -480,8 +480,8 @@ class spell
         void create_field( const tripoint &at ) const;
 
         // makes a spell sound at the location
-        void make_sound( const tripoint &target ) const;
-        void make_sound( const tripoint &target, int loudness ) const;
+        void make_sound( const tripoint &target, Creature &caster ) const;
+        void make_sound( const tripoint &target, Creature &caster, int loudness ) const;
         // heals the critter at the location, returns amount healed (Character heals each body part)
         int heal( const tripoint &target ) const;
 
