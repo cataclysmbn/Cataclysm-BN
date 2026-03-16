@@ -2490,7 +2490,7 @@ void options_manager::add_options_performance()
                                "smaller values reduce both. "
                                "REQUIRES A GAME RESTART to take effect — "
                                "changing this mid-session will NOT resize caches or the loaded map." ),
-             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 8 );
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 6 );
     } );
 
     get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );

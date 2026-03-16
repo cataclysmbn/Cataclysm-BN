@@ -192,6 +192,7 @@ bool compare_sound_alert( const dangerous_sound &sound_a, const dangerous_sound 
 
 static bool clear_shot_reach( const tripoint &from, const tripoint &to, bool check_ally = true )
 {
+    ZoneScopedN( "clear_shot_reach" );
     std::vector<tripoint> path = line_to( from, to );
     tripoint target_point = path.back();
     path.pop_back();
@@ -336,6 +337,7 @@ std::vector<sphere> npc::find_dangerous_explosives() const
 
 float npc::evaluate_enemy( const Creature &target ) const
 {
+    ZoneScopedN( "evaluate_enemy" );
     if( target.is_monster() ) {
         const monster &mon = dynamic_cast<const monster &>( target );
         float diff = static_cast<float>( mon.type->difficulty );
