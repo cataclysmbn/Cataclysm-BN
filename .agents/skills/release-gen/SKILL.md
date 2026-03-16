@@ -13,3 +13,7 @@ compatibility: Requires git, gh, internet access, write access to this repo, and
 - Push the Flathub branch and open the PR with `gh pr create --web`.
 - If Flathub cannot be updated, leave an exact handoff note with repo, branch, file, URL, commit, and `sha256` work left.
 - Verify XML validity and that version, date, URL, commit, and hash all match.
+
+## Example release
+
+- For `0.11.1`, set the metainfo version to `0.11.1`, use the tagged release URL `https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.11.1`, and update the Flathub manifest commit + metainfo source hash to the same release.
