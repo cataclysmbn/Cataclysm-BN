@@ -64,6 +64,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 - **MUST** use modern C++23 features.
 - **MUST** use options struct for functions with more than 3 parameters. Use designated initializers at call sites.
 - **MUST NOT** manually write an options/struct type at a call site when the function parameter type makes it inferable; use `{ .field = value }` instead of `options_type{ .field = value }`.
+- **MUST** fully type annotate new or changed Lua code. Do not leave partial EmmyLua annotations; annotate functions, params, returns, and locals that can't be inferred, such as `local foo = {}`.
 - **SHOULD** search for existing solution because it's a large, legacy codebase.
 
 ## Workflow
