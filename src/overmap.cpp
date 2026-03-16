@@ -5632,7 +5632,7 @@ bool overmap::can_place_special( const overmap_special &special, const tripoint_
         return false;
     }
 
-    if( special.has_flag( "GLOBALLY_UNIQUE" ) &&
+    if( get_option<bool>( "RESPECT_GLOBALLY_UNIQUE" ) && special.has_flag( "GLOBALLY_UNIQUE" ) &&
         overmap_buffer.contains_unique_special( special.id ) ) {
         return false;
     }
@@ -6106,9 +6106,10 @@ void overmap::place_specials( overmap_special_batch &enabled_specials )
 
         const numeric_interval<int> &o = special.get_constraints().occurrences;
 
-        float average_amount = special.has_flag( "UNIQUE" ) ?
-                               static_cast<float>( o.min ) / o.max :
-                               static_cast<float>( o.min + o.max ) / 2;
+        const float average_amount = special.has_flag( "UNIQUE" ) ||
+                                     ( !respect_globally_unique && special.has_flag( "GLOBALLY_UNIQUE" ) ) ?
+                                     static_cast<float>( o.min ) / o.max :
+                                     static_cast<float>( o.min + o.max ) / 2;
 
         special_area[special.id] = current == zone::land_under ? this_area.under : this_area.surface;
         float this_range = current == zone::land_under ? 0 : RANGE;
@@ -6187,20 +6188,19 @@ void overmap::place_specials( overmap_special_batch &enabled_specials )
 
         zone current = special_zone[special.id];
 
-        const float rate = is_true_center && special.has_flag( "ENDGAME" ) ? 1 :
-                           zone_ratio[current];
+        const bool unique = special.has_flag( "UNIQUE" );
+        const bool globally_unique = special.has_flag( "GLOBALLY_UNIQUE" );
 
-        const bool unique = iter.special_details->has_flag( "UNIQUE" );
-        const bool globally_unique = iter.special_details->has_flag( "GLOBALLY_UNIQUE" );
-
-        int amount_to_place;
+        int amount_to_place = 1;
         if( unique || globally_unique ) {
-            const overmap_special_id &id = iter.special_details->id;
-
             //FINGERS CROSSED EMOGI
-            amount_to_place = x_in_y( min, max ) && ( !globally_unique ||
-                              !overmap_buffer.contains_unique_special( id ) ) ? 1 : 0;
+            if( !x_in_y( min, max ) || ( globally_unique && respect_globally_unique &&
+                                         overmap_buffer.contains_unique_special( special.id ) ) ) {
+                continue;
+            }
         } else {
+            const float rate = is_true_center && special.has_flag( "ENDGAME" ) ? 1 :
+                               zone_ratio[current];
             // Number of instances normalized to terrain ratio
             float real_max = std::max( static_cast<float>( min ), max * rate );
             amount_to_place = roll_remainder( rng_float( min, real_max ) );
