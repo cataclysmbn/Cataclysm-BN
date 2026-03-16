@@ -2829,7 +2829,22 @@ void monster::batch_turns( int n )
         if( is_dead_state() ) {
             break;
         }
-        process_turn();
+        for( const auto &sp_type : type->special_attacks ) {
+            const std::string &special_name = sp_type.first;
+            const auto local_iter = special_attacks.find( special_name );
+            if( local_iter == special_attacks.end() ) {
+                continue;
+            }
+            mon_special_attack &local_attack_data = local_iter->second;
+            if( !local_attack_data.enabled ) {
+                continue;
+            }
+
+            if( local_attack_data.cooldown > 0 ) {
+                local_attack_data.cooldown--;
+            }
+        }
+        decrement_summon_timer();
     }
     // One reproduction check at the end rather than per-turn to avoid
     // O(n) spawns for high-fecundity species catching up after long absence.
