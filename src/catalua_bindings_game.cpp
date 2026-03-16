@@ -9,6 +9,7 @@
 #include "avatar.h"
 #include "distribution_grid.h"
 #include "game.h"
+#include "harvest.h"
 #include "lightmap.h"
 #include "map.h"
 #include "catalua_log.h"
@@ -152,6 +153,14 @@ void cata::detail::reg_game_api( sol::state &lua )
                   []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> Creature * { return g->critter_at<Creature>( p, allow_hallucination.value_or( false ) ); } );
     luna::set_fx( lib, "get_monster_at",
                   []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> monster * { return g->critter_at<monster>( p, allow_hallucination.value_or( false ) ); } );
+    DOC( "Returns the default faction id string for a monster type." );
+    luna::set_fx( lib, "monster_type_default_faction",
+                  []( const mtype_id & type_id ) -> std::string { return type_id.obj().default_faction.id().str(); } );
+    DOC( "Returns whether a monster type harvest contains the requested entry type." );
+    luna::set_fx( lib, "monster_type_has_harvest_entry_type",
+    []( const mtype_id & type_id, const std::string & entry_type ) -> bool {
+        return type_id.obj().harvest.is_valid() && type_id.obj().harvest->has_entry_type( entry_type );
+    } );
     luna::set_fx( lib, "place_monster_at", []( const mtype_id & id, const tripoint & p ) { return g->place_critter_at( id, p ); } );
     luna::set_fx( lib, "place_monster_around", []( const mtype_id & id, const tripoint & p,
     const int radius ) { return g->place_critter_around( id, p, radius ); } );
