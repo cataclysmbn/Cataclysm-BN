@@ -294,7 +294,6 @@ class game : public submap_load_listener
          */
         std::string get_dimension_prefix() const;
 
-        /**
         /** Returns the other end of the stairs (if any). May query, affect u etc.  */
         std::optional<tripoint> find_stairs( map &mp, int z_after, bool peeking );
         std::optional<tripoint> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
