@@ -1386,7 +1386,6 @@ void vehicle::transform_terrain()
     for( const vpart_reference &vp : get_enabled_parts( "TRANSFORM_TERRAIN" ) ) {
         const tripoint start_pos = vp.pos();
         const transform_terrain_data &ttd = vp.info().transform_terrain;
-        const transform_terrain_data &ttd = vp.info().transform_terrain;
         bool prereq_fulfilled = ttd.diggable && g->m.ter( start_pos )->is_diggable();
         for( const std::string &flag : ttd.pre_flags ) {
             if( g->m.has_flag( flag, start_pos ) ) {
