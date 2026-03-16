@@ -224,7 +224,7 @@
       "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 6 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "flags": [ "UNMOUNT_ON_DAMAGE", "SHARP", "PROTRUSION", "SHREDDER", "EXTRA_DRAG" ],
+    "flags": [ "UNMOUNT_ON_DAMAGE", "SHARP", "PROTRUSION", "POWERED_BY_ENGINE" ],
     "damage_reduction": { "all": 55 }
   },
   {
