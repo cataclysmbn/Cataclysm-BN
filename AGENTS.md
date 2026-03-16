@@ -62,6 +62,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 - **SHOULD NOT** modify existing headers with >10 usages. Create new header with pure functions.
 - **MUST** use modern C++23 features.
 - **MUST** use options struct for functions with more than 3 parameters. Use designated initializers at call sites.
+- **MUST** fully type annotate new or changed Lua code. Do not leave partial EmmyLua annotations; annotate functions, params, returns, and locals that can't be inferred, such as `local foo = {}`.
 - **SHOULD** search for existing solution because it's a large, legacy codebase.
 
 ## Workflow
