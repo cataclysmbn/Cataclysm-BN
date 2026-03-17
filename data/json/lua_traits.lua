@@ -103,7 +103,7 @@ local function count_loose_items(here, center)
   if not you then return 0 end
   local total = 0
 
-  for _, pt in ipairs(here:points_in_radius(center, 16, 1)) do
+  for _, pt in ipairs(here:points_in_radius(center, clutter_radius, 0)) do
     if you:sees(pt) then
       if is_loot_on_floor(here, pt) then
         local items = here:get_items_at(pt)
