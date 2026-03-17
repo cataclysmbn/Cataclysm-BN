@@ -770,7 +770,7 @@
     "id": "sparkledogsuit_on",
     "copy-from": "sparkledogsuit",
     "type": "TOOL_ARMOR",
-    "name": { "str": "sparkledog suit (on)", "str_pl": "sparkledog suit (on)" },
+    "name": { "str": "sparkledog suit (on)", "str_pl": "sparkledog suits (on)" },
     "power_draw": 10000,
     "revert_to": "sparkledogsuit",
     "use_action": { "menu_text": "Turn off", "type": "transform", "msg": "You turn your fursuit off.", "target": "sparkledogsuit" },
