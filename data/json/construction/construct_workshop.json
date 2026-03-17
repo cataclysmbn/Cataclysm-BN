@@ -329,26 +329,13 @@
     "id": "constr_industrial_freezer",
     "group": "install_industrial_freezer",
     "category": "WORKSHOP",
-    "required_skills": [ [ "fabrication", 6 ], [ "mechanics", 2 ], [ "electronics", 2 ] ],
-    "using": [ [ "soldering_standard", 50 ], [ "welding_standard", 100 ] ],
-    "time": "120 m",
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+	"required_skills": [  ],
+    "time": "10 m",
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
     "post_furniture": "f_freezer_industrial",
     "components": [
-      [ [ "sheet_metal", 36 ] ],
-      [ [ "sheet_metal_small", 10 ] ],
-      [ [ "steel_standard", 2, "LIST" ] ],
-      [ [ "cable", 10 ] ],
-      [ [ "power_supply", 1 ] ],
-      [ [ "hose", 2 ] ],
-      [ [ "condensor_coil", 2 ] ],
-      [ [ "evaporator_coil", 2 ] ],
-      [ [ "refrigerant_tank", 2 ] ],
-      [ [ "thermostat", 1 ] ],
-      [ [ "light_bulb", 1 ] ],
-      [ [ "motor_tiny", 2 ] ]
+      [ [ "freezer_industrial", 1 ] ]
     ]
   },
   {
