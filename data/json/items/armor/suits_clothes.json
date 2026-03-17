@@ -73,6 +73,7 @@
   },
     {
     "id": "dinosuit_unstuffed",
+    "type": "ARMOR",
     "copyfrom": "dinosuit",
     "name": { "str": "unstuffed dinosaur suit" },
     "description": "A full body costume in the form of an anthropomorphic dinosaur.  Interior padding has been removed to accomodate mutant anatomy, also making it slightly cooler and less encumbering.",
@@ -182,6 +183,7 @@
   },
   {
     "id": "wolfsuit_unstuffed",
+    "type": "ARMOR",
     "copyfrom": "wolfsuit",
     "name": { "str": "unstuffed wolf suit" },
     "description": "A full body fursuit in the form of an anthropomorphic wolf.  Interior padding has been removed to accomodate mutant anatomy, also making it slightly cooler and less encumbering.",
