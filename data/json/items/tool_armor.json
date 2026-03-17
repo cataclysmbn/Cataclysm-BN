@@ -782,14 +782,14 @@
     "copy-from": "sparkledogsuit",
     "name": { "str": "unstuffed sparkledog suit" },
     "description": "A full body fursuit in the form of some unidentifiable species. It's a riot of clashing neon colors, LEDs, and glitter.  Interior padding has been removed to accomodate mutant anatomy, also making it slightly cooler and less encumbering.  Using it will turn the LEDs on.",
-     "use_action": {
+    "use_action": {
       "type": "transform",
       "msg": "You turn your fursuit's LEDs on.",
       "target": "sparkledogsuit_unstuffed_on",
       "active": true,
       "transform_charges": 1,
       "need_charges": 1,
-      "need_charges_msg": "The fursuit's batteries are dead."
+      "need_charges_msg": "The fursuit's batteries are dead.",
      },
     "weight": "6123 g",
     "encumbrance": 27,
