@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstdio>
@@ -218,12 +219,27 @@ void print_grid_comparison( const point &offset,
     }
 }
 
+// Sight model for all shadowcasting test cases.  Both update_float and
+// update_quadrants are non-null so this model works with castLightAll (float)
+// and castLightAll_q (four_quadrants) alike.
+static const light_model k_sight_model = {
+    sight_calc, sight_check, update_light, update_light_quadrants, sight_from_lookup,
+    accumulate_transparency
+};
+
 static void shadowcasting_runoff( const int iterations, const bool test_bresenham = false )
 {
-    float seen_squares_control[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{0}};
-    float seen_squares_experiment[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{0}};
-    float transparency_cache[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{0}};
-    diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{{false, false}}};
+    // Static to avoid stack overflow: MAPSIZE*SEEX x MAPSIZE*SEEY = 420x420 floats (~689 KB each).
+    static float seen_squares_control[MAPSIZE * SEEX][MAPSIZE * SEEY];
+    static float seen_squares_experiment[MAPSIZE * SEEX][MAPSIZE * SEEY];
+    static float transparency_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
+    static diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
+
+    // Result arrays accumulate light; must be zeroed before each run.
+    std::fill_n( &seen_squares_control[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, 0.0f );
+    std::fill_n( &seen_squares_experiment[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, 0.0f );
+    // transparency_cache fully overwritten by randomly_fill_transparency below.
+    // blocked_cache fully overwritten by uninitialized_fill_n below.
 
     diagonal_blocks fill = {false, false};
     std::uninitialized_fill_n( &blocked_cache[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, fill );
@@ -254,9 +270,9 @@ static void shadowcasting_runoff( const int iterations, const bool test_bresenha
     const auto start2 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
         // Then the current algorithm.
-        castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>
-        (
-            seen_squares_experiment, transparency_cache, blocked_cache, offset );
+        castLightAll( &seen_squares_experiment[0][0], &transparency_cache[0][0],
+                      &blocked_cache[0][0], MAPSIZE * SEEX, MAPSIZE * SEEY,
+                      offset, 0, VISIBILITY_FULL, k_sight_model );
     }
     const auto end2 = std::chrono::high_resolution_clock::now();
 
@@ -294,10 +310,17 @@ static void shadowcasting_runoff( const int iterations, const bool test_bresenha
 static void shadowcasting_float_quad(
     const int iterations, const unsigned int denominator = DENOMINATOR )
 {
-    float lit_squares_float[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{0}};
-    four_quadrants lit_squares_quad[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{}};
-    float transparency_cache[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{0}};
-    diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{{false, false}}};
+    // Static to avoid stack overflow: MAPSIZE*SEEX x MAPSIZE*SEEY arrays (~689 KB each).
+    static float lit_squares_float[MAPSIZE * SEEX][MAPSIZE * SEEY];
+    static four_quadrants lit_squares_quad[MAPSIZE * SEEX][MAPSIZE * SEEY];
+    static float transparency_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
+    static diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
+
+    // Result arrays accumulate light; must be zeroed before each run.
+    std::fill_n( &lit_squares_float[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, 0.0f );
+    std::fill_n( &lit_squares_quad[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, four_quadrants{} );
+    // transparency_cache fully overwritten by randomly_fill_transparency below.
+    // blocked_cache fully overwritten by uninitialized_fill_n below.
 
     diagonal_blocks fill = {false, false};
     std::uninitialized_fill_n( &blocked_cache[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, fill );
@@ -310,18 +333,18 @@ static void shadowcasting_float_quad(
 
     const auto start1 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
-        castLightAllWithLookup<float, four_quadrants, sight_calc, sight_check, update_light_quadrants,
-                               accumulate_transparency, sight_from_lookup>(
-                                   lit_squares_quad, transparency_cache, blocked_cache, offset );
+        castLightAll_q( &lit_squares_quad[0][0], &transparency_cache[0][0],
+                        &blocked_cache[0][0], MAPSIZE * SEEX, MAPSIZE * SEEY,
+                        offset, 0, VISIBILITY_FULL, k_sight_model );
     }
     const auto end1 = std::chrono::high_resolution_clock::now();
 
     const auto start2 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
         // Then the current algorithm.
-        castLightAllWithLookup<float, float, sight_calc, sight_check, update_light,
-                               accumulate_transparency, sight_from_lookup>(
-                                   lit_squares_float, transparency_cache, blocked_cache, offset );
+        castLightAll( &lit_squares_float[0][0], &transparency_cache[0][0],
+                      &blocked_cache[0][0], MAPSIZE * SEEX, MAPSIZE * SEEY,
+                      offset, 0, VISIBILITY_FULL, k_sight_model );
     }
     const auto end2 = std::chrono::high_resolution_clock::now();
 
@@ -350,11 +373,20 @@ static void shadowcasting_float_quad(
 
 static void shadowcasting_3d_2d( const int iterations )
 {
-    float seen_squares_control[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{0}};
-    float seen_squares_experiment[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{0}};
-    float transparency_cache[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{0}};
-    bool floor_cache[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{false}};
-    diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{{false, false}}};
+    // Static to avoid stack overflow: MAPSIZE*SEEX x MAPSIZE*SEEY arrays (~689 KB each).
+    static float seen_squares_control[MAPSIZE * SEEX][MAPSIZE * SEEY];
+    static float seen_squares_experiment[MAPSIZE * SEEX][MAPSIZE * SEEY];
+    static float transparency_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
+    static bool floor_cache[MAPSIZE * SEEX][MAPSIZE *
+                                            SEEY]; // zero-initialized once; never written by algorithms.
+    static diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
+
+    // Result arrays accumulate light; must be zeroed before each run.
+    std::fill_n( &seen_squares_control[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, 0.0f );
+    std::fill_n( &seen_squares_experiment[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, 0.0f );
+    // transparency_cache fully overwritten by randomly_fill_transparency below.
+    // floor_cache is read-only by cast_zlight; stays all-false (static zero-init) for all calls.
+    // blocked_cache fully overwritten by uninitialized_fill_n below.
 
     diagonal_blocks fill = {false, false};
     std::uninitialized_fill_n( &blocked_cache[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, fill );
@@ -368,30 +400,32 @@ static void shadowcasting_3d_2d( const int iterations )
     const auto start1 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
         // First the control algorithm.
-        castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>
-        ( seen_squares_control, transparency_cache, blocked_cache, offset.xy() );
+        castLightAll( &seen_squares_control[0][0], &transparency_cache[0][0],
+                      &blocked_cache[0][0], MAPSIZE * SEEX, MAPSIZE * SEEY,
+                      offset.xy(), 0, VISIBILITY_FULL, k_sight_model );
     }
     const auto end1 = std::chrono::high_resolution_clock::now();
 
     const tripoint origin( offset );
-    std::array<const float ( * )[MAPSIZE *SEEX][MAPSIZE *SEEY], OVERMAP_LAYERS> transparency_caches;
-    std::array<float ( * )[MAPSIZE *SEEX][MAPSIZE *SEEY], OVERMAP_LAYERS> seen_caches;
-    std::array<const bool ( * )[MAPSIZE *SEEX][MAPSIZE *SEEY], OVERMAP_LAYERS> floor_caches;
-    std::array<const diagonal_blocks( * )[MAPSIZE_X][MAPSIZE_Y], OVERMAP_LAYERS>
-    blocked_caches;
+    // TODO: Give some more proper values here (all z-levels share the same 2D test data).
+    // Build cache_grid_ref wrappers so cast_zlight can index into the flat C arrays.
+    array_of_grids_of<float>                 seen_caches;
+    array_of_grids_of<const float>           transparency_caches;
+    array_of_grids_of<const bool>            floor_caches;
+    array_of_grids_of<const diagonal_blocks> blocked_caches;
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-        // TODO: Give some more proper values here
-        transparency_caches[z + OVERMAP_DEPTH] = &transparency_cache;
-        seen_caches[z + OVERMAP_DEPTH] = &seen_squares_experiment;
-        floor_caches[z + OVERMAP_DEPTH] = &floor_cache;
-        blocked_caches[z + OVERMAP_DEPTH] = &blocked_cache;
+        const int zi = z + OVERMAP_DEPTH;
+        seen_caches[zi]         = { &seen_squares_experiment[0][0], MAPSIZE * SEEX, MAPSIZE * SEEY };
+        transparency_caches[zi] = { &transparency_cache[0][0],      MAPSIZE * SEEX, MAPSIZE * SEEY };
+        floor_caches[zi]        = { &floor_cache[0][0],             MAPSIZE * SEEX, MAPSIZE * SEEY };
+        blocked_caches[zi]      = { &blocked_cache[0][0],           MAPSIZE * SEEX, MAPSIZE * SEEY };
     }
 
     const auto start2 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
         // Then the newer algorithm.
-        cast_zlight<float, sight_calc, sight_check, accumulate_transparency>(
-            seen_caches, transparency_caches, floor_caches, blocked_caches, origin, 0, 1.0 );
+        cast_zlight( seen_caches, transparency_caches, floor_caches, blocked_caches,
+                     origin, 0, 1.0f, k_sight_model );
     }
     const auto end2 = std::chrono::high_resolution_clock::now();
 
@@ -462,32 +496,36 @@ struct grid_overlay {
 
 static void run_spot_check( const grid_overlay &test_case, const grid_overlay &expected_result )
 {
-    float seen_squares[ MAPSIZE * SEEY ][ MAPSIZE * SEEX ] = {{ 0 }};
-    float transparency_cache[ MAPSIZE * SEEY ][ MAPSIZE * SEEX ] = {{ 0 }};
-    diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY] = {{{false, false}}};
+    // Static to avoid stack overflow: MAPSIZE*SEEX x MAPSIZE*SEEY arrays (~689 KB each).
+    static float seen_squares[ MAPSIZE * SEEX ][ MAPSIZE * SEEY ];
+    static float transparency_cache[ MAPSIZE * SEEX ][ MAPSIZE * SEEY ];
+    static diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
+
+    // seen_squares accumulates light; must be zeroed before each run.
+    std::fill_n( &seen_squares[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, 0.0f );
+    // transparency_cache fully overwritten by the loop below.
+    // blocked_cache fully overwritten by uninitialized_fill_n below.
 
     diagonal_blocks fill = {false, false};
     std::uninitialized_fill_n( &blocked_cache[0][0], MAPSIZE * SEEX * MAPSIZE * SEEY, fill );
 
-    for( int y = 0; y < static_cast<int>( sizeof( transparency_cache ) /
-                                          sizeof( transparency_cache[0] ) ); ++y ) {
-        for( int x = 0; x < static_cast<int>( sizeof( transparency_cache[0] ) /
-                                              sizeof( transparency_cache[0][0] ) ); ++x ) {
-            transparency_cache[ y ][ x ] = test_case.get_global( point( x, y ) );
+    for( int x = 0; x < MAPSIZE * SEEX; ++x ) {
+        for( int y = 0; y < MAPSIZE * SEEY; ++y ) {
+            transparency_cache[x][y] = test_case.get_global( point( x, y ) );
         }
     }
 
-    castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>
-    ( seen_squares, transparency_cache, blocked_cache, ORIGIN );
+    castLightAll( &seen_squares[0][0], &transparency_cache[0][0], &blocked_cache[0][0],
+                  MAPSIZE * SEEX, MAPSIZE * SEEY, ORIGIN, 0, VISIBILITY_FULL, k_sight_model );
     // Compares the whole grid, but out-of-bounds compares will de-facto pass.
     for( int y = 0; y < expected_result.height(); ++y ) {
         for( int x = 0; x < expected_result.width(); ++x ) {
             INFO( "x:" << x << " y:" << y << " expected:" << expected_result.data[y][x] << " actual:" <<
-                  seen_squares[expected_result.offset.y + y][expected_result.offset.x + x] );
+                  seen_squares[expected_result.offset.x + x][expected_result.offset.y + y] );
             if( V == expected_result.get_local( point( x, y ) ) ) {
-                CHECK( seen_squares[expected_result.offset.y + y][expected_result.offset.x + x] > 0 );
+                CHECK( seen_squares[expected_result.offset.x + x][expected_result.offset.y + y] > 0 );
             } else {
-                CHECK( seen_squares[expected_result.offset.y + y][expected_result.offset.x + x] == 0 );
+                CHECK( seen_squares[expected_result.offset.x + x][expected_result.offset.y + y] == 0 );
             }
         }
     }

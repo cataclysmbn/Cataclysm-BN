@@ -525,7 +525,8 @@ void spawn_nested_mapgen()
         target_map.load( abs_sub, true );
         // TODO: fix point types
         const tripoint local_ms = target_map.getlocal( abs_ms.raw() );
-        mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr );
+        mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr,
+                       get_overmapbuffer( target_map.get_bound_dimension() ) );
         const auto &ptr = nested_mapgen[nest_str[nest_choice]].pick();
         if( ptr == nullptr ) {
             return;
@@ -574,7 +575,7 @@ static void control_npc_menu()
     uilist charmenu;
     int charnum = 0;
     for( const auto &elem : g->get_follower_list() ) {
-        shared_ptr_fast<npc> follower = overmap_buffer.find_npc( elem );
+        shared_ptr_fast<npc> follower = ACTIVE_OVERMAP_BUFFER.find_npc( elem );
         if( follower ) {
             followers.emplace_back( follower );
             charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, follower->get_name() );
@@ -611,7 +612,7 @@ void character_edit_menu( Character &c )
         if( np->has_destination() ) {
             data << string_format(
                      _( "Destination: %s %s" ), np->goal.to_string(),
-                     overmap_buffer.ter( np->goal )->get_name() ) << '\n';
+                     ACTIVE_OVERMAP_BUFFER.ter( np->goal )->get_name() ) << '\n';
         } else {
             data << _( "No destination." ) << '\n';
         }
@@ -1543,7 +1544,7 @@ void debug()
             shared_ptr_fast<npc> temp = make_shared_fast<npc>();
             temp->randomize();
             temp->spawn_at_precise( { g->get_levx(), g->get_levy() }, u.pos() + point( -4, -4 ) );
-            overmap_buffer.insert_npc( temp );
+            ACTIVE_OVERMAP_BUFFER.insert_npc( temp );
             temp->form_opinion( u );
             temp->mission = NPC_MISSION_NULL;
             temp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, temp->global_omt_location(),
@@ -1594,7 +1595,7 @@ void debug()
             popup_top(
                 s.c_str(),
                 u.posx(), g->u.posy(), g->get_levx(), g->get_levy(),
-                overmap_buffer.ter( g->u.global_omt_location() )->get_name(),
+                ACTIVE_OVERMAP_BUFFER.ter( g->u.global_omt_location() )->get_name(),
                 to_turns<int>( calendar::turn - calendar::turn_zero ),
                 get_option<bool>( "RANDOM_NPC" ) ? _( "NPCs are going to spawn." ) :
                 _( "NPCs are NOT going to spawn." ),

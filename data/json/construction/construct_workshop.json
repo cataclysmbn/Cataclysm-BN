@@ -613,6 +613,26 @@
   },
   {
     "type": "construction",
+    "id": "constr_gridwater_purifier",
+    "group": "install_water_purifier",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "mechanics", 2 ], [ "electronics", 1 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ], [ { "id": "WRENCH", "level": 1 } ] ],
+    "using": [ [ "soldering_standard", 20 ] ],
+    "components": [
+      [ [ "water_purifier", 1 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "hose", 1 ], [ "makeshift_hose", 1 ] ],
+      [ [ "cu_pipe", 2 ] ]
+    ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.  Connect it to a fluid grid to purify water.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_water_purifier_off"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridcraftrig",
     "group": "place_craftrig",
     "category": "WORKSHOP",

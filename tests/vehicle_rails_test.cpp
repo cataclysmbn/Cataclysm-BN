@@ -137,7 +137,7 @@ static vehicle &add_moving_vehicle(
     units::angle face_dir
 )
 {
-    tripoint initial_veh_pos( MAPSIZE_X * 3 / 4, MAPSIZE_Y * 3 / 4, 0 );
+    tripoint initial_veh_pos( g_mapsize_x * 3 / 4, g_mapsize_y * 3 / 4, 0 );
     vehicle *veh_ptr = here.add_vehicle( vproto_id( veh_id ), initial_veh_pos, face_dir, 45, 0 );
     REQUIRE( veh_ptr != nullptr );
     vehicle &veh = *veh_ptr;
@@ -279,7 +279,7 @@ static void run_test_case_at_rotation( const test_case &t, int i_rot )
 {
     CAPTURE( i_rot );
     map_helpers::canvas canvas = t.canvas.rotated( i_rot );
-    tripoint canvas_pos = tripoint( ( point( MAPSIZE_X, MAPSIZE_Y ) - canvas.size().xy() ) / 2, 0 );
+    tripoint canvas_pos = tripoint( ( point( g_mapsize_x, g_mapsize_y ) - canvas.size().xy() ) / 2, 0 );
 
     point sz = t.canvas.size().xy();
     tripoint start_pos = canvas_pos + t.start_pos.rotate_2d( i_rot, sz );

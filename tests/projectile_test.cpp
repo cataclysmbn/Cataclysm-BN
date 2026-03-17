@@ -88,14 +88,15 @@ TEST_CASE( "adjacent_friendly_fire_prevention", "[projectile][ballistics]" )
     clear_all_state();
     map &here = get_map();
 
-    // Set up test area: shooter at (0,0), friendly NPC adjacent at (1,0), target at (5,0)
-    const auto shooter_pos = tripoint_zero;
-    const auto friendly_pos = tripoint_east;
-    const auto target_pos = tripoint( 5, 0, 0 );
+    // Set up test area: shooter at (50,60), friendly NPC adjacent at (51,60), target at (55,60).
+    // Positions near map center so spawned NPCs are within load_npcs radius (4 submaps).
+    const auto shooter_pos = tripoint( 50, 60, 0 );
+    const auto friendly_pos = tripoint( 51, 60, 0 );
+    const auto target_pos = tripoint( 55, 60, 0 );
 
     // Clear the area
-    for( int x = 0; x <= 5; ++x ) {
-        auto pt = tripoint( x, 0, 0 );
+    for( int x = 50; x <= 55; ++x ) {
+        auto pt = tripoint( x, 60, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
@@ -145,14 +146,15 @@ TEST_CASE( "npc_adjacent_friendly_fire_prevention", "[projectile][ballistics]" )
     clear_all_state();
     map &here = get_map();
 
-    // Set up test area: NPC shooter at (0,0), friendly NPC adjacent at (1,0), target at (5,0)
-    const auto shooter_pos = tripoint_zero;
-    const auto friendly_pos = tripoint_east;
-    const auto target_pos = tripoint( 5, 0, 0 );
+    // Set up test area: NPC shooter at (50,60), friendly NPC adjacent at (51,60), target at (55,60).
+    // Positions near map center so spawned NPCs are within load_npcs radius (4 submaps).
+    const auto shooter_pos = tripoint( 50, 60, 0 );
+    const auto friendly_pos = tripoint( 51, 60, 0 );
+    const auto target_pos = tripoint( 55, 60, 0 );
 
     // Clear the area
-    for( int x = 0; x <= 5; ++x ) {
-        auto pt = tripoint( x, 0, 0 );
+    for( int x = 50; x <= 55; ++x ) {
+        auto pt = tripoint( x, 60, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
@@ -210,14 +212,15 @@ TEST_CASE( "npc_protects_adjacent_player", "[projectile][ballistics]" )
     clear_all_state();
     map &here = get_map();
 
-    // Set up test area: NPC shooter at (0,0), player adjacent at (1,0), target at (5,0)
-    const auto shooter_pos = tripoint_zero;
-    const auto player_pos = tripoint_east;
-    const auto target_pos = tripoint( 5, 0, 0 );
+    // Set up test area: NPC shooter at (50,60), player adjacent at (51,60), target at (55,60).
+    // Positions near map center so spawned NPCs are within load_npcs radius (4 submaps).
+    const auto shooter_pos = tripoint( 50, 60, 0 );
+    const auto player_pos = tripoint( 51, 60, 0 );
+    const auto target_pos = tripoint( 55, 60, 0 );
 
     // Clear the area
-    for( int x = 0; x <= 5; ++x ) {
-        auto pt = tripoint( x, 0, 0 );
+    for( int x = 50; x <= 55; ++x ) {
+        auto pt = tripoint( x, 60, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
@@ -324,23 +327,22 @@ TEST_CASE( "hostile_npc_adjacent_ally_fire_prevention", "[projectile][ballistics
     clear_all_state();
     map &here = get_map();
 
-    // Set up test area: hostile NPC shooter at (0,0), allied hostile NPC at (1,0), target at (5,0)
-    const auto shooter_pos = tripoint_zero;
-    const auto ally_pos = tripoint_east;
-    const auto target_pos = tripoint( 5, 0, 0 );
+    // Set up test area: hostile NPC shooter at (50,60), allied hostile NPC at (51,60), target at (55,60).
+    // Positions near map center so spawned NPCs are within load_npcs radius (4 submaps).
+    const auto shooter_pos = tripoint( 50, 60, 0 );
+    const auto ally_pos = tripoint( 51, 60, 0 );
+    const auto target_pos = tripoint( 55, 60, 0 );
 
     // Clear the area
-    for( int x = 0; x <= 5; ++x ) {
-        auto pt = tripoint( x, 0, 0 );
+    for( int x = 50; x <= 55; ++x ) {
+        auto pt = tripoint( x, 60, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
     }
 
-    // Move player out of the way
-    get_avatar().setpos( tripoint( 10, 10, 0 ) );
-
-    // Create two hostile NPCs from the same faction
+    // Create two hostile NPCs from the same faction while player is at default (60,60),
+    // so they are within load_npcs radius and enter active_npc.
     auto &shooter = spawn_npc( shooter_pos.xy(), "thug" );
     shooter.set_fac( faction_id( "hells_raiders" ) );
     shooter.set_attitude( NPCATT_KILL );
@@ -348,6 +350,9 @@ TEST_CASE( "hostile_npc_adjacent_ally_fire_prevention", "[projectile][ballistics
     auto &ally = spawn_npc( ally_pos.xy(), "thug" );
     ally.set_fac( faction_id( "hells_raiders" ) );
     ally.set_attitude( NPCATT_KILL );
+
+    // Move player out of the way after NPCs are loaded.
+    get_avatar().setpos( tripoint( 10, 10, 0 ) );
 
     REQUIRE( g->critter_at( shooter_pos ) == &shooter );
     REQUIRE( g->critter_at( ally_pos ) == &ally );

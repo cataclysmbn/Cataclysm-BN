@@ -990,7 +990,7 @@ void vehicle::autopilot_patrol()
     }
     zone_manager &mgr = zone_manager::get_manager();
     const auto &zone_src_set = mgr.get_near( zone_type_id( "VEHICLE_PATROL" ),
-                               global_square_location().raw(), 60 );
+                               global_square_location().raw(), g_max_view_distance );
     if( zone_src_set.empty() ) {
         is_patrolling = false;
         return;
@@ -3756,7 +3756,7 @@ void vehicle::set_submap_moved( const tripoint &p )
     if( !tracking_on ) {
         return;
     }
-    overmap_buffer.move_vehicle( this, old_msp );
+    get_overmapbuffer( dimension_id_ ).move_vehicle( this, old_msp );
 }
 
 units::mass vehicle::total_mass() const
@@ -5432,7 +5432,7 @@ int vehicle::total_solar_epower_w() const
 int vehicle::total_wind_epower_w() const
 {
     map &here = get_map();
-    const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
+    const oter_id &cur_om_ter = get_overmapbuffer( dimension_id_ ).ter( global_omt_location() );
     const weather_manager &weather = get_weather();
     int epower_w = 0;
     for( int part : wind_turbines ) {
@@ -5627,7 +5627,8 @@ vehicle *vehicle::find_vehicle( const tripoint &where )
     tripoint veh_in_sm = where;
     tripoint veh_sm = ms_to_sm_remain( veh_in_sm );
 
-    auto sm = MAPBUFFER.lookup_submap( veh_sm );
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    auto sm = mbuf.lookup_submap( veh_sm );
     if( sm == nullptr ) {
         return nullptr;
     }
@@ -7697,7 +7698,8 @@ static bool is_sm_tile_over_water( const tripoint &real_global_pos )
 
     const tripoint smp = ms_to_sm_copy( real_global_pos );
     const point p( modulo( real_global_pos.x, SEEX ), modulo( real_global_pos.y, SEEY ) );
-    auto sm = MAPBUFFER.lookup_submap( smp );
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    auto sm = mbuf.lookup_submap( smp );
     if( sm == nullptr ) {
         debugmsg( "is_sm_tile_outside(): couldn't find submap %d,%d,%d", smp.x, smp.y, smp.z );
         return false;
@@ -7717,7 +7719,8 @@ static bool is_sm_tile_outside( const tripoint &real_global_pos )
 
     const tripoint smp = ms_to_sm_copy( real_global_pos );
     const point p( modulo( real_global_pos.x, SEEX ), modulo( real_global_pos.y, SEEY ) );
-    auto sm = MAPBUFFER.lookup_submap( smp );
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    auto sm = mbuf.lookup_submap( smp );
     if( sm == nullptr ) {
         debugmsg( "is_sm_tile_outside(): couldn't find submap %d,%d,%d", smp.x, smp.y, smp.z );
         return false;

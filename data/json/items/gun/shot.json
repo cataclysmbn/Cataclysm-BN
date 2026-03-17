@@ -711,5 +711,35 @@
     "blackpowder_tolerance": 72,
     "default_mods": [ "sword_bayonet" ],
     "flags": [ "RELOAD_ONE" ]
+  },
+  {
+    "id": "BP_12",
+    "copy-from": "shotgun_base",
+    "type": "GUN",
+    "name": { "str": "BP-12" },
+    "description": "A bullpup, magazine fed, semi-automatic shotgun, possessing the accuracy of a full-length barrel in a compact frame.",
+    "weight": "3628 g",
+    "volume": "3443 ml",
+    "price": "325 USD",
+    "price_postapoc": "475 USD",
+    "material": [ "steel", "plastic" ],
+    "dispersion": 425,
+    "durability": 7,
+    "barrel_volume": "250 ml",
+    "magazine_well": "250 ml",
+    "valid_mod_locations": [
+      [ "accessories", 2 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ],
+      [ "mechanism", 4 ],
+      [ "barrel", 1 ],
+      [ "brass catcher", 1 ],
+      [ "grip", 1 ],
+      [ "rail", 1 ],
+      [ "sights", 1 ],
+      [ "underbarrel", 1 ]
+    ],
+    "blackpowder_tolerance": 24,
+    "magazines": [ [ "shot", [ "saiga10mag", "saiga30mag" ] ] ]
   }
 ]

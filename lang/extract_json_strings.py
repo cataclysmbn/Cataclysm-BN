@@ -192,7 +192,8 @@ automatically_convertible = {
     "vitamin",
     "WHEEL",
     "help",
-    "weather_type"
+    "weather_type",
+    "world_type"
 }
 
 # for these objects a plural form is needed
