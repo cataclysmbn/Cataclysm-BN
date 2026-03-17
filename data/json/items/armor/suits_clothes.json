@@ -80,7 +80,7 @@
     "weight": "6123 g",
     "encumbrance": 27,
     "warmth": 45,
-    "flags": [ "OUTER", "SUPER_FANCY", "VARSIZE", "ALLOWS_CLAWS", "ALLOWS_CLAWS_FOOT", "ALLOWS_HOOVES", "ALLOWS_HORNS", "ALLOWS_MUZZLE", "ALLOWS_TAIL", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ]
+    "flags": [ "OUTER", "SUPER_FANCY", "OVERSIZE" ]
   },
   {
     "id": "jumpsuit",
@@ -190,7 +190,7 @@
     "weight": "6123 g",
     "encumbrance": 27,
     "warmth": 45,
-    "flags": [ "OUTER", "SUPER_FANCY", "VARSIZE", "ALLOWS_CLAWS", "ALLOWS_CLAWS_FOOT", "ALLOWS_HOOVES", "ALLOWS_HORNS", "ALLOWS_MUZZLE", "ALLOWS_TAIL", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ]
+    "flags": [ "OUTER", "SUPER_FANCY", "OVERSIZE" ]
   },
   {
     "id": "wool_suit",
