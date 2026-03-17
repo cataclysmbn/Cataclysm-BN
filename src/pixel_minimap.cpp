@@ -289,9 +289,7 @@ void pixel_minimap::flush_cache_updates()
                     const point tile_pos = projector->get_tile_pos( { x, y }, { SEEX, SEEY } );
                     const point tile_size = projector->get_tile_size();
 
-                    const SDL_Rect rect = SDL_Rect{ tile_pos.x, tile_pos.y, tile_size.x, tile_size.y };
-
-                    geometry->rect( renderer, rect, SDL_Color() );
+                    geometry->rect( renderer, tile_pos, tile_size.x, tile_size.y, SDL_Color() );
                 }
             }
         }
@@ -406,9 +404,8 @@ void pixel_minimap::set_screen_rect( const SDL_Rect &screen_rect )
         main_tex_clip_rect = SDL_Rect{ 0, 0, size_on_screen.x, size_on_screen.y };
         screen_clip_rect = fit_rect_inside( main_tex_clip_rect, screen_rect );
 
-        SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "1" );
         main_tex = create_cache_texture( renderer, size_on_screen.x, size_on_screen.y );
-        SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "0" );
+        SDL_SetTextureScaleMode( main_tex.get(), SDL_SCALEMODE_LINEAR );
 
     } else {
         const point d( ( size_on_screen.x - screen_rect.w ) / 2, ( size_on_screen.y - screen_rect.h ) / 2 );
@@ -465,7 +462,11 @@ void pixel_minimap::render( const tripoint &center )
     //set display buffer to main screen
     set_displaybuffer_rendertarget();
     //paint intermediate texture to screen
-    RenderCopy( renderer, main_tex, &main_tex_clip_rect, &screen_clip_rect );
+    const SDL_FRect fsrc{ float( main_tex_clip_rect.x ), float( main_tex_clip_rect.y ),
+                          float( main_tex_clip_rect.w ), float( main_tex_clip_rect.h ) };
+    const SDL_FRect fdst{ float( screen_clip_rect.x ), float( screen_clip_rect.y ),
+                          float( screen_clip_rect.w ), float( screen_clip_rect.h ) };
+    RenderCopy( renderer, main_tex, &fsrc, &fdst );
 }
 
 void pixel_minimap::render_cache( const tripoint &center )
@@ -506,7 +507,9 @@ void pixel_minimap::render_cache( const tripoint &center )
 
         const SDL_Rect chunk_rect = projector->get_chunk_rect( ms_pos.xy(), { SEEX, SEEY } );
 
-        RenderCopy( renderer, elem.second.chunk_tex, nullptr, &chunk_rect );
+        const SDL_FRect fchunk{ float( chunk_rect.x ), float( chunk_rect.y ),
+                                float( chunk_rect.w ), float( chunk_rect.h ) };
+        RenderCopy( renderer, elem.second.chunk_tex, nullptr, &fchunk );
     }
 }
 

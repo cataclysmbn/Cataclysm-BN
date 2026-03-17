@@ -89,7 +89,7 @@ static const mongroup_id GROUP_NEMESIS( "GROUP_NEMESIS" );
 static const trait_id trait_DEBUG_NIGHTVISION( "DEBUG_NIGHTVISION" );
 
 #if defined(__ANDROID__)
-#include <SDL_keyboard.h>
+#include <SDL3/SDL.h>
 #endif
 
 static constexpr int UILIST_MAP_NOTE_DELETED = -2047;

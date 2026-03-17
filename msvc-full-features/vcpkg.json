@@ -2,18 +2,11 @@
   "name": "bn-vcpkg-dependencies",
   "version-string": "experimental",
   "dependencies": [
-    "sdl2",
-    { "name": "sdl2-image", "features": [ "libjpeg-turbo" ] },
-    { "name": "sdl2-mixer", "features": [ "libflac", "mpg123", "libmodplug" ] },
-    "sdl2-ttf",
+    "sdl3",
+    { "name": "sdl3-image", "features": [ "png", "jpeg" ] },
+    "sdl3-ttf",
     "sqlite3",
     "zlib"
   ],
-  "builtin-baseline": "b1b19307e2d2ec1eefbdb7ea069de7d4bcd31f01",
-  "overrides": [
-    { "name": "sdl2-mixer", "version": "2.6.3#1" }
-  ],
-  "vcpkg-configuration": {
-    "overlay-ports": [ "../.github/vcpkg_ports" ]
-  }
+  "builtin-baseline": "b1b19307e2d2ec1eefbdb7ea069de7d4bcd31f01"
 }

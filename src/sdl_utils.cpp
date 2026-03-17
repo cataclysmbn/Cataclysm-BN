@@ -231,11 +231,7 @@ std::vector<SDL_Color> color_linear_interpolate( const SDL_Color &start_color,
 
 SDL_Surface_Ptr create_surface_32( int w, int h )
 {
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    return CreateRGBSurface( 0, w, h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF );
-#else
-    return CreateRGBSurface( 0, w, h, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000 );
-#endif
+    return CreateSurface( SDL_PIXELFORMAT_RGBA32, w, h );
 }
 
 SDL_Rect fit_rect_inside( const SDL_Rect &inner, const SDL_Rect &outer )
@@ -256,11 +252,12 @@ SDL_Rect fit_rect_inside( const SDL_Rect &inner, const SDL_Rect &outer )
 void get_pixel_rgba( const SDL_Surface *surface, int x, int y,
                      Uint8 &r, Uint8 &g, Uint8 &b, Uint8 &a )
 {
+    const SDL_PixelFormatDetails *fmt = SDL_GetPixelFormatDetails( surface->format );
     auto *pixels = static_cast<Uint8 *>( surface->pixels );
-    Uint8 *p = pixels + y * surface->pitch + x * surface->format->BytesPerPixel;
+    Uint8 *p = pixels + y * surface->pitch + x * fmt->bytes_per_pixel;
 
     Uint32 pixel;
-    switch( surface->format->BytesPerPixel ) {
+    switch( fmt->bytes_per_pixel ) {
         case 4:
             pixel = *reinterpret_cast<Uint32 *>( p );
             break;
@@ -277,18 +274,19 @@ void get_pixel_rgba( const SDL_Surface *surface, int x, int y,
             break;
     }
 
-    SDL_GetRGBA( pixel, surface->format, &r, &g, &b, &a );
+    SDL_GetRGBA( pixel, fmt, nullptr, &r, &g, &b, &a );
 }
 
 void set_pixel_rgba( const SDL_Surface *surface, int x, int y,
                      Uint8 r, Uint8 g, Uint8 b, Uint8 a )
 {
-    Uint32 pixel = SDL_MapRGBA( surface->format, r, g, b, a );
+    const SDL_PixelFormatDetails *fmt = SDL_GetPixelFormatDetails( surface->format );
+    Uint32 pixel = SDL_MapRGBA( fmt, nullptr, r, g, b, a );
 
     auto *pixels = static_cast<Uint8 *>( surface->pixels );
-    Uint8 *p = pixels + y * surface->pitch + x * surface->format->BytesPerPixel;
+    Uint8 *p = pixels + y * surface->pitch + x * fmt->bytes_per_pixel;
 
-    switch( surface->format->BytesPerPixel ) {
+    switch( fmt->bytes_per_pixel ) {
         case 4:
             *reinterpret_cast<Uint32 *>( p ) = pixel;
             break;

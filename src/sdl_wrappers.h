@@ -3,18 +3,12 @@
 #if defined(TILES)
 
 // IWYU pragma: begin_exports
-#if defined(_MSC_VER) && defined(USE_VCPKG)
-#   include <SDL2/SDL.h>
-#   include <SDL2/SDL_image.h>
-#   include <SDL2/SDL_ttf.h>
-#else
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-#   include <SDL.h>
+#include <SDL3/SDL.h>
 #pragma GCC diagnostic pop
-#   include <SDL_image.h>
-#   include <SDL_ttf.h>
-#endif
+#include <SDL3_image/SDL_image.h>
+#include <SDL3_ttf/SDL_ttf.h>
 // IWYU pragma: end_exports
 
 #include <memory>
@@ -36,13 +30,6 @@ struct SDL_Window_deleter {
 };
 using SDL_Window_Ptr = std::unique_ptr<SDL_Window, SDL_Window_deleter>;
 
-struct SDL_PixelFormat_deleter {
-    void operator()( SDL_PixelFormat *const format ) {
-        SDL_FreeFormat( format );
-    }
-};
-using SDL_PixelFormat_Ptr = std::unique_ptr<SDL_PixelFormat, SDL_PixelFormat_deleter>;
-
 struct SDL_Texture_deleter {
     void operator()( SDL_Texture *const ptr ) {
         SDL_DestroyTexture( ptr );
@@ -53,7 +40,7 @@ using SDL_Texture_SharedPtr = std::shared_ptr<SDL_Texture>;
 
 struct SDL_Surface_deleter {
     void operator()( SDL_Surface *const ptr ) {
-        SDL_FreeSurface( ptr );
+        SDL_DestroySurface( ptr );
     }
 };
 using SDL_Surface_Ptr = std::unique_ptr<SDL_Surface, SDL_Surface_deleter>;
@@ -86,15 +73,15 @@ void throwErrorIf( bool condition, const char *message );
  */
 /**@{*/
 void RenderCopy( const SDL_Renderer_Ptr &renderer, const SDL_Texture_Ptr &texture,
-                 const SDL_Rect *srcrect, const SDL_Rect *dstrect );
-SDL_Texture_Ptr CreateTexture( const SDL_Renderer_Ptr &renderer, Uint32 format, int access,
+                 const SDL_FRect *srcrect, const SDL_FRect *dstrect );
+SDL_Texture_Ptr CreateTexture( const SDL_Renderer_Ptr &renderer, SDL_PixelFormat format, SDL_TextureAccess access,
                                int w, int h );
 SDL_Texture_Ptr CreateTextureFromSurface( const SDL_Renderer_Ptr &renderer,
         const SDL_Surface_Ptr &surface );
 void SetRenderDrawColor( const SDL_Renderer_Ptr &renderer, Uint8 r, Uint8 g, Uint8 b, Uint8 a );
 void RenderDrawPoint( const SDL_Renderer_Ptr &renderer, point p );
-void RenderFillRect( const SDL_Renderer_Ptr &renderer, const SDL_Rect *rect );
-void FillRect( const SDL_Surface_Ptr &surface, const SDL_Rect *rect, Uint32 color );
+void RenderFillRect( const SDL_Renderer_Ptr &renderer, const SDL_FRect *rect );
+void FillSurfaceRect( const SDL_Surface_Ptr &surface, const SDL_Rect *rect, Uint32 color );
 void SetTextureBlendMode( const SDL_Texture_Ptr &texture, SDL_BlendMode blendMode );
 bool SetTextureColorMod( const SDL_Texture_Ptr &texture, Uint32 r, Uint32 g, Uint32 b );
 void SetRenderDrawBlendMode( const SDL_Renderer_Ptr &renderer, SDL_BlendMode blendMode );
@@ -102,8 +89,7 @@ void GetRenderDrawBlendMode( const SDL_Renderer_Ptr &renderer, SDL_BlendMode &bl
 SDL_Surface_Ptr load_image( const char *path );
 void SetRenderTarget( const SDL_Renderer_Ptr &renderer, const SDL_Texture_Ptr &texture );
 void RenderClear( const SDL_Renderer_Ptr &renderer );
-SDL_Surface_Ptr CreateRGBSurface( Uint32 flags, int width, int height, int depth, Uint32 Rmask,
-                                  Uint32 Gmask, Uint32 Bmask, Uint32 Amask );
+SDL_Surface_Ptr CreateSurface( SDL_PixelFormat format, int width, int height );
 /**@}*/
 
 /**

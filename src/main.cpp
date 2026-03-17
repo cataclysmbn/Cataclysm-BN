@@ -57,17 +57,10 @@ class ui_adaptor;
 #if defined(TILES)
 #   define SDL_MAIN_HANDLED
 #   include "sdl_wrappers.h"
-#   if defined(_MSC_VER) && defined(USE_VCPKG)
-#      include <SDL2/SDL_version.h>
-#   else
-#      include <SDL_version.h>
-#   endif
 #endif
 
 #if defined(__ANDROID__)
-#include <SDL_filesystem.h>
-#include <SDL_keyboard.h>
-#include <SDL_system.h>
+#include <SDL3/SDL.h>
 #include <android/log.h>
 #include <unistd.h>
 
@@ -705,19 +698,16 @@ int main( int argc, char *argv[] )
     }
 
 #if defined(TILES)
-    SDL_version compiled;
-    SDL_VERSION( &compiled );
     DebugLog( DL::Info, DC::Main ) << "SDL version used during compile is "
-                                   << static_cast<int>( compiled.major ) << "."
-                                   << static_cast<int>( compiled.minor ) << "."
-                                   << static_cast<int>( compiled.patch );
+                                   << SDL_MAJOR_VERSION << "."
+                                   << SDL_MINOR_VERSION << "."
+                                   << SDL_MICRO_VERSION;
 
-    SDL_version linked;
-    SDL_GetVersion( &linked );
+    const int linked_ver = SDL_GetVersion();
     DebugLog( DL::Info, DC::Main ) << "SDL version used during linking and in runtime is "
-                                   << static_cast<int>( linked.major ) << "."
-                                   << static_cast<int>( linked.minor ) << "."
-                                   << static_cast<int>( linked.patch );
+                                   << SDL_VERSIONNUM_MAJOR( linked_ver ) << "."
+                                   << SDL_VERSIONNUM_MINOR( linked_ver ) << "."
+                                   << SDL_VERSIONNUM_MICRO( linked_ver );
 #endif
 
 #if !defined(TILES)

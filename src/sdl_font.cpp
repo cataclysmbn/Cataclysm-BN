@@ -6,25 +6,37 @@
 
 #define dbg(x) DebugLogFL((x),DC::SDL)
 
+// SDL3_ttf 3.x: TTF_OpenFontIndex removed; use TTF_OpenFontWithProperties with face index property
+static TTF_Font *open_font_index( const std::string &f, int size, int faceIndex )
+{
+    SDL_PropertiesID props = SDL_CreateProperties();
+    SDL_SetStringProperty( props, TTF_PROP_FONT_CREATE_FILENAME_STRING, f.c_str() );
+    SDL_SetFloatProperty( props, TTF_PROP_FONT_CREATE_SIZE_FLOAT, static_cast<float>( size ) );
+    SDL_SetNumberProperty( props, TTF_PROP_FONT_CREATE_FACE_NUMBER, faceIndex );
+    TTF_Font *font = TTF_OpenFontWithProperties( props );
+    SDL_DestroyProperties( props );
+    return font;
+}
+
 // bitmap font size test
 // return face index that has this size or below
 static int test_face_size( const std::string &f, int size, int faceIndex )
 {
-    const TTF_Font_Ptr font( TTF_OpenFontIndex( f.c_str(), size, faceIndex ) );
+    const TTF_Font_Ptr font( open_font_index( f, size, faceIndex ) );
     if( font ) {
-        const char *font_style = TTF_FontFaceStyleName( font.get() );
+        const char *font_style = TTF_GetFontStyleName( font.get() );
         if( font_style != nullptr ) {
-            int num_faces = TTF_FontFaces( font.get() );
+            int num_faces = TTF_GetNumFontFaces( font.get() );
             for( int face_i = num_faces - 1; face_i >= 0; face_i-- ) {
-                const TTF_Font_Ptr face( TTF_OpenFontIndex( f.c_str(), size, face_i ) );
+                const TTF_Font_Ptr face( open_font_index( f, size, face_i ) );
                 if( !face ) {
                     continue;
                 }
-                const char *face_style = TTF_FontFaceStyleName( face.get() );
+                const char *face_style = TTF_GetFontStyleName( face.get() );
                 if( !face_style ) {
                     continue;
                 }
-                if( lcequal( face_style, font_style ) && TTF_FontHeight( face.get() ) <= size ) {
+                if( lcequal( face_style, font_style ) && TTF_GetFontHeight( face.get() ) <= size ) {
                     return face_i;
                 }
             }
@@ -34,7 +46,7 @@ static int test_face_size( const std::string &f, int size, int faceIndex )
     return faceIndex;
 }
 
-std::unique_ptr<Font> Font::load_font( SDL_Renderer_Ptr &renderer, SDL_PixelFormat_Ptr &format,
+std::unique_ptr<Font> Font::load_font( SDL_Renderer_Ptr &renderer, SDL_PixelFormat format,
                                        const std::string &typeface, int fontsize, int width,
                                        int height,
                                        const palette_array &palette,
@@ -308,9 +320,9 @@ CachedTTFFont::CachedTTFFont(
     if( typeface.length() > 4 && lcequal( typeface.substr( typeface.length() - 4 ), ".fon" ) ) {
         faceIndex = test_face_size( typeface, fontsize, faceIndex );
     }
-    font.reset( TTF_OpenFontIndex( typeface.c_str(), fontsize, faceIndex ) );
+    font.reset( open_font_index( typeface, fontsize, faceIndex ) );
     if( !font ) {
-        throw std::runtime_error( TTF_GetError() );
+        throw std::runtime_error( SDL_GetError() );
     }
     TTF_SetFontStyle( font.get(), TTF_STYLE_NORMAL );
 }
@@ -319,30 +331,17 @@ SDL_Texture_Ptr CachedTTFFont::create_glyph( const SDL_Renderer_Ptr &renderer,
         const std::string &ch,
         const int color )
 {
-    const auto function = fontblending ? TTF_RenderUTF8_Blended : TTF_RenderUTF8_Solid;
-    SDL_Surface_Ptr sglyph( function( font.get(), ch.c_str(), windowsPalette[color] ) );
+    SDL_Surface_Ptr sglyph(
+        fontblending
+        ? TTF_RenderText_Blended( font.get(), ch.c_str(), 0, windowsPalette[color] )
+        : TTF_RenderText_Solid( font.get(), ch.c_str(), 0, windowsPalette[color] )
+    );
     if( !sglyph ) {
-        dbg( DL::Error ) << "Failed to create glyph for " << ch << ": " << TTF_GetError();
+        dbg( DL::Error ) << "Failed to create glyph for " << ch << ": " << SDL_GetError();
         return nullptr;
     }
-    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
-       on the endianness (byte order) of the machine */
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    static const Uint32 rmask = 0xff000000;
-    static const Uint32 gmask = 0x00ff0000;
-    static const Uint32 bmask = 0x0000ff00;
-    static const Uint32 amask = 0x000000ff;
-#else
-    static const Uint32 rmask = 0x000000ff;
-    static const Uint32 gmask = 0x0000ff00;
-    static const Uint32 bmask = 0x00ff0000;
-    static const Uint32 amask = 0xff000000;
-#endif
     const int wf = utf8_wrapper( ch ).display_width();
-    // Note: bits per pixel must be 8 to be synchronized with the surface
-    // that TTF_RenderGlyph above returns. This is important for SDL_BlitScaled
-    SDL_Surface_Ptr surface = CreateRGBSurface( 0, width * wf, height, 32, rmask, gmask, bmask,
-                              amask );
+    SDL_Surface_Ptr surface( SDL_CreateSurface( width * wf, height, SDL_PIXELFORMAT_RGBA32 ) );
     SDL_Rect src_rect = { 0, 0, sglyph->w, sglyph->h };
     SDL_Rect dst_rect = { 0, 0, width * wf, height };
     if( src_rect.w < dst_rect.w ) {
@@ -360,7 +359,7 @@ SDL_Texture_Ptr CachedTTFFont::create_glyph( const SDL_Renderer_Ptr &renderer,
         src_rect.h = dst_rect.h;
     }
 
-    if( !printErrorIf( SDL_BlitSurface( sglyph.get(), &src_rect, surface.get(), &dst_rect ) != 0,
+    if( !printErrorIf( !SDL_BlitSurface( sglyph.get(), &src_rect, surface.get(), &dst_rect ),
                        "SDL_BlitSurface failed" ) ) {
         sglyph = std::move( surface );
     }
@@ -370,7 +369,7 @@ SDL_Texture_Ptr CachedTTFFont::create_glyph( const SDL_Renderer_Ptr &renderer,
 
 bool CachedTTFFont::isGlyphProvided( const std::string &ch ) const
 {
-    return TTF_GlyphIsProvided( font.get(), UTF8_getch( ch ) );
+    return TTF_FontHasGlyph( font.get(), UTF8_getch( ch ) );
 }
 
 void CachedTTFFont::OutputChar( const SDL_Renderer_Ptr &renderer, const GeometryRenderer_Ptr &,
@@ -393,11 +392,11 @@ void CachedTTFFont::OutputChar( const SDL_Renderer_Ptr &renderer, const Geometry
         // Nothing we can do here )-:
         return;
     }
-    SDL_Rect rect {p.x, p.y, value.width, height};
+    const SDL_FRect frect{ float( p.x ), float( p.y ), float( value.width ), float( height ) };
     if( opacity != 1.0f ) {
         SDL_SetTextureAlphaMod( value.texture.get(), opacity * 255.0f );
     }
-    RenderCopy( renderer, value.texture, nullptr, &rect );
+    RenderCopy( renderer, value.texture, nullptr, &frect );
     if( opacity != 1.0f ) {
         SDL_SetTextureAlphaMod( value.texture.get(), 255 );
     }
@@ -405,7 +404,7 @@ void CachedTTFFont::OutputChar( const SDL_Renderer_Ptr &renderer, const Geometry
 
 
 BitmapFont::BitmapFont(
-    SDL_Renderer_Ptr &renderer, SDL_PixelFormat_Ptr &format,
+    SDL_Renderer_Ptr &renderer, SDL_PixelFormat format,
     const int w, const int h,
     const palette_array &palette,
     const std::string &typeface_path )
@@ -417,16 +416,16 @@ BitmapFont::BitmapFont(
     if( asciiload->w * asciiload->h < ( width * height * 256 ) ) {
         throw std::runtime_error( "bitmap for font is to small" );
     }
-    Uint32 key = SDL_MapRGB( asciiload->format, 0xFF, 0, 0xFF );
-    SDL_SetColorKey( asciiload.get(), SDL_TRUE, key );
+    Uint32 key = SDL_MapRGB( SDL_GetPixelFormatDetails( asciiload->format ), nullptr, 0xFF, 0, 0xFF );
+    SDL_SetSurfaceColorKey( asciiload.get(), true, key );
     SDL_Surface_Ptr ascii_surf[std::tuple_size<decltype( ascii )>::value];
-    ascii_surf[0].reset( SDL_ConvertSurface( asciiload.get(), format.get(), 0 ) );
-    SDL_SetSurfaceRLE( ascii_surf[0].get(), 1 );
+    ascii_surf[0].reset( SDL_ConvertSurface( asciiload.get(), format ) );
+    SDL_SetSurfaceRLE( ascii_surf[0].get(), true );
     asciiload.reset();
 
     for( size_t a = 1; a < std::tuple_size<decltype( ascii )>::value; ++a ) {
-        ascii_surf[a].reset( SDL_ConvertSurface( ascii_surf[0].get(), format.get(), 0 ) );
-        SDL_SetSurfaceRLE( ascii_surf[a].get(), 1 );
+        ascii_surf[a].reset( SDL_ConvertSurface( ascii_surf[0].get(), format ) );
+        SDL_SetSurfaceRLE( ascii_surf[a].get(), true );
     }
 
     for( size_t a = 0; a < std::tuple_size<decltype( ascii )>::value - 1; ++a ) {
@@ -548,10 +547,12 @@ void BitmapFont::OutputChar( const SDL_Renderer_Ptr &renderer, const GeometryRen
         rect.y = p.y;
         rect.w = width;
         rect.h = height;
+        const SDL_FRect fsrc{ float( src.x ), float( src.y ), float( src.w ), float( src.h ) };
+        const SDL_FRect frect{ float( rect.x ), float( rect.y ), float( rect.w ), float( rect.h ) };
         if( opacity != 1.0f ) {
             SDL_SetTextureAlphaMod( ascii[color].get(), opacity * 255 );
         }
-        RenderCopy( renderer, ascii[color], &src, &rect );
+        RenderCopy( renderer, ascii[color], &fsrc, &frect );
         if( opacity != 1.0f ) {
             SDL_SetTextureAlphaMod( ascii[color].get(), 255 );
         }
@@ -599,7 +600,7 @@ void BitmapFont::OutputChar( const SDL_Renderer_Ptr &renderer, const GeometryRen
 }
 
 FontFallbackList::FontFallbackList(
-    SDL_Renderer_Ptr &renderer, SDL_PixelFormat_Ptr &format,
+    SDL_Renderer_Ptr &renderer, SDL_PixelFormat format,
     const int w, const int h,
     const palette_array &palette,
     const std::vector<std::string> &typefaces,

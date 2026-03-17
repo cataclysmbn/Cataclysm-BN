@@ -14,11 +14,7 @@
 #include <ostream>
 #include <utility>
 
-#if defined(_MSC_VER) && defined(USE_VCPKG)
-#    include <SDL2/SDL_mixer.h>
-#else
-#    include <SDL_mixer.h>
-#endif
+#include <SDL3_mixer/SDL_mixer.h>
 
 #include "cached_options.h"
 #include "debug.h"
