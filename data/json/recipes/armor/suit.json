@@ -900,7 +900,7 @@
       [ [ "cable", 5 ] ],
       [ [ "e_scrap", 3 ] ],
       [ [ "circuit", 1 ] ],
-      [ [ "superglue", 3 ], [ "bone_glue", 3 ] ]
+      [ [ "adhesive_proper", 3, "LIST" ] ]
     ]
   },
   {
