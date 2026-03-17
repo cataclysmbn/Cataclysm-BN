@@ -2239,6 +2239,16 @@
     ]
   },
   {
+    "id": "everyday_dp-12",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "dp-12", "ammo-group": "on_hand_shot", "charges": [ 0, 7 ] },
+      { "group": "on_hand_shot", "charges": [ 5, 10 ], "count": [ 2, 3 ] }
+    ]
+  },
+  {
     "id": "everyday_tavor_12",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

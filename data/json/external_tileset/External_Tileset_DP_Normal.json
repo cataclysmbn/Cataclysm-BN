@@ -321,7 +321,9 @@
           { "id": [ "aerial_bomb_armed", "overlay_wielded_aerial_bomb_armed" ], "fg": 214 },
           { "id": "mon_feral_pa_boss", "fg": 215 },
           { "id": [ "heavy_power_armor_frame", "overlay_wielded_power_armor_frame" ], "fg": 216 },
-          { "id": "overlay_worn_heavy_power_armor_frame", "fg": 217 }
+          { "id": "overlay_worn_heavy_power_armor_frame", "fg": 217 },
+          { "id": "dp-12", "fg": 218 },
+          { "id": "overlay_wielded_dp-12", "fg": 219 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
