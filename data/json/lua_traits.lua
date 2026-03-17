@@ -228,7 +228,6 @@ local function tick_morale_traits()
       you:rem_morale(morale_outdoor_misery)
     end
   end
-
 end
 
 local function tick_clutter_intolerant()
