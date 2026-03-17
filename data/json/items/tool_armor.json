@@ -777,6 +777,37 @@
     "flags": [ "OUTER", "LIGHT_200", "SUPER_FANCY" ]
   },
   {
+    "id": "sparkledogsuit_unstuffed",
+    "type": "ARMOR",
+    "copy-from": "sparkledogsuit",
+    "name": { "str": "unstuffed sparkledog suit" },
+    "description": "A full body fursuit in the form of some unidentifiable species. It's a riot of clashing neon colors, LEDs, and glitter.  Interior padding has been removed to accomodate mutant anatomy, also making it slightly cooler and less encumbering.  Using it will turn the LEDs on.",
+     "use_action": {
+      "type": "transform",
+      "msg": "You turn your fursuit's LEDs on.",
+      "target": "sparkledogsuit_unstuffed_on",
+      "active": true,
+      "transform_charges": 1,
+      "need_charges": 1,
+      "need_charges_msg": "The fursuit's batteries are dead."
+    "weight": "6123 g",
+    "encumbrance": 27,
+    "warmth": 45,
+    "flags": [ "OUTER", "SUPER_FANCY", "OVERSIZE" ]
+  },
+    {
+    "id": "sparkledogsuit_unstuffed_on",
+    "type": "ARMOR",
+    "copy-from": "sparkledogsuit_on",
+    "name": { "str": "unstuffed sparkledog suit (on)" },
+    "description": "A full body fursuit in the form of some unidentifiable species. It's a riot of clashing neon colors, LEDs, and glitter.  Interior padding has been removed to accomodate mutant anatomy, also making it slightly cooler and less encumbering.  Using it will turn the LEDs on.",
+    "use_action": { "menu_text": "Turn off", "type": "transform", "msg": "You turn your fursuit off.", "target": "sparkledogsuit_unstuffed" },
+    "weight": "6123 g",
+    "encumbrance": 27,
+    "warmth": 45,
+    "flags": [ "OUTER", "LIGHT_200", "SUPER_FANCY", "OVERSIZE" ]
+  },
+  {
     "id": "survivor_light",
     "type": "TOOL_ARMOR",
     "category": "clothing",
