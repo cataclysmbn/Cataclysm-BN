@@ -329,14 +329,12 @@
     "id": "constr_industrial_freezer",
     "group": "install_industrial_freezer",
     "category": "WORKSHOP",
-	"required_skills": [  ],
+    "required_skills": [  ],
     "time": "10 m",
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
     "post_furniture": "f_freezer_industrial",
-    "components": [
-      [ [ "freezer_industrial", 1 ] ]
-    ]
+    "components": [ [ [ "freezer_industrial", 1 ] ] ]
   },
   {
     "type": "construction",

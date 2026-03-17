@@ -43,7 +43,7 @@
     "color": "blue",
     "category": "scrap_electronics"
   },
-   {
+  {
     "id": "freezer_industrial",
     "type": "TOOL",
     "looks_like": "f_fridge",
