@@ -20,6 +20,8 @@
 #include "zlib.h"
 
 #define dbg(x) DebugLogFL((x),DC::Main)
+
+// Open a single SQLite connection (used for save_db and during pool initialization)
 static sqlite3 *open_db( const std::string &path )
 {
     sqlite3 *db = nullptr;
@@ -31,7 +33,8 @@ static sqlite3 *open_db( const std::string &path )
         throw std::runtime_error( "Failed to initialize sqlite3" );
     }
 
-    ret = sqlite3_open_v2( path.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL );
+    ret = sqlite3_open_v2( path.c_str(), &db,
+                           SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL );
     if( ret != SQLITE_OK ) {
         dbg( DL::Error ) << "Failed to open db" << path << " (Error " << ret << ")";
         throw std::runtime_error( "Failed to open db" );
@@ -54,6 +57,92 @@ static sqlite3 *open_db( const std::string &path )
     }
 
     return db;
+}
+
+sqlite_connection_pool::sqlite_connection_pool( const std::string &db_path )
+    : db_path( db_path )
+{
+    // Create the initial connection and set up WAL mode
+    // WAL mode is persistent and only needs to be set once per database file
+    sqlite3 *init_db = create_connection();
+    sqlite3_exec( init_db, "PRAGMA journal_mode=WAL", NULL, NULL, NULL );
+
+    // Store the initial connection for the main thread
+    connections[std::this_thread::get_id()] = init_db;
+}
+
+sqlite_connection_pool::~sqlite_connection_pool()
+{
+    std::lock_guard<std::mutex> lock( pool_mutex );
+    for( auto &pair : connections ) {
+        sqlite3_close( pair.second );
+    }
+    connections.clear();
+}
+
+sqlite3 *sqlite_connection_pool::create_connection()
+{
+    sqlite3 *db = nullptr;
+    int ret;
+
+    ret = sqlite3_initialize();
+    if( ret != SQLITE_OK ) {
+        dbg( DL::Error ) << "Failed to initialize sqlite3 (Error " << ret << ")";
+        throw std::runtime_error( "Failed to initialize sqlite3" );
+    }
+
+    // No FULLMUTEX needed - each thread gets its own connection
+    ret = sqlite3_open_v2( db_path.c_str(), &db,
+                           SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL );
+    if( ret != SQLITE_OK ) {
+        dbg( DL::Error ) << "Failed to open db " << db_path << " (Error " << ret << ")";
+        throw std::runtime_error( "Failed to open db" );
+    }
+
+    // Ensure schema exists (safe to run multiple times due to IF NOT EXISTS)
+    auto sql = R"sql(
+        CREATE TABLE IF NOT EXISTS files (
+            path           TEXT PRIMARY KEY NOT NULL,
+            parent         TEXT NOT NULL,
+            compression    TEXT DEFAULT NULL,
+            data           BLOB NOT NULL
+        );
+    )sql";
+
+    char *sqlErrMsg = nullptr;
+    ret = sqlite3_exec( db, sql, NULL, NULL, &sqlErrMsg );
+    if( ret != SQLITE_OK ) {
+        dbg( DL::Error ) << "Failed to init db " << db_path << " (" << sqlErrMsg << ")";
+        sqlite3_free( sqlErrMsg );
+        sqlite3_close( db );
+        throw std::runtime_error( "Failed to init db" );
+    }
+
+    return db;
+}
+
+sqlite3 *sqlite_connection_pool::acquire()
+{
+    std::thread::id tid = std::this_thread::get_id();
+
+    std::lock_guard<std::mutex> lock( pool_mutex );
+    auto it = connections.find( tid );
+    if( it != connections.end() ) {
+        return it->second;
+    }
+
+    // Create new connection for this thread
+    sqlite3 *conn = create_connection();
+    connections[tid] = conn;
+    return conn;
+}
+
+void sqlite_connection_pool::exec_all( const char *sql )
+{
+    std::lock_guard<std::mutex> lock( pool_mutex );
+    for( auto &pair : connections ) {
+        sqlite3_exec( pair.second, sql, NULL, NULL, NULL );
+    }
 }
 
 save_t::save_t( const std::string &name ): name( name ) {}
@@ -409,7 +498,7 @@ world::world( WORLDINFO *info )
     }
 
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-        map_db = open_db( info->folder_path() + "/map.sqlite3" );
+        map_db_pool = std::make_unique<sqlite_connection_pool>( info->folder_path() + "/map.sqlite3" );
     } else {
         if( !assure_dir_exist( "/maps" ) ) {
             dbg( DL::Error ) << "Unable to create or open world directory structure: " << info->folder_path();
@@ -423,9 +512,7 @@ world::~world()
         dbg( DL::Error ) << "Save transaction was not committed before world destruction";
     }
 
-    if( map_db ) {
-        sqlite3_close( map_db );
-    }
+    // map_db_pool destructor handles closing all pooled connections
 
     if( save_db ) {
         sqlite3_close( save_db );
@@ -441,8 +528,8 @@ void world::start_save_tx()
                            std::chrono::system_clock::now().time_since_epoch()
                        ).count();
 
-    if( map_db ) {
-        sqlite3_exec( map_db, "BEGIN TRANSACTION", NULL, NULL, NULL );
+    if( map_db_pool ) {
+        map_db_pool->exec_all( "BEGIN TRANSACTION" );
     }
 
     if( save_db ) {
@@ -456,8 +543,8 @@ int64_t world::commit_save_tx()
         throw std::runtime_error( "Attempted to commit a save transaction while none was in progress" );
     }
 
-    if( map_db ) {
-        sqlite3_exec( map_db, "COMMIT", NULL, NULL, NULL );
+    if( map_db_pool ) {
+        map_db_pool->exec_all( "COMMIT" );
     }
 
     if( save_db ) {
@@ -494,7 +581,7 @@ bool world::read_map_quad( const tripoint &om_addr, file_read_json_fn reader ) c
 
     // V2 logic
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-        return read_from_db_json( map_db, quad_path, reader, true );
+        return read_from_db_json( map_db_pool->acquire(), quad_path, reader, true );
     } else {
         if( !file_exist( quad_path ) ) {
             // Fix for old saves where the path was generated using std::stringstream, which
@@ -519,7 +606,7 @@ bool world::write_map_quad( const tripoint &om_addr, file_write_fn writer ) cons
 
     // V2 logic
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-        write_to_db( map_db, quad_path, writer );
+        write_to_db( map_db_pool->acquire(), quad_path, writer );
         return true;
     } else {
         assure_dir_exist( dirname );
@@ -544,7 +631,7 @@ std::string world::overmap_player_filename( const point_abs_om &p ) const
 bool world::overmap_exists( const point_abs_om &p ) const
 {
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-        return file_exist_in_db( map_db, overmap_terrain_filename( p ) );
+        return file_exist_in_db( map_db_pool->acquire(), overmap_terrain_filename( p ) );
     } else {
         return file_exist( overmap_terrain_filename( p ) );
     }
@@ -553,7 +640,7 @@ bool world::overmap_exists( const point_abs_om &p ) const
 bool world::read_overmap( const point_abs_om &p, file_read_fn reader ) const
 {
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-        return read_from_db( map_db, overmap_terrain_filename( p ), reader, true );
+        return read_from_db( map_db_pool->acquire(), overmap_terrain_filename( p ), reader, true );
     } else {
         return read_from_file( overmap_terrain_filename( p ), reader, true );
     }
@@ -572,7 +659,7 @@ bool world::read_overmap_player_visibility( const point_abs_om &p, file_read_fn 
 bool world::write_overmap( const point_abs_om &p, file_write_fn writer ) const
 {
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-        write_to_db( map_db, overmap_terrain_filename( p ), writer );
+        write_to_db( map_db_pool->acquire(), overmap_terrain_filename( p ), writer );
         return true;
     } else {
         return write_to_file( overmap_terrain_filename( p ), writer );
@@ -725,6 +812,7 @@ void world::convert_from_v1( const std::unique_ptr<WORLDINFO> &old_world )
     // The map database should already be loaded via the constructor.
     // The save database(s) will need to be created separately here.
     // Transactions are mostly being used for performance reasons rather than consistency.
+    sqlite3 *map_db = map_db_pool->acquire();
     sqlite3_exec( map_db, "BEGIN TRANSACTION", NULL, NULL, NULL );
 
     // Keep track of the last used save DB
