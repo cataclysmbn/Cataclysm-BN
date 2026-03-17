@@ -790,6 +790,7 @@
       "transform_charges": 1,
       "need_charges": 1,
       "need_charges_msg": "The fursuit's batteries are dead."
+     }
     "weight": "6123 g",
     "encumbrance": 27,
     "warmth": 45,
