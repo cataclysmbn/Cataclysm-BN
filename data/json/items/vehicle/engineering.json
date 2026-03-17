@@ -59,7 +59,7 @@
     "type": "GENERIC",
     "id": "v_roadheader_item",
     "symbol": "&",
-	"looks_like": "v_rockwheel_item",
+    "looks_like": "v_rockwheel_item",
     "name": { "str": "roadheader" },
     "color": "dark_gray",
     "description": "A massive metal wheel-like drill used to bore tunnels.",

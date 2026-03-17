@@ -179,7 +179,7 @@
     "requirements": {
       "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
       "removal": { "skills": [ [ "mechanics", 6 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 5  ], [ "steel_tiny", 1 ] ] }
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
     "flags": [ "PROTRUSION", "EXTRA_DRAG", "ROADHEAD", "CRASH_TERRAIN_AROUND" ],
     "damage_reduction": { "all": 132 }

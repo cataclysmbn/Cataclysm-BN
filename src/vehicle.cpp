@@ -6583,15 +6583,15 @@ void vehicle::refresh()
             extra_drag += vpi.power;
         }
         if( vpi.has_flag( "POWERED_BY_ENGINE" ) {
-            extra_drag += vpi.power;
-        }
-        if( camera_on && vpi.has_flag( "CAMERA" ) ) {
-            vp.part().enabled = true;
+        extra_drag += vpi.power;
+    }
+    if( camera_on && vpi.has_flag( "CAMERA" ) ) {
+        vp.part().enabled = true;
         } else if( !camera_on && vpi.has_flag( "CAMERA" ) ) {
-            vp.part().enabled = false;
+        vp.part().enabled = false;
         }
         if( vpi.has_flag( "TURRET" ) && !has_part( global_part_pos3( vp.part() ), "TURRET_CONTROLS" ) ) {
-            vp.part().enabled = false;
+        vp.part().enabled = false;
         }
     }
 
