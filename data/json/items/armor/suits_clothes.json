@@ -73,6 +73,7 @@
   },
   {
     "id": "dinosuit_unstuffed",
+    "type": "ARMOR",
     "copy-from": "dinosuit",
     "name": { "str": "unstuffed dinosaur suit" },
     "description": "A full body costume in the form of an anthropomorphic dinosaur.  Interior padding has been removed to accomodate mutant anatomy, also making it slightly cooler and less encumbering.",
