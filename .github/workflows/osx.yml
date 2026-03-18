@@ -67,17 +67,9 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install runtime dependencies
-        uses: BrettDong/setup-sdl2-frameworks@v1
-        with:
-          sdl2: 2.30.11
-          sdl2-ttf: 2.24.0
-          sdl2-image: 2.8.4
-          sdl2-mixer: 2.8.0
-
       - name: Install build dependencies
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl2 sdl2_image sdl2_ttf sdl2_mixer gettext parallel llvm@20 astyle sqlite3 zlib
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel llvm@20 astyle sqlite3 zlib
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
