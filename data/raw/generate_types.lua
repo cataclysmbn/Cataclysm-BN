@@ -59,6 +59,71 @@ local fmt_function_signature = function(arg_list, ret_type, class_name, meta)
   return "fun(" .. params_str .. ")" .. ret_str
 end
 
+---@type table<string, string>
+local operator_metamethod_names = {
+  __add = "add",
+  __concat = "concat",
+  __div = "div",
+  __eq = "eq",
+  __le = "le",
+  __len = "len",
+  __lt = "lt",
+  __mod = "mod",
+  __mul = "mul",
+  __pow = "pow",
+  __sub = "sub",
+  __unm = "unm",
+}
+
+---@param member_name string
+---@return string?
+local get_operator_metamethod_name = function(member_name) return operator_metamethod_names[member_name] end
+
+---@param member table {name:string, overloads:table[]}
+---@param class_name string
+---@return string
+local fmt_operator_annotations = function(member, class_name)
+  local operator_name = get_operator_metamethod_name(tostring(member.name))
+  if not operator_name or not member.overloads or #member.overloads == 0 then return "" end
+
+  ---@type string[]
+  local lines = {}
+  ---@type table<string, boolean>
+  local seen = {}
+
+  for _, overload in ipairs(member.overloads) do
+    local clean_arg_list = remove_hidden_args(overload.args)
+    ---@type string[]
+    local operand_types = {}
+
+    for i, arg_str in ipairs(clean_arg_list) do
+      if not (i == 1 and arg_str == class_name) then
+        table.insert(operand_types, map_cpp_type_to_lua(arg_str, false))
+      end
+    end
+
+    if #operand_types <= 1 then
+      local operator_args = ""
+      if #operand_types == 1 then operator_args = "(" .. operand_types[1] .. ")" end
+
+      local operator_line = "---@operator "
+        .. operator_name
+        .. operator_args
+        .. ": "
+        .. map_cpp_type_to_lua(overload.retval, false)
+
+      if not seen[operator_line] then
+        seen[operator_line] = true
+        table.insert(lines, operator_line)
+      end
+    end
+  end
+
+  if #lines == 0 then return "" end
+
+  return table.concat(lines, "\n") .. "\n"
+end
+
 --[[
     Formats ---@field annotation for variable members.
   ]]
@@ -93,6 +158,9 @@ end
 ---@param class_name string The name of the owning class/library
 ---@return string
 local fmt_function_field = function(member, class_name)
+  local operator_annotations = fmt_operator_annotations(member, class_name)
+  if operator_annotations ~= "" then return operator_annotations end
+
   local ret = ""
   local member_name = tostring(member.name)
   if not string.match(member_name, "^[%a_][%w_]*$") then
