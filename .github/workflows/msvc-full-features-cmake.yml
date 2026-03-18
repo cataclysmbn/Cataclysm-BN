@@ -50,7 +50,7 @@ env:
   CMAKE_PRESET: windows-tiles-sounds-x64-msvc
 
 jobs:
-  build_catatclysm:
+  build_cataclysm:
     name: Build
     runs-on: windows-latest
     if: github.event.pull_request.draft == false
@@ -93,6 +93,7 @@ jobs:
         id: runvcpkg
         with:
           vcpkgDirectory: "${{ runner.workspace }}/b/vcpkg"
+          vcpkgGitCommitId: "a8f78d257ade3c2e7999c1129a6d29971ae32006"
 
       - name: Integrate vcpkg
         run: |
@@ -133,9 +134,9 @@ jobs:
       - name: Dump logs if build failed
         if: failure()
         run: |
-          echo =================================================
+          echo ============================================================
           Get-ChildItem "${{ runner.workspace }}/Cataclysm-BN/out/build/$env:CMAKE_PRESET" -Recurse
-          echo =================================================
+          echo ============================================================
 
       - name: Compile .mo files for localization
         run: |
