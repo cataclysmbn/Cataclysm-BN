@@ -44,7 +44,7 @@ jobs:
       - name: Setup build and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install gcc-14 gettext libsqlite3-dev zlib1g-dev
+          sudo apt-get install gcc-14 gettext libsqlite3-dev zlib1g-dev zip
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
@@ -65,6 +65,23 @@ jobs:
         working-directory: ./android
         env:
           NDK_CCACHE: ccache
+        shell: bash
         run: |
           chmod +x gradlew
-          ./gradlew -Pj=$((`nproc`+0)) -Pabi_arm_32=false assembleExperimentalRelease
+          ./gradlew -Pj=$(nproc) -Pabi_arm_32=false assembleExperimentalDebug
+
+      - name: Create PR debug distribution zip
+        shell: bash
+        run: |
+          artifact_suffix="pr-${{ github.event.pull_request.number }}-${GITHUB_SHA::7}"
+          apk_path=$(ls -1 android/app/build/outputs/apk/experimental/debug/*.apk | head -n1)
+          cp "${apk_path}" "cbn-android-debug-${artifact_suffix}.apk"
+          zip "cbn-android-debug-${artifact_suffix}.zip" "cbn-android-debug-${artifact_suffix}.apk"
+
+      - name: Upload PR debug distribution zip
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: cbn-android-debug-pr-${{ github.event.pull_request.number }}
+          path: cbn-android-debug-*.zip
+          if-no-files-found: error
+          retention-days: 14
