@@ -334,7 +334,7 @@ if (TILES)
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
         set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
         # ^^ Use sdl3-config.cmake provided by the system or VCPKG
-        find_package(SDL3)
+        find_package(SDL3 CONFIG REQUIRED)
         if(NOT SDL3_FOUND)
             # Use our CMakeModules/Find/FindSDL3.cmake
             set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
@@ -351,7 +351,7 @@ if (TILES)
     endif ()
 
     message(STATUS "Searching for SDL3_ttf library --")
-    find_package(SDL3_ttf)
+    find_package(SDL3_ttf CONFIG REQUIRED)
     if (NOT (SDL3_TTF_FOUND OR TARGET SDL3_ttf::SDL3_ttf OR TARGET SDL3_ttf::SDL3_ttf-static))
         message(FATAL_ERROR
                 "This project requires SDL3_ttf to be installed to compile in graphical mode. \
@@ -361,7 +361,7 @@ if (TILES)
     endif ()
 
     message(STATUS "Searching for SDL3_image library --")
-    find_package(SDL3_image)
+    find_package(SDL3_image CONFIG REQUIRED)
     if (NOT (SDL3_IMAGE_FOUND OR TARGET SDL3_image::SDL3_image OR TARGET SDL3_image::SDL3_image-static))
         message(FATAL_ERROR
                 "This project requires SDL3_image to be installed to compile in graphical mode. \
@@ -401,7 +401,7 @@ if (SOUND)
 
     # Sound requires SDL_mixer library
     message(STATUS "Searching for SDL3_mixer library --")
-    find_package(SDL3_mixer)
+    find_package(SDL3_mixer CONFIG REQUIRED)
     if (NOT (SDL3_MIXER_FOUND OR TARGET SDL3_mixer::SDL3_mixer
                               OR TARGET SDL3_mixer::SDL3_mixer-static))
         message(FATAL_ERROR
