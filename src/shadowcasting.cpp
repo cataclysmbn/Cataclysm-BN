@@ -48,7 +48,7 @@ static const exp_lookup s_openair_lookup{ LIGHT_TRANSPARENCY_OPEN_AIR };
 // where R = g_max_view_distance, Z = fov_3d_z_range.
 // Rebuilt whenever those two runtime values change.
 
-static constexpr float Z_LEVEL_SCALE = 1.8f;
+// Z_LEVEL_SCALE is declared in shadowcasting.h (inline constexpr float).
 
 static std::vector<uint16_t> s_zdist_table;
 static int s_zdist_R = -1;
