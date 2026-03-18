@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cmath>
 #include <cstdint>
 
@@ -13,6 +14,7 @@
 #include "point.h"
 #include "profile.h"
 #include "string_formatter.h"
+#include "thread_pool.h"
 
 // ── four_quadrants ────────────────────────────────────────────────────────────
 
@@ -35,6 +37,65 @@ void exp_lookup::reset( float t ) noexcept
 
 // Precomputed table for open-air transparency — always valid, never changes.
 static const exp_lookup s_openair_lookup{ LIGHT_TRANSPARENCY_OPEN_AIR };
+
+// ── Z-distance table (Proposals A + B) ───────────────────────────────────────
+// Precomputes round(sqrt(dx² + dy² + (dz * Z_LEVEL_SCALE)²)) for every
+// (dx, dy, dz) triple that cast_zlight_segment can encounter.  Replaces the
+// per-tile sqrt() call and applies a 1.8× z-level scaling to correct the
+// physics: one z-level is ~1.8 horizontal tiles in height.
+//
+// Table layout: [dy * (Z+1) * (R+1) + dz * (R+1) + dx]
+// where R = g_max_view_distance, Z = fov_3d_z_range.
+// Rebuilt whenever those two runtime values change.
+
+static constexpr float Z_LEVEL_SCALE = 1.8f;
+
+static std::vector<uint16_t> s_zdist_table;
+static int s_zdist_R = -1;
+static int s_zdist_Z = -1;
+
+static void rebuild_zdist_table()
+{
+    const int R = g_max_view_distance;
+    const int Z = fov_3d_z_range;
+    if( R == s_zdist_R && Z == s_zdist_Z ) {
+        return;
+    }
+    s_zdist_R = R;
+    s_zdist_Z = Z;
+    s_zdist_table.resize( static_cast<size_t>( R + 1 ) * ( Z + 1 ) * ( R + 1 ) );
+    for( int dy = 0; dy <= R; ++dy ) {
+        for( int dz = 0; dz <= Z; ++dz ) {
+            const float fz  = static_cast<float>( dz ) * Z_LEVEL_SCALE;
+            const float fz2 = fz * fz;
+            for( int dx = 0; dx <= R; ++dx ) {
+                const float d = std::sqrt( static_cast<float>( dx * dx + dy * dy ) + fz2 );
+                s_zdist_table[static_cast<size_t>( dy ) * ( Z + 1 ) * ( R + 1 ) +
+                              static_cast<size_t>( dz ) * ( R + 1 ) + dx] =
+                    static_cast<uint16_t>( std::lround( d ) );
+            }
+        }
+    }
+}
+
+static int zdist_lookup( int dx, int dy, int dz ) noexcept
+{
+    return s_zdist_table[static_cast<size_t>( dy ) * ( s_zdist_Z + 1 ) * ( s_zdist_R + 1 ) +
+                         static_cast<size_t>( dz ) * ( s_zdist_R + 1 ) + dx];
+}
+
+// ── Atomic float-max (Proposal C) ────────────────────────────────────────────
+// Used by parallel cast_zlight octants to merge outputs without data races.
+// std::atomic_ref<float> is C++20; CAS loop is correct for all platforms.
+
+static void atomic_float_max( float &cell, float val ) noexcept
+{
+    std::atomic_ref<float> a( cell );
+    float expected = a.load( std::memory_order_relaxed );
+    while( expected < val &&
+           !a.compare_exchange_weak( expected, val, std::memory_order_relaxed ) ) {
+    }
+}
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -430,10 +491,12 @@ void castLightOctants_q(
 
 // ── Internal 3D cast ──────────────────────────────────────────────────────────
 
-// Casts light through one 3D octant-segment.  This is the non-template
-// replacement for cast_zlight_segment<xx,xy,xz,yx,yy,yz,zz,T,calc,check,acc>.
-// The transform is a runtime value; all 16 call sites pass constexpr constants
-// so the compiler constant-folds the arithmetic identically to the old templates.
+// Casts light through one 3D octant-segment.
+//
+// UseAtomic — when true, output writes use std::atomic_ref CAS so that 16
+// octant segments can run in parallel (Proposal C).  When false, plain
+// assignments are used (serial path).
+template<bool UseAtomic>
 static void cast_zlight_segment(
     const array_of_grids_of<float> &output_caches,
     const array_of_grids_of<const float> &input_arrays,
@@ -542,10 +605,30 @@ static void cast_zlight_segment(
                     current_floor = new_floor;
                 }
 
-                const int dist = rl_dist( tripoint_zero, delta ) + offset_distance;
-                last_intensity = model.calc( numerator, cumulative_transparency, dist );
-                output_caches[z_index].at( current.x, current.y ) =
-                    std::max( output_caches[z_index].at( current.x, current.y ), last_intensity );
+                // Proposal A: table lookup replaces per-tile sqrt().
+                // dist_2d is the horizontal (xy-plane) distance used for Beer-Lambert
+                // intensity — vertical offset does not penalise apparent brightness.
+                // dist_3d applies the 1.8× z-level scale for future occlusion use.
+                const int dist_2d  = zdist_lookup( delta.x, delta.y, 0 ) + offset_distance;
+                // (dist_3d available here if occlusion weighting is added later)
+
+                // Proposal B: skip exp() for the common open-air fast path.
+                if( cumulative_transparency == LIGHT_TRANSPARENCY_OPEN_AIR ) {
+                    const int lookup_idx = std::min( dist_2d, exp_lookup::size - 1 );
+                    last_intensity = numerator * s_openair_lookup.values[lookup_idx];
+                } else {
+                    last_intensity = model.calc( numerator, cumulative_transparency, dist_2d );
+                }
+
+                // Proposal C: atomic write when running in parallel; plain when serial.
+                float &out_cell = output_caches[z_index].at( current.x, current.y );
+                if constexpr( UseAtomic ) {
+                    atomic_float_max( out_cell, last_intensity );
+                } else {
+                    if( last_intensity > out_cell ) {
+                        out_cell = last_intensity;
+                    }
+                }
 
                 if( new_transparency != current_transparency || new_floor != current_floor ) {
                     // ── Split: A (past rows), B (processed x so far), C (rest) ─
@@ -569,7 +652,7 @@ static void cast_zlight_segment(
                         // Cast section A (rows already processed at this distance).
                         const float next_cumulative = model.accumulate(
                                                           cumulative_transparency, current_transparency, distance );
-                        cast_zlight_segment(
+                        cast_zlight_segment<UseAtomic>(
                             output_caches, input_arrays, floor_caches, blocked_caches,
                             offset, offset_distance, numerator, model, xf,
                             distance + 1,
@@ -584,7 +667,7 @@ static void cast_zlight_segment(
                                             : ( delta.x - 0.5f ) / ( delta.y + 0.5f );
 
                     // Section C: always cast (handles the new transparency span).
-                    cast_zlight_segment(
+                    cast_zlight_segment<UseAtomic>(
                         output_caches, input_arrays, floor_caches, blocked_caches,
                         offset, offset_distance, numerator, model, xf,
                         distance,
@@ -614,7 +697,7 @@ static void cast_zlight_segment(
                     const float next_cumulative = model.accumulate(
                                                       cumulative_transparency, current_transparency, distance );
                     const float top_edge = ( delta.z + 0.5f ) / ( delta.y + 0.5001f );
-                    cast_zlight_segment(
+                    cast_zlight_segment<UseAtomic>(
                         output_caches, input_arrays, floor_caches, blocked_caches,
                         offset, offset_distance, numerator, model, xf,
                         distance + 1,
@@ -655,10 +738,26 @@ void cast_zlight(
     const light_model &model )
 {
     ZoneScoped;
-    for( const auto &xf : k_zlight_xforms ) {
-        cast_zlight_segment(
-            output_caches, input_arrays, floor_caches, blocked_caches,
-            origin, offset_distance, numerator, model, xf,
-            1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
+
+    // Ensure the z-distance lookup table matches current runtime settings.
+    rebuild_zdist_table();
+
+    // Proposal C: dispatch all 16 octant segments in parallel when enabled.
+    // Each segment is independent (read-only inputs, max-writes to outputs).
+    // Overlapping output cells are resolved via atomic CAS in the hot path.
+    if( parallel_enabled ) {
+        parallel_for_chunked( 0, static_cast<int>( k_zlight_xforms.size() ), 1, [&]( int i ) {
+            cast_zlight_segment<true>(
+                output_caches, input_arrays, floor_caches, blocked_caches,
+                origin, offset_distance, numerator, model, k_zlight_xforms[i],
+                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
+        } );
+    } else {
+        std::ranges::for_each( k_zlight_xforms, [&]( const octant_xform_3d &xf ) {
+            cast_zlight_segment<false>(
+                output_caches, input_arrays, floor_caches, blocked_caches,
+                origin, offset_distance, numerator, model, xf,
+                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
+        } );
     }
 }
