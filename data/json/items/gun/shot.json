@@ -719,7 +719,7 @@
     "name": { "str": "BP-12" },
     "description": "A bullpup, magazine fed, semi-automatic shotgun, possessing the accuracy of a full-length barrel in a compact frame.",
     "weight": "3628 g",
-    "volume": "3443 ml",
+    "volume": "2250 ml",
     "price": "325 USD",
     "price_postapoc": "475 USD",
     "material": [ "steel", "plastic" ],
