@@ -1097,6 +1097,35 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         }
         cast_zlight( seen_caches, transparency_caches, floor_caches, blocked_caches,
                      origin, 0, 1.0f, k_sight_model );
+
+        // Horizontal occlusion pass: clip each non-origin z-level's seen_cache
+        // with a 2D shadow cast from origin.xy().  cast_zlight handles vertical
+        // line-of-sight (floors, ceilings) but cannot shadow horizontal obstacles
+        // at z-levels other than the player's.  This pass adds that shadowing.
+        if( fov_3d_occlusion ) {
+            ZoneScopedN( "build_seen_cache_3d_occlusion" );
+            auto &ref_cache = get_cache( -OVERMAP_DEPTH );
+            const int cache_sz = ref_cache.cache_x * ref_cache.cache_y;
+            std::vector<float> temp_seen( cache_sz );
+
+            const int z_lo = std::max( -OVERMAP_DEPTH,  origin.z - fov_3d_z_range );
+            const int z_hi = std::min(  OVERMAP_HEIGHT, origin.z + fov_3d_z_range );
+            for( int z = z_lo; z <= z_hi; ++z ) {
+                if( z == origin.z ) {
+                    continue;
+                }
+                auto &zc = get_cache( z );
+                std::fill( temp_seen.begin(), temp_seen.end(), light_transparency_solid );
+                temp_seen[zc.idx( origin.x, origin.y )] = VISIBILITY_FULL;
+                castLightAll( temp_seen.data(), zc.transparency_cache.data(),
+                              zc.vehicle_obscured_cache.data(), zc.cache_x, zc.cache_y,
+                              origin.xy(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
+                std::ranges::transform( zc.seen_cache, temp_seen, zc.seen_cache.begin(),
+                []( float a, float b ) {
+                    return std::min( a, b );
+                } );
+            }
+        }
     }
 
     if( origin.z == target_z ) {

@@ -631,63 +631,71 @@ static void cast_zlight_segment(
                 }
 
                 if( new_transparency != current_transparency || new_floor != current_floor ) {
-                    // ── Split: A (past rows), B (processed x so far), C (rest) ─
-                    //
-                    //  +---+---+  <- end_major
-                    //  | B | C |
-                    //  +---+---+  <- mid_major
-                    //  |   A   |
-                    //  +-------+  <- start_major
-                    //  ^   ^   ^
-                    //  |   |   end_minor
-                    //  |   mid_minor
-                    //  start_minor
+                    if( fov_3d_occlusion || delta.z == 0 ) {
+                        // ── Split: A (past rows), B (processed x so far), C (rest) ─
+                        //
+                        //  +---+---+  <- end_major
+                        //  | B | C |
+                        //  +---+---+  <- mid_major
+                        //  |   A   |
+                        //  +-------+  <- start_major
+                        //  ^   ^   ^
+                        //  |   |   end_minor
+                        //  |   mid_minor
+                        //  start_minor
 
-                    const float mid_major = ( current_transparency < new_transparency )
-                                            ? ( delta.z - 0.5f ) / ( delta.y - 0.5f )
-                                            : ( delta.z - 0.5f ) / ( delta.y + 0.5f );
+                        const float mid_major = ( current_transparency < new_transparency )
+                                                ? ( delta.z - 0.5f ) / ( delta.y - 0.5f )
+                                                : ( delta.z - 0.5f ) / ( delta.y + 0.5f );
 
-                    if( delta.z != z_start &&
-                        model.check( current_transparency, last_intensity ) ) {
-                        // Cast section A (rows already processed at this distance).
-                        const float next_cumulative = model.accumulate(
-                                                          cumulative_transparency, current_transparency, distance );
+                        if( delta.z != z_start &&
+                            model.check( current_transparency, last_intensity ) ) {
+                            // Cast section A (rows already processed at this distance).
+                            const float next_cumulative = model.accumulate(
+                                                              cumulative_transparency, current_transparency, distance );
+                            cast_zlight_segment<UseAtomic>(
+                                output_caches, input_arrays, floor_caches, blocked_caches,
+                                offset, offset_distance, numerator, model, xf,
+                                distance + 1,
+                                start_major, std::min( mid_major, end_major ),
+                                start_minor, end_minor,
+                                next_cumulative,
+                                -1, -1 );
+                        }
+
+                        const float mid_minor = ( current_transparency < new_transparency )
+                                                ? ( delta.x - 0.5f ) / ( delta.y - 0.5f )
+                                                : ( delta.x - 0.5f ) / ( delta.y + 0.5f );
+
+                        // Section C: always cast (handles the new transparency span).
                         cast_zlight_segment<UseAtomic>(
                             output_caches, input_arrays, floor_caches, blocked_caches,
                             offset, offset_distance, numerator, model, xf,
-                            distance + 1,
-                            start_major, std::min( mid_major, end_major ),
-                            start_minor, end_minor,
-                            next_cumulative,
-                            -1, -1 );
+                            distance,
+                            std::max( mid_major, start_major ), end_major,
+                            std::max( mid_minor, start_minor ), end_minor,
+                            cumulative_transparency, delta.x, delta.z );
+
+                        // Continue with section B (already-processed x tiles).
+                        if( delta.x == x_start ) {
+                            return;  // B is zero-width.
+                        }
+
+                        start_major = std::max( start_major, mid_major );
+                        end_minor   = std::min( end_minor, mid_minor );
+
+                        if( start_major >= end_major || start_minor >= end_minor ) {
+                            return;
+                        }
+                        z_start = delta.z;
+                        break;  // Exit x loop; z loop continues from delta.z.
+                    } else {
+                        // No horizontal occlusion: skip sector-splitting for delta.z > 0.
+                        // Update floor tracking only so the floor-handling block below
+                        // still stops downward rays correctly.  Leave current_transparency
+                        // alone so end-of-distance model.check uses the delta.z==0 value.
+                        current_floor = new_floor;
                     }
-
-                    const float mid_minor = ( current_transparency < new_transparency )
-                                            ? ( delta.x - 0.5f ) / ( delta.y - 0.5f )
-                                            : ( delta.x - 0.5f ) / ( delta.y + 0.5f );
-
-                    // Section C: always cast (handles the new transparency span).
-                    cast_zlight_segment<UseAtomic>(
-                        output_caches, input_arrays, floor_caches, blocked_caches,
-                        offset, offset_distance, numerator, model, xf,
-                        distance,
-                        std::max( mid_major, start_major ), end_major,
-                        std::max( mid_minor, start_minor ), end_minor,
-                        cumulative_transparency, delta.x, delta.z );
-
-                    // Continue with section B (already-processed x tiles).
-                    if( delta.x == x_start ) {
-                        return;  // B is zero-width.
-                    }
-
-                    start_major = std::max( start_major, mid_major );
-                    end_minor   = std::min( end_minor, mid_minor );
-
-                    if( start_major >= end_major || start_minor >= end_minor ) {
-                        return;
-                    }
-                    z_start = delta.z;
-                    break;  // Exit x loop; z loop continues from delta.z.
                 }
             } // end x loop
 

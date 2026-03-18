@@ -59,6 +59,9 @@ extern bool fov_3d;
 /** 3D FoV range, in Z levels, in both directions. */
 extern int fov_3d_z_range;
 
+/** 3D FoV horizontal occlusion: clip vertical-cast results with per-z 2D horizontal shadow passes. */
+extern bool fov_3d_occlusion;
+
 /** Using isometric tileset. */
 extern bool tile_iso;
 

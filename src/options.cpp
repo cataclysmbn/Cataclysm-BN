@@ -2617,6 +2617,12 @@ void options_manager::add_options_debug()
 
     get_option( "FOV_3D_Z_RANGE" ).setPrerequisite( "FOV_3D" );
 
+    add( "FOV_3D_OCCLUSION", debug, translate_marker( "3D FoV horizontal occlusion" ),
+         translate_marker( "When enabled, obstacles at other z-levels correctly block horizontal line of sight.  Requires 3D FoV.  Slightly slower than disabled." ),
+         true
+       );
+    get_option( "FOV_3D_OCCLUSION" ).setPrerequisite( "FOV_3D" );
+
     add( "ENABLE_EVENTS", debug, translate_marker( "Event bus system" ),
          translate_marker( "If false, achievements and some Magiclysm functionality won't work, but performance will be better." ),
          true
@@ -4108,6 +4114,7 @@ void options_manager::cache_to_globals()
     message_cooldown = ::get_option<int>( "MESSAGE_COOLDOWN" );
     fov_3d = ::get_option<bool>( "FOV_3D" );
     fov_3d_z_range = ::get_option<int>( "FOV_3D_Z_RANGE" );
+    fov_3d_occlusion = ::get_option<bool>( "FOV_3D_OCCLUSION" );
     static_z_effect = ::get_option<bool>( "STATICZEFFECT" );
     overmap_transparency = ::get_option<bool>( "OVERMAP_TRANSPARENCY" );
     PICKUP_RANGE = ::get_option<int>( "PICKUP_RANGE" );
