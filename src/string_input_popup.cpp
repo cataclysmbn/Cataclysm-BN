@@ -23,6 +23,7 @@
 #include <SDL3/SDL.h>
 
 #include "options.h"
+#include "sdltiles.h"
 #endif
 
 #include <algorithm>
@@ -446,7 +447,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
         if( action == "TEXT.QUIT" ) {
 #if defined(__ANDROID__)
             if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-                SDL_StopTextInput();
+                SDL_StopTextInput( get_sdl_window().get() );
             }
 #endif
             _text.clear();

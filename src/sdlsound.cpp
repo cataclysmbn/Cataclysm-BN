@@ -62,10 +62,9 @@ struct music_playlist {
 };
 
 // ── Volume helpers ─────────────────────────────────────────────────────────────
-// SDL2_mixer volumes were integers in [0, 128] (MIX_MAX_VOLUME = 128).
-// SDL3_mixer uses float gain: 0.0 = silent, 1.0 = full volume.
+// Game audio volumes use integers in [0, 128]; SDL3_mixer uses float gain: 0.0–1.0.
 
-static constexpr auto sdl2_volume_to_gain( const int volume ) -> float
+static constexpr auto volume_to_gain( const int volume ) -> float
 {
     return static_cast<float>( volume ) / 128.0f;
 }
@@ -77,7 +76,7 @@ static constexpr auto ms_to_frames( const int ms ) -> Sint64
     return static_cast<Sint64>( ms ) * 44100 / 1000;
 }
 
-// ── String tags (replace SDL2_mixer's integer group IDs) ──────────────────────
+// ── String tags ───────────────────────────────────────────────────────────────
 // SDL3_mixer uses string-based tags for grouping tracks.
 
 static constexpr const char *TAG_ALL_SFX    = "cbn.all_sfx";
@@ -119,7 +118,7 @@ static constexpr int MAX_CHANNEL_COUNT = static_cast<int>( sfx::channel::MAX_CHA
 static std::array<MIX_Track *, MAX_CHANNEL_COUNT> channel_tracks{};
 
 // Pre-allocated pool for fire-and-forget one-shot effects (channel::any).
-// Tracks are reused once they finish playing, mirroring SDL2_mixer's channel pool.
+// Tracks are reused once they finish playing.
 static constexpr int TEMP_TRACK_POOL_SIZE = 64;
 static std::array<MIX_Track *, TEMP_TRACK_POOL_SIZE> temp_tracks{};
 
@@ -191,15 +190,14 @@ auto init_sound() -> bool
         channel_tracks[i] = MIX_CreateTrack( g_mixer );
     }
 
-    // Fire-and-forget pool (equivalent to SDL2_mixer's preallocated channel slots)
+    // Fire-and-forget pool
     for( int i = 0; i < TEMP_TRACK_POOL_SIZE; ++i ) {
         temp_tracks[i] = MIX_CreateTrack( g_mixer );
     }
 
     music_track = MIX_CreateTrack( g_mixer );
 
-    // ── String-tag grouping (replaces SDL2_mixer's Mix_GroupChannels) ─────────
-    // SDL3_mixer uses string tags instead of integer group IDs.
+    // ── String-tag grouping ──────────────────────────────────────────────────
 
     using ch = sfx::channel;
 
@@ -320,7 +318,7 @@ static auto play_music_file( const std::string &filename, const int volume ) -> 
     }
 
     MIX_SetTrackGain( music_track,
-                      sdl2_volume_to_gain( volume * get_option<int>( "MUSIC_VOLUME" ) / 100 ) );
+                      volume_to_gain( volume * get_option<int>( "MUSIC_VOLUME" ) / 100 ) );
     MIX_SetTrackStoppedCallback( music_track, music_stopped_cb, nullptr );
     MIX_SetTrackAudio( music_track, audio );
     MIX_SetTrackLoops( music_track, 0 );
@@ -421,7 +419,7 @@ auto update_volumes() -> void
 
     if( music_track && MIX_TrackPlaying( music_track ) ) {
         MIX_SetTrackGain( music_track,
-                          sdl2_volume_to_gain(
+                          volume_to_gain(
                               current_music_track_volume * get_option<int>( "MUSIC_VOLUME" ) / 100 ) );
     }
 
@@ -546,10 +544,9 @@ auto sfx::has_variant_sound( const std::string &id, const std::string &variant )
 
 // ── Playback ──────────────────────────────────────────────────────────────────
 
-// NOTE: Pitch shift is not supported with SDL3_mixer 3.x. MIX_Audio is opaque and
-// raw PCM manipulation (as was done via Mix_Chunk::abuf in SDL2_mixer) is no longer
-// possible. Sounds play at their natural pitch. Future work could use SDL_AudioStream
-// sample-rate conversion if pitch variation is required.
+// NOTE: Pitch shift is not supported. MIX_Audio is opaque — raw PCM buffer access
+// is unavailable. Sounds play at their natural pitch. Future work could use
+// SDL_AudioStream sample-rate conversion if pitch variation is required.
 
 auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
                                const int volume ) -> void
@@ -582,7 +579,7 @@ auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
     }
 
     const int vol = eff->volume * get_option<int>( "SOUND_EFFECT_VOLUME" ) * volume / ( 100 * 100 );
-    MIX_SetTrackGain( track, sdl2_volume_to_gain( vol ) );
+    MIX_SetTrackGain( track, volume_to_gain( vol ) );
     MIX_SetTrackAudio( track, audio );
     MIX_SetTrackLoops( track, 0 );
     if( !MIX_PlayTrack( track, 0 ) ) {
@@ -619,7 +616,7 @@ auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
     }
 
     const int vol = eff->volume * get_option<int>( "SOUND_EFFECT_VOLUME" ) * volume / ( 100 * 100 );
-    MIX_SetTrackGain( track, sdl2_volume_to_gain( vol ) );
+    MIX_SetTrackGain( track, volume_to_gain( vol ) );
 
     const float angle_rad = static_cast<float>( to_degrees( angle ) ) * SDL_PI_F / 180.0f;
     const MIX_Point3D pos = { SDL_sinf( angle_rad ), 0.0f, SDL_cosf( angle_rad ) };
@@ -665,7 +662,7 @@ auto sfx::play_ambient_variant_sound( const std::string &id, const std::string &
 
     auto *track = channel_tracks[ch];
     const int vol = eff->volume * get_option<int>( "AMBIENT_SOUND_VOLUME" ) * volume / ( 100 * 100 );
-    MIX_SetTrackGain( track, sdl2_volume_to_gain( vol ) );
+    MIX_SetTrackGain( track, volume_to_gain( vol ) );
     MIX_SetTrackAudio( track, audio );
     MIX_SetTrackLoops( track, loops );
 
@@ -786,7 +783,7 @@ auto sfx::set_channel_volume( const channel channel, const int volume ) -> int
         return -1;
     }
     const int old_vol = static_cast<int>( MIX_GetTrackGain( track ) * 128.0f );
-    MIX_SetTrackGain( track, sdl2_volume_to_gain( volume ) );
+    MIX_SetTrackGain( track, volume_to_gain( volume ) );
     return old_vol;
 }
 

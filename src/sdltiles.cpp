@@ -174,8 +174,7 @@ static void InitSDL()
     throwErrorIf( !TTF_Init(), "TTF_Init failed" );
     printErrorIf( !SDL_InitSubSystem( SDL_INIT_JOYSTICK ), "Initializing joystick subsystem failed" );
 
-    //SDL2 has no functionality for INPUT_DELAY, we would have to query it manually, which is expensive
-    //SDL2 instead uses the OS's Input Delay.
+    // SDL uses the OS's input delay; there is no API to query or set INPUT_DELAY directly.
 
     atexit( TTF_Quit );
     atexit( SDL_Quit );
@@ -2411,7 +2410,9 @@ void draw_terminal_size_preview()
         }
         SetRenderDrawColor( renderer, 255, 255, 255, 255 );
         SDL_Rect previewrect = get_android_render_rect( preview_terminal_width, preview_terminal_height );
-        SDL_RenderDrawRect( renderer.get(), &previewrect );
+        const SDL_FRect fpreviewrect = { static_cast<float>( previewrect.x ), static_cast<float>( previewrect.y ),
+                                         static_cast<float>( previewrect.w ), static_cast<float>( previewrect.h ) };
+        SDL_RenderRect( renderer.get(), &fpreviewrect );
         SetRenderDrawColor( renderer, 0, 0, 0, 255 );
     }
 }
@@ -2560,7 +2561,7 @@ void draw_quick_shortcuts()
             }
         }
         SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_NONE );
-        SDL_RenderSetScale( renderer.get(), text_scale, text_scale );
+        SDL_SetRenderScale( renderer.get(), text_scale, text_scale );
         int text_x, text_y;
         if( shortcut_right ) {
             text_x = ( WindowWidth - ( i + 0.5f ) * width - ( font->width * utf8_width(
@@ -2592,7 +2593,7 @@ void draw_quick_shortcuts()
                     text_scale *= ( WindowWidth * safe_margin ) / ( font->width * text_scale *
                                   hint_length );    // scale to fit comfortably
                 }
-                SDL_RenderSetScale( renderer.get(), text_scale, text_scale );
+                SDL_SetRenderScale( renderer.get(), text_scale, text_scale );
                 text_x = ( WindowWidth - ( ( font->width  * hint_length ) * text_scale ) ) * 0.5f / text_scale;
                 text_y = ( WindowHeight - font->height * text_scale ) * 0.5f / text_scale;
                 font->OutputChar( renderer, geometry, hint_text, point( text_x + 1, text_y + 1 ), 0,
@@ -2602,7 +2603,7 @@ void draw_quick_shortcuts()
                                   get_option<int>( "ANDROID_SHORTCUT_OPACITY_FG" ) * 0.01f );
             }
         }
-        SDL_RenderSetScale( renderer.get(), 1.0f, 1.0f );
+        SDL_SetRenderScale( renderer.get(), 1.0f, 1.0f );
         i++;
         if( ( i + 1 ) * width > WindowWidth ) {
             break;
@@ -4141,6 +4142,11 @@ HWND getWindowHandle()
 const SDL_Renderer_Ptr &get_sdl_renderer()
 {
     return renderer;
+}
+
+const SDL_Window_Ptr &get_sdl_window()
+{
+    return window;
 }
 
 

@@ -42,6 +42,7 @@ window_dimensions get_window_dimensions( const catacurses::window &win );
 window_dimensions get_window_dimensions( point pos, point size );
 
 const SDL_Renderer_Ptr &get_sdl_renderer();
+const SDL_Window_Ptr &get_sdl_window();
 
 #endif // TILES
 

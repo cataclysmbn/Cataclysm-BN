@@ -12,6 +12,7 @@
 #include <SDL3/SDL.h>
 #include "cata_utility.h"
 #include "options.h"
+#include "sdltiles.h"
 #endif
 
 #include "wcwidth.h"
@@ -605,7 +606,7 @@ std::pair<bool, std::string> string_editor_window::query_string()
 #if defined(__ANDROID__)
     on_out_of_scope stop_text_input( []() {
         if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-            SDL_StopTextInput();
+            SDL_StopTextInput( get_sdl_window().get() );
         }
     } );
 #endif

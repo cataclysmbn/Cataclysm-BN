@@ -4399,7 +4399,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
         ret = render( 0, SDL_FLIP_NONE );
     }
 
-    printErrorIf( !ret, "SDL_RenderCopyEx() failed" );
+    printErrorIf( !ret, "SDL_RenderTextureRotated() failed" );
     // this reference passes all the way back up the call chain back to
     // cata_tiles::draw() std::vector<tile_render_info> draw_points[].height_3d
     // where we are accumulating the height of every sprite stacked up in a tile
