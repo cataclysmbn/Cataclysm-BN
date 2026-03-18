@@ -88,11 +88,16 @@ static constexpr const char *TAG_FATIGUE    = "cbn.fatigue";
 static auto sfx_group_to_tag( const sfx::group group ) -> const char *
 {
     switch( group ) {
-        case sfx::group::time_of_day:    return TAG_TIME_OF_DAY;
-        case sfx::group::weather:        return TAG_WEATHER;
-        case sfx::group::context_themes: return TAG_CONTEXT;
-        case sfx::group::fatigue:        return TAG_FATIGUE;
-        default:                         return nullptr;
+        case sfx::group::time_of_day:
+            return TAG_TIME_OF_DAY;
+        case sfx::group::weather:
+            return TAG_WEATHER;
+        case sfx::group::context_themes:
+            return TAG_CONTEXT;
+        case sfx::group::fatigue:
+            return TAG_FATIGUE;
+        default:
+            return nullptr;
     }
 }
 
@@ -528,7 +533,7 @@ static auto find_random_effect( const id_and_variant &id_variants_pair ) -> cons
 }
 
 static auto find_random_effect( const std::string &id,
-                                 const std::string &variant ) -> const sound_effect *
+                                const std::string &variant ) -> const sound_effect *
 {
     const sound_effect *eff = find_random_effect( id_and_variant( id, variant ) );
     if( eff != nullptr ) {
@@ -549,7 +554,7 @@ auto sfx::has_variant_sound( const std::string &id, const std::string &variant )
 // SDL_AudioStream sample-rate conversion if pitch variation is required.
 
 auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
-                               const int volume ) -> void
+                              const int volume ) -> void
 {
     if( test_mode ) {
         return;
@@ -588,8 +593,8 @@ auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
 }
 
 auto sfx::play_variant_sound( const std::string &id, const std::string &variant, const int volume,
-                               const units::angle angle,
-                               double /*pitch_min*/, double /*pitch_max*/ ) -> void
+                              const units::angle angle,
+                              double /*pitch_min*/, double /*pitch_max*/ ) -> void
 {
     if( test_mode ) {
         return;

@@ -1188,7 +1188,8 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
             this->offset + ( pos.x / sprite_width ) +
             ( pos.y / sprite_height ) * ( tile_atlas_width / sprite_width );
 
-        SDL_FillSurfaceRect( st_surf, nullptr, SDL_MapRGBA( SDL_GetPixelFormatDetails( st_surf->format ), nullptr, 255, 255, 255, 0 ) );
+        SDL_FillSurfaceRect( st_surf, nullptr, SDL_MapRGBA( SDL_GetPixelFormatDetails( st_surf->format ),
+                             nullptr, 255, 255, 255, 0 ) );
         SDL_BlitSurface( surf.get(), &src_rect, st_surf, &st_sub_rect );
 
         const auto surf_hash = get_surface_hash( st_surf, nullptr );
@@ -1849,7 +1850,8 @@ void tileset_loader::load_tileset( const std::string &img_path, const bool pump_
 
     if( R >= 0 && R <= 255 && G >= 0 && G <= 255 && B >= 0 && B <= 255 ) {
         const Uint32 key = SDL_MapRGB( SDL_GetPixelFormatDetails( tile_atlas->format ), nullptr, 0, 0, 0 );
-        throwErrorIf( !SDL_SetSurfaceColorKey( tile_atlas.get(), true, key ), "SDL_SetSurfaceColorKey failed" );
+        throwErrorIf( !SDL_SetSurfaceColorKey( tile_atlas.get(), true, key ),
+                      "SDL_SetSurfaceColorKey failed" );
         throwErrorIf( !SDL_SetSurfaceRLE( tile_atlas.get(), true ), "SDL_SetSurfaceRLE failed" );
     }
 
@@ -5728,8 +5730,9 @@ void tileset_loader::ensure_default_item_highlight()
 
     const SDL_Surface_Ptr surface = create_surface_32( ts.tile_width, ts.tile_height );
     assert( surface );
-    throwErrorIf( !SDL_FillSurfaceRect( surface.get(), nullptr, SDL_MapRGBA( SDL_GetPixelFormatDetails( surface->format ), nullptr, 0, 0, 127,
-                                highlight_alpha ) ), "SDL_FillSurfaceRect failed" );
+    throwErrorIf( !SDL_FillSurfaceRect( surface.get(), nullptr,
+                                        SDL_MapRGBA( SDL_GetPixelFormatDetails( surface->format ), nullptr, 0, 0, 127,
+                                                highlight_alpha ) ), "SDL_FillSurfaceRect failed" );
 
     auto [tex, rect] = ts.tileset_atlas->allocate_sprite( ts.tile_width, ts.tile_height );
     SDL_UpdateTexture( tex.get(), &rect, surface->pixels, surface->pitch );
@@ -5750,8 +5753,9 @@ void tileset_loader::ensure_default_item_highlight()
 
     const SDL_Surface_Ptr surface = create_surface_32( ts.tile_width, ts.tile_height );
     assert( surface );
-    throwErrorIf( !SDL_FillSurfaceRect( surface.get(), nullptr, SDL_MapRGBA( SDL_GetPixelFormatDetails( surface->format ), nullptr, 0, 0, 127,
-                                highlight_alpha ) ), "SDL_FillSurfaceRect failed" );
+    throwErrorIf( !SDL_FillSurfaceRect( surface.get(), nullptr,
+                                        SDL_MapRGBA( SDL_GetPixelFormatDetails( surface->format ), nullptr, 0, 0, 127,
+                                                highlight_alpha ) ), "SDL_FillSurfaceRect failed" );
     ts.tile_values.emplace_back( CreateTextureFromSurface( renderer, surface ), SDL_Rect{ 0, 0, ts.tile_width, ts.tile_height } );
     ts.tile_ids[ITEM_HIGHLIGHT].sprite.fg.add( std::vector<int>( {index} ), 1 );
 #endif

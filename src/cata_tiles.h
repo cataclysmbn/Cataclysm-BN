@@ -133,7 +133,7 @@ class texture
             srcrect( rect ) { }
         texture( SDL_Texture_SharedPtr ptr, const SDL_Rect &rect ) : sdl_texture_ptr( ptr ),
             srcrect( { static_cast<float>( rect.x ), static_cast<float>( rect.y ),
-                       static_cast<float>( rect.w ), static_cast<float>( rect.h ) } ) { }
+                     static_cast<float>( rect.w ), static_cast<float>( rect.h ) } ) { }
         texture() = default;
 
         /// Returns the width (first) and height (second) of the stored texture.
@@ -148,22 +148,22 @@ class texture
                              const double angle,
                              const SDL_FPoint *const center, const SDL_FlipMode flip ) const {
             return SDL_RenderTextureRotated( renderer.get(), sdl_texture_ptr.get(), &srcrect, dstrect,
-                                            angle, center, flip );
+                                             angle, center, flip );
         }
 
         bool render_copy_ex( const SDL_Renderer_Ptr &renderer, const SDL_Rect *const dstrect,
                              const double angle,
                              const SDL_Point *const center, const SDL_FlipMode flip ) const {
             const std::optional<SDL_FRect> fdst = dstrect
-                ? std::optional<SDL_FRect>( SDL_FRect{ float( dstrect->x ), float( dstrect->y ),
-                                             float( dstrect->w ), float( dstrect->h ) } )
-                : std::nullopt;
+                                                  ? std::optional<SDL_FRect>( SDL_FRect{ float( dstrect->x ), float( dstrect->y ),
+                                                          float( dstrect->w ), float( dstrect->h ) } )
+                                                  : std::nullopt;
             const std::optional<SDL_FPoint> fcenter = center
-                ? std::optional<SDL_FPoint>( SDL_FPoint{ float( center->x ), float( center->y ) } )
-                : std::nullopt;
+                    ? std::optional<SDL_FPoint>( SDL_FPoint{ float( center->x ), float( center->y ) } )
+                    : std::nullopt;
             return SDL_RenderTextureRotated( renderer.get(), sdl_texture_ptr.get(), &srcrect,
-                                            fdst ? &fdst.value() : nullptr, angle,
-                                            fcenter ? &fcenter.value() : nullptr, flip );
+                                             fdst ? &fdst.value() : nullptr, angle,
+                                             fcenter ? &fcenter.value() : nullptr, flip );
         }
 
         /// Interface to @ref SDL_RenderTexture, using this as the texture

@@ -189,10 +189,10 @@ auto dynamic_atlas::readback_find( const texture &tex ) -> std::tuple<bool, SDL_
 
     return ( it == sheets.end() )
            ? std::make_tuple( false, nullptr, SDL_Rect{} )
-           : std::make_tuple( true, it->readback.get(), SDL_Rect{
-               static_cast<int>( tex.srcrect.x ), static_cast<int>( tex.srcrect.y ),
-               static_cast<int>( tex.srcrect.w ), static_cast<int>( tex.srcrect.h )
-           } );
+    : std::make_tuple( true, it->readback.get(), SDL_Rect{
+        static_cast<int>( tex.srcrect.x ), static_cast<int>( tex.srcrect.y ),
+        static_cast<int>( tex.srcrect.w ), static_cast<int>( tex.srcrect.h )
+    } );
 }
 
 atlas_texture dynamic_atlas::allocate_sprite( const int w, const int h )

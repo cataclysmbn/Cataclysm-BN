@@ -74,7 +74,8 @@ void throwErrorIf( bool condition, const char *message );
 /**@{*/
 void RenderCopy( const SDL_Renderer_Ptr &renderer, const SDL_Texture_Ptr &texture,
                  const SDL_FRect *srcrect, const SDL_FRect *dstrect );
-SDL_Texture_Ptr CreateTexture( const SDL_Renderer_Ptr &renderer, SDL_PixelFormat format, SDL_TextureAccess access,
+SDL_Texture_Ptr CreateTexture( const SDL_Renderer_Ptr &renderer, SDL_PixelFormat format,
+                               SDL_TextureAccess access,
                                int w, int h );
 SDL_Texture_Ptr CreateTextureFromSurface( const SDL_Renderer_Ptr &renderer,
         const SDL_Surface_Ptr &surface );

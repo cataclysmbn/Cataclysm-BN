@@ -1167,7 +1167,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 .h = fontheight
             };
 
-            geometry->rect( renderer, point{ clip_rect.x, clip_rect.y }, clip_rect.w, clip_rect.h, SDL_Color() );
+            geometry->rect( renderer, point{ clip_rect.x, clip_rect.y }, clip_rect.w, clip_rect.h,
+                            SDL_Color() );
 
             draw_string( *font, renderer, geometry, name, draw_pos, 11 );
         };
@@ -2411,7 +2412,8 @@ void draw_terminal_size_preview()
         SetRenderDrawColor( renderer, 255, 255, 255, 255 );
         SDL_Rect previewrect = get_android_render_rect( preview_terminal_width, preview_terminal_height );
         const SDL_FRect fpreviewrect = { static_cast<float>( previewrect.x ), static_cast<float>( previewrect.y ),
-                                         static_cast<float>( previewrect.w ), static_cast<float>( previewrect.h ) };
+                                         static_cast<float>( previewrect.w ), static_cast<float>( previewrect.h )
+                                       };
         SDL_RenderRect( renderer.get(), &fpreviewrect );
         SetRenderDrawColor( renderer, 0, 0, 0, 255 );
     }
@@ -3588,8 +3590,8 @@ static void init_term_size_and_scaling_factor()
         int display_count = 0;
         SDL_DisplayID *display_list = SDL_GetDisplays( &display_count );
         const SDL_DisplayID current_display_id = ( display_list && current_display_idx < display_count )
-                                                 ? display_list[current_display_idx]
-                                                 : SDL_GetPrimaryDisplay();
+                ? display_list[current_display_idx]
+                : SDL_GetPrimaryDisplay();
         SDL_free( display_list );
 
         const SDL_DisplayMode *current_display = SDL_GetDesktopDisplayMode( current_display_id );
@@ -4120,7 +4122,7 @@ bool save_screenshot( const std::string &file_path )
     // Save screenshot as PNG file
     const bool ok = !printErrorIf( !IMG_SavePNG( readback, file_path.c_str() ),
                                    std::string( "save_screenshot: cannot save screenshot file: " +
-                                                file_path ).c_str() );
+                                           file_path ).c_str() );
     SDL_DestroySurface( readback );
     return ok;
 }
