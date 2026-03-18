@@ -69,7 +69,10 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel llvm@20 astyle sqlite3 zlib
+          # NOTE (macOS maintainer): sdl3_mixer is not yet available as a Homebrew formula (as of
+          # March 2026). Once `brew install sdl3_mixer` works, add it back here and restore
+          # SOUND=${{ matrix.tiles }} in the make command below.
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf gettext parallel llvm@20 astyle sqlite3 zlib
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
@@ -94,4 +97,6 @@ jobs:
       - name: Build
         run: |
           source ./venv/bin/activate
-          make -j3 CCACHE=1 TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LANGUAGES=all USE_HOME_DIR=1 OSX_MIN=11 PCH=0 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist
+          # SOUND=0: sdl3_mixer is not yet in Homebrew — see the brew install step above.
+          # Restore SOUND=${{ matrix.tiles }} once sdl3_mixer becomes available.
+          make -j3 CCACHE=1 TILES=${{ matrix.tiles }} SOUND=0 RELEASE=1 LANGUAGES=all USE_HOME_DIR=1 OSX_MIN=11 PCH=0 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist

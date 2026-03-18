@@ -126,6 +126,15 @@ jobs:
 
       - name: Configure and Build
         uses: lukka/run-cmake@v10
+        env:
+          # lukka/run-cmake@v10 builds cmake's env from `vcpkg env set` output and only reads the
+          # first line of each NAME=VALUE pair. X_VCPKG_RECURSIVE_DATA is a multi-line JSON block,
+          # so it gets truncated to just "{", causing cmake to fail with "Unexpected EOF". Override
+          # it to empty so cmake never sees the mangled value.
+          X_VCPKG_RECURSIVE_DATA: ""
+          # `vcpkg env set` output does not include VCPKG_ROOT, so cmake inherits it from the
+          # runner image's system env (C:\vcpkg) instead of our pinned install. Set it explicitly.
+          VCPKG_ROOT: "${{ runner.workspace }}/b/vcpkg"
         with:
           configurePreset: ${{ env.CMAKE_PRESET }}
           buildPreset: windows-msvc-build
