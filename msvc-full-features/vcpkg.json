@@ -4,9 +4,10 @@
   "dependencies": [
     "sdl3",
     { "name": "sdl3-image", "features": [ "png", "jpeg" ] },
+    "sdl3-mixer",
     "sdl3-ttf",
     "sqlite3",
     "zlib"
   ],
-  "builtin-baseline": "b1b19307e2d2ec1eefbdb7ea069de7d4bcd31f01"
+  "builtin-baseline": "a8f78d257ade3c2e7999c1129a6d29971ae32006"
 }
