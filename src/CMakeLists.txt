@@ -142,26 +142,26 @@ if (TILES)
 
     if (NOT DYNAMIC_LINKING)
         target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-            SDL2::SDL2-static
-            SDL2_image::SDL2_image-static
-            SDL2_ttf::SDL2_ttf-static
+            SDL3::SDL3-static
+            SDL3_image::SDL3_image-static
+            SDL3_ttf::SDL3_ttf-static
         )
     else()
         target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-            SDL2::SDL2
-            SDL2_image::SDL2_image
-            SDL2_ttf::SDL2_ttf
+            SDL3::SDL3
+            SDL3_image::SDL3_image
+            SDL3_ttf::SDL3_ttf
         )
     endif ()
 
     if (SOUND)
         if (NOT DYNAMIC_LINKING)
             target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-                SDL2_mixer::SDL2_mixer-static
+                SDL3_mixer::SDL3_mixer-static
             )
         else()
             target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-                SDL2_mixer::SDL2_mixer
+                SDL3_mixer::SDL3_mixer
             )
         endif()
         add_definitions(-DSDL_SOUND)
