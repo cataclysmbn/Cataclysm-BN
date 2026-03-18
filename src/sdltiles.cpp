@@ -99,7 +99,7 @@
 
 std::shared_ptr<cata_tiles> tilecontext;
 std::shared_ptr<cata_tiles> overmap_tilecontext;
-static uint32_t lastupdate = 0;
+static Uint64 lastupdate = 0;
 static uint32_t interval = 25;
 static bool needupdate = false;
 static bool need_invalidate_framebuffers = false;
@@ -128,9 +128,9 @@ static input_event last_input;
 
 static constexpr int ERR = -1;
 static int inputdelay;         //How long getch will wait for a character to be typed
-static Uint32 delaydpad =
-    std::numeric_limits<Uint32>::max();     // Used for entering diagonal directions with d-pad.
-static Uint32 dpad_delay =
+static Uint64 delaydpad =
+    std::numeric_limits<Uint64>::max();     // Used for entering diagonal directions with d-pad.
+static Uint64 dpad_delay =
     100;   // Delay in milliseconds between registering a d-pad event and processing it.
 static bool dpad_continuous = false;  // Whether we're currently moving continuously with the dpad.
 static int lastdpad = ERR;      // Keeps track of the last dpad press.
@@ -170,10 +170,6 @@ static void InitSDL()
 {
     SDL_InitFlags init_flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO;
 
-#if defined(SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING)
-    SDL_SetHint( SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING, "1" );
-#endif
-
     throwErrorIf( !SDL_Init( init_flags ), "SDL_Init failed" );
     throwErrorIf( !TTF_Init(), "TTF_Init failed" );
     printErrorIf( !SDL_InitSubSystem( SDL_INIT_JOYSTICK ), "Initializing joystick subsystem failed" );
@@ -190,6 +186,7 @@ static bool SetupRenderTarget()
     SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_NONE );
     display_buffer.reset( SDL_CreateTexture( renderer.get(), SDL_PIXELFORMAT_ARGB8888,
                           SDL_TEXTUREACCESS_TARGET, WindowWidth / scaling_factor, WindowHeight / scaling_factor ) );
+    SDL_SetTextureScaleMode( display_buffer.get(), SDL_SCALEMODE_NEAREST );
     if( printErrorIf( !display_buffer, "Failed to create window buffer" ) ) {
         return false;
     }
@@ -254,12 +251,8 @@ static void WinCreate()
 #endif
 
     // Prevent mouse|touch input confusion
-#if defined(SDL_HINT_ANDROID_SEPARATE_MOUSE_AND_TOUCH)
-    SDL_SetHint( SDL_HINT_ANDROID_SEPARATE_MOUSE_AND_TOUCH, "1" );
-#else
     SDL_SetHint( SDL_HINT_MOUSE_TOUCH_EVENTS, "0" );
     SDL_SetHint( SDL_HINT_TOUCH_MOUSE_EVENTS, "0" );
-#endif
 #endif
 
     ::window.reset( SDL_CreateWindow( version.c_str(), WindowWidth, WindowHeight, window_flags ) );
@@ -316,9 +309,6 @@ static void WinCreate()
     bool software_renderer = get_option<bool>( "SOFTWARE_RENDERING" );
 #endif
 
-#if defined(SDL_HINT_RENDER_BATCHING)
-    SDL_SetHint( SDL_HINT_RENDER_BATCHING, get_option<bool>( "RENDER_BATCHING" ) ? "1" : "0" );
-#endif
     if( !software_renderer ) {
         dbg( DL::Info ) << "Attempting to initialize accelerated SDL renderer.";
 
@@ -342,9 +332,6 @@ static void WinCreate()
     }
 
     if( software_renderer ) {
-        if( get_option<bool>( "FRAMEBUFFER_ACCEL" ) ) {
-            SDL_SetHint( SDL_HINT_FRAMEBUFFER_ACCELERATION, "1" );
-        }
         renderer.reset( SDL_CreateRenderer( ::window.get(), "software" ) );
         throwErrorIf( !renderer, "Failed to initialize software renderer" );
         throwErrorIf( !SetupRenderTarget(),
@@ -443,7 +430,7 @@ static bool quick_shortcuts_enabled = true;
 // For previewing the terminal size with a transparent rectangle overlay when user is adjusting it in the settings
 static int preview_terminal_width = -1;
 static int preview_terminal_height = -1;
-static uint32_t preview_terminal_change_time = 0;
+static Uint64 preview_terminal_change_time = 0;
 
 extern "C" {
 
@@ -538,7 +525,7 @@ void refresh_display()
 // only update if the set interval has elapsed
 static void try_sdl_update()
 {
-    uint32_t now = SDL_GetTicks();
+    Uint64 now = SDL_GetTicks();
     if( now - lastupdate >= interval ) {
         refresh_display();
     } else {
@@ -1764,7 +1751,7 @@ static int HandleDPad()
             lc = JOY_RIGHTDOWN;
         }
 
-        if( delaydpad == std::numeric_limits<Uint32>::max() ) {
+        if( delaydpad == std::numeric_limits<Uint64>::max() ) {
             delaydpad = SDL_GetTicks() + dpad_delay;
             queued_dpad = lc;
         }
@@ -1795,7 +1782,7 @@ static int HandleDPad()
         }
     } else {
         dpad_continuous = false;
-        delaydpad = std::numeric_limits<Uint32>::max();
+        delaydpad = std::numeric_limits<Uint64>::max();
 
         // If we didn't hold it down for a while, just
         // fire the last registered press.
@@ -2097,20 +2084,20 @@ static float second_finger_down_y = -1.0f; // in pixels
 static float second_finger_curr_x = -1.0f; // in pixels
 static float second_finger_curr_y = -1.0f; // in pixels
 // when did the first finger start touching the screen? 0 if not touching, otherwise the time in milliseconds.
-static uint32_t finger_down_time = 0;
+static Uint64 finger_down_time = 0;
 // the last time we repeated input for a finger hold, 0 if not touching, otherwise the time in milliseconds.
-static uint32_t finger_repeat_time = 0;
+static Uint64 finger_repeat_time = 0;
 // the last time a single tap was detected. used for double-tap detection.
-static uint32_t last_tap_time = 0;
+static Uint64 last_tap_time = 0;
 // when did the hardware back button start being pressed? 0 if not touching, otherwise the time in milliseconds.
-static uint32_t ac_back_down_time = 0;
+static Uint64 ac_back_down_time = 0;
 // has a second finger touched the screen while the first was touching?
 static bool is_two_finger_touch = false;
 // did this touch start on a quick shortcut?
 static bool is_quick_shortcut_touch = false;
 static bool quick_shortcuts_toggle_handled = false;
 // the current finger repeat delay - will be somewhere between the min/max values depending on user input
-uint32_t finger_repeat_delay = 500;
+Uint64 finger_repeat_delay = 500;
 // should we make sure the sdl surface is visible? set to true whenever the SDL window is shown.
 static bool needs_sdl_surface_visibility_refresh = true;
 
@@ -2436,7 +2423,7 @@ void draw_quick_shortcuts()
     if( !quick_shortcuts_enabled ||
         SDL_TextInputActive( ::window.get() ) ||
         ( get_option<bool>( "ANDROID_HIDE_HOLDS" ) && !is_quick_shortcut_touch && finger_down_time > 0 &&
-          SDL_GetTicks() - finger_down_time >= static_cast<uint32_t>(
+          SDL_GetTicks() - finger_down_time >= static_cast<Uint64>(
               get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) ) { // player is swipe + holding in a direction
         return;
     }
@@ -2683,9 +2670,9 @@ void update_finger_repeat_delay()
                     std::max( 0.01f, ( get_option<float>( "ANDROID_REPEAT_DELAY_RANGE" ) ) * longest_window_edge ),
                     0.0f, 1.0f );
     finger_repeat_delay = lerp( std::pow( t, get_option<float>( "ANDROID_SENSITIVITY_POWER" ) ),
-                                static_cast<uint32_t>( std::max( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
+                                static_cast<Uint64>( std::max( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
                                         get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ),
-                                static_cast<uint32_t>( std::min( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
+                                static_cast<Uint64>( std::min( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
                                         get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ) );
 }
 
@@ -2709,7 +2696,7 @@ int get_key_event_from_string( const std::string &str )
     return -1;
 }
 // This function is triggered on finger up events, OR by a repeating timer for touch hold events.
-void handle_finger_input( uint32_t ticks )
+void handle_finger_input( Uint64 ticks )
 {
 
     float delta_x = finger_curr_x - finger_down_x;
@@ -2786,7 +2773,7 @@ void handle_finger_input( uint32_t ticks )
             }
         } else {
             if( last_tap_time > 0 &&
-                ticks - last_tap_time < static_cast<uint32_t>( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
+                ticks - last_tap_time < static_cast<Uint64>( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
                 // Double tap
                 last_input = input_event( is_default_mode ? KEY_ESCAPE : KEY_ESCAPE, input_event_t::keyboard );
                 last_tap_time = 0;
@@ -2842,7 +2829,7 @@ static void CheckMessages()
         visible_display_frame_dirty = false;
     }
 
-    uint32_t ticks = SDL_GetTicks();
+    Uint64 ticks = SDL_GetTicks();
 
     // Force text input mode if hardware keyboard is available.
     if( android_is_hardware_keyboard_available() && !SDL_TextInputActive( ::window.get() ) ) {
@@ -3101,7 +3088,7 @@ static void CheckMessages()
                 finger_repeat_time = ticks;
                 // Prevent repeating inputs on the next call to this function if there is a fingerup event
                 while( SDL_PollEvent( &ev ) ) {
-                    if( ev.type == SDL_FINGERUP ) {
+                    if( ev.type == SDL_EVENT_FINGER_UP ) {
                         second_finger_down_x = second_finger_curr_x = finger_down_x = finger_curr_x = -1.0f;
                         second_finger_down_y = second_finger_curr_y = finger_down_y = finger_curr_y = -1.0f;
                         is_two_finger_touch = false;
@@ -3345,7 +3332,7 @@ static void CheckMessages()
                 break;
 
 #if defined(__ANDROID__)
-            case SDL_FINGERMOTION:
+            case SDL_EVENT_FINGER_MOTION:
                 if( ev.tfinger.fingerId == 0 ) {
                     if( !is_quick_shortcut_touch ) {
                         update_finger_repeat_delay();
@@ -3373,7 +3360,7 @@ static void CheckMessages()
                     second_finger_curr_y = ev.tfinger.y * WindowHeight;
                 }
                 break;
-            case SDL_FINGERDOWN:
+            case SDL_EVENT_FINGER_DOWN:
                 if( ev.tfinger.fingerId == 0 ) {
                     finger_down_x = finger_curr_x = ev.tfinger.x * WindowWidth;
                     finger_down_y = finger_curr_y = ev.tfinger.y * WindowHeight;
@@ -3392,7 +3379,7 @@ static void CheckMessages()
                     }
                 }
                 break;
-            case SDL_FINGERUP:
+            case SDL_EVENT_FINGER_UP:
                 if( ev.tfinger.fingerId == 0 ) {
                     finger_curr_x = ev.tfinger.x * WindowWidth;
                     finger_curr_y = ev.tfinger.y * WindowHeight;
@@ -3410,7 +3397,7 @@ static void CheckMessages()
                             // Get the quick shortcut that was originally touched
                             quick_shortcut = get_quick_shortcut_under_finger( true );
                             if( quick_shortcut &&
-                                ticks - finger_down_time <= static_cast<uint32_t>( get_option<int>( "ANDROID_INITIAL_DELAY" ) )
+                                ticks - finger_down_time <= static_cast<Uint64>( get_option<int>( "ANDROID_INITIAL_DELAY" ) )
                                 &&
                                 finger_curr_y < finger_down_y &&
                                 finger_down_y - finger_curr_y > std::abs( finger_down_x - finger_curr_x ) ) {
@@ -3482,7 +3469,7 @@ static void CheckMessages()
                                     }
                                 }
                             }
-                        } else if( ticks - finger_down_time <= static_cast<uint32_t>(
+                        } else if( ticks - finger_down_time <= static_cast<Uint64>(
                                        get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
                             handle_finger_input( ticks );
                         }
@@ -3885,8 +3872,8 @@ input_event input_manager::get_input_event()
             SDL_Delay( 1 );
         } while( last_input.type == input_event_t::error );
     } else if( inputdelay > 0 ) {
-        uint32_t starttime = SDL_GetTicks();
-        uint32_t endtime = 0;
+        Uint64 starttime = SDL_GetTicks();
+        Uint64 endtime = 0;
         bool timedout = false;
         do {
             CheckMessages();

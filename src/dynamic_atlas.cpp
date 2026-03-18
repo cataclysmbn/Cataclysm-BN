@@ -242,6 +242,7 @@ atlas_texture dynamic_atlas::allocate_sprite( const int w, const int h )
     const auto tex = SDL_CreateTexture( r.get(), sdl_color_pixel_format, SDL_TEXTUREACCESS_TARGET,
                                         tex_width, tex_height );
     SDL_SetTextureBlendMode( tex, SDL_BLENDMODE_BLEND );
+    SDL_SetTextureScaleMode( tex, SDL_SCALEMODE_NEAREST );
 
     {
         const auto state = sdl_save_render_state( r.get() );

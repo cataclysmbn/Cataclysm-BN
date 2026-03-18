@@ -54,6 +54,9 @@ SDL_Texture_Ptr CreateTexture( const SDL_Renderer_Ptr &renderer, SDL_PixelFormat
     }
     SDL_Texture_Ptr result( SDL_CreateTexture( renderer.get(), format, access, w, h ) );
     printErrorIf( !result, "SDL_CreateTexture failed" );
+    if( result ) {
+        SDL_SetTextureScaleMode( result.get(), SDL_SCALEMODE_NEAREST );
+    }
     return result;
 }
 
@@ -70,6 +73,9 @@ SDL_Texture_Ptr CreateTextureFromSurface( const SDL_Renderer_Ptr &renderer,
     }
     SDL_Texture_Ptr result( SDL_CreateTextureFromSurface( renderer.get(), surface.get() ) );
     printErrorIf( !result, "SDL_CreateTextureFromSurface failed" );
+    if( result ) {
+        SDL_SetTextureScaleMode( result.get(), SDL_SCALEMODE_NEAREST );
+    }
     return result;
 }
 
