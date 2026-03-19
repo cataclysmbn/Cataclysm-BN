@@ -26,6 +26,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "cached_item_options.h"
+#include "calendar.h"
 #include "catalua_icallback_actor.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -9430,6 +9431,11 @@ int item::getlight_emit() const
 time_point item::get_last_relic_process() const
 {
     return last_relic_process;
+}
+
+void item::update_last_relic_process()
+{
+    last_relic_process = calendar::turn;
 }
 
 units::volume item::get_container_capacity() const

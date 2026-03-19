@@ -1010,6 +1010,9 @@ class item : public location_visitable<item>, public game_object<item>
         /** Get the last time this relic was checked */
         time_point get_last_relic_process() const;
 
+        /** Update the time this relic was checked with the current turn */
+        void update_last_relic_process();
+
         /** Time for this item to be fully fermented. */
         time_duration brewing_time() const;
         /** The results of fermenting this item. */
