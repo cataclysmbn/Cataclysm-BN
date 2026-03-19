@@ -9430,12 +9430,12 @@ int item::getlight_emit() const
 
 time_point item::get_last_relic_process() const
 {
-    return last_relic_process;
+    return time_point::from_turn(get_var("last_relic_process", 0.0));
 }
 
 void item::update_last_relic_process()
 {
-    last_relic_process = calendar::turn;
+    set_var("last_relic_process", to_turn<int>(calendar::turn));
 }
 
 units::volume item::get_container_capacity() const
