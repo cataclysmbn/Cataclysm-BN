@@ -85,12 +85,12 @@ static int zdist_lookup( int dx, int dy, int dz ) noexcept
 }
 
 #if !defined(__ANDROID__)
-static void atomic_float_max(float& cell, float val) noexcept
+static void atomic_float_max( float &cell, float val ) noexcept
 {
-    std::atomic_ref<float> a(cell);
-    float expected = a.load(std::memory_order_relaxed);
-    while (expected < val &&
-        !a.compare_exchange_weak(expected, val, std::memory_order_relaxed)) {
+    std::atomic_ref<float> a( cell );
+    float expected = a.load( std::memory_order_relaxed );
+    while( expected < val &&
+           !a.compare_exchange_weak( expected, val, std::memory_order_relaxed ) ) {
     }
 }
 #endif
