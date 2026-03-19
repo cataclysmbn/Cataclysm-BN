@@ -3272,6 +3272,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
                 const bool has_memory = has_memory_at( pos );
 
+                const bool is_air = here.ter(pos) != t_open_air;
+
                 const bool stop_on_memory = z != center.z && has_memory &&
                                             ( !in_map_bounds || here.ter( pos ) != t_open_air );
                 
@@ -3281,7 +3283,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                     if( !would_apply_vision_effects( visibility ) ) {
                         last_vis = z;
                         last_vis_ll = ll;
-                    } else if( !has_memory && visibility == visibility_type::VIS_HIDDEN ) {
+                    } else if( !has_memory && !is_air && visibility == visibility_type::VIS_HIDDEN ) {
                         if( drew_occluded_overlay ) {
                             // A second hidden layer means nothing below will be visible either;
                             // stop descending to prevent stacked overlays compounding to solid blue.

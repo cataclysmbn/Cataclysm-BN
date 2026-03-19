@@ -14,7 +14,7 @@ bool display_mod_source;
 bool display_object_ids;
 bool trigdist;
 bool fov_3d;
-bool fov_3d_occlusion = true;
+bool fov_3d_occlusion = false;
 bool static_z_effect = false;
 bool overmap_transparency = true;
 int fov_3d_z_range;

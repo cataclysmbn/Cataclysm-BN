@@ -2377,6 +2377,28 @@ void options_manager::add_options_performance()
 
     add_empty_line();
 
+    add_option_group( performance, Group( "fov_3d", to_translation( "3D Field of Vision" ),
+                                          to_translation( "Configure three-dimensional visibility across z-levels." ) ),
+    [&]( auto & page_id ) {
+        add( "FOV_3D", page_id, translate_marker( "3D field of vision" ),
+             translate_marker( "If false, vision is limited to current z-level.  If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
+             true
+           );
+        add( "FOV_3D_Z_RANGE", page_id, translate_marker( "Vertical range of 3D field of vision" ),
+             translate_marker( "How many levels up and down the experimental 3D field of vision reaches.  (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
+             0, OVERMAP_LAYERS, 4
+           );
+        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV horizontal occlusion" ),
+             translate_marker( "When enabled, obstacles at other z-levels correctly block horizontal line of sight.  Requires 3D FoV.  Slower than disabled." ),
+             false
+           );
+    } );
+
+    get_option( "FOV_3D_Z_RANGE" ).setPrerequisite( "FOV_3D" );
+    get_option( "FOV_3D_OCCLUSION" ).setPrerequisite( "FOV_3D" );
+
+    add_empty_line();
+
     add( "SKEW_VISION_CACHE_SIZE", performance,
          translate_marker( "LOS Cache Size" ),
          translate_marker( "Maximum number of line-of-sight results kept in the skew-vision LRU cache.  "
@@ -2602,26 +2624,6 @@ void options_manager::add_options_debug()
          translate_marker( "Maximum distance at which items are considered available for crafting (or some other actions)." ),
          1, 30, 6
        );
-
-    add_empty_line();
-
-    add( "FOV_3D", debug, translate_marker( "3D field of vision" ),
-         translate_marker( "If false, vision is limited to current z-level.  If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
-         true
-       );
-
-    add( "FOV_3D_Z_RANGE", debug, translate_marker( "Vertical range of 3D field of vision" ),
-         translate_marker( "How many levels up and down the experimental 3D field of vision reaches.  (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
-         0, OVERMAP_LAYERS, 4
-       );
-
-    get_option( "FOV_3D_Z_RANGE" ).setPrerequisite( "FOV_3D" );
-
-    add( "FOV_3D_OCCLUSION", debug, translate_marker( "3D FoV horizontal occlusion" ),
-         translate_marker( "When enabled, obstacles at other z-levels correctly block horizontal line of sight.  Requires 3D FoV.  Slightly slower than disabled." ),
-         true
-       );
-    get_option( "FOV_3D_OCCLUSION" ).setPrerequisite( "FOV_3D" );
 
     add( "ENABLE_EVENTS", debug, translate_marker( "Event bus system" ),
          translate_marker( "If false, achievements and some Magiclysm functionality won't work, but performance will be better." ),
