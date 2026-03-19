@@ -461,17 +461,18 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
     }
     int rate_multiplier = 1; // Not quite sure where to put this
-    if ( rech.type == relic_recharge_type::time ) {
+    if( rech.type == relic_recharge_type::time ) {
         time_duration elapsed = calendar::turn - itm.get_last_relic_process();
         int ticks = elapsed / rech.interval;
-        if ( ticks > 0 ) {
+        if( ticks > 0 ) {
             rate_multiplier = rech.rate * ticks;
         }
         itm.update_last_relic_process();
     }
     // If it already has ammo, increment charges of ammo inside.
     if( itm.ammo_data() ) {
-        int ammo_charge = clamp( itm.ammo_remaining() + rech.rate * rate_multiplier, 0, itm.ammo_capacity() );
+        int ammo_charge = clamp( itm.ammo_remaining() + rech.rate * rate_multiplier, 0,
+                                 itm.ammo_capacity() );
         itm.ammo_set( itm.ammo_current(), ammo_charge );
     } else {
         // If not, either give it default ammo, or increment charges directly.
