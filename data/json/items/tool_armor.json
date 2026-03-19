@@ -774,7 +774,7 @@
     "power_draw": 10000,
     "revert_to": "sparkledogsuit",
     "use_action": { "menu_text": "Turn off", "type": "transform", "msg": "You turn your fursuit off.", "target": "sparkledogsuit" },
-    "flags": [ "OUTER", "LIGHT_200" ]
+    "flags": [ "OUTER", "LIGHT_200", "SUPER_FANCY" ]
   },
   {
     "id": "survivor_light",

@@ -2749,6 +2749,12 @@ void options_manager::add_options_world_default()
          0.01, 10.0, 1.0, 0.01
        );
 
+    add( "CROSS_Z_LEVEL_MELEE_DIFFICULTY_MODIFIER", world_default,
+         translate_marker( "Cross z-level melee difficulty modifier" ),
+         translate_marker( "A scaling factor that determines additional move and stamina cost for melee attacks against a target above or below you.  1.00 disables the modifier." ),
+         1.00, 3.00, 1.20, 0.01
+       );
+
     add_empty_line();
 
     add_option_group( world_default, Group( "skill_buff_category",
