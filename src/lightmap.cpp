@@ -1132,6 +1132,9 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 const float sx    = dx / total;
                 const float sy    = dy / total;
                 const float sz    = dz / total;
+                int ox = origin.x;
+                int oy = origin.y;
+                int oz = origin.z;
                 for( int s = 1; s < steps; ++s )
                 {
                     const int cx = static_cast<int>( std::lround( origin.x + s * sx ) );
@@ -1140,11 +1143,27 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                     if( cz < -OVERMAP_DEPTH || cz > OVERMAP_HEIGHT ) {
                         continue;
                     }
-                    const auto &ic = transparency_caches[cz + OVERMAP_DEPTH];
-                    if( cx >= 0 && cy >= 0 && cx < ic.sx && cy < ic.sy &&
-                        ic.at( cx, cy ) <= LIGHT_TRANSPARENCY_SOLID ) {
-                        return false;
+                    if( cx >= 0 && cy >= 0 ) {
+                        if( oz != cz && oz > -OVERMAP_DEPTH && cz < OVERMAP_HEIGHT ) {
+                            if( oz < cz ) {
+                                if( floor_caches[cz + OVERMAP_DEPTH].at( cx, cy ) ) {
+                                    return false;
+                                }
+                            } else {
+                                if( floor_caches[oz + OVERMAP_DEPTH].at( ox, oy ) ) {
+                                    return false;
+                                }
+                            }
+                        }
+                        const auto &ic = transparency_caches[cz + OVERMAP_DEPTH];
+                        if( cx < ic.sx && cy < ic.sy &&
+                            ic.at( cx, cy ) <= LIGHT_TRANSPARENCY_SOLID ) {
+                            return false;
+                        }
                     }
+                    ox = cx;
+                    oy = cy;
+                    oz = cz;
                 }
                 return true;
             };
@@ -1171,7 +1190,9 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                         if( sc <= 0.0f ) {
                             // cast_zlight missed this tile (steep-angle blind spot).
                             // Fill from 2D if horizontal LoS is clear.
-                            if( temp_seen[tile_idx] > 0.0f ) {
+                            // Outside cache is checked for roof occlusion.
+                            // Might be incorrect, but seems to produce correct results.
+                            if( ( z < origin.z ? zc.outside_cache[tile_idx] : zc.floor_cache[tile_idx] == 0 ) && temp_seen[tile_idx] > 0.0f ) {
                                 sc = temp_seen[tile_idx];
                             }
                             continue;
