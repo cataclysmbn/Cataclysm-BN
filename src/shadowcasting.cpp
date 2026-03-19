@@ -84,18 +84,16 @@ static int zdist_lookup( int dx, int dy, int dz ) noexcept
                                               static_cast<size_t>( dz ) * ( s_zdist_R + 1 ) + dx];
 }
 
-// ── Atomic float-max (Proposal C) ────────────────────────────────────────────
-// Used by parallel cast_zlight octants to merge outputs without data races.
-// std::atomic_ref<float> is C++20; CAS loop is correct for all platforms.
-
-static void atomic_float_max( float &cell, float val ) noexcept
+#if !defined(__ANDROID__)
+static void atomic_float_max(float& cell, float val) noexcept
 {
-    std::atomic_ref<float> a( cell );
-    float expected = a.load( std::memory_order_relaxed );
-    while( expected < val &&
-           !a.compare_exchange_weak( expected, val, std::memory_order_relaxed ) ) {
+    std::atomic_ref<float> a(cell);
+    float expected = a.load(std::memory_order_relaxed);
+    while (expected < val &&
+        !a.compare_exchange_weak(expected, val, std::memory_order_relaxed)) {
     }
 }
+#endif
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -622,6 +620,7 @@ static void cast_zlight_segment(
 
                 // Proposal C: atomic write when running in parallel; plain when serial.
                 float &out_cell = output_caches[z_index].at( current.x, current.y );
+#if !defined(__ANDROID__)
                 if constexpr( UseAtomic ) {
                     atomic_float_max( out_cell, last_intensity );
                 } else {
@@ -629,6 +628,11 @@ static void cast_zlight_segment(
                         out_cell = last_intensity;
                     }
                 }
+#else
+                if( last_intensity > out_cell ) {
+                    out_cell = last_intensity;
+                }
+#endif
 
                 if( new_transparency != current_transparency || new_floor != current_floor ) {
                     if( fov_3d_occlusion || delta.z == 0 ) {
