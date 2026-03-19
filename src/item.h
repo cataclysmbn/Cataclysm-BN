@@ -1007,6 +1007,9 @@ class item : public location_visitable<item>, public game_object<item>
             rot += val;
         }
 
+        /** Get the last time this relic was checked */
+        time_point get_last_relic_process() const;
+
         /** Time for this item to be fully fermented. */
         time_duration brewing_time() const;
         /** The results of fermenting this item. */

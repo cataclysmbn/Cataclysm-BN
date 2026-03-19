@@ -9427,6 +9427,11 @@ int item::getlight_emit() const
     return lumint;
 }
 
+time_point item::get_last_relic_process() const
+{
+    return last_relic_process;
+}
+
 units::volume item::get_container_capacity() const
 {
     if( !is_container() ) {
