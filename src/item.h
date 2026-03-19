@@ -2560,7 +2560,7 @@ class item : public location_visitable<item>, public game_object<item>
         int damage_ = 0;
         light_emission light = nolight;
         /** Time when the relic was last processed (To charge time-based relics out of reality bubble) */
-        time_point last_relic_process = calendar::turn_zero
+        time_point last_relic_process = calendar::turn_zero;
 
                                     public:
                                         char invlet = 0;      // Inventory letter
