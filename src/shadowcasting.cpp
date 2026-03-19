@@ -648,8 +648,8 @@ static void cast_zlight_segment(
                         model.check( current_transparency, last_intensity ) ) {
                         // Cast section A (rows already processed at this distance).
                         const float next_cumulative = model.accumulate(
-                                                            cumulative_transparency, current_transparency, distance );
-                            cast_zlight_segment<UseAtomic>(
+                                                          cumulative_transparency, current_transparency, distance );
+                        cast_zlight_segment<UseAtomic>(
                             output_caches, input_arrays, floor_caches, blocked_caches,
                             offset, offset_distance, numerator, model, xf,
                             distance + 1,
@@ -664,7 +664,7 @@ static void cast_zlight_segment(
                                             : ( delta.x - 0.5f ) / ( delta.y + 0.5f );
 
                     // Section C: always cast (handles the new transparency span).
-                        cast_zlight_segment<UseAtomic>(
+                    cast_zlight_segment<UseAtomic>(
                         output_caches, input_arrays, floor_caches, blocked_caches,
                         offset, offset_distance, numerator, model, xf,
                         distance,
@@ -752,9 +752,9 @@ void cast_zlight(
     } else {
         std::ranges::for_each( k_zlight_xforms, [&]( const octant_xform_3d & xf ) {
             cast_zlight_segment<false>(
-            output_caches, input_arrays, floor_caches, blocked_caches,
-            origin, offset_distance, numerator, model, xf,
-            1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
+                output_caches, input_arrays, floor_caches, blocked_caches,
+                origin, offset_distance, numerator, model, xf,
+                1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
         } );
     }
 }

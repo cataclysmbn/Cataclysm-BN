@@ -1192,7 +1192,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                             // Fill from 2D if horizontal LoS is clear.
                             // Outside cache is checked for roof occlusion.
                             // Might be incorrect, but seems to produce correct results.
-                            if( ( z < origin.z ? zc.outside_cache[tile_idx] : zc.floor_cache[tile_idx] == 0 ) && temp_seen[tile_idx] > 0.0f ) {
+                            if( ( z < origin.z ? zc.outside_cache[tile_idx] : zc.floor_cache[tile_idx] == 0 ) &&
+                                temp_seen[tile_idx] > 0.0f ) {
                                 sc = temp_seen[tile_idx];
                             }
                             continue;
