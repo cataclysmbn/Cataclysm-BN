@@ -1121,16 +1121,19 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 const float dx    = static_cast<float>( tx - origin.x );
                 const float dy    = static_cast<float>( ty - origin.y );
                 const float dz    = static_cast<float>( tz - origin.z );
-                const float total = std::max( { std::abs( dx ), std::abs( dy ),
-                                               std::abs( dz ) * Z_LEVEL_SCALE } );
-                if( total < 1.0f ) {
+                const float total = std::max( {
+                    std::abs( dx ), std::abs( dy ),
+                    std::abs( dz ) * Z_LEVEL_SCALE } );
+                if( total < 1.0f )
+                {
                     return true;
                 }
                 const int   steps = static_cast<int>( total );
                 const float sx    = dx / total;
                 const float sy    = dy / total;
                 const float sz    = dz / total;
-                for( int s = 1; s < steps; ++s ) {
+                for( int s = 1; s < steps; ++s )
+                {
                     const int cx = static_cast<int>( std::lround( origin.x + s * sx ) );
                     const int cy = static_cast<int>( std::lround( origin.y + s * sy ) );
                     const int cz = static_cast<int>( std::lround( origin.z + s * sz ) );
@@ -1147,7 +1150,7 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
             };
 
             const int z_lo = std::max( -OVERMAP_DEPTH,  origin.z - fov_3d_z_range );
-            const int z_hi = std::min(  OVERMAP_HEIGHT, origin.z + fov_3d_z_range );
+            const int z_hi = std::min( OVERMAP_HEIGHT, origin.z + fov_3d_z_range );
             for( int z = z_lo; z <= z_hi; ++z ) {
                 if( z == origin.z ) {
                     continue;

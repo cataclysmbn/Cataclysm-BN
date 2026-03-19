@@ -71,8 +71,8 @@ static void rebuild_zdist_table()
             for( int dx = 0; dx <= R; ++dx ) {
                 const float d = std::sqrt( static_cast<float>( dx * dx + dy * dy ) + fz2 );
                 s_zdist_table[static_cast<size_t>( dy ) * ( Z + 1 ) * ( R + 1 ) +
-                              static_cast<size_t>( dz ) * ( R + 1 ) + dx] =
-                    static_cast<uint16_t>( std::lround( d ) );
+                                                   static_cast<size_t>( dz ) * ( R + 1 ) + dx] =
+                                  static_cast<uint16_t>( std::lround( d ) );
             }
         }
     }
@@ -81,7 +81,7 @@ static void rebuild_zdist_table()
 static int zdist_lookup( int dx, int dy, int dz ) noexcept
 {
     return s_zdist_table[static_cast<size_t>( dy ) * ( s_zdist_Z + 1 ) * ( s_zdist_R + 1 ) +
-                         static_cast<size_t>( dz ) * ( s_zdist_R + 1 ) + dx];
+                                              static_cast<size_t>( dz ) * ( s_zdist_R + 1 ) + dx];
 }
 
 // ── Atomic float-max (Proposal C) ────────────────────────────────────────────
@@ -761,7 +761,7 @@ void cast_zlight(
                 1, 0.0f, 1.0f, 0.0f, 1.0f, LIGHT_TRANSPARENCY_OPEN_AIR, -1, -1 );
         } );
     } else {
-        std::ranges::for_each( k_zlight_xforms, [&]( const octant_xform_3d &xf ) {
+        std::ranges::for_each( k_zlight_xforms, [&]( const octant_xform_3d & xf ) {
             cast_zlight_segment<false>(
                 output_caches, input_arrays, floor_caches, blocked_caches,
                 origin, offset_distance, numerator, model, xf,

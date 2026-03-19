@@ -3250,7 +3250,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             if( g->display_overlay_state( ACTION_DISPLAY_TRANSPARENCY ) ) {
                 const float tr = here.light_transparency( {temp_x, temp_y, center.z} );
                 const int intensity =  tr <= LIGHT_TRANSPARENCY_SOLID ? 10 :  static_cast<int>
-                                 ( ( tr - LIGHT_TRANSPARENCY_OPEN_AIR ) * 8 );
+                                       ( ( tr - LIGHT_TRANSPARENCY_OPEN_AIR ) * 8 );
                 draw_debug_tile( intensity, string_format( "%.2f", tr ) );
             }
 
@@ -3266,7 +3266,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const int &y = pos.y;
 
                 const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
-                                       x <= max_visible_x );
+                                             x <= max_visible_x );
 
                 const bool in_map_bounds = here.inbounds( pos );
 
@@ -3274,7 +3274,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
                 const bool stop_on_memory = z != center.z && has_memory &&
                                             ( !in_map_bounds || here.ter( pos ) != t_open_air );
-                
+
                 ll = ch.visibility_cache[ch.idx( x, y )];
                 const auto visibility = here.get_visibility( ll, cache );
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
