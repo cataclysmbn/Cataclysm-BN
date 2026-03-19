@@ -476,6 +476,7 @@ item::item( const item &source ) : game_object<item>( source ), contents( this )
     old_owner = source.old_owner;
     damage_ = source.damage_;
     light = source.light;
+    last_relic_process = source.last_relic_process;
     invlet = source.invlet;
     active = source.active;
     activated_by = source.activated_by;
@@ -521,6 +522,7 @@ item &item::operator=( const item &source )
     old_owner = source.old_owner;
     damage_ = source.damage_;
     light = source.light;
+    last_relic_process = source.last_relic_process;
     invlet = source.invlet;
     active = source.active;
     activated_by = source.activated_by;
