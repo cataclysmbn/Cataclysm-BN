@@ -3242,14 +3242,14 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 if( g->displaying_lighting_condition == 0 ) {
                     const float light = here.ambient_light_at( {temp_x, temp_y, center.z} );
                     // note: lighting will be constrained in the [1.0, 11.0] range.
-                    int intensity = static_cast<int>( std::max( 1.0, LIGHT_AMBIENT_LIT - light + 1.0 ) ) - 1;
+                    const int intensity = static_cast<int>( std::max( 1.0, LIGHT_AMBIENT_LIT - light + 1.0 ) ) - 1;
                     draw_debug_tile( intensity, string_format( "%.1f", light ) );
                 }
             }
 
             if( g->display_overlay_state( ACTION_DISPLAY_TRANSPARENCY ) ) {
                 const float tr = here.light_transparency( {temp_x, temp_y, center.z} );
-                int intensity =  tr <= LIGHT_TRANSPARENCY_SOLID ? 10 :  static_cast<int>
+                const int intensity =  tr <= LIGHT_TRANSPARENCY_SOLID ? 10 :  static_cast<int>
                                  ( ( tr - LIGHT_TRANSPARENCY_OPEN_AIR ) * 8 );
                 draw_debug_tile( intensity, string_format( "%.2f", tr ) );
             }
@@ -3257,6 +3257,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             lit_level ll = lit_level::BLANK;
             int last_vis = center.z + 1;
             lit_level last_vis_ll = lit_level::BLANK;
+            bool drew_occluded_overlay = false;
             for( int z = center.z; z >= -OVERMAP_DEPTH; z-- ) {
                 const auto &ch = here.access_cache( z );
 
@@ -3264,20 +3265,35 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const int &x = pos.x;
                 const int &y = pos.y;
 
-                bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
+                const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
                                        x <= max_visible_x );
 
-                bool in_map_bounds = here.inbounds( pos );
+                const bool in_map_bounds = here.inbounds( pos );
 
-                const bool stop_on_memory = z != center.z && has_memory_at( pos ) &&
+                const bool has_memory = has_memory_at( pos );
+
+                const bool stop_on_memory = z != center.z && has_memory &&
                                             ( !in_map_bounds || here.ter( pos ) != t_open_air );
-
+                
+                ll = ch.visibility_cache[ch.idx( x, y )];
+                const auto visibility = here.get_visibility( ll, cache );
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
-                    ll = ch.visibility_cache[ch.idx( x, y )];
-                    if( !would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( x, y )],
-                                                     cache ) ) ) {
+                    if( !would_apply_vision_effects( visibility ) ) {
                         last_vis = z;
                         last_vis_ll = ll;
+                    } else if( !has_memory && visibility == visibility_type::VIS_HIDDEN ) {
+                        if( drew_occluded_overlay ) {
+                            // A second hidden layer means nothing below will be visible either;
+                            // stop descending to prevent stacked overlays compounding to solid blue.
+                            break;
+                        }
+                        drew_occluded_overlay = true;
+                        // Draw a depth-faded semi-transparent overlay for the topmost occluded tile.
+                        const tile_search_params dark_tile{ "lighting_lowlight_dark", C_LIGHTING,
+                                                            empty_string, 0, 0 };
+                        draw_from_id_string( dark_tile, pos, std::nullopt, std::nullopt,
+                                             lit_level::LIT, false, center.z - z, false );
+                        continue;
                     }
                 }
 
@@ -3285,13 +3301,13 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const bool low_overridden = low_override != draw_below_override.end();
                 if( low_overridden ? !low_override->second :
                     ( in_map_bounds && ( here.dont_draw_lower_floor( pos ) || stop_on_memory ) )
-                    || ( !in_map_bounds && ( has_memory_at( pos ) || pos.z <= 0 ) ) ) {
+                    || ( !in_map_bounds && ( has_memory || pos.z <= 0 ) ) ) {
                     // invisible to normal eyes
                     bool invisible[5];
                     invisible[0] = false;
 
                     if( !in_vis_bounds ) {
-                        if( has_memory_at( pos ) ) {
+                        if( has_memory ) {
                             ll = lit_level::MEMORIZED;
                             invisible[0] = true;
                         } else if( has_draw_override( pos ) ) {
@@ -3303,7 +3319,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                         }
                     }
 
-                    int height_3d = 0;
+                    const int height_3d = 0;
 
                     for( int i = 0; i < 4; i++ ) {
                         const tripoint np = pos + neighborhood[i];
@@ -3313,8 +3329,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                                                    cache ) );
                     }
 
-                    if( !invisible[0] && apply_vision_effects( pos, here.get_visibility( ll, cache ) ) ) {
-                        if( has_draw_override( pos ) || has_memory_at( pos ) ) {
+                    if( !invisible[0] && apply_vision_effects( pos, visibility ) ) {
+                        if( has_draw_override( pos ) || has_memory ) {
                             invisible[0] = true;
                         }
                         for( int cz = pos.z; !invisible[0] && cz <= -center.z; cz++ ) {
