@@ -691,9 +691,9 @@ static void cast_zlight_segment(
                         break;  // Exit x loop; z loop continues from delta.z.
                     } else {
                         // No horizontal occlusion: skip sector-splitting for delta.z > 0.
-                        // Update floor tracking only so the floor-handling block below
-                        // still stops downward rays correctly.  Leave current_transparency
-                        // alone so end-of-distance model.check uses the delta.z==0 value.
+                        // Still track actual transparency so a wall at one z-level doesn't
+                        // incorrectly block rays at other z-levels in the same row.
+                        current_transparency = new_transparency;
                         current_floor = new_floor;
                     }
                 }

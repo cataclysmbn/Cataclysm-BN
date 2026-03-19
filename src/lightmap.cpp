@@ -1098,24 +1098,18 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         cast_zlight( seen_caches, transparency_caches, floor_caches, blocked_caches,
                      origin, 0, 1.0f, k_sight_model );
 
-        // Horizontal occlusion pass: cast_zlight handles vertical LoS (floors,
-        // ceilings) but cannot shadow horizontal obstacles at z-levels other than
-        // the player's.  This pass adds that shadowing via a two-phase check:
+        // Per-z-level 2D pass: cast_zlight covers only tiles within ~45° of
+        // horizontal (delta.z <= delta.y).  Steeper tiles — including the pyramid
+        // directly below/above the player — are left at sc=0.  A castLightAll
+        // from origin.xy() at each z-level fills those blind spots.
         //
-        //  Phase 1 — 2D cast pre-filter: castLightAll from origin.xy() at each
-        //             z-level determines which tiles have clear horizontal LoS.
-        //             Tiles with temp_seen > 0 are kept as-is (2D confirms them).
-        //
-        //  Phase 2 — 3D DDA verification: tiles the 2D pass blocks (temp_seen == 0)
-        //             but cast_zlight illuminated (seen_cache > 0) may still be
-        //             reachable via the diagonal 3D ray from the player's actual
-        //             elevation.  A DDA line walk using Z_LEVEL_SCALE decides:
-        //             clear → keep the cast_zlight result;
-        //             blocked → set seen_cache to 0 (rendered as map-memory by
-        //             the tiles renderer once lit_level::BLANK → MEMORIZED fix
-        //             is applied in cata_tiles.cpp).
-        if( fov_3d_occlusion ) {
-            ZoneScopedN( "build_seen_cache_3d_occlusion" );
+        // When fov_3d_occlusion is also enabled, the same 2D result is used as
+        // a pre-filter for a 3D DDA check that enforces horizontal occlusion:
+        //   • sc > 0 and temp_seen > 0 → 2D confirms visibility; keep as-is.
+        //   • sc > 0 and temp_seen = 0 → 2D says blocked; verify with DDA.
+        //     DDA clear → keep; DDA blocked → set sc = 0.
+        {
+            ZoneScopedN( "build_seen_cache_3d_fill" );
             auto &ref_cache = get_cache( -OVERMAP_DEPTH );
             const int cache_sz = ref_cache.cache_x * ref_cache.cache_y;
             std::vector<float> temp_seen( cache_sz );
@@ -1160,20 +1154,29 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 }
                 auto &zc = get_cache( z );
 
-                // Phase 1: 2D cast pre-filter.
+                // 2D cast from origin.xy at this z-level.
                 std::fill( temp_seen.begin(), temp_seen.end(), light_transparency_solid );
                 temp_seen[zc.idx( origin.x, origin.y )] = VISIBILITY_FULL;
                 castLightAll( temp_seen.data(), zc.transparency_cache.data(),
                               zc.vehicle_obscured_cache.data(), zc.cache_x, zc.cache_y,
                               origin.xy(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
 
-                // Phase 2: DDA check for tiles the 2D pass blocked.
                 for( int x = 0; x < zc.cache_x; ++x ) {
                     for( int y = 0; y < zc.cache_y; ++y ) {
                         const int tile_idx = zc.idx( x, y );
                         float &sc = zc.seen_cache[tile_idx];
-                        if( sc <= 0.0f || temp_seen[tile_idx] > 0.0f ) {
-                            continue;  // not 3D-visible, or 2D already confirms it
+                        if( sc <= 0.0f ) {
+                            // cast_zlight missed this tile (steep-angle blind spot).
+                            // Fill from 2D if horizontal LoS is clear.
+                            if( temp_seen[tile_idx] > 0.0f ) {
+                                sc = temp_seen[tile_idx];
+                            }
+                            continue;
+                        }
+                        // Occlusion: tiles cast_zlight illuminated but 2D blocked
+                        // need a DDA check to confirm they're truly reachable.
+                        if( !fov_3d_occlusion || temp_seen[tile_idx] > 0.0f ) {
+                            continue;
                         }
                         if( !is_3d_clear( x, y, z ) ) {
                             sc = 0.0f;
