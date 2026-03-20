@@ -87,7 +87,7 @@ auto is_sandwich_bread( const item &it ) -> bool
 
     return id.contains( "bread" ) || id.contains( "bun" ) || id.contains( "bagel" ) ||
            id.contains( "roll" ) || id.contains( "tortilla" ) || id.contains( "biscuit" ) ||
-           id.contains( "hardtack" );
+           id.contains( "hardtack" ) || id.contains( "brioche" );
 }
 
 auto normalized_hp( const item &it ) -> float
