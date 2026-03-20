@@ -13,7 +13,7 @@ TEST_CASE( "proc_make_item_applies_food_blob_to_item", "[proc][make][food]" )
     sch.cat = "food";
     sch.res = itype_id( "sandwich_generic" );
     sch.slots = {
-        proc::slot_data{ .id = proc::slot_id( "top" ), .role = "bread", .min = 1, .max = 1, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "bread" ), .role = "bread", .min = 2, .max = 2, .rep = true, .ok = {}, .no = {} },
         proc::slot_data{ .id = proc::slot_id( "meat" ), .role = "meat", .min = 0, .max = 2, .rep = true, .ok = {}, .no = {} }
     };
 
@@ -34,7 +34,7 @@ TEST_CASE( "proc_make_item_applies_food_blob_to_item", "[proc][make][food]" )
 
     auto opts = proc::make_opts{};
     opts.mode = proc::hist::none;
-    opts.slots = { proc::slot_id( "top" ), proc::slot_id( "meat" ) };
+    opts.slots = { proc::slot_id( "bread" ), proc::slot_id( "meat" ) };
     const auto made = proc::make_item( sch, { bread, meat }, opts );
     REQUIRE( proc::read_payload( *made ) );
     CHECK( proc::read_payload( *made )->blob.kcal == 480 );

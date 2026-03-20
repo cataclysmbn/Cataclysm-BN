@@ -13,6 +13,11 @@
 namespace
 {
 
+auto has_material( const item &it, const material_id &id ) -> bool
+{
+    return std::ranges::find( it.made_of(), id ) != it.made_of().end();
+}
+
 auto normalized_hp( const item &it ) -> float
 {
     const auto max_damage = it.max_damage();
@@ -28,19 +33,23 @@ auto default_tags( const item &it ) -> std::vector<std::string>
 {
     auto ret = std::vector<std::string> {};
     const auto &id = it.typeId().str();
-    if( id.starts_with( "bread" ) ) {
+    if( ( it.is_comestible() && !it.count_by_charges() && has_material( it, material_id( "wheat" ) ) ) ||
+        id.contains( "bread" ) || id.contains( "bun" ) || id.contains( "bagel" ) ||
+        id.contains( "toast" ) || id.contains( "roll" ) || id.contains( "tortilla" ) ) {
         ret.push_back( "bread" );
     }
-    if( id.starts_with( "cheese" ) ) {
+    if( id.contains( "cheese" ) || has_material( it, material_id( "milk" ) ) ) {
         ret.push_back( "cheese" );
     }
-    if( id == "lettuce" || id == "tomato" ) {
+    if( has_material( it, material_id( "veggy" ) ) ) {
         ret.push_back( "veg" );
     }
-    if( id == "mustard" || id == "mustard_powder" ) {
+    if( id.contains( "mustard" ) || id.contains( "ketchup" ) || id.contains( "mayo" ) ||
+        id.contains( "sauce" ) ) {
         ret.push_back( "cond" );
     }
-    if( id.starts_with( "meat_" ) ) {
+    if( has_material( it, material_id( "flesh" ) ) || has_material( it, material_id( "hflesh" ) ) ||
+        has_material( it, material_id( "iflesh" ) ) || has_material( it, material_id( "fish" ) ) ) {
         ret.push_back( "meat" );
     }
     return ret;
