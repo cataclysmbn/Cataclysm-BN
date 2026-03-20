@@ -74,6 +74,10 @@ TEST_CASE( "proc_part_fact_assigns_food_role_tags", "[proc][fact]" )
     const auto hardtack_fact = proc::normalize_part_fact( hardtack, { .ix = 10 } );
     CHECK( std::ranges::find( hardtack_fact.tag, "bread" ) != hardtack_fact.tag.end() );
 
+    const auto brioche = item( "brioche" );
+    const auto brioche_fact = proc::normalize_part_fact( brioche, { .ix = 11 } );
+    CHECK( std::ranges::find( brioche_fact.tag, "bread" ) != brioche_fact.tag.end() );
+
     const auto meat = item( "meat_cooked" );
     const auto meat_fact = proc::normalize_part_fact( meat, { .ix = 2 } );
     CHECK( std::ranges::find( meat_fact.tag, "meat" ) != meat_fact.tag.end() );

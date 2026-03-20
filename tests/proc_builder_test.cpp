@@ -665,25 +665,27 @@ TEST_CASE( "proc_builder_sandwich_limits_bread_slot_to_sandwichable_bases",
 
     const auto bread_a = proc::normalize_part_fact( item( "bread" ), { .ix = 1 } );
     const auto bread_b = proc::normalize_part_fact( item( "bread" ), { .ix = 2 } );
-    const auto sweetbread = proc::normalize_part_fact( item( "sweetbread" ), { .ix = 3 } );
-    const auto pancakes = proc::normalize_part_fact( item( "pancakes" ), { .ix = 4 } );
-    const auto waffles = proc::normalize_part_fact( item( "waffles" ), { .ix = 5 } );
-    const auto crackers = proc::normalize_part_fact( item( "crackers" ), { .ix = 6 } );
-    const auto pretzels = proc::normalize_part_fact( item( "pretzels" ), { .ix = 7 } );
-    const auto snack_cake = proc::normalize_part_fact( item( "cake2" ), { .ix = 8 } );
+    const auto brioche = proc::normalize_part_fact( item( "brioche" ), { .ix = 3 } );
+    const auto sweetbread = proc::normalize_part_fact( item( "sweetbread" ), { .ix = 4 } );
+    const auto pancakes = proc::normalize_part_fact( item( "pancakes" ), { .ix = 5 } );
+    const auto waffles = proc::normalize_part_fact( item( "waffles" ), { .ix = 6 } );
+    const auto crackers = proc::normalize_part_fact( item( "crackers" ), { .ix = 7 } );
+    const auto pretzels = proc::normalize_part_fact( item( "pretzels" ), { .ix = 8 } );
+    const auto snack_cake = proc::normalize_part_fact( item( "cake2" ), { .ix = 9 } );
 
     const auto state = proc::build_state( sch,
-    { bread_a, bread_b, sweetbread, pancakes, waffles, crackers, pretzels, snack_cake } );
+    { bread_a, bread_b, brioche, sweetbread, pancakes, waffles, crackers, pretzels, snack_cake } );
     const auto &bread_candidates = state.cand.at( proc::slot_id( "bread" ) );
 
     CHECK( std::ranges::find( bread_candidates, proc::part_ix( 1 ) ) != bread_candidates.end() );
     CHECK( std::ranges::find( bread_candidates, proc::part_ix( 2 ) ) != bread_candidates.end() );
-    CHECK( std::ranges::find( bread_candidates, proc::part_ix( 3 ) ) == bread_candidates.end() );
+    CHECK( std::ranges::find( bread_candidates, proc::part_ix( 3 ) ) != bread_candidates.end() );
     CHECK( std::ranges::find( bread_candidates, proc::part_ix( 4 ) ) == bread_candidates.end() );
     CHECK( std::ranges::find( bread_candidates, proc::part_ix( 5 ) ) == bread_candidates.end() );
     CHECK( std::ranges::find( bread_candidates, proc::part_ix( 6 ) ) == bread_candidates.end() );
     CHECK( std::ranges::find( bread_candidates, proc::part_ix( 7 ) ) == bread_candidates.end() );
     CHECK( std::ranges::find( bread_candidates, proc::part_ix( 8 ) ) == bread_candidates.end() );
+    CHECK( std::ranges::find( bread_candidates, proc::part_ix( 9 ) ) == bread_candidates.end() );
 }
 
 TEST_CASE( "proc_builder_excludes_breakfast_dishes_and_entrees_from_food_slots",
