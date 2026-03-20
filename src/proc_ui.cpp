@@ -102,7 +102,8 @@ auto filtered_candidates( const proc::builder_state &state, const proc::slot_id 
     }
     std::ranges::for_each( iter->second, [&]( const proc::part_ix ix ) {
         const auto *source = source_for_ix( sources, ix );
-        if( source != nullptr && matches_search( *source, query ) ) {
+        if( source != nullptr && proc::remaining_uses( state, ix ) > 0 &&
+            matches_search( *source, query ) ) {
             ret.push_back( ix );
         }
     } );
@@ -153,7 +154,7 @@ auto candidate_meta( const source_entry &source, const proc::schema &sch ) -> st
 auto candidate_line( const source_entry &source, const proc::builder_state &state,
                      const proc::schema &sch ) -> std::string
 {
-    const auto remaining = std::max( source.fact.uses - proc::pick_count( state, source.fact.ix ), 0 );
+    const auto remaining = proc::remaining_uses( state, source.fact.ix );
     const auto count_suffix = remaining > 1 ? string_format( " x%d", remaining ) : std::string();
     return string_format( "%s %s  [%s]%s", source.prefix, source.src->tname(),
                           candidate_meta( source, sch ), count_suffix );
