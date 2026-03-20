@@ -4,21 +4,29 @@
     "id": "sandwich",
     "cat": "food",
     "res": "sandwich_generic",
-    "hist": {
-      "def": "none",
-      "ok": [ "none", "compact", "full" ]
-    },
+    "hist": { "def": "none", "ok": [ "none", "compact", "full" ] },
     "slot": [
       { "id": "top", "role": "bread", "min": 1, "max": 1, "ok": [ "itype:bread", "itype:bread_garlic" ] },
       { "id": "bot", "role": "bread", "min": 1, "max": 1, "ok": [ "itype:bread", "itype:bread_garlic" ] },
       { "id": "veg", "role": "veg", "min": 0, "max": 4, "rep": true, "ok": [ "itype:lettuce", "itype:tomato" ] },
-      { "id": "cheese", "role": "cheese", "min": 0, "max": 2, "rep": true, "ok": [ "itype:cheese", "itype:cheese_fresh", "itype:cheese_hard" ] },
+      {
+        "id": "cheese",
+        "role": "cheese",
+        "min": 0,
+        "max": 2,
+        "rep": true,
+        "ok": [ "itype:cheese", "itype:cheese_fresh", "itype:cheese_hard" ]
+      },
       { "id": "cond", "role": "cond", "min": 0, "max": 2, "rep": true, "ok": [ "itype:mustard" ] },
-      { "id": "meat", "role": "meat", "min": 0, "max": 3, "rep": true, "ok": [ "itype:meat_cooked", "itype:meat_cooked_seasoned" ] }
+      {
+        "id": "meat",
+        "role": "meat",
+        "min": 0,
+        "max": 3,
+        "rep": true,
+        "ok": [ "itype:meat_cooked", "itype:meat_cooked_seasoned" ]
+      }
     ],
-    "lua": {
-      "full": "proc.food.full",
-      "make": "proc.food.make"
-    }
+    "lua": { "full": "proc.food.full", "make": "proc.food.make" }
   }
 ]

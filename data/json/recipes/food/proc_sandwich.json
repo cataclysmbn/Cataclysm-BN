@@ -11,8 +11,8 @@
     "proc_id": "sandwich",
     "builder_name": { "str": "Sandwich" },
     "builder_desc": { "str": "Pick bread and fillings." },
-    "qualities": [],
-    "tools": [],
-    "components": []
+    "qualities": [  ],
+    "tools": [  ],
+    "components": [  ]
   }
 ]
