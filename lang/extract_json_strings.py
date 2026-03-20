@@ -546,6 +546,19 @@ def extract_recipe(state, item):
         writestr(state, item["description"])
     if "blueprint_name" in item:
         writestr(state, item["blueprint_name"])
+    if "builder_name" in item:
+        writestr(state, item["builder_name"], comment="Procedural recipe builder title")
+    if "builder_desc" in item:
+        writestr(state, item["builder_desc"], comment="Procedural recipe builder description")
+
+
+def extract_proc(state, item):
+    proc_id = item.get("id", "unknown proc")
+    for slot in item.get("slot", []):
+        if type(slot) is not dict or "role" not in slot:
+            continue
+        slot_id = slot.get("id", "unknown slot")
+        writestr(state, slot["role"], comment=f"Procedural slot role for {proc_id}:{slot_id}")
 
 
 def extract_recipe_group(state, item):
@@ -856,6 +869,7 @@ extract_specials = {
     "mutation_category": extract_mutation_category,
     "mutation": extract_mutation,
     "profession": extract_profession,
+    "PROC": extract_proc,
     "recipe_category": extract_recipe_category,
     "recipe_group": extract_recipe_group,
     "recipe": extract_recipe,
