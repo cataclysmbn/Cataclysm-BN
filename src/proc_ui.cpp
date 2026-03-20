@@ -13,11 +13,11 @@
 #include "input.h"
 #include "inventory.h"
 #include "item.h"
+#include "item_factory.h"
 #include "output.h"
 #include "proc_fact.h"
 #include "recipe.h"
 #include "string_formatter.h"
-#include "type_id.h"
 #include "translations.h"
 #include "ui.h"
 #include "ui_manager.h"
@@ -26,10 +26,6 @@ namespace
 {
 
 static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
-static const itype_id itype_bread( "bread" );
-static const itype_id itype_potato( "potato" );
-static const itype_id itype_meat_cooked( "meat_cooked" );
-static const itype_id itype_fish( "fish" );
 
 struct source_entry {
     item *src = nullptr;
@@ -104,47 +100,43 @@ auto gather_inventory_sources( Character &who, const proc::schema &sch ) -> sour
     return ret;
 }
 
-auto debug_item_for_atom( const std::string &atom ) -> std::optional<itype_id>
+auto matching_slot_uses( const proc::schema &sch, const proc::part_fact &fact ) -> int
 {
-    if( atom.starts_with( "itype:" ) ) {
-        return itype_id( atom.substr( 6 ) );
-    }
-    if( atom == "mat:veggy" ) {
-        return itype_potato;
-    }
-    if( atom == "mat:flesh" ) {
-        return itype_meat_cooked;
-    }
-    if( atom == "mat:fish" ) {
-        return itype_fish;
-    }
-    if( atom == "mat:wheat" ) {
-        return itype_bread;
-    }
-    return std::nullopt;
+    auto uses = 0;
+    std::ranges::for_each( sch.slots, [&]( const proc::slot_data & slot ) {
+        if( proc::matches_slot( slot, fact ) ) {
+            uses += std::max( slot.max, 1 );
+        }
+    } );
+    return uses;
 }
 
 auto gather_debug_sources( const proc::schema &sch ) -> source_pool
 {
     auto ret = source_pool {};
     auto ix = proc::part_ix{ 0 };
-    std::ranges::for_each( sch.slots, [&]( const proc::slot_data & slot ) {
-        std::ranges::for_each( slot.ok, [&]( const std::string & atom ) {
-            const auto id = debug_item_for_atom( atom );
-            if( !id || id->is_null() ) {
-                return;
-            }
-            ret.owned.push_back( item::spawn( *id, calendar::turn ) );
-            auto *temp = &*ret.owned.back();
-            ret.entries.push_back( make_source_entry( {
-                .src = temp,
-                .where = _( "debug hammerspace" ),
-                .ix = ix,
-                .charges = temp->count_by_charges() ? std::max( temp->charges, 1 ) : 0,
-                .uses = std::max( slot.max, 1 )
-            } ) );
-            ix++;
+    const auto candidates = item_controller->all();
+    std::ranges::for_each( candidates, [&]( const itype * candidate ) {
+        if( candidate == nullptr ) {
+            return;
+        }
+        ret.owned.push_back( item::spawn( candidate->get_id(), calendar::turn ) );
+        auto *temp = &*ret.owned.back();
+        auto entry = make_source_entry( {
+            .src = temp,
+            .where = _( "debug hammerspace" ),
+            .ix = ix,
+            .charges = temp->count_by_charges() ? 1 : 0,
+            .uses = 1
         } );
+        const auto uses = matching_slot_uses( sch, entry.fact );
+        if( uses <= 0 ) {
+            ret.owned.pop_back();
+            return;
+        }
+        entry.fact.uses = uses;
+        ret.entries.push_back( entry );
+        ix++;
     } );
     return ret;
 }
@@ -256,10 +248,8 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         return std::nullopt;
     }
 
-    auto source_data = gather_inventory_sources( who, sch );
-    if( who.has_trait( trait_DEBUG_HS ) && source_data.entries.empty() ) {
-        source_data = gather_debug_sources( sch );
-    }
+    auto source_data = who.has_trait( trait_DEBUG_HS ) ? gather_debug_sources( sch ) :
+                       gather_inventory_sources( who, sch );
 
     const auto facts = source_data.entries
     | std::views::transform( []( const source_entry & entry ) {
