@@ -157,15 +157,15 @@ class recipe
             return proc_enabled;
         }
 
-        auto proc_id() const -> const proc::schema_id & {
+        auto proc_id() const -> const proc::schema_id& {
             return proc_id_;
         }
 
-        auto builder_name() const -> const translation & {
+        auto builder_name() const -> const translation& {
             return builder_name_;
         }
 
-        auto builder_desc() const -> const translation & {
+        auto builder_desc() const -> const translation& {
             return builder_desc_;
         }
 
