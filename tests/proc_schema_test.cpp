@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -93,6 +94,36 @@ TEST_CASE( "proc_schema_registry_loads_by_id", "[proc][schema]" )
     REQUIRE( proc::has( proc::schema_id( "knife_spear" ) ) );
     CHECK( proc::get( proc::schema_id( "knife_spear" ) ).cat == "melee" );
     CHECK( proc::get( proc::schema_id( "knife_spear" ) ).hist.def == proc::hist::full );
+
+    proc::reset();
+}
+
+TEST_CASE( "proc_sandwich_schema_allows_three_breads", "[proc][schema]" )
+{
+    proc::reset();
+
+    auto file = std::ifstream( "data/json/proc/sandwich.json", std::ios::binary );
+    REQUIRE( file.is_open() );
+
+    auto jsin = JsonIn( file );
+    for( JsonObject jo : jsin.get_array() ) {
+        jo.allow_omitted_members();
+        const auto type = jo.get_string( "type" );
+        if( type != "PROC" || jo.get_string( "id" ) != "sandwich" ) {
+            continue;
+        }
+        proc::load( jo, "data/json/proc/sandwich.json" );
+    }
+
+    REQUIRE( proc::has( proc::schema_id( "sandwich" ) ) );
+    const auto &loaded = proc::get( proc::schema_id( "sandwich" ) );
+    const auto slot = std::ranges::find_if( loaded.slots, []( const proc::slot_data & entry ) {
+        return entry.id == proc::slot_id( "bread" );
+    } );
+    REQUIRE( slot != loaded.slots.end() );
+    CHECK( slot->min == 2 );
+    CHECK( slot->max == 3 );
+    CHECK( slot->rep );
 
     proc::reset();
 }

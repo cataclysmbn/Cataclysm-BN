@@ -6,7 +6,7 @@
     "res": "sandwich_generic",
     "hist": { "def": "full", "ok": [ "full", "compact" ] },
     "slot": [
-      { "id": "bread", "role": "bread", "min": 2, "max": 2, "rep": true, "ok": [ "tag:bread" ] },
+      { "id": "bread", "role": "bread", "min": 2, "max": 3, "rep": true, "ok": [ "tag:bread" ] },
       { "id": "veg", "role": "veg", "min": 0, "max": 4, "rep": true, "ok": [ "tag:veg" ] },
       { "id": "cheese", "role": "cheese", "min": 0, "max": 2, "rep": true, "ok": [ "tag:cheese" ] },
       { "id": "cond", "role": "cond", "min": 0, "max": 2, "rep": true, "ok": [ "tag:cond" ] },
