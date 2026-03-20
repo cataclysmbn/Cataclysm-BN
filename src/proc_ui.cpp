@@ -9,6 +9,7 @@
 
 #include "character.h"
 #include "cursesdef.h"
+#include "game.h"
 #include "input.h"
 #include "inventory.h"
 #include "item.h"
@@ -284,17 +285,19 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
     auto status = std::string {};
 
     auto w = catacurses::window {};
-    auto ui = ui_adaptor {};
+    auto ui = ui_adaptor( ui_adaptor::disable_uis_below {} );
     auto width = FULL_SCREEN_WIDTH;
     auto height = TERMY;
 
-    ui.on_screen_resize( [&]( ui_adaptor & adaptor ) {
+    const auto resize_cb = [&]( ui_adaptor & adaptor ) {
         width = std::min( TERMX - 2, FULL_SCREEN_WIDTH * 2 );
         height = std::min( TERMY, FULL_SCREEN_HEIGHT );
         const auto start = point( ( TERMX - width ) / 2, ( TERMY - height ) / 2 );
         w = catacurses::newwin( height, width, start );
-        adaptor.position( start, point( width, height ) );
-    } );
+        adaptor.position_from_window( w );
+    };
+    resize_cb( ui );
+    ui.on_screen_resize( resize_cb );
 
     ui.on_redraw( [&]( ui_adaptor & ) {
         werase( w );
@@ -370,6 +373,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         wnoutrefresh( w );
     } );
     ui.mark_resize();
+    g->invalidate_main_ui_adaptor();
 
     auto ctxt = input_context( "PROC_BUILDER" );
     ctxt.register_action( "UP", to_translation( "Previous entry" ) );
@@ -382,11 +386,12 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
     ctxt.register_action( "END", to_translation( "Go to last entry" ) );
     ctxt.register_action( "CONFIRM", to_translation( "Add selected candidate" ) );
     ctxt.register_action( "QUIT", to_translation( "Cancel" ) );
+    ctxt.register_action( "HELP_KEYBINDINGS" );
 
     while( true ) {
         ui_manager::redraw();
+        const auto action = ctxt.handle_input();
         const auto evt = ctxt.get_raw_input();
-        const auto action = ctxt.input_to_action( evt );
         const auto ch = evt.get_first_input();
         const auto &slot = current_slot( sch, slot_cursor );
         const auto &candidates = current_candidates( state, slot.id );
