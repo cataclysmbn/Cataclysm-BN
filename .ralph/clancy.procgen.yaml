@@ -1,0 +1,16 @@
+version: 1
+
+agent:
+  command: "bash ./.ralph/run_opencode_forever.sh"
+  env:
+    OPENCODE_DISABLE_COLOR: "1"
+
+loop:
+  max_steps: 500
+  timeout: "9h"
+  delay: "2s"
+  stop_phrase: "<promise>RALPH_STOP</promise>"
+  stop_mode: "suffix"
+
+input:
+  prompt: "file:./.ralph/procgen_forever_prompt.md"
