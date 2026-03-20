@@ -630,6 +630,11 @@ auto proc::add_pick( builder_state &state, const schema &sch, const slot_id &slo
     if( slot_data == nullptr ) {
         return false;
     }
+    const auto cand_iter = state.cand.find( slot );
+    if( cand_iter == state.cand.end() ||
+        std::ranges::find( cand_iter->second, ix ) == cand_iter->second.end() ) {
+        return false;
+    }
     const auto *fact = find_fact( state.facts, ix );
     if( fact == nullptr || pick_count( state, ix ) >= fact->uses ) {
         return false;

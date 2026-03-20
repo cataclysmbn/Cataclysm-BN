@@ -249,6 +249,46 @@ TEST_CASE( "proc_builder_limits_repeated_charge_picks", "[proc][builder]" )
     CHECK_FALSE( proc::add_pick( state, sch, proc::slot_id( "base" ), 1 ) );
 }
 
+TEST_CASE( "proc_builder_rejects_picks_that_do_not_match_the_target_slot", "[proc][builder]" )
+{
+    const auto sch = load_schema_for_test( R"(
+{
+  "type": "PROC",
+  "id": "sandwich",
+  "cat": "food",
+  "res": "sandwich_generic",
+  "slot": [
+    { "id": "top", "role": "bread", "min": 1, "max": 1, "ok": [ "tag:bread" ] },
+    { "id": "fill", "role": "meat", "min": 0, "max": 1, "ok": [ "tag:meat" ] }
+  ]
+}
+    )" );
+
+    auto bread = proc::part_fact{};
+    bread.ix = 1;
+    bread.id = itype_id( "bread" );
+    bread.tag = { "bread" };
+    bread.mass_g = 120;
+    bread.volume_ml = 250;
+    bread.kcal = 300;
+
+    auto meat = proc::part_fact{};
+    meat.ix = 2;
+    meat.id = itype_id( "meat_cooked" );
+    meat.tag = { "meat" };
+    meat.mass_g = 80;
+    meat.volume_ml = 125;
+    meat.kcal = 180;
+
+    auto state = proc::build_state( sch, { bread, meat } );
+    CHECK_FALSE( proc::add_pick( state, sch, proc::slot_id( "top" ), 2 ) );
+    CHECK_FALSE( proc::add_pick( state, sch, proc::slot_id( "fill" ), 1 ) );
+    CHECK( state.chosen.empty() );
+    CHECK( state.fast.mass_g == 0 );
+    CHECK( state.fast.volume_ml == 0 );
+    CHECK( state.fast.kcal == 0 );
+}
+
 TEST_CASE( "proc_builder_filters_out_exhausted_candidates", "[proc][builder]" )
 {
     const auto sch = load_schema_for_test( R"(
