@@ -50,6 +50,7 @@ struct payload {
 struct craft_plan {
     hist mode = hist::none;
     std::vector<slot_id> slots;
+    std::vector<part_fact> facts;
 
     auto operator==( const craft_plan & ) const -> bool = default;
 };

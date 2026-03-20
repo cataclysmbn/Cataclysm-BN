@@ -944,17 +944,69 @@ auto restore_consumed_proc_items( Character &who, std::vector<detached_ptr<item>
     } );
 }
 
+auto selected_proc_slots( const proc::ui_result &result ) -> std::vector<proc::slot_id>
+{
+    auto slots = std::vector<proc::slot_id> {};
+    slots.reserve( result.picks.size() );
+    std::ranges::for_each( result.picks, [&]( const proc::ui_pick & pick ) {
+        slots.push_back( pick.slot );
+    } );
+    return slots;
+}
+
+auto selected_proc_facts( const proc::ui_result &result ) -> std::vector<proc::part_fact>
+{
+    auto facts = std::vector<proc::part_fact> {};
+    facts.reserve( result.picks.size() );
+    std::ranges::for_each( result.picks, [&]( const proc::ui_pick & pick ) {
+        facts.push_back( pick.fact );
+    } );
+    return facts;
+}
+
+auto finish_debug_proc_craft( Character &who, const recipe &rec,
+                              const proc::ui_result &result ) -> item * // *NOPAD*
+{
+    if( !proc::has( rec.proc_id() ) ) {
+        return nullptr;
+    }
+
+    const auto &sch = proc::get( rec.proc_id() );
+    auto newit = proc::make_item( sch, selected_proc_facts( result ), {
+        .mode = sch.hist.def,
+        .rec = &rec,
+        .used = {},
+        .slots = selected_proc_slots( result )
+    } );
+    who.add_msg_player_or_npc(
+        _( "You craft %s using debug hammerspace." ),
+        _( "<npcname> crafts %s using debug hammerspace." ),
+        newit->tname() );
+    if( newit->made_of( LIQUID ) ) {
+        liquid_handler::handle_all_liquid( std::move( newit ), PICKUP_RANGE );
+    } else {
+        set_item_inventory( who, std::move( newit ) );
+    }
+    who.inv_restack();
+    return nullptr;
+}
+
 auto start_proc_craft( const start_proc_craft_options &opts ) -> item * // *NOPAD*
 {
     auto &who = opts.who;
     const auto &rec = opts.rec;
+    const auto &result = opts.result;
+    if( who.has_trait( trait_DEBUG_HS ) ) {
+        return finish_debug_proc_craft( who, rec, result );
+    }
+
     auto tool_selections = std::vector<comp_selection<tool_comp>> {};
     if( !prepare_proc_craft_tools( who, rec, tool_selections ) ) {
         return nullptr;
     }
 
-    auto used = consume_proc_items( opts.result.picks );
-    if( used.size() != opts.result.picks.size() ) {
+    auto used = consume_proc_items( result.picks );
+    if( used.size() != result.picks.size() ) {
         restore_consumed_proc_items( who, used );
         popup( _( "Selected procedural components are no longer available." ) );
         return nullptr;
@@ -965,14 +1017,9 @@ auto start_proc_craft( const start_proc_craft_options &opts ) -> item * // *NOPA
     craft->set_tools_to_continue( true );
     who.craft_consume_tools( *craft, 1, true );
     craft->set_next_failure_point( who );
-    auto slots = std::vector<proc::slot_id> {};
-    slots.reserve( opts.result.picks.size() );
-    std::ranges::for_each( opts.result.picks, [&]( const proc::ui_pick & pick ) {
-        slots.push_back( pick.slot );
-    } );
     proc::write_craft_plan( *craft, {
         .mode = proc::get( rec.proc_id() ).hist.def,
-        .slots = std::move( slots )
+        .slots = selected_proc_slots( result )
     } );
     return start_craft_item( {
         .who = who,
