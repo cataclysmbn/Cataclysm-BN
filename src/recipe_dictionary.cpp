@@ -56,7 +56,7 @@ static DynamicDataLoader::deferred_json deferred;
 template<>
 const recipe &string_id<recipe>::obj() const
 {
-    const auto iter = recipe_dict.recipes.find( *this );
+    const auto iter = recipe_dict.recipes.find( recipe_dictionary::migrate_id( *this ) );
     if( iter != recipe_dict.recipes.end() ) {
         if( iter->second.obsolete ) {
             return null_recipe;
@@ -72,7 +72,27 @@ const recipe &string_id<recipe>::obj() const
 template<>
 bool string_id<recipe>::is_valid() const
 {
-    return recipe_dict.recipes.contains( *this );
+    return recipe_dict.recipes.contains( recipe_dictionary::migrate_id( *this ) );
+}
+
+auto recipe_dictionary::migrate_id( const recipe_id &id ) -> recipe_id
+{
+    if( id.is_null() || item_controller == nullptr ) {
+        return id;
+    }
+
+    if( const auto iter = recipe_dict.recipes.find( id ); iter != recipe_dict.recipes.end() ) {
+        if( !iter->second.obsolete ) {
+            return id;
+        }
+        const auto migrated_result_id = item_controller->migrate_id( iter->second.result() );
+        const auto migrated_result_recipe_id = recipe_id( migrated_result_id.str() );
+        return recipe_dict.recipes.contains( migrated_result_recipe_id ) ? migrated_result_recipe_id : id;
+    }
+
+    const auto migrated_item_id = item_controller->migrate_id( itype_id( id.str() ) );
+    const auto migrated_id = recipe_id( migrated_item_id.str() );
+    return recipe_dict.recipes.contains( migrated_id ) ? migrated_id : id;
 }
 
 const recipe &recipe_dictionary::get_uncraft( const itype_id &id )

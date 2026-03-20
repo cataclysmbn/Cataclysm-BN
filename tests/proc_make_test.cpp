@@ -161,6 +161,57 @@ TEST_CASE( "proc_food_remaining_size_tracks_servings", "[proc][make][food]" )
     CHECK( proc::blob_kcal( *made ) == starting_kcal );
 }
 
+TEST_CASE( "proc_make_item_scales_stew_servings_with_total_size", "[proc][make][food]" )
+{
+    auto sch = proc::schema{};
+    sch.id = proc::schema_id( "stew" );
+    sch.cat = "food";
+    sch.res = itype_id( "stew_generic" );
+    sch.slots = {
+        proc::slot_data{ .id = proc::slot_id( "base" ), .role = "base", .min = 1, .max = 1, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "veg" ), .role = "veg", .min = 1, .max = 4, .rep = true, .ok = {}, .no = {} }
+    };
+
+    auto broth = proc::part_fact{};
+    broth.ix = 1;
+    broth.id = itype_id( "broth" );
+    broth.kcal = 600;
+    broth.mass_g = 2200;
+    broth.volume_ml = 2200;
+
+    auto carrot = proc::part_fact{};
+    carrot.ix = 2;
+    carrot.id = itype_id( "carrot" );
+    carrot.kcal = 300;
+    carrot.mass_g = 1800;
+    carrot.volume_ml = 1800;
+
+    auto opts = proc::make_opts{};
+    opts.mode = proc::hist::none;
+    opts.slots = { proc::slot_id( "base" ), proc::slot_id( "veg" ) };
+    const auto made = proc::make_item( sch, { broth, carrot }, opts );
+
+    const auto base = item( "stew_generic", calendar::turn );
+    const auto ceil_div = []( const int value, const int divisor ) {
+        return value <= 0 ? 0 : ( value + divisor - 1 ) / divisor;
+    };
+    const auto base_servings = std::max( base.charges, 1 );
+    const auto expected_servings = std::max( {
+        base_servings,
+        ceil_div( ( broth.mass_g + carrot.mass_g ) * base_servings,
+                  std::max( units::to_gram( base.weight() ), 1L ) ),
+        ceil_div( ( broth.volume_ml + carrot.volume_ml ) * base_servings,
+                  std::max( units::to_milliliter( base.volume() ), 1 ) )
+    } );
+
+    REQUIRE( proc::read_payload( *made ) );
+    CHECK( made->charges == expected_servings );
+    CHECK( proc::read_payload( *made )->servings == expected_servings );
+    CHECK( made->charges > base_servings );
+    CHECK( made->weight() == units::from_gram( 4000 ) );
+    CHECK( made->volume() == units::from_milliliter( 4000 ) );
+}
+
 TEST_CASE( "proc_food_uses_blob_nutrition_and_component_hash", "[proc][make][food]" )
 {
     auto sch = proc::schema{};

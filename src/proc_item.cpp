@@ -67,7 +67,7 @@ auto payload_servings( const item &it, const proc::payload &data ) -> int
     if( data.servings > 0 ) {
         return data.servings;
     }
-    return it.count_by_charges() ? default_stack_servings( it.typeId() ) : 1;
+    return it.is_comestible() && it.count_by_charges() ? default_stack_servings( it.typeId() ) : 0;
 }
 
 auto scaled_payload_total( const item &it, const proc::payload &data, const int total ) -> int
@@ -1084,7 +1084,7 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
         full.data.name = !sch.cat.empty() ? sch.cat + " " + sch.id.str() : sch.id.str();
     }
 
-    if( result->count_by_charges() ) {
+    if( result->is_comestible() && result->count_by_charges() ) {
         result->charges = scaled_food_servings( *result, full.data );
     }
 
@@ -1092,7 +1092,8 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
     out_payload.id = sch.id;
     out_payload.mode = mode;
     out_payload.blob = full.data;
-    out_payload.servings = result->count_by_charges() ? std::max( result->charges, 1 ) : 1;
+    out_payload.servings = result->is_comestible() && result->count_by_charges() ?
+                           std::max( result->charges, 1 ) : 0;
     out_payload.fp = fast_fp( sch, full.data, facts );
     if( mode == hist::compact ) {
         out_payload.parts = !opts.slots.empty() ? make_compact_parts( facts, opts.slots ) :

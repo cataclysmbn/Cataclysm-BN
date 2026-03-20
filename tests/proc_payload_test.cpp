@@ -290,6 +290,36 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
     } );
 }
 
+TEST_CASE( "legacy_sandwich_recipe_ids_migrate_to_proc_recipe", "[proc][payload][migration]" )
+{
+    const auto proc_recipe = recipe_id( "sandwich_generic" );
+    REQUIRE( proc_recipe.is_valid() );
+
+    for( const auto &legacy_id : {
+             recipe_id( "blt" ),
+             recipe_id( "sandwich_t" ),
+             recipe_id( "sandwich_veggy" ),
+             recipe_id( "sandwich_cheese" ),
+             recipe_id( "sandwich_sauce" ),
+             recipe_id( "sandwich_honey" ),
+             recipe_id( "sandwich_jam" ),
+             recipe_id( "sandwich_pb" ),
+             recipe_id( "sandwich_pbj" ),
+             recipe_id( "sandwich_pbh" ),
+             recipe_id( "sandwich_pbm" ),
+             recipe_id( "sandwich_deluxe" ),
+             recipe_id( "sandwich_okay" ),
+             recipe_id( "sandwich_deluxe_nocheese" ),
+             recipe_id( "fish_sandwich" ),
+             recipe_id( "sandwich_cucumber" ),
+         } ) {
+        INFO( legacy_id.str() );
+        CHECK( legacy_id.is_valid() );
+        CHECK( legacy_id.obj().ident() == proc_recipe );
+        CHECK( legacy_id.obj().result() == itype_id( "sandwich_generic" ) );
+    }
+}
+
 TEST_CASE( "legacy_sandwiches_migrate_to_proc_sandwich_items", "[proc][payload][migration]" )
 {
     const auto cases = std::vector<itype_id> {
