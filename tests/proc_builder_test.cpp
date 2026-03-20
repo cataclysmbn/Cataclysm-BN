@@ -542,6 +542,35 @@ TEST_CASE( "proc_builder_stew_excludes_payload_marked_raw_food_candidates",
     CHECK( std::ranges::find( meat_candidates, proc::part_ix( 5 ) ) == meat_candidates.end() );
 }
 
+TEST_CASE( "proc_builder_sandwich_excludes_prepared_meals_from_raw_slots",
+           "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/sandwich.json", "sandwich" );
+
+    const auto bread_a = proc::normalize_part_fact( item( "bread" ), { .ix = 1 } );
+    const auto bread_b = proc::normalize_part_fact( item( "bread" ), { .ix = 2 } );
+    const auto veggie_pie = proc::normalize_part_fact( item( "pie_veggy" ), { .ix = 3 } );
+    const auto cheese_fries = proc::normalize_part_fact( item( "cheese_fries" ), { .ix = 4 } );
+    const auto burrito = proc::normalize_part_fact( item( "homemade_burrito" ), { .ix = 5 } );
+    const auto cheese = proc::normalize_part_fact( item( "cheese" ), { .ix = 6 } );
+
+    const auto state = proc::build_state( sch,
+    { bread_a, bread_b, veggie_pie, cheese_fries, burrito, cheese } );
+    const auto &bread_candidates = state.cand.at( proc::slot_id( "bread" ) );
+    const auto &veg_candidates = state.cand.at( proc::slot_id( "veg" ) );
+    const auto &cheese_candidates = state.cand.at( proc::slot_id( "cheese" ) );
+    const auto &meat_candidates = state.cand.at( proc::slot_id( "meat" ) );
+
+    CHECK( std::ranges::find( bread_candidates, proc::part_ix( 1 ) ) != bread_candidates.end() );
+    CHECK( std::ranges::find( bread_candidates, proc::part_ix( 2 ) ) != bread_candidates.end() );
+    CHECK( std::ranges::find( bread_candidates, proc::part_ix( 3 ) ) == bread_candidates.end() );
+    CHECK( std::ranges::find( bread_candidates, proc::part_ix( 5 ) ) == bread_candidates.end() );
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 3 ) ) == veg_candidates.end() );
+    CHECK( std::ranges::find( cheese_candidates, proc::part_ix( 4 ) ) == cheese_candidates.end() );
+    CHECK( std::ranges::find( cheese_candidates, proc::part_ix( 6 ) ) != cheese_candidates.end() );
+    CHECK( std::ranges::find( meat_candidates, proc::part_ix( 5 ) ) == meat_candidates.end() );
+}
+
 TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][weapon]" )
 {
     const auto sch = load_schema_for_test( R"(

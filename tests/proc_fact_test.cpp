@@ -167,6 +167,26 @@ TEST_CASE( "proc_part_fact_marks_finished_stews_and_curries_as_dishes", "[proc][
     CHECK( std::ranges::find( curry_fact.tag, "meat" ) == curry_fact.tag.end() );
 }
 
+TEST_CASE( "proc_part_fact_marks_prepared_meals_as_dishes", "[proc][fact]" )
+{
+    const auto veggie_pie = item( "pie_veggy" );
+    const auto pie_fact = proc::normalize_part_fact( veggie_pie, { .ix = 27 } );
+    CHECK( std::ranges::find( pie_fact.tag, "dish" ) != pie_fact.tag.end() );
+    CHECK( std::ranges::find( pie_fact.tag, "bread" ) == pie_fact.tag.end() );
+    CHECK( std::ranges::find( pie_fact.tag, "veg" ) == pie_fact.tag.end() );
+
+    const auto cheese_fries = item( "cheese_fries" );
+    const auto fries_fact = proc::normalize_part_fact( cheese_fries, { .ix = 28 } );
+    CHECK( std::ranges::find( fries_fact.tag, "dish" ) != fries_fact.tag.end() );
+    CHECK( std::ranges::find( fries_fact.tag, "cheese" ) == fries_fact.tag.end() );
+
+    const auto burrito = item( "homemade_burrito" );
+    const auto burrito_fact = proc::normalize_part_fact( burrito, { .ix = 29 } );
+    CHECK( std::ranges::find( burrito_fact.tag, "dish" ) != burrito_fact.tag.end() );
+    CHECK( std::ranges::find( burrito_fact.tag, "bread" ) == burrito_fact.tag.end() );
+    CHECK( std::ranges::find( burrito_fact.tag, "meat" ) == burrito_fact.tag.end() );
+}
+
 TEST_CASE( "proc_part_fact_treats_payload_marked_raw_food_as_finished_dish", "[proc][fact]" )
 {
     const auto proc_bread_item = make_proc_test_item( itype_id( "bread" ),
