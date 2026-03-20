@@ -164,6 +164,104 @@ auto fact_soft_penalty( const proc::part_fact &fact ) -> int
     } );
 }
 
+struct candidate_sort_entry {
+    proc::part_ix ix = proc::invalid_part_ix;
+    int score = 0;
+    int uses = 0;
+    int mass_g = 0;
+    int volume_ml = 0;
+    std::string id;
+};
+
+auto weapon_role_score( const std::string &role, const proc::part_fact &fact ) -> int
+{
+    const auto density = fact_density( fact );
+    const auto bash_resist = fact_bash_resist( fact );
+    const auto cut_resist = fact_cut_resist( fact );
+    const auto chip_resist = fact_chip_resist( fact );
+    const auto bullet_resist = fact_bullet_resist( fact );
+    const auto reinforce_bonus = fact_reinforce_bonus( fact );
+    const auto soft_penalty = fact_soft_penalty( fact );
+
+    if( role == "blade" ) {
+        return density / 8 + cut_resist * 6 + chip_resist * 3 + bullet_resist * 2 +
+               reinforce_bonus * 5 - soft_penalty * 4 + fact.mass_g / 120;
+    }
+    if( role == "guard" ) {
+        return bash_resist * 5 + chip_resist * 3 + cut_resist * 2 + density / 10 +
+               reinforce_bonus * 4 - soft_penalty * 3 + fact.mass_g / 180;
+    }
+    if( role == "handle" ) {
+        return bash_resist * 3 + chip_resist * 2 + density / 14 + reinforce_bonus * 2 -
+               soft_penalty * 2 + fact.mass_g / 220;
+    }
+    if( role == "grip" ) {
+        return bash_resist * 3 + cut_resist * 2 + chip_resist * 2 + density / 12 +
+               reinforce_bonus * 2 - soft_penalty * 3 + fact.mass_g / 260;
+    }
+    if( role == "reinforcement" ) {
+        return reinforce_bonus * 8 + cut_resist * 3 + chip_resist * 3 + bash_resist * 2 +
+               density / 10 - soft_penalty * 2 + fact.mass_g / 140;
+    }
+    return bash_resist * 2 + cut_resist * 2 + chip_resist * 2 + density / 16 +
+           reinforce_bonus * 2 - soft_penalty * 2 + fact.mass_g / 200;
+}
+
+auto build_candidate_sort_entry( const proc::slot_data &slot,
+                                 const proc::part_fact &fact ) -> candidate_sort_entry
+{
+    return candidate_sort_entry{
+        .ix = fact.ix,
+        .score = weapon_role_score( slot.role, fact ),
+        .uses = fact.uses,
+        .mass_g = fact.mass_g,
+        .volume_ml = fact.volume_ml,
+        .id = fact.id.str(),
+    };
+}
+
+auto sort_weapon_slot_candidates( const proc::slot_data &slot,
+                                  const std::vector<proc::part_fact> &facts,
+                                  std::vector<proc::part_ix> &slot_facts ) -> void
+{
+    auto ranked = std::vector<candidate_sort_entry> {};
+    ranked.reserve( slot_facts.size() );
+    std::ranges::for_each( slot_facts, [&]( const proc::part_ix ix ) {
+        const auto *fact = find_fact( facts, ix );
+        if( fact == nullptr ) {
+            return;
+        }
+        ranked.push_back( build_candidate_sort_entry( slot, *fact ) );
+    } );
+
+    std::ranges::sort( ranked, []( const candidate_sort_entry & lhs,
+    const candidate_sort_entry & rhs ) {
+        if( lhs.score != rhs.score ) {
+            return lhs.score > rhs.score;
+        }
+        if( lhs.uses != rhs.uses ) {
+            return lhs.uses > rhs.uses;
+        }
+        if( lhs.mass_g != rhs.mass_g ) {
+            return lhs.mass_g > rhs.mass_g;
+        }
+        if( lhs.volume_ml != rhs.volume_ml ) {
+            return lhs.volume_ml > rhs.volume_ml;
+        }
+        if( lhs.id != rhs.id ) {
+            return lhs.id < rhs.id;
+        }
+        return lhs.ix < rhs.ix;
+    } );
+
+    slot_facts.clear();
+    slot_facts.reserve( ranked.size() );
+    std::ranges::transform( ranked, std::back_inserter( slot_facts ),
+    []( const candidate_sort_entry & entry ) {
+        return entry.ix;
+    } );
+}
+
 auto role_count( const std::vector<proc::craft_pick> &picks, const proc::slot_id &slot ) -> int
 {
     return static_cast<int>( std::ranges::count_if( picks, [&]( const proc::craft_pick & pick ) {
@@ -556,6 +654,9 @@ auto proc::build_candidates( const schema &sch,
                 slot_facts.push_back( fact.ix );
             }
         } );
+        if( sch.id == proc::schema_id( "sword" ) || sch.cat == "weapon" ) {
+            sort_weapon_slot_candidates( slot, facts, slot_facts );
+        }
         ret.emplace( slot.id, std::move( slot_facts ) );
     } );
     return ret;
