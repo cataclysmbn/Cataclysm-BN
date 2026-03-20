@@ -225,6 +225,101 @@ auto damage_from_hp( const item &it, const float hp ) -> int
                        0, it.max_damage() );
 }
 
+auto spawn_fact_item( const proc::part_fact &fact ) -> detached_ptr<item>
+{
+    auto spawned = item::spawn( fact.id, calendar::turn );
+    if( spawned->max_damage() > 0 ) {
+        spawned->set_damage( damage_from_hp( *spawned, fact.hp ) );
+    }
+    if( spawned->count_by_charges() && fact.chg > 0 ) {
+        spawned->charges = fact.chg;
+    }
+    if( !fact.proc.empty() ) {
+        proc::set_payload_from_json( *spawned, fact.proc );
+    }
+    return spawned;
+}
+
+auto to_json( JsonOut &jsout, const proc::part_fact &fact ) -> void
+{
+    jsout.start_object();
+    jsout.member( "ix", fact.ix );
+    jsout.member( "id", fact.id );
+    jsout.member( "tag", fact.tag );
+    jsout.member( "flag" );
+    jsout.start_array();
+    std::ranges::for_each( fact.flag, [&]( const flag_id & entry ) {
+        jsout.write( entry );
+    } );
+    jsout.end_array();
+    jsout.member( "qual" );
+    jsout.start_object();
+    std::ranges::for_each( fact.qual, [&]( const std::pair<const quality_id, int> &entry ) {
+        jsout.member( entry.first.str(), entry.second );
+    } );
+    jsout.end_object();
+    jsout.member( "mat" );
+    jsout.start_array();
+    std::ranges::for_each( fact.mat, [&]( const material_id & entry ) {
+        jsout.write( entry );
+    } );
+    jsout.end_array();
+    jsout.member( "vit" );
+    jsout.start_object();
+    std::ranges::for_each( fact.vit, [&]( const std::pair<const vitamin_id, int> &entry ) {
+        jsout.member( entry.first.str(), entry.second );
+    } );
+    jsout.end_object();
+    jsout.member( "mass_g", fact.mass_g );
+    jsout.member( "volume_ml", fact.volume_ml );
+    jsout.member( "kcal", fact.kcal );
+    jsout.member( "hp", fact.hp );
+    jsout.member( "chg", fact.chg );
+    jsout.member( "uses", fact.uses );
+    if( !fact.proc.empty() ) {
+        jsout.member( "proc", fact.proc );
+    }
+    jsout.end_object();
+}
+
+auto from_json( JsonObject &jo, proc::part_fact &fact ) -> void
+{
+    jo.read( "ix", fact.ix );
+    jo.read( "id", fact.id );
+    jo.read( "tag", fact.tag );
+    if( jo.has_array( "flag" ) ) {
+        auto arr = jo.get_array( "flag" );
+        while( arr.has_more() ) {
+            fact.flag.push_back( flag_id( arr.next_string() ) );
+        }
+    }
+    if( jo.has_object( "qual" ) ) {
+        const auto qual_jo = jo.get_object( "qual" );
+        for( const JsonMember &member : qual_jo ) {
+            fact.qual.emplace( quality_id( member.name() ), member.get_int() );
+        }
+    }
+    if( jo.has_array( "mat" ) ) {
+        auto arr = jo.get_array( "mat" );
+        while( arr.has_more() ) {
+            fact.mat.push_back( material_id( arr.next_string() ) );
+        }
+    }
+    if( jo.has_object( "vit" ) ) {
+        const auto vit_jo = jo.get_object( "vit" );
+        for( const JsonMember &member : vit_jo ) {
+            fact.vit.emplace( vitamin_id( member.name() ), member.get_int() );
+        }
+    }
+    jo.read( "mass_g", fact.mass_g );
+    jo.read( "volume_ml", fact.volume_ml );
+    jo.read( "kcal", fact.kcal );
+    jo.read( "hp", fact.hp );
+    jo.read( "chg", fact.chg );
+    jo.read( "uses", fact.uses );
+    jo.read( "proc", fact.proc );
+}
+
 } // namespace
 
 auto proc::to_json( JsonOut &jsout, const compact_part &part ) -> void
@@ -363,6 +458,12 @@ auto proc::to_json( JsonOut &jsout, const craft_plan &data ) -> void
         jsout.write( slot );
     } );
     jsout.end_array();
+    jsout.member( "facts" );
+    jsout.start_array();
+    std::ranges::for_each( data.facts, [&]( const part_fact & fact ) {
+        ::to_json( jsout, fact );
+    } );
+    jsout.end_array();
     jsout.end_object();
 }
 
@@ -375,6 +476,15 @@ auto proc::from_json( JsonIn &jsin, craft_plan &data ) -> void
         auto arr = jo.get_array( "slots" );
         while( arr.has_more() ) {
             data.slots.push_back( slot_id( arr.next_string() ) );
+        }
+    }
+    if( jo.has_array( "facts" ) ) {
+        auto arr = jo.get_array( "facts" );
+        while( arr.has_more() ) {
+            auto fact = part_fact {};
+            auto fact_jo = arr.next_object();
+            ::from_json( fact_jo, fact );
+            data.facts.push_back( std::move( fact ) );
         }
     }
 }
@@ -600,11 +710,17 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
 
     if( mode == hist::full ) {
         auto &components = result->get_components();
-        std::ranges::for_each( opts.used, [&]( const item * used ) {
-            if( used != nullptr ) {
-                components.push_back( item::spawn( *used ) );
-            }
-        } );
+        if( !opts.used.empty() ) {
+            std::ranges::for_each( opts.used, [&]( const item * used ) {
+                if( used != nullptr ) {
+                    components.push_back( item::spawn( *used ) );
+                }
+            } );
+        } else {
+            std::ranges::for_each( facts, [&]( const part_fact & fact ) {
+                components.push_back( spawn_fact_item( fact ) );
+            } );
+        }
     }
 
     return result;

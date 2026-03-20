@@ -65,6 +65,36 @@ TEST_CASE( "proc_food_uses_blob_nutrition_and_component_hash", "[proc][make][foo
                 *made )->fp ) );
 }
 
+TEST_CASE( "proc_make_item_full_mode_rebuilds_components_from_facts", "[proc][make][food]" )
+{
+    auto sch = proc::schema{};
+    sch.id = proc::schema_id( "sandwich" );
+    sch.cat = "food";
+    sch.res = itype_id( "sandwich_generic" );
+
+    auto bread = proc::part_fact{};
+    bread.ix = 1;
+    bread.id = itype_id( "bread" );
+    bread.kcal = 120;
+    bread.mass_g = 60;
+    bread.volume_ml = 125;
+
+    auto meat = proc::part_fact{};
+    meat.ix = 2;
+    meat.id = itype_id( "meat_cooked" );
+    meat.kcal = 180;
+    meat.mass_g = 80;
+    meat.volume_ml = 125;
+
+    auto opts = proc::make_opts{};
+    opts.mode = proc::hist::full;
+    const auto made = proc::make_item( sch, { bread, meat }, opts );
+    const auto &components = made->get_components();
+    REQUIRE( components.size() == 2 );
+    CHECK( components.as_vector()[0]->typeId() == itype_id( "bread" ) );
+    CHECK( components.as_vector()[1]->typeId() == itype_id( "meat_cooked" ) );
+}
+
 TEST_CASE( "proc_make_item_applies_weapon_blob_to_item", "[proc][make][weapon]" )
 {
     auto sch = proc::schema{};

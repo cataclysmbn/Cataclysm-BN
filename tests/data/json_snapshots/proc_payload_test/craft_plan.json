@@ -1,4 +1,21 @@
 {
+  "facts": [
+    {
+      "chg": 0,
+      "flag": [],
+      "hp": 1,
+      "id": "bread",
+      "ix": 1,
+      "kcal": 120,
+      "mass_g": 60,
+      "mat": [ "wheat" ],
+      "qual": {},
+      "tag": [ "bread" ],
+      "uses": 1,
+      "vit": {},
+      "volume_ml": 125
+    }
+  ],
   "mode": "compact",
   "slots": [ "blade", "grip" ]
 }

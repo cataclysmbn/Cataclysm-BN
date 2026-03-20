@@ -875,47 +875,19 @@ auto selected_proc_facts( const proc::ui_result &result ) -> std::vector<proc::p
     return facts;
 }
 
-auto finish_debug_proc_craft( Character &who, const recipe &rec,
-                              const proc::ui_result &result ) -> item * // *NOPAD*
-{
-    if( !proc::has( rec.proc_id() ) ) {
-        return nullptr;
-    }
-
-    const auto &sch = proc::get( rec.proc_id() );
-    auto newit = proc::make_item( sch, selected_proc_facts( result ), {
-        .mode = sch.hist.def,
-        .rec = &rec,
-        .used = {},
-        .slots = selected_proc_slots( result )
-    } );
-    who.add_msg_player_or_npc(
-        _( "You craft %s using debug hammerspace." ),
-        _( "<npcname> crafts %s using debug hammerspace." ),
-        newit->tname() );
-    if( newit->made_of( LIQUID ) ) {
-        liquid_handler::handle_all_liquid( std::move( newit ), PICKUP_RANGE );
-    } else {
-        set_item_inventory( who, std::move( newit ) );
-    }
-    who.inv_restack();
-    return nullptr;
-}
-
 auto start_proc_craft( Character &who, const recipe &rec, const bool is_long,
                        const proc::ui_result &result ) -> item * // *NOPAD*
 {
-    if( who.has_trait( trait_DEBUG_HS ) ) {
-        return finish_debug_proc_craft( who, rec, result );
-    }
+    const auto debug_hammerspace = who.has_trait( trait_DEBUG_HS );
 
     auto tool_selections = std::vector<comp_selection<tool_comp>> {};
-    if( !prepare_proc_craft_tools( who, rec, tool_selections ) ) {
+    if( !debug_hammerspace && !prepare_proc_craft_tools( who, rec, tool_selections ) ) {
         return nullptr;
     }
 
-    auto used = consume_proc_items( result.picks );
-    if( used.size() != result.picks.size() ) {
+    auto used = debug_hammerspace ? std::vector<detached_ptr<item>> {} :
+                consume_proc_items( result.picks );
+    if( !debug_hammerspace && used.size() != result.picks.size() ) {
         restore_consumed_proc_items( who, used );
         popup( _( "Selected procedural components are no longer available." ) );
         return nullptr;
@@ -924,11 +896,14 @@ auto start_proc_craft( Character &who, const recipe &rec, const bool is_long,
     auto craft = item::spawn( &rec, 1, std::move( used ), std::vector<item_comp> {} );
     craft->set_cached_tool_selections( tool_selections );
     craft->set_tools_to_continue( true );
-    who.craft_consume_tools( *craft, 1, true );
-    craft->set_next_failure_point( who );
+    if( !debug_hammerspace ) {
+        who.craft_consume_tools( *craft, 1, true );
+        craft->set_next_failure_point( who );
+    }
     proc::write_craft_plan( *craft, {
         .mode = proc::get( rec.proc_id() ).hist.def,
-        .slots = selected_proc_slots( result )
+        .slots = selected_proc_slots( result ),
+        .facts = selected_proc_facts( result )
     } );
     return start_craft_item( who, std::move( craft ), rec.skill_used, is_long );
 }
@@ -1227,15 +1202,17 @@ void complete_craft( Character &who, item &craft )
         }
         const auto &sch = proc::get( making.proc_id() );
         const auto plan = proc::read_craft_plan( craft );
-        auto facts = std::vector<proc::part_fact> {};
-        facts.reserve( used_items.size() );
-        std::ranges::for_each( std::views::iota( size_t{ 0 }, used_items.size() ), [&]( const size_t idx ) {
-            facts.push_back( proc::normalize_part_fact( *used_items[idx], {
-                .ix = static_cast<proc::part_ix>( idx ),
-                .charges = used_items[idx]->count_by_charges() ? used_items[idx]->charges : 0,
-                .uses = 1
-            } ) );
-        } );
+        auto facts = plan ? plan->facts : std::vector<proc::part_fact> {};
+        if( facts.empty() ) {
+            facts.reserve( used_items.size() );
+            std::ranges::for_each( std::views::iota( size_t{ 0 }, used_items.size() ), [&]( const size_t idx ) {
+                facts.push_back( proc::normalize_part_fact( *used_items[idx], {
+                    .ix = static_cast<proc::part_ix>( idx ),
+                    .charges = used_items[idx]->count_by_charges() ? used_items[idx]->charges : 0,
+                    .uses = 1
+                } ) );
+            } );
+        }
         auto used_const = std::vector<const item *> {};
         used_const.reserve( used_items.size() );
         std::ranges::for_each( used_items, [&]( const item * entry ) {
