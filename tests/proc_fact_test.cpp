@@ -1,10 +1,30 @@
 #include "catch/catch.hpp"
 
 #include <ranges>
+#include <string>
 
+#include "calendar.h"
 #include "item.h"
 #include "itype.h"
 #include "proc_fact.h"
+#include "proc_item.h"
+
+namespace
+{
+
+auto make_proc_test_item( const itype_id &id, const proc::schema_id &schema,
+                          const std::string &fp ) -> detached_ptr<item>
+{
+    auto crafted = item::spawn( id, calendar::turn );
+    auto payload = proc::payload{};
+    payload.id = schema;
+    payload.fp = fp;
+    payload.blob.name = crafted->type_name();
+    proc::write_payload( *crafted, payload );
+    return crafted;
+}
+
+} // namespace
 
 TEST_CASE( "proc_part_fact_normalizes_basic_item_fields", "[proc][fact]" )
 {
@@ -123,4 +143,22 @@ TEST_CASE( "proc_part_fact_marks_finished_stews_and_curries_as_dishes", "[proc][
     CHECK( std::ranges::find( curry_fact.tag, "dish" ) != curry_fact.tag.end() );
     CHECK( std::ranges::find( curry_fact.tag, "veg" ) == curry_fact.tag.end() );
     CHECK( std::ranges::find( curry_fact.tag, "meat" ) == curry_fact.tag.end() );
+}
+
+TEST_CASE( "proc_part_fact_treats_payload_marked_raw_food_as_finished_dish", "[proc][fact]" )
+{
+    const auto proc_bread_item = make_proc_test_item( itype_id( "bread" ),
+                                 proc::schema_id( "sandwich" ),
+                                 "sandwich:bread" );
+    const auto proc_bread = proc::normalize_part_fact( *proc_bread_item, { .ix = 20 } );
+    CHECK( std::ranges::find( proc_bread.tag, "dish" ) != proc_bread.tag.end() );
+    CHECK( std::ranges::find( proc_bread.tag, "bread" ) == proc_bread.tag.end() );
+    CHECK_FALSE( proc_bread.proc.empty() );
+
+    const auto proc_carrot_item = make_proc_test_item( itype_id( "carrot" ), proc::schema_id( "stew" ),
+                                  "stew:carrot" );
+    const auto proc_carrot = proc::normalize_part_fact( *proc_carrot_item, { .ix = 21 } );
+    CHECK( std::ranges::find( proc_carrot.tag, "dish" ) != proc_carrot.tag.end() );
+    CHECK( std::ranges::find( proc_carrot.tag, "veg" ) == proc_carrot.tag.end() );
+    CHECK_FALSE( proc_carrot.proc.empty() );
 }

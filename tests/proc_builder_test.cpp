@@ -6,10 +6,12 @@
 #include <string>
 #include <vector>
 
+#include "calendar.h"
 #include "item.h"
 #include "json.h"
 #include "proc_builder.h"
 #include "proc_fact.h"
+#include "proc_item.h"
 #include "proc_schema.h"
 #include "recipe_dictionary.h"
 
@@ -58,6 +60,18 @@ auto load_schema_from_file( const std::string &path, const std::string &id ) -> 
     const auto loaded = proc::get( proc::schema_id( id ) );
     proc::reset();
     return loaded;
+}
+
+auto make_proc_test_item( const itype_id &id, const proc::schema_id &schema,
+                          const std::string &fp ) -> detached_ptr<item>
+{
+    auto crafted = item::spawn( id, calendar::turn );
+    auto payload = proc::payload{};
+    payload.id = schema;
+    payload.fp = fp;
+    payload.blob.name = crafted->type_name();
+    proc::write_payload( *crafted, payload );
+    return crafted;
 }
 
 } // namespace
@@ -397,6 +411,60 @@ TEST_CASE( "proc_builder_sandwich_accepts_supported_spreads_in_cond_slot",
     CHECK( std::ranges::find( cond_candidates, proc::part_ix( 4 ) ) != cond_candidates.end() );
     CHECK( std::ranges::find( cond_candidates, proc::part_ix( 5 ) ) != cond_candidates.end() );
     CHECK( std::ranges::find( cond_candidates, proc::part_ix( 6 ) ) != cond_candidates.end() );
+}
+
+TEST_CASE( "proc_builder_sandwich_excludes_payload_marked_raw_food_candidates",
+           "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/sandwich.json", "sandwich" );
+
+    const auto bread_a = proc::normalize_part_fact( item( "bread" ), { .ix = 1 } );
+    const auto bread_b = proc::normalize_part_fact( item( "bread" ), { .ix = 2 } );
+    const auto proc_bread_item = make_proc_test_item( itype_id( "bread" ),
+                                 proc::schema_id( "sandwich" ),
+                                 "sandwich:bread" );
+    const auto proc_bread = proc::normalize_part_fact( *proc_bread_item, { .ix = 3 } );
+    const auto cheese = proc::normalize_part_fact( item( "cheese" ), { .ix = 4 } );
+    const auto proc_cheese_item = make_proc_test_item( itype_id( "cheese" ),
+                                  proc::schema_id( "sandwich" ),
+                                  "sandwich:cheese" );
+    const auto proc_cheese = proc::normalize_part_fact( *proc_cheese_item, { .ix = 5 } );
+
+    const auto state = proc::build_state( sch, { bread_a, bread_b, proc_bread, cheese, proc_cheese } );
+    const auto &bread_candidates = state.cand.at( proc::slot_id( "bread" ) );
+    const auto &cheese_candidates = state.cand.at( proc::slot_id( "cheese" ) );
+
+    CHECK( std::ranges::find( bread_candidates, proc::part_ix( 1 ) ) != bread_candidates.end() );
+    CHECK( std::ranges::find( bread_candidates, proc::part_ix( 2 ) ) != bread_candidates.end() );
+    CHECK( std::ranges::find( bread_candidates, proc::part_ix( 3 ) ) == bread_candidates.end() );
+    CHECK( std::ranges::find( cheese_candidates, proc::part_ix( 4 ) ) != cheese_candidates.end() );
+    CHECK( std::ranges::find( cheese_candidates, proc::part_ix( 5 ) ) == cheese_candidates.end() );
+}
+
+TEST_CASE( "proc_builder_stew_excludes_payload_marked_raw_food_candidates",
+           "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/stew.json", "stew" );
+
+    const auto broth = proc::normalize_part_fact( item( "broth" ), { .ix = 1 } );
+    const auto carrot = proc::normalize_part_fact( item( "carrot" ), { .ix = 2 } );
+    const auto proc_carrot_item = make_proc_test_item( itype_id( "carrot" ), proc::schema_id( "stew" ),
+                                  "stew:carrot" );
+    const auto proc_carrot = proc::normalize_part_fact( *proc_carrot_item, { .ix = 3 } );
+    const auto cooked_meat = proc::normalize_part_fact( item( "meat_cooked" ), { .ix = 4 } );
+    const auto proc_meat_item = make_proc_test_item( itype_id( "meat_cooked" ),
+                                proc::schema_id( "stew" ),
+                                "stew:meat" );
+    const auto proc_meat = proc::normalize_part_fact( *proc_meat_item, { .ix = 5 } );
+
+    const auto state = proc::build_state( sch, { broth, carrot, proc_carrot, cooked_meat, proc_meat } );
+    const auto &veg_candidates = state.cand.at( proc::slot_id( "veg" ) );
+    const auto &meat_candidates = state.cand.at( proc::slot_id( "meat" ) );
+
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 2 ) ) != veg_candidates.end() );
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 3 ) ) == veg_candidates.end() );
+    CHECK( std::ranges::find( meat_candidates, proc::part_ix( 4 ) ) != meat_candidates.end() );
+    CHECK( std::ranges::find( meat_candidates, proc::part_ix( 5 ) ) == meat_candidates.end() );
 }
 
 TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][weapon]" )
