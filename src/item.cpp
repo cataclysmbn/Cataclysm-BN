@@ -26,7 +26,6 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "cached_item_options.h"
-#include "calendar.h"
 #include "catalua_icallback_actor.h"
 #include "cata_utility.h"
 #include "catacharset.h"
