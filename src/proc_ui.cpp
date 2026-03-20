@@ -18,6 +18,7 @@
 #include "proc_builder.h"
 #include "proc_fact.h"
 #include "recipe.h"
+#include "proc_ui_candidates.h"
 #include "proc_ui_text.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -91,23 +92,38 @@ auto matches_search( const source_entry &source, const std::string &query ) -> b
     }, query );
 }
 
-auto filtered_candidates( const proc::builder_state &state, const proc::slot_id &slot,
-                          const std::vector<source_entry> &sources,
-                          const std::string &query ) -> std::vector<proc::part_ix>
+auto candidate_meta( const source_entry &source, const proc::schema &sch ) -> std::string;
+
+auto candidate_line( const source_entry &source, const proc::schema &sch ) -> std::string
 {
-    auto ret = std::vector<proc::part_ix> {};
+    return string_format( "%s %s  [%s]", source.prefix, source.src->tname(),
+                          candidate_meta( source, sch ) );
+}
+
+auto filtered_candidates( const proc::builder_state &state, const proc::slot_id &slot,
+                          const proc::schema &sch,
+                          const std::vector<source_entry> &sources,
+                          const std::string &query ) -> std::vector<proc::grouped_candidate_entry>
+{
+    auto matches = std::vector<proc::candidate_label_entry> {};
     const auto iter = state.cand.find( slot );
     if( iter == state.cand.end() ) {
-        return ret;
+        return {};
     }
     std::ranges::for_each( iter->second, [&]( const proc::part_ix ix ) {
         const auto *source = source_for_ix( sources, ix );
-        if( source != nullptr && proc::remaining_uses( state, ix ) > 0 &&
-            matches_search( *source, query ) ) {
-            ret.push_back( ix );
+        const auto remaining = proc::remaining_uses( state, ix );
+        if( source != nullptr && remaining > 0 && matches_search( *source, query ) ) {
+            const auto label = candidate_line( *source, sch );
+            matches.push_back( proc::candidate_label_entry{
+                .key = label,
+                .label = label,
+                .ix = ix,
+                .count = remaining,
+            } );
         }
     } );
-    return ret;
+    return proc::group_candidate_entries( matches );
 }
 
 auto slot_indicator( const proc::slot_data &slot, const int picked ) -> std::string
@@ -151,15 +167,6 @@ auto candidate_meta( const source_entry &source, const proc::schema &sch ) -> st
     return string_format( "%d g", source.fact.mass_g );
 }
 
-auto candidate_line( const source_entry &source, const proc::builder_state &state,
-                     const proc::schema &sch ) -> std::string
-{
-    const auto remaining = proc::remaining_uses( state, source.fact.ix );
-    const auto count_suffix = remaining > 1 ? string_format( " x%d", remaining ) : std::string();
-    return string_format( "%s %s  [%s]%s", source.prefix, source.src->tname(),
-                          candidate_meta( source, sch ), count_suffix );
-}
-
 auto result_state_label( const proc::schema &sch ) -> std::string
 {
     return sch.cat == "food" ? _( "Fresh" ) : _( "New" );
@@ -169,13 +176,16 @@ auto clear_slot( proc::builder_state &state, const proc::slot_id &slot ) -> void
 
 auto highlighted_preview( proc::builder_state state, const proc::schema &sch,
                           const proc::slot_id &slot,
-                          const std::vector<proc::part_ix> &candidates,
+                          const std::vector<proc::grouped_candidate_entry> &candidates,
                           const int cursor ) -> proc::fast_blob
 {
     if( candidates.empty() || cursor < 0 || static_cast<size_t>( cursor ) >= candidates.size() ) {
         return state.fast;
     }
-    const auto chosen = candidates[static_cast<size_t>( cursor )];
+    const auto chosen = proc::first_grouped_candidate_ix( candidates[static_cast<size_t>( cursor )] );
+    if( chosen == proc::invalid_part_ix ) {
+        return state.fast;
+    }
     if( const auto slot_data = std::ranges::find_if( sch.slots, [&]( const proc::slot_data & entry ) {
     return entry.id == slot;
 } ); slot_data != sch.slots.end() && slot_data->max == 1 && !state.picks_for( slot ).empty() ) {
@@ -429,7 +439,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         }
 
         const auto &slot = current_slot( sch, slot_cursor );
-        auto candidates = filtered_candidates( state, slot.id, source_data.entries, search_query );
+        auto candidates = filtered_candidates( state, slot.id, sch, source_data.entries, search_query );
         auto &cand_cursor = candidate_cursor[slot.id];
         if( !candidates.empty() ) {
             cand_cursor = std::clamp( cand_cursor, 0, static_cast<int>( candidates.size() ) - 1 );
@@ -478,13 +488,9 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         const auto cand_end = std::min( static_cast<int>( candidates.size() ),
                                         cand_start + content_height );
         std::ranges::for_each( std::views::iota( cand_start, cand_end ), [&]( const int row ) {
-            const auto *source = source_for_ix( source_data.entries, candidates[static_cast<size_t>( row )] );
-            if( source == nullptr ) {
-                return;
-            }
             const auto color = row == cand_cursor && focus != panel_focus::slots ? c_yellow : c_white;
             trim_and_print( w, point( left_width + 3, list_top + row - cand_start ), middle_width - 2,
-                            color, candidate_line( *source, state, sch ) );
+                            color, proc::grouped_candidate_label( candidates[static_cast<size_t>( row )] ) );
         } );
 
         auto preview = std::vector<std::string> {};
@@ -535,7 +541,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         const auto evt = ctxt.get_raw_input();
         const auto ch = evt.get_first_input();
         const auto &slot = current_slot( sch, slot_cursor );
-        auto candidates = filtered_candidates( state, slot.id, source_data.entries, search_query );
+        auto candidates = filtered_candidates( state, slot.id, sch, source_data.entries, search_query );
         auto &cand_cursor = candidate_cursor[slot.id];
         if( !candidates.empty() ) {
             cand_cursor = std::clamp( cand_cursor, 0, static_cast<int>( candidates.size() ) - 1 );
@@ -649,7 +655,12 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
                 status = _( "No candidates for this slot." );
                 continue;
             }
-            const auto picked_ix = candidates[static_cast<size_t>( cand_cursor )];
+            const auto picked_ix = proc::first_grouped_candidate_ix( candidates[static_cast<size_t>
+                                   ( cand_cursor )] );
+            if( picked_ix == proc::invalid_part_ix ) {
+                status = _( "No candidates for this slot." );
+                continue;
+            }
             if( slot.max == 1 && !state.picks_for( slot.id ).empty() &&
                 std::ranges::find( state.picks_for( slot.id ), picked_ix ) == state.picks_for( slot.id ).end() ) {
                 clear_slot( state, slot.id );
