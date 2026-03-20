@@ -192,6 +192,7 @@ TEST_CASE( "proc_make_item_names_stews_from_selected_raw_ingredients", "[proc][m
     const auto broth = proc::normalize_part_fact( item( "broth" ), { .ix = 1 } );
     const auto carrot = proc::normalize_part_fact( item( "carrot" ), { .ix = 2 } );
     const auto cooked_meat = proc::normalize_part_fact( item( "meat_cooked" ), { .ix = 3 } );
+    const auto cooked_fish = proc::normalize_part_fact( item( "fish_cooked" ), { .ix = 4 } );
 
     auto opts = proc::make_opts{};
     opts.mode = proc::hist::compact;
@@ -202,6 +203,9 @@ TEST_CASE( "proc_make_item_names_stews_from_selected_raw_ingredients", "[proc][m
     opts.slots = { proc::slot_id( "base" ), proc::slot_id( "veg" ), proc::slot_id( "meat" ) };
     const auto meat_stew = proc::make_item( sch, { broth, carrot, cooked_meat }, opts );
     CHECK( meat_stew->type_name() == "meat stew" );
+
+    const auto fish_stew = proc::make_item( sch, { broth, carrot, cooked_fish }, opts );
+    CHECK( fish_stew->type_name() == "fish stew" );
 }
 
 TEST_CASE( "proc_make_item_names_sandwiches_from_selected_ingredients", "[proc][make][food]" )
@@ -214,6 +218,7 @@ TEST_CASE( "proc_make_item_names_sandwiches_from_selected_ingredients", "[proc][
     const auto mustard = proc::normalize_part_fact( item( "mustard" ), { .ix = 6 } );
     const auto fish = proc::normalize_part_fact( item( "fish_cooked" ), { .ix = 7 } );
     const auto cucumber = proc::normalize_part_fact( item( "cucumber" ), { .ix = 8 } );
+    const auto bread_c = proc::normalize_part_fact( item( "bread" ), { .ix = 9 } );
 
     CHECK( make_sandwich_name_for_test( { bread_a, bread_b, meat }, {
         proc::slot_id( "bread" ),
@@ -228,6 +233,15 @@ TEST_CASE( "proc_make_item_names_sandwiches_from_selected_ingredients", "[proc][
         proc::slot_id( "veg" ),
         proc::slot_id( "cond" ),
     } ) == "fish sandwich" );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, bread_c, meat, lettuce, mustard }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "meat" ),
+        proc::slot_id( "veg" ),
+        proc::slot_id( "cond" ),
+    } ) == "club sandwich" );
 
     CHECK( make_sandwich_name_for_test( { bread_a, bread_b, meat, cheese, lettuce, mustard }, {
         proc::slot_id( "bread" ),

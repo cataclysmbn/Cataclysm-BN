@@ -314,11 +314,13 @@ auto sword_name( const std::vector<proc::part_fact> &facts ) -> std::string
 auto sandwich_name( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
                     const std::vector<proc::craft_pick> &picks ) -> std::string
 {
+    const auto bread_facts = picked_facts_for_role( sch, facts, picks, "bread" );
     const auto meat_facts = picked_facts_for_role( sch, facts, picks, "meat" );
     const auto cheese_facts = picked_facts_for_role( sch, facts, picks, "cheese" );
     const auto veg_facts = picked_facts_for_role( sch, facts, picks, "veg" );
     const auto cond_facts = picked_facts_for_role( sch, facts, picks, "cond" );
 
+    const auto bread_count = static_cast<int>( bread_facts.size() );
     const auto has_fish = std::ranges::any_of( meat_facts, [&]( const proc::part_fact & fact ) {
         return has_material( fact, material_id( "fish" ) ) || fact.id.str().contains( "fish" );
     } );
@@ -329,6 +331,9 @@ auto sandwich_name( const proc::schema &sch, const std::vector<proc::part_fact> 
 
     if( has_fish ) {
         return "fish sandwich";
+    }
+    if( bread_count >= 3 && has_meat && has_veg && has_cond ) {
+        return "club sandwich";
     }
     if( has_meat && has_cheese && has_veg && has_cond ) {
         return "deluxe sandwich";
@@ -350,6 +355,11 @@ auto sandwich_name( const proc::schema &sch, const std::vector<proc::part_fact> 
 
 auto stew_name( const std::vector<proc::part_fact> &facts ) -> std::string
 {
+    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+    return has_material( fact, material_id( "fish" ) ) || fact.id.str().contains( "fish" );
+    } ) ) {
+        return "fish stew";
+    }
     if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
     return std::ranges::find( fact.tag, "meat" ) != fact.tag.end();
     } ) ) {
