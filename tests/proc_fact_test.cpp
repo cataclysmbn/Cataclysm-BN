@@ -58,3 +58,23 @@ TEST_CASE( "proc_part_fact_assigns_food_role_tags", "[proc][fact]" )
     const auto fertilizer_fact = proc::normalize_part_fact( fertilizer, { .ix = 4 } );
     CHECK( std::ranges::find( fertilizer_fact.tag, "veg" ) == fertilizer_fact.tag.end() );
 }
+
+TEST_CASE( "proc_part_fact_does_not_treat_finished_sandwiches_as_raw_ingredients", "[proc][fact]" )
+{
+    const auto cheese_sandwich = item( "sandwich_cheese" );
+    const auto cheese_fact = proc::normalize_part_fact( cheese_sandwich, { .ix = 5 } );
+    CHECK( std::ranges::find( cheese_fact.tag, "bread" ) == cheese_fact.tag.end() );
+    CHECK( std::ranges::find( cheese_fact.tag, "cheese" ) == cheese_fact.tag.end() );
+
+    const auto meat_sandwich = item( "sandwich_t" );
+    const auto meat_fact = proc::normalize_part_fact( meat_sandwich, { .ix = 6 } );
+    CHECK( std::ranges::find( meat_fact.tag, "meat" ) == meat_fact.tag.end() );
+
+    const auto veg_sandwich = item( "sandwich_veggy" );
+    const auto veg_fact = proc::normalize_part_fact( veg_sandwich, { .ix = 7 } );
+    CHECK( std::ranges::find( veg_fact.tag, "veg" ) == veg_fact.tag.end() );
+
+    const auto sauce_sandwich = item( "sandwich_sauce" );
+    const auto sauce_fact = proc::normalize_part_fact( sauce_sandwich, { .ix = 8 } );
+    CHECK( std::ranges::find( sauce_fact.tag, "cond" ) == sauce_fact.tag.end() );
+}
