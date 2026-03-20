@@ -87,17 +87,25 @@ static int zdist_lookup( int dx, int dy, int dz ) noexcept
 template<bool UseAtomic>
 static void atomic_float_max( float &cell, float val ) noexcept
 {
-#if !defined(__ANDROID__)
-    if( UseAtomic ) {
+    if constexpr( UseAtomic ) {
+#if defined(__cpp_lib_atomic_ref)
         std::atomic_ref<float> a( cell );
         float expected = a.load( std::memory_order_relaxed );
         while( expected < val &&
                !a.compare_exchange_weak( expected, val, std::memory_order_relaxed ) ) {
         }
-        return;
-    }
+#else
+        // Fallback for toolchains without std::atomic_ref (e.g. older Android NDK).
+        // __atomic_* builtins are available on all GCC and Clang targets.
+        float expected = __atomic_load_n( &cell, __ATOMIC_RELAXED );
+        while( expected < val &&
+               !__atomic_compare_exchange_n( &cell, &expected, val, true,
+                                             __ATOMIC_RELAXED, __ATOMIC_RELAXED ) ) {
+        }
 #endif
-    cell = std::max( cell, val );
+    } else {
+        cell = std::max( cell, val );
+    }
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
