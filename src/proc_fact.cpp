@@ -45,9 +45,13 @@ auto is_finished_dish( const item &it ) -> bool
     }
 
     const auto &id = it.typeId().str();
-    return id_contains_any( id, std::array<std::string_view, 13> {
+    if( id.starts_with( "mre_" ) ) {
+        return true;
+    }
+
+    return id_contains_any( id, std::array<std::string_view, 15> {
         "sandwich", "burger", "hotdog", "pizza", "taco", "quesadilla", "stew",
-        "soup", "curry", "salad", "pie", "burrito", "fries"
+        "soup", "curry", "salad", "pie", "burrito", "fries", "omelette", "omelet"
     } );
 }
 
@@ -90,7 +94,7 @@ auto default_tags( const item &it ) -> std::vector<std::string>
         ( ( !it.count_by_charges() &&
             has_material( it, material_id( "wheat" ) ) ) ||
           id.contains( "bread" ) || id.contains( "bun" ) || id.contains( "bagel" ) ||
-          id.contains( "toast" ) || id.contains( "roll" ) || id.contains( "tortilla" ) ||
+          id.contains( "roll" ) || id.contains( "tortilla" ) ||
           id.contains( "biscuit" ) || id.contains( "hardtack" ) ) ) {
         ret.push_back( "bread" );
     }
