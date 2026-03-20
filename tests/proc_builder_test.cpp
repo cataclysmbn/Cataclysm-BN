@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 
 #include <fstream>
+#include <iterator>
 #include <ranges>
 #include <sstream>
 #include <string>
@@ -837,6 +838,39 @@ TEST_CASE( "proc_builder_supports_sword_reinforcements_and_legacy_like_names",
     CHECK( crude.fast.name == "crude sword" );
     CHECK( crude.fast.melee.cut > plain.fast.melee.cut );
     CHECK( crude.fast.mass_g > plain.fast.mass_g );
+}
+
+TEST_CASE( "proc_builder_ranks_sword_candidates_by_role_quality", "[proc][builder][weapon]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/sword.json", "sword" );
+
+    const auto wood_blade = proc::normalize_part_fact( item( "stick_long" ), { .ix = 1 } );
+    const auto steel_blade = proc::normalize_part_fact( item( "steel_chunk" ), { .ix = 2 } );
+    const auto bone_blade = proc::normalize_part_fact( item( "bone" ), { .ix = 3 } );
+    const auto leather_grip = proc::normalize_part_fact( item( "leather" ), { .ix = 4 } );
+    const auto rag_grip = proc::normalize_part_fact( item( "rag" ), { .ix = 5 } );
+
+    const auto state = proc::build_state( sch, {
+        wood_blade,
+        steel_blade,
+        bone_blade,
+        leather_grip,
+        rag_grip,
+    } );
+
+    const auto position_in = []( const std::vector<proc::part_ix> &values,
+    const proc::part_ix target ) {
+        const auto iter = std::ranges::find( values, target );
+        REQUIRE( iter != values.end() );
+        return static_cast<int>( std::distance( values.begin(), iter ) );
+    };
+
+    const auto &blade_candidates = state.cand.at( proc::slot_id( "blade" ) );
+    CHECK( position_in( blade_candidates, 2 ) < position_in( blade_candidates, 3 ) );
+    CHECK( position_in( blade_candidates, 3 ) < position_in( blade_candidates, 1 ) );
+
+    const auto &grip_candidates = state.cand.at( proc::slot_id( "grip" ) );
+    CHECK( position_in( grip_candidates, 4 ) < position_in( grip_candidates, 5 ) );
 }
 
 TEST_CASE( "proc_recipe_search_matches_builder_name_and_role", "[proc][builder][recipe]" )
