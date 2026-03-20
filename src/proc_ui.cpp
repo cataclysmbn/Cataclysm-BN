@@ -1,6 +1,7 @@
 #include "proc_ui.h"
 
 #include <algorithm>
+#include <cctype>
 #include <map>
 #include <optional>
 #include <ranges>
@@ -26,9 +27,19 @@ namespace
 {
 
 static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
+inline constexpr auto filled_slot = "\xE2\x96\xA0";
+inline constexpr auto required_empty_slot = "\xE2\x96\xA1";
+inline constexpr auto optional_empty_slot = "\xC2\xB7";
+
+enum class panel_focus : int {
+    slots,
+    candidates,
+    search,
+};
 
 struct source_entry {
     item *src = nullptr;
+    std::string prefix;
     std::string where;
     proc::part_fact fact;
 };
@@ -40,6 +51,7 @@ struct source_pool {
 
 struct source_options {
     item *src = nullptr;
+    std::string prefix;
     std::string where;
     proc::part_ix ix = proc::invalid_part_ix;
     int charges = 0;
@@ -50,6 +62,7 @@ auto make_source_entry( const source_options &opts ) -> source_entry
 {
     return source_entry{
         .src = opts.src,
+        .prefix = opts.prefix,
         .where = opts.where,
         .fact = proc::normalize_part_fact( *opts.src, {
             .ix = opts.ix,
@@ -68,6 +81,155 @@ auto source_for_ix( const std::vector<source_entry> &sources,
     return &sources[static_cast<size_t>( ix )];
 }
 
+auto lower_copy( std::string text ) -> std::string
+{
+    std::ranges::transform( text, text.begin(), []( const unsigned char ch ) {
+        return static_cast<char>( std::tolower( ch ) );
+    } );
+    return text;
+}
+
+auto search_blob( const source_entry &source ) -> std::string
+{
+    auto tags = std::string {};
+    std::ranges::for_each( source.fact.tag, [&]( const std::string & entry ) {
+        if( !tags.empty() ) {
+            tags += ' ';
+        }
+        tags += entry;
+    } );
+    return lower_copy( string_format( "%s %s %s %s", source.src->tname(), source.fact.id.str(), tags,
+                                      source.where ) );
+}
+
+auto matches_search( const source_entry &source, const std::string &query ) -> bool
+{
+    return query.empty() || search_blob( source ).contains( lower_copy( query ) );
+}
+
+auto filtered_candidates( const proc::builder_state &state, const proc::slot_id &slot,
+                          const std::vector<source_entry> &sources,
+                          const std::string &query ) -> std::vector<proc::part_ix>
+{
+    auto ret = std::vector<proc::part_ix> {};
+    const auto iter = state.cand.find( slot );
+    if( iter == state.cand.end() ) {
+        return ret;
+    }
+    std::ranges::for_each( iter->second, [&]( const proc::part_ix ix ) {
+        const auto *source = source_for_ix( sources, ix );
+        if( source != nullptr && matches_search( *source, query ) ) {
+            ret.push_back( ix );
+        }
+    } );
+    return ret;
+}
+
+auto slot_indicator( const proc::slot_data &slot, const int picked ) -> std::string
+{
+    auto cells = std::string {};
+    std::ranges::for_each( std::views::iota( 0, std::max( slot.max, 0 ) ), [&]( const int idx ) {
+        if( !cells.empty() ) {
+            cells += ' ';
+        }
+        if( idx < picked ) {
+            cells += filled_slot;
+        } else if( idx < slot.min ) {
+            cells += required_empty_slot;
+        } else {
+            cells += optional_empty_slot;
+        }
+    } );
+    return string_format( "[%s]", cells );
+}
+
+auto slot_summary( const proc::builder_state &state, const proc::slot_data &slot,
+                   const std::vector<source_entry> &sources ) -> std::string
+{
+    auto picks = std::vector<std::string> {};
+    std::ranges::for_each( state.picks_for( slot.id ), [&]( const proc::part_ix ix ) {
+        if( const auto *source = source_for_ix( sources, ix ) ) {
+            picks.push_back( source->src->tname() );
+        }
+    } );
+    return picks.empty() ? _( "empty" ) : enumerate_as_string( picks, enumeration_conjunction::none );
+}
+
+auto candidate_meta( const source_entry &source, const proc::schema &sch ) -> std::string
+{
+    if( sch.cat == "food" ) {
+        return string_format( "+%d kcal", source.fact.kcal );
+    }
+    if( sch.cat == "weapon" ) {
+        return string_format( "%d g", source.fact.mass_g );
+    }
+    return string_format( "%d g", source.fact.mass_g );
+}
+
+auto candidate_line( const source_entry &source, const proc::builder_state &state,
+                     const proc::schema &sch ) -> std::string
+{
+    const auto remaining = std::max( source.fact.uses - proc::pick_count( state, source.fact.ix ), 0 );
+    const auto count_suffix = remaining > 1 ? string_format( " x%d", remaining ) : std::string();
+    return string_format( "%s %s  [%s]%s", source.prefix, source.src->tname(),
+                          candidate_meta( source, sch ), count_suffix );
+}
+
+auto result_state_label( const proc::schema &sch ) -> std::string
+{
+    return sch.cat == "food" ? _( "Fresh" ) : _( "New" );
+}
+
+auto clear_slot( proc::builder_state &state, const proc::slot_id &slot ) -> void;
+
+auto highlighted_preview( proc::builder_state state, const proc::schema &sch,
+                          const proc::slot_id &slot,
+                          const std::vector<proc::part_ix> &candidates,
+                          const int cursor ) -> proc::fast_blob
+{
+    if( candidates.empty() || cursor < 0 || static_cast<size_t>( cursor ) >= candidates.size() ) {
+        return state.fast;
+    }
+    const auto chosen = candidates[static_cast<size_t>( cursor )];
+    if( const auto slot_data = std::ranges::find_if( sch.slots, [&]( const proc::slot_data & entry ) {
+    return entry.id == slot;
+} ); slot_data != sch.slots.end() && slot_data->max == 1 && !state.picks_for( slot ).empty() ) {
+        clear_slot( state, slot );
+    }
+    if( !proc::add_pick( state, sch, slot, chosen ) ) {
+        return state.fast;
+    }
+    return state.fast;
+}
+
+auto diff_line( const std::string &label, const int current, const int preview,
+                const std::string &suffix ) -> std::string
+{
+    if( current == preview ) {
+        return string_format( "%-10s %d%s", label, current, suffix );
+    }
+    if( current == 0 ) {
+        return string_format( "%-10s %d%s", label, preview, suffix );
+    }
+    return string_format( "%-10s %d%s -> [ %d%s ]", label, current, suffix, preview, suffix );
+}
+
+auto selected_ingredient_lines( const proc::builder_state &state, const proc::schema &sch,
+                                const std::vector<source_entry> &sources ) -> std::vector<std::string>
+{
+    auto counts = std::map<std::string, int> {};
+    std::ranges::for_each( proc::selected_picks( state, sch ), [&]( const proc::craft_pick & pick ) {
+        if( const auto *source = source_for_ix( sources, pick.ix ) ) {
+            counts[source->src->tname()]++;
+        }
+    } );
+    auto lines = std::vector<std::string> {};
+    std::ranges::for_each( counts, [&]( const std::pair<const std::string, int> &entry ) {
+        lines.push_back( string_format( "- %s (%d)", entry.first, entry.second ) );
+    } );
+    return lines;
+}
+
 auto gather_inventory_sources( Character &who, const proc::schema &sch ) -> source_pool
 {
     auto ret = source_pool {};
@@ -83,6 +245,7 @@ auto gather_inventory_sources( Character &who, const proc::schema &sch ) -> sour
             }
             const auto entry = make_source_entry( {
                 .src = it,
+                .prefix = "(I)",
                 .where = it->describe_location( &who ),
                 .ix = ix,
                 .charges = it->count_by_charges() ? 1 : 0,
@@ -124,6 +287,7 @@ auto gather_debug_sources( const proc::schema &sch ) -> source_pool
         auto *temp = &*ret.owned.back();
         auto entry = make_source_entry( {
             .src = temp,
+            .prefix = "(D)",
             .where = _( "debug hammerspace" ),
             .ix = ix,
             .charges = temp->count_by_charges() ? 1 : 0,
@@ -160,81 +324,44 @@ auto current_slot( const proc::schema &sch, const int slot_cursor ) -> const pro
     return sch.slots[static_cast<size_t>( slot_cursor )];
 }
 
-auto current_candidates( const proc::builder_state &state,
-                         const proc::slot_id &slot ) -> const std::vector<proc::part_ix> & // *NOPAD*
-{
-    static const auto empty = std::vector<proc::part_ix> {};
-    const auto iter = state.cand.find( slot );
-    return iter == state.cand.end() ? empty : iter->second;
-}
-
-auto slot_pick_text( const proc::builder_state &state, const proc::slot_data &slot,
-                     const std::vector<source_entry> &sources ) -> std::string
-{
-    auto picks = std::vector<std::string> {};
-    std::ranges::for_each( state.picks_for( slot.id ), [&]( const proc::part_ix ix ) {
-        if( const auto *source = source_for_ix( sources, ix ) ) {
-            picks.push_back( source->src->tname() );
-        }
-    } );
-    const auto count = static_cast<int>( picks.size() );
-    const auto body = picks.empty() ? _( "empty" ) : enumerate_as_string( picks,
-                      enumeration_conjunction::none );
-    return string_format( "%s %d/%d %s", slot.role, count, slot.max, body );
-}
-
-auto candidate_text( const source_entry &source, const proc::builder_state &state ) -> std::string
-{
-    const auto remaining = std::max( source.fact.uses - proc::pick_count( state, source.fact.ix ), 0 );
-    const auto count_suffix = remaining > 1 ? string_format( " x%d", remaining ) : std::string();
-    return string_format( "%s [%s]%s", source.src->tname(), source.where, count_suffix );
-}
-
-auto preview_metric_line( const std::string &label, const std::string &value ) -> std::string
-{
-    return string_format( "%-10s %s", label, value );
-}
-
 auto preview_lines( const proc::schema &sch, const proc::builder_state &state,
+                    const proc::fast_blob &preview_blob,
                     const std::vector<source_entry> &sources ) -> std::vector<std::string>
 {
     auto lines = std::vector<std::string> {};
-    const auto title = state.fast.name.empty() ? sch.id.str() : state.fast.name;
-    lines.push_back( title );
-    lines.push_back( preview_metric_line( _( "Mass:" ), string_format( "%d g", state.fast.mass_g ) ) );
-    lines.push_back( preview_metric_line( _( "Volume:" ), string_format( "%d ml",
-                                          state.fast.volume_ml ) ) );
+    lines.push_back( string_format( _( "Result: %s" ), preview_blob.name.empty() ? sch.res.str() :
+                                    preview_blob.name ) );
+    lines.push_back( string_format( _( "State:  %s" ), result_state_label( sch ) ) );
+    lines.push_back( "----------------------" );
+    lines.push_back( diff_line( _( "Mass:" ), state.fast.mass_g, preview_blob.mass_g, " g" ) );
+    lines.push_back( diff_line( _( "Vol:" ), state.fast.volume_ml, preview_blob.volume_ml, " ml" ) );
     if( sch.cat == "food" ) {
-        lines.push_back( preview_metric_line( _( "Calories:" ), string_format( "%d", state.fast.kcal ) ) );
+        lines.push_back( diff_line( _( "Cal:" ), state.fast.kcal, preview_blob.kcal, "" ) );
     }
-    if( !state.fast.vit.empty() ) {
+    if( !preview_blob.vit.empty() ) {
         auto vitamins = std::vector<std::string> {};
-        std::ranges::for_each( state.fast.vit, [&]( const std::pair<const vitamin_id, int> &entry ) {
+        std::ranges::for_each( preview_blob.vit, [&]( const std::pair<const vitamin_id, int> &entry ) {
             vitamins.push_back( string_format( "%s:%d", entry.first.str(), entry.second ) );
         } );
-        lines.push_back( preview_metric_line( _( "Vitamins:" ), enumerate_as_string( vitamins,
-                                              enumeration_conjunction::none ) ) );
+        lines.push_back( string_format( _( "Vit: %s" ), enumerate_as_string( vitamins,
+                                        enumeration_conjunction::none ) ) );
     }
-    if( !state.fast.melee.empty() ) {
-        lines.push_back( preview_metric_line( _( "Bash:" ), string_format( "%d",
-                                              state.fast.melee.bash ) ) );
-        lines.push_back( preview_metric_line( _( "Cut:" ), string_format( "%d", state.fast.melee.cut ) ) );
-        lines.push_back( preview_metric_line( _( "Stab:" ), string_format( "%d",
-                                              state.fast.melee.stab ) ) );
-        lines.push_back( preview_metric_line( _( "To-hit:" ), string_format( "%+d",
-                                              state.fast.melee.to_hit ) ) );
-        lines.push_back( preview_metric_line( _( "Durability:" ), string_format( "%d",
-                                              state.fast.melee.dur ) ) );
+    if( !preview_blob.melee.empty() ) {
+        lines.push_back( diff_line( _( "Bash:" ), state.fast.melee.bash, preview_blob.melee.bash, "" ) );
+        lines.push_back( diff_line( _( "Cut:" ), state.fast.melee.cut, preview_blob.melee.cut, "" ) );
+        lines.push_back( diff_line( _( "Stab:" ), state.fast.melee.stab, preview_blob.melee.stab, "" ) );
+        lines.push_back( diff_line( _( "To-hit:" ), state.fast.melee.to_hit, preview_blob.melee.to_hit,
+                                    "" ) );
+        lines.push_back( diff_line( _( "Dur:" ), state.fast.melee.dur, preview_blob.melee.dur, "" ) );
     }
-    lines.push_back( std::string() );
-    lines.push_back( _( "Selected parts:" ) );
-    std::ranges::for_each( sch.slots, [&]( const proc::slot_data & slot ) {
-        std::ranges::for_each( state.picks_for( slot.id ), [&]( const proc::part_ix ix ) {
-            if( const auto *source = source_for_ix( sources, ix ) ) {
-                lines.push_back( string_format( "%s: %s", slot.role, source->src->tname() ) );
-            }
-        } );
-    } );
+    lines.push_back( "----------------------" );
+    lines.push_back( _( "[ Ingredients Added ]" ) );
+    const auto ingredients = selected_ingredient_lines( state, sch, sources );
+    if( ingredients.empty() ) {
+        lines.push_back( string_format( "- %s", _( "None" ) ) );
+    } else {
+        std::ranges::copy( ingredients, std::back_inserter( lines ) );
+    }
     return lines;
 }
 
@@ -281,7 +408,8 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         candidate_cursor.emplace( slot.id, 0 );
     } );
     auto slot_cursor = 0;
-    auto slots_focused = true;
+    auto focus = panel_focus::slots;
+    auto search_query = std::string {};
     auto status = std::string {};
 
     auto w = catacurses::window {};
@@ -319,36 +447,51 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             trim_and_print( w, point( 2, 2 ), width - 4, c_light_gray, rec.builder_desc().translated() );
         }
 
-        const auto content_top = 4;
-        const auto content_height = height - 8;
-        mvwvline( w, point( left_width + 1, content_top ), LINE_XOXO, content_height );
-        mvwvline( w, point( left_width + middle_width + 3, content_top ), LINE_XOXO, content_height );
-        trim_and_print( w, point( 2, content_top - 1 ), left_width - 1,
-                        slots_focused ? c_yellow : c_light_gray, _( "Slots" ) );
-        trim_and_print( w, point( left_width + 3, content_top - 1 ), middle_width - 2,
-                        slots_focused ? c_light_gray : c_yellow, _( "Candidates" ) );
-        trim_and_print( w, point( left_width + middle_width + 5, content_top - 1 ), right_width - 1,
-                        c_light_gray, _( "Preview" ) );
-
-        auto slot_start = 0;
-        calcStartPos( slot_start, slot_cursor, content_height, static_cast<int>( sch.slots.size() ) );
-        const auto slot_end = std::min( static_cast<int>( sch.slots.size() ), slot_start + content_height );
-        std::ranges::for_each( std::views::iota( slot_start, slot_end ), [&]( const int row ) {
-            const auto &slot = sch.slots[static_cast<size_t>( row )];
-            const auto color = row == slot_cursor ? c_yellow : proc::slot_complete( state, sch, slot.id ) ?
-                               c_light_green : c_white;
-            trim_and_print( w, point( 2, content_top + row - slot_start ), left_width - 2, color,
-                            slot_pick_text( state, slot, source_data.entries ) );
-        } );
-
         const auto &slot = current_slot( sch, slot_cursor );
-        const auto &candidates = current_candidates( state, slot.id );
+        auto candidates = filtered_candidates( state, slot.id, source_data.entries, search_query );
         auto &cand_cursor = candidate_cursor[slot.id];
         if( !candidates.empty() ) {
             cand_cursor = std::clamp( cand_cursor, 0, static_cast<int>( candidates.size() ) - 1 );
         } else {
             cand_cursor = 0;
         }
+        const auto preview_blob = highlighted_preview( state, sch, slot.id, candidates, cand_cursor );
+
+        const auto content_top = 5;
+        const auto search_row = content_top;
+        const auto list_top = content_top + 2;
+        const auto content_height = std::max( height - list_top - 4, 1 );
+        mvwvline( w, point( left_width + 1, content_top ), LINE_XOXO, content_height );
+        mvwvline( w, point( left_width + middle_width + 3, content_top ), LINE_XOXO, content_height );
+        trim_and_print( w, point( 2, content_top - 1 ), left_width - 1,
+                        focus == panel_focus::slots ? c_yellow : c_light_gray, _( "[1. Slots]" ) );
+        trim_and_print( w, point( left_width + 3, content_top - 1 ), middle_width - 2,
+                        focus != panel_focus::slots ? c_yellow : c_light_gray,
+                        string_format( _( "[2. Candidates: %s ]" ), search_query.empty() ? slot.role : search_query ) );
+        trim_and_print( w, point( left_width + middle_width + 5, content_top - 1 ), right_width - 1,
+                        c_light_gray, _( "[3. Preview ]" ) );
+        trim_and_print( w, point( left_width + 3, search_row ), middle_width - 2,
+                        focus == panel_focus::search ? c_yellow : c_light_gray,
+                        string_format( _( "Search: /%s%s" ), search_query,
+                                       focus == panel_focus::search ? "_" : "" ) );
+
+        auto slot_start = 0;
+        calcStartPos( slot_start, slot_cursor, content_height, static_cast<int>( sch.slots.size() ) );
+        const auto slot_end = std::min( static_cast<int>( sch.slots.size() ), slot_start + content_height );
+        std::ranges::for_each( std::views::iota( slot_start, slot_end ), [&]( const int row ) {
+            const auto &slot_entry = sch.slots[static_cast<size_t>( row )];
+            const auto picked = static_cast<int>( state.picks_for( slot_entry.id ).size() );
+            const auto color = row == slot_cursor ? c_yellow : proc::slot_complete( state, sch,
+                               slot_entry.id ) ?
+                               c_light_green : c_white;
+            const auto line = string_format( "%s %s %s",
+                                             row == slot_cursor ? ">" : " ",
+                                             slot_indicator( slot_entry, picked ),
+                                             string_format( "%s %s", slot_entry.role,
+                                                     slot_summary( state, slot_entry, source_data.entries ) ) );
+            trim_and_print( w, point( 2, list_top + row - slot_start ), left_width - 2, color, line );
+        } );
+
         auto cand_start = 0;
         calcStartPos( cand_start, cand_cursor, content_height, static_cast<int>( candidates.size() ) );
         const auto cand_end = std::min( static_cast<int>( candidates.size() ),
@@ -358,23 +501,33 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             if( source == nullptr ) {
                 return;
             }
-            const auto color = row == cand_cursor && !slots_focused ? c_yellow : c_white;
-            trim_and_print( w, point( left_width + 3, content_top + row - cand_start ), middle_width - 2,
-                            color, candidate_text( *source, state ) );
+            const auto color = row == cand_cursor && focus != panel_focus::slots ? c_yellow : c_white;
+            trim_and_print( w, point( left_width + 3, list_top + row - cand_start ), middle_width - 2,
+                            color, candidate_line( *source, state, sch ) );
         } );
 
-        const auto preview = preview_lines( sch, state, source_data.entries );
+        auto preview = std::vector<std::string> {};
+        std::ranges::for_each( preview_lines( sch, state, preview_blob, source_data.entries ),
+        [&]( const std::string & line ) {
+            const auto wrapped = foldstring( line, right_width - 1 );
+            if( wrapped.empty() ) {
+                preview.push_back( std::string() );
+                return;
+            }
+            std::ranges::copy( wrapped, std::back_inserter( preview ) );
+        } );
         const auto preview_end = std::min( static_cast<int>( preview.size() ), content_height );
         std::ranges::for_each( std::views::iota( 0, preview_end ), [&]( const int row ) {
-            trim_and_print( w, point( left_width + middle_width + 5, content_top + row ), right_width - 1,
+            trim_and_print( w, point( left_width + middle_width + 5, list_top + row ), right_width - 1,
                             c_white, preview[static_cast<size_t>( row )] );
         } );
 
         const auto ready_color = proc::complete( state, sch ) ? c_light_green : c_light_red;
         trim_and_print( w, point( 2, height - 3 ), width - 4, ready_color,
-                        proc::complete( state, sch ) ? _( "Ready to craft" ) : _( "Missing required slots" ) );
+                        proc::complete( state, sch ) ? _( "Status: [ READY TO CRAFT ]" ) :
+                        _( "Status: [ MISSING REQUIRED SLOTS ]" ) );
         trim_and_print( w, point( 2, height - 2 ), width - 4, c_light_gray,
-                        status.empty() ? _( "Arrows move, Enter adds, r removes, c clears, f crafts, Esc cancels" ) :
+                        status.empty() ? _( "[Arrows] Navigate  [/] Search  [Enter] Add/Remove  [f] Craft  [Esc] Cancel" ) :
                         status );
         wnoutrefresh( w );
     } );
@@ -401,23 +554,48 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         const auto evt = ctxt.get_raw_input();
         const auto ch = evt.get_first_input();
         const auto &slot = current_slot( sch, slot_cursor );
-        const auto &candidates = current_candidates( state, slot.id );
+        auto candidates = filtered_candidates( state, slot.id, source_data.entries, search_query );
         auto &cand_cursor = candidate_cursor[slot.id];
+        if( !candidates.empty() ) {
+            cand_cursor = std::clamp( cand_cursor, 0, static_cast<int>( candidates.size() ) - 1 );
+        } else {
+            cand_cursor = 0;
+        }
         status.clear();
 
         if( action == "QUIT" ) {
             return std::nullopt;
         }
+        if( focus == panel_focus::search ) {
+            if( ch == KEY_BACKSPACE || ch == KEY_DC ) {
+                if( !search_query.empty() ) {
+                    search_query.pop_back();
+                }
+                continue;
+            }
+            if( action == "CONFIRM" || action == "LEFT" || action == "RIGHT" ) {
+                focus = panel_focus::candidates;
+                continue;
+            }
+            if( action == "ANY_INPUT" && !evt.text.empty() ) {
+                search_query += evt.text;
+                continue;
+            }
+        }
+        if( ch == '/' ) {
+            focus = panel_focus::search;
+            continue;
+        }
         if( action == "LEFT" ) {
-            slots_focused = true;
+            focus = panel_focus::slots;
             continue;
         }
         if( action == "RIGHT" ) {
-            slots_focused = false;
+            focus = panel_focus::candidates;
             continue;
         }
         if( action == "UP" ) {
-            if( slots_focused ) {
+            if( focus == panel_focus::slots ) {
                 slot_cursor = std::max( slot_cursor - 1, 0 );
             } else if( !candidates.empty() ) {
                 cand_cursor = std::max( cand_cursor - 1, 0 );
@@ -425,23 +603,23 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             continue;
         }
         if( action == "DOWN" ) {
-            if( slots_focused ) {
+            if( focus == panel_focus::slots ) {
                 slot_cursor = std::min( slot_cursor + 1, static_cast<int>( sch.slots.size() ) - 1 );
             } else if( !candidates.empty() ) {
                 cand_cursor = std::min( cand_cursor + 1, static_cast<int>( candidates.size() ) - 1 );
             }
             continue;
         }
-        if( action == "PAGE_UP" && !slots_focused && !candidates.empty() ) {
+        if( action == "PAGE_UP" && focus != panel_focus::slots && !candidates.empty() ) {
             cand_cursor = std::max( cand_cursor - 8, 0 );
             continue;
         }
-        if( action == "PAGE_DOWN" && !slots_focused && !candidates.empty() ) {
+        if( action == "PAGE_DOWN" && focus != panel_focus::slots && !candidates.empty() ) {
             cand_cursor = std::min( cand_cursor + 8, static_cast<int>( candidates.size() ) - 1 );
             continue;
         }
         if( action == "HOME" ) {
-            if( slots_focused ) {
+            if( focus == panel_focus::slots ) {
                 slot_cursor = 0;
             } else {
                 cand_cursor = 0;
@@ -449,7 +627,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             continue;
         }
         if( action == "END" ) {
-            if( slots_focused ) {
+            if( focus == panel_focus::slots ) {
                 slot_cursor = static_cast<int>( sch.slots.size() ) - 1;
             } else if( !candidates.empty() ) {
                 cand_cursor = static_cast<int>( candidates.size() ) - 1;
@@ -482,17 +660,25 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             return result;
         }
         if( action == "CONFIRM" ) {
-            slots_focused = false;
+            if( focus == panel_focus::slots ) {
+                focus = panel_focus::candidates;
+                continue;
+            }
             if( candidates.empty() ) {
                 status = _( "No candidates for this slot." );
                 continue;
             }
-            if( slot.max == 1 && !state.picks_for( slot.id ).empty() ) {
+            const auto picked_ix = candidates[static_cast<size_t>( cand_cursor )];
+            if( slot.max == 1 && !state.picks_for( slot.id ).empty() &&
+                std::ranges::find( state.picks_for( slot.id ), picked_ix ) == state.picks_for( slot.id ).end() ) {
                 clear_slot( state, slot.id );
             }
-            const auto picked_ix = candidates[static_cast<size_t>( cand_cursor )];
-            status = proc::add_pick( state, sch, slot.id, picked_ix ) ? _( "Added pick." ) :
-                     _( "That candidate can not be used again." );
+            if( proc::add_pick( state, sch, slot.id, picked_ix ) ) {
+                status = _( "Added selection." );
+                continue;
+            }
+            status = proc::remove_pick( state, slot.id, picked_ix ) ? _( "Removed selection." ) :
+                     _( "That candidate can not be used here." );
             continue;
         }
     }
