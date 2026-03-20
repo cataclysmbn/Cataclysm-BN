@@ -488,6 +488,28 @@ auto proc::filter_available_candidates( const builder_state &state,
     return ret;
 }
 
+auto proc::slot_can_meet_minimum( const builder_state &state, const schema &sch,
+                                  const slot_id &slot ) -> bool
+{
+    const auto *slot_data = slot_by_id( sch, slot );
+    if( slot_data == nullptr ) {
+        return false;
+    }
+    if( slot_data->min <= 0 ) {
+        return true;
+    }
+    const auto iter = state.cand.find( slot );
+    if( iter == state.cand.end() ) {
+        return false;
+    }
+
+    auto total_uses = 0;
+    std::ranges::for_each( iter->second, [&]( const part_ix ix ) {
+        total_uses += remaining_uses( state, ix );
+    } );
+    return total_uses >= slot_data->min;
+}
+
 auto proc::slot_complete( const builder_state &state, const schema &sch,
                           const slot_id &slot ) -> bool
 {
