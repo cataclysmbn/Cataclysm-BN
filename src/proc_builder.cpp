@@ -10,8 +10,10 @@
 #include <string>
 #include <vector>
 
+#include "item.h"
 #include "material.h"
 #include "output.h"
+#include "proc_fact.h"
 #include "recipe.h"
 #include "string_formatter.h"
 #include "string_utils.h"
@@ -184,6 +186,17 @@ auto facts_have_tag( const std::vector<proc::part_fact> &facts, const std::strin
     return std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
         return fact_has_tag( fact, tag );
     } );
+}
+
+auto matching_slot_uses( const proc::schema &sch, const proc::part_fact &fact ) -> int
+{
+    auto uses = 0;
+    std::ranges::for_each( sch.slots, [&]( const proc::slot_data & slot ) {
+        if( proc::matches_slot( slot, fact ) ) {
+            uses += std::max( slot.max, 1 );
+        }
+    } );
+    return uses;
 }
 
 auto picked_facts_for_role( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
@@ -610,6 +623,22 @@ auto proc::rebuild_fast( const builder_state &state ) -> fast_blob
         return fast_blob{};
     }
     return preview_blob( state.sch, facts, selected_picks( state, state.sch ) );
+}
+
+auto proc::debug_part_fact( const schema &sch, const item &it,
+                            const part_ix ix ) -> std::optional<part_fact>
+{
+    auto fact = normalize_part_fact( it, {
+        .ix = ix,
+        .charges = it.count_by_charges() ? 1 : 0,
+        .uses = 1,
+    } );
+    const auto uses = matching_slot_uses( sch, fact );
+    if( uses <= 0 ) {
+        return std::nullopt;
+    }
+    fact.uses = uses;
+    return fact;
 }
 
 auto proc::build_state( const schema &sch, const std::vector<part_fact> &facts ) -> builder_state

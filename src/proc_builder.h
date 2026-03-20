@@ -1,11 +1,13 @@
 #pragma once
 
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "proc_schema.h"
 
+class item;
 class recipe;
 
 namespace proc
@@ -46,6 +48,8 @@ auto remove_last_pick( builder_state &state, const slot_id &slot ) -> bool;
 auto selected_picks( const builder_state &state, const schema &sch ) -> std::vector<craft_pick>;
 auto selected_facts( const builder_state &state ) -> std::vector<part_fact>;
 auto rebuild_fast( const builder_state &state ) -> fast_blob;
+auto debug_part_fact( const schema &sch, const item &it,
+                      part_ix ix ) -> std::optional<part_fact>;
 auto fast_fp( const schema &sch, const fast_blob &blob,
               const std::vector<part_fact> &facts ) -> std::string;
 auto part_search_texts( const part_fact &fact,

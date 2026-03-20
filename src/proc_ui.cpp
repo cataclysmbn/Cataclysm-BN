@@ -249,17 +249,6 @@ auto gather_inventory_sources( Character &who, const proc::schema &sch ) -> sour
     return ret;
 }
 
-auto matching_slot_uses( const proc::schema &sch, const proc::part_fact &fact ) -> int
-{
-    auto uses = 0;
-    std::ranges::for_each( sch.slots, [&]( const proc::slot_data & slot ) {
-        if( proc::matches_slot( slot, fact ) ) {
-            uses += std::max( slot.max, 1 );
-        }
-    } );
-    return uses;
-}
-
 auto gather_debug_sources( const proc::schema &sch ) -> source_pool
 {
     auto ret = source_pool {};
@@ -271,21 +260,17 @@ auto gather_debug_sources( const proc::schema &sch ) -> source_pool
         }
         ret.owned.push_back( item::spawn( candidate->get_id(), calendar::turn ) );
         auto *temp = &*ret.owned.back();
-        auto entry = make_source_entry( {
-            .src = temp,
-            .prefix = "(D)",
-            .where = _( "debug hammerspace" ),
-            .ix = ix,
-            .charges = temp->count_by_charges() ? 1 : 0,
-            .uses = 1
-        } );
-        const auto uses = matching_slot_uses( sch, entry.fact );
-        if( uses <= 0 ) {
+        const auto fact = proc::debug_part_fact( sch, *temp, ix );
+        if( !fact.has_value() ) {
             ret.owned.pop_back();
             return;
         }
-        entry.fact.uses = uses;
-        ret.entries.push_back( entry );
+        ret.entries.push_back( source_entry{
+            .src = temp,
+            .prefix = "(D)",
+            .where = _( "debug hammerspace" ),
+            .fact = *fact,
+        } );
         ix++;
     } );
     return ret;

@@ -357,6 +357,51 @@ TEST_CASE( "proc_builder_required_slots_count_total_uses_toward_minimum", "[proc
     CHECK( proc::slot_can_meet_minimum( sufficient, sch, proc::slot_id( "bread" ) ) );
 }
 
+TEST_CASE( "proc_builder_debug_facts_skip_items_that_match_no_slots", "[proc][builder]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/sandwich.json", "sandwich" );
+
+    CHECK_FALSE( proc::debug_part_fact( sch, item( "rock" ), 1 ).has_value() );
+}
+
+TEST_CASE( "proc_builder_debug_facts_sum_matching_slot_capacity", "[proc][builder]" )
+{
+    const auto sch = load_schema_for_test( R"(
+{
+  "type": "PROC",
+  "id": "debug_overlap",
+  "cat": "weapon",
+  "res": "proc_sword_generic",
+  "slot": [
+    { "id": "blade", "role": "blade", "min": 1, "max": 2, "rep": true, "ok": [ "mat:steel" ] },
+    { "id": "guard", "role": "guard", "min": 0, "max": 1, "ok": [ "mat:steel" ] }
+  ]
+}
+    )" );
+
+    const auto fact = proc::debug_part_fact( sch, item( "steel_chunk" ), 7 );
+    REQUIRE( fact.has_value() );
+    CHECK( fact->ix == 7 );
+    CHECK( fact->uses == 3 );
+}
+
+TEST_CASE( "proc_builder_debug_facts_follow_food_candidate_filtering", "[proc][builder][food]" )
+{
+    const auto sandwich = load_schema_from_file( "data/json/proc/sandwich.json", "sandwich" );
+    const auto stew = load_schema_from_file( "data/json/proc/stew.json", "stew" );
+
+    CHECK_FALSE( proc::debug_part_fact( stew, item( "soup_veggy" ), 1 ).has_value() );
+
+    const auto carrot = proc::debug_part_fact( stew, item( "carrot" ), 2 );
+    REQUIRE( carrot.has_value() );
+    CHECK( carrot->uses == 4 );
+
+    const auto proc_bread_item = make_proc_test_item( itype_id( "bread" ),
+                                 proc::schema_id( "sandwich" ),
+                                 "sandwich:bread" );
+    CHECK_FALSE( proc::debug_part_fact( sandwich, *proc_bread_item, 3 ).has_value() );
+}
+
 TEST_CASE( "proc_builder_sandwich_bread_slot_requires_two_total_bread_uses",
            "[proc][builder][food]" )
 {
