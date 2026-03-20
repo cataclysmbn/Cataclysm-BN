@@ -363,6 +363,28 @@ auto proc::pick_count( const builder_state &state, const part_ix ix ) -> int
     return total;
 }
 
+auto proc::remaining_uses( const builder_state &state, const part_ix ix ) -> int
+{
+    const auto *fact = find_fact( state.facts, ix );
+    if( fact == nullptr ) {
+        return 0;
+    }
+    return std::max( fact->uses - pick_count( state, ix ), 0 );
+}
+
+auto proc::filter_available_candidates( const builder_state &state,
+                                        const std::vector<part_ix> &candidates ) -> std::vector<part_ix>
+{
+    auto ret = std::vector<part_ix> {};
+    ret.reserve( candidates.size() );
+    std::ranges::for_each( candidates, [&]( const part_ix ix ) {
+        if( remaining_uses( state, ix ) > 0 ) {
+            ret.push_back( ix );
+        }
+    } );
+    return ret;
+}
+
 auto proc::slot_complete( const builder_state &state, const schema &sch,
                           const slot_id &slot ) -> bool
 {

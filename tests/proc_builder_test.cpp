@@ -180,6 +180,43 @@ TEST_CASE( "proc_builder_limits_repeated_charge_picks", "[proc][builder]" )
     CHECK_FALSE( proc::add_pick( state, sch, proc::slot_id( "base" ), 1 ) );
 }
 
+TEST_CASE( "proc_builder_filters_out_exhausted_candidates", "[proc][builder]" )
+{
+    const auto sch = load_schema_for_test( R"(
+{
+  "type": "PROC",
+  "id": "battery_pack",
+  "cat": "other",
+  "res": "battery",
+  "slot": [
+    { "id": "cell", "role": "cell", "min": 1, "max": 3, "rep": true, "ok": [] }
+  ]
+}
+    )" );
+
+    auto repeatable = proc::part_fact{};
+    repeatable.ix = 1;
+    repeatable.id = itype_id( "battery" );
+    repeatable.uses = 2;
+
+    auto spare = proc::part_fact{};
+    spare.ix = 2;
+    spare.id = itype_id( "battery" );
+    spare.uses = 1;
+
+    auto state = proc::build_state( sch, { repeatable, spare } );
+    const auto candidates = state.cand.at( proc::slot_id( "cell" ) );
+    CHECK( proc::remaining_uses( state, 1 ) == 2 );
+    CHECK( proc::filter_available_candidates( state, candidates ) == candidates );
+
+    REQUIRE( proc::add_pick( state, sch, proc::slot_id( "cell" ), 1 ) );
+    CHECK( proc::remaining_uses( state, 1 ) == 1 );
+
+    REQUIRE( proc::add_pick( state, sch, proc::slot_id( "cell" ), 1 ) );
+    CHECK( proc::remaining_uses( state, 1 ) == 0 );
+    CHECK( proc::filter_available_candidates( state, candidates ) == std::vector<proc::part_ix> { 2 } );
+}
+
 TEST_CASE( "proc_builder_stew_excludes_finished_dishes_from_candidates", "[proc][builder][food]" )
 {
     const auto sch = load_schema_from_file( "data/json/proc/stew.json", "stew" );
