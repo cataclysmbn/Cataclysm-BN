@@ -99,6 +99,84 @@ TEST_CASE( "proc_builder_builds_candidates_and_fast_preview", "[proc][builder]" 
     CHECK( proc::fast_fp( sch, state.fast, proc::selected_facts( state ) ).starts_with( "sandwich:" ) );
 }
 
+TEST_CASE( "proc_builder_limits_repeated_charge_picks", "[proc][builder]" )
+{
+    const auto sch = load_schema_for_test( R"(
+{
+  "type": "PROC",
+  "id": "stew",
+  "cat": "food",
+  "res": "stew_generic",
+  "slot": [
+    { "id": "base", "role": "base", "min": 1, "max": 2, "rep": true, "ok": [ "itype:broth" ] }
+  ]
+}
+    )" );
+
+    auto broth = proc::part_fact{};
+    broth.ix = 1;
+    broth.id = itype_id( "broth" );
+    broth.mass_g = 250;
+    broth.volume_ml = 250;
+    broth.kcal = 13;
+    broth.chg = 1;
+    broth.uses = 2;
+
+    auto state = proc::build_state( sch, { broth } );
+    REQUIRE( proc::add_pick( state, sch, proc::slot_id( "base" ), 1 ) );
+    REQUIRE( proc::add_pick( state, sch, proc::slot_id( "base" ), 1 ) );
+    CHECK_FALSE( proc::add_pick( state, sch, proc::slot_id( "base" ), 1 ) );
+}
+
+TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][weapon]" )
+{
+    const auto sch = load_schema_for_test( R"(
+{
+  "type": "PROC",
+  "id": "sword",
+  "cat": "weapon",
+  "res": "proc_sword_generic",
+  "slot": [
+    { "id": "blade", "role": "blade", "min": 1, "max": 1, "ok": [ "itype:steel_chunk" ] },
+    { "id": "handle", "role": "handle", "min": 1, "max": 1, "ok": [ "itype:stick_long" ] },
+    { "id": "grip", "role": "grip", "min": 1, "max": 2, "rep": true, "ok": [ "itype:rag" ] }
+  ]
+}
+    )" );
+
+    auto blade = proc::part_fact{};
+    blade.ix = 1;
+    blade.id = itype_id( "steel_chunk" );
+    blade.mat = { material_id( "steel" ) };
+    blade.mass_g = 1200;
+    blade.volume_ml = 500;
+
+    auto handle = proc::part_fact{};
+    handle.ix = 2;
+    handle.id = itype_id( "stick_long" );
+    handle.mat = { material_id( "wood" ) };
+    handle.mass_g = 400;
+    handle.volume_ml = 500;
+
+    auto grip = proc::part_fact{};
+    grip.ix = 3;
+    grip.id = itype_id( "rag" );
+    grip.mat = { material_id( "cotton" ) };
+    grip.mass_g = 50;
+    grip.volume_ml = 50;
+
+    auto state = proc::build_state( sch, { blade, handle, grip } );
+    REQUIRE( proc::add_pick( state, sch, proc::slot_id( "blade" ), 1 ) );
+    REQUIRE( proc::add_pick( state, sch, proc::slot_id( "handle" ), 2 ) );
+    REQUIRE( proc::add_pick( state, sch, proc::slot_id( "grip" ), 3 ) );
+
+    CHECK( state.fast.melee.bash > 0 );
+    CHECK( state.fast.melee.cut > 0 );
+    CHECK( state.fast.melee.stab > 0 );
+    CHECK( state.fast.melee.dur > 0 );
+    CHECK( state.fast.name == "forged sword" );
+}
+
 TEST_CASE( "proc_recipe_search_matches_builder_name_and_role", "[proc][builder][recipe]" )
 {
     proc::reset();

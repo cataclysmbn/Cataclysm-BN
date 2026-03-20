@@ -1,0 +1,18 @@
+[
+  {
+    "type": "recipe",
+    "result": "stew_generic",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_MEAT",
+    "skill_used": "cooking",
+    "difficulty": 1,
+    "time": 200,
+    "proc": true,
+    "proc_id": "stew",
+    "builder_name": { "str": "Stew" },
+    "builder_desc": { "str": "Pick a broth and hearty ingredients." },
+    "qualities": [  ],
+    "tools": [  ],
+    "components": [  ]
+  }
+]

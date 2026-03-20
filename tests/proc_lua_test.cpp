@@ -12,7 +12,7 @@ TEST_CASE( "proc_lua_full_bridge_reads_named_function", "[proc][lua]" )
     state.lua.open_libraries( sol::lib::base, sol::lib::package, sol::lib::math, sol::lib::string,
                               sol::lib::table );
     state.lua.script( R"(
-proc = {
+ procgen = {
   food = {
     full = function(params)
       return {
@@ -36,8 +36,8 @@ proc = {
     auto sch = proc::schema{};
     sch.id = proc::schema_id( "sandwich" );
     sch.res = itype_id( "sandwich_generic" );
-    sch.lua.full = "proc.food.full";
-    sch.lua.make = "proc.food.make";
+    sch.lua.full = "procgen.food.full";
+    sch.lua.make = "procgen.food.make";
 
     auto fact = proc::part_fact{};
     fact.ix = 1;

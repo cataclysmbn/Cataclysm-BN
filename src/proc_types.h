@@ -9,6 +9,8 @@
 #include "string_id.h"
 #include "type_id.h"
 
+class item;
+
 namespace proc
 {
 
@@ -41,6 +43,7 @@ struct part_fact {
     int kcal = 0;
     float hp = 1.0f;
     int chg = 0;
+    int uses = 1;
     std::string proc;
 
     auto valid() const -> bool {
@@ -48,6 +51,31 @@ struct part_fact {
     }
 
     auto operator==( const part_fact & ) const -> bool = default;
+};
+
+struct craft_pick {
+    slot_id slot = slot_id::NULL_ID();
+    part_ix ix = invalid_part_ix;
+
+    auto valid() const -> bool {
+        return !slot.is_null() && ix != invalid_part_ix;
+    }
+
+    auto operator==( const craft_pick & ) const -> bool = default;
+};
+
+struct melee_blob {
+    int bash = 0;
+    int cut = 0;
+    int stab = 0;
+    int to_hit = 0;
+    int dur = 0;
+
+    auto empty() const -> bool {
+        return bash == 0 && cut == 0 && stab == 0 && to_hit == 0 && dur == 0;
+    }
+
+    auto operator==( const melee_blob & ) const -> bool = default;
 };
 
 struct pick {
@@ -66,10 +94,12 @@ struct fast_blob {
     int volume_ml = 0;
     int kcal = 0;
     std::map<vitamin_id, int> vit;
+    melee_blob melee;
     std::string name;
 
     auto empty() const -> bool {
-        return mass_g == 0 && volume_ml == 0 && kcal == 0 && vit.empty() && name.empty();
+        return mass_g == 0 && volume_ml == 0 && kcal == 0 && vit.empty() && melee.empty() &&
+               name.empty();
     }
 
     auto operator==( const fast_blob & ) const -> bool = default;

@@ -47,6 +47,13 @@ struct payload {
     auto operator==( const payload & ) const -> bool = default;
 };
 
+struct craft_plan {
+    hist mode = hist::none;
+    std::vector<slot_id> slots;
+
+    auto operator==( const craft_plan & ) const -> bool = default;
+};
+
 struct lua_opts {
     cata::lua_state *state = nullptr;
 };
@@ -55,6 +62,7 @@ struct make_opts {
     hist mode = hist::none;
     const recipe *rec = nullptr;
     std::vector<const item *> used;
+    std::vector<slot_id> slots;
     cata::lua_state *state = nullptr;
 };
 
@@ -62,14 +70,20 @@ auto to_json( JsonOut &jsout, const compact_part &part ) -> void;
 auto from_json( JsonIn &jsin, compact_part &part ) -> void;
 auto to_json( JsonOut &jsout, const payload &data ) -> void;
 auto from_json( JsonIn &jsin, payload &data ) -> void;
+auto to_json( JsonOut &jsout, const craft_plan &data ) -> void;
+auto from_json( JsonIn &jsin, craft_plan &data ) -> void;
 auto read_payload( const item &it ) -> std::optional<payload>;
 auto write_payload( item &it, const payload &data ) -> void;
 auto clear_payload( item &it ) -> void;
 auto set_payload_from_json( item &it, const std::string &json ) -> void;
 auto payload_json( const payload &data ) -> std::string;
+auto read_craft_plan( const item &it ) -> std::optional<craft_plan>;
+auto write_craft_plan( item &it, const craft_plan &data ) -> void;
 auto restore_parts( const payload &data ) -> std::vector<detached_ptr<item>>;
 auto make_compact_parts( const std::vector<part_fact> &facts,
                          const schema &sch ) -> std::vector<compact_part>;
+auto make_compact_parts( const std::vector<part_fact> &facts,
+                         const std::vector<slot_id> &slots ) -> std::vector<compact_part>;
 auto apply_on_damage( item &it, int qty ) -> void;
 auto run_full( const schema &sch, const std::vector<part_fact> &facts,
 const fast_blob &blob, const lua_opts &opts = {} ) -> full_blob;
@@ -79,6 +93,7 @@ auto blob_kcal( const item &it ) -> std::optional<int>;
 auto blob_vitamins( const item &it ) -> std::optional<std::map<vitamin_id, int>>;
 auto blob_mass( const item &it ) -> std::optional<int>;
 auto blob_volume( const item &it ) -> std::optional<int>;
+auto blob_melee( const item &it ) -> std::optional<melee_blob>;
 auto component_hash( const item &it ) -> std::optional<std::uint64_t>;
 
 } // namespace proc
