@@ -25,6 +25,15 @@ auto is_comestible_candidate( const item &it ) -> bool
     return it.is_comestible();
 }
 
+template<size_t N>
+auto id_contains_any( const std::string &id,
+                      const std::array<std::string_view, N> &needles ) -> bool
+{
+    return std::ranges::any_of( needles, [&]( const std::string_view needle ) {
+        return id.contains( needle );
+    } );
+}
+
 auto is_finished_dish( const item &it ) -> bool
 {
     if( !it.is_comestible() ) {
@@ -36,18 +45,9 @@ auto is_finished_dish( const item &it ) -> bool
     }
 
     const auto &id = it.typeId().str();
-    return id.contains( "sandwich" ) || id.contains( "burger" ) || id.contains( "hotdog" ) ||
-           id.contains( "pizza" ) || id.contains( "taco" ) || id.contains( "quesadilla" ) ||
-           id.contains( "stew" ) || id.contains( "soup" ) || id.contains( "curry" ) ||
-           id.contains( "salad" );
-}
-
-template<size_t N>
-auto id_contains_any( const std::string &id,
-                      const std::array<std::string_view, N> &needles ) -> bool
-{
-    return std::ranges::any_of( needles, [&]( const std::string_view needle ) {
-        return id.contains( needle );
+    return id_contains_any( id, std::array<std::string_view, 13> {
+        "sandwich", "burger", "hotdog", "pizza", "taco", "quesadilla", "stew",
+        "soup", "curry", "salad", "pie", "burrito", "fries"
     } );
 }
 
