@@ -25,18 +25,19 @@ auto is_comestible_candidate( const item &it ) -> bool
 
 auto is_finished_dish( const item &it ) -> bool
 {
-    if( proc::read_payload( it ) ) {
-        return true;
-    }
-
     if( !it.is_comestible() ) {
         return false;
+    }
+
+    if( proc::read_payload( it ) ) {
+        return true;
     }
 
     const auto &id = it.typeId().str();
     return id.contains( "sandwich" ) || id.contains( "burger" ) || id.contains( "hotdog" ) ||
            id.contains( "pizza" ) || id.contains( "taco" ) || id.contains( "quesadilla" ) ||
-           id.contains( "stew" ) || id.contains( "soup" ) || id.contains( "salad" );
+           id.contains( "stew" ) || id.contains( "soup" ) || id.contains( "curry" ) ||
+           id.contains( "salad" );
 }
 
 auto normalized_hp( const item &it ) -> float
@@ -54,7 +55,11 @@ auto default_tags( const item &it ) -> std::vector<std::string>
 {
     auto ret = std::vector<std::string> {};
     const auto &id = it.typeId().str();
-    const auto raw_ingredient_candidate = is_comestible_candidate( it ) && !is_finished_dish( it );
+    const auto finished_dish = is_finished_dish( it );
+    const auto raw_ingredient_candidate = is_comestible_candidate( it ) && !finished_dish;
+    if( finished_dish ) {
+        ret.push_back( "dish" );
+    }
     if( raw_ingredient_candidate &&
         ( ( !it.count_by_charges() &&
             has_material( it, material_id( "wheat" ) ) ) ||

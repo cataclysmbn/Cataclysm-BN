@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "item.h"
+#include "proc_fact.h"
 #include "proc_item.h"
 #include "proc_schema.h"
 
@@ -140,6 +141,33 @@ TEST_CASE( "proc_make_item_applies_weapon_blob_to_item", "[proc][make][weapon]" 
     CHECK( made->type_name() == "forged sword" );
     REQUIRE( proc::read_payload( *made )->parts.size() == 3 );
     CHECK( proc::read_payload( *made )->parts[0].role == "blade" );
+}
+
+TEST_CASE( "proc_make_item_names_stews_from_selected_raw_ingredients", "[proc][make][food]" )
+{
+    auto sch = proc::schema{};
+    sch.id = proc::schema_id( "stew" );
+    sch.cat = "food";
+    sch.res = itype_id( "stew_generic" );
+    sch.slots = {
+        proc::slot_data{ .id = proc::slot_id( "base" ), .role = "base", .min = 1, .max = 1, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "veg" ), .role = "veg", .min = 1, .max = 4, .rep = true, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "meat" ), .role = "meat", .min = 0, .max = 3, .rep = true, .ok = {}, .no = {} }
+    };
+
+    const auto broth = proc::normalize_part_fact( item( "broth" ), { .ix = 1 } );
+    const auto carrot = proc::normalize_part_fact( item( "carrot" ), { .ix = 2 } );
+    const auto cooked_meat = proc::normalize_part_fact( item( "meat_cooked" ), { .ix = 3 } );
+
+    auto opts = proc::make_opts{};
+    opts.mode = proc::hist::compact;
+    opts.slots = { proc::slot_id( "base" ), proc::slot_id( "veg" ) };
+    const auto vegetable_stew = proc::make_item( sch, { broth, carrot }, opts );
+    CHECK( vegetable_stew->type_name() == "vegetable stew" );
+
+    opts.slots = { proc::slot_id( "base" ), proc::slot_id( "veg" ), proc::slot_id( "meat" ) };
+    const auto meat_stew = proc::make_item( sch, { broth, carrot, cooked_meat }, opts );
+    CHECK( meat_stew->type_name() == "meat stew" );
 }
 
 TEST_CASE( "proc_compact_restore_preserves_spear_part_damage", "[proc][make][compact]" )

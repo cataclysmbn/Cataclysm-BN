@@ -1,11 +1,15 @@
 #include "catch/catch.hpp"
 
+#include <fstream>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "item.h"
 #include "json.h"
 #include "proc_builder.h"
+#include "proc_fact.h"
 #include "proc_schema.h"
 #include "recipe_dictionary.h"
 
@@ -32,6 +36,28 @@ auto load_recipe_for_test( const std::string &json ) -> recipe
     auto rec = recipe{};
     rec.load( jsin.get_object(), "test" );
     return rec;
+}
+
+auto load_schema_from_file( const std::string &path, const std::string &id ) -> proc::schema
+{
+    proc::reset();
+
+    auto file = std::ifstream( path, std::ios::binary );
+    REQUIRE( file.is_open() );
+
+    auto jsin = JsonIn( file );
+    for( JsonObject jo : jsin.get_array() ) {
+        jo.allow_omitted_members();
+        if( jo.get_string( "type" ) != "PROC" || jo.get_string( "id" ) != id ) {
+            continue;
+        }
+        proc::load( jo, path );
+    }
+
+    REQUIRE( proc::has( proc::schema_id( id ) ) );
+    const auto loaded = proc::get( proc::schema_id( id ) );
+    proc::reset();
+    return loaded;
 }
 
 } // namespace
@@ -152,6 +178,27 @@ TEST_CASE( "proc_builder_limits_repeated_charge_picks", "[proc][builder]" )
     REQUIRE( proc::add_pick( state, sch, proc::slot_id( "base" ), 1 ) );
     REQUIRE( proc::add_pick( state, sch, proc::slot_id( "base" ), 1 ) );
     CHECK_FALSE( proc::add_pick( state, sch, proc::slot_id( "base" ), 1 ) );
+}
+
+TEST_CASE( "proc_builder_stew_excludes_finished_dishes_from_candidates", "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/stew.json", "stew" );
+
+    const auto broth = proc::normalize_part_fact( item( "broth" ), { .ix = 1 } );
+    const auto carrot = proc::normalize_part_fact( item( "carrot" ), { .ix = 2 } );
+    const auto cooked_meat = proc::normalize_part_fact( item( "meat_cooked" ), { .ix = 3 } );
+    const auto veggie_soup = proc::normalize_part_fact( item( "soup_veggy" ), { .ix = 4 } );
+    const auto meat_curry = proc::normalize_part_fact( item( "curry_meat" ), { .ix = 5 } );
+
+    const auto state = proc::build_state( sch, { broth, carrot, cooked_meat, veggie_soup, meat_curry } );
+    const auto &veg_candidates = state.cand.at( proc::slot_id( "veg" ) );
+    const auto &meat_candidates = state.cand.at( proc::slot_id( "meat" ) );
+
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 2 ) ) != veg_candidates.end() );
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 4 ) ) == veg_candidates.end() );
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 5 ) ) == veg_candidates.end() );
+    CHECK( std::ranges::find( meat_candidates, proc::part_ix( 3 ) ) != meat_candidates.end() );
+    CHECK( std::ranges::find( meat_candidates, proc::part_ix( 5 ) ) == meat_candidates.end() );
 }
 
 TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][weapon]" )
