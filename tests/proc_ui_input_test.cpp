@@ -92,3 +92,32 @@ TEST_CASE( "proc_builder_search_mode_updates_and_clears_query", "[proc][ui]" )
     CHECK( deleted_empty.handled );
     CHECK( deleted_empty.search_query.empty() );
 }
+
+TEST_CASE( "proc_builder_search_quit_returns_to_previous_panel", "[proc][ui]" )
+{
+    const auto to_slots = proc::handle_builder_search_input( {
+        .focus = proc::builder_focus::search,
+        .return_focus = proc::builder_focus::slots,
+        .action = "QUIT",
+        .ch = 0,
+        .text = "",
+        .search_query = "bread",
+    } );
+    const auto to_candidates = proc::handle_builder_search_input( {
+        .focus = proc::builder_focus::search,
+        .return_focus = proc::builder_focus::candidates,
+        .action = "QUIT",
+        .ch = 0,
+        .text = "",
+        .search_query = "bread",
+    } );
+
+    CHECK( to_slots.handled );
+    CHECK( to_slots.focus == proc::builder_focus::slots );
+    CHECK( to_slots.return_focus == proc::builder_focus::slots );
+    CHECK( to_slots.search_query == "bread" );
+    CHECK( to_candidates.handled );
+    CHECK( to_candidates.focus == proc::builder_focus::candidates );
+    CHECK( to_candidates.return_focus == proc::builder_focus::candidates );
+    CHECK( to_candidates.search_query == "bread" );
+}

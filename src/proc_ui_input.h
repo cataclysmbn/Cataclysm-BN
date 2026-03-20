@@ -13,6 +13,7 @@ enum class builder_focus : int {
 
 struct builder_input_options {
     builder_focus focus = builder_focus::slots;
+    builder_focus return_focus = builder_focus::candidates;
     std::string action;
     int ch = 0;
     std::string text;
@@ -21,6 +22,7 @@ struct builder_input_options {
 
 struct builder_input_result {
     builder_focus focus = builder_focus::slots;
+    builder_focus return_focus = builder_focus::candidates;
     std::string search_query;
     bool handled = false;
 };
