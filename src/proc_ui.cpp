@@ -278,9 +278,7 @@ auto missing_required_slots( const proc::schema &sch,
 {
     auto ret = std::vector<std::string> {};
     std::ranges::for_each( sch.slots, [&]( const proc::slot_data & slot ) {
-        const auto iter = state.cand.find( slot.id );
-        const auto missing = slot.min > 0 && ( iter == state.cand.end() || iter->second.empty() );
-        if( missing ) {
+        if( !proc::slot_can_meet_minimum( state, sch, slot.id ) ) {
             ret.push_back( slot.role );
         }
     } );

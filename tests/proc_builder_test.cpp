@@ -272,6 +272,51 @@ TEST_CASE( "proc_builder_filters_out_exhausted_candidates", "[proc][builder]" )
     CHECK( proc::filter_available_candidates( state, candidates ) == std::vector<proc::part_ix> { 2 } );
 }
 
+TEST_CASE( "proc_builder_required_slots_count_total_uses_toward_minimum", "[proc][builder]" )
+{
+    const auto sch = load_schema_for_test( R"(
+{
+  "type": "PROC",
+  "id": "double_bread",
+  "cat": "food",
+  "res": "sandwich_generic",
+  "slot": [
+    { "id": "bread", "role": "bread", "min": 2, "max": 3, "rep": true, "ok": [ "tag:bread" ] }
+  ]
+}
+    )" );
+
+    auto single_use_bread = proc::part_fact{};
+    single_use_bread.ix = 1;
+    single_use_bread.id = itype_id( "bread" );
+    single_use_bread.tag = { "bread" };
+    single_use_bread.uses = 1;
+
+    auto double_use_bread = single_use_bread;
+    double_use_bread.ix = 2;
+    double_use_bread.uses = 2;
+
+    const auto insufficient = proc::build_state( sch, { single_use_bread } );
+    CHECK_FALSE( proc::slot_can_meet_minimum( insufficient, sch, proc::slot_id( "bread" ) ) );
+
+    const auto sufficient = proc::build_state( sch, { double_use_bread } );
+    CHECK( proc::slot_can_meet_minimum( sufficient, sch, proc::slot_id( "bread" ) ) );
+}
+
+TEST_CASE( "proc_builder_sandwich_bread_slot_requires_two_total_bread_uses", "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/sandwich.json", "sandwich" );
+
+    auto bread = proc::normalize_part_fact( item( "bread" ), { .ix = 1 } );
+    bread.uses = 1;
+
+    const auto one_bread = proc::build_state( sch, { bread } );
+    CHECK_FALSE( proc::slot_can_meet_minimum( one_bread, sch, proc::slot_id( "bread" ) ) );
+
+    const auto two_breads = proc::build_state( sch, { bread, proc::normalize_part_fact( item( "bread" ), { .ix = 2 } ) } );
+    CHECK( proc::slot_can_meet_minimum( two_breads, sch, proc::slot_id( "bread" ) ) );
+}
+
 TEST_CASE( "proc_builder_stew_excludes_finished_dishes_from_candidates", "[proc][builder][food]" )
 {
     const auto sch = load_schema_from_file( "data/json/proc/stew.json", "stew" );

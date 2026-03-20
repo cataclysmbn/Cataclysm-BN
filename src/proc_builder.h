@@ -36,6 +36,7 @@ auto pick_count( const builder_state &state, part_ix ix ) -> int;
 auto remaining_uses( const builder_state &state, part_ix ix ) -> int;
 auto filter_available_candidates( const builder_state &state,
                                   const std::vector<part_ix> &candidates ) -> std::vector<part_ix>;
+auto slot_can_meet_minimum( const builder_state &state, const schema &sch, const slot_id &slot ) -> bool;
 auto slot_complete( const builder_state &state, const schema &sch, const slot_id &slot ) -> bool;
 auto complete( const builder_state &state, const schema &sch ) -> bool;
 auto add_pick( builder_state &state, const schema &sch, const slot_id &slot, part_ix ix ) -> bool;
