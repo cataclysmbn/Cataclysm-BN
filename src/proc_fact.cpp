@@ -33,7 +33,8 @@ auto default_tags( const item &it ) -> std::vector<std::string>
 {
     auto ret = std::vector<std::string> {};
     const auto &id = it.typeId().str();
-    if( ( it.is_comestible() && !it.count_by_charges() && has_material( it, material_id( "wheat" ) ) ) ||
+    if( ( it.is_comestible() && !it.count_by_charges() &&
+          has_material( it, material_id( "wheat" ) ) ) ||
         id.contains( "bread" ) || id.contains( "bun" ) || id.contains( "bagel" ) ||
         id.contains( "toast" ) || id.contains( "roll" ) || id.contains( "tortilla" ) ) {
         ret.push_back( "bread" );
