@@ -120,7 +120,7 @@ if ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
     set(_OS_DARWIN_ 1)
     add_definitions(-DMACOSX)
     if (TILES)
-        add_definitions(-DOSX_SDL2_LIBS)
+        add_definitions(-DOSX_SDL3_LIBS)
     endif ()
 endif ()
 
@@ -330,42 +330,42 @@ endif ()
 # Check for build types and libraries
 if (TILES)
     # Find SDL, SDL_ttf & SDL_image for graphical install
-    message(STATUS "Searching for SDL2 library --")
+    message(STATUS "Searching for SDL3 library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
         set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
-        # ^^ Use sdl2-config.cmake provided by the system or VCPKG
-        find_package(SDL2)
-        if(NOT SDL2_FOUND)
-            # Use our CMakeModules/Find/FindSDL2.cmake
+        # ^^ Use sdl3-config.cmake provided by the system or VCPKG
+        find_package(SDL3 CONFIG REQUIRED)
+        if(NOT SDL3_FOUND)
+            # Use our CMakeModules/Find/FindSDL3.cmake
             set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
-            find_package(SDL2)
+            find_package(SDL3)
         endif()
         set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
     endif()
-    if (NOT (SDL2_FOUND OR TARGET SDL2::SDL2 OR TARGET SDL2::SDL2-static))
+    if (NOT (SDL3_FOUND OR TARGET SDL3::SDL3 OR TARGET SDL3::SDL3-static))
         message(FATAL_ERROR
-                "This project requires SDL2 to be installed to compile in graphical mode.  \
-                 Please install the SDL2 development libraries, \
+                "This project requires SDL3 to be installed to compile in graphical mode.  \
+                 Please install the SDL3 development libraries, \
                  or try compiling without -DTILES=1 for a text-only compilation. \
                  See CMake compiling guide for details and more info.")
     endif ()
 
-    message(STATUS "Searching for SDL2_TTF library --")
-    find_package(SDL2_ttf)
-    if (NOT (SDL2_TTF_FOUND OR TARGET SDL2::SDL2_ttf OR TARGET SDL2_ttf::SDL2_ttf-static))
+    message(STATUS "Searching for SDL3_ttf library --")
+    find_package(SDL3_ttf CONFIG REQUIRED)
+    if (NOT (SDL3_TTF_FOUND OR TARGET SDL3_ttf::SDL3_ttf OR TARGET SDL3_ttf::SDL3_ttf-static))
         message(FATAL_ERROR
-                "This project requires SDL2_ttf to be installed to compile in graphical mode. \
-                Please install the SDL2_ttf development libraries, \
+                "This project requires SDL3_ttf to be installed to compile in graphical mode. \
+                Please install the SDL3_ttf development libraries, \
                 or try compiling without -DTILES=1 for a text-only compilation. \
                 See CMake compiling guide for details and more info.")
     endif ()
 
-    message(STATUS "Searching for SDL2_image library --")
-    find_package(SDL2_image)
-    if (NOT (SDL2_IMAGE_FOUND OR TARGET SDL2::SDL2_image OR TARGET SDL2_image::SDL2_image-static))
+    message(STATUS "Searching for SDL3_image library --")
+    find_package(SDL3_image CONFIG REQUIRED)
+    if (NOT (SDL3_IMAGE_FOUND OR TARGET SDL3_image::SDL3_image OR TARGET SDL3_image::SDL3_image-static))
         message(FATAL_ERROR
-                "This project requires SDL2_image to be installed to compile in graphical mode. \
-                 Please install the SDL2_image development libraries, \
+                "This project requires SDL3_image to be installed to compile in graphical mode. \
+                 Please install the SDL3_image development libraries, \
                  or try compiling without -DTILES=1 for a text-only compilation. \
                  See doc/COMPILING/COMPILING-CMAKE.md for details and more info.")
     endif ()
@@ -400,12 +400,12 @@ if (SOUND)
     endif ()
 
     # Sound requires SDL_mixer library
-    message(STATUS "Searching for SDL2_mixer library --")
-    find_package(SDL2_mixer)
-    if (NOT (SDL2_MIXER_FOUND OR TARGET SDL2_mixer::SDL2_mixer
-                              OR TARGET SDL2_mixer::SDL2_mixer-static))
+    message(STATUS "Searching for SDL3_mixer library --")
+    find_package(SDL3_mixer CONFIG REQUIRED)
+    if (NOT (SDL3_MIXER_FOUND OR TARGET SDL3_mixer::SDL3_mixer
+                              OR TARGET SDL3_mixer::SDL3_mixer-static))
         message(FATAL_ERROR
-                "You need the SDL2_mixer development library \
+                "You need the SDL3_mixer development library \
                     to be able to compile with sound enabled. \
                     See CMake compiling guide for details and more info.")
     endif()

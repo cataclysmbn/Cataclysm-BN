@@ -239,7 +239,7 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, i
     // Set SDL clip rectangle to prevent drawing outside the window bounds
     const SDL_Renderer_Ptr &renderer = get_sdl_renderer();
     SDL_Rect clip_rect = { win_left, win_top, win_width, win_height };
-    SDL_RenderSetClipRect( renderer.get(), &clip_rect );
+    SDL_SetRenderClipRect( renderer.get(), &clip_rect );
 
     // Get all parts that should be displayed (one per tile)
     const std::vector<int> structural_parts = veh.all_standalone_parts();
@@ -290,7 +290,7 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, i
     draw_cursor_at_pixel( center_px );
 
     // Clear the clip rectangle
-    SDL_RenderSetClipRect( renderer.get(), nullptr );
+    SDL_SetRenderClipRect( renderer.get(), nullptr );
 }
 
 vehicle_preview_window::~vehicle_preview_window()
@@ -306,7 +306,7 @@ void vehicle_preview_window::clear()
 
     // Ensure clip rectangle is cleared
     const auto &renderer = get_sdl_renderer();
-    SDL_RenderSetClipRect( renderer.get(), nullptr );
+    SDL_SetRenderClipRect( renderer.get(), nullptr );
 }
 
 #endif // TILES

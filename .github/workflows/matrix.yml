@@ -83,10 +83,10 @@ jobs:
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
 
-      - name: install SDL2 dependencies (ubuntu)
+      - name: install SDL3 dependencies (ubuntu)
         if: ${{ env.SKIP == 'false' && matrix.tiles == 1 }}
         run: |
-          sudo apt-get install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer-dev libpulse-dev libflac-dev
+          sudo apt-get install libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
 
       # problem matchers are only ran on GCC to reduce error spam
       - name: add problem matcher

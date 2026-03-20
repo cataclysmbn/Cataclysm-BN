@@ -50,7 +50,7 @@ env:
   CMAKE_PRESET: windows-tiles-sounds-x64-msvc
 
 jobs:
-  build_catatclysm:
+  build_cataclysm:
     name: Build
     runs-on: windows-latest
     if: github.event.pull_request.draft == false
@@ -93,6 +93,7 @@ jobs:
         id: runvcpkg
         with:
           vcpkgDirectory: "${{ runner.workspace }}/b/vcpkg"
+          vcpkgGitCommitId: "a8f78d257ade3c2e7999c1129a6d29971ae32006"
 
       - name: Integrate vcpkg
         run: |
@@ -125,6 +126,15 @@ jobs:
 
       - name: Configure and Build
         uses: lukka/run-cmake@v10
+        env:
+          # lukka/run-cmake@v10 builds cmake's env from `vcpkg env set` output and only reads the
+          # first line of each NAME=VALUE pair. X_VCPKG_RECURSIVE_DATA is a multi-line JSON block,
+          # so it gets truncated to just "{", causing cmake to fail with "Unexpected EOF". Override
+          # it to empty so cmake never sees the mangled value.
+          X_VCPKG_RECURSIVE_DATA: ""
+          # `vcpkg env set` output does not include VCPKG_ROOT, so cmake inherits it from the
+          # runner image's system env (C:\vcpkg) instead of our pinned install. Set it explicitly.
+          VCPKG_ROOT: "${{ runner.workspace }}/b/vcpkg"
         with:
           configurePreset: ${{ env.CMAKE_PRESET }}
           buildPreset: windows-msvc-build
@@ -133,9 +143,9 @@ jobs:
       - name: Dump logs if build failed
         if: failure()
         run: |
-          echo =================================================
+          echo ============================================================
           Get-ChildItem "${{ runner.workspace }}/Cataclysm-BN/out/build/$env:CMAKE_PRESET" -Recurse
-          echo =================================================
+          echo ============================================================
 
       - name: Compile .mo files for localization
         run: |

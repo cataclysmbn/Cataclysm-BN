@@ -46,11 +46,6 @@
 #include "profile.h"
 
 #if defined(SDL_SOUND)
-#   if defined(_MSC_VER) && defined(USE_VCPKG)
-#      include <SDL2/SDL_mixer.h>
-#   else
-#      include <SDL_mixer.h>
-#   endif
 #   include <thread>
 #   if defined(_WIN32) && !defined(_MSC_VER)
 #       include "mingw.thread.h"
@@ -668,63 +663,6 @@ std::string sounds::sound_at( const tripoint &location )
 }
 
 #if defined(SDL_SOUND)
-void sfx::fade_audio_group( group group, int duration )
-{
-    if( test_mode ) {
-        return;
-    }
-    Mix_FadeOutGroup( static_cast<int>( group ), duration );
-}
-
-void sfx::fade_audio_channel( channel channel, int duration )
-{
-    if( test_mode ) {
-        return;
-    }
-    Mix_FadeOutChannel( static_cast<int>( channel ), duration );
-}
-
-bool sfx::is_channel_playing( channel channel )
-{
-    if( test_mode ) {
-        return false;
-    }
-    return Mix_Playing( static_cast<int>( channel ) ) != 0;
-}
-
-void sfx::stop_sound_effect_fade( channel channel, int duration )
-{
-    if( test_mode ) {
-        return;
-    }
-    if( Mix_FadeOutChannel( static_cast<int>( channel ), duration ) == -1 ) {
-        dbg( DL::Error ) << "Failed to stop sound effect: " << Mix_GetError();
-    }
-}
-
-void sfx::stop_sound_effect_timed( channel channel, int time )
-{
-    if( test_mode ) {
-        return;
-    }
-    Mix_ExpireChannel( static_cast<int>( channel ), time );
-}
-
-int sfx::set_channel_volume( channel channel, int volume )
-{
-    if( test_mode ) {
-        return 0;
-    }
-    int ch = static_cast<int>( channel );
-    if( !Mix_Playing( ch ) ) {
-        return -1;
-    }
-    if( Mix_FadingChannel( ch ) != MIX_NO_FADING ) {
-        return -1;
-    }
-    return Mix_Volume( ch, volume );
-}
-
 void sfx::do_vehicle_engine_sfx()
 {
     if( test_mode ) {
@@ -839,7 +777,7 @@ void sfx::do_vehicle_engine_sfx()
     }
 
     if( current_speed != previous_speed ) {
-        Mix_HaltChannel( static_cast<int>( ch ) );
+        fade_audio_channel( ch, 0 );
         add_msg( m_debug, "STOP speed %d =/= %d", current_speed, previous_speed );
         play_ambient_variant_sound( id_and_variant.first, id_and_variant.second,
                                     sfx::get_heard_volume( player_character.pos() ), ch, 1000, pitch );
@@ -856,7 +794,6 @@ void sfx::do_vehicle_exterior_engine_sfx()
     }
 
     static const channel ch = channel::exterior_engine_sound;
-    static const int ch_int = static_cast<int>( ch );
     const avatar &player_character = get_avatar();
     // early bail-outs for efficiency
     if( player_character.in_vehicle ) {
@@ -893,7 +830,7 @@ void sfx::do_vehicle_exterior_engine_sfx()
         return;
     }
 
-    vol = MIX_MAX_VOLUME * noise_factor / veh->vehicle_noise;
+    vol = static_cast<unsigned char>( 128 * noise_factor / veh->vehicle_noise );
     std::pair<std::string, std::string> id_and_variant;
 
     for( size_t e = 0; e < veh->engines.size(); ++e ) {
@@ -916,29 +853,25 @@ void sfx::do_vehicle_exterior_engine_sfx()
 
     if( is_channel_playing( ch ) ) {
         if( engine_external_id_and_variant == id_and_variant ) {
-            Mix_SetPosition( ch_int, to_degrees( get_heard_angle( veh->global_pos3() ) ), 0 );
+            set_channel_3d_position( ch, get_heard_angle( veh->global_pos3() ) );
             set_channel_volume( ch, vol );
-            add_msg( m_debug, "PLAYING exterior_engine_sound, vol: ex:%d true:%d", vol, Mix_Volume( ch_int,
-                     -1 ) );
+            add_msg( m_debug, "PLAYING exterior_engine_sound, vol: %d", vol );
         } else {
             engine_external_id_and_variant = id_and_variant;
-            Mix_HaltChannel( ch_int );
+            fade_audio_channel( ch, 0 );
             add_msg( m_debug, "STOP exterior_engine_sound, change id/var" );
             play_ambient_variant_sound( id_and_variant.first, id_and_variant.second, 128, ch, 0 );
-            Mix_SetPosition( ch_int, to_degrees( get_heard_angle( veh->global_pos3() ) ), 0 );
+            set_channel_3d_position( ch, get_heard_angle( veh->global_pos3() ) );
             set_channel_volume( ch, vol );
             add_msg( m_debug, "START exterior_engine_sound %s %s vol: %d", id_and_variant.first,
-                     id_and_variant.second,
-                     Mix_Volume( ch_int, -1 ) );
+                     id_and_variant.second, get_channel_volume( ch ) );
         }
     } else {
         play_ambient_variant_sound( id_and_variant.first, id_and_variant.second, 128, ch, 0 );
-        add_msg( m_debug, "Vol: %d %d", vol, Mix_Volume( ch_int, -1 ) );
-        Mix_SetPosition( ch_int, to_degrees( get_heard_angle( veh->global_pos3() ) ), 0 );
-        add_msg( m_debug, "Vol: %d %d", vol, Mix_Volume( ch_int, -1 ) );
+        set_channel_3d_position( ch, get_heard_angle( veh->global_pos3() ) );
         set_channel_volume( ch, vol );
-        add_msg( m_debug, "START exterior_engine_sound NEW %s %s vol: ex:%d true:%d", id_and_variant.first,
-                 id_and_variant.second, vol, Mix_Volume( ch_int, -1 ) );
+        add_msg( m_debug, "START exterior_engine_sound NEW %s %s vol: ex:%d true:%d",
+                 id_and_variant.first, id_and_variant.second, vol, get_channel_volume( ch ) );
     }
 }
 

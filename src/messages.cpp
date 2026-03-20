@@ -22,7 +22,7 @@
 
 #if defined(__ANDROID__)
 #include <optional>
-#include <SDL_keyboard.h>
+#include <SDL3/SDL.h>
 #endif
 #include "options.h"
 

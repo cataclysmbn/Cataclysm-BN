@@ -23,15 +23,6 @@
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
-#if defined(_MSC_VER) && defined(USE_VCPKG)
-#   include <SDL2/SDL_image.h>
-#   include <SDL2/SDL_syswm.h>
-#else
-#ifdef _WIN32
-#   include <SDL_syswm.h>
-#endif
-#endif
-
 #include "avatar.h"
 #include "cata_tiles.h"
 #include "cata_utility.h"
@@ -108,7 +99,7 @@
 
 std::shared_ptr<cata_tiles> tilecontext;
 std::shared_ptr<cata_tiles> overmap_tilecontext;
-static uint32_t lastupdate = 0;
+static Uint64 lastupdate = 0;
 static uint32_t interval = 25;
 static bool needupdate = false;
 static bool need_invalidate_framebuffers = false;
@@ -122,7 +113,7 @@ static Font_Ptr overmap_font;
 
 static SDL_Window_Ptr window;
 static SDL_Renderer_Ptr renderer;
-static SDL_PixelFormat_Ptr format;
+static SDL_PixelFormat format = SDL_PIXELFORMAT_UNKNOWN;
 static SDL_Texture_Ptr display_buffer;
 static GeometryRenderer_Ptr geometry;
 #if defined(__ANDROID__)
@@ -137,9 +128,9 @@ static input_event last_input;
 
 static constexpr int ERR = -1;
 static int inputdelay;         //How long getch will wait for a character to be typed
-static Uint32 delaydpad =
-    std::numeric_limits<Uint32>::max();     // Used for entering diagonal directions with d-pad.
-static Uint32 dpad_delay =
+static Uint64 delaydpad =
+    std::numeric_limits<Uint64>::max();     // Used for entering diagonal directions with d-pad.
+static Uint64 dpad_delay =
     100;   // Delay in milliseconds between registering a d-pad event and processing it.
 static bool dpad_continuous = false;  // Whether we're currently moving continuously with the dpad.
 static int lastdpad = ERR;      // Keeps track of the last dpad press.
@@ -177,41 +168,15 @@ static void ClearScreen()
 
 static void InitSDL()
 {
-    int init_flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
-    int ret;
+    SDL_InitFlags init_flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO;
 
-#if defined(SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING)
-    SDL_SetHint( SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING, "1" );
-#endif
+    throwErrorIf( !SDL_Init( init_flags ), "SDL_Init failed" );
+    throwErrorIf( !TTF_Init(), "TTF_Init failed" );
+    printErrorIf( !SDL_InitSubSystem( SDL_INIT_JOYSTICK ), "Initializing joystick subsystem failed" );
 
-#if defined(__linux__)
-    // https://bugzilla.libsdl.org/show_bug.cgi?id=3472#c5
-    if( SDL_COMPILEDVERSION == SDL_VERSIONNUM( 2, 0, 5 ) ) {
-        const char *xmod = getenv( "XMODIFIERS" );
-        if( xmod && strstr( xmod, "@im=ibus" ) != nullptr ) {
-            setenv( "XMODIFIERS", "@im=none", 1 );
-        }
-    }
-#endif
+    // SDL uses the OS's input delay; there is no API to query or set INPUT_DELAY directly.
 
-    ret = SDL_Init( init_flags );
-    throwErrorIf( ret != 0, "SDL_Init failed" );
-
-    ret = TTF_Init();
-    throwErrorIf( ret != 0, "TTF_Init failed" );
-
-    // cata_tiles won't be able to load the tiles, but the normal SDL
-    // code will display fine.
-    ret = IMG_Init( IMG_INIT_PNG );
-    printErrorIf( ( ret & IMG_INIT_PNG ) != IMG_INIT_PNG,
-                  "IMG_Init failed to initialize PNG support, tiles won't work" );
-
-    ret = SDL_InitSubSystem( SDL_INIT_JOYSTICK );
-    printErrorIf( ret != 0, "Initializing joystick subsystem failed" );
-
-    //SDL2 has no functionality for INPUT_DELAY, we would have to query it manually, which is expensive
-    //SDL2 instead uses the OS's Input Delay.
-
+    atexit( TTF_Quit );
     atexit( SDL_Quit );
 }
 
@@ -220,10 +185,11 @@ static bool SetupRenderTarget()
     SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_NONE );
     display_buffer.reset( SDL_CreateTexture( renderer.get(), SDL_PIXELFORMAT_ARGB8888,
                           SDL_TEXTUREACCESS_TARGET, WindowWidth / scaling_factor, WindowHeight / scaling_factor ) );
+    SDL_SetTextureScaleMode( display_buffer.get(), SDL_SCALEMODE_NEAREST );
     if( printErrorIf( !display_buffer, "Failed to create window buffer" ) ) {
         return false;
     }
-    if( printErrorIf( SDL_SetRenderTarget( renderer.get(), display_buffer.get() ) != 0,
+    if( printErrorIf( !SDL_SetRenderTarget( renderer.get(), display_buffer.get() ),
                       "SDL_SetRenderTarget failed" ) ) {
         return false;
     }
@@ -241,10 +207,7 @@ static void WinCreate()
     int window_flags = 0;
     WindowWidth = TERMINAL_WIDTH * fontwidth * scaling_factor;
     WindowHeight = TERMINAL_HEIGHT * fontheight * scaling_factor;
-    window_flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-
-    // We want our textures clean and sharp when zooming in.
-    SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "nearest" );
+    window_flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
 #if !defined(__ANDROID__)
     const auto screen_mode = get_option<std::string>( "FULLSCREEN" );
@@ -256,7 +219,7 @@ static void WinCreate()
         window_flags |= SDL_WINDOW_FULLSCREEN;
         fullscreen = true;
     } else if( screen_mode == "windowedbl" ) {
-        window_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+        window_flags |= SDL_WINDOW_FULLSCREEN;
         fullscreen = true;
     } else if( screen_mode == "maximized" ) {
         window_flags |= SDL_WINDOW_MAXIMIZED;
@@ -264,8 +227,13 @@ static void WinCreate()
 #endif
 
     int display = std::stoi( get_option<std::string>( "DISPLAY" ) );
-    if( display < 0 || display >= SDL_GetNumVideoDisplays() ) {
-        display = 0;
+    {
+        int display_count = 0;
+        SDL_DisplayID *displays = SDL_GetDisplays( &display_count );
+        if( display < 0 || display >= display_count || !displays ) {
+            display = 0;
+        }
+        SDL_free( displays );
     }
 
 #if defined(__ANDROID__)
@@ -282,29 +250,21 @@ static void WinCreate()
 #endif
 
     // Prevent mouse|touch input confusion
-#if defined(SDL_HINT_ANDROID_SEPARATE_MOUSE_AND_TOUCH)
-    SDL_SetHint( SDL_HINT_ANDROID_SEPARATE_MOUSE_AND_TOUCH, "1" );
-#else
     SDL_SetHint( SDL_HINT_MOUSE_TOUCH_EVENTS, "0" );
     SDL_SetHint( SDL_HINT_TOUCH_MOUSE_EVENTS, "0" );
 #endif
-#endif
 
-    ::window.reset( SDL_CreateWindow( version.c_str(),
-                                      SDL_WINDOWPOS_CENTERED_DISPLAY( display ),
-                                      SDL_WINDOWPOS_CENTERED_DISPLAY( display ),
-                                      WindowWidth,
-                                      WindowHeight,
-                                      window_flags
-                                    ) );
+    ::window.reset( SDL_CreateWindow( version.c_str(), WindowWidth, WindowHeight, window_flags ) );
     throwErrorIf( !::window, "SDL_CreateWindow failed" );
+    SDL_SetWindowPosition( ::window.get(), SDL_WINDOWPOS_CENTERED_DISPLAY( display ),
+                           SDL_WINDOWPOS_CENTERED_DISPLAY( display ) );
+    SDL_StartTextInput( ::window.get() );
 
 #if !defined(__ANDROID__)
     // On Android SDL seems janky in windowed mode so we're fullscreen all the time.
     // Fullscreen mode is now modified so it obeys terminal width/height, rather than
     // overwriting it with this calculation.
-    if( window_flags & SDL_WINDOW_FULLSCREEN || window_flags & SDL_WINDOW_FULLSCREEN_DESKTOP
-        || window_flags & SDL_WINDOW_MAXIMIZED ) {
+    if( fullscreen || ( window_flags & SDL_WINDOW_MAXIMIZED ) ) {
         SDL_GetWindowSize( ::window.get(), &WindowWidth, &WindowHeight );
         // Ignore previous values, use the whole window, but nothing more.
         TERMINAL_WIDTH = WindowWidth / fontwidth / scaling_factor;
@@ -322,9 +282,8 @@ static void WinCreate()
         oversized_framebuffer[i].chars.assign( TERMINAL_WIDTH, cursecell( "" ) );
     }
 
-    const Uint32 wformat = SDL_GetWindowPixelFormat( ::window.get() );
-    format.reset( SDL_AllocFormat( wformat ) );
-    throwErrorIf( !format, "SDL_AllocFormat failed" );
+    format = SDL_GetWindowPixelFormat( ::window.get() );
+    throwErrorIf( format == SDL_PIXELFORMAT_UNKNOWN, "SDL_GetWindowPixelFormat failed" );
 
     int renderer_id = -1;
 #if !defined(__ANDROID__)
@@ -338,11 +297,10 @@ static void WinCreate()
 
     const int numRenderDrivers = SDL_GetNumRenderDrivers();
     for( int i = 0; i < numRenderDrivers; i++ ) {
-        SDL_RendererInfo ri;
-        SDL_GetRenderDriverInfo( i, &ri );
-        if( renderer_name == ri.name ) {
+        const char *name = SDL_GetRenderDriver( i );
+        if( name && renderer_name == name ) {
             renderer_id = i;
-            DebugLog( DL::Info, DC::Main ) << "Active renderer: " << renderer_id << "/" << ri.name;
+            DebugLog( DL::Info, DC::Main ) << "Active renderer: " << i << "/" << name;
             break;
         }
     }
@@ -350,36 +308,30 @@ static void WinCreate()
     bool software_renderer = get_option<bool>( "SOFTWARE_RENDERING" );
 #endif
 
-#if defined(SDL_HINT_RENDER_BATCHING)
-    SDL_SetHint( SDL_HINT_RENDER_BATCHING, get_option<bool>( "RENDER_BATCHING" ) ? "1" : "0" );
-#endif
     if( !software_renderer ) {
         dbg( DL::Info ) << "Attempting to initialize accelerated SDL renderer.";
 
-        int init_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
-        if( get_option<bool>( "VSYNC" ) ) {
-            init_flags |= SDL_RENDERER_PRESENTVSYNC;
-        }
-
-        renderer.reset( SDL_CreateRenderer( ::window.get(), renderer_id, init_flags ) );
+        const char *renderer_driver = renderer_id >= 0 ? SDL_GetRenderDriver( renderer_id ) : nullptr;
+        renderer.reset( SDL_CreateRenderer( ::window.get(), renderer_driver ) );
         if( printErrorIf( !renderer,
                           "Failed to initialize accelerated renderer, falling back to software rendering" ) ) {
             software_renderer = true;
-        } else if( !SetupRenderTarget() ) {
-            dbg( DL::Error ) << "Failed to initialize display buffer under accelerated rendering, "
-                             "falling back to software rendering.";
-            software_renderer = true;
-            display_buffer.reset();
-            renderer.reset();
+        } else {
+            if( get_option<bool>( "VSYNC" ) ) {
+                SDL_SetRenderVSync( renderer.get(), 1 );
+            }
+            if( !SetupRenderTarget() ) {
+                dbg( DL::Error ) << "Failed to initialize display buffer under accelerated rendering, "
+                                 "falling back to software rendering.";
+                software_renderer = true;
+                display_buffer.reset();
+                renderer.reset();
+            }
         }
     }
 
     if( software_renderer ) {
-        if( get_option<bool>( "FRAMEBUFFER_ACCEL" ) ) {
-            SDL_SetHint( SDL_HINT_FRAMEBUFFER_ACCELERATION, "1" );
-        }
-        renderer.reset( SDL_CreateRenderer( ::window.get(), -1,
-                                            SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE ) );
+        renderer.reset( SDL_CreateRenderer( ::window.get(), "software" ) );
         throwErrorIf( !renderer, "Failed to initialize software renderer" );
         throwErrorIf( !SetupRenderTarget(),
                       "Failed to initialize display buffer under software rendering, unable to continue." );
@@ -390,8 +342,7 @@ static void WinCreate()
 
 #if defined(__ANDROID__)
     // TODO: Not too sure why this works to make fullscreen on Android behave. :/
-    if( window_flags & SDL_WINDOW_FULLSCREEN || window_flags & SDL_WINDOW_FULLSCREEN_DESKTOP
-        || window_flags & SDL_WINDOW_MAXIMIZED ) {
+    if( fullscreen || ( window_flags & SDL_WINDOW_MAXIMIZED ) ) {
         SDL_GetWindowSize( ::window.get(), &WindowWidth, &WindowHeight );
     }
 
@@ -403,29 +354,30 @@ static void WinCreate()
 
     // Errors here are ignored, worst case: the option does not work as expected,
     // but that won't crash
-    if( get_option<std::string>( "HIDE_CURSOR" ) != "show" && SDL_ShowCursor( -1 ) ) {
-        SDL_ShowCursor( SDL_DISABLE );
+    if( get_option<std::string>( "HIDE_CURSOR" ) != "show" && SDL_CursorVisible() ) {
+        SDL_HideCursor();
     } else {
-        SDL_ShowCursor( SDL_ENABLE );
+        SDL_ShowCursor();
     }
 
     // Initialize joysticks.
-    int numjoy = SDL_NumJoysticks();
+    int numjoy = 0;
+    SDL_JoystickID *joystick_ids = SDL_GetJoysticks( &numjoy );
 
     if( get_option<bool>( "ENABLE_JOYSTICK" ) && numjoy >= 1 ) {
         if( numjoy > 1 ) {
             dbg( DL::Warn ) << "You have more than one gamepads/joysticks plugged in, "
                             "only the first will be used.";
         }
-        joystick = SDL_JoystickOpen( 0 );
-        printErrorIf( joystick == nullptr, "SDL_JoystickOpen failed" );
+        joystick = SDL_OpenJoystick( joystick_ids[0] );
+        printErrorIf( joystick == nullptr, "SDL_OpenJoystick failed" );
         if( joystick ) {
-            printErrorIf( SDL_JoystickEventState( SDL_ENABLE ) < 0,
-                          "SDL_JoystickEventState(SDL_ENABLE) failed" );
+            SDL_SetJoystickEventsEnabled( true );
         }
     } else {
         joystick = nullptr;
     }
+    SDL_free( joystick_ids );
 
     // Set up audio mixer.
     init_sound();
@@ -450,12 +402,12 @@ static void WinDestroy()
     tilecontext.reset();
 
     if( joystick ) {
-        SDL_JoystickClose( joystick );
+        SDL_CloseJoystick( joystick );
 
         joystick = nullptr;
     }
     geometry.reset();
-    format.reset();
+    format = SDL_PIXELFORMAT_UNKNOWN;
     display_buffer.reset();
     renderer.reset();
     ::window.reset();
@@ -477,7 +429,7 @@ static bool quick_shortcuts_enabled = true;
 // For previewing the terminal size with a transparent rectangle overlay when user is adjusting it in the settings
 static int preview_terminal_width = -1;
 static int preview_terminal_height = -1;
-static uint32_t preview_terminal_change_time = 0;
+static Uint64 preview_terminal_change_time = 0;
 
 extern "C" {
 
@@ -572,7 +524,7 @@ void refresh_display()
 // only update if the set interval has elapsed
 static void try_sdl_update()
 {
-    uint32_t now = SDL_GetTicks();
+    Uint64 now = SDL_GetTicks();
     if( now - lastupdate >= interval ) {
         refresh_display();
     } else {
@@ -863,11 +815,11 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     {
         //set clipping to prevent drawing over stuff we shouldn't
         SDL_Rect clipRect = { dest.x, dest.y, width, height };
-        printErrorIf( SDL_RenderSetClipRect( renderer.get(), &clipRect ) != 0,
-                      "SDL_RenderSetClipRect failed" );
+        printErrorIf( !SDL_SetRenderClipRect( renderer.get(), &clipRect ),
+                      "SDL_SetRenderClipRect failed" );
 
         //fill render area with black to prevent artifacts where no new pixels are drawn
-        geometry->rect( renderer, clipRect, SDL_Color() );
+        geometry->rect( renderer, point{ clipRect.x, clipRect.y }, clipRect.w, clipRect.h, SDL_Color() );
     }
 
     point s;
@@ -1189,9 +1141,9 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         const auto label_bg = [&]( const tripoint_abs_sm & pos, const std::string & name ) {
             const int name_length = utf8_width( name );
             const point draw_pos = abs_sm_to_draw_label( pos, name_length );
-            SDL_Rect clipRect = { draw_pos.x, draw_pos.y, name_length * fontwidth, fontheight };
+            const SDL_Rect clipRect = { draw_pos.x, draw_pos.y, name_length * fontwidth, fontheight };
 
-            geometry->rect( renderer, clipRect, SDL_Color() );
+            geometry->rect( renderer, point{ clipRect.x, clipRect.y }, clipRect.w, clipRect.h, SDL_Color() );
 
             draw_string( *font, renderer, geometry, name, draw_pos, 11 );
         };
@@ -1208,14 +1160,15 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         const auto label_bg_omt = [&]( const tripoint_abs_omt & pos, const std::string & name ) {
             const auto name_length = utf8_width( name );
             const auto draw_pos = abs_omt_to_draw_label( pos, name_length );
-            auto clip_rect = SDL_Rect{
+            const auto clip_rect = SDL_Rect{
                 .x = draw_pos.x,
                 .y = draw_pos.y,
                 .w = name_length * fontwidth,
                 .h = fontheight
             };
 
-            geometry->rect( renderer, clip_rect, SDL_Color() );
+            geometry->rect( renderer, point{ clip_rect.x, clip_rect.y }, clip_rect.w, clip_rect.h,
+                            SDL_Color() );
 
             draw_string( *font, renderer, geometry, name, draw_pos, 11 );
         };
@@ -1319,7 +1272,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             fontwidth * utf8_width( header_string ) + padding * 2,
             fontheight + padding * 2
         };
-        geometry->rect( renderer, header_background_rect, SDL_Color{ 0, 0, 0, 175 } );
+        geometry->rect( renderer, point{ header_background_rect.x, header_background_rect.y },
+                        header_background_rect.w, header_background_rect.h, SDL_Color{ 0, 0, 0, 175 } );
         draw_note_text( draw_point, header_string, header_color );
         draw_point.y += fontheight + padding * 2;
 
@@ -1360,7 +1314,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 fontwidth *line_length + padding * 2,
                 fontheight + padding * 2
             };
-            geometry->rect( renderer, background_rect, SDL_Color{ 0, 0, 0, 175 } );
+            geometry->rect( renderer, point{ background_rect.x, background_rect.y },
+                            background_rect.w, background_rect.h, SDL_Color{ 0, 0, 0, 175 } );
 
             // Draw colored text segments
             for( auto &colored_line : colored_lines ) {
@@ -1372,15 +1327,15 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         }
     }
 
-    printErrorIf( SDL_RenderSetClipRect( renderer.get(), nullptr ) != 0,
-                  "SDL_RenderSetClipRect failed" );
+    printErrorIf( !SDL_SetRenderClipRect( renderer.get(), nullptr ),
+                  "SDL_SetRenderClipRect failed" );
 }
 
 static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offset )
 {
     if( scaling_factor > 1 ) {
-        SDL_RenderSetLogicalSize( renderer.get(), WindowWidth / scaling_factor,
-                                  WindowHeight / scaling_factor );
+        SDL_SetRenderLogicalPresentation( renderer.get(), WindowWidth / scaling_factor,
+                                          WindowHeight / scaling_factor, SDL_LOGICAL_PRESENTATION_STRETCH );
     }
 
     cata_cursesport::WINDOW *const win = w.get<cata_cursesport::WINDOW>();
@@ -1574,8 +1529,8 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w )
 void cata_cursesport::curses_drawwindow( const catacurses::window &w )
 {
     if( scaling_factor > 1 ) {
-        SDL_RenderSetLogicalSize( renderer.get(), WindowWidth / scaling_factor,
-                                  WindowHeight / scaling_factor );
+        SDL_SetRenderLogicalPresentation( renderer.get(), WindowWidth / scaling_factor,
+                                          WindowHeight / scaling_factor, SDL_LOGICAL_PRESENTATION_STRETCH );
     }
     WINDOW *const win = w.get<WINDOW>();
     bool update = false;
@@ -1772,11 +1727,11 @@ static int end_alt_code()
 static int HandleDPad()
 {
     // Check if we have a gamepad d-pad event.
-    if( SDL_JoystickGetHat( joystick, 0 ) != SDL_HAT_CENTERED ) {
+    if( SDL_GetJoystickHat( joystick, 0 ) != SDL_HAT_CENTERED ) {
         // When someone tries to press a diagonal, they likely will
         // press a single direction first. Wait a few milliseconds to
         // give them time to press both of the buttons for the diagonal.
-        int button = SDL_JoystickGetHat( joystick, 0 );
+        int button = SDL_GetJoystickHat( joystick, 0 );
         int lc = ERR;
         if( button == SDL_HAT_LEFT ) {
             lc = JOY_LEFT;
@@ -1796,7 +1751,7 @@ static int HandleDPad()
             lc = JOY_RIGHTDOWN;
         }
 
-        if( delaydpad == std::numeric_limits<Uint32>::max() ) {
+        if( delaydpad == std::numeric_limits<Uint64>::max() ) {
             delaydpad = SDL_GetTicks() + dpad_delay;
             queued_dpad = lc;
         }
@@ -1827,7 +1782,7 @@ static int HandleDPad()
         }
     } else {
         dpad_continuous = false;
-        delaydpad = std::numeric_limits<Uint32>::max();
+        delaydpad = std::numeric_limits<Uint64>::max();
 
         // If we didn't hold it down for a while, just
         // fire the last registered press.
@@ -1920,14 +1875,14 @@ static void end_arrow_combo()
  * -1 when a ALT+number sequence has been started,
  * or something that a call to ncurses getch would return.
  */
-static int sdl_keysym_to_curses( const SDL_Keysym &keysym )
+static int sdl_keysym_to_curses( const SDL_Keycode sym, const SDL_Keymod mod )
 {
 
     const std::string diag_mode = get_option<std::string>( "DIAG_MOVE_WITH_MODIFIERS_MODE" );
 
     if( diag_mode == "mode1" ) {
-        if( keysym.mod & KMOD_CTRL && sdl_keycode_is_arrow( keysym.sym ) ) {
-            return handle_arrow_combo( keysym.sym );
+        if( mod & SDL_KMOD_CTRL && sdl_keycode_is_arrow( sym ) ) {
+            return handle_arrow_combo( sym );
         } else {
             end_arrow_combo();
         }
@@ -1935,8 +1890,8 @@ static int sdl_keysym_to_curses( const SDL_Keysym &keysym )
 
     if( diag_mode == "mode2" ) {
         //Shift + Cursor Arrow (diagonal clockwise)
-        if( keysym.mod & KMOD_SHIFT ) {
-            switch( keysym.sym ) {
+        if( mod & SDL_KMOD_SHIFT ) {
+            switch( sym ) {
                 case SDLK_LEFT:
                     return inp_mngr.get_first_char_for_action( "LEFTUP" );
                 case SDLK_RIGHT:
@@ -1948,8 +1903,8 @@ static int sdl_keysym_to_curses( const SDL_Keysym &keysym )
             }
         }
         //Ctrl + Cursor Arrow (diagonal counter-clockwise)
-        if( keysym.mod & KMOD_CTRL ) {
-            switch( keysym.sym ) {
+        if( mod & SDL_KMOD_CTRL ) {
+            switch( sym ) {
                 case SDLK_LEFT:
                     return inp_mngr.get_first_char_for_action( "LEFTDOWN" );
                 case SDLK_RIGHT:
@@ -1964,8 +1919,8 @@ static int sdl_keysym_to_curses( const SDL_Keysym &keysym )
 
     if( diag_mode == "mode3" ) {
         //Shift + Cursor Left/RightArrow
-        if( keysym.mod & KMOD_SHIFT ) {
-            switch( keysym.sym ) {
+        if( mod & SDL_KMOD_SHIFT ) {
+            switch( sym ) {
                 case SDLK_LEFT:
                     return inp_mngr.get_first_char_for_action( "LEFTUP" );
                 case SDLK_RIGHT:
@@ -1973,8 +1928,8 @@ static int sdl_keysym_to_curses( const SDL_Keysym &keysym )
             }
         }
         //Ctrl + Cursor Left/Right Arrow
-        if( keysym.mod & KMOD_CTRL ) {
-            switch( keysym.sym ) {
+        if( mod & SDL_KMOD_CTRL ) {
+            switch( sym ) {
                 case SDLK_LEFT:
                     return inp_mngr.get_first_char_for_action( "LEFTDOWN" );
                 case SDLK_RIGHT:
@@ -1983,11 +1938,11 @@ static int sdl_keysym_to_curses( const SDL_Keysym &keysym )
         }
     }
 
-    if( keysym.mod & KMOD_CTRL && keysym.sym >= 'a' && keysym.sym <= 'z' ) {
+    if( mod & SDL_KMOD_CTRL && sym >= 'a' && sym <= 'z' ) {
         // ASCII ctrl codes, ^A through ^Z.
-        return keysym.sym - 'a' + '\1';
+        return sym - 'a' + '\1';
     }
-    switch( keysym.sym ) {
+    switch( sym ) {
         // This is special: allow entering a Unicode character with ALT+number
         case SDLK_RALT:
         case SDLK_LALT:
@@ -2006,7 +1961,7 @@ static int sdl_keysym_to_curses( const SDL_Keysym &keysym )
         case SDLK_ESCAPE:
             return KEY_ESCAPE;
         case SDLK_TAB:
-            if( keysym.mod & KMOD_SHIFT ) {
+            if( mod & SDL_KMOD_SHIFT ) {
                 return KEY_BTAB;
             }
             return '\t';
@@ -2095,7 +2050,7 @@ void toggle_fullscreen_window()
     static int restore_win_h = get_option<int>( "TERMINAL_Y" ) * fontheight * scaling_factor;
 
     if( fullscreen ) {
-        if( printErrorIf( SDL_SetWindowFullscreen( window.get(), 0 ) != 0,
+        if( printErrorIf( !SDL_SetWindowFullscreen( window.get(), false ),
                           "SDL_SetWindowFullscreen failed" ) ) {
             return;
         }
@@ -2106,7 +2061,8 @@ void toggle_fullscreen_window()
     } else {
         restore_win_w = WindowWidth;
         restore_win_h = WindowHeight;
-        if( printErrorIf( SDL_SetWindowFullscreen( window.get(), SDL_WINDOW_FULLSCREEN_DESKTOP ) != 0,
+        SDL_SetWindowFullscreenMode( window.get(), nullptr );
+        if( printErrorIf( !SDL_SetWindowFullscreen( window.get(), true ),
                           "SDL_SetWindowFullscreen failed" ) ) {
             return;
         }
@@ -2128,20 +2084,20 @@ static float second_finger_down_y = -1.0f; // in pixels
 static float second_finger_curr_x = -1.0f; // in pixels
 static float second_finger_curr_y = -1.0f; // in pixels
 // when did the first finger start touching the screen? 0 if not touching, otherwise the time in milliseconds.
-static uint32_t finger_down_time = 0;
+static Uint64 finger_down_time = 0;
 // the last time we repeated input for a finger hold, 0 if not touching, otherwise the time in milliseconds.
-static uint32_t finger_repeat_time = 0;
+static Uint64 finger_repeat_time = 0;
 // the last time a single tap was detected. used for double-tap detection.
-static uint32_t last_tap_time = 0;
+static Uint64 last_tap_time = 0;
 // when did the hardware back button start being pressed? 0 if not touching, otherwise the time in milliseconds.
-static uint32_t ac_back_down_time = 0;
+static Uint64 ac_back_down_time = 0;
 // has a second finger touched the screen while the first was touching?
 static bool is_two_finger_touch = false;
 // did this touch start on a quick shortcut?
 static bool is_quick_shortcut_touch = false;
 static bool quick_shortcuts_toggle_handled = false;
 // the current finger repeat delay - will be somewhere between the min/max values depending on user input
-uint32_t finger_repeat_delay = 500;
+Uint64 finger_repeat_delay = 500;
 // should we make sure the sdl surface is visible? set to true whenever the SDL window is shown.
 static bool needs_sdl_surface_visibility_refresh = true;
 
@@ -2455,7 +2411,10 @@ void draw_terminal_size_preview()
         }
         SetRenderDrawColor( renderer, 255, 255, 255, 255 );
         SDL_Rect previewrect = get_android_render_rect( preview_terminal_width, preview_terminal_height );
-        SDL_RenderDrawRect( renderer.get(), &previewrect );
+        const SDL_FRect fpreviewrect = { static_cast<float>( previewrect.x ), static_cast<float>( previewrect.y ),
+                                         static_cast<float>( previewrect.w ), static_cast<float>( previewrect.h )
+                                       };
+        SDL_RenderRect( renderer.get(), &fpreviewrect );
         SetRenderDrawColor( renderer, 0, 0, 0, 255 );
     }
 }
@@ -2465,9 +2424,9 @@ void draw_quick_shortcuts()
 {
 
     if( !quick_shortcuts_enabled ||
-        SDL_IsTextInputActive() ||
+        SDL_TextInputActive( ::window.get() ) ||
         ( get_option<bool>( "ANDROID_HIDE_HOLDS" ) && !is_quick_shortcut_touch && finger_down_time > 0 &&
-          SDL_GetTicks() - finger_down_time >= static_cast<uint32_t>(
+          SDL_GetTicks() - finger_down_time >= static_cast<Uint64>(
               get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) ) { // player is swipe + holding in a direction
         return;
     }
@@ -2604,7 +2563,7 @@ void draw_quick_shortcuts()
             }
         }
         SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_NONE );
-        SDL_RenderSetScale( renderer.get(), text_scale, text_scale );
+        SDL_SetRenderScale( renderer.get(), text_scale, text_scale );
         int text_x, text_y;
         if( shortcut_right ) {
             text_x = ( WindowWidth - ( i + 0.5f ) * width - ( font->width * utf8_width(
@@ -2636,7 +2595,7 @@ void draw_quick_shortcuts()
                     text_scale *= ( WindowWidth * safe_margin ) / ( font->width * text_scale *
                                   hint_length );    // scale to fit comfortably
                 }
-                SDL_RenderSetScale( renderer.get(), text_scale, text_scale );
+                SDL_SetRenderScale( renderer.get(), text_scale, text_scale );
                 text_x = ( WindowWidth - ( ( font->width  * hint_length ) * text_scale ) ) * 0.5f / text_scale;
                 text_y = ( WindowHeight - font->height * text_scale ) * 0.5f / text_scale;
                 font->OutputChar( renderer, geometry, hint_text, point( text_x + 1, text_y + 1 ), 0,
@@ -2646,7 +2605,7 @@ void draw_quick_shortcuts()
                                   get_option<int>( "ANDROID_SHORTCUT_OPACITY_FG" ) * 0.01f );
             }
         }
-        SDL_RenderSetScale( renderer.get(), 1.0f, 1.0f );
+        SDL_SetRenderScale( renderer.get(), 1.0f, 1.0f );
         i++;
         if( ( i + 1 ) * width > WindowWidth ) {
             break;
@@ -2714,9 +2673,9 @@ void update_finger_repeat_delay()
                     std::max( 0.01f, ( get_option<float>( "ANDROID_REPEAT_DELAY_RANGE" ) ) * longest_window_edge ),
                     0.0f, 1.0f );
     finger_repeat_delay = lerp( std::pow( t, get_option<float>( "ANDROID_SENSITIVITY_POWER" ) ),
-                                static_cast<uint32_t>( std::max( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
+                                static_cast<Uint64>( std::max( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
                                         get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ),
-                                static_cast<uint32_t>( std::min( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
+                                static_cast<Uint64>( std::min( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
                                         get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ) );
 }
 
@@ -2740,7 +2699,7 @@ int get_key_event_from_string( const std::string &str )
     return -1;
 }
 // This function is triggered on finger up events, OR by a repeating timer for touch hold events.
-void handle_finger_input( uint32_t ticks )
+void handle_finger_input( Uint64 ticks )
 {
 
     float delta_x = finger_curr_x - finger_down_x;
@@ -2817,7 +2776,7 @@ void handle_finger_input( uint32_t ticks )
             }
         } else {
             if( last_tap_time > 0 &&
-                ticks - last_tap_time < static_cast<uint32_t>( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
+                ticks - last_tap_time < static_cast<Uint64>( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
                 // Double tap
                 last_input = input_event( is_default_mode ? KEY_ESCAPE : KEY_ESCAPE, input_event_t::keyboard );
                 last_tap_time = 0;
@@ -2873,11 +2832,11 @@ static void CheckMessages()
         visible_display_frame_dirty = false;
     }
 
-    uint32_t ticks = SDL_GetTicks();
+    Uint64 ticks = SDL_GetTicks();
 
     // Force text input mode if hardware keyboard is available.
-    if( android_is_hardware_keyboard_available() && !SDL_IsTextInputActive() ) {
-        SDL_StartTextInput();
+    if( android_is_hardware_keyboard_available() && !SDL_TextInputActive( ::window.get() ) ) {
+        SDL_StartTextInput( ::window.get() );
     }
 
     // Make sure the SDL surface view is visible, otherwise the "Z" loading screen is visible.
@@ -2903,9 +2862,9 @@ static void CheckMessages()
             if( touch_input_context.allow_text_entry &&
                 !new_input_context->allow_text_entry &&
                 !is_string_input( *new_input_context ) &&
-                SDL_IsTextInputActive() &&
+                SDL_TextInputActive( ::window.get() ) &&
                 get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-                SDL_StopTextInput();
+                SDL_StopTextInput( ::window.get() );
             }
 
             touch_input_context = *new_input_context;
@@ -3132,7 +3091,7 @@ static void CheckMessages()
                 finger_repeat_time = ticks;
                 // Prevent repeating inputs on the next call to this function if there is a fingerup event
                 while( SDL_PollEvent( &ev ) ) {
-                    if( ev.type == SDL_FINGERUP ) {
+                    if( ev.type == SDL_EVENT_FINGER_UP ) {
                         second_finger_down_x = second_finger_curr_x = finger_down_x = finger_curr_x = -1.0f;
                         second_finger_down_y = second_finger_curr_y = finger_down_y = finger_curr_y = -1.0f;
                         is_two_finger_touch = false;
@@ -3174,73 +3133,67 @@ static void CheckMessages()
 
     while( SDL_PollEvent( &ev ) ) {
         switch( ev.type ) {
-            case SDL_WINDOWEVENT:
-                switch( ev.window.event ) {
 #if defined(__ANDROID__)
-                    // SDL will send a focus lost event whenever the app loses focus (eg. lock screen, switch app focus etc.)
-                    // If we detect it and the game seems in a saveable state, try and do a quicksave. This is a bit dodgy
-                    // as the player could be ANYWHERE doing ANYTHING (a sub-menu, interacting with an NPC/computer etc.)
-                    // but it seems to work so far, and the alternative is the player losing their progress as the app is likely
-                    // to be destroyed pretty quickly when it goes out of focus due to memory usage.
-                    case SDL_WINDOWEVENT_FOCUS_LOST:
-                        if( world_generator &&
-                            world_generator->active_world &&
-                            g && g->uquit == QUIT_NO &&
-                            get_option<bool>( "ANDROID_QUICKSAVE" ) &&
-                            !std::uncaught_exceptions() ) {
-                            g->quicksave();
-                        }
-                        break;
-                    // SDL sends a window size changed event whenever the screen rotates orientation
-                    case SDL_WINDOWEVENT_SIZE_CHANGED:
-                        WindowWidth = ev.window.data1;
-                        WindowHeight = ev.window.data2;
-                        SDL_Delay( 500 );
-                        SDL_GetWindowSurface( window.get() );
-                        refresh_display();
-                        needupdate = true;
-                        break;
-#endif
-                    case SDL_WINDOWEVENT_SHOWN:
-                    case SDL_WINDOWEVENT_MINIMIZED:
-                    case SDL_WINDOWEVENT_FOCUS_GAINED:
-                        break;
-                    case SDL_WINDOWEVENT_EXPOSED:
-                        needupdate = true;
-                        break;
-                    case SDL_WINDOWEVENT_RESTORED:
-#if defined(__ANDROID__)
-                        needs_sdl_surface_visibility_refresh = true;
-                        if( android_is_hardware_keyboard_available() ) {
-                            SDL_StopTextInput();
-                            SDL_StartTextInput();
-                        }
-#endif
-                        break;
-                    case SDL_WINDOWEVENT_RESIZED:
-                        resize_dims = point( ev.window.data1, ev.window.data2 );
-                        break;
-                    default:
-                        break;
+            // SDL will send a focus lost event whenever the app loses focus (eg. lock screen, switch app focus etc.)
+            // If we detect it and the game seems in a saveable state, try and do a quicksave. This is a bit dodgy
+            // as the player could be ANYWHERE doing ANYTHING (a sub-menu, interacting with an NPC/computer etc.)
+            // but it seems to work so far, and the alternative is the player losing their progress as the app is likely
+            // to be destroyed pretty quickly when it goes out of focus due to memory usage.
+            case SDL_EVENT_WINDOW_FOCUS_LOST:
+                if( world_generator &&
+                    world_generator->active_world &&
+                    g && g->uquit == QUIT_NO &&
+                    get_option<bool>( "ANDROID_QUICKSAVE" ) &&
+                    !std::uncaught_exceptions() ) {
+                    g->quicksave();
                 }
                 break;
-            case SDL_RENDER_TARGETS_RESET:
+            // SDL sends a pixel size changed event whenever the screen rotates orientation
+            case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+                WindowWidth = ev.window.data1;
+                WindowHeight = ev.window.data2;
+                SDL_Delay( 500 );
+                SDL_GetWindowSurface( window.get() );
+                refresh_display();
+                needupdate = true;
+                break;
+#endif
+            case SDL_EVENT_WINDOW_SHOWN:
+            case SDL_EVENT_WINDOW_MINIMIZED:
+            case SDL_EVENT_WINDOW_FOCUS_GAINED:
+                break;
+            case SDL_EVENT_WINDOW_EXPOSED:
+                needupdate = true;
+                break;
+            case SDL_EVENT_WINDOW_RESTORED:
+#if defined(__ANDROID__)
+                needs_sdl_surface_visibility_refresh = true;
+                if( android_is_hardware_keyboard_available() ) {
+                    SDL_StopTextInput( ::window.get() );
+                    SDL_StartTextInput( ::window.get() );
+                }
+#endif
+                break;
+            case SDL_EVENT_WINDOW_RESIZED:
+                resize_dims = point( ev.window.data1, ev.window.data2 );
+                break;
+            case SDL_EVENT_RENDER_TARGETS_RESET:
                 render_target_reset = true;
                 break;
-            case SDL_KEYDOWN: {
+            case SDL_EVENT_KEY_DOWN: {
 #if defined(__ANDROID__)
                 // Toggle virtual keyboard with Android back button. For some reason I get double inputs, so ignore everything once it's already down.
-                if( ev.key.keysym.sym == SDLK_AC_BACK && ac_back_down_time == 0 ) {
+                if( ev.key.key == SDLK_AC_BACK && ac_back_down_time == 0 ) {
                     ac_back_down_time = ticks;
                     quick_shortcuts_toggle_handled = false;
                 }
 #endif
                 is_repeat = ev.key.repeat;
                 //hide mouse cursor on keyboard input
-                if( get_option<std::string>( "HIDE_CURSOR" ) != "show" && SDL_ShowCursor( -1 ) ) {
-                    SDL_ShowCursor( SDL_DISABLE );
+                if( get_option<std::string>( "HIDE_CURSOR" ) != "show" && SDL_CursorVisible() ) {
+                    SDL_HideCursor();
                 }
-                const int lc = sdl_keysym_to_curses( ev.key.keysym );
+                const int lc = sdl_keysym_to_curses( ev.key.key, ev.key.mod );
                 if( lc <= 0 ) {
                     // a key we don't know in curses and won't handle.
                     break;
@@ -3252,7 +3205,7 @@ static void CheckMessages()
                     if( !android_is_hardware_keyboard_available() ) {
                         if( !is_string_input( touch_input_context ) && !touch_input_context.allow_text_entry ) {
                             if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-                                SDL_StopTextInput();
+                                SDL_StopTextInput( ::window.get() );
                             }
 
                             // add a quick shortcut
@@ -3263,7 +3216,7 @@ static void CheckMessages()
                             }
                         } else if( lc == '\n' || lc == KEY_ESCAPE ) {
                             if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-                                SDL_StopTextInput();
+                                SDL_StopTextInput( ::window.get() );
                             }
                         }
                     }
@@ -3271,23 +3224,23 @@ static void CheckMessages()
                 }
             }
             break;
-            case SDL_KEYUP: {
+            case SDL_EVENT_KEY_UP: {
 #if defined(__ANDROID__)
                 // Toggle virtual keyboard with Android back button
-                if( ev.key.keysym.sym == SDLK_AC_BACK ) {
+                if( ev.key.key == SDLK_AC_BACK ) {
                     if( ticks - ac_back_down_time <= static_cast<uint32_t>
                         ( get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
-                        if( SDL_IsTextInputActive() ) {
-                            SDL_StopTextInput();
+                        if( SDL_TextInputActive( ::window.get() ) ) {
+                            SDL_StopTextInput( ::window.get() );
                         } else {
-                            SDL_StartTextInput();
+                            SDL_StartTextInput( ::window.get() );
                         }
                     }
                     ac_back_down_time = 0;
                 }
 #endif
                 is_repeat = ev.key.repeat;
-                if( ev.key.keysym.sym == SDLK_LALT || ev.key.keysym.sym == SDLK_RALT ) {
+                if( ev.key.key == SDLK_LALT || ev.key.key == SDLK_RALT ) {
                     int code = end_alt_code();
                     if( code ) {
                         last_input = input_event( code, input_event_t::keyboard );
@@ -3296,7 +3249,7 @@ static void CheckMessages()
                 }
             }
             break;
-            case SDL_TEXTINPUT:
+            case SDL_EVENT_TEXT_INPUT:
                 if( !add_alt_code( *ev.text.text ) ) {
                     if( strlen( ev.text.text ) > 0 ) {
                         const unsigned lc = UTF8_getch( ev.text.text );
@@ -3305,7 +3258,7 @@ static void CheckMessages()
                         if( !android_is_hardware_keyboard_available() ) {
                             if( !is_string_input( touch_input_context ) && !touch_input_context.allow_text_entry ) {
                                 if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-                                    SDL_StopTextInput();
+                                    SDL_StopTextInput( ::window.get() );
                                 }
 
                                 quick_shortcuts_t &qsl = quick_shortcuts_map[get_quick_shortcut_name(
@@ -3315,7 +3268,7 @@ static void CheckMessages()
                                 refresh_display();
                             } else if( lc == '\n' || lc == KEY_ESCAPE ) {
                                 if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-                                    SDL_StopTextInput();
+                                    SDL_StopTextInput( ::window.get() );
                                 }
                             }
                         }
@@ -3329,7 +3282,7 @@ static void CheckMessages()
                     text_refresh = true;
                 }
                 break;
-            case SDL_TEXTEDITING: {
+            case SDL_EVENT_TEXT_EDITING: {
                 if( strlen( ev.edit.text ) > 0 ) {
                     const unsigned lc = UTF8_getch( ev.edit.text );
                     last_input = input_event( lc, input_event_t::keyboard );
@@ -3343,18 +3296,18 @@ static void CheckMessages()
                 text_refresh = true;
             }
             break;
-            case SDL_JOYBUTTONDOWN:
+            case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
                 last_input = input_event( ev.jbutton.button, input_event_t::keyboard );
                 break;
-            case SDL_JOYAXISMOTION:
+            case SDL_EVENT_JOYSTICK_AXIS_MOTION:
                 // on gamepads, the axes are the analog sticks
                 // TODO: somehow get the "digipad" values from the axes
                 break;
-            case SDL_MOUSEMOTION:
+            case SDL_EVENT_MOUSE_MOTION:
                 if( get_option<std::string>( "HIDE_CURSOR" ) == "show" ||
                     get_option<std::string>( "HIDE_CURSOR" ) == "hidekb" ) {
-                    if( !SDL_ShowCursor( -1 ) ) {
-                        SDL_ShowCursor( SDL_ENABLE );
+                    if( !SDL_CursorVisible() ) {
+                        SDL_ShowCursor();
                     }
 
                     // Only monitor motion when cursor is visible
@@ -3362,7 +3315,7 @@ static void CheckMessages()
                 }
                 break;
 
-            case SDL_MOUSEBUTTONUP:
+            case SDL_EVENT_MOUSE_BUTTON_UP:
                 switch( ev.button.button ) {
                     case SDL_BUTTON_LEFT:
                         last_input = input_event( MOUSE_BUTTON_LEFT, input_event_t::mouse );
@@ -3373,7 +3326,7 @@ static void CheckMessages()
                 }
                 break;
 
-            case SDL_MOUSEWHEEL:
+            case SDL_EVENT_MOUSE_WHEEL:
                 if( ev.wheel.y > 0 ) {
                     last_input = input_event( SCROLLWHEEL_UP, input_event_t::mouse );
                 } else if( ev.wheel.y < 0 ) {
@@ -3382,7 +3335,7 @@ static void CheckMessages()
                 break;
 
 #if defined(__ANDROID__)
-            case SDL_FINGERMOTION:
+            case SDL_EVENT_FINGER_MOTION:
                 if( ev.tfinger.fingerId == 0 ) {
                     if( !is_quick_shortcut_touch ) {
                         update_finger_repeat_delay();
@@ -3410,7 +3363,7 @@ static void CheckMessages()
                     second_finger_curr_y = ev.tfinger.y * WindowHeight;
                 }
                 break;
-            case SDL_FINGERDOWN:
+            case SDL_EVENT_FINGER_DOWN:
                 if( ev.tfinger.fingerId == 0 ) {
                     finger_down_x = finger_curr_x = ev.tfinger.x * WindowWidth;
                     finger_down_y = finger_curr_y = ev.tfinger.y * WindowHeight;
@@ -3429,7 +3382,7 @@ static void CheckMessages()
                     }
                 }
                 break;
-            case SDL_FINGERUP:
+            case SDL_EVENT_FINGER_UP:
                 if( ev.tfinger.fingerId == 0 ) {
                     finger_curr_x = ev.tfinger.x * WindowWidth;
                     finger_curr_y = ev.tfinger.y * WindowHeight;
@@ -3447,7 +3400,7 @@ static void CheckMessages()
                             // Get the quick shortcut that was originally touched
                             quick_shortcut = get_quick_shortcut_under_finger( true );
                             if( quick_shortcut &&
-                                ticks - finger_down_time <= static_cast<uint32_t>( get_option<int>( "ANDROID_INITIAL_DELAY" ) )
+                                ticks - finger_down_time <= static_cast<Uint64>( get_option<int>( "ANDROID_INITIAL_DELAY" ) )
                                 &&
                                 finger_curr_y < finger_down_y &&
                                 finger_down_y - finger_curr_y > std::abs( finger_down_x - finger_curr_x ) ) {
@@ -3519,7 +3472,7 @@ static void CheckMessages()
                                     }
                                 }
                             }
-                        } else if( ticks - finger_down_time <= static_cast<uint32_t>(
+                        } else if( ticks - finger_down_time <= static_cast<Uint64>(
                                        get_option<int>( "ANDROID_INITIAL_DELAY" ) ) ) {
                             handle_finger_input( ticks );
                         }
@@ -3543,7 +3496,7 @@ static void CheckMessages()
                 break;
 #endif
 
-            case SDL_QUIT:
+            case SDL_EVENT_QUIT:
                 quit = true;
                 break;
         }
@@ -3597,19 +3550,13 @@ int projected_window_height()
 // Measures scaling factor for high-dpi displays
 static std::pair<float, float> get_display_scale( int display_index )
 {
-#if SDL_VERSION_ATLEAST(2,26,0)
-    int x = SDL_WINDOWPOS_CENTERED_DISPLAY( display_index );
-    int y = SDL_WINDOWPOS_CENTERED_DISPLAY( display_index );
-
-    SDL_Window *w = SDL_CreateWindow(
-                        "probe",
-                        x, y,
-                        16, 16,
-                        SDL_WINDOW_HIDDEN | SDL_WINDOW_ALLOW_HIGHDPI
-                    );
+    SDL_Window *w = SDL_CreateWindow( "probe", 16, 16,
+                                      SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY );
     if( !w ) {
         return std::make_pair( 1.0f, 1.0f );
     }
+    SDL_SetWindowPosition( w, SDL_WINDOWPOS_CENTERED_DISPLAY( display_index ),
+                           SDL_WINDOWPOS_CENTERED_DISPLAY( display_index ) );
 
     int lw, lh;
     SDL_GetWindowSize( w, &lw, &lh );
@@ -3620,10 +3567,6 @@ static std::pair<float, float> get_display_scale( int display_index )
     float scale_w = lw ? static_cast<float>( pw ) / static_cast<float>( lw ) : 1.0f;
     float scale_h = lh ? static_cast<float>( ph ) / static_cast<float>( lh ) : 1.0f;
     return std::make_pair( scale_w, scale_h );
-#else
-    ( void )display_index; // avoid unused parameter lint
-    return std::make_pair( 1.0f, 1.0f );
-#endif
 }
 
 static void init_term_size_and_scaling_factor()
@@ -3643,27 +3586,31 @@ static void init_term_size_and_scaling_factor()
 
         int max_width, max_height;
 
-        int current_display_id = std::stoi( get_option<std::string>( "DISPLAY" ) );
-        SDL_DisplayMode current_display;
+        const int current_display_idx = std::stoi( get_option<std::string>( "DISPLAY" ) );
+        int display_count = 0;
+        SDL_DisplayID *display_list = SDL_GetDisplays( &display_count );
+        const SDL_DisplayID current_display_id = ( display_list && current_display_idx < display_count )
+                ? display_list[current_display_idx]
+                : SDL_GetPrimaryDisplay();
+        SDL_free( display_list );
 
-        if( SDL_GetDesktopDisplayMode( current_display_id, &current_display ) == 0 ) {
+        const SDL_DisplayMode *current_display = SDL_GetDesktopDisplayMode( current_display_id );
+
+        if( current_display ) {
             if( get_option<std::string>( "FULLSCREEN" ) == "no" ) {
 
                 // Make a maximized test window to determine maximum windowed size
                 SDL_Window_Ptr test_window;
                 test_window.reset( SDL_CreateWindow( "test_window",
-                                                     SDL_WINDOWPOS_CENTERED_DISPLAY( current_display_id ),
-                                                     SDL_WINDOWPOS_CENTERED_DISPLAY( current_display_id ),
                                                      FULL_SCREEN_WIDTH * fontwidth,
                                                      FULL_SCREEN_HEIGHT * fontheight,
-                                                     SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MAXIMIZED
+                                                     SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MAXIMIZED
                                                    ) );
+                SDL_SetWindowPosition( test_window.get(),
+                                       SDL_WINDOWPOS_CENTERED_DISPLAY( current_display_idx ),
+                                       SDL_WINDOWPOS_CENTERED_DISPLAY( current_display_idx ) );
 
-#if SDL_VERSION_ATLEAST(2,26,0)
                 SDL_GetWindowSizeInPixels( test_window.get(), &max_width, &max_height );
-#else
-                SDL_GetWindowSize( test_window.get(), &max_width, &max_height );
-#endif
 
                 // If the video subsystem isn't reset the test window messes things up later
                 test_window.reset();
@@ -3672,9 +3619,9 @@ static void init_term_size_and_scaling_factor()
 
             } else {
                 // For fullscreen or window borderless maximum size is the display size
-                auto [ dpi_scale_w, dpi_scale_h ] = get_display_scale( current_display_id );
-                max_width = dpi_scale_w * current_display.w;
-                max_height = dpi_scale_h * current_display.h;
+                auto [ dpi_scale_w, dpi_scale_h ] = get_display_scale( current_display_idx );
+                max_width = static_cast<int>( dpi_scale_w * current_display->w );
+                max_height = static_cast<int>( dpi_scale_h * current_display->h );
             }
         } else {
             dbg( DL::Warn ) << "Failed to get current Display Mode, assuming infinite display size.";
@@ -3928,8 +3875,8 @@ input_event input_manager::get_input_event()
             SDL_Delay( 1 );
         } while( last_input.type == input_event_t::error );
     } else if( inputdelay > 0 ) {
-        uint32_t starttime = SDL_GetTicks();
-        uint32_t endtime = 0;
+        Uint64 starttime = SDL_GetTicks();
+        Uint64 endtime = 0;
         bool timedout = false;
         do {
             CheckMessages();
@@ -3948,7 +3895,10 @@ input_event input_manager::get_input_event()
     }
 
     if( last_input.type == input_event_t::mouse ) {
-        SDL_GetMouseState( &last_input.mouse_pos.x, &last_input.mouse_pos.y );
+        float mx, my;
+        SDL_GetMouseState( &mx, &my );
+        last_input.mouse_pos.x = static_cast<int>( mx );
+        last_input.mouse_pos.y = static_cast<int>( my );
     } else if( last_input.type == input_event_t::keyboard ) {
         previously_pressed_key = last_input.get_first_input();
 #if defined(__ANDROID__)
@@ -4163,29 +4113,18 @@ bool is_draw_tiles_mode()
 */
 bool save_screenshot( const std::string &file_path )
 {
-    // Note: the viewport is returned by SDL and we don't have to manage its lifetime.
-    SDL_Rect viewport;
-
-    // Get the viewport size (width and heigth of the screen)
-    SDL_RenderGetViewport( renderer.get(), &viewport );
-
-    // Create SDL_Surface with depth of 32 bits (note: using zeros for the RGB masks sets a default value, based on the depth; Alpha mask will be 0).
-    SDL_Surface_Ptr surface = CreateRGBSurface( 0, viewport.w, viewport.h, 32, 0, 0, 0, 0 );
-
-    // Get data from SDL_Renderer and save them into surface
-    if( printErrorIf( SDL_RenderReadPixels( renderer.get(), nullptr, surface->format->format,
-                                            surface->pixels, surface->pitch ) != 0,
-                      "save_screenshot: cannot read data from SDL_Renderer." ) ) {
+    // SDL3: SDL_RenderReadPixels returns a new SDL_Surface* owned by caller.
+    SDL_Surface *readback = SDL_RenderReadPixels( renderer.get(), nullptr );
+    if( printErrorIf( !readback, "save_screenshot: cannot read data from SDL_Renderer." ) ) {
         return false;
     }
 
     // Save screenshot as PNG file
-    if( printErrorIf( IMG_SavePNG( surface.get(), file_path.c_str() ) != 0,
-                      std::string( "save_screenshot: cannot save screenshot file: " + file_path ).c_str() ) ) {
-        return false;
-    }
-
-    return true;
+    const bool ok = !printErrorIf( !IMG_SavePNG( readback, file_path.c_str() ),
+                                   std::string( "save_screenshot: cannot save screenshot file: " +
+                                           file_path ).c_str() );
+    SDL_DestroySurface( readback );
+    return ok;
 }
 
 void repoint_overmap_tilecontext()
@@ -4195,16 +4134,21 @@ void repoint_overmap_tilecontext()
 #ifdef _WIN32
 HWND getWindowHandle()
 {
-    SDL_SysWMinfo info;
-    SDL_VERSION( &info.version );
-    SDL_GetWindowWMInfo( ::window.get(), &info );
-    return info.info.win.window;
+    return static_cast<HWND>( SDL_GetPointerProperty(
+                                  SDL_GetWindowProperties( ::window.get() ),
+                                  SDL_PROP_WINDOW_WIN32_HWND_POINTER,
+                                  nullptr ) );
 }
 #endif
 
 const SDL_Renderer_Ptr &get_sdl_renderer()
 {
     return renderer;
+}
+
+const SDL_Window_Ptr &get_sdl_window()
+{
+    return window;
 }
 
 

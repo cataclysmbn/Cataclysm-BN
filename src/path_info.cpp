@@ -13,7 +13,7 @@
 #endif
 #if defined(__ANDROID__)
 #include <jni.h>
-#include <SDL_system.h>
+#include <SDL3/SDL.h>
 #endif
 /**
  * Return a locale specific path, or if there is no path for the current

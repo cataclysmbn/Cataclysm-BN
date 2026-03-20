@@ -42,9 +42,9 @@ While many of the dependencies that the game depends on are likely installed by 
 
 Here are the commands for some of the most popular distro families:
 
-- Ubuntu / Debian: `sudo apt install libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libfreetype6 zip libsqlite3-0`
-- Fedora: `sudo dnf install SDL2 SDL2_image SDL2_ttf SDL2_mixer freetype zip sqlite`
-- Arch: `sudo pacman -S sdl2 sdl2_image sdl2_ttf sdl2_mixer zip sqlite`
+- Ubuntu / Debian: `sudo apt install libsdl3-0 libsdl3-image-0 libsdl3-ttf-0 libsdl3-mixer-0 libfreetype6 zip libsqlite3-0`
+- Fedora: `sudo dnf install SDL3 SDL3_image SDL3_ttf SDL3_mixer freetype zip sqlite`
+- Arch: `sudo pacman -S sdl3 sdl3_image sdl3_ttf sdl3_mixer zip sqlite`
 
 ### Launchers
 

@@ -7,6 +7,7 @@
 #include <format>
 #include <ranges>
 #include <stack>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -157,26 +158,17 @@ auto dynamic_atlas::id_search( const size_t id ) -> std::optional<atlas_texture>
 
 void dynamic_atlas::readback_load()
 {
-
     for( auto &it : sheets ) {
-        const auto &r = get_sdl_renderer();
-        if( it.readback == nullptr ) {
-            it.readback = create_surface_32( it.atlas_width, it.atlas_height );
-            SDL_SetSurfaceBlendMode( it.readback.get(), SDL_BLENDMODE_NONE );
-        }
-
         if( it.dirty ) {
+            const auto &r = get_sdl_renderer();
             const auto prev_rt = SDL_GetRenderTarget( r.get() );
             SDL_SetRenderTarget( r.get(), it.texture.get() );
 
-            // Read pixels using format 0 (renderer's native format) to get raw pixel data,
-            // then let SDL_BlitSurface handle any necessary format conversion when we use it.
-            // This avoids potential format conversion bugs in SDL_RenderReadPixels.
-            SDL_RenderReadPixels( r.get(), nullptr, it.readback->format->format,
-                                  it.readback->pixels, it.readback->pitch );
+            // SDL3: SDL_RenderReadPixels returns a new surface owned by us.
+            it.readback.reset( SDL_RenderReadPixels( r.get(), nullptr ) );
 
             SDL_SetRenderTarget( r.get(), prev_rt );
-            it.dirty = false;  // Mark as clean to avoid redundant readbacks
+            it.dirty = false;
         }
     }
 }
@@ -197,7 +189,10 @@ auto dynamic_atlas::readback_find( const texture &tex ) -> std::tuple<bool, SDL_
 
     return ( it == sheets.end() )
            ? std::make_tuple( false, nullptr, SDL_Rect{} )
-           : std::make_tuple( true, it->readback.get(), tex.srcrect );
+    : std::make_tuple( true, it->readback.get(), SDL_Rect{
+        static_cast<int>( tex.srcrect.x ), static_cast<int>( tex.srcrect.y ),
+        static_cast<int>( tex.srcrect.w ), static_cast<int>( tex.srcrect.h )
+    } );
 }
 
 atlas_texture dynamic_atlas::allocate_sprite( const int w, const int h )
@@ -219,24 +214,23 @@ atlas_texture dynamic_atlas::allocate_sprite( const int w, const int h )
     }
 
     const auto &r = get_sdl_renderer();
-    SDL_RendererInfo info{};
-    SDL_GetRendererInfo( r.get(), &info );
+    const bool is_software = ( std::string_view( SDL_GetRendererName( r.get() ) ) == "software" );
     int tex_width;
     int tex_height;
-    int tex_access;
 
     std::unique_ptr<detail::texture_packer> packer;
-    if( info.flags & SDL_RENDERER_SOFTWARE ) {
+    if( is_software ) {
         tex_width = w;
         tex_height = h;
-        tex_access = SDL_TEXTUREACCESS_TARGET;
         packer = std::make_unique<null_texture_packer>(
                      SDL_Rect{0, 0, tex_width, tex_height}
                  );
     } else {
-        tex_width = std::min( max_atlas_width, info.max_texture_width );
-        tex_height = std::min( max_atlas_height, info.max_texture_height );
-        tex_access = SDL_TEXTUREACCESS_TARGET;
+        const auto props = SDL_GetRendererProperties( r.get() );
+        const int max_tex = static_cast<int>(
+                                SDL_GetNumberProperty( props, SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, 4096 ) );
+        tex_width = std::min( max_atlas_width, max_tex );
+        tex_height = std::min( max_atlas_height, max_tex );
         packer = std::make_unique<stripe_texture_packer>(
                      SDL_Rect{0, 0, tex_width, tex_height},
                      hint_sprite_width
@@ -245,9 +239,10 @@ atlas_texture dynamic_atlas::allocate_sprite( const int w, const int h )
 
     assert( w <= tex_width && h <= tex_height );
 
-    const auto tex = SDL_CreateTexture( r.get(), sdl_color_pixel_format, tex_access, tex_width,
-                                        tex_height );
+    const auto tex = SDL_CreateTexture( r.get(), sdl_color_pixel_format, SDL_TEXTUREACCESS_TARGET,
+                                        tex_width, tex_height );
     SDL_SetTextureBlendMode( tex, SDL_BLENDMODE_BLEND );
+    SDL_SetTextureScaleMode( tex, SDL_SCALEMODE_NEAREST );
 
     {
         const auto state = sdl_save_render_state( r.get() );

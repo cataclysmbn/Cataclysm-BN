@@ -126,50 +126,77 @@ class texture
         friend class dynamic_atlas;
     private:
         SDL_Texture_SharedPtr sdl_texture_ptr;
-        SDL_Rect srcrect = { 0, 0, 0, 0 };
+        SDL_FRect srcrect = { 0, 0, 0, 0 };
 
     public:
-        texture( SDL_Texture_SharedPtr ptr, const SDL_Rect &rect ) : sdl_texture_ptr( ptr ),
+        texture( SDL_Texture_SharedPtr ptr, const SDL_FRect &rect ) : sdl_texture_ptr( ptr ),
             srcrect( rect ) { }
+        texture( SDL_Texture_SharedPtr ptr, const SDL_Rect &rect ) : sdl_texture_ptr( ptr ),
+            srcrect( { static_cast<float>( rect.x ), static_cast<float>( rect.y ),
+                     static_cast<float>( rect.w ), static_cast<float>( rect.h ) } ) { }
         texture() = default;
 
         /// Returns the width (first) and height (second) of the stored texture.
         std::pair<int, int> dimension() const {
-            return std::make_pair( srcrect.w, srcrect.h );
+            return std::make_pair( static_cast<int>( srcrect.w ), static_cast<int>( srcrect.h ) );
         }
 
-        /// Interface to @ref SDL_RenderCopyEx, using this as the texture, and
+        /// Interface to @ref SDL_RenderTextureRotated, using this as the texture, and
         /// null as source rectangle (render the whole texture). Other parameters
         /// are simply passed through.
-        int render_copy_ex( const SDL_Renderer_Ptr &renderer, const SDL_Rect *const dstrect,
-                            const double angle,
-                            const SDL_Point *const center, const SDL_RendererFlip flip ) const {
-            return SDL_RenderCopyEx( renderer.get(), sdl_texture_ptr.get(), &srcrect, dstrect, angle, center,
-                                     flip );
+        bool render_copy_ex( const SDL_Renderer_Ptr &renderer, const SDL_FRect *const dstrect,
+                             const double angle,
+                             const SDL_FPoint *const center, const SDL_FlipMode flip ) const {
+            return SDL_RenderTextureRotated( renderer.get(), sdl_texture_ptr.get(), &srcrect, dstrect,
+                                             angle, center, flip );
         }
 
-        /// Interface to @ref SDL_RenderCopy, using this as the texture
-        int render_copy( const SDL_Renderer_Ptr &renderer, const SDL_Rect *const dstrect ) const {
-            return SDL_RenderCopy( renderer.get(), sdl_texture_ptr.get(), &srcrect, dstrect );
+        bool render_copy_ex( const SDL_Renderer_Ptr &renderer, const SDL_Rect *const dstrect,
+                             const double angle,
+                             const SDL_Point *const center, const SDL_FlipMode flip ) const {
+            const std::optional<SDL_FRect> fdst = dstrect
+                                                  ? std::optional<SDL_FRect>( SDL_FRect{ float( dstrect->x ), float( dstrect->y ),
+                                                          float( dstrect->w ), float( dstrect->h ) } )
+                                                  : std::nullopt;
+            const std::optional<SDL_FPoint> fcenter = center
+                    ? std::optional<SDL_FPoint>( SDL_FPoint{ float( center->x ), float( center->y ) } )
+                    : std::nullopt;
+            return SDL_RenderTextureRotated( renderer.get(), sdl_texture_ptr.get(), &srcrect,
+                                             fdst ? &fdst.value() : nullptr, angle,
+                                             fcenter ? &fcenter.value() : nullptr, flip );
         }
 
-        int get_blend_mode( SDL_BlendMode *mode ) const {
+        /// Interface to @ref SDL_RenderTexture, using this as the texture
+        bool render_copy( const SDL_Renderer_Ptr &renderer, const SDL_FRect *const dstrect ) const {
+            return SDL_RenderTexture( renderer.get(), sdl_texture_ptr.get(), &srcrect, dstrect );
+        }
+
+        bool render_copy( const SDL_Renderer_Ptr &renderer, const SDL_Rect *const dstrect ) const {
+            if( !dstrect ) {
+                return SDL_RenderTexture( renderer.get(), sdl_texture_ptr.get(), &srcrect, nullptr );
+            }
+            const SDL_FRect fdst{ float( dstrect->x ), float( dstrect->y ),
+                                  float( dstrect->w ), float( dstrect->h ) };
+            return SDL_RenderTexture( renderer.get(), sdl_texture_ptr.get(), &srcrect, &fdst );
+        }
+
+        bool get_blend_mode( SDL_BlendMode *mode ) const {
             return SDL_GetTextureBlendMode( sdl_texture_ptr.get(), mode );
         }
 
-        int set_blend_mode( const SDL_BlendMode mode ) const {
+        bool set_blend_mode( const SDL_BlendMode mode ) const {
             return SDL_SetTextureBlendMode( sdl_texture_ptr.get(), mode );
         }
 
-        int get_alpha_mod( uint8_t *mod ) const {
+        bool get_alpha_mod( uint8_t *mod ) const {
             return SDL_GetTextureAlphaMod( sdl_texture_ptr.get(), mod );
         }
 
-        int set_alpha_mod( const uint8_t mod ) const {
+        bool set_alpha_mod( const uint8_t mod ) const {
             return SDL_SetTextureAlphaMod( sdl_texture_ptr.get(), mod );
         }
 
-        int set_color_mod( const uint8_t r, const uint8_t g, const uint8_t b ) const {
+        bool set_color_mod( const uint8_t r, const uint8_t g, const uint8_t b ) const {
             return SDL_SetTextureColorMod( sdl_texture_ptr.get(), r, g, b );
         }
 
