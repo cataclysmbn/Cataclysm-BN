@@ -4,6 +4,7 @@
 #include <array>
 #include <atomic>
 #include <cmath>
+#include <cstring>
 #include <cstdint>
 
 #include "cached_options.h"
@@ -96,10 +97,15 @@ static void atomic_float_max( float &cell, float val ) noexcept
         }
 #else
         // Fallback for toolchains without std::atomic_ref (e.g. older Android NDK).
-        // __atomic_* builtins are available on all GCC and Clang targets.
-        float expected = __atomic_load_n( &cell, __ATOMIC_RELAXED );
-        while( expected < val &&
-               !__atomic_compare_exchange_n( &cell, &expected, val, true,
+        // __atomic_* builtins only accept integer/pointer types, so type-pun float through uint32_t.
+        // Non-negative IEEE 754 floats preserve ordering as uint32_t, so bit comparison is valid.
+        static_assert( sizeof( float ) == sizeof( uint32_t ) );
+        uint32_t *cell_bits = reinterpret_cast<uint32_t *>( &cell );
+        uint32_t val_bits;
+        std::memcpy( &val_bits, &val, sizeof( float ) );
+        uint32_t expected_bits = __atomic_load_n( cell_bits, __ATOMIC_RELAXED );
+        while( expected_bits < val_bits &&
+               !__atomic_compare_exchange_n( cell_bits, &expected_bits, val_bits, true,
                                              __ATOMIC_RELAXED, __ATOMIC_RELAXED ) ) {
         }
 #endif
