@@ -18,6 +18,11 @@ auto has_material( const item &it, const material_id &id ) -> bool
     return std::ranges::find( it.made_of(), id ) != it.made_of().end();
 }
 
+auto is_comestible_candidate( const item &it ) -> bool
+{
+    return it.is_comestible();
+}
+
 auto normalized_hp( const item &it ) -> float
 {
     const auto max_damage = it.max_damage();
@@ -33,24 +38,28 @@ auto default_tags( const item &it ) -> std::vector<std::string>
 {
     auto ret = std::vector<std::string> {};
     const auto &id = it.typeId().str();
-    if( ( it.is_comestible() && !it.count_by_charges() &&
+    if( is_comestible_candidate( it ) &&
+        ( ( !it.count_by_charges() &&
           has_material( it, material_id( "wheat" ) ) ) ||
-        id.contains( "bread" ) || id.contains( "bun" ) || id.contains( "bagel" ) ||
-        id.contains( "toast" ) || id.contains( "roll" ) || id.contains( "tortilla" ) ) {
+          id.contains( "bread" ) || id.contains( "bun" ) || id.contains( "bagel" ) ||
+          id.contains( "toast" ) || id.contains( "roll" ) || id.contains( "tortilla" ) ) ) {
         ret.push_back( "bread" );
     }
-    if( id.contains( "cheese" ) || has_material( it, material_id( "milk" ) ) ) {
+    if( is_comestible_candidate( it ) &&
+        ( id.contains( "cheese" ) || has_material( it, material_id( "milk" ) ) ) ) {
         ret.push_back( "cheese" );
     }
-    if( has_material( it, material_id( "veggy" ) ) ) {
+    if( is_comestible_candidate( it ) && has_material( it, material_id( "veggy" ) ) ) {
         ret.push_back( "veg" );
     }
-    if( id.contains( "mustard" ) || id.contains( "ketchup" ) || id.contains( "mayo" ) ||
-        id.contains( "sauce" ) ) {
+    if( is_comestible_candidate( it ) &&
+        ( id.contains( "mustard" ) || id.contains( "ketchup" ) || id.contains( "mayo" ) ||
+          id.contains( "sauce" ) ) ) {
         ret.push_back( "cond" );
     }
-    if( has_material( it, material_id( "flesh" ) ) || has_material( it, material_id( "hflesh" ) ) ||
-        has_material( it, material_id( "iflesh" ) ) || has_material( it, material_id( "fish" ) ) ) {
+    if( is_comestible_candidate( it ) &&
+        ( has_material( it, material_id( "flesh" ) ) || has_material( it, material_id( "hflesh" ) ) ||
+          has_material( it, material_id( "iflesh" ) ) || has_material( it, material_id( "fish" ) ) ) ) {
         ret.push_back( "meat" );
     }
     return ret;
