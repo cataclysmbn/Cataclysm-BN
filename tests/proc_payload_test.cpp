@@ -217,8 +217,12 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
 
     const auto cases = std::vector<legacy_case> {
         legacy_case{ .id = itype_id( "sandwich_t" ), .bread = 2, .meat = 1 },
+        legacy_case{ .id = itype_id( "sandwich_veggy" ), .bread = 2, .veg = 1 },
+        legacy_case{ .id = itype_id( "sandwich_cheese" ), .bread = 2, .cheese = 1 },
+        legacy_case{ .id = itype_id( "sandwich_sauce" ), .bread = 2, .cond = 1 },
         legacy_case{ .id = itype_id( "fish_sandwich" ), .bread = 2, .fish = 1, .veg = 1, .cond = 1 },
         legacy_case{ .id = itype_id( "sandwich_deluxe" ), .bread = 2, .meat = 1, .cheese = 2, .veg = 1, .cond = 1 },
+        legacy_case{ .id = itype_id( "sandwich_okay" ), .bread = 2, .meat = 1, .veg = 1 },
         legacy_case{ .id = itype_id( "sandwich_deluxe_nocheese" ), .bread = 2, .meat = 1, .veg = 1, .cond = 1 },
         legacy_case{ .id = itype_id( "sandwich_cucumber" ), .bread = 2, .cucumber = 1 }
     };
@@ -254,6 +258,11 @@ TEST_CASE( "proc_and_legacy_sandwiches_have_uncraft_recipes", "[proc][payload][m
 {
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_generic" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_t" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_veggy" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_cheese" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_sauce" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_okay" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "fish_sandwich" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_deluxe" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_deluxe_nocheese" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_cucumber" ) ) );
