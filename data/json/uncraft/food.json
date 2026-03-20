@@ -61,5 +61,12 @@
     "time": "30 s",
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "bread", 2 ] ], [ [ "fish_cooked", 1 ] ], [ [ "lettuce", 1 ] ], [ [ "mustard", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_cucumber",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "cucumber", 1 ] ] ]
   }
 ]
