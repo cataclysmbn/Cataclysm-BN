@@ -219,6 +219,8 @@ TEST_CASE( "proc_make_item_names_sandwiches_from_selected_ingredients", "[proc][
     const auto fish = proc::normalize_part_fact( item( "fish_cooked" ), { .ix = 7 } );
     const auto cucumber = proc::normalize_part_fact( item( "cucumber" ), { .ix = 8 } );
     const auto bread_c = proc::normalize_part_fact( item( "bread" ), { .ix = 9 } );
+    const auto bacon = proc::normalize_part_fact( item( "bacon" ), { .ix = 10 } );
+    const auto tomato = proc::normalize_part_fact( item( "tomato" ), { .ix = 11 } );
 
     CHECK( make_sandwich_name_for_test( { bread_a, bread_b, meat }, {
         proc::slot_id( "bread" ),
@@ -233,6 +235,14 @@ TEST_CASE( "proc_make_item_names_sandwiches_from_selected_ingredients", "[proc][
         proc::slot_id( "veg" ),
         proc::slot_id( "cond" ),
     } ) == "fish sandwich" );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, bacon, lettuce, tomato }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "meat" ),
+        proc::slot_id( "veg" ),
+        proc::slot_id( "veg" ),
+    } ) == "BLT" );
 
     CHECK( make_sandwich_name_for_test( { bread_a, bread_b, bread_c, meat, lettuce, mustard }, {
         proc::slot_id( "bread" ),

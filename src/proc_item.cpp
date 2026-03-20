@@ -134,6 +134,14 @@ auto legacy_sandwich_specs( const itype_id &id ) -> std::vector<legacy_sandwich_
             legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "syrup" ), .count = 1 }
         };
     }
+    if( id == itype_id( "blt" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "meat", .id = itype_id( "bacon" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "veg", .id = itype_id( "lettuce" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "veg", .id = itype_id( "tomato" ), .count = 1 }
+        };
+    }
     if( id == itype_id( "sandwich_deluxe" ) ) {
         return {
             legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },

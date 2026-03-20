@@ -209,10 +209,12 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         itype_id id;
         int bread = 0;
         int meat = 0;
+        int bacon = 0;
         int fish = 0;
         int cheese = 0;
         int veg = 0;
         int cucumber = 0;
+        int tomato = 0;
         int mustard = 0;
         int honey = 0;
         int jam = 0;
@@ -231,6 +233,7 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         legacy_case{ .id = itype_id( "sandwich_pbj" ), .bread = 2, .jam = 1, .peanut_butter = 1 },
         legacy_case{ .id = itype_id( "sandwich_pbh" ), .bread = 2, .honey = 1, .peanut_butter = 1 },
         legacy_case{ .id = itype_id( "sandwich_pbm" ), .bread = 2, .peanut_butter = 1, .syrup = 1 },
+        legacy_case{ .id = itype_id( "blt" ), .bread = 2, .bacon = 1, .veg = 1, .tomato = 1 },
         legacy_case{ .id = itype_id( "fish_sandwich" ), .bread = 2, .fish = 1, .veg = 1, .mustard = 1 },
         legacy_case{ .id = itype_id( "sandwich_deluxe" ), .bread = 2, .meat = 1, .cheese = 2, .veg = 1, .mustard = 1 },
         legacy_case{ .id = itype_id( "sandwich_okay" ), .bread = 2, .meat = 1, .veg = 1 },
@@ -258,10 +261,12 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         CHECK( restored->volume() == legacy.volume() );
         CHECK( part_count( *payload, itype_id( "bread" ) ) == test_case.bread );
         CHECK( part_count( *payload, itype_id( "meat_cooked" ) ) == test_case.meat );
+        CHECK( part_count( *payload, itype_id( "bacon" ) ) == test_case.bacon );
         CHECK( part_count( *payload, itype_id( "fish_cooked" ) ) == test_case.fish );
         CHECK( part_count( *payload, itype_id( "cheese" ) ) == test_case.cheese );
         CHECK( part_count( *payload, itype_id( "lettuce" ) ) == test_case.veg );
         CHECK( part_count( *payload, itype_id( "cucumber" ) ) == test_case.cucumber );
+        CHECK( part_count( *payload, itype_id( "tomato" ) ) == test_case.tomato );
         CHECK( part_count( *payload, itype_id( "mustard" ) ) == test_case.mustard );
         CHECK( part_count( *payload, itype_id( "honey_bottled" ) ) == test_case.honey );
         CHECK( part_count( *payload, itype_id( "jam_fruit" ) ) == test_case.jam );
@@ -273,6 +278,7 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
 TEST_CASE( "legacy_sandwiches_migrate_to_proc_sandwich_items", "[proc][payload][migration]" )
 {
     const auto cases = std::vector<itype_id> {
+        itype_id( "blt" ),
         itype_id( "sandwich_t" ),
         itype_id( "sandwich_honey" ),
         itype_id( "sandwich_jam" ),
@@ -305,6 +311,7 @@ TEST_CASE( "legacy_sandwich_ids_migrate_to_proc_uncraft_recipe", "[proc][payload
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_generic" ) ) );
 
     const auto cases = std::vector<itype_id> {
+        itype_id( "blt" ),
         itype_id( "sandwich_t" ),
         itype_id( "sandwich_veggy" ),
         itype_id( "sandwich_cheese" ),
