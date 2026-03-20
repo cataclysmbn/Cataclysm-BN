@@ -87,6 +87,27 @@ TEST_CASE( "proc_part_fact_assigns_food_role_tags", "[proc][fact]" )
     CHECK( std::ranges::find( fertilizer_fact.tag, "veg" ) == fertilizer_fact.tag.end() );
 }
 
+TEST_CASE( "proc_part_fact_limits_bread_tags_to_sandwichable_bases", "[proc][fact]" )
+{
+    const auto sweetbread_fact = proc::normalize_part_fact( item( "sweetbread" ), { .ix = 30 } );
+    CHECK( std::ranges::find( sweetbread_fact.tag, "bread" ) == sweetbread_fact.tag.end() );
+
+    const auto pancake_fact = proc::normalize_part_fact( item( "pancakes" ), { .ix = 31 } );
+    CHECK( std::ranges::find( pancake_fact.tag, "bread" ) == pancake_fact.tag.end() );
+
+    const auto waffle_fact = proc::normalize_part_fact( item( "waffles" ), { .ix = 32 } );
+    CHECK( std::ranges::find( waffle_fact.tag, "bread" ) == waffle_fact.tag.end() );
+
+    const auto cracker_fact = proc::normalize_part_fact( item( "crackers" ), { .ix = 33 } );
+    CHECK( std::ranges::find( cracker_fact.tag, "bread" ) == cracker_fact.tag.end() );
+
+    const auto pretzel_fact = proc::normalize_part_fact( item( "pretzels" ), { .ix = 34 } );
+    CHECK( std::ranges::find( pretzel_fact.tag, "bread" ) == pretzel_fact.tag.end() );
+
+    const auto snack_cake_fact = proc::normalize_part_fact( item( "cake2" ), { .ix = 35 } );
+    CHECK( std::ranges::find( snack_cake_fact.tag, "bread" ) == snack_cake_fact.tag.end() );
+}
+
 TEST_CASE( "proc_part_fact_assigns_cond_tags_to_supported_sandwich_condiments", "[proc][fact]" )
 {
     const auto butter_fact = proc::normalize_part_fact( item( "butter" ), { .ix = 13 } );
