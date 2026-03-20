@@ -59,7 +59,8 @@ auto default_tags( const item &it ) -> std::vector<std::string>
         ( ( !it.count_by_charges() &&
             has_material( it, material_id( "wheat" ) ) ) ||
           id.contains( "bread" ) || id.contains( "bun" ) || id.contains( "bagel" ) ||
-          id.contains( "toast" ) || id.contains( "roll" ) || id.contains( "tortilla" ) ) ) {
+          id.contains( "toast" ) || id.contains( "roll" ) || id.contains( "tortilla" ) ||
+          id.contains( "biscuit" ) || id.contains( "hardtack" ) ) ) {
         ret.push_back( "bread" );
     }
     if( raw_ingredient_candidate &&
