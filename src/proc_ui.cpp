@@ -17,6 +17,7 @@
 #include "output.h"
 #include "proc_builder.h"
 #include "proc_fact.h"
+#include "proc_recipe.h"
 #include "recipe.h"
 #include "proc_ui_candidates.h"
 #include "proc_ui_input.h"
@@ -75,13 +76,14 @@ auto make_source_entry( const source_options &opts ) -> source_entry
     };
 }
 
-auto current_recipe_requirement_status( Character &who,
-                                        const recipe &rec ) -> recipe_requirement_status
+auto current_recipe_requirement_status( Character &who, const recipe &rec,
+                                        const std::vector<proc::part_fact> &facts ) -> recipe_requirement_status
 {
-    const auto ready = rec.simple_requirements().can_make_with_inventory( who.crafting_inventory(),
+    const auto reqs = proc::recipe_requirements( rec, facts );
+    const auto ready = reqs.can_make_with_inventory( who.crafting_inventory(),
                        rec.get_component_filter(), 1, cost_adjustment::start_only );
     const auto missing = ready ? std::string {} :
-                         rec.simple_requirements().list_missing();
+                         reqs.list_missing();
     return recipe_requirement_status{
         .ready = ready,
         .missing = missing,
@@ -366,8 +368,6 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
     auto search_return_focus = panel_focus::candidates;
     auto search_query = std::string {};
     auto status = std::string {};
-    const auto recipe_requirements = current_recipe_requirement_status( who, rec );
-
     auto w = catacurses::window {};
     auto ui = ui_adaptor( ui_adaptor::disable_uis_below {} );
     auto width = TERMX;
@@ -473,6 +473,9 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             trim_and_print( w, point( left_width + middle_width + 5, list_top + row ), right_width - 1,
                             c_white, preview[static_cast<size_t>( row )] );
         } );
+
+        const auto recipe_requirements = current_recipe_requirement_status( who, rec,
+                                         proc::selected_facts( state ) );
 
         const auto readiness = !proc::complete( state,
                                                 sch ) ? proc::builder_readiness::missing_required_slots :
@@ -597,6 +600,8 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             continue;
         }
         if( ch == 'f' ) {
+            const auto recipe_requirements = current_recipe_requirement_status( who, rec,
+                                             proc::selected_facts( state ) );
             if( !proc::complete( state, sch ) ) {
                 status = _( "Fill all required slots before crafting." );
                 continue;
