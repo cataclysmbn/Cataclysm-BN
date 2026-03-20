@@ -8,6 +8,9 @@
 #include "json.h"
 #include "json_assertion_helpers.h"
 #include "proc_item.h"
+#include "recipe_dictionary.h"
+#include "units_mass.h"
+#include "units_volume.h"
 
 namespace
 {
@@ -30,6 +33,17 @@ auto craft_plan_json( const proc::craft_plan &plan ) -> std::string
     return serialize_wrapper( [&]( JsonOut & jsout ) {
         proc::to_json( jsout, plan );
     } );
+}
+
+auto part_count( const proc::payload &payload, const itype_id &id ) -> int
+{
+    auto total = 0;
+    std::ranges::for_each( payload.parts, [&]( const proc::compact_part & part ) {
+        if( part.id == id ) {
+            total += part.n;
+        }
+    } );
+    return total;
 }
 
 } // namespace
@@ -186,4 +200,54 @@ TEST_CASE( "proc_payload_restores_nested_compact_parts", "[proc][payload]" )
     REQUIRE( restored.size() == 1 );
     REQUIRE( proc::read_payload( *restored.front() ) );
     CHECK( proc::read_payload( *restored.front() )->fp == "sandwich:child" );
+}
+
+TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][migration]" )
+{
+    struct legacy_case {
+        itype_id id;
+        int bread = 0;
+        int meat = 0;
+        int cheese = 0;
+        int veg = 0;
+        int cond = 0;
+    };
+
+    const auto cases = std::vector<legacy_case> {
+        legacy_case{ .id = itype_id( "sandwich_t" ), .bread = 2, .meat = 1 },
+        legacy_case{ .id = itype_id( "sandwich_deluxe" ), .bread = 2, .meat = 1, .cheese = 2, .veg = 1, .cond = 1 },
+        legacy_case{ .id = itype_id( "sandwich_deluxe_nocheese" ), .bread = 2, .meat = 1, .veg = 1, .cond = 1 }
+    };
+
+    std::ranges::for_each( cases, [&]( const legacy_case & test_case ) {
+        const auto legacy = item( test_case.id, calendar::turn );
+        const auto restored = round_trip( legacy );
+
+        INFO( test_case.id.str() );
+        const auto payload = proc::read_payload( *restored );
+        REQUIRE( payload );
+        CHECK( payload->id == proc::schema_id( "sandwich" ) );
+        CHECK( payload->mode == proc::hist::compact );
+        CHECK( payload->fp == "sandwich:legacy:" + test_case.id.str() );
+        CHECK( restored->typeId() == test_case.id );
+        CHECK( restored->type_name() == legacy.type_name() );
+        CHECK( payload->blob.name == legacy.type_name() );
+        CHECK( payload->blob.mass_g == units::to_gram( legacy.weight() ) );
+        CHECK( payload->blob.volume_ml == units::to_milliliter( legacy.volume() ) );
+        CHECK( restored->weight() == legacy.weight() );
+        CHECK( restored->volume() == legacy.volume() );
+        CHECK( part_count( *payload, itype_id( "bread" ) ) == test_case.bread );
+        CHECK( part_count( *payload, itype_id( "meat_cooked" ) ) == test_case.meat );
+        CHECK( part_count( *payload, itype_id( "cheese" ) ) == test_case.cheese );
+        CHECK( part_count( *payload, itype_id( "lettuce" ) ) == test_case.veg );
+        CHECK( part_count( *payload, itype_id( "mustard" ) ) == test_case.cond );
+    } );
+}
+
+TEST_CASE( "proc_and_legacy_sandwiches_have_uncraft_recipes", "[proc][payload][migration]" )
+{
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_generic" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_t" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_deluxe" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_deluxe_nocheese" ) ) );
 }

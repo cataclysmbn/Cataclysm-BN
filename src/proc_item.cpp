@@ -16,6 +16,7 @@
 #include "fstream_utils.h"
 #include "init.h"
 #include "item.h"
+#include "itype.h"
 #include "json.h"
 #include "proc_fact.h"
 #include "units_mass.h"
@@ -24,8 +25,108 @@
 namespace
 {
 
+struct legacy_sandwich_part_spec {
+    std::string role;
+    itype_id id = itype_id::NULL_ID();
+    int count = 1;
+};
+
 inline constexpr auto proc_var_key = std::string_view { "proc" };
 inline constexpr auto proc_craft_var_key = std::string_view { "proc_craft" };
+
+auto default_food_blob( const item &it ) -> proc::fast_blob
+{
+    auto blob = proc::fast_blob{};
+    blob.mass_g = units::to_gram( it.weight() );
+    blob.volume_ml = units::to_milliliter( it.volume() );
+    blob.name = it.type_name();
+    if( !it.is_comestible() ) {
+        return blob;
+    }
+
+    const auto charges = std::max( it.charges, 1 );
+    blob.kcal = it.get_comestible()->default_nutrition.kcal * charges;
+    blob.vit = it.get_comestible()->default_nutrition.vitamins;
+    std::ranges::for_each( blob.vit, [&]( std::pair<const vitamin_id, int> &entry ) {
+        entry.second *= charges;
+    } );
+    return blob;
+}
+
+auto make_legacy_sandwich_part( const legacy_sandwich_part_spec &spec ) -> proc::compact_part
+{
+    const auto sample = item::spawn( spec.id, calendar::turn );
+    auto part = proc::compact_part{};
+    part.role = spec.role;
+    part.id = spec.id;
+    part.n = spec.count;
+    part.hp = 1.0f;
+    part.dmg = 0;
+    part.chg = sample->count_by_charges() ? spec.count : 0;
+    part.mat = sample->made_of();
+    return part;
+}
+
+auto legacy_sandwich_specs( const itype_id &id ) -> std::vector<legacy_sandwich_part_spec>
+{
+    if( id == itype_id( "sandwich_t" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "meat", .id = itype_id( "meat_cooked" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_veggy" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "veg", .id = itype_id( "lettuce" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_cheese" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "cheese", .id = itype_id( "cheese" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_sauce" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "mustard" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_deluxe" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "meat", .id = itype_id( "meat_cooked" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "cheese", .id = itype_id( "cheese" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "veg", .id = itype_id( "lettuce" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "mustard" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_okay" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "meat", .id = itype_id( "meat_cooked" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "veg", .id = itype_id( "lettuce" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_deluxe_nocheese" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "meat", .id = itype_id( "meat_cooked" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "veg", .id = itype_id( "lettuce" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "mustard" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "fish_sandwich" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "meat", .id = itype_id( "fish_cooked" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "veg", .id = itype_id( "lettuce" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "mustard" ), .count = 1 }
+        };
+    }
+    return {};
+}
 
 auto split_path( const std::string &path ) -> std::vector<std::string>
 {
@@ -554,6 +655,30 @@ auto proc::write_craft_plan( item &it, const craft_plan &data ) -> void
         to_json( jsout, data );
     } ) );
 }
+
+namespace proc
+{
+
+auto legacy_sandwich_payload( const item &it ) -> std::optional<payload>
+{
+    const auto specs = legacy_sandwich_specs( it.typeId() );
+    if( specs.empty() ) {
+        return std::nullopt;
+    }
+
+    auto out = payload{};
+    out.id = schema_id( "sandwich" );
+    out.mode = hist::compact;
+    out.fp = "sandwich:legacy:" + it.typeId().str();
+    out.blob = default_food_blob( it );
+    std::ranges::transform( specs,
+    std::back_inserter( out.parts ), [&]( const legacy_sandwich_part_spec & spec ) {
+        return make_legacy_sandwich_part( spec );
+    } );
+    return out;
+}
+
+} // namespace proc
 
 auto proc::set_payload_from_json( item &it, const std::string &json ) -> void
 {

@@ -1,0 +1,65 @@
+[
+  {
+    "type": "uncraft",
+    "result": "sandwich_generic",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_t",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "meat_cooked", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_veggy",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "lettuce", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_cheese",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "cheese", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_sauce",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "mustard", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_deluxe",
+    "time": "45 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "meat_cooked", 1 ] ], [ [ "cheese", 2 ] ], [ [ "lettuce", 1 ] ], [ [ "mustard", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_okay",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "meat_cooked", 1 ] ], [ [ "lettuce", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_deluxe_nocheese",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "meat_cooked", 1 ] ], [ [ "lettuce", 1 ] ], [ [ "mustard", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "fish_sandwich",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "fish_cooked", 1 ] ], [ [ "lettuce", 1 ] ], [ [ "mustard", 1 ] ] ]
+  }
+]
