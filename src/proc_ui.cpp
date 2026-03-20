@@ -377,6 +377,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
     ctxt.register_action( "CONFIRM", to_translation( "Add selected candidate" ) );
     ctxt.register_action( "QUIT", to_translation( "Cancel" ) );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "ANY_INPUT" );
 
     while( true ) {
         ui_manager::redraw();
