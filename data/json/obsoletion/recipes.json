@@ -2251,5 +2251,45 @@
       [ [ "processor", 1 ] ],
       [ [ "RAM", 1 ] ]
     ]
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_t",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_veggy",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_cheese",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_sauce",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_deluxe",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_okay",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_deluxe_nocheese",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "fish_sandwich",
+    "obsolete": true
   }
 ]

@@ -38,6 +38,7 @@
 #include "item.h"
 #include "item_contents.h"
 #include "item_group.h"
+#include "proc_item.h"
 #include "iuse_actor.h"
 #include "json.h"
 
@@ -2959,6 +2960,10 @@ void Item_factory::migrate_item( const itype_id &id, item &obj )
             const int capacity = child.charges_per_volume( obj.get_container_capacity() );
             child.charges = std::min( child.charges, capacity );
         }
+    }
+
+    if( const auto payload = proc::legacy_sandwich_payload( obj ) ) {
+        proc::write_payload( obj, *payload );
     }
 }
 
