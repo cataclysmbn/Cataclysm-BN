@@ -453,6 +453,25 @@ TEST_CASE( "proc_builder_sandwich_accepts_supported_spreads_in_cond_slot",
     CHECK( std::ranges::find( cond_candidates, proc::part_ix( 6 ) ) != cond_candidates.end() );
 }
 
+TEST_CASE( "proc_builder_sandwich_excludes_non_cheese_dairy_from_cheese_slot",
+           "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/sandwich.json", "sandwich" );
+
+    const auto bread_a = proc::normalize_part_fact( item( "bread" ), { .ix = 1 } );
+    const auto bread_b = proc::normalize_part_fact( item( "bread" ), { .ix = 2 } );
+    const auto butter = proc::normalize_part_fact( item( "butter" ), { .ix = 3 } );
+    const auto milk = proc::normalize_part_fact( item( "milk" ), { .ix = 4 } );
+    const auto cheese = proc::normalize_part_fact( item( "cheese" ), { .ix = 5 } );
+
+    const auto state = proc::build_state( sch, { bread_a, bread_b, butter, milk, cheese } );
+    const auto &cheese_candidates = state.cand.at( proc::slot_id( "cheese" ) );
+
+    CHECK( std::ranges::find( cheese_candidates, proc::part_ix( 3 ) ) == cheese_candidates.end() );
+    CHECK( std::ranges::find( cheese_candidates, proc::part_ix( 4 ) ) == cheese_candidates.end() );
+    CHECK( std::ranges::find( cheese_candidates, proc::part_ix( 5 ) ) != cheese_candidates.end() );
+}
+
 TEST_CASE( "proc_builder_sandwich_excludes_payload_marked_raw_food_candidates",
            "[proc][builder][food]" )
 {
