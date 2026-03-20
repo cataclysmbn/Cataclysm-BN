@@ -139,7 +139,8 @@ TEST_CASE( "proc_make_item_applies_weapon_blob_to_item", "[proc][make][weapon]" 
     sch.slots = {
         proc::slot_data{ .id = proc::slot_id( "blade" ), .role = "blade", .min = 1, .max = 1, .ok = {}, .no = {} },
         proc::slot_data{ .id = proc::slot_id( "handle" ), .role = "handle", .min = 1, .max = 1, .ok = {}, .no = {} },
-        proc::slot_data{ .id = proc::slot_id( "grip" ), .role = "grip", .min = 1, .max = 2, .rep = true, .ok = {}, .no = {} }
+        proc::slot_data{ .id = proc::slot_id( "grip" ), .role = "grip", .min = 1, .max = 2, .rep = true, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "reinforcement" ), .role = "reinforcement", .min = 0, .max = 4, .rep = true, .ok = {}, .no = {} }
     };
 
     auto blade = proc::part_fact{};
@@ -172,9 +173,72 @@ TEST_CASE( "proc_make_item_applies_weapon_blob_to_item", "[proc][make][weapon]" 
     CHECK( proc::blob_melee( *made )->stab > 0 );
     CHECK( proc::blob_melee( *made )->bash > 0 );
     CHECK( made->damage_melee( DT_STAB ) == proc::blob_melee( *made )->stab );
-    CHECK( made->type_name() == "forged sword" );
+    CHECK( made->type_name() == "hand-forged sword" );
     REQUIRE( proc::read_payload( *made )->parts.size() == 3 );
     CHECK( proc::read_payload( *made )->parts[0].role == "blade" );
+}
+
+TEST_CASE( "proc_make_item_names_reinforced_wood_swords", "[proc][make][weapon]" )
+{
+    auto sch = proc::schema{};
+    sch.id = proc::schema_id( "sword" );
+    sch.cat = "weapon";
+    sch.res = itype_id( "proc_sword_generic" );
+    sch.slots = {
+        proc::slot_data{ .id = proc::slot_id( "blade" ), .role = "blade", .min = 1, .max = 1, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "handle" ), .role = "handle", .min = 1, .max = 1, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "grip" ), .role = "grip", .min = 1, .max = 2, .rep = true, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "reinforcement" ), .role = "reinforcement", .min = 0, .max = 4, .rep = true, .ok = {}, .no = {} }
+    };
+
+    auto wood_blade = proc::part_fact{};
+    wood_blade.ix = 1;
+    wood_blade.id = itype_id( "stick_long" );
+    wood_blade.mat = { material_id( "wood" ) };
+    wood_blade.mass_g = 450;
+    wood_blade.volume_ml = 450;
+
+    auto handle = proc::part_fact{};
+    handle.ix = 2;
+    handle.id = itype_id( "stick_long" );
+    handle.mat = { material_id( "wood" ) };
+    handle.mass_g = 180;
+    handle.volume_ml = 200;
+
+    auto grip = proc::part_fact{};
+    grip.ix = 3;
+    grip.id = itype_id( "rag" );
+    grip.mat = { material_id( "cotton" ) };
+    grip.mass_g = 30;
+    grip.volume_ml = 40;
+
+    auto nail = proc::part_fact{};
+    nail.ix = 4;
+    nail.id = itype_id( "nail" );
+    nail.mat = { material_id( "iron" ) };
+    nail.mass_g = 20;
+    nail.volume_ml = 5;
+
+    auto scrap = proc::part_fact{};
+    scrap.ix = 5;
+    scrap.id = itype_id( "scrap" );
+    scrap.mat = { material_id( "steel" ) };
+    scrap.mass_g = 120;
+    scrap.volume_ml = 80;
+
+    auto opts = proc::make_opts{};
+    opts.mode = proc::hist::compact;
+
+    opts.slots = { proc::slot_id( "blade" ), proc::slot_id( "handle" ), proc::slot_id( "grip" ) };
+    CHECK( proc::make_item( sch, { wood_blade, handle, grip }, opts )->type_name() == "2-by-sword" );
+
+    opts.slots = { proc::slot_id( "blade" ), proc::slot_id( "handle" ), proc::slot_id( "grip" ),
+                   proc::slot_id( "reinforcement" )
+                 };
+    CHECK( proc::make_item( sch, { wood_blade, handle, grip, nail }, opts )->type_name() ==
+           "nail sword" );
+    CHECK( proc::make_item( sch, { wood_blade, handle, grip, scrap }, opts )->type_name() ==
+           "crude sword" );
 }
 
 TEST_CASE( "proc_make_item_names_stews_from_selected_raw_ingredients", "[proc][make][food]" )
