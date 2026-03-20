@@ -109,7 +109,6 @@ static void atomic_float_max( float &cell, float val ) noexcept
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
-
 // Fast integer square-root for distances ≤ MAX_VIEW_DISTANCE.
 // Schraudolph-Newton method; matches rl_dist() truncation behaviour.
 // Only used when g_max_view_distance ≤ 60.  See lightmap.cpp for derivation.
@@ -501,7 +500,6 @@ void castLightOctants_q(
 }
 
 // ── Internal 3D cast ──────────────────────────────────────────────────────────
-
 // Casts light through one 3D octant-segment.
 //
 // UseAtomic — when true, output writes use std::atomic_ref CAS so that 16
@@ -616,14 +614,8 @@ static void cast_zlight_segment(
                     current_floor = new_floor;
                 }
 
-                // Proposal A: table lookup replaces per-tile sqrt().
-                // dist_2d is the horizontal (xy-plane) distance used for Beer-Lambert
-                // intensity — vertical offset does not penalise apparent brightness.
-                // dist_3d applies the 1.8× z-level scale for future occlusion use.
                 const int dist_2d  = zdist_lookup( delta.x, delta.y, 0 ) + offset_distance;
-                // (dist_3d available here if occlusion weighting is added later)
 
-                // Proposal B: skip exp() for the common open-air fast path.
                 if( cumulative_transparency == LIGHT_TRANSPARENCY_OPEN_AIR ) {
                     const int lookup_idx = std::min( dist_2d, exp_lookup::size - 1 );
                     last_intensity = numerator * s_openair_lookup.values[lookup_idx];
@@ -631,7 +623,6 @@ static void cast_zlight_segment(
                     last_intensity = model.calc( numerator, cumulative_transparency, dist_2d );
                 }
 
-                // Proposal C: atomic write when running in parallel; plain when serial.
                 float &out_cell = output_caches[z_index].at( current.x, current.y );
                 atomic_float_max<UseAtomic>( out_cell, last_intensity );
 
@@ -747,9 +738,6 @@ void cast_zlight(
     // Ensure the z-distance lookup table matches current runtime settings.
     rebuild_zdist_table();
 
-    // Proposal C: dispatch all 16 octant segments in parallel when enabled.
-    // Each segment is independent (read-only inputs, max-writes to outputs).
-    // Overlapping output cells are resolved via atomic CAS in the hot path.
     if( parallel_enabled ) {
         parallel_for_chunked( 0, static_cast<int>( k_zlight_xforms.size() ), 1, [&]( int i ) {
             cast_zlight_segment<true>(
