@@ -21,6 +21,7 @@
 #include "string_formatter.h"
 #include "translations.h"
 #include "ui.h"
+#include "proc_ui_navigation.h"
 #include "ui_manager.h"
 
 namespace
@@ -596,17 +597,17 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         }
         if( action == "UP" ) {
             if( focus == panel_focus::slots ) {
-                slot_cursor = std::max( slot_cursor - 1, 0 );
+                slot_cursor = proc::wrap_cursor( slot_cursor, -1, static_cast<int>( sch.slots.size() ) );
             } else if( !candidates.empty() ) {
-                cand_cursor = std::max( cand_cursor - 1, 0 );
+                cand_cursor = proc::wrap_cursor( cand_cursor, -1, static_cast<int>( candidates.size() ) );
             }
             continue;
         }
         if( action == "DOWN" ) {
             if( focus == panel_focus::slots ) {
-                slot_cursor = std::min( slot_cursor + 1, static_cast<int>( sch.slots.size() ) - 1 );
+                slot_cursor = proc::wrap_cursor( slot_cursor, 1, static_cast<int>( sch.slots.size() ) );
             } else if( !candidates.empty() ) {
-                cand_cursor = std::min( cand_cursor + 1, static_cast<int>( candidates.size() ) - 1 );
+                cand_cursor = proc::wrap_cursor( cand_cursor, 1, static_cast<int>( candidates.size() ) );
             }
             continue;
         }
