@@ -21,7 +21,8 @@ auto display_label( const proc::counted_label &entry ) -> std::string
 
 } // namespace
 
-auto proc::group_duplicate_labels( const std::vector<std::string> &labels ) -> std::vector<counted_label>
+auto proc::group_duplicate_labels( const std::vector<std::string> &labels ) ->
+std::vector<counted_label>
 {
     auto ret = std::vector<counted_label> {};
     for( const auto &label : labels ) {
