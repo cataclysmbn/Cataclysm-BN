@@ -56,6 +56,11 @@ struct source_options {
     int uses = 1;
 };
 
+struct recipe_requirement_status {
+    bool ready = true;
+    std::string missing;
+};
+
 auto make_source_entry( const source_options &opts ) -> source_entry
 {
     return source_entry{
@@ -67,6 +72,19 @@ auto make_source_entry( const source_options &opts ) -> source_entry
             .charges = opts.charges,
             .uses = opts.uses
         } )
+    };
+}
+
+auto current_recipe_requirement_status( Character &who,
+                                        const recipe &rec ) -> recipe_requirement_status
+{
+    const auto ready = rec.simple_requirements().can_make_with_inventory( who.crafting_inventory(),
+                       rec.get_component_filter(), 1, cost_adjustment::start_only );
+    const auto missing = ready ? std::string {} :
+                         rec.simple_requirements().list_missing();
+    return recipe_requirement_status{
+        .ready = ready,
+        .missing = missing,
     };
 }
 
@@ -377,6 +395,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
     auto focus = panel_focus::slots;
     auto search_query = std::string {};
     auto status = std::string {};
+    const auto recipe_requirements = current_recipe_requirement_status( who, rec );
 
     auto w = catacurses::window {};
     auto ui = ui_adaptor( ui_adaptor::disable_uis_below {} );
@@ -484,12 +503,19 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
                             c_white, preview[static_cast<size_t>( row )] );
         } );
 
-        const auto ready_color = proc::complete( state, sch ) ? c_light_green : c_light_red;
+        const auto readiness = !proc::complete( state,
+                                                sch ) ? proc::builder_readiness::missing_required_slots :
+                               recipe_requirements.ready ? proc::builder_readiness::ready_to_craft :
+                               proc::builder_readiness::missing_recipe_requirements;
+        const auto ready_color = readiness == proc::builder_readiness::ready_to_craft ? c_light_green :
+                                 c_light_red;
         trim_and_print( w, point( 2, height - 3 ), width - 4, ready_color,
-                        proc::complete( state, sch ) ? _( "Status: [ READY TO CRAFT ]" ) :
-                        _( "Status: [ MISSING REQUIRED SLOTS ]" ) );
+                        proc::builder_readiness_label( readiness ) );
+        const auto idle_status = readiness == proc::builder_readiness::missing_recipe_requirements ?
+                                 proc::compact_requirement_text( recipe_requirements.missing ) :
+                                 _( "[Arrows] Navigate  [/] Search  [Enter] Add/Remove  [f] Craft  [Esc] Cancel" );
         trim_and_print( w, point( 2, height - 2 ), width - 4, c_light_gray,
-                        status.empty() ? _( "[Arrows] Navigate  [/] Search  [Enter] Add/Remove  [f] Craft  [Esc] Cancel" ) :
+                        status.empty() ? idle_status :
                         status );
         wnoutrefresh( w );
     } );
@@ -600,6 +626,13 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         if( ch == 'f' ) {
             if( !proc::complete( state, sch ) ) {
                 status = _( "Fill all required slots before crafting." );
+                continue;
+            }
+            if( !recipe_requirements.ready ) {
+                status = proc::compact_requirement_text( recipe_requirements.missing );
+                if( status.empty() ) {
+                    status = _( "Missing required tools or qualities for this recipe." );
+                }
                 continue;
             }
             auto result = ui_result{};

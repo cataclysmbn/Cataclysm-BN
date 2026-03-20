@@ -26,3 +26,23 @@ TEST_CASE( "proc_ui_formats_grouped_slot_and_preview_labels_with_x_counts", "[pr
     CHECK( proc::grouped_label_lines( { "bread", "bread", "cheese" } ) ==
            std::vector<std::string> { "- bread x2", "- cheese" } );
 }
+
+TEST_CASE( "proc_ui_formats_builder_readiness_labels", "[proc][ui]" )
+{
+    CHECK( proc::builder_readiness_label( proc::builder_readiness::missing_required_slots ) ==
+           "Status: [ MISSING REQUIRED SLOTS ]" );
+    CHECK( proc::builder_readiness_label( proc::builder_readiness::missing_recipe_requirements ) ==
+           "Status: [ MISSING TOOLS OR QUALITIES ]" );
+    CHECK( proc::builder_readiness_label( proc::builder_readiness::ready_to_craft ) ==
+           "Status: [ READY TO CRAFT ]" );
+}
+
+TEST_CASE( "proc_ui_compacts_missing_requirement_text_for_status_bar", "[proc][ui]" )
+{
+    CHECK( proc::compact_requirement_text( "" ).empty() );
+    CHECK( proc::compact_requirement_text( "These tools are missing:\ncutting 1\nboiling 2\n" ) ==
+           "These tools are missing: cutting 1; boiling 2" );
+    CHECK( proc::compact_requirement_text(
+               "These tools are missing:\ncutting 1\nThese tools are missing:\nboiling 2\n" ) ==
+           "These tools are missing: cutting 1; boiling 2" );
+}
