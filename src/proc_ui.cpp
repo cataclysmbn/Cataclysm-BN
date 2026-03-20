@@ -1,7 +1,6 @@
 #include "proc_ui.h"
 
 #include <algorithm>
-#include <cctype>
 #include <map>
 #include <optional>
 #include <ranges>
@@ -16,6 +15,7 @@
 #include "item.h"
 #include "item_factory.h"
 #include "output.h"
+#include "proc_builder.h"
 #include "proc_fact.h"
 #include "recipe.h"
 #include "proc_ui_text.h"
@@ -83,30 +83,12 @@ auto source_for_ix( const std::vector<source_entry> &sources,
     return &sources[static_cast<size_t>( ix )];
 }
 
-auto lower_copy( std::string text ) -> std::string
-{
-    std::ranges::transform( text, text.begin(), []( const unsigned char ch ) {
-        return static_cast<char>( std::tolower( ch ) );
-    } );
-    return text;
-}
-
-auto search_blob( const source_entry &source ) -> std::string
-{
-    auto tags = std::string {};
-    std::ranges::for_each( source.fact.tag, [&]( const std::string & entry ) {
-        if( !tags.empty() ) {
-            tags += ' ';
-        }
-        tags += entry;
-    } );
-    return lower_copy( string_format( "%s %s %s %s", source.src->tname(), source.fact.id.str(), tags,
-                                      source.where ) );
-}
-
 auto matches_search( const source_entry &source, const std::string &query ) -> bool
 {
-    return query.empty() || search_blob( source ).contains( lower_copy( query ) );
+    return proc::part_matches_search( source.fact, {
+        .name = source.src->tname(),
+        .where = source.where
+    }, query );
 }
 
 auto filtered_candidates( const proc::builder_state &state, const proc::slot_id &slot,

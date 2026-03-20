@@ -54,6 +54,32 @@ TEST_CASE( "proc_builder_matches_query_atoms", "[proc][builder]" )
     CHECK_FALSE( proc::matches_atom( fact, "qual:CUT>=3" ) );
 }
 
+TEST_CASE( "proc_builder_search_matches_name_location_and_fact_tokens", "[proc][builder]" )
+{
+    auto fact = proc::part_fact{};
+    fact.ix = 1;
+    fact.id = itype_id( "knife_butcher" );
+    fact.tag = { "blade", "knife" };
+    fact.flag = { flag_id( "STAB" ) };
+    fact.mat = { material_id( "steel" ) };
+    fact.qual.emplace( quality_id( "CUT" ), 2 );
+
+    const auto opts = proc::part_search_options{
+        .name = "Combat Knife",
+        .where = "backpack"
+    };
+
+    CHECK( proc::part_matches_search( fact, opts, "combat" ) );
+    CHECK( proc::part_matches_search( fact, opts, "backpack" ) );
+    CHECK( proc::part_matches_search( fact, opts, "itype:knife_butcher" ) );
+    CHECK( proc::part_matches_search( fact, opts, "tag:knife" ) );
+    CHECK( proc::part_matches_search( fact, opts, "mat:steel" ) );
+    CHECK( proc::part_matches_search( fact, opts, "flag:STAB" ) );
+    CHECK( proc::part_matches_search( fact, opts, "qual:CUT>=2" ) );
+    CHECK_FALSE( proc::part_matches_search( fact, opts, "mat:wheat" ) );
+    CHECK_FALSE( proc::part_matches_search( fact, opts, "qual:CUT>=3" ) );
+}
+
 TEST_CASE( "proc_builder_builds_candidates_and_fast_preview", "[proc][builder]" )
 {
     const auto sch = load_schema_for_test( R"(

@@ -42,6 +42,14 @@ auto quality_match( const proc::part_fact &fact, const std::string &rhs ) -> boo
     return iter != fact.qual.end() && iter->second >= level;
 }
 
+auto is_search_atom( const std::string &query ) -> bool
+{
+    const auto atom_prefixes = std::vector<std::string> { "tag:", "flag:", "mat:", "itype:", "qual:" };
+    return std::ranges::any_of( atom_prefixes, [&]( const std::string & prefix ) {
+        return query.starts_with( prefix );
+    } );
+}
+
 auto join_none( const std::vector<std::string> &values ) -> std::string
 {
     auto ret = std::string{};
@@ -497,6 +505,50 @@ auto proc::fast_fp( const schema &sch, const fast_blob &blob,
                       blob.volume_ml, blob.kcal, blob.melee.bash, blob.melee.cut, blob.melee.stab,
                       blob.melee.to_hit, blob.melee.dur, joined ) );
     return string_format( "%s:%08x", sch.id.str(), static_cast<unsigned int>( hash & 0xffffffffU ) );
+}
+
+auto proc::part_search_texts( const part_fact &fact,
+                              const proc::part_search_options &opts ) -> std::vector<std::string>
+{
+    auto ret = std::vector<std::string> { opts.name, fact.id.str(), string_format( "itype:%s", fact.id.str() ),
+                                          opts.where
+                                        };
+    std::ranges::for_each( fact.tag, [&]( const std::string & tag ) {
+        ret.push_back( tag );
+        ret.push_back( string_format( "tag:%s", tag ) );
+    } );
+    std::ranges::for_each( fact.mat, [&]( const material_id & mat ) {
+        ret.push_back( mat.str() );
+        ret.push_back( string_format( "mat:%s", mat.str() ) );
+    } );
+    std::ranges::for_each( fact.flag, [&]( const flag_id & flag ) {
+        ret.push_back( flag.str() );
+        ret.push_back( string_format( "flag:%s", flag.str() ) );
+    } );
+    std::ranges::for_each( fact.qual, [&]( const std::pair<const quality_id, int> &entry ) {
+        ret.push_back( entry.first.str() );
+        ret.push_back( string_format( "qual:%s", entry.first.str() ) );
+        ret.push_back( string_format( "qual:%s>=%d", entry.first.str(), entry.second ) );
+    } );
+    return ret;
+}
+
+auto proc::part_matches_search( const part_fact &fact, const proc::part_search_options &opts,
+                                const std::string &txt ) -> bool
+{
+    if( txt.empty() ) {
+        return true;
+    }
+
+    const auto needle = to_lower_case( txt );
+    if( is_search_atom( needle ) && matches_atom( fact, needle ) ) {
+        return true;
+    }
+
+    const auto texts = part_search_texts( fact, opts );
+    return std::ranges::any_of( texts, [&]( const std::string & entry ) {
+        return lcmatch( entry, needle );
+    } );
 }
 
 auto proc::recipe_search_texts( const recipe &rec ) -> std::vector<std::string>
