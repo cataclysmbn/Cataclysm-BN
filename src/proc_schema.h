@@ -15,8 +15,19 @@ struct hist_data {
     hist def = hist::none;
     std::vector<hist> ok;
 
-    void load( const JsonObject &jo );
+    auto load( const JsonObject &jo ) -> void;
     auto allows( hist value ) const -> bool;
+};
+
+struct lua_data {
+    std::string full;
+    std::string name;
+    std::string make;
+
+    auto load( const JsonObject &jo ) -> void;
+    auto empty() const -> bool {
+        return full.empty() && name.empty() && make.empty();
+    }
 };
 
 struct slot_data {
@@ -28,7 +39,7 @@ struct slot_data {
     std::vector<std::string> ok;
     std::vector<std::string> no;
 
-    void load( const JsonObject &jo );
+    auto load( const JsonObject &jo ) -> void;
 };
 
 struct schema {
@@ -37,15 +48,16 @@ struct schema {
     itype_id res = itype_id::NULL_ID();
     hist_data hist;
     std::vector<slot_data> slots;
+    lua_data lua;
     bool was_loaded = false;
 
-    void load( const JsonObject &jo, const std::string &src );
-    void check() const;
+    auto load( const JsonObject &jo, const std::string &src ) -> void;
+    auto check() const -> void;
 };
 
-void load( const JsonObject &jo, const std::string &src );
-void check();
-void reset();
+auto load( const JsonObject &jo, const std::string &src ) -> void;
+auto check() -> void;
+auto reset() -> void;
 auto all() -> const std::vector<schema>&; // *NOPAD*
 auto get( const schema_id &id ) -> const schema&; // *NOPAD*
 auto has( const schema_id &id ) -> bool;

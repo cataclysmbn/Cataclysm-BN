@@ -55,6 +55,8 @@
 #include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
+#include "proc_item.h"
+#include "popup.h"
 #include "point.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
@@ -602,6 +604,12 @@ void Character::make_craft_with_command( const recipe_id &id_to_make, int batch_
     const auto &recipe_to_make = *id_to_make;
 
     if( !recipe_to_make ) {
+        return;
+    }
+
+    if( recipe_to_make.is_proc() ) {
+        popup( _( "Procedural builder stub for %s" ), recipe_to_make.builder_name().translated().empty() ?
+               recipe_to_make.result_name() : recipe_to_make.builder_name().translated() );
         return;
     }
 
@@ -2208,6 +2216,14 @@ void crafting::complete_disassemble( Character &who, const iuse_location &target
     // If the components aren't empty, we want items exactly identical to them
     // Even if the best-fit recipe does not involve those items
     location_vector<item> &components = dis_item.get_components();
+
+    if( const auto payload = proc::read_payload( dis_item ); payload &&
+        payload->mode == proc::hist::compact ) {
+        auto restored = proc::restore_parts( *payload );
+        std::ranges::for_each( restored, [&]( detached_ptr<item> &entry ) {
+            components.push_back( std::move( entry ) );
+        } );
+    }
 
     // If the components are empty, item is the default kind and made of default components
     if( components.empty() ) {

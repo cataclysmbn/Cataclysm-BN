@@ -37,6 +37,7 @@
 #include "mutation.h"
 #include "options.h"
 #include "pldata.h"
+#include "proc_item.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
@@ -310,6 +311,15 @@ static std::map<vitamin_id, int> compute_default_effective_vitamins(
 static nutrients compute_default_effective_nutrients( const item &comest,
         const Character &you, const cata::flat_set<flag_id> &extra_flags = {} )
 {
+    if( const auto kcal = proc::blob_kcal( comest ) ) {
+        auto ret = nutrients{};
+        ret.kcal = *kcal;
+        if( const auto vit = proc::blob_vitamins( comest ) ) {
+            ret.vitamins = *vit;
+        }
+        return ret;
+    }
+
     return { compute_default_effective_kcal( comest, you, extra_flags ),
              compute_default_effective_vitamins( comest, you ) };
 }

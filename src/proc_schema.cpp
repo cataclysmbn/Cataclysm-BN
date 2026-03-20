@@ -15,7 +15,7 @@ generic_factory<proc::schema> proc_schema_factory( "proc schema" );
 
 } // namespace
 
-void proc::hist_data::load( const JsonObject &jo )
+auto proc::hist_data::load( const JsonObject &jo ) -> void
 {
     jo.read( "def", def );
     if( jo.has_array( "ok" ) ) {
@@ -32,7 +32,14 @@ auto proc::hist_data::allows( const hist value ) const -> bool
     return std::ranges::find( ok, value ) != ok.end();
 }
 
-void proc::slot_data::load( const JsonObject &jo )
+auto proc::lua_data::load( const JsonObject &jo ) -> void
+{
+    jo.read( "full", full );
+    jo.read( "name", name );
+    jo.read( "make", make );
+}
+
+auto proc::slot_data::load( const JsonObject &jo ) -> void
 {
     jo.read( "id", id );
     jo.read( "role", role );
@@ -56,7 +63,7 @@ void proc::slot_data::load( const JsonObject &jo )
     }
 }
 
-void proc::schema::load( const JsonObject &jo, const std::string & )
+auto proc::schema::load( const JsonObject &jo, const std::string & ) -> void
 {
     jo.read( "cat", cat );
     jo.read( "res", res );
@@ -64,7 +71,9 @@ void proc::schema::load( const JsonObject &jo, const std::string & )
     if( jo.has_object( "hist" ) ) {
         hist.load( jo.get_object( "hist" ) );
     }
-
+    if( jo.has_object( "lua" ) ) {
+        lua.load( jo.get_object( "lua" ) );
+    }
     if( jo.has_array( "slot" ) ) {
         slots.clear();
         auto slot_arr = jo.get_array( "slot" );
@@ -76,7 +85,7 @@ void proc::schema::load( const JsonObject &jo, const std::string & )
     }
 }
 
-void proc::schema::check() const
+auto proc::schema::check() const -> void
 {
     if( res.is_null() ) {
         debugmsg( "proc schema %s is missing res", id.c_str() );
@@ -98,17 +107,17 @@ void proc::schema::check() const
     } );
 }
 
-void proc::load( const JsonObject &jo, const std::string &src )
+auto proc::load( const JsonObject &jo, const std::string &src ) -> void
 {
     proc_schema_factory.load( jo, src );
 }
 
-void proc::check()
+auto proc::check() -> void
 {
     proc_schema_factory.check();
 }
 
-void proc::reset()
+auto proc::reset() -> void
 {
     proc_schema_factory.reset();
 }

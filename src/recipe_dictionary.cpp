@@ -1,5 +1,7 @@
 #include "recipe_dictionary.h"
 
+#include "proc_builder.h"
+
 #include <algorithm>
 #include <iterator>
 #include <memory>
@@ -169,7 +171,7 @@ std::vector<const recipe *> recipe_subset::search( const std::string &txt,
         }
         switch( key ) {
             case search_type::name:
-                return lcmatch( r->result_name( /*decorated=*/true ), txt );
+                return proc::recipe_matches_search( *r, txt );
 
             case search_type::skill:
                 return lcmatch( r->required_skills_string( nullptr, true, false ), txt );
