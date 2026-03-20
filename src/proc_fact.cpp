@@ -79,8 +79,8 @@ auto is_sandwich_bread( const item &it ) -> bool
 
     const auto &id = it.typeId().str();
     if( id_contains_any( id, std::array<std::string_view, 9> {
-        "sweetbread", "pancake", "waffle", "cracker", "pretzel", "cookie", "brownie", "donut", "cake"
-    } ) ) {
+    "sweetbread", "pancake", "waffle", "cracker", "pretzel", "cookie", "brownie", "donut", "cake"
+} ) ) {
         return false;
     }
 
