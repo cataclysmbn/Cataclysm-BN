@@ -121,3 +121,68 @@ TEST_CASE( "proc_builder_search_quit_returns_to_previous_panel", "[proc][ui]" )
     CHECK( to_candidates.return_focus == proc::builder_focus::candidates );
     CHECK( to_candidates.search_query == "bread" );
 }
+
+TEST_CASE( "proc_builder_search_mode_consumes_navigation_keys", "[proc][ui]" )
+{
+    const auto up = proc::handle_builder_search_input( {
+        .focus = proc::builder_focus::search,
+        .action = "UP",
+        .ch = 0,
+        .text = "",
+        .search_query = "bread",
+    } );
+    const auto down = proc::handle_builder_search_input( {
+        .focus = proc::builder_focus::search,
+        .action = "DOWN",
+        .ch = 0,
+        .text = "",
+        .search_query = "bread",
+    } );
+    const auto page_up = proc::handle_builder_search_input( {
+        .focus = proc::builder_focus::search,
+        .action = "PAGE_UP",
+        .ch = 0,
+        .text = "",
+        .search_query = "bread",
+    } );
+    const auto page_down = proc::handle_builder_search_input( {
+        .focus = proc::builder_focus::search,
+        .action = "PAGE_DOWN",
+        .ch = 0,
+        .text = "",
+        .search_query = "bread",
+    } );
+    const auto home = proc::handle_builder_search_input( {
+        .focus = proc::builder_focus::search,
+        .action = "HOME",
+        .ch = 0,
+        .text = "",
+        .search_query = "bread",
+    } );
+    const auto end = proc::handle_builder_search_input( {
+        .focus = proc::builder_focus::search,
+        .action = "END",
+        .ch = 0,
+        .text = "",
+        .search_query = "bread",
+    } );
+
+    CHECK( up.handled );
+    CHECK( up.focus == proc::builder_focus::search );
+    CHECK( up.search_query == "bread" );
+    CHECK( down.handled );
+    CHECK( down.focus == proc::builder_focus::search );
+    CHECK( down.search_query == "bread" );
+    CHECK( page_up.handled );
+    CHECK( page_up.focus == proc::builder_focus::search );
+    CHECK( page_up.search_query == "bread" );
+    CHECK( page_down.handled );
+    CHECK( page_down.focus == proc::builder_focus::search );
+    CHECK( page_down.search_query == "bread" );
+    CHECK( home.handled );
+    CHECK( home.focus == proc::builder_focus::search );
+    CHECK( home.search_query == "bread" );
+    CHECK( end.handled );
+    CHECK( end.focus == proc::builder_focus::search );
+    CHECK( end.search_query == "bread" );
+}

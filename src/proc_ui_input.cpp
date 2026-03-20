@@ -1,6 +1,24 @@
 #include "proc_ui_input.h"
 
+#include <array>
+#include <string_view>
+
 #include "input.h"
+
+namespace
+{
+
+auto is_search_navigation_action( const std::string &action ) -> bool
+{
+    constexpr auto search_navigation_actions = std::array<std::string_view, 6> {
+        "UP", "DOWN", "PAGE_UP", "PAGE_DOWN", "HOME", "END"
+    };
+    return std::ranges::any_of( search_navigation_actions, [&]( const std::string_view candidate ) {
+        return action == candidate;
+    } );
+}
+
+} // namespace
 
 namespace proc
 {
@@ -40,6 +58,10 @@ auto handle_builder_search_input( const builder_input_options &opts ) -> builder
         }
         if( opts.action == "ANY_INPUT" && !opts.text.empty() ) {
             result.search_query += opts.text;
+            result.handled = true;
+            return result;
+        }
+        if( is_search_navigation_action( opts.action ) ) {
             result.handled = true;
             return result;
         }
