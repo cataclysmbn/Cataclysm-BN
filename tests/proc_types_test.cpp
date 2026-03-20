@@ -5,6 +5,7 @@
 
 #include "enum_conversions.h"
 #include "proc_types.h"
+#include "type_id.h"
 
 TEST_CASE( "proc_hist_round_trip", "[proc]" )
 {
@@ -24,7 +25,9 @@ TEST_CASE( "proc_core_scaffold_types", "[proc]" )
 
     const auto sandwich = proc::schema_id( "sandwich" );
     const auto bread = proc::slot_id( "bread" );
-    const auto fact = proc::part_fact{ .ix = 7 };
+    auto fact = proc::part_fact{};
+    fact.ix = 7;
+    fact.id = itype_id( "2x4" );
     const auto pick = proc::pick{ .slot = bread, .parts = { 1, 4 } };
 
     CHECK( sandwich == proc::schema_id( "sandwich" ) );

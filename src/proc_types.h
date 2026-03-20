@@ -6,6 +6,7 @@
 
 #include "enum_traits.h"
 #include "string_id.h"
+#include "type_id.h"
 
 namespace proc
 {
@@ -28,12 +29,19 @@ enum class hist : std::uint8_t {
 
 struct part_fact {
     part_ix ix = invalid_part_ix;
+    itype_id id = itype_id::NULL_ID();
+    std::vector<material_id> mat;
+    int mass_g = 0;
+    int volume_ml = 0;
+    int kcal = 0;
+    float hp = 1.0f;
+    int chg = 0;
 
     auto valid() const -> bool {
-        return ix >= 0;
+        return ix >= 0 && !id.is_null();
     }
 
-    auto operator<=>( const part_fact & ) const = default; // *NOPAD*
+    auto operator==( const part_fact & ) const -> bool = default;
 };
 
 struct pick {
