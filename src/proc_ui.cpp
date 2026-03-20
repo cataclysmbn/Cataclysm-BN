@@ -16,6 +16,7 @@
 #include "proc_fact.h"
 #include "recipe.h"
 #include "string_formatter.h"
+#include "type_id.h"
 #include "translations.h"
 #include "ui.h"
 #include "ui_manager.h"
@@ -23,11 +24,43 @@
 namespace
 {
 
+static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
+static const itype_id itype_bread( "bread" );
+static const itype_id itype_potato( "potato" );
+static const itype_id itype_meat_cooked( "meat_cooked" );
+static const itype_id itype_fish( "fish" );
+
 struct source_entry {
     item *src = nullptr;
     std::string where;
     proc::part_fact fact;
 };
+
+struct source_pool {
+    std::vector<detached_ptr<item>> owned;
+    std::vector<source_entry> entries;
+};
+
+struct source_options {
+    item *src = nullptr;
+    std::string where;
+    proc::part_ix ix = proc::invalid_part_ix;
+    int charges = 0;
+    int uses = 1;
+};
+
+auto make_source_entry( const source_options &opts ) -> source_entry
+{
+    return source_entry{
+        .src = opts.src,
+        .where = opts.where,
+        .fact = proc::normalize_part_fact( *opts.src, {
+            .ix = opts.ix,
+            .charges = opts.charges,
+            .uses = opts.uses
+        } )
+    };
+}
 
 auto source_for_ix( const std::vector<source_entry> &sources,
                     const proc::part_ix ix ) -> const source_entry * // *NOPAD*
@@ -38,9 +71,9 @@ auto source_for_ix( const std::vector<source_entry> &sources,
     return &sources[static_cast<size_t>( ix )];
 }
 
-auto gather_sources( Character &who, const proc::schema &sch ) -> std::vector<source_entry>
+auto gather_inventory_sources( Character &who, const proc::schema &sch ) -> source_pool
 {
-    auto ret = std::vector<source_entry> {};
+    auto ret = source_pool {};
     auto ix = proc::part_ix{ 0 };
     const auto &inv = who.crafting_inventory();
     std::ranges::for_each( inv.const_slice(), [&]( const std::vector<item *> *stack ) {
@@ -51,10 +84,9 @@ auto gather_sources( Character &who, const proc::schema &sch ) -> std::vector<so
             if( it == nullptr || it->is_craft() ) {
                 return;
             }
-            auto entry = source_entry{};
-            entry.src = it;
-            entry.where = it->describe_location( &who );
-            entry.fact = proc::normalize_part_fact( *it, {
+            const auto entry = make_source_entry( {
+                .src = it,
+                .where = it->describe_location( &who ),
                 .ix = ix,
                 .charges = it->count_by_charges() ? 1 : 0,
                 .uses = it->count_by_charges() ? std::max( it->charges, 1 ) : 1
@@ -64,9 +96,68 @@ auto gather_sources( Character &who, const proc::schema &sch ) -> std::vector<so
             } ) ) {
                 return;
             }
-            ret.push_back( entry );
+            ret.entries.push_back( entry );
             ix++;
         } );
+    } );
+    return ret;
+}
+
+auto debug_item_for_atom( const std::string &atom ) -> std::optional<itype_id>
+{
+    if( atom.starts_with( "itype:" ) ) {
+        return itype_id( atom.substr( 6 ) );
+    }
+    if( atom == "mat:veggy" ) {
+        return itype_potato;
+    }
+    if( atom == "mat:flesh" ) {
+        return itype_meat_cooked;
+    }
+    if( atom == "mat:fish" ) {
+        return itype_fish;
+    }
+    if( atom == "mat:wheat" ) {
+        return itype_bread;
+    }
+    return std::nullopt;
+}
+
+auto gather_debug_sources( const proc::schema &sch ) -> source_pool
+{
+    auto ret = source_pool {};
+    auto ix = proc::part_ix{ 0 };
+    std::ranges::for_each( sch.slots, [&]( const proc::slot_data & slot ) {
+        std::ranges::for_each( slot.ok, [&]( const std::string & atom ) {
+            const auto id = debug_item_for_atom( atom );
+            if( !id || id->is_null() ) {
+                return;
+            }
+            ret.owned.push_back( item::spawn( *id, calendar::turn ) );
+            auto *temp = &*ret.owned.back();
+            ret.entries.push_back( make_source_entry( {
+                .src = temp,
+                .where = _( "debug hammerspace" ),
+                .ix = ix,
+                .charges = temp->count_by_charges() ? std::max( temp->charges, 1 ) : 0,
+                .uses = std::max( slot.max, 1 )
+            } ) );
+            ix++;
+        } );
+    } );
+    return ret;
+}
+
+auto missing_required_slots( const proc::schema &sch,
+                             const proc::builder_state &state ) -> std::vector<std::string>
+{
+    auto ret = std::vector<std::string> {};
+    std::ranges::for_each( sch.slots, [&]( const proc::slot_data & slot ) {
+        const auto iter = state.cand.find( slot.id );
+        const auto missing = slot.min > 0 && ( iter == state.cand.end() || iter->second.empty() );
+        if( missing ) {
+            ret.push_back( slot.role );
+        }
     } );
     return ret;
 }
@@ -164,13 +255,26 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         return std::nullopt;
     }
 
-    const auto sources = gather_sources( who, sch );
-    const auto facts = sources
+    auto source_data = gather_inventory_sources( who, sch );
+    if( who.has_trait( trait_DEBUG_HS ) && source_data.entries.empty() ) {
+        source_data = gather_debug_sources( sch );
+    }
+
+    const auto facts = source_data.entries
     | std::views::transform( []( const source_entry & entry ) {
         return entry.fact;
     } )
     | std::ranges::to<std::vector>();
     auto state = proc::build_state( sch, facts );
+    if( source_data.entries.empty() ) {
+        popup( _( "No nearby items match this procedural recipe." ) );
+        return std::nullopt;
+    }
+    if( const auto missing = missing_required_slots( sch, state ); !missing.empty() ) {
+        popup( _( "Missing candidates for required slots: %s" ),
+               enumerate_as_string( missing, enumeration_conjunction::none ) );
+        return std::nullopt;
+    }
     auto candidate_cursor = std::map<slot_id, int> {};
     std::ranges::for_each( sch.slots, [&]( const slot_data & slot ) {
         candidate_cursor.emplace( slot.id, 0 );
@@ -225,7 +329,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             const auto color = row == slot_cursor ? c_yellow : proc::slot_complete( state, sch, slot.id ) ?
                                c_light_green : c_white;
             trim_and_print( w, point( 2, content_top + row - slot_start ), left_width - 2, color,
-                            slot_pick_text( state, slot, sources ) );
+                            slot_pick_text( state, slot, source_data.entries ) );
         } );
 
         const auto &slot = current_slot( sch, slot_cursor );
@@ -241,7 +345,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         const auto cand_end = std::min( static_cast<int>( candidates.size() ),
                                         cand_start + content_height );
         std::ranges::for_each( std::views::iota( cand_start, cand_end ), [&]( const int row ) {
-            const auto *source = source_for_ix( sources, candidates[static_cast<size_t>( row )] );
+            const auto *source = source_for_ix( source_data.entries, candidates[static_cast<size_t>( row )] );
             if( source == nullptr ) {
                 return;
             }
@@ -250,7 +354,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
                             color, candidate_text( *source, state ) );
         } );
 
-        const auto preview = preview_lines( sch, state, sources );
+        const auto preview = preview_lines( sch, state, source_data.entries );
         const auto preview_end = std::min( static_cast<int>( preview.size() ), content_height );
         std::ranges::for_each( std::views::iota( 0, preview_end ), [&]( const int row ) {
             trim_and_print( w, point( left_width + middle_width + 4, content_top + row ), right_width - 1,
@@ -359,7 +463,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             result.preview = state.fast;
             const auto picks = proc::selected_picks( state, sch );
             std::ranges::for_each( picks, [&]( const proc::craft_pick & pick ) {
-                if( const auto *source = source_for_ix( sources, pick.ix ) ) {
+                if( const auto *source = source_for_ix( source_data.entries, pick.ix ) ) {
                     result.picks.push_back( ui_pick{ .slot = pick.slot, .src = source->src, .fact = source->fact } );
                 }
             } );
