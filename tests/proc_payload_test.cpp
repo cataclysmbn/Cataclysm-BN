@@ -208,15 +208,19 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         itype_id id;
         int bread = 0;
         int meat = 0;
+        int fish = 0;
         int cheese = 0;
         int veg = 0;
+        int cucumber = 0;
         int cond = 0;
     };
 
     const auto cases = std::vector<legacy_case> {
         legacy_case{ .id = itype_id( "sandwich_t" ), .bread = 2, .meat = 1 },
+        legacy_case{ .id = itype_id( "fish_sandwich" ), .bread = 2, .fish = 1, .veg = 1, .cond = 1 },
         legacy_case{ .id = itype_id( "sandwich_deluxe" ), .bread = 2, .meat = 1, .cheese = 2, .veg = 1, .cond = 1 },
-        legacy_case{ .id = itype_id( "sandwich_deluxe_nocheese" ), .bread = 2, .meat = 1, .veg = 1, .cond = 1 }
+        legacy_case{ .id = itype_id( "sandwich_deluxe_nocheese" ), .bread = 2, .meat = 1, .veg = 1, .cond = 1 },
+        legacy_case{ .id = itype_id( "sandwich_cucumber" ), .bread = 2, .cucumber = 1 }
     };
 
     std::ranges::for_each( cases, [&]( const legacy_case & test_case ) {
@@ -238,8 +242,10 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         CHECK( restored->volume() == legacy.volume() );
         CHECK( part_count( *payload, itype_id( "bread" ) ) == test_case.bread );
         CHECK( part_count( *payload, itype_id( "meat_cooked" ) ) == test_case.meat );
+        CHECK( part_count( *payload, itype_id( "fish_cooked" ) ) == test_case.fish );
         CHECK( part_count( *payload, itype_id( "cheese" ) ) == test_case.cheese );
         CHECK( part_count( *payload, itype_id( "lettuce" ) ) == test_case.veg );
+        CHECK( part_count( *payload, itype_id( "cucumber" ) ) == test_case.cucumber );
         CHECK( part_count( *payload, itype_id( "mustard" ) ) == test_case.cond );
     } );
 }
@@ -250,4 +256,5 @@ TEST_CASE( "proc_and_legacy_sandwiches_have_uncraft_recipes", "[proc][payload][m
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_t" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_deluxe" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_deluxe_nocheese" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_cucumber" ) ) );
 }

@@ -125,6 +125,12 @@ auto legacy_sandwich_specs( const itype_id &id ) -> std::vector<legacy_sandwich_
             legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "mustard" ), .count = 1 }
         };
     }
+    if( id == itype_id( "sandwich_cucumber" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "veg", .id = itype_id( "cucumber" ), .count = 1 }
+        };
+    }
     return {};
 }
 
