@@ -11,6 +11,11 @@ class recipe;
 namespace proc
 {
 
+struct part_search_options {
+    std::string name;
+    std::string where;
+};
+
 struct builder_state {
     schema_id id = schema_id::NULL_ID();
     schema sch;
@@ -38,6 +43,10 @@ auto selected_facts( const builder_state &state ) -> std::vector<part_fact>;
 auto rebuild_fast( const builder_state &state ) -> fast_blob;
 auto fast_fp( const schema &sch, const fast_blob &blob,
               const std::vector<part_fact> &facts ) -> std::string;
+auto part_search_texts( const part_fact &fact,
+                        const part_search_options &opts ) -> std::vector<std::string>;
+auto part_matches_search( const part_fact &fact, const part_search_options &opts,
+                          const std::string &txt ) -> bool;
 auto recipe_search_texts( const recipe &rec ) -> std::vector<std::string>;
 auto recipe_matches_search( const recipe &rec, const std::string &txt ) -> bool;
 
