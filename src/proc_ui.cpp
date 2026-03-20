@@ -19,6 +19,7 @@
 #include "proc_fact.h"
 #include "recipe.h"
 #include "proc_ui_candidates.h"
+#include "proc_ui_input.h"
 #include "proc_ui_slot_indicator.h"
 #include "proc_ui_text.h"
 #include "string_formatter.h"
@@ -32,11 +33,7 @@ namespace
 
 static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
 
-enum class panel_focus : int {
-    slots,
-    candidates,
-    search,
-};
+using panel_focus = proc::builder_focus;
 
 struct source_entry {
     item *src = nullptr;
@@ -533,24 +530,15 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         if( action == "QUIT" ) {
             return std::nullopt;
         }
-        if( focus == panel_focus::search ) {
-            if( ch == KEY_BACKSPACE || ch == KEY_DC ) {
-                if( !search_query.empty() ) {
-                    search_query.pop_back();
-                }
-                continue;
-            }
-            if( action == "CONFIRM" || action == "LEFT" || action == "RIGHT" ) {
-                focus = panel_focus::candidates;
-                continue;
-            }
-            if( action == "ANY_INPUT" && !evt.text.empty() ) {
-                search_query += evt.text;
-                continue;
-            }
-        }
-        if( ch == '/' ) {
-            focus = panel_focus::search;
+        if( const auto search_input = proc::handle_builder_search_input( {
+        .focus = focus,
+        .action = action,
+        .ch = ch,
+        .text = evt.text,
+        .search_query = search_query,
+    } ); search_input.handled ) {
+            focus = search_input.focus;
+            search_query = search_input.search_query;
             continue;
         }
         if( action == "LEFT" ) {
