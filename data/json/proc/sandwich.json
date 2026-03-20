@@ -11,7 +11,6 @@
       { "id": "cheese", "role": "cheese", "min": 0, "max": 2, "rep": true, "ok": [ "tag:cheese" ] },
       { "id": "cond", "role": "cond", "min": 0, "max": 2, "rep": true, "ok": [ "tag:cond" ] },
       { "id": "meat", "role": "meat", "min": 0, "max": 3, "rep": true, "ok": [ "tag:meat" ] }
-    ],
-    "lua": { "full": "procgen.food.full", "make": "procgen.food.make" }
+    ]
   }
 ]

@@ -61,14 +61,19 @@ auto find_lua_function( sol::state &lua,
         return std::nullopt;
     }
 
-    auto current = sol::object( lua, sol::in_place, lua.globals() );
     const auto parts = split_path( path );
-    std::ranges::for_each( parts, [&]( const std::string & part ) {
-        if( current.get_type() != sol::type::table ) {
+    if( parts.empty() ) {
+        return std::nullopt;
+    }
+
+    auto current = lua.globals().get_or<sol::object>( parts.front(), sol::lua_nil );
+    std::ranges::for_each( parts | std::views::drop( 1 ), [&]( const std::string & part ) {
+        if( current == sol::lua_nil || !current.is<sol::table>() ) {
             current = sol::make_object( lua, sol::lua_nil );
             return;
         }
-        current = current.as<sol::table>().get_or<sol::object>( part, sol::lua_nil );
+        const auto table = current.as<sol::table>();
+        current = table.get_or<sol::object>( part, sol::lua_nil );
     } );
 
     if( current == sol::lua_nil ) {
