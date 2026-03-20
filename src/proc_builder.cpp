@@ -321,6 +321,20 @@ auto sandwich_name( const proc::schema &sch, const std::vector<proc::part_fact> 
     const auto cond_facts = picked_facts_for_role( sch, facts, picks, "cond" );
 
     const auto bread_count = static_cast<int>( bread_facts.size() );
+    const auto has_any_itype = []( const std::vector<proc::part_fact> &picked_facts,
+    const auto & ids ) {
+        return std::ranges::any_of( picked_facts, [&]( const proc::part_fact & fact ) {
+            return std::ranges::find( ids, fact.id ) != ids.end();
+        } );
+    };
+    static const auto lettuce_ids = std::array {
+        itype_id( "irradiated_lettuce" ),
+        itype_id( "lettuce" ),
+    };
+    static const auto tomato_ids = std::array {
+        itype_id( "irradiated_tomato" ),
+        itype_id( "tomato" ),
+    };
     const auto has_fish = std::ranges::any_of( meat_facts, [&]( const proc::part_fact & fact ) {
         return has_material( fact, material_id( "fish" ) ) || fact.id.str().contains( "fish" );
     } );
@@ -328,9 +342,15 @@ auto sandwich_name( const proc::schema &sch, const std::vector<proc::part_fact> 
     const auto has_cheese = !cheese_facts.empty();
     const auto has_veg = !veg_facts.empty();
     const auto has_cond = !cond_facts.empty();
+    const auto has_blt = has_any_itype( meat_facts, std::array { itype_id( "bacon" ) } ) &&
+                         has_any_itype( veg_facts, lettuce_ids ) &&
+                         has_any_itype( veg_facts, tomato_ids );
 
     if( has_fish ) {
         return "fish sandwich";
+    }
+    if( has_blt ) {
+        return "BLT";
     }
     if( bread_count >= 3 && has_meat && has_veg && has_cond ) {
         return "club sandwich";
