@@ -80,3 +80,22 @@ MAKE_STRUCT_NULL_ID( vehicle_prototype, "null" )
 MAKE_STRUCT_NULL_ID( weather_type, "null" )
 MAKE_STRUCT_NULL_ID( MOD_INFORMATION, "" )
 MAKE_STRUCT_NULL_ID( quality, "" )
+namespace proc
+{
+struct schema;
+struct slot;
+} // namespace proc
+
+template<>
+const string_id<proc::schema> &string_id<proc::schema>::NULL_ID()
+{
+    static string_id<proc::schema> id = string_id<proc::schema>( "" );
+    return id;
+}
+
+template<>
+const string_id<proc::slot> &string_id<proc::slot>::NULL_ID()
+{
+    static string_id<proc::slot> id = string_id<proc::slot>( "" );
+    return id;
+}

@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "proc_types.h"
 #include "requirements.h"
 #include "translations.h"
 #include "type_id.h"
@@ -152,6 +153,22 @@ class recipe
 
         bool has_flag( const std::string &flag_name ) const;
 
+        auto is_proc() const -> bool {
+            return proc_enabled;
+        }
+
+        auto proc_id() const -> const proc::schema_id& {
+            return proc_id_;
+        }
+
+        auto builder_name() const -> const translation& {
+            return builder_name_;
+        }
+
+        auto builder_desc() const -> const translation& {
+            return builder_desc_;
+        }
+
         bool is_reversible() const {
             return reversible;
         }
@@ -189,6 +206,11 @@ class recipe
         /** Can recipe be used for disassembly of @ref result via @ref disassembly_requirements */
         bool reversible = false;
 
+        bool proc_enabled = false;
+        proc::schema_id proc_id_ = proc::schema_id::NULL_ID();
+        translation builder_name_;
+        translation builder_desc_;
+
         /** What does the item spawn contained in? Unset ("null") means default container. */
         itype_id container = itype_id::NULL_ID();
 
@@ -222,4 +244,3 @@ class recipe
         std::vector<std::pair<std::string, int>> bp_excludes;
 
 };
-
