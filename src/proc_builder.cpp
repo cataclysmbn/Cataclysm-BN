@@ -177,6 +177,22 @@ auto facts_have_tag( const std::vector<proc::part_fact> &facts, const std::strin
     } );
 }
 
+auto picked_facts_for_role( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
+                            const std::vector<proc::craft_pick> &picks,
+                            const std::string &role ) -> std::vector<proc::part_fact>
+{
+    auto ret = std::vector<proc::part_fact> {};
+    std::ranges::for_each( picks, [&]( const proc::craft_pick & pick ) {
+        const auto *slot = slot_by_id( sch, pick.slot );
+        const auto *fact = find_fact( facts, pick.ix );
+        if( slot == nullptr || fact == nullptr || slot->role != role ) {
+            return;
+        }
+        ret.push_back( *fact );
+    } );
+    return ret;
+}
+
 auto sandwich_condiment_name( const std::vector<proc::part_fact> &facts ) -> std::string
 {
     if( !facts_have_tag( facts, "cond" ) ) {
@@ -234,15 +250,21 @@ auto sword_name( const std::vector<proc::part_fact> &facts ) -> std::string
     return "sword";
 }
 
-auto sandwich_name( const std::vector<proc::part_fact> &facts ) -> std::string
+auto sandwich_name( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
+                    const std::vector<proc::craft_pick> &picks ) -> std::string
 {
-    const auto has_fish = std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+    const auto meat_facts = picked_facts_for_role( sch, facts, picks, "meat" );
+    const auto cheese_facts = picked_facts_for_role( sch, facts, picks, "cheese" );
+    const auto veg_facts = picked_facts_for_role( sch, facts, picks, "veg" );
+    const auto cond_facts = picked_facts_for_role( sch, facts, picks, "cond" );
+
+    const auto has_fish = std::ranges::any_of( meat_facts, [&]( const proc::part_fact & fact ) {
         return has_material( fact, material_id( "fish" ) ) || fact.id.str().contains( "fish" );
     } );
-    const auto has_meat = facts_have_tag( facts, "meat" );
-    const auto has_cheese = facts_have_tag( facts, "cheese" );
-    const auto has_veg = facts_have_tag( facts, "veg" );
-    const auto has_cond = facts_have_tag( facts, "cond" );
+    const auto has_meat = !meat_facts.empty();
+    const auto has_cheese = !cheese_facts.empty();
+    const auto has_veg = !veg_facts.empty();
+    const auto has_cond = !cond_facts.empty();
 
     if( has_fish ) {
         return "fish sandwich";
@@ -257,10 +279,10 @@ auto sandwich_name( const std::vector<proc::part_fact> &facts ) -> std::string
         return "cheese sandwich";
     }
     if( has_veg ) {
-        return sandwich_vegetable_name( facts );
+        return sandwich_vegetable_name( veg_facts );
     }
     if( has_cond ) {
-        return sandwich_condiment_name( facts );
+        return sandwich_condiment_name( cond_facts );
     }
     return "sandwich";
 }
@@ -351,7 +373,7 @@ auto preview_blob( const proc::schema &sch, const std::vector<proc::part_fact> &
 {
     auto blob = basic_preview( sch, facts, picks );
     if( sch.id == proc::schema_id( "sandwich" ) ) {
-        blob.name = sandwich_name( facts );
+        blob.name = sandwich_name( sch, facts, picks );
         return blob;
     }
     if( sch.id == proc::schema_id( "stew" ) ) {

@@ -257,6 +257,33 @@ TEST_CASE( "proc_make_item_names_sandwiches_from_selected_ingredients", "[proc][
     } ) == "mustard sandwich" );
 }
 
+TEST_CASE( "proc_make_item_names_supported_condiment_sandwiches", "[proc][make][food]" )
+{
+    const auto bread_a = proc::normalize_part_fact( item( "bread" ), { .ix = 1 } );
+    const auto bread_b = proc::normalize_part_fact( item( "bread" ), { .ix = 2 } );
+    const auto butter = proc::normalize_part_fact( item( "butter" ), { .ix = 3 } );
+    const auto horseradish = proc::normalize_part_fact( item( "horseradish" ), { .ix = 4 } );
+    const auto sauerkraut = proc::normalize_part_fact( item( "sauerkraut" ), { .ix = 5 } );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, butter }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "cond" ),
+    } ) == "butter sandwich" );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, horseradish }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "cond" ),
+    } ) == "horseradish sandwich" );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, sauerkraut }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "cond" ),
+    } ) == "sauerkraut sandwich" );
+}
+
 TEST_CASE( "proc_compact_restore_preserves_spear_part_damage", "[proc][make][compact]" )
 {
     auto payload = proc::payload{};

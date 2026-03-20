@@ -67,6 +67,18 @@ TEST_CASE( "proc_part_fact_assigns_food_role_tags", "[proc][fact]" )
     CHECK( std::ranges::find( fertilizer_fact.tag, "veg" ) == fertilizer_fact.tag.end() );
 }
 
+TEST_CASE( "proc_part_fact_assigns_cond_tags_to_supported_sandwich_condiments", "[proc][fact]" )
+{
+    const auto butter_fact = proc::normalize_part_fact( item( "butter" ), { .ix = 13 } );
+    CHECK( std::ranges::find( butter_fact.tag, "cond" ) != butter_fact.tag.end() );
+
+    const auto horseradish_fact = proc::normalize_part_fact( item( "horseradish" ), { .ix = 14 } );
+    CHECK( std::ranges::find( horseradish_fact.tag, "cond" ) != horseradish_fact.tag.end() );
+
+    const auto sauerkraut_fact = proc::normalize_part_fact( item( "sauerkraut" ), { .ix = 15 } );
+    CHECK( std::ranges::find( sauerkraut_fact.tag, "cond" ) != sauerkraut_fact.tag.end() );
+}
+
 TEST_CASE( "proc_part_fact_does_not_treat_finished_sandwiches_as_raw_ingredients", "[proc][fact]" )
 {
     const auto cheese_sandwich = item( "sandwich_cheese" );
