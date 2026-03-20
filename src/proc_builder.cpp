@@ -1,6 +1,7 @@
 #include "proc_builder.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <map>
 #include <ranges>
@@ -164,6 +165,55 @@ auto has_material( const proc::part_fact &fact, const material_id &id ) -> bool
     return std::ranges::find( fact.mat, id ) != fact.mat.end();
 }
 
+auto fact_has_tag( const proc::part_fact &fact, const std::string &tag ) -> bool
+{
+    return std::ranges::find( fact.tag, tag ) != fact.tag.end();
+}
+
+auto facts_have_tag( const std::vector<proc::part_fact> &facts, const std::string &tag ) -> bool
+{
+    return std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+        return fact_has_tag( fact, tag );
+    } );
+}
+
+auto sandwich_condiment_name( const std::vector<proc::part_fact> &facts ) -> std::string
+{
+    if( !facts_have_tag( facts, "cond" ) ) {
+        return {};
+    }
+
+    static const auto named_condiments = std::array<std::pair<itype_id, std::string>, 9> {{
+            { itype_id( "mustard" ), "mustard sandwich" },
+            { itype_id( "ketchup" ), "ketchup sandwich" },
+            { itype_id( "mayonnaise" ), "mayonnaise sandwich" },
+            { itype_id( "horseradish" ), "horseradish sandwich" },
+            { itype_id( "butter" ), "butter sandwich" },
+            { itype_id( "sauerkraut" ), "sauerkraut sandwich" },
+            { itype_id( "soysauce" ), "soy sauce sandwich" },
+            { itype_id( "sauce_pesto" ), "pesto sandwich" },
+            { itype_id( "sauce_red" ), "red sauce sandwich" },
+        }
+    };
+    const auto named_condiment = std::ranges::find_if( named_condiments, [&]( const auto & entry ) {
+        return std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+            return fact.id == entry.first;
+        } );
+    } );
+    if( named_condiment != named_condiments.end() ) {
+        return named_condiment->second;
+    }
+    return "sauce sandwich";
+}
+
+auto sandwich_vegetable_name( const std::vector<proc::part_fact> &facts ) -> std::string
+{
+    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) { return fact.id == itype_id( "cucumber" ); } ) ) {
+        return "cucumber sandwich";
+    }
+    return "vegetable sandwich";
+}
+
 auto sword_name( const std::vector<proc::part_fact> &facts ) -> std::string
 {
     if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
@@ -186,20 +236,31 @@ auto sword_name( const std::vector<proc::part_fact> &facts ) -> std::string
 
 auto sandwich_name( const std::vector<proc::part_fact> &facts ) -> std::string
 {
-    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
-    return std::ranges::find( fact.tag, "meat" ) != fact.tag.end();
-    } ) ) {
+    const auto has_fish = std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+        return has_material( fact, material_id( "fish" ) ) || fact.id.str().contains( "fish" );
+    } );
+    const auto has_meat = facts_have_tag( facts, "meat" );
+    const auto has_cheese = facts_have_tag( facts, "cheese" );
+    const auto has_veg = facts_have_tag( facts, "veg" );
+    const auto has_cond = facts_have_tag( facts, "cond" );
+
+    if( has_fish ) {
+        return "fish sandwich";
+    }
+    if( has_meat && has_cheese && has_veg && has_cond ) {
+        return "deluxe sandwich";
+    }
+    if( has_meat ) {
         return "meat sandwich";
     }
-    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
-    return std::ranges::find( fact.tag, "cheese" ) != fact.tag.end();
-    } ) ) {
+    if( has_cheese ) {
         return "cheese sandwich";
     }
-    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
-    return std::ranges::find( fact.tag, "veg" ) != fact.tag.end();
-    } ) ) {
-        return "veggy sandwich";
+    if( has_veg ) {
+        return sandwich_vegetable_name( facts );
+    }
+    if( has_cond ) {
+        return sandwich_condiment_name( facts );
     }
     return "sandwich";
 }
