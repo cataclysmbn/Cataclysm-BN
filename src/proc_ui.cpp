@@ -393,6 +393,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
     } );
     auto slot_cursor = 0;
     auto focus = panel_focus::slots;
+    auto search_return_focus = panel_focus::candidates;
     auto search_query = std::string {};
     auto status = std::string {};
     const auto recipe_requirements = current_recipe_requirement_status( who, rec );
@@ -551,19 +552,21 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         }
         status.clear();
 
-        if( action == "QUIT" ) {
-            return std::nullopt;
-        }
         if( const auto search_input = proc::handle_builder_search_input( {
         .focus = focus,
+        .return_focus = search_return_focus,
         .action = action,
         .ch = ch,
         .text = evt.text,
         .search_query = search_query,
     } ); search_input.handled ) {
             focus = search_input.focus;
+            search_return_focus = search_input.return_focus;
             search_query = search_input.search_query;
             continue;
+        }
+        if( action == "QUIT" ) {
+            return std::nullopt;
         }
         if( action == "LEFT" ) {
             focus = panel_focus::slots;
