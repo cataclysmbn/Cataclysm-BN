@@ -1,10 +1,26 @@
 #include "proc_ui_candidates.h"
 
 #include <algorithm>
+#include <ranges>
 #include <string>
 #include <vector>
 
 #include "string_formatter.h"
+
+namespace
+{
+
+auto source_for_ix( const std::vector<proc::candidate_source_entry> &sources,
+                    const proc::part_ix ix ) -> const proc::candidate_source_entry * // *NOPAD*
+{
+    const auto iter = std::ranges::find_if( sources, [&]( const proc::candidate_source_entry &
+    source ) {
+        return source.fact.ix == ix;
+    } );
+    return iter == sources.end() ? nullptr : &*iter;
+}
+
+} // namespace
 
 auto proc::group_candidate_entries( const std::vector<candidate_label_entry> &entries ) ->
 std::vector<grouped_candidate_entry>
@@ -28,6 +44,36 @@ std::vector<grouped_candidate_entry>
         iter->total_count += entry.count;
     }
     return ret;
+}
+
+auto proc::filter_grouped_candidates( const builder_state &state, const slot_id &slot,
+                                      const std::vector<candidate_source_entry> &sources,
+                                      const std::string &query ) -> std::vector<grouped_candidate_entry>
+{
+    auto matches = std::vector<candidate_label_entry> {};
+    const auto iter = state.cand.find( slot );
+    if( iter == state.cand.end() ) {
+        return {};
+    }
+
+    std::ranges::for_each( iter->second, [&]( const part_ix ix ) {
+        const auto *source = source_for_ix( sources, ix );
+        const auto remaining = remaining_uses( state, ix );
+        if( source == nullptr || remaining <= 0 ||
+        !part_matches_search( source->fact, {
+        .name = source->name,
+        .where = source->where,
+    }, query ) ) {
+            return;
+        }
+        matches.push_back( candidate_label_entry{
+            .key = source->label,
+            .label = source->label,
+            .ix = ix,
+            .count = remaining,
+        } );
+    } );
+    return group_candidate_entries( matches );
 }
 
 auto proc::grouped_candidate_label( const grouped_candidate_entry &entry ) -> std::string

@@ -97,14 +97,6 @@ auto source_for_ix( const std::vector<source_entry> &sources,
     return &sources[static_cast<size_t>( ix )];
 }
 
-auto matches_search( const source_entry &source, const std::string &query ) -> bool
-{
-    return proc::part_matches_search( source.fact, {
-        .name = source.src->tname(),
-        .where = source.where
-    }, query );
-}
-
 auto candidate_meta( const source_entry &source, const proc::schema &sch ) -> std::string;
 
 auto candidate_line( const source_entry &source, const proc::schema &sch ) -> std::string
@@ -118,25 +110,18 @@ auto filtered_candidates( const proc::builder_state &state, const proc::slot_id 
                           const std::vector<source_entry> &sources,
                           const std::string &query ) -> std::vector<proc::grouped_candidate_entry>
 {
-    auto matches = std::vector<proc::candidate_label_entry> {};
-    const auto iter = state.cand.find( slot );
-    if( iter == state.cand.end() ) {
-        return {};
-    }
-    std::ranges::for_each( iter->second, [&]( const proc::part_ix ix ) {
-        const auto *source = source_for_ix( sources, ix );
-        const auto remaining = proc::remaining_uses( state, ix );
-        if( source != nullptr && remaining > 0 && matches_search( *source, query ) ) {
-            const auto label = candidate_line( *source, sch );
-            matches.push_back( proc::candidate_label_entry{
-                .key = label,
-                .label = label,
-                .ix = ix,
-                .count = remaining,
-            } );
-        }
+    auto candidate_sources = std::vector<proc::candidate_source_entry> {};
+    candidate_sources.reserve( sources.size() );
+    std::ranges::transform( sources,
+    std::back_inserter( candidate_sources ), [&]( const source_entry & source ) {
+        return proc::candidate_source_entry{
+            .label = candidate_line( source, sch ),
+            .name = source.src->tname(),
+            .where = source.where,
+            .fact = source.fact,
+        };
     } );
-    return proc::group_candidate_entries( matches );
+    return proc::filter_grouped_candidates( state, slot, candidate_sources, query );
 }
 
 auto slot_summary( const proc::builder_state &state, const proc::slot_data &slot,
