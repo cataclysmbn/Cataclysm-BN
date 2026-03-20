@@ -462,7 +462,8 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
     }
     int rate_multiplier = 1; // Not quite sure where to put this
     if( rech.type == relic_recharge_type::time ) {
-        time_duration elapsed = calendar::turn - time_point::from_turn(itm.get_var( "last_relic_process", 0.0 ));
+        time_duration elapsed = calendar::turn - time_point::from_turn( itm.get_var( "last_relic_process",
+                                0.0 ) );
         int ticks = elapsed / rech.interval;
         if( ticks > 0 ) {
             rate_multiplier = rech.rate * ticks;
