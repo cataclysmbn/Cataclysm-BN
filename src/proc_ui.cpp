@@ -202,7 +202,8 @@ auto preview_lines( const proc::schema &sch, const proc::builder_state &state,
     const auto title = state.fast.name.empty() ? sch.id.str() : state.fast.name;
     lines.push_back( title );
     lines.push_back( preview_metric_line( _( "Mass:" ), string_format( "%d g", state.fast.mass_g ) ) );
-    lines.push_back( preview_metric_line( _( "Volume:" ), string_format( "%d ml", state.fast.volume_ml ) ) );
+    lines.push_back( preview_metric_line( _( "Volume:" ), string_format( "%d ml",
+                                          state.fast.volume_ml ) ) );
     if( sch.cat == "food" ) {
         lines.push_back( preview_metric_line( _( "Calories:" ), string_format( "%d", state.fast.kcal ) ) );
     }
@@ -212,14 +213,18 @@ auto preview_lines( const proc::schema &sch, const proc::builder_state &state,
             vitamins.push_back( string_format( "%s:%d", entry.first.str(), entry.second ) );
         } );
         lines.push_back( preview_metric_line( _( "Vitamins:" ), enumerate_as_string( vitamins,
-                                        enumeration_conjunction::none ) ) );
+                                              enumeration_conjunction::none ) ) );
     }
     if( !state.fast.melee.empty() ) {
-        lines.push_back( preview_metric_line( _( "Bash:" ), string_format( "%d", state.fast.melee.bash ) ) );
+        lines.push_back( preview_metric_line( _( "Bash:" ), string_format( "%d",
+                                              state.fast.melee.bash ) ) );
         lines.push_back( preview_metric_line( _( "Cut:" ), string_format( "%d", state.fast.melee.cut ) ) );
-        lines.push_back( preview_metric_line( _( "Stab:" ), string_format( "%d", state.fast.melee.stab ) ) );
-        lines.push_back( preview_metric_line( _( "To-hit:" ), string_format( "%+d", state.fast.melee.to_hit ) ) );
-        lines.push_back( preview_metric_line( _( "Durability:" ), string_format( "%d", state.fast.melee.dur ) ) );
+        lines.push_back( preview_metric_line( _( "Stab:" ), string_format( "%d",
+                                              state.fast.melee.stab ) ) );
+        lines.push_back( preview_metric_line( _( "To-hit:" ), string_format( "%+d",
+                                              state.fast.melee.to_hit ) ) );
+        lines.push_back( preview_metric_line( _( "Durability:" ), string_format( "%d",
+                                              state.fast.melee.dur ) ) );
     }
     lines.push_back( std::string() );
     lines.push_back( _( "Selected parts:" ) );
