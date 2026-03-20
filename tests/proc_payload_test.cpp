@@ -62,9 +62,18 @@ TEST_CASE( "proc_payload_round_trips_through_item_save", "[proc][payload]" )
 TEST_CASE( "proc_craft_plan_round_trips_through_item_save", "[proc][payload]" )
 {
     auto craft = item( "sandwich_generic", calendar::turn );
+    auto fact = proc::part_fact{};
+    fact.ix = 1;
+    fact.id = itype_id( "bread" );
+    fact.tag = { "bread" };
+    fact.mat = { material_id( "wheat" ) };
+    fact.kcal = 120;
+    fact.mass_g = 60;
+    fact.volume_ml = 125;
     proc::write_craft_plan( craft, {
         .mode = proc::hist::compact,
-        .slots = { proc::slot_id( "blade" ), proc::slot_id( "grip" ) }
+        .slots = { proc::slot_id( "blade" ), proc::slot_id( "grip" ) },
+        .facts = { fact }
     } );
 
     const auto restored = round_trip( craft );
@@ -72,6 +81,8 @@ TEST_CASE( "proc_craft_plan_round_trips_through_item_save", "[proc][payload]" )
     CHECK( proc::read_craft_plan( *restored )->mode == proc::hist::compact );
     REQUIRE( proc::read_craft_plan( *restored )->slots.size() == 2 );
     CHECK( proc::read_craft_plan( *restored )->slots[0] == proc::slot_id( "blade" ) );
+    REQUIRE( proc::read_craft_plan( *restored )->facts.size() == 1 );
+    CHECK( proc::read_craft_plan( *restored )->facts[0].id == itype_id( "bread" ) );
 }
 
 TEST_CASE( "proc_payload_json_matches_snapshot", "[proc][payload][snapshot]" )
@@ -107,7 +118,25 @@ TEST_CASE( "proc_craft_plan_json_matches_snapshot", "[proc][payload][snapshot]" 
     json_snapshot::check_json_snapshot(
     craft_plan_json( {
         .mode = proc::hist::compact,
-        .slots = { proc::slot_id( "blade" ), proc::slot_id( "grip" ) }
+        .slots = { proc::slot_id( "blade" ), proc::slot_id( "grip" ) },
+        .facts = {
+            proc::part_fact{
+                .ix = 1,
+                .id = itype_id( "bread" ),
+                .tag = { "bread" },
+                .flag = {},
+                .qual = {},
+                .mat = { material_id( "wheat" ) },
+                .vit = {},
+                .mass_g = 60,
+                .volume_ml = 125,
+                .kcal = 120,
+                .hp = 1.0f,
+                .chg = 0,
+                .uses = 1,
+                .proc = ""
+            }
+        }
     } ),
     "tests/data/json_snapshots/proc_payload_test/craft_plan.json" );
 }
