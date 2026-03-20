@@ -13,6 +13,7 @@ namespace proc
 
 struct builder_state {
     schema_id id = schema_id::NULL_ID();
+    schema sch;
     std::vector<part_fact> facts;
     std::map<slot_id, std::vector<part_ix>> cand;
     std::map<slot_id, std::vector<part_ix>> chosen;
@@ -26,8 +27,13 @@ auto matches_slot( const slot_data &slot, const part_fact &fact ) -> bool;
 auto build_candidates( const schema &sch,
                        const std::vector<part_fact> &facts ) -> std::map<slot_id, std::vector<part_ix>>;
 auto build_state( const schema &sch, const std::vector<part_fact> &facts ) -> builder_state;
+auto pick_count( const builder_state &state, part_ix ix ) -> int;
+auto slot_complete( const builder_state &state, const schema &sch, const slot_id &slot ) -> bool;
+auto complete( const builder_state &state, const schema &sch ) -> bool;
 auto add_pick( builder_state &state, const schema &sch, const slot_id &slot, part_ix ix ) -> bool;
 auto remove_pick( builder_state &state, const slot_id &slot, part_ix ix ) -> bool;
+auto remove_last_pick( builder_state &state, const slot_id &slot ) -> bool;
+auto selected_picks( const builder_state &state, const schema &sch ) -> std::vector<craft_pick>;
 auto selected_facts( const builder_state &state ) -> std::vector<part_fact>;
 auto rebuild_fast( const builder_state &state ) -> fast_blob;
 auto fast_fp( const schema &sch, const fast_blob &blob,

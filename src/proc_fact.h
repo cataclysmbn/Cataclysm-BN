@@ -9,7 +9,13 @@ class item;
 namespace proc
 {
 
-auto normalize_part_fact( const item &it, part_ix ix ) -> part_fact;
+struct normalize_options {
+    part_ix ix = invalid_part_ix;
+    int charges = 0;
+    int uses = 1;
+};
+
+auto normalize_part_fact( const item &it, const normalize_options &opts ) -> part_fact;
 auto normalize_part_facts( const std::vector<const item *> &items ) -> std::vector<part_fact>;
 
 } // namespace proc

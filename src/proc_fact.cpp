@@ -1,6 +1,7 @@
 #include "proc_fact.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 #include "item.h"
@@ -73,21 +74,36 @@ auto default_vitamins( const item &it ) -> std::map<vitamin_id, int>
 
 } // namespace
 
-auto proc::normalize_part_fact( const item &it, const part_ix ix ) -> part_fact
+auto proc::normalize_part_fact( const item &it, const proc::normalize_options &opts ) -> part_fact
 {
     auto fact = part_fact{};
-    fact.ix = ix;
+    const auto full_charges = it.count_by_charges() ? std::max( it.charges, 1 ) : 1;
+    const auto selected_charges = it.count_by_charges() ?
+                                  std::clamp( opts.charges > 0 ? opts.charges : 1, 1, full_charges ) : 0;
+    const auto uses = std::max( opts.uses, 1 );
+    const auto scale = it.count_by_charges() ?
+                       static_cast<double>( selected_charges ) / static_cast<double>( full_charges ) : 1.0;
+
+    fact.ix = opts.ix;
     fact.id = it.typeId();
     fact.tag = default_tags( it );
     fact.flag = default_flags( it );
     fact.qual = default_qualities( it );
     fact.mat = it.made_of();
     fact.vit = default_vitamins( it );
-    fact.mass_g = static_cast<int>( units::to_gram( it.weight() ) );
-    fact.volume_ml = units::to_milliliter( it.volume() );
-    fact.kcal = it.is_comestible() ? it.get_comestible()->default_nutrition.kcal : 0;
+    fact.mass_g = static_cast<int>( std::lround( static_cast<double>( units::to_gram( it.weight() ) ) *
+                                    scale ) );
+    fact.volume_ml = static_cast<int>( std::lround( static_cast<double>( units::to_milliliter(
+                                           it.volume() ) ) *
+                                       scale ) );
+    fact.kcal = it.is_comestible() ? it.get_comestible()->default_nutrition.kcal *
+                std::max( selected_charges, 1 ) : 0;
     fact.hp = normalized_hp( it );
-    fact.chg = it.count_by_charges() ? it.charges : 0;
+    fact.chg = selected_charges;
+    fact.uses = uses;
+    std::ranges::for_each( fact.vit, [&]( std::pair<const vitamin_id, int> &entry ) {
+        entry.second *= std::max( selected_charges, 1 );
+    } );
     if( const auto payload = proc::read_payload( it ) ) {
         fact.proc = proc::payload_json( *payload );
     }
@@ -103,7 +119,7 @@ auto proc::normalize_part_facts( const std::vector<const item *> &items ) -> std
         if( it == nullptr ) {
             return;
         }
-        ret.push_back( normalize_part_fact( *it, ix ) );
+        ret.push_back( normalize_part_fact( *it, { .ix = ix } ) );
         ix++;
     } );
     return ret;

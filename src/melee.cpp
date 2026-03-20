@@ -58,6 +58,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "projectile.h"
+#include "proc_item.h"
 #include "rng.h"
 #include "sounds.h"
 #include "string_formatter.h"
@@ -2752,6 +2753,21 @@ double melee::expected_damage( const Character &c, const item &weapon,
 
 const attack_statblock &melee::default_attack( const item &it )
 {
+    if( const auto proc_melee = proc::blob_melee( it ) ) {
+        static thread_local auto proc_attack = attack_statblock{};
+        proc_attack = attack_statblock{};
+        proc_attack.to_hit = proc_melee->to_hit;
+        if( proc_melee->bash > 0 ) {
+            proc_attack.damage.add_damage( DT_BASH, proc_melee->bash );
+        }
+        if( proc_melee->cut > 0 ) {
+            proc_attack.damage.add_damage( DT_CUT, proc_melee->cut );
+        }
+        if( proc_melee->stab > 0 ) {
+            proc_attack.damage.add_damage( DT_STAB, proc_melee->stab );
+        }
+        return proc_attack;
+    }
     assert( !it.type->attacks.empty() );
     return it.type->attacks.begin()->second;
 }

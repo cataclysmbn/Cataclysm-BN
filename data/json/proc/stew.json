@@ -1,0 +1,15 @@
+[
+  {
+    "type": "PROC",
+    "id": "stew",
+    "cat": "food",
+    "res": "stew_generic",
+    "hist": { "def": "full", "ok": [ "full", "compact" ] },
+    "slot": [
+      { "id": "base", "role": "base", "min": 1, "max": 1, "ok": [ "itype:broth", "itype:broth_bone", "itype:water_clean" ] },
+      { "id": "veg", "role": "veg", "min": 1, "max": 4, "rep": true, "ok": [ "mat:veggy" ] },
+      { "id": "meat", "role": "meat", "min": 0, "max": 3, "rep": true, "ok": [ "mat:flesh", "mat:fish" ] }
+    ],
+    "lua": { "full": "procgen.food.full", "make": "procgen.food.make" }
+  }
+]

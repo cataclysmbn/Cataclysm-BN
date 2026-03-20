@@ -3691,10 +3691,12 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
     // Old behavior - default to it for now
     if( type->attacks.contains( "DEFAULT" ) ) {
         const auto &attack = melee::default_attack( *this );
+        const auto proc_melee = proc::blob_melee( *this );
+        const auto to_hit = proc_melee ? proc_melee->to_hit : type->m_to_hit;
         int dmg_bash = damage_melee( DT_BASH );
         int dmg_cut = damage_melee( DT_CUT );
         int dmg_stab = damage_melee( DT_STAB );
-        if( dmg_bash || dmg_cut || dmg_stab || type->m_to_hit > 0 ) {
+        if( dmg_bash || dmg_cut || dmg_stab || to_hit > 0 ) {
             print_attacks = true;
         }
 
@@ -3720,7 +3722,7 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
         if( dmg_bash || dmg_cut || dmg_stab ) {
             if( parts->test( iteminfo_parts::BASE_TOHIT ) ) {
                 info.emplace_back( "BASE", space + _( "To-hit bonus: " ), "",
-                                   iteminfo::show_plus, type->m_to_hit + get_melee_hit_bonus() );
+                                   iteminfo::show_plus, to_hit + get_melee_hit_bonus() );
             }
 
             if( parts->test( iteminfo_parts::BASE_MOVES ) ) {
@@ -5737,8 +5739,23 @@ int item::damage_melee( const attack_statblock &attack, damage_type dt ) const
         return 0;
     }
 
-    // effectiveness is reduced by 10% per damage level
     int res = attack.damage.type_damage( dt );
+    if( const auto proc_melee = proc::blob_melee( *this ) ) {
+        switch( dt ) {
+            case DT_BASH:
+                res = proc_melee->bash;
+                break;
+            case DT_CUT:
+                res = proc_melee->cut;
+                break;
+            case DT_STAB:
+                res = proc_melee->stab;
+                break;
+            default:
+                break;
+        }
+    }
+    // effectiveness is reduced by 10% per damage level
     res -= res * std::max( damage_level( 4 ), 0 ) * 0.1;
 
     // apply type specific flags

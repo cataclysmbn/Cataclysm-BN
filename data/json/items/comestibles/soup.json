@@ -1,6 +1,15 @@
 [
   {
     "type": "COMESTIBLE",
+    "id": "stew_generic",
+    "copy-from": "soup_veggy",
+    "name": { "str": "GENERIC STEW", "str_pl": "GENERIC STEWS" },
+    "description": "If you can see this, a procedural stew recipe did not finish correctly.",
+    "calories": 120,
+    "flags": [ "EATEN_HOT", "USE_EAT_VERB" ]
+  },
+  {
+    "type": "COMESTIBLE",
     "id": "broth",
     "name": "broth",
     "weight": "253 g",

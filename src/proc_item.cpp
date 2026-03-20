@@ -25,6 +25,7 @@ namespace
 {
 
 inline constexpr auto proc_var_key = std::string_view { "proc" };
+inline constexpr auto proc_craft_var_key = std::string_view { "proc_craft" };
 
 auto split_path( const std::string &path ) -> std::vector<std::string>
 {
@@ -138,6 +139,14 @@ auto blob_table( sol::state &lua, const proc::fast_blob &blob ) -> sol::table
         vit_tbl[entry.first.str()] = entry.second;
     } );
     tbl["vit"] = vit_tbl;
+
+    auto melee_tbl = lua.create_table();
+    melee_tbl["bash"] = blob.melee.bash;
+    melee_tbl["cut"] = blob.melee.cut;
+    melee_tbl["stab"] = blob.melee.stab;
+    melee_tbl["to_hit"] = blob.melee.to_hit;
+    melee_tbl["dur"] = blob.melee.dur;
+    tbl["melee"] = melee_tbl;
     return tbl;
 }
 
@@ -194,6 +203,15 @@ auto parse_blob_into( proc::fast_blob &blob, const sol::table &tbl ) -> void
                 blob.vit[vitamin_id( entry.first.as<std::string>() )] = entry.second.as<int>();
             }
         } );
+    }
+    const auto melee_obj = tbl.get_or<sol::object>( "melee", sol::lua_nil );
+    if( melee_obj != sol::lua_nil && melee_obj.is<sol::table>() ) {
+        const auto melee_tbl = melee_obj.as<sol::table>();
+        blob.melee.bash = melee_tbl.get_or( "bash", blob.melee.bash );
+        blob.melee.cut = melee_tbl.get_or( "cut", blob.melee.cut );
+        blob.melee.stab = melee_tbl.get_or( "stab", blob.melee.stab );
+        blob.melee.to_hit = melee_tbl.get_or( "to_hit", blob.melee.to_hit );
+        blob.melee.dur = melee_tbl.get_or( "dur", blob.melee.dur );
     }
 }
 
@@ -260,6 +278,14 @@ auto proc::to_json( JsonOut &jsout, const payload &data ) -> void
     jsout.member( "volume_ml", data.blob.volume_ml );
     jsout.member( "kcal", data.blob.kcal );
     jsout.member( "name", data.blob.name );
+    jsout.member( "melee" );
+    jsout.start_object();
+    jsout.member( "bash", data.blob.melee.bash );
+    jsout.member( "cut", data.blob.melee.cut );
+    jsout.member( "stab", data.blob.melee.stab );
+    jsout.member( "to_hit", data.blob.melee.to_hit );
+    jsout.member( "dur", data.blob.melee.dur );
+    jsout.end_object();
     jsout.member( "vit" );
     jsout.start_object();
     std::ranges::for_each( data.blob.vit, [&]( const std::pair<const vitamin_id, int> &entry ) {
@@ -289,6 +315,14 @@ auto proc::from_json( JsonIn &jsin, payload &data ) -> void
         blob_jo.read( "volume_ml", data.blob.volume_ml );
         blob_jo.read( "kcal", data.blob.kcal );
         blob_jo.read( "name", data.blob.name );
+        if( blob_jo.has_object( "melee" ) ) {
+            const auto melee_jo = blob_jo.get_object( "melee" );
+            melee_jo.read( "bash", data.blob.melee.bash );
+            melee_jo.read( "cut", data.blob.melee.cut );
+            melee_jo.read( "stab", data.blob.melee.stab );
+            melee_jo.read( "to_hit", data.blob.melee.to_hit );
+            melee_jo.read( "dur", data.blob.melee.dur );
+        }
         if( blob_jo.has_object( "vit" ) ) {
             const auto vit_jo = blob_jo.get_object( "vit" );
             std::for_each( vit_jo.begin(), vit_jo.end(), [&]( const JsonMember & member ) {
@@ -319,6 +353,32 @@ auto proc::from_json( JsonIn &jsin, payload &data ) -> void
     }
 }
 
+auto proc::to_json( JsonOut &jsout, const craft_plan &data ) -> void
+{
+    jsout.start_object();
+    jsout.member( "mode", io::enum_to_string( data.mode ) );
+    jsout.member( "slots" );
+    jsout.start_array();
+    std::ranges::for_each( data.slots, [&]( const slot_id & slot ) {
+        jsout.write( slot );
+    } );
+    jsout.end_array();
+    jsout.end_object();
+}
+
+auto proc::from_json( JsonIn &jsin, craft_plan &data ) -> void
+{
+    const auto jo = jsin.get_object();
+    data.mode = jo.has_member( "mode" ) ? io::string_to_enum<proc::hist>( jo.get_string( "mode" ) ) :
+                proc::hist::none;
+    if( jo.has_array( "slots" ) ) {
+        auto arr = jo.get_array( "slots" );
+        while( arr.has_more() ) {
+            data.slots.push_back( slot_id( arr.next_string() ) );
+        }
+    }
+}
+
 auto proc::payload_json( const payload &data ) -> std::string
 {
     return serialize_wrapper( [&]( JsonOut & jsout ) {
@@ -344,15 +404,40 @@ auto proc::read_payload( const item &it ) -> std::optional<payload>
     return ret;
 }
 
+auto proc::read_craft_plan( const item &it ) -> std::optional<craft_plan>
+{
+    if( !it.has_var( std::string( proc_craft_var_key ) ) ) {
+        return std::nullopt;
+    }
+
+    auto ret = craft_plan{};
+    try {
+        deserialize_wrapper( [&]( JsonIn & jsin ) {
+            from_json( jsin, ret );
+        }, it.get_var( std::string( proc_craft_var_key ) ) );
+    } catch( const JsonError &err ) {
+        debugmsg( "Failed to read proc craft plan: %s", err.what() );
+        return std::nullopt;
+    }
+    return ret;
+}
+
 auto proc::write_payload( item &it, const payload &data ) -> void
 {
     it.set_var( std::string( proc_var_key ), payload_json( data ) );
     if( !data.blob.name.empty() ) {
         it.set_var( "name", data.blob.name );
     }
-    if( !data.blob.empty() ) {
+    if( it.is_comestible() && !data.blob.empty() ) {
         it.set_flag( flag_NUTRIENT_OVERRIDE );
     }
+}
+
+auto proc::write_craft_plan( item &it, const craft_plan &data ) -> void
+{
+    it.set_var( std::string( proc_craft_var_key ), serialize_wrapper( [&]( JsonOut & jsout ) {
+        to_json( jsout, data );
+    } ) );
 }
 
 auto proc::set_payload_from_json( item &it, const std::string &json ) -> void
@@ -385,6 +470,26 @@ auto proc::make_compact_parts( const std::vector<part_fact> &facts,
             part.proc = fact.proc;
             ret.push_back( part );
         } );
+    } );
+    return ret;
+}
+
+auto proc::make_compact_parts( const std::vector<part_fact> &facts,
+                               const std::vector<slot_id> &slots ) -> std::vector<compact_part>
+{
+    auto ret = std::vector<compact_part> {};
+    const auto count = std::min( facts.size(), slots.size() );
+    std::ranges::for_each( std::views::iota( size_t{ 0 }, count ), [&]( const size_t idx ) {
+        auto part = compact_part{};
+        part.role = slots[idx].str();
+        part.id = facts[idx].id;
+        part.n = std::max( facts[idx].chg, 1 );
+        part.hp = facts[idx].hp;
+        part.dmg = 0;
+        part.chg = facts[idx].chg;
+        part.mat = facts[idx].mat;
+        part.proc = facts[idx].proc;
+        ret.push_back( part );
     } );
     return ret;
 }
@@ -445,14 +550,23 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
                       const make_opts &opts ) -> detached_ptr<item>
 {
     auto preview = fast_blob{};
-    std::ranges::for_each( facts, [&]( const part_fact & fact ) {
-        preview.mass_g += fact.mass_g;
-        preview.volume_ml += fact.volume_ml;
-        preview.kcal += fact.kcal;
-        std::ranges::for_each( fact.vit, [&]( const std::pair<const vitamin_id, int> &entry ) {
-            preview.vit[entry.first] += entry.second;
+    if( !opts.slots.empty() ) {
+        auto state = build_state( sch, facts );
+        const auto count = std::min( facts.size(), opts.slots.size() );
+        std::ranges::for_each( std::views::iota( size_t{ 0 }, count ), [&]( const size_t idx ) {
+            state.chosen[opts.slots[idx]].push_back( facts[idx].ix );
         } );
-    } );
+        preview = rebuild_fast( state );
+    } else {
+        std::ranges::for_each( facts, [&]( const part_fact & fact ) {
+            preview.mass_g += fact.mass_g;
+            preview.volume_ml += fact.volume_ml;
+            preview.kcal += fact.kcal;
+            std::ranges::for_each( fact.vit, [&]( const std::pair<const vitamin_id, int> &entry ) {
+                preview.vit[entry.first] += entry.second;
+            } );
+        } );
+    }
     auto full = run_full( sch, facts, preview, { .state = opts.state } );
     auto mode = opts.mode;
     auto result = item::spawn( sch.res, calendar::turn );
@@ -479,7 +593,8 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
     out_payload.blob = full.data;
     out_payload.fp = fast_fp( sch, full.data, facts );
     if( mode == hist::compact ) {
-        out_payload.parts = make_compact_parts( facts, sch );
+        out_payload.parts = !opts.slots.empty() ? make_compact_parts( facts, opts.slots ) :
+                            make_compact_parts( facts, sch );
     }
     write_payload( *result, out_payload );
 
@@ -517,6 +632,12 @@ auto proc::blob_volume( const item &it ) -> std::optional<int>
 {
     const auto payload = read_payload( it );
     return payload ? std::optional<int>( payload->blob.volume_ml ) : std::nullopt;
+}
+
+auto proc::blob_melee( const item &it ) -> std::optional<melee_blob>
+{
+    const auto payload = read_payload( it );
+    return payload ? std::optional<melee_blob>( payload->blob.melee ) : std::nullopt;
 }
 
 auto proc::component_hash( const item &it ) -> std::optional<std::uint64_t>

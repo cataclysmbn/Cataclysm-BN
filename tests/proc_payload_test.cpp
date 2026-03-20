@@ -3,8 +3,10 @@
 #include <sstream>
 #include <string>
 
+#include "fstream_utils.h"
 #include "item.h"
 #include "json.h"
+#include "json_assertion_helpers.h"
 #include "proc_item.h"
 
 namespace
@@ -23,6 +25,13 @@ auto round_trip( const item &src ) -> detached_ptr<item>
     return restored;
 }
 
+auto craft_plan_json( const proc::craft_plan &plan ) -> std::string
+{
+    return serialize_wrapper( [&]( JsonOut & jsout ) {
+        proc::to_json( jsout, plan );
+    } );
+}
+
 } // namespace
 
 TEST_CASE( "proc_payload_round_trips_through_item_save", "[proc][payload]" )
@@ -36,6 +45,7 @@ TEST_CASE( "proc_payload_round_trips_through_item_save", "[proc][payload]" )
     payload.blob.mass_g = 220;
     payload.blob.volume_ml = 330;
     payload.blob.name = "meat sandwich";
+    payload.blob.melee.stab = 9;
     auto part = proc::compact_part{};
     part.role = "bread";
     part.id = itype_id( "bread" );
@@ -47,6 +57,59 @@ TEST_CASE( "proc_payload_round_trips_through_item_save", "[proc][payload]" )
     const auto restored = round_trip( sandwich );
     REQUIRE( proc::read_payload( *restored ) );
     CHECK( *proc::read_payload( *restored ) == payload );
+}
+
+TEST_CASE( "proc_craft_plan_round_trips_through_item_save", "[proc][payload]" )
+{
+    auto craft = item( "sandwich_generic", calendar::turn );
+    proc::write_craft_plan( craft, {
+        .mode = proc::hist::compact,
+        .slots = { proc::slot_id( "blade" ), proc::slot_id( "grip" ) }
+    } );
+
+    const auto restored = round_trip( craft );
+    REQUIRE( proc::read_craft_plan( *restored ) );
+    CHECK( proc::read_craft_plan( *restored )->mode == proc::hist::compact );
+    REQUIRE( proc::read_craft_plan( *restored )->slots.size() == 2 );
+    CHECK( proc::read_craft_plan( *restored )->slots[0] == proc::slot_id( "blade" ) );
+}
+
+TEST_CASE( "proc_payload_json_matches_snapshot", "[proc][payload][snapshot]" )
+{
+    auto payload = proc::payload{};
+    payload.id = proc::schema_id( "sandwich" );
+    payload.mode = proc::hist::compact;
+    payload.fp = "sandwich:abcd1234";
+    payload.blob.kcal = 420;
+    payload.blob.mass_g = 220;
+    payload.blob.volume_ml = 330;
+    payload.blob.name = "meat sandwich";
+    payload.blob.melee.stab = 9;
+    payload.blob.vit.emplace( vitamin_id( "vitC" ), 4 );
+    payload.parts.push_back( proc::compact_part{
+        .role = "bread",
+        .id = itype_id( "bread" ),
+        .n = 2,
+        .hp = 1.0f,
+        .dmg = 0,
+        .chg = 0,
+        .mat = { material_id( "wheat" ) },
+        .proc = ""
+    } );
+
+    json_snapshot::check_json_snapshot(
+        proc::payload_json( payload ),
+        "tests/data/json_snapshots/proc_payload_test/payload.json" );
+}
+
+TEST_CASE( "proc_craft_plan_json_matches_snapshot", "[proc][payload][snapshot]" )
+{
+    json_snapshot::check_json_snapshot(
+    craft_plan_json( {
+        .mode = proc::hist::compact,
+        .slots = { proc::slot_id( "blade" ), proc::slot_id( "grip" ) }
+    } ),
+    "tests/data/json_snapshots/proc_payload_test/craft_plan.json" );
 }
 
 TEST_CASE( "proc_payload_participates_in_stacking", "[proc][payload]" )

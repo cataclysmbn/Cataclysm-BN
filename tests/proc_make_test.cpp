@@ -12,6 +12,10 @@ TEST_CASE( "proc_make_item_applies_food_blob_to_item", "[proc][make][food]" )
     sch.id = proc::schema_id( "sandwich" );
     sch.cat = "food";
     sch.res = itype_id( "sandwich_generic" );
+    sch.slots = {
+        proc::slot_data{ .id = proc::slot_id( "top" ), .role = "bread", .min = 1, .max = 1, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "meat" ), .role = "meat", .min = 0, .max = 2, .rep = true, .ok = {}, .no = {} }
+    };
 
     auto bread = proc::part_fact{};
     bread.ix = 1;
@@ -30,6 +34,7 @@ TEST_CASE( "proc_make_item_applies_food_blob_to_item", "[proc][make][food]" )
 
     auto opts = proc::make_opts{};
     opts.mode = proc::hist::none;
+    opts.slots = { proc::slot_id( "top" ), proc::slot_id( "meat" ) };
     const auto made = proc::make_item( sch, { bread, meat }, opts );
     REQUIRE( proc::read_payload( *made ) );
     CHECK( proc::read_payload( *made )->blob.kcal == 480 );
@@ -58,6 +63,53 @@ TEST_CASE( "proc_food_uses_blob_nutrition_and_component_hash", "[proc][make][foo
     CHECK( proc::blob_kcal( *made ) == std::optional<int>( 250 ) );
     CHECK( made->make_component_hash() == std::hash<std::string> {}( proc::read_payload(
                 *made )->fp ) );
+}
+
+TEST_CASE( "proc_make_item_applies_weapon_blob_to_item", "[proc][make][weapon]" )
+{
+    auto sch = proc::schema{};
+    sch.id = proc::schema_id( "sword" );
+    sch.cat = "weapon";
+    sch.res = itype_id( "proc_sword_generic" );
+    sch.slots = {
+        proc::slot_data{ .id = proc::slot_id( "blade" ), .role = "blade", .min = 1, .max = 1, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "handle" ), .role = "handle", .min = 1, .max = 1, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "grip" ), .role = "grip", .min = 1, .max = 2, .rep = true, .ok = {}, .no = {} }
+    };
+
+    auto blade = proc::part_fact{};
+    blade.ix = 1;
+    blade.id = itype_id( "steel_chunk" );
+    blade.mat = { material_id( "steel" ) };
+    blade.mass_g = 1200;
+    blade.volume_ml = 500;
+
+    auto handle = proc::part_fact{};
+    handle.ix = 2;
+    handle.id = itype_id( "stick_long" );
+    handle.mat = { material_id( "wood" ) };
+    handle.mass_g = 400;
+    handle.volume_ml = 500;
+
+    auto grip = proc::part_fact{};
+    grip.ix = 3;
+    grip.id = itype_id( "rag" );
+    grip.mat = { material_id( "cotton" ) };
+    grip.mass_g = 50;
+    grip.volume_ml = 50;
+
+    auto opts = proc::make_opts{};
+    opts.mode = proc::hist::compact;
+    opts.slots = { proc::slot_id( "blade" ), proc::slot_id( "handle" ), proc::slot_id( "grip" ) };
+    const auto made = proc::make_item( sch, { blade, handle, grip }, opts );
+    REQUIRE( proc::read_payload( *made ) );
+    REQUIRE( proc::blob_melee( *made ) );
+    CHECK( proc::blob_melee( *made )->stab > 0 );
+    CHECK( proc::blob_melee( *made )->bash > 0 );
+    CHECK( made->damage_melee( DT_STAB ) == proc::blob_melee( *made )->stab );
+    CHECK( made->type_name() == "forged sword" );
+    REQUIRE( proc::read_payload( *made )->parts.size() == 3 );
+    CHECK( proc::read_payload( *made )->parts[0].role == "blade" );
 }
 
 TEST_CASE( "proc_compact_restore_preserves_spear_part_damage", "[proc][make][compact]" )

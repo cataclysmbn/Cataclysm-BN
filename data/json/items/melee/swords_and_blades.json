@@ -1,5 +1,17 @@
 [
   {
+    "id": "proc_sword_generic",
+    "type": "GENERIC",
+    "copy-from": "sword_metal",
+    "name": { "str": "GENERIC SWORD" },
+    "description": "If you can see this, a procedural sword recipe did not finish correctly.",
+    "weight": "1000 g",
+    "volume": "1750 ml",
+    "bashing": 4,
+    "cutting": 4,
+    "to_hit": 0
+  },
+  {
     "id": "sword_wood",
     "type": "GENERIC",
     "category": "weapons",

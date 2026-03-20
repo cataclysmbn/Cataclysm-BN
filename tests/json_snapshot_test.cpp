@@ -38,5 +38,5 @@ TEST_CASE( "json_snapshot_helper_matches_deep_json_ignoring_object_order", "[jso
     json_snapshot::check_json_snapshot(
         sample_json_output(),
         "tests/data/json_snapshots/json_snapshot_test/sample.json",
-        { .ignore_deep_object_order = true, .pretty_print = true } );
+    { .ignore_deep_object_order = true, .pretty_print = true } );
 }

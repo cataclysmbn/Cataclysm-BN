@@ -7,7 +7,7 @@
 TEST_CASE( "proc_part_fact_normalizes_basic_item_fields", "[proc][fact]" )
 {
     const auto apple = item( "apple" );
-    const auto fact = proc::normalize_part_fact( apple, 3 );
+    const auto fact = proc::normalize_part_fact( apple, { .ix = 3 } );
 
     CHECK( fact.valid() );
     CHECK( fact.ix == 3 );
@@ -25,10 +25,15 @@ TEST_CASE( "proc_part_fact_normalizes_damage_and_charges", "[proc][fact]" )
     REQUIRE( shirt.max_damage() > 0 );
     shirt.set_damage( 1 );
 
-    const auto damaged_fact = proc::normalize_part_fact( shirt, 1 );
+    const auto damaged_fact = proc::normalize_part_fact( shirt, { .ix = 1 } );
     CHECK( damaged_fact.hp < 1.0f );
 
     const auto battery = item( "battery" );
-    const auto battery_fact = proc::normalize_part_fact( battery, 2 );
-    CHECK( battery_fact.chg == battery.charges );
+    const auto battery_fact = proc::normalize_part_fact( battery, {
+        .ix = 2,
+        .charges = 1,
+        .uses = battery.charges
+    } );
+    CHECK( battery_fact.chg == 1 );
+    CHECK( battery_fact.uses == battery.charges );
 }
