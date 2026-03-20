@@ -413,6 +413,22 @@ TEST_CASE( "proc_builder_stew_rejects_nonfood_material_matches", "[proc][builder
     CHECK( std::ranges::find( meat_candidates, proc::part_ix( 5 ) ) == meat_candidates.end() );
 }
 
+TEST_CASE( "proc_builder_stew_excludes_condiment_spreads_from_veg_candidates",
+           "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/stew.json", "stew" );
+
+    const auto broth = proc::normalize_part_fact( item( "broth" ), { .ix = 1 } );
+    const auto carrot = proc::normalize_part_fact( item( "carrot" ), { .ix = 2 } );
+    const auto ketchup = proc::normalize_part_fact( item( "ketchup" ), { .ix = 3 } );
+
+    const auto state = proc::build_state( sch, { broth, carrot, ketchup } );
+    const auto &veg_candidates = state.cand.at( proc::slot_id( "veg" ) );
+
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 2 ) ) != veg_candidates.end() );
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 3 ) ) == veg_candidates.end() );
+}
+
 TEST_CASE( "proc_builder_sandwich_accepts_supported_condiments_in_cond_slot",
            "[proc][builder][food]" )
 {
