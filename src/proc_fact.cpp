@@ -97,7 +97,8 @@ auto default_tags( const item &it ) -> std::vector<std::string>
     if( raw_ingredient_candidate && is_sandwich_cheese( it ) ) {
         ret.push_back( "cheese" );
     }
-    if( raw_ingredient_candidate && has_material( it, material_id( "veggy" ) ) ) {
+    if( raw_ingredient_candidate && has_material( it, material_id( "veggy" ) ) &&
+        !is_sandwich_spread( it ) ) {
         ret.push_back( "veg" );
     }
     if( raw_ingredient_candidate && is_sandwich_spread( it ) ) {

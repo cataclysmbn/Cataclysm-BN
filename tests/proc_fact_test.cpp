@@ -123,6 +123,16 @@ TEST_CASE( "proc_part_fact_does_not_tag_non_cheese_dairy_as_cheese", "[proc][fac
     CHECK( std::ranges::find( cheese_fact.tag, "cheese" ) != cheese_fact.tag.end() );
 }
 
+TEST_CASE( "proc_part_fact_does_not_tag_condiment_spreads_as_veg", "[proc][fact]" )
+{
+    const auto ketchup_fact = proc::normalize_part_fact( item( "ketchup" ), { .ix = 25 } );
+    CHECK( std::ranges::find( ketchup_fact.tag, "cond" ) != ketchup_fact.tag.end() );
+    CHECK( std::ranges::find( ketchup_fact.tag, "veg" ) == ketchup_fact.tag.end() );
+
+    const auto carrot_fact = proc::normalize_part_fact( item( "carrot" ), { .ix = 26 } );
+    CHECK( std::ranges::find( carrot_fact.tag, "veg" ) != carrot_fact.tag.end() );
+}
+
 TEST_CASE( "proc_part_fact_does_not_treat_finished_sandwiches_as_raw_ingredients", "[proc][fact]" )
 {
     const auto cheese_sandwich = item( "sandwich_cheese" );
