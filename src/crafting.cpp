@@ -58,6 +58,7 @@
 #include "player_activity.h"
 #include "proc_fact.h"
 #include "proc_item.h"
+#include "proc_recipe.h"
 #include "proc_ui.h"
 #include "popup.h"
 #include "point.h"
@@ -785,10 +786,16 @@ auto start_craft_item( Character &who, detached_ptr<item> &&craft, const skill_i
 }
 
 auto prepare_proc_craft_tools( Character &who, const recipe &rec,
+                               const std::vector<proc::part_fact> &facts,
                                std::vector<comp_selection<tool_comp>> &tool_selections ) -> bool
 {
-    if( !who.can_make( &rec, 1 ) ) {
-        if( who.can_start_craft( &rec, recipe_filter_flags::none, 1 ) ) {
+    const auto requirements = proc::recipe_requirements( rec, facts );
+    const auto deduped_requirements = deduped_requirement_data( requirements, rec.ident() );
+
+    if( !deduped_requirements.can_make_with_inventory( who.crafting_inventory(),
+            rec.get_component_filter(), 1 ) ) {
+        if( deduped_requirements.can_make_with_inventory( who.crafting_inventory(),
+                rec.get_component_filter(), 1, cost_adjustment::start_only ) ) {
             if( !query_yn( _( "You don't have enough charges to complete the %s.\n"
                               "Start crafting anyway?" ), rec.result_name() ) ) {
                 return false;
@@ -800,7 +807,8 @@ auto prepare_proc_craft_tools( Character &who, const recipe &rec,
     }
 
     auto flags = recipe_filter_flags::no_rotten;
-    if( !who.can_start_craft( &rec, flags, 1 ) ) {
+    if( !deduped_requirements.can_make_with_inventory( who.crafting_inventory(),
+            rec.get_component_filter( flags ), 1, cost_adjustment::start_only ) ) {
         if( !query_yn( _( "This craft will use rotten components.\n"
                           "Start crafting anyway?" ) ) ) {
             return false;
@@ -809,7 +817,7 @@ auto prepare_proc_craft_tools( Character &who, const recipe &rec,
     }
 
     const auto filter = rec.get_component_filter( flags );
-    const auto *needs = rec.deduped_requirements().select_alternative( who, filter, 1,
+    const auto *needs = deduped_requirements.select_alternative( who, filter, 1,
                         cost_adjustment::start_only );
     if( needs == nullptr ) {
         return false;
@@ -879,9 +887,10 @@ auto start_proc_craft( Character &who, const recipe &rec, const bool is_long,
                        const proc::ui_result &result ) -> item * // *NOPAD*
 {
     const auto debug_hammerspace = who.has_trait( trait_DEBUG_HS );
+    const auto facts = selected_proc_facts( result );
 
     auto tool_selections = std::vector<comp_selection<tool_comp>> {};
-    if( !debug_hammerspace && !prepare_proc_craft_tools( who, rec, tool_selections ) ) {
+    if( !debug_hammerspace && !prepare_proc_craft_tools( who, rec, facts, tool_selections ) ) {
         return nullptr;
     }
 
@@ -903,7 +912,7 @@ auto start_proc_craft( Character &who, const recipe &rec, const bool is_long,
     proc::write_craft_plan( *craft, {
         .mode = proc::get( rec.proc_id() ).hist.def,
         .slots = selected_proc_slots( result ),
-        .facts = selected_proc_facts( result )
+        .facts = facts
     } );
     return start_craft_item( who, std::move( craft ), rec.skill_used, is_long );
 }
