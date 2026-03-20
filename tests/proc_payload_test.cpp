@@ -5,6 +5,7 @@
 
 #include "fstream_utils.h"
 #include "item.h"
+#include "item_factory.h"
 #include "json.h"
 #include "json_assertion_helpers.h"
 #include "proc_item.h"
@@ -265,6 +266,35 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         CHECK( part_count( *payload, itype_id( "jam_fruit" ) ) == test_case.jam );
         CHECK( part_count( *payload, itype_id( "peanutbutter" ) ) == test_case.peanut_butter );
         CHECK( part_count( *payload, itype_id( "syrup" ) ) == test_case.syrup );
+    } );
+}
+
+TEST_CASE( "legacy_sandwiches_gain_proc_payload_via_item_migration", "[proc][payload][migration]" )
+{
+    const auto cases = std::vector<itype_id> {
+        itype_id( "sandwich_t" ),
+        itype_id( "sandwich_honey" ),
+        itype_id( "sandwich_jam" ),
+        itype_id( "sandwich_pbj" ),
+        itype_id( "sandwich_pbh" ),
+        itype_id( "sandwich_pbm" ),
+        itype_id( "fish_sandwich" ),
+    };
+
+    std::ranges::for_each( cases, [&]( const itype_id & test_case ) {
+        auto legacy = item( test_case, calendar::turn );
+        proc::clear_payload( legacy );
+
+        item_controller->migrate_item( test_case, legacy );
+
+        INFO( test_case.str() );
+        const auto payload = proc::read_payload( legacy );
+        REQUIRE( payload );
+        CHECK( payload->id == proc::schema_id( "sandwich" ) );
+        CHECK( payload->mode == proc::hist::compact );
+        CHECK( payload->fp == "sandwich:legacy:" + test_case.str() );
+        CHECK( legacy.typeId() == test_case );
+        CHECK( payload->blob.name == legacy.type_name() );
     } );
 }
 
