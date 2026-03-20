@@ -78,6 +78,89 @@ TEST_CASE( "proc_make_item_applies_food_blob_to_item", "[proc][make][food]" )
     CHECK( made->volume() == units::from_milliliter( 375 ) );
 }
 
+TEST_CASE( "proc_make_item_scales_food_servings_with_total_size", "[proc][make][food]" )
+{
+    auto sch = proc::schema{};
+    sch.id = proc::schema_id( "sandwich" );
+    sch.cat = "food";
+    sch.res = itype_id( "sandwich_generic" );
+    sch.slots = {
+        proc::slot_data{ .id = proc::slot_id( "bread" ), .role = "bread", .min = 2, .max = 2, .rep = true, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "meat" ), .role = "meat", .min = 0, .max = 2, .rep = true, .ok = {}, .no = {} }
+    };
+
+    auto bread = proc::part_fact{};
+    bread.ix = 1;
+    bread.id = itype_id( "bread" );
+    bread.kcal = 1200;
+    bread.mass_g = 2400;
+    bread.volume_ml = 2400;
+
+    auto meat = proc::part_fact{};
+    meat.ix = 2;
+    meat.id = itype_id( "meat_cooked" );
+    meat.kcal = 1800;
+    meat.mass_g = 2600;
+    meat.volume_ml = 2600;
+
+    auto opts = proc::make_opts{};
+    opts.mode = proc::hist::none;
+    opts.slots = { proc::slot_id( "bread" ), proc::slot_id( "meat" ) };
+    const auto made = proc::make_item( sch, { bread, meat }, opts );
+
+    const auto base = item( "sandwich_generic", calendar::turn );
+    const auto ceil_div = []( const int value, const int divisor ) {
+        return value <= 0 ? 0 : ( value + divisor - 1 ) / divisor;
+    };
+    const auto base_servings = std::max( base.charges, 1 );
+    const auto expected_servings = std::max( {
+        base_servings,
+        ceil_div( ( bread.mass_g + meat.mass_g ) * base_servings,
+                  std::max( units::to_gram( base.weight() ), 1L ) ),
+        ceil_div( ( bread.volume_ml + meat.volume_ml ) * base_servings,
+                  std::max( units::to_milliliter( base.volume() ), 1 ) )
+    } );
+
+    REQUIRE( proc::read_payload( *made ) );
+    CHECK( made->charges == expected_servings );
+    CHECK( made->charges == proc::read_payload( *made )->servings );
+    CHECK( made->charges > base_servings );
+    CHECK( proc::blob_kcal( *made ) == std::optional<int>( 75 ) );
+    CHECK( made->weight() == units::from_gram( 5000 ) );
+    CHECK( made->volume() == units::from_milliliter( 5000 ) );
+}
+
+TEST_CASE( "proc_food_remaining_size_tracks_servings", "[proc][make][food]" )
+{
+    auto sch = proc::schema{};
+    sch.id = proc::schema_id( "sandwich" );
+    sch.cat = "food";
+    sch.res = itype_id( "sandwich_generic" );
+
+    auto fact = proc::part_fact{};
+    fact.ix = 1;
+    fact.id = itype_id( "bread" );
+    fact.kcal = 1200;
+    fact.mass_g = 1200;
+    fact.volume_ml = 1200;
+
+    auto opts = proc::make_opts{};
+    opts.mode = proc::hist::none;
+    const auto made = proc::make_item( sch, { fact }, opts );
+    REQUIRE( proc::read_payload( *made ) );
+    REQUIRE( made->charges == proc::read_payload( *made )->servings );
+
+    const auto starting_weight = made->weight();
+    const auto starting_volume = made->volume();
+    const auto starting_kcal = proc::blob_kcal( *made );
+
+    made->mod_charges( -1 );
+
+    CHECK( made->weight() < starting_weight );
+    CHECK( made->volume() < starting_volume );
+    CHECK( proc::blob_kcal( *made ) == starting_kcal );
+}
+
 TEST_CASE( "proc_food_uses_blob_nutrition_and_component_hash", "[proc][make][food]" )
 {
     auto sch = proc::schema{};
@@ -95,7 +178,8 @@ TEST_CASE( "proc_food_uses_blob_nutrition_and_component_hash", "[proc][make][foo
     auto opts2 = proc::make_opts{};
     opts2.mode = proc::hist::none;
     const auto made = proc::make_item( sch, { fact }, opts2 );
-    CHECK( proc::blob_kcal( *made ) == std::optional<int>( 250 ) );
+    REQUIRE( proc::read_payload( *made ) );
+    CHECK( proc::blob_kcal( *made ) == std::optional<int>( 63 ) );
     CHECK( made->make_component_hash() == std::hash<std::string> {}( proc::read_payload(
                 *made )->fp ) );
 }

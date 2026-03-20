@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "fstream_utils.h"
 #include "item.h"
@@ -47,6 +48,17 @@ auto part_count( const proc::payload &payload, const itype_id &id ) -> int
     return total;
 }
 
+auto role_count( const proc::payload &payload, const std::string &role ) -> int
+{
+    auto total = 0;
+    std::ranges::for_each( payload.parts, [&]( const proc::compact_part & part ) {
+        if( part.role == role ) {
+            total += part.n;
+        }
+    } );
+    return total;
+}
+
 } // namespace
 
 TEST_CASE( "proc_payload_round_trips_through_item_save", "[proc][payload]" )
@@ -61,6 +73,7 @@ TEST_CASE( "proc_payload_round_trips_through_item_save", "[proc][payload]" )
     payload.blob.volume_ml = 330;
     payload.blob.name = "meat sandwich";
     payload.blob.melee.stab = 9;
+    payload.servings = 6;
     auto part = proc::compact_part{};
     part.role = "bread";
     part.id = itype_id( "bread" );
@@ -112,6 +125,7 @@ TEST_CASE( "proc_payload_json_matches_snapshot", "[proc][payload][snapshot]" )
     payload.blob.name = "meat sandwich";
     payload.blob.melee.stab = 9;
     payload.blob.vit.emplace( vitamin_id( "vitC" ), 4 );
+    payload.servings = 6;
     payload.parts.push_back( proc::compact_part{
         .role = "bread",
         .id = itype_id( "bread" ),
@@ -257,6 +271,7 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         CHECK( payload->blob.name == legacy.type_name() );
         CHECK( payload->blob.mass_g == units::to_gram( legacy.weight() ) );
         CHECK( payload->blob.volume_ml == units::to_milliliter( legacy.volume() ) );
+        CHECK( payload->servings == std::max( legacy.charges, 1 ) );
         CHECK( restored->weight() == legacy.weight() );
         CHECK( restored->volume() == legacy.volume() );
         CHECK( part_count( *payload, itype_id( "bread" ) ) == test_case.bread );
@@ -303,6 +318,65 @@ TEST_CASE( "legacy_sandwiches_migrate_to_proc_sandwich_items", "[proc][payload][
         CHECK( payload->fp == "sandwich:legacy:" + test_case.str() );
         CHECK( legacy.typeId() == itype_id( "sandwich_generic" ) );
         CHECK( payload->blob.name == legacy.type_name() );
+    } );
+}
+
+TEST_CASE( "legacy_swords_gain_proc_payload_on_save_load", "[proc][payload][migration]" )
+{
+    struct legacy_weapon_case {
+        itype_id id;
+        int blades = 0;
+        int guards = 0;
+        int handles = 0;
+        int grips = 0;
+        int reinforcements = 0;
+        int steel_chunks = 0;
+        int sticks = 0;
+        int bones = 0;
+        int leather = 0;
+        int rags = 0;
+        int nails = 0;
+        int scraps = 0;
+    };
+
+    const auto cases = std::vector<legacy_weapon_case> {
+        legacy_weapon_case{ .id = itype_id( "sword_metal" ), .blades = 1, .guards = 1, .handles = 1, .grips = 1, .steel_chunks = 2, .sticks = 1, .leather = 1 },
+        legacy_weapon_case{ .id = itype_id( "sword_wood" ), .blades = 1, .guards = 1, .handles = 1, .grips = 1, .sticks = 3, .rags = 1 },
+        legacy_weapon_case{ .id = itype_id( "sword_nail" ), .blades = 1, .guards = 1, .handles = 1, .grips = 1, .reinforcements = 1, .sticks = 3, .rags = 1, .nails = 1 },
+        legacy_weapon_case{ .id = itype_id( "sword_crude" ), .blades = 1, .guards = 1, .handles = 1, .grips = 1, .reinforcements = 1, .sticks = 3, .rags = 1, .scraps = 1 },
+        legacy_weapon_case{ .id = itype_id( "sword_bone" ), .blades = 1, .handles = 1, .grips = 1, .sticks = 1, .bones = 1, .leather = 1 }
+    };
+
+    std::ranges::for_each( cases, [&]( const legacy_weapon_case & test_case ) {
+        const auto legacy = item( test_case.id, calendar::turn );
+        const auto restored = round_trip( legacy );
+
+        INFO( test_case.id.str() );
+        const auto payload = proc::read_payload( *restored );
+        REQUIRE( payload );
+        CHECK( payload->id == proc::schema_id( "sword" ) );
+        CHECK( payload->mode == proc::hist::compact );
+        CHECK( payload->fp == "sword:legacy:" + test_case.id.str() );
+        CHECK( restored->typeId() == test_case.id );
+        CHECK( restored->type_name() == legacy.type_name() );
+        CHECK( payload->blob.name == legacy.type_name() );
+        CHECK( payload->blob.mass_g == units::to_gram( legacy.weight() ) );
+        CHECK( payload->blob.volume_ml == units::to_milliliter( legacy.volume() ) );
+        CHECK( payload->blob.melee.bash == legacy.damage_melee( DT_BASH ) );
+        CHECK( payload->blob.melee.cut == legacy.damage_melee( DT_CUT ) );
+        CHECK( payload->blob.melee.stab == legacy.damage_melee( DT_STAB ) );
+        CHECK( role_count( *payload, "blade" ) == test_case.blades );
+        CHECK( role_count( *payload, "guard" ) == test_case.guards );
+        CHECK( role_count( *payload, "handle" ) == test_case.handles );
+        CHECK( role_count( *payload, "grip" ) == test_case.grips );
+        CHECK( role_count( *payload, "reinforcement" ) == test_case.reinforcements );
+        CHECK( part_count( *payload, itype_id( "steel_chunk" ) ) == test_case.steel_chunks );
+        CHECK( part_count( *payload, itype_id( "stick_long" ) ) == test_case.sticks );
+        CHECK( part_count( *payload, itype_id( "bone" ) ) == test_case.bones );
+        CHECK( part_count( *payload, itype_id( "leather" ) ) == test_case.leather );
+        CHECK( part_count( *payload, itype_id( "rag" ) ) == test_case.rags );
+        CHECK( part_count( *payload, itype_id( "nail" ) ) == test_case.nails );
+        CHECK( part_count( *payload, itype_id( "scrap" ) ) == test_case.scraps );
     } );
 }
 
