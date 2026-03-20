@@ -208,6 +208,45 @@ auto sandwich_condiment_name( const std::vector<proc::part_fact> &facts ) -> std
         return {};
     }
 
+    const auto has_itype = [&]( const itype_id & id ) {
+        return std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+            return fact.id == id;
+        } );
+    };
+    const auto has_material_id = [&]( const material_id & id ) {
+        return std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+            return has_material( fact, id );
+        } );
+    };
+
+    const auto has_peanut_butter = has_itype( itype_id( "peanutbutter" ) ) ||
+                                   has_itype( itype_id( "peanutbutter_imitation" ) );
+    const auto has_jam = has_itype( itype_id( "jam_fruit" ) );
+    const auto has_honey = has_material_id( material_id( "honey" ) );
+    const auto has_syrup = has_itype( itype_id( "syrup" ) );
+
+    if( has_peanut_butter && has_jam ) {
+        return "PB&J sandwich";
+    }
+    if( has_peanut_butter && has_honey ) {
+        return "PB&H sandwich";
+    }
+    if( has_peanut_butter && has_syrup ) {
+        return "PB&M sandwich";
+    }
+    if( has_peanut_butter ) {
+        return "peanut butter sandwich";
+    }
+    if( has_jam ) {
+        return "jam sandwich";
+    }
+    if( has_honey ) {
+        return "honey sandwich";
+    }
+    if( has_syrup ) {
+        return "syrup sandwich";
+    }
+
     static const auto named_condiments = std::array<std::pair<itype_id, std::string>, 9> {{
             { itype_id( "mustard" ), "mustard sandwich" },
             { itype_id( "ketchup" ), "ketchup sandwich" },

@@ -51,6 +51,16 @@ auto id_contains_any( const std::string &id,
     } );
 }
 
+auto is_sandwich_spread( const item &it ) -> bool
+{
+    const auto &id = it.typeId().str();
+    return has_material( it, material_id( "honey" ) ) || id == "syrup" ||
+    id_contains_any( id, std::array<std::string_view, 9> {
+        "mustard", "ketchup", "mayo", "butter", "horseradish", "sauerkraut", "soysauce",
+        "sauce", "jam"
+    } );
+}
+
 auto normalized_hp( const item &it ) -> float
 {
     const auto max_damage = it.max_damage();
@@ -86,11 +96,7 @@ auto default_tags( const item &it ) -> std::vector<std::string>
     if( raw_ingredient_candidate && has_material( it, material_id( "veggy" ) ) ) {
         ret.push_back( "veg" );
     }
-    if( raw_ingredient_candidate &&
-    id_contains_any( id, std::array<std::string_view, 8> {
-    "mustard", "ketchup", "mayo", "butter", "horseradish", "sauerkraut", "soysauce",
-    "sauce"
-} ) ) {
+    if( raw_ingredient_candidate && is_sandwich_spread( it ) ) {
         ret.push_back( "cond" );
     }
     if( raw_ingredient_candidate &&

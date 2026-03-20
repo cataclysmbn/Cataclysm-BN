@@ -378,6 +378,27 @@ TEST_CASE( "proc_builder_sandwich_accepts_supported_condiments_in_cond_slot",
     CHECK( std::ranges::find( cond_candidates, proc::part_ix( 5 ) ) != cond_candidates.end() );
 }
 
+TEST_CASE( "proc_builder_sandwich_accepts_supported_spreads_in_cond_slot",
+           "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/sandwich.json", "sandwich" );
+
+    const auto bread_a = proc::normalize_part_fact( item( "bread" ), { .ix = 1 } );
+    const auto bread_b = proc::normalize_part_fact( item( "bread" ), { .ix = 2 } );
+    const auto honey = proc::normalize_part_fact( item( "honey_bottled" ), { .ix = 3 } );
+    const auto jam = proc::normalize_part_fact( item( "jam_fruit" ), { .ix = 4 } );
+    const auto peanut_butter = proc::normalize_part_fact( item( "peanutbutter" ), { .ix = 5 } );
+    const auto syrup = proc::normalize_part_fact( item( "syrup" ), { .ix = 6 } );
+
+    const auto state = proc::build_state( sch, { bread_a, bread_b, honey, jam, peanut_butter, syrup } );
+    const auto &cond_candidates = state.cand.at( proc::slot_id( "cond" ) );
+
+    CHECK( std::ranges::find( cond_candidates, proc::part_ix( 3 ) ) != cond_candidates.end() );
+    CHECK( std::ranges::find( cond_candidates, proc::part_ix( 4 ) ) != cond_candidates.end() );
+    CHECK( std::ranges::find( cond_candidates, proc::part_ix( 5 ) ) != cond_candidates.end() );
+    CHECK( std::ranges::find( cond_candidates, proc::part_ix( 6 ) ) != cond_candidates.end() );
+}
+
 TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][weapon]" )
 {
     const auto sch = load_schema_for_test( R"(

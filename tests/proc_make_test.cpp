@@ -284,6 +284,55 @@ TEST_CASE( "proc_make_item_names_supported_condiment_sandwiches", "[proc][make][
     } ) == "sauerkraut sandwich" );
 }
 
+TEST_CASE( "proc_make_item_names_supported_spread_sandwiches", "[proc][make][food]" )
+{
+    const auto bread_a = proc::normalize_part_fact( item( "bread" ), { .ix = 1 } );
+    const auto bread_b = proc::normalize_part_fact( item( "bread" ), { .ix = 2 } );
+    const auto honey = proc::normalize_part_fact( item( "honey_bottled" ), { .ix = 3 } );
+    const auto jam = proc::normalize_part_fact( item( "jam_fruit" ), { .ix = 4 } );
+    const auto peanut_butter = proc::normalize_part_fact( item( "peanutbutter" ), { .ix = 5 } );
+    const auto syrup = proc::normalize_part_fact( item( "syrup" ), { .ix = 6 } );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, honey }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "cond" ),
+    } ) == "honey sandwich" );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, jam }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "cond" ),
+    } ) == "jam sandwich" );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, peanut_butter }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "cond" ),
+    } ) == "peanut butter sandwich" );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, peanut_butter, jam }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "cond" ),
+        proc::slot_id( "cond" ),
+    } ) == "PB&J sandwich" );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, peanut_butter, honey }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "cond" ),
+        proc::slot_id( "cond" ),
+    } ) == "PB&H sandwich" );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, peanut_butter, syrup }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "cond" ),
+        proc::slot_id( "cond" ),
+    } ) == "PB&M sandwich" );
+}
+
 TEST_CASE( "proc_compact_restore_preserves_spear_part_damage", "[proc][make][compact]" )
 {
     auto payload = proc::payload{};

@@ -36,6 +36,48 @@
   },
   {
     "type": "uncraft",
+    "result": "sandwich_honey",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "honey_bottled", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_jam",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "jam_fruit", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_pb",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "peanutbutter", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_pbj",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "jam_fruit", 1 ] ], [ [ "peanutbutter", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_pbh",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "honey_bottled", 1 ] ], [ [ "peanutbutter", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "sandwich_pbm",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "bread", 2 ] ], [ [ "syrup", 1 ] ], [ [ "peanutbutter", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
     "result": "sandwich_deluxe",
     "time": "45 s",
     "qualities": [ { "id": "CUT", "level": 1 } ],

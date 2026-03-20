@@ -212,18 +212,28 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         int cheese = 0;
         int veg = 0;
         int cucumber = 0;
-        int cond = 0;
+        int mustard = 0;
+        int honey = 0;
+        int jam = 0;
+        int peanut_butter = 0;
+        int syrup = 0;
     };
 
     const auto cases = std::vector<legacy_case> {
         legacy_case{ .id = itype_id( "sandwich_t" ), .bread = 2, .meat = 1 },
         legacy_case{ .id = itype_id( "sandwich_veggy" ), .bread = 2, .veg = 1 },
         legacy_case{ .id = itype_id( "sandwich_cheese" ), .bread = 2, .cheese = 1 },
-        legacy_case{ .id = itype_id( "sandwich_sauce" ), .bread = 2, .cond = 1 },
-        legacy_case{ .id = itype_id( "fish_sandwich" ), .bread = 2, .fish = 1, .veg = 1, .cond = 1 },
-        legacy_case{ .id = itype_id( "sandwich_deluxe" ), .bread = 2, .meat = 1, .cheese = 2, .veg = 1, .cond = 1 },
+        legacy_case{ .id = itype_id( "sandwich_sauce" ), .bread = 2, .mustard = 1 },
+        legacy_case{ .id = itype_id( "sandwich_honey" ), .bread = 2, .honey = 1 },
+        legacy_case{ .id = itype_id( "sandwich_jam" ), .bread = 2, .jam = 1 },
+        legacy_case{ .id = itype_id( "sandwich_pb" ), .bread = 2, .peanut_butter = 1 },
+        legacy_case{ .id = itype_id( "sandwich_pbj" ), .bread = 2, .jam = 1, .peanut_butter = 1 },
+        legacy_case{ .id = itype_id( "sandwich_pbh" ), .bread = 2, .honey = 1, .peanut_butter = 1 },
+        legacy_case{ .id = itype_id( "sandwich_pbm" ), .bread = 2, .peanut_butter = 1, .syrup = 1 },
+        legacy_case{ .id = itype_id( "fish_sandwich" ), .bread = 2, .fish = 1, .veg = 1, .mustard = 1 },
+        legacy_case{ .id = itype_id( "sandwich_deluxe" ), .bread = 2, .meat = 1, .cheese = 2, .veg = 1, .mustard = 1 },
         legacy_case{ .id = itype_id( "sandwich_okay" ), .bread = 2, .meat = 1, .veg = 1 },
-        legacy_case{ .id = itype_id( "sandwich_deluxe_nocheese" ), .bread = 2, .meat = 1, .veg = 1, .cond = 1 },
+        legacy_case{ .id = itype_id( "sandwich_deluxe_nocheese" ), .bread = 2, .meat = 1, .veg = 1, .mustard = 1 },
         legacy_case{ .id = itype_id( "sandwich_cucumber" ), .bread = 2, .cucumber = 1 }
     };
 
@@ -250,7 +260,11 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         CHECK( part_count( *payload, itype_id( "cheese" ) ) == test_case.cheese );
         CHECK( part_count( *payload, itype_id( "lettuce" ) ) == test_case.veg );
         CHECK( part_count( *payload, itype_id( "cucumber" ) ) == test_case.cucumber );
-        CHECK( part_count( *payload, itype_id( "mustard" ) ) == test_case.cond );
+        CHECK( part_count( *payload, itype_id( "mustard" ) ) == test_case.mustard );
+        CHECK( part_count( *payload, itype_id( "honey_bottled" ) ) == test_case.honey );
+        CHECK( part_count( *payload, itype_id( "jam_fruit" ) ) == test_case.jam );
+        CHECK( part_count( *payload, itype_id( "peanutbutter" ) ) == test_case.peanut_butter );
+        CHECK( part_count( *payload, itype_id( "syrup" ) ) == test_case.syrup );
     } );
 }
 
@@ -261,6 +275,12 @@ TEST_CASE( "proc_and_legacy_sandwiches_have_uncraft_recipes", "[proc][payload][m
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_veggy" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_cheese" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_sauce" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_honey" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_jam" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_pb" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_pbj" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_pbh" ) ) );
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_pbm" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_okay" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "fish_sandwich" ) ) );
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_deluxe" ) ) );
