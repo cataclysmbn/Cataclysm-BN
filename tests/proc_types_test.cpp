@@ -20,8 +20,8 @@ TEST_CASE( "proc_hist_round_trip", "[proc]" )
 
 TEST_CASE( "proc_core_scaffold_types", "[proc]" )
 {
-    STATIC_REQUIRE( std::is_empty_v<proc::fast_blob> );
-    STATIC_REQUIRE( std::is_empty_v<proc::full_blob> );
+    CHECK( proc::fast_blob{}.empty() );
+    CHECK( proc::full_blob{} == proc::full_blob{} );
 
     const auto sandwich = proc::schema_id( "sandwich" );
     const auto bread = proc::slot_id( "bread" );
