@@ -161,17 +161,18 @@ auto make_legacy_sandwich_part( const legacy_sandwich_part_spec &spec ) -> proc:
     return part;
 }
 
-auto default_weapon_blob( const item &it ) -> proc::fast_blob
+auto default_weapon_blob( const itype_id &source_id ) -> proc::fast_blob
 {
+    const auto source = item( source_id, calendar::turn );
     auto blob = proc::fast_blob{};
-    blob.mass_g = units::to_gram( it.weight() );
-    blob.volume_ml = units::to_milliliter( it.volume() );
-    blob.name = it.type_name();
-    blob.melee.bash = it.damage_melee( DT_BASH );
-    blob.melee.cut = it.damage_melee( DT_CUT );
-    blob.melee.stab = it.damage_melee( DT_STAB );
-    blob.melee.to_hit = it.type->m_to_hit;
-    blob.melee.dur = std::max( it.max_damage(), 0 );
+    blob.mass_g = units::to_gram( source.weight() );
+    blob.volume_ml = units::to_milliliter( source.volume() );
+    blob.name = source.type_name();
+    blob.melee.bash = source.damage_melee( DT_BASH );
+    blob.melee.cut = source.damage_melee( DT_CUT );
+    blob.melee.stab = source.damage_melee( DT_STAB );
+    blob.melee.to_hit = source.type->m_to_hit;
+    blob.melee.dur = std::max( source.max_damage(), 0 );
     return blob;
 }
 
@@ -903,7 +904,7 @@ auto legacy_sandwich_payload( const item &it,
     return out;
 }
 
-auto legacy_weapon_payload( const item &it,
+auto legacy_weapon_payload( const item &,
                             const itype_id &legacy_id ) -> std::optional<payload>
 {
     const auto specs = legacy_weapon_specs( legacy_id );
@@ -924,7 +925,7 @@ auto legacy_weapon_payload( const item &it,
     out.id = schema_id( "sword" );
     out.mode = hist::compact;
     out.fp = "sword:legacy:" + legacy_id.str();
-    out.blob = default_weapon_blob( it );
+    out.blob = default_weapon_blob( legacy_id );
     out.parts = make_compact_parts( facts, slots );
     return out;
 }

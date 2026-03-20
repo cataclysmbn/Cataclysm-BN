@@ -7,6 +7,7 @@
     "skill_used": "fabrication",
     "difficulty": 2,
     "time": 1500,
+    "reversible": true,
     "proc": true,
     "proc_id": "sword",
     "builder_name": { "str": "Sword" },
