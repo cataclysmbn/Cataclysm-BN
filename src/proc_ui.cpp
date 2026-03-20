@@ -19,6 +19,7 @@
 #include "proc_fact.h"
 #include "recipe.h"
 #include "proc_ui_candidates.h"
+#include "proc_ui_slot_indicator.h"
 #include "proc_ui_text.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -30,9 +31,6 @@ namespace
 {
 
 static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
-inline constexpr auto filled_slot = "\xE2\x96\xA0";
-inline constexpr auto required_empty_slot = "\xE2\x96\xA1";
-inline constexpr auto optional_empty_slot = "\xC2\xB7";
 
 enum class panel_focus : int {
     slots,
@@ -124,24 +122,6 @@ auto filtered_candidates( const proc::builder_state &state, const proc::slot_id 
         }
     } );
     return proc::group_candidate_entries( matches );
-}
-
-auto slot_indicator( const proc::slot_data &slot, const int picked ) -> std::string
-{
-    auto cells = std::string {};
-    std::ranges::for_each( std::views::iota( 0, std::max( slot.max, 0 ) ), [&]( const int idx ) {
-        if( !cells.empty() ) {
-            cells += ' ';
-        }
-        if( idx < picked ) {
-            cells += filled_slot;
-        } else if( idx < slot.min ) {
-            cells += required_empty_slot;
-        } else {
-            cells += optional_empty_slot;
-        }
-    } );
-    return string_format( "[%s]", cells );
 }
 
 auto slot_summary( const proc::builder_state &state, const proc::slot_data &slot,
@@ -477,7 +457,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
                                c_light_green : c_white;
             const auto line = string_format( "%s %s %s",
                                              row == slot_cursor ? ">" : " ",
-                                             slot_indicator( slot_entry, picked ),
+                                             proc::slot_indicator( slot_entry, picked ),
                                              string_format( "%s %s", slot_entry.role,
                                                      slot_summary( state, slot_entry, source_data.entries ) ) );
             trim_and_print( w, point( 2, list_top + row - slot_start ), left_width - 2, color, line );
