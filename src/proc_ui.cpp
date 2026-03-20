@@ -18,6 +18,7 @@
 #include "output.h"
 #include "proc_fact.h"
 #include "recipe.h"
+#include "proc_ui_text.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "ui.h"
@@ -153,7 +154,7 @@ auto slot_summary( const proc::builder_state &state, const proc::slot_data &slot
             picks.push_back( source->src->tname() );
         }
     } );
-    return picks.empty() ? _( "empty" ) : enumerate_as_string( picks, enumeration_conjunction::none );
+    return proc::grouped_label_summary( picks, _( "empty" ) );
 }
 
 auto candidate_meta( const source_entry &source, const proc::schema &sch ) -> std::string
@@ -218,17 +219,13 @@ auto diff_line( const std::string &label, const int current, const int preview,
 auto selected_ingredient_lines( const proc::builder_state &state, const proc::schema &sch,
                                 const std::vector<source_entry> &sources ) -> std::vector<std::string>
 {
-    auto counts = std::map<std::string, int> {};
+    auto picks = std::vector<std::string> {};
     std::ranges::for_each( proc::selected_picks( state, sch ), [&]( const proc::craft_pick & pick ) {
         if( const auto *source = source_for_ix( sources, pick.ix ) ) {
-            counts[source->src->tname()]++;
+            picks.push_back( source->src->tname() );
         }
     } );
-    auto lines = std::vector<std::string> {};
-    std::ranges::for_each( counts, [&]( const std::pair<const std::string, int> &entry ) {
-        lines.push_back( string_format( "- %s (%d)", entry.first, entry.second ) );
-    } );
-    return lines;
+    return proc::grouped_label_lines( picks );
 }
 
 auto gather_inventory_sources( Character &who, const proc::schema &sch ) -> source_pool
