@@ -23,6 +23,22 @@ auto is_comestible_candidate( const item &it ) -> bool
     return it.is_comestible();
 }
 
+auto is_finished_dish( const item &it ) -> bool
+{
+    if( proc::read_payload( it ) ) {
+        return true;
+    }
+
+    if( !it.is_comestible() ) {
+        return false;
+    }
+
+    const auto &id = it.typeId().str();
+    return id.contains( "sandwich" ) || id.contains( "burger" ) || id.contains( "hotdog" ) ||
+           id.contains( "pizza" ) || id.contains( "taco" ) || id.contains( "quesadilla" ) ||
+           id.contains( "stew" ) || id.contains( "soup" ) || id.contains( "salad" );
+}
+
 auto normalized_hp( const item &it ) -> float
 {
     const auto max_damage = it.max_damage();
@@ -38,26 +54,27 @@ auto default_tags( const item &it ) -> std::vector<std::string>
 {
     auto ret = std::vector<std::string> {};
     const auto &id = it.typeId().str();
-    if( is_comestible_candidate( it ) &&
+    const auto raw_ingredient_candidate = is_comestible_candidate( it ) && !is_finished_dish( it );
+    if( raw_ingredient_candidate &&
         ( ( !it.count_by_charges() &&
             has_material( it, material_id( "wheat" ) ) ) ||
           id.contains( "bread" ) || id.contains( "bun" ) || id.contains( "bagel" ) ||
           id.contains( "toast" ) || id.contains( "roll" ) || id.contains( "tortilla" ) ) ) {
         ret.push_back( "bread" );
     }
-    if( is_comestible_candidate( it ) &&
+    if( raw_ingredient_candidate &&
         ( id.contains( "cheese" ) || has_material( it, material_id( "milk" ) ) ) ) {
         ret.push_back( "cheese" );
     }
-    if( is_comestible_candidate( it ) && has_material( it, material_id( "veggy" ) ) ) {
+    if( raw_ingredient_candidate && has_material( it, material_id( "veggy" ) ) ) {
         ret.push_back( "veg" );
     }
-    if( is_comestible_candidate( it ) &&
+    if( raw_ingredient_candidate &&
         ( id.contains( "mustard" ) || id.contains( "ketchup" ) || id.contains( "mayo" ) ||
           id.contains( "sauce" ) ) ) {
         ret.push_back( "cond" );
     }
-    if( is_comestible_candidate( it ) &&
+    if( raw_ingredient_candidate &&
         ( has_material( it, material_id( "flesh" ) ) || has_material( it, material_id( "hflesh" ) ) ||
           has_material( it, material_id( "iflesh" ) ) || has_material( it, material_id( "fish" ) ) ) ) {
         ret.push_back( "meat" );
