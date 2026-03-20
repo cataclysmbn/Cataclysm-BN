@@ -248,7 +248,8 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         CHECK( payload->id == proc::schema_id( "sandwich" ) );
         CHECK( payload->mode == proc::hist::compact );
         CHECK( payload->fp == "sandwich:legacy:" + test_case.id.str() );
-        CHECK( restored->typeId() == test_case.id );
+        CHECK( item_controller->migrate_id( test_case.id ) == itype_id( "sandwich_generic" ) );
+        CHECK( restored->typeId() == itype_id( "sandwich_generic" ) );
         CHECK( restored->type_name() == legacy.type_name() );
         CHECK( payload->blob.name == legacy.type_name() );
         CHECK( payload->blob.mass_g == units::to_gram( legacy.weight() ) );
@@ -269,7 +270,7 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
     } );
 }
 
-TEST_CASE( "legacy_sandwiches_gain_proc_payload_via_item_migration", "[proc][payload][migration]" )
+TEST_CASE( "legacy_sandwiches_migrate_to_proc_sandwich_items", "[proc][payload][migration]" )
 {
     const auto cases = std::vector<itype_id> {
         itype_id( "sandwich_t" ),
@@ -284,6 +285,7 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_via_item_migration", "[proc][pay
     std::ranges::for_each( cases, [&]( const itype_id & test_case ) {
         auto legacy = item( test_case, calendar::turn );
         proc::clear_payload( legacy );
+        legacy.convert( item_controller->migrate_id( test_case ) );
 
         item_controller->migrate_item( test_case, legacy );
 
@@ -293,27 +295,36 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_via_item_migration", "[proc][pay
         CHECK( payload->id == proc::schema_id( "sandwich" ) );
         CHECK( payload->mode == proc::hist::compact );
         CHECK( payload->fp == "sandwich:legacy:" + test_case.str() );
-        CHECK( legacy.typeId() == test_case );
+        CHECK( legacy.typeId() == itype_id( "sandwich_generic" ) );
         CHECK( payload->blob.name == legacy.type_name() );
     } );
 }
 
-TEST_CASE( "proc_and_legacy_sandwiches_have_uncraft_recipes", "[proc][payload][migration]" )
+TEST_CASE( "legacy_sandwich_ids_migrate_to_proc_uncraft_recipe", "[proc][payload][migration]" )
 {
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_generic" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_t" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_veggy" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_cheese" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_sauce" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_honey" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_jam" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_pb" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_pbj" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_pbh" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_pbm" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_okay" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "fish_sandwich" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_deluxe" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_deluxe_nocheese" ) ) );
-    CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_cucumber" ) ) );
+
+    const auto cases = std::vector<itype_id> {
+        itype_id( "sandwich_t" ),
+        itype_id( "sandwich_veggy" ),
+        itype_id( "sandwich_cheese" ),
+        itype_id( "sandwich_sauce" ),
+        itype_id( "sandwich_honey" ),
+        itype_id( "sandwich_jam" ),
+        itype_id( "sandwich_pb" ),
+        itype_id( "sandwich_pbj" ),
+        itype_id( "sandwich_pbh" ),
+        itype_id( "sandwich_pbm" ),
+        itype_id( "sandwich_okay" ),
+        itype_id( "fish_sandwich" ),
+        itype_id( "sandwich_deluxe" ),
+        itype_id( "sandwich_deluxe_nocheese" ),
+        itype_id( "sandwich_cucumber" )
+    };
+
+    std::ranges::for_each( cases, [&]( const itype_id & test_case ) {
+        INFO( test_case.str() );
+        CHECK( item_controller->migrate_id( test_case ) == itype_id( "sandwich_generic" ) );
+        CHECK( recipe_dictionary::get_uncraft( item_controller->migrate_id( test_case ) ) );
+    } );
 }

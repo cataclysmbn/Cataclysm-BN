@@ -728,5 +728,26 @@
     "id": "multi_cooker_filled",
     "type": "MIGRATION",
     "replace": "multi_cooker"
+  },
+  {
+    "id": [
+      "sandwich_t",
+      "sandwich_veggy",
+      "sandwich_cheese",
+      "sandwich_sauce",
+      "sandwich_honey",
+      "sandwich_jam",
+      "sandwich_pb",
+      "sandwich_pbj",
+      "sandwich_pbh",
+      "sandwich_pbm",
+      "sandwich_deluxe",
+      "sandwich_okay",
+      "sandwich_deluxe_nocheese",
+      "fish_sandwich",
+      "sandwich_cucumber"
+    ],
+    "type": "MIGRATION",
+    "replace": "sandwich_generic"
   }
 ]

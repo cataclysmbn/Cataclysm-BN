@@ -34,19 +34,21 @@ struct legacy_sandwich_part_spec {
 inline constexpr auto proc_var_key = std::string_view { "proc" };
 inline constexpr auto proc_craft_var_key = std::string_view { "proc_craft" };
 
-auto default_food_blob( const item &it ) -> proc::fast_blob
+auto default_food_blob( const item &it,
+                        const itype_id &source_id ) -> proc::fast_blob
 {
+    const auto sample = item::spawn( source_id, calendar::turn );
     auto blob = proc::fast_blob{};
-    blob.mass_g = units::to_gram( it.weight() );
-    blob.volume_ml = units::to_milliliter( it.volume() );
-    blob.name = it.type_name();
-    if( !it.is_comestible() ) {
+    blob.mass_g = units::to_gram( sample->weight() );
+    blob.volume_ml = units::to_milliliter( sample->volume() );
+    blob.name = sample->type_name();
+    if( !sample->is_comestible() ) {
         return blob;
     }
 
-    const auto charges = std::max( it.charges, 1 );
-    blob.kcal = it.get_comestible()->default_nutrition.kcal * charges;
-    blob.vit = it.get_comestible()->default_nutrition.vitamins;
+    const auto charges = sample->count_by_charges() ? std::max( it.charges, 1 ) : 1;
+    blob.kcal = sample->get_comestible()->default_nutrition.kcal * charges;
+    blob.vit = sample->get_comestible()->default_nutrition.vitamins;
     std::ranges::for_each( blob.vit, [&]( std::pair<const vitamin_id, int> &entry ) {
         entry.second *= charges;
     } );
@@ -706,7 +708,13 @@ namespace proc
 
 auto legacy_sandwich_payload( const item &it ) -> std::optional<payload>
 {
-    const auto specs = legacy_sandwich_specs( it.typeId() );
+    return legacy_sandwich_payload( it, it.typeId() );
+}
+
+auto legacy_sandwich_payload( const item &it,
+                              const itype_id &legacy_id ) -> std::optional<payload>
+{
+    const auto specs = legacy_sandwich_specs( legacy_id );
     if( specs.empty() ) {
         return std::nullopt;
     }
@@ -714,8 +722,8 @@ auto legacy_sandwich_payload( const item &it ) -> std::optional<payload>
     auto out = payload{};
     out.id = schema_id( "sandwich" );
     out.mode = hist::compact;
-    out.fp = "sandwich:legacy:" + it.typeId().str();
-    out.blob = default_food_blob( it );
+    out.fp = "sandwich:legacy:" + legacy_id.str();
+    out.blob = default_food_blob( it, legacy_id );
     std::ranges::transform( specs,
     std::back_inserter( out.parts ), [&]( const legacy_sandwich_part_spec & spec ) {
         return make_legacy_sandwich_part( spec );
