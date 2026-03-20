@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstdint>
 #include <map>
 #include <ranges>
@@ -35,11 +36,19 @@ auto split_atom( const std::string &atom ) -> std::pair<std::string, std::string
 auto quality_match( const proc::part_fact &fact, const std::string &rhs ) -> bool
 {
     const auto cmp_pos = rhs.find( ">=" );
-    if( cmp_pos == std::string::npos ) {
+    if( cmp_pos == std::string::npos || cmp_pos == 0 ) {
         return false;
     }
     const auto qual = quality_id( rhs.substr( 0, cmp_pos ) );
-    const auto level = std::stoi( rhs.substr( cmp_pos + 2 ) );
+    const auto level_txt = rhs.substr( cmp_pos + 2 );
+    if( level_txt.empty() ) {
+        return false;
+    }
+    auto level = 0;
+    const auto parse = std::from_chars( level_txt.data(), level_txt.data() + level_txt.size(), level );
+    if( parse.ec != std::errc() || parse.ptr != level_txt.data() + level_txt.size() ) {
+        return false;
+    }
     const auto iter = fact.qual.find( qual );
     return iter != fact.qual.end() && iter->second >= level;
 }
@@ -661,7 +670,7 @@ auto proc::part_matches_search( const part_fact &fact, const proc::part_search_o
     return std::ranges::all_of( terms, [&]( const std::string & term ) {
         if( is_search_atom( term ) ) {
             return matches_atom( fact, term ) || std::ranges::any_of( texts, [&]( const std::string & entry ) {
-                return lcmatch( entry, term );
+                return to_lower_case( entry ) == term;
             } );
         }
         return std::ranges::any_of( texts, [&]( const std::string & entry ) {

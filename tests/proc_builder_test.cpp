@@ -80,6 +80,19 @@ TEST_CASE( "proc_builder_matches_query_atoms", "[proc][builder]" )
     CHECK_FALSE( proc::matches_atom( fact, "qual:CUT>=3" ) );
 }
 
+TEST_CASE( "proc_builder_rejects_malformed_quality_atoms_without_throwing", "[proc][builder]" )
+{
+    auto fact = proc::part_fact{};
+    fact.ix = 1;
+    fact.id = itype_id( "knife_butcher" );
+    fact.qual.emplace( quality_id( "CUT" ), 2 );
+
+    CHECK_FALSE( proc::matches_atom( fact, "qual:CUT>=" ) );
+    CHECK_FALSE( proc::matches_atom( fact, "qual:CUT>=x" ) );
+    CHECK_FALSE( proc::matches_atom( fact, "qual:>=2" ) );
+    CHECK_FALSE( proc::matches_atom( fact, "qual:CUT>" ) );
+}
+
 TEST_CASE( "proc_builder_search_matches_name_location_and_fact_tokens", "[proc][builder]" )
 {
     auto fact = proc::part_fact{};
@@ -126,6 +139,26 @@ TEST_CASE( "proc_builder_search_requires_all_query_terms", "[proc][builder]" )
     CHECK( proc::part_matches_search( fact, opts, "itype:knife_butcher qual:CUT>=2" ) );
     CHECK_FALSE( proc::part_matches_search( fact, opts, "combat pantry" ) );
     CHECK_FALSE( proc::part_matches_search( fact, opts, "tag:knife mat:wheat" ) );
+}
+
+TEST_CASE( "proc_builder_search_rejects_malformed_quality_terms_without_throwing",
+           "[proc][builder]" )
+{
+    auto fact = proc::part_fact{};
+    fact.ix = 1;
+    fact.id = itype_id( "knife_butcher" );
+    fact.qual.emplace( quality_id( "CUT" ), 2 );
+
+    const auto opts = proc::part_search_options{
+        .name = "Combat Knife",
+        .where = "backpack"
+    };
+
+    CHECK_FALSE( proc::part_matches_search( fact, opts, "qual:CUT>=" ) );
+    CHECK_FALSE( proc::part_matches_search( fact, opts, "qual:CUT>=x" ) );
+    CHECK_FALSE( proc::part_matches_search( fact, opts, "combat qual:>=2" ) );
+    CHECK( proc::part_matches_search( fact, opts, "qual:CUT>=2" ) );
+    CHECK_FALSE( proc::part_matches_search( fact, opts, "qual:CUT>=3" ) );
 }
 
 TEST_CASE( "proc_builder_builds_candidates_and_fast_preview", "[proc][builder]" )
