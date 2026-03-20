@@ -70,6 +70,25 @@ auto is_sandwich_cheese( const item &it ) -> bool
     return it.typeId().str().contains( "cheese" );
 }
 
+auto is_sandwich_bread( const item &it ) -> bool
+{
+    if( has_material( it, material_id( "flesh" ) ) || has_material( it, material_id( "hflesh" ) ) ||
+        has_material( it, material_id( "iflesh" ) ) || has_material( it, material_id( "fish" ) ) ) {
+        return false;
+    }
+
+    const auto &id = it.typeId().str();
+    if( id_contains_any( id, std::array<std::string_view, 9> {
+        "sweetbread", "pancake", "waffle", "cracker", "pretzel", "cookie", "brownie", "donut", "cake"
+    } ) ) {
+        return false;
+    }
+
+    return id.contains( "bread" ) || id.contains( "bun" ) || id.contains( "bagel" ) ||
+           id.contains( "roll" ) || id.contains( "tortilla" ) || id.contains( "biscuit" ) ||
+           id.contains( "hardtack" );
+}
+
 auto normalized_hp( const item &it ) -> float
 {
     const auto max_damage = it.max_damage();
@@ -84,18 +103,12 @@ auto normalized_hp( const item &it ) -> float
 auto default_tags( const item &it ) -> std::vector<std::string>
 {
     auto ret = std::vector<std::string> {};
-    const auto &id = it.typeId().str();
     const auto finished_dish = is_finished_dish( it );
     const auto raw_ingredient_candidate = is_comestible_candidate( it ) && !finished_dish;
     if( finished_dish ) {
         ret.push_back( "dish" );
     }
-    if( raw_ingredient_candidate &&
-        ( ( !it.count_by_charges() &&
-            has_material( it, material_id( "wheat" ) ) ) ||
-          id.contains( "bread" ) || id.contains( "bun" ) || id.contains( "bagel" ) ||
-          id.contains( "roll" ) || id.contains( "tortilla" ) ||
-          id.contains( "biscuit" ) || id.contains( "hardtack" ) ) ) {
+    if( raw_ingredient_candidate && is_sandwich_bread( it ) ) {
         ret.push_back( "bread" );
     }
     if( raw_ingredient_candidate && is_sandwich_cheese( it ) ) {
