@@ -1,5 +1,7 @@
 #include "catch/catch.hpp"
 
+#include <fstream>
+#include <ranges>
 #include <sstream>
 #include <string>
 
@@ -20,6 +22,39 @@ auto load_test_recipe( const std::string &json ) -> recipe
 }
 
 } // namespace
+
+TEST_CASE( "proc_stew_recipe_requires_cutting_and_boiling", "[proc][recipe]" )
+{
+    auto file = std::ifstream( "data/json/recipes/food/proc_stew.json", std::ios::binary );
+    REQUIRE( file.is_open() );
+
+    auto jsin = JsonIn( file );
+    auto rec = recipe{};
+    auto loaded = false;
+    for( JsonObject jo : jsin.get_array() ) {
+        jo.allow_omitted_members();
+        if( jo.get_string( "type" ) != "recipe" || jo.get_string( "result" ) != "stew_generic" ) {
+            continue;
+        }
+        rec.load( jo, "data/json/recipes/food/proc_stew.json" );
+        loaded = true;
+        break;
+    }
+
+    REQUIRE( loaded );
+    rec.finalize();
+    const auto &qualities = rec.simple_requirements().get_qualities();
+    const auto has_quality = [&]( const quality_id & id, const int level ) {
+        return std::ranges::any_of( qualities, [&]( const std::vector<quality_requirement> &alt ) {
+            return std::ranges::any_of( alt, [&]( const quality_requirement & entry ) {
+                return entry.type == id && entry.level == level;
+            } );
+        } );
+    };
+
+    CHECK( has_quality( quality_id( "CUT" ), 1 ) );
+    CHECK( has_quality( quality_id( "BOIL" ), 2 ) );
+}
 
 TEST_CASE( "proc_recipe_fields_parse", "[proc][recipe]" )
 {

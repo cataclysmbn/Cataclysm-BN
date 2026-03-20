@@ -11,7 +11,7 @@
     "proc_id": "stew",
     "builder_name": { "str": "Stew" },
     "builder_desc": { "str": "Pick a broth and hearty ingredients." },
-    "qualities": [  ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "BOIL", "level": 2 } ],
     "tools": [  ],
     "components": [  ]
   }
