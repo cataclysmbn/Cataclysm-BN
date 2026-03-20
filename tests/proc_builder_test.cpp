@@ -106,6 +106,28 @@ TEST_CASE( "proc_builder_search_matches_name_location_and_fact_tokens", "[proc][
     CHECK_FALSE( proc::part_matches_search( fact, opts, "qual:CUT>=3" ) );
 }
 
+TEST_CASE( "proc_builder_search_requires_all_query_terms", "[proc][builder]" )
+{
+    auto fact = proc::part_fact{};
+    fact.ix = 1;
+    fact.id = itype_id( "knife_butcher" );
+    fact.tag = { "blade", "knife" };
+    fact.flag = { flag_id( "STAB" ) };
+    fact.mat = { material_id( "steel" ) };
+    fact.qual.emplace( quality_id( "CUT" ), 2 );
+
+    const auto opts = proc::part_search_options{
+        .name = "Combat Knife",
+        .where = "backpack"
+    };
+
+    CHECK( proc::part_matches_search( fact, opts, "combat backpack" ) );
+    CHECK( proc::part_matches_search( fact, opts, "tag:knife backpack" ) );
+    CHECK( proc::part_matches_search( fact, opts, "itype:knife_butcher qual:CUT>=2" ) );
+    CHECK_FALSE( proc::part_matches_search( fact, opts, "combat pantry" ) );
+    CHECK_FALSE( proc::part_matches_search( fact, opts, "tag:knife mat:wheat" ) );
+}
+
 TEST_CASE( "proc_builder_builds_candidates_and_fast_preview", "[proc][builder]" )
 {
     const auto sch = load_schema_for_test( R"(
@@ -329,5 +351,8 @@ TEST_CASE( "proc_recipe_search_matches_builder_name_and_role", "[proc][builder][
     subset.include( &rec );
     CHECK( subset.search( "Sandwich" ).size() == 1 );
     CHECK( subset.search( "c:bread" ).size() == 1 );
+    CHECK( subset.search( "Sandwich bread" ).size() == 1 );
+    CHECK( subset.search( "c:Sandwich bread" ).size() == 1 );
+    CHECK( subset.search( "Sandwich stew" ).empty() );
     proc::reset();
 }
