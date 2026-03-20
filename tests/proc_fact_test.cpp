@@ -154,6 +154,16 @@ TEST_CASE( "proc_part_fact_does_not_tag_condiment_spreads_as_veg", "[proc][fact]
     CHECK( std::ranges::find( carrot_fact.tag, "veg" ) != carrot_fact.tag.end() );
 }
 
+TEST_CASE( "proc_part_fact_does_not_tag_liquid_stew_bases_as_veg", "[proc][fact]" )
+{
+    const auto broth_fact = proc::normalize_part_fact( item( "broth" ), { .ix = 36 } );
+    CHECK( std::ranges::find( broth_fact.tag, "veg" ) == broth_fact.tag.end() );
+
+    const auto broth_bone_fact = proc::normalize_part_fact( item( "broth_bone" ), { .ix = 37 } );
+    CHECK( std::ranges::find( broth_bone_fact.tag, "veg" ) == broth_bone_fact.tag.end() );
+    CHECK( std::ranges::find( broth_bone_fact.tag, "meat" ) == broth_bone_fact.tag.end() );
+}
+
 TEST_CASE( "proc_part_fact_does_not_treat_finished_sandwiches_as_raw_ingredients", "[proc][fact]" )
 {
     const auto cheese_sandwich = item( "sandwich_cheese" );

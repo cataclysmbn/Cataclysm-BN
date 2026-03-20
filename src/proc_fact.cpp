@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 
+#include "enums.h"
 #include "item.h"
 #include "itype.h"
 #include "proc_item.h"
@@ -105,23 +106,24 @@ auto default_tags( const item &it ) -> std::vector<std::string>
     auto ret = std::vector<std::string> {};
     const auto finished_dish = is_finished_dish( it );
     const auto raw_ingredient_candidate = is_comestible_candidate( it ) && !finished_dish;
+    const auto solid_ingredient_candidate = raw_ingredient_candidate && !it.made_of( phase_id::LIQUID );
     if( finished_dish ) {
         ret.push_back( "dish" );
     }
     if( raw_ingredient_candidate && is_sandwich_bread( it ) ) {
         ret.push_back( "bread" );
     }
-    if( raw_ingredient_candidate && is_sandwich_cheese( it ) ) {
+    if( solid_ingredient_candidate && is_sandwich_cheese( it ) ) {
         ret.push_back( "cheese" );
     }
-    if( raw_ingredient_candidate && has_material( it, material_id( "veggy" ) ) &&
+    if( solid_ingredient_candidate && has_material( it, material_id( "veggy" ) ) &&
         !is_sandwich_spread( it ) ) {
         ret.push_back( "veg" );
     }
     if( raw_ingredient_candidate && is_sandwich_spread( it ) ) {
         ret.push_back( "cond" );
     }
-    if( raw_ingredient_candidate &&
+    if( solid_ingredient_candidate &&
         ( has_material( it, material_id( "flesh" ) ) || has_material( it, material_id( "hflesh" ) ) ||
           has_material( it, material_id( "iflesh" ) ) || has_material( it, material_id( "fish" ) ) ) ) {
         ret.push_back( "meat" );

@@ -474,6 +474,26 @@ TEST_CASE( "proc_builder_stew_excludes_condiment_spreads_from_veg_candidates",
     CHECK( std::ranges::find( veg_candidates, proc::part_ix( 3 ) ) == veg_candidates.end() );
 }
 
+TEST_CASE( "proc_builder_stew_keeps_liquid_bases_out_of_veg_candidates",
+           "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/stew.json", "stew" );
+
+    const auto broth = proc::normalize_part_fact( item( "broth" ), { .ix = 1 } );
+    const auto bone_broth = proc::normalize_part_fact( item( "broth_bone" ), { .ix = 2 } );
+    const auto carrot = proc::normalize_part_fact( item( "carrot" ), { .ix = 3 } );
+
+    const auto state = proc::build_state( sch, { broth, bone_broth, carrot } );
+    const auto &base_candidates = state.cand.at( proc::slot_id( "base" ) );
+    const auto &veg_candidates = state.cand.at( proc::slot_id( "veg" ) );
+
+    CHECK( std::ranges::find( base_candidates, proc::part_ix( 1 ) ) != base_candidates.end() );
+    CHECK( std::ranges::find( base_candidates, proc::part_ix( 2 ) ) != base_candidates.end() );
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 1 ) ) == veg_candidates.end() );
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 2 ) ) == veg_candidates.end() );
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 3 ) ) != veg_candidates.end() );
+}
+
 TEST_CASE( "proc_builder_sandwich_accepts_supported_condiments_in_cond_slot",
            "[proc][builder][food]" )
 {
