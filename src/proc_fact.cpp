@@ -1,8 +1,10 @@
 #include "proc_fact.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <string>
+#include <string_view>
 
 #include "item.h"
 #include "itype.h"
@@ -38,6 +40,15 @@ auto is_finished_dish( const item &it ) -> bool
            id.contains( "pizza" ) || id.contains( "taco" ) || id.contains( "quesadilla" ) ||
            id.contains( "stew" ) || id.contains( "soup" ) || id.contains( "curry" ) ||
            id.contains( "salad" );
+}
+
+template<size_t N>
+auto id_contains_any( const std::string &id,
+                      const std::array<std::string_view, N> &needles ) -> bool
+{
+    return std::ranges::any_of( needles, [&]( const std::string_view needle ) {
+        return id.contains( needle );
+    } );
 }
 
 auto normalized_hp( const item &it ) -> float
@@ -76,8 +87,10 @@ auto default_tags( const item &it ) -> std::vector<std::string>
         ret.push_back( "veg" );
     }
     if( raw_ingredient_candidate &&
-        ( id.contains( "mustard" ) || id.contains( "ketchup" ) || id.contains( "mayo" ) ||
-          id.contains( "sauce" ) ) ) {
+    id_contains_any( id, std::array<std::string_view, 8> {
+    "mustard", "ketchup", "mayo", "butter", "horseradish", "sauerkraut", "soysauce",
+    "sauce"
+} ) ) {
         ret.push_back( "cond" );
     }
     if( raw_ingredient_candidate &&

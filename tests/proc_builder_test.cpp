@@ -280,6 +280,25 @@ TEST_CASE( "proc_builder_stew_rejects_nonfood_material_matches", "[proc][builder
     CHECK( std::ranges::find( meat_candidates, proc::part_ix( 5 ) ) == meat_candidates.end() );
 }
 
+TEST_CASE( "proc_builder_sandwich_accepts_supported_condiments_in_cond_slot",
+           "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/sandwich.json", "sandwich" );
+
+    const auto bread_a = proc::normalize_part_fact( item( "bread" ), { .ix = 1 } );
+    const auto bread_b = proc::normalize_part_fact( item( "bread" ), { .ix = 2 } );
+    const auto butter = proc::normalize_part_fact( item( "butter" ), { .ix = 3 } );
+    const auto horseradish = proc::normalize_part_fact( item( "horseradish" ), { .ix = 4 } );
+    const auto sauerkraut = proc::normalize_part_fact( item( "sauerkraut" ), { .ix = 5 } );
+
+    const auto state = proc::build_state( sch, { bread_a, bread_b, butter, horseradish, sauerkraut } );
+    const auto &cond_candidates = state.cand.at( proc::slot_id( "cond" ) );
+
+    CHECK( std::ranges::find( cond_candidates, proc::part_ix( 3 ) ) != cond_candidates.end() );
+    CHECK( std::ranges::find( cond_candidates, proc::part_ix( 4 ) ) != cond_candidates.end() );
+    CHECK( std::ranges::find( cond_candidates, proc::part_ix( 5 ) ) != cond_candidates.end() );
+}
+
 TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][weapon]" )
 {
     const auto sch = load_schema_for_test( R"(
