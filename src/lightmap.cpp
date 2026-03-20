@@ -8,6 +8,7 @@
 #include <cstring>
 #include <memory>
 #include <optional>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -1074,49 +1075,66 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         }
     } else {
         ZoneScopedN( "build_seen_cache_3d" );
-        // Cache per-z-level data pointers for cast_zlight.
+        // Cache per-z-level data pointers.
         array_of_grids_of<const float> transparency_caches;
         array_of_grids_of<float> seen_caches;
         array_of_grids_of<const bool> floor_caches;
+        array_of_grids_of<const bool> vehicle_floor_caches;
         array_of_grids_of<const diagonal_blocks> blocked_caches;
         for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
             auto &cur_cache = get_cache( z );
             const int idx = z + OVERMAP_DEPTH;
             transparency_caches[idx] = { cur_cache.transparency_cache.data(), cur_cache.cache_x, cur_cache.cache_y };
             seen_caches[idx]         = { cur_cache.seen_cache.data(),         cur_cache.cache_x, cur_cache.cache_y };
-            // floor_cache stores char (non-zero == has floor); reinterpret as bool pointer (safe: 0↔false, nonzero↔true).
+            // floor_cache / vehicle_floor_cache store char; reinterpret as bool pointer (safe: 0↔false, nonzero↔true).
             // NOLINTNEXTLINE(cata-use-localized-sorting)
-            floor_caches[idx]   = { reinterpret_cast<const bool *>( cur_cache.floor_cache.data() ), cur_cache.cache_x, cur_cache.cache_y };
+            floor_caches[idx]         = { reinterpret_cast<const bool *>( cur_cache.floor_cache.data() ),         cur_cache.cache_x, cur_cache.cache_y };
+            // NOLINTNEXTLINE(cata-use-localized-sorting)
+            vehicle_floor_caches[idx] = { reinterpret_cast<const bool *>( cur_cache.vehicle_floor_cache.data() ), cur_cache.cache_x, cur_cache.cache_y };
             blocked_caches[idx] = { cur_cache.vehicle_obscured_cache.data(), cur_cache.cache_x, cur_cache.cache_y };
             std::fill( cur_cache.seen_cache.begin(), cur_cache.seen_cache.end(),
                        light_transparency_solid );
             cur_cache.seen_cache_dirty = false;
         }
-        if( origin.z == target_z ) {
-            get_cache( origin.z ).seen_cache[get_cache( origin.z ).idx( origin.x, origin.y )] = VISIBILITY_FULL;
-        }
-        cast_zlight( seen_caches, transparency_caches, floor_caches, blocked_caches,
-                     origin, 0, 1.0f, k_sight_model );
 
-        // Per-z-level 2D pass: cast_zlight covers only tiles within ~45° of
-        // horizontal (delta.z <= delta.y).  Steeper tiles — including the pyramid
-        // directly below/above the player — are left at sc=0.  A castLightAll
-        // from origin.xy() at each z-level fills those blind spots.
+        auto &origin_cache = get_cache( origin.z );
+
+        if( fov_3d_occlusion ) {
+            // Accurate path: cast_zlight computes proper 3D shadows across all octants.
+            // It fully populates origin.z (delta.z == 0 octants) as well as off-levels.
+            // Always set the origin tile so blind-spot fill can use it as origin_vis source
+            // regardless of which target_z is currently being built.
+            origin_cache.seen_cache[origin_cache.idx( origin.x, origin.y )] = VISIBILITY_FULL;
+            cast_zlight( seen_caches, transparency_caches, floor_caches, blocked_caches,
+                         origin, 0, 1.0f, k_sight_model );
+        } else {
+            // Fast path: single 2D cast at origin.z, projected to other levels below.
+            // No cast_zlight; off-level tiles filled from the projected result.
+            origin_cache.seen_cache[origin_cache.idx( origin.x, origin.y )] = VISIBILITY_FULL;
+            castLightAll( origin_cache.seen_cache.data(), origin_cache.transparency_cache.data(),
+                          origin_cache.vehicle_obscured_cache.data(), origin_cache.cache_x, origin_cache.cache_y,
+                          origin.xy(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
+        }
+
+        // Fill off-level tiles from origin.z's seen_cache.
         //
-        // When fov_3d_occlusion is also enabled, the same 2D result is used as
-        // a pre-filter for a 3D DDA check that enforces horizontal occlusion:
-        //   • sc > 0 and temp_seen > 0 → 2D confirms visibility; keep as-is.
-        //   • sc > 0 and temp_seen = 0 → 2D says blocked; verify with DDA.
-        //     DDA clear → keep; DDA blocked → set sc = 0.
+        // fov_3d_occlusion=true:  cast_zlight filled non-blind-spot tiles; this pass
+        //   fills steep-angle blind spots (sc==0) from the projected origin.z result,
+        //   and validates cast_zlight-lit tiles via a per-level 2D cast + DDA check.
+        //   The per-level cast uses the target z-level's own transparency, so walls
+        //   on that level correctly trigger the DDA and produce proper 3D shadows.
+        // fov_3d_occlusion=false: cast_zlight skipped; all off-level tiles filled by
+        //   projecting origin.z visibility through the cumulative floor filter.
+        //
+        // vert_blocked[tile_idx] accumulates floor_cache OR across levels between
+        // origin.z and the current z.  Non-zero means the vertical path is obstructed.
+        // Accumulated cumulatively so each z-level costs one OR-sweep instead of k.
         {
             ZoneScopedN( "build_seen_cache_3d_fill" );
-            auto &ref_cache = get_cache( -OVERMAP_DEPTH );
-            const int cache_sz = ref_cache.cache_x * ref_cache.cache_y;
-            std::vector<float> temp_seen( cache_sz );
 
-            // 3D DDA: walk the line from origin to (tx, ty, tz), checking
-            // transparency at each intermediate tile.  Returns false when any
-            // solid tile blocks the ray before the target.
+            // 3D DDA: walk the line from origin to (tx, ty, tz), returning false if any
+            // intermediate tile is solid or a floor crosses the ray.
+            // Only invoked for the fov_3d_occlusion=true path.
             const auto is_3d_clear = [&]( int tx, int ty, int tz ) -> bool {
                 const float dx    = static_cast<float>( tx - origin.x );
                 const float dy    = static_cast<float>( ty - origin.y );
@@ -1124,10 +1142,45 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 const float total = std::max( {
                     std::abs( dx ), std::abs( dy ),
                     std::abs( dz ) * Z_LEVEL_SCALE } );
-                if( total < 1.0f )
-                {
+                if( total < 1.0f ) {
                     return true;
                 }
+
+                // Explicit z-boundary crossing check.
+                // The discrete DDA loop can miss floor crossings at shallow angles:
+                // lround(0.5) rounds up, keeping cz at origin.z so no transition is
+                // detected for e.g. fdh=2, fdz=1.  Interpolate each crossing directly.
+                //   Going down: crossing k separates z=(origin.z-k) from z=(origin.z-k-1),
+                //               so check floor_cache at z=(origin.z-k).
+                //   Going up:   crossing k separates z=(origin.z+k) from z=(origin.z+k+1),
+                //               so check floor_cache at z=(origin.z+k+1).
+                // The origin tile is exempted: the player stands on top of that floor.
+                {
+                    const int n_cross = static_cast<int>( std::abs( dz ) );
+                    for( int k = 0; k < n_cross; ++k ) {
+                        const float t  = ( static_cast<float>( k ) + 0.5f ) / std::abs( dz );
+                        const int   fx = static_cast<int>( std::lround(
+                            static_cast<float>( origin.x ) + t * dx ) );
+                        const int   fy = static_cast<int>( std::lround(
+                            static_cast<float>( origin.y ) + t * dy ) );
+                        if( k == 0 && dz < 0.0f &&
+                            fx == origin.x && fy == origin.y ) {
+                            continue; // player's own floor; they stand on top of it
+                        }
+                        const int floor_z = ( dz < 0.0f )
+                            ? static_cast<int>( origin.z ) - k
+                            : static_cast<int>( origin.z ) + k + 1;
+                        if( floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT ) {
+                            continue;
+                        }
+                        const auto &fc = floor_caches[floor_z + OVERMAP_DEPTH];
+                        if( fx >= 0 && fy >= 0 && fx < fc.sx && fy < fc.sy &&
+                            fc.at( fx, fy ) ) {
+                            return false;
+                        }
+                    }
+                }
+
                 const int   steps = static_cast<int>( total );
                 const float sx    = dx / total;
                 const float sy    = dy / total;
@@ -1135,8 +1188,7 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 int ox = origin.x;
                 int oy = origin.y;
                 int oz = origin.z;
-                for( int s = 1; s < steps; ++s )
-                {
+                for( int s = 1; s < steps; ++s ) {
                     const int cx = static_cast<int>( std::lround( origin.x + s * sx ) );
                     const int cy = static_cast<int>( std::lround( origin.y + s * sy ) );
                     const int cz = static_cast<int>( std::lround( origin.z + s * sz ) );
@@ -1168,46 +1220,214 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 return true;
             };
 
-            const int z_lo = std::max( -OVERMAP_DEPTH,  origin.z - fov_3d_z_range );
-            const int z_hi = std::min( OVERMAP_HEIGHT, origin.z + fov_3d_z_range );
-            for( int z = z_lo; z <= z_hi; ++z ) {
-                if( z == origin.z ) {
-                    continue;
+            // Cheaper variant: checks only whether a floor intervenes on the oblique
+            // path from origin to (tx, ty, tz).  Skips the transparency DDA because
+            // cast_zlight already verified transparency when sc > 0.
+            const auto floor_crossing_blocked = [&]( int tx, int ty, int tz ) -> bool {
+                const float dx      = static_cast<float>( tx - origin.x );
+                const float dy      = static_cast<float>( ty - origin.y );
+                const float dz      = static_cast<float>( tz - origin.z );
+                const int   n_cross = static_cast<int>( std::abs( dz ) );
+                for( int k = 0; k < n_cross; ++k ) {
+                    const float t  = ( static_cast<float>( k ) + 0.5f ) / std::abs( dz );
+                    const int   fx = static_cast<int>( std::lround(
+                        static_cast<float>( origin.x ) + t * dx ) );
+                    const int   fy = static_cast<int>( std::lround(
+                        static_cast<float>( origin.y ) + t * dy ) );
+                    if( k == 0 && dz < 0.0f &&
+                        fx == origin.x && fy == origin.y ) {
+                        continue; // player's own floor
+                    }
+                    const int floor_z = ( dz < 0.0f )
+                        ? static_cast<int>( origin.z ) - k
+                        : static_cast<int>( origin.z ) + k + 1;
+                    if( floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT ) {
+                        continue;
+                    }
+                    const auto &fc  = floor_caches[floor_z + OVERMAP_DEPTH];
+                    const auto &vfc = vehicle_floor_caches[floor_z + OVERMAP_DEPTH];
+                    if( fx >= 0 && fy >= 0 && fx < fc.sx && fy < fc.sy &&
+                        fc.at( fx, fy ) && !vfc.at( fx, fy ) ) {
+                        return true;
+                    }
                 }
+                return false;
+            };
+
+            const float *const origin_seen = origin_cache.seen_cache.data();
+            const int cache_sz = origin_cache.cache_x * origin_cache.cache_y;
+
+            // Accurate path only: 2D cast at the target level used to gate blind-spot fill.
+            // Prevents the pyramid artifact by excluding tiles unreachable at their own level.
+            std::vector<float> temp_seen;
+            if( fov_3d_occlusion ) {
+                temp_seen.resize( cache_sz );
+            }
+
+            // Per-tile vertical obstruction mask, accumulated cumulatively per direction.
+            std::vector<char> vert_blocked( cache_sz );
+
+            // Process one z-level using the current vert_blocked state.
+            const auto process_z_level = [&]( int z ) {
                 auto &zc = get_cache( z );
 
-                // 2D cast from origin.xy at this z-level.
-                std::fill( temp_seen.begin(), temp_seen.end(), light_transparency_solid );
-                temp_seen[zc.idx( origin.x, origin.y )] = VISIBILITY_FULL;
-                castLightAll( temp_seen.data(), zc.transparency_cache.data(),
-                              zc.vehicle_obscured_cache.data(), zc.cache_x, zc.cache_y,
-                              origin.xy(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
+                // Accurate path: 2D cast at the target level gates both the DDA check
+                // and the blind-spot fill; only tiles reachable at their own level are kept.
+                if( fov_3d_occlusion ) {
+                    std::fill( temp_seen.begin(), temp_seen.end(), light_transparency_solid );
+                    temp_seen[zc.idx( origin.x, origin.y )] = VISIBILITY_FULL;
+                    castLightAll( temp_seen.data(), zc.transparency_cache.data(),
+                                  zc.vehicle_obscured_cache.data(), zc.cache_x, zc.cache_y,
+                                  origin.xy(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
+                }
 
                 for( int x = 0; x < zc.cache_x; ++x ) {
                     for( int y = 0; y < zc.cache_y; ++y ) {
                         const int tile_idx = zc.idx( x, y );
-                        float &sc = zc.seen_cache[tile_idx];
-                        if( sc <= 0.0f ) {
-                            // cast_zlight missed this tile (steep-angle blind spot).
-                            // Fill from 2D if horizontal LoS is clear.
-                            // Outside cache is checked for roof occlusion.
-                            // Might be incorrect, but seems to produce correct results.
-                            if( ( z < origin.z ? zc.outside_cache[tile_idx] : zc.floor_cache[tile_idx] == 0 ) &&
-                                temp_seen[tile_idx] > 0.0f ) {
-                                sc = temp_seen[tile_idx];
+                        float    &sc       = zc.seen_cache[tile_idx];
+                        if( sc > 0.0f ) {
+                            // cast_zlight lit this tile; validate to correct octant leaks.
+                            if( !fov_3d_occlusion ) {
+                                continue; // fast path: trust cast_zlight
+                            }
+                            if( temp_seen[tile_idx] > 0.0f ) {
+                                // Horizontal path confirmed by 2D cast; transparency confirmed
+                                // by cast_zlight.  Only a floor on the oblique path can block.
+                                if( floor_crossing_blocked( x, y, z ) ) {
+                                    sc = 0.0f;
+                                }
+                                continue;
+                            }
+                            // temp_seen == 0: possible octant leak; full DDA to verify.
+                            if( !is_3d_clear( x, y, z ) ) {
+                                sc = 0.0f;
                             }
                             continue;
                         }
-                        // Occlusion: tiles cast_zlight illuminated but 2D blocked
-                        // need a DDA check to confirm they're truly reachable.
-                        if( !fov_3d_occlusion || temp_seen[tile_idx] > 0.0f ) {
-                            continue;
-                        }
-                        if( !is_3d_clear( x, y, z ) ) {
-                            sc = 0.0f;
+                        // Blind spot (accurate) or all tiles (fast): fill from origin.z
+                        // projection when the vertical path is clear.
+                        // Accurate path: restrict to tiles geometrically unreachable by
+                        // cast_zlight (dz * Z_LEVEL_SCALE > max(|dx|,|dy|)), then verify
+                        // via DDA to block paths shadowed by walls at intermediate levels.
+                        const float origin_vis = origin_seen[tile_idx];
+                        if( !vert_blocked[tile_idx] && origin_vis > 0.0f ) {
+                            if( fov_3d_occlusion ) {
+                                const float fdz = static_cast<float>( std::abs( z - origin.z ) );
+                                const float fdh = static_cast<float>(
+                                    std::max( std::abs( x - origin.x ),
+                                              std::abs( y - origin.y ) ) );
+                                if( fdz * Z_LEVEL_SCALE > fdh && is_3d_clear( x, y, z ) ) {
+                                    sc = origin_vis;
+                                }
+                            } else {
+                                sc = origin_vis;
+                            }
                         }
                     }
                 }
+
+                // Accurate path: close cast_zlight octant-seam notches on the south
+                // and east faces of shadows.  These are the only two faces affected
+                // by the octant sweep asymmetry.  A dark tile whose south (y+1) or
+                // east (x+1) neighbour is lit, and whose oblique floor-crossing path
+                // is clear, is a seam artefact and should be lit.
+                //
+                // Reading neighbours from a snapshot of seen_cache (overwriting the
+                // now-unused temp_seen buffer) prevents cascade: a tile filled in
+                // this pass cannot itself become a neighbour source for other tiles
+                // in the same pass.
+                if( fov_3d_occlusion ) {
+                    std::ranges::copy( zc.seen_cache, temp_seen.begin() );
+                    for( int x = 1; x < zc.cache_x - 1; ++x ) {
+                        for( int y = 1; y < zc.cache_y - 1; ++y ) {
+                            const int tile_idx = zc.idx( x, y );
+                            if( temp_seen[tile_idx] > 0.0f || vert_blocked[tile_idx] ) {
+                                continue;
+                            }
+                            if( origin_seen[tile_idx] <= 0.0f ) {
+                                continue;
+                            }
+                            const float best = std::ranges::max( {
+                                temp_seen[zc.idx( x,     y + 1 )],   // south
+                                temp_seen[zc.idx( x + 1, y     )],   // east
+                                temp_seen[zc.idx( x,     y - 1 )],   // north
+                                temp_seen[zc.idx( x - 1, y     )] }, // west
+                                std::less<float>{} );
+                            if( best > 0.0f && !floor_crossing_blocked( x, y, z ) ) {
+                                zc.seen_cache[tile_idx] = best;
+                            }
+                        }
+                    }
+                }
+
+                // Fast path: one-ring neighbor propagation for tiles adjacent to a
+                // directly-projected tile. Handles wall faces visible laterally through
+                // a gap when the wall itself sits under a solid floor above it.
+                if( !fov_3d_occlusion ) {
+                    static constexpr std::array<std::pair<int, int>, 4> k_dirs = {{
+                        { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }
+                    }};
+                    for( int x = 0; x < zc.cache_x; ++x ) {
+                        for( int y = 0; y < zc.cache_y; ++y ) {
+                            const int tile_idx = zc.idx( x, y );
+                            if( zc.seen_cache[tile_idx] > 0.0f ) {
+                                continue;
+                            }
+                            const float best = std::ranges::fold_left( k_dirs, 0.0f,
+                                [&]( float acc, const std::pair<int, int> &d ) -> float {
+                                    const int nx = x + d.first;
+                                    const int ny = y + d.second;
+                                    if( nx < 0 || ny < 0 ||
+                                        nx >= zc.cache_x || ny >= zc.cache_y ) {
+                                        return acc;
+                                    }
+                                    const int nidx = zc.idx( nx, ny );
+                                    if( !vert_blocked[nidx] && origin_seen[nidx] > acc ) {
+                                        return origin_seen[nidx];
+                                    }
+                                    return acc;
+                                } );
+                            if( best > 0.0f ) {
+                                zc.seen_cache[tile_idx] = best;
+                            }
+                        }
+                    }
+                }
+            };
+
+            const int z_lo = std::max( -OVERMAP_DEPTH, origin.z - fov_3d_z_range );
+            const int z_hi = std::min( OVERMAP_HEIGHT, origin.z + fov_3d_z_range );
+
+            // Going down: crossing from z=k to z=k-1 is blocked by floor_cache[k].
+            // Accumulate one level at a time so each step is a single OR-sweep.
+            std::fill( vert_blocked.begin(), vert_blocked.end(), 0 );
+            for( int z = origin.z - 1; z >= z_lo; --z ) {
+                const auto &fc = get_cache( z + 1 ).floor_cache;
+                std::ranges::transform( vert_blocked, fc, vert_blocked.begin(),
+                                        []( char a, char b ) -> char { return a | b; } );
+                process_z_level( z );
+            }
+
+            // Fixed vehicle-roof shadow stamp: when viewed from above, zero out
+            // seen_cache at any tile directly beneath a vehicle roof.  This gives a
+            // shadow footprint glued to the vehicle (no mirror-position artifact)
+            // at the cost of perspective accuracy.
+            for( int z = origin.z - 1; z >= z_lo; --z ) {
+                const auto &vfc = vehicle_floor_caches[z + 1 + OVERMAP_DEPTH];
+                const auto  sc  = seen_caches[z + OVERMAP_DEPTH];
+                const auto vfc_span = std::span( vfc.data, static_cast<size_t>( vfc.sx * vfc.sy ) );
+                const auto  sc_span = std::span( sc.data,  static_cast<size_t>( sc.sx  * sc.sy  ) );
+                std::ranges::transform( sc_span, vfc_span, sc_span.begin(),
+                []( float s, bool v ) -> float { return v ? 0.0f : s; } );
+            }
+
+            // Going up: crossing from z=k-1 to z=k is blocked by floor_cache[k].
+            std::fill( vert_blocked.begin(), vert_blocked.end(), 0 );
+            for( int z = origin.z + 1; z <= z_hi; ++z ) {
+                const auto &fc = get_cache( z ).floor_cache;
+                std::ranges::transform( vert_blocked, fc, vert_blocked.begin(),
+                                        []( char a, char b ) -> char { return a | b; } );
+                process_z_level( z );
             }
         }
     }

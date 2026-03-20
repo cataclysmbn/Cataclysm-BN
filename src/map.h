@@ -362,6 +362,12 @@ struct level_cache {
     // Stored as char (not bool) for contiguous storage; non-zero means true.
     std::vector<char>               floor_cache;
 
+    // Subset of floor_cache: entries contributed by vehicle ROOF or OPAQUE parts only
+    // (set by vehicle_caching_internal_above).  Used to exclude vehicle-derived floors
+    // from floor_crossing_blocked and to stamp a fixed roof-shadow pass.
+    // Stored as char for contiguous storage; non-zero means true.
+    std::vector<char>               vehicle_floor_cache;
+
     // stores cached transparency of the tiles
     // units: "transparency" (see LIGHT_TRANSPARENCY_OPEN_AIR)
     std::vector<float>              transparency_cache;

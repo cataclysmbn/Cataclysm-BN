@@ -9670,7 +9670,9 @@ static void vehicle_caching_internal_above( level_cache &zch_above, const vpart_
 {
     if( vp.has_feature( VPFLAG_ROOF ) || vp.has_feature( VPFLAG_OPAQUE ) ) {
         const tripoint &part_pos = v->global_part_pos3( vp.part() );
-        zch_above.floor_cache[zch_above.idx( part_pos.x, part_pos.y )] = true;
+        const int tile_idx = zch_above.idx( part_pos.x, part_pos.y );
+        zch_above.floor_cache[tile_idx] = true;
+        zch_above.vehicle_floor_cache[tile_idx] = true;
     }
 }
 
@@ -9735,6 +9737,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 // Guard the 68 KB zero-fills: most z-levels have no vehicles.
                 // veh_in_active_range is set by update_vehicle_list() / clear_vehicle_list().
                 level_cache &ch = get_cache( z );
+                // vehicle_floor_cache is written by vehicles one level below (via
+                // vehicle_caching_internal_above), so it must be cleared unconditionally —
+                // not gated on veh_in_active_range — to prevent stale entries after shifts.
+                std::fill( ch.vehicle_floor_cache.begin(), ch.vehicle_floor_cache.end(), '\0' );
                 if( ch.veh_in_active_range ) {
                     const diagonal_blocks fill = {false, false};
                     std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
@@ -9759,6 +9765,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 // Guard the 68 KB zero-fills: most z-levels have no vehicles.
                 // veh_in_active_range is set by update_vehicle_list() / clear_vehicle_list().
                 level_cache &ch = get_cache( z );
+                // vehicle_floor_cache is written by vehicles one level below (via
+                // vehicle_caching_internal_above), so it must be cleared unconditionally —
+                // not gated on veh_in_active_range — to prevent stale entries after shifts.
+                std::fill( ch.vehicle_floor_cache.begin(), ch.vehicle_floor_cache.end(), '\0' );
                 if( ch.veh_in_active_range ) {
                     const diagonal_blocks fill = {false, false};
                     std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
@@ -10496,6 +10506,7 @@ level_cache::level_cache( int mx, int my )
       light_source_buffer( static_cast<size_t>( mx * my ), 0.0f ),
       outside_cache( static_cast<size_t>( mx * my ), false ),
       floor_cache( static_cast<size_t>( mx * my ), false ),
+      vehicle_floor_cache( static_cast<size_t>( mx * my ), '\0' ),
       transparency_cache( static_cast<size_t>( mx * my ), 0.0f ),
       vehicle_obscured_cache( static_cast<size_t>( mx * my ), diagonal_blocks{false, false} ),
       vehicle_obstructed_cache( static_cast<size_t>( mx * my ), diagonal_blocks{false, false} ),
