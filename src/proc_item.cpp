@@ -93,6 +93,45 @@ auto legacy_sandwich_specs( const itype_id &id ) -> std::vector<legacy_sandwich_
             legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "mustard" ), .count = 1 }
         };
     }
+    if( id == itype_id( "sandwich_honey" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "honey_bottled" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_jam" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "jam_fruit" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_pb" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "peanutbutter" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_pbj" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "peanutbutter" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "jam_fruit" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_pbh" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "peanutbutter" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "honey_bottled" ), .count = 1 }
+        };
+    }
+    if( id == itype_id( "sandwich_pbm" ) ) {
+        return {
+            legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "peanutbutter" ), .count = 1 },
+            legacy_sandwich_part_spec{ .role = "cond", .id = itype_id( "syrup" ), .count = 1 }
+        };
+    }
     if( id == itype_id( "sandwich_deluxe" ) ) {
         return {
             legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
