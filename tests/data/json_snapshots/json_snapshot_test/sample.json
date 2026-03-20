@@ -1,0 +1,13 @@
+{
+  "name": "snapshot",
+  "outer": {
+    "a": [
+      {
+        "x": 1,
+        "y": true
+      },
+      null
+    ],
+    "b": 2
+  }
+}
