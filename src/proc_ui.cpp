@@ -190,31 +190,36 @@ auto candidate_text( const source_entry &source, const proc::builder_state &stat
     return string_format( "%s [%s]%s", source.src->tname(), source.where, count_suffix );
 }
 
+auto preview_metric_line( const std::string &label, const std::string &value ) -> std::string
+{
+    return string_format( "%-10s %s", label, value );
+}
+
 auto preview_lines( const proc::schema &sch, const proc::builder_state &state,
                     const std::vector<source_entry> &sources ) -> std::vector<std::string>
 {
     auto lines = std::vector<std::string> {};
     const auto title = state.fast.name.empty() ? sch.id.str() : state.fast.name;
     lines.push_back( title );
-    lines.push_back( string_format( _( "Mass: %d g" ), state.fast.mass_g ) );
-    lines.push_back( string_format( _( "Volume: %d ml" ), state.fast.volume_ml ) );
+    lines.push_back( preview_metric_line( _( "Mass:" ), string_format( "%d g", state.fast.mass_g ) ) );
+    lines.push_back( preview_metric_line( _( "Volume:" ), string_format( "%d ml", state.fast.volume_ml ) ) );
     if( sch.cat == "food" ) {
-        lines.push_back( string_format( _( "Calories: %d" ), state.fast.kcal ) );
+        lines.push_back( preview_metric_line( _( "Calories:" ), string_format( "%d", state.fast.kcal ) ) );
     }
     if( !state.fast.vit.empty() ) {
         auto vitamins = std::vector<std::string> {};
         std::ranges::for_each( state.fast.vit, [&]( const std::pair<const vitamin_id, int> &entry ) {
             vitamins.push_back( string_format( "%s:%d", entry.first.str(), entry.second ) );
         } );
-        lines.push_back( string_format( _( "Vitamins: %s" ), enumerate_as_string( vitamins,
+        lines.push_back( preview_metric_line( _( "Vitamins:" ), enumerate_as_string( vitamins,
                                         enumeration_conjunction::none ) ) );
     }
     if( !state.fast.melee.empty() ) {
-        lines.push_back( string_format( _( "Bash: %d" ), state.fast.melee.bash ) );
-        lines.push_back( string_format( _( "Cut: %d" ), state.fast.melee.cut ) );
-        lines.push_back( string_format( _( "Stab: %d" ), state.fast.melee.stab ) );
-        lines.push_back( string_format( _( "To-hit: %+d" ), state.fast.melee.to_hit ) );
-        lines.push_back( string_format( _( "Durability: %d" ), state.fast.melee.dur ) );
+        lines.push_back( preview_metric_line( _( "Bash:" ), string_format( "%d", state.fast.melee.bash ) ) );
+        lines.push_back( preview_metric_line( _( "Cut:" ), string_format( "%d", state.fast.melee.cut ) ) );
+        lines.push_back( preview_metric_line( _( "Stab:" ), string_format( "%d", state.fast.melee.stab ) ) );
+        lines.push_back( preview_metric_line( _( "To-hit:" ), string_format( "%+d", state.fast.melee.to_hit ) ) );
+        lines.push_back( preview_metric_line( _( "Durability:" ), string_format( "%d", state.fast.melee.dur ) ) );
     }
     lines.push_back( std::string() );
     lines.push_back( _( "Selected parts:" ) );
@@ -276,12 +281,12 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
 
     auto w = catacurses::window {};
     auto ui = ui_adaptor( ui_adaptor::disable_uis_below {} );
-    auto width = FULL_SCREEN_WIDTH;
+    auto width = TERMX;
     auto height = TERMY;
 
     const auto resize_cb = [&]( ui_adaptor & adaptor ) {
-        width = std::min( TERMX - 2, FULL_SCREEN_WIDTH * 2 );
-        height = std::min( TERMY, FULL_SCREEN_HEIGHT );
+        width = std::clamp( TERMX - 2, 80, TERMX );
+        height = std::clamp( TERMY - 2, 24, TERMY );
         const auto start = point( ( TERMX - width ) / 2, ( TERMY - height ) / 2 );
         w = catacurses::newwin( height, width, start );
         adaptor.position_from_window( w );
@@ -293,9 +298,15 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         werase( w );
         draw_border( w );
 
-        const auto left_width = 28;
-        const auto middle_width = 38;
-        const auto right_width = width - left_width - middle_width - 4;
+        auto left_width = std::max( 28, width * 3 / 10 );
+        auto middle_width = std::max( 34, width * 33 / 100 );
+        if( left_width + middle_width + 32 > width - 6 ) {
+            middle_width = std::max( 28, width - left_width - 32 - 6 );
+        }
+        if( left_width + middle_width + 32 > width - 6 ) {
+            left_width = std::max( 24, width - middle_width - 32 - 6 );
+        }
+        const auto right_width = width - left_width - middle_width - 6;
         const auto header = rec.builder_name().translated().empty() ? rec.result_name() :
                             rec.builder_name().translated();
         trim_and_print( w, point( 2, 1 ), width - 4, c_white, header );
@@ -306,12 +317,12 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         const auto content_top = 4;
         const auto content_height = height - 8;
         mvwvline( w, point( left_width + 1, content_top ), LINE_XOXO, content_height );
-        mvwvline( w, point( left_width + middle_width + 2, content_top ), LINE_XOXO, content_height );
+        mvwvline( w, point( left_width + middle_width + 3, content_top ), LINE_XOXO, content_height );
         trim_and_print( w, point( 2, content_top - 1 ), left_width - 1,
                         slots_focused ? c_yellow : c_light_gray, _( "Slots" ) );
         trim_and_print( w, point( left_width + 3, content_top - 1 ), middle_width - 2,
                         slots_focused ? c_light_gray : c_yellow, _( "Candidates" ) );
-        trim_and_print( w, point( left_width + middle_width + 4, content_top - 1 ), right_width - 1,
+        trim_and_print( w, point( left_width + middle_width + 5, content_top - 1 ), right_width - 1,
                         c_light_gray, _( "Preview" ) );
 
         auto slot_start = 0;
@@ -350,7 +361,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         const auto preview = preview_lines( sch, state, source_data.entries );
         const auto preview_end = std::min( static_cast<int>( preview.size() ), content_height );
         std::ranges::for_each( std::views::iota( 0, preview_end ), [&]( const int row ) {
-            trim_and_print( w, point( left_width + middle_width + 4, content_top + row ), right_width - 1,
+            trim_and_print( w, point( left_width + middle_width + 5, content_top + row ), right_width - 1,
                             c_white, preview[static_cast<size_t>( row )] );
         } );
 

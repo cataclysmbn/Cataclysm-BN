@@ -49,4 +49,12 @@ TEST_CASE( "proc_part_fact_assigns_food_role_tags", "[proc][fact]" )
     const auto meat = item( "meat_cooked" );
     const auto meat_fact = proc::normalize_part_fact( meat, { .ix = 2 } );
     CHECK( std::ranges::find( meat_fact.tag, "meat" ) != meat_fact.tag.end() );
+
+    const auto rollmat = item( "rollmat" );
+    const auto rollmat_fact = proc::normalize_part_fact( rollmat, { .ix = 3 } );
+    CHECK( std::ranges::find( rollmat_fact.tag, "bread" ) == rollmat_fact.tag.end() );
+
+    const auto fertilizer = item( "fertilizer" );
+    const auto fertilizer_fact = proc::normalize_part_fact( fertilizer, { .ix = 4 } );
+    CHECK( std::ranges::find( fertilizer_fact.tag, "veg" ) == fertilizer_fact.tag.end() );
 }
