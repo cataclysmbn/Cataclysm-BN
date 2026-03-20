@@ -349,14 +349,14 @@ auto sandwich_name( const proc::schema &sch, const std::vector<proc::part_fact> 
     if( has_fish ) {
         return "fish sandwich";
     }
-    if( has_blt ) {
-        return "BLT";
-    }
     if( bread_count >= 3 && has_meat && has_veg && has_cond ) {
         return "club sandwich";
     }
     if( has_meat && has_cheese && has_veg && has_cond ) {
         return "deluxe sandwich";
+    }
+    if( has_blt ) {
+        return "BLT";
     }
     if( has_meat ) {
         return "meat sandwich";

@@ -244,6 +244,26 @@ TEST_CASE( "proc_make_item_names_sandwiches_from_selected_ingredients", "[proc][
         proc::slot_id( "veg" ),
     } ) == "BLT" );
 
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, bread_c, bacon, lettuce, tomato, mustard }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "meat" ),
+        proc::slot_id( "veg" ),
+        proc::slot_id( "veg" ),
+        proc::slot_id( "cond" ),
+    } ) == "club sandwich" );
+
+    CHECK( make_sandwich_name_for_test( { bread_a, bread_b, bacon, cheese, lettuce, tomato, mustard }, {
+        proc::slot_id( "bread" ),
+        proc::slot_id( "bread" ),
+        proc::slot_id( "meat" ),
+        proc::slot_id( "cheese" ),
+        proc::slot_id( "veg" ),
+        proc::slot_id( "veg" ),
+        proc::slot_id( "cond" ),
+    } ) == "deluxe sandwich" );
+
     CHECK( make_sandwich_name_for_test( { bread_a, bread_b, bread_c, meat, lettuce, mustard }, {
         proc::slot_id( "bread" ),
         proc::slot_id( "bread" ),
