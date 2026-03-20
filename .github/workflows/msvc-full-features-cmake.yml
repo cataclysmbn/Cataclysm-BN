@@ -1,6 +1,7 @@
 name: Cataclysm Windows build (CMake + MSVC)
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -47,7 +48,7 @@ env:
   # Have to use github.workspace because runner namespace isn't available yet.
   VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
   ZSTD_CLEVEL: 17
-  CMAKE_PRESET: windows-tiles-sounds-x64-msvc
+  CMAKE_BUILD_DIR: out/build/windows-tiles-sounds-x64-msvc-tests
 
 jobs:
   build_catatclysm:
@@ -61,10 +62,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
         with:
-          vs-version: 17.13
+          arch: x64
 
       - name: Remove Strawberry Perl from PATH
         run: |
@@ -108,11 +109,11 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: msvc-cmake-${{ env.CMAKE_PRESET }}-${{ github.ref_name }}
+          key: msvc-cmake-windows-tiles-sounds-x64-msvc-${{ github.ref_name }}
           restore-keys: |
-            msvc-cmake-${{ env.CMAKE_PRESET }}-${{ github.ref_name }}
-            msvc-cmake-${{ env.CMAKE_PRESET }}-main
-            msvc-cmake-${{ env.CMAKE_PRESET }}-
+            msvc-cmake-windows-tiles-sounds-x64-msvc-${{ github.ref_name }}
+            msvc-cmake-windows-tiles-sounds-x64-msvc-main
+            msvc-cmake-windows-tiles-sounds-x64-msvc-
           max-size: 500M
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
@@ -123,23 +124,43 @@ jobs:
           echo "CCACHE_SLOPPINESS=include_file_ctime,include_file_mtime,time_macros,pch_defines" >> $env:GITHUB_ENV
           echo "CCACHE_NOHASHDIR=1" >> $env:GITHUB_ENV
 
-      - name: Configure and Build
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: ${{ env.CMAKE_PRESET }}
-          buildPreset: windows-msvc-build
-          buildPresetAdditionalArgs: "['--config', 'RelWithDebInfo']"
+      # build-scripts/windows-tiles-sounds-x64-msvc.cmake (CMAKE_PROJECT_INCLUDE_BEFORE)
+      # bootstraps the MSVC toolchain via VsDevCmd.bat if not already in a VS environment,
+      # and auto-detects ccache if present on PATH.
+      - name: Configure CMake
+        run: |
+          cmake -G Ninja `
+            -S "${{ github.workspace }}" `
+            -B "${{ github.workspace }}/${{ env.CMAKE_BUILD_DIR }}" `
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo `
+            -DCMAKE_PROJECT_INCLUDE_BEFORE="${{ github.workspace }}/build-scripts/windows-tiles-sounds-x64-msvc.cmake" `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build-scripts/MSVC.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+            -DDYNAMIC_LINKING=False `
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON `
+            -DCURSES=False `
+            -DLOCALIZE=True `
+            -DTILES=True `
+            -DSOUND=True `
+            -DTESTS=True `
+            -DJSON_FORMAT=OFF `
+            -DCMAKE_INSTALL_MESSAGE=NEVER
+
+      - name: Build
+        run: |
+          cmake --build "${{ github.workspace }}/${{ env.CMAKE_BUILD_DIR }}" `
+            --target cataclysm-bn-tiles --target cata_test-tiles
 
       - name: Dump logs if build failed
         if: failure()
         run: |
           echo =================================================
-          Get-ChildItem "${{ runner.workspace }}/Cataclysm-BN/out/build/$env:CMAKE_PRESET" -Recurse
+          Get-ChildItem "${{ github.workspace }}/${{ env.CMAKE_BUILD_DIR }}" -Recurse
           echo =================================================
 
       - name: Compile .mo files for localization
         run: |
-          cmake --build out/build/$env:CMAKE_PRESET --target translations_compile --config RelWithDebInfo
+          cmake --build "${{ github.workspace }}/${{ env.CMAKE_BUILD_DIR }}" --target translations_compile
 
       - name: ccache stats
         run: |
@@ -147,4 +168,4 @@ jobs:
 
       - name: Run tests
         run: |
-          & "out/build/$env:CMAKE_PRESET/tests/RelWithDebInfo/cata_test-tiles.exe" --rng-seed time
+          & "${{ github.workspace }}/${{ env.CMAKE_BUILD_DIR }}/tests/cata_test-tiles.exe" --rng-seed time
