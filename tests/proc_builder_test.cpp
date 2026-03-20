@@ -260,6 +260,26 @@ TEST_CASE( "proc_builder_stew_excludes_finished_dishes_from_candidates", "[proc]
     CHECK( std::ranges::find( meat_candidates, proc::part_ix( 5 ) ) == meat_candidates.end() );
 }
 
+TEST_CASE( "proc_builder_stew_rejects_nonfood_material_matches", "[proc][builder][food]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/stew.json", "stew" );
+
+    const auto broth = proc::normalize_part_fact( item( "broth" ), { .ix = 1 } );
+    const auto carrot = proc::normalize_part_fact( item( "carrot" ), { .ix = 2 } );
+    const auto plant_fiber = proc::normalize_part_fact( item( "plant_fibre" ), { .ix = 3 } );
+    const auto cooked_meat = proc::normalize_part_fact( item( "meat_cooked" ), { .ix = 4 } );
+    const auto sinew = proc::normalize_part_fact( item( "sinew" ), { .ix = 5 } );
+
+    const auto state = proc::build_state( sch, { broth, carrot, plant_fiber, cooked_meat, sinew } );
+    const auto &veg_candidates = state.cand.at( proc::slot_id( "veg" ) );
+    const auto &meat_candidates = state.cand.at( proc::slot_id( "meat" ) );
+
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 2 ) ) != veg_candidates.end() );
+    CHECK( std::ranges::find( veg_candidates, proc::part_ix( 3 ) ) == veg_candidates.end() );
+    CHECK( std::ranges::find( meat_candidates, proc::part_ix( 4 ) ) != meat_candidates.end() );
+    CHECK( std::ranges::find( meat_candidates, proc::part_ix( 5 ) ) == meat_candidates.end() );
+}
+
 TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][weapon]" )
 {
     const auto sch = load_schema_for_test( R"(
