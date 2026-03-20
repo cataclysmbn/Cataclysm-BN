@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <map>
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -48,6 +49,16 @@ auto is_search_atom( const std::string &query ) -> bool
     return std::ranges::any_of( atom_prefixes, [&]( const std::string & prefix ) {
         return query.starts_with( prefix );
     } );
+}
+
+auto split_search_terms( const std::string &query ) -> std::vector<std::string>
+{
+    auto ret = std::vector<std::string> {};
+    auto input = std::istringstream( to_lower_case( query ) );
+    for( auto term = std::string{}; input >> term; ) {
+        ret.push_back( term );
+    }
+    return ret;
 }
 
 auto join_none( const std::vector<std::string> &values ) -> std::string
@@ -562,14 +573,17 @@ auto proc::part_matches_search( const part_fact &fact, const proc::part_search_o
         return true;
     }
 
-    const auto needle = to_lower_case( txt );
-    if( is_search_atom( needle ) && matches_atom( fact, needle ) ) {
-        return true;
-    }
-
     const auto texts = part_search_texts( fact, opts );
-    return std::ranges::any_of( texts, [&]( const std::string & entry ) {
-        return lcmatch( entry, needle );
+    const auto terms = split_search_terms( txt );
+    return std::ranges::all_of( terms, [&]( const std::string & term ) {
+        if( is_search_atom( term ) ) {
+            return matches_atom( fact, term ) || std::ranges::any_of( texts, [&]( const std::string & entry ) {
+                return lcmatch( entry, term );
+            } );
+        }
+        return std::ranges::any_of( texts, [&]( const std::string & entry ) {
+            return lcmatch( entry, term );
+        } );
     } );
 }
 
@@ -603,7 +617,10 @@ auto proc::recipe_matches_search( const recipe &rec, const std::string &txt ) ->
         needle = needle.substr( 2 );
     }
     const auto texts = recipe_search_texts( rec );
-    return std::ranges::any_of( texts, [&]( const std::string & entry ) {
-        return lcmatch( entry, needle );
+    const auto terms = split_search_terms( needle );
+    return std::ranges::all_of( terms, [&]( const std::string & term ) {
+        return std::ranges::any_of( texts, [&]( const std::string & entry ) {
+            return lcmatch( entry, term );
+        } );
     } );
 }
