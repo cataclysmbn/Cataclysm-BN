@@ -303,7 +303,8 @@ TEST_CASE( "proc_builder_required_slots_count_total_uses_toward_minimum", "[proc
     CHECK( proc::slot_can_meet_minimum( sufficient, sch, proc::slot_id( "bread" ) ) );
 }
 
-TEST_CASE( "proc_builder_sandwich_bread_slot_requires_two_total_bread_uses", "[proc][builder][food]" )
+TEST_CASE( "proc_builder_sandwich_bread_slot_requires_two_total_bread_uses",
+           "[proc][builder][food]" )
 {
     const auto sch = load_schema_from_file( "data/json/proc/sandwich.json", "sandwich" );
 
