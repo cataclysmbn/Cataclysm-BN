@@ -155,6 +155,22 @@ class recipe
 
         bool has_flag( const std::string &flag_name ) const;
 
+        auto is_proc() const -> bool {
+            return proc_enabled;
+        }
+
+        auto proc_id() const -> const proc::schema_id & {
+            return proc_id_;
+        }
+
+        auto builder_name() const -> const translation & {
+            return builder_name_;
+        }
+
+        auto builder_desc() const -> const translation & {
+            return builder_desc_;
+        }
+
         bool is_reversible() const {
             return reversible;
         }
