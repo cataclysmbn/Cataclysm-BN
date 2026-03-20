@@ -111,6 +111,18 @@ TEST_CASE( "proc_part_fact_assigns_cond_tags_to_supported_sandwich_condiments", 
     CHECK( std::ranges::find( syrup_fact.tag, "cond" ) != syrup_fact.tag.end() );
 }
 
+TEST_CASE( "proc_part_fact_does_not_tag_non_cheese_dairy_as_cheese", "[proc][fact]" )
+{
+    const auto butter_fact = proc::normalize_part_fact( item( "butter" ), { .ix = 22 } );
+    CHECK( std::ranges::find( butter_fact.tag, "cheese" ) == butter_fact.tag.end() );
+
+    const auto milk_fact = proc::normalize_part_fact( item( "milk" ), { .ix = 23 } );
+    CHECK( std::ranges::find( milk_fact.tag, "cheese" ) == milk_fact.tag.end() );
+
+    const auto cheese_fact = proc::normalize_part_fact( item( "cheese" ), { .ix = 24 } );
+    CHECK( std::ranges::find( cheese_fact.tag, "cheese" ) != cheese_fact.tag.end() );
+}
+
 TEST_CASE( "proc_part_fact_does_not_treat_finished_sandwiches_as_raw_ingredients", "[proc][fact]" )
 {
     const auto cheese_sandwich = item( "sandwich_cheese" );

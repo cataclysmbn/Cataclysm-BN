@@ -61,6 +61,11 @@ auto is_sandwich_spread( const item &it ) -> bool
     } );
 }
 
+auto is_sandwich_cheese( const item &it ) -> bool
+{
+    return it.typeId().str().contains( "cheese" );
+}
+
 auto normalized_hp( const item &it ) -> float
 {
     const auto max_damage = it.max_damage();
@@ -89,8 +94,7 @@ auto default_tags( const item &it ) -> std::vector<std::string>
           id.contains( "biscuit" ) || id.contains( "hardtack" ) ) ) {
         ret.push_back( "bread" );
     }
-    if( raw_ingredient_candidate &&
-        ( id.contains( "cheese" ) || has_material( it, material_id( "milk" ) ) ) ) {
+    if( raw_ingredient_candidate && is_sandwich_cheese( it ) ) {
         ret.push_back( "cheese" );
     }
     if( raw_ingredient_candidate && has_material( it, material_id( "veggy" ) ) ) {
