@@ -86,3 +86,17 @@ TEST_CASE( "proc_part_fact_does_not_treat_finished_sandwiches_as_raw_ingredients
     const auto sauce_fact = proc::normalize_part_fact( sauce_sandwich, { .ix = 8 } );
     CHECK( std::ranges::find( sauce_fact.tag, "cond" ) == sauce_fact.tag.end() );
 }
+
+TEST_CASE( "proc_part_fact_marks_finished_stews_and_curries_as_dishes", "[proc][fact]" )
+{
+    const auto veggie_soup = item( "soup_veggy" );
+    const auto soup_fact = proc::normalize_part_fact( veggie_soup, { .ix = 11 } );
+    CHECK( std::ranges::find( soup_fact.tag, "dish" ) != soup_fact.tag.end() );
+    CHECK( std::ranges::find( soup_fact.tag, "veg" ) == soup_fact.tag.end() );
+
+    const auto meat_curry = item( "curry_meat" );
+    const auto curry_fact = proc::normalize_part_fact( meat_curry, { .ix = 12 } );
+    CHECK( std::ranges::find( curry_fact.tag, "dish" ) != curry_fact.tag.end() );
+    CHECK( std::ranges::find( curry_fact.tag, "veg" ) == curry_fact.tag.end() );
+    CHECK( std::ranges::find( curry_fact.tag, "meat" ) == curry_fact.tag.end() );
+}
