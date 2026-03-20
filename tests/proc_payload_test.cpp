@@ -357,11 +357,14 @@ TEST_CASE( "legacy_swords_gain_proc_payload_on_save_load", "[proc][payload][migr
         CHECK( payload->id == proc::schema_id( "sword" ) );
         CHECK( payload->mode == proc::hist::compact );
         CHECK( payload->fp == "sword:legacy:" + test_case.id.str() );
-        CHECK( restored->typeId() == test_case.id );
+        CHECK( item_controller->migrate_id( test_case.id ) == itype_id( "proc_sword_generic" ) );
+        CHECK( restored->typeId() == itype_id( "proc_sword_generic" ) );
         CHECK( restored->type_name() == legacy.type_name() );
         CHECK( payload->blob.name == legacy.type_name() );
         CHECK( payload->blob.mass_g == units::to_gram( legacy.weight() ) );
         CHECK( payload->blob.volume_ml == units::to_milliliter( legacy.volume() ) );
+        CHECK( units::to_gram( restored->weight() ) == units::to_gram( legacy.weight() ) );
+        CHECK( restored->volume() == legacy.volume() );
         CHECK( payload->blob.melee.bash == legacy.damage_melee( DT_BASH ) );
         CHECK( payload->blob.melee.cut == legacy.damage_melee( DT_CUT ) );
         CHECK( payload->blob.melee.stab == legacy.damage_melee( DT_STAB ) );
@@ -377,6 +380,25 @@ TEST_CASE( "legacy_swords_gain_proc_payload_on_save_load", "[proc][payload][migr
         CHECK( part_count( *payload, itype_id( "rag" ) ) == test_case.rags );
         CHECK( part_count( *payload, itype_id( "nail" ) ) == test_case.nails );
         CHECK( part_count( *payload, itype_id( "scrap" ) ) == test_case.scraps );
+    } );
+}
+
+TEST_CASE( "legacy_sword_ids_migrate_to_proc_uncraft_recipe", "[proc][payload][migration]" )
+{
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "proc_sword_generic" ) ) );
+
+    const auto cases = std::vector<itype_id> {
+        itype_id( "sword_metal" ),
+        itype_id( "sword_wood" ),
+        itype_id( "sword_nail" ),
+        itype_id( "sword_crude" ),
+        itype_id( "sword_bone" )
+    };
+
+    std::ranges::for_each( cases, [&]( const itype_id & test_case ) {
+        INFO( test_case.str() );
+        CHECK( item_controller->migrate_id( test_case ) == itype_id( "proc_sword_generic" ) );
+        CHECK( recipe_dictionary::get_uncraft( item_controller->migrate_id( test_case ) ) );
     } );
 }
 

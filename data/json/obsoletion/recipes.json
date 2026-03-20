@@ -2321,5 +2321,30 @@
     "type": "recipe",
     "result": "fish_sandwich",
     "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sword_wood",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sword_nail",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sword_crude",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sword_metal",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sword_bone",
+    "obsolete": true
   }
 ]

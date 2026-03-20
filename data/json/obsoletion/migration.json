@@ -730,6 +730,11 @@
     "replace": "multi_cooker"
   },
   {
+    "id": [ "sword_metal", "sword_wood", "sword_nail", "sword_crude", "sword_bone" ],
+    "type": "MIGRATION",
+    "replace": "proc_sword_generic"
+  },
+  {
     "id": [
       "blt",
       "sandwich_t",
