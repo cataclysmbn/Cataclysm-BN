@@ -1,0 +1,22 @@
+# https://github.com/eduardolat/clancy
+
+version: 1
+
+agent:
+  # The command to run. ${PROMPT} is replaced with the content from input.prompt.
+  # Note: Ensure usage of quotes compatible with your shell.
+  command: "opencode run '${PROMPT}'"
+  env:
+    # Optional environment variables
+    FOO: "bar"
+
+loop:
+  max_steps: 20 # Stop after 20 iterations
+  timeout: "60m" # Stop after 60 minutes
+  stop_phrase: "<promise>DONE</promise>" # The success signal
+  stop_mode: "suffix" # Options: "exact", "contains", "suffix" (Recommended)
+  # delay: "5s" # Wait time between iterations
+
+input:
+  # Can be a string literal or "file:path/to/prompt.md"
+  prompt: "file:./task.md"
