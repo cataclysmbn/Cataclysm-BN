@@ -1142,7 +1142,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 const float total = std::max( {
                     std::abs( dx ), std::abs( dy ),
                     std::abs( dz ) * Z_LEVEL_SCALE } );
-                if( total < 1.0f ) {
+                if( total < 1.0f )
+                {
                     return true;
                 }
 
@@ -1157,19 +1158,20 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 // The origin tile is exempted: the player stands on top of that floor.
                 {
                     const int n_cross = static_cast<int>( std::abs( dz ) );
-                    for( int k = 0; k < n_cross; ++k ) {
+                    for( int k = 0; k < n_cross; ++k )
+                    {
                         const float t  = ( static_cast<float>( k ) + 0.5f ) / std::abs( dz );
                         const int   fx = static_cast<int>( std::lround(
-                            static_cast<float>( origin.x ) + t * dx ) );
+                                                               static_cast<float>( origin.x ) + t * dx ) );
                         const int   fy = static_cast<int>( std::lround(
-                            static_cast<float>( origin.y ) + t * dy ) );
+                                                               static_cast<float>( origin.y ) + t * dy ) );
                         if( k == 0 && dz < 0.0f &&
                             fx == origin.x && fy == origin.y ) {
                             continue; // player's own floor; they stand on top of it
                         }
                         const int floor_z = ( dz < 0.0f )
-                            ? static_cast<int>( origin.z ) - k
-                            : static_cast<int>( origin.z ) + k + 1;
+                                            ? static_cast<int>( origin.z ) - k
+                                            : static_cast<int>( origin.z ) + k + 1;
                         if( floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT ) {
                             continue;
                         }
@@ -1188,7 +1190,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 int ox = origin.x;
                 int oy = origin.y;
                 int oz = origin.z;
-                for( int s = 1; s < steps; ++s ) {
+                for( int s = 1; s < steps; ++s )
+                {
                     const int cx = static_cast<int>( std::lround( origin.x + s * sx ) );
                     const int cy = static_cast<int>( std::lround( origin.y + s * sy ) );
                     const int cz = static_cast<int>( std::lround( origin.z + s * sz ) );
@@ -1228,19 +1231,20 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 const float dy      = static_cast<float>( ty - origin.y );
                 const float dz      = static_cast<float>( tz - origin.z );
                 const int   n_cross = static_cast<int>( std::abs( dz ) );
-                for( int k = 0; k < n_cross; ++k ) {
+                for( int k = 0; k < n_cross; ++k )
+                {
                     const float t  = ( static_cast<float>( k ) + 0.5f ) / std::abs( dz );
                     const int   fx = static_cast<int>( std::lround(
-                        static_cast<float>( origin.x ) + t * dx ) );
+                                                           static_cast<float>( origin.x ) + t * dx ) );
                     const int   fy = static_cast<int>( std::lround(
-                        static_cast<float>( origin.y ) + t * dy ) );
+                                                           static_cast<float>( origin.y ) + t * dy ) );
                     if( k == 0 && dz < 0.0f &&
                         fx == origin.x && fy == origin.y ) {
                         continue; // player's own floor
                     }
                     const int floor_z = ( dz < 0.0f )
-                        ? static_cast<int>( origin.z ) - k
-                        : static_cast<int>( origin.z ) + k + 1;
+                                        ? static_cast<int>( origin.z ) - k
+                                        : static_cast<int>( origin.z ) + k + 1;
                     if( floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT ) {
                         continue;
                     }
@@ -1314,8 +1318,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                             if( fov_3d_occlusion ) {
                                 const float fdz = static_cast<float>( std::abs( z - origin.z ) );
                                 const float fdh = static_cast<float>(
-                                    std::max( std::abs( x - origin.x ),
-                                              std::abs( y - origin.y ) ) );
+                                                      std::max( std::abs( x - origin.x ),
+                                                                std::abs( y - origin.y ) ) );
                                 if( fdz * Z_LEVEL_SCALE > fdh && is_3d_clear( x, y, z ) ) {
                                     sc = origin_vis;
                                 }
@@ -1349,10 +1353,10 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                             }
                             const float best = std::ranges::max( {
                                 temp_seen[zc.idx( x,     y + 1 )],   // south
-                                temp_seen[zc.idx( x + 1, y     )],   // east
+                                temp_seen[zc.idx( x + 1, y )],       // east
                                 temp_seen[zc.idx( x,     y - 1 )],   // north
-                                temp_seen[zc.idx( x - 1, y     )] }, // west
-                                std::less<float>{} );
+                                temp_seen[zc.idx( x - 1, y )] },     // west
+                            std::less<float> {} );
                             if( best > 0.0f && !floor_crossing_blocked( x, y, z ) ) {
                                 zc.seen_cache[tile_idx] = best;
                             }
@@ -1365,8 +1369,9 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 // a gap when the wall itself sits under a solid floor above it.
                 if( !fov_3d_occlusion ) {
                     static constexpr std::array<std::pair<int, int>, 4> k_dirs = {{
-                        { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }
-                    }};
+                            { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }
+                        }
+                    };
                     for( int x = 0; x < zc.cache_x; ++x ) {
                         for( int y = 0; y < zc.cache_y; ++y ) {
                             const int tile_idx = zc.idx( x, y );
@@ -1374,19 +1379,21 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                                 continue;
                             }
                             const float best = std::ranges::fold_left( k_dirs, 0.0f,
-                                [&]( float acc, const std::pair<int, int> &d ) -> float {
-                                    const int nx = x + d.first;
-                                    const int ny = y + d.second;
-                                    if( nx < 0 || ny < 0 ||
-                                        nx >= zc.cache_x || ny >= zc.cache_y ) {
-                                        return acc;
-                                    }
-                                    const int nidx = zc.idx( nx, ny );
-                                    if( !vert_blocked[nidx] && origin_seen[nidx] > acc ) {
-                                        return origin_seen[nidx];
-                                    }
+                            [&]( float acc, const std::pair<int, int> &d ) -> float {
+                                const int nx = x + d.first;
+                                const int ny = y + d.second;
+                                if( nx < 0 || ny < 0 ||
+                                    nx >= zc.cache_x || ny >= zc.cache_y )
+                                {
                                     return acc;
-                                } );
+                                }
+                                const int nidx = zc.idx( nx, ny );
+                                if( !vert_blocked[nidx] && origin_seen[nidx] > acc )
+                                {
+                                    return origin_seen[nidx];
+                                }
+                                return acc;
+                            } );
                             if( best > 0.0f ) {
                                 zc.seen_cache[tile_idx] = best;
                             }
@@ -1416,9 +1423,9 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                 const auto &vfc = vehicle_floor_caches[z + 1 + OVERMAP_DEPTH];
                 const auto  sc  = seen_caches[z + OVERMAP_DEPTH];
                 const auto vfc_span = std::span( vfc.data, static_cast<size_t>( vfc.sx * vfc.sy ) );
-                const auto  sc_span = std::span( sc.data,  static_cast<size_t>( sc.sx  * sc.sy  ) );
+                const auto  sc_span = std::span( sc.data,  static_cast<size_t>( sc.sx  * sc.sy ) );
                 std::ranges::transform( sc_span, vfc_span, sc_span.begin(),
-                []( float s, bool v ) -> float { return v ? 0.0f : s; } );
+                                        []( float s, bool v ) -> float { return v ? 0.0f : s; } );
             }
 
             // Going up: crossing from z=k-1 to z=k is blocked by floor_cache[k].
