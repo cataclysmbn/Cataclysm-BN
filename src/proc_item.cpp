@@ -1,11 +1,13 @@
 #include "proc_item.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "calendar.h"
@@ -31,26 +33,116 @@ struct legacy_sandwich_part_spec {
     int count = 1;
 };
 
+struct legacy_weapon_part_spec {
+    std::string role;
+    itype_id id = itype_id::NULL_ID();
+};
+
 inline constexpr auto proc_var_key = std::string_view { "proc" };
 inline constexpr auto proc_craft_var_key = std::string_view { "proc_craft" };
+
+auto ceil_div( const int64_t value, const int divisor ) -> int
+{
+    if( value <= 0 || divisor <= 0 ) {
+        return 0;
+    }
+    return static_cast<int>( ( value + divisor - 1 ) / divisor );
+}
+
+auto default_stack_servings( const itype_id &id ) -> int
+{
+    static auto cache = std::map<itype_id, int> {};
+    if( const auto iter = cache.find( id ); iter != cache.end() ) {
+        return iter->second;
+    }
+
+    const auto sample = item::spawn( id, calendar::turn );
+    const auto servings = sample->count_by_charges() ? std::max( sample->charges, 1 ) : 1;
+    cache.emplace( id, servings );
+    return servings;
+}
+
+auto payload_servings( const item &it, const proc::payload &data ) -> int
+{
+    if( data.servings > 0 ) {
+        return data.servings;
+    }
+    return it.count_by_charges() ? default_stack_servings( it.typeId() ) : 1;
+}
+
+auto scaled_payload_total( const item &it, const proc::payload &data, const int total ) -> int
+{
+    if( !it.count_by_charges() ) {
+        return total;
+    }
+
+    const auto servings = payload_servings( it, data );
+    if( servings <= 0 ) {
+        return total;
+    }
+
+    return static_cast<int>( std::lround( static_cast<double>( total ) *
+                                          static_cast<double>( std::max( it.charges, 0 ) ) /
+                                          static_cast<double>( servings ) ) );
+}
+
+auto per_serving_payload_value( const item &it, const proc::payload &data, const int total ) -> int
+{
+    if( !it.count_by_charges() ) {
+        return total;
+    }
+
+    const auto servings = payload_servings( it, data );
+    if( servings <= 0 ) {
+        return total;
+    }
+
+    return static_cast<int>( std::lround( static_cast<double>( total ) /
+                                          static_cast<double>( servings ) ) );
+}
+
+auto scaled_food_servings( const item &it, const proc::fast_blob &blob ) -> int
+{
+    if( !it.count_by_charges() ) {
+        return 1;
+    }
+
+    const auto default_servings = std::max( it.charges, 1 );
+    const auto default_mass_g = std::max( units::to_gram( it.weight() ), 1L );
+    const auto default_volume_ml = std::max( units::to_milliliter( it.volume() ), 1 );
+    const auto mass_servings = blob.mass_g > 0 ?
+                               ceil_div( static_cast<int64_t>( blob.mass_g ) * default_servings,
+                                         default_mass_g ) : default_servings;
+    const auto volume_servings = blob.volume_ml > 0 ?
+                                 ceil_div( static_cast<int64_t>( blob.volume_ml ) * default_servings,
+                                           default_volume_ml ) : default_servings;
+    return std::max( { default_servings, mass_servings, volume_servings } );
+}
 
 auto default_food_blob( const item &it,
                         const itype_id &source_id ) -> proc::fast_blob
 {
     const auto sample = item::spawn( source_id, calendar::turn );
     auto blob = proc::fast_blob{};
-    blob.mass_g = units::to_gram( sample->weight() );
-    blob.volume_ml = units::to_milliliter( sample->volume() );
+    const auto sample_charges = sample->count_by_charges() ? std::max( sample->charges, 1 ) : 1;
+    const auto current_charges = sample->count_by_charges() ? std::max( it.charges, 1 ) : 1;
+    blob.mass_g = static_cast<int>( std::lround( static_cast<double>( units::to_gram(
+                                        sample->weight() ) ) *
+                                    static_cast<double>( current_charges ) /
+                                    static_cast<double>( sample_charges ) ) );
+    blob.volume_ml = static_cast<int>( std::lround( static_cast<double>( units::to_milliliter(
+                                           sample->volume() ) ) *
+                                       static_cast<double>( current_charges ) /
+                                       static_cast<double>( sample_charges ) ) );
     blob.name = sample->type_name();
     if( !sample->is_comestible() ) {
         return blob;
     }
 
-    const auto charges = sample->count_by_charges() ? std::max( it.charges, 1 ) : 1;
-    blob.kcal = sample->get_comestible()->default_nutrition.kcal * charges;
+    blob.kcal = sample->get_comestible()->default_nutrition.kcal * current_charges;
     blob.vit = sample->get_comestible()->default_nutrition.vitamins;
     std::ranges::for_each( blob.vit, [&]( std::pair<const vitamin_id, int> &entry ) {
-        entry.second *= charges;
+        entry.second *= current_charges;
     } );
     return blob;
 }
@@ -67,6 +159,29 @@ auto make_legacy_sandwich_part( const legacy_sandwich_part_spec &spec ) -> proc:
     part.chg = sample->count_by_charges() ? spec.count : 0;
     part.mat = sample->made_of();
     return part;
+}
+
+auto default_weapon_blob( const item &it ) -> proc::fast_blob
+{
+    auto blob = proc::fast_blob{};
+    blob.mass_g = units::to_gram( it.weight() );
+    blob.volume_ml = units::to_milliliter( it.volume() );
+    blob.name = it.type_name();
+    blob.melee.bash = it.damage_melee( DT_BASH );
+    blob.melee.cut = it.damage_melee( DT_CUT );
+    blob.melee.stab = it.damage_melee( DT_STAB );
+    blob.melee.to_hit = it.type->m_to_hit;
+    blob.melee.dur = std::max( it.max_damage(), 0 );
+    return blob;
+}
+
+auto make_legacy_weapon_fact( const legacy_weapon_part_spec &spec,
+                              const proc::part_ix ix ) -> proc::part_fact
+{
+    const auto sample = item( spec.id, calendar::turn );
+    return proc::normalize_part_fact( sample, {
+        .ix = ix,
+    } );
 }
 
 auto legacy_sandwich_specs( const itype_id &id ) -> std::vector<legacy_sandwich_part_spec>
@@ -178,6 +293,52 @@ auto legacy_sandwich_specs( const itype_id &id ) -> std::vector<legacy_sandwich_
         return {
             legacy_sandwich_part_spec{ .role = "bread", .id = itype_id( "bread" ), .count = 2 },
             legacy_sandwich_part_spec{ .role = "veg", .id = itype_id( "cucumber" ), .count = 1 }
+        };
+    }
+    return {};
+}
+
+auto legacy_weapon_specs( const itype_id &id ) -> std::vector<legacy_weapon_part_spec>
+{
+    if( id == itype_id( "sword_metal" ) ) {
+        return {
+            legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "steel_chunk" ) },
+            legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "steel_chunk" ) },
+            legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "leather" ) }
+        };
+    }
+    if( id == itype_id( "sword_wood" ) ) {
+        return {
+            legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "rag" ) }
+        };
+    }
+    if( id == itype_id( "sword_nail" ) ) {
+        return {
+            legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "rag" ) },
+            legacy_weapon_part_spec{ .role = "reinforcement", .id = itype_id( "nail" ) }
+        };
+    }
+    if( id == itype_id( "sword_crude" ) ) {
+        return {
+            legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "rag" ) },
+            legacy_weapon_part_spec{ .role = "reinforcement", .id = itype_id( "scrap" ) }
+        };
+    }
+    if( id == itype_id( "sword_bone" ) ) {
+        return {
+            legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "bone" ) },
+            legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+            legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "leather" ) }
         };
     }
     return {};
@@ -549,6 +710,7 @@ auto proc::to_json( JsonOut &jsout, const payload &data ) -> void
     } );
     jsout.end_object();
     jsout.end_object();
+    jsout.member( "servings", data.servings );
     jsout.member( "parts" );
     jsout.start_array();
     std::ranges::for_each( data.parts, [&]( const compact_part & entry ) {
@@ -586,6 +748,7 @@ auto proc::from_json( JsonIn &jsin, payload &data ) -> void
             } );
         }
     }
+    jo.read( "servings", data.servings );
     if( jo.has_array( "parts" ) ) {
         auto arr = jo.get_array( "parts" );
         while( arr.has_more() ) {
@@ -732,11 +895,43 @@ auto legacy_sandwich_payload( const item &it,
     out.mode = hist::compact;
     out.fp = "sandwich:legacy:" + legacy_id.str();
     out.blob = default_food_blob( it, legacy_id );
+    out.servings = it.count_by_charges() ? std::max( it.charges, 1 ) : 1;
     std::ranges::transform( specs,
     std::back_inserter( out.parts ), [&]( const legacy_sandwich_part_spec & spec ) {
         return make_legacy_sandwich_part( spec );
     } );
     return out;
+}
+
+auto legacy_weapon_payload( const item &it,
+                            const itype_id &legacy_id ) -> std::optional<payload>
+{
+    const auto specs = legacy_weapon_specs( legacy_id );
+    if( specs.empty() ) {
+        return std::nullopt;
+    }
+
+    auto facts = std::vector<part_fact> {};
+    auto slots = std::vector<slot_id> {};
+    facts.reserve( specs.size() );
+    slots.reserve( specs.size() );
+    std::ranges::for_each( std::views::iota( size_t{ 0 }, specs.size() ), [&]( const size_t idx ) {
+        facts.push_back( make_legacy_weapon_fact( specs[idx], static_cast<part_ix>( idx ) ) );
+        slots.push_back( slot_id( specs[idx].role ) );
+    } );
+
+    auto out = payload{};
+    out.id = schema_id( "sword" );
+    out.mode = hist::compact;
+    out.fp = "sword:legacy:" + legacy_id.str();
+    out.blob = default_weapon_blob( it );
+    out.parts = make_compact_parts( facts, slots );
+    return out;
+}
+
+auto legacy_weapon_payload( const item &it ) -> std::optional<payload>
+{
+    return legacy_weapon_payload( it, it.typeId() );
 }
 
 } // namespace proc
@@ -888,10 +1083,15 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
         full.data.name = !sch.cat.empty() ? sch.cat + " " + sch.id.str() : sch.id.str();
     }
 
+    if( result->count_by_charges() ) {
+        result->charges = scaled_food_servings( *result, full.data );
+    }
+
     auto out_payload = payload{};
     out_payload.id = sch.id;
     out_payload.mode = mode;
     out_payload.blob = full.data;
+    out_payload.servings = result->count_by_charges() ? std::max( result->charges, 1 ) : 1;
     out_payload.fp = fast_fp( sch, full.data, facts );
     if( mode == hist::compact ) {
         out_payload.parts = !opts.slots.empty() ? make_compact_parts( facts, opts.slots ) :
@@ -920,25 +1120,37 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
 auto proc::blob_kcal( const item &it ) -> std::optional<int>
 {
     const auto payload = read_payload( it );
-    return payload ? std::optional<int>( payload->blob.kcal ) : std::nullopt;
+    return payload ? std::optional<int>( per_serving_payload_value( it, *payload,
+                                         payload->blob.kcal ) ) :
+           std::nullopt;
 }
 
 auto proc::blob_vitamins( const item &it ) -> std::optional<std::map<vitamin_id, int>>
 {
     const auto payload = read_payload( it );
-    return payload ? std::optional<std::map<vitamin_id, int>>( payload->blob.vit ) : std::nullopt;
+    if( !payload ) {
+        return std::nullopt;
+    }
+
+    auto vitamins = payload->blob.vit;
+    std::ranges::for_each( vitamins, [&]( std::pair<const vitamin_id, int> &entry ) {
+        entry.second = per_serving_payload_value( it, *payload, entry.second );
+    } );
+    return vitamins;
 }
 
 auto proc::blob_mass( const item &it ) -> std::optional<int>
 {
     const auto payload = read_payload( it );
-    return payload ? std::optional<int>( payload->blob.mass_g ) : std::nullopt;
+    return payload ? std::optional<int>( scaled_payload_total( it, *payload, payload->blob.mass_g ) ) :
+           std::nullopt;
 }
 
 auto proc::blob_volume( const item &it ) -> std::optional<int>
 {
     const auto payload = read_payload( it );
-    return payload ? std::optional<int>( payload->blob.volume_ml ) : std::nullopt;
+    return payload ? std::optional<int>( scaled_payload_total( it, *payload,
+                                         payload->blob.volume_ml ) ) : std::nullopt;
 }
 
 auto proc::blob_melee( const item &it ) -> std::optional<melee_blob>

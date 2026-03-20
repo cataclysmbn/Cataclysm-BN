@@ -42,6 +42,7 @@ struct payload {
     hist mode = hist::none;
     std::string fp;
     fast_blob blob;
+    int servings = 0;
     std::vector<compact_part> parts;
 
     auto operator==( const payload & ) const -> bool = default;
@@ -83,6 +84,9 @@ auto write_craft_plan( item &it, const craft_plan &data ) -> void;
 auto legacy_sandwich_payload( const item &it ) -> std::optional<payload>;
 auto legacy_sandwich_payload( const item &it,
                               const itype_id &legacy_id ) -> std::optional<payload>;
+auto legacy_weapon_payload( const item &it ) -> std::optional<payload>;
+auto legacy_weapon_payload( const item &it,
+                            const itype_id &legacy_id ) -> std::optional<payload>;
 auto restore_parts( const payload &data ) -> std::vector<detached_ptr<item>>;
 auto make_compact_parts( const std::vector<part_fact> &facts,
                          const schema &sch ) -> std::vector<compact_part>;

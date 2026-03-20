@@ -2971,6 +2971,9 @@ void Item_factory::migrate_item( const itype_id &id, item &obj )
     if( const auto payload = proc::legacy_sandwich_payload( obj, id ) ) {
         proc::write_payload( obj, *payload );
     }
+    if( const auto payload = proc::legacy_weapon_payload( obj, id ) ) {
+        proc::write_payload( obj, *payload );
+    }
 }
 
 void Item_factory::set_qualities_from_json( const JsonObject &jo, const std::string &member,

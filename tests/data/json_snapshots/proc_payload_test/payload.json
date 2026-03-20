@@ -1,7 +1,17 @@
 {
-  "blob": { "kcal": 420, "mass_g": 220, "melee": { "bash": 0, "cut": 0, "dur": 0, "stab": 9, "to_hit": 0 }, "name": "meat sandwich", "vit": { "vitC": 4 }, "volume_ml": 330 },
+  "blob": {
+    "kcal": 420,
+    "mass_g": 220,
+    "melee": { "bash": 0, "cut": 0, "dur": 0, "stab": 9, "to_hit": 0 },
+    "name": "meat sandwich",
+    "vit": { "vitC": 4 },
+    "volume_ml": 330
+  },
   "fp": "sandwich:abcd1234",
   "id": "sandwich",
   "mode": "compact",
-  "parts": [ { "chg": 0, "dmg": 0, "hp": 1, "id": "bread", "mat": [ "wheat" ], "n": 2, "role": "bread" } ]
+  "servings": 6,
+  "parts": [
+    { "chg": 0, "dmg": 0, "hp": 1, "id": "bread", "mat": [ "wheat" ], "n": 2, "role": "bread" }
+  ]
 }
