@@ -770,7 +770,73 @@ TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][
     CHECK( state.fast.melee.cut > 0 );
     CHECK( state.fast.melee.stab > 0 );
     CHECK( state.fast.melee.dur > 0 );
-    CHECK( state.fast.name == "forged sword" );
+    CHECK( state.fast.name == "hand-forged sword" );
+}
+
+TEST_CASE( "proc_builder_supports_sword_reinforcements_and_legacy_like_names",
+           "[proc][builder][weapon]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/sword.json", "sword" );
+
+    auto wood_blade = proc::part_fact{};
+    wood_blade.ix = 1;
+    wood_blade.id = itype_id( "stick_long" );
+    wood_blade.mat = { material_id( "wood" ) };
+    wood_blade.mass_g = 450;
+    wood_blade.volume_ml = 450;
+
+    auto handle = proc::part_fact{};
+    handle.ix = 2;
+    handle.id = itype_id( "stick_long" );
+    handle.mat = { material_id( "wood" ) };
+    handle.mass_g = 180;
+    handle.volume_ml = 200;
+
+    auto grip = proc::part_fact{};
+    grip.ix = 3;
+    grip.id = itype_id( "rag" );
+    grip.mat = { material_id( "cotton" ) };
+    grip.mass_g = 30;
+    grip.volume_ml = 40;
+
+    auto nail = proc::part_fact{};
+    nail.ix = 4;
+    nail.id = itype_id( "nail" );
+    nail.mat = { material_id( "iron" ) };
+    nail.mass_g = 20;
+    nail.volume_ml = 5;
+    nail.uses = 4;
+
+    auto scrap = proc::part_fact{};
+    scrap.ix = 5;
+    scrap.id = itype_id( "scrap" );
+    scrap.mat = { material_id( "steel" ) };
+    scrap.mass_g = 120;
+    scrap.volume_ml = 80;
+
+    const auto base_state = [&]() {
+        auto state = proc::build_state( sch, { wood_blade, handle, grip, nail, scrap } );
+        REQUIRE( proc::add_pick( state, sch, proc::slot_id( "blade" ), 1 ) );
+        REQUIRE( proc::add_pick( state, sch, proc::slot_id( "handle" ), 2 ) );
+        REQUIRE( proc::add_pick( state, sch, proc::slot_id( "grip" ), 3 ) );
+        return state;
+    };
+
+    const auto plain = base_state();
+    CHECK( plain.fast.name == "2-by-sword" );
+
+    auto nailed = base_state();
+    REQUIRE( proc::add_pick( nailed, sch, proc::slot_id( "reinforcement" ), 4 ) );
+    REQUIRE( proc::add_pick( nailed, sch, proc::slot_id( "reinforcement" ), 4 ) );
+    CHECK( nailed.fast.name == "nail sword" );
+    CHECK( nailed.fast.melee.cut > plain.fast.melee.cut );
+    CHECK( nailed.fast.melee.dur >= plain.fast.melee.dur );
+
+    auto crude = base_state();
+    REQUIRE( proc::add_pick( crude, sch, proc::slot_id( "reinforcement" ), 5 ) );
+    CHECK( crude.fast.name == "crude sword" );
+    CHECK( crude.fast.melee.cut > plain.fast.melee.cut );
+    CHECK( crude.fast.mass_g > plain.fast.mass_g );
 }
 
 TEST_CASE( "proc_recipe_search_matches_builder_name_and_role", "[proc][builder][recipe]" )

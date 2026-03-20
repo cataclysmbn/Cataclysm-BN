@@ -10,7 +10,7 @@
     "proc": true,
     "proc_id": "sword",
     "builder_name": { "str": "Sword" },
-    "builder_desc": { "str": "Assemble a blade, hilt, and grip." },
+    "builder_desc": { "str": "Assemble a blade, hilt, grip, and any reinforcements." },
     "qualities": [  ],
     "tools": [  ],
     "components": [  ]

@@ -176,6 +176,13 @@ auto has_material( const proc::part_fact &fact, const material_id &id ) -> bool
     return std::ranges::find( fact.mat, id ) != fact.mat.end();
 }
 
+auto has_itype( const std::vector<proc::part_fact> &facts, const itype_id &id ) -> bool
+{
+    return std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+        return fact.id == id;
+    } );
+}
+
 auto fact_has_tag( const proc::part_fact &fact, const std::string &tag ) -> bool
 {
     return std::ranges::find( fact.tag, tag ) != fact.tag.end();
@@ -291,22 +298,33 @@ auto sandwich_vegetable_name( const std::vector<proc::part_fact> &facts ) -> std
     return "vegetable sandwich";
 }
 
-auto sword_name( const std::vector<proc::part_fact> &facts ) -> std::string
+auto sword_name( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
+                 const std::vector<proc::craft_pick> &picks ) -> std::string
 {
-    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+    const auto blade_facts = picked_facts_for_role( sch, facts, picks, "blade" );
+    const auto reinforcement_facts = picked_facts_for_role( sch, facts, picks, "reinforcement" );
+
+    if( has_itype( reinforcement_facts, itype_id( "nail" ) ) ) {
+        return "nail sword";
+    }
+    if( has_itype( reinforcement_facts, itype_id( "scrap" ) ) ||
+        has_itype( blade_facts, itype_id( "scrap" ) ) ) {
+        return "crude sword";
+    }
+    if( std::ranges::any_of( blade_facts, [&]( const proc::part_fact & fact ) {
     return has_material( fact, material_id( "steel" ) ) || has_material( fact, material_id( "iron" ) );
     } ) ) {
-        return "forged sword";
+        return "hand-forged sword";
     }
-    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+    if( std::ranges::any_of( blade_facts, [&]( const proc::part_fact & fact ) {
     return has_material( fact, material_id( "bone" ) );
     } ) ) {
         return "bone sword";
     }
-    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+    if( std::ranges::any_of( blade_facts, [&]( const proc::part_fact & fact ) {
     return has_material( fact, material_id( "wood" ) );
     } ) ) {
-        return "wood sword";
+        return "2-by-sword";
     }
     return "sword";
 }
@@ -440,6 +458,11 @@ auto sword_preview( const proc::schema &sch, const std::vector<proc::part_fact> 
             blade_mass += fact->mass_g;
             edge_score += density + cut_resist * 2 + chip_resist + reinforce_bonus - soft_penalty;
             point_score += density + cut_resist + bullet_resist + chip_resist - soft_penalty;
+        } else if( slot->role == "reinforcement" ) {
+            support_mass += fact->mass_g;
+            bash_score += bash_resist + density / 2 + reinforce_bonus - soft_penalty / 2;
+            edge_score += density / 2 + cut_resist + reinforce_bonus * 2 - soft_penalty;
+            point_score += density / 3 + cut_resist + reinforce_bonus - soft_penalty;
         } else if( slot->role == "handle" || slot->role == "grip" ) {
             handle_mass += fact->mass_g;
             bash_score += bash_resist + density + reinforce_bonus - soft_penalty / 2;
@@ -455,7 +478,7 @@ auto sword_preview( const proc::schema &sch, const std::vector<proc::part_fact> 
     blob.melee.stab = std::max( 0, blade_mass / 80 + point_score / 3 + handle_mass / 300 );
     blob.melee.to_hit = std::clamp( ( edge_score + bash_score ) / 18 - blob.mass_g / 900, -2, 4 );
     blob.melee.dur = std::max( 1, dur_score + blob.mass_g / 250 );
-    blob.name = sword_name( facts );
+    blob.name = sword_name( sch, facts, picks );
     return blob;
 }
 
