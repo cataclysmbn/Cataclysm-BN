@@ -58,3 +58,28 @@ TEST_CASE( "proc_lua_full_bridge_reads_named_function", "[proc][lua]" )
     REQUIRE( proc::read_payload( *made ) );
     CHECK( proc::read_payload( *made )->mode == proc::hist::compact );
 }
+
+TEST_CASE( "proc_lua_missing_runtime_keeps_preview_blob", "[proc][lua]" )
+{
+    auto sch = proc::schema{};
+    sch.id = proc::schema_id( "sandwich" );
+    sch.res = itype_id( "sandwich_generic" );
+    sch.lua.full = "procgen.food.full";
+
+    auto fact = proc::part_fact{};
+    fact.ix = 1;
+    fact.id = itype_id( "bread" );
+    fact.kcal = 90;
+
+    auto preview = proc::fast_blob{};
+    preview.kcal = 90;
+    preview.mass_g = 60;
+    preview.volume_ml = 125;
+    preview.name = "fallback sandwich";
+
+    const auto full = proc::run_full( sch, { fact }, preview );
+    CHECK( full.data.kcal == 90 );
+    CHECK( full.data.mass_g == 60 );
+    CHECK( full.data.volume_ml == 125 );
+    CHECK( full.data.name == "fallback sandwich" );
+}

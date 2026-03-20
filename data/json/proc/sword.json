@@ -22,7 +22,6 @@
       },
       { "id": "handle", "role": "handle", "min": 1, "max": 1, "ok": [ "itype:stick_long", "itype:bone" ] },
       { "id": "grip", "role": "grip", "min": 1, "max": 2, "rep": true, "ok": [ "itype:leather", "itype:rag" ] }
-    ],
-    "lua": { "make": "procgen.gear.make" }
+    ]
   }
 ]
