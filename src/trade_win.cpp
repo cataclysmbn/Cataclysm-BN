@@ -581,7 +581,7 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
             }
             trim_and_print( w_whose, point( name_x, row_y ), name_w, line_color, "%c %c %s",
                             keychar, selection_mark, itname );
-#if defined(__ANDROID__)
+#if defined(SDL_PLATFORM_ANDROID)
             if( keychar != ' ' ) {
                 ctxt.register_manual_key( keychar, itname );
             }

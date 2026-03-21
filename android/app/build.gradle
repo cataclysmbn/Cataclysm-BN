@@ -350,6 +350,9 @@ android {
     lintOptions {
         abortOnError false
     }
+    buildFeatures {
+        prefab true
+    }
 
     if (buildAsLibrary) {
         libraryVariants.all { variant ->
@@ -383,5 +386,9 @@ sourceSets {
 }
 
 dependencies {
+    implementation files('jni/sdl3/SDL3.aar')
+    implementation files('jni/sdl3/SDL3_mixer.aar')
+    implementation files('jni/sdl3/SDL3_image.aar')
+    implementation files('jni/sdl3/SDL3_ttf.aar')
     api fileTree(include: ['*.jar'], dir: 'libs')
 }

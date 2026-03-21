@@ -452,12 +452,12 @@ extern "C" {
 
 } // "C"
 
-SDL_Rect get_android_render_rect( float DisplayBufferWidth, float DisplayBufferHeight )
+SDL_FRect get_android_render_rect( float DisplayBufferWidth, float DisplayBufferHeight )
 {
     // If the display buffer aspect ratio is wider than the display,
     // draw it at the top of the screen so it doesn't get covered up
     // by the virtual keyboard. Otherwise just center it.
-    SDL_Rect dstrect;
+    SDL_FRect dstrect;
     float DisplayBufferAspect = DisplayBufferWidth / static_cast<float>( DisplayBufferHeight );
     float WindowHeightLessShortcuts = static_cast<float>( WindowHeight );
     if( !get_option<bool>( "ANDROID_SHORTCUT_OVERLAP" ) && quick_shortcuts_enabled ) {
@@ -506,7 +506,7 @@ void refresh_display()
     SetRenderTarget( renderer, nullptr );
     ClearScreen();
 #if defined(__ANDROID__)
-    SDL_Rect dstrect = get_android_render_rect( TERMINAL_WIDTH * fontwidth,
+    SDL_FRect dstrect = get_android_render_rect( TERMINAL_WIDTH * fontwidth,
                        TERMINAL_HEIGHT * fontheight );
     RenderCopy( renderer, display_buffer, nullptr, &dstrect );
 #else
@@ -2121,8 +2121,8 @@ std::string get_quick_shortcut_name( const std::string &category )
 
 float android_get_display_density()
 {
-    JNIEnv *env = static_cast< JNIEnv *>( SDL_AndroidGetJNIEnv() );
-    jobject activity = static_cast<jobject>( SDL_AndroidGetActivity() );
+    JNIEnv *env = static_cast< JNIEnv *>( SDL_GetAndroidJNIEnv() );
+    jobject activity = static_cast<jobject>( SDL_GetAndroidActivity() );
     jclass clazz( env->GetObjectClass( activity ) );
     jmethodID method_id = env->GetMethodID( clazz, "getDisplayDensity", "()F" );
     jfloat ans = env->CallFloatMethod( activity, method_id );
@@ -2410,11 +2410,8 @@ void draw_terminal_size_preview()
             preview_terminal_change_time = SDL_GetTicks();
         }
         SetRenderDrawColor( renderer, 255, 255, 255, 255 );
-        SDL_Rect previewrect = get_android_render_rect( preview_terminal_width, preview_terminal_height );
-        const SDL_FRect fpreviewrect = { static_cast<float>( previewrect.x ), static_cast<float>( previewrect.y ),
-                                         static_cast<float>( previewrect.w ), static_cast<float>( previewrect.h )
-                                       };
-        SDL_RenderRect( renderer.get(), &fpreviewrect );
+        SDL_FRect previewrect = get_android_render_rect( preview_terminal_width, preview_terminal_height );
+        SDL_RenderRect( renderer.get(), &previewrect );
         SetRenderDrawColor( renderer, 0, 0, 0, 255 );
     }
 }
@@ -2480,7 +2477,7 @@ void draw_quick_shortcuts()
     float border, width, height;
     get_quick_shortcut_dimensions( qsl, border, width, height );
     input_event *hovered_quick_shortcut = get_quick_shortcut_under_finger();
-    SDL_Rect rect;
+    SDL_FRect rect;
     bool hovered, show_hint;
     int i = 0;
     for( std::list<input_event>::iterator it = qsl.begin(); it != qsl.end(); ++it ) {
@@ -2534,9 +2531,9 @@ void draw_quick_shortcuts()
             }
         }
         if( shortcut_right )
-            rect = { WindowWidth - static_cast<int>( ( i + 1 ) * width + border ), static_cast<int>( WindowHeight - height ), static_cast<int>( width - border * 2 ), static_cast<int>( height ) };
+            rect = { WindowWidth -  ( ( i + 1 ) * width + border ), ( WindowHeight - height ), ( width - border * 2 ), ( height ) };
         else
-            rect = { static_cast<int>( i * width + border ), static_cast<int>( WindowHeight - height ), static_cast<int>( width - border * 2 ), static_cast<int>( height ) };
+            rect = { ( i * width + border ), ( WindowHeight - height ), ( width - border * 2 ), ( height ) };
         if( hovered ) {
             SetRenderDrawColor( renderer, 0, 0, 0, 255 );
         } else {
@@ -2548,15 +2545,15 @@ void draw_quick_shortcuts()
         if( hovered ) {
             // draw a second button hovering above the first one
             if( shortcut_right )
-                rect = { WindowWidth - static_cast<int>( ( i + 1 ) * width + border ), static_cast<int>( WindowHeight - height * 2.2f ), static_cast<int>( width - border * 2 ), static_cast<int>( height ) };
+                rect = { WindowWidth - ( ( i + 1 ) * width + border ), ( WindowHeight - height * 2.2f ), ( width - border * 2 ), ( height ) };
             else
-                rect = { static_cast<int>( i * width + border ), static_cast<int>( WindowHeight - height * 2.2f ), static_cast<int>( width - border * 2 ), static_cast<int>( height ) };
+                rect = { ( i * width + border ), ( WindowHeight - height * 2.2f ), ( width - border * 2 ), ( height ) };
             SetRenderDrawColor( renderer, 0, 0, 196, 255 );
             RenderFillRect( renderer, &rect );
 
             if( show_hint ) {
                 // draw a backdrop for the hint text
-                rect = { 0, static_cast<int>( ( WindowHeight - height ) * 0.5f ), static_cast<int>( WindowWidth ), static_cast<int>( height ) };
+                rect = { 0, ( ( WindowHeight - height ) * 0.5f ), static_cast<float>( WindowWidth ), ( height ) };
                 SetRenderDrawColor( renderer, 0, 0, 0,
                                     get_option<int>( "ANDROID_SHORTCUT_OPACITY_BG" ) * 0.01f * 255.0f );
                 RenderFillRect( renderer, &rect );
@@ -2631,7 +2628,7 @@ void draw_virtual_joystick()
 
     float longest_window_edge = std::max( WindowWidth, WindowHeight );
 
-    SDL_Rect dstrect;
+    SDL_FRect dstrect;
 
     // Draw deadzone range
     dstrect.w = dstrect.h = ( get_option<float>( "ANDROID_DEADZONE_RANGE" ) ) * longest_window_edge * 2;
@@ -2790,8 +2787,8 @@ void handle_finger_input( Uint64 ticks )
 
 bool android_is_hardware_keyboard_available()
 {
-    JNIEnv *env = static_cast<JNIEnv *>( SDL_AndroidGetJNIEnv() );
-    jobject activity = static_cast<jobject>( SDL_AndroidGetActivity() );
+    JNIEnv *env = static_cast<JNIEnv *>( SDL_GetAndroidJNIEnv() );
+    jobject activity = static_cast<jobject>( SDL_GetAndroidActivity() );
     jclass clazz( env->GetObjectClass( activity ) );
     jmethodID method_id = env->GetMethodID( clazz, "isHardwareKeyboardAvailable", "()Z" );
     jboolean ans = env->CallBooleanMethod( activity, method_id );
@@ -2804,8 +2801,8 @@ void android_vibrate()
 {
     int vibration_ms = get_option<int>( "ANDROID_VIBRATION" );
     if( vibration_ms > 0 && !android_is_hardware_keyboard_available() ) {
-        JNIEnv *env = static_cast<JNIEnv *>( SDL_AndroidGetJNIEnv() );
-        jobject activity = static_cast<jobject>( SDL_AndroidGetActivity() );
+        JNIEnv *env = static_cast<JNIEnv *>( SDL_GetAndroidJNIEnv() );
+        jobject activity = static_cast<jobject>( SDL_GetAndroidActivity() );
         jclass clazz( env->GetObjectClass( activity ) );
         jmethodID method_id = env->GetMethodID( clazz, "vibrate", "(I)V" );
         env->CallVoidMethod( activity, method_id, vibration_ms );
@@ -2844,8 +2841,8 @@ static void CheckMessages()
         needs_sdl_surface_visibility_refresh = false;
 
         // Call Java show_sdl_surface()
-        JNIEnv *env = static_cast<JNIEnv *>( SDL_AndroidGetJNIEnv() );
-        jobject activity = static_cast<jobject>( SDL_AndroidGetActivity() );
+        JNIEnv *env = static_cast<JNIEnv *>( SDL_GetAndroidJNIEnv() );
+        jobject activity = static_cast<jobject>( SDL_GetAndroidActivity() );
         jclass clazz( env->GetObjectClass( activity ) );
         jmethodID method_id = env->GetMethodID( clazz, "show_sdl_surface", "()V" );
         env->CallVoidMethod( activity, method_id );
@@ -3069,8 +3066,8 @@ static void CheckMessages()
 
                 // Display an Android toast message
                 {
-                    JNIEnv *env = static_cast<JNIEnv *>( SDL_AndroidGetJNIEnv() );
-                    jobject activity = static_cast<jobject>( SDL_AndroidGetActivity() );
+                    JNIEnv *env = static_cast<JNIEnv *>( SDL_GetAndroidJNIEnv() );
+                    jobject activity = static_cast<jobject>( SDL_GetAndroidActivity() );
                     jclass clazz( env->GetObjectClass( activity ) );
                     jstring toast_message = env->NewStringUTF( quick_shortcuts_enabled ? "Shortcuts visible" :
                                             "Shortcuts hidden" );
@@ -3254,7 +3251,7 @@ static void CheckMessages()
                     if( strlen( ev.text.text ) > 0 ) {
                         const unsigned lc = UTF8_getch( ev.text.text );
                         last_input = input_event( lc, input_event_t::keyboard );
-#if defined(__ANDROID__)
+#if defined(SDL_PLATFORM_ANDROID)
                         if( !android_is_hardware_keyboard_available() ) {
                             if( !is_string_input( touch_input_context ) && !touch_input_context.allow_text_entry ) {
                                 if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
@@ -3336,7 +3333,7 @@ static void CheckMessages()
 
 #if defined(__ANDROID__)
             case SDL_EVENT_FINGER_MOTION:
-                if( ev.tfinger.fingerId == 0 ) {
+                if( ev.tfinger.fingerID == 1 ) {
                     if( !is_quick_shortcut_touch ) {
                         update_finger_repeat_delay();
                     }
@@ -3358,13 +3355,13 @@ static void CheckMessages()
                         }
                     }
 
-                } else if( ev.tfinger.fingerId == 1 ) {
+                } else if( ev.tfinger.fingerID == 2 ) {
                     second_finger_curr_x = ev.tfinger.x * WindowWidth;
                     second_finger_curr_y = ev.tfinger.y * WindowHeight;
                 }
                 break;
             case SDL_EVENT_FINGER_DOWN:
-                if( ev.tfinger.fingerId == 0 ) {
+                if( ev.tfinger.fingerID == 1 ) {
                     finger_down_x = finger_curr_x = ev.tfinger.x * WindowWidth;
                     finger_down_y = finger_curr_y = ev.tfinger.y * WindowHeight;
                     finger_down_time = ticks;
@@ -3374,7 +3371,7 @@ static void CheckMessages()
                         update_finger_repeat_delay();
                     }
                     needupdate = true; // ensure virtual joystick and quick shortcuts redraw as we interact
-                } else if( ev.tfinger.fingerId == 1 ) {
+                } else if( ev.tfinger.fingerID == 2 ) {
                     if( !is_quick_shortcut_touch ) {
                         second_finger_down_x = second_finger_curr_x = ev.tfinger.x * WindowWidth;
                         second_finger_down_y = second_finger_curr_y = ev.tfinger.y * WindowHeight;
@@ -3383,7 +3380,7 @@ static void CheckMessages()
                 }
                 break;
             case SDL_EVENT_FINGER_UP:
-                if( ev.tfinger.fingerId == 0 ) {
+                if( ev.tfinger.fingerID == 1 ) {
                     finger_curr_x = ev.tfinger.x * WindowWidth;
                     finger_curr_y = ev.tfinger.y * WindowHeight;
                     if( is_quick_shortcut_touch ) {
@@ -3484,7 +3481,7 @@ static void CheckMessages()
                     finger_repeat_time = 0;
                     needupdate = true; // ensure virtual joystick and quick shortcuts are updated properly
                     refresh_display(); // as above, but actually redraw it now as well
-                } else if( ev.tfinger.fingerId == 1 ) {
+                } else if( ev.tfinger.fingerID == 2 ) {
                     if( is_two_finger_touch ) {
                         // on second finger release, just remember the x/y position so we can calculate delta once first finger is done
                         // is_two_finger_touch will be reset when first finger lifts (see above)

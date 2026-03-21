@@ -1164,8 +1164,8 @@ std::vector<options_manager::id_and_option> options_manager::build_soundpacks_li
 #if defined(__ANDROID__)
 bool android_get_default_setting( const char *settings_name, bool default_value )
 {
-    JNIEnv *env = static_cast< JNIEnv *>( SDL_AndroidGetJNIEnv() );
-    jobject activity = static_cast< jobject>( SDL_AndroidGetActivity() );
+    JNIEnv *env = static_cast< JNIEnv *>( SDL_GetAndroidJNIEnv() );
+    jobject activity = static_cast< jobject>( SDL_GetAndroidActivity() );
     jclass clazz( env->GetObjectClass( activity ) );
     jmethodID method_id = env->GetMethodID( clazz, "getDefaultSetting", "(Ljava/lang/String;Z)Z" );
     jboolean ans = env->CallBooleanMethod( activity, method_id, env->NewStringUTF( settings_name ),

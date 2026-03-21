@@ -61,6 +61,7 @@ class ui_adaptor;
 
 #if defined(__ANDROID__)
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_system.h>
 #include <android/log.h>
 #include <unistd.h>
 
@@ -208,7 +209,7 @@ int main( int argc, char *argv[] )
 
     // On Android first launch, we copy all data files from the APK into the app's writeable folder so std::io stuff works.
     // Use the external storage so it's publicly modifiable data (so users can mess with installed data, save games etc.)
-    std::string external_storage_path( SDL_AndroidGetExternalStoragePath() );
+    std::string external_storage_path( SDL_GetAndroidExternalStoragePath() );
 
     PATH_INFO::init_base_path( external_storage_path );
 #else
@@ -670,7 +671,7 @@ int main( int argc, char *argv[] )
 #if defined(__ANDROID__)
     if( !dir_exist( PATH_INFO::user_dir() ) ) {
         check_dir_good( PATH_INFO::user_dir() );
-        std::string external_storage_path( SDL_AndroidGetExternalStoragePath() );
+        std::string external_storage_path( SDL_GetAndroidExternalStoragePath() );
         if( dir_exist( external_storage_path + "/config" ) ) {
             std::filesystem::copy( external_storage_path + "/config", PATH_INFO::user_dir() + "config",
                                    std::filesystem::copy_options::recursive );

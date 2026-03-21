@@ -14,7 +14,7 @@ void open_url( const std::string &url )
         "xdg-open";
 #elif defined(__APPLE__)
         "open";
-#elif defined(__ANDROID__)
+#elif defined(SDL_PLATFORM_ANDROID)
         "am start -a android.intent.action.VIEW -d";
 #endif
     const std::string command = executable + " \"" + url + "\"";
