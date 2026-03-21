@@ -293,6 +293,127 @@ auto facts_have_tag( const std::vector<proc::part_fact> &facts, const std::strin
     } );
 }
 
+auto join_sentences( const std::vector<std::string> &sentences ) -> std::string
+{
+    auto ret = std::string {};
+    std::ranges::for_each( sentences, [&]( const std::string & sentence ) {
+        if( sentence.empty() ) {
+            return;
+        }
+        if( !ret.empty() ) {
+            ret += ' ';
+        }
+        ret += sentence;
+    } );
+    return ret;
+}
+
+auto primary_material_name( const std::vector<proc::part_fact> &facts ) -> std::string
+{
+    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+    return has_material( fact, material_id( "steel" ) ) || has_material( fact, material_id( "iron" ) );
+    } ) ) {
+        return "metal";
+    }
+    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+    return has_material( fact, material_id( "bone" ) );
+    } ) ) {
+        return "bone";
+    }
+    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
+    return has_material( fact, material_id( "wood" ) );
+    } ) ) {
+        return "wooden";
+    }
+    return "simple";
+}
+
+auto sword_base_description( const std::string &name ) -> std::string
+{
+    if( name == "nail sword" ) {
+        return "A rough wooden sword stiffened with driven nails.";
+    }
+    if( name == "crude sword" ) {
+        return "A crude sword pieced together from wood and scavenged scrap.";
+    }
+    if( name == "hand-forged sword" ) {
+        return "A serviceable sword built around a forged metal blade.";
+    }
+    if( name == "bone sword" ) {
+        return "A rough sword built around a sharpened bone blade.";
+    }
+    if( name == "2-by-sword" ) {
+        return "A club-like sword carved from a sturdy length of wood.";
+    }
+    return "A makeshift sword assembled from scavenged parts.";
+}
+
+auto sword_guard_phrase( const std::vector<proc::part_fact> &guard_facts ) -> std::string
+{
+    if( guard_facts.empty() ) {
+        return "no guard";
+    }
+    const auto material = primary_material_name( guard_facts );
+    if( material == "metal" ) {
+        return "a metal guard";
+    }
+    if( material == "bone" ) {
+        return "a bone guard";
+    }
+    if( material == "wooden" ) {
+        return "a wooden guard";
+    }
+    return "a simple guard";
+}
+
+auto sword_grip_phrase( const std::vector<proc::part_fact> &grip_facts ) -> std::string
+{
+    if( grip_facts.empty() ) {
+        return {};
+    }
+    if( has_itype( grip_facts, itype_id( "leather" ) ) || std::ranges::any_of( grip_facts,
+    [&]( const proc::part_fact & fact ) {
+    return has_material( fact, material_id( "leather" ) );
+    } ) ) {
+        return "a leather-wrapped grip";
+    }
+    if( has_itype( grip_facts, itype_id( "rag" ) ) || std::ranges::any_of( grip_facts,
+    [&]( const proc::part_fact & fact ) {
+    return has_material( fact, material_id( "cotton" ) );
+    } ) ) {
+        return "a rag-wrapped grip";
+    }
+    return "a wrapped grip";
+}
+
+auto sword_hilt_sentence( const std::vector<proc::part_fact> &guard_facts,
+                          const std::vector<proc::part_fact> &grip_facts ) -> std::string
+{
+    const auto guard_phrase = sword_guard_phrase( guard_facts );
+    const auto grip_phrase = sword_grip_phrase( grip_facts );
+    if( grip_phrase.empty() ) {
+        return string_format( "The hilt uses %s.", guard_phrase );
+    }
+    return string_format( "The hilt uses %s and %s.", guard_phrase, grip_phrase );
+}
+
+auto sword_reinforcement_sentence( const std::vector<proc::part_fact> &reinforcement_facts ) ->
+std::string
+{
+    const auto has_nails = has_itype( reinforcement_facts, itype_id( "nail" ) );
+    const auto has_scrap = has_itype( reinforcement_facts, itype_id( "scrap" ) );
+    if( has_nails && has_scrap ) {
+        return "Driven nails and scrap reinforcement add stiffness at the cost of weight.";
+    }
+    if( has_nails ) {
+        return "Driven nails add stiffness and a little puncturing power.";
+    }
+    if( has_scrap ) {
+        return "Scrap reinforcement adds weight and stiffness.";
+    }
+    return {};
+}
+
 auto matching_slot_uses( const proc::schema &sch, const proc::part_fact &fact ) -> int
 {
     auto uses = 0;
@@ -425,6 +546,20 @@ auto sword_name( const proc::schema &sch, const std::vector<proc::part_fact> &fa
         return "2-by-sword";
     }
     return "sword";
+}
+
+auto sword_description( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
+                        const std::vector<proc::craft_pick> &picks,
+                        const std::string &name ) -> std::string
+{
+    const auto guard_facts = picked_facts_for_role( sch, facts, picks, "guard" );
+    const auto grip_facts = picked_facts_for_role( sch, facts, picks, "grip" );
+    const auto reinforcement_facts = picked_facts_for_role( sch, facts, picks, "reinforcement" );
+    return join_sentences( {
+        sword_base_description( name ),
+        sword_hilt_sentence( guard_facts, grip_facts ),
+        sword_reinforcement_sentence( reinforcement_facts ),
+    } );
 }
 
 auto sandwich_name( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
@@ -577,6 +712,7 @@ auto sword_preview( const proc::schema &sch, const std::vector<proc::part_fact> 
     blob.melee.to_hit = std::clamp( ( edge_score + bash_score ) / 18 - blob.mass_g / 900, -2, 4 );
     blob.melee.dur = std::max( 1, dur_score + blob.mass_g / 250 );
     blob.name = sword_name( sch, facts, picks );
+    blob.description = sword_description( sch, facts, picks, blob.name );
     return blob;
 }
 

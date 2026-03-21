@@ -20,6 +20,7 @@ TEST_CASE( "proc_lua_full_bridge_reads_named_function", "[proc][lua]" )
         mass_g = 333,
         volume_ml = 222,
         name = "lua sandwich",
+        description = "lua description",
         vit = { vitC = 12 }
       }
     end,
@@ -49,6 +50,7 @@ TEST_CASE( "proc_lua_full_bridge_reads_named_function", "[proc][lua]" )
     CHECK( full.data.mass_g == 333 );
     CHECK( full.data.volume_ml == 222 );
     CHECK( full.data.name == "lua sandwich" );
+    CHECK( full.data.description == "lua description" );
     CHECK( full.data.vit.at( vitamin_id( "vitC" ) ) == 12 );
 
     auto opts = proc::make_opts{};
@@ -76,10 +78,12 @@ TEST_CASE( "proc_lua_missing_runtime_keeps_preview_blob", "[proc][lua]" )
     preview.mass_g = 60;
     preview.volume_ml = 125;
     preview.name = "fallback sandwich";
+    preview.description = "fallback description";
 
     const auto full = proc::run_full( sch, { fact }, preview );
     CHECK( full.data.kcal == 90 );
     CHECK( full.data.mass_g == 60 );
     CHECK( full.data.volume_ml == 125 );
     CHECK( full.data.name == "fallback sandwich" );
+    CHECK( full.data.description == "fallback description" );
 }

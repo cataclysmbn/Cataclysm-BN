@@ -135,6 +135,7 @@ auto default_food_blob( const item &it,
                                        static_cast<double>( current_charges ) /
                                        static_cast<double>( sample_charges ) ) );
     blob.name = sample->type_name();
+    blob.description = sample->type->description.translated();
     if( !sample->is_comestible() ) {
         return blob;
     }
@@ -168,6 +169,7 @@ auto default_weapon_blob( const itype_id &source_id ) -> proc::fast_blob
     blob.mass_g = units::to_gram( source.weight() );
     blob.volume_ml = units::to_milliliter( source.volume() );
     blob.name = source.type_name();
+    blob.description = source.type->description.translated();
     blob.melee.bash = source.damage_melee( DT_BASH );
     blob.melee.cut = source.damage_melee( DT_CUT );
     blob.melee.stab = source.damage_melee( DT_STAB );
@@ -456,6 +458,7 @@ auto blob_table( sol::state &lua, const proc::fast_blob &blob ) -> sol::table
     tbl["volume_ml"] = blob.volume_ml;
     tbl["kcal"] = blob.kcal;
     tbl["name"] = blob.name;
+    tbl["description"] = blob.description;
 
     auto vit_tbl = lua.create_table();
     std::ranges::for_each( blob.vit, [&]( const std::pair<const vitamin_id, int> &entry ) {
@@ -517,6 +520,7 @@ auto parse_blob_into( proc::fast_blob &blob, const sol::table &tbl ) -> void
     blob.volume_ml = tbl.get_or( "volume_ml", blob.volume_ml );
     blob.kcal = tbl.get_or( "kcal", blob.kcal );
     blob.name = tbl.get_or<std::string>( "name", blob.name );
+    blob.description = tbl.get_or<std::string>( "description", blob.description );
     const auto vit_obj = tbl.get_or<sol::object>( "vit", sol::lua_nil );
     if( vit_obj != sol::lua_nil && vit_obj.is<sol::table>() ) {
         blob.vit.clear();
@@ -696,6 +700,9 @@ auto proc::to_json( JsonOut &jsout, const payload &data ) -> void
     jsout.member( "volume_ml", data.blob.volume_ml );
     jsout.member( "kcal", data.blob.kcal );
     jsout.member( "name", data.blob.name );
+    if( !data.blob.description.empty() ) {
+        jsout.member( "description", data.blob.description );
+    }
     jsout.member( "melee" );
     jsout.start_object();
     jsout.member( "bash", data.blob.melee.bash );
@@ -734,6 +741,7 @@ auto proc::from_json( JsonIn &jsin, payload &data ) -> void
         blob_jo.read( "volume_ml", data.blob.volume_ml );
         blob_jo.read( "kcal", data.blob.kcal );
         blob_jo.read( "name", data.blob.name );
+        blob_jo.read( "description", data.blob.description );
         if( blob_jo.has_object( "melee" ) ) {
             const auto melee_jo = blob_jo.get_object( "melee" );
             melee_jo.read( "bash", data.blob.melee.bash );
@@ -862,6 +870,9 @@ auto proc::write_payload( item &it, const payload &data ) -> void
     it.set_var( std::string( proc_var_key ), payload_json( data ) );
     if( !data.blob.name.empty() ) {
         it.set_var( "name", data.blob.name );
+    }
+    if( !data.blob.description.empty() ) {
+        it.set_var( "description", data.blob.description );
     }
     if( it.is_comestible() && !data.blob.empty() ) {
         it.set_flag( flag_NUTRIENT_OVERRIDE );
