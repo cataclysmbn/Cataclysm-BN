@@ -15,8 +15,8 @@ lua_iuse_actor::lua_iuse_actor( const std::string &type,
                                 sol::protected_function &&use_func,
                                 sol::protected_function &&can_use_func )
     : iuse_actor( type ),
-      use_func( use_func ),
-      can_use_func( can_use_func ) {}
+      use_func( std::move( use_func ) ),
+      can_use_func( std::move( can_use_func ) ) {}
 
 lua_iuse_actor::~lua_iuse_actor() = default;
 
