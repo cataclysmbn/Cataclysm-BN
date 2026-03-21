@@ -12,6 +12,8 @@ Read and obey:
 
 Continuously improve the procedural crafting / procgen feature on this branch until a stop file appears.
 
+The current top priority is procedural melee weapons. Food procgen remains important, but only for correctness, migrations, and shared-system stability.
+
 ## Hard operating rules
 
 - Work autonomously.
@@ -35,19 +37,20 @@ If the stop file does not exist, do not print that phrase.
 
 ## Current product priorities
 
-- make the procgen builder production-ready
-- fix candidate filtering and semantics
-- improve sandwich, stew, sword, and other sensible procgen recipes
-- add migrations/obsoletions for procgen-able handcrafted items
+- make procedural melee weapons production-ready first
+- improve weapon stat composition, naming, descriptions, and recipe breadth
+- keep the procgen builder production-ready for both weapon and food flows
+- fix candidate filtering and semantics across the system
+- add migrations and obsoletions for procgen-able handcrafted melee weapons and sandwich-like items
 - increase regression coverage and crash resistance
 
 ## Immediate focus queue
 
-1. builder input bugs and search behavior
-2. sane filtering and duplicate grouping
-3. sandwich/stew semantics and tool-aware stew support
-4. migration/obsoletion for handcrafted sandwich-like items
-5. more procgen recipes where justified
+1. procedural melee weapon schemas, outputs, and migrations
+2. builder input bugs, search behavior, and duplicate grouping
+3. sane filtering and candidate ranking, especially for melee parts
+4. tool-aware recipe support where appropriate
+5. sandwich/stew correctness only where needed for shared-system stability
 6. stronger tests and snapshots
 
 ## Iteration policy

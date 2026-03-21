@@ -1,12 +1,19 @@
-# PRD: Procedural Item Creation System - Production Readiness Push
+# PRD: Procedural Item Creation System - Procedural Melee Weapons Focus
 
 ## Context
 
-This branch introduces procedural crafting for items such as sandwiches, stew, and swords. The current feature is still not production ready. The user wants an autonomous improvement loop that continues refining the system with atomic commits until told to stop.
+This branch introduces procedural crafting for items such as sandwiches, stew, and swords. The current feature is still not production ready. The user has now shifted the autonomous loop's main focus toward procedural melee weapons while keeping existing food procgen stable.
 
 ## Product goal
 
-Deliver a production-ready procedural crafting system for Cataclysm: Bright Nights that supports intuitive keyboard-first creation flows, reliable runtime behavior, sane candidate filtering, migration from legacy handcrafted variants where appropriate, and strong automated test coverage.
+Deliver a production-ready procedural crafting system for Cataclysm: Bright Nights, with primary emphasis on procedural melee weapons. The system should support intuitive keyboard-first creation flows, reliable runtime behavior, sane candidate filtering, migration from legacy handcrafted variants where appropriate, and strong automated test coverage.
+
+## Current strategic focus
+
+Procedural melee weapons are now the primary focus.
+
+- Food procgen should only receive fixes needed for correctness, migration, or shared-system stability.
+- New design and implementation effort should prioritize melee weapon schemas, UI fit, naming, descriptions, stat composition, migrations, and tests.
 
 ## Primary user-facing goals
 
@@ -43,15 +50,24 @@ Deliver a production-ready procedural crafting system for Cataclysm: Bright Nigh
 - debug and non-debug paths should share the same core craft completion flow
 - highlighted preview and final result should stay consistent
 
-### D. Procgen recipes and migrations
+### D. Procgen melee weapons and migrations
+
+- expand procedural melee weapon support beyond a single sword example
+- support sensible weapon roles such as blade, head, shaft, guard, grip, pommel, binding, and reinforcement where applicable
+- compute bash, cut, stab, to-hit, speed, durability, and weight/volume from material values and part traits where sensible
+- support procedural naming and descriptions for melee weapons
+- support migration/obsoletion of handcrafted melee items that should become procgen-backed
+- add more procgen melee recipes where the design clearly fits
+- ensure tool-aware weapon crafting where appropriate
+
+### E. Food and shared recipe work
 
 - sandwich should support up to 3 breads
 - stew should support tool-gated inputs like cutting and heat source concepts where appropriate
-- add more procgen recipes where the design makes sense
 - obsolete or migrate handcrafted variants that should now be procgen-backed, especially sandwiches
 - dynamically construct names and descriptions where appropriate
 
-### E. Testing and verification
+### F. Testing and verification
 
 - expand unit/regression coverage substantially
 - add tests for filtering behavior, search behavior, readiness logic, Lua/runtime fallback, craft completion, and migration behavior
@@ -76,22 +92,21 @@ Deliver a production-ready procedural crafting system for Cataclysm: Bright Nigh
 The work is considered moving in the right direction when:
 
 - the builder is stable and intuitive in normal play
-- sandwich/stew/sword are reliable demonstrations of the system
+- procedural melee weapons are the strongest and most polished demonstrations of the system
+- sandwich/stew/sword remain stable demonstrations of shared procgen infrastructure
 - procgen candidate filtering behaves sensibly in both normal play and debug hammerspace
 - tests meaningfully cover regressions and runtime bugs
 - the branch accumulates a clean series of atomic commits that push the feature toward production readiness
 
-## Explicit next priorities from user feedback
+## Explicit next priorities from user feedback and focus shift
 
-1. candidate list wraparound at top/bottom
-2. working search
-3. sane debug hammerspace candidate handling
-4. prevent using things like `cheese sandwich` as cheese input
-5. group duplicates in selected parts and slots with `xN`
-6. sandwich max breads = 3
-7. sane filtering in general
-8. more tests
-9. obsoletion and migration for procgen-able items such as sandwiches
-10. tool-aware stew input handling
-11. broader procgen recipe support where appropriate
-12. keep improving autonomously until a stop signal is present
+1. prioritize procedural melee weapons over new food work
+2. make melee weapon candidate filtering sane and domain-correct
+3. improve melee weapon part schemas, stat composition, naming, and descriptions
+4. broaden procgen melee recipes where justified
+5. add migrations/obsoletions for procgen-able melee weapons and legacy sandwich items
+6. finish builder interaction issues such as wraparound, search, and duplicate grouping
+7. keep debug hammerspace behavior sane but secondary to real gameplay behavior
+8. support tool-aware inputs where it makes sense, especially stew and weapon crafting
+9. write substantially more tests and regression coverage
+10. keep improving autonomously until a stop signal is present
