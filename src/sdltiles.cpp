@@ -507,7 +507,7 @@ void refresh_display()
     ClearScreen();
 #if defined(__ANDROID__)
     SDL_FRect dstrect = get_android_render_rect( TERMINAL_WIDTH * fontwidth,
-                       TERMINAL_HEIGHT * fontheight );
+                        TERMINAL_HEIGHT * fontheight );
     RenderCopy( renderer, display_buffer, nullptr, &dstrect );
 #else
     RenderCopy( renderer, display_buffer, nullptr, nullptr );
@@ -2531,7 +2531,7 @@ void draw_quick_shortcuts()
             }
         }
         if( shortcut_right )
-            rect = { WindowWidth -  ( ( i + 1 ) * width + border ), ( WindowHeight - height ), ( width - border * 2 ), ( height ) };
+            rect = { WindowWidth - ( ( i + 1 ) * width + border ), ( WindowHeight - height ), ( width - border * 2 ), ( height ) };
         else
             rect = { ( i * width + border ), ( WindowHeight - height ), ( width - border * 2 ), ( height ) };
         if( hovered ) {
