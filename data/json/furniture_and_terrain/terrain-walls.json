@@ -480,7 +480,7 @@
         { "item": "material_rocksalt", "prob": 10 }
       ],
       "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
-      "ranged": { "reduction": [ 240, 240 ], "destroy_threshold": 240 }
+      "ranged": { "reduction": [ 240, 240 ], "destroy_threshold": 320 }
     }
   },
   {
