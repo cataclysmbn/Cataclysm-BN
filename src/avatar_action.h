@@ -74,7 +74,7 @@ bool can_fire_weapon( avatar &you, const map &m, const item &weapon );
  * Only call outside of can_fire_turret if using turret from vehicle controls.
  * As can_fire_turret also checks things like "do you have two hands to fire the M2HB?"
  */
-bool will_fire_turret( avatar &you );
+bool will_fire_turret( avatar &you, const turret_data &turret );
 
 /**
  * Checks if the turret is valid and if the player meets certain conditions for manually firing it.

@@ -49,7 +49,8 @@
       { "group": "tools_recharging", "prob": 50 },
       { "group": "tools_lighting", "prob": 50 },
       { "group": "ammo_pocket_batteries", "prob": 75 },
-      { "group": "household_clutter", "count": [ 1, 3 ], "prob": 75 }
+      { "group": "household_clutter", "count": [ 1, 3 ], "prob": 75 },
+      { "item": "plastic_shopping_bag", "count": [ 1, 6 ], "prob": 25 }
     ]
   },
   {
@@ -129,14 +130,19 @@
     "subtype": "collection",
     "entries": [
       { "item": "microwave", "prob": 90 },
-      { "item": "food_processor", "prob": 70 },
+      {
+        "distribution": [
+          { "item": "food_processor", "prob": 70 },
+          { "item": "multi_cooker", "prob": 50 },
+          { "item": "dehydrator", "prob": 30 },
+          { "item": "hotplate", "prob": 30 }
+        ],
+        "prob": 50
+      },
       { "item": "waffleiron", "prob": 45 },
-      { "item": "multi_cooker", "prob": 25 },
       { "item": "pastaextruder", "prob": 10 },
-      { "item": "dehydrator", "prob": 10 },
       { "item": "soda_machine", "prob": 10 },
       { "item": "carbondioxide_tank", "prob": 2 },
-      { "item": "hotplate", "prob": 10 },
       { "collection": [ { "item": "charcoal", "prob": 70 }, { "item": "char_smoker", "prob": 100 } ], "prob": 5 },
       { "item": "can_sealer", "prob": 2 },
       { "group": "dishes_utility", "prob": 50, "count": [ 1, 3 ] }

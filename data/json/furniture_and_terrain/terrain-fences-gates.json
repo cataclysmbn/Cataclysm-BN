@@ -720,7 +720,7 @@
     "looks_like": "t_fencegate_o",
     "move_cost": 2,
     "coverage": 60,
-    "flags": [ "TRANSPARENT", "DOOR", "BURROWABLE", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "BURROWABLE", "FLAT", "ROAD" ],
     "connects_to": "WOODFENCE",
     "close": "t_gate_metal_c",
     "deconstruct": {

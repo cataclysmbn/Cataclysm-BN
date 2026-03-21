@@ -57,7 +57,8 @@ namespace vehicles
 {
 // ratio of constant rolling resistance to the part that varies with velocity
 constexpr double rolling_constant_to_variable = 33.33;
-constexpr float vmiph_per_tile = 400.0f;
+// 1 tile/s is approximately 1.78816 m/s == 178.816 cm/s.
+constexpr float cmps_per_tile = 178.816f;
 } // namespace vehicles
 struct rider_data {
     Creature *psg = nullptr;
@@ -99,6 +100,7 @@ enum veh_coll_type : int {
     veh_coll_veh,      // 2 - vehicle
     veh_coll_bashable, // 3 - bashable
     veh_coll_other,    // 4 - other
+    veh_coll_veh_nocollide, // 5 - vehicle NOCOLLIDE
     num_veh_coll_types
 };
 
@@ -173,10 +175,8 @@ struct bounding_box {
 
 char keybind( const std::string &opt, const std::string &context = "VEHICLE" );
 
-int mps_to_vmiph( double mps );
-double vmiph_to_mps( int vmiph );
-int cmps_to_vmiph( int cmps );
-int vmiph_to_cmps( int vmiph );
+auto mps_to_cmps( double mps ) -> int;
+auto cmps_to_mps( int cmps ) -> double;
 float impulse_to_damage( float impulse );
 float damage_to_impulse( float damage );
 
@@ -400,6 +400,7 @@ class vehicle
         int break_off( int p, int dmg );
         // Returns if it did actually explode
         bool explode_fuel( int p, damage_type type );
+        std::pair<int, int> get_controls_and_security() const;
         //damages vehicle controls and security system
         void smash_security_system();
         // get vpart powerinfo for part number, accounting for variable-sized parts and hps.
@@ -469,7 +470,8 @@ class vehicle
             return find_vehicle( where.raw() );
         }
 
-        vehicle( const vproto_id &type_id, int init_veh_fuel = -1, int init_veh_status = -1 );
+        vehicle( const vproto_id &type_id, int init_veh_fuel = -1, int init_veh_status = -1,
+                 std::optional<bool> locked = std::nullopt, std::optional<bool> has_keys = std::nullopt );
         vehicle();
         ~vehicle();
 
@@ -516,7 +518,9 @@ class vehicle
         bool remote_controlled( const Character &who ) const;
 
         // init parts state for randomly generated vehicle
-        void init_state( int init_veh_fuel, int init_veh_status );
+        void init_state( int init_veh_fuel, int init_veh_status,
+                         std::optional<bool> locked,
+                         std::optional<bool> has_keys );
 
         // damages all parts of a vehicle by a random amount
         void smash( map &m, float hp_percent_loss_min = 0.1f, float hp_percent_loss_max = 1.2f,
@@ -526,7 +530,7 @@ class vehicle
         void deserialize( JsonIn &jsin );
         // Vehicle parts list - all the parts on a single tile
         int print_part_list( const catacurses::window &win, int y1, int max_y, int width, int p,
-                             int hl = -1, bool detail = false ) const;
+                             int hl = -1, bool detail = false, int start_at = 0 ) const;
 
         // Vehicle parts descriptions - descriptions for all the parts on a single tile
         void print_vparts_descs( const catacurses::window &win, int max_y, int width, int p,
@@ -546,38 +550,22 @@ class vehicle
         bool is_owned_by( const Character &c, bool available_to_take = false ) const;
         bool is_old_owner( const Character &c, bool available_to_take = false ) const;
         std::string get_owner_name() const;
-        void set_old_owner( const faction_id &temp_owner ) {
-            theft_time = calendar::turn;
-            old_owner = temp_owner;
-        }
-        void remove_old_owner() {
-            theft_time = std::nullopt;
-            old_owner = faction_id::NULL_ID();
-        }
-        void set_owner( const faction_id &new_owner ) {
-            owner = new_owner;
-        }
+        void set_old_owner( const faction_id &temp_owner );
+        void remove_old_owner();
+        void set_owner( const faction_id &new_owner );
         void set_owner( const Character &c );
-        void remove_owner() {
-            owner = faction_id::NULL_ID();
-        }
-        faction_id get_owner() const {
-            return owner;
-        }
-        faction_id get_old_owner() const {
-            return old_owner;
-        }
-        bool has_owner() const {
-            return !owner.is_null();
-        }
-        bool has_old_owner() const {
-            return !old_owner.is_null();
-        }
+        void remove_owner();
+        faction_id get_owner() const;
+        faction_id get_old_owner() const;
+        bool has_owner() const;
+        bool has_old_owner() const;
         /**
          * Handle potential vehicle theft.
          * @param you Avatar to check against
-         * @param check_only If true, won't prompt to steal and instead will refure to interact
-         * @param prompt Whether to prompt confirmation or proceed with the theft without prompt
+         * @param check_only If true, won't prompt to steal and instead will
+         * refure to interact
+         * @param prompt Whether to prompt confirmation or proceed with the
+         * theft without prompt
          * @return whether the avatar is willing to interact with the vehicle
          */
         bool handle_potential_theft( avatar &you, bool check_only = false, bool prompt = true );
@@ -587,9 +575,7 @@ class vehicle
         void autopilot_patrol();
         units::angle get_angle_from_targ( const tripoint &targ );
         void drive_to_local_target( const tripoint &target, bool follow_protocol );
-        tripoint get_autodrive_target() {
-            return autodrive_local_target;
-        }
+        tripoint get_autodrive_target();
         // Drive automatically towards some destination for one turn.
         autodrive_result do_autodrive( Character &driver );
         // Stop any kind of automatic vehicle control and apply the brakes.
@@ -1064,6 +1050,11 @@ class vehicle
         double coeff_air_drag() const;
 
         /**
+         * coefficient of airship balloon drag
+         */
+        double coeff_balloon_drag() const;
+
+        /**
          * coefficient of rolling resistance
          * multiplied by velocity to get the variable part of rolling resistance drag in N
          * multiplied by a constant to get the constant part of rolling resistance drag in N
@@ -1162,8 +1153,10 @@ class vehicle
         /**
          * total lift of all lifters
          */
-        double total_lift( bool fuelled, bool safe = false, bool ideal = false ) const;
-        bool has_sufficient_lift() const;
+        double total_lift( bool fuelled, bool safe = false, bool ideal = false,
+                           bool unpowered = false ) const;
+        bool has_sufficient_lift( bool unpowered = false ) const;
+        double get_lift_percent( bool unpowered = false ) const;
         int get_z_change() const;
         bool is_flying_in_air() const;
         void set_flying( bool new_flying_value );
@@ -1407,6 +1400,20 @@ class vehicle
         // Be aware this will not consider damage to more outside parts such as inner parts protected by an outer wall, only armor effects are considered
         unsigned int hits_to_destroy( int p, int dmg, damage_type type ) const;
 
+        /**
+         * @name Vehicle Droppers
+         *
+         *@{*/
+
+        vehicle_part *get_cargo_part( vehicle_part *part );
+
+        bool has_item_stored( vehicle_part *part );
+
+        void item_dropper_drop( std::vector<vehicle_part *> droppers, bool single );
+
+        void item_dropper_drop_all();
+
+        void item_dropper_drop_single( bool single );
     private:
         /*
          * Find all turrets that are ready to fire.
@@ -1509,6 +1516,10 @@ class vehicle
         //mark engine as on or off
         void toggle_specific_engine( int e, bool on );
         void toggle_specific_part( int p, bool on );
+        // muscle engine validation
+        bool can_enable_muscle_engine( int e, std::string &failure_reason ) const;
+        bool has_muscle_engine_operator( int e ) const;
+        void validate_muscle_engines();
         //true if an engine exists with specified type
         //If enabled true, this engine must be enabled to return true
         bool has_engine_type( const itype_id &ft, bool enabled ) const;
@@ -1578,12 +1589,12 @@ class vehicle
         // Process vehicle emitters
         void process_emitters();
 
+    private:
         // The faction that owns this vehicle.
         faction_id owner = faction_id::NULL_ID();
         // The faction that previously owned this vehicle
         faction_id old_owner = faction_id::NULL_ID();
 
-    private:
         mutable double coefficient_air_resistance = 1;
         mutable double coefficient_rolling_resistance = 1;
         mutable double coefficient_water_resistance = 1;
@@ -1622,11 +1633,12 @@ class vehicle
         std::vector<int> loose_parts;      // List of UNMOUNT_ON_MOVE parts
         std::vector<int> wheelcache;       // List of wheels
         std::vector<int> rotors;           // List of rotors
-        std::vector<int> balloons;         // List of repulsors
+        std::vector<int> balloons;         // List of balloons
         std::vector<int> wings;            // List of wings
         std::vector<int> propellers;       // List of propellerrs
         std::vector<int> rail_wheelcache;  // List of rail wheels
         std::vector<int> steering;         // List of STEERABLE parts
+        std::vector<int> droppers;         // List of droppers
         // List of parts that will not be on a vehicle very often, or which only one will be present
         std::vector<int> speciality;
         std::vector<int> floating;         // List of parts that provide buoyancy to boats
@@ -1707,6 +1719,10 @@ class vehicle
          * not change therefor no call to set_submap_moved is required.
          */
         tripoint sm_pos;
+        // Absolute submap position — set by loadn(), on_submap_loaded(), copy_grid(),
+        // and displace_vehicle()/z-level transitions.  Runtime-only (not serialized).
+        // Always authoritative while the vehicle is in any loaded submap.
+        tripoint_abs_sm abs_sm_pos;
 
         // alternator load as a percentage of engine power, in units of 0.1% so 1000 is 100.0%
         int alternator_load = 0;
@@ -1722,7 +1738,7 @@ class vehicle
          * set them directly, except when initializing the vehicle or during mapgen.
          */
         point pos;
-        // vehicle current velocity, mph * 100
+        // vehicle current velocity, cm/s
         int velocity = 0;
         // velocity vehicle's cruise control trying to achieve
         int cruise_velocity = 0;
@@ -1730,6 +1746,14 @@ class vehicle
         int vertical_velocity = 0;
         // id of the om_vehicle struct corresponding to this vehicle
         int om_id = -1;
+
+        // ID of the dimension this vehicle belongs to.  Empty string = primary dimension.
+        // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
+        // Persisted across saves so cross-dimension processing survives reload.
+        std::string dimension_id_;
+        auto get_dimension() const -> const std::string & { // *NOPAD*
+            return dimension_id_;
+        }
         // direction, to which vehicle is turning (player control). will rotate frame on next move
         // must be a multiple of 15 degrees
         units::angle turn_dir = 0_degrees;
@@ -1803,6 +1827,12 @@ class vehicle
         bool is_alarm_on = false;
         bool camera_on = false;
         bool autopilot_on = false;
+        // true if any non-broken part has the AUTOLOADER flag; maintained by refresh()
+        bool has_autoloaders = false;
+        // MISSED-4: true if any non-broken part has the RECHARGE flag; maintained by
+        // refresh().  Gates the cargo recharge loop in process_items_in_vehicle()
+        // (analogous to has_autoloaders gating process_autoloaders() in idle()).
+        bool has_cargo_recharge = false;
         // skidding mode
         bool skidding = false;
         // has bloody or smoking parts
@@ -1826,5 +1856,3 @@ namespace rot
 {
 temperature_flag temperature_flag_for_part( const vehicle &veh, size_t part );
 } // namespace rot
-
-

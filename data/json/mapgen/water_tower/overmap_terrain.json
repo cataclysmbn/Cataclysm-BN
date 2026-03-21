@@ -1,0 +1,103 @@
+[
+  {
+    "type": "monstergroup",
+    "name": "GROUP_WATER_TOWER_TANK",
+    "default": "mon_razorclaw",
+    "monsters": [
+      { "monster": "mon_alpha_razorclaw", "freq": 500, "cost_multiplier": 10, "pack_size": [ 0, 1 ] },
+      { "monster": "mon_razorclaw", "freq": 500, "cost_multiplier": 1, "pack_size": [ 0, 20 ] },
+      { "monster": "mon_mosquito_giant", "freq": 500, "cost_multiplier": 1, "pack_size": [ 0, 40 ] }
+    ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "water_tower_0zl",
+    "name": "water tower",
+    "sym": "87",
+    "color": "i_yellow",
+    "see_cost": 2,
+    "flags": [ "KNOWN_DOWN", "SIDEWALK" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "water_tower_1zl",
+    "name": "water tower",
+    "sym": "87",
+    "color": "i_yellow",
+    "see_cost": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "water_tower_2zl",
+    "name": "water tower",
+    "sym": "87",
+    "color": "i_yellow",
+    "see_cost": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "water_tower_3zl",
+    "name": "water tower",
+    "sym": "87",
+    "color": "i_yellow",
+    "see_cost": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "water_tower_4zl",
+    "name": "water tower",
+    "sym": "87",
+    "color": "i_yellow",
+    "see_cost": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "water_tower_5zl",
+    "name": "water tower",
+    "sym": "87",
+    "color": "i_yellow",
+    "see_cost": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "water_tower_-1zl",
+    "name": "water tower shaft",
+    "looks_like": "sewer",
+    "sym": "87",
+    "color": "i_yellow",
+    "see_cost": 99
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "water_tower_tank",
+    "name": "water tower reservoir",
+    "looks_like": "sewer",
+    "sym": "87",
+    "color": "i_yellow",
+    "extras": "subway",
+    "see_cost": 99,
+    "spawns": { "group": "GROUP_WATER_TOWER_TANK", "population": [ 10, 19 ], "chance": 50 }
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "water_tower_corner",
+    "name": "water tower reservoir",
+    "looks_like": "sewer",
+    "sym": "87",
+    "color": "i_yellow",
+    "extras": "subway",
+    "see_cost": 99,
+    "spawns": { "group": "GROUP_WATER_TOWER_TANK", "population": [ 1, 9 ], "chance": 50 }
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "water_tower_edge",
+    "name": "water tower reservoir",
+    "looks_like": "sewer",
+    "sym": "87",
+    "color": "i_yellow",
+    "extras": "subway",
+    "see_cost": 99,
+    "spawns": { "group": "GROUP_WATER_TOWER_TANK", "population": [ 1, 9 ], "chance": 50 }
+  }
+]

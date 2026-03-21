@@ -9,8 +9,8 @@
     "size": 5,
     "power": 100,
     "food_supply": 115200,
-    "wealth": 100000,
-    "currency": "embued_coin",
+    "wealth": 10000000,
+    "currency": "crystallized_mana",
     "relations": {
       "lobby_beggars": {
         "kill on sight": false,

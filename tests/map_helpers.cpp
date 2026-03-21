@@ -10,6 +10,7 @@
 
 #include "avatar.h"
 #include "calendar.h"
+#include "distribution_grid.h"
 #include "field.h"
 #include "game.h"
 #include "game_constants.h"
@@ -55,7 +56,7 @@ void clear_creatures()
 
 void clear_npcs()
 {
-    // Reload to ensure that all active NPCs are in the overmap_buffer.
+    // Reload to ensure that all active NPCs are in the overmapbuffer.
     g->reload_npcs();
     for( npc &n : g->all_npcs() ) {
         n.die( nullptr );
@@ -93,7 +94,7 @@ void clear_items( const int zlevel )
 void clear_overmap()
 {
     MAPBUFFER.clear();
-    overmap_buffer.clear();
+    ACTIVE_OVERMAP_BUFFER.clear();
 }
 
 void clear_map()
@@ -110,6 +111,10 @@ void clear_map()
     for( int z = -2; z <= 0; ++z ) {
         clear_items( z );
     }
+    // Reset the distribution grid tracker so that stale grids from a previous
+    // test's Catch2 WHEN section do not bleed into the next run.  The tracker
+    // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.
+    get_distribution_grid_tracker().clear();
 }
 
 void put_player_underground()

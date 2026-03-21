@@ -38,6 +38,9 @@ bool can_noclip( const Character &ch );
 
 bool can_fly( Character &ch );
 
+auto is_driving( const Character &p ) -> bool;
+
+
 /** Checks for trait interactions that affect both get_book_fun_for and is_fun_to_read */
 bool is_book_morale_boosted( const Character &ch, const item &book );
 
@@ -236,6 +239,8 @@ int ammo_count_for( const Character &who, const item &gun );
 /** This shows warning to the player that their current activity will not give them xp */
 void show_skill_capped_notice( const Character &who, const skill_id &id );
 
+/** Returns true if the character has a bionic listed in the entered bionic id's available_upgrades field **/
+auto has_upgraded_bionic( const Character &c, const bionic_id &b ) -> bool;
 } // namespace character_funcs
 
 

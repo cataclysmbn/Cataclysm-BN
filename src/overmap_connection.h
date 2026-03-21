@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <mutex>
 
 #include "omdata.h"
 #include "type_id.h"
@@ -58,6 +59,13 @@ class overmap_connection
         };
 
     public:
+        overmap_connection() = default;
+        overmap_connection( const overmap_connection &other );
+        overmap_connection &operator=( const overmap_connection &other );
+
+        overmap_connection( overmap_connection &&other ) noexcept;
+        overmap_connection &operator=( overmap_connection &&other ) noexcept;
+
         const subtype *pick_subtype_for( const oter_id &ground ) const;
         void clear_subtype_cache() const;
         bool can_start_at( const oter_id &ground ) const;
@@ -81,14 +89,15 @@ class overmap_connection
         struct cache {
             const subtype *value = nullptr;
             bool assigned = false;
-            operator bool() const {
+            explicit operator bool() const {
                 return assigned;
             }
         };
 
         overmap_connection_layout layout;
         std::vector<subtype> subtypes;
-        mutable std::vector<cache> cached_subtypes;
+        mutable std::unordered_map<oter_id, cache> cached_subtypes;
+        mutable std::mutex mutex;
 };
 
 namespace overmap_connections

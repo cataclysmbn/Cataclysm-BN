@@ -594,7 +594,7 @@
     ],
     "weight": "32 g",
     "color": "brown",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": -2,

@@ -8,7 +8,7 @@
 #include "npctrade.h"
 #include "state_helpers.h"
 
-// https://github.com/cataclysmbnteam/Cataclysm-BN/issues/6986
+// https://github.com/cataclysmbn/Cataclysm-BN/issues/6986
 TEST_CASE( "low_price_materials_not_free", "[npc][trade][pricing]" )
 {
     SECTION( "Materials with low per-unit prices should not be traded for free" ) {

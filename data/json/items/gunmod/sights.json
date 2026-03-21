@@ -81,7 +81,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "sight_dispersion": 13,
     "aim_speed": 6,
@@ -114,7 +115,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "sight_dispersion": 30,
     "aim_speed": 6,
@@ -165,7 +167,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "sight_dispersion": 23,
     "aim_speed": 6,
@@ -193,7 +196,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "install_time": "30 m",
     "sight_dispersion": 0,
@@ -214,7 +218,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -238,7 +243,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "install_time": "30 m",
     "sight_dispersion": 8,
@@ -260,7 +266,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -298,7 +305,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "install_time": "30 m",
     "sight_dispersion": 15,

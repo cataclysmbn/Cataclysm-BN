@@ -839,6 +839,26 @@
     "flags": [ "OVERSIZE", "BELTED", "RESTRICT_HANDS", "WATER_FRIENDLY", "POWERARMOR_COMPATIBLE" ]
   },
   {
+    "id": "pack_basket",
+    "type": "ARMOR",
+    "name": { "str": "pack basket" },
+    "description": "A large hand made straw basket, with shoulder straps to wear like a backpack.",
+    "weight": "300 g",
+    "volume": "8 L",
+    "price": "10 USD",
+    "to_hit": -1,
+    "material": "dry_plant",
+    "symbol": "[",
+    "color": "light_gray",
+    "covers": [ "torso" ],
+    "coverage": 30,
+    "encumbrance": 12,
+    "storage": "15 L",
+    "material_thickness": 2,
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+  },
+  {
     "id": "suitcase_l",
     "repairs_like": "backpack_hiking",
     "type": "ARMOR",

@@ -85,9 +85,6 @@ static const mtype_id mon_chicken( "mon_chicken" );
 static const mtype_id mon_cow( "mon_cow" );
 static const mtype_id mon_horse( "mon_horse" );
 
-static const bionic_id bio_power_storage( "bio_power_storage" );
-static const bionic_id bio_power_storage_mkII( "bio_power_storage_mkII" );
-
 struct itype;
 
 void spawn_animal( npc &p, const mtype_id &mon );
@@ -314,8 +311,8 @@ void talk_function::goto_location( npc &p )
         destination = g->u.global_omt_location();
     }
     p.goal = destination;
-    p.omt_path = overmap_buffer.get_travel_path( p.global_omt_location(), p.goal,
-                 overmap_path_params::for_npc() );
+    p.omt_path = get_overmapbuffer( p.get_dimension() ).get_travel_path(
+                     p.global_omt_location(), p.goal, overmap_path_params::for_npc() );
     if( destination == tripoint_abs_omt() || destination == overmap::invalid_tripoint ||
         p.omt_path.empty() ) {
         p.goal = npc::no_goal_point;
@@ -375,6 +372,11 @@ void talk_function::wake_up( npc &p )
     // TODO: Get mad at player for waking us up unless we're in danger
 }
 
+void talk_function::control_npc( npc &p )
+{
+    get_avatar().control_npc( p );
+}
+
 void talk_function::reveal_stats( npc &p )
 {
     character_display::disp_info( p );
@@ -426,17 +428,13 @@ void talk_function::bionic_remove( npc &p )
     std::vector<itype_id> bionic_types;
     std::vector<std::string> bionic_names;
     for( const bionic &bio : all_bio ) {
-        if( std::ranges::find( bionic_types,
-                               bio.info().itype() ) == bionic_types.end() ) {
-            if( bio.id != bio_power_storage ||
-                bio.id != bio_power_storage_mkII ) {
-                bionic_types.push_back( bio.info().itype() );
-                if( bio.info().itype().is_valid() ) {
-                    item *tmp = item::spawn_temporary( bio.id.str(), calendar::start_of_cataclysm );
-                    bionic_names.push_back( tmp->tname() + " - " + format_money( 50000 + ( tmp->price( true ) / 4 ) ) );
-                } else {
-                    bionic_names.push_back( bio.id.str() + " - " + format_money( 50000 ) );
-                }
+        if( std::ranges::find( bionic_types, bio.info().itype() ) == bionic_types.end() ) {
+            bionic_types.push_back( bio.info().itype() );
+            if( bio.info().itype().is_valid() ) {
+                item *tmp = item::spawn_temporary( bio.id.str(), calendar::start_of_cataclysm );
+                bionic_names.push_back( tmp->tname() + " - " + format_money( 50000 + ( tmp->price( true ) / 4 ) ) );
+            } else {
+                bionic_names.push_back( bio.id.str() + " - " + format_money( 50000 ) );
             }
         }
     }
@@ -613,7 +611,7 @@ void talk_function::buy_10_logs( npc &p )
     find_params.search_range = { 0, 1 };
     find_params.search_layers = { 0, 0 };
 
-    std::vector<tripoint_abs_omt> places = overmap_buffer.find_all(
+    std::vector<tripoint_abs_omt> places = ACTIVE_OVERMAP_BUFFER.find_all(
             get_player_character().global_omt_location(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
@@ -622,7 +620,7 @@ void talk_function::buy_10_logs( npc &p )
     const auto &cur_om = g->get_cur_om();
     std::vector<tripoint_abs_omt> places_om;
     for( const tripoint_abs_omt &i : places ) {
-        if( &cur_om == overmap_buffer.get_existing_om_global( i ).om ) {
+        if( &cur_om == ACTIVE_OVERMAP_BUFFER.get_existing_om_global( i ).om ) {
             places_om.push_back( i );
         }
     }
@@ -645,7 +643,7 @@ void talk_function::buy_100_logs( npc &p )
     find_params.search_layers = { 0, 0 };
 
     std::vector<tripoint_abs_omt> places =
-        overmap_buffer.find_all( get_player_character().global_omt_location(), find_params );
+        ACTIVE_OVERMAP_BUFFER.find_all( get_player_character().global_omt_location(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;
@@ -653,7 +651,7 @@ void talk_function::buy_100_logs( npc &p )
     const auto &cur_om = g->get_cur_om();
     std::vector<tripoint_abs_omt> places_om;
     for( auto &i : places ) {
-        if( &cur_om == overmap_buffer.get_existing_om_global( i ).om ) {
+        if( &cur_om == ACTIVE_OVERMAP_BUFFER.get_existing_om_global( i ).om ) {
             places_om.push_back( i );
         }
     }
@@ -840,6 +838,11 @@ void talk_function::lead_to_safety( npc &p )
 
 bool npc_trading::pay_npc( npc &np, int cost )
 {
+    // Free items should never trigger trading
+    if( cost <= 0 ) {
+        return true;
+    }
+
     if( np.op_of_u.owed >= cost ) {
         np.op_of_u.owed -= cost;
         return true;
@@ -952,7 +955,7 @@ void talk_function::set_npc_pickup( npc &p )
 void talk_function::npc_die( npc &p )
 {
     p.die( nullptr );
-    const shared_ptr_fast<npc> guy = overmap_buffer.find_npc( p.getID() );
+    const shared_ptr_fast<npc> guy = get_overmapbuffer( p.get_dimension() ).find_npc( p.getID() );
     if( guy && !guy->is_dead() ) {
         guy->marked_for_death = true;
     }

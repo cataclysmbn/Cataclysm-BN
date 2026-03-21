@@ -18,7 +18,8 @@
     "encumbrance": 15,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_TAIL_SNAKE", "ALLOWS_HOOVES" ]
+    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_TAIL_SNAKE", "ALLOWS_HOOVES" ],
+    "qualities": [ [ "SLEEP_AID", 1 ] ]
   },
   {
     "id": "blanket",

@@ -1,0 +1,11 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "underground_dynamic_temperature",
+    "name": "Underground Dynamic Temperature",
+    "authors": [ "NappingOcean" ],
+    "description": "Enables underground dynamic temperature that is influenced by surface weather conditions. Underground temperatures will gradually transition from surface temperature (z=-1: 50% influence, z=-2: 25%, z<=-3: 0% - annual average only).",
+    "category": "rebalance",
+    "dependencies": [ "bn" ]
+  }
+]

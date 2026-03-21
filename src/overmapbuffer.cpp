@@ -1,4 +1,5 @@
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 
 #include <algorithm>
 #include <cassert>
@@ -12,6 +13,7 @@
 #include <future>
 
 #include "avatar.h"
+#include "batch_turns.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "character_id.h"
@@ -39,6 +41,7 @@
 #include "popup.h"
 #include "rng.h"
 #include "simple_pathfinding.h"
+#include "thread_pool.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
@@ -47,6 +50,7 @@
 #include "vehicle_part.h"
 #include "profile.h"
 #include "world.h"
+#include "fluid_grid.h"
 
 class map_extra;
 
@@ -54,8 +58,6 @@ template<typename _Mutex>
 using write_lock = std::unique_lock< _Mutex >;
 template<typename _Mutex>
 using read_lock = std::shared_lock< _Mutex >;
-
-overmapbuffer overmap_buffer;
 
 overmapbuffer::overmapbuffer()
 {
@@ -94,12 +96,12 @@ overmap &overmapbuffer::get( const point_abs_om &p )
 
         // That constructor loads an existing overmap or creates a new one.
         assert( overmaps.find( p ) == overmaps.end() );
-        overmaps[p] = std::make_unique<overmap>( p );
+        overmaps[p] = std::make_unique<overmap>( p, dimension_id_ );
         new_om = overmaps[p].get();
     }
     // Note: fix_mongroups might load other overmaps, so overmaps.back() is not
     // necessarily the overmap at (x,y)
-    new_om->populate();
+    new_om->populate( dimension_id_ );
     fix_mongroups( *new_om );
     fix_npcs( *new_om );
 
@@ -111,45 +113,65 @@ void overmapbuffer::create_custom_overmap( const point_abs_om &p, overmap_specia
     overmap *new_om;
     {
         write_lock<std::shared_mutex> _l( mutex );
-        overmaps[p] = std::make_unique<overmap>( p );
+        overmaps[p] = std::make_unique<overmap>( p, dimension_id_ );
         new_om = overmaps[p].get();
     }
-    new_om->populate( specials );
+    new_om->populate( dimension_id_, specials );
 }
 
 void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
 {
-    using overmap_loc = std::pair<point_abs_om, std::unique_ptr<overmap>>;
+    struct pending {
+        point_abs_om                          loc;
+        std::future<std::unique_ptr<overmap>> future;
+    };
+    std::vector<pending> futures;
+    futures.reserve( locs.size() );
 
-    std::vector<std::future<overmap_loc>> async_data;
-    for( auto &loc : locs ) {
-        if( overmap_buffer.has( loc ) ) {
-            continue;
+    for( const point_abs_om &loc : locs ) {
+        {
+            std::shared_lock lock( mutex );
+            if( overmaps.count( loc ) ) {
+                continue;
+            }
         }
-
-        auto gen_func = [&]() {
-            auto map = std::make_unique<overmap>( loc );
-            map->populate();
-            fix_mongroups( *map );
-            fix_npcs( *map );
-            return std::make_pair( loc, std::move( map ) );
-        };
-        async_data.push_back( std::async( std::launch::async, gen_func ) );
+        // Capture loc by value — [&] would reference the loop variable, which
+        // advances each iteration, creating a latent race if threads outlive the loop.
+        // fix_mongroups / fix_nemesis / fix_npcs access shared overmap state and must
+        // run inside the write lock below, NOT inside the async lambda.
+        auto dim_id = dimension_id_;
+        futures.push_back( { loc, get_thread_pool().submit_returning( [loc, dim_id] {
+                auto om = std::make_unique<overmap>( loc, dim_id );
+                om->populate( dim_id );
+                return om;
+            } ) } );
     }
 
+    // Non-blocking scan: insert each overmap as soon as its future is ready rather
+    // than waiting for all futures to complete before any insertion occurs.
+    // This reduces peak memory (overmaps are freed as inserted) and allows early
+    // results to be visible to subsequent generate() calls.
     auto popup = make_shared_fast<throbber_popup>( _( "Please wait..." ) );
-    for( auto &f : async_data ) {
-        while( f.wait_for( std::chrono::milliseconds( 10 ) ) != std::future_status::ready ) {
-            popup->refresh();
-        }
-    }
-
-    {
-        write_lock<std::shared_mutex> _l( mutex );
-        for( auto &m : async_data ) {
-            auto result = m.get();
-            overmaps[result.first] = std::move( result.second );
-        }
+    while( !futures.empty() ) {
+        futures.erase( std::remove_if( futures.begin(), futures.end(), [&]( pending & p ) {
+            if( p.future.wait_for( std::chrono::milliseconds( 0 ) ) !=
+                std::future_status::ready ) {
+                return false;
+            }
+            auto om = p.future.get();
+            {
+                write_lock<std::shared_mutex> _l( mutex );
+                // fix_mongroups, fix_nemesis, and fix_npcs all access shared overmap
+                // state (iterating / relocating mongroups and NPCs across overmaps).
+                // Running them inside the write lock prevents data races with readers.
+                fix_mongroups( *om );
+                fix_nemesis( *om );  // was absent in the original; added here
+                fix_npcs( *om );
+                overmaps.emplace( p.loc, std::move( om ) );
+            }
+            return true;
+        } ), futures.end() );
+        popup->refresh();
     }
 }
 
@@ -183,6 +205,33 @@ void overmapbuffer::fix_mongroups( overmap &new_overmap )
         mg.pos = tripoint_om_sm( sm_rem, mg.pos.z() );
         om.add_mon_group( mg );
         new_overmap.zg.erase( it++ );
+    }
+}
+
+void overmapbuffer::fix_nemesis( overmap &new_overmap )
+{
+    for( auto it = new_overmap.zg.begin(); it != new_overmap.zg.end(); ) {
+        mongroup &mg = it->second;
+
+        if( mg.horde_behaviour != "nemesis" ) {
+            ++it;
+            continue;
+        }
+
+        if( project_to<coords::om>( mg.abs_pos.xy() ) == new_overmap.pos() ) {
+            ++it;
+            continue;
+        }
+
+        point_abs_om omp;
+        point_om_sm sm_rem;
+        std::tie( omp, sm_rem ) = project_remain<coords::om>( mg.abs_pos.xy() );
+
+        overmap &om = get( omp );
+        mg.pos = tripoint_om_sm( sm_rem, mg.pos.z() );
+        om.add_mon_group( mg );
+        new_overmap.zg.erase( it++ );
+        break;
     }
 }
 
@@ -238,14 +287,22 @@ void overmapbuffer::fix_npcs( overmap &new_overmap )
     }
 }
 
-void overmapbuffer::save()
+void overmapbuffer::save( const std::string &dim_id )
 {
     read_lock<std::shared_mutex> _l( mutex );
 
     for( auto &omp : overmaps ) {
         // Note: this may throw io errors from std::ofstream
-        omp.second->save();
+        omp.second->save( dim_id );
     }
+}
+
+void overmapbuffer::save()
+{
+    // Legacy overload: routes through g_active_dimension_id.
+    // save_all_overmapbuffers() calls save(dim_id) directly to avoid needing
+    // to mutate the global and to allow parallel execution.
+    save( g_active_dimension_id );
 }
 
 void overmapbuffer::clear()
@@ -255,6 +312,8 @@ void overmapbuffer::clear()
     overmaps.clear();
     known_non_existing.clear();
     placed_unique_specials.clear();
+    current_bounds_.reset();
+    fluid_grid::clear();
 }
 
 const regional_settings &overmapbuffer::get_settings( const tripoint_abs_omt &p )
@@ -266,6 +325,7 @@ const regional_settings &overmapbuffer::get_settings( const tripoint_abs_omt &p 
 void overmapbuffer::add_note( const tripoint_abs_omt &p, const std::string &message )
 {
     overmap_with_local_coords om_loc = get_om_global( p );
+    auto lk = std::lock_guard( extras_mutex_ );
     om_loc.om->add_note( om_loc.local, message );
 }
 
@@ -287,14 +347,23 @@ void overmapbuffer::mark_note_dangerous( const tripoint_abs_omt &p, int radius, 
 
 void overmapbuffer::add_extra( const tripoint_abs_omt &p, const string_id<map_extra> &id )
 {
+    // get_om_global acquires+releases mutex internally; acquire extras_mutex_ afterwards
+    // so generation workers can add extras concurrently without deadlocking on mutex.
     overmap_with_local_coords om_loc = get_om_global( p );
+    auto lk = std::lock_guard( extras_mutex_ );
     om_loc.om->add_extra( om_loc.local, id );
 }
 
 void overmapbuffer::delete_extra( const tripoint_abs_omt &p )
 {
-    if( has_extra( p ) ) {
-        overmap_with_local_coords om_loc = get_om_global( p );
+    // Consolidate the has_extra check and the delete under a single extras_mutex_ acquisition
+    // to avoid a TOCTOU window between the check and the erase.
+    const overmap_with_local_coords om_loc = get_existing_om_global( p );
+    if( !om_loc ) {
+        return;
+    }
+    auto lk = std::lock_guard( extras_mutex_ );
+    if( om_loc.om->has_extra( om_loc.local ) ) {
         om_loc.om->delete_extra( om_loc.local );
     }
 }
@@ -420,6 +489,7 @@ const std::string &overmapbuffer::note( const tripoint_abs_omt &p )
 bool overmapbuffer::has_extra( const tripoint_abs_omt &p )
 {
     if( const overmap_with_local_coords om_loc = get_existing_om_global( p ) ) {
+        auto lk = std::lock_guard( extras_mutex_ );
         return om_loc.om->has_extra( om_loc.local );
     }
     return false;
@@ -428,6 +498,7 @@ bool overmapbuffer::has_extra( const tripoint_abs_omt &p )
 const string_id<map_extra> &overmapbuffer::extra( const tripoint_abs_omt &p )
 {
     if( const overmap_with_local_coords om_loc = get_existing_om_global( p ) ) {
+        auto lk = std::lock_guard( extras_mutex_ );
         return om_loc.om->extra( om_loc.local );
     }
     static const string_id<map_extra> id;
@@ -464,7 +535,7 @@ void overmapbuffer::toggle_path( const tripoint_abs_omt &p )
 
 bool overmapbuffer::has_horde( const tripoint_abs_omt &p )
 {
-    for( const auto &m : overmap_buffer.monsters_at( p ) ) {
+    for( const auto &m : monsters_at( p ) ) {
         if( m->horde ) {
             return true;
         }
@@ -476,7 +547,7 @@ bool overmapbuffer::has_horde( const tripoint_abs_omt &p )
 int overmapbuffer::get_horde_size( const tripoint_abs_omt &p )
 {
     int horde_size = 0;
-    for( const auto &m : overmap_buffer.monsters_at( p ) ) {
+    for( const auto &m : monsters_at( p ) ) {
         if( m->horde ) {
             if( !m->monsters.empty() ) {
                 horde_size += m->monsters.size();
@@ -543,11 +614,18 @@ void overmapbuffer::signal_hordes( const tripoint_abs_sm &center, const int sig_
     }
 }
 
+void overmapbuffer::signal_nemesis( const tripoint_abs_sm p )
+{
+    for( std::pair<const point_abs_om, std::unique_ptr<overmap>> &omp : overmaps ) {
+        omp.second->signal_nemesis( p );
+    }
+}
+
 void overmapbuffer::process_mongroups()
 {
     ZoneScoped;
     // arbitrary radius to include nearby overmaps (aside from the current one)
-    const auto radius = MAPSIZE * 2;
+    const auto radius = g_mapsize * 2;
     // TODO: fix point types
     const tripoint_abs_sm center( get_player_character().global_sm_location() );
     for( auto &om : get_overmaps_near( center, radius ) ) {
@@ -560,11 +638,36 @@ void overmapbuffer::move_hordes()
     ZoneScoped;
 
     // arbitrary radius to include nearby overmaps (aside from the current one)
-    const auto radius = MAPSIZE * 2;
+    const auto radius = g_mapsize * 2;
     // TODO: fix point types
     const tripoint_abs_sm center( get_player_character().global_sm_location() );
     for( auto &om : get_overmaps_near( center, radius ) ) {
         om->move_hordes();
+    }
+}
+
+void overmapbuffer::add_nemesis( const tripoint_abs_omt &p )
+{
+    const tripoint_abs_om loc = project_to<coords::om>( p );
+    overmap &om = get( loc.xy() );
+    om.place_nemesis( p );
+}
+
+void overmapbuffer::move_nemesis()
+{
+    for( std::pair<const point_abs_om, std::unique_ptr<overmap>> &omp : overmaps ) {
+        omp.second->move_nemesis();
+        fix_nemesis( *omp.second );
+    }
+}
+
+void overmapbuffer::remove_nemesis()
+{
+    for( std::pair<const point_abs_om, std::unique_ptr<overmap>> &omp : overmaps ) {
+        const bool nemesis_removed = omp.second->remove_nemesis();
+        if( nemesis_removed ) {
+            break;
+        }
     }
 }
 
@@ -677,8 +780,22 @@ void overmapbuffer::add_vehicle( vehicle *veh )
     veh->om_id = id;
 }
 
+void overmapbuffer::set_dimension_bounds( const dimension_bounds &bounds )
+{
+    current_bounds_ = bounds;
+    bounds_oter_id_ = bounds.boundary_overmap_terrain.id();
+}
+
+void overmapbuffer::clear_dimension_bounds()
+{
+    current_bounds_.reset();
+}
+
 bool overmapbuffer::seen( const tripoint_abs_omt &p )
 {
+    if( current_bounds_ && !current_bounds_->contains_omt( p ) ) {
+        return true;
+    }
     if( const overmap_with_local_coords om_loc = get_existing_om_global( p ) ) {
         return om_loc.om->seen( om_loc.local );
     }
@@ -697,12 +814,18 @@ void overmapbuffer::set_seen( const tripoint_abs_omt &p, bool seen )
 
 const oter_id &overmapbuffer::ter( const tripoint_abs_omt &p )
 {
+    if( current_bounds_ && !current_bounds_->contains_omt( p ) ) {
+        return bounds_oter_id_;
+    }
     const overmap_with_local_coords om_loc = get_om_global( p );
     return om_loc.om->ter( om_loc.local );
 }
 
 const oter_id &overmapbuffer::ter_existing( const tripoint_abs_omt &p )
 {
+    if( current_bounds_ && !current_bounds_->contains_omt( p ) ) {
+        return bounds_oter_id_;
+    }
     static const oter_id ot_null;
     const overmap_with_local_coords om_loc = get_existing_om_global( p );
     if( !om_loc.om ) {
@@ -823,22 +946,23 @@ overmap_path_params overmap_path_params::for_aircraft()
     return ret;
 }
 
-static int get_terrain_cost( const tripoint_abs_omt &omt_pos, const overmap_path_params &params )
+static int get_terrain_cost( const tripoint_abs_omt &omt_pos, const overmap_path_params &params,
+                             overmapbuffer &omb )
 {
-    if( params.only_known_by_player && !overmap_buffer.seen( omt_pos ) ) {
+    if( params.only_known_by_player && !omb.seen( omt_pos ) ) {
         return -1;
     }
-    if( params.avoid_danger && overmap_buffer.is_marked_dangerous( omt_pos ) ) {
+    if( params.avoid_danger && omb.is_marked_dangerous( omt_pos ) ) {
         return -1;
     }
-    const oter_id &oter = overmap_buffer.ter_existing( omt_pos );
+    const oter_id &oter = omb.ter_existing( omt_pos );
     if( is_ot_match( "road", oter, ot_match_type::type ) ||
         is_ot_match( "bridge", oter, ot_match_type::type ) ||
         is_ot_match( "bridge_road", oter, ot_match_type::type ) ||
         is_ot_match( "bridgehead_ground", oter, ot_match_type::type ) ||
         is_ot_match( "bridgehead_ramp", oter, ot_match_type::type ) ||
         is_ot_match( "road_nesw_manhole", oter, ot_match_type::type ) ||
-        overmap_buffer.is_path( omt_pos ) ) {
+        omb.is_path( omt_pos ) ) {
         return params.road_cost;
     } else if( is_ot_match( "field", oter, ot_match_type::type ) ) {
         return params.field_cost;
@@ -875,9 +999,9 @@ static int get_terrain_cost( const tripoint_abs_omt &omt_pos, const overmap_path
     }
 }
 
-static bool is_ramp( const tripoint_abs_omt &omt_pos )
+static bool is_ramp( const tripoint_abs_omt &omt_pos, overmapbuffer &omb )
 {
-    const oter_id &oter = overmap_buffer.ter_existing( omt_pos );
+    const oter_id &oter = omb.ter_existing( omt_pos );
     return is_ot_match( "bridgehead_ground", oter, ot_match_type::type ) ||
            is_ot_match( "bridgehead_ramp", oter, ot_match_type::type );
 }
@@ -890,11 +1014,11 @@ std::vector<tripoint_abs_omt> overmapbuffer::get_travel_path(
     }
 
     const pf::omt_scoring_fn estimate = [&]( tripoint_abs_omt pos ) {
-        const int cur_cost = pos == src ? 0 : get_terrain_cost( pos, params );
+        const int cur_cost = pos == src ? 0 : get_terrain_cost( pos, params, *this );
         if( cur_cost < 0 ) {
             return pf::omt_score::rejected;
         }
-        return pf::omt_score( cur_cost, is_ramp( pos ) );
+        return pf::omt_score( cur_cost, is_ramp( pos, *this ) );
     };
 
     constexpr int radius = 4 * OMAPX; // radius of search in OMTs = 4 overmaps
@@ -1147,7 +1271,7 @@ std::vector<tripoint_abs_omt> overmapbuffer::find_all( const tripoint_abs_omt &o
         const omt_find_params &params )
 {
     const auto concurrency = std::max( 1u, std::thread::hardware_concurrency() - 1 );
-    if( concurrency == 1 ) {
+    if( params.force_sync || concurrency == 1 ) {
         return find_all_sync( origin, params );
     } else {
         return find_all_async( origin, params );
@@ -1281,6 +1405,7 @@ std::vector<tripoint_abs_omt> overmapbuffer::find_all_async( const tripoint_abs_
             continue;
         }
 
+        //auto task_func = [params, this]( point_abs_om l,
         auto task_func = [&]( point_abs_om l,
         std::vector<std::pair<tripoint_abs_omt, tripoint_om_omt>> locals ) {
             std::vector<tripoint_abs_omt> result;
@@ -1309,7 +1434,7 @@ std::vector<tripoint_abs_omt> overmapbuffer::find_all_async( const tripoint_abs_
             return result;
         };
 
-        auto task = std::async( std::launch::async, task_func, task_om, std::move( task_omts ) );
+        auto task = get_thread_pool().submit_returning( task_func, task_om, std::move( task_omts ) );
 
         tasks.push_back( std::move( task ) );
 
@@ -1412,11 +1537,20 @@ void overmapbuffer::insert_npc( const shared_ptr_fast<npc> &who )
     assert( who );
     const tripoint_abs_omt npc_omt_pos = who->global_omt_location();
     const point_abs_om npc_om_pos = project_to<coords::om>( npc_omt_pos.xy() );
-    get( npc_om_pos ).insert_npc( who );
+    // get() acquires+releases mutex internally (may create the overmap).
+    // Lock npc_mutex_ separately afterwards so we never hold both simultaneously,
+    // preserving the locking order: mutex → npc_mutex_.
+    overmap &om = get( npc_om_pos );
+    std::lock_guard<std::mutex> lk( npc_mutex_ );
+    om.insert_npc( who );
 }
 
 shared_ptr_fast<npc> overmapbuffer::remove_npc( const character_id &id )
 {
+    // Hold a read lock on mutex for safe iteration over overmaps, then
+    // npc_mutex_ for the NPC container write.  Order: mutex → npc_mutex_.
+    read_lock<std::shared_mutex> rl( mutex );
+    std::lock_guard<std::mutex> lk( npc_mutex_ );
     for( auto &it : overmaps ) {
         if( const auto p = it.second->erase_npc( id ) ) {
             return p;
@@ -1491,8 +1625,12 @@ std::vector<shared_ptr_fast<npc>> overmapbuffer::get_companion_mission_npcs( int
 std::vector<shared_ptr_fast<npc>> overmapbuffer::get_npcs_near( const tripoint_abs_sm &p,
                                int radius )
 {
+    // get_overmaps_near() acquires+releases mutex internally; collect the list
+    // first so we hold npc_mutex_ only while reading NPC containers (not mutex).
+    auto nearby = get_overmaps_near( p.xy(), radius );
+    std::lock_guard<std::mutex> lk( npc_mutex_ );
     std::vector<shared_ptr_fast<npc>> result;
-    for( auto &it : get_overmaps_near( p.xy(), radius ) ) {
+    for( auto &it : nearby ) {
         auto temp = it->get_npcs( [&]( const npc & guy ) {
             // Global position of NPC, in submap coordinates
             // TODO: fix point types
@@ -1511,8 +1649,10 @@ std::vector<shared_ptr_fast<npc>> overmapbuffer::get_npcs_near( const tripoint_a
 std::vector<shared_ptr_fast<npc>> overmapbuffer::get_npcs_near_omt( const tripoint_abs_omt &p,
                                int radius )
 {
+    auto nearby = get_overmaps_near( project_to<coords::sm>( p.xy() ), radius );
+    std::lock_guard<std::mutex> lk( npc_mutex_ );
     std::vector<shared_ptr_fast<npc>> result;
-    for( auto &it : get_overmaps_near( project_to<coords::sm>( p.xy() ), radius ) ) {
+    for( auto &it : nearby ) {
         auto temp = it->get_npcs( [&]( const npc & guy ) {
             // Global position of NPC, in submap coordinates
             tripoint_abs_omt pos = guy.global_omt_location();
@@ -1718,24 +1858,50 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         monster *const placed = g->place_critter_at( make_shared_fast<monster>( this_monster ),
                                 local );
         if( placed ) {
+            // Keep pos_abs in sync with the placed local position.
+            placed->pos_abs = tripoint_abs_ms( ms.x, ms.y, p.z() );
+            // Batch-advance AI state for turns missed while despawned.
+            // Only applies to monsters with a valid (non-zero) last_updated timestamp.
+            // batch_turns() does NOT update last_updated so on_load() can still
+            // perform its biological catchup and sanity checks.
+            if( placed->last_updated > calendar::turn_zero &&
+                placed->last_updated < calendar::turn ) {
+                const int missed = to_turns<int>( calendar::turn - placed->last_updated );
+                placed->batch_turns( missed );
+            }
             placed->on_load();
         }
     } );
     om.monster_map->erase( current_submap_loc );
 }
 
+void overmapbuffer::discard_monster_map( const tripoint_abs_sm &p )
+{
+    auto abs_sm = p.xy();
+    point_om_sm sm;
+    point_abs_om omp;
+    std::tie( omp, sm ) = project_remain<coords::om>( abs_sm );
+    overmap &om = get( omp );
+    const tripoint_om_sm submap_loc( sm, p.z() );
+    om.monster_map->erase( submap_loc );
+}
+
 void overmapbuffer::despawn_monster( const monster &critter )
 {
-    // Get absolute coordinates of the monster in map squares, translate to submap position
-    // TODO: fix point types
-    tripoint_abs_sm abs_sm( ms_to_sm_copy( get_map().getabs( critter.pos() ) ) );
+    // pos_abs is stamped by game::despawn_monster() before this call, so no map context needed.
+    const tripoint_abs_sm abs_sm( ms_to_sm_copy( critter.pos_abs.raw() ) );
     // Get the overmap coordinates and get the overmap, sm is now local to that overmap
     point_abs_om omp;
     tripoint_om_sm sm;
     std::tie( omp, sm ) = project_remain<coords::om>( abs_sm );
     overmap &om = get( omp );
     // Store the monster using coordinates local to the overmap.
-    om.monster_map->insert( std::make_pair( sm, critter ) );
+    if( critter.is_nemesis() ) {
+        const tripoint_abs_omt abs_omt( ms_to_omt_copy( critter.pos_abs.raw() ) );
+        om.place_nemesis( abs_omt );
+    } else {
+        om.monster_map->insert( std::make_pair( sm, critter ) );
+    }
 }
 
 overmapbuffer::t_notes_vector overmapbuffer::get_notes( int z, const std::string *pattern )

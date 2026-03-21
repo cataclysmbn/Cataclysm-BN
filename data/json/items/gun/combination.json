@@ -14,7 +14,7 @@
     "volume": "3 L",
     "blackpowder_tolerance": 72,
     "clip_size": 1,
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "built_in_mods": [ "combination_gun_shotgun" ],
     "valid_mod_locations": [
       [ "accessories", 4 ],
@@ -45,7 +45,7 @@
     "weight": "2267 g",
     "volume": "2 L",
     "price_postapoc": "1250 cent",
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "built_in_mods": [ "combination_gun_shotgun_pipe" ],
     "extend": { "flags": "NEVER_JAMS" }
   }

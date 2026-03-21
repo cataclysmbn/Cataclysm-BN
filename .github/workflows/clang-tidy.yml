@@ -47,7 +47,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install \
-            cmake gettext ninja-build mold ccache jq \
+            cmake gettext ninja-build mold jq \
             libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer-dev libpulse-dev libflac-dev \
             sqlite3 libsqlite3-dev zlib1g-dev
 
@@ -60,10 +60,16 @@ jobs:
           done
 
       - name: Setup ccache
-        uses: Chocobo1/setup-ccache-action@v1
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          install_ccache: false
-          update_packager_index: false
+          key: clang-tidy-${{ github.ref_name }}
+          restore-keys: |
+            clang-tidy-${{ github.ref_name }}
+            clang-tidy-main
+            clang-tidy-
+          max-size: 500M
+          verbose: 2
+          save: ${{ github.event_name != 'pull_request' }}
 
       - name: add problem matcher
         run: |

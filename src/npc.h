@@ -283,24 +283,25 @@ const std::unordered_map<std::string, cbm_reserve_rule> cbm_reserve_strs = { {
     }
 };
 
-enum class ally_rule {
+enum class ally_rule : int {
     DEFAULT = 0,
-    use_guns = 1,
-    use_grenades = 2,
-    use_silent = 4,
-    avoid_friendly_fire = 8,
-    allow_pick_up = 16,
-    allow_bash = 32,
-    allow_sleep = 64,
-    allow_complain = 128,
-    allow_pulp = 256,
-    close_doors = 512,
-    follow_close = 1024,
-    avoid_doors = 2048,
-    hold_the_line = 4096,
-    ignore_noise = 8192,
-    forbid_engage = 16384,
-    follow_distance_2 = 32768
+    use_guns = 1 << 0,
+    use_grenades = 1 << 1,
+    use_silent = 1 << 2,
+    avoid_friendly_fire = 1 << 3,
+    allow_pick_up = 1 << 4,
+    allow_bash = 1 << 5,
+    allow_sleep = 1 << 6,
+    allow_complain = 1 << 7,
+    allow_pulp = 1 << 8,
+    close_doors = 1 << 9,
+    follow_close = 1 << 10,
+    avoid_doors = 1 << 11,
+    hold_the_line = 1 << 12,
+    ignore_noise = 1 << 13,
+    forbid_engage = 1 << 14,
+    follow_distance_2 = 1 << 15,
+    move_own_pace = 1 << 16,
 };
 
 struct ally_rule_data {
@@ -420,6 +421,13 @@ const std::unordered_map<std::string, ally_rule_data> ally_rule_strs = { {
                 ally_rule::follow_distance_2,
                 "<ally_rule_follow_distance_2_true_text>",
                 "<ally_rule_follow_distance_2_false_text>"
+            }
+        },
+        {
+            "move_own_pace", {
+                ally_rule::move_own_pace,
+                "<ally_rule_move_own_pace_true_text>",
+                "<ally_rule_move_own_pace_false_text>"
             }
         }
     }
@@ -873,7 +881,7 @@ class npc : public player
         int follow_distance() const;
 
         // Dialogue and bartering--see npctalk.cpp
-        void talk_to_u( bool radio_contact = false );
+        void talk_to_u( bool radio_contact = false, bool enforce_first_topic = false );
         // Re-roll the inventory of a shopkeeper
         void shop_restock();
         std::string get_restock_interval() const;
@@ -945,6 +953,10 @@ class npc : public player
         void decide_needs();
         void reboot();
         void die( Creature *killer ) override;
+        /**
+        * Deletes the npc without any death notifications.
+        */
+        void erase();
         bool is_dead() const;
         // How well we smash terrain (not corpses!)
         int smash_ability() const;
@@ -1009,6 +1021,19 @@ class npc : public player
         void move(); // Picks an action & a target and calls execute_action
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
+        /**
+         * Batch catchup: simulate up to MAX_CATCHUP_NPC missed turns.
+         * Calls npc_update_body() and process_turn() per iteration, then
+         * calls advance_job_progress(n) to fast-forward any ongoing activity.
+         */
+        void batch_turns( int n ) override;
+        /**
+         * Fast-forward the NPC's current activity by @p n turns.
+         * Grants the NPC enough move points (to_moves<int>(n)) to advance
+         * any ongoing player_activity, mirroring what on_load() does for
+         * destination/activity NPCs.
+         */
+        void advance_job_progress( int n );
 
         using Character::invoke_item;
         bool invoke_item( item *, const tripoint &pt ) override;
@@ -1289,6 +1314,15 @@ class npc : public player
         // Dummy point that indicates that the goal is invalid.
         static constexpr tripoint_abs_omt no_goal_point{ tripoint_min };
         time_point last_updated;
+
+        // ID of the dimension this NPC belongs to.  Empty string = primary dimension.
+        // Set when the NPC is spawned or loaded from a non-primary dimension submap.
+        // Persisted across saves so cross-dimension processing survives reload.
+        std::string dimension_id_;
+        const std::string &get_dimension() const override {
+            return dimension_id_;
+        }
+
         /**
          * Do some cleanup and caching as npc is being unloaded from map.
          */
@@ -1348,8 +1382,12 @@ class npc : public player
 class standard_npc : public npc
 {
     public:
+        // pos defaults to tripoint_min as a sentinel; the constructor body
+        // resolves it to tripoint( g_half_mapsize_x, g_half_mapsize_y, 0 ) at
+        // runtime so that the correct bubble-center is used regardless of the
+        // current REALITY_BUBBLE_SIZE setting.
         standard_npc( const std::string &name = "",
-                      const tripoint &pos = tripoint( HALF_MAPSIZE_X, HALF_MAPSIZE_Y, 0 ),
+                      const tripoint &pos = tripoint_min,
                       const std::vector<std::string> &clothing = {},
                       int sk_lvl = 4, int s_str = 8, int s_dex = 8, int s_int = 8, int s_per = 8 );
 };

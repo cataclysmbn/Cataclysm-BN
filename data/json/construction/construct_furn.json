@@ -713,6 +713,22 @@
   },
   {
     "type": "construction",
+    "id": "constr_charcoal_purifier",
+    "group": "build_char_purifier",
+    "category": "FURN",
+    "required_skills": [ [ "survival", 2 ] ],
+    "time": "25 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 1 } ], [ { "id": "CUT", "level": 1 } ] ],
+    "components": [
+      [ [ "wood_structural", 3, "LIST" ] ],
+      [ [ "birchbark", 12 ], [ "withered", 24 ], [ "straw_pile", 24 ], [ "string_36", 2 ] ]
+    ],
+    "pre_note": "Can be deconstructed without tools.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_char_purifier"
+  },
+  {
+    "type": "construction",
     "id": "constr_butcher_rack",
     "group": "build_butchering_rack",
     "category": "FURN",

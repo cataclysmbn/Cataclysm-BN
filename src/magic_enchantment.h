@@ -77,6 +77,13 @@ enum class mod : int {
     ITEM_ARMOR_ACID,
     ITEM_ARMOR_BIO,
     ITEM_ATTACK_COST,
+    // effects for ranged bonuses
+    RANGED_DISPERSION,
+    RANGED_DAMAGE_BULLET,
+    RANGED_ARMOR_PENETRATION,
+    RANGED_RANGE,
+    RANGED_RECOIL,
+    RANGED_RELOAD_TIME,
     NUM_MOD
 };
 } // namespace enchant_vals

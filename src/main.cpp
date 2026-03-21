@@ -674,6 +674,26 @@ int main( int argc, char *argv[] )
         }
     };
 
+#if defined(__ANDROID__)
+    if( !dir_exist( PATH_INFO::user_dir() ) ) {
+        check_dir_good( PATH_INFO::user_dir() );
+        std::string external_storage_path( SDL_AndroidGetExternalStoragePath() );
+        if( dir_exist( external_storage_path + "/config" ) ) {
+            std::filesystem::copy( external_storage_path + "/config", PATH_INFO::user_dir() + "config",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/font", PATH_INFO::user_dir() + "font",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/gfx", PATH_INFO::user_dir() + "gfx",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/save", PATH_INFO::user_dir() + "save",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/sound", PATH_INFO::user_dir() + "sound",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/templates", PATH_INFO::user_dir() + "templates",
+                                   std::filesystem::copy_options::recursive );
+        }
+    }
+#endif
     check_dir_good( PATH_INFO::user_dir() );
     check_dir_good( PATH_INFO::config_dir() );
     check_dir_good( PATH_INFO::savedir() );

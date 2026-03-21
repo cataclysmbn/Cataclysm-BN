@@ -321,7 +321,7 @@
     "volume": "500 ml",
     "price": "10 USD",
     "price_postapoc": "5 USD",
-    "material": "iron",
+    "material": "steel",
     "symbol": ",",
     "color": "light_gray",
     "flags": [ "NO_SALVAGE" ]

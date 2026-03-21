@@ -525,10 +525,10 @@ std::string recipe::batch_savings_string() const
            : _( "none" );
 }
 
-std::string recipe::result_name() const
+std::string recipe::result_name( const bool decorated ) const
 {
     std::string name = item::nname( result_ );
-    if( uistate.favorite_recipes.contains( this->ident() ) ) {
+    if( decorated && uistate.favorite_recipes.contains( this->ident() ) ) {
         name = "* " + name;
     }
 

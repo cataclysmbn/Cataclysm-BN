@@ -17,7 +17,7 @@
     "components": [ [ [ "withered", 3 ] ] ]
   },
   {
-    "result": "pellet",
+    "result": "crt_pellet",
     "type": "recipe",
     "category": "CC_AMMO",
     "subcategory": "CSC_AMMO_RIFLE",
@@ -28,6 +28,50 @@
     "batch_time_factors": [ 60, 5 ],
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 4 ] ],
     "charges": 1,
-    "using": [ [ "bullet_forming", 1 ], [ "ammo_bullet", 1 ] ]
+    "components": [ [ [ "lead", 1 ] ] ],
+    "using": [ [ "bullet_forming", 1 ] ]
+  },
+  {
+    "result": "crt_spellet",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_RIFLE",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 2 ],
+    "time": "90 s",
+    "batch_time_factors": [ 60, 5 ],
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 4 ] ],
+    "charges": 1,
+    "components": [ [ [ "scrap", 1 ] ] ],
+    "using": [ [ "bullet_forming", 1 ] ]
+  },
+  {
+    "result": "crt_supellet",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_RIFLE",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 2 ],
+    "time": "90 s",
+    "batch_time_factors": [ 60, 5 ],
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 4 ] ],
+    "charges": 50,
+    "components": [ [ [ "alloy_sheet", 1 ] ] ],
+    "using": [ [ "bullet_forming", 1 ] ]
+  },
+  {
+    "result": "crt_laser_pistol",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_RIFLE",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "autolearn": true,
+    "skills_required": [ "electronics", 5 ],
+    "time": "1 h",
+    "components": [ [ [ "lens", 2 ] ], [ [ "crt_laser_pistol_brk", 1 ] ] ],
+    "using": [ [ "soldering_standard", 50 ] ]
   }
 ]

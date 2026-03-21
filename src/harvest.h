@@ -25,6 +25,8 @@ struct harvest_entry {
     std::string type = "null";
     float mass_ratio = 0.00f;
 
+    bool no_auto_pickup = false;
+
     static harvest_entry load( const JsonObject &jo, const std::string &src );
 
     std::vector<flag_id> flags;

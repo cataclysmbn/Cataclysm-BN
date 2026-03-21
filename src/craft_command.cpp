@@ -274,8 +274,65 @@ detached_ptr<item> craft_command::create_in_progress_craft()
 
     new_craft->set_cached_tool_selections( tool_selections );
     new_craft->set_tools_to_continue( true );
-    // Pass true to indicate that we are starting the craft and the remainder should be consumed as well
-    crafter->craft_consume_tools( *new_craft, 1, true );
+
+    for( const comp_selection<tool_comp> &tool_sel : tool_selections ) {
+        const auto type = tool_sel.comp.type;
+        if( tool_sel.comp.count > 0 ) {
+            const auto full_cost = tool_sel.comp.count * batch_size;
+            switch( tool_sel.use_from ) {
+                case usage_from::player:
+                    if( !crafter->has_charges( type, full_cost ) ) {
+                        return detached_ptr<item>();
+                    }
+                    break;
+                case usage_from::map:
+                    if( !map_inv.has_charges( type, full_cost ) ) {
+                        return detached_ptr<item>();
+                    }
+                    break;
+                case usage_from::both:
+                    if( crafter->charges_of( type ) + map_inv.charges_of( type ) < full_cost ) {
+                        return detached_ptr<item>();
+                    }
+                    break;
+                case usage_from::none:
+                case usage_from::cancel:
+                case usage_from::num_usages_from:
+                    break;
+            }
+        } else {
+            switch( tool_sel.use_from ) {
+                case usage_from::player:
+                    if( !crafter->has_amount( type, 1 ) ) {
+                        return detached_ptr<item>();
+                    }
+                    break;
+                case usage_from::map:
+                    if( !map_inv.has_tools( type, 1 ) ) {
+                        return detached_ptr<item>();
+                    }
+                    break;
+                case usage_from::both:
+                    if( crafter->amount_of( type ) + map_inv.amount_of( type ) < 1 ) {
+                        return detached_ptr<item>();
+                    }
+                    break;
+                case usage_from::none:
+                case usage_from::cancel:
+                case usage_from::num_usages_from:
+                    break;
+            }
+        }
+    }
+    for( const comp_selection<tool_comp> &tool : tool_selections ) {
+        if( tool.comp.count <= 0 ) {
+            continue;
+        }
+        auto to_consume = tool;
+        to_consume.comp.count *= batch_size;
+        crafter->consume_tools( to_consume, 1 );
+    }
+    new_craft->set_var( "craft_tools_fully_prepaid", 1 );
     new_craft->set_next_failure_point( *crafter );
 
     return new_craft;

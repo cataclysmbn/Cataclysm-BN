@@ -245,7 +245,7 @@ static int compute_default_effective_kcal( const item &comest, const Character &
         kcal *= 0.75f;
     }
 
-    if( comest.get_kcal_mult() > 1 ) {
+    if( get_option<bool>( "cooking_kcal_buff" ) && comest.get_kcal_mult() > 1 ) {
         kcal *= comest.get_kcal_mult();
     }
     if( you.has_trait( trait_GIZZARD ) ) {

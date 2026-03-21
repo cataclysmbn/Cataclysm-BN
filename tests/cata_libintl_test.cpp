@@ -374,7 +374,7 @@ TEST_CASE( "mo_plurals_calculation", "[libintl][i18n][.]" )
 // For some languages Transifex defines additional plural form for fractions.
 // Neither GNU gettext nor Cata's implementation support fractional numbers, so
 // the extra plural form goes unused. Relevant issue:
-// https://github.com/cataclysmbnteam/Cataclysm-BN/issues/432
+// https://github.com/cataclysmbn/Cataclysm-BN/issues/432
 //
 // This test reaffirms the assumption that both Transifex's and GNU's plf expressions
 // produce same values for integer numbers.

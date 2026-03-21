@@ -1,0 +1,77 @@
+[
+  {
+    "type": "mapgen",
+    "om_terrain": "water_tower_3zl",
+    "weight": 1000,
+    "method": "json",
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "........................",
+        "........................",
+        "....,,,,,,,,,,,,,,,,....",
+        "...,,MMMmMMMMMMMMMM,,...",
+        "..,,MM &          MM,,..",
+        "..,MM              MM,..",
+        "..,M                M,..",
+        "..,M                M,..",
+        "..,M                M,..",
+        "..,M                M,..",
+        "..,M      M  M      M,..",
+        "..,M       >>       M,..",
+        "..,M       <<       M,..",
+        "..,M      M  M      M,..",
+        "..,M                M,..",
+        "..,M                M,..",
+        "..,M                M,..",
+        "..,M                M,..",
+        "..,MM              MM,..",
+        "..,,MM            MM,,..",
+        "...,,MMMMMMMMMMMMMM,,...",
+        "....,,,,,,,,,,,,,,,,....",
+        "........................",
+        "........................"
+      ],
+      "palettes": [ "water_tower" ],
+      "terrain": { "m": "t_door_metal_locked", "&": "t_gates_control_metal", " ": "t_metal_floor", ",": "t_bridge", ".": "t_open_air" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "om_terrain": "water_tower_3zl",
+    "weight": 100,
+    "method": "json",
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "........................",
+        "........................",
+        "....,,,,,,,,,,,,,,,,....",
+        "...,,MMMmMMMMMMMMMM,,...",
+        "..,,MMl&  WTTTx   MM,,..",
+        "..,MM              MM,..",
+        "..,M                M,..",
+        "..,M                M,..",
+        "..,M              BBM,..",
+        "..,M                M,..",
+        "..,M      M  M    BBM,..",
+        "..,M       >>       M,..",
+        "..,M       <<     BBM,..",
+        "..,M      M  M      M,..",
+        "..,M                M,..",
+        "..,M                M,..",
+        "..,M                M,..",
+        "..,M                M,..",
+        "..,MM              MM,..",
+        "..,,MM            MM,,..",
+        "...,,MMMMMMMMMMMMMM,,...",
+        "....,,,,,,,,,,,,,,,,....",
+        "........................",
+        "........................"
+      ],
+      "palettes": [ "water_tower" ],
+      "terrain": { "m": "t_door_metal_locked", "&": "t_gates_control_metal", " ": "t_metal_floor", ",": "t_bridge", ".": "t_open_air" },
+      "furniture": { "B": "f_bed", "l": "f_locker", "T": "f_table", "W": "f_woodstove", "x": "f_crate_o" }
+    }
+  }
+]

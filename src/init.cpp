@@ -25,6 +25,8 @@
 #include "catalua.h"
 #include "cata_utility.h"
 #include "catalua_impl.h"
+#include "lua_sidebar_widgets.h"
+#include "panels.h"
 #include "clothing_mod.h"
 #include "clzones.h"
 #include "construction.h"
@@ -106,6 +108,7 @@
 #include "vitamin.h"
 #include "weather.h"
 #include "weather_type.h"
+#include "world_type.h"
 #include "worldfactory.h"
 
 #if defined(TILES)
@@ -257,6 +260,7 @@ void DynamicDataLoader::initialize()
     add( "fault", &fault::load_fault );
     add( "field_type", &field_types::load );
     add( "weather_type", &weather_types::load );
+    add( "world_type", &world_types::load );
     add( "ammo_effect", &ammo_effects::load );
     add( "emit", &emit::load_emit );
     add( "activity_type", &activity_type::load );
@@ -633,6 +637,7 @@ void DynamicDataLoader::unload_data()
     vpart_info::reset();
     weapon_category::reset();
     weather_types::reset();
+    world_types::reset();
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
 #if defined(TILES)
@@ -641,6 +646,7 @@ void DynamicDataLoader::unload_data()
 
     // Has to be cleaned last in case one of the above data collections
     // holds references to Lua functions or tables.
+    cata::lua_sidebar_widgets::clear_widgets();
     lua.reset();
 }
 
@@ -663,6 +669,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Body parts" ), &body_part_type::finalize_all },
             { _( "Bionics" ), &bionic_data::finalize_all },
             { _( "Weather types" ), &weather_types::finalize_all },
+            { _( "World types" ), &world_types::finalize_all },
             { _( "Field types" ), &field_types::finalize_all },
             { _( "Ammo effects" ), &ammo_effects::finalize_all },
             { _( "Emissions" ), &emit::finalize },
@@ -746,6 +753,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             },
             { _( "Vitamins" ), &vitamin::check_consistency },
             { _( "Weather types" ), &weather_types::check_consistency },
+            { _( "World types" ), &world_types::check_consistency },
             { _( "Field types" ), &field_types::check_consistency },
             { _( "Ammo effects" ), &ammo_effects::check_consistency },
             { _( "Emissions" ), &emit::check_consistency },
@@ -855,6 +863,7 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
 
     DynamicDataLoader &loader = DynamicDataLoader::get_instance();
 
+    cata::lua_sidebar_widgets::clear_widgets();
     loader.lua = cata::make_wrapped_state();
 
     cata::init_global_state_tables( *loader.lua, available );
@@ -875,7 +884,7 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
         }
     }
 
-    cata::reg_lua_iuse_actors( *loader.lua, *item_controller );
+    cata::reg_lua_icallback_actors( *loader.lua, *item_controller );
 
     for( const mod_id &mod : available ) {
         loader.load_data_from_path( mod->path, mod.str(), ui );
@@ -883,6 +892,8 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
     }
 
     loader.finalize_loaded_data( ui );
+
+    cata::resolve_lua_bionic_and_mutation_callbacks();
 
     for( const mod_id &mod : available ) {
         if( mod->lua_api_version ) {
@@ -909,7 +920,9 @@ auto init::load_main_lua_scripts( cata::lua_state &state, const std::vector<mod_
         cata::set_mod_being_loaded( state, mod );
         cata::run_mod_main_script( state, mod );
     }
-    return std::ranges::distance( range );
+    const auto loaded = std::ranges::distance( range );
+    panel_manager::get_manager().sync_lua_panels();
+    return loaded;
 }
 
 bool init::is_data_loaded()
@@ -1037,7 +1050,7 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
 
         // TODO: Why would we need these calls?
         MAPBUFFER.clear();
-        overmap_buffer.clear();
+        ACTIVE_OVERMAP_BUFFER.clear();
     }
 
     return !debug_has_error_been_observed();

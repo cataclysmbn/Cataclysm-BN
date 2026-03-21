@@ -123,6 +123,12 @@
     "info": "This item <info>provides</info> instructions and other required data for several bionics, allowing installation of them with <good>minimal failure chance</good>."
   },
   {
+    "id": "GENOME_DRIVE",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "info": "This item stores <info>genetic data</info> for a genome workstation."
+  },
+  {
     "id": "BIONIC_NPC_USABLE",
     "type": "json_flag",
     "context": [ "BIONIC_ITEM" ],
@@ -134,6 +140,12 @@
     "context": [ "ARMOR", "TOOL_ARMOR" ],
     "//": "Blinds the wearer while worn, and provides nominal protection vs flashbang flashes.",
     "info": "This gear <bad>prevents</bad> you from <info>seeing</info> anything."
+  },
+  {
+    "id": "BLINDS_EYES_ON_HIT",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "When thrown and it hits a creature's head, it can <bad>blind</bad> them."
   },
   {
     "id": "EFFECT_NIGHT_VISION",
@@ -607,6 +619,13 @@
     "info": "Any creature spawned from this item will <info>always</info> emerge <good>friendly to you</good>."
   },
   {
+    "id": "SPAWN_HOSTILE",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "//": "This item will spawn mean. Used for target dummies and such.",
+    "info": "Any creature spawned from this item will <info>always</info> emerge <bad>against you</good>."
+  },
+  {
     "id": "STAB",
     "type": "json_flag",
     "context": [ "GENERIC", "TOOL" ]
@@ -785,6 +804,12 @@
     "type": "json_flag",
     "context": [  ],
     "info": "This item can be used to <info>pick locks</info> with <good>zero effort</good>."
+  },
+  {
+    "id": "DURABLE_LOCKPICK",
+    "type": "json_flag",
+    "context": [  ],
+    "//": "takes no damage from normal use"
   },
   {
     "id": "RAINPROOF",
@@ -1552,6 +1577,11 @@
     "context": [  ]
   },
   {
+    "id": "FAKE_CLONING_VAT",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "FAKE_SMOKE",
     "type": "json_flag",
     "context": [  ]
@@ -1619,7 +1649,14 @@
   {
     "id": "GNV_EFFECT",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "info": "This gear <good>enhances your vision</good> when worn, and <info>tints your field of view</info>."
+  },
+  {
+    "id": "RECON_VISION",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>enhances your vision</good> when worn."
   },
   {
     "id": "HELMET_COMPAT",
@@ -1669,7 +1706,8 @@
   {
     "id": "IR_EFFECT",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "info": "This gear allows you to <good>see heat signatures</good> when worn."
   },
   {
     "id": "IS_ARMOR",
@@ -2098,6 +2136,12 @@
     "context": [  ]
   },
   {
+    "id": "NET_TANGLE",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "Thrown nets apply the NET_TANGLE ammo effect to nearby creatures."
+  },
+  {
     "id": "TARDIS",
     "type": "json_flag",
     "context": [  ]
@@ -2293,6 +2337,12 @@
     "context": [  ]
   },
   {
+    "id": "FLY_STRAIGHT",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "info": "This thrown item <info>flies straight</info> without rotating in the air, maintaining its aerodynamic orientation."
+  },
+  {
     "id": "LEAK_ALWAYS",
     "type": "json_flag",
     "context": [  ]
@@ -2395,5 +2445,95 @@
     "type": "json_flag",
     "info": "You have marked this article to not display a sprite when worn.",
     "context": [ "ARMOR", "TOOL_ARMOR" ]
+  },
+  {
+    "id": "INITIALLY_ACTIVATE",
+    "type": "json_flag",
+    "//": "Used on bionics, sets them to be active once installed",
+    "context": [  ]
+  },
+  {
+    "id": "BIONIC_TOOLS",
+    "type": "json_flag",
+    "//": "Used on bionics and fake bionic items, invalidates crafting inventory on activate or makes them usable with bionic power",
+    "context": [  ]
+  },
+  {
+    "id": "MULTIINSTALL",
+    "type": "json_flag",
+    "//": "Lets you install multiple copies of this bionic",
+    "context": [  ]
+  },
+  {
+    "id": "TEMPORARY_ITEM",
+    "type": "json_flag",
+    "//": "Set in game on fake items for their special processing",
+    "context": [  ]
+  },
+  {
+    "id": "TINT_NO_FG",
+    "type": "json_flag",
+    "//": "Do not apply tint to background",
+    "context": [  ]
+  },
+  {
+    "id": "TINT_NO_BG",
+    "type": "json_flag",
+    "//": "Do not apply tint to foreground",
+    "context": [  ]
+  },
+  {
+    "id": "TINT_NONE",
+    "type": "json_flag",
+    "//": "Do not apply tint",
+    "context": [  ]
+  },
+  {
+    "id": "VEHICLE_UNLOCKED",
+    "type": "json_flag",
+    "//": "Marks a vehicle to always spawn unlocked, but possibly requiring hotwiring",
+    "context": [  ]
+  },
+  {
+    "id": "VEHICLE_LOCKED",
+    "type": "json_flag",
+    "//": "Marks a vehicle to always spawn locked, and possibly requiring hotwiring",
+    "context": [  ]
+  },
+  {
+    "id": "VEHICLE_NO_LOCKS",
+    "type": "json_flag",
+    "//": "Marks a vehicle to not get locks installed automatically",
+    "context": [  ]
+  },
+  {
+    "id": "VEHICLE_HOTWIRE",
+    "type": "json_flag",
+    "//": "Marks a vehicle to always requiring hotwiring controls",
+    "context": [  ]
+  },
+  {
+    "id": "VEHICLE_NO_HOTWIRE",
+    "type": "json_flag",
+    "//": "Marks a vehicle to never require hotwiring controls (e.g bycicles)",
+    "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_ADDED",
+    "type": "json_flag",
+    "//": "",
+    "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_TICK",
+    "type": "json_flag",
+    "//": "",
+    "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_REMOVED",
+    "type": "json_flag",
+    "//": "",
+    "context": [  ]
   }
 ]

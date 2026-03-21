@@ -416,7 +416,7 @@
     "volume": "3 L",
     "price": "35 USD",
     "price_postapoc": "750 cent",
-    "material": [ "cotton", "plastic" ],
+    "material": [ "cotton", "nylon" ],
     "symbol": "[",
     "looks_like": "coat_winter",
     "color": "green",
@@ -749,6 +749,7 @@
     "storage": "1 L",
     "warmth": 5,
     "material_thickness": 1,
+    "qualities": [ [ "SLEEP_AID", 3 ] ],
     "flags": [ "VARSIZE", "FANCY", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ]
   },
   {
@@ -839,6 +840,7 @@
     "storage": "3 L",
     "warmth": 20,
     "material_thickness": 2,
+    "qualities": [ [ "SLEEP_AID", 2 ] ],
     "flags": [ "VARSIZE", "OUTER", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ]
   },
   {
@@ -851,7 +853,7 @@
     "volume": "5 L",
     "price": "180 USD",
     "price_postapoc": "5 USD",
-    "material": [ "cotton", "plastic" ],
+    "material": [ "cotton", "nylon" ],
     "symbol": "[",
     "looks_like": "coat_winter",
     "color": "light_blue",
@@ -1346,7 +1348,7 @@
     "volume": "3 L",
     "price": "4375 cent",
     "price_postapoc": "750 cent",
-    "material": [ "cotton", "plastic" ],
+    "material": [ "cotton", "nylon" ],
     "symbol": "[",
     "looks_like": "coat_winter",
     "color": "white",

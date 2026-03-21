@@ -36,6 +36,7 @@
     "copy-from": "spice",
     "type": "COMESTIBLE",
     "name": { "str_sp": "salt" },
+    "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF", "BLINDS_EYES_ON_HIT" ],
     "description": "Yuck!  You surely wouldn't want to eat this.  It's good for preserving meat and cooking, though.",
     "color": "white"
   },
@@ -128,7 +129,7 @@
     "container": "bottle_glass",
     "primary_material": "water",
     "category": "cooking_ingredients",
-    "flags": [ "NO_COOKING_BUFF" ],
+    "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "quench": -20,
     "charges": 10,
     "healthy": -1,

@@ -22,6 +22,18 @@
         "msg": "You put in the earbuds and start listening to music.",
         "moves": 200
       },
+      {
+        "//": "40 xp/hr.  Tier 1, 0-3 skill, higher-tier EXP since requires power.",
+        "type": "train_skill",
+        "training_msg": "You fiddle with your phone’s settings and apps, picking up some basic computer knowledge.",
+        "training_skill": "computer",
+        "training_skill_min_level": 0,
+        "training_skill_xp": 8,
+        "training_skill_max_level": 3,
+        "training_skill_fatigue": 0,
+        "training_skill_interval": 12,
+        "training_skill_xp_chance": 90
+      },
       "ROBOTCONTROL"
     ]
   },

@@ -228,6 +228,23 @@ struct MinAdaptor {
     }
 };
 
+template <typename T, typename BinOp>
+struct FoldLeftAdaptor {
+    T init;
+    BinOp op;
+
+    explicit FoldLeftAdaptor( T i, BinOp o ) : init( std::move( i ) ), op( std::move( o ) ) {}
+
+    template <std::ranges::input_range R>
+    auto operator()( R &&r ) const {
+        auto accum = init;
+        for( auto &&elem : r ) {
+            accum = op( std::move( accum ), std::forward<decltype( elem )>( elem ) );
+        }
+        return accum;
+    }
+};
+
 template <typename Proj>
 inline auto max_by( Proj &&proj )
 {
@@ -246,6 +263,14 @@ inline auto min_by( Proj &&proj )
 inline auto min()
 {
     return MinAdaptor( std::identity{} );
+}
+
+/// std::ranges::fold_left but pipeable
+template <typename T, typename BinOp>
+inline auto fold_left( T &&init, BinOp &&op )
+{
+    return FoldLeftAdaptor<std::decay_t<T>, std::decay_t<BinOp>>(
+               std::forward<T>( init ), std::forward<BinOp>( op ) );
 }
 
 } // namespace ranges

@@ -99,12 +99,12 @@ Anmerkung #########
 
 Beachte: All diese Ansätze sind nur Notlösungen!
 
-Eine echte Lösung des Problems kann es eigentlich nur geben, wenn die Art, wie C:DDA diese Strings
+Eine echte Lösung des Problems kann es eigentlich nur geben, wenn die Art, wie C:BN diese Strings
 aufbaut, grundsätzlich ändert. :-(
 
 ## Problemwort: »bionics«
 
-C:DDA verwendet »bionic« als Wort für eine Art Implantat, nicht für ein Konzept wie in Wikipedia
+C:BN verwendet »bionic« als Wort für eine Art Implantat, nicht für ein Konzept wie in Wikipedia
 beschrieben (s.u.).
 
 So übersetzen wir es:

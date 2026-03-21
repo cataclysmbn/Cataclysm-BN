@@ -1,0 +1,15 @@
+[
+  {
+    "type": "palette",
+    "id": "water_tower",
+    "terrain": {
+      "<": "t_stairs_up",
+      ">": "t_stairs_down",
+      "M": "t_wall_metal",
+      "f": "t_chainfence",
+      "F": "t_chaingate_l",
+      "G": "t_reinforced_glass",
+      "+": "t_door_metal_c"
+    }
+  }
+]

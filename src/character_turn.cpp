@@ -4,6 +4,7 @@
 #include "bionics.h"
 #include "calendar.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_effects.h"
 #include "character_functions.h"
 #include "character_stat.h"
@@ -27,6 +28,7 @@
 #include "rng.h"
 #include "submap.h"
 #include "trap.h"
+#include "type_id.h"
 #include "units_temperature.h"
 #include "veh_type.h"
 #include "vehicle.h"
@@ -54,7 +56,6 @@ static const trait_id trait_INSECT_ARMS_OK( "INSECT_ARMS_OK" );
 static const trait_id trait_INSECT_ARMS( "INSECT_ARMS" );
 static const trait_id trait_LIGHTFUR( "LIGHTFUR" );
 static const trait_id trait_LUPINE_FUR( "LUPINE_FUR" );
-static const trait_id trait_M_IMMUNE( "M_IMMUNE" );
 static const trait_id trait_NOMAD( "NOMAD" );
 static const trait_id trait_NOMAD2( "NOMAD2" );
 static const trait_id trait_NOMAD3( "NOMAD3" );
@@ -63,6 +64,7 @@ static const trait_id trait_SLIMY( "SLIMY" );
 static const trait_id trait_STIMBOOST( "STIMBOOST" );
 static const trait_id trait_SUNLIGHT_DEPENDENT( "SUNLIGHT_DEPENDENT" );
 static const trait_id trait_THICK_SCALES( "THICK_SCALES" );
+static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const trait_id trait_URSINE_FUR( "URSINE_FUR" );
 static const trait_id trait_WEBBED( "WEBBED" );
 static const trait_id trait_WHISKERS_RAT( "WHISKERS_RAT" );
@@ -101,6 +103,7 @@ static const bionic_id bio_hydraulics( "bio_hydraulics" );
 static const bionic_id bio_speed( "bio_speed" );
 
 static const itype_id itype_UPS( "UPS" );
+static const itype_id itype_battery( "battery" );
 
 void Character::recalc_speed_bonus()
 {
@@ -311,7 +314,7 @@ void Character::process_turn()
             }
             // Find the amount of time passed since the player touched any of the overmap tile's submaps.
             const tripoint_abs_omt tpt( it->first, 0 );
-            const time_point last_touched = overmap_buffer.scent_at( tpt ).creation_time;
+            const time_point last_touched = ACTIVE_OVERMAP_BUFFER.scent_at( tpt ).creation_time;
             const time_duration since_visit = now - last_touched;
             // If the player has spent little time in this overmap tile, let it decay after just an hour instead of the usual extended decay time.
             const time_duration modified_decay_time = it->second > 5_minutes ? decay_time : 1_hours;
@@ -550,6 +553,20 @@ void Character::process_one_effect( effect &it, bool is_new )
     }
 
     // Speed and stats are handled in recalc_speed_bonus and reset_stats respectively
+
+    if( is_new && it.has_flag( flag_EFFECT_LUA_ON_ADDED ) ) {
+        cata::run_hooks( "on_character_effect_added", [ &, this ]( auto & params ) {
+            params["char"] = this;
+            params["effect"] = &it;
+        } );
+    }
+
+    if( it.has_flag( flag_EFFECT_LUA_ON_TICK ) ) {
+        cata::run_hooks( "on_character_effect", [ &, this ]( auto & params ) {
+            params["char"] = this;
+            params["effect"] = &it;
+        } );
+    }
 }
 
 void Character::process_effects_internal()
@@ -558,7 +575,8 @@ void Character::process_effects_internal()
     if( has_effect( effect_darkness ) && g->is_in_sunlight( pos() ) ) {
         remove_effect( effect_darkness );
     }
-    if( has_trait( trait_M_IMMUNE ) && has_effect( effect_fungus ) ) {
+    // Mycus can still accidentally get infected until they pick up immunity, but won't suffer from it.
+    if( has_trait( trait_THRESH_MYCUS ) && has_effect( effect_fungus ) ) {
         vomit();
         remove_effect( effect_fungus );
         add_msg_if_player( m_bad, _( "We have mistakenly colonized a local guide!  Purging now." ) );
@@ -807,7 +825,9 @@ void Character::reset_stats()
     recalc_sight_limits();
     recalc_speed_bonus();
 
-    cata::run_hooks( "on_character_reset_stats", [this]( auto & params ) { params["character"] = this; } );
+    cata::run_hooks( "on_character_reset_stats", [this]( auto & params ) {
+        params["character"] = this;
+    } );
 }
 
 void Character::environmental_revert_effect()
@@ -901,6 +921,7 @@ void Character::process_items()
     }
     if( update_required ) {
         reset_encumbrance();
+        set_check_encumbrance( false );
     }
     if( has_active_bionic( bionic_id( "bio_ups" ) ) ) {
         ch_UPS += std::min( units::to_kilojoule( get_power_level() ), 10 );
@@ -911,10 +932,14 @@ void Character::process_items()
         int used = std::min( ch_UPS, weap->ammo_capacity() - weap->ammo_remaining() );
         ch_UPS -= used;
         ch_UPS_used += used;
-        if( weap->ammo_current() != itype_id::NULL_ID() ) {
-            weap->ammo_set( weap->ammo_current(), weap->ammo_remaining() + used );
+        const itype_id ammo = weap->ammo_current();
+        if( !ammo.is_null() && ammo != itype_id::NULL_ID() ) {
+            weap->ammo_set( ammo, weap->ammo_remaining() + used );
+        } else if( weap->ammo_remaining() == 0 ) {
+            weap->ammo_set( itype_battery, weap->ammo_remaining() + used );
         } else {
-            weap->ammo_set( weap->ammo_default(), weap->ammo_remaining() + used );
+            ch_UPS_used -= used;
+            ch_UPS += used;
         }
     }
     // Load all items that use the UPS to their minimal functional charge,
@@ -927,10 +952,14 @@ void Character::process_items()
         int used = std::min( ch_UPS, it.ammo_capacity() - it.ammo_remaining() );
         ch_UPS -= used;
         ch_UPS_used += used;
-        if( it.ammo_current() != itype_id::NULL_ID() ) {
-            it.ammo_set( it.ammo_current(), it.ammo_remaining() + used );
+        const itype_id ammo = it.ammo_current();
+        if( !ammo.is_null() && ammo != itype_id::NULL_ID() ) {
+            it.ammo_set( ammo, it.ammo_remaining() + used );
+        } else if( it.ammo_remaining() == 0 ) {
+            it.ammo_set( itype_battery, it.ammo_remaining() + used );
         } else {
-            it.ammo_set( it.ammo_default(), it.ammo_remaining() + used );
+            ch_UPS_used -= used;
+            ch_UPS += used;
         }
     }
     for( item *worn_item : active_worn_items ) {
@@ -940,7 +969,15 @@ void Character::process_items()
         int used = std::min( ch_UPS, worn_item->ammo_capacity() - worn_item->ammo_remaining() );
         ch_UPS -= used;
         ch_UPS_used += used;
-        worn_item->ammo_set( worn_item->ammo_current(), worn_item->ammo_remaining() + used );
+        const itype_id ammo = worn_item->ammo_current();
+        if( !ammo.is_null() && ammo != itype_id::NULL_ID() ) {
+            worn_item->ammo_set( ammo, worn_item->ammo_remaining() + used );
+        } else if( worn_item->ammo_remaining() == 0 ) {
+            worn_item->ammo_set( itype_battery, worn_item->ammo_remaining() + used );
+        } else {
+            ch_UPS_used -= used;
+            ch_UPS += used;
+        }
     }
     if( ch_UPS_used > 0 ) {
         use_charges( itype_UPS, ch_UPS_used );
@@ -1042,7 +1079,6 @@ void do_pause( Character &who )
         }
 
         if( who.is_underwater() ) {
-            who.as_player()->practice( skill_swimming, 1 );
             who.drench( 100, { {
                     bodypart_str_id( "leg_l" ), bodypart_str_id( "leg_r" ), bodypart_str_id( "torso" ), bodypart_str_id( "arm_l" ),
                     bodypart_str_id( "arm_r" ), bodypart_str_id( "head" ), bodypart_str_id( "eyes" ), bodypart_str_id( "mouth" ),
@@ -1050,7 +1086,6 @@ void do_pause( Character &who )
                 }
             }, true );
         } else if( here.has_flag( TFLAG_DEEP_WATER, who.pos() ) ) {
-            who.as_player()->practice( skill_swimming, 1 );
             // Same as above, except no head/eyes/mouth
             who.drench( 100, { {
                     bodypart_str_id( "leg_l" ), bodypart_str_id( "leg_r" ), bodypart_str_id( "torso" ), bodypart_str_id( "arm_l" ),

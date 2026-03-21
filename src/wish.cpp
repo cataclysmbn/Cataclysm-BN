@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <ranges>
 
 #include "bionics.h"
 #include "calendar.h"
@@ -188,14 +189,10 @@ class wish_mutate_callback: public uilist_callback
                     }
                 }
 
-                if( !mdata.threshreq.empty() ) {
+                if( mdata.threshold_tier != 0 ) {
                     line2++;
-                    mvwprintz( menu->window, point( startx, line2 ), c_light_gray, _( "Thresholds required:" ) );
-                    for( const trait_id &j : mdata.threshreq ) {
-                        mvwprintz( menu->window, point( startx + 21, line2 ), mcolor( j ),
-                                   mutation_branch::get_name( j ) );
-                        line2++;
-                    }
+                    mvwprintz( menu->window, point( startx, line2 ), c_light_gray, _( "Threshold tier: %d" ),
+                               mdata.threshold_tier );
                 }
 
                 if( !mdata.cancels.empty() ) {
@@ -435,35 +432,51 @@ void debug_menu::wishbionics( Character &c )
                 break;
             }
             case 3: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in kJ)?  Currently: %s" ),
-                               units::display( power_max ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in kJ)?  Currently: %s" ),
+                                                  units::display( power_max ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_max_power_level( units::from_kilojoule( new_value ) );
                     c.set_power_level( c.get_power_level() );
                 }
                 break;
             }
             case 4: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in J)?  Currently: %s" ),
-                               units::display( power_max ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in J)?  Currently: %s" ),
+                                                  units::display( power_max ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_max_power_level( units::from_joule( new_value ) );
                     c.set_power_level( c.get_power_level() );
                 }
                 break;
             }
             case 5: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in kJ)?  Currently: %s" ),
-                               units::display( power_level ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in kJ)?  Currently: %s" ),
+                                                  units::display( power_level ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_power_level( units::from_kilojoule( new_value ) );
                 }
                 break;
             }
             case 6: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in J)?  Currently: %s" ),
-                               units::display( power_level ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in J)?  Currently: %s" ),
+                                                  units::display( power_level ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_power_level( units::from_joule( new_value ) );
                 }
                 break;
@@ -542,8 +555,9 @@ class wish_monster_callback: public uilist_callback
             if( valid_entnum ) {
                 tmp->print_info( w_info, 2, 5, 1 );
 
-                std::string header = string_format( "#%d: %s (%d)%s", entnum, tmp->type->nname(),
-                                                    group, hallucination ? _( " (hallucination)" ) : "" );
+                std::string header = string_format( "#%d: %s (%d)%s%s", entnum, tmp->type->nname(),
+                                                    group, friendly ? _( " (friendly)" ) : "",
+                                                    hallucination ? _( " (hallucination)" ) : "" );
                 mvwprintz( w_info, point( ( getmaxx( w_info ) - utf8_width( header ) ) / 2, 0 ), c_cyan, header );
             }
 

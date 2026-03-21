@@ -12,6 +12,7 @@
 #include "json.h"
 #include "output.h"
 #include "point.h"
+#include "sdl_wrappers.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "string_utils.h"
@@ -29,6 +30,10 @@
 #include <deque>
 #include <iterator>
 #include <memory>
+#include <ranges>
+#include <map>
+#include <set>
+
 namespace
 {
 
@@ -468,7 +473,8 @@ void Messages::dialog::init_first_time()
 
     static auto actionnames = {
         "PAGE_UP", "PAGE_DOWN", "FILTER", "RESET_FILTER",
-        "QUIT", "HELP_KEYBINDINGS", "TOGGLE_WIDE_DISPLAY", "TOGGLE_FULL_HEIGHT_DISPLAY"
+        "QUIT", "HELP_KEYBINDINGS", "TOGGLE_WIDE_DISPLAY", "TOGGLE_FULL_HEIGHT_DISPLAY",
+        "COPY_MESSAGE", "ERASE_HISTORY"
     };
     for( const auto &actionname : actionnames ) {
         ctxt.register_action( actionname );
@@ -625,9 +631,10 @@ void Messages::dialog::show()
     } else {
         if( filter_str.empty() ) {
             mvwprintz( w, point( border_width, w_height - 1 ), border_color,
-                       _( "< Press %s to filter, %s to reset, %s or %s to adjust size >" ),
+                       _( "< %s to filter, %s to reset, %s/%s to adjust size, %s to copy, %s to erase >" ),
                        ctxt.get_desc( "FILTER" ), ctxt.get_desc( "RESET_FILTER" ),
-                       ctxt.get_desc( "TOGGLE_WIDE_DISPLAY" ), ctxt.get_desc( "TOGGLE_FULL_HEIGHT_DISPLAY" )
+                       ctxt.get_desc( "TOGGLE_WIDE_DISPLAY" ), ctxt.get_desc( "TOGGLE_FULL_HEIGHT_DISPLAY" ),
+                       ctxt.get_desc( "COPY_MESSAGE" ), ctxt.get_desc( "ERASE_HISTORY" )
                      );
         } else {
             mvwprintz( w, point( border_width, w_height - 1 ), border_color, "< %s >", filter_str );
@@ -729,6 +736,46 @@ void Messages::dialog::input( const ui_adaptor &ui )
             filter_str.clear();
             filter.text( filter_str );
             do_filter( filter_str );
+        } else if( action == "COPY_MESSAGE" ) {
+            const auto type_names = msg_type_and_names() | std::ranges::to<std::map>();
+
+            auto format_as_logfmt = [&]( const size_t msg_ind ) {
+                const auto &msg = player_messages.history( msg_ind );
+                const auto msg_time = msg.timestamp_in_turns;
+
+                const auto it = type_names.find( msg.type );
+                const auto &type_name = ( it != type_names.end() ) ? it->second : "unknown";
+
+                const auto escaped_message = replace_all( remove_color_tags( msg.get_with_count() ), "\"", "\\\"" );
+                return string_format( "turn=%-9d time=\"%s\" type=%-8s message=\"%s\"\n",
+                                      to_turn<int>( msg_time ),
+                                      to_string_clipped( calendar::turn - msg_time, clipped_align::right ),
+                                      type_name,
+                                      escaped_message );
+            };
+
+            const auto lines = folded_filtered
+            | std::views::transform( [&]( const size_t idx ) { return folded_all[idx].first; } )
+            | std::ranges::to<std::set>()
+            | std::views::reverse
+            | std::views::transform( format_as_logfmt );
+
+            const auto clipboard_text = std::ranges::fold_left( lines, std::string{}, std::plus<> {} );
+
+            DebugLog( DL::Info, DC::Main ) << " MESSAGE LOG COPY:\n" << clipboard_text;
+            std::string popup_msg = _( "Messages written to debug.log" );
+
+#if defined(TILES)
+            // Also copy to clipboard in tiles mode
+            const int clipboard_result = SDL_SetClipboardText( clipboard_text.c_str() );
+            if( clipboard_result == 0 ) {
+                popup_msg = _( "Messages written to debug.log and copied to clipboard" );
+            }
+#endif
+            popup( popup_msg );
+        } else if( action == "ERASE_HISTORY" ) {
+            clear_messages();
+            canceled = true;
         } else if( action == "QUIT" ) {
             canceled = true;
         } else if( action == "TOGGLE_WIDE_DISPLAY" || action == "TOGGLE_FULL_HEIGHT_DISPLAY" ) {

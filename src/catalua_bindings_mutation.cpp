@@ -145,7 +145,7 @@ void cata::detail::mod_mutation_branch( sol::state &lua )
         DOC( "Lists the secondary mutation(s) needed to gain this mutation." );
         luna::set_fx( ut, "other_prerequisites", []( const UT_CLASS & mut ) -> std::vector<trait_id> { std::vector<trait_id> rv = mut.prereqs2; return rv; } );
         DOC( "Lists the threshold mutation(s) required to gain this mutation." );
-        luna::set_fx( ut, "thresh_requirements", []( const UT_CLASS & mut ) -> std::vector<trait_id> { std::vector<trait_id> rv = mut.threshreq; return rv; } );
+        luna::set_fx( ut, "thresh_requirements", []( const UT_CLASS & mut ) -> std::vector<trait_id> { std::vector<trait_id> rv; for( auto cat : mut.category ) { rv.push_back( cat->threshold_muts[ mut.threshold_tier ] ); } return rv; } );
         DOC( "Lists the type(s) of this mutation. Mutations of a given type are mutually exclusive." );
         luna::set_fx( ut, "mutation_types", []( const UT_CLASS & mut ) -> std::set<std::string> { std::set<std::string> rv = mut.types; return rv; } );
         DOC( "Lists conflicting mutations." );

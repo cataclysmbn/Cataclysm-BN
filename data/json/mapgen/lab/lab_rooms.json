@@ -297,7 +297,7 @@
         "........."
       ],
       "palettes": [ "lab_palette" ],
-      "terrain": { "C": [ "t_vat" ] },
+      "furniture": { "C": [ "f_cloning_vat" ] },
       "mapping": { "C": { "items": [ { "item": "cloning_vat", "chance": 50 } ] } }
     }
   },
@@ -320,7 +320,7 @@
         "........."
       ],
       "palettes": [ "lab_palette" ],
-      "terrain": { "C": [ "t_vat" ] },
+      "furniture": { "C": [ "f_cloning_vat" ] },
       "mapping": {
         "C": { "items": [ { "item": "cloning_vat", "chance": 50 } ] },
         "c": { "items": [ { "item": "mut_lab", "chance": 20 } ] }
@@ -347,7 +347,7 @@
         "cccc.cccc"
       ],
       "palettes": [ "lab_palette" ],
-      "terrain": { "C": [ "t_vat" ] },
+      "furniture": { "C": [ "f_cloning_vat" ] },
       "mapping": {
         "C": { "items": [ { "item": "cloning_vat", "chance": 50 } ] },
         "c": { "items": [ { "item": "mut_lab", "chance": 15 } ] }

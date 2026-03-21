@@ -57,7 +57,7 @@
     "description": "A gloppy mix of egg, oil, and salt that is traditionally used to moisten sandwiches.",
     "price": "187 cent",
     "price_postapoc": "5 USD",
-    "material": [ "junk", "egg" ],
+    "material": [ "egg" ],
     "weight": "15 g",
     "volume": "250 ml",
     "comestible_type": "DRINK",
@@ -68,7 +68,7 @@
     "charges": 16,
     "fun": -7,
     "phase": "liquid",
-    "vitamins": [ [ "egg_allergen", 1 ], [ "junk_allergen", 1 ] ]
+    "vitamins": [ [ "egg_allergen", 1 ] ]
   },
   {
     "id": "ketchup",
@@ -101,7 +101,7 @@
     "description": "A condiment made from the seeds of a mustard plant (/Brassica/ or /Sinapis/), vinegar, salt, and spices.",
     "price": "50 cent",
     "price_postapoc": "1 USD",
-    "material": [ "junk" ],
+    "material": [ "water" ],
     "weight": "5 g",
     "volume": "250 ml",
     "comestible_type": "DRINK",
@@ -112,7 +112,7 @@
     "spoils_in": "15 days",
     "charges": 48,
     "phase": "liquid",
-    "vitamins": [ [ "iron", 2 ], [ "junk_allergen", 1 ] ]
+    "vitamins": [ [ "iron", 2 ] ]
   },
   {
     "id": "honey_bottled",
@@ -150,7 +150,7 @@
     "volume": "250 ml",
     "comestible_type": "DRINK",
     "container": "jar_glass_sealed",
-    "material": [ "junk", "nut" ],
+    "material": [ "nut" ],
     "quench": -2,
     "calories": 190,
     "charges": 8,

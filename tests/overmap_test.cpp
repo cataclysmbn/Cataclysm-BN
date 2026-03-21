@@ -45,11 +45,11 @@ TEST_CASE( "default_overmap_generation_always_succeeds", "[overmap][slow]" )
     int overmaps_to_construct = 10;
     for( const point_abs_om &candidate_addr : closest_points_first( point_abs_om(), 10 ) ) {
         // Skip populated overmaps.
-        if( overmap_buffer.has( candidate_addr ) ) {
+        if( ACTIVE_OVERMAP_BUFFER.has( candidate_addr ) ) {
             continue;
         }
         overmap_special_batch test_specials = overmap_specials::get_default_batch( candidate_addr );
-        overmap_buffer.create_custom_overmap( candidate_addr, test_specials );
+        ACTIVE_OVERMAP_BUFFER.create_custom_overmap( candidate_addr, test_specials );
         for( const auto &special_placement : test_specials ) {
             auto special = special_placement.special_details;
             if( special->has_flag( "UNIQUE" ) || special->has_flag( "GLOBALLY_UNIQUE" ) ) {
@@ -73,8 +73,8 @@ void do_lab_finale_test()
     const oter_id labt_endgame( "central_lab_endgame" );
     const point_abs_om origin;
     auto batch = overmap_specials::get_default_batch( origin );
-    overmap_buffer.create_custom_overmap( origin, batch );
-    overmap *test_overmap = overmap_buffer.get_existing( origin );
+    ACTIVE_OVERMAP_BUFFER.create_custom_overmap( origin, batch );
+    overmap *test_overmap = ACTIVE_OVERMAP_BUFFER.get_existing( origin );
     int endgame_count = 0;
     for( int z = -OVERMAP_DEPTH; z < 0; ++z ) {
         for( int x = 0; x < OMAPX; ++x ) {

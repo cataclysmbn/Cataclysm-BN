@@ -37,7 +37,7 @@
     "symbol": "o",
     "color": "light_gray",
     "name": { "str": "gas sac buoyancy cell" },
-    "description": "Several bags tied together, filled with just enough hydrogen to provide buoyancy.  Add buoyancy cells to a vehicle until it floats.  Then attach oars or a motor to get the boat to move.",
+    "description": "Several bags tied together, filled with hydrogen to provide buoyancy.  Add buoyancy cells to a vehicle until it floats, or install enough to provide lift for an airship.",
     "price": 100,
     "price_postapoc": 10,
     "material": [ "plastic" ],

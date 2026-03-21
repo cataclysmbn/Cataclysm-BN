@@ -139,6 +139,13 @@
   },
   {
     "type": "monstergroup",
+    "name": "GROUP_NEMESIS",
+    "default": "mon_zombie_nemesis",
+    "//": "nemesis squad",
+    "monsters": [ { "monster": "mon_zombie_nemesis", "freq": 1000, "cost_multiplier": 0 } ]
+  },
+  {
+    "type": "monstergroup",
     "name": "GROUP_VANILLA",
     "default": "mon_zombie",
     "monsters": [
@@ -862,6 +869,21 @@
       { "monster": "mon_feral_prepper", "starts": 250, "freq": 4, "cost_multiplier": 5 },
       { "monster": "mon_feral_militia", "starts": 250, "freq": 1, "cost_multiplier": 10 },
       { "monster": "mon_feral_jackboot", "starts": 250, "freq": 1, "cost_multiplier": 10 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ZOMBIE_CARGOSHIP",
+    "default": "mon_zombie",
+    "monsters": [
+      { "monster": "mon_zombie_technician", "freq": 100, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_labsecurity", "freq": 100, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_hazmat", "freq": 30, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_nurse", "freq": 20, "cost_multiplier": 10 },
+      { "monster": "mon_zombie_swimmer", "freq": 50, "cost_multiplier": 5 },
+      { "monster": "mon_feral_human_tool", "starts": 250, "freq": 20, "cost_multiplier": 5 },
+      { "monster": "mon_feral_labsecurity_9mm", "starts": 250, "freq": 15, "cost_multiplier": 5 },
+      { "monster": "mon_feral_labsecurity_flashlight", "freq": 15, "cost_multiplier": 5 }
     ]
   }
 ]

@@ -47,6 +47,11 @@
   },
   {
     "type": "overmap_location",
+    "id": "river_center",
+    "terrains": [ "river", "river_center" ]
+  },
+  {
+    "type": "overmap_location",
     "id": "bridge",
     "terrains": [ "bridge" ]
   },

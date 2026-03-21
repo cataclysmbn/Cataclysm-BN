@@ -23,6 +23,44 @@
   },
   {
     "type": "furniture",
+    "id": "f_barricade_windbreak",
+    "name": "simple wooden barricade",
+    "symbol": "#",
+    "bgcolor": "brown",
+    "looks_like": "t_wall_log_half",
+    "description": "A waist-high barricade made of stout saplings, held in place by poles hammered into the ground.  Useful to fence in a campsite and shelter a fire from the wind, or slow down intruders.",
+    "move_cost_mod": -1,
+    "coverage": 60,
+    "required_str": -1,
+    "flags": [
+      "CLIMB_SIMPLE",
+      "TRANSPARENT",
+      "FLAMMABLE_ASH",
+      "ORGANIC",
+      "MOUNTABLE",
+      "THIN_OBSTACLE",
+      "CLIMBABLE",
+      "PERMEABLE",
+      "EASY_DECONSTRUCT",
+      "BLOCK_WIND"
+    ],
+    "examine_action": "chainfence",
+    "deconstruct": { "items": [ { "item": "stick", "count": 8 }, { "item": "pointy_stick", "count": 2 } ] },
+    "bash": {
+      "str_min": 10,
+      "str_max": 50,
+      "sound": "smash!",
+      "sound_fail": "whump.",
+      "items": [
+        { "item": "stick", "count": [ 3, 6 ] },
+        { "item": "splinter", "count": [ 4, 8 ] },
+        { "item": "pointy_stick", "count": [ 0, 1 ] }
+      ],
+      "ranged": { "reduction": [ 10, 10 ], "destroy_threshold": 50, "block_unaimed_chance": "50%" }
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_earthbag_half",
     "name": "earthbag barricade",
     "symbol": "#",

@@ -80,7 +80,7 @@
     "description": "Leadworks LLC's bullpup L523 platform utilizes the ubiquitous 5.56 round in multiple applications, and is designed to part-swap quickly, safely, and effectively from one to the next.  The DMR incorporates a specially-designed extended barrel with integral bipod and foregrip, along with an integral 8x optic, and trades selective-fire for the Leadworks gyro-stabilization system.  Like the rest of the family, though, it doesn't accept third-party modifications.",
     "price": "5800 USD",
     "durability": 9,
-    "barrel_length": "750 ml",
+    "barrel_volume": "750 ml",
     "modes": [ [ "DEFAULT", "semi-auto", 1 ] ],
     "relative": { "//": "Volume, range, and bullpup all point to a very large barrel on this one.", "weight": 1200, "volume": 4 },
     "delete": { "modes": [ [ "AUTO", "auto", 3 ] ] },

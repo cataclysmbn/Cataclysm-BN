@@ -1,0 +1,70 @@
+[
+  {
+    "type": "recipe",
+    "result": "portable_planter_s",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "survival",
+    "skills_required": [ "survival", 1 ],
+    "difficulty": 1,
+    "time": "2 m",
+    "autolearn": true,
+    "reversible": true,
+    "components": [ [ [ "clay_pot_flower", 1 ], [ "plastic_pot_flower", 1 ] ], [ [ "material_soil", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "portable_planter_m",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "survival", 3 ], [ "electronics", 5 ] ],
+    "difficulty": 3,
+    "time": "1 h",
+    "book_learn": [ [ "advanced_electronics", 5 ] ],
+    "decomp_learn": 6,
+    "autolearn": false,
+    "reversible": true,
+    "tools": [ [ [ "soldering_standard", 20, "LIST" ] ] ],
+    "components": [
+      [ [ "jerrycan", 1 ] ],
+      [ [ "material_soil", 1 ] ],
+      [ [ "pipe", 4 ] ],
+      [ [ "lightstrip_inactive", 2 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "plut_cell", 2 ] ],
+      [ [ "cable", 2 ] ],
+      [ [ "RTG_coffee", 1 ] ],
+      [ [ "e_scrap", 5 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "portable_planter_l",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "survival", 5 ], [ "electronics", 7 ] ],
+    "difficulty": 5,
+    "time": "3 h",
+    "decomp_learn": 9,
+    "book_learn": [ [ "recipe_lab_elec", 8 ] ],
+    "autolearn": false,
+    "reversible": true,
+    "tools": [ [ [ "soldering_standard", 50, "LIST" ] ], [ [ "welding_standard", 5, "LIST" ] ] ],
+    "components": [
+      [ [ "metal_tank", 1 ] ],
+      [ [ "material_soil", 1 ] ],
+      [ [ "pipe", 12 ] ],
+      [ [ "sheet_metal", 5 ] ],
+      [ [ "glass_sheet", 1 ] ],
+      [ [ "element", 1 ] ],
+      [ [ "lightstrip_inactive", 2 ] ],
+      [ [ "power_supply", 4 ] ],
+      [ [ "plut_cell", 4 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "RTG_coffee", 2 ] ],
+      [ [ "e_scrap", 10 ] ]
+    ]
+  }
+]

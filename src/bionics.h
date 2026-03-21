@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -15,12 +16,15 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "enums.h"
+#include "color.h"
 
 class JsonIn;
 class JsonObject;
 class JsonOut;
 class Character;
 class player;
+class lua_bionic_callback_actor;
 
 enum class character_stat : char;
 
@@ -140,6 +144,12 @@ struct bionic_data {
      */
     std::vector<bionic_id> required_bionics;
 
+    bool can_uninstall = true;
+    std::string no_uninstall_reason;
+
+    bool starting_bionic = false;
+    int points = 0;
+
     std::set<flag_id> flags;
     bool has_flag( const flag_id &flag ) const;
 
@@ -147,10 +157,19 @@ struct bionic_data {
 
     bool is_included( const bionic_id &id ) const;
 
+    /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+     *  Mutable because it is wired post-construction through const factory references. */
+    mutable const lua_bionic_callback_actor *lua_callbacks = nullptr;
+
     static void load_bionic( const JsonObject &jo, const std::string &src );
     static void check_consistency();
     static void finalize_all();
+    static std::vector<bionic_data> get_all();
     static void reset();
+
+    /** Wire Lua callback pointers onto bionic_data objects. */
+    static void resolve_lua_callbacks(
+        const std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> &actors );
 
     bool was_loaded = false;
     void load( const JsonObject &obj, const std::string & );
@@ -201,10 +220,21 @@ struct bionic {
 
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );
+
+        LUA_TYPE_OPS( bionic, id );
     private:
         // generic bionic specific flags
         cata::flat_set<std::string> bionic_tags;
         float auto_start_threshold = -1.0;
+};
+
+nc_color get_bionic_text_color( const bionic &bio, const bool isHighlightedBionic );
+struct bionic_sort_less {
+    bionic_ui_sort_mode mode = bionic_ui_sort_mode::NONE;
+    bool operator()( const bionic &lhs, const bionic &rhs ) const;
+    bool operator()( const bionic *lhs, const bionic *rhs ) const {
+        return lhs && rhs && operator()( *lhs, *rhs );
+    }
 };
 
 // A simpler wrapper to allow forward declarations of it. std::vector can not

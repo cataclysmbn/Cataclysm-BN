@@ -27,5 +27,29 @@
     "damage_modifier": 80,
     "breaks_into": [ { "item": "scrap", "count": [ 8, 15 ] }, { "item": "steel_chunk", "count": [ 2, 8 ] } ],
     "damage_reduction": { "all": 22 }
+  },
+  {
+    "id": "propeller_wood",
+    "copy-from": "propeller_rotors",
+    "type": "vehicle_part",
+    "name": "wooden aircraft propeller",
+    "item": "wood_propeller_item",
+    "propeller_diameter": 2,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 5 ] ], "time": "2 h", "using": [ [ "vehicle_nail_install", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 5 ] ], "time": "2 h", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 6 ] ],
+        "time": "2 h",
+        "using": [ [ "nail_any_adhesive", 10 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "durability": 75,
+    "damage_modifier": 80,
+    "breaks_into": [ { "item": "scrap", "count": [ 8, 15 ] }, { "item": "splinter", "count": [ 5, 10 ] } ],
+    "damage_reduction": { "all": 15 },
+    "extend": { "flags": [ "FOLDABLE" ] },
+    "folded_volume": "20 L",
+    "color": "brown"
   }
 ]

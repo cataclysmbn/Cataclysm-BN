@@ -1,0 +1,75 @@
+[
+  {
+    "type": "profession",
+    "id": "crt_dude",
+    "name": "C.R.I.T. Janitor",
+    "description": "*Sigh* Your life has been a wreck.  Hopping place to place you finally found a job at Catastrophe Response and Investigation Team… as a janitor of sorts.  The pay was good and you got some sneak-peeks on some pretty cool stuff.  After all non-essential personnel were purged you found yourself stuck with nothing but the uniform they gave you and your job's sign-bonus equipment.",
+    "points": 3,
+    "skills": [
+      { "level": 3, "name": "barter" },
+      { "level": 3, "name": "speech" },
+      { "level": 1, "name": "unarmed" },
+      { "level": 1, "name": "melee" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "crt_rec_hat",
+          "crt_rec_duster",
+          "crt_jacket",
+          "crt_rec_gloves",
+          "crt_dress_pants",
+          "crt_belt",
+          "socks",
+          "crt_dress_shoes",
+          "id_military",
+          "knife_crt",
+          "cell_phone"
+        ],
+        "entries": [ { "item": "water_clean", "container-item": "thermos" } ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "crt_employee",
+    "name": "C.R.I.T. Employee",
+    "description": "Like many others, you had requested to join the Catastrophe Response and Investigation Team organization's admin-offices to escape from bitter memories and past traumas after valiantly protecting your comrades for years.  After you completed the readjustment program, your skills may have rusted considerably since your last deployment to battle, but the drilled muscle memories have not worn away.  As your comrades' screams once again ring in your ears and repressed memories of abhorrent nature resurface, can you find it within yourself to overcome the looming terror which paralyzes you?",
+    "traits": [ "MARTIAL_CRT", "PROF_MILITARY", "SPIRITUAL", "SCHIZOPHRENIC", "JITTERY" ],
+    "points": 3,
+    "skills": [
+      { "level": 2, "name": "computer" },
+      { "level": 3, "name": "driving" },
+      { "level": 2, "name": "melee" },
+      { "level": 1, "name": "unarmed" },
+      { "level": 2, "name": "gun" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "crt_rec_hat",
+          "briefcase",
+          "crt_rec_duster",
+          "crt_jacket",
+          "dress_shirt",
+          "crt_rec_gloves",
+          "crt_dress_pants",
+          "crt_belt",
+          "socks",
+          "crt_dress_shoes",
+          "lighter",
+          "knife_crt",
+          "thorazine",
+          "id_military"
+        ],
+        "entries": [ { "item": "water_clean", "container-item": "thermos" } ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  }
+]

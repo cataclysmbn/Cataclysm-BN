@@ -29,6 +29,6 @@ mod.turntimer_hook = function(turn, func)
   storage.hook_assuarance[the_when:to_turns()] = "Requiem"
 end
 
-table.insert(game.hooks.on_game_load, function(...) return mod.assure_timer_hook(...) end)
+game.add_hook("on_game_load", function(...) return mod.assure_timer_hook(...) end)
 
 game.iuse_functions["LUA_EBOOK"] = function(...) return mod.ebook_ui(...) end

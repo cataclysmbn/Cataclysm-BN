@@ -7,7 +7,6 @@
       [ "spell_scroll_summon_lemon", 20 ],
       [ "spell_scroll_smite", 40 ],
       [ "spell_scroll_summon_zombie", 25 ],
-      [ "spell_scroll_light_healing", 50 ],
       [ "spell_scroll_bio_acidicspray", 35 ],
       [ "spell_scroll_create_atomic_light", 50 ],
       [ "spell_scroll_blinding_flash", 50 ],
@@ -30,7 +29,9 @@
       [ "spell_scroll_biomancer_paralytic_dart", 40 ],
       [ "spell_scroll_biomancer_visceral_projection", 40 ],
       [ "spell_scroll_summon_wisps", 30 ],
-      [ "spell_scroll_stormshaper_wall_of_fog", 35 ]
+      [ "spell_scroll_stormshaper_wall_of_fog", 35 ],
+      [ "spell_scroll_force_push", 50 ],
+      [ "spell_scroll_force_pull", 50 ]
     ]
   },
   {
@@ -41,6 +42,7 @@
       [ "spell_scroll_pain_split", 25 ],
       [ "spell_scroll_bio_grotesque", 40 ],
       [ "spell_scroll_bio_fleshpouch", 30 ],
+      [ "spell_scroll_light_healing", 20 ],
       [ "spell_scroll_protection_aura", 50 ],
       [ "spell_scroll_druid_veggrasp", 35 ],
       [ "spell_scroll_druid_rootstrike", 40 ],
@@ -93,6 +95,7 @@
       [ "spell_scroll_gravity_well", 35 ],
       [ "spell_scroll_magus_mana_bolt", 35 ],
       [ "spell_scroll_magus_haste", 50 ],
+      [ "spell_scroll_magus_slow", 50 ],
       [ "spell_scroll_magus_mana_beam", 35 ],
       [ "spell_scroll_magus_escape", 50 ],
       [ "spell_scroll_cats_grace", 50 ],

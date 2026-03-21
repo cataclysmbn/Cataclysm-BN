@@ -34,10 +34,10 @@ In order to compile localization files, you'll also need `gettext` package.
 ## Build Environment
 
 You can obtain the source code tarball for the latest version from
-[git](https://github.com/cataclysmbnteam/Cataclysm-BN).
+[git](https://github.com/cataclysmbn/Cataclysm-BN).
 
 ```sh
-git clone --filter=blob:none https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone --filter=blob:none https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 
@@ -114,6 +114,36 @@ Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 > sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
 > sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
 > ```
+
+### macOS Environment
+
+Install dependencies via [Homebrew](https://brew.sh/):
+
+```sh
+brew install cmake ninja ccache sdl2 sdl2_image sdl2_ttf sdl2_mixer \
+  freetype gettext sqlite pkg-config
+```
+
+> [!NOTE]
+> Apple Clang shipped with Xcode 16+ supports the C++23 features required by CataclysmBN.
+> You do **not** need to install a separate compiler.
+
+#### Building on Apple Silicon (Recommended)
+
+```sh
+cmake --preset osx-arm-slim
+cmake --build --preset osx-arm-slim
+```
+
+This places executables into `out/build/osx-arm-slim/`.
+
+#### Creating a macOS Distribution
+
+```sh
+cmake --preset osx-arm-dist
+cmake --build --preset osx-arm-dist
+cmake --install build --prefix cataclysmbn-osx-tiles
+```
 
 ### Windows Subsystem for Linux (WSL)
 
@@ -201,6 +231,72 @@ To install CataclysmBN after building (as root using su or sudo if necessary):
 ```sh
 cmake --install build
 ```
+
+### Creating Distribution Packages
+
+Use the `dist-tiles` or `dist-curses` presets to create portable distribution packages:
+
+```sh
+# Configure for tiles distribution
+cmake --preset dist-tiles
+
+# Build the game and tools
+cmake --build --preset dist-tiles
+
+# Create distribution package
+cmake --install build --prefix cataclysmbn-linux-tiles
+```
+
+For curses-only builds:
+
+```sh
+cmake --preset dist-curses
+cmake --build --preset dist-curses
+cmake --install build --prefix cataclysmbn-linux-curses
+```
+
+This creates a self-contained directory with the following structure:
+
+```
+cataclysmbn-linux-tiles/
+├── cataclysm-bn-tiles     # Game executable
+├── cataclysm-launcher     # Launcher script
+├── json_formatter         # JSON formatting tool
+├── data/                  # Game data files
+├── gfx/                   # Tilesets
+├── lang/                  # Translations
+├── doc/                   # Documentation
+├── README.md
+├── LICENSE.txt
+└── VERSION.txt
+```
+
+To create a tarball for distribution:
+
+```sh
+tar -czvf cataclysmbn-linux-tiles.tar.gz cataclysmbn-linux-tiles
+```
+
+> [!TIP]
+> The `cataclysm-launcher` script sets up the correct working directory and library paths.
+> Use it to run the game from any location.
+
+#### Distribution Presets
+
+| Preset         | Description                             |
+| -------------- | --------------------------------------- |
+| `dist-tiles`   | Linux: Tiles + Sound + Languages        |
+| `dist-curses`  | Linux: Curses + Languages               |
+| `osx-arm-dist` | macOS ARM: Tiles + Sound + Languages    |
+| `lint`         | Minimal build for formatting tools only |
+
+#### Portable vs System Install
+
+| Option          | `USE_PREFIX_DATA_DIR=OFF` | `USE_PREFIX_DATA_DIR=ON`   |
+| --------------- | ------------------------- | -------------------------- |
+| Data location   | `./data/`                 | `/usr/share/cataclysm-bn/` |
+| Config location | `./config/`               | `~/.config/cataclysm-bn/`  |
+| Best for        | Portable/release builds   | System packages (deb/rpm)  |
 
 To change build options, you can either pass the options on the command line:
 
@@ -395,6 +491,11 @@ Use XDG directories for save and config files.
 - TESTS=`<boolean>`
 
 Whether to build tests.
+
+- JSON_FORMAT=`<boolean>`
+
+Build the `json_formatter` tool and enable `style-json` / `style-json-parallel` targets for
+formatting JSON files. See [Formatting & Linting](../formatting.md) for usage.
 
 So a CMake command for building Cataclysm-BN in release mode with tiles and sound support will look
 as follows, provided it is run in build directory located in the project.

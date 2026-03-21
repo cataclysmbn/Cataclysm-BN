@@ -1,5 +1,7 @@
 {
   "includes": [
+    "data/json/*.lua",
+    "data/lua/**/*.lua",
     "data/raw/**/*.lua",
     "data/mods/**/*.lua",
     "tests/**/*.lua"

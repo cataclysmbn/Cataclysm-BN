@@ -1,0 +1,84 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockRealXotto", "MSX++DEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "gfx/normal.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_panic",
+            "fg": [
+              { "weight": 3, "sprite": 0 },
+              { "weight": 3, "sprite": 1 },
+              { "weight": 3, "sprite": 2 },
+              { "weight": 3, "sprite": 3 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/cops.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_police",
+            "fg": [
+              { "weight": 3, "sprite": 5 },
+              { "weight": 3, "sprite": 6 },
+              { "weight": 3, "sprite": 7 },
+              { "weight": 3, "sprite": 8 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/fighters.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_zombiefighter",
+            "fg": [
+              { "weight": 3, "sprite": 9 },
+              { "weight": 3, "sprite": 10 },
+              { "weight": 3, "sprite": 11 },
+              { "weight": 3, "sprite": 12 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/hospital.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_icu",
+            "fg": [
+              { "weight": 3, "sprite": 13 },
+              { "weight": 3, "sprite": 14 },
+              { "weight": 3, "sprite": 15 },
+              { "weight": 3, "sprite": 16 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      }
+    ]
+  }
+]

@@ -10,7 +10,7 @@ client in order to start profiling.
 > [!CAUTION]
 >
 > Both the game and profiler have to be built with same version of tracy to work properly. Due to
-> [numerous issues](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3253#discussion_r1545267113),
+> [numerous issues](https://github.com/cataclysmbn/Cataclysm-BN/pull/3253#discussion_r1545267113),
 > The windows version uses [`v0.10`](https://github.com/wolfpld/tracy/releases/tag/v0.10) wheras the
 > linux version uses
 > [`6d1deb5640ed11da01995fb1791115cfebe54dbf`](https://github.com/wolfpld/tracy/commit/6d1deb5640ed11da01995fb1791115cfebe54dbf).
@@ -102,7 +102,7 @@ $ cmake --build profiler/build --config Release --parallel $(nproc)
 
 ### Windows
 
-![image](https://github.com/cataclysmbnteam/Cataclysm-BN/assets/54838975/b6f73c09-969c-4305-b8fb-070d14fb834a)
+![image](https://github.com/cataclysmbn/Cataclysm-BN/assets/54838975/b6f73c09-969c-4305-b8fb-070d14fb834a)
 
 Download pre-compiled executable from <https://github.com/wolfpld/tracy/releases>.
 

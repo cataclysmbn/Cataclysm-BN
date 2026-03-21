@@ -20,7 +20,8 @@
       [ "GATLING_GUNS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "handling_modifier": 40,
     "dispersion_modifier": -50,
@@ -44,7 +45,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "extend": { "flags": [ "PUMP_RAIL_COMPATIBLE" ] }
   },
@@ -124,7 +126,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "handling_modifier": 5,
     "flags": [ "PUMP_RAIL_COMPATIBLE" ]
@@ -147,7 +150,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -301,7 +305,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "sight_dispersion": 30,
     "aim_speed": 9,
@@ -365,7 +370,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -401,7 +407,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -445,7 +452,8 @@
         [ "M_XBOWS" ],
         [ "GRENADE_LAUNCHERS" ],
         [ "ROCKET_LAUNCHERS" ],
-        [ "FLAMETHROWERS" ]
+        [ "FLAMETHROWERS" ],
+        [ "SPRAY_GUNS" ]
       ],
       "mode_modifier": [ [ "REACH", "bayonet", 2, [ "MELEE", "REACH_ATTACK" ] ] ]
     },
@@ -483,7 +491,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -509,7 +518,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "gun_data": { "ammo": "40x46mm", "skill": "launcher", "dispersion": 450, "durability": 10, "clip_size": 1 }
   },
@@ -566,7 +576,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -608,7 +619,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   }
 ]

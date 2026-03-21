@@ -12,7 +12,7 @@
     "ammo": "m235",
     "weight": "5220 g",
     "volume": "6 L",
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "dispersion": 300,
     "durability": 7,
     "modes": [ [ "DEFAULT", "single shot", 1, "NPC_AVOID" ], [ "BURST", "all barrels", 4, "NPC_AVOID" ] ],

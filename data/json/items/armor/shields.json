@@ -87,6 +87,17 @@
     "flags": [ "OVERSIZE", "BELTED", "RESTRICT_HANDS", "BLOCK_WHILE_WORN", "POWERARMOR_COMPATIBLE" ]
   },
   {
+    "id": "shield_ballistic_large",
+    "copy-from": "shield_ballistic",
+    "looks_like": "shield_riot",
+    "type": "ARMOR",
+    "name": { "str": "large ballistic shield" },
+    "description": "A tall composite shield used by SWAT teams and other armed forces, rated for pistol bullets.  Covers the body and legs quite well, but is much heavier and more encumbering than lighter models.",
+    "proportional": { "weight": 1.5, "volume": 1.5, "price": 1.5, "price_postapoc": 1.5 },
+    "relative": { "to_hit": -1, "encumbrance": 10, "bashing": 4 },
+    "techniques": [ "WBLOCK_3" ]
+  },
+  {
     "id": "shield_leather",
     "type": "ARMOR",
     "name": { "str": "leather-reinforced shield" },
@@ -113,7 +124,7 @@
     "id": "shield_banded",
     "type": "ARMOR",
     "name": { "str": "banded shield" },
-    "description": "A simple round shield made of wood with bands of steel reinforcing it.  Stronger than a simple wooden shield, but also more encumbering.",
+    "description": "A simple round shield made of wood with bands of iron reinforcing it.  Stronger than a simple wooden shield, but also more encumbering.",
     "weight": "3400 g",
     "volume": "3 L",
     "price": "100 USD",
@@ -153,7 +164,7 @@
     "looks_like": "shield_wooden_large",
     "type": "ARMOR",
     "name": { "str": "large banded shield" },
-    "description": "A large shield made of wood with steel bands reinforcing it.  Stronger than a simple wooden shield, but also more encumbering.",
+    "description": "A large shield made of wood with iron bands reinforcing it.  Stronger than a simple wooden shield, but also more encumbering.",
     "volume": "5 L",
     "weight": "5400 g",
     "price": "120 USD",
@@ -276,7 +287,8 @@
     "to_hit": -2,
     "bashing": 10,
     "cutting": 10,
-    "encumbrance": 30
+    "encumbrance": 30,
+    "techniques": [ "WBLOCK_3" ]
   },
   {
     "id": "shield_bronze",

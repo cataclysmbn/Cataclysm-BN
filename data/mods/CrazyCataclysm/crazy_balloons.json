@@ -1,0 +1,56 @@
+[
+  {
+    "type": "GENERIC",
+    "id": "bundle_of_balloons_item",
+    "symbol": "o",
+    "color": "light_red",
+    "name": { "str": "bundle of balloons" },
+    "description": "A large bunch of party balloons tied together with string, attached to a rock so it doesn't float away. If attached to a vehicle instead this may provide a small amount of lift.",
+    "price": "10 USD",
+    "price_postapoc": "1 USD",
+    "material": [ "plastic" ],
+    "weight": "1 kg",
+    "volume": "3 L",
+    "to_hit": -5,
+    "category": "veh_parts",
+    "explosion": { "damage": 1, "radius": 1 },
+    "explode_in_fire": true
+  },
+  {
+    "id": "bundle_of_balloons",
+    "copy-from": "airship_balloon",
+    "type": "vehicle_part",
+    "name": "bundle of balloons",
+    "item": "bundle_of_balloons_item",
+    "height": 10,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "rope_natural_short", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [  ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "adhesive", 1 ] ] }
+    },
+    "durability": 20,
+    "damage_modifier": 90,
+    "flags": [ "BALLOON", "SHOCK_IMMUNE" ],
+    "damage_reduction": { "bash": 2 },
+    "breaks_into": [ { "item": "chunk_rubber", "count": [ 1, 3 ] } ]
+  },
+  {
+    "type": "recipe",
+    "result": "bundle_of_balloons_item",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "30 m",
+    "autolearn": true,
+    "components": [ [ [ "balloon", 20 ], [ "condom", 20 ] ], [ [ "rope_natural_short", 1, "LIST" ] ] ]
+  },
+  {
+    "id": "bundle_of_balloons_external",
+    "copy-from": "bundle_of_balloons",
+    "type": "vehicle_part",
+    "name": "external bundle of balloons",
+    "location": "structural",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF" ] }
+  }
+]

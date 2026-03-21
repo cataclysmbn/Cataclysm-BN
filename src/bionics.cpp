@@ -20,6 +20,7 @@
 #include "ballistics.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catalua_icallback_actor.h"
 #include "character.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
@@ -171,8 +172,6 @@ static const bionic_id bio_lockpick( "bio_lockpick" );
 static const bionic_id bio_magnet( "bio_magnet" );
 static const bionic_id bio_nanobots( "bio_nanobots" );
 static const bionic_id bio_painkiller( "bio_painkiller" );
-static const bionic_id bio_power_storage( "bio_power_storage" );
-static const bionic_id bio_power_storage_mkII( "bio_power_storage_mkII" );
 static const bionic_id bio_probability_travel( "bio_probability_travel" );
 static const bionic_id bio_radscrubber( "bio_radscrubber" );
 static const bionic_id bio_reactor( "bio_reactor" );
@@ -184,7 +183,6 @@ static const bionic_id bio_time_freeze( "bio_time_freeze" );
 static const bionic_id bio_tools( "bio_tools" );
 static const bionic_id bio_torsionratchet( "bio_torsionratchet" );
 static const bionic_id bio_water_extractor( "bio_water_extractor" );
-static const bionic_id bionic_TOOLS_EXTEND( "bio_tools_extend" );
 static const bionic_id afs_bio_dopamine_stimulators( "afs_bio_dopamine_stimulators" );
 
 static const trait_id trait_CENOBITE( "CENOBITE" );
@@ -225,6 +223,8 @@ bool string_id<bionic_data>::is_valid() const
 {
     return bionic_factory.is_valid( *this );
 }
+
+
 
 std::vector<bodypart_id> get_occupied_bodyparts( const bionic_id &bid )
 {
@@ -268,6 +268,22 @@ void bionic_data::finalize_all()
     bionic_factory.finalize();
     for( const bionic_data &bd : bionic_factory.get_all() ) {
         bd.finalize();
+    }
+}
+
+std::vector<bionic_data> bionic_data::get_all()
+{
+    return bionic_factory.get_all();
+}
+
+void bionic_data::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> &actors )
+{
+    for( const bionic_data &bd : bionic_factory.get_all() ) {
+        auto it = actors.find( bd.id.str() );
+        if( it != actors.end() ) {
+            bd.lua_callbacks = it->second.get();
+        }
     }
 }
 
@@ -320,6 +336,11 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
     assign( jsobj, "upgraded_bionic", upgraded_bionic, strict );
     assign( jsobj, "available_upgrades", available_upgrades, strict );
     assign( jsobj, "flags", flags, strict );
+    assign( jsobj, "can_uninstall", can_uninstall, strict );
+    assign( jsobj, "no_uninstall_reason", no_uninstall_reason, strict );
+    assign( jsobj, "starting_bionic", starting_bionic, strict );
+    assign( jsobj, "points", points, strict );
+
 
     activated = has_flag( flag_BIONIC_TOGGLED ) ||
                 power_activate > 0_kJ ||
@@ -727,9 +748,6 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
                                _( "Your %s issues a low humidity warning.  Efficiency will be reduced." ),
                                bio.info().name );
         }
-    } else if( bio.id == bio_tools ) {
-        add_msg_activate();
-        invalidate_crafting_inventory();
     } else if( bio.id == bio_cqb ) {
         add_msg_activate();
         const avatar *you = as_avatar();
@@ -978,10 +996,9 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         // Calculate local wind power
         int vehwindspeed = 0;
         if( optional_vpart_position vp = here.veh_at( pos() ) ) {
-            // vehicle velocity in mph
-            vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+            vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
         }
-        const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
+        const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() );
         /* cache g->get_temperature( player location ) since it is used twice. No reason to recalc */
         const auto player_local_temp = weather.get_temperature( g->u.pos() );
         /* windpower defined in internal velocity units (=.01 mph) */
@@ -1145,6 +1162,9 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         item *vtm;
         vtm = item::spawn_temporary( "voltmeter_bionic", calendar::start_of_cataclysm );
         invoke_item( vtm );
+    } else if( bio.info().has_flag( flag_BIONIC_TOOLS ) ) {
+        add_msg_activate();
+        invalidate_crafting_inventory();
     } else {
         add_msg_activate();
     }
@@ -1156,6 +1176,10 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
     // Also reset crafting inventory cache if this bionic spawned a fake item
     if( !bio.info().fake_item.is_empty() ) {
         invalidate_crafting_inventory();
+    }
+
+    if( const auto *lcb = bio.info().lua_callbacks ) {
+        lcb->call_on_activate( *this, bio );
     }
 
     return true;
@@ -1223,7 +1247,7 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
                    !has_active_item_with_action( "REMOTEVEH" ) ) {
             set_value( "remote_controlling", "" );
         }
-    } else if( bio.id == bio_tools ) {
+    } else if( bio.info().has_flag( flag_BIONIC_TOOLS ) ) {
         invalidate_crafting_inventory();
     } else if( bio.id == bio_ads ) {
         mod_power_level( bio.energy_stored );
@@ -1242,10 +1266,8 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
         invalidate_crafting_inventory();
     }
 
-    // Compatibility with old saves without the toolset hammerspace
-    if( !eff_only && bio.id == bio_tools && !has_bionic( bionic_TOOLS_EXTEND ) ) {
-        // E X T E N D    T O O L S
-        add_bionic( bionic_TOOLS_EXTEND );
+    if( const auto *lcb = bio.info().lua_callbacks ) {
+        lcb->call_on_deactivate( *this, bio );
     }
 
     return true;
@@ -1260,6 +1282,12 @@ bool Character::burn_fuel( bionic &bio, bool start )
     const bool is_metabolism_powered = bio.is_this_fuel_powered( fuel_type_metabolism );
     const bool is_cable_powered = bio.info().is_remote_fueled;
     std::vector<itype_id> fuel_available = get_fuel_available( bio.id );
+    // When a bionic has passive_fuel_efficiency, perpetual fuels are handled by
+    // passive_power_gen() while the bionic is off.  Exclude them from burn_fuel()
+    // so they don't interfere with consumable fuel processing when active.
+    if( bio.info().passive_fuel_efficiency > 0.0f ) {
+        std::erase_if( fuel_available, []( const auto & fuel ) { return fuel->has_flag( flag_PERPETUAL ); } );
+    }
     float effective_efficiency = get_effective_efficiency( bio, bio.info().fuel_efficiency );
 
     if( is_cable_powered ) {
@@ -1349,12 +1377,11 @@ bool Character::burn_fuel( bionic &bio, bool start )
                             int vehwindspeed = 0;
                             const optional_vpart_position vp = here.veh_at( pos() );
                             if( vp ) {
-                                // vehicle velocity in mph
-                                vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+                                vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
                             }
                             const weather_manager &wm = get_weather();
                             const double windpower = get_local_windpower( wm.windspeed + vehwindspeed,
-                                                     overmap_buffer.ter( global_omt_location() ), pos(), wm.winddirection,
+                                                     ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() ), pos(), wm.winddirection,
                                                      g->is_sheltered( pos() ) );
                             mod_power_level( units::from_kilojoule( fuel_energy ) * windpower * effective_efficiency );
                         } else {
@@ -1435,12 +1462,11 @@ void Character::passive_power_gen( bionic &bio )
             int vehwindspeed = 0;
             const optional_vpart_position vp = here.veh_at( pos() );
             if( vp ) {
-                // vehicle velocity in mph
-                vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+                vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
             }
             const weather_manager &weather = get_weather();
             const double windpower = get_local_windpower( weather.windspeed + vehwindspeed,
-                                     overmap_buffer.ter( global_omt_location() ), pos(), weather.winddirection,
+                                     ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() ), pos(), weather.winddirection,
                                      g->is_sheltered( pos() ) );
             mod_power_level( units::from_kilojoule( fuel_energy ) * windpower * effective_passive_efficiency );
         } else {
@@ -2175,9 +2201,8 @@ bool Character::can_uninstall_bionic( const bionic_id &b_id, Character &installe
         return false;
     }
 
-    if( b_id == bio_eye_optic ) {
-        popup( _( "The Telescopic Lenses are part of %s eyes now.  Removing them would leave %s blind." ),
-               disp_name( true ), disp_name() );
+    if( !b_id->can_uninstall ) {
+        popup( _( b_id->no_uninstall_reason ) );
         return false;
     }
 
@@ -2295,6 +2320,10 @@ void Character::perform_uninstall( bionic_id bid, int difficulty, int success,
                                _( "<npcname>'s parts are jiggled back into their familiar places." ) );
         add_msg( m_good, _( "Successfully removed %s." ), bid.obj().name );
         remove_bionic( bid );
+
+        if( const auto *lcb = bid.obj().lua_callbacks ) {
+            lcb->call_on_removed( *this, bid );
+        }
 
         // remove power bank provided by bionic
         mod_max_power_level( -power_lvl );
@@ -2589,6 +2618,10 @@ void Character::perform_install( bionic_id bid, bionic_id upbid, int difficulty,
 
     add_bionic( bid );
 
+    if( const auto *lcb = bid.obj().lua_callbacks ) {
+        lcb->call_on_installed( *this, bid );
+    }
+
     if( !trait_to_rem.empty() ) {
         for( const trait_id &tid : trait_to_rem ) {
             if( has_trait( tid ) ) {
@@ -2763,7 +2796,10 @@ std::map<bodypart_id, int> Character::bionic_installation_issues( const bionic_i
         return issues;
     }
     for( const std::pair<const bodypart_str_id, int> &elem : bioid->occupied_bodyparts ) {
-        const int lacked_slots = elem.second - get_free_bionics_slots( elem.first );
+        int lacked_slots = elem.second - get_free_bionics_slots( elem.first );
+        if( bioid->upgraded_bionic ) {
+            lacked_slots -= bioid->upgraded_bionic->occupied_bodyparts.at( elem.first );
+        }
         if( lacked_slots > 0 ) {
             issues.emplace( elem.first, lacked_slots );
         }
@@ -2807,22 +2843,21 @@ bool has_enough_anesthesia( const itype *cbm, Character &doc, const Character &p
 
 void Character::add_bionic( const bionic_id &b )
 {
-    if( has_bionic( b ) ) {
+    if( !b->has_flag( flag_MULTIINSTALL ) && has_bionic( b ) ) {
         debugmsg( "Tried to install bionic %s that is already installed!", b.c_str() );
         return;
     }
 
     const units::energy pow_up = b->capacity;
     mod_max_power_level( pow_up );
-    if( b == bio_power_storage || b == bio_power_storage_mkII ) {
+    if( pow_up != 0_J ) {
         add_msg_if_player( m_good, _( "Increased storage capacity by %i." ),
                            units::to_kilojoule( pow_up ) );
-        // Power Storage CBMs are not real bionic units, so return without adding it to my_bionics
-        return;
     }
 
-    my_bionics->push_back( bionic( b, get_free_invlet( *my_bionics ) ) );
-    if( b == bio_tools || b == bio_ears ) {
+    const auto invlet = b.obj().activated ? get_free_invlet( *my_bionics ) : ' ';
+    my_bionics->push_back( bionic( b, invlet ) );
+    if( b->has_flag( flag_INITIALLY_ACTIVATE ) ) {
         activate_bionic( my_bionics->back() );
     }
 
@@ -2864,13 +2899,20 @@ void Character::remove_bionic( const bionic_id &b )
     bionic_collection new_my_bionics;
     // any spells you should not forget due to still having a bionic installed that has it.
     std::set<spell_id> cbm_spells;
+    std::set<bionic_id> removed_bionics;
     for( bionic &i : *my_bionics ) {
-        if( b == i.id ) {
+        if( b == i.id && !removed_bionics.contains( i.id ) ) {
+            const units::energy pow_up = i.id->capacity;
+            mod_max_power_level( -1 * pow_up );
+            removed_bionics.emplace( i.id );
             continue;
         }
 
         // Linked bionics: if either is removed, the other is removed as well.
-        if( b->is_included( i.id ) || i.id->is_included( b ) ) {
+        if( ( b->is_included( i.id ) || i.id->is_included( b ) ) && !removed_bionics.contains( i.id ) ) {
+            const units::energy pow_up = i.id->capacity;
+            mod_max_power_level( -1 * pow_up );
+            removed_bionics.emplace( i.id );
             continue;
         }
 
@@ -2899,39 +2941,6 @@ void Character::remove_bionic( const bionic_id &b )
 bool Character::has_bionics() const
 {
     return !my_bionics->empty() || has_max_power();
-}
-
-std::pair<int, int> Character::amount_of_storage_bionics() const
-{
-    units::energy lvl = get_max_power_level();
-
-    // exclude amount of power capacity obtained via non-power-storage CBMs
-    for( const bionic &it : get_bionic_collection() ) {
-        lvl -= it.info().capacity;
-    }
-
-    std::pair<int, int> results( 0, 0 );
-    if( lvl <= 0_kJ ) {
-        return results;
-    }
-
-    const units::energy pow_mkI = bio_power_storage->capacity;
-    const units::energy pow_mkII = bio_power_storage_mkII->capacity;
-
-    while( lvl >= std::min( pow_mkI, pow_mkII ) ) {
-        if( one_in( 2 ) ) {
-            if( lvl >= pow_mkI ) {
-                results.first++;
-                lvl -= pow_mkI;
-            }
-        } else {
-            if( lvl >= pow_mkII ) {
-                results.second++;
-                lvl -= pow_mkII;
-            }
-        }
-    }
-    return results;
 }
 
 void Character::clear_bionics()
@@ -3169,5 +3178,15 @@ void Character::introduce_into_anesthesia( const time_duration &duration, Charac
     } else {
         add_effect( effect_narcosis, duration );
         fall_asleep( duration );
+    }
+}
+// NOTE: Not toggling in the sense of activation
+// Instead toggling in the sense of having it
+void Character::toggle_bionic( const bionic_id &bio )
+{
+    if( has_bionic( bio ) ) {
+        remove_bionic( bio );
+    } else {
+        add_bionic( bio );
     }
 }

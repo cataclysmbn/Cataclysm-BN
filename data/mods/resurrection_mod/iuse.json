@@ -1,0 +1,7 @@
+[
+  {
+    "type": "item_action",
+    "id": "resurrection_anchor_use",
+    "name": { "str": "Place and activate the resurrection anchor." }
+  }
+]

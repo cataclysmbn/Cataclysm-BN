@@ -53,7 +53,8 @@
             { "item": "tools_science", "chance": 10 },
             { "item": "robots", "chance": 10 },
             { "item": "science", "chance": 10 },
-            { "item": "mut_lab", "chance": 2 }
+            { "item": "mut_lab", "chance": 2 },
+            { "item": "crt_airship_balloon_item", "chance": 5 }
           ]
         }
       },
@@ -62,13 +63,13 @@
         "6": {
           "name": "C.R.I.T. Lab Housing Entrance",
           "security": 4,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 7 } ],
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 6 } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "7": {
           "name": "C.R.I.T. Lab Entrance",
           "security": 6,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 8 } ],
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
       },

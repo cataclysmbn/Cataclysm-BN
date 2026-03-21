@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <memory>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -11,7 +12,10 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_cartesian_product.h"
 #include "cata_utility.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "enums.h"
@@ -20,6 +24,7 @@
 #include "item.h"
 #include "item_contents.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "math_defines.h"
 #include "messages.h"
 #include "options.h"
@@ -31,6 +36,7 @@
 #include "rng.h"
 #include "sounds.h"
 #include "string_formatter.h"
+#include "submap.h"
 #include "translations.h"
 #include "trap.h"
 #include "units.h"
@@ -176,7 +182,7 @@ weather_sum sum_conditions( const time_point &start, const time_point &end,
         const weather_manager &weather = get_weather();
         data.wind_amount += get_local_windpower( weather.windspeed,
                             // TODO: fix point types
-                            overmap_buffer.ter( tripoint_abs_omt( ms_to_omt_copy( location ) ) ),
+                            ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( location ) ) ),
                             location,
                             weather.winddirection, false ) * to_turns<int>( tick_size );
     }
@@ -325,31 +331,50 @@ double trap::funnel_turns_per_charge( double rain_depth_mm_per_hour ) const
 static void fill_funnels( int rain_depth_mm_per_hour, bool acid, const trap &tr )
 {
     const double turns_per_charge = tr.funnel_turns_per_charge( rain_depth_mm_per_hour );
-    // Give each funnel on the map a chance to collect the rain.
-    const std::vector<tripoint> &funnel_locs = g->m.trap_locations( tr.loadid );
-    for( const tripoint &loc : funnel_locs ) {
-        units::volume maxcontains = 0_ml;
-        if( one_in( turns_per_charge ) ) {
-            // FIXME:
-            //add_msg("%d mm/h %d tps %.4f: fill",int(calendar::turn),rain_depth_mm_per_hour,turns_per_charge);
-            // This funnel has collected some rain! Put the rain in the largest
-            // container here which is either empty or contains some mixture of
-            // impure water and acid.
-            map_stack items = g->m.i_at( loc );
-            auto container = items.end();
-            for( auto candidate_container = items.begin(); candidate_container != items.end();
-                 ++candidate_container ) {
-                if( ( *candidate_container )->is_funnel_container( maxcontains ) ) {
-                    container = candidate_container;
+    // Scan all loaded submaps in the current dimension's mapbuffer instead of the
+    // bubble-bounded traplocs.  This covers funnels at player bases and other
+    // loaded-but-out-of-bubble locations.
+    const auto abs_sub = g->m.get_abs_sub();
+    auto &mbuf = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
+    std::ranges::for_each( mbuf, [&]( auto & entry ) {
+        auto &[raw_pos, sm_ptr] = entry;
+        if( !sm_ptr || sm_ptr->is_uniform ) {
+            return;
+        }
+        std::ranges::for_each(
+            cata::views::cartesian_product( std::views::iota( 0, SEEX ),
+                                            std::views::iota( 0, SEEY ) ),
+        [&]( auto xy ) {
+            auto [lx, ly] = xy;
+            if( sm_ptr->get_trap( point( lx, ly ) ) != tr.loadid ) {
+                return;
+            }
+            const tripoint loc( ( raw_pos.x - abs_sub.x ) * SEEX + lx,
+                                ( raw_pos.y - abs_sub.y ) * SEEY + ly,
+                                raw_pos.z );
+            units::volume maxcontains = 0_ml;
+            if( one_in( turns_per_charge ) ) {
+                // FIXME:
+                //add_msg("%d mm/h %d tps %.4f: fill",int(calendar::turn),rain_depth_mm_per_hour,turns_per_charge);
+                // This funnel has collected some rain! Put the rain in the largest
+                // container here which is either empty or contains some mixture of
+                // impure water and acid.
+                map_stack items = g->m.i_at( loc );
+                auto container = items.end();
+                for( auto candidate_container = items.begin(); candidate_container != items.end();
+                     ++candidate_container ) {
+                    if( ( *candidate_container )->is_funnel_container( maxcontains ) ) {
+                        container = candidate_container;
+                    }
+                }
+
+                if( container != items.end() ) {
+                    ( *container )->add_rain_to_container( acid, 1 );
+                    ( *container )->set_age( 0_turns );
                 }
             }
-
-            if( container != items.end() ) {
-                ( *container )->add_rain_to_container( acid, 1 );
-                ( *container )->set_age( 0_turns );
-            }
-        }
-    }
+        } );
+    } );
 }
 
 /**
@@ -493,7 +518,8 @@ void weather_effect::morale( int intensity, int bonus, int bonus_max, time_durat
 void weather_effect::effect( int intensity, time_duration duration,
                              bodypart_str_id bp_id, int effect_intensity,
                              const std::string &effect_id_str,
-                             const std::string &effect_msg, int effect_msg_frequency, game_message_type message_type,
+                             const std::string &effect_msg, int effect_msg_frequency, int effect_msg_blocked_frequency,
+                             game_message_type message_type,
                              std::string precipitation_name, bool ignore_armor, int clothing_protection,
                              int umbrella_protection )
 {
@@ -505,14 +531,26 @@ void weather_effect::effect( int intensity, time_duration duration,
         auto &you = get_avatar();
         bool has_helmet = false;
         if( one_in( umbrella_protection ) && you.primary_weapon().has_flag( json_flag_RAIN_PROTECT ) ) {
-            return add_msg( _( "Your umbrella protects you from the %s." ), precipitation_name );
+            if( one_in( effect_msg_blocked_frequency ) ) {
+                add_msg( _( "Your umbrella protects you from the %s." ), precipitation_name );
+            }
+            return;
         } else if( one_in( umbrella_protection ) && you.worn_with_flag( json_flag_RAINPROOF ) ) {
-            return add_msg( _( "Your rainproof clothing protects you from the %s." ), precipitation_name );
+            if( one_in( effect_msg_blocked_frequency ) ) {
+                add_msg( _( "Your rainproof clothing protects you from the %s." ), precipitation_name );
+            }
+            return;
         } else if( one_in( clothing_protection ) ) {
-            return add_msg( _( "Your clothing protects you from the %s." ), precipitation_name );
+            if( one_in( effect_msg_blocked_frequency ) ) {
+                add_msg( _( "Your clothing protects you from the %s." ), precipitation_name );
+            }
+            return;
         } else if( you.is_wearing_power_armor( &has_helmet ) && ( has_helmet ||
                    !one_in( clothing_protection ) ) ) {
-            return add_msg( _( "Your power armor protects you from the %s." ), precipitation_name );
+            if( one_in( effect_msg_blocked_frequency ) ) {
+                add_msg( _( "Your power armor protects you from the %s." ), precipitation_name );
+            }
+            return;
         }
     }
 
@@ -630,7 +668,7 @@ std::string weather_forecast( const point_abs_sm &abs_sm_pos )
 {
     std::string weather_report;
     // Local conditions
-    const auto cref = overmap_buffer.closest_city( tripoint_abs_sm( abs_sm_pos, 0 ) );
+    const auto cref = ACTIVE_OVERMAP_BUFFER.closest_city( tripoint_abs_sm( abs_sm_pos, 0 ) );
     const std::string city_name = cref ? cref.city->name : std::string( _( "#####" ) );
     // Current time
     const weather_manager &weather = get_weather();
@@ -1118,6 +1156,35 @@ void weather_manager::update_weather()
     water_temperature = weather_gen.get_water_temperature(
                             tripoint_abs_ms( g->u.global_square_location() ),
                             calendar::turn, calendar::config, g->get_seed() ) ;
+
+    // Only call on_weather_changed if old_weather was a valid weather type (not initial state)
+    if( weather_id != old_weather && old_weather != weather_type_id::NULL_ID() ) {
+        cata::run_hooks( "on_weather_changed", [ &, this]( auto & params ) {
+            params["weather_id"] = weather_id.str();
+            params["old_weather_id"] = old_weather.str();
+            params["temperature"] = units::to_celsius( temperature );
+            params["temperature_f"] = units::to_fahrenheit( temperature );
+            params["windspeed"] = windspeed;
+            params["winddirection"] = winddirection; // 360 degrees
+            params["humidity"] = w.humidity;
+            params["pressure"] = w.pressure;
+            params["is_sheltered"] = !is_player_outside();
+        } );
+    }
+
+    // Only call on_weather_updated if old_weather was valid (not initial state)
+    if( old_weather != weather_type_id::NULL_ID() ) {
+        cata::run_hooks( "on_weather_updated", [ &, this]( auto & params ) {
+            params["weather_id"] = weather_id.str();
+            params["temperature"] = units::to_celsius( temperature );
+            params["temperature_f"] = units::to_fahrenheit( temperature );
+            params["windspeed"] = windspeed;
+            params["winddirection"] = winddirection;
+            params["humidity"] = w.humidity;
+            params["pressure"] = w.pressure;
+            params["is_sheltered"] = !is_player_outside();
+        } );
+    }
 }
 
 void weather_manager::set_nextweather( time_point t )
@@ -1136,14 +1203,40 @@ auto weather_manager::get_temperature( const tripoint &location ) const -> units
     // local modifier
     int temp_mod = 0;
 
-    if( !g->new_game ) {
+    if( !g->new_game && !g->swapping_dimensions ) {
         temp_mod += get_heat_radiation( location, false );
         temp_mod += get_convection_temperature( location );
     }
 
-    const int added_f = g->new_game ? 0 : g->m.get_temperature( location ) + temp_mod;
-    const int base_f = units::to_fahrenheit(
-                           location.z < 0 ? temperatures::annual_average : temperature );
+    const int added_f = ( g->new_game || g->swapping_dimensions ) ? 0 :
+                        g->m.get_temperature( location ) + temp_mod;
+
+    // Calculate base temperature with underground influence
+    units::temperature base_temp;
+    if( location.z >= 0 ) {
+        // Surface: full influence from current weather
+        base_temp = temperature;
+    } else if( !get_option<bool>( "UNDERGROUND_TEMPERATURE_INFLUENCED_BY_SURFACE" ) ) {
+        // Default behavior: underground is always annual average
+        base_temp = temperatures::annual_average;
+    } else {
+        // Underground: gradual transition to annual average
+        if( location.z <= -3 ) {
+            // Deep underground: always annual average (0% surface influence)
+            base_temp = temperatures::annual_average;
+        } else {
+            // z=-1: 50%, z=-2: 25%
+            const double influence_factor = location.z == -1 ? 0.5 : 0.25;
+
+            const double annual_avg_c = units::to_celsius( temperatures::annual_average );
+            const double current_temp_c = units::to_celsius( temperature );
+            const double temp_diff_c = current_temp_c - annual_avg_c;
+            const double base_temp_c = annual_avg_c + temp_diff_c * influence_factor;
+            base_temp = units::from_celsius( base_temp_c );
+        }
+    }
+
+    const int base_f = units::to_fahrenheit( base_temp );
 
     // Hack: adding temperatures between temperatures makes no sense
     return units::from_celsius( std::round( units::fahrenheit_to_celsius( base_f + added_f ) ) );
@@ -1152,13 +1245,34 @@ auto weather_manager::get_temperature( const tripoint &location ) const -> units
 auto weather_manager::get_temperature( const tripoint_abs_omt &location ) const ->
 units::temperature
 {
-    if( location.z() < 0 ) {
+    if( location.z() < 0 && !get_option<bool>( "UNDERGROUND_TEMPERATURE_INFLUENCED_BY_SURFACE" ) ) {
+        // Default behavior: underground is always annual average
         return temperatures::annual_average;
     }
 
     tripoint abs_ms = project_to<coords::ms>( location ).raw();
     w_point w = get_cur_weather_gen().get_weather( abs_ms, calendar::turn, g->get_seed() );
-    return w.temperature;
+
+    if( location.z() >= 0 ) {
+        // Surface: full influence from current weather
+        return w.temperature;
+    }
+
+    // Underground: gradual transition to annual average
+    if( location.z() <= -3 ) {
+        // Deep underground: always annual average (0% surface influence)
+        return temperatures::annual_average;
+    }
+
+    // z=-1: 50%, z=-2: 25%
+    const double influence_factor = location.z() == -1 ? 0.5 : 0.25;
+
+    const double annual_avg_c = units::to_celsius( temperatures::annual_average );
+    const double current_temp_c = units::to_celsius( w.temperature );
+    const double temp_diff_c = current_temp_c - annual_avg_c;
+    const double base_temp_c = annual_avg_c + temp_diff_c * influence_factor;
+
+    return units::from_celsius( base_temp_c );
 }
 
 auto weather_manager::get_water_temperature( const tripoint & ) const -> units::temperature

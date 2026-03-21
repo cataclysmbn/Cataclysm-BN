@@ -253,6 +253,7 @@
         [ "medical_tape", 40 ],
         [ "cardboard", 10 ],
         [ "bag_plastic", 1 ],
+        [ "bag_zipper", 1 ],
         [ "bottle_plastic_small", 1 ],
         [ "plastic_chunk", 1 ],
         [ "aluminum_foil", 40 ],

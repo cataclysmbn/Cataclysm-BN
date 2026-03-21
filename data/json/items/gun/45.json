@@ -7,7 +7,7 @@
     "description": "The TDI Vector is a submachine gun with a unique, in-line design that makes recoil very manageable, even in the powerful .45 caliber.",
     "weight": "3400 g",
     "volume": "1750 ml",
-    "barrel_length": "150 ml",
+    "barrel_volume": "150 ml",
     "price": "3100 USD",
     "price_postapoc": "35 USD",
     "to_hit": -2,
@@ -91,7 +91,7 @@
     "description": "The MAC-10 is a popular machine pistol originally designed for military use.  For many years they were the most inexpensive automatic weapon in the US, and enjoyed great popularity among criminals less concerned with quality firearms.",
     "weight": "2840 g",
     "volume": "750 ml",
-    "barrel_length": "50 ml",
+    "barrel_volume": "50 ml",
     "price": "1800 USD",
     "price_postapoc": "25 USD",
     "to_hit": -2,
@@ -123,7 +123,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "45",
-    "barrel_length": "750 ml"
+    "barrel_volume": "750 ml"
   },
   {
     "id": "smg_45",
@@ -146,7 +146,7 @@
     "min_cycle_recoil": 456,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
     "loudness": 25,
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "handling": 20,
     "valid_mod_locations": [
       [ "accessories", 3 ],
@@ -172,7 +172,7 @@
     "description": "A large and heavy revolver evidently welded from scrap.  It's not pretty, but the .45 it's chambered with packs a serious punch.  Just watch out for the kick.",
     "weight": "1200 g",
     "volume": "1 L",
-    "barrel_length": "100 ml",
+    "barrel_volume": "100 ml",
     "price": "600 USD",
     "price_postapoc": "750 cent",
     "to_hit": -3,
@@ -205,7 +205,7 @@
     "durability": 7,
     "min_cycle_recoil": 540,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "magazines": [ [ "45", [ "thompson_mag", "thompson_bigmag", "thompson_drum", "thompson_makeshiftmag" ] ] ]
   },
   {
@@ -297,7 +297,7 @@
     "description": "A semi-automatic rifle using .45 ACP rounds.  It is also compatible with Glock 21 magazines.",
     "weight": "2300 g",
     "volume": "2 L",
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "price": "1650 USD",
     "price_postapoc": "40 USD",
     "material": [ "steel", "plastic" ],

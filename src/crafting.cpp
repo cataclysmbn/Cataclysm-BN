@@ -27,6 +27,7 @@
 #include "color.h"
 #include "craft_command.h"
 #include "crafting_gui.h"
+#include "crafting_quality.h"
 #include "debug.h"
 #include "enums.h"
 #include "faction.h"
@@ -248,18 +249,20 @@ float workbench_crafting_speed_multiplier( const item &craft, const bench_locati
 
 float crafting_speed_multiplier( const Character &who, const recipe &rec, bool )
 {
-    const float result = morale_crafting_speed_multiplier( who, rec ) *
-                         lighting_crafting_speed_multiplier( who,
-                                 rec ) * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
-                                           ? 9999
-                                           : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
-                         who.mutation_value( "crafting_speed_modifier" );
+    const auto tools_multi = crafting_tools_speed_multiplier( who, rec );
+    const auto result = morale_crafting_speed_multiplier( who, rec ) *
+                        lighting_crafting_speed_multiplier( who,
+                                rec ) * tools_multi * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                                        ? 9999
+                                        : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
+                        who.mutation_value( "crafting_speed_modifier" );
 
     return result;
 }
 
 float crafting_speed_multiplier( const Character &who, const item &craft,
-                                 const bench_location &bench )
+                                 const bench_location &bench,
+                                 const std::optional<float> tools_multi_override )
 {
     if( !craft.is_craft() ) {
         debugmsg( "Can't calculate crafting speed multiplier of non-craft '%s'", craft.tname() );
@@ -271,12 +274,15 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     const float light_multi = lighting_crafting_speed_multiplier( who, rec );
     const float bench_multi = workbench_crafting_speed_multiplier( craft, bench );
     const float morale_multi = morale_crafting_speed_multiplier( who, rec );
+    const auto tools_multi = tools_multi_override
+                             ? *tools_multi_override
+                             : crafting_tools_speed_multiplier( who, rec );
     const float mutation_multi = who.mutation_value( "crafting_speed_modifier" );
     const float game_opt_multi = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0 ? 9999 :
                                  100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
 
-    const float total_multi = light_multi * bench_multi * morale_multi * mutation_multi *
-                              game_opt_multi;
+    const auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
+                             game_opt_multi;
 
     if( light_multi <= 0.0f ) {
         who.add_msg_if_player( m_bad, _( "You can no longer see well enough to keep crafting." ) );
@@ -544,9 +550,9 @@ const inventory &Character::crafting_inventory( const tripoint &src_pos, int rad
     if( src_pos == tripoint_zero ) {
         inv_pos = pos();
     }
-    if( cached_moves == moves
-        && cached_time == calendar::turn
-        && cached_position == inv_pos ) {
+    const auto cache_hit = cached_time == calendar::turn
+                           && cached_position == inv_pos;
+    if( cache_hit ) {
         return cached_crafting_inventory;
     }
     cached_crafting_inventory.form_from_map( inv_pos, radius, this, false, clear_path );
@@ -750,6 +756,8 @@ item *Character::start_craft( craft_command &command, const tripoint & )
     activity->values.push_back( command.is_long() );
     // Ugly
     activity->values.push_back( static_cast<int>( bench.type ) );
+    activity->values.push_back( 100 );
+    activity->values.push_back( 0 );
 
     add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),

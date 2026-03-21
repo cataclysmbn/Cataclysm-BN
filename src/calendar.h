@@ -26,7 +26,7 @@ struct enum_traits<season_type> {
 };
 
 /** Phases of the moon */
-enum moon_phase {
+enum moon_phase : int {
     /** New (completely dark) moon */
     MOON_NEW = 0,
     /** One quarter of moon lit, amount lit is increasing every day */
@@ -45,6 +45,11 @@ enum moon_phase {
     MOON_WANING_CRESCENT,
     /** Not a valid moon phase, but can be used for iterating through enum */
     MOON_PHASE_MAX
+};
+
+template<>
+struct enum_traits<moon_phase> {
+    static constexpr moon_phase last = moon_phase::MOON_PHASE_MAX;
 };
 
 /**
@@ -598,7 +603,7 @@ bool is_dawn( const time_point &p );
 /** Returns the current seasonally-adjusted maximum daylight level */
 double current_daylight_level( const time_point &p );
 /** How much light is provided in full daylight */
-double default_daylight_level();
+static constexpr double default_daylight_level() { return 100.0; }
 /** Returns the current sunlight or moonlight level through the preceding functions.
  *  By default, returns sunlight level for vision, with moonlight providing a measurable amount
  *  of light.  with vision == false, returns sunlight for solar panel purposes, and moonlight

@@ -17,7 +17,7 @@
     "container": "flask_glass",
     "color": "light_blue",
     "comestible_type": "DRINK",
-    "flags": [ "EATEN_COLD", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_COLD", "NUTRIENT_OVERRIDE", "UNSAFE_CONSUME" ],
     "phase": "liquid",
     "price": "25 USD"
   },
@@ -54,7 +54,7 @@
     "container": "flask_glass",
     "color": "yellow",
     "comestible_type": "DRINK",
-    "flags": [ "EATEN_COLD", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_COLD", "NUTRIENT_OVERRIDE", "UNSAFE_CONSUME" ],
     "phase": "liquid",
     "price": "30 USD"
   },
@@ -101,7 +101,7 @@
     "color": "brown",
     "spoils_in": "5 days",
     "comestible_type": "DRINK",
-    "flags": [ "TRADER_AVOID", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "TRADER_AVOID", "NUTRIENT_OVERRIDE", "UNSAFE_CONSUME" ],
     "phase": "liquid",
     "price": "25 USD"
   },

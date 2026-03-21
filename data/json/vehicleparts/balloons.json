@@ -36,6 +36,6 @@
     "name": "external airship balloon",
     "location": "structural",
     "//": "Overhead, so don't affect movement but don't board.",
-    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF" ] }
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF", "NOCOLLIDE", "NOCOLLIDEBELOW" ] }
   }
 ]

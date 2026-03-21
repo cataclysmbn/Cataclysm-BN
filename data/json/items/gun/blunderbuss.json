@@ -17,7 +17,7 @@
     "durability": 3,
     "clip_size": 1,
     "reload": 300,
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "valid_mod_locations": [ [ "sling", 1 ], [ "stock", 1 ], [ "grip", 1 ], [ "rail", 1 ], [ "sights", 1 ], [ "underbarrel", 1 ] ],
     "faults": [  ]
   }

@@ -14,6 +14,12 @@
     "tools": [ [ [ "fire", -1 ], [ "hotplate", 2 ], [ "toolset", 2 ] ] ]
   },
   {
+    "id": "magazine_standard",
+    "type": "requirement",
+    "//": "Forging of steel firearm magazines",
+    "tools": [ [ [ "blacksmithing_standard", 2, "LIST" ] ], [ [ "small_repairkit", 10 ], [ "large_repairkit", 5 ] ] ]
+  },
+  {
     "id": "shot_forming",
     "type": "requirement",
     "//": "Forming of shot from raw materials, allows use of makeshift press",
@@ -106,6 +112,13 @@
     "components": [ [ [ "filament", 1, "LIST" ] ] ]
   },
   {
+    "id": "sewing_advanced",
+    "type": "requirement",
+    "//": "Steel sewing needle and awl, for working with tougher materials like leather and kevlar",
+    "qualities": [ { "id": "SEW", "level": 3 }, { "id": "LEATHER_AWL", "level": 2 }, { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "filament", 1, "LIST" ] ] ]
+  },
+  {
     "id": "welding_standard",
     "type": "requirement",
     "//": "Crafting or repair of steel items or installation of vehicle parts",
@@ -123,7 +136,7 @@
       { "id": "DRILL", "level": 2 },
       { "id": "PULL_FINE", "level": 2 }
     ],
-    "components": [ [ [ "link_sheet", 1 ] ], [ [ "chain_link", 25 ] ], [ [ "rag", 2 ] ] ]
+    "components": [ [ [ "link_sheet", 1 ] ], [ [ "chain_link", 25 ] ] ]
   },
   {
     "id": "soldering_standard",

@@ -89,6 +89,27 @@
     "flags": [ "NEEDS_UNFOLD" ]
   },
   {
+    "id": "crossbow_draw_assist",
+    "type": "GUNMOD",
+    "name": { "str": "crossbow draw motor" },
+    "description": "An electric motor and transmission that can be attached to a crossbow's string to make it easier to draw back. It makes reloading faster, but requires UPS power and makes the crossbow bulkier and heavier. Who said crossbows needed to be medieval?",
+    "weight": "800 g",
+    "volume": "250 ml",
+    "integral_volume": "125 ml",
+    "price": "21 USD",
+    "price_postapoc": "2 USD",
+    "material": [ "steel", "plastic" ],
+    "looks_like": "motor_tiny",
+    "symbol": ":",
+    "color": "light_gray",
+    "location": "accessories",
+    "mod_target_category": [ [ "M_XBOWS" ] ],
+    "install_time": "1 m",
+    "handling_modifier": -3,
+    "reload_modifier": -65,
+    "ups_charges_modifier": 5
+  },
+  {
     "id": "belt_clip",
     "type": "GUNMOD",
     "name": { "str": "belt clip" },

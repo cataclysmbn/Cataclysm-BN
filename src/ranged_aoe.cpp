@@ -1,6 +1,8 @@
 #include <queue>
 
+#include "enums.h"
 #include "game.h"
+#include "line.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "projectile.h"
@@ -131,6 +133,12 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
     // Terrain will be shown damaged, but having it in unknown state would complicate timing the animation
     for( const auto &[point, coverage] : final_coverage ) {
         Creature *critter = g->critter_at( point );
+        // Skip friendly creatures within 1 tile of attacker to prevent adjacent friendly fire in AOE
+        if( critter != nullptr &&
+            attacker.attitude_to( *critter ) == Attitude::A_FRIENDLY &&
+            rl_dist( attacker.pos(), point ) <= 1 ) {
+            continue;
+        }
         if( critter != nullptr ) {
             dealt_projectile_attack atk;
             atk.end_point = point;

@@ -1037,7 +1037,8 @@
       { "item": "flyer", "prob": 30 },
       { "item": "box_small", "prob": 30 },
       { "item": "rag", "prob": 20 },
-      { "item": "bag_plastic", "prob": 20 },
+      { "item": "bag_plastic", "prob": 15 },
+      { "item": "bag_zipper", "prob": 5 },
       { "item": "news_regional", "prob": 15 },
       { "item": "mag_news", "prob": 15 }
     ]
@@ -1711,7 +1712,14 @@
   {
     "id": "laundromat_containers",
     "type": "item_group",
-    "items": [ [ "duffelbag", 5 ], [ "backpack", 5 ], [ "bag_plastic", 30 ], [ "basket_laundry", 30 ] ]
+    "items": [
+      [ "duffelbag", 5 ],
+      [ "backpack", 5 ],
+      [ "plastic_shopping_bag", 10 ],
+      [ "bag_plastic", 15 ],
+      [ "bag_zipper", 5 ],
+      [ "basket_laundry", 30 ]
+    ]
   },
   {
     "id": "clothing_sport",
@@ -1791,7 +1799,8 @@
       [ "hacksaw", 5 ],
       [ "gloves_rubber", 25 ],
       [ "rag_bloody", 10 ],
-      [ "bag_plastic", 20 ],
+      [ "bag_plastic", 10 ],
+      [ "bag_zipper", 10 ],
       [ "string_6", 5 ]
     ]
   },
@@ -1812,7 +1821,8 @@
       [ "gloves_medical", 20 ],
       [ "rag", 15 ],
       [ "rag_bloody", 2 ],
-      [ "bag_plastic", 20 ],
+      [ "bag_plastic", 10 ],
+      [ "bag_zipper", 10 ],
       [ "jerky", 40 ]
     ]
   },

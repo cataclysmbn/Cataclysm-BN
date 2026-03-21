@@ -42,6 +42,7 @@ extern const flag_id flag_BIO_IMMUNE;
 extern const flag_id flag_BIPOD;
 extern const flag_id flag_BIRD;
 extern const flag_id flag_BLIND;
+extern const flag_id flag_BLINDS_EYES_ON_HIT;
 extern const flag_id flag_BLOCK_WHILE_WORN;
 extern const flag_id flag_BOMB;
 extern const flag_id flag_BOOK_CANNIBAL;
@@ -104,6 +105,9 @@ extern const flag_id flag_EFFECT_HEAT_IMMUNE;
 extern const flag_id flag_EFFECT_IMPEDING;
 extern const flag_id flag_EFFECT_INVISIBLE;
 extern const flag_id flag_EFFECT_LIGHT_IMMUNE;
+extern const flag_id flag_EFFECT_LUA_ON_ADDED;
+extern const flag_id flag_EFFECT_LUA_ON_TICK;
+extern const flag_id flag_EFFECT_LUA_ON_REMOVED;
 extern const flag_id flag_EFFECT_NIGHT_VISION;
 extern const flag_id flag_EFFECT_PSI_IMMUNE;
 extern const flag_id flag_EFFECT_STAB_IMMUNE;
@@ -113,6 +117,7 @@ extern const flag_id flag_ETHEREAL_ITEM;
 extern const flag_id flag_EXPLOSION_SMASHED;
 extern const flag_id flag_EXPLOSION_PROPELLED;
 extern const flag_id flag_FAKE_MILL;
+extern const flag_id flag_FAKE_CLONING_VAT;
 extern const flag_id flag_FAKE_SMOKE;
 extern const flag_id flag_FANCY;
 extern const flag_id flag_FELINE;
@@ -236,6 +241,7 @@ extern const flag_id flag_OUTER;
 extern const flag_id flag_OVERSIZE;
 extern const flag_id flag_PARTIAL_DEAF;
 extern const flag_id flag_PERFECT_LOCKPICK;
+extern const flag_id flag_DURABLE_LOCKPICK;
 extern const flag_id flag_PERPETUAL;
 extern const flag_id flag_PERSONAL;
 extern const flag_id flag_PLACE_RANDOMLY;
@@ -279,6 +285,7 @@ extern const flag_id flag_REACH;
 extern const flag_id flag_REACH_ATTACK;
 extern const flag_id flag_REBREATHER;
 extern const flag_id flag_RECHARGE;
+extern const flag_id flag_RECON_VISION;
 extern const flag_id flag_REDUCED_BASHING;
 extern const flag_id flag_REDUCED_WEIGHT;
 extern const flag_id flag_RELOAD_AND_SHOOT;
@@ -312,6 +319,7 @@ extern const flag_id flag_SNIPPET_NEEDS_LITERACY;
 extern const flag_id flag_SOLARPACK;
 extern const flag_id flag_SOLARPACK_ON;
 extern const flag_id flag_SPAWN_FRIENDLY;
+extern const flag_id flag_SPAWN_HOSTILE;
 extern const flag_id flag_SPEAR;
 extern const flag_id flag_SPEEDLOADER;
 extern const flag_id flag_SPLINT;
@@ -324,6 +332,7 @@ extern const flag_id flag_SUN_GLASSES;
 extern const flag_id flag_SUPER_FANCY;
 extern const flag_id flag_SWIM_GOGGLES;
 extern const flag_id flag_TACK;
+extern const flag_id flag_NET_TANGLE;
 extern const flag_id flag_TANGLE;
 extern const flag_id flag_TARDIS;
 extern const flag_id flag_THERMOMETER;
@@ -371,7 +380,10 @@ extern const flag_id flag_MUTE;
 extern const flag_id flag_NOT_FOOTWEAR;
 extern const flag_id flag_WEATHER_FORECAST;
 extern const flag_id flag_WINDMETER;
-
+extern const flag_id flag_INITIALLY_ACTIVATE;
+extern const flag_id flag_MULTIINSTALL;
+extern const flag_id flag_BIONIC_TOOLS;
+extern const flag_id flag_TEMPORARY_ITEM;
 /**
  * Flags: json entity with "type": "json_flag", defined in flags.json, vp_flags.json
  * Currently used by:
@@ -464,5 +476,3 @@ class json_flag
         /** Clear all loaded flags (invalidating any pointers) */
         static void reset();
 };
-
-

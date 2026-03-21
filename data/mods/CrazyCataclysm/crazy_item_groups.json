@@ -2,7 +2,7 @@
   {
     "id": "grenades",
     "type": "item_group",
-    "items": [ [ "granade", 1 ] ]
+    "items": [ [ "debug_grenade", 1 ] ]
   },
   {
     "id": "skeltal_drops",

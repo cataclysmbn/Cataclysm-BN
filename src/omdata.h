@@ -299,6 +299,14 @@ struct oter_t {
             return type->has_flag( oter_flags::lake_shore );
         }
 
+        // Comparison operators for Lua bindings
+        bool operator==( const oter_t &rhs ) const {
+            return id == rhs.id;
+        }
+        bool operator<( const oter_t &rhs ) const {
+            return id < rhs.id;
+        }
+
     private:
         om_direction::type dir = om_direction::type::none;
         uint32_t symbol;

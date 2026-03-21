@@ -112,7 +112,7 @@
   },
   {
     "type": "mutation_category",
-    "id": "Lamia",
+    "id": "LAMIA",
     "name": "Lamia",
     "threshold_mut": "THRESH_LAMIA",
     "mutagen_message": "You feel a slithering feeling.",

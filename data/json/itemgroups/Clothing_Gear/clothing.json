@@ -428,7 +428,8 @@
       { "item": "tac_helmet", "prob": 10 },
       { "item": "glasses_bal", "prob": 10 },
       { "item": "mask_bal", "prob": 5 },
-      { "item": "shield_ballistic", "prob": 5 }
+      { "item": "shield_ballistic", "prob": 5 },
+      { "item": "shield_ballistic_large", "prob": 5 }
     ]
   },
   {
@@ -1280,6 +1281,7 @@
       [ "firecracker_pack", 5 ],
       [ "firecracker", 5 ],
       [ "wolfsuit", 4 ],
+      [ "sparkledogsuit", 4 ],
       [ "dinosuit", 4 ],
       [ "zentai", 5 ],
       [ "vibrator", 5 ],
@@ -2032,6 +2034,7 @@
       [ "knee_pads", 40 ],
       [ "mask_bal", 5 ],
       [ "shield_ballistic", 2 ],
+      [ "shield_ballistic_large", 1 ],
       [ "e_tool", 10 ],
       [ "shovel_short", 2 ],
       [ "waterproof_gunmod", 8 ],
@@ -2524,6 +2527,7 @@
       [ "shield_spiked_large", 1 ],
       [ "shield_riot", 8 ],
       [ "shield_ballistic", 4 ],
+      [ "shield_ballistic_large", 2 ],
       [ "shield_welded", 2 ],
       [ "carbon_shield", 1 ]
     ]

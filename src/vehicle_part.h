@@ -29,13 +29,13 @@ struct vehicle_part {
         friend class turret_data;
         friend class vehicle_base_item_location;
 
-        enum : int { passenger_flag = 1,
-                     animal_flag = 2,
-                     carried_flag = 4,
-                     carrying_flag = 8,
-                     tracked_flag = 16, //carried vehicle part with tracking enabled
-                     targets_grid = 32, // Jumper cable is to grid, not vehicle
-                   };
+        enum vp_state_flag : int { passenger_flag = 1,
+                                   animal_flag = 2,
+                                   carried_flag = 4,
+                                   carrying_flag = 8,
+                                   tracked_flag = 16, //carried vehicle part with tracking enabled
+                                   targets_grid = 32, // Jumper cable is to grid, not vehicle
+                                 };
 
         vehicle_part();
         vehicle_part( vehicle * );
@@ -49,14 +49,13 @@ struct vehicle_part {
         /** Check this instance is non-null (not default constructed) */
         explicit operator bool() const;
 
-        // TODO: Make all of those use the above enum
-        bool has_flag( const int flag ) const noexcept {
+        bool has_flag( const vp_state_flag flag ) const noexcept {
             return flag & flags;
         }
-        int  set_flag( const int flag )       noexcept {
+        int  set_flag( const vp_state_flag flag )       noexcept {
             return flags |= flag;
         }
-        int  remove_flag( const int flag )    noexcept {
+        int  remove_flag( const vp_state_flag flag )    noexcept {
             return flags &= ~flag;
         }
 

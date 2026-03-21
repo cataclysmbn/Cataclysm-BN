@@ -442,8 +442,8 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                             }
                         } else {
                             popup( _( "You cannot activate %s!  To read a description of "
-                                      "%s, press '!', then '%c'." ),
-                                   mut_data.name(), mut_data.name(), who.my_mutations[*mut_id].key );
+                                      "%s, press '!'." ),
+                                   mut_data.name(), mut_data.name() );
                         }
                         break;
                     }
@@ -607,8 +607,8 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                                 }
                             } else {
                                 popup( _( "You cannot activate %s!  To read a description of "
-                                          "%s, press '!', then '%c'." ),
-                                       mut_data.name(), mut_data.name(), who.my_mutations[mut_id].key );
+                                          "%s, press '!'." ),
+                                       mut_data.name(), mut_data.name() );
                             }
                             break;
                         }

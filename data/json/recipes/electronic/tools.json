@@ -314,7 +314,7 @@
     "reversible": true,
     "decomp_learn": 4,
     "book_learn": [ [ "textbook_anarch", 3 ], [ "advanced_electronics", 5 ] ],
-    "using": [ [ "soldering_standard", 10 ], [ "coding_standard", 120 ], [ "utility_software_standard", 120 ] ],
+    "using": [ [ "soldering_standard", 10 ], [ "coding_standard", 120 ], [ "utility_software_standard", -1 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "VOLT_MEASURE", "level": 1 } ],
     "components": [ [ [ "processor", 1 ] ], [ [ "RAM", 1 ] ], [ [ "scrap", 4 ] ], [ [ "cable", 10 ] ] ]
   },
@@ -998,7 +998,7 @@
     "autolearn": true,
     "using": [ [ "soldering_standard", 10 ] ],
     "qualities": [ { "id": "SCREW_FINE", "level": 1 } ],
-    "components": [ [ [ "power_supply", 1 ] ], [ [ "e_scrap", 1 ] ] ]
+    "components": [ [ [ "power_supply", 1 ] ], [ [ "e_scrap", 1 ] ], [ [ "multi_cooker", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -1030,7 +1030,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_electronics", 6 ], [ "advanced_electronics", 6 ] ],
     "using": [ [ "soldering_standard", 10 ], [ "welding_standard", 5 ] ],
-    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SCREW_FINE", "level": 2 }, { "id": "SAW_M_FINE", "level": 2 } ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
     "components": [
       [ [ "motor_small", 1 ] ],
       [ [ "sheet_metal_small", 2 ] ],

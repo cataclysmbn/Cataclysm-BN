@@ -349,75 +349,102 @@
     "color": "white",
     "move_cost_mod": 0,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "PLACE_ITEM" ]
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "SUN_ROOF_ABOVE", "INDOORS", "FLAT", "PLACE_ITEM" ],
+    "deconstruct": { "items": [ { "item": "sheet", "count": 1 } ] }
+  },
+  {
+    "type": "furniture",
+    "id": "f_skylight_canvas_floor",
+    "name": "skylight canvas floor",
+    "description": "Flooring made out of stretched, waterproof cloth.  Helps keep the dirt out of the tent. Has a plastic skylight to let light",
+    "symbol": "#",
+    "color": "white",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "INDOORS", "FLAT", "PLACE_ITEM" ],
+    "deconstruct": { "items": [ { "item": "sheet", "count": 1 }, { "item": "plastic_sheet", "count": 1 } ] }
   },
   {
     "type": "furniture",
     "id": "f_canvas_wall",
     "name": "canvas wall",
-    "description": "A wall made of stretched, waterproof cloth.",
+    "description": "A wall made of stretched, waterproof cloth and supported by wooden or metal stakes.",
     "symbol": "#",
     "color": "blue",
     "move_cost_mod": -1,
     "coverage": 95,
     "required_str": -1,
-    "flags": [ "FLAMMABLE_HARD", "NOITEM", "BLOCK_WIND", "SUN_ROOF_ABOVE" ],
+    "flags": [ "FLAMMABLE_HARD", "NOITEM", "SUN_ROOF_ABOVE", "NO_SCENT", "BLOCK_WIND" ],
     "bash": {
       "str_min": 1,
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
       "sound_vol": 8,
-      "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ],
       "//": "Go straight through without taking any damage.",
-      "ranged": { "block_unaimed_chance": "100%" }
-    }
+      "ranged": { "block_unaimed_chance": "100%" },
+      "items": [ { "item": "rag", "count": [ 10, 20 ] }, { "item": "pointy_stick_long", "count": [ 0, 1 ] } ]
+    },
+    "deconstruct": { "items": [ { "item": "sheet", "count": 1 }, { "item": "pointy_stick_long", "count": 1 } ] }
   },
   {
     "type": "furniture",
     "id": "f_large_canvas_wall",
-    "name": "canvas wall",
-    "description": "A wall made of stretched, heavy-duty, waterproof cloth.",
+    "name": "heavy-duty canvas wall",
+    "description": "A wall made of stretched, waterproof cloth and supported by wooden or metal stakes. It has been strenghtened with plastic sheets.",
     "symbol": "#",
     "color": "blue",
     "move_cost_mod": -1,
     "coverage": 95,
     "required_str": -1,
-    "flags": [ "FLAMMABLE_HARD", "NOITEM", "BLOCK_WIND", "SUN_ROOF_ABOVE" ],
+    "flags": [ "FLAMMABLE_HARD", "NOITEM", "SUN_ROOF_ABOVE", "NO_SCENT", "BLOCK_WIND" ],
     "bash": {
-      "str_min": 1,
+      "str_min": 4,
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
       "sound_vol": 8,
-      "collapse_radius": 2,
-      "tent_centers": [ "f_center_groundsheet" ],
       "//": "Go straight through without taking any damage.",
-      "ranged": { "block_unaimed_chance": "100%" }
+      "ranged": { "block_unaimed_chance": "100%" },
+      "items": [
+        { "item": "rag", "count": [ 10, 20 ] },
+        { "item": "plastic_chunk", "count": [ 10, 20 ] },
+        { "item": "pointy_stick_long", "count": [ 0, 1 ] }
+      ]
+    },
+    "deconstruct": {
+      "items": [
+        { "item": "sheet", "count": 1 },
+        { "item": "plastic_sheet", "count": 1 },
+        { "item": "pointy_stick_long", "count": 1 }
+      ]
     }
   },
   {
     "type": "furniture",
     "id": "f_canvas_door",
     "name": "canvas flap",
-    "description": "This canvas flap door could be pulled aside.",
+    "description": "This canvas flap door could be pulled aside. If you examine it closely, you could peek outside.",
     "symbol": "+",
     "color": "blue",
+    "looks_like": "f_canvas_door",
     "move_cost_mod": -1,
     "coverage": 95,
     "required_str": -1,
-    "flags": [ "FLAMMABLE_HARD", "NOITEM", "DOOR", "BLOCK_WIND", "SUN_ROOF_ABOVE" ],
+    "flags": [ "FLAMMABLE_HARD", "DOOR", "NOITEM", "SUN_ROOF_ABOVE", "NO_SCENT", "BLOCK_WIND" ],
     "open": "f_canvas_door_o",
+    "examine_action": "door_peephole",
     "bash": {
       "str_min": 1,
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
       "sound_vol": 8,
-      "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ],
       "//": "Go straight through without taking any damage.",
-      "ranged": { "block_unaimed_chance": "100%" }
-    }
+      "ranged": { "block_unaimed_chance": "100%" },
+      "items": [ { "item": "rag", "count": [ 10, 20 ] } ]
+    },
+    "deconstruct": { "items": [ { "item": "sheet", "count": 1 } ] }
   },
   {
     "type": "furniture",
@@ -426,9 +453,10 @@
     "description": "This canvas flap door has been pulled aside.",
     "symbol": ".",
     "color": "blue",
-    "move_cost_mod": 0,
+    "move_cost_mod": 2,
+    "coverage": 95,
     "required_str": -1,
-    "flags": [ "TRANSPARENT" ],
+    "flags": [ "FLAMMABLE", "INDOORS", "TRANSPARENT" ],
     "close": "f_canvas_door",
     "bash": {
       "str_min": 1,
@@ -436,52 +464,80 @@
       "sound": "rrrrip!",
       "sound_fail": "slap!",
       "sound_vol": 8,
-      "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet", "f_center_groundsheet" ]
-    }
+      "//": "Go straight through without taking any damage.",
+      "ranged": { "block_unaimed_chance": "100%" },
+      "items": [ { "item": "rag", "count": [ 10, 20 ] } ]
+    },
+    "deconstruct": { "items": [ { "item": "sheet", "count": 1 } ] }
   },
   {
     "type": "furniture",
     "id": "f_large_canvas_door",
-    "name": "canvas flap",
-    "description": "This heavy canvas flap door could be pulled aside.",
+    "name": "heavy-duty canvas flap",
+    "description": "This canvas flap door could be pulled aside. If you examine it closely, you could peek outside.",
     "symbol": "+",
     "color": "blue",
+    "looks_like": "f_large_canvas_door",
     "move_cost_mod": -1,
     "coverage": 95,
     "required_str": -1,
-    "flags": [ "FLAMMABLE_HARD", "NOITEM", "DOOR", "BLOCK_WIND", "SUN_ROOF_ABOVE" ],
+    "flags": [ "FLAMMABLE_HARD", "DOOR", "NOITEM", "SUN_ROOF_ABOVE", "NO_SCENT", "BLOCK_WIND" ],
     "open": "f_large_canvas_door_o",
+    "examine_action": "door_peephole",
     "bash": {
-      "str_min": 1,
+      "str_min": 4,
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
       "sound_vol": 8,
-      "collapse_radius": 2,
-      "tent_centers": [ "f_center_groundsheet" ],
       "//": "Go straight through without taking any damage.",
-      "ranged": { "block_unaimed_chance": "100%" }
+      "ranged": { "block_unaimed_chance": "100%" },
+      "items": [
+        { "item": "rag", "count": [ 10, 20 ] },
+        { "item": "plastic_chunk", "count": [ 10, 20 ] },
+        { "item": "pointy_stick_long", "count": [ 0, 1 ] }
+      ]
+    },
+    "deconstruct": {
+      "items": [
+        { "item": "sheet", "count": 1 },
+        { "item": "plastic_sheet", "count": 1 },
+        { "item": "pointy_stick_long", "count": 1 }
+      ]
     }
   },
   {
     "type": "furniture",
     "id": "f_large_canvas_door_o",
-    "name": "open canvas flap",
-    "description": "This heavy canvas flap door has been pulled aside.",
+    "name": "open heavy-duty canvas flap",
+    "description": "This canvas flap door has been pulled aside.",
     "symbol": ".",
     "color": "blue",
-    "move_cost_mod": 0,
+    "move_cost_mod": 2,
+    "coverage": 95,
     "required_str": -1,
-    "flags": [ "TRANSPARENT" ],
+    "flags": [ "FLAMMABLE", "INDOORS", "TRANSPARENT" ],
     "close": "f_large_canvas_door",
     "bash": {
-      "str_min": 1,
+      "str_min": 4,
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
       "sound_vol": 8,
-      "collapse_radius": 2,
-      "tent_centers": [ "f_center_groundsheet" ]
+      "//": "Go straight through without taking any damage.",
+      "ranged": { "block_unaimed_chance": "100%" },
+      "items": [
+        { "item": "rag", "count": [ 10, 20 ] },
+        { "item": "plastic_chunk", "count": [ 10, 20 ] },
+        { "item": "pointy_stick_long", "count": [ 0, 1 ] }
+      ]
+    },
+    "deconstruct": {
+      "items": [
+        { "item": "sheet", "count": 1 },
+        { "item": "plastic_sheet", "count": 1 },
+        { "item": "pointy_stick_long", "count": 1 }
+      ]
     }
   },
   {
@@ -1264,5 +1320,57 @@
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 4, 8 ], "destroy_threshold": 30, "block_unaimed_chance": "75%" }
     }
+  },
+  {
+    "id": "f_tarptent",
+    "type": "furniture",
+    "name": "tarp lean-to",
+    "description": "A small shelter covered by waterproof tarp, that can be used to take refuge from the elements.",
+    "symbol": ";",
+    "looks_like": "t_tarptent",
+    "color": [ "light_blue" ],
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "bash": {
+      "str_min": 6,
+      "str_max": 12,
+      "sound": "crash!",
+      "sound_fail": "whack!",
+      "items": [
+        { "item": "stick", "count": [ 1, 2 ] },
+        { "item": "splinter", "count": [ 1, 4 ] },
+        { "item": "plastic_chunk", "count": [ 4, 8 ] }
+      ]
+    },
+    "deconstruct": {
+      "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "string_6", "count": 4 }, { "item": "tarp", "count": 1 } ]
+    },
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "THIN_OBSTACLE", "INDOORS", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
+  },
+  {
+    "id": "f_tarptent_leather",
+    "type": "furniture",
+    "name": "leather tarp lean-to",
+    "description": "A makeshift shelter made from a lather tarp and stakes driven into the ground.",
+    "symbol": ";",
+    "looks_like": "f_skin_door",
+    "color": [ "brown" ],
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "bash": {
+      "str_min": 6,
+      "str_max": 12,
+      "sound": "crash!",
+      "sound_fail": "whack!",
+      "items": [
+        { "item": "stick", "count": [ 1, 2 ] },
+        { "item": "splinter", "count": [ 1, 4 ] },
+        { "item": "leather", "count": [ 4, 8 ] }
+      ]
+    },
+    "deconstruct": {
+      "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "cordage_6", "count": 6 }, { "item": "leather_tarp", "count": 1 } ]
+    },
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "THIN_OBSTACLE", "INDOORS", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
   }
 ]

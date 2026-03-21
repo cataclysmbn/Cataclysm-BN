@@ -56,7 +56,7 @@ vcpkg integrate install
 should probably add `--depth=1`.
 
 ```cmd
-git clone https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 

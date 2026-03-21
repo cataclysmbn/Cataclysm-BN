@@ -192,7 +192,11 @@ the appropriate JSON file.
 | time                                                                                                 | (_optional_) How long, when activated, between drawing cost. If 0, it draws power once. (default: `0`)                                                                          |
 | upgraded_bionic                                                                                      | (_optional_) Bionic that can be upgraded by installing this one.                                                                                                                |
 | required_bionics                                                                                     | (_optional_) Bionics which are required to install this bionic, and which cannot be uninstalled if this bionic is installed                                                     |
+| can_uninstall                                                                                        | (_optional_) Can the bionic be uninstalled once installed?                                                                                                                      |
+| no_uninstall_reason                                                                                  | (_optional_) Required with can_uninstall being false, string displayed when trying to uninstall the CBM.                                                                        |
 | available_upgrades                                                                                   | (_optional_) Upgrades available for this bionic, i.e. the list of bionics                                                                                                       |
+| starting_bionic                                                                                      | (_optional_) Bool to determine weather it is permitted to choose on start                                                                                                       |
+| points                                                                                               | (_optional_) The number of points this bionic costs to choose                                                                                                                   |
 | having this one referenced by `upgraded_bionic`.                                                     |                                                                                                                                                                                 |
 | and how much this bionic encumber them.                                                              |                                                                                                                                                                                 |
 | carrying capacity in grams, can be negative. Strings can be used - "5000 g" or "5 kg" (default: `0`) |                                                                                                                                                                                 |
@@ -356,7 +360,7 @@ When you sort your inventory by category, these are the categories that are disp
 ### Scores and Achievements
 
 Scores are defined in two or three steps based on _events_. To see what events exist and what data
-they contain, read [`event.h`](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/src/event.h).
+they contain, read [`event.h`](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/src/event.h).
 
 Each event contains a certain set of fields. Each field has a string key and a `cata_variant` value.
 The fields should provide all the relevant information about the event.
@@ -405,7 +409,7 @@ Any or all of the following alterations can be made to the event stream:
 
 - Add new fields to each event based on event field transformations. The event field transformations
   can be found in
-  [`event_field_transformation.cpp`](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/src/event_field_transformations.cpp).
+  [`event_field_transformation.cpp`](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/src/event_field_transformations.cpp).
 - Filter events based on the values they contain to produce a stream containing some subset of the
   input stream.
 - Drop some fields which are not of interest in the output stream.

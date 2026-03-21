@@ -136,7 +136,8 @@
                 { "mission_goal": "MGOAL_ASSASSINATE" },
                 { "mission_goal": "MGOAL_KILL_MONSTER" },
                 { "mission_goal": "MGOAL_KILL_MONSTER_SPEC" },
-                { "mission_goal": "MGOAL_KILL_MONSTER_TYPE" }
+                { "mission_goal": "MGOAL_KILL_MONSTER_TYPE" },
+                { "mission_goal": "MGOAL_KILL_MONSTERS" }
               ]
             }
           ]
@@ -211,7 +212,13 @@
         "topic": "TALK_MISSION_SUCCESS",
         "condition": {
           "and": [
-            { "or": [ { "mission_goal": "MGOAL_KILL_MONSTER_SPEC" }, { "mission_goal": "MGOAL_KILL_MONSTER_TYPE" } ] },
+            {
+              "or": [
+                { "mission_goal": "MGOAL_KILL_MONSTER_SPEC" },
+                { "mission_goal": "MGOAL_KILL_MONSTER_TYPE" },
+                { "mission_goal": "MGOAL_KILL_MONSTERS" }
+              ]
+            },
             "mission_complete"
           ]
         },

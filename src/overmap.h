@@ -264,19 +264,33 @@ class overmap
 {
     public:
         overmap( overmap && ) noexcept ;
-        overmap( const point_abs_om &p );
+        overmap( const point_abs_om &p, const std::string &dim_id = "" );
         ~overmap();
+
+        auto get_dimension_id() const -> const std::string & { // *NOPAD*
+            return dimension_id_;
+        }
 
         /**
          * Create content in the overmap.
          **/
-        void populate( overmap_special_batch &enabled_specials );
-        void populate();
+        void populate( const std::string &dim_id, overmap_special_batch &enabled_specials );
+        void populate( const std::string &dim_id );
 
         const point_abs_om &pos() const {
             return loc;
         }
 
+        /**
+         * Save this overmap to the world folder using @p dim_id to determine
+         * the correct dimension subdirectory.  Thread-safe when different overmaps
+         * are saved concurrently: each writes to a distinct file path.
+         */
+        void save( const std::string &dim_id ) const;
+
+        /** Legacy overload — delegates to save(g_active_dimension_id).
+         *  Do NOT call from background threads; see g_active_dimension_id comment
+         *  in overmapbuffer_registry.h. */
         void save() const;
 
         /**
@@ -425,6 +439,7 @@ class overmap
 
         bool nullbool = false;
         point_abs_om loc;
+        std::string dimension_id_;
 
         std::array<map_layer, OVERMAP_LAYERS> layer;
         std::unordered_map<tripoint_abs_omt, scent_trace> scents;
@@ -451,7 +466,7 @@ class overmap
         // Initialize
         void init_layers();
         // open existing overmap, or generate a new one
-        void open( overmap_special_batch &enabled_specials );
+        void open( const std::string &dim_id, overmap_special_batch &enabled_specials );
     public:
 
         /**
@@ -479,8 +494,12 @@ class overmap
         const city &get_nearest_city( const tripoint_om_omt &p ) const;
 
         void signal_hordes( const tripoint_rel_sm &p, int sig_power );
+        void signal_nemesis( tripoint_abs_sm p );
         void process_mongroups();
         void move_hordes();
+        void move_nemesis();
+        void place_nemesis( tripoint_abs_omt p );
+        bool remove_nemesis(); // returns true if nemesis found and removed
 
         // Overall terrain
         void place_river( point_om_omt pa, point_om_omt pb );
@@ -624,4 +643,3 @@ const std::string &oter_get_rotation_string( const oter_id &oter );
  * Determine whether provided tile belongs to overmap connection.
  */
 bool belongs_to_connection( const overmap_connection_id &id, const oter_id &oter );
-

@@ -355,7 +355,7 @@
   {
     "id": "ACT_HAND_CRANK",
     "type": "activity_type",
-    "verb": "cranking",
+    "verb": "charging",
     "rooted": true,
     "complex_moves": { "speed": true, "stats": [ [ "STR" ] ] }
   },
@@ -369,6 +369,12 @@
     "id": "ACT_VIBE",
     "type": "activity_type",
     "verb": "de-stressing",
+    "verbose_tooltip": false
+  },
+  {
+    "id": "ACT_TRAIN_SKILL",
+    "type": "activity_type",
+    "verb": "training",
     "verbose_tooltip": false
   },
   {

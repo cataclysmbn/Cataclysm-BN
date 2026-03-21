@@ -199,7 +199,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
 
                 dump( test_npc, gun );
 
-                if( gun.type->gun->barrel_length > 0_ml ) {
+                if( gun.type->gun->barrel_volume > 0_ml ) {
                     gun.put_in( item::spawn( "barrel_small" ) );
                     dump( test_npc, gun );
                 }
@@ -240,7 +240,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
 
         for( const recipe *e : dict ) {
             std::vector<std::string> r;
-            r.push_back( e->result_name() );
+            r.push_back( e->result_name( /*decorated=*/true ) );
             for( const auto &s : sk ) {
                 if( e->skill_used == s.ident() ) {
                     r.push_back( std::to_string( e->difficulty ) );

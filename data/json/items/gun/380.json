@@ -123,7 +123,7 @@
     "handling": 30,
     "range": 15,
     "min_cycle_recoil": 180,
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "magazine_well": "250 ml",
     "magazines": [ [ "380", [ "hipoint_3895mag" ] ] ]
   }

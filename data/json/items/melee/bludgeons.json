@@ -109,6 +109,17 @@
     "price_postapoc": "1750 cent"
   },
   {
+    "id": "bat_metal_bolted",
+    "type": "GENERIC",
+    "copy-from": "bat_metal",
+    "name": { "str": "bolted bat" },
+    "description": "An aluminum baseball bat with several large bolts driven through it, making it a brutal melee weapon.",
+    "weight": "850 g",
+    "relative": { "to_hit": -1, "bashing": 7 },
+    "extend": { "techniques": [ "BRUTAL" ] },
+    "price_postapoc": "2500 cent"
+  },
+  {
     "id": "baton",
     "type": "GENERIC",
     "category": "weapons",
@@ -1107,5 +1118,38 @@
       }
     ],
     "extend": { "flags": [ "FIRE", "LIGHT_310", "CHARGEDIM", "DURABLE_MELEE", "TRADER_AVOID", "WATER_EXTINGUISH", "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "greatclub_wood",
+    "type": "GENERIC",
+    "category": "weapons",
+    "weapon_category": [ "CLUBS" ],
+    "name": { "str": "wooden greatclub" },
+    "description": "One of humanity's oldest weapons pushed to an inhuman extreme.  Despite its simplicity, this two-handed club carved from a log requires considerable strength and skill to use effectively.",
+    "weight": "2500 g",
+    "volume": "3 L",
+    "price_postapoc": "5 USD",
+    "bashing": 45,
+    "to_hit": -2,
+    "material": [ "wood" ],
+    "symbol": "/",
+    "color": "brown",
+    "looks_like": "bat",
+    "techniques": [ "WIDE", "BRUTAL" ],
+    "flags": [ "ALWAYS_TWOHAND" ]
+  },
+  {
+    "id": "greatclub_iron",
+    "copy-from": "greatclub_wood",
+    "type": "GENERIC",
+    "name": { "str": "ironshod greatclub" },
+    "description": "A massive two-handed club, carved from a log and reinforced with iron bands that give it even more heft.  This weapon embodies the phrase \"like giving a kanabō to an oni\" as anyone capable of using it effectively could likely tear their enemies apart with their bare hands.",
+    "weight": "3500 g",
+    "price_postapoc": "20 USD",
+    "bashing": 60,
+    "material": [ "wood", "iron" ],
+    "color": "light_gray",
+    "looks_like": "bwirebat",
+    "extend": { "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE" ] }
   }
 ]

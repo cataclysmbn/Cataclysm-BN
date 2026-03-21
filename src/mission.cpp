@@ -27,6 +27,7 @@
 #include "npc_class.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
+#include "profile.h"
 #include "requirements.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -97,6 +98,7 @@ void mission::add_existing( const mission &m )
 
 void mission::process_all()
 {
+    ZoneScoped;
     for( auto &e : world_missions ) {
         e.second.process();
     }
@@ -136,6 +138,16 @@ void mission::on_creature_death( Creature &poor_dead_dude )
     }
     monster *mon = dynamic_cast<monster *>( &poor_dead_dude );
     if( mon != nullptr ) {
+        if( mon->is_nemesis() ) {
+            // The nemesis monster doesn't have a mission attached because it's an overmap horde.
+            for( std::pair<const int, mission> &e : world_missions ) {
+                mission &i = e.second;
+                if( i.type->goal == MGOAL_KILL_NEMESIS && g->u.getID() == i.player_id ) {
+                    i.step_complete( 1 );
+                    return;
+                }
+            }
+        }
         if( mon->mission_id == -1 ) {
             return;
         }
@@ -146,6 +158,11 @@ void mission::on_creature_death( Creature &poor_dead_dude )
         }
         if( type->goal == MGOAL_KILL_MONSTER ) {
             mission->step_complete( 1 );
+        }
+        if( type->goal == MGOAL_KILL_MONSTERS ) {
+            if( --mission->monster_kill_goal <= 0 ) {
+                mission->step_complete( 1 );
+            }
         }
         return;
     }
@@ -266,6 +283,7 @@ void mission::step_complete( const int _step )
         case MGOAL_FIND_MONSTER:
         case MGOAL_ASSASSINATE:
         case MGOAL_KILL_MONSTER:
+        case MGOAL_KILL_MONSTERS:
         case MGOAL_COMPUTER_TOGGLE:
         case MGOAL_TALK_TO_NPC:
             // Go back and report.
@@ -356,7 +374,7 @@ bool mission::is_complete( const character_id &_npc_id ) const
         }
 
         case MGOAL_GO_TO_TYPE: {
-            const auto cur_ter = overmap_buffer.ter( g->u.global_omt_location() );
+            const auto cur_ter = ACTIVE_OVERMAP_BUFFER.ter( g->u.global_omt_location() );
             return is_ot_match( type->target_id.str(), cur_ter, ot_match_type::type );
         }
 
@@ -411,7 +429,7 @@ bool mission::is_complete( const character_id &_npc_id ) const
         }
 
         case MGOAL_RECRUIT_NPC_CLASS: {
-            const auto npcs = overmap_buffer.get_npcs_near_player( 100 );
+            const auto npcs = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( 100 );
             for( auto &npc : npcs ) {
                 if( npc->myclass == recruit_class && npc->is_player_ally() ) {
                     return true;
@@ -426,6 +444,8 @@ bool mission::is_complete( const character_id &_npc_id ) const
         case MGOAL_TALK_TO_NPC:
         case MGOAL_ASSASSINATE:
         case MGOAL_KILL_MONSTER:
+        case MGOAL_KILL_NEMESIS:
+        case MGOAL_KILL_MONSTERS:
         case MGOAL_COMPUTER_TOGGLE:
             return step >= 1;
 
@@ -693,6 +713,11 @@ mission::mission()
     bad_fac_id = -1;
     step = 0;
     player_id = character_id();
+}
+
+void mission::register_kill_needed()
+{
+    monster_kill_goal++;
 }
 
 namespace io

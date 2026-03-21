@@ -15,7 +15,7 @@ class item;
 class player;
 class player_activity;
 struct tripoint;
-// TODO (https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1612):
+// TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that forward declaration after repair_activity_actor.
 class vehicle;
 
@@ -180,6 +180,7 @@ void generic_game_do_turn( player_activity *act, player *p );
 void churn_do_turn( player_activity *act, player *p );
 void start_fire_do_turn( player_activity *act, player *p );
 void vibe_do_turn( player_activity *act, player *p );
+void train_skill_do_turn( player_activity *act, player *p );
 void hand_crank_do_turn( player_activity *act, player *p );
 void multiple_chop_planks_do_turn( player_activity *act, player *p );
 void wear_do_turn( player_activity *act, player *p );
@@ -262,6 +263,7 @@ void socialize_finish( player_activity *act, player *p );
 void try_sleep_finish( player_activity *act, player *p );
 void operation_finish( player_activity *act, player *p );
 void vibe_finish( player_activity *act, player *p );
+void train_skill_finish( player_activity *act, player *p );
 void hand_crank_finish( player_activity *act, player *p );
 void atm_finish( player_activity *act, player *p );
 void eat_menu_finish( player_activity *act, player *p );
@@ -290,7 +292,7 @@ finish_functions;
 // from vehicles or furniture until
 // `repair_activity_actor` would be implemented.
 //
-// TODO (https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1612):
+// TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that repair code after repair_activity_actor.
 namespace repair_activity_hack
 {

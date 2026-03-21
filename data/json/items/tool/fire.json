@@ -184,7 +184,7 @@
     "id": "ref_lighter_on",
     "type": "TOOL",
     "category": "tools_cooking",
-    "name": { "str": "refillable lighter" },
+    "name": { "str": "refillable lighter (lit)", "str_pl": "refillable lighters (lit)" },
     "description": "This is a lighter featuring a flip top cover and refuelable tank.  It is lit.",
     "weight": "20 g",
     "volume": "50 ml",

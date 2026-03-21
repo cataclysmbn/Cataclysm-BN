@@ -4,7 +4,6 @@
     "type": "MONSTER",
     "name": { "str": "panicked person" },
     "description": "This hysterical individual has a faint, yet fading, glint of intelligence in their bloodshot eyes.  They sometimes scream in fear and behave clearly irrationally.  This will quite likely cause their demise at the hands of the undead horde rather quickly.",
-    "looks_like": "mon_prototype_cyborg",
     "default_faction": "human",
     "bodytype": "human",
     "species": [ "HUMAN" ],

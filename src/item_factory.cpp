@@ -13,6 +13,7 @@
 #include <unordered_set>
 
 #include "addiction.h"
+#include "catalua_icallback_actor.h"
 #include "ammo.h"
 #include "artifact.h"
 #include "assign.h"
@@ -38,6 +39,15 @@
 #include "item_group.h"
 #include "iuse_actor.h"
 #include "json.h"
+#include "point.h"
+
+class player;
+
+namespace iuse
+{
+auto report_fluid_grid_connections( player *, item *, bool, const tripoint & ) -> int;
+auto modify_fluid_grid_connections( player *, item *, bool, const tripoint & ) -> int;
+} // namespace iuse
 #include "material.h"
 #include "options.h"
 #include "recipe.h"
@@ -710,6 +720,9 @@ void Item_factory::finalize()
         finalize_post( *e.second );
     }
 
+    // Wire Lua callback actor pointers onto itype objects
+    resolve_lua_callbacks();
+
     // for each item register all (non-obsolete) potential recipes
     for( const std::pair<const recipe_id, recipe> &p : recipe_dict ) {
         const recipe &rec = p.second;
@@ -971,8 +984,8 @@ void Item_factory::init()
                                 "present</info>."
                               ) );
     add_iuse( "GEIGER", &iuse::geiger );
-    add_iuse( "GRANADE", &iuse::granade );
-    add_iuse( "GRANADE_ACT", &iuse::granade_act );
+    add_iuse( "DEBUG_GRENADE", &iuse::debug_grenade );
+    add_iuse( "DEBUG_GRENADE_ACT", &iuse::debug_grenade_act );
     add_iuse( "GRENADE_INC_ACT", &iuse::grenade_inc_act );
     add_iuse( "GUN_CLEAN", &iuse::gun_clean );
     add_iuse( "GUN_REPAIR", &iuse::gun_repair );
@@ -1033,6 +1046,8 @@ void Item_factory::init()
     add_iuse( "REPORT_GRID_CHARGE", &iuse::report_grid_charge );
     add_iuse( "REPORT_GRID_CONNECTIONS", &iuse::report_grid_connections );
     add_iuse( "MODIFY_GRID_CONNECTIONS", &iuse::modify_grid_connections );
+    add_iuse( "REPORT_FLUID_GRID_CONNECTIONS", &iuse::report_fluid_grid_connections );
+    add_iuse( "MODIFY_FLUID_GRID_CONNECTIONS", &iuse::modify_fluid_grid_connections );
     add_iuse( "ROBOTCONTROL", &iuse::robotcontrol );
     add_iuse( "SEED", &iuse::seed );
     add_iuse( "SEWAGE", &iuse::sewage );
@@ -1059,7 +1074,6 @@ void Item_factory::init()
     add_iuse( "BLOOD_DRAW", &iuse::blood_draw );
     add_iuse( "MIND_SPLICER", &iuse::mind_splicer );
     add_iuse( "VIBE", &iuse::vibe );
-    add_iuse( "HAND_CRANK", &iuse::hand_crank );
     add_iuse( "VORTEX", &iuse::vortex );
     add_iuse( "WATER_PURIFIER", &iuse::water_purifier );
     add_iuse( "WEAK_ANTIBIOTIC", &iuse::weak_antibiotic );
@@ -1095,6 +1109,8 @@ void Item_factory::init()
     add_actor( std::make_unique<deploy_furn_actor>() );
     add_actor( std::make_unique<place_monster_iuse>() );
     add_actor( std::make_unique<change_scent_iuse>() );
+    add_actor( std::make_unique<cloning_syringe_iuse>() );
+    add_actor( std::make_unique<dna_editor_iuse>() );
     add_actor( std::make_unique<place_npc_iuse>() );
     add_actor( std::make_unique<reveal_map_actor>() );
     add_actor( std::make_unique<unfold_vehicle_iuse>() );
@@ -1113,10 +1129,16 @@ void Item_factory::init()
     add_actor( std::make_unique<gps_device_actor>() );
     add_actor( std::make_unique<sew_advanced_actor>() );
     add_actor( std::make_unique<multicooker_iuse>() );
+    add_actor( std::make_unique<hand_crank_actor>() );
     add_actor( std::make_unique<sex_toy_actor>() );
+    add_actor( std::make_unique<train_skill_actor>() );
     add_actor( std::make_unique<iuse_music_player>() );
     add_actor( std::make_unique<iuse_prospect_pick>() );
     add_actor( std::make_unique<iuse_reveal_contents>() );
+    add_actor( std::make_unique<iuse_flowerpot_plant>() );
+    add_actor( std::make_unique<iuse_flowerpot_collect>() );
+    add_actor( std::make_unique<iuse_dimension_travel>() );
+    add_actor( std::make_unique<iuse_pocket_dimension>() );
 
     // An empty dummy group, it will not spawn anything. However, it makes that item group
     // id valid, so it can be used all over the place without need to explicitly check for it.
@@ -1355,8 +1377,8 @@ void Item_factory::check_definitions() const
                     }
                 }
             }
-            if( type->gun->barrel_length < 0_ml ) {
-                msg += "gun barrel length cannot be negative\n";
+            if( type->gun->barrel_volume < 0_ml ) {
+                msg += "gun barrel volume cannot be negative\n";
             }
 
             if( !type->gun->skill_used ) {
@@ -1826,7 +1848,7 @@ void Item_factory::load( islot_fuel &slot, const JsonObject &jo, const std::stri
 
     assign( jo, "energy", slot.energy, strict, 0.001f );
     if( jo.has_member( "pump_terrain" ) ) {
-        slot.pump_terrain = jo.get_string( "pump_terrain" );
+        slot.pump_terrain = ter_id( jo.get_string( "pump_terrain" ) );
     }
     if( jo.has_member( "explosion_data" ) ) {
         slot.has_explode_data = true;
@@ -1880,7 +1902,9 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
     assign( jo, "reload", slot.reload_time, strict, 0 );
     assign( jo, "reload_noise", slot.reload_noise, strict );
     assign( jo, "reload_noise_volume", slot.reload_noise_volume, strict, 0 );
-    assign( jo, "barrel_length", slot.barrel_length, strict, 0_ml );
+    // Depreciated alias, use barrel_volume instead.
+    assign( jo, "barrel_length", slot.barrel_volume, strict, 0_ml );
+    assign( jo, "barrel_volume", slot.barrel_volume, strict, 0_ml );
     assign( jo, "built_in_mods", slot.built_in_mods, strict );
     assign( jo, "default_mods", slot.default_mods, strict );
     assign( jo, "ups_charges", slot.ups_charges, strict, 0 );
@@ -2627,7 +2651,9 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
     assign( jo, "magazine_well", def.magazine_well );
     assign( jo, "explode_in_fire", def.explode_in_fire );
     assign( jo, "solar_efficiency", def.solar_efficiency );
+    assign( jo, "repair_difficulty", def.repair_difficulty );
     assign( jo, "ascii_picture", def.picture_id );
+    assign( jo, "item_vars", def.item_vars );
 
     if( jo.has_member( "thrown_damage" ) ) {
         def.thrown_damage = load_damage_instance( jo.get_array( "thrown_damage" ) );
@@ -2788,6 +2814,8 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
             delete_qualities_from_json( tmp, "qualities", def );
         }
     }
+
+    assign( jo, "crafting_speed_modifier", def.crafting_speed_modifier );
 
     if( jo.has_member( "properties" ) ) {
         set_properties_from_json( jo, "properties", def );
@@ -3010,7 +3038,102 @@ void Item_factory::clear()
     migrated_magazines.clear();
     migrations.clear();
 
+    iwieldable_actors.clear();
+    iwearable_actors.clear();
+    iequippable_actors.clear();
+    istate_actors.clear();
+    imelee_actors.clear();
+    iranged_actors.clear();
+
     frozen = false;
+}
+
+void Item_factory::add_iwieldable_actor( const itype_id &id,
+        std::unique_ptr<lua_iwieldable_actor> actor )
+{
+    iwieldable_actors[id] = std::move( actor );
+}
+
+void Item_factory::add_iwearable_actor( const itype_id &id,
+                                        std::unique_ptr<lua_iwearable_actor> actor )
+{
+    iwearable_actors[id] = std::move( actor );
+}
+
+void Item_factory::add_iequippable_actor( const itype_id &id,
+        std::unique_ptr<lua_iequippable_actor> actor )
+{
+    iequippable_actors[id] = std::move( actor );
+}
+
+void Item_factory::add_istate_actor( const itype_id &id,
+                                     std::unique_ptr<lua_istate_actor> actor )
+{
+    istate_actors[id] = std::move( actor );
+}
+
+void Item_factory::add_imelee_actor( const itype_id &id,
+                                     std::unique_ptr<lua_imelee_actor> actor )
+{
+    imelee_actors[id] = std::move( actor );
+}
+
+void Item_factory::add_iranged_actor( const itype_id &id,
+                                      std::unique_ptr<lua_iranged_actor> actor )
+{
+    iranged_actors[id] = std::move( actor );
+}
+
+void Item_factory::resolve_lua_callbacks()
+{
+    for( auto &[id, actor] : iwieldable_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.iwieldable_callbacks = actor.get();
+        } else {
+            debugmsg( "iwieldable_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
+    for( auto &[id, actor] : iwearable_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.iwearable_callbacks = actor.get();
+        } else {
+            debugmsg( "iwearable_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
+    for( auto &[id, actor] : iequippable_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.iequippable_callbacks = actor.get();
+        } else {
+            debugmsg( "iequippable_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
+    for( auto &[id, actor] : istate_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.istate_callbacks = actor.get();
+        } else {
+            debugmsg( "istate_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
+    for( auto &[id, actor] : imelee_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.imelee_callbacks = actor.get();
+        } else {
+            debugmsg( "imelee_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
+    for( auto &[id, actor] : iranged_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.iranged_callbacks = actor.get();
+        } else {
+            debugmsg( "iranged_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
 }
 
 static std::string to_string( Item_group::Type t )

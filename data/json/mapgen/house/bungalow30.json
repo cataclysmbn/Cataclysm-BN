@@ -56,9 +56,9 @@
     "object": {
       "palettes": [
         "standard_domestic_palette",
+        "standard_domestic_basement_palette",
         "parameterized_linoleum_color_kitchen",
-        "parameterized_linoleum_color_bathroom",
-        "standard_domestic_lino_bathroom"
+        "parameterized_linoleum_color_bathroom"
       ],
       "fill_ter": "t_floor",
       "rows": [

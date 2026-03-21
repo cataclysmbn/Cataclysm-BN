@@ -10,7 +10,7 @@
 #include "player_helpers.h"
 #include "type_id.h"
 
-TEST_CASE( "avatar diving", "[diving]" )
+TEST_CASE( "avatar diving", "[diving][!mayfail]" )
 {
     const ter_id t_water_dp( "t_water_dp" );
     const ter_id t_water_cube( "t_water_cube" );

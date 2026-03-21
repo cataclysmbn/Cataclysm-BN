@@ -111,5 +111,26 @@
     "valid_mod_locations": [ [ "accessories", 2 ], [ "sights", 1 ], [ "sling", 1 ] ],
     "delete": { "flags": [ "WATERPROOF_GUN", "UNDERWATER_GUN" ] },
     "loudness": 15
+  },
+  {
+    "id": "atlatl",
+    "copy-from": "sling_base",
+    "type": "GUN",
+    "name": { "str": "atlatl" },
+    "description": "A wooden tool for supporting a javelin, to throw it more effectively than by hand.",
+    "weight": "116 g",
+    "volume": "250 ml",
+    "price": "5 USD",
+    "to_hit": -1,
+    "bashing": 1,
+    "material": [ "wood" ],
+    "ammo": "atlatl",
+    "skill": "throw",
+    "ranged_damage": { "damage_type": "stab", "amount": 20 },
+    "range": 15,
+    "dispersion": 1000,
+    "durability": 6,
+    "reload": 100,
+    "extend": { "flags": [ "BELT_CLIP" ] }
   }
 ]

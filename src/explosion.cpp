@@ -19,9 +19,12 @@
 #include "animation.h"
 #include "avatar.h"
 #include "ballistics.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "cata_algo.h"
 #include "color.h"
 #include "creature.h"
 #include "damage.h"
@@ -64,6 +67,8 @@
 #include "type_id.h"
 #include "units.h"
 #include "ui_manager.h"
+#include "units_mass.h"
+#include "units_volume.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
@@ -242,7 +247,7 @@ class ExplosionEvent
 
             rl_vec2d position;
             float angle;
-            float velocity;
+            float velocity; //< more of a number of tiles it can fly
 
             float cur_relative_time;
         };
@@ -405,8 +410,11 @@ class ExplosionProcess
             assert( delay >= 0 );
             event_queue.emplace( cur_relative_time + delay + std::numeric_limits<float>::epsilon(), event );
         }
-        bool is_animated() {
-            return !test_mode && get_option<int>( "ANIMATION_DELAY" ) > 0;
+        auto is_animated() const -> bool {
+            if( test_mode || get_option<int>( "ANIMATION_DELAY" ) <= 0 ) { return false; }
+
+            const int skip_after = get_option<int>( "SKIP_EXPLOSION_ANIMATION_AFTER" );
+            return skip_after == 0 || get_explosion_queue().get_count() <= skip_after;
         }
 
         bool process_next();
@@ -442,7 +450,8 @@ void ExplosionProcess::fill_maps()
             continue;
         }
 
-        // Uses this ternany check instead of rl_dist because it converts trig_dist's distance to int implicitly
+        // Uses this ternary check instead of rl_dist to keep the raw float for sorting.
+        // std::lround matches rl_dist's rounding behaviour (round-half-away-from-zero).
         const float distance = (
                                    trigdist ?
                                    trig_dist( center, target ) :
@@ -450,13 +459,12 @@ void ExplosionProcess::fill_maps()
                                );
         const float z_distance = abs( target.z - center.z );
         const float z_aware_distance = distance + ( ExplosionConstants::Z_LEVEL_DIST - 1 ) * z_distance;
-        // We static_cast<int> in order to keep parity with legacy blasts using rl_dist for distance
-        //   which, as stated above, converts trig_dist into int implicitly
-        if( blast_radius > 0 && static_cast<int>( z_aware_distance ) <= blast_radius ) {
+        if( blast_radius > 0 && static_cast<int>( std::lround( z_aware_distance ) ) <= blast_radius ) {
             blast_map.emplace_back( z_aware_distance, target );
         }
 
-        if( shrapnel && static_cast<int>( distance ) <= shrapnel_range && target.z == center.z &&
+        if( shrapnel && static_cast<int>( std::lround( distance ) ) <= shrapnel_range &&
+            target.z == center.z &&
             !is_occluded( center, target ) ) {
             shrapnel_map.emplace_back( distance, target );
         }
@@ -961,6 +969,116 @@ void ExplosionProcess::move_entity( const tripoint position,
         } else {
             item *target = &*std::get<safe_reference<item>>( cur_target );
 
+            if( get_option<bool>( "ITEM_DAMAGE_ON_FLYING_IMPACT" ) ) {
+                const auto weight = target->weight();
+                const auto vol = target->volume();
+                const auto total_vol_ml = units::to_milliliter( vol );
+                const auto unit_vol_ml =
+                    units::to_milliliter( vol ) / static_cast<double>( std::max( 1, target->count() ) );
+
+                const auto mass_kg = weight / 1000.0_gram;
+
+                const auto max_hardness = ( target->made_of()
+                | std::views::transform( []( const auto & x ) { return x.obj().bash_resist(); } )
+                | cata::ranges::max() ).value_or( 0 );
+
+                const auto acts_as_shrapnel = max_hardness >= 3 && unit_vol_ml < 50.0;
+                const auto effective_velocity_ms = new_velocity * ( acts_as_shrapnel ? 10.0 : 3.0 );
+                const auto kinetic_energy = 0.5 * mass_kg * std::pow( effective_velocity_ms, 2 );
+
+                // add_msg( "name: %s, ke: %.4f, vel: %.4f, mass: %.4fkg, vol: %dml, hard: %d, shrap: %d",
+                //          target->tname(), kinetic_energy, effective_velocity_ms,
+                //          mass_kg, units::to_milliliter( vol ),
+                //          max_hardness, static_cast<int>( acts_as_shrapnel ) );
+                damage_instance dmg;
+
+                const auto damage_per_joule = acts_as_shrapnel ? 0.15 : 0.1;
+                if( acts_as_shrapnel ) {
+                    const auto penetration_factor = 1.0 + ( 15.0 / ( total_vol_ml + 1.0 ) );
+                    const auto hardness_factor = 1.0 + ( max_hardness * 0.1 );
+
+                    const auto base_damage = kinetic_energy * penetration_factor * hardness_factor * damage_per_joule;
+                    const auto velocity_damage = effective_velocity_ms * 0.05;
+
+                    auto final_damage = static_cast<int>( base_damage + velocity_damage );
+                    if( effective_velocity_ms > 20 && final_damage < 1 ) { final_damage = 1; }
+
+                    // add_msg( m_debug, "SHRAPNEL: %s | KE: %.1f | Base: %.1f | VelDmg: %.1f | Final: %d",
+                    //          target->tname(), kinetic_energy, base_damage, velocity_damage, final_damage );
+
+                    const auto ap_val = static_cast<int>( final_damage * 0.8 );
+
+                    const damage_instance &thrown_dmg = target->base_damage_thrown();
+                    auto dt = DT_BASH;
+                    auto max_dmg = 0.0f;
+                    for( const damage_unit &du : thrown_dmg.damage_units ) {
+                        if( du.amount > max_dmg ) {
+                            max_dmg = du.amount;
+                            dt = du.type;
+                        }
+                    }
+                    dmg.add_damage( dt, final_damage, ap_val );
+                } else {
+                    auto dispersion =
+                        vol > 500_ml ? 500.0 / units::to_milliliter( vol ) : 1.0;
+                    if( max_hardness < 2 ) { dispersion *= 0.1; }
+
+                    const auto base_damage = kinetic_energy * dispersion * damage_per_joule;
+                    const auto momentum_damage = mass_kg * effective_velocity_ms * 0.5;
+                    const auto bash_damage = base_damage + momentum_damage;
+                    // add_msg( "BLUNT: %s | Mass: %.1f | Vel: %.1f | KE: %.1f | Mom: %.1f | Dmg: %f",
+                    //          target->tname(), mass_kg, effective_velocity_ms, kinetic_energy,
+                    //          momentum_damage, bash_damage );
+                    dmg.add_damage( DT_BASH, bash_damage, 0.0f, 3.0f );
+                }
+
+                if( !target->base_damage_thrown().empty() && new_velocity > 15 ) {
+                    dmg.add( target->base_damage_thrown() );
+                }
+
+                const auto to_next = [&] {
+                    new_velocity *= ExplosionConstants::RESTITUTION_COEFF;
+                    do_next = new_velocity >= 1;
+                };
+                const auto total_dmg = dmg.total_damage();
+                auto *hit_creature = g->critter_at( new_position );
+                if( total_dmg >= 1 && hit_creature ) {
+                    auto hit_part = bodypart_id( "torso" );
+                    if( one_in( 3 ) ) {
+                        hit_part = bodypart_id( "head" );
+                    } else if( one_in( 4 ) ) {
+                        hit_part = one_in( 2 ) ? bodypart_id( "arm_l" ) : bodypart_id( "arm_r" );
+                    } else if( one_in( 4 ) ) {
+                        hit_part = one_in( 2 ) ? bodypart_id( "leg_l" ) : bodypart_id( "leg_r" );
+                    }
+
+                    auto *attacker = emitter.has_value() ? emitter.value() : nullptr;
+                    auto dealt_damage = hit_creature->deal_damage( attacker, hit_part, dmg ).total_damage();
+
+                    if( get_avatar().sees( *hit_creature ) ) {
+                        if( dealt_damage > 0 ) {
+                            //~ %1$s: entity dealing damage, %2$s: target creature name, %3$d: damage value
+                            add_msg( _( "%1$s flies and hits %2$s for %3$d damage!" ),
+                                     target->tname(), hit_creature->disp_name(), dealt_damage );
+                        } else {
+                            //~ %1$s: entity dealing damage, %2$s: target creature name
+                            add_msg( _( "%1$s flies and hits %2$s but deals no damage." ),
+                                     target->tname(), hit_creature->disp_name() );
+                        }
+                    }
+                    to_next();
+                } else if( total_dmg >= 1 ) {
+                    const auto bash_str = static_cast<int>( std::lerp( std::sqrt( total_dmg ), total_dmg, 0.6 ) );
+                    const auto bash_result = here.bash( new_position, bash_str );
+
+                    if( bash_result.did_bash && bash_result.success && get_avatar().sees( new_position ) ) {
+                        //~ %1$s: item name
+                        add_msg( _( "%1$s flies and smashes into something!" ), target->tname() );
+                    }
+                    if( bash_result.did_bash ) { to_next(); }
+                }
+            }
+
             detached_ptr<item> detached = target->detach();
 
             here.add_item( new_position, std::move( detached ) );
@@ -1073,37 +1191,42 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
     projectile proj = fragment;
     proj.add_effect( ammo_effect_NULL_SOURCE );
 
-    float obstacle_cache[MAPSIZE_X][MAPSIZE_Y] = {};
-    float visited_cache[MAPSIZE_X][MAPSIZE_Y] = {};
-
     map &here = get_map();
 
-    diagonal_blocks( &blocked_cache )[MAPSIZE_X][MAPSIZE_Y] = here.access_cache(
-                src.z ).vehicle_obstructed_cache;
+    auto &_exp_cache = here.access_cache( src.z );
+    const int exp_sx = _exp_cache.cache_x;
+    const int exp_sy = _exp_cache.cache_y;
+    auto obstacle_cache = std::vector<float>( static_cast<size_t>( exp_sx ) * exp_sy, 0.0f );
+    auto visited_cache  = std::vector<float>( static_cast<size_t>( exp_sx ) * exp_sy, 0.0f );
 
     // TODO: Calculate range based on max effective range for projectiles.
     // Basically bisect between 0 and map diameter using shrapnel_calc().
     // Need to update shadowcasting to support limiting range without adjusting initial distance.
     const tripoint_range<tripoint> area = here.points_on_zlevel( src.z );
 
-    here.build_obstacle_cache( area.min(), area.max() + tripoint_south_east, obstacle_cache );
+    here.build_obstacle_cache( area.min(), area.max() + tripoint_south_east,
+                               obstacle_cache.data(), exp_sy );
 
     // Shadowcasting normally ignores the origin square,
     // so apply it manually to catch monsters standing on the explosive.
     // This "blocks" some fragments, but does not apply deceleration.
-    visited_cache[src.x][src.y] = 1.0f;
+    visited_cache[src.x * exp_sy + src.y] = 1.0f;
 
     // This is used to limit radius
     // By default, the radius is 60, so negative values can be helpful here
     const int offset_distance = 60 - 1 - fragment.range;
-    castLightAll<float, float, shrapnel_calc, shrapnel_check,
-                 update_fragment_cloud, accumulate_fragment_cloud>
-                 ( visited_cache, obstacle_cache, blocked_cache, src.xy(),
-                   offset_distance, fragment.range + 1.0f );
+    static const light_model k_shrapnel_model = {
+        shrapnel_calc, shrapnel_check, update_fragment_cloud, nullptr, nullptr,
+        accumulate_fragment_cloud
+    };
+    castLightAll( visited_cache.data(), obstacle_cache.data(),
+                  _exp_cache.vehicle_obstructed_cache.data(), exp_sx, exp_sy,
+                  src.xy(), offset_distance, fragment.range + 1.0f, k_shrapnel_model );
 
     // Now visited_caches are populated with density and velocity of fragments.
     for( const tripoint &target : area ) {
-        if( visited_cache[target.x][target.y] <= 0.0f || rl_dist( src, target ) > fragment.range ) {
+        if( visited_cache[target.x * exp_sy + target.y] <= 0.0f ||
+            rl_dist( src, target ) > fragment.range ) {
             continue;
         }
         auto critter = g->critter_at( target );
@@ -1156,7 +1279,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
         blast_center + tripoint( raw_blast_radius, raw_blast_radius, z_levels_affected )
     );
 
-    static std::vector<dist_point_pair> blast_map( MAPSIZE_X * MAPSIZE_Y );
+    static std::vector<dist_point_pair> blast_map;
     static std::map<tripoint, nc_color> explosion_colors;
     blast_map.clear();
     explosion_colors.clear();
@@ -1428,6 +1551,13 @@ void explosion_funcs::regular( const queued_explosion &qe )
     const tripoint &p = qe.pos;
     const explosion_data &ex = qe.exp_data;
     auto &shr = ex.fragment;
+
+    cata::run_hooks( "on_explosion_start", [&]( sol::table & params ) {
+        params["pos"] = p;
+        params["damage"] = ex.damage;
+        params["radius"] = static_cast<int>( ex.radius );
+        params["fire"] = ex.fire;
+    } );
 
     int base_noise = ex.damage;
     if( shr ) {
@@ -1779,7 +1909,9 @@ void explosion_funcs::resonance_cascade( const queued_explosion &qe )
         g->u.add_effect( effect_teleglow, rng( minglow, maxglow ) * 100 );
     }
 
-    constexpr half_open_rectangle<point> map_bounds( point_zero, point( MAPSIZE_X, MAPSIZE_Y ) );
+    const auto &qe_cache = get_map().access_cache( p.z );
+    const half_open_rectangle<point> map_bounds( point_zero,
+            point( qe_cache.cache_x, qe_cache.cache_y ) );
     constexpr point cascade_reach( 8, 8 );
 
     point start = clamp( p.xy() - cascade_reach, map_bounds );
@@ -1891,9 +2023,11 @@ explosion_queue &get_explosion_queue()
 
 void explosion_queue::execute()
 {
+    explosion_count = 0;
     while( !elems.empty() ) {
         queued_explosion exp = std::move( elems.front() );
         elems.pop_front();
+        explosion_count++;
         switch( exp.type ) {
             case ExplosionType::Regular:
                 explosion_funcs::regular( exp );

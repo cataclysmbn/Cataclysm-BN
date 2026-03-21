@@ -1,6 +1,7 @@
 #include "melee.h"
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <climits>
 #include <cmath>
@@ -20,6 +21,8 @@
 #include "cached_options.h"
 #include "calendar.h"
 #include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_functions.h"
@@ -49,6 +52,7 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "npc.h"
+#include "options.h"
 #include "output.h"
 #include "player.h"
 #include "pldata.h"
@@ -75,6 +79,23 @@ static const itype_id itype_rag( "rag" );
 static const matec_id tec_none( "tec_none" );
 static const matec_id WBLOCK_1( "WBLOCK_1" );
 static const matec_id WBLOCK_2( "WBLOCK_2" );
+
+namespace
+{
+
+auto with_cross_z_melee_cost( const int base_cost, const tripoint &source,
+                              const tripoint &target ) -> int
+{
+    if( std::abs( source.z - target.z ) < 1 ) {
+        return base_cost;
+    }
+
+    const auto modifier = get_option<float>( "CROSS_Z_LEVEL_MELEE_DIFFICULTY_MODIFIER" );
+    return static_cast<int>( std::floor( base_cost * modifier ) );
+}
+
+} // namespace
+
 static const matec_id WBLOCK_3( "WBLOCK_3" );
 
 static const skill_id skill_stabbing( "stabbing" );
@@ -331,7 +352,8 @@ float Character::get_hit_weapon( const item &weap, const attack_statblock &attac
     }
 
     /** @EFFECT_MELEE improves hit chance for all items (including non-weapons) */
-    return ( skill / 3.0f ) + ( get_skill_level( skill_melee ) / 2.0f ) + attack.to_hit;
+    return ( skill / 3.0f ) + ( get_skill_level( skill_melee ) / 2.0f ) + attack.to_hit +
+           weap.get_melee_hit_bonus();
 }
 
 float Character::get_melee_hit( const item &weapon, const attack_statblock &attack ) const
@@ -481,17 +503,32 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
     }
     item &cur_weapon = allow_unarmed ? used_weapon() : primary_weapon();
     const attack_statblock &attack = melee::pick_attack( *this, cur_weapon, t );
+
+    // Lua imelee on_melee_attack callback: fires before hit resolution.
+    // Returning false from Lua forces a miss.
+    bool lua_force_miss = false;
+    if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
+        if( !imelee_cb->call_on_melee_attack( *this, t, cur_weapon ) ) {
+            lua_force_miss = true;
+        }
+    }
+
     int hit_spread = t.deal_melee_attack( this, hit_roll( cur_weapon, attack ) );
-    const bool attack_hit = hit_spread >= 0;
+    const bool attack_hit = !lua_force_miss && hit_spread >= 0;
 
     if( cur_weapon.attack_cost() > attack_cost( cur_weapon ) * 20 ) {
         add_msg( m_bad, _( "This weapon is too unwieldy to attack with!" ) );
         return;
     }
 
-    int move_cost = attack_cost( cur_weapon );
+    int move_cost = with_cross_z_melee_cost( attack_cost( cur_weapon ), pos(), t.pos() );
 
     if( !attack_hit ) {
+        // Lua imelee on_miss callback
+        if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
+            imelee_cb->call_on_miss( *this, cur_weapon );
+        }
+
         int stumble_pen = stumble( *this, cur_weapon );
         sfx::generate_melee_sound( pos(), t.pos(), false, false );
         if( is_player() ) { // Only display messages if this is the player
@@ -597,6 +634,12 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
                 perform_special_attacks( t, dealt_special_dam );
             }
             t.deal_melee_hit( this, &cur_weapon, hit_spread, critical_hit, d, dealt_dam );
+
+            // Lua imelee on_hit callback
+            if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
+                imelee_cb->call_on_hit( *this, t, cur_weapon, dealt_dam );
+            }
+
             if( dealt_special_dam.type_damage( DT_CUT ) > 0 ||
                 dealt_special_dam.type_damage( DT_STAB ) > 0 ||
                 ( cur_weapon.is_null() && ( dealt_dam.type_damage( DT_CUT ) > 0 ||
@@ -665,7 +708,8 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         }
     }
 
-    const int mod_sta = -get_melee_stamina_cost( cur_weapon );
+    const int mod_sta = -with_cross_z_melee_cost( get_melee_stamina_cost( cur_weapon ), pos(),
+                        t.pos() );
     mod_stamina( std::min( -50, mod_sta ) );
     add_msg( m_debug, "Stamina burn: %d", std::min( -50, mod_sta ) );
     mod_moves( -move_cost );
@@ -704,7 +748,7 @@ void Character::reach_attack( const tripoint &p )
     // Max out recoil
     recoil = MAX_RECOIL;
 
-    int move_cost = attack_cost( primary_weapon() );
+    int move_cost = with_cross_z_melee_cost( attack_cost( primary_weapon() ), pos(), p );
     int skill = std::min( 10, get_skill_level( skill_stabbing ) );
     int t = 0;
     std::vector<tripoint> path = line_to( pos(), p, t, 0 );
@@ -818,10 +862,11 @@ double Character::crit_chance( float roll_hit, float target_dodge, const item &w
         weapon_crit_chance = 0.5 + 0.05 * get_skill_level( skill_unarmed );
     }
 
-    if( attack.to_hit > 0 ) {
-        weapon_crit_chance = std::max( weapon_crit_chance, 0.5 + 0.1 * attack.to_hit );
-    } else if( attack.to_hit < 0 ) {
-        weapon_crit_chance += 0.1 * attack.to_hit;
+    int attack_to_hit = attack.to_hit + weap.get_melee_hit_bonus();
+    if( attack_to_hit > 0 ) {
+        weapon_crit_chance = std::max( weapon_crit_chance, 0.5 + 0.1 * attack_to_hit );
+    } else if( attack_to_hit < 0 ) {
+        weapon_crit_chance += 0.1 * attack_to_hit;
     }
     weapon_crit_chance = limit_probability( weapon_crit_chance );
 
@@ -1938,6 +1983,12 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
         }
     }
 
+    // Lua imelee on_block callback (fires for the blocking item)
+    if( const auto *imelee_cb = shield.type->imelee_callbacks ) {
+        imelee_cb->call_on_block( *this, *source, shield,
+                                  static_cast<int>( damage_blocked ) );
+    }
+
     cata::run_hooks( "on_creature_blocked", [ &, this]( auto & params ) {
         params["char"] = this;
         params["source"] = source;
@@ -2426,6 +2477,14 @@ int Character::attack_cost( const item &weap ) const
     move_cost *= stamina_penalty;
     move_cost += skill_cost;
     move_cost -= dexbonus;
+
+    // If we're strong enough to use this weapon one-handed but commit to two-handing it anyway, make it easier to swing.
+    // Limit to weapons over 100 base movecost so you can't do this with weapons that're too small.
+    // Exponential bonus so heavier weapons benefit more than small ones.
+    if( weap.attack_cost() > 100 && !weap.is_two_handed( *this ) &&
+        has_two_arms() && !worn_with_flag( flag_RESTRICT_HANDS ) ) {
+        move_cost = std::pow( move_cost, 0.975f );
+    }
 
     move_cost += bonus_from_enchantments( move_cost, enchant_vals::mod::ATTACK_COST, true );
 

@@ -34,7 +34,8 @@
       [ "tac_fullhelmet", 5 ],
       [ "tac_helmet", 10 ],
       [ "shield_riot", 20 ],
-      [ "shield_ballistic", 5 ]
+      [ "shield_ballistic", 5 ],
+      [ "shield_ballistic_large", 5 ]
     ]
   },
   {

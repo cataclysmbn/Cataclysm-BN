@@ -65,6 +65,7 @@ class avatar : public player
         void deserialize( JsonIn &jsin ) override;
         bool save_map_memory();
         void load_map_memory();
+        void clear_map_memory();
 
         // newcharacter.cpp
         bool create( character_type type, const std::string &tempname = "" );
@@ -132,7 +133,8 @@ class avatar : public player
         std::unique_ptr<tripoint_abs_omt> custom_waypoint = nullptr;
         tripoint_abs_omt get_active_mission_target() const;
         /** Returns the custom mission target directly set by the player */
-        tripoint_abs_omt get_custom_mission_target();
+        auto get_custom_mission_target() -> tripoint_abs_omt;
+        auto get_custom_mission_target() const -> tripoint_abs_omt;
         /**
          * Set which mission is active. The mission must be listed in @ref active_missions.
          */
@@ -189,6 +191,8 @@ class avatar : public player
 
         bool is_hallucination() const override;
 
+        auto is_dead_state() const -> bool override;
+
         pimpl<teleporter_list> translocators;
 
         int get_str_base() const override;
@@ -200,8 +204,8 @@ class avatar : public player
         int free_upgrade_points() const;
         // how much "kill xp" you have
         int kill_xp() const;
-        // how much "kill xp" needed for next point (empty if reached max level)
-        std::optional<int> kill_xp_for_next_point() const;
+        // how much "kill xp" needed for next point
+        int kill_xp_for_next_point() const;
         // upgrade stat from kills
         void upgrade_stat( character_stat stat );
 
@@ -312,5 +316,4 @@ class avatar : public player
 };
 
 avatar &get_avatar();
-
 

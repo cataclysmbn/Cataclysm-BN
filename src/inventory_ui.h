@@ -15,6 +15,7 @@
 
 #include "color.h"
 #include "cursesdef.h"
+#include "detached_ptr.h"
 #include "input.h"
 #include "item_handling_util.h"
 #include "memory_fast.h"
@@ -442,6 +443,7 @@ class inventory_selector
         void add_map_items( const tripoint &target );
         void add_vehicle_items( const tripoint &target );
         void add_nearby_items( int radius = 1 );
+        void add_bionics_items( Character &character );
         /** Remove all items */
         void clear_items();
         /** Assigns a title that will be shown on top of the menu. */
@@ -472,6 +474,10 @@ class inventory_selector
 
         bool keep_open = false;
 
+        void add_item( inventory_column &target_column,
+                       item *location,
+                       const item_category *custom_category = nullptr );
+
     protected:
         player &u;
         const inventory_selector_preset &preset;
@@ -488,9 +494,6 @@ class inventory_selector
                         std::vector<item *> &&locations,
                         const item_category *custom_category = nullptr );
 
-        void add_item( inventory_column &target_column,
-                       item *location,
-                       const item_category *custom_category = nullptr );
 
         void add_items( inventory_column &target_column,
                         const std::function<item*( item * )> &locator,
@@ -584,6 +587,7 @@ class inventory_selector
 
         void set_active_column( size_t index );
 
+        inventory_column own_gear_column;    // Column for own gear (weapon, armor) items
     protected:
         size_t get_columns_width( const std::vector<inventory_column *> &columns ) const;
         /** @return Percentage of the window occupied by columns */
@@ -614,6 +618,7 @@ class inventory_selector
 
         const navigation_mode_data &get_navigation_data( navigation_mode m ) const;
 
+
     private:
         catacurses::window w_inv;
 
@@ -630,7 +635,6 @@ class inventory_selector
         navigation_mode mode;
 
         inventory_column own_inv_column;     // Column for own inventory items
-        inventory_column own_gear_column;    // Column for own gear (weapon, armor) items
         inventory_column map_column;         // Column for map and vehicle items
 
         const int border = 1;                // Width of the window border

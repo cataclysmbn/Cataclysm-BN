@@ -11,11 +11,14 @@
 
 #include "auto_pickup.h"
 #include "avatar.h"
+#include "batch_turns.h"
 #include "bodypart.h"
 #include "character.h"
 #include "character_id.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "clzones.h"
 #include "coordinate_conversions.h"
 #include "damage.h"
@@ -57,6 +60,7 @@
 #include "output.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "legacy_pathfinding.h"
 #include "player_activity.h"
 #include "pldata.h"
@@ -129,6 +133,8 @@ static const trait_id trait_PSYCHOPATH( "PSYCHOPATH" );
 static const trait_id trait_SAPIOVORE( "SAPIOVORE" );
 static const trait_id trait_SCHIZOPHRENIC( "SCHIZOPHRENIC" );
 static const trait_id trait_TERRIFYING( "TERRIFYING" );
+static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
+
 
 class monfaction;
 
@@ -189,7 +195,10 @@ standard_npc::standard_npc( const std::string &name, const tripoint &pos,
                             int sk_lvl, int s_str, int s_dex, int s_int, int s_per )
 {
     this->name = name;
-    position = pos;
+    // Resolve tripoint_min sentinel to the runtime bubble center.
+    position = ( pos == tripoint_min )
+               ? tripoint( g_half_mapsize_x, g_half_mapsize_y, 0 )
+               : pos;
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );
@@ -719,8 +728,9 @@ void npc::setpos( const tripoint &pos )
     // TODO: fix point types
     const point_abs_om pos_om_new( sm_to_om_copy( submap_coords ) );
     if( !is_fake() && pos_om_old != pos_om_new ) {
-        overmap &om_old = overmap_buffer.get( pos_om_old );
-        overmap &om_new = overmap_buffer.get( pos_om_new );
+        auto &dim_ob = get_overmapbuffer( get_dimension() );
+        overmap &om_old = dim_ob.get( pos_om_old );
+        overmap &om_new = dim_ob.get( pos_om_new );
         if( const auto ptr = om_old.erase_npc( getID() ) ) {
             om_new.insert_npc( ptr );
         } else {
@@ -748,8 +758,9 @@ void npc::travel_overmap( const tripoint &pos )
         reach_omt_destination();
     }
     if( !is_fake() && pos_om_old != pos_om_new ) {
-        overmap &om_old = overmap_buffer.get( pos_om_old );
-        overmap &om_new = overmap_buffer.get( pos_om_new );
+        auto &dim_ob = get_overmapbuffer( get_dimension() );
+        overmap &om_old = dim_ob.get( pos_om_old );
+        overmap &om_new = dim_ob.get( pos_om_new );
         if( const auto ptr = om_old.erase_npc( getID() ) ) {
             om_new.insert_npc( ptr );
         } else {
@@ -784,9 +795,11 @@ void npc::place_on_map()
 {
     // The global absolute position (in map squares) of the npc is *always*
     // "submap_coords.x * SEEX + posx() % SEEX" (analog for y).
-    // The main map assumes that pos is in its own (local to the main map)
-    // coordinate system. We have to change pos to match that assumption
-    const point dm( submap_coords + point( -g->get_levx(), -g->get_levy() ) );
+    // Use get_map() rather than g->m directly so that this function works
+    // correctly when called under a scoped_map_context (e.g. for out-of-bubble
+    // loaded regions whose tinymap is temporarily the active map).
+    const tripoint map_origin = get_map().get_abs_sub();
+    const point dm( submap_coords + point( -map_origin.x, -map_origin.y ) );
     const point offset( position.x % SEEX, position.y % SEEY );
     // value of "submap_coords.x * SEEX + posx()" is unchanged
     setpos( tripoint( offset.x + dm.x * SEEX, offset.y + dm.y * SEEY, posz() ) );
@@ -2209,6 +2222,7 @@ Attitude npc::attitude_to( const Creature &other ) const
         case MATT_ATTACK:
             return Attitude::A_HOSTILE;
         case MATT_NULL:
+        case MATT_UNKNOWN:
         case NUM_MONSTER_ATTITUDES:
             break;
     }
@@ -2316,16 +2330,19 @@ int npc::follow_distance() const
 
 nc_color npc::basic_symbol_color() const
 {
-    if( attitude == NPCATT_KILL ) {
-        return c_red;
-    } else if( attitude == NPCATT_FLEE || attitude == NPCATT_FLEE_TEMP ) {
-        return c_light_red;
-    } else if( is_player_ally() ) {
-        return c_green;
-    } else if( is_walking_with() ) {
-        return c_light_green;
-    } else if( guaranteed_hostile() ) {
-        return c_red;
+    const avatar &ply = get_avatar();
+    if( !ply.has_trait( trait_INATTENTIVE ) ) {
+        if( attitude == NPCATT_KILL ) {
+            return c_red;
+        } else if( attitude == NPCATT_FLEE || attitude == NPCATT_FLEE_TEMP ) {
+            return c_light_red;
+        } else if( is_player_ally() ) {
+            return c_green;
+        } else if( is_walking_with() ) {
+            return c_light_green;
+        } else if( guaranteed_hostile() ) {
+            return c_red;
+        }
     }
     return c_pink;
 }
@@ -2341,11 +2358,13 @@ int npc::print_info( const catacurses::window &w, int line, int vLines, int colu
     mvwprintz( w, point( column, line++ ), c_white, _( "NPC: " ) );
     wprintz( w, basic_symbol_color(), name );
 
+    const bool player_knows = !g->u.has_trait( trait_INATTENTIVE );
+
     if( display_object_ids ) {
         mvwprintz( w, point( column, line++ ), c_light_blue, string_format( "[%s]", myclass ) );
     }
 
-    if( sees( g->u ) ) {
+    if( sees( g->u ) && player_knows )  {
         mvwprintz( w, point( column, line++ ), c_yellow, _( "Aware of your presence!" ) );
     }
 
@@ -2619,6 +2638,37 @@ void npc::die( Creature *nkiller )
     place_corpse();
 }
 
+void npc::erase()
+{
+    if( dead ) {
+        return;
+    }
+    if( in_vehicle ) {
+        g->m.unboard_vehicle( pos(), true );
+    }
+    if( is_mounted() ) {
+        monster *critter = mounted_creature.get();
+        critter->remove_effect( effect_ridden );
+        critter->mounted_player = nullptr;
+        critter->mounted_player_id = character_id();
+    }
+    if( my_fac ) {
+        if( !is_fake() && !is_hallucination() ) {
+            if( my_fac->members.size() == 1 ) {
+                for( auto elem : inv_dump() ) {
+                    elem->remove_owner();
+                    elem->remove_old_owner();
+                }
+            }
+            my_fac->remove_member( getID() );
+        }
+    }
+    dead = true;
+    g->remove_npc_follower( getID() );
+    get_overmapbuffer( get_dimension() ).remove_npc( getID() );
+    g->cleanup_dead();
+}
+
 std::string npc_attitude_id( npc_attitude att )
 {
     static const std::map<npc_attitude, std::string> npc_attitude_ids = {
@@ -2663,53 +2713,57 @@ std::string io::enum_to_string<npc_attitude>( npc_attitude att )
 
 std::string npc_attitude_name( npc_attitude att )
 {
-    switch( att ) {
-        // Don't care/ignoring player
-        case NPCATT_NULL:
-            return _( "Ignoring" );
-        // Move to and talk to player
-        case NPCATT_TALK:
-            return _( "Wants to talk" );
-        // Follow the player
-        case NPCATT_FOLLOW:
-            return _( "Following" );
-        // Lead the player, wait for them if they're behind
-        case NPCATT_LEAD:
-            return _( "Leading" );
-        // Waiting for the player
-        case NPCATT_WAIT:
-            return _( "Waiting for you" );
-        // Mug the player
-        case NPCATT_MUG:
-            return _( "Mugging you" );
-        // Attack the player if our patience runs out
-        case NPCATT_WAIT_FOR_LEAVE:
-            return _( "Waiting for you to leave" );
-        // Kill the player
-        case NPCATT_KILL:
-            return _( "Attacking to kill" );
-        // Get away from the player
-        case NPCATT_FLEE:
-        case NPCATT_FLEE_TEMP:
-            return _( "Fleeing" );
-        // Get to the player and heal them
-        case NPCATT_HEAL:
-            return _( "Healing you" );
-        case NPCATT_ACTIVITY:
-            return _( "Performing a task" );
-        case NPCATT_RECOVER_GOODS:
-            return _( "Trying to recover stolen goods" );
-        case NPCATT_LEGACY_1:
-        case NPCATT_LEGACY_2:
-        case NPCATT_LEGACY_3:
-        case NPCATT_LEGACY_4:
-        case NPCATT_LEGACY_5:
-        case NPCATT_LEGACY_6:
-            return _( "NPC Legacy Attitude" );
-        default:
-            break;
+    const avatar &ply = get_avatar();
+    if( ply.has_trait( trait_INATTENTIVE ) ) {
+        return _( "" );
+    } else {
+        switch( att ) {
+            // Don't care/ignoring player
+            case NPCATT_NULL:
+                return _( "Ignoring" );
+            // Move to and talk to player
+            case NPCATT_TALK:
+                return _( "Wants to talk" );
+            // Follow the player
+            case NPCATT_FOLLOW:
+                return _( "Following" );
+            // Lead the player, wait for them if they're behind
+            case NPCATT_LEAD:
+                return _( "Leading" );
+            // Waiting for the player
+            case NPCATT_WAIT:
+                return _( "Waiting for you" );
+            // Mug the player
+            case NPCATT_MUG:
+                return _( "Mugging you" );
+            // Attack the player if our patience runs out
+            case NPCATT_WAIT_FOR_LEAVE:
+                return _( "Waiting for you to leave" );
+            // Kill the player
+            case NPCATT_KILL:
+                return _( "Attacking to kill" );
+            // Get away from the player
+            case NPCATT_FLEE:
+            case NPCATT_FLEE_TEMP:
+                return _( "Fleeing" );
+            // Get to the player and heal them
+            case NPCATT_HEAL:
+                return _( "Healing you" );
+            case NPCATT_ACTIVITY:
+                return _( "Performing a task" );
+            case NPCATT_RECOVER_GOODS:
+                return _( "Trying to recover stolen goods" );
+            case NPCATT_LEGACY_1:
+            case NPCATT_LEGACY_2:
+            case NPCATT_LEGACY_3:
+            case NPCATT_LEGACY_4:
+            case NPCATT_LEGACY_5:
+            case NPCATT_LEGACY_6:
+                return _( "NPC Legacy Attitude" );
+            default:
+                break;
+        }
     }
-
     debugmsg( "Invalid attitude: %d", att );
     return _( "Unknown attitude" );
 }
@@ -2844,6 +2898,13 @@ void npc::on_load()
     if( has_trait( trait_HALLUCINATION ) ) {
         hallucination = true;
     }
+
+    cata::run_hooks( "on_creature_loaded", [this]( sol::table & params ) {
+        params["creature"] = this;
+    } );
+    cata::run_hooks( "on_npc_loaded", [this]( sol::table & params ) {
+        params["npc"] = this;
+    } );
 }
 
 void npc_chatbin::add_new_mission( mission *miss )
@@ -2944,6 +3005,55 @@ void npc::process_turn()
 
     // TODO: Add decreasing trust/value/etc. here when player doesn't provide food
     // TODO: Make NPCs leave the player if there's a path out of map and player is sleeping/unseen/etc.
+}
+
+void npc::batch_turns( int n )
+{
+    if( n <= 0 || is_dead_state() ) {
+        return;
+    }
+    n = std::min( n, MAX_CATCHUP_NPC );
+
+    // Biological catchup (hunger, thirst, healing, etc.) in one coarse pass.
+    // Call update_body directly (bypassing the once_every throttle used in
+    // npc_update_body) since we're doing a deliberate catch-up pass.
+    if( last_updated < calendar::turn ) {
+        update_body( last_updated, calendar::turn );
+        last_updated = calendar::turn;
+    }
+
+    // Per-turn effect/bonus processing.
+    for( int i = 0; i < n; ++i ) {
+        if( is_dead_state() ) {
+            break;
+        }
+        process_turn();
+    }
+
+    // Fast-forward any ongoing activity.
+    advance_job_progress( n );
+
+    moves = 0;
+}
+
+void npc::advance_job_progress( int n )
+{
+    if( n <= 0 ) {
+        return;
+    }
+    if( activity && *activity ) {
+        // Directly reduce moves_left by n turns' worth (100 moves per turn).
+        // The mod_moves() approach is wrong here: activity->do_turn() unconditionally
+        // sets p.moves = 0 after each step, so any extra moves granted via mod_moves()
+        // are zeroed on the very first step and the catchup never happens.
+        // Direct reduction is speed-independent, matching the design intent.
+        activity->moves_left = std::max( 0, activity->moves_left - n * 100 );
+    } else if( has_destination() ) {
+        // Destination movement: grant extra moves so the NPC takes additional path
+        // steps toward its goal.  mod_moves() is correct here because path-following
+        // does consume moves one step at a time without zeroing the full pool.
+        mod_moves( to_moves<int>( time_duration::from_turns( n ) ) );
+    }
 }
 
 bool npc::invoke_item( item *used, const tripoint &pt )
@@ -3078,7 +3188,7 @@ std::set<tripoint> npc::get_legacy_path_avoid() const
     }
     if( rules.has_flag( ally_rule::avoid_doors ) ) {
         for( const tripoint &p : g->m.points_in_radius( pos(), 30 ) ) {
-            if( g->m.open_door( p, true, true ) ) {
+            if( g->m.can_open_door( this, p, true ) ) {
                 ret.insert( p );
             }
         }
@@ -3161,24 +3271,30 @@ mfaction_id npc::get_monster_faction() const
 std::string npc::extended_description() const
 {
     std::string ss;
+    const avatar &ply = get_avatar();
+
     // For some reason setting it using str or constructor doesn't work
     ss += Character::extended_description();
 
     ss += "\n--\n";
-    if( attitude == NPCATT_KILL ) {
-        ss += _( "Is trying to kill you." );
-    } else if( attitude == NPCATT_FLEE || attitude == NPCATT_FLEE_TEMP ) {
-        ss += _( "Is trying to flee from you." );
-    } else if( is_player_ally() ) {
-        ss += _( "Is your friend." );
-    } else if( is_following() ) {
-        ss += _( "Is following you." );
-    } else if( is_leader() ) {
-        ss += _( "Is guiding you." );
-    } else if( guaranteed_hostile() ) {
-        ss += _( "Will try to kill you or flee from you if you reveal yourself." );
+    if( !ply.has_trait( trait_INATTENTIVE ) ) {
+        if( attitude == NPCATT_KILL ) {
+            ss += _( "Is trying to kill you." );
+        } else if( attitude == NPCATT_FLEE || attitude == NPCATT_FLEE_TEMP ) {
+            ss += _( "Is trying to flee from you." );
+        } else if( is_player_ally() ) {
+            ss += _( "Is your friend." );
+        } else if( is_following() ) {
+            ss += _( "Is following you." );
+        } else if( is_leader() ) {
+            ss += _( "Is guiding you." );
+        } else if( guaranteed_hostile() ) {
+            ss += _( "Will try to kill you or flee from you if you reveal yourself." );
+        } else {
+            ss += _( "Is neutral." );
+        }
     } else {
-        ss += _( "Is neutral." );
+        ss += _( "It is a person." );
     }
 
     if( display_object_ids ) {

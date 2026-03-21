@@ -90,7 +90,7 @@ static void check_near( float prob, const float expected, const float tolerance 
 
 static const int num_iters = 10000;
 
-static constexpr tripoint dude_pos( HALF_MAPSIZE_X, HALF_MAPSIZE_Y, 0 );
+static const tripoint dude_pos( g_half_mapsize_x, g_half_mapsize_y, 0 );
 
 TEST_CASE( "Character attacking a zombie", "[.melee]" )
 {
