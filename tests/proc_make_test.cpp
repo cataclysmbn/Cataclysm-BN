@@ -309,6 +309,12 @@ TEST_CASE( "proc_make_item_applies_weapon_blob_to_item", "[proc][make][weapon]" 
     CHECK( proc::blob_melee( *made )->bash > 0 );
     CHECK( made->damage_melee( DT_STAB ) == proc::blob_melee( *made )->stab );
     CHECK( made->type_name() == "hand-forged sword" );
+    CHECK( proc::read_payload( *made )->blob.description ==
+           "A serviceable sword built around a forged metal blade. "
+           "The hilt uses no guard and a rag-wrapped grip." );
+    CHECK( made->get_var( "description" ) ==
+           "A serviceable sword built around a forged metal blade. "
+           "The hilt uses no guard and a rag-wrapped grip." );
     REQUIRE( proc::read_payload( *made )->parts.size() == 3 );
     CHECK( proc::read_payload( *made )->parts[0].role == "blade" );
 }

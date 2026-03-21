@@ -72,6 +72,7 @@ TEST_CASE( "proc_payload_round_trips_through_item_save", "[proc][payload]" )
     payload.blob.mass_g = 220;
     payload.blob.volume_ml = 330;
     payload.blob.name = "meat sandwich";
+    payload.blob.description = "A sandwich payload used for save testing.";
     payload.blob.melee.stab = 9;
     payload.servings = 6;
     auto part = proc::compact_part{};
@@ -269,6 +270,7 @@ TEST_CASE( "legacy_sandwiches_gain_proc_payload_on_save_load", "[proc][payload][
         CHECK( restored->typeId() == itype_id( "sandwich_generic" ) );
         CHECK( restored->type_name() == legacy.type_name() );
         CHECK( payload->blob.name == legacy.type_name() );
+        CHECK( payload->blob.description == legacy.type->description.translated() );
         CHECK( payload->blob.mass_g == units::to_gram( legacy.weight() ) );
         CHECK( payload->blob.volume_ml == units::to_milliliter( legacy.volume() ) );
         CHECK( payload->servings == std::max( legacy.charges, 1 ) );
@@ -391,6 +393,7 @@ TEST_CASE( "legacy_swords_gain_proc_payload_on_save_load", "[proc][payload][migr
         CHECK( restored->typeId() == itype_id( "proc_sword_generic" ) );
         CHECK( restored->type_name() == legacy.type_name() );
         CHECK( payload->blob.name == legacy.type_name() );
+        CHECK( payload->blob.description == legacy.type->description.translated() );
         CHECK( payload->blob.mass_g == units::to_gram( legacy.weight() ) );
         CHECK( payload->blob.volume_ml == units::to_milliliter( legacy.volume() ) );
         CHECK( units::to_gram( restored->weight() ) == units::to_gram( legacy.weight() ) );

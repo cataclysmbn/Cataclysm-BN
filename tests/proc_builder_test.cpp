@@ -825,17 +825,28 @@ TEST_CASE( "proc_builder_supports_sword_reinforcements_and_legacy_like_names",
 
     const auto plain = base_state();
     CHECK( plain.fast.name == "2-by-sword" );
+    CHECK( plain.fast.description ==
+           "A club-like sword carved from a sturdy length of wood. "
+           "The hilt uses no guard and a rag-wrapped grip." );
 
     auto nailed = base_state();
     REQUIRE( proc::add_pick( nailed, sch, proc::slot_id( "reinforcement" ), 4 ) );
     REQUIRE( proc::add_pick( nailed, sch, proc::slot_id( "reinforcement" ), 4 ) );
     CHECK( nailed.fast.name == "nail sword" );
+    CHECK( nailed.fast.description ==
+           "A rough wooden sword stiffened with driven nails. "
+           "The hilt uses no guard and a rag-wrapped grip. "
+           "Driven nails add stiffness and a little puncturing power." );
     CHECK( nailed.fast.melee.cut > plain.fast.melee.cut );
     CHECK( nailed.fast.melee.dur >= plain.fast.melee.dur );
 
     auto crude = base_state();
     REQUIRE( proc::add_pick( crude, sch, proc::slot_id( "reinforcement" ), 5 ) );
     CHECK( crude.fast.name == "crude sword" );
+    CHECK( crude.fast.description ==
+           "A crude sword pieced together from wood and scavenged scrap. "
+           "The hilt uses no guard and a rag-wrapped grip. "
+           "Scrap reinforcement adds weight and stiffness." );
     CHECK( crude.fast.melee.cut > plain.fast.melee.cut );
     CHECK( crude.fast.mass_g > plain.fast.mass_g );
 }

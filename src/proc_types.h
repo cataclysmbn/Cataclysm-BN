@@ -96,10 +96,11 @@ struct fast_blob {
     std::map<vitamin_id, int> vit;
     melee_blob melee;
     std::string name;
+    std::string description;
 
     auto empty() const -> bool {
         return mass_g == 0 && volume_ml == 0 && kcal == 0 && vit.empty() && melee.empty() &&
-               name.empty();
+               name.empty() && description.empty();
     }
 
     auto operator==( const fast_blob & ) const -> bool = default;
