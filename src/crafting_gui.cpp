@@ -33,6 +33,7 @@
 #include "output.h"
 #include "player.h"
 #include "point.h"
+#include "proc_recipe.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
@@ -460,6 +461,7 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             item_info_cache.dummy = rec->create_result();
             if( rec->is_proc() && !rec->builder_name().translated().empty() ) {
                 item_info_cache.dummy->set_var( "name", rec->builder_name().translated() );
+                item_info_cache.dummy->set_var( "description", proc::recipe_preview_description( *rec ) );
             }
             item_info_cache.dummy->set_var( "recipe_exemplar", rec->ident().str() );
             item_info_scroll = 0;

@@ -276,3 +276,16 @@ TEST_CASE( "proc_recipe_rejects_proc_id_without_proc", "[proc][recipe]" )
 
     CHECK( rec.get_consistency_error() == "specifies proc_id but proc is false" );
 }
+
+TEST_CASE( "proc_recipe_preview_description_avoids_placeholder_copy_from_text", "[proc][recipe]" )
+{
+    const auto sandwich = load_recipe_from_file( "data/json/recipes/food/proc_sandwich.json",
+                          "sandwich_generic" );
+    const auto sword = load_recipe_from_file( "data/json/recipes/weapon/proc_sword.json",
+                       "proc_sword_generic" );
+
+    CHECK_FALSE( proc::recipe_preview_description( sandwich ).contains( "If you can see this" ) );
+    CHECK_FALSE( proc::recipe_preview_description( sword ).contains( "If you can see this" ) );
+    CHECK_FALSE( proc::recipe_preview_description( sandwich ).empty() );
+    CHECK_FALSE( proc::recipe_preview_description( sword ).empty() );
+}
