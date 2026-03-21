@@ -17,6 +17,7 @@
 #include "output.h"
 #include "proc_builder.h"
 #include "proc_fact.h"
+#include "proc_item.h"
 #include "proc_recipe.h"
 #include "recipe.h"
 #include "proc_ui_candidates.h"
@@ -24,6 +25,7 @@
 #include "proc_ui_slot_indicator.h"
 #include "proc_ui_text.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "ui.h"
 #include "proc_ui_navigation.h"
@@ -321,6 +323,60 @@ auto preview_lines( const proc::schema &sch, const proc::builder_state &state,
     return lines;
 }
 
+auto preview_slots( const proc::builder_state &state,
+                    const proc::schema &sch ) -> std::vector<proc::slot_id>
+{
+    auto slots = std::vector<proc::slot_id> {};
+    const auto picks = proc::selected_picks( state, sch );
+    slots.reserve( picks.size() );
+    std::ranges::for_each( picks, [&]( const proc::craft_pick & pick ) {
+        slots.push_back( pick.slot );
+    } );
+    return slots;
+}
+
+auto preview_item_from_state( const proc::builder_state &state, const proc::schema &sch,
+                              const recipe &rec ) -> detached_ptr<item>
+{
+    auto facts = proc::selected_facts( state );
+    if( facts.empty() ) {
+        auto fallback = item::spawn( sch.res, calendar::turn );
+        fallback->set_var( "name", rec.builder_name().translated().empty() ? rec.result_name() :
+                           rec.builder_name().translated() );
+        fallback->set_var( "description", rec.builder_desc().translated().empty() ?
+                           _( "Select parts to preview the crafted item." ) :
+                           rec.builder_desc().translated() );
+        return fallback;
+    }
+    return proc::make_item( sch, facts, {
+        .mode = proc::hist::none,
+        .rec = &rec,
+        .used = {},
+        .slots = preview_slots( state, sch )
+    } );
+}
+
+auto preview_compare_lines( const proc::schema &sch, const proc::builder_state &state,
+                            const proc::fast_blob &preview_blob,
+                            const std::vector<source_entry> &sources,
+                            const recipe &rec ) -> std::vector<std::string>
+{
+    auto preview_state = state;
+    preview_state.fast = preview_blob;
+    auto display_item = preview_item_from_state( preview_state, sch, rec );
+    auto compare_info = std::vector<iteminfo> {};
+    if( !proc::selected_facts( state ).empty() ) {
+        const auto compare_item = preview_item_from_state( state, sch, rec );
+        compare_info = compare_item->info();
+    }
+
+    auto lines = string_split( format_item_info( display_item->info(), compare_info ), '\n' );
+    if( lines.empty() ) {
+        return preview_lines( sch, state, preview_blob, sources );
+    }
+    return lines;
+}
+
 auto clear_slot( proc::builder_state &state, const proc::slot_id &slot ) -> void
 {
     while( proc::remove_last_pick( state, slot ) ) {
@@ -459,7 +515,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         } );
 
         auto preview = std::vector<std::string> {};
-        std::ranges::for_each( preview_lines( sch, state, preview_blob, source_data.entries ),
+        std::ranges::for_each( preview_compare_lines( sch, state, preview_blob, source_data.entries, rec ),
         [&]( const std::string & line ) {
             const auto wrapped = foldstring( line, right_width - 1 );
             if( wrapped.empty() ) {
