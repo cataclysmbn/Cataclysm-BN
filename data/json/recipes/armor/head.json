@@ -1652,5 +1652,18 @@
     "autolearn": true,
     "using": [ [ "blacksmithing_intermediate", 12 ] ],
     "components": [ [ [ "hard_steel_armor", 6 ] ] ]
+  },
+  {
+    "result": "bearskin_hat",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "tailor",
+    "difficulty": 3,
+    "time": "30 m",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_tailor", 2 ], [ "manual_tailor", 2 ], [ "tailor_portfolio", 2 ] ],
+    "using": [ [ "sewing_standard", 8 ] ],
+    "components": [ [ [ "fur", 3 ] ] ]
   }
 ]
