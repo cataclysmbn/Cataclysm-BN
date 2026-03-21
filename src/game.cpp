@@ -5283,7 +5283,7 @@ void game::npcmove()
     const std::string &player_dim = m.get_bound_dimension();
     for( npc &guy : g->all_npcs() ) {
         const auto dim = guy.get_dimension();
-        const tripoint_abs_sm pos_sm( guy.pos() );
+        const auto pos_sm = tripoint_abs_sm( guy.pos() );
         // Don't process NPCs in unloaded submaps like a LEMON
         if( !submap_loader.is_simulated( dim, pos_sm ) ) {
             continue;
