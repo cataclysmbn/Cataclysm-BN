@@ -441,6 +441,43 @@ auto picked_facts_for_role( const proc::schema &sch, const std::vector<proc::par
     return ret;
 }
 
+struct sword_variant_data {
+    std::string name;
+    itype_id result = itype_id::NULL_ID();
+};
+
+auto sword_variant( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
+                    const std::vector<proc::craft_pick> &picks ) -> sword_variant_data
+{
+    const auto blade_facts = picked_facts_for_role( sch, facts, picks, "blade" );
+    const auto reinforcement_facts = picked_facts_for_role( sch, facts, picks, "reinforcement" );
+
+    if( has_itype( reinforcement_facts, itype_id( "nail" ) ) ) {
+        return { .name = "nail sword", .result = itype_id( "sword_nail" ) };
+    }
+    if( has_itype( reinforcement_facts, itype_id( "scrap" ) ) ||
+        has_itype( blade_facts, itype_id( "scrap" ) ) ) {
+        return { .name = "crude sword", .result = itype_id( "sword_crude" ) };
+    }
+    if( std::ranges::any_of( blade_facts, [&]( const proc::part_fact & fact ) {
+    return has_material( fact, material_id( "steel" ) ) || has_material( fact,
+                material_id( "iron" ) );
+    } ) ) {
+        return { .name = "hand-forged sword", .result = itype_id( "sword_metal" ) };
+    }
+    if( std::ranges::any_of( blade_facts, [&]( const proc::part_fact & fact ) {
+    return has_material( fact, material_id( "bone" ) );
+    } ) ) {
+        return { .name = "bone sword", .result = itype_id( "sword_bone" ) };
+    }
+    if( std::ranges::any_of( blade_facts, [&]( const proc::part_fact & fact ) {
+    return has_material( fact, material_id( "wood" ) );
+    } ) ) {
+        return { .name = "2-by-sword", .result = itype_id( "sword_wood" ) };
+    }
+    return { .name = "sword", .result = itype_id( "proc_sword_generic" ) };
+}
+
 auto sandwich_condiment_name( const std::vector<proc::part_fact> &facts ) -> std::string
 {
     if( !facts_have_tag( facts, "cond" ) ) {
@@ -520,32 +557,7 @@ auto sandwich_vegetable_name( const std::vector<proc::part_fact> &facts ) -> std
 auto sword_name( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
                  const std::vector<proc::craft_pick> &picks ) -> std::string
 {
-    const auto blade_facts = picked_facts_for_role( sch, facts, picks, "blade" );
-    const auto reinforcement_facts = picked_facts_for_role( sch, facts, picks, "reinforcement" );
-
-    if( has_itype( reinforcement_facts, itype_id( "nail" ) ) ) {
-        return "nail sword";
-    }
-    if( has_itype( reinforcement_facts, itype_id( "scrap" ) ) ||
-        has_itype( blade_facts, itype_id( "scrap" ) ) ) {
-        return "crude sword";
-    }
-    if( std::ranges::any_of( blade_facts, [&]( const proc::part_fact & fact ) {
-    return has_material( fact, material_id( "steel" ) ) || has_material( fact, material_id( "iron" ) );
-    } ) ) {
-        return "hand-forged sword";
-    }
-    if( std::ranges::any_of( blade_facts, [&]( const proc::part_fact & fact ) {
-    return has_material( fact, material_id( "bone" ) );
-    } ) ) {
-        return "bone sword";
-    }
-    if( std::ranges::any_of( blade_facts, [&]( const proc::part_fact & fact ) {
-    return has_material( fact, material_id( "wood" ) );
-    } ) ) {
-        return "2-by-sword";
-    }
-    return "sword";
+    return sword_variant( sch, facts, picks ).name;
 }
 
 auto sword_description( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
@@ -913,6 +925,15 @@ auto proc::rebuild_fast( const builder_state &state ) -> fast_blob
         return fast_blob{};
     }
     return preview_blob( state.sch, facts, selected_picks( state, state.sch ) );
+}
+
+auto proc::preview_result_override( const schema &sch, const std::vector<part_fact> &facts,
+                                    const std::vector<craft_pick> &picks ) -> std::optional<itype_id>
+{
+    if( sch.id != schema_id( "sword" ) ) {
+        return std::nullopt;
+    }
+    return sword_variant( sch, facts, picks ).result;
 }
 
 auto proc::debug_part_fact( const schema &sch, const item &it,

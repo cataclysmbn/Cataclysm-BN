@@ -147,4 +147,23 @@ TEST_CASE( "proc_make_item_converts_proc_swords_to_legacy_variants", "[proc][mak
         CHECK( made->typeId() == itype_id( "sword_bone" ) );
         CHECK( made->type_name() == "bone sword" );
     }
+
+    SECTION( "result variant does not depend on localized sword names" ) {
+        state.lua.script( R"(
+            procgen.test = procgen.test or {}
+            function procgen.test.rename(params)
+              local blob = params.blob or {}
+              blob.name = "mystery sword"
+              return blob
+            end
+        )" );
+
+        auto renamed = sch;
+        renamed.lua.full = "procgen.test.rename";
+
+        opts.slots = { proc::slot_id( "blade" ), proc::slot_id( "handle" ), proc::slot_id( "grip" ) };
+        const auto made = proc::make_item( renamed, { steel_blade, handle, grip }, opts );
+        CHECK( made->typeId() == itype_id( "sword_metal" ) );
+        CHECK( made->type_name() == "mystery sword" );
+    }
 }

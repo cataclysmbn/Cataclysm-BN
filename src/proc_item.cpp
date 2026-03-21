@@ -478,7 +478,8 @@ auto blob_table( sol::state &lua, const proc::fast_blob &blob ) -> sol::table
 
 auto call_lua_blob( const std::string &path, const proc::schema &sch,
                     const std::vector<proc::part_fact> &facts, const proc::fast_blob &blob,
-                    cata::lua_state *state ) -> std::optional<sol::table>
+                    cata::lua_state *state,
+                    const std::optional<itype_id> &result_override = std::nullopt ) -> std::optional<sol::table>
 {
     auto *active = active_lua_state( state );
     if( active == nullptr ) {
@@ -493,6 +494,9 @@ auto call_lua_blob( const std::string &path, const proc::schema &sch,
     auto params = lua.create_table();
     params["schema_id"] = sch.id.str();
     params["schema_res"] = sch.res.str();
+    if( result_override.has_value() ) {
+        params["result_override"] = result_override->str();
+    }
     params["blob"] = blob_table( lua, blob );
 
     auto facts_tbl = lua.create_table();
@@ -1058,12 +1062,15 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
                       const make_opts &opts ) -> detached_ptr<item>
 {
     auto preview = fast_blob{};
+    auto result_override = std::optional<itype_id> {};
     if( !opts.slots.empty() ) {
         auto state = build_state( sch, facts );
         const auto count = std::min( facts.size(), opts.slots.size() );
         std::ranges::for_each( std::views::iota( size_t{ 0 }, count ), [&]( const size_t idx ) {
             state.chosen[opts.slots[idx]].push_back( facts[idx].ix );
         } );
+        const auto picks = selected_picks( state, sch );
+        result_override = proc::preview_result_override( sch, facts, picks );
         preview = rebuild_fast( state );
     } else {
         std::ranges::for_each( facts, [&]( const part_fact & fact ) {
@@ -1079,7 +1086,8 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
     auto mode = opts.mode;
     auto result = item::spawn( sch.res, calendar::turn );
 
-    if( const auto tbl = call_lua_blob( sch.lua.make, sch, facts, full.data, opts.state ) ) {
+    if( const auto tbl = call_lua_blob( sch.lua.make, sch, facts, full.data, opts.state,
+                                        result_override ) ) {
         parse_blob_into( full.data, *tbl );
         const auto result_id = tbl->get_or<std::string>( "result", "" );
         if( !result_id.empty() ) {

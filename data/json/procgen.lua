@@ -30,8 +30,8 @@ end
 
 function procgen.gear.make(params)
   local blob = params.blob or {}
-  local result = params.schema_res or "proc_sword_generic"
-  if params.schema_id == "sword" then result = sword_result_from_name(blob.name) end
+  local result = params.result_override or params.schema_res or "proc_sword_generic"
+  if params.schema_id == "sword" and not params.result_override then result = sword_result_from_name(blob.name) end
   return {
     result = result,
     name = blob.name,
