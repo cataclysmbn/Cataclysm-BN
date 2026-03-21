@@ -217,10 +217,7 @@
     "durability": 450,
     "power": -5000,
     "damage_modifier": 170,
-    "breaks_into": [
-	  { "item": "steel_lump", "count": [ 70, 90 ] },
-      { "item": "chain", "count": [ 2, 2 ] }
-	],
+    "breaks_into": [ { "item": "steel_lump", "count": [ 70, 90 ] }, { "item": "chain", "count": [ 2, 2 ] } ],
     "description": "A circular blade, powered by the vehicle's engine.  It will significantly increase the damage the vehicle delivers in collisions.  Mount on the edges of the vehicle, preferably the front.",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 5 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
