@@ -265,7 +265,8 @@
             "multitile": true,
             "additional_tiles": [ { "id": "broken", "fg": 185 } ]
           },
-          { "id": "f_rain_collector_plumbed", "fg": 186 }
+          { "id": "f_rain_collector_plumbed", "fg": 186 },
+          { "id": "vp_light_white", "fg": 187 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
