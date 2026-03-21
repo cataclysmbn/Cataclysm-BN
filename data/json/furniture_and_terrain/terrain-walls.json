@@ -405,7 +405,7 @@
       "sound_fail": "bash!",
       "ter_set": "t_null",
       "items": [ { "item": "rock", "count": [ 8, 15 ] }, { "item": "brick", "count": [ 2, 6 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 120, 120 ], "destroy_threshold": 120 }
     }
   },
@@ -428,7 +428,7 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": [ { "item": "rock", "count": [ 8, 18 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 160, 160 ], "destroy_threshold": 160 }
     }
   },
@@ -468,7 +468,7 @@
     "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL", "CONNECT_TO_WALL", "MINEABLE", "BLOCK_WIND" ],
     "connects_to": "WALL",
     "bash": {
-      "str_min": 225,
+      "str_min": 120,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -479,8 +479,8 @@
         { "item": "material_limestone", "charges": [ 400, 800 ], "prob": 40 },
         { "item": "material_rocksalt", "prob": 10 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
-      "ranged": { "reduction": [ 240, 240 ], "destroy_threshold": 320 }
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 240, 240 ], "destroy_threshold": 240 }
     }
   },
   {
@@ -525,7 +525,7 @@
       "sound_fail": "bash!",
       "ter_set": "t_null",
       "items": [ { "item": "material_soil", "count": [ 8, 20 ] }, { "item": "adobe_brick", "count": [ 2, 6 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 90, 90 ], "destroy_threshold": 90 }
     }
   },
@@ -548,7 +548,7 @@
       "sound_fail": "whump!",
       "ter_set": "t_reb_cage",
       "items": [ { "item": "rock", "count": [ 10, 22 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 140, 140 ], "destroy_threshold": 140 }
     }
   },
@@ -570,7 +570,7 @@
       "byproducts": [ { "item": "steel_plate", "count": [ 2, 3 ] }, { "item": "steel_chunk", "count": [ 12, 20 ] } ]
     },
     "bash": {
-      "str_min": 300,
+      "str_min": 200,
       "str_max": 600,
       "sound": "metal screeching!",
       "sound_fail": "clang!",
@@ -596,7 +596,7 @@
     "roof": "t_metal_flat_roof",
     "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL", "MINEABLE", "BLOCK_WIND" ],
     "bash": {
-      "str_min": 300,
+      "str_min": 200,
       "str_max": 600,
       "sound": "metal screeching!",
       "sound_fail": "clang!",
@@ -622,7 +622,7 @@
     "roof": "t_metal_flat_roof",
     "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL", "MINEABLE", "BLOCK_WIND", "WATER_CUBE" ],
     "bash": {
-      "str_min": 300,
+      "str_min": 200,
       "str_max": 600,
       "sound": "metal screeching!",
       "sound_fail": "clang!",
@@ -654,7 +654,7 @@
       "sound_fail": "whump!",
       "ter_set": "t_pit_shallow",
       "items": [ { "item": "rock", "count": [ 10, 22 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 180, 180 ], "destroy_threshold": 180 }
     }
   },
@@ -699,7 +699,7 @@
       "sound_fail": "whump!",
       "ter_set": "t_reb_cage",
       "items": [ { "item": "rock", "count": [ 10, 22 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 240, 240 ], "destroy_threshold": 240 }
     }
   },
@@ -1509,7 +1509,7 @@
     "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "MINEABLE", "BLOCK_WIND", "CLIMBABLE" ],
     "roof": "t_rock_floor_no_roof",
     "bash": {
-      "str_min": 225,
+      "str_min": 100,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1522,8 +1522,8 @@
         { "group": "rock_mining_extra", "prob": 25 },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
-      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 300 }
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
   {
@@ -1537,7 +1537,7 @@
     "coverage": 100,
     "flags": [ "MINEABLE" ],
     "bash": {
-      "str_min": 225,
+      "str_min": 100,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1549,8 +1549,8 @@
         { "item": "material_rocksalt", "prob": 10 },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
-      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 300 }
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
   {
@@ -1564,7 +1564,7 @@
     "coverage": 100,
     "flags": [ "MINEABLE" ],
     "bash": {
-      "str_min": 225,
+      "str_min": 100,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1576,8 +1576,8 @@
         { "item": "material_rocksalt", "prob": 10 },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
-      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 300 }
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
   {
@@ -1591,7 +1591,7 @@
     "coverage": 100,
     "flags": [ "MINEABLE" ],
     "bash": {
-      "str_min": 225,
+      "str_min": 100,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1603,8 +1603,8 @@
         { "item": "material_rocksalt", "prob": 10 },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
-      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 300 }
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
   {
@@ -1617,7 +1617,7 @@
     "color": "brown",
     "looks_like": "t_fault",
     "bash": {
-      "str_min": 225,
+      "str_min": 100,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1630,8 +1630,8 @@
         { "item": "iron_ore", "count": [ 20, 40 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
-      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 300 }
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
   {
@@ -1644,7 +1644,7 @@
     "color": "brown",
     "looks_like": "t_fault",
     "bash": {
-      "str_min": 225,
+      "str_min": 100,
       "str_max": 400,
       "sound": "crash!",
       "sound_fail": "whump!",
@@ -1658,8 +1658,8 @@
         { "item": "gold_ore", "count": [ 2, 4 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
-      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 300 }
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
   {
@@ -1685,7 +1685,7 @@
         { "item": "copper_ore", "count": [ 20, 40 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1714,7 +1714,7 @@
         { "item": "iron_ore", "count": [ 4, 8 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1743,7 +1743,7 @@
         { "item": "iron_ore", "count": [ 5, 10 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1770,7 +1770,7 @@
         { "item": "lead_ore", "count": [ 20, 40 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1798,7 +1798,7 @@
         { "item": "silver_ore", "count": [ 10, 20 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1827,7 +1827,7 @@
         { "item": "gold_ore", "count": [ 10, 20 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1854,7 +1854,7 @@
         { "item": "tin_ore", "count": [ 20, 40 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1883,7 +1883,7 @@
         { "item": "copper_ore", "count": [ 10, 20 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1912,7 +1912,7 @@
         { "item": "copper_ore", "count": [ 15, 30 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1940,7 +1940,7 @@
         { "item": "silver_small", "charges": [ 50, 100 ], "prob": 25 },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1968,7 +1968,7 @@
         { "item": "gold_small", "charges": [ 50, 100 ], "prob": 25 },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -1997,7 +1997,7 @@
         { "item": "gold_ore", "count": [ 10, 20 ] },
         { "item": "geode", "prob": 5 }
       ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
     }
   },
@@ -2019,7 +2019,7 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": [ { "item": "rock", "count": [ 1, 3 ] }, { "item": "rebar", "count": [ 0, 2 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 80, 80 ], "destroy_threshold": 80, "block_unaimed_chance": "75%" }
     }
   },
@@ -2062,7 +2062,7 @@
       "sound_fail": "whump!",
       "ter_set": "t_reb_cage",
       "items": [ { "item": "rock", "count": [ 10, 22 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 240, 240 ], "destroy_threshold": 240 }
     }
   },
@@ -2153,7 +2153,7 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": [ { "item": "rock", "count": [ 8, 18 ] }, { "item": "pebble", "count": [ 20, 38 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 100, 100 ], "destroy_threshold": 100 }
     }
   },
@@ -2197,7 +2197,7 @@
       "sound_fail": "whump!",
       "ter_set": "t_reb_cage",
       "items": [ { "item": "rock", "count": [ 10, 22 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 240, 240 ], "destroy_threshold": 240 }
     }
   },
@@ -2303,7 +2303,7 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": [ { "item": "rock", "count": [ 6, 14 ] }, { "item": "pebble", "count": [ 20, 38 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 100, 100 ], "destroy_threshold": 100, "block_unaimed_chance": "75%" }
     },
     "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
@@ -2325,7 +2325,7 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": [ { "item": "rock", "count": [ 6, 14 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 160, 160 ], "destroy_threshold": 160, "block_unaimed_chance": "75%" }
     },
     "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
@@ -2347,7 +2347,7 @@
       "sound_fail": "bash!",
       "ter_set": "t_null",
       "items": [ { "item": "rock", "count": [ 7, 12 ] }, { "item": "brick", "count": [ 2, 4 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 120, 120 ], "destroy_threshold": 120, "block_unaimed_chance": "75%" }
     },
     "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
@@ -2369,7 +2369,7 @@
       "sound_fail": "bash!",
       "ter_set": "t_null",
       "items": [ { "item": "material_soil", "count": [ 6, 15 ] }, { "item": "adobe_brick", "count": [ 2, 4 ] } ],
-      "//": "Some stone obstacles have higher than expected reduction and lower destroy_threshold in return",
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 90, 90 ], "destroy_threshold": 90, "block_unaimed_chance": "75%" }
     },
     "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
