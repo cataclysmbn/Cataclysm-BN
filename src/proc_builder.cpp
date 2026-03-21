@@ -167,11 +167,27 @@ auto fact_soft_penalty( const proc::part_fact &fact ) -> int
 struct candidate_sort_entry {
     proc::part_ix ix = proc::invalid_part_ix;
     int score = 0;
+    int material_rank = 0;
     int uses = 0;
     int mass_g = 0;
     int volume_ml = 0;
     std::string id;
 };
+
+auto blade_material_rank( const proc::part_fact &fact ) -> int
+{
+    if( std::ranges::find( fact.mat, material_id( "steel" ) ) != fact.mat.end() ||
+        std::ranges::find( fact.mat, material_id( "iron" ) ) != fact.mat.end() ) {
+        return 3;
+    }
+    if( std::ranges::find( fact.mat, material_id( "bone" ) ) != fact.mat.end() ) {
+        return 2;
+    }
+    if( std::ranges::find( fact.mat, material_id( "wood" ) ) != fact.mat.end() ) {
+        return 1;
+    }
+    return 0;
+}
 
 auto weapon_role_score( const std::string &role, const proc::part_fact &fact ) -> int
 {
@@ -210,9 +226,15 @@ auto weapon_role_score( const std::string &role, const proc::part_fact &fact ) -
 auto build_candidate_sort_entry( const proc::slot_data &slot,
                                  const proc::part_fact &fact ) -> candidate_sort_entry
 {
+    auto score = weapon_role_score( slot.role, fact );
+    if( slot.role == "blade" &&
+        std::ranges::find( fact.mat, material_id( "bone" ) ) != fact.mat.end() ) {
+        score += 8;
+    }
     return candidate_sort_entry{
         .ix = fact.ix,
-        .score = weapon_role_score( slot.role, fact ),
+        .score = score,
+        .material_rank = slot.role == "blade" ? blade_material_rank( fact ) : 0,
         .uses = fact.uses,
         .mass_g = fact.mass_g,
         .volume_ml = fact.volume_ml,
@@ -234,10 +256,17 @@ auto sort_weapon_slot_candidates( const proc::slot_data &slot,
         ranked.push_back( build_candidate_sort_entry( slot, *fact ) );
     } );
 
-    std::ranges::sort( ranked, []( const candidate_sort_entry & lhs,
+    const auto prefer_material_rank = slot.role == "blade";
+    std::ranges::sort( ranked, [&]( const candidate_sort_entry & lhs,
     const candidate_sort_entry & rhs ) {
+        if( prefer_material_rank && lhs.material_rank != rhs.material_rank ) {
+            return lhs.material_rank > rhs.material_rank;
+        }
         if( lhs.score != rhs.score ) {
             return lhs.score > rhs.score;
+        }
+        if( !prefer_material_rank && lhs.material_rank != rhs.material_rank ) {
+            return lhs.material_rank > rhs.material_rank;
         }
         if( lhs.uses != rhs.uses ) {
             return lhs.uses > rhs.uses;
