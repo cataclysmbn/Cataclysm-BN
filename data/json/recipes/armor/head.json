@@ -1659,11 +1659,11 @@
     "category": "CC_ARMOR",
     "subcategory": "CSC_ARMOR_HEAD",
     "skill_used": "tailor",
-    "difficulty": 3,
+    "difficulty": 4,
     "time": "30 m",
     "autolearn": true,
-    "book_learn": [ [ "textbook_tailor", 2 ], [ "manual_tailor", 2 ], [ "tailor_portfolio", 2 ] ],
-    "using": [ [ "sewing_standard", 8 ] ],
-    "components": [ [ [ "fur", 3 ] ] ]
+    "book_learn": [ [ "textbook_tailor", 3 ], [ "manual_tailor", 3 ], [ "tailor_portfolio", 3 ] ],
+    "using": [ [ "sewing_standard", 16 ] ],
+    "components": [ [ [ "fur", 6 ] ] ]
   }
 ]

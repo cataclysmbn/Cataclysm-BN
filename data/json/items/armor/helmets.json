@@ -802,24 +802,5 @@
     "color": "green",
     "material_thickness": 5,
     "environmental_protection": 4
-  },
-  {
-    "id": "bearskin_hat",
-    "type": "ARMOR",
-    "name": { "str": "bearskin hat" },
-    "description": "Tall ceremonial hat once worn by European soldiers. Very warm. Very tall.",
-    "weight": "246 g",
-    "volume": "750 ml",
-    "price": "50 USD",
-    "price_postapoc": "5 USD",
-    "material": [ "fur" ],
-    "symbol": "[",
-    "color": "black",
-    "covers": [ "head" ],
-    "coverage": 95,
-    "encumbrance": 10,
-    "warmth": 70,
-    "material_thickness": 3,
-    "valid_mods": [ "resized_large", "resized_small" ]
   }
 ]
