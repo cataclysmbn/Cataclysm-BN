@@ -93,3 +93,20 @@ auto proc::recipe_requirements( const recipe &rec,
 
     return reqs;
 }
+
+auto proc::recipe_preview_description( const recipe &rec ) -> std::string
+{
+    if( !rec.builder_desc().translated().empty() ) {
+        return rec.builder_desc().translated();
+    }
+    if( rec.proc_id() == proc::schema_id( "sandwich" ) ) {
+        return _( "Choose breads and fillings to assemble a procedural sandwich." );
+    }
+    if( rec.proc_id() == proc::schema_id( "stew" ) ) {
+        return _( "Choose a base and ingredients to simmer a procedural stew." );
+    }
+    if( rec.proc_id() == proc::schema_id( "sword" ) ) {
+        return _( "Choose weapon parts and materials to assemble a procedural melee weapon." );
+    }
+    return _( "Choose parts to assemble this procedural item." );
+}
