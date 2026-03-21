@@ -5282,15 +5282,10 @@ void game::npcmove()
     // individually controlled by SLEEP_SKIP_NPC without affecting monsters.
     const std::string &player_dim = m.get_bound_dimension();
     for( npc &guy : g->all_npcs() ) {
-        // NPCs in a different dimension skip the full move loop; only biological
-        // processing (process_turn + npc_update_body) runs for them.
-        if( guy.get_dimension() != player_dim ) {
-            if( !guy.is_dead() && !guy.has_effect( effect_npc_suspend ) ) {
-                guy.process_turn();
-            }
-            if( !guy.is_dead() ) {
-                guy.npc_update_body();
-            }
+        const auto dim = guy.get_dimension();
+        const tripoint_abs_sm pos_sm( guy.pos() );
+        // Don't process NPCs in unloaded submaps like a LEMON
+        if( !submap_loader.is_simulated( dim, pos_sm ) ) {
             continue;
         }
 
