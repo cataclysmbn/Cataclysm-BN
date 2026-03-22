@@ -2100,6 +2100,21 @@
     "components": [ [ [ "frame", 2 ] ] ]
   },
   {
+    "result": "v_roadheader_item",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "skills_required": [ "mechanics", 6 ],
+    "difficulty": 8,
+    "autolearn": true,
+    "book_learn": [ [ "welding_book", 6 ], [ "textbook_mechanics", 5 ] ],
+    "time": "8 h",
+    "using": [ [ "welding_standard", 40 ], [ "steel_standard", 40 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 }, { "id": "WRENCH", "level": 2 } ],
+    "components": [ [ [ "hdframe", 2 ] ] ]
+  },
+  {
     "type": "recipe",
     "result": "wheel_mount_light_wood",
     "category": "CC_OTHER",

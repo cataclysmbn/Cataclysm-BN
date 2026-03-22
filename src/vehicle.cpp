@@ -6582,6 +6582,9 @@ void vehicle::refresh()
                                               vpi.has_flag( "WATER_WHEEL" ) ) ) {
             extra_drag += vpi.power;
         }
+        if( vpi.has_flag( "POWERED_BY_ENGINE" ) ) {
+            extra_drag += vpi.power;
+        }
         if( camera_on && vpi.has_flag( "CAMERA" ) ) {
             vp.part().enabled = true;
         } else if( !camera_on && vpi.has_flag( "CAMERA" ) ) {

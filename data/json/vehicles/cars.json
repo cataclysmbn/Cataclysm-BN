@@ -1453,6 +1453,7 @@
     "id": "formula1_car",
     "type": "vehicle",
     "name": "Formula One Car",
+    "flags": [ "VEHICLE_UNLOCKED", "VEHICLE_NO_LOCKS" ],
     "blueprint": [  ],
     "parts": [
       {
