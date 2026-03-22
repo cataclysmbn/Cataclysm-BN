@@ -155,6 +155,36 @@
     "damage_reduction": { "all": 132 }
   },
   {
+    "id": "roadheader",
+    "type": "vehicle_part",
+    "name": { "str": "roadheader" },
+    "item": "v_roadheader_item",
+    "location": "structure",
+    "symbol": "&",
+    "broken_symbol": "x",
+    "color": "light_gray",
+    "broken_color": "light_gray",
+    "looks_like": "ram_spiked",
+    "damage_modifier": 100,
+    "durability": 400,
+    "description": "A large metal jagged metalhead, powered by the vehicle's engines.  Use the vehicle controls to turn it on or off.  When turned on, it will stop the vehicle unless it has a strong engine.  When turned on, it will destroy walls near it.",
+    "folded_volume": "50 L",
+    "power": -100000,
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 4, 26 ] },
+      { "item": "steel_chunk", "count": [ 4, 15 ] },
+      { "item": "scrap", "count": [ 4, 100 ] }
+    ],
+    "transform_terrain": { "pre_flags": [ "MINEABLE" ], "post_terrain": "don't used" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 6 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "PROTRUSION", "EXTRA_DRAG", "ROADHEAD", "CRASH_TERRAIN_AROUND" ],
+    "damage_reduction": { "all": 132 }
+  },
+  {
     "type": "vehicle_part",
     "id": "air_jack",
     "name": { "str": "air jack system" },

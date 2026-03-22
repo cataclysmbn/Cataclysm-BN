@@ -4230,10 +4230,11 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // Minimum improvement is 5MoA.  This mostly puts a cap on how long aiming for sniping takes.
     aim_speed = std::max( aim_speed, 5.0 );
     // Apply enchantment bonus to aim speed
-    
-    double ench_aim_bonus = who.bonus_from_enchantments( aim_speed, enchant_vals::mod::RANGED_AIM_SPEED );
-    
-    // To prevent a bug where aiming does not proceed at all because the aiming speed drops below the game's minimum limit (5.0) due to debuffs (such as Cursed Artifacts), 
+
+    double ench_aim_bonus = who.bonus_from_enchantments( aim_speed,
+                            enchant_vals::mod::RANGED_AIM_SPEED );
+
+    // To prevent a bug where aiming does not proceed at all because the aiming speed drops below the game's minimum limit (5.0) due to debuffs (such as Cursed Artifacts),
     // so applying the max value once more.
     aim_speed = std::max( 5.0, aim_speed + ench_aim_bonus );
     // Never improve by more than the currently used sights permit.
