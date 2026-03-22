@@ -2481,6 +2481,14 @@ void options_manager::add_options_performance()
                                "Larger values increase the loaded area and memory usage; "
                                "smaller values reduce both. " ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 6 );
+        add( "ACTIVITY_BUBBLE_SIZE", page_id,
+             translate_marker( "Activity Reality Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while the player is busy with a long "
+                               "activity (sleeping, reading, crafting, etc.).  "
+                               "Reduces CPU and GPU load during fast-forward turns.  "
+                               "Only activates when the activity has at least 5 minutes remaining.  "
+                               "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 3 : 4 );
         add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
              translate_marker( "Out-of-Bubble Fire Spread" ),
              translate_marker( "Controls whether fire can keep areas loaded outside of render "

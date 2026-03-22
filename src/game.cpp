@@ -237,11 +237,9 @@ int g_max_view_distance = 60;
 // Default matches the old hardcoded 0.1 threshold for g_max_view_distance=60.
 float g_visible_threshold = 0.1f;
 
-/// Read REALITY_BUBBLE_SIZE from options and update all runtime globals.
-/// Must be called before map construction (game::setup) and after each load.
-static void init_bubble_config()
+/// Update all runtime globals from an explicit bubble size value.
+static void init_bubble_config( int size )
 {
-    const int size = get_option<int>( "REALITY_BUBBLE_SIZE" );
     g_reality_bubble_size = size;
     // g_half_mapsize = size + 1 (the center submap is the implied +1).
     // Formula: radius = size+1, grid = (2*radius+1)^2 submaps.
@@ -256,6 +254,13 @@ static void init_bubble_config()
     // At g_max_view_distance tiles through clear air, visibility = 1/exp(t*d) = g_visible_threshold.
     // This replaces the old hardcoded 0.1 threshold (which assumed g_max_view_distance=60).
     g_visible_threshold   = 1.0f / std::exp( LIGHT_TRANSPARENCY_OPEN_AIR * g_max_view_distance );
+}
+
+/// Read REALITY_BUBBLE_SIZE from options and update all runtime globals.
+/// Must be called before map construction (game::setup) and after each load.
+static void init_bubble_config()
+{
+    init_bubble_config( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
 }
 
 static constexpr int DANGEROUS_PROXIMITY = 5;
@@ -1892,6 +1897,7 @@ bool game::do_turn()
     perhaps_add_random_npc();
     process_voluntary_act_interrupt();
     process_activity();
+    update_activity_bubble();
     if( !soundperf ) {
         // Process NPC sound events before they move or they hear themselves talking
         for( npc &guy : all_npcs() ) {
@@ -11867,7 +11873,7 @@ void game::on_move_effects()
     sfx::do_ambient();
 }
 
-void game::resize_reality_bubble()
+void game::resize_reality_bubble_to( int new_size )
 {
     // Quiesce the background submap streamer before touching any grid state.
     submap_streamer.flush_all();
@@ -11883,7 +11889,6 @@ void game::resize_reality_bubble()
 
     // When shrinking, despawn entities that fall outside the new bubble radius
     // so they are properly saved to the overmapbuffer rather than dropped.
-    const int new_size = get_option<int>( "REALITY_BUBBLE_SIZE" );
     if( new_size < g_reality_bubble_size ) {
         const int new_half_sm = new_size + 1;
         const tripoint player_sm_in_grid( u.posx() / SEEX, u.posy() / SEEY, get_levz() );
@@ -11919,7 +11924,7 @@ void game::resize_reality_bubble()
     // Update globals and rebuild the map grid.
     // grid[] is cleared by resize(); submaps stay resident in the mapbuffer
     // with their dirty flags intact and will be saved on normal eviction.
-    init_bubble_config();
+    init_bubble_config( new_size );
     m.resize( g_mapsize );
     reality_bubble_radius_ = g_half_mapsize;
 
@@ -11957,6 +11962,50 @@ void game::resize_reality_bubble()
         tilecontext->reset_minimap();
     }
 #endif
+}
+
+void game::resize_reality_bubble()
+{
+    // Called when the user explicitly changes REALITY_BUBBLE_SIZE in the options menu.
+    // Clear activity-bubble state so the new normal size takes effect immediately;
+    // the next do_turn() will re-shrink if an activity is still running.
+    in_activity_bubble_ = false;
+    resize_reality_bubble_to( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
+}
+
+void game::update_activity_bubble()
+{
+    const int activity_size = get_option<int>( "ACTIVITY_BUBBLE_SIZE" );
+    const int normal_size   = get_option<int>( "REALITY_BUBBLE_SIZE" );
+
+    // Activity ID is captured for future whitelist / blacklist filtering.
+    const activity_id &act_id = u.activity ? u.activity.get()->id() : activity_id::NULL_ID();
+    ( void )act_id;
+    const bool has_activity   = static_cast<bool>( u.activity );
+
+    if( in_activity_bubble_ ) {
+        // Already shrunk: restore as soon as the activity ends.
+        if( !has_activity ) {
+            in_activity_bubble_ = false;
+            if( g_reality_bubble_size != normal_size ) {
+                resize_reality_bubble_to( normal_size );
+            }
+        }
+        return;
+    }
+
+    // Feature disabled, or activity bubble size would not shrink anything.
+    if( !has_activity || activity_size <= 0 || activity_size >= normal_size ) {
+        return;
+    }
+    const int five_minutes = to_moves<int>( 5_minutes );
+    // Only shrink for long activities — skip brief ones to avoid the resize overhead.
+    if( u.activity.get()->get_moves_left() < five_minutes ) {
+        return;
+    }
+
+    in_activity_bubble_ = true;
+    resize_reality_bubble_to( activity_size );
 }
 
 void game::on_options_changed()

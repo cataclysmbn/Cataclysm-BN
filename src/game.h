@@ -519,11 +519,23 @@ class game : public submap_load_listener
         /** Makes any nearby NPCs on the overmap active. */
         void load_npcs();
     private:
-        /** Resizes the reality bubble to match the current REALITY_BUBBLE_SIZE option.
+        /** Resizes the reality bubble to an explicit target size.
          *  Safe to call mid-session: despawns out-of-range entities, flushes the
          *  background streamer, rebuilds map grid and all dependent caches.
          */
+        void resize_reality_bubble_to( int new_size );
+
+        /** Resizes the reality bubble to match the current REALITY_BUBBLE_SIZE option.
+         *  Also clears in_activity_bubble_ so the normal size takes effect immediately.
+         *  Called by on_options_changed() when the user changes REALITY_BUBBLE_SIZE.
+         */
         void resize_reality_bubble();
+
+        /** Called each turn to shrink/restore the bubble around long player activities.
+         *  Shrinks to ACTIVITY_BUBBLE_SIZE when the player has a long activity (>= 5 min)
+         *  and restores to REALITY_BUBBLE_SIZE when it ends.
+         */
+        void update_activity_bubble();
 
         /** Unloads all NPCs.
          *
@@ -1201,6 +1213,10 @@ class game : public submap_load_listener
         // Handle for the lazy border around the reality bubble.
         // Controlled by LAZY_BORDER cached option.
         load_request_handle lazy_border_handle_ = 0;
+
+        // True while the bubble is temporarily shrunk by update_activity_bubble().
+        // Cleared by resize_reality_bubble() so an explicit option change always wins.
+        bool in_activity_bubble_ = false;
 
         // Turns between world_tick() passes.  1 = every turn (default).
         // Read from REALITY_BUBBLE_TICK_INTERVAL in start_game() / load().
