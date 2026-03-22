@@ -223,6 +223,8 @@ static const fault_id fault_bionic_nonsterile( "fault_bionic_nonsterile" );
 static const skill_id skill_dodge( "dodge" );
 static const skill_id skill_gun( "gun" );
 static const skill_id skill_swimming( "swimming" );
+static const skill_id skill_survival( "survival" );
+static const skill_id skill_driving( "driving" );
 static const skill_id skill_throw( "throw" );
 
 static const species_id HUMAN( "HUMAN" );
@@ -1353,13 +1355,18 @@ bool Character::check_mount_is_spooked()
     // base 1% per turn.
     // + 1% per square closer than 15 distanace. (1% - 15%)
     // * 2 if hostile monster is bigger than or same size as mounted creature.
+    // / 2 if horse has full tack and saddle.
+    // / 2 With Animal Empath
+    // / 4 With Animal Kinship
     // -0.25% per point of dexterity (low -1%, average -2%, high -3%, extreme -3.5%)
     // -0.1% per point of strength ( low -0.4%, average -0.8%, high -1.2%, extreme -1.4% )
-    // / 2 if horse has full tack and saddle.
+    // -0.075 per point of survival & driving
     // Monster in spear reach monster and average stat (8) player on saddled horse, 14% -2% -0.8% / 2 = ~5%
     if( mounted_creature && mounted_creature->type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE ) ) {
+        if( mounted_creature->has_flag( MF_COMBAT_MOUNT ) ) {
+
+        }
         const creature_size mount_size = mounted_creature->get_size();
-        const bool saddled = mounted_creature->has_effect( effect_saddled );
         for( const monster &critter : g->all_monsters() ) {
             double chance = 1.0;
             Attitude att = critter.attitude_to( *this );
@@ -1369,12 +1376,20 @@ bool Character::check_mount_is_spooked()
                 if( critter.get_size() >= mount_size ) {
                     chance *= 2;
                 }
-                chance -= 0.25 * get_dex();
-                chance -= 0.1 * get_str();
-                if( saddled ) {
+                if( mounted_creature->has_effect( effect_saddled ) ) {
                     chance /= 2;
                 }
-                chance = std::max( 1.0, chance );
+                if( has_trait( trait_id( "ANIMALEMPATH" ) ) ) {
+                    chance /= 2;
+                }
+                if( has_trait( trait_id( "ANIMALEMPATH2" ) ) ) {
+                    chance /= 4;
+                }
+                chance -= 0.25 * get_dex();
+                chance -= 0.1 * get_str();
+                chance -= 0.075 * get_skill_level( skill_survival );
+                chance -= 0.075 * get_skill_level( skill_driving );
+                chance = std::max( 0.0, chance );
                 if( x_in_y( chance, 100.0 ) ) {
                     forced_dismount();
                     return true;

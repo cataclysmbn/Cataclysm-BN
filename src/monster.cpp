@@ -1096,7 +1096,7 @@ bool monster::avoid_trap( const tripoint & /* pos */, const trap &tr ) const
 
 bool monster::has_flag( const m_flag f ) const
 {
-    return type->has_flag( f );
+    return type->has_flag( f ) || monster_flags.contains( f );
 }
 
 bool monster::can_see() const

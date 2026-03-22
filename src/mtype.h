@@ -202,6 +202,7 @@ enum m_flag : int {
     MF_MOUNTABLE_STAIRS,     // When ridden, this monster can go up or down stairs and climb.
     MF_MOUNTABLE_OBSTACLES,     // When ridden, this monster can pass obstacles like fences or doorways when mounted.
     MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
+    MF_COMBAT_MOUNT,
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };

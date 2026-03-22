@@ -33,6 +33,7 @@
 #include "value_ptr.h"
 #include "monster_action.h"
 #include "monster_plan.h"
+#include "mtype.h"
 #include "visitable.h"
 
 class Character;
@@ -764,6 +765,7 @@ class monster : public Creature, public location_visitable<monster>
         std::vector<tripoint> path;
         bool repath_requested = false;
         std::bitset<NUM_MEFF> effect_cache;
+        std::set<m_flag> monster_flags;
         std::optional<time_duration> summon_time_limit = std::nullopt;
 
 
