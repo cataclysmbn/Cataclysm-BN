@@ -1,5 +1,5 @@
 [
-{
+  {
     "result": "105mm_heat",
     "type": "uncraft",
     "skill_used": "fabrication",
@@ -134,4 +134,4 @@
     "components": [ [ [ "25mm_casing", 1 ] ], [ [ "scrap", 4 ] ], [ [ "gunpowder_rifle", 80 ] ], [ [ "lgrifle_primer", 1 ] ] ],
     "charges": 1
   }
-] 
+]

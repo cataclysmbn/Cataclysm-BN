@@ -97,11 +97,7 @@
           "seat",
           "seatbelt_heavyduty",
           "turret_mount",
-          {
-            "part": "mounted_tank_manual",
-            "ammo": 80,
-            "ammo_types": [ "120mm_usable_heat", "120mm_usable_ap" ]
-          },
+          { "part": "mounted_tank_manual", "ammo": 80, "ammo_types": [ "120mm_usable_heat", "120mm_usable_ap" ] },
           "hdroof"
         ]
       },
@@ -959,11 +955,7 @@
           "cam_control",
           "horn_big",
           "turret_mount",
-          {
-            "part": "mounted_tank_auto",
-            "ammo": 80,
-            "ammo_types": [ "120mm_usable_heat", "120mm_usable_ap" ]
-          },
+          { "part": "mounted_tank_auto", "ammo": 80, "ammo_types": [ "120mm_usable_heat", "120mm_usable_ap" ] },
           "controls_turret",
           "hdroof"
         ]
