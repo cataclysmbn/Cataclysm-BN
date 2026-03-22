@@ -1,6 +1,7 @@
 #include "mapbuffer.h"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <exception>
 #include <functional>
@@ -11,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "calendar.h"
 #include "cata_utility.h"
 #include "coordinate_conversions.h"
 #include "debug.h"
@@ -130,17 +132,26 @@ void mapbuffer::unload_submap( const tripoint_abs_sm &pos )
     remove_submap( p );
 }
 
-void mapbuffer::unload_quad( const tripoint &om_addr )
+void mapbuffer::unload_quad( const tripoint &om_addr, bool save )
 {
     // Hold the mutex for the entire save+erase so that background lazy-border
     // preload_quad() workers (which acquire the mutex per add_submap()) cannot
     // race with our submaps.find()/erase() calls.
     std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
-    // Save the quad once and collect all in-memory submaps for deletion.
-    // Using delete_after_save=true ensures save_quad() enumerates what to delete
-    // so we don't need to recompute the 4 addresses separately.
     std::list<tripoint> to_delete;
-    save_quad( om_addr, to_delete, /*delete_after_save=*/true );
+    if( save ) {
+        // Save the quad once and collect all in-memory submaps for deletion.
+        // Using delete_after_save=true ensures save_quad() enumerates what to delete
+        // so we don't need to recompute the 4 addresses separately.
+        save_quad( om_addr, to_delete, /*delete_after_save=*/true );
+    } else {
+        // Border-only quad: content is identical to what is already on disk.
+        // Skip serialisation; just collect the four submap addresses to discard.
+        const tripoint base = omt_to_sm_copy( om_addr );
+        for( const point &off : { point_zero, point_south, point_east, point_south_east } ) {
+            to_delete.push_back( { base.x + off.x, base.y + off.y, base.z } );
+        }
+    }
     // Safety: skip freeing submaps that map::grid[] still references.
     // This prevents use-after-free when submap_loader eviction races with
     // map::shift() / copy_grid() during large map shifts (e.g. pocket entry).
@@ -495,6 +506,89 @@ void mapbuffer::preload_quad( const tripoint &om_addr )
             }
         }
     }
+}
+
+void mapbuffer::generate_quad( const tripoint &om_addr )
+{
+    ZoneScoped;
+    const tripoint base = omt_to_sm_copy( om_addr );
+    const bool all_loaded =
+        lookup_submap_in_memory( base )
+        && lookup_submap_in_memory( { base.x + 1, base.y,     base.z } )
+        &&lookup_submap_in_memory( { base.x,     base.y + 1, base.z } )
+        &&lookup_submap_in_memory( { base.x + 1, base.y + 1, base.z } );
+    if( all_loaded ) {
+        return;
+    }
+    tinymap tmp_map;
+    tmp_map.bind_dimension( dimension_id_ );
+    tmp_map.generate( base, calendar::turn );
+}
+
+void mapbuffer::load_or_generate_quad( const tripoint &om_addr )
+{
+    ZoneScoped;
+    preload_quad( om_addr );
+    generate_quad( om_addr );
+}
+
+void mapbuffer::presave_quad( const tripoint &om_addr )
+{
+    ZoneScoped;
+    const tripoint base = omt_to_sm_copy( om_addr );
+    const std::array<tripoint, 4> addrs = { {
+            base,
+            { base.x + 1, base.y,     base.z },
+            { base.x,     base.y + 1, base.z },
+            { base.x + 1, base.y + 1, base.z },
+        }
+    };
+
+    // Collect raw submap pointers under the lock — brief hold only.
+    std::array<submap *, 4> ptrs = {};
+    bool all_uniform = true;
+    {
+        std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+        for( int i = 0; i < 4; ++i ) {
+            const auto it = submaps.find( addrs[i] );
+            if( it != submaps.end() && it->second ) {
+                ptrs[i] = it->second.get();
+                if( !it->second->is_uniform ) {
+                    all_uniform = false;
+                }
+            }
+        }
+    }
+
+    // Uniform quads regenerate faster than a disk round-trip.
+    if( all_uniform || disable_mapgen ) {
+        return;
+    }
+
+    // Serialize and write outside the lock.  The submap objects stay alive
+    // in the mapbuffer until after this future resolves (submap_load_manager
+    // withholds eviction until the presave completes).
+    g->get_active_world()->write_map_quad( dimension_id_, om_addr, [&]( std::ostream & fout ) {
+        JsonOut jsout( fout );
+        jsout.start_array();
+        for( int i = 0; i < 4; ++i ) {
+            submap *sm = ptrs[i];
+            if( !sm ) {
+                continue;
+            }
+            jsout.start_object();
+            jsout.member( "version", savegame_version );
+            jsout.member( "coordinates" );
+            jsout.start_array();
+            jsout.write( addrs[i].x );
+            jsout.write( addrs[i].y );
+            jsout.write( addrs[i].z );
+            jsout.end_array();
+            sm->store( jsout );
+            jsout.end_object();
+        }
+        jsout.end_array();
+    } );
 }
 
 auto mapbuffer::drain_pending_submap_destroy() -> void

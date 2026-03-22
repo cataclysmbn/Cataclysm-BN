@@ -54,7 +54,10 @@ class fire_spread_loader
          */
         void prune_disconnected( submap_load_manager &loader );
 
-        /** Total number of currently active fire-spread load requests. */
+        /**
+         * Total number of tracked fire submaps (in-bubble + out-of-bubble).
+         * The cap is only enforced for out-of-bubble positions.
+         */
         int loaded_count() const {
             return static_cast<int>( fire_handles_.size() );
         }
