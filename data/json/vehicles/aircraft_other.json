@@ -580,7 +580,7 @@
       { "x": 6, "y": -1, "parts": [ "frame_horizontal_2", "roof", "board_horizontal" ] },
       { "x": 5, "y": 0, "parts": [ "frame_vertical_2", "roof", "aisle_horizontal" ] },
       { "x": 0, "y": -2, "parts": [ "frame_vertical", "door_sliding" ] },
-      { "x": 0, "y": 2, "parts": [ "frame_vertical",  "door_sliding" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "door_sliding" ] },
       { "x": -2, "y": 2, "parts": [ "frame_vertical", "board_vertical", "tank_55gal_drum" ] },
       { "x": 7, "y": 2, "parts": [ "frame_vertical", "windshield_horizontal_front" ] },
       { "x": 7, "y": 0, "parts": [ "frame_vertical_2", "roof", "veh_table", "vehicle_clock", "aisle_lights" ] },
