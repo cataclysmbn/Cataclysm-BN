@@ -186,7 +186,7 @@
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_NESTED",
     "description": "Shelter basics and simple camp cooking.",
-    "nested_category_data": [ "tent_kit", "tent_kit_repair", "large_tent_kit", "large_tent_kit_repair", "popcan_stove", "rock_quern" ]
+    "nested_category_data": [ "tent_kit", "large_tent_kit", "popcan_stove", "rock_quern" ]
   },
   {
     "type": "nested_category",
