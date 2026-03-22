@@ -743,5 +743,34 @@
       { "x": -4, "y": 1, "chance": 10, "//": { "item": "cat_food", "container-item": "can_food" } },
       { "x": -4, "y": 0, "chance": 3, "items": [ "beartrap" ] }
     ]
+  },
+  {
+    "id": "log_truck",
+    "type": "vehicle",
+    "name": "Log Truck",
+    "blueprint": [
+      "-R-----^+'w",
+      "======='S'|",
+      "======='b'>",
+      "======='#'|",
+      "-R-----v+'W"
+    ],
+    "blueprint_origin": { "x": 8, "y": 1 },
+    "palette": {
+      "-": [ "frame_vertical", "halfboard_vertical" ],
+      "=": [ "frame_vertical", "logtruckbed" ],
+      "S": [ "frame_vertical_2", "seat", "seatbelt", "roof", "controls", "dashboard", "vehicle_alarm", "horn_car" ],
+      "R": [ "frame_vertical", "halfboard_vertical", "wheel_mount_medium", "wheel_wide" ],
+      "'": [ "frame_horizontal", "windshield" ],
+      "+": [ "frame_horizontal", "windshield" ],
+      "w": [ "frame_nw", "halfboard_nw", "headlight", "wheel_mount_medium_steerable", "wheel_wide" ],
+      "W": [ "frame_ne", "halfboard_ne", "headlight", "wheel_mount_medium_steerable", "wheel_wide" ],
+      "b": [ "frame_vertical", "box", "roof" ],
+      "#": [ "frame_vertical_2", "seat", "seatbelt", "roof" ],
+      "^": [ "frame_sw", "board_sw", { "part": "tank", "fuel": "gasoline" } ],
+      "v": [ "frame_se", "board_se", { "part": "tank", "fuel": "gasoline" } ],
+      ">": [ "frame_cover", "halfboard_cover", "engine_v6", "alternator_truck", "battery_car" ],
+      "|": [ "frame_horizontal", "halfboard_horizontal" ]
+    }
   }
 ]

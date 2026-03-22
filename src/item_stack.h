@@ -54,6 +54,15 @@ class item_stack
         virtual int count_limit() const = 0;
         /** Maximum volume allowed here */
         virtual units::volume max_volume() const = 0;
+        /** Item Count */
+        virtual bool use_total_count() const {
+            return false;
+        }
+        virtual int total_count_limit() const {
+            return 0;
+        };
+        int get_total_stored_count() const;
+        int get_total_free_count() const;
         /** Total volume of the items here */
         units::volume stored_volume() const;
         units::volume free_volume() const;

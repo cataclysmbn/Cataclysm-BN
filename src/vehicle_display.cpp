@@ -200,11 +200,18 @@ int vehicle::print_part_list( const catacurses::window &win, int y1, const int m
         }
 
         if( part_flag( pl[i], "CARGO" ) ) {
-            //~ used/total volume of a cargo vehicle part
-            partname += string_format( _( " (vol: %s/%s %s)" ),
-                                       format_volume( stored_volume( pl[i] ) ),
-                                       format_volume( max_volume( pl[i] ) ),
-                                       volume_units_abbr() );
+            if( part_flag( pl[i], "CARGO_BY_CHARGES" ) ) {
+                partname += string_format( _( " (items: %s/%s)" ),
+                                           stored_charges( pl[i] ),
+                                           max_charges( pl[i] ) );
+
+            } else {
+                //~ used/total volume of a cargo vehicle part
+                partname += string_format( _( " (vol: %s/%s %s)" ),
+                                           format_volume( stored_volume( pl[i] ) ),
+                                           format_volume( max_volume( pl[i] ) ),
+                                           volume_units_abbr() );
+            }
         }
 
         bool armor = part_flag( pl[i], "ARMOR" );
