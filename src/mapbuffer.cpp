@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "calendar.h"
 #include "cata_utility.h"
 #include "coordinate_conversions.h"
 #include "debug.h"
@@ -504,6 +505,30 @@ void mapbuffer::preload_quad( const tripoint &om_addr )
             }
         }
     }
+}
+
+void mapbuffer::generate_quad( const tripoint &om_addr )
+{
+    ZoneScoped;
+    const tripoint base = omt_to_sm_copy( om_addr );
+    const bool all_loaded =
+        lookup_submap_in_memory( base )
+        && lookup_submap_in_memory( { base.x + 1, base.y,     base.z } )
+        && lookup_submap_in_memory( { base.x,     base.y + 1, base.z } )
+        && lookup_submap_in_memory( { base.x + 1, base.y + 1, base.z } );
+    if( all_loaded ) {
+        return;
+    }
+    tinymap tmp_map;
+    tmp_map.bind_dimension( dimension_id_ );
+    tmp_map.generate( base, calendar::turn );
+}
+
+void mapbuffer::load_or_generate_quad( const tripoint &om_addr )
+{
+    ZoneScoped;
+    preload_quad( om_addr );
+    generate_quad( om_addr );
 }
 
 auto mapbuffer::drain_pending_submap_destroy() -> void

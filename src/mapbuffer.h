@@ -111,6 +111,25 @@ class mapbuffer
         void preload_quad( const tripoint &om_addr );
 
         /**
+         * Generate all submaps in the OMT quad at @p om_addr if any are not yet
+         * resident in memory.  Called internally by load_or_generate_quad().
+         *
+         * Thread-safe: uses per-thread RNG, npc_mutex_ for NPC writes, and
+         * submaps_mutex_ for add_submap().  If two workers race on the same quad
+         * the duplicate submaps are deferred to drain_pending_submap_destroy().
+         */
+        void generate_quad( const tripoint &om_addr );
+
+        /**
+         * Try to load submaps from disk (@ref preload_quad), then generate any
+         * still missing via @ref generate_quad.
+         *
+         * Safe to call concurrently from worker threads for distinct quad addresses.
+         * Identical thread-safety contract as preload_quad().
+         */
+        void load_or_generate_quad( const tripoint &om_addr );
+
+        /**
          * Destroy submaps that were discarded by preload_quad() because the in-memory
          * version already existed.  Must be called on the main thread after all
          * preload_quad() futures have been joined.
