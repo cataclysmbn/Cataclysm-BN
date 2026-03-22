@@ -1633,6 +1633,7 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `DOOR_LOCKING` This part is unopenable to non-faction NPCs and monsters if enabled from the electronics menu. Can only be
   installed on a part with `OPENABLE` flag.
 - `CARGO` Cargo holding area.
+- `CARGO_BY_CHARGES` Cargo holding area, uses charges instead of volume for limit; needs CARGO flag.
 - `CHIMES` Generates continuous noise when used.
 - `CIRCLE_LIGHT` Projects a circular radius of light when turned on.
 - `CONE_LIGHT` Projects a cone of light when turned on.
