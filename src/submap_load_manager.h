@@ -257,6 +257,14 @@ class submap_load_manager
         /** Quad keys with in-flight lazy futures — prevents duplicate submissions. */
         std::unordered_set<quad_key, pair_hash> lazy_in_flight_;
 
+        /** In-flight presave_quad futures for dirty quads that left simulation.
+         *  Eviction waits for these before freeing the in-memory submaps. */
+        std::vector<std::pair<quad_key, std::future<void>>> presave_futures_;
+
+        /** Quad keys with in-flight presave futures.
+         *  Used to gate re-entry into simulation and to avoid double-submission. */
+        std::unordered_set<quad_key, pair_hash> presave_in_flight_;
+
         /**
          * Quads that have entered the simulated zone at least once since they
          * were last evicted.  Only dirty quads are written to disk on eviction;

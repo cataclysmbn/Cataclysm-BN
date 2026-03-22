@@ -1,6 +1,7 @@
 #include "mapbuffer.h"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <exception>
 #include <functional>
@@ -529,6 +530,65 @@ void mapbuffer::load_or_generate_quad( const tripoint &om_addr )
     ZoneScoped;
     preload_quad( om_addr );
     generate_quad( om_addr );
+}
+
+void mapbuffer::presave_quad( const tripoint &om_addr )
+{
+    ZoneScoped;
+    const tripoint base = omt_to_sm_copy( om_addr );
+    const std::array<tripoint, 4> addrs = { {
+            base,
+            { base.x + 1, base.y,     base.z },
+            { base.x,     base.y + 1, base.z },
+            { base.x + 1, base.y + 1, base.z },
+        }
+    };
+
+    // Collect raw submap pointers under the lock — brief hold only.
+    std::array<submap *, 4> ptrs = {};
+    bool all_uniform = true;
+    {
+        std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
+        for( int i = 0; i < 4; ++i ) {
+            const auto it = submaps.find( addrs[i] );
+            if( it != submaps.end() && it->second ) {
+                ptrs[i] = it->second.get();
+                if( !it->second->is_uniform ) {
+                    all_uniform = false;
+                }
+            }
+        }
+    }
+
+    // Uniform quads regenerate faster than a disk round-trip.
+    if( all_uniform || disable_mapgen ) {
+        return;
+    }
+
+    // Serialize and write outside the lock.  The submap objects stay alive
+    // in the mapbuffer until after this future resolves (submap_load_manager
+    // withholds eviction until the presave completes).
+    g->get_active_world()->write_map_quad( dimension_id_, om_addr, [&]( std::ostream & fout ) {
+        JsonOut jsout( fout );
+        jsout.start_array();
+        for( int i = 0; i < 4; ++i ) {
+            submap *sm = ptrs[i];
+            if( !sm ) {
+                continue;
+            }
+            jsout.start_object();
+            jsout.member( "version", savegame_version );
+            jsout.member( "coordinates" );
+            jsout.start_array();
+            jsout.write( addrs[i].x );
+            jsout.write( addrs[i].y );
+            jsout.write( addrs[i].z );
+            jsout.end_array();
+            sm->store( jsout );
+            jsout.end_object();
+        }
+        jsout.end_array();
+    } );
 }
 
 auto mapbuffer::drain_pending_submap_destroy() -> void

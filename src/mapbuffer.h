@@ -130,6 +130,23 @@ class mapbuffer
         void load_or_generate_quad( const tripoint &om_addr );
 
         /**
+         * Serialize and write the OMT quad at @p om_addr to disk without evicting
+         * submaps from memory.  Intended to be called from a background worker thread
+         * while the quad is in the border zone (not simulated), so that the subsequent
+         * eviction only needs to free the in-memory objects without an I/O stall.
+         *
+         * Thread-safety contract:
+         * - Briefly acquires @c submaps_mutex_ to collect raw submap pointers.
+         * - Releases the lock before serialization, so concurrent @c preload_quad()
+         *   or @c add_submap() calls on other quads are not blocked.
+         * - The caller (submap_load_manager) guarantees the submaps remain alive
+         *   in memory for the duration of this call by withholding eviction until
+         *   the returned future is resolved.
+         * - @c write_map_quad is thread-safe (SQLite SERIALIZED mode or per-file I/O).
+         */
+        void presave_quad( const tripoint &om_addr );
+
+        /**
          * Destroy submaps that were discarded by preload_quad() because the in-memory
          * version already existed.  Must be called on the main thread after all
          * preload_quad() futures have been joined.
