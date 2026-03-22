@@ -744,5 +744,5 @@
     "damage_modifier": 80,
     "description": "A truckbed designed to hold very few very large objects, primarily used for logs before the cataclysm, perhaps you can find other uses for it.",
     "flags": [ "CARGO", "CARGO_BY_CHARGES" ]
-  },
+  }
 ]
