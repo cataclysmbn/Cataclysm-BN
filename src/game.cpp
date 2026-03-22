@@ -915,9 +915,6 @@ bool game::start_game()
         start_loc.add_map_extra( omtstart, scen->get_map_extra() );
     }
 
-    // Read performance options before the first load_map so the reality bubble
-    // request uses the correct radius from the very first load.
-    world_tick_interval_ = get_option<int>( "REALITY_BUBBLE_TICK_INTERVAL" );
     init_bubble_config();
     // Resize the map grid to match the (possibly changed) bubble-size option.
     // The grid may hold stale pointers from a previous session; resize() clears
@@ -3217,9 +3214,6 @@ bool game::load( const save_t &name )
     validate_npc_followers();
     validate_mounted_npcs();
     validate_linked_vehicles();
-    // Read performance options before update_map so the reality bubble request
-    // uses the correct radius from the very first submap_loader wiring.
-    world_tick_interval_ = get_option<int>( "REALITY_BUBBLE_TICK_INTERVAL" );
     // Re-read the bubble-size option for the submap-loader request.
     // Do NOT call m.resize() here — the grid is already filled by unserialize().
     // setup() already called init_bubble_config() + m.resize().
@@ -11873,6 +11867,98 @@ void game::on_move_effects()
     sfx::do_ambient();
 }
 
+void game::resize_reality_bubble()
+{
+    // Quiesce the background submap streamer before touching any grid state.
+    submap_streamer.flush_all();
+
+    // Capture player's absolute submap position and within-submap tile offset
+    // before any coordinate system changes.
+    const tripoint old_abs_sub = m.get_abs_sub();
+    const tripoint player_abs_sm(
+        old_abs_sub.x + u.posx() / SEEX,
+        old_abs_sub.y + u.posy() / SEEY,
+        old_abs_sub.z );
+    const point player_within_sm( u.posx() % SEEX, u.posy() % SEEY );
+
+    // When shrinking, despawn entities that fall outside the new bubble radius
+    // so they are properly saved to the overmapbuffer rather than dropped.
+    const int new_size = get_option<int>( "REALITY_BUBBLE_SIZE" );
+    if( new_size < g_reality_bubble_size ) {
+        const int new_half_sm = new_size + 1;
+        const tripoint player_sm_in_grid( u.posx() / SEEX, u.posy() / SEEY, get_levz() );
+        for( monster &critter : all_monsters() ) {
+            const tripoint critter_sm( critter.posx() / SEEX, critter.posy() / SEEY, critter.posz() );
+            const tripoint diff = critter_sm - player_sm_in_grid;
+            if( std::abs( diff.x ) > new_half_sm || std::abs( diff.y ) > new_half_sm ) {
+                despawn_monster( critter );
+            }
+        }
+        for( auto it = active_npc.begin(); it != active_npc.end(); ) {
+            const tripoint npc_sm( ( *it )->posx() / SEEX, ( *it )->posy() / SEEY, ( *it )->posz() );
+            const tripoint diff = npc_sm - player_sm_in_grid;
+            if( std::abs( diff.x ) > new_half_sm || std::abs( diff.y ) > new_half_sm ) {
+                ( *it )->on_unload();
+                it = active_npc.erase( it );
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    // Release submap loader handles so load_map() recreates them with the new radius.
+    if( reality_bubble_handle_ != 0 ) {
+        submap_loader.release_load( reality_bubble_handle_ );
+        reality_bubble_handle_ = 0;
+    }
+    if( lazy_border_handle_ != 0 ) {
+        submap_loader.release_load( lazy_border_handle_ );
+        lazy_border_handle_ = 0;
+    }
+
+    // Update globals and rebuild the map grid.
+    // grid[] is cleared by resize(); submaps stay resident in the mapbuffer
+    // with their dirty flags intact and will be saved on normal eviction.
+    init_bubble_config();
+    m.resize( g_mapsize );
+    reality_bubble_radius_ = g_half_mapsize;
+
+    // Reposition the player in the new (possibly different-sized) coordinate space
+    // and compute the new top-left abs_sub so load_map centers on the player.
+    u.setpos( tripoint( g_half_mapsize_x + player_within_sm.x,
+                        g_half_mapsize_y + player_within_sm.y,
+                        get_levz() ) );
+    const tripoint_abs_sm new_abs_sub(
+        player_abs_sm.x - g_half_mapsize,
+        player_abs_sm.y - g_half_mapsize,
+        player_abs_sm.z );
+
+    // Reload the map around the player; this fills grid[], recreates load handles,
+    // rebuilds distribution_grid_tracker and fluid_grid.
+    load_map( new_abs_sub, /*pump_events=*/false );
+
+    // Flush the load/eviction diff immediately so the first boundary crossing
+    // after resize doesn't stall on a bulk eviction of the old bubble's submaps.
+    // on_submap_unloaded is safe here: map::on_submap_unloaded guards grid[]
+    // writes behind contains_abs_sm(), so old out-of-bubble positions are
+    // skipped and only vehicle/active-item tracking is cleaned up.
+    submap_loader.update();
+
+    load_npcs();
+
+    m.invalidate_map_cache( get_levz() );
+    u.recalc_sight_limits();
+
+    // Discard pathfinding objects sized for the old bubble.
+    Pathfinding::clear_pool();
+
+#if defined(TILES)
+    if( tilecontext ) {
+        tilecontext->reset_minimap();
+    }
+#endif
+}
+
 void game::on_options_changed()
 {
 #if defined(TILES)
@@ -11889,6 +11975,9 @@ void game::on_options_changed()
         if( tracker_ptr ) {
             tracker_ptr->on_options_changed();
         }
+    }
+    if( get_option<int>( "REALITY_BUBBLE_SIZE" ) != g_reality_bubble_size ) {
+        resize_reality_bubble();
     }
 }
 

@@ -3275,7 +3275,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const bool stop_on_memory = z != center.z && has_memory &&
                                             ( !in_map_bounds || here.ter( pos ) != t_open_air );
 
-                ll = ch.visibility_cache[ch.idx( x, y )];
+                ll = ch.inbounds( {x, y} ) ? ch.visibility_cache[ch.idx( x, y )] : lit_level::BLANK;
                 const auto visibility = here.get_visibility( ll, cache );
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
                     if( !would_apply_vision_effects( visibility ) ) {
@@ -3752,6 +3752,11 @@ void cata_tiles::draw_minimap( point dest, const tripoint &center, int width, in
 bool cata_tiles::minimap_requires_animation() const
 {
     return minimap->has_animated_elements();
+}
+
+void cata_tiles::reset_minimap()
+{
+    minimap->reset();
 }
 
 void cata_tiles::get_window_tile_counts( const int width, const int height, int &columns,

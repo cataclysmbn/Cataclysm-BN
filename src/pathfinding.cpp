@@ -228,6 +228,11 @@ void Pathfinding::clear_d_maps()
     Pathfinding::d_maps.clear();
     Pathfinding::cached_closest_z_changes.clear();
 }
+void Pathfinding::clear_pool()
+{
+    clear_d_maps();
+    Pathfinding::d_maps_store.clear();
+}
 void Pathfinding::reset_maps()
 {
     this->p_at( this->dest ) = 0.0;
