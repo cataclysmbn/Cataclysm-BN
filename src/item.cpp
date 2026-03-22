@@ -2656,15 +2656,16 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
                            _( "Damage/range will vary with <info>throwing skill and ammo.</info>" ) );
     }
 
-if( parts->test( iteminfo_parts::GUN_AIMING_STATS ) ) {
+    if( parts->test( iteminfo_parts::GUN_AIMING_STATS ) ) {
         insert_separation_line( info );
-        
+
         int base_aim = ranged::aim_per_move( you, *mod, MAX_RECOIL );
-        int ench_aim_bonus = you.bonus_from_enchantments( base_aim, enchant_vals::mod::RANGED_AIM_SPEED, true );
-        info.emplace_back( "GUN", _( "<bold>Base aim speed</bold>: " ), "<num>", 
-                           (ench_aim_bonus != 0) ? iteminfo::no_newline : iteminfo::no_flags,
+        int ench_aim_bonus = you.bonus_from_enchantments( base_aim, enchant_vals::mod::RANGED_AIM_SPEED,
+                             true );
+        info.emplace_back( "GUN", _( "<bold>Base aim speed</bold>: " ), "<num>",
+                           ( ench_aim_bonus != 0 ) ? iteminfo::no_newline : iteminfo::no_flags,
                            base_aim );
-                           
+
         if( ench_aim_bonus != 0 ) {
             info.emplace_back( "GUN", "ench_aim_speed", _( " (부여: <num>)" ),
                                iteminfo::no_name | iteminfo::show_plus,
