@@ -4852,11 +4852,10 @@ void game::world_tick()
             }
 
             if( fire_spread && has_fire ) {
-                // Keep this fire submap loaded even when it leaves the
-                // reality bubble so fire continues to burn and spread.
-                if( !submap_loader.is_properly_requested( dim, pos_sm ) ) {
-                    fire_loader.request_for_fire( dim, pos_sm );
-                }
+                // Always register the fire submap itself — including while it is
+                // still inside the bubble — so the fire_spread request already
+                // exists when the bubble shifts away on a future turn.
+                fire_loader.request_for_fire( dim, pos_sm );
 
                 // Look up dimension bounds once per submap so we can
                 // prevent fire from escaping a bounded pocket dimension.

@@ -42,11 +42,6 @@ static bool submap_has_fire( submap &sm )
 void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_sm pos )
 {
     ZoneScoped;
-    // Respect the player-configurable ceiling (cached from FIRE_SPREAD_SUBMAP_CAP).
-    if( fire_spread_submap_cap <= 0 || loaded_count() >= fire_spread_submap_cap ) {
-        return;
-    }
-
     dim_pos_key key{ dim, pos };
 
     // Already tracked by this loader.
@@ -54,10 +49,15 @@ void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_
         return;
     }
 
-    // Already covered by a non-fire_spread (properly-loaded) request — no
-    // need to add a weaker fire-spread request on top.
-    if( submap_loader.is_properly_requested( dim, pos ) ) {
-        return;
+    // For positions inside the bubble: always register without applying the cap —
+    // they are already loaded and cost no extra memory.  We need the fire_spread
+    // request to exist *before* the bubble can shift away and trigger eviction.
+    const bool in_bubble = submap_loader.is_properly_requested( dim, pos );
+    if( !in_bubble ) {
+        // Apply the cap only to genuinely out-of-bubble submaps.
+        if( fire_spread_submap_cap <= 0 || loaded_count() >= fire_spread_submap_cap ) {
+            return;
+        }
     }
 
     // Request a single submap (radius 0) at the given z-level.
@@ -89,7 +89,10 @@ void fire_spread_loader::prune_disconnected( submap_load_manager &loader )
     for( auto &[key, handle] : fire_handles_ ) {
         mapbuffer &mb = MAPBUFFER_REGISTRY.get( key.first );
         submap *sm = mb.lookup_submap_in_memory( key.second.raw() );
-        if( sm == nullptr || !submap_has_fire( *sm ) ) {
+        // sm == nullptr means the submap hasn't been loaded yet — keep the handle
+        // so submap_loader.update() gets a chance to load it.  Only prune once
+        // the submap is resident in memory but no longer has fire.
+        if( sm != nullptr && !submap_has_fire( *sm ) ) {
             no_fire.push_back( key );
         }
     }
