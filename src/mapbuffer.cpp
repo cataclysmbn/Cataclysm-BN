@@ -515,8 +515,8 @@ void mapbuffer::generate_quad( const tripoint &om_addr )
     const bool all_loaded =
         lookup_submap_in_memory( base )
         && lookup_submap_in_memory( { base.x + 1, base.y,     base.z } )
-        && lookup_submap_in_memory( { base.x,     base.y + 1, base.z } )
-        && lookup_submap_in_memory( { base.x + 1, base.y + 1, base.z } );
+        &&lookup_submap_in_memory( { base.x,     base.y + 1, base.z } )
+        &&lookup_submap_in_memory( { base.x + 1, base.y + 1, base.z } );
     if( all_loaded ) {
         return;
     }
