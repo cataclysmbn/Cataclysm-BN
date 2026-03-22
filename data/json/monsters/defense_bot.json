@@ -565,7 +565,7 @@
     "material": [ "steel", "ceramic" ],
     "symbol": "R",
     "color": "dark_gray",
-    "aggression": 50,
+    "aggression": 0,
     "morale": 100,
     "melee_dice": 5,
     "melee_dice_sides": 10,
@@ -599,6 +599,7 @@
     ],
     "death_function": [ "EXPLODE", "BROKEN" ],
     "flags": [
+      "FACTION_MEMORY",
       "WARM",
       "BASHES",
       "HIT_AND_RUN",
