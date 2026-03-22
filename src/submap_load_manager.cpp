@@ -569,9 +569,14 @@ bool submap_load_manager::is_simulated( const std::string &dim_id,
         // Only covered by lazy-border requests — not simulated.
         return false;
     }
-    // Not covered by any request (e.g. loaded as a quad side-effect beyond the
-    // border, or direct map::load in tests).  Not simulated.
-    return false;
+    // No request covers this position.  Two distinct cases:
+    //   • requests_ is empty  — map was loaded directly (e.g. in tests via
+    //     map::load) without going through the request system.  Treat the
+    //     submap as simulated so items, fields, and NPCs are processed normally.
+    //   • requests_ is non-empty — the submap was loaded as a quad-alignment
+    //     overflow beyond the lazy-border zone (odd bubble size forces an extra
+    //     row/column of submaps to be resident).  It should not be simulated.
+    return requests_.empty();
 }
 
 bool submap_load_manager::is_loaded( const std::string &dim_id,
