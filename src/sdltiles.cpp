@@ -773,10 +773,6 @@ static std::optional<std::pair<tripoint_abs_omt, std::string>> get_mission_arrow
         mission_arrow_variant += 'e';
     }
 
-    if( arr_pos.x == overmap_area.p_max.x ) {
-        arr_pos.x = std::max( overmap_area.p_min.x, arr_pos.x - 1 );
-    }
-
     return std::make_pair( tripoint_abs_omt( arr_pos ), mission_arrow_variant );
 }
 
@@ -784,7 +780,7 @@ std::string cata_tiles::get_omt_id_rotation_and_subtile(
     const tripoint_abs_omt &omp, int &rota, int &subtile )
 {
     auto oter_at = []( const tripoint_abs_omt & p ) {
-        const oter_id &cur_ter = overmap_buffer.ter( p );
+        const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( p );
 
         if( !uistate.overmap_show_forest_trails &&
             is_ot_match( "forest_trail", cur_ter, ot_match_type::type ) ) {
@@ -908,17 +904,17 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         return tripoint( omp.raw().xy(), 0 );
     };
     const auto has_player_label = [&]( const tripoint_abs_omt & pos ) -> bool {
-        const auto player_label = overmap_label_note::extract_label( overmap_buffer.note( pos ) );
+        const auto player_label = overmap_label_note::extract_label( ACTIVE_OVERMAP_BUFFER.note( pos ) );
         return player_label.has_value() && !player_label->empty();
     };
     const auto has_map_label = [&]( const tripoint_abs_omt & pos ) -> bool {
-        if( const auto player_label = overmap_label_note::extract_label( overmap_buffer.note( pos ) );
+        if( const auto player_label = overmap_label_note::extract_label( ACTIVE_OVERMAP_BUFFER.note( pos ) );
             player_label.has_value() && !player_label->empty() )
         {
             return true;
         }
 
-        const auto &terrain = overmap_buffer.ter( pos );
+        const auto &terrain = ACTIVE_OVERMAP_BUFFER.ter( pos );
         if( const auto static_label = overmap_labels::get_label( terrain->get_type_id() );
             static_label.has_value() && !static_label->empty() )
         {
@@ -932,7 +928,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         for( int col = min_col; col < max_col; col++ ) {
             const tripoint_abs_omt omp = corner_NW + point( col, row );
 
-            const bool see = has_debug_vision || overmap_buffer.seen( omp );
+            const bool see = has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen( omp );
             const bool los = see && you.overmap_los( omp, sight_points );
             // the full string from the ter_id including _north etc.
             TILE_CATEGORY category = TILE_CATEGORY::C_OVERMAP_TERRAIN;
@@ -961,7 +957,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 while( id == "open_air" ) {
                     z_offset++;
                     const tripoint_abs_omt lower_omp = omp + tripoint( 0, 0, -z_offset );
-                    const bool lower_see = has_debug_vision || overmap_buffer.seen( lower_omp );
+                    const bool lower_see = has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen( lower_omp );
                     if( !lower_see ) {
                         //actually really strange situation when above overmap is explored, but below one isn't
                         //so let's account for this just in case, drawing highest seen tile
@@ -972,9 +968,9 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 }
                 draw_om_tile_recursively( omp + tripoint( 0, 0, -z_offset ), id, rotation, subtile, z_offset );
             } else {
-                const lit_level ll = overmap_buffer.is_explored( omp ) ? lit_level::LOW : lit_level::LIT;
+                const lit_level ll = ACTIVE_OVERMAP_BUFFER.is_explored( omp ) ? lit_level::LOW : lit_level::LIT;
 
-                auto [bgCol, fgCol] = get_overmap_color( overmap_buffer, omp );
+                auto [bgCol, fgCol] = get_overmap_color( ACTIVE_OVERMAP_BUFFER, omp );
 
                 // light level is now used for choosing between grayscale filter and normal lit tiles.
                 const tile_search_params tile { id, category, "overmap_terrain", subtile, rotation };
@@ -997,7 +993,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
 
             if( see ) {
                 if( blink && uistate.overmap_debug_mongroup ) {
-                    const std::vector<mongroup *> mgroups = overmap_buffer.monsters_at( omp );
+                    const std::vector<mongroup *> mgroups = ACTIVE_OVERMAP_BUFFER.monsters_at( omp );
                     if( !mgroups.empty() ) {
                         auto mgroup_iter = mgroups.begin();
                         std::advance( mgroup_iter, rng( 0, mgroups.size() - 1 ) );
@@ -1006,7 +1002,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                                              std::nullopt, lit_level::LIT, false, 0, false );
                     }
                 }
-                const int horde_size = overmap_buffer.get_horde_size( omp );
+                const int horde_size = ACTIVE_OVERMAP_BUFFER.get_horde_size( omp );
                 if( showhordes && los && horde_size >= HORDE_VISIBILITY_SIZE ) {
                     // a little bit of hardcoded fallbacks for hordes
                     std::string horde_id;
@@ -1044,7 +1040,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             if( uistate.place_terrain || uistate.place_special ) {
                 // Highlight areas that already have been generated
                 // TODO: fix point types
-                if( MAPBUFFER.lookup_submap( project_to<coords::sm>( omp ).raw() ) ) {
+                if( ACTIVE_MAPBUFFER.lookup_submap( project_to<coords::sm>( omp ).raw() ) ) {
                     const tile_search_params tile {"highlight", C_NONE, empty_string, 0, 0};
                     draw_from_id_string(
                         tile, omp.raw(), std::nullopt, std::nullopt,
@@ -1052,7 +1048,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 }
             }
 
-            if( blink && overmap_buffer.has_vehicle( omp ) ) {
+            if( blink && ACTIVE_OVERMAP_BUFFER.has_vehicle( omp ) ) {
                 const std::string tile_id = find_tile_looks_like( "overmap_remembered_vehicle", C_OVERMAP_NOTE )
                                             ? "overmap_remembered_vehicle"
                                             : "note_c_cyan";
@@ -1062,18 +1058,18 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                     lit_level::LIT, false, 0, false );
             }
 
-            if( blink && uistate.overmap_show_map_notes && overmap_buffer.has_note( omp ) &&
+            if( blink && uistate.overmap_show_map_notes && ACTIVE_OVERMAP_BUFFER.has_note( omp ) &&
                 !has_map_label( omp ) ) {
 
                 nc_color ter_color = c_black;
                 std::string ter_sym = " ";
                 // Display notes in all situations, even when not seen
                 std::tie( ter_sym, ter_color, std::ignore ) =
-                    overmap_ui::get_note_display_info( overmap_buffer.note( omp ) );
+                    overmap_ui::get_note_display_info( ACTIVE_OVERMAP_BUFFER.note( omp ) );
 
                 bool drew_note_sprite = false;
                 const std::optional<std::string> note_sprite =
-                    overmap_ui::get_note_sprite_id( overmap_buffer.note( omp ) );
+                    overmap_ui::get_note_sprite_id( ACTIVE_OVERMAP_BUFFER.note( omp ) );
                 if( note_sprite ) {
                     const tile_search_params sprite_tile { *note_sprite, C_NONE, empty_string, 0, 0 };
                     drew_note_sprite = draw_from_id_string(
@@ -1123,12 +1119,13 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         }
     }
 
-    auto npcs_near_player = overmap_buffer.get_npcs_near_player( sight_points );
+    auto npcs_near_player = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( sight_points );
 
     // draw nearby seen npcs
     for( const shared_ptr_fast<npc> &guy : npcs_near_player ) {
         const tripoint_abs_omt &guy_loc = guy->global_omt_location();
-        if( guy_loc.z() == center_abs_omt.z() && ( has_debug_vision || overmap_buffer.seen( guy_loc ) ) ) {
+        if( guy_loc.z() == center_abs_omt.z() && ( has_debug_vision ||
+                ACTIVE_OVERMAP_BUFFER.seen( guy_loc ) ) ) {
             draw_entity_with_overlays( *guy, global_omt_to_draw_position( guy_loc ), lit_level::LIT,
                                        height_3d );
         }
@@ -1228,10 +1225,10 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         const int radius = coords::project_to<coords::sm>( tripoint_abs_omt( std::min( max_col, max_row ),
                            0, 0 ) ).x() / 2;
 
-        for( const city_reference &city : overmap_buffer.get_cities_near(
+        for( const city_reference &city : ACTIVE_OVERMAP_BUFFER.get_cities_near(
                  coords::project_to<coords::sm>( center_abs_omt ), radius ) ) {
             const tripoint_abs_omt city_center = coords::project_to<coords::omt>( city.abs_sm_pos );
-            if( overmap_buffer.seen( city_center ) && overmap_area.contains( city_center.raw() ) &&
+            if( ACTIVE_OVERMAP_BUFFER.seen( city_center ) && overmap_area.contains( city_center.raw() ) &&
                 !has_player_label( city_center ) ) {
                 label_bg( city.abs_sm_pos, city.city->name );
             }
@@ -1240,16 +1237,16 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         for( int row = min_row; row < max_row; row++ ) {
             for( int col = min_col; col < max_col; col++ ) {
                 const tripoint_abs_omt omt_pos = corner_NW + point( col, row );
-                if( !overmap_buffer.seen( omt_pos ) ) {
+                if( !ACTIVE_OVERMAP_BUFFER.seen( omt_pos ) ) {
                     continue;
                 }
                 auto label_text = std::optional<std::string> {};
                 if( const auto player_label =
-                        overmap_label_note::extract_label( overmap_buffer.note( omt_pos ) );
+                        overmap_label_note::extract_label( ACTIVE_OVERMAP_BUFFER.note( omt_pos ) );
                     player_label.has_value() ) {
                     label_text = *player_label;
                 } else {
-                    const auto &terrain = overmap_buffer.ter( omt_pos );
+                    const auto &terrain = ACTIVE_OVERMAP_BUFFER.ter( omt_pos );
                     if( const auto static_label = overmap_labels::get_label( terrain->get_type_id() );
                         static_label.has_value() ) {
                         label_text = _( *static_label );
@@ -1268,7 +1265,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     std::vector<std::pair<nc_color, std::string>> notes_window_text;
 
     if( uistate.overmap_show_map_notes ) {
-        const std::string &note_text = overmap_buffer.note( center_abs_omt );
+        const std::string &note_text = ACTIVE_OVERMAP_BUFFER.note( center_abs_omt );
         if( !note_text.empty() && !overmap_label_note::is_label_only( note_text ) ) {
             const std::tuple<char, nc_color, size_t> note_info = overmap_ui::get_note_display_info(
                         note_text );
@@ -1276,13 +1273,13 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             if( pos != std::string::npos ) {
                 notes_window_text.emplace_back( std::get<1>( note_info ), note_text.substr( pos ) );
             }
-            if( overmap_buffer.is_marked_dangerous( center_abs_omt ) ) {
+            if( ACTIVE_OVERMAP_BUFFER.is_marked_dangerous( center_abs_omt ) ) {
                 notes_window_text.emplace_back( c_red, _( "DANGEROUS AREA!" ) );
             }
         }
     }
 
-    if( has_debug_vision || overmap_buffer.seen( center_abs_omt ) ) {
+    if( has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen( center_abs_omt ) ) {
         for( const auto &npc : npcs_near_player ) {
             if( !npc->marked_for_death && npc->global_omt_location() == center_abs_omt ) {
                 notes_window_text.emplace_back( npc->basic_symbol_color(), npc->name );
@@ -1290,7 +1287,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         }
     }
 
-    for( auto &v : overmap_buffer.get_vehicle( center_abs_omt ) ) {
+    for( auto &v : ACTIVE_OVERMAP_BUFFER.get_vehicle( center_abs_omt ) ) {
         notes_window_text.emplace_back( c_white, v.name );
     }
 
@@ -2937,7 +2934,7 @@ static void CheckMessages()
                 std::set<action_id> actions_remove;
 
                 // Check if we're in a potential combat situation, if so, sort a few actions to the top.
-                if( !g->u.get_hostile_creatures( 60 ).empty() ) {
+                if( !g->u.get_hostile_creatures( g_max_view_distance ).empty() ) {
                     // Only prioritize movement options if we're not driving.
                     if( !g->u.controlling_vehicle ) {
                         actions.insert( ACTION_CYCLE_MOVE );

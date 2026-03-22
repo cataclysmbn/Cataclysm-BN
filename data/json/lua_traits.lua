@@ -14,7 +14,7 @@ local morale_indoor_misery = MoraleTypeDataId.new("morale_indoor_misery")
 local morale_outdoor_misery = MoraleTypeDataId.new("morale_outdoor_misery")
 local morale_clutter_intolerant = MoraleTypeDataId.new("morale_clutter_intolerant")
 
-local clutter_radius = 4
+local clutter_radius = 8
 local clutter_threshold = 12
 local clutter_step = 5
 local max_penalty = 30
@@ -66,8 +66,8 @@ local function apply_penalty(who, morale_id, penalty)
     morale_id,
     -magnitude,
     -magnitude,
-    TimeDuration.from_minutes(1),
-    TimeDuration.from_minutes(1),
+    TimeDuration.from_minutes(20),
+    TimeDuration.from_minutes(20),
     true,
     nil
   )
@@ -102,14 +102,10 @@ local function count_loose_items(here, center)
   local you = gapi.get_avatar()
   if not you then return 0 end
   local total = 0
-  local visibility_radius = 15
-  local seen = {}
 
-  for _, pt in ipairs(here:points_in_radius(center, visibility_radius)) do
-    if pt.z == center.z and you:sees(pt) and coords.rl_dist(center, pt) <= clutter_radius then
-      local key = string.format("%d:%d:%d", pt.x, pt.y, pt.z)
-      if not seen[key] and is_loot_on_floor(here, pt) then
-        seen[key] = true
+  for _, pt in ipairs(here:points_in_radius(center, clutter_radius, 0)) do
+    if you:sees(pt) then
+      if is_loot_on_floor(here, pt) then
         local items = here:get_items_at(pt)
         total = total + #items
       end
@@ -208,7 +204,6 @@ local function tick_morale_traits()
   if you:get_effect_int(effect_depressants) > 3 then
     you:rem_morale(morale_indoor_misery)
     you:rem_morale(morale_outdoor_misery)
-    you:rem_morale(morale_clutter_intolerant)
     return
   end
 
@@ -233,6 +228,19 @@ local function tick_morale_traits()
       you:rem_morale(morale_outdoor_misery)
     end
   end
+end
+
+local function tick_clutter_intolerant()
+  local you = gapi.get_avatar()
+  if not you then return end
+
+  if you:get_effect_int(effect_depressants) > 3 then
+    you:rem_morale(morale_clutter_intolerant)
+    return
+  end
+
+  local here = gapi.get_map()
+  local pos = you:get_pos_ms()
 
   if you:has_trait(trait_clutter_intolerant) then
     local loose_items = count_loose_items(here, pos)
@@ -285,6 +293,7 @@ function lua_traits.register(mod)
   mod.on_character_try_move = on_character_try_move
   mod.on_nyctophobia_tick = tick_nyctophobia
   mod.on_morale_traits_tick = tick_morale_traits
+  mod.on_clutter_intolerant_tick = tick_clutter_intolerant
 end
 
 return lua_traits
