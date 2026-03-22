@@ -169,6 +169,7 @@ void submap_load_manager::update()
     // submaps_mutex_), and load_or_generate_quad() only briefly acquires it
     // per add_submap().  Eviction below also acquires the mutex via unload_quad().
     {
+        ZoneScopedN( "slm_lazy_reap" );
         auto it = std::remove_if( lazy_futures_.begin(), lazy_futures_.end(),
         [this]( auto & entry ) {
             if( entry.second.wait_for( std::chrono::seconds( 0 ) ) == std::future_status::ready ) {
@@ -186,6 +187,7 @@ void submap_load_manager::update()
     // happen on the main thread.  This is always safe to call — it only
     // processes entries already in the queue from finished workers.
     {
+        ZoneScopedN( "slm_drain_destroy" );
         auto dims_to_drain = std::set<std::string> {};
         std::ranges::for_each( requests_, [&]( const auto & kv ) {
             if( kv.second.source == load_request_source::lazy_border ) {
@@ -201,7 +203,10 @@ void submap_load_manager::update()
     // workers.  Hooks are batched per-turn here rather than accumulating until
     // the next map::shift(), which avoids a large synchronous spike on the first
     // shift into a new area.
-    run_deferred_mapgen_hooks();
+    {
+        ZoneScopedN( "slm_mapgen_hooks_lazy" );
+        run_deferred_mapgen_hooks();
+    }
 
     TracyPlot( "Thread Pool Workers", static_cast<int64_t>( get_thread_pool().num_workers() ) );
     TracyPlot( "Thread Pool Queue", static_cast<int64_t>( get_thread_pool().queue_size() ) );
@@ -222,11 +227,14 @@ void submap_load_manager::update()
     }
 
     // Simulated set: positions that need full per-turn processing.
-    auto simulated = compute_desired_set();
-
-    // Full set: simulated + lazy border (eviction protection only).
-    auto all_desired = simulated;
-    compute_border_into( all_desired );
+    key_set simulated;
+    key_set all_desired;
+    {
+        ZoneScopedN( "slm_compute_sets" );
+        simulated = compute_desired_set();
+        all_desired = simulated;
+        compute_border_into( all_desired );
+    }
 
     TracyPlot( "Simulated Submaps", static_cast<int64_t>( simulated.size() ) );
     TracyPlot( "Border Submaps",
@@ -248,6 +256,8 @@ void submap_load_manager::update()
     } );
 
     std::vector<std::future<void>> load_futures;
+    {
+    ZoneScopedN( "slm_load_new_quads" );
     load_futures.reserve( new_quads.size() );
     for( const auto &[dim_id, om_addr] : new_quads ) {
         auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
@@ -272,6 +282,8 @@ void submap_load_manager::update()
         f.get();
     } );
 
+    } // slm_load_new_quads
+
     // Drain deferred submap destructions from the sync loads.
     auto drained_dims = std::set<std::string> {};
     std::ranges::transform( new_quads, std::inserter( drained_dims, drained_dims.end() ),
@@ -283,9 +295,14 @@ void submap_load_manager::update()
     } );
 
     // Drain Lua postprocess hooks from any async generation above.
-    run_deferred_mapgen_hooks();
+    {
+        ZoneScopedN( "slm_mapgen_hooks_sim" );
+        run_deferred_mapgen_hooks();
+    }
 
     // ---- Listener notifications (simulated set only) ----
+    {
+    ZoneScopedN( "slm_listener_notifications" );
     for( const desired_key &key : simulated ) {
         if( prev_simulated_.count( key ) == 0 ) {
             const tripoint_abs_sm pos( key.second );
@@ -303,10 +320,12 @@ void submap_load_manager::update()
             }
         }
     }
+    } // slm_listener_notifications
 
     // ---- Eviction (full set: simulated + border) ----
     // Only evict when ALL 4 submaps in a quad are absent from all_desired.
     {
+        ZoneScopedN( "slm_eviction" );
         std::unordered_set<quad_key, pair_hash> quads_checked;
         for( const desired_key &key : prev_desired_ ) {
             if( all_desired.count( key ) != 0 ) {
@@ -337,6 +356,8 @@ void submap_load_manager::update()
     }
 
     // ---- Async load-or-generate for lazy border ----
+    {
+    ZoneScopedN( "slm_lazy_submit" );
     // Submit load_or_generate_quad tasks to the thread pool for border quads
     // not yet in MAPBUFFER and not already in-flight.  Completed futures are
     // reaped non-blockingly at the start of the next update(), at which point
@@ -371,6 +392,7 @@ void submap_load_manager::update()
             } ) );
         }
     }
+    } // slm_lazy_submit
 
     TracyPlot( "Lazy Futures In-Flight", static_cast<int64_t>( lazy_futures_.size() ) );
 
