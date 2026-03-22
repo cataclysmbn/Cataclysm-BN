@@ -234,6 +234,12 @@ void submap_load_manager::update()
         }
     }
 
+    // Mark newly-simulated quads as dirty: they will receive game logic and
+    // must be saved to disk when evicted.
+    std::ranges::for_each( new_quads, [&]( const auto &qk ) {
+        dirty_quads_.insert( qk );
+    } );
+
     std::vector<std::future<void>> load_futures;
     load_futures.reserve( new_quads.size() );
     for( const auto &[dim_id, om_addr] : new_quads ) {
@@ -311,7 +317,11 @@ void submap_load_manager::update()
                 }
             }
             if( !any_still_desired ) {
-                MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr );
+                // Only save if the quad was ever simulated (potentially modified).
+                // Border-only quads were never processed by game logic, so their
+                // content is identical to what is on disk — skip the write.
+                const bool was_dirty = dirty_quads_.erase( qk ) > 0;
+                MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr, was_dirty );
             }
         }
     }
@@ -413,7 +423,9 @@ bool submap_load_manager::is_simulated( const std::string &dim_id,
         // Only covered by lazy-border requests — not simulated.
         return false;
     }
-    return true;
+    // Not covered by any request (e.g. loaded as a quad side-effect beyond the
+    // border, or direct map::load in tests).  Not simulated.
+    return false;
 }
 
 bool submap_load_manager::is_loaded( const std::string &dim_id,
@@ -450,6 +462,7 @@ void submap_load_manager::flush_prev_desired()
     prev_desired_.clear();
     prev_simulated_.clear();
     prev_centers_.clear();
+    dirty_quads_.clear();
 }
 
 void submap_load_manager::add_listener( submap_load_listener *listener )

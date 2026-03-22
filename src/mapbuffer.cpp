@@ -130,17 +130,26 @@ void mapbuffer::unload_submap( const tripoint_abs_sm &pos )
     remove_submap( p );
 }
 
-void mapbuffer::unload_quad( const tripoint &om_addr )
+void mapbuffer::unload_quad( const tripoint &om_addr, bool save )
 {
     // Hold the mutex for the entire save+erase so that background lazy-border
     // preload_quad() workers (which acquire the mutex per add_submap()) cannot
     // race with our submaps.find()/erase() calls.
     std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
-    // Save the quad once and collect all in-memory submaps for deletion.
-    // Using delete_after_save=true ensures save_quad() enumerates what to delete
-    // so we don't need to recompute the 4 addresses separately.
     std::list<tripoint> to_delete;
-    save_quad( om_addr, to_delete, /*delete_after_save=*/true );
+    if( save ) {
+        // Save the quad once and collect all in-memory submaps for deletion.
+        // Using delete_after_save=true ensures save_quad() enumerates what to delete
+        // so we don't need to recompute the 4 addresses separately.
+        save_quad( om_addr, to_delete, /*delete_after_save=*/true );
+    } else {
+        // Border-only quad: content is identical to what is already on disk.
+        // Skip serialisation; just collect the four submap addresses to discard.
+        const tripoint base = omt_to_sm_copy( om_addr );
+        for( const point &off : { point_zero, point_south, point_east, point_south_east } ) {
+            to_delete.push_back( { base.x + off.x, base.y + off.y, base.z } );
+        }
+    }
     // Safety: skip freeing submaps that map::grid[] still references.
     // This prevents use-after-free when submap_loader eviction races with
     // map::shift() / copy_grid() during large map shifts (e.g. pocket entry).
