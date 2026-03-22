@@ -2383,7 +2383,7 @@ void options_manager::add_options_performance()
            );
         add( "FOV_3D_Z_RANGE", page_id, translate_marker( "Vertical range of 3D field of vision" ),
              translate_marker( "How many levels up and down the experimental 3D field of vision reaches.  (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
-             0, OVERMAP_LAYERS, is_android ? 4 : 5
+             0, OVERMAP_LAYERS, is_android ? 3 : 5
            );
         add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV horizontal occlusion" ),
              translate_marker( "When enabled, obstacles at other z-levels correctly cast 3D shadows.  Requires 3D FoV.  Significantly slower than disabled." ),
@@ -2488,7 +2488,13 @@ void options_manager::add_options_performance()
                                "Reduces CPU and GPU load during fast-forward turns.  "
                                "Only activates when the activity has at least 5 minutes remaining.  "
                                "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
-             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 3 : 4 );
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 2 : 4 );
+        add( "VEHICLE_BUBBLE_SIZE", page_id,
+             translate_marker( "Vehicle Reality Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while the player is actively driving a vehicle  "
+                               "or mounted on a creature. Useful with a high render distance to reduce lag at speed.  "
+                               "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 3 : 0 );
         add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
              translate_marker( "Out-of-Bubble Fire Spread" ),
              translate_marker( "Controls whether fire can keep areas loaded outside of render "

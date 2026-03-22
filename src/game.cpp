@@ -1897,7 +1897,7 @@ bool game::do_turn()
     perhaps_add_random_npc();
     process_voluntary_act_interrupt();
     process_activity();
-    update_activity_bubble();
+    update_performance_bubble();
     if( !soundperf ) {
         // Process NPC sound events before they move or they hear themselves talking
         for( npc &guy : all_npcs() ) {
@@ -11973,39 +11973,41 @@ void game::resize_reality_bubble()
     resize_reality_bubble_to( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
 }
 
-void game::update_activity_bubble()
+void game::update_performance_bubble()
 {
-    const int activity_size = get_option<int>( "ACTIVITY_BUBBLE_SIZE" );
     const int normal_size   = get_option<int>( "REALITY_BUBBLE_SIZE" );
+    const int activity_size = get_option<int>( "ACTIVITY_BUBBLE_SIZE" );
+    const int vehicle_size  = get_option<int>( "VEHICLE_BUBBLE_SIZE" );
 
-    // Activity ID is captured for future whitelist / blacklist filtering.
-    const activity_id &act_id = u.activity ? u.activity.get()->id() : activity_id::NULL_ID();
+    const bool has_activity = static_cast<bool>( u.activity );
+
+    // Activity ID captured for future whitelist / blacklist filtering.
+    const activity_id &act_id = has_activity ? u.activity.get()->id() : activity_id::NULL_ID();
     ( void )act_id;
-    const bool has_activity   = static_cast<bool>( u.activity );
 
+    // Update the activity-bubble gate (5-minute entry hysteresis).
+    // Once entered, we stay shrunk until the activity ends regardless of remaining time.
     if( in_activity_bubble_ ) {
-        // Already shrunk: restore as soon as the activity ends.
         if( !has_activity ) {
             in_activity_bubble_ = false;
-            if( g_reality_bubble_size != normal_size ) {
-                resize_reality_bubble_to( normal_size );
-            }
         }
-        return;
+    } else if( has_activity && activity_size > 0 && activity_size < normal_size &&
+               u.activity.get()->get_moves_left() >= to_moves<int>( 5_minutes ) ) {
+        in_activity_bubble_ = true;
     }
 
-    // Feature disabled, or activity bubble size would not shrink anything.
-    if( !has_activity || activity_size <= 0 || activity_size >= normal_size ) {
-        return;
+    // Compute the desired bubble size as the minimum of all applicable shrinks.
+    auto target = normal_size;
+    if( in_activity_bubble_ ) {
+        target = std::min( target, activity_size );
     }
-    const int five_minutes = to_moves<int>( 5_minutes );
-    // Only shrink for long activities — skip brief ones to avoid the resize overhead.
-    if( u.activity.get()->get_moves_left() < five_minutes ) {
-        return;
+    if( vehicle_size > 0 && vehicle_size < normal_size && ( ( u.in_vehicle && u.controlling_vehicle ) || u.is_mounted() ) ) {
+        target = std::min( target, vehicle_size );
     }
 
-    in_activity_bubble_ = true;
-    resize_reality_bubble_to( activity_size );
+    if( g_reality_bubble_size != target ) {
+        resize_reality_bubble_to( target );
+    }
 }
 
 void game::on_options_changed()

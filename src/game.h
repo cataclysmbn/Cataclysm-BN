@@ -531,11 +531,12 @@ class game : public submap_load_listener
          */
         void resize_reality_bubble();
 
-        /** Called each turn to shrink/restore the bubble around long player activities.
-         *  Shrinks to ACTIVITY_BUBBLE_SIZE when the player has a long activity (>= 5 min)
-         *  and restores to REALITY_BUBBLE_SIZE when it ends.
+        /** Called each turn to shrink/restore the bubble based on active performance modes.
+         *  ACTIVITY_BUBBLE_SIZE: shrinks while the player has a long activity (>= 5 min entry gate).
+         *  VEHICLE_BUBBLE_SIZE:  shrinks while is_mounted() is true (no hysteresis).
+         *  The target is min() of all applicable sizes, so both can apply simultaneously.
          */
-        void update_activity_bubble();
+        void update_performance_bubble();
 
         /** Unloads all NPCs.
          *
@@ -1214,7 +1215,9 @@ class game : public submap_load_listener
         // Controlled by LAZY_BORDER cached option.
         load_request_handle lazy_border_handle_ = 0;
 
-        // True while the bubble is temporarily shrunk by update_activity_bubble().
+        // True while the bubble is temporarily shrunk for an ongoing long activity.
+        // Provides the 5-minute entry hysteresis: once set, stays true until the
+        // activity ends regardless of remaining time.
         // Cleared by resize_reality_bubble() so an explicit option change always wins.
         bool in_activity_bubble_ = false;
 
