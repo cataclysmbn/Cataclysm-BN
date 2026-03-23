@@ -132,7 +132,7 @@
       "place_furniture": [ { "furn": "f_crate_c", "x": 9, "y": 6 } ],
       "place_loot": [
         { "group": "fuel_barrel_diesel_only", "x": 9, "y": 4, "chance": 50 },
-        { "group": "m60_patton_ammo_rack", "x": 9, "y": 6, "chance": 90 }
+        { "group": "m60_patton_ammo_rack", "x": 9, "y": 6, "chance": 100 }
       ],
       "place_monster": [
         { "group": "GROUP_MIL_WEAK", "x": [ 7, 9 ], "y": [ 2, 9 ], "chance": 50 },
