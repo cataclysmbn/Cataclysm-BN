@@ -47,8 +47,8 @@
       "a": "f_ash"
     },
     "vehicles": {
-      "<": { "vehicle": "flatbed_truck", "chance": 100, "rotation": 180 },
-      ">": { "vehicle": "flatbed_truck", "chance": 100, "rotation": 0 }
+      "<": { "vehicle": "flatbed_truck", "chance": 10, "rotation": 180 },
+      ">": { "vehicle": "flatbed_truck", "chance": 10, "rotation": 0 }
     }
   }
 ]
