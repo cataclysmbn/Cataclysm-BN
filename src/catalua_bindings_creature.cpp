@@ -1126,6 +1126,9 @@ void cata::detail::reg_npc( sol::state &lua )
         // Methods
         SET_FX_N_T( set_fac, "set_faction_id", void( const faction_id & id ) );
 
+        DOC( "True if this NPC is in a simulated (fully loaded, AI-eligible) submap." );
+        SET_FX_T( is_simulated, bool() const );
+
         SET_FX_T( turned_hostile, bool() const );
 
         SET_FX_T( hostile_anger_level, int() const );

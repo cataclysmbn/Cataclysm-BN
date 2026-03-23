@@ -5217,6 +5217,12 @@ void game::monmove()
         if( critter.is_dead() ) {
             continue;
         }
+        cata::run_hooks( "on_creature_do_turn", [&critter]( sol::table &params ) {
+            params["creature"] = static_cast<Creature *>( &critter );
+        } );
+        cata::run_hooks( "on_monster_do_turn", [&critter]( sol::table &params ) {
+            params["monster"] = &critter;
+        } );
         if( critter.lod_tier == 2 ) {
             do_tier2_macro( critter );
             check_bio_alarm( critter );
@@ -5275,12 +5281,16 @@ void game::npcmove()
     processing_npcs_ = true;
     const std::string &player_dim = m.get_bound_dimension();
     for( npc &guy : g->all_npcs() ) {
-        const auto dim = guy.get_dimension();
-        const auto pos_sm = tripoint_abs_sm( guy.global_sm_location() );
         // Don't process NPCs in unloaded submaps like a LEMON
-        if( !submap_loader.is_simulated( dim, pos_sm ) ) {
+        if( !guy.is_simulated() ) {
             continue;
         }
+        cata::run_hooks( "on_creature_do_turn", [&guy]( sol::table &params ) {
+            params["creature"] = static_cast<Creature *>( &guy );
+        } );
+        cata::run_hooks( "on_npc_do_turn", [&guy]( sol::table &params ) {
+            params["npc"] = &guy;
+        } );
 
         int turns = 0;
         if( guy.is_mounted() ) {

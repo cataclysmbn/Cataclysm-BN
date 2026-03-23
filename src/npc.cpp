@@ -2638,6 +2638,12 @@ void npc::die( Creature *nkiller )
     place_corpse();
 }
 
+bool npc::is_simulated() const
+{
+    return submap_loader.is_simulated( get_dimension(),
+                                       tripoint_abs_sm( global_sm_location() ) );
+}
+
 void npc::erase()
 {
     if( dead ) {
