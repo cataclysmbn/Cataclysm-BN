@@ -53,7 +53,7 @@
     "id": "excavator",
     "type": "vehicle",
     "name": "Excavator",
-    "//": "Please replace the wheel mounts and wheels with tank treads when those get mainlined. Please replace the rockwheel with an excavator turret or something if that gets added to the game.",
+    "//": "Please replace the rockwheel with an excavator turret or something if that gets added to the game.",
     "blueprint": [
       [ "o-=o" ],
       [ "|X={" ],
@@ -66,36 +66,16 @@
         "parts": [ "hdframe_cross", "seat", "seatbelt", "roof", "controls", "dashboard", "vehicle_alarm", "floodlight", "horn_big" ]
       },
       { "x": 1, "y": 0, "parts": [ "hdframe_horizontal", "windshield_horizontal_front" ] },
-      {
-        "x": 1,
-        "y": -1,
-        "parts": [ "hdframe_nw", "windshield_nw_edge", "wheel_mount_medium_steerable", "wheel_wide_or" ]
-      },
-      {
-        "x": 1,
-        "y": 2,
-        "parts": [ "hdframe_ne", "halfboard_vertical_right", "wheel_mount_medium_steerable", "wheel_wide_or" ]
-      },
+      { "x": 1, "y": -1, "parts": [ "hdframe_nw", "windshield_nw_edge", "tread1" ] },
+      { "x": 1, "y": 2, "parts": [ "hdframe_ne", "halfboard_vertical_right", "tread1" ] },
       { "x": 0, "y": 1, "parts": [ "hdframe_cross", "board_horizontal_front" ] },
-      {
-        "x": 0,
-        "y": 2,
-        "parts": [ "hdframe_vertical", "halfboard_vertical_right", "wheel_mount_medium_steerable", "wheel_wide_or" ]
-      },
+      { "x": 0, "y": 2, "parts": [ "hdframe_vertical", "halfboard_vertical_right", "tread1" ] },
       { "x": 1, "y": 1, "part": "hdframe_vertical" },
       { "x": 2, "y": 1, "part": "hdframe_vertical" },
       { "x": 3, "y": 1, "part": "rockwheel" },
-      { "x": 0, "y": -1, "parts": [ "hdframe_vertical", "door", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
-      {
-        "x": -1,
-        "y": -1,
-        "parts": [ "hdframe_vertical", "halfboard_vertical_left", "wheel_mount_medium_steerable", "wheel_wide_or" ]
-      },
-      {
-        "x": -1,
-        "y": 2,
-        "parts": [ "hdframe_vertical", "halfboard_vertical_right", "wheel_mount_medium_steerable", "wheel_wide_or" ]
-      },
+      { "x": 0, "y": -1, "parts": [ "hdframe_vertical", "door", "tread1" ] },
+      { "x": -1, "y": -1, "parts": [ "hdframe_vertical", "halfboard_vertical_left", "tread1" ] },
+      { "x": -1, "y": 2, "parts": [ "hdframe_vertical", "halfboard_vertical_right", "tread1" ] },
       { "x": -1, "y": 0, "parts": [ "hdframe_cross", "halfboard_horizontal", { "part": "tank", "fuel": "diesel" } ] },
       {
         "x": -1,
@@ -109,8 +89,8 @@
           { "part": "tank", "fuel": "diesel" }
         ]
       },
-      { "x": -2, "y": 2, "parts": [ "hdframe_se", "halfboard_se", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
-      { "x": -2, "y": -1, "parts": [ "hdframe_sw", "halfboard_sw", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
+      { "x": -2, "y": 2, "parts": [ "hdframe_se", "halfboard_se", "tread1" ] },
+      { "x": -2, "y": -1, "parts": [ "hdframe_sw", "halfboard_sw", "tread1" ] },
       { "x": -2, "y": 0, "parts": [ "hdframe_horizontal", "halfboard_horizontal_rear" ] },
       { "x": -2, "y": 1, "parts": [ "hdframe_horizontal", "halfboard_horizontal_rear", "beeper" ] }
     ],
@@ -277,54 +257,21 @@
     "id": "roadheader_mining",
     "type": "vehicle",
     "name": "Mining Roadheader",
-    "//": "Please replace the wheel mounts and wheels with tank treads when those get mainlined.",
     "flags": [ "VEHICLE_UNLOCKED", "VEHICLE_NO_LOCKS" ],
     "parts": [
       { "x": 0, "y": 0, "parts": [ "hdframe_cross", "seat", "seatbelt", "dashboard", "controls", "vehicle_alarm", "hdroof" ] },
       { "x": 1, "y": 0, "parts": [ "hdframe_horizontal", "reinforced_windshield_horizontal_front" ] },
-      {
-        "x": 0,
-        "y": 1,
-        "parts": [ "hdframe_vertical", "wheel_mount_heavy_steerable", "wheel_armor", "directed_floodlight", "door_sliding" ]
-      },
-      {
-        "x": 0,
-        "y": -1,
-        "parts": [ "hdframe_vertical", "wheel_mount_heavy_steerable", "wheel_armor", "directed_floodlight", "door_sliding" ]
-      },
-      {
-        "x": -1,
-        "y": -1,
-        "parts": [ "hdframe_vertical", "wheel_mount_heavy_steerable", "wheel_armor", "trunk_flat" ]
-      },
-      {
-        "x": -2,
-        "y": -1,
-        "parts": [ "hdframe_vertical", "wheel_mount_heavy_steerable", "wheel_armor", "halfboard_vertical_left" ]
-      },
-      {
-        "x": -3,
-        "y": -1,
-        "parts": [ "hdframe_vertical", "wheel_mount_heavy_steerable", "wheel_armor", "trunk_flat" ]
-      },
-      {
-        "x": -4,
-        "y": -1,
-        "parts": [ "hdframe_vertical", "wheel_mount_heavy_steerable", "wheel_armor", "halfboard_vertical_left" ]
-      },
-      { "x": -1, "y": 1, "parts": [ "hdframe_vertical", "wheel_mount_heavy_steerable", "wheel_armor", "trunk_flat" ] },
+      { "x": 0, "y": 1, "parts": [ "hdframe_vertical", "tread2", "directed_floodlight", "door_sliding" ] },
+      { "x": 0, "y": -1, "parts": [ "hdframe_vertical", "tread2", "directed_floodlight", "door_sliding" ] },
+      { "x": -1, "y": -1, "parts": [ "hdframe_vertical", "tread2", "trunk_flat" ] },
+      { "x": -2, "y": -1, "parts": [ "hdframe_vertical", "tread2", "halfboard_vertical_left" ] },
+      { "x": -3, "y": -1, "parts": [ "hdframe_vertical", "tread2", "trunk_flat" ] },
+      { "x": -4, "y": -1, "parts": [ "hdframe_vertical", "tread2", "halfboard_vertical_left" ] },
+      { "x": -1, "y": 1, "parts": [ "hdframe_vertical", "tread2", "trunk_flat" ] },
       { "x": -5, "y": -1, "parts": [ "hdframe_sw", "halfboard_sw" ] },
-      {
-        "x": -2,
-        "y": 1,
-        "parts": [ "hdframe_vertical", "wheel_mount_heavy_steerable", "wheel_armor", "halfboard_vertical_right" ]
-      },
-      { "x": -3, "y": 1, "parts": [ "hdframe_vertical", "wheel_mount_heavy_steerable", "wheel_armor", "trunk_flat" ] },
-      {
-        "x": -4,
-        "y": 1,
-        "parts": [ "hdframe_vertical", "wheel_mount_heavy_steerable", "wheel_armor", "halfboard_vertical_right" ]
-      },
+      { "x": -2, "y": 1, "parts": [ "hdframe_vertical", "tread2", "halfboard_vertical_right" ] },
+      { "x": -3, "y": 1, "parts": [ "hdframe_vertical", "tread2", "trunk_flat" ] },
+      { "x": -4, "y": 1, "parts": [ "hdframe_vertical", "tread2", "halfboard_vertical_right" ] },
       { "x": -5, "y": 1, "parts": [ "hdframe_se", "halfboard_se" ] },
       { "x": -5, "y": 0, "parts": [ "hdframe_horizontal", "beeper", "halfboard_horizontal_rear" ] },
       {
