@@ -11864,9 +11864,6 @@ void game::on_move_effects()
 
 void game::resize_reality_bubble_to( int new_size )
 {
-    // Quiesce the background submap streamer before touching any grid state.
-    submap_streamer.flush_all();
-
     // Capture player's absolute submap position and within-submap tile offset
     // before any coordinate system changes.
     const tripoint old_abs_sub = m.get_abs_sub();
@@ -11876,29 +11873,42 @@ void game::resize_reality_bubble_to( int new_size )
         old_abs_sub.z );
     const point player_within_sm( u.posx() % SEEX, u.posy() % SEEY );
 
-    // When shrinking, despawn entities that fall outside the new bubble radius
-    // so they are properly saved to the overmapbuffer rather than dropped.
-    if( new_size < g_reality_bubble_size ) {
-        const int new_half_sm = new_size + 1;
+    // The grid origin shifts by (old_half - new_half) submaps when the bubble changes size.
+    // Compute this before any globals change so we can use it for two purposes:
+    //   1. Deciding which monsters are outside the new bubble (shrink-only despawn).
+    //   2. Translating surviving monster positions into the new local coordinate system.
+    const int old_half = static_cast<int>( g_half_mapsize );
+    const int new_half = new_size + 1;
+    const int shift_sm = old_half - new_half;  // > 0 when shrinking, < 0 when growing
+
+    // When shrinking, despawn monsters that fall outside the new bubble radius.
+    if( shift_sm > 0 ) {
         const tripoint player_sm_in_grid( u.posx() / SEEX, u.posy() / SEEY, get_levz() );
         for( monster &critter : all_monsters() ) {
             const tripoint critter_sm( critter.posx() / SEEX, critter.posy() / SEEY, critter.posz() );
             const tripoint diff = critter_sm - player_sm_in_grid;
-            if( std::abs( diff.x ) > new_half_sm || std::abs( diff.y ) > new_half_sm ) {
+            if( std::abs( diff.x ) > new_half || std::abs( diff.y ) > new_half ) {
                 despawn_monster( critter );
             }
         }
-        for( auto it = active_npc.begin(); it != active_npc.end(); ) {
-            const tripoint npc_sm( ( *it )->posx() / SEEX, ( *it )->posy() / SEEY, ( *it )->posz() );
-            const tripoint diff = npc_sm - player_sm_in_grid;
-            if( std::abs( diff.x ) > new_half_sm || std::abs( diff.y ) > new_half_sm ) {
-                ( *it )->on_unload();
-                it = active_npc.erase( it );
-            } else {
-                ++it;
-            }
-        }
     }
+
+    // Adjust surviving monsters' local positions to the new coordinate origin.
+    // monster::shift(sm_delta) does: position -= sm_to_ms(sm_delta), which correctly
+    // translates positions regardless of shrink/grow direction.  The bounds check
+    // inside shift_monsters is not used here because the old grid bounds are larger
+    // than the new ones when shrinking, so all in-range survivors pass.
+    if( shift_sm != 0 ) {
+        for( monster &critter : all_monsters() ) {
+            critter.shift( { shift_sm, shift_sm } );
+        }
+        critter_tracker->rebuild_cache();
+    }
+
+    // Unload ALL active NPCs so load_npcs() re-places them with correct positions
+    // in the new coordinate system.  Keeping survivors active is wrong because
+    // load_npcs() skips already-active IDs, leaving them with stale local coords.
+    unload_npcs();
 
     // Release submap loader handles so load_map() recreates them with the new radius.
     if( reality_bubble_handle_ != 0 ) {
@@ -11937,6 +11947,13 @@ void game::resize_reality_bubble_to( int new_size )
     // writes behind contains_abs_sm(), so old out-of-bubble positions are
     // skipped and only vehicle/active-item tracking is cleaned up.
     submap_loader.update();
+
+    // When the bubble grew, submaps outside the old (smaller) bubble just entered.
+    // Their stored monsters are still in the overmap monster_map; spawn them now
+    // so the expanded bubble isn't empty until the next boundary crossing.
+    if( shift_sm < 0 ) {
+        m.spawn_monsters( false );
+    }
 
     load_npcs();
 
