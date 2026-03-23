@@ -7,22 +7,31 @@
 #include "catalua_luna_doc.h"
 
 #include <algorithm>
+#include <functional>
+#include <optional>
 #include <ranges>
 #include <stdexcept>
 #include <vector>
 
 #include "avatar.h"
 #include "creature_tracker.h"
+#include "dimension_info.h"
 #include "distribution_grid.h"
 #include "game.h"
+#include "game_constants.h"
 #include "iexamine.h"
 #include "lightmap.h"
 #include "map.h"
+#include "map_iterator.h"
 #include "catalua_log.h"
 #include "messages.h"
 #include "npc.h"
 #include "monster.h"
+#include "overmap.h"
+#include "overmap_special.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
+#include "point.h"
 #include "weather.h"
 #include "line.h"
 #include "lua_action_menu.h"
@@ -30,7 +39,19 @@
 namespace
 {
 
-void add_msg_lua( game_message_type t, sol::variadic_args va )
+struct dimension_travel_options {
+    std::string dimension_id;
+    tripoint_abs_omt target_omt;
+    std::optional<std::string> world_type;
+    std::optional<tripoint_abs_omt> bounds_min_omt;
+    std::optional<tripoint_abs_omt> bounds_max_omt;
+    std::optional<std::string> boundary_terrain;
+    std::optional<std::string> boundary_overmap_terrain;
+    std::optional<std::string> pregen_special_id;
+    std::optional<tripoint_abs_omt> pregen_special_omt;
+};
+
+auto add_msg_lua( game_message_type t, sol::variadic_args va ) -> void
 {
     if( va.size() == 0 ) {
         // Nothing to print
@@ -52,6 +73,156 @@ auto place_lua_monster_around( const mtype_id &id, const tripoint_bub_ms &center
 }
 
 
+
+auto read_optional_string( const sol::table &opts, const char *key ) -> std::optional<std::string>
+{
+    const auto value = opts.get<sol::optional<std::string>>( key );
+    if( !value || value->empty() ) {
+        return std::nullopt;
+    }
+    return *value;
+}
+
+auto read_optional_abs_omt( const sol::table &opts, const char *key ) -> std::optional<tripoint_abs_omt>
+{
+    const auto value = opts.get<sol::optional<tripoint_abs_omt>>( key );
+    if( !value ) {
+        return std::nullopt;
+    }
+    return *value;
+}
+
+auto get_dimension_entry_point( const tripoint_abs_omt &target_omt ) -> tripoint_abs_ms
+{
+    return project_to<coords::ms>( target_omt ) + point( SEEX, SEEY );
+}
+
+auto parse_dimension_travel_options( const sol::table &opts ) -> dimension_travel_options
+{
+    return {
+        .dimension_id = opts.get_or( "dimension_id", std::string{} ),
+        .target_omt = read_optional_abs_omt( opts, "target_omt" ).value_or( tripoint_abs_omt( tripoint_zero ) ),
+        .world_type = read_optional_string( opts, "world_type" ),
+        .bounds_min_omt = read_optional_abs_omt( opts, "bounds_min_omt" ),
+        .bounds_max_omt = read_optional_abs_omt( opts, "bounds_max_omt" ),
+        .boundary_terrain = read_optional_string( opts, "boundary_terrain" ),
+        .boundary_overmap_terrain = read_optional_string( opts, "boundary_overmap_terrain" ),
+        .pregen_special_id = read_optional_string( opts, "pregen_special_id" ),
+        .pregen_special_omt = read_optional_abs_omt( opts, "pregen_special_omt" ),
+    };
+}
+
+auto make_pocket_dimension_data( const dimension_travel_options &opts ) ->
+std::optional<pocket_dimension_data>
+{
+    if( !opts.bounds_min_omt && !opts.bounds_max_omt ) {
+        return std::nullopt;
+    }
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return std::nullopt;
+    }
+
+    auto pocket_data = pocket_dimension_data{};
+    pocket_data.entry_point = get_dimension_entry_point( opts.target_omt );
+    pocket_data.bounds = dimension_bounds{
+        .min_bound = project_to<coords::sm>( *opts.bounds_min_omt ),
+        .max_bound = project_to<coords::sm>( *opts.bounds_max_omt ) + point_rel_sm::south_east(),
+        .boundary_terrain = ter_str_id( opts.boundary_terrain.value_or( "t_pd_border" ) ),
+        .boundary_overmap_terrain = oter_str_id( opts.boundary_overmap_terrain.value_or( "pd_border" ) ),
+    };
+    return pocket_data;
+}
+
+auto is_valid_dimension_travel_config( const dimension_travel_options &opts ) -> bool
+{
+    if( opts.bounds_min_omt.has_value() != opts.bounds_max_omt.has_value() ) {
+        return false;
+    }
+
+    if( opts.pregen_special_id ) {
+        const auto special_id = overmap_special_id( *opts.pregen_special_id );
+        if( !special_id.is_valid() ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+auto find_safe_spawn( const tripoint_bub_ms &target ) -> tripoint_bub_ms
+{
+    auto &here = get_map();
+
+    if( here.passable( target ) && !g->critter_at( target ) ) {
+        return target;
+    }
+
+    for( auto radius = 1; radius <= 10; radius++ ) {
+        for( const auto &point : here.points_in_radius( target, radius ) ) {
+            if( here.passable( point ) && !g->critter_at( point ) ) {
+                return point;
+            }
+        }
+    }
+
+    return target;
+}
+
+auto get_dimension_load_position( const tripoint_abs_omt &target_omt ) -> tripoint_abs_sm
+{
+    const auto target_sm = project_to<coords::sm>( target_omt );
+    return target_sm - tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
+}
+
+auto build_dimension_preload_callback( const dimension_travel_options &opts ) ->
+std::function<void()>
+{
+    if( !opts.pregen_special_id ) {
+        return {};
+    }
+
+    const auto special_id = overmap_special_id( *opts.pregen_special_id );
+
+    const auto special_omt = opts.pregen_special_omt.value_or( opts.target_omt );
+    const auto dimension_id = opts.dimension_id;
+
+    return [dimension_id, special_id, special_omt]() {
+        auto &dim_omb = get_overmapbuffer( dimension_id );
+        auto global_location = dim_omb.get_om_global( special_omt );
+        overmap &om = *global_location.om;
+        om.place_special_forced( special_id, global_location.local, om_direction::type::north );
+    };
+}
+
+auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
+{
+    if( !is_valid_dimension_travel_config( opts ) ) {
+        return false;
+    }
+
+    auto pocket_data = make_pocket_dimension_data( opts );
+    const auto has_bounds = opts.bounds_min_omt.has_value() || opts.bounds_max_omt.has_value();
+    if( has_bounds && !pocket_data ) {
+        return false;
+    }
+
+    auto world_type = world_type_id{};
+    if( opts.world_type ) {
+        world_type = world_type_id( *opts.world_type );
+    }
+
+    const auto preload_callback = build_dimension_preload_callback( opts );
+    const auto load_pos = get_dimension_load_position( opts.target_omt );
+    if( !g->travel_to_dimension( opts.dimension_id, world_type, pocket_data, load_pos, preload_callback ) ) {
+        return false;
+    }
+
+    auto &avatar = get_avatar();
+    const auto target_local = get_map().abs_to_bub( get_dimension_entry_point( opts.target_omt ) );
+    avatar.setpos( find_safe_spawn( target_local ) );
+    g->update_map( avatar );
+    return true;
+}
 
 } // namespace
 
@@ -82,6 +253,12 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "place_player_overmap_at", []( const tripoint_abs_omt & p ) -> void { g->place_player_overmap( p ); } );
     DOC( "Teleports player to local coordinates within active map" );
     luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
+    DOC( "Returns the current dimension id. Empty string means the overworld." );
+    luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id(); } );
+    DOC( "Moves the player into another dimension and loads the destination around the requested OMT." );
+    luna::set_fx( lib, "place_player_dimension_at", []( sol::table opts ) -> bool {
+        return place_player_dimension_at( parse_dimension_travel_options( opts ) );
+    } );
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );
