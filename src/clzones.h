@@ -30,6 +30,7 @@ struct construction;
 using faction_id = string_id<faction>;
 static const faction_id your_fac( "your_followers" );
 const std::string type_fac_hash_str = "__FAC__";
+const std::string type_dim_hash_str = "__DIM__";
 
 class zone_type
 {
@@ -263,6 +264,7 @@ class zone_data
         bool invert;
         bool enabled;
         bool is_vehicle;
+        dimension_id dim_id;
         tripoint_abs_ms start;
         tripoint_abs_ms end;
         shared_ptr_fast<zone_options> options;
@@ -273,6 +275,7 @@ class zone_data
             invert = false;
             enabled = false;
             is_vehicle = false;
+            dim_id = dimension_id();
             start = tripoint_abs_ms::zero();
             end = tripoint_abs_ms::zero();
             options = nullptr;
@@ -288,6 +291,7 @@ class zone_data
             invert = _invert;
             enabled = _enabled;
             is_vehicle = false;
+            dim_id = dimension_id();
             start = _start;
             end = _end;
 
@@ -307,9 +311,16 @@ class zone_data
                            bool manual = true );
         void set_enabled( bool enabled_arg );
         void set_is_vehicle( bool is_vehicle_arg );
+        void set_dimension( const dimension_id &dim_id_arg ) {
+            dim_id = dim_id_arg;
+        }
 
+        static std::string make_type_hash( const zone_type_id &_type, const faction_id &_fac,
+                                           const dimension_id &_dim ) {
+            return _type.c_str() + type_fac_hash_str + _fac.c_str() + type_dim_hash_str + _dim.c_str();
+        }
         static std::string make_type_hash( const zone_type_id &_type, const faction_id &_fac ) {
-            return _type.c_str() + type_fac_hash_str + _fac.c_str();
+            return make_type_hash( _type, _fac, dimension_id() );
         }
         static zone_type_id unhash_type( const std::string &hash_type ) {
             size_t end = hash_type.find( type_fac_hash_str );
@@ -324,8 +335,11 @@ class zone_data
         const faction_id &get_faction() const {
             return faction;
         }
+        const dimension_id &get_dimension() const { // *NOPAD*
+            return dim_id;
+        }
         std::string get_type_hash() const {
-            return make_type_hash( type, faction );
+            return make_type_hash( type, faction, dim_id );
         }
         const zone_type_id &get_type() const {
             return type;

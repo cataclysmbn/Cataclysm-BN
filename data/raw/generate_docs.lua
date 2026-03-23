@@ -51,13 +51,13 @@ local fmt_arg_list = function(arg_list, meta)
   local visible_arg_list = remove_hidden_args(arg_list)
   if #visible_arg_list == 0 then return ret end
 
-  local meta_params = get_meta_params(meta)
+  local meta_params = get_meta_param_specs(meta)
   local state
-  local name
+  local param_spec
   for i, value in pairs(visible_arg_list) do
-    state, name = next(meta_params, state)
+    state, param_spec = next(meta_params, state)
     if state ~= nil then
-      visible_arg_list[i] = name .. ": " .. value
+      visible_arg_list[i] = param_spec.name .. ": " .. (param_spec.type or value)
     else
       visible_arg_list[i] = value
     end
@@ -134,7 +134,7 @@ local fmt_one_member = function(typename, member)
 
   if member.comment then
     local com = string_concat_matches(member.comment, "[^\r\n]+", "\n", function(m)
-      if string.match(m, "^@param") then return nil end
+      if string.match(m, "^@param") or is_luals_metadata_line(m) then return nil end
       return "> " .. linkify_types(m, true)
     end)
     ret = ret .. com
