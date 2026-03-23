@@ -67,6 +67,26 @@ static const zone_type_id zone_NO_AUTO_PICKUP( "NO_AUTO_PICKUP" );
 static const zone_type_id zone_NO_NPC_PICKUP( "NO_NPC_PICKUP" );
 static const zone_type_id zone_CONSTRUCTION_IGNORE( "CONSTRUCTION_IGNORE" );
 
+namespace
+{
+
+auto current_dimension() -> const dimension_id & // *NOPAD*
+{
+    return get_map().get_bound_dimension();
+}
+
+auto current_dimension_zone_hash( const zone_type_id &type, const faction_id &fac ) -> std::string
+{
+    return zone_data::make_type_hash( type, fac, current_dimension() );
+}
+
+auto is_in_current_dimension( const zone_data &zone ) -> bool
+{
+    return zone.get_dimension() == current_dimension();
+}
+
+} // namespace
+
 zone_manager::zone_manager()
 {
     for( const zone_type &zone : zone_type::get_all() ) {
@@ -866,7 +886,7 @@ bool zone_manager::has_type( const zone_type_id &type ) const
 
 bool zone_manager::has_defined( const zone_type_id &type, const faction_id &fac ) const
 {
-    const auto &type_iter = area_cache.find( zone_data::make_type_hash( type, fac ) );
+    const auto &type_iter = area_cache.find( current_dimension_zone_hash( type, fac ) );
     return type_iter != area_cache.end();
 }
 
@@ -896,7 +916,7 @@ void zone_manager::cache_vzones()
             return;
         }
 
-        auto &cache = vzone_cache[elem->get_type_hash()];
+        auto &cache = vzone_cache[current_dimension_zone_hash( elem->get_type(), elem->get_faction() )];
         const auto points = get_zone_covered_points( *elem );
         std::ranges::for_each( points, [&]( const tripoint_abs_ms & point ) {
             cache.insert( point );
@@ -907,7 +927,7 @@ void zone_manager::cache_vzones()
 std::unordered_set<tripoint_abs_ms> zone_manager::get_point_set( const zone_type_id &type,
         const faction_id &fac ) const
 {
-    const auto &type_iter = area_cache.find( zone_data::make_type_hash( type, fac ) );
+    const auto &type_iter = area_cache.find( current_dimension_zone_hash( type, fac ) );
     if( type_iter == area_cache.end() ) {
         return std::unordered_set<tripoint_abs_ms>();
     }
@@ -945,7 +965,7 @@ std::unordered_set<tripoint_abs_ms> zone_manager::get_vzone_set( const zone_type
         const faction_id &fac ) const
 {
     //Only regenerate the vehicle zone cache if any vehicles have moved
-    const auto &type_iter = vzone_cache.find( zone_data::make_type_hash( type, fac ) );
+    const auto &type_iter = vzone_cache.find( current_dimension_zone_hash( type, fac ) );
     if( type_iter == vzone_cache.end() ) {
         return std::unordered_set<tripoint_abs_ms>();
     }
@@ -1006,7 +1026,7 @@ const zone_data *zone_manager::get_zone_at( const tripoint_abs_ms &where,
         const zone_type_id &type ) const
 {
     for( const zone_data &zone : zones ) {
-        if( zone.has_inside( where ) && zone.get_type() == type ) {
+        if( is_in_current_dimension( zone ) && zone.has_inside( where ) && zone.get_type() == type ) {
             return &zone;
         }
     }
@@ -1175,7 +1195,7 @@ std::vector<zone_data> zone_manager::get_zones( const zone_type_id &type,
     auto zones = std::vector<zone_data>();
 
     for( const auto &zone : this->zones ) {
-        if( zone.get_type() == type && zone.get_faction() == fac ) {
+        if( is_in_current_dimension( zone ) && zone.get_type() == type && zone.get_faction() == fac ) {
             if( zone.has_inside( where ) ) {
                 zones.emplace_back( zone );
             }
@@ -1190,7 +1210,7 @@ const zone_data *zone_manager::get_zone_at( const tripoint_abs_ms &where ) const
     for( auto it = zones.rbegin(); it != zones.rend(); ++it ) {
         const auto &zone = *it;
 
-        if( zone.has_inside( where ) ) {
+        if( is_in_current_dimension( zone ) && zone.has_inside( where ) ) {
             return &zone;
         }
     }
@@ -1202,7 +1222,7 @@ const zone_data *zone_manager::get_bottom_zone( const tripoint_abs_ms &where,
 {
     for( auto it = zones.rbegin(); it != zones.rend(); ++it ) {
         const auto &zone = *it;
-        if( zone.get_faction() != fac ) {
+        if( zone.get_faction() != fac || !is_in_current_dimension( zone ) ) {
             continue;
         }
 
@@ -1285,6 +1305,7 @@ void zone_manager::add( const std::string &name, const zone_type_id &type, const
                                     std::move( options ) );
     //the start is a vehicle tile with cargo space
     map &here = get_map();
+    new_zone.set_dimension( here.get_bound_dimension() );
     if( const std::optional<vpart_reference> vp = here.veh_at( abs_to_bub(
                 start ) ).part_with_feature( "CARGO", false ) ) {
         // TODO:Allow for loot zones on vehicles to be larger than 1x1
@@ -1366,6 +1387,9 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
     const auto a_end = map_local_to_abs( target_map, tripoint_bub_ms( 23, 23, 0 ) );
     const point dim( 24, 24 );
     for( zone_data &zone : zones ) {
+        if( zone.get_dimension() != target_map.get_bound_dimension() ) {
+            continue;
+        }
         const auto z_start = zone.get_start_point();
         const auto z_end = zone.get_end_point();
         if( ( a_start.x() <= z_start.x() && a_start.y() <= z_start.y() ) &&
@@ -1399,7 +1423,7 @@ std::vector<zone_manager::ref_zone_data> zone_manager::get_zones( const faction_
     auto zones = std::vector<ref_zone_data>();
 
     for( auto &zone : this->zones ) {
-        if( zone.get_faction() == fac ) {
+        if( is_in_current_dimension( zone ) && zone.get_faction() == fac ) {
             zones.emplace_back( zone );
         }
     }
@@ -1421,7 +1445,7 @@ std::vector<zone_manager::ref_const_zone_data> zone_manager::get_zones(
     auto zones = std::vector<ref_const_zone_data>();
 
     for( auto &zone : this->zones ) {
-        if( zone.get_faction() == fac ) {
+        if( is_in_current_dimension( zone ) && zone.get_faction() == fac ) {
             zones.emplace_back( zone );
         }
     }
@@ -1466,6 +1490,7 @@ void zone_data::serialize( JsonOut &json ) const
     json.member( "invert", invert );
     json.member( "enabled", enabled );
     json.member( "is_vehicle", is_vehicle );
+    json.member( "dimension", dim_id.str() );
     json.member( "start", start );
     json.member( "end", end );
     get_options().serialize( json );
@@ -1485,6 +1510,9 @@ void zone_data::deserialize( JsonIn &jsin )
     }
     data.read( "invert", invert );
     data.read( "enabled", enabled );
+    auto raw_dim_id = std::string{};
+    data.read( "dimension", raw_dim_id );
+    dim_id = dimension_id( raw_dim_id );
     //Legacy support
     if( data.has_member( "is_vehicle" ) ) {
         data.read( "is_vehicle", is_vehicle );
