@@ -179,7 +179,6 @@
 #include "fire_spread_loader.h"
 #include "submap.h"
 #include "submap_fields.h"
-#include "submap_stream.h"
 #include "type_id.h"
 #include "tileray.h"
 #include "timed_event.h"
@@ -2093,10 +2092,8 @@ bool game::do_turn()
     world_tick();
 
     // Fire-spread (and other non-bubble) requests created during world_tick()
-    // must be realised before the next turn.  Flush background streamer first
-    // to avoid concurrent mapbuffer access, then let the load manager diff
+    // must be realised before the next turn.  Let the load manager diff
     // the desired set and load/unload as needed.
-    submap_streamer.flush_all();
     // Ensure trackers exist for all active dimensions before update() fires
     // on_submap_loaded events (mirrors the logic in load_map / update_map).
     for( const auto &dim_id : submap_loader.active_dimensions() ) {
@@ -3343,16 +3340,9 @@ bool game::save_artifacts()
 bool game::save_maps()
 {
     try {
-        // Drain any in-flight lazy-border preload tasks and flush the streamer
-        // before save so that save_quad workers (which call submaps.find()
-        // without the mutex) do not race with background workers calling
-        // add_submap().
+        // Drain any in-flight lazy-border preload tasks before save so that
+        // save_quad workers do not race with background workers calling add_submap().
         submap_loader.drain_lazy_loads();
-        submap_streamer.flush_all();
-        // Debug invariant: no worker tasks may be in-flight during save.
-        // flush_all() is supposed to drain them all; if this fires, a worker
-        // submitted a new task concurrently with flush_all() — that is a bug.
-        assert( !submap_streamer.has_pending() );
         m.save();
         save_all_overmapbuffers(); // can throw — saves every loaded dimension's overmapbuffer
         // Save mapbuffers for all registered dimensions (active + any kept/non-active).
@@ -4862,11 +4852,10 @@ void game::world_tick()
             }
 
             if( fire_spread && has_fire ) {
-                // Keep this fire submap loaded even when it leaves the
-                // reality bubble so fire continues to burn and spread.
-                if( !submap_loader.is_properly_requested( dim, pos_sm ) ) {
-                    fire_loader.request_for_fire( dim, pos_sm );
-                }
+                // Always register the fire submap itself — including while it is
+                // still inside the bubble — so the fire_spread request already
+                // exists when the bubble shifts away on a future turn.
+                fire_loader.request_for_fire( dim, pos_sm );
 
                 // Look up dimension bounds once per submap so we can
                 // prevent fire from escaping a bounded pocket dimension.
@@ -5283,7 +5272,7 @@ void game::npcmove()
     const std::string &player_dim = m.get_bound_dimension();
     for( npc &guy : g->all_npcs() ) {
         const auto dim = guy.get_dimension();
-        const auto pos_sm = tripoint_abs_sm( guy.pos() );
+        const auto pos_sm = tripoint_abs_sm( guy.global_sm_location() );
         // Don't process NPCs in unloaded submaps like a LEMON
         if( !submap_loader.is_simulated( dim, pos_sm ) ) {
             continue;
@@ -12745,10 +12734,6 @@ bool game::travel_to_dimension( const std::string &dim_id,
             here.unboard_vehicle( player.pos() );
         }
 
-        // Flush background streamer tasks first to avoid a concurrent read+write race
-        // between save_quad workers (submaps.find, no mutex) and submap_stream workers
-        // (add_submap, with mutex).
-        submap_streamer.flush_all();
         world *active_world = get_active_world();
         try {
             if( active_world ) {
@@ -13250,11 +13235,6 @@ point game::update_map( int &x, int &y )
         remaining_shift -= this_shift;
     }
 
-    // Track the most recent non-zero shift direction for speculative streaming.
-    // Retained across zero-shift calls so submap_streamer can continue pre-loading
-    // in the direction the player was moving even on turns with no map shift.
-    last_move_delta_ = tripoint( shift, 0 );
-
     // Keep the reality bubble request center in sync with the shifted map.
     // Distribution-grid tracker updates are fully incremental via
     // on_submap_loaded/unloaded; the old full-rebuild has been removed.
@@ -13284,10 +13264,6 @@ point game::update_map( int &x, int &y )
         for( const auto &dim_id : submap_loader.active_dimensions() ) {
             ensure_distribution_grid_tracker_for( dim_id );
         }
-        // Flush background streamer before update() to prevent concurrent
-        // mapbuffer read+write (UB: update() erases while workers access submaps
-        // without a mutex).
-        submap_streamer.flush_all();
         submap_loader.update();
         // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {

@@ -142,9 +142,9 @@ jobs:
 
       - name: Install MSBuild (windows msvc)
         if: runner.os == 'Windows'
-        uses: microsoft/setup-msbuild@v2
+        uses: ilammy/msvc-dev-cmd@v1
         with:
-          vs-version: 17.13
+          arch: x64
 
       - name: Install stable CMake
         if: runner.os == 'Windows'
@@ -281,14 +281,32 @@ jobs:
 
       - name: Configure and Build CBN (windows msvc)
         if: runner.os == 'Windows'
-        uses: lukka/run-cmake@v10
         env:
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
-        with:
-          configurePreset: windows-tiles-sounds-x64-msvc
-          buildPreset: windows-msvc-build
-          configurePresetAdditionalArgs: "['-DRELEASE=ON']"
-          buildPresetAdditionalArgs: "['--config', 'Release']"
+        run: |
+          cmake -G Ninja `
+            -S "${{ github.workspace }}" `
+            -B "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PROJECT_INCLUDE_BEFORE="${{ github.workspace }}/build-scripts/windows-tiles-sounds-x64-msvc.cmake" `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build-scripts/MSVC.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+            -DDYNAMIC_LINKING=False `
+            -DCURSES=False `
+            -DLOCALIZE=True `
+            -DTILES=True `
+            -DSOUND=True `
+            -DTESTS=False `
+            -DRELEASE=ON `
+            -DJSON_FORMAT=OFF `
+            -DCMAKE_INSTALL_MESSAGE=NEVER
+
+      - name: Build CBN (windows msvc)
+        if: runner.os == 'Windows'
+        run: |
+          cmake --build "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" `
+            --config Release `
+            --target cataclysm-bn-tiles
 
       - name: Create distribution package (windows msvc)
         if: runner.os == 'Windows'

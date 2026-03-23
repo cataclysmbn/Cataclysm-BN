@@ -1205,10 +1205,6 @@ class game : public submap_load_listener
         // Default 5 matches REALITY_BUBBLE_SIZE=2 (original 11×11 grid).
         int reality_bubble_radius_ = 5;
 
-        // The most recent submap-coordinate shift applied by update_map().
-        // Used by submap_stream speculative loading to pre-request the edge
-        // row that would be needed if the player keeps moving in the same direction.
-        tripoint last_move_delta_;
     private:
         location_vector<item> fake_items;
     public:

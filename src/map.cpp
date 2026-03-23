@@ -101,7 +101,6 @@
 #include "string_id.h"
 #include "submap.h"
 #include "submap_load_manager.h"
-#include "submap_stream.h"
 #include "thread_pool.h"
 #include "tileray.h"
 #include "timed_event.h"
@@ -7881,38 +7880,6 @@ void map::shift( point sp )
     const half_open_rectangle<point> boundaries_2d( point_zero, point( g_mapsize_x, g_mapsize_y ) );
     const point shift_offset_pt( -sp.x * SEEX, -sp.y * SEEY );
 
-    // Block on submaps the main loop is about to need.  The previous shift()
-    // speculatively enqueued these via submap_streamer.request_load().  If the
-    // worker finished, MAPBUFFER already has the submap so loadn() hits the
-    // fast (in-memory) path.  If not ready yet, drain_completed() blocks.
-    {
-        ZoneScopedN( "shift_drain_preloads" );
-        std::vector<tripoint_abs_sm> must_have;
-        const tripoint new_abs = get_abs_sub();
-        for( int gridz = zmin; gridz <= zmax; gridz++ ) {
-            if( sp.x > 0 ) {
-                for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-                    must_have.emplace_back( tripoint( new_abs.x + my_MAPSIZE - 1,
-                                                      new_abs.y + gridy, gridz ) );
-                }
-            } else if( sp.x < 0 ) {
-                for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-                    must_have.emplace_back( tripoint( new_abs.x, new_abs.y + gridy, gridz ) );
-                }
-            }
-            if( sp.y > 0 ) {
-                for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-                    must_have.emplace_back( tripoint( new_abs.x + gridx,
-                                                      new_abs.y + my_MAPSIZE - 1, gridz ) );
-                }
-            } else if( sp.y < 0 ) {
-                for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-                    must_have.emplace_back( tripoint( new_abs.x + gridx, new_abs.y, gridz ) );
-                }
-            }
-        }
-        submap_streamer.drain_completed( *this, must_have );
-    }
 
     // Run any Lua on_mapgen_postprocess hooks that were deferred from worker
     // threads (Lua is not thread-safe).  The submaps are already in the
@@ -8047,53 +8014,6 @@ void map::shift( point sp )
         shift_tripoint_set( support_cache_dirty, shift_offset_pt, boundaries_2d );
     }
 
-    // Speculative next-shift pre-loading.
-    // Enqueue async loads for the edge row/column one step beyond the current
-    // viewport in the direction we just shifted.  On the next shift() call,
-    // drain_completed() (above) will block until they are ready so loadn()
-    // hits the MAPBUFFER fast path.
-    {
-        ZoneScopedN( "shift_speculative_preload" );
-        const tripoint cur_abs = get_abs_sub();
-        const std::string &dim = get_bound_dimension();
-        auto &mb = MAPBUFFER_REGISTRY.get( dim );
-        for( int gridz = zmin; gridz <= zmax; gridz++ ) {
-            if( sp.x > 0 ) {
-                for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-                    const tripoint_abs_sm pos( tripoint( cur_abs.x + my_MAPSIZE,
-                                                         cur_abs.y + gridy, gridz ) );
-                    if( !mb.lookup_submap_in_memory( pos.raw() ) ) {
-                        submap_streamer.request_load( dim, pos );
-                    }
-                }
-            } else if( sp.x < 0 ) {
-                for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-                    const tripoint_abs_sm pos( tripoint( cur_abs.x - 1,
-                                                         cur_abs.y + gridy, gridz ) );
-                    if( !mb.lookup_submap_in_memory( pos.raw() ) ) {
-                        submap_streamer.request_load( dim, pos );
-                    }
-                }
-            }
-            if( sp.y > 0 ) {
-                for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-                    const tripoint_abs_sm pos( tripoint( cur_abs.x + gridx,
-                                                         cur_abs.y + my_MAPSIZE, gridz ) );
-                    if( !mb.lookup_submap_in_memory( pos.raw() ) ) {
-                        submap_streamer.request_load( dim, pos );
-                    }
-                }
-            } else if( sp.y < 0 ) {
-                for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-                    const tripoint_abs_sm pos( tripoint( cur_abs.x + gridx,
-                                                         cur_abs.y - 1, gridz ) );
-                    if( !mb.lookup_submap_in_memory( pos.raw() ) ) {
-                        submap_streamer.request_load( dim, pos );
-                    }
-                }
-            }
-        }
-    }
 }
 
 void map::vertical_shift( const int newz )

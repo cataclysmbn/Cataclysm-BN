@@ -5,6 +5,11 @@
 #include "calendar.h"
 #include "coordinates.h"
 
+namespace cata
+{
+struct lua_state;
+} // namespace cata
+
 /**
  * Deferred Lua mapgen post-process hook.
  *
@@ -25,8 +30,20 @@ struct deferred_mapgen_hook {
     time_point        when;
 };
 
-/** Push a hook entry from a worker thread (thread-safe). */
+/** Push a hook entry from a worker thread (thread-safe).
+ *  No-op if no on_mapgen_postprocess hooks are registered — avoids queuing
+ *  deferred entries that will be discarded anyway. */
 void push_deferred_mapgen_hook( deferred_mapgen_hook h );
+
+/**
+ * Update the cached flag used by push_deferred_mapgen_hook() to decide
+ * whether any on_mapgen_postprocess hooks are registered.
+ *
+ * Must be called on the main thread after all mod scripts have finished
+ * loading (i.e. after init::load_main_lua_scripts).  Thread-safe write via
+ * std::atomic — no Android fallback needed (plain bool, not atomic_ref).
+ */
+void refresh_mapgen_postprocess_hook_presence( cata::lua_state &state );
 
 /**
  * Drain all deferred hooks and run each one on the main thread.

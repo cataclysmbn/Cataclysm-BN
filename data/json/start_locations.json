@@ -641,5 +641,11 @@
     "id": "sloc_tankmod_radio_tower",
     "name": "Radio Tower",
     "terrain": [ "radio_tower_1" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_airport",
+    "name": "Regional Airport",
+    "terrain": [ "waiting_area", "s_air_term_south" ]
   }
 ]
