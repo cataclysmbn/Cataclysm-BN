@@ -2660,15 +2660,16 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
         insert_separation_line( info );
         int final_aim = ranged::aim_per_move( you, *mod, MAX_RECOIL );
         double add = you.bonus_from_enchantments( 0, enchant_vals::mod::RANGED_AIM_SPEED, false );
-        double mul = ( you.bonus_from_enchantments( 1000, enchant_vals::mod::RANGED_AIM_SPEED, false ) - add ) / 1000.0;
+        double mul = ( you.bonus_from_enchantments( 1000, enchant_vals::mod::RANGED_AIM_SPEED,
+                       false ) - add ) / 1000.0;
         int base_aim = final_aim;
         if( 1.0 + mul != 0.0 ) {
-            base_aim = std::round( (final_aim - add) / (1.0 + mul) );
+            base_aim = std::round( ( final_aim - add ) / ( 1.0 + mul ) );
         }
         int ench_aim_bonus = final_aim - base_aim;
-        info.emplace_back( "GUN", _( "<bold>Base aim speed</bold>: " ), "<num>", 
-                           (ench_aim_bonus != 0) ? iteminfo::no_newline : iteminfo::no_flags,
-                           final_aim ); 
+        info.emplace_back( "GUN", _( "<bold>Base aim speed</bold>: " ), "<num>",
+                           ( ench_aim_bonus != 0 ) ? iteminfo::no_newline : iteminfo::no_flags,
+                           final_aim );
         if( ench_aim_bonus != 0 ) {
             info.emplace_back( "GUN", "ench_aim_speed", _( " (enchanted: <num>)" ),
                                iteminfo::no_name | iteminfo::show_plus,
