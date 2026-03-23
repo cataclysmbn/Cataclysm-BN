@@ -2656,7 +2656,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
                            _( "Damage/range will vary with <info>throwing skill and ammo.</info>" ) );
     }
 
-if( parts->test( iteminfo_parts::GUN_AIMING_STATS ) ) {
+    if( parts->test( iteminfo_parts::GUN_AIMING_STATS ) ) {
         insert_separation_line( info );
         int final_aim = ranged::aim_per_move( you, *mod, MAX_RECOIL );
         double add = you.bonus_from_enchantments( 0, enchant_vals::mod::RANGED_AIM_SPEED, false );
