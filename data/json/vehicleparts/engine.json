@@ -193,5 +193,108 @@
     ],
     "extend": { "flags": [ "E_NO_POWER_DECAY" ] },
     "damage_reduction": { "all": 60 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "sail",
+    "name": { "str": "small sail" },
+    "description": "A sail for a raft, small enough to be foldable.",
+    "symbol": "M",
+    "color": "light_gray",
+    "broken_symbol": "#",
+    "broken_color": "red",
+    "damage_modifier": 50,
+    "durability": 20,
+    "power": 800,
+    "fuel_type": "wind",
+    "noise_factor": 1,
+    "m2c": 90,
+    "exclusions": [ "wind" ],
+    "item": "sail",
+    "location": "on_roof",
+    "folded_volume": "500 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "flags": [
+      "ENGINE",
+      "CONTROLS",
+      "FOLDABLE",
+      "PROTRUSION",
+      "E_STARTS_INSTANTLY",
+      "WIND_POWERED",
+      "OVER",
+      "STABLE",
+      "UNMOUNT_ON_DAMAGE",
+      "SHOCK_IMMUNE"
+    ],
+    "breaks_into": [ { "item": "splinter", "count": [ 2, 4 ] }, { "item": "rag", "count": [ 5, 10 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "sail_large",
+    "copy-from": "sail",
+    "name": { "str": "large sail" },
+    "description": "Sails and rigging fit for a yacht or sloop, about as large as a single person can reasonably crew.",
+    "durability": 150,
+    "power": 4000,
+    "item": "sail_large_item",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "vehicle_nail_install", 30 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "vehicle_nail_removal", 2 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "60 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "breaks_into": [
+      { "item": "log", "count": [ 1, 2 ] },
+      { "item": "splinter", "count": [ 10, 20 ] },
+      { "item": "sheet", "count": [ 0, 1 ] },
+      { "item": "rag", "count": [ 25, 50 ] }
+    ],
+    "delete": { "flags": [ "UNMOUNT_ON_DAMAGE", "SHOCK_IMMUNE" ] }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "yoke_harness",
+    "name": { "str": "yoke and harness" },
+    "symbol": "H",
+    "looks_like": "frame_wood_cross",
+    "color": "brown",
+    "broken_symbol": "M",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "noise_factor": 5,
+    "fuel_type": "animal",
+    "durability": 20,
+    "item": "yoke_harness",
+    "m2c": 90,
+    "contact_area": 60,
+    "rolling_resistance": 1.5,
+    "wheel_type": "off-road",
+    "description": "Attach this part to a beast of burden to allow it to pull your vehicle.",
+    "size": "6250 ml",
+    "power": 0,
+    "location": "structure",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "100 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "100 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "20 s",
+        "using": [ [ "nail_any_adhesive", 1 ], [ "vehicle_repair_small_wood", 4 ] ]
+      }
+    },
+    "breaks_into": "ig_vp_wood_plate",
+    "flags": [ "ENGINE", "BOARDABLE", "E_STARTS_INSTANTLY", "ANIMAL_CTRL", "HARNESS_any", "TRACKED", "UNMOUNT_ON_DAMAGE", "WHEEL" ],
+    "damage_reduction": { "all": 2 }
   }
 ]

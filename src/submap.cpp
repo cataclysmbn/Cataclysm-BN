@@ -4,14 +4,19 @@
 #include <array>
 #include <iterator>
 #include <memory>
+#include <span>
 #include <utility>
 
+#include "debug.h"
 #include "int_id.h"
+#include "lightmap.h"
+#include "map.h"
 #include "mapdata.h"
 #include "tileray.h"
 #include "trap.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
+#include "weather.h"
 
 
 template<int sx, int sy>
@@ -540,4 +545,164 @@ void submap::rotate( int turns )
         rot_transformer_last_run.emplace( point_sm_ms( rotate_point( elem.first.raw() ) ), elem.second );
     }
     transformer_last_run = rot_transformer_last_run;
+}
+
+
+auto submap::rebuild_outside_cache( const map &m, tripoint grid_pos ) -> void
+{
+    if( !outside_dirty ) {
+        return;
+    }
+    // For each tile, mark inside (outside=false) if any tile in the 3×3
+    // neighbourhood (including itself) has TFLAG_INDOORS on terrain or furniture.
+    for( int sx = 0; sx < SEEX; ++sx ) {
+        const int x = grid_pos.x * SEEX + sx;
+        for( int sy = 0; sy < SEEY; ++sy ) {
+            const int y = grid_pos.y * SEEY + sy;
+            auto any_indoors = [&]() -> bool {
+                for( int dx = -1; dx <= 1; ++dx )
+                {
+                    for( int dy = -1; dy <= 1; ++dy ) {
+                        if( m.has_flag( TFLAG_INDOORS, tripoint( x + dx, y + dy, grid_pos.z ) ) ) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+            outside_cache[sx][sy] = !any_indoors();
+        }
+    }
+    outside_dirty = false;
+}
+
+auto submap::rebuild_floor_cache( const map &m, tripoint grid_pos ) -> void
+{
+    if( !floor_dirty ) {
+        return;
+    }
+    // Default: has floor (non-zero).
+    std::ranges::fill( std::span( &floor_cache[0][0], SEEX * SEEY ), '\x01' );
+
+    const bool lowest_z = grid_pos.z <= -OVERMAP_DEPTH;
+    const submap *below = lowest_z ? nullptr
+                          : m.get_submap_at_grid( { grid_pos.x, grid_pos.y, grid_pos.z - 1 } );
+
+    for( int sx = 0; sx < SEEX; ++sx ) {
+        for( int sy = 0; sy < SEEY; ++sy ) {
+            const point sp( sx, sy );
+            const auto &ter_obj = get_ter( sp ).obj();
+            if( ter_obj.has_flag( TFLAG_NO_FLOOR ) || ter_obj.has_flag( TFLAG_Z_TRANSPARENT ) ) {
+                if( below && below->get_furn( sp ).obj().has_flag( TFLAG_SUN_ROOF_ABOVE ) ) {
+                    continue;
+                }
+                floor_cache[sx][sy] = '\0';
+            }
+        }
+    }
+    floor_dirty = false;
+}
+
+auto submap::rebuild_pf_cache( const map &m, tripoint grid_pos ) -> void
+{
+    if( !pf_dirty ) {
+        return;
+    }
+    for( int sx = 0; sx < SEEX; ++sx ) {
+        for( int sy = 0; sy < SEEY; ++sy ) {
+            const point sp( sx, sy );
+            const tripoint p( grid_pos.x * SEEX + sx, grid_pos.y * SEEY + sy, grid_pos.z );
+            auto cur_value = PF_NORMAL;
+
+            const auto &terrain   = get_ter( sp ).obj();
+            const auto &furniture = get_furn( sp ).obj();
+            int vpart = -1;
+            const vehicle *veh = m.veh_at_internal( p, vpart );
+            const int cost = m.move_cost_internal( furniture, terrain, veh, vpart );
+
+            if( cost > 2 ) {
+                cur_value |= PF_SLOW;
+            } else if( cost <= 0 ) {
+                cur_value |= PF_WALL;
+                if( terrain.has_flag( TFLAG_CLIMBABLE ) ) {
+                    cur_value |= PF_CLIMBABLE;
+                }
+            }
+
+            if( veh != nullptr ) {
+                cur_value |= PF_VEHICLE;
+            }
+
+            for( const auto &fld : get_field( sp ) ) {
+                const auto &cur_fld = fld.second;
+                if( cur_fld.get_field_type().obj().get_dangerous(
+                        cur_fld.get_field_intensity() - 1 ) ) {
+                    cur_value |= PF_FIELD;
+                }
+            }
+
+            if( !get_trap( sp ).obj().is_benign() || !terrain.trap.obj().is_benign() ) {
+                cur_value |= PF_TRAP;
+            }
+
+            if( terrain.has_flag( TFLAG_GOES_DOWN ) || terrain.has_flag( TFLAG_GOES_UP ) ||
+                terrain.has_flag( TFLAG_RAMP )      || terrain.has_flag( TFLAG_RAMP_UP ) ||
+                terrain.has_flag( TFLAG_RAMP_DOWN ) ) {
+                cur_value |= PF_UPDOWN;
+            }
+
+            if( terrain.has_flag( TFLAG_SHARP ) ) {
+                cur_value |= PF_SHARP;
+            }
+
+            pf_special_cache[sx][sy] = cur_value;
+        }
+    }
+    pf_dirty = false;
+}
+
+auto submap::rebuild_transparency_cache( const map &m, tripoint grid_pos ) -> void
+{
+    if( !transparency_dirty ) {
+        return;
+    }
+    // outside_cache must be current before applying the weather sight penalty.
+    if( outside_dirty ) {
+        rebuild_outside_cache( m, grid_pos );
+    }
+
+    const float sight_penalty = get_weather().weather_id->sight_penalty;
+
+    for( int sx = 0; sx < SEEX; ++sx ) {
+        for( int sy = 0; sy < SEEY; ++sy ) {
+            const point sp( sx, sy );
+
+            if( !( get_ter( sp ).obj().transparent && get_furn( sp ).obj().transparent ) ) {
+                transparency_cache[sx][sy] = LIGHT_TRANSPARENCY_SOLID;
+                continue;
+            }
+
+            auto value = LIGHT_TRANSPARENCY_OPEN_AIR;
+            if( outside_cache[sx][sy] ) {
+                value *= sight_penalty;
+            }
+
+            for( const auto &fld : get_field( sp ) ) {
+                if( !fld.first.is_valid() ) {
+                    debugmsg( "rebuild_transparency_cache: invalid field type id %d at "
+                              "grid(%d,%d,%d) tile(%d,%d) field_count=%d is_uniform=%d",
+                              fld.first.to_i(), grid_pos.x, grid_pos.y, grid_pos.z,
+                              sx, sy, field_count, static_cast<int>( is_uniform ) );
+                    break;
+                }
+                const auto &cur = fld.second;
+                if( !cur.is_transparent() ) {
+                    value *= cur.translucency();
+                }
+            }
+
+            transparency_cache[sx][sy] = value;
+        }
+    }
+    transparency_dirty = false;
 }

@@ -4,6 +4,10 @@
 #include "sdl_wrappers.h"
 #endif
 
+#include <algorithm>
+#include <array>
+#include <cctype>
+
 #if defined(__ANDROID__)
 #include <SDL_keyboard.h>
 #include "cata_utility.h"
@@ -33,6 +37,174 @@ struct folded_line {
     int cpts_end;
     std::string str;
 };
+
+namespace
+{
+
+auto count_logical_lines( const std::string &text ) -> int
+{
+    const auto newline_count = static_cast<int>( std::ranges::count( text, '\n' ) );
+    return std::max( 1, newline_count + 1 );
+}
+
+auto get_line_number_width( const std::string &text, const int min_width ) -> int
+{
+    const auto line_count = count_logical_lines( text );
+    const auto digits = static_cast<int>( std::to_string( line_count ).size() );
+    return std::max( min_width, digits );
+}
+
+auto ends_with_linebreak( const folded_line &line ) -> bool
+{
+    return !line.str.empty() && line.str.back() == '\n';
+}
+
+auto build_line_number_map( const std::vector<folded_line> &lines ) -> std::vector<int>
+{
+    auto result = std::vector<int>( lines.size(), 0 );
+    auto line_number = 1;
+    for( auto i = 0; i < static_cast<int>( lines.size() ); ++i ) {
+        if( i == 0 || ends_with_linebreak( lines[i - 1] ) ) {
+            result[i] = line_number;
+            ++line_number;
+        }
+    }
+    return result;
+}
+
+auto format_line_number( const int line_number, const int width ) -> std::string
+{
+    if( line_number <= 0 ) {
+        return std::string( width, ' ' );
+    }
+    auto rendered = std::to_string( line_number );
+    const auto padding = width - static_cast<int>( rendered.size() );
+    if( padding > 0 ) {
+        rendered.insert( rendered.begin(), padding, ' ' );
+    }
+    return rendered;
+}
+
+struct lua_syntax_token {
+    std::string text;
+    nc_color color = c_white;
+};
+
+auto is_identifier_start( const char c ) -> bool
+{
+    const auto uc = static_cast<unsigned char>( c );
+    return std::isalpha( uc ) != 0 || c == '_';
+}
+
+auto is_identifier_char( const char c ) -> bool
+{
+    const auto uc = static_cast<unsigned char>( c );
+    return std::isalnum( uc ) != 0 || c == '_';
+}
+
+auto is_number_char( const char c ) -> bool
+{
+    const auto uc = static_cast<unsigned char>( c );
+    return std::isdigit( uc ) != 0 || c == '.' || c == '_'
+           || ( c >= 'a' && c <= 'f' ) || ( c >= 'A' && c <= 'F' )
+           || c == 'x' || c == 'X';
+}
+
+auto is_lua_keyword( const std::string_view token ) -> bool
+{
+    static constexpr auto keywords = std::array<std::string_view, 22> {
+        "and", "break", "do", "else", "elseif", "end", "false", "for", "function",
+        "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then",
+        "true", "until", "while"
+    };
+    return std::ranges::find( keywords, token ) != keywords.end();
+}
+
+auto push_syntax_token( std::vector<lua_syntax_token> &tokens, const nc_color color,
+                        const std::string_view text ) -> void
+{
+    if( text.empty() ) {
+        return;
+    }
+    if( !tokens.empty() && tokens.back().color == color ) {
+        tokens.back().text.append( text );
+        return;
+    }
+    tokens.push_back( lua_syntax_token{ std::string( text ), color } );
+}
+
+auto build_lua_syntax_tokens( const std::string_view line ) -> std::vector<lua_syntax_token>
+{
+    auto tokens = std::vector<lua_syntax_token>();
+    auto i = std::string::size_type{ 0 };
+    while( i < line.size() ) {
+        const auto c = line[i];
+        if( c == '-' && i + 1 < line.size() && line[i + 1] == '-' ) {
+            push_syntax_token( tokens, c_dark_gray, line.substr( i ) );
+            break;
+        }
+        if( c == '"' || c == '\'' ) {
+            const auto quote = c;
+            auto j = i + 1;
+            auto escaped = false;
+            while( j < line.size() ) {
+                const auto ch = line[j];
+                if( escaped ) {
+                    escaped = false;
+                } else if( ch == '\\' ) {
+                    escaped = true;
+                } else if( ch == quote ) {
+                    ++j;
+                    break;
+                }
+                ++j;
+            }
+            push_syntax_token( tokens, c_light_green, line.substr( i, j - i ) );
+            i = j;
+            continue;
+        }
+        if( std::isdigit( static_cast<unsigned char>( c ) ) != 0
+            || ( c == '.' && i + 1 < line.size()
+                 && std::isdigit( static_cast<unsigned char>( line[i + 1] ) ) != 0 ) ) {
+            auto j = i + 1;
+            while( j < line.size() && is_number_char( line[j] ) ) {
+                ++j;
+            }
+            push_syntax_token( tokens, c_yellow, line.substr( i, j - i ) );
+            i = j;
+            continue;
+        }
+        if( is_identifier_start( c ) ) {
+            auto j = i + 1;
+            while( j < line.size() && is_identifier_char( line[j] ) ) {
+                ++j;
+            }
+            const auto token = line.substr( i, j - i );
+            const auto color = is_lua_keyword( token ) ? c_light_blue : c_white;
+            push_syntax_token( tokens, color, token );
+            i = j;
+            continue;
+        }
+        push_syntax_token( tokens, c_white, line.substr( i, 1 ) );
+        ++i;
+    }
+    return tokens;
+}
+
+auto print_syntax_line( const catacurses::window &win, const point &pos,
+                        const std::string &line ) -> void
+{
+    wmove( win, pos );
+    const auto tokens = build_lua_syntax_tokens( line );
+    for( auto i = std::string::size_type{ 0 }; i < tokens.size(); ++i ) {
+        const auto &token = tokens[i];
+        if( !token.text.empty() ) {
+            wprintz( win, token.color, "%s", token.text );
+        }
+    }
+}
+
+} // namespace
 
 // fold text without truncating spaces or parsing color tags
 class folded_text
@@ -187,6 +359,16 @@ string_editor_window::string_editor_window(
     _utext = utf8_wrapper( text );
 }
 
+string_editor_window::string_editor_window(
+    const std::function<catacurses::window()> &create_window,
+    const std::string &text,
+    const string_editor_window_options &options )
+    : string_editor_window( create_window, text )
+{
+    _show_line_numbers = options.show_line_numbers;
+    _line_number_min_width = options.line_number_min_width;
+}
+
 string_editor_window::~string_editor_window() = default;
 
 point string_editor_window::get_line_and_position( const int position, const bool zero_x )
@@ -199,6 +381,11 @@ void string_editor_window::print_editor( ui_adaptor &ui )
     const point focus = _ime_preview_range ? _ime_preview_range->display_last : _cursor_display;
     const int ftsize = _folded->get_lines().size();
     const int middleofpage = _max.y / 2;
+    const auto line_number_width = _show_line_numbers ? _line_number_width : 0;
+    const auto line_number_padding = _show_line_numbers ? 1 : 0;
+    const auto content_x = 1 + line_number_width + line_number_padding;
+    const auto line_number_map = _show_line_numbers ? build_line_number_map( _folded->get_lines() )
+                                 : std::vector<int>();
 
     int topoflist = 0;
     int bottomoflist = std::min( topoflist + _max.y, ftsize );
@@ -218,7 +405,20 @@ void string_editor_window::print_editor( ui_adaptor &ui )
     for( int i = topoflist; i < bottomoflist; i++ ) {
         const int y = i - topoflist;
         const folded_line &line = _folded->get_lines()[i];
-        mvwprintz( _win, point( 1, y ), c_white, "%s", line.str );
+        if( _show_line_numbers ) {
+            const auto line_number = line_number_map[i];
+            const auto line_number_color = ( !_ime_preview_range && i == _cursor_display.y )
+                                           ? c_white
+                                           : c_light_gray;
+            mvwprintz(
+                _win,
+                point( 1, y ),
+                line_number_color,
+                "%s",
+                format_line_number( line_number, line_number_width )
+            );
+        }
+        print_syntax_line( _win, point( content_x, y ), line.str );
         if( !_ime_preview_range && i == _cursor_display.y ) {
             uint32_t c_cursor = 0;
             const char *src = line.str.c_str();
@@ -235,7 +435,7 @@ void string_editor_window::print_editor( ui_adaptor &ui )
                 || is_linebreak( c_cursor ) || mk_wcwidth( c_cursor ) < 1 ) {
                 c_cursor = ' ';
             }
-            const point cursor_pos( _cursor_display.x + 1, y );
+            const point cursor_pos( _cursor_display.x + content_x, y );
             mvwprintz( _win, cursor_pos, h_white, "%s", utf32_to_utf8( c_cursor ) );
             ui.set_cursor( _win, cursor_pos );
         }
@@ -245,17 +445,17 @@ void string_editor_window::print_editor( ui_adaptor &ui )
             const int end = std::min( _ime_preview_range->end, line.cpts_end ) - line.cpts_start;
             const utf8_wrapper preview = utf8_wrapper( line.str ).substr( beg, end - beg );
             const point disp = i == _ime_preview_range->display_first.y
-                               ? point( _ime_preview_range->display_first.x + 1, y )
-                               : point( 1, y );
+                               ? point( _ime_preview_range->display_first.x + content_x, y )
+                               : point( content_x, y );
             mvwprintz( _win, disp, c_dark_gray_white, "%s", preview.str() );
         }
     }
     if( _ime_preview_range ) {
-        cursor_pos = _ime_preview_range->display_last + point( 1, -topoflist );
+        cursor_pos = _ime_preview_range->display_last + point( content_x, -topoflist );
     }
 
     if( _ime_preview_range ) {
-        const point cursor_pos = _ime_preview_range->display_last + point( 1, -topoflist );
+        const point cursor_pos = _ime_preview_range->display_last + point( content_x, -topoflist );
         ui.set_cursor( _win, cursor_pos );
     }
 
@@ -371,7 +571,14 @@ std::pair<bool, std::string> string_editor_window::query_string()
             if( !edit.empty() ) {
                 text.insert( _position, edit );
             }
-            _folded = std::make_unique<folded_text>( text.str(), _max.x - 2 );
+            if( _show_line_numbers ) {
+                _line_number_width = get_line_number_width( text.str(), _line_number_min_width );
+            } else {
+                _line_number_width = 0;
+            }
+            const auto gutter_width = _show_line_numbers ? _line_number_width + 1 : 0;
+            const auto fold_width = std::max( 1, _max.x - 2 - gutter_width );
+            _folded = std::make_unique<folded_text>( text.str(), fold_width );
             refold = false;
             reposition = true;
         }

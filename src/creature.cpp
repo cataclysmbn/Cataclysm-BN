@@ -52,7 +52,13 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
+#include "overmapbuffer_registry.h"
 #include "profile.h"
+
+const std::string &Creature::get_dimension() const
+{
+    return g_active_dimension_id;
+}
 
 static const ammo_effect_str_id ammo_effect_APPLY_SAP( "APPLY_SAP" );
 static const ammo_effect_str_id ammo_effect_BEANBAG( "BEANBAG" );
@@ -236,6 +242,18 @@ void Creature::process_turn()
     }
 }
 
+void Creature::batch_turns( int n )
+{
+    ZoneScoped;
+    for( int i = 0; i < n; ++i ) {
+        if( is_dead_state() ) {
+            break;
+        }
+        process_turn();
+    }
+    moves = 0;
+}
+
 bool Creature::is_underwater() const
 {
     return underwater;
@@ -283,6 +301,11 @@ bool Creature::sees( const Creature &critter ) const
         // Invisible hallucinations would be pretty useless (nobody would see them at all), therefor
         // the player will see them always.
         return is_player();
+    }
+
+    // Creatures in different dimensions cannot see each other.
+    if( get_dimension() != critter.get_dimension() ) {
+        return false;
     }
 
     if( !fov_3d && !debug_mode && posz() != critter.posz() ) {
@@ -350,26 +373,45 @@ bool Creature::sees( const Creature &critter ) const
 
 bool Creature::sees( const tripoint &t, bool is_avatar, int range_mod ) const
 {
+    ZoneScoped;
     if( !fov_3d && posz() != t.z ) {
         return false;
     }
 
     map &here = get_map();
-    const int range_cur = sight_range( here.ambient_light_at( t ) );
-    const int range_day = sight_range( default_daylight_level() );
-    const int range_night = sight_range( 0 );
-    const int range_max = std::max( range_day, range_night );
-    const int range_min = std::min( range_cur, range_max );
-    const int wanted_range = rl_dist( pos(), t );
+    // A creature in a different dimension from the current render map cannot
+    // perform a valid sight check through that map's terrain data.
+    if( get_dimension() != here.get_bound_dimension() ) {
+        return false;
+    }
+    // range_day and range_night depend only on creature stats, not on the target.
+    // Cache them per-creature per-tick so repeated calls (e.g. from compute_plan)
+    // only pay for sight_range() once.
+    struct range_cache_t {
+        const Creature *creature = nullptr;
+        time_point turn{};
+        int range_day = 0;
+        int range_night = 0;
+        int range_max = 0;
+    };
+    static thread_local range_cache_t tl_range;
+    if( tl_range.creature != this || tl_range.turn != calendar::turn ) {
+        tl_range.creature   = this;
+        tl_range.turn       = calendar::turn;
+        tl_range.range_day  = sight_range( default_daylight_level() );
+        tl_range.range_night = sight_range( 0 );
+        tl_range.range_max  = std::max( tl_range.range_day, tl_range.range_night );
+    }
+    const auto range_max = tl_range.range_max;
+    const auto ambient = here.ambient_light_at( t );
+    const auto range_cur = sight_range( ambient );
+    const auto range_min = std::min( range_cur, range_max );
+    const auto wanted_range = rl_dist( pos(), t );
+    const auto natural_light = g->natural_light_level( t.z );
+    const auto is_lit = ambient > natural_light;
     if( wanted_range <= range_min ||
-        ( wanted_range <= range_max &&
-          here.ambient_light_at( t ) > g->natural_light_level( t.z ) ) ) {
-        int range = 0;
-        if( here.ambient_light_at( t ) > g->natural_light_level( t.z ) ) {
-            range = MAX_VIEW_DISTANCE;
-        } else {
-            range = range_min;
-        }
+        ( wanted_range <= range_max && is_lit ) ) {
+        auto range = is_lit ? g_max_view_distance : range_min;
         if( has_effect( effect_no_sight ) ) {
             range = 1;
         }
@@ -378,10 +420,16 @@ bool Creature::sees( const tripoint &t, bool is_avatar, int range_mod ) const
         }
         if( is_avatar ) {
             // Special case monster -> player visibility, forcing it to be symmetric with player vision.
-            const float player_visibility_factor = g->u.visibility() / 100.0f;
-            int adj_range = std::floor( range * player_visibility_factor );
+            const auto player_visibility_factor = g->u.visibility() / 100.0f;
+            const auto adj_range = static_cast<int>( std::floor( range * player_visibility_factor ) );
+            const auto &_mc = here.get_cache_ref( pos().z );
+            // seen_cache is only valid within the render area; out-of-render entities
+            // are not visible to the player by definition.
+            if( !_mc.inbounds( pos().xy() ) ) {
+                return false;
+            }
             return adj_range >= wanted_range &&
-                   here.get_cache_ref( pos().z ).seen_cache[pos().x][pos().y] > LIGHT_TRANSPARENCY_SOLID;
+                   _mc.seen_cache[_mc.idx( pos().x, pos().y )] > LIGHT_TRANSPARENCY_SOLID;
         } else {
             return here.sees( pos(), t, range );
         }

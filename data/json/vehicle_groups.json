@@ -4,9 +4,11 @@
     "id": "city_vehicles",
     "vehicles": [
       [ "car", 2000 ],
+      [ "sedan", 2000 ],
       [ "car_anmlcmpt", 250 ],
       [ "car_hatch", 1000 ],
       [ "electric_car", 300 ],
+      [ "electric_sedan", 300 ],
       [ "car_sports", 300 ],
       [ "car_sports_electric", 60 ],
       [ "suv", 800 ],
@@ -14,6 +16,7 @@
       [ "suv_electric", 120 ],
       [ "car_mini", 400 ],
       [ "beetle", 500 ],
+      [ "muscle_car", 500 ],
       [ "bicycle", 800 ],
       [ "bicycle_dirt", 200 ],
       [ "bicycle_plastic", 100 ],
@@ -65,6 +68,10 @@
       [ "tatra_truck", 100 ],
       [ "4x4_car", 400 ],
       [ "whillys_mb", 100 ],
+      [ "ifv_m2_bradley", 75 ],
+      [ "tank_m1_abrams", 50 ],
+      [ "tank_m60_patton", 15 ],
+      [ "howitzer_m109", 25 ],
       [ "car_sports_atomic", 15 ],
       [ "bubble_car", 20 ]
     ]
@@ -107,7 +114,8 @@
       [ "sailboat", 125 ],
       [ "pirate_ship", 25 ],
       [ "DUKW", 75 ],
-      [ "hovercraft_motor_single", 25 ]
+      [ "hovercraft_motor_single", 25 ],
+      [ "CG_cutter_25mm", 25 ]
     ]
   },
   {
@@ -172,15 +180,18 @@
     "id": "city_pileup",
     "vehicles": [
       [ "car", 7000 ],
+      [ "sedan", 7000 ],
       [ "car_anmlcmpt", 600 ],
       [ "car_hatch", 3500 ],
       [ "electric_car", 800 ],
+      [ "electric_sedan", 800 ],
       [ "car_sports", 500 ],
       [ "suv", 1000 ],
       [ "suv_electric", 300 ],
       [ "suv_electric", 150 ],
       [ "car_mini", 500 ],
       [ "beetle", 500 ],
+      [ "muscle_car", 500 ],
       [ "pickup", 1600 ],
       [ "pickup_diesel", 400 ],
       [ "flatbed_truck", 800 ],
@@ -203,9 +214,11 @@
     "id": "highway",
     "vehicles": [
       [ "car", 3000 ],
+      [ "sedan", 3000 ],
       [ "car_anmlcmpt", 250 ],
       [ "car_hatch", 1000 ],
       [ "electric_car", 300 ],
+      [ "electric_sedan", 300 ],
       [ "car_sports", 1000 ],
       [ "car_sports_electric", 300 ],
       [ "pickup", 480 ],
@@ -246,7 +259,13 @@
       [ "blinkie_van", 5 ],
       [ "tatra_truck", 300 ],
       [ "4x4_car", 300 ],
-      [ "whillys_mb", 100 ]
+      [ "whillys_mb", 100 ],
+      [ "ifv_m2_bradley", 250 ],
+      [ "tank_m1_abrams", 125 ],
+      [ "tank_m60_patton", 25 ],
+      [ "howitzer_m109", 75 ],
+      [ "tank_xm7_elec", 5 ],
+      [ "tractor_bandit", 5 ]
     ]
   },
   {
@@ -254,11 +273,14 @@
     "id": "suburban_home",
     "vehicles": [
       [ "car", 1000 ],
+      [ "sedan", 1000 ],
       [ "car_anmlcmpt", 150 ],
       [ "car_hatch", 500 ],
       [ "car_mini", 250 ],
       [ "electric_car", 400 ],
+      [ "electric_sedan", 400 ],
       [ "beetle", 300 ],
+      [ "muscle_car", 300 ],
       [ "car_sports", 100 ],
       [ "car_sports_electric", 50 ],
       [ "car_racing_electric", 5 ],
@@ -324,10 +346,13 @@
       [ "flatbed_truck_diesel", 200 ],
       [ "car_mini", 375 ],
       [ "beetle", 750 ],
+      [ "muscle_car", 750 ],
       [ "car", 1000 ],
+      [ "sedan", 1000 ],
       [ "car_anmlcmpt", 100 ],
       [ "car_hatch", 500 ],
       [ "electric_car", 600 ],
+      [ "electric_sedan", 600 ],
       [ "hippie_van", 675 ],
       [ "hippie_van_electric", 75 ],
       [ "golf_cart", 300 ],
@@ -347,7 +372,13 @@
       [ "portable_generator", 50 ],
       [ "4x4_car", 175 ],
       [ "whillys_mb", 25 ],
-      [ "bubble_car", 50 ]
+      [ "bubble_car", 50 ],
+      [ "ifv_m2_bradley", 50 ],
+      [ "tank_m1_abrams", 25 ],
+      [ "tank_m60_patton", 5 ],
+      [ "tank_m60_patton_mothballed", 5 ],
+      [ "howitzer_m109", 10 ],
+      [ "tank_xm7_elec", 1 ]
     ]
   },
   {
@@ -355,6 +386,7 @@
     "type": "vehicle_group",
     "vehicles": [
       [ "car", 5 ],
+      [ "sedan", 5 ],
       [ "car_hatch", 2 ],
       [ "car_chassis", 20 ],
       [ "engine_crane", 40 ],
@@ -378,6 +410,7 @@
       [ "car_sports_atomic", 1 ],
       [ "car_racing_electric", 1 ],
       [ "electric_car", 14 ],
+      [ "electric_sedan", 14 ],
       [ "engine_crane", 15 ],
       [ "hippie_van_electric", 5 ],
       [ "portable_generator", 10 ],
@@ -399,7 +432,13 @@
       [ "apc-gl", 250 ],
       [ "aapc-mg", 250 ],
       [ "aapc-gl", 125 ],
-      [ "whillys_mb", 50 ]
+      [ "whillys_mb", 50 ],
+      [ "ifv_m2_bradley", 500 ],
+      [ "tank_m1_abrams", 250 ],
+      [ "tank_m60_patton", 25 ],
+      [ "tank_m60_patton_mothballed", 50 ],
+      [ "howitzer_m109", 125 ],
+      [ "tank_xm7_elec", 10 ]
     ]
   },
   {
@@ -412,7 +451,11 @@
       [ "oldtractor", 250 ],
       [ "autotractor", 1000 ],
       [ "excavator", 500 ],
-      [ "helicopter_gyro", 100 ]
+      [ "helicopter_gyro", 100 ],
+      [ "tractor_heavy_plow", 250 ],
+      [ "tractor_heavy_seed", 250 ],
+      [ "tractor_heavy_reaper", 250 ],
+      [ "tractor_bandit", 100 ]
     ]
   },
   {
@@ -428,7 +471,8 @@
       [ "pickup_diesel", 4 ],
       [ "road_roller", 80 ],
       [ "tatra_truck", 20 ],
-      [ "trencher", 40 ]
+      [ "trencher", 40 ],
+      [ "tractor_bandit", 50 ]
     ]
   },
   {
@@ -457,7 +501,8 @@
       [ "quad_bike", 150 ],
       [ "motorcycle", 300 ],
       [ "motorcycle_methcart", 50 ],
-      [ "whillys_mb", 10 ]
+      [ "whillys_mb", 10 ],
+      [ "tractor_bandit", 150 ]
     ]
   },
   {
@@ -465,9 +510,11 @@
     "id": "junkyard_vehicles",
     "vehicles": [
       [ "car", 1500 ],
+      [ "sedan", 1500 ],
       [ "car_hatch", 750 ],
       [ "car_chassis", 2000 ],
       [ "electric_car", 400 ],
+      [ "electric_sedan", 400 ],
       [ "car_sports", 400 ],
       [ "car_sports_electric", 100 ],
       [ "car_racing_electric", 5 ],
@@ -476,11 +523,14 @@
       [ "suv_electric", 120 ],
       [ "car_mini", 300 ],
       [ "beetle", 500 ],
+      [ "muscle_car", 500 ],
       [ "pickup", 480 ],
       [ "pickup_diesel", 120 ],
       [ "hippie_van", 700 ],
       [ "4x4_car", 400 ],
-      [ "whillys_mb", 100 ]
+      [ "whillys_mb", 100 ],
+      [ "tractor_bandit", 200 ],
+      [ "tank_m60_patton_mothballed", 300 ]
     ]
   },
   {
@@ -488,6 +538,7 @@
     "id": "dumpsite_vehicles",
     "vehicles": [
       [ "car", 1000 ],
+      [ "sedan", 1000 ],
       [ "car_hatch", 500 ],
       [ "car_chassis", 1200 ],
       [ "car_sports", 200 ],
@@ -496,6 +547,7 @@
       [ "rv", 250 ],
       [ "meth_lab", 50 ],
       [ "beetle", 400 ],
+      [ "muscle_car", 400 ],
       [ "schoolbus", 100 ],
       [ "flatbed_truck", 160 ],
       [ "flatbed_truck_diesel", 40 ],
@@ -504,7 +556,9 @@
       [ "pickup_diesel", 100 ],
       [ "hippie_van", 350 ],
       [ "4x4_car", 400 ],
-      [ "whillys_mb", 100 ]
+      [ "whillys_mb", 100 ],
+      [ "tractor_bandit", 200 ],
+      [ "tank_m60_patton_mothballed", 300 ]
     ]
   },
   {
@@ -512,9 +566,11 @@
     "id": "campground_vehicles",
     "vehicles": [
       [ "car", 950 ],
+      [ "sedan", 950 ],
       [ "car_hatch", 475 ],
       [ "car_anmlcmpt", 150 ],
       [ "electric_car", 100 ],
+      [ "electric_sedan", 100 ],
       [ "suv", 800 ],
       [ "suv_electric", 100 ],
       [ "suv_electric_rack", 100 ],
@@ -523,6 +579,7 @@
       [ "motorcycle_enduro", 150 ],
       [ "car_mini", 100 ],
       [ "beetle", 200 ],
+      [ "muscle_car", 200 ],
       [ "pickup", 560 ],
       [ "pickup_diesel", 140 ],
       [ "hippie_van", 720 ],
@@ -536,10 +593,12 @@
     "id": "forgotten_vehicles",
     "vehicles": [
       [ "car", 1000 ],
+      [ "sedan", 1000 ],
       [ "car_hatch", 500 ],
       [ "car_anmlcmpt", 100 ],
       [ "suv", 400 ],
       [ "rv", 200 ],
+      [ "tractor_bandit", 250 ],
       [ "car_sports", 300 ],
       [ "cube_van_cheap", 200 ],
       [ "pickup", 400 ],
@@ -555,10 +614,13 @@
       [ "cube_van", 1000 ],
       [ "car_mini", 375 ],
       [ "beetle", 750 ],
+      [ "muscle_car", 750 ],
       [ "car", 1000 ],
+      [ "sedan", 1000 ],
       [ "car_hatch", 500 ],
       [ "car_anmlcmpt", 150 ],
       [ "electric_car", 600 ],
+      [ "electric_sedan", 600 ],
       [ "hippie_van", 675 ],
       [ "hippie_van_electric", 75 ],
       [ "motorcycle", 500 ],
@@ -634,9 +696,14 @@
       [ "Medevac1_Wreck", 50 ],
       [ "SmallFlier3", 300 ],
       [ "Medevac2", 150 ],
-      [ "Medevac2_Wreck", 100 ],
-      [ "blimp", 25 ]
+      [ "Medevac2_Wreck", 100 ]
     ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "runway_large",
+    "//": "Larger planes or blimps that might not fit in normal spawns",
+    "vehicles": [ [ "passenger_plane", 500 ], [ "cargo_plane", 500 ], [ "blimp", 500 ] ]
   },
   {
     "type": "vehicle_group",
@@ -702,8 +769,10 @@
     "//": "for cs_car_showroom",
     "vehicles": [
       [ "electric_car", 100 ],
+      [ "electric_sedan", 100 ],
       [ "suv_electric", 70 ],
       [ "rara_x", 40 ],
+      [ "motorcycle_plane", 20 ],
       [ "car_sports", 30 ],
       [ "car_sports_electric", 20 ],
       [ "car_sports_atomic", 5 ]
@@ -760,12 +829,15 @@
     "//": "for cs_car_dealership",
     "vehicles": [
       [ "car", 2000 ],
+      [ "sedan", 2000 ],
       [ "car_hatch", 1000 ],
       [ "electric_car", 400 ],
+      [ "electric_sedan", 400 ],
       [ "suv", 800 ],
       [ "suv_electric", 200 ],
       [ "car_mini", 400 ],
       [ "beetle", 500 ],
+      [ "muscle_car", 500 ],
       [ "motorcycle", 200 ],
       [ "motorcycle_sidecart", 100 ],
       [ "scooter", 200 ],
@@ -796,7 +868,9 @@
       [ "car_sports_electric", 100 ],
       [ "car_mini", 375 ],
       [ "beetle", 750 ],
+      [ "muscle_car", 750 ],
       [ "car", 1500 ],
+      [ "sedan", 1500 ],
       [ "car_hatch", 750 ],
       [ "suv", 800 ],
       [ "suv_electric", 100 ],
@@ -805,6 +879,7 @@
       [ "pickup_diesel", 10 ],
       [ "car_anmlcmpt", 150 ],
       [ "electric_car", 600 ],
+      [ "electric_sedan", 600 ],
       [ "hippie_van", 675 ],
       [ "hippie_van_electric", 75 ],
       [ "motorcycle", 500 ],
@@ -836,12 +911,15 @@
     "//": "for ws_regional_dump",
     "vehicles": [
       [ "car", 1000 ],
+      [ "sedan", 1000 ],
       [ "car_hatch", 500 ],
       [ "electric_car", 400 ],
+      [ "electric_sedan", 400 ],
       [ "suv", 800 ],
       [ "suv_electric", 200 ],
       [ "car_mini", 400 ],
       [ "beetle", 500 ],
+      [ "muscle_car", 500 ],
       [ "motorcycle", 200 ],
       [ "motorcycle_sidecart", 100 ],
       [ "scooter", 200 ],
@@ -867,7 +945,9 @@
       [ "tractor_reaper", 800 ],
       [ "tractor_plow", 800 ],
       [ "cube_van", 800 ],
-      [ "car_mini", 800 ]
+      [ "car_mini", 800 ],
+      [ "tank_m60_patton", 200 ],
+      [ "tank_m60_patton_mothballed", 600 ]
     ]
   },
   {
@@ -875,12 +955,15 @@
     "id": "oa_vg_ts_vehicles",
     "vehicles": [
       [ "car", 2000 ],
+      [ "sedan", 2000 ],
       [ "car_hatch", 1000 ],
       [ "electric_car", 400 ],
+      [ "electric_sedan", 400 ],
       [ "suv", 800 ],
       [ "suv_electric", 200 ],
       [ "car_mini", 400 ],
       [ "beetle", 500 ],
+      [ "muscle_car", 500 ],
       [ "motorcycle", 200 ],
       [ "motorcycle_cross", 50 ],
       [ "motorcycle_enduro", 50 ],
@@ -903,8 +986,10 @@
     "type": "vehicle_group",
     "vehicles": [
       [ "car", 2000 ],
+      [ "sedan", 2000 ],
       [ "car_hatch", 1000 ],
       [ "electric_car", 400 ],
+      [ "electric_sedan", 400 ],
       [ "car_mini", 250 ],
       [ "suv", 800 ],
       [ "suv_electric", 200 ],
@@ -925,13 +1010,16 @@
     "id": "dealership",
     "vehicles": [
       [ "car", 500 ],
+      [ "sedan", 500 ],
       [ "electric_car", 100 ],
+      [ "electric_sedan", 100 ],
       [ "car_sports", 300 ],
       [ "car_sports_electric", 300 ],
       [ "suv", 500 ],
       [ "suv_electric", 500 ],
       [ "car_mini", 500 ],
       [ "beetle", 500 ],
+      [ "muscle_car", 500 ],
       [ "motorcycle", 200 ],
       [ "superbike", 200 ],
       [ "motorcycle_sidecart", 100 ],
@@ -959,13 +1047,16 @@
     "id": "speedway_car_truck",
     "vehicles": [
       [ "car", 500 ],
+      [ "sedan", 500 ],
       [ "electric_car", 100 ],
+      [ "electric_sedan", 100 ],
       [ "car_sports", 300 ],
       [ "car_sports_electric", 300 ],
       [ "suv", 500 ],
       [ "suv_electric", 500 ],
       [ "car_mini", 500 ],
       [ "beetle", 500 ],
+      [ "muscle_car", 500 ],
       [ "motorcycle", 200 ],
       [ "superbike", 200 ],
       [ "pickup", 640 ],
@@ -992,11 +1083,23 @@
   {
     "id": "military_display_vehicles",
     "type": "vehicle_group",
-    "vehicles": [ [ "whillys_mb_display", 75 ], [ "cannon_3in", 20 ], [ "gatling_carriage", 5 ] ]
+    "vehicles": [ [ "whillys_mb_display", 75 ], [ "cannon_3in", 20 ], [ "gatling_carriage", 5 ], [ "tank_m60_patton_mothballed", 100 ] ]
   },
   {
     "type": "vehicle_group",
     "id": "os_work_vehicles",
     "vehicles": [ [ "wheelbarrow", 60 ], [ "portable_generator", 40 ], [ "oa_work_light", 50 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "tankmod_garage_restoration",
+    "vehicles": [
+      [ "military_cargo_truck", 10 ],
+      [ "humvee", 15 ],
+      [ "whillys_mb", 10 ],
+      [ "whillys_mb_display", 15 ],
+      [ "tank_m60_patton", 25 ],
+      [ "tank_m60_patton_mothballed", 25 ]
+    ]
   }
 ]

@@ -25,6 +25,7 @@
 #include "npc.h"
 #include "output.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "pimpl.h"
 #include "player.h"
 #include "point.h"
@@ -813,7 +814,12 @@ void faction_manager::display() const
         // create a list of NPCs, visible and the ones on overmapbuffer
         followers.clear();
         for( auto &elem : g->get_follower_list() ) {
-            shared_ptr_fast<npc> npc_to_get = overmap_buffer.find_npc( elem );
+            shared_ptr_fast<npc> npc_to_get = nullptr;
+            for_each_overmapbuffer( [&]( const std::string &, overmapbuffer & omb ) {
+                if( !npc_to_get ) {
+                    npc_to_get = omb.find_npc( elem );
+                }
+            } );
             if( !npc_to_get ) {
                 continue;
             }

@@ -84,7 +84,10 @@
     "type": "monstergroup",
     "name": "GROUP_BOOMER_UPGRADE",
     "default": "mon_boomer_huge",
-    "monsters": [ { "monster": "mon_gas_zombie", "freq": 50, "cost_multiplier": 10 } ]
+    "monsters": [
+      { "monster": "mon_gas_zombie", "freq": 50, "cost_multiplier": 10 },
+      { "monster": "mon_zomballoon", "freq": 50, "cost_multiplier": 10 }
+    ]
   },
   {
     "type": "monstergroup",

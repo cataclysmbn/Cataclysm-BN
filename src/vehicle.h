@@ -57,7 +57,8 @@ namespace vehicles
 {
 // ratio of constant rolling resistance to the part that varies with velocity
 constexpr double rolling_constant_to_variable = 33.33;
-constexpr float vmiph_per_tile = 400.0f;
+// 1 tile/s is approximately 1.78816 m/s == 178.816 cm/s.
+constexpr float cmps_per_tile = 178.816f;
 } // namespace vehicles
 struct rider_data {
     Creature *psg = nullptr;
@@ -174,10 +175,8 @@ struct bounding_box {
 
 char keybind( const std::string &opt, const std::string &context = "VEHICLE" );
 
-int mps_to_vmiph( double mps );
-double vmiph_to_mps( int vmiph );
-int cmps_to_vmiph( int cmps );
-int vmiph_to_cmps( int vmiph );
+auto mps_to_cmps( double mps ) -> int;
+auto cmps_to_mps( int cmps ) -> double;
 float impulse_to_damage( float impulse );
 float damage_to_impulse( float damage );
 
@@ -1051,6 +1050,11 @@ class vehicle
         double coeff_air_drag() const;
 
         /**
+         * coefficient of airship balloon drag
+         */
+        double coeff_balloon_drag() const;
+
+        /**
          * coefficient of rolling resistance
          * multiplied by velocity to get the variable part of rolling resistance drag in N
          * multiplied by a constant to get the constant part of rolling resistance drag in N
@@ -1715,6 +1719,10 @@ class vehicle
          * not change therefor no call to set_submap_moved is required.
          */
         tripoint sm_pos;
+        // Absolute submap position — set by loadn(), on_submap_loaded(), copy_grid(),
+        // and displace_vehicle()/z-level transitions.  Runtime-only (not serialized).
+        // Always authoritative while the vehicle is in any loaded submap.
+        tripoint_abs_sm abs_sm_pos;
 
         // alternator load as a percentage of engine power, in units of 0.1% so 1000 is 100.0%
         int alternator_load = 0;
@@ -1730,7 +1738,7 @@ class vehicle
          * set them directly, except when initializing the vehicle or during mapgen.
          */
         point pos;
-        // vehicle current velocity, mph * 100
+        // vehicle current velocity, cm/s
         int velocity = 0;
         // velocity vehicle's cruise control trying to achieve
         int cruise_velocity = 0;
@@ -1738,6 +1746,14 @@ class vehicle
         int vertical_velocity = 0;
         // id of the om_vehicle struct corresponding to this vehicle
         int om_id = -1;
+
+        // ID of the dimension this vehicle belongs to.  Empty string = primary dimension.
+        // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
+        // Persisted across saves so cross-dimension processing survives reload.
+        std::string dimension_id_;
+        auto get_dimension() const -> const std::string & { // *NOPAD*
+            return dimension_id_;
+        }
         // direction, to which vehicle is turning (player control). will rotate frame on next move
         // must be a multiple of 15 degrees
         units::angle turn_dir = 0_degrees;
@@ -1811,6 +1827,12 @@ class vehicle
         bool is_alarm_on = false;
         bool camera_on = false;
         bool autopilot_on = false;
+        // true if any non-broken part has the AUTOLOADER flag; maintained by refresh()
+        bool has_autoloaders = false;
+        // MISSED-4: true if any non-broken part has the RECHARGE flag; maintained by
+        // refresh().  Gates the cargo recharge loop in process_items_in_vehicle()
+        // (analogous to has_autoloaders gating process_autoloaders() in idle()).
+        bool has_cargo_recharge = false;
         // skidding mode
         bool skidding = false;
         // has bloody or smoking parts
@@ -1834,5 +1856,3 @@ namespace rot
 {
 temperature_flag temperature_flag_for_part( const vehicle &veh, size_t part );
 } // namespace rot
-
-

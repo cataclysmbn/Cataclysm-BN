@@ -54,5 +54,37 @@
     "breaks_into": [ { "item": "steel_chunk", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 0, 2 ] } ],
     "extend": { "flags": [ "FOLDABLE", "MUSCLE_ARMS", "CONTROLS" ] },
     "damage_reduction": { "all": 4 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "hand_paddles",
+    "name": { "str": "hand paddles" },
+    "symbol": "*",
+    "color": "light_gray",
+    "broken_symbol": "#",
+    "broken_color": "red",
+    "damage_modifier": 50,
+    "durability": 50,
+    "power": 800,
+    "fuel_type": "muscle",
+    "muscle_power_factor": 40,
+    "noise_factor": 8,
+    "m2c": 45,
+    "exclusions": [ "manual" ],
+    "item": "hand_paddles",
+    "location": "engine_block",
+    "folded_volume": "500 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "60 m" },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "60 m" },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "vehicle_repair_small_wood", 4 ] ]
+      }
+    },
+    "flags": [ "ENGINE", "CONTROLS", "FOLDABLE", "MUSCLE_ARMS", "E_STARTS_INSTANTLY", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "splinter", "count": [ 2, 4 ] } ],
+    "damage_reduction": { "all": 5 }
   }
 ]
