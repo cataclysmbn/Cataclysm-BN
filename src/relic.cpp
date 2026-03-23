@@ -466,7 +466,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
                                 0.0 ) );
         int ticks = elapsed / rech.interval;
         if( ticks > 0 ) {
-            rate_multiplier = rech.rate * ticks;
+            rate_multiplier = ticks;
         }
         itm.set_var( "last_relic_process", to_turn<int>( calendar::turn ) );
     }
