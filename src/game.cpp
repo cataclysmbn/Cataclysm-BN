@@ -5217,10 +5217,10 @@ void game::monmove()
         if( critter.is_dead() ) {
             continue;
         }
-        cata::run_hooks( "on_creature_do_turn", [&critter]( sol::table &params ) {
+        cata::run_hooks( "on_creature_do_turn", [&critter]( sol::table & params ) {
             params["creature"] = static_cast<Creature *>( &critter );
         } );
-        cata::run_hooks( "on_monster_do_turn", [&critter]( sol::table &params ) {
+        cata::run_hooks( "on_monster_do_turn", [&critter]( sol::table & params ) {
             params["monster"] = &critter;
         } );
         if( critter.lod_tier == 2 ) {
@@ -5285,10 +5285,10 @@ void game::npcmove()
         if( !guy.is_simulated() ) {
             continue;
         }
-        cata::run_hooks( "on_creature_do_turn", [&guy]( sol::table &params ) {
+        cata::run_hooks( "on_creature_do_turn", [&guy]( sol::table & params ) {
             params["creature"] = static_cast<Creature *>( &guy );
         } );
-        cata::run_hooks( "on_npc_do_turn", [&guy]( sol::table &params ) {
+        cata::run_hooks( "on_npc_do_turn", [&guy]( sol::table & params ) {
             params["npc"] = &guy;
         } );
 

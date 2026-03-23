@@ -1378,7 +1378,8 @@ class npc : public player
         location_ptr<item, false> cbm_fake_toggled;
 
         bool dead = false;           // If true, we need to be cleaned up
-        bool manually_erased_ = false; // Set by erase(); tells cleanup_dead() not to re-do overmap/follower removal
+        bool manually_erased_ =
+            false; // Set by erase(); tells cleanup_dead() not to re-do overmap/follower removal
 
         bool sees_dangerous_field( const tripoint &p ) const;
         bool could_move_onto( const tripoint &p ) const;
