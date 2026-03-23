@@ -998,6 +998,18 @@
     "allowed_locs": [ "sloc_tankmod_radio_tower" ],
     "missions": [ "MISSION_TANK_SUPPLY_RUN" ],
     "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
-    "flags": [ "CITY_START", "LONE_START", "SUM_START" ]
+    "flags": [ "CITY_START", "LONE_START", "SUM_START" ],
+    "bionics": [
+      "bio_reactor",
+      "bio_metabolics",
+      "bio_ethanol",
+      "bio_ups",
+      "bio_targeting",
+      "bio_geiger",
+      "bio_power_armor_interface",
+      "bio_cqb",
+      "bio_blade",
+      "bio_weight"
+    ]
   }
 ]
