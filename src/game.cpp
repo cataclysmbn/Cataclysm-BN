@@ -4674,8 +4674,11 @@ void game::cleanup_dead()
     if( npc_is_dead ) {
         for( auto it = active_npc.begin(); it != active_npc.end(); ) {
             if( ( *it )->is_dead() ) {
-                remove_npc_follower( ( *it )->getID() );
-                get_overmapbuffer( ( *it )->get_dimension() ).remove_npc( ( *it )->getID() );
+                if( !( *it )->is_manually_erased() ) {
+                    // Normal death path — npc::erase() was not called, so do cleanup here.
+                    remove_npc_follower( ( *it )->getID() );
+                    get_overmapbuffer( ( *it )->get_dimension() ).remove_npc( ( *it )->getID() );
+                }
                 it = active_npc.erase( it );
             } else {
                 it++;
@@ -5269,6 +5272,7 @@ void game::npcmove()
     ZoneScoped;
     // Active NPC processing.  Extracted from monmove() so it can be
     // individually controlled by SLEEP_SKIP_NPC without affecting monsters.
+    processing_npcs_ = true;
     const std::string &player_dim = m.get_bound_dimension();
     for( npc &guy : g->all_npcs() ) {
         const auto dim = guy.get_dimension();
@@ -5321,6 +5325,7 @@ void game::npcmove()
             guy.npc_update_body();
         }
     }
+    processing_npcs_ = false;
     cleanup_dead();
 }
 
@@ -5333,6 +5338,7 @@ void game::sleep_skip_npc_process()
     // NPCs whose current activity is not suspendable (e.g. ACT_OPERATION) are
     // left frozen for the turn rather than interrupted mid-activity.
 
+    processing_npcs_ = true;
     // Every ~30 in-game minutes, re-examine sleeping NPCs and wake any whose
     // sleep need is satisfied or whose player has woken up.  Otherwise, renew
     // their lying-down effect for another 30-minute window.
@@ -5389,6 +5395,7 @@ void game::sleep_skip_npc_process()
         }
         guy.npc_update_body();
     }
+    processing_npcs_ = false;
     cleanup_dead();
 }
 
@@ -5941,6 +5948,18 @@ bool game::update_zombie_pos( const monster &critter, const tripoint &pos )
 void game::remove_zombie( const monster &critter )
 {
     critter_tracker->remove( critter );
+}
+
+void game::erase_npc( character_id id )
+{
+    auto it = std::ranges::find_if( active_npc, [id]( const shared_ptr_fast<npc> &n ) {
+        return n->getID() == id;
+    } );
+    if( it == active_npc.end() ) {
+        debugmsg( "game::erase_npc: NPC (%d) not found in active_npc.", id.get_value() );
+        return;
+    }
+    active_npc.erase( it );
 }
 
 void game::clear_zombies()

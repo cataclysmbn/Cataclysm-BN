@@ -954,9 +954,13 @@ class npc : public player
         void reboot();
         void die( Creature *killer ) override;
         /**
-        * Deletes the npc without any death notifications.
+        * Removes the npc from the game without death notifications or a corpse.
+        * Immediate if called outside npc processing, deferred to cleanup_dead() otherwise.
         */
-        void erase();
+        void erase() override;
+        bool is_manually_erased() const {
+            return manually_erased_;
+        }
         bool is_dead() const;
         // How well we smash terrain (not corpses!)
         int smash_ability() const;
@@ -1368,7 +1372,8 @@ class npc : public player
         // Copy of toggled CBM weapon for comparisons;
         location_ptr<item, false> cbm_fake_toggled;
 
-        bool dead = false;  // If true, we need to be cleaned up
+        bool dead = false;           // If true, we need to be cleaned up
+        bool manually_erased_ = false; // Set by erase(); tells cleanup_dead() not to re-do overmap/follower removal
 
         bool sees_dangerous_field( const tripoint &p ) const;
         bool could_move_onto( const tripoint &p ) const;

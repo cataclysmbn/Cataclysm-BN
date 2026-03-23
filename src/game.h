@@ -530,6 +530,12 @@ class game : public submap_load_listener
     public:
         /** Unloads, then loads the NPCs */
         void reload_npcs();
+        /** Immediately removes NPC with the given id from active_npc. */
+        void erase_npc( character_id id );
+        /** True while npcmove() or sleep_skip_npc_process() is iterating active_npc. */
+        bool is_processing_npcs() const {
+            return processing_npcs_;
+        }
         /** Add follower id to set of followers. */
         void add_npc_follower( const character_id &id );
         /** Remove follower id from follower set. */
@@ -1121,6 +1127,8 @@ class game : public submap_load_listener
         bool npcs_dirty = false;
         /** Has anything died in this turn and needs to be cleaned up? */
         bool critter_died = false;
+        /** True while npcmove()/sleep_skip_npc_process() is iterating active_npc. */
+        bool processing_npcs_ = false;
         /** Is this the first redraw since waiting (sleeping or activity) started */
         bool first_redraw_since_waiting_started = true;
         /** Is Zone manager open or not - changes graphics of some zone tiles */

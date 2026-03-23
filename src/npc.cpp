@@ -2663,10 +2663,16 @@ void npc::erase()
             my_fac->remove_member( getID() );
         }
     }
+    manually_erased_ = true;
     dead = true;
+    on_unload();
     g->remove_npc_follower( getID() );
     get_overmapbuffer( get_dimension() ).remove_npc( getID() );
-    g->cleanup_dead();
+    if( g->is_processing_npcs() ) {
+        // Deferred: cleanup_dead() at the end of npcmove() will remove from active_npc.
+        return;
+    }
+    g->erase_npc( getID() );
 }
 
 std::string npc_attitude_id( npc_attitude att )

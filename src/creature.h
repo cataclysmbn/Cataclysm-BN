@@ -284,6 +284,9 @@ class Creature
         /** Empty function. Should always be overwritten by the appropriate player/NPC/monster version. */
         virtual void die( Creature *killer ) = 0;
 
+        /** Removes this creature from the game without death notifications or a corpse. */
+        virtual void erase();
+
         virtual float dodge_roll() = 0;
         virtual float stability_roll() const = 0;
 
