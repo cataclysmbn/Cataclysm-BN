@@ -11990,7 +11990,8 @@ void game::update_performance_bubble()
     if( in_activity_bubble_ ) {
         target = std::min( target, activity_size );
     }
-    if( vehicle_size > 0 && vehicle_size < normal_size && ( ( u.in_vehicle && u.controlling_vehicle ) || u.is_mounted() ) ) {
+    if( vehicle_size > 0 && vehicle_size < normal_size && ( ( u.in_vehicle && u.controlling_vehicle ) ||
+            u.is_mounted() ) ) {
         target = std::min( target, vehicle_size );
     }
 
