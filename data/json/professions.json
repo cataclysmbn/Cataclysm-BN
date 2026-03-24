@@ -12,6 +12,12 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "tankmod_army_mags_m9",
+    "entries": [ { "item": "m9mag", "ammo-item": "9mm", "charges": 15 }, { "item": "m9mag", "ammo-item": "9mm", "charges": 15 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "hitman_pistol",
     "entries": [
       { "item": "walther_ppq_45", "ammo-item": "45_super", "charges": 12, "contents-item": [ "suppressor", "pistol_grip" ] }
@@ -7475,5 +7481,135 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "flags": [ "SCEN_ONLY", "VEH_GROUNDED" ]
+  },
+  {
+    "type": "profession",
+    "id": "tankmod_driver",
+    "name": "Tank Driver",
+    "description": "You were in charge of driving the tank, but without a commander it's a lot harder to get a clear picture of what's around you.",
+    "points": 4,
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 4, "name": "driving" },
+      { "level": 1, "name": "mechanics" },
+      { "level": 2, "name": "gun" },
+      { "level": 3, "name": "rifle" }
+    ],
+    "items": {
+      "both": {
+        "items": [ "pants_army", "socks", "boots_combat", "wristwatch", "gloves_tactical", "helmet_army", "jacket_army", "webbing_belt" ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "legpouch_large", "contents-group": "army_mags_m4" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "m4a1", "ammo-item": "556", "charges": 30, "contents-item": "shoulder_strap" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
+    "id": "tankmod_gunner",
+    "name": "Tank Gunner",
+    "description": "You were responsible for aiming and firing the main gun, but now you have no one left to spot targets for you.",
+    "points": 4,
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 4, "name": "launcher" },
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "rifle" }
+    ],
+    "items": {
+      "both": {
+        "items": [ "pants_army", "socks", "boots_combat", "wristwatch", "gloves_tactical", "helmet_army", "jacket_army", "webbing_belt" ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "legpouch_large", "contents-group": "army_mags_m4" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "m4a1", "ammo-item": "556", "charges": 30, "contents-item": "shoulder_strap" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
+    "id": "tankmod_loader",
+    "name": "Tank Loader",
+    "description": "Your job was to help the main gunner with loading, now you'll have to do all the work yourself.",
+    "points": 3,
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 3, "name": "mechanics" },
+      { "level": 1, "name": "launcher" },
+      { "level": 2, "name": "gun" },
+      { "level": 3, "name": "pistol" }
+    ],
+    "items": {
+      "both": {
+        "items": [ "pants_army", "socks", "boots_combat", "wristwatch", "gloves_tactical", "helmet_army", "jacket_army", "webbing_belt" ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "legpouch_large", "contents-group": "tankmod_army_mags_m9" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "m9", "ammo-item": "9mm", "charges": 15, "container-item": "holster" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
+    "id": "tankmod_commander",
+    "name": "Tank Commander",
+    "description": "Your role was to coordinate the tank crew's actions and spot targets, a job made significantly harder by everyone else being either dead or MIA.",
+    "points": 5,
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 3, "name": "survival" },
+      { "level": 2, "name": "firstaid" },
+      { "level": 1, "name": "driving" },
+      { "level": 2, "name": "gun" },
+      { "level": 3, "name": "pistol" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "pants_army",
+          "socks",
+          "boots_combat",
+          "wristwatch",
+          "gloves_tactical",
+          "helmet_army",
+          "jacket_army",
+          "webbing_belt",
+          "binoculars",
+          "militarymap"
+        ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "legpouch_large", "contents-group": "tankmod_army_mags_m9" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "m9", "ammo-item": "9mm", "charges": 15, "container-item": "holster" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
   }
 ]

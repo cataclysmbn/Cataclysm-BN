@@ -1128,8 +1128,8 @@
     "required_skills": [ [ "fabrication", 4 ], [ "mechanics", 2 ], [ "electronics", 2 ] ],
     "time": "240 m",
     "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "WRENCH", "level": 1 } ], [ { "id": "SCREW", "level": 1 } ] ],
-    "components": [ [ [ "well_pump", 1 ] ], [ [ "pipe", 6 ] ], [ [ "motor_small", 1 ] ], [ [ "power_supply", 1 ] ], [ [ "cable", 10 ] ] ],
-    "pre_terrain": "t_covered_well",
+    "components": [ [ [ "motor_small", 1 ] ], [ [ "power_supply", 1 ] ], [ [ "cable", 10 ] ] ],
+    "pre_terrain": "t_water_pump",
     "post_furniture": "f_electric_well_pump"
   },
   {

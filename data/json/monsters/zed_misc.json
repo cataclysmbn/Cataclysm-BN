@@ -1090,6 +1090,7 @@
     "melee_cut": 5,
     "dodge": 2,
     "vision_night": 3,
+    "harvest": "zombie",
     "armor_bash": 12,
     "armor_cut": 10,
     "armor_bullet": 8,

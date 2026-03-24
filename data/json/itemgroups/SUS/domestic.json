@@ -130,14 +130,19 @@
     "subtype": "collection",
     "entries": [
       { "item": "microwave", "prob": 90 },
-      { "item": "food_processor", "prob": 70 },
+      {
+        "distribution": [
+          { "item": "food_processor", "prob": 70 },
+          { "item": "multi_cooker", "prob": 50 },
+          { "item": "dehydrator", "prob": 30 },
+          { "item": "hotplate", "prob": 30 }
+        ],
+        "prob": 50
+      },
       { "item": "waffleiron", "prob": 45 },
-      { "item": "multi_cooker", "prob": 25 },
       { "item": "pastaextruder", "prob": 10 },
-      { "item": "dehydrator", "prob": 10 },
       { "item": "soda_machine", "prob": 10 },
       { "item": "carbondioxide_tank", "prob": 2 },
-      { "item": "hotplate", "prob": 10 },
       { "collection": [ { "item": "charcoal", "prob": 70 }, { "item": "char_smoker", "prob": 100 } ], "prob": 5 },
       { "item": "can_sealer", "prob": 2 },
       { "group": "dishes_utility", "prob": 50, "count": [ 1, 3 ] }

@@ -1137,6 +1137,8 @@ void Item_factory::init()
     add_actor( std::make_unique<iuse_reveal_contents>() );
     add_actor( std::make_unique<iuse_flowerpot_plant>() );
     add_actor( std::make_unique<iuse_flowerpot_collect>() );
+    add_actor( std::make_unique<iuse_dimension_travel>() );
+    add_actor( std::make_unique<iuse_pocket_dimension>() );
 
     // An empty dummy group, it will not spawn anything. However, it makes that item group
     // id valid, so it can be used all over the place without need to explicitly check for it.
@@ -2812,6 +2814,8 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
             delete_qualities_from_json( tmp, "qualities", def );
         }
     }
+
+    assign( jo, "crafting_speed_modifier", def.crafting_speed_modifier );
 
     if( jo.has_member( "properties" ) ) {
         set_properties_from_json( jo, "properties", def );

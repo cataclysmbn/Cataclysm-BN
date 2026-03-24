@@ -67,7 +67,7 @@ end
 
 ---@type fun(who: Character, item: Item, pos: Tripoint): integer
 analyzer.menu = function(params)
-  local who = params.who
+  local who = params.user
   local item = params.item
   local pos = params.pos
   local artifacts = collect_artifacts(who)

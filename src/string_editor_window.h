@@ -47,9 +47,21 @@ class string_editor_window
 
         std::unique_ptr<input_context> ctxt;
 
+        bool _show_line_numbers = false;
+        int _line_number_min_width = 2;
+        int _line_number_width = 0;
+
     public:
+        struct string_editor_window_options {
+            bool show_line_numbers = false;
+            int line_number_min_width = 2;
+        };
+
         string_editor_window( const std::function<catacurses::window()> &create_window,
                               const std::string &text );
+        string_editor_window( const std::function<catacurses::window()> &create_window,
+                              const std::string &text,
+                              const string_editor_window_options &options );
         ~string_editor_window();
 
         /*loop, user input is handled. returns whether user confirmed input and
@@ -69,4 +81,3 @@ class string_editor_window
         /*returns line and position in folded text for position in text*/
         point get_line_and_position( const int position, const bool zero_x );
 };
-

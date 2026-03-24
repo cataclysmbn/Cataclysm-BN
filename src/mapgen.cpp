@@ -21,6 +21,7 @@
 #include "calendar.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "catalua_mapgen.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character_id.h"
@@ -33,6 +34,7 @@
 #include "drawing_primitives.h"
 #include "enums.h"
 #include "field_type.h"
+#include "fluid_grid.h"
 #include "game.h"
 #include "game_constants.h"
 #include "generic_factory.h"
@@ -49,9 +51,11 @@
 #include "map_extras.h"
 #include "map_iterator.h"
 #include "mapdata.h"
+#include "mapgen_async.h"
 #include "mapgen_functions.h"
 #include "mapgendata.h"
 #include "mapgenformat.h"
+#include "thread_pool.h"
 #include "memory_fast.h"
 #include "mission.h"
 #include "mod_manager.h"
@@ -140,19 +144,22 @@ void map::generate( const tripoint &p, const time_point &when )
     // x, and y are submap coordinates, convert to overmap terrain coordinates
     // TODO: fix point types
     tripoint_abs_omt abs_omt( sm_to_omt_copy( p ) );
-    oter_id terrain_type = overmap_buffer.ter( abs_omt );
+    // Use the dimension-specific overmapbuffer so worker threads do not read the
+    // active-dimension global (g_active_dimension_id).
+    overmapbuffer &omap = get_overmapbuffer( bound_dimension_ );
+    oter_id terrain_type = omap.ter( abs_omt );
 
     // This attempts to scale density of zombies inversely with distance from the nearest city.
     // In other words, make city centers dense and perimeters sparse.
     float density = 0.0;
     for( int i = -MON_RADIUS; i <= MON_RADIUS; i++ ) {
         for( int j = -MON_RADIUS; j <= MON_RADIUS; j++ ) {
-            density += overmap_buffer.ter( abs_omt + point( i, j ) )->get_mondensity();
+            density += omap.ter( abs_omt + point( i, j ) )->get_mondensity();
         }
     }
     density = density / 100;
 
-    mapgendata dat( abs_omt, *this, density, when, nullptr );
+    mapgendata dat( abs_omt, *this, density, when, nullptr, omap );
     draw_map( dat );
 
     // At some point, we should add region information so we can grab the appropriate extras
@@ -201,15 +208,13 @@ void map::generate( const tripoint &p, const time_point &when )
         }
     }
 
-    cata::run_on_mapgen_postprocess_hooks(
-        *DynamicDataLoader::get_instance().lua,
-        *this,
-        sm_to_omt_copy( p ),
-        when
-    );
-
-    // Okay, we know who are neighbors are.  Let's draw!
-    // And finally save used submaps and delete the rest.
+    // Save the 2×2 OMT-aligned submaps into the mapbuffer first.  This must
+    // happen before the Lua postprocess hook so that:
+    //  (a) The hook runs against the same submap objects that are now owned
+    //      by the mapbuffer (modifications persist without an extra save step).
+    //  (b) When generate() is called from a worker thread, the submaps land
+    //      in the mapbuffer before the deferred hook is queued, so the main
+    //      thread can reconstruct a tinymap from the mapbuffer to run it.
     for( int i = 0; i < my_MAPSIZE; i++ ) {
         for( int j = 0; j < my_MAPSIZE; j++ ) {
             dbg( DL::Info ) << "map::generate: submap (" << i << "," << j << ")";
@@ -223,6 +228,21 @@ void map::generate( const tripoint &p, const time_point &when )
                 setsubmap( grid_pos, nullptr );
             }
         }
+    }
+
+    // Run the Lua on_mapgen_postprocess hook.
+    // Main thread: run immediately.  Worker thread: defer (Lua is not thread-safe).
+    // map::shift() drains deferred hooks after drain_completed().
+    const tripoint_abs_omt omt_pos( sm_to_omt_copy( p ) );
+    if( is_pool_worker_thread() ) {
+        push_deferred_mapgen_hook( { bound_dimension_, omt_pos, when } );
+    } else {
+        cata::run_on_mapgen_postprocess_hooks(
+            *DynamicDataLoader::get_instance().lua,
+            *this,
+            omt_pos.raw(),
+            when
+        );
     }
 }
 
@@ -508,6 +528,12 @@ load_mapgen_function( const JsonObject &jio, point offset, point total )
         jo.allow_omitted_members();
         return std::make_shared<mapgen_function_json>(
                    jsrc, mgweight, offset, total );
+    } else if( mgtype == "lua" ) {
+        if( !jio.has_string( "luamethod" ) ) {
+            jio.throw_error( R"(mapgen with method "lua" must define string "luamethod")" );
+        }
+        std::string luamethod = jio.get_string( "luamethod" );
+        return std::make_shared<mapgen_function_lua>( luamethod, mgweight );
     } else {
         jio.throw_error( R"(invalid value: must be "builtin" or "json")", "method" );
     }
@@ -1686,7 +1712,7 @@ class jmapgen_sign : public jmapgen_piece
                 std::string cityname = "illegible city name";
                 tripoint abs_sub = dat.m.get_abs_sub();
                 // TODO: fix point types
-                const city *c = overmap_buffer.closest_city( tripoint_abs_sm( abs_sub ) ).city;
+                const city *c = dat.get_overmapbuffer().closest_city( tripoint_abs_sm( abs_sub ) ).city;
                 if( c != nullptr ) {
                     cityname = c->name;
                 }
@@ -1739,7 +1765,7 @@ class jmapgen_graffiti : public jmapgen_piece
                 std::string cityname = "illegible city name";
                 tripoint abs_sub = dat.m.get_abs_sub();
                 // TODO: fix point types
-                const city *c = overmap_buffer.closest_city( tripoint_abs_sm( abs_sub ) ).city;
+                const city *c = dat.get_overmapbuffer().closest_city( tripoint_abs_sm( abs_sub ) ).city;
                 if( c != nullptr ) {
                     cityname = c->name;
                 }
@@ -1848,11 +1874,17 @@ class jmapgen_gaspump : public jmapgen_piece
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
             const point r( x.get(), y.get() );
-            int charges = amount.get();
+            auto charges = amount.get();
             dat.m.furn_set( r, f_null );
             if( charges == 0 ) {
                 charges = rng( 10000, 50000 );
             }
+
+            const auto global_rate = get_option<float>( "ITEM_SPAWNRATE" );
+            const auto fuel_rate = get_option<float>( "SPAWN_RATE_fuel" );
+            const auto combined_rate = global_rate * fuel_rate;
+            charges = static_cast<int>( charges * combined_rate );
+
             itype_id chosen_fuel = fuel.get( dat );
             if( chosen_fuel.is_null() ) {
                 dat.m.place_gas_pump( r, charges );
@@ -1885,19 +1917,35 @@ class jmapgen_liquid_item : public jmapgen_piece
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
             if( one_in( chance.get() ) ) {
-                itype_id chosen_id = liquid.get( dat );
+                const auto chosen_id = liquid.get( dat );
                 if( chosen_id.is_null() ) {
                     return;
                 }
                 // Itemgroups apply migrations when being loaded, but we need to migrate
                 // individual items here.
-                itype_id migrated = item_controller->migrate_id( chosen_id );
-                detached_ptr<item> newliquid = item::spawn( migrated, calendar::start_of_cataclysm );
+                const auto migrated = item_controller->migrate_id( chosen_id );
+                auto newliquid = item::spawn( migrated, calendar::start_of_cataclysm );
                 if( amount.valmax > 0 ) {
-                    newliquid->charges = amount.get();
+                    auto base_charges = amount.get();
+                    const auto global_rate = get_option<float>( "ITEM_SPAWNRATE" );
+                    const auto cat_rate = dat.m.item_category_spawn_rate( *newliquid );
+                    const auto combined_rate = global_rate * cat_rate;
+                    newliquid->charges = static_cast<int>( base_charges * combined_rate );
                 }
-                dat.m.add_item_or_charges( tripoint( x.get(), y.get(), dat.m.get_abs_sub().z ),
-                                           std::move( newliquid ) );
+
+                const auto target = tripoint( x.get(), y.get(), dat.m.get_abs_sub().z );
+                const auto &furn = dat.m.furn( target.xy() ).obj();
+                if( furn.fluid_grid && furn.fluid_grid->role == fluid_grid_role::tank &&
+                    furn.fluid_grid->allowed_liquids.contains( migrated ) ) {
+                    const auto target_abs_omt = project_to<coords::omt>( dat.m.getglobal( target ) );
+                    const auto added = fluid_grid::seed_liquid_charges_for_mapgen( target_abs_omt, migrated,
+                                       newliquid->charges );
+                    if( added > 0 ) {
+                        return;
+                    }
+                }
+
+                dat.m.add_item_or_charges( target, std::move( newliquid ) );
             }
         }
 
@@ -2272,8 +2320,15 @@ class jmapgen_artifact : public jmapgen_piece
 
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
-            const auto raw_chance = chance.get();
-            if( raw_chance != 100 && !x_in_y( raw_chance, 100 ) ) {
+            auto raw_chance = chance.get();
+
+            const auto global_rate = get_option<float>( "ITEM_SPAWNRATE" );
+            const auto artifact_rate = get_option<float>( "SPAWN_RATE_artifacts" );
+            const auto combined_rate = std::min( global_rate * artifact_rate, 1.0f );
+
+            const auto final_chance = static_cast<int>( raw_chance * combined_rate );
+
+            if( final_chance != 100 && !x_in_y( final_chance, 100 ) ) {
                 return;
             }
             const tripoint p( x.get(), y.get(), dat.m.get_abs_sub().z );
@@ -4036,10 +4091,7 @@ void map::draw_map( mapgendata &dat )
     const bool generated = run_mapgen_func( function_key, dat );
 
     if( !generated ) {
-        if( is_ot_match( "slimepit", terrain_type, ot_match_type::prefix ) ||
-            is_ot_match( "slime_pit", terrain_type, ot_match_type::prefix ) ) {
-            draw_slimepit( dat );
-        } else if( is_ot_match( "office", terrain_type, ot_match_type::prefix ) ) {
+        if( is_ot_match( "office", terrain_type, ot_match_type::prefix ) ) {
             draw_office_tower( dat );
         } else if( is_ot_match( "temple", terrain_type, ot_match_type::prefix ) ) {
             draw_temple( dat );
@@ -5985,56 +6037,6 @@ void map::draw_mine( mapgendata &dat )
     }
 }
 
-void map::draw_slimepit( mapgendata &dat )
-{
-    const oter_id &terrain_type = dat.terrain_type();
-    if( is_ot_match( "slimepit", terrain_type, ot_match_type::prefix ) ) {
-        if( dat.zlevel() == 0 ) {
-            dat.fill_groundcover();
-        } else {
-            draw_fill_background( t_rock_floor );
-        }
-
-        for( int i = 0; i < 4; i++ ) {
-            if( !is_ot_match( "slimepit", dat.t_nesw[i], ot_match_type::prefix ) ) {
-                dat.set_dir( i, SEEX );
-            }
-        }
-
-        for( int i = 0; i < SEEX * 2; i++ ) {
-            for( int j = 0; j < SEEY * 2; j++ ) {
-                if( !one_in( 5 ) && ( rng( 0, dat.n_fac ) <= j &&
-                                      rng( 0, dat.w_fac ) <= i &&
-                                      SEEY * 2 - rng( 0, dat.s_fac ) > j &&
-                                      SEEX * 2 - rng( 0, dat.e_fac ) > i ) ) {
-                    ter_set( point( i, j ), t_slime );
-                }
-            }
-        }
-        if( terrain_type == "slimepit_down" ) {
-            ter_set( point( rng( 3, SEEX * 2 - 4 ), rng( 3, SEEY * 2 - 4 ) ), t_slope_down );
-        }
-        if( dat.above() == "slimepit_down" ) {
-            switch( rng( 1, 4 ) ) {
-                case 1:
-                    ter_set( point( rng( 0, 2 ), rng( 0, 2 ) ), t_slope_up );
-                    break;
-                case 2:
-                    ter_set( point( rng( 0, 2 ), SEEY * 2 - rng( 1, 3 ) ), t_slope_up );
-                    break;
-                case 3:
-                    ter_set( point( SEEX * 2 - rng( 1, 3 ), rng( 0, 2 ) ), t_slope_up );
-                    break;
-                case 4:
-                    ter_set( point( SEEX * 2 - rng( 1, 3 ), SEEY * 2 - rng( 1, 3 ) ), t_slope_up );
-            }
-        }
-        place_spawns( GROUP_BLOB, 1, point( SEEX, SEEY ), point( SEEX, SEEY ), 0.15 );
-        place_items( item_group_id( "sewer" ), 40, point_zero, point( EAST_EDGE, SOUTH_EDGE ), true,
-                     calendar::start_of_cataclysm );
-    }
-}
-
 void map::draw_connections( const mapgendata &dat )
 {
     const oter_id &terrain_type = dat.terrain_type();
@@ -6188,7 +6190,7 @@ void map::place_spawns( const mongroup_id &group, const int chance,
     if( !group.is_valid() ) {
         // TODO: fix point types
         const tripoint_abs_omt omt( sm_to_omt_copy( get_abs_sub() ) );
-        const oter_id &oid = overmap_buffer.ter( omt );
+        const oter_id &oid = get_overmapbuffer( bound_dimension_ ).ter( omt );
         debugmsg( "place_spawns: invalid mongroup '%s', om_terrain = '%s' (%s)", group.c_str(),
                   oid.id().c_str(), oid->get_mapgen_id().c_str() );
         return;
@@ -6281,13 +6283,18 @@ character_id map::place_npc( point p, const string_id<npc_template> &type, bool 
     temp->load_npc_template( type );
     temp->spawn_at_precise( { abs_sub.xy() }, { p, abs_sub.z } );
     temp->toggle_trait( trait_NPC_STATIC_NPC );
-    overmap_buffer.insert_npc( temp );
-    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-        params["creature"] = temp.get();
-    } );
-    cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
-        params["npc"] = temp.get();
-    } );
+    get_overmapbuffer( bound_dimension_ ).insert_npc( temp );
+    // Lua is not reentrant — skip notification hooks on worker threads.
+    // The NPC is already registered in the overmapbuffer (thread-safe via npc_mutex_);
+    // mods that need on_npc_spawn will see it when the main thread next loads the submap.
+    if( !is_pool_worker_thread() ) {
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = temp.get();
+        } );
+        cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+            params["npc"] = temp.get();
+        } );
+    }
     return temp->getID();
 }
 
@@ -6328,7 +6335,7 @@ std::vector<item *> map::place_items( const item_group_id &loc, const int chance
         if( !it.is_valid() ) {
             // TODO: fix point types
             const tripoint_abs_omt omt( sm_to_omt_copy( get_abs_sub() ) );
-            const oter_id &oid = overmap_buffer.ter( omt );
+            const oter_id &oid = get_overmapbuffer( bound_dimension_ ).ter( omt );
             debugmsg( "place_items: invalid item group / item '%s', om_terrain = '%s' (%s)",
                       loc.c_str(), oid.id().c_str(), oid->get_mapgen_id().c_str() );
             return res;
@@ -6466,10 +6473,6 @@ void map::add_spawn( const mtype_id &type, int count, const tripoint &p,
                      spawn_disposition disposition,
                      int faction_id, int mission_id, const std::string &name ) const
 {
-    if( p.x < 0 || p.x >= SEEX * my_MAPSIZE || p.y < 0 || p.y >= SEEY * my_MAPSIZE ) {
-        debugmsg( "Bad add_spawn(%s, %d, %d, %d)", type.c_str(), count, p.x, p.y );
-        return;
-    }
     point offset;
     submap *place_on_submap = get_submap_at( p, offset );
 
@@ -6548,6 +6551,12 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
         auto &ch = get_cache( placed_vehicle->sm_pos.z );
         ch.vehicle_list.insert( placed_vehicle );
         add_vehicle_to_cache( placed_vehicle );
+
+        placed_vehicle->abs_sm_pos = tripoint_abs_sm(
+                                         abs_sub.x + placed_vehicle->sm_pos.x,
+                                         abs_sub.y + placed_vehicle->sm_pos.y,
+                                         placed_vehicle->sm_pos.z );
+        loaded_vehicles.insert( placed_vehicle );
 
         //debugmsg ("grid[%d]->vehicles.size=%d veh.parts.size=%d", nonant, grid[nonant]->vehicles.size(),veh.parts.size());
     }
@@ -6705,11 +6714,12 @@ void map::rotate( int turns, const bool setpos_safe )
     rc.fromabs( point( abs_sub.x * SEEX, abs_sub.y * SEEY ) );
 
     // TODO: This radius can be smaller - how small?
-    const int radius = HALF_MAPSIZE + 3;
+    const int radius = g_half_mapsize + 3;
     // uses submap coordinates
     // TODO: fix point types
+    overmapbuffer &omap = get_overmapbuffer( bound_dimension_ );
     const std::vector<shared_ptr_fast<npc>> npcs =
-            overmap_buffer.get_npcs_near( tripoint_abs_sm( abs_sub ), radius );
+            omap.get_npcs_near( tripoint_abs_sm( abs_sub ), radius );
     for( const shared_ptr_fast<npc> &i : npcs ) {
         npc &np = *i;
         const tripoint sq = np.global_square_location();
@@ -6745,9 +6755,9 @@ void map::rotate( int turns, const bool setpos_safe )
             // OK, this is ugly: we remove the NPC from the whole map
             // Then we place it back from scratch
             // It could be rewritten to utilize the fact that rotation shouldn't cross overmaps
-            shared_ptr_fast<npc> npc_ptr = overmap_buffer.remove_npc( np.getID() );
+            shared_ptr_fast<npc> npc_ptr = omap.remove_npc( np.getID() );
             np.spawn_at_precise( { abs_sub.xy() }, { new_pos, abs_sub.z } );
-            overmap_buffer.insert_npc( npc_ptr );
+            omap.insert_npc( npc_ptr );
         }
     }
 
@@ -7435,7 +7445,8 @@ bool update_mapgen_function_json::update_map( const tripoint_abs_omt &omt_pos, p
     const tripoint sm_pos = project_to<coords::sm>( omt_pos ).raw();
     update_tmap.load( sm_pos, true );
 
-    mapgendata md( omt_pos, update_tmap, 0.0f, calendar::start_of_cataclysm, miss );
+    mapgendata md( omt_pos, update_tmap, 0.0f, calendar::start_of_cataclysm, miss,
+                   get_overmapbuffer( update_tmap.get_bound_dimension() ) );
 
     return update_map( md, offset, verify );
 }

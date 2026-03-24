@@ -105,7 +105,8 @@
     "price_postapoc": "0 cent",
     "material": [ "paper" ],
     "symbol": "*",
-    "color": "light_gray"
+    "color": "light_gray",
+    "flags": [ "MISSION_ITEM" ]
   },
   {
     "id": "chess",

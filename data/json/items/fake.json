@@ -581,7 +581,7 @@
       {
         "type": "repair_item",
         "item_action_type": "repair_metal",
-        "materials": [ "plastic", "lead", "tin", "zinc" ],
+        "materials": [ "plastic", "lead", "tin", "zinc", "rubber" ],
         "skill": "fabrication",
         "cost_scaling": 0.1,
         "move_cost": 1500
@@ -783,7 +783,8 @@
     "type": "TOOL",
     "name": { "str": "installed reloading press" },
     "//": "Doesn't substitute for hand press because we want to define this tool in crafting requirements separately, due to disassembly code.",
-    "qualities": [ [ "PULL", 2 ], [ "CASING_PRESSING", 3 ] ]
+    "qualities": [ [ "PULL", 2 ], [ "CASING_PRESSING", 3 ] ],
+    "crafting_speed_modifier": 1.5
   },
   {
     "id": "grid_hydraulic_press",

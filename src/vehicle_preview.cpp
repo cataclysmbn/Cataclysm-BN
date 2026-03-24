@@ -22,12 +22,12 @@ static const std::string empty_string;
 // We provide our own static definitions here to avoid duplicate symbols
 static int termx_to_pixel_value()
 {
-    return projected_window_width() / TERMX;
+    return projected_window_width() / TERMX / get_scaling_factor();
 }
 
 static int termy_to_pixel_value()
 {
-    return projected_window_height() / TERMY;
+    return projected_window_height() / TERMY / get_scaling_factor();
 }
 
 /**

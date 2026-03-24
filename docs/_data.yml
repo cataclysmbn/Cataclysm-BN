@@ -17,4 +17,5 @@ repo:
   path: /docs
 
 extra_head: |
+  <link rel="stylesheet" href="/prism.css">
   <script type="module" src="/redirect.js"></script>

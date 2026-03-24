@@ -108,7 +108,8 @@
     "material": "steel",
     "symbol": ";",
     "color": "light_gray",
-    "qualities": [ [ "LOCKPICK", 5 ] ]
+    "qualities": [ [ "LOCKPICK", 5 ] ],
+    "flags": [ "DURABLE_LOCKPICK" ]
   },
   {
     "id": "pseudo_bio_picklock",

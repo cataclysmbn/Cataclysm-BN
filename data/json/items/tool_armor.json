@@ -219,7 +219,7 @@
     "encumbrance": 60,
     "material_thickness": 3,
     "qualities": [ [ "GLARE", 3 ] ],
-    "flags": [ "SUN_GLASSES", "FLASH_PROTECTION", "BLIND" ]
+    "flags": [ "SUN_GLASSES", "FLASH_PROTECTION" ]
   },
   {
     "id": "welding_mask_crude",
@@ -272,6 +272,7 @@
     "encumbrance": 60,
     "material_thickness": 2,
     "coverage": 30,
+    "qualities": [ [ "GLARE", 2 ] ],
     "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
@@ -297,7 +298,8 @@
     "warmth": 5,
     "encumbrance": 60,
     "material_thickness": 3,
-    "coverage": 30
+    "coverage": 30,
+    "qualities": [ [ "GLARE", 3 ] ]
   },
   {
     "type": "TOOL_ARMOR",
@@ -730,6 +732,51 @@
     "magazine_well": "250 ml"
   },
   {
+    "id": "sparkledogsuit",
+    "copy-from": "wolfsuit",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "sparkledog suit" },
+    "description": "A full body fursuit in the form of some unidentifiable species. It's a riot of clashing neon colors, LEDs, and glitter. It is quite encumbering and has little storage but is very warm.  Using it will turn the LEDs on.",
+    "price": "5700 USD",
+    "price_postapoc": "3 USD",
+    "color": "c_pink_green",
+    "ammo": "battery",
+    "use_action": {
+      "type": "transform",
+      "msg": "You turn your fursuit's LEDs on.",
+      "target": "sparkledogsuit_on",
+      "active": true,
+      "transform_charges": 1,
+      "need_charges": 1,
+      "need_charges_msg": "The fursuit's batteries are dead."
+    },
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_plus_battery_cell",
+          "light_disposable_cell",
+          "light_minus_disposable_cell",
+          "light_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell"
+        ]
+      ]
+    ],
+    "magazine_well": "250 ml"
+  },
+  {
+    "id": "sparkledogsuit_on",
+    "copy-from": "sparkledogsuit",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "sparkledog suit (on)", "str_pl": "sparkledog suits (on)" },
+    "power_draw": 10000,
+    "revert_to": "sparkledogsuit",
+    "use_action": { "menu_text": "Turn off", "type": "transform", "msg": "You turn your fursuit off.", "target": "sparkledogsuit" },
+    "flags": [ "OUTER", "LIGHT_200", "SUPER_FANCY" ]
+  },
+  {
     "id": "survivor_light",
     "type": "TOOL_ARMOR",
     "category": "clothing",
@@ -894,6 +941,7 @@
       "ALARMCLOCK",
       "SWIM_GOGGLES",
       "SUN_GLASSES",
+      "RECON_VISION",
       "RAD_PROOF",
       "ELECTRIC_IMMUNE",
       "THERMOMETER",

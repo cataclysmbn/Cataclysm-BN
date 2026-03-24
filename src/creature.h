@@ -250,6 +250,12 @@ class Creature
         virtual const avatar *as_avatar() const {
             return nullptr;
         }
+
+        /** Return the dimension this creature belongs to.
+         *  Default (player/avatar): returns g_active_dimension_id.
+         *  Overridden by npc and monster to return their stored dimension_id_. */
+        virtual const std::string &get_dimension() const;
+
         /** return the direction the creature is facing, for sdl horizontal flip **/
         FacingDirection facing = FD_RIGHT;
         /** Returns true for non-real Creatures used temporarily; i.e. fake NPC's used for turret fire. */
@@ -259,6 +265,14 @@ class Creature
 
         /** Processes effects and bonuses and allocates move points based on speed. */
         virtual void process_turn();
+        /**
+         * Batch catchup: simulate @p n missed turns for this creature.
+         * Default implementation calls process_turn() @p n times.
+         * Derived classes (monster, npc) provide specialized versions that are
+         * cheaper and/or more appropriate for out-of-bubble simulation.
+         * @p n is expected to be pre-clamped by the caller.
+         */
+        virtual void batch_turns( int n );
         /** Resets the value of all bonus fields to 0. */
         virtual void reset_bonuses();
         /** Resets stats, and applies effects in an idempotent manner */

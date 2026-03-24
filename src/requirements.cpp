@@ -93,6 +93,9 @@ void quality::load_static( const JsonObject &jo, const std::string &src )
 void quality::load( const JsonObject &jo, const std::string & )
 {
     mandatory( jo, was_loaded, "name", name );
+    optional( jo, was_loaded, "crafting_speed_bonus_per_level", crafting_speed_bonus_per_level,
+              0.0f );
+    optional( jo, was_loaded, "crafting_speed_level_offset", crafting_speed_level_offset, 0 );
 
     for( JsonArray levels : jo.get_array( "usages" ) ) {
         const int level = levels.get_int( 0 );
