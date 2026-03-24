@@ -885,6 +885,25 @@
     "components": [ [ [ "faux_fur", 30 ] ] ]
   },
   {
+    "result": "sparkledogsuit",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 7,
+    "skills_required": [ "electronics", 4 ],
+    "time": "6 h",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 200 ], [ "soldering_standard", 6 ] ],
+    "components": [
+      [ [ "faux_fur", 30 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "e_scrap", 3 ] ],
+      [ [ "circuit", 1 ] ],
+      [ [ "adhesive_proper", 3, "LIST" ] ]
+    ]
+  },
+  {
     "result": "wsurvivor_suit",
     "type": "recipe",
     "category": "CC_ARMOR",

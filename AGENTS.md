@@ -1,6 +1,5 @@
 # Cataclysm: Bright Nights - Agent Guidelines
 
-- **MUST** RE-READ AGENTS.md BETWEEN subtasks.
 - **MUST** FOLLOW for all code changes.
 
 ## HARD CONSTRAINTS (NEVER VIOLATE)
@@ -115,6 +114,15 @@ deno task docs:gen
 ```
 
 - **Commit**: Commit **ATOMICALLY**. **MUST** Follow [Conventional Commits](./docs/en/contribute/changelog_guidelines.md). **MUST NOT** add body/footer unless critical.
+
+## WHEN translating docs
+
+When translating, MUST search for correct glossary, e.g
+
+```sh
+rg -C2 -i '<<TARGET>>' lang/po/<<LANG>>.po | rg -v '^(#:|--)' | head -n 20
+rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
+```
 
 ## References
 

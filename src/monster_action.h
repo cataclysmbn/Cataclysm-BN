@@ -10,7 +10,7 @@ class Creature;
  * Describes the single step a monster intends to take this tick.
  *
  * Produced by monster::decide_action() — a const, read-only planning function
- * that is safe to call from worker threads (Phase 2+).  Consumed by
+ * that is safe to call from worker threads.  Consumed by
  * monster::execute_action(), which performs all state mutations.
  *
  * All write operations (move_to, attack_at, bash_at, open_door, die, stumble,
@@ -25,8 +25,8 @@ enum class monster_action_kind : uint8_t {
     idle,        // No viable move; consume move_cost moves and optionally stumble.
     die,         // Hallucination death; execute_action calls die(nullptr).
     stumble,     // Monster is stunned; execute_action calls stumble() then zeroes moves.
-    // special,  // Phase 3 placeholder: signal a pending serialised special attack.
-    //           // Not set by decide_action yet; see PERFORMANCE_TODO Phase 3.
+    // special,  // Placeholder: signal a pending serialised special attack.
+    //           // Not set by decide_action yet.
     move,        // Move to dest tile.
     attack,      // Melee attack creature at dest.
     bash,        // Bash obstacle at dest.
@@ -34,9 +34,7 @@ enum class monster_action_kind : uint8_t {
     push,        // Push creature at dest.
 };
 
-// ---------------------------------------------------------------------------
 // Action descriptor
-// ---------------------------------------------------------------------------
 struct monster_action_t {
     monster_action_kind kind           = monster_action_kind::idle;
 
@@ -52,9 +50,6 @@ struct monster_action_t {
 
     /// Stagger multiplier passed to move_to().  1.0 = no stagger.
     float               stagger_adjust = 1.0f;
-
-    // must_serialize removed — Phase 3 infrastructure; re-add when Step 7 ships.
-    // See PERFORMANCE_TODO Phase 3 / Step 7.
 
     /// Path is stale; execute_action must call Pathfinding::route() before stepping.
     /// Set for Tier-0 whenever requested; set for Tier-1 when genuinely stuck

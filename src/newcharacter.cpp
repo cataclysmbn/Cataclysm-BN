@@ -534,7 +534,7 @@ bool avatar::create( character_type type, const std::string &tempname )
         }
 
         if( points.limit == points_left::TRANSFER ) {
-            tab = 6;
+            tab = NEWCHAR_TAB_MAX;
         }
 
         switch( tab ) {

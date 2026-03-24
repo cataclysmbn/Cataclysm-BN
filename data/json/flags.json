@@ -2535,5 +2535,10 @@
     "type": "json_flag",
     "//": "",
     "context": [  ]
+  },
+  {
+    "id": "TRACKED",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ]
   }
 ]

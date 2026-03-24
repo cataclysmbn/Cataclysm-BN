@@ -84,6 +84,7 @@ enum class mod : int {
     RANGED_RANGE,
     RANGED_RECOIL,
     RANGED_RELOAD_TIME,
+    RANGED_AIM_SPEED,
     NUM_MOD
 };
 } // namespace enchant_vals

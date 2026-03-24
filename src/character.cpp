@@ -851,9 +851,17 @@ int Character::sight_range( int light_level ) const
     return clamp( range, 1, sight_max );
 }
 
-int Character::unimpaired_range() const
+auto Character::unimpaired_range() const -> int
 {
-    return std::min( sight_max, 60 );
+    // Cap at g_max_view_distance (runtime bubble radius) so castLight's
+    // row-distance limit produces a circular — not square — visible area.
+    //
+    // NOTE: g_max_view_distance currently equals SEEX * g_half_mapsize — the full
+    // half-extent of the map cache — so this cap never bites for a normal character.
+    // If a future change decouples actual vision range from bubble size (e.g. a hard
+    // cap of ~60 tiles regardless of bubble), update_visibility_cache's inner loops
+    // can be clamped to plr_pos ± unimpaired_range() for a large serial-path win.
+    return std::min( sight_max, g_max_view_distance );
 }
 
 bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )
@@ -870,7 +878,7 @@ bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )
     const std::vector<tripoint> line = line_to( ompos.raw(), omt.raw(), 0, 0 );
     for( size_t i = 0; i < line.size() && sight_points >= 0; i++ ) {
         const tripoint &pt = line[i];
-        const oter_id &ter = overmap_buffer.ter( tripoint_abs_omt( pt ) );
+        const oter_id &ter = ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( pt ) );
         sight_points -= static_cast<int>( ter->get_see_cost() );
         if( sight_points < 0 ) {
             return false;
@@ -5930,7 +5938,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     if( vp ) {
         vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
     }
-    const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() );
     bool sheltered = weather::is_sheltered( m, pos() );
     double total_windpower = get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
                              pos(),
@@ -8539,7 +8547,7 @@ void Character::signal_nemesis()
 {
     const tripoint_abs_omt ompos = global_omt_location();
     const tripoint_abs_sm smpos = project_to<coords::sm>( ompos );
-    overmap_buffer.signal_nemesis( smpos );
+    ACTIVE_OVERMAP_BUFFER.signal_nemesis( smpos );
 }
 
 void Character::vomit()
@@ -12324,3 +12332,4 @@ detached_ptr<item> Character::reduce_charges( item *it, int quantity )
     taken->charges = quantity;
     return taken;
 }
+

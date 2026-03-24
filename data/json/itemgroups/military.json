@@ -18,7 +18,8 @@
       { "group": "pwr_armor_acc", "prob": 2 },
       { "group": "inactive_bots_milspec", "prob": 2 },
       { "group": "bionics_mil", "prob": 2 },
-      { "group": "bionic_power_storage_mil", "prob": 2 }
+      { "group": "bionic_power_storage_mil", "prob": 2 },
+      { "group": "guns_launcher_heavy", "prob": 10 }
     ]
   },
   {
@@ -434,7 +435,19 @@
       { "item": "effective_emitter", "prob": 1 },
       { "item": "high_density_capacitor", "prob": 1 },
       { "item": "emp_gun", "prob": 1 },
-      { "item": "energy_drink_atomic_syrup", "prob": 5 }
+      { "item": "energy_drink_atomic_syrup", "prob": 5 },
+      { "item": "electric_primer_120mm", "prob": 2 },
+      { "item": "primer_155mm", "prob": 1 },
+      { "item": "atgm_launcher", "prob": 1 },
+      { "item": "25mm_apds", "prob": 1 },
+      { "item": "25mm_hei", "prob": 1 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 1 },
+      { "item": "120mm_usable_heat", "prob": 3 },
+      { "item": "120mm_usable_ap", "prob": 1 },
+      { "item": "155mm_frag", "prob": 2 },
+      { "item": "155mm_heat", "prob": 1 },
+      { "item": "105mm_heat", "prob": 1 },
+      { "item": "105mm_ap", "prob": 1 }
     ]
   },
   {
@@ -569,7 +582,18 @@
       { "item": "20x66_exp", "prob": 2 },
       { "item": "20x66_frag", "prob": 2 },
       { "item": "20x66_flare", "prob": 4 },
-      { "item": "20x66_inc", "prob": 2 }
+      { "item": "20x66_inc", "prob": 2 },
+      { "item": "electric_primer_120mm", "prob": 2 },
+      { "item": "primer_155mm", "prob": 1 },
+      { "item": "25mm_apds", "prob": 1 },
+      { "item": "25mm_hei", "prob": 1 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 1 },
+      { "item": "120mm_usable_heat", "prob": 3 },
+      { "item": "120mm_usable_ap", "prob": 1 },
+      { "item": "155mm_frag", "prob": 2 },
+      { "item": "155mm_heat", "prob": 1 },
+      { "item": "105mm_heat", "prob": 1 },
+      { "item": "105mm_ap", "prob": 1 }
     ]
   },
   {
@@ -695,7 +719,14 @@
       { "item": "grapnel", "prob": 1 },
       { "item": "briefcase", "prob": 5 },
       { "item": "survnote", "prob": 2 },
-      { "item": "robot_controls", "prob": 3 }
+      { "item": "robot_controls", "prob": 3 },
+      { "item": "electric_primer_120mm", "prob": 2 },
+      { "item": "primer_155mm", "prob": 1 },
+      { "item": "25mm_apds", "prob": 2 },
+      { "item": "25mm_hei", "prob": 2 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 3 },
+      { "item": "105mm_heat", "prob": 1 },
+      { "item": "105mm_ap", "prob": 1 }
     ]
   },
   {
@@ -774,6 +805,118 @@
       [ "recharge_station", 8 ],
       [ "turret_mount", 12 ],
       [ "turret_controls", 3 ]
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_launcher_heavy",
+    "items": [
+      [ "120mm_usable_ap", 15 ],
+      [ "120mm_usable_heat", 10 ],
+      [ "155mm_frag", 15 ],
+      [ "155mm_heat", 10 ],
+      [ "25mm_apds", 10 ],
+      [ "25mm_hei", 5 ],
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 10 },
+      [ "105mm_heat", 10 ],
+      [ "105mm_ap", 5 ],
+      [ "electric_primer_120mm", 6 ],
+      [ "primer_155mm", 4 ]
+    ]
+  },
+  {
+    "id": "m1_abrams_ammo_rack",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "120mm_usable_heat", "count": [ 0, 6 ], "prob": 75 },
+      { "item": "120mm_usable_ap", "count": [ 0, 6 ], "prob": 75 },
+      { "item": "120mm_case_base", "count": [ 0, 5 ], "prob": 90 },
+      { "item": "electric_primer_120mm", "prob": 75 }
+    ]
+  },
+  {
+    "id": "m109_ammo_rack",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "155mm_frag", "count": [ 0, 6 ], "prob": 75 },
+      { "item": "155mm_heat", "count": [ 0, 2 ], "prob": 75 },
+      { "item": "primer_155mm", "prob": 75 }
+    ]
+  },
+  {
+    "id": "m2_bradley_ammo_rack",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "atgm_heat", "count": [ 1, 2 ], "prob": 30 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 50 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 50 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "25mm_ammo",
+    "items": [
+      { "item": "25mm_apds", "prob": 50, "charges": [ 1, 100 ] },
+      { "item": "25mm_hei", "prob": 50, "charges": [ 1, 100 ] }
+    ]
+  },
+  {
+    "id": "m60_patton_ammo_rack",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "105mm_heat", "count": [ 0, 6 ], "prob": 75 },
+      { "item": "105mm_ap", "count": [ 0, 6 ], "prob": 75 },
+      { "item": "105mm_casing", "count": [ 0, 5 ], "prob": 90 },
+      { "item": "electric_primer_120mm", "prob": 75 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "killdozer_ammo_shot",
+    "subtype": "collection",
+    "entries": [
+      { "item": "shotbelt_20", "contents-group": "killdozer_shells", "prob": 75 },
+      { "item": "shotbelt_20", "contents-group": "killdozer_shells", "prob": 75 },
+      { "item": "shotbelt_20", "contents-group": "killdozer_shells", "prob": 75 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "killdozer_shells",
+    "items": [
+      { "item": "shot_00", "prob": 30, "charges": [ 1, 20 ] },
+      { "item": "shot_slug", "prob": 20, "charges": [ 1, 20 ] },
+      { "item": "shot_scrap", "prob": 25, "charges": [ 1, 20 ] },
+      { "item": "bp_shot_00", "prob": 15, "charges": [ 1, 20 ] },
+      { "item": "bp_shot_slug", "prob": 10, "charges": [ 1, 20 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "killdozer_ammo_cannon",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [
+          { "item": "25mm_hei", "charges": [ 1, 5 ], "prob": 25 },
+          { "item": "25mm_slug", "charges": [ 1, 5 ], "prob": 50 },
+          { "item": "bp_25mm_slug", "charges": [ 1, 5 ], "prob": 25 }
+        ],
+        "prob": 75
+      },
+      {
+        "distribution": [
+          { "item": "25mm_hei", "charges": [ 1, 5 ], "prob": 25 },
+          { "item": "25mm_slug", "charges": [ 1, 5 ], "prob": 50 },
+          { "item": "bp_25mm_slug", "charges": [ 1, 5 ], "prob": 25 }
+        ],
+        "prob": 75
+      },
+      { "item": "25mm_casing", "count": [ 1, 5 ], "prob": 90 }
     ]
   }
 ]
