@@ -21,6 +21,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "catalua_icallback_actor.h"
 #include "catalua_readonly.h"
 #include "catalua_serde.h"
+#include "catalua_sound_bindings.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "init.h"
@@ -849,6 +850,8 @@ void resolve_lua_bionic_and_mutation_callbacks()
 
 void run_on_every_x_hooks( lua_state &state )
 {
+    poll_sound_channel_listeners( state );
+
     std::vector<cata::on_every_x_hooks> &master_table =
         state.lua["game"]["cata_internal"]["on_every_x_hooks"];
     for( auto &entry : master_table ) {

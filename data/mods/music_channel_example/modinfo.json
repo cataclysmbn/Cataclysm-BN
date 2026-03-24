@@ -1,0 +1,13 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "music_channel_example",
+    "name": "Music Channel Example",
+    "authors": [ "Codex" ],
+    "description": "Demonstrates queuing ambient tracks by watching for sound channel end events.",
+    "category": "example",
+    "obsolete": false,
+    "lua_api_version": 2,
+    "dependencies": [ "bn" ]
+  }
+]
