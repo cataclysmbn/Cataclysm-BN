@@ -529,6 +529,12 @@
   },
   {
     "type": "start_location",
+    "id": "sloc_lodge_ground",
+    "name": "Hunting Lodge",
+    "terrain": [ "lodge_ground1" ]
+  },
+  {
+    "type": "start_location",
     "id": "sloc_marina",
     "name": "Marina",
     "terrain": [ "marina_11" ]
@@ -629,5 +635,17 @@
     "id": "water_tower",
     "name": "Water Tower",
     "terrain": [ "water_tower_-1zl" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_tankmod_radio_tower",
+    "name": "Radio Tower",
+    "terrain": [ "radio_tower_1" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_airport",
+    "name": "Regional Airport",
+    "terrain": [ "waiting_area", "s_air_term_south" ]
   }
 ]

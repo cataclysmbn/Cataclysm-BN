@@ -21,7 +21,9 @@
       "g": "t_pit_glass",
       "1": "t_dirtmound",
       "2": "t_dirtmound",
-      "3": "t_dirtmound"
+      "3": "t_dirtmound",
+      "<": "t_pavement",
+      ">": "t_pavement"
     },
     "furniture": {
       "B": "f_bathtub",
@@ -43,6 +45,10 @@
       "L": "f_locker",
       "d": "f_desk",
       "a": "f_ash"
+    },
+    "vehicles": {
+      "<": { "vehicle": "flatbed_truck", "chance": 10, "rotation": 180 },
+      ">": { "vehicle": "flatbed_truck", "chance": 10, "rotation": 0 }
     }
   }
 ]

@@ -27,6 +27,7 @@
 #include "npc_class.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
+#include "profile.h"
 #include "requirements.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -97,6 +98,7 @@ void mission::add_existing( const mission &m )
 
 void mission::process_all()
 {
+    ZoneScoped;
     for( auto &e : world_missions ) {
         e.second.process();
     }
@@ -372,7 +374,7 @@ bool mission::is_complete( const character_id &_npc_id ) const
         }
 
         case MGOAL_GO_TO_TYPE: {
-            const auto cur_ter = overmap_buffer.ter( g->u.global_omt_location() );
+            const auto cur_ter = ACTIVE_OVERMAP_BUFFER.ter( g->u.global_omt_location() );
             return is_ot_match( type->target_id.str(), cur_ter, ot_match_type::type );
         }
 
@@ -427,7 +429,7 @@ bool mission::is_complete( const character_id &_npc_id ) const
         }
 
         case MGOAL_RECRUIT_NPC_CLASS: {
-            const auto npcs = overmap_buffer.get_npcs_near_player( 100 );
+            const auto npcs = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( 100 );
             for( auto &npc : npcs ) {
                 if( npc->myclass == recruit_class && npc->is_player_ally() ) {
                     return true;

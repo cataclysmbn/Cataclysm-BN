@@ -1,0 +1,12 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "i_noencum_backpacks",
+    "name": "No encumbrance backpacks",
+    "authors": [ "Sai/Fentanylreactor" ],
+    "description": "If you don't want to bother backpacks every fight because it's annoying, this is the mod for you.",
+    "category": "rebalance",
+    "version": "0.0.0-alpha",
+    "dependencies": [ "bn" ]
+  }
+]

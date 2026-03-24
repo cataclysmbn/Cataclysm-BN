@@ -14,4 +14,8 @@ gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...)
   if mod.on_morale_traits_tick then mod.on_morale_traits_tick(...) end
 end)
 
+gapi.add_on_every_x_hook(TimeDuration.from_turns(300), function(...)
+  if mod.on_clutter_intolerant_tick then mod.on_clutter_intolerant_tick(...) end
+end)
+
 game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)

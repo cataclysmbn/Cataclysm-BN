@@ -418,5 +418,20 @@
     "id": "RECYCLED",
     "type": "ammo_effect",
     "//": "Nearly-immeasurable chance to fail to fire."
+  },
+  {
+    "id": "AMMO_25MM_HEI",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 1, "radius": 1, "chance": 25 },
+    "explosion": { "damage": 10, "radius": 1 }
+  },
+  {
+    "id": "AMMO_155MM_FRAG",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 100,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 400, "armor_multiplier": 3 }, "range": 10 },
+      "radius": 10
+    }
   }
 ]

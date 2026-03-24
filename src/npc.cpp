@@ -11,6 +11,7 @@
 
 #include "auto_pickup.h"
 #include "avatar.h"
+#include "batch_turns.h"
 #include "bodypart.h"
 #include "character.h"
 #include "character_id.h"
@@ -59,6 +60,7 @@
 #include "output.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "legacy_pathfinding.h"
 #include "player_activity.h"
 #include "pldata.h"
@@ -193,7 +195,10 @@ standard_npc::standard_npc( const std::string &name, const tripoint &pos,
                             int sk_lvl, int s_str, int s_dex, int s_int, int s_per )
 {
     this->name = name;
-    position = pos;
+    // Resolve tripoint_min sentinel to the runtime bubble center.
+    position = ( pos == tripoint_min )
+               ? tripoint( g_half_mapsize_x, g_half_mapsize_y, 0 )
+               : pos;
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );
@@ -723,8 +728,9 @@ void npc::setpos( const tripoint &pos )
     // TODO: fix point types
     const point_abs_om pos_om_new( sm_to_om_copy( submap_coords ) );
     if( !is_fake() && pos_om_old != pos_om_new ) {
-        overmap &om_old = overmap_buffer.get( pos_om_old );
-        overmap &om_new = overmap_buffer.get( pos_om_new );
+        auto &dim_ob = get_overmapbuffer( get_dimension() );
+        overmap &om_old = dim_ob.get( pos_om_old );
+        overmap &om_new = dim_ob.get( pos_om_new );
         if( const auto ptr = om_old.erase_npc( getID() ) ) {
             om_new.insert_npc( ptr );
         } else {
@@ -752,8 +758,9 @@ void npc::travel_overmap( const tripoint &pos )
         reach_omt_destination();
     }
     if( !is_fake() && pos_om_old != pos_om_new ) {
-        overmap &om_old = overmap_buffer.get( pos_om_old );
-        overmap &om_new = overmap_buffer.get( pos_om_new );
+        auto &dim_ob = get_overmapbuffer( get_dimension() );
+        overmap &om_old = dim_ob.get( pos_om_old );
+        overmap &om_new = dim_ob.get( pos_om_new );
         if( const auto ptr = om_old.erase_npc( getID() ) ) {
             om_new.insert_npc( ptr );
         } else {
@@ -788,9 +795,11 @@ void npc::place_on_map()
 {
     // The global absolute position (in map squares) of the npc is *always*
     // "submap_coords.x * SEEX + posx() % SEEX" (analog for y).
-    // The main map assumes that pos is in its own (local to the main map)
-    // coordinate system. We have to change pos to match that assumption
-    const point dm( submap_coords + point( -g->get_levx(), -g->get_levy() ) );
+    // Use get_map() rather than g->m directly so that this function works
+    // correctly when called under a scoped_map_context (e.g. for out-of-bubble
+    // loaded regions whose tinymap is temporarily the active map).
+    const tripoint map_origin = get_map().get_abs_sub();
+    const point dm( submap_coords + point( -map_origin.x, -map_origin.y ) );
     const point offset( position.x % SEEX, position.y % SEEY );
     // value of "submap_coords.x * SEEX + posx()" is unchanged
     setpos( tripoint( offset.x + dm.x * SEEX, offset.y + dm.y * SEEY, posz() ) );
@@ -2656,7 +2665,7 @@ void npc::erase()
     }
     dead = true;
     g->remove_npc_follower( getID() );
-    overmap_buffer.remove_npc( getID() );
+    get_overmapbuffer( get_dimension() ).remove_npc( getID() );
     g->cleanup_dead();
 }
 
@@ -2996,6 +3005,55 @@ void npc::process_turn()
 
     // TODO: Add decreasing trust/value/etc. here when player doesn't provide food
     // TODO: Make NPCs leave the player if there's a path out of map and player is sleeping/unseen/etc.
+}
+
+void npc::batch_turns( int n )
+{
+    if( n <= 0 || is_dead_state() ) {
+        return;
+    }
+    n = std::min( n, MAX_CATCHUP_NPC );
+
+    // Biological catchup (hunger, thirst, healing, etc.) in one coarse pass.
+    // Call update_body directly (bypassing the once_every throttle used in
+    // npc_update_body) since we're doing a deliberate catch-up pass.
+    if( last_updated < calendar::turn ) {
+        update_body( last_updated, calendar::turn );
+        last_updated = calendar::turn;
+    }
+
+    // Per-turn effect/bonus processing.
+    for( int i = 0; i < n; ++i ) {
+        if( is_dead_state() ) {
+            break;
+        }
+        process_turn();
+    }
+
+    // Fast-forward any ongoing activity.
+    advance_job_progress( n );
+
+    moves = 0;
+}
+
+void npc::advance_job_progress( int n )
+{
+    if( n <= 0 ) {
+        return;
+    }
+    if( activity && *activity ) {
+        // Directly reduce moves_left by n turns' worth (100 moves per turn).
+        // The mod_moves() approach is wrong here: activity->do_turn() unconditionally
+        // sets p.moves = 0 after each step, so any extra moves granted via mod_moves()
+        // are zeroed on the very first step and the catchup never happens.
+        // Direct reduction is speed-independent, matching the design intent.
+        activity->moves_left = std::max( 0, activity->moves_left - n * 100 );
+    } else if( has_destination() ) {
+        // Destination movement: grant extra moves so the NPC takes additional path
+        // steps toward its goal.  mod_moves() is correct here because path-following
+        // does consume moves one step at a time without zeroing the full pool.
+        mod_moves( to_moves<int>( time_duration::from_turns( n ) ) );
+    }
 }
 
 bool npc::invoke_item( item *used, const tripoint &pt )
