@@ -138,7 +138,7 @@ static constexpr int NAV_VIEW_SIZE_Y = NAV_MAP_SIZE_Y + 2 * NAV_VIEW_PADDING;
 static constexpr int TURNING_INCREMENT = 15;
 static constexpr int NUM_ORIENTATIONS = 360 / TURNING_INCREMENT;
 // min and max speed in tiles/s
-static constexpr int VMIPH_PER_TPS = static_cast<int>( vehicles::vmiph_per_tile );
+static constexpr int CMPS_PER_TPS = static_cast<int>( vehicles::cmps_per_tile );
 
 /**
  * Data type representing a vehicle orientation, which corresponds to an angle that is
@@ -804,10 +804,10 @@ void vehicle::autodrive_controller::precompute_data()
         data.land_ok = driven_veh.valid_wheel_config();
         data.water_ok = driven_veh.can_float();
         data.air_ok = driven_veh.is_aircraft();
-        data.max_speed_tps = std::min( MAX_SPEED_TPS, driven_veh.safe_velocity() / VMIPH_PER_TPS );
+        data.max_speed_tps = std::min( MAX_SPEED_TPS, driven_veh.safe_velocity() / CMPS_PER_TPS );
         data.acceleration.resize( data.max_speed_tps );
         for( int speed_tps = 0; speed_tps < data.max_speed_tps; speed_tps++ ) {
-            data.acceleration[speed_tps] = driven_veh.acceleration( true, speed_tps * VMIPH_PER_TPS );
+            data.acceleration[speed_tps] = driven_veh.acceleration( true, speed_tps * CMPS_PER_TPS );
         }
         // TODO: compute from driver's skill and speed stat
         // TODO: change it during simulation based on vehicle speed and terrain
@@ -881,14 +881,14 @@ const
     constexpr int move_cost = 0;
     constexpr int steering_cost = 1;
     const int sign = target_speed_tps > 0 ? 1 : -1;
-    const int target_speed = target_speed_tps * VMIPH_PER_TPS;
+    const int target_speed = target_speed_tps * CMPS_PER_TPS;
     const int cur_omt = addr.x / OMT_SIZE;
     int next_speed = target_speed;
     int num_tiles_to_move = std::abs( target_speed_tps );
     if( target_speed_tps > 1 && node.speed < target_speed ) {
-        const int cur_tps = std::min( std::max( node.speed / VMIPH_PER_TPS, 0 ), data.max_speed_tps - 1 );
+        const int cur_tps = std::min( std::max( node.speed / CMPS_PER_TPS, 0 ), data.max_speed_tps - 1 );
         next_speed = std::min( std::max<int>( node.speed, 0 ) + data.acceleration[cur_tps], target_speed );
-        num_tiles_to_move = next_speed / VMIPH_PER_TPS;
+        num_tiles_to_move = next_speed / CMPS_PER_TPS;
     }
     for( int steer = -data.max_steer; steer <= data.max_steer; steer++ ) {
         node_address next_addr = addr;
@@ -1010,7 +1010,7 @@ void vehicle::autodrive_controller::check_safe_speed()
     // taking damage). We normally determine this at the beginning of path planning and cache it.
     // However, sometimes the vehicle's safe speed may drop (e.g. amphibious vehicle entering
     // water), so this extra check is needed to adjust our max speed.
-    int safe_speed_tps = driven_veh.safe_velocity() / VMIPH_PER_TPS;
+    int safe_speed_tps = driven_veh.safe_velocity() / CMPS_PER_TPS;
     if( data.max_speed_tps > safe_speed_tps ) {
         data.max_speed_tps = safe_speed_tps;
     }
@@ -1043,7 +1043,7 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( orie
     }
     const int speed = std::min( driven_veh.velocity + driven_veh.current_acceleration(),
                                 driven_veh.cruise_velocity );
-    const int speed_tps = speed / VMIPH_PER_TPS;
+    const int speed_tps = speed / CMPS_PER_TPS;
     std::unordered_set<point> collision_zone;
     tdir.advance();
     point offset( tdir.dx(), tdir.dy() );
@@ -1222,8 +1222,8 @@ autodrive_result vehicle::do_autodrive( Character &driver )
     }
     active_autodrive_controller->check_safe_speed();
     std::optional<navigation_step> next_step = active_autodrive_controller->compute_next_step();
-    if( has_part( VPFLAG_WING ) ) {
-        driver.add_msg_if_player( _( "Autodrive is not good enough for planes." ) );
+    if( has_part( VPFLAG_WING ) && is_flying_in_air() ) {
+        driver.add_msg_if_player( _( "Autodrive is not good enough for flying planes." ) );
         stop_autodriving( false );
         return autodrive_result::abort;
     }
@@ -1243,7 +1243,7 @@ autodrive_result vehicle::do_autodrive( Character &driver )
         return autodrive_result::finished;
     }
     cruise_on = true;
-    cruise_velocity = next_step->target_speed_tps * VMIPH_PER_TPS;
+    cruise_velocity = next_step->target_speed_tps * CMPS_PER_TPS;
 
     // check for collisions before we steer, since steering may end our turn
     // which would cause the vehicle to move and maybe crash
@@ -1258,8 +1258,8 @@ autodrive_result vehicle::do_autodrive( Character &driver )
             return autodrive_result::abort;
         case collision_check_result::slow_down:
             active_autodrive_controller->reduce_speed();
-            if( cruise_velocity > VMIPH_PER_TPS ) {
-                cruise_velocity = VMIPH_PER_TPS;
+            if( cruise_velocity > CMPS_PER_TPS ) {
+                cruise_velocity = CMPS_PER_TPS;
             }
             break;
         case collision_check_result::ok:

@@ -996,10 +996,9 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         // Calculate local wind power
         int vehwindspeed = 0;
         if( optional_vpart_position vp = here.veh_at( pos() ) ) {
-            // vehicle velocity in mph
-            vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+            vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
         }
-        const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
+        const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() );
         /* cache g->get_temperature( player location ) since it is used twice. No reason to recalc */
         const auto player_local_temp = weather.get_temperature( g->u.pos() );
         /* windpower defined in internal velocity units (=.01 mph) */
@@ -1283,6 +1282,12 @@ bool Character::burn_fuel( bionic &bio, bool start )
     const bool is_metabolism_powered = bio.is_this_fuel_powered( fuel_type_metabolism );
     const bool is_cable_powered = bio.info().is_remote_fueled;
     std::vector<itype_id> fuel_available = get_fuel_available( bio.id );
+    // When a bionic has passive_fuel_efficiency, perpetual fuels are handled by
+    // passive_power_gen() while the bionic is off.  Exclude them from burn_fuel()
+    // so they don't interfere with consumable fuel processing when active.
+    if( bio.info().passive_fuel_efficiency > 0.0f ) {
+        std::erase_if( fuel_available, []( const auto & fuel ) { return fuel->has_flag( flag_PERPETUAL ); } );
+    }
     float effective_efficiency = get_effective_efficiency( bio, bio.info().fuel_efficiency );
 
     if( is_cable_powered ) {
@@ -1372,12 +1377,11 @@ bool Character::burn_fuel( bionic &bio, bool start )
                             int vehwindspeed = 0;
                             const optional_vpart_position vp = here.veh_at( pos() );
                             if( vp ) {
-                                // vehicle velocity in mph
-                                vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+                                vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
                             }
                             const weather_manager &wm = get_weather();
                             const double windpower = get_local_windpower( wm.windspeed + vehwindspeed,
-                                                     overmap_buffer.ter( global_omt_location() ), pos(), wm.winddirection,
+                                                     ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() ), pos(), wm.winddirection,
                                                      g->is_sheltered( pos() ) );
                             mod_power_level( units::from_kilojoule( fuel_energy ) * windpower * effective_efficiency );
                         } else {
@@ -1458,12 +1462,11 @@ void Character::passive_power_gen( bionic &bio )
             int vehwindspeed = 0;
             const optional_vpart_position vp = here.veh_at( pos() );
             if( vp ) {
-                // vehicle velocity in mph
-                vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+                vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
             }
             const weather_manager &weather = get_weather();
             const double windpower = get_local_windpower( weather.windspeed + vehwindspeed,
-                                     overmap_buffer.ter( global_omt_location() ), pos(), weather.winddirection,
+                                     ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() ), pos(), weather.winddirection,
                                      g->is_sheltered( pos() ) );
             mod_power_level( units::from_kilojoule( fuel_energy ) * windpower * effective_passive_efficiency );
         } else {

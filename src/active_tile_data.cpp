@@ -31,7 +31,7 @@ T *furn_at( const tripoint_abs_ms &p )
     point_sm_ms p_within_sm;
     std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( p );
 
-    submap *sm = MAPBUFFER.lookup_submap( p_abs_sm );
+    submap *sm = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() ).lookup_submap( p_abs_sm );
     if( sm == nullptr ) {
         return nullptr;
     }
@@ -51,6 +51,38 @@ template charge_watcher_tile *furn_at<charge_watcher_tile>( const tripoint_abs_m
 template countdown_tile *furn_at<countdown_tile>( const tripoint_abs_ms & );
 template charger_tile *furn_at<charger_tile>( const tripoint_abs_ms & );
 template solar_tile *furn_at<solar_tile>( const tripoint_abs_ms & );
+template grid_link_tile *furn_at<grid_link_tile>( const tripoint_abs_ms & );
+
+template<typename T>
+T *furn_at( const tripoint_abs_ms &p, mapbuffer &buffer )
+{
+    tripoint_abs_sm p_abs_sm;
+    point_sm_ms p_within_sm;
+    std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( p );
+
+    submap *sm = buffer.lookup_submap( p_abs_sm );
+    if( sm == nullptr ) {
+        return nullptr;
+    }
+    auto iter = sm->active_furniture.find( p_within_sm );
+    if( iter == sm->active_furniture.end() ) {
+        return nullptr;
+    }
+
+    return dynamic_cast<T *>( &*iter->second );
+}
+
+template active_tile_data *furn_at<active_tile_data>( const tripoint_abs_ms &, mapbuffer & );
+template vehicle_connector_tile *furn_at<vehicle_connector_tile>( const tripoint_abs_ms &,
+        mapbuffer & );
+template battery_tile *furn_at<battery_tile>( const tripoint_abs_ms &, mapbuffer & );
+template steady_consumer_tile *furn_at<steady_consumer_tile>( const tripoint_abs_ms &,
+        mapbuffer & );
+template charge_watcher_tile *furn_at<charge_watcher_tile>( const tripoint_abs_ms &, mapbuffer & );
+template countdown_tile *furn_at<countdown_tile>( const tripoint_abs_ms &, mapbuffer & );
+template charger_tile *furn_at<charger_tile>( const tripoint_abs_ms &, mapbuffer & );
+template solar_tile *furn_at<solar_tile>( const tripoint_abs_ms &, mapbuffer & );
+template grid_link_tile *furn_at<grid_link_tile>( const tripoint_abs_ms &, mapbuffer & );
 
 void furn_transform::serialize( JsonOut &jsout ) const
 {
@@ -270,7 +302,7 @@ void charger_tile::update_internal( time_point to, const tripoint_abs_ms &p,
     point_sm_ms p_within_sm;
     std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( p );
 
-    submap *sm = MAPBUFFER.lookup_submap( p_abs_sm );
+    submap *sm = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() ).lookup_submap( p_abs_sm );
     if( sm == nullptr ) {
         return;
     }
@@ -438,6 +470,46 @@ void countdown_tile::load( JsonObject &jo )
     jo.read( "ticks", ticks );
 }
 
+void grid_link_tile::update_internal( time_point, const tripoint_abs_ms &,
+                                      distribution_grid & )
+{
+    // Power equalisation and upkeep are handled by game::tick_portal_links()
+    // outside the normal per-grid update path.  Nothing to do here.
+}
+
+active_tile_data *grid_link_tile::clone() const
+{
+    return new grid_link_tile( *this );
+}
+
+const std::string &grid_link_tile::get_type() const
+{
+    static const std::string type( "grid_link" );
+    return type;
+}
+
+void grid_link_tile::store( JsonOut &jsout ) const
+{
+    jsout.member( "linked", linked );
+    jsout.member( "paused", paused );
+    if( linked ) {
+        jsout.member( "target_dim_id", target_dim_id );
+        jsout.member( "target_pos", target_pos.raw() );
+    }
+}
+
+void grid_link_tile::load( JsonObject &jo )
+{
+    jo.read( "linked", linked );
+    jo.read( "paused", paused );
+    if( linked ) {
+        jo.read( "target_dim_id", target_dim_id );
+        tripoint raw;
+        jo.read( "target_pos", raw );
+        target_pos = tripoint_abs_ms( raw );
+    }
+}
+
 static std::map<std::string, std::unique_ptr<active_tile_data>> build_type_map()
 {
     std::map<std::string, std::unique_ptr<active_tile_data>> type_map;
@@ -451,6 +523,7 @@ static std::map<std::string, std::unique_ptr<active_tile_data>> build_type_map()
     add_type( new steady_consumer_tile() );
     add_type( new vehicle_connector_tile() );
     add_type( new countdown_tile() );
+    add_type( new grid_link_tile() );
     return type_map;
 }
 

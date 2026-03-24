@@ -28,7 +28,7 @@ void old_scent_map_update( const tripoint &center, map &m,
     std::array<std::array<bool, MAPSIZE_Y>, MAPSIZE_X> reduces_scent;
 
 
-    std::array<std::array<char, MAPSIZE_Y>, MAPSIZE_X> monkey;
+    std::vector<char> monkey( MAPSIZE_X * MAPSIZE_Y, 0 );
 
     // for loop constants
     const int scentmap_minx = center.x - SCENT_RADIUS;
@@ -41,15 +41,15 @@ void old_scent_map_update( const tripoint &center, map &m,
     const int diffusivity = 100;
 
     // The new scent flag searching function. Should be wayyy faster than the old one.
-    m.scent_blockers( monkey, point( scentmap_minx - 1, scentmap_miny - 1 ),
+    m.scent_blockers( monkey, MAPSIZE_Y, point( scentmap_minx - 1, scentmap_miny - 1 ),
                       point( scentmap_maxx + 1, scentmap_maxy + 1 ) );
 
     for( int x = 0; x < MAPSIZE_X; x++ ) {
         for( int y = 0; y < MAPSIZE_Y; y++ ) {
-            if( monkey[x][y] == 0 ) {
+            if( monkey[x * MAPSIZE_Y + y] == 0 ) {
                 blocks_scent[x][y] = true;
                 reduces_scent[x][y] = false;
-            } else if( monkey[x][y] == 1 ) {
+            } else if( monkey[x * MAPSIZE_Y + y] == 1 ) {
                 blocks_scent[x][y] = false;
                 reduces_scent[x][y] = true;
             } else {

@@ -13,6 +13,7 @@ constexpr auto hook_names = std::array
     "on_weather_updated",
     "on_try_npc_interaction",
     "on_npc_interaction",
+    "on_try_monster_interaction",
     "on_dialogue_start",
     "on_dialogue_option",
     "on_dialogue_end",
@@ -37,6 +38,12 @@ constexpr auto hook_names = std::array
     "on_character_try_move",
     "on_mapgen_postprocess",
     "on_explosion_start",
+    "on_creature_spawn",
+    "on_monster_spawn",
+    "on_npc_spawn",
+    "on_creature_loaded",
+    "on_monster_loaded",
+    "on_npc_loaded",
 };
 
 void define_hooks( lua_state &state )

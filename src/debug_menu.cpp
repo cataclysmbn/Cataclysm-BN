@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <fstream>
 
 #include "action.h"
 #include "artifact.h"
@@ -32,6 +33,8 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "character_display.h"
 #include "character_id.h"
@@ -78,6 +81,7 @@
 #include "overmap.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
+#include "path_info.h"
 #include "pimpl.h"
 #include "player.h"
 #include "pldata.h"
@@ -521,7 +525,8 @@ void spawn_nested_mapgen()
         target_map.load( abs_sub, true );
         // TODO: fix point types
         const tripoint local_ms = target_map.getlocal( abs_ms.raw() );
-        mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr );
+        mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr,
+                       get_overmapbuffer( target_map.get_bound_dimension() ) );
         const auto &ptr = nested_mapgen[nest_str[nest_choice]].pick();
         if( ptr == nullptr ) {
             return;
@@ -570,7 +575,7 @@ static void control_npc_menu()
     uilist charmenu;
     int charnum = 0;
     for( const auto &elem : g->get_follower_list() ) {
-        shared_ptr_fast<npc> follower = overmap_buffer.find_npc( elem );
+        shared_ptr_fast<npc> follower = ACTIVE_OVERMAP_BUFFER.find_npc( elem );
         if( follower ) {
             followers.emplace_back( follower );
             charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, follower->get_name() );
@@ -607,7 +612,7 @@ void character_edit_menu( Character &c )
         if( np->has_destination() ) {
             data << string_format(
                      _( "Destination: %s %s" ), np->goal.to_string(),
-                     overmap_buffer.ter( np->goal )->get_name() ) << '\n';
+                     ACTIVE_OVERMAP_BUFFER.ter( np->goal )->get_name() ) << '\n';
         } else {
             data << _( "No destination." ) << '\n';
         }
@@ -1539,7 +1544,7 @@ void debug()
             shared_ptr_fast<npc> temp = make_shared_fast<npc>();
             temp->randomize();
             temp->spawn_at_precise( { g->get_levx(), g->get_levy() }, u.pos() + point( -4, -4 ) );
-            overmap_buffer.insert_npc( temp );
+            ACTIVE_OVERMAP_BUFFER.insert_npc( temp );
             temp->form_opinion( u );
             temp->mission = NPC_MISSION_NULL;
             temp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, temp->global_omt_location(),
@@ -1550,6 +1555,12 @@ void debug()
             faction *new_solo_fac = g->faction_manager_ptr->add_new_faction( temp->name,
                                     faction_id( new_fac_id ), faction_id( "no_faction" ) );
             temp->set_fac( new_solo_fac ? new_solo_fac->id : faction_id( "no_faction" ) );
+            cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+                params["creature"] = temp.get();
+            } );
+            cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+                params["npc"] = temp.get();
+            } );
             g->load_npcs();
         }
         break;
@@ -1584,7 +1595,7 @@ void debug()
             popup_top(
                 s.c_str(),
                 u.posx(), g->u.posy(), g->get_levx(), g->get_levy(),
-                overmap_buffer.ter( g->u.global_omt_location() )->get_name(),
+                ACTIVE_OVERMAP_BUFFER.ter( g->u.global_omt_location() )->get_name(),
                 to_turns<int>( calendar::turn - calendar::turn_zero ),
                 get_option<bool>( "RANDOM_NPC" ) ? _( "NPCs are going to spawn." ) :
                 _( "NPCs are NOT going to spawn." ),
@@ -2250,21 +2261,15 @@ void debug()
                 break;
             }
             const vehicle &veh = v_part_pos->vehicle();
-            std::stringstream ss;
+            auto ss = std::ofstream( PATH_INFO::config_dir() + veh.name + ".json" );
             JsonOut json( ss, true );
+            json.start_array();
             json_export::vehicle( json, veh );
+            json.end_array();
 
             // write to log
-            DebugLog( DL::Info, DC::Main ) << " JSON TEMPLATE EXPORT:\n" << ss.str();
-            std::string popup_msg = _( "JSON template written to debug.log" );
-#if defined(TILES)
-            // copy to clipboard
-            const int clipboard_result = SDL_SetClipboardText( ss.str().c_str() );
-            printErrorIf( clipboard_result != 0, "Error while exporting JSON to the clipboard." );
-            if( clipboard_result == 0 ) {
-                popup_msg += _( " and to the clipboard." );
-            }
-#endif
+            ss.close();
+            std::string popup_msg = _( "JSON template written to " + veh.name + ".json" );
             popup( popup_msg );
             break;
         }

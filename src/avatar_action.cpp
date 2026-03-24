@@ -92,6 +92,8 @@ static const std::string flag_RAMP_END( "RAMP_END" );
 static const std::string flag_SWIMMABLE( "SWIMMABLE" );
 static const std::string flag_LADDER( "LADDER" );
 
+static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
+
 #define dbg(x) DebugLog((x), DC::SDL)
 
 bool avatar_action::move( avatar &you, map &m, const tripoint &d )
@@ -229,7 +231,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
         int curdist = INT_MAX;
         int newdist = INT_MAX;
         const tripoint minp = tripoint( 0, 0, you.posz() );
-        const tripoint maxp = tripoint( MAPSIZE_X, MAPSIZE_Y, you.posz() );
+        const tripoint maxp = tripoint( g_mapsize_x, g_mapsize_y, you.posz() );
         for( const tripoint &pt : m.points_in_rectangle( minp, maxp ) ) {
             if( m.ter( pt ) == t_fault ) {
                 int dist = rl_dist( pt, you.pos() );
@@ -580,7 +582,8 @@ void avatar_action::swim( map &m, avatar &you, const tripoint &p )
     if( movecost >= 500 ) {
         if( !you.is_underwater() &&
             !( you.shoe_type_count( itype_swim_fins ) == 2 ||
-               ( you.shoe_type_count( itype_swim_fins ) == 1 && one_in( 2 ) ) ) ) {
+               ( you.shoe_type_count( itype_swim_fins ) == 1 && one_in( 2 ) ) ||
+               you.has_trait_flag( trait_flag_MUTATION_SWIM ) ) ) {
             add_msg( m_bad, _( "You sink like a rock!" ) );
             you.set_underwater( true );
             ///\EFFECT_STR increases breath-holding capacity while sinking

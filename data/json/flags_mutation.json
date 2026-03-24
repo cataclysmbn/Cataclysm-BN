@@ -82,6 +82,10 @@
     "type": "mutation_flag"
   },
   {
+    "id": "MUTATION_SWIM",
+    "type": "mutation_flag"
+  },
+  {
     "id": "FURRY",
     "type": "mutation_flag"
   }

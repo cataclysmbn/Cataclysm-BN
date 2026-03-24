@@ -39,6 +39,15 @@
 #include "item_group.h"
 #include "iuse_actor.h"
 #include "json.h"
+#include "point.h"
+
+class player;
+
+namespace iuse
+{
+auto report_fluid_grid_connections( player *, item *, bool, const tripoint & ) -> int;
+auto modify_fluid_grid_connections( player *, item *, bool, const tripoint & ) -> int;
+} // namespace iuse
 #include "material.h"
 #include "options.h"
 #include "recipe.h"
@@ -1037,6 +1046,8 @@ void Item_factory::init()
     add_iuse( "REPORT_GRID_CHARGE", &iuse::report_grid_charge );
     add_iuse( "REPORT_GRID_CONNECTIONS", &iuse::report_grid_connections );
     add_iuse( "MODIFY_GRID_CONNECTIONS", &iuse::modify_grid_connections );
+    add_iuse( "REPORT_FLUID_GRID_CONNECTIONS", &iuse::report_fluid_grid_connections );
+    add_iuse( "MODIFY_FLUID_GRID_CONNECTIONS", &iuse::modify_fluid_grid_connections );
     add_iuse( "ROBOTCONTROL", &iuse::robotcontrol );
     add_iuse( "SEED", &iuse::seed );
     add_iuse( "SEWAGE", &iuse::sewage );
@@ -1126,6 +1137,8 @@ void Item_factory::init()
     add_actor( std::make_unique<iuse_reveal_contents>() );
     add_actor( std::make_unique<iuse_flowerpot_plant>() );
     add_actor( std::make_unique<iuse_flowerpot_collect>() );
+    add_actor( std::make_unique<iuse_dimension_travel>() );
+    add_actor( std::make_unique<iuse_pocket_dimension>() );
 
     // An empty dummy group, it will not spawn anything. However, it makes that item group
     // id valid, so it can be used all over the place without need to explicitly check for it.
@@ -2801,6 +2814,8 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
             delete_qualities_from_json( tmp, "qualities", def );
         }
     }
+
+    assign( jo, "crafting_speed_modifier", def.crafting_speed_modifier );
 
     if( jo.has_member( "properties" ) ) {
         set_properties_from_json( jo, "properties", def );

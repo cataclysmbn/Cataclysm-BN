@@ -240,7 +240,7 @@
     "difficulty": 8,
     "time": "3 h 10 m",
     "book_learn": [ [ "textbook_armwest", 7 ] ],
-    "using": [ [ "blacksmithing_advanced", 32 ], [ "steel_standard", 8 ] ],
+    "using": [ [ "blacksmithing_advanced", 32 ], [ "steel_standard", 6 ] ],
     "components": [ [ [ "fabric_hides_proper", 6, "LIST" ] ] ]
   },
   {
@@ -253,7 +253,7 @@
     "time": "3 h 10 m",
     "book_learn": [ [ "textbook_armwest", 9 ] ],
     "using": [ [ "blacksmithing_advanced", 32 ] ],
-    "components": [ [ [ "alloy_sheet", 8 ] ], [ [ "fabric_hides_proper", 6, "LIST" ] ] ]
+    "components": [ [ [ "alloy_sheet", 6 ] ], [ [ "fabric_hides_proper", 6, "LIST" ] ] ]
   },
   {
     "result": "cuirass_scrap",

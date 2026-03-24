@@ -65,27 +65,6 @@
   },
   {
     "type": "scenario",
-    "id": "largebuilding",
-    "name": "Large Building",
-    "points": -2,
-    "description": "Whether due to stubbornness, ignorance, or just plain bad luck, you missed the evacuation, and are stuck in a large building full of the risen dead.",
-    "allowed_locs": [
-      "sloc_mall_loading_area",
-      "sloc_mall_loading_area_roof",
-      "sloc_mall_food_court",
-      "sloc_apartments_rooftop",
-      "sloc_apartments_house",
-      "sloc_hospital",
-      "sloc_bastion_fort",
-      "sloc_marina",
-      "sloc_convention_center_rooftop"
-    ],
-    "start_name": "In Large Building",
-    "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
-    "flags": [ "CITY_START", "LONE_START" ]
-  },
-  {
-    "type": "scenario",
     "id": "surrounded",
     "name": "Surrounded",
     "points": -2,
@@ -105,7 +84,18 @@
       "sloc_cemetery",
       "sloc_fire_station",
       "sloc_police",
-      "sloc_town_hall"
+      "sloc_town_hall",
+      "sloc_mall_loading_area",
+      "sloc_mall_loading_area_roof",
+      "sloc_mall_food_court",
+      "sloc_apartments_rooftop",
+      "sloc_apartments_house",
+      "sloc_hospital",
+      "sloc_bastion_fort",
+      "sloc_marina",
+      "sloc_convention_center_rooftop",
+      "sloc_school",
+      "sloc_mansion"
     ],
     "professions": [ "neighborhood_watch" ],
     "add_professions": true,
@@ -120,19 +110,36 @@
     "points": 1,
     "description": "You've found some distant safe place, devoid of the living dead.  Looks like you're on your own...",
     "allowed_locs": [
-      "sloc_refugee_center",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
       "sloc_cabin",
       "sloc_lmoe",
       "sloc_horse_ranch",
-      "sloc_lighthouse_ground",
       "sloc_cabin_lake",
+      "sloc_lodge_ground",
       "sloc_freshwater_research_station",
       "sloc_marina"
     ],
     "start_name": "Safe Building",
     "flags": [ "LONE_START" ]
+  },
+  {
+    "type": "scenario",
+    "id": "survivor_holdout",
+    "name": "Survivor Holdout",
+    "points": 1,
+    "description": "A few days after fleeing the chaos of the cities, you've finally found a place still inhabited by the living.",
+    "allowed_locs": [
+      "sloc_refugee_center",
+      "sloc_farm_isherwood",
+      "sloc_cabin_lapin",
+      "sloc_occupied_chemlab",
+      "sloc_occupied_scrapyard",
+      "sloc_occupied_lumbermill",
+      "sloc_hub_01"
+    ],
+    "start_name": "Inhabited Refuge",
+    "flags": [ "CITY_START", "LONE_START" ]
   },
   {
     "type": "scenario",
@@ -411,7 +418,8 @@
       "bio_medic",
       "bionic_mentat",
       "bionic_spy",
-      "military_saboteur"
+      "military_saboteur",
+      "hacker"
     ],
     "allowed_locs": [ "sloc_lab_random", "sloc_lab_escape_cells", "sloc_lab_finale", "sloc_ice_lab_stairs", "sloc_ice_lab_finale" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
@@ -448,6 +456,8 @@
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
+      "sloc_lodge_ground",
+      "sloc_airport",
       "sloc_campsite",
       "sloc_campground",
       "sloc_bastion_fort",
@@ -485,6 +495,8 @@
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
+      "sloc_lodge_ground",
+      "sloc_airport",
       "sloc_campsite",
       "sloc_campground",
       "sloc_cabin_lake",
@@ -813,6 +825,25 @@
   },
   {
     "type": "scenario",
+    "id": "basement_dweller",
+    "name": "Basement Dweller",
+    "points": 1,
+    "description": "You were happiest tucked away below street level, tinkering and hiding in your basement.",
+    "start_name": "Basement Hideout",
+    "allowed_locs": [
+      "sloc_basement_bionic",
+      "sloc_basement_game",
+      "sloc_basement_chem",
+      "sloc_basement_hidden_lab",
+      "sloc_basement_meth",
+      "sloc_basement_messed",
+      "sloc_basement_survival",
+      "sloc_basement_weed"
+    ],
+    "flags": [ "CITY_START", "LONE_START" ]
+  },
+  {
+    "type": "scenario",
     "id": "cyberpunk",
     "name": "High Tech, Low Life",
     "description": "Before the world ended, bionics were reserved for the rich and the famous.  You might not have been either, but you wanted in.  Hidden offices sequestered away in basements, anesthetic smuggled out of hospitals, and desperate people with little to lose could get you what you wanted.  If you went too deep, however, your augmentation may have come at a price...",
@@ -944,6 +975,32 @@
       "prof_combat_engineer"
     ],
     "flags": [ "CHALLENGE", "LONE_START" ],
+    "bionics": [
+      "bio_reactor",
+      "bio_metabolics",
+      "bio_ethanol",
+      "bio_ups",
+      "bio_targeting",
+      "bio_geiger",
+      "bio_power_armor_interface",
+      "bio_cqb",
+      "bio_blade",
+      "bio_weight"
+    ]
+  },
+  {
+    "type": "scenario",
+    "id": "tankmod_armored_warfare",
+    "name": "Armored Apocalypse",
+    "points": 0,
+    "description": "Wandering in search of any other survivors after a disastrous mobilization, your tank and its crew have slowly been worn down by attrition.  After trying to establish communications using an old radio tower, the only other surviving crew member went off in search of supplies and fuel a few days ago.  Now something's stirred up the undead, several are converging on your position.",
+    "vehicle": "tank_m1_abrams",
+    "professions": [ "tankmod_driver", "tankmod_gunner", "tankmod_loader", "tankmod_commander" ],
+    "start_name": "Radio Tower",
+    "allowed_locs": [ "sloc_tankmod_radio_tower" ],
+    "missions": [ "MISSION_TANK_SUPPLY_RUN" ],
+    "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
+    "flags": [ "CITY_START", "LONE_START", "SUM_START" ],
     "bionics": [
       "bio_reactor",
       "bio_metabolics",

@@ -25,6 +25,8 @@ constexpr int LUA_API_VERSION = 2;
 #include "fstream_utils.h"
 #include "init.h"
 #include "item_factory.h"
+#include "mapgen_async.h"
+#include "lua_sidebar_widgets.h"
 #include "lua_action_menu.h"
 #include "map.h"
 #include "messages.h"
@@ -110,6 +112,9 @@ void reload_lua_code()
         debugmsg( "%s", e.what() );
     }
     clear_mod_being_loaded( state );
+    // Refresh the cached flag so worker threads immediately see any change to
+    // on_mapgen_postprocess hook registration caused by the reload.
+    refresh_mapgen_postprocess_hook_presence( state );
 }
 
 void debug_write_lua_backtrace( std::ostream &out )
@@ -246,6 +251,9 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     // bionic/mutation functions
     gt["bionic_functions"] = lua.create_table();
     gt["mutation_functions"] = lua.create_table();
+
+    // mapgen functions
+    gt["mapgen_functions"] = lua.create_table();
 
     // hooks
     cata::define_hooks( state );
@@ -902,6 +910,13 @@ void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &
         params["omt"] = p;
         params["when"] = when;
     }, { .state = &state } );
+}
+
+bool has_mapgen_postprocess_hooks( lua_state &state )
+{
+    const auto maybe_hooks = state.lua.globals()["game"]["hooks"]["on_mapgen_postprocess"]
+                             .get<sol::optional<sol::table>>();
+    return maybe_hooks.has_value() && !maybe_hooks->empty();
 }
 
 } // namespace cata
