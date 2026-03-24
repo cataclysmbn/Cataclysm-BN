@@ -186,9 +186,9 @@ void cata::detail::reg_overmap( sol::state &lua )
                 check_func_result( res );
                 return res.get<bool>();
             };
-            return overmap_buffer.reveal( tripoint_abs_omt( center ), radius, wrapped_filter );
+            return ACTIVE_OVERMAP_BUFFER.reveal( tripoint_abs_omt( center ), radius, wrapped_filter );
         }
-        return overmap_buffer.reveal( tripoint_abs_omt( center ), radius );
+        return ACTIVE_OVERMAP_BUFFER.reveal( tripoint_abs_omt( center ), radius );
     } );
 
     DOC( "Check if the terrain at the given position has been explored by the player. Returns boolean." );

@@ -10,7 +10,6 @@ local storage = game.mod_storage[game.current_mod]
 mod.voltmeter = voltmeter
 mod.slimepit = slimepit
 mod.artifact_analyzer = artifact_analyzer
-nyctophobia.register(mod)
 sonar.register(mod)
 mod.lua_traits = lua_traits
 lua_traits.register(mod)

@@ -77,7 +77,6 @@ static const itype_id itype_battery( "battery" );
 static const itype_id itype_fungal_seeds( "fungal_seeds" );
 static const itype_id itype_hotplate( "hotplate" );
 static const itype_id itype_marloss_seed( "marloss_seed" );
-static const auto itype_sonar_device = itype_id( "sonar_device" );
 static const itype_id itype_water( "water" );
 static const itype_id itype_water_clean( "water_clean" );
 static const itype_id itype_water_purifier( "water_purifier" );
@@ -1887,7 +1886,9 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     const bool has_planter = avail_part_with_feature( interact_part, "PLANTER", true ) >= 0;
     const int door_lock_part = avail_part_with_feature( interact_part, "DOOR_LOCKING", true );
     const bool has_door_lock = door_lock_part >= 0;
-    const bool has_sonar = avail_part_with_feature( interact_part, "SONAR", true ) >= 0;
+    const auto sonar_part = avail_part_with_feature( interact_part, "SONAR", true );
+    const bool has_sonar = sonar_part >= 0;
+    const itype_id sonar_item_type = has_sonar ? parts[ sonar_part ].info().item : itype_id::NULL_ID();
 
     enum {
         EXAMINE, TRACK, HANDBRAKE, CONTROL, CONTROL_ELECTRONICS, GET_ITEMS, GET_ITEMS_ON_GROUND, FOLD_VEHICLE, UNLOAD_TURRET,
@@ -1991,7 +1992,7 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
         auto capacity = pseudo.ammo_capacity( true );
         auto qty = capacity - discharge_battery( capacity );
         pseudo.ammo_set( itype_battery, qty );
-        you.invoke_item( &pseudo );
+        you.invoke_item( &pseudo, pos );
         charge_battery( pseudo.ammo_remaining() );
         return true;
     };
@@ -2023,7 +2024,9 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
             return;
         }
         case USE_SONAR: {
-            veh_tool( itype_sonar_device );
+            if( sonar_item_type ) {
+                veh_tool( sonar_item_type );
+            }
             return;
         }
         case USE_AUTOCLAVE: {
