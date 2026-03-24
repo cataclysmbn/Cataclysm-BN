@@ -342,6 +342,7 @@ static const mongroup_id GROUP_FISH( "GROUP_FISH" );
 static const mtype_id mon_bee( "mon_bee" );
 static const mtype_id mon_blob( "mon_blob" );
 static const mtype_id mon_dog_thing( "mon_dog_thing" );
+static const mtype_id mon_duck( "mon_duck" );
 static const mtype_id mon_fly( "mon_fly" );
 static const mtype_id mon_hologram( "mon_hologram" );
 static const mtype_id mon_shadow( "mon_shadow" );
@@ -3275,7 +3276,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
 
     if( it->charges == 0 ) { // When that timer runs down...
         int explosion_radius = 3;
-        int effect_roll = rng( 1, 5 );
+        int effect_roll = rng( 1, 6 );
         auto buff_stat = [&]( int &current_stat, int modify_by ) {
             const auto modified_stat = current_stat + modify_by;
             current_stat = std::max( current_stat, modified_stat );
@@ -3395,12 +3396,12 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                 }
                 break;
             case 5:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "BEES!" ),
+                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "QUACK!" ),
                                true, "speech", it->typeId().str() );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_yellow, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( one_in( 5 ) && !g->critter_at( dest ) ) {
-                        g->m.add_field( dest, fd_bees, rng( 1, 3 ) );
+                        g->place_critter_at( mon_duck, dest );;
                     }
                 }
                 break;
