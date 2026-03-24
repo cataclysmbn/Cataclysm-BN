@@ -2100,6 +2100,21 @@
     "components": [ [ [ "frame", 2 ] ] ]
   },
   {
+    "result": "v_roadheader_item",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "skills_required": [ "mechanics", 6 ],
+    "difficulty": 8,
+    "autolearn": true,
+    "book_learn": [ [ "welding_book", 6 ], [ "textbook_mechanics", 5 ] ],
+    "time": "8 h",
+    "using": [ [ "welding_standard", 40 ], [ "steel_standard", 40 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 }, { "id": "WRENCH", "level": 2 } ],
+    "components": [ [ [ "hdframe", 2 ] ] ]
+  },
+  {
     "type": "recipe",
     "result": "wheel_mount_light_wood",
     "category": "CC_OTHER",
@@ -2124,6 +2139,62 @@
     "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
     "using": [ [ "3d_printing_standard", 10 ] ],
     "components": [ [ [ "carbon_fiber_filament", 100 ] ] ]
+  },
+  {
+    "result": "sheet_carbon",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "computer",
+    "difficulty": 2,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "10 m",
+    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
+    "using": [ [ "3d_printing_standard", 5 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 50 ] ] ]
+  },
+  {
+    "result": "carbon_plate",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "computer",
+    "difficulty": 2,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "10 m",
+    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
+    "using": [ [ "3d_printing_standard", 15 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 150 ] ] ]
+  },
+  {
+    "result": "wing_carbon_item",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "computer",
+    "difficulty": 2,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "10 m",
+    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
+    "using": [ [ "3d_printing_standard", 10 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 75 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "lit_wing_carbon_item",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_LIGHTING",
+    "skill_used": "electronics",
+    "difficulty": 1,
+    "time": "15 m",
+    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ] ],
+    "using": [ [ "soldering_standard", 5 ] ],
+    "components": [
+      [ [ "wing_carbon_item", 1 ] ],
+      [ [ "lightstrip_inactive", 1 ], [ "light_bulb", 1 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "plastic_chunk", 1 ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -2376,5 +2447,48 @@
     "using": [ [ "welding_standard", 10 ] ],
     "qualities": [ { "id": "HAMMER", "level": 2 } ],
     "components": [ [ [ "sheet_metal", 4 ] ], [ [ "scrap", 6 ] ], [ [ "amplifier", 4 ] ], [ [ "e_scrap", 6 ] ] ]
+  },
+  {
+    "result": "tread1",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "skills_required": [ "mechanics", 5 ],
+    "time": "3 h",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_fabrication", 3 ], [ "welding_book", 4 ], [ "textbook_carpentry", 3 ] ],
+    "using": [ [ "blacksmithing_standard", 10 ], [ "steel_standard", 10 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "chunk_rubber", 40 ] ], [ [ "wire", 10 ] ], [ [ "chain", 2 ] ] ]
+  },
+  {
+    "result": "tread2",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "skills_required": [ "mechanics", 5 ],
+    "time": "4 h",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_fabrication", 4 ], [ "welding_book", 5 ], [ "textbook_carpentry", 4 ] ],
+    "using": [ [ "blacksmithing_intermediate", 15 ], [ "steel_standard", 15 ] ],
+    "components": [ [ [ "steel_plate", 3 ] ], [ [ "chain", 2 ] ] ]
+  },
+  {
+    "result": "tread3",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "skills_required": [ "mechanics", 5 ],
+    "time": "5 h",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_fabrication", 5 ], [ "welding_book", 6 ], [ "textbook_carpentry", 5 ] ],
+    "using": [ [ "blacksmithing_advanced", 20 ], [ "steel_standard", 20 ] ],
+    "components": [ [ [ "hard_plate", 5 ] ], [ [ "chain", 2 ] ] ]
   }
 ]

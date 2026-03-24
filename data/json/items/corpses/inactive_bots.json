@@ -974,5 +974,23 @@
       "skills": [ "electronics", "computer" ]
     },
     "flags": [ "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "broken_uafv_xm246e1",
+    "looks_like": "broken_tankbot",
+    "symbol": ",",
+    "color": "green",
+    "name": { "str": "broken Mini-Tank UAFV" },
+    "category": "other",
+    "description": "A hulking wreck of treads, composite plating, and cold robotic hatred.  Hopefully won't ever be operational again, now only good for parts.",
+    "price": "10 USD",
+    "material": [ "steel", "plastic" ],
+    "weight": "45000 kg",
+    "volume": "900 L",
+    "bashing": 20,
+    "cutting": 15,
+    "to_hit": -3,
+    "flags": [ "TRADER_AVOID", "NO_REPAIR" ]
   }
 ]

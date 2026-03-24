@@ -729,7 +729,10 @@
       [ "chem_hexamine", 5 ],
       [ "esbit_stove", 10 ],
       [ "mess_tin", 10 ],
-      [ "angle_grinder", 4 ]
+      [ "angle_grinder", 4 ],
+      [ "textbook_launcher", 2 ],
+      [ "105mm_casing", 12 ],
+      [ "120mm_case_base", 4 ]
     ]
   },
   {

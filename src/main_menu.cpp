@@ -996,7 +996,7 @@ bool main_menu::new_character_tab()
     if( !pc.create( play_type, selected_template ) ) {
         load_char_templates();
         MAPBUFFER.clear();
-        overmap_buffer.clear();
+        ACTIVE_OVERMAP_BUFFER.clear();
         return false;
     }
 
@@ -1099,7 +1099,7 @@ void main_menu::world_tab( const std::string &worldname )
         world_generator->delete_world( worldname, do_delete );
         savegames.clear();
         MAPBUFFER.clear();
-        overmap_buffer.clear();
+        ACTIVE_OVERMAP_BUFFER.clear();
         if( do_delete ) {
             sel2 = 0; // reset to create world selection
         }
@@ -1109,7 +1109,7 @@ void main_menu::world_tab( const std::string &worldname )
         world_generator->set_active_world( nullptr );
         savegames.clear();
         MAPBUFFER.clear();
-        overmap_buffer.clear();
+        ACTIVE_OVERMAP_BUFFER.clear();
         world_generator->convert_to_v2( worldname );
     };
 
@@ -1155,7 +1155,7 @@ void main_menu::world_tab( const std::string &worldname )
                 pc.character_to_template( pc.name );
                 pc = avatar();
                 MAPBUFFER.clear();
-                overmap_buffer.clear();
+                ACTIVE_OVERMAP_BUFFER.clear();
                 load_char_templates();
             }
             break;

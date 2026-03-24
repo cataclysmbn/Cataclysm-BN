@@ -1,0 +1,94 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "external_tileset/furry_mutations/rabbit_ears.png",
+        "tiles": [ { "id": "overlay_mutation_RABBIT_EARS", "fg": 1, "bg": 0, "rotates": true } ],
+        "sprite_offset_y": -8,
+        "sprite_width": 32,
+        "sprite_height": 32
+      },
+      {
+        "file": "external_tileset/furry_mutations/rabbit_tail.png",
+        "tiles": [ { "id": "overlay_mutation_TAIL_RABBIT", "fg": 2, "rotates": true } ],
+        "sprite_width": 32,
+        "sprite_height": 32
+      },
+      {
+        "file": "external_tileset/furry_mutations/rabbit_nose.png",
+        "tiles": [ { "id": "overlay_mutation_RABBIT_NOSE", "fg": 3, "rotates": true } ],
+        "sprite_width": 32,
+        "sprite_height": 32
+      },
+      {
+        "file": "external_tileset/furry_mutations/rabbit_paw.png",
+        "tiles": [ { "id": "overlay_mutation_PAWS_LITTLE", "fg": 4, "rotates": true } ],
+        "sprite_width": 32,
+        "sprite_height": 32
+      },
+      {
+        "file": "external_tileset/furry_mutations/rabbit_fur.png",
+        "tiles": [
+          { "id": "overlay_female_mutation_RABBIT_FUR", "fg": 6, "rotates": true },
+          { "id": "overlay_male_mutation_RABBIT_FUR", "fg": 5, "rotates": true }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32
+      },
+      {
+        "file": "external_tileset/furry_mutations/chitin_fur.png",
+        "tiles": [
+          { "id": "overlay_female_mutation_CHITIN_FUR", "bg": 7, "fg": 13, "rotates": true },
+          { "id": "overlay_male_mutation_CHITIN_FUR", "bg": 8, "fg": 14, "rotates": true },
+          { "id": "overlay_female_mutation_CHITIN_FUR2", "bg": 9, "fg": 15, "rotates": true },
+          { "id": "overlay_male_mutation_CHITIN_FUR2", "bg": 10, "fg": 16, "rotates": true },
+          { "id": "overlay_female_mutation_CHITIN_FUR3", "bg": 11, "fg": 17, "rotates": true },
+          { "id": "overlay_male_mutation_CHITIN_FUR3", "bg": 12, "fg": 18, "rotates": true }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32
+      },
+      {
+        "file": "external_tileset/furry_mutations/overlay_FUR.png",
+        "tiles": [
+          { "id": "overlay_female_mutation_FELINE_FUR", "fg": 19, "rotates": true },
+          { "id": "overlay_male_mutation_FELINE_FUR", "fg": 20, "rotates": true },
+          { "id": "overlay_female_mutation_FUR", "fg": 21, "rotates": true },
+          { "id": "overlay_male_mutation_FUR", "fg": 22, "rotates": true },
+          { "id": "overlay_female_mutation_LIGHTFUR", "fg": 23, "rotates": true },
+          { "id": "overlay_male_mutation_LIGHTFUR", "fg": 24, "rotates": true },
+          { "id": "overlay_female_mutation_LUPINE_FUR", "fg": 25, "rotates": true },
+          { "id": "overlay_male_mutation_LUPINE_FUR", "fg": 26, "rotates": true },
+          { "id": "overlay_female_mutation_LYNX_FUR", "fg": 28, "bg": 27, "rotates": true },
+          { "id": "overlay_male_mutation_LYNX_FUR", "fg": 29, "bg": 27, "rotates": true },
+          { "id": "overlay_female_mutation_URSINE_FUR", "fg": 30, "rotates": true },
+          { "id": "overlay_male_mutation_URSINE_FUR", "fg": 31, "rotates": true },
+          { "id": "overlay_mutation_MUZZLE", "fg": 39, "rotates": true },
+          { "id": "overlay_mutation_MUZZLE_BEAR", "fg": 40, "rotates": true },
+          { "id": "overlay_mutation_MUZZLE_RAT", "fg": 42, "bg": 41, "rotates": true },
+          { "id": "overlay_mutation_PAWS_LARGE", "fg": 43, "rotates": true },
+          { "id": "overlay_mutation_TAIL_CATTLE", "fg": 44, "rotates": true },
+          { "id": "overlay_mutation_TAIL_FLUFFY", "fg": 45, "rotates": true },
+          { "id": "overlay_mutation_TAIL_LONG", "fg": 46, "rotates": true }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32
+      },
+      {
+        "file": "external_tileset/furry_mutations/overlay_FUR.png",
+        "tiles": [
+          { "id": "overlay_mutation_CANINE_EARS", "fg": 32, "rotates": true },
+          { "id": "overlay_mutation_FELINE_EARS", "fg": 34, "bg": 33, "rotates": true },
+          { "id": "overlay_mutation_LUPINE_EARS", "fg": 36, "bg": 35, "rotates": true },
+          { "id": "overlay_mutation_MOUSE_EARS", "fg": 38, "bg": 37, "rotates": true },
+          { "id": "overlay_mutation_URSINE_EARS", "fg": 47, "rotates": true }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_y": -16
+      }
+    ]
+  }
+]

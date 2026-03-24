@@ -1165,7 +1165,7 @@ void spell_effect::map_area( const spell &sp, Creature &caster, const tripoint &
         return;
     }
     const tripoint_abs_omt center = you->global_omt_location();
-    overmap_buffer.reveal( center.xy(), sp.aoe(), center.z() );
+    ACTIVE_OVERMAP_BUFFER.reveal( center.xy(), sp.aoe(), center.z() );
 }
 
 void spell_effect::morale( const spell &sp, Creature &caster, const tripoint &target )

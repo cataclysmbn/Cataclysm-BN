@@ -251,9 +251,9 @@ void cata::detail::reg_map( sol::state &lua )
 
         luna::set_fx( ut, "is_outside", sol::resolve<bool( const tripoint & ) const>( &map::is_outside ) );
         // Actually sheltered or in sunlight doesn't need map, but it's convenient to have it here
-        luna::set_fx( ut, "is_sheltered", []( map & m, tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
+        luna::set_fx( ut, "is_sheltered", []( map &, tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
 
-        luna::set_fx( ut, "is_in_sunlight", []( map & m, tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
+        luna::set_fx( ut, "is_in_sunlight", []( map &, tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
 
         // Mapgen stuffs
 
@@ -386,15 +386,11 @@ void cata::detail::reg_distribution_grid( sol::state &lua )
                       []( const distribution_grid_tracker & tr, const tripoint & omt_pos ) -> std::uintptr_t { return tr.debug_grid_id( tripoint_abs_omt( omt_pos ) ); } );
         DOC( "Update all grids to the given time point" );
         luna::set_fx( ut, "update", &distribution_grid_tracker::update );
-        DOC( "Load grids for the given map" );
-        luna::set_fx( ut, "load", sol::resolve<void( const map & )>( &distribution_grid_tracker::load ) );
         DOC( "Notify tracker that a tile at the given position has changed" );
         luna::set_fx( ut, "on_changed",
         []( distribution_grid_tracker & tr, const tripoint & p ) {
             tr.on_changed( tripoint_abs_ms( p ) );
         } );
-        DOC( "Notify tracker that the game has been saved" );
-        luna::set_fx( ut, "on_saved", &distribution_grid_tracker::on_saved );
         DOC( "Notify tracker that game options have changed" );
         luna::set_fx( ut, "on_options_changed", &distribution_grid_tracker::on_options_changed );
     }

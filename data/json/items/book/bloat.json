@@ -194,7 +194,7 @@
     "copy-from": "holybook_bible1",
     "price": "15 USD",
     "fun": -1,
-    "extend": { "flags": [ "MORBID" ] }
+    "extend": { "flags": [ "MORBID", "MISSION_ITEM" ] }
   },
   {
     "id": "guidebook",
@@ -233,7 +233,7 @@
     "copy-from": "paperback_novel",
     "price": "29 USD",
     "fun": -1,
-    "flags": [ "MORBID" ]
+    "flags": [ "MORBID", "MISSION_ITEM" ]
   },
   {
     "id": "ZSG",

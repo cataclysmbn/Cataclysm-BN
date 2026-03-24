@@ -255,7 +255,7 @@
     "difficulty": 7,
     "time": "190 m",
     "book_learn": [ [ "textbook_armwest", 6 ] ],
-    "using": [ [ "blacksmithing_advanced", 28 ], [ "steel_standard", 7 ] ],
+    "using": [ [ "blacksmithing_advanced", 28 ], [ "steel_standard", 4 ] ],
     "components": [ [ [ "fabric_hides_proper", 6, "LIST" ] ] ]
   },
   {
@@ -268,7 +268,7 @@
     "time": "190 m",
     "book_learn": [ [ "textbook_armwest", 8 ] ],
     "using": [ [ "blacksmithing_advanced", 28 ] ],
-    "components": [ [ [ "alloy_sheet", 7 ] ], [ [ "fabric_hides_proper", 6, "LIST" ] ] ]
+    "components": [ [ [ "alloy_sheet", 4 ] ], [ [ "fabric_hides_proper", 6, "LIST" ] ] ]
   },
   {
     "result": "legguard_metal",

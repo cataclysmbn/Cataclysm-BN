@@ -60,4 +60,3 @@ NOTE: Please read your emails. Anyone mentioned on Github with an @ will receive
 - [ ] This PR modifies lua scripts or the lua API.
   - [ ] I have added [`lua` scope](https://docs.cataclysmbn.org/contribute/changelog_guidelines/#lua%3A-changes-to-lua-api) to the PR title.
   - [ ] I have added [type annotations](https://emmylua.github.io/annotation.html) to functions so that it's safe and easy to maintain.
-  - [ ] I have committed the output of `deno task docs:gen` so the Lua API documentation is updated.

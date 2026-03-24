@@ -206,6 +206,16 @@ constexpr static int sdl_color_pixel_format = SDL_PIXELFORMAT_ABGR8888;
 ///@returns Always a valid pointer.
 SDL_Surface_Ptr create_surface_32( int w, int h );
 
+// Helper to get a pixel's RGBA bytes from a surface at (x, y)
+// Uses SDL's format information to correctly interpret pixel data
+void get_pixel_rgba( const SDL_Surface *surface, int x, int y,
+                     Uint8 &r, Uint8 &g, Uint8 &b, Uint8 &a );
+
+// Helper to set a pixel's RGBA bytes on a surface at (x, y)
+// Uses SDL's format information to correctly write pixel data
+void set_pixel_rgba( const SDL_Surface *surface, int x, int y,
+                     Uint8 r, Uint8 g, Uint8 b, Uint8 a );
+
 SDL_Rect fit_rect_inside( const SDL_Rect &inner, const SDL_Rect &outer );
 
 /** Linearly interpolate intermediate colors between two given colors.

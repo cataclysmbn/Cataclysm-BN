@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -80,6 +81,7 @@ class panel_manager
         void show_adm();
 
         void init();
+        auto sync_lua_panels() -> void;
 
     private:
         bool save();
@@ -94,7 +96,7 @@ class panel_manager
         int width_left = 0;
         std::string current_layout_id;
         std::map<std::string, std::vector<window_panel>> layouts;
+        std::set<std::string> lua_panel_names;
 
 };
-
 

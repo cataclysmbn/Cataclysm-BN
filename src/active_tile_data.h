@@ -8,6 +8,7 @@ class JsonObject;
 class JsonOut;
 struct tripoint;
 class distribution_grid;
+class mapbuffer;
 
 class active_tile_data
 {
@@ -57,6 +58,11 @@ namespace active_tiles
 // TODO: Don't return a raw pointer
 template <typename T = active_tile_data>
 T * furn_at( const tripoint_abs_ms &pos );
+
+/// Dimension-explicit overload: looks up the submap in @p buffer
+/// instead of using get_map().get_bound_dimension().
+template <typename T = active_tile_data>
+T * furn_at( const tripoint_abs_ms &pos, mapbuffer &buffer );
 
 } // namespace active_tiles
 

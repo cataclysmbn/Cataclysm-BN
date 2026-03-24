@@ -108,6 +108,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_door_window",
+    "group": "build_door_window",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "45 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ] ],
+    "components": [ [ [ "2x4", 2 ] ], [ [ "wood_panel", 1 ] ], [ [ "nail", 12 ] ], [ [ "hinge", 2 ] ], [ [ "glass_sheet", 1 ] ] ],
+    "pre_terrain": "t_door_frame",
+    "post_terrain": "t_door_window_c"
+  },
+  {
+    "type": "construction",
     "id": "constr_fill_water_sh",
     "group": "fill_shallow_water_with_dirt",
     "category": "CONSTRUCT",
@@ -1128,8 +1140,8 @@
     "required_skills": [ [ "fabrication", 4 ], [ "mechanics", 2 ], [ "electronics", 2 ] ],
     "time": "240 m",
     "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "WRENCH", "level": 1 } ], [ { "id": "SCREW", "level": 1 } ] ],
-    "components": [ [ [ "well_pump", 1 ] ], [ [ "pipe", 6 ] ], [ [ "motor_small", 1 ] ], [ [ "power_supply", 1 ] ], [ [ "cable", 10 ] ] ],
-    "pre_terrain": "t_covered_well",
+    "components": [ [ [ "motor_small", 1 ] ], [ [ "power_supply", 1 ] ], [ [ "cable", 10 ] ] ],
+    "pre_terrain": "t_water_pump",
     "post_furniture": "f_electric_well_pump"
   },
   {

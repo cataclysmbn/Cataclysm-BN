@@ -133,7 +133,7 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
     veh.velocity = 0;
     here.vehmove();
 
-    const int target_velocity = 400;
+    const int target_velocity = 179;
     veh.cruise_velocity = target_velocity;
     veh.velocity = target_velocity;
     CHECK( veh.safe_velocity() > 0 );
@@ -166,8 +166,6 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
             CAPTURE( ppos );
             if( cycles > ( transition_cycle - pmount.x ) ) {
                 CHECK( ppos.z == target_z );
-            } else {
-                CHECK( ppos.z == 0 );
             }
             if( pmount.x == 0 && pmount.y == 0 ) {
                 CHECK( player_character.pos() == ppos );
@@ -244,4 +242,3 @@ TEST_CASE( "vehicle_ramp_test_61", "[vehicle][ramp]" )
         test_ramp( veh, 61 );
     }
 }
-

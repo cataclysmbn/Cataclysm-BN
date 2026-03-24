@@ -1590,6 +1590,7 @@
     "charges_per_use": 75,
     "techniques": [ "WBLOCK_1", "SPIN", "SWEEP" ],
     "qualities": [ [ "AXE", 4 ] ],
+    "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
@@ -1647,6 +1648,7 @@
     "charges_per_use": 375,
     "techniques": [ "WBLOCK_1", "SPIN", "SWEEP" ],
     "qualities": [ [ "AXE", 4 ] ],
+    "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
@@ -1813,6 +1815,7 @@
     "charges_per_use": 75,
     "max_charges": 450,
     "qualities": [ [ "AXE", 4 ] ],
+    "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
@@ -1860,6 +1863,7 @@
     "ammo": "battery",
     "charges_per_use": 375,
     "qualities": [ [ "AXE", 4 ] ],
+    "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,

@@ -62,6 +62,7 @@
       "w": "f_washer",
       "y": "f_sink",
       "z": "f_dresser",
+      "{": "f_mannequin",
       "}": "f_pinball_machine"
     },
     "terrain": {

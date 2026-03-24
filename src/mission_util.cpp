@@ -39,10 +39,10 @@ static tripoint_abs_omt reveal_destination( const std::string &type )
     params.search_range = { 0, rng( 40, 80 ) };
     params.search_layers = std::nullopt;
 
-    const tripoint_abs_omt center_pos = overmap_buffer.find_random( your_pos, params );
+    const tripoint_abs_omt center_pos = ACTIVE_OVERMAP_BUFFER.find_random( your_pos, params );
 
     if( center_pos != overmap::invalid_tripoint ) {
-        overmap_buffer.reveal( center_pos, 2 );
+        ACTIVE_OVERMAP_BUFFER.reveal( center_pos, 2 );
         return center_pos;
     }
 
@@ -59,12 +59,12 @@ static void reveal_target( mission *miss, const std::string &omter_id )
 
     const tripoint_abs_omt destination = reveal_destination( omter_id );
     if( destination != overmap::invalid_tripoint ) {
-        const oter_id oter = overmap_buffer.ter( destination );
+        const oter_id oter = ACTIVE_OVERMAP_BUFFER.ter( destination );
         add_msg( _( "%s has marked the only %s known to them on your map." ), p->name,
                  oter->get_name() );
         miss->set_target( destination );
         if( one_in( 3 ) &&
-            mission_util::reveal_road( g->u.global_omt_location(), destination, overmap_buffer ) ) {
+            mission_util::reveal_road( g->u.global_omt_location(), destination, ACTIVE_OVERMAP_BUFFER ) ) {
             add_msg( _( "%s also marks the road that leads to it…" ), p->name );
         }
     }
@@ -83,8 +83,8 @@ bool mission_util::reveal_road( const tripoint_abs_omt &source, const tripoint_a
     find_params.search_range = { 0, 3 };
     find_params.search_layers = { 0, 0 };
 
-    const tripoint_abs_omt source_road = overmap_buffer.find_closest( source, find_params );
-    const tripoint_abs_omt dest_road = overmap_buffer.find_closest( dest, find_params );
+    const tripoint_abs_omt source_road = omb.find_closest( source, find_params );
+    const tripoint_abs_omt dest_road = omb.find_closest( dest, find_params );
 
     omt_route_params route_params;
     route_params.popup = make_shared_fast<throbber_popup>( _( "Please wait…" ) );
@@ -108,9 +108,9 @@ tripoint_abs_omt mission_util::reveal_om_ter( const std::string &omter, int reve
     // Missions are normally on z-level 0, but allow an optional argument.
     tripoint_abs_omt loc = get_player_character().global_omt_location();
     loc.z() = target_z;
-    const tripoint_abs_omt place = overmap_buffer.find_closest( loc, find_params );
+    const tripoint_abs_omt place = ACTIVE_OVERMAP_BUFFER.find_closest( loc, find_params );
     if( place != overmap::invalid_tripoint && reveal_rad >= 0 ) {
-        overmap_buffer.reveal( place, reveal_rad );
+        ACTIVE_OVERMAP_BUFFER.reveal( place, reveal_rad );
     }
     return place;
 }
@@ -126,7 +126,7 @@ static tripoint_abs_omt random_house_in_city( const city_reference &cref )
         project_to<coords::omt>( cref.abs_sm_pos );
     std::vector<tripoint_abs_omt> valid;
     for( const tripoint_abs_omt &p : points_in_radius( city_center_omt, cref.city->size ) ) {
-        if( overmap_buffer.check_ot( "house", ot_match_type::prefix, p ) ) {
+        if( ACTIVE_OVERMAP_BUFFER.check_ot( "house", ot_match_type::prefix, p ) ) {
             valid.push_back( p );
         }
     }
@@ -138,7 +138,7 @@ tripoint_abs_omt mission_util::random_house_in_closest_city()
     Character &player_character = get_player_character();
     // TODO: fix point types
     const tripoint_abs_sm center( player_character.global_sm_location() );
-    const city_reference cref = overmap_buffer.closest_city( center );
+    const city_reference cref = ACTIVE_OVERMAP_BUFFER.closest_city( center );
     if( !cref ) {
         debugmsg( "could not find closest city" );
         return g->u.global_omt_location();
@@ -155,11 +155,12 @@ tripoint_abs_omt mission_util::target_closest_lab_entrance(
     find_params.search_layers = std::nullopt;
 
     // Get the surface locations for labs and for spaces above hidden lab stairs.
-    tripoint_abs_omt surface = overmap_buffer.find_closest( tripoint_abs_omt( origin.xy(), 0 ),
+    tripoint_abs_omt surface = ACTIVE_OVERMAP_BUFFER.find_closest( tripoint_abs_omt( origin.xy(), 0 ),
                                find_params );
 
     find_params.types.front().first = "hidden_lab_stairs";
-    tripoint_abs_omt underground = overmap_buffer.find_closest( tripoint_abs_omt( origin.xy(), -1 ),
+    tripoint_abs_omt underground = ACTIVE_OVERMAP_BUFFER.find_closest( tripoint_abs_omt( origin.xy(),
+                                   -1 ),
                                    find_params );
 
     tripoint_abs_omt closest;
@@ -176,7 +177,7 @@ tripoint_abs_omt mission_util::target_closest_lab_entrance(
     // Reveal / Target surface regardless
     closest = tripoint_abs_omt( closest.xy(), 0 );
     if( reveal_rad >= 0 ) {
-        overmap_buffer.reveal( closest, reveal_rad );
+        ACTIVE_OVERMAP_BUFFER.reveal( closest, reveal_rad );
     }
     miss->set_target( closest );
     return closest;
@@ -213,9 +214,9 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
 
         // Either find a random or closest match, based on the criteria.
         if( params.random ) {
-            target_pos = overmap_buffer.find_random( origin_pos, find_params );
+            target_pos = ACTIVE_OVERMAP_BUFFER.find_random( origin_pos, find_params );
         } else {
-            target_pos = overmap_buffer.find_closest( origin_pos, find_params );
+            target_pos = ACTIVE_OVERMAP_BUFFER.find_closest( origin_pos, find_params );
         }
 
         // If we didn't find a match, and we're allowed to create new terrain, and the player didn't
@@ -224,31 +225,31 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
             // If this terrain is part of an overmap special...
             if( params.overmap_special ) {
                 // ...then attempt to place the whole special.
-                const bool placed = overmap_buffer.place_special( *params.overmap_special, origin_pos,
+                const bool placed = ACTIVE_OVERMAP_BUFFER.place_special( *params.overmap_special, origin_pos,
                                     params.min_distance, params.search_range );
                 // If we succeeded in placing the special, then try and find the particular location
                 // we're interested in.
                 if( placed ) {
                     find_params.seen = std::nullopt;
-                    target_pos = overmap_buffer.find_closest( origin_pos, find_params );
+                    target_pos = ACTIVE_OVERMAP_BUFFER.find_closest( origin_pos, find_params );
                 }
             } else if( params.replaceable_overmap_terrain ) {
                 // This terrain wasn't part of an overmap special, but we do have a replacement
                 // terrain specified. Find a random location of that replacement type.
                 find_params.seen = std::nullopt;
                 find_params.types.front().first = *params.replaceable_overmap_terrain;
-                target_pos = overmap_buffer.find_random( origin_pos, find_params );
+                target_pos = ACTIVE_OVERMAP_BUFFER.find_random( origin_pos, find_params );
 
                 // We didn't find it, so allow this search to create new overmaps and try again.
                 find_params.existing_only = false;
                 if( target_pos == overmap::invalid_tripoint ) {
-                    target_pos = overmap_buffer.find_random( origin_pos, find_params );
+                    target_pos = ACTIVE_OVERMAP_BUFFER.find_random( origin_pos, find_params );
                 }
 
                 // We found a match, so set this position (which was our replacement terrain)
                 // to our desired mission terrain.
                 if( target_pos != overmap::invalid_tripoint ) {
-                    overmap_buffer.ter_set( target_pos, oter_id( params.overmap_terrain ) );
+                    ACTIVE_OVERMAP_BUFFER.ter_set( target_pos, oter_id( params.overmap_terrain ) );
                 }
             }
         }
@@ -311,7 +312,7 @@ std::optional<tripoint_abs_omt> mission_util::assign_mission_target(
 
         // If we specified a reveal radius, then go ahead and reveal around our found position.
         if( params.reveal_radius ) {
-            overmap_buffer.reveal( *target_pos, *params.reveal_radius );
+            ACTIVE_OVERMAP_BUFFER.reveal( *target_pos, *params.reveal_radius );
         }
 
         // Set the mission target to our found position.
@@ -340,7 +341,7 @@ tripoint_abs_omt mission_util::get_om_terrain_pos( const mission_target_params &
 
     // If we specified a reveal radius, then go ahead and reveal around our found position.
     if( params.reveal_radius ) {
-        overmap_buffer.reveal( target_pos, *params.reveal_radius );
+        ACTIVE_OVERMAP_BUFFER.reveal( target_pos, *params.reveal_radius );
     }
 
     return target_pos;
@@ -372,23 +373,23 @@ tripoint_abs_omt mission_util::target_om_ter_random( const std::string &omter, i
     find_params.search_layers = std::nullopt;
     find_params.seen = must_see ? std::make_optional( true ) : std::nullopt;
 
-    auto places = overmap_buffer.find_all( loc, find_params );
+    auto places = ACTIVE_OVERMAP_BUFFER.find_all( loc, find_params );
     if( places.empty() ) {
         return g->u.global_omt_location();
     }
-    const overmap *loc_om = overmap_buffer.get_existing_om_global( loc ).om;
+    const overmap *loc_om = ACTIVE_OVERMAP_BUFFER.get_existing_om_global( loc ).om;
     assert( loc_om );
 
     std::vector<tripoint_abs_omt> places_om;
     for( auto &i : places ) {
-        if( loc_om == overmap_buffer.get_existing_om_global( i ).om ) {
+        if( loc_om == ACTIVE_OVERMAP_BUFFER.get_existing_om_global( i ).om ) {
             places_om.push_back( i );
         }
     }
 
     const tripoint_abs_omt place = random_entry( places_om );
     if( reveal_rad >= 0 ) {
-        overmap_buffer.reveal( place, reveal_rad );
+        ACTIVE_OVERMAP_BUFFER.reveal( place, reveal_rad );
     }
     miss->set_target( place );
     return place;

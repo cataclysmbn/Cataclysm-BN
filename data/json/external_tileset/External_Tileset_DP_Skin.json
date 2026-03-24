@@ -1,0 +1,47 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tints": [
+      { "id": "SKIN_DARK", "fg": "#55381c", "blend_mode": "multiply" },
+      { "id": "SKIN_LIGHT", "fg": "#ffccb5", "blend_mode": "multiply" },
+      { "id": "SKIN_MEDIUM", "fg": "#bf876a", "blend_mode": "multiply" },
+      { "id": "SKIN_PINK", "fg": "#ffb5bc", "blend_mode": "multiply" },
+      { "id": "SKIN_TAN", "fg": "#ff9f68", "blend_mode": "multiply" },
+      { "id": "SKIN_OLIVE", "fg": "#ffe3ac", "blend_mode": "multiply" },
+      { "id": "PALE", "fg": "#ffccb5", "blend_mode": "softlight" },
+      { "id": "ALBINO", "fg": "#ffe3d7", "blend_mode": "softlight" },
+      { "id": "SUNBURN", "fg": "#ffe3d7", "blend_mode": "softlight" },
+      { "id": "PLANTSKIN", "fg": "#7fba45", "blend_mode": "softlight" }
+    ],
+    "tiles-new": [
+      {
+        "file": "external_tileset/External_Tileset_DP_Skin.png",
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "tiles": [
+          { "id": "overlay_female_mutation_SKIN_DARK", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_SKIN_DARK", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_SKIN_LIGHT", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_SKIN_LIGHT", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_SKIN_MEDIUM", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_SKIN_MEDIUM", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_SKIN_PINK", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_SKIN_PINK", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_SKIN_TAN", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_SKIN_TAN", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_SKIN_OLIVE", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_SKIN_OLIVE", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_PALE", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_PALE", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_ALBINO", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_ALBINO", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_SUNBURN", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_SUNBURN", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_PLANTSKIN", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_PLANTSKIN", "fg": 1, "rotates": false }
+        ]
+      }
+    ]
+  }
+]
