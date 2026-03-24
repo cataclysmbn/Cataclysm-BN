@@ -361,9 +361,6 @@ void cata::detail::reg_date_time_api( sol::state &lua )
     DOC( "System date and time API." );
     luna::userlib lib = luna::begin_lib( lua, "date_time" ) ;
 
-    const time_t timestamp = time( nullptr );
-    const tm *loc = localtime( &timestamp );
-
     luna::set_fx( lib, "year", []() { return local_time_impl()->tm_year + 1900; } );
     // It makes sense to start month at 1, not 0
     luna::set_fx( lib, "month", []() { return local_time_impl()->tm_mon + 1; } );
@@ -586,6 +583,13 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `npc` (NPC): The NPC being interacted with  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_npc_interaction", []( const sol::table & ) {} );
+
+    DOC( "Called when the player tries to interact with a monster.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster): The monster being interacted with  " );
+    DOC( "Return false to prevent monster interaction actions from running.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_try_monster_interaction", []( const sol::table & ) {} );
 
     DOC( "Called just before the dialogue window opens and the first topic is chosen.  " );
     DOC( "The hook receives a table with keys:  " );

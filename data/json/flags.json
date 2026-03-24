@@ -836,6 +836,12 @@
     "info": "This item can be used to <info>pick locks</info> with <good>zero effort</good>."
   },
   {
+    "id": "DURABLE_LOCKPICK",
+    "type": "json_flag",
+    "context": [  ],
+    "//": "takes no damage from normal use"
+  },
+  {
     "id": "RAINPROOF",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
@@ -1673,7 +1679,14 @@
   {
     "id": "GNV_EFFECT",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "info": "This gear <good>enhances your vision</good> when worn, and <info>tints your field of view</info>."
+  },
+  {
+    "id": "RECON_VISION",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>enhances your vision</good> when worn."
   },
   {
     "id": "HELMET_COMPAT",
@@ -1723,7 +1736,8 @@
   {
     "id": "IR_EFFECT",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "info": "This gear allows you to <good>see heat signatures</good> when worn."
   },
   {
     "id": "IS_ARMOR",
@@ -2551,5 +2565,10 @@
     "type": "json_flag",
     "//": "",
     "context": [  ]
+  },
+  {
+    "id": "TRACKED",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ]
   }
 ]

@@ -57,6 +57,7 @@
       [ "mag_traps", 20 ],
       [ "manual_traps", 12 ],
       [ "trappers_companion", 2 ],
+      [ "textbook_launcher", 5 ],
       [ "mag_guns", 40 ],
       [ "mag_rifle", 40 ],
       [ "mag_shotgun", 15 ],
@@ -1582,7 +1583,8 @@
       { "item": "bondage_mask", "prob": 1 },
       { "group": "auto_sears", "prob": 20 },
       { "item": "survnote", "prob": 5 },
-      { "item": "thermos", "prob": 25 }
+      { "item": "thermos", "prob": 25 },
+      { "item": "textbook_launcher", "prob": 3 }
     ]
   },
   {

@@ -3,6 +3,7 @@
 #include <array>
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include "avatar.h"
 #include "avatar_action.h"
@@ -22,6 +23,7 @@
 #include "monster.h"
 #include "morale_types.h"
 #include "options.h"
+#include "profile.h"
 #include "rng.h"
 #include "sounds.h"
 #include "text_snippets.h"
@@ -161,9 +163,11 @@ void timed_event::actualize()
         case TIMED_EVENT_TEMPLE_FLOOD: {
             bool flooded = false;
 
-            ter_id flood_buf[MAPSIZE_X][MAPSIZE_Y];
+            auto &flood_lc = g->m.access_cache( g->get_levz() );
+            const int flood_sy = flood_lc.cache_y;
+            auto flood_buf = std::vector<ter_id>( static_cast<size_t>( flood_lc.cache_x ) * flood_sy );
             for( const tripoint &p : g->m.points_on_zlevel() ) {
-                flood_buf[p.x][p.y] = g->m.ter( p );
+                flood_buf[p.x * flood_sy + p.y] = g->m.ter( p );
             }
             for( const tripoint &p : g->m.points_on_zlevel() ) {
                 if( g->m.ter( p ) == t_water_sh ) {
@@ -175,7 +179,7 @@ void timed_event::actualize()
                         }
                     }
                     if( deepen ) {
-                        flood_buf[p.x][p.y] = t_water_dp;
+                        flood_buf[p.x * flood_sy + p.y] = t_water_dp;
                         flooded = true;
                     }
                 } else if( g->m.ter( p ) == t_rock_floor ) {
@@ -187,7 +191,7 @@ void timed_event::actualize()
                         }
                     }
                     if( flood ) {
-                        flood_buf[p.x][p.y] = t_water_sh;
+                        flood_buf[p.x * flood_sy + p.y] = t_water_sh;
                         flooded = true;
                     }
                 }
@@ -197,8 +201,8 @@ void timed_event::actualize()
                 return;
             }
             // Check if we should print a message
-            if( flood_buf[g->u.posx()][g->u.posy()] != g->m.ter( g->u.pos() ) ) {
-                if( flood_buf[g->u.posx()][g->u.posy()] == t_water_sh ) {
+            if( flood_buf[g->u.posx() * flood_sy + g->u.posy()] != g->m.ter( g->u.pos() ) ) {
+                if( flood_buf[g->u.posx() * flood_sy + g->u.posy()] == t_water_sh ) {
                     add_msg( m_warning, _( "Water quickly floods up to your knees." ) );
                     g->memorial().add(
                         pgettext( "memorial_male", "Water level reached knees." ),
@@ -214,7 +218,7 @@ void timed_event::actualize()
             }
             // flood_buf is filled with correct tiles; now copy them back to g->m
             for( const tripoint &p : g->m.points_on_zlevel() ) {
-                g->m.ter_set( p, flood_buf[p.x][p.y] );
+                g->m.ter_set( p, flood_buf[p.x * flood_sy + p.y] );
             }
             g->timed_events.add( TIMED_EVENT_TEMPLE_FLOOD,
                                  calendar::turn + rng( 2_turns, 3_turns ) );
@@ -304,6 +308,7 @@ void timed_event::per_turn()
 
 void timed_event_manager::process()
 {
+    ZoneScoped;
     for( auto it = events.begin(); it != events.end(); ) {
         it->per_turn();
         if( it->when <= calendar::turn ) {

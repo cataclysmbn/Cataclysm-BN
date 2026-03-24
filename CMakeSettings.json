@@ -1,0 +1,117 @@
+{
+  "configurations": [
+    {
+      "name": "Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${projectDir}/out/build/windows-tiles-sounds-x64-msvc-debug",
+      "installRoot": "${projectDir}/out/install/windows-tiles-sounds-x64-msvc",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": [
+        { "name": "CMAKE_PROJECT_INCLUDE_BEFORE",    "value": "${projectDir}/build-scripts/windows-tiles-sounds-x64-msvc.cmake", "type": "FILEPATH" },
+        { "name": "CMAKE_TOOLCHAIN_FILE",            "value": "${projectDir}/build-scripts/MSVC.cmake",                          "type": "FILEPATH" },
+        { "name": "VCPKG_TARGET_TRIPLET",            "value": "x64-windows-static",   "type": "STRING" },
+        { "name": "DYNAMIC_LINKING",                 "value": "False",                 "type": "BOOL"   },
+        { "name": "CMAKE_EXPORT_COMPILE_COMMANDS",   "value": "ON",                    "type": "BOOL"   },
+        { "name": "CURSES",                          "value": "False",                 "type": "BOOL"   },
+        { "name": "LOCALIZE",                        "value": "True",                  "type": "BOOL"   },
+        { "name": "TILES",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "SOUND",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "TESTS",                           "value": "False",                 "type": "BOOL"   },
+        { "name": "JSON_FORMAT",                     "value": "ON",                    "type": "BOOL"   },
+        { "name": "CMAKE_INSTALL_MESSAGE",           "value": "NEVER",                 "type": "STRING" }
+      ]
+    },
+    {
+      "name": "RelWithDebInfo",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "buildRoot": "${projectDir}/out/build/windows-tiles-sounds-x64-msvc-relwithdebinfo",
+      "installRoot": "${projectDir}/out/install/windows-tiles-sounds-x64-msvc",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": [
+        { "name": "CMAKE_PROJECT_INCLUDE_BEFORE",    "value": "${projectDir}/build-scripts/windows-tiles-sounds-x64-msvc.cmake", "type": "FILEPATH" },
+        { "name": "CMAKE_TOOLCHAIN_FILE",            "value": "${projectDir}/build-scripts/MSVC.cmake",                          "type": "FILEPATH" },
+        { "name": "VCPKG_TARGET_TRIPLET",            "value": "x64-windows-static",   "type": "STRING" },
+        { "name": "DYNAMIC_LINKING",                 "value": "False",                 "type": "BOOL"   },
+        { "name": "CMAKE_EXPORT_COMPILE_COMMANDS",   "value": "ON",                    "type": "BOOL"   },
+        { "name": "CURSES",                          "value": "False",                 "type": "BOOL"   },
+        { "name": "LOCALIZE",                        "value": "True",                  "type": "BOOL"   },
+        { "name": "TILES",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "SOUND",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "TESTS",                           "value": "False",                 "type": "BOOL"   },
+        { "name": "JSON_FORMAT",                     "value": "ON",                    "type": "BOOL"   },
+        { "name": "CMAKE_INSTALL_MESSAGE",           "value": "NEVER",                 "type": "STRING" }
+      ]
+    },
+    {
+      "name": "Release",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "buildRoot": "${projectDir}/out/build/windows-tiles-sounds-x64-msvc-release",
+      "installRoot": "${projectDir}/out/install/windows-tiles-sounds-x64-msvc",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": [
+        { "name": "CMAKE_PROJECT_INCLUDE_BEFORE",    "value": "${projectDir}/build-scripts/windows-tiles-sounds-x64-msvc.cmake", "type": "FILEPATH" },
+        { "name": "CMAKE_TOOLCHAIN_FILE",            "value": "${projectDir}/build-scripts/MSVC.cmake",                          "type": "FILEPATH" },
+        { "name": "VCPKG_TARGET_TRIPLET",            "value": "x64-windows-static",   "type": "STRING" },
+        { "name": "DYNAMIC_LINKING",                 "value": "False",                 "type": "BOOL"   },
+        { "name": "CMAKE_EXPORT_COMPILE_COMMANDS",   "value": "ON",                    "type": "BOOL"   },
+        { "name": "CURSES",                          "value": "False",                 "type": "BOOL"   },
+        { "name": "LOCALIZE",                        "value": "True",                  "type": "BOOL"   },
+        { "name": "TILES",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "SOUND",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "TESTS",                           "value": "False",                 "type": "BOOL"   },
+        { "name": "JSON_FORMAT",                     "value": "ON",                    "type": "BOOL"   },
+        { "name": "CMAKE_INSTALL_MESSAGE",           "value": "NEVER",                 "type": "STRING" }
+      ]
+    },
+    {
+      "name": "Tests",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "buildRoot": "${projectDir}/out/build/windows-tiles-sounds-x64-msvc-tests",
+      "installRoot": "${projectDir}/out/install/windows-tiles-sounds-x64-msvc",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": [
+        { "name": "CMAKE_PROJECT_INCLUDE_BEFORE",    "value": "${projectDir}/build-scripts/windows-tiles-sounds-x64-msvc.cmake", "type": "FILEPATH" },
+        { "name": "CMAKE_TOOLCHAIN_FILE",            "value": "${projectDir}/build-scripts/MSVC.cmake",                          "type": "FILEPATH" },
+        { "name": "VCPKG_TARGET_TRIPLET",            "value": "x64-windows-static",   "type": "STRING" },
+        { "name": "DYNAMIC_LINKING",                 "value": "False",                 "type": "BOOL"   },
+        { "name": "CMAKE_EXPORT_COMPILE_COMMANDS",   "value": "ON",                    "type": "BOOL"   },
+        { "name": "CURSES",                          "value": "False",                 "type": "BOOL"   },
+        { "name": "LOCALIZE",                        "value": "True",                  "type": "BOOL"   },
+        { "name": "TILES",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "SOUND",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "TESTS",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "JSON_FORMAT",                     "value": "OFF",                   "type": "BOOL"   },
+        { "name": "CMAKE_INSTALL_MESSAGE",           "value": "NEVER",                 "type": "STRING" }
+      ]
+    },
+    {
+      "name": "Tracy",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "buildRoot": "${projectDir}/out/build/windows-tiles-sounds-x64-msvc-tracy",
+      "installRoot": "${projectDir}/out/install/windows-tiles-sounds-x64-msvc",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": [
+        { "name": "CMAKE_PROJECT_INCLUDE_BEFORE",    "value": "${projectDir}/build-scripts/windows-tiles-sounds-x64-msvc.cmake", "type": "FILEPATH" },
+        { "name": "CMAKE_TOOLCHAIN_FILE",            "value": "${projectDir}/build-scripts/MSVC.cmake",                          "type": "FILEPATH" },
+        { "name": "VCPKG_TARGET_TRIPLET",            "value": "x64-windows-static",   "type": "STRING" },
+        { "name": "DYNAMIC_LINKING",                 "value": "False",                 "type": "BOOL"   },
+        { "name": "CMAKE_EXPORT_COMPILE_COMMANDS",   "value": "ON",                    "type": "BOOL"   },
+        { "name": "CURSES",                          "value": "False",                 "type": "BOOL"   },
+        { "name": "LOCALIZE",                        "value": "True",                  "type": "BOOL"   },
+        { "name": "TILES",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "SOUND",                           "value": "True",                  "type": "BOOL"   },
+        { "name": "TESTS",                           "value": "False",                 "type": "BOOL"   },
+        { "name": "JSON_FORMAT",                     "value": "OFF",                   "type": "BOOL"   },
+        { "name": "CMAKE_INSTALL_MESSAGE",           "value": "NEVER",                 "type": "STRING" },
+        { "name": "USE_TRACY",                       "value": "True",                  "type": "BOOL"   },
+        { "name": "TRACY_ON_DEMAND",                 "value": "True",                  "type": "BOOL"   },
+        { "name": "TRACY_ONLY_IPV4",                 "value": "True",                  "type": "BOOL"   }
+      ]
+    }
+  ]
+}

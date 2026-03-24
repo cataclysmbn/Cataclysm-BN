@@ -45,8 +45,10 @@
  * appropriately and so the counts of a redirected reference should only ever go down.
  */
 
+#include <atomic>
 #include <memory>
 #include <algorithm>
+#include <mutex>
 #include <unordered_map>
 
 #include "debug.h"
@@ -110,7 +112,10 @@ class safe_reference
 
         inline static rbp_type records_by_pointer;
         inline static rbi_type records_by_id;
-        inline static uint32_t next_id = 1;
+        // Atomic so that concurrent save_quad() workers can call serialize() without
+        // racing on ID generation.  Reads/writes to individual record fields are safe
+        // across workers because each item belongs to exactly one quad (distinct records).
+        inline static std::atomic<uint32_t> next_id = 1;
 
         auto fill( T *obj ) -> void {
             rbp_it search = records_by_pointer.find( obj );
@@ -367,6 +372,11 @@ class cache_reference
         using ref_map_it = typename ref_map::iterator;
 
         inline static ref_map reference_map;
+        // Guards all access to reference_map.  Needed because preload_quad() deserialises
+        // submaps (including their active_item_cache) on worker threads, which constructs
+        // cache_reference objects concurrently.  Uncontended on the main thread so the
+        // cost during normal gameplay is a single atomic CAS per lock/unlock.
+        inline static std::mutex reference_map_mutex_;
 
         auto invalidate() -> void {
             p = nullptr;
@@ -376,6 +386,7 @@ class cache_reference
             if( !p ) {
                 return;
             }
+            auto lk = std::lock_guard( reference_map_mutex_ );
             ref_map_it search = reference_map.find( p );
             if( search != reference_map.end() ) {
                 search->second.push_back( this );
@@ -388,6 +399,7 @@ class cache_reference
             if( !p ) {
                 return;
             }
+            auto lk = std::lock_guard( reference_map_mutex_ );
             ref_map_it search = reference_map.find( p );
             if( search != reference_map.end() ) {
                 ref_list &list = search->second;
@@ -403,6 +415,7 @@ class cache_reference
     public:
 
         static auto mark_destroyed( T *obj ) -> void {
+            auto lk = std::lock_guard( reference_map_mutex_ );
             ref_map_it search = reference_map.find( obj );
             if( search == reference_map.end() ) {
                 return;
@@ -435,6 +448,7 @@ class cache_reference
             if( !p ) {
                 return;
             }
+            auto lk = std::lock_guard( reference_map_mutex_ );
             ref_map_it search = reference_map.find( p );
             if( search == reference_map.end() ) {
                 debugmsg( "Couldn't find cached reference in reference map." );

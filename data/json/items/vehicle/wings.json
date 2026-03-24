@@ -26,6 +26,31 @@
   },
   {
     "type": "GENERIC",
+    "id": "wing_carbon_item",
+    "name": { "str": "carbon aerofoil" },
+    "description": "A section of aircraft wing made of carbon fiber skin over solid carbon fiber ribs and stringers.  Wings allow a vehicle to fly, but require a propeller and enough velocity to take off.",
+    "weight": "2 kg",
+    "to_hit": -3,
+    "color": "light_gray",
+    "symbol": "]",
+    "looks_like": "carbonfiber_boat_hull",
+    "material": [ "carbon_fiber" ],
+    "volume": "15 L",
+    "bashing": 10,
+    "category": "veh_parts",
+    "price": "40 USD",
+    "price_postapoc": "1 USD"
+  },
+  {
+    "type": "GENERIC",
+    "id": "lit_wing_carbon_item",
+    "copy-from": "wing_carbon_item",
+    "name": { "str": "wired carbon aerofoil" },
+    "description": "A section of aircraft wing made of sheet carbon skin over steel ribs and stringers, and a navigation light wired into it.  Wings allow a vehicle to fly, but require a propeller and enough velocity to take off.",
+    "relative": { "weight": "200 g", "price": "10 USD", "price_postapoc": "25 cent" }
+  },
+  {
+    "type": "GENERIC",
     "id": "wing_wood_item",
     "name": { "str": "wooden aerofoil" },
     "description": "A section of aircraft wing made of fabric over wooden frame.  Wings allow a vehicle to fly, but require a propeller and enough velocity to take off.",

@@ -1562,6 +1562,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     }
 
     bool perfect = it->has_flag( flag_PERFECT_LOCKPICK );
+    bool durable = it->has_flag( flag_DURABLE_LOCKPICK );
     bool destroy = false;
 
     /** @EFFECT_DEX improves chances of successfully picking door lock, reduces chances of bad outcomes */
@@ -1584,7 +1585,8 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         }
 
         who.add_msg_if_player( m_good, open_message );
-    } else if( lock_roll > ( 1.5 * pick_roll ) ) {
+    } else if( lock_roll > ( 1.5 * pick_roll ) && !durable ) {
+        // damage lockpick on a low result, unless it's durable
         if( it->inc_damage() ) {
             who.add_msg_if_player( m_bad,
                                    _( "The lock stumps your efforts to pick it, and you destroy your tool." ) );

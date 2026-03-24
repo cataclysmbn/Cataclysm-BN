@@ -133,7 +133,8 @@ double rng_normal( double lo, double hi )
     return clamp( val, lo, hi );
 }
 
-cata_default_random_engine &rng_get_engine()
+// Main-thread global engine (default, time-seeded).
+static cata_default_random_engine &main_rng_engine()
 {
     // NOLINTNEXTLINE(cata-determinism)
     static cata_default_random_engine eng(
@@ -141,11 +142,31 @@ cata_default_random_engine &rng_get_engine()
     return eng;
 }
 
+// Per-worker-thread engine.  Inactive (flag=false) on the main thread.
+// NOLINTNEXTLINE(cata-determinism)
+static thread_local bool tl_is_worker = false;
+// NOLINTNEXTLINE(cata-determinism)
+static thread_local cata_default_random_engine tl_worker_engine;
+
+cata_default_random_engine &rng_get_engine()
+{
+    if( tl_is_worker ) {
+        return tl_worker_engine;
+    }
+    return main_rng_engine();
+}
+
 void rng_set_engine_seed( unsigned int seed )
 {
     if( seed != 0 ) {
-        rng_get_engine().seed( seed );
+        main_rng_engine().seed( seed );
     }
+}
+
+void rng_set_worker_seed( unsigned int seed )
+{
+    tl_is_worker = true;
+    tl_worker_engine.seed( seed );
 }
 
 namespace weighted_list_detail

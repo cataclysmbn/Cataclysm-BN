@@ -439,11 +439,75 @@
     "type": "item_group",
     "subtype": "distribution",
     "items": [
-      [ "null", 7 ],
-      { "group": "soa_decor", "prob": 3 },
-      { "group": "soa_plate", "prob": 2 },
-      { "group": "soa_mail", "prob": 1 },
-      { "group": "soa_samurai", "prob": 1 }
+      [ "null", 50 ],
+      { "group": "soa_decor", "prob": 5 },
+      { "group": "soa_plate", "prob": 5 },
+      { "group": "soa_mail", "prob": 5 },
+      { "group": "soa_samurai", "prob": 10 },
+      { "group": "soa_colonial", "prob": 15 },
+      { "group": "soa_wwii", "prob": 10 }
+    ]
+  },
+  {
+    "id": "soa_colonial",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [
+      { "group": "soa_weapons_colonial_firearm" },
+      { "group": "soa_weapons_colonial_sword", "prob": 50 },
+      [ "knee_high_boots", 100 ],
+      [ "breeches", 100 ],
+      [ "waistcoat", 100 ],
+      { "distribution": [ { "item": "peacoat", "prob": 75 }, { "item": "greatcoat", "prob": 25 } ] },
+      [ "flintlock_pouch", 75 ],
+      [ "tricorne", 100 ]
+    ]
+  },
+  {
+    "id": "soa_weapons_colonial_firearm",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [ [ "longrifle_flintlock", 25 ], [ "rifle_flintlock", 25 ], [ "carbine_flintlock", 25 ], [ "pistol_flintlock", 25 ] ]
+  },
+  {
+    "id": "soa_weapons_colonial_sword",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "group": "soa_fake_weapon_colonial", "prob": 3 },
+      { "group": "soa_poor_weapon_colonial", "prob": 3 },
+      { "group": "soa_real_weapon_colonial", "prob": 3 }
+    ]
+  },
+  {
+    "id": "soa_wwii",
+    "type": "item_group",
+    "subtype": "collection",
+    "//": "TODO: replace army jacket with all-cotton equivalent if added, add all-steel army helmets to spawn ~75% of the time in place of berets",
+    "items": [
+      { "group": "soa_weapons_wwii" },
+      [ "boots", 100 ],
+      [ "pants", 100 ],
+      [ "jacket_army", 100 ],
+      [ "chestrig", 75 ],
+      [ "rucksack", 50 ],
+      [ "beret", 100 ]
+    ]
+  },
+  {
+    "id": "soa_weapons_wwii",
+    "type": "item_group",
+    "subtype": "distribution",
+    "//": "Mostly US weapons plus a small number of British ones",
+    "items": [
+      [ "garand", 30 ],
+      [ "m1918", 10 ],
+      [ "m1903", 10 ],
+      [ "tommygun", 15 ],
+      [ "m1911", 15 ],
+      [ "winchester_1897", 10 ],
+      [ "sten", 5 ],
+      [ "hi_power_9mm", 5 ]
     ]
   },
   {
@@ -587,6 +651,48 @@
     "items": [ [ "katana_inferior", 100 ], [ "wakizashi_inferior", 34 ], [ "tanto_inferior", 12 ] ]
   },
   {
+    "id": "sabre+scabbard",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [ [ "cavalry_sabre", 100 ], [ "scabbard", 100 ] ]
+  },
+  {
+    "id": "sabre_fake+scabbard",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [ [ "cavalry_sabre_fake", 100 ], [ "scabbard", 100 ] ]
+  },
+  {
+    "id": "rapier+scabbard",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [ [ "rapier", 100 ], [ "scabbard", 100 ] ]
+  },
+  {
+    "id": "rapier_fake+scabbard",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [ [ "rapier_fake", 100 ], [ "scabbard", 100 ] ]
+  },
+  {
+    "id": "cutlass+scabbard",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [ [ "cutlass", 100 ], [ "scabbard", 100 ] ]
+  },
+  {
+    "id": "cutlass_fake+scabbard",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [ [ "cutlass_fake", 100 ], [ "scabbard", 100 ] ]
+  },
+  {
+    "id": "cutlass_inferior+scabbard",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [ [ "cutlass_inferior", 100 ], [ "scabbard", 100 ] ]
+  },
+  {
     "id": "soa_fake_weapon_decor",
     "type": "item_group",
     "subtype": "distribution",
@@ -706,6 +812,35 @@
     "type": "item_group",
     "subtype": "distribution",
     "items": [ { "group": "samurai_sword_set", "prob": 7 }, [ "bokken", 6 ], [ "nodachi", 5 ], [ "naginata", 5 ] ]
+  },
+  {
+    "id": "soa_fake_weapon_colonial",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "group": "sabre_fake+scabbard", "prob": 50 },
+      { "group": "broadsword_fake+scabbard", "prob": 25 },
+      { "group": "cutlass_fake+scabbard", "prob": 15 },
+      { "group": "rapier_fake+scabbard", "prob": 10 }
+    ]
+  },
+  {
+    "id": "soa_poor_weapon_colonial",
+    "type": "item_group",
+    "subtype": "distribution",
+    "//": "TODO: include inferior version of rapier and cavalry saber when added",
+    "items": [ { "group": "broadsword_inferior+scabbard", "prob": 75 }, { "group": "cutlass_inferior+scabbard", "prob": 25 } ]
+  },
+  {
+    "id": "soa_real_weapon_colonial",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "group": "sabre+scabbard", "prob": 50 },
+      { "group": "broadsword+scabbard", "prob": 25 },
+      { "group": "cutlass+scabbard", "prob": 15 },
+      { "group": "rapier+scabbard", "prob": 10 }
+    ]
   },
   {
     "id": "toy_box",

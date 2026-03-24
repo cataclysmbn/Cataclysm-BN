@@ -67,7 +67,18 @@
       { "item": "v29", "prob": 10 },
       { "item": "bot_mininuke_hack", "prob": 10 },
       { "item": "mininuke", "prob": 10 },
-      { "item": "mininuke_launcher", "prob": 15 }
+      { "item": "mininuke_launcher", "prob": 15 },
+      { "item": "electric_primer_120mm", "prob": 1 },
+      { "item": "primer_155mm", "prob": 1 },
+      { "item": "25mm_apds", "prob": 1 },
+      { "item": "25mm_hei", "prob": 1 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 1 },
+      { "item": "120mm_usable_heat", "prob": 3 },
+      { "item": "120mm_usable_ap", "prob": 1 },
+      { "item": "155mm_frag", "prob": 2 },
+      { "item": "155mm_heat", "prob": 1 },
+      { "item": "105mm_heat", "prob": 1 },
+      { "item": "105mm_ap", "prob": 1 }
     ]
   },
   {
@@ -234,7 +245,18 @@
       { "item": "atgm_launcher", "prob": 3 },
       { "item": "atgm_heat", "prob": 6 },
       { "item": "flamethrower", "prob": 50 },
-      { "item": "rm451_flamethrower", "prob": 40 }
+      { "item": "rm451_flamethrower", "prob": 40 },
+      { "item": "120mm_usable_ap", "prob": 3 },
+      { "item": "120mm_usable_heat", "prob": 2 },
+      { "item": "155mm_frag", "prob": 3 },
+      { "item": "155mm_heat", "prob": 2 },
+      { "item": "25mm_apds", "prob": 2 },
+      { "item": "25mm_hei", "prob": 1 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 2 },
+      { "item": "105mm_heat", "prob": 2 },
+      { "item": "105mm_ap", "prob": 1 },
+      { "item": "electric_primer_120mm", "prob": 1 },
+      { "item": "primer_155mm", "prob": 1 }
     ]
   },
   {
