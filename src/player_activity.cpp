@@ -237,7 +237,7 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     std::string time_desc = string_format( _( "Time left: %s" ),
                                            to_string( time_duration::from_turns( remaining_turns ) ) );
 
-    const std::array<std::pair<float, std::string>, 7> mults_with_data = { {
+    const std::array<std::pair<float, std::string>, 8> mults_with_data = { {
             { total_mult, _( "Total" ) },
             { speed_mult, _( "Speed" ) },
             { light_mult, _( "Light" ) },
