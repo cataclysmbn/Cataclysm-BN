@@ -130,10 +130,13 @@ class mapbuffer
         void load_or_generate_quad( const tripoint &om_addr );
 
         /**
-         * Serialize and write the OMT quad at @p om_addr to disk without evicting
-         * submaps from memory.  Intended to be called from a background worker thread
-         * while the quad is in the border zone (not simulated), so that the subsequent
-         * eviction only needs to free the in-memory objects without an I/O stall.
+         * Serialise the OMT quad at @p om_addr into the in-memory write-back cache
+         * (@c pending_writes_) without evicting submaps or touching disk.  Intended
+         * to be called from a background worker thread while the quad is in the border
+         * zone (not simulated), so that the subsequent eviction only needs to free the
+         * in-memory objects without an I/O stall.  The cached data is flushed to disk
+         * only on an explicit save; discarding it (via @c clear()) lets the player
+         * revert to the pre-session state.
          *
          * Thread-safety contract:
          * - Briefly acquires @c submaps_mutex_ to collect raw submap pointers.
@@ -142,7 +145,7 @@ class mapbuffer
          * - The caller (submap_load_manager) guarantees the submaps remain alive
          *   in memory for the duration of this call by withholding eviction until
          *   the returned future is resolved.
-         * - @c write_map_quad is thread-safe (SQLite SERIALIZED mode or per-file I/O).
+         * - Writes to @c pending_writes_ under @c pending_writes_mutex_ (brief hold).
          */
         void presave_quad( const tripoint &om_addr );
 
@@ -168,10 +171,12 @@ class mapbuffer
         /**
          * Evict all submaps in the OMT quad at @p om_addr.
          *
-         * If @p save is true (default), the quad is serialised to disk first.
+         * If @p save is true (default), the quad is serialised into the in-memory
+         * write-back cache (@c pending_writes_) before the submap objects are freed.
+         * The cache is flushed to disk only on an explicit save.
          * Pass @p save = false only for border-preloaded quads that were never
          * simulated — their in-memory content is identical to what is already on
-         * disk, so the write is redundant.
+         * disk, so no write is needed.
          *
          * This is the correct way to evict a quad: calling unload_submap() per-submap
          * repeatedly overwrites the quad file without the previously-removed siblings,
@@ -203,6 +208,14 @@ class mapbuffer
         /// inside safe_reference<T>, cache_reference<T>, and cata_arena<T>.
         mutable std::mutex pending_destroy_mutex_;
         std::vector<std::unique_ptr<submap>> pending_destroy_submaps_;
+
+        /// Serialised quads awaiting disk flush.  Written by presave_quad() (worker
+        /// threads) and the save=true branch of unload_quad() (main thread); read back
+        /// by preload_quad() (worker threads) before falling through to disk.  Flushed
+        /// to disk by save() and discarded by clear(), leaving disk files untouched so
+        /// the player can revert to the pre-session state by quitting without saving.
+        mutable std::mutex pending_writes_mutex_;
+        std::map<tripoint, std::string> pending_writes_;
 
     public:
         submap_map_t::iterator begin() {
