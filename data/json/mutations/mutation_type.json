@@ -90,6 +90,7 @@
   {
     "type": "mutation_type",
     "id": "facial_hair",
+    "swap_on_conflict": true,
     "random_chance": 50
   }
 ]

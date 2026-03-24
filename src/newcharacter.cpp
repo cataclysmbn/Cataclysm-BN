@@ -91,7 +91,6 @@ static const trait_flag_str_id flag_MALE_EXCLUSIVE( "MALE_EXCLUSIVE" );
 static const trait_flag_str_id flag_FEMALE_EXCLUSIVE( "FEMALE_EXCLUSIVE" );
 static const trait_flag_str_id flag_MALE_PREFERRED( "MALE_PREFERRED" );
 static const trait_flag_str_id flag_FEMALE_PREFERRED( "FEMALE_PREFERRED" );
-static const trait_flag_str_id flag_APPEARANCE( "APPEARANCE" );
 
 // Colors used in this file: (Most else defaults to c_light_gray)
 #define COL_STAT_ACT        c_white   // Selected stat
@@ -1461,8 +1460,10 @@ tab_direction set_traits( avatar &u, points_left &points )
                     }
                 }
             } else if( newcharacter::has_conflicting_trait( u, cur_trait ) ) {
-                if( cur_trait.obj().flags.contains( flag_APPEARANCE ) ) {
-                    const auto &new_types = cur_trait.obj().types;
+                const auto &new_types = cur_trait.obj().types;
+                const bool do_swap = std::ranges::any_of( new_types,
+                []( const auto & t ) { return mutation_type_swaps_on_conflict( t ); } );
+                if( do_swap ) {
                     const auto base_traits = u.get_base_traits();
                     auto it = std::ranges::find_if( base_traits, [&]( const trait_id & tr ) {
                         return tr != cur_trait && std::ranges::any_of( tr.obj().types,

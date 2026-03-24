@@ -502,6 +502,7 @@ void reset_mutation_types();
 bool mutation_category_is_valid( const mutation_category_id &cat );
 bool mutation_type_exists( const std::string &id );
 bool mutation_type_is_mandatory( const std::string &id );
+bool mutation_type_swaps_on_conflict( const std::string &id );
 int mutation_type_random_chance( const std::string &id );
 std::vector<std::string> get_all_mutation_type_ids();
 std::vector<trait_id> get_mutations_in_types( const std::set<std::string> &ids );

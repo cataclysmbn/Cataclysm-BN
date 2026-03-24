@@ -90,10 +90,6 @@
     "type": "mutation_flag"
   },
   {
-    "id": "APPEARANCE",
-    "type": "mutation_flag"
-  },
-  {
     "id": "MALE_EXCLUSIVE",
     "type": "mutation_flag"
   },
