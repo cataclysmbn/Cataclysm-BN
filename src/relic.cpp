@@ -461,10 +461,16 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
     }
     int rate_multiplier = 1; // Not quite sure where to put this
+    int ticks;
     if( rech.type == relic_recharge_type::time ) {
-        time_duration elapsed = calendar::turn - time_point::from_turn( itm.get_var( "last_relic_process",
-                                0.0 ) );
-        int ticks = elapsed / rech.interval;
+        int last_relic_process = itm.get_var( "last_relic_process", 0 );
+        if( last_relic_process == 0 &&
+            carrier ) { // We do not want batteries to fully charge while in a player's inventory
+            ticks = 1;
+        } else {
+            time_duration elapsed = calendar::turn - time_point::from_turn( last_relic_process );
+            ticks = elapsed / rech.interval;
+        }
         if( ticks > 0 ) {
             rate_multiplier = ticks;
         }
