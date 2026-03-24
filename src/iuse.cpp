@@ -3265,9 +3265,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
         return 0;
     }
     if( t ) { // Simple timer effects
-        // Vol 0 = only heard if you hold it
-        sounds::sound( pos, 0, sounds::sound_t::electronic_speech, _( "Merged!" ),
-                       true, "speech", it->typeId().str() );
+        add_msg( m_info, _( "\"Merged!\"" ) );
     } else if( it->charges > 0 ) {
         p->add_msg_if_player( m_info, _( "You've already pulled the %s's pin, try throwing it instead." ),
                               it->tname() );
@@ -3283,8 +3281,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
         };
         switch( effect_roll ) {
             case 1:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "BUGFIXES!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"BUGFIXES!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_light_cyan, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     monster *const mon = g->critter_at<monster>( dest, true );
@@ -3295,8 +3292,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                 break;
 
             case 2:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "BUFFS!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"BUFFS!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_green, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
@@ -3337,8 +3333,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                 break;
 
             case 3:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "NERFS!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"NERFS!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_red, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
@@ -3378,8 +3373,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                 break;
 
             case 4:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "REVERTS!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"REVERTS!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_pink, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
@@ -3396,8 +3390,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                 }
                 break;
             case 5:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "QUACK!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"QUACK!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_yellow, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( one_in( 5 ) && !g->critter_at( dest ) ) {
@@ -3406,8 +3399,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                 }
                 break;
             case 6:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "EEPY!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"EEPY!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_magenta, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( npc *const person = g->critter_at<npc>( dest ) ) {
