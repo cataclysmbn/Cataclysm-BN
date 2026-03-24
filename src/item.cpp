@@ -7750,7 +7750,7 @@ bool item::is_container_full( bool allow_bucket ) const
     }
 
     const auto free_volume = std::max( get_container_capacity() -
-                             contents.item_size_modifier(), 0_ml );
+                                       contents.item_size_modifier(), 0_ml );
 
     return free_volume <= 0_ml;
 }
@@ -7802,7 +7802,7 @@ bool item::is_reloadable_helper( const itype_id &ammo, bool now ) const
         }
         item sample( ammo, calendar::turn, item::solitary_tag{} );
         const auto free_volume = std::max( get_container_capacity() -
-                                  contents.item_size_modifier(), 0_ml );
+                                           contents.item_size_modifier(), 0_ml );
         if( sample.count_by_charges() ) {
             return sample.charges_per_volume( free_volume ) > 0;
         }
@@ -7821,7 +7821,7 @@ bool item::is_reloadable_helper( const itype_id &ammo, bool now ) const
         }
         item sample( ammo, calendar::turn, item::solitary_tag{} );
         const auto free_volume = std::max( get_container_capacity() -
-                                  contents.item_size_modifier(), 0_ml );
+                                           contents.item_size_modifier(), 0_ml );
         if( sample.count_by_charges() ) {
             return sample.charges_per_volume( free_volume ) > 0;
         }
@@ -9541,7 +9541,7 @@ int item::get_remaining_capacity_for_liquid( const item &liquid, bool allow_buck
         }
 
         const auto free_volume = std::max( get_container_capacity() -
-                                 contents.item_size_modifier(), 0_ml );
+                                           contents.item_size_modifier(), 0_ml );
         remaining_capacity = liquid.charges_per_volume( free_volume );
     } else {
         return error( string_format( _( "That %1$s won't hold %2$s." ), tname(),
@@ -9691,7 +9691,7 @@ detached_ptr<item> item::fill_with( detached_ptr<item> &&liquid, int amount )
     } else {
         if( liquid->count_by_charges() ) {
             const auto contents_match = std::ranges::find_if( contents.all_items_top(),
-            [&]( item *cts ) {
+            [&]( item * cts ) {
                 return cts->typeId() == liquid->typeId() && cts->count_by_charges();
             } );
 

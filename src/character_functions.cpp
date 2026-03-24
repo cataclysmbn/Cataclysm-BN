@@ -1237,7 +1237,7 @@ void find_ammo_helper( T &src, const item &obj, bool empty, Output out, bool nes
         const auto contents_id = contents_are_liquid ? obj.contents.front().typeId() : itype_id::NULL_ID();
 
         src.visit_items( [&nested, &out, &obj, contents_are_liquid, is_empty_container,
-        &contents_id]( item * node ) {
+                 &contents_id]( item * node ) {
             if( node == &obj ) {
                 return VisitResponse::SKIP;
             }
