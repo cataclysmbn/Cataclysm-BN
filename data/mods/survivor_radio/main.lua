@@ -27,6 +27,19 @@ gapi.register_action_menu_entry({
     fn = function() return mod.test_spawn_and_erase_npc() end,
 })
 
+mod.spawn_debug_party = function()
+    if mod.survivor_radio and mod.survivor_radio.debug_spawn_party then
+        mod.survivor_radio.debug_spawn_party()
+    end
+end
+
+gapi.register_action_menu_entry({
+    id = "bn_debug_spawn_party",
+    name = "Test: spawn survivor radio party",
+    category = "debug",
+    fn = function() return mod.spawn_debug_party() end,
+})
+
 mod.queue_npc_erase = function(npc_id, erase_turn)
     local queue = storage.test_npc_erase_queue or {}
     table.insert(queue, { id = npc_id, erase_turn = erase_turn })

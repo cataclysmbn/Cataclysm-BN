@@ -1,5 +1,6 @@
 local ui = require("lib.ui")
 local survivor_radio = {}
+local current_mod_id
 
 local function color_text(text, color)
   return string.format("<color_%s>%s</color>", color, text)
@@ -178,7 +179,7 @@ local function get_signal_definition(signal_id)
 end
 
 local function resolve_storage()
-  local mod_id = game.current_mod or "bn"
+  local mod_id = current_mod_id or game.current_mod or "bn"
   local storage = game.mod_storage[mod_id]
   if not storage then
     storage = {}
@@ -513,14 +514,73 @@ local function clear_pending_spawn(storage)
   storage.survivor_radio_pending_spawn = nil
 end
 
-local function schedule_spawn(storage, signal_id, audience_index)
+local function schedule_spawn(storage, signal_id, audience_index, broadcast)
   local delay_hours = gapi.rng(4, 24)
   storage.survivor_radio_pending_spawn = {
     signal_id = signal_id,
     audience_index = audience_index,
     due_turn = now_turn() + TimeDuration.from_hours(delay_hours):to_turns(),
+    broadcast = broadcast and {
+      pos = broadcast.pos,
+      range = broadcast.range,
+      speech = broadcast.speech,
+    },
   }
   debug_log(string.format("scheduled spawn signal=%s audience=%d delay_hours=%d", signal_id, audience_index, delay_hours))
+end
+
+survivor_radio.debug_spawn_party = function()
+  local def = get_signal_definition("distress")
+  if not def then
+    gapi.add_msg(MsgType.warning, locale.gettext("Debug: survivor radio signal definition missing."))
+    return
+  end
+  local entry = def.audiences and def.audiences[1]
+  if not entry then
+    gapi.add_msg(MsgType.warning, locale.gettext("Debug: survivor radio audience definition missing."))
+    return
+  end
+  local avatar = gapi.get_avatar()
+  local here = gapi.get_map()
+  if not avatar or not here then
+    gapi.add_msg(MsgType.warning, locale.gettext("Debug: unable to locate the avatar."))
+    return
+  end
+
+  local center = avatar:get_pos_ms()
+  local anchor_local = here:get_local_ms(center)
+  if not anchor_local then
+    anchor_local = Point.new(math.floor(here:get_map_size() / 2), math.floor(here:get_map_size() / 2))
+  end
+
+  local templates = entry.npc_templates or {}
+  if #templates == 0 then
+    gapi.add_msg(MsgType.warning, locale.gettext("Debug: audience templates missing."))
+    return
+  end
+
+  local spawned = 0
+  local points = here:points_in_radius(anchor_local, 3)
+  for _, pt in ipairs(points) do
+    if spawned >= 3 then break end
+    if gapi.get_creature_at(pt, true) then goto continue end
+    local template = templates[((spawned) % #templates) + 1]
+    local npc = here:place_npc(Point.new(pt.x, pt.y), template)
+    if not npc then goto continue end
+    local world_pos = here:get_abs_ms(pt)
+    npc:set_pos_ms(world_pos)
+    npc:set_faction_id(FactionId.new(entry.faction_id))
+    if entry.make_angry then npc:make_angry() end
+    track_spawned_npc(npc, entry)
+    spawned = spawned + 1
+    ::continue::
+  end
+
+  if spawned > 0 then
+    gapi.add_msg(MsgType.good, locale.gettext("Debug: a survivor radio party has spawned nearby."))
+  else
+    gapi.add_msg(MsgType.warning, locale.gettext("Debug: failed to place a survivor radio party nearby."))
+  end
 end
 
 ---@return number
@@ -635,27 +695,27 @@ end
 
 ---@param mod table
 function survivor_radio.register(mod)
+  current_mod_id = current_mod_id or game.current_mod
   mod.on_survivor_radio_tick = function()
     local storage = mod.storage or resolve_storage()
     cleanup_due_npcs()
     erase_pending_npcs()
     local broadcast = get_active_broadcast(storage)
-    if not broadcast then return end
-
-    local def = get_signal_definition(broadcast.signal_id)
-    if not def then return end
-    local now = now_turn()
     local pending = storage.survivor_radio_pending_spawn
-    if pending and pending.signal_id ~= broadcast.signal_id then
+    local now = now_turn()
+
+    if pending and broadcast and pending.signal_id ~= broadcast.signal_id then
       clear_pending_spawn(storage)
       pending = nil
     end
+
     if pending and now >= pending.due_turn then
       local pending_def = get_signal_definition(pending.signal_id)
       local pending_entry = pending_def
         and pending_def.audiences
         and pending_def.audiences[pending.audience_index]
-      if pending_entry and spawn_audience(pending_entry, broadcast) then
+      local pending_broadcast = pending.broadcast or broadcast
+      if pending_entry and pending_broadcast and spawn_audience(pending_entry, pending_broadcast) then
         clear_pending_spawn(storage)
         return
       end
@@ -663,6 +723,14 @@ function survivor_radio.register(mod)
       storage.survivor_radio_pending_spawn = pending
       return
     elseif pending then
+      return
+    end
+
+    if not broadcast then return end
+
+    local def = get_signal_definition(broadcast.signal_id)
+    if not def then
+      storage.survivor_radio = nil
       return
     end
 
@@ -689,7 +757,16 @@ function survivor_radio.register(mod)
         entry.faction_id or "unknown"
       ))
       if roll <= spawn_chance then
-        schedule_spawn(storage, def.id, idx)
+        schedule_spawn(storage, def.id, idx, broadcast)
+        local audience_name = get_audience_name(entry)
+        gapi.add_msg(
+          MsgType.info,
+          string.format(
+            locale.gettext("%s responded to your broadcast and will arrive soon."),
+            audience_name
+          )
+        )
+        storage.survivor_radio = nil
         return
       end
     end
