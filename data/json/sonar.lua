@@ -31,12 +31,8 @@ sonar.register = function(mod)
   mod.sonar_scan = function(params)
     local who = params.user
     local pos = params.pos
-    if pos == nil and who then
-      pos = who:get_pos_ms()
-    end
-    if pos == nil then
-      return 0
-    end
+    if pos == nil and who then pos = who:get_pos_ms() end
+    if pos == nil then return 0 end
     local map = gapi.get_map()
     local abs_ms = map:get_abs_ms(pos)
     local center_omt = coords.ms_to_omt(abs_ms)
