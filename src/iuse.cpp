@@ -3303,17 +3303,17 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                         critter.set_speed_base(
                             critter.get_speed_base() * rng_float( 1.1, 2.0 ) );
                         critter.set_hp( critter.get_hp() * rng_float( 1.1, 2.0 ) );
-                } else if( npc *const person = g->critter_at<npc>( dest ) ) {
-                    /** @EFFECT_STR_MAX increases possible granade str buff for NPCs */
-                    buff_stat( person->str_max, rng( 0, person->str_max / 2 ) );
-                    /** @EFFECT_DEX_MAX increases possible granade dex buff for NPCs */
-                    buff_stat( person->dex_max, rng( 0, person->dex_max / 2 ) );
-                    /** @EFFECT_INT_MAX increases possible granade int buff for NPCs */
-                    buff_stat( person->int_max, rng( 0, person->int_max / 2 ) );
-                    /** @EFFECT_PER_MAX increases possible granade per buff for NPCs */
-                    buff_stat( person->per_max, rng( 0, person->per_max / 2 ) );
-                    apply_debug_grenade_skill_modifier( *person, debug_grenade_skill_modifier_type::buff );
-                } else if( g->u.pos() == dest ) {
+                    } else if( npc *const person = g->critter_at<npc>( dest ) ) {
+                        /** @EFFECT_STR_MAX increases possible granade str buff for NPCs */
+                        buff_stat( person->str_max, rng( 0, person->str_max / 2 ) );
+                        /** @EFFECT_DEX_MAX increases possible granade dex buff for NPCs */
+                        buff_stat( person->dex_max, rng( 0, person->dex_max / 2 ) );
+                        /** @EFFECT_INT_MAX increases possible granade int buff for NPCs */
+                        buff_stat( person->int_max, rng( 0, person->int_max / 2 ) );
+                        /** @EFFECT_PER_MAX increases possible granade per buff for NPCs */
+                        buff_stat( person->per_max, rng( 0, person->per_max / 2 ) );
+                        apply_debug_grenade_skill_modifier( *person, debug_grenade_skill_modifier_type::buff );
+                    } else if( g->u.pos() == dest ) {
                         /** @EFFECT_STR_MAX increases possible granade str buff */
                         buff_stat( g->u.str_max, rng( 0, g->u.str_max / 2 ) );
                         /** @EFFECT_DEX_MAX increases possible granade dex buff */
@@ -3324,42 +3324,42 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                         buff_stat( g->u.per_max, rng( 0, g->u.per_max / 2 ) );
                         g->u.recalc_hp();
                         for( const bodypart_id &bp : g->u.get_all_body_parts() ) {
-                        g->u.set_part_hp_cur( bp, g->u.get_part_hp_cur( bp ) * rng_float( 1, 1.2 ) );
-                        const int hp_max = g->u.get_part_hp_max( bp );
-                        if( g->u.get_part_hp_cur( bp ) > hp_max ) {
-                            g->u.set_part_hp_cur( bp, hp_max );
+                            g->u.set_part_hp_cur( bp, g->u.get_part_hp_cur( bp ) * rng_float( 1, 1.2 ) );
+                            const int hp_max = g->u.get_part_hp_max( bp );
+                            if( g->u.get_part_hp_cur( bp ) > hp_max ) {
+                                g->u.set_part_hp_cur( bp, hp_max );
+                            }
                         }
+                        apply_debug_grenade_skill_modifier( g->u, debug_grenade_skill_modifier_type::buff );
                     }
-                    apply_debug_grenade_skill_modifier( g->u, debug_grenade_skill_modifier_type::buff );
                 }
-            }
-            break;
+                break;
 
             case 3:
                 sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "NERFS!" ),
                                true, "speech", it->typeId().str() );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_red, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
-                if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
-                    monster &critter = *mon_ptr;
-                    critter.set_speed_base(
-                        rng( 0, critter.get_speed_base() ) );
-                    critter.set_hp( rng( 1, critter.get_hp() ) );
-                } else if( npc *const person = g->critter_at<npc>( dest ) ) {
-                    /** @EFFECT_STR_MAX increases possible granade str debuff for NPCs (NEGATIVE) */
-                    person->str_max -= rng( 0, person->str_max / 2 );
-                    /** @EFFECT_DEX_MAX increases possible granade dex debuff for NPCs (NEGATIVE) */
-                    person->dex_max -= rng( 0, person->dex_max / 2 );
-                    /** @EFFECT_INT_MAX increases possible granade int debuff for NPCs (NEGATIVE) */
-                    person->int_max -= rng( 0, person->int_max / 2 );
-                    /** @EFFECT_PER_MAX increases possible granade per debuff for NPCs (NEGATIVE) */
-                    person->per_max -= rng( 0, person->per_max / 2 );
-                    apply_debug_grenade_skill_modifier( *person, debug_grenade_skill_modifier_type::nerf );
-                } else if( g->u.pos() == dest ) {
-                    /** @EFFECT_STR_MAX increases possible granade str debuff (NEGATIVE) */
-                    g->u.str_max -= rng( 0, g->u.str_max / 2 );
-                    /** @EFFECT_DEX_MAX increases possible granade dex debuff (NEGATIVE) */
-                    g->u.dex_max -= rng( 0, g->u.dex_max / 2 );
+                    if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
+                        monster &critter = *mon_ptr;
+                        critter.set_speed_base(
+                            rng( 0, critter.get_speed_base() ) );
+                        critter.set_hp( rng( 1, critter.get_hp() ) );
+                    } else if( npc *const person = g->critter_at<npc>( dest ) ) {
+                        /** @EFFECT_STR_MAX increases possible granade str debuff for NPCs (NEGATIVE) */
+                        person->str_max -= rng( 0, person->str_max / 2 );
+                        /** @EFFECT_DEX_MAX increases possible granade dex debuff for NPCs (NEGATIVE) */
+                        person->dex_max -= rng( 0, person->dex_max / 2 );
+                        /** @EFFECT_INT_MAX increases possible granade int debuff for NPCs (NEGATIVE) */
+                        person->int_max -= rng( 0, person->int_max / 2 );
+                        /** @EFFECT_PER_MAX increases possible granade per debuff for NPCs (NEGATIVE) */
+                        person->per_max -= rng( 0, person->per_max / 2 );
+                        apply_debug_grenade_skill_modifier( *person, debug_grenade_skill_modifier_type::nerf );
+                    } else if( g->u.pos() == dest ) {
+                        /** @EFFECT_STR_MAX increases possible granade str debuff (NEGATIVE) */
+                        g->u.str_max -= rng( 0, g->u.str_max / 2 );
+                        /** @EFFECT_DEX_MAX increases possible granade dex debuff (NEGATIVE) */
+                        g->u.dex_max -= rng( 0, g->u.dex_max / 2 );
                         /** @EFFECT_INT_MAX increases possible granade int debuff (NEGATIVE) */
                         g->u.int_max -= rng( 0, g->u.int_max / 2 );
                         /** @EFFECT_PER_MAX increases possible granade per debuff (NEGATIVE) */
@@ -3367,14 +3367,14 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                         g->u.recalc_hp();
                         for( const bodypart_id &bp : g->u.get_all_body_parts() ) {
                             const int hp_cur = g->u.get_part_hp_cur( bp );
-                        if( hp_cur > 0 ) {
-                            g->u.set_part_hp_cur( bp, rng( 1, hp_cur ) );
+                            if( hp_cur > 0 ) {
+                                g->u.set_part_hp_cur( bp, rng( 1, hp_cur ) );
+                            }
                         }
+                        apply_debug_grenade_skill_modifier( g->u, debug_grenade_skill_modifier_type::nerf );
                     }
-                    apply_debug_grenade_skill_modifier( g->u, debug_grenade_skill_modifier_type::nerf );
                 }
-            }
-            break;
+                break;
 
             case 4:
                 sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "REVERTS!" ),
