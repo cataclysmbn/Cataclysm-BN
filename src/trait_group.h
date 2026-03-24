@@ -23,6 +23,12 @@ using Trait_list = std::vector<trait_id>;
 Trait_list traits_from( const Trait_group_tag &gid );
 
 /**
+ * As above, but filters out traits with gender-exclusive or gender-preferred flags
+ * that conflict with the given gender.
+ */
+Trait_list traits_from( const Trait_group_tag &gid, bool male );
+
+/**
  * Check whether a particular trait is a member of the given group.
  */
 bool group_contains_trait( const Trait_group_tag &gid, const trait_id &tid );
