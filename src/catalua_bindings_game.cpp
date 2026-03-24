@@ -167,7 +167,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     } );
     luna::set_fx( lib, "remove_npc_by_id", []( const character_id &id ) -> bool {
         g->remove_npc_follower( id );
-        auto removed = overmap_buffer.remove_npc( id );
+        auto removed = get_active_overmapbuffer().remove_npc( id );
         return static_cast<bool>( removed );
     } );
     luna::set_fx( lib, "spawn_npc_overmap", []( const std::string &template_id, const tripoint &pos ) -> npc * {
@@ -179,7 +179,7 @@ void cata::detail::reg_game_api( sol::state &lua )
         auto spawned = make_shared_fast<npc>();
         spawned->load_npc_template( npc_template_id );
         spawned->spawn_at_sm( omt_to_sm_copy( pos ) );
-        overmap_buffer.insert_npc( spawned );
+        get_active_overmapbuffer().insert_npc( spawned );
         return spawned.get();
     } );
 
