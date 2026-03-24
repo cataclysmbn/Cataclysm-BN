@@ -3254,8 +3254,8 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
         int explosion_radius = 3;
         int effect_roll = rng( 1, 5 );
         auto buff_stat = [&]( int &current_stat, int modify_by ) {
-            auto modified_stat = current_stat + modify_by;
-            current_stat = std::max( current_stat, std::min( 15, modified_stat ) );
+            const auto modified_stat = current_stat + modify_by;
+            current_stat = std::max( current_stat, modified_stat );
         };
         switch( effect_roll ) {
             case 1:
