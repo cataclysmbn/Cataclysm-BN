@@ -141,12 +141,12 @@ Mutation flags are defined in `data/json/flags_mutation.json` and referenced in 
 
 These flags control how a mutation is assigned during character creation and NPC generation. They apply to cosmetic appearance traits and are checked during randomization and character creation trait selection.
 
-| Flag | Effect |
-|------|--------|
-| `MALE_EXCLUSIVE` | Mutation cannot be assigned to female characters. Hidden from female characters in character creation. |
-| `FEMALE_EXCLUSIVE` | Mutation cannot be assigned to male characters. Hidden from male characters in character creation. |
-| `MALE_PREFERRED` | Mutation is never auto-assigned to female characters, but female players may still manually select it. |
-| `FEMALE_PREFERRED` | Mutation is never auto-assigned to male characters, but male players may still manually select it. |
+| Flag               | Effect                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------ |
+| `MALE_EXCLUSIVE`   | Mutation cannot be assigned to female characters. Hidden from female characters in character creation. |
+| `FEMALE_EXCLUSIVE` | Mutation cannot be assigned to male characters. Hidden from male characters in character creation.     |
+| `MALE_PREFERRED`   | Mutation is never auto-assigned to female characters, but female players may still manually select it. |
+| `FEMALE_PREFERRED` | Mutation is never auto-assigned to male characters, but male players may still manually select it.     |
 
 `EXCLUSIVE` flags take precedence over `mandatory_one` — if no gender-valid trait exists for a mandatory type, the type is silently skipped rather than assigning an invalid trait.
 
@@ -157,10 +157,10 @@ Mutation types group related mutations together. They are defined as separate JS
 ```json
 {
   "type": "mutation_type",
-  "id": "hair_color",       // Unique string ID for this type
-  "mandatory_one": true,    // If true, characters must always have at least one mutation of this type. Implies swap_on_conflict. (default: false)
+  "id": "hair_color", // Unique string ID for this type
+  "mandatory_one": true, // If true, characters must always have at least one mutation of this type. Implies swap_on_conflict. (default: false)
   "swap_on_conflict": true, // If true, selecting a new mutation of this type in character creation automatically removes the previously held mutation of the same type instead of showing a conflict error. (default: false)
-  "random_chance": 50       // Percent chance (0–100) that a mutation of this type is randomly assigned during cosmetic randomization. Only used if mandatory_one is false. (default: 0)
+  "random_chance": 50 // Percent chance (0–100) that a mutation of this type is randomly assigned during cosmetic randomization. Only used if mandatory_one is false. (default: 0)
 }
 ```
 
