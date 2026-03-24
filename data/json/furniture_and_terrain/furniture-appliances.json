@@ -2022,7 +2022,7 @@
     "name": "industrial freezer",
     "symbol": "}",
     "color": "blue",
-    "description": "An industrial grade freezer, capable preserving huge amounts of food, as long as it's powered.  It has no power.",
+    "description": "An industrial grade freezer, capable of preserving huge amounts of food, as long as it's powered.  It has no power.",
     "examine_action": "transform",
     "looks_like": "f_fridge",
     "transforms_into": "f_freezer_industrial_off",
@@ -2037,21 +2037,7 @@
     "coverage": 90,
     "flags": [ "CONTAINER", "PLACE_ITEM", "BLOCKSDOOR", "MINEABLE" ],
     "max_volume": "1000 L",
-    "deconstruct": {
-      "items": [
-        { "item": "sheet_metal", "count": 36 },
-        { "item": "sheet_metal_small", "count": 10 },
-        { "item": "steel_chunk", "count": 10 },
-        { "item": "cable", "count": 5 },
-        { "item": "hose", "count": 1 },
-        { "item": "condensor_coil", "count": 2 },
-        { "item": "evaporator_coil", "count": 2 },
-        { "item": "refrigerant_tank", "count": 2 },
-        { "item": "thermostat", "count": 1 },
-        { "item": "light_bulb", "count": 1 },
-        { "item": "motor_tiny", "count": 2 }
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "freezer_industrial", "count": 1 } ] },
     "bash": {
       "str_min": 20,
       "str_max": 60,

@@ -26,7 +26,8 @@
       { "item": "manual_smg", "prob": 10 },
       { "item": "pocket_firearms", "prob": 100 },
       { "item": "manual_luty", "prob": 45 },
-      { "item": "recipe_bullets", "prob": 80 }
+      { "item": "recipe_bullets", "prob": 80 },
+      { "item": "textbook_launcher", "prob": 5 }
     ]
   },
   {
@@ -93,7 +94,8 @@
       { "item": "manual_traps_mil", "prob": 30 },
       { "item": "manual_luty", "prob": 10 },
       { "item": "pocket_firearms", "prob": 10 },
-      { "item": "textbook_firstaid", "prob": 30 }
+      { "item": "textbook_firstaid", "prob": 30 },
+      { "item": "textbook_launcher", "prob": 20 }
     ]
   },
   {
@@ -335,7 +337,8 @@
       { "item": "fermenting_book", "prob": 8 },
       { "item": "distilling_cookbook", "prob": 3 },
       { "item": "sweets_book", "prob": 8 },
-      { "group": "dojo_manuals", "prob": 20 }
+      { "group": "dojo_manuals", "prob": 20 },
+      { "item": "textbook_launcher", "prob": 1 }
     ]
   },
   {
@@ -393,7 +396,8 @@
       { "item": "reference_cooking", "prob": 2 },
       { "item": "reference_fabrication1", "prob": 6 },
       { "item": "reference_firstaid1", "prob": 2 },
-      { "item": "reference_firstaid2", "prob": 1 }
+      { "item": "reference_firstaid2", "prob": 1 },
+      { "item": "textbook_launcher", "prob": 5 }
     ]
   },
   {

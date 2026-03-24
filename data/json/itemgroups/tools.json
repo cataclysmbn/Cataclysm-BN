@@ -218,7 +218,8 @@
       [ "soldering_iron", 150 ],
       [ "cordless_drill", 100 ],
       [ "pin_reamer", 30 ],
-      [ "clamp", 10 ]
+      [ "clamp", 10 ],
+      [ "plumber_toolkit", 5 ]
     ]
   },
   {

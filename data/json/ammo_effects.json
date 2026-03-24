@@ -400,6 +400,11 @@
     "//": "Applies tied effect and may be recovered after the critter breaks free."
   },
   {
+    "id": "NET_TANGLE",
+    "type": "ammo_effect",
+    "//": "Applies tied effect to all creatures in a radius with disposable nets."
+  },
+  {
     "id": "WHIP",
     "type": "ammo_effect",
     "//": "Scares wildlife hit by it.  If user has 5+ melee, applies disarm on some reach attacks."
@@ -413,5 +418,20 @@
     "id": "RECYCLED",
     "type": "ammo_effect",
     "//": "Nearly-immeasurable chance to fail to fire."
+  },
+  {
+    "id": "AMMO_25MM_HEI",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 1, "radius": 1, "chance": 25 },
+    "explosion": { "damage": 10, "radius": 1 }
+  },
+  {
+    "id": "AMMO_155MM_FRAG",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 100,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 400, "armor_multiplier": 3 }, "range": 10 },
+      "radius": 10
+    }
   }
 ]

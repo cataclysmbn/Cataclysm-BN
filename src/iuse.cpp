@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bitset>
 #include <climits>
 #include <cmath>
 #include <cstdlib>
@@ -11,6 +12,7 @@
 #include <list>
 #include <map>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <unordered_map>
@@ -79,6 +81,7 @@
 #include "monattack.h"
 #include "mongroup.h"
 #include "monster.h"
+#include "fluid_grid.h"
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -325,6 +328,8 @@ static const quality_id qual_LOCKPICK( "LOCKPICK" );
 
 static const requirement_id requirement_add_grid_connection =
     requirement_id( "add_grid_connection" );
+static const auto requirement_add_fluid_grid_connection =
+    requirement_id( "add_fluid_grid_connection" );
 
 static const species_id FUNGUS( "FUNGUS" );
 static const species_id HALLUCINATION( "HALLUCINATION" );
@@ -1681,7 +1686,7 @@ int iuse::good_fishing_spot( tripoint pos )
     int fishable_locations = g->get_fishable_locations( 60, pos ).size();
     map &here = get_map();
     const oter_id &cur_omt =
-        overmap_buffer.ter( tripoint_abs_omt( ms_to_omt_copy( here.getabs( pos ) ) ) );
+        ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( here.getabs( pos ) ) ) );
     std::string om_id = cur_omt.id().c_str();
     if( fishable_locations < 100 && !g->m.has_flag( "CURRENT", pos ) &&
         om_id.find( "river_" ) == std::string::npos && !cur_omt->is_lake() &&
@@ -2059,7 +2064,7 @@ int iuse::directional_antenna( player *p, item *it, bool, const tripoint & )
     }
     const item &radio = *radios.front();
     // Find the radio station its tuned to (if any)
-    const auto tref = overmap_buffer.find_radio_station( radio.frequency );
+    const auto tref = ACTIVE_OVERMAP_BUFFER.find_radio_station( radio.frequency );
     if( !tref ) {
         p->add_msg_if_player( m_info, _( "You can't find the direction if your radio isn't tuned." ) );
         return 0;
@@ -2077,7 +2082,7 @@ int iuse::radio_on( player *p, item *it, bool t, const tripoint &pos )
     if( t ) {
         // Normal use
         std::string message = _( "Radio: Kssssssssssssh." );
-        const auto tref = overmap_buffer.find_radio_station( it->frequency );
+        const auto tref = ACTIVE_OVERMAP_BUFFER.find_radio_station( it->frequency );
         if( tref ) {
             const auto selected_tower = tref.tower;
             if( selected_tower->type == radio_type::MESSAGE_BROADCAST ) {
@@ -2128,7 +2133,7 @@ int iuse::radio_on( player *p, item *it, bool t, const tripoint &pos )
                 const int old_frequency = it->frequency;
                 const radio_tower *lowest_tower = nullptr;
                 const radio_tower *lowest_larger_tower = nullptr;
-                for( auto &tref : overmap_buffer.find_all_radio_stations() ) {
+                for( auto &tref : ACTIVE_OVERMAP_BUFFER.find_all_radio_stations() ) {
                     const auto new_frequency = tref.tower->frequency;
                     if( new_frequency == old_frequency ) {
                         continue;
@@ -4735,7 +4740,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
 
             case AEA_MAP: {
                 const tripoint_abs_omt center = p->global_omt_location();
-                const bool new_map = overmap_buffer.reveal( center.xy(), 20, center.z() );
+                const bool new_map = ACTIVE_OVERMAP_BUFFER.reveal( center.xy(), 20, center.z() );
                 if( new_map ) {
                     p->add_msg_if_player( m_warning, _( "You have a vision of the surrounding area…" ) );
                     p->moves -= to_moves<int>( 1_seconds );
@@ -5168,7 +5173,9 @@ int iuse::unfold_generic( player *p, item *it, bool, const tripoint & )
         unfold_msg = _( unfold_msg );
     }
     veh->set_owner( *p );
-    g->m.board_vehicle( p->pos(), p );
+    if( g->m.veh_at( p->pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
+        g->m.board_vehicle( p->pos(), p );
+    }
     p->add_msg_if_player( m_neutral, unfold_msg, veh->name );
 
     p->moves -= it->get_var( "moves", to_turns<int>( 5_seconds ) );
@@ -6049,11 +6056,32 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint &pos )
             p->moves -= 30;
 
             if( it->is_active() ) {
+                // Turn music off - revert to original type
+                const std::optional<itype_id> revert_to = it->type->tool->revert_to;
+                if( revert_to.has_value() ) {
+                    it->convert( revert_to.value() );
+                }
                 it->deactivate();
                 it->erase_var( "EIPC_MUSIC_ON" );
 
                 p->add_msg_if_player( m_info, _( "You turned off music on your %s." ), it->tname() );
             } else {
+                // Turn music on - find music_player action's target if it exists
+                itype_id music_type;
+                const auto music_it = it->type->use_methods.find( "music_player" );
+                if( music_it != it->type->use_methods.end() ) {
+                    const iuse_music_player *music_actor =
+                        dynamic_cast<const iuse_music_player *>( music_it->second.get_actor_ptr() );
+                    if( music_actor ) {
+                        music_type = music_actor->target;
+                    }
+                }
+
+                // Transform to music variant if found
+                if( !music_type.is_empty() && music_type.is_valid() ) {
+                    it->convert( music_type );
+                }
+
                 it->activate();
                 it->set_var( "EIPC_MUSIC_ON", "1" );
 
@@ -6830,7 +6858,7 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
 
     // TODO: fix point types
     const oter_id &cur_ter =
-        overmap_buffer.ter( tripoint_abs_omt( ms_to_omt_copy( g->m.getabs( aim_point ) ) ) );
+        ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( g->m.getabs( aim_point ) ) ) );
     std::string overmap_desc = string_format( _( "In the background you can see a %s" ),
                                colorize( cur_ter->get_name(), cur_ter->get_color() ) );
     if( outside_tiles_num == total_tiles_num ) {
@@ -8358,7 +8386,7 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint & )
     }
     if( it->has_flag( flag_WEATHER_FORECAST ) ) {
         std::string message = string_format( "", message );
-        const auto tref = overmap_buffer.find_radio_station( it->frequency );
+        const auto tref = ACTIVE_OVERMAP_BUFFER.find_radio_station( it->frequency );
         if( tref ) {
             {
                 message = weather_forecast( tref.abs_sm_pos );
@@ -8369,15 +8397,16 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint & )
     if( it->has_flag( flag_WINDMETER ) ) {
         int vehwindspeed = 0;
         if( optional_vpart_position vp = g->m.veh_at( p->pos() ) ) {
-            vehwindspeed = std::abs( vp->vehicle().velocity / 100 ); // For mph
+            vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
         }
-        const oter_id &cur_om_ter = overmap_buffer.ter( p->global_omt_location() );
+        const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( p->global_omt_location() );
         /* windpower defined in internal velocity units (=.01 mph) */
         const double windpower = 100 * get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
                                  p->pos(), weather.winddirection, g->is_sheltered( p->pos() ) );
+        const int windpower_vehicle_units = std::lround( windpower * 0.44704 );
         std::string dirstring = get_dirstring( weather.winddirection );
         p->add_msg_if_player( m_neutral, _( "Wind: %.1f %2$s from the %3$s.\nFeels like: %4$s." ),
-                              convert_velocity( windpower, VU_VEHICLE ),
+                              convert_velocity( windpower_vehicle_units, VU_VEHICLE ),
                               velocity_units( VU_VEHICLE ), dirstring, print_temperature(
                                   get_local_windchill( units::to_fahrenheit( weatherPoint.temperature ),
                                           weatherPoint.humidity,
@@ -8640,6 +8669,10 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
         return 0;
     }
 
+    if( it->get_var( "craft_tools_fully_prepaid", 0 ) == 0 ) {
+        it->set_var( "craft_tools_fully_prepaid", 1 );
+    }
+
     bench_location best_bench = find_best_bench( *p, *it );
     p->add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),
@@ -8671,6 +8704,8 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
     p->activity->values.push_back( 0 ); // Not a long craft
     // Ugly
     p->activity->values.push_back( static_cast<int>( best_bench.type ) );
+    p->activity->values.push_back( 100 );
+    p->activity->values.push_back( 0 );
 
     return 0;
 }
@@ -8828,7 +8863,8 @@ int iuse::report_grid_charge( player *p, item *, bool, const tripoint &pos )
 int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos )
 {
     tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
-    std::vector<tripoint_rel_omt> connections = overmap_buffer.electric_grid_connectivity_at( pos_abs );
+    std::vector<tripoint_rel_omt> connections = ACTIVE_OVERMAP_BUFFER.electric_grid_connectivity_at(
+                pos_abs );
 
     std::vector<std::string> connection_names;
     connection_names.reserve( connections.size() );
@@ -8849,10 +8885,54 @@ int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos 
     return 0;
 }
 
+auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoint &pos ) -> int
+{
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
+    const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
+    const auto fluid_stats = fluid_grid::storage_stats_at( pos_abs );
+
+    auto connection_names = std::vector<std::string> {};
+    connection_names.reserve( connections.size() );
+    std::ranges::for_each( connections, [&]( const tripoint_rel_omt & delta ) {
+        connection_names.push_back( direction_name( direction_from( delta.raw() ) ) );
+    } );
+
+    auto msg = std::string{};
+    if( connection_names.empty() ) {
+        msg = _( "This fluid grid has no connections." );
+    } else {
+        msg = string_format( _( "This fluid grid has connections: %s." ),
+                             enumerate_as_string( connection_names ) );
+    }
+    p->add_msg_if_player( msg );
+    p->add_msg_if_player( string_format( _( "Fluid stored: %1$s/%2$s %3$s." ),
+                                         format_volume( fluid_stats.stored ),
+                                         format_volume( fluid_stats.capacity ),
+                                         volume_units_abbr() ) );
+    auto fluid_entries = std::vector<std::string> {};
+    std::ranges::for_each( fluid_stats.stored_by_type, [&]( const auto & entry ) {
+        if( entry.second <= 0_ml ) {
+            return;
+        }
+        const auto name = item::nname( entry.first );
+        const auto volume = format_volume( entry.second );
+        fluid_entries.push_back( string_format( _( "%1$s: %2$s" ), name, volume ) );
+    } );
+    if( fluid_entries.empty() ) {
+        p->add_msg_if_player( _( "Fluids: empty." ) );
+    } else {
+        p->add_msg_if_player( string_format( _( "Fluids: %s." ),
+                                             enumerate_as_string( fluid_entries ) ) );
+    }
+
+    return 0;
+}
+
 int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &pos )
 {
     tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
-    std::vector<tripoint_rel_omt> connections = overmap_buffer.electric_grid_connectivity_at( pos_abs );
+    std::vector<tripoint_rel_omt> connections = ACTIVE_OVERMAP_BUFFER.electric_grid_connectivity_at(
+                pos_abs );
 
     uilist ui;
 
@@ -8879,10 +8959,11 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
     size_t ret = static_cast<size_t>( ui.ret );
     tripoint_abs_omt destination_pos_abs = pos_abs + tripoint_rel_omt( six_cardinal_directions[ret] );
     if( connection_present[ret] ) {
-        overmap_buffer.remove_grid_connection( pos_abs, destination_pos_abs );
+        ACTIVE_OVERMAP_BUFFER.remove_grid_connection( pos_abs, destination_pos_abs );
     } else {
-        std::set<tripoint_abs_omt> lhs_locations = overmap_buffer.electric_grid_at( pos_abs );
-        std::set<tripoint_abs_omt> rhs_locations = overmap_buffer.electric_grid_at( destination_pos_abs );
+        std::set<tripoint_abs_omt> lhs_locations = ACTIVE_OVERMAP_BUFFER.electric_grid_at( pos_abs );
+        std::set<tripoint_abs_omt> rhs_locations = ACTIVE_OVERMAP_BUFFER.electric_grid_at(
+                    destination_pos_abs );
         int cost_mult;
         if( lhs_locations == rhs_locations ) {
             cost_mult = 0;
@@ -8936,7 +9017,100 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
         }
         p->invalidate_crafting_inventory();
 
-        bool success = overmap_buffer.add_grid_connection( pos_abs, destination_pos_abs );
+        bool success = ACTIVE_OVERMAP_BUFFER.add_grid_connection( pos_abs, destination_pos_abs );
+        if( success ) {
+            return it->type->charges_to_use();
+        }
+    }
+
+    return 0;
+}
+
+auto iuse::modify_fluid_grid_connections( player *p, item *it, bool, const tripoint &pos ) -> int
+{
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
+    const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
+
+    uilist ui;
+
+    auto connection_present = std::bitset<six_cardinal_directions.size()> {};
+    std::ranges::for_each( std::views::iota( size_t{ 0 }, six_cardinal_directions.size() ),
+    [&]( size_t i ) {
+        const auto &delta = six_cardinal_directions[i];
+        connection_present[i] = std::ranges::find( connections,
+                                tripoint_rel_omt( delta ) ) != connections.end();
+        const auto name = direction_name( direction_from( delta ) );
+        const auto i_int = static_cast<int>( i );
+        const auto format = connection_present[i]
+                            ? _( "Remove fluid grid connection in direction: %s" )
+                            : _( "Add fluid grid connection in direction: %s" );
+        const auto new_z = pos.z + delta.z;
+        const auto enabled = new_z >= -10 && new_z <= 10;
+        ui.addentry( i_int, enabled, i_int, format, name.c_str() );
+    } );
+
+    ui.query();
+    if( ui.ret < 0 ) {
+        return 0;
+    }
+
+    const auto ret = static_cast<size_t>( ui.ret );
+    const auto destination_pos_abs =
+        pos_abs + tripoint_rel_omt( six_cardinal_directions[ret] );
+    if( connection_present[ret] ) {
+        fluid_grid::remove_grid_connection( pos_abs, destination_pos_abs );
+    } else {
+        const auto lhs_locations = fluid_grid::grid_at( pos_abs );
+        const auto rhs_locations = fluid_grid::grid_at( destination_pos_abs );
+        auto cost_mult = 0;
+        if( lhs_locations != rhs_locations ) {
+            cost_mult = static_cast<int>( lhs_locations.size() + rhs_locations.size() );
+        }
+        const auto &reqs = *requirement_add_fluid_grid_connection * cost_mult;
+        const auto &crafting_inv = p->crafting_inventory();
+        auto grid_connection_string = std::string{};
+        if( cost_mult == 0 ) {
+            grid_connection_string = string_format(
+                                         _( "You are connecting two locations in the same grid, with %lu elements." ),
+                                         std::max( lhs_locations.size(), rhs_locations.size() ) );
+        } else if( lhs_locations.size() == 1 || rhs_locations.size() == 1 ) {
+            grid_connection_string = string_format(
+                                         _( "You are extending a grid with %lu elements." ),
+                                         std::max( lhs_locations.size(), rhs_locations.size() ) );
+        } else {
+            grid_connection_string = string_format(
+                                         _( "You are connecting a grid with %lu elements to a grid with %lu elements." ),
+                                         lhs_locations.size(),
+                                         rhs_locations.size() );
+        }
+
+        if( !reqs.can_make_with_inventory( crafting_inv, is_crafting_component ) ) {
+            popup( string_format( _( "%s\n%s\n%s" ),
+                                  grid_connection_string,
+                                  reqs.list_missing(),
+                                  reqs.list_all() ) );
+            return 0;
+        }
+
+        if( ( cost_mult == 0 &&
+              query_yn( string_format( _( "%s\nThis action will not consume any resources.\nAre you sure?" ),
+                                       grid_connection_string ) ) ) ||
+            query_yn( string_format( std::string( "%s\n%s\n" ) + _( "Are you sure?" ),
+                                     grid_connection_string,
+                                     reqs.list_all() ) ) )
+        {} else {
+            return 0;
+        }
+
+        std::ranges::for_each( reqs.get_components(), [&]( const auto & e ) {
+            p->consume_items( e );
+        } );
+        std::ranges::for_each( reqs.get_tools(), [&]( const auto & e ) {
+            p->consume_tools( e );
+        } );
+        p->invalidate_crafting_inventory();
+
+        const auto success = fluid_grid::add_grid_connection( pos_abs, destination_pos_abs );
         if( success ) {
             return it->type->charges_to_use();
         }

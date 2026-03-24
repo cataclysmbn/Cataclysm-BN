@@ -142,6 +142,12 @@
     "info": "This gear <bad>prevents</bad> you from <info>seeing</info> anything."
   },
   {
+    "id": "BLINDS_EYES_ON_HIT",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "When thrown and it hits a creature's head, it can <bad>blind</bad> them."
+  },
+  {
     "id": "EFFECT_NIGHT_VISION",
     "context": [  ],
     "type": "json_flag"
@@ -613,6 +619,13 @@
     "info": "Any creature spawned from this item will <info>always</info> emerge <good>friendly to you</good>."
   },
   {
+    "id": "SPAWN_HOSTILE",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "//": "This item will spawn mean. Used for target dummies and such.",
+    "info": "Any creature spawned from this item will <info>always</info> emerge <bad>against you</good>."
+  },
+  {
     "id": "STAB",
     "type": "json_flag",
     "context": [ "GENERIC", "TOOL" ]
@@ -791,6 +804,12 @@
     "type": "json_flag",
     "context": [  ],
     "info": "This item can be used to <info>pick locks</info> with <good>zero effort</good>."
+  },
+  {
+    "id": "DURABLE_LOCKPICK",
+    "type": "json_flag",
+    "context": [  ],
+    "//": "takes no damage from normal use"
   },
   {
     "id": "RAINPROOF",
@@ -1630,7 +1649,14 @@
   {
     "id": "GNV_EFFECT",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "info": "This gear <good>enhances your vision</good> when worn, and <info>tints your field of view</info>."
+  },
+  {
+    "id": "RECON_VISION",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>enhances your vision</good> when worn."
   },
   {
     "id": "HELMET_COMPAT",
@@ -1680,7 +1706,8 @@
   {
     "id": "IR_EFFECT",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "info": "This gear allows you to <good>see heat signatures</good> when worn."
   },
   {
     "id": "IS_ARMOR",
@@ -2109,6 +2136,12 @@
     "context": [  ]
   },
   {
+    "id": "NET_TANGLE",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "Thrown nets apply the NET_TANGLE ammo effect to nearby creatures."
+  },
+  {
     "id": "TARDIS",
     "type": "json_flag",
     "context": [  ]
@@ -2502,5 +2535,10 @@
     "type": "json_flag",
     "//": "",
     "context": [  ]
+  },
+  {
+    "id": "TRACKED",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ]
   }
 ]

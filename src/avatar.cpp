@@ -17,6 +17,7 @@
 #include "calendar.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -223,6 +224,11 @@ void avatar::load_map_memory()
     player_map_memory->load( g->m.getabs( pos() ) );
 }
 
+void avatar::clear_map_memory()
+{
+    player_map_memory->clear();
+}
+
 void avatar::prepare_map_memory_region( const tripoint &p1, const tripoint &p2 )
 {
     player_map_memory->prepare_region( p1, p2 );
@@ -296,6 +302,14 @@ tripoint_abs_omt avatar::get_active_mission_target() const
 }
 
 tripoint_abs_omt avatar::get_custom_mission_target()
+{
+    if( custom_waypoint == nullptr ) {
+        return overmap::invalid_tripoint;
+    }
+    return *custom_waypoint;
+}
+
+auto avatar::get_custom_mission_target() const -> tripoint_abs_omt
 {
     if( custom_waypoint == nullptr ) {
         return overmap::invalid_tripoint;
@@ -1361,6 +1375,13 @@ bool avatar::wield( item &target )
         return false;
     }
 
+    // Lua iwieldable can_wield callback
+    if( const auto *iwield_cb = target.type->iwieldable_callbacks ) {
+        if( !iwield_cb->call_can_wield( *this, target ) ) {
+            return false;
+        }
+    }
+
     if( !unwield() ) {
         return false;
     }
@@ -1409,6 +1430,13 @@ detached_ptr<item> avatar::wield( detached_ptr<item> &&target )
 {
     if( !can_wield( *target ).success() ) {
         return std::move( target );
+    }
+
+    // Lua iwieldable can_wield callback
+    if( const auto *iwield_cb = target->type->iwieldable_callbacks ) {
+        if( !iwield_cb->call_can_wield( *this, *target ) ) {
+            return std::move( target );
+        }
     }
 
     if( !unwield() ) {

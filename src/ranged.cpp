@@ -22,6 +22,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
@@ -96,6 +97,7 @@ static const weapon_category_id weapon_cat_ENERGY_WEAPONS( "ENERGY_WEAPONS" );
 static const ammo_effect_str_id ammo_effect_ACT_ON_RANGED_HIT( "ACT_ON_RANGED_HIT" );
 static const ammo_effect_str_id ammo_effect_BLACKPOWDER( "BLACKPOWDER" );
 static const ammo_effect_str_id ammo_effect_BOUNCE( "BOUNCE" );
+static const ammo_effect_str_id ammo_effect_BLINDS_EYES( "BLINDS_EYES" );
 static const ammo_effect_str_id ammo_effect_BURST( "BURST" );
 static const ammo_effect_str_id ammo_effect_CUSTOM_EXPLOSION( "CUSTOM_EXPLOSION" );
 static const ammo_effect_str_id ammo_effect_EMP( "EMP" );
@@ -114,6 +116,7 @@ static const ammo_effect_str_id ammo_effect_RECYCLED( "RECYCLED" );
 static const ammo_effect_str_id ammo_effect_SHATTER_SELF( "SHATTER_SELF" );
 static const ammo_effect_str_id ammo_effect_SHOT( "SHOT" );
 static const ammo_effect_str_id ammo_effect_TANGLE( "TANGLE" );
+static const ammo_effect_str_id ammo_effect_NET_TANGLE( "NET_TANGLE" );
 static const ammo_effect_str_id ammo_effect_WIDE( "WIDE" );
 static const ammo_effect_str_id ammo_effect_THROWN( "THROWN" );
 
@@ -916,6 +919,13 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
         debugmsg( "Attempted to fire zero or negative shots using %s", gun.tname() );
     }
 
+    // Lua iranged can_fire callback: blocks firing before any ammo is consumed
+    if( const auto *iranged_cb = gun.type->iranged_callbacks ) {
+        if( !iranged_cb->call_can_fire( who, gun ) ) {
+            return 0;
+        }
+    }
+
     std::optional<shape_factory> shape = ranged::get_shape_factory( gun );
 
     map &here = get_map();
@@ -1076,6 +1086,13 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
     // launchers train weapon skill for both hits and misses.
     int practice_units = aoe_attack ? curshot : hits;
     who.as_player()->practice( gun.gun_skill(), ( practice_units + 1 ) * 5 );
+
+    // Lua iranged on_fire callback: returns false to zero out hits (force miss)
+    if( const auto *iranged_cb = gun.type->iranged_callbacks ) {
+        if( !iranged_cb->call_on_fire( who, gun, target, curshot ) ) {
+            hits = 0;
+        }
+    }
 
     cata::run_hooks( "on_shoot", [ & ]( auto & params ) {
         params["shooter"] = &who;
@@ -1371,6 +1388,9 @@ dealt_projectile_attack throw_item( Character &who, const tripoint &target,
         proj.add_effect( ammo_effect_ACT_ON_RANGED_HIT );
         thrown.activate();
     }
+    if( thrown.has_flag( flag_BLINDS_EYES_ON_HIT ) ) {
+        proj.add_effect( ammo_effect_BLINDS_EYES );
+    }
     // This is just to indicate something is a thrown item
     // Checking with other methods downstream breaks other projectile attacks.
     proj.add_effect( ammo_effect_THROWN );
@@ -1425,6 +1445,9 @@ dealt_projectile_attack throw_item( Character &who, const tripoint &target,
     // handling for tangling thrown items
     if( thrown.has_flag( flag_TANGLE ) ) {
         proj.add_effect( ammo_effect_TANGLE );
+    }
+    if( thrown.has_flag( flag_NET_TANGLE ) ) {
+        proj.add_effect( ammo_effect_NET_TANGLE );
     }
 
     if( thrown.has_flag( flag_NO_DAMAGE ) ) {
@@ -1896,6 +1919,9 @@ static projectile make_gun_projectile( const item &gun )
     if( gun.ammo_data() ) {
         assert( gun.ammo_data()->ammo );
         const islot_ammo &ammo = *gun.ammo_data()->ammo;
+        if( gun.ammo_data()->has_flag( flag_BLINDS_EYES_ON_HIT ) ) {
+            fx.add_effect( ammo_effect_BLINDS_EYES );
+        }
         // Some projectiles have a chance of being recoverable
         bool recover = !one_in( ammo.dont_recover_one_in );
         // Some weapons can override this
@@ -2928,8 +2954,6 @@ void target_ui::update_target_list()
         return;
     }
 
-    // Get targets in range and sort them by distance (targets[0] is the closest)
-
     if( mode == TargetMode::TurretManual ) {
         targets = ranged::targetable_creatures( *you, range, *turret );
     } else {
@@ -2939,11 +2963,12 @@ void target_ui::update_target_list()
     map &here = get_map();
     const auto player_pos = you->pos();
 
-    std::ranges::sort( targets, {}, [&]( const Creature * c ) -> std::tuple<bool, bool, int> {
+    std::ranges::sort( targets, {}, [&]( const Creature * c ) -> std::tuple<bool, bool, bool, int> {
         const auto target_pos = c->pos();
-        const bool same_z = player_pos.z == target_pos.z;
-        const bool has_los = here.sees( player_pos, target_pos, range );
-        return { !has_los, !same_z, rl_dist_exact( target_pos, player_pos ) };
+        const auto z_diff = std::abs( player_pos.z - target_pos.z );
+        const auto is_hostile = c->attitude_to( *you ) == Attitude::A_HOSTILE;
+        const auto has_los = here.sees( player_pos, target_pos, range );
+        return { !has_los, !is_hostile, z_diff, rl_dist_exact( target_pos, player_pos ) };
     } );
 }
 
@@ -4204,7 +4229,14 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
 
     // Minimum improvement is 5MoA.  This mostly puts a cap on how long aiming for sniping takes.
     aim_speed = std::max( aim_speed, 5.0 );
+    // Apply enchantment bonus to aim speed
 
+    double ench_aim_bonus = who.bonus_from_enchantments( aim_speed,
+                            enchant_vals::mod::RANGED_AIM_SPEED );
+
+    // To prevent a bug where aiming does not proceed at all because the aiming speed drops below the game's minimum limit (5.0) due to debuffs (such as Cursed Artifacts),
+    // so applying the max value once more.
+    aim_speed = std::max( 5.0, aim_speed + ench_aim_bonus );
     // Never improve by more than the currently used sights permit.
     return std::min( aim_speed, recoil - limit );
 }

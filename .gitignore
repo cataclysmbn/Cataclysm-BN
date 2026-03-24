@@ -14,6 +14,7 @@ build
 !build.yml
 !build-scripts
 !build-data
+build-data/gettext
 test_user_dir*
 /build-start-time
 /cmake-build-debug/

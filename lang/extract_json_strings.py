@@ -128,6 +128,7 @@ ignorable = {
     "vehicle_group",
     "vehicle_placement",
     "WORLD_OPTION",
+    "sound_effect",
 }
 
 # these objects can have their strings automatically extracted.
@@ -191,7 +192,8 @@ automatically_convertible = {
     "vitamin",
     "WHEEL",
     "help",
-    "weather_type"
+    "weather_type",
+    "world_type"
 }
 
 # for these objects a plural form is needed
@@ -500,6 +502,8 @@ def extract_scenario(state, item):
 
 def extract_mapgen(state, item):
     # writestr will not write string if it is None.
+    if "object" not in item or type(item["object"]) != dict:
+        return
     for (objkey, objval) in sorted(item["object"].items(), key=lambda x: x[0]):
         if objkey == "place_specials" or objkey == "place_signs":
             for special in objval:

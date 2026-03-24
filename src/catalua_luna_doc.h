@@ -49,6 +49,7 @@ class item_stack;
 class ma_technique;
 class ma_buff;
 class map;
+class mapgendata;
 class map_stack;
 class material_type;
 class mission;
@@ -68,6 +69,7 @@ class time_point;
 class tinymap;
 class uilist;
 class relic;
+struct bionic;
 struct body_part_type;
 struct damage_instance;
 struct damage_unit;
@@ -182,6 +184,7 @@ LUNA_VAL( distribution_grid_tracker, "DistributionGridTracker" );
 LUNA_PTR_VAL( item, "Item" );
 LUNA_VAL( item_stack, "ItemStack" );
 LUNA_VAL( map, "Map" );
+LUNA_VAL( mapgendata, "MapgenData" );
 LUNA_VAL( map_stack, "MapStack" );
 LUNA_VAL( mission, "Mission" );
 LUNA_VAL( mission_type, "MissionType" );
@@ -219,6 +222,7 @@ LUNA_VAL( effect, "Effect" );
 LUNA_VAL( explosion_data, "ExplosionData" );
 LUNA_VAL( requirement_data, "RequirementData" );
 LUNA_VAL( inventory, "Inventory" );
+LUNA_VAL( bionic, "Bionic" );
 
 // Ids for in-game objects
 LUNA_ID( ammunition_type, "AmmunitionType" )

@@ -1059,6 +1059,24 @@
   },
   {
     "type": "furniture",
+    "id": "f_standing_tank_plumbed",
+    "copy-from": "f_standing_tank",
+    "name": "standing tank (plumbed)",
+    "description": "A large freestanding metal tank hooked into a fluid grid.",
+    "symbol": "O",
+    "color": "light_gray",
+    "keg_capacity": 1200,
+    "fluid_grid": {
+      "role": "tank",
+      "allow_input": true,
+      "allow_output": true,
+      "allowed_liquids": [ "water", "water_clean" ],
+      "disconnected_variant": "f_standing_tank",
+      "use_keg_capacity": true
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_clay_storage",
     "looks_like": "f_standing_tank",
     "name": "clay water pots",

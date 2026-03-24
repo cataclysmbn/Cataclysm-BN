@@ -56,8 +56,11 @@
 #include "overmap.h"
 #include "overmap_location.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
+#include "calendar.h"
 #include "player_activity.h"
 #include "pldata.h"
+#include "profile.h"
 #include "projectile.h"
 #include "ranged.h"
 #include "ret_val.h"
@@ -189,6 +192,7 @@ bool compare_sound_alert( const dangerous_sound &sound_a, const dangerous_sound 
 
 static bool clear_shot_reach( const tripoint &from, const tripoint &to, bool check_ally = true )
 {
+    ZoneScopedN( "clear_shot_reach" );
     std::vector<tripoint> path = line_to( from, to );
     tripoint target_point = path.back();
     path.pop_back();
@@ -298,7 +302,7 @@ std::vector<sphere> npc::find_dangerous_explosives() const
 {
     std::vector<sphere> result;
 
-    const auto active_items = get_map().get_active_items_in_radius( pos(), MAX_VIEW_DISTANCE,
+    const auto active_items = get_map().get_active_items_in_radius( pos(), g_max_view_distance,
                               special_item_type::explosive );
 
     for( const auto &elem : active_items ) {
@@ -333,6 +337,7 @@ std::vector<sphere> npc::find_dangerous_explosives() const
 
 float npc::evaluate_enemy( const Creature &target ) const
 {
+    ZoneScopedN( "evaluate_enemy" );
     if( target.is_monster() ) {
         const monster &mon = dynamic_cast<const monster &>( target );
         float diff = static_cast<float>( mon.type->difficulty );
@@ -350,8 +355,32 @@ static bool too_close( const tripoint &critter_pos, const tripoint &ally_pos, co
     return rl_dist( critter_pos, ally_pos ) <= def_radius;
 }
 
+// Per-turn symmetric sight cache wrapper — mirrors turn_cached_sees() in monmove.cpp.
+// Exploits LOS symmetry: if a monster already checked visibility against this NPC during
+// compute_plan(), the result is already cached and this call is a cheap shared_lock read.
+static auto npc_turn_cached_sees( const Creature &seer, const Creature &target ) -> bool
+{
+    const Creature *lo = &seer < &target ? &seer : &target;
+    const Creature *hi = &seer < &target ? &target : &seer;
+    const auto key = std::make_pair( lo, hi );
+    {
+        std::shared_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
+        const auto it = g->turn_sight_cache_.find( key );
+        if( it != g->turn_sight_cache_.end() ) {
+            return it->second;
+        }
+    }
+    const bool result = seer.sees( target );
+    {
+        std::unique_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
+        g->turn_sight_cache_.emplace( key, result );
+    }
+    return result;
+}
+
 void npc::assess_danger()
 {
+    ZoneScoped;
     float assessment = 0.0f;
     float highest_priority = 1.0f;
     int def_radius = rules.has_flag( ally_rule::follow_close ) ? follow_distance() : 6;
@@ -422,7 +451,7 @@ void npc::assess_danger()
     // cache string_id -> int_id conversion before hot loop
     const field_type_id fd_fire = ::fd_fire;
     // first, check if we're about to be consumed by fire
-    // `map::get_field` uses `field_cache`, so in general case (no fire) it provides an early exit
+    // `map::get_field` checks field_count first, so in general case (no fire) it provides an early exit
     for( const tripoint &pt : here.points_in_radius( pos(), 6 ) ) {
         if( pt == pos() || !here.get_field( pt, fd_fire ) || here.has_flag( TFLAG_FIRE_CONTAINER,  pt ) ) {
             continue;
@@ -457,72 +486,78 @@ void npc::assess_danger()
         }
     }
 
-    for( const monster &critter : g->all_monsters() ) {
-        auto att = critter.attitude_to( *this );
-        if( att == Attitude::A_FRIENDLY ) {
-            ai_cache.friends.emplace_back( g->shared_from( critter ) );
-            continue;
-        }
-        if( att != Attitude::A_HOSTILE && ( critter.friendly || !is_enemy() ) ) {
-            continue;
-        }
-        if( !sees( critter ) ) {
-            continue;
-        }
-        float critter_threat = evaluate_enemy( critter );
-        // warn and consider the odds for distant enemies
-        int dist = rl_dist( pos(), critter.pos() );
-        if( ( is_enemy() || !critter.friendly ) ) {
-            assessment += critter_threat;
-            if( critter_threat > ( 8.0f + personality.bravery + rng( 0, 5 ) ) ) {
-                warn_about( "monster", 10_minutes, critter.type->nname(), dist, critter.pos() );
+    {
+        ZoneScopedN( "assess_all_monsters" );
+        for( const monster &critter : g->all_monsters() ) {
+            const auto dist = rl_dist_fast( pos(), critter.pos() );
+            if( dist > default_daylight_level() ) {
+                continue;
             }
-        }
-        if( must_retreat || no_fighting ) {
-            continue;
-        }
-        // ignore targets behind glass even if we can see them
-        if( !clear_shot_reach( pos(), critter.pos(), false ) ) {
-            continue;
-        }
+            auto att = critter.attitude_to( *this );
+            if( att == Attitude::A_FRIENDLY ) {
+                ai_cache.friends.emplace_back( g->shared_from( critter ) );
+                continue;
+            }
+            if( att != Attitude::A_HOSTILE && ( critter.friendly || !is_enemy() ) ) {
+                continue;
+            }
+            if( !npc_turn_cached_sees( *this, critter ) ) {
+                continue;
+            }
+            float critter_threat = evaluate_enemy( critter );
+            // warn and consider the odds for distant enemies
+            if( ( is_enemy() || !critter.friendly ) ) {
+                assessment += critter_threat;
+                if( critter_threat > ( 8.0f + personality.bravery + rng( 0, 5 ) ) ) {
+                    warn_about( "monster", 10_minutes, critter.type->nname(), dist, critter.pos() );
+                }
+            }
+            if( must_retreat || no_fighting ) {
+                continue;
+            }
+            // ignore targets behind glass even if we can see them
+            if( !clear_shot_reach( pos(), critter.pos(), false ) ) {
+                continue;
+            }
 
-        float scaled_distance = std::max( 1.0f, dist / critter.speed_rating() );
-        float hp_percent = 1.0f - static_cast<float>( critter.get_hp() ) / critter.get_hp_max();
-        float critter_danger = std::max( critter_threat * ( hp_percent * 0.5f + 0.5f ),
-                                         NPC_DANGER_VERY_LOW );
-        ai_cache.total_danger += critter_danger / scaled_distance;
+            float scaled_distance = std::max( 1.0f, dist / critter.speed_rating() );
+            float hp_percent = 1.0f - static_cast<float>( critter.get_hp() ) / critter.get_hp_max();
+            float critter_danger = std::max( critter_threat * ( hp_percent * 0.5f + 0.5f ),
+                                             NPC_DANGER_VERY_LOW );
+            ai_cache.total_danger += critter_danger / scaled_distance;
 
-        // don't ignore monsters that are too close or too close to an ally if we can move
-        bool is_too_close = dist <= def_radius;
-        for( const weak_ptr_fast<Creature> &guy : ai_cache.friends ) {
-            if( is_too_close || self_defense_only ) {
-                break;
+            // don't ignore monsters that are too close or too close to an ally if we can move
+            bool is_too_close = dist <= def_radius;
+            for( const weak_ptr_fast<Creature> &guy : ai_cache.friends ) {
+                if( is_too_close || self_defense_only ) {
+                    break;
+                }
+                // HACK: Bit of a dirty hack - sometimes shared_from, returns nullptr or bad weak_ptr for
+                // friendly NPC when the NPC is riding a creature - I don't know why.
+                // so this skips the bad weak_ptrs, but this doesn't functionally change the AI Priority
+                // because the horse the NPC is riding is still in the ai_cache.friends vector,
+                // so either one would count as a friendly for this purpose.
+                if( guy.lock() ) {
+                    is_too_close |= too_close( critter.pos(), guy.lock()->pos(), def_radius );
+                }
             }
-            // HACK: Bit of a dirty hack - sometimes shared_from, returns nullptr or bad weak_ptr for
-            // friendly NPC when the NPC is riding a creature - I don't know why.
-            // so this skips the bad weak_ptrs, but this doesn't functionally change the AI Priority
-            // because the horse the NPC is riding is still in the ai_cache.friends vector,
-            // so either one would count as a friendly for this purpose.
-            if( guy.lock() ) {
-                is_too_close |= too_close( critter.pos(), guy.lock()->pos(), def_radius );
+            // ignore distant monsters that our rules prevent us from attacking
+            if( !is_too_close && is_player_ally() && !ok_by_rules( critter, dist, scaled_distance ) ) {
+                continue;
+            }
+            // prioritize the biggest, nearest threats, or the biggest threats that are threatening
+            // us or an ally
+            // critter danger is always at least NPC_DANGER_VERY_LOW
+            float priority = std::max( critter_danger - 2.0f * ( scaled_distance - 1.0f ),
+                                       is_too_close ? critter_danger : 0.0f );
+            cur_threat_map[direction_from( pos(), critter.pos() )] += priority;
+            if( priority > highest_priority ) {
+                highest_priority = priority;
+                ai_cache.target = g->shared_from( critter );
+                ai_cache.danger = critter_danger;
             }
         }
-        // ignore distant monsters that our rules prevent us from attacking
-        if( !is_too_close && is_player_ally() && !ok_by_rules( critter, dist, scaled_distance ) ) {
-            continue;
-        }
-        // prioritize the biggest, nearest threats, or the biggest threats that are threatening
-        // us or an ally
-        // critter danger is always at least NPC_DANGER_VERY_LOW
-        float priority = std::max( critter_danger - 2.0f * ( scaled_distance - 1.0f ),
-                                   is_too_close ? critter_danger : 0.0f );
-        cur_threat_map[direction_from( pos(), critter.pos() )] += priority;
-        if( priority > highest_priority ) {
-            highest_priority = priority;
-            ai_cache.target = g->shared_from( critter );
-            ai_cache.danger = critter_danger;
-        }
-    }
+    } // assess_all_monsters
 
     if( assessment == 0.0 && hostile_guys.empty() ) {
         ai_cache.danger_assessment = assessment;
@@ -647,6 +682,7 @@ float npc::character_danger( const Character &u ) const
 
 void npc::regen_ai_cache()
 {
+    ZoneScoped;
     map &here = get_map();
     auto i = std::begin( ai_cache.sound_alerts );
     while( i != std::end( ai_cache.sound_alerts ) ) {
@@ -699,6 +735,7 @@ void npc::regen_ai_cache()
 
 void npc::move()
 {
+    ZoneScoped;
     // don't just return from this function without doing something
     // that will eventually subtract moves, or change the NPC to a different type of action.
     // because this will result in an infinite loop
@@ -959,7 +996,10 @@ void npc::move()
     }
 
     add_msg( m_debug, "%s chose action %s.", name, npc_action_name( action ) );
-    execute_action( action );
+    {
+        ZoneScopedN( "npc_execute_action" );
+        execute_action( action );
+    }
 }
 
 void npc::execute_action( npc_action action )
@@ -2891,7 +2931,7 @@ void npc::find_item()
         }
         std::vector<npc *> followers;
         for( auto &elem : g->get_follower_list() ) {
-            shared_ptr_fast<npc> npc_to_get = overmap_buffer.find_npc( elem );
+            shared_ptr_fast<npc> npc_to_get = get_overmapbuffer( get_dimension() ).find_npc( elem );
             if( !npc_to_get ) {
                 continue;
             }
@@ -4101,8 +4141,8 @@ void npc::look_for_player( const Character &sought )
         path.clear();
     }
     std::vector<point> possibilities;
-    for (int x = 1; x < MAPSIZE_X; x += 11) { // 1, 12, 23, 34
-        for (int y = 1; y < MAPSIZE_Y; y += 11) {
+    for (int x = 1; x < g_mapsize_x; x += 11) { // 1, 12, 23, 34
+        for (int y = 1; y < g_mapsize_y; y += 11) {
             if( sees( x, y ) ) {
                 possibilities.push_back(point(x, y));
             }
@@ -4247,14 +4287,16 @@ void npc::set_omt_destination()
             find_params.search_range = { 0, 75 };
             find_params.search_layers = omt_find_all_layers;
 
-            goal = overmap_buffer.find_closest( surface_omt_loc, find_params );
+            auto &dim_ob = get_overmapbuffer( get_dimension() );
+            goal = dim_ob.find_closest( surface_omt_loc, find_params );
             npc_need_goal_cache &cache = goal_cache[fulfill];
             cache.goal = goal;
             cache.omt_loc = surface_omt_loc;
         }
         omt_path.clear();
         if( goal != overmap::invalid_tripoint ) {
-            omt_path = overmap_buffer.get_travel_path( surface_omt_loc, goal, overmap_path_params::for_npc() );
+            omt_path = get_overmapbuffer( get_dimension() ).get_travel_path( surface_omt_loc, goal,
+                       overmap_path_params::for_npc() );
         }
         if( !omt_path.empty() ) {
             break;
@@ -4263,12 +4305,13 @@ void npc::set_omt_destination()
 
     // couldn't find any places to go, so go somewhere.
     if( goal == overmap::invalid_tripoint || omt_path.empty() ) {
+        auto &dim_ob = get_overmapbuffer( get_dimension() );
         goal = surface_omt_loc + point( rng( -90, 90 ), rng( -90, 90 ) );
-        omt_path = overmap_buffer.get_travel_path( surface_omt_loc, goal, overmap_path_params::for_npc() );
+        omt_path = dim_ob.get_travel_path( surface_omt_loc, goal, overmap_path_params::for_npc() );
         // try one more time
         if( omt_path.empty() ) {
             goal = surface_omt_loc + point( rng( -90, 90 ), rng( -90, 90 ) );
-            omt_path = overmap_buffer.get_travel_path( surface_omt_loc, goal, overmap_path_params::for_npc() );
+            omt_path = dim_ob.get_travel_path( surface_omt_loc, goal, overmap_path_params::for_npc() );
         }
         if( omt_path.empty() ) {
             goal = no_goal_point;

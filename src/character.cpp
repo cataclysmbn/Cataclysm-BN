@@ -27,6 +27,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
@@ -88,6 +89,7 @@
 #include "player.h"
 #include "player_activity.h"
 #include "profession.h"
+#include "profile.h"
 #include "recipe_dictionary.h"
 #include "regen.h"
 #include "ret_val.h"
@@ -849,9 +851,17 @@ int Character::sight_range( int light_level ) const
     return clamp( range, 1, sight_max );
 }
 
-int Character::unimpaired_range() const
+auto Character::unimpaired_range() const -> int
 {
-    return std::min( sight_max, 60 );
+    // Cap at g_max_view_distance (runtime bubble radius) so castLight's
+    // row-distance limit produces a circular — not square — visible area.
+    //
+    // NOTE: g_max_view_distance currently equals SEEX * g_half_mapsize — the full
+    // half-extent of the map cache — so this cap never bites for a normal character.
+    // If a future change decouples actual vision range from bubble size (e.g. a hard
+    // cap of ~60 tiles regardless of bubble), update_visibility_cache's inner loops
+    // can be clamped to plr_pos ± unimpaired_range() for a large serial-path win.
+    return std::min( sight_max, g_max_view_distance );
 }
 
 bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )
@@ -868,7 +878,7 @@ bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )
     const std::vector<tripoint> line = line_to( ompos.raw(), omt.raw(), 0, 0 );
     for( size_t i = 0; i < line.size() && sight_points >= 0; i++ ) {
         const tripoint &pt = line[i];
-        const oter_id &ter = overmap_buffer.ter( tripoint_abs_omt( pt ) );
+        const oter_id &ter = ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( pt ) );
         sight_points -= static_cast<int>( ter->get_see_cost() );
         if( sight_points < 0 ) {
             return false;
@@ -1964,7 +1974,7 @@ void Character::recalc_sight_limits()
     for( const mutation_branch *mut : cached_mutations ) {
         best_bonus_nv = std::max( best_bonus_nv, mut->night_vision_range );
     }
-    if( is_wearing( itype_rm13_armor_on ) ||
+    if( worn_with_flag( flag_RECON_VISION ) ||
         ( is_mounted() && mounted_creature->has_flag( MF_MECH_RECON_VISION ) ) ) {
         best_bonus_nv = std::max( best_bonus_nv, 10.0f );
     }
@@ -2473,6 +2483,13 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
             add_msg_if_player( m_info, "%s", ret.c_str() );
         }
         return std::move( wear );
+    }
+
+    // Lua iwearable can_wear callback
+    if( const auto *iwear_cb = to_wear.type->iwearable_callbacks ) {
+        if( !iwear_cb->call_can_wear( *this, to_wear ) ) {
+            return std::move( wear );
+        }
     }
 
     const bool was_deaf = is_deaf();
@@ -3507,6 +3524,13 @@ bool Character::takeoff( item &it, std::vector<detached_ptr<item>> *res )
         return false;
     }
 
+    // Lua iwearable can_takeoff callback
+    if( const auto *iwear_cb = it.type->iwearable_callbacks ) {
+        if( !iwear_cb->call_can_takeoff( *this, it ) ) {
+            return false;
+        }
+    }
+
     auto iter = std::ranges::find_if( worn, [ &it ]( item * wit ) {
         return &it == wit;
     } );
@@ -3602,6 +3626,15 @@ bool Character::unwield()
     if( !can_unwield( primary_weapon() ).success() ) {
         return false;
     }
+
+    // Lua iwieldable can_unwield callback
+    if( const auto *iwield_cb = primary_weapon().type->iwieldable_callbacks ) {
+        if( !iwield_cb->call_can_unwield( *this, primary_weapon() ) ) {
+            return false;
+        }
+    }
+
+    primary_weapon().on_unwield( *this );
 
     const std::string query = string_format( _( "Stop wielding %s?" ), primary_weapon().tname() );
 
@@ -3860,8 +3893,8 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
 
     // first get effects
     for( const auto &[eff_type, eff_by_part] : *effects ) {
-        const auto eff = eff_by_part.begin()->second;
-        if( !eff.is_removed() ) {
+        const auto &eff = eff_by_part.begin()->second;
+        if( eff.get_id().is_valid() && !eff.is_removed() ) {
             const std::string &looks_like = eff_type.obj().get_looks_like();
 
             const overlay_entry ent {
@@ -5363,6 +5396,7 @@ void Character::update_body()
 
 void Character::update_body( const time_point &from, const time_point &to )
 {
+    ZoneScoped;
     update_stamina( to_turns<int>( to - from ) );
     update_stomach( from, to );
     recalculate_enchantment_cache();
@@ -5902,9 +5936,9 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     int vehwindspeed = 0;
     const optional_vpart_position vp = m.veh_at( pos() );
     if( vp ) {
-        vehwindspeed = std::abs( vp->vehicle().velocity / 100 ); // vehicle velocity in mph
+        vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
     }
-    const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() );
     bool sheltered = weather::is_sheltered( m, pos() );
     double total_windpower = get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
                              pos(),
@@ -6162,6 +6196,12 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
             bp_conv = ( ( bp_conv - adjusted_temp ) / 5 ) + adjusted_temp;
         }
 
+        // Because we don't actually model insulation very well at the moment, clothes are oppressive in Summer
+        // So we make them half as effective at making you uncomfortably hot as they are at making you not-cold
+        if( bp_conv >= BODYTEMP_HOT ) {
+            bp_conv -= clothing_warmth_adjustment / 2;
+        }
+
         // FINAL CALCULATION : Increments current body temperature towards convergent.
         int temp_before = bp_stats.get_temp_cur();
         int temp_difference = temp_before - bp_conv; // Negative if the player is warming up.
@@ -6176,8 +6216,8 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
         static const double change_mult_water = std::exp( -0.008 );
         const double change_mult = submerged_bp ? change_mult_water : change_mult_air;
         if( bp_stats.get_temp_cur() != bp_conv ) {
-            bp_stats.set_temp_cur( static_cast<int>( temp_difference * change_mult )
-                                   + bp_conv + rounding_error );
+            bp_stats.set_temp_cur( static_cast<int>( temp_difference * change_mult ) + bp_conv +
+                                   rounding_error );
         }
         int temp_after = bp_stats.get_temp_cur();
         // PENALTIES
@@ -8507,7 +8547,7 @@ void Character::signal_nemesis()
 {
     const tripoint_abs_omt ompos = global_omt_location();
     const tripoint_abs_sm smpos = project_to<coords::sm>( ompos );
-    overmap_buffer.signal_nemesis( smpos );
+    ACTIVE_OVERMAP_BUFFER.signal_nemesis( smpos );
 }
 
 void Character::vomit()
@@ -12292,3 +12332,4 @@ detached_ptr<item> Character::reduce_charges( item *it, int quantity )
     taken->charges = quantity;
     return taken;
 }
+

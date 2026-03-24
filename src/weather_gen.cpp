@@ -320,10 +320,10 @@ units::temperature weather_generator::get_water_temperature(
     constexpr int lower_limit = units::to_millidegree_celsius( -10_c );
     constexpr int upper_limit = units::to_millidegree_celsius( 30_c );
     const int weighted_average_celsius = units::to_millidegree_celsius( weighted_avg );
-    const double t = logarithmic_range( lower_limit,
-                                        upper_limit,
-                                        weighted_average_celsius );
-    return multiply_any_unit( 0_c, 1 - t ) + multiply_any_unit( 30_c, t );
+    const auto cold_factor = logarithmic_range( lower_limit,
+                             upper_limit,
+                             weighted_average_celsius );
+    return multiply_any_unit( 0_c, cold_factor ) + multiply_any_unit( 30_c, 1 - cold_factor );
 }
 
 void weather_generator::test_weather( unsigned seed = 1000 ) const

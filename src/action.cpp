@@ -54,7 +54,7 @@ static const std::string flag_GOES_UP( "GOES_UP" );
 static const std::string flag_SEALED( "SEALED" );
 static const std::string flag_SWIMMABLE( "SWIMMABLE" );
 
-static const trait_flag_str_id trait_flag_TAIL_FIN( "TAIL_FIN" );
+static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
 
 class inventory;
 
@@ -604,7 +604,7 @@ bool can_move_vertical_at( const tripoint &p, int movez )
             return !g->u.is_underwater() && !g->u.worn_with_flag( flag_FLOTATION );
         } else {
             return g->u.swim_speed() < 500 || ( g->u.is_wearing( itype_id( "swim_fins" ) ) ||
-                                                g->u.has_trait_flag( trait_flag_TAIL_FIN ) );
+                                                g->u.has_trait_flag( trait_flag_MUTATION_SWIM ) );
         }
     }
 
@@ -772,7 +772,7 @@ action_id handle_action_menu()
     std::map<action_id, int> action_weightings;
 
     // Check if we're in a potential combat situation, if so, sort a few actions to the top.
-    if( !g->u.get_hostile_creatures( 60 ).empty() ) {
+    if( !g->u.get_hostile_creatures( g_max_view_distance ).empty() ) {
         // Only prioritize movement options if we're not driving.
         if( !g->u.controlling_vehicle ) {
             action_weightings[ACTION_CYCLE_MOVE] = 400;

@@ -31,6 +31,7 @@
 #include "json.h"
 #include "line.h"
 #include "map.h"
+#include "submap_fields.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "mapgen.h"
@@ -40,6 +41,7 @@
 #include "options.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "point.h"
 #include "point_float.h"
 #include "regional_settings.h"
@@ -47,6 +49,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "text_snippets.h"
+#include "thread_pool.h"
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
@@ -508,12 +511,13 @@ static bool mx_helicopter( map &m, const tripoint &abs_sub )
 
 static bool mx_roadblock( map &m, const tripoint &abs_sub )
 {
+    auto &omb = get_overmapbuffer( m.get_bound_dimension() );
     // TODO: fix point types
     const tripoint_abs_omt abs_omt( sm_to_omt_copy( abs_sub ) );
-    const oter_id &north = overmap_buffer.ter( abs_omt + point_north );
-    const oter_id &south = overmap_buffer.ter( abs_omt + point_south );
-    const oter_id &west = overmap_buffer.ter( abs_omt + point_west );
-    const oter_id &east = overmap_buffer.ter( abs_omt + point_east );
+    const oter_id &north = omb.ter( abs_omt + point_north );
+    const oter_id &south = omb.ter( abs_omt + point_south );
+    const oter_id &west = omb.ter( abs_omt + point_west );
+    const oter_id &east = omb.ter( abs_omt + point_east );
 
     const bool road_at_north = is_ot_match( "road", north, ot_match_type::type );
     const bool road_at_south = is_ot_match( "road", south, ot_match_type::type );
@@ -691,11 +695,12 @@ static bool mx_marloss_pilgrimage( map &m, const tripoint &abs_sub )
 
 static bool mx_bandits_block( map &m, const tripoint &abs_sub )
 {
+    auto &omb = get_overmapbuffer( m.get_bound_dimension() );
     const tripoint_abs_omt abs_omt( sm_to_omt_copy( abs_sub ) );
-    const oter_id &north = overmap_buffer.ter( abs_omt + point_north );
-    const oter_id &south = overmap_buffer.ter( abs_omt + point_south );
-    const oter_id &west = overmap_buffer.ter( abs_omt + point_west );
-    const oter_id &east = overmap_buffer.ter( abs_omt + point_east );
+    const oter_id &north = omb.ter( abs_omt + point_north );
+    const oter_id &south = omb.ter( abs_omt + point_south );
+    const oter_id &west = omb.ter( abs_omt + point_west );
+    const oter_id &east = omb.ter( abs_omt + point_east );
 
     const bool forest_at_north = is_ot_match( "forest", north, ot_match_type::prefix );
     const bool forest_at_south = is_ot_match( "forest", south, ot_match_type::prefix );
@@ -823,20 +828,21 @@ static bool mx_portal( map &m, const tripoint &abs_sub )
     return true;
 }
 
-static bool mx_minefield( map &/*m_orig*/, const tripoint &abs_sub )
+static bool mx_minefield( map &m_orig, const tripoint &abs_sub )
 {
+    auto &omb = get_overmapbuffer( m_orig.get_bound_dimension() );
     const tripoint_abs_omt abs_omt( sm_to_omt_copy( abs_sub ) );
 
-    const oter_id &center = overmap_buffer.ter( abs_omt );
+    const oter_id &center = omb.ter( abs_omt );
     const bool bridgehead_at_center = center->get_type_id() == oter_type_bridgehead_ground;
     if( !bridgehead_at_center ) {
         return false;
     }
 
-    const oter_id &north = overmap_buffer.ter( abs_omt + point_north );
-    const oter_id &south = overmap_buffer.ter( abs_omt + point_south );
-    const oter_id &west = overmap_buffer.ter( abs_omt + point_west );
-    const oter_id &east = overmap_buffer.ter( abs_omt + point_east );
+    const oter_id &north = omb.ter( abs_omt + point_north );
+    const oter_id &south = omb.ter( abs_omt + point_south );
+    const oter_id &west = omb.ter( abs_omt + point_west );
+    const oter_id &east = omb.ter( abs_omt + point_east );
 
     const bool bridge_at_north = north->get_type_id() == oter_type_bridge_under;
     const bool bridge_at_south = south->get_type_id() == oter_type_bridge_under;
@@ -1901,7 +1907,7 @@ static void burned_ground_parser( map &m, const tripoint &loc )
         std::vector<detached_ptr<item>> products;
         for( auto it = stack.begin(); it != stack.end(); ) {
             if( ( *it )->flammable() ) {
-                m.create_burnproducts( products, **it, ( *it )->weight() );
+                create_burnproducts( products, **it, ( *it )->weight() );
                 it = stack.erase( it );
             } else {
                 it++;
@@ -1973,11 +1979,12 @@ static bool mx_roadworks( map &m, const tripoint &abs_sub )
     // equipment in a box
     // (curved roads & intersections excluded, perhaps TODO)
 
+    auto &omb = get_overmapbuffer( m.get_bound_dimension() );
     const tripoint_abs_omt abs_omt( sm_to_omt_copy( abs_sub ) );
-    const oter_id &north = overmap_buffer.ter( abs_omt + point_north );
-    const oter_id &south = overmap_buffer.ter( abs_omt + point_south );
-    const oter_id &west = overmap_buffer.ter( abs_omt + point_west );
-    const oter_id &east = overmap_buffer.ter( abs_omt + point_east );
+    const oter_id &north = omb.ter( abs_omt + point_north );
+    const oter_id &south = omb.ter( abs_omt + point_south );
+    const oter_id &west = omb.ter( abs_omt + point_west );
+    const oter_id &east = omb.ter( abs_omt + point_east );
 
     const bool road_at_north = is_ot_match( "road", north, ot_match_type::type );
     const bool road_at_south = is_ot_match( "road", south, ot_match_type::type );
@@ -2746,13 +2753,14 @@ void apply_function( const string_id<map_extra> &id, map &m, const tripoint &abs
         }
         case map_extra_method::mapgen: {
             mapgendata dat( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), m, 0.0f, calendar::turn,
-                            nullptr );
+                            nullptr, get_overmapbuffer( m.get_bound_dimension() ) );
             applied_successfully = run_mapgen_func( extra.generator_id, dat );
             break;
         }
         case map_extra_method::update_mapgen: {
             mapgendata dat( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), m, 0.0f,
-                            calendar::start_of_cataclysm, nullptr );
+                            calendar::start_of_cataclysm, nullptr,
+                            get_overmapbuffer( m.get_bound_dimension() ) );
             applied_successfully = run_mapgen_update_func( extra.generator_id, dat );
             break;
         }
@@ -2765,30 +2773,36 @@ void apply_function( const string_id<map_extra> &id, map &m, const tripoint &abs
         return;
     }
 
-    // TODO: fix point types
-    overmap_buffer.add_extra( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), id );
+    overmapbuffer &omap = get_overmapbuffer( m.get_bound_dimension() );
+    omap.add_extra( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), id );
 
-    auto_notes::auto_note_settings &autoNoteSettings = get_auto_notes_settings();
+    // Auto-notes touch the per-character auto_note_settings singleton (unordered_sets with no
+    // mutex) and call overmapbuffer::add_note (notes vector, now guarded by extras_mutex_).
+    // The set_discovered / has_auto_note_enabled calls are not thread-safe, so skip them on
+    // worker threads.  Background generation happens before the player ever sees the cell, so
+    // discovery will be recorded on the main thread when they first explore the area.
+    if( !is_pool_worker_thread() ) {
+        auto_notes::auto_note_settings &autoNoteSettings = get_auto_notes_settings();
 
-    // The player has discovered a map extra of this type.
-    autoNoteSettings.set_discovered( id );
+        // The player has discovered a map extra of this type.
+        autoNoteSettings.set_discovered( id );
 
-    if( get_option<bool>( "AUTO_NOTES" ) && get_option<bool>( "AUTO_NOTES_MAP_EXTRAS" ) ) {
+        if( get_option<bool>( "AUTO_NOTES" ) && get_option<bool>( "AUTO_NOTES_MAP_EXTRAS" ) ) {
 
-        // Only place note if the user has not disabled it via the auto note manager
-        if( autoNoteSettings.has_auto_note_enabled( id ) ) {
-            std::string sprite_prefix;
-            if( extra.looks_like && !extra.looks_like->empty() ) {
-                sprite_prefix = "SPRITE:" + *extra.looks_like + ";";
+            // Only place note if the user has not disabled it via the auto note manager
+            if( autoNoteSettings.has_auto_note_enabled( id ) ) {
+                std::string sprite_prefix;
+                if( extra.looks_like && !extra.looks_like->empty() ) {
+                    sprite_prefix = "SPRITE:" + *extra.looks_like + ";";
+                }
+                const std::string mx_note =
+                    sprite_prefix + string_format( "%s:%s;<color_yellow>%s</color>: <color_white>%s</color>",
+                                                   extra.get_symbol(),
+                                                   get_note_string_from_color( extra.color ),
+                                                   extra.name(),
+                                                   extra.description() );
+                omap.add_note( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), mx_note );
             }
-            const std::string mx_note =
-                sprite_prefix + string_format( "%s:%s;<color_yellow>%s</color>: <color_white>%s</color>",
-                                               extra.get_symbol(),
-                                               get_note_string_from_color( extra.color ),
-                                               extra.name(),
-                                               extra.description() );
-            // TODO: fix point types
-            overmap_buffer.add_note( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), mx_note );
         }
     }
 }

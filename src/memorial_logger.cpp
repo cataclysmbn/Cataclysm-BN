@@ -101,7 +101,7 @@ void memorial_logger::add( const std::string &male_msg,
         return;
     }
 
-    const oter_id &cur_ter = overmap_buffer.ter( g->u.global_omt_location() );
+    const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( g->u.global_omt_location() );
     const std::string &location = cur_ter->get_name();
 
     std::string log_message = "| " + to_string( calendar::turn ) + " | " + location + " | " + msg;
@@ -170,14 +170,14 @@ void memorial_logger::write( std::ostream &file, const std::string &epitaph ) co
 
     // TODO: fix point types
     const std::string locdesc =
-        overmap_buffer.get_description_at( tripoint_abs_sm( u.global_sm_location() ) );
+        ACTIVE_OVERMAP_BUFFER.get_description_at( tripoint_abs_sm( u.global_sm_location() ) );
     //~ First parameter is a pronoun ("He"/"She"), second parameter is a description
     //~ that designates the location relative to its surroundings.
     const std::string kill_place = string_format( _( "%1$s was killed in a %2$s." ),
                                    pronoun, locdesc );
 
     //Header
-    file << string_format( _( "Cataclysm - Dark Days Ahead version %s memorial file" ),
+    file << string_format( _( "Cataclysm: Bright Nights version %s memorial file" ),
                            getVersionString() ) << eol;
     file << eol;
     file << string_format( _( "In memory of: %s" ), u.name ) << eol;
@@ -308,7 +308,7 @@ void memorial_logger::write( std::ostream &file, const std::string &epitaph ) co
         file << indent << _( "No bionics were installed." ) << eol;
     }
     file << string_format(
-             _( "Bionic Power: <color_light_blue>%d</color>/<color_light_blue>%d</color>" ),
+             _( "Bionic Power: %d/%d" ),
              units::to_kilojoule( u.get_power_level() ), units::to_kilojoule( u.get_max_power_level() ) ) << eol;
     file << eol;
 

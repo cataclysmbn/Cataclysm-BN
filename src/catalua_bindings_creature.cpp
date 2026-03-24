@@ -20,6 +20,7 @@
 #include "field.h"
 #include "field_type.h"
 #include "flag.h"
+#include "make_static.h"
 #include "flag_trait.h"
 #include "game.h"
 #include "inventory.h"
@@ -275,6 +276,9 @@ void cata::detail::reg_creature( sol::state &lua )
         SET_FX_T( mod_all_parts_hp_cur, void( int ) );
         SET_FX_T( set_all_parts_hp_to_max, void() );
 
+        SET_FX_T( get_random_body_part, bodypart_id( bool ) const );
+        SET_FX_T( get_all_body_parts, std::vector<bodypart_id>( bool ) const );
+
         SET_FX_T( set_armor_bash_bonus, void( int ) );
         SET_FX_T( set_armor_cut_bonus, void( int ) );
         SET_FX_T( set_armor_bullet_bonus, void( int ) );
@@ -341,7 +345,7 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( swims, bool() const );
 
         SET_FX_T( move_target, tripoint() );
-        SET_FX_N_T( is_wandering, "is_wandering", bool() );
+        SET_FX_N_T( is_wandering, "is_wandering", bool() const );
 
         SET_FX_T( wander_to, void( const tripoint & p, int f ) );
         SET_FX_T( move_to, bool( const tripoint & p, bool force, bool step_on_critter,
@@ -600,6 +604,16 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( mutation_loss_effect, void( const trait_id & ) );
 
+        luna::set_fx( ut, "activate_mutation_id", []( UT_CLASS & utObj, trait_id & mut )
+        {
+            utObj.activate_mutation( mut );
+        } );
+
+        luna::set_fx( ut, "deactivate_mutation_id", []( UT_CLASS & utObj, trait_id & mut )
+        {
+            utObj.deactivate_mutation( mut );
+        } );
+
         SET_FX_T( has_active_mutation, bool( const trait_id & ) const );
 
         SET_FX_T( mutate, void() );
@@ -632,7 +646,37 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( get_bionics, std::vector<bionic_id>() const );
 
+        luna::set_fx( ut, "get_bionic", []( UT_CLASS & utObj, const bionic_id & bid ) -> bionic {
+            return utObj.get_bionic_state( bid );
+        } );
+
         SET_FX_T( has_bionic, bool( const bionic_id & b ) const );
+
+        luna::set_fx( ut, "activate_bionic", []( UT_CLASS & utObj, const bionic_id & bid, std::optional<bool> block_message ) -> bool {
+            if( utObj.has_bionic( bid ) )
+            {
+                bionic &bio = utObj.get_bionic_state( bid );
+                bio.powered = bio.info().has_flag( STATIC( flag_id( "BIONIC_TOGGLED" ) ) ) ||
+                bio.info().charge_time > 0;
+                if( bio.info().charge_time > 0 ) {
+                    bio.charge_timer = bio.info().charge_time;
+                }
+                if( !bio.id->enchantments.empty() ) {
+                    utObj.recalculate_enchantment_cache();
+                }
+                return utObj.activate_bionic( bio, block_message.value_or( true ) );
+            }
+            return false;
+        } );
+
+        luna::set_fx( ut, "deactivate_bionic", []( UT_CLASS & utObj, const bionic_id & bid, std::optional<bool> block_message ) -> bool {
+            if( utObj.has_bionic( bid ) )
+            {
+                bionic &bio = utObj.get_bionic_state( bid );
+                return utObj.deactivate_bionic( bio, block_message.value_or( true ) );
+            }
+            return false;
+        } );
 
         SET_FX_T( has_active_bionic, bool( const bionic_id & b ) const );
 
@@ -649,6 +693,47 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( add_bionic, void( const bionic_id & ) );
 
+        // Power saving / auto-start controls (by bionic_id)
+        luna::set_fx( ut, "toggle_safe_fuel_mod", []( UT_CLASS & ch, const bionic_id & bid )
+        {
+            if( ch.has_bionic( bid ) ) {
+                ch.get_bionic_state( bid ).toggle_safe_fuel_mod();
+            }
+        } );
+        luna::set_fx( ut, "toggle_auto_start_mod", []( UT_CLASS & ch, const bionic_id & bid )
+        {
+            if( ch.has_bionic( bid ) ) {
+                ch.get_bionic_state( bid ).toggle_auto_start_mod();
+            }
+        } );
+        luna::set_fx( ut, "set_auto_start_thresh", []( UT_CLASS & ch, const bionic_id & bid, float val )
+        {
+            if( ch.has_bionic( bid ) ) {
+                ch.get_bionic_state( bid ).set_auto_start_thresh( val );
+            }
+        } );
+        luna::set_fx( ut, "get_auto_start_thresh", []( UT_CLASS & ch, const bionic_id & bid ) -> float {
+            if( ch.has_bionic( bid ) )
+            {
+                return ch.get_bionic_state( bid ).get_auto_start_thresh();
+            }
+            return -1.0f;
+        } );
+        luna::set_fx( ut, "is_auto_start_on", []( UT_CLASS & ch, const bionic_id & bid ) -> bool {
+            if( ch.has_bionic( bid ) )
+            {
+                return ch.get_bionic_state( bid ).is_auto_start_on();
+            }
+            return false;
+        } );
+        luna::set_fx( ut, "is_auto_start_keep_full", []( UT_CLASS & ch, const bionic_id & bid ) -> bool {
+            if( ch.has_bionic( bid ) )
+            {
+                return ch.get_bionic_state( bid ).is_auto_start_keep_full();
+            }
+            return false;
+        } );
+
         SET_FX_T( get_power_level, units::energy() const );
         SET_FX_T( get_max_power_level, units::energy() const );
         SET_FX_T( mod_power_level, void( const units::energy & ) );
@@ -658,6 +743,7 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( is_max_power, bool() const );
         SET_FX_T( has_power, bool() const );
         SET_FX_T( has_max_power, bool() const );
+        SET_FX_T( enough_power_for, bool( const bionic_id & ) const );
 
         SET_FX_T( is_worn, bool( const item & ) const );
 

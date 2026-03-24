@@ -18,6 +18,8 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <ranges>
+#include <span>
 #include <set>
 #include <sstream>
 #include <stack>
@@ -34,6 +36,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_cartesian_product.h"
 #include "cata_io.h"
 #include "cata_variant.h"
 #include "cata_utility.h"
@@ -64,6 +67,7 @@
 #include "int_id.h"
 #include "inventory.h"
 #include "item.h"
+#include "world_type.h"
 #include "item_contents.h"
 #include "item_factory.h"
 #include "itype.h"
@@ -80,6 +84,7 @@
 #include "morale.h"
 #include "morale_types.h"
 #include "mtype.h"
+#include "mutation.h"
 #include "npc.h"
 #include "npc_class.h"
 #include "options.h"
@@ -103,6 +108,7 @@
 #include "submap.h"
 #include "text_snippets.h"
 #include "tileray.h"
+#include "trait_group.h"
 #include "units.h"
 #include "uistate.h"
 #include "value_ptr.h"
@@ -112,8 +118,6 @@
 #include "vitamin.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
-
-struct mutation_branch;
 
 static const efftype_id effect_riding( "riding" );
 
@@ -573,27 +577,120 @@ void Character::load( const JsonObject &data )
     data.read( "magic", magic );
     JsonArray parray;
 
+    // Migration for old combined hair mutations (e.g., hair_black_crewcut -> hair_black + hair_crewcut)
+    std::vector<trait_id> valid_hair_colors = get_mutations_in_type( "hair_color" );
+    std::vector<trait_id> valid_hair_styles = get_mutations_in_type( "hair_style" );
+
     data.read( "traits", my_traits );
     for( auto it = my_traits.begin(); it != my_traits.end(); ) {
         const auto &tid = *it;
         if( tid.is_valid() ) {
             ++it;
         } else {
-            debugmsg( "character %s has invalid trait %s, it will be ignored", name, tid.c_str() );
+            bool silence = false;
+            auto pid = it->str();
+            if( pid.starts_with( "hair_" ) ) {
+                int cnt = 0;
+                for( auto c : pid.substr( 5 ) ) {
+                    if( c == '_' ) { cnt++; }
+                }
+                silence = cnt >= 1;
+            }
+            if( !silence ) {
+                debugmsg( "character %s has invalid trait %s, it will be ignored", name, pid );
+            }
             my_traits.erase( it++ );
         }
     }
 
     data.read( "mutations", my_mutations );
+    std::vector<trait_id> migrations_to_add;
+    bool has_hair_bald = false;
+    bool has_hair_color = false;
     for( auto it = my_mutations.begin(); it != my_mutations.end(); ) {
-        const trait_id &mid = it->first;
+        const auto &mid = it->first;
+        auto pid = mid.str();
         if( mid.is_valid() ) {
-            on_mutation_gain( mid );
-            cached_mutations.push_back( &mid.obj() );
+            if( mid.str() == "HAIR_BALD" ) {
+                has_hair_bald = true;
+            }
+            for( const trait_id &color_trait : valid_hair_colors ) {
+                if( mid == color_trait ) {
+                    has_hair_color = true;
+                    break;
+                }
+            }
             ++it;
         } else {
-            debugmsg( "character %s has invalid mutation %s, it will be ignored", name, mid.c_str() );
+            std::string mid_str = mid.str();
+            bool migrated = false;
+
+            if( mid_str.starts_with( "hair_" ) ) {
+                for( const trait_id &color_trait : valid_hair_colors ) {
+                    std::string color_str = color_trait.str();
+                    if( !color_str.starts_with( "hair_" ) ) {
+                        color_str = "hair_" + color_str;
+                    }
+                    std::string prefix = color_str + "_";
+                    if( mid_str.starts_with( prefix ) ) {
+                        std::string style_suffix = mid_str.substr( prefix.length() );
+                        for( const trait_id &style_trait : valid_hair_styles ) {
+                            std::string style_str = style_trait.str();
+                            if( style_str.starts_with( "hair_" ) ) {
+                                style_str = style_str.substr( 5 );
+                            }
+                            if( style_suffix == style_str ) {
+                                migrations_to_add.push_back( color_trait );
+                                migrations_to_add.push_back( style_trait );
+                                has_hair_color = true;
+                                migrated = true;
+                                break;
+                            }
+                        }
+                        if( migrated ) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if( !migrated ) {
+                debugmsg( "character %s has invalid mutation %s, it will be ignored", name, mid.c_str() );
+            }
             it = my_mutations.erase( it );
+        }
+    }
+
+    // Iterate twice to avoid issues with subsequent calls on invalid mutations
+    for( auto it = my_mutations.begin(); it != my_mutations.end(); ) {
+        const auto &mid = it->first;
+        on_mutation_gain( mid );
+        cached_mutations.push_back( &mid.obj() );
+        it++;
+    }
+
+    for( const trait_id &tid : migrations_to_add ) {
+        if( !has_trait( tid ) ) {
+            if( !has_base_trait( tid ) ) {
+                toggle_trait( tid );
+            } else {
+                set_mutation( tid );
+            }
+        }
+    }
+    // Handle old HAIR_BALD saves: if character has HAIR_BALD but no hair color,
+    // add a random hair color (in the new system, even bald characters have a hair color)
+    if( has_hair_bald && !has_hair_color ) {
+        trait_group::Trait_list random_colors = trait_group::traits_from(
+                trait_group::Trait_group_tag( "Hair_Color_Any" ) );
+        if( !random_colors.empty() ) {
+            const trait_id &color_tid = random_colors.front();
+            if( !has_trait( color_tid ) ) {
+                set_mutation( color_tid );
+            }
+            if( !has_base_trait( color_tid ) ) {
+                toggle_trait( color_tid );
+            }
         }
     }
     recalculate_size();
@@ -966,8 +1063,8 @@ void player::load( const JsonObject &data )
     data.read( "last_target_pos", last_target_pos );
     data.read( "ammo_location", ammo_location );
     if( tmptartyp == +1 ) {
-        // Use overmap_buffer because game::active_npc is not filled yet.
-        last_target = overmap_buffer.find_npc( character_id( tmptar ) );
+        // Use ACTIVE_OVERMAP_BUFFER because game::active_npc is not filled yet.
+        last_target = ACTIVE_OVERMAP_BUFFER.find_npc( character_id( tmptar ) );
     } else if( tmptartyp == -1 ) {
         // Need to do this *after* the monsters have been loaded!
         last_target = g->critter_tracker->from_temporary_id( tmptar );
@@ -1683,6 +1780,7 @@ void npc::load( const JsonObject &data )
     if( !data.read( "last_updated", last_updated ) ) {
         last_updated = calendar::turn;
     }
+    data.read( "dimension_id", dimension_id_ );
     complaints.clear();
     data.read( "complaints", complaints );
 }
@@ -1759,6 +1857,9 @@ void npc::store( JsonOut &json ) const
     json.member( "restock", restock );
 
     json.member( "last_updated", last_updated );
+    if( !dimension_id_.empty() ) {
+        json.member( "dimension_id", dimension_id_ );
+    }
     json.member( "complaints", complaints );
 }
 
@@ -1992,6 +2093,8 @@ void monster::load( const JsonObject &data )
     if( !data.read( "last_updated", last_updated ) ) {
         last_updated = calendar::turn;
     }
+    data.read( "pos_abs", pos_abs );
+    data.read( "dimension_id", dimension_id_ );
     data.read( "mounted_player_id", mounted_player_id );
     data.read( "path", path );
 }
@@ -2064,6 +2167,10 @@ void monster::store( JsonOut &json ) const
     json.member( "upgrades", upgrades );
     json.member( "upgrade_time", upgrade_time );
     json.member( "last_updated", last_updated );
+    json.member( "pos_abs", pos_abs );
+    if( !dimension_id_.empty() ) {
+        json.member( "dimension_id", dimension_id_ );
+    }
     json.member( "reproduces", reproduces );
     json.member( "baby_timer", baby_timer );
     json.member( "udder_timer", udder_timer );
@@ -2141,6 +2248,82 @@ void item::craft_data::deserialize( const JsonObject &obj )
     next_failure_point = obj.get_int( "next_failure_point", -1 );
     tools_to_continue = obj.get_bool( "tools_to_continue", false );
     obj.read( "cached_tool_selections", cached_tool_selections );
+}
+
+void item::pocket_dimension_data::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+    jsout.member( "dimension_id", dimension_id );
+    jsout.member( "world_type", world_type );
+    jsout.member( "entry_point", entry_point );
+    jsout.member( "bounds_min", bounds_min );
+    jsout.member( "bounds_max", bounds_max );
+    jsout.member( "is_initialized", is_initialized );
+    jsout.member( "terrain_generated", terrain_generated );
+    jsout.member( "return_dimension_id", return_dimension_id );
+    jsout.member( "return_world_type", return_world_type );
+    jsout.member( "return_point", return_point );
+    jsout.end_object();
+}
+
+void item::pocket_dimension_data::deserialize( JsonIn &jsin )
+{
+    JsonObject obj = jsin.get_object();
+    obj.allow_omitted_members();
+
+    // New format: dimension_id is the primary key.
+    // Legacy compat: reconstruct dimension_id from dimension_type + instance_id.
+    if( obj.has_member( "dimension_id" ) ) {
+        obj.read( "dimension_id", dimension_id );
+        obj.read( "world_type", world_type );
+        obj.read( "return_dimension_id", return_dimension_id );
+        obj.read( "return_world_type", return_world_type );
+    } else {
+        // Old format: reconstruct dimension_id and return_dimension_id
+        world_type_id old_dim_type;
+        std::string old_instance_id;
+        obj.read( "dimension_type", old_dim_type );
+        obj.read( "instance_id", old_instance_id );
+        world_type = old_dim_type;
+        if( old_dim_type.is_valid() && !old_instance_id.empty() ) {
+            dimension_id = old_dim_type.obj().save_prefix + old_instance_id + "_";
+        }
+        // Old return fields
+        world_type_id old_return_dim;
+        std::string old_return_instance;
+        obj.read( "return_dimension", old_return_dim );
+        obj.read( "return_instance_id", old_return_instance );
+        return_world_type = old_return_dim;
+        if( old_return_dim.is_valid() ) {
+            return_dimension_id = old_return_dim.obj().save_prefix + old_return_instance + "_";
+        }
+        // Trim trailing "_" for the return if instance was empty (overworld return)
+        if( return_dimension_id.ends_with( "_" ) && old_return_instance.empty() ) {
+            return_dimension_id = old_return_dim.obj().save_prefix;
+        }
+    }
+
+    obj.read( "entry_point", entry_point );
+    obj.read( "bounds_min", bounds_min );
+    obj.read( "bounds_max", bounds_max );
+    is_initialized = obj.get_bool( "is_initialized", false );
+    terrain_generated = obj.get_bool( "terrain_generated", false );
+    obj.read( "return_point", return_point );
+}
+
+// Full equivalence. Consider only checking identifying data.
+bool item::pocket_dimension_data::operator==( const pocket_dimension_data &rhs ) const
+{
+    return dimension_id == rhs.dimension_id &&
+           world_type == rhs.world_type &&
+           entry_point == rhs.entry_point &&
+           bounds_min == rhs.bounds_min &&
+           bounds_max == rhs.bounds_max &&
+           is_initialized == rhs.is_initialized &&
+           terrain_generated == rhs.terrain_generated &&
+           return_dimension_id == rhs.return_dimension_id &&
+           return_world_type == rhs.return_world_type &&
+           return_point == rhs.return_point;
 }
 
 // Template parameter because item::craft_data is private and I don't want to make it public.
@@ -2390,6 +2573,8 @@ void item::io( Archive &archive )
 
     static const cata::value_ptr<relic> null_relic_ptr = nullptr;
     archive.io( "relic_data", relic_data, null_relic_ptr );
+
+    archive.io( "pocket_dim", pocket_dim, std::optional<pocket_dimension_data>() );
 
     archive.io( "drop_token", drop_token, decltype( drop_token )() );
 
@@ -2796,12 +2981,24 @@ void vehicle::deserialize( JsonIn &jsin )
     int turn_dir_int;
     data.read( "turn_dir", turn_dir_int );
     turn_dir = units::from_degrees( turn_dir_int );
-    data.read( "velocity", velocity );
+    int loaded_velocity = 0;
+    int loaded_cruise_velocity = 0;
+    int loaded_vertical_velocity = 0;
+    data.read( "velocity", loaded_velocity );
     data.read( "falling", is_falling );
     data.read( "floating", is_floating );
     data.read( "flying", is_flying );
-    data.read( "cruise_velocity", cruise_velocity );
-    data.read( "vertical_velocity", vertical_velocity );
+    data.read( "cruise_velocity", loaded_cruise_velocity );
+    data.read( "vertical_velocity", loaded_vertical_velocity );
+    if( savegame_loading_version < 29 ) {
+        velocity = std::lround( static_cast<double>( loaded_velocity ) * 0.44704 );
+        cruise_velocity = std::lround( static_cast<double>( loaded_cruise_velocity ) * 0.44704 );
+        vertical_velocity = std::lround( static_cast<double>( loaded_vertical_velocity ) * 0.44704 );
+    } else {
+        velocity = loaded_velocity;
+        cruise_velocity = loaded_cruise_velocity;
+        vertical_velocity = loaded_vertical_velocity;
+    }
     data.read( "cruise_on", cruise_on );
     data.read( "engine_on", engine_on );
     data.read( "tracking_on", tracking_on );
@@ -2834,6 +3031,7 @@ void vehicle::deserialize( JsonIn &jsin )
         old_owner = faction_id( temp_old_id );
     }
     data.read( "theft_time", theft_time );
+    data.read( "dimension_id", dimension_id_ );
 
     data.read( "parts", parts );
 
@@ -3020,6 +3218,9 @@ void vehicle::serialize( JsonOut &json ) const
     json.member( "is_alarm_on", is_alarm_on );
     json.member( "camera_on", camera_on );
     json.member( "last_update_turn", last_update );
+    if( !dimension_id_.empty() ) {
+        json.member( "dimension_id", dimension_id_ );
+    }
     json.member( "pivot", pivot_anchor[0] );
     json.member( "is_following", is_following );
     json.member( "is_patrolling", is_patrolling );
@@ -3892,6 +4093,35 @@ void submap::store( JsonOut &jsout ) const
     jsout.write( count );
     jsout.end_array();
 
+    // Serialize scent values using RLE (value, count pairs).
+    // Omitted entirely when all tiles are zero to keep typical saves compact.
+    if( std::ranges::any_of( &scent_values[0][0], &scent_values[0][0] + SEEX * SEEY,
+    []( int v ) { return v != 0; } ) ) {
+        jsout.member( "scent_values" );
+        jsout.start_array();
+        int last_scent = -1;
+        int scent_count = 0;
+        std::ranges::for_each(
+            cata::views::cartesian_product( std::views::iota( 0, SEEY ),
+                                            std::views::iota( 0, SEEX ) ),
+        [&]( auto ji ) {
+            auto [j, i] = ji;
+            auto v = scent_values[i][j];
+            if( v == last_scent ) {
+                scent_count++;
+            } else {
+                if( scent_count ) {
+                    jsout.write( scent_count );
+                }
+                jsout.write( v );
+                last_scent = v;
+                scent_count = 1;
+            }
+        } );
+        jsout.write( scent_count );
+        jsout.end_array();
+    }
+
     jsout.member( "furniture" );
     jsout.start_array();
     for( int j = 0; j < SEEY; j++ ) {
@@ -4039,6 +4269,14 @@ void submap::store( JsonOut &jsout ) const
         pr.second.serialize( jsout );
     }
     jsout.end_array();
+
+    jsout.member( "transformer_last_run" );
+    jsout.start_array();
+    for( const auto &pr : transformer_last_run ) {
+        jsout.write( pr.first );
+        jsout.write( pr.second );
+    }
+    jsout.end_array();
 }
 
 void submap::load( JsonIn &jsin, const std::string &member_name, int version,
@@ -4046,6 +4284,8 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
 {
     if( member_name == "turn_last_touched" ) {
         last_touched = calendar::turn_zero + time_duration::from_turns( jsin.get_int() );
+        // Guard against corrupted saves: last_touched must not be in the future.
+        last_touched = std::min( last_touched, calendar::turn );
     } else if( member_name == "temperature" ) {
         temperature = jsin.get_int();
     } else if( member_name == "terrain" ) {
@@ -4089,6 +4329,17 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                     set_radiation( { 0 % SEEX, rad_cell / SEEX }, rad_strength );
                     rad_cell++;
                 }
+            }
+        }
+    } else if( member_name == "scent_values" ) {
+        // Load RLE-encoded scent values (value, count pairs).
+        int scent_cell = 0;
+        jsin.start_array();
+        while( !jsin.end_array() ) {
+            const int val = jsin.get_int();
+            const int num = jsin.get_int();
+            for( int i = 0; i < num && scent_cell < SEEX * SEEY; ++i, ++scent_cell ) {
+                scent_values[scent_cell % SEEX][scent_cell / SEEX] = val;
             }
         }
     } else if( member_name == "furniture" ) {
@@ -4281,6 +4532,15 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             point_sm_ms p;
             jsin.read( p );
             active_furniture[p].deserialize( jsin );
+        }
+    } else if( member_name == "transformer_last_run" ) {
+        jsin.start_array();
+        while( !jsin.end_array() ) {
+            point_sm_ms p;
+            time_point t;
+            jsin.read( p );
+            jsin.read( t );
+            transformer_last_run[p] = t;
         }
     } else {
         jsin.skip_value();

@@ -83,14 +83,14 @@ auto choose_floor( const tripoint &examp, const tripoint_abs_omt &this_omt,
     choice.title = _( "Please select destination floor" );
     for( int z = OVERMAP_HEIGHT; z >= -OVERMAP_DEPTH; z-- ) {
         const tripoint_abs_omt that_omt{ this_omt.xy(), z };
-        const int turns = get_rot_turns( this_omt, that_omt );
+        const int turns = get_rot_turns( this_omt, that_omt, ACTIVE_OVERMAP_BUFFER );
         const tripoint zp =
             rotate_point_sm( { examp.xy(), z }, sm_orig, turns );
 
         if( !find_elevators_nearby( zp ) ) {
             continue;
         }
-        const std::string omt_name = overmap_buffer.ter_existing( that_omt )->get_name();
+        const std::string omt_name = ACTIVE_OVERMAP_BUFFER.ter_existing( that_omt )->get_name();
         const auto floor_name = z == examp.z ? this_floor : "";
         const std::string name = string_format( "%3iF %s%s", z, omt_name, floor_name );
 
@@ -248,7 +248,8 @@ void iexamine::elevator( player &p, const tripoint &examp )
     }
 
     const tripoint_abs_omt that_omt{ this_omt.xy(), movez };
-    const int turns = get_rot_turns( this_omt, that_omt );
+    auto &omb = get_overmapbuffer( here.get_bound_dimension() );
+    const int turns = get_rot_turns( this_omt, that_omt, omb );
 
     const auto elevator_dest = elevator::dest( elevator_here, sm_orig, turns, movez );
     const auto vehicles_dest = elevator::vehicles_on( elevator_dest );
