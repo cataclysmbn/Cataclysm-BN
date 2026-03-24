@@ -3304,23 +3304,23 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                             critter.get_speed_base() * rng_float( 1.1, 2.0 ) );
                         critter.set_hp( critter.get_hp() * rng_float( 1.1, 2.0 ) );
                     } else if( npc *const person = g->critter_at<npc>( dest ) ) {
-                        /** @EFFECT_STR_MAX increases possible granade str buff for NPCs */
+                        /** @EFFECT_STR_MAX increases possible str buff for NPCs */
                         buff_stat( person->str_max, rng( 0, person->str_max / 2 ) );
-                        /** @EFFECT_DEX_MAX increases possible granade dex buff for NPCs */
+                        /** @EFFECT_DEX_MAX increases possible dex buff for NPCs */
                         buff_stat( person->dex_max, rng( 0, person->dex_max / 2 ) );
-                        /** @EFFECT_INT_MAX increases possible granade int buff for NPCs */
+                        /** @EFFECT_INT_MAX increases possible int buff for NPCs */
                         buff_stat( person->int_max, rng( 0, person->int_max / 2 ) );
-                        /** @EFFECT_PER_MAX increases possible granade per buff for NPCs */
+                        /** @EFFECT_PER_MAX increases possible per buff for NPCs */
                         buff_stat( person->per_max, rng( 0, person->per_max / 2 ) );
                         apply_debug_grenade_skill_modifier( *person, debug_grenade_skill_modifier_type::buff );
                     } else if( g->u.pos() == dest ) {
-                        /** @EFFECT_STR_MAX increases possible granade str buff */
+                        /** @EFFECT_STR_MAX increases possible str buff */
                         buff_stat( g->u.str_max, rng( 0, g->u.str_max / 2 ) );
-                        /** @EFFECT_DEX_MAX increases possible granade dex buff */
+                        /** @EFFECT_DEX_MAX increases possible dex buff */
                         buff_stat( g->u.dex_max, rng( 0, g->u.dex_max / 2 ) );
-                        /** @EFFECT_INT_MAX increases possible granade int buff */
+                        /** @EFFECT_INT_MAX increases possible int buff */
                         buff_stat( g->u.int_max, rng( 0, g->u.int_max / 2 ) );
-                        /** @EFFECT_PER_MAX increases possible granade per buff */
+                        /** @EFFECT_PER_MAX increases possible per buff */
                         buff_stat( g->u.per_max, rng( 0, g->u.per_max / 2 ) );
                         g->u.recalc_hp();
                         for( const bodypart_id &bp : g->u.get_all_body_parts() ) {
@@ -3346,23 +3346,23 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                             rng( 0, critter.get_speed_base() ) );
                         critter.set_hp( rng( 1, critter.get_hp() ) );
                     } else if( npc *const person = g->critter_at<npc>( dest ) ) {
-                        /** @EFFECT_STR_MAX increases possible granade str debuff for NPCs (NEGATIVE) */
+                        /** @EFFECT_STR_MAX increases possible str debuff for NPCs (NEGATIVE) */
                         person->str_max -= rng( 0, person->str_max / 2 );
-                        /** @EFFECT_DEX_MAX increases possible granade dex debuff for NPCs (NEGATIVE) */
+                        /** @EFFECT_DEX_MAX increases possible dex debuff for NPCs (NEGATIVE) */
                         person->dex_max -= rng( 0, person->dex_max / 2 );
-                        /** @EFFECT_INT_MAX increases possible granade int debuff for NPCs (NEGATIVE) */
+                        /** @EFFECT_INT_MAX increases possible int debuff for NPCs (NEGATIVE) */
                         person->int_max -= rng( 0, person->int_max / 2 );
-                        /** @EFFECT_PER_MAX increases possible granade per debuff for NPCs (NEGATIVE) */
+                        /** @EFFECT_PER_MAX increases possible per debuff for NPCs (NEGATIVE) */
                         person->per_max -= rng( 0, person->per_max / 2 );
                         apply_debug_grenade_skill_modifier( *person, debug_grenade_skill_modifier_type::nerf );
                     } else if( g->u.pos() == dest ) {
-                        /** @EFFECT_STR_MAX increases possible granade str debuff (NEGATIVE) */
+                        /** @EFFECT_STR_MAX increases possible str debuff (NEGATIVE) */
                         g->u.str_max -= rng( 0, g->u.str_max / 2 );
-                        /** @EFFECT_DEX_MAX increases possible granade dex debuff (NEGATIVE) */
+                        /** @EFFECT_DEX_MAX increases possible dex debuff (NEGATIVE) */
                         g->u.dex_max -= rng( 0, g->u.dex_max / 2 );
-                        /** @EFFECT_INT_MAX increases possible granade int debuff (NEGATIVE) */
+                        /** @EFFECT_INT_MAX increases possible int debuff (NEGATIVE) */
                         g->u.int_max -= rng( 0, g->u.int_max / 2 );
-                        /** @EFFECT_PER_MAX increases possible granade per debuff (NEGATIVE) */
+                        /** @EFFECT_PER_MAX increases possible per debuff (NEGATIVE) */
                         g->u.per_max -= rng( 0, g->u.per_max / 2 );
                         g->u.recalc_hp();
                         for( const bodypart_id &bp : g->u.get_all_body_parts() ) {
