@@ -18,6 +18,7 @@
 #include "color.h"
 #include "construction_partial.h"
 #include "crafting.h"
+#include "crafting_quality.h"
 #include "distraction_manager.h"
 #include "flag.h"
 #include "game.h"
