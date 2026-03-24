@@ -2954,8 +2954,6 @@ void target_ui::update_target_list()
         return;
     }
 
-    // Get targets in range and sort them by distance (targets[0] is the closest)
-
     if( mode == TargetMode::TurretManual ) {
         targets = ranged::targetable_creatures( *you, range, *turret );
     } else {
@@ -2965,11 +2963,12 @@ void target_ui::update_target_list()
     map &here = get_map();
     const auto player_pos = you->pos();
 
-    std::ranges::sort( targets, {}, [&]( const Creature * c ) -> std::tuple<bool, bool, int> {
+    std::ranges::sort( targets, {}, [&]( const Creature * c ) -> std::tuple<bool, bool, bool, int> {
         const auto target_pos = c->pos();
-        const bool same_z = player_pos.z == target_pos.z;
-        const bool has_los = here.sees( player_pos, target_pos, range );
-        return { !has_los, !same_z, rl_dist_exact( target_pos, player_pos ) };
+        const auto z_diff = std::abs( player_pos.z - target_pos.z );
+        const auto is_hostile = c->attitude_to( *you ) == Attitude::A_HOSTILE;
+        const auto has_los = here.sees( player_pos, target_pos, range );
+        return { !has_los, !is_hostile, z_diff, rl_dist_exact( target_pos, player_pos ) };
     } );
 }
 
@@ -4230,7 +4229,14 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
 
     // Minimum improvement is 5MoA.  This mostly puts a cap on how long aiming for sniping takes.
     aim_speed = std::max( aim_speed, 5.0 );
+    // Apply enchantment bonus to aim speed
 
+    double ench_aim_bonus = who.bonus_from_enchantments( aim_speed,
+                            enchant_vals::mod::RANGED_AIM_SPEED );
+
+    // To prevent a bug where aiming does not proceed at all because the aiming speed drops below the game's minimum limit (5.0) due to debuffs (such as Cursed Artifacts),
+    // so applying the max value once more.
+    aim_speed = std::max( 5.0, aim_speed + ench_aim_bonus );
     // Never improve by more than the currently used sights permit.
     return std::min( aim_speed, recoil - limit );
 }

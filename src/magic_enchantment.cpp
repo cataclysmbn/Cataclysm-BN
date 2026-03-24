@@ -137,6 +137,7 @@ namespace io
             case enchant_vals::mod::RANGED_RANGE: return "RANGED_RANGE";
             case enchant_vals::mod::RANGED_RECOIL: return "RANGED_RECOIL";
             case enchant_vals::mod::RANGED_RELOAD_TIME: return "RANGED_RELOAD_TIME";
+            case enchant_vals::mod::RANGED_AIM_SPEED: return "RANGED_AIM_SPEED";
             case enchant_vals::mod::NUM_MOD: break;
         }
         debugmsg( "Invalid enchant_vals::mod" );

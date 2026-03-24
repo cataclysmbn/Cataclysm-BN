@@ -650,14 +650,13 @@ TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )
     clear_avatar();
     GIVEN( "player is near an oven on an electric grid with a battery on it" ) {
         // TODO: clear_grids()
-        auto om = overmap_buffer.get_om_global( u.global_omt_location() );
+        auto om = ACTIVE_OVERMAP_BUFFER.get_om_global( u.global_omt_location() );
         om.om->set_electric_grid_connections( om.local, {} );
 
         m.furn_set( start_pos + point( 10, 0 ), furn_str_id( "f_battery" ) );
         m.furn_set( start_pos + point_east, furn_str_id( "f_oven" ) );
 
-        distribution_grid_tracker grid_tracker;
-        grid_tracker.load( m );
+        distribution_grid_tracker &grid_tracker = get_distribution_grid_tracker();
         distribution_grid &grid = grid_tracker.grid_at( start_pos_abs + point( 10, 0 ) );
         REQUIRE( !grid.empty() );
         // We need the grid to be the same for both the oven and the battery

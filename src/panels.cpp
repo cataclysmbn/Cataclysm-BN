@@ -409,9 +409,12 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
                                      const tripoint_abs_omt &global_omt, point start_input,
                                      const int width, const int height )
 {
+    auto &player_character = get_avatar();
     const point_abs_omt curs = global_omt.xy();
-    const tripoint_abs_omt targ = you.get_active_mission_target();
-    bool drew_mission = targ == overmap::invalid_tripoint;
+    const auto custom_targ = player_character.get_custom_mission_target();
+    const auto mission_targ = you.get_active_mission_target();
+    const auto targ = custom_targ != overmap::invalid_tripoint ? custom_targ : mission_targ;
+    auto drew_mission = targ == overmap::invalid_tripoint;
     const int start_y = start_input.y + ( height / 2 ) - 2;
     const int start_x = start_input.x + ( width / 2 ) - 2;
 
@@ -420,11 +423,11 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
             const tripoint_abs_omt omp( curs + point( i, j ), g->get_levz() );
             nc_color ter_color;
             std::string ter_sym;
-            const bool seen = overmap_buffer.seen( omp );
-            const bool vehicle_here = overmap_buffer.has_vehicle( omp );
-            if( overmap_buffer.has_note( omp ) ) {
+            const bool seen = ACTIVE_OVERMAP_BUFFER.seen( omp );
+            const bool vehicle_here = ACTIVE_OVERMAP_BUFFER.has_vehicle( omp );
+            if( ACTIVE_OVERMAP_BUFFER.has_note( omp ) ) {
 
-                const std::string &note_text = overmap_buffer.note( omp );
+                const std::string &note_text = ACTIVE_OVERMAP_BUFFER.note( omp );
 
                 const auto note_info = overmap_ui::get_note_display_info( note_text );
                 ter_color = std::get<1>( note_info );
@@ -436,9 +439,9 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
                 ter_color = c_cyan;
                 ter_sym = "c";
             } else {
-                const oter_id &cur_ter = overmap_buffer.ter( omp );
+                const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( omp );
                 ter_sym = cur_ter->get_symbol();
-                if( overmap_buffer.is_explored( omp ) ) {
+                if( ACTIVE_OVERMAP_BUFFER.is_explored( omp ) ) {
                     ter_color = c_dark_gray;
                 } else {
                     ter_color = cur_ter->get_color();
@@ -492,7 +495,6 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
             mvwputch( w_minimap, point( arrowx + start_x, arrowy + start_y ), c_red, glyph );
         }
     }
-    avatar &player_character = get_avatar();
     const int sight_points = player_character.overmap_sight_range( g->light_level(
                                  player_character.posz() ) );
     for( int i = -3; i <= 3; i++ ) {
@@ -501,9 +503,9 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
                 continue; // only do hordes on the border, skip inner map
             }
             const tripoint_abs_omt omp( curs + point( i, j ), g->get_levz() );
-            int horde_size = overmap_buffer.get_horde_size( omp );
+            int horde_size = ACTIVE_OVERMAP_BUFFER.get_horde_size( omp );
             if( horde_size >= HORDE_VISIBILITY_SIZE ) {
-                if( overmap_buffer.seen( omp )
+                if( ACTIVE_OVERMAP_BUFFER.seen( omp )
                     && player_character.overmap_los( omp, sight_points ) ) {
                     mvwputch( w_minimap, point( i + 3, j + 3 ), c_green,
                               horde_size > HORDE_VISIBILITY_SIZE * 2 ? 'Z' : 'z' );
@@ -1521,7 +1523,7 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
 {
     werase( w );
     // display location
-    const oter_id &cur_ter = overmap_buffer.ter( u.global_omt_location() );
+    const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
     tripoint_abs_omt coord = u.global_omt_location();
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Place: " ) );
@@ -1736,7 +1738,7 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
     // style
     mvwprintz( w, point( 8, 1 ), c_light_gray, "%s", u.martial_arts_data->selected_style_name( u ) );
     // location
-    mvwprintz( w, point( 8, 2 ), c_white, utf8_truncate( overmap_buffer.ter(
+    mvwprintz( w, point( 8, 2 ), c_white, utf8_truncate( ACTIVE_OVERMAP_BUFFER.ter(
                    u.global_omt_location() )->get_name(), getmaxx( w ) - 8 ) );
     // weather
     const weather_manager &weather = get_weather();
@@ -1751,7 +1753,7 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
                 character_funcs::fine_detail_vision_mod( get_avatar() ) );
     mvwprintz( w, point( 8, 4 ), ll.second, ll.first );
     // wind
-    const oter_id &cur_om_ter = overmap_buffer.ter( u.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
                                             u.pos(), weather.winddirection, g->is_sheltered( u.pos() ) );
     mvwprintz( w, point( 8, 5 ), get_wind_color( windpower ),
@@ -1772,7 +1774,7 @@ static void render_wind( avatar &u, const catacurses::window &w, const std::stri
     mvwprintz( w, point_zero, c_light_gray,
                //~ translation should not exceed 5 console cells
                string_format( formatstr, left_justify( _( "Wind" ), 5 ) ) );
-    const oter_id &cur_om_ter = overmap_buffer.ter( u.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
     const weather_manager &weather = get_weather();
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
                                             u.pos(), weather.winddirection, g->is_sheltered( u.pos() ) );
@@ -2236,7 +2238,7 @@ static void draw_location_classic( const avatar &u, const catacurses::window &w 
     werase( w );
 
     mvwprintz( w, point_zero, c_light_gray, _( "Location:" ) );
-    mvwprintz( w, point( 10, 0 ), c_white, utf8_truncate( overmap_buffer.ter(
+    mvwprintz( w, point( 10, 0 ), c_white, utf8_truncate( ACTIVE_OVERMAP_BUFFER.ter(
                    u.global_omt_location() )->get_name(), getmaxx( w ) - 13 ) );
 
     wnoutrefresh( w );

@@ -261,7 +261,8 @@ float crafting_speed_multiplier( const Character &who, const recipe &rec, bool )
 }
 
 float crafting_speed_multiplier( const Character &who, const item &craft,
-                                 const bench_location &bench )
+                                 const bench_location &bench,
+                                 const std::optional<float> tools_multi_override )
 {
     if( !craft.is_craft() ) {
         debugmsg( "Can't calculate crafting speed multiplier of non-craft '%s'", craft.tname() );
@@ -273,7 +274,9 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     const float light_multi = lighting_crafting_speed_multiplier( who, rec );
     const float bench_multi = workbench_crafting_speed_multiplier( craft, bench );
     const float morale_multi = morale_crafting_speed_multiplier( who, rec );
-    const auto tools_multi = crafting_tools_speed_multiplier( who, rec );
+    const auto tools_multi = tools_multi_override
+                             ? *tools_multi_override
+                             : crafting_tools_speed_multiplier( who, rec );
     const float mutation_multi = who.mutation_value( "crafting_speed_modifier" );
     const float game_opt_multi = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0 ? 9999 :
                                  100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
@@ -547,9 +550,9 @@ const inventory &Character::crafting_inventory( const tripoint &src_pos, int rad
     if( src_pos == tripoint_zero ) {
         inv_pos = pos();
     }
-    if( cached_moves == moves
-        && cached_time == calendar::turn
-        && cached_position == inv_pos ) {
+    const auto cache_hit = cached_time == calendar::turn
+                           && cached_position == inv_pos;
+    if( cache_hit ) {
         return cached_crafting_inventory;
     }
     cached_crafting_inventory.form_from_map( inv_pos, radius, this, false, clear_path );
@@ -753,6 +756,8 @@ item *Character::start_craft( craft_command &command, const tripoint & )
     activity->values.push_back( command.is_long() );
     // Ugly
     activity->values.push_back( static_cast<int>( bench.type ) );
+    activity->values.push_back( 100 );
+    activity->values.push_back( 0 );
 
     add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),

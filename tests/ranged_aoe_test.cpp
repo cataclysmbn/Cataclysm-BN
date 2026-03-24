@@ -111,7 +111,7 @@ TEST_CASE( "character using birdshot against another character", "[shape][ranged
     target->worn.clear();
     target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_zero );
     target->setpos( target_pos );
-    overmap_buffer.insert_npc( target );
+    ACTIVE_OVERMAP_BUFFER.insert_npc( target );
     g->load_npcs();
 
     detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );

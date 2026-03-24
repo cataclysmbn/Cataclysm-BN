@@ -383,7 +383,7 @@ TEST_CASE( "npc-movement" )
                 guy->assign_activity( activity_id( "ACT_MEDITATE" ) );
                 //Sometimes they spawn with sledge hammers and bash down the walls
                 guy->remove_primary_weapon();
-                overmap_buffer.insert_npc( guy );
+                ACTIVE_OVERMAP_BUFFER.insert_npc( guy );
                 g->load_npcs();
                 guy->set_attitude( ( type == 'M' || type == 'C' ) ? NPCATT_NULL : NPCATT_FOLLOW );
             }
@@ -483,7 +483,7 @@ TEST_CASE( "npc_move_through_vehicle_holes" )
     guy->randomize();
     guy->spawn_at_precise( {g->get_levx(), g->get_levy()}, mon_origin );
 
-    overmap_buffer.insert_npc( guy );
+    ACTIVE_OVERMAP_BUFFER.insert_npc( guy );
     g->load_npcs();
 
     guy->move_to( mon_origin + tripoint_north_west, true, nullptr );

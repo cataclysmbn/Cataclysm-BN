@@ -1331,6 +1331,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_water_purifier",
+    "name": "Install Water Purifier"
+  },
+  {
+    "type": "construction_group",
     "id": "place_craftrig",
     "name": "Place FOODCO Kitchen Buddy"
   },

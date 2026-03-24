@@ -85,6 +85,10 @@ struct mongroup {
     unsigned int radius = 1;
     unsigned int population = 1;
     tripoint_om_sm target; // location the horde is interested in.
+    // TODO(cross-dim-alias): tripoint_abs_sm has no dimension field.  A nemesis
+    // horde chasing a player who dimension-travels loses the dimension context of
+    // the target.  Full fix requires attaching a dimension_id to the target or
+    // storing it separately on mongroup.  Acceptable limitation for this PR.
     tripoint_abs_sm nemesis_target; // abs target for nemesis hordes
     int interest = 0; //interest to target in percents
     bool dying = false;

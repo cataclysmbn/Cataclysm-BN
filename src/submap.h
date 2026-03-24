@@ -16,6 +16,7 @@
 #include "field.h"
 #include "game_constants.h"
 #include "item.h"
+#include "legacy_pathfinding.h"
 #include "type_id.h"
 #include "monster.h"
 #include "point.h"
@@ -226,8 +227,35 @@ class submap : maptile_soa<SEEX, SEEY>
         active_item_cache active_items;
 
         int field_count = 0;
+        // Serialized as "turn_last_touched" (absolute turn number).
+        // Initialized to calendar::turn_zero; legacy saves that predate
+        // serialization will receive the maximum-capped catchup on first load.
         time_point last_touched = calendar::turn_zero;
         std::vector<spawn_point> spawns;
+
+        // ---- Per-submap simulation caches ----
+        // Source of truth for game-logic queries on any loaded submap.
+        // terrain-derived caches carry a dirty flag.
+        // scent_values is serialized; the other caches are rebuilt on load.
+
+        float  transparency_cache[SEEX][SEEY] = {};
+        bool   outside_cache[SEEX][SEEY]      = {};
+        char   floor_cache[SEEX][SEEY]         = {};
+        pf_special pf_special_cache[SEEX][SEEY]  = {};
+        int    scent_values[SEEX][SEEY]        = {};
+
+        bool transparency_dirty = true;
+        bool outside_dirty      = true;
+        bool floor_dirty        = true;
+        bool pf_dirty           = true;
+
+        // Rebuild per-submap caches from terrain/furniture/field data.
+        // grid_pos = submap grid coordinates within map m (x,y = submap index, z = z-level).
+        auto rebuild_outside_cache( const map &m, tripoint grid_pos ) -> void;
+        auto rebuild_floor_cache( const map &m, tripoint grid_pos ) -> void;
+        auto rebuild_pf_cache( const map &m, tripoint grid_pos ) -> void;
+        // rebuild_transparency_cache calls rebuild_outside_cache first if outside_dirty.
+        auto rebuild_transparency_cache( const map &m, tripoint grid_pos ) -> void;
         /**
          * Vehicles on this submap (their (0,0) point is on this submap).
          * This vehicle objects are deleted by this submap when it gets

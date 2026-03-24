@@ -386,15 +386,11 @@ void cata::detail::reg_distribution_grid( sol::state &lua )
                       []( const distribution_grid_tracker & tr, const tripoint & omt_pos ) -> std::uintptr_t { return tr.debug_grid_id( tripoint_abs_omt( omt_pos ) ); } );
         DOC( "Update all grids to the given time point" );
         luna::set_fx( ut, "update", &distribution_grid_tracker::update );
-        DOC( "Load grids for the given map" );
-        luna::set_fx( ut, "load", sol::resolve<void( const map & )>( &distribution_grid_tracker::load ) );
         DOC( "Notify tracker that a tile at the given position has changed" );
         luna::set_fx( ut, "on_changed",
         []( distribution_grid_tracker & tr, const tripoint & p ) {
             tr.on_changed( tripoint_abs_ms( p ) );
         } );
-        DOC( "Notify tracker that the game has been saved" );
-        luna::set_fx( ut, "on_saved", &distribution_grid_tracker::on_saved );
         DOC( "Notify tracker that game options have changed" );
         luna::set_fx( ut, "on_options_changed", &distribution_grid_tracker::on_options_changed );
     }

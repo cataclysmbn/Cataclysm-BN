@@ -57,6 +57,21 @@
   },
   {
     "type": "GENERIC",
+    "id": "v_roadheader_item",
+    "symbol": "&",
+    "looks_like": "v_rockwheel_item",
+    "name": { "str": "roadheader" },
+    "color": "dark_gray",
+    "description": "A massive metal wheel-like drill used to bore tunnels.",
+    "weight": "240 kg",
+    "material": "steel",
+    "category": "veh_parts",
+    "price": "300 USD",
+    "price_postapoc": "30 USD",
+    "volume": "100000 ml"
+  },
+  {
+    "type": "GENERIC",
     "id": "v_airjack_item",
     "symbol": "&",
     "name": { "str": "airjack" },
