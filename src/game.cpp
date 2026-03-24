@@ -3728,8 +3728,7 @@ struct zone_callback_options {
     bool is_moving_zone = false;
 };
 
-static auto create_zone_callback( const zone_callback_options &options )
-- > shared_ptr_fast<game::draw_callback_t>
+static auto create_zone_callback( const zone_callback_options &options ) -> shared_ptr_fast<game::draw_callback_t>
 {
     auto &zone_start = options.zone_start;
     auto &zone_end = options.zone_end;
