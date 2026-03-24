@@ -447,7 +447,7 @@ void set_cosmetic_trait( Character &c, std::string mutation_type, const trait_id
 
 void avatar::randomize_cosmetics()
 {
-    std::ranges::for_each( get_all_mutation_type_ids(), [this]( const std::string &type_id ) {
+    std::ranges::for_each( get_all_mutation_type_ids(), [this]( const std::string & type_id ) {
         const bool mandatory = mutation_type_is_mandatory( type_id );
         const int chance = mutation_type_random_chance( type_id );
         if( mandatory || ( chance > 0 && x_in_y( chance, 100 ) ) ) {
