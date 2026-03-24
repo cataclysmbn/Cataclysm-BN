@@ -364,7 +364,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
         std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
         pending_snapshot = std::move( pending_writes_ );
     }
-    std::ranges::for_each( pending_snapshot, [&]( auto &entry ) {
+    std::ranges::for_each( pending_snapshot, [&]( auto & entry ) {
         const auto &[om_addr, data] = entry;
         const tripoint base = omt_to_sm_copy( om_addr );
         const bool in_memory =
