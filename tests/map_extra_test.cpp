@@ -32,7 +32,7 @@ TEST_CASE( "mx_minefield real spawn", "[.][map_extra][overmap]" )
     find_params.search_range = { 0, 180 };
     find_params.search_layers = std::nullopt;
 
-    const std::vector<tripoint_abs_omt> bridges = overmap_buffer.find_all( origin, find_params );
+    const std::vector<tripoint_abs_omt> bridges = ACTIVE_OVERMAP_BUFFER.find_all( origin, find_params );
 
     // The rest of this check is pointless if there are no bridges.
     REQUIRE( !bridges.empty() );
@@ -45,7 +45,7 @@ TEST_CASE( "mx_minefield real spawn", "[.][map_extra][overmap]" )
 
     // Get all of the map extras that have been generated.
     const std::vector<std::pair<point_abs_omt, string_id<map_extra>>> extras =
-        overmap_buffer.get_all_extras( origin.z() );
+        ACTIVE_OVERMAP_BUFFER.get_all_extras( origin.z() );
 
     // Count the number of mx_minefield map extras that have been generated.
     const string_id<map_extra> mx_minefield( "mx_minefield" );
@@ -61,7 +61,7 @@ TEST_CASE( "mx_minefield real spawn", "[.][map_extra][overmap]" )
 TEST_CASE( "mx_minefield theoretical spawn", "[map_extra][overmap]" )
 {
     clear_all_state();
-    overmap &om = overmap_buffer.get( point_abs_om() );
+    overmap &om = ACTIVE_OVERMAP_BUFFER.get( point_abs_om() );
 
     const oter_id road( "road_ns" );
     const oter_id bridge( "bridge_under_north" );

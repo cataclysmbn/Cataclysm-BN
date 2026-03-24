@@ -201,7 +201,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "remove_npc_follower", []( npc & p ) { g->remove_npc_follower( p.getID() ); } );
 
     DOC( "Get the global overmap buffer" );
-    luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return overmap_buffer; } );
+    luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return ACTIVE_OVERMAP_BUFFER; } );
 
     DOC( "Get direction from a tripoint delta" );
     luna::set_fx( lib, "direction_from", []( const tripoint & delta ) -> direction { return direction_from( delta ); } );

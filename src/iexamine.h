@@ -140,6 +140,8 @@ ret_val<bool> can_fertilize( player &p, const tripoint &tile, const itype_id &fe
 // Skill training common functions
 void practice_survival_while_foraging( player *p );
 
+void power_portal( player &p, const tripoint &examp );
+
 } //namespace iexamine
 
 using iexamine_function = void ( * )( player &, const tripoint & );
