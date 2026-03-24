@@ -415,6 +415,7 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
         loops++;
     }
 
+    randomize_cosmetics();
     set_body();
 }
 
@@ -487,7 +488,6 @@ bool avatar::create( character_type type, const std::string &tempname )
         case character_type::RANDOM:
             //random scenario, default name if exist
             randomize( true, points );
-            randomize_cosmetics();
             tab = NEWCHAR_TAB_MAX;
             break;
         case character_type::NOW:
