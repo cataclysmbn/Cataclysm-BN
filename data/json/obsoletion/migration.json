@@ -735,6 +735,11 @@
     "replace": "proc_sword_generic"
   },
   {
+    "id": [ "hand_axe", "makeshift_axe" ],
+    "type": "MIGRATION",
+    "replace": "proc_axe_generic"
+  },
+  {
     "id": [ "spear_spike", "spear_knife", "spear_knife_superior", "spear_stone", "spear_steel" ],
     "type": "MIGRATION",
     "replace": "proc_spear_generic"

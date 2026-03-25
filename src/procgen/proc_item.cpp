@@ -349,6 +349,27 @@ auto legacy_weapon_specs( const itype_id &id ) -> std::optional<legacy_weapon_sp
             }
         };
     }
+    if( id == itype_id( "hand_axe" ) ) {
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "axe" ),
+            .fp_prefix = "axe",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "head", .id = itype_id( "rock" ) },
+                legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) }
+            }
+        };
+    }
+    if( id == itype_id( "makeshift_axe" ) ) {
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "axe" ),
+            .fp_prefix = "axe",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "head", .id = itype_id( "steel_chunk" ) },
+                legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "binding", .id = itype_id( "string_36" ) }
+            }
+        };
+    }
     if( id == itype_id( "spear_spike" ) ) {
         return legacy_weapon_spec{
             .schema = proc::schema_id( "spear" ),
