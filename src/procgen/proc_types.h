@@ -70,9 +70,10 @@ struct melee_blob {
     int stab = 0;
     int to_hit = 0;
     int dur = 0;
+    int moves = 0;
 
     auto empty() const -> bool {
-        return bash == 0 && cut == 0 && stab == 0 && to_hit == 0 && dur == 0;
+        return bash == 0 && cut == 0 && stab == 0 && to_hit == 0 && dur == 0 && moves == 0;
     }
 
     auto operator==( const melee_blob & ) const -> bool = default;

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "proc_axe_generic",
+    "type": "GENERIC",
+    "copy-from": "hatchet",
+    "name": { "str": "GENERIC AXE" },
+    "description": "A procedural axe awaiting generated details.",
+    "weight": "900 g",
+    "volume": "1 L",
+    "bashing": 8,
+    "cutting": 10,
+    "to_hit": 0
+  },
+  {
+    "id": "proc_spear_generic",
+    "type": "GENERIC",
+    "copy-from": "spear_wood",
+    "name": { "str": "GENERIC SPEAR" },
+    "description": "A procedural spear awaiting generated details.",
+    "weight": "1000 g",
+    "volume": "1750 ml",
+    "bashing": 4,
+    "cutting": 8,
+    "to_hit": 0
+  },
+  {
+    "id": "proc_knife_generic",
+    "type": "TOOL",
+    "copy-from": "knife_hunting",
+    "name": { "str": "GENERIC KNIFE" },
+    "description": "A procedural knife awaiting generated details.",
+    "weight": "250 g",
+    "volume": "250 ml",
+    "cutting": 8,
+    "to_hit": 0
+  }
+]
