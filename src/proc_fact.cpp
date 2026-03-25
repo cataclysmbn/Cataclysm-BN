@@ -66,6 +66,27 @@ auto is_sandwich_spread( const item &it ) -> bool
     } );
 }
 
+auto is_trail_mix_nut( const item &it ) -> bool
+{
+    return has_material( it, material_id( "nut" ) );
+}
+
+auto is_trail_mix_dried_fruit( const item &it ) -> bool
+{
+    if( !has_material( it, material_id( "fruit" ) ) ) {
+        return false;
+    }
+    const auto &id = it.typeId().str();
+    return id.contains( "dry" ) || id.contains( "dried" ) || id.contains( "leather" ) ||
+           id.contains( "cranberr" );
+}
+
+auto is_trail_mix_sweet( const item &it ) -> bool
+{
+    const auto &id = it.typeId().str();
+    return id.contains( "chocolate" ) || id == "candy" || id == "candy2" || id == "maltballs";
+}
+
 auto is_sandwich_cheese( const item &it ) -> bool
 {
     return it.typeId().str().contains( "cheese" );
@@ -127,6 +148,15 @@ auto default_tags( const item &it ) -> std::vector<std::string>
         ( has_material( it, material_id( "flesh" ) ) || has_material( it, material_id( "hflesh" ) ) ||
           has_material( it, material_id( "iflesh" ) ) || has_material( it, material_id( "fish" ) ) ) ) {
         ret.push_back( "meat" );
+    }
+    if( solid_ingredient_candidate && is_trail_mix_nut( it ) ) {
+        ret.push_back( "trail_nut" );
+    }
+    if( solid_ingredient_candidate && is_trail_mix_dried_fruit( it ) ) {
+        ret.push_back( "trail_dried" );
+    }
+    if( solid_ingredient_candidate && is_trail_mix_sweet( it ) ) {
+        ret.push_back( "trail_sweet" );
     }
     return ret;
 }

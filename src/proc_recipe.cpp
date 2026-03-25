@@ -105,6 +105,9 @@ auto proc::recipe_preview_description( const recipe &rec ) -> std::string
     if( rec.proc_id() == proc::schema_id( "stew" ) ) {
         return _( "Choose a base and ingredients to simmer a procedural stew." );
     }
+    if( rec.proc_id() == proc::schema_id( "trail_mix" ) ) {
+        return _( "Choose nuts, dried fruit, and optional sweets for a procedural trail mix." );
+    }
     if( rec.proc_id() == proc::schema_id( "sword" ) ) {
         return _( "Choose weapon parts and materials to assemble a procedural melee weapon." );
     }

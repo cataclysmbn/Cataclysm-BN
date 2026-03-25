@@ -5,6 +5,7 @@
 #include <climits>
 #include <cmath>
 #include <cstdlib>
+#include <expected>
 #include <functional>
 #include <limits>
 #include <map>
@@ -109,6 +110,25 @@ namespace
 
 auto start_proc_craft( Character &who, const recipe &rec, bool is_long,
                        const proc::ui_result &result ) -> item *; // *NOPAD*
+
+auto validate_proc_craft_plan( const proc::schema &sch,
+                               const proc::craft_plan &plan ) -> std::expected<void, std::string>
+{
+    const auto state = proc::build_state( sch, plan.facts );
+    auto selected = proc::builder_state{};
+    selected.id = sch.id;
+    selected.sch = sch;
+    selected.facts = plan.facts;
+    selected.cand = state.cand;
+    selected.chosen = std::map<proc::slot_id, std::vector<proc::part_ix>> {};
+    std::ranges::for_each( std::views::iota( size_t{ 0 }, std::min( plan.facts.size(),
+                           plan.slots.size() ) ),
+    [&]( const size_t idx ) {
+        selected.chosen[plan.slots[idx]].push_back( plan.facts[idx].ix );
+    } );
+    selected.fast = proc::rebuild_fast( selected );
+    return proc::validate_selection( sch, plan.facts, selected.fast );
+}
 
 } // namespace
 
@@ -888,6 +908,12 @@ auto start_proc_craft( Character &who, const recipe &rec, const bool is_long,
 {
     const auto debug_hammerspace = who.has_trait( trait_DEBUG_HS );
     const auto facts = selected_proc_facts( result );
+    const auto &sch = proc::get( rec.proc_id() );
+
+    if( const auto valid = proc::validate_selection( sch, facts, result.preview ); !valid ) {
+        popup( "%s", valid.error() );
+        return nullptr;
+    }
 
     auto tool_selections = std::vector<comp_selection<tool_comp>> {};
     if( !debug_hammerspace && !prepare_proc_craft_tools( who, rec, facts, tool_selections ) ) {
@@ -1193,6 +1219,16 @@ void complete_craft( Character &who, item &craft )
     }
 
     const recipe &making = craft.get_making();
+    if( making.is_proc() && proc::has( making.proc_id() ) ) {
+        if( const auto plan = proc::read_craft_plan( craft ); plan.has_value() ) {
+            const auto &sch = proc::get( making.proc_id() );
+            if( const auto valid = validate_proc_craft_plan( sch, *plan ); !valid ) {
+                add_msg( m_bad, _( "You can not finish this procedural craft: %s" ), valid.error() );
+                return;
+            }
+        }
+    }
+
     const int batch_size = craft.charges;
     std::vector<detached_ptr<item>> used = craft.remove_components();
     std::vector<item *> used_items;
@@ -1221,6 +1257,11 @@ void complete_craft( Character &who, item &craft )
                     .uses = 1
                 } ) );
             } );
+        }
+        if( plan.has_value() ) {
+            if( const auto valid = validate_proc_craft_plan( sch, *plan ); !valid ) {
+                debugmsg( "proc craft validation failed for schema %s: %s", sch.id.c_str(), valid.error().c_str() );
+            }
         }
         auto used_const = std::vector<const item *> {};
         used_const.reserve( used_items.size() );

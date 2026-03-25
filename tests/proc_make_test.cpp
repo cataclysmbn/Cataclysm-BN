@@ -1,7 +1,11 @@
 #include "catch/catch.hpp"
 
+#include <fstream>
+#include <sstream>
 #include <vector>
 
+#include "catalua_impl.h"
+#include "catalua_sol.h"
 #include "item.h"
 #include "proc_fact.h"
 #include "proc_item.h"
@@ -10,12 +14,26 @@
 namespace
 {
 
+auto load_procgen_runtime( cata::lua_state &state ) -> void
+{
+    state.lua.open_libraries( sol::lib::base, sol::lib::package, sol::lib::math, sol::lib::string,
+                              sol::lib::table );
+
+    auto file = std::ifstream( "data/json/procgen.lua", std::ios::binary );
+    REQUIRE( file.is_open() );
+
+    auto script = std::ostringstream {};
+    script << file.rdbuf();
+    state.lua["procgen"] = state.lua.script( script.str() );
+}
+
 auto sandwich_schema_for_test() -> proc::schema
 {
     auto sch = proc::schema{};
     sch.id = proc::schema_id( "sandwich" );
     sch.cat = "food";
     sch.res = itype_id( "sandwich_generic" );
+    sch.lua.name = "procgen.food.name";
     sch.slots = {
         proc::slot_data{ .id = proc::slot_id( "bread" ), .role = "bread", .min = 2, .max = 3, .rep = true, .ok = {}, .no = {} },
         proc::slot_data{ .id = proc::slot_id( "veg" ), .role = "veg", .min = 0, .max = 4, .rep = true, .ok = {}, .no = {} },
@@ -29,12 +47,14 @@ auto sandwich_schema_for_test() -> proc::schema
 auto make_sandwich_name_for_test( const std::vector<proc::part_fact> &facts,
                                   const std::vector<proc::slot_id> &slots ) -> std::string
 {
+    auto state = cata::lua_state {};
+    load_procgen_runtime( state );
     const auto made = proc::make_item( sandwich_schema_for_test(), facts, {
         .mode = proc::hist::compact,
         .rec = nullptr,
         .used = {},
         .slots = slots,
-        .state = nullptr,
+        .state = &state,
     } );
     return made->type_name();
 }
@@ -388,11 +408,15 @@ TEST_CASE( "proc_make_item_names_stews_from_selected_raw_ingredients", "[proc][m
     sch.id = proc::schema_id( "stew" );
     sch.cat = "food";
     sch.res = itype_id( "stew_generic" );
+    sch.lua.name = "procgen.food.name";
     sch.slots = {
         proc::slot_data{ .id = proc::slot_id( "base" ), .role = "base", .min = 1, .max = 1, .ok = {}, .no = {} },
         proc::slot_data{ .id = proc::slot_id( "veg" ), .role = "veg", .min = 1, .max = 4, .rep = true, .ok = {}, .no = {} },
         proc::slot_data{ .id = proc::slot_id( "meat" ), .role = "meat", .min = 0, .max = 3, .rep = true, .ok = {}, .no = {} }
     };
+
+    auto state = cata::lua_state {};
+    load_procgen_runtime( state );
 
     const auto broth = proc::normalize_part_fact( item( "broth" ), { .ix = 1 } );
     const auto carrot = proc::normalize_part_fact( item( "carrot" ), { .ix = 2 } );
@@ -401,6 +425,7 @@ TEST_CASE( "proc_make_item_names_stews_from_selected_raw_ingredients", "[proc][m
 
     auto opts = proc::make_opts{};
     opts.mode = proc::hist::compact;
+    opts.state = &state;
     opts.slots = { proc::slot_id( "base" ), proc::slot_id( "veg" ) };
     const auto vegetable_stew = proc::make_item( sch, { broth, carrot }, opts );
     CHECK( vegetable_stew->type_name() == "vegetable stew" );
@@ -580,6 +605,44 @@ TEST_CASE( "proc_make_item_names_supported_spread_sandwiches", "[proc][make][foo
         proc::slot_id( "cond" ),
         proc::slot_id( "cond" ),
     } ) == "PB&M sandwich" );
+}
+
+TEST_CASE( "proc_make_item_names_and_describes_trail_mix", "[proc][make][food]" )
+{
+    auto sch = proc::schema{};
+    sch.id = proc::schema_id( "trail_mix" );
+    sch.cat = "food";
+    sch.res = itype_id( "trail_mix_generic" );
+    sch.lua.name = "procgen.food.name";
+    sch.slots = {
+        proc::slot_data{ .id = proc::slot_id( "nut" ), .role = "nut", .min = 1, .max = 4, .rep = true, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "dried" ), .role = "dried", .min = 1, .max = 4, .rep = true, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "sweet" ), .role = "sweet", .min = 0, .max = 3, .rep = true, .ok = {}, .no = {} }
+    };
+
+    auto state = cata::lua_state {};
+    load_procgen_runtime( state );
+
+    auto peanut = proc::normalize_part_fact( item( "peanut" ), { .ix = 1 } );
+    peanut.tag.push_back( "trail_nut" );
+    auto dry_fruit = proc::normalize_part_fact( item( "dry_fruit" ), { .ix = 2 } );
+    dry_fruit.tag.push_back( "trail_dried" );
+    auto chocolate = proc::normalize_part_fact( item( "chocolate" ), { .ix = 3 } );
+    chocolate.tag.push_back( "trail_sweet" );
+
+    auto opts = proc::make_opts{};
+    opts.mode = proc::hist::compact;
+    opts.state = &state;
+    opts.slots = { proc::slot_id( "nut" ), proc::slot_id( "dried" ) };
+    const auto basic_mix = proc::make_item( sch, { peanut, dry_fruit }, opts );
+    CHECK( basic_mix->type_name() == "trail mix" );
+    REQUIRE( proc::read_payload( *basic_mix ) );
+    CHECK( proc::read_payload( *basic_mix )->blob.description.contains( "peanut" ) );
+    CHECK( proc::read_payload( *basic_mix )->blob.description.contains( "dry_fruit" ) );
+
+    opts.slots = { proc::slot_id( "nut" ), proc::slot_id( "dried" ), proc::slot_id( "sweet" ) };
+    const auto deluxe_mix = proc::make_item( sch, { peanut, dry_fruit, chocolate }, opts );
+    CHECK( deluxe_mix->type_name() == "deluxe trail mix" );
 }
 
 TEST_CASE( "proc_compact_restore_preserves_spear_part_damage", "[proc][make][compact]" )

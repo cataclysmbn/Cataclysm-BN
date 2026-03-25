@@ -124,6 +124,33 @@ TEST_CASE( "proc_sandwich_schema_allows_three_breads", "[proc][schema]" )
     CHECK( slot->min == 2 );
     CHECK( slot->max == 3 );
     CHECK( slot->rep );
+    CHECK( loaded.lua.name == "procgen.food.name" );
+
+    proc::reset();
+}
+
+TEST_CASE( "proc_trail_mix_schema_loads_lua_validate", "[proc][schema]" )
+{
+    proc::reset();
+
+    auto file = std::ifstream( "data/json/proc/trail_mix.json", std::ios::binary );
+    REQUIRE( file.is_open() );
+
+    auto jsin = JsonIn( file );
+    for( JsonObject jo : jsin.get_array() ) {
+        jo.allow_omitted_members();
+        const auto type = jo.get_string( "type" );
+        if( type != "PROC" || jo.get_string( "id" ) != "trail_mix" ) {
+            continue;
+        }
+        proc::load( jo, "data/json/proc/trail_mix.json" );
+    }
+
+    REQUIRE( proc::has( proc::schema_id( "trail_mix" ) ) );
+    const auto &loaded = proc::get( proc::schema_id( "trail_mix" ) );
+    CHECK( loaded.lua.name == "procgen.food.name" );
+    CHECK( loaded.lua.validate == "procgen.food.validate" );
+    CHECK( loaded.res == itype_id( "trail_mix_generic" ) );
 
     proc::reset();
 }

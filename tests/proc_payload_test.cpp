@@ -171,6 +171,28 @@ TEST_CASE( "proc_craft_plan_json_matches_snapshot", "[proc][payload][snapshot]" 
     "tests/data/json_snapshots/proc_payload_test/craft_plan.json" );
 }
 
+TEST_CASE( "proc_craft_plan_validation_round_trips", "[proc][payload]" )
+{
+    auto craft = item( "trail_mix_generic", calendar::turn );
+    auto fact = proc::part_fact{};
+    fact.ix = 1;
+    fact.id = itype_id( "chocolate" );
+    fact.tag = { "trail_sweet" };
+    fact.mass_g = 50;
+    fact.volume_ml = 50;
+    fact.kcal = 100;
+    proc::write_craft_plan( craft, {
+        .mode = proc::hist::compact,
+        .slots = { proc::slot_id( "sweet" ) },
+        .facts = { fact }
+    } );
+
+    const auto restored = round_trip( craft );
+    REQUIRE( proc::read_craft_plan( *restored ) );
+    CHECK( proc::read_craft_plan( *restored )->slots[0] == proc::slot_id( "sweet" ) );
+    CHECK( proc::read_craft_plan( *restored )->facts[0].tag[0] == "trail_sweet" );
+}
+
 TEST_CASE( "proc_payload_participates_in_stacking", "[proc][payload]" )
 {
     auto a = item( "sandwich_generic", calendar::turn );

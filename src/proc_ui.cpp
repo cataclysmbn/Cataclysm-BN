@@ -669,6 +669,11 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
                 }
                 continue;
             }
+            if( const auto valid = proc::validate_selection( sch, proc::selected_facts( state ),
+                                   state.fast ); !valid ) {
+                status = valid.error();
+                continue;
+            }
             auto result = ui_result{};
             result.preview = state.fast;
             const auto picks = proc::selected_picks( state, sch );

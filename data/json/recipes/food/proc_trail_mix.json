@@ -1,0 +1,18 @@
+[
+  {
+    "type": "recipe",
+    "result": "trail_mix_generic",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_SNACK",
+    "skill_used": "cooking",
+    "difficulty": 1,
+    "time": 80,
+    "proc": true,
+    "proc_id": "trail_mix",
+    "builder_name": { "str": "Trail mix" },
+    "builder_desc": { "str": "Pick nuts, dried fruit, and optional sweets." },
+    "qualities": [  ],
+    "tools": [  ],
+    "components": [  ]
+  }
+]

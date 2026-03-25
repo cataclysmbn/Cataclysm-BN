@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <expected>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -36,6 +37,11 @@ struct legacy_sandwich_part_spec {
 struct legacy_weapon_part_spec {
     std::string role;
     itype_id id = itype_id::NULL_ID();
+};
+
+struct lua_validate_result {
+    bool ok = true;
+    std::string reason;
 };
 
 inline constexpr auto proc_var_key = std::string_view { "proc" };
@@ -476,8 +482,29 @@ auto blob_table( sol::state &lua, const proc::fast_blob &blob ) -> sol::table
     return tbl;
 }
 
+auto slot_role( const proc::schema &sch, const proc::slot_id &slot ) -> std::string
+{
+    const auto iter = std::ranges::find_if( sch.slots, [&]( const proc::slot_data & entry ) {
+        return entry.id == slot;
+    } );
+    return iter == sch.slots.end() ? std::string {} : iter->role;
+}
+
+auto picks_from_slots( const std::vector<proc::part_fact> &facts,
+                       const std::vector<proc::slot_id> &slots ) -> std::vector<proc::craft_pick>
+{
+    const auto count = std::min( facts.size(), slots.size() );
+    auto ret = std::vector<proc::craft_pick> {};
+    ret.reserve( count );
+    std::ranges::for_each( std::views::iota( size_t { 0 }, count ), [&]( const size_t idx ) {
+        ret.push_back( proc::craft_pick { .slot = slots[idx], .ix = facts[idx].ix } );
+    } );
+    return ret;
+}
+
 auto call_lua_blob( const std::string &path, const proc::schema &sch,
-                    const std::vector<proc::part_fact> &facts, const proc::fast_blob &blob,
+                    const std::vector<proc::part_fact> &facts,
+                    const std::vector<proc::craft_pick> &picks, const proc::fast_blob &blob,
                     cata::lua_state *state,
                     const std::optional<itype_id> &result_override = std::nullopt ) -> std::optional<sol::table>
 {
@@ -506,6 +533,17 @@ auto call_lua_blob( const std::string &path, const proc::schema &sch,
     } );
     params["facts"] = facts_tbl;
 
+    auto picks_tbl = lua.create_table();
+    idx = int { 1 };
+    std::ranges::for_each( picks, [&]( const proc::craft_pick & pick ) {
+        auto pick_tbl = lua.create_table();
+        pick_tbl["ix"] = pick.ix;
+        pick_tbl["slot"] = pick.slot.str();
+        pick_tbl["role"] = slot_role( sch, pick.slot );
+        picks_tbl[idx++] = pick_tbl;
+    } );
+    params["picks"] = picks_tbl;
+
     auto res = ( *fn )( params );
     check_func_result( res );
     if( !res.valid() || res.return_count() == 0 ) {
@@ -516,6 +554,74 @@ auto call_lua_blob( const std::string &path, const proc::schema &sch,
         return std::nullopt;
     }
     return obj.as<sol::table>();
+}
+
+auto call_lua_validate( const std::string &path, const proc::schema &sch,
+                        const std::vector<proc::part_fact> &facts, const proc::fast_blob &blob,
+                        cata::lua_state *state ) -> std::optional<lua_validate_result>
+{
+    auto *active = active_lua_state( state );
+    if( active == nullptr ) {
+        return std::nullopt;
+    }
+    auto &lua = active->lua;
+    const auto fn = find_lua_function( lua, path );
+    if( !fn ) {
+        return std::nullopt;
+    }
+
+    auto params = lua.create_table();
+    params["schema_id"] = sch.id.str();
+    params["schema_res"] = sch.res.str();
+    params["blob"] = blob_table( lua, blob );
+
+    auto facts_tbl = lua.create_table();
+    auto idx = int{ 1 };
+    std::ranges::for_each( facts, [&]( const proc::part_fact & fact ) {
+        facts_tbl[idx++] = fact_table( lua, fact );
+    } );
+    params["facts"] = facts_tbl;
+
+    auto res = ( *fn )( params );
+    check_func_result( res );
+    if( !res.valid() || res.return_count() == 0 ) {
+        return lua_validate_result{};
+    }
+    const auto obj = res.get<sol::object>();
+    if( obj == sol::lua_nil ) {
+        return lua_validate_result{};
+    }
+    if( obj.is<bool>() ) {
+        return lua_validate_result{ .ok = obj.as<bool>(), .reason = "" };
+    }
+    if( obj.is<std::string>() ) {
+        const auto reason = obj.as<std::string>();
+        return lua_validate_result{ .ok = reason.empty(), .reason = reason };
+    }
+    if( !obj.is<sol::table>() ) {
+        return lua_validate_result{};
+    }
+
+    const auto tbl = obj.as<sol::table>();
+    auto out = lua_validate_result{};
+    const auto err_obj = tbl.get_or<sol::object>( "err", sol::lua_nil );
+    if( err_obj != sol::lua_nil && err_obj.is<std::string>() ) {
+        out.ok = false;
+        out.reason = err_obj.as<std::string>();
+        return out;
+    }
+    const auto ok_obj = tbl.get_or<sol::object>( "ok", sol::lua_nil );
+    if( ok_obj != sol::lua_nil && ok_obj.is<bool>() ) {
+        out.ok = ok_obj.as<bool>();
+    }
+    const auto reason_obj = tbl.get_or<sol::object>( "reason", sol::lua_nil );
+    if( reason_obj != sol::lua_nil && reason_obj.is<std::string>() ) {
+        out.reason = reason_obj.as<std::string>();
+    }
+    if( !out.ok && out.reason.empty() ) {
+        out.reason = "invalid selection";
+    }
+    return out;
 }
 
 auto parse_blob_into( proc::fast_blob &blob, const sol::table &tbl ) -> void
@@ -1049,19 +1155,38 @@ auto proc::run_full( const schema &sch, const std::vector<part_fact> &facts,
                      const fast_blob &blob, const lua_opts &opts ) -> full_blob
 {
     auto out = full_blob{ .data = blob };
-    if( const auto tbl = call_lua_blob( sch.lua.full, sch, facts, blob, opts.state ) ) {
+    if( const auto tbl = call_lua_blob( sch.lua.full, sch, facts, opts.picks, blob, opts.state ) ) {
         parse_blob_into( out.data, *tbl );
     }
-    if( const auto tbl = call_lua_blob( sch.lua.name, sch, facts, out.data, opts.state ) ) {
+    if( const auto tbl = call_lua_blob( sch.lua.name, sch, facts, opts.picks, out.data,
+                                        opts.state ) ) {
         parse_blob_into( out.data, *tbl );
     }
     return out;
+}
+
+auto proc::validate_selection( const schema &sch, const std::vector<part_fact> &facts,
+                               const fast_blob &blob,
+                               const validate_opts &opts ) -> std::expected<void, std::string>
+{
+    if( sch.lua.validate.empty() ) {
+        return {};
+    }
+    const auto result = call_lua_validate( sch.lua.validate, sch, facts, blob, opts.state );
+    if( !result.has_value() || result->ok ) {
+        return {};
+    }
+    if( result->reason.empty() ) {
+        return std::unexpected( std::string( "invalid selection" ) );
+    }
+    return std::unexpected( result->reason );
 }
 
 auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
                       const make_opts &opts ) -> detached_ptr<item>
 {
     auto preview = fast_blob{};
+    auto lua_picks = std::vector<craft_pick> {};
     auto result_override = std::optional<itype_id> {};
     if( !opts.slots.empty() ) {
         auto state = build_state( sch, facts );
@@ -1070,6 +1195,7 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
             state.chosen[opts.slots[idx]].push_back( facts[idx].ix );
         } );
         const auto picks = selected_picks( state, sch );
+        lua_picks = picks_from_slots( facts, opts.slots );
         result_override = proc::preview_result_override( sch, facts, picks );
         preview = rebuild_fast( state );
     } else {
@@ -1082,11 +1208,12 @@ auto proc::make_item( const schema &sch, const std::vector<part_fact> &facts,
             } );
         } );
     }
-    auto full = run_full( sch, facts, preview, { .state = opts.state } );
+    auto full = run_full( sch, facts, preview, { .state = opts.state, .picks = lua_picks } );
     auto mode = opts.mode;
     auto result = item::spawn( sch.res, calendar::turn );
 
-    if( const auto tbl = call_lua_blob( sch.lua.make, sch, facts, full.data, opts.state,
+    if( const auto tbl = call_lua_blob( sch.lua.make, sch, facts, lua_picks, full.data,
+                                        opts.state,
                                         result_override ) ) {
         parse_blob_into( full.data, *tbl );
         const auto result_id = tbl->get_or<std::string>( "result", "" );

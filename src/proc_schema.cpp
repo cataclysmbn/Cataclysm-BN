@@ -37,6 +37,7 @@ auto proc::lua_data::load( const JsonObject &jo ) -> void
     jo.read( "full", full );
     jo.read( "name", name );
     jo.read( "make", make );
+    jo.read( "validate", validate );
 }
 
 auto proc::slot_data::load( const JsonObject &jo ) -> void

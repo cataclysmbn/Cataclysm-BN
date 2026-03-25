@@ -4,6 +4,7 @@
     "id": "stew",
     "cat": "food",
     "res": "stew_generic",
+    "lua": { "name": "procgen.food.name" },
     "hist": { "def": "full", "ok": [ "full", "compact" ] },
     "slot": [
       { "id": "base", "role": "base", "min": 1, "max": 1, "ok": [ "itype:broth", "itype:broth_bone", "itype:water_clean" ] },

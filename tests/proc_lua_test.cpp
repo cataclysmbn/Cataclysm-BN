@@ -45,7 +45,7 @@ TEST_CASE( "proc_lua_full_bridge_reads_named_function", "[proc][lua]" )
     fact.id = itype_id( "bread" );
     fact.kcal = 50;
 
-    auto full = proc::run_full( sch, { fact }, proc::fast_blob{}, { .state = &state } );
+    auto full = proc::run_full( sch, { fact }, proc::fast_blob{}, { .state = &state, .picks = {} } );
     CHECK( full.data.kcal == 777 );
     CHECK( full.data.mass_g == 333 );
     CHECK( full.data.volume_ml == 222 );
@@ -86,4 +86,34 @@ TEST_CASE( "proc_lua_missing_runtime_keeps_preview_blob", "[proc][lua]" )
     CHECK( full.data.volume_ml == 125 );
     CHECK( full.data.name == "fallback sandwich" );
     CHECK( full.data.description == "fallback description" );
+}
+
+TEST_CASE( "proc_lua_validate_returns_reason", "[proc][lua]" )
+{
+    auto state = cata::lua_state{};
+    state.lua.open_libraries( sol::lib::base, sol::lib::package, sol::lib::math, sol::lib::string,
+                              sol::lib::table );
+    state.lua.script( R"(
+ procgen = {
+  food = {
+    validate = function(params)
+      return { err = "needs more variety" }
+    end
+  }
+ }
+    )" );
+
+    auto sch = proc::schema{};
+    sch.id = proc::schema_id( "trail_mix" );
+    sch.res = itype_id( "trail_mix_generic" );
+    sch.lua.validate = "procgen.food.validate";
+
+    auto fact = proc::part_fact{};
+    fact.ix = 1;
+    fact.id = itype_id( "chocolate" );
+    fact.kcal = 100;
+
+    const auto valid = proc::validate_selection( sch, { fact }, proc::fast_blob{}, { .state = &state } );
+    CHECK_FALSE( valid.has_value() );
+    CHECK( valid.error() == "needs more variety" );
 }

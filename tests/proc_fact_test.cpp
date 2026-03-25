@@ -239,3 +239,18 @@ TEST_CASE( "proc_part_fact_treats_payload_marked_raw_food_as_finished_dish", "[p
     CHECK( std::ranges::find( proc_carrot.tag, "veg" ) == proc_carrot.tag.end() );
     CHECK_FALSE( proc_carrot.proc.empty() );
 }
+
+TEST_CASE( "proc_part_fact_assigns_trail_mix_tags", "[proc][fact]" )
+{
+    const auto peanut_fact = proc::normalize_part_fact( item( "peanut" ), { .ix = 38 } );
+    CHECK( std::ranges::find( peanut_fact.tag, "trail_nut" ) != peanut_fact.tag.end() );
+
+    const auto dry_fruit_fact = proc::normalize_part_fact( item( "dry_fruit" ), { .ix = 39 } );
+    CHECK( std::ranges::find( dry_fruit_fact.tag, "trail_dried" ) != dry_fruit_fact.tag.end() );
+
+    const auto cranberry_fact = proc::normalize_part_fact( item( "cranberries" ), { .ix = 40 } );
+    CHECK( std::ranges::find( cranberry_fact.tag, "trail_dried" ) != cranberry_fact.tag.end() );
+
+    const auto chocolate_fact = proc::normalize_part_fact( item( "chocolate" ), { .ix = 41 } );
+    CHECK( std::ranges::find( chocolate_fact.tag, "trail_sweet" ) != chocolate_fact.tag.end() );
+}

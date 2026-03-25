@@ -23,10 +23,11 @@ struct lua_data {
     std::string full;
     std::string name;
     std::string make;
+    std::string validate;
 
     auto load( const JsonObject &jo ) -> void;
     auto empty() const -> bool {
-        return full.empty() && name.empty() && make.empty();
+        return full.empty() && name.empty() && make.empty() && validate.empty();
     }
 };
 

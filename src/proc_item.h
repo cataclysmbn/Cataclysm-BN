@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <expected>
 #include <map>
 #include <optional>
 #include <string>
@@ -58,6 +59,11 @@ struct craft_plan {
 
 struct lua_opts {
     cata::lua_state *state = nullptr;
+    std::vector<craft_pick> picks;
+};
+
+struct validate_opts {
+    cata::lua_state *state = nullptr;
 };
 
 struct make_opts {
@@ -95,6 +101,9 @@ auto make_compact_parts( const std::vector<part_fact> &facts,
 auto apply_on_damage( item &it, int qty ) -> void;
 auto run_full( const schema &sch, const std::vector<part_fact> &facts,
 const fast_blob &blob, const lua_opts &opts = {} ) -> full_blob;
+auto validate_selection( const schema &sch, const std::vector<part_fact> &facts,
+                         const fast_blob &blob,
+const validate_opts &opts = {} ) -> std::expected<void, std::string>;
 auto make_item( const schema &sch, const std::vector<part_fact> &facts,
                 const make_opts &opts ) -> detached_ptr<item>;
 auto blob_kcal( const item &it ) -> std::optional<int>;

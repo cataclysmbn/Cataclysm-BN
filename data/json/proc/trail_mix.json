@@ -1,0 +1,15 @@
+[
+  {
+    "type": "PROC",
+    "id": "trail_mix",
+    "cat": "food",
+    "res": "trail_mix_generic",
+    "lua": { "name": "procgen.food.name", "make": "procgen.food.make", "validate": "procgen.food.validate" },
+    "hist": { "def": "compact", "ok": [ "full", "compact" ] },
+    "slot": [
+      { "id": "nut", "role": "nut", "min": 1, "max": 4, "rep": true, "ok": [ "tag:trail_nut" ] },
+      { "id": "dried", "role": "dried", "min": 1, "max": 4, "rep": true, "ok": [ "tag:trail_dried" ] },
+      { "id": "sweet", "role": "sweet", "min": 0, "max": 3, "rep": true, "ok": [ "tag:trail_sweet" ] }
+    ]
+  }
+]

@@ -14,6 +14,7 @@
 #include "material.h"
 #include "output.h"
 #include "proc_fact.h"
+#include "proc_item.h"
 #include "recipe.h"
 #include "string_formatter.h"
 #include "string_utils.h"
@@ -310,18 +311,6 @@ auto has_itype( const std::vector<proc::part_fact> &facts, const itype_id &id ) 
     } );
 }
 
-auto fact_has_tag( const proc::part_fact &fact, const std::string &tag ) -> bool
-{
-    return std::ranges::find( fact.tag, tag ) != fact.tag.end();
-}
-
-auto facts_have_tag( const std::vector<proc::part_fact> &facts, const std::string &tag ) -> bool
-{
-    return std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
-        return fact_has_tag( fact, tag );
-    } );
-}
-
 auto join_sentences( const std::vector<std::string> &sentences ) -> std::string
 {
     auto ret = std::string {};
@@ -507,82 +496,6 @@ auto sword_variant( const proc::schema &sch, const std::vector<proc::part_fact> 
     return { .name = "sword", .result = itype_id( "proc_sword_generic" ) };
 }
 
-auto sandwich_condiment_name( const std::vector<proc::part_fact> &facts ) -> std::string
-{
-    if( !facts_have_tag( facts, "cond" ) ) {
-        return {};
-    }
-
-    const auto has_itype = [&]( const itype_id & id ) {
-        return std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
-            return fact.id == id;
-        } );
-    };
-    const auto has_material_id = [&]( const material_id & id ) {
-        return std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
-            return has_material( fact, id );
-        } );
-    };
-
-    const auto has_peanut_butter = has_itype( itype_id( "peanutbutter" ) ) ||
-                                   has_itype( itype_id( "peanutbutter_imitation" ) );
-    const auto has_jam = has_itype( itype_id( "jam_fruit" ) );
-    const auto has_honey = has_material_id( material_id( "honey" ) );
-    const auto has_syrup = has_itype( itype_id( "syrup" ) );
-
-    if( has_peanut_butter && has_jam ) {
-        return "PB&J sandwich";
-    }
-    if( has_peanut_butter && has_honey ) {
-        return "PB&H sandwich";
-    }
-    if( has_peanut_butter && has_syrup ) {
-        return "PB&M sandwich";
-    }
-    if( has_peanut_butter ) {
-        return "peanut butter sandwich";
-    }
-    if( has_jam ) {
-        return "jam sandwich";
-    }
-    if( has_honey ) {
-        return "honey sandwich";
-    }
-    if( has_syrup ) {
-        return "syrup sandwich";
-    }
-
-    static const auto named_condiments = std::array<std::pair<itype_id, std::string>, 9> {{
-            { itype_id( "mustard" ), "mustard sandwich" },
-            { itype_id( "ketchup" ), "ketchup sandwich" },
-            { itype_id( "mayonnaise" ), "mayonnaise sandwich" },
-            { itype_id( "horseradish" ), "horseradish sandwich" },
-            { itype_id( "butter" ), "butter sandwich" },
-            { itype_id( "sauerkraut" ), "sauerkraut sandwich" },
-            { itype_id( "soysauce" ), "soy sauce sandwich" },
-            { itype_id( "sauce_pesto" ), "pesto sandwich" },
-            { itype_id( "sauce_red" ), "red sauce sandwich" },
-        }
-    };
-    const auto named_condiment = std::ranges::find_if( named_condiments, [&]( const auto & entry ) {
-        return std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
-            return fact.id == entry.first;
-        } );
-    } );
-    if( named_condiment != named_condiments.end() ) {
-        return named_condiment->second;
-    }
-    return "sauce sandwich";
-}
-
-auto sandwich_vegetable_name( const std::vector<proc::part_fact> &facts ) -> std::string
-{
-    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) { return fact.id == itype_id( "cucumber" ); } ) ) {
-        return "cucumber sandwich";
-    }
-    return "vegetable sandwich";
-}
-
 auto sword_name( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
                  const std::vector<proc::craft_pick> &picks ) -> std::string
 {
@@ -601,83 +514,6 @@ auto sword_description( const proc::schema &sch, const std::vector<proc::part_fa
         sword_hilt_sentence( guard_facts, grip_facts ),
         sword_reinforcement_sentence( reinforcement_facts ),
     } );
-}
-
-auto sandwich_name( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
-                    const std::vector<proc::craft_pick> &picks ) -> std::string
-{
-    const auto bread_facts = picked_facts_for_role( sch, facts, picks, "bread" );
-    const auto meat_facts = picked_facts_for_role( sch, facts, picks, "meat" );
-    const auto cheese_facts = picked_facts_for_role( sch, facts, picks, "cheese" );
-    const auto veg_facts = picked_facts_for_role( sch, facts, picks, "veg" );
-    const auto cond_facts = picked_facts_for_role( sch, facts, picks, "cond" );
-
-    const auto bread_count = static_cast<int>( bread_facts.size() );
-    const auto has_any_itype = []( const std::vector<proc::part_fact> &picked_facts,
-    const auto & ids ) {
-        return std::ranges::any_of( picked_facts, [&]( const proc::part_fact & fact ) {
-            return std::ranges::find( ids, fact.id ) != ids.end();
-        } );
-    };
-    static const auto lettuce_ids = std::array {
-        itype_id( "irradiated_lettuce" ),
-        itype_id( "lettuce" ),
-    };
-    static const auto tomato_ids = std::array {
-        itype_id( "irradiated_tomato" ),
-        itype_id( "tomato" ),
-    };
-    const auto has_fish = std::ranges::any_of( meat_facts, [&]( const proc::part_fact & fact ) {
-        return has_material( fact, material_id( "fish" ) ) || fact.id.str().contains( "fish" );
-    } );
-    const auto has_meat = !meat_facts.empty();
-    const auto has_cheese = !cheese_facts.empty();
-    const auto has_veg = !veg_facts.empty();
-    const auto has_cond = !cond_facts.empty();
-    const auto has_blt = has_any_itype( meat_facts, std::array { itype_id( "bacon" ) } ) &&
-                         has_any_itype( veg_facts, lettuce_ids ) &&
-                         has_any_itype( veg_facts, tomato_ids );
-
-    if( has_fish ) {
-        return "fish sandwich";
-    }
-    if( bread_count >= 3 && has_meat && has_veg && has_cond ) {
-        return "club sandwich";
-    }
-    if( has_meat && has_cheese && has_veg && has_cond ) {
-        return "deluxe sandwich";
-    }
-    if( has_blt ) {
-        return "BLT";
-    }
-    if( has_meat ) {
-        return "meat sandwich";
-    }
-    if( has_cheese ) {
-        return "cheese sandwich";
-    }
-    if( has_veg ) {
-        return sandwich_vegetable_name( veg_facts );
-    }
-    if( has_cond ) {
-        return sandwich_condiment_name( cond_facts );
-    }
-    return "sandwich";
-}
-
-auto stew_name( const std::vector<proc::part_fact> &facts ) -> std::string
-{
-    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
-    return has_material( fact, material_id( "fish" ) ) || fact.id.str().contains( "fish" );
-    } ) ) {
-        return "fish stew";
-    }
-    if( std::ranges::any_of( facts, [&]( const proc::part_fact & fact ) {
-    return std::ranges::find( fact.tag, "meat" ) != fact.tag.end();
-    } ) ) {
-        return "meat stew";
-    }
-    return "vegetable stew";
 }
 
 auto basic_preview( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
@@ -760,17 +596,10 @@ auto sword_preview( const proc::schema &sch, const std::vector<proc::part_fact> 
 auto preview_blob( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
                    const std::vector<proc::craft_pick> &picks ) -> proc::fast_blob
 {
-    auto blob = basic_preview( sch, facts, picks );
-    if( sch.id == proc::schema_id( "sandwich" ) ) {
-        blob.name = sandwich_name( sch, facts, picks );
-        return blob;
-    }
-    if( sch.id == proc::schema_id( "stew" ) ) {
-        blob.name = stew_name( facts );
-        return blob;
-    }
-    if( sch.id == proc::schema_id( "sword" ) || sch.cat == "weapon" ) {
-        return sword_preview( sch, facts, picks );
+    auto blob = sch.id == proc::schema_id( "sword" ) || sch.cat == "weapon" ?
+                sword_preview( sch, facts, picks ) : basic_preview( sch, facts, picks );
+    if( !sch.lua.full.empty() || !sch.lua.name.empty() ) {
+        return proc::run_full( sch, facts, blob, { .picks = picks } ).data;
     }
     return blob;
 }
