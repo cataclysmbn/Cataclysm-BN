@@ -280,7 +280,7 @@ TEST_CASE( "proc_make_item_applies_weapon_blob_to_item", "[proc][make][weapon]" 
     sch.slots = {
         proc::slot_data{ .id = proc::slot_id( "blade" ), .role = "blade", .min = 1, .max = 1, .ok = {}, .no = {} },
         proc::slot_data{ .id = proc::slot_id( "handle" ), .role = "handle", .min = 1, .max = 1, .ok = {}, .no = {} },
-        proc::slot_data{ .id = proc::slot_id( "grip" ), .role = "grip", .min = 1, .max = 2, .rep = true, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "grip" ), .role = "grip", .min = 1, .max = 1, .ok = {}, .no = {} },
         proc::slot_data{ .id = proc::slot_id( "reinforcement" ), .role = "reinforcement", .min = 0, .max = 4, .rep = true, .ok = {}, .no = {} }
     };
 
@@ -341,7 +341,7 @@ TEST_CASE( "proc_make_item_names_reinforced_wood_swords", "[proc][make][weapon]"
     sch.slots = {
         proc::slot_data{ .id = proc::slot_id( "blade" ), .role = "blade", .min = 1, .max = 1, .ok = {}, .no = {} },
         proc::slot_data{ .id = proc::slot_id( "handle" ), .role = "handle", .min = 1, .max = 1, .ok = {}, .no = {} },
-        proc::slot_data{ .id = proc::slot_id( "grip" ), .role = "grip", .min = 1, .max = 2, .rep = true, .ok = {}, .no = {} },
+        proc::slot_data{ .id = proc::slot_id( "grip" ), .role = "grip", .min = 1, .max = 1, .ok = {}, .no = {} },
         proc::slot_data{ .id = proc::slot_id( "reinforcement" ), .role = "reinforcement", .min = 0, .max = 4, .rep = true, .ok = {}, .no = {} }
     };
 
