@@ -1,31 +1,15 @@
 #include "catch/catch.hpp"
 
-#include <fstream>
-#include <sstream>
 #include <vector>
 
-#include "catalua_impl.h"
-#include "catalua_sol.h"
 #include "item.h"
 #include "proc_fact.h"
 #include "proc_item.h"
 #include "proc_schema.h"
+#include "proc_test_utils.h"
 
 namespace
 {
-
-auto load_procgen_runtime( cata::lua_state &state ) -> void
-{
-    state.lua.open_libraries( sol::lib::base, sol::lib::package, sol::lib::math, sol::lib::string,
-                              sol::lib::table );
-
-    auto file = std::ifstream( "data/json/procgen.lua", std::ios::binary );
-    REQUIRE( file.is_open() );
-
-    auto script = std::ostringstream {};
-    script << file.rdbuf();
-    state.lua["procgen"] = state.lua.script( script.str() );
-}
 
 auto sandwich_schema_for_test() -> proc::schema
 {
@@ -48,7 +32,7 @@ auto make_sandwich_name_for_test( const std::vector<proc::part_fact> &facts,
                                   const std::vector<proc::slot_id> &slots ) -> std::string
 {
     auto state = cata::lua_state {};
-    load_procgen_runtime( state );
+    proc_test::load_procgen_runtime( state );
     const auto made = proc::make_item( sandwich_schema_for_test(), facts, {
         .mode = proc::hist::compact,
         .rec = nullptr,
@@ -416,7 +400,7 @@ TEST_CASE( "proc_make_item_names_stews_from_selected_raw_ingredients", "[proc][m
     };
 
     auto state = cata::lua_state {};
-    load_procgen_runtime( state );
+    proc_test::load_procgen_runtime( state );
 
     const auto broth = proc::normalize_part_fact( item( "broth" ), { .ix = 1 } );
     const auto carrot = proc::normalize_part_fact( item( "carrot" ), { .ix = 2 } );
@@ -621,7 +605,7 @@ TEST_CASE( "proc_make_item_names_and_describes_trail_mix", "[proc][make][food]" 
     };
 
     auto state = cata::lua_state {};
-    load_procgen_runtime( state );
+    proc_test::load_procgen_runtime( state );
 
     auto peanut = proc::normalize_part_fact( item( "peanut" ), { .ix = 1 } );
     peanut.tag.push_back( "trail_nut" );

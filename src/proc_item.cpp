@@ -44,6 +44,19 @@ struct lua_validate_result {
     std::string reason;
 };
 
+struct lua_function_ref {
+    cata::lua_state *state = nullptr;
+    sol::protected_function fn;
+};
+
+struct lua_params_options {
+    const proc::schema &sch;
+    const std::vector<proc::part_fact> &facts;
+    const proc::fast_blob &blob;
+    const std::vector<proc::craft_pick> *picks = nullptr;
+    std::optional<itype_id> result_override = std::nullopt;
+};
+
 inline constexpr auto proc_var_key = std::string_view { "proc" };
 inline constexpr auto proc_craft_var_key = std::string_view { "proc_craft" };
 
@@ -411,6 +424,22 @@ auto find_lua_function( sol::state &lua,
     return current.as<sol::protected_function>();
 }
 
+auto resolve_lua_function( cata::lua_state *state,
+                           const std::string &path ) -> std::optional<lua_function_ref>
+{
+    auto *active = active_lua_state( state );
+    if( active == nullptr ) {
+        return std::nullopt;
+    }
+
+    const auto fn = find_lua_function( active->lua, path );
+    if( !fn ) {
+        return std::nullopt;
+    }
+
+    return lua_function_ref { .state = active, .fn = *fn };
+}
+
 auto fact_table( sol::state &lua, const proc::part_fact &fact ) -> sol::table
 {
     auto tbl = lua.create_table();
@@ -482,12 +511,47 @@ auto blob_table( sol::state &lua, const proc::fast_blob &blob ) -> sol::table
     return tbl;
 }
 
+auto slot_role( const proc::schema &sch, const proc::slot_id &slot ) -> std::string;
+
+auto make_lua_params( sol::state &lua, const lua_params_options &opts ) -> sol::table
+{
+    auto params = lua.create_table();
+    params["schema_id"] = opts.sch.id.str();
+    params["schema_res"] = opts.sch.res.str();
+    if( opts.result_override.has_value() ) {
+        params["result_override"] = opts.result_override->str();
+    }
+    params["blob"] = blob_table( lua, opts.blob );
+
+    auto facts_tbl = lua.create_table();
+    auto idx = int { 1 };
+    std::ranges::for_each( opts.facts, [&]( const proc::part_fact & fact ) {
+        facts_tbl[idx++] = fact_table( lua, fact );
+    } );
+    params["facts"] = facts_tbl;
+
+    auto picks_tbl = lua.create_table();
+    idx = int { 1 };
+    const auto picks = opts.picks == nullptr ? std::vector<proc::craft_pick> {} :
+                       *opts.picks;
+    std::ranges::for_each( picks, [&]( const proc::craft_pick & pick ) {
+        auto pick_tbl = lua.create_table();
+        pick_tbl["ix"] = pick.ix;
+        pick_tbl["slot"] = pick.slot.str();
+        pick_tbl["role"] = slot_role( opts.sch, pick.slot );
+        picks_tbl[idx++] = pick_tbl;
+    } );
+    params["picks"] = picks_tbl;
+    return params;
+}
+
 auto slot_role( const proc::schema &sch, const proc::slot_id &slot ) -> std::string
 {
     const auto iter = std::ranges::find_if( sch.slots, [&]( const proc::slot_data & entry ) {
         return entry.id == slot;
     } );
-    return iter == sch.slots.end() ? std::string {} : iter->role;
+    return iter == sch.slots.end() ? std::string {} :
+           iter->role;
 }
 
 auto picks_from_slots( const std::vector<proc::part_fact> &facts,
@@ -508,43 +572,21 @@ auto call_lua_blob( const std::string &path, const proc::schema &sch,
                     cata::lua_state *state,
                     const std::optional<itype_id> &result_override = std::nullopt ) -> std::optional<sol::table>
 {
-    auto *active = active_lua_state( state );
-    if( active == nullptr ) {
-        return std::nullopt;
-    }
-    auto &lua = active->lua;
-    const auto fn = find_lua_function( lua, path );
-    if( !fn ) {
+    const auto ref = resolve_lua_function( state, path );
+    if( !ref ) {
         return std::nullopt;
     }
 
-    auto params = lua.create_table();
-    params["schema_id"] = sch.id.str();
-    params["schema_res"] = sch.res.str();
-    if( result_override.has_value() ) {
-        params["result_override"] = result_override->str();
-    }
-    params["blob"] = blob_table( lua, blob );
-
-    auto facts_tbl = lua.create_table();
-    auto idx = int{ 1 };
-    std::ranges::for_each( facts, [&]( const proc::part_fact & fact ) {
-        facts_tbl[idx++] = fact_table( lua, fact );
+    auto &lua = ref->state->lua;
+    const auto params = make_lua_params( lua, {
+        .sch = sch,
+        .facts = facts,
+        .blob = blob,
+        .picks = &picks,
+        .result_override = result_override,
     } );
-    params["facts"] = facts_tbl;
 
-    auto picks_tbl = lua.create_table();
-    idx = int { 1 };
-    std::ranges::for_each( picks, [&]( const proc::craft_pick & pick ) {
-        auto pick_tbl = lua.create_table();
-        pick_tbl["ix"] = pick.ix;
-        pick_tbl["slot"] = pick.slot.str();
-        pick_tbl["role"] = slot_role( sch, pick.slot );
-        picks_tbl[idx++] = pick_tbl;
-    } );
-    params["picks"] = picks_tbl;
-
-    auto res = ( *fn )( params );
+    auto res = ref->fn( params );
     check_func_result( res );
     if( !res.valid() || res.return_count() == 0 ) {
         return std::nullopt;
@@ -560,29 +602,19 @@ auto call_lua_validate( const std::string &path, const proc::schema &sch,
                         const std::vector<proc::part_fact> &facts, const proc::fast_blob &blob,
                         cata::lua_state *state ) -> std::optional<lua_validate_result>
 {
-    auto *active = active_lua_state( state );
-    if( active == nullptr ) {
-        return std::nullopt;
-    }
-    auto &lua = active->lua;
-    const auto fn = find_lua_function( lua, path );
-    if( !fn ) {
+    const auto ref = resolve_lua_function( state, path );
+    if( !ref ) {
         return std::nullopt;
     }
 
-    auto params = lua.create_table();
-    params["schema_id"] = sch.id.str();
-    params["schema_res"] = sch.res.str();
-    params["blob"] = blob_table( lua, blob );
-
-    auto facts_tbl = lua.create_table();
-    auto idx = int{ 1 };
-    std::ranges::for_each( facts, [&]( const proc::part_fact & fact ) {
-        facts_tbl[idx++] = fact_table( lua, fact );
+    auto &lua = ref->state->lua;
+    const auto params = make_lua_params( lua, {
+        .sch = sch,
+        .facts = facts,
+        .blob = blob,
     } );
-    params["facts"] = facts_tbl;
 
-    auto res = ( *fn )( params );
+    auto res = ref->fn( params );
     check_func_result( res );
     if( !res.valid() || res.return_count() == 0 ) {
         return lua_validate_result{};
