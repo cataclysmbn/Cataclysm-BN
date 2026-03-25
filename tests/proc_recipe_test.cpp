@@ -207,6 +207,185 @@ TEST_CASE( "proc_sword_recipe_readiness_depends_on_selected_material_tools",
     CHECK( can_start( mixed_requirements ) );
 }
 
+TEST_CASE( "proc_other_melee_recipes_require_selected_material_tools",
+           "[proc][recipe][weapon]" )
+{
+    const auto steel_chunk = proc::normalize_part_fact( item( "steel_chunk" ), { .ix = 1 } );
+    const auto rock = proc::normalize_part_fact( item( "rock" ), { .ix = 2 } );
+    const auto stick_long = proc::normalize_part_fact( item( "stick_long" ), { .ix = 3 } );
+    const auto rag = proc::normalize_part_fact( item( "rag" ), { .ix = 4 } );
+
+    SECTION( "axe" ) {
+        const auto rec = load_recipe_from_file( "data/json/recipes/weapon/proc_melee.json",
+                                                "proc_axe_generic" );
+
+        CHECK_FALSE( has_quality_requirement( rec.simple_requirements(), quality_id( "CUT" ), 1 ) );
+        CHECK_FALSE( has_quality_requirement( rec.simple_requirements(), quality_id( "HAMMER" ), 1 ) );
+
+        const auto head_requirements = proc::recipe_requirements( rec, { steel_chunk } );
+        CHECK_FALSE( has_quality_requirement( head_requirements, quality_id( "CUT" ), 1 ) );
+        CHECK( has_quality_requirement( head_requirements, quality_id( "HAMMER" ), 1 ) );
+
+        const auto handle_requirements = proc::recipe_requirements( rec, { stick_long, rag } );
+        CHECK( has_quality_requirement( handle_requirements, quality_id( "CUT" ), 1 ) );
+        CHECK_FALSE( has_quality_requirement( handle_requirements, quality_id( "HAMMER" ), 1 ) );
+
+        const auto mixed_requirements = proc::recipe_requirements( rec, { steel_chunk, stick_long, rag } );
+        CHECK( has_quality_requirement( mixed_requirements, quality_id( "CUT" ), 1 ) );
+        CHECK( has_quality_requirement( mixed_requirements, quality_id( "HAMMER" ), 1 ) );
+    }
+
+    SECTION( "spear" ) {
+        const auto rec = load_recipe_from_file( "data/json/recipes/weapon/proc_melee.json",
+                                                "proc_spear_generic" );
+
+        const auto tip_requirements = proc::recipe_requirements( rec, { rock } );
+        CHECK_FALSE( has_quality_requirement( tip_requirements, quality_id( "CUT" ), 1 ) );
+        CHECK( has_quality_requirement( tip_requirements, quality_id( "HAMMER" ), 1 ) );
+
+        const auto shaft_requirements = proc::recipe_requirements( rec, { stick_long, rag } );
+        CHECK( has_quality_requirement( shaft_requirements, quality_id( "CUT" ), 1 ) );
+        CHECK_FALSE( has_quality_requirement( shaft_requirements, quality_id( "HAMMER" ), 1 ) );
+
+        const auto mixed_requirements = proc::recipe_requirements( rec, { rock, stick_long, rag } );
+        CHECK( has_quality_requirement( mixed_requirements, quality_id( "CUT" ), 1 ) );
+        CHECK( has_quality_requirement( mixed_requirements, quality_id( "HAMMER" ), 1 ) );
+    }
+
+    SECTION( "knife" ) {
+        const auto rec = load_recipe_from_file( "data/json/recipes/weapon/proc_melee.json",
+                                                "proc_knife_generic" );
+
+        const auto blade_requirements = proc::recipe_requirements( rec, { steel_chunk } );
+        CHECK_FALSE( has_quality_requirement( blade_requirements, quality_id( "CUT" ), 1 ) );
+        CHECK( has_quality_requirement( blade_requirements, quality_id( "HAMMER" ), 1 ) );
+
+        const auto handle_requirements = proc::recipe_requirements( rec, { stick_long, rag } );
+        CHECK( has_quality_requirement( handle_requirements, quality_id( "CUT" ), 1 ) );
+        CHECK_FALSE( has_quality_requirement( handle_requirements, quality_id( "HAMMER" ), 1 ) );
+
+        const auto mixed_requirements = proc::recipe_requirements( rec, { steel_chunk, stick_long, rag } );
+        CHECK( has_quality_requirement( mixed_requirements, quality_id( "CUT" ), 1 ) );
+        CHECK( has_quality_requirement( mixed_requirements, quality_id( "HAMMER" ), 1 ) );
+    }
+}
+
+TEST_CASE( "proc_other_melee_recipe_readiness_depends_on_selected_material_tools",
+           "[proc][recipe][weapon]" )
+{
+    clear_all_state();
+    auto &who = get_avatar();
+    auto &here = get_map();
+    who.setpos( tripoint( 60, 60, 0 ) );
+
+    const auto can_start = [&]( const recipe & rec, const requirement_data & reqs ) {
+        who.invalidate_crafting_inventory();
+        return reqs.can_make_with_inventory( who.crafting_inventory(),
+                                             rec.get_component_filter(), 1, cost_adjustment::start_only );
+    };
+
+    SECTION( "axe" ) {
+        const auto rec = load_recipe_from_file( "data/json/recipes/weapon/proc_melee.json",
+                                                "proc_axe_generic" );
+        const auto head_requirements = proc::recipe_requirements( rec, {
+            proc::normalize_part_fact( item( "steel_chunk" ), { .ix = 1 } )
+        } );
+        const auto handle_requirements = proc::recipe_requirements( rec, {
+            proc::normalize_part_fact( item( "stick_long" ), { .ix = 2 } ),
+            proc::normalize_part_fact( item( "rag" ), { .ix = 3 } )
+        } );
+        const auto mixed_requirements = proc::recipe_requirements( rec, {
+            proc::normalize_part_fact( item( "steel_chunk" ), { .ix = 4 } ),
+            proc::normalize_part_fact( item( "stick_long" ), { .ix = 5 } ),
+            proc::normalize_part_fact( item( "rag" ), { .ix = 6 } )
+        } );
+
+        CHECK_FALSE( can_start( rec, head_requirements ) );
+        CHECK_FALSE( can_start( rec, handle_requirements ) );
+        CHECK_FALSE( can_start( rec, mixed_requirements ) );
+
+        here.add_item( who.pos(), item::spawn( itype_id( "knife_butcher" ), calendar::turn ) );
+        CHECK_FALSE( can_start( rec, head_requirements ) );
+        CHECK( can_start( rec, handle_requirements ) );
+        CHECK_FALSE( can_start( rec, mixed_requirements ) );
+
+        here.add_item( who.pos(), item::spawn( itype_id( "hammer" ), calendar::turn ) );
+        CHECK( can_start( rec, head_requirements ) );
+        CHECK( can_start( rec, handle_requirements ) );
+        CHECK( can_start( rec, mixed_requirements ) );
+    }
+
+    clear_all_state();
+    who.setpos( tripoint( 60, 60, 0 ) );
+    auto &spear_map = get_map();
+
+    SECTION( "spear" ) {
+        const auto rec = load_recipe_from_file( "data/json/recipes/weapon/proc_melee.json",
+                                                "proc_spear_generic" );
+        const auto tip_requirements = proc::recipe_requirements( rec, {
+            proc::normalize_part_fact( item( "rock" ), { .ix = 7 } )
+        } );
+        const auto shaft_requirements = proc::recipe_requirements( rec, {
+            proc::normalize_part_fact( item( "stick_long" ), { .ix = 8 } ),
+            proc::normalize_part_fact( item( "rag" ), { .ix = 9 } )
+        } );
+        const auto mixed_requirements = proc::recipe_requirements( rec, {
+            proc::normalize_part_fact( item( "rock" ), { .ix = 10 } ),
+            proc::normalize_part_fact( item( "stick_long" ), { .ix = 11 } ),
+            proc::normalize_part_fact( item( "rag" ), { .ix = 12 } )
+        } );
+
+        CHECK_FALSE( can_start( rec, tip_requirements ) );
+        CHECK_FALSE( can_start( rec, shaft_requirements ) );
+        CHECK_FALSE( can_start( rec, mixed_requirements ) );
+
+        spear_map.add_item( who.pos(), item::spawn( itype_id( "knife_butcher" ), calendar::turn ) );
+        CHECK_FALSE( can_start( rec, tip_requirements ) );
+        CHECK( can_start( rec, shaft_requirements ) );
+        CHECK_FALSE( can_start( rec, mixed_requirements ) );
+
+        spear_map.add_item( who.pos(), item::spawn( itype_id( "hammer" ), calendar::turn ) );
+        CHECK( can_start( rec, tip_requirements ) );
+        CHECK( can_start( rec, shaft_requirements ) );
+        CHECK( can_start( rec, mixed_requirements ) );
+    }
+
+    clear_all_state();
+    who.setpos( tripoint( 60, 60, 0 ) );
+    auto &knife_map = get_map();
+
+    SECTION( "knife" ) {
+        const auto rec = load_recipe_from_file( "data/json/recipes/weapon/proc_melee.json",
+                                                "proc_knife_generic" );
+        const auto blade_requirements = proc::recipe_requirements( rec, {
+            proc::normalize_part_fact( item( "steel_chunk" ), { .ix = 13 } )
+        } );
+        const auto handle_requirements = proc::recipe_requirements( rec, {
+            proc::normalize_part_fact( item( "stick_long" ), { .ix = 14 } ),
+            proc::normalize_part_fact( item( "rag" ), { .ix = 15 } )
+        } );
+        const auto mixed_requirements = proc::recipe_requirements( rec, {
+            proc::normalize_part_fact( item( "steel_chunk" ), { .ix = 16 } ),
+            proc::normalize_part_fact( item( "stick_long" ), { .ix = 17 } ),
+            proc::normalize_part_fact( item( "rag" ), { .ix = 18 } )
+        } );
+
+        CHECK_FALSE( can_start( rec, blade_requirements ) );
+        CHECK_FALSE( can_start( rec, handle_requirements ) );
+        CHECK_FALSE( can_start( rec, mixed_requirements ) );
+
+        knife_map.add_item( who.pos(), item::spawn( itype_id( "knife_butcher" ), calendar::turn ) );
+        CHECK_FALSE( can_start( rec, blade_requirements ) );
+        CHECK( can_start( rec, handle_requirements ) );
+        CHECK_FALSE( can_start( rec, mixed_requirements ) );
+
+        knife_map.add_item( who.pos(), item::spawn( itype_id( "hammer" ), calendar::turn ) );
+        CHECK( can_start( rec, blade_requirements ) );
+        CHECK( can_start( rec, handle_requirements ) );
+        CHECK( can_start( rec, mixed_requirements ) );
+    }
+}
+
 TEST_CASE( "proc_recipe_fields_parse", "[proc][recipe]" )
 {
     const auto rec = load_test_recipe( R"(

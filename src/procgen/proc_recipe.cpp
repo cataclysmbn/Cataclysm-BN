@@ -1,6 +1,7 @@
 #include "procgen/proc_recipe.h"
 
 #include <algorithm>
+#include <array>
 #include <ranges>
 
 #include "itype.h"
@@ -11,7 +12,9 @@ namespace
 
 static const flag_id flag_RAW( "RAW" );
 static const material_id material_bone( "bone" );
+static const material_id material_copper( "copper" );
 static const material_id material_iron( "iron" );
+static const material_id material_stone( "stone" );
 static const material_id material_steel( "steel" );
 static const material_id material_wood( "wood" );
 
@@ -49,30 +52,42 @@ auto stew_tool_requirements( const std::vector<proc::part_fact> &facts ) -> requ
     }, {} );
 }
 
-auto sword_requires_cutting( const std::vector<proc::part_fact> &facts ) -> bool
+auto melee_weapon_requires_cutting( const std::vector<proc::part_fact> &facts ) -> bool
 {
     return std::ranges::any_of( facts, []( const proc::part_fact & fact ) {
         return has_material( fact, material_wood ) || has_material( fact, material_bone );
     } );
 }
 
-auto sword_requires_hammering( const std::vector<proc::part_fact> &facts ) -> bool
+auto melee_weapon_requires_hammering( const std::vector<proc::part_fact> &facts ) -> bool
 {
     return std::ranges::any_of( facts, []( const proc::part_fact & fact ) {
-        return has_material( fact, material_steel ) || has_material( fact, material_iron );
+        return has_material( fact, material_steel ) || has_material( fact, material_iron ) ||
+               has_material( fact, material_copper ) || has_material( fact, material_stone );
     } );
 }
 
-auto sword_tool_requirements( const std::vector<proc::part_fact> &facts ) -> requirement_data
+auto melee_weapon_tool_requirements( const std::vector<proc::part_fact> &facts ) -> requirement_data
 {
     auto qualities = std::vector<std::vector<quality_requirement>> {};
-    if( sword_requires_cutting( facts ) ) {
+    if( melee_weapon_requires_cutting( facts ) ) {
         qualities.push_back( { quality_requirement( quality_id( "CUT" ), 1, 1 ) } );
     }
-    if( sword_requires_hammering( facts ) ) {
+    if( melee_weapon_requires_hammering( facts ) ) {
         qualities.push_back( { quality_requirement( quality_id( "HAMMER" ), 1, 1 ) } );
     }
     return requirement_data( {}, qualities, {} );
+}
+
+auto is_melee_weapon_proc( const recipe &rec ) -> bool
+{
+    static const auto melee_weapon_proc_ids = std::array {
+        proc::schema_id( "sword" ),
+        proc::schema_id( "axe" ),
+        proc::schema_id( "spear" ),
+        proc::schema_id( "knife" ),
+    };
+    return std::ranges::find( melee_weapon_proc_ids, rec.proc_id() ) != melee_weapon_proc_ids.end();
 }
 
 } // namespace
@@ -87,8 +102,8 @@ auto proc::recipe_requirements( const recipe &rec,
 
     if( rec.proc_id() == proc::schema_id( "stew" ) ) {
         reqs = reqs + stew_tool_requirements( facts );
-    } else if( rec.proc_id() == proc::schema_id( "sword" ) ) {
-        reqs = reqs + sword_tool_requirements( facts );
+    } else if( is_melee_weapon_proc( rec ) ) {
+        reqs = reqs + melee_weapon_tool_requirements( facts );
     }
 
     return reqs;
