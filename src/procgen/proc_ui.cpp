@@ -24,6 +24,7 @@
 #include "procgen/proc_ui_input.h"
 #include "procgen/proc_ui_slot_indicator.h"
 #include "procgen/proc_ui_text.h"
+#include "string_input_popup.h"
 #include "string_formatter.h"
 #include "string_utils.h"
 #include "translations.h"
@@ -356,10 +357,10 @@ auto preview_item_from_state( const proc::builder_state &state, const proc::sche
     } );
 }
 
-auto preview_compare_lines( const proc::schema &sch, const proc::builder_state &state,
-                            const proc::fast_blob &preview_blob,
-                            const std::vector<source_entry> &sources,
-                            const recipe &rec ) -> std::vector<std::string>
+auto preview_item_info( const proc::schema &sch, const proc::builder_state &state,
+                        const proc::fast_blob &preview_blob,
+                        const std::vector<source_entry> &sources,
+                        const recipe &rec, int &preview_scroll ) -> item_info_data
 {
     auto preview_state = state;
     preview_state.fast = preview_blob;
@@ -370,11 +371,16 @@ auto preview_compare_lines( const proc::schema &sch, const proc::builder_state &
         compare_info = compare_item->info();
     }
 
-    auto lines = string_split( format_item_info( display_item->info(), compare_info ), '\n' );
-    if( lines.empty() ) {
-        return preview_lines( sch, state, preview_blob, sources );
-    }
-    return lines;
+    auto data = item_info_data( display_item->tname(), std::string {}, display_item->info(),
+                                compare_info,
+                                preview_scroll );
+    data.without_getch = true;
+    data.without_border = true;
+    data.use_full_win = true;
+    data.scrollbar_left = false;
+    data.any_input = false;
+    data.padding = 0;
+    return data;
 }
 
 auto clear_slot( proc::builder_state &state, const proc::slot_id &slot ) -> void
@@ -421,18 +427,20 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
     } );
     auto slot_cursor = 0;
     auto focus = panel_focus::slots;
-    auto search_return_focus = panel_focus::candidates;
     auto search_query = std::string {};
     auto status = std::string {};
     auto w = catacurses::window {};
     auto ui = ui_adaptor( ui_adaptor::disable_uis_below {} );
     auto width = TERMX;
     auto height = TERMY;
+    auto window_origin = point_zero;
+    auto preview_scroll = 0;
 
     const auto resize_cb = [&]( ui_adaptor & adaptor ) {
         width = std::clamp( TERMX - 2, 80, TERMX );
         height = std::clamp( TERMY - 2, 24, TERMY );
         const auto start = point( ( TERMX - width ) / 2, ( TERMY - height ) / 2 );
+        window_origin = start;
         w = catacurses::newwin( height, width, start );
         adaptor.position_from_window( w );
     };
@@ -483,9 +491,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         trim_and_print( w, point( left_width + middle_width + 5, content_top - 1 ), right_width - 1,
                         c_light_gray, _( "[3. Preview ]" ) );
         trim_and_print( w, point( left_width + 3, search_row ), middle_width - 2,
-                        focus == panel_focus::search ? c_yellow : c_light_gray,
-                        string_format( _( "Search: /%s%s" ), search_query,
-                                       focus == panel_focus::search ? "_" : "" ) );
+                        c_light_gray, string_format( _( "Search: /%s" ), search_query ) );
 
         auto slot_start = 0;
         calcStartPos( slot_start, slot_cursor, content_height, static_cast<int>( sch.slots.size() ) );
@@ -514,21 +520,10 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
                             color, proc::grouped_candidate_label( candidates[static_cast<size_t>( row )] ) );
         } );
 
-        auto preview = std::vector<std::string> {};
-        std::ranges::for_each( preview_compare_lines( sch, state, preview_blob, source_data.entries, rec ),
-        [&]( const std::string & line ) {
-            const auto wrapped = foldstring( line, right_width - 1 );
-            if( wrapped.empty() ) {
-                preview.push_back( std::string() );
-                return;
-            }
-            std::ranges::copy( wrapped, std::back_inserter( preview ) );
-        } );
-        const auto preview_end = std::min( static_cast<int>( preview.size() ), content_height );
-        std::ranges::for_each( std::views::iota( 0, preview_end ), [&]( const int row ) {
-            trim_and_print( w, point( left_width + middle_width + 5, list_top + row ), right_width - 1,
-                            c_white, preview[static_cast<size_t>( row )] );
-        } );
+        auto preview_data = preview_item_info( sch, state, preview_blob, source_data.entries, rec,
+                                               preview_scroll );
+        draw_item_info( window_origin.x + left_width + middle_width + 4, right_width + 1,
+                        window_origin.y + list_top, content_height, preview_data );
 
         const auto recipe_requirements = current_recipe_requirement_status( who, rec,
                                          proc::selected_facts( state ) );
@@ -564,7 +559,6 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
     ctxt.register_action( "CONFIRM", to_translation( "Add selected candidate" ) );
     ctxt.register_action( "QUIT", to_translation( "Cancel" ) );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-    ctxt.register_action( "ANY_INPUT" );
 
     while( true ) {
         ui_manager::redraw();
@@ -581,21 +575,18 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         }
         status.clear();
 
-        if( const auto search_input = proc::handle_builder_search_input( {
-        .focus = focus,
-        .return_focus = search_return_focus,
-        .action = action,
-        .ch = ch,
-        .text = evt.text,
-        .search_query = search_query,
-    } ); search_input.handled ) {
-            focus = search_input.focus;
-            search_return_focus = search_input.return_focus;
-            search_query = search_input.search_query;
-            continue;
-        }
         if( action == "QUIT" ) {
             return std::nullopt;
+        }
+        if( ch == '/' ) {
+            search_query = string_input_popup()
+                           .title( _( "Search term:" ) )
+                           .description( _( "Filter candidates by item text or tag atoms like tag:fish." ) )
+                           .identifier( "proc_builder" )
+                           .text( search_query )
+                           .query_string();
+            focus = panel_focus::candidates;
+            continue;
         }
         if( action == "LEFT" ) {
             focus = panel_focus::slots;
