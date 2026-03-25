@@ -2346,5 +2346,30 @@
     "type": "recipe",
     "result": "sword_bone",
     "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "spear_spike",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "spear_knife",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "spear_knife_superior",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "spear_stone",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "spear_steel",
+    "obsolete": true
   }
 ]

@@ -457,6 +457,83 @@ TEST_CASE( "legacy_sword_ids_migrate_to_proc_uncraft_recipe", "[proc][payload][m
     } );
 }
 
+TEST_CASE( "legacy_spear_items_restore_proc_payloads_after_migration",
+           "[proc][payload][migration]" )
+{
+    struct legacy_spear_case {
+        itype_id id;
+        int tips = 0;
+        int shafts = 0;
+        int bindings = 0;
+        int sticks = 0;
+        int rocks = 0;
+        int steel_chunks = 0;
+        int knives = 0;
+        int spikes = 0;
+        int strings = 0;
+    };
+
+    const auto cases = std::vector<legacy_spear_case> {
+        legacy_spear_case{ .id = itype_id( "spear_spike" ), .tips = 1, .shafts = 1, .bindings = 1, .sticks = 1, .spikes = 1, .strings = 1 },
+        legacy_spear_case{ .id = itype_id( "spear_knife" ), .tips = 1, .shafts = 1, .bindings = 1, .sticks = 1, .knives = 1, .strings = 1 },
+        legacy_spear_case{ .id = itype_id( "spear_knife_superior" ), .tips = 1, .shafts = 1, .bindings = 1, .sticks = 1, .knives = 1, .strings = 1 },
+        legacy_spear_case{ .id = itype_id( "spear_stone" ), .tips = 1, .shafts = 1, .bindings = 1, .sticks = 1, .rocks = 1, .strings = 1 },
+        legacy_spear_case{ .id = itype_id( "spear_steel" ), .tips = 1, .shafts = 1, .bindings = 1, .sticks = 1, .steel_chunks = 1, .strings = 1 }
+    };
+
+    std::ranges::for_each( cases, [&]( const legacy_spear_case & test_case ) {
+        const auto legacy = item( test_case.id, calendar::turn );
+        const auto restored = round_trip( legacy );
+
+        INFO( test_case.id.str() );
+        const auto payload = proc::read_payload( *restored );
+        REQUIRE( payload );
+        CHECK( payload->id == proc::schema_id( "spear" ) );
+        CHECK( payload->mode == proc::hist::compact );
+        CHECK( payload->fp == "spear:legacy:" + test_case.id.str() );
+        CHECK( item_controller->migrate_id( test_case.id ) == itype_id( "proc_spear_generic" ) );
+        CHECK( restored->typeId() == itype_id( "proc_spear_generic" ) );
+        CHECK( restored->type_name() == legacy.type_name() );
+        CHECK( payload->blob.name == legacy.type_name() );
+        CHECK( payload->blob.description == legacy.type->description.translated() );
+        CHECK( payload->blob.mass_g == units::to_gram( legacy.weight() ) );
+        CHECK( payload->blob.volume_ml == units::to_milliliter( legacy.volume() ) );
+        CHECK( units::to_gram( restored->weight() ) == units::to_gram( legacy.weight() ) );
+        CHECK( restored->volume() == legacy.volume() );
+        CHECK( payload->blob.melee.bash == legacy.damage_melee( DT_BASH ) );
+        CHECK( payload->blob.melee.cut == legacy.damage_melee( DT_CUT ) );
+        CHECK( payload->blob.melee.stab == legacy.damage_melee( DT_STAB ) );
+        CHECK( role_count( *payload, "tip" ) == test_case.tips );
+        CHECK( role_count( *payload, "shaft" ) == test_case.shafts );
+        CHECK( role_count( *payload, "binding" ) == test_case.bindings );
+        CHECK( part_count( *payload, itype_id( "stick_long" ) ) == test_case.sticks );
+        CHECK( part_count( *payload, itype_id( "rock" ) ) == test_case.rocks );
+        CHECK( part_count( *payload, itype_id( "steel_chunk" ) ) == test_case.steel_chunks );
+        CHECK( part_count( *payload, itype_id( "knife_hunting" ) ) == test_case.knives );
+        CHECK( part_count( *payload, itype_id( "spike" ) ) == test_case.spikes );
+        CHECK( part_count( *payload, itype_id( "string_36" ) ) == test_case.strings );
+    } );
+}
+
+TEST_CASE( "legacy_spear_ids_migrate_to_proc_uncraft_recipe", "[proc][payload][migration]" )
+{
+    CHECK( recipe_dictionary::get_uncraft( itype_id( "proc_spear_generic" ) ) );
+
+    const auto cases = std::vector<itype_id> {
+        itype_id( "spear_spike" ),
+        itype_id( "spear_knife" ),
+        itype_id( "spear_knife_superior" ),
+        itype_id( "spear_stone" ),
+        itype_id( "spear_steel" )
+    };
+
+    std::ranges::for_each( cases, [&]( const itype_id & test_case ) {
+        INFO( test_case.str() );
+        CHECK( item_controller->migrate_id( test_case ) == itype_id( "proc_spear_generic" ) );
+        CHECK( recipe_dictionary::get_uncraft( item_controller->migrate_id( test_case ) ) );
+    } );
+}
+
 TEST_CASE( "legacy_sandwich_ids_migrate_to_proc_uncraft_recipe", "[proc][payload][migration]" )
 {
     CHECK( recipe_dictionary::get_uncraft( itype_id( "sandwich_generic" ) ) );

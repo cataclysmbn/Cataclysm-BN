@@ -33,6 +33,12 @@ struct legacy_weapon_part_spec {
     itype_id id = itype_id::NULL_ID();
 };
 
+struct legacy_weapon_spec {
+    proc::schema_id schema = proc::schema_id::NULL_ID();
+    std::string fp_prefix;
+    std::vector<legacy_weapon_part_spec> parts;
+};
+
 inline constexpr auto proc_var_key = std::string_view { "proc" };
 inline constexpr auto proc_craft_var_key = std::string_view { "proc_craft" };
 
@@ -280,50 +286,125 @@ auto legacy_sandwich_specs( const itype_id &id ) -> std::vector<legacy_sandwich_
     return {};
 }
 
-auto legacy_weapon_specs( const itype_id &id ) -> std::vector<legacy_weapon_part_spec>
+auto legacy_weapon_specs( const itype_id &id ) -> std::optional<legacy_weapon_spec>
 {
     if( id == itype_id( "sword_metal" ) ) {
-        return {
-            legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "steel_chunk" ) },
-            legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "steel_chunk" ) },
-            legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "leather" ) }
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "sword" ),
+            .fp_prefix = "sword",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "steel_chunk" ) },
+                legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "steel_chunk" ) },
+                legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "leather" ) }
+            }
         };
     }
     if( id == itype_id( "sword_wood" ) ) {
-        return {
-            legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "rag" ) }
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "sword" ),
+            .fp_prefix = "sword",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "rag" ) }
+            }
         };
     }
     if( id == itype_id( "sword_nail" ) ) {
-        return {
-            legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "rag" ) },
-            legacy_weapon_part_spec{ .role = "reinforcement", .id = itype_id( "nail" ) }
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "sword" ),
+            .fp_prefix = "sword",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "rag" ) },
+                legacy_weapon_part_spec{ .role = "reinforcement", .id = itype_id( "nail" ) }
+            }
         };
     }
     if( id == itype_id( "sword_crude" ) ) {
-        return {
-            legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "rag" ) },
-            legacy_weapon_part_spec{ .role = "reinforcement", .id = itype_id( "scrap" ) }
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "sword" ),
+            .fp_prefix = "sword",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "guard", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "rag" ) },
+                legacy_weapon_part_spec{ .role = "reinforcement", .id = itype_id( "scrap" ) }
+            }
         };
     }
     if( id == itype_id( "sword_bone" ) ) {
-        return {
-            legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "bone" ) },
-            legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
-            legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "leather" ) }
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "sword" ),
+            .fp_prefix = "sword",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "blade", .id = itype_id( "bone" ) },
+                legacy_weapon_part_spec{ .role = "handle", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "grip", .id = itype_id( "leather" ) }
+            }
         };
     }
-    return {};
+    if( id == itype_id( "spear_spike" ) ) {
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "spear" ),
+            .fp_prefix = "spear",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "tip", .id = itype_id( "spike" ) },
+                legacy_weapon_part_spec{ .role = "shaft", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "binding", .id = itype_id( "string_36" ) }
+            }
+        };
+    }
+    if( id == itype_id( "spear_knife" ) ) {
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "spear" ),
+            .fp_prefix = "spear",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "tip", .id = itype_id( "knife_hunting" ) },
+                legacy_weapon_part_spec{ .role = "shaft", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "binding", .id = itype_id( "string_36" ) }
+            }
+        };
+    }
+    if( id == itype_id( "spear_knife_superior" ) ) {
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "spear" ),
+            .fp_prefix = "spear",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "tip", .id = itype_id( "knife_hunting" ) },
+                legacy_weapon_part_spec{ .role = "shaft", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "binding", .id = itype_id( "string_36" ) }
+            }
+        };
+    }
+    if( id == itype_id( "spear_stone" ) ) {
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "spear" ),
+            .fp_prefix = "spear",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "tip", .id = itype_id( "rock" ) },
+                legacy_weapon_part_spec{ .role = "shaft", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "binding", .id = itype_id( "string_36" ) }
+            }
+        };
+    }
+    if( id == itype_id( "spear_steel" ) ) {
+        return legacy_weapon_spec{
+            .schema = proc::schema_id( "spear" ),
+            .fp_prefix = "spear",
+            .parts = {
+                legacy_weapon_part_spec{ .role = "tip", .id = itype_id( "steel_chunk" ) },
+                legacy_weapon_part_spec{ .role = "shaft", .id = itype_id( "stick_long" ) },
+                legacy_weapon_part_spec{ .role = "binding", .id = itype_id( "string_36" ) }
+            }
+        };
+    }
+    return std::nullopt;
 }
 
 auto to_json( JsonOut &jsout, const proc::part_fact &fact ) -> void
@@ -679,24 +760,25 @@ auto legacy_sandwich_payload( const item &it,
 auto legacy_weapon_payload( const item &,
                             const itype_id &legacy_id ) -> std::optional<payload>
 {
-    const auto specs = legacy_weapon_specs( legacy_id );
-    if( specs.empty() ) {
+    const auto spec = legacy_weapon_specs( legacy_id );
+    if( !spec ) {
         return std::nullopt;
     }
 
     auto facts = std::vector<part_fact> {};
     auto slots = std::vector<slot_id> {};
-    facts.reserve( specs.size() );
-    slots.reserve( specs.size() );
-    std::ranges::for_each( std::views::iota( size_t{ 0 }, specs.size() ), [&]( const size_t idx ) {
-        facts.push_back( make_legacy_weapon_fact( specs[idx], static_cast<part_ix>( idx ) ) );
-        slots.push_back( slot_id( specs[idx].role ) );
+    facts.reserve( spec->parts.size() );
+    slots.reserve( spec->parts.size() );
+    std::ranges::for_each( std::views::iota( size_t{ 0 }, spec->parts.size() ), [&](
+    const size_t idx ) {
+        facts.push_back( make_legacy_weapon_fact( spec->parts[idx], static_cast<part_ix>( idx ) ) );
+        slots.push_back( slot_id( spec->parts[idx].role ) );
     } );
 
     auto out = payload{};
-    out.id = schema_id( "sword" );
+    out.id = spec->schema;
     out.mode = hist::compact;
-    out.fp = "sword:legacy:" + legacy_id.str();
+    out.fp = spec->fp_prefix + ":legacy:" + legacy_id.str();
     out.blob = default_weapon_blob( legacy_id );
     out.parts = make_compact_parts( facts, slots );
     return out;
