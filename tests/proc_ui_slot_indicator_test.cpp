@@ -10,8 +10,8 @@ TEST_CASE( "proc_ui_slot_indicator_uses_ascii_cells_for_required_and_optional_sl
         .max = 3,
     };
 
-    CHECK( proc::slot_indicator( slot, 0 ) == "[_ _ .]" );
-    CHECK( proc::slot_indicator( slot, 1 ) == "[# _ .]" );
+    CHECK( proc::slot_indicator( slot, 0 ) == "[! ! .]" );
+    CHECK( proc::slot_indicator( slot, 1 ) == "[# ! .]" );
     CHECK( proc::slot_indicator( slot, 2 ) == "[# # .]" );
     CHECK( proc::slot_indicator( slot, 3 ) == "[# # #]" );
 }

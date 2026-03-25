@@ -1,10 +1,33 @@
 #include "catch/catch.hpp"
 
+#include <filesystem>
 #include <vector>
 
 #include "catalua_impl.h"
+#include "catalua_loader.h"
 #include "catalua_sol.h"
 #include "procgen/proc_item.h"
+
+TEST_CASE( "proc_lua_can_publish_procgen_to_globals", "[proc][lua]" )
+{
+    auto lua = make_lua_state();
+    auto game = lua.create_table();
+    game["current_mod_path"] = std::filesystem::absolute( "data/json" ).string();
+    lua["game"] = game;
+    const auto script = std::filesystem::absolute( "data/json/procgen.lua" );
+    const auto guard = cata::lua_loader::script_context_guard { script };
+    lua.script( R"(
+        _G.procgen = require("./procgen")
+    )" );
+
+    const auto procgen = lua.globals().get_or<sol::object>( "procgen", sol::lua_nil );
+    REQUIRE( procgen != sol::lua_nil );
+    REQUIRE( procgen.is<sol::table>() );
+    const auto food = procgen.as<sol::table>().get_or<sol::object>( "food", sol::lua_nil );
+    REQUIRE( food != sol::lua_nil );
+    REQUIRE( food.is<sol::table>() );
+    CHECK( food.as<sol::table>().get_or<sol::object>( "name", sol::lua_nil ).is<sol::function>() );
+}
 
 TEST_CASE( "proc_lua_full_bridge_reads_named_function", "[proc][lua]" )
 {

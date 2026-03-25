@@ -359,7 +359,7 @@ auto preview_item_from_state( const proc::builder_state &state, const proc::sche
 
 auto preview_item_info( const proc::schema &sch, const proc::builder_state &state,
                         const proc::fast_blob &preview_blob,
-                        const std::vector<source_entry> &sources,
+                        const std::vector<source_entry> &,
                         const recipe &rec, int &preview_scroll ) -> item_info_data
 {
     auto preview_state = state;
@@ -520,11 +520,6 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
                             color, proc::grouped_candidate_label( candidates[static_cast<size_t>( row )] ) );
         } );
 
-        auto preview_data = preview_item_info( sch, state, preview_blob, source_data.entries, rec,
-                                               preview_scroll );
-        draw_item_info( window_origin.x + left_width + middle_width + 4, right_width + 1,
-                        window_origin.y + list_top, content_height, preview_data );
-
         const auto recipe_requirements = current_recipe_requirement_status( who, rec,
                                          proc::selected_facts( state ) );
 
@@ -538,11 +533,16 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
                         proc::builder_readiness_label( readiness ) );
         const auto idle_status = readiness == proc::builder_readiness::missing_recipe_requirements ?
                                  proc::compact_requirement_text( recipe_requirements.missing ) :
-                                 _( "[Arrows] Navigate  [/] Search  [Enter] Add/Remove  [f] Craft  [Esc] Cancel" );
+                                 _( "[Arrows] Navigate  [/] Search  [Enter] Add  [r] Remove  [c] Clear  [f] Craft  [Esc] Cancel" );
         trim_and_print( w, point( 2, height - 2 ), width - 4, c_light_gray,
                         status.empty() ? idle_status :
                         status );
         wnoutrefresh( w );
+
+        auto preview_data = preview_item_info( sch, state, preview_blob, source_data.entries, rec,
+                                               preview_scroll );
+        draw_item_info( window_origin.x + left_width + middle_width + 4, right_width + 1,
+                        window_origin.y + list_top, content_height, preview_data );
     } );
     ui.mark_resize();
     g->invalidate_main_ui_adaptor();
@@ -559,6 +559,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
     ctxt.register_action( "CONFIRM", to_translation( "Add selected candidate" ) );
     ctxt.register_action( "QUIT", to_translation( "Cancel" ) );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "ANY_INPUT" );
 
     while( true ) {
         ui_manager::redraw();
@@ -578,7 +579,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         if( action == "QUIT" ) {
             return std::nullopt;
         }
-        if( ch == '/' ) {
+        if( action == "ANY_INPUT" && ch == '/' ) {
             search_query = string_input_popup()
                            .title( _( "Search term:" ) )
                            .description( _( "Filter candidates by item text or tag atoms like tag:fish." ) )
@@ -636,7 +637,7 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             }
             continue;
         }
-        if( ch == 'r' ) {
+        if( ch == 'r' || ch == KEY_BACKSPACE || ch == KEY_DC ) {
             status = proc::remove_last_pick( state, slot.id ) ? _( "Removed last pick." ) :
                      _( "Slot is already empty." );
             continue;
