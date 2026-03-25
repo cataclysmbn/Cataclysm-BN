@@ -68,6 +68,7 @@
       [ "juice", 35 ],
       [ "cranberry_juice", 35 ],
       [ "cola", 50 ],
+      [ "zero_cola", 50 ],
       [ "lemonlime", 45 ],
       [ "V8", 15 ],
       [ "gum", 15 ]
@@ -104,6 +105,7 @@
       [ "energy_drink_atomic", 4 ],
       { "group": "softdrinks_canned", "prob": 70 },
       { "item": "cola", "prob": 70, "container-item": "bottle_plastic" },
+      { "item": "zero_cola", "prob": 70, "container-item": "bottle_plastic" },
       { "item": "rootbeer", "prob": 20, "container-item": "bottle_plastic" },
       { "item": "creamsoda", "prob": 60, "container-item": "bottle_plastic" },
       { "item": "lemonlime", "prob": 60, "container-item": "bottle_plastic" },

@@ -2787,6 +2787,7 @@
       [ "water_clean", 80 ],
       [ "water_mineral", 5 ],
       [ "cola", 70 ],
+      [ "zero_cola", 70 ],
       [ "creamsoda", 60 ],
       [ "lemonlime", 60 ],
       [ "orangesoda", 60 ],
