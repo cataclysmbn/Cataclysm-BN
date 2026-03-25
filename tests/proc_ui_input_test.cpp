@@ -1,7 +1,7 @@
 #include "catch/catch.hpp"
 
 #include "input.h"
-#include "proc_ui_input.h"
+#include "procgen/proc_ui_input.h"
 
 TEST_CASE( "proc_builder_enters_search_mode_from_builder_panels", "[proc][ui]" )
 {

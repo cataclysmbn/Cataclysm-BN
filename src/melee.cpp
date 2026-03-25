@@ -58,7 +58,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "projectile.h"
-#include "proc_item.h"
+#include "procgen/proc_item.h"
 #include "rng.h"
 #include "sounds.h"
 #include "string_formatter.h"

@@ -86,7 +86,7 @@
 #include "overmap_location.h"
 #include "overmap_special.h"
 #include "profession.h"
-#include "proc_schema.h"
+#include "procgen/proc_schema.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
 #include "regional_settings.h"

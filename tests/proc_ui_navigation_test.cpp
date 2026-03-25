@@ -1,6 +1,6 @@
 #include "catch/catch.hpp"
 
-#include "proc_ui_navigation.h"
+#include "procgen/proc_ui_navigation.h"
 
 TEST_CASE( "proc_builder_wrap_cursor_wraps_at_top_and_bottom", "[proc][ui]" )
 {

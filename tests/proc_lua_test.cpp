@@ -4,7 +4,7 @@
 
 #include "catalua_impl.h"
 #include "catalua_sol.h"
-#include "proc_item.h"
+#include "procgen/proc_item.h"
 
 TEST_CASE( "proc_lua_full_bridge_reads_named_function", "[proc][lua]" )
 {

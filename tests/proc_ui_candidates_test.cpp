@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "proc_ui_candidates.h"
+#include "procgen/proc_ui_candidates.h"
 
 TEST_CASE( "proc_ui_groups_duplicate_candidates_in_first_seen_order", "[proc][ui]" )
 {

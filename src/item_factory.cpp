@@ -37,7 +37,7 @@
 #include "item.h"
 #include "item_contents.h"
 #include "item_group.h"
-#include "proc_item.h"
+#include "procgen/proc_item.h"
 #include "iuse_actor.h"
 #include "json.h"
 #include "point.h"

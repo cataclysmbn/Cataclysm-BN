@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "json.h"
-#include "proc_schema.h"
+#include "procgen/proc_schema.h"
 
 namespace
 {

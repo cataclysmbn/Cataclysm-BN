@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "enum_conversions.h"
-#include "proc_types.h"
+#include "procgen/proc_types.h"
 #include "type_id.h"
 
 TEST_CASE( "proc_hist_round_trip", "[proc]" )

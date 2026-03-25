@@ -1,6 +1,6 @@
 #include "catch/catch.hpp"
 
-#include "proc_ui_slot_indicator.h"
+#include "procgen/proc_ui_slot_indicator.h"
 
 TEST_CASE( "proc_ui_slot_indicator_uses_ascii_cells_for_required_and_optional_slots", "[proc][ui]" )
 {

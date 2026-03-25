@@ -10,10 +10,10 @@
 #include "calendar.h"
 #include "item.h"
 #include "json.h"
-#include "proc_builder.h"
-#include "proc_fact.h"
-#include "proc_item.h"
-#include "proc_schema.h"
+#include "procgen/proc_builder.h"
+#include "procgen/proc_fact.h"
+#include "procgen/proc_item.h"
+#include "procgen/proc_schema.h"
 #include "recipe_dictionary.h"
 
 namespace

@@ -9,7 +9,7 @@
 #include "item_factory.h"
 #include "json.h"
 #include "json_assertion_helpers.h"
-#include "proc_item.h"
+#include "procgen/proc_item.h"
 #include "recipe_dictionary.h"
 #include "units_mass.h"
 #include "units_volume.h"
