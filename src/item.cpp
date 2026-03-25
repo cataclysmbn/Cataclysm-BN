@@ -85,7 +85,7 @@
 #include "overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
-#include "proc_item.h"
+#include "procgen/proc_item.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "point.h"

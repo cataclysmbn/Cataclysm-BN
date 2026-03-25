@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "proc_ui_text.h"
+#include "procgen/proc_ui_text.h"
 
 TEST_CASE( "proc_ui_groups_duplicate_labels_in_first_seen_order", "[proc][ui]" )
 {

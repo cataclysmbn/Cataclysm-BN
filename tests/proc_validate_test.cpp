@@ -1,9 +1,9 @@
 #include "catch/catch.hpp"
 
 #include "item.h"
-#include "proc_builder.h"
-#include "proc_fact.h"
-#include "proc_item.h"
+#include "procgen/proc_builder.h"
+#include "procgen/proc_fact.h"
+#include "procgen/proc_item.h"
 #include "proc_test_utils.h"
 
 TEST_CASE( "proc_validate_trail_mix_rejects_only_chocolate", "[proc][validate]" )
@@ -27,7 +27,7 @@ TEST_CASE( "proc_validate_trail_mix_rejects_only_chocolate", "[proc][validate]" 
     proc::add_pick( builder, sch, proc::slot_id( "sweet" ), 2 );
 
     const auto valid = proc::validate_selection( sch, proc::selected_facts( builder ), builder.fast,
-                       { .state = &state } );
+    { .state = &state } );
     CHECK_FALSE( valid.has_value() );
     CHECK( valid.error() == "Trail mix can not be made from only chocolate." );
 }

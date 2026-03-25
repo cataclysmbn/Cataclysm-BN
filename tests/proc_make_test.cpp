@@ -3,9 +3,9 @@
 #include <vector>
 
 #include "item.h"
-#include "proc_fact.h"
-#include "proc_item.h"
-#include "proc_schema.h"
+#include "procgen/proc_fact.h"
+#include "procgen/proc_item.h"
+#include "procgen/proc_schema.h"
 #include "proc_test_utils.h"
 
 namespace

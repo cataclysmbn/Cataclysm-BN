@@ -42,7 +42,7 @@
 #include "output.h"
 #include "player.h"
 #include "point.h"
-#include "proc_recipe.h"
+#include "procgen/proc_recipe.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"

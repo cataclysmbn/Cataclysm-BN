@@ -10,8 +10,8 @@
 #include "item.h"
 #include "json.h"
 #include "map.h"
-#include "proc_fact.h"
-#include "proc_recipe.h"
+#include "procgen/proc_fact.h"
+#include "procgen/proc_recipe.h"
 #include "state_helpers.h"
 #include "recipe.h"
 

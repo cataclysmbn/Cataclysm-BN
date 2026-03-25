@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "procgen/proc_types.h"
 #include "requirements.h"
 #include "translations.h"
 #include "type_id.h"

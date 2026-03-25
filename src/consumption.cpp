@@ -37,7 +37,7 @@
 #include "mutation.h"
 #include "options.h"
 #include "pldata.h"
-#include "proc_item.h"
+#include "procgen/proc_item.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"

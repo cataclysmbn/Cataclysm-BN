@@ -9,8 +9,8 @@
 #include "item.h"
 #include "json.h"
 #include "martialarts.h"
-#include "proc_item.h"
-#include "proc_schema.h"
+#include "procgen/proc_item.h"
+#include "procgen/proc_schema.h"
 
 namespace
 {

@@ -1,6 +1,6 @@
 #include "recipe_dictionary.h"
 
-#include "proc_builder.h"
+#include "procgen/proc_builder.h"
 
 #include <algorithm>
 #include <iterator>
