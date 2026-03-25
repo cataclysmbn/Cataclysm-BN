@@ -1,5 +1,6 @@
 #include "procgen/proc_ui_input.h"
 
+#include <algorithm>
 #include <array>
 #include <string_view>
 
@@ -17,6 +18,16 @@ auto is_search_navigation_action( const std::string &action ) -> bool
     return std::ranges::any_of( search_navigation_actions, [&]( const std::string_view candidate ) {
         return action == candidate;
     } );
+}
+
+auto is_builder_up_action( const std::string &action ) -> bool
+{
+    return action == "UP" || action == "SCROLL_UP";
+}
+
+auto is_builder_down_action( const std::string &action ) -> bool
+{
+    return action == "DOWN" || action == "SCROLL_DOWN";
 }
 
 } // namespace
@@ -90,9 +101,9 @@ builder_slot_navigation_result
     }
 
     auto next_cursor = opts.slot_cursor;
-    if( opts.action == "UP" ) {
+    if( is_builder_up_action( opts.action ) ) {
         next_cursor = wrap_cursor( opts.slot_cursor, -1, opts.slot_count );
-    } else if( opts.action == "DOWN" ) {
+    } else if( is_builder_down_action( opts.action ) ) {
         next_cursor = wrap_cursor( opts.slot_cursor, 1, opts.slot_count );
     } else if( opts.action == "HOME" ) {
         next_cursor = 0;
@@ -107,6 +118,52 @@ builder_slot_navigation_result
     if( next_cursor != opts.slot_cursor ) {
         result.search_query.clear();
     }
+    return result;
+}
+
+auto handle_builder_candidate_navigation( const builder_candidate_navigation_options &opts ) ->
+builder_candidate_navigation_result
+{
+    auto result = builder_candidate_navigation_result{
+        .candidate_cursor = opts.candidate_cursor,
+    };
+
+    if( opts.focus != builder_focus::candidates || opts.candidate_count <= 0 ) {
+        return result;
+    }
+
+    if( is_builder_up_action( opts.action ) ) {
+        result.handled = true;
+        result.candidate_cursor = wrap_cursor( opts.candidate_cursor, -1, opts.candidate_count );
+        return result;
+    }
+    if( is_builder_down_action( opts.action ) ) {
+        result.handled = true;
+        result.candidate_cursor = wrap_cursor( opts.candidate_cursor, 1, opts.candidate_count );
+        return result;
+    }
+    if( opts.action == "PAGE_UP" ) {
+        result.handled = true;
+        result.candidate_cursor = std::max( opts.candidate_cursor - opts.page_size, 0 );
+        return result;
+    }
+    if( opts.action == "PAGE_DOWN" ) {
+        result.handled = true;
+        result.candidate_cursor = std::min( opts.candidate_cursor + opts.page_size,
+                                            opts.candidate_count - 1 );
+        return result;
+    }
+    if( opts.action == "HOME" ) {
+        result.handled = true;
+        result.candidate_cursor = 0;
+        return result;
+    }
+    if( opts.action == "END" ) {
+        result.handled = true;
+        result.candidate_cursor = opts.candidate_count - 1;
+        return result;
+    }
+
     return result;
 }
 

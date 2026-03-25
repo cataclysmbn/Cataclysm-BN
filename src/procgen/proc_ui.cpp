@@ -579,6 +579,8 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
     ctxt.register_action( "RIGHT", to_translation( "Switch to candidates" ) );
     ctxt.register_action( "PAGE_UP", to_translation( "Fast scroll up" ) );
     ctxt.register_action( "PAGE_DOWN", to_translation( "Fast scroll down" ) );
+    ctxt.register_action( "SCROLL_UP", to_translation( "Previous entry" ) );
+    ctxt.register_action( "SCROLL_DOWN", to_translation( "Next entry" ) );
     ctxt.register_action( "HOME", to_translation( "Go to first entry" ) );
     ctxt.register_action( "END", to_translation( "Go to last entry" ) );
     ctxt.register_action( "CONFIRM", to_translation( "Add selected candidate" ) );
@@ -622,76 +624,25 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
             focus = panel_focus::candidates;
             continue;
         }
-        if( action == "UP" ) {
-            if( focus == panel_focus::slots ) {
-                const auto navigation = proc::handle_builder_slot_navigation( {
-                    .focus = focus,
-                    .action = action,
-                    .slot_cursor = slot_cursor,
-                    .slot_count = static_cast<int>( sch.slots.size() ),
-                    .search_query = search_query,
-                } );
-                slot_cursor = navigation.slot_cursor;
-                search_query = navigation.search_query;
-            } else if( !candidates.empty() ) {
-                cand_cursor = proc::wrap_cursor( cand_cursor, -1, static_cast<int>( candidates.size() ) );
-            }
+        if( const auto navigation = proc::handle_builder_slot_navigation( {
+        .focus = focus,
+        .action = action,
+        .slot_cursor = slot_cursor,
+        .slot_count = static_cast<int>( sch.slots.size() ),
+            .search_query = search_query,
+        } ); navigation.handled ) {
+            slot_cursor = navigation.slot_cursor;
+            search_query = navigation.search_query;
             continue;
         }
-        if( action == "DOWN" ) {
-            if( focus == panel_focus::slots ) {
-                const auto navigation = proc::handle_builder_slot_navigation( {
-                    .focus = focus,
-                    .action = action,
-                    .slot_cursor = slot_cursor,
-                    .slot_count = static_cast<int>( sch.slots.size() ),
-                    .search_query = search_query,
-                } );
-                slot_cursor = navigation.slot_cursor;
-                search_query = navigation.search_query;
-            } else if( !candidates.empty() ) {
-                cand_cursor = proc::wrap_cursor( cand_cursor, 1, static_cast<int>( candidates.size() ) );
-            }
-            continue;
-        }
-        if( action == "PAGE_UP" && focus != panel_focus::slots && !candidates.empty() ) {
-            cand_cursor = std::max( cand_cursor - 8, 0 );
-            continue;
-        }
-        if( action == "PAGE_DOWN" && focus != panel_focus::slots && !candidates.empty() ) {
-            cand_cursor = std::min( cand_cursor + 8, static_cast<int>( candidates.size() ) - 1 );
-            continue;
-        }
-        if( action == "HOME" ) {
-            if( focus == panel_focus::slots ) {
-                const auto navigation = proc::handle_builder_slot_navigation( {
-                    .focus = focus,
-                    .action = action,
-                    .slot_cursor = slot_cursor,
-                    .slot_count = static_cast<int>( sch.slots.size() ),
-                    .search_query = search_query,
-                } );
-                slot_cursor = navigation.slot_cursor;
-                search_query = navigation.search_query;
-            } else {
-                cand_cursor = 0;
-            }
-            continue;
-        }
-        if( action == "END" ) {
-            if( focus == panel_focus::slots ) {
-                const auto navigation = proc::handle_builder_slot_navigation( {
-                    .focus = focus,
-                    .action = action,
-                    .slot_cursor = slot_cursor,
-                    .slot_count = static_cast<int>( sch.slots.size() ),
-                    .search_query = search_query,
-                } );
-                slot_cursor = navigation.slot_cursor;
-                search_query = navigation.search_query;
-            } else if( !candidates.empty() ) {
-                cand_cursor = static_cast<int>( candidates.size() ) - 1;
-            }
+        if( const auto navigation = proc::handle_builder_candidate_navigation( {
+        .focus = focus,
+        .action = action,
+        .candidate_cursor = cand_cursor,
+        .candidate_count = static_cast<int>( candidates.size() ),
+            .page_size = 8,
+        } ); navigation.handled ) {
+            cand_cursor = navigation.candidate_cursor;
             continue;
         }
         if( ch == 'r' || ch == KEY_BACKSPACE || ch == KEY_DC ) {

@@ -41,8 +41,23 @@ struct builder_slot_navigation_result {
     bool handled = false;
 };
 
+struct builder_candidate_navigation_options {
+    builder_focus focus = builder_focus::candidates;
+    std::string action;
+    int candidate_cursor = 0;
+    int candidate_count = 0;
+    int page_size = 8;
+};
+
+struct builder_candidate_navigation_result {
+    int candidate_cursor = 0;
+    bool handled = false;
+};
+
 auto handle_builder_search_input( const builder_input_options &opts ) -> builder_input_result;
 auto handle_builder_slot_navigation( const builder_slot_navigation_options &opts ) ->
 builder_slot_navigation_result;
+auto handle_builder_candidate_navigation( const builder_candidate_navigation_options &opts ) ->
+builder_candidate_navigation_result;
 
 } // namespace proc
