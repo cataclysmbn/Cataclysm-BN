@@ -14,6 +14,7 @@
 #include "procgen/proc_fact.h"
 #include "procgen/proc_item.h"
 #include "procgen/proc_schema.h"
+#include "proc_test_utils.h"
 #include "recipe_dictionary.h"
 
 namespace
@@ -727,12 +728,14 @@ TEST_CASE( "proc_builder_excludes_breakfast_dishes_and_entrees_from_food_slots",
 
 TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][weapon]" )
 {
+    auto runtime = proc_test::scoped_loader_lua {};
     const auto sch = load_schema_for_test( R"(
 {
   "type": "PROC",
   "id": "sword",
   "cat": "weapon",
   "res": "proc_sword_generic",
+  "lua": { "full": "procgen.gear.full", "make": "procgen.gear.make" },
   "slot": [
     { "id": "blade", "role": "blade", "min": 1, "max": 1, "ok": [ "itype:steel_chunk" ] },
     { "id": "handle", "role": "handle", "min": 1, "max": 1, "ok": [ "itype:stick_long" ] },
@@ -771,12 +774,13 @@ TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][
     CHECK( state.fast.melee.cut > 0 );
     CHECK( state.fast.melee.stab > 0 );
     CHECK( state.fast.melee.dur > 0 );
-    CHECK( state.fast.name == "hand-forged sword" );
+    CHECK( state.fast.name == "steel sword" );
 }
 
 TEST_CASE( "proc_builder_supports_sword_reinforcements_and_legacy_like_names",
            "[proc][builder][weapon]" )
 {
+    auto runtime = proc_test::scoped_loader_lua {};
     const auto sch = load_schema_from_file( "data/json/proc/sword.json", "sword" );
 
     auto wood_blade = proc::part_fact{};
@@ -824,29 +828,24 @@ TEST_CASE( "proc_builder_supports_sword_reinforcements_and_legacy_like_names",
     };
 
     const auto plain = base_state();
-    CHECK( plain.fast.name == "2-by-sword" );
+    CHECK( plain.fast.name == "wooden sword" );
     CHECK( plain.fast.description ==
-           "A club-like sword carved from a sturdy length of wood. "
-           "The hilt uses no guard and a rag-wrapped grip." );
+           "A wooden sword assembled from wooden blade, wooden handle, cloth grip." );
 
     auto nailed = base_state();
     REQUIRE( proc::add_pick( nailed, sch, proc::slot_id( "reinforcement" ), 4 ) );
     REQUIRE( proc::add_pick( nailed, sch, proc::slot_id( "reinforcement" ), 4 ) );
-    CHECK( nailed.fast.name == "nail sword" );
+    CHECK( nailed.fast.name == "wooden sword" );
     CHECK( nailed.fast.description ==
-           "A rough wooden sword stiffened with driven nails. "
-           "The hilt uses no guard and a rag-wrapped grip. "
-           "Driven nails add stiffness and a little puncturing power." );
+           "A wooden sword assembled from wooden blade, wooden handle, cloth grip, iron reinforcement." );
     CHECK( nailed.fast.melee.cut > plain.fast.melee.cut );
     CHECK( nailed.fast.melee.dur >= plain.fast.melee.dur );
 
     auto crude = base_state();
     REQUIRE( proc::add_pick( crude, sch, proc::slot_id( "reinforcement" ), 5 ) );
-    CHECK( crude.fast.name == "crude sword" );
+    CHECK( crude.fast.name == "wooden sword" );
     CHECK( crude.fast.description ==
-           "A crude sword pieced together from wood and scavenged scrap. "
-           "The hilt uses no guard and a rag-wrapped grip. "
-           "Scrap reinforcement adds weight and stiffness." );
+           "A wooden sword assembled from wooden blade, wooden handle, cloth grip, steel reinforcement." );
     CHECK( crude.fast.melee.cut > plain.fast.melee.cut );
     CHECK( crude.fast.mass_g > plain.fast.mass_g );
 }

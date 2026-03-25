@@ -597,8 +597,7 @@ auto sword_preview( const proc::schema &sch, const std::vector<proc::part_fact> 
 auto preview_blob( const proc::schema &sch, const std::vector<proc::part_fact> &facts,
                    const std::vector<proc::craft_pick> &picks ) -> proc::fast_blob
 {
-    auto blob = sch.id == proc::schema_id( "sword" ) || sch.cat == "weapon" ?
-                sword_preview( sch, facts, picks ) : basic_preview( sch, facts, picks );
+    auto blob = basic_preview( sch, facts, picks );
     if( !sch.lua.full.empty() || !sch.lua.name.empty() ) {
         return proc::run_full( sch, facts, blob, { .picks = picks } ).data;
     }
@@ -796,10 +795,10 @@ auto proc::rebuild_fast( const builder_state &state ) -> fast_blob
 auto proc::preview_result_override( const schema &sch, const std::vector<part_fact> &facts,
                                     const std::vector<craft_pick> &picks ) -> std::optional<itype_id>
 {
-    if( sch.id != schema_id( "sword" ) ) {
-        return std::nullopt;
-    }
-    return sword_variant( sch, facts, picks ).result;
+    ( void )sch;
+    ( void )facts;
+    ( void )picks;
+    return std::nullopt;
 }
 
 auto proc::debug_part_fact( const schema &sch, const item &it,
@@ -900,7 +899,7 @@ auto proc::fast_fp( const schema &sch, const fast_blob &blob,
                       sch.id.str(),
                       blob.mass_g,
                       blob.volume_ml, blob.kcal, blob.melee.bash, blob.melee.cut, blob.melee.stab,
-                      blob.melee.to_hit, blob.melee.dur, joined ) );
+                      blob.melee.to_hit, blob.melee.dur, blob.melee.moves, joined ) );
     return string_format( "%s:%08x", sch.id.str(), static_cast<unsigned int>( hash & 0xffffffffU ) );
 }
 
