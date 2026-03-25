@@ -1,7 +1,9 @@
 #include "catch/catch.hpp"
 
+#include <array>
 #include <vector>
 
+#include "itype.h"
 #include "item.h"
 #include "procgen/proc_fact.h"
 #include "procgen/proc_item.h"
@@ -10,6 +12,12 @@
 
 namespace
 {
+
+struct proc_fallback_text_case {
+    itype_id id;
+    std::string_view name;
+    std::string_view description;
+};
 
 auto sandwich_schema_for_test() -> proc::schema
 {
@@ -80,6 +88,56 @@ TEST_CASE( "proc_make_item_applies_food_blob_to_item", "[proc][make][food]" )
     CHECK( made->type_name() == proc::read_payload( *made )->blob.name );
     CHECK( made->weight() == units::from_gram( 200 ) );
     CHECK( made->volume() == units::from_milliliter( 375 ) );
+}
+
+TEST_CASE( "proc_generic_item_fallback_text_is_player_facing", "[proc][make]" )
+{
+    const auto cases = std::array {
+        proc_fallback_text_case {
+            .id = itype_id( "sandwich_generic" ),
+            .name = "sandwich",
+            .description = "A sandwich assembled from selected breads and fillings.",
+        },
+        proc_fallback_text_case {
+            .id = itype_id( "trail_mix_generic" ),
+            .name = "trail mix",
+            .description = "A mix of nuts, dried fruit, and other selected snacks.",
+        },
+        proc_fallback_text_case {
+            .id = itype_id( "stew_generic" ),
+            .name = "stew",
+            .description = "A hearty stew assembled from a broth and selected ingredients.",
+        },
+        proc_fallback_text_case {
+            .id = itype_id( "proc_sword_generic" ),
+            .name = "sword",
+            .description = "A melee weapon assembled from a blade, grip, and other selected parts.",
+        },
+        proc_fallback_text_case {
+            .id = itype_id( "proc_axe_generic" ),
+            .name = "axe",
+            .description = "A melee weapon assembled from an axe head, handle, and other selected parts.",
+        },
+        proc_fallback_text_case {
+            .id = itype_id( "proc_spear_generic" ),
+            .name = "spear",
+            .description = "A melee weapon assembled from a point, shaft, and other selected parts.",
+        },
+        proc_fallback_text_case {
+            .id = itype_id( "proc_knife_generic" ),
+            .name = "knife",
+            .description = "A cutting weapon assembled from a blade, handle, and other selected parts.",
+        },
+    };
+
+    std::ranges::for_each( cases, []( const proc_fallback_text_case & test_case ) {
+        const auto it = item( test_case.id, calendar::turn );
+        CHECK( it.type_name() == test_case.name );
+        CHECK( it.type->description.translated() == test_case.description );
+        CHECK_FALSE( it.type_name().contains( "GENERIC" ) );
+        CHECK_FALSE( it.type->description.translated().contains( "If you can see this" ) );
+        CHECK_FALSE( it.type->description.translated().contains( "awaiting generated details" ) );
+    } );
 }
 
 TEST_CASE( "proc_make_item_scales_food_servings_with_total_size", "[proc][make][food]" )
