@@ -10,7 +10,7 @@ namespace
 {
 
 inline constexpr char filled_slot = '#';
-inline constexpr char required_empty_slot = '_';
+inline constexpr char required_empty_slot = '!';
 inline constexpr char optional_empty_slot = '.';
 
 } // namespace
