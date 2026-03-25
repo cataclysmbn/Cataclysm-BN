@@ -1021,15 +1021,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 ui.set_cursor( w_list, print_from );
             }
             const std::string group_name = is_favorite( group ) ? "* " + group->name() : group->name();
-            if( filter_mode ) {
-                const nc_color base_col = c_dark_gray;
-                const nc_color final_col = highlight ? hilite( base_col ) : base_col;
-                trim_and_print( w_list, print_from, w_list_width, final_col, group_name );
-            } else {
-                const nc_color base_col = construction_color( group, false );
-                const nc_color final_col = highlight ? hilite( base_col ) : base_col;
-                trim_and_print( w_list, print_from, w_list_width, final_col, group_name );
-            }
+            const nc_color final_col = construction_color( group, highlight );
+            trim_and_print( w_list, print_from, w_list_width, final_col, group_name );
         }
 
         // Clear out lines for tools & materials
