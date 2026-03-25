@@ -143,6 +143,8 @@ TEST_CASE( "proc_sword_recipe_requires_selected_material_tools", "[proc][recipe]
 {
     const auto rec = load_recipe_from_file( "data/json/recipes/weapon/proc_sword.json",
                                             "proc_sword_generic" );
+    CHECK( rec.builder_desc().translated() ==
+           "Assemble a blade, handle, grip, optional guard, and any reinforcements." );
     const auto steel_chunk = proc::normalize_part_fact( item( "steel_chunk" ), { .ix = 1 } );
     const auto stick_long = proc::normalize_part_fact( item( "stick_long" ), { .ix = 2 } );
     const auto rag = proc::normalize_part_fact( item( "rag" ), { .ix = 3 } );

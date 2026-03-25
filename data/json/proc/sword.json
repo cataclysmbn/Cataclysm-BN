@@ -22,7 +22,7 @@
         "ok": [ "itype:scrap", "itype:steel_chunk", "itype:bone" ]
       },
       { "id": "handle", "role": "handle", "min": 1, "max": 1, "ok": [ "itype:stick_long", "itype:bone" ] },
-      { "id": "grip", "role": "grip", "min": 1, "max": 2, "rep": true, "ok": [ "itype:leather", "itype:rag" ] },
+      { "id": "grip", "role": "grip", "min": 1, "max": 1, "ok": [ "itype:leather", "itype:rag" ] },
       {
         "id": "reinforcement",
         "role": "reinforcement",

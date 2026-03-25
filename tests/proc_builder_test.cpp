@@ -739,7 +739,7 @@ TEST_CASE( "proc_builder_previews_sword_stats_from_materials", "[proc][builder][
   "slot": [
     { "id": "blade", "role": "blade", "min": 1, "max": 1, "ok": [ "itype:steel_chunk" ] },
     { "id": "handle", "role": "handle", "min": 1, "max": 1, "ok": [ "itype:stick_long" ] },
-    { "id": "grip", "role": "grip", "min": 1, "max": 2, "rep": true, "ok": [ "itype:rag" ] }
+    { "id": "grip", "role": "grip", "min": 1, "max": 1, "ok": [ "itype:rag" ] }
   ]
 }
     )" );
@@ -848,6 +848,29 @@ TEST_CASE( "proc_builder_supports_sword_reinforcements_and_legacy_like_names",
            "A wooden sword assembled from wooden blade, wooden handle, cloth grip, steel reinforcement." );
     CHECK( crude.fast.melee.cut > plain.fast.melee.cut );
     CHECK( crude.fast.mass_g > plain.fast.mass_g );
+}
+
+TEST_CASE( "proc_sword_schema_limits_grips_to_a_single_wrap", "[proc][builder][weapon]" )
+{
+    const auto sch = load_schema_from_file( "data/json/proc/sword.json", "sword" );
+    const auto grip_slot = std::ranges::find_if( sch.slots, []( const proc::slot_data & slot ) {
+        return slot.id == proc::slot_id( "grip" );
+    } );
+
+    REQUIRE( grip_slot != sch.slots.end() );
+    CHECK( grip_slot->min == 1 );
+    CHECK( grip_slot->max == 1 );
+    CHECK_FALSE( grip_slot->rep );
+
+    const auto wood_blade = proc::normalize_part_fact( item( "stick_long" ), { .ix = 1 } );
+    const auto handle = proc::normalize_part_fact( item( "stick_long" ), { .ix = 2 } );
+    const auto grip = proc::normalize_part_fact( item( "rag" ), { .ix = 3 } );
+    auto state = proc::build_state( sch, { wood_blade, handle, grip } );
+
+    REQUIRE( proc::add_pick( state, sch, proc::slot_id( "blade" ), 1 ) );
+    REQUIRE( proc::add_pick( state, sch, proc::slot_id( "handle" ), 2 ) );
+    REQUIRE( proc::add_pick( state, sch, proc::slot_id( "grip" ), 3 ) );
+    CHECK_FALSE( proc::add_pick( state, sch, proc::slot_id( "grip" ), 3 ) );
 }
 
 TEST_CASE( "proc_builder_ranks_sword_candidates_by_role_quality", "[proc][builder][weapon]" )
