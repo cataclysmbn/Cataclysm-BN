@@ -186,3 +186,73 @@ TEST_CASE( "proc_builder_search_mode_consumes_navigation_keys", "[proc][ui]" )
     CHECK( end.focus == proc::builder_focus::search );
     CHECK( end.search_query == "bread" );
 }
+
+TEST_CASE( "proc_builder_slot_navigation_resets_search_on_slot_change", "[proc][ui]" )
+{
+    const auto up = proc::handle_builder_slot_navigation( {
+        .focus = proc::builder_focus::slots,
+        .action = "UP",
+        .slot_cursor = 1,
+        .slot_count = 3,
+        .search_query = "bread",
+    } );
+    const auto down = proc::handle_builder_slot_navigation( {
+        .focus = proc::builder_focus::slots,
+        .action = "DOWN",
+        .slot_cursor = 1,
+        .slot_count = 3,
+        .search_query = "bread",
+    } );
+    const auto home = proc::handle_builder_slot_navigation( {
+        .focus = proc::builder_focus::slots,
+        .action = "HOME",
+        .slot_cursor = 1,
+        .slot_count = 3,
+        .search_query = "bread",
+    } );
+    const auto end = proc::handle_builder_slot_navigation( {
+        .focus = proc::builder_focus::slots,
+        .action = "END",
+        .slot_cursor = 1,
+        .slot_count = 3,
+        .search_query = "bread",
+    } );
+
+    CHECK( up.handled );
+    CHECK( up.slot_cursor == 0 );
+    CHECK( up.search_query.empty() );
+    CHECK( down.handled );
+    CHECK( down.slot_cursor == 2 );
+    CHECK( down.search_query.empty() );
+    CHECK( home.handled );
+    CHECK( home.slot_cursor == 0 );
+    CHECK( home.search_query.empty() );
+    CHECK( end.handled );
+    CHECK( end.slot_cursor == 2 );
+    CHECK( end.search_query.empty() );
+}
+
+TEST_CASE( "proc_builder_slot_navigation_keeps_search_when_slot_stays_same", "[proc][ui]" )
+{
+    const auto home = proc::handle_builder_slot_navigation( {
+        .focus = proc::builder_focus::slots,
+        .action = "HOME",
+        .slot_cursor = 0,
+        .slot_count = 3,
+        .search_query = "bread",
+    } );
+    const auto ignored = proc::handle_builder_slot_navigation( {
+        .focus = proc::builder_focus::candidates,
+        .action = "DOWN",
+        .slot_cursor = 1,
+        .slot_count = 3,
+        .search_query = "bread",
+    } );
+
+    CHECK( home.handled );
+    CHECK( home.slot_cursor == 0 );
+    CHECK( home.search_query == "bread" );
+    CHECK_FALSE( ignored.handled );
+    CHECK( ignored.slot_cursor == 1 );
+    CHECK( ignored.search_query == "bread" );
+}
