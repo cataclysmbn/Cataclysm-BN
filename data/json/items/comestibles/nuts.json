@@ -438,5 +438,24 @@
     "vitamins": [ [ "calcium", 1 ], [ "iron", 2 ], [ "nut_allergen", 1 ] ],
     "volume": "250 ml",
     "milling": { "into": "flour", "conversion_rate": 8 }
+  },
+    {
+    "type": "COMESTIBLE",
+    "id": "trailmix",
+    "name": { "str_sp": "trail mix" },
+    "weight": "120 g",
+    "color": "brown",
+    "comestible_type": "FOOD",
+    "symbol": "%",
+    "healthy": 1,
+    "calories": 560,
+	"//": "This is a one cup serving.",
+    "flags": [ "NO_COOKING_BUFF" ],
+    "description": "This is what's known as organic mountain trail mix - a variety of wild-harvested nuts, all-natural dark chocolate, and dried fruit for a combination of quick energy and sustained energy on the trail.",
+    "price": "7 USD",
+    "price_postapoc": "4 USD",
+    "material": [ "nut" , "fruit" ],
+    "vitamins": [ [ "calcium", 2 ], [ "iron", 2 ], [ "vitC", 2], [ "nut_allergen", 2 ] ],
+    "volume": "250 ml"
   }
 ]
