@@ -599,7 +599,15 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         }
         if( action == "UP" ) {
             if( focus == panel_focus::slots ) {
-                slot_cursor = proc::wrap_cursor( slot_cursor, -1, static_cast<int>( sch.slots.size() ) );
+                const auto navigation = proc::handle_builder_slot_navigation( {
+                    .focus = focus,
+                    .action = action,
+                    .slot_cursor = slot_cursor,
+                    .slot_count = static_cast<int>( sch.slots.size() ),
+                    .search_query = search_query,
+                } );
+                slot_cursor = navigation.slot_cursor;
+                search_query = navigation.search_query;
             } else if( !candidates.empty() ) {
                 cand_cursor = proc::wrap_cursor( cand_cursor, -1, static_cast<int>( candidates.size() ) );
             }
@@ -607,7 +615,15 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         }
         if( action == "DOWN" ) {
             if( focus == panel_focus::slots ) {
-                slot_cursor = proc::wrap_cursor( slot_cursor, 1, static_cast<int>( sch.slots.size() ) );
+                const auto navigation = proc::handle_builder_slot_navigation( {
+                    .focus = focus,
+                    .action = action,
+                    .slot_cursor = slot_cursor,
+                    .slot_count = static_cast<int>( sch.slots.size() ),
+                    .search_query = search_query,
+                } );
+                slot_cursor = navigation.slot_cursor;
+                search_query = navigation.search_query;
             } else if( !candidates.empty() ) {
                 cand_cursor = proc::wrap_cursor( cand_cursor, 1, static_cast<int>( candidates.size() ) );
             }
@@ -623,7 +639,15 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         }
         if( action == "HOME" ) {
             if( focus == panel_focus::slots ) {
-                slot_cursor = 0;
+                const auto navigation = proc::handle_builder_slot_navigation( {
+                    .focus = focus,
+                    .action = action,
+                    .slot_cursor = slot_cursor,
+                    .slot_count = static_cast<int>( sch.slots.size() ),
+                    .search_query = search_query,
+                } );
+                slot_cursor = navigation.slot_cursor;
+                search_query = navigation.search_query;
             } else {
                 cand_cursor = 0;
             }
@@ -631,7 +655,15 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         }
         if( action == "END" ) {
             if( focus == panel_focus::slots ) {
-                slot_cursor = static_cast<int>( sch.slots.size() ) - 1;
+                const auto navigation = proc::handle_builder_slot_navigation( {
+                    .focus = focus,
+                    .action = action,
+                    .slot_cursor = slot_cursor,
+                    .slot_count = static_cast<int>( sch.slots.size() ),
+                    .search_query = search_query,
+                } );
+                slot_cursor = navigation.slot_cursor;
+                search_query = navigation.search_query;
             } else if( !candidates.empty() ) {
                 cand_cursor = static_cast<int>( candidates.size() ) - 1;
             }

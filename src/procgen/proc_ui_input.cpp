@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "input.h"
+#include "procgen/proc_ui_navigation.h"
 
 namespace
 {
@@ -73,6 +74,39 @@ auto handle_builder_search_input( const builder_input_options &opts ) -> builder
         result.handled = true;
     }
 
+    return result;
+}
+
+auto handle_builder_slot_navigation( const builder_slot_navigation_options &opts ) ->
+builder_slot_navigation_result
+{
+    auto result = builder_slot_navigation_result{
+        .slot_cursor = opts.slot_cursor,
+        .search_query = opts.search_query,
+    };
+
+    if( opts.focus != builder_focus::slots || opts.slot_count <= 0 ) {
+        return result;
+    }
+
+    auto next_cursor = opts.slot_cursor;
+    if( opts.action == "UP" ) {
+        next_cursor = wrap_cursor( opts.slot_cursor, -1, opts.slot_count );
+    } else if( opts.action == "DOWN" ) {
+        next_cursor = wrap_cursor( opts.slot_cursor, 1, opts.slot_count );
+    } else if( opts.action == "HOME" ) {
+        next_cursor = 0;
+    } else if( opts.action == "END" ) {
+        next_cursor = opts.slot_count - 1;
+    } else {
+        return result;
+    }
+
+    result.handled = true;
+    result.slot_cursor = next_cursor;
+    if( next_cursor != opts.slot_cursor ) {
+        result.search_query.clear();
+    }
     return result;
 }
 

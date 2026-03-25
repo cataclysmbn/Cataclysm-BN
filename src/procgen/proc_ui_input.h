@@ -27,6 +27,22 @@ struct builder_input_result {
     bool handled = false;
 };
 
+struct builder_slot_navigation_options {
+    builder_focus focus = builder_focus::slots;
+    std::string action;
+    int slot_cursor = 0;
+    int slot_count = 0;
+    std::string search_query;
+};
+
+struct builder_slot_navigation_result {
+    int slot_cursor = 0;
+    std::string search_query;
+    bool handled = false;
+};
+
 auto handle_builder_search_input( const builder_input_options &opts ) -> builder_input_result;
+auto handle_builder_slot_navigation( const builder_slot_navigation_options &opts ) ->
+builder_slot_navigation_result;
 
 } // namespace proc
