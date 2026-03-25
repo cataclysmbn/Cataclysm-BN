@@ -4,8 +4,8 @@
     "id": "sword",
     "cat": "weapon",
     "res": "proc_sword_generic",
-    "lua": { "make": "procgen.gear.make" },
-    "hist": { "def": "compact", "ok": [ "compact", "full" ] },
+    "lua": { "full": "procgen.gear.full", "make": "procgen.gear.make" },
+    "hist": { "def": "full", "ok": [ "compact", "full" ] },
     "slot": [
       {
         "id": "blade",

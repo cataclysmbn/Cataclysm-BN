@@ -1,0 +1,53 @@
+[
+  {
+    "type": "recipe",
+    "result": "proc_axe_generic",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_BASHING",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": 1200,
+    "reversible": true,
+    "proc": true,
+    "proc_id": "axe",
+    "builder_name": { "str": "Axe" },
+    "builder_desc": { "str": "Assemble an axe head, handle, and any bindings." },
+    "qualities": [  ],
+    "tools": [  ],
+    "components": [  ]
+  },
+  {
+    "type": "recipe",
+    "result": "proc_spear_generic",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_PIERCING",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": 1000,
+    "reversible": true,
+    "proc": true,
+    "proc_id": "spear",
+    "builder_name": { "str": "Spear" },
+    "builder_desc": { "str": "Assemble a spear tip, shaft, and bindings." },
+    "qualities": [  ],
+    "tools": [  ],
+    "components": [  ]
+  },
+  {
+    "type": "recipe",
+    "result": "proc_knife_generic",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_CUTTING",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": 600,
+    "reversible": true,
+    "proc": true,
+    "proc_id": "knife",
+    "builder_name": { "str": "Knife" },
+    "builder_desc": { "str": "Assemble a blade, handle, and bindings." },
+    "qualities": [  ],
+    "tools": [  ],
+    "components": [  ]
+  }
+]

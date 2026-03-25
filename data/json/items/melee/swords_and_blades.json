@@ -4,7 +4,7 @@
     "type": "GENERIC",
     "copy-from": "sword_metal",
     "name": { "str": "GENERIC SWORD" },
-    "description": "If you can see this, a procedural sword recipe did not finish correctly.",
+    "description": "A procedural sword awaiting generated details.",
     "weight": "1000 g",
     "volume": "1750 ml",
     "bashing": 4,
