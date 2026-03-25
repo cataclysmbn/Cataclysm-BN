@@ -206,6 +206,7 @@ auto blob_table( sol::state &lua, const proc::fast_blob &blob ) -> sol::table
     melee_tbl["stab"] = blob.melee.stab;
     melee_tbl["to_hit"] = blob.melee.to_hit;
     melee_tbl["dur"] = blob.melee.dur;
+    melee_tbl["moves"] = blob.melee.moves;
     tbl["melee"] = melee_tbl;
     return tbl;
 }
@@ -380,6 +381,7 @@ auto parse_blob_into( proc::fast_blob &blob, const sol::table &tbl ) -> void
         blob.melee.stab = melee_tbl.get_or( "stab", blob.melee.stab );
         blob.melee.to_hit = melee_tbl.get_or( "to_hit", blob.melee.to_hit );
         blob.melee.dur = melee_tbl.get_or( "dur", blob.melee.dur );
+        blob.melee.moves = melee_tbl.get_or( "moves", blob.melee.moves );
     }
 }
 

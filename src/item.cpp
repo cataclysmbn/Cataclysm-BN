@@ -5717,6 +5717,12 @@ int item::lift_strength() const
 
 int item::attack_cost() const
 {
+    if( const auto proc_melee = proc::blob_melee( *this ); proc_melee && proc_melee->moves > 0 ) {
+        const auto base = proc_melee->moves;
+        const auto bonus = static_cast<int>( bonus_from_enchantments_wielded( base,
+                                             enchant_vals::mod::ITEM_ATTACK_COST, true ) );
+        return std::max( 0, base + bonus );
+    }
     int base = 65 + ( volume() / 62.5_ml + weight() / 60_gram ) / count();
     int bonus = bonus_from_enchantments_wielded( base, enchant_vals::mod::ITEM_ATTACK_COST, true );
     return std::max( 0, base + bonus );

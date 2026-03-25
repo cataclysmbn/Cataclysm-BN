@@ -469,6 +469,7 @@ auto proc::to_json( JsonOut &jsout, const payload &data ) -> void
     jsout.member( "stab", data.blob.melee.stab );
     jsout.member( "to_hit", data.blob.melee.to_hit );
     jsout.member( "dur", data.blob.melee.dur );
+    jsout.member( "moves", data.blob.melee.moves );
     jsout.end_object();
     jsout.member( "vit" );
     jsout.start_object();
@@ -508,6 +509,7 @@ auto proc::from_json( JsonIn &jsin, payload &data ) -> void
             melee_jo.read( "stab", data.blob.melee.stab );
             melee_jo.read( "to_hit", data.blob.melee.to_hit );
             melee_jo.read( "dur", data.blob.melee.dur );
+            melee_jo.read( "moves", data.blob.melee.moves );
         }
         if( blob_jo.has_object( "vit" ) ) {
             const auto vit_jo = blob_jo.get_object( "vit" );

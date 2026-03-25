@@ -24,6 +24,7 @@
 ---@field stab integer?
 ---@field to_hit integer?
 ---@field dur integer?
+---@field moves integer?
 
 ---@class ProcBlob
 ---@field mass_g integer?
