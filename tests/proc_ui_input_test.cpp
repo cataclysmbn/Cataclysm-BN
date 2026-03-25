@@ -256,3 +256,66 @@ TEST_CASE( "proc_builder_slot_navigation_keeps_search_when_slot_stays_same", "[p
     CHECK( ignored.slot_cursor == 1 );
     CHECK( ignored.search_query == "bread" );
 }
+
+TEST_CASE( "proc_builder_slot_navigation_accepts_mouse_wheel_actions", "[proc][ui]" )
+{
+    const auto scroll_up = proc::handle_builder_slot_navigation( {
+        .focus = proc::builder_focus::slots,
+        .action = "SCROLL_UP",
+        .slot_cursor = 1,
+        .slot_count = 3,
+        .search_query = "bread",
+    } );
+    const auto scroll_down = proc::handle_builder_slot_navigation( {
+        .focus = proc::builder_focus::slots,
+        .action = "SCROLL_DOWN",
+        .slot_cursor = 1,
+        .slot_count = 3,
+        .search_query = "bread",
+    } );
+
+    CHECK( scroll_up.handled );
+    CHECK( scroll_up.slot_cursor == 0 );
+    CHECK( scroll_up.search_query.empty() );
+    CHECK( scroll_down.handled );
+    CHECK( scroll_down.slot_cursor == 2 );
+    CHECK( scroll_down.search_query.empty() );
+}
+
+TEST_CASE( "proc_builder_candidate_navigation_accepts_mouse_wheel_actions", "[proc][ui]" )
+{
+    const auto scroll_up = proc::handle_builder_candidate_navigation( {
+        .focus = proc::builder_focus::candidates,
+        .action = "SCROLL_UP",
+        .candidate_cursor = 0,
+        .candidate_count = 3,
+    } );
+    const auto scroll_down = proc::handle_builder_candidate_navigation( {
+        .focus = proc::builder_focus::candidates,
+        .action = "SCROLL_DOWN",
+        .candidate_cursor = 0,
+        .candidate_count = 3,
+    } );
+    const auto page_down = proc::handle_builder_candidate_navigation( {
+        .focus = proc::builder_focus::candidates,
+        .action = "PAGE_DOWN",
+        .candidate_cursor = 1,
+        .candidate_count = 10,
+        .page_size = 4,
+    } );
+    const auto ignored = proc::handle_builder_candidate_navigation( {
+        .focus = proc::builder_focus::slots,
+        .action = "SCROLL_DOWN",
+        .candidate_cursor = 1,
+        .candidate_count = 3,
+    } );
+
+    CHECK( scroll_up.handled );
+    CHECK( scroll_up.candidate_cursor == 2 );
+    CHECK( scroll_down.handled );
+    CHECK( scroll_down.candidate_cursor == 1 );
+    CHECK( page_down.handled );
+    CHECK( page_down.candidate_cursor == 5 );
+    CHECK_FALSE( ignored.handled );
+    CHECK( ignored.candidate_cursor == 1 );
+}
