@@ -1737,7 +1737,7 @@
   {
     "type": "terrain",
     "id": "t_reinforced_triple_pane_glass_with_curtain_open",
-    "name": "Reinforced triple glazed glass window With a curtain",
+    "name": "Reinforced triple glazed glass window with a curtain",
     "description": "A triple glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
     "looks_like": "t_window_open",
     "symbol": "|",
