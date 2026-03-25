@@ -1,45 +1,67 @@
-local procgen = {}
-procgen.food = {}
-procgen.gear = {}
+---@class ProcPartFact
+---@field ix integer
+---@field id string
+---@field tag string[]?
+---@field flag string[]?
+---@field mat string[]?
+---@field vit table<string, integer>?
+---@field qual table<string, integer>?
+---@field mass_g integer?
+---@field volume_ml integer?
+---@field kcal integer?
+---@field hp number?
+---@field chg integer?
+---@field proc string?
 
-local function sword_result_from_name(name)
-  if name == "nail sword" then return "sword_nail" end
-  if name == "crude sword" then return "sword_crude" end
-  if name == "hand-forged sword" then return "sword_metal" end
-  if name == "bone sword" then return "sword_bone" end
-  if name == "2-by-sword" then return "sword_wood" end
-  return "proc_sword_generic"
-end
+---@class ProcPick
+---@field ix integer
+---@field slot string
+---@field role string
 
-function procgen.food.full(params) return params.blob or {} end
+---@class ProcBlobMelee
+---@field bash integer?
+---@field cut integer?
+---@field stab integer?
+---@field to_hit integer?
+---@field dur integer?
 
-function procgen.food.make(params)
-  local blob = params.blob or {}
-  local result = "sandwich_generic"
-  if params.schema_id == "stew" then result = "stew_generic" end
-  return {
-    result = result,
-    name = blob.name,
-    kcal = blob.kcal,
-    mass_g = blob.mass_g,
-    volume_ml = blob.volume_ml,
-    vit = blob.vit,
-    mode = "full",
-  }
-end
+---@class ProcBlob
+---@field mass_g integer?
+---@field volume_ml integer?
+---@field kcal integer?
+---@field name string?
+---@field description string?
+---@field vit table<string, integer>?
+---@field melee ProcBlobMelee?
 
-function procgen.gear.make(params)
-  local blob = params.blob or {}
-  local result = params.result_override or params.schema_res or "proc_sword_generic"
-  if params.schema_id == "sword" and not params.result_override then result = sword_result_from_name(blob.name) end
-  return {
-    result = result,
-    name = blob.name,
-    mass_g = blob.mass_g,
-    volume_ml = blob.volume_ml,
-    melee = blob.melee,
-    mode = "compact",
-  }
-end
+---@class ProcParams
+---@field schema_id string
+---@field schema_res string
+---@field result_override string?
+---@field blob ProcBlob?
+---@field facts ProcPartFact[]?
+---@field picks ProcPick[]?
+
+---@class ProcValidateOk
+---@field ok true
+
+---@class ProcValidateErr
+---@field err string
+
+---@alias ProcValidateResult ProcValidateOk|ProcValidateErr
+
+---@class ProcMakeResult: ProcBlob
+---@field result string?
+---@field mode string?
+
+---@class ProcgenModule
+---@field food table
+---@field gear table
+
+---@type ProcgenModule
+local procgen = {
+  food = require("proc.food"),
+  gear = require("proc.gear"),
+}
 
 return procgen
