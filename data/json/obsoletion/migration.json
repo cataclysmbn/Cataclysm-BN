@@ -735,6 +735,11 @@
     "replace": "proc_sword_generic"
   },
   {
+    "id": [ "spear_spike", "spear_knife", "spear_knife_superior", "spear_stone", "spear_steel" ],
+    "type": "MIGRATION",
+    "replace": "proc_spear_generic"
+  },
+  {
     "id": [
       "blt",
       "sandwich_t",
