@@ -374,7 +374,7 @@
       [ [ "sugar", 10 ] ]
     ]
   },
-    {
+  {
     "type": "recipe",
     "result": "trailmix",
     "category": "CC_FOOD",
@@ -385,8 +385,8 @@
     "time": "5 m",
     "components": [
       [ [ "nuts_tasty", 4, "LIST" ] ],
-	  [ [ "nuts_tasty", 4, "LIST" ] ],
-	  [ [ "cacao_nibs", 4 ] ],
+      [ [ "nuts_tasty", 4, "LIST" ] ],
+      [ [ "cacao_nibs", 4 ] ],
       [ [ "apple_sugar", 4 ], [ "dry_fruit", 4 ], [ "raisins", 4 ] ],
       [ [ "salt", 8 ] ]
     ]
