@@ -1588,7 +1588,7 @@ class Character : public Creature, public location_visitable<Character>
          *
          * Only required for rendering.
          */
-        std::vector<overlay_entry> get_overlay_ids() const;
+        auto get_overlay_ids() const -> std::vector<overlay_entry>;
 
         // --------------- Skill Stuff ---------------
         int get_skill_level( const skill_id &ident ) const;

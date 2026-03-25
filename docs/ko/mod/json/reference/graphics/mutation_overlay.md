@@ -1,117 +1,82 @@
-# 돌연변이 오버레이
+# 돌연변이 오버레이 순서 지정
 
-돌연변이 오버레이는 캐릭터에 돌연변이가 있을 때 타일셋 모드에서 플레이어 캐릭터의 외모를 수정하는 시각적 레이어입니다. 이를 통해 뿔, 촉수, 비늘과 같은 돌연변이를 시각적으로 표현할 수 있습니다.
+`mutation_ordering.json` 파일은 게임 내에서 캐릭터 오버레이가 렌더링되는 순서를 정의합니다.
+돌연변이, 바이오닉, 효과, 착용한 아이템, 손에 든 아이템의 순서를 재배치할 수 있습니다. 레이어 값은
+0 (하단) - 9999 (상단) 범위로 설정되며, 착용 및 손에 든 오버레이는 재정의하지 않는 한 더 높은 기본값을 사용합니다.
 
-## 기본 구조
-
-돌연변이 오버레이는 타일셋의 `tile_config.json`에 정의됩니다:
-
-```json
-{
-  "id": "overlay_mutation_HORNS",
-  "fg": 100,
-  "bg": 0
-}
-```
-
-### 필드
-
-| 필드 | 타입    | 설명                                                                 |
-| ---- | ------- | -------------------------------------------------------------------- |
-| `id` | string  | 돌연변이 오버레이 ID. `overlay_mutation_` 뒤에 돌연변이 ID가 옵니다. |
-| `fg` | integer | 전경 타일 인덱스.                                                    |
-| `bg` | integer | 배경 타일 인덱스. 일반적으로 0(투명).                                |
-
-## 명명 규칙
-
-돌연변이 오버레이 ID는 다음 형식을 따라야 합니다:
-
-```
-overlay_mutation_<MUTATION_ID>
-```
-
-여기서 `<MUTATION_ID>`는 `data/json/mutations/` 또는 모드에 정의된 돌연변이 ID입니다.
-
-### 예시
-
-돌연변이 `HORNS`의 경우 오버레이 ID는 `overlay_mutation_HORNS`가 됩니다.
-
-돌연변이 `TENTACLE_ARMS`의 경우 오버레이 ID는 `overlay_mutation_TENTACLE_ARMS`가 됩니다.
-
-## 다양한 캐릭터 상태에 대한 오버레이
-
-서 있거나, 앉아 있거나, 누워 있거나, 죽은 상태와 같은 다양한 캐릭터 상태에 대해 서로 다른 오버레이를 지정할 수 있습니다:
+예시:
 
 ```json
-{
-  "id": "overlay_mutation_TAIL_LONG",
-  "fg": 200,
-  "bg": 0
-}
+[
+  {
+    "type": "overlay_order",
+    "overlay_ordering": [
+      {
+        "id": [
+          "BEAUTIFUL",
+          "BEAUTIFUL2",
+          "BEAUTIFUL3",
+          "LARGE",
+          "PRETTY",
+          "RADIOACTIVE1",
+          "RADIOACTIVE2",
+          "RADIOACTIVE3",
+          "REGEN"
+        ],
+        "order": 1000
+      },
+      {
+        "id": ["HOOVES", "ROOTS1", "ROOTS2", "ROOTS3", "TALONS"],
+        "order": 4500
+      },
+      {
+        "id": "worn_backpack",
+        "order": 5400
+      },
+      {
+        "id": "FLOWERS",
+        "order": 5000
+      },
+      {
+        "id": [
+          "PROF_CYBERCOP",
+          "PROF_FED",
+          "PROF_PD_DET",
+          "PROF_POLICE",
+          "PROF_SWAT",
+          "PHEROMONE_INSECT"
+        ],
+        "order": 8500
+      },
+      {
+        "id": [
+          "bio_armor_arms",
+          "bio_armor_legs",
+          "bio_armor_torso",
+          "bio_armor_head",
+          "bio_armor_eyes"
+        ],
+        "order": 500
+      }
+    ]
+  }
+]
 ```
 
-오버레이는 기본 캐릭터 스프라이트 위에 자동으로 렌더링됩니다.
+## `id`
 
-## 성별별 오버레이
+(문자열)
 
-다양한 캐릭터 성별에 대해 서로 다른 오버레이를 제공할 수 있습니다:
+오버레이 ID입니다. 단일 문자열로 제공하거나 문자열 배열로 제공할 수 있습니다. 제공된 순서 값은
+배열의 모든 항목에 적용됩니다.
 
-```json
-{
-  "id": "overlay_mutation_BEAUTIFUL",
-  "fg": [
-    { "weight": 1, "sprite": 300 }
-  ]
-}
-```
+`ELFA_EARS` 및 `bio_armor_head`와 같은 레거시 돌연변이 및 바이오닉 ID는 여전히 작동합니다.
+다른 오버레이의 순서를 재배치하려면 `worn_backpack`, `wielded_katana`,
+`mutation_ELFA_EARS` 또는 `effect_onfire`와 같은 전체 오버레이 ID를 사용하세요.
 
-```json
-{
-  "id": "overlay_mutation_BEAUTIFUL2",
-  "fg": [
-    { "weight": 1, "sprite": 301 }
-  ]
-}
-```
+## `order`
 
-## 레이어링
+(정수)
 
-여러 오버레이는 플레이어가 여러 돌연변이를 가지고 있을 때 서로 위에 쌓입니다. 게임은 적절한 Z-순서를 자동으로 처리합니다.
-
-## 모범 사례
-
-1. **일관된 스타일** - 오버레이가 기본 타일셋의 아트 스타일과 일치하는지 확인하세요.
-2. **투명도** - 배경에는 적절한 알파 채널을 사용하세요.
-3. **정렬** - 오버레이가 기본 캐릭터 스프라이트와 올바르게 정렬되도록 하세요.
-4. **테스트** - 다양한 조합으로 오버레이를 테스트하여 충돌이 없는지 확인하세요.
-
-## 예시: 뿔 오버레이
-
-```json
-{
-  "id": "overlay_mutation_HORNS",
-  "fg": 450,
-  "bg": 0
-}
-```
-
-이것은 `HORNS` 돌연변이를 가진 캐릭터의 머리 위에 뿔 스프라이트를 추가합니다.
-
-## 예시: 꼬리 오버레이
-
-```json
-{
-  "id": "overlay_mutation_TAIL_LONG",
-  "fg": 451,
-  "bg": 0
-}
-```
-
-이것은 `TAIL_LONG` 돌연변이를 가진 캐릭터 뒤에 긴 꼬리를 추가합니다.
-
-## 참고사항
-
-- 오버레이는 타일셋 모드에서만 표시됩니다.
-- 정의되지 않은 돌연변이는 오버레이 없이 작동합니다.
-- 일부 돌연변이는 의도적으로 시각적이지 않으며 오버레이가 필요하지 않습니다.
-- 오버레이 렌더링 순서는 돌연변이 타입에 따라 달라질 수 있습니다.
+돌연변이 오버레이의 순서 값입니다. 값의 범위는 0 - 9999이며, 9999가 가장 위에 그려지는
+레이어입니다. 어떤 목록에도 없는 돌연변이는 기본적으로 9999로 설정됩니다.

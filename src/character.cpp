@@ -3884,12 +3884,10 @@ static auto get_enchantment_mut_active(
     return mut->activated && mut->starts_active;
 }
 
-std::vector<Character::overlay_entry> Character::get_overlay_ids() const
+auto Character::get_overlay_ids() const -> std::vector<overlay_entry>
 {
-    std::vector<overlay_entry> rval;
-    std::multimap<int, overlay_entry> mutation_sorting;
-    int order;
-    std::string overlay_id;
+    auto rval = std::vector<overlay_entry> {};
+    auto overlay_sorting = std::multimap<int, overlay_entry> {};
 
     // first get effects
     for( const auto &[eff_type, eff_by_part] : *effects ) {
@@ -3901,7 +3899,7 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
                 "effect_" + ( looks_like.empty() ? eff_type.str() : looks_like ),
                 &eff
             };
-            rval.emplace_back( ent );
+            overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
         }
     }
 
@@ -3910,13 +3908,13 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
         if( !mut.second.show_sprite ) {
             continue;
         }
-        overlay_id = ( mut.second.powered ? "active_" : "" ) + mut.first.str();
-        order = get_overlay_order_of_mutation( overlay_id );
+        const auto overlay_id = std::string( mut.second.powered ? "mutation_active_" : "mutation_" ) +
+                                mut.first.str();
         const overlay_entry ent {
             overlay_id,
             &mut
         };
-        mutation_sorting.insert( std::make_pair( order, ent ) );
+        overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
     }
 
     // then get bionics
@@ -3924,13 +3922,13 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
         if( !bio.show_sprite ) {
             continue;
         }
-        overlay_id = ( bio.powered ? "active_" : "" ) + bio.id.str();
-        order = get_overlay_order_of_mutation( overlay_id );
+        const auto overlay_id = std::string( bio.powered ? "mutation_active_" : "mutation_" ) +
+                                bio.id.str();
         const overlay_entry ent {
             overlay_id,
             &bio
         };
-        mutation_sorting.insert( std::make_pair( order, ent ) );
+        overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
     }
 
     // and enchantments mutations
@@ -3941,9 +3939,7 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
             }
 
             const auto active = get_enchantment_mut_active( mut, *this, *ench, src );
-
-            overlay_id = ( active ? "active_" : "" ) + mut.str();
-            order = get_overlay_order_of_mutation( overlay_id );
+            const auto overlay_id = std::string( active ? "mutation_active_" : "mutation_" ) + mut.str();
 
             // Maybe don't inherit colors from source (entry = std::nullopt)?
             const overlay_entry ent {
@@ -3951,20 +3947,10 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
                 static_variant_cast<decltype( overlay_entry::entry )>( src )
             };
 
-            mutation_sorting.insert( std::make_pair( order, ent ) );
+            overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
         }
     }
 
-    for( const auto &[id, ent] : mutation_sorting | std::views::values ) {
-        const overlay_entry actual_ent {
-            "mutation_" + id,
-            ent
-        };
-        rval.push_back( actual_ent );
-    }
-
-    // next clothing
-    // TODO: worry about correct order of clothing overlays
     for( const item * const &worn_item : worn ) {
         if( worn_item->has_flag( flag_id( "HIDDEN" ) ) ) {
             continue;
@@ -3973,17 +3959,19 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
             "worn_" + worn_item->typeId().str(),
             worn_item
         };
-        rval.push_back( ent );
+        overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
     }
 
-    // last weapon
-    // TODO: might there be clothing that covers the weapon?
     const item &weapon = primary_weapon();
     if( is_armed() ) {
         const overlay_entry ent {
             "wielded_" + weapon.typeId().str(),
             &weapon
         };
+        overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
+    }
+
+    for( const auto &ent : overlay_sorting | std::views::values ) {
         rval.push_back( ent );
     }
 
@@ -12332,4 +12320,3 @@ detached_ptr<item> Character::reduce_charges( item *it, int quantity )
     taken->charges = quantity;
     return taken;
 }
-

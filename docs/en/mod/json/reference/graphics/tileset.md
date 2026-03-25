@@ -326,15 +326,19 @@ ordering provided in `mutation_ordering.json`. Example:
   ],
   "overlay_ordering": [
     {
-      "id": "WINGS_BAT", // mutation name, in a string or array of strings
+      "id": "WINGS_BAT", // legacy mutation name, in a string or array of strings
       "order": 1000 // range from 0 - 9999, 9999 being the topmost layer
     },
     {
-      "id": ["PLANTSKIN", "BARK"], // mutation name, in a string or array of strings
+      "id": ["PLANTSKIN", "BARK"], // legacy mutation name, in a string or array of strings
       "order": 3500 // order is applied to all items in the array
     },
     {
-      "id": "bio_armor_torso", // Overlay order of bionics is controlled in the same way
+      "id": "bio_armor_torso", // legacy bionic name
+      "order": 500
+    },
+    {
+      "id": "worn_backpack", // full overlay ids can reorder worn and wielded sprites too
       "order": 500
     }
   ]

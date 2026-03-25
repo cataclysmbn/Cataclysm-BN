@@ -1,7 +1,9 @@
 # Mutation overlay ordering
 
-The file `mutation_ordering.json` defines the order that visual mutation and bionic overlays are
-rendered on a character ingame. The layering value from 0 (bottom) - 9999 (top) sets the order.
+The file `mutation_ordering.json` defines the order that character overlays are rendered ingame.
+It can reorder mutations, bionics, effects, worn items, and wielded items. The layering value from
+0 (bottom) - 9999 (top) sets the order, though worn and wielded overlays use higher default values
+unless overridden.
 
 Example:
 
@@ -27,6 +29,10 @@ Example:
       {
         "id": ["HOOVES", "ROOTS1", "ROOTS2", "ROOTS3", "TALONS"],
         "order": 4500
+      },
+      {
+        "id": "worn_backpack",
+        "order": 5400
       },
       {
         "id": "FLOWERS",
@@ -62,8 +68,12 @@ Example:
 
 (string)
 
-The internal ID of the mutation. Can be provided as a single string, or an array of strings. The
-order value provided will be applied to all items in the array.
+The overlay ID. Can be provided as a single string, or an array of strings. The order value
+provided will be applied to all items in the array.
+
+Legacy mutation and bionic IDs such as `ELFA_EARS` and `bio_armor_head` still work. To reorder
+other overlays, use the full overlay ID such as `worn_backpack`, `wielded_katana`,
+`mutation_ELFA_EARS`, or `effect_onfire`.
 
 ## `order`
 
