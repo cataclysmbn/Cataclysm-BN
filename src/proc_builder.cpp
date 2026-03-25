@@ -52,8 +52,9 @@ auto quality_match( const proc::part_fact &fact, const std::string &rhs ) -> boo
     if( parse.ec != std::errc() || parse.ptr != level_txt.data() + level_txt.size() ) {
         return false;
     }
-    const auto iter = fact.qual.find( qual );
-    return iter != fact.qual.end() && iter->second >= level;
+    return std::ranges::any_of( fact.qual, [&]( const std::pair<const quality_id, int> &entry ) {
+        return to_lower_case( entry.first.str() ) == to_lower_case( qual.str() ) && entry.second >= level;
+    } );
 }
 
 auto is_search_atom( const std::string &query ) -> bool
@@ -617,20 +618,27 @@ std::vector<part_ix>& // *NOPAD*
 auto proc::matches_atom( const part_fact &fact, const std::string &atom ) -> bool
 {
     const auto [lhs, rhs] = split_atom( atom );
+    const auto normalized_rhs = to_lower_case( rhs );
     if( lhs == "tag" ) {
-        return std::ranges::find( fact.tag, rhs ) != fact.tag.end();
+        return std::ranges::any_of( fact.tag, [&]( const std::string & tag ) {
+            return to_lower_case( tag ) == normalized_rhs;
+        } );
     }
     if( lhs == "flag" ) {
-        return std::ranges::find( fact.flag, flag_id( rhs ) ) != fact.flag.end();
+        return std::ranges::any_of( fact.flag, [&]( const flag_id & flag ) {
+            return to_lower_case( flag.str() ) == normalized_rhs;
+        } );
     }
     if( lhs == "mat" ) {
-        return std::ranges::find( fact.mat, material_id( rhs ) ) != fact.mat.end();
+        return std::ranges::any_of( fact.mat, [&]( const material_id & mat ) {
+            return to_lower_case( mat.str() ) == normalized_rhs;
+        } );
     }
     if( lhs == "itype" ) {
-        return fact.id == itype_id( rhs );
+        return to_lower_case( fact.id.str() ) == normalized_rhs;
     }
     if( lhs == "qual" ) {
-        return quality_match( fact, rhs );
+        return quality_match( fact, normalized_rhs );
     }
     return false;
 }
