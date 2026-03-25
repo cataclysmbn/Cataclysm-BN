@@ -389,6 +389,27 @@ auto clear_slot( proc::builder_state &state, const proc::slot_id &slot ) -> void
     }
 }
 
+auto draw_slot_indicator( const catacurses::window &w, const point &pos,
+                          const proc::slot_data &slot, const int picked,
+                          const bool selected, const nc_color &frame_color ) -> int
+{
+    const auto cells = proc::slot_indicator_cells( slot, picked, selected );
+    auto x = pos.x;
+    mvwputch( w, point( x, pos.y ), frame_color, '[' );
+    x++;
+    std::ranges::for_each( std::views::iota( size_t{ 0 }, cells.size() ), [&]( const size_t idx ) {
+        const auto &cell = cells[idx];
+        mvwputch( w, point( x, pos.y ), cell.color, cell.glyph );
+        x++;
+        if( idx + 1 < cells.size() ) {
+            mvwputch( w, point( x, pos.y ), cell.color, ' ' );
+            x++;
+        }
+    } );
+    mvwputch( w, point( x, pos.y ), frame_color, ']' );
+    return x - pos.x + 1;
+}
+
 } // namespace
 
 auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui_result>
@@ -499,15 +520,19 @@ auto proc::open_builder( Character &who, const recipe &rec ) -> std::optional<ui
         std::ranges::for_each( std::views::iota( slot_start, slot_end ), [&]( const int row ) {
             const auto &slot_entry = sch.slots[static_cast<size_t>( row )];
             const auto picked = static_cast<int>( state.picks_for( slot_entry.id ).size() );
-            const auto color = row == slot_cursor ? c_yellow : proc::slot_complete( state, sch,
+            const auto selected = row == slot_cursor;
+            const auto color = selected ? c_yellow : proc::slot_complete( state, sch,
                                slot_entry.id ) ?
                                c_light_green : c_white;
-            const auto line = string_format( "%s %s %s",
-                                             row == slot_cursor ? ">" : " ",
-                                             proc::slot_indicator( slot_entry, picked ),
-                                             string_format( "%s %s", slot_entry.role,
-                                                     slot_summary( state, slot_entry, source_data.entries ) ) );
-            trim_and_print( w, point( 2, list_top + row - slot_start ), left_width - 2, color, line );
+            const auto y = list_top + row - slot_start;
+            const auto prefix = string_format( "%s ", selected ? ">" : " " );
+            trim_and_print( w, point( 2, y ), left_width - 2, color, prefix );
+            const auto indicator_width = draw_slot_indicator( w, point( 2 + utf8_width( prefix ), y ),
+                                         slot_entry, picked, selected, color );
+            trim_and_print( w, point( 2 + utf8_width( prefix ) + indicator_width, y ),
+                            left_width - 2 - utf8_width( prefix ) - indicator_width, color,
+                            string_format( " %s %s", slot_entry.role,
+                                           slot_summary( state, slot_entry, source_data.entries ) ) );
         } );
 
         auto cand_start = 0;
