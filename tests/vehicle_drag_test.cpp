@@ -30,9 +30,7 @@ static void clear_game_drag( const ter_id &terrain )
 {
     // Set to turn 0 to prevent solars from producing power
     calendar::turn = calendar::turn_zero;
-    clear_creatures();
-    clear_npcs();
-    clear_avatar();
+    clear_states( state::avatar | state::vehicle );
 
     avatar &player_character = get_avatar();
     // Move player somewhere safe
@@ -43,13 +41,10 @@ static void clear_game_drag( const ter_id &terrain )
     // Make sure the ST is 8 so that muscle powered results are consistent
     player_character.str_cur = 8;
 
-    clear_vehicles();
     build_test_map( terrain );
 
     map &here = get_map();
-    // hard force a rebuild of caches
-    here.shift( point_south );
-    here.shift( point_north );
+    here.build_map_cache( 0, true );
 }
 
 static vehicle *setup_drag_test( const vproto_id &veh_id )

@@ -42,10 +42,7 @@ static void clear_game( const ter_id &terrain )
 {
     // Set to turn 0 to prevent solars from producing power
     calendar::turn = calendar::turn_zero;
-    clear_avatar();
-    clear_creatures();
-    clear_npcs();
-    clear_vehicles();
+    clear_states( state::avatar | state::vehicle );
 
     // Move player somewhere safe
     REQUIRE_FALSE( g->u.in_vehicle );
