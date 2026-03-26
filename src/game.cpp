@@ -4557,8 +4557,9 @@ void game::mon_info_update( )
         // (not view-offset-relative) so the compass stays accurate in look-mode.
         const int compass_index = [&]() -> int {
             const direction compass_dir = direction_from( u.pos().xy(),
-                                          point( c->posx(), c->posy() ) );
-            switch( compass_dir ) {
+                    point( c->posx(), c->posy() ) );
+            switch( compass_dir )
+            {
                 // *INDENT-OFF*
                 case direction::ABOVENORTHWEST: case direction::NORTHWEST: case direction::BELOWNORTHWEST: return 7;
                 case direction::ABOVENORTH:     case direction::NORTH:     case direction::BELOWNORTH:     return 0;
@@ -12075,7 +12076,8 @@ void game::update_performance_bubble()
 
     const bool combat_cond = combat_size > 0 && combat_size < normal_size
                              && u.get_mon_visible().combat_hostile_count >= ( combat_bubble_turns_ >= dynamic_grace ? 4 : 5 );
-    combat_bubble_turns_ = combat_cond ? combat_bubble_turns_ + 1 : std::min( combat_bubble_turns_ - 1, dynamic_grace );
+    combat_bubble_turns_ = combat_cond ? combat_bubble_turns_ + 1 : std::min( combat_bubble_turns_ - 1,
+                           dynamic_grace );
 
     // Compute the desired bubble size as the minimum of all applicable shrinks.
     auto target = normal_size;
@@ -12087,8 +12089,8 @@ void game::update_performance_bubble()
     }
     if( vehicle_bubble_turns_ >= dynamic_grace ) {
         target = std::min( target, vehicle_size );
-    }
-    else if( combat_bubble_turns_ >= dynamic_grace ) { // If the vehicle bubble is active, the combat bubble is ignored
+    } else if( combat_bubble_turns_ >=
+               dynamic_grace ) { // If the vehicle bubble is active, the combat bubble is ignored
         target = std::min( target, combat_size );
     }
 
