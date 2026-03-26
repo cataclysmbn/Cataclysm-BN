@@ -845,6 +845,57 @@ auto can_use_heavy_weapon( const Character &who, const map &m, const tripoint &p
     return is_mountable_nearby( m, pos );
 }
 
+auto firing_vehicle( map &here, const Character &who ) -> vehicle * // *NOPAD*
+{
+    if( !who.in_vehicle && !who.has_effect( effect_on_roof ) ) {
+        return nullptr;
+    }
+
+    const auto vp = here.veh_at( who.pos() );
+    if( !vp ) {
+        return nullptr;
+    }
+
+    return &vp->vehicle();
+}
+
+auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoint &target,
+                                  const int gun_recoil, const int shots ) -> void
+{
+    if( gun_recoil <= 0 || shots <= 0 ) {
+        return;
+    }
+
+    auto *const veh = firing_vehicle( here, who );
+    if( veh == nullptr ) {
+        return;
+    }
+
+    const auto recoil_direction = rl_vec2d( who.pos().xy() - target.xy() );
+    if( recoil_direction.is_null() ) {
+        return;
+    }
+
+    const auto vehicle_mass_kg = std::max( 1.0, static_cast<double>( units::to_kilogram(
+            veh->total_mass() ) ) );
+    const auto recoil_velocity = static_cast<int>( std::round( static_cast<double>( gun_recoil ) *
+                                 shots / vehicle_mass_kg ) );
+    if( recoil_velocity == 0 ) {
+        return;
+    }
+
+    const auto final_velocity = veh->velo_vec() + recoil_direction.normalized() * recoil_velocity;
+    const auto resulting_velocity = static_cast<int>( std::round( final_velocity.magnitude() ) );
+    if( resulting_velocity == 0 ) {
+        veh->velocity = 0;
+        return;
+    }
+
+    veh->move.init( final_velocity.normalized().as_point() );
+    veh->velocity = final_velocity.dot_product( veh->face_vec() ) < 0 ? -resulting_velocity :
+                    resulting_velocity;
+}
+
 } // namespace
 
 
@@ -1069,6 +1120,8 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
                 gun_recoil = gun_recoil * 3;
             }
         }
+
+        apply_gun_recoil_to_vehicle( here, who, target, gun_recoil, curshot );
 
         who.recoil += gun_recoil;
         if( is_mech_weapon ) {
