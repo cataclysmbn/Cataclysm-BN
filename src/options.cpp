@@ -2505,6 +2505,12 @@ void options_manager::add_options_performance()
                                "or mounted on a creature. Useful with a high render distance to reduce lag at speed.  "
                                "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 3 : 0 );
+        add( "COMBAT_BUBBLE_SIZE", page_id,
+             translate_marker( "Combat Reality Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while hostile creatures are visible nearby.  "
+                               "Uses the same detection range as safe mode.  "
+                               "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
+             0, REALITY_BUBBLE_SIZE_MAX, 0 );
         add( "ACTIVITY_BUBBLE_GRACE", page_id,
              translate_marker( "Activity Bubble Grace Period" ),
              translate_marker( "Minimum length of activity in minutes before the reality bubble shrinks.  "
@@ -2514,7 +2520,7 @@ void options_manager::add_options_performance()
         add( "DYNAMIC_BUBBLE_GRACE", page_id,
              translate_marker( "Dynamic Bubble Grace Period" ),
              translate_marker( "Consecutive turns a condition must be met before the reality bubble shrinks "
-                               "for underground and vehicle modes.  "
+                               "for underground, vehicle, and combat modes.  "
                                "Prevents rapid resizing when briefly entering or leaving a trigger zone.  "
                                "Default is 5 turns." ),
              1, 30, 5 );

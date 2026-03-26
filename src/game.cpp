@@ -4471,6 +4471,10 @@ void game::mon_info_update( )
         m.clear();
     }
     std::fill( dangerous, dangerous + 8, false );
+    mon_visible.visible_count_by_dir.fill( 0 );
+    mon_visible.nearby_hostile_count = 0;
+    mon_visible.combat_hostile_count = 0;
+    const int combat_bubble_range = SEEX * ( get_option<int>( "COMBAT_BUBBLE_SIZE" ) + 1 );
 
     const tripoint view = u.pos() + u.view_offset;
     new_seen_mon.clear();
@@ -4541,6 +4545,34 @@ void game::mon_info_update( )
                     abort();
             }
         }
+
+        // Accumulate hostile counts for danger music and combat bubble.
+        if( u.attitude_to( *c ) == Attitude::A_HOSTILE ) {
+            mon_visible.nearby_hostile_count++;
+            if( rl_dist( u.pos(), c->pos() ) <= combat_bubble_range ) {
+                mon_visible.combat_hostile_count++;
+            }
+        }
+        // Per-direction creature count for the compass panel, computed player-relative
+        // (not view-offset-relative) so the compass stays accurate in look-mode.
+        const int compass_index = [&]() -> int {
+            const direction compass_dir = direction_from( u.pos().xy(),
+                                          point( c->posx(), c->posy() ) );
+            switch( compass_dir ) {
+                // *INDENT-OFF*
+                case direction::ABOVENORTHWEST: case direction::NORTHWEST: case direction::BELOWNORTHWEST: return 7;
+                case direction::ABOVENORTH:     case direction::NORTH:     case direction::BELOWNORTH:     return 0;
+                case direction::ABOVENORTHEAST: case direction::NORTHEAST: case direction::BELOWNORTHEAST: return 1;
+                case direction::ABOVEWEST:      case direction::WEST:      case direction::BELOWWEST:      return 6;
+                case direction::ABOVEEAST:      case direction::EAST:      case direction::BELOWEAST:      return 2;
+                case direction::ABOVESOUTHWEST: case direction::SOUTHWEST: case direction::BELOWSOUTHWEST: return 5;
+                case direction::ABOVESOUTH:     case direction::SOUTH:     case direction::BELOWSOUTH:     return 4;
+                case direction::ABOVESOUTHEAST: case direction::SOUTHEAST: case direction::BELOWSOUTHEAST: return 3;
+                default: return 8;
+                // *INDENT-ON*
+            }
+        }();
+        mon_visible.visible_count_by_dir[compass_index]++;
 
         rule_state safemode_state = RULE_NONE;
         const bool safemode_empty = get_safemode().empty();
@@ -11979,6 +12011,8 @@ void game::resize_reality_bubble()
     in_activity_bubble_ = false;
     underground_bubble_turns_ = 0;
     vehicle_bubble_turns_ = 0;
+    combat_bubble_turns_ = 0;
+    u.get_mon_visible().combat_hostile_count = 0;
     resize_reality_bubble_to( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
 }
 
@@ -11989,6 +12023,7 @@ void game::update_performance_bubble()
     const int idle_size        = get_option<int>( "ACTIVITY_IDLE_BUBBLE_SIZE" );
     const int underground_size = get_option<int>( "UNDERGROUND_BUBBLE_SIZE" );
     const int vehicle_size     = get_option<int>( "VEHICLE_BUBBLE_SIZE" );
+    const int combat_size      = get_option<int>( "COMBAT_BUBBLE_SIZE" );
     const int grace_minutes    = get_option<int>( "ACTIVITY_BUBBLE_GRACE" );
     const int dynamic_grace    = get_option<int>( "DYNAMIC_BUBBLE_GRACE" );
 
@@ -12038,6 +12073,10 @@ void game::update_performance_bubble()
                               && ( ( u.in_vehicle && u.controlling_vehicle ) || u.is_mounted() );
     vehicle_bubble_turns_ = vehicle_cond ? vehicle_bubble_turns_ + 1 : 0;
 
+    const bool combat_cond = combat_size > 0 && combat_size < normal_size
+                             && u.get_mon_visible().combat_hostile_count >= ( combat_bubble_turns_ >= dynamic_grace ? 4 : 5 );
+    combat_bubble_turns_ = combat_cond ? combat_bubble_turns_ + 1 : std::min( combat_bubble_turns_ - 1, dynamic_grace );
+
     // Compute the desired bubble size as the minimum of all applicable shrinks.
     auto target = normal_size;
     if( in_activity_bubble_ ) {
@@ -12048,6 +12087,9 @@ void game::update_performance_bubble()
     }
     if( vehicle_bubble_turns_ >= dynamic_grace ) {
         target = std::min( target, vehicle_size );
+    }
+    else if( combat_bubble_turns_ >= dynamic_grace ) { // If the vehicle bubble is active, the combat bubble is ignored
+        target = std::min( target, combat_size );
     }
 
     if( g_reality_bubble_size != target ) {

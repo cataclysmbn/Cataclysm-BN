@@ -537,8 +537,9 @@ class game : public submap_load_listener
          *  Entry requires activity moves >= ACTIVITY_BUBBLE_GRACE minutes.
          *  UNDERGROUND_BUBBLE_SIZE: shrinks while underground (z < 0) with a floor above (enclosed).
          *  VEHICLE_BUBBLE_SIZE: shrinks while actively driving or mounted.
-         *  Underground and vehicle use turn-based hysteresis (DYNAMIC_BUBBLE_GRACE turns to enter,
-         *  immediate exit). The target is min() of all applicable sizes.
+         *  COMBAT_BUBBLE_SIZE: shrinks while hostile creatures are visible within safe-mode range.
+         *  Underground, vehicle, and combat use turn-based hysteresis (DYNAMIC_BUBBLE_GRACE turns
+         *  to enter, immediate exit). The target is min() of all applicable sizes.
          */
         void update_performance_bubble();
 
@@ -1230,6 +1231,7 @@ class game : public submap_load_listener
         // when the condition is no longer met (no exit hysteresis).
         int underground_bubble_turns_ = 0;
         int vehicle_bubble_turns_ = 0;
+        int combat_bubble_turns_ = 0;
 
         // Turns between world_tick() passes.  1 = every turn (default).
         // Read from REALITY_BUBBLE_TICK_INTERVAL in start_game() / load().
