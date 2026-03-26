@@ -11996,10 +11996,14 @@ void game::update_performance_bubble()
 
     // Determine the target size for this activity's effect (0 = disabled / none).
     const auto activity_target_size = [&]() -> int {
-        switch( bubble_effect ) {
-            case activity_bubble_effect::mobile: return mobile_size;
-            case activity_bubble_effect::idle:   return idle_size;
-            default:                             return 0;
+        switch( bubble_effect )
+        {
+            case activity_bubble_effect::mobile:
+                return mobile_size;
+            case activity_bubble_effect::idle:
+                return idle_size;
+            default:
+                return 0;
         }
     }();
 

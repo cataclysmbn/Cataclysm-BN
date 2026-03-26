@@ -2513,8 +2513,8 @@ void options_manager::add_options_performance()
 
     add_option_group( performance, Group( "submap_loading", to_translation( "Submap Loading" ),
                                           to_translation( "Configure how submaps are loaded and "
-                                                "processed outside of the reality bubble." ) ),
-    [&](auto& page_id) {
+                                                  "processed outside of the reality bubble." ) ),
+    [&]( auto & page_id ) {
         add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
              translate_marker( "Out-of-Bubble Fire Spread" ),
              translate_marker( "Controls whether fire can keep areas loaded outside of render "
