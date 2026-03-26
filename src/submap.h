@@ -108,11 +108,13 @@ class submap : maptile_soa<SEEX, SEEY>
 
         void set_furn( point p, furn_id furn ) {
             is_uniform = false;
+            emitter_cache = -1;
             frn[p.x][p.y] = furn;
         }
 
         void set_all_furn( const furn_id &furn ) {
             std::uninitialized_fill_n( &frn[0][0], elements, furn );
+            emitter_cache = -1;
         }
 
         ter_id get_ter( point p ) const {
@@ -227,6 +229,9 @@ class submap : maptile_soa<SEEX, SEEY>
         active_item_cache active_items;
 
         int field_count = 0;
+        /** -1 = unknown (dirty), 0 = no EMITTER furniture, 1 = has EMITTER furniture.
+         *  Lazily computed by world_tick on first use; invalidated by set_furn / set_all_furn. */
+        int8_t emitter_cache = -1;
         // Serialized as "turn_last_touched" (absolute turn number).
         // Initialized to calendar::turn_zero; legacy saves that predate
         // serialization will receive the maximum-capped catchup on first load.

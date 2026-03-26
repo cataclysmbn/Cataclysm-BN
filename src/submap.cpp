@@ -43,6 +43,7 @@ void submap::swap( submap &first, submap &second )
     std::swap( first.is_uniform, second.is_uniform );
     std::swap( first.active_items, second.active_items );
     std::swap( first.field_count, second.field_count );
+    std::swap( first.emitter_cache, second.emitter_cache );
     std::swap( first.last_touched, second.last_touched );
     std::swap( first.spawns, second.spawns );
     std::swap( first.vehicles, second.vehicles );
