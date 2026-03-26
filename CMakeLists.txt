@@ -125,6 +125,7 @@ if ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
 endif ()
 
 include(CheckCXXCompilerFlag)
+include(FetchContent)
 
 #FIXME: Add dest build choice: m32 for 32 bit or m64 for 64 bit version
 #add_definitions("-m32")
@@ -136,6 +137,17 @@ include(CheckCXXCompilerFlag)
 find_package(PkgConfig)
 find_package(SQLite3)
 find_package(ZLIB)
+
+set( SEMVER_OPT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE )
+set( SEMVER_OPT_BUILD_TESTS OFF CACHE BOOL "" FORCE )
+set( SEMVER_OPT_INSTALL OFF CACHE BOOL "" FORCE )
+FetchContent_Declare(
+    neargye_semver
+    GIT_REPOSITORY https://github.com/Neargye/semver.git
+    GIT_TAG v0.3.1
+    GIT_PROGRESS TRUE )
+FetchContent_MakeAvailable( neargye_semver )
+
 if (NOT DYNAMIC_LINKING)
     if(NOT MSVC)
         set(CMAKE_FIND_LIBRARY_SUFFIXES ".a;.dll.a")
@@ -299,8 +311,6 @@ set(CMAKE_THREAD_PREFER_PTHREAD True)
 find_package(Threads REQUIRED)
 
 if (USE_TRACY)
-    include(FetchContent)
-
     if (NOT TRACY_VERSION)
         if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
             set(TRACY_VERSION 6d1deb5640ed11da01995fb1791115cfebe54dbf)

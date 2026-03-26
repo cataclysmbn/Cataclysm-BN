@@ -7,7 +7,7 @@
     "description": "Additional weathers ported from the Japanese CDDA variant and modified to fit BN.\n\nEnables acid rain and adds the following weather: Rainbows, Sundogs (renamed from Diamond Dust), Northern Lights, Geomagnetic Storms, Acid Flurries, Acid Snow, and Acid Snowstorms.",
     "category": "content",
     "dependencies": [ "bn" ],
-    "version": "1",
+    "version": "1.0.0",
     "obsolete": false
   }
 ]
