@@ -37,6 +37,7 @@
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
+#include "activity_type.h"
 #include "armor_layers.h"
 #include "artifact.h"
 #include "auto_note.h"
@@ -11982,30 +11983,42 @@ void game::resize_reality_bubble()
 void game::update_performance_bubble()
 {
     const int normal_size   = get_option<int>( "REALITY_BUBBLE_SIZE" );
-    const int activity_size = get_option<int>( "ACTIVITY_BUBBLE_SIZE" );
+    const int mobile_size   = get_option<int>( "ACTIVITY_MOBILE_BUBBLE_SIZE" );
+    const int idle_size     = get_option<int>( "ACTIVITY_IDLE_BUBBLE_SIZE" );
     const int vehicle_size  = get_option<int>( "VEHICLE_BUBBLE_SIZE" );
+    const int grace_minutes = get_option<int>( "ACTIVITY_BUBBLE_GRACE" );
 
     const bool has_activity = static_cast<bool>( u.activity );
 
-    // Activity ID captured for future whitelist / blacklist filtering.
-    const activity_id &act_id = has_activity ? u.activity.get()->id() : activity_id::NULL_ID();
-    ( void )act_id;
+    const activity_bubble_effect bubble_effect = has_activity
+            ? u.activity.get()->id().obj().bubble_effect()
+            : activity_bubble_effect::none;
 
-    // Update the activity-bubble gate (5-minute entry hysteresis).
+    // Determine the target size for this activity's effect (0 = disabled / none).
+    const auto activity_target_size = [&]() -> int {
+        switch( bubble_effect ) {
+            case activity_bubble_effect::mobile: return mobile_size;
+            case activity_bubble_effect::idle:   return idle_size;
+            default:                             return 0;
+        }
+    }();
+
+    // Update the activity-bubble hysteresis gate.
     // Once entered, we stay shrunk until the activity ends regardless of remaining time.
     if( in_activity_bubble_ ) {
-        if( !has_activity ) {
+        if( !has_activity || bubble_effect == activity_bubble_effect::none ) {
             in_activity_bubble_ = false;
         }
-    } else if( has_activity && activity_size > 0 && activity_size < normal_size &&
-               u.activity.get()->get_moves_left() >= to_moves<int>( 5_minutes ) ) {
+    } else if( has_activity && activity_target_size > 0 && activity_target_size < normal_size &&
+               u.activity.get()->get_moves_left() >= to_moves<int>( time_duration::from_minutes(
+                           grace_minutes ) ) ) {
         in_activity_bubble_ = true;
     }
 
     // Compute the desired bubble size as the minimum of all applicable shrinks.
     auto target = normal_size;
     if( in_activity_bubble_ ) {
-        target = std::min( target, activity_size );
+        target = std::min( target, activity_target_size );
     }
     if( vehicle_size > 0 && vehicle_size < normal_size && ( ( u.in_vehicle && u.controlling_vehicle ) ||
             u.is_mounted() ) ) {

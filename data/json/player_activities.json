@@ -24,7 +24,8 @@
     "auto_needs": true,
     "morale_blocked": true,
     "complex_moves": { "light": true, "speed": true, "stats": [ [ "INT" ] ], "morale": true },
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_MULTIPLE_CONSTRUCTION",
@@ -34,7 +35,8 @@
     "suspendable": false,
     "no_resume": true,
     "multi_activity": true,
-    "auto_needs": true
+    "auto_needs": true,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_MULTIPLE_MINE",
@@ -43,14 +45,16 @@
     "special": true,
     "suspendable": false,
     "no_resume": true,
-    "multi_activity": true
+    "multi_activity": true,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_TIDY_UP",
     "type": "activity_type",
     "verb": "tidying up",
     "special": true,
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_VEHICLE_DECONSTRUCTION",
@@ -59,7 +63,8 @@
     "special": true,
     "suspendable": false,
     "no_resume": true,
-    "multi_activity": true
+    "multi_activity": true,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_VEHICLE_REPAIR",
@@ -68,7 +73,8 @@
     "special": true,
     "suspendable": false,
     "no_resume": true,
-    "multi_activity": true
+    "multi_activity": true,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_MULTIPLE_CHOP_PLANKS",
@@ -78,7 +84,8 @@
     "suspendable": false,
     "no_resume": true,
     "multi_activity": true,
-    "auto_needs": true
+    "auto_needs": true,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_MULTIPLE_BUTCHER",
@@ -88,7 +95,8 @@
     "suspendable": false,
     "no_resume": true,
     "multi_activity": true,
-    "auto_needs": true
+    "auto_needs": true,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_MULTIPLE_CHOP_TREES",
@@ -98,28 +106,32 @@
     "suspendable": false,
     "no_resume": true,
     "multi_activity": true,
-    "auto_needs": true
+    "auto_needs": true,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_MULTIPLE_FISH",
     "type": "activity_type",
     "verb": "fishing",
     "special": true,
-    "auto_needs": true
+    "auto_needs": true,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_GENERIC_GAME",
     "type": "activity_type",
     "verb": "playing",
     "rooted": true,
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_GAME",
     "type": "activity_type",
     "verb": "playing",
     "rooted": true,
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_WAIT",
@@ -129,7 +141,8 @@
     "no_resume": true,
     "refuel_fires": true,
     "auto_needs": true,
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_CRAFT",
@@ -139,7 +152,8 @@
     "refuel_fires": true,
     "auto_needs": true,
     "morale_blocked": true,
-    "complex_moves": { "max_assistants": 4, "bench": true, "light": true, "speed": true, "skills": true, "qualities": true, "morale": true }
+    "complex_moves": { "max_assistants": 4, "bench": true, "light": true, "speed": true, "skills": true, "qualities": true, "morale": true },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_DISASSEMBLE",
@@ -150,7 +164,8 @@
     "refuel_fires": true,
     "auto_needs": true,
     "morale_blocked": true,
-    "complex_moves": { "max_assistants": 4, "bench": true, "light": true, "speed": true, "skills": true, "qualities": true, "morale": true }
+    "complex_moves": { "max_assistants": 4, "bench": true, "light": true, "speed": true, "skills": true, "qualities": true, "morale": true },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_BUTCHER",
@@ -165,7 +180,8 @@
       "skills": [ [ "survival" ] ],
       "stats": [ [ "DEX" ] ],
       "qualities": [ [ "BUTCHER" ] ]
-    }
+    },
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_BUTCHER_FULL",
@@ -180,7 +196,8 @@
       "skills": [ [ "survival" ] ],
       "stats": [ [ "DEX" ] ],
       "qualities": [ [ "BUTCHER" ] ]
-    }
+    },
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_FIELD_DRESS",
@@ -195,7 +212,8 @@
       "skills": [ [ "survival" ] ],
       "stats": [ [ "DEX" ] ],
       "qualities": [ [ "BUTCHER" ] ]
-    }
+    },
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_BLEED",
@@ -204,6 +222,7 @@
     "auto_needs": true,
     "morale_blocked": true,
     "complex_moves": { "skills": [ [ "survival" ] ] },
+	"bubble_size_effect": "mobile",
     "//": "the only way to bleed corpse 'faster' is making a proper cut"
   },
   {
@@ -219,7 +238,8 @@
       "skills": [ [ "survival" ] ],
       "stats": [ [ "DEX" ] ],
       "qualities": [ [ "BUTCHER" ] ]
-    }
+    },
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_QUARTER",
@@ -234,7 +254,8 @@
       "skills": [ [ "survival" ] ],
       "stats": [ [ "STR" ] ],
       "qualities": [ [ "BUTCHER" ] ]
-    }
+    },
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_DISMEMBER",
@@ -248,7 +269,8 @@
       "skills": [ [ "survival" ] ],
       "stats": [ [ "STR" ] ],
       "qualities": [ [ "BUTCHER" ] ]
-    }
+    },
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_DISSECT",
@@ -263,7 +285,8 @@
       "skills": [ [ "firstaid" ] ],
       "stats": [ [ "PER" ], [ "DEX" ] ],
       "qualities": [ [ "CUT_FINE", -60 ] ]
-    }
+    },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_LONGSALVAGE",
@@ -272,14 +295,16 @@
     "no_resume": true,
     "refuel_fires": true,
     "auto_needs": true,
-    "complex_moves": { "speed": true, "bench": true, "light": true, "skills": [ [ "fabrication" ] ], "qualities": true }
+    "complex_moves": { "speed": true, "bench": true, "light": true, "skills": [ [ "fabrication" ] ], "qualities": true },
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_FORAGE",
     "type": "activity_type",
     "verb": "foraging",
     "complex_moves": { "light": true, "speed": true, "skills": [ [ "survival" ] ], "stats": [ [ "PER" ] ] },
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_BUILD",
@@ -288,7 +313,8 @@
     "auto_needs": true,
     "verb": "constructing",
     "morale_blocked": true,
-    "complex_moves": { "max_assistants": 8, "light": true, "speed": true, "skills": true, "qualities": true }
+    "complex_moves": { "max_assistants": 8, "light": true, "speed": true, "skills": true, "qualities": true },
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_VEHICLE",
@@ -300,14 +326,16 @@
     "id": "ACT_TRAIN",
     "type": "activity_type",
     "verb": "training",
-    "complex_moves": { "speed": true, "skills": [ [ "melee" ] ], "stats": [ [ "INT" ] ] }
+    "complex_moves": { "speed": true, "skills": [ [ "melee" ] ], "stats": [ [ "INT" ] ] },
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_SOCIALIZE",
     "type": "activity_type",
     "verb": "socializing",
     "rooted": true,
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_WAIT_WEATHER",
@@ -316,13 +344,15 @@
     "rooted": true,
     "no_resume": true,
     "auto_needs": true,
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_FIRSTAID",
     "type": "activity_type",
     "verb": "using first aid",
-    "complex_moves": { "max_assistants": 1, "light": true, "speed": true, "skills": [ [ "firstaid" ] ] }
+    "complex_moves": { "max_assistants": 1, "light": true, "speed": true, "skills": [ [ "firstaid" ] ] },
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_FISH",
@@ -330,7 +360,8 @@
     "verb": "fishing",
     "rooted": true,
     "suspendable": false,
-    "complex_moves": { "light": true, "morale": true, "speed": true, "skills": [ [ "survival" ] ], "stats": [ [ "PER" ] ] }
+    "complex_moves": { "light": true, "morale": true, "speed": true, "skills": [ [ "survival" ] ], "stats": [ [ "PER" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_PICKAXE",
@@ -369,13 +400,15 @@
     "id": "ACT_VIBE",
     "type": "activity_type",
     "verb": "de-stressing",
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_TRAIN_SKILL",
     "type": "activity_type",
     "verb": "training",
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_MAKE_ZLAVE",
@@ -436,7 +469,8 @@
     "suspendable": false,
     "special": true,
     "no_resume": true,
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "mobile"
   },
   {
     "id": "ACT_MOVE_LOOT",
@@ -526,7 +560,8 @@
     "suspendable": false,
     "rooted": true,
     "no_resume": true,
-    "complex_moves": { "speed": true, "skills": true }
+    "complex_moves": { "speed": true, "skills": true },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_SHEAR",
@@ -536,7 +571,8 @@
     "rooted": true,
     "no_resume": true,
     "morale_blocked": true,
-    "complex_moves": { "max_assistants": 2, "light": true, "speed": true, "skills": [ [ "survival" ] ] }
+    "complex_moves": { "max_assistants": 2, "light": true, "speed": true, "skills": [ [ "survival" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_HOTWIRE_CAR",
@@ -596,7 +632,8 @@
       "stats": [ [ "DEX" ], [ "PER" ] ],
       "skills": [ [ "mechanics" ] ],
       "qualities": [ [ "LOCKPICK" ] ]
-    }
+    },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_REPAIR_ITEM",
@@ -617,7 +654,8 @@
     "refuel_fires": true,
     "auto_needs": true,
     "morale_blocked": true,
-    "complex_moves": { "bench": true, "light": true, "speed": true, "skills": true, "qualities": true }
+    "complex_moves": { "bench": true, "light": true, "speed": true, "skills": true, "qualities": true },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_GUNMOD_ADD",
@@ -639,7 +677,8 @@
     "verb": "interacting with the NPC",
     "rooted": true,
     "no_resume": true,
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_WAIT_STAMINA",
@@ -647,7 +686,8 @@
     "verb": "catching breath",
     "rooted": true,
     "no_resume": true,
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_CLEAR_RUBBLE",
@@ -661,7 +701,8 @@
     "type": "activity_type",
     "verb": "meditating",
     "rooted": true,
-    "complex_moves": { "speed": true, "stats": [ [ "INT" ] ] }
+    "complex_moves": { "speed": true, "stats": [ [ "INT" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_HACKSAW",
@@ -686,32 +727,37 @@
     "id": "ACT_CHOP_TREE",
     "type": "activity_type",
     "verb": "chopping down a tree",
-    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ], "skills": [ [ "fabrication" ] ], "qualities": [ [ "AXE" ] ] }
+    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ], "skills": [ [ "fabrication" ] ], "qualities": [ [ "AXE" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_CHOP_LOGS",
     "type": "activity_type",
     "verb": "chopping a log",
-    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ], "skills": [ [ "fabrication" ] ], "qualities": [ [ "AXE" ] ] }
+    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ], "skills": [ [ "fabrication" ] ], "qualities": [ [ "AXE" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_CHOP_PLANKS",
     "type": "activity_type",
     "verb": "cutting planks",
     "no_resume": true,
-    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ], "skills": [ [ "fabrication" ] ], "qualities": [ [ "AXE" ] ] }
+    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ], "skills": [ [ "fabrication" ] ], "qualities": [ [ "AXE" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_JACKHAMMER",
     "type": "activity_type",
     "verb": "drilling",
-    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ] }
+    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_CHURN",
     "type": "activity_type",
     "verb": "churning earth",
-    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ], "qualities": [ [ "DIG" ] ] }
+    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ], "qualities": [ [ "DIG" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_PLANT_SEED",
@@ -742,14 +788,16 @@
     "type": "activity_type",
     "verb": "shaving",
     "rooted": true,
-    "complex_moves": { "light": true, "speed": true, "stats": [ [ "DEX" ], [ "PER" ] ] }
+    "complex_moves": { "light": true, "speed": true, "stats": [ [ "DEX" ], [ "PER" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_HAIRCUT",
     "type": "activity_type",
     "verb": "cutting your hair",
     "rooted": true,
-    "complex_moves": { "light": true, "speed": true, "stats": [ [ "DEX" ], [ "PER" ] ] }
+    "complex_moves": { "light": true, "speed": true, "stats": [ [ "DEX" ], [ "PER" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_PLAY_WITH_PET",
@@ -764,13 +812,15 @@
     "rooted": true,
     "suspendable": false,
     "complex_moves": { "speed": true, "stats": [ [ "INT" ] ] },
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_OPERATION",
     "type": "activity_type",
     "verb": "being operated on",
-    "suspendable": false
+    "suspendable": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_ROBOT_CONTROL",
@@ -795,7 +845,8 @@
     "rooted": true,
     "suspendable": false,
     "no_resume": true,
-    "verbose_tooltip": false
+    "verbose_tooltip": false,
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_EAT_MENU",
@@ -834,7 +885,8 @@
     "auto_needs": true,
     "rooted": true,
     "no_resume": true,
-    "complex_moves": { "speed": true }
+    "complex_moves": { "speed": true },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_CONSUME_DRINK_MENU",
@@ -868,7 +920,8 @@
     "verb": "hacking",
     "suspendable": false,
     "no_resume": true,
-    "complex_moves": { "speed": true, "skills": [ [ "computer" ] ], "stats": [ [ "INT" ] ] }
+    "complex_moves": { "speed": true, "skills": [ [ "computer" ] ], "stats": [ [ "INT" ] ] },
+	"bubble_size_effect": "idle"
   },
   {
     "id": "ACT_MIGRATION_CANCEL",

@@ -2471,7 +2471,7 @@ void options_manager::add_options_performance()
     add_empty_line();
 
     add_option_group( performance, Group( "reality_bubble", to_translation( "Reality Bubble" ),
-                                          to_translation( "Configure how submaps are loaded and processed." ) ),
+                                          to_translation( "Configure how the reality bubble functions." ) ),
     [&]( auto & page_id ) {
         add( "REALITY_BUBBLE_SIZE", page_id,
              translate_marker( "Reality Bubble Size" ),
@@ -2481,20 +2481,40 @@ void options_manager::add_options_performance()
                                "Larger values increase the loaded area and memory usage; "
                                "smaller values reduce both. " ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 6 );
-        add( "ACTIVITY_BUBBLE_SIZE", page_id,
-             translate_marker( "Activity Reality Bubble Size" ),
-             translate_marker( "Shrink the reality bubble to this radius while the player is busy with a long "
-                               "activity (sleeping, reading, crafting, etc.).  "
+        add( "ACTIVITY_MOBILE_BUBBLE_SIZE", page_id,
+             translate_marker( "Mobile Activity Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while the player is performing a "
+                               "mobile activity (crafting, construction, etc.).  "
                                "Reduces CPU and GPU load during fast-forward turns.  "
-                               "Only activates when the activity has at least 5 minutes remaining.  "
                                "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
-             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 2 : 4 );
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 3 : 4 );
+        add( "ACTIVITY_IDLE_BUBBLE_SIZE", page_id,
+             translate_marker( "Idle Activity Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while the player is performing an "
+                               "idle activity (sleeping, reading, waiting, etc.).  "
+                               "Reduces CPU and GPU load during fast-forward turns.  "
+                               "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 2 : 3 );
         add( "VEHICLE_BUBBLE_SIZE", page_id,
              translate_marker( "Vehicle Reality Bubble Size" ),
              translate_marker( "Shrink the reality bubble to this radius while the player is actively driving a vehicle  "
                                "or mounted on a creature. Useful with a high render distance to reduce lag at speed.  "
                                "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 3 : 0 );
+        add( "ACTIVITY_BUBBLE_GRACE", page_id,
+             translate_marker( "Activity Bubble Grace Period" ),
+             translate_marker( "Minimum length of activity in minutes before the reality bubble shrinks.  "
+                               "Acts as a safety net to avoid unnecessary resizes for short tasks.  "
+                               "Default is 5 minutes." ),
+             1, 60, 5 );
+    } );
+
+    add_empty_line();
+
+    add_option_group( performance, Group( "submap_loading", to_translation( "Submap Loading" ),
+                                          to_translation( "Configure how submaps are loaded and "
+                                                "processed outside of the reality bubble." ) ),
+    [&](auto& page_id) {
         add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
              translate_marker( "Out-of-Bubble Fire Spread" ),
              translate_marker( "Controls whether fire can keep areas loaded outside of render "
@@ -2513,16 +2533,15 @@ void options_manager::add_options_performance()
                                "fires to be simulated correctly. "
                                "0 disables out-of-bubble fire spread loading entirely. " ),
              0, 250, 25 );
+        add( "POWER_PORTAL_LOAD_RADIUS", performance,
+             translate_marker( "Power portal load radius (submaps)" ),
+             translate_marker( "Radius in submaps around each end of a power-portal link that is "
+                               "force-loaded while the link is active." ),
+             0, static_cast<int>( REALITY_BUBBLE_SIZE_MAX ) + 1, is_android ? 2 : 3
+           );
     } );
 
     get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
-
-    add( "POWER_PORTAL_LOAD_RADIUS", performance,
-         translate_marker( "Power portal load radius (submaps)" ),
-         translate_marker( "Radius in submaps around each end of a power-portal link that is "
-                           "force-loaded while the link is active." ),
-         0, static_cast<int>( REALITY_BUBBLE_SIZE_MAX ) + 1, is_android ? 2 : 3
-       );
 }
 
 void options_manager::add_options_debug()
