@@ -135,6 +135,7 @@ if ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
 endif ()
 
 include(CheckCXXCompilerFlag)
+include(FetchContent)
 
 #FIXME: Add dest build choice: m32 for 32 bit or m64 for 64 bit version
 #add_definitions("-m32")
@@ -153,6 +154,17 @@ if (NOT TARGET SQLite3::SQLite3 AND TARGET SQLite::SQLite3)
     add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
 endif ()
 find_package(ZLIB)
+
+set( SEMVER_OPT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE )
+set( SEMVER_OPT_BUILD_TESTS OFF CACHE BOOL "" FORCE )
+set( SEMVER_OPT_INSTALL OFF CACHE BOOL "" FORCE )
+FetchContent_Declare(
+    neargye_semver
+    GIT_REPOSITORY https://github.com/Neargye/semver.git
+    GIT_TAG v0.3.1
+    GIT_PROGRESS TRUE )
+FetchContent_MakeAvailable( neargye_semver )
+
 if (NOT DYNAMIC_LINKING)
     if(NOT MSVC)
         set(CMAKE_FIND_LIBRARY_SUFFIXES ".a;.dll.a")
