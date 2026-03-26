@@ -534,9 +534,11 @@ class game : public submap_load_listener
         /** Called each turn to shrink/restore the bubble based on active performance modes.
          *  ACTIVITY_MOBILE_BUBBLE_SIZE / ACTIVITY_IDLE_BUBBLE_SIZE: shrinks while the player has a
          *  long activity whose bubble_size_effect is "mobile" or "idle" respectively.
-         *  Entry requires activity moves >= ACTIVITY_BUBBLE_GRACE minutes (hysteresis).
-         *  VEHICLE_BUBBLE_SIZE: shrinks while is_mounted() is true (no hysteresis).
-         *  The target is min() of all applicable sizes, so both can apply simultaneously.
+         *  Entry requires activity moves >= ACTIVITY_BUBBLE_GRACE minutes.
+         *  UNDERGROUND_BUBBLE_SIZE: shrinks while underground (z < 0) with a floor above (enclosed).
+         *  VEHICLE_BUBBLE_SIZE: shrinks while actively driving or mounted.
+         *  Underground and vehicle use turn-based hysteresis (DYNAMIC_BUBBLE_GRACE turns to enter,
+         *  immediate exit). The target is min() of all applicable sizes.
          */
         void update_performance_bubble();
 
@@ -1222,6 +1224,12 @@ class game : public submap_load_listener
         // until the activity ends regardless of remaining time.
         // Cleared by resize_reality_bubble() so an explicit option change always wins.
         bool in_activity_bubble_ = false;
+
+        // Consecutive turns each dynamic condition has been continuously met.
+        // Trigger fires once the count reaches DYNAMIC_BUBBLE_GRACE; resets to 0 immediately
+        // when the condition is no longer met (no exit hysteresis).
+        int underground_bubble_turns_ = 0;
+        int vehicle_bubble_turns_ = 0;
 
         // Turns between world_tick() passes.  1 = every turn (default).
         // Read from REALITY_BUBBLE_TICK_INTERVAL in start_game() / load().

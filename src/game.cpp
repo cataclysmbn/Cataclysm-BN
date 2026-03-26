@@ -11974,27 +11974,31 @@ void game::resize_reality_bubble_to( int new_size )
 void game::resize_reality_bubble()
 {
     // Called when the user explicitly changes REALITY_BUBBLE_SIZE in the options menu.
-    // Clear activity-bubble state so the new normal size takes effect immediately;
-    // the next do_turn() will re-shrink if an activity is still running.
+    // Clear all bubble state so the new normal size takes effect immediately;
+    // the next do_turn() will re-evaluate and re-shrink as appropriate.
     in_activity_bubble_ = false;
+    underground_bubble_turns_ = 0;
+    vehicle_bubble_turns_ = 0;
     resize_reality_bubble_to( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
 }
 
 void game::update_performance_bubble()
 {
-    const int normal_size   = get_option<int>( "REALITY_BUBBLE_SIZE" );
-    const int mobile_size   = get_option<int>( "ACTIVITY_MOBILE_BUBBLE_SIZE" );
-    const int idle_size     = get_option<int>( "ACTIVITY_IDLE_BUBBLE_SIZE" );
-    const int vehicle_size  = get_option<int>( "VEHICLE_BUBBLE_SIZE" );
-    const int grace_minutes = get_option<int>( "ACTIVITY_BUBBLE_GRACE" );
+    const int normal_size      = get_option<int>( "REALITY_BUBBLE_SIZE" );
+    const int mobile_size      = get_option<int>( "ACTIVITY_MOBILE_BUBBLE_SIZE" );
+    const int idle_size        = get_option<int>( "ACTIVITY_IDLE_BUBBLE_SIZE" );
+    const int underground_size = get_option<int>( "UNDERGROUND_BUBBLE_SIZE" );
+    const int vehicle_size     = get_option<int>( "VEHICLE_BUBBLE_SIZE" );
+    const int grace_minutes    = get_option<int>( "ACTIVITY_BUBBLE_GRACE" );
+    const int dynamic_grace    = get_option<int>( "DYNAMIC_BUBBLE_GRACE" );
 
+    // --- Activity-based bubble (minute-scale hysteresis) ---
     const bool has_activity = static_cast<bool>( u.activity );
 
     const activity_bubble_effect bubble_effect = has_activity
             ? u.activity.get()->id().obj().bubble_effect()
             : activity_bubble_effect::none;
 
-    // Determine the target size for this activity's effect (0 = disabled / none).
     const auto activity_target_size = [&]() -> int {
         switch( bubble_effect )
         {
@@ -12007,7 +12011,6 @@ void game::update_performance_bubble()
         }
     }();
 
-    // Update the activity-bubble hysteresis gate.
     // Once entered, we stay shrunk until the activity ends regardless of remaining time.
     if( in_activity_bubble_ ) {
         if( !has_activity || bubble_effect == activity_bubble_effect::none ) {
@@ -12019,13 +12022,31 @@ void game::update_performance_bubble()
         in_activity_bubble_ = true;
     }
 
+    // --- Dynamic conditions (turn-scale hysteresis via per-condition counters) ---
+    // Each counter increments while its condition holds; resets to 0 the moment it doesn't.
+    // The bubble shrinks once the counter reaches dynamic_grace (no exit hysteresis).
+
+    // Use has_floor on the tile above rather than is_outside: the latter relies on TFLAG_INDOORS
+    // which water-derived terrain (e.g. sewage) may lack, causing false "outside" readings.
+    // A physical floor one level up is a reliable proxy for "enclosed/has ceiling".
+    const bool underground_cond = underground_size > 0 && underground_size < normal_size
+                                  && u.pos().z < 0
+                                  && m.has_floor( tripoint( u.pos().xy(), u.pos().z + 1 ) );
+    underground_bubble_turns_ = underground_cond ? underground_bubble_turns_ + 1 : 0;
+
+    const bool vehicle_cond = vehicle_size > 0 && vehicle_size < normal_size
+                              && ( ( u.in_vehicle && u.controlling_vehicle ) || u.is_mounted() );
+    vehicle_bubble_turns_ = vehicle_cond ? vehicle_bubble_turns_ + 1 : 0;
+
     // Compute the desired bubble size as the minimum of all applicable shrinks.
     auto target = normal_size;
     if( in_activity_bubble_ ) {
         target = std::min( target, activity_target_size );
     }
-    if( vehicle_size > 0 && vehicle_size < normal_size && ( ( u.in_vehicle && u.controlling_vehicle ) ||
-            u.is_mounted() ) ) {
+    if( underground_bubble_turns_ >= dynamic_grace ) {
+        target = std::min( target, underground_size );
+    }
+    if( vehicle_bubble_turns_ >= dynamic_grace ) {
         target = std::min( target, vehicle_size );
     }
 

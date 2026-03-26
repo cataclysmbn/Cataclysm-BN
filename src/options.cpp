@@ -2485,16 +2485,20 @@ void options_manager::add_options_performance()
              translate_marker( "Mobile Activity Bubble Size" ),
              translate_marker( "Shrink the reality bubble to this radius while the player is performing a "
                                "mobile activity (crafting, construction, etc.).  "
-                               "Reduces CPU and GPU load during fast-forward turns.  "
                                "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 3 : 4 );
         add( "ACTIVITY_IDLE_BUBBLE_SIZE", page_id,
              translate_marker( "Idle Activity Bubble Size" ),
              translate_marker( "Shrink the reality bubble to this radius while the player is performing an "
                                "idle activity (sleeping, reading, waiting, etc.).  "
-                               "Reduces CPU and GPU load during fast-forward turns.  "
                                "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 2 : 3 );
+        add( "UNDERGROUND_BUBBLE_SIZE", page_id,
+             translate_marker( "Underground Reality Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while the player is underground "
+                               "and indoors (no sky visible).  "
+                               "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 2 : 4 );
         add( "VEHICLE_BUBBLE_SIZE", page_id,
              translate_marker( "Vehicle Reality Bubble Size" ),
              translate_marker( "Shrink the reality bubble to this radius while the player is actively driving a vehicle  "
@@ -2507,6 +2511,13 @@ void options_manager::add_options_performance()
                                "Acts as a safety net to avoid unnecessary resizes for short tasks.  "
                                "Default is 5 minutes." ),
              1, 60, 5 );
+        add( "DYNAMIC_BUBBLE_GRACE", page_id,
+             translate_marker( "Dynamic Bubble Grace Period" ),
+             translate_marker( "Consecutive turns a condition must be met before the reality bubble shrinks "
+                               "for underground and vehicle modes.  "
+                               "Prevents rapid resizing when briefly entering or leaving a trigger zone.  "
+                               "Default is 5 turns." ),
+             1, 30, 5 );
     } );
 
     add_empty_line();
