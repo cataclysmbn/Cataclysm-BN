@@ -2657,7 +2657,8 @@ int map::climb_difficulty( const tripoint &p ) const
     if( has_flag( TFLAG_NO_FLOOR, p ) ) {
         const auto below = p + tripoint_below;
         const auto below_range = points_in_radius( below, 1 );
-        climb_points.insert( climb_points.end(), below_range.begin(), below_range.end() );
+        const auto below_points = std::vector<tripoint>( below_range.begin(), below_range.end() );
+        climb_points.insert( climb_points.end(), below_points.begin(), below_points.end() );
     }
 
     for( const tripoint &pt : climb_points ) {
