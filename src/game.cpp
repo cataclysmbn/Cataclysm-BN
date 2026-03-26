@@ -4830,19 +4830,22 @@ void game::world_tick()
         }
 
         mb.for_each_submap( [&]( auto & entry ) {
-            ZoneScopedN( "wtd_submap_body" );
             auto &[raw_pos, sm_ptr] = entry;
             if( !sm_ptr ) {
                 return;
             }
-            const tripoint_abs_sm pos_sm( raw_pos );
 
             // Only simulate submaps that are actively requested (reality bubble,
             // fire spread, player base, script).  Skip lazy-border and streamer
             // pre-loaded submaps that are merely resident in memory.
-            if( !submap_loader.is_simulated( dim, pos_sm ) ) {
+            // Use the precomputed O(1) set rather than is_simulated() which does
+            // an O(log N) mapbuffer lookup + O(R) request scan per submap.
+            if( !submap_loader.is_in_simulated_set( dim, raw_pos ) ) {
                 return;
             }
+
+            ZoneScopedN( "wtd_submap_body" );
+            const tripoint_abs_sm pos_sm( raw_pos );
 
             total_field_count += sm_ptr->field_count;
 
@@ -7309,6 +7312,11 @@ void game::peek( const tripoint &p )
     u.moves -= 200;
     tripoint prev = u.pos();
     u.setpos( p );
+    // Force a full cache rebuild from the peek position so look_around renders
+    // correct FOV and lighting.  Without this, lightmap_dirty may already be
+    // false (built from the pre-peek player position earlier this turn), causing
+    // look_around to display stale lighting and visibility.
+    m.invalidate_map_cache( p.z );
     tripoint center = p;
     const look_around_result result = look_around( /*show_window=*/true, center, center, false, false,
                                       true );
