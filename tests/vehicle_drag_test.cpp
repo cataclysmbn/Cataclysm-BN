@@ -133,14 +133,13 @@ static bool test_drag(
     return valid;
 }
 
-static void test_vehicle_drag(
-    std::string type, const double expected_c_air, const double expected_c_rr,
-    const double expected_c_water, const int expected_safe, const int expected_max )
+static auto test_vehicle_drag(
+    const std::string &type, const double expected_c_air, const double expected_c_rr,
+    const double expected_c_water, const int expected_safe, const int expected_max ) -> void
 {
-    SECTION( type ) {
-        test_drag( vproto_id( type ), expected_c_air, expected_c_rr, expected_c_water,
-                   expected_safe, expected_max, true );
-    }
+    CAPTURE( type );
+    CHECK( test_drag( vproto_id( type ), expected_c_air, expected_c_rr, expected_c_water,
+                      expected_safe, expected_max, true ) );
 }
 
 std::vector<std::string> vehs_to_test_drag = {

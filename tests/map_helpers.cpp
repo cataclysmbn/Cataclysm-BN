@@ -23,6 +23,14 @@
 #include "point.h"
 #include "type_id.h"
 
+namespace
+{
+
+constexpr int test_map_z_min = -2;
+constexpr int test_map_z_max = 1;
+
+} // namespace
+
 // Remove all vehicles from the map
 void clear_vehicles()
 {
@@ -35,8 +43,8 @@ void wipe_map_terrain()
 {
     map &here = get_map();
     const int mapsize = here.getmapsize() * SEEX;
-    for( int z = -1; z <= OVERMAP_HEIGHT; ++z ) {
-        ter_id terrain = z == 0 ? t_grass : z < 0 ? t_rock : t_open_air;
+    for( int z = test_map_z_min; z <= test_map_z_max; ++z ) {
+        const ter_id terrain = z == 0 ? t_grass : z < 0 ? t_rock : t_open_air;
         for( int x = 0; x < mapsize; ++x ) {
             for( int y = 0; y < mapsize; ++y ) {
                 g->m.set( { x, y, z}, terrain, f_null );
@@ -45,7 +53,6 @@ void wipe_map_terrain()
     }
     clear_vehicles();
     g->m.invalidate_map_cache( 0 );
-    g->m.build_map_cache( 0, true );
 }
 
 void clear_creatures()
@@ -101,16 +108,22 @@ void clear_map()
 {
     // Clearing all z-levels is rather slow, so just clear the ones I know the
     // tests use for now.
-    for( int z = -2; z <= 0; ++z ) {
+    for( int z = test_map_z_min; z <= test_map_z_max; ++z ) {
         clear_fields( z );
     }
+
     wipe_map_terrain();
+
     clear_npcs();
+
     clear_creatures();
+
     g->m.clear_traps();
-    for( int z = -2; z <= 0; ++z ) {
+
+    for( int z = test_map_z_min; z <= test_map_z_max; ++z ) {
         clear_items( z );
     }
+
     // Reset the distribution grid tracker so that stale grids from a previous
     // test's Catch2 WHEN section do not bleed into the next run.  The tracker
     // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.
@@ -173,7 +186,5 @@ void set_time( const time_point &time )
     calendar::turn = time;
     g->reset_light_level();
     int z = g->u.posz();
-    g->m.update_visibility_cache( z );
     g->m.invalidate_map_cache( z );
-    g->m.build_map_cache( z );
 }

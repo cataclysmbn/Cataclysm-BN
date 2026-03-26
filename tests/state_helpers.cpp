@@ -20,7 +20,5 @@ void clear_all_state( )
     clear_map();
     set_time( calendar::turn_zero );
     Name::clear();
-
-
     cleanup_arenas();
 }
