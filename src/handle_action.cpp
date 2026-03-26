@@ -1678,8 +1678,13 @@ bool game::handle_action()
     }
 
     const optional_vpart_position vp = m.veh_at( u.pos() );
-    bool veh_ctrl = !u.is_dead_state() &&
-                    ( ( vp && vp->vehicle().player_in_control( u ) ) || remoteveh() != nullptr );
+    const auto player_vehicle = vp ? &vp->vehicle() : nullptr;
+    const bool local_vehicle_in_control = vp && vp->vehicle().player_in_control( u );
+    const auto remote_vehicle = remoteveh();
+    const auto controlled_vehicle = remote_vehicle != nullptr ? remote_vehicle :
+                                    local_vehicle_in_control ? player_vehicle : nullptr;
+    const auto veh_ctrl = !u.is_dead_state() && ( local_vehicle_in_control ||
+                          remote_vehicle != nullptr );
 
     // If performing an action with right mouse button, co-ordinates
     // of location clicked.
@@ -1974,10 +1979,10 @@ bool game::handle_action()
                         }
                     }
                 }
-                if( !u.in_vehicle ) {
-                    vertical_move( -1, false );
-                } else if( veh_ctrl && vp->vehicle().is_aircraft() ) {
+                if( controlled_vehicle != nullptr && controlled_vehicle->is_aircraft() ) {
                     pldrive( tripoint_below );
+                } else if( !u.in_vehicle ) {
+                    vertical_move( -1, false );
                 } else if( get_map().has_rope_at( u.pos() ) ) {
                     map &here = get_map();
                     const optional_vpart_position vp = here.veh_at( u.pos() );
@@ -2029,7 +2034,18 @@ bool game::handle_action()
                         }
                     }
                 }
-                if( !u.in_vehicle ) {
+                if( controlled_vehicle != nullptr ) {
+                    if( controlled_vehicle->is_aircraft() ) {
+                        pldrive( tripoint_above );
+                    } else if( ( controlled_vehicle->has_part( "ROTOR" ) ||
+                                 controlled_vehicle->has_part( "BALLOON" ) ||
+                                 controlled_vehicle->has_part( "WING" ) ) &&
+                               !controlled_vehicle->has_sufficient_lift() ) {
+                        add_msg( m_bad, _( "The craft struggles to generate enough lift!" ) );
+                    } else {
+                        u.add_msg_if_player( _( "You need a propeller to take off!" ) );
+                    }
+                } else if( !u.in_vehicle ) {
                     if( get_map().has_rope_at( u.pos() ) ) {
                         point xy = u.pos().xy();
                         map &here = get_map();
@@ -2063,13 +2079,6 @@ bool game::handle_action()
                     } else {
                         vertical_move( 1, false );
                     }
-                } else if( veh_ctrl && vp->vehicle().is_aircraft() ) {
-                    pldrive( tripoint_above );
-                } else if( veh_ctrl && ( vp->vehicle().has_part( "ROTOR" ) ||
-                                         vp->vehicle().has_part( "BALLOON" ) ||
-                                         vp->vehicle().has_part( "WING" ) ) &&
-                           !vp->vehicle().has_sufficient_lift() ) {
-                    add_msg( m_bad, _( "The craft struggles to generate enough lift!" ) );
                 } else {
                     u.add_msg_if_player( _( "You need a propeller to take off!" ) );
                 }
