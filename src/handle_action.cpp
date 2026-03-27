@@ -858,7 +858,7 @@ static auto parse_custom_wait_duration( const std::string &value ) -> std::optio
     if( trimmed_value.empty() ) {
         return std::nullopt;
     }
-    auto digits_end = decltype( trimmed_value.size() ){ 0 };
+    auto digits_end = decltype( trimmed_value.size() ) { 0 };
     while( digits_end < trimmed_value.size() &&
            std::isdigit( static_cast<unsigned char>( trimmed_value[digits_end] ) ) ) {
         ++digits_end;
@@ -869,8 +869,8 @@ static auto parse_custom_wait_duration( const std::string &value ) -> std::optio
     const auto numeric_text = trimmed_value.substr( 0, digits_end );
     auto amount = std::int64_t( 0 );
     const auto parse_result = std::from_chars( numeric_text.data(),
-                                               numeric_text.data() + numeric_text.size(),
-                                               amount );
+                              numeric_text.data() + numeric_text.size(),
+                              amount );
     if( parse_result.ec != std::errc() ) {
         return std::nullopt;
     }
@@ -892,7 +892,8 @@ static auto parse_custom_wait_duration( const std::string &value ) -> std::optio
             ++suffix_pos;
         }
     }
-    const auto normalized_unit = static_cast<char>( std::tolower( static_cast<unsigned char>( unit ) ) );
+    const auto normalized_unit = static_cast<char>( std::tolower( static_cast<unsigned char>
+                                 ( unit ) ) );
     switch( normalized_unit ) {
         case 's':
             return amount * 1_seconds;
