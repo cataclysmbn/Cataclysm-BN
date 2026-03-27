@@ -128,7 +128,7 @@ auto wall_support_count( const map &here, const tripoint &anchor ) -> int
 
     const auto below = anchor + tripoint_below;
     const auto below_range = points_in_radius( below, 1 );
-    neighbors.assign( below_range.begin(), below_range.end() );
+    neighbors = std::vector<tripoint>( below_range.begin(), below_range.end() );
 
     const auto below_supports = std::ranges::count_if( neighbors,
     [&below, &is_cardinal_support]( const tripoint & pt ) {

@@ -88,7 +88,7 @@ auto has_cardinal_wall_support( const map &here, const tripoint &anchor ) -> boo
 
     const auto below = anchor + tripoint_below;
     const auto below_range = points_in_radius( below, 1 );
-    neighbors.assign( below_range.begin(), below_range.end() );
+    neighbors = std::vector<tripoint>( below_range.begin(), below_range.end() );
 
     return std::ranges::any_of( neighbors, [&below, &is_cardinal_support]( const tripoint & pt ) {
         return is_cardinal_support( below, pt );
