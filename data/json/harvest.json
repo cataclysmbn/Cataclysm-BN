@@ -187,7 +187,7 @@
     "entries": [
       { "drop": "mutant_blood", "type": "blood", "mass_ratio": 0.1 },
       { "drop": "mutant_human_flesh", "type": "flesh", "mass_ratio": 0.34 },
-      { "drop": "hstomach","type": "offal", "mass_ratio": 0.005 },
+      { "drop": "hstomach", "type": "offal", "mass_ratio": 0.005 },
       { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
       { "drop": "bone_human", "type": "bone", "mass_ratio": 0.15 },
       { "drop": "raw_hfur", "type": "skin", "mass_ratio": 0.02 },
@@ -202,7 +202,7 @@
       { "drop": "cyborg_harvest_uncommon", "type": "bionic_group", "faults": [ "fault_bionic_nonsterile" ] },
       { "drop": "mutant_blood", "type": "blood", "mass_ratio": 0.1 },
       { "drop": "mutant_human_flesh", "type": "flesh", "mass_ratio": 0.34 },
-      { "drop": "hstomach","type": "offal", "mass_ratio": 0.005 },
+      { "drop": "hstomach", "type": "offal", "mass_ratio": 0.005 },
       { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
       { "drop": "bone_human", "type": "bone", "mass_ratio": 0.15 },
       { "drop": "raw_hfur", "type": "skin", "mass_ratio": 0.02 },
