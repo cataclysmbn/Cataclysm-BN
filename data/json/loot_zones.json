@@ -413,6 +413,13 @@
     "color": "cyan"
   },
   {
+    "id": "CONSTRUCTION_IGNORE",
+    "type": "LOOT_ZONE",
+    "name": "Construction: Ignore",
+    "description": "NPCs will ignore construction orders inside this zone, useful for leaving openings such as doorways.",
+    "color": "dark_gray"
+  },
+  {
     "id": "FARM_PLOT",
     "type": "LOOT_ZONE",
     "name": "Farm: Plot",

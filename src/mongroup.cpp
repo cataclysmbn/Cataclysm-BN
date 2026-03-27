@@ -1,6 +1,7 @@
 #include "mongroup.h"
 
 #include <algorithm>
+#include <ranges>
 #include <utility>
 
 #include "assign.h"
@@ -260,6 +261,14 @@ const MonsterGroup &MonsterGroupManager::GetMonsterGroup( const mongroup_id &gro
     } else {
         return it->second;
     }
+}
+
+auto MonsterGroupManager::get_all_group_ids() -> std::vector<mongroup_id>
+{
+    namespace views = std::views;
+    return monsterGroupMap
+           | views::keys
+           | std::ranges::to<std::vector<mongroup_id>>();
 }
 
 void MonsterGroupManager::LoadMonsterBlacklist( const JsonObject &jo )

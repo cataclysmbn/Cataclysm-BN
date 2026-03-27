@@ -1,0 +1,137 @@
+[
+  {
+    "result": "105mm_heat",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 4 ], [ "electronics", 1 ] ],
+    "difficulty": 6,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "copper", 2000 ] ],
+      [ [ "chem_compositionb", 1000 ] ],
+      [ [ "gunpowder_artillery", 6000 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 6 ] ],
+      [ [ "105mm_casing", 1 ] ],
+      [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "105mm_ap",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 4 ], [ "electronics", 1 ] ],
+    "difficulty": 6,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "gunpowder_artillery", 6000 ] ],
+      [ [ "scrap", 20 ] ],
+      [ [ "105mm_casing", 1 ] ],
+      [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "120mm_usable_heat",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 4 ], [ "electronics", 1 ] ],
+    "difficulty": 6,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "copper", 2500 ] ],
+      [ [ "chem_compositionb", 2000 ] ],
+      [ [ "gunpowder_artillery", 8000 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 8 ] ],
+      [ [ "120mm_case_base", 1 ] ],
+      [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "120mm_usable_ap",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 4 ], [ "electronics", 1 ] ],
+    "difficulty": 6,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "//": "Realistically you'd get a fair bit of depleted uranium, and probably get horribly toxic oxides everywhere, but...",
+    "components": [
+      [ [ "gunpowder_artillery", 8000 ] ],
+      [ [ "scrap", 24 ] ],
+      [ [ "120mm_case_base", 1 ] ],
+      [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "155mm_heat",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 5 ], [ "mechanics", 1 ] ],
+    "difficulty": 4,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "copper", 4500 ] ],
+      [ [ "chem_compositionb", 6000 ] ],
+      [ [ "gunpowder_artillery", 12000 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 12 ] ],
+      [ [ "primer_155mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "155mm_frag",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 5 ], [ "mechanics", 1 ] ],
+    "difficulty": 4,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "chem_compositionb", 8000 ] ],
+      [ [ "gunpowder_artillery", 12000 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 24 ] ],
+      [ [ "primer_155mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "25mm_hei",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "skills_required": [ [ "launcher", 3 ], [ "mechanics", 1 ] ],
+    "time": "3 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "25mm_casing", 1 ] ],
+      [ [ "chem_compositionb", 20 ] ],
+      [ [ "incendiary", 20 ] ],
+      [ [ "gunpowder_rifle", 80 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "25mm_apds",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "skills_required": [ [ "launcher", 3 ], [ "mechanics", 1 ] ],
+    "time": "3 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "25mm_casing", 1 ] ], [ [ "scrap", 4 ] ], [ [ "gunpowder_rifle", 80 ] ], [ [ "lgrifle_primer", 1 ] ] ],
+    "charges": 1
+  }
+]

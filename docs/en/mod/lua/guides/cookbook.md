@@ -123,6 +123,26 @@ local scraps = gapi.create_item(ItypeId.new("scrap"), 3)
 target_monster:as_monster():add_item(scraps)
 ```
 
+### Randomly blocking monster interaction
+
+Paste this into the Lua console to give monster interaction a 50% chance to
+fail:
+
+```lua
+game.add_hook("on_try_monster_interaction", function(params)
+    local monster = params.monster
+
+    gapi.add_msg(string.format("you try to talk to %s", monster:get_name()))
+    if math.random(2) == 1 then
+        gapi.add_msg(MsgType.warning, string.format("you are too shy to interact with %s!", monster:get_name()))
+        return false
+    end
+end)
+```
+
+Return `false` to block the normal pet, mech, or friendly-monster interaction,
+or `true` to let it continue.
+
 ## NPCs
 
 ### Spawning and erasing NPCs

@@ -132,7 +132,7 @@ bool tutorial_game::init()
     const tripoint_om_omt lp( 50, 50, 0 );
     // Assume overmap zero
     const tripoint_abs_omt lp_abs = project_combine( point_abs_om(), lp );
-    auto &starting_om = overmap_buffer.get( point_abs_om() );
+    auto &starting_om = ACTIVE_OVERMAP_BUFFER.get( point_abs_om() );
     for( int i = 0; i < OMAPX; i++ ) {
         for( int j = 0; j < OMAPY; j++ ) {
             tripoint_om_omt p( i, j, 0 );

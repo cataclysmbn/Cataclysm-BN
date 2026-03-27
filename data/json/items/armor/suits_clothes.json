@@ -69,7 +69,7 @@
     "material_thickness": 5,
     "environmental_protection": 2,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "OUTER" ]
+    "flags": [ "OUTER", "SUPER_FANCY" ]
   },
   {
     "id": "jumpsuit",
@@ -168,7 +168,7 @@
     "material_thickness": 7,
     "environmental_protection": 2,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "OUTER" ]
+    "flags": [ "OUTER", "SUPER_FANCY" ]
   },
   {
     "id": "wool_suit",

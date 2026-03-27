@@ -3137,5 +3137,83 @@
         { "item": "hinge", "count": [ 1, 2 ] }
       ]
     }
+  },
+  {
+    "type": "terrain",
+    "id": "t_door_window_c",
+    "name": "closed wood windowed door",
+    "description": "A standard wooden door that doesn't look very resilient.  It'd probably burn easily, too. This one has a window.",
+    "symbol": "+",
+    "color": "brown",
+    "move_cost": 0,
+    "coverage": 75,
+    "roof": "t_flat_roof",
+    "flags": [ "FLAMMABLE_ASH", "DOOR", "NOITEM", "TRANSPARENT", "CONNECT_TO_WALL", "NO_SCENT", "BLOCK_WIND" ],
+    "open": "t_door_window_o",
+    "deconstruct": {
+      "ter_set": "t_door_frame",
+      "items": [
+        { "item": "2x4", "count": 2 },
+        { "item": "wood_panel", "count": 1 },
+        { "item": "nail", "charges": 12 },
+        { "item": "hinge", "count": 2 },
+        { "item": "glass_sheet", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 10,
+      "str_max": 80,
+      "str_min_blocked": 15,
+      "str_max_blocked": 100,
+      "sound": "smash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_door_b",
+      "items": [
+        { "item": "2x4", "prob": 25 },
+        { "item": "wood_panel", "prob": 10 },
+        { "item": "splinter", "count": [ 1, 2 ] },
+        { "item": "nail", "charges": [ 0, 2 ] },
+        { "item": "glass_sheet", "prob": 10 }
+      ],
+      "ranged": { "reduction": [ 10, 10 ], "destroy_threshold": 80 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_door_window_o",
+    "name": "open wood door",
+    "description": "A standard wooden door that doesn't look very resilient.  It'd probably burn easily, too.  This one is wide open, and has a window.",
+    "symbol": "'",
+    "color": "brown",
+    "move_cost": 2,
+    "roof": "t_flat_roof",
+    "flags": [ "FLAMMABLE_ASH", "INDOORS", "TRANSPARENT", "FLAT", "CONNECT_TO_WALL", "ROAD" ],
+    "deconstruct": {
+      "ter_set": "t_door_frame",
+      "items": [
+        { "item": "2x4", "count": 4 },
+        { "item": "wood_panel", "count": 1 },
+        { "item": "nail", "charges": 12 },
+        { "item": "hinge", "count": 2 },
+        { "item": "glass_sheet", "count": 1 }
+      ]
+    },
+    "close": "t_door_window_c",
+    "bash": {
+      "str_min": 5,
+      "str_max": 80,
+      "str_min_blocked": 7,
+      "str_max_blocked": 100,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_door_frame",
+      "items": [
+        { "item": "2x4", "count": [ 1, 3 ] },
+        { "item": "nail", "charges": [ 1, 6 ] },
+        { "item": "splinter", "count": [ 2, 6 ] },
+        { "item": "hinge", "count": [ 1, 2 ] },
+        { "item": "glass_sheet", "prob": 10 }
+      ]
+    }
   }
 ]

@@ -224,6 +224,11 @@ void avatar::load_map_memory()
     player_map_memory->load( g->m.getabs( pos() ) );
 }
 
+void avatar::clear_map_memory()
+{
+    player_map_memory->clear();
+}
+
 void avatar::prepare_map_memory_region( const tripoint &p1, const tripoint &p2 )
 {
     player_map_memory->prepare_region( p1, p2 );
@@ -297,6 +302,14 @@ tripoint_abs_omt avatar::get_active_mission_target() const
 }
 
 tripoint_abs_omt avatar::get_custom_mission_target()
+{
+    if( custom_waypoint == nullptr ) {
+        return overmap::invalid_tripoint;
+    }
+    return *custom_waypoint;
+}
+
+auto avatar::get_custom_mission_target() const -> tripoint_abs_omt
 {
     if( custom_waypoint == nullptr ) {
         return overmap::invalid_tripoint;

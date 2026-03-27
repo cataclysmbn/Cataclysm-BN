@@ -515,7 +515,7 @@ void computer_session::action_maps()
     Character &player_character = get_player_character();
     player_character.moves -= 30;
     const tripoint_abs_omt center = player_character.global_omt_location();
-    overmap_buffer.reveal( center.xy(), 40, 0 );
+    ACTIVE_OVERMAP_BUFFER.reveal( center.xy(), 40, 0 );
     query_any(
         _( "Surface map data downloaded.  Local anomalous-access error logged.  Press any key…" ) );
     comp.remove_option( COMPACT_MAPS );
@@ -530,10 +530,10 @@ void computer_session::action_map_sewer()
     for( int i = -60; i <= 60; i++ ) {
         for( int j = -60; j <= 60; j++ ) {
             point offset( i, j );
-            const oter_id &oter = overmap_buffer.ter( center + offset );
+            const oter_id &oter = ACTIVE_OVERMAP_BUFFER.ter( center + offset );
             if( is_ot_match( "sewer", oter, ot_match_type::type ) ||
                 is_ot_match( "sewage", oter, ot_match_type::prefix ) ) {
-                overmap_buffer.set_seen( center + offset, true );
+                ACTIVE_OVERMAP_BUFFER.set_seen( center + offset, true );
             }
         }
     }
@@ -549,10 +549,10 @@ void computer_session::action_map_subway()
     for( int i = -60; i <= 60; i++ ) {
         for( int j = -60; j <= 60; j++ ) {
             point offset( i, j );
-            const oter_id &oter = overmap_buffer.ter( center + offset );
+            const oter_id &oter = ACTIVE_OVERMAP_BUFFER.ter( center + offset );
             if( is_ot_match( "subway", oter, ot_match_type::type ) ||
                 is_ot_match( "lab_train_depot", oter, ot_match_type::contains ) ) {
-                overmap_buffer.set_seen( center + offset, true );
+                ACTIVE_OVERMAP_BUFFER.set_seen( center + offset, true );
             }
         }
     }
@@ -1397,11 +1397,13 @@ void computer_session::failure_amigara()
 {
     g->timed_events.add( TIMED_EVENT_AMIGARA, calendar::turn + 30_seconds );
     g->u.add_effect( effect_amigara, 2_minutes );
-    explosion_handler::explosion( tripoint( rng( 0, MAPSIZE_X ), rng( 0, MAPSIZE_Y ), g->get_levz() ),
+    explosion_handler::explosion( tripoint( rng( 0, g_mapsize_x ), rng( 0, g_mapsize_y ),
+                                            g->get_levz() ),
                                   nullptr,
                                   10,
                                   0.7, false, 10 );
-    explosion_handler::explosion( tripoint( rng( 0, MAPSIZE_X ), rng( 0, MAPSIZE_Y ), g->get_levz() ),
+    explosion_handler::explosion( tripoint( rng( 0, g_mapsize_x ), rng( 0, g_mapsize_y ),
+                                            g->get_levz() ),
                                   nullptr,
                                   10,
                                   0.7, false, 10 );

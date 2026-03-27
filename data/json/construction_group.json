@@ -411,6 +411,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_door_window",
+    "name": "Build Windowed Door"
+  },
+  {
+    "type": "construction_group",
     "id": "build_makeshift_door",
     "name": "Build Makeshift Door"
   },
@@ -1328,6 +1333,11 @@
     "type": "construction_group",
     "id": "place_vaccuum_sealer",
     "name": "Plug In Vaccuum Sealer"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_water_purifier",
+    "name": "Install Water Purifier"
   },
   {
     "type": "construction_group",
