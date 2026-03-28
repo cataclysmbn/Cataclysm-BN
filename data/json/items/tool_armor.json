@@ -764,7 +764,8 @@
         ]
       ]
     ],
-    "magazine_well": "250 ml"
+    "magazine_well": "250 ml",
+    "extend": { "flags": [ "FANCY" ] }
   },
   {
     "id": "sparkledogsuit_on",
@@ -774,7 +775,7 @@
     "power_draw": 10000,
     "revert_to": "sparkledogsuit",
     "use_action": { "menu_text": "Turn off", "type": "transform", "msg": "You turn your fursuit off.", "target": "sparkledogsuit" },
-    "flags": [ "OUTER", "LIGHT_200", "SUPER_FANCY" ]
+    "extend": { "flags": [ "LIGHT_200" ] }
   },
   {
     "id": "survivor_light",
