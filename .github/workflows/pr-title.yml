@@ -11,8 +11,6 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
-      - uses: docker://ghcr.io/scarf005/conventional-prs:main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: scarf005/conventional-prs@v0.5.1

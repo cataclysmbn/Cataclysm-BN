@@ -1,16 +1,23 @@
 #pragma once
 
+#include <map>
 #include <set>
+#include <unordered_map>
 #include <vector>
 
+#include "coordinates.h"
+#include "ret_val.h"
 #include "type_id.h"
+#include "units.h"
 
 class Character;
 class inventory;
 class item;
 class material_type;
+class player;
 class JsonIn;
 
+struct quality;
 struct tripoint;
 
 

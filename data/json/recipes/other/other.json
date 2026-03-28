@@ -499,7 +499,6 @@
     "type": "recipe",
     "result": "freezer",
     "copy-from": "fridge",
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
     "components": [
       [ [ "sheet_metal", 6 ] ],
       [ [ "sheet_metal_small", 4 ] ],
@@ -512,6 +511,29 @@
       [ [ "thermostat", 1 ] ],
       [ [ "light_bulb", 1 ] ],
       [ [ "motor_tiny", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "freezer_industrial",
+    "copy-from": "fridge",
+    "decomp_learn": 6,
+    "book_learn": [ [ "textbook_mechanics", 6 ], [ "manual_mechanics", 6 ], [ "textbook_fabrication", 6 ] ],
+    "using": [ [ "soldering_standard", 50 ], [ "welding_standard", 100 ] ],
+    "difficulty": 6,
+    "skills_required": [ [ "electronics", 2 ], [ "mechanics", 2 ] ],
+    "components": [
+      [ [ "sheet_metal", 36 ] ],
+      [ [ "sheet_metal_small", 10 ] ],
+      [ [ "steel_chunk", 10 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "hose", 1 ] ],
+      [ [ "condensor_coil", 2 ] ],
+      [ [ "evaporator_coil", 2 ] ],
+      [ [ "refrigerant_tank", 2 ] ],
+      [ [ "thermostat", 1 ] ],
+      [ [ "light_bulb", 1 ] ],
+      [ [ "motor_tiny", 2 ] ]
     ]
   },
   {

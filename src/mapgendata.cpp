@@ -10,6 +10,7 @@
 #include "omdata.h"
 #include "overmap_special.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "point.h"
 #include "regional_settings.h"
 
@@ -36,6 +37,7 @@ mapgendata::mapgendata( map &mp, dummy_settings_t )
     : density_( 0 )
     , when_( calendar::turn )
     , mission_( nullptr )
+    , omapbuf_( ACTIVE_OVERMAP_BUFFER )
     , pos( tripoint_zero )
     , region( dummy_regional_settings )
     , m( mp )
@@ -47,15 +49,16 @@ mapgendata::mapgendata( map &mp, dummy_settings_t )
 }
 
 mapgendata::mapgendata( const tripoint_abs_omt &over, map &mp, const float density,
-                        const time_point &when, ::mission *const miss )
-    : terrain_type_( overmap_buffer.ter( over ) )
+                        const time_point &when, ::mission *const miss, overmapbuffer &omap )
+    : terrain_type_( omap.ter( over ) )
     , density_( density )
     , when_( when )
     , mission_( miss )
-    , t_above( overmap_buffer.ter( over + tripoint_above ) )
-    , t_below( overmap_buffer.ter( over + tripoint_below ) )
+    , omapbuf_( omap )
+    , t_above( omap.ter( over + tripoint_above ) )
+    , t_below( omap.ter( over + tripoint_below ) )
     , pos( over )
-    , region( overmap_buffer.get_settings( over ) )
+    , region( omap.get_settings( over ) )
     , m( mp )
     , default_groundcover( region.default_groundcover )
 {
@@ -63,7 +66,7 @@ mapgendata::mapgendata( const tripoint_abs_omt &over, map &mp, const float densi
     int rotation = ignore_rotation ? 0 : terrain_type_->get_rotation();
     auto set_neighbour = [&]( int index, direction dir ) {
         t_nesw[index] =
-            overmap_buffer.ter( over + displace( dir ).rotate( rotation ) );
+            omap.ter( over + displace( dir ).rotate( rotation ) );
     };
     set_neighbour( 0, direction::NORTH );
     set_neighbour( 1, direction::EAST );
@@ -74,18 +77,18 @@ mapgendata::mapgendata( const tripoint_abs_omt &over, map &mp, const float densi
     set_neighbour( 6, direction::SOUTHWEST );
     set_neighbour( 7, direction::NORTHWEST );
     for( cube_direction dir : all_enum_values<cube_direction>() ) {
-        if( std::string *join = overmap_buffer.join_used_at( { over, dir } ) ) {
+        if( std::string *join = omap.join_used_at( { over, dir } ) ) {
             cube_direction rotated_dir = dir - rotation;
             joins.emplace( rotated_dir, *join );
         }
     }
-    if( std::optional<mapgen_arguments> *maybe_args = overmap_buffer.mapgen_args( over ) ) {
+    if( std::optional<mapgen_arguments> *maybe_args = omap.mapgen_args( over ) ) {
         if( *maybe_args ) {
             mapgen_args_ = **maybe_args;
         } else {
             // We are the first omt from this overmap_special to be generated,
             // so now is the time to generate the arguments
-            if( std::optional<overmap_special_id> s = overmap_buffer.overmap_special_at( over ) ) {
+            if( std::optional<overmap_special_id> s = omap.overmap_special_at( over ) ) {
                 const overmap_special &special = **s;
                 *maybe_args = special.get_args( *this );
                 mapgen_args_ = **maybe_args;

@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <ranges>
 
 #include "active_tile_data_def.h"
 #include "avatar.h"
@@ -989,7 +990,7 @@ void vehicle::autopilot_patrol()
     }
     zone_manager &mgr = zone_manager::get_manager();
     const auto &zone_src_set = mgr.get_near( zone_type_id( "VEHICLE_PATROL" ),
-                               global_square_location().raw(), 60 );
+                               global_square_location().raw(), g_max_view_distance );
     if( zone_src_set.empty() ) {
         is_patrolling = false;
         return;
@@ -1030,7 +1031,7 @@ void vehicle::autopilot_patrol()
 std::set<point> vehicle::immediate_path( units::angle rotate )
 {
     std::set<point> points_to_check;
-    const int distance_to_check = 10 + ( velocity / 800 );
+    const int distance_to_check = 10 + ( velocity / 358 );
     units::angle adjusted_angle = normalize( face.dir() + rotate );
     // clamp to multiples of 15.
     adjusted_angle = round_to_multiple_of( adjusted_angle, 15_degrees );
@@ -1143,11 +1144,11 @@ void vehicle::drive_to_local_target( const tripoint &target, bool follow_protoco
     // we really want to avoid running the player over.
     // If its a helicopter, we dont need to worry about airborne obstacles so much
     // And fuel efficiency is terrible at low speeds.
-    int safe_player_follow_speed = 400;
+    int safe_player_follow_speed = 179;
     if( g->u.movement_mode_is( CMM_RUN ) ) {
-        safe_player_follow_speed = 800;
+        safe_player_follow_speed = 358;
     } else if( g->u.movement_mode_is( CMM_CROUCH ) ) {
-        safe_player_follow_speed = 200;
+        safe_player_follow_speed = 89;
     }
     if( follow_protocol ) {
         if( ( ( turn_x > 0 || turn_x < 0 ) && velocity > safe_player_follow_speed ) ||
@@ -1156,18 +1157,19 @@ void vehicle::drive_to_local_target( const tripoint &target, bool follow_protoco
         }
         if( ( velocity < std::min( safe_velocity(), safe_player_follow_speed ) && turn_x == 0 &&
               rl_dist( vehpos, g->m.getabs( g->u.pos() ) ) > 8 + ( ( mount_max.y * 3 ) + 4 ) ) ||
-            velocity < 100 ) {
+            velocity < 45 ) {
             accel_y = -1;
         }
     } else {
-        if( ( turn_x > 0 || turn_x < 0 ) && velocity > 1000 ) {
+        if( ( turn_x > 0 || turn_x < 0 ) && velocity > 447 ) {
             accel_y = 1;
         }
         if( ( velocity < std::min( safe_velocity(), is_aircraft() &&
-                                   is_flying_in_air() ? 12000 : 32 * 100 ) && turn_x == 0 ) || velocity < 500 ) {
+                                   is_flying_in_air() ? 5364 : 1431 ) && turn_x == 0 ) ||
+            velocity < 224 ) {
             accel_y = -1;
         }
-        if( is_patrolling && velocity > 400 ) {
+        if( is_patrolling && velocity > 179 ) {
             accel_y = 1;
         }
     }
@@ -1284,11 +1286,77 @@ int vehicle::lift_strength() const
 
 void vehicle::toggle_specific_engine( int e, bool on )
 {
+    // Special validation for muscle engines
+    if( on && is_engine_type( e, fuel_type_muscle ) ) {
+        std::string failure_reason;
+        if( !can_enable_muscle_engine( e, failure_reason ) ) {
+            add_msg( m_info, "%s", failure_reason.c_str() );
+            return; // Don't enable the engine
+        }
+    }
+
     toggle_specific_part( engines[e], on );
 }
 void vehicle::toggle_specific_part( int p, bool on )
 {
     parts[p].enabled = on;
+}
+
+bool vehicle::can_enable_muscle_engine( int e, std::string &failure_reason ) const
+{
+    const int part_idx = engines[e];
+    const vpart_info &engine_info = part_info( part_idx );
+
+    const player *passenger = get_passenger( part_idx );
+    if( passenger != nullptr ) {
+        if( engine_info.has_flag( "MUSCLE_LEGS" ) && passenger->get_working_leg_count() < 2 ) {
+            failure_reason = string_format( _( "%s cannot operate the %s due to injured legs." ),
+                                            passenger->name, engine_info.name() );
+            return false;
+        }
+        if( engine_info.has_flag( "MUSCLE_ARMS" ) && passenger->get_working_arm_count() < 2 ) {
+            failure_reason = string_format( _( "%s cannot operate the %s due to injured arms." ),
+                                            passenger->name, engine_info.name() );
+            return false;
+        }
+        return true;
+    }
+
+    failure_reason = string_format( _( "The %s cannot operate without an occupant." ),
+                                    engine_info.name() );
+    return false;
+}
+
+bool vehicle::has_muscle_engine_operator( int e ) const
+{
+    const int part_idx = engines[e];
+    const vpart_info &engine_info = part_info( part_idx );
+
+    const player *passenger = get_passenger( part_idx );
+    if( passenger != nullptr ) {
+        if( engine_info.has_flag( "MUSCLE_LEGS" ) && passenger->get_working_leg_count() >= 2 ) {
+            return true;
+        }
+        if( engine_info.has_flag( "MUSCLE_ARMS" ) && passenger->get_working_arm_count() >= 2 ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void vehicle::validate_muscle_engines()
+{
+    for( size_t e = 0; e < engines.size(); e++ ) {
+        if( is_engine_type( e, fuel_type_muscle ) && is_engine_on( e ) ) {
+            if( !has_muscle_engine_operator( e ) ) {
+                const int part_idx = engines[e];
+                const vpart_info &engine_info = part_info( part_idx );
+                parts[part_idx].enabled = false;
+                add_msg( m_info, _( "The %s shuts down - it cannot operate without an occupant." ),
+                         engine_info.name() );
+            }
+        }
+    }
 }
 bool vehicle::is_engine_type_on( int e, const itype_id &ft ) const
 {
@@ -1341,7 +1409,9 @@ bool vehicle::has_engine_conflict( const vpart_info *possible_conflict,
 
 bool vehicle::is_engine_type( const int e, const itype_id  &ft ) const
 {
-    return parts[engines[e]].ammo_current().is_null() ? parts[engines[e]].fuel_current() == ft :
+    auto engine_fuel = parts[engines[e]].info().engine_fuel_opts();
+    bool engine_has_fuel = std::find( engine_fuel.begin(), engine_fuel.end(), ft ) != engine_fuel.end();
+    return parts[engines[e]].ammo_current().is_null() ? engine_has_fuel :
            parts[engines[e]].ammo_current() == ft;
 }
 
@@ -1719,13 +1789,18 @@ bool vehicle::can_unmount( const int p, std::string &reason ) const
     const auto no_remove_open =  part_info( p ).has_flag( "NOREMOVE_OPEN" );
     for( const auto &elem : parts_here ) {
         const auto is_openable = part_info( elem ).has_flag( "OPENABLE" );
-        if( no_remove_closed && is_openable && !parts[elem].open ) {
+        const auto is_working = !parts[elem].is_broken();
+        if( no_remove_closed && is_openable && is_working && !parts[elem].open ) {
             reason = string_format( _( "Open the attached %s first." ), part_info( elem ).name() );
             return false;
         }
-        if( no_remove_open && is_openable &&  parts[elem].open ) {
+        if( no_remove_open && is_openable && is_working && parts[elem].open ) {
             reason = string_format( _( "Close the attached %s first." ), part_info( elem ).name() );
             return false;
+        }
+
+        if( !is_working ) {
+            continue;
         }
 
         for( const std::string &flag : part_info( elem ).get_flags() ) {
@@ -3631,9 +3706,11 @@ std::vector<rider_data> vehicle::get_riders() const
 
 player *vehicle::get_passenger( int p ) const
 {
-    p = part_with_feature( p, VPFLAG_BOARDABLE, false );
-    if( p >= 0 && parts[p].has_flag( vehicle_part::passenger_flag ) ) {
-        return g->critter_by_id<player>( parts[p].passenger_id );
+    for( auto part : get_parts_at( mount_to_tripoint( parts[p].mount ), "BOARDABLE",
+                                   part_status_flag::any ) ) {
+        if( part && part->has_flag( vehicle_part::passenger_flag ) ) {
+            return g->critter_by_id<player>( part->passenger_id );
+        }
     }
     return nullptr;
 }
@@ -3679,7 +3756,7 @@ void vehicle::set_submap_moved( const tripoint &p )
     if( !tracking_on ) {
         return;
     }
-    overmap_buffer.move_vehicle( this, old_msp );
+    get_overmapbuffer( dimension_id_ ).move_vehicle( this, old_msp );
 }
 
 units::mass vehicle::total_mass() const
@@ -3756,23 +3833,17 @@ int vehicle::fuel_left( const itype_id &ftype, bool recurse ) const
         distribution_graph::traverse( *this, fuel_counting_visitor, power_counting_visitor );
     }
 
-    //muscle engines have infinite fuel
     if( ftype == fuel_type_muscle ) {
-        // TODO: Allow NPCs to power those
-        const optional_vpart_position vp = g->m.veh_at( g->u.pos() );
-        bool player_controlling = player_in_control( g->u );
-
-        //if the engine in the player tile is a muscle engine, and player is controlling vehicle
-        if( vp && &vp->vehicle() == this && player_controlling ) {
-            const int p = avail_part_with_feature( vp->part_index(), VPFLAG_ENGINE, true );
-            if( p >= 0 && is_part_on( p ) && part_info( p ).fuel_type == fuel_type_muscle ) {
-                //Broken limbs prevent muscle engines from working
-                if( ( part_info( p ).has_flag( "MUSCLE_LEGS" ) && ( g->u.get_working_leg_count() >= 2 ) ) ||
-                    ( part_info( p ).has_flag( "MUSCLE_ARMS" ) &&
-                      ( g->u.get_working_arm_count() >= 2 ) ) ) {
-                    fl += 10;
+        int active_operators = 0;
+        for( int ep = 0; ep < static_cast<int>( engines.size() ); ep++ ) {
+            if( is_engine_type( ep, fuel_type_muscle ) && is_engine_on( ep ) ) {
+                if( has_muscle_engine_operator( ep ) ) {
+                    active_operators++;
                 }
             }
+        }
+        if( active_operators > 0 ) {
+            fl += 10 * active_operators;
         }
         // As do any other engine flagged as perpetual
         //TODO!: push up
@@ -3970,8 +4041,8 @@ int vehicle::ground_acceleration( const bool fueled, int at_vel_in_vmi, const bo
     if( !( engine_on || skidding ) ) {
         return 0;
     }
-    int target_vmiph = std::max( at_vel_in_vmi, std::max( 1000, max_velocity( fueled ) / 4 ) );
-    int cmps = vmiph_to_cmps( target_vmiph );
+    int target_cmps = std::max( at_vel_in_vmi, std::max( 447,
+                                max_velocity( fueled ) / 4 ) );
     double weight = to_kilogram( total_mass() );
     if( is_towing() ) {
         vehicle *other_veh = tow_data.get_towed();
@@ -3980,10 +4051,10 @@ int vehicle::ground_acceleration( const bool fueled, int at_vel_in_vmi, const bo
         }
     }
     int engine_power_ratio = ( ideal ? ideal_engine_power() : total_power_w( fueled ) ) / weight;
-    int accel_at_vel = 100 * 100 * engine_power_ratio / cmps;
-    add_msg( m_debug, "%s: accel at %d vimph is %d", name, target_vmiph,
-             cmps_to_vmiph( accel_at_vel ) );
-    return cmps_to_vmiph( accel_at_vel );
+    int accel_at_vel = 100 * 100 * engine_power_ratio / target_cmps;
+    add_msg( m_debug, "%s: accel at %d cm/s is %d cm/s", name, target_cmps,
+             accel_at_vel );
+    return accel_at_vel;
 }
 
 int vehicle::aircraft_acceleration( const bool fueled, int at_vel_in_vmi, const bool ideal ) const
@@ -3997,7 +4068,7 @@ int vehicle::aircraft_acceleration( const bool fueled, int at_vel_in_vmi, const 
         return 0;
     }
     const int accel_at_vel = 100 * total_thrust( fueled, ideal ) / to_kilogram( total_mass() );
-    return cmps_to_vmiph( accel_at_vel );
+    return accel_at_vel;
 }
 
 int vehicle::water_acceleration( const bool fueled, int at_vel_in_vmi, const bool ideal ) const
@@ -4005,9 +4076,8 @@ int vehicle::water_acceleration( const bool fueled, int at_vel_in_vmi, const boo
     if( !( engine_on || skidding ) ) {
         return 0;
     }
-    int target_vmiph = std::max( at_vel_in_vmi, std::max( 1000,
-                                 max_water_velocity( fueled ) / 4 ) );
-    int cmps = vmiph_to_cmps( target_vmiph );
+    int target_cmps = std::max( at_vel_in_vmi, std::max( 447,
+                                max_water_velocity( fueled ) / 4 ) );
     double weight = to_kilogram( total_mass() );
     if( is_towing() ) {
         vehicle *other_veh = tow_data.get_towed();
@@ -4016,10 +4086,10 @@ int vehicle::water_acceleration( const bool fueled, int at_vel_in_vmi, const boo
         }
     }
     int engine_power_ratio = ( ideal ? ideal_engine_power() : total_power_w( fueled ) ) / weight;
-    int accel_at_vel = 100 * 100 * engine_power_ratio / cmps;
-    add_msg( m_debug, "%s: water accel at %d vimph is %d", name, target_vmiph,
-             cmps_to_vmiph( accel_at_vel ) );
-    return cmps_to_vmiph( accel_at_vel );
+    int accel_at_vel = 100 * 100 * engine_power_ratio / target_cmps;
+    add_msg( m_debug, "%s: water accel at %d cm/s is %d cm/s", name, target_cmps,
+             accel_at_vel );
+    return accel_at_vel;
 }
 
 // cubic equation solution
@@ -4105,7 +4175,7 @@ int vehicle::max_ground_velocity( const bool fueled, const bool ideal ) const
                         -total_engine_w );
     add_msg( m_debug, "%s: power %d, c_air %3.2f, c_rolling %3.2f, max_in_mps %3.2f",
              name, total_engine_w, coeff_air_drag(), c_rolling_drag, max_in_mps );
-    return mps_to_vmiph( max_in_mps );
+    return mps_to_cmps( max_in_mps );
 }
 
 // the same physics as ground velocity, but there's no rolling resistance so the math is easy
@@ -4125,14 +4195,14 @@ int vehicle::max_water_velocity( const bool fueled, const bool ideal ) const
     double max_in_mps = std::cbrt( total_engine_w / total_drag );
     add_msg( m_debug, "%s: power %d, c_air %3.2f, c_water %3.2f, water max_in_mps %3.2f",
              name, total_engine_w, coeff_air_drag(), coeff_water_drag(), max_in_mps );
-    return mps_to_vmiph( max_in_mps );
+    return mps_to_cmps( max_in_mps );
 }
 
 int vehicle::max_air_velocity( const bool fueled, const bool ideal ) const
 {
     const double max_air_mps = std::sqrt( total_thrust( fueled, false, ideal ) / coeff_air_drag() );
     // fly fast at your own risk
-    return mps_to_vmiph( max_air_mps );
+    return mps_to_cmps( max_air_mps );
 }
 
 int vehicle::max_velocity( const bool fueled, const bool ideal ) const
@@ -4186,7 +4256,7 @@ int vehicle::safe_ground_velocity( const bool fueled, const bool ideal ) const
     double safe_in_mps = simple_cubic_solution( coeff_air_drag(), c_rolling_drag,
                          c_rolling_drag * vehicles::rolling_constant_to_variable,
                          -effective_engine_w );
-    return mps_to_vmiph( safe_in_mps );
+    return mps_to_cmps( safe_in_mps );
 }
 
 // TODO: Consider some kind of dynamic pressure based safe velocity
@@ -4195,7 +4265,7 @@ int vehicle::safe_aircraft_velocity( const bool fueled, const bool ideal ) const
 {
     const double max_air_mps = std::sqrt( total_thrust( fueled,
                                           true, ideal ) / coeff_air_drag() );
-    return std::min( 22501, mps_to_vmiph( max_air_mps ) );
+    return std::min( 10059, mps_to_cmps( max_air_mps ) );
 }
 
 // the same physics as max_water_velocity, but with a smaller engine power
@@ -4204,7 +4274,7 @@ int vehicle::safe_water_velocity( const bool fueled, const bool ideal ) const
     int total_engine_w = ( ideal ? ideal_engine_power( true ) : total_power_w( fueled, true ) );
     double total_drag = coeff_water_drag() + coeff_air_drag();
     double safe_in_mps = std::cbrt( total_engine_w / total_drag );
-    return mps_to_vmiph( safe_in_mps );
+    return mps_to_cmps( safe_in_mps );
 }
 
 int vehicle::safe_velocity( const bool fueled ) const
@@ -4338,7 +4408,7 @@ void vehicle::noise_and_smoke( int load, time_duration time )
     // Cap engine noise to avoid deafening.
     noise = std::min( noise, 100.0 );
     // Even a vehicle with engines off will make noise traveling at high speeds
-    noise = std::max( noise, std::fabs( velocity / 500.0 ) );
+    noise = std::max( noise, std::fabs( velocity / 224.0 ) );
     int lvl = 0;
     if( one_in( 4 ) && rng( 0, 30 ) < noise ) {
         while( noise > sounds[lvl].second ) {
@@ -4470,12 +4540,11 @@ double vehicle::coeff_air_drag() const
             d_check_max( drag[ col ].seat, pa, pa.info().has_flag( "SEAT" ) ||
                          pa.info().has_flag( "BED" ) );
             d_check_max( drag[ col ].turret, pa, pa.info().location == part_location_onroof &&
-                         !pa.info().has_flag( "SOLAR_PANEL" ) );
+                         !pa.info().has_flag( "SOLAR_PANEL" ) && !pa.info().has_flag( "WING" ) );
             d_check_max( drag[ col ].roof, pa, pa.info().has_flag( "ROOF" ) );
             d_check_max( drag[ col ].panel, pa, pa.info().has_flag( "SOLAR_PANEL" ) );
             d_check_max( drag[ col ].windmill, pa, pa.info().has_flag( "WIND_TURBINE" ) );
             d_check_max( drag[ col ].rotor, pa, pa.info().has_flag( "ROTOR" ) );
-            d_check_max( drag[ col ].ballon, pa, pa.info().has_flag( "BALLOON" ) );
             d_check_max( drag[ col ].sail, pa, pa.info().has_flag( "WIND_POWERED" ) );
             d_check_max( drag[ col ].exposed, pa, d_exposed( pa ) );
             d_check_min( drag[ col ].last, pa, pa.info().has_flag( "LOW_FINAL_AIR_DRAG" ) ||
@@ -4510,8 +4579,6 @@ double vehicle::coeff_air_drag() const
         c_air_drag_c += ( dc.windmill > minrow ) ? 5 * c_air_mod : 0;
         // rotors are not great for drag!
         c_air_drag_c += ( dc.rotor > minrow ) ? 6 * c_air_mod : 0;
-        // Neither are balloons
-        c_air_drag_c += ( dc.ballon > minrow ) ? 6 * c_air_mod : 0;
         // having a sail is terrible for your drag
         c_air_drag_c += ( dc.sail > minrow ) ? 7 * c_air_mod : 0;
         c_air_drag += c_air_drag_c;
@@ -4541,11 +4608,24 @@ double vehicle::coeff_air_drag() const
     double cross_area = height * tile_to_width( width );
     add_msg( m_debug, "%s: height %3.2fm, width %3.2fm (%d tiles), c_air %3.2f\n", name, height,
              tile_to_width( width ), width, c_air_drag );
+    if( !balloons.empty() ) {
+        c_air_drag += coeff_balloon_drag();
+    }
     // F_air_drag = c_air_drag * cross_area * 1/2 * air_density * v^2
     // coeff_air_resistance = c_air_drag * cross_area * 1/2 * air_density
     coefficient_air_resistance = std::max( 0.1, c_air_drag * cross_area * 0.5 * air_density );
     coeff_air_dirty = false;
     return coefficient_air_resistance;
+}
+
+double vehicle::coeff_balloon_drag() const
+{
+    double volume = std::accumulate( balloons.begin(), balloons.end(), double{0.0},
+    [&]( double acc, int balloon ) {
+        const double height{ parts[ balloon ].info().balloon_height() };
+        return acc + height;
+    } );
+    return std::pow( volume, 2 / 3 );
 }
 
 double vehicle::coeff_rolling_drag() const
@@ -4641,10 +4721,7 @@ double vehicle::total_balloon_lift() const
 // Based on air being 1kg/m^3
 double vehicle::total_wing_lift() const
 {
-    // Velocity is in mph * 100 (why oh why)
-    // Convert to km/h then m/s then m/s ^ 2
-    const double kilometerperhour = velocity / 100 * 1.609;
-    const double meterpersec = kilometerperhour / 3600 * 1000;
+    const double meterpersec = cmps_to_mps( velocity );
     const double meterpersecsquared = std::pow( meterpersec, 2 );
     return meterpersecsquared * std::accumulate( wings.begin(), wings.end(), double{0.0},
     [&]( double acc, int wing ) {
@@ -5138,7 +5215,7 @@ float vehicle::handling_difficulty() const
     // TestVehicle but on fungal bed (0.5 friction) and bad steering = 10
     // TestVehicle but turned 90 degrees during this turn (0 align) = 10
     const float diff_mod = ( ( 1.0f - steer ) + ( 1.0f - ktraction ) + ( 1.0f - aligned ) );
-    return velocity * diff_mod / vehicles::vmiph_per_tile;
+    return velocity * diff_mod / vehicles::cmps_per_tile;
 }
 
 std::map<itype_id, int> vehicle::fuel_usage() const
@@ -5235,34 +5312,46 @@ void vehicle::consume_fuel( int load, const int t_seconds, bool skip_electric )
         int base_burn = static_cast<int>( get_option<float>( "PLAYER_BASE_STAMINA_REGEN_RATE" ) ) -
                         3;
         base_burn = std::max( eff_load / 3, base_burn );
-        //charge bionics when using muscle engine
-        const item &muscle = *item::spawn_temporary( "muscle" );
-        for( const bionic_id &bid : g->u.get_bionic_fueled_with( muscle ) ) {
-            if( g->u.has_active_bionic( bid ) ) { // active power gen
-                // more pedaling = more power
-                g->u.mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->fuel_efficiency *
-                                      ( load / 1000.0f ) );
-                mod += eff_load / 5;
-            } else { // passive power gen
-                g->u.mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->passive_fuel_efficiency *
-                                      ( load / 1000.0f ) );
-                mod += eff_load / 10;
+
+        // Check if player is contributing muscle power
+        const bool npc_needs_enabled = !get_option<bool>( "NO_NPC_FOOD" );
+        for( vpart_reference vp : get_enabled_parts( VPFLAG_ENGINE ) ) {
+            if( vp.info().fuel_type == fuel_type_muscle ) {
+                player *p = get_passenger( vp.part_index() );
+                if( p && ( ( vp.info().has_flag( "MUSCLE_LEGS" ) && ( p->get_working_leg_count() >= 2 ) ) ||
+                           ( vp.info().has_flag( "MUSCLE_ARMS" ) && ( p->get_working_arm_count() >= 2 ) ) ) ) {
+                    const item &muscle = *item::spawn_temporary( "muscle" );
+                    for( const bionic_id &bid : p->get_bionic_fueled_with( muscle ) ) {
+                        if( p->has_active_bionic( bid ) ) { // active power gen
+                            // more pedaling = more power
+                            p->mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->fuel_efficiency *
+                                                ( load / 1000.0f ) );
+                            mod += eff_load / 5;
+                        } else { // passive power gen
+                            p->mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->passive_fuel_efficiency *
+                                                ( load / 1000.0f ) );
+                            mod += eff_load / 10;
+                        }
+                    }
+                    // decreased stamina burn scalable with load
+                    if( p->has_active_bionic( bio_jointservo ) ) {
+                        p->mod_power_level( -bio_jointservo->power_trigger * std::max( eff_load / 20, 1 ) );
+                        mod -= std::max( eff_load / 5, 5 );
+                    }
+                    if( p->is_player() || npc_needs_enabled ) {
+                        if( one_in( 1000 / load ) && one_in( 10 ) ) {
+                            p->mod_stored_kcal( -10 );
+                            p->mod_thirst( 1 );
+                            p->mod_fatigue( 1 );
+                        }
+                        p->mod_stamina( -( base_burn + mod ) );
+                        add_msg( m_debug, "Load: %d", load );
+                        add_msg( m_debug, "Mod: %d", mod );
+                        add_msg( m_debug, "Burn: %d", -( base_burn + mod ) );
+                    }
+                }
             }
         }
-        // decreased stamina burn scalable with load
-        if( g->u.has_active_bionic( bio_jointservo ) ) {
-            g->u.mod_power_level( -bio_jointservo->power_trigger * std::max( eff_load / 20, 1 ) );
-            mod -= std::max( eff_load / 5, 5 );
-        }
-        if( one_in( 1000 / load ) && one_in( 10 ) ) {
-            g->u.mod_stored_kcal( -10 );
-            g->u.mod_thirst( 1 );
-            g->u.mod_fatigue( 1 );
-        }
-        g->u.mod_stamina( -( base_burn + mod ) );
-        add_msg( m_debug, "Load: %d", load );
-        add_msg( m_debug, "Mod: %d", mod );
-        add_msg( m_debug, "Burn: %d", -( base_burn + mod ) );
     }
 }
 
@@ -5343,7 +5432,7 @@ int vehicle::total_solar_epower_w() const
 int vehicle::total_wind_epower_w() const
 {
     map &here = get_map();
-    const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
+    const oter_id &cur_om_ter = get_overmapbuffer( dimension_id_ ).ter( global_omt_location() );
     const weather_manager &weather = get_weather();
     int epower_w = 0;
     for( int part : wind_turbines ) {
@@ -5518,7 +5607,8 @@ void vehicle::power_parts()
         if( engine_epower < 0 ) {
             // Not enough epower to run gas engine ignition system
             engine_on = false;
-            if( player_in_control( g->u ) || g->u.sees( global_pos3() ) ) {
+            if( ( player_in_control( g->u ) || g->u.sees( global_pos3() ) ) &&
+                has_engine_type_not( fuel_type_muscle, true ) ) {
                 add_msg( _( "The %s's engine dies!" ), name );
             }
         }
@@ -5537,7 +5627,8 @@ vehicle *vehicle::find_vehicle( const tripoint &where )
     tripoint veh_in_sm = where;
     tripoint veh_sm = ms_to_sm_remain( veh_in_sm );
 
-    auto sm = MAPBUFFER.lookup_submap( veh_sm );
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    auto sm = mbuf.lookup_submap( veh_sm );
     if( sm == nullptr ) {
         return nullptr;
     }
@@ -5841,6 +5932,8 @@ void vehicle::do_engine_damage( size_t e, int strain )
 void vehicle::idle( bool on_map )
 {
     power_parts();
+    // Validate muscle engines - auto-disable if conditions are not met
+    validate_muscle_engines();
     if( engine_on && total_power_w() > 0 ) {
         bool no_electric_power = true;
         int idle_rate = alternator_load;
@@ -5911,7 +6004,10 @@ void vehicle::idle( bool on_map )
         alarm();
     }
 
-    vehicle_funcs::process_autoloaders( *this );
+    // V-3: skip the full part scan when no AUTOLOADER parts are installed.
+    if( has_autoloaders ) {
+        vehicle_funcs::process_autoloaders( *this );
+    }
 }
 
 void vehicle::on_move()
@@ -6358,6 +6454,8 @@ void vehicle::refresh()
     alternator_load = 0;
     extra_drag = 0;
     rail_profile.clear();
+    has_autoloaders = false;
+    has_cargo_recharge = false;
 
     // Used to sort part list so it displays properly when examining
     struct sort_veh_part_vector {
@@ -6449,6 +6547,12 @@ void vehicle::refresh()
         if( vpi.has_flag( "EMITTER" ) ) {
             emitters.push_back( p );
         }
+        if( vpi.has_flag( "AUTOLOADER" ) ) {
+            has_autoloaders = true;
+        }
+        if( vpi.has_flag( VPFLAG_RECHARGE ) ) {
+            has_cargo_recharge = true;
+        }
         if( vpi.has_flag( VPFLAG_WHEEL ) ) {
             wheelcache.push_back( p );
         }
@@ -6476,6 +6580,9 @@ void vehicle::refresh()
         }
         if( vpi.has_flag( "EXTRA_DRAG" ) && ( vpi.has_flag( "WIND_TURBINE" ) ||
                                               vpi.has_flag( "WATER_WHEEL" ) ) ) {
+            extra_drag += vpi.power;
+        }
+        if( vpi.has_flag( "POWERED_BY_ENGINE" ) ) {
             extra_drag += vpi.power;
         }
         if( camera_on && vpi.has_flag( "CAMERA" ) ) {
@@ -7591,7 +7698,8 @@ static bool is_sm_tile_over_water( const tripoint &real_global_pos )
 
     const tripoint smp = ms_to_sm_copy( real_global_pos );
     const point p( modulo( real_global_pos.x, SEEX ), modulo( real_global_pos.y, SEEY ) );
-    auto sm = MAPBUFFER.lookup_submap( smp );
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    auto sm = mbuf.lookup_submap( smp );
     if( sm == nullptr ) {
         debugmsg( "is_sm_tile_outside(): couldn't find submap %d,%d,%d", smp.x, smp.y, smp.z );
         return false;
@@ -7611,7 +7719,8 @@ static bool is_sm_tile_outside( const tripoint &real_global_pos )
 
     const tripoint smp = ms_to_sm_copy( real_global_pos );
     const point p( modulo( real_global_pos.x, SEEX ), modulo( real_global_pos.y, SEEY ) );
-    auto sm = MAPBUFFER.lookup_submap( smp );
+    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
+    auto sm = mbuf.lookup_submap( smp );
     if( sm == nullptr ) {
         debugmsg( "is_sm_tile_outside(): couldn't find submap %d,%d,%d", smp.x, smp.y, smp.z );
         return false;

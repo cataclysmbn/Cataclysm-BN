@@ -2,15 +2,16 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <algorithm>
 #include <optional>
 #include <queue>
+#include <ranges>
 #include <set>
 #include <array>
 #include <memory>
 #include <utility>
 #include <vector>
 
+#include "cata_cartesian_product.h"
 #include "cata_utility.h"
 #include "coordinates.h"
 #include "debug.h"
@@ -32,28 +33,44 @@ enum astar_state {
     ASL_CLOSED
 };
 
-// Turns two indexed to a 2D array into an index to equivalent 1D array
-constexpr int flat_index( const tripoint &p )
+// Turns two coordinates into an index into the 1D backing array.
+// stride_y is the total tile height of the loaded map.
+static int flat_index( const tripoint &p, int stride_y )
 {
-    return ( p.x * MAPSIZE_Y ) + p.y;
+    return ( p.x * stride_y ) + p.y;
 }
 
-// Flattened 2D array representing a single z-level worth of pathfinding data
+// Flattened 2D array representing a single z-level worth of pathfinding data.
+// All four fields are heap-allocated vectors sized from runtime g_mapsize_x / g_mapsize_y
+// so that they scale correctly with any REALITY_BUBBLE_SIZE setting.
 struct path_data_layer {
-    // State is accessed way more often than all other values here
-    std::array< astar_state, MAPSIZE_X *MAPSIZE_Y > state;
-    std::array< int, MAPSIZE_X *MAPSIZE_Y > score;
-    std::array< int, MAPSIZE_X *MAPSIZE_Y > gscore;
-    std::array< tripoint, MAPSIZE_X *MAPSIZE_Y > parent;
+    const int stride_y; // = g_mapsize_y at construction time
 
+    // State is accessed way more often than all other values here.
+    std::vector<astar_state> state;
+    std::vector<int> score;
+    std::vector<int> gscore;
+    std::vector<tripoint> parent;
+
+    explicit path_data_layer() :
+        stride_y( g_mapsize_y ),
+        state( static_cast<std::size_t>( g_mapsize_x * g_mapsize_y ), ASL_NONE ),
+        score( static_cast<std::size_t>( g_mapsize_x * g_mapsize_y ), 0 ),
+        gscore( static_cast<std::size_t>( g_mapsize_x * g_mapsize_y ), 0 ),
+        parent( static_cast<std::size_t>( g_mapsize_x * g_mapsize_y ) )
+    {}
+
+    // All elements are initialised to ASL_NONE in the constructor; init() is kept
+    // for compatibility but is a no-op when the vector is already zeroed.
     void init( point min, point max ) {
-        tripoint p;
-        for( p.x = min.x; p.x <= max.x; p.x++ ) {
-            for( p.y = min.y; p.y <= max.y; p.y++ ) {
-                const int ind = flat_index( p );
-                state[ind] = ASL_NONE; // Mark as unvisited
-            }
-        }
+        std::ranges::for_each(
+            cata::views::cartesian_product(
+                std::views::iota( min.x, max.x + 1 ),
+                std::views::iota( min.y, max.y + 1 ) ),
+        [this]( auto xy ) {
+            const auto &[x, y] = xy;
+            state[flat_index( tripoint{ x, y, 0 }, stride_y )] = ASL_NONE;
+        } );
     }
 };
 
@@ -91,7 +108,7 @@ struct pathfinder {
 
     void add_point( const int gscore, const int score, const tripoint &from, const tripoint &to ) {
         auto &layer = get_layer( to.z );
-        const int index = flat_index( to );
+        const int index = flat_index( to, layer.stride_y );
         if( ( layer.state[index] == ASL_OPEN && gscore >= layer.gscore[index] ) ||
             layer.state[index] == ASL_CLOSED ) {
             return;
@@ -106,13 +123,13 @@ struct pathfinder {
 
     void close_point( const tripoint &p ) {
         auto &layer = get_layer( p.z );
-        const int index = flat_index( p );
+        const int index = flat_index( p, layer.stride_y );
         layer.state[index] = ASL_CLOSED;
     }
 
     void unclose_point( const tripoint &p ) {
         auto &layer = get_layer( p.z );
-        const int index = flat_index( p );
+        const int index = flat_index( p, layer.stride_y );
         layer.state[index] = ASL_NONE;
     }
 };
@@ -139,17 +156,17 @@ bool vertical_move_destination( const map &m, tripoint &t )
     if( start.y < 0 ) {
         start.y = 0;
     }
-    if( end.x >= MAPSIZE_X ) {
-        end.x = MAPSIZE_X - 1;
+    const auto &rend_cache = m.get_cache_ref( t.z );
+    if( end.x >= rend_cache.cache_x ) {
+        end.x = rend_cache.cache_x - 1;
     }
-    if( end.y >= MAPSIZE_Y ) {
-        end.y = MAPSIZE_Y - 1;
+    if( end.y >= rend_cache.cache_y ) {
+        end.y = rend_cache.cache_y - 1;
     }
 
-    const auto &pf_cache = m.get_pathfinding_cache_ref( t.z );
     for( int x = start.x; x < end.x; x++ ) {
         for( int y = start.y; y < end.y; y++ ) {
-            if( pf_cache.special[x][y] & PF_UPDOWN ) {
+            if( m.get_pf_special( tripoint( x, y, t.z ) ) & PF_UPDOWN ) {
                 const tripoint p( x, y, t.z );
                 if( m.has_flag( flag, p ) ) {
                     t = p;
@@ -216,11 +233,10 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
     static const auto non_normal = PF_SLOW | PF_WALL | PF_VEHICLE | PF_TRAP | PF_SHARP;
     if( f.z == t.z ) {
         const auto line_path = line_to( f, t );
-        const auto &pf_cache = get_pathfinding_cache_ref( f.z );
         // Check all points for any special case (including just hard terrain)
-        if( !( pf_cache.special[f.x][f.y] & non_normal ) &&
-        std::ranges::all_of( line_path, [&pf_cache]( const tripoint & p ) {
-        return !( pf_cache.special[p.x][p.y] & non_normal );
+        if( !( get_pf_special( f ) & non_normal ) &&
+        std::ranges::all_of( line_path, [this]( const tripoint & p ) {
+        return !( get_pf_special( p ) & non_normal );
         } ) ) {
             const std::set<tripoint> sorted_line( line_path.begin(), line_path.end() );
 
@@ -274,8 +290,8 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
     do {
         auto cur = pf.get_next();
 
-        const int parent_index = flat_index( cur );
         auto &layer = pf.get_layer( cur.z );
+        const int parent_index = flat_index( cur, layer.stride_y );
         auto &cur_state = layer.state[parent_index];
         if( cur_state == ASL_CLOSED ) {
             continue;
@@ -293,8 +309,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
 
         cur_state = ASL_CLOSED;
 
-        const auto &pf_cache = get_pathfinding_cache_ref( cur.z );
-        const auto cur_special = pf_cache.special[cur.x][cur.y];
+        const auto cur_special = get_pf_special( cur );
 
         int cur_part;
         const vehicle *cur_veh = veh_at_internal( cur, cur_part );
@@ -306,7 +321,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
         constexpr std::array<int, 8> y_offset{{  0,  0, -1,  1, -1,  1, -1, 1 }};
         for( size_t i = 0; i < 8; i++ ) {
             const tripoint p( cur.x + x_offset[i], cur.y + y_offset[i], cur.z );
-            const int index = flat_index( p );
+            const int index = flat_index( p, layer.stride_y );
 
             // TODO: Remove this and instead have sentinels at the edges
             if( p.x < minx || p.x >= maxx || p.y < miny || p.y >= maxy ) {
@@ -334,7 +349,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
             // Penalize for diagonals or the path will look "unnatural"
             int newg = layer.gscore[parent_index] + ( ( cur.x != p.x && cur.y != p.y ) ? 1 : 0 );
 
-            const auto p_special = pf_cache.special[p.x][p.y];
+            const auto p_special = get_pf_special( p );
             // TODO: De-uglify, de-huge-n
             if( !( p_special & non_normal ) ) {
                 // Boring flat dirt - the most common case above the ground
@@ -526,8 +541,8 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
         tripoint cur = t;
         // Just to limit max distance, in case something weird happens
         for( int fdist = max_length; fdist != 0; fdist-- ) {
-            const int cur_index = flat_index( cur );
             const auto &layer = pf.get_layer( cur.z );
+            const int cur_index = flat_index( cur, layer.stride_y );
             const tripoint &par = layer.parent[cur_index];
             if( cur == f ) {
                 break;

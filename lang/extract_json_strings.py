@@ -128,6 +128,7 @@ ignorable = {
     "vehicle_group",
     "vehicle_placement",
     "WORLD_OPTION",
+    "sound_effect",
 }
 
 # these objects can have their strings automatically extracted.
@@ -191,7 +192,8 @@ automatically_convertible = {
     "vitamin",
     "WHEEL",
     "help",
-    "weather_type"
+    "weather_type",
+    "world_type"
 }
 
 # for these objects a plural form is needed

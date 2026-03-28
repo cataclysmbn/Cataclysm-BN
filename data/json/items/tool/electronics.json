@@ -1178,5 +1178,21 @@
       ]
     ],
     "magazine_well": "500 ml"
+  },
+  {
+    "id": "power_portal_key",
+    "type": "TOOL",
+    "category": "electronics",
+    "name": { "str": "power portal keycard" },
+    "description": "A programmable electronic keycard used to pair two power portal nodes. Stores the absolute location of a single portal endpoint; re-attuning it to a different portal simply overwrites the stored data. Carry this to the second portal and use its interface to complete the link.",
+    "weight": "10 g",
+    "volume": "10 ml",
+    "price": "200 USD",
+    "price_postapoc": "15 USD",
+    "bashing": 0,
+    "material": [ "plastic", "steel" ],
+    "symbol": ";",
+    "color": "cyan",
+    "flags": [ "BELT_CLIP" ]
   }
 ]
