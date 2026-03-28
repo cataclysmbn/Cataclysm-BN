@@ -70,7 +70,7 @@
     "environmental_protection": 2,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "OUTER" ],
-	"qualities": [ [ "SLEEP_AID", 4 ] ]
+    "qualities": [ [ "SLEEP_AID", 4 ] ]
   },
   {
     "id": "jumpsuit",
@@ -170,7 +170,7 @@
     "environmental_protection": 2,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "OUTER" ],
-	"qualities": [ [ "SLEEP_AID", 4 ] ]
+    "qualities": [ [ "SLEEP_AID", 4 ] ]
   },
   {
     "id": "wool_suit",
