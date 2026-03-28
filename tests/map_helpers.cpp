@@ -26,8 +26,15 @@
 // Remove all vehicles from the map
 void clear_vehicles()
 {
+    std::vector<vehicle *> vehicles;
+    vehicles.reserve( g->m.get_vehicles().size() );
+
     for( wrapped_vehicle &veh : g->m.get_vehicles() ) {
-        g->m.destroy_vehicle( veh.v );
+        vehicles.push_back( veh.v );
+    }
+
+    for( vehicle *veh : vehicles ) {
+        g->m.destroy_vehicle( veh );
     }
 }
 
