@@ -21,16 +21,7 @@
 #include "npc.h"
 #include "overmapbuffer.h"
 #include "point.h"
-#include "submap.h"
 #include "type_id.h"
-
-namespace
-{
-
-constexpr int test_map_z_min = -2;
-constexpr int test_map_z_max = 1;
-
-} // namespace
 
 // Remove all vehicles from the map
 void clear_vehicles()
@@ -44,7 +35,7 @@ void wipe_map_terrain()
 {
     map &here = get_map();
     const int mapsize = here.getmapsize() * SEEX;
-    for( int z = test_map_z_min; z <= test_map_z_max; ++z ) {
+    for( int z = -1; z <= OVERMAP_HEIGHT; ++z ) {
         const ter_id terrain = z == 0 ? t_grass : z < 0 ? t_rock : t_open_air;
         for( int x = 0; x < mapsize; ++x ) {
             for( int y = 0; y < mapsize; ++y ) {
@@ -54,6 +45,7 @@ void wipe_map_terrain()
     }
     clear_vehicles();
     g->m.invalidate_map_cache( 0 );
+    g->m.build_map_cache( 0, true );
 }
 
 void clear_creatures()
@@ -99,30 +91,6 @@ void clear_items( const int zlevel )
     }
 }
 
-namespace
-{
-
-auto clear_map_state() -> void
-{
-    for( int z = test_map_z_min; z <= test_map_z_max; ++z ) {
-        clear_fields( z );
-    }
-
-    wipe_map_terrain();
-    g->m.clear_traps();
-
-    for( int z = test_map_z_min; z <= test_map_z_max; ++z ) {
-        clear_items( z );
-    }
-
-    // Reset the distribution grid tracker so that stale grids from a previous
-    // test's Catch2 WHEN section do not bleed into the next run.  The tracker
-    // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.
-    get_distribution_grid_tracker().clear();
-}
-
-} // namespace
-
 void clear_overmap()
 {
     MAPBUFFER.clear();
@@ -131,9 +99,22 @@ void clear_overmap()
 
 void clear_map()
 {
-    clear_map_state();
+    // Clearing all z-levels is rather slow, so just clear the ones I know the
+    // tests use for now.
+    for( int z = -2; z <= 0; ++z ) {
+        clear_fields( z );
+    }
+    wipe_map_terrain();
     clear_npcs();
     clear_creatures();
+    g->m.clear_traps();
+    for( int z = -2; z <= 0; ++z ) {
+        clear_items( z );
+    }
+    // Reset the distribution grid tracker so that stale grids from a previous
+    // test's Catch2 WHEN section do not bleed into the next run.  The tracker
+    // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.
+    get_distribution_grid_tracker().clear();
 }
 
 void put_player_underground()
@@ -153,22 +134,16 @@ monster &spawn_test_monster( const std::string &monster_type, const tripoint &st
 // terrain, and no furniture, traps, or items.
 void build_test_map( const ter_id &terrain )
 {
-    const auto submap_count = g->m.getmapsize();
-    for( int grid_x = 0; grid_x < submap_count; ++grid_x ) {
-        for( int grid_y = 0; grid_y < submap_count; ++grid_y ) {
-            submap *const current_submap = g->m.get_submap_at_grid( tripoint( grid_x, grid_y, 0 ) );
-            current_submap->set_all_furn( furn_id( "f_null" ) );
-            current_submap->set_all_ter( terrain );
-            current_submap->set_all_traps( trap_id( "tr_null" ) );
-        }
-    }
-
     for( const tripoint &p : g->m.points_in_rectangle( tripoint_zero,
             tripoint( MAPSIZE * SEEX, MAPSIZE * SEEY, 0 ) ) ) {
+        g->m.furn_set( p, furn_id( "f_null" ) );
+        g->m.ter_set( p, terrain );
+        g->m.trap_set( p, trap_id( "tr_null" ) );
         g->m.i_clear( p );
     }
 
     g->m.invalidate_map_cache( 0 );
+    g->m.build_map_cache( 0, true );
 }
 
 void build_water_test_map( const ter_id &surface, const ter_id &mid, const ter_id &bottom )
@@ -197,6 +172,8 @@ void set_time( const time_point &time )
 {
     calendar::turn = time;
     g->reset_light_level();
-    int z = g->u.posz();
+    const auto z = g->u.posz();
+    g->m.update_visibility_cache( z );
     g->m.invalidate_map_cache( z );
+    g->m.build_map_cache( z );
 }
