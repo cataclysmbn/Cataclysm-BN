@@ -7,6 +7,8 @@
 #include <queue>
 #include <utility>
 
+#include <semver.hpp>
+
 #include "assign.h"
 #include "cata_utility.h"
 #include "debug.h"
@@ -21,6 +23,55 @@
 #include "worldfactory.h"
 
 static const std::string MOD_SEARCH_FILE( "modinfo.json" );
+
+namespace
+{
+
+auto is_valid_mod_semver( const std::string &version ) -> bool
+{
+    return semver::valid( version );
+}
+
+auto warn_on_non_semver_version( const JsonObject &jo, const std::string &version ) -> void
+{
+    if( version.empty() || is_valid_mod_semver( version ) ) {
+        return;
+    }
+
+    report_strict_violation(
+        jo,
+        string_format(
+            "mod version must use strict semantic versioning (MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]); got \"%s\"",
+            version ),
+        "version" );
+}
+
+auto read_mod_dependencies( const JsonObject &jo ) -> std::vector<mod_id>
+{
+    auto dependencies = std::vector<mod_id> {};
+
+    if( jo.has_array( "dependencies" ) ) {
+        assign( jo, "dependencies", dependencies );
+        return dependencies;
+    }
+
+    if( !jo.has_object( "dependencies" ) ) {
+        return dependencies;
+    }
+
+    for( const JsonMember &member : jo.get_object( "dependencies" ) ) {
+        if( member.is_comment() ) {
+            continue;
+        }
+
+        static_cast<void>( member.get_string() );
+        dependencies.emplace_back( member.name() );
+    }
+
+    return dependencies;
+}
+
+} // namespace
 
 template<>
 const MOD_INFORMATION &string_id<MOD_INFORMATION>::obj() const
@@ -291,8 +342,9 @@ std::optional<MOD_INFORMATION> load_modfile( const JsonObject &jo, const std::st
     assign( jo, "authors", modfile.authors );
     assign( jo, "maintainers", modfile.maintainers );
     assign( jo, "version", modfile.version );
+    warn_on_non_semver_version( jo, modfile.version );
     assign( jo, "lua_api_version", modfile.lua_api_version );
-    assign( jo, "dependencies", modfile.dependencies );
+    modfile.dependencies = read_mod_dependencies( jo );
     assign( jo, "conflicts", modfile.conflicts );
     assign( jo, "core", modfile.core );
     assign( jo, "obsolete", modfile.obsolete );

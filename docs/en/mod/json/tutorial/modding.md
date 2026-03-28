@@ -39,6 +39,7 @@ this:
     "authors": ["Your name here", "Your friend's name if you want"],
     "description": "Your description here",
     "category": "content",
+    "version": "1.0.0",
     "dependencies": ["bn"]
   }
 ]
@@ -68,7 +69,9 @@ document was written. Pick whichever one applies best to your mod when writing y
 The `dependencies` attribute is used to tell Cataclysm that your mod is dependent on something
 present in another mod. If you have no dependencies outside of the core game, then just including
 `bn` in the list is good enough. If your mod depends on another one to work properly, adding that
-mod's `id` attribute to the array causes Cataclysm to force that mod to load before yours.
+mod's `id` attribute to the array causes Cataclysm to force that mod to load before yours. Exact
+version metadata can also be written with a project.json-style object such as
+`{"bn": "0.7.0", "other_mod": "1.2.3"}`.
 
 For more details on `MOD_INFO` object, see [JSON_INFO.md](./../reference/mod_info).
 

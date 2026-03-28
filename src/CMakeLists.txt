@@ -46,6 +46,7 @@ function(setup_common_target_properties target_name)
     # Add common libraries
     target_link_libraries(${target_name} PUBLIC ZLIB::ZLIB)
     target_link_libraries(${target_name} PUBLIC SQLite::SQLite3)
+    target_link_libraries(${target_name} PUBLIC semver::semver)
 
     # Setup threading
     if (CMAKE_USE_PTHREADS_INIT)
