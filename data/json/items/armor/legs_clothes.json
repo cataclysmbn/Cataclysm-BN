@@ -166,7 +166,7 @@
     "warmth": 10,
     "material_thickness": 3,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
-    "flags": [ "VARSIZE", "POCKETS", "FANCY" ]
+    "flags": [ "VARSIZE", "POCKETS" ]
   },
   {
     "id": "kilt",
