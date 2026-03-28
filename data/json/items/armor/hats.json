@@ -264,6 +264,19 @@
     "warmth": 60
   },
   {
+    "id": "bearskin_hat",
+    "type": "ARMOR",
+    "copy-from": "hat_fur",
+    "looks_like": "hat_fur",
+    "name": { "str": "bearskin hat" },
+    "description": "A tall ceremonial hat once worn by European soldiers.  Very warm.  Very tall.",
+    "weight": "650 g",
+    "volume": "1500 ml",
+    "price": "100 USD",
+    "color": "black",
+    "flags": [ "FANCY" ]
+  },
+  {
     "id": "hat_hard",
     "type": "ARMOR",
     "name": { "str": "hard hat" },
