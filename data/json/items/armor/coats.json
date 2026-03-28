@@ -573,7 +573,7 @@
     "material_thickness": 3,
     "environmental_protection": 1,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
-    "flags": [ "VARSIZE", "FANCY", "POCKETS", "OUTER", "ALLOWS_WINGS" ]
+    "flags": [ "VARSIZE", "POCKETS", "OUTER", "FANCY", "ALLOWS_WINGS" ]
   },
   {
     "id": "jacket_light",
