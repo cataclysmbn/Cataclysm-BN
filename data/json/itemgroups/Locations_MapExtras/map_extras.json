@@ -153,7 +153,14 @@
     "type": "item_group",
     "subtype": "distribution",
     "id": "map_extra_casings",
-    "entries": [ { "item": "rag_bloody" }, { "item": "cigar_butt" }, { "item": "cig_butt" }, { "item": "can_drink_unsealed" } ]
+    "entries": [
+      { "item": "rag_bloody", "prob": 25 },
+      { "item": "cigar_butt", "prob": 25 },
+      { "item": "cig_butt", "prob": 25 },
+      { "item": "can_drink_unsealed", "prob": 25 },
+      { "item": "105mm_casing", "prob": 2 },
+      { "item": "120mm_case_base", "prob": 3 }
+    ]
   },
   {
     "type": "item_group",

@@ -1273,10 +1273,10 @@ static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,
     if( !get_option<bool>( "AUTO_NOTES_DROPPED_FAVORITES" ) ) {
         return;
     }
-    if( !overmap_buffer.has_note( note_pos ) ) {
+    if( !ACTIVE_OVERMAP_BUFFER.has_note( note_pos ) ) {
         return;
     }
-    const std::string note_text = overmap_buffer.note( note_pos );
+    const std::string note_text = ACTIVE_OVERMAP_BUFFER.note( note_pos );
     std::vector<std::string> tokens = string_split( note_text, ';' );
     std::vector<std::string> kept;
     kept.reserve( tokens.size() );
@@ -1296,7 +1296,7 @@ static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,
         return;
     }
     if( kept.empty() || ( kept.size() == 1 && kept.front().starts_with( "SPRITE:" ) ) ) {
-        overmap_buffer.delete_note( note_pos );
+        ACTIVE_OVERMAP_BUFFER.delete_note( note_pos );
         return;
     }
     std::string updated = kept.front();
@@ -1304,7 +1304,7 @@ static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,
         updated += "; ";
         updated += kept[i];
     }
-    overmap_buffer.add_note( note_pos, updated );
+    ACTIVE_OVERMAP_BUFFER.add_note( note_pos, updated );
 }
 
 detached_ptr<item> pickup::handle_spillable_contents( Character &c, detached_ptr<item> &&it,

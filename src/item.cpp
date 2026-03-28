@@ -2658,8 +2658,25 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
 
     if( parts->test( iteminfo_parts::GUN_AIMING_STATS ) ) {
         insert_separation_line( info );
-        info.emplace_back( "GUN", _( "<bold>Base aim speed</bold>: " ), "<num>", iteminfo::no_flags,
-                           ranged::aim_per_move( you, *mod, MAX_RECOIL ) );
+        int final_aim = ranged::aim_per_move( you, *mod, MAX_RECOIL );
+        double add = you.bonus_from_enchantments( 0, enchant_vals::mod::RANGED_AIM_SPEED, false );
+        double mul = ( you.bonus_from_enchantments( 1000, enchant_vals::mod::RANGED_AIM_SPEED,
+                       false ) - add ) / 1000.0;
+        int base_aim = final_aim;
+        if( 1.0 + mul != 0.0 ) {
+            base_aim = std::round( ( final_aim - add ) / ( 1.0 + mul ) );
+        }
+        int ench_aim_bonus = final_aim - base_aim;
+        info.emplace_back( "GUN", _( "<bold>Base aim speed</bold>: " ), "<num>",
+                           ( ench_aim_bonus != 0 ) ? iteminfo::no_newline : iteminfo::no_flags,
+                           final_aim );
+        if( ench_aim_bonus != 0 ) {
+            info.emplace_back( "GUN", "ench_aim_speed", _( " (enchanted: <num>)" ),
+                               iteminfo::no_name | iteminfo::show_plus,
+                               ench_aim_bonus );
+            info.back().bNewLine = true;
+        }
+
         for( const ranged::aim_type &type : ranged::get_aim_types( you, *mod ) ) {
             // Nameless aim levels don't get an entry.
             if( type.name.empty() ) {
@@ -4892,7 +4909,7 @@ void item::handle_pickup_ownership( Character &c )
             std::vector<npc *> witnesses;
             for( npc &elem : g->all_npcs() ) {
                 // If they already want to murder you, no point in confronting you about theft
-                if( rl_dist( elem.pos(), you.pos() ) < MAX_VIEW_DISTANCE && elem.get_faction() &&
+                if( rl_dist( elem.pos(), you.pos() ) < g_max_view_distance && elem.get_faction() &&
                     is_owned_by( elem ) && elem.sees( you.pos() ) && !elem.guaranteed_hostile() ) {
                     elem.say( "<witnessed_thievery>", 7 );
                     npc *npc_to_add = &elem;
@@ -5386,7 +5403,7 @@ std::string item::display_name( unsigned int quantity ) const
             get_var( "reveal_map_center_omt", you.global_omt_location().raw() );
         tripoint_abs_sm map_pos =
             project_to<coords::sm>( tripoint_abs_omt( map_pos_omt ) );
-        const city *c = overmap_buffer.closest_city( map_pos ).city;
+        const city *c = ACTIVE_OVERMAP_BUFFER.closest_city( map_pos ).city;
         if( c != nullptr ) {
             name = string_format( "%s %s", c->name, name );
         }
@@ -7809,6 +7826,32 @@ bool item::is_craft() const
     return craft_data_ != nullptr;
 }
 
+bool item::is_pocket_dimension_key() const
+{
+    return pocket_dim.has_value();
+}
+
+item::pocket_dimension_data *item::get_pocket_dimension_data()
+{
+    if( pocket_dim.has_value() ) {
+        return &pocket_dim.value();
+    }
+    return nullptr;
+}
+
+const item::pocket_dimension_data *item::get_pocket_dimension_data() const
+{
+    if( pocket_dim.has_value() ) {
+        return &pocket_dim.value();
+    }
+    return nullptr;
+}
+
+void item::set_pocket_dimension_data( pocket_dimension_data &&data )
+{
+    pocket_dim = std::move( data );
+}
+
 bool item::is_funnel_container( units::volume &bigger_than ) const
 {
     if( !is_bucket() && !is_watertight_container() ) {
@@ -8239,7 +8282,7 @@ int item::gun_range( bool with_ammo ) const
         }
     }
     ret += get_range_bonus();
-    return std::min( std::max( 0, ret ), RANGE_HARD_CAP );
+    return std::min( std::max( 0, ret ), g_max_view_distance );
 }
 
 int item::gun_range( const player *p ) const
@@ -9629,6 +9672,23 @@ int item::get_counter() const
     return item_counter;
 }
 
+bool item::has_explicit_turn_timer() const
+{
+    return is_active() && item_counter > 0 && type->countdown_interval > 0;
+}
+
+void item::advance_timer( int n )
+{
+    if( !has_explicit_turn_timer() || n <= 0 ) {
+        return;
+    }
+    // Decrement counter, clamping at 0.  The countdown_action is deliberately
+    // NOT fired here — it will trigger on the next normal process_items() call
+    // when the submap re-enters the reality bubble, avoiding side-effects in
+    // out-of-bubble context (explosions, spawns, etc.).
+    item_counter = std::max( 0, item_counter - n );
+}
+
 void item::set_charges( int value )
 {
     if( value < 0 ) {
@@ -9853,6 +9913,15 @@ detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoin
                                         temperature_flag temperature,
                                         const weather_manager &weather )
 {
+    // Guard against null or invalid items that can survive save/load cycles
+    // during dimension transitions (e.g. zombie items from deferred arena cleanup).
+    if( !self || !self->type || self->type == nullitem() ) {
+        if( self ) {
+            debugmsg( "actualize_rot: skipping item with %s type at %s",
+                      self->type ? "null-type" : "null", pnt.to_string() );
+        }
+        return std::move( self );
+    }
     if( self->goes_bad() ) {
         return process_rot( std::move( self ), false, pnt, nullptr, temperature, weather );
     } else if( self->type->container && self->type->container->preserves ) {
@@ -9861,6 +9930,9 @@ detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoin
     } else if( self->type->container && self->type->container->seals ) {
         // Items inside rot but do not vanish as the container seals them in.
         self->contents.remove_top_items_with( [&pnt, &temperature, &weather]( detached_ptr<item> &&it ) {
+            if( !it || !it->type || it->type == nullitem() ) {
+                return std::move( it );
+            }
             if( it->goes_bad() ) {
                 it = process_rot( std::move( it ), true, pnt, nullptr, temperature, weather );
             }

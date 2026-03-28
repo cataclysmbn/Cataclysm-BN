@@ -53,6 +53,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "ui.h"
 #include "value_ptr.h"
@@ -659,11 +660,11 @@ void vehicle::toggle_autopilot()
 void vehicle::toggle_tracking()
 {
     if( tracking_on ) {
-        overmap_buffer.remove_vehicle( this );
+        get_overmapbuffer( dimension_id_ ).remove_vehicle( this );
         tracking_on = false;
         add_msg( _( "You stop keeping track of the vehicle position." ) );
     } else {
-        overmap_buffer.add_vehicle( this );
+        get_overmapbuffer( dimension_id_ ).add_vehicle( this );
         tracking_on = true;
         add_msg( _( "You start keeping track of this vehicle's position." ) );
     }
@@ -979,8 +980,7 @@ bool vehicle::fold_up()
         folding_veh_item->set_var( "weight", to_milligram( total_mass() ) );
         folding_veh_item->set_var( "volume", total_folded_volume() / units::legacy_volume_factor );
         // remove "folded" from name to allow for more flexibility with folded vehicle names. also lowers first character
-        folding_veh_item->set_var( "name", string_format( _( "%s" ), ( name.empty() ? name : std::string( 1,
-                                   std::tolower( name[0] ) ) + name.substr( 1 ) ) ) );
+        folding_veh_item->set_var( "name", to_lower_case( name ) );
         folding_veh_item->set_var( "vehicle_name", name );
         // TODO: a better description?
         folding_veh_item->set_var( "description", string_format( _( "A folded %s." ), name ) );
@@ -1386,9 +1386,9 @@ void vehicle::transform_terrain()
     for( const vpart_reference &vp : get_enabled_parts( "TRANSFORM_TERRAIN" ) ) {
         const tripoint start_pos = vp.pos();
         const transform_terrain_data &ttd = vp.info().transform_terrain;
-        bool prereq_fulfilled = false;
+        bool prereq_fulfilled = ttd.diggable && g->m.ter( start_pos )->is_diggable();
         for( const std::string &flag : ttd.pre_flags ) {
-            if( ( ttd.diggable && g->m.ter( start_pos )->is_diggable() ) || g->m.has_flag( flag, start_pos ) ) {
+            if( g->m.has_flag( flag, start_pos ) ) {
                 prereq_fulfilled = true;
                 break;
             }
