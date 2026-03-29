@@ -1841,14 +1841,26 @@ bool game::handle_action()
             case ACTION_MOVE_DOWN:
                 if( u.is_mounted() ) {
                     const monster *mon = u.mounted_creature.get();
+                    bool ladder = m.has_flag( "DIFFICULT_Z", u.pos() );
 
-                    const bool can_use_stairs =
-                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
-                        mon->has_flag( MF_FLIES );
+                    if (ladder) {
+                        const bool can_use_ladder = 
+                            mon->has_flag( MF_MOUNTABLE_LADDER ) ||
+                            mon->has_flag( MF_FLIES );
 
-                    if( !can_use_stairs ) {
-                        add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
-                        break;
+                        if (!can_use_ladder) {
+                            add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
+                            break;
+                        }
+                    } else {
+                        const bool can_use_stairs =
+                            mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                            mon->has_flag( MF_FLIES );
+
+                        if( !can_use_stairs &&  ) {
+                            add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
+                            break;
+                        }
                     }
                 }
                 if( !u.in_vehicle ) {
@@ -1886,7 +1898,7 @@ bool game::handle_action()
                     const monster *mon = u.mounted_creature.get();
 
                     const bool can_use_stairs =
-                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                        mon->has_flag( MF_MOUNTABLE_STAIRS ) || //zz
                         mon->has_flag( MF_FLIES );
 
                     if( !can_use_stairs ) {

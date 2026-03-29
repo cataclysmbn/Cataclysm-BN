@@ -200,6 +200,7 @@ std::string enum_to_string<m_flag>( m_flag data )
          case MF_VOLATILE: return "VOLATILE";
          case MF_CANT_CLONE: return "CANT_CLONE";
          case MF_MOUNTABLE_STAIRS: return "MOUNTABLE_STAIRS";
+         case MF_MOUNTABLE_LADDER: return "MOUNTABLE_LADDER";
          case MF_MOUNTABLE_OBSTACLES: return "MOUNTABLE_OBSTACLES";
          case MF_MOUNTABLE_DOORS: return "MOUNTABLE_DOORS";
          case MF_MOUNTABLE_LEDGE: return "MOUNTABLE_LEDGE";

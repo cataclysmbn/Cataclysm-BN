@@ -1121,6 +1121,7 @@ Multiple death functions can be used. Not all combinations make sense.
 - `PET_MOUNTABLE` Creature can be ridden or attached to an harness.
 - `PET_HARNESSABLE`Creature can be attached to an harness.
 - `MOUNTABLE_STAIRS` Player can go up/down stairs while riding this creature.
+- `MOUNTABLE_LADDER` Player can go up/down stairs that have the difficult_z flag while riding this creature.
 - `MOUNTABLE_OBSTACLES` Player can travel over fences/doors while riding this creature.
 - `MOUNTABLE_DOORS` Player can open/close doors while riding this creature.
 - `MOUNTABLE_LEDGE` Player can jump down ledges while riding this creature.
