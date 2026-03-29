@@ -1255,14 +1255,15 @@ void cata::detail::reg_npc( sol::state &lua )
 
         DOC( "Returns the npc's overmap destination as a tripoint or nil if unset." );
         luna::set_fx( ut, "get_omt_destination", []( const UT_CLASS & npchar ) -> sol::optional<tripoint> {
-            if( npchar.goal == npc::no_goal_point ) {
+            if( npchar.goal == npc::no_goal_point )
+            {
                 return sol::optional<tripoint>();
             }
             return sol::optional<tripoint>( npchar.goal.raw() );
         } );
 
         DOC( "Sets the npc's overmap destination (absolute omt tripoint)." );
-        luna::set_fx( ut, "set_omt_destination", []( UT_CLASS & npchar, const tripoint &dest ) -> void {
+        luna::set_fx( ut, "set_omt_destination", []( UT_CLASS & npchar, const tripoint & dest ) -> void {
             npchar.goal = tripoint_abs_omt( dest );
         } );
 
@@ -1272,7 +1273,7 @@ void cata::detail::reg_npc( sol::state &lua )
         } );
 
         DOC( "Moves the npc to an overmap tile (absolute omt tripoint) without pathing." );
-        luna::set_fx( ut, "travel_overmap_to", []( UT_CLASS & npchar, const tripoint &dest ) -> void {
+        luna::set_fx( ut, "travel_overmap_to", []( UT_CLASS & npchar, const tripoint & dest ) -> void {
             npchar.travel_overmap( omt_to_sm_copy( dest ) );
         } );
 

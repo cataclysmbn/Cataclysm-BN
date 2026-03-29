@@ -162,17 +162,19 @@ void cata::detail::reg_game_api( sol::state &lua )
                   []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> Character * { return g->critter_at<Character>( p, allow_hallucination.value_or( false ) ); } );
     luna::set_fx( lib, "get_npc_at",
                   []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> npc * { return g->critter_at<npc>( p, allow_hallucination.value_or( false ) ); } );
-    luna::set_fx( lib, "get_npc_by_id", []( const character_id &id ) -> npc * {
+    luna::set_fx( lib, "get_npc_by_id", []( const character_id & id ) -> npc * {
         return g->find_npc( id );
     } );
-    luna::set_fx( lib, "remove_npc_by_id", []( const character_id &id ) -> bool {
+    luna::set_fx( lib, "remove_npc_by_id", []( const character_id & id ) -> bool {
         g->remove_npc_follower( id );
         auto removed = get_active_overmapbuffer().remove_npc( id );
         return static_cast<bool>( removed );
     } );
-    luna::set_fx( lib, "spawn_npc_overmap", []( const std::string &template_id, const tripoint &pos ) -> npc * {
+    luna::set_fx( lib, "spawn_npc_overmap", []( const std::string & template_id,
+    const tripoint & pos ) -> npc * {
         auto npc_template_id = string_id<npc_template>( template_id );
-        if( !npc_template_id.is_valid() ) {
+        if( !npc_template_id.is_valid() )
+        {
             debugmsg( "spawn_npc_overmap: invalid npc template '%s'", template_id );
             return nullptr;
         }
