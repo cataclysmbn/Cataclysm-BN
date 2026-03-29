@@ -1162,7 +1162,7 @@ std::vector<options_manager::id_and_option> options_manager::build_soundpacks_li
 }
 
 #if defined(__ANDROID__)
-bool android_get_default_setting( const char *settings_name, bool default_value )
+bool options_manager::android_get_default_setting( const char *settings_name, bool default_value )
 {
     JNIEnv *env = static_cast< JNIEnv *>( SDL_AndroidGetJNIEnv() );
     jobject activity = static_cast< jobject>( SDL_AndroidGetActivity() );
@@ -2304,6 +2304,7 @@ void options_manager::add_options_performance()
         add( "LOAD_FROM_EXTERNAL", page_id, translate_marker( "External Storage Saving" ),
              translate_marker( "Save in data/catalcysm... instead of Documents/..." ),
              false );
+
 #endif
     } );
 

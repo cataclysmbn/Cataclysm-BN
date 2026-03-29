@@ -232,6 +232,100 @@
     "items": [ { "x": -2, "y": 1, "chance": 100, "items": [ "jerrycan" ] } ]
   },
   {
+    "id": "tractor_bandit",
+    "type": "vehicle",
+    "name": "Bandit Bulldozer",
+    "blueprint": [
+      [ "ooo=# x" ],
+      [ "|-+'||x" ],
+      [ "'=#'||x" ],
+      [ "|-''||x" ],
+      [ "ooooo x" ]
+    ],
+    "parts": [
+      { "x": -2, "y": -2, "parts": [ "frame_horizontal", "tread2" ] },
+      { "x": -1, "y": -2, "parts": [ "frame_horizontal", "tread2" ] },
+      { "x": 0, "y": -2, "parts": [ "frame_horizontal", "tread2" ] },
+      { "x": 1, "y": -2, "parts": [ "frame_horizontal", "tread2", "trunk" ] },
+      {
+        "x": 2,
+        "y": -2,
+        "parts": [
+          "frame_horizontal",
+          "tread2",
+          "seat",
+          "turret_mount_manual_steel",
+          {
+            "part": "mounted_25mm_autocannon_sawn",
+            "ammo": 80,
+            "ammo_types": [ "25mm_hei", "25mm_slug", "bp_25mm_slug" ]
+          }
+        ]
+      },
+      { "x": 3, "y": -2, "parts": [ "frame_vertical" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_horizontal", "halfboard_sw", { "part": "tank", "fuel": "gasoline" } ] },
+      { "x": -1, "y": -1, "parts": [ "frame_horizontal", "halfboard_vertical" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_horizontal", "door", "roof" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_horizontal", "windshield", "rebar_plate" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_horizontal", "halfboard_vertical" ] },
+      { "x": 3, "y": -1, "parts": [ "frame_horizontal", "halfboard_nw" ] },
+      { "x": 4, "y": -1, "parts": [ "ram_spiked" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_horizontal", "windshield", "rebar_plate" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_horizontal", "trunk", { "part": "tank", "fuel": "gasoline" }, "roof" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "frame_horizontal",
+          "seat",
+          "turret_mount_manual_steel",
+          {
+            "part": "mounted_bigun",
+            "ammo": 80,
+            "ammo_types": [ "shot_00", "shot_slug", "shot_scrap", "bp_shot_00", "bp_shot_slug" ],
+            "ammo_qty": [ 5, 20 ]
+          },
+          "controls",
+          "dashboard",
+          "horn_big",
+          "roof"
+        ]
+      },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield", "rebar_plate" ] },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [ "frame_horizontal", "halfboard_cover", "engine_v6", "battery_car", "alternator_truck" ]
+      },
+      { "x": 3, "y": 0, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
+      { "x": 4, "y": 0, "parts": [ "ram_spiked" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_horizontal", "halfboard_se" ] },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [ "frame_horizontal", "halfboard_vertical", { "part": "tank", "fuel": "gasoline" } ]
+      },
+      { "x": 0, "y": 1, "parts": [ "frame_horizontal", "door", "roof" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield", "rebar_plate" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_vertical" ] },
+      { "x": 3, "y": 1, "parts": [ "frame_horizontal", "halfboard_ne" ] },
+      { "x": 4, "y": 1, "parts": [ "ram_spiked" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_horizontal", "tread2" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_horizontal", "tread2" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_horizontal", "tread2" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_horizontal", "tread2" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_horizontal", "tread2" ] },
+      { "x": 3, "y": 2, "parts": [ "frame_vertical" ] },
+      { "x": 4, "y": 2, "parts": [ "ram_spiked" ] },
+      { "x": 4, "y": -2, "parts": [ "ram_spiked" ] }
+    ],
+    "items": [
+      { "x": -1, "y": 0, "chance": 25, "item_groups": "fuel_gasoline" },
+      { "x": -1, "y": 0, "chance": 100, "item_groups": "killdozer_ammo_shot" },
+      { "x": 1, "y": -2, "chance": 100, "item_groups": "killdozer_ammo_cannon" }
+    ]
+  },
+  {
     "id": "motorcycle_methcart",
     "type": "vehicle",
     "name": "Meth Bike",

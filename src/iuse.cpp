@@ -121,6 +121,7 @@
 #include "vehicle_part.h"
 #include "vehicle_selector.h"
 #include "visitable.h"
+#include "skill.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "weather.h"
@@ -341,6 +342,7 @@ static const mongroup_id GROUP_FISH( "GROUP_FISH" );
 static const mtype_id mon_bee( "mon_bee" );
 static const mtype_id mon_blob( "mon_blob" );
 static const mtype_id mon_dog_thing( "mon_dog_thing" );
+static const mtype_id mon_duck( "mon_duck" );
 static const mtype_id mon_fly( "mon_fly" );
 static const mtype_id mon_hologram( "mon_hologram" );
 static const mtype_id mon_shadow( "mon_shadow" );
@@ -3226,6 +3228,28 @@ int iuse::throwable_extinguisher_act( player *, item *it, bool, const tripoint &
     return 0;
 }
 
+/// Apply a debug grenade skill buff or nerf to a random valid skill.
+enum class debug_grenade_skill_modifier_type {
+    buff,
+    nerf
+};
+static auto apply_debug_grenade_skill_modifier( Character &ch,
+        const debug_grenade_skill_modifier_type mode ) -> void
+{
+    const skill_id skill = Skill::random_skill();
+    if( !skill ) {
+        return;
+    }
+    const bool buff = ( mode == debug_grenade_skill_modifier_type::buff );
+    const int current_level = ch.get_skill_level( skill );
+    const int cap = buff ? MAX_SKILL - current_level : current_level;
+    if( cap <= 0 ) {
+        return;
+    }
+    const int change = 1;
+    ch.mod_skill_level( skill, buff ? change : -change );
+}
+
 int iuse::debug_grenade( player *p, item *it, bool, const tripoint & )
 {
     p->add_msg_if_player( _( "You pull the pin on the %s." ), it->tname() );
@@ -3241,9 +3265,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
         return 0;
     }
     if( t ) { // Simple timer effects
-        // Vol 0 = only heard if you hold it
-        sounds::sound( pos, 0, sounds::sound_t::electronic_speech, _( "Merged!" ),
-                       true, "speech", it->typeId().str() );
+        add_msg( m_info, _( "\"Merged!\"" ) );
     } else if( it->charges > 0 ) {
         p->add_msg_if_player( m_info, _( "You've already pulled the %s's pin, try throwing it instead." ),
                               it->tname() );
@@ -3252,15 +3274,14 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
 
     if( it->charges == 0 ) { // When that timer runs down...
         int explosion_radius = 3;
-        int effect_roll = rng( 1, 5 );
+        int effect_roll = rng( 1, 6 );
         auto buff_stat = [&]( int &current_stat, int modify_by ) {
-            auto modified_stat = current_stat + modify_by;
-            current_stat = std::max( current_stat, std::min( 15, modified_stat ) );
+            const auto modified_stat = current_stat + modify_by;
+            current_stat = std::max( current_stat, modified_stat );
         };
         switch( effect_roll ) {
             case 1:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "BUGFIXES!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"BUGFIXES!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_light_cyan, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     monster *const mon = g->critter_at<monster>( dest, true );
@@ -3271,8 +3292,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                 break;
 
             case 2:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "BUFFS!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"BUFFS!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_green, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
@@ -3281,22 +3301,23 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                             critter.get_speed_base() * rng_float( 1.1, 2.0 ) );
                         critter.set_hp( critter.get_hp() * rng_float( 1.1, 2.0 ) );
                     } else if( npc *const person = g->critter_at<npc>( dest ) ) {
-                        /** @EFFECT_STR_MAX increases possible granade str buff for NPCs */
+                        /** @EFFECT_STR_MAX increases possible str buff for NPCs */
                         buff_stat( person->str_max, rng( 0, person->str_max / 2 ) );
-                        /** @EFFECT_DEX_MAX increases possible granade dex buff for NPCs */
+                        /** @EFFECT_DEX_MAX increases possible dex buff for NPCs */
                         buff_stat( person->dex_max, rng( 0, person->dex_max / 2 ) );
-                        /** @EFFECT_INT_MAX increases possible granade int buff for NPCs */
+                        /** @EFFECT_INT_MAX increases possible int buff for NPCs */
                         buff_stat( person->int_max, rng( 0, person->int_max / 2 ) );
-                        /** @EFFECT_PER_MAX increases possible granade per buff for NPCs */
+                        /** @EFFECT_PER_MAX increases possible per buff for NPCs */
                         buff_stat( person->per_max, rng( 0, person->per_max / 2 ) );
+                        apply_debug_grenade_skill_modifier( *person, debug_grenade_skill_modifier_type::buff );
                     } else if( g->u.pos() == dest ) {
-                        /** @EFFECT_STR_MAX increases possible granade str buff */
+                        /** @EFFECT_STR_MAX increases possible str buff */
                         buff_stat( g->u.str_max, rng( 0, g->u.str_max / 2 ) );
-                        /** @EFFECT_DEX_MAX increases possible granade dex buff */
+                        /** @EFFECT_DEX_MAX increases possible dex buff */
                         buff_stat( g->u.dex_max, rng( 0, g->u.dex_max / 2 ) );
-                        /** @EFFECT_INT_MAX increases possible granade int buff */
+                        /** @EFFECT_INT_MAX increases possible int buff */
                         buff_stat( g->u.int_max, rng( 0, g->u.int_max / 2 ) );
-                        /** @EFFECT_PER_MAX increases possible granade per buff */
+                        /** @EFFECT_PER_MAX increases possible per buff */
                         buff_stat( g->u.per_max, rng( 0, g->u.per_max / 2 ) );
                         g->u.recalc_hp();
                         for( const bodypart_id &bp : g->u.get_all_body_parts() ) {
@@ -3306,13 +3327,13 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                                 g->u.set_part_hp_cur( bp, hp_max );
                             }
                         }
+                        apply_debug_grenade_skill_modifier( g->u, debug_grenade_skill_modifier_type::buff );
                     }
                 }
                 break;
 
             case 3:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "NERFS!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"NERFS!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_red, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
@@ -3321,22 +3342,23 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                             rng( 0, critter.get_speed_base() ) );
                         critter.set_hp( rng( 1, critter.get_hp() ) );
                     } else if( npc *const person = g->critter_at<npc>( dest ) ) {
-                        /** @EFFECT_STR_MAX increases possible granade str debuff for NPCs (NEGATIVE) */
+                        /** @EFFECT_STR_MAX increases possible str debuff for NPCs (NEGATIVE) */
                         person->str_max -= rng( 0, person->str_max / 2 );
-                        /** @EFFECT_DEX_MAX increases possible granade dex debuff for NPCs (NEGATIVE) */
+                        /** @EFFECT_DEX_MAX increases possible dex debuff for NPCs (NEGATIVE) */
                         person->dex_max -= rng( 0, person->dex_max / 2 );
-                        /** @EFFECT_INT_MAX increases possible granade int debuff for NPCs (NEGATIVE) */
+                        /** @EFFECT_INT_MAX increases possible int debuff for NPCs (NEGATIVE) */
                         person->int_max -= rng( 0, person->int_max / 2 );
-                        /** @EFFECT_PER_MAX increases possible granade per debuff for NPCs (NEGATIVE) */
+                        /** @EFFECT_PER_MAX increases possible per debuff for NPCs (NEGATIVE) */
                         person->per_max -= rng( 0, person->per_max / 2 );
+                        apply_debug_grenade_skill_modifier( *person, debug_grenade_skill_modifier_type::nerf );
                     } else if( g->u.pos() == dest ) {
-                        /** @EFFECT_STR_MAX increases possible granade str debuff (NEGATIVE) */
+                        /** @EFFECT_STR_MAX increases possible str debuff (NEGATIVE) */
                         g->u.str_max -= rng( 0, g->u.str_max / 2 );
-                        /** @EFFECT_DEX_MAX increases possible granade dex debuff (NEGATIVE) */
+                        /** @EFFECT_DEX_MAX increases possible dex debuff (NEGATIVE) */
                         g->u.dex_max -= rng( 0, g->u.dex_max / 2 );
-                        /** @EFFECT_INT_MAX increases possible granade int debuff (NEGATIVE) */
+                        /** @EFFECT_INT_MAX increases possible int debuff (NEGATIVE) */
                         g->u.int_max -= rng( 0, g->u.int_max / 2 );
-                        /** @EFFECT_PER_MAX increases possible granade per debuff (NEGATIVE) */
+                        /** @EFFECT_PER_MAX increases possible per debuff (NEGATIVE) */
                         g->u.per_max -= rng( 0, g->u.per_max / 2 );
                         g->u.recalc_hp();
                         for( const bodypart_id &bp : g->u.get_all_body_parts() ) {
@@ -3345,13 +3367,13 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                                 g->u.set_part_hp_cur( bp, rng( 1, hp_cur ) );
                             }
                         }
+                        apply_debug_grenade_skill_modifier( g->u, debug_grenade_skill_modifier_type::nerf );
                     }
                 }
                 break;
 
             case 4:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "REVERTS!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"REVERTS!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_pink, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
@@ -3368,12 +3390,22 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                 }
                 break;
             case 5:
-                sounds::sound( pos, 100, sounds::sound_t::electronic_speech, _( "BEES!" ),
-                               true, "speech", it->typeId().str() );
+                add_msg( m_info, _( "\"QUACK!\"" ) );
                 explosion_handler::draw_explosion( pos, explosion_radius, c_yellow, "explosion" );
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( one_in( 5 ) && !g->critter_at( dest ) ) {
-                        g->m.add_field( dest, fd_bees, rng( 1, 3 ) );
+                        g->place_critter_at( mon_duck, dest );;
+                    }
+                }
+                break;
+            case 6:
+                add_msg( m_info, _( "\"EEPY!\"" ) );
+                explosion_handler::draw_explosion( pos, explosion_radius, c_magenta, "explosion" );
+                for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
+                    if( npc *const person = g->critter_at<npc>( dest ) ) {
+                        person->fall_asleep( 5_minutes );
+                    } else if( g->u.pos() == dest ) {
+                        g->u.fall_asleep( 5_minutes );
                     }
                 }
                 break;

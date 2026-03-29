@@ -250,6 +250,8 @@ jobs:
 
       - name: Generate Lua reference/annotations
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
+        env:
+          CATA_EXE: ./cataclysm-bn-tiles
         run: |
           ln -sf build/src/cataclysm-bn-tiles ./cataclysm-bn-tiles
           deno task docs:gen

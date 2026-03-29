@@ -39,6 +39,8 @@ mapbuffer::~mapbuffer() = default;
 void mapbuffer::clear()
 {
     submaps.clear();
+    std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
+    pending_writes_.clear();
 }
 
 bool mapbuffer::add_submap( const tripoint &p, std::unique_ptr<submap> &sm )
@@ -140,10 +142,58 @@ void mapbuffer::unload_quad( const tripoint &om_addr, bool save )
     std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
     std::list<tripoint> to_delete;
     if( save ) {
-        // Save the quad once and collect all in-memory submaps for deletion.
-        // Using delete_after_save=true ensures save_quad() enumerates what to delete
-        // so we don't need to recompute the 4 addresses separately.
-        save_quad( om_addr, to_delete, /*delete_after_save=*/true );
+        // Serialise into the pending-writes cache (no disk I/O).  The data will
+        // be flushed to disk on the next explicit save.
+        const tripoint base = omt_to_sm_copy( om_addr );
+        const std::array<tripoint, 4> addrs = { {
+                base,
+                { base.x + 1, base.y,     base.z },
+                { base.x,     base.y + 1, base.z },
+                { base.x + 1, base.y + 1, base.z },
+            }
+        };
+
+        bool all_uniform = true;
+        for( const tripoint &addr : addrs ) {
+            const auto it = submaps.find( addr );
+            if( it != submaps.end() && it->second && !it->second->is_uniform ) {
+                all_uniform = false;
+                break;
+            }
+        }
+
+        if( !all_uniform && !disable_mapgen ) {
+            std::ostringstream buf;
+            {
+                JsonOut jsout( buf );
+                jsout.start_array();
+                for( const tripoint &addr : addrs ) {
+                    const auto it = submaps.find( addr );
+                    if( it == submaps.end() || !it->second ) {
+                        continue;
+                    }
+                    jsout.start_object();
+                    jsout.member( "version", savegame_version );
+                    jsout.member( "coordinates" );
+                    jsout.start_array();
+                    jsout.write( addr.x );
+                    jsout.write( addr.y );
+                    jsout.write( addr.z );
+                    jsout.end_array();
+                    it->second->store( jsout );
+                    jsout.end_object();
+                }
+                jsout.end_array();
+            }
+            std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
+            pending_writes_[om_addr] = std::move( buf ).str();
+        }
+
+        for( const tripoint &addr : addrs ) {
+            if( submaps.contains( addr ) ) {
+                to_delete.push_back( addr );
+            }
+        }
     } else {
         // Border-only quad: content is identical to what is already on disk.
         // Skip serialisation; just collect the four submap addresses to discard.
@@ -302,6 +352,33 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
             tracker.on_submap_unloaded( tripoint_abs_sm( pos ), "" );
         }
     }
+
+    // Flush the pending-writes cache to disk.  These are quads that were
+    // serialised in memory (by presave_quad or unload_quad) but not yet written.
+    // Quads still resident in submaps were already handled by save_quad() above;
+    // only evicted quads need to be written here.
+    //
+    // Snapshot under the lock so disk I/O is not performed while holding it.
+    std::map<tripoint, std::string> pending_snapshot;
+    {
+        std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
+        pending_snapshot = std::move( pending_writes_ );
+    }
+    std::ranges::for_each( pending_snapshot, [&]( auto & entry ) {
+        const auto &[om_addr, data] = entry;
+        const tripoint base = omt_to_sm_copy( om_addr );
+        const bool in_memory =
+            submaps.contains( base ) ||
+            submaps.contains( tripoint{ base.x + 1, base.y,     base.z } ) ||
+            submaps.contains( tripoint{ base.x,     base.y + 1, base.z } ) ||
+            submaps.contains( tripoint{ base.x + 1, base.y + 1, base.z } );
+        if( !in_memory ) {
+            g->get_active_world()->write_map_quad( dimension_id_, om_addr,
+            [&data]( std::ostream & fout ) {
+                fout << data;
+            } );
+        }
+    } );
 }
 
 void mapbuffer::save_quad( const tripoint &om_addr, std::list<tripoint> &submaps_to_delete,
@@ -477,17 +554,35 @@ void mapbuffer::preload_quad( const tripoint &om_addr )
     // Disk I/O and JSON parsing — runs outside submaps_mutex_ so
     // different quads can be prefetched concurrently on worker threads.
     std::vector<std::pair<tripoint, std::unique_ptr<submap>>> loaded;
-    using namespace std::placeholders;
     // Skip submaps already resident in memory during deserialization.
     // This avoids the expensive sm->load() (items, vehicles, terrain construction)
     // for submaps that were already loaded by a prior lazy-border or sync pass.
     auto already_loaded = [this]( const tripoint & p ) {
         return lookup_submap_in_memory( p ) != nullptr;
     };
-    g->get_active_world()->read_map_quad( dimension_id_, om_addr,
-    [this, &loaded, &already_loaded]( JsonIn & jsin ) {
+
+    // Check the in-memory write-back cache before going to disk.  A quad that
+    // was presaved but not yet explicitly saved lives here instead of on disk.
+    std::string pending_data;
+    {
+        std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
+        const auto it = pending_writes_.find( om_addr );
+        if( it != pending_writes_.end() ) {
+            pending_data = std::move( it->second );
+            pending_writes_.erase( it );
+        }
+    }
+
+    if( !pending_data.empty() ) {
+        std::istringstream iss( pending_data );
+        JsonIn jsin( iss );
         deserialize_into_vec( jsin, loaded, already_loaded );
-    } );
+    } else {
+        g->get_active_world()->read_map_quad( dimension_id_, om_addr,
+        [this, &loaded, &already_loaded]( JsonIn & jsin ) {
+            deserialize_into_vec( jsin, loaded, already_loaded );
+        } );
+    }
 
     // Add parsed submaps to the in-memory buffer under submaps_mutex_.
     // add_submap() handles concurrent duplicate-add gracefully (keeps in-memory version).
@@ -565,11 +660,13 @@ void mapbuffer::presave_quad( const tripoint &om_addr )
         return;
     }
 
-    // Serialize and write outside the lock.  The submap objects stay alive
-    // in the mapbuffer until after this future resolves (submap_load_manager
-    // withholds eviction until the presave completes).
-    g->get_active_world()->write_map_quad( dimension_id_, om_addr, [&]( std::ostream & fout ) {
-        JsonOut jsout( fout );
+    // Serialise into the pending-writes cache outside the lock.  The submap
+    // objects stay alive until after this future resolves (submap_load_manager
+    // withholds eviction until the presave completes).  No disk I/O occurs here;
+    // the cache is flushed to disk only on an explicit save.
+    std::ostringstream buf;
+    {
+        JsonOut jsout( buf );
         jsout.start_array();
         for( int i = 0; i < 4; ++i ) {
             submap *sm = ptrs[i];
@@ -588,7 +685,9 @@ void mapbuffer::presave_quad( const tripoint &om_addr )
             jsout.end_object();
         }
         jsout.end_array();
-    } );
+    }
+    std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
+    pending_writes_[om_addr] = std::move( buf ).str();
 }
 
 auto mapbuffer::drain_pending_submap_destroy() -> void

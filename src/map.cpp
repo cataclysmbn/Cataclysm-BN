@@ -8014,6 +8014,7 @@ void map::shift( point sp )
         shift_tripoint_set( support_cache_dirty, shift_offset_pt, boundaries_2d );
     }
 
+    invalidate_lightmap_caches();
 }
 
 void map::vertical_shift( const int newz )

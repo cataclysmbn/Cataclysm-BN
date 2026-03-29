@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <variant>
@@ -21,6 +22,7 @@
 #include "overmapbuffer.h"
 #include "pimpl.h"
 #include "point.h"
+#include "zone_draw_options.h"
 #include "sdl_geometry.h"
 #include "sdl_utils.h"
 #include "sdl_wrappers.h"
@@ -948,7 +950,7 @@ class cata_tiles
         void draw_sct_frame( std::multimap<point, formatted_text> &overlay_strings );
         void void_sct();
 
-        void init_draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset );
+        void init_draw_zones( const zone_draw_options &options );
         void draw_zones_frame( std::multimap<point, formatted_text> &overlay_strings );
         void void_zones();
 
@@ -1115,6 +1117,8 @@ class cata_tiles
         tripoint zone_start;
         tripoint zone_end;
         tripoint zone_offset;
+        std::vector<tripoint> zone_points;
+        std::unordered_set<tripoint> zone_point_lookup;
 
         // offset values, in tile coordinates, not pixels
         point o;
@@ -1153,5 +1157,3 @@ class cata_tiles
         std::string memory_map_mode = "color_pixel_sepia";
         tileset *current_tileset() const { return tileset_ptr.get(); }
 };
-
-

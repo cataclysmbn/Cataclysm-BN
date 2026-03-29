@@ -23,7 +23,8 @@
       "2": "t_dirtmound",
       "3": "t_dirtmound",
       "<": "t_pavement",
-      ">": "t_pavement"
+      ">": "t_pavement",
+      "4": "t_gutter_downspout"
     },
     "furniture": {
       "B": "f_bathtub",
