@@ -1843,7 +1843,6 @@ bool game::handle_action()
                     const monster *mon = u.mounted_creature.get();
 
                     const bool can_use_stairs =
-                        mon->has_flag( MF_RIDEABLE_MECH ) ||
                         mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
                         mon->has_flag( MF_FLIES );
 
@@ -1887,7 +1886,6 @@ bool game::handle_action()
                     const monster *mon = u.mounted_creature.get();
 
                     const bool can_use_stairs =
-                        mon->has_flag( MF_RIDEABLE_MECH ) ||
                         mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
                         mon->has_flag( MF_FLIES );
 
@@ -1947,7 +1945,7 @@ bool game::handle_action()
                     add_msg( m_info, _( "You can't open things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                    if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
                         add_msg( m_info, _( "You can't open things while you're riding." ) );
                         break;
                     } else {
@@ -1963,7 +1961,7 @@ bool game::handle_action()
                     add_msg( m_info, _( "You can't close things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                    if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
                         add_msg( m_info, _( "You can't close things while you're riding." ) );
                         break;
                     } else {

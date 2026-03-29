@@ -201,6 +201,8 @@ enum m_flag : int {
     MF_CANT_CLONE,            // This monster can't be recreated using cloning vats, genome samples will fail if used on it.
     MF_MOUNTABLE_STAIRS,     // When ridden, this monster can go up or down stairs and climb.
     MF_MOUNTABLE_OBSTACLES,     // When ridden, this monster can pass obstacles like fences or doorways when mounted.
+    MF_MOUNTABLE_DOORS,     //Player can open/close doors while riding this monster
+    MF_MOUNTABLE_LEDGE,     //Player can drop down ledges while riding this monster
     MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST

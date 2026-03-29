@@ -941,6 +941,8 @@
       "GROUP_MORALE",
       "HEARS",
       "PET_MOUNTABLE",
+      "MOUNTABLE_STAIRS",
+      "MOUNTABLE_DOORS", 
       "HIT_AND_RUN",
       "KEENNOSE",
       "PATH_AVOID_DANGER_1",

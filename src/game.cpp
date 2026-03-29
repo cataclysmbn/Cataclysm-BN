@@ -10846,7 +10846,7 @@ bool game::prompt_dangerous_tile( const tripoint &dest_loc ) const
         return false;
     } else {
         auto crit = u.mounted_creature.get();
-        if( crit->has_flag( MF_RIDEABLE_MECH ) ) {
+        if( crit->has_flag( MF_MOUNTABLE_LEDGE ) ) {
             return true; // mount can climb down ledges
         }
     }
@@ -11106,7 +11106,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     const int previous_moves = u.moves;
     if( u.is_mounted() ) {
         auto crit = u.mounted_creature.get();
-        if( !crit->has_flag( MF_RIDEABLE_MECH ) && !crit->has_flag( MF_MOUNTABLE_OBSTACLES ) &&
+        if( !crit->has_flag( MF_MOUNTABLE_OBSTACLES ) &&
             ( m.has_flag_ter_or_furn( "MOUNTABLE", dest_loc ) ||
               m.has_flag_ter_or_furn( "BARRICADABLE_DOOR", dest_loc ) ||
               m.has_flag_ter_or_furn( "OPENCLOSE_INSIDE", dest_loc ) ||

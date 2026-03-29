@@ -4817,7 +4817,7 @@ struct can_open_while_mounted {
         if constexpr( is_const_char || is_char ) {
             if( u->is_mounted() ) {
                 auto mon = u->mounted_creature.get();
-                if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
                     u->add_msg_if_player( m_info, _( "You can't open things while you're riding." ) );
                     return false;
                 }
