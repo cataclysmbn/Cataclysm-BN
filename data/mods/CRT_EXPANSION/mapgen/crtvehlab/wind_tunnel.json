@@ -57,7 +57,7 @@
       ],
       "place_nested": [
         { "chunks": [ "crt_lab_veh_wind_prod_plane" ], "x": 1, "y": 18 },
-        { "chunks": [ "crt_lab_veh_wind_tun_blimp" ], "x": 8, "y": 5 }
+        { "chunks": [ "crt_lab_veh_wind_tun_blimp" ], "x": 8, "y": 6 }
       ],
       "terrain": {
         "#": "t_concrete_wall",
@@ -98,7 +98,7 @@
         "                    "
       ],
       "place_vehicles": [
-        { "vehicle": "crt_solardart_incomplete", "x": [ 8, 8 ], "y": [ 2, 2 ], "rotation": 0, "chance": 100 }
+        { "vehicle": "crt_solardart_incomplete", "x": [ 11, 11 ], "y": [ 2, 2 ], "rotation": 0, "chance": 100, "status": 0 }
       ]
     }
   },
@@ -108,9 +108,6 @@
     "nested_mapgen_id": "crt_lab_veh_wind_tun_blimp",
     "object": {
       "mapgensize": [ 8, 10 ],
-      "terrain": {
-        " ": "t_floor"
-      },
       "rows": [
         "        ",
         "        ",
@@ -124,7 +121,7 @@
         "        "
       ],
       "place_vehicles": [
-        { "vehicle": "crt_microblimp", "x": [ 3, 3 ], "y": [ 5, 5 ], "rotation": 0, "chance": 100 }
+        { "vehicle": "crt_microblimp", "x": [ 3, 3 ], "y": [ 5, 5 ], "rotation": 270, "chance": 100, "status": 0 }
       ],
     }
   }
