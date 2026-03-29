@@ -398,13 +398,20 @@ auto monster::can_wall_climb_to( const tripoint &p ) const -> bool
         return false;
     }
 
-    const auto &anchor = dz > 0 ? from : p;
-    const auto climb_diff = here.climb_difficulty( anchor );
-    if( climb_diff > 10 ) {
-        return false;
+    const auto climb_target = dz > 0 ? from : p;
+    const auto target_climb_diff = here.climb_difficulty( climb_target );
+    if( target_climb_diff <= 10 && anchored_on_wall( here, climb_target ) ) {
+        return true;
     }
 
-    return has_wall_support( here, anchor );
+    if( dz < 0 ) {
+        const auto source_climb_diff = here.climb_difficulty( from );
+        if( source_climb_diff <= 10 && anchored_on_wall( here, from ) ) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void monster::set_dest( const tripoint &p )
