@@ -1895,6 +1895,7 @@ bool game::handle_action()
 
             case ACTION_MOVE_UP:
                 if( u.is_mounted() ) {
+                    const monster *mon = u.mounted_creature.get();
                     bool ladder = m.has_flag( "DIFFICULT_Z", u.pos() );
 
                     if( ladder ) {
