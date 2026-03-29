@@ -762,8 +762,9 @@ function survivor_radio.register(mod)
         gapi.add_msg(
           MsgType.info,
           string.format(
-            locale.gettext("%s responded to your broadcast and will arrive soon."),
-            audience_name
+            locale.gettext("%s responded to your broadcast and will arrive in %d hours."),
+            audience_name,
+            math.ceil((broadcast.next_tick - now) / TimeDuration.from_hours(1):to_turns())
           )
         )
         storage.survivor_radio = nil

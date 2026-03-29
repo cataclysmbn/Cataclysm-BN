@@ -69,12 +69,6 @@
     ]
   },
   {
-    "id": "TALK_STRANGER_RADIO",
-    "type": "talk_topic",
-    "dynamic_line": "Hey, I heard your survivor band broadcast.",
-    "responses": [ { "text": "Bye.", "topic": "TALK_DONE" } ]
-  },
-  {
     "id": "TALK_STRANGER_FRIENDLY",
     "type": "talk_topic",
     "dynamic_line": "Hey there, <name_g>.",
