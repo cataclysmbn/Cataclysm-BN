@@ -91,21 +91,15 @@
     "object": {
       "mapgensize": [ 20, 5 ],
       "rows": [
-        "    a   aaaa        ",
-        "    a     aa        ",
-        "    a      a        ",
-        "    a     aa        ",
-        "    a   aaaa        "
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    "
       ],
-      "terrain": {
-        "a": "t_floor"
-      },
       "place_vehicles": [
-        { "vehicle": "crt_solardart_incomplete", "x": 8, "y": 2, "rotation": 90 }
-      ],
-      "items": {
-        "a": { "item": "crt_lab_veh_parts", "chance": 100 }
-      }
+        { "vehicle": "crt_solardart_incomplete", "x": [ 8, 8 ], "y": [ 2, 2 ], "rotation": 0, "chance": 100 }
+      ]
     }
   },
   {
@@ -130,7 +124,7 @@
         "        "
       ],
       "place_vehicles": [
-        { "vehicle": "crt_microblimp", "x": 3, "y": 5, "rotation": 0 }
+        { "vehicle": "crt_microblimp", "x": [ 3, 3 ], "y": [ 5, 5 ], "rotation": 0, "chance": 100 }
       ],
     }
   }
