@@ -1857,7 +1857,7 @@ bool game::handle_action()
                             mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
                             mon->has_flag( MF_FLIES );
 
-                        if( !can_use_stairs && ) {
+                        if( !can_use_stairs ) {
                             add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
                             break;
                         }
