@@ -1333,6 +1333,9 @@ bool Character::check_mount_will_move( const tripoint &dest_loc )
     if( !is_mounted() ) {
         return true;
     }
+    if( mounted_creature->has_flag( MF_COMBAT_MOUNT ) ) {
+        return true;
+    }
     if( mounted_creature && mounted_creature->type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE ) ) {
         for( const monster &critter : g->all_monsters() ) {
             Attitude att = critter.attitude_to( *this );
@@ -1364,7 +1367,7 @@ bool Character::check_mount_is_spooked()
     // Monster in spear reach monster and average stat (8) player on saddled horse, 14% -2% -0.8% / 2 = ~5%
     if( mounted_creature && mounted_creature->type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE ) ) {
         if( mounted_creature->has_flag( MF_COMBAT_MOUNT ) ) {
-
+            return false;
         }
         const creature_size mount_size = mounted_creature->get_size();
         for( const monster &critter : g->all_monsters() ) {

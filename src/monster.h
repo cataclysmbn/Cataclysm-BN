@@ -733,6 +733,8 @@ class monster : public Creature, public location_visitable<monster>
         void add_faction_anger( mfaction_id target_faction, int amount );
         auto get_faction_anger( mfaction_id target_faction ) const -> int;
 
+        std::set<m_flag> monster_flags;
+
     private:
         void process_trigger( mon_trigger trig, int amount );
         void process_trigger( mon_trigger trig, const std::function < auto() -> int > &amount_func );
@@ -765,7 +767,6 @@ class monster : public Creature, public location_visitable<monster>
         std::vector<tripoint> path;
         bool repath_requested = false;
         std::bitset<NUM_MEFF> effect_cache;
-        std::set<m_flag> monster_flags;
         std::optional<time_duration> summon_time_limit = std::nullopt;
 
 

@@ -758,6 +758,12 @@
     "complex_moves": { "speed": true, "stats": [ [ "DEX" ] ] }
   },
   {
+    "id": "ACT_TRAIN_PET",
+    "type": "activity_type",
+    "verb": "training your pet",
+    "complex_moves": { "speed": true, "stats": [ [ "DEX" ] ] }
+  },
+  {
     "id": "ACT_TRY_SLEEP",
     "type": "activity_type",
     "verb": "trying to fall asleep",
