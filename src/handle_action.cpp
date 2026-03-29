@@ -1843,12 +1843,12 @@ bool game::handle_action()
                     const monster *mon = u.mounted_creature.get();
                     bool ladder = m.has_flag( "DIFFICULT_Z", u.pos() );
 
-                    if (ladder) {
-                        const bool can_use_ladder = 
+                    if( ladder ) {
+                        const bool can_use_ladder =
                             mon->has_flag( MF_MOUNTABLE_LADDER ) ||
                             mon->has_flag( MF_FLIES );
 
-                        if (!can_use_ladder) {
+                        if( !can_use_ladder ) {
                             add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
                             break;
                         }
@@ -1857,7 +1857,7 @@ bool game::handle_action()
                             mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
                             mon->has_flag( MF_FLIES );
 
-                        if( !can_use_stairs &&  ) {
+                        if( !can_use_stairs && ) {
                             add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
                             break;
                         }
