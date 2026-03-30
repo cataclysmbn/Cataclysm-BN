@@ -948,6 +948,11 @@ void map::vehmove()
     }
     TracyPlot( "Vehicles Moved", moved_count );
 
+    // A map shift can occur mid-loop when the player is a vehicle passenger:
+    if( last_full_vehicle_list_dirty ) {
+        vehicle_list = get_vehicles();
+    }
+
     // Process item removal on the vehicles that were modified this turn.
     // Use a copy because part_removal_cleanup can modify the container.
     {
@@ -2118,6 +2123,29 @@ ter_id map::ter( const tripoint &p ) const
     }
 
     return current_submap->get_ter( l );
+}
+
+data_vars::data_set *map::ter_vars( const tripoint &p ) const
+{
+    if( !inbounds( p ) ) {
+        return nullptr;
+    }
+
+    point l;
+    const auto sm = get_submap_at( p, l );
+    return &sm->get_ter_vars( l );
+}
+
+
+data_vars::data_set *map::furn_vars( const tripoint &p ) const
+{
+    if( !inbounds( p ) ) {
+        return nullptr;
+    }
+
+    point l;
+    const auto sm = get_submap_at( p, l );
+    return &sm->get_furn_vars( l );
 }
 
 uint8_t map::get_known_connections( const tripoint &p, int connect_group,
@@ -4827,7 +4855,7 @@ struct can_open_while_mounted {
         if constexpr( is_const_char || is_char ) {
             if( u->is_mounted() ) {
                 auto mon = u->mounted_creature.get();
-                if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
                     u->add_msg_if_player( m_info, _( "You can't open things while you're riding." ) );
                     return false;
                 }
@@ -8024,6 +8052,7 @@ void map::shift( point sp )
         shift_tripoint_set( support_cache_dirty, shift_offset_pt, boundaries_2d );
     }
 
+    invalidate_lightmap_caches();
 }
 
 void map::vertical_shift( const int newz )

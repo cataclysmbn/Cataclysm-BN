@@ -538,9 +538,6 @@ endif()
 if (RELEASE)
     if (USE_PREFIX_DATA_DIR)
         install(DIRECTORY doc TYPE DOC)
-        install(DIRECTORY data TYPE DATA
-            PATTERN "json/external_tileset/README.md" EXCLUDE
-            PATTERN "json/mapgen/lab/README.md" EXCLUDE)
         install(FILES
             ${CMAKE_SOURCE_DIR}/README.md
             ${CMAKE_SOURCE_DIR}/LICENSE.txt
@@ -549,9 +546,6 @@ if (RELEASE)
             TYPE DOC)
     else()
         install(DIRECTORY doc DESTINATION .)
-        install(DIRECTORY data DESTINATION .
-            PATTERN "json/external_tileset/README.md" EXCLUDE
-            PATTERN "json/mapgen/lab/README.md" EXCLUDE)
         install(FILES
             ${CMAKE_SOURCE_DIR}/README.md
             ${CMAKE_SOURCE_DIR}/LICENSE.txt

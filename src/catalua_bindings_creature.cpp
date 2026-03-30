@@ -188,6 +188,9 @@ void cata::detail::reg_creature( sol::state &lua )
         DOC( "Retrieves an arbitrary entry using the same key format as set_value." );
         SET_FX_T( get_value, std::string( const std::string & ) const );
 
+        DOC( "Removes this creature from the game without death notifications or a corpse." );
+        SET_FX_T( erase, void() );
+
         SET_FX_T( get_weight, units::mass() const );
 
         SET_FX_T( has_trait, bool( const trait_id & ) const );
@@ -1123,7 +1126,8 @@ void cata::detail::reg_npc( sol::state &lua )
         // Methods
         SET_FX_N_T( set_fac, "set_faction_id", void( const faction_id & id ) );
 
-        SET_FX_T( erase, void() );
+        DOC( "True if this NPC is in a simulated (fully loaded, AI-eligible) submap." );
+        SET_FX_T( is_simulated, bool() const );
 
         SET_FX_T( turned_hostile, bool() const );
 

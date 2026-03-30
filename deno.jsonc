@@ -30,7 +30,7 @@
   },
   "unstable": ["raw-imports", "fmt-component", "temporal"],
   "fmt": {
-    "exclude": ["doc"],
+    "exclude": ["doc", "**/*.svg"],
     "include": ["scripts", ".agents", "doc", "docs", "*.md", ".github", ".claude"],
     "semiColons": false,
     "lineWidth": 100,

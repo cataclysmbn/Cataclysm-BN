@@ -2857,6 +2857,11 @@ void monster::batch_turns( int n )
     moves = 0;
 }
 
+void monster::erase()
+{
+    g->remove_zombie( *this );
+}
+
 void monster::die( Creature *nkiller )
 {
     if( dead ) {

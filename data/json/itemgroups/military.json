@@ -829,9 +829,9 @@
     "type": "item_group",
     "subtype": "collection",
     "entries": [
-      { "item": "120mm_usable_heat", "count": [ 0, 6 ], "prob": 75 },
-      { "item": "120mm_usable_ap", "count": [ 0, 6 ], "prob": 75 },
-      { "item": "120mm_case_base", "count": [ 0, 5 ], "prob": 90 },
+      { "item": "120mm_usable_heat", "count": [ 1, 2 ], "prob": 75 },
+      { "item": "120mm_usable_ap", "count": [ 1, 2 ], "prob": 50 },
+      { "item": "120mm_case_base", "count": [ 1, 5 ], "prob": 90 },
       { "item": "electric_primer_120mm", "prob": 75 }
     ]
   },
@@ -840,8 +840,8 @@
     "type": "item_group",
     "subtype": "collection",
     "entries": [
-      { "item": "155mm_frag", "count": [ 0, 6 ], "prob": 75 },
-      { "item": "155mm_heat", "count": [ 0, 2 ], "prob": 75 },
+      { "item": "155mm_frag", "count": [ 1, 2 ], "prob": 75 },
+      { "item": "155mm_heat", "count": [ 1, 2 ], "prob": 50 },
       { "item": "primer_155mm", "prob": 75 }
     ]
   },
@@ -850,7 +850,7 @@
     "type": "item_group",
     "subtype": "collection",
     "entries": [
-      { "item": "atgm_heat", "count": [ 1, 2 ], "prob": 30 },
+      { "item": "atgm_heat", "count": [ 1, 3 ], "prob": 50 },
       { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 50 },
       { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 50 }
     ]
@@ -868,9 +868,9 @@
     "type": "item_group",
     "subtype": "collection",
     "entries": [
-      { "item": "105mm_heat", "count": [ 0, 6 ], "prob": 75 },
-      { "item": "105mm_ap", "count": [ 0, 6 ], "prob": 75 },
-      { "item": "105mm_casing", "count": [ 0, 5 ], "prob": 90 },
+      { "item": "105mm_heat", "count": [ 1, 2 ], "prob": 75 },
+      { "item": "105mm_ap", "count": [ 1, 2 ], "prob": 50 },
+      { "item": "105mm_casing", "count": [ 1, 5 ], "prob": 90 },
       { "item": "electric_primer_120mm", "prob": 75 }
     ]
   },
@@ -914,7 +914,7 @@
           { "item": "25mm_slug", "charges": [ 1, 5 ], "prob": 50 },
           { "item": "bp_25mm_slug", "charges": [ 1, 5 ], "prob": 25 }
         ],
-        "prob": 75
+        "prob": 50
       },
       { "item": "25mm_casing", "count": [ 1, 5 ], "prob": 90 }
     ]

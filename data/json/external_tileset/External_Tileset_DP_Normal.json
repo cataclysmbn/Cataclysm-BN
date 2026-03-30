@@ -266,7 +266,9 @@
             "additional_tiles": [ { "id": "broken", "fg": 185 } ]
           },
           { "id": "f_rain_collector_plumbed", "fg": 186 },
-          { "id": "bearskin_hat", "fg": 187 }
+          { "id": "bearskin_hat", "fg": 187 },
+          { "id": "t_door_window_c", "fg": 189 },
+          { "id": "t_door_window_o", "fg": 190 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

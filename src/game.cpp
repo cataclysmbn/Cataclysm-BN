@@ -3719,17 +3719,26 @@ void game::add_draw_callback( const shared_ptr_fast<draw_callback_t> &cb )
 
 static void draw_trail( const tripoint &start, const tripoint &end, bool bDrawX );
 
-static shared_ptr_fast<game::draw_callback_t> create_zone_callback(
-    const std::optional<tripoint> &zone_start,
-    const std::optional<tripoint> &zone_end,
-    const bool &zone_blink,
-    const bool &zone_cursor,
-    const bool &is_moving_zone = false
-)
+struct zone_callback_options {
+    std::optional<tripoint> &zone_start;
+    std::optional<tripoint> &zone_end;
+    bool &zone_blink;
+    bool &zone_cursor;
+    std::function<std::vector<tripoint>( const tripoint &, const tripoint & )> point_generator;
+    bool is_moving_zone = false;
+};
+
+static auto create_zone_callback( const zone_callback_options &options ) ->
+shared_ptr_fast<game::draw_callback_t>
 {
-    ( void ) zone_blink;
+    auto &zone_start = options.zone_start;
+    auto &zone_end = options.zone_end;
+    auto &zone_cursor = options.zone_cursor;
+    auto point_generator = options.point_generator;
+    const auto is_moving_zone = options.is_moving_zone;
+    ( void ) options.zone_blink;
     return make_shared_fast<game::draw_callback_t>(
-    [&]() {
+    [ &, point_generator = std::move( point_generator ), is_moving_zone]() {
         if( zone_cursor ) {
             if( is_moving_zone ) {
                 g->draw_cursor( ( zone_start.value() + zone_end.value() ) / 2 );
@@ -3762,7 +3771,17 @@ static shared_ptr_fast<game::draw_callback_t> create_zone_callback(
             const tripoint end( std::max( zone_start->x, zone_end->x ),
                                 std::max( zone_start->y, zone_end->y ),
                                 zone_end->z );
-            g->draw_zones( start, end, offset );
+            auto points = std::vector<tripoint>();
+            if( point_generator ) {
+                points = point_generator( start, end );
+            }
+            auto zone_options = zone_draw_options{
+                .start = start,
+                .end = end,
+                .offset = offset,
+                .points = std::move( points )
+            };
+            g->draw_zones( zone_options );
         }
     } );
 }
@@ -4674,8 +4693,11 @@ void game::cleanup_dead()
     if( npc_is_dead ) {
         for( auto it = active_npc.begin(); it != active_npc.end(); ) {
             if( ( *it )->is_dead() ) {
-                remove_npc_follower( ( *it )->getID() );
-                get_overmapbuffer( ( *it )->get_dimension() ).remove_npc( ( *it )->getID() );
+                if( !( *it )->is_manually_erased() ) {
+                    // Normal death path — npc::erase() was not called, so do cleanup here.
+                    remove_npc_follower( ( *it )->getID() );
+                    get_overmapbuffer( ( *it )->get_dimension() ).remove_npc( ( *it )->getID() );
+                }
                 it = active_npc.erase( it );
             } else {
                 it++;
@@ -4808,19 +4830,22 @@ void game::world_tick()
         }
 
         mb.for_each_submap( [&]( auto & entry ) {
-            ZoneScopedN( "wtd_submap_body" );
             auto &[raw_pos, sm_ptr] = entry;
             if( !sm_ptr ) {
                 return;
             }
-            const tripoint_abs_sm pos_sm( raw_pos );
 
             // Only simulate submaps that are actively requested (reality bubble,
             // fire spread, player base, script).  Skip lazy-border and streamer
             // pre-loaded submaps that are merely resident in memory.
-            if( !submap_loader.is_simulated( dim, pos_sm ) ) {
+            // Use the precomputed O(1) set rather than is_simulated() which does
+            // an O(log N) mapbuffer lookup + O(R) request scan per submap.
+            if( !submap_loader.is_in_simulated_set( dim, raw_pos ) ) {
                 return;
             }
+
+            ZoneScopedN( "wtd_submap_body" );
+            const tripoint_abs_sm pos_sm( raw_pos );
 
             total_field_count += sm_ptr->field_count;
 
@@ -4829,11 +4854,13 @@ void game::world_tick()
 
             // Furniture field emitters — covers all loaded submaps, not just the bubble.
             // Primary dimension only: m.emit_field() operates in primary-map coordinates.
-            if( do_emits && dim.empty() ) {
+            // emitter_cache skips the 144-tile scan for submaps with no EMITTER furniture.
+            if( do_emits && dim.empty() && sm_ptr->emitter_cache != 0 ) {
                 ZoneScopedN( "field_emits" );
                 const tripoint local_sm_origin( ( raw_pos.x - abs_sub.x ) * SEEX,
                                                 ( raw_pos.y - abs_sub.y ) * SEEY,
                                                 raw_pos.z );
+                bool found_emitter = false;
                 std::ranges::for_each(
                     cata::views::cartesian_product( std::views::iota( 0, SEEX ),
                                                     std::views::iota( 0, SEEY ) ),
@@ -4841,6 +4868,7 @@ void game::world_tick()
                     auto [lx, ly] = xy;
                     const furn_t &fd = sm_ptr->get_furn( point( lx, ly ) ).obj();
                     if( fd.has_flag( "EMITTER" ) ) {
+                        found_emitter = true;
                         const tripoint local_pos( local_sm_origin.x + lx,
                                                   local_sm_origin.y + ly,
                                                   raw_pos.z );
@@ -4849,6 +4877,7 @@ void game::world_tick()
                         } );
                     }
                 } );
+                sm_ptr->emitter_cache = found_emitter ? 1 : 0;
             }
 
             if( fire_spread && has_fire ) {
@@ -5214,6 +5243,12 @@ void game::monmove()
         if( critter.is_dead() ) {
             continue;
         }
+        cata::run_hooks( "on_creature_do_turn", [&critter]( sol::table & params ) {
+            params["creature"] = static_cast<Creature *>( &critter );
+        } );
+        cata::run_hooks( "on_monster_do_turn", [&critter]( sol::table & params ) {
+            params["monster"] = &critter;
+        } );
         if( critter.lod_tier == 2 ) {
             do_tier2_macro( critter );
             check_bio_alarm( critter );
@@ -5269,14 +5304,19 @@ void game::npcmove()
     ZoneScoped;
     // Active NPC processing.  Extracted from monmove() so it can be
     // individually controlled by SLEEP_SKIP_NPC without affecting monsters.
+    processing_npcs_ = true;
     const std::string &player_dim = m.get_bound_dimension();
     for( npc &guy : g->all_npcs() ) {
-        const auto dim = guy.get_dimension();
-        const auto pos_sm = tripoint_abs_sm( guy.global_sm_location() );
         // Don't process NPCs in unloaded submaps like a LEMON
-        if( !submap_loader.is_simulated( dim, pos_sm ) ) {
+        if( !guy.is_simulated() ) {
             continue;
         }
+        cata::run_hooks( "on_creature_do_turn", [&guy]( sol::table & params ) {
+            params["creature"] = static_cast<Creature *>( &guy );
+        } );
+        cata::run_hooks( "on_npc_do_turn", [&guy]( sol::table & params ) {
+            params["npc"] = &guy;
+        } );
 
         int turns = 0;
         if( guy.is_mounted() ) {
@@ -5321,6 +5361,7 @@ void game::npcmove()
             guy.npc_update_body();
         }
     }
+    processing_npcs_ = false;
     cleanup_dead();
 }
 
@@ -5333,6 +5374,7 @@ void game::sleep_skip_npc_process()
     // NPCs whose current activity is not suspendable (e.g. ACT_OPERATION) are
     // left frozen for the turn rather than interrupted mid-activity.
 
+    processing_npcs_ = true;
     // Every ~30 in-game minutes, re-examine sleeping NPCs and wake any whose
     // sleep need is satisfied or whose player has woken up.  Otherwise, renew
     // their lying-down effect for another 30-minute window.
@@ -5389,6 +5431,7 @@ void game::sleep_skip_npc_process()
         }
         guy.npc_update_body();
     }
+    processing_npcs_ = false;
     cleanup_dead();
 }
 
@@ -5941,6 +5984,18 @@ bool game::update_zombie_pos( const monster &critter, const tripoint &pos )
 void game::remove_zombie( const monster &critter )
 {
     critter_tracker->remove( critter );
+}
+
+void game::erase_npc( character_id id )
+{
+    auto it = std::ranges::find_if( active_npc, [id]( const shared_ptr_fast<npc> &n ) {
+        return n->getID() == id;
+    } );
+    if( it == active_npc.end() ) {
+        debugmsg( "game::erase_npc: NPC (%d) not found in active_npc.", id.get_value() );
+        return;
+    }
+    active_npc.erase( it );
 }
 
 void game::clear_zombies()
@@ -7261,6 +7316,11 @@ void game::peek( const tripoint &p )
     u.moves -= 200;
     tripoint prev = u.pos();
     u.setpos( p );
+    // Force a full cache rebuild from the peek position so look_around renders
+    // correct FOV and lighting.  Without this, lightmap_dirty may already be
+    // false (built from the pre-peek player position earlier this turn), causing
+    // look_around to display stale lighting and visibility.
+    m.invalidate_map_cache( p.z );
     tripoint center = p;
     const look_around_result result = look_around( /*show_window=*/true, center, center, false, false,
                                       true );
@@ -7629,7 +7689,13 @@ bool game::is_zones_manager_open() const
     return zones_manager_open;
 }
 
-static void zones_manager_shortcuts( const catacurses::window &w_info, const bool overlay_enabled )
+bool game::is_zone_submap_grid_overlay_enabled() const
+{
+    return zone_submap_grid_overlay;
+}
+
+static void zones_manager_shortcuts( const catacurses::window &w_info, const bool overlay_enabled,
+                                     const bool submap_grid_enabled )
 {
     werase( w_info );
 
@@ -7653,6 +7719,10 @@ static void zones_manager_shortcuts( const catacurses::window &w_info, const boo
     const nc_color overlay_color = overlay_enabled ? c_light_green : c_white;
     shortcut_print( w_info, point( tmpx, 3 ), c_white, overlay_color,
                     _( "<O> - Toggle Overlays" ) );
+    tmpx += shortcut_print( w_info, point( tmpx, 3 ), c_white, c_light_green, "  " ) + 1;
+    const nc_color submap_color = submap_grid_enabled ? c_light_green : c_white;
+    shortcut_print( w_info, point( tmpx, 3 ), c_white, submap_color,
+                    _( "<G> - Submap grid" ) );
 
     wnoutrefresh( w_info );
 }
@@ -7760,6 +7830,7 @@ void game::zones_manager()
     ctxt.register_action( "DISABLE_ZONE" );
     ctxt.register_action( "SHOW_ALL_ZONES" );
     ctxt.register_action( "TOGGLE_ZONE_OVERLAY" );
+    ctxt.register_action( "debug_submap_grid" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
     auto &mgr = zone_manager::get_manager();
@@ -7816,10 +7887,28 @@ void game::zones_manager()
 
     std::optional<tripoint> zone_start;
     std::optional<tripoint> zone_end;
-    bool zone_blink = false;
-    bool zone_cursor = false;
-    shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback(
-                zone_start, zone_end, zone_blink, zone_cursor );
+    auto zone_blink = false;
+    auto zone_cursor = false;
+    auto current_zone_type = zone_type_id();
+    shared_ptr_fast<const blueprint_options> current_bp_options;
+    static const auto zone_construction_blueprint = zone_type_id( "CONSTRUCTION_BLUEPRINT" );
+    auto zone_point_generator =
+    [&]( const tripoint & start, const tripoint & end ) -> std::vector<tripoint> {
+        if( current_zone_type == zone_construction_blueprint )
+        {
+            if( current_bp_options ) {
+                return current_bp_options->get_covered_points( start, end );
+            }
+        }
+        return std::vector<tripoint>();
+    };
+    shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback( zone_callback_options{
+        .zone_start = zone_start,
+        .zone_end = zone_end,
+        .zone_blink = zone_blink,
+        .zone_cursor = zone_cursor,
+        .point_generator = zone_point_generator,
+    } );
     add_draw_callback( zone_cb );
 
     auto query_position =
@@ -7831,9 +7920,11 @@ void game::zones_manager()
         restore_on_out_of_scope<bool> show_prev( show );
         restore_on_out_of_scope<std::optional<tripoint>> zone_start_prev( zone_start );
         restore_on_out_of_scope<std::optional<tripoint>> zone_end_prev( zone_end );
+        restore_on_out_of_scope<bool> zone_cursor_prev( zone_cursor );
         show = false;
         zone_start = std::nullopt;
         zone_end = std::nullopt;
+        zone_cursor = true;
         ui.mark_resize();
 
         static_popup popup;
@@ -7873,7 +7964,8 @@ void game::zones_manager()
             return;
         }
         zones_manager_draw_borders( w_zones_border, w_zones_info_border, zone_ui_height, width );
-        zones_manager_shortcuts( w_zones_info, g->show_zone_overlay );
+        zones_manager_shortcuts( w_zones_info, g->show_zone_overlay,
+                                 g->debug_submap_grid_overlay || zone_submap_grid_overlay );
 
         if( zone_cnt == 0 ) {
             werase( w_zones );
@@ -7960,7 +8052,10 @@ void game::zones_manager()
                 }
                 const std::string &name = maybe_name.value();
 
-                const auto position = query_position();
+                current_zone_type = id;
+                current_bp_options = std::dynamic_pointer_cast<const blueprint_options>( options );
+                std::optional<std::pair<tripoint, tripoint>> position;
+                position = query_position();
                 if( !position ) {
                     break;
                 }
@@ -7979,6 +8074,8 @@ void game::zones_manager()
             active_index = 0;
         } else if( action == "TOGGLE_ZONE_OVERLAY" ) {
             g->show_zone_overlay = !g->show_zone_overlay;
+        } else if( action == "debug_submap_grid" ) {
+            zone_submap_grid_overlay = !zone_submap_grid_overlay;
         } else if( zone_cnt > 0 ) {
             if( action == "UP" ) {
                 active_index--;
@@ -8046,9 +8143,11 @@ void game::zones_manager()
                         restore_on_out_of_scope<bool> show_prev( show );
                         restore_on_out_of_scope<std::optional<tripoint>> zone_start_prev( zone_start );
                         restore_on_out_of_scope<std::optional<tripoint>> zone_end_prev( zone_end );
+                        restore_on_out_of_scope<bool> zone_cursor_prev( zone_cursor );
                         show = false;
                         zone_start = std::nullopt;
                         zone_end = std::nullopt;
+                        zone_cursor = true;
                         ui.mark_resize();
                         static_popup message_pop;
                         message_pop.on_top( true );
@@ -8116,8 +8215,13 @@ void game::zones_manager()
             const auto &zone = zones[active_index].get();
             zone_start = m.getlocal( zone.get_start_point() );
             zone_end = m.getlocal( zone.get_end_point() );
+            current_zone_type = zone.get_type();
+            current_bp_options = std::dynamic_pointer_cast<const blueprint_options>(
+                                     zone.get_options_ptr() );
         } else {
             zone_start = zone_end = std::nullopt;
+            current_zone_type = zone_type_id();
+            current_bp_options = nullptr;
         }
 
         // Actually accessed from the terrain overlay callback `zone_cb` in the
@@ -8330,8 +8434,17 @@ look_around_result game::look_around( bool show_window, tripoint &center,
     std::optional<tripoint> zone_end;
     bool zone_blink = false;
     bool zone_cursor = true;
-    shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback( zone_start, zone_end, zone_blink,
-            zone_cursor, is_moving_zone );
+    auto noop_zone_points = []( const tripoint &, const tripoint & ) {
+        return std::vector<tripoint>();
+    };
+    shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback( zone_callback_options{
+        .zone_start = zone_start,
+        .zone_end = zone_end,
+        .zone_blink = zone_blink,
+        .zone_cursor = zone_cursor,
+        .point_generator = noop_zone_points,
+        .is_moving_zone = is_moving_zone,
+    } );
     add_draw_callback( zone_cb );
 
     is_looking = true;
@@ -10733,8 +10846,9 @@ bool game::prompt_dangerous_tile( const tripoint &dest_loc ) const
         return false;
     } else {
         auto crit = u.mounted_creature.get();
-        if( crit->has_flag( MF_RIDEABLE_MECH ) ) {
-            return true; // mount can climb down ledges
+        if( crit->has_flag( MF_MOUNTABLE_LEDGE ) ) {
+            return query_yn( _( "Really step into %s?" ),
+                             enumerate_as_string( harmful_stuff ) ) ; // mount can climb down ledges
         }
     }
 
@@ -10993,7 +11107,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     const int previous_moves = u.moves;
     if( u.is_mounted() ) {
         auto crit = u.mounted_creature.get();
-        if( !crit->has_flag( MF_RIDEABLE_MECH ) && !crit->has_flag( MF_MOUNTABLE_OBSTACLES ) &&
+        if( !crit->has_flag( MF_MOUNTABLE_OBSTACLES ) &&
             ( m.has_flag_ter_or_furn( "MOUNTABLE", dest_loc ) ||
               m.has_flag_ter_or_furn( "BARRICADABLE_DOOR", dest_loc ) ||
               m.has_flag_ter_or_furn( "OPENCLOSE_INSIDE", dest_loc ) ||
@@ -11747,6 +11861,13 @@ bool game::grabbed_furn_move( const tripoint &dp )
 
     active_tile_data *atd = active_tiles::furn_at<active_tile_data>
                             ( tripoint_abs_ms( m.getabs( fpos ) ) );
+
+    // Swap furniture vars between tiles beforehand
+    // because the furn_set call will clear the vars
+    // when furniture is set to f_null
+    const auto dstVars = m.furn_vars( fdest );
+    const auto srcVars = m.furn_vars( fpos );
+    std::swap( *srcVars, *dstVars );
 
     // Actually move the furniture.
     m.furn_set( fdest, m.furn( fpos ), atd ? atd->clone() : nullptr );
@@ -13308,14 +13429,6 @@ point game::update_map( int &x, int &y )
     // Put those in the active list.
     load_npcs();
 
-    // Make sure map cache is consistent since it may have shifted.
-    if( m.has_zlevels() ) {
-        for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; ++zlev ) {
-            m.invalidate_map_cache( zlev );
-        }
-    } else {
-        m.invalidate_map_cache( get_levz() );
-    }
     m.build_map_cache( get_levz() );
 
     // Spawn monsters only in the strip of submaps that just entered the bubble

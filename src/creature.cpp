@@ -195,6 +195,11 @@ void Creature::reset()
     reset_stats();
 }
 
+void Creature::erase()
+{
+    debugmsg( "Creature::erase() called on '%s', which is not an npc or monster.", get_name() );
+}
+
 void Creature::bleed() const
 {
     const field_type_id &blood_type = bloodType();
