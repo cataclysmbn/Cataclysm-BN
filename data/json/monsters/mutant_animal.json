@@ -364,7 +364,18 @@
       "feed": "The %s seems to like you!",
       "pet": "The %s makes a happy arachnid-like chitter at you as you pat its head."
     },
-    "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "CLIMBS", "CLIMBS_WALLS", "PET_MOUNTABLE", "CANPLAY", "PATH_AVOID_DANGER_1", "WARM" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "ANIMAL",
+      "CLIMBS",
+      "CLIMBS_WALLS",
+      "PET_MOUNTABLE",
+      "CANPLAY",
+      "PATH_AVOID_DANGER_1",
+      "WARM"
+    ]
   },
   {
     "id": "mon_deer_mutant_spider_fawn",
