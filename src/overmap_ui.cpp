@@ -1632,7 +1632,7 @@ static void create_note( const tripoint_abs_omt &curs )
                               _( "Type <color_white>LABEL:TEXT</color> to set a custom label." ),
                               _( "Use <color_white>;</color> as a separator to combine elements." ),
                               // NOLINTNEXTLINE(cata-text-style): literal exclaimation mark
-                              _( "Examples: <color_white>B:Base</color> | <color_white>g;Loot</color> | <color_white>SPRITE:toolbox</color> | <color_white>LABEL:Survivor City</color>" ) );
+                              _( "Examples: <color_white>$:Bank</color> | <color_white>R;Red</color> | <color_white>SPRITE:toolbox</color> | <color_white>LABEL:Survivor City</color>" ) );
     color_notes = color_notes.replace( color_notes.end() - 2, color_notes.end(), helper_text );
     std::string title = _( "Note:" );
 
