@@ -81,7 +81,7 @@
     "modes": [ [ "DEFAULT", "semi", 1 ] ],
     "loudness": 12,
     "reload": 0,
-    "ammo_effects": [ "LASER", "INCENDIARY" ],
+    "ammo_effects": [ "LASER" ],
     "flags": [ "NEVER_JAMS", "NO_UNLOAD", "NON_FOULING" ]
   }
 ]
