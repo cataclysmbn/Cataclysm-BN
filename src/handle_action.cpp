@@ -1,8 +1,12 @@
 #include "game.h" // IWYU pragma: associated
 
+#include <cctype>
+#include <charconv>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <utility>
@@ -81,6 +85,7 @@
 #include "scores_ui.h"
 #include "sounds.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "translations.h"
@@ -846,6 +851,66 @@ static int try_set_alarm()
     return as_m.ret;
 }
 
+
+static auto parse_custom_wait_duration( const std::string &value ) -> std::optional<time_duration>
+{
+    const auto trimmed_value = trim_whitespaces( value );
+    if( trimmed_value.empty() ) {
+        return std::nullopt;
+    }
+    auto digits_end = decltype( trimmed_value.size() ) { 0 };
+    while( digits_end < trimmed_value.size() &&
+           std::isdigit( static_cast<unsigned char>( trimmed_value[digits_end] ) ) ) {
+        ++digits_end;
+    }
+    if( digits_end == 0 ) {
+        return std::nullopt;
+    }
+    const auto numeric_text = trimmed_value.substr( 0, digits_end );
+    auto amount = std::int64_t( 0 );
+    const auto parse_result = std::from_chars( numeric_text.data(),
+                              numeric_text.data() + numeric_text.size(),
+                              amount );
+    if( parse_result.ec != std::errc() ) {
+        return std::nullopt;
+    }
+    auto suffix_pos = digits_end;
+    while( suffix_pos < trimmed_value.size() &&
+           std::isspace( static_cast<unsigned char>( trimmed_value[suffix_pos] ) ) ) {
+        ++suffix_pos;
+    }
+    auto unit = 'm';
+    auto has_unit = false;
+    if( suffix_pos < trimmed_value.size() ) {
+        unit = trimmed_value[suffix_pos];
+        ++suffix_pos;
+        has_unit = true;
+        while( suffix_pos < trimmed_value.size() ) {
+            if( !std::isspace( static_cast<unsigned char>( trimmed_value[suffix_pos] ) ) ) {
+                return std::nullopt;
+            }
+            ++suffix_pos;
+        }
+    }
+    const auto normalized_unit = static_cast<char>( std::tolower( static_cast<unsigned char>
+                                 ( unit ) ) );
+    switch( normalized_unit ) {
+        case 's':
+            return amount * 1_seconds;
+        case 'm':
+            return amount * 1_minutes;
+        case 'h':
+            return amount * 1_hours;
+        case 'd':
+            return amount * 1_days;
+        default:
+            if( !has_unit ) {
+                return amount * 1_minutes;
+            }
+            return std::nullopt;
+    }
+}
+
 static void wait()
 {
     std::map<int, time_duration> durations;
@@ -950,11 +1015,19 @@ static void wait()
 
     time_duration time_to_wait;
     if( as_m.ret == 13 ) {
-        int minutes = string_input_popup()
-                      .title( _( "How long?  (in minutes)" ) )
-                      .identifier( "wait_duration" )
-                      .query_int();
-        time_to_wait = minutes * 1_minutes;
+        const auto duration_input = string_input_popup()
+                                    .title( _( "How long?  (e.g. 10s, 15m, 1h)" ) )
+                                    .identifier( "wait_duration" )
+                                    .query_string();
+        if( duration_input.empty() ) {
+            return;
+        }
+        const auto parsed_duration = parse_custom_wait_duration( duration_input );
+        if( !parsed_duration ) {
+            add_msg( m_bad, _( "Invalid duration. Use s, m, h, or d suffixes." ) );
+            return;
+        }
+        time_to_wait = *parsed_duration;
     } else {
 
         const auto dur_iter = durations.find( as_m.ret );

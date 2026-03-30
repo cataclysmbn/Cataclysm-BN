@@ -379,6 +379,9 @@ bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Cha
 
 bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *carrier )
 {
+    if( carrier ) {
+        itm.set_var( "relic_was_in_inventory", true );
+    }
     if( !calendar::once_every( rech.interval ) ) {
         return false;
     }
@@ -465,7 +468,8 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
     if( rech.type == relic_recharge_type::time ) {
         int last_relic_process = itm.get_var( "last_relic_process", 0 );
         if( last_relic_process == 0 &&
-            carrier ) { // We do not want batteries to fully charge while in a player's inventory
+            itm.get_var( "relic_was_in_inventory",
+                         false ) ) { // We do not want batteries to fully charge after it has been in a player's inventory
             ticks = 1;
         } else {
             time_duration elapsed = calendar::turn - time_point::from_turn( last_relic_process );

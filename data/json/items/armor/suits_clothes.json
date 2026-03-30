@@ -44,7 +44,7 @@
     "storage": "3250 ml",
     "warmth": 10,
     "material_thickness": 2,
-    "flags": [ "VARSIZE", "FANCY", "POCKETS", "OUTER" ]
+    "flags": [ "VARSIZE", "POCKETS", "OUTER" ]
   },
   {
     "id": "dinosuit",
@@ -54,8 +54,8 @@
     "description": "A full-body costume in the form of an anthropomorphic dinosaur.  It is quite encumbering and has little storage but is very warm.",
     "weight": "7033 g",
     "volume": "12 L",
-    "price": "145 USD",
-    "price_postapoc": "1 USD",
+    "price": "8000 USD",
+    "price_postapoc": "20 USD",
     "to_hit": -3,
     "material": [ "faux_fur" ],
     "symbol": "[",
@@ -69,7 +69,8 @@
     "material_thickness": 5,
     "environmental_protection": 2,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "OUTER", "SUPER_FANCY" ]
+    "flags": [ "OUTER" ],
+    "qualities": [ [ "SLEEP_AID", 4 ] ]
   },
   {
     "id": "jumpsuit",
@@ -153,8 +154,8 @@
     "description": "A full body fursuit in the form of an anthropomorphic wolf.  It is quite encumbering and has little storage but is very warm.",
     "weight": "7033 g",
     "volume": "12 L",
-    "price": "145 USD",
-    "price_postapoc": "50 cent",
+    "price": "8000 USD",
+    "price_postapoc": "20 USD",
     "to_hit": -3,
     "material": [ "faux_fur" ],
     "symbol": "[",
@@ -168,7 +169,8 @@
     "material_thickness": 7,
     "environmental_protection": 2,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "OUTER", "SUPER_FANCY" ]
+    "flags": [ "OUTER" ],
+    "qualities": [ [ "SLEEP_AID", 4 ] ]
   },
   {
     "id": "wool_suit",

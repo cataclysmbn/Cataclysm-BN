@@ -82,6 +82,7 @@
     "points": 1,
     "description": "You are accustomed to being exposed to the elements.  This decreases morale penalties for being wet.",
     "starting_trait": true,
+    "purifiable": false,
     "valid": false,
     "wet_protection": [
       { "part": "head", "neutral": 6 },
@@ -104,6 +105,7 @@
     "description": "You're skilled at clearing obstacles; terrain like railings or counters are as easy for you to move on as solid ground.  Your experience also allows you to take reduced damage from falls.",
     "starting_trait": true,
     "valid": false,
+    "purifiable": false,
     "cancels": [ "BADKNEES", "FELINE_FLEXIBILITY" ],
     "movecost_obstacle_modifier": 0.5,
     "falling_damage_multiplier": 0.66
@@ -329,6 +331,7 @@
     "description": "You can manage to find space for anything!  You can carry 40% more volume.",
     "starting_trait": true,
     "valid": false,
+    "purifiable": false,
     "cancels": [ "DISORGANIZED" ],
     "packmule_modifier": 1.4
   },
@@ -352,6 +355,7 @@
     "description": "You have a flexible mind, allowing you to learn skills much faster than others.  Note that this only applies to real-world experience, not to skill gain from other sources like books.",
     "starting_trait": true,
     "valid": false,
+    "purifiable": false,
     "cancels": [ "SLOWLEARNER" ]
   },
   {
@@ -383,6 +387,7 @@
     "starting_trait": true,
     "social_modifiers": { "persuade": 5 },
     "valid": false,
+    "purifiable": false,
     "flags": [ "SPIRITUAL" ]
   },
   {
@@ -413,6 +418,7 @@
     "description": "There's nothing quite like the smell of a good book!  Books are more fun (or less boring) for you!",
     "starting_trait": true,
     "valid": false,
+    "purifiable": false,
     "cancels": [ "ILLITERATE" ]
   },
   {
@@ -505,7 +511,8 @@
     "points": -1,
     "description": "You have no sense of style, and don't care about wearing anything 'fancy';  you'd be perfectly happy to wear non-matching socks, or wear socks and sandals.  You get no morale bonus from fancy equipment.",
     "starting_trait": true,
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -829,6 +836,7 @@
     "description": "You are terrible at organizing and storing your possessions.  You can carry 40% less volume.",
     "starting_trait": true,
     "valid": false,
+    "purifiable": false,
     "cancels": [ "PACKMULE" ],
     "packmule_modifier": 0.6
   },
@@ -840,6 +848,7 @@
     "description": "You never learned to read!  Books and computers are off-limits to you.",
     "starting_trait": true,
     "valid": false,
+    "purifiable": false,
     "cancels": [ "FASTREADER", "SLOWREADER", "PROF_DICEMASTER", "LOVES_BOOKS" ]
   },
   {
@@ -873,6 +882,7 @@
     "description": "You are slow to grasp new ideas, and thus learn things more slowly than others.  Note that this only applies to real-world experience, not to skill gain from other sources like books.",
     "starting_trait": true,
     "valid": false,
+    "purifiable": false,
     "cancels": [ "FASTLEARNER" ]
   },
   {
@@ -1063,6 +1073,7 @@
     "reading_speed_multiplier": 1.3,
     "starting_trait": true,
     "valid": false,
+    "purifiable": false,
     "cancels": [ "ILLITERATE", "FASTREADER" ]
   },
   {
@@ -1082,7 +1093,8 @@
     "points": -3,
     "description": "You are terribly afraid of the dark.  You refuse to enter very dark areas.  If you somehow still happen to stay in dark areas, you suffer from various detrimental mental and physical effects.",
     "starting_trait": true,
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -1092,7 +1104,8 @@
     "description": "Tight, enclosed spaces make your skin crawl.  Staying indoors drains your focus and gives you a steady morale penalty.",
     "starting_trait": true,
     "cancels": [ "AGORAPHOBIA" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -1102,7 +1115,8 @@
     "description": "Open spaces and wide skies make you uneasy.  Spending time outdoors drains your focus and gives you a steady morale penalty.",
     "starting_trait": true,
     "cancels": [ "CLAUSTROPHOBIA" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -1112,7 +1126,8 @@
     "description": "Loose junk everywhere grates on your nerves.  Piles of items scattered on the ground nearby will steadily erode your morale.",
     "starting_trait": true,
     "cancels": [ "HOARDER" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -1152,7 +1167,8 @@
     "description": "You don't feel right unless you're carrying as much as you can.  You suffer morale penalties for carrying less than maximum volume (weight is ignored).  Xanax can help control this anxiety.",
     "starting_trait": true,
     "cancels": [ "CLUTTER_INTOLERANT" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -1161,7 +1177,8 @@
     "points": -4,
     "description": "You tend to specialize in one skill and be poor at all others.  You advance at half speed in all skills except your best one.  Note that combining this with Fast Learner will come out to a slower rate of learning for all skills.",
     "starting_trait": true,
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -6890,7 +6907,8 @@
     "points": -1,
     "starting_trait": true,
     "description": "You're too adventurous for your own good.  The more time you spend somewhere, the unhappier it makes you to be there.",
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -6899,7 +6917,8 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, traveling with vehicles is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
