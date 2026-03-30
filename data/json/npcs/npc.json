@@ -129,7 +129,7 @@
     "name_suffix": "wandering survivor",
     "//": "spawns in the res_lawn_randomnpc nested mapgen",
     "class": "NC_WANDERING_SCAVENGER",
-    "attitude": 0,
+    "attitude": 1,
     "mission": 7,
     "chat": "TALK_STRANGER_NEUTRAL",
     "faction": "no_faction"

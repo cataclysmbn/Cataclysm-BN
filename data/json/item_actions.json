@@ -831,6 +831,11 @@
   },
   {
     "type": "item_action",
+    "id": "SURVIVOR_RADIO_BROADCAST",
+    "name": { "str": "Broadcast survivor signal" }
+  },
+  {
+    "type": "item_action",
     "id": "TOWEL",
     "name": { "str": "Dry/clean yourself" }
   },

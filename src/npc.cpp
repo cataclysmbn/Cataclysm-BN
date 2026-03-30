@@ -2858,6 +2858,12 @@ void npc::add_new_mission( class mission *miss )
 
 void npc::on_unload()
 {
+    cata::run_hooks( "on_creature_unload", [this]( sol::table & params ) {
+        params["creature"] = this;
+    } );
+    cata::run_hooks( "on_npc_unload", [this]( sol::table & params ) {
+        params["npc"] = this;
+    } );
 }
 
 // A throtled version of player::update_body since npc's don't need to-the-turn updates.
