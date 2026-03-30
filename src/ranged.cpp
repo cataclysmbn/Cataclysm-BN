@@ -879,7 +879,8 @@ auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoin
     const auto vehicle_mass_kg = std::max( 1.0, static_cast<double>( units::to_kilogram(
             veh->total_mass() ) ) );
     const auto recoil_velocity = static_cast<int>( std::round( static_cast<double>( gun_recoil ) *
-                                 shots / vehicle_mass_kg ) );
+                                 shots * get_option<float>( "VEHICLE_GUN_RECOIL_FACTOR" ) /
+                                 vehicle_mass_kg ) );
     if( recoil_velocity == 0 ) {
         return;
     }
