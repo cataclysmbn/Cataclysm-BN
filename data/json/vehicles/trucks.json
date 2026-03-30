@@ -279,7 +279,7 @@
         "hdframe_horizontal",
         "wheel_mount_medium",
         "wheel_wide",
-        { "fuel": "liquid_fertilizer", "part": "afs_mounted_external_tank" }
+        { "fuel": "fertilizer_liquid", "part": "afs_mounted_external_tank" }
       ],
       "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
       "B": [ "hdframe_se" ],
