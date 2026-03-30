@@ -1258,13 +1258,6 @@ void game::load_npcs()
     }
 
     for( const auto &npc : just_added ) {
-        // batch-advance AI state for missed turns before on_load()
-        // does the sanity checks.  batch_turns() updates last_updated so
-        // on_load() sees dt=0 and skips the redundant body-update loop.
-        if( npc->last_updated < calendar::turn ) {
-            const int missed = to_turns<int>( calendar::turn - npc->last_updated );
-            npc->batch_turns( missed );
-        }
         npc->on_load();
     }
 

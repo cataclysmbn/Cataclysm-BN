@@ -508,9 +508,9 @@ class Character : public Creature, public location_visitable<Character>
         /** Updates all "biology" by one turn. Should be called once every turn. */
         void update_body();
         /** Updates all "biology" as if time between `from` and `to` passed. */
-        void update_body( const time_point &from, const time_point &to );
+        void update_body( const time_duration &duration );
         /** Updates the stomach to give accurate hunger messages */
-        void update_stomach( const time_point &from, const time_point &to );
+        void update_stomach( const time_duration &duration );
         /** Increases hunger, thirst, fatigue and stimulants wearing off. `rate_multiplier` is for retroactive updates. */
         void update_needs( int rate_multiplier );
         needs_rates calc_needs_rates() const;
@@ -2209,7 +2209,7 @@ class Character : public Creature, public location_visitable<Character>
             check_encumbrance = new_check;
         }
         /** Ticks down morale counters and removes them */
-        void update_morale();
+        void update_morale( const time_duration &duration = 1_minutes );
         /** Ensures persistent morale effects are up-to-date */
         void apply_persistent_morale();
         /** Used to apply morale modifications from food and medication **/

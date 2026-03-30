@@ -21,7 +21,6 @@ class vehicle;
 // Catchup caps — keep these conservative; they limit worst-case load time.
 inline constexpr int MAX_CATCHUP_FIELDS  = 100000;
 inline constexpr int MAX_CATCHUP_ITEMS   = 100000;
-inline constexpr int MAX_CATCHUP_VEHICLE = 10000;
 inline constexpr int MAX_CATCHUP_MONSTER = 10000;
 inline constexpr int MAX_CATCHUP_NPC    = 10000;
 inline constexpr int MAX_CATCHUP_GRID   = 50000;
@@ -43,13 +42,6 @@ void batch_turns_field( submap &sm, int n );
 void batch_turns_items( submap &sm, int n );
 
 /**
- * Apply the net electrical balance of @p veh for @p n turns.
- * Uses net_battery_charge_rate_w() and a single charge/discharge call,
- * rather than simulating each turn individually.  Clamped at MAX_CATCHUP_VEHICLE.
- */
-void batch_turns_vehicle( vehicle &veh, int n );
-
-/**
  * Apply the net power balance of @p grid for @p n turns.
  * Calls distribution_grid::apply_net_power(net * n).
  * Clamped at MAX_CATCHUP_GRID.
@@ -61,4 +53,4 @@ void batch_turns_distribution_grid( distribution_grid &grid, int n );
  * batch_turns_vehicle for every vehicle on the submap.  Intended for use
  * in map::loadn() immediately before actualize().
  */
-void run_submap_batch_turns( submap &sm, int n );
+void run_submap_batch_turns( submap &sm, int n, const bool capped = true );

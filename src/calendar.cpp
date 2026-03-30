@@ -492,6 +492,22 @@ bool calendar::once_every( const time_duration &event_frequency )
     return ( calendar::turn - calendar::turn_zero ) % event_frequency == 0_turns;
 }
 
+int calendar::ticks_between( const time_point &from, const time_point &to,
+                    const time_duration &tick_length )
+{
+    if( tick_length <= 0_turns ) {
+        return 0;
+    }
+    const int tick = to_turns<int>( tick_length );
+    return ( to_turn<int>( to ) / to_turns<int>( tick_length ) ) -
+           ( to_turn<int>( from ) / to_turns<int>( tick_length ) );
+}
+
+int calendar::ticks_between( const time_duration &duration, const time_duration &tick_length )
+{
+    return ticks_between( calendar::turn - duration, calendar::turn, tick_length );
+}
+
 std::string calendar::name_season( season_type s )
 {
     static const std::array<std::string, 5> season_names_untranslated = {{

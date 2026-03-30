@@ -50,7 +50,6 @@ void batch_turns_field( submap &sm, int n )
     if( n <= 0 || sm.field_count == 0 ) {
         return;
     }
-    n = std::min( n, MAX_CATCHUP_FIELDS );
 
     for( int x = 0; x < SEEX; ++x ) {
         for( int y = 0; y < SEEY; ++y ) {
@@ -112,7 +111,6 @@ void batch_turns_items( submap &sm, int n )
     if( n <= 0 || sm.active_items.empty() ) {
         return;
     }
-    n = std::min( n, MAX_CATCHUP_ITEMS );
 
     std::ranges::for_each(
     sm.active_items.get() | std::views::filter( []( const item * it ) {
@@ -124,40 +122,17 @@ void batch_turns_items( submap &sm, int n )
     );
 }
 
-void batch_turns_vehicle( vehicle &veh, int n )
-{
-    ZoneScoped;
-    if( n <= 0 ) {
-        return;
-    }
-    n = std::min( n, MAX_CATCHUP_VEHICLE );
-
-    // net_battery_charge_rate_w() returns watts (positive = charging, negative = discharging).
-    // Each game turn is 1 second, so watts == watt-turns per turn.
-    const int net_per_turn = veh.net_battery_charge_rate_w();
-    if( net_per_turn == 0 ) {
-        return;
-    }
-
-    const int64_t total = static_cast<int64_t>( net_per_turn ) * n;
-    // Clamp to int range for the charge/discharge API.
-    constexpr int64_t INT_MAX_64 = static_cast<int64_t>( INT_MAX );
-    if( total > 0 ) {
-        const int charge = static_cast<int>( std::min( total, INT_MAX_64 ) );
-        veh.charge_battery( charge, /*include_other_vehicles=*/false );
-    } else {
-        const int discharge = static_cast<int>( std::min( -total, INT_MAX_64 ) );
-        veh.discharge_battery( discharge, /*recurse=*/false );
-    }
-}
-
+// TODO: figure out a clean way to implement this functionality. Seemingly cannot do it
+// per-submap because the entire grid is needed, which can span multiple submaps.
 void batch_turns_distribution_grid( distribution_grid &grid, int n )
 {
     ZoneScoped;
     if( n <= 0 ) {
         return;
     }
+    // This should move to the call site when implemented
     n = std::min( n, MAX_CATCHUP_GRID );
+
 
     const auto stat = grid.get_power_stat();
     // Positive means net generation (charge batteries), negative means net drain.
@@ -171,18 +146,18 @@ void batch_turns_distribution_grid( distribution_grid &grid, int n )
     grid.apply_net_power( delta );
 }
 
-void run_submap_batch_turns( submap &sm, int n )
+void run_submap_batch_turns( submap &sm, int n, const bool capped )
 {
     ZoneScoped;
     TracyPlot( "Batch Turns N", static_cast<int64_t>( n ) );
     if( n <= 0 ) {
         return;
     }
-    batch_turns_field( sm, n );
-    batch_turns_items( sm, n );
+    batch_turns_field( sm, capped ? std::min( n, MAX_CATCHUP_FIELDS ) : n );
+    batch_turns_items( sm, capped ? std::min( n, MAX_CATCHUP_ITEMS ) : n );
     for( const auto &veh_ptr : sm.vehicles ) {
         if( veh_ptr ) {
-            batch_turns_vehicle( *veh_ptr, n );
+            veh_ptr->update_time( calendar::turn );
         }
     }
 }

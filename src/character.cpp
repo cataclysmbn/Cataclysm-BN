@@ -5380,41 +5380,34 @@ void Character::update_health( int external_modifiers )
              static_cast<int>( get_healthy_mod() ) );
 }
 
-// Returns the number of multiples of tick_length we would "pass" on our way `from` to `to`
-// For example, if `tick_length` is 1 hour, then going from 0:59 to 1:01 should return 1
-inline int ticks_between( const time_point &from, const time_point &to,
-                          const time_duration &tick_length )
-{
-    return ( to_turn<int>( to ) / to_turns<int>( tick_length ) ) - ( to_turn<int>
-            ( from ) / to_turns<int>( tick_length ) );
-}
-
 void Character::update_body()
 {
-    update_body( calendar::turn - 1_turns, calendar::turn );
+    update_body( 1_turns );
 }
 
-void Character::update_body( const time_point &from, const time_point &to )
+void Character::update_body( const time_duration &duration )
 {
     ZoneScoped;
-    update_stamina( to_turns<int>( to - from ) );
-    update_stomach( from, to );
+    update_stamina( to_turns<int>( duration ) );
+    update_stomach( duration );
     recalculate_enchantment_cache();
-    if( ticks_between( from, to, 3_minutes ) > 0 ) {
-        magic->update_mana( *this->as_player(), to_turns<double>( 3_minutes ) );
+    const int three_mins = calendar::ticks_between( duration, 3_minutes );
+    if( three_mins > 0 ) {
+        magic->update_mana( *this->as_player(), to_turns<double>( 3_minutes * 3 ) );
     }
-    const int five_mins = ticks_between( from, to, 5_minutes );
+    const int five_mins = calendar::ticks_between( duration, 5_minutes );
     if( five_mins > 0 ) {
         check_needs_extremes();
         update_needs( five_mins );
         regen( five_mins );
     }
-    if( ticks_between( from, to, 24_hours ) > 0 ) {
+    int days_passed = calendar::ticks_between( duration, 24_hours );
+    for( ; days_passed > 0; days_passed-- ) {
         enforce_minimum_healing();
     }
 
-    const int thirty_mins = ticks_between( from, to, 30_minutes );
-    if( thirty_mins > 0 ) {
+    int thirty_mins = calendar::ticks_between( duration, 30_minutes );
+    for( ; thirty_mins > 0; thirty_mins-- ) {
         // Radiation kills health even at low doses
         update_health( has_trait( trait_RADIOGENIC ) ? 0 : -get_rad() );
     }
@@ -5422,14 +5415,14 @@ void Character::update_body( const time_point &from, const time_point &to )
     for( const auto &v : vitamin::all() ) {
         const time_duration rate = vitamin_rate( v.first );
         if( rate > 0_turns ) {
-            int qty = ticks_between( from, to, rate );
+            int qty = calendar::ticks_between( duration, rate );
             if( qty > 0 ) {
                 vitamin_mod( v.first, 0 - qty );
             }
 
         } else if( rate < 0_turns ) {
             // mutations can result in vitamins being generated (but never accumulated)
-            int qty = ticks_between( from, to, -rate );
+            int qty = calendar::ticks_between( duration, -rate );
             if( qty > 0 ) {
                 vitamin_mod( v.first, qty );
             }
@@ -5458,7 +5451,7 @@ namespace
 constexpr int metabolic_base_kcals = 2500;
 } // namespace
 
-void Character::update_stomach( const time_point &from, const time_point &to )
+void Character::update_stomach( const time_duration &duration )
 {
     const needs_rates rates = calc_needs_rates();
     // No food/thirst/fatigue clock at all
@@ -5469,7 +5462,7 @@ void Character::update_stomach( const time_point &from, const time_point &to )
     const bool mouse = has_trait( trait_NO_THIRST );
     const bool mycus = has_trait( trait_M_DEPENDENT );
     const float kcal_per_time = rates.hunger * metabolic_base_kcals / ( 12.0f * 24.0f );
-    const int five_mins = ticks_between( from, to, 5_minutes );
+    const int five_mins = duration / 5_minutes;
 
     if( five_mins > 0 ) {
         // Digest nutrients in stomach
@@ -9949,9 +9942,9 @@ bool Character::is_waterproof( const body_part_set &parts ) const
     return covered_with_flag( flag_WATERPROOF, parts );
 }
 
-void Character::update_morale()
+void Character::update_morale( const time_duration &duration )
 {
-    morale->decay( 1_minutes );
+    morale->decay( duration );
     apply_persistent_morale();
 }
 

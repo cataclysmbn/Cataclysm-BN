@@ -185,16 +185,6 @@ auto clear_transformer_last_run_at( const tripoint_abs_ms &p ) -> void
     target_submap->transformer_last_run.erase( target_pos );
 }
 
-auto ticks_between( const time_point &from, const time_point &to,
-                    const time_duration &tick_length ) -> int
-{
-    if( tick_length <= 0_turns ) {
-        return 0;
-    }
-    return ( to_turn<int>( to ) / to_turns<int>( tick_length ) ) -
-           ( to_turn<int>( from ) / to_turns<int>( tick_length ) );
-}
-
 auto volume_from_charges( const itype_id &liquid_type, int charges ) -> units::volume
 {
     if( charges <= 0 ) {
@@ -1436,7 +1426,7 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
     auto state_dirty = false;
     std::ranges::for_each( transformers, [&]( const transformer_instance & inst ) {
         const auto last_run = transformer_last_run_at( inst.pos );
-        const auto tick_count = ticks_between( last_run, to, inst.config->tick_interval );
+        const auto tick_count = calendar::ticks_between( last_run, to, inst.config->tick_interval );
         if( tick_count <= 0 ) {
             return;
         }

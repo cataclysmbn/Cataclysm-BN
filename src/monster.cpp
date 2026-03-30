@@ -2823,7 +2823,11 @@ void monster::batch_turns( int n )
     if( n <= 0 || is_dead_state() ) {
         return;
     }
-    n = std::min( n, MAX_CATCHUP_MONSTER );
+
+    try_upgrade( false );
+    if( has_flag( MF_MILKABLE ) ) {
+        refill_udders();
+    }
 
     for( int i = 0; i < n; ++i ) {
         if( is_dead_state() ) {
@@ -2846,9 +2850,60 @@ void monster::batch_turns( int n )
         }
         decrement_summon_timer();
     }
-    // One reproduction check at the end rather than per-turn to avoid
-    // O(n) spawns for high-fecundity species catching up after long absence.
+
     try_reproduce();
+
+    if( !has_flag( MF_FACTION_MEMORY ) && anger != type->agro ) {
+
+        if( std::abs( anger - type->agro ) > 15 ) {
+            const int adjust_by_a = std::min( ( n / 4 ),
+                                              ( std::abs( anger - type->agro ) - 15 ) );
+            n -= adjust_by_a * 4;
+            if( anger < type->agro ) {
+                anger += adjust_by_a;
+            } else {
+                anger -= adjust_by_a;
+            }
+        }
+
+        if( anger > type->agro ) {
+            anger -= std::min( static_cast<int>( std::ceil( n / 8.0 ) ),
+                               std::abs( anger - type->agro ) );
+        } else {
+            anger += std::min( ( n / 8 ),
+                               std::abs( anger - type->agro ) );
+        }
+        // If we got angry at characters have a chance at calming down
+        if( aggro_character && !type->aggro_character && !x_in_y( anger, 100 ) ) {
+            add_msg( m_debug, "%s's character aggro reset", name() );
+            aggro_character = false;
+        }
+    }
+
+    float regen = type->regenerates;
+    if( regen <= 0 ) {
+        if( has_flag( MF_REVIVES ) ) {
+            regen = 1.0f / to_turns<int>( 1_hours );
+        } else if( made_of( material_id( "flesh" ) ) || made_of( material_id( "veggy" ) ) ) {
+            // Most living stuff here
+            regen = 0.25f / to_turns<int>( 1_hours );
+        }
+    }
+    if( has_effect( effect_well_fed ) ) {
+        regen *= 2.0f;
+    }
+    const int heal_amount = roll_remainder( regen * n );
+    const int healed = heal( heal_amount );
+    int healed_speed = 0;
+    if( healed < heal_amount && get_speed_base() < type->speed ) {
+        int old_speed = get_speed_base();
+        set_speed_base( std::min( get_speed_base() + heal_amount - healed, type->speed ) );
+        healed_speed = get_speed_base() - old_speed;
+    }
+
+    add_msg( m_debug, "on_load() by %s, %d turns, healed %d hp, %d speed",
+             name(), n, healed, healed_speed );
+
     moves = 0;
 }
 
@@ -3738,71 +3793,9 @@ void monster::on_unload()
 
 void monster::on_load()
 {
-    try_upgrade( false );
-    try_reproduce();
-    if( has_flag( MF_MILKABLE ) ) {
-        refill_udders();
-    }
+    batch_turns( std::min( to_turns<int>( calendar::turn - last_updated ), MAX_CATCHUP_MONSTER ) );
 
-    const time_duration dt = calendar::turn - last_updated;
     last_updated = calendar::turn;
-    if( dt <= 0_turns ) {
-        return;
-    }
-
-    // Don't restore global anger for FACTION_MEMORY monsters
-    if( !has_flag( MF_FACTION_MEMORY ) && anger != type->agro ) {
-        int dt_left_a = to_turns<int>( dt );
-
-        if( std::abs( anger - type->agro ) > 15 ) {
-            const int adjust_by_a = std::min( ( dt_left_a / 4 ),
-                                              ( std::abs( anger - type->agro ) - 15 ) );
-            dt_left_a -= adjust_by_a * 4;
-            if( anger < type->agro ) {
-                anger += adjust_by_a;
-            } else {
-                anger -= adjust_by_a;
-            }
-        }
-
-        if( anger > type->agro ) {
-            anger -= std::min( static_cast<int>( std::ceil( dt_left_a / 8.0 ) ),
-                               std::abs( anger - type->agro ) );
-        } else {
-            anger += std::min( ( dt_left_a / 8 ),
-                               std::abs( anger - type->agro ) );
-        }
-        // If we got angry at characters have a chance at calming down
-        if( aggro_character && !type->aggro_character && !x_in_y( anger, 100 ) ) {
-            add_msg( m_debug, "%s's character aggro reset", name() );
-            aggro_character = false;
-        }
-    }
-
-
-    float regen = type->regenerates;
-    if( regen <= 0 ) {
-        if( has_flag( MF_REVIVES ) ) {
-            regen = 1.0f / to_turns<int>( 1_hours );
-        } else if( made_of( material_id( "flesh" ) ) || made_of( material_id( "veggy" ) ) ) {
-            // Most living stuff here
-            regen = 0.25f / to_turns<int>( 1_hours );
-        }
-    }
-    if( has_effect( effect_well_fed ) ) {
-        regen *= 2.0f;
-    }
-    const int heal_amount = roll_remainder( regen * to_turns<int>( dt ) );
-    const int healed = heal( heal_amount );
-    int healed_speed = 0;
-    if( healed < heal_amount && get_speed_base() < type->speed ) {
-        int old_speed = get_speed_base();
-        set_speed_base( std::min( get_speed_base() + heal_amount - healed, type->speed ) );
-        healed_speed = get_speed_base() - old_speed;
-    }
-
-    add_msg( m_debug, "on_load() by %s, %d turns, healed %d hp, %d speed",
-             name(), to_turns<int>( dt ), healed, healed_speed );
 
     cata::run_hooks( "on_creature_loaded", [this]( sol::table & params ) {
         params["creature"] = this;
