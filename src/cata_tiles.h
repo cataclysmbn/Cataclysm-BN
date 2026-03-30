@@ -63,6 +63,7 @@ struct tile_type {
     bool rotates = false;
     bool animated = false;
     bool has_om_transparency = false;
+    bool is_multitile_subtile = false;
     int height_3d = 0;
     point offset = point_zero;
 

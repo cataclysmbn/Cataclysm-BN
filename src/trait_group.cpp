@@ -16,9 +16,30 @@
 
 using namespace trait_group;
 
+static const trait_flag_str_id flag_MALE_EXCLUSIVE( "MALE_EXCLUSIVE" );
+static const trait_flag_str_id flag_FEMALE_EXCLUSIVE( "FEMALE_EXCLUSIVE" );
+static const trait_flag_str_id flag_MALE_PREFERRED( "MALE_PREFERRED" );
+static const trait_flag_str_id flag_FEMALE_PREFERRED( "FEMALE_PREFERRED" );
+
 Trait_list trait_group::traits_from( const Trait_group_tag &gid )
 {
     return mutation_branch::get_group( gid )->create();
+}
+
+Trait_list trait_group::traits_from( const Trait_group_tag &gid, bool male )
+{
+    Trait_list result = traits_from( gid );
+    std::erase_if( result, [male]( const trait_id & tid ) {
+        const auto &flags = tid.obj().flags;
+        if( male ) {
+            return flags.contains( flag_FEMALE_EXCLUSIVE ) ||
+                   flags.contains( flag_FEMALE_PREFERRED );
+        } else {
+            return flags.contains( flag_MALE_EXCLUSIVE ) ||
+                   flags.contains( flag_MALE_PREFERRED );
+        }
+    } );
+    return result;
 }
 
 bool trait_group::group_contains_trait( const Trait_group_tag &gid, const trait_id &tid )

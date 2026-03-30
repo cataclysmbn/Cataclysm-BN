@@ -607,8 +607,7 @@
     "warmth": 20,
     "material_thickness": 4,
     "environmental_protection": 2,
-    "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "FANCY" ]
+    "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
     "id": "dance_shoes",
