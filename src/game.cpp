@@ -10847,7 +10847,8 @@ bool game::prompt_dangerous_tile( const tripoint &dest_loc ) const
     } else {
         auto crit = u.mounted_creature.get();
         if( crit->has_flag( MF_MOUNTABLE_LEDGE ) ) {
-            return query_yn( _( "Really step into %s?" ), enumerate_as_string( harmful_stuff ) ) ; // mount can climb down ledges
+            return query_yn( _( "Really step into %s?" ),
+                             enumerate_as_string( harmful_stuff ) ) ; // mount can climb down ledges
         }
     }
 
