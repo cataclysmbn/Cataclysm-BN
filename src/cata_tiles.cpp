@@ -3314,18 +3314,17 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                         last_vis_ll = ll;
                     } else if( !has_memory && z < center.z &&
                                visibility == visibility_type::VIS_HIDDEN ) {
-                        if( drew_occluded_overlay ) {
-                            // Overlay already drawn; keep descending to find a floor tile to render,
-                            // but don't draw a second overlay (which would compound to solid blue).
-                            continue;
+                        if( !drew_occluded_overlay ) {
+                            drew_occluded_overlay = true;
+                            // Draw a depth-faded semi-transparent overlay for the topmost occluded tile.
+                            const tile_search_params dark_tile{ "lighting_lowlight_dark", C_LIGHTING,
+                                                                empty_string, 0, 0 };
+                            draw_from_id_string( dark_tile, pos, std::nullopt, std::nullopt,
+                                                 lit_level::LIT, false, center.z - z, false );
                         }
-                        drew_occluded_overlay = true;
-                        // Draw a depth-faded semi-transparent overlay for the topmost occluded tile.
-                        const tile_search_params dark_tile{ "lighting_lowlight_dark", C_LIGHTING,
-                                                            empty_string, 0, 0 };
-                        draw_from_id_string( dark_tile, pos, std::nullopt, std::nullopt,
-                                             lit_level::LIT, false, center.z - z, false );
-                        continue;
+                        // Fall through to dont_draw_lower_floor: for a solid hidden floor it will
+                        // call apply_vision_effects (drawing lighting_hidden) and break; for open-air
+                        // hidden tiles it will not fire and the loop continues to the next z-level.
                     }
                 }
 
