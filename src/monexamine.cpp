@@ -159,7 +159,7 @@ bool monexamine::pet_menu( monster &z )
     if( z.has_flag( MF_CANPLAY ) ) {
         amenu.addentry( play_with_pet, true, 'y', _( "Play with %s" ), pet_name );
     }
-    if( can_train_pet( z ) ) v{
+    if( can_train_pet( z ) ) {
         amenu.addentry( train_combat_pet, true, '[', _( "Train %s" ), pet_name );
     }
     if( z.has_effect( effect_tied ) ) {
