@@ -33,6 +33,7 @@
 #include "output.h"
 #include "player.h"
 #include "point.h"
+#include "procgen/proc_recipe.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
@@ -458,6 +459,10 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         if( item_info_cache.last_recipe != rec ) {
             item_info_cache.last_recipe = rec;
             item_info_cache.dummy = rec->create_result();
+            if( rec->is_proc() && !rec->builder_name().translated().empty() ) {
+                item_info_cache.dummy->set_var( "name", rec->builder_name().translated() );
+                item_info_cache.dummy->set_var( "description", proc::recipe_preview_description( *rec ) );
+            }
             item_info_cache.dummy->set_var( "recipe_exemplar", rec->ident().str() );
             item_info_scroll = 0;
             item_info_scroll_popup = 0;
@@ -658,7 +663,8 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         int recipe_scroll_window_max = std::min( recmax, recipe_scroll_window_min + dataLines );
 
         for( int i = recipe_scroll_window_min; i < recipe_scroll_window_max; ++i ) {
-            std::string tmp_name = current[i]->result_name( /*decorated=*/true );
+            std::string tmp_name = current[i]->is_proc() && !current[i]->builder_name().translated().empty() ?
+                                   current[i]->builder_name().translated() : current[i]->result_name( /*decorated=*/true );
             if( batch ) {
                 tmp_name = string_format( _( "%2dx %s" ), i + 1, tmp_name );
             }

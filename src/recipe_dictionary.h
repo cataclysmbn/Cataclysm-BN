@@ -40,6 +40,7 @@ class recipe_dictionary
 
         /** Returns disassembly recipe (or null recipe if no match) */
         static const recipe &get_uncraft( const itype_id &id );
+        static auto migrate_id( const recipe_id &id ) -> recipe_id;
 
         static void load_recipe( const JsonObject &jo, const std::string &src );
         static void load_uncraft( const JsonObject &jo, const std::string &src );
@@ -185,5 +186,4 @@ class recipe_subset
 
 void serialize( const recipe_subset &value, JsonOut &jsout );
 void deserialize( recipe_subset &value, JsonIn &jsin );
-
 

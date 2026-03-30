@@ -86,6 +86,7 @@
 #include "overmap_location.h"
 #include "overmap_special.h"
 #include "profession.h"
+#include "procgen/proc_schema.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
 #include "regional_settings.h"
@@ -396,6 +397,7 @@ void DynamicDataLoader::initialize()
     add( "recipe",  &recipe_dictionary::load_recipe );
     add( "uncraft", &recipe_dictionary::load_uncraft );
     add( "recipe_group",  &recipe_group::load );
+    add( "PROC", &proc::load );
 
     add( "tool_quality", &quality::load_static );
     add( "technique", &load_technique );
@@ -606,6 +608,7 @@ void DynamicDataLoader::unload_data()
     quality::reset();
     recipe_dictionary::reset();
     recipe_group::reset();
+    proc::reset();
     requirement_data::reset();
     reset_effect_types();
     reset_furn_ter();
@@ -752,6 +755,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
                     requirement_data::check_consistency();
                 }
             },
+            { _( "Proc schemas" ), &proc::check },
             { _( "Vitamins" ), &vitamin::check_consistency },
             { _( "Weather types" ), &weather_types::check_consistency },
             { _( "World types" ), &world_types::check_consistency },

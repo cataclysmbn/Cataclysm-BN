@@ -85,6 +85,7 @@
 #include "overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
+#include "procgen/proc_item.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "point.h"
@@ -3690,10 +3691,12 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
     // Old behavior - default to it for now
     if( type->attacks.contains( "DEFAULT" ) ) {
         const auto &attack = melee::default_attack( *this );
+        const auto proc_melee = proc::blob_melee( *this );
+        const auto to_hit = proc_melee ? proc_melee->to_hit : type->m_to_hit;
         int dmg_bash = damage_melee( DT_BASH );
         int dmg_cut = damage_melee( DT_CUT );
         int dmg_stab = damage_melee( DT_STAB );
-        if( dmg_bash || dmg_cut || dmg_stab || type->m_to_hit > 0 ) {
+        if( dmg_bash || dmg_cut || dmg_stab || to_hit > 0 ) {
             print_attacks = true;
         }
 
@@ -3719,7 +3722,7 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
         if( dmg_bash || dmg_cut || dmg_stab ) {
             if( parts->test( iteminfo_parts::BASE_TOHIT ) ) {
                 info.emplace_back( "BASE", space + _( "To-hit bonus: " ), "",
-                                   iteminfo::show_plus, type->m_to_hit + get_melee_hit_bonus() );
+                                   iteminfo::show_plus, to_hit + get_melee_hit_bonus() );
             }
 
             if( parts->test( iteminfo_parts::BASE_MOVES ) ) {
@@ -4973,6 +4976,7 @@ void item::on_contents_changed()
 
 void item::on_damage( int qty, damage_type )
 {
+    proc::apply_on_damage( *this, qty );
     if( is_corpse() && qty + damage_ >= max_damage() ) {
         set_flag( flag_PULPED );
     }
@@ -5484,6 +5488,14 @@ units::mass item::weight( bool include_contents, bool integral ) const
         return ret;
     }
 
+    if( const auto mass = proc::blob_mass( *this ) ) {
+        auto ret = units::from_gram( *mass );
+        if( include_contents ) {
+            ret += contents.item_weight_modifier();
+        }
+        return ret;
+    }
+
     units::mass ret;
     std::string local_str_mass = integral ? get_var( "integral_weight" ) : get_var( "weight" );
     if( local_str_mass.empty() ) {
@@ -5611,6 +5623,10 @@ units::volume item::base_volume() const
         }
     }
 
+    if( const auto proc_volume = proc::blob_volume( *this ) ) {
+        return units::from_milliliter( *proc_volume );
+    }
+
     return type->volume;
 }
 
@@ -5630,6 +5646,10 @@ units::volume item::volume( bool integral ) const
             ret += it->volume();
         }
         return ret;
+    }
+
+    if( const auto proc_volume = proc::blob_volume( *this ) ) {
+        return units::from_milliliter( *proc_volume );
     }
 
     const int local_volume = get_var( "volume", -1 );
@@ -5697,6 +5717,12 @@ int item::lift_strength() const
 
 int item::attack_cost() const
 {
+    if( const auto proc_melee = proc::blob_melee( *this ); proc_melee && proc_melee->moves > 0 ) {
+        const auto base = proc_melee->moves;
+        const auto bonus = static_cast<int>( bonus_from_enchantments_wielded( base,
+                                             enchant_vals::mod::ITEM_ATTACK_COST, true ) );
+        return std::max( 0, base + bonus );
+    }
     int base = 65 + ( volume() / 62.5_ml + weight() / 60_gram ) / count();
     int bonus = bonus_from_enchantments_wielded( base, enchant_vals::mod::ITEM_ATTACK_COST, true );
     return std::max( 0, base + bonus );
@@ -5719,8 +5745,23 @@ int item::damage_melee( const attack_statblock &attack, damage_type dt ) const
         return 0;
     }
 
-    // effectiveness is reduced by 10% per damage level
     int res = attack.damage.type_damage( dt );
+    if( const auto proc_melee = proc::blob_melee( *this ) ) {
+        switch( dt ) {
+            case DT_BASH:
+                res = proc_melee->bash;
+                break;
+            case DT_CUT:
+                res = proc_melee->cut;
+                break;
+            case DT_STAB:
+                res = proc_melee->stab;
+                break;
+            default:
+                break;
+        }
+    }
+    // effectiveness is reduced by 10% per damage level
     res -= res * std::max( damage_level( 4 ), 0 ) * 0.1;
 
     // apply type specific flags
@@ -10032,6 +10073,10 @@ std::string item::components_to_string() const
 
 uint64_t item::make_component_hash() const
 {
+    if( const auto hash = proc::component_hash( *this ) ) {
+        return *hash;
+    }
+
     // First we need to sort the IDs so that identical ingredients give identical hashes.
     std::multiset<std::string> id_set;
     for( const item * const &it : components ) {
@@ -11339,6 +11384,21 @@ int item::get_min_str() const
 std::vector<item_comp> item::get_uncraft_components() const
 {
     std::vector<item_comp> ret;
+    if( const auto payload = proc::read_payload( *this ); payload &&
+        payload->mode == proc::hist::compact ) {
+        std::ranges::for_each( payload->parts, [&]( const proc::compact_part & part ) {
+            auto iter = std::ranges::find_if( ret, [&]( item_comp & obj ) {
+                return obj.type == part.id;
+            } );
+            if( iter != ret.end() ) {
+                iter->count += part.n;
+            } else {
+                ret.emplace_back( part.id, part.n );
+            }
+        } );
+        return ret;
+    }
+
     if( components.empty() ) {
         //If item wasn't crafted with specific components use default recipe
         std::vector<std::vector<item_comp>> recipe = recipe_dictionary::get_uncraft(

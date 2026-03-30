@@ -2251,5 +2251,125 @@
       [ [ "processor", 1 ] ],
       [ [ "RAM", 1 ] ]
     ]
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_t",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_veggy",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_cheese",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_sauce",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_honey",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_jam",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_pb",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_pbj",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_pbh",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_pbm",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_deluxe",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_okay",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sandwich_deluxe_nocheese",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "fish_sandwich",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sword_wood",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sword_nail",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sword_crude",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sword_metal",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "sword_bone",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "spear_spike",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "spear_knife",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "spear_knife_superior",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "spear_stone",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "spear_steel",
+    "obsolete": true
   }
 ]

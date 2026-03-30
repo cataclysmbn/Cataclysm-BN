@@ -1,0 +1,28 @@
+[
+  {
+    "type": "PROC",
+    "id": "knife",
+    "cat": "weapon",
+    "res": "proc_knife_generic",
+    "lua": { "full": "procgen.gear.full", "make": "procgen.gear.make" },
+    "hist": { "def": "full", "ok": [ "compact", "full" ] },
+    "slot": [
+      {
+        "id": "blade",
+        "role": "blade",
+        "min": 1,
+        "max": 1,
+        "ok": [ "mat:steel", "mat:iron", "mat:copper", "mat:stone", "mat:bone" ]
+      },
+      { "id": "handle", "role": "handle", "min": 1, "max": 1, "ok": [ "itype:stick_long", "mat:wood", "mat:bone" ] },
+      {
+        "id": "binding",
+        "role": "binding",
+        "min": 0,
+        "max": 2,
+        "rep": true,
+        "ok": [ "mat:leather", "mat:cotton", "itype:thread", "itype:string_36", "itype:sinew" ]
+      }
+    ]
+  }
+]

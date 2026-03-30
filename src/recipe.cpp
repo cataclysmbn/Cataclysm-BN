@@ -229,6 +229,10 @@ void recipe::load( const JsonObject &jo, const std::string &src )
         assign( jo, "category", category, strict );
         assign( jo, "subcategory", subcategory, strict );
         assign( jo, "description", description, strict );
+        assign( jo, "proc", proc_enabled, strict );
+        assign( jo, "proc_id", proc_id_, strict );
+        jo.read( "builder_name", builder_name_ );
+        jo.read( "builder_desc", builder_desc_ );
         assign( jo, "reversible", reversible, strict );
 
         if( jo.has_member( "byproducts" ) ) {
@@ -328,6 +332,14 @@ std::string recipe::get_consistency_error() const
 
     if( charges && result_mult != 1 ) {
         return "specifies both charges and result_mult";
+    }
+
+    if( proc_enabled && proc_id_.is_null() ) {
+        return "is proc but missing proc_id";
+    }
+
+    if( !proc_enabled && !proc_id_.is_null() ) {
+        return "specifies proc_id but proc is false";
     }
 
     if( result_mult != 1 && reversible ) {
