@@ -1087,18 +1087,20 @@ void mtype::setup_pathfinding_deferred()
     const auto default_override = get_option<bool>( "PATHFINDING_DEFAULT_IS_OVERRIDE" );
     const auto range_mult = get_option<float>( "PATHFINDING_RANGE_MULT" );
 
+    const auto climbs = this->has_flag( MF_CLIMBS );
     const auto climbs_walls = this->has_flag( MF_CLIMBS_WALLS );
     const auto flies = this->has_flag( MF_FLIES );
+    const auto can_climb_surfaces = climbs || climbs_walls;
 
-    if( this->has_flag( MF_CLIMBS ) || climbs_walls ) {
+    if( climbs || climbs_walls ) {
         this->legacy_path_settings.climb_cost = 3;
         this->path_settings.climb_cost = 3.0;
     }
 
     if( flies || climbs_walls ) {
         this->path_settings.can_fly = true;
-        this->path_settings.needs_wall_cling = climbs_walls && !flies;
     }
+    this->path_settings.needs_wall_cling = can_climb_surfaces && !flies;
 
     const auto extract_into = [this]<typename T>( std::string field, T & out ) {
         if( this->recorded_path_settings.contains( field ) ) {

@@ -961,9 +961,10 @@ std::vector<tripoint> Pathfinding::get_route_3d(
     // Instead, we will **only** consider taking z_changes that bring us closer to target's Z level.
     const bool we_go_up = to.z > from.z;
 
+    const bool can_use_open_air = path_settings.can_fly || path_settings.needs_wall_cling;
     const map &here = get_map();
 
-    Pathfinding::update_z_caches( path_settings.can_fly );
+    Pathfinding::update_z_caches( can_use_open_air );
 
     const auto can_wall_cling_to_change = [&here]( const Pathfinding::ZLevelChange & change,
     const bool we_go_up ) {
@@ -1037,7 +1038,7 @@ std::vector<tripoint> Pathfinding::get_route_3d(
                 }
 
                 // Open air processing
-                if( path_settings.can_fly ) {
+                if( can_use_open_air ) {
                     std::unordered_map<point, ZLevelChangeOpenAirPair> &target =
                         Pathfinding::get_z_cache_open_air( cur_origin.z );
 

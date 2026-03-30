@@ -954,7 +954,17 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         if( att_to_target == Attitude::A_HOSTILE && !fleeing ) {
             local_goal = dest;
         } else if( fleeing ) {
-            local_goal = tripoint( posx() * 2 - dest.x, posy() * 2 - dest.y, posz() );
+            tripoint mirror = tripoint( posx() * 2 - dest.x, posy() * 2 - dest.y, posz() );
+            if( flies() || climbs_walls() ) {
+                const map &here = get_map();
+                if( here.has_zlevels() ) {
+                    const int upper_z = std::min( posz() + 1, OVERMAP_HEIGHT );
+                    if( here.inbounds_z( upper_z ) ) {
+                        mirror.z = upper_z;
+                    }
+                }
+            }
+            local_goal = mirror;
         }
         if( angers_hostile_weak && att_to_target != Attitude::A_FRIENDLY ) {
             int hp_per = target->hp_percentage();
