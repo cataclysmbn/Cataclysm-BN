@@ -1973,12 +1973,6 @@ bool game::handle_action()
                     const monster *mon = u.mounted_creature.get();
                     bool ladder = m.has_flag( "DIFFICULT_Z", u.pos() );
 
-                    const bool can_use_stairs =
-                        mon->has_flag( MF_RIDEABLE_MECH ) ||
-                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
-                        mon->has_flag( MF_FLIES ) ||
-                        mon->has_flag( MF_CLIMBS ) ||
-                        mon->has_flag( MF_CLIMBS_WALLS );
                     if( ladder ) {
                         const bool can_use_ladder =
                             mon->has_flag( MF_MOUNTABLE_LADDER ) ||
