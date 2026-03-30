@@ -493,7 +493,7 @@ bool calendar::once_every( const time_duration &event_frequency )
 }
 
 int calendar::ticks_between( const time_point &from, const time_point &to,
-                    const time_duration &tick_length )
+                             const time_duration &tick_length )
 {
     if( tick_length <= 0_turns ) {
         return 0;

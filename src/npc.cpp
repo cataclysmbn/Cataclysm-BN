@@ -3011,7 +3011,7 @@ void npc::batch_turns( int n )
     if( n <= 0 || is_dead_state() ) {
         return;
     }
-    
+
     const auto advance_effects = [&]( const time_duration & elapsed_dur ) {
         for( auto &elem : *effects ) {
             for( auto &_effect_it : elem.second ) {
