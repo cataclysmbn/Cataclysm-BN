@@ -3306,8 +3306,9 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const bool stop_on_memory = z != center.z && has_memory &&
                                             ( !in_map_bounds || here.ter( pos ) != t_open_air );
 
-                ll = ch.visibility_cache[ch.idx( x, y )];
-                const auto visibility = here.get_visibility( ll, cache );
+                ll = in_map_bounds ? ch.visibility_cache[ch.idx( x, y )] :
+                     has_memory ? lit_level::MEMORIZED : lit_level::DARK;
+                const auto visibility = in_map_bounds ? here.get_visibility( ll, cache ) : offscreen_type;
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
                     if( !would_apply_vision_effects( visibility ) ) {
                         last_vis = z;
@@ -3356,7 +3357,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                     for( int i = 0; i < 4; i++ ) {
                         const tripoint np = pos + neighborhood[i];
                         invisible[1 + i] = np.y < min_visible_y || np.y > max_visible_y ||
-                                           np.x < min_visible_x || np.x > max_visible_x ||
+                                           np.x < min_visible_x || np.x > max_visible_x || !here.inbounds( np ) ||
                                            would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x, np.y )],
                                                    cache ) );
                     }
