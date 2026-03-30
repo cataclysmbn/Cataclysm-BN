@@ -31,6 +31,7 @@ sonar.register = function(mod)
   mod.sonar_scan = function(params)
     local who = params.user
     local pos = params.pos
+    local item = params.item
     if pos == nil and who then pos = who:get_pos_ms() end
     if pos == nil then return 0 end
     local map = gapi.get_map()
@@ -55,7 +56,7 @@ sonar.register = function(mod)
       gapi.add_msg(locale.gettext("The sonar pulse finds nothing new."))
     end
 
-    return 1
+    return item:get_type():obj():charges_to_use()
   end
 end
 

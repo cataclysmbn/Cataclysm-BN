@@ -238,6 +238,7 @@
     "description": "A set of sonar transducers and electronics used to scan underwater terrain.  Activate it from the vehicle controls to reveal local underwater overmap tiles.",
     "folded_volume": "2 L",
     "item": "sonar_device",
+    "integrated_tools": [ "sonar_device" ],
     "requirements": {
       "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_screw", 1 ] ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_screw", 1 ] ] },
@@ -247,7 +248,7 @@
         "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "SONAR", "SHOCK_RESISTANT" ],
+    "flags": [ "SHOCK_RESISTANT", "CRAFTER" ],
     "breaks_into": [ { "item": "e_scrap", "count": [ 4, 8 ] }, { "item": "plastic_chunk", "count": [ 2, 6 ] } ]
   },
   {
