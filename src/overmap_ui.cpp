@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <tuple>
@@ -1431,6 +1432,8 @@ static void draw_om_sidebar(
                 }
                 mvwprintz( wbar, point( 3, line_number++ ),
                            c_blue, "  Interest: %d", mgroup->interest );
+                mvwprintz( wbar, point( 3, line_number++ ),
+                           c_blue, "  Behaviour: %s", mgroup->horde_behaviour );
                 mvwprintz( wbar, point( 3, line_number ),
                            c_blue, "  Target: %s", mgroup->target.to_string() );
                 mvwprintz( wbar, point( 3, line_number++ ),

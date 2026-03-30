@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -900,36 +901,77 @@ void game::draw_sct()
 
 namespace
 {
-void draw_zones_curses( const catacurses::window &w, const tripoint &start, const tripoint &end,
-                        const tripoint &offset )
+void draw_zones_curses( const catacurses::window &w, const zone_draw_options &options )
 {
-    if( end.x < start.x || end.y < start.y || end.z < start.z ) {
+    nc_color    const col = invert_color( c_light_green );
+    const bool has_points = !options.points.empty();
+    if( has_points ) {
+        std::ranges::for_each( options.points, [&]( const tripoint & location ) {
+            mvwputch( w, point( location.x - options.offset.x, location.y - options.offset.y ),
+                      col, '~' );
+        } );
+    } else {
+        if( options.end.x < options.start.x || options.end.y < options.start.y ||
+            options.end.z < options.start.z ) {
+            return;
+        }
+
+        const std::string line( options.end.x - options.start.x + 1, '~' );
+        const int x = options.start.x - options.offset.x;
+
+        for( int y = options.start.y; y <= options.end.y; ++y ) {
+            mvwprintz( w, point( x, y - options.offset.y ), col, line );
+        }
+    }
+
+    const auto bounds = [&]() -> std::optional<std::pair<point, point>> {
+        if( has_points )
+        {
+            const auto min_x = std::ranges::minmax_element( options.points, {}, &tripoint::x );
+            const auto min_y = std::ranges::minmax_element( options.points, {}, &tripoint::y );
+            return std::pair<point, point>( point( min_x.min->x, min_y.min->y ),
+                                            point( min_x.max->x, min_y.max->y ) );
+        }
+        return std::pair<point, point>( options.start.xy(), options.end.xy() );
+    }();
+
+    if( !bounds.has_value() ) {
         return;
     }
 
-    nc_color    const col = invert_color( c_light_green );
-    const std::string line( end.x - start.x + 1, '~' );
-    int         const x = start.x - offset.x;
-
-    for( int y = start.y; y <= end.y; ++y ) {
-        mvwprintz( w, point( x, y - offset.y ), col, line );
+    const point min_local = bounds->first;
+    const point max_local = bounds->second;
+    const int width = max_local.x - min_local.x + 1;
+    const int height = max_local.y - min_local.y + 1;
+    if( width <= 0 || height <= 0 ) {
+        return;
     }
+
+    const std::string label = string_format( _( "(%dx%d)" ), width, height );
+    const point center_local( ( min_local.x + max_local.x ) / 2,
+                              ( min_local.y + max_local.y ) / 2 );
+    const point label_pos = point(
+                                std::clamp( center_local.x - static_cast<int>( label.size() ) / 2,
+                                            0, getmaxx( w ) - static_cast<int>( label.size() ) ),
+                                std::clamp( center_local.y - options.offset.y, 0,
+                                            getmaxy( w ) - 1 ) );
+    mvwprintz( w, label_pos, c_white, label );
 }
 } //namespace
 
 #if defined(TILES)
-void game::draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset )
+void game::draw_zones( const zone_draw_options &options )
 {
     if( use_tiles ) {
-        tilecontext->init_draw_zones( start, end, offset );
+        tilecontext->init_draw_zones( options );
     } else {
-        draw_zones_curses( w_terrain, start, end, offset );
+        draw_zones_curses( w_terrain, options );
     }
 }
 #else
-void game::draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset )
+void game::draw_zones( const zone_draw_options &options )
 {
-    draw_zones_curses( w_terrain, start, end, offset );
+    draw_zones_curses( w_terrain, options );
 }
 #endif
 

@@ -200,6 +200,71 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "add_npc_follower", []( npc & p ) { g->add_npc_follower( p.getID() ); } );
     luna::set_fx( lib, "remove_npc_follower", []( npc & p ) { g->remove_npc_follower( p.getID() ); } );
 
+    DOC( "Returns all active creatures (monsters, NPCs, and the player) as a Lua array." );
+    luna::set_fx( lib, "get_all_creatures", []( sol::this_state s ) -> sol::table {
+        sol::state_view lua( s );
+        auto out = lua.create_table();
+        auto npc_rng = g->all_npcs();
+        auto mon_rng = g->all_monsters();
+        int idx = 1;
+        out[idx++] = static_cast<Creature *>( &g->u );
+        std::ranges::for_each(
+            npc_rng.items
+        | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
+        | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool { return sp && !sp->is_dead(); } ),
+        [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = static_cast<Creature *>( sp.get() ); } );
+        std::ranges::for_each(
+            mon_rng.items
+        | std::views::transform( []( const weak_ptr_fast<monster> &wp ) { return wp.lock(); } )
+        | std::views::filter( []( const shared_ptr_fast<monster> &sp ) -> bool { return sp && !sp->is_dead(); } ),
+        [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = static_cast<Creature *>( sp.get() ); } );
+        return out;
+    } );
+
+    DOC( "Returns all active NPCs as a Lua array." );
+    luna::set_fx( lib, "get_all_npcs", []( sol::this_state s ) -> sol::table {
+        sol::state_view lua( s );
+        auto out = lua.create_table();
+        auto rng = g->all_npcs();
+        int idx = 1;
+        std::ranges::for_each(
+            rng.items
+        | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
+        | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool { return sp && !sp->is_dead(); } ),
+        [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
+        return out;
+    } );
+
+    DOC( "Returns all active monsters as a Lua array." );
+    luna::set_fx( lib, "get_all_monsters", []( sol::this_state s ) -> sol::table {
+        sol::state_view lua( s );
+        auto out = lua.create_table();
+        auto rng = g->all_monsters();
+        int idx = 1;
+        std::ranges::for_each(
+            rng.items
+        | std::views::transform( []( const weak_ptr_fast<monster> &wp ) { return wp.lock(); } )
+        | std::views::filter( []( const shared_ptr_fast<monster> &sp ) -> bool { return sp && !sp->is_dead(); } ),
+        [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = sp.get(); } );
+        return out;
+    } );
+
+    DOC( "Returns NPCs in simulated (fully loaded, AI-eligible) submaps as a Lua array." );
+    luna::set_fx( lib, "get_simulated_npcs", []( sol::this_state s ) -> sol::table {
+        sol::state_view lua( s );
+        auto out = lua.create_table();
+        auto rng = g->all_npcs();
+        int idx = 1;
+        std::ranges::for_each(
+            rng.items
+        | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
+        | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool {
+            return sp && !sp->is_dead() && sp->is_simulated();
+        } ),
+        [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
+        return out;
+    } );
+
     DOC( "Get the global overmap buffer" );
     luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return ACTIVE_OVERMAP_BUFFER; } );
 

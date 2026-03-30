@@ -369,7 +369,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_GOATEE",
@@ -381,7 +382,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CIRCLE",
@@ -393,7 +395,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_ROYALE",
@@ -405,7 +408,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_ANCHOR",
@@ -417,7 +421,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SHORTBOXED",
@@ -429,7 +434,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHEVRON",
@@ -441,7 +447,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_3DAYSTUBBLE",
@@ -453,7 +460,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_HORSESHOE",
@@ -465,7 +473,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_MUSTACHE",
@@ -477,7 +486,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_MUTTONCHOPS",
@@ -489,7 +499,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_GUNSLINGER",
@@ -501,7 +512,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHIN_STRIP",
@@ -513,7 +525,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHIN_CURTAIN",
@@ -525,7 +538,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHIN_STRAP",
@@ -537,7 +551,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_BEARD",
@@ -549,7 +564,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_HANDLEBAR",
@@ -561,7 +577,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_NECKBEARD",
@@ -573,7 +590,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_PENCIL",
@@ -585,7 +603,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SHENANDOAH",
@@ -597,7 +616,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SIDEBURNS",
@@ -609,7 +629,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SOUL_PATCH",
@@ -621,7 +642,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_TOOTHBRUSH",
@@ -633,7 +655,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_VANDYKE",
@@ -645,7 +668,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_WALRUS",
@@ -657,7 +681,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_ZAPPA",
@@ -669,6 +694,7 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   }
 ]

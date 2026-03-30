@@ -457,7 +457,7 @@ void npc::randomize( const npc_class_id &type )
     clear_mutations();
 
     // Add fixed traits
-    for( const trait_id &tid : trait_group::traits_from( myclass->traits ) ) {
+    for( const trait_id &tid : trait_group::traits_from( myclass->traits, male ) ) {
         if( !has_trait( tid ) ) {
             toggle_trait( tid );
         }
@@ -694,6 +694,35 @@ void npc::revert_after_activity()
     current_activity_id = activity_id::NULL_ID();
     clear_destination();
     backlog.clear();
+}
+
+void npc::set_suppress_activity_complete_message( const bool value )
+{
+    suppress_activity_complete_message = value;
+}
+
+bool npc::consume_suppress_activity_complete_message()
+{
+    const bool suppressed = suppress_activity_complete_message;
+    suppress_activity_complete_message = false;
+    return suppressed;
+}
+
+void npc::set_activity_failure_message( const std::string &msg )
+{
+    activity_failure_message = msg;
+}
+
+std::string npc::consume_activity_failure_message()
+{
+    std::string msg = activity_failure_message;
+    activity_failure_message.clear();
+    return msg;
+}
+
+std::string npc::peek_activity_failure_message() const
+{
+    return activity_failure_message;
 }
 
 npc_mission npc::get_previous_mission()
@@ -2638,6 +2667,12 @@ void npc::die( Creature *nkiller )
     place_corpse();
 }
 
+bool npc::is_simulated() const
+{
+    return submap_loader.is_simulated( get_dimension(),
+                                       tripoint_abs_sm( global_sm_location() ) );
+}
+
 void npc::erase()
 {
     if( dead ) {
@@ -2663,10 +2698,16 @@ void npc::erase()
             my_fac->remove_member( getID() );
         }
     }
+    manually_erased_ = true;
     dead = true;
+    on_unload();
     g->remove_npc_follower( getID() );
     get_overmapbuffer( get_dimension() ).remove_npc( getID() );
-    g->cleanup_dead();
+    if( g->is_processing_npcs() ) {
+        // Deferred: cleanup_dead() at the end of npcmove() will remove from active_npc.
+        return;
+    }
+    g->erase_npc( getID() );
 }
 
 std::string npc_attitude_id( npc_attitude att )

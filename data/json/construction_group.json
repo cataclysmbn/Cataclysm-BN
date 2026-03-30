@@ -411,6 +411,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_door_window",
+    "name": "Build Windowed Door"
+  },
+  {
+    "type": "construction_group",
     "id": "build_makeshift_door",
     "name": "Build Makeshift Door"
   },
