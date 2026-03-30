@@ -1623,6 +1623,7 @@ static void create_note( const tripoint_abs_omt &curs )
                               _( "Type GLYPH:TEXT to set a custom glyph." ),
                               _( "Type COLOR;TEXT to set a custom color." ),
                               _( "Type SPRITE:TILE_ID to set a custom sprite." ),
+                              _( "Type LABEL:TEXT to set a custom label." ),
                               // NOLINTNEXTLINE(cata-text-style): literal exclaimation mark
                               _( "Examples: B:Base | g;Loot | SPRITE:toolbox;g;Tools" ) );
     color_notes = color_notes.replace( color_notes.end() - 2, color_notes.end(), helper_text );
