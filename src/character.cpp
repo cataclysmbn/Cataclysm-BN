@@ -4283,9 +4283,10 @@ void Character::do_skill_rust( const time_duration &duration )
     // adjacent overmap tile (any z-level). Only evaluated if is_npc().
     const bool has_ally = [&]() -> bool {
         const tripoint_abs_omt self_omt = global_omt_location();
-        return !g->get_npcs_if( [this, &self_omt]( const npc &other ) {
+        return !g->get_npcs_if( [this, &self_omt]( const npc & other )
+        {
             return other.is_ally( *this ) &&
-                   rl_dist( other.global_omt_location().xy(), self_omt.xy() ) <= 1;
+            rl_dist( other.global_omt_location().xy(), self_omt.xy() ) <= 1;
         } ).empty();
     }();
 
@@ -4293,9 +4294,10 @@ void Character::do_skill_rust( const time_duration &duration )
         const Skill &aSkill = *pair.first;
         SkillLevel &skill_level_obj = pair.second;
 
-        const int pred_tick = has_trait_flag( trait_flag_PRED2 ) ? calendar::ticks_between( duration, 8_hours ) :
-            has_trait_flag( trait_flag_PRED3 ) ? calendar::ticks_between( duration, 4_hours ) :
-            has_trait_flag( trait_flag_PRED4 ) ? calendar::ticks_between( duration, 3_hours ) : 0;
+        const int pred_tick = has_trait_flag( trait_flag_PRED2 ) ? calendar::ticks_between( duration,
+                              8_hours ) :
+                              has_trait_flag( trait_flag_PRED3 ) ? calendar::ticks_between( duration, 4_hours ) :
+                              has_trait_flag( trait_flag_PRED4 ) ? calendar::ticks_between( duration, 3_hours ) : 0;
 
         if( aSkill.is_combat_skill() && pred_tick > 0 ) {
             // Their brain is optimized to remember this
@@ -4322,12 +4324,13 @@ void Character::do_skill_rust( const time_duration &duration )
             continue;
         }
 
-        if( rust_rate_tmp <= 0 ) continue;
+        if( rust_rate_tmp <= 0 ) { continue; }
 
         const bool charged_bio_mem = get_power_level() > bio_memory->power_trigger &&
                                      has_active_bionic( bio_memory );
 
-        const int n_ticks = calendar::ticks_between( duration, skill_level_obj.rust_interval( rust_rate_tmp ) );
+        const int n_ticks = calendar::ticks_between( duration,
+                            skill_level_obj.rust_interval( rust_rate_tmp ) );
 
         if( is_npc() && n_ticks > 0 ) {
             // Catch-up path: simulate all rust ticks that would have fired during duration.
@@ -4346,8 +4349,8 @@ void Character::do_skill_rust( const time_duration &duration )
             // that's fine.
             const int trigger_kj = units::to_kilojoule( bio_memory->power_trigger );
             const int max_bio_saves = !charged_bio_mem ? 0 :
-                has_indefinite_power_source() ? std::numeric_limits<int>::max() :
-                trigger_kj > 0 ? units::to_kilojoule( get_power_level() ) / trigger_kj : 0;
+                                      has_indefinite_power_source() ? std::numeric_limits<int>::max() :
+                                      trigger_kj > 0 ? units::to_kilojoule( get_power_level() ) / trigger_kj : 0;
 
             const int oldSkillLevel = skill_level_obj.level();
             const int bio_saves = skill_level_obj.rust_by( duration, max_bio_saves, rust_rate_tmp );
@@ -5449,7 +5452,7 @@ void Character::update_body( const time_duration &duration )
     recalculate_enchantment_cache();
 
     int three_mins = calendar::ticks_between( duration, 3_minutes );
-    for ( ; three_mins > 0; three_mins-- ) {
+    for( ; three_mins > 0; three_mins-- ) {
         magic->update_mana( *this->as_player(), to_turns<double>( 3_minutes ) );
     }
 

@@ -1440,8 +1440,8 @@ bool Character::burn_fuel( bionic &bio, bool start )
 
 bool Character::has_indefinite_power_source() const
 {
-    return std::ranges::any_of( *my_bionics, []( const bionic &bio ) {
-        return std::ranges::any_of( bio.info().fuel_opts, []( const itype_id &fuel ) {
+    return std::ranges::any_of( *my_bionics, []( const bionic & bio ) {
+        return std::ranges::any_of( bio.info().fuel_opts, []( const itype_id & fuel ) {
             return fuel == fuel_type_metabolism ||
                    item::spawn_temporary( fuel )->has_flag( flag_PERPETUAL );
         } );
