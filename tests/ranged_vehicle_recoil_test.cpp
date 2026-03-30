@@ -1,13 +1,19 @@
 #include "catch/catch.hpp"
 
+#include <cmath>
+#include <ranges>
+
 #include "avatar.h"
+#include "gun_mode.h"
 #include "item.h"
 #include "map.h"
+#include "options_helpers.h"
 #include "ranged.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_part.h"
 
 TEST_CASE( "firing_from_a_vehicle_applies_recoil_to_the_vehicle", "[vehicle][gun]" )
 {
@@ -36,4 +42,73 @@ TEST_CASE( "firing_from_a_vehicle_applies_recoil_to_the_vehicle", "[vehicle][gun
 
     REQUIRE( shots_fired == 1 );
     CHECK( veh->velocity != 0 );
+}
+
+TEST_CASE( "vehicle gun recoil scaling factor can disable vehicle thrust", "[vehicle][gun]" )
+{
+    clear_all_state();
+
+    override_option vehicle_gun_recoil_factor( "VEHICLE_GUN_RECOIL_FACTOR", "0.0" );
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    const auto vehicle_origin = tripoint( 60, 60, 0 );
+
+    auto *const veh = here.add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
+    REQUIRE( veh != nullptr );
+
+    player_character.setpos( vehicle_origin );
+    here.board_vehicle( vehicle_origin, &player_character );
+    REQUIRE( player_character.in_vehicle );
+
+    auto gun = item::spawn( itype_id( "m1014" ) );
+    gun->ammo_set( itype_id( "shot_bird" ) );
+    player_character.wield( std::move( gun ) );
+    REQUIRE( player_character.primary_weapon().typeId() == itype_id( "m1014" ) );
+
+    REQUIRE( veh->velocity == 0 );
+
+    const auto shots_fired = ranged::fire_gun( player_character, vehicle_origin + tripoint( 5, 0, 0 ),
+                             1 );
+
+    REQUIRE( shots_fired == 1 );
+    CHECK( veh->velocity == 0 );
+}
+
+TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Browning past 6 km/h",
+           "[vehicle][gun]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    const auto vehicle_origin = tripoint( 60, 60, 0 );
+
+    auto *const veh = here.add_vehicle( vproto_id( "shopping_cart" ), vehicle_origin, 0_degrees, 0, 0 );
+    REQUIRE( veh != nullptr );
+
+    REQUIRE( veh->install_part( point_zero, vpart_id( "turret_mount_manual_steel" ), true ) >= 0 );
+    const auto turret_index = veh->install_part( point_zero, vpart_id( "mounted_browning" ), true );
+    REQUIRE( turret_index >= 0 );
+    REQUIRE( veh->part( turret_index ).ammo_set( itype_id( "50bmg" ) ) );
+
+    player_character.setpos( vehicle_origin );
+    here.board_vehicle( vehicle_origin, &player_character );
+    REQUIRE( player_character.in_vehicle );
+
+    auto turret = veh->turret_query( veh->part( turret_index ) );
+    REQUIRE( turret );
+    REQUIRE( turret.base().gun_set_mode( gun_mode_id( "AUTO" ) ) );
+    REQUIRE( turret.query() == turret_data::status::ready );
+
+    REQUIRE( veh->velocity == 0 );
+
+    auto shots_fired = 0;
+    for( const auto _ : std::views::iota( 0, 5 ) ) {
+        ( void ) _;
+        shots_fired += turret.fire( player_character, vehicle_origin + tripoint( 10, 0, 0 ) );
+    }
+
+    REQUIRE( shots_fired == 15 );
+    CHECK( std::abs( veh->velocity ) >= 167 );
 }
