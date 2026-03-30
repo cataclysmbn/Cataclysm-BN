@@ -2262,7 +2262,7 @@
   {
     "id": "WORN_GUN",
     "type": "json_flag",
-    "context": [ ],
+    "context": [  ],
     "info": "This gun can be fired while <good>worn</good>."
   },
   {
