@@ -200,12 +200,7 @@
       "F": [ "hdframe_cross", { "fuel": "avgas", "part": "afs_mounted_external_tank" } ],
       "-": [ "hdframe_vertical" ],
       "|": [ "hdframe_horizontal" ],
-      "W": [
-        "hdframe_horizontal",
-        "wheel_mount_medium",
-        "wheel_wide",
-        { "fuel": "avgas", "part": "afs_mounted_external_tank" }
-      ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "avgas", "part": "afs_mounted_external_tank" } ],
       "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
       "B": [ "hdframe_se" ],
       "Y": [ "hdframe_sw" ],
@@ -230,12 +225,7 @@
       "F": [ "hdframe_cross", { "fuel": "jp8", "part": "afs_mounted_external_tank" } ],
       "-": [ "hdframe_vertical" ],
       "|": [ "hdframe_horizontal" ],
-      "W": [
-        "hdframe_horizontal",
-        "wheel_mount_medium",
-        "wheel_wide",
-        { "fuel": "jp8", "part": "afs_mounted_external_tank" }
-      ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "jp8", "part": "afs_mounted_external_tank" } ],
       "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
       "B": [ "hdframe_se" ],
       "Y": [ "hdframe_sw" ],
@@ -260,12 +250,7 @@
       "F": [ "hdframe_cross", { "fuel": "diesel", "part": "afs_mounted_external_tank" } ],
       "-": [ "hdframe_vertical" ],
       "|": [ "hdframe_horizontal" ],
-      "W": [
-        "hdframe_horizontal",
-        "wheel_mount_medium",
-        "wheel_wide",
-        { "fuel": "diesel", "part": "afs_mounted_external_tank" }
-      ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "diesel", "part": "afs_mounted_external_tank" } ],
       "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
       "B": [ "hdframe_se" ],
       "Y": [ "hdframe_sw" ],
@@ -320,12 +305,7 @@
       "F": [ "hdframe_cross", { "fuel": "bleach", "part": "afs_mounted_external_tank" } ],
       "-": [ "hdframe_vertical" ],
       "|": [ "hdframe_horizontal" ],
-      "W": [
-        "hdframe_horizontal",
-        "wheel_mount_medium",
-        "wheel_wide",
-        { "fuel": "bleach", "part": "afs_mounted_external_tank" }
-      ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "bleach", "part": "afs_mounted_external_tank" } ],
       "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
       "B": [ "hdframe_se" ],
       "Y": [ "hdframe_sw" ],
@@ -350,12 +330,7 @@
       "F": [ "hdframe_cross", { "fuel": "ammonia", "part": "afs_mounted_external_tank" } ],
       "-": [ "hdframe_vertical" ],
       "|": [ "hdframe_horizontal" ],
-      "W": [
-        "hdframe_horizontal",
-        "wheel_mount_medium",
-        "wheel_wide",
-        { "fuel": "ammonia", "part": "afs_mounted_external_tank" }
-      ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "ammonia", "part": "afs_mounted_external_tank" } ],
       "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
       "B": [ "hdframe_se" ],
       "Y": [ "hdframe_sw" ],
@@ -410,12 +385,7 @@
       "F": [ "hdframe_cross", { "fuel": "water", "part": "afs_mounted_external_tank" } ],
       "-": [ "hdframe_vertical" ],
       "|": [ "hdframe_horizontal" ],
-      "W": [
-        "hdframe_horizontal",
-        "wheel_mount_medium",
-        "wheel_wide",
-        { "fuel": "water", "part": "afs_mounted_external_tank" }
-      ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "water", "part": "afs_mounted_external_tank" } ],
       "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
       "B": [ "hdframe_se" ],
       "Y": [ "hdframe_sw" ],
@@ -440,12 +410,7 @@
       "F": [ "hdframe_cross", { "fuel": "ether", "part": "afs_mounted_external_tank" } ],
       "-": [ "hdframe_vertical" ],
       "|": [ "hdframe_horizontal" ],
-      "W": [
-        "hdframe_horizontal",
-        "wheel_mount_medium",
-        "wheel_wide",
-        { "fuel": "ether", "part": "afs_mounted_external_tank" }
-      ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "ether", "part": "afs_mounted_external_tank" } ],
       "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
       "B": [ "hdframe_se" ],
       "Y": [ "hdframe_sw" ],
