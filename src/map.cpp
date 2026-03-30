@@ -948,6 +948,11 @@ void map::vehmove()
     }
     TracyPlot( "Vehicles Moved", moved_count );
 
+    // A map shift can occur mid-loop when the player is a vehicle passenger:
+    if( last_full_vehicle_list_dirty ) {
+        vehicle_list = get_vehicles();
+    }
+
     // Process item removal on the vehicles that were modified this turn.
     // Use a copy because part_removal_cleanup can modify the container.
     {
