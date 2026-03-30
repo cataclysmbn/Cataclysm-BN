@@ -77,7 +77,7 @@ bool can_train_pet( monster &z )
            z.has_flag( MF_PET_MOUNTABLE ) &&
            !z.has_flag( MF_COMBAT_MOUNT ) &&
            !z.has_flag( MF_CANT_TRAIN ) &&
-           !z.type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE );
+           z.type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE );
 }
 
 bool monexamine::pet_menu( monster &z )
