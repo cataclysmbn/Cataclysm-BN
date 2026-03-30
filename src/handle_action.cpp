@@ -1409,32 +1409,41 @@ static void fire()
         std::vector<std::string> options;
         std::vector<std::function<void()>> actions;
 
+        bool do_autofire = false;
         for( auto &w : u.worn ) {
             if( w->type->can_use( "holster" ) && !w->has_flag( flag_NO_QUICKDRAW ) &&
                 !w->contents.empty() && w->contents.front().is_gun() ) {
                 //~ draw (first) gun contained in holster
                 //~ %1$s: weapon name, %2$s: container name, %3$d: remaining ammo count
-                options.push_back( string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
-                                                  w->contents.front().tname(),
-                                                  w->type_name(),
-                                                  w->contents.front().ammo_remaining() ) );
+                options.push_back( "Draw: " + string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
+                                   w->contents.front().tname(),
+                                   w->type_name(),
+                                   w->contents.front().ammo_remaining() ) );
 
                 actions.emplace_back( [&] { u.invoke_item( w, "holster" ); } );
 
+            } else if( w->is_gun() && w->has_flag( flag_WORN_GUN ) ) {
+                options.push_back( "Fire: " + w->display_name() );
+                actions.emplace_back( [&] { avatar_action::fire_ranged_gear( u, w ); } );
+                do_autofire = true;
             } else if( w->is_gun() && w->gunmod_find( itype_shoulder_strap ) ) {
                 // wield item currently worn using shoulder strap
-                options.push_back( w->display_name() );
+                options.push_back( "Wield: " + w->display_name() );
                 actions.emplace_back( [&] { u.wield( *w ); } );
             } else if( w->is_gun() && w->gunmod_find( itype_pistol_lanyard ) ) {
                 // wield item currently worn using pistol lanyard
-                options.push_back( w->display_name() );
+                options.push_back( "Wield: " + w->display_name() );
                 actions.emplace_back( [&] { u.wield( *w ); } );
             }
         }
         if( !options.empty() ) {
-            int sel = uilist( _( "Draw what?" ), options );
-            if( sel >= 0 ) {
-                actions[sel]();
+            if( options.size() == 1 && do_autofire ) {
+                actions[0]();
+            } else {
+                int sel = uilist( _( "Do what?" ), options );
+                if( sel >= 0 ) {
+                    actions[sel]();
+                }
             }
         }
     }

@@ -267,6 +267,7 @@ to find which flags work elsewhere.
 - `WATERPROOF` Prevents the covered body-part(s) from getting wet in any circumstance.
 - `WATER_FRIENDLY` Prevents the item from making the body part count as unfriendly to water and thus
   causing negative morale from being wet.
+- `WORN_GUN` Allows the gun to be fired while worn as armor.
 - `ALLOWS_FLIGHT` While active, drains UPS to provide flight.
 - `ALWAYS_ALLOWS_FLIGHT` Always allow flight.
 
