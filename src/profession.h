@@ -29,7 +29,7 @@ class profession
     public:
         using StartingSkill = std::pair<skill_id, int>;
         using StartingSkillList = std::vector<StartingSkill>;
-        struct starting_age_range {
+        struct age_range {
             int min;
             int max;
         };
@@ -125,8 +125,8 @@ class profession
         std::map<spell_id, int> spells() const;
 
         std::optional<signed int> _starting_cash = std::nullopt;
-        std::optional<starting_age_range> _starting_age_range;
-        auto starting_age_range() const -> std::optional<starting_age_range>;
+        std::optional<age_range> _starting_age_range;
+        auto starting_age_range() const -> std::optional<age_range>;
 
         /**
          * Check if this type of profession has a certain flag set.

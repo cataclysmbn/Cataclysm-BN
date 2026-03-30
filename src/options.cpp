@@ -3116,6 +3116,11 @@ void options_manager::add_options_world_default()
     "any"
        );
 
+    add( "ENFORCE_PROFESSION_AGE_RANGE", world_default,
+         translate_marker( "Enforce profession age ranges" ),
+         translate_marker( "When enabled, character ages are constrained by profession-defined age ranges when available." ),
+         true );
+
     add( "DISABLE_LIFTING", world_default,
          translate_marker( "Disables lifting requirements for vehicle parts." ),
          translate_marker( "If true, strength checks and/or lifting qualities no longer need to be met in order to change parts." ),

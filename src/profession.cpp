@@ -264,14 +264,14 @@ void profession::load( const JsonObject &jo, const std::string & )
     if( jo.has_member( "age" ) ) {
         if( jo.has_int( "age" ) ) {
             const auto value = clamp_age_value( jo.get_int( "age" ) );
-            _starting_age_range = starting_age_range{ value, value };
+            _starting_age_range = age_range{ value, value };
         } else if( jo.has_object( "age" ) ) {
             JsonObject age_obj = jo.get_object( "age" );
             const auto min_age = clamp_age_value( age_obj.get_int( "min" ) );
             const auto max_age = clamp_age_value( age_obj.get_int( "max" ) );
             const auto range_min = std::min( min_age, max_age );
             const auto range_max = std::max( min_age, max_age );
-            _starting_age_range = starting_age_range{ range_min, range_max };
+            _starting_age_range = age_range{ range_min, range_max };
         } else {
             jo.throw_error( "\"age\" must be an integer or an object" );
         }
@@ -441,7 +441,7 @@ std::optional<int> profession::starting_cash() const
     return _starting_cash;
 }
 
-auto profession::starting_age_range() const -> std::optional<profession::starting_age_range>
+auto profession::starting_age_range() const -> std::optional<profession::age_range>
 {
     return _starting_age_range;
 }

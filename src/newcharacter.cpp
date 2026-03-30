@@ -92,18 +92,32 @@ static const trait_flag_str_id flag_FEMALE_EXCLUSIVE( "FEMALE_EXCLUSIVE" );
 static const trait_flag_str_id flag_MALE_PREFERRED( "MALE_PREFERRED" );
 static const trait_flag_str_id flag_FEMALE_PREFERRED( "FEMALE_PREFERRED" );
 
+static auto profession_age_limits_enabled() -> bool
+{
+    if( world_generator && world_generator->active_world ) {
+        return world_generator->active_world->info->WORLD_OPTIONS["ENFORCE_PROFESSION_AGE_RANGE"]
+               .value_as<bool>();
+    }
+    return false;
+}
+
+static auto profession_age_bounds( const profession &prof ) -> std::pair<int, int>
+{
+    if( profession_age_limits_enabled() ) {
+        if( const auto range = prof.starting_age_range() ) {
+            return { range->min, range->max };
+        }
+    }
+    return { profession::min_age, profession::max_age };
+}
+
 static auto random_age_for_profession( const profession &prof ) -> int
 {
-    const auto range = prof.starting_age_range();
-    if( range ) {
-        const auto min_age = range->min;
-        const auto max_age = range->max;
-        if( min_age == max_age ) {
-            return min_age;
-        }
-        return rng( min_age, max_age );
+    const auto [min_age, max_age] = profession_age_bounds( prof );
+    if( min_age == max_age ) {
+        return min_age;
     }
-    return rng( profession::min_age, profession::max_age );
+    return rng( min_age, max_age );
 }
 
 // Colors used in this file: (Most else defaults to c_light_gray)
@@ -3710,13 +3724,17 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
     // do not switch IME mode now, but restore previous mode on return
     ime_sentry sentry( ime_sentry::keep );
 
-    int min_allowed_age = 16;
-    int max_allowed_age = 55;
+    int min_allowed_age = profession::min_age;
+    int max_allowed_age = profession::max_age;
     // in centimeters. 2 std. deviations below average female height
     int min_allowed_height = 145;
     int max_allowed_height = 200;
 
     do {
+        const auto [new_min_age, new_max_age] = profession_age_bounds( *you.prof );
+        min_allowed_age = new_min_age;
+        max_allowed_age = new_max_age;
+        you.set_base_age( clamp( you.base_age(), min_allowed_age, max_allowed_age ) );
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();
 #if defined(TILES)
@@ -3876,12 +3894,14 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
                     break;
                 }
                 case char_creation::AGE: {
-                    popup.title( _( "Enter age in years.  Minimum 16, maximum 55" ) )
+                    const std::string title = string_format( _( "Enter age in years.  Minimum %d, maximum %d" ),
+                                                             min_allowed_age, max_allowed_age );
+                    popup.title( title )
                     .text( string_format( "%d", you.base_age() ) )
                     .only_digits( true );
                     const int result = popup.query_int();
                     if( result != 0 ) {
-                        you.set_base_age( clamp( result, 16, 55 ) );
+                        you.set_base_age( clamp( result, min_allowed_age, max_allowed_age ) );
                     }
                     break;
                 }
