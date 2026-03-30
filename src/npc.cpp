@@ -11,7 +11,6 @@
 
 #include "auto_pickup.h"
 #include "avatar.h"
-#include "batch_turns.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "character.h"
@@ -2873,7 +2872,7 @@ void npc::npc_update_body()
 
 void npc::on_load()
 {
-    batch_turns( std::min( to_turns<int>( calendar::turn - last_updated ), MAX_CATCHUP_NPC ) );
+    batch_turns( to_turns<int>( calendar::turn - last_updated ) );
 
     last_updated = calendar::turn;
 

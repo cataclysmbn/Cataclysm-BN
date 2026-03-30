@@ -1031,8 +1031,8 @@ class npc : public player
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
         /**
-         * Batch catchup: simulate up to MAX_CATCHUP_NPC missed turns.
-         * Calls npc_update_body() and process_turn() per iteration, then
+         * Batch catchup: analytically simulate @p n missed turns.
+         * Processes biology at 30-min/5-min/1-turn granularity, then
          * calls advance_job_progress(n) to fast-forward any ongoing activity.
          */
         void batch_turns( int n ) override;

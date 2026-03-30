@@ -9,7 +9,6 @@
 #include <unordered_map>
 
 #include "avatar.h"
-#include "batch_turns.h"
 #include "bodypart.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
@@ -2829,26 +2828,25 @@ void monster::batch_turns( int n )
         refill_udders();
     }
 
-    for( int i = 0; i < n; ++i ) {
-        if( is_dead_state() ) {
-            break;
+    // Analytically advance all special attack cooldowns — O(attacks), not O(n).
+    for( const auto &sp_type : type->special_attacks ) {
+        const auto local_iter = special_attacks.find( sp_type.first );
+        if( local_iter == special_attacks.end() || !local_iter->second.enabled ) {
+            continue;
         }
-        for( const auto &sp_type : type->special_attacks ) {
-            const std::string &special_name = sp_type.first;
-            const auto local_iter = special_attacks.find( special_name );
-            if( local_iter == special_attacks.end() ) {
-                continue;
-            }
-            mon_special_attack &local_attack_data = local_iter->second;
-            if( !local_attack_data.enabled ) {
-                continue;
-            }
+        local_iter->second.cooldown = std::max( 0, local_iter->second.cooldown - n );
+    }
 
-            if( local_attack_data.cooldown > 0 ) {
-                local_attack_data.cooldown--;
-            }
+    // Advance the summon timer; desummon the monster if it expires.
+    // decrement_summon_timer fires death when timer reaches <= 0 on the NEXT call,
+    // so the batch equivalent is: die if timer < n (strictly less than).
+    if( summon_time_limit ) {
+        const auto n_dur = time_duration::from_turns( n );
+        if( *summon_time_limit < n_dur ) {
+            die( nullptr );
+            return;
         }
-        decrement_summon_timer();
+        *summon_time_limit -= n_dur;
     }
 
     try_reproduce();
@@ -3793,7 +3791,7 @@ void monster::on_unload()
 
 void monster::on_load()
 {
-    batch_turns( std::min( to_turns<int>( calendar::turn - last_updated ), MAX_CATCHUP_MONSTER ) );
+    batch_turns( to_turns<int>( calendar::turn - last_updated ) );
 
     last_updated = calendar::turn;
 

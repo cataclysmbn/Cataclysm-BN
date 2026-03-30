@@ -1,19 +1,15 @@
 #include "batch_turns.h"
 
 #include <algorithm>
-#include <climits>
-#include <cstdint>
 #include <ranges>
 
 #include "profile.h"
 
 #include "calendar.h"
-#include "distribution_grid.h"
 #include "field.h"
 #include "field_type.h"
 #include "item.h"
 #include "submap.h"
-#include "units.h"
 #include "vehicle.h"
 
 /**
@@ -122,39 +118,15 @@ void batch_turns_items( submap &sm, int n )
     );
 }
 
-// TODO: figure out a clean way to implement this functionality. Seemingly cannot do it
-// per-submap because the entire grid is needed, which can span multiple submaps.
-void batch_turns_distribution_grid( distribution_grid &grid, int n )
-{
-    ZoneScoped;
-    if( n <= 0 ) {
-        return;
-    }
-    // This should move to the call site when implemented
-    n = std::min( n, MAX_CATCHUP_GRID );
-
-
-    const auto stat = grid.get_power_stat();
-    // Positive means net generation (charge batteries), negative means net drain.
-    const int64_t net_per_turn = static_cast<int64_t>( stat.gen_w ) -
-                                 static_cast<int64_t>( stat.use_w );
-    if( net_per_turn == 0 ) {
-        return;
-    }
-
-    const int64_t delta = net_per_turn * static_cast<int64_t>( n );
-    grid.apply_net_power( delta );
-}
-
-void run_submap_batch_turns( submap &sm, int n, const bool capped )
+void run_submap_batch_turns( submap &sm, int n )
 {
     ZoneScoped;
     TracyPlot( "Batch Turns N", static_cast<int64_t>( n ) );
     if( n <= 0 ) {
         return;
     }
-    batch_turns_field( sm, capped ? std::min( n, MAX_CATCHUP_FIELDS ) : n );
-    batch_turns_items( sm, capped ? std::min( n, MAX_CATCHUP_ITEMS ) : n );
+    batch_turns_field( sm, n );
+    batch_turns_items( sm, n );
     for( const auto &veh_ptr : sm.vehicles ) {
         if( veh_ptr ) {
             veh_ptr->update_time( calendar::turn );
