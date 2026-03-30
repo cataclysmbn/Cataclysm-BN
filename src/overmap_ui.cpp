@@ -1304,7 +1304,7 @@ static void draw_ascii( ui_adaptor &ui,
             const size_t pos = std::get<2>( note_info );
             if( pos != std::string::npos ) {
                 const auto display_note_text = note_label_utils::strip_label_commands(
-                                                  note_text.substr( pos ) );
+                                                   note_text.substr( pos ) );
                 if( !display_note_text.empty() ) {
                     corner_text.emplace_back( std::get<1>( note_info ), display_note_text );
                 }
@@ -1626,13 +1626,13 @@ static void create_note( const tripoint_abs_omt &curs )
     }
 
     const auto helper_text = string_format( ".\n\n%s\n%s\n%s\n%s\n%s\n\n%s\n",
-                              _( "Type <color_white>COLOR;TEXT</color> to set a custom color." ),
-                              _( "Type <color_white>GLYPH:TEXT</color> to set a custom glyph." ),
-                              _( "Type <color_white>SPRITE:TILE_ID</color> to set a custom sprite." ),
-                              _( "Type <color_white>LABEL:TEXT</color> to set a custom label." ),
-                              _( "Use <color_white>;</color> as a separator to combine elements." ),
-                              // NOLINTNEXTLINE(cata-text-style): literal exclaimation mark
-                              _( "Examples: <color_white>$:Bank</color> | <color_white>R;Red</color> | <color_white>SPRITE:toolbox</color> | <color_white>LABEL:Survivor City</color>" ) );
+                                            _( "Type <color_white>COLOR;TEXT</color> to set a custom color." ),
+                                            _( "Type <color_white>GLYPH:TEXT</color> to set a custom glyph." ),
+                                            _( "Type <color_white>SPRITE:TILE_ID</color> to set a custom sprite." ),
+                                            _( "Type <color_white>LABEL:TEXT</color> to set a custom label." ),
+                                            _( "Use <color_white>;</color> as a separator to combine elements." ),
+                                            // NOLINTNEXTLINE(cata-text-style): literal exclaimation mark
+                                            _( "Examples: <color_white>$:Bank</color> | <color_white>R;Red</color> | <color_white>SPRITE:toolbox</color> | <color_white>LABEL:Survivor City</color>" ) );
     color_notes = color_notes.replace( color_notes.end() - 2, color_notes.end(), helper_text );
     std::string title = _( "Note:" );
 
