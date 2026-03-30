@@ -915,7 +915,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Applies skill-based boosts to stats **/
         void apply_skill_boost();
     protected:
-        void do_skill_rust();
+        void do_skill_rust( const time_duration &duration );
         /** Applies stat mods to character. */
         void apply_mods( const trait_id &mut, bool add_remove );
 
@@ -1045,6 +1045,9 @@ class Character : public Creature, public location_visitable<Character>
         bool has_bionic( const bionic_id &b ) const;
         /** Returns true if the player has the entered bionic id and it is powered on */
         bool has_active_bionic( const bionic_id &b ) const;
+        /** Returns true if the player has any bionic that generates power indefinitely
+         *  (perpetual-fueled passive generator or metabolic power source). */
+        bool has_indefinite_power_source() const;
         /** Returns true if the player has a bionic with that fake item and it is powered on */
         bool has_active_bionic_with_fake( const itype_id &it ) const;
         /** Returns the number of bionics of a certain type the player has */
