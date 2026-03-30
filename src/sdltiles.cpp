@@ -61,6 +61,7 @@
 #include "overmap_location.h"
 #include "overmap_label.h"
 #include "overmap_label_note.h"
+#include "note_label_utils.h"
 #include "overmap_special.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
@@ -1307,7 +1308,11 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                         note_text );
             const size_t pos = std::get<2>( note_info );
             if( pos != std::string::npos ) {
-                notes_window_text.emplace_back( std::get<1>( note_info ), note_text.substr( pos ) );
+                const auto display_note_text =
+                    note_label_utils::strip_label_commands( note_text.substr( pos ) );
+                if( !display_note_text.empty() ) {
+                    notes_window_text.emplace_back( std::get<1>( note_info ), display_note_text );
+                }
             }
             if( ACTIVE_OVERMAP_BUFFER.is_marked_dangerous( center_abs_omt ) ) {
                 notes_window_text.emplace_back( c_red, _( "DANGEROUS AREA!" ) );
