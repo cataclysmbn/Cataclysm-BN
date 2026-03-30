@@ -1397,6 +1397,8 @@ void map_data_common_t::load( const JsonObject &jo, const std::string &src )
     optional( jo, was_loaded, "prompt", prompt );
 
     assign( jo, "flags", flags );
+    assign( jo, "default_vars", default_vars );
+
     bitflags.reset();
     transparent = false;
 

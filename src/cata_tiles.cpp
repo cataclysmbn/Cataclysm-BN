@@ -2721,6 +2721,8 @@ void tileset_loader::load_tilejson_from_file( const JsonObject &config )
                     tile_type &curr_subtile = load_tile( subentry, m_id );
                     curr_subtile.offset = sprite_offset;
                     curr_subtile.rotates = true;
+                    curr_subtile.is_multitile_subtile = std::ranges::find( multitile_keys,
+                                                        s_id ) != multitile_keys.end();
                     curr_subtile.height_3d = t_h3d;
                     curr_subtile.animated = subentry.get_bool( "animated", false );
                     curr_subtile.default_tint = t_tint;
@@ -2737,6 +2739,7 @@ void tileset_loader::load_tilejson_from_file( const JsonObject &config )
             curr_tile.height_3d = t_h3d;
             curr_tile.default_tint = t_tint;
             curr_tile.flags = t_flags;
+            curr_tile.is_multitile_subtile = false;
             curr_tile.animated = entry.get_bool( "animated", false );
         }
     }
@@ -4243,7 +4246,9 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
      */
     const auto num_sprites = sprite_list.size();
     const auto is_single_sprite = num_sprites == 1;
-    const auto rotate_sprite = ( is_fg || tile.rotates ) && is_single_sprite;
+    const auto rotate_sprite = ( is_fg || tile.rotates )
+                               && is_single_sprite
+                               && !tile.is_multitile_subtile;
     const auto sprite_num = is_single_sprite
                             ? 0
                             : ( rota % num_sprites );

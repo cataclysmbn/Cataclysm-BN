@@ -1914,15 +1914,26 @@ bool game::handle_action()
             case ACTION_MOVE_DOWN:
                 if( u.is_mounted() ) {
                     const monster *mon = u.mounted_creature.get();
+                    bool ladder = m.has_flag( "DIFFICULT_Z", u.pos() );
 
-                    const bool can_use_stairs =
-                        mon->has_flag( MF_RIDEABLE_MECH ) ||
-                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
-                        mon->has_flag( MF_FLIES );
+                    if( ladder ) {
+                        const bool can_use_ladder =
+                            mon->has_flag( MF_MOUNTABLE_LADDER ) ||
+                            mon->has_flag( MF_FLIES );
 
-                    if( !can_use_stairs ) {
-                        add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
-                        break;
+                        if( !can_use_ladder ) {
+                            add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
+                            break;
+                        }
+                    } else {
+                        const bool can_use_stairs =
+                            mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                            mon->has_flag( MF_FLIES );
+
+                        if( !can_use_stairs ) {
+                            add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
+                            break;
+                        }
                     }
                 }
                 if( !u.in_vehicle ) {
@@ -1958,15 +1969,26 @@ bool game::handle_action()
             case ACTION_MOVE_UP:
                 if( u.is_mounted() ) {
                     const monster *mon = u.mounted_creature.get();
+                    bool ladder = m.has_flag( "DIFFICULT_Z", u.pos() );
 
-                    const bool can_use_stairs =
-                        mon->has_flag( MF_RIDEABLE_MECH ) ||
-                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
-                        mon->has_flag( MF_FLIES );
+                    if( ladder ) {
+                        const bool can_use_ladder =
+                            mon->has_flag( MF_MOUNTABLE_LADDER ) ||
+                            mon->has_flag( MF_FLIES );
 
-                    if( !can_use_stairs ) {
-                        add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
-                        break;
+                        if( !can_use_ladder ) {
+                            add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
+                            break;
+                        }
+                    } else {
+                        const bool can_use_stairs =
+                            mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                            mon->has_flag( MF_FLIES );
+
+                        if( !can_use_stairs ) {
+                            add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
+                            break;
+                        }
                     }
                 }
                 if( !u.in_vehicle ) {
@@ -2020,7 +2042,7 @@ bool game::handle_action()
                     add_msg( m_info, _( "You can't open things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                    if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
                         add_msg( m_info, _( "You can't open things while you're riding." ) );
                         break;
                     } else {
@@ -2036,7 +2058,7 @@ bool game::handle_action()
                     add_msg( m_info, _( "You can't close things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                    if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
                         add_msg( m_info, _( "You can't close things while you're riding." ) );
                         break;
                     } else {

@@ -88,5 +88,21 @@
   {
     "id": "FURRY",
     "type": "mutation_flag"
+  },
+  {
+    "id": "MALE_EXCLUSIVE",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "FEMALE_EXCLUSIVE",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "MALE_PREFERRED",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "FEMALE_PREFERRED",
+    "type": "mutation_flag"
   }
 ]

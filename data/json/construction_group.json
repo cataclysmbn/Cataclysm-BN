@@ -1016,6 +1016,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_multicooker",
+    "name": "Plug In Multi Cooker"
+  },
+  {
+    "type": "construction_group",
     "id": "install_refrigerator",
     "name": "Plug In Refrigerator"
   },
