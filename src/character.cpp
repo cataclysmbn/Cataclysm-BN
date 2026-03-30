@@ -5393,7 +5393,7 @@ void Character::update_body( const time_duration &duration )
     recalculate_enchantment_cache();
     const int three_mins = calendar::ticks_between( duration, 3_minutes );
     if( three_mins > 0 ) {
-        magic->update_mana( *this->as_player(), to_turns<double>( 3_minutes * 3 ) );
+        magic->update_mana( *this->as_player(), to_turns<double>( 3_minutes ) );
     }
     const int five_mins = calendar::ticks_between( duration, 5_minutes );
     if( five_mins > 0 ) {
@@ -5462,7 +5462,7 @@ void Character::update_stomach( const time_duration &duration )
     const bool mouse = has_trait( trait_NO_THIRST );
     const bool mycus = has_trait( trait_M_DEPENDENT );
     const float kcal_per_time = rates.hunger * metabolic_base_kcals / ( 12.0f * 24.0f );
-    const int five_mins = duration / 5_minutes;
+    const int five_mins = calendar::ticks_between( duration, 5_minutes );
 
     if( five_mins > 0 ) {
         // Digest nutrients in stomach

@@ -3028,7 +3028,6 @@ void npc::batch_turns( int n )
         }
     };
     auto dt = time_duration::from_turns<int>( n );
-    const auto minute = to_turns<int>( 1_minutes );
     // TODO: Sleeping, healing etc.
     // First update with 30 minute granularity, then 5 minutes, then turns
     for( ; dt >= 31_minutes; dt -= 30_minutes ) {
@@ -3053,10 +3052,10 @@ void npc::batch_turns( int n )
     // Not necessarily true, but it's not a bad idea to set this
     has_new_items = true;
 
+    moves = 0;
+
     // Fast-forward any ongoing activity.
     advance_job_progress( n );
-
-    moves = 0;
 }
 
 void npc::advance_job_progress( int n )

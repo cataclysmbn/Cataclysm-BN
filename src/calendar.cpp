@@ -498,7 +498,6 @@ int calendar::ticks_between( const time_point &from, const time_point &to,
     if( tick_length <= 0_turns ) {
         return 0;
     }
-    const int tick = to_turns<int>( tick_length );
     return ( to_turn<int>( to ) / to_turns<int>( tick_length ) ) -
            ( to_turn<int>( from ) / to_turns<int>( tick_length ) );
 }
