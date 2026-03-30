@@ -1056,6 +1056,7 @@ Multiple death functions can be used. Not all combinations make sense.
 - `CAN_DIG` Can dig _and_ walk.
 - `CAN_OPEN_DOORS` Can open doors on its path.
 - `CANPLAY` This creature can be played with if it's a pet.
+- `CANT_TRAIN` This creature cannot be trained for combat
 - `CATFOOD` Becomes friendly / tamed with cat food.
 - `CATTLEFODDER` Becomes friendly / tamed with cattle fodder.
 - `CBM_CIV` May produce a common CBM a power CBM when butchered.
