@@ -3895,7 +3895,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
                 }
                 case char_creation::AGE: {
                     const std::string title = string_format( _( "Enter age in years.  Minimum %d, maximum %d" ),
-                                                             min_allowed_age, max_allowed_age );
+                                              min_allowed_age, max_allowed_age );
                     popup.title( title )
                     .text( string_format( "%d", you.base_age() ) )
                     .only_digits( true );
