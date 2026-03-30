@@ -272,7 +272,7 @@
     ],
     "blueprint_origin": { "x": 4, "y": 3 },
     "palette": {
-      "F": [ "hdframe_cross", { "fuel": "liquid_fertilizer", "part": "afs_mounted_external_tank" } ],
+      "F": [ "hdframe_cross", { "fuel": "fertilizer_liquid", "part": "afs_mounted_external_tank" } ],
       "-": [ "hdframe_vertical" ],
       "|": [ "hdframe_horizontal" ],
       "W": [
