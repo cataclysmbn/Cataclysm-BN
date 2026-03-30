@@ -92,6 +92,20 @@ static const trait_flag_str_id flag_FEMALE_EXCLUSIVE( "FEMALE_EXCLUSIVE" );
 static const trait_flag_str_id flag_MALE_PREFERRED( "MALE_PREFERRED" );
 static const trait_flag_str_id flag_FEMALE_PREFERRED( "FEMALE_PREFERRED" );
 
+static auto random_age_for_profession( const profession &prof ) -> int
+{
+    const auto range = prof.starting_age_range();
+    if( range ) {
+        const auto min_age = range->min;
+        const auto max_age = range->max;
+        if( min_age == max_age ) {
+            return min_age;
+        }
+        return rng( min_age, max_age );
+    }
+    return rng( profession::min_age, profession::max_age );
+}
+
 // Colors used in this file: (Most else defaults to c_light_gray)
 #define COL_STAT_ACT        c_white   // Selected stat
 #define COL_STAT_BONUS      c_light_green // Bonus
@@ -230,8 +244,6 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
     } else {
         name = MAP_SHARING::getUsername();
     }
-    // if adjusting min and max age from 16 and 55, make sure to see set_description()
-    init_age = rng( 16, 55 );
     // if adjusting min and max height from 145 and 200, make sure to see set_description()
     init_height = rng( 145, 200 );
     bool cities_enabled = world_generator->active_world->info->WORLD_OPTIONS["CITY_SIZE"].getValue() !=
@@ -252,6 +264,8 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
 
     prof = g->scen->weighted_random_profession();
     random_start_location = true;
+    // if adjusting min and max age from 16 and 55, make sure to see set_description()
+    set_base_age( random_age_for_profession( *prof ) );
 
     str_max = rng( 6, HIGH_STAT - 2 );
     dex_max = rng( 6, HIGH_STAT - 2 );
@@ -2476,6 +2490,7 @@ tab_direction set_profession( avatar &u, points_left &points,
             }
             const int netPointCost = sorted_profs[cur_id]->point_cost() - u.prof->point_cost();
             u.prof = sorted_profs[cur_id];
+            u.set_base_age( random_age_for_profession( *u.prof ) );
             // Add traits for the new profession (and perhaps scenario, if, for example,
             // both the scenario and old profession require the same trait)
             newcharacter::add_traits( u, points );
@@ -4165,6 +4180,7 @@ void reset_scenario( avatar &u, const scenario *scen )
     u.per_max = 8;
     g->scen = scen;
     u.prof = default_prof;
+    u.set_base_age( random_age_for_profession( *u.prof ) );
     for( auto &t : u.get_mutations() ) {
         if( t.obj().hp_modifier != 0 ) {
             u.toggle_trait( t );
