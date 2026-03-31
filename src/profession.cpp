@@ -29,11 +29,6 @@ generic_factory<profession> all_profs( "profession" );
 const profession_id generic_profession_id( "unemployed" );
 } // namespace
 
-static auto clamp_age_value( int age ) -> int
-{
-    return std::clamp( age, profession::min_age, profession::max_age );
-}
-
 static class json_item_substitution
 {
     public:
@@ -263,12 +258,12 @@ void profession::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "npcs", _starting_npcs, auto_flags_reader<npc_class_id> {} );
     if( jo.has_member( "age" ) ) {
         if( jo.has_int( "age" ) ) {
-            const auto value = clamp_age_value( jo.get_int( "age" ) );
+            const auto value = jo.get_int( "age" );
             _starting_age_range = age_range{ value, value };
         } else if( jo.has_object( "age" ) ) {
             JsonObject age_obj = jo.get_object( "age" );
-            const auto min_age = clamp_age_value( age_obj.get_int( "min" ) );
-            const auto max_age = clamp_age_value( age_obj.get_int( "max" ) );
+            const auto min_age = age_obj.get_int( "min" );
+            const auto max_age = age_obj.get_int( "max" );
             const auto range_min = std::min( min_age, max_age );
             const auto range_max = std::max( min_age, max_age );
             _starting_age_range = age_range{ range_min, range_max };

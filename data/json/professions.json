@@ -3211,7 +3211,7 @@
     "name": "Student",
     "description": "You were a high school student, but the tests you'll face now will have much higher stakes.  There might even be something useful in one of these books you've been lugging around all year.",
     "points": 1,
-    "age": { "min": 16, "max": 18 },
+    "age": { "min": 14, "max": 18 },
     "items": {
       "both": {
         "items": [
@@ -3240,7 +3240,7 @@
     "name": "Library Nerd",
     "description": "They say reading is food for the brain, but those corpses seem to see your brain as food.  In your haste to escape, you grabbed the library's return box, but is there anything in there that might help you?",
     "points": 2,
-    "age": { "min": 16, "max": 18 },
+    "age": { "min": 14, "max": 18 },
     "traits": [ "LOVES_BOOKS" ],
     "items": {
       "both": {
@@ -5678,6 +5678,7 @@
     "name": "Bionic Student",
     "description": "Your parents were so obsessed with making sure you aced every test that they had you outfitted with bionics to make you smarter and never forget anything.  And now, you are facing the most dire test yet, and once again you had better succeed, or else.",
     "points": 3,
+    "age": { "min": 14, "max": 18 },
     "CBMs": [ "bio_batteries", "bio_power_storage", "bio_int_enhancer", "bio_memory" ],
     "items": {
       "both": [
