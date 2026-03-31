@@ -74,6 +74,7 @@
 #include "units_angle.h"
 #include "units_utility.h"
 #include "value_ptr.h"
+#include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
@@ -862,6 +863,23 @@ auto firing_vehicle( map &here, const Character &who ) -> vehicle * // *NOPAD*
     return &vp->vehicle();
 }
 
+auto has_only_rigid_wheels( const vehicle &veh ) -> bool
+{
+    auto has_wheels = false;
+    for( auto index = 0; index < veh.part_count(); ++index ) {
+        if( !veh.part_info( index ).has_flag( VPFLAG_WHEEL ) ) {
+            continue;
+        }
+
+        has_wheels = true;
+        if( std::abs( veh.part_info( index ).wheel_or_rating() - 0.1f ) > 0.001f ) {
+            return false;
+        }
+    }
+
+    return has_wheels;
+}
+
 auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoint &target,
                                   const int gun_recoil, const int shots ) -> void
 {
@@ -891,11 +909,12 @@ auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoin
 
     const auto face_velocity_vec = veh->face_vec();
     const auto lateral_velocity_vec = rl_vec2d( -face_velocity_vec.y, face_velocity_vec.x );
+    const auto lateral_scale = has_only_rigid_wheels( *veh ) ? 1.0 : vehicle_recoil_lateral_scale;
     const auto recoil_velocity_vec = recoil_direction.normalized() * recoil_velocity;
     const auto final_velocity = veh->velo_vec() +
                                 face_velocity_vec * recoil_velocity_vec.dot_product( face_velocity_vec ) +
                                 lateral_velocity_vec * recoil_velocity_vec.dot_product( lateral_velocity_vec ) *
-                                vehicle_recoil_lateral_scale;
+                                lateral_scale;
     const auto face_velocity = final_velocity.dot_product( veh->face_vec() );
     const auto lateral_velocity = final_velocity.dot_product( lateral_velocity_vec );
     const auto should_skid = veh->skidding || std::abs( lateral_velocity ) >= 1.0;

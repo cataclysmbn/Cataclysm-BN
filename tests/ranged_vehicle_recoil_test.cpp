@@ -186,7 +186,7 @@ TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Brow
     CHECK( veh->forward_velocity() < 0.0f );
 }
 
-TEST_CASE( "perpendicular gun recoil becomes a weak lateral skid instead of forward thrust",
+TEST_CASE( "perpendicular gun recoil keeps full sideways push on rigid-wheel vehicles",
            "[vehicle][gun]" )
 {
     const auto vehicle_origin = tripoint( 60, 60, 0 );
@@ -204,7 +204,7 @@ TEST_CASE( "perpendicular gun recoil becomes a weak lateral skid instead of forw
 
         auto &here = get_map();
         auto &player_character = get_avatar();
-        auto *const veh = here.add_vehicle( vproto_id( "swivel_chair" ), vehicle_origin, 0_degrees, 0, 0 );
+        auto *const veh = here.add_vehicle( vproto_id( "shopping_cart" ), vehicle_origin, 0_degrees, 0, 0 );
         REQUIRE( veh != nullptr );
 
         player_character.setpos( vehicle_origin );
@@ -239,5 +239,5 @@ TEST_CASE( "perpendicular gun recoil becomes a weak lateral skid instead of forw
     CHECK( lateral_result.skidding );
     CHECK( lateral_result.moves_off_face );
     CHECK( lateral_result.velocity > 0 );
-    CHECK( lateral_result.velocity < forward_result.velocity );
+    CHECK( lateral_result.velocity == Approx( forward_result.velocity ).margin( 1 ) );
 }
