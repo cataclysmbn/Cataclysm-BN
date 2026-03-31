@@ -183,6 +183,7 @@ TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Brow
 
     REQUIRE( shots_fired == 15 );
     CHECK( std::abs( veh->velocity ) >= 160 );
+    CHECK( veh->forward_velocity() < 0.0f );
 }
 
 TEST_CASE( "perpendicular gun recoil becomes a weak lateral skid instead of forward thrust",
