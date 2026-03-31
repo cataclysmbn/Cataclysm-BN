@@ -3293,7 +3293,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             const int &y = temp_y;
 
             const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
-                                            x <= max_visible_x );
+                                         x <= max_visible_x );
             for( int z = center.z; z >= -OVERMAP_DEPTH; z-- ) {
                 const auto &ch = here.access_cache( z );
 
