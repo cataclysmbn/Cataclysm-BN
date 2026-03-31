@@ -341,7 +341,7 @@
       { "item": "steel_chunk", "count": [ 1, 2 ] },
       { "item": "scrap", "count": [ 1, 2 ] }
     ],
-    "rolling_resistance": 0.5,
+    "rolling_resistance": 2,
     "wheel_type": "rigid",
     "contact_area": 4,
     "requirements": {
