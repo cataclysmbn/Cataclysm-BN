@@ -1981,21 +1981,13 @@
     "method": "json",
     "//": "Spawns a perfectly normal toilet",
     "nested_mapgen_id": "chunk_spawn_toilet",
-    "object": {
-      "mapgensize": [ 1, 1 ],
-      "rows": [ "t" ],
-      "toilets": { "t": {  } }
-    }
+    "object": { "mapgensize": [ 1, 1 ], "rows": [ "t" ], "toilets": { "t": {  } } }
   },
   {
     "type": "mapgen",
     "method": "json",
     "//": "Spawns an extremely abnormal toilet",
     "nested_mapgen_id": "chunk_spawn_skibidi_toilet",
-    "object": {
-      "mapgensize": [ 1, 1 ],
-      "rows": [ "t" ],
-      "monster": { "t": { "monster": "mon_skibidi_toilet" } }
-    }
+    "object": { "mapgensize": [ 1, 1 ], "rows": [ "t" ], "monster": { "t": { "monster": "mon_skibidi_toilet" } } }
   }
 ]
