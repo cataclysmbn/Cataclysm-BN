@@ -887,10 +887,12 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         int recipe_scroll_window_max = std::min( recmax, recipe_scroll_window_min + dataLines );
 
         for( int i = recipe_scroll_window_min; i < recipe_scroll_window_max; ++i ) {
-            auto tmp_name = std::string( indent[i], ' ' ) +
-                            current[i]->result_name( /*decorated=*/true );
+            std::string tmp_name;
             if( batch ) {
-                tmp_name = string_format( _( "%2dx %s" ), i + 1, tmp_name );
+                tmp_name = string_format( _( "%2dx %s" ), i + 1, current[i]->result_name( true ) );
+            } else {
+                tmp_name = std::string( indent[i], ' ' ) +
+                           current[i]->result_name( /*decorated=*/true );
             }
             const bool rcp_known = available_recipes.contains( *current[i] );
             const bool rcp_read = !highlight_unread_recipes ||
