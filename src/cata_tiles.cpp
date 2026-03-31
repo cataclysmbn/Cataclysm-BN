@@ -3372,8 +3372,19 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                             min_z = std::min( pos.z, min_z );
                             draw_points.emplace_back( pos, height_3d, ll, invisible );
                         } else if( last_vis != center.z + 1 ) {
-                            min_z = std::min( last_vis, min_z );
-                            draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d, last_vis_ll, invisible );
+                            if( in_map_bounds && z < center.z - fov_3d_z_range ) {
+                                // The floor is below the 3D FOV limit, but the loop only
+                                // reaches here through a fully transparent column above.
+                                // Treat it as seen-through-sky: render and memorize at the
+                                // floor's actual position with surface lighting + depth tint.
+                                here.set_memory_seen_cache_dirty( pos );
+                                min_z = std::min( pos.z, min_z );
+                                draw_points.emplace_back( pos, height_3d, last_vis_ll, invisible );
+                            } else {
+                                min_z = std::min( last_vis, min_z );
+                                draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d,
+                                                          last_vis_ll, invisible );
+                            }
                         }
 
                     } else {
