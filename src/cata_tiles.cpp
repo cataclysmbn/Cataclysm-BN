@@ -3289,15 +3289,15 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             int last_vis = center.z + 1;
             lit_level last_vis_ll = lit_level::BLANK;
             bool drew_occluded_overlay = false;
+            const int &x = temp_x;
+            const int &y = temp_y;
+
+            const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
+                                            x <= max_visible_x );
             for( int z = center.z; z >= -OVERMAP_DEPTH; z-- ) {
                 const auto &ch = here.access_cache( z );
 
                 const tripoint pos( temp_x, temp_y, z );
-                const int &x = pos.x;
-                const int &y = pos.y;
-
-                const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
-                                             x <= max_visible_x );
 
                 const bool in_map_bounds = here.inbounds( pos );
 
@@ -3322,9 +3322,6 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                             draw_from_id_string( dark_tile, pos, std::nullopt, std::nullopt,
                                                  lit_level::LIT, false, center.z - z, false );
                         }
-                        // Fall through to dont_draw_lower_floor: for a solid hidden floor it will
-                        // call apply_vision_effects (drawing lighting_hidden) and break; for open-air
-                        // hidden tiles it will not fire and the loop continues to the next z-level.
                     }
                 }
 
@@ -4696,6 +4693,22 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
         if( ret.has_value() ) {
             const auto& [tile_id, subtile, rotation] = ret.value();
             const tile_search_params tile { tile_id, C_TERRAIN, empty_string, subtile, rotation };
+            return draw_from_id_string(
+                       tile, p, bgCol, fgCol,
+                       lit_level::MEMORIZED, true, z_drop, false, height_3d );
+        } else if( t && !neighborhood_overridden && t != t_open_air ) {
+            // The single memory slot was overwritten by furniture/trap on this tile.
+            // Fall back to rendering the actual terrain as memorized so it isn't invisible.
+            int subtile = 0;
+            int rotation = 0;
+            int connect_group = 0;
+            if( t.obj().connects( connect_group ) ) {
+                get_connect_values( p, subtile, rotation, connect_group, {} );
+            } else {
+                get_terrain_orientation( p, rotation, subtile, {}, invisible );
+            }
+            const std::string &tname = t.id().str();
+            const tile_search_params tile { tname, C_TERRAIN, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
