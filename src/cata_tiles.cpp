@@ -2429,7 +2429,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                                  bool has_top_level, tint_blend_mode top_blend_mode,
                                  std::optional<float> top_contrast, std::optional<float> top_saturation,
         std::optional<float> top_brightness ) -> tint_config {
-            tint_config cfg;
+            tint_config cfg = {};
             if( !obj.has_member( key ) )
             {
                 return cfg;
