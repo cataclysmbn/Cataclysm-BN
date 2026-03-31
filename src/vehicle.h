@@ -1481,9 +1481,11 @@ class vehicle
         void play_music();
         void play_chimes();
         void operate_planter();
+        std::string brake_hold_toggle_string() const;
         std::string tracking_toggle_string();
         void autopilot_patrol_check();
         void toggle_autopilot();
+        void toggle_brake_hold();
         void enable_patrol();
         void toggle_tracking();
         //scoop operation,pickups, battery drain, etc.
@@ -1819,6 +1821,8 @@ class vehicle
         bool cruise_on = true;
         // at least one engine is on, of any type
         bool engine_on = false;
+        // parked braking drag on/off
+        bool brake_hold = true;
         // vehicle tracking on/off
         bool tracking_on = false;
         // vehicle has no key

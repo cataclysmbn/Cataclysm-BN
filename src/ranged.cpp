@@ -161,6 +161,8 @@ static dispersion_sources calculate_dispersion( const map &m, const Character &w
 namespace
 {
 
+constexpr auto vehicle_recoil_velocity_scale = 1.4;
+
 /// more generic version of `item::gunmod_find`
 auto gunmod_find_with(
     item &it, std::function < auto( const item * ) -> bool > pred
@@ -879,7 +881,8 @@ auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoin
     const auto vehicle_mass_kg = std::max( 1.0, static_cast<double>( units::to_kilogram(
             veh->total_mass() ) ) );
     const auto recoil_velocity = static_cast<int>( std::round( static_cast<double>( gun_recoil ) *
-                                 shots * get_option<float>( "VEHICLE_GUN_RECOIL_FACTOR" ) /
+                                 shots * vehicle_recoil_velocity_scale *
+                                 get_option<float>( "VEHICLE_GUN_RECOIL_FACTOR" ) /
                                  vehicle_mass_kg ) );
     if( recoil_velocity == 0 ) {
         return;

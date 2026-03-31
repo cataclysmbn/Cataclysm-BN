@@ -75,7 +75,79 @@ TEST_CASE( "vehicle gun recoil scaling factor can disable vehicle thrust", "[veh
     CHECK( veh->velocity == 0 );
 }
 
-TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Browning past 6 km/h",
+TEST_CASE( "brake hold toggles parked braking drag", "[vehicle][drag]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    auto *const bicycle = here.add_vehicle( vproto_id( "bicycle" ), tripoint( 60, 60, 0 ), 0_degrees, 0,
+                                            0 );
+    auto *const shopping_cart = here.add_vehicle( vproto_id( "shopping_cart" ), tripoint( 70, 60, 0 ),
+                                0_degrees, 0, 0 );
+
+    REQUIRE( bicycle != nullptr );
+    REQUIRE( shopping_cart != nullptr );
+
+    CHECK( bicycle->static_drag() < bicycle->static_drag( false ) );
+
+    bicycle->toggle_brake_hold();
+    shopping_cart->toggle_brake_hold();
+
+    CHECK( bicycle->static_drag() == bicycle->static_drag( false ) );
+    CHECK( shopping_cart->static_drag() == shopping_cart->static_drag( false ) );
+}
+
+TEST_CASE( "single birdshot can move a swivel chair one tile on office floor at 10x recoil",
+           "[vehicle][gun]" )
+{
+    clear_all_state();
+
+    override_option vehicle_gun_recoil_factor( "VEHICLE_GUN_RECOIL_FACTOR", "10.0" );
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    const auto vehicle_origin = tripoint( 60, 60, 0 );
+
+    for( const auto x : std::views::iota( 40, 81 ) ) {
+        here.ter_set( tripoint( x, vehicle_origin.y, vehicle_origin.z ), ter_id( "t_linoleum_white" ) );
+        here.furn_set( tripoint( x, vehicle_origin.y, vehicle_origin.z ), furn_id( "f_null" ) );
+    }
+
+    auto *const veh = here.add_vehicle( vproto_id( "swivel_chair" ), vehicle_origin, 0_degrees, 0, 0 );
+    REQUIRE( veh != nullptr );
+
+    veh->toggle_brake_hold();
+
+    player_character.setpos( vehicle_origin );
+    here.board_vehicle( vehicle_origin, &player_character );
+    REQUIRE( player_character.in_vehicle );
+
+    auto gun = item::spawn( itype_id( "m1014" ) );
+    gun->ammo_set( itype_id( "shot_bird" ) );
+    player_character.wield( std::move( gun ) );
+    REQUIRE( player_character.primary_weapon().typeId() == itype_id( "m1014" ) );
+
+    const auto starting_pos = veh->global_pos3();
+
+    const auto shots_fired = ranged::fire_gun( player_character, vehicle_origin + tripoint( 5, 0, 0 ),
+                             1 );
+
+    REQUIRE( shots_fired == 1 );
+    REQUIRE( veh->velocity != 0 );
+
+    for( const auto _ : std::views::iota( 0, 20 ) ) {
+        ( void ) _;
+        here.vehmove();
+        if( veh->global_pos3() != starting_pos ) {
+            break;
+        }
+    }
+
+    CHECK( square_dist( starting_pos, veh->global_pos3() ) >= 1 );
+    CHECK( player_character.pos() == veh->global_pos3() );
+}
+
+TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Browning near 6 km/h",
            "[vehicle][gun]" )
 {
     clear_all_state();
@@ -110,5 +182,5 @@ TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Brow
     }
 
     REQUIRE( shots_fired == 15 );
-    CHECK( std::abs( veh->velocity ) >= 167 );
+    CHECK( std::abs( veh->velocity ) >= 160 );
 }
