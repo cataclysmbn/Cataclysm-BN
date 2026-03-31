@@ -881,7 +881,7 @@ auto has_only_rigid_wheels( const vehicle &veh ) -> bool
 }
 
 auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoint &target,
-                                  const int gun_recoil, const int shots ) -> void
+                                  const tripoint &shot_origin, const int gun_recoil, const int shots ) -> void
 {
     if( gun_recoil <= 0 || shots <= 0 ) {
         return;
@@ -892,7 +892,7 @@ auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoin
         return;
     }
 
-    const auto recoil_direction = rl_vec2d( who.pos().xy() - target.xy() );
+    const auto recoil_direction = rl_vec2d( shot_origin.xy() - target.xy() );
     if( recoil_direction.is_null() ) {
         return;
     }
@@ -966,11 +966,11 @@ static int calc_gun_volume( const item &gun )
 
 int ranged::fire_gun( Character &who, const tripoint &target, int shots )
 {
-    return fire_gun( who, target, shots, who.primary_weapon(), nullptr );
+    return fire_gun( who, target, shots, who.primary_weapon(), nullptr, std::nullopt );
 }
 
 int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, item &gun,
-                      item *ammo )
+                      item *ammo, const std::optional<tripoint> &shot_origin )
 {
     int attack_moves = time_to_attack( who, gun, ammo );
 
@@ -1024,6 +1024,7 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
 
     bool aoe_attack = gun.gun_skill() == skill_launcher || shape;
     tripoint aim = target;
+    const auto recoil_origin = shot_origin.value_or( who.pos() );
     int curshot = 0;
     int hits = 0; // total shots on target
     while( curshot != shots ) {
@@ -1157,7 +1158,7 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
             }
         }
 
-        apply_gun_recoil_to_vehicle( here, who, target, gun_recoil, curshot );
+        apply_gun_recoil_to_vehicle( here, who, target, recoil_origin, gun_recoil, curshot );
 
         who.recoil += gun_recoil;
         if( is_mech_weapon ) {
