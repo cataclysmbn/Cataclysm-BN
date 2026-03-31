@@ -86,6 +86,20 @@ static const activity_id ACT_VEHICLE( "ACT_VEHICLE" );
 
 static const std::string flag_MOUNTABLE( "MOUNTABLE" );
 
+namespace
+{
+
+auto spawn_debug_install_base( const vpart_info &vpinfo ) -> detached_ptr<item>
+{
+    auto spawned = item::spawn( vpinfo.item );
+    if( vpinfo.fuel_type == fuel_type_battery && spawned->ammo_capacity() > 0 ) {
+        spawned->ammo_set( spawned->ammo_default(), -1 );
+    }
+    return spawned;
+}
+
+} // namespace
+
 static inline std::string status_color( bool status )
 {
     return status ? "<color_green>" : "<color_red>";
@@ -3219,31 +3233,35 @@ void veh_interact::complete_vehicle( Character &who )
             const inventory &inv = who.crafting_inventory();
 
             const auto reqs = vpinfo.install_requirements();
-            if( !reqs.can_make_with_inventory( inv, is_crafting_component ) ) {
+            const auto using_debug_hammerspace = who.has_trait( trait_DEBUG_HS );
+            if( !using_debug_hammerspace && !reqs.can_make_with_inventory( inv, is_crafting_component ) ) {
                 add_msg( m_info, _( "You don't meet the requirements to install the %s." ), vpinfo.name() );
                 break;
             }
-            //TODO!: cheeeeck
-            // consume items extracting a match for the parts base item
             detached_ptr<item> base;
-            for( const auto &e : reqs.get_components() ) {
-                for( auto &obj : who.consume_items( e, 1, is_crafting_component ) ) {
-                    if( obj->typeId() == vpinfo.item ) {
-                        base = std::move( obj );
+            if( using_debug_hammerspace ) {
+                base = spawn_debug_install_base( vpinfo );
+            } else {
+                // Consume items, extracting the specific base item for the installed part.
+                for( const auto &e : reqs.get_components() ) {
+                    for( auto &obj : who.consume_items( e, 1, is_crafting_component ) ) {
+                        if( obj->typeId() == vpinfo.item ) {
+                            base = std::move( obj );
+                        }
                     }
+                }
+
+                for( const auto &e : reqs.get_tools() ) {
+                    who.consume_tools( e );
                 }
             }
             if( !base ) {
-                if( !who.has_trait( trait_DEBUG_HS ) ) {
+                if( !using_debug_hammerspace ) {
                     add_msg( m_info, _( "Could not find base part in requirements for %s." ), vpinfo.name() );
                     break;
                 } else {
-                    base = item::spawn( vpinfo.item );
+                    base = spawn_debug_install_base( vpinfo );
                 }
-            }
-
-            for( const auto &e : reqs.get_tools() ) {
-                who.consume_tools( e );
             }
 
             who.invalidate_crafting_inventory();
