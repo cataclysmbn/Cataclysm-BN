@@ -16,7 +16,14 @@
 #include "overmap.h"
 #include "trap.h"
 #include "detached_ptr.h"
+#include "veh_type.h"
 #include "type_id.h"
+#include "units_angle.h"
+#include "vehicle.h"
+
+#include <cmath>
+
+LUNA_VAL( wrapped_vehicle, "WrappedVehicle" )
 
 namespace sol
 {
@@ -28,6 +35,175 @@ struct is_container<map_stack> : std::false_type {};
 
 namespace
 {
+
+struct replace_vehicle_options {
+    units::angle orientation = 0_degrees;
+    int status = -1;
+    std::optional<bool> locks = std::nullopt;
+};
+
+struct replace_vehicle_target {
+    tripoint pos;
+    vehicle *veh = nullptr;
+    units::angle default_orientation = 0_degrees;
+};
+
+struct replace_vehicle_request {
+    vproto_id replacement_type;
+    replace_vehicle_options options;
+    std::optional<bool> locked = std::nullopt;
+    std::optional<bool> has_keys = std::nullopt;
+};
+
+auto parse_replace_vehicle_options( const sol::table &opts,
+                                    const units::angle default_orientation ) -> std::optional<replace_vehicle_options>
+{
+    auto parsed = replace_vehicle_options{ .orientation = default_orientation };
+
+    const auto orientation_obj = opts.get<sol::optional<sol::object>>( "orientation" );
+    if( orientation_obj.has_value() ) {
+        if( orientation_obj->is<units::angle>() ) {
+            parsed.orientation = orientation_obj->as<units::angle>();
+        } else if( orientation_obj->is<int>() ) {
+            parsed.orientation = units::from_degrees( orientation_obj->as<int>() );
+        } else if( orientation_obj->is<double>() ) {
+            parsed.orientation = units::from_degrees( orientation_obj->as<double>() );
+        } else {
+            return std::nullopt;
+        }
+    }
+
+    const auto status_obj = opts.get<sol::optional<sol::object>>( "status" );
+    if( status_obj.has_value() ) {
+        if( status_obj->is<int>() ) {
+            parsed.status = status_obj->as<int>();
+        } else if( status_obj->is<double>() ) {
+            parsed.status = static_cast<int>( status_obj->as<double>() );
+        } else {
+            return std::nullopt;
+        }
+    }
+
+    const auto locks_obj = opts.get<sol::optional<sol::object>>( "locks" );
+    if( locks_obj.has_value() ) {
+        if( locks_obj->is<bool>() ) {
+            parsed.locks = locks_obj->as<bool>();
+        } else {
+            return std::nullopt;
+        }
+    }
+
+    return parsed;
+}
+
+auto get_replace_vehicle_target( const wrapped_vehicle &wrapped ) ->
+std::optional<replace_vehicle_target>
+{
+    if( wrapped.v == nullptr ) {
+        return std::nullopt;
+    }
+
+    return replace_vehicle_target{
+        .pos = wrapped.pos,
+        .veh = wrapped.v,
+        .default_orientation = wrapped.v->face.dir(),
+    };
+}
+
+auto get_replace_vehicle_target( map &m,
+                                 const tripoint &pos ) -> std::optional<replace_vehicle_target>
+{
+    const auto vehicles = m.get_vehicles();
+    const auto vehicle_it = std::ranges::find_if( vehicles, [&pos]( const wrapped_vehicle & wrapped ) {
+        return wrapped.pos == pos;
+    } );
+    if( vehicle_it == vehicles.end() || vehicle_it->v == nullptr ) {
+        return std::nullopt;
+    }
+
+    return replace_vehicle_target{
+        .pos = vehicle_it->pos,
+        .veh = vehicle_it->v,
+        .default_orientation = vehicle_it->v->face.dir(),
+    };
+}
+
+auto make_replace_vehicle_request( const std::string &vehicle_id,
+                                   const replace_vehicle_target &target,
+                                   const sol::optional<sol::table> &opts ) -> std::optional<replace_vehicle_request>
+{
+    const auto replacement_type = vproto_id( vehicle_id );
+    if( !replacement_type.is_valid() ) {
+        return std::nullopt;
+    }
+
+    auto options = replace_vehicle_options{ .orientation = target.default_orientation };
+    if( opts.has_value() ) {
+        const auto parsed_options = parse_replace_vehicle_options( *opts, target.default_orientation );
+        if( !parsed_options.has_value() ) {
+            return std::nullopt;
+        }
+        options = *parsed_options;
+    }
+
+    return replace_vehicle_request{
+        .replacement_type = replacement_type,
+        .options = options,
+        .locked = options.locks.has_value() && ! *options.locks ? std::optional<bool>( false ) : std::nullopt,
+        .has_keys = options.locks.has_value() && ! *options.locks ? std::optional<bool>( true ) : std::nullopt,
+    };
+}
+
+auto configure_vehicle_locks( vehicle &veh, const replace_vehicle_request &request ) -> void
+{
+    if( !request.options.locks.has_value() || *request.options.locks ) { return; }
+
+    for( auto index = veh.part_count(); index > 0; --index ) {
+        const auto part_index = index - 1;
+        if( veh.part_with_feature( part_index, "DOOR_LOCKING", false ) == part_index ) {
+            veh.remove_part( part_index );
+        }
+    }
+}
+
+auto configure_vehicle_brake_hold( vehicle &veh ) -> void
+{
+    auto has_wheels = false;
+    auto all_wheels_are_rigid = true;
+    for( auto index = 0; index < veh.part_count(); ++index ) {
+        if( !veh.part_info( index ).has_flag( VPFLAG_WHEEL ) ) {
+            continue;
+        }
+
+        has_wheels = true;
+        if( std::abs( veh.part_info( index ).wheel_or_rating() - 0.1f ) > 0.001f ) {
+            all_wheels_are_rigid = false;
+            break;
+        }
+    }
+
+    if( has_wheels && all_wheels_are_rigid ) {
+        veh.toggle_brake_hold();
+    }
+}
+
+auto replace_vehicle_impl( map &m, const replace_vehicle_target &target,
+                           const replace_vehicle_request &request ) -> bool
+{
+    auto detached_vehicle = m.detach_vehicle( target.veh );
+    if( !detached_vehicle ) {
+        return false;
+    }
+
+    auto *const added_vehicle = m.add_vehicle( request.replacement_type, target.pos,
+                                request.options.orientation, -1, request.options.status,
+                                true, request.locked, request.has_keys );
+    if( added_vehicle == nullptr ) { return false; }
+
+    configure_vehicle_locks( *added_vehicle, request );
+    configure_vehicle_brake_hold( *added_vehicle );
+    return true;
+}
 
 struct item_stack_lua_it_state {
     item_stack *stack;
@@ -110,6 +286,18 @@ item *item_stack_lua_index( item_stack &stk, int i )
 
 void cata::detail::reg_map( sol::state &lua )
 {
+    {
+        auto ut = luna::new_usertype<wrapped_vehicle>( lua, luna::no_bases, luna::no_constructor );
+
+        DOC( "Returns the vehicle origin tile in local map-square coordinates." );
+        luna::set_fx( ut, "pos", []( const wrapped_vehicle & wrapped ) -> tripoint { return wrapped.pos; } );
+        DOC( "Returns the vehicle prototype id string." );
+        luna::set_fx( ut, "type", []( const wrapped_vehicle & wrapped ) -> std::string {
+            if( wrapped.v == nullptr ) { return ""; }
+            return wrapped.v->type.str();
+        } );
+    }
+
     // Register 'map' class to be used in Lua
     {
         sol::usertype<map> ut = luna::new_usertype<map>( lua, luna::no_bases, luna::no_constructor );
@@ -205,6 +393,32 @@ void cata::detail::reg_map( sol::state &lua )
             }
             return points;
         } );
+
+        DOC( "Returns every vehicle currently on the map." );
+        luna::set_fx( ut, "get_vehicles", []( map & m ) -> std::vector<wrapped_vehicle> { return m.get_vehicles(); } );
+
+        DOC( "Replaces a specific vehicle with a different prototype, preserving origin tile by default. Pass an optional table with `orientation` (Angle or degrees), `status`, and `locks` to override spawn settings." );
+        luna::set_fx( ut, "replace_vehicle", sol::overload(
+                          []( map & m, const wrapped_vehicle & wrapped, const std::string & vehicle_id,
+        sol::optional<sol::table> opts ) -> bool {
+            const auto target = get_replace_vehicle_target( wrapped );
+            if( !target.has_value() ) { return false; }
+
+            const auto request = make_replace_vehicle_request( vehicle_id, *target, opts );
+            if( !request.has_value() ) { return false; }
+
+            return replace_vehicle_impl( m, *target, *request );
+        },
+        []( map & m, const tripoint & pos, const std::string & vehicle_id,
+            sol::optional<sol::table> opts ) -> bool {
+            const auto target = get_replace_vehicle_target( m, pos );
+            if( !target.has_value() ) { return false; }
+
+            const auto request = make_replace_vehicle_request( vehicle_id, *target, opts );
+            if( !request.has_value() ) { return false; }
+
+            return replace_vehicle_impl( m, *target, *request );
+        } ) );
 
         DOC( "Moves an item from one position to another, preserving all item state including contents." );
         luna::set_fx( ut, "move_item_to", []( map & m, const tripoint & from, item * it,

@@ -11,16 +11,21 @@
 #include "faction.h"
 #include "fstream_utils.h"
 #include "json.h"
+#include "map.h"
 #include "mapdata.h"
 #include "options.h"
 #include "point.h"
+#include "state_helpers.h"
 #include "string_formatter.h"
 #include "stringmaker.h"
 #include "type_id.h"
 #include "units_angle.h"
 #include "units_energy.h"
 #include "units_mass.h"
+#include "units_utility.h"
 #include "units_volume.h"
+#include "vehicle.h"
+#include "vehicle_part.h"
 
 #include <optional>
 #include <string>
@@ -264,6 +269,48 @@ TEST_CASE( "lua_get_luna_type", "[lua]" )
         st["k"] = custom_udata{};
         CHECK( get_luna_type( st["k"] ) == std::nullopt );
     }
+}
+
+TEST_CASE( "lua_map_vehicle_replacement", "[lua]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    const auto origin = tripoint( 60, 60, 0 );
+    const auto original_facing = -90_degrees;
+    const auto overridden_facing = 180_degrees;
+    auto *vehicle_ptr = here.add_vehicle( vproto_id( "bicycle" ), origin, original_facing, 0, 0 );
+    REQUIRE( vehicle_ptr != nullptr );
+
+    sol::state lua = make_lua_state();
+    auto test_data = lua.create_table();
+    test_data["map"] = &here;
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "map_vehicle_replacement_test.lua" );
+
+    CHECK( test_data.get<int>( "vehicle_count_before" ) == 1 );
+    CHECK( test_data.get<std::string>( "vehicle_type_before" ) == "bicycle" );
+    CHECK( test_data.get<bool>( "replace_ok" ) );
+    CHECK( test_data.get<bool>( "replace_with_opts_ok" ) );
+    CHECK( test_data.get<int>( "vehicle_count_after" ) == 1 );
+    CHECK( test_data.get<std::string>( "vehicle_type_after" ) == "swivel_chair" );
+
+    const auto vehicles = here.get_vehicles();
+    REQUIRE( vehicles.size() == 1 );
+    CHECK( vehicles.front().pos == origin );
+    REQUIRE( vehicles.front().v != nullptr );
+    CHECK( vehicles.front().v->type == vproto_id( "swivel_chair" ) );
+    CHECK( normalize( vehicles.front().v->face.dir() ) == normalize( overridden_facing ) );
+    CHECK( vehicles.front().v->static_drag() == vehicles.front().v->static_drag( false ) );
+    const auto part_count = vehicles.front().v->part_count();
+    auto has_lock = false;
+    for( auto index = 0; index < part_count; ++index ) {
+        CHECK( vehicles.front().v->part( index ).damage_percent() == Approx( 0.0 ) );
+        has_lock = has_lock ||
+                   vehicles.front().v->part_with_feature( index, "DOOR_LOCKING", false ) == index;
+    }
+    CHECK( !has_lock );
 }
 
 TEST_CASE( "lua_table_serde", "[lua]" )

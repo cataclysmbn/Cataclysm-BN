@@ -188,35 +188,55 @@ TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Brow
 TEST_CASE( "perpendicular gun recoil becomes a weak lateral skid instead of forward thrust",
            "[vehicle][gun]" )
 {
-    clear_all_state();
-
-    auto &here = get_map();
-    auto &player_character = get_avatar();
     const auto vehicle_origin = tripoint( 60, 60, 0 );
 
-    auto *const veh = here.add_vehicle( vproto_id( "swivel_chair" ), vehicle_origin, 0_degrees, 0, 0 );
-    REQUIRE( veh != nullptr );
+    override_option vehicle_gun_recoil_factor( "VEHICLE_GUN_RECOIL_FACTOR", "1.0" );
 
-    player_character.setpos( vehicle_origin );
-    here.board_vehicle( vehicle_origin, &player_character );
-    REQUIRE( player_character.in_vehicle );
+    struct recoil_result {
+        int velocity = 0;
+        bool skidding = false;
+        bool moves_off_face = false;
+    };
 
-    auto gun = item::spawn( itype_id( "m1014" ) );
-    gun->ammo_set( itype_id( "shot_00" ) );
-    player_character.wield( std::move( gun ) );
-    REQUIRE( player_character.primary_weapon().typeId() == itype_id( "m1014" ) );
+    const auto fire_recoil = [&]( const tripoint & target ) -> recoil_result {
+        clear_all_state();
 
-    REQUIRE( veh->velocity == 0 );
+        auto &here = get_map();
+        auto &player_character = get_avatar();
+        auto *const veh = here.add_vehicle( vproto_id( "swivel_chair" ), vehicle_origin, 0_degrees, 0, 0 );
+        REQUIRE( veh != nullptr );
 
-    auto shots_fired = 0;
-    for( const auto _ : std::views::iota( 0, 5 ) ) {
-        ( void ) _;
-        shots_fired += ranged::fire_gun( player_character, vehicle_origin + tripoint( 0, -5, 0 ), 1 );
-    }
+        player_character.setpos( vehicle_origin );
+        here.board_vehicle( vehicle_origin, &player_character );
+        REQUIRE( player_character.in_vehicle );
 
-    REQUIRE( shots_fired == 5 );
-    CHECK( veh->skidding );
-    CHECK( veh->move.dir() != veh->face.dir() );
-    CHECK( std::abs( veh->velocity ) > 0 );
-    CHECK( std::abs( veh->velocity ) < 667 );
+        auto gun = item::spawn( itype_id( "m1014" ) );
+        gun->ammo_set( itype_id( "shot_00" ) );
+        player_character.wield( std::move( gun ) );
+        REQUIRE( player_character.primary_weapon().typeId() == itype_id( "m1014" ) );
+
+        REQUIRE( veh->velocity == 0 );
+
+        auto shots_fired = 0;
+        for( const auto _ : std::views::iota( 0, 5 ) )
+        {
+            ( void ) _;
+            shots_fired += ranged::fire_gun( player_character, target, 1 );
+        }
+
+        REQUIRE( shots_fired == 5 );
+        return recoil_result{
+            .velocity = std::abs( veh->velocity ),
+            .skidding = veh->skidding,
+            .moves_off_face = veh->move.dir() != veh->face.dir(),
+        };
+    };
+
+    const auto forward_result = fire_recoil( vehicle_origin + tripoint( 5, 0, 0 ) );
+    const auto lateral_result = fire_recoil( vehicle_origin + tripoint( 0, -5, 0 ) );
+
+    CHECK( lateral_result.skidding );
+    CHECK( lateral_result.moves_off_face );
+    CHECK( lateral_result.velocity > 0 );
+    CHECK( lateral_result.velocity < forward_result.velocity );
 }
