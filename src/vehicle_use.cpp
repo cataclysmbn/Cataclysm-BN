@@ -1222,15 +1222,16 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
         starting_engine_position = global_pos3();
     }
 
+    if( take_control && !g->u.controlling_vehicle ) {
+        g->u.controlling_vehicle = true;
+        add_msg( _( "You take control of the %s." ), name );
+    }
+
     if( !has_engine ) {
         add_msg( m_info, _( "The %s doesn't have an engine!" ), name );
         return;
     }
 
-    if( take_control && !g->u.controlling_vehicle ) {
-        g->u.controlling_vehicle = true;
-        add_msg( _( "You take control of the %s." ), name );
-    }
     if( !autodrive ) {
         g->u.assign_activity( ACT_START_ENGINES, start_time );
         g->u.activity->placement = starting_engine_position - g->u.pos();
