@@ -3508,5 +3508,23 @@
     "volume": "250 ml",
     "price": "8 USD",
     "price_postapoc": "50 cent"
+  },
+  {
+    "type": "GENERIC",
+    "id": "broken_skibidi_toilet",
+    "symbol": "%",
+    "color": "white",
+    "looks_like": "f_rubble_landfill",
+    "name": { "str": "broken skibidi toilet" },
+    "category": "scrap_ceramics",
+    "description": "The broken leftovers of a toilet with some sort of laser cannon strapped to it.  Much better now that it finally shut up.  Could probably be dismantled for scrap.",
+    "price": "10 USD",
+    "price_postapoc": "10 cent",
+    "material": [ "ceramic" ],
+    "weight": "40 kg",
+    "volume": "16 L",
+    "bashing": 12,
+    "to_hit": -3,
+    "flags": [ "TRADER_AVOID", "NO_REPAIR" ]
   }
 ]

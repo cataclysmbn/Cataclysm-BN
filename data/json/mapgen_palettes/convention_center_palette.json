@@ -91,7 +91,6 @@
     },
     "liquids": { "g": { "liquid": "water_clean", "amount": [ 0, 100 ] } },
     "vendingmachines": { "D": { "item_group": "vending_drink" }, "F": { "item_group": "vending_food" } },
-    "toilets": { "t": {  } },
     "nested": {
       "(": {
         "chunks": [
@@ -103,7 +102,8 @@
       },
       ")": {
         "chunks": [ [ "null", 2 ], [ "conference_big_vacant", 6 ], [ "conference_big_lecture", 3 ], [ "conference_big_meeting", 3 ] ]
-      }
+      },
+      "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] }
     }
   },
   {

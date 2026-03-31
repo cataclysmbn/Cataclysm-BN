@@ -20,7 +20,6 @@
       "n": "f_table",
       "o": "f_bookcase",
       "r": "f_rack",
-      "t": "f_toilet",
       "z": "f_crate_c",
       "{": "f_rubble"
     },
@@ -83,7 +82,7 @@
       "}": "t_manhole_cover",
       "b": "t_utility_light"
     },
-    "toilets": { "t": {  } },
+    "nested": { "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "items": {
       " ": { "item": "subway", "chance": 1 },
       "@": { "item": "bed", "chance": 50, "repeat": 2 },

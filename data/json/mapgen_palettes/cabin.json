@@ -26,7 +26,6 @@
       "R": [ "f_rack", "f_utility_shelf" ],
       "S": "f_woodstove",
       "s": "f_sink",
-      "T": "f_toilet",
       "U": "f_utility_shelf",
       "V": "f_oven",
       "u": "f_cupboard",
@@ -153,6 +152,6 @@
       "5": { "item": "SUS_kitchen_sink", "chance": 35 }
     },
     "toilets": { "T": {  } },
-    "nested": { "w": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] } }
+    "nested": { "w": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] }, "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

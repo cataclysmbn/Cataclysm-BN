@@ -14,7 +14,6 @@
       "O": "f_oven",
       "P": "f_indoor_plant",
       "S": "f_sink",
-      "T": "f_toilet",
       "U": "f_statue",
       "Z": "f_crate_o",
       "b": "f_bench",
@@ -29,7 +28,6 @@
       "n": "f_table",
       "o": "f_bookcase",
       "r": "f_rack",
-      "t": "f_toilet",
       "z": "f_crate_c"
     },
     "terrain": {
@@ -112,7 +110,10 @@
       "}": "t_manhole_cover",
       "&": "t_gas_pump"
     },
-    "toilets": { "t": {  } },
+    "nested": {
+      "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] },
+      "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] }
+    },
     "items": {
       "@": { "item": "bed", "chance": 50 },
       "D": { "item": "floor_trash", "chance": 75, "repeat": 2 },

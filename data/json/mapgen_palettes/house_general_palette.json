@@ -19,7 +19,6 @@
         }
       }
     },
-    "toilets": { "t": {  } },
     "furniture": {
       "a": "f_fireplace",
       "b": "f_bigmirror",
@@ -219,7 +218,8 @@
     "nested": {
       "ɸ": { "chunks": [ "NC_res_personal_items_1X1" ] },
       "o": { "chunks": [ [ "null", 195 ], [ "house_place_air_conditioner", 5 ] ] },
-      "v": { "chunks": [ [ "house_chunk_spawn_firesafe", 50 ], [ "house_chunk_spawn_gunsafe", 50 ] ] }
+      "v": { "chunks": [ [ "house_chunk_spawn_firesafe", 50 ], [ "house_chunk_spawn_gunsafe", 50 ] ] },
+      "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] }
     }
   },
   {

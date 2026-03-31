@@ -58,7 +58,7 @@
       "t": "f_table",
       "U": "f_utility_shelf"
     },
-    "toilets": { "T": {  } },
+    "nested": { "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "vendingmachines": { "D": { "item_group": "vending_drink" }, "F": { "item_group": "vending_food" } }
   },
   {
@@ -119,7 +119,7 @@
       "t": "f_table",
       "v": "f_vent_pipe"
     },
-    "toilets": { "T": {  } },
+    "nested": { "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "vendingmachines": { "D": { "item_group": "vending_drink" }, "F": { "item_group": "vending_food" } }
   },
   {

@@ -6039,5 +6039,22 @@
       [ [ "gun_module", 1 ] ],
       [ [ "tank_gun_auto", 1 ] ]
     ]
+  },
+  {
+    "result": "broken_skibidi_toilet",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "15 m",
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
+    "components": [
+      [ [ "cu_pipe", 2 ] ],
+      [ [ "ceramic_shard", 20 ] ],
+      [ [ "wax", 1 ] ],
+      [ [ "cerberus_laser", 1 ] ],
+      [ [ "medium_storage_battery", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "robot_controls", 1 ] ]
+    ]
   }
 ]

@@ -70,8 +70,10 @@
       "l": { "terrain": "t_dirtfloor", "furniture": "f_locker" },
       "u": { "terrain": "t_dirtfloor", "furniture": "f_counter" }
     },
-    "toilets": { "t": {  } },
     "items": { "ü": { "item": "guns_hunting_safe", "chance": 100 } },
-    "nested": { "v": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] } }
+    "nested": {
+      "v": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] },
+      "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] }
+    }
   }
 ]

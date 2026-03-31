@@ -48,7 +48,7 @@
       "w": [ { "item": "snacks", "chance": 10 }, { "item": "novels", "chance": 10 }, { "item": "alcohol", "chance": 5 } ],
       "7": { "item": "office_paper", "chance": 30 }
     },
-    "toilets": { "t": {  } },
+    "nested": { "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "vendingmachines": { "D": { "item_group": "vending_drink" }, "V": { "item_group": "vending_food" } }
   }
 ]

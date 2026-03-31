@@ -64,7 +64,7 @@
       "[": "f_glass_freezer",
       ":": "f_shredder"
     },
-    "toilets": { "&": { "amount": [ 0, 50 ] } },
+    "nested": { "&": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "items": {
       "D": { "item": "office", "chance": 60 },
       "l": { "item": "jackets", "chance": 5 },

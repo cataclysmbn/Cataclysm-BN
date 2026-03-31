@@ -30,7 +30,6 @@
       "#": "t_shrub"
     },
     "furniture": {
-      "&": "f_toilet",
       "~": "f_shower",
       "@": "f_bed",
       "a": "f_armchair",
@@ -55,7 +54,10 @@
       "^": "f_indoor_plant",
       "x": "f_safe_l"
     },
-    "toilets": { ";": {  } },
+    "nested": {
+      ";": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] },
+      "&": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] }
+    },
     "items": { "d": { "item": "office", "chance": 70 } }
   }
 ]

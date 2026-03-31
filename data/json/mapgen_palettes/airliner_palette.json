@@ -27,6 +27,6 @@
       "<": "t_slope_up"
     },
     "furniture": { "a": "f_seat_airplane", "c": "f_counter", "f": "f_fridge", "l": "f_locker", "S": "f_sink", "*": "f_wreckage" },
-    "toilets": { "T": {  } }
+    "nested": { "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

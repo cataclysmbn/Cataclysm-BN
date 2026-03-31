@@ -51,7 +51,6 @@
       "o": "f_bookcase",
       "p": "f_cardboard_fort",
       "r": "f_rack",
-      "t": "f_toilet",
       "u": "f_utility_shelf",
       "v": "f_utility_shelf",
       "w": "f_utility_shelf",
@@ -59,7 +58,7 @@
       "}": "f_rubble",
       "~": "f_shower"
     },
-    "toilets": { "t": {  } }
+    "nested": { "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   },
   {
     "type": "palette",

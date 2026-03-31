@@ -33,7 +33,7 @@
       "B": "f_battery",
       "C": "f_charger"
     },
-    "toilets": { "T": {  } },
+    "nested": { "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "items": {
       "l": { "item": "SUS_evac_shelter_locker", "chance": 80 },
       "c": { "item": "SUS_evac_shelter_cabinet", "chance": 60 },

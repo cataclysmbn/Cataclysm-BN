@@ -3074,5 +3074,59 @@
     "speaker": "mon_uafv_xm246e1",
     "sound": "the metallic squeal of tank tracks!",
     "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_mi_go", "mon_skibidi_toilet" ],
+    "sound": "\"What the heck is going on?\"",
+    "volume": 25
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_mi_go", "mon_skibidi_toilet" ],
+    "sound": "\"Skibidi!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_mi_go", "mon_skibidi_toilet" ],
+    "sound": "\"Skibidi?\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_skibidi_toilet",
+    "sound": "\"Brrrrrr skibidi dop dop dop yes yes!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_skibidi_toilet",
+    "sound": "\"Skibidi dop dop dop yes yes!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_skibidi_toilet",
+    "sound": "\"Skibidi dabudu neep neep!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_skibidi_toilet",
+    "sound": "\"Skibidi dop dop neep neep!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_skibidi_toilet",
+    "sound": "\"Skibidi skibidi skibidi!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_mi_go", "mon_skibidi_toilet" ],
+    "sound": "\"Oh help me please somebody!\"",
+    "volume": 30
   }
 ]

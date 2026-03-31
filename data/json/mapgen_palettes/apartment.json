@@ -81,7 +81,6 @@
       "&": "f_chimney",
       "@": "f_TV_antenna"
     },
-    "toilets": { "T": {  } },
     "items": {
       "B": { "item": "bed", "chance": 60 },
       "d": { "item": "dresser", "chance": 70, "repeat": [ 1, 3 ] },
@@ -118,7 +117,10 @@
       "3": [ { "item": "SUS_junk_drawer" }, { "item": "SUS_kitchen_sink" } ]
     },
     "item": { "n": { "item": "television", "chance": 70 } },
-    "nested": { "w": { "chunks": [ [ "null", 195 ], [ "house_place_air_conditioner", 5 ] ] } }
+    "nested": {
+      "w": { "chunks": [ [ "null", 195 ], [ "house_place_air_conditioner", 5 ] ] },
+      "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] }
+    }
   },
   {
     "type": "palette",
@@ -163,7 +165,6 @@
       "r": "f_rack",
       "S": "f_sink",
       "t": "f_table",
-      "T": "f_toilet",
       "u": "f_cupboard",
       "Y": "f_rack_coat",
       "1": "f_cupboard",
@@ -171,7 +172,7 @@
       "3": "f_sink",
       "^": "f_indoor_plant"
     },
-    "toilets": { "T": {  } },
+    "nested": { "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "items": {
       "B": { "item": "bed", "chance": 60 },
       "O": { "item": "oven", "chance": 70 },

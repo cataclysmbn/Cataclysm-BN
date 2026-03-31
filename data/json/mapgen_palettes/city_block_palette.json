@@ -75,7 +75,6 @@
       "?": "t_console_broken",
       "$": [ [ "t_region_tree_fruit", 2 ], [ "t_region_tree_nut", 2 ], "t_region_tree_shade" ]
     },
-    "toilets": { "t": {  } },
     "liquids": { "g": { "liquid": "water", "amount": [ 0, 100 ] } },
     "items": {
       "p": { "item": "trash_dumpster", "chance": 80 },
@@ -125,6 +124,9 @@
       "Y": { "item": "trash", "chance": 30, "repeat": [ 1, 2 ] },
       "R": { "item": "homebooks", "chance": 30, "repeat": [ 1, 2 ] }
     },
-    "nested": { "@": { "chunks": [ [ "null", 195 ], [ "house_place_air_conditioner", 5 ] ] } }
+    "nested": {
+      "@": { "chunks": [ [ "null", 195 ], [ "house_place_air_conditioner", 5 ] ] },
+      "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] }
+    }
   }
 ]

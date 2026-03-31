@@ -1975,5 +1975,27 @@
       "furniture": { "S": [ "f_gun_safe_el", "f_gunsafe_ml" ] },
       "items": { "S": { "item": "guns_safe", "chance": 100 } }
     }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "Spawns a perfectly normal toilet",
+    "nested_mapgen_id": "chunk_spawn_toilet",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "t" ],
+      "toilets": { "t": {  } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "Spawns an extremely abnormal toilet",
+    "nested_mapgen_id": "chunk_spawn_skibidi_toilet",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "t" ],
+      "monster": { "t": { "monster": "mon_skibidi_toilet" } }
+    }
   }
 ]

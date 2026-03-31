@@ -71,7 +71,6 @@
       "^": [ "f_indoor_plant", "f_indoor_plant_y" ],
       "r": "f_rack",
       "S": "f_sink",
-      "T": "f_toilet",
       "O": [ [ "f_cardboard_box", 6 ], "f_crate_c" ],
       "a": "f_trashcan",
       "F": "f_filing_cabinet",
@@ -101,6 +100,6 @@
       ".": { "item": "office_mess", "chance": 1 }
     },
     "vendingmachines": { "8": { "item_group": "vending_drink" }, "9": { "item_group": "vending_food" } },
-    "toilets": { "T": {  } }
+    "nested": { "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

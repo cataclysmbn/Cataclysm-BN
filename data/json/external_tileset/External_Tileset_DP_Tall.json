@@ -58,7 +58,9 @@
           { "id": [ "t_grass_tall_season_spring", "t_grass_tall_season_summer" ], "fg": 38 },
           { "id": "t_grass_tall_season_autumn", "fg": 39 },
           { "id": "t_grass_tall_season_winter", "fg": 40 },
-          { "id": "overlay_worn_helmet_conical", "fg": 41 }
+          { "id": "overlay_worn_helmet_conical", "fg": 41 },
+          { "id": "mon_skibidi_toilet", "fg": 42 },
+          { "id": "broken_skibidi_toilet", "fg": 43 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,

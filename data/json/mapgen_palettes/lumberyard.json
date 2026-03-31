@@ -56,7 +56,7 @@
       "x": [ [ "f_crate_c", 2 ], "f_crate_o" ],
       "O": "f_crate_o"
     },
-    "toilets": { "t": {  } },
+    "nested": { "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "items": {
       "F": { "item": "vending_food", "chance": 100 },
       "D": { "item": "vending_drink", "chance": 100 },

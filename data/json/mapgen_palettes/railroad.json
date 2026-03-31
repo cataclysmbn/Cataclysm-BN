@@ -66,7 +66,6 @@
       "f": "f_sofa",
       "l": "f_locker",
       "s": "f_sink",
-      "T": "f_toilet",
       "!": "f_trashcan",
       "&": "f_trashcan"
     },
@@ -85,7 +84,7 @@
         { "item": "manuals", "chance": 2 }
       ]
     },
-    "toilets": { "T": {  } }
+    "nested": { "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   },
   {
     "type": "palette",

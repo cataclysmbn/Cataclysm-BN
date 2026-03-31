@@ -114,6 +114,6 @@
       "Ü": { "item": "trash_dumpster", "chance": 80 },
       "#": { "item": "mil_surplus", "chance": 30 }
     },
-    "toilets": { "&": {  } }
+    "nested": { "&": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

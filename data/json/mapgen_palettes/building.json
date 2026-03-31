@@ -17,6 +17,6 @@
       "<": "t_stairs_up",
       ">": "t_stairs_down"
     },
-    "toilets": { "t": {  } }
+    "nested": { "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

@@ -46,7 +46,6 @@
       "A": "f_rack",
       "$": "f_treadmill",
       "%": "f_exercise",
-      "&": "f_toilet",
       "[": "f_table",
       ")": "f_table",
       "{": "f_table",
@@ -314,12 +313,12 @@
       ],
       "d": [ { "item": "SUS_bathroom_sink", "chance": 70, "repeat": [ 0, 3 ] } ]
     },
-    "toilets": { "&": {  } },
     "traps": { "=": "tr_rollmat" },
     "nested": {
       "δ": { "chunks": [ [ "null", 2 ], [ "crates_supplies_mechanics", 3 ] ] },
       "ε": { "chunks": [ [ "null", 2 ], [ "crates_armament_milspec", 3 ] ] },
-      "ζ": { "chunks": [ [ "null", 2 ], [ "crates_random_supply", 3 ] ] }
+      "ζ": { "chunks": [ [ "null", 2 ], [ "crates_random_supply", 3 ] ] },
+      "&": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] }
     },
     "vehicles": {
       "n": { "vehicle": "hospital_bed", "chance": 100, "status": 1 },

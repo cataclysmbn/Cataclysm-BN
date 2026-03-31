@@ -72,11 +72,10 @@
       "2": "f_table",
       "T": "f_table",
       "9": "f_table",
-      "&": "f_toilet",
       "A": "f_autodoc",
       "?": "f_autodoc_couch",
       "à": "f_surgical_laser"
     },
-    "toilets": { "&": {  } }
+    "nested": { "&": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

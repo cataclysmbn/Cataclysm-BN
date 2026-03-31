@@ -42,6 +42,6 @@
       "n": "f_tourist_table",
       "o": "f_firering"
     },
-    "toilets": { "&": {  } }
+    "nested": { "&": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

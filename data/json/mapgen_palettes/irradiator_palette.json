@@ -95,6 +95,6 @@
       "u": { "terrain": "t_sidewalk", "furniture": "f_dumpster" },
       "n": { "terrain": "t_strconc_floor", "furniture": "f_bench" }
     },
-    "toilets": { "?": {  } }
+    "nested": { "?": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

@@ -57,7 +57,6 @@
       "r": "f_rack",
       "s": "f_rack",
       "S": "f_sink",
-      "T": "f_toilet",
       "u": "f_cupboard",
       "Y": "f_rack_coat",
       "y": "f_hay",
@@ -66,7 +65,6 @@
       "6": "f_cupboard",
       "ü": "f_gunsafe_ml"
     },
-    "toilets": { "T": {  } },
     "items": {
       "B": { "item": "bed", "chance": 60 },
       "b": { "item": "shower", "chance": 70 },
@@ -96,6 +94,9 @@
       "6": [ { "item": "SUS_cookware" }, { "item": "SUS_kitchen_misc" } ],
       "ü": { "item": "guns_hunting_safe", "chance": 100 }
     },
-    "nested": { "w": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] } }
+    "nested": {
+      "w": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] },
+      "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] }
+    }
   }
 ]

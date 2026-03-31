@@ -38,7 +38,6 @@
       "8": "f_bathtub",
       "9": "f_rack",
       ":": "f_dresser",
-      ";": "f_toilet",
       "=": "f_fireplace",
       "?": "f_sofa",
       "@": "f_bed",
@@ -51,6 +50,6 @@
       "X": "f_crate_c",
       "l": "f_locker"
     },
-    "toilets": { ";": {  } }
+    "nested": { ";": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

@@ -117,6 +117,6 @@
       "7": { "liquid": "water_sewage", "amount": [ 0, 200 ] },
       "H": { "liquid": "diesel", "amount": [ 0, 30000 ] }
     },
-    "toilets": { "T": {  } }
+    "nested": { "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

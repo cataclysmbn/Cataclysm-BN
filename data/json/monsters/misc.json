@@ -181,5 +181,52 @@
     "death_function": [ "DISAPPEAR" ],
     "path_settings": { "max_dist": 30 },
     "flags": [ "FLIES", "NO_BREATHE", "HARDTOSHOOT", "PET_WONT_FOLLOW" ]
+  },
+  {
+    "id": "mon_skibidi_toilet",
+    "looks_like": "f_toilet",
+    "type": "MONSTER",
+    "name": { "str": "skibidi toilet" },
+    "description": "A porcelain throne.  Emergency water sour-wait, no.  It's moving on its own, and also seems to be …singing?  Is that a human head in the bowl?  Why is there a laser cannon attached to it!?",
+    "default_faction": "mutant",
+    "species": [ "HORROR" ],
+    "diff": 69,
+    "volume": "20 L",
+    "weight": "45 kg",
+    "hp": 50,
+    "speed": 100,
+    "material": [ "ceramic" ],
+    "symbol": "&",
+    "color": "white",
+    "aggression": 100,
+    "morale": 100,
+    "melee_dice": 2,
+    "melee_dice_sides": 6,
+    "armor_bash": 8,
+    "armor_cut": 30,
+    "armor_stab": 24,
+    "armor_bullet": 30,
+    "armor_acid": 60,
+    "armor_fire": 30,
+    "vision_day": 50,
+    "vision_night": 25,
+    "starting_ammo": { "plasma": 25 },
+    "special_attacks": [
+      [ "FEAR_PARALYZE", 10 ],
+      [ "PARROT", 10 ],
+      { "type": "bite", "cooldown": 5 },
+      {
+        "type": "gun",
+        "cooldown": 5,
+        "target_moving_vehicles": true,
+        "gun_type": "laser_cannon_turret_fake",
+        "fake_skills": [ [ "gun", 4 ], [ "rifle", 8 ] ],
+        "ranges": [ [ 0, 30, "DEFAULT" ] ],
+        "description": "The skibdi toilet fires its laser cannon!",
+        "no_crits": true
+      }
+    ],
+    "death_function": [ "BROKEN" ],
+    "flags": [ "BASHES", "HIT_AND_RUN", "PRIORITIZE_TARGETS", "PATH_AVOID_DANGER_2", "SEES", "HEARS", "SMELLS" ]
   }
 ]

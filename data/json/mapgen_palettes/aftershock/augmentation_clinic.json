@@ -27,7 +27,6 @@
     "furniture": {
       "$": "f_safe_l",
       "A": "f_dresser",
-      "&": "f_toilet",
       "B": "f_bed",
       "S": "f_sink",
       "b": "f_bench",
@@ -44,6 +43,6 @@
       "^": "f_indoor_plant",
       "à": "f_surgical_laser"
     },
-    "toilets": { "&": {  } }
+    "nested": { "&": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } }
   }
 ]

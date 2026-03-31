@@ -64,7 +64,7 @@
       "X": "f_crate_c",
       "7": "f_centrifuge"
     },
-    "toilets": { "&": { "amount": [ 0, 50 ] } },
+    "nested": { "&": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "items": {
       "b": { "item": "homebooks", "chance": 60, "repeat": [ 1, 5 ] },
       "B": { "item": "bed", "chance": 25, "repeat": [ 1, 2 ] },

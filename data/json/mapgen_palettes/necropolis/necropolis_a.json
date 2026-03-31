@@ -55,8 +55,7 @@
       "x": "f_region_flower_decorative",
       "z": "f_crate_c",
       "(": "f_cupboard",
-      "{": "f_rubble",
-      "t": "f_toilet"
+      "{": "f_rubble"
     },
     "terrain": {
       "Ю": "t_sidewalk",
@@ -162,7 +161,6 @@
       "}": "t_manhole_cover",
       "U": "t_sidewalk"
     },
-    "toilets": { "t": {  } },
     "items": {
       "(": { "item": "pantry", "chance": 50, "repeat": 3 },
       "@": { "item": "bed", "chance": 50, "repeat": 2 },
@@ -177,6 +175,9 @@
       "o": { "item": "homebooks", "chance": 50, "repeat": 2 },
       "o̱": { "item": "manuals", "chance": 75, "repeat": [ 1, 2 ] }
     },
-    "nested": { "v": { "chunks": [ [ "null", 195 ], [ "house_place_air_conditioner", 5 ] ] } }
+    "nested": {
+      "v": { "chunks": [ [ "null", 195 ], [ "house_place_air_conditioner", 5 ] ] },
+      "t": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] }
+    }
   }
 ]

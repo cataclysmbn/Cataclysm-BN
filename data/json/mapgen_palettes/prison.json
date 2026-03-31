@@ -50,7 +50,6 @@
       "D": "f_dryer",
       "E": "f_exercise",
       "S": "f_sink",
-      "T": "f_toilet",
       "W": "f_washer",
       "b": "f_bed",
       "c": "f_counter",
@@ -66,7 +65,7 @@
       "t": "f_table",
       "z": "f_rack"
     },
-    "toilets": { "T": {  } },
+    "nested": { "T": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "items": {
       "D": [ { "item": "prison_textile", "chance": 100, "repeat": [ 1, 20 ] } ],
       "W": [ { "item": "prison_textile", "chance": 100, "repeat": [ 1, 20 ] } ],

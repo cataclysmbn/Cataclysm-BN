@@ -58,7 +58,7 @@
       "s": "f_sink",
       "r": "f_rack_wood"
     },
-    "toilets": { "&": {  } },
+    "nested": { "&": { "chunks": [ [ "chunk_spawn_toilet", 90 ], [ "chunk_spawn_skibidi_toilet", 10 ] ] } },
     "items": {
       "B": [
         { "item": "manuals", "chance": 50, "repeat": 2 },
