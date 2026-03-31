@@ -184,3 +184,39 @@ TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Brow
     REQUIRE( shots_fired == 15 );
     CHECK( std::abs( veh->velocity ) >= 160 );
 }
+
+TEST_CASE( "perpendicular gun recoil becomes a weak lateral skid instead of forward thrust",
+           "[vehicle][gun]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    const auto vehicle_origin = tripoint( 60, 60, 0 );
+
+    auto *const veh = here.add_vehicle( vproto_id( "swivel_chair" ), vehicle_origin, 0_degrees, 0, 0 );
+    REQUIRE( veh != nullptr );
+
+    player_character.setpos( vehicle_origin );
+    here.board_vehicle( vehicle_origin, &player_character );
+    REQUIRE( player_character.in_vehicle );
+
+    auto gun = item::spawn( itype_id( "m1014" ) );
+    gun->ammo_set( itype_id( "shot_00" ) );
+    player_character.wield( std::move( gun ) );
+    REQUIRE( player_character.primary_weapon().typeId() == itype_id( "m1014" ) );
+
+    REQUIRE( veh->velocity == 0 );
+
+    auto shots_fired = 0;
+    for( const auto _ : std::views::iota( 0, 5 ) ) {
+        ( void ) _;
+        shots_fired += ranged::fire_gun( player_character, vehicle_origin + tripoint( 0, -5, 0 ), 1 );
+    }
+
+    REQUIRE( shots_fired == 5 );
+    CHECK( veh->skidding );
+    CHECK( veh->move.dir() != veh->face.dir() );
+    CHECK( std::abs( veh->velocity ) > 0 );
+    CHECK( std::abs( veh->velocity ) < 667 );
+}
