@@ -11,6 +11,7 @@
 #include "ranged.h"
 #include "state_helpers.h"
 #include "type_id.h"
+#include "units_utility.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -196,15 +197,17 @@ TEST_CASE( "perpendicular gun recoil keeps full sideways push on rigid-wheel veh
     struct recoil_result {
         int velocity = 0;
         bool skidding = false;
-        bool moves_off_face = false;
+        units::angle move_dir = 0_degrees;
     };
 
-    const auto fire_recoil = [&]( const tripoint & target ) -> recoil_result {
+    const auto fire_recoil = [&]( const vproto_id & vehicle_type, const units::angle facing,
+                                  const tripoint & target,
+    const std::optional<tripoint> &shot_origin ) -> recoil_result {
         clear_all_state();
 
         auto &here = get_map();
         auto &player_character = get_avatar();
-        auto *const veh = here.add_vehicle( vproto_id( "shopping_cart" ), vehicle_origin, 0_degrees, 0, 0 );
+        auto *const veh = here.add_vehicle( vehicle_type, vehicle_origin, facing, 0, 0 );
         REQUIRE( veh != nullptr );
 
         player_character.setpos( vehicle_origin );
@@ -222,22 +225,28 @@ TEST_CASE( "perpendicular gun recoil keeps full sideways push on rigid-wheel veh
         for( const auto _ : std::views::iota( 0, 5 ) )
         {
             ( void ) _;
-            shots_fired += ranged::fire_gun( player_character, target, 1 );
+            shots_fired += ranged::fire_gun( player_character, target, 1,
+                                             player_character.primary_weapon(), nullptr, shot_origin );
         }
 
         REQUIRE( shots_fired == 5 );
         return recoil_result{
             .velocity = std::abs( veh->velocity ),
             .skidding = veh->skidding,
-            .moves_off_face = veh->move.dir() != veh->face.dir(),
+            .move_dir = veh->move.dir(),
         };
     };
 
-    const auto forward_result = fire_recoil( vehicle_origin + tripoint( 5, 0, 0 ) );
-    const auto lateral_result = fire_recoil( vehicle_origin + tripoint( 0, -5, 0 ) );
+    const auto forward_result = fire_recoil( vproto_id( "shopping_cart" ), 180_degrees,
+                                vehicle_origin + tripoint( -5, 0, 0 ), std::nullopt );
+    const auto offset_lateral_result = fire_recoil( vproto_id( "grocery_cart" ), -90_degrees,
+                                       vehicle_origin + tripoint( -6, 0, 0 ),
+                                       vehicle_origin + tripoint( -1, 0, 0 ) );
 
-    CHECK( lateral_result.skidding );
-    CHECK( lateral_result.moves_off_face );
-    CHECK( lateral_result.velocity > 0 );
-    CHECK( lateral_result.velocity == Approx( forward_result.velocity ).margin( 1 ) );
+    CHECK( forward_result.skidding );
+    CHECK( normalize( forward_result.move_dir ) == normalize( 0_degrees ) );
+    CHECK( forward_result.velocity > 0 );
+    CHECK( offset_lateral_result.skidding );
+    CHECK( normalize( offset_lateral_result.move_dir ) == normalize( 0_degrees ) );
+    CHECK( offset_lateral_result.velocity > 0 );
 }

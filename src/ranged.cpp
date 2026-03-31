@@ -909,12 +909,25 @@ auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoin
 
     const auto face_velocity_vec = veh->face_vec();
     const auto lateral_velocity_vec = rl_vec2d( -face_velocity_vec.y, face_velocity_vec.x );
-    const auto lateral_scale = has_only_rigid_wheels( *veh ) ? 1.0 : vehicle_recoil_lateral_scale;
     const auto recoil_velocity_vec = recoil_direction.normalized() * recoil_velocity;
+    if( has_only_rigid_wheels( *veh ) ) {
+        const auto final_velocity = veh->velo_vec() + recoil_velocity_vec;
+        const auto resulting_velocity = static_cast<int>( std::round( final_velocity.magnitude() ) );
+        if( resulting_velocity == 0 ) {
+            veh->velocity = 0;
+            return;
+        }
+
+        veh->skidding = true;
+        veh->move.init( final_velocity.normalized().as_point() );
+        veh->velocity = resulting_velocity;
+        return;
+    }
+
     const auto final_velocity = veh->velo_vec() +
                                 face_velocity_vec * recoil_velocity_vec.dot_product( face_velocity_vec ) +
                                 lateral_velocity_vec * recoil_velocity_vec.dot_product( lateral_velocity_vec ) *
-                                lateral_scale;
+                                vehicle_recoil_lateral_scale;
     const auto face_velocity = final_velocity.dot_product( veh->face_vec() );
     const auto lateral_velocity = final_velocity.dot_product( lateral_velocity_vec );
     const auto should_skid = veh->skidding || std::abs( lateral_velocity ) >= 1.0;
