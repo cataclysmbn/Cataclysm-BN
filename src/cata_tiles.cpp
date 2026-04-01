@@ -3379,7 +3379,11 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                                 // floor's actual position with surface lighting + depth tint.
                                 here.set_memory_seen_cache_dirty( pos );
                                 min_z = std::min( pos.z, min_z );
-                                draw_points.emplace_back( pos, height_3d, last_vis_ll, invisible );
+                                //invisible[0] = true;
+                                draw_points.emplace_back( pos, height_3d, lit_level::MEMORIZED, invisible );
+                                //const ter_id &t = here.ter( pos );
+                                //const auto tile = tile_search_params{ t.id().str(), C_TERRAIN, empty_string, 0, 0 };
+                                //draw_from_id_string( tile, pos, std::nullopt, std::nullopt, lit_level::MEMORIZED, false, center.z - z, false );
                             } else {
                                 min_z = std::min( last_vis, min_z );
                                 draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d,
@@ -4937,7 +4941,7 @@ bool cata_tiles::draw_graffiti( const tripoint &p, const lit_level ll, int &heig
 bool cata_tiles::draw_field_or_item( const tripoint &p, const lit_level ll, int &height_3d,
                                      const bool ( &invisible )[5], int z_drop )
 {
-    if( !fov_3d && z_drop > 0 ) {
+    if( ( !fov_3d && z_drop > 0 ) || fov_3d_z_range < z_drop ) {
         return false;
     }
     const auto fld_override = field_override.find( p );
