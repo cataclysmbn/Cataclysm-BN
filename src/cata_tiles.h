@@ -668,6 +668,7 @@ class cata_tiles
         /** Minimap functionality */
         void draw_minimap( point dest, const tripoint &center, int width, int height );
         bool minimap_requires_animation() const;
+        void reset_minimap();
 
     protected:
         /** How many rows and columns of tiles fit into given dimensions **/

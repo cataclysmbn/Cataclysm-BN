@@ -285,7 +285,19 @@
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
     "special_attacks": [ [ "EAT_FOOD", 2400 ] ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "PET_MOUNTABLE",
+      "MOUNTABLE_DOORS",
+      "MOUNTABLE_OBSTACLES",
+      "ANIMAL",
+      "PATH_AVOID_DANGER_1",
+      "WARM",
+      "KEENNOSE",
+      "BLEED"
+    ],
     "petfood": { "food": [ "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s squeals happily at you." }
   },
   {
@@ -2277,7 +2289,19 @@
     "death_function": [ "NORMAL" ],
     "special_attacks": [ [ "EAT_FOOD", 2400 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
-    "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "PET_MOUNTABLE",
+      "MOUNTABLE_DOORS",
+      "MOUNTABLE_OBSTACLES",
+      "ANIMAL",
+      "PATH_AVOID_DANGER_1",
+      "WARM",
+      "KEENNOSE",
+      "BLEED"
+    ]
   },
   {
     "id": "mon_rabbit",

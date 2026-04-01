@@ -849,7 +849,7 @@ void map::vehmove()
     }
     TracyPlot( "Vehicles Active", static_cast<int64_t>( vehicle_list.size() ) );
 
-    // V-1: Priority queue keyed on of_turn (max-heap) for O(log V) scheduling
+    // Priority queue keyed on of_turn (max-heap) for O(log V) scheduling
     // instead of the previous O(V) linear scan per iteration.
     auto veh_cmp = []( const wrapped_vehicle * a, const wrapped_vehicle * b ) {
         return a->v->of_turn < b->v->of_turn;
@@ -8328,6 +8328,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles,
     if( tmpsub->last_touched < calendar::turn ) {
         const int missed = to_turns<int>( calendar::turn - tmpsub->last_touched );
         run_submap_batch_turns( *tmpsub, missed );
+        tmpsub->last_touched = calendar::turn;
     }
 
     actualize( grid );

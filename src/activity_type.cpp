@@ -42,6 +42,24 @@ bool string_id<activity_type>::is_valid() const
     return found != activity_type_all.end();
 }
 
+namespace io
+{
+template<>
+std::string enum_to_string<activity_bubble_effect>( activity_bubble_effect data )
+{
+    switch( data ) {
+        // *INDENT-OFF*
+        case activity_bubble_effect::none:   return "none";
+        case activity_bubble_effect::mobile: return "mobile";
+        case activity_bubble_effect::idle:   return "idle";
+        case activity_bubble_effect::last:   break;
+        // *INDENT-ON*
+    }
+    debugmsg( "Invalid activity_bubble_effect", data );
+}
+} // namespace io
+
+
 
 void activity_type::load( const JsonObject &jo )
 {
@@ -58,6 +76,8 @@ void activity_type::load( const JsonObject &jo )
     assign( jo, "auto_needs", result.auto_needs, false );
     assign( jo, "morale_blocked", result.morale_blocked_, false );
     assign( jo, "verbose_tooltip", result.verbose_tooltip_, false );
+    result.bubble_effect_ = jo.get_enum_value<activity_bubble_effect>( "bubble_size_effect",
+                            activity_bubble_effect::none );
     if( jo.has_member( "complex_moves" ) ) {
         result.complex_moves_ = true;
         auto c_moves = jo.get_object( "complex_moves" );

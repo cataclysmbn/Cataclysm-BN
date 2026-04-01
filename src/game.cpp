@@ -37,6 +37,7 @@
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
+#include "activity_type.h"
 #include "armor_layers.h"
 #include "artifact.h"
 #include "auto_note.h"
@@ -236,11 +237,9 @@ int g_max_view_distance = 60;
 // Default matches the old hardcoded 0.1 threshold for g_max_view_distance=60.
 float g_visible_threshold = 0.1f;
 
-/// Read REALITY_BUBBLE_SIZE from options and update all runtime globals.
-/// Must be called before map construction (game::setup) and after each load.
-static void init_bubble_config()
+/// Update all runtime globals from an explicit bubble size value.
+static void init_bubble_config( int size )
 {
-    const int size = get_option<int>( "REALITY_BUBBLE_SIZE" );
     g_reality_bubble_size = size;
     // g_half_mapsize = size + 1 (the center submap is the implied +1).
     // Formula: radius = size+1, grid = (2*radius+1)^2 submaps.
@@ -255,6 +254,13 @@ static void init_bubble_config()
     // At g_max_view_distance tiles through clear air, visibility = 1/exp(t*d) = g_visible_threshold.
     // This replaces the old hardcoded 0.1 threshold (which assumed g_max_view_distance=60).
     g_visible_threshold   = 1.0f / std::exp( LIGHT_TRANSPARENCY_OPEN_AIR * g_max_view_distance );
+}
+
+/// Read REALITY_BUBBLE_SIZE from options and update all runtime globals.
+/// Must be called before map construction (game::setup) and after each load.
+static void init_bubble_config()
+{
+    init_bubble_config( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
 }
 
 static constexpr int DANGEROUS_PROXIMITY = 5;
@@ -914,9 +920,6 @@ bool game::start_game()
         start_loc.add_map_extra( omtstart, scen->get_map_extra() );
     }
 
-    // Read performance options before the first load_map so the reality bubble
-    // request uses the correct radius from the very first load.
-    world_tick_interval_ = get_option<int>( "REALITY_BUBBLE_TICK_INTERVAL" );
     init_bubble_config();
     // Resize the map grid to match the (possibly changed) bubble-size option.
     // The grid may hold stale pointers from a previous session; resize() clears
@@ -1258,13 +1261,6 @@ void game::load_npcs()
     }
 
     for( const auto &npc : just_added ) {
-        // batch-advance AI state for missed turns before on_load()
-        // does the sanity checks.  batch_turns() updates last_updated so
-        // on_load() sees dt=0 and skips the redundant body-update loop.
-        if( npc->last_updated < calendar::turn ) {
-            const int missed = to_turns<int>( calendar::turn - npc->last_updated );
-            npc->batch_turns( missed );
-        }
         npc->on_load();
     }
 
@@ -1894,6 +1890,7 @@ bool game::do_turn()
     perhaps_add_random_npc();
     process_voluntary_act_interrupt();
     process_activity();
+    update_performance_bubble();
     if( !soundperf ) {
         // Process NPC sound events before they move or they hear themselves talking
         for( npc &guy : all_npcs() ) {
@@ -3214,9 +3211,6 @@ bool game::load( const save_t &name )
     validate_npc_followers();
     validate_mounted_npcs();
     validate_linked_vehicles();
-    // Read performance options before update_map so the reality bubble request
-    // uses the correct radius from the very first submap_loader wiring.
-    world_tick_interval_ = get_option<int>( "REALITY_BUBBLE_TICK_INTERVAL" );
     // Re-read the bubble-size option for the submap-loader request.
     // Do NOT call m.resize() here — the grid is already filled by unserialize().
     // setup() already called init_bubble_config() + m.resize().
@@ -4489,6 +4483,10 @@ void game::mon_info_update( )
         m.clear();
     }
     std::fill( dangerous, dangerous + 8, false );
+    mon_visible.visible_count_by_dir.fill( 0 );
+    mon_visible.nearby_hostile_count = 0;
+    mon_visible.combat_hostile_count = 0;
+    const int combat_bubble_range = SEEX * ( get_option<int>( "COMBAT_BUBBLE_SIZE" ) + 1 );
 
     const tripoint view = u.pos() + u.view_offset;
     new_seen_mon.clear();
@@ -4559,6 +4557,35 @@ void game::mon_info_update( )
                     abort();
             }
         }
+
+        // Accumulate hostile counts for danger music and combat bubble.
+        if( u.attitude_to( *c ) == Attitude::A_HOSTILE ) {
+            mon_visible.nearby_hostile_count++;
+            if( rl_dist( u.pos(), c->pos() ) <= combat_bubble_range ) {
+                mon_visible.combat_hostile_count++;
+            }
+        }
+        // Per-direction creature count for the compass panel, computed player-relative
+        // (not view-offset-relative) so the compass stays accurate in look-mode.
+        const int compass_index = [&]() -> int {
+            const direction compass_dir = direction_from( u.pos().xy(),
+                    point( c->posx(), c->posy() ) );
+            switch( compass_dir )
+            {
+                // *INDENT-OFF*
+                case direction::ABOVENORTHWEST: case direction::NORTHWEST: case direction::BELOWNORTHWEST: return 7;
+                case direction::ABOVENORTH:     case direction::NORTH:     case direction::BELOWNORTH:     return 0;
+                case direction::ABOVENORTHEAST: case direction::NORTHEAST: case direction::BELOWNORTHEAST: return 1;
+                case direction::ABOVEWEST:      case direction::WEST:      case direction::BELOWWEST:      return 6;
+                case direction::ABOVEEAST:      case direction::EAST:      case direction::BELOWEAST:      return 2;
+                case direction::ABOVESOUTHWEST: case direction::SOUTHWEST: case direction::BELOWSOUTHWEST: return 5;
+                case direction::ABOVESOUTH:     case direction::SOUTH:     case direction::BELOWSOUTH:     return 4;
+                case direction::ABOVESOUTHEAST: case direction::SOUTHEAST: case direction::BELOWSOUTHEAST: return 3;
+                default: return 8;
+                // *INDENT-ON*
+            }
+        }();
+        mon_visible.visible_count_by_dir[compass_index]++;
 
         rule_state safemode_state = RULE_NONE;
         const bool safemode_empty = get_safemode().empty();
@@ -11983,6 +12010,209 @@ void game::on_move_effects()
     sfx::do_ambient();
 }
 
+void game::resize_reality_bubble_to( int new_size )
+{
+    // Capture player's absolute submap position and within-submap tile offset
+    // before any coordinate system changes.
+    const tripoint old_abs_sub = m.get_abs_sub();
+    const tripoint player_abs_sm(
+        old_abs_sub.x + u.posx() / SEEX,
+        old_abs_sub.y + u.posy() / SEEY,
+        old_abs_sub.z );
+    const point player_within_sm( u.posx() % SEEX, u.posy() % SEEY );
+
+    // The grid origin shifts by (old_half - new_half) submaps when the bubble changes size.
+    // Compute this before any globals change so we can use it for two purposes:
+    //   1. Deciding which monsters are outside the new bubble (shrink-only despawn).
+    //   2. Translating surviving monster positions into the new local coordinate system.
+    const int old_half = static_cast<int>( g_half_mapsize );
+    const int new_half = new_size + 1;
+    const int shift_sm = old_half - new_half;  // > 0 when shrinking, < 0 when growing
+
+    // When shrinking, despawn monsters that fall outside the new bubble radius.
+    if( shift_sm > 0 ) {
+        const tripoint player_sm_in_grid( u.posx() / SEEX, u.posy() / SEEY, get_levz() );
+        for( monster &critter : all_monsters() ) {
+            const tripoint critter_sm( critter.posx() / SEEX, critter.posy() / SEEY, critter.posz() );
+            const tripoint diff = critter_sm - player_sm_in_grid;
+            if( std::abs( diff.x ) > new_half || std::abs( diff.y ) > new_half ) {
+                despawn_monster( critter );
+            }
+        }
+    }
+
+    // Adjust surviving monsters' local positions to the new coordinate origin.
+    // monster::shift(sm_delta) does: position -= sm_to_ms(sm_delta), which correctly
+    // translates positions regardless of shrink/grow direction.  The bounds check
+    // inside shift_monsters is not used here because the old grid bounds are larger
+    // than the new ones when shrinking, so all in-range survivors pass.
+    if( shift_sm != 0 ) {
+        for( monster &critter : all_monsters() ) {
+            critter.shift( { shift_sm, shift_sm } );
+        }
+        critter_tracker->rebuild_cache();
+    }
+
+    // Unload ALL active NPCs so load_npcs() re-places them with correct positions
+    // in the new coordinate system.  Keeping survivors active is wrong because
+    // load_npcs() skips already-active IDs, leaving them with stale local coords.
+    unload_npcs();
+
+    // Release submap loader handles so load_map() recreates them with the new radius.
+    if( reality_bubble_handle_ != 0 ) {
+        submap_loader.release_load( reality_bubble_handle_ );
+        reality_bubble_handle_ = 0;
+    }
+    if( lazy_border_handle_ != 0 ) {
+        submap_loader.release_load( lazy_border_handle_ );
+        lazy_border_handle_ = 0;
+    }
+
+    // Update globals and rebuild the map grid.
+    // grid[] is cleared by resize(); submaps stay resident in the mapbuffer
+    // with their dirty flags intact and will be saved on normal eviction.
+    init_bubble_config( new_size );
+    m.resize( g_mapsize );
+    reality_bubble_radius_ = g_half_mapsize;
+
+    // Reposition the player in the new (possibly different-sized) coordinate space
+    // and compute the new top-left abs_sub so load_map centers on the player.
+    u.setpos( tripoint( g_half_mapsize_x + player_within_sm.x,
+                        g_half_mapsize_y + player_within_sm.y,
+                        get_levz() ) );
+    const tripoint_abs_sm new_abs_sub(
+        player_abs_sm.x - g_half_mapsize,
+        player_abs_sm.y - g_half_mapsize,
+        player_abs_sm.z );
+
+    // Reload the map around the player; this fills grid[], recreates load handles,
+    // rebuilds distribution_grid_tracker and fluid_grid.
+    load_map( new_abs_sub, /*pump_events=*/false );
+
+    // Flush the load/eviction diff immediately so the first boundary crossing
+    // after resize doesn't stall on a bulk eviction of the old bubble's submaps.
+    // on_submap_unloaded is safe here: map::on_submap_unloaded guards grid[]
+    // writes behind contains_abs_sm(), so old out-of-bubble positions are
+    // skipped and only vehicle/active-item tracking is cleaned up.
+    submap_loader.update();
+
+    // When the bubble grew, submaps outside the old (smaller) bubble just entered.
+    // Their stored monsters are still in the overmap monster_map; spawn them now
+    // so the expanded bubble isn't empty until the next boundary crossing.
+    if( shift_sm < 0 ) {
+        m.spawn_monsters( false );
+    }
+
+    load_npcs();
+
+    m.invalidate_map_cache( get_levz() );
+    u.recalc_sight_limits();
+
+    // Discard pathfinding objects sized for the old bubble.
+    Pathfinding::clear_pool();
+
+#if defined(TILES)
+    if( tilecontext ) {
+        tilecontext->reset_minimap();
+    }
+#endif
+}
+
+void game::resize_reality_bubble()
+{
+    // Called when the user explicitly changes REALITY_BUBBLE_SIZE in the options menu.
+    // Clear all bubble state so the new normal size takes effect immediately;
+    // the next do_turn() will re-evaluate and re-shrink as appropriate.
+    in_activity_bubble_ = false;
+    underground_bubble_turns_ = 0;
+    vehicle_bubble_turns_ = 0;
+    combat_bubble_turns_ = 0;
+    u.get_mon_visible().combat_hostile_count = 0;
+    resize_reality_bubble_to( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
+}
+
+void game::update_performance_bubble()
+{
+    const int normal_size      = get_option<int>( "REALITY_BUBBLE_SIZE" );
+    const int mobile_size      = get_option<int>( "ACTIVITY_MOBILE_BUBBLE_SIZE" );
+    const int idle_size        = get_option<int>( "ACTIVITY_IDLE_BUBBLE_SIZE" );
+    const int underground_size = get_option<int>( "UNDERGROUND_BUBBLE_SIZE" );
+    const int vehicle_size     = get_option<int>( "VEHICLE_BUBBLE_SIZE" );
+    const int combat_size      = get_option<int>( "COMBAT_BUBBLE_SIZE" );
+    const int grace_minutes    = get_option<int>( "ACTIVITY_BUBBLE_GRACE" );
+    const int dynamic_grace    = get_option<int>( "DYNAMIC_BUBBLE_GRACE" );
+
+    // --- Activity-based bubble (minute-scale hysteresis) ---
+    const bool has_activity = static_cast<bool>( u.activity );
+
+    const activity_bubble_effect bubble_effect = has_activity
+            ? u.activity.get()->id().obj().bubble_effect()
+            : activity_bubble_effect::none;
+
+    const auto activity_target_size = [&]() -> int {
+        switch( bubble_effect )
+        {
+            case activity_bubble_effect::mobile:
+                return mobile_size;
+            case activity_bubble_effect::idle:
+                return idle_size;
+            default:
+                return 0;
+        }
+    }();
+
+    // Once entered, we stay shrunk until the activity ends regardless of remaining time.
+    if( in_activity_bubble_ ) {
+        if( !has_activity || bubble_effect == activity_bubble_effect::none ) {
+            in_activity_bubble_ = false;
+        }
+    } else if( has_activity && activity_target_size > 0 && activity_target_size < normal_size &&
+               u.activity.get()->get_moves_left() >= to_moves<int>( time_duration::from_minutes(
+                           grace_minutes ) ) ) {
+        in_activity_bubble_ = true;
+    }
+
+    // --- Dynamic conditions (turn-scale hysteresis via per-condition counters) ---
+    // Each counter increments while its condition holds; resets to 0 the moment it doesn't.
+    // The bubble shrinks once the counter reaches dynamic_grace (no exit hysteresis).
+
+    // Use has_floor on the tile above rather than is_outside: the latter relies on TFLAG_INDOORS
+    // which water-derived terrain (e.g. sewage) may lack, causing false "outside" readings.
+    // A physical floor one level up is a reliable proxy for "enclosed/has ceiling".
+    const bool underground_cond = underground_size > 0 && underground_size < normal_size
+                                  && u.pos().z < 0
+                                  && m.has_floor( tripoint( u.pos().xy(), u.pos().z + 1 ) );
+    underground_bubble_turns_ = underground_cond ? underground_bubble_turns_ + 1 : 0;
+
+    const bool vehicle_cond = vehicle_size > 0 && vehicle_size < normal_size
+                              && ( ( u.in_vehicle && u.controlling_vehicle ) || u.is_mounted() );
+    vehicle_bubble_turns_ = vehicle_cond ? vehicle_bubble_turns_ + 1 : 0;
+
+    const bool combat_cond = combat_size > 0 && combat_size < normal_size
+                             && u.get_mon_visible().combat_hostile_count >= ( combat_bubble_turns_ >= dynamic_grace ? 4 : 5 );
+    combat_bubble_turns_ = combat_cond ? combat_bubble_turns_ + 1 : std::min( combat_bubble_turns_ - 1,
+                           dynamic_grace );
+
+    // Compute the desired bubble size as the minimum of all applicable shrinks.
+    auto target = normal_size;
+    if( in_activity_bubble_ ) {
+        target = std::min( target, activity_target_size );
+    }
+    if( underground_bubble_turns_ >= dynamic_grace ) {
+        target = std::min( target, underground_size );
+    }
+    if( vehicle_bubble_turns_ >= dynamic_grace ) {
+        target = std::min( target, vehicle_size );
+    } else if( combat_bubble_turns_ >=
+               dynamic_grace ) { // If the vehicle bubble is active, the combat bubble is ignored
+        target = std::min( target, combat_size );
+    }
+
+    if( g_reality_bubble_size != target ) {
+        resize_reality_bubble_to( target );
+    }
+}
+
 void game::on_options_changed()
 {
 #if defined(TILES)
@@ -11999,6 +12229,9 @@ void game::on_options_changed()
         if( tracker_ptr ) {
             tracker_ptr->on_options_changed();
         }
+    }
+    if( get_option<int>( "REALITY_BUBBLE_SIZE" ) != g_reality_bubble_size ) {
+        resize_reality_bubble();
     }
 }
 

@@ -69,6 +69,23 @@
     "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
   },
   {
+    "id": "helmet_steel",
+    "copy-from": "helmet_army",
+    "repairs_like": "barbute",
+    "type": "ARMOR",
+    "name": { "str": "steel combat helmet" },
+    "description": "A heavy helmet made of hardened steel with a chin strap.  Various designs were once used by armies around the world, modern ballistic helmets have mostly relegated this to military surplus.",
+    "weight": "1500 g",
+    "volume": "1 L",
+    "price": "80 USD",
+    "price_postapoc": "12 USD",
+    "to_hit": -1,
+    "bashing": 12,
+    "material": [ "hardsteel" ],
+    "color": "dark_gray",
+    "material_thickness": 5
+  },
+  {
     "id": "tac_fullhelmet",
     "repairs_like": "xlkevlar",
     "type": "ARMOR",

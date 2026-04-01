@@ -11,8 +11,8 @@
 
 #include "auto_pickup.h"
 #include "avatar.h"
-#include "batch_turns.h"
 #include "bodypart.h"
+#include "calendar.h"
 #include "character.h"
 #include "character_id.h"
 #include "character_functions.h"
@@ -2858,66 +2858,23 @@ void npc::add_new_mission( class mission *miss )
 
 void npc::on_unload()
 {
+    last_updated = calendar::turn;
 }
 
 // A throtled version of player::update_body since npc's don't need to-the-turn updates.
 void npc::npc_update_body()
 {
     if( calendar::once_every( 10_seconds ) ) {
-        update_body( last_updated, calendar::turn );
+        update_body( 10_seconds );
         last_updated = calendar::turn;
     }
 }
 
 void npc::on_load()
 {
-    const auto advance_effects = [&]( const time_duration & elapsed_dur ) {
-        for( auto &elem : *effects ) {
-            for( auto &_effect_it : elem.second ) {
-                effect &e = _effect_it.second;
-                const time_duration &time_left = e.get_duration();
-                if( time_left > 1_turns ) {
-                    if( time_left < elapsed_dur ) {
-                        e.set_duration( 1_turns );
-                    } else {
-                        e.set_duration( time_left - elapsed_dur );
-                    }
-                }
-            }
-        }
-    };
-    // Cap at some reasonable number, say 2 days
-    const time_duration dt = std::min( calendar::turn - last_updated, 2_days );
-    // TODO: Sleeping, healing etc.
+    batch_turns( to_turns<int>( calendar::turn - last_updated ) );
+
     last_updated = calendar::turn;
-    time_point cur = calendar::turn - dt;
-    add_msg( m_debug, "on_load() by %s, %d turns", name, to_turns<int>( dt ) );
-    // First update with 30 minute granularity, then 5 minutes, then turns
-    for( ; cur < calendar::turn - 30_minutes; cur += 30_minutes + 1_turns ) {
-        update_body( cur, cur + 30_minutes );
-        advance_effects( 30_minutes );
-    }
-    for( ; cur < calendar::turn - 5_minutes; cur += 5_minutes + 1_turns ) {
-        update_body( cur, cur + 5_minutes );
-        advance_effects( 5_minutes );
-    }
-    for( ; cur < calendar::turn; cur += 1_turns ) {
-        update_body( cur, cur + 1_turns );
-        process_effects();
-    }
-
-    if( dt > 0_turns ) {
-        // This ensures food is properly rotten at load
-        // Otherwise NPCs try to eat rotten food and fail
-        process_items();
-        // give NPCs that are doing activities a pile of moves
-        if( has_destination() || activity ) {
-            mod_moves( to_moves<int>( dt ) );
-        }
-    }
-
-    // Not necessarily true, but it's not a bad idea to set this
-    has_new_items = true;
 
     // for spawned npcs
     if( g->m.has_flag( "UNSTABLE", pos() ) ) {
@@ -3053,28 +3010,51 @@ void npc::batch_turns( int n )
     if( n <= 0 || is_dead_state() ) {
         return;
     }
-    n = std::min( n, MAX_CATCHUP_NPC );
 
-    // Biological catchup (hunger, thirst, healing, etc.) in one coarse pass.
-    // Call update_body directly (bypassing the once_every throttle used in
-    // npc_update_body) since we're doing a deliberate catch-up pass.
-    if( last_updated < calendar::turn ) {
-        update_body( last_updated, calendar::turn );
-        last_updated = calendar::turn;
-    }
-
-    // Per-turn effect/bonus processing.
-    for( int i = 0; i < n; ++i ) {
-        if( is_dead_state() ) {
-            break;
+    const auto advance_effects = [&]( const time_duration & elapsed_dur ) {
+        for( auto &elem : *effects ) {
+            for( auto &_effect_it : elem.second ) {
+                effect &e = _effect_it.second;
+                const time_duration &time_left = e.get_duration();
+                if( time_left > 1_turns ) {
+                    if( time_left < elapsed_dur ) {
+                        e.set_duration( 1_turns );
+                    } else {
+                        e.set_duration( time_left - elapsed_dur );
+                    }
+                }
+            }
         }
-        process_turn();
+    };
+    auto dt = time_duration::from_turns<int>( n );
+    // TODO: Sleeping, healing etc.
+    // First update with 30 minute granularity, then 5 minutes, then turns
+    for( ; dt >= 31_minutes; dt -= 30_minutes ) {
+        update_body( 30_minutes );
+        update_morale( 30_minutes );
+        advance_effects( 30_minutes );
     }
+    for( ; dt >= 6_minutes; dt -= 5_minutes ) {
+        update_body( 5_minutes );
+        update_morale( 5_minutes );
+        advance_effects( 5_minutes );
+    }
+    for( ; dt >= 1_turns; dt -= 1_turns ) {
+        update_body( 1_turns );
+        update_morale( 1_turns );
+        process_effects();
+    }
+    // This ensures food is properly rotten at load
+    // Otherwise NPCs try to eat rotten food and fail
+    process_items();
+
+    // Not necessarily true, but it's not a bad idea to set this
+    has_new_items = true;
+
+    moves = 0;
 
     // Fast-forward any ongoing activity.
     advance_job_progress( n );
-
-    moves = 0;
 }
 
 void npc::advance_job_progress( int n )

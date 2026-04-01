@@ -1299,12 +1299,7 @@ void sfx::do_danger_music()
         return;
     }
     audio_muted = false;
-    int hostiles = 0;
-    for( auto &critter : player_character.get_visible_creatures( 40 ) ) {
-        if( player_character.attitude_to( *critter ) == Attitude::A_HOSTILE ) {
-            hostiles++;
-        }
-    }
+    const int hostiles = player_character.get_mon_visible().combat_hostile_count;
     if( hostiles == prev_hostiles ) {
         return;
     }

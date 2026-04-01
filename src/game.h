@@ -520,6 +520,30 @@ class game : public submap_load_listener
         /** Makes any nearby NPCs on the overmap active. */
         void load_npcs();
     private:
+        /** Resizes the reality bubble to an explicit target size.
+         *  Safe to call mid-session: despawns out-of-range entities, flushes the
+         *  background streamer, rebuilds map grid and all dependent caches.
+         */
+        void resize_reality_bubble_to( int new_size );
+
+        /** Resizes the reality bubble to match the current REALITY_BUBBLE_SIZE option.
+         *  Also clears in_activity_bubble_ so the normal size takes effect immediately.
+         *  Called by on_options_changed() when the user changes REALITY_BUBBLE_SIZE.
+         */
+        void resize_reality_bubble();
+
+        /** Called each turn to shrink/restore the bubble based on active performance modes.
+         *  ACTIVITY_MOBILE_BUBBLE_SIZE / ACTIVITY_IDLE_BUBBLE_SIZE: shrinks while the player has a
+         *  long activity whose bubble_size_effect is "mobile" or "idle" respectively.
+         *  Entry requires activity moves >= ACTIVITY_BUBBLE_GRACE minutes.
+         *  UNDERGROUND_BUBBLE_SIZE: shrinks while underground (z < 0) with a floor above (enclosed).
+         *  VEHICLE_BUBBLE_SIZE: shrinks while actively driving or mounted.
+         *  COMBAT_BUBBLE_SIZE: shrinks while hostile creatures are visible within safe-mode range.
+         *  Underground, vehicle, and combat use turn-based hysteresis (DYNAMIC_BUBBLE_GRACE turns
+         *  to enter, immediate exit). The target is min() of all applicable sizes.
+         */
+        void update_performance_bubble();
+
         /** Unloads all NPCs.
          *
          * If you call this you must later call load_npcs, lest caches get
@@ -1207,6 +1231,19 @@ class game : public submap_load_listener
         // Handle for the lazy border around the reality bubble.
         // Controlled by LAZY_BORDER cached option.
         load_request_handle lazy_border_handle_ = 0;
+
+        // True while the bubble is temporarily shrunk for an ongoing long activity.
+        // Entry requires >= ACTIVITY_BUBBLE_GRACE minutes remaining; once set, stays true
+        // until the activity ends regardless of remaining time.
+        // Cleared by resize_reality_bubble() so an explicit option change always wins.
+        bool in_activity_bubble_ = false;
+
+        // Consecutive turns each dynamic condition has been continuously met.
+        // Trigger fires once the count reaches DYNAMIC_BUBBLE_GRACE; resets to 0 immediately
+        // when the condition is no longer met (no exit hysteresis).
+        int underground_bubble_turns_ = 0;
+        int vehicle_bubble_turns_ = 0;
+        int combat_bubble_turns_ = 0;
 
         // Turns between world_tick() passes.  1 = every turn (default).
         // Read from REALITY_BUBBLE_TICK_INTERVAL in start_game() / load().

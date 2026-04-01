@@ -74,6 +74,7 @@
 #include "units_angle.h"
 #include "units_utility.h"
 #include "value_ptr.h"
+#include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
@@ -160,6 +161,9 @@ static dispersion_sources calculate_dispersion( const map &m, const Character &w
 
 namespace
 {
+
+constexpr auto vehicle_recoil_velocity_scale = 1.4;
+constexpr auto vehicle_recoil_lateral_scale = 0.1;
 
 /// more generic version of `item::gunmod_find`
 auto gunmod_find_with(
@@ -845,6 +849,102 @@ auto can_use_heavy_weapon( const Character &who, const map &m, const tripoint &p
     return is_mountable_nearby( m, pos );
 }
 
+auto firing_vehicle( map &here, const Character &who ) -> vehicle * // *NOPAD*
+{
+    if( !who.in_vehicle && !who.has_effect( effect_on_roof ) ) {
+        return nullptr;
+    }
+
+    const auto vp = here.veh_at( who.pos() );
+    if( !vp ) {
+        return nullptr;
+    }
+
+    return &vp->vehicle();
+}
+
+auto has_only_rigid_wheels( const vehicle &veh ) -> bool
+{
+    auto has_wheels = false;
+    for( auto index = 0; index < veh.part_count(); ++index ) {
+        if( !veh.part_info( index ).has_flag( VPFLAG_WHEEL ) ) {
+            continue;
+        }
+
+        has_wheels = true;
+        if( std::abs( veh.part_info( index ).wheel_or_rating() - 0.1f ) > 0.001f ) {
+            return false;
+        }
+    }
+
+    return has_wheels;
+}
+
+auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoint &target,
+                                  const tripoint &shot_origin, const int gun_recoil, const int shots ) -> void
+{
+    if( gun_recoil <= 0 || shots <= 0 ) {
+        return;
+    }
+
+    auto *const veh = firing_vehicle( here, who );
+    if( veh == nullptr ) {
+        return;
+    }
+
+    const auto recoil_direction = rl_vec2d( shot_origin.xy() - target.xy() );
+    if( recoil_direction.is_null() ) {
+        return;
+    }
+
+    const auto vehicle_mass_kg = std::max( 1.0, static_cast<double>( units::to_kilogram(
+            veh->total_mass() ) ) );
+    const auto recoil_velocity = static_cast<int>( std::round( static_cast<double>( gun_recoil ) *
+                                 shots * vehicle_recoil_velocity_scale *
+                                 get_option<float>( "VEHICLE_GUN_RECOIL_FACTOR" ) /
+                                 vehicle_mass_kg ) );
+    if( recoil_velocity == 0 ) {
+        return;
+    }
+
+    const auto face_velocity_vec = veh->face_vec();
+    const auto lateral_velocity_vec = rl_vec2d( -face_velocity_vec.y, face_velocity_vec.x );
+    const auto recoil_velocity_vec = recoil_direction.normalized() * recoil_velocity;
+    if( has_only_rigid_wheels( *veh ) ) {
+        const auto final_velocity = veh->velo_vec() + recoil_velocity_vec;
+        const auto resulting_velocity = static_cast<int>( std::round( final_velocity.magnitude() ) );
+        if( resulting_velocity == 0 ) {
+            veh->velocity = 0;
+            return;
+        }
+
+        veh->skidding = true;
+        veh->move.init( final_velocity.normalized().as_point() );
+        veh->velocity = resulting_velocity;
+        return;
+    }
+
+    const auto final_velocity = veh->velo_vec() +
+                                face_velocity_vec * recoil_velocity_vec.dot_product( face_velocity_vec ) +
+                                lateral_velocity_vec * recoil_velocity_vec.dot_product( lateral_velocity_vec ) *
+                                vehicle_recoil_lateral_scale;
+    const auto face_velocity = final_velocity.dot_product( veh->face_vec() );
+    const auto lateral_velocity = final_velocity.dot_product( lateral_velocity_vec );
+    const auto should_skid = veh->skidding || std::abs( lateral_velocity ) >= 1.0;
+    const auto resulting_velocity = static_cast<int>( std::round( should_skid ?
+                                    final_velocity.magnitude() : std::abs( face_velocity ) ) );
+    if( resulting_velocity == 0 ) {
+        veh->velocity = 0;
+        return;
+    }
+
+    if( should_skid ) {
+        veh->skidding = true;
+        veh->move.init( final_velocity.normalized().as_point() );
+    }
+    veh->velocity = face_velocity < 0 ? -resulting_velocity : resulting_velocity;
+}
+
 } // namespace
 
 
@@ -879,11 +979,11 @@ static int calc_gun_volume( const item &gun )
 
 int ranged::fire_gun( Character &who, const tripoint &target, int shots )
 {
-    return fire_gun( who, target, shots, who.primary_weapon(), nullptr );
+    return fire_gun( who, target, shots, who.primary_weapon(), nullptr, std::nullopt );
 }
 
 int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, item &gun,
-                      item *ammo )
+                      item *ammo, const std::optional<tripoint> &shot_origin )
 {
     int attack_moves = time_to_attack( who, gun, ammo );
 
@@ -937,6 +1037,7 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
 
     bool aoe_attack = gun.gun_skill() == skill_launcher || shape;
     tripoint aim = target;
+    const auto recoil_origin = shot_origin.value_or( who.pos() );
     int curshot = 0;
     int hits = 0; // total shots on target
     while( curshot != shots ) {
@@ -1069,6 +1170,8 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
                 gun_recoil = gun_recoil * 3;
             }
         }
+
+        apply_gun_recoil_to_vehicle( here, who, target, recoil_origin, gun_recoil, curshot );
 
         who.recoil += gun_recoil;
         if( is_mech_weapon ) {

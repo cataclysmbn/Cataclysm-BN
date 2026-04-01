@@ -8,28 +8,17 @@
  *   - game::load_npcs()  (per-NPC catchup via Creature::batch_turns)
  *   - map::spawn_monsters_submap() (per-monster catchup)
  *
- * All functions clamp n to a safe maximum to prevent O(saved-time) blowups
- * on fresh saves loaded after long real-world absence.
+ * All functions scale O(1) with respect to n and are uncapped.
+ * Distribution grid catchup is handled by per-tile timestamps in
+ * distribution_grid_tracker::update().
  */
 
-#include <cstdint>
-
-class distribution_grid;
 class submap;
-class vehicle;
-
-// Catchup caps — keep these conservative; they limit worst-case load time.
-inline constexpr int MAX_CATCHUP_FIELDS  = 100000;
-inline constexpr int MAX_CATCHUP_ITEMS   = 100000;
-inline constexpr int MAX_CATCHUP_VEHICLE = 10000;
-inline constexpr int MAX_CATCHUP_MONSTER = 10000;
-inline constexpr int MAX_CATCHUP_NPC    = 10000;
-inline constexpr int MAX_CATCHUP_GRID   = 50000;
 
 /**
  * Analytically advance field intensity/age in @p sm by @p n turns.
  * Uses the half_life formula to compute expected intensity drops rather than
- * simulating each turn individually.  Clamped at MAX_CATCHUP_FIELDS.
+ * simulating each turn individually.
  */
 void batch_turns_field( submap &sm, int n );
 
@@ -38,27 +27,13 @@ void batch_turns_field( submap &sm, int n );
  * Only affects items whose itype has countdown_interval > 0 and are currently
  * active.  Counters clamp at 0; the countdown_action fires on the next
  * normal in-bubble process_items() call (not here, to avoid side-effects
- * in out-of-bubble context).  Clamped at MAX_CATCHUP_FIELDS.
+ * in out-of-bubble context).
  */
 void batch_turns_items( submap &sm, int n );
 
 /**
- * Apply the net electrical balance of @p veh for @p n turns.
- * Uses net_battery_charge_rate_w() and a single charge/discharge call,
- * rather than simulating each turn individually.  Clamped at MAX_CATCHUP_VEHICLE.
- */
-void batch_turns_vehicle( vehicle &veh, int n );
-
-/**
- * Apply the net power balance of @p grid for @p n turns.
- * Calls distribution_grid::apply_net_power(net * n).
- * Clamped at MAX_CATCHUP_GRID.
- */
-void batch_turns_distribution_grid( distribution_grid &grid, int n );
-
-/**
  * Convenience wrapper: calls batch_turns_field, batch_turns_items, and
- * batch_turns_vehicle for every vehicle on the submap.  Intended for use
+ * vehicle::update_time for every vehicle on the submap.  Intended for use
  * in map::loadn() immediately before actualize().
  */
 void run_submap_batch_turns( submap &sm, int n );

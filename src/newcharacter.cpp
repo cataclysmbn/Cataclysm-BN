@@ -92,6 +92,34 @@ static const trait_flag_str_id flag_FEMALE_EXCLUSIVE( "FEMALE_EXCLUSIVE" );
 static const trait_flag_str_id flag_MALE_PREFERRED( "MALE_PREFERRED" );
 static const trait_flag_str_id flag_FEMALE_PREFERRED( "FEMALE_PREFERRED" );
 
+static auto profession_age_limits_enabled() -> bool
+{
+    if( world_generator && world_generator->active_world ) {
+        return world_generator->active_world->info->WORLD_OPTIONS["ENFORCE_PROFESSION_AGE_RANGE"]
+               .value_as<bool>();
+    }
+    return false;
+}
+
+static auto profession_age_bounds( const profession &prof ) -> std::pair<int, int>
+{
+    if( profession_age_limits_enabled() ) {
+        if( const auto range = prof.starting_age_range() ) {
+            return { range->min, range->max };
+        }
+    }
+    return { profession::min_age, profession::max_age };
+}
+
+static auto random_age_for_profession( const profession &prof ) -> int
+{
+    const auto [min_age, max_age] = profession_age_bounds( prof );
+    if( min_age == max_age ) {
+        return min_age;
+    }
+    return rng( min_age, max_age );
+}
+
 // Colors used in this file: (Most else defaults to c_light_gray)
 #define COL_STAT_ACT        c_white   // Selected stat
 #define COL_STAT_BONUS      c_light_green // Bonus
@@ -230,8 +258,6 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
     } else {
         name = MAP_SHARING::getUsername();
     }
-    // if adjusting min and max age from 16 and 55, make sure to see set_description()
-    init_age = rng( 16, 55 );
     // if adjusting min and max height from 145 and 200, make sure to see set_description()
     init_height = rng( 145, 200 );
     bool cities_enabled = world_generator->active_world->info->WORLD_OPTIONS["CITY_SIZE"].getValue() !=
@@ -252,6 +278,8 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
 
     prof = g->scen->weighted_random_profession();
     random_start_location = true;
+    // if adjusting min and max age from 16 and 55, make sure to see set_description()
+    set_base_age( random_age_for_profession( *prof ) );
 
     str_max = rng( 6, HIGH_STAT - 2 );
     dex_max = rng( 6, HIGH_STAT - 2 );
@@ -2476,6 +2504,7 @@ tab_direction set_profession( avatar &u, points_left &points,
             }
             const int netPointCost = sorted_profs[cur_id]->point_cost() - u.prof->point_cost();
             u.prof = sorted_profs[cur_id];
+            u.set_base_age( random_age_for_profession( *u.prof ) );
             // Add traits for the new profession (and perhaps scenario, if, for example,
             // both the scenario and old profession require the same trait)
             newcharacter::add_traits( u, points );
@@ -3695,13 +3724,17 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
     // do not switch IME mode now, but restore previous mode on return
     ime_sentry sentry( ime_sentry::keep );
 
-    int min_allowed_age = 16;
-    int max_allowed_age = 55;
+    int min_allowed_age = profession::min_age;
+    int max_allowed_age = profession::max_age;
     // in centimeters. 2 std. deviations below average female height
     int min_allowed_height = 145;
     int max_allowed_height = 200;
 
     do {
+        const auto [new_min_age, new_max_age] = profession_age_bounds( *you.prof );
+        min_allowed_age = new_min_age;
+        max_allowed_age = new_max_age;
+        you.set_base_age( clamp( you.base_age(), min_allowed_age, max_allowed_age ) );
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();
 #if defined(TILES)
@@ -3861,12 +3894,14 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
                     break;
                 }
                 case char_creation::AGE: {
-                    popup.title( _( "Enter age in years.  Minimum 16, maximum 55" ) )
+                    const std::string title = string_format( _( "Enter age in years.  Minimum %d, maximum %d" ),
+                                              min_allowed_age, max_allowed_age );
+                    popup.title( title )
                     .text( string_format( "%d", you.base_age() ) )
                     .only_digits( true );
                     const int result = popup.query_int();
                     if( result != 0 ) {
-                        you.set_base_age( clamp( result, 16, 55 ) );
+                        you.set_base_age( clamp( result, min_allowed_age, max_allowed_age ) );
                     }
                     break;
                 }
@@ -4165,6 +4200,7 @@ void reset_scenario( avatar &u, const scenario *scen )
     u.per_max = 8;
     g->scen = scen;
     u.prof = default_prof;
+    u.set_base_age( random_age_for_profession( *u.prof ) );
     for( auto &t : u.get_mutations() ) {
         if( t.obj().hp_modifier != 0 ) {
             u.toggle_trait( t );

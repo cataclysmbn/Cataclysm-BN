@@ -7,6 +7,7 @@
 #include "catalua_bindings.h"
 #include "catalua.h"
 #include "catalua_bindings_utils.h"
+#include "catalua_impl.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
@@ -173,6 +174,24 @@ void cata::detail::reg_overmap( sol::state &lua )
     luna::set_fx( lib, "set_seen",
     []( const tripoint & p, sol::optional<bool> seen_val ) -> void {
         ACTIVE_OVERMAP_BUFFER.set_seen( tripoint_abs_omt( p ), seen_val.value_or( true ) );
+    } );
+
+    DOC( "Reveal a square area around a center point on the overmap. Returns true if any new tiles were revealed." );
+    DOC( "Optional filter callback receives oter_id and should return true to reveal that tile." );
+    luna::set_fx( lib, "reveal",
+                  []( const tripoint & center, int radius,
+    sol::optional<sol::protected_function> filter_fn ) -> bool {
+        if( filter_fn.has_value() )
+        {
+            auto filter = filter_fn.value();
+            const auto wrapped_filter = [filter]( const oter_id & ter ) -> bool {
+                sol::protected_function_result res = filter( ter );
+                check_func_result( res );
+                return res.get<bool>();
+            };
+            return ACTIVE_OVERMAP_BUFFER.reveal( tripoint_abs_omt( center ), radius, wrapped_filter );
+        }
+        return ACTIVE_OVERMAP_BUFFER.reveal( tripoint_abs_omt( center ), radius );
     } );
 
     DOC( "Check if the terrain at the given position has been explored by the player. Returns boolean." );

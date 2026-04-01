@@ -372,6 +372,7 @@ extern const flag_id flag_WATER_DISABLE;
 extern const flag_id flag_WET;
 extern const flag_id flag_WHIP;
 extern const flag_id flag_WIND_EXTINGUISH;
+extern const flag_id flag_WORN_GUN;
 extern const flag_id flag_WRITE_MESSAGE;
 extern const flag_id flag_ZERO_WEIGHT;
 extern const flag_id flag_ZOOM;

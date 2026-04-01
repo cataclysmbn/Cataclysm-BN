@@ -74,6 +74,7 @@
 #include "ui.h"
 #include "ui_manager.h"
 #include "uistate.h"
+#include "note_label_utils.h"
 #include "units.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -327,6 +328,7 @@ static void update_note_preview( const std::string &note,
     const nc_color note_color = std::get<1>( om_symbol );
     const char symbol = std::get<0>( om_symbol );
     const std::string note_text = note.substr( std::get<2>( om_symbol ), std::string::npos );
+    const std::string visible_note_text = note_label_utils::strip_label_commands( note_text );
 
     auto w_preview       = std::get<0>( preview_windows );
     auto w_preview_title = std::get<1>( preview_windows );
@@ -339,9 +341,9 @@ static void update_note_preview( const std::string &note,
 
     werase( *w_preview_title );
     nc_color default_color = note_color;
-    print_colored_text( *w_preview_title, point_zero, default_color, note_color, note_text,
+    print_colored_text( *w_preview_title, point_zero, default_color, note_color, visible_note_text,
                         report_color_error::no );
-    int note_text_width = utf8_width( note_text );
+    int note_text_width = utf8_width( visible_note_text );
     mvwputch( *w_preview_title, point( note_text_width, 0 ), c_white, LINE_XOXO );
     for( int i = 0; i < note_text_width; i++ ) {
         mvwputch( *w_preview_title, point( i, 1 ), c_white, LINE_OXOX );
@@ -1301,7 +1303,11 @@ static void draw_ascii( ui_adaptor &ui,
                         note_text );
             const size_t pos = std::get<2>( note_info );
             if( pos != std::string::npos ) {
-                corner_text.emplace_back( std::get<1>( note_info ), note_text.substr( pos ) );
+                const auto display_note_text = note_label_utils::strip_label_commands(
+                                                   note_text.substr( pos ) );
+                if( !display_note_text.empty() ) {
+                    corner_text.emplace_back( std::get<1>( note_info ), display_note_text );
+                }
             }
             if( ACTIVE_OVERMAP_BUFFER.is_marked_dangerous( center ) ) {
                 corner_text.emplace_back( c_red, _( "DANGEROUS AREA!" ) );
@@ -1619,12 +1625,14 @@ static void create_note( const tripoint_abs_omt &curs )
                                       _( color_pair.second ), replace_all( color_pair.second, " ", "_" ) );
     }
 
-    std::string helper_text = string_format( ".\n\n%s\n%s\n%s\n%s\n",
-                              _( "Type GLYPH:TEXT to set a custom glyph." ),
-                              _( "Type COLOR;TEXT to set a custom color." ),
-                              _( "Type SPRITE:TILE_ID to set a custom sprite." ),
-                              // NOLINTNEXTLINE(cata-text-style): literal exclaimation mark
-                              _( "Examples: B:Base | g;Loot | SPRITE:toolbox;g;Tools" ) );
+    const auto helper_text = string_format( ".\n\n%s\n%s\n%s\n%s\n%s\n\n%s\n",
+                                            _( "Type <color_white>COLOR;TEXT</color> to set a custom color." ),
+                                            _( "Type <color_white>GLYPH:TEXT</color> to set a custom glyph." ),
+                                            _( "Type <color_white>SPRITE:TILE_ID</color> to set a custom sprite." ),
+                                            _( "Type <color_white>LABEL:TEXT</color> to set a custom label." ),
+                                            _( "Use <color_white>;</color> as a separator to combine elements." ),
+                                            // NOLINTNEXTLINE(cata-text-style): literal exclaimation mark
+                                            _( "Examples: <color_white>$:Bank</color> | <color_white>R;Red</color> | <color_white>SPRITE:toolbox</color> | <color_white>LABEL:Survivor City</color>" ) );
     color_notes = color_notes.replace( color_notes.end() - 2, color_notes.end(), helper_text );
     std::string title = _( "Note:" );
 

@@ -1,6 +1,6 @@
 #include "active_tile_data.h"
 #include "active_tile_data_def.h"
-
+#include "calendar.h"
 #include "coordinate_conversions.h"
 #include "debug.h"
 #include "distribution_grid.h"
@@ -134,15 +134,6 @@ class null_tile_data : public active_tile_data
         void load( JsonObject & ) override
         {}
 };
-
-// Copypasted from character.cpp
-// TODO: Move somewhere (calendar?)
-inline int ticks_between( const time_point &from, const time_point &to,
-                          const time_duration &tick_length )
-{
-    return ( to_turn<int>( to ) / to_turns<int>( tick_length ) ) - ( to_turn<int>
-            ( from ) / to_turns<int>( tick_length ) );
-}
 
 namespace
 {
@@ -359,7 +350,7 @@ void charger_tile::load( JsonObject &jo )
 void steady_consumer_tile::update_internal( time_point to, const tripoint_abs_ms &p,
         distribution_grid &grid )
 {
-    int ticks = ticks_between( get_last_updated(), to, consume_every );
+    int ticks = calendar::ticks_between( get_last_updated(), to, consume_every );
     if( ticks == 0 ) {
         return;
     }

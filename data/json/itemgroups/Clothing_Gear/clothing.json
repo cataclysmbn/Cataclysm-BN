@@ -1167,7 +1167,6 @@
     "subtype": "distribution",
     "entries": [
       { "item": "jeans", "prob": 90 },
-      { "item": "jeans_red", "prob": 50 },
       { "item": "shorts", "prob": 70 },
       { "item": "shorts_denim", "prob": 35 },
       { "item": "b_shorts", "prob": 30 },
@@ -2473,6 +2472,7 @@
       [ "helmet_chitin", 2 ],
       [ "helmet_acidchitin", 1 ],
       [ "pickelhaube", 1 ],
+      [ "helmet_steel", 1 ],
       [ "firehelmet", 2 ],
       [ "helmet_barbute", 1 ],
       [ "helmet_plate", 1 ],
@@ -2988,7 +2988,7 @@
       },
       { "item": "jeans", "prob": 80 },
       { "item": "jeans_red", "prob": 20 },
-      { "item": "leg_warmers", "prob": 20 },
+      { "item": "leg_warmers", "prob": 10 },
       { "item": "leggings", "prob": 30 },
       { "item": "legguard_hard", "prob": 3 },
       { "item": "pants", "prob": 70 },
@@ -3240,7 +3240,6 @@
       { "item": "jacket_jean", "prob": 80 },
       { "item": "jacket_flannel", "prob": 50 },
       { "item": "jacket_leather", "prob": 50 },
-      { "item": "jacket_leather_red", "prob": 25 },
       { "item": "jacket_light", "prob": 60 },
       { "item": "jacket_windbreaker", "prob": 70 },
       { "item": "poncho", "prob": 30 },
@@ -3252,7 +3251,12 @@
     "//": "Bathrobes and kimonos in the same itemgroup",
     "type": "item_group",
     "subtype": "distribution",
-    "items": [ { "item": "house_coat", "prob": 80 }, { "item": "kimono", "prob": 20 }, { "item": "robe", "prob": 10 } ]
+    "items": [
+      { "item": "house_coat", "prob": 80 },
+      { "item": "kimono", "prob": 20 },
+      { "item": "robe", "prob": 10 },
+      { "item": "jacket_leather_red", "prob": 10 }
+    ]
   },
   {
     "id": "vests",

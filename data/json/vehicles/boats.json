@@ -1762,7 +1762,7 @@
       {
         "x": 1,
         "y": 0,
-        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "controls", "seat", "seatbelt", "roof_cloth" ]
+        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "sonar_array", "controls", "seat", "seatbelt", "roof_cloth" ]
       },
       { "x": -2, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
@@ -1839,7 +1839,7 @@
       {
         "x": 1,
         "y": 0,
-        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "controls", "seat", "seatbelt", "roof_cloth" ]
+        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "sonar_array", "controls", "seat", "seatbelt", "roof_cloth" ]
       },
       { "x": -2, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },

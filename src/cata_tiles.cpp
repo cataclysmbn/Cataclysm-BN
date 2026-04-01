@@ -2429,7 +2429,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                                  bool has_top_level, tint_blend_mode top_blend_mode,
                                  std::optional<float> top_contrast, std::optional<float> top_saturation,
         std::optional<float> top_brightness ) -> tint_config {
-            tint_config cfg;
+            tint_config cfg{};
             if( !obj.has_member( key ) )
             {
                 return cfg;
@@ -3306,7 +3306,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const bool stop_on_memory = z != center.z && has_memory &&
                                             ( !in_map_bounds || here.ter( pos ) != t_open_air );
 
-                ll = ch.visibility_cache[ch.idx( x, y )];
+                ll = ch.inbounds( {x, y} ) ? ch.visibility_cache[ch.idx( x, y )] : lit_level::BLANK;
                 const auto visibility = here.get_visibility( ll, cache );
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
                     if( !would_apply_vision_effects( visibility ) ) {
@@ -3792,6 +3792,11 @@ bool cata_tiles::minimap_requires_animation() const
     return minimap->has_animated_elements();
 }
 
+void cata_tiles::reset_minimap()
+{
+    minimap->reset();
+}
+
 void cata_tiles::get_window_tile_counts( const int width, const int height, int &columns,
         int &rows ) const
 {
@@ -4257,9 +4262,9 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
      */
     const auto num_sprites = sprite_list.size();
     const auto is_single_sprite = num_sprites == 1;
-    const auto rotate_sprite = ( is_fg || tile.rotates )
-                               && is_single_sprite
-                               && !tile.is_multitile_subtile;
+    constexpr auto rotate_sprite_fg = true;
+    const auto rotate_sprite_bg = tile.rotates && !tile.is_multitile_subtile;
+    const auto rotate_sprite = is_single_sprite && ( is_fg ? rotate_sprite_fg : rotate_sprite_bg );
     const auto sprite_num = is_single_sprite
                             ? 0
                             : ( rota % num_sprites );

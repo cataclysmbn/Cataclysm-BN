@@ -197,15 +197,17 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_PROJECTILE_RESISTANT_2: return "PROJECTILE_RESISTANT_2";
         case MF_PROJECTILE_RESISTANT_3: return "PROJECTILE_RESISTANT_3";
         case MF_PROJECTILE_RESISTANT_4: return "PROJECTILE_RESISTANT_4";
-         case MF_VOLATILE: return "VOLATILE";
-         case MF_CANT_CLONE: return "CANT_CLONE";
-         case MF_MOUNTABLE_STAIRS: return "MOUNTABLE_STAIRS";
-         case MF_MOUNTABLE_LADDER: return "MOUNTABLE_LADDER";
-         case MF_MOUNTABLE_OBSTACLES: return "MOUNTABLE_OBSTACLES";
-         case MF_MOUNTABLE_DOORS: return "MOUNTABLE_DOORS";
-         case MF_MOUNTABLE_LEDGE: return "MOUNTABLE_LEDGE";
-         case MF_FACTION_MEMORY: return "FACTION_MEMORY";
-         // *INDENT-ON*
+        case MF_VOLATILE: return "VOLATILE";
+        case MF_CANT_CLONE: return "CANT_CLONE";
+        case MF_MOUNTABLE_STAIRS: return "MOUNTABLE_STAIRS";
+        case MF_MOUNTABLE_LADDER: return "MOUNTABLE_LADDER";
+        case MF_MOUNTABLE_OBSTACLES: return "MOUNTABLE_OBSTACLES";
+        case MF_MOUNTABLE_DOORS: return "MOUNTABLE_DOORS";
+        case MF_MOUNTABLE_LEDGE: return "MOUNTABLE_LEDGE";        
+        case MF_FACTION_MEMORY: return "FACTION_MEMORY";
+        case MF_COMBAT_MOUNT: return "COMBAT_MOUNT";
+        case MF_CANT_TRAIN: return "CANT_TRAIN";
+        // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
     }

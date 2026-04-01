@@ -371,6 +371,7 @@ void vehicle::copy_static_from( const vehicle &source )
     is_patrolling = source.is_patrolling;
     cruise_on = source.cruise_on;
     engine_on = source.engine_on;
+    brake_hold = source.brake_hold;
     tracking_on = source.tracking_on;
     is_locked = source.is_locked;
     is_alarm_on = source.is_alarm_on;
@@ -2694,6 +2695,7 @@ bool vehicle::split_vehicles( const std::vector<std::vector <int>> &new_vehs,
             new_vehicle->cruise_velocity = cruise_velocity;
             new_vehicle->cruise_on = cruise_on;
             new_vehicle->engine_on = engine_on;
+            new_vehicle->brake_hold = brake_hold;
             new_vehicle->tracking_on = tracking_on;
             new_vehicle->camera_on = camera_on;
         }
@@ -4960,7 +4962,7 @@ float vehicle::k_traction( float wheel_traction_area ) const
 
 int vehicle::static_drag( bool actual ) const
 {
-    return extra_drag + ( actual && !engine_on && !is_towed() ? -1500 : 0 );
+    return extra_drag + ( actual && !engine_on && !is_towed() && brake_hold ? -1500 : 0 );
 }
 
 float vehicle::strain() const

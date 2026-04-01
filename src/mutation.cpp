@@ -107,6 +107,26 @@ std::string enum_to_string<mutagen_technique>( mutagen_technique data )
 
 } // namespace io
 
+namespace
+{
+
+auto get_threshold_mutation_for_tier( const mutation_category_id &category_id,
+                                      const size_t tier ) -> trait_id
+{
+    if( !category_id.is_valid() ) {
+        return trait_id::NULL_ID();
+    }
+
+    const auto &threshold_muts = category_id->threshold_muts;
+    if( tier >= threshold_muts.size() ) {
+        return trait_id::NULL_ID();
+    }
+
+    return threshold_muts[tier];
+}
+
+} // namespace
+
 bool Character::has_trait( const trait_id &b ) const
 {
     return my_mutations.contains( b ) || enchantment_cache->get_mutations().contains( b );
@@ -1277,9 +1297,11 @@ bool Character::mutate_towards( const trait_id &mut )
         }
     }
 
-    for( auto cat : mdata.category ) {
-        if( has_trait( cat->threshold_muts[tierreq] ) ) {
+    for( const auto &cat : mdata.category ) {
+        const auto threshold_mut = get_threshold_mutation_for_tier( cat, tierreq );
+        if( threshold_mut && has_trait( threshold_mut ) ) {
             has_threshreq = true;
+            break;
         }
     }
 

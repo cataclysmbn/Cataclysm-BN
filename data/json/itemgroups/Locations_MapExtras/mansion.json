@@ -483,7 +483,7 @@
     "id": "soa_wwii",
     "type": "item_group",
     "subtype": "collection",
-    "//": "TODO: replace army jacket with all-cotton equivalent if added, add all-steel army helmets to spawn ~75% of the time in place of berets",
+    "//": "TODO: replace army jacket with all-cotton equivalent if added",
     "items": [
       { "group": "soa_weapons_wwii" },
       [ "boots", 100 ],
@@ -491,7 +491,7 @@
       [ "jacket_army", 100 ],
       [ "chestrig", 75 ],
       [ "rucksack", 50 ],
-      [ "beret", 100 ]
+      { "distribution": [ { "item": "helmet_steel", "prob": 75 }, { "item": "beret", "prob": 25 } ] }
     ]
   },
   {

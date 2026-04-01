@@ -205,6 +205,8 @@ enum m_flag : int {
     MF_MOUNTABLE_DOORS,     //Player can open/close doors while riding this monster
     MF_MOUNTABLE_LEDGE,     //Player can drop down ledges while riding this monster
     MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
+    MF_COMBAT_MOUNT,        // This monster is trained for combat
+    MF_CANT_TRAIN,            // This monster can't be trained for combat
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };

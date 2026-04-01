@@ -154,6 +154,7 @@ static const activity_id ACT_OPERATION( "ACT_OPERATION" );
 static const activity_id ACT_PICKAXE( "ACT_PICKAXE" );
 static const activity_id ACT_PLANT_SEED( "ACT_PLANT_SEED" );
 static const activity_id ACT_PLAY_WITH_PET( "ACT_PLAY_WITH_PET" );
+static const activity_id ACT_TRAIN_PET( "ACT_TRAIN_PET" );
 static const activity_id ACT_PRY_NAILS( "ACT_PRY_NAILS" );
 static const activity_id ACT_PULP( "ACT_PULP" );
 static const activity_id ACT_QUARTER( "ACT_QUARTER" );
@@ -371,6 +372,7 @@ activity_handlers::finish_functions = {
     { ACT_JACKHAMMER, jackhammer_finish },
     { ACT_FILL_PIT, fill_pit_finish },
     { ACT_PLAY_WITH_PET, play_with_pet_finish },
+    { ACT_TRAIN_PET, train_pet_finish },
     { ACT_SHAVE, shaving_finish },
     { ACT_HAIRCUT, haircut_finish },
     { ACT_ROBOT_CONTROL, robot_control_finish },
@@ -4210,6 +4212,24 @@ void activity_handlers::play_with_pet_finish( player_activity *act, player *p )
     p->add_morale( MORALE_PLAY_WITH_PET, rng( 3, 10 ), 10, 5_hours, 25_minutes );
     p->add_msg_if_player( m_good, _( "Playing with your %s has lifted your spirits a bit." ),
                           act->str_values[0] );
+    act->set_to_null();
+}
+
+void activity_handlers::train_pet_finish( player_activity *act, player *p )
+{
+    if( 4 * p->get_skill_level( skill_survival ) >= rng( 0, 100 ) ) {
+        auto mon = act->monsters[0].lock();
+        if( mon ) {
+            mon->monster_flags.insert( MF_COMBAT_MOUNT );
+            p->add_msg_if_player( m_good,
+                                  _( "Training your %s has finally succeeded, they should be less skittish in combat now." ),
+                                  act->str_values[0] );
+        }
+    } else {
+        p->add_msg_if_player( m_good,
+                              _( "Training your %s takes time, it seems they are making a bit of progress at least." ),
+                              act->str_values[0] );
+    }
     act->set_to_null();
 }
 

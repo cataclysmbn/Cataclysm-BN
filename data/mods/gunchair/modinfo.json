@@ -1,0 +1,23 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "gunchair",
+    "name": "GunChair™",
+    "description": "Own a minigun-propelled armchair for home defense, Just as the founding fathers intended",
+    "category": "content",
+    "lua_api_version": 2,
+    "dependencies": [ "bn" ]
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "VEHICLE_GUN_RECOIL_FACTOR",
+    "stype": "float",
+    "value": 100.0
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "VEHICLE_LOCKS",
+    "stype": "bool",
+    "value": false
+  }
+]

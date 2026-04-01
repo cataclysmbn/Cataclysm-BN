@@ -813,6 +813,12 @@ void avatar_action::fire_wielded_weapon( avatar &you )
                          ( aim_activity_actor::use_wielded() ), false );
 }
 
+void avatar_action::fire_ranged_gear( avatar &you, item *gun )
+{
+    you.assign_activity( std::make_unique<player_activity>( aim_activity_actor::use_gear( gun ) ),
+                         false );
+}
+
 void avatar_action::fire_ranged_mutation( avatar &you, detached_ptr<item> &&fake_gun )
 {
     you.assign_activity( std::make_unique<player_activity>( aim_activity_actor::use_mutation(

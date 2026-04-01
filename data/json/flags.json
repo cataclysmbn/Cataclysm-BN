@@ -2260,6 +2260,12 @@
     "context": [  ]
   },
   {
+    "id": "WORN_GUN",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gun can be fired while <good>worn</good>."
+  },
+  {
     "id": "WRITE_MESSAGE",
     "type": "json_flag",
     "context": [ "TOOL" ]
