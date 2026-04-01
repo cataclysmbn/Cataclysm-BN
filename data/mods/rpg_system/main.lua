@@ -262,6 +262,9 @@ mod.on_game_load = function()
   gdebug.log_info("RPG System: Loaded character at level " .. level)
 end
 
+---@param player Character
+---@param monster_hp integer
+---@param xp_gain number
 local function level_up(player, monster_hp, xp_gain)
   local exp = get_char_value(player, "rpg_exp", 0)
   local old_level = get_char_value(player, "rpg_level", 0)
@@ -281,13 +284,13 @@ local function level_up(player, monster_hp, xp_gain)
       .. " "
       .. string.format(gettext("You are now %s!"), color_info(gettext("Level") .. " " .. new_level))
 
+    -- Calculate trait slots
+    local old_max_traits = 1 + math.floor(old_level / LEVELS_PER_TRAIT_SLOT)
+    local new_max_traits = 1 + math.floor(new_level / LEVELS_PER_TRAIT_SLOT)
+    set_char_value(player, "rpg_max_traits", new_max_traits)
+
     if show_messages then
       gapi.add_msg(MsgType.good, level_msg)
-
-      -- Calculate trait slots
-      local old_max_traits = 1 + math.floor(old_level / LEVELS_PER_TRAIT_SLOT)
-      local new_max_traits = 1 + math.floor(new_level / LEVELS_PER_TRAIT_SLOT)
-      set_char_value(player, "rpg_max_traits", new_max_traits)
 
       if new_max_traits > old_max_traits then
         local traits_gained = new_max_traits - old_max_traits
