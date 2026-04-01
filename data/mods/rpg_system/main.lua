@@ -354,6 +354,34 @@ local function level_up(player, monster_hp, xp_gain)
   end
 end
 
+---@param killer Creature
+---@param monster_hp integer
+---@param xp_gain number
+local function level_up_allies(killer, monster_hp, xp_gain)
+  local avatar = gapi.get_avatar()
+  if not avatar then return end
+
+  local half_xp_gain = xp_gain / 2
+  if killer:is_avatar() then
+    for _, npc in ipairs(gapi.get_all_npcs()) do
+      if npc:is_player_ally() then level_up(npc, monster_hp, half_xp_gain) end
+    end
+    return
+  end
+
+  if not killer:is_npc() then return end
+
+  local killer_npc = killer:as_npc()
+  if not killer_npc:is_player_ally() then return end
+
+  level_up(avatar, monster_hp, half_xp_gain)
+
+  local killer_id = killer_npc:getID()
+  for _, npc in ipairs(gapi.get_all_npcs()) do
+    if npc:is_player_ally() and npc:getID() ~= killer_id then level_up(npc, monster_hp, half_xp_gain) end
+  end
+end
+
 mod.on_monster_killed = function(params)
   local killer = params.killer
   local monster = params.mon
@@ -367,11 +395,7 @@ mod.on_monster_killed = function(params)
   local xp_gain = math.max(1, math.floor(monster_hp / 10))
 
   level_up(player, monster_hp, xp_gain)
-
-  -- if an NPC kills a monster, the player character gets half the XP
-  if killer:is_npc() and killer:as_npc():is_ally(gapi.get_avatar()) then
-    level_up(gapi.get_avatar(), monster_hp, xp_gain / 2)
-  end
+  level_up_allies(killer, monster_hp, xp_gain)
 end
 
 mod.on_character_reset_stats = function(params)
