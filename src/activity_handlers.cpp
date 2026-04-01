@@ -4670,7 +4670,9 @@ void activity_handlers::study_spell_do_turn( player_activity *act, player *p )
     if( act->values.size() < 4 ) {
         act->values.push_back( 0 );
     }
-    if( !character_funcs::can_see_fine_details( *p ) ) {
+    const auto study_pos = act->placement == tripoint_zero ? p->pos() : get_map().getlocal(
+                               act->placement );
+    if( !character_funcs::can_see_fine_details( *p, study_pos ) ) {
         act->values[2] = -1;
         act->moves_left = 0;
         return;

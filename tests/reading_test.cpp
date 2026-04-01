@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include "activity_type.h"
+#include "activity_handlers.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -351,6 +353,48 @@ TEST_CASE( "reasons for not being able to read", "[reading][reasons]" )
                 CHECK( reasons == expect_reasons );
             }
         }
+    }
+}
+
+TEST_CASE( "spell study uses the reading tile light", "[reading][spellbook][light]" )
+{
+    clear_all_state();
+    clear_map();
+    build_test_map( t_floor );
+    set_time( calendar::turn_zero );
+
+    avatar dummy;
+    dummy.setpos( tripoint( 62, 60, 0 ) );
+
+    map &here = get_map();
+    const auto study_pos = tripoint( 60, 60, 0 );
+    here.add_item_or_charges( study_pos, item::spawn( "candle_lit" ) );
+    here.invalidate_map_cache( study_pos.z );
+    here.build_map_cache( study_pos.z );
+
+    REQUIRE_FALSE( character_funcs::can_see_fine_details( dummy ) );
+    REQUIRE( character_funcs::can_see_fine_details( dummy, study_pos ) );
+
+    SECTION( "unplaced study uses the player tile" ) {
+        player_activity act( activity_id( "ACT_STUDY_SPELL" ), 100 );
+        act.values = { 0, 0, 0 };
+
+        activity_handlers::study_spell_do_turn( &act, &dummy );
+
+        CHECK( act.values[2] == -1 );
+        CHECK( act.moves_left == 0 );
+    }
+
+    SECTION( "placed study uses the lit reading tile" ) {
+        player_activity act( activity_id( "ACT_STUDY_SPELL" ), 100 );
+        act.values = { 0, 0, 0 };
+        act.placement = here.getabs( study_pos );
+
+        activity_handlers::study_spell_do_turn( &act, &dummy );
+
+        CHECK( act.values[2] == 0 );
+        CHECK( act.moves_left == 100 );
+        CHECK( act.values[3] == 1 );
     }
 }
 
