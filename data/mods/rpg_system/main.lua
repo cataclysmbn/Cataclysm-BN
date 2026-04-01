@@ -336,7 +336,11 @@ local function level_up(player, monster_hp, xp_gain)
   local xp_needed = rpg_xp_needed(new_level + 1)
   local xp_to_next = xp_needed - exp
   set_char_value(player, "rpg_xp_to_next_level", xp_to_next)
+end
 
+---@param player Character
+---@param monster_hp integer
+local function apply_kill_monster_bonuses(player, monster_hp)
   -- Apply kill monster bonuses (e.g., healing on kill)
   local level = get_char_value(player, "rpg_level", 0)
   local level_scaling = get_char_value(player, "rpg_level_scaling", 100) / 100.0
@@ -395,6 +399,7 @@ mod.on_monster_killed = function(params)
   local xp_gain = math.max(1, math.floor(monster_hp / 10))
 
   level_up(player, monster_hp, xp_gain)
+  apply_kill_monster_bonuses(player, monster_hp)
   level_up_allies(killer, monster_hp, xp_gain)
 end
 
