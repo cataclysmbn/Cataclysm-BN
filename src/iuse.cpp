@@ -8732,7 +8732,7 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
         }
     }
     p->activity->targets.emplace_back( where );
-    p->activity->coords.push_back( best_bench.position );
+    p->activity->coords.push_back( get_map().getabs( best_bench.position ) );
     p->activity->values.push_back( 0 ); // Not a long craft
     // Ugly
     p->activity->values.push_back( static_cast<int>( best_bench.type ) );

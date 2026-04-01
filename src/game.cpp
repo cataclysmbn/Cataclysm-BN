@@ -12105,8 +12105,9 @@ void game::resize_reality_bubble_to( int new_size )
 
     load_npcs();
 
-    m.invalidate_map_cache( get_levz() );
     u.recalc_sight_limits();
+    m.invalidate_map_cache( get_levz() );
+    m.build_map_cache( get_levz() );
 
     // Discard pathfinding objects sized for the old bubble.
     Pathfinding::clear_pool();
