@@ -3808,7 +3808,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
     }
 
     const recipe &rec = craft->get_making();
-    const tripoint bench_pos = get_map().getlocal(act->coords.front());
+    const tripoint bench_pos = get_map().getlocal( act->coords.front() );
     // Ugly
     bench_type bench_t = bench_type( act->values[craft_bench_type_idx] );
 
