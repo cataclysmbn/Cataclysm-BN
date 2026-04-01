@@ -1025,6 +1025,10 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         to_check.emplace( mod_management::get_default_core_content_pack() );
     }
 
+    // Ensure the last checked mod unloads before process exit so Lua-backed
+    // mapgen functions do not outlive the active Lua state.
+    on_out_of_scope clear_last_checked_data( [] { clear_loaded_data(); } );
+
     for( const mod_id &id : to_check ) {
         clear_loaded_data();
 
