@@ -109,6 +109,15 @@ end
 
 local function set_char_value(char, key, value) char:set_value(key, tostring(value)) end
 
+local SYSTEM_INTERFACE_ITEM_ID = ItypeId.new("system_interface")
+
+---@param char Character
+local function give_system_interface(char)
+  if char:has_item_with_id(SYSTEM_INTERFACE_ITEM_ID, true) then return end
+
+  char:add_item_with_id(SYSTEM_INTERFACE_ITEM_ID, 1)
+end
+
 -- Common requirement checking and formatting
 local function check_requirements(player, mutation, current_level)
   local reqs = mutation.requirements
@@ -212,7 +221,7 @@ mod.on_game_started = function()
   set_char_value(player, "rpg_assigned_per", 0)
   set_char_value(player, "rpg_level_scaling", 100)
 
-  player:add_item_with_id(ItypeId.new("system_interface"), 1)
+  give_system_interface(player)
 
   gapi.add_msg(
     MsgType.mixed,
@@ -243,7 +252,7 @@ mod.on_game_load = function()
     set_char_value(player, "rpg_assigned_per", 0)
     set_char_value(player, "rpg_level_scaling", 100)
 
-    player:add_item_with_id(ItypeId.new("system_interface"), 1)
+    give_system_interface(player)
 
     gapi.add_msg(
       MsgType.mixed,
@@ -260,6 +269,15 @@ mod.on_game_load = function()
   end
 
   gdebug.log_info("RPG System: Loaded character at level " .. level)
+end
+
+---@param params { npc: Npc }
+mod.on_dialogue_end = function(params)
+  local npc = params.npc
+  if not npc then return end
+  if not npc:is_player_ally() then return end
+
+  give_system_interface(npc)
 end
 
 ---@param player Character
