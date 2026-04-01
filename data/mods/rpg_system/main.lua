@@ -369,7 +369,9 @@ mod.on_monster_killed = function(params)
   level_up(player, monster_hp, xp_gain)
 
   -- if an NPC kills a monster, the player character gets half the XP
-  if not player:is_avatar() then level_up(gapi.get_avatar(), monster_hp, xp_gain / 2) end
+  if killer:is_npc() and killer:as_npc():is_ally(gapi.get_avatar()) then
+    level_up(gapi.get_avatar(), monster_hp, xp_gain / 2)
+  end
 end
 
 mod.on_character_reset_stats = function(params)
