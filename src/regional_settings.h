@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <map>
 #include <memory>
 #include <set>
@@ -243,9 +244,9 @@ struct enum_traits<region_effect_type> {
  */
 struct regional_settings {
     std::string id;           //
-    oter_str_id default_oter; // 'field'
-    // When set, overmap tiles equal to default_oter are rendered using this otertype's
-    // symbol/color/name instead. The stored tile ID remains default_oter for all mapgen logic.
+    std::array<oter_str_id, OVERMAP_LAYERS> default_oter;
+    // When set, overmap tiles equal to the surface default oter are rendered using this
+    // otertype's symbol/color/name instead. The stored tile ID remains the default oter.
     oter_str_id display_oter;
     double river_scale = 1;
     // Set river_scale = 0.0 in JSON to disable river generation entirely.
@@ -268,7 +269,13 @@ struct regional_settings {
 
     std::unordered_map<std::string, map_extras> region_extras;
 
-    regional_settings() : id( "null" ), default_oter( "field" ) {
+    regional_settings() : id( "null" ) {
+        const auto field = oter_str_id( "field" );
+        const auto open_air = oter_str_id( "open_air" );
+        const auto empty_rock = oter_str_id( "empty_rock" );
+        for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
+            default_oter[OVERMAP_DEPTH + z] = z == 0 ? field : ( z > 0 ? open_air : empty_rock );
+        }
         default_groundcover.add( t_null, 0 );
     }
     void finalize();
@@ -284,5 +291,3 @@ void load_region_settings( const JsonObject &jo );
 void reset_region_settings();
 void load_region_overlay( const JsonObject &jo );
 void apply_region_overlay( const JsonObject &jo, regional_settings &region );
-
-
