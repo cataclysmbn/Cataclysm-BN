@@ -37,6 +37,8 @@ class options_manager
 
         void enable_json( const std::string &var );
         void add_retry( const std::string &var, const std::string &val );
+        auto load_option_definitions() -> void;
+        auto reload_option_definitions_preserving_values() -> void;
 
         std::map<std::string, std::string> post_json_verify;
 
@@ -60,6 +62,8 @@ class options_manager
             COPT_POSIX_CURSES_HIDE,
             /** Hide this option in builds without sound support */
             COPT_NO_SOUND_HIDE,
+            /** Hide this option in builds without Android support. */
+            COPT_ANDROID_HIDE,
             /** Hide this option always, it should not be changed by user directly through UI. **/
             COPT_ALWAYS_HIDE
         };
@@ -328,6 +332,8 @@ class options_manager
                 Page( const std::string &id, const translation &name ) : id_( id ), name_( name ) { }
         };
 
+        auto insert_page_item( Page &page, const PageItem &item ) -> void;
+
         std::vector<Page> pages_;
         std::string adding_to_group_;
         std::vector<Group> groups_;
@@ -373,5 +379,3 @@ inline T get_option( const std::string &name )
 {
     return get_options().get_option( name ).value_as<T>();
 }
-
-

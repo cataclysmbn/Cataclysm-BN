@@ -1,0 +1,316 @@
+[
+  {
+    "type": "OPTION_GROUP",
+    "id": "debug_basics",
+    "page": "debug",
+    "title": "General"
+  },
+  {
+    "type": "OPTION",
+    "name": "STRICT_JSON_CHECKS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "debug_basics",
+    "menu_text": "Strict JSON checks",
+    "tooltip": "If true, will show additional warnings for JSON data correctness.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "FORCE_TILESET_RELOAD",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "debug_basics",
+    "menu_text": "Force tileset reload",
+    "tooltip": "If false, the game will keep tileset in memory after first load to speed up subsequent loadings of game data.  Enable this if you're working on a tileset for the game or a mod.",
+    "default": false
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "debug_display",
+    "page": "debug",
+    "title": "Display"
+  },
+  {
+    "type": "OPTION",
+    "name": "MOD_SOURCE",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "debug_display",
+    "menu_text": "Display Mod Source",
+    "tooltip": "Displays what content pack a piece of furniture, terrain, item or monster comes from or is affected by.  Disable if it's annoying.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "SHOW_IDS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "debug_display",
+    "menu_text": "Display Object IDs",
+    "tooltip": "Displays internal IDs of game objects and creatures.  Warning: IDs may contain spoilers.",
+    "default": false
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "chargen_debug",
+    "page": "debug",
+    "title": "Character Generation"
+  },
+  {
+    "type": "OPTION",
+    "name": "DISTANCE_INITIAL_VISIBILITY",
+    "stype": "int",
+    "scope": "global",
+    "page": "debug",
+    "group": "chargen_debug",
+    "menu_text": "Distance initial visibility",
+    "tooltip": "Determines the scope, which is known in the beginning of the game.",
+    "min": 3,
+    "max": 20,
+    "default": 15
+  },
+  {
+    "type": "OPTION",
+    "name": "INITIAL_STAT_POINTS",
+    "stype": "int",
+    "scope": "global",
+    "page": "debug",
+    "group": "chargen_debug",
+    "menu_text": "Initial stat points",
+    "tooltip": "Initial points available to spend on stats on character generation.",
+    "min": 0,
+    "max": 1000,
+    "default": 6
+  },
+  {
+    "type": "OPTION",
+    "name": "INITIAL_TRAIT_POINTS",
+    "stype": "int",
+    "scope": "global",
+    "page": "debug",
+    "group": "chargen_debug",
+    "menu_text": "Initial trait points",
+    "tooltip": "Initial points available to spend on traits on character generation.",
+    "min": 0,
+    "max": 1000,
+    "default": 0
+  },
+  {
+    "type": "OPTION",
+    "name": "INITIAL_SKILL_POINTS",
+    "stype": "int",
+    "scope": "global",
+    "page": "debug",
+    "group": "chargen_debug",
+    "menu_text": "Initial skill points",
+    "tooltip": "Initial points available to spend on skills on character generation.",
+    "min": 0,
+    "max": 1000,
+    "default": 2
+  },
+  {
+    "type": "OPTION",
+    "name": "MAX_TRAIT_POINTS",
+    "stype": "int",
+    "scope": "global",
+    "page": "debug",
+    "group": "chargen_debug",
+    "menu_text": "Maximum trait points",
+    "tooltip": "Maximum trait points available for character generation.",
+    "min": 0,
+    "max": 1000,
+    "default": 12
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "skill_debug",
+    "page": "debug",
+    "title": "Skills"
+  },
+  {
+    "type": "OPTION",
+    "name": "SKILL_TRAINING_SPEED",
+    "stype": "float",
+    "scope": "global",
+    "page": "debug",
+    "group": "skill_debug",
+    "menu_text": "Skill training speed",
+    "tooltip": "Scales experience gained from practicing skills and reading books.  0.5 is half as fast as default, 2.0 is twice as fast, 0.0 disables skill training except for NPC training.",
+    "min": 0.0,
+    "max": 100.0,
+    "step": 0.1,
+    "default": 1.0
+  },
+  {
+    "type": "OPTION",
+    "name": "SKILL_RUST",
+    "stype": "string_select",
+    "scope": "global",
+    "page": "debug",
+    "group": "skill_debug",
+    "menu_text": "Skill rust",
+    "tooltip": "Set the level of skill rust.  Vanilla: Vanilla Cataclysm - Capped: Capped at skill levels 2 - Int: Intelligence dependent - IntCap: Intelligence dependent, capped - Off: None at all.",
+    "default": "off",
+    "items": [
+      { "value": "vanilla", "label": "Vanilla" },
+      { "value": "capped", "label": "Capped" },
+      { "value": "int", "label": "Int" },
+      { "value": "intcap", "label": "IntCap" },
+      { "value": "off", "label": "Off" }
+    ]
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "systems_debug",
+    "page": "debug",
+    "title": "Systems"
+  },
+  {
+    "type": "OPTION",
+    "name": "PICKUP_RANGE",
+    "stype": "int",
+    "scope": "global",
+    "page": "debug",
+    "group": "systems_debug",
+    "menu_text": "Crafting range",
+    "tooltip": "Maximum distance at which items are considered available for crafting (or some other actions).",
+    "min": 1,
+    "max": 30,
+    "default": 6
+  },
+  {
+    "type": "OPTION",
+    "name": "ENABLE_EVENTS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "systems_debug",
+    "menu_text": "Event bus system",
+    "tooltip": "If false, achievements and some Magiclysm functionality won't work, but performance will be better.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "ELECTRIC_GRID",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "systems_debug",
+    "menu_text": "Electric grid testing",
+    "tooltip": "If true, enables somewhat unfinished electric grid system that may slow the game down.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "MADE_OF_EXPLODIUM",
+    "stype": "int",
+    "scope": "global",
+    "page": "debug",
+    "group": "systems_debug",
+    "menu_text": "Made of explodium",
+    "tooltip": "Explosive items and traps will detonate when hit by damage exceeding the threshold.  A higher number means more damage is required to detonate.  Set to 0 to disable.",
+    "min": 0,
+    "max": 1000,
+    "default": 30,
+    "deps": [ { "option": "OLD_EXPLOSIONS", "values": [ "false" ] } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "ITEM_DAMAGE_ON_FLYING_IMPACT",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "systems_debug",
+    "menu_text": "Item damage on flying impact",
+    "tooltip": "If true, items flung by explosions will deal (lethal) damage to whatever they hit.",
+    "default": true,
+    "deps": [ { "option": "OLD_EXPLOSIONS", "values": [ "false" ] } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "OLD_EXPLOSIONS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "systems_debug",
+    "menu_text": "Old explosions system",
+    "tooltip": "If true, disables new raycasting based explosive system in favor of old system.  With new system obstacles (impassable terrain, furniture or vehicle parts) will block shrapnel, while blast will bash obstacles and throw creatures outward.  If obstacles are destroyed, blast continues outward.",
+    "default": false
+  },
+  {
+    "type": "OPTION",
+    "name": "CHRONIC_PAIN",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "systems_debug",
+    "menu_text": "Chronic pain",
+    "tooltip": "If true, injuries cause persistent pain until they are healed.",
+    "default": false
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "autodrive_debug",
+    "page": "debug",
+    "title": "Autodrive"
+  },
+  {
+    "type": "OPTION",
+    "name": "MIN_AUTODRIVE_SPEED",
+    "stype": "int",
+    "scope": "global",
+    "page": "debug",
+    "group": "autodrive_debug",
+    "menu_text": "Minimum auto-drive speed",
+    "tooltip": "Set the minimum speed for the auto-drive feature.  In tiles/s.  Default is 1 (6 km/h or 4 mph).",
+    "min": 1,
+    "max": 100,
+    "default": 1
+  },
+  {
+    "type": "OPTION",
+    "name": "MAX_AUTODRIVE_SPEED",
+    "stype": "int",
+    "scope": "global",
+    "page": "debug",
+    "group": "autodrive_debug",
+    "menu_text": "Maximum auto-drive speed",
+    "tooltip": "Set the maximum speed for the auto-drive feature.  In tiles/s.  Default is 9 (57 km/h or 36 mph).",
+    "min": 1,
+    "max": 100,
+    "default": 9
+  },
+  {
+    "type": "OPTION",
+    "name": "LIMITED_BAYONETS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "autodrive_debug",
+    "menu_text": "New bayonet system",
+    "tooltip": "If true, bayonets replace weapon attack instead of adding to it.  WIP feature, weakens bayonets heavily at the moment.",
+    "default": false
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "pathfinding_debug",
+    "page": "debug",
+    "title": "Pathfinding"
+  },
+  {
+    "type": "OPTION",
+    "name": "USE_LEGACY_PATHFINDING",
+    "stype": "bool",
+    "scope": "global",
+    "page": "debug",
+    "group": "pathfinding_debug",
+    "menu_text": "Use legacy pathfinding",
+    "tooltip": "If true, opt out of new pathfinding in favor of legacy one. This makes pathfinding mods not work.",
+    "default": false
+  }
+]

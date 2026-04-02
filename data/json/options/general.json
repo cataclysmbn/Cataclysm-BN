@@ -1,0 +1,576 @@
+[
+  {
+    "type": "OPTION_GROUP",
+    "id": "death",
+    "page": "general",
+    "title": "Death"
+  },
+  {
+    "type": "OPTION",
+    "name": "PROMPT_ON_CHARACTER_DEATH",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "death",
+    "menu_text": "Prompt on character death",
+    "tooltip": "If enabled, when your character dies, the player is given a prompt that gives the option to reload the last saved game instead of dying.",
+    "default": false
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "character_defaults",
+    "page": "general",
+    "title": "Character Defaults"
+  },
+  {
+    "type": "OPTION",
+    "name": "DEF_CHAR_NAME",
+    "stype": "string_input",
+    "scope": "global",
+    "page": "general",
+    "group": "character_defaults",
+    "menu_text": "Default character name",
+    "tooltip": "Set a default character name that will be used instead of a random name on character creation.",
+    "default": "",
+    "max_length": 30
+  },
+  {
+    "type": "OPTION",
+    "name": "DEF_CHAR_GENDER",
+    "stype": "string_select",
+    "scope": "global",
+    "page": "general",
+    "group": "character_defaults",
+    "menu_text": "Default character gender",
+    "tooltip": "Set a default character gender that will be used on character creation.",
+    "default": "male",
+    "items": [ { "value": "male", "label": "Male" }, { "value": "female", "label": "Female" } ]
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "comestible_merging",
+    "page": "general",
+    "title": "Merge similar comestibles",
+    "desc": "Configure how similar items are stacked."
+  },
+  {
+    "type": "OPTION",
+    "name": "MERGE_COMESTIBLES",
+    "stype": "string_select",
+    "scope": "global",
+    "page": "general",
+    "group": "comestible_merging",
+    "menu_text": "Merging Mode",
+    "tooltip": "Merge similar comestibles.  Legacy: default behavior.  Liquid: Merge only liquid comestibles.  All: Merge all comestibles.",
+    "default": "all",
+    "items": [
+      { "value": "legacy", "label": "Legacy" },
+      { "value": "liquid", "label": "Liquid" },
+      { "value": "all", "label": "All" }
+    ]
+  },
+  {
+    "type": "OPTION",
+    "name": "MERGE_COMESTIBLES_THRESHOLD",
+    "stype": "float",
+    "scope": "global",
+    "page": "general",
+    "group": "comestible_merging",
+    "menu_text": "Freshness similarity threshold",
+    "tooltip": "Limit maximum allowed staleness difference when merging comestibles.  The lower the value, the more similar the items must be to merge.  0.0: Only merge identical items.  1.0: Merge comestibles regardless of its freshness.",
+    "min": 0.0,
+    "max": 1.0,
+    "step": 0.05,
+    "default": 0.25,
+    "deps": [ { "option": "MERGE_COMESTIBLES", "values": [ "liquid", "all" ] } ]
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "auto_pickup",
+    "page": "general",
+    "title": "Auto pickup"
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_PICKUP",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_pickup",
+    "menu_text": "Auto pickup enabled",
+    "tooltip": "Enable item auto pickup.  Change pickup rules with the Auto Pickup Manager.",
+    "default": false
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_PICKUP_ADJACENT",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_pickup",
+    "menu_text": "Auto pickup adjacent",
+    "tooltip": "If true, will enable to pickup items one tile around to the player.  You can assign No Auto Pickup zones with the Zones Manager 'Y' key for e.g.  your homebase.",
+    "default": false,
+    "deps": [ { "option": "AUTO_PICKUP" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_PICKUP_WEIGHT_LIMIT",
+    "stype": "int",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_pickup",
+    "menu_text": "Auto pickup weight limit",
+    "tooltip": "Auto pickup items with weight less than or equal to [option] * 50 grams.  You must also set the small items option.  '0' disables this option",
+    "min": 0,
+    "max": 20,
+    "default": 0,
+    "deps": [ { "option": "AUTO_PICKUP" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_PICKUP_VOL_LIMIT",
+    "stype": "int",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_pickup",
+    "menu_text": "Auto pickup volume limit",
+    "tooltip": "Auto pickup items with volume less than or equal to [option] * 50 milliliters.  You must also set the light items option.  '0' disables this option",
+    "min": 0,
+    "max": 20,
+    "default": 0,
+    "deps": [ { "option": "AUTO_PICKUP" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_PICKUP_SAFEMODE",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_pickup",
+    "menu_text": "Auto pickup safe mode",
+    "tooltip": "Auto pickup is disabled as long as you can see monsters nearby.  This is affected by 'Safe Mode proximity distance'.",
+    "default": false,
+    "deps": [ { "option": "AUTO_PICKUP" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "NO_AUTO_PICKUP_ZONES_LIST_ITEMS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_pickup",
+    "menu_text": "List items within no auto pickup zones",
+    "tooltip": "If false, you will not see messages about items, you step on, within no auto pickup zones.",
+    "default": true,
+    "deps": [ { "option": "AUTO_PICKUP" } ]
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "auto_features",
+    "page": "general",
+    "title": "Additional auto features"
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_FEATURES",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_features",
+    "menu_text": "Additional auto features",
+    "tooltip": "If true, enables configured auto features below.  Disabled as long as any enemy monster is seen.",
+    "default": false
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_PULP_BUTCHER",
+    "stype": "string_select",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_features",
+    "menu_text": "Auto pulp or butcher",
+    "tooltip": "Action to perform when 'Auto pulp or butcher' is enabled.  Pulp: Pulp corpses you stand on.  - Pulp Adjacent: Also pulp corpses adjacent from you.  - Butcher: Butcher corpses you stand on.",
+    "default": "off",
+    "items": [
+      { "value": "off", "label": { "str": "Disabled", "ctxt": "options" } },
+      { "value": "pulp", "label": "Pulp" },
+      { "value": "pulp_adjacent", "label": "Pulp Adjacent" },
+      { "value": "butcher", "label": "Butcher" }
+    ],
+    "deps": [ { "option": "AUTO_FEATURES" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_MINING",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_features",
+    "menu_text": "Auto mining",
+    "tooltip": "If true, enables automatic use of wielded pickaxes and jackhammers whenever trying to move into mineable terrain.",
+    "default": false,
+    "deps": [ { "option": "AUTO_FEATURES" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_FORAGING",
+    "stype": "string_select",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_features",
+    "menu_text": "Auto foraging",
+    "tooltip": "Action to perform when 'Auto foraging' is enabled.  Bushes: Only forage bushes.  - Trees: Only forage trees.  - Everything: Forage bushes, trees, and everything else including flowers, cattails etc.",
+    "default": "off",
+    "items": [
+      { "value": "off", "label": { "str": "Disabled", "ctxt": "options" } },
+      { "value": "bushes", "label": "Bushes" },
+      { "value": "trees", "label": "Trees" },
+      { "value": "flowers", "label": "Flowers" },
+      { "value": "both", "label": "Everything" }
+    ],
+    "deps": [ { "option": "AUTO_FEATURES" } ]
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "danger_warnings",
+    "page": "general",
+    "title": "Danger warnings"
+  },
+  {
+    "type": "OPTION",
+    "name": "DANGEROUS_PICKUPS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "danger_warnings",
+    "menu_text": "Dangerous pickups",
+    "tooltip": "If false, will cause player to drop new items that cause them to exceed the weight limit.",
+    "default": false
+  },
+  {
+    "type": "OPTION",
+    "name": "DANGEROUS_TERRAIN_WARNING_PROMPT",
+    "stype": "string_select",
+    "scope": "global",
+    "page": "general",
+    "group": "danger_warnings",
+    "menu_text": "Dangerous terrain warning prompt",
+    "tooltip": "Always: You will be prompted to move onto dangerous tiles.  Running: You will only be able to move onto dangerous tiles while running and will be prompted.  Crouching: You will only be able to move onto a dangerous tile while crouching and will be prompted.  Never:  You will not be able to move onto a dangerous tile unless running and will not be warned or prompted.  Ignore:  You will be able to move onto a dangerous tile without any warnings or prompts.",
+    "default": "ALWAYS",
+    "items": [
+      { "value": "ALWAYS", "label": "Always" },
+      { "value": "RUNNING", "label": "Running" },
+      { "value": "CROUCHING", "label": "Crouching" },
+      { "value": "NEVER", "label": "Never" },
+      { "value": "IGNORE", "label": "Ignore" }
+    ]
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "safe_mode",
+    "page": "general",
+    "title": "Safe mode"
+  },
+  {
+    "type": "OPTION",
+    "name": "SAFEMODE",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "safe_mode",
+    "menu_text": "Safe mode",
+    "tooltip": "If true, will hold the game and display a warning if a hostile monster/npc is approaching.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "SAFEMODEPROXIMITY",
+    "stype": "int",
+    "scope": "global",
+    "page": "general",
+    "group": "safe_mode",
+    "menu_text": "Safe mode proximity distance",
+    "tooltip": "If safe mode is enabled, distance to hostiles at which safe mode should show a warning.  0 = Max player view distance.  This option only has effect when no safe mode rule is specified.  Otherwise, edit the default rule in Safe Mode Manager instead of this value.",
+    "min": 0,
+    "max": 60,
+    "default": 0
+  },
+  {
+    "type": "OPTION",
+    "name": "SAFEMODEVEH",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "safe_mode",
+    "menu_text": "Safe mode when driving",
+    "tooltip": "When true, safe mode will alert you of hostiles while you are driving a vehicle.",
+    "default": false
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTOSAFEMODE",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "safe_mode",
+    "menu_text": "Auto reactivate safe mode",
+    "tooltip": "If true, safe mode will automatically reactivate after a certain number of turns.  See option 'Turns to auto reactivate safe mode.'",
+    "default": false
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTOSAFEMODETURNS",
+    "stype": "int",
+    "scope": "global",
+    "page": "general",
+    "group": "safe_mode",
+    "menu_text": "Turns to auto reactivate safe mode",
+    "tooltip": "Number of turns after which safe mode is reactivated.  Will only reactivate if no hostiles are in 'Safe mode proximity distance.'",
+    "min": 1,
+    "max": 600,
+    "default": 50
+  },
+  {
+    "type": "OPTION",
+    "name": "SAFEMODEIGNORETURNS",
+    "stype": "int",
+    "scope": "global",
+    "page": "general",
+    "group": "safe_mode",
+    "menu_text": "Turns to remember ignored monsters",
+    "tooltip": "Number of turns an ignored monster stays ignored after it is no longer seen.  0 disables this option and monsters are permanently ignored.",
+    "min": 0,
+    "max": 3600,
+    "default": 200
+  },
+  {
+    "type": "OPTION",
+    "name": "QUERY_BEFORE_ATTACKING_NEUTRAL",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "safe_mode",
+    "menu_text": "Query before attacking neutral monsters",
+    "tooltip": "If true, you will be prompted to confirm before attacking neutral or fleeing monsters that you have yet to engage in combat with.",
+    "default": true
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "clothing_destruction_popup",
+    "page": "general",
+    "title": "Clothing destruction popup",
+    "desc": "Configure when popups appear due to clothing being destroyed."
+  },
+  {
+    "type": "OPTION",
+    "name": "CLOTHING_DESTRUCTION_POPUP",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "clothing_destruction_popup",
+    "menu_text": "Enable popup",
+    "tooltip": "If true, a popup will display when a piece of the player/NPC's worn clothing is destroyed.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "CLOTHING_DESTRUCTION_POPUP_CONTENTS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "clothing_destruction_popup",
+    "menu_text": "Only if contents present",
+    "tooltip": "Only show popup if destroyed clothing has contents.",
+    "default": false
+  },
+  {
+    "type": "OPTION",
+    "name": "CLOTHING_DESTRUCTION_POPUP_MIN_WEIGHT",
+    "stype": "int",
+    "scope": "global",
+    "page": "general",
+    "group": "clothing_destruction_popup",
+    "menu_text": "Min weight for popup (g)",
+    "tooltip": "Minimum weight of the item for the popup to trigger.",
+    "min": 0,
+    "max": 1000000,
+    "default": 0
+  },
+  {
+    "type": "OPTION",
+    "name": "CLOTHING_DESTRUCTION_POPUP_MIN_VOLUME",
+    "stype": "int",
+    "scope": "global",
+    "page": "general",
+    "group": "clothing_destruction_popup",
+    "menu_text": "Min volume for popup (ml)",
+    "tooltip": "Minimum volume of the item for the popup to trigger.",
+    "min": 0,
+    "max": 1000000,
+    "default": 0
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "turn_progression",
+    "page": "general",
+    "title": "Realtime turn progression"
+  },
+  {
+    "type": "OPTION",
+    "name": "TURN_DURATION",
+    "stype": "float",
+    "scope": "global",
+    "page": "general",
+    "group": "turn_progression",
+    "menu_text": "Realtime turn progression",
+    "tooltip": "If enabled, monsters will take periodic gameplay turns.  This value is the delay between each turn, in seconds.  Works best with Safe Mode disabled.  0 = disabled.",
+    "min": 0.0,
+    "max": 10.0,
+    "step": 0.05,
+    "default": 0.0
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "autosave",
+    "page": "general",
+    "title": "Autosave"
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTOSAVE",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "autosave",
+    "menu_text": "Autosave",
+    "tooltip": "If true, game will periodically save the map.  Autosaves occur based on in-game turns or real-time minutes, whichever is larger.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTOSAVE_TURNS",
+    "stype": "int",
+    "scope": "global",
+    "page": "general",
+    "group": "autosave",
+    "menu_text": "Game turns between autosaves",
+    "tooltip": "Number of game turns between autosaves",
+    "min": 10,
+    "max": 1000,
+    "default": 50,
+    "deps": [ { "option": "AUTOSAVE" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTOSAVE_MINUTES",
+    "stype": "int",
+    "scope": "global",
+    "page": "general",
+    "group": "autosave",
+    "menu_text": "Real minutes between autosaves",
+    "tooltip": "Number of real time minutes between autosaves",
+    "min": 0,
+    "max": 127,
+    "default": 5,
+    "deps": [ { "option": "AUTOSAVE" } ]
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "auto_notes",
+    "page": "general",
+    "title": "Auto notes"
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_NOTES",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_notes",
+    "menu_text": "Auto notes",
+    "tooltip": "If true, automatically sets notes",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_NOTES_STAIRS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_notes",
+    "menu_text": "Auto notes (stairs)",
+    "tooltip": "If true, automatically sets notes on places that have stairs that go up or down",
+    "default": false,
+    "deps": [ { "option": "AUTO_NOTES" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_NOTES_MAP_EXTRAS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_notes",
+    "menu_text": "Auto notes (map extras)",
+    "tooltip": "If true, automatically sets notes on places that contain various map extras",
+    "default": true,
+    "deps": [ { "option": "AUTO_NOTES" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "AUTO_NOTES_DROPPED_FAVORITES",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "auto_notes",
+    "menu_text": "Auto notes (dropped favorites)",
+    "tooltip": "If true, automatically sets notes when player drops favorited items.",
+    "default": true,
+    "deps": [ { "option": "AUTO_NOTES" } ]
+  },
+  {
+    "type": "OPTION_GROUP",
+    "id": "misc_general",
+    "page": "general",
+    "title": "Miscellaneous"
+  },
+  {
+    "type": "OPTION",
+    "name": "CIRCLEDIST",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "misc_general",
+    "menu_text": "Circular distances",
+    "tooltip": "If true, the game will calculate range in a realistic way: light sources will be circles, diagonal movement will cover more ground and take longer.  If disabled, everything is square: moving to the northwest corner of a building takes as long as moving to the north wall.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "DROP_EMPTY",
+    "stype": "string_select",
+    "scope": "global",
+    "page": "general",
+    "group": "misc_general",
+    "menu_text": "Drop empty containers",
+    "tooltip": "Set to drop empty containers after use.  No: Don't drop any.  - Watertight: All except watertight containers.  - All: Drop all containers.",
+    "default": "no",
+    "items": [
+      { "value": "no", "label": "No" },
+      { "value": "watertight", "label": "Watertight" },
+      { "value": "all", "label": "All" }
+    ]
+  },
+  {
+    "type": "OPTION",
+    "name": "DEATHCAM",
+    "stype": "string_select",
+    "scope": "global",
+    "page": "general",
+    "group": "misc_general",
+    "menu_text": "DeathCam",
+    "tooltip": "Always: Always start deathcam.  Ask: Query upon death.  Never: Never show deathcam.",
+    "default": "ask",
+    "items": [ { "value": "always", "label": "Always" }, { "value": "ask", "label": "Ask" }, { "value": "never", "label": "Never" } ]
+  }
+]
