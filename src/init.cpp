@@ -256,6 +256,8 @@ void DynamicDataLoader::initialize()
     // Static Function Access
     add( "WORLD_OPTION", &load_world_option );
     add( "EXTERNAL_OPTION", &load_external_option );
+    add( "OPTION", &load_ignored_type );
+    add( "OPTION_GROUP", &load_ignored_type );
     add( "json_flag", &json_flag::load_all );
     add( "mutation_flag", &json_trait_flag::load_all );
     add( "fault", &fault::load_fault );
