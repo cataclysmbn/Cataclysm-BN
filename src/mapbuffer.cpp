@@ -469,10 +469,24 @@ submap *mapbuffer::unserialize_submaps( const tripoint &p )
     // Map the tripoint to the submap quad that stores it.
     const tripoint om_addr = sm_to_omt_copy( p );
 
+    std::string pending_data;
+    {
+        std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
+        const auto it = pending_writes_.find( om_addr );
+        if( it != pending_writes_.end() ) {
+            pending_data = std::move( it->second );
+            pending_writes_.erase( it );
+        }
+    }
+
     using namespace std::placeholders;
-    if( !g->get_active_world()->read_map_quad( dimension_id_, om_addr,
-            std::bind( &mapbuffer::deserialize, this, _1 ) ) ) {
-        // If it doesn't exist, trigger generating it.
+    if( !pending_data.empty() ) {
+        std::istringstream iss( pending_data );
+        JsonIn jsin( iss );
+        deserialize( jsin );
+    } else if( !g->get_active_world()->read_map_quad( dimension_id_, om_addr,
+               std::bind( &mapbuffer::deserialize, this, _1 ) ) ) {
+        // If it doesn't exist on disk either, trigger generating it.
         return nullptr;
     }
     if( !submaps.contains( p ) ) {
