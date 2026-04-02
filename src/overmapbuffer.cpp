@@ -2068,7 +2068,7 @@ std::set<tripoint_abs_omt> overmapbuffer::electric_grid_at( const tripoint_abs_o
         }
 
         const auto &connections_bitset = cached_om->electric_grid_connections[tripoint_om_omt( local_2d,
-                                         elem.z() )];
+                                                          elem.z() )];
         for( size_t i = 0; i < six_cardinal_directions.size(); i++ ) {
             if( connections_bitset.test( i ) ) {
                 tripoint_abs_omt other = elem + six_cardinal_directions[i];
