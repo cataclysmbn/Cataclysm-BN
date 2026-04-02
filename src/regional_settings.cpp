@@ -36,6 +36,51 @@ void read_and_set_or_throw( const JsonObject &jo, const std::string &member, T &
     }
 }
 
+namespace
+{
+
+auto make_legacy_default_oter( const oter_str_id &surface_oter ) ->
+std::array<oter_str_id, OVERMAP_LAYERS>
+{
+    auto result = std::array<oter_str_id, OVERMAP_LAYERS> {};
+    const auto open_air = oter_str_id( "open_air" );
+    const auto empty_rock = oter_str_id( "empty_rock" );
+    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
+        result[OVERMAP_DEPTH + z] = z == 0 ? surface_oter : ( z > 0 ? open_air : empty_rock );
+    }
+    return result;
+}
+
+auto read_default_oter( const JsonObject &jo,
+                        std::array<oter_str_id, OVERMAP_LAYERS> &default_oter ) -> bool
+{
+    if( !jo.has_member( "default_oter" ) ) {
+        return false;
+    }
+
+    if( jo.has_array( "default_oter" ) ) {
+        auto default_oter_array = jo.get_array( "default_oter" );
+        if( default_oter_array.size() != OVERMAP_LAYERS ) {
+            jo.throw_error( string_format( "default_oter must contain %d entries", OVERMAP_LAYERS ) );
+        }
+        for( int i = 0; i < OVERMAP_LAYERS; ++i ) {
+            default_oter[i] = oter_str_id( default_oter_array.get_string( i ) );
+        }
+        std::ranges::reverse( default_oter );
+        return true;
+    }
+
+    auto surface_oter = oter_str_id();
+    if( jo.read( "default_oter", surface_oter ) ) {
+        default_oter = make_legacy_default_oter( surface_oter );
+        return true;
+    }
+
+    return false;
+}
+
+} // namespace
+
 static void load_forest_biome_component(
     const JsonObject &jo, forest_biome_component &forest_biome_component, const bool overlay )
 {
@@ -418,8 +463,8 @@ void load_region_settings( const JsonObject &jo )
     if( !jo.read( "id", new_region.id ) ) {
         jo.throw_error( "No 'id' field." );
     }
-    bool strict = new_region.id == "default";
-    if( !jo.read( "default_oter", new_region.default_oter ) && strict ) {
+    const auto strict = new_region.id == "default";
+    if( !read_default_oter( jo, new_region.default_oter ) && strict ) {
         jo.throw_error( "default_oter required for default ( though it should probably remain 'field' )" );
     }
     if( !jo.read( "river_scale", new_region.river_scale ) && strict ) {
@@ -618,7 +663,7 @@ void load_region_overlay( const JsonObject &jo )
 
 void apply_region_overlay( const JsonObject &jo, regional_settings &region )
 {
-    jo.read( "default_oter", region.default_oter );
+    read_default_oter( jo, region.default_oter );
     jo.read( "river_scale", region.river_scale );
     if( jo.has_array( "default_groundcover" ) ) {
         region.default_groundcover_str.reset( new weighted_int_list<ter_str_id> );
