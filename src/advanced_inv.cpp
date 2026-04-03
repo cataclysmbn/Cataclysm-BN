@@ -1531,9 +1531,9 @@ void advanced_inventory::display()
                 dpane.set_filter( "" );
             }
         } else if( action == "PAGE_DOWN" ) {
-            spane.scroll_by( +itemsPerPage );
-        } else if( action == "PAGE_UP" ) {
             spane.scroll_by( -itemsPerPage );
+        } else if( action == "PAGE_UP" ) {
+            spane.scroll_by( +itemsPerPage );
         } else if( action == "DOWN" ) {
             if( inCategoryMode ) {
                 spane.scroll_category( +1 );
