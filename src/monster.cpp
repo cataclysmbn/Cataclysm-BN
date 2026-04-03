@@ -912,8 +912,9 @@ std::string monster::extended_description() const
 
     ss += "\n--\n";
 
-    ss += string_format( _( "This is a %s.  %s %s" ), name(), att_colored,
-                         difficulty_str ) + "\n";
+    const auto header_colored = colorize( string_format( _( "This is a %s." ), name() ),
+                                          symbol_color() );
+    ss += header_colored + "  " + att_colored + " " + difficulty_str + "\n";
     if( !get_effect_status().empty() ) {
         ss += string_format( _( "<stat>It is %s.</stat>" ), get_effect_status() ) + "\n";
     }

@@ -177,15 +177,17 @@ void game::extended_description( const tripoint &p )
 std::string map_data_common_t::extended_description() const
 {
     std::stringstream ss;
-    ss << "<header>" << string_format( _( "That is a %s." ), name() ) << "</header>" << '\n';
-    ss << description << '\n';
+    ss << "--" << '\n';
+    ss << colorize( string_format( _( "This is a %s." ), name() ), color() ) << '\n';
+    ss << "--" << '\n';
+    ss << "<dark>" << description << "</dark>" << '\n';
+    ss << "--" << '\n';
     bool has_any_harvest = std::ranges::any_of( harvest_by_season,
     []( const harvest_id & hv ) {
         return !hv.obj().empty();
     } );
 
     if( has_any_harvest ) {
-        ss << "--" << '\n';
         int player_skill = get_avatar().get_skill_level( skill_survival );
         ss << _( "You could harvest the following things from it:" ) << '\n';
         // Group them by identical ids to avoid repeating same blocks of data
@@ -225,7 +227,7 @@ std::string map_data_common_t::extended_description() const
             identical_harvest.erase( range.first, range.second );
         }
 
-        ss << '\n';
+        ss << "--";
     }
 
     if( deconstruct.can_do ) {
@@ -238,6 +240,7 @@ std::string map_data_common_t::extended_description() const
         } else {
             ss << _( "It can be deconstructed, but won't yield any resources." ) << '\n';
         }
+        ss << "--";
     }
 
     if( debug_vision() ) {
@@ -267,7 +270,7 @@ std::string map_data_common_t::extended_description() const
         if( bash.ranged->block_unaimed_chance > 0_pct ) {
             ss << indent << "Block Chance: " << bash.ranged->block_unaimed_chance / 1_pct << "%" << "\n";
         }
-        ss << "\n";
+        ss << "--" << '\n';
     }
 
     if( !flags.empty() ) {

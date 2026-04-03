@@ -7528,6 +7528,8 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
     const auto location_color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes );
     const auto terrain_desc = terrain.description.translated();
     const std::string tile = m.tername( lp );
+    const auto coverage = m.coverage( lp );
+    const auto block_chance = m.obstacle_coverage( u.pos(), lp );
     const std::string move_cost_str = string_format( _( "Move cost: %d" ),
                                                      m.move_cost( lp ) * 50 );
     const int move_cost_len = utf8_width( move_cost_str );
@@ -7555,10 +7557,14 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
         }
     }
 
-    fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, _( "Cover: %d%%" ),
-                    m.coverage( lp ) );
-    fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, _( "Block: %d%%" ),
-                    m.coverage( lp ) );
+    if( coverage > 0 ) {
+        fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
+                        _( "Cover: %d%%" ), coverage );
+    }
+    if( block_chance > 0 ) {
+        fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
+                        _( "Block: %d%%" ), block_chance );
+    }
 
     std::vector<std::string> feature_lines = foldstring( m.features( lp ), max_width );
     const int numlines = feature_lines.size();
