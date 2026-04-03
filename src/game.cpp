@@ -7530,17 +7530,20 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
     const std::string tile = m.tername( lp );
     const auto coverage = m.coverage( lp );
     const auto block_chance = m.obstacle_coverage( u.pos(), lp );
-    const std::string move_cost_str = string_format( _( "Move cost: %d" ),
-                                                     m.move_cost( lp ) * 50 );
+    const auto move_cost = m.move_cost( lp );
+    const auto move_cost_is_zero = move_cost == 0;
+    const auto move_cost_str = move_cost_is_zero ? _( "Impassable" ) :
+                           string_format( _( "Move cost: %d" ), move_cost * 50 );
+    const auto move_cost_color = move_cost_is_zero ? c_light_red : c_light_gray;
     const int move_cost_len = utf8_width( move_cost_str );
     const int location_width = std::max( 0, max_width - move_cost_len - 1 );
     trim_and_print( w_look, point( column, line ), location_width, location_color, area_name );
     const int move_col = column + std::max( 0, max_width - move_cost_len );
-    mvwprintz( w_look, point( move_col, line ), c_light_gray, move_cost_str );
+    mvwprintz( w_look, point( move_col, line ), move_cost_color, move_cost_str );
     line++;
     trim_and_print( w_look, point( column, line ), max_width, terrain_color, tile );
     if( !terrain_desc.empty() ) {
-        const int desc_lines = fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
+        const int desc_lines = fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
                                                terrain_desc ) - 1;
         line += desc_lines;
     }
@@ -7551,29 +7554,25 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
         const auto furniture_desc = furniture.description.translated();
         mvwprintz( w_look, point( column, ++line ), furniture_color, m.furnname( lp ) );
         if( !furniture_desc.empty() ) {
-            const int desc_lines = fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
+            const int desc_lines = fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
                                                    furniture_desc ) - 1;
             line += desc_lines;
         }
     }
 
     if( coverage > 0 ) {
-        fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
+        fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
                         _( "Cover: %d%%" ), coverage );
     }
     if( block_chance > 0 ) {
-        fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
+        fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
                         _( "Block: %d%%" ), block_chance );
     }
 
     std::vector<std::string> feature_lines = foldstring( m.features( lp ), max_width );
     const int numlines = feature_lines.size();
     for( int i = 0; i < numlines; i++ ) {
-        mvwprintz( w_look, point( column, ++line ), c_light_gray, feature_lines[i] );
-    }
-
-    if( m.impassable( lp ) ) {
-        mvwprintz( w_look, point( column, ++line ), c_light_red, _( "Impassable" ) );
+        mvwprintz( w_look, point( column, ++line ), c_dark_gray, feature_lines[i] );
     }
 
     std::string signage = m.get_signage( lp );
