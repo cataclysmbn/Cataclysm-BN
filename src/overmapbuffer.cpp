@@ -162,18 +162,27 @@ void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
             }
             auto om = p.future.get();
             overmap *om_ptr;
+            bool inserted;
             {
                 write_lock<std::shared_mutex> _l( mutex );
                 auto [it, ins] = overmaps.emplace( p.loc, std::move( om ) );
                 om_ptr = it->second.get();
+                inserted = ins;
             }
             // Run fix passes after releasing the write lock.
             // fix_mongroups / fix_nemesis / fix_npcs all call get() or has(),
             // which acquire the mutex themselves.  Holding the write lock here
             // causes same-thread deadlock on the non-recursive std::shared_mutex.
-            fix_mongroups( *om_ptr );
-            fix_nemesis( *om_ptr );
-            fix_npcs( *om_ptr );
+            //
+            // Only run if we won the insertion race.  If another path (e.g.
+            // get() called from a neighbour's fix_nemesis) already inserted
+            // this overmap, it already ran the fix passes; running them again
+            // can corrupt mongroup data for the already-fixed entry.
+            if( inserted ) {
+                fix_mongroups( *om_ptr );
+                fix_nemesis( *om_ptr );
+                fix_npcs( *om_ptr );
+            }
             return true;
         } ), futures.end() );
         popup->refresh();
