@@ -7513,81 +7513,67 @@ void game::print_visibility_info( const catacurses::window &w_look, int column, 
             break;
     }
 
-    mvwprintw( w_look, point( column, line ), visibility_message );
+    mvwprintz( w_look, point( column, line ), c_light_gray, visibility_message );
     line += 2;
 }
 
 void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_look,
-                               const std::string &area_name, int column,
-                               int &line )
+                               const std::string &area_name, int column, int &line )
 {
     const int max_width = getmaxx( w_look ) - column - 1;
 
-    const auto fmt_tile_info = []( const tripoint & lp ) {
-        map &here = get_map();
-        std::string ret;
-        if( debug_mode ) {
-            ret += lp.to_string();
-            ret += "\n";
-        }
-        ret += here.tername( lp );
-        if( debug_mode || display_object_ids ) {
-            ret += colorize( string_format( " [%s]", here.ter( lp )->id ), c_light_blue );
-        }
-        if( here.has_furn( lp ) ) {
-            ret += string_format( "; %s", here.furnname( lp ) );
-            if( debug_mode || display_object_ids ) {
-                ret += colorize( string_format( " [%s]", here.furn( lp )->id ), c_light_blue );
-            }
-        }
-        return ret;
-    };
+    std::string tile = m.tername( lp );
+    trim_and_print( w_look, point( column, line ), max_width, c_white, area_name );
+    trim_and_print( w_look, point( column + utf8_width( area_name ) + 1, line ), max_width,
+                    c_light_gray, tile );
 
-    std::string tile = string_format( "(%s) %s", area_name, fmt_tile_info( lp ) );
+    if( m.has_furn( lp ) ) {
+        mvwprintz( w_look, point( column, ++line ), c_light_blue, m.furnname( lp ) );
+    }
+
+    fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, _( "Cover: %d%%" ),
+                    m.coverage( lp ) );
+    std::vector<std::string> feature_lines = foldstring( m.features( lp ), max_width );
+    const int numlines = feature_lines.size();
+    for( int i = 0; i < numlines; i++ ) {
+        mvwprintz( w_look, point( column, ++line ), c_light_gray, feature_lines[i] );
+    }
 
     if( m.impassable( lp ) ) {
-        line += fold_and_print( w_look, point( column, line ), max_width, c_light_gray,
-                                _( "%s; Impassable" ),
-                                tile );
+        mvwprintz( w_look, point( column, ++line ), c_light_red, _( "Impassable" ) );
     } else {
-        line += fold_and_print( w_look, point( column, line ), max_width, c_light_gray,
-                                _( "%s; Movement cost %d" ),
-                                tile, m.move_cost( lp ) * 50 );
-
-        const auto ll = get_light_level( std::max( 1.0,
-                                         LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
-        mvwprintw( w_look, point( column, line++ ), _( "Lighting: " ) );
-        wprintz( w_look, ll.second, ll.first );
+        mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Move cost: %d" ),
+                   m.move_cost( lp ) * 50 );
     }
 
     std::string signage = m.get_signage( lp );
     if( !signage.empty() ) {
-        trim_and_print( w_look, point( column, line++ ), max_width, c_dark_gray,
-                        // NOLINTNEXTLINE(cata-text-style): the question mark does not end a sentence
-                        u.has_trait( trait_ILLITERATE ) ? _( "Sign: ???" ) : _( "Sign: %s" ), signage );
+        std::string sign_string = u.has_trait( trait_ILLITERATE ) ? "???" : signage;
+        mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Sign: %s" ), sign_string );
     }
 
+    std::pair<std::string, nc_color> ll = get_light_level( std::max( 1.0,
+                                          LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
+    mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Lighting: " ) );
+    mvwprintz( w_look, point( column + utf8_width( _( "Lighting: " ) ), line ), ll.second, ll.first );
+
     if( m.has_zlevels() && lp.z > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
-        // Print info about stuff below
         tripoint below( lp.xy(), lp.z - 1 );
-        std::string tile_below = fmt_tile_info( below );
+        std::string tile_below = m.tername( below );
+        if( m.has_furn( below ) ) {
+            tile_below += ", " + m.furnname( below );
+        }
 
         if( !m.has_floor_or_support( lp ) ) {
-            line += fold_and_print( w_look, point( column, line ), max_width, c_dark_gray,
-                                    _( "Below: %s; No support" ),
-                                    tile_below );
+            fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
+                            _( "Below: %s; No support" ), tile_below );
         } else {
-            line += fold_and_print( w_look, point( column, line ), max_width, c_dark_gray,
-                                    _( "Below: %s; Walkable" ),
-                                    tile_below );
+            fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
+                            _( "Below: %s; Walkable" ), tile_below );
         }
     }
 
-    line += fold_and_print( w_look, point( column, line ), max_width, c_dark_gray,
-                            m.features( lp ) );
-    line += fold_and_print( w_look, point( column, line ), max_width, c_light_gray,
-                            _( "Coverage: %d%%" ),
-                            m.coverage( lp ) );
+    ++line;
 }
 
 void game::print_fields_info( const tripoint &lp, const catacurses::window &w_look, int column,
@@ -7605,6 +7591,11 @@ void game::print_fields_info( const tripoint &lp, const catacurses::window &w_lo
         } else {
             mvwprintz( w_look, point( column, ++line ), cur.color(), cur.name() );
         }
+    }
+
+    int size = std::distance( tmpfield.begin(), tmpfield.end() );
+    if( size > 0 ) {
+        mvwprintz( w_look, point( column, ++line ), c_white, "\n" );
     }
 }
 
@@ -7626,6 +7617,8 @@ void game::print_trap_info( const tripoint &lp, const catacurses::window &w_look
 
         mvwprintz( w_look, point( column, ++line ), tr.color, tr_name );
     }
+
+    ++line;
 }
 
 void game::print_creature_info( const Creature *creature, const catacurses::window &w_look,
@@ -7641,7 +7634,11 @@ void game::print_vehicle_info( const vehicle *veh, int veh_part, const catacurse
                                const int column, int &line, const int last_line )
 {
     if( veh ) {
-        mvwprintw( w_look, point( column, ++line ), _( "There is a %s there.  Parts:" ), veh->name );
+        // Print the name of the vehicle.
+        mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Vehicle: " ) );
+        mvwprintz( w_look, point( column + utf8_width( _( "Vehicle: " ) ), line ), c_white, "%s",
+                   veh->name );
+        // Then the list of parts on that tile.
         line = veh->print_part_list( w_look, ++line, last_line, getmaxx( w_look ), veh_part );
     }
 }
@@ -7661,9 +7658,10 @@ void game::print_items_info( const tripoint &lp, const catacurses::window &w_loo
                    _( "There's something there, but you can't see what it is." ) );
         return;
     } else {
-        std::map<std::string, int> item_names;
+        std::map<std::string, std::pair<int, nc_color>> item_names;
         for( auto &item : m.i_at( lp ) ) {
-            ++item_names[item->tname()];
+            ++item_names[item->tname()].first;
+            item_names[item->tname()].second = item->color_in_inventory();
         }
 
         const int max_width = getmaxx( w_look ) - column - 1;
@@ -7674,12 +7672,12 @@ void game::print_items_info( const tripoint &lp, const catacurses::window &w_loo
                 break;
             }
 
-            if( it->second > 1 ) {
-                trim_and_print( w_look, point( column, ++line ), max_width, c_white,
+            if( it->second.first > 1 ) {
+                trim_and_print( w_look, point( column, ++line ), max_width, it->second.second,
                                 pgettext( "%s is the name of the item.  %d is the quantity of that item.", "%s [%d]" ),
-                                it->first.c_str(), it->second );
+                                it->first.c_str(), it->second.first );
             } else {
-                trim_and_print( w_look, point( column, ++line ), max_width, c_white, it->first );
+                trim_and_print( w_look, point( column, ++line ), max_width, it->second.second, it->first );
             }
         }
     }
@@ -10095,7 +10093,12 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
                             ::get_hp_bar( critter->get_hp(), critter->get_hp_max(), false );
                     }
                     if( player_knows ) {
-                        mvwprintz( w_monsters, point( width - 19, y ), color, sText );
+                        mvwprintz( w_monsters, point( width - 25, y ), color, sText );
+                        const int bar_max_width = 5;
+                        const int bar_width = utf8_width( sText );
+                        for( int i = 0; i < bar_max_width - bar_width; ++i ) {
+                            mvwprintz( w_monsters, point( width - 21 - i, y ), c_white, "." );
+                        }
                     }
 
                     if( m != nullptr ) {
