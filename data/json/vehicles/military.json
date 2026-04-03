@@ -350,7 +350,11 @@
       { "x": -6, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_vertical", "plating_military" ] },
       { "x": -5, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_vertical", "plating_military" ] },
       { "x": -4, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
-      { "x": -3, "y": -1, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -3,
+        "y": -1,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": -2, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_nw", "plating_military" ] },
       { "x": -1, "y": -1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 0, "y": -1, "parts": [ "hdframe_vertical_2", "hdhatch", "hdroof", "NBC_seal", "plating_military" ] },
@@ -374,7 +378,8 @@
           "cam_control",
           "turret_mount",
           { "part": "tow_turret", "ammo": 60, "ammo_qty": [ 1, 2 ] },
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
       { "x": -2, "y": 0, "parts": [ "hdframe_vertical_2", "hdboard_se", "plating_military" ] },
@@ -382,14 +387,32 @@
       {
         "x": 0,
         "y": 0,
-        "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "controls", "dashboard", "vehicle_clock", "horn_big", "hdroof", "NBC_seal" ]
+        "parts": [
+          "hdframe_vertical_2",
+          "seat",
+          "seatbelt_heavyduty",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "horn_big",
+          "hdroof",
+          "NBC_seal"
+        ]
       },
       { "x": 1, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 2, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
-      { "x": -7, "y": 1, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -7,
+        "y": 1,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": -6, "y": 1, "parts": [ "hdframe_vertical_2", "aisle_vertical", "hdroof", "NBC_seal" ] },
       { "x": -5, "y": 1, "parts": [ "hdframe_vertical_2", "aisle_vertical", "hdroof", "NBC_seal" ] },
-      { "x": -4, "y": 1, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -4,
+        "y": 1,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": -3, "y": 1, "parts": [ "hdframe_vertical_2", "aisle_vertical", "hdroof", "NBC_seal" ] },
       {
         "x": -2,
@@ -407,7 +430,8 @@
             "ammo_types": [ "25mm_apds", "25mm_hei" ],
             "ammo_qty": [ 10, 50 ]
           },
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
       { "x": -1, "y": 1, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
@@ -439,7 +463,11 @@
       { "x": -6, "y": 3, "parts": [ "hdframe_vertical_2", "hdboard_vertical", "plating_military" ] },
       { "x": -5, "y": 3, "parts": [ "hdframe_vertical_2", "hdboard_vertical", "plating_military" ] },
       { "x": -4, "y": 3, "parts": [ "hdframe_vertical_2", "hdboard_se", "plating_military" ] },
-      { "x": -3, "y": 3, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -3,
+        "y": 3,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": -2, "y": 3, "parts": [ "hdframe_vertical_2", "hdboard_ne", "plating_military" ] },
       {
         "x": -1,
@@ -677,10 +705,18 @@
       { "y": 0, "x": 1, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
       { "y": -1, "x": 1, "parts": [ "hdframe_vertical", "reinforced_windshield" ] },
       { "y": 3, "x": 0, "parts": [ "hdframe_vertical", "hddoor_right" ] },
-      { "y": 2, "x": 0, "parts": [ "hdframe_vertical_2", "hdroof", "NBC_seal", { "fuel": "diesel", "part": "tank" } ] },
+      {
+        "y": 2,
+        "x": 0,
+        "parts": [ "hdframe_vertical_2", "hdroof", "NBC_seal", { "fuel": "diesel", "part": "tank" } ]
+      },
       { "y": 2, "x": 0, "parts": [ "seat", "seatbelt" ] },
       { "y": 1, "x": 0, "parts": [ "hdframe_vertical_2", "box", "recharge_station", "hdroof", "NBC_seal" ] },
-      { "y": 0, "x": 0, "parts": [ "hdframe_vertical_2", "hdroof", "NBC_seal", { "fuel": "diesel", "part": "tank" } ] },
+      {
+        "y": 0,
+        "x": 0,
+        "parts": [ "hdframe_vertical_2", "hdroof", "NBC_seal", { "fuel": "diesel", "part": "tank" } ]
+      },
       { "y": 0, "x": 0, "parts": [ "controls", "dashboard", "vehicle_clock", "horn_big" ] },
       { "y": 0, "x": 0, "parts": [ "seat", "seatbelt" ] },
       { "y": -1, "x": 0, "parts": [ "hdframe_vertical", "hddoor_left" ] },
@@ -997,7 +1033,11 @@
       },
       { "x": -3, "y": -2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": -2, "y": -2, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
-      { "x": -1, "y": -2, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -1,
+        "y": -2,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": 0, "y": -2, "parts": [ "hdframe_vertical_2", "hdboard_nw", "plating_military" ] },
       { "x": 1, "y": -2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 2, "y": -2, "parts": [ "hdframe_vertical_2", "hdhatch", "hdroof", "NBC_seal", "plating_military" ] },
@@ -1017,7 +1057,17 @@
       {
         "x": 2,
         "y": -1,
-        "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "controls", "dashboard", "vehicle_clock", "horn_big", "hdroof", "NBC_seal" ]
+        "parts": [
+          "hdframe_vertical_2",
+          "seat",
+          "seatbelt_heavyduty",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "horn_big",
+          "hdroof",
+          "NBC_seal"
+        ]
       },
       { "x": 3, "y": -1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 4, "y": -1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
@@ -1031,7 +1081,8 @@
           "diesel_engine_v12",
           "alternator_truck",
           "storage_battery",
-          "hdroof", "NBC_seal",
+          "hdroof",
+          "NBC_seal",
           { "part": "afs_small_roof_external_tank", "fuel": "diesel" },
           "plating_military"
         ]
@@ -1049,7 +1100,8 @@
           "cam_control",
           "turret_mount_manual_steel",
           { "part": "mounted_tank_manual_105mm", "ammo_types": [ "105mm_heat", "105mm_ap" ], "ammo": 80 },
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
       { "x": 1, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
@@ -1071,7 +1123,8 @@
           "cam_control",
           "turret_mount_manual_steel",
           { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 10, 100 ] },
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
       { "x": 0, "y": 1, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
@@ -1087,7 +1140,11 @@
       },
       { "x": -3, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": -2, "y": 2, "parts": [ "hdframe_vertical_2", "hdboard_se", "plating_military" ] },
-      { "x": -1, "y": 2, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -1,
+        "y": 2,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": 0, "y": 2, "parts": [ "hdframe_vertical_2", "hdboard_ne", "plating_military" ] },
       { "x": 1, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 2, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
@@ -1162,7 +1219,11 @@
       },
       { "x": -3, "y": -2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": -2, "y": -2, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
-      { "x": -1, "y": -2, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -1,
+        "y": -2,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": 0, "y": -2, "parts": [ "hdframe_vertical_2", "hdboard_nw", "plating_military" ] },
       { "x": 1, "y": -2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 2, "y": -2, "parts": [ "hdframe_vertical_2", "hdhatch", "hdroof", "NBC_seal", "plating_military" ] },
@@ -1182,7 +1243,17 @@
       {
         "x": 2,
         "y": -1,
-        "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "controls", "dashboard", "vehicle_clock", "horn_big", "hdroof", "NBC_seal" ]
+        "parts": [
+          "hdframe_vertical_2",
+          "seat",
+          "seatbelt_heavyduty",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "horn_big",
+          "hdroof",
+          "NBC_seal"
+        ]
       },
       { "x": 3, "y": -1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 4, "y": -1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
@@ -1196,7 +1267,8 @@
           "diesel_engine_v12",
           "alternator_truck",
           "storage_battery",
-          "hdroof", "NBC_seal",
+          "hdroof",
+          "NBC_seal",
           "afs_small_roof_external_tank",
           "plating_military"
         ]
@@ -1214,7 +1286,8 @@
           "cam_control",
           "turret_mount_manual_steel",
           "mounted_tank_manual_105mm",
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
       { "x": 1, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
@@ -1244,7 +1317,11 @@
       },
       { "x": -3, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": -2, "y": 2, "parts": [ "hdframe_vertical_2", "hdboard_se", "plating_military" ] },
-      { "x": -1, "y": 2, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -1,
+        "y": 2,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": 0, "y": 2, "parts": [ "hdframe_vertical_2", "hdboard_ne", "plating_military" ] },
       { "x": 1, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 2, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
@@ -1301,7 +1378,11 @@
       { "x": -6, "y": -1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": -5, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
       { "x": -4, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_vertical", "plating_military" ] },
-      { "x": -3, "y": -1, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -3,
+        "y": -1,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": -2, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_nw", "plating_military" ] },
       { "x": -1, "y": -1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 0, "y": -1, "parts": [ "hdframe_vertical_2", "hdhatch", "hdroof", "NBC_seal", "plating_military" ] },
@@ -1326,15 +1407,30 @@
           "cam_control",
           "turret_mount",
           { "part": "mounted_m240", "ammo": 80, "ammo_types": [ "762_51" ], "ammo_qty": [ 10, 100 ] },
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
       { "x": -2, "y": 0, "parts": [ "hdframe_vertical_2", "hdboard_se", "plating_military" ] },
-      { "x": -1, "y": 0, "parts": [ "hdframe_vertical_2", "hdhatch_opaque_left", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque_left", "hdroof", "NBC_seal", "plating_military" ]
+      },
       {
         "x": 0,
         "y": 0,
-        "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "controls", "dashboard", "vehicle_clock", "horn_big", "hdroof", "NBC_seal" ]
+        "parts": [
+          "hdframe_vertical_2",
+          "seat",
+          "seatbelt_heavyduty",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "horn_big",
+          "hdroof",
+          "NBC_seal"
+        ]
       },
       { "x": 1, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 2, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
@@ -1348,7 +1444,8 @@
           "engine_turbine_small",
           "alternator_truck",
           "storage_battery",
-          "hdroof", "NBC_seal",
+          "hdroof",
+          "NBC_seal",
           { "part": "afs_roof_external_tank", "fuel": "jp8" },
           "plating_military"
         ]
@@ -1366,10 +1463,15 @@
           "seatbelt_heavyduty",
           "turret_mount",
           { "part": "mounted_tank_manual", "ammo": 80, "ammo_types": [ "120mm_usable_heat", "120mm_usable_ap" ] },
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
-      { "x": -1, "y": 1, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": 0, "y": 1, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
       { "x": 1, "y": 1, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
       { "x": 2, "y": 1, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
@@ -1389,7 +1491,8 @@
           "controls_electronic",
           "turret_mount",
           { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 10, 100 ] },
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
       { "x": -2, "y": 2, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
@@ -1406,7 +1509,11 @@
       { "x": -6, "y": 3, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": -5, "y": 3, "parts": [ "hdframe_vertical_2", "hdboard_se", "plating_military" ] },
       { "x": -4, "y": 3, "parts": [ "hdframe_vertical_2", "hdboard_vertical", "plating_military" ] },
-      { "x": -3, "y": 3, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": -3,
+        "y": 3,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": -2, "y": 3, "parts": [ "hdframe_vertical_2", "hdboard_ne", "plating_military" ] },
       { "x": -1, "y": 3, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 0, "y": 3, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
@@ -1492,13 +1599,27 @@
       { "x": -6, "y": 0, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
       { "x": -5, "y": 0, "parts": [ "hdframe_vertical_2", "hdboard_ne", "hdroof", "NBC_seal" ] },
       { "x": -4, "y": 0, "parts": [ "hdframe_vertical_2", "trunk", "hdroof", "NBC_seal" ] },
-      { "x": -3, "y": 0, "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "cam_control", "hdroof", "NBC_seal" ] },
+      {
+        "x": -3,
+        "y": 0,
+        "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "cam_control", "hdroof", "NBC_seal" ]
+      },
       { "x": -2, "y": 0, "parts": [ "hdframe_vertical_2", "hdboard_se", "plating_military" ] },
       { "x": -1, "y": 0, "parts": [ "hdframe_vertical_2", "hdboard_nw", "plating_military" ] },
       {
         "x": 0,
         "y": 0,
-        "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "controls", "dashboard", "vehicle_clock", "horn_big", "hdroof", "NBC_seal" ]
+        "parts": [
+          "hdframe_vertical_2",
+          "seat",
+          "seatbelt_heavyduty",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "horn_big",
+          "hdroof",
+          "NBC_seal"
+        ]
       },
       { "x": 1, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
       { "x": 2, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
@@ -1516,7 +1637,8 @@
           "cam_control",
           "turret_mount",
           { "part": "mounted_howitzer", "ammo": 60, "ammo_types": [ "155mm_frag", "155mm_heat" ] },
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
       { "x": -1, "y": 1, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
@@ -1550,7 +1672,8 @@
           "controls_electronic",
           "turret_mount",
           { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 10, 100 ] },
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
       { "x": -2, "y": 2, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
@@ -1636,7 +1759,11 @@
         "y": -1,
         "parts": [ "hdframe_vertical_2", "hdstowboard_vertical", "plating_military", "solar_panel_v2" ]
       },
-      { "x": 0, "y": -1, "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": 0,
+        "y": -1,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": 1, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_nw", "plating_military" ] },
       {
         "x": 2,
@@ -1665,12 +1792,25 @@
           "turret_mount",
           { "part": "mounted_tank_auto", "ammo": 80, "ammo_types": [ "120mm_usable_heat", "120mm_usable_ap" ] },
           "controls_turret",
-          "hdroof", "NBC_seal"
+          "hdroof",
+          "NBC_seal"
         ]
       },
-      { "x": 1, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ] },
-      { "x": 2, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ] },
-      { "x": 3, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ]
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ]
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ]
+      },
       { "x": -3, "y": 1, "parts": [ "hdframe_vertical_2", "trunk", "omnicam", "plating_military" ] },
       {
         "x": -2,
@@ -1682,7 +1822,11 @@
         "y": 1,
         "parts": [ "hdframe_vertical_2", "hdstowboard_vertical", "plating_military", "solar_panel_v2" ]
       },
-      { "x": 0, "y": 1, "parts": [ "hdframe_vertical_2", "hdboard_vertical", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": 0,
+        "y": 1,
+        "parts": [ "hdframe_vertical_2", "hdboard_vertical", "hdroof", "NBC_seal", "plating_military" ]
+      },
       {
         "x": 1,
         "y": 1,
