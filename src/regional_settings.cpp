@@ -40,6 +40,60 @@ void read_and_set_or_throw( const JsonObject &jo, const std::string &member, T &
 namespace
 {
 
+struct compat_map_extra_collection {
+    std::optional<std::string> copy_from;
+    unsigned int chance = 0;
+    weighted_int_list<std::string> values;
+};
+
+struct compat_region_settings_map_extras {
+    std::optional<std::string> copy_from;
+    std::vector<std::string> extras;
+};
+
+struct compat_region_terrain_furniture {
+    std::optional<std::string> copy_from;
+    std::optional<std::string> replaced_terrain_id;
+    std::optional<std::string> replaced_furniture_id;
+    weighted_int_list<ter_id> terrain;
+    weighted_int_list<furn_id> furniture;
+};
+
+struct compat_region_settings_terrain_furniture {
+    std::optional<std::string> copy_from;
+    std::vector<std::string> ter_furn;
+};
+
+struct compat_region_settings_forest_mapgen {
+    std::optional<std::string> copy_from;
+    std::vector<std::string> biomes;
+};
+
+auto compat_weather_generators = std::unordered_map<std::string, weather_generator> {};
+auto compat_map_extra_collection_defs = std::unordered_map<std::string, compat_map_extra_collection> {};
+auto compat_region_settings_map_extras_defs = std::unordered_map<std::string,
+     compat_region_settings_map_extras> {};
+auto compat_region_terrain_furniture_defs = std::unordered_map<std::string,
+     compat_region_terrain_furniture> {};
+auto compat_region_settings_terrain_furniture_defs = std::unordered_map<std::string,
+     compat_region_settings_terrain_furniture> {};
+auto compat_region_settings_forest_mapgen_defs = std::unordered_map<std::string,
+     compat_region_settings_forest_mapgen> {};
+
+auto get_default_region_settings() -> const regional_settings *
+{
+    const auto iter = region_settings_map.find( "default" );
+    return iter == region_settings_map.end() ? nullptr : &iter->second;
+}
+
+auto get_default_weather_generator() -> weather_generator
+{
+    if( const auto *default_region = get_default_region_settings() ) {
+        return default_region->weather;
+    }
+    return weather_generator {};
+}
+
 auto make_legacy_default_oter( const oter_str_id &surface_oter ) ->
 std::array<oter_str_id, OVERMAP_LAYERS>
 {
