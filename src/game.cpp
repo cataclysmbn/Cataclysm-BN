@@ -7523,12 +7523,14 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
     const int max_width = getmaxx( w_look ) - column - 1;
 
     std::string tile = m.tername( lp );
-    trim_and_print( w_look, point( column, line ), max_width, c_white, area_name );
+    const auto terrain_color = m.ter( lp ).obj().color();
+    trim_and_print( w_look, point( column, line ), max_width, terrain_color, area_name );
     trim_and_print( w_look, point( column + utf8_width( area_name ) + 1, line ), max_width,
-                    c_light_gray, tile );
+                    terrain_color, tile );
 
     if( m.has_furn( lp ) ) {
-        mvwprintz( w_look, point( column, ++line ), c_light_blue, m.furnname( lp ) );
+        const auto furniture_color = m.furn( lp ).obj().color();
+        mvwprintz( w_look, point( column, ++line ), furniture_color, m.furnname( lp ) );
     }
 
     fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, _( "Cover: %d%%" ),
