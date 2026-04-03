@@ -1276,7 +1276,7 @@ void flush_deferred_zones()
         pending.swap( g_deferred_zones );
     }
     auto &mgr = zone_manager::get_manager();
-    std::ranges::for_each( pending, [&]( const deferred_zone &z ) {
+    std::ranges::for_each( pending, [&]( const deferred_zone & z ) {
         mgr.add( z.name, z.type, z.fac, z.invert, z.enabled, z.start, z.end );
     } );
 }
