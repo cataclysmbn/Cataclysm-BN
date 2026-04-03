@@ -2491,7 +2491,7 @@
     "using": [ [ "blacksmithing_advanced", 20 ], [ "steel_standard", 20 ] ],
     "components": [ [ [ "hard_plate", 5 ] ], [ [ "chain", 2 ] ] ]
   },
-    { //Mind you this is all guess work and "what sounds right to me", feel free to fix it later. I lgedimately don't kwow what goes into NBC seals. The idea is it's a kit of goop you can paint in the internals of a vehicle to protect from NBC stuff so makes sense to me for it to be large and heavy. <3 ~Ekarus
+    {
     "result": "NBC_seal",
     "type": "recipe",
     "category": "CC_OTHER",

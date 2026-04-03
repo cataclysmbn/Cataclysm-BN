@@ -37,7 +37,7 @@
     "category": "veh_parts",
     "name": { "str": "NBC_seal" },
     "description": "`A series of lead-based gaskets, seals and other things meant to keep all Nuclear, Biological, and Chemical contaminants out of a vehicle. You need to install one of these on every tile of your vehicle to be completely safe.`",
-    "weight": "8000 g", //Everything past here, including this is my best guess. Please fix it if it's wrong. I don't know what to do otherwise.
+    "weight": "8000 g",
     "volume": "1 L",
     "price": "50 USD",
     "price_postapoc": "1500 cent",
