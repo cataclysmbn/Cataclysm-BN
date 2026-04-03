@@ -95,5 +95,22 @@
     ],
     "breaks_into": [ { "item": "plastic_chunk", "count": [ 4, 8 ] } ],
     "damage_reduction": { "all": 12, "stab": 4, "cut": 4 }
+  },
+    {
+    "type": "vehicle_part",
+    "id": "NBC_seal",
+    "name": { "str": "NBC seal" },
+    "description": "Nuclear, Biological, Chemical seals for this part. By installing this your vehicle will be sealed from Nuclear, biolgocial, and chemical agents. You will need to install these seals on every part to be safe however.",
+    "symbol": "0",
+    "color": "white",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 120,
+    "item": "NBC_seal",
+    "location": "anywhere",
+    "flags": [
+      "NOFIELDS", "SHOCK_IMMUNE"
+    ]
   }
 ]
