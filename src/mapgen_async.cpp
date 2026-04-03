@@ -76,7 +76,7 @@ void run_deferred_autonotes()
     const bool notes_active = get_option<bool>( "AUTO_NOTES" ) &&
                               get_option<bool>( "AUTO_NOTES_MAP_EXTRAS" );
 
-    std::ranges::for_each( pending, [&]( const deferred_autonote &entry ) {
+    std::ranges::for_each( pending, [&]( const deferred_autonote & entry ) {
         const string_id<map_extra> extra_sid( entry.extra_id );
         settings.set_discovered( extra_sid );
 
