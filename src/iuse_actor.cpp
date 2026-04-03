@@ -97,6 +97,7 @@
 #include "string_formatter.h"
 #include "string_utils.h"
 #include "string_input_popup.h"
+#include "submap_load_manager.h"
 #include "text_snippets.h"
 #include "translations.h"
 #include "trap.h"
@@ -1593,6 +1594,12 @@ void reveal_map_actor::reveal_targets( const tripoint_abs_omt &map ) const
             vec.emplace_back( x, y );
         }
     }
+
+    // Drain any in-flight lazy-border generation workers before spawning our own
+    // overmap futures.  Without this, a background worker calling
+    // overmapbuffer::get() and our futures calling it concurrently can both
+    // observe a partially-initialised overmap in the map.
+    submap_loader.drain_lazy_loads();
 
     for( const auto& [_, to_gen] : om_to_generate ) {
         ACTIVE_OVERMAP_BUFFER.generate( to_gen );

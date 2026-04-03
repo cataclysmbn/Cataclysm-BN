@@ -7916,6 +7916,7 @@ void map::shift( point sp )
     {
         ZoneScopedN( "shift_mapgen_hooks" );
         run_deferred_mapgen_hooks();
+        run_deferred_autonotes();
     }
 
     // Clear vehicle list and rebuild after shift

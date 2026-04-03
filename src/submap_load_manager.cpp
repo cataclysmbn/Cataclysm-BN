@@ -235,6 +235,7 @@ void submap_load_manager::update()
     {
         ZoneScopedN( "slm_mapgen_hooks_lazy" );
         run_deferred_mapgen_hooks();
+        run_deferred_autonotes();
     }
 
     TracyPlot( "Thread Pool Workers", static_cast<int64_t>( get_thread_pool().num_workers() ) );
@@ -349,6 +350,7 @@ void submap_load_manager::update()
     {
         ZoneScopedN( "slm_mapgen_hooks_sim" );
         run_deferred_mapgen_hooks();
+        run_deferred_autonotes();
     }
 
     // ---- Listener notifications (simulated set only) ----
