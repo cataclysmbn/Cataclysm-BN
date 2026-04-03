@@ -3026,6 +3026,28 @@ void Item_factory::set_properties_from_json( const JsonObject &jo, const std::st
             }
             def.properties.insert( prop );
         }
+    } else if( jo.has_object( member ) ) {
+        for( const JsonMember prop : jo.get_object( member ) ) {
+            if( prop.is_comment() ) {
+                continue;
+            }
+            auto value = std::string {};
+            if( prop.test_string() ) {
+                value = prop.get_string();
+            } else if( prop.test_int() ) {
+                value = std::to_string( prop.get_int() );
+            } else if( prop.test_bool() ) {
+                value = prop.get_bool() ? "true" : "false";
+            } else if( prop.test_float() ) {
+                value = std::to_string( prop.get_float() );
+            } else {
+                prop.throw_error( "Property value must be a string, number, or boolean" );
+            }
+            if( def.properties.contains( prop.name() ) ) {
+                prop.throw_error( "Duplicated property" );
+            }
+            def.properties.insert( std::pair<std::string, std::string>( prop.name(), value ) );
+        }
     } else {
         jo.throw_error( "Properties list is not an array", member );
     }

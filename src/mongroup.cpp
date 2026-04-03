@@ -367,8 +367,8 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
     if( jo.has_array( "monsters" ) ) {
         for( JsonObject mon : jo.get_array( "monsters" ) ) {
             const bool has_group = mon.has_string( "group" );
-            const int freq = mon.get_int( "freq", mon.get_int( "weight", 0 ) );
-            const int cost = mon.get_int( "cost_multiplier", 1 );
+            const auto freq = mon.get_int( "freq", mon.get_int( "weight", 0 ) );
+            const auto cost = mon.get_int( "cost_multiplier", 1 );
             int pack_min = 1;
             int pack_max = 1;
             if( mon.has_member( "pack_size" ) ) {
@@ -389,12 +389,12 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
             if( has_group ) {
                 const auto group_id = mongroup_id( mon.get_string( "group" ) );
                 if( monsterGroupMap.contains( group_id ) ) {
-                    const MonsterGroup &nested_group = monsterGroupMap[group_id];
-                    const int nested_total = std::max( nested_group.freq_total, 1 );
+                    const auto &nested_group = monsterGroupMap[group_id];
+                    const auto nested_total = std::max( nested_group.freq_total, 1 );
                     if( nested_group.defaultMonster != mtype_id::NULL_ID() ) {
-                        const int scaled_freq = std::max( 1, freq / nested_total );
-                        MonsterGroupEntry new_mon_group = MonsterGroupEntry( nested_group.defaultMonster, scaled_freq, cost,
-                                                          pack_min, pack_max, starts, ends );
+                        const auto scaled_freq = std::max( 1, freq / nested_total );
+                        auto new_mon_group = MonsterGroupEntry( nested_group.defaultMonster, scaled_freq, cost, pack_min,
+                                                                pack_max, starts, ends );
                         if( mon.has_member( "conditions" ) ) {
                             for( const std::string line : mon.get_array( "conditions" ) ) {
                                 new_mon_group.conditions.push_back( line );
@@ -405,10 +405,10 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
                             inferred_default = nested_group.defaultMonster;
                         }
                     }
-                    for( const MonsterGroupEntry &nested_entry : nested_group.monsters ) {
-                        const int scaled_freq = std::max( 1, nested_entry.frequency * std::max( freq, 1 ) / nested_total );
-                        MonsterGroupEntry new_mon_group = MonsterGroupEntry( nested_entry.name, scaled_freq, cost,
-                                                          pack_min, pack_max, starts, ends );
+                    for( const auto &nested_entry : nested_group.monsters ) {
+                        const auto scaled_freq = std::max( 1, nested_entry.frequency * std::max( freq, 1 ) / nested_total );
+                        auto new_mon_group = MonsterGroupEntry( nested_entry.name, scaled_freq, cost,
+                                                                pack_min, pack_max, starts, ends );
                         new_mon_group.conditions = nested_entry.conditions;
                         if( mon.has_member( "conditions" ) ) {
                             for( const std::string line : mon.get_array( "conditions" ) ) {
@@ -424,9 +424,8 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
                 continue;
             }
 
-            const mtype_id name = mtype_id( mon.get_string( "monster" ) );
-            MonsterGroupEntry new_mon_group = MonsterGroupEntry( name, freq, cost, pack_min, pack_max, starts,
-                                              ends );
+            const auto name = mtype_id( mon.get_string( "monster" ) );
+            auto new_mon_group = MonsterGroupEntry( name, freq, cost, pack_min, pack_max, starts, ends );
             if( mon.has_member( "conditions" ) ) {
                 for( const std::string line : mon.get_array( "conditions" ) ) {
                     new_mon_group.conditions.push_back( line );

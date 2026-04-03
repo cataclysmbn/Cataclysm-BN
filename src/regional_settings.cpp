@@ -74,15 +74,16 @@ struct compat_region_settings_forest_mapgen {
 };
 
 auto compat_weather_generators = std::unordered_map<std::string, weather_generator> {};
-auto compat_map_extra_collection_defs = std::unordered_map<std::string, compat_map_extra_collection> {};
+auto compat_map_extra_collection_defs =
+std::unordered_map<std::string, compat_map_extra_collection> {};
 auto compat_region_settings_map_extras_defs = std::unordered_map<std::string,
-     compat_region_settings_map_extras> {};
+compat_region_settings_map_extras> {};
 auto compat_region_terrain_furniture_defs = std::unordered_map<std::string,
-     compat_region_terrain_furniture> {};
+compat_region_terrain_furniture> {};
 auto compat_region_settings_terrain_furniture_defs = std::unordered_map<std::string,
-     compat_region_settings_terrain_furniture> {};
+compat_region_settings_terrain_furniture> {};
 auto compat_region_settings_forest_mapgen_defs = std::unordered_map<std::string,
-     compat_region_settings_forest_mapgen> {};
+compat_region_settings_forest_mapgen> {};
 
 auto get_default_region_settings() -> const regional_settings *
 {

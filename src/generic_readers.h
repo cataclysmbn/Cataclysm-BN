@@ -459,6 +459,10 @@ class string_id_reader : public generic_typed_reader<string_id_reader<T>>
 inline bool legacy_volume_reader( const JsonObject &jo, const std::string &member_name,
                                   units::volume &value, bool )
 {
+    if( jo.has_string( member_name ) ) {
+        value = read_from_json_string<units::volume>( *jo.get_raw( member_name ), units::volume_units );
+        return true;
+    }
     int legacy_value;
     if( !jo.read( member_name, legacy_value ) ) {
         return false;
@@ -466,5 +470,4 @@ inline bool legacy_volume_reader( const JsonObject &jo, const std::string &membe
     value = legacy_value * units::legacy_volume_factor;
     return true;
 }
-
 
