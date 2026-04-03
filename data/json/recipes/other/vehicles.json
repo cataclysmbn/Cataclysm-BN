@@ -2496,11 +2496,12 @@
     "type": "recipe",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_MATERIALS",
-    "skill_used": "fabrication",
-    "difficulty": 3,
-    "skills_required": [ "mechanics", 3 ],
+    "skill_used": "cooking",
+    "difficulty": 5,
+    "skills_required": [ [ "fabrication", 2 ] ],
     "time": "1 h",
-    "autolearn": true,
-    "components": [ [ [ "rubber", 15 ] ], [ [ "lead", 5000 ] ] ]
+    "book_learn": [ [ "textbook_gaswarfare", 4 ], [ "atomic_survival", 4 ] ],
+    "tools": [ [ [ "mold_plastic", -1 ] ], [ [ "surface_heat", 80, "LIST" ] ] ],
+    "components": [ [ [ "chunk_rubber", 80 ] ], [ [ "lead", 1000 ] ], [ [ "steel_standard", 1, "LIST" ] ], [ [ "plastic_sheet", 1 ] ] ]
   }
 ]
