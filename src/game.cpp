@@ -7528,8 +7528,13 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
     const auto location_color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes );
     const auto terrain_desc = terrain.description.translated();
     const std::string tile = m.tername( lp );
-    // codex add the move cost here
-    trim_and_print( w_look, point( column, line ), max_width, location_color, area_name );
+    const std::string move_cost_str = string_format( _( "Move cost: %d" ),
+                                                     m.move_cost( lp ) * 50 );
+    const int move_cost_len = utf8_width( move_cost_str );
+    const int location_width = std::max( 0, max_width - move_cost_len - 1 );
+    trim_and_print( w_look, point( column, line ), location_width, location_color, area_name );
+    const int move_col = column + std::max( 0, max_width - move_cost_len );
+    mvwprintz( w_look, point( move_col, line ), c_light_gray, move_cost_str );
     line++;
     trim_and_print( w_look, point( column, line ), max_width, terrain_color, tile );
     if( !terrain_desc.empty() ) {
@@ -7552,6 +7557,9 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
 
     fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, _( "Cover: %d%%" ),
                     m.coverage( lp ) );
+    fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, _( "Block: %d%%" ),
+                    m.coverage( lp ) );
+
     std::vector<std::string> feature_lines = foldstring( m.features( lp ), max_width );
     const int numlines = feature_lines.size();
     for( int i = 0; i < numlines; i++ ) {
@@ -7560,9 +7568,6 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
 
     if( m.impassable( lp ) ) {
         mvwprintz( w_look, point( column, ++line ), c_light_red, _( "Impassable" ) );
-    } else {
-        mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Move cost: %d" ),
-                   m.move_cost( lp ) * 50 );
     }
 
     std::string signage = m.get_signage( lp );
