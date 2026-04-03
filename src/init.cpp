@@ -63,6 +63,7 @@
 #include "magic_ter_furn_transform.h"
 #include "map_extras.h"
 #include "mapbuffer.h"
+#include "map_feature_descriptions.h"
 #include "mapdata.h"
 #include "mapgen.h"
 #include "mapgen_async.h"
@@ -415,6 +416,7 @@ void DynamicDataLoader::initialize()
     add( "overmap_special", &overmap_specials::load );
     add( "city_building", &city_buildings::load );
     add( "map_extra", &MapExtras::load );
+    add( "map_feature_description", &map_feature_descriptions::load_map_feature_descriptions );
 
     add( "region_settings", &load_region_settings );
     add( "region_overlay", &load_region_overlay );
@@ -585,6 +587,7 @@ void DynamicDataLoader::unload_data()
     json_flag::reset();
     json_trait_flag::reset();
     MapExtras::reset();
+    map_feature_descriptions::reset_map_feature_descriptions();
     mapgen_palette::reset();
     materials::reset();
     mission_type::reset();

@@ -7522,15 +7522,32 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
 {
     const int max_width = getmaxx( w_look ) - column - 1;
 
-    std::string tile = m.tername( lp );
-    const auto terrain_color = m.ter( lp ).obj().color();
-    trim_and_print( w_look, point( column, line ), max_width, terrain_color, area_name );
-    trim_and_print( w_look, point( column + utf8_width( area_name ) + 1, line ), max_width,
-                    terrain_color, tile );
+    const auto &terrain = m.ter( lp ).obj();
+    const auto terrain_color = terrain.color();
+    const oter_id &cur_ter_m = ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( m.getabs( lp ) ) ) );
+    const auto location_color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes );
+    const auto terrain_desc = terrain.description.translated();
+    const std::string tile = m.tername( lp );
+    // codex add the move cost here
+    trim_and_print( w_look, point( column, line ), max_width, location_color, area_name );
+    line++;
+    trim_and_print( w_look, point( column, line ), max_width, terrain_color, tile );
+    if( !terrain_desc.empty() ) {
+        const int desc_lines = fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
+                                               terrain_desc ) - 1;
+        line += desc_lines;
+    }
 
     if( m.has_furn( lp ) ) {
-        const auto furniture_color = m.furn( lp ).obj().color();
+        const auto &furniture = m.furn( lp ).obj();
+        const auto furniture_color = furniture.color();
+        const auto furniture_desc = furniture.description.translated();
         mvwprintz( w_look, point( column, ++line ), furniture_color, m.furnname( lp ) );
+        if( !furniture_desc.empty() ) {
+            const int desc_lines = fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
+                                                   furniture_desc ) - 1;
+            line += desc_lines;
+        }
     }
 
     fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, _( "Cover: %d%%" ),
@@ -7556,8 +7573,7 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
 
     std::pair<std::string, nc_color> ll = get_light_level( std::max( 1.0,
                                           LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
-    mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Lighting: " ) );
-    mvwprintz( w_look, point( column + utf8_width( _( "Lighting: " ) ), line ), ll.second, ll.first );
+    mvwprintz( w_look, point( column, ++line ), ll.second, ll.first );
 
     if( m.has_zlevels() && lp.z > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
         tripoint below( lp.xy(), lp.z - 1 );
