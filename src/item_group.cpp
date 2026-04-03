@@ -23,6 +23,20 @@ bool string_id<Item_group>::is_valid() const
     return item_group::group_is_defined( *this );
 }
 
+namespace
+{
+
+auto clone_optional_spawn_data( const std::unique_ptr<Item_spawn_data> &data ) ->
+std::unique_ptr<Item_spawn_data>
+{
+    if( data == nullptr ) {
+        return nullptr;
+    }
+    return data->clone();
+}
+
+} // namespace
+
 std::vector<detached_ptr<item>> Item_spawn_data::create( const time_point &birthday ) const
 {
     RecursionList rec;
@@ -40,6 +54,27 @@ Single_item_creator::Single_item_creator( const std::string &_id, Type _type, in
     , id( _id )
     , type( _type )
 {
+}
+
+auto Single_item_creator::clone() const -> std::unique_ptr<Item_spawn_data>
+{
+    auto cloned = std::make_unique<Single_item_creator>( id, type, probability );
+    if( modifier.has_value() ) {
+        auto cloned_modifier = Item_modifier{};
+        cloned_modifier.damage = modifier->damage;
+        cloned_modifier.count = modifier->count;
+        cloned_modifier.dirt = modifier->dirt;
+        cloned_modifier.charges = modifier->charges;
+        cloned_modifier.ammo = clone_optional_spawn_data( modifier->ammo );
+        cloned_modifier.container = clone_optional_spawn_data( modifier->container );
+        cloned_modifier.contents = clone_optional_spawn_data( modifier->contents );
+        cloned_modifier.custom_flags = modifier->custom_flags;
+        cloned_modifier.postprocess_fns = modifier->postprocess_fns;
+        cloned_modifier.with_ammo = modifier->with_ammo;
+        cloned_modifier.with_magazine = modifier->with_magazine;
+        cloned->modifier.emplace( std::move( cloned_modifier ) );
+    }
+    return cloned;
 }
 
 detached_ptr<item> Single_item_creator::create_single( const time_point &birthday,
@@ -614,6 +649,16 @@ std::set<const itype *> Item_group::every_item() const
         result.insert( these_items.begin(), these_items.end() );
     }
     return result;
+}
+
+auto Item_group::clone() const -> std::unique_ptr<Item_spawn_data>
+{
+    auto cloned = std::make_unique<Item_group>( type, probability, with_ammo, with_magazine );
+    cloned->sum_prob = sum_prob;
+    for( const auto &entry : items ) {
+        cloned->items.push_back( entry->clone() );
+    }
+    return cloned;
 }
 
 std::vector<detached_ptr<item>> item_group::items_from( const item_group_id &group_id,

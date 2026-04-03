@@ -139,6 +139,7 @@ class Item_spawn_data
         virtual bool has_item( const itype_id &itemid ) const = 0;
 
         virtual std::set<const itype *> every_item() const = 0;
+        virtual auto clone() const -> std::unique_ptr<Item_spawn_data> = 0;
 
         /** probability, used by the parent object. */
         int probability;
@@ -252,6 +253,7 @@ class Single_item_creator : public Item_spawn_data
 
         bool has_item( const itype_id &itemid ) const override;
         std::set<const itype *> every_item() const override;
+        auto clone() const -> std::unique_ptr<Item_spawn_data> override;
 };
 
 /**
@@ -300,6 +302,7 @@ class Item_group : public Item_spawn_data
         bool replace_item( const itype_id &itemid, const itype_id &replacementid ) override;
         bool has_item( const itype_id &itemid ) const override;
         std::set<const itype *> every_item() const override;
+        auto clone() const -> std::unique_ptr<Item_spawn_data> override;
         /**
          * Hack for testing. TODO: Find a better way.
          */
@@ -328,5 +331,4 @@ class Item_group : public Item_spawn_data
          */
         prop_list items;
 };
-
 
