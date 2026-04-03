@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <set>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 #include "catacharset.h"
 #include "color.h"
@@ -42,6 +44,8 @@ class map_extra
         uint32_t symbol = UTF8_getch( "X" );
         nc_color color = c_red;
         std::optional<std::string> looks_like;
+        std::set<std::string> flags;
+        std::optional<std::pair<int, int>> min_max_zlevel;
 
         std::string get_symbol() const {
             return utf32_to_utf8( symbol );
