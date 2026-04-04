@@ -33,6 +33,7 @@
 #include "pimpl.h"
 #include "point.h"
 #include "submap_load_manager.h"
+#include "zone_draw_options.h"
 #include "type_id.h"
 #include "location_vector.h"
 
@@ -519,6 +520,30 @@ class game : public submap_load_listener
         /** Makes any nearby NPCs on the overmap active. */
         void load_npcs();
     private:
+        /** Resizes the reality bubble to an explicit target size.
+         *  Safe to call mid-session: despawns out-of-range entities, flushes the
+         *  background streamer, rebuilds map grid and all dependent caches.
+         */
+        void resize_reality_bubble_to( int new_size );
+
+        /** Resizes the reality bubble to match the current REALITY_BUBBLE_SIZE option.
+         *  Also clears in_activity_bubble_ so the normal size takes effect immediately.
+         *  Called by on_options_changed() when the user changes REALITY_BUBBLE_SIZE.
+         */
+        void resize_reality_bubble();
+
+        /** Called each turn to shrink/restore the bubble based on active performance modes.
+         *  ACTIVITY_MOBILE_BUBBLE_SIZE / ACTIVITY_IDLE_BUBBLE_SIZE: shrinks while the player has a
+         *  long activity whose bubble_size_effect is "mobile" or "idle" respectively.
+         *  Entry requires activity moves >= ACTIVITY_BUBBLE_GRACE minutes.
+         *  UNDERGROUND_BUBBLE_SIZE: shrinks while underground (z < 0) with a floor above (enclosed).
+         *  VEHICLE_BUBBLE_SIZE: shrinks while actively driving or mounted.
+         *  COMBAT_BUBBLE_SIZE: shrinks while hostile creatures are visible within safe-mode range.
+         *  Underground, vehicle, and combat use turn-based hysteresis (DYNAMIC_BUBBLE_GRACE turns
+         *  to enter, immediate exit). The target is min() of all applicable sizes.
+         */
+        void update_performance_bubble();
+
         /** Unloads all NPCs.
          *
          * If you call this you must later call load_npcs, lest caches get
@@ -530,6 +555,12 @@ class game : public submap_load_listener
     public:
         /** Unloads, then loads the NPCs */
         void reload_npcs();
+        /** Immediately removes NPC with the given id from active_npc. */
+        void erase_npc( character_id id );
+        /** True while npcmove() or sleep_skip_npc_process() is iterating active_npc. */
+        bool is_processing_npcs() const {
+            return processing_npcs_;
+        }
         /** Add follower id to set of followers. */
         void add_npc_follower( const character_id &id );
         /** Remove follower id from follower set. */
@@ -591,6 +622,7 @@ class game : public submap_load_listener
         /** Checks whether or not there is a zone of particular type nearby */
         bool check_near_zone( const zone_type_id &type, const tripoint &where ) const;
         bool is_zones_manager_open() const;
+        bool is_zone_submap_grid_overlay_enabled() const;
         void zones_manager();
 
         // Look at nearby terrain ';', or select zone points
@@ -718,7 +750,7 @@ class game : public submap_load_listener
         void draw_line( const tripoint &p, const std::vector<tripoint> &points );
         void draw_weather( const weather_printable &wPrint );
         void draw_sct();
-        void draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset );
+        void draw_zones( const zone_draw_options &options );
         // In curses mode, draw critter (if visible!) on its current position into w_terrain.
         // @param center the center of view, same as when calling map::draw
         void draw_critter( const Creature &critter, const tripoint &center );
@@ -1121,10 +1153,14 @@ class game : public submap_load_listener
         bool npcs_dirty = false;
         /** Has anything died in this turn and needs to be cleaned up? */
         bool critter_died = false;
+        /** True while npcmove()/sleep_skip_npc_process() is iterating active_npc. */
+        bool processing_npcs_ = false;
         /** Is this the first redraw since waiting (sleeping or activity) started */
         bool first_redraw_since_waiting_started = true;
         /** Is Zone manager open or not - changes graphics of some zone tiles */
         bool zones_manager_open = false;
+        /** Zone manager toggle for submap grid overlay (only active while the UI is open) */
+        bool zone_submap_grid_overlay = false;
 
         std::unique_ptr<special_game> gamemode;
 
@@ -1196,6 +1232,19 @@ class game : public submap_load_listener
         // Controlled by LAZY_BORDER cached option.
         load_request_handle lazy_border_handle_ = 0;
 
+        // True while the bubble is temporarily shrunk for an ongoing long activity.
+        // Entry requires >= ACTIVITY_BUBBLE_GRACE minutes remaining; once set, stays true
+        // until the activity ends regardless of remaining time.
+        // Cleared by resize_reality_bubble() so an explicit option change always wins.
+        bool in_activity_bubble_ = false;
+
+        // Consecutive turns each dynamic condition has been continuously met.
+        // Trigger fires once the count reaches DYNAMIC_BUBBLE_GRACE; resets to 0 immediately
+        // when the condition is no longer met (no exit hysteresis).
+        int underground_bubble_turns_ = 0;
+        int vehicle_bubble_turns_ = 0;
+        int combat_bubble_turns_ = 0;
+
         // Turns between world_tick() passes.  1 = every turn (default).
         // Read from REALITY_BUBBLE_TICK_INTERVAL in start_game() / load().
         int world_tick_interval_ = 1;
@@ -1228,5 +1277,3 @@ namespace cata_event_dispatch
 // @param p The point the avatar is moving to on map m
 void avatar_moves( const avatar &u, const map &m, const tripoint &p );
 } // namespace cata_event_dispatch
-
-

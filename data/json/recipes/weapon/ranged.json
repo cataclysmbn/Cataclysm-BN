@@ -1378,6 +1378,7 @@
     "difficulty": 6,
     "time": "3 h",
     "autolearn": true,
+    "book_learn": [ [ "manual_launcher", 5 ], [ "textbook_launcher", 5 ] ],
     "using": [ [ "blacksmithing_intermediate", 40 ], [ "steel_standard", 10 ], [ "wood_structural", 5 ] ],
     "qualities": [ { "id": "SAW_W", "level": 1 }, { "id": "DRILL", "level": 1 } ],
     "components": [ [ [ "log", 2 ] ] ]

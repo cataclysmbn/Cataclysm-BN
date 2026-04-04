@@ -370,6 +370,7 @@ const flag_id flag_WATER_DISABLE( "WATER_DISABLE" );
 const flag_id flag_WET( "WET" );
 const flag_id flag_WHIP( "WHIP" );
 const flag_id flag_WIND_EXTINGUISH( "WIND_EXTINGUISH" );
+const flag_id flag_WORN_GUN( "WORN_GUN" );
 const flag_id flag_WRITE_MESSAGE( "WRITE_MESSAGE" );
 const flag_id flag_ZERO_WEIGHT( "ZERO_WEIGHT" );
 const flag_id flag_ZOOM( "ZOOM" );

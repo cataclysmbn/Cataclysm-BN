@@ -65,6 +65,12 @@ namespace calendar
  */
 bool once_every( const time_duration &event_frequency );
 
+// Returns the number of multiples of tick_length we would "pass" on our way `from` to `to`
+// For example, if `tick_length` is 1 hour, then going from 0:59 to 1:01 should return 1
+int ticks_between( const time_point &from, const time_point &to,
+                   const time_duration &tick_length );
+int ticks_between( const time_duration &duration, const time_duration &tick_length );
+
 /**
  * A number that represents the longest possible action.
  *

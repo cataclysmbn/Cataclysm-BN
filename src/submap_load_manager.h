@@ -168,6 +168,25 @@ class submap_load_manager
                            const tripoint_abs_sm &pos ) const;
 
         /**
+         * O(1) alternative to is_simulated() for hot per-submap loops.
+         *
+         * Uses the precomputed simulated set from the previous update() rather
+         * than scanning all active requests.  Call this instead of is_simulated()
+         * inside world_tick()'s for_each_submap lambda to avoid an O(log N)
+         * mapbuffer lookup + O(R) request scan for every loaded submap.
+         *
+         * @p raw_pos is the raw tripoint key as stored in mapbuffer::submaps,
+         * matching the key_type used in the internal simulated set.
+         *
+         * Safe to call from world_tick(): prev_simulated_ is only modified by
+         * update(), which runs after world_tick() in the same game turn.
+         */
+        auto is_in_simulated_set( const std::string &dim_id,
+                                  const tripoint &raw_pos ) const noexcept -> bool {
+            return prev_simulated_.contains( { dim_id, raw_pos } );
+        }
+
+        /**
          * Return the set of dimension IDs that have at least one active request.
          */
         std::vector<std::string> active_dimensions() const;
@@ -249,10 +268,11 @@ class submap_load_manager
         /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
         std::vector<point> bubble_offsets_;
 
-        /** In-flight preload_quad futures for lazy border positions.
-         *  Each future is paired with the quad key it was submitted for,
-         *  so we can remove it from lazy_in_flight_ when reaped. */
-        std::vector<std::pair<quad_key, std::future<void>>> lazy_futures_;
+        /** In-flight load_or_generate_quad futures for lazy border positions.
+         *  Returns true if mapgen ran (newly-generated quad), false if the quad was
+         *  already on disk.  Each future is paired with the quad key so we can remove
+         *  it from lazy_in_flight_ when reaped and mark newly-generated quads dirty. */
+        std::vector<std::pair<quad_key, std::future<bool>>> lazy_futures_;
 
         /** Quad keys with in-flight lazy futures — prevents duplicate submissions. */
         std::unordered_set<quad_key, pair_hash> lazy_in_flight_;

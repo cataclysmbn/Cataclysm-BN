@@ -33,6 +33,7 @@
 #include "value_ptr.h"
 #include "monster_action.h"
 #include "monster_plan.h"
+#include "mtype.h"
 #include "visitable.h"
 
 class Character;
@@ -516,7 +517,7 @@ class monster : public Creature, public location_visitable<monster>
         int shortest_special_cooldown() const;
 
         void process_turn() override;
-        /** Batch catchup: simulate up to MAX_CATCHUP_MONSTER missed turns. */
+        /** Batch catchup: analytically simulate @p n missed turns. */
         void batch_turns( int n ) override;
         /** Resets the value of all bonus fields to 0, clears special effect flags. */
         void reset_bonuses() override;
@@ -524,6 +525,7 @@ class monster : public Creature, public location_visitable<monster>
         void reset_stats() override;
 
         void die( Creature *killer ) override; //this is the die from Creature, it calls kill_mo
+        void erase() override;
         void drop_items_on_death();
 
         // Other
@@ -730,6 +732,8 @@ class monster : public Creature, public location_visitable<monster>
         // Faction-specific anger tracking
         void add_faction_anger( mfaction_id target_faction, int amount );
         auto get_faction_anger( mfaction_id target_faction ) const -> int;
+
+        std::set<m_flag> monster_flags;
 
     private:
         void process_trigger( mon_trigger trig, int amount );

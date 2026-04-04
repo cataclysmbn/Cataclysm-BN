@@ -737,8 +737,8 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "sparkledog suit" },
     "description": "A full body fursuit in the form of some unidentifiable species. It's a riot of clashing neon colors, LEDs, and glitter. It is quite encumbering and has little storage but is very warm.  Using it will turn the LEDs on.",
-    "price": "5700 USD",
-    "price_postapoc": "3 USD",
+    "price": "1200 USD",
+    "price_postapoc": "25 USD",
     "color": "c_pink_green",
     "ammo": "battery",
     "use_action": {
@@ -764,7 +764,8 @@
         ]
       ]
     ],
-    "magazine_well": "250 ml"
+    "magazine_well": "250 ml",
+    "extend": { "flags": [ "FANCY" ] }
   },
   {
     "id": "sparkledogsuit_on",
@@ -774,7 +775,7 @@
     "power_draw": 10000,
     "revert_to": "sparkledogsuit",
     "use_action": { "menu_text": "Turn off", "type": "transform", "msg": "You turn your fursuit off.", "target": "sparkledogsuit" },
-    "flags": [ "OUTER", "LIGHT_200", "SUPER_FANCY" ]
+    "extend": { "flags": [ "LIGHT_200" ] }
   },
   {
     "id": "survivor_light",

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -6,11 +7,14 @@
 #include "catalua_bindings.h"
 #include "catalua.h"
 #include "catalua_bindings_utils.h"
+#include "catalua_impl.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "enums.h"
+#include "mongroup.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
 #include "type_id.h"
@@ -172,6 +176,24 @@ void cata::detail::reg_overmap( sol::state &lua )
         ACTIVE_OVERMAP_BUFFER.set_seen( tripoint_abs_omt( p ), seen_val.value_or( true ) );
     } );
 
+    DOC( "Reveal a square area around a center point on the overmap. Returns true if any new tiles were revealed." );
+    DOC( "Optional filter callback receives oter_id and should return true to reveal that tile." );
+    luna::set_fx( lib, "reveal",
+                  []( const tripoint & center, int radius,
+    sol::optional<sol::protected_function> filter_fn ) -> bool {
+        if( filter_fn.has_value() )
+        {
+            auto filter = filter_fn.value();
+            const auto wrapped_filter = [filter]( const oter_id & ter ) -> bool {
+                sol::protected_function_result res = filter( ter );
+                check_func_result( res );
+                return res.get<bool>();
+            };
+            return ACTIVE_OVERMAP_BUFFER.reveal( tripoint_abs_omt( center ), radius, wrapped_filter );
+        }
+        return ACTIVE_OVERMAP_BUFFER.reveal( tripoint_abs_omt( center ), radius );
+    } );
+
     DOC( "Check if the terrain at the given position has been explored by the player. Returns boolean." );
     luna::set_fx( lib, "is_explored",
     []( const tripoint & p ) -> bool {
@@ -228,6 +250,109 @@ void cata::detail::reg_overmap( sol::state &lua )
     luna::set_fx( lib, "remove_grid_connection",
     []( const tripoint & lhs, const tripoint & rhs ) -> bool {
         return ACTIVE_OVERMAP_BUFFER.remove_grid_connection( tripoint_abs_omt( lhs ), tripoint_abs_omt( rhs ) );
+    } );
+
+    // Horde and monster group methods
+    DOC( "List monster groups influencing the given overmap tile (absolute OMT coordinates)." );
+    luna::set_fx( lib, "monster_groups_at",
+    []( const tripoint & p ) -> std::vector<mongroup *> {
+        return ACTIVE_OVERMAP_BUFFER.monsters_at( tripoint_abs_omt( p ) );
+    } );
+
+    DOC( "List hordes influencing the given overmap tile (absolute OMT coordinates)." );
+    luna::set_fx( lib, "hordes_at",
+    []( const tripoint & p ) -> std::vector<mongroup *> {
+        namespace views = std::views;
+        return ACTIVE_OVERMAP_BUFFER.monsters_at( tripoint_abs_omt( p ) )
+        | views::filter( []( const mongroup * group )
+        {
+            return group != nullptr && group->horde;
+        } )
+        | std::ranges::to<std::vector<mongroup *>>();
+    } );
+
+    DOC( "Count hordes influencing the given overmap tile (absolute OMT coordinates)." );
+    luna::set_fx( lib, "horde_count",
+    []( const tripoint & p ) -> int {
+        auto groups = ACTIVE_OVERMAP_BUFFER.monsters_at( tripoint_abs_omt( p ) );
+        return static_cast<int>( std::ranges::count_if( groups, []( const mongroup * group )
+        {
+            return group != nullptr && group->horde;
+        } ) );
+    } );
+
+    DOC( "Check if a horde is present at the given overmap tile." );
+    luna::set_fx( lib, "has_horde",
+    []( const tripoint & p ) -> bool {
+        return ACTIVE_OVERMAP_BUFFER.has_horde( tripoint_abs_omt( p ) );
+    } );
+
+    DOC( "Get the estimated size of the horde at the given overmap tile." );
+    luna::set_fx( lib, "horde_size",
+    []( const tripoint & p ) -> int {
+        return ACTIVE_OVERMAP_BUFFER.get_horde_size( tripoint_abs_omt( p ) );
+    } );
+
+    DOC( "Signal nearby hordes toward an absolute submap position with the given strength." );
+    luna::set_fx( lib, "signal_hordes",
+    []( const tripoint & center_sm, int sig_power ) -> void {
+        ACTIVE_OVERMAP_BUFFER.signal_hordes( tripoint_abs_sm( center_sm ), sig_power );
+    } );
+
+    DOC( "Advance horde movement across all loaded overmaps." );
+    luna::set_fx( lib, "move_hordes",
+    []() -> void {
+        ACTIVE_OVERMAP_BUFFER.move_hordes();
+    } );
+
+    DOC( "Create a monster horde at the given absolute OMT position. Pass a table with fields: type (mongroup_id, required), pos (tripoint abs_omt, required), radius (int), population (int), horde (bool), behaviour (string), diffuse (bool), target (tripoint abs_omt)." );
+    luna::set_fx( lib, "create_horde",
+    []( const sol::table & opts ) -> mongroup * {
+        const sol::object type_obj = opts.get<sol::object>( "type" );
+        mongroup_id type_id = mongroup_id::NULL_ID();
+        if( type_obj.is<std::string>() )
+        {
+            type_id = mongroup_id( type_obj.as<std::string>() );
+        } else if( type_obj.is<mongroup_id>() )
+        {
+            type_id = type_obj.as<mongroup_id>();
+        }
+        const sol::optional<tripoint> pos_val = opts.get<sol::optional<tripoint>>( "pos" );
+        if( type_id.is_null() || !pos_val.has_value() )
+        {
+            return nullptr;
+        }
+        const tripoint pos_omt = *pos_val;
+        const int radius = opts.get_or( "radius", 1 );
+        const int population = opts.get_or( "population", 100 );
+        const bool is_horde = opts.get_or( "horde", true );
+        const std::string behaviour = opts.get_or( "behaviour", std::string( "roam" ) );
+        const bool diffuse = opts.get_or( "diffuse", false );
+        const sol::optional<tripoint> target_omt = opts.get<sol::optional<tripoint>>( "target" );
+
+        const tripoint_abs_omt pos_abs_omt( pos_omt );
+        const tripoint_abs_sm pos_abs_sm = project_to<coords::sm>( pos_abs_omt );
+        point_abs_om omp;
+        point_om_sm sm_within;
+        std::tie( omp, sm_within ) = project_remain<coords::om>( pos_abs_sm.xy() );
+
+        mongroup mg( type_id, tripoint_om_sm( sm_within, pos_abs_sm.z() ), radius, population );
+        mg.abs_pos = pos_abs_sm;
+        mg.horde = is_horde;
+        mg.horde_behaviour = behaviour;
+        mg.diffuse = diffuse;
+
+        if( target_omt.has_value() )
+        {
+            const tripoint_abs_sm target_abs_sm = project_to<coords::sm>( tripoint_abs_omt( *target_omt ) );
+            point_abs_om target_om;
+            point_om_sm target_within;
+            std::tie( target_om, target_within ) = project_remain<coords::om>( target_abs_sm.xy() );
+            mg.target = tripoint_om_sm( target_within, target_abs_sm.z() );
+            mg.nemesis_target = target_abs_sm;
+        }
+
+        return ACTIVE_OVERMAP_BUFFER.create_horde( mg );
     } );
 
     luna::finalize_lib( lib );

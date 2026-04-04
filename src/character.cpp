@@ -223,6 +223,8 @@ static const fault_id fault_bionic_nonsterile( "fault_bionic_nonsterile" );
 static const skill_id skill_dodge( "dodge" );
 static const skill_id skill_gun( "gun" );
 static const skill_id skill_swimming( "swimming" );
+static const skill_id skill_survival( "survival" );
+static const skill_id skill_driving( "driving" );
 static const skill_id skill_throw( "throw" );
 
 static const species_id HUMAN( "HUMAN" );
@@ -1331,6 +1333,9 @@ bool Character::check_mount_will_move( const tripoint &dest_loc )
     if( !is_mounted() ) {
         return true;
     }
+    if( mounted_creature->has_flag( MF_COMBAT_MOUNT ) ) {
+        return true;
+    }
     if( mounted_creature && mounted_creature->type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE ) ) {
         for( const monster &critter : g->all_monsters() ) {
             Attitude att = critter.attitude_to( *this );
@@ -1353,13 +1358,18 @@ bool Character::check_mount_is_spooked()
     // base 1% per turn.
     // + 1% per square closer than 15 distanace. (1% - 15%)
     // * 2 if hostile monster is bigger than or same size as mounted creature.
+    // / 2 if horse has full tack and saddle.
+    // / 2 With Animal Empath
+    // / 4 With Animal Kinship
     // -0.25% per point of dexterity (low -1%, average -2%, high -3%, extreme -3.5%)
     // -0.1% per point of strength ( low -0.4%, average -0.8%, high -1.2%, extreme -1.4% )
-    // / 2 if horse has full tack and saddle.
+    // -0.075 per point of survival & driving
     // Monster in spear reach monster and average stat (8) player on saddled horse, 14% -2% -0.8% / 2 = ~5%
     if( mounted_creature && mounted_creature->type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE ) ) {
+        if( mounted_creature->has_flag( MF_COMBAT_MOUNT ) ) {
+            return false;
+        }
         const creature_size mount_size = mounted_creature->get_size();
-        const bool saddled = mounted_creature->has_effect( effect_saddled );
         for( const monster &critter : g->all_monsters() ) {
             double chance = 1.0;
             Attitude att = critter.attitude_to( *this );
@@ -1369,12 +1379,20 @@ bool Character::check_mount_is_spooked()
                 if( critter.get_size() >= mount_size ) {
                     chance *= 2;
                 }
-                chance -= 0.25 * get_dex();
-                chance -= 0.1 * get_str();
-                if( saddled ) {
+                if( mounted_creature->has_effect( effect_saddled ) ) {
                     chance /= 2;
                 }
-                chance = std::max( 1.0, chance );
+                if( has_trait( trait_id( "ANIMALEMPATH" ) ) ) {
+                    chance /= 2;
+                }
+                if( has_trait( trait_id( "ANIMALEMPATH2" ) ) ) {
+                    chance /= 4;
+                }
+                chance -= 0.25 * get_dex();
+                chance -= 0.1 * get_str();
+                chance -= 0.075 * get_skill_level( skill_survival );
+                chance -= 0.075 * get_skill_level( skill_driving );
+                chance = std::max( 0.0, chance );
                 if( x_in_y( chance, 100.0 ) ) {
                     forced_dismount();
                     return true;
@@ -4275,19 +4293,37 @@ void Character::apply_skill_boost()
     }
 }
 
-void Character::do_skill_rust()
+void Character::do_skill_rust( const time_duration &duration )
 {
     const int rust_rate_tmp = rust_rate();
+
+    // For NPC catch-up: check once whether any same-faction ally is in an
+    // adjacent overmap tile (any z-level). Only evaluated if is_npc().
+    const bool has_ally = [&]() -> bool {
+        const tripoint_abs_omt self_omt = global_omt_location();
+        return !g->get_npcs_if( [this, &self_omt]( const npc & other )
+        {
+            return other.is_ally( *this ) &&
+            rl_dist( other.global_omt_location().xy(), self_omt.xy() ) <= 1;
+        } ).empty();
+    }();
+
     for( std::pair<const skill_id, SkillLevel> &pair : *_skills ) {
         const Skill &aSkill = *pair.first;
         SkillLevel &skill_level_obj = pair.second;
 
-        if( aSkill.is_combat_skill() &&
-            ( ( has_trait_flag( trait_flag_PRED2 ) && calendar::once_every( 8_hours ) ) ||
-              ( has_trait_flag( trait_flag_PRED3 ) && calendar::once_every( 4_hours ) ) ||
-              ( has_trait_flag( trait_flag_PRED4 ) && calendar::once_every( 3_hours ) ) ) ) {
+        const int pred_tick = has_trait_flag( trait_flag_PRED2 ) ? calendar::ticks_between( duration,
+                              8_hours ) :
+                              has_trait_flag( trait_flag_PRED3 ) ? calendar::ticks_between( duration, 4_hours ) :
+                              has_trait_flag( trait_flag_PRED4 ) ? calendar::ticks_between( duration, 3_hours ) : 0;
+
+        if( aSkill.is_combat_skill() && pred_tick > 0 ) {
             // Their brain is optimized to remember this
-            if( one_in( 13 ) && !has_effect( effect_sleep ) ) {
+            int tries = 0;
+            for( int i = 0; i < pred_tick; i++ ) {
+                tries += one_in( 13 ) ? 1 : 0;
+            }
+            if( tries > 0 && !has_effect( effect_sleep ) ) {
                 // They've already passed the roll to avoid rust at
                 // this point, but print a message about it now and
                 // then.
@@ -4297,26 +4333,67 @@ void Character::do_skill_rust()
                 // average every 8/4/3 hours, enough for immersion
                 // without becoming an annoyance.
                 //
+                // Additionally, catching up NPCs will prevent rust
+                // for combat skills, presumably they'd hunt while
+                // the player is gone.
                 add_msg_if_player( _( "Your heart races as you recall your most recent hunt." ) );
-                mod_stim( 1 );
+                mod_stim( tries );
             }
             continue;
         }
 
+        if( rust_rate_tmp <= 0 ) { continue; }
+
         const bool charged_bio_mem = get_power_level() > bio_memory->power_trigger &&
                                      has_active_bionic( bio_memory );
-        const int oldSkillLevel = skill_level_obj.level();
-        if( skill_level_obj.rust( charged_bio_mem, rust_rate_tmp ) ) {
-            add_msg_if_player( m_warning,
-                               _( "Your knowledge of %s begins to fade, but your memory banks retain it!" ), aSkill.name() );
-            mod_power_level( -bio_memory->power_trigger );
-        }
-        const int newSkill = skill_level_obj.level();
-        if( newSkill < oldSkillLevel ) {
-            add_msg_if_player( m_bad, _( "Your skill in %s has reduced to %d!" ), aSkill.name(), newSkill );
-            // Athletics (swimming) skill modifies encumbrance, so make sure encumbrance is updated.
-            // No harm updating it for any skill rust in general.
-            reset_encumbrance();
+
+        const int n_ticks = calendar::ticks_between( duration,
+                            skill_level_obj.rust_interval( rust_rate_tmp ) );
+
+        if( is_npc() && n_ticks > 0 ) {
+            // Catch-up path: simulate all rust ticks that would have fired during duration.
+
+            // NPCs practice skills while the player is away, preventing rust.
+            // Combat skills are always practiced; others require a nearby ally.
+            if( skill_level_obj.can_train() ) {
+                if( aSkill.is_combat_skill() || has_ally ) {
+                    skill_level_obj.practice();
+                    continue;
+                }
+            }
+
+            // bio_memory saves up to what power can afford; indefinite sources are unlimited.
+            // Technically this handwaves nutrition costs for metabolic power sources, but
+            // that's fine.
+            const int trigger_kj = units::to_kilojoule( bio_memory->power_trigger );
+            const int max_bio_saves = !charged_bio_mem ? 0 :
+                                      has_indefinite_power_source() ? std::numeric_limits<int>::max() :
+                                      trigger_kj > 0 ? units::to_kilojoule( get_power_level() ) / trigger_kj : 0;
+
+            const int oldSkillLevel = skill_level_obj.level();
+            const int bio_saves = skill_level_obj.rust_by( duration, max_bio_saves, rust_rate_tmp );
+
+            if( bio_saves > 0 ) {
+                mod_power_level( -units::from_kilojoule( trigger_kj * bio_saves ) );
+            }
+            const int newSkill = skill_level_obj.level();
+            if( newSkill < oldSkillLevel ) {
+                reset_encumbrance();
+            }
+        } else {
+            // Per-tick path
+            const int oldSkillLevel = skill_level_obj.level();
+            if( skill_level_obj.rust( charged_bio_mem, rust_rate_tmp ) ) {
+                add_msg_if_player( m_warning,
+                                   _( "Your knowledge of %s begins to fade, but your memory banks retain it!" ),
+                                   aSkill.name() );
+                mod_power_level( -bio_memory->power_trigger );
+            }
+            const int newSkill = skill_level_obj.level();
+            if( newSkill < oldSkillLevel ) {
+                add_msg_if_player( m_bad, _( "Your skill in %s has reduced to %d!" ), aSkill.name(), newSkill );
+                reset_encumbrance();
+            }
         }
     }
 }
@@ -5380,41 +5457,40 @@ void Character::update_health( int external_modifiers )
              static_cast<int>( get_healthy_mod() ) );
 }
 
-// Returns the number of multiples of tick_length we would "pass" on our way `from` to `to`
-// For example, if `tick_length` is 1 hour, then going from 0:59 to 1:01 should return 1
-inline int ticks_between( const time_point &from, const time_point &to,
-                          const time_duration &tick_length )
-{
-    return ( to_turn<int>( to ) / to_turns<int>( tick_length ) ) - ( to_turn<int>
-            ( from ) / to_turns<int>( tick_length ) );
-}
-
 void Character::update_body()
 {
-    update_body( calendar::turn - 1_turns, calendar::turn );
+    update_body( 1_turns );
 }
 
-void Character::update_body( const time_point &from, const time_point &to )
+void Character::update_body( const time_duration &duration )
 {
     ZoneScoped;
-    update_stamina( to_turns<int>( to - from ) );
-    update_stomach( from, to );
+    update_stamina( to_turns<int>( duration ) );
+    update_stomach( duration );
     recalculate_enchantment_cache();
-    if( ticks_between( from, to, 3_minutes ) > 0 ) {
+
+    int three_mins = calendar::ticks_between( duration, 3_minutes );
+    for( ; three_mins > 0; three_mins-- ) {
         magic->update_mana( *this->as_player(), to_turns<double>( 3_minutes ) );
     }
-    const int five_mins = ticks_between( from, to, 5_minutes );
+
+    // Is this good enough? I'm concerned that NPCs will magically survive very long periods of time
+    // When they otherwise shouldn't. But simply swapping the order might cause problems that
+    // an NPC who were simulated would've easily solved to prevent that.
+    const int five_mins = calendar::ticks_between( duration, 5_minutes );
     if( five_mins > 0 ) {
         check_needs_extremes();
         update_needs( five_mins );
         regen( five_mins );
     }
-    if( ticks_between( from, to, 24_hours ) > 0 ) {
+
+    int days_passed = calendar::ticks_between( duration, 24_hours );
+    for( ; days_passed > 0; days_passed-- ) {
         enforce_minimum_healing();
     }
 
-    const int thirty_mins = ticks_between( from, to, 30_minutes );
-    if( thirty_mins > 0 ) {
+    int thirty_mins = calendar::ticks_between( duration, 30_minutes );
+    for( ; thirty_mins > 0; thirty_mins-- ) {
         // Radiation kills health even at low doses
         update_health( has_trait( trait_RADIOGENIC ) ? 0 : -get_rad() );
     }
@@ -5422,21 +5498,21 @@ void Character::update_body( const time_point &from, const time_point &to )
     for( const auto &v : vitamin::all() ) {
         const time_duration rate = vitamin_rate( v.first );
         if( rate > 0_turns ) {
-            int qty = ticks_between( from, to, rate );
+            int qty = calendar::ticks_between( duration, rate );
             if( qty > 0 ) {
                 vitamin_mod( v.first, 0 - qty );
             }
 
         } else if( rate < 0_turns ) {
             // mutations can result in vitamins being generated (but never accumulated)
-            int qty = ticks_between( from, to, -rate );
+            int qty = calendar::ticks_between( duration, -rate );
             if( qty > 0 ) {
                 vitamin_mod( v.first, qty );
             }
         }
     }
 
-    do_skill_rust();
+    do_skill_rust( duration );
 }
 
 item *Character::best_quality_item( const quality_id &qual )
@@ -5458,7 +5534,7 @@ namespace
 constexpr int metabolic_base_kcals = 2500;
 } // namespace
 
-void Character::update_stomach( const time_point &from, const time_point &to )
+void Character::update_stomach( const time_duration &duration )
 {
     const needs_rates rates = calc_needs_rates();
     // No food/thirst/fatigue clock at all
@@ -5469,7 +5545,7 @@ void Character::update_stomach( const time_point &from, const time_point &to )
     const bool mouse = has_trait( trait_NO_THIRST );
     const bool mycus = has_trait( trait_M_DEPENDENT );
     const float kcal_per_time = rates.hunger * metabolic_base_kcals / ( 12.0f * 24.0f );
-    const int five_mins = ticks_between( from, to, 5_minutes );
+    const int five_mins = calendar::ticks_between( duration, 5_minutes );
 
     if( five_mins > 0 ) {
         // Digest nutrients in stomach
@@ -9949,9 +10025,9 @@ bool Character::is_waterproof( const body_part_set &parts ) const
     return covered_with_flag( flag_WATERPROOF, parts );
 }
 
-void Character::update_morale()
+void Character::update_morale( const time_duration &duration )
 {
-    morale->decay( 1_minutes );
+    morale->decay( duration );
     apply_persistent_morale();
 }
 

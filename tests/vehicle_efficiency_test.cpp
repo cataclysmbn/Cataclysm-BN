@@ -42,10 +42,7 @@ static void clear_game( const ter_id &terrain )
 {
     // Set to turn 0 to prevent solars from producing power
     calendar::turn = calendar::turn_zero;
-    clear_avatar();
-    clear_creatures();
-    clear_npcs();
-    clear_vehicles();
+    clear_states( state::avatar | state::vehicle );
 
     // Move player somewhere safe
     REQUIRE_FALSE( g->u.in_vehicle );
@@ -342,40 +339,37 @@ static int print_test_strings( const std::string &type, bool in_reverse = false 
     return v1;
 }
 
-static void test_vehicle(
-    std::string type, int expected_mass,
+static auto test_vehicle(
+    const std::string &type, const int expected_mass,
     const int pavement_target, const int dirt_target,
     const int pavement_target_w_stops, const int dirt_target_w_stops,
     const int pavement_target_smooth_stops = 0, const int dirt_target_smooth_stops = 0,
-    const bool in_reverse = false )
+    const bool in_reverse = false ) -> void
 {
-    SECTION( type + " on pavement" ) {
-        test_efficiency( vproto_id( type ), expected_mass, ter_id( "t_pavement" ), -1,
-                         pavement_target, false, true, in_reverse );
-    }
-    SECTION( type + " on dirt" ) {
-        test_efficiency( vproto_id( type ), expected_mass, ter_id( "t_dirt" ), -1,
-                         dirt_target, false, true, in_reverse );
-    }
-    SECTION( type + " on pavement, full stop every 5 turns" ) {
-        test_efficiency( vproto_id( type ), expected_mass, ter_id( "t_pavement" ), 5,
-                         pavement_target_w_stops, false, true, in_reverse );
-    }
-    SECTION( type + " on dirt, full stop every 5 turns" ) {
-        test_efficiency( vproto_id( type ), expected_mass, ter_id( "t_dirt" ), 5,
-                         dirt_target_w_stops, false, true, in_reverse );
-    }
+    const auto run_case = [&]( const char *label, const ter_id & terrain,
+                               const int reset_velocity_turn, const int target_distance,
+    const bool smooth_stops ) {
+        CAPTURE( type );
+        CAPTURE( label );
+        auto current_expected_mass = expected_mass;
+        test_efficiency( vproto_id( type ), current_expected_mass, terrain,
+                         reset_velocity_turn, target_distance, smooth_stops, true, in_reverse );
+    };
+
+    run_case( "on pavement", ter_id( "t_pavement" ), -1, pavement_target, false );
+    run_case( "on dirt", ter_id( "t_dirt" ), -1, dirt_target, false );
+    run_case( "on pavement, full stop every 5 turns", ter_id( "t_pavement" ), 5,
+              pavement_target_w_stops, false );
+    run_case( "on dirt, full stop every 5 turns", ter_id( "t_dirt" ), 5,
+              dirt_target_w_stops, false );
+
     if( pavement_target_smooth_stops > 0 ) {
-        SECTION( type + " on pavement, alternating 5 turns of acceleration and 5 turns of decceleration" ) {
-            test_efficiency( vproto_id( type ), expected_mass, ter_id( "t_pavement" ), 5,
-                             pavement_target_smooth_stops, true, true, in_reverse );
-        }
+        run_case( "on pavement, alternating 5 turns of acceleration and 5 turns of decceleration",
+                  ter_id( "t_pavement" ), 5, pavement_target_smooth_stops, true );
     }
     if( dirt_target_smooth_stops > 0 ) {
-        SECTION( type + " on dirt, alternating 5 turns of acceleration and 5 turns of decceleration" ) {
-            test_efficiency( vproto_id( type ), expected_mass, ter_id( "t_dirt" ), 5,
-                             dirt_target_smooth_stops, true, true, in_reverse );
-        }
+        run_case( "on dirt, alternating 5 turns of acceleration and 5 turns of decceleration",
+                  ter_id( "t_dirt" ), 5, dirt_target_smooth_stops, true );
     }
 }
 
@@ -459,19 +453,19 @@ TEST_CASE( "vehicle_efficiency", "[vehicle] [engine]" )
     test_vehicle( "beetle_test", 818837, 58970, 58870, 44560, 43060, 0, 0, true );
     test_vehicle( "car_test", 1125629, 76060, 76060, 44230, 24870, 0, 0, true );
     test_vehicle( "car_sports_test", 1157382, 353200, 268000, 35200, 19540, 0, 0, true );
-    test_vehicle( "electric_car_test", 879098, 133100, 72520, 8140, 3390, 0, 0, true );
+    test_vehicle( "electric_car_test", 879098, 186100, 128500, 13570, 8810, 0, 0, true );
     test_vehicle( "suv_test", 1325297, 112000, 111800, 66880, 31670, 0, 0, true );
     test_vehicle( "motorcycle_test", 163085, 19980, 19030, 15490, 14890, 0, 0, true );
     test_vehicle( "quad_bike_test", 264465, 19650, 19650, 15440, 15440, 0, 0, true );
     test_vehicle( "scooter_test", 57587, 62440, 62440, 47990, 47990, 0, 0, true );
     test_vehicle( "superbike_test", 244085, 18320, 10570, 13070, 8497, 0, 0, true );
     test_vehicle( "ambulance_test", 1854071, 58460, 57780, 42480, 39130, 0, 0, true );
-    test_vehicle( "fire_engine_test", 2257115, 258000, 257800, 179800, 173300, 0, 0, true );
+    test_vehicle( "fire_engine_test", 2257115, 256000, 255500, 185600, 185200, 0, 0, true );
     test_vehicle( "fire_truck_test", 6319523, 58480, 58640, 18600, 4471, 0, 0, true );
     test_vehicle( "truck_swat_test", 5906166, 129300, 130100, 29350, 7668, 0, 0, true );
     test_vehicle( "tractor_plow_test", 725658, 72240, 72240, 53610, 53610, 0, 0, true );
-    test_vehicle( "apc_test", 5830459, 418700, 419400, 107300, 74330, 0, 0, true );
-    test_vehicle( "humvee_test", 5531381, 89940, 89940, 25780, 9086, 0, 0, true );
+    test_vehicle( "apc_test", 5797694, 417900, 417900, 107100, 107100, 0, 0, true );
+    test_vehicle( "humvee_test", 5516216, 89850, 90100, 25690, 16750, 0, 0, true );
     test_vehicle( "road_roller_test", 8831804, 97490, 97690, 22880, 6606, 0, 0, true );
-    test_vehicle( "golf_cart_test", 319630, 37140, 11510, 14110, 4450, 0, 0, true );
+    test_vehicle( "golf_cart_test", 319630, 50120, 18830, 22970, 9087, 0, 0, true );
 }

@@ -411,6 +411,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_door_window",
+    "name": "Build Windowed Door"
+  },
+  {
+    "type": "construction_group",
     "id": "build_makeshift_door",
     "name": "Build Makeshift Door"
   },
@@ -1008,6 +1013,11 @@
     "type": "construction_group",
     "id": "install_oven",
     "name": "Plug In Oven"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_multicooker",
+    "name": "Plug In Multi Cooker"
   },
   {
     "type": "construction_group",

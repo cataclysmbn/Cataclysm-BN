@@ -73,6 +73,11 @@ static const trait_id trait_ROOTS2( "ROOTS2" );
 static const trait_id trait_ROOTS3( "ROOTS3" );
 static const trait_id trait_SLIMESPAWNER( "SLIMESPAWNER" );
 static const trait_id trait_STR_ALPHA( "STR_ALPHA" );
+
+static const trait_flag_str_id flag_MALE_EXCLUSIVE( "MALE_EXCLUSIVE" );
+static const trait_flag_str_id flag_FEMALE_EXCLUSIVE( "FEMALE_EXCLUSIVE" );
+static const trait_flag_str_id flag_MALE_PREFERRED( "MALE_PREFERRED" );
+static const trait_flag_str_id flag_FEMALE_PREFERRED( "FEMALE_PREFERRED" );
 static const trait_id trait_THRESH_MARLOSS( "THRESH_MARLOSS" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const trait_id trait_TREE_COMMUNION( "TREE_COMMUNION" );
@@ -101,6 +106,26 @@ std::string enum_to_string<mutagen_technique>( mutagen_technique data )
 }
 
 } // namespace io
+
+namespace
+{
+
+auto get_threshold_mutation_for_tier( const mutation_category_id &category_id,
+                                      const size_t tier ) -> trait_id
+{
+    if( !category_id.is_valid() ) {
+        return trait_id::NULL_ID();
+    }
+
+    const auto &threshold_muts = category_id->threshold_muts;
+    if( tier >= threshold_muts.size() ) {
+        return trait_id::NULL_ID();
+    }
+
+    return threshold_muts[tier];
+}
+
+} // namespace
 
 bool Character::has_trait( const trait_id &b ) const
 {
@@ -685,6 +710,17 @@ bool Character::mutation_ok( const trait_id &mutation, bool force_good, bool for
     if( mutation_branch::trait_is_blacklisted( mutation ) ) {
         return false;
     }
+    if( male ) {
+        if( mutation->flags.contains( flag_FEMALE_EXCLUSIVE ) ||
+            mutation->flags.contains( flag_FEMALE_PREFERRED ) ) {
+            return false;
+        }
+    } else {
+        if( mutation->flags.contains( flag_MALE_EXCLUSIVE ) ||
+            mutation->flags.contains( flag_MALE_PREFERRED ) ) {
+            return false;
+        }
+    }
     if( has_trait( mutation ) || has_child_flag( mutation ) ) {
         // We already have this mutation or something that replaces it.
         return false;
@@ -1249,10 +1285,23 @@ bool Character::mutate_towards( const trait_id &mut )
         // Profession picks fail silently
         return false;
     }
+    if( male ) {
+        if( mdata.flags.contains( flag_FEMALE_EXCLUSIVE ) ||
+            mdata.flags.contains( flag_FEMALE_PREFERRED ) ) {
+            return false;
+        }
+    } else {
+        if( mdata.flags.contains( flag_MALE_EXCLUSIVE ) ||
+            mdata.flags.contains( flag_MALE_PREFERRED ) ) {
+            return false;
+        }
+    }
 
-    for( auto cat : mdata.category ) {
-        if( has_trait( cat->threshold_muts[tierreq] ) ) {
+    for( const auto &cat : mdata.category ) {
+        const auto threshold_mut = get_threshold_mutation_for_tier( cat, tierreq );
+        if( threshold_mut && has_trait( threshold_mut ) ) {
             has_threshreq = true;
+            break;
         }
     }
 

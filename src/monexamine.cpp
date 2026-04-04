@@ -45,6 +45,7 @@ static const efftype_id effect_sheared( "sheared" );
 
 static const activity_id ACT_MILK( "ACT_MILK" );
 static const activity_id ACT_PLAY_WITH_PET( "ACT_PLAY_WITH_PET" );
+static const activity_id ACT_TRAIN_PET( "ACT_TRAIN_PET" );
 
 static const efftype_id effect_ai_waiting( "ai_waiting" );
 static const efftype_id effect_docile( "docile" );
@@ -70,6 +71,15 @@ static const flag_id json_flag_TIE_UP( "TIE_UP" );
 static const flag_id json_flag_TACK( "TACK" );
 static const flag_id json_flag_MECH_BAT( "MECH_BAT" );
 
+bool can_train_pet( monster &z )
+{
+    return get_player_character().get_skill_level( skill_survival ) > 3 &&
+           z.has_flag( MF_PET_MOUNTABLE ) &&
+           !z.has_flag( MF_COMBAT_MOUNT ) &&
+           !z.has_flag( MF_CANT_TRAIN ) &&
+           z.type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE );
+}
+
 bool monexamine::pet_menu( monster &z )
 {
     enum choices {
@@ -88,6 +98,7 @@ bool monexamine::pet_menu( monster &z )
         leash,
         unleash,
         play_with_pet,
+        train_combat_pet,
         slaughter,
         milk,
         shear,
@@ -147,6 +158,9 @@ bool monexamine::pet_menu( monster &z )
     }
     if( z.has_flag( MF_CANPLAY ) ) {
         amenu.addentry( play_with_pet, true, 'y', _( "Play with %s" ), pet_name );
+    }
+    if( can_train_pet( z ) ) {
+        amenu.addentry( train_combat_pet, true, '[', _( "Train %s" ), pet_name );
     }
     if( z.has_effect( effect_tied ) ) {
         amenu.addentry( untie, true, 'u', _( "Untie" ) );
@@ -312,6 +326,9 @@ bool monexamine::pet_menu( monster &z )
             if( query_yn( _( "Spend a few minutes to play with your %s?" ), pet_name ) ) {
                 play_with( z );
             }
+            break;
+        case train_combat_pet:
+            train_pet( z );
             break;
         case slaughter:
             if( query_yn( _( "Really kill the %s?" ), pet_name ) ) {
@@ -852,8 +869,20 @@ void monexamine::play_with( monster &z )
 {
     std::string pet_name = z.get_name();
     avatar &you = get_avatar();
-    you.assign_activity( ACT_PLAY_WITH_PET, rng( 50, 125 ) * 100 );
+    int turns = rng( 50, 125 ) * 100;
+    you.assign_activity( ACT_PLAY_WITH_PET, turns );
     you.activity->str_values.push_back( pet_name );
+    z.add_effect( effect_ai_waiting, time_duration::from_turns( turns ) );
+}
+
+void monexamine::train_pet( monster &z )
+{
+    std::string pet_name = z.get_name();
+    avatar &you = get_avatar();
+    you.assign_activity( ACT_TRAIN_PET, to_moves<int>( 60_minutes ) );
+    you.activity->monsters.push_back( g->shared_from( z ) );
+    you.activity->str_values.push_back( pet_name );
+    z.add_effect( effect_ai_waiting, 60_minutes );
 }
 
 void monexamine::kill_zslave( monster &z )

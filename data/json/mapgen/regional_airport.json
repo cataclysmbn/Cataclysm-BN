@@ -366,6 +366,7 @@
         "/%fss_,___________,_ss  ",
         "/%fss_,___________,_ssff"
       ],
+      "place_vehicles": [ { "vehicle": "runway_fuel", "chance": 25, "fuel": -1, "rotation": -90, "status": -1, "x": 12, "y": 12 } ],
       "palettes": [ "airport_palette" ]
     }
   },
@@ -514,7 +515,7 @@
         "/%fss_,___________,_ss  ",
         "/%fss_,___________,_ss  "
       ],
-      "place_vehicles": [ { "vehicle": "runway_large", "chance": 50, "fuel": -1, "rotation": -90, "status": -1, "x": 12, "y": 12 } ],
+      "place_vehicles": [ { "vehicle": "runway_fuel", "chance": 25, "fuel": -1, "rotation": -90, "status": -1, "x": 12, "y": 12 } ],
       "palettes": [ "airport_palette" ]
     }
   },
@@ -552,6 +553,7 @@
         "/%fss_,___________,_ssf/",
         "/%fss_,___________,_ssf/"
       ],
+      "place_vehicles": [ { "vehicle": "runway_large", "chance": 50, "fuel": -1, "rotation": -90, "status": -1, "x": 12, "y": 12 } ],
       "palettes": [ "airport_palette" ]
     }
   },

@@ -954,9 +954,18 @@ class npc : public player
         void reboot();
         void die( Creature *killer ) override;
         /**
-        * Deletes the npc without any death notifications.
+        * Removes the npc from the game without death notifications or a corpse.
+        * Immediate if called outside npc processing, deferred to cleanup_dead() otherwise.
         */
-        void erase();
+        void erase() override;
+        /**
+        * True if this NPC is in a simulated submap — i.e. loaded and eligible
+        * for per-turn AI processing.  Mirrors the check used in npcmove().
+        */
+        bool is_simulated() const;
+        bool is_manually_erased() const {
+            return manually_erased_;
+        }
         bool is_dead() const;
         // How well we smash terrain (not corpses!)
         int smash_ability() const;
@@ -1022,8 +1031,8 @@ class npc : public player
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
         /**
-         * Batch catchup: simulate up to MAX_CATCHUP_NPC missed turns.
-         * Calls npc_update_body() and process_turn() per iteration, then
+         * Batch catchup: analytically simulate @p n missed turns.
+         * Processes biology at 30-min/5-min/1-turn granularity, then
          * calls advance_job_progress(n) to fast-forward any ongoing activity.
          */
         void batch_turns( int n ) override;
@@ -1218,6 +1227,11 @@ class npc : public player
         npc_attitude get_previous_attitude();
         npc_mission get_previous_mission();
         void revert_after_activity();
+        void set_suppress_activity_complete_message( bool value );
+        bool consume_suppress_activity_complete_message();
+        void set_activity_failure_message( const std::string &msg );
+        std::string consume_activity_failure_message();
+        std::string peek_activity_failure_message() const;
 
         // #############   VALUES   ################
         activity_id current_activity_id = activity_id::NULL_ID();
@@ -1246,6 +1260,8 @@ class npc : public player
         npc_short_term_cache ai_cache;
 
         std::map<npc_need, npc_need_goal_cache> goal_cache;
+        bool suppress_activity_complete_message = false;
+        std::string activity_failure_message;
     public:
         /**
          * Global position, expressed in map square coordinate system
@@ -1368,7 +1384,9 @@ class npc : public player
         // Copy of toggled CBM weapon for comparisons;
         location_ptr<item, false> cbm_fake_toggled;
 
-        bool dead = false;  // If true, we need to be cleaned up
+        bool dead = false;           // If true, we need to be cleaned up
+        bool manually_erased_ =
+            false; // Set by erase(); tells cleanup_dead() not to re-do overmap/follower removal
 
         bool sees_dangerous_field( const tripoint &p ) const;
         bool could_move_onto( const tripoint &p ) const;
@@ -1448,5 +1466,3 @@ static constexpr int density_search_radius = 120;
 /** Chance that a random NPC spawns somewhere on overmap. */
 double spawn_chance_in_hour( int current_npc_count, double density );
 } // namespace npc_overmap
-
-

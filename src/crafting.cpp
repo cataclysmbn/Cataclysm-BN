@@ -752,7 +752,7 @@ item *Character::start_craft( craft_command &command, const tripoint & )
 
     assign_activity( ACT_CRAFT );
     activity->targets.emplace_back( craft_in_world );
-    activity->coords.push_back( bench.position );
+    activity->coords.push_back( get_map().getabs( bench.position ) );
     activity->values.push_back( command.is_long() );
     // Ugly
     activity->values.push_back( static_cast<int>( bench.type ) );

@@ -133,6 +133,13 @@ std::unique_ptr<aim_activity_actor> aim_activity_actor::use_bionic( detached_ptr
     return act;
 }
 
+std::unique_ptr<aim_activity_actor> aim_activity_actor::use_gear( item *gun )
+{
+    std::unique_ptr<aim_activity_actor> act( new aim_activity_actor() );
+    act->weapon = safe_reference<item>( gun );
+    return act;
+}
+
 std::unique_ptr<aim_activity_actor> aim_activity_actor::use_mutation( detached_ptr<item>
         &&fake_gun )
 {
@@ -314,6 +321,9 @@ std::unique_ptr<activity_actor> aim_activity_actor::deserialize( JsonIn &jsin )
 
 item *aim_activity_actor::get_weapon()
 {
+    if( weapon ) {
+        return &*weapon;
+    }
     if( fake_weapon ) {
         // TODO: check if the player lost relevant bionic/mutation
         return &*fake_weapon;

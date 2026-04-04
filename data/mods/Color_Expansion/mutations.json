@@ -36,6 +36,18 @@
     "types": [ "eye_color" ]
   },
   {
+    "id": "eye_orange",
+    "type": "mutation",
+    "name": { "str": "Eye color: orange" },
+    "description": "Your eyes are vividly orange.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "eye_color" ]
+  },
+  {
     "id": "hair_crimson",
     "type": "mutation",
     "name": { "str": "Hair color: crimson" },
@@ -100,6 +112,18 @@
     "type": "mutation",
     "name": { "str": "Hair color: cyan" },
     "description": "You have cyan hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_orange",
+    "type": "mutation",
+    "name": { "str": "Hair color: orange" },
+    "description": "You have orange hair.",
     "points": 0,
     "starting_trait": true,
     "valid": false,

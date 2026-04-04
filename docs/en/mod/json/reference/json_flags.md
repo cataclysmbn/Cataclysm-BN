@@ -267,6 +267,7 @@ to find which flags work elsewhere.
 - `WATERPROOF` Prevents the covered body-part(s) from getting wet in any circumstance.
 - `WATER_FRIENDLY` Prevents the item from making the body part count as unfriendly to water and thus
   causing negative morale from being wet.
+- `WORN_GUN` Allows the gun to be fired while worn as armor.
 - `ALLOWS_FLIGHT` While active, drains UPS to provide flight.
 - `ALWAYS_ALLOWS_FLIGHT` Always allow flight.
 
@@ -1044,6 +1045,7 @@ Multiple death functions can be used. Not all combinations make sense.
 - `BILE_BLOOD` Makes monster bleed bile.
 - `BIOPROOF` Makes monster immune to Bio damage (A damage type mostly used by magic mods)
 - `COLDPROOF` Makes monster immune to Cold damage (A damage type mostly used by magic mods)
+- `COMBAT_MOUNT` Makes pet able to approach combat without becoming immobile nor knocking the player off
 - `DARKPROOF` Makes monster immune to Dark damage (A damage type completely used by magic mods)
 - `LIGHTPROOF` Makes monster immune to Light damage (A damage type completely used by magic mods)
 - `PSIPROOF` Makes monster immune to Psionic damage (A damage type mostly used by magic mods)
@@ -1055,6 +1057,7 @@ Multiple death functions can be used. Not all combinations make sense.
 - `CAN_DIG` Can dig _and_ walk.
 - `CAN_OPEN_DOORS` Can open doors on its path.
 - `CANPLAY` This creature can be played with if it's a pet.
+- `CANT_TRAIN` This creature cannot be trained for combat
 - `CATFOOD` Becomes friendly / tamed with cat food.
 - `CATTLEFODDER` Becomes friendly / tamed with cattle fodder.
 - `CBM_CIV` May produce a common CBM a power CBM when butchered.
@@ -1120,6 +1123,11 @@ Multiple death functions can be used. Not all combinations make sense.
 - `PAY_BOT` Creature can be turned into a pet for a limited time in exchange of e-money.
 - `PET_MOUNTABLE` Creature can be ridden or attached to an harness.
 - `PET_HARNESSABLE`Creature can be attached to an harness.
+- `MOUNTABLE_STAIRS` Player can go up/down stairs while riding this creature.
+- `MOUNTABLE_LADDER` Player can go up/down stairs that have the difficult_z flag while riding this creature.
+- `MOUNTABLE_OBSTACLES` Player can travel over fences/doors while riding this creature.
+- `MOUNTABLE_DOORS` Player can open/close doors while riding this creature.
+- `MOUNTABLE_LEDGE` Player can jump down ledges while riding this creature.
 - `NULL` Source use only.
 - `PACIFIST` That monster will never do melee attacks.
 - `PARALYZE` Attack may paralyze the player with venom.

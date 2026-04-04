@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "game_constants.h"
+#include "point.h"
 #include "type_id.h"
 
 class aim_activity_actor;
@@ -23,7 +24,6 @@ class vehicle;
 class shape;
 class shape_factory;
 struct itype;
-struct tripoint;
 struct projectile;
 struct vehicle_part;
 struct dealt_damage_instance;
@@ -183,7 +183,7 @@ int fire_gun( Character &who, const tripoint &target, int shots = 1 );
  * @return Number of shots actually fired
  */
 int fire_gun( Character &who, const tripoint &target, int shots, item &gun,
-              item *ammo );
+              item *ammo, const std::optional<tripoint> &shot_origin = std::nullopt );
 
 /** Expected thrown damage with a given item, given the thrower's effective strength and skill. */
 auto throw_damage( const item &it, const int skill, const int str ) -> int;
@@ -199,5 +199,3 @@ auto throw_item( Character &who, const tripoint &target,
                  std::optional<tripoint> blind_throw_from_pos ) -> dealt_projectile_attack;
 
 } // namespace ranged
-
-

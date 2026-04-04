@@ -199,6 +199,21 @@ void scent_map::update( const tripoint &center, map &m )
     const int st_sy = _scent_lc.cache_y;
     auto scent_transfer = std::vector<char>( static_cast<size_t>( _scent_lc.cache_x ) * st_sy, 0 );
     const auto *blocked_data = _scent_lc.vehicle_obstructed_cache.data();
+    const int scent_cache_x = _scent_lc.cache_x;
+    const auto safe_st = [&]( int ax, int ay ) -> char {
+        if( ax < 0 || ax >= scent_cache_x || ay < 0 || ay >= st_sy )
+        {
+            return char( 0 );
+        }
+        return scent_transfer[ax * st_sy + ay];
+    };
+    const auto safe_bd = [&]( int ax, int ay ) -> diagonal_blocks {
+        if( ax < 0 || ax >= scent_cache_x || ay < 0 || ay >= st_sy )
+        {
+            return {};
+        }
+        return blocked_data[ax * st_sy + ay];
+    };
 
     std::array < std::array < int, 3 + SCENT_RADIUS * 2 >, 1 + SCENT_RADIUS * 2 > new_scent;
     std::array < std::array < int, 3 + SCENT_RADIUS * 2 >, 1 + SCENT_RADIUS * 2 > sum_3_scent_y;
@@ -279,8 +294,8 @@ void scent_map::update( const tripoint &center, map &m )
                 sum_3_scent_y[y][x] = 0;
                 squares_used_y[y][x] = 0;
                 for( int i = abs.y - 1; i <= abs.y + 1; ++i ) {
-                    sum_3_scent_y[y][x] += scent_transfer[abs.x * st_sy + i] * scent_cache[x][i - cache_y_offset];
-                    squares_used_y[y][x] += scent_transfer[abs.x * st_sy + i];
+                    sum_3_scent_y[y][x] += safe_st( abs.x, i ) * scent_cache[x][i - cache_y_offset];
+                    squares_used_y[y][x] += safe_st( abs.x, i );
                 }
             }
         } );
@@ -294,8 +309,8 @@ void scent_map::update( const tripoint &center, map &m )
                 sum_3_scent_y[y][x] = 0;
                 squares_used_y[y][x] = 0;
                 for( int i = abs.y - 1; i <= abs.y + 1; ++i ) {
-                    sum_3_scent_y[y][x] += scent_transfer[abs.x * st_sy + i] * scent_cache[x][i - cache_y_offset];
-                    squares_used_y[y][x] += scent_transfer[abs.x * st_sy + i];
+                    sum_3_scent_y[y][x] += safe_st( abs.x, i ) * scent_cache[x][i - cache_y_offset];
+                    squares_used_y[y][x] += safe_st( abs.x, i );
                 }
             }
         }
@@ -313,33 +328,33 @@ void scent_map::update( const tripoint &center, map &m )
                 int total = sum_3_scent_y[y][x - 1] + sum_3_scent_y[y][x] + sum_3_scent_y[y][x + 1];
 
                 //handle vehicle holes
-                if( blocked_data[abs.x * st_sy + abs.y].nw &&
-                    scent_transfer[( abs.x + 1 ) * st_sy + abs.y + 1] == 5 ) {
+                if( safe_bd( abs.x, abs.y ).nw &&
+                    safe_st( abs.x + 1, abs.y + 1 ) == 5 ) {
                     squares_used -= 4;
                     total -= 4 * scent_cache[x + 1][y + 2];
                 }
-                if( blocked_data[abs.x * st_sy + abs.y].ne &&
-                    scent_transfer[( abs.x - 1 ) * st_sy + abs.y + 1] == 5 ) {
+                if( safe_bd( abs.x, abs.y ).ne &&
+                    safe_st( abs.x - 1, abs.y + 1 ) == 5 ) {
                     squares_used -= 4;
                     total -= 4 * scent_cache[x - 1][y + 2];
                 }
-                if( blocked_data[( abs.x - 1 ) * st_sy + abs.y - 1].nw &&
-                    scent_transfer[( abs.x - 1 ) * st_sy + abs.y - 1] == 5 ) {
+                if( safe_bd( abs.x - 1, abs.y - 1 ).nw &&
+                    safe_st( abs.x - 1, abs.y - 1 ) == 5 ) {
                     squares_used -= 4;
                     total -= 4 * scent_cache[x - 1][y];
                 }
-                if( blocked_data[( abs.x + 1 ) * st_sy + abs.y - 1].ne &&
-                    scent_transfer[( abs.x + 1 ) * st_sy + abs.y - 1] == 5 ) {
+                if( safe_bd( abs.x + 1, abs.y - 1 ).ne &&
+                    safe_st( abs.x + 1, abs.y - 1 ) == 5 ) {
                     squares_used -= 4;
                     total -= 4 * scent_cache[x + 1][y];
                 }
 
                 //Lingering scent
                 const int cur = scent_cache[x][y + 1];
-                int temp_scent = cur * ( 250 - squares_used * scent_transfer[abs.x * st_sy + abs.y] );
-                temp_scent -= cur * scent_transfer[abs.x * st_sy + abs.y] * ( 45 - squares_used ) / 5;
+                int temp_scent = cur * ( 250 - squares_used * safe_st( abs.x, abs.y ) );
+                temp_scent -= cur * safe_st( abs.x, abs.y ) * ( 45 - squares_used ) / 5;
 
-                new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x * st_sy + abs.y] ) / 250;
+                new_scent[y][x] = ( temp_scent + total * safe_st( abs.x, abs.y ) ) / 250;
             }
         } );
     } else {
@@ -351,33 +366,33 @@ void scent_map::update( const tripoint &center, map &m )
                 int total = sum_3_scent_y[y][x - 1] + sum_3_scent_y[y][x] + sum_3_scent_y[y][x + 1];
 
                 //handle vehicle holes
-                if( blocked_data[abs.x * st_sy + abs.y].nw &&
-                    scent_transfer[( abs.x + 1 ) * st_sy + abs.y + 1] == 5 ) {
+                if( safe_bd( abs.x, abs.y ).nw &&
+                    safe_st( abs.x + 1, abs.y + 1 ) == 5 ) {
                     squares_used -= 4;
                     total -= 4 * scent_cache[x + 1][y + 2];
                 }
-                if( blocked_data[abs.x * st_sy + abs.y].ne &&
-                    scent_transfer[( abs.x - 1 ) * st_sy + abs.y + 1] == 5 ) {
+                if( safe_bd( abs.x, abs.y ).ne &&
+                    safe_st( abs.x - 1, abs.y + 1 ) == 5 ) {
                     squares_used -= 4;
                     total -= 4 * scent_cache[x - 1][y + 2];
                 }
-                if( blocked_data[( abs.x - 1 ) * st_sy + abs.y - 1].nw &&
-                    scent_transfer[( abs.x - 1 ) * st_sy + abs.y - 1] == 5 ) {
+                if( safe_bd( abs.x - 1, abs.y - 1 ).nw &&
+                    safe_st( abs.x - 1, abs.y - 1 ) == 5 ) {
                     squares_used -= 4;
                     total -= 4 * scent_cache[x - 1][y];
                 }
-                if( blocked_data[( abs.x + 1 ) * st_sy + abs.y - 1].ne &&
-                    scent_transfer[( abs.x + 1 ) * st_sy + abs.y - 1] == 5 ) {
+                if( safe_bd( abs.x + 1, abs.y - 1 ).ne &&
+                    safe_st( abs.x + 1, abs.y - 1 ) == 5 ) {
                     squares_used -= 4;
                     total -= 4 * scent_cache[x + 1][y];
                 }
 
                 //Lingering scent
                 const int cur = scent_cache[x][y + 1];
-                int temp_scent = cur * ( 250 - squares_used * scent_transfer[abs.x * st_sy + abs.y] );
-                temp_scent -= cur * scent_transfer[abs.x * st_sy + abs.y] * ( 45 - squares_used ) / 5;
+                int temp_scent = cur * ( 250 - squares_used * safe_st( abs.x, abs.y ) );
+                temp_scent -= cur * safe_st( abs.x, abs.y ) * ( 45 - squares_used ) / 5;
 
-                new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x * st_sy + abs.y] ) / 250;
+                new_scent[y][x] = ( temp_scent + total * safe_st( abs.x, abs.y ) ) / 250;
             }
         }
     }

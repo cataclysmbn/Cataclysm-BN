@@ -2490,5 +2490,19 @@
     "book_learn": [ [ "textbook_fabrication", 5 ], [ "welding_book", 6 ], [ "textbook_carpentry", 5 ] ],
     "using": [ [ "blacksmithing_advanced", 20 ], [ "steel_standard", 20 ] ],
     "components": [ [ [ "hard_plate", 5 ] ], [ [ "chain", 2 ] ] ]
+  },
+  {
+    "result": "NBC_seal",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "cooking",
+    "difficulty": 5,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "1 h",
+    "book_learn": [ [ "textbook_gaswarfare", 4 ], [ "atomic_survival", 4 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 } ],
+    "tools": [ [ [ "mold_plastic", -1 ] ], [ [ "surface_heat", 80, "LIST" ] ] ],
+    "components": [ [ [ "chunk_rubber", 80 ] ], [ [ "lead", 1000 ] ], [ [ "steel_standard", 1, "LIST" ] ], [ [ "plastic_sheet", 1 ] ] ]
   }
 ]

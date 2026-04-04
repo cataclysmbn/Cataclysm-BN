@@ -1202,6 +1202,7 @@
     "name": "Professional Cyclist",
     "description": "You were a promising young cyclist with a bright career in front of you before this all happened.  Perhaps you'll never get to participate in the grand tours now, but as the saying goes: Life is like riding a bicycle, you got to keep moving.",
     "points": 3,
+    "age": { "min": 18, "max": 27 },
     "skills": [ { "level": 1, "name": "swimming" }, { "level": 3, "name": "driving" }, { "level": 2, "name": "dodge" } ],
     "items": {
       "both": {
@@ -2043,6 +2044,7 @@
     "name": "Medical Resident",
     "description": "Fresh out of med school, you've got little in the way of practical experience.  You just hope it will be enough if the old adage of 'Doctor, heal thyself' ends up being required.",
     "points": 2,
+    "age": { "min": 25, "max": 33 },
     "skills": [ { "level": 4, "name": "firstaid" } ],
     "traits": [ "PROF_MED" ],
     "items": {
@@ -2419,6 +2421,7 @@
     "name": "Electrical Engineer",
     "description": "Fresh out of college, you've got little in the way of practical engineering experience.  The Cataclysm might prove to be a rather complicated problem to solve even from an engineering perspective, and you're not sure if you can solder your way out of this one.",
     "points": 2,
+    "age": { "min": 22, "max": 26 },
     "skills": [ { "level": 4, "name": "electronics" }, { "level": 2, "name": "fabrication" }, { "level": 2, "name": "computer" } ],
     "items": {
       "both": { "items": [ "pants", "dress_shirt", "socks", "dress_shoes", "wristwatch", "water_clean", "smart_phone", "file" ] },
@@ -2432,6 +2435,7 @@
     "name": "Mechanical Engineer",
     "description": "Fresh out of college, you've got little in the way of practical engineering experience.  The Cataclysm might prove to be a rather complicated problem to solve even from an engineering perspective, and you're not sure if you will pass this stress test.",
     "points": 2,
+    "age": { "min": 22, "max": 26 },
     "skills": [ { "level": 4, "name": "mechanics" }, { "level": 2, "name": "fabrication" }, { "level": 2, "name": "computer" } ],
     "items": {
       "both": { "items": [ "pants", "dress_shirt", "socks", "dress_shoes", "wristwatch", "water_clean", "smart_phone", "file" ] },
@@ -3207,6 +3211,7 @@
     "name": "Student",
     "description": "You were a high school student, but the tests you'll face now will have much higher stakes.  There might even be something useful in one of these books you've been lugging around all year.",
     "points": 1,
+    "age": { "min": 14, "max": 18 },
     "items": {
       "both": {
         "items": [
@@ -3235,6 +3240,7 @@
     "name": "Library Nerd",
     "description": "They say reading is food for the brain, but those corpses seem to see your brain as food.  In your haste to escape, you grabbed the library's return box, but is there anything in there that might help you?",
     "points": 2,
+    "age": { "min": 14, "max": 18 },
     "traits": [ "LOVES_BOOKS" ],
     "items": {
       "both": {
@@ -3945,6 +3951,7 @@
     "name": "Senior Citizen",
     "description": "You haven't seen this much blood since the war.  The whole world's gone crazy!  They ate your grandkids!  But dagnabbit, you'll make them all pay for what they've done.",
     "points": 0,
+    "age": { "min": 65, "max": 80 },
     "items": {
       "both": {
         "items": [ "tobacco", "pipe_tobacco", "ref_lighter", "socks", "dress_shoes", "knit_scarf" ],
@@ -4974,7 +4981,7 @@
           "motorbike_boots",
           "vambrace_larmor",
           "gauntlets_larmor",
-          "pickelhaube",
+          "helmet_steel",
           "mask_hockey",
           "camelbak",
           "dump_pouch",
@@ -5671,6 +5678,7 @@
     "name": "Bionic Student",
     "description": "Your parents were so obsessed with making sure you aced every test that they had you outfitted with bionics to make you smarter and never forget anything.  And now, you are facing the most dire test yet, and once again you had better succeed, or else.",
     "points": 3,
+    "age": { "min": 14, "max": 18 },
     "CBMs": [ "bio_batteries", "bio_power_storage", "bio_int_enhancer", "bio_memory" ],
     "items": {
       "both": [
@@ -6720,7 +6728,7 @@
           "socks",
           "boots",
           "bandana",
-          "pickelhaube",
+          "helmet_steel",
           "jacket_leather",
           "wristwatch",
           "meth",

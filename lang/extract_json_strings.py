@@ -1011,6 +1011,7 @@ def extract_use_action_msgs(state, use_action, it_name):
             extract_use_action_msgs(state, v, it_name)
 
 found_types = set();
+warned_unknown_types = set();
 known_types = ignorable | extract_specials.keys() | automatically_convertible
 
 
@@ -1027,7 +1028,12 @@ def extract_json(state, item):
         extract_specials[object_type](state, item)
         return
     elif object_type not in automatically_convertible:
-        raise WrongJSONItem(f"ERROR: Unrecognized object type '{object_type}'!", item)
+        if object_type not in warned_unknown_types:
+            warned_unknown_types.add(object_type)
+            print(
+                f"WARNING: Skipping unrecognized object type '{object_type}' in '{state.current_source_file}'"
+            )
+        return
     if object_type not in known_types:
         print(f"WARNING: known_types does not contain object type '{object_type}'")
     # Use mod id as project name if project name is not specified

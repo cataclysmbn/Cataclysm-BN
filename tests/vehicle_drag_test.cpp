@@ -30,9 +30,7 @@ static void clear_game_drag( const ter_id &terrain )
 {
     // Set to turn 0 to prevent solars from producing power
     calendar::turn = calendar::turn_zero;
-    clear_creatures();
-    clear_npcs();
-    clear_avatar();
+    clear_states( state::avatar | state::vehicle );
 
     avatar &player_character = get_avatar();
     // Move player somewhere safe
@@ -43,13 +41,10 @@ static void clear_game_drag( const ter_id &terrain )
     // Make sure the ST is 8 so that muscle powered results are consistent
     player_character.str_cur = 8;
 
-    clear_vehicles();
     build_test_map( terrain );
 
     map &here = get_map();
-    // hard force a rebuild of caches
-    here.shift( point_south );
-    here.shift( point_north );
+    here.build_map_cache( 0, true );
 }
 
 static vehicle *setup_drag_test( const vproto_id &veh_id )
@@ -133,14 +128,13 @@ static bool test_drag(
     return valid;
 }
 
-static void test_vehicle_drag(
-    std::string type, const double expected_c_air, const double expected_c_rr,
-    const double expected_c_water, const int expected_safe, const int expected_max )
+static auto test_vehicle_drag(
+    const std::string &type, const double expected_c_air, const double expected_c_rr,
+    const double expected_c_water, const int expected_safe, const int expected_max ) -> void
 {
-    SECTION( type ) {
-        test_drag( vproto_id( type ), expected_c_air, expected_c_rr, expected_c_water,
-                   expected_safe, expected_max, true );
-    }
+    CAPTURE( type );
+    CHECK( test_drag( vproto_id( type ), expected_c_air, expected_c_rr, expected_c_water,
+                      expected_safe, expected_max, true ) );
 }
 
 std::vector<std::string> vehs_to_test_drag = {

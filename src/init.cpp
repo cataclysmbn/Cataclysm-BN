@@ -395,6 +395,7 @@ void DynamicDataLoader::initialize()
     add( "recipe_category", &load_recipe_category );
     add( "recipe",  &recipe_dictionary::load_recipe );
     add( "uncraft", &recipe_dictionary::load_uncraft );
+    add( "nested_category", &recipe_dictionary::load_nested_category );
     add( "recipe_group",  &recipe_group::load );
 
     add( "tool_quality", &quality::load_static );
@@ -1023,6 +1024,10 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
     if( to_check.empty() ) {
         to_check.emplace( mod_management::get_default_core_content_pack() );
     }
+
+    // Ensure the last checked mod unloads before process exit so Lua-backed
+    // mapgen functions do not outlive the active Lua state.
+    on_out_of_scope clear_last_checked_data( [] { clear_loaded_data(); } );
 
     for( const mod_id &id : to_check ) {
         clear_loaded_data();

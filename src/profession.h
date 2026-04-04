@@ -29,6 +29,10 @@ class profession
     public:
         using StartingSkill = std::pair<skill_id, int>;
         using StartingSkillList = std::vector<StartingSkill>;
+        struct age_range {
+            int min;
+            int max;
+        };
         struct itypedec {
             itype_id type_id;
             /** Snippet id, @see snippet_library. */
@@ -84,6 +88,8 @@ class profession
         void load( const JsonObject &jo, const std::string &src );
 
     public:
+        static constexpr auto min_age = 16;
+        static constexpr auto max_age = 55;
         //these three aren't meant for external use, but had to be made public regardless
         profession();
 
@@ -119,6 +125,8 @@ class profession
         std::map<spell_id, int> spells() const;
 
         std::optional<signed int> _starting_cash = std::nullopt;
+        std::optional<age_range> _starting_age_range;
+        auto starting_age_range() const -> std::optional<age_range>;
 
         /**
          * Check if this type of profession has a certain flag set.
@@ -142,5 +150,3 @@ class profession
         std::set<bionic_id> get_forbidden_bionics() const;
         std::set<bionic_id> get_allowed_bionics() const;
 };
-
-

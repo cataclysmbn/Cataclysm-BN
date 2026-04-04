@@ -108,11 +108,23 @@ class submap : maptile_soa<SEEX, SEEY>
 
         void set_furn( point p, furn_id furn ) {
             is_uniform = false;
+            emitter_cache = -1;
             frn[p.x][p.y] = furn;
+            frn_vars[p].merge( furn->default_vars );
+            if( furn != f_null ) {
+                return;
+            }
+            frn_vars.erase( p );
         }
 
         void set_all_furn( const furn_id &furn ) {
             std::uninitialized_fill_n( &frn[0][0], elements, furn );
+            if( furn != f_null ) {
+                return;
+            }
+            // Reset furniture vars on clear
+            frn_vars.clear();
+            emitter_cache = -1;
         }
 
         ter_id get_ter( point p ) const {
@@ -173,6 +185,30 @@ class submap : maptile_soa<SEEX, SEEY>
             return fld[p.x][p.y];
         }
 
+        data_vars::data_set &get_ter_vars( point p ) {
+            return ter_vars[p];
+        };
+
+        data_vars::data_set &get_furn_vars( point p ) {
+            return frn_vars[p];
+        };
+
+        const data_vars::data_set &get_ter_vars( point p ) const {
+            const auto it = ter_vars.find( p );
+            if( it == ter_vars.end() ) {
+                return EMPTY_VARS;
+            }
+            return it->second;
+        };
+
+        const data_vars::data_set &get_furn_vars( point p ) const {
+            const auto it = ter_vars.find( p );
+            if( it == ter_vars.end() ) {
+                return EMPTY_VARS;
+            }
+            return it->second;
+        };
+
         struct cosmetic_t {
             point pos;
             std::string type;
@@ -227,6 +263,9 @@ class submap : maptile_soa<SEEX, SEEY>
         active_item_cache active_items;
 
         int field_count = 0;
+        /** -1 = unknown (dirty), 0 = no EMITTER furniture, 1 = has EMITTER furniture.
+         *  Lazily computed by world_tick on first use; invalidated by set_furn / set_all_furn. */
+        int8_t emitter_cache = -1;
         // Serialized as "turn_last_touched" (absolute turn number).
         // Initialized to calendar::turn_zero; legacy saves that predate
         // serialization will receive the maximum-capped catchup on first load.
@@ -269,6 +308,10 @@ class submap : maptile_soa<SEEX, SEEY>
         static void swap( submap &first, submap &second );
 
     private:
+        static const data_vars::data_set EMPTY_VARS;
+        std::unordered_map<point, data_vars::data_set> ter_vars;
+        std::unordered_map<point, data_vars::data_set> frn_vars;
+
         std::map<point, computer> computers;
         std::unique_ptr<computer> legacy_computer;
         int temperature = 0;
