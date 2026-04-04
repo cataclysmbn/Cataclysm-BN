@@ -826,11 +826,16 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
         mvwprintz( w, point( column + 4 - i, vStart ), c_white, "." );
     }
     mvwprintz( w, point( column + bar_max_width + 1, vStart ), basic_symbol_color(), name() );
-    trim_and_print( w, point( column + bar_max_width + utf8_width( " " + name() + " " ), vStart ),
-                    max_width - bar_max_width - utf8_width( " " + name() + " " ), h_white, get_effect_status() );
 
-    std::pair<std::string, nc_color> att = get_attitude();
-    mvwprintz( w, point( column, ++vStart ), att.second, att.first );
+    const auto att = get_attitude();
+    const int att_width = utf8_width( att.first );
+    const int att_start = column + std::max( 0, max_width - att_width );
+    const int effect_start = column + bar_max_width + utf8_width( " " + name() + " " );
+    const int effect_width = std::max( 0, att_start - effect_start - 1 );
+    if( effect_width > 0 ) {
+        trim_and_print( w, point( effect_start, vStart ), effect_width, h_white, get_effect_status() );
+    }
+    mvwprintz( w, point( att_start, vStart ), att.second, att.first );
 
     const std::string senses_str = sees( g->u ) ? _( "Can see to your current location" ) :
                                    _( "Can't see to your current location" );
@@ -866,7 +871,7 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     }
 
     if( size_bonus > 0 ) {
-        mvwprintz( w, point( column, ++vStart ), c_light_gray, _( " It is %s." ),
+        mvwprintz( w, point( column, ++vStart ), c_light_gray, _( "It is %s." ),
                    size_names.at( get_size() ) );
     }
 

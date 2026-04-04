@@ -7636,6 +7636,7 @@ void game::print_trap_info( const tripoint &lp, const catacurses::window &w_look
                             int &line )
 {
     const trap &tr = m.tr_at( lp );
+    auto printed = false;
     if( tr.can_see( lp, u ) ) {
         partial_con *pc = m.partial_con_at( lp );
         std::string tr_name;
@@ -7648,9 +7649,12 @@ void game::print_trap_info( const tripoint &lp, const catacurses::window &w_look
         }
 
         mvwprintz( w_look, point( column, ++line ), tr.color, tr_name );
+        printed = true;
     }
 
-    ++line;
+    if( printed ) {
+        ++line;
+    }
 }
 
 void game::print_creature_info( const Creature *creature, const catacurses::window &w_look,

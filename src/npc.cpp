@@ -2376,28 +2376,57 @@ nc_color npc::basic_symbol_color() const
     return c_pink;
 }
 
-int npc::print_info( const catacurses::window &w, int line, int vLines, int column ) const
+auto npc::print_info( const catacurses::window &w, int line, int vLines, int column ) const -> int
 {
     const int last_line = line + vLines;
     const int iWidth = getmaxx( w ) - 2;
 
-    std::pair<std::string, nc_color> bar = get_hp_bar( hp_percentage(), 100 );
+    const auto bar = get_hp_bar( hp_percentage(), 100 );
     mvwprintz( w, point( column, line ), bar.second, bar.first );
-    const int bar_max_width = 5;
-    const int bar_width = utf8_width( bar.first );
+    constexpr auto bar_max_width = 5;
+    const auto bar_width = utf8_width( bar.first );
     for( int i = 0; i < bar_max_width - bar_width; ++i ) {
-        mvwprintz( w, point( column + 4 - i, line ), c_white, "." );
+        mvwprintz( w, point( column + bar_max_width - 1 - i, line ), c_white, "." );
     }
-    trim_and_print( w, point( column + bar.first.length() + 1, line ), iWidth, basic_symbol_color(),
-                    name );
+    const auto name_column = column + bar_max_width + 1;
+    mvwprintz( w, point( name_column, line ), basic_symbol_color(), name );
+    const std::string att_goal = npc_attitude_name( get_attitude() );
+    if( !att_goal.empty() ) {
+        const auto info_width = getmaxx( w ) - column - 1;
+        const auto name_width = utf8_width( name );
+        const auto name_end = name_column + name_width;
+        const auto available_for_goal = column + info_width - ( name_end + 1 );
+        if( available_for_goal > 0 ) {
+            const auto goal_text = utf8_truncate( att_goal, static_cast<size_t>( available_for_goal ) );
+            if( !goal_text.empty() ) {
+                const auto goal_width = utf8_width( goal_text );
+                const auto right_align_offset = std::max( 0, info_width - goal_width );
+                auto goal_column = column + right_align_offset;
+                goal_column = std::max( goal_column, name_end + 1 );
+                mvwprintz( w, point( goal_column, line ), basic_symbol_color(), goal_text );
+            }
+        }
+    }
 
     Attitude att = attitude_to( g->u );
     const std::pair<translation, nc_color> res = Creature::get_attitude_ui_data( att );
-    mvwprintz( w, point( column, ++line ), res.second, res.first.translated() );
 
     const std::string senses_str = sees( g->u ) ? _( "Aware of your presence" ) :
                                    _( "Unaware of you" );
-    mvwprintz( w, point( column, ++line ), sees( g->u ) ? c_yellow : c_green, senses_str );
+    line = line + 1;
+    mvwprintz( w, point( column, line ), sees( g->u ) ? c_yellow : c_green, senses_str );
+    const auto info_width = getmaxx( w ) - column - 1;
+    const auto senses_end = column + utf8_width( senses_str );
+    const auto info_end = column + info_width;
+    const int available_for_att = std::max( 0, info_end - ( senses_end + 1 ) );
+    if( available_for_att > 0 ) {
+        const auto att_text = utf8_truncate( res.first.translated(), static_cast<size_t>( available_for_att ) );
+        if( !att_text.empty() ) {
+            const int att_width = utf8_width( att_text );
+            const int att_column = info_end - att_width;
+            mvwprintz( w, point( att_column, line ), res.second, att_text );
+        }
+    }
 
     if( display_object_ids && line < last_line ) {
         mvwprintz( w, point( column, ++line ), c_light_blue, string_format( "[%s]", myclass ) );
@@ -2416,8 +2445,9 @@ int npc::print_info( const catacurses::window &w, int line, int vLines, int colu
     if( !worn_str.empty() ) {
         std::vector<std::string> worn_lines = foldstring( _( "Wearing: " ) + worn_str, iWidth );
         int worn_numlines = worn_lines.size();
+        // keeps the light gray color intact; changing this breaks the colorization again
         for( int i = 0; i < worn_numlines && line < last_line; i++ ) {
-            mvwprintz( w, point( column, ++line ), c_light_gray, worn_lines[i] );
+            trim_and_print( w, point( column, ++line ), iWidth, c_light_gray, worn_lines[i] );
         }
     }
 
