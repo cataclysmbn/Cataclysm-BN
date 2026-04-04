@@ -2636,9 +2636,10 @@ void learn_spell_actor::info( const item &, std::vector<iteminfo> &dump ) const
     }
 }
 
-int learn_spell_actor::use( player &p, item &, bool, const tripoint & ) const
+int learn_spell_actor::use( player &p, item &book, bool, const tripoint &pos ) const
 {
-    if( !character_funcs::can_see_fine_details( p ) ) {
+    const auto study_pos = pos == p.pos() && book.has_position() ? book.position() : pos;
+    if( !character_funcs::can_see_fine_details( p, study_pos ) ) {
         p.add_msg_if_player( _( "It's too dark to read." ) );
         return 0;
     }
@@ -2717,6 +2718,7 @@ int learn_spell_actor::use( player &p, item &, bool, const tripoint & ) const
         study_spell->values[1] = 0; // reserved for levels
     }
     study_spell->name = spells[action];
+    study_spell->placement = get_map().getabs( study_pos );
     p.assign_activity( std::move( study_spell ), false );
     return 0;
 }

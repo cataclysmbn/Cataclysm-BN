@@ -1362,7 +1362,8 @@ static void read()
     if( loc ) {
         if( loc->type->can_use( "learn_spell" ) ) {
             item &spell_book = *loc;
-            spell_book.get_use( "learn_spell" )->call( u, spell_book, spell_book.is_active(), u.pos() );
+            spell_book.get_use( "learn_spell" )->call( u, spell_book, spell_book.is_active(),
+                    spell_book.position() );
         } else {
             u.read( loc );
         }
