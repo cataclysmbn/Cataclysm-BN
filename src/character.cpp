@@ -11516,7 +11516,8 @@ std::string Character::short_description() const
     return join( short_description_parts(), ";   " );
 }
 
-auto Character::print_info( const catacurses::window &w, int vStart, int vLines, int column ) const -> int
+auto Character::print_info( const catacurses::window &w, int vStart, int vLines,
+                            int column ) const -> int
 {
     const int last_line = vStart + vLines;
     const int iWidth = getmaxx( w ) - 2;

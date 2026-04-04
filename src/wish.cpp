@@ -701,7 +701,7 @@ class wish_item_callback: public uilist_callback
                         break;
                     }
                     const std::string stripped = trim_whitespaces(
-                        remove_color_tags( line_text ) );
+                                                     remove_color_tags( line_text ) );
                     if( stripped == "--" ) {
                         mvwhline( menu->window, point( startx, line_y ), LINE_OXOX,
                                   menu->pad_right - 1 );

@@ -2420,7 +2420,8 @@ auto npc::print_info( const catacurses::window &w, int line, int vLines, int col
     const auto info_end = column + info_width;
     const int available_for_att = std::max( 0, info_end - ( senses_end + 1 ) );
     if( available_for_att > 0 ) {
-        const auto att_text = utf8_truncate( res.first.translated(), static_cast<size_t>( available_for_att ) );
+        const auto att_text = utf8_truncate( res.first.translated(),
+                                             static_cast<size_t>( available_for_att ) );
         if( !att_text.empty() ) {
             const int att_width = utf8_width( att_text );
             const int att_column = info_end - att_width;
