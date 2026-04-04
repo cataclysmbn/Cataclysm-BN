@@ -133,9 +133,7 @@ you wish to assign to that action.
 
 #### There is no music (or sound) in the game. How can I add it?
 
-First boot up the game, select help, click 6 ( resolved game directories )
-
-Take note of the folder after "user sounds: "
+See where to place 3rd party mods, but replace mods/ with sounds/, this is the folder you will put it into
 
 Find a soundpack such as the recommended one [Otopack](https://github.com/NarandBD/Otopack-BN-Mk-2).
 
@@ -145,9 +143,21 @@ Then finally select it from the settings, and then restart the game.
 
 #### Where should I put 3rd-party mods?
 
+If not in the List of common directories or it fails to work:
+
 First boot up the game, select help, click 6 ( resolved game directories )
 
 Place mods in the folder after "user mods: "
+
+Otherwise:
+
+For Windows users it is wherever your game folder is ( same level as the EXE ) /mods
+
+For Android users using the non-legacy storage, the user mods folder is `Documents/Cataclysm-BN/mods`
+
+For Linux users using the XDG directories (but NOT the flatpak): The user mods directory should be in `~/.local/share/cataclysm-bn/mods` (`~/.local/share/cataclysm-bn` is the user directory in general)
+
+For flatpak users, the user mods folder is `~/.var/app/org.cataclysmbn.CataclysmBN/data/cataclysm-bn/mods` (the user directory in general is `~/.var/app/org.cataclysmbn.CataclysmBN/data/cataclysm-bn/`)
 
 #### How do I update the game manually?
 
