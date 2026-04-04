@@ -1,4 +1,7 @@
 #if defined(TILES)
+
+#include <ranges>
+
 #include "character_preview.h"
 #include "bionics.h"
 #include "color.h"
@@ -173,28 +176,33 @@ class char_preview_adapter : public cata_tiles
             avatar temp_avatar;
         };
 
-        overlay_result get_overlay_ids( const avatar &av, bool with_clothing ) {
-            overlay_result result;
-            std::multimap<int, overlay_entry> mutation_sorting;
+        auto get_overlay_ids( const avatar &av, bool with_clothing ) -> overlay_result {
+            auto result = overlay_result{};
+            auto overlay_sorting = std::multimap<int, overlay_entry> {};
 
             for( const auto &[eff_type, eff_by_part] : av.get_effects() ) {
                 const effect &eff = eff_by_part.begin()->second;
                 if( eff.is_removed() ) {
                     continue;
                 }
-                result.overlays.emplace_back( overlay_entry{
+                const auto ent = overlay_entry{
                     "effect_" + eff_type.str(),
                     &eff
-                } );
+                };
+                overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
             }
 
             for( const mutation &mut : av.my_mutations ) {
                 if( !mut.second.show_sprite ) {
                     continue;
                 }
-                std::string overlay_id = ( mut.second.powered ? "active_" : "" ) + mut.first.str();
-                int order = get_overlay_order_of_mutation( overlay_id );
-                mutation_sorting.insert( { order, overlay_entry{ overlay_id, &mut } } );
+                const auto overlay_id = std::string( mut.second.powered ? "mutation_active_" : "mutation_" ) +
+                                        mut.first.str();
+                const auto ent = overlay_entry{
+                    overlay_id,
+                    &mut
+                };
+                overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
             }
 
             for( const bionic_id &bio : av.prof->CBMs() ) {
@@ -209,21 +217,18 @@ class char_preview_adapter : public cata_tiles
                 if( !bio.show_sprite ) {
                     continue;
                 }
-                std::string overlay_id = ( bio.powered ? "active_" : "" ) + bio.id.str();
-                int order = get_overlay_order_of_mutation( overlay_id );
-                mutation_sorting.insert( { order, overlay_entry{ overlay_id, &bio } } );
-            }
-
-            for( auto &[order, entry] : mutation_sorting ) {
-                result.overlays.emplace_back( overlay_entry{
-                    "mutation_" + entry.id,
-                    entry.entry
-                } );
+                const auto overlay_id = std::string( bio.powered ? "mutation_active_" : "mutation_" ) +
+                                        bio.id.str();
+                const auto ent = overlay_entry{
+                    overlay_id,
+                    &bio
+                };
+                overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
             }
 
             if( with_clothing ) {
                 static const flag_id json_flag_auto_wield( "auto_wield" );
-                std::vector<itype_id> wielded_items;
+                auto wielded_items = std::vector<itype_id> {};
                 for( const auto &it : av.prof->items( av.male, av.get_mutations() ) ) {
                     if( it->has_flag( json_flag_auto_wield ) ) {
                         wielded_items.push_back( it->typeId() );
@@ -232,18 +237,25 @@ class char_preview_adapter : public cata_tiles
                     }
                 }
                 for( const item * const &worn_item : result.temp_avatar.worn ) {
-                    result.overlays.emplace_back( overlay_entry{
+                    const auto ent = overlay_entry{
                         "worn_" + worn_item->typeId().str(),
                         worn_item
-                    } );
+                    };
+                    overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
                 }
                 for( const itype_id &wielded : wielded_items ) {
-                    result.overlays.emplace_back( overlay_entry{
+                    const auto ent = overlay_entry{
                         "wielded_" + wielded.str(),
                         std::monostate{}
-                    } );
+                    };
+                    overlay_sorting.emplace( get_overlay_order( ent.id ), ent );
                 }
             }
+
+            for( const auto &entry : overlay_sorting | std::views::values ) {
+                result.overlays.emplace_back( entry );
+            }
+
             return result;
         }
 };

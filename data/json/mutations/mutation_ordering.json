@@ -174,6 +174,26 @@
       { "id": [ "LEG_TENTACLES" ], "order": 4000 },
       { "id": [ "HOOVES", "ROOTS1", "ROOTS2", "ROOTS3", "TALONS" ], "order": 4500 },
       { "id": [ "FLOWERS" ], "order": 5000 },
+      {
+        "id": [
+          "worn_backpack",
+          "worn_backpack_giant",
+          "worn_backpack_hiking",
+          "worn_backpack_leather",
+          "worn_backpack_tactical_large",
+          "worn_boxpack",
+          "worn_daypack",
+          "worn_molle_pack",
+          "worn_pack_basket",
+          "worn_petpack",
+          "worn_slingpack",
+          "worn_survivor_hiking_backpack",
+          "worn_survivor_pack",
+          "worn_survivor_runner_pack",
+          "worn_travelpack"
+        ],
+        "order": 5400
+      },
       { "id": [ "ELFA_EARS", "RABBIT_EARS", "FELINE_EARS", "LUPINE_EARS", "URSINE_EARS" ], "order": 5500 },
       { "id": [ "ANTENNAE", "ANTLERS", "CURVED_HORNS", "HORNS", "POINTED_HORNS" ], "order": 6000 },
       { "id": [ "COMPOUND_EYES", "ELFAEYES", "FEL_EYE", "LIZ_EYE" ], "order": 6500 },
