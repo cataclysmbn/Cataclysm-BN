@@ -56,7 +56,8 @@ auto &sound_channel_listeners() -> std::vector<sound_channel_listener> &
     return listeners;
 }
 
-auto &sound_channel_previous_state() -> std::array<bool, static_cast<int>( sfx::channel::MAX_CHANNEL )> &
+auto &sound_channel_previous_state() ->
+std::array<bool, static_cast<int>( sfx::channel::MAX_CHANNEL )> &
 {
     static std::array<bool, static_cast<int>( sfx::channel::MAX_CHANNEL )> state{};
     return state;
@@ -77,7 +78,7 @@ auto notify_sound_channel_end( lua_state &state, const sfx::channel channel ) ->
     std::vector<sound_channel_listener> survivors;
     survivors.reserve( current_listeners.size() );
 
-    std::ranges::for_each( current_listeners, [&]( sound_channel_listener &listener ) {
+    std::ranges::for_each( current_listeners, [&]( sound_channel_listener & listener ) {
         bool keep_listener = true;
         if( channel_matches( listener, channel ) ) {
             try {
@@ -110,7 +111,8 @@ namespace cata::detail
 {
 
 auto register_sound_channel_end_listener(
-    [[maybe_unused]] sol::this_state lua_state, sfx::channel channel, sol::protected_function callback ) -> void
+    [[maybe_unused]] sol::this_state lua_state, sfx::channel channel,
+    sol::protected_function callback ) -> void
 {
     if( !callback || channel == sfx::channel::MAX_CHANNEL ) {
         return;
@@ -324,12 +326,12 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "Call a Lua function whenever a sound channel finishes. Returning false from the callback removes the listener." );
     luna::set_fx( lib, "on_sound_channel_end",
                   sol::overload(
-                      []( sol::this_state lua_this, sol::protected_function callback ) {
-                          register_sound_channel_end_listener( lua_this, sfx::channel::any, callback );
-                      },
-                      []( sol::this_state lua_this, sfx::channel channel, sol::protected_function callback ) {
-                          register_sound_channel_end_listener( lua_this, channel, callback );
-                      }
+    []( sol::this_state lua_this, sol::protected_function callback ) {
+        register_sound_channel_end_listener( lua_this, sfx::channel::any, callback );
+    },
+    []( sol::this_state lua_this, sfx::channel channel, sol::protected_function callback ) {
+        register_sound_channel_end_listener( lua_this, channel, callback );
+    }
                   ) );
 
     luna::set_fx( lib, "add_npc_follower", []( npc & p ) { g->add_npc_follower( p.getID() ); } );
