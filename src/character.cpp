@@ -11516,10 +11516,36 @@ std::string Character::short_description() const
     return join( short_description_parts(), ";   " );
 }
 
-int Character::print_info( const catacurses::window &w, int vStart, int, int column ) const
+auto Character::print_info( const catacurses::window &w, int vStart, int vLines,
+                            int column ) const -> int
 {
-    mvwprintw( w, point( column, vStart++ ), _( "You (%s)" ), name );
-    return vStart;
+    const int last_line = vStart + vLines;
+    const int iWidth = getmaxx( w ) - 2;
+    const auto bar = ::get_hp_bar( get_hp(), get_hp_max(), false );
+    mvwprintz( w, point( column, vStart ), bar.second, bar.first );
+    constexpr auto bar_max_width = 5;
+    const auto bar_width = utf8_width( bar.first );
+    for( int i = 0; i < bar_max_width - bar_width; ++i ) {
+        mvwprintz( w, point( column + bar_max_width - 1 - i, vStart ), c_white, "." );
+    }
+    const int name_column = column + bar_max_width + 1;
+    mvwprintz( w, point( name_column, vStart ), basic_symbol_color(), _( "You (%s)" ), name );
+    int line = vStart + 1;
+    const auto description_parts = short_description_parts();
+    for( size_t idx = 1; idx < description_parts.size(); ++idx ) {
+        const auto &part = description_parts[idx];
+        if( line >= last_line ) {
+            break;
+        }
+        const std::vector<std::string> part_lines = foldstring( part, iWidth );
+        for( const std::string &part_line : part_lines ) {
+            if( line >= last_line ) {
+                break;
+            }
+            trim_and_print( w, point( column, line++ ), iWidth, c_light_gray, part_line );
+        }
+    }
+    return line;
 }
 
 void Character::shift_destination( point shift )
@@ -12408,4 +12434,3 @@ detached_ptr<item> Character::reduce_charges( item *it, int quantity )
     taken->charges = quantity;
     return taken;
 }
-

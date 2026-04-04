@@ -76,6 +76,7 @@
 #include "map_memory.h"
 #include "map_selector.h"
 #include "mapbuffer.h"
+#include "map_feature_descriptions.h"
 #include "math_defines.h"
 #include "memory_fast.h"
 #include "messages.h"
@@ -2428,16 +2429,23 @@ std::string map::features( const tripoint &p )
     // This is used in an info window that is 46 characters wide, and is expected
     // to take up one line.  So, make sure it does that.
     // FIXME: can't control length of localized text.
-    add_if( is_bashable( p ), _( "Smashable." ) );
-    add_if( ter( p )->is_diggable(), _( "Diggable." ) );
-    add_if( has_flag( "PLOWABLE", p ), _( "Plowable." ) );
-    add_if( has_flag( "ROUGH", p ), _( "Rough." ) );
-    add_if( has_flag( "UNSTABLE", p ), _( "Unstable." ) );
-    add_if( has_flag( "SHARP", p ), _( "Sharp." ) );
-    add_if( has_flag( "FLAT", p ), _( "Flat." ) );
-    add_if( has_flag( "ROOF", p ), _( "Roof." ) );
-    add_if( has_flag( "EASY_DECONSTRUCT", p ), _( "Simple." ) );
-    add_if( has_flag( "MOUNTABLE", p ), _( "Mountable." ) );
+    const auto &feature_descriptions = map_feature_descriptions::get_map_feature_descriptions();
+    using map_feature_descriptions::map_feature_description;
+    for( const auto &description : feature_descriptions ) {
+        bool condition = false;
+        switch( description.test ) {
+            case map_feature_description::test_type::bashable:
+                condition = is_bashable( p );
+                break;
+            case map_feature_description::test_type::diggable:
+                condition = ter( p )->is_diggable();
+                break;
+            case map_feature_description::test_type::flag:
+                condition = has_flag( description.flag, p );
+                break;
+        }
+        add_if( condition, description.text.translated() );
+    }
     return result;
 }
 

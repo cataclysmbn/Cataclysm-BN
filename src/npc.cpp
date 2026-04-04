@@ -2376,55 +2376,82 @@ nc_color npc::basic_symbol_color() const
     return c_pink;
 }
 
-int npc::print_info( const catacurses::window &w, int line, int vLines, int column ) const
+auto npc::print_info( const catacurses::window &w, int line, int vLines, int column ) const -> int
 {
     const int last_line = line + vLines;
     const int iWidth = getmaxx( w ) - 2;
-    // First line of w is the border; the next 4 are terrain info, and after that
-    // is a blank line. w is 13 characters tall, and we can't use the last one
-    // because it's a border as well; so we have lines 6 through 11.
-    // w is also 48 characters wide - 2 characters for border = 46 characters for us
-    mvwprintz( w, point( column, line++ ), c_white, _( "NPC: " ) );
-    wprintz( w, basic_symbol_color(), name );
 
-    const bool player_knows = !g->u.has_trait( trait_INATTENTIVE );
-
-    if( display_object_ids ) {
-        mvwprintz( w, point( column, line++ ), c_light_blue, string_format( "[%s]", myclass ) );
+    const auto bar = get_hp_bar( hp_percentage(), 100 );
+    mvwprintz( w, point( column, line ), bar.second, bar.first );
+    constexpr auto bar_max_width = 5;
+    const auto bar_width = utf8_width( bar.first );
+    for( int i = 0; i < bar_max_width - bar_width; ++i ) {
+        mvwprintz( w, point( column + bar_max_width - 1 - i, line ), c_white, "." );
+    }
+    const auto name_column = column + bar_max_width + 1;
+    mvwprintz( w, point( name_column, line ), basic_symbol_color(), name );
+    const std::string att_goal = npc_attitude_name( get_attitude() );
+    if( !att_goal.empty() ) {
+        const auto info_width = getmaxx( w ) - column - 1;
+        const auto name_width = utf8_width( name );
+        const auto name_end = name_column + name_width;
+        const auto available_for_goal = column + info_width - ( name_end + 1 );
+        if( available_for_goal > 0 ) {
+            const auto goal_text = utf8_truncate( att_goal, static_cast<size_t>( available_for_goal ) );
+            if( !goal_text.empty() ) {
+                const auto goal_width = utf8_width( goal_text );
+                const auto right_align_offset = std::max( 0, info_width - goal_width );
+                auto goal_column = column + right_align_offset;
+                goal_column = std::max( goal_column, name_end + 1 );
+                mvwprintz( w, point( goal_column, line ), basic_symbol_color(), goal_text );
+            }
+        }
     }
 
-    if( sees( g->u ) && player_knows )  {
-        mvwprintz( w, point( column, line++ ), c_yellow, _( "Aware of your presence!" ) );
+    Attitude att = attitude_to( g->u );
+    const std::pair<translation, nc_color> res = Creature::get_attitude_ui_data( att );
+
+    const std::string senses_str = sees( g->u ) ? _( "Aware of your presence" ) :
+                                   _( "Unaware of you" );
+    line = line + 1;
+    mvwprintz( w, point( column, line ), sees( g->u ) ? c_yellow : c_green, senses_str );
+    const auto info_width = getmaxx( w ) - column - 1;
+    const auto senses_end = column + utf8_width( senses_str );
+    const auto info_end = column + info_width;
+    const int available_for_att = std::max( 0, info_end - ( senses_end + 1 ) );
+    if( available_for_att > 0 ) {
+        const auto att_text = utf8_truncate( res.first.translated(),
+                                             static_cast<size_t>( available_for_att ) );
+        if( !att_text.empty() ) {
+            const int att_width = utf8_width( att_text );
+            const int att_column = info_end - att_width;
+            mvwprintz( w, point( att_column, line ), res.second, att_text );
+        }
     }
 
-    if( is_armed() ) {
-        trim_and_print( w, point( column, line++ ), iWidth, c_red, _( "Wielding a %s" ),
+    if( display_object_ids && line < last_line ) {
+        mvwprintz( w, point( column, ++line ), c_light_blue, string_format( "[%s]", myclass ) );
+    }
+
+    if( is_armed() && line < last_line ) {
+        mvwprintz( w, point( column, ++line ), c_light_gray, _( "Wielding: " ) );
+        trim_and_print( w, point( column + utf8_width( _( "Wielding: " ) ), line ), iWidth, c_red,
                         primary_weapon().tname() );
     }
-
-    const auto enumerate_print = [ w, last_line, column, iWidth, &line ]( const std::string & str_in,
-    nc_color color ) {
-        const std::vector<std::string> folded = foldstring( str_in, iWidth );
-        for( auto it = folded.begin(); it < folded.end() && line < last_line; ++it, ++line ) {
-            trim_and_print( w, point( column, line ), iWidth, color, *it );
-        }
-    };
 
     const std::string worn_str = enumerate_as_string( worn.begin(),
     worn.end(), []( const item * const & it ) {
         return it->tname();
     } );
     if( !worn_str.empty() ) {
-        const std::string wearing = _( "Wearing: " ) + worn_str;
-        enumerate_print( wearing, c_light_blue );
+        std::vector<std::string> worn_lines = foldstring( _( "Wearing: " ) + worn_str, iWidth );
+        int worn_numlines = worn_lines.size();
+        // keeps the light gray color intact; changing this breaks the colorization again
+        for( int i = 0; i < worn_numlines && line < last_line; i++ ) {
+            trim_and_print( w, point( column, ++line ), iWidth, c_light_gray, worn_lines[i] );
+        }
     }
 
-    // as of now, visibility of mutations is between 0 and 10
-    // 10 perception and 10 distance would see all mutations - cap 0
-    // 10 perception and 30 distance - cap 5, some mutations visible
-    // 3 perception and 3 distance would see all mutations - cap 0
-    // 3 perception and 15 distance - cap 5, some mutations visible
-    // 3 perception and 20 distance would be barely able to discern huge antlers on a person - cap 10
     const int per = g->u.get_per();
     const int dist = rl_dist( g->u.pos(), pos() );
     int visibility_cap;
@@ -2434,10 +2461,13 @@ int npc::print_info( const catacurses::window &w, int line, int vLines, int colu
         visibility_cap = std::round( dist * dist / 20.0 / ( per - 1 ) );
     }
 
-    const auto trait_str = visible_mutations( visibility_cap );
+    const std::string trait_str = visible_mutations( visibility_cap );
     if( !trait_str.empty() ) {
-        const std::string mutations = _( "Traits: " ) + trait_str;
-        enumerate_print( mutations, c_green );
+        std::vector<std::string> trait_lines = foldstring( _( "Traits: " ) + trait_str, iWidth );
+        int trait_numlines = trait_lines.size();
+        for( int i = 0; i < trait_numlines && line < last_line; i++ ) {
+            trim_and_print( w, point( column, ++line ), iWidth, c_light_gray, trait_lines[i] );
+        }
     }
 
     return line;
