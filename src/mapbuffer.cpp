@@ -562,7 +562,7 @@ void mapbuffer::deserialize( JsonIn &jsin )
     }
 }
 
-void mapbuffer::preload_quad( const tripoint &om_addr )
+bool mapbuffer::preload_quad( const tripoint &om_addr )
 {
     ZoneScoped;
     // Disk I/O and JSON parsing — runs outside submaps_mutex_ so
@@ -578,12 +578,14 @@ void mapbuffer::preload_quad( const tripoint &om_addr )
     // Check the in-memory write-back cache before going to disk.  A quad that
     // was presaved but not yet explicitly saved lives here instead of on disk.
     std::string pending_data;
+    bool from_cache = false;
     {
         std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
         const auto it = pending_writes_.find( om_addr );
         if( it != pending_writes_.end() ) {
             pending_data = std::move( it->second );
             pending_writes_.erase( it );
+            from_cache = true;
         }
     }
 
@@ -615,9 +617,10 @@ void mapbuffer::preload_quad( const tripoint &om_addr )
             }
         }
     }
+    return from_cache;
 }
 
-void mapbuffer::generate_quad( const tripoint &om_addr )
+bool mapbuffer::generate_quad( const tripoint &om_addr )
 {
     ZoneScoped;
     const tripoint base = omt_to_sm_copy( om_addr );
@@ -627,18 +630,23 @@ void mapbuffer::generate_quad( const tripoint &om_addr )
         &&lookup_submap_in_memory( { base.x,     base.y + 1, base.z } )
         &&lookup_submap_in_memory( { base.x + 1, base.y + 1, base.z } );
     if( all_loaded ) {
-        return;
+        return false;
     }
     tinymap tmp_map;
     tmp_map.bind_dimension( dimension_id_ );
     tmp_map.generate( base, calendar::turn );
+    return true;
 }
 
-void mapbuffer::load_or_generate_quad( const tripoint &om_addr )
+bool mapbuffer::load_or_generate_quad( const tripoint &om_addr )
 {
     ZoneScoped;
-    preload_quad( om_addr );
-    generate_quad( om_addr );
+    // Return true if the quad needs saving before eviction: either mapgen ran
+    // (newly generated, not yet on disk) or data came from the write-back cache
+    // (pending_writes_) which is consumed on read and would be lost on eviction.
+    const bool from_cache = preload_quad( om_addr );
+    const bool generated  = generate_quad( om_addr );
+    return from_cache || generated;
 }
 
 void mapbuffer::presave_quad( const tripoint &om_addr )

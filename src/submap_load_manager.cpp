@@ -202,7 +202,12 @@ void submap_load_manager::update()
         auto it = std::remove_if( lazy_futures_.begin(), lazy_futures_.end(),
         [this]( auto & entry ) {
             if( entry.second.wait_for( std::chrono::seconds( 0 ) ) == std::future_status::ready ) {
-                entry.second.get();
+                // Mark dirty if mapgen ran — the quad has new content that must be
+                // saved before eviction.  Quads that were already on disk return false
+                // and are left clean so eviction frees them without a redundant write.
+                if( entry.second.get() ) {
+                    dirty_quads_.insert( entry.first );
+                }
                 lazy_in_flight_.erase( entry.first );
                 return true;
             }
@@ -290,10 +295,32 @@ void submap_load_manager::update()
         ZoneScopedN( "slm_load_new_quads" );
         load_futures.reserve( new_quads.size() );
         for( const auto &[dim_id, om_addr] : new_quads ) {
+            const quad_key qk_presave{ dim_id, om_addr };
+
+            // If a lazy-border future is in-flight for this quad, drain it before
+            // submitting the sync load.  Both paths call tinymap::generate(), so a
+            // concurrent lazy worker would race with the sync load and cause two
+            // apply_map_extra() calls on the same quad → duplicate autonotes and
+            // potentially duplicate special spawns.
+            if( lazy_in_flight_.count( qk_presave ) ) {
+                for( auto &entry : lazy_futures_ ) {
+                    if( entry.first == qk_presave ) {
+                        entry.second.get();
+                        break;
+                    }
+                }
+                lazy_in_flight_.erase( qk_presave );
+                lazy_futures_.erase(
+                    std::remove_if( lazy_futures_.begin(), lazy_futures_.end(),
+                [&qk_presave]( const auto & e ) {
+                    return e.first == qk_presave;
+                } ),
+                lazy_futures_.end() );
+            }
+
             // If a presave is in-flight for this quad, wait for it before allowing
             // game logic to modify the submaps.  The worker holds raw submap pointers
             // and reads them for serialization; concurrent writes would corrupt the save.
-            const quad_key qk_presave{ dim_id, om_addr };
             if( presave_in_flight_.count( qk_presave ) ) {
                 for( auto &entry : presave_futures_ ) {
                     if( entry.first == qk_presave ) {
@@ -434,6 +461,30 @@ void submap_load_manager::update()
                 }
             }
             if( !any_still_desired ) {
+                // If a lazy future is still in-flight for this quad, drain it now
+                // before consulting dirty_quads_.  The future may have run mapgen
+                // and will return true, but the lazy reap (non-blocking) could have
+                // missed it if it completed after the reap already ran this turn.
+                // Draining here ensures the dirty mark is applied before we decide
+                // whether to save on eviction.
+                if( lazy_in_flight_.count( qk ) ) {
+                    for( auto &entry : lazy_futures_ ) {
+                        if( entry.first == qk ) {
+                            if( entry.second.get() ) {
+                                dirty_quads_.insert( qk );
+                            }
+                            break;
+                        }
+                    }
+                    lazy_in_flight_.erase( qk );
+                    lazy_futures_.erase(
+                        std::remove_if( lazy_futures_.begin(), lazy_futures_.end(),
+                    [&qk]( const auto & e ) {
+                        return e.first == qk;
+                    } ),
+                    lazy_futures_.end() );
+                }
+
                 const bool was_dirty = dirty_quads_.count( qk ) > 0;
                 if( was_dirty ) {
                     if( presave_in_flight_.count( qk ) ) {
@@ -474,13 +525,16 @@ void submap_load_manager::update()
     // ---- Async load-or-generate for lazy border ----
     {
         ZoneScopedN( "slm_lazy_submit" );
-        // Submit load_or_generate_quad tasks to the thread pool for border quads
-        // not yet in MAPBUFFER and not already in-flight.  Completed futures are
-        // reaped non-blockingly at the start of the next update(), at which point
-        // deferred Lua hooks are also drained.  world_tick() uses for_each_submap()
-        // (locked iteration) so workers can safely insert while the main thread
-        // iterates.  Pre-generating border quads means map::shift() → loadn() finds
-        // submaps already resident and skips synchronous generation.
+        // Submit load_or_generate_quad tasks to the thread pool for border quads not
+        // yet in MAPBUFFER and not already in-flight.  Spreading both disk loads and
+        // first-time mapgen across worker threads reduces hitching when the player
+        // crosses into new areas.
+        //
+        // Newly-generated quads (load_or_generate_quad returns true) are marked dirty
+        // in the lazy reap above, so they are saved to disk on eviction just like
+        // simulated quads.  This prevents the "rocking at a quad boundary" problem:
+        // without saving, the same never-persisted quad would be regenerated on each
+        // border pass, accumulating mongroups and firing duplicate autonotes.
         {
             std::unordered_set<quad_key, pair_hash> lazy_quads;
             for( const desired_key &key : all_desired ) {
@@ -504,7 +558,7 @@ void submap_load_manager::update()
                     quad_key{ dim_id, om_addr },
                     get_thread_pool().submit_returning(
                 [&mb, om_addr]() {
-                    mb.load_or_generate_quad( om_addr );
+                    return mb.load_or_generate_quad( om_addr );
                 } ) );
             }
         }

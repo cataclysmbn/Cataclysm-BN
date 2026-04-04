@@ -108,7 +108,12 @@ class mapbuffer
          * in SQLITE_THREADSAFE ≥ 1 (serialised or multi-thread) mode — the
          * default for all supported SQLite builds.
          */
-        void preload_quad( const tripoint &om_addr );
+        /**
+         * Returns true if data was loaded from the in-memory write-back cache
+         * (pending_writes_) rather than from disk.  A cache-loaded quad has not yet
+         * been flushed to actual disk files and must be re-saved before eviction.
+         */
+        bool preload_quad( const tripoint &om_addr );
 
         /**
          * Generate all submaps in the OMT quad at @p om_addr if any are not yet
@@ -118,16 +123,21 @@ class mapbuffer
          * submaps_mutex_ for add_submap().  If two workers race on the same quad
          * the duplicate submaps are deferred to drain_pending_submap_destroy().
          */
-        void generate_quad( const tripoint &om_addr );
+        /**
+         * Returns true if mapgen actually ran (quad was not fully resident),
+         * false if all submaps were already in memory and nothing was generated.
+         */
+        bool generate_quad( const tripoint &om_addr );
 
         /**
          * Try to load submaps from disk (@ref preload_quad), then generate any
-         * still missing via @ref generate_quad.
+         * still missing via @ref generate_quad.  Returns true if mapgen ran,
+         * false if the quad was already fully resident after the disk load.
          *
          * Safe to call concurrently from worker threads for distinct quad addresses.
          * Identical thread-safety contract as preload_quad().
          */
-        void load_or_generate_quad( const tripoint &om_addr );
+        bool load_or_generate_quad( const tripoint &om_addr );
 
         /**
          * Serialise the OMT quad at @p om_addr into the in-memory write-back cache

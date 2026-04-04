@@ -268,10 +268,11 @@ class submap_load_manager
         /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
         std::vector<point> bubble_offsets_;
 
-        /** In-flight preload_quad futures for lazy border positions.
-         *  Each future is paired with the quad key it was submitted for,
-         *  so we can remove it from lazy_in_flight_ when reaped. */
-        std::vector<std::pair<quad_key, std::future<void>>> lazy_futures_;
+        /** In-flight load_or_generate_quad futures for lazy border positions.
+         *  Returns true if mapgen ran (newly-generated quad), false if the quad was
+         *  already on disk.  Each future is paired with the quad key so we can remove
+         *  it from lazy_in_flight_ when reaped and mark newly-generated quads dirty. */
+        std::vector<std::pair<quad_key, std::future<bool>>> lazy_futures_;
 
         /** Quad keys with in-flight lazy futures — prevents duplicate submissions. */
         std::unordered_set<quad_key, pair_hash> lazy_in_flight_;
