@@ -567,6 +567,10 @@ if (RELEASE)
         install(PROGRAMS ${CMAKE_SOURCE_DIR}/cataclysm-launcher
             DESTINATION .)
     endif()
+    if (WIN32)
+        install(DIRECTORY ${CMAKE_SOURCE_DIR}/mods
+            DESTINATION .)
+    endif()
 endif()
 
 configure_file(
