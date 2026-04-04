@@ -1626,9 +1626,15 @@ overmap_special_id city_settings::pick_finale() const
 
 void city_settings::finalize()
 {
-    houses.finalize();
-    shops.finalize();
-    parks.finalize();
+    if( !houses.unfinalized_buildings.empty() ) {
+        houses.finalize();
+    }
+    if( !shops.unfinalized_buildings.empty() ) {
+        shops.finalize();
+    }
+    if( !parks.unfinalized_buildings.empty() ) {
+        parks.finalize();
+    }
     if( !finales.unfinalized_buildings.empty() ) {
         finales.finalize();
     }
