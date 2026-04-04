@@ -1,0 +1,11 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "gun_bow",
+    "name": "Gunbow",
+    "authors": [ "hamatk" ],
+    "description": "adds one rare bow with custom-made sound fx",
+    "category": "content",
+    "dependencies": [ "bn" ]
+  }
+]

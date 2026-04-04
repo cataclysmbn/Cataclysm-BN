@@ -1,0 +1,61 @@
+[
+    {
+        "type": "sound_effect",
+        "id" : "fire_gun",
+        "volume" : 30,
+        "variant" : "machine_bow",
+        "files" : [
+            "ham_archery/ham_cata_machBow_1.ogg",
+			"ham_archery/ham_cata_machBow_2.ogg",
+			"ham_archery/ham_cata_machBow_3.ogg",
+			"ham_archery/ham_cata_machBow_4.ogg",
+            "ham_archery/ham_cata_machBow_5.ogg",
+			"ham_archery/ham_cata_machBow_6.ogg",
+            "ham_archery/ham_cata_machBow_7.ogg"
+        ]
+    },
+    {
+        "type": "sound_effect",
+        "id" : "fire_gun_distant",
+        "volume" : 15,
+        "variant" : "machine_bow",
+        "files" : [
+            "ham_archery/ham_cata_machBow_1.ogg",
+			"ham_archery/ham_cata_machBow_2.ogg",
+			"ham_archery/ham_cata_machBow_3.ogg",
+			"ham_archery/ham_cata_machBow_4.ogg",
+            "ham_archery/ham_cata_machBow_5.ogg",
+			"ham_archery/ham_cata_machBow_6.ogg",
+            "ham_archery/ham_cata_machBow_7.ogg"
+        ]
+    },
+    {
+        "type": "sound_effect",
+        "id" : "reload",
+        "volume" : 65,
+        "variant" : "machine_bow",
+        "files" : [
+            "ham_archery/ham_cata_machBowReload.wav"
+        ]
+    },
+    {
+        "type": "sound_effect",
+        "id" : "fire_gun",
+        "volume" : 36,
+        "variant" : "mb_aux_shotgun",
+        "files" : [
+            "ham_archery/ham_cata_machShot.ogg",
+			"ham_archery/ham_cata_machShot_2.ogg"
+        ]
+    },
+    {
+        "type": "sound_effect",
+        "id" : "fire_gun_distant",
+        "volume" : 18,
+        "variant" : "mb_aux_shotgun",
+        "files" : [
+            "ham_archery/ham_cata_machShot.ogg",
+			"ham_archery/ham_cata_machShot_2.ogg"
+        ]
+    }
+]
