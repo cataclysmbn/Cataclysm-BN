@@ -911,7 +911,7 @@
     "autolearn": true,
     "time": "10 m",
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
-    "components": [ [ [ "chunk_rubber", 1 ] ], [ [ "superglue", 3 ] ] ]
+    "components": [ [ [ "chunk_rubber", 1 ] ], [ [ "adhesive_proper", 3, "LIST" ] ] ]
   },
   {
     "type": "recipe",
