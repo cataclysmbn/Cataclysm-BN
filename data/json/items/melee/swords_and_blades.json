@@ -103,7 +103,7 @@
     "symbol": ";",
     "color": "light_gray",
     "qualities": [ [ "CUT", 1 ], [ "CUT_FINE", 1 ], [ "BUTCHER", 12 ] ],
-    "flags": [ "STAB", "BELT_CLIP", "SHEATH_KNIFE" ]
+    "flags": [ "STAB", "BELT_CLIP" ]
   },
   {
     "id": "knife_combat",
