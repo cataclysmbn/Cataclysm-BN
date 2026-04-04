@@ -332,7 +332,7 @@
     "weight": "30 g",
     "bashing": 1,
     "ammo_type": "arrow",
-    "damage": { "damage_type": "stab", "damage_multiplier": 1.25, "armor_multiplier": 1.15 },
+    "damage": { "damage_type": "stab", "damage_multiplier": 1.28, "armor_multiplier": 1.18 },
     "range": 4,
     "dispersion": 50,
     "loudness": 0,
@@ -579,14 +579,15 @@
     "weight": "2000 g",
     "volume": "5 L",
     "price_postapoc": "20 USD",
-    "bashing": 13,
+    "bashing": 15,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 25 },
     "loudness": 16,
     "reload_noise_volume": 4,
-    "ranged_damage": { "damage_type": "stab", "amount": 56 },
+    "ranged_damage": { "damage_type": "stab", "amount": 56, "armor_penetration": 2 },
     "range": 26,
-    "dispersion": 1200,
-    "durability": 8
+    "dispersion": 1190,
+    "durability": 8,
+    "valid_mod_locations": [ [ "grip", 1 ], [ "underbarrel", 1 ], [ "sights", 1 ], [ "accessories", 2 ], [ "stabilizer", 1 ], [ "dampening", 1 ] ]
   },
   {
     "id": "compgreatbow",
@@ -603,12 +604,13 @@
     "volume": "6 L",
     "price_postapoc": "30 USD",
     "armor_data": { "covers": [ "torso" ], "encumbrance": 30 },
-    "bashing": 15,
+    "bashing": 17,
     "reload_noise_volume": 4,
     "loudness": 20,
     "durability": 8,
-    "ranged_damage": { "damage_type": "stab", "amount": 60 },
+    "ranged_damage": { "damage_type": "stab", "amount": 60, "armor_penetration": 2 },
     "range": 28,
-    "dispersion": 1000
+    "dispersion": 990,
+    "valid_mod_locations": [ [ "grip", 1 ], [ "underbarrel", 1 ], [ "sights", 1 ], [ "accessories", 2 ], [ "stabilizer", 1 ], [ "dampening", 1 ] ]
   }
 ]
