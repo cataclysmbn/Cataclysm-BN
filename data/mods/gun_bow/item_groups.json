@@ -1,0 +1,26 @@
+[
+  {
+    "type": "item_group",
+    "id": "rare",
+    "subtype": "distribution",
+    "entries": [ { "item": "machine_bow", "prob": 10 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "military",
+    "subtype": "distribution",
+    "entries": [ { "item": "machine_bow", "prob": 1 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_bank_vault",
+    "//": "Rare guns for bank vaults. No heavy weapons and LMGs.",
+    "items": [ { "item": "machine_bow", "prob": 8 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_rifle_milspec",
+    "//": "Military specification rifles only ever found at military sites.",
+    "items": [ { "item": "machine_bow", "prob": 5 } ]
+  }
+]
