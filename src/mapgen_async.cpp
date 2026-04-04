@@ -9,6 +9,8 @@
 
 #include "auto_note.h"
 #include "catalua.h"
+#include "catalua_sol.h"
+#include "catalua_threaded_hooks.h"
 #include "color.h"
 #include "coordinate_conversions.h"
 #include "init.h"
@@ -30,7 +32,7 @@ std::vector<deferred_mapgen_hook> g_hooks;
 std::mutex                      g_autonote_mutex;
 std::vector<deferred_autonote>  g_autonotes;
 
-// Cached flag: are any on_mapgen_postprocess hooks registered?
+// Cached flag: are any on_mapgen_postprocess hooks registered (serial OR threaded)?
 // Written on the main thread after mod load; read from worker threads.
 // Plain std::atomic<bool> — no Android-specific fallback needed
 // (the atomic_ref<float> workaround in shadowcasting.cpp does not apply here).
@@ -44,6 +46,21 @@ void push_deferred_mapgen_hook( deferred_mapgen_hook h )
     if( !g_has_mapgen_hooks.load( std::memory_order_relaxed ) ) {
         return;
     }
+
+    // Run the threaded hook pre-pass on this worker thread before queuing.
+    // The pre-pass is a no-op when no threaded hooks are registered.
+    if( cata::has_threaded_mapgen_hooks() ) {
+        const auto &omt = h.omt_pos;
+        h.pre_results = cata::run_threaded_hook_pre(
+            "on_mapgen_postprocess",
+            [&omt]( sol::table &params ) {
+                params["pos_x"] = omt.raw().x;
+                params["pos_y"] = omt.raw().y;
+                params["pos_z"] = omt.raw().z;
+            }
+        );
+    }
+
     std::lock_guard<std::mutex> lk( g_hook_mutex );
     g_hooks.push_back( std::move( h ) );
 }
@@ -51,7 +68,8 @@ void push_deferred_mapgen_hook( deferred_mapgen_hook h )
 void refresh_mapgen_postprocess_hook_presence( cata::lua_state &state )
 {
     g_has_mapgen_hooks.store(
-        cata::has_mapgen_postprocess_hooks( state ),
+        cata::has_mapgen_postprocess_hooks( state ) ||
+        cata::has_threaded_mapgen_hooks(),
         std::memory_order_relaxed );
 }
 
@@ -109,16 +127,19 @@ void run_deferred_mapgen_hooks()
         pending.swap( g_hooks );
     }
 
-    // Skip the expensive tinymap construction when no hooks are registered.
-    // Worker threads always push a deferred entry when generating on a worker
-    // thread, regardless of hook registration.  Checking here (on the main
-    // thread, where Lua access is safe) avoids building O(n) tinymaps per turn
-    // just to call a no-op hook loop.
-    if( !cata::has_mapgen_postprocess_hooks( *DynamicDataLoader::get_instance().lua ) ) {
+    if( pending.empty() ) {
         return;
     }
 
-    for( auto &h : pending ) {
+    auto &lua_instance = *DynamicDataLoader::get_instance().lua;
+    const bool has_serial = cata::has_mapgen_postprocess_hooks( lua_instance );
+
+    std::ranges::for_each( pending, [&]( deferred_mapgen_hook &h ) {
+        const bool has_threaded = !h.pre_results.empty();
+        if( !has_serial && !has_threaded ) {
+            return;
+        }
+
         // The submaps are already in the mapbuffer (saven() was called before
         // the hook was deferred).  Load them into a temporary tinymap so the
         // Lua hook receives a live map reference identical in content to what
@@ -128,11 +149,27 @@ void run_deferred_mapgen_hooks()
         tinymap tmp;
         tmp.bind_dimension( h.dim );
         tmp.load_from_mapbuffer( sm_base );
-        cata::run_on_mapgen_postprocess_hooks(
-            *DynamicDataLoader::get_instance().lua,
-            tmp,
-            h.omt_pos.raw(),
-            h.when
-        );
-    }
+
+        if( has_serial ) {
+            cata::run_on_mapgen_postprocess_hooks(
+                lua_instance,
+                tmp,
+                h.omt_pos.raw(),
+                h.when
+            );
+        }
+
+        if( has_threaded ) {
+            map *tmp_as_map = &tmp;
+            cata::run_threaded_hook_post(
+                lua_instance,
+                h.pre_results,
+                [&]( sol::table &params ) {
+                    params["map"]  = tmp_as_map;
+                    params["omt"]  = h.omt_pos.raw();
+                    params["when"] = h.when;
+                }
+            );
+        }
+    } );
 }

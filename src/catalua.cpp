@@ -17,6 +17,8 @@ constexpr int LUA_API_VERSION = 2;
 #include "bionics.h"
 #include "catalua_console.h"
 #include "catalua_hooks.h"
+#include "catalua_threaded_hooks.h"
+#include "catalua_worker.h"
 #include "catalua_impl.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_readonly.h"
@@ -112,9 +114,13 @@ void reload_lua_code()
         debugmsg( "%s", e.what() );
     }
     clear_mod_being_loaded( state );
-    // Refresh the cached flag so worker threads immediately see any change to
-    // on_mapgen_postprocess hook registration caused by the reload.
+    // Refresh cached flags so worker threads immediately see any change to hook
+    // registrations caused by the reload.
+    // Threaded presence must be refreshed first — the combined g_has_mapgen_hooks
+    // flag reads the threaded result.
+    cata::refresh_threaded_mapgen_hook_presence();
     refresh_mapgen_postprocess_hook_presence( state );
+    cata::invalidate_worker_states();
 }
 
 void debug_write_lua_backtrace( std::ostream &out )
@@ -258,6 +264,7 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
 
     // hooks
     cata::define_hooks( state );
+    cata::define_threaded_hooks( state );
 
     gt["add_hook"] = [&lua]( const std::string & hook_name, const sol::object & entry ) {
         auto *L = lua.lua_state();

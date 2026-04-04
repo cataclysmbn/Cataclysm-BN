@@ -1,8 +1,10 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "calendar.h"
+#include "catalua_threaded_hook_types.h"
 #include "coordinates.h"
 
 namespace cata
@@ -28,6 +30,9 @@ struct deferred_mapgen_hook {
     std::string       dim;
     tripoint_abs_omt  omt_pos;
     time_point        when;
+    /// Results from threaded hook pre-passes run on the worker thread.
+    /// Empty when no threaded on_mapgen_postprocess hooks are registered.
+    std::vector<cata::hook_pre_result> pre_results;
 };
 
 /**
