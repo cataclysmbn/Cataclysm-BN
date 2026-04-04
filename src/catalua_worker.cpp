@@ -51,7 +51,7 @@ auto get_or_create_worker_state() -> worker_lua_state &
 auto table_to_intent( const sol::table &t ) -> cata::hook_intent
 {
     auto result = cata::hook_intent{};
-    t.for_each( [&]( const sol::object &key, const sol::object &val ) {
+    t.for_each( [&]( const sol::object & key, const sol::object & val ) {
         if( !key.is<std::string>() ) {
             return;
         }
@@ -92,11 +92,11 @@ auto call_pre_fn_in_worker(
         }
         auto *L = ws.lua.lua_state();
         const int status = luaL_loadbuffer(
-            L,
-            reinterpret_cast<const char *>( opts.bytecode->data() ),
-            opts.bytecode->size(),
-            std::string( opts.debug_name ).c_str()
-        );
+                               L,
+                               reinterpret_cast<const char *>( opts.bytecode->data() ),
+                               opts.bytecode->size(),
+                               std::string( opts.debug_name ).c_str()
+                           );
         if( status != 0 ) {
             const char *err_msg = lua_tostring( L, -1 );
             lua_pop( L, 1 );

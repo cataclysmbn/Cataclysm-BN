@@ -52,13 +52,13 @@ void push_deferred_mapgen_hook( deferred_mapgen_hook h )
     if( cata::has_threaded_mapgen_hooks() ) {
         const auto &omt = h.omt_pos;
         h.pre_results = cata::run_threaded_hook_pre(
-            "on_mapgen_postprocess",
-            [&omt]( sol::table &params ) {
-                params["pos_x"] = omt.raw().x;
-                params["pos_y"] = omt.raw().y;
-                params["pos_z"] = omt.raw().z;
-            }
-        );
+                            "on_mapgen_postprocess",
+        [&omt]( sol::table & params ) {
+            params["pos_x"] = omt.raw().x;
+            params["pos_y"] = omt.raw().y;
+            params["pos_z"] = omt.raw().z;
+        }
+                        );
     }
 
     std::lock_guard<std::mutex> lk( g_hook_mutex );
@@ -134,7 +134,7 @@ void run_deferred_mapgen_hooks()
     auto &lua_instance = *DynamicDataLoader::get_instance().lua;
     const bool has_serial = cata::has_mapgen_postprocess_hooks( lua_instance );
 
-    std::ranges::for_each( pending, [&]( deferred_mapgen_hook &h ) {
+    std::ranges::for_each( pending, [&]( deferred_mapgen_hook & h ) {
         const bool has_threaded = !h.pre_results.empty();
         if( !has_serial && !has_threaded ) {
             return;
@@ -164,11 +164,11 @@ void run_deferred_mapgen_hooks()
             cata::run_threaded_hook_post(
                 lua_instance,
                 h.pre_results,
-                [&]( sol::table &params ) {
-                    params["map"]  = tmp_as_map;
-                    params["omt"]  = h.omt_pos.raw();
-                    params["when"] = h.when;
-                }
+            [&]( sol::table & params ) {
+                params["map"]  = tmp_as_map;
+                params["omt"]  = h.omt_pos.raw();
+                params["when"] = h.when;
+            }
             );
         }
     } );

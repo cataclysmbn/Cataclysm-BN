@@ -40,21 +40,21 @@ std::atomic<bool> g_has_threaded_mapgen_hooks{ false };
 /// Returns empty vector on failure (e.g. C function, unsupported closure).
 auto dump_lua_fn( lua_State *L, const sol::protected_function &fn ) -> std::vector<std::byte>
 {
-    auto result = std::vector<std::byte>{};
+    auto result = std::vector<std::byte> {};
 
     fn.push();  // pushes the function onto the Lua stack
 
     const int status = lua_dump(
-        L,
-        []( lua_State *, const void *data, size_t sz, void *ud ) -> int {
-            auto *vec = static_cast<std::vector<std::byte> *>( ud );
-            const auto *bytes = static_cast<const std::byte *>( data );
-            vec->insert( vec->end(), bytes, bytes + sz );
-            return 0;
-        },
-        &result,
-        /*strip=*/0
-    );
+                           L,
+    []( lua_State *, const void *data, size_t sz, void *ud ) -> int {
+        auto *vec = static_cast<std::vector<std::byte> *>( ud );
+        const auto *bytes = static_cast<const std::byte *>( data );
+        vec->insert( vec->end(), bytes, bytes + sz );
+        return 0;
+    },
+    &result,
+    /*strip=*/0
+                       );
 
     lua_pop( L, 1 );  // pop the function that fn.push() left on the stack
 
@@ -134,7 +134,7 @@ void define_threaded_hooks( lua_state &state )
             e.mod_id      = mod_id;
             e.pre_bytecode = std::move( bytecode );
             std::ranges::stable_sort( entries, std::ranges::greater{},
-                []( const threaded_hook_entry & e2 ) { return e2.priority; } );
+            []( const threaded_hook_entry & e2 ) { return e2.priority; } );
         }
     };
 }
@@ -142,8 +142,8 @@ void define_threaded_hooks( lua_state &state )
 auto intent_to_table( sol::state_view lua, const hook_intent &intent ) -> sol::table
 {
     auto t = lua.create_table();
-    std::ranges::for_each( intent, [&t]( const auto &kv ) {
-        std::visit( [&t, &kv]( const auto &v ) {
+    std::ranges::for_each( intent, [&t]( const auto & kv ) {
+        std::visit( [&t, &kv]( const auto & v ) {
             using V = std::decay_t<decltype( v )>;
             if constexpr( !std::is_same_v<V, std::monostate> ) {
                 t[kv.first] = v;
@@ -158,7 +158,7 @@ auto run_threaded_hook_pre(
     std::function<void( sol::table & )> init
 ) -> std::vector<hook_pre_result>
 {
-    auto results = std::vector<hook_pre_result>{};
+    auto results = std::vector<hook_pre_result> {};
 
     std::shared_lock lock( g_registry_mutex );
     const auto it = g_registry.find( std::string( hook_name ) );
@@ -168,17 +168,17 @@ auto run_threaded_hook_pre(
 
     results.reserve( it->second.size() );
 
-    std::ranges::for_each( it->second, [&]( const threaded_hook_entry &entry ) {
+    std::ranges::for_each( it->second, [&]( const threaded_hook_entry & entry ) {
         auto intent = hook_intent{};
         const bool fired = cata::call_pre_fn_in_worker(
-            pre_fn_call_opts{
-                .fn_id      = entry.pre_fn_id,
-                .bytecode   = &entry.pre_bytecode,
-                .debug_name = string_format( "%s/%s", entry.mod_id, hook_name ),
-            },
-            init,
-            intent
-        );
+        pre_fn_call_opts{
+            .fn_id      = entry.pre_fn_id,
+            .bytecode   = &entry.pre_bytecode,
+            .debug_name = string_format( "%s/%s", entry.mod_id, hook_name ),
+        },
+        init,
+        intent
+                           );
 
         results.push_back( hook_pre_result{
             .run_post   = fired && entry.post_fn_id != 0,
@@ -199,7 +199,7 @@ void run_threaded_hook_post(
     sol::state &lua = global.lua;
     sol::table post_fns = lua["game"]["cata_internal"]["threaded_hook_post_fns"];
 
-    std::ranges::for_each( results, [&]( const hook_pre_result &r ) {
+    std::ranges::for_each( results, [&]( const hook_pre_result & r ) {
         if( !r.run_post || r.post_fn_id == 0 ) {
             return;
         }
