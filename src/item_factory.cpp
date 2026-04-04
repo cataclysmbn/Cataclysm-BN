@@ -3413,13 +3413,15 @@ void Item_factory::load_item_group( const JsonObject &jsobj, const item_group_id
         }
     }
 
-    if( jsobj.has_string( "copy-from" ) && isd == nullptr ) {
+    if( jsobj.has_string( "copy-from" ) ) {
         const auto copy_from_id = item_group_id( jsobj.get_string( "copy-from" ) );
-        if( const auto *copy_from = dynamic_cast<const Item_group *>( get_group( copy_from_id ) ) ) {
-            isd = copy_from->clone();
-        } else {
-            jsobj.throw_error( string_format( "unknown item group copy-from '%s'", copy_from_id.str() ),
-                               "copy-from" );
+        if( isd == nullptr ) {
+            if( const auto *copy_from = dynamic_cast<const Item_group *>( get_group( copy_from_id ) ) ) {
+                isd = copy_from->clone();
+            } else {
+                jsobj.throw_error( string_format( "unknown item group copy-from '%s'", copy_from_id.str() ),
+                                   "copy-from" );
+            }
         }
     }
 
