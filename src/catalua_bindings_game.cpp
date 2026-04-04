@@ -126,6 +126,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "register_action_menu_entry", []( sol::table opts ) -> void {
         auto id = opts.get_or( "id", std::string{} );
         auto name = opts.get_or( "name", std::string{} );
+        auto description = opts.get_or( "description", std::string{} );
         auto category_id = opts.get_or( "category", std::string{ "misc" } );
         auto hotkey = opts.get<sol::optional<std::string>>( "hotkey" );
         auto hotkey_value = std::optional<std::string>{};
@@ -137,10 +138,19 @@ void cata::detail::reg_game_api( sol::state &lua )
         cata::lua_action_menu::register_entry( {
             .id = std::move( id ),
             .name = std::move( name ),
+            .description = std::move( description ),
             .category_id = std::move( category_id ),
             .hotkey = std::move( hotkey_value ),
             .fn = std::move( fn ),
         } );
+    } );
+    DOC( "Returns action menu entries as JSON string for CLI integration." );
+    luna::set_fx( lib, "list_action_menu_entries_json", []() -> std::string {
+        return cata::lua_action_menu::list_entries_json();
+    } );
+    DOC( "Run action menu entry by id. Returns true on success." );
+    luna::set_fx( lib, "run_action_menu_entry", []( const std::string & id ) -> bool {
+        return cata::lua_action_menu::run_entry( id );
     } );
 
     DOC( "Spawns a new item. Same as Item::spawn " );
