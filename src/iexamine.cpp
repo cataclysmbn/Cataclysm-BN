@@ -956,8 +956,8 @@ void iexamine::vending( player &p, const tripoint &examp )
         const auto name_color = cur_item->color_in_inventory( p );
         const auto cost = format_money( cur_item->price( false ) );
         const std::string header_text = string_format( "<%s> %s",
-                                                      colorize( cur_item->display_name(), name_color ),
-                                                      cost );
+                                        colorize( cur_item->display_name(), name_color ),
+                                        cost );
         trim_and_print( w_item_info, point_east, std::max( 0, w_info_w - 3 ), c_light_gray, header_text );
         wnoutrefresh( w_item_info );
     } );
