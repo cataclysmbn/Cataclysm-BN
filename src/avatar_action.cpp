@@ -130,8 +130,13 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
         return m.has_flag( flag_LADDER, dest_loc + tripoint_below );
     };
 
+    const auto can_use_ramp_exit = [&]( const tripoint & ramp_pos ) {
+        const auto above_ramp = ramp_pos + tripoint_above;
+        return m.has_flag( TFLAG_RAMP_DOWN, above_ramp );
+    };
+
     bool via_ramp = false;
-    if( m.has_flag( TFLAG_RAMP_UP, dest_loc ) ) {
+    if( m.has_flag( TFLAG_RAMP_UP, dest_loc ) && can_use_ramp_exit( dest_loc ) ) {
         dest_loc.z += 1;
         via_ramp = true;
     } else if( m.has_flag( TFLAG_RAMP_DOWN, dest_loc ) || can_use_ladder() ) {
@@ -455,6 +460,10 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
         && m.has_flag( flag_LADDER, you.pos() )
         && !m.passable( dest_loc )
         && g->walk_move( dest_loc + tripoint_above ) ) {
+        return true;
+    }
+
+    if( !is_riding && avatar_action::ramp_move( you, m, dest_loc ) ) {
         return true;
     }
 

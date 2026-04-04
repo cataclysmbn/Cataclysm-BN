@@ -28,6 +28,53 @@
 
 static weather_type_id WEATHER_CLOUDY = weather_type_id( "cloudy" );
 
+namespace
+{
+
+struct zlope_layout {
+    tripoint start;
+    tripoint zlope_pos;
+    tripoint wall_pos;
+    tripoint roof_pos;
+    tripoint open_above_zlope;
+};
+
+auto set_test_terrain( map &here, const tripoint &pos, const ter_id &terrain ) -> void
+{
+    if( here.ter( pos ) != terrain ) {
+        REQUIRE( here.ter_set( pos, terrain ) );
+    }
+}
+
+auto build_single_tile_zlope( const ter_id &headroom_terrain,
+                              const ter_id &upper_exit_terrain ) -> zlope_layout
+{
+    clear_all_state();
+    clear_map();
+
+    auto &dummy = get_avatar();
+    auto &here = get_map();
+
+    const auto layout = zlope_layout{
+        .start = tripoint( 60, 60, 0 ),
+        .zlope_pos = tripoint( 61, 60, 0 ),
+        .wall_pos = tripoint( 62, 60, 0 ),
+        .roof_pos = tripoint( 62, 60, 1 ),
+        .open_above_zlope = tripoint( 61, 60, 1 ),
+    };
+
+    dummy.setpos( layout.start );
+    set_test_terrain( here, layout.start, ter_id( "t_floor" ) );
+    set_test_terrain( here, layout.zlope_pos, ter_id( "t_zlope" ) );
+    set_test_terrain( here, layout.wall_pos, ter_id( "t_wall" ) );
+    set_test_terrain( here, layout.roof_pos, upper_exit_terrain );
+    set_test_terrain( here, layout.open_above_zlope, headroom_terrain );
+
+    return layout;
+}
+
+} // namespace
+
 struct body_part_temp {
     body_part_temp( bodypart_str_id part, int temperature )
         : part( part ), temperature( temperature )
@@ -563,4 +610,53 @@ TEST_CASE( "player_move_through_vehicle_holes" )
 
     CHECK( get_avatar().pos() == pos );
 
+}
+
+TEST_CASE( "player_can_use_single_tile_zlope" )
+{
+    SECTION( "floor exit" ) {
+        const auto layout = build_single_tile_zlope( ter_id( "t_open_air" ), ter_id( "t_floor" ) );
+        auto &dummy = get_avatar();
+        auto &here = get_map();
+
+        REQUIRE( avatar_action::move( dummy, here, point_east ) );
+        CHECK( dummy.pos() == layout.zlope_pos );
+
+        REQUIRE( avatar_action::move( dummy, here, point_east ) );
+        CHECK( dummy.pos() == layout.roof_pos );
+
+        REQUIRE( avatar_action::move( dummy, here, point_west ) );
+        CHECK( dummy.pos() == layout.zlope_pos );
+    }
+
+    SECTION( "bridge exit" ) {
+        const auto layout = build_single_tile_zlope( ter_id( "t_open_air" ), ter_id( "t_airbridge_wood" ) );
+        auto &dummy = get_avatar();
+        auto &here = get_map();
+
+        REQUIRE( avatar_action::move( dummy, here, point_east ) );
+        CHECK( dummy.pos() == layout.zlope_pos );
+
+        REQUIRE( avatar_action::move( dummy, here, point_east ) );
+        CHECK( dummy.pos() == layout.roof_pos );
+
+        REQUIRE( avatar_action::move( dummy, here, point_west ) );
+        CHECK( dummy.pos() == layout.zlope_pos );
+    }
+}
+
+TEST_CASE( "player_does_not_auto_climb_blocked_single_tile_zlope" )
+{
+    const auto layout = build_single_tile_zlope( ter_id( "t_airbridge_wood" ), ter_id( "t_floor" ) );
+    auto &dummy = get_avatar();
+    auto &here = get_map();
+
+    REQUIRE( avatar_action::move( dummy, here, point_east ) );
+    CHECK( dummy.pos() == layout.zlope_pos );
+
+    CHECK_FALSE( avatar_action::move( dummy, here, point_east ) );
+    CHECK( dummy.pos() == layout.zlope_pos );
+
+    REQUIRE( avatar_action::move( dummy, here, point_west ) );
+    CHECK( dummy.pos() == layout.start );
 }
