@@ -89,6 +89,10 @@ units::volume item_stack::stored_volume() const
 
 int item_stack::amount_can_fit( const item &it ) const
 {
+    if( use_total_count() ) {
+        const int amt = get_total_free_count();
+        return std::min( amt, it.count() );
+    }
     // Without stacking charges, would we violate the count limit?
     const bool violates_count = size() >= static_cast<size_t>( count_limit() );
     const item *here = it.count_by_charges() ? stacks_with( it ) : nullptr;
@@ -137,4 +141,18 @@ void item_stack::remove_top_items_with( std::function < detached_ptr<item>
                                         ( detached_ptr<item> && ) > cb )
 {
     items->remove_with( std::move( cb ) );
+}
+
+int item_stack::get_total_stored_count() const
+{
+    int charges = 0;
+    for( item *&item : *items ) {
+        charges += item->count();
+    }
+    return charges;
+}
+
+int item_stack::get_total_free_count() const
+{
+    return total_count_limit() - get_total_stored_count();
 }

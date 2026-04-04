@@ -43,6 +43,12 @@
     "info": "You can store items here."
   },
   {
+    "id": "CARGO_BY_CHARGES",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "You can store very few, but infinite volume items here."
+  },
+  {
     "id": "CTRL_ELECTRONIC",
     "type": "json_flag",
     "context": [ "vehicle_part" ],

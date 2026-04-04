@@ -272,6 +272,19 @@ units::volume vehicle_stack::max_volume() const
     return 0_ml;
 }
 
+bool vehicle_stack::use_total_count() const
+{
+    return myorigin->part_flag( part_num, "CARGO_BY_CHARGES" );
+}
+int vehicle_stack::total_count_limit() const
+{
+    if( myorigin->part_flag( part_num, "CARGO_BY_CHARGES" ) &&
+        !myorigin->part( part_num ).is_broken() ) {
+        return myorigin->part( part_num ).info().cargo_charges;
+    }
+    return 0;
+}
+
 // Vehicle class methods.
 
 void vehicle::copy_static_from( const vehicle &source )
@@ -6080,6 +6093,21 @@ units::volume vehicle::max_volume( const int part ) const
 units::volume vehicle::free_volume( const int part ) const
 {
     return get_items( part ).free_volume();
+}
+
+int vehicle::stored_charges( const int part ) const
+{
+    return get_items( part ).get_total_stored_count();
+}
+
+int vehicle::max_charges( const int part ) const
+{
+    return get_items( part ).total_count_limit();
+}
+
+int vehicle::free_charges( const int part ) const
+{
+    return get_items( part ).get_total_free_count();
 }
 
 void vehicle::make_inactive( item &target )
