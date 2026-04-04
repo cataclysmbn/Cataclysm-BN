@@ -1296,7 +1296,9 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
 
 void groundcover_extra::finalize()   // FIXME: return bool for failure
 {
-    default_ter = ter_id( default_ter_str );
+    if( !default_ter_str.empty() ) {
+        default_ter = ter_id( default_ter_str );
+    }
 
     ter_furn_id tf_id;
     int wtotal = 0;
