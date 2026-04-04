@@ -897,24 +897,24 @@ std::string monster::extended_description() const
     }
 
     if( display_mod_source ) {
-        ss += _( "Origin: " );
-        ss += enumerate_as_string( type->src.begin(),
+        const std::string mod_src = enumerate_as_string( type->src.begin(),
         type->src.end(), []( const std::pair<mtype_id, mod_id> &source ) {
             return string_format( "'%s'", source.second->name() );
         }, enumeration_conjunction::arrow );
+        ss += colorize( string_format( _( "Origin: %s" ), mod_src ), c_light_blue );
+        ss += "\n";
     }
     if( display_object_ids ) {
-        if( display_mod_source ) {
-            ss += "\n";
-        }
         ss += colorize( string_format( "[%s]", type->id.str() ), c_light_blue );
     }
 
     ss += "\n--\n";
-
-    const auto header_colored = colorize( string_format( _( "This is a %s." ), name() ),
-                                          symbol_color() );
-    ss += header_colored + "  " + att_colored + " " + difficulty_str + "\n";
+    ss += "<color_light_gray>";
+    ss += _( "This is a " );
+    ss += "</color>";
+    ss += colorize( name(), symbol_color() );
+    ss += "<color_light_gray>.</color>";
+    ss += "  " + att_colored + " " + difficulty_str + "\n";
     if( !get_effect_status().empty() ) {
         ss += string_format( _( "<stat>It is %s.</stat>" ), get_effect_status() ) + "\n";
     }
@@ -929,7 +929,7 @@ std::string monster::extended_description() const
     ss += colorize( speed_desc.first, speed_desc.second ) + "\n";
 
     ss += "--\n";
-    ss += string_format( "<dark>%s</dark>", type->get_description() ) + "\n";
+    ss += "<color_light_gray>" + type->get_description() + "</color>\n";
     ss += "--\n";
 
     ss += string_format( _( "It is %s in size." ),

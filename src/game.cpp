@@ -7532,16 +7532,22 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
     const auto block_chance = m.obstacle_coverage( u.pos(), lp );
     const auto move_cost = m.move_cost( lp );
     const auto move_cost_is_zero = move_cost == 0;
-    const auto move_cost_str = move_cost_is_zero ? _( "Impassable" ) :
-                           string_format( _( "Move cost: %d" ), move_cost * 50 );
+    const auto move_cost_str = move_cost_is_zero ? _( "Impassable " ) :
+                           string_format( _( "Move cost: %d " ), move_cost * 50 );
     const auto move_cost_color = move_cost_is_zero ? c_light_red : c_light_gray;
     const int move_cost_len = utf8_width( move_cost_str );
-    const int location_width = std::max( 0, max_width - move_cost_len - 1 );
+    const std::pair<std::string, nc_color> ll = get_light_level( std::max( 1.0,
+                                          LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
+    const int light_len = utf8_width( ll.first );
+    const auto location_width = std::max( 0, max_width - move_cost_len - 1 );
     trim_and_print( w_look, point( column, line ), location_width, location_color, area_name );
-    const int move_col = column + std::max( 0, max_width - move_cost_len );
+    const auto move_col = column + std::max( 0, max_width - move_cost_len );
     mvwprintz( w_look, point( move_col, line ), move_cost_color, move_cost_str );
     line++;
-    trim_and_print( w_look, point( column, line ), max_width, terrain_color, tile );
+    const auto terrain_width = std::max( 0, max_width - light_len - 1 );
+    trim_and_print( w_look, point( column, line ), terrain_width, terrain_color, tile );
+    const auto light_col = column + std::max( 0, max_width - light_len - 1 );
+    mvwprintz( w_look, point( light_col, line ), ll.second, ll.first );
     if( !terrain_desc.empty() ) {
         const int desc_lines = fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
                                                terrain_desc ) - 1;
@@ -7580,10 +7586,6 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
         std::string sign_string = u.has_trait( trait_ILLITERATE ) ? "???" : signage;
         mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Sign: %s" ), sign_string );
     }
-
-    std::pair<std::string, nc_color> ll = get_light_level( std::max( 1.0,
-                                          LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
-    mvwprintz( w_look, point( column, ++line ), ll.second, ll.first );
 
     if( m.has_zlevels() && lp.z > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
         tripoint below( lp.xy(), lp.z - 1 );
@@ -7663,9 +7665,7 @@ void game::print_vehicle_info( const vehicle *veh, int veh_part, const catacurse
 {
     if( veh ) {
         // Print the name of the vehicle.
-        mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Vehicle: " ) );
-        mvwprintz( w_look, point( column + utf8_width( _( "Vehicle: " ) ), line ), c_white, "%s",
-                   veh->name );
+        mvwprintz( w_look, point( column, ++line ), c_white, "%s", veh->name );
         // Then the list of parts on that tile.
         line = veh->print_part_list( w_look, ++line, last_line, getmaxx( w_look ), veh_part );
     }

@@ -78,6 +78,16 @@
       "text": "Holds liquids.",
       "test": "flag",
       "flag": "LIQUIDCONT"
+    },
+    {
+      "text": "Can sit here.",
+      "test": "flag",
+      "flag": "CAN_SIT"
+    },
+    {
+      "text": "Short.",
+      "test": "flag",
+      "flag": "SHORT"
     }
   ]
 }

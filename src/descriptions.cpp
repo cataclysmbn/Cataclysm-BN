@@ -121,7 +121,7 @@ void game::extended_description( const tripoint &p )
                         fid->src.end(), []( const std::pair<furn_str_id, mod_id> &source ) {
                             return string_format( "'%s'", source.second->name() );
                         }, enumeration_conjunction::arrow );
-                        desc = string_format( _( "Origin: %s\n" ), mod_src );
+                        desc = colorize( string_format( _( "\nOrigin: %s\n" ), mod_src ), c_light_blue );
                     }
                     if( display_object_ids ) {
                         desc += colorize( string_format( "[%s]\n", fid.id() ), c_light_blue );
@@ -139,7 +139,7 @@ void game::extended_description( const tripoint &p )
                         tid->src.end(), []( const std::pair<ter_str_id, mod_id> &source ) {
                             return string_format( "'%s'", source.second->name() );
                         }, enumeration_conjunction::arrow );
-                        desc = string_format( _( "Origin: %s\n" ), mod_src );
+                        desc = colorize( string_format( _( "\nOrigin: %s\n" ), mod_src ), c_light_blue );
                     }
                     if( display_object_ids ) {
                         desc += colorize( string_format( "[%s]\n", tid.id() ), c_light_blue );
@@ -178,9 +178,11 @@ std::string map_data_common_t::extended_description() const
 {
     std::stringstream ss;
     ss << "--" << '\n';
-    ss << colorize( string_format( _( "This is a %s." ), name() ), color() ) << '\n';
+    ss << "<color_light_gray>" << _( "This is a " ) << "</color>";
+    ss << colorize( name(), color() );
+    ss << "<color_light_gray>.</color>\n";
     ss << "--" << '\n';
-    ss << "<dark>" << description << "</dark>" << '\n';
+    ss << "<color_light_gray>" << description << "</color>\n";
     ss << "--" << '\n';
     bool has_any_harvest = std::ranges::any_of( harvest_by_season,
     []( const harvest_id & hv ) {
@@ -227,20 +229,20 @@ std::string map_data_common_t::extended_description() const
             identical_harvest.erase( range.first, range.second );
         }
 
-        ss << "--";
+        ss << "--" << '\n';
     }
 
     if( deconstruct.can_do ) {
         const auto items = item_group::every_possible_item_from( deconstruct.drop_group );
         if( !items.empty() ) {
-            ss << '\n' << _( "You could deconstruct it to get some of those items:" ) << '\n';
+            ss << _( "You could deconstruct it to get some of those items:" ) << '\n';
             for( const itype *it : items ) {
                 ss << "<good>" << item::nname( it->get_id() ) << "</good>" << '\n';
             }
         } else {
             ss << _( "It can be deconstructed, but won't yield any resources." ) << '\n';
         }
-        ss << "--";
+        ss << "--" << '\n';
     }
 
     if( debug_vision() ) {
@@ -249,7 +251,7 @@ std::string map_data_common_t::extended_description() const
 
     if( bash.ranged && bash.ranged->reduction.min > 0 ) {
         static std::string indent = "    ";
-        ss << "\n" << "Cover:" << "\n";
+        ss << "Cover:" << "\n";
         if( bash.ranged->reduction.min == bash.ranged->reduction.max ) {
             ss << indent << "Damage Reduction: " << bash.ranged->reduction.min << "\n";
         } else {
