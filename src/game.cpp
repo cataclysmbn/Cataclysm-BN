@@ -7517,6 +7517,7 @@ void game::print_visibility_info( const catacurses::window &w_look, int column, 
     line += 2;
 }
 
+// lots of this is from https://github.com/CleverRaven/Cataclysm-DDA/pull/39793
 void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_look,
                                const std::string &area_name, int column, int &line )
 {
