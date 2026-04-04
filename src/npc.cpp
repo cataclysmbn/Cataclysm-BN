@@ -2396,7 +2396,7 @@ int npc::print_info( const catacurses::window &w, int line, int vLines, int colu
     mvwprintz( w, point( column, ++line ), res.second, res.first.translated() );
 
     const std::string senses_str = sees( g->u ) ? _( "Aware of your presence" ) :
-                             _( "Unaware of you" );
+                                   _( "Unaware of you" );
     mvwprintz( w, point( column, ++line ), sees( g->u ) ? c_yellow : c_green, senses_str );
 
     if( display_object_ids && line < last_line ) {

@@ -833,14 +833,15 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     mvwprintz( w, point( column, ++vStart ), att.second, att.first );
 
     const std::string senses_str = sees( g->u ) ? _( "Can see to your current location" ) :
-                                              _( "Can't see to your current location" );
+                                   _( "Can't see to your current location" );
     mvwprintz( w, point( column, ++vStart ), sees( g->u ) ? c_red : c_green, senses_str );
 
     const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
     mvwprintz( w, point( column, ++vStart ), speed_desc.second, speed_desc.first );
 
     if( debug_mode ) {
-        mvwprintz( w, point( column, ++vStart ), c_light_gray, _( " Difficulty " ) + std::to_string( type->difficulty ) );
+        mvwprintz( w, point( column, ++vStart ), c_light_gray,
+                   _( " Difficulty " ) + std::to_string( type->difficulty ) );
     }
     if( display_mod_source ) {
         const std::string mod_src = enumerate_as_string( type->src.begin(),

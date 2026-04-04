@@ -7524,7 +7524,8 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
 
     const auto &terrain = m.ter( lp ).obj();
     const auto terrain_color = terrain.color();
-    const oter_id &cur_ter_m = ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( m.getabs( lp ) ) ) );
+    const oter_id &cur_ter_m = ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( m.getabs(
+                                   lp ) ) ) );
     const auto location_color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes );
     const auto terrain_desc = terrain.description.translated();
     const std::string tile = m.tername( lp );
@@ -7533,11 +7534,11 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
     const auto move_cost = m.move_cost( lp );
     const auto move_cost_is_zero = move_cost == 0;
     const auto move_cost_str = move_cost_is_zero ? _( "Impassable " ) :
-                           string_format( _( "Move cost: %d " ), move_cost * 50 );
+                               string_format( _( "Move cost: %d " ), move_cost * 50 );
     const auto move_cost_color = move_cost_is_zero ? c_light_red : c_light_gray;
     const int move_cost_len = utf8_width( move_cost_str );
     const std::pair<std::string, nc_color> ll = get_light_level( std::max( 1.0,
-                                          LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
+            LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
     const int light_len = utf8_width( ll.first );
     const auto location_width = std::max( 0, max_width - move_cost_len - 1 );
     trim_and_print( w_look, point( column, line ), location_width, location_color, area_name );
