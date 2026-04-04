@@ -160,7 +160,15 @@
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 2 ] ],
     "ammo": "223",
     "built_in_mods": [ "mach_bow_arrowrest", "mach_bow_sight", "mach_bow_silencer", "mb_aux_shotgun" ],
-    "valid_mod_locations": [ [ "rail", 1 ], [ "underbarrel", 1 ], [ "sights", 1 ], [ "accessories", 2 ], [ "brass catcher", 1 ], [ "stabilizer", 1 ], [ "dampening", 1 ] ],
+    "valid_mod_locations": [
+      [ "rail", 1 ],
+      [ "underbarrel", 1 ],
+      [ "sights", 1 ],
+      [ "accessories", 2 ],
+      [ "brass catcher", 1 ],
+      [ "stabilizer", 1 ],
+      [ "dampening", 1 ]
+    ],
     "magazines": [ [ "223", [ "stanag30", "stanag5", "stanag10", "stanag20" ] ] ]
   },
   {
@@ -174,8 +182,22 @@
     "time": "200 m",
     "decomp_learn": 1,
     "reversible": true,
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "qualities": [
+      { "id": "CUT", "level": 1 },
+      { "id": "SAW_M_FINE", "level": 1 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "WRENCH_FINE", "level": 1 }
+    ],
     "using": [ [ "welding_standard", 15 ] ],
-    "components": [ [ [ "processor", 1 ] ], [ [ "motor_tiny", 1 ] ], [ [ "spring", 2 ] ], [ [ "steel_chunk", 3 ] ], [ [ "scrap", 3 ] ], [ [ "alloy_sheet", 3 ] ], [ [ "solder_wire", 4 ] ], [ [ "wire", 2 ] ] ]
+    "components": [
+      [ [ "processor", 1 ] ],
+      [ [ "motor_tiny", 1 ] ],
+      [ [ "spring", 2 ] ],
+      [ [ "steel_chunk", 3 ] ],
+      [ [ "scrap", 3 ] ],
+      [ [ "alloy_sheet", 3 ] ],
+      [ [ "solder_wire", 4 ] ],
+      [ [ "wire", 2 ] ]
+    ]
   }
 ]
