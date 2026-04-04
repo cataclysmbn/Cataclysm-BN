@@ -567,7 +567,7 @@ if (RELEASE)
         install(PROGRAMS ${CMAKE_SOURCE_DIR}/cataclysm-launcher
             DESTINATION .)
     endif()
-    if (WIN32)
+    if ( NOT USE_XDG_DIR AND NOT USE_HOME_DIR )
         install(DIRECTORY ${CMAKE_SOURCE_DIR}/mods
             DESTINATION .)
     endif()
