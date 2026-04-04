@@ -1458,7 +1458,11 @@ void forest_biome::finalize()
 
     for( auto &pr : unfinalized_terrain_dependent_furniture ) {
         pr.second.finalize();
-        const ter_id t( pr.first );
+        const ter_str_id tid( pr.first );
+        if( !tid.is_valid() ) {
+            continue;
+        }
+        const auto t = tid.id();
         terrain_dependent_furniture[t] = pr.second;
     }
 }
