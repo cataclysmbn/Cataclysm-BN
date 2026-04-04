@@ -1481,7 +1481,9 @@ void forest_trail_settings::finalize()
         trail_terrain.add( tid.id(), pr.second );
     }
 
-    trailheads.finalize();
+    if( !trailheads.unfinalized_buildings.empty() ) {
+        trailheads.finalize();
+    }
 }
 
 void overmap_lake_settings::finalize()
