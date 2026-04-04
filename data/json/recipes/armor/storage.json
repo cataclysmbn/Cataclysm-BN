@@ -559,8 +559,7 @@
         [ "technician_pants_gray", 1 ],
         [ "jeans", 1 ]
       ]
-    ],
-    "flags": [ "BLIND_HARD" ]
+    ]
   },
   {
     "result": "makeshift_sling",
