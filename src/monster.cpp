@@ -1147,7 +1147,12 @@ bool monster::flies() const
 
 bool monster::climbs() const
 {
-    return has_flag( MF_CLIMBS );
+    return has_flag( MF_CLIMBS ) || climbs_walls();
+}
+
+auto monster::climbs_walls() const -> bool
+{
+    return has_flag( MF_CLIMBS_WALLS );
 }
 
 bool monster::swims() const

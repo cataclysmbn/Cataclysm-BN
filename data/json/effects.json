@@ -398,6 +398,15 @@
   },
   {
     "type": "effect_type",
+    "id": "wall_clinging",
+    "name": [ "Clinging" ],
+    "desc": [ "Clinging to a vertical surface." ],
+    "rating": "neutral",
+    "show_in_info": true,
+    "permanent": true
+  },
+  {
+    "type": "effect_type",
     "id": "blind",
     "name": [ "Blind" ],
     "desc": [ "Range of Sight: 0.  You cannot see anything." ],

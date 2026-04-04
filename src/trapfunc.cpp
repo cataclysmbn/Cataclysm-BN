@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
+#include <ranges>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "avatar.h"
 #include "bodypart.h"
@@ -1122,8 +1124,16 @@ bool trapfunc::ledge( const tripoint &p, Creature *c, item * )
     if( c == nullptr ) {
         return false;
     }
+    if( Character *ch = dynamic_cast<Character *>( c ) ) {
+        if( ch->is_mounted() ) {
+            monster *mount = ch->mounted_creature.get();
+            if( mount != nullptr && ( mount->flies() || mount->climbs() || mount->climbs_walls() ) ) {
+                return false;
+            }
+        }
+    }
     monster *m = dynamic_cast<monster *>( c );
-    if( m != nullptr && m->flies() ) {
+    if( m != nullptr && ( m->flies() || m->climbs() || m->climbs_walls() ) ) {
         return false;
     }
     if( !g->m.has_zlevels() ) {
