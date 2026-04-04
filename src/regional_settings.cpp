@@ -1035,11 +1035,20 @@ void load_region_settings( const JsonObject &jo )
     if( jo.has_member( "lakes" ) && jo.has_null( "lakes" ) ) {
         disable_lakes( new_region );
     }
+    if( jo.has_member( "ocean" ) && jo.has_null( "ocean" ) ) {
+        // BN has no separate ocean settings block here.
+    }
     if( jo.has_member( "forests" ) && jo.has_null( "forests" ) ) {
         disable_forests( new_region );
     }
     if( jo.has_member( "forest_trails" ) && jo.has_null( "forest_trails" ) ) {
         new_region.place_forest_trails = false;
+    }
+    if( jo.has_member( "ravines" ) && jo.has_null( "ravines" ) ) {
+        // BN has no ravines settings block here.
+    }
+    if( jo.has_member( "highways" ) && jo.has_null( "highways" ) ) {
+        // BN has no highways settings block here.
     }
 
     load_overmap_forest_settings( jo, new_region.overmap_forest, strict, false );
@@ -1117,11 +1126,20 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
     if( jo.has_member( "lakes" ) && jo.has_null( "lakes" ) ) {
         disable_lakes( region );
     }
+    if( jo.has_member( "ocean" ) && jo.has_null( "ocean" ) ) {
+        // BN has no separate ocean settings block here.
+    }
     if( jo.has_member( "forests" ) && jo.has_null( "forests" ) ) {
         disable_forests( region );
     }
     if( jo.has_member( "forest_trails" ) && jo.has_null( "forest_trails" ) ) {
         region.place_forest_trails = false;
+    }
+    if( jo.has_member( "ravines" ) && jo.has_null( "ravines" ) ) {
+        // BN has no ravines settings block here.
+    }
+    if( jo.has_member( "highways" ) && jo.has_null( "highways" ) ) {
+        // BN has no highways settings block here.
     }
 
     if( jo.has_array( "default_groundcover" ) ) {

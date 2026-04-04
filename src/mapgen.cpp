@@ -1808,6 +1808,7 @@ class jmapgen_vending_machine : public jmapgen_piece
         mapgen_value<item_group_id> group_id;
         jmapgen_vending_machine( const JsonObject &jsi ) :
             reinforced( jsi.get_bool( "reinforced", false ) ) {
+            jsi.get_bool( "powered", false );
             if( jsi.has_member( "item_group" ) ) {
                 group_id = mapgen_value<item_group_id>( jsi.get_member( "item_group" ) );
             } else {
@@ -3608,6 +3609,9 @@ bool mapgen_function_json_base::setup_common( const JsonObject &jo )
     JsonArray parray;
     JsonArray sparray;
     JsonObject pjo;
+    if( jo.has_array( "flags" ) ) {
+        static_cast<void>( jo.get_tags<std::string>( "flags" ) );
+    }
 
     // just like mapf::basic_bind("stuff",blargle("foo", etc) ), only json input and faster when applying
     if( jo.has_array( "rows" ) ) {
