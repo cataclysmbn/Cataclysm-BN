@@ -13,6 +13,7 @@
 #include "cata_cartesian_product.h"
 #include "coordinate_conversions.h"
 #include "mapbuffer.h"
+#include "clzones.h"
 #include "mapgen_async.h"
 #include "mapbuffer_registry.h"
 #include "point.h"
@@ -240,6 +241,7 @@ void submap_load_manager::update()
     {
         ZoneScopedN( "slm_mapgen_hooks_lazy" );
         run_deferred_mapgen_hooks();
+        flush_deferred_zones();
         run_deferred_autonotes();
     }
 
@@ -377,6 +379,7 @@ void submap_load_manager::update()
     {
         ZoneScopedN( "slm_mapgen_hooks_sim" );
         run_deferred_mapgen_hooks();
+        flush_deferred_zones();
         run_deferred_autonotes();
     }
 

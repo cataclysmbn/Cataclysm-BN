@@ -2152,6 +2152,9 @@ uint8_t map::get_known_connections( const tripoint &p, int connect_group,
                                     const std::map<tripoint, ter_id> &override ) const
 {
     auto &ch = access_cache( p.z );
+    if( !ch.inbounds( p.xy() ) ) {
+        return 0;
+    }
     uint8_t val = 0;
     std::function<bool( const tripoint & )> is_memorized;
 #ifdef TILES
@@ -2204,6 +2207,9 @@ uint8_t map::get_known_connections_f( const tripoint &p, int connect_group,
                                       const std::map<tripoint, furn_id> &override ) const
 {
     const level_cache &ch = access_cache( p.z );
+    if( !ch.inbounds( p.xy() ) ) {
+        return 0;
+    }
     uint8_t val = 0;
     std::function<bool( const tripoint & )> is_memorized;
     avatar &player_character = get_avatar();
