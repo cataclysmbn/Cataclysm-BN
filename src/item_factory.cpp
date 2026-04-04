@@ -3380,7 +3380,13 @@ void Item_factory::add_entry( Item_group &ig, const JsonObject &obj )
 void Item_factory::load_item_group( const JsonObject &jsobj )
 {
     const item_group_id group_id = item_group_id( jsobj.get_string( "id" ) );
-    const std::string subtype = jsobj.get_string( "subtype", "old" );
+    auto subtype = jsobj.get_string( "subtype", "old" );
+    if( subtype == "old" && jsobj.has_string( "copy-from" ) ) {
+        const auto copy_from_id = item_group_id( jsobj.get_string( "copy-from" ) );
+        if( const auto *copy_from = dynamic_cast<const Item_group *>( get_group( copy_from_id ) ) ) {
+            subtype = copy_from->type == Item_group::G_COLLECTION ? "collection" : "distribution";
+        }
+    }
     load_item_group( jsobj, group_id, subtype );
 }
 
