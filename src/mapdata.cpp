@@ -1440,8 +1440,11 @@ void ter_t::load( const JsonObject &jo, const std::string &src )
     // connect_group is initialized to none, then terrain flags are set, then finally
     // connections from JSON are set. This is so that wall flags can set wall connections
     // but can be overridden by explicit connections in JSON.
-    if( jo.has_member( "connect_groups" ) && !jo.has_member( "connects_to" ) ) {
-        set_connects( jo.get_string( "connect_groups" ) );
+    if( jo.has_member( "connect_groups" ) ) {
+        const auto connect_groups = jo.get_string( "connect_groups" );
+        if( !jo.has_member( "connects_to" ) ) {
+            set_connects( connect_groups );
+        }
     }
     if( jo.has_member( "connects_to" ) ) {
         set_connects( jo.get_string( "connects_to" ) );
@@ -1730,8 +1733,11 @@ void furn_t::load( const JsonObject &jo, const std::string &src )
 
     // see the comment in ter_id::load for connect_group handling
     connect_group = TERCONN_NONE;
-    if( jo.has_member( "connect_groups" ) && !jo.has_member( "connects_to" ) ) {
-        set_connects( jo.get_string( "connect_groups" ) );
+    if( jo.has_member( "connect_groups" ) ) {
+        const auto connect_groups = jo.get_string( "connect_groups" );
+        if( !jo.has_member( "connects_to" ) ) {
+            set_connects( connect_groups );
+        }
     }
     if( jo.has_member( "connects_to" ) ) {
         set_connects( jo.get_string( "connects_to" ) );
