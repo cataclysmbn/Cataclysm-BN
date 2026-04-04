@@ -711,7 +711,56 @@ void load_region_settings( const JsonObject &jo )
         }
     }
 
-    load_overmap_feature_flag_settings( jo, new_region.overmap_feature_flag, strict, false );
+    if( jo.has_object( "feature_flag_settings" ) ) {
+        auto feature_flag_settings = jo.get_object( "feature_flag_settings" );
+        read_and_set_or_throw<bool>( feature_flag_settings, "clear_blacklist",
+                                     new_region.overmap_feature_flag.clear_blacklist, false );
+        read_and_set_or_throw<bool>( feature_flag_settings, "clear_whitelist",
+                                     new_region.overmap_feature_flag.clear_whitelist, false );
+        if( new_region.overmap_feature_flag.clear_blacklist ) {
+            new_region.overmap_feature_flag.blacklist.clear();
+        }
+        if( new_region.overmap_feature_flag.clear_whitelist ) {
+            new_region.overmap_feature_flag.whitelist.clear();
+        }
+        for( const auto &value : feature_flag_settings.get_tags<std::string>( "blacklist" ) ) {
+            new_region.overmap_feature_flag.blacklist.emplace( value );
+        }
+        for( const auto &value : feature_flag_settings.get_tags<std::string>( "whitelist" ) ) {
+            new_region.overmap_feature_flag.whitelist.emplace( value );
+        }
+    } else {
+        load_overmap_feature_flag_settings( jo, new_region.overmap_feature_flag, strict, false );
+    }
+
+    if( jo.has_bool( "place_roads" ) ) {
+        new_region.place_roads = jo.get_bool( "place_roads" );
+    }
+    if( jo.has_bool( "neighbor_connections" ) ) {
+        new_region.neighbor_connections = jo.get_bool( "neighbor_connections" );
+    }
+
+    if( jo.has_member( "rivers" ) && jo.has_null( "rivers" ) ) {
+        new_region.river_scale = 0.0;
+    }
+    if( jo.has_member( "lakes" ) && jo.has_null( "lakes" ) ) {
+        disable_lakes( new_region );
+    }
+    if( jo.has_member( "ocean" ) && jo.has_null( "ocean" ) ) {
+        // BN has no separate ocean settings block here.
+    }
+    if( jo.has_member( "forests" ) && jo.has_null( "forests" ) ) {
+        disable_forests( new_region );
+    }
+    if( jo.has_member( "forest_trails" ) && jo.has_null( "forest_trails" ) ) {
+        new_region.place_forest_trails = false;
+    }
+    if( jo.has_member( "ravines" ) && jo.has_null( "ravines" ) ) {
+        // BN has no ravines settings block here.
+    }
+    if( jo.has_member( "highways" ) && jo.has_null( "highways" ) ) {
+        // BN has no highways settings block here.
+    }
 
     load_overmap_forest_settings( jo, new_region.overmap_forest, strict, false );
 
@@ -765,6 +814,34 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
 {
     read_default_oter( jo, region.default_oter );
     jo.read( "river_scale", region.river_scale );
+    if( jo.has_bool( "place_roads" ) ) {
+        region.place_roads = jo.get_bool( "place_roads" );
+    }
+    if( jo.has_bool( "neighbor_connections" ) ) {
+        region.neighbor_connections = jo.get_bool( "neighbor_connections" );
+    }
+    if( jo.has_member( "rivers" ) && jo.has_null( "rivers" ) ) {
+        region.river_scale = 0.0;
+    }
+    if( jo.has_member( "lakes" ) && jo.has_null( "lakes" ) ) {
+        disable_lakes( region );
+    }
+    if( jo.has_member( "ocean" ) && jo.has_null( "ocean" ) ) {
+        // BN has no separate ocean settings block here.
+    }
+    if( jo.has_member( "forests" ) && jo.has_null( "forests" ) ) {
+        disable_forests( region );
+    }
+    if( jo.has_member( "forest_trails" ) && jo.has_null( "forest_trails" ) ) {
+        region.place_forest_trails = false;
+    }
+    if( jo.has_member( "ravines" ) && jo.has_null( "ravines" ) ) {
+        // BN has no ravines settings block here.
+    }
+    if( jo.has_member( "highways" ) && jo.has_null( "highways" ) ) {
+        // BN has no highways settings block here.
+    }
+
     if( jo.has_array( "default_groundcover" ) ) {
         region.default_groundcover_str.reset( new weighted_int_list<ter_str_id> );
         for( JsonArray inner : jo.get_array( "default_groundcover" ) ) {
