@@ -7,8 +7,13 @@
 #include <ranges>
 
 #include "avatar.h"
+#include "achievement.h"
+#include "calendar.h"
+#include "cata_variant.h"
 #include "distribution_grid.h"
+#include "event_statistics.h"
 #include "game.h"
+#include "kill_tracker.h"
 #include "lightmap.h"
 #include "map.h"
 #include "catalua_log.h"
@@ -18,6 +23,8 @@
 #include "overmapbuffer.h"
 #include "line.h"
 #include "lua_action_menu.h"
+#include "skill.h"
+#include "stats_tracker.h"
 
 namespace
 {
@@ -105,6 +112,134 @@ void cata::detail::reg_game_api( sol::state &lua )
                        );
             out[idx + 1] = row;
         } );
+        return out;
+    } );
+    luna::set_fx( lib, "get_event_statistic", []( const std::string & stat_id ) -> int {
+        const auto stat = string_id<event_statistic>( stat_id );
+        if( !stat.is_valid() )
+        {
+            return 0;
+        }
+        const auto value = g->stats().value_of( stat );
+        if( value.type() != cata_variant_type::int_ )
+        {
+            return 0;
+        }
+        return value.get<int>();
+    } );
+    luna::set_fx( lib, "get_avatar_skill_level", []( const std::string & skill_str ) -> int {
+        const auto sid = skill_id( skill_str );
+        if( !sid.is_valid() )
+        {
+            return 0;
+        }
+        return get_avatar().get_skill_level( sid );
+    } );
+    luna::set_fx( lib, "get_monster_kill_count", []( const std::string & monster_str ) -> int {
+        const auto mid = mtype_id( monster_str );
+        if( !mid.is_valid() )
+        {
+            return 0;
+        }
+        return g->get_kill_tracker().kill_count( mid );
+    } );
+    luna::set_fx( lib, "get_species_kill_count", []( const std::string & species_str ) -> int {
+        const auto sid = species_id( species_str );
+        if( !sid.is_valid() )
+        {
+            return 0;
+        }
+        return g->get_kill_tracker().kill_count( sid );
+    } );
+    luna::set_fx( lib, "get_total_monster_kill_count", []() -> int {
+        return g->get_kill_tracker().monster_kill_count();
+    } );
+    luna::set_fx( lib, "get_achievement_definitions", []( sol::this_state lua_this ) {
+        const auto comparison_to_string = []( const achievement_comparison comp ) -> std::string {
+            switch( comp )
+            {
+                case achievement_comparison::less_equal:
+                    return "<=";
+                case achievement_comparison::greater_equal:
+                    return ">=";
+                case achievement_comparison::anything:
+                    return "anything";
+                case achievement_comparison::last:
+                    break;
+            }
+            return "anything";
+        };
+
+        sol::state_view lua( lua_this );
+        auto out = lua.create_table();
+        auto out_idx = 1;
+
+        for( const achievement &ach : achievement::get_all() ) {
+            auto row = lua.create_table();
+            row["id"] = ach.id.str();
+            row["name"] = ach.name().translated();
+            row["description"] = ach.description().translated();
+
+            auto hidden_by = lua.create_table();
+            auto hidden_idx = 1;
+            for( const string_id<achievement> &hidden : ach.hidden_by() ) {
+                hidden_by[hidden_idx++] = hidden.str();
+            }
+            row["hidden_by"] = hidden_by;
+
+            if( ach.time_constraint() ) {
+                auto time_row = lua.create_table();
+                time_row["comparison"] = comparison_to_string( ach.time_constraint()->comparison() );
+                time_row["target_turn"] = to_turn<int>( ach.time_constraint()->target() );
+                row["time_constraint"] = time_row;
+            }
+
+            auto requirements = lua.create_table();
+            auto req_idx = 1;
+            for( const achievement_requirement &req : ach.requirements() ) {
+                auto req_row = lua.create_table();
+                req_row["event_statistic"] = req.statistic.str();
+                req_row["comparison"] = comparison_to_string( req.comparison );
+                req_row["becomes_false"] = req.becomes_false;
+                if( req.comparison != achievement_comparison::anything ) {
+                    req_row["target"] = req.target;
+                }
+                requirements[req_idx++] = req_row;
+            }
+            row["requirements"] = requirements;
+
+            auto kill_requirements = lua.create_table();
+            auto kill_idx = 1;
+            for( const auto &[mid, pair] : ach.kill_requirements() ) {
+                auto kill_row = lua.create_table();
+                kill_row["monster"] = mid.is_null() ? std::string() : mid.str();
+                kill_row["comparison"] = comparison_to_string( pair.first );
+                kill_row["count"] = pair.second;
+                kill_requirements[kill_idx++] = kill_row;
+            }
+            for( const auto &[sid, pair] : ach.species_kill_requirements() ) {
+                auto kill_row = lua.create_table();
+                kill_row["species"] = sid.str();
+                kill_row["comparison"] = comparison_to_string( pair.first );
+                kill_row["count"] = pair.second;
+                kill_requirements[kill_idx++] = kill_row;
+            }
+            row["kill_requirements"] = kill_requirements;
+
+            auto skill_requirements = lua.create_table();
+            auto skill_idx = 1;
+            for( const auto &[sid, pair] : ach.skill_requirements() ) {
+                auto skill_row = lua.create_table();
+                skill_row["skill"] = sid.str();
+                skill_row["comparison"] = comparison_to_string( pair.first );
+                skill_row["level"] = pair.second;
+                skill_requirements[skill_idx++] = skill_row;
+            }
+            row["skill_requirements"] = skill_requirements;
+
+            out[out_idx++] = row;
+        }
+
         return out;
     } );
     luna::set_fx( lib, "add_on_every_x_hook",
