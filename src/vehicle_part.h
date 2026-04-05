@@ -139,13 +139,13 @@ struct vehicle_part {
         /** Try to set fault returning false if specified fault cannot occur with this item */
         bool fault_set( const fault_id &f );
 
-        /** Get wheel diameter times wheel width (inches^2) or return 0 if part is not wheel */
+        /** Get wheel diameter times wheel width (millimeters^2) or return 0 if part is not wheel */
         int wheel_area() const;
 
-        /** Get wheel diameter (inches) or return 0 if part is not wheel */
+        /** Get wheel diameter (millimeters) or return 0 if part is not wheel */
         int wheel_diameter() const;
 
-        /** Get wheel width (inches) or return 0 if part is not wheel */
+        /** Get wheel width (millimeters) or return 0 if part is not wheel */
         int wheel_width() const;
 
         /**
@@ -336,5 +336,4 @@ struct vehicle_part {
          */
         std::vector<detached_ptr<item>> pieces_for_broken_part() const;
 };
-
 

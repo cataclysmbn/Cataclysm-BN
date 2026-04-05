@@ -1603,6 +1603,10 @@ void options_manager::add_options_interface()
          translate_marker( "Metric or Imperial" ),
     { { "metric", translate_marker( "Metric" ) }, { "imperial", translate_marker( "Imperial" ) } },
     "metric" );
+    add( "WHEEL_SIZE_UNITS", interface, translate_marker( "Wheel size units" ),
+         translate_marker( "Switch wheel diameter and width display between centimeters and legacy inches." ),
+    { { "cm", translate_marker( "42.5cm" ) }, { "in", translate_marker( "17\"" ) } },
+    "cm" );
 
     add(
         "OVERMAP_COORDINATE_FORMAT",

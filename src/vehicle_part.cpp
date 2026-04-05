@@ -27,6 +27,7 @@
 #include "veh_type.h"
 #include "vpart_position.h"
 #include "weather.h"
+#include "wheel_dimensions.h"
 
 static const itype_id fuel_type_battery( "battery" );
 static const itype_id fuel_type_none( "null" );
@@ -203,7 +204,8 @@ std::string vehicle_part::name( bool with_prefix ) const
         res.insert( 0, string_format( _( "%2.1fL " ), base->engine_displacement() / 100.0 ) );
 
     } else if( wheel_diameter() > 0 ) {
-        res.insert( 0, string_format( _( "%d\" " ), wheel_diameter() ) );
+        res.insert( 0, string_format( _( "%s " ),
+                                      wheel_dimensions::format_for_display( wheel_diameter() ).c_str() ) );
     }
 
     if( base->is_faulty() ) {
@@ -515,13 +517,13 @@ int vehicle_part::wheel_area() const
     return info().wheel_area();
 }
 
-/** Get wheel diameter (inches) or return 0 if part is not wheel */
+/** Get wheel diameter (millimeters) or return 0 if part is not wheel */
 int vehicle_part::wheel_diameter() const
 {
     return base->is_wheel() ? base->type->wheel->diameter : 0;
 }
 
-/** Get wheel width (inches) or return 0 if part is not wheel */
+/** Get wheel width (millimeters) or return 0 if part is not wheel */
 int vehicle_part::wheel_width() const
 {
     return base->is_wheel() ? base->type->wheel->width : 0;
