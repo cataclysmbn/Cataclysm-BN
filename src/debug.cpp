@@ -28,6 +28,7 @@
 
 #include "catalua.h"
 #include "cata_utility.h"
+#include "thread_pool.h"
 #include "cached_options.h"
 #include "color.h"
 #include "cursesdef.h"
@@ -106,6 +107,13 @@ static bool buffering_debugmsgs = true;
 
 /** Set to true when any error is logged. */
 static bool error_observed = false;
+
+/**
+ * Mutex serialising all writes to the debug log stream.
+ * Also held by DebugLogGuard for the full duration of a log entry so that
+ * header + message body + newline are never interleaved across threads.
+ */
+static std::mutex g_debug_log_mutex;
 
 /** If true, debug messages will be captured,
  * used to test debugmsg calls in the unit tests
@@ -220,6 +228,13 @@ struct buffered_prompt_info {
     std::string text;
     bool force;
 };
+
+/**
+ * debugmsg prompts queued by worker threads that cannot drive the UI.
+ * Drained on the main thread by drain_worker_thread_debugmsgs().
+ */
+static std::mutex g_worker_prompts_mutex;
+static std::vector<buffered_prompt_info> g_worker_thread_prompts;
 
 namespace
 {
@@ -367,6 +382,29 @@ void replay_buffered_debugmsg_prompts()
         );
     }
     buffered_prompts().clear();
+    // Also show anything that worker threads queued during startup.
+    drain_worker_thread_debugmsgs();
+}
+
+void drain_worker_thread_debugmsgs()
+{
+    if( !catacurses::stdscr ) {
+        return;
+    }
+    std::vector<buffered_prompt_info> pending;
+    {
+        std::lock_guard<std::mutex> lock( g_worker_prompts_mutex );
+        pending = std::move( g_worker_thread_prompts );
+    }
+    for( const auto &prompt : pending ) {
+        debug_error_prompt(
+            prompt.filename.c_str(),
+            prompt.line.c_str(),
+            prompt.funcname.c_str(),
+            prompt.text.c_str(),
+            prompt.force
+        );
+    }
 }
 
 struct time_info {
@@ -452,7 +490,7 @@ struct repetition_folder {
     }
 };
 
-static repetition_folder rep_folder;
+static thread_local repetition_folder rep_folder;
 static void output_repetitions( std::ostream &out );
 
 void realDebugmsg( const char *filename, const char *line, const char *funcname,
@@ -484,6 +522,16 @@ void realDebugmsg( const char *filename, const char *line, const char *funcname,
     // Show excessive repetition prompt once per excessive set
     bool excess_repetition = rep_folder.repeat_count == repetition_folder::repetition_threshold;
 
+    // Worker threads cannot drive the UI. Queue the prompt for the main thread.
+    if( is_pool_worker_thread() ) {
+        std::lock_guard<std::mutex> lock( g_worker_prompts_mutex );
+        g_worker_thread_prompts.push_back( { filename, line, funcname, text, false } );
+        if( excess_repetition ) {
+            g_worker_thread_prompts.push_back( { filename, line, funcname, text, true } );
+        }
+        return;
+    }
+
     if( buffering_debugmsgs ) {
         buffered_prompts().push_back( {filename, line, funcname, text, false } );
         if( excess_repetition ) {
@@ -491,6 +539,9 @@ void realDebugmsg( const char *filename, const char *line, const char *funcname,
         }
         return;
     }
+
+    // Before showing this prompt, drain any queued worker-thread prompts.
+    drain_worker_thread_debugmsgs();
 
     debug_error_prompt( filename, line, funcname, text.c_str(), false );
     if( excess_repetition ) {
@@ -722,6 +773,12 @@ void setupDebug( DebugOutput output_mode )
 void deinitDebug()
 {
     debugFile().deinit();
+}
+
+void flush_debug_log()
+{
+    std::lock_guard<std::mutex> lock( g_debug_log_mutex );
+    debugFile().get_file().flush();
 }
 
 // OStream Operators                                                {{{2
@@ -1386,6 +1443,7 @@ detail::DebugLogGuard detail::realDebugLog( DL lev, DC cl, const char *filename,
     }
 
     if( checkDebugLevelClass( lev, cl ) ) {
+        std::unique_lock<std::mutex> lock( g_debug_log_mutex );
         std::ostream &out = debugFile().get_file();
 
         output_repetitions( out );
@@ -1428,7 +1486,7 @@ detail::DebugLogGuard detail::realDebugLog( DL lev, DC cl, const char *filename,
         }
 #endif
 
-        return DebugLogGuard( out );
+        return DebugLogGuard( out, std::move( lock ) );
     }
 
     static NullStream null_stream;

@@ -50,6 +50,11 @@ extern "C" {
         // reasons, including the memory allocations and the SDL message box.
         // But it should usually work in practice, unless for example the
         // program segfaults inside malloc.
+
+        // Flush the debug log before writing the crash report so that any
+        // messages written just before the crash are on disk.
+        flush_debug_log();
+
 #if defined(_WIN32)
         dump_to( ".core" );
 #endif
