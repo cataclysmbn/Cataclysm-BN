@@ -1,0 +1,79 @@
+[
+  {
+    "id": "crt_hydrogen_converter",
+    "type": "vehicle_part",
+    "name": "C.R.I.T. hydrogen producer",
+    "description": "Weight is often the most critical factor when producing While not the fastest piece of technology, not the most effective piece of technology, this generator will create hydrogen no matter where it is. Making it highly useful to refuel the multitude of hydrogen vehicles and weapons produced by C.R.I.T.",
+    "item": "crt_hydrogen_converter_item",
+    "durability": 200,
+    "//1": "CBM provides water with 2 L / 60 kW efficiency, which sounds about right",
+    "//2": "Electrolysis kit provides 1 unit hydrogen / unit water, at 200 kJ",
+    "//3": "That is at 50% efficiency, not really military level tech",
+    "//3": "Excess oxygen is produced, recovery systems will recover 10% of energy",
+    "//4": "Cost is then 60 / 8 + 100 - 100 * 0.1 kJ",
+    "//5": "Multiply by 1000 as epower is in J",
+    "//6": "This is technically not normal epower though, so comparison epower is 162.5",
+    "converter": {
+      "output": "c_hydrogen",
+      "output_step": 1,
+      "max_steps": 2 
+    }
+    "epower": 97500,
+    "flags": [ "CONVERTER" ],
+    
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ] ]
+      },
+      "removal": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "vehicle_bolt", 1 ] ]
+      },
+      "repair": {
+        "skills": [ [ "mechanics", 6 ] ],
+        "time": "60 m",
+        "using": [
+          [ "welding_standard", 5 ],
+          [ "vehicle_repair_electronics", 5 ]
+        ]
+      }
+    },
+  },
+  {
+    "copy-from": "crt_engine_hydrogen",
+    "id": "crt_hydro_engine_small",
+    "type": "vehicle_part",
+    "name": "C.R.I.T. small hydrogen motor",
+    "description": "While not the most powerful motor, this one works well for smaller C.R.I.T. vehicles which need a lightweight renewable power source, yet also a strong engine.",
+    "item": "crt_hydro_engine_small_item",
+    "durability": 200,
+    "//": "Really efficent, maybe too efficent tho, very good for combustion types",
+    "epower": -100,
+    "power": 64000,
+    "energy_consumption": 128000,
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ] ]
+      },
+      "removal": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "vehicle_bolt", 1 ] ]
+      },
+      "repair": {
+        "skills": [ [ "mechanics", 8 ] ],
+        "time": "60 m",
+        "using": [
+          [ "welding_standard", 5 ],
+          [ "vehicle_repair_electronics", 5 ]
+        ]
+      }
+    },
+  },
+]
+

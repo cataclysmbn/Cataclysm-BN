@@ -1,0 +1,83 @@
+[
+  {
+    "abstract": "crt_engine_hydrogen",
+    "type": "vehicle_part",
+    "location": "engine_block",
+    "symbol": "*",
+    "color": "light_red",
+    "broken_color": "red",
+    "damage_modifier": 80,
+    "backfire_threshold": 0.25,
+    "backfire_freq": 20,
+    "noise_factor": 15,
+    "damaged_power_factor": 0.25,
+    "flags": [ "ENGINE", "E_COMBUSTION", "E_ALTERNATOR", "E_HIGHER_SKILL", "E_HEATER", "E_COLD_START" ],
+    "description": "A combustion engine.  Burns fuel from a tank in the vehicle.",
+    "fuel_type": "c_hydrogen_gas",
+    "fuel_options": [ "c_hydrogen_gas" ],
+    "m2c": 75
+  },
+  {
+    "id": "crt_plut_engine",
+    "copy-from": "engine_motor",
+    "type": "vehicle_part",
+    "name": "C.R.I.T. plutonium motor",
+    "description": "While not the most powerful motor, this works in a pinch to give enough power to move lighter vehicles at a fast pace and heavy vehicles slowly, but doens't take any fuel, letting military vehicles limp back to base...",
+    "item": "crt_plut_engine_item",
+    "durability": 200,
+    "power": 8000,
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 7 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ] ]
+      },
+      "removal": {
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "30 m",
+        "using": [ [ "vehicle_bolt", 1 ] ]
+      },
+      "repair": {
+        "skills": [ [ "mechanics", 8 ] ],
+        "time": "60 m",
+        "using": [
+          [ "welding_standard", 5 ],
+          [ "vehicle_repair_electronics", 5 ]
+        ]
+      }
+    },
+  },
+  {
+    "copy-from": "crt_engine_hydrogen",
+    "id": "crt_hydro_engine_small",
+    "type": "vehicle_part",
+    "name": "C.R.I.T. small hydrogen motor",
+    "description": "While not the most powerful motor, this one works well for smaller C.R.I.T. vehicles which need a lightweight renewable power source, yet also a strong engine.",
+    "item": "crt_hydro_engine_small_item",
+    "durability": 200,
+    "//": "Really efficent, maybe too efficent tho, very good for combustion types",
+    "epower": -100,
+    "power": 64000,
+    "energy_consumption": 128000,
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ] ]
+      },
+      "removal": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "vehicle_bolt", 1 ] ]
+      },
+      "repair": {
+        "skills": [ [ "mechanics", 8 ] ],
+        "time": "60 m",
+        "using": [
+          [ "welding_standard", 5 ],
+          [ "vehicle_repair_electronics", 5 ]
+        ]
+      }
+    },
+  },
+]

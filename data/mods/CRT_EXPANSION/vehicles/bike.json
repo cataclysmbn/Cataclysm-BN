@@ -1,0 +1,38 @@
+[
+  {
+    "id": "crt_hydrobike",
+    "type": "vehicle",
+    "name": "CRIT Hydrocycle",
+    "blueprint": [ "WSW" ],
+    "blueprint_origin": { "x": 1, "y": 0 },
+    "palette": {
+      "W": [ "frame_carbon_vertical", "wheel_mount_light_steerable", "wheel_motorbike_or", { "part": "crt_compressed_gas_tank", "fuel": "c_hydrogen_gas" } ],
+      "S": [
+        "frame_carbon_vertical",
+        "saddle_motor",
+        "controls",
+        "battery_motorbike_small",
+        "crt_hydro_engine_small",
+        "alternator_motorbike"
+      ]
+    }
+  },
+  {
+    "id": "crt_nukebike",
+    "type": "vehicle",
+    "name": "CRIT Nukecycle",
+    "blueprint": [ "WSW" ],
+    "blueprint_origin": { "x": 1, "y": 0 },
+    "palette": {
+      "W": [ "frame_carbon_vertical", "wheel_mount_light_steerable", "wheel_motorbike_or" ],
+      "S": [
+        "frame_carbon_vertical",
+        "saddle_motor",
+        "controls",
+        "battery_motorbike_small",
+        "crt_plut_engine",
+        "alternator_motorbike"
+      ]
+    }
+  }
+]

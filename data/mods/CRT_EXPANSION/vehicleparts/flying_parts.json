@@ -1,0 +1,124 @@
+[
+  {
+    "id": "crt_airship_balloon_small",
+    "copy-from": "balloon",
+    "looks_like": "airship_balloon",
+    "type": "vehicle_part",
+    "name": "C.R.I.T. small airship balloon",
+    "description": "A balloon interspaced with solar cells that provides lift, but requires aircraft propellers for horizontal momentum. While weaker then solar panels, they make up for it in quantity",
+    "item": "crt_airship_balloon_small_item",
+    "height": 30,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural_short", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [  ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "plastics", 1 ] ] }
+    },
+    "durability": 10,
+    "damage_modifier": 10,
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 3, 6 ] }, { "item": "solar_cell", "count": [ 1, 4 ] } ],
+    "epower": 10,
+    "flags": [ "BALLOON", "SHOCK_IMMUNE", "SOLAR_PANEL" ],
+    "damage_reduction": { "bash": 10 }
+  },
+  {
+    "id": "crt_airship_balloon_small_external",
+    "copy-from": "crt_airship_balloon_small",
+    "type": "vehicle_part",
+    "name": "external C.R.I.T. small airship balloon",
+    "location": "structural",
+    "//": "Overhead, so don't affect movement but don't board.",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF" ] }
+  },
+  {
+    "id": "crt_airship_balloon",
+    "copy-from": "balloon",
+    "looks_like": "airship_balloon",
+    "type": "vehicle_part",
+    "name": "C.R.I.T. airship balloon",
+    "description": "A balloon interspaced with solar cells that provides lift, but requires aircraft propellers for horizontal momentum. While weaker then solar panels, they make up for it in quantity",
+    "item": "crt_airship_balloon_item",
+    "height": 90,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural_short", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [  ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "plastics", 1 ] ] }
+    },
+    "durability": 30,
+    "damage_modifier": 10,
+    "//": "Todo: should explode if damaged or destroyed by bullets, fire, or electric damage.",
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 10, 20 ] }, { "item": "solar_cell", "count": [ 1, 4 ] } ],
+    "epower": 10,
+    "flags": [ "BALLOON", "SHOCK_IMMUNE", "SOLAR_PANEL" ],
+    "damage_reduction": { "bash": 10 }
+  },
+  {
+    "id": "crt_airship_balloon_external",
+    "copy-from": "crt_airship_balloon",
+    "type": "vehicle_part",
+    "name": "external C.R.I.T. airship balloon",
+    "location": "structural",
+    "//": "Overhead, so don't affect movement but don't board.",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF" ] }
+  },
+  {
+    "id": "crt_airship_balloon_small",
+    "copy-from": "balloon",
+    "looks_like": "airship_balloon",
+    "type": "vehicle_part",
+    "name": "C.R.I.T. small airship balloon",
+    "description": "A balloon interspaced with solar cells that provides lift, but requires aircraft propellers for horizontal momentum. While weaker then solar panels, they make up for it in quantity",
+    "item": "crt_airship_balloon_small_item",
+    "height": 30,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural_short", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [  ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "plastics", 1 ] ] }
+    },
+    "durability": 10,
+    "damage_modifier": 10,
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 3, 6 ] }, { "item": "solar_cell", "count": [ 1, 4 ] } ],
+    "epower": 10,
+    "flags": [ "BALLOON", "SHOCK_IMMUNE", "SOLAR_PANEL" ],
+    "damage_reduction": { "bash": 10 }
+  },
+  {
+    "id": "crt_airship_balloon_small_external",
+    "copy-from": "crt_airship_balloon_small",
+    "type": "vehicle_part",
+    "name": "external C.R.I.T. small airship balloon",
+    "location": "structural",
+    "//": "Overhead, so don't affect movement but don't board.",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF" ] }
+  },
+  {
+    "id": "crt_airship_balloon",
+    "copy-from": "balloon",
+    "looks_like": "airship_balloon",
+    "type": "vehicle_part",
+    "name": "C.R.I.T. airship balloon",
+    "description": "A balloon interspaced with solar cells that provides lift, but requires aircraft propellers for horizontal momentum. While weaker then solar panels, they make up for it in quantity",
+    "item": "crt_airship_balloon_item",
+    "height": 90,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural_short", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [  ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "plastics", 1 ] ] }
+    },
+    "durability": 30,
+    "damage_modifier": 10,
+    "//": "Todo: should explode if damaged or destroyed by bullets, fire, or electric damage.",
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 10, 20 ] }, { "item": "solar_cell", "count": [ 1, 4 ] } ],
+    "epower": 10,
+    "flags": [ "BALLOON", "SHOCK_IMMUNE", "SOLAR_PANEL" ],
+    "damage_reduction": { "bash": 10 }
+  },
+  {
+    "id": "crt_airship_balloon_external",
+    "copy-from": "crt_airship_balloon",
+    "type": "vehicle_part",
+    "name": "external C.R.I.T. airship balloon",
+    "location": "structural",
+    "//": "Overhead, so don't affect movement but don't board.",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF" ] }
+  }
+]

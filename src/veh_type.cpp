@@ -382,6 +382,26 @@ void vpart_info::load_crafter( std::optional<vpslot_crafter> &craftptr, const Js
     assert( craftptr );
 }
 
+void vpart_info::load_converter( std::optional<vpslot_converter> &convertptr, const JsonObject &jo )
+{
+    vpslot_converter convert_info{};
+    if( convertptr ) {
+        convert_info = *convertptr;
+    }
+
+    JsonObject converter = jo.get_object( "converter" );
+
+    assign( converter, "input", convert_info.input );
+    assign( converter, "input_step", convert_info.input_step );
+    assign( converter, "output", convert_info.output );
+    assign( converter, "output_steps", convert_info.output_step );
+    assign( converter, "max_steps", convert_info.max_steps );
+    assign( converter, "charge_cost", convert_info.charge_cost );
+
+    convertptr = convert_info;
+    assert( convertptr );
+}
+
 /**
  * Reads in a vehicle part from a JsonObject.
  */
@@ -716,7 +736,7 @@ void vpart_info::check()
         const itype &base_item_type = *part.item;
         // Fuel type errors are serious and need fixing now
         if( !part.fuel_type.is_valid() ) {
-            debugmsg( "vehicle part %s uses undefined fuel %s", part.id.c_str(), part.item.c_str() );
+            debugmsg( "vehicle part %s uses undefined fuel %s", part.id.c_str(), part.fuel_type.c_str() );
             part.fuel_type = itype_id::NULL_ID();
         } else if( part.fuel_type && !part.fuel_type->fuel &&
                    ( !base_item_type.container || !base_item_type.container->watertight ) ) {
@@ -1036,10 +1056,34 @@ int vpart_info::propeller_diameter() const
 {
     return has_flag( VPFLAG_PROPELLER ) ? propeller_info->propeller_diameter : 0;
 }
+
+int vpart_info::get_max_conversions() const
+{
+    return has_flag( "CONVERTER" ) ? converter_info->max_steps : 0;
+}
+
+int vpart_info::get_conversion_charges() const
+{
+    return has_flag( "CONVERTER" ) ? converter_info->charge_cost : 0;
+}
+
+const std::pair<itype_id, int> vpart_info::get_conversion_input() const
+{
+    return has_flag( "CONVERTER" ) ? std::make_pair( converter_info->input,
+            converter_info->input_step ) : std::make_pair( itype_id::NULL_ID(), 0 );
+}
+
+const std::pair<itype_id, int> vpart_info::get_conversion_output() const
+{
+    return has_flag( "CONVERTER" ) ? std::make_pair( converter_info->output,
+            converter_info->output_step ) : std::make_pair( itype_id::NULL_ID(), 0 );
+}
+
 const std::vector<itype_id> vpart_info::craftertools() const
 {
     return crafter_info->fake_parts;
 }
+
 const std::optional<vpslot_workbench> &vpart_info::get_workbench_info() const
 {
     return workbench_info;

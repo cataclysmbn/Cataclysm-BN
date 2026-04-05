@@ -41,7 +41,7 @@
     }
   },
   {
-    "id": "crt_microblimp",
+    "id": "crt_microblimp_electric",
     "type": "vehicle",
     "name": "CRIT Micro Blimp",
     "blueprint": [

@@ -41,13 +41,7 @@ Hydrogen & Carbon Fiber lab plan for CRIT CBN
     - Chance: Contains a weak plutonium engine and a note about XEDRA forcing the researchers to find a use for plutonium
     - Compressed hydrogen tanks -> Used as magazines for ammo along with vehicle fuel tanks
     - Contains one engine on a cart w/ alternator for stress testing
-
-  - Gun Room ( 24x24 )
-    - Contains
-      - Lazer Weapons
-        - Just update and include the CRIT ones already in existance
-      - Hydrogen Weapons
-        - Smaller ones mainly -> Pistol & rifle; Big held ones are covered by base game 
+    - Designed as a hallway for compatibility, but is a special hallway as all rooms can spawn at once
 
   - Barracks ( 24x24 )
     - Contains
@@ -104,6 +98,10 @@ Hydrogen & Carbon Fiber lab plan for CRIT CBN
     - Autodoc room
       - Contains an autodoc and a lot of medical supplies
       - Can contains some of the CRIT medic exclusive stuff
+    - Lazer Weapons Room
+      - Just update and include the CRIT ones already in existance
+    - Hydrogen Weapons Room
+      - Smaller ones mainly -> Pistol & rifle; Big held ones are covered by base game 
 
 
 - Special Things

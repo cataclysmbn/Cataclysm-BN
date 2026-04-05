@@ -1641,6 +1641,8 @@ class vehicle
         std::vector<int> rail_wheelcache;  // List of rail wheels
         std::vector<int> steering;         // List of STEERABLE parts
         std::vector<int> droppers;         // List of droppers
+        std::vector<int> tanks;            // List of FLUIDTANKs
+        std::vector<int> converters;       // List of coverters
         // List of parts that will not be on a vehicle very often, or which only one will be present
         std::vector<int> speciality;
         std::vector<int> floating;         // List of parts that provide buoyancy to boats

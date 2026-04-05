@@ -135,6 +135,15 @@ struct vpslot_ladder {
     int length = 0;
 };
 
+struct vpslot_converter {
+    itype_id input;
+    int input_step;
+    itype_id output;
+    int output_step;
+    int max_steps;
+    int charge_cost;
+};
+
 struct vpslot_workbench {
     // Base multiplier applied for crafting here
     float multiplier = 1.0f;
@@ -170,6 +179,7 @@ class vpart_info
         std::optional<vpslot_wing> wing_info;
         std::optional<vpslot_balloon> balloon_info;
         std::optional<vpslot_ladder> ladder_info;
+        std::optional<vpslot_converter> converter_info;
         std::optional<vpslot_workbench> workbench_info;
         std::optional<vpslot_crafter> crafter_info;
 
@@ -345,6 +355,10 @@ class vpart_info
         int propeller_diameter() const;
         float balloon_height() const;
         int ladder_length() const;
+        const std::pair<itype_id, int> get_conversion_input() const;
+        const std::pair<itype_id, int> get_conversion_output() const;
+        int get_max_conversions() const;
+        int get_conversion_charges() const;
         const std::vector<itype_id> craftertools() const;
         /**
          * Getter for optional workbench info
@@ -392,6 +406,7 @@ class vpart_info
         static void load_ladder( std::optional<vpslot_ladder> &ladptr, const JsonObject &jo );
         static void load_propeller( std::optional<vpslot_propeller> &proptr, const JsonObject &jo );
         static void load_crafter( std::optional<vpslot_crafter> &craftptr, const JsonObject &jo );
+        static void load_converter( std::optional<vpslot_converter> &convertptr, const JsonObject &jo );
         static void load( const JsonObject &jo, const std::string &src );
         static void finalize();
         static void check();

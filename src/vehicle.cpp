@@ -1,5 +1,6 @@
 #include "vehicle.h"
 #include "detached_ptr.h"
+#include "type_id.h"
 #include "units_mass.h"
 #include "vehicle_part.h" // IWYU pragma: associated
 #include "vpart_position.h" // IWYU pragma: associated
@@ -12,6 +13,7 @@
 #include <complex>
 #include <cstdint>
 #include <cstdlib>
+#include <iterator>
 #include <list>
 #include <memory>
 #include <numeric>
@@ -7752,6 +7754,67 @@ void vehicle::update_time( const time_point &update_to )
     }
     time_duration elapsed = update_to - last_update;
     last_update = update_to;
+
+    if( !converters.empty() ) {
+        for( int p : converters ) {
+            const auto &part = parts[p];
+            if( !part.is_unavailable() ) {
+                int repeat = part.info().get_max_conversions() * to_seconds<int>( elapsed ) / 60;
+                auto [ consume_type, consume_charges ] = part.info().get_conversion_input();
+                auto [ output_type, output_charges ] = part.info().get_conversion_output();
+                const item *output = item::spawn_temporary( output_type, calendar::turn, output_charges );
+
+                vehicle_part &consume_tank;
+
+                if( consume_type != itype_id::NULL_ID() ) {
+                    auto consume_tank_idx = std::ranges::find_if( tanks, [&]( int tank ) {
+                        const auto &part = parts[tank];
+                        if( part.ammo_current() == consume_type && part.ammo_remaining() > consume_charges ) {
+                            return true;
+                        }
+                        return false;
+                    } );
+
+                    if( consume_tank_idx == tanks.end() ) {
+                        continue;
+                    }
+                    consume_tank = parts[*consume_tank_idx];
+                }
+
+                vehicle_part &output_tank;
+
+                if( output_type != itype_id::NULL_ID() ) {
+                    auto output_tank_idx = std::ranges::find_if( tanks, [&]( int tank ) {
+                        const auto &part = parts[tank];
+                        if( part.can_reload( output ) && part.ammo_capacity() - part.ammo_remaining() > output_charges ) {
+                            return true;
+                        }
+                        return false;
+                    } );
+
+                    if( output_tank_idx != tanks.end() ) {
+                        continue;
+                    }
+                }
+                auto &output_tank = parts[*output_tank_idx];
+
+                int max_repeats = std::max( repeat,
+                                            std::max( consume_tank.ammo_remaining() / consume_charges,
+                                                      ( output_tank.ammo_capacity() - output_tank.ammo_remaining() ) / output_charges )
+                                          );
+
+                if( consume_type != itype_id::NULL_ID() ) {
+                    consume_tank.ammo_consume( max_repeats * consume_charges, global_part_pos3( consume_tank ) );
+                }
+
+                if( output_type != itype_id::NULL_ID() ) {
+                    output_tank.ammo_set( output_type, max_repeats * output_charges + output_tank.ammo_remaining() );
+                }
+
+                discharge_battery( part.info().get_conversion_charges() * max_repeats );
+            }
+        }
+    }
 
     if( sm_pos.z < 0 ) {
         return;
