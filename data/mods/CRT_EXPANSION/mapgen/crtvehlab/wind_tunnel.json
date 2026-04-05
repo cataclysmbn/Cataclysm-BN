@@ -77,13 +77,6 @@
     "nested_mapgen_id": "crt_lab_veh_wind_prod_plane",
     "object": {
       "mapgensize": [ 20, 5 ],
-      "rows": [
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    "
-      ],
       "place_vehicles": [ { "vehicle": "crt_solardart_incomplete", "x": [ 11, 11 ], "y": [ 2, 2 ], "rotation": 0, "chance": 100, "status": 0 } ]
     }
   },
@@ -93,19 +86,7 @@
     "nested_mapgen_id": "crt_lab_veh_wind_tun_blimp",
     "object": {
       "mapgensize": [ 8, 10 ],
-      "rows": [
-        "        ",
-        "        ",
-        "        ",
-        "        ",
-        "        ",
-        "        ",
-        "        ",
-        "        ",
-        "        ",
-        "        "
-      ],
-      "place_vehicles": [ { "vehicle": "crt_microblimp", "x": [ 3, 3 ], "y": [ 5, 5 ], "rotation": 270, "chance": 100, "status": 0 } ]
+      "place_vehicles": [ { "vehicle": "crt_microblimp_electric", "x": [ 3, 3 ], "y": [ 5, 5 ], "rotation": 270, "chance": 100, "status": 0 } ]
     }
   }
 ]
