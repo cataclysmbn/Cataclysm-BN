@@ -55,10 +55,11 @@ extern "C" {
         // messages written just before the crash are on disk.
         flush_debug_log();
 
-#if defined(_WIN32)
-        dump_to( ".core" );
-#endif
         const std::string crash_log_file = PATH_INFO::crash();
+#if defined(_WIN32)
+        const std::string minidump_file = crash_log_file + ".dmp";
+        dump_to( minidump_file.c_str() );
+#endif
         std::ostringstream log_text;
 #if defined(__ANDROID__)
         // At this point, Android JVM is already doomed
@@ -70,6 +71,10 @@ extern "C" {
         log_text << "The program has crashed."
                  << "\nSee the log file for a stack trace."
                  << "\nCRASH LOG FILE: " << crash_log_file
+#if defined(_WIN32)
+                 << "\nMINIDUMP FILE:  " << minidump_file
+                 << "\n(Attach both files when reporting this crash)"
+#endif
                  << "\nVERSION: " << getVersionString()
                  << "\nTYPE: " << type
                  << "\nMESSAGE: " << msg;

@@ -1,6 +1,7 @@
 #include "debug.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <cctype>
 #include <cerrno>
@@ -103,10 +104,10 @@ static enum_bitset<DL> debugLevel;
 static enum_bitset<DC> debugClass;
 
 /** True during game startup, when debugmsgs cannot be displayed yet. */
-static bool buffering_debugmsgs = true;
+static std::atomic<bool> buffering_debugmsgs = true;
 
 /** Set to true when any error is logged. */
-static bool error_observed = false;
+static std::atomic<bool> error_observed = false;
 
 /**
  * Mutex serialising all writes to the debug log stream.
@@ -1028,6 +1029,11 @@ class sym_init
         }
 };
 static std::unique_ptr<sym_init> sym_init_;
+static std::once_flag sym_init_once_;
+// Serialises all dbghelp calls: the entire dbghelp.dll API is single-threaded.
+// Also protects the shared static buffers (bt, mod_path, sym_storage) used during
+// backtrace capture so concurrent crashes on different threads don't corrupt each other.
+static std::mutex g_dbghelp_mutex;
 
 constexpr int module_path_len = 512;
 // on some systems the number of frames to capture have to be less than 63 according to the documentation
@@ -1125,9 +1131,10 @@ void debug_write_backtrace( std::ostream &out )
 #endif
 
 #if defined(_WIN32)
-    if( !sym_init_ ) {
+    std::lock_guard<std::mutex> dbghelp_lock( g_dbghelp_mutex );
+    std::call_once( sym_init_once_, []() {
         sym_init_ = std::make_unique<sym_init>();
-    }
+    } );
     sym.SizeOfStruct = sizeof( SYMBOL_INFO );
     sym.MaxNameLen = max_name_len;
     // libbacktrace's own backtrace capturing doesn't seem to work on Windows
