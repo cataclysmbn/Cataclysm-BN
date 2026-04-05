@@ -394,7 +394,7 @@ void vpart_info::load_converter( std::optional<vpslot_converter> &convertptr, co
     assign( converter, "input", convert_info.input );
     assign( converter, "input_step", convert_info.input_step );
     assign( converter, "output", convert_info.output );
-    assign( converter, "output_steps", convert_info.output_step );
+    assign( converter, "output_step", convert_info.output_step );
     assign( converter, "max_steps", convert_info.max_steps );
     assign( converter, "charge_cost", convert_info.charge_cost );
 
@@ -549,12 +549,18 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
         load_wing( def.wing_info, jo );
     }
 
+    if( def.has_flag( "CONVERTER" ) ) {
+        load_converter( def.converter_info, jo );
+    }
+
     if( def.has_flag( "WORKBENCH" ) ) {
         load_workbench( def.workbench_info, jo );
     }
+
     if( def.has_flag( "CRAFTER" ) ) {
         load_crafter( def.crafter_info, jo );
     }
+
     // Dummy
     // TODO: Implement
     jo.get_string_array( "categories" );

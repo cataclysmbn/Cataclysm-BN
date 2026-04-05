@@ -159,7 +159,11 @@
     "requirements": {
       "install": { "skills": [ [ "mechanics", 4 ] ], "time": "40 m", "using": [ [ "vehicle_nail_install", 5 ] ] },
       "removal": { "skills": [ [ "mechanics", 4 ] ], "time": "10 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ] }
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
     },
     "flags": [ "WING", "SHOCK_RESISTANT" ],
     "damage_reduction": { "all": 28 }

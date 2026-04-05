@@ -1,4 +1,3 @@
-
 [
   {
     "id": "crt_plut_engine_item",
@@ -29,5 +28,5 @@
     "symbol": "0",
     "color": "light_green",
     "category": "scrap_electronics"
-  },
+  }
 ]

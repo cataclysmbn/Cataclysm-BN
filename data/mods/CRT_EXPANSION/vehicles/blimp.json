@@ -53,7 +53,17 @@
     "palette": {
       "O": [ "crt_airship_balloon_small_external" ],
       "C": [ "frame_carbon_cross", "cargo_space_carbon", "medium_storage_battery", "roof", "crt_airship_balloon_small" ],
-      "S": [ "frame_carbon_cross", "seat", "seatbelt", "controls", "dashboard", "black_box", "roof", "engine_electric", "crt_airship_balloon_small" ],
+      "S": [
+        "frame_carbon_cross",
+        "seat",
+        "seatbelt",
+        "controls",
+        "dashboard",
+        "black_box",
+        "roof",
+        "engine_electric",
+        "crt_airship_balloon_small"
+      ],
       "P": [ "propeller_metal" ]
     }
   }

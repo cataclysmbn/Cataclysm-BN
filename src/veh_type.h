@@ -136,12 +136,12 @@ struct vpslot_ladder {
 };
 
 struct vpslot_converter {
-    itype_id input;
-    int input_step;
-    itype_id output;
-    int output_step;
-    int max_steps;
-    int charge_cost;
+    itype_id input = itype_id::NULL_ID();
+    int input_step = 0;
+    itype_id output = itype_id::NULL_ID();
+    int output_step = 0;
+    int max_steps = 0;
+    int charge_cost = 0;
 };
 
 struct vpslot_workbench {

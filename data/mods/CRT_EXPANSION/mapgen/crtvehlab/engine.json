@@ -1,4 +1,3 @@
- 
 [
   {
     "type": "overmap_terrain",
@@ -41,7 +40,7 @@
         "#       #      #       #",
         "#       #      #       #",
         "#       #      #       #",
-        "########################",
+        "########################"
       ],
       "place_nested": [
         { "chunks": [ "crt_lab_veh_hall_engine" ], "x": 1, "y": 1 },
@@ -49,18 +48,13 @@
         { "chunks": [ "crt_lab_veh_hall_office" ], "x": 16, "y": 16 },
         { "chunks": [ "crt_lab_veh_hall_small_veh" ], "x": 16, "y": 16 }
       ],
-      "terrain": {
-        "#": "t_concrete_wall",
-        "w": "t_gates_mech_control",
-        "W": "t_wall_glass",
-        "G": "t_door_metal_locked"
-      },
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "G": "t_door_metal_locked" },
       "place_monster": [
         { "group": "GROUP_MIL_STRONG", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ] },
         { "group": "GROUP_MIL_WEAK", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ] },
         { "group": "GROUP_MIL_STRONG", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ] },
         { "group": "GROUP_MIL_WEAK", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ] }
-      ],
+      ]
     }
   },
   {
@@ -88,7 +82,7 @@
         "C": "f_armchair",
         "T": "f_utility_shelf",
         "P": "f_utility_shelf",
-        "S": "f_utility_shelf",
+        "S": "f_utility_shelf"
       },
       "//": "TODO: Make an actual item group for relevant engine crafting supplies",
       "items": {
@@ -97,5 +91,5 @@
         "S": { "item": "crt_lab_veh_engine", "chance": 100 }
       }
     }
-  },
+  }
 ]

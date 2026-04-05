@@ -6,7 +6,12 @@
     "blueprint": [ "WSW" ],
     "blueprint_origin": { "x": 1, "y": 0 },
     "palette": {
-      "W": [ "frame_carbon_vertical", "wheel_mount_light_steerable", "wheel_motorbike_or", { "part": "crt_compressed_gas_tank", "fuel": "c_hydrogen_gas" } ],
+      "W": [
+        "frame_carbon_vertical",
+        "wheel_mount_light_steerable",
+        "wheel_motorbike_or",
+        { "part": "crt_compressed_gas_tank", "fuel": "c_hydrogen_gas" }
+      ],
       "S": [
         "frame_carbon_vertical",
         "saddle_motor",

@@ -75,5 +75,5 @@
     "watertight": true,
     "qualities": [ [ "BOIL", 2 ], [ "CONTAIN", 1 ] ],
     "flags": [ "NO_RELOAD" ]
-  },
+  }
 ]

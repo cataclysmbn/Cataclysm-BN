@@ -57,14 +57,7 @@
       "b": [ "crt_wing_external_right" ],
       "-": [ "crt_wing_external_horizontal" ],
       "C": [ "frame_carbon_cross", "cargo_space_carbon", "medium_storage_battery", "crt_wing_horizontal" ],
-      "S": [
-        "frame_carbon_cross",
-        "seat",
-        "seatbelt",
-        "controls",
-        "dashboard",
-        "crt_wing_horizontal"
-      ],
+      "S": [ "frame_carbon_cross", "seat", "seatbelt", "controls", "dashboard", "crt_wing_horizontal" ],
       "P": [ "propeller_metal" ]
     }
   }
