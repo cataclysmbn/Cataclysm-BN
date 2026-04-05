@@ -44,6 +44,7 @@
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "thread_pool.h"
 #include "effect.h"
 #include "enum_conversions.h"
 #include "enums.h"
@@ -173,6 +174,8 @@ enum debug_menu_index {
     DEBUG_TRAIT_GROUP,
     DEBUG_SHOW_MSG,
     DEBUG_CRASH_GAME,
+    DEBUG_SHOW_WORKER_MSG,
+    DEBUG_CRASH_WORKER,
     DEBUG_RELOAD_TRANSLATIONS,
     DEBUG_MAP_EXTRA,
     DEBUG_DISPLAY_NPC_PATH,
@@ -260,6 +263,8 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_TRAIT_GROUP, true, 't', _( "Test trait group" ) ) },
             { uilist_entry( DEBUG_SHOW_MSG, true, 'd', _( "Show debug message" ) ) },
             { uilist_entry( DEBUG_CRASH_GAME, true, 'C', _( "Crash game (test crash handling)" ) ) },
+            { uilist_entry( DEBUG_SHOW_WORKER_MSG, true, 0, _( "Show debug message (worker thread)" ) ) },
+            { uilist_entry( DEBUG_CRASH_WORKER, true, 0, _( "Crash worker thread (test crash handling)" ) ) },
             { uilist_entry( DEBUG_RELOAD_TRANSLATIONS, true, 'L', _( "Reload translations" ) ) },
             { uilist_entry( DEBUG_DISPLAY_NPC_PATH, true, 'n', _( "Toggle NPC pathfinding on map" ) ) },
             { uilist_entry( DEBUG_PRINT_FACTION_INFO, true, 'f', _( "Print faction info to console" ) ) },
@@ -2105,6 +2110,17 @@ void debug()
             break;
         case DEBUG_CRASH_GAME:
             raise( SIGSEGV );
+            break;
+        case DEBUG_SHOW_WORKER_MSG:
+            get_thread_pool().submit_returning( []() {
+                debugmsg( "Test debugmsg from worker thread" );
+            } ).get();
+            drain_worker_thread_debugmsgs();
+            break;
+        case DEBUG_CRASH_WORKER:
+            get_thread_pool().submit( []() {
+                raise( SIGSEGV );
+            } );
             break;
         case DEBUG_RELOAD_TRANSLATIONS:
             l10n_data::reload_catalogues();

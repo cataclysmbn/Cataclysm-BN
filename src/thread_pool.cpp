@@ -4,6 +4,7 @@
 #include <functional>
 #include <thread>
 
+#include "crash.h"
 #include "options.h"
 #include "rng.h"
 
@@ -39,6 +40,11 @@ cata_thread_pool::~cata_thread_pool()
 void cata_thread_pool::worker_loop()
 {
     tl_is_worker_thread = true;
+    // Windows installs signal handlers per-thread for hardware exception signals
+    // (SIGSEGV, SIGFPE, SIGILL).  Re-run the crash handler setup so that crashes
+    // on worker threads are caught and logged the same way as main-thread crashes.
+    // On POSIX the signal disposition is process-wide, so this is a no-op.
+    init_crash_handlers();
 
     // Seed this worker's thread-local RNG so compute_plan() calls do not
     // race on the main thread's global engine (P-5).
