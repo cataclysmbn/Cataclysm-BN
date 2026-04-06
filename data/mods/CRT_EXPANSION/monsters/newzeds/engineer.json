@@ -1,0 +1,50 @@
+[
+  {
+    "id": "crt_mon_engineer_t3",
+    "type": "MONSTER",
+    "name": "C.R.I.T. combat engineer zombie",
+    "description": "Clad in heavy assault gear, it has a small experimental pistol in one hand, and a punch knife in the other. While it doesn't look terrifing on the surface the small electrical shocks make you question your thinking.",
+    "default_faction": "zombie",
+    "looks_like": "mon_zombie_military_pilot",
+    "species": [ "ZOMBIE", "HUMAN" ],
+    "volume": "62500 ml",
+    "weight": "81500 g",
+    "hp": 150,
+    "speed": 120,
+    "material": [ "bone" ],
+    "symbol": "N",
+    "color": "white",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 6,
+    "melee_dice": 3,
+    "melee_dice_sides": 6,
+    "melee_damage": [ { "damage_type": "cut", "amount": 20 } ],
+    "dodge": 1,
+    "armor_cut": 30,
+    "armor_stab": 30,
+    "armor_bullet": 50,
+    "armor_acid": 4,
+    "vision_day": 25,
+    "vision_night": 3,
+    "harvest": "zombie_maybe_survivalist_bionics",
+    "starting_ammo": { "bot_gasbomb_hack": 10 },
+    "special_attacks": [
+      {
+        "type": "deployer",
+        "deployables": {
+          "bot_gasbomb_hack": {
+            "message": "Gasbomb deployed, we don't wish to poison you",
+            "chance": 1,
+            "ammo_percentage": 1.0,
+            "range": 10,
+          }
+        },
+        "cooldown": 10
+      }
+    ],
+    "death_drops": "mon_zombie_cop_death_drops",
+    "death_function": [ "NORMAL" ],
+    "flags": [ "SEES", "HEARS", "BLEED", "REVIVES", "NO_BREATHE", "POISON" ]
+  }
+]
