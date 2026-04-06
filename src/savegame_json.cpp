@@ -1102,6 +1102,13 @@ void avatar::store( JsonOut &json ) const
     // misc player specific stuff
     json.member( "focus_pool", focus_pool );
 
+    // bio_portal_tap persistent link
+    if( bio_portal_tap_linked ) {
+        json.member( "bio_portal_tap_linked", bio_portal_tap_linked );
+        json.member( "bio_portal_tap_dim_id", bio_portal_tap_dim_id );
+        json.member( "bio_portal_tap_pos", bio_portal_tap_pos.raw() );
+    }
+
     if( shadow_npc ) {
         json.member( "shadow_npc", *shadow_npc );
     }
@@ -1182,6 +1189,15 @@ void avatar::load( const JsonObject &data )
           grab_point );
 
     data.read( "focus_pool", focus_pool );
+
+    // bio_portal_tap persistent link
+    if( data.has_member( "bio_portal_tap_linked" ) ) {
+        data.read( "bio_portal_tap_linked", bio_portal_tap_linked );
+        data.read( "bio_portal_tap_dim_id", bio_portal_tap_dim_id );
+        tripoint raw;
+        data.read( "bio_portal_tap_pos", raw );
+        bio_portal_tap_pos = tripoint_abs_ms( raw );
+    }
 
     if( data.has_member( "shadow_npc" ) ) {
         shadow_npc = std::make_unique<npc>();
@@ -2263,6 +2279,12 @@ void item::pocket_dimension_data::serialize( JsonOut &jsout ) const
     jsout.member( "return_dimension_id", return_dimension_id );
     jsout.member( "return_world_type", return_world_type );
     jsout.member( "return_point", return_point );
+    if( last_player_exit.has_value() ) {
+        jsout.member( "last_player_exit", *last_player_exit );
+    }
+    if( lifetime.has_value() ) {
+        jsout.member( "lifetime", *lifetime );
+    }
     jsout.end_object();
 }
 
@@ -2309,6 +2331,16 @@ void item::pocket_dimension_data::deserialize( JsonIn &jsin )
     is_initialized = obj.get_bool( "is_initialized", false );
     terrain_generated = obj.get_bool( "terrain_generated", false );
     obj.read( "return_point", return_point );
+    if( obj.has_member( "last_player_exit" ) ) {
+        time_point tp = calendar::turn_zero;
+        obj.read( "last_player_exit", tp );
+        last_player_exit = tp;
+    }
+    if( obj.has_member( "lifetime" ) ) {
+        time_duration td = 0_turns;
+        obj.read( "lifetime", td );
+        lifetime = td;
+    }
 }
 
 // Full equivalence. Consider only checking identifying data.
@@ -2860,6 +2892,13 @@ void vehicle_part::deserialize( JsonIn &jsin )
     data.read( "target_second_y", target.second.y );
     data.read( "target_second_z", target.second.z );
     data.read( "ammo_pref", ammo_pref );
+    if( data.has_member( "portal_tap_linked" ) ) {
+        data.read( "portal_tap_linked", portal_tap_linked );
+        data.read( "portal_tap_dim_id", portal_tap_dim_id );
+        tripoint raw;
+        data.read( "portal_tap_pos", raw );
+        portal_tap_pos = tripoint_abs_ms( raw );
+    }
 
     if( legacy_fuel.is_empty() ) {
         legacy_fuel = id.obj().fuel_type;
@@ -2937,6 +2976,11 @@ void vehicle_part::serialize( JsonOut &json ) const
         json.member( "target_second_z", target.second.z );
     }
     json.member( "ammo_pref", ammo_pref );
+    if( portal_tap_linked ) {
+        json.member( "portal_tap_linked", portal_tap_linked );
+        json.member( "portal_tap_dim_id", portal_tap_dim_id );
+        json.member( "portal_tap_pos", portal_tap_pos.raw() );
+    }
     json.end_object();
 }
 

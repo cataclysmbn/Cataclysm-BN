@@ -47,6 +47,7 @@ enum class load_request_source : int {
     script,          ///< Lua/scripted event that needs a region loaded
     fire_spread,     ///< Fire-spread loader keeping adjacent submaps resident
     lazy_border,     ///< Kept in memory around the bubble but not simulated
+    portal_preload,  ///< portal_tile keeping its target area resident
 };
 
 /** Opaque handle returned by request_load(); used to update or release. */
@@ -85,8 +86,7 @@ class submap_load_manager
          * Register a new load request.
          *
          * @p z_min and @p z_max control the z-level range covered by the request.
-         * Pass the same value for both to cover a single z-level.  For reality-bubble
-         * requests in z-level builds, pass @c -OVERMAP_DEPTH and @c OVERMAP_HEIGHT.
+         * Pass the same value for both to cover a single z-level.
          *
          * @return A handle that identifies this request for future updates/releases.
          */
@@ -96,6 +96,20 @@ class submap_load_manager
                                           int radius,
                                           int z_min,
                                           int z_max );
+
+        load_request_handle request_load( load_request_source source,
+                                          const std::string &dim_id,
+                                          const tripoint_abs_sm &center ) {
+                                              return request_load(
+                                              source, dim_id, center, 0,
+                                              center.z(), center.z() ); }
+
+        load_request_handle request_load( load_request_source source,
+                                          const std::string &dim_id,
+                                          const tripoint_abs_sm &center,
+                                          int radius ) { return request_load(
+                                              source, dim_id, center, radius,
+                                              -OVERMAP_DEPTH, OVERMAP_HEIGHT ); }
 
         /**
          * Move the center of an existing request (e.g. on player movement).

@@ -1987,6 +1987,8 @@ bool game::do_turn()
         }
     }
     tick_portal_links();
+    tick_temporary_pocket_dimensions();
+    tick_vehicle_portal_taps();
     fluid_grid::update( calendar::turn );
 
     // Apply sounds from previous turn to monster and NPC AI.
@@ -13184,8 +13186,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
             .world_type          = effective_wt,
             .display_name        = target_type ? target_type->name.translated() : dim_id,
             .bounds              = bounds,
-            .origin_pos          = current_abs_sm,
-            .parent_dimension_id = old_dim_id
+            .origin_pos          = current_abs_sm
         };
     }
 
@@ -15161,6 +15162,55 @@ void game::tick_portal_links()
     // Apply deferred pauses outside the read loops.
     std::ranges::for_each( to_pause, []( const auto & p ) {
         p.first->pause_export_node( p.second );
+    } );
+}
+
+void game::tick_temporary_pocket_dimensions()
+{
+    // Visit all pocket dimension items in the player's possession.
+    // If a pocket has expired (last_player_exit + lifetime < now), close it.
+    u.visit_items( [&]( item *it ) {
+        auto *pd = it->get_pocket_dimension_data();
+        if( !pd || !pd->lifetime.has_value() || !pd->last_player_exit.has_value() ) {
+            return VisitResponse::NEXT;
+        }
+        if( *pd->last_player_exit + *pd->lifetime < calendar::turn ) {
+            add_msg( m_bad, _( "The %s flickers and goes dark — the pocket dimension has collapsed." ),
+                     it->tname() );
+            it->pocket_dim = std::nullopt;
+        }
+        return VisitResponse::NEXT;
+    } );
+}
+
+void game::tick_vehicle_portal_taps()
+{
+    constexpr int TAP_KJ_PER_TURN = 5;
+    static const std::string flag_portal_tap( "POWER_DRAW_LINKED_PORTAL" );
+
+    std::ranges::for_each( m.get_vehicles(), [&]( wrapped_vehicle &wv ) {
+        vehicle &veh = *wv.v;
+        for( int i = 0; i < veh.part_count(); ++i ) {
+            vehicle_part &part = veh.part( i );
+            if( !part.portal_tap_linked ) {
+                continue;
+            }
+            if( !part.info().has_flag( flag_portal_tap ) ) {
+                continue;
+            }
+            auto *tracker = get_distribution_grid_tracker_for( part.portal_tap_dim_id );
+            if( tracker == nullptr ) {
+                continue;
+            }
+            auto grid = tracker->grid_at( part.portal_tap_pos );
+            const auto available = grid.get_resource();
+            if( available <= 0 ) {
+                continue;
+            }
+            const auto to_draw = std::min( available, TAP_KJ_PER_TURN );
+            grid.mod_resource( -to_draw );
+            veh.charge_battery( to_draw );
+        }
     } );
 }
 

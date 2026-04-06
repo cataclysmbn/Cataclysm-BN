@@ -6,6 +6,7 @@
 #include <set>
 
 #include "character_id.h"
+#include "coordinates.h"
 #include "item.h"
 #include "item_group.h"
 #include "point.h"
@@ -302,6 +303,11 @@ struct vehicle_part {
          */
         character_id crew_id;
     public:
+
+        // POWER_DRAW_LINKED_PORTAL: portal tap link state (persisted per-part instance).
+        std::string portal_tap_dim_id;
+        tripoint_abs_ms portal_tap_pos;
+        bool portal_tap_linked = false;
         /** Get part definition common to all parts of this type */
         const vpart_info &info() const;
 

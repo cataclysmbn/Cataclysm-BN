@@ -43,6 +43,8 @@
 #include "units_temperature.h"
 #include "vpart_position.h"
 #include "weather_gen.h"
+#include "world_type.h"
+#include "dimension_info.h"
 #include "profile.h"
 
 static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );

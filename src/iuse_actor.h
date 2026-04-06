@@ -1566,6 +1566,10 @@ class iuse_pocket_dimension : public iuse_actor
         std::optional<ter_str_id> boundary_terrain;  // Override boundary terrain for this pocket
         std::string pocket_name;                 // Display name for this pocket on the overmap
 
+        // Temporary pocket lifetime: pocket collapses this long after the player exits.
+        // nullopt = permanent pocket.
+        std::optional<time_duration> lifetime;
+
         iuse_pocket_dimension( const std::string &type = "pocket_dimension" ) : iuse_actor( type ) {}
         ~iuse_pocket_dimension() override = default;
         void load( const JsonObject &obj ) override;
@@ -1576,4 +1580,35 @@ class iuse_pocket_dimension : public iuse_actor
         void initialize_pocket( item &it ) const;
         void enter_pocket( player &p, item &it ) const;
         void exit_pocket( player &p, item &it ) const;
+};
+
+/**
+ * An item that can be "tuned" to a portal_tile and then used to teleport to it.
+ *
+ * When used near a matching portal (furniture with a portal_tile whose
+ * linkable_item_flag matches @ref required_portal_flag), the item links itself.
+ * When used away from a portal while linked, it teleports the player to the
+ * portal and optionally stores the origin for a return trip.
+ *
+ * Item variables stored on the instance:
+ *   "portal_linked"            — bool, true once linked
+ *   "linked_dim_id"            — string, target dimension
+ *   "linked_pos_x/y/z"        — int, target tripoint_abs_ms
+ *   "origin_dim_id"            — string, stored on first teleport (if can_return)
+ *   "origin_pos_x/y/z"        — int, origin tripoint_abs_ms
+ */
+class iuse_portal_link : public iuse_actor
+{
+    public:
+        std::string required_portal_flag;  // portal_tile::linkable_item_flag must match this
+        bool can_return = false;           // store origin for a return trip
+        int charges_per_use = 0;           // charges consumed per teleport
+
+        iuse_portal_link( const std::string &type = "portal_link" ) : iuse_actor( type ) {}
+        ~iuse_portal_link() override = default;
+        void load( const JsonObject &obj ) override;
+        auto use( player &p, item &it, bool, const tripoint &pos ) const -> int override;
+        auto can_use( const Character &, const item &it, bool,
+                      const tripoint &pos ) const -> ret_val<bool> override;
+        auto clone() const -> std::unique_ptr<iuse_actor> override;
 };

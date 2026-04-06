@@ -35,14 +35,11 @@ void world_type::load( const JsonObject &jo, const std::string & )
         boundary_terrain = ter_str_id( jo.get_string( "boundary_terrain" ) );
     }
 
-    optional( jo, was_loaded, "simulate_when_inactive", simulate_when_inactive, false );
     optional( jo, was_loaded, "save_prefix", save_prefix, "" );
     optional( jo, was_loaded, "allow_npc_travel", allow_npc_travel, false );
     optional( jo, was_loaded, "allow_vehicle_travel", allow_vehicle_travel, false );
 
-    if( jo.has_member( "parent_dimension" ) ) {
-        parent_dimension = world_type_id( jo.get_string( "parent_dimension" ) );
-    }
+    optional( jo, was_loaded, "world_scale", world_scale, 1.0f );
 }
 
 void world_type::check() const
@@ -50,11 +47,6 @@ void world_type::check() const
     if( boundary_terrain && !boundary_terrain->is_valid() ) {
         debugmsg( "World type \"%s\" has invalid boundary_terrain \"%s\"",
                   id.str(), boundary_terrain->str() );
-    }
-
-    if( parent_dimension && !parent_dimension->is_valid() ) {
-        debugmsg( "World type \"%s\" has invalid parent_dimension \"%s\"",
-                  id.str(), parent_dimension->str() );
     }
 
     // Bounded dimensions should have boundary terrain defined

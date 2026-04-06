@@ -213,6 +213,22 @@ struct region_terrain_and_furniture_settings {
     region_terrain_and_furniture_settings() = default;
 };
 
+enum class region_effect_type : int {
+    generic,
+    sunlight,
+    night_time,
+    surface,
+    underground,
+    underwater,
+    sleep,
+    num_types
+};
+
+template<>
+struct enum_traits<region_effect_type> {
+    static constexpr auto last = region_effect_type::num_types;
+};
+
 /*
  * Spatially relevant overmap and mapgen variables grouped into a set of suggested defaults;
  * eventually region mapping will modify as required and allow for transitions of biomes / demographics in a smooth fashion
@@ -233,6 +249,7 @@ struct regional_settings {
     overmap_forest_settings overmap_forest;
     overmap_lake_settings overmap_lake;
     region_terrain_and_furniture_settings region_terrain_and_furniture;
+    std::map<region_effect_type, std::vector<std::pair<efftype_id, int>>> region_effects;
 
     std::unordered_map<std::string, map_extras> region_extras;
 

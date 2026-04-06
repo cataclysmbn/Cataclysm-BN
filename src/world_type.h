@@ -37,9 +37,6 @@ struct world_type {
         std::optional<ter_str_id> boundary_terrain;  // Visual tile for out-of-bounds
         // Note: bash message comes from the terrain definition itself
 
-        // Simulation
-        bool simulate_when_inactive = false;  // For keep-world-loaded feature
-
         // Save structure
         std::string save_prefix;  // Folder/file naming prefix (empty for default dimension)
 
@@ -47,8 +44,8 @@ struct world_type {
         bool allow_npc_travel = false;
         bool allow_vehicle_travel = false;
 
-        // Hierarchy
-        std::optional<world_type_id> parent_dimension;
+        // Relative scale (informational + used by iuse_dimension_travel remapping)
+        float world_scale = 1.0f;
 
         void load( const JsonObject &jo, const std::string &src );
         void check() const;

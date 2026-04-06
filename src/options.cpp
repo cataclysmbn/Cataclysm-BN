@@ -3052,11 +3052,6 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
-    add( "INITIAL_TIME", world_default, translate_marker( "Initial time" ),
-         translate_marker( "Initial starting time of day on character generation." ),
-         0, 23, 8
-       );
-
     add( "INITIAL_DAY", world_default, translate_marker( "Initial day" ),
          translate_marker( "How many days into the year the cataclysm occurred.  Day 0 is Spring 1.  Day -1 randomizes the start date.  Can be overridden by scenarios.  This does not advance food rot or monster evolution." ),
          -1, 999, 15

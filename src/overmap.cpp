@@ -2790,10 +2790,27 @@ void overmap_special::load( const JsonObject &jo, const std::string &src )
     assign( jo, "rotate", rotatable_, strict );
     assign( jo, "flags", flags_, strict );
 
+    if( jo.has_array( "dimensions" ) ) {
+        dimensions_.clear();
+        for( const std::string &dim : jo.get_array( "dimensions" ) ) {
+            dimensions_.push_back( dim );
+        }
+    }
+
     // Another hack
     if( !is_special ) {
         flags_.insert( "ELECTRIC_GRID" );
     }
+}
+
+auto overmap_special::can_spawn_in_dimension( const std::string &dim_id,
+        bool dim_inherits_base ) const -> bool
+{
+    if( dimensions_.empty() ) {
+        // No filter: allowed in primary ("") and in dims with inherit_base_mapgen.
+        return dim_id.empty() || dim_inherits_base;
+    }
+    return std::ranges::find( dimensions_, dim_id ) != dimensions_.end();
 }
 
 void overmap_special::finalize()
