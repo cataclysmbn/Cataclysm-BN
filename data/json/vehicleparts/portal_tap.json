@@ -17,10 +17,7 @@
         "skills": [ [ "mechanics", 4 ], [ "electronics", 3 ] ],
         "qualities": [ { "id": "WRENCH", "level": 2 }, { "id": "SCREW", "level": 2 } ]
       },
-      "removal": {
-        "skills": [ [ "mechanics", 3 ] ],
-        "using": [ [ "vehicle_screw", 1 ] ]
-      }
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "using": [ [ "vehicle_screw", 1 ] ] }
     },
     "breaks_into": [
       { "item": "steel_lump", "count": [ 1, 2 ] },

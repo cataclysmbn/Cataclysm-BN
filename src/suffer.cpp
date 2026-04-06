@@ -1533,41 +1533,41 @@ void Character::suffer()
     }
 
     const auto dim = get_dimension();
-    const auto& effects = get_overmapbuffer( dim ).get_settings( global_omt_location() ).region_effects;
-    for( const auto& [type, effect_list] : effects) {
-        switch (type) {
-        case region_effect_type::generic:
-            break;
-        case region_effect_type::sunlight:
-            if ( !g->is_in_sunlight( pos() ) ) {
-                continue;
-            }
-            break;
-        case region_effect_type::surface:
-            if ( pos().z < 0 || !g->is_sheltered( pos() ) ) {
-                continue;
-            }
-            break;
-        case region_effect_type::night_time:
-            if ( !is_night( calendar::turn ) ) {
-                continue;
-            }
-            break;
-        case region_effect_type::sleep:
-            if ( !in_sleep_state() ) {
-                continue;
-            }
-            break;
-        case region_effect_type::underwater:
-            if ( !is_underwater() ) {
-                continue;
-            }
-            break;
-        case region_effect_type::underground:
-            if ( pos().z >= 0 ) {
-                continue;
-            }
-            break;
+    const auto &effects = get_overmapbuffer( dim ).get_settings( global_omt_location() ).region_effects;
+    for( const auto& [type, effect_list] : effects ) {
+        switch( type ) {
+            case region_effect_type::generic:
+                break;
+            case region_effect_type::sunlight:
+                if( !g->is_in_sunlight( pos() ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::surface:
+                if( pos().z < 0 || !g->is_sheltered( pos() ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::night_time:
+                if( !is_night( calendar::turn ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::sleep:
+                if( !in_sleep_state() ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::underwater:
+                if( !is_underwater() ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::underground:
+                if( pos().z >= 0 ) {
+                    continue;
+                }
+                break;
         }
 
         for( const auto &effect : effect_list ) {

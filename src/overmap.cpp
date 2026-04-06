@@ -4784,12 +4784,12 @@ void overmap::place_cities()
 {
     const city_settings &city_spec = settings->city_spec;
     int op_city_size = city_spec.city_size >= 0 ? city_spec.city_size
-                                                 : get_option<int>( "CITY_SIZE" );
+                       : get_option<int>( "CITY_SIZE" );
     if( op_city_size <= 0 ) {
         return;
     }
     int op_city_spacing = city_spec.city_spacing >= 0 ? city_spec.city_spacing
-                                                       : get_option<int>( "CITY_SPACING" );
+                          : get_option<int>( "CITY_SPACING" );
     // spacing dictates how much of the map is covered in cities
     //   city  |  cities  |   size N cities per overmap
     // spacing | % of map |  2  |  4  |  8  |  12 |  16

@@ -7747,7 +7747,7 @@ void iexamine::portal( player &p, const tripoint &examp )
 
     const auto target_sm = project_to<coords::sm>( pt->target_pos );
     const auto dest_sm = tripoint_abs_sm( target_sm.raw() - tripoint( g_half_mapsize,
-                         g_half_mapsize, 0 ) );
+                                          g_half_mapsize, 0 ) );
 
     g->travel_to_dimension( pt->target_dim_id, wt_id, std::nullopt, dest_sm );
 

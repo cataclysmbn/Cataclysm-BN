@@ -41,14 +41,7 @@
     "map_extras": {
       "field": {
         "chance": 100,
-        "extras": {
-          "mx_helicopter": 1,
-          "mx_military": 2,
-          "mx_supplydrop": 4,
-          "mx_portal": 1,
-          "mx_crater": 15,
-          "mx_portal_in": 1
-        }
+        "extras": { "mx_helicopter": 1, "mx_military": 2, "mx_supplydrop": 4, "mx_portal": 1, "mx_crater": 15, "mx_portal_in": 1 }
       },
       "road": {
         "chance": 75,
@@ -70,7 +63,7 @@
           "mx_corpses": 30,
           "mx_prison_bus": 15
         }
-      },
+      }
     },
     "city": {
       "city_size": 4,
@@ -103,13 +96,10 @@
       "winter_humidity_manual_mod": -7,
       "base_wind": 35,
       "base_wind_season_variation": 10,
-      "weather_types": [
-        "clear",
-        "sunny"
-      ]
+      "weather_types": [ "clear", "sunny" ]
     },
-	"effects": [ ],
-    "overmap_feature_flag_settings": { "clear_blacklist": false, "blacklist": [], "clear_whitelist": true, "whitelist": [] }
+    "effects": [  ],
+    "overmap_feature_flag_settings": { "clear_blacklist": false, "blacklist": [  ], "clear_whitelist": true, "whitelist": [  ] }
   },
   {
     "type": "overmap_terrain",

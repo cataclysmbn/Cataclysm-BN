@@ -572,7 +572,7 @@ void load_region_settings( const JsonObject &jo )
 
     // Unclear if required. C++ uninitialized values now concern me.
     new_region.region_effects = {};
-    for( int i = 0; i < (int)region_effect_type::num_types; i++ ) {
+    for( int i = 0; i < ( int )region_effect_type::num_types; i++ ) {
         new_region.region_effects[( region_effect_type )i] = {};
     }
 

@@ -7410,7 +7410,7 @@ auto iuse_portal_link::can_use( const Character &, const item &it, bool,
 {
     if( charges_per_use > 0 && it.ammo_remaining() < charges_per_use ) {
         return ret_val<bool>::make_failure( _( "The %s doesn't have enough charges." ),
-                                           it.tname() );
+                                            it.tname() );
     }
     return ret_val<bool>::make_success();
 }

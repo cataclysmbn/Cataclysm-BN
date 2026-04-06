@@ -15176,7 +15176,7 @@ void game::tick_temporary_pocket_dimensions()
 {
     // Visit all pocket dimension items in the player's possession.
     // If a pocket has expired (last_player_exit + lifetime < now), close it.
-    u.visit_items( [&]( item *it ) {
+    u.visit_items( [&]( item * it ) {
         auto *pd = it->get_pocket_dimension_data();
         if( !pd || !pd->lifetime.has_value() || !pd->last_player_exit.has_value() ) {
             return VisitResponse::NEXT;
@@ -15195,7 +15195,7 @@ void game::tick_vehicle_portal_taps()
     constexpr int TAP_KJ_PER_TURN = 5;
     static const std::string flag_portal_tap( "POWER_DRAW_LINKED_PORTAL" );
 
-    std::ranges::for_each( m.get_vehicles(), [&]( wrapped_vehicle &wv ) {
+    std::ranges::for_each( m.get_vehicles(), [&]( wrapped_vehicle & wv ) {
         vehicle &veh = *wv.v;
         for( int i = 0; i < veh.part_count(); ++i ) {
             vehicle_part &part = veh.part( i );
