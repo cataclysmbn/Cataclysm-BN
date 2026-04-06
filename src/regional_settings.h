@@ -33,6 +33,10 @@ class building_bin
 };
 
 struct city_settings {
+    // -1 means use CITY_SIZE / CITY_SPACING world options
+    int city_size    = -1;
+    int city_spacing = -1;
+
     // About the average US city non-residential, non-park land usage
     int shop_radius = 30;
     int shop_sigma = 20;
@@ -236,7 +240,15 @@ struct enum_traits<region_effect_type> {
 struct regional_settings {
     std::string id;           //
     oter_str_id default_oter; // 'field'
+    // When set, overmap tiles equal to default_oter are rendered using this otertype's
+    // symbol/color/name instead. The stored tile ID remains default_oter for all mapgen logic.
+    oter_str_id display_oter;
     double river_scale = 1;
+    // Set river_scale = 0.0 in JSON to disable river generation entirely.
+    // These flags disable their respective generation passes for this region.
+    bool generate_forests = true;
+    bool generate_lakes   = true;
+    bool generate_trails  = true;
     weighted_int_list<ter_id> default_groundcover; // i.e., 'grass_or_dirt'
     shared_ptr_fast<weighted_int_list<ter_str_id>> default_groundcover_str;
 

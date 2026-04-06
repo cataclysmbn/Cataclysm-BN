@@ -1,5 +1,6 @@
 #include "world_type.h"
 
+#include "calendar.h"
 #include "generic_factory.h"
 #include "json.h"
 #include "mapdata.h"
@@ -40,6 +41,15 @@ void world_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "allow_vehicle_travel", allow_vehicle_travel, false );
 
     optional( jo, was_loaded, "world_scale", world_scale, 1.0f );
+
+    optional( jo, was_loaded, "sunrise_summer",  sunrise_summer,  -1 );
+    optional( jo, was_loaded, "sunrise_winter",  sunrise_winter,  -1 );
+    optional( jo, was_loaded, "sunrise_equinox", sunrise_equinox, -1 );
+    optional( jo, was_loaded, "sunset_summer",   sunset_summer,   -1 );
+    optional( jo, was_loaded, "sunset_winter",   sunset_winter,   -1 );
+    optional( jo, was_loaded, "sunset_equinox",  sunset_equinox,  -1 );
+    optional( jo, was_loaded, "permanent_daylight", permanent_daylight, false );
+    optional( jo, was_loaded, "permanent_night",    permanent_night,    false );
 }
 
 void world_type::check() const
@@ -64,6 +74,27 @@ void world_types::reset()
 void world_types::finalize_all()
 {
     world_type_factory.finalize();
+
+    // Register per-dimension time configs with the calendar system.
+    for( const auto &wt : world_type_factory.get_all() ) {
+        calendar::dim_time_config cfg;
+        cfg.sunrise_summer  = wt.sunrise_summer;
+        cfg.sunrise_winter  = wt.sunrise_winter;
+        cfg.sunrise_equinox = wt.sunrise_equinox;
+        cfg.sunset_summer   = wt.sunset_summer;
+        cfg.sunset_winter   = wt.sunset_winter;
+        cfg.sunset_equinox  = wt.sunset_equinox;
+        cfg.permanent_daylight = wt.permanent_daylight;
+        cfg.permanent_night    = wt.permanent_night;
+        // Only register if this world_type has any non-default time settings.
+        const bool has_time_overrides = cfg.sunrise_summer  >= 0 || cfg.sunrise_winter  >= 0 ||
+                                        cfg.sunrise_equinox >= 0 || cfg.sunset_summer   >= 0 ||
+                                        cfg.sunset_winter   >= 0 || cfg.sunset_equinox  >= 0 ||
+                                        cfg.permanent_daylight || cfg.permanent_night;
+        if( has_time_overrides ) {
+            calendar::register_dim_time_config( wt.id.str(), cfg );
+        }
+    }
 }
 
 const std::vector<world_type> &world_types::get_all()

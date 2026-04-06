@@ -32,6 +32,12 @@
     "save_prefix": "desert_test_",
     "allow_npc_travel": true,
     "allow_vehicle_travel": true,
-    "world_scale": 1.0
+    "world_scale": 1.0,
+    "sunrise_summer": 4,
+    "sunrise_winter": 6,
+    "sunrise_equinox": 5,
+    "sunset_summer": 22,
+    "sunset_winter": 18,
+    "sunset_equinox": 20
   }
 ]

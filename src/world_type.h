@@ -47,6 +47,21 @@ struct world_type {
         // Relative scale (informational + used by iuse_dimension_travel remapping)
         float world_scale = 1.0f;
 
+        // Per-dimension sunrise/sunset hour overrides (0–23). -1 means use world option default.
+        // See calendar::dim_time_config for details.
+        int sunrise_summer  = -1;
+        int sunrise_winter  = -1;
+        int sunrise_equinox = -1;
+        int sunset_summer   = -1;
+        int sunset_winter   = -1;
+        int sunset_equinox  = -1;
+
+        // Permanent day/night modes. These override is_day()/is_night() checks entirely.
+        // NOTE: A full custom-ticks-per-day system would require refactoring calendar
+        // conversion functions throughout the codebase — deferred.
+        bool permanent_daylight = false;
+        bool permanent_night    = false;
+
         void load( const JsonObject &jo, const std::string &src );
         void check() const;
 };

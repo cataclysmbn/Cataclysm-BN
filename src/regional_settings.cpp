@@ -526,6 +526,8 @@ void load_region_settings( const JsonObject &jo )
         }
     } else {
         JsonObject cjo = jo.get_object( "city" );
+        cjo.read( "city_size", new_region.city_spec.city_size );
+        cjo.read( "city_spacing", new_region.city_spec.city_spacing );
         if( !cjo.read( "shop_radius", new_region.city_spec.shop_radius ) && strict ) {
             jo.throw_error( "city: shop_radius required for default" );
         }
@@ -617,6 +619,11 @@ void load_region_settings( const JsonObject &jo )
 
     load_region_terrain_and_furniture_settings( jo, new_region.region_terrain_and_furniture, strict,
             false );
+
+    jo.read( "display_oter", new_region.display_oter );
+    jo.read( "generate_forests", new_region.generate_forests );
+    jo.read( "generate_lakes", new_region.generate_lakes );
+    jo.read( "generate_trails", new_region.generate_trails );
 
     region_settings_map[new_region.id] = new_region;
 }
@@ -742,6 +749,8 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
 
     JsonObject cityjo = jo.get_object( "city" );
 
+    cityjo.read( "city_size", region.city_spec.city_size );
+    cityjo.read( "city_spacing", region.city_spec.city_spacing );
     cityjo.read( "shop_radius", region.city_spec.shop_radius );
     cityjo.read( "shop_sigma", region.city_spec.shop_sigma );
     cityjo.read( "park_radius", region.city_spec.park_radius );
@@ -769,6 +778,11 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
     load_overmap_lake_settings( jo, region.overmap_lake, false, true );
 
     load_region_terrain_and_furniture_settings( jo, region.region_terrain_and_furniture, false, true );
+
+    jo.read( "display_oter", region.display_oter );
+    jo.read( "generate_forests", region.generate_forests );
+    jo.read( "generate_lakes", region.generate_lakes );
+    jo.read( "generate_trails", region.generate_trails );
 }
 
 void groundcover_extra::finalize()   // FIXME: return bool for failure
@@ -1106,11 +1120,14 @@ overmap_special_id building_bin::pick() const
 {
     if( !finalized ) {
         debugmsg( "Tried to pick a special out of a non-finalized bin" );
-        overmap_special_id null_special( "null" );
-        return null_special;
+        return overmap_special_id( "null" );
     }
 
-    return *buildings.pick();
+    const auto *result = buildings.pick();
+    if( !result ) {
+        return overmap_special_id( "null" );
+    }
+    return *result;
 }
 
 void building_bin::clear()
@@ -1127,10 +1144,7 @@ void building_bin::finalize()
         debugmsg( "Tried to finalize a finalized bin (that's a code-side error which can't be fixed with jsons)" );
         return;
     }
-    if( unfinalized_buildings.empty() ) {
-        debugmsg( "There must be at least one entry in this building bin." );
-        return;
-    }
+    // Empty bins are valid — pick() returns null_special, causing no building to be placed.
 
     for( const std::pair<const overmap_special_id, int> &pr : unfinalized_buildings ) {
         overmap_special_id current_id = pr.first;

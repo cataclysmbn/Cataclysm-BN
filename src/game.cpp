@@ -869,6 +869,7 @@ bool game::start_game()
             .display_name = wt_ptr ? wt_ptr->name.translated() : std::string{},
         };
         ACTIVE_OVERMAP_BUFFER.current_region_type = wt_ptr ? wt_ptr->region_settings_id : "default";
+        calendar::set_active_world_type( default_wt.str() );
     }
 
     u.setID( assign_npc_id() ); // should be as soon as possible, but *after* load_master
@@ -13145,6 +13146,12 @@ bool game::travel_to_dimension( const std::string &dim_id,
 
     current_dimension_id_ = dim_id;
     g_active_dimension_id = dim_id;
+    {
+        auto it = loaded_dimensions_.find( dim_id );
+        if( it != loaded_dimensions_.end() ) {
+            calendar::set_active_world_type( it->second.world_type.str() );
+        }
+    }
 
     add_msg( m_debug, "[DIM] Switched active dimension: '%s' → '%s'", old_dim_id, dim_id );
 

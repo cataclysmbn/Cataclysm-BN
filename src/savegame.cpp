@@ -13,6 +13,7 @@
 
 #include "achievement.h"
 #include "avatar.h"
+#include "calendar.h"
 #include "cata_io.h"
 #include "coordinate_conversions.h"
 #include "creature_tracker.h"
@@ -303,6 +304,14 @@ void game::unserialize( std::istream &fin )
                     info.bounds = bounds;
                 }
                 loaded_dimensions_[info.dimension_id] = info;
+            }
+        }
+
+        // Set the calendar's active world type now that loaded_dimensions_ is populated.
+        {
+            auto it = loaded_dimensions_.find( current_dimension_id_ );
+            if( it != loaded_dimensions_.end() ) {
+                calendar::set_active_world_type( it->second.world_type.str() );
             }
         }
 
