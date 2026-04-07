@@ -100,7 +100,7 @@ int distribution_grid::mod_resource( int amt, bool recurse )
                                                 mb );
             if( connector != nullptr ) {
                 for( const tripoint_abs_ms &veh_abs : connector->connected_vehicles ) {
-                    vehicle *veh = vehicle::find_vehicle( veh_abs );
+                    vehicle *veh = vehicle::find_vehicle( veh_abs, mb );
                     if( veh == nullptr ) {
                         // TODO: Disconnect
                         debugmsg( "lost vehicle at %s", veh_abs.to_string() );
@@ -174,7 +174,7 @@ int distribution_grid::get_resource( bool recurse ) const
                                                 mb );
             if( connector != nullptr ) {
                 for( const tripoint_abs_ms &veh_abs : connector->connected_vehicles ) {
-                    vehicle *veh = vehicle::find_vehicle( veh_abs );
+                    vehicle *veh = vehicle::find_vehicle( veh_abs, mb );
                     if( veh == nullptr ) {
                         // TODO: Disconnect
                         debugmsg( "lost vehicle at %s", veh_abs.to_string() );
@@ -219,7 +219,7 @@ auto distribution_grid::get_power_stat_local() const -> power_stat
 
     auto get_vehicle_stats = [&]( const vehicle_connector_tile * connector ) -> power_stat {
         return connector->connected_vehicles
-        | std::views::transform( []( const auto & pos ) { return vehicle::find_vehicle( pos ); } )
+        | std::views::transform( [&]( const auto & pos ) { return vehicle::find_vehicle( pos, mb ); } )
         | std::views::filter( []( auto * v ) { return v; } )
         | std::views::transform( [&]( auto * veh ) { return to_stat( veh->net_battery_charge_rate_w() ); } )
         | cata::ranges::fold_left( power_stat{}, std::plus<>{} );
@@ -465,7 +465,12 @@ distribution_grid &distribution_grid_tracker::make_distribution_grid_at(
     const std::set<tripoint_abs_omt> overmap_positions = get_overmapbuffer(
                 dimension_id_ ).electric_grid_at(
                 project_to<coords::omt>( sm_pos ) );
-    assert( !overmap_positions.empty() );
+    if( overmap_positions.empty() ) {
+        // Remote submap not loaded — return the same empty sentinel used when
+        // ELECTRIC_GRID is disabled rather than asserting and crashing.
+        static distribution_grid empty_grid( {}, MAPBUFFER );
+        return empty_grid;
+    }
     std::vector<tripoint_abs_sm> submap_positions;
     for( const tripoint_abs_omt &omp : overmap_positions ) {
         tripoint_abs_sm tp = project_to<coords::sm>( omp );

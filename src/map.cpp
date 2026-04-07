@@ -1557,8 +1557,6 @@ VehicleList map::get_vehicles( const tripoint &start, const tripoint &end )
                     continue;
                 }
                 for( const auto &elem : current_submap->vehicles ) {
-                    // Ensure the vehicle z-position is correct
-                    elem->sm_pos.z = cz;
                     wrapped_vehicle w;
                     w.v = elem.get();
                     w.pos = w.v->global_pos3();

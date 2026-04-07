@@ -700,6 +700,12 @@ class monster : public Creature, public location_visitable<monster>
 
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
 
+        // Discard the cached movement path so the monster replans on its next turn.
+        void clear_path() {
+            path.clear();
+            repath_requested = false;
+        }
+
         // summoned monsters via spells
         void set_summon_time( const time_duration &length );
         // handles removing the monster if the timer runs out

@@ -5619,6 +5619,11 @@ void vehicle::power_parts()
 
 vehicle *vehicle::find_vehicle( const tripoint &where )
 {
+    return find_vehicle( where, MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() ) );
+}
+
+vehicle *vehicle::find_vehicle( const tripoint &where, mapbuffer &mbuf )
+{
     // Is it in the reality bubble?
     tripoint veh_local = g->m.getlocal( where );
     if( const optional_vpart_position vp = g->m.veh_at( veh_local ) ) {
@@ -5629,7 +5634,6 @@ vehicle *vehicle::find_vehicle( const tripoint &where )
     tripoint veh_in_sm = where;
     tripoint veh_sm = ms_to_sm_remain( veh_in_sm );
 
-    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
     auto sm = mbuf.lookup_submap( veh_sm );
     if( sm == nullptr ) {
         return nullptr;
@@ -7037,7 +7041,7 @@ void vehicle::remove_remote_part( int part_num )
         }
         return;
     }
-    auto veh = find_vehicle( parts[part_num].target.second );
+    auto veh = find_vehicle( parts[part_num].target.second, MAPBUFFER_REGISTRY.get( dimension_id_ ) );
 
     // If the target vehicle is still there, ask it to remove its part
     if( veh != nullptr ) {

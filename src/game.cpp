@@ -1295,7 +1295,16 @@ void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*
     } );
     std::erase_if( active_npc, in_evicted );
 
-    // TODO: evict monsters from unloaded submaps once on_submap_loaded monster activation lands.
+    // Evict monsters whose absolute submap position matches the unloaded submap.
+    // get_map().getabs() is pure coordinate arithmetic — safe after the submap pointer is gone.
+    // all_monsters() snapshots weak_ptrs at construction; despawn_monster() marks hp=0 so the
+    // non_dead_range iterator skips evicted entries on subsequent steps, mirroring shift_monsters().
+    for( monster &critter : all_monsters() ) {
+        const tripoint sm = ms_to_sm_copy( get_map().getabs( critter.pos() ) );
+        if( sm == raw ) {
+            despawn_monster( critter );
+        }
+    }
 }
 
 void game::reload_npcs()
@@ -12087,6 +12096,10 @@ void game::resize_reality_bubble_to( int new_size )
     if( grid_origin_delta_in_sm != 0 ) {
         for( monster &critter : all_monsters() ) {
             critter.shift( { grid_origin_delta_in_sm, grid_origin_delta_in_sm } );
+            // Stale local-coordinate paths become invalid after the origin shift.
+            // Clear them so the monster replans on its next turn rather than
+            // pathing toward wrong tiles.
+            critter.clear_path();
         }
         critter_tracker->rebuild_cache();
     }
@@ -12149,6 +12162,8 @@ void game::resize_reality_bubble_to( int new_size )
         const tripoint new_origin_ms = sm_to_ms_copy( get_map().get_abs_sub() );
         std::ranges::for_each( active_npc, [&]( const auto &n ) {
             n->onswapsetpos( n->global_square_location() - new_origin_ms );
+            // Same as monsters above: local-coordinate paths are now stale.
+            n->path.clear();
         } );
     }
 
