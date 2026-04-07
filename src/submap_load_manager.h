@@ -14,8 +14,19 @@
 #include "point.h"
 
 /**
- * Interface for objects that need to react when submaps become resident or
- * are evicted from memory.
+ * Interface for objects that need to react when submaps enter or leave the
+ * *simulated* set — i.e. the fully-active zone driven by all non-lazy load
+ * requests (reality_bubble, fire_spread, player_base, script).
+ *
+ * **Important distinction:** these callbacks track simulation membership, not
+ * memory residency.  A submap that transitions simulated → lazy_border fires
+ * on_submap_unloaded even though it remains resident in its mapbuffer.
+ * Similarly, lazy_border → evicted does NOT fire on_submap_unloaded; that
+ * eviction is silent from the listener's perspective.
+ *
+ * Implementors that need to track memory residency rather than simulation
+ * membership must maintain their own residency cache using
+ * mapbuffer::lookup_submap_in_memory().
  *
  * Implementors are registered with submap_load_manager::add_listener() and
  * are notified during submap_load_manager::update().
@@ -27,14 +38,17 @@ class submap_load_listener
 
         /**
          * Called when the submap at @p pos in dimension @p dim_id has just
-         * been loaded into its mapbuffer and is ready for use.
+         * entered the simulated set and game logic should begin tracking it.
+         * The submap is guaranteed to be resident in its mapbuffer at this point.
          */
         virtual void on_submap_loaded( const tripoint_abs_sm &pos,
                                        const std::string &dim_id ) = 0;
 
         /**
-         * Called just before the submap at @p pos in dimension @p dim_id is
-         * removed from its mapbuffer.
+         * Called when the submap at @p pos in dimension @p dim_id has just
+         * left the simulated set.  The submap may still be resident in memory
+         * (e.g. it moved to the lazy-border zone); game logic should stop
+         * treating it as actively simulated.
          */
         virtual void on_submap_unloaded( const tripoint_abs_sm &pos,
                                          const std::string &dim_id ) = 0;

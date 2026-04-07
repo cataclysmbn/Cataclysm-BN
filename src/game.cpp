@@ -1170,7 +1170,7 @@ vehicle *game::place_vehicle_nearby(
 void game::load_npcs()
 {
     ZoneScoped;
-    const int radius = g_half_mapsize - 1;
+    const int radius = g_half_mapsize;
     // uses submap coordinates
     std::vector<shared_ptr_fast<npc>> just_added;
     for( const auto &temp : get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player( radius ) ) {
@@ -1272,7 +1272,11 @@ void game::unload_npcs()
 
 void game::on_submap_loaded( const tripoint_abs_sm &/*pos*/, const std::string &/*dim_id*/ )
 {
-    // TODO: activate out-of-bubble NPCs once non_bubble_requests() integration lands.
+    // Schedule an NPC activation scan on the next do_turn().  Any NPCs whose
+    // authoritative submap position falls within the newly-simulated submap
+    // will be placed on the map by load_npcs().  This covers both reality-bubble
+    // entries and non-bubble requests (fire_spread, player_base, script).
+    set_npcs_dirty();
 }
 
 void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*dim_id*/ )
@@ -12087,10 +12091,22 @@ void game::resize_reality_bubble_to( int new_size )
         critter_tracker->rebuild_cache();
     }
 
-    // Unload ALL active NPCs so load_npcs() re-places them with correct positions
-    // in the new coordinate system.  Keeping survivors active is wrong because
-    // load_npcs() skips already-active IDs, leaving them with stale local coords.
-    unload_npcs();
+    // Selectively unload NPCs that fall outside the new bubble.  NPCs that stay
+    // within bounds are re-anchored after load_map() rebuilds abs_sub — this avoids
+    // the redundant on_unload()/on_load() cycle on every activity-bubble transition.
+    {
+        auto out_of_range = std::ranges::stable_partition( active_npc,
+        [&]( const shared_ptr_fast<npc> &n ) {
+            const tripoint npc_sm = ms_to_sm_copy( n->global_square_location() );
+            if( !m.has_zlevels() && npc_sm.z != get_levz() ) {
+                return false;  // wrong z-level — evict
+            }
+            const tripoint diff = npc_sm - player_abs_sm;
+            return std::abs( diff.x ) <= new_half && std::abs( diff.y ) <= new_half;
+        } );
+        std::ranges::for_each( out_of_range, []( const auto &n ) { n->on_unload(); } );
+        active_npc.erase( out_of_range.begin(), out_of_range.end() );
+    }
 
     // Release submap loader handles so load_map() recreates them with the new radius.
     if( reality_bubble_handle_ != 0 ) {
@@ -12122,6 +12138,19 @@ void game::resize_reality_bubble_to( int new_size )
     // Reload the map around the player; this fills grid[], recreates load handles,
     // rebuilds distribution_grid_tracker and fluid_grid.
     load_map( new_abs_sub, /*pump_events=*/false );
+
+    // Re-anchor surviving NPCs to the new map origin.
+    // We use onswapsetpos() rather than place_on_map() because place_on_map() calls
+    // setpos() + is_empty(): since the NPC is already in active_npc, critter_at()
+    // finds it at its own newly-set position and reports the tile occupied, which
+    // triggers the collision-avoidance nudge and shifts the NPC by 1 tile.
+    // onswapsetpos() bypasses that loop and directly fixes position + submap_coords.
+    {
+        const tripoint new_origin_ms = sm_to_ms_copy( get_map().get_abs_sub() );
+        std::ranges::for_each( active_npc, [&]( const auto &n ) {
+            n->onswapsetpos( n->global_square_location() - new_origin_ms );
+        } );
+    }
 
     // Flush the load/eviction diff immediately so the first boundary crossing
     // after resize doesn't stall on a bulk eviction of the old bubble's submaps.
