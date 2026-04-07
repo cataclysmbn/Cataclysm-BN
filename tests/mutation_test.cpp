@@ -17,6 +17,7 @@
 #include "type_id.h"
 
 static const efftype_id effect_accumulated_mutagen( "accumulated_mutagen" );
+static const auto trait_marloss = trait_id( "MARLOSS" );
 
 std::string get_mutations_as_string( const player &p );
 
@@ -193,4 +194,12 @@ TEST_CASE( "Mutating with full mutagen accumulation results in multiple mutation
             }
         }
     }
+}
+
+TEST_CASE( "Mutating marloss does not crash on missing category data", "[mutations]" )
+{
+    npc dummy;
+
+    CHECK( dummy.mutate_towards( trait_marloss ) );
+    CHECK( dummy.has_trait( trait_marloss ) );
 }

@@ -155,7 +155,7 @@
       { "item": "hat_boonie", "prob": 3 },
       { "item": "cowboy_hat", "prob": 2 },
       { "item": "bandana_head", "prob": 5 },
-      { "item": "pickelhaube", "prob": 5 },
+      { "item": "pickelhaube", "prob": 1 },
       { "item": "helmet_skid", "prob": 10 },
       { "item": "helmet_motor", "prob": 10 },
       { "item": "helmet_bike", "prob": 5 },
@@ -166,7 +166,8 @@
       { "item": "helmet_larmor", "prob": 5 },
       { "item": "helmet_plarmor", "prob": 5 },
       { "item": "helmet_skull", "prob": 5 },
-      { "item": "helmet_army", "prob": 10 }
+      { "item": "helmet_army", "prob": 5 },
+      { "item": "helmet_steel", "prob": 9 }
     ]
   },
   {

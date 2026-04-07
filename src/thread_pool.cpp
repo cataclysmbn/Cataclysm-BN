@@ -4,8 +4,16 @@
 #include <functional>
 #include <thread>
 
+#include "crash.h"
 #include "options.h"
 #include "rng.h"
+
+thread_local bool tl_is_worker_thread = false;
+
+bool is_pool_worker_thread()
+{
+    return tl_is_worker_thread;
+}
 
 cata_thread_pool::cata_thread_pool( unsigned int num_workers )
 {
@@ -31,6 +39,13 @@ cata_thread_pool::~cata_thread_pool()
 
 void cata_thread_pool::worker_loop()
 {
+    tl_is_worker_thread = true;
+    // Windows installs signal handlers per-thread for hardware exception signals
+    // (SIGSEGV, SIGFPE, SIGILL).  Re-run the crash handler setup so that crashes
+    // on worker threads are caught and logged the same way as main-thread crashes.
+    // On POSIX the signal disposition is process-wide, so this is a no-op.
+    init_crash_handlers();
+
     // Seed this worker's thread-local RNG so compute_plan() calls do not
     // race on the main thread's global engine (P-5).
     // Mix thread ID with current time for a unique-ish seed per worker.
@@ -69,16 +84,24 @@ void cata_thread_pool::submit( std::function<void()> task )
 cata_thread_pool &get_thread_pool()
 {
     // Worker count is read once at first call (the static pool is constructed
-    // only once).  Changes to THREAD_POOL_WORKERS require a restart.
-    static cata_thread_pool pool( []() {
+    // only once).  Changes to THREAD_POOL_WORKERS or MULTITHREADING_ENABLED
+    // require a restart.
+    static cata_thread_pool pool( []() -> unsigned int {
+        // Respect the "disable multi-threading" setting.  This is read via
+        // get_option<bool>() directly (not the cached parallel_enabled global)
+        // because cache_to_globals() has not yet run at pool-init time.
+        if( !get_option<bool>( "MULTITHREADING_ENABLED" ) )
+        {
+            return 0u;
+        }
         const int workers_opt = get_option<int>( "THREAD_POOL_WORKERS" );
-        if( workers_opt > 0 ) {
+        if( workers_opt > 0 )
+        {
             return static_cast<unsigned int>( workers_opt );
         }
         // 0 = auto: hardware_concurrency()-1, leaving one core for the main/SDL thread.
         const unsigned int hc = std::thread::hardware_concurrency();
         return hc > 1u ? hc - 1u : 0u;
-    }
-    () );
+    }() );
     return pool;
 }

@@ -60,6 +60,7 @@ void mapgen_cavern( mapgendata &dat );
 void mapgen_rock( mapgendata &dat );
 void mapgen_rock_partial( mapgendata &dat );
 void mapgen_open_air( mapgendata &dat );
+void mapgen_pd_border( mapgendata &dat );
 void mapgen_rift( mapgendata &dat );
 void mapgen_hellmouth( mapgendata &dat );
 void mapgen_subway( mapgendata &dat );

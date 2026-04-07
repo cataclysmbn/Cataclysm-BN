@@ -90,6 +90,27 @@ Example:
 
 Point cost of profession. Positive values cost points and negative values grant points.
 
+#### `age`
+
+(optional, integer or object with members `min` and `max`)
+
+Defines the age that the profession should start at. A single integer forces the character to
+start at that exact age, while the object allows selecting a random age between `min` and `max`
+(inclusive). Both `min` and `max` are required when using the object form; the final values are
+clamped to the game's default limits of 16 to 55 and reordered if necessary so the lower value
+comes first.
+
+```json
+"age": 32
+
+"age": {
+    "min": 24,
+    "max": 38
+}
+```
+
+If no `age` member is defined the profession defaults to a randomly generated age between 16 and 55.
+
 #### `addictions`
 
 (optional, array of addictions)

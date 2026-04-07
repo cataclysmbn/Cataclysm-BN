@@ -38,7 +38,7 @@ TEST_CASE( "vehicle_collision_with_wall_terminates", "[vehicle]" )
     auto const veh_pos = tripoint( 60, 60, 0 );
     auto const wall_pos = tripoint( 60, 59, 0 );
 
-    auto *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), veh_pos, 270_degrees, 0, 0 );
+    auto *veh_ptr = here.add_vehicle( vproto_id( "bicycle_test" ), veh_pos, 270_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
 
     REQUIRE( here.ter_set( wall_pos, ter_id( "t_concrete_wall" ) ) );

@@ -249,6 +249,14 @@
   },
   {
     "type": "overmap_terrain",
+    "id": "ws_regional_dump_3_0_1_roof",
+    "copy-from": "generic_city_building_no_sidewalk",
+    "name": "regional dump",
+    "sym": "d",
+    "color": "i_brown"
+  },
+  {
+    "type": "overmap_terrain",
     "id": "smallscrapyard",
     "copy-from": "generic_city_building_no_sidewalk",
     "name": "small scrap yard",

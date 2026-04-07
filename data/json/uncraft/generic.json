@@ -6014,5 +6014,30 @@
     "time": "10 m",
     "qualities": [ { "id": "PRY", "level": 1 } ],
     "components": [ [ [ "2x4", 4 ] ], [ [ "felt_patch", 4 ] ], [ [ "wood_panel", 1 ] ], [ [ "nail", 10 ] ], [ [ "scrap", 2 ] ] ]
+  },
+  {
+    "result": "broken_uafv_xm246e1",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "2 h",
+    "using": [ [ "soldering_standard", 40 ], [ "welding_standard", 10 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [
+      [ [ "ai_module", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "memory_module", 1 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "tread3", 4 ] ],
+      [ [ "hdframe", 4 ] ],
+      [ [ "motor_super", 1 ] ],
+      [ [ "storage_battery", 1 ] ],
+      [ [ "power_supply", 4 ] ],
+      [ [ "solar_panel", 2 ] ],
+      [ [ "turret_chassis", 1 ] ],
+      [ [ "gun_module", 1 ] ],
+      [ [ "tank_gun_auto", 1 ] ]
+    ]
   }
 ]

@@ -157,9 +157,11 @@ PRタイトルの例：
 feat(balance): Give moose pelts instead of hides
 ```
 
-### `port`: DDAまたは他のフォークからの移植
+### `port`: 他人の貢献の移植
 
-PRタイトルの例：
+例えば、DDAや他のフォークからのもの。
+
+PRタイトルの例:
 
 ```
 feat(port): game shop

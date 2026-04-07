@@ -86,10 +86,7 @@ static void clear_game( const ter_id &terrain )
 {
     // Set to turn 0 to prevent solars from producing power
     calendar::turn = calendar::turn_zero;
-    clear_avatar();
-    clear_creatures();
-    clear_npcs();
-    clear_vehicles();
+    clear_states( state::avatar | state::vehicle );
 
     avatar &u = get_avatar();
     // Move player somewhere safe
@@ -137,7 +134,7 @@ static vehicle &add_moving_vehicle(
     units::angle face_dir
 )
 {
-    tripoint initial_veh_pos( MAPSIZE_X * 3 / 4, MAPSIZE_Y * 3 / 4, 0 );
+    tripoint initial_veh_pos( g_mapsize_x * 3 / 4, g_mapsize_y * 3 / 4, 0 );
     vehicle *veh_ptr = here.add_vehicle( vproto_id( veh_id ), initial_veh_pos, face_dir, 45, 0 );
     REQUIRE( veh_ptr != nullptr );
     vehicle &veh = *veh_ptr;
@@ -279,7 +276,7 @@ static void run_test_case_at_rotation( const test_case &t, int i_rot )
 {
     CAPTURE( i_rot );
     map_helpers::canvas canvas = t.canvas.rotated( i_rot );
-    tripoint canvas_pos = tripoint( ( point( MAPSIZE_X, MAPSIZE_Y ) - canvas.size().xy() ) / 2, 0 );
+    tripoint canvas_pos = tripoint( ( point( g_mapsize_x, g_mapsize_y ) - canvas.size().xy() ) / 2, 0 );
 
     point sz = t.canvas.size().xy();
     tripoint start_pos = canvas_pos + t.start_pos.rotate_2d( i_rot, sz );
@@ -293,80 +290,51 @@ static void run_test_case_at_rotation( const test_case &t, int i_rot )
     units::angle end_dir_l = normalize( t.end_dir_left + rot );
     units::angle end_dir_r = normalize( t.end_dir_right + rot );
 
-    clear_game( t_floor );
-    build_map_from_canvas( canvas, canvas_pos );
-
-    int i = 16 * i_rot;
-    const auto sn = [&]( const char *s ) {
-        // Catch breaks when same "leaf" sections are executed multiple times,
-        // so we have to generate unique name for each invocation.
-        return std::string( s ) + "   sid=" + std::to_string( i ) + t.veh_id;
+    const auto run_case = [&]( const char *label, const int move_dir,
+                               const tripoint & vehicle_pos, const units::angle face_dir,
+                               const units::angle turn_delta, const tripoint & expected_pos,
+    const units::angle expected_dir ) {
+        CAPTURE( label );
+        clear_game( t_floor );
+        build_map_from_canvas( canvas, canvas_pos );
+        test_rail_movement( t, move_dir, vehicle_pos, face_dir,
+                            turn_delta, expected_pos, expected_dir );
     };
-    WHEN( sn( "moving forward" ) ) {
-        AND_WHEN( sn( "not trying to turn " ) ) {
-            test_rail_movement( t, 1, start_pos, start_dir,
-                                0_degrees, end_pos_s, end_dir_s );
-        }
-        AND_WHEN( sn( "trying to turn right " ) ) {
-            test_rail_movement( t, 1, start_pos, start_dir,
-                                turn_step, end_pos_r, end_dir_r );
-        }
-        AND_WHEN( sn( "trying to turn left " ) ) {
-            test_rail_movement( t, 1, start_pos, start_dir,
-                                -turn_step, end_pos_l, end_dir_l );
-        }
-    }
+
+    run_case( "moving forward without turning", 1, start_pos, start_dir,
+              0_degrees, end_pos_s, end_dir_s );
+    run_case( "moving forward turning right", 1, start_pos, start_dir,
+              turn_step, end_pos_r, end_dir_r );
+    run_case( "moving forward turning left", 1, start_pos, start_dir,
+              -turn_step, end_pos_l, end_dir_l );
+
     if( t.scope & tcscope::check_back_move ) {
-        WHEN( sn( "moving backwards from straight path" ) ) {
-            AND_WHEN( sn( "not trying to turn" ) ) {
-                test_rail_movement( t, -1, end_pos_s, end_dir_s,
-                                    0_degrees, start_pos, start_dir );
-            }
-            if( t.scope & tcscope::check_back_turns ) {
-                AND_WHEN( sn( "trying to turn right" ) ) {
-                    test_rail_movement( t, -1, end_pos_s, end_dir_s,
-                                        turn_step, start_pos, start_dir );
-                }
-                AND_WHEN( sn( "trying to turn left" ) ) {
-                    test_rail_movement( t, -1, end_pos_s, end_dir_s,
-                                        -turn_step, start_pos, start_dir );
-                }
-            }
+        run_case( "moving backwards from straight path without turning", -1,
+                  end_pos_s, end_dir_s, 0_degrees, start_pos, start_dir );
+        if( t.scope & tcscope::check_back_turns ) {
+            run_case( "moving backwards from straight path turning right", -1,
+                      end_pos_s, end_dir_s, turn_step, start_pos, start_dir );
+            run_case( "moving backwards from straight path turning left", -1,
+                      end_pos_s, end_dir_s, -turn_step, start_pos, start_dir );
         }
         if( end_pos_r != end_pos_s ) {
-            WHEN( sn( "moving backwards from right path" ) ) {
-                AND_WHEN( sn( "not trying to turn" ) ) {
-                    test_rail_movement( t, -1, end_pos_r, end_dir_r,
-                                        0_degrees, start_pos, start_dir );
-                }
-                if( t.scope & tcscope::check_back_turns ) {
-                    AND_WHEN( sn( "trying to turn right" ) ) {
-                        test_rail_movement( t, -1, end_pos_r, end_dir_r,
-                                            turn_step, start_pos, start_dir );
-                    }
-                    AND_WHEN( sn( "trying to turn left" ) ) {
-                        test_rail_movement( t, -1, end_pos_r, end_dir_r,
-                                            -turn_step, start_pos, start_dir );
-                    }
-                }
+            run_case( "moving backwards from right path without turning", -1,
+                      end_pos_r, end_dir_r, 0_degrees, start_pos, start_dir );
+            if( t.scope & tcscope::check_back_turns ) {
+                run_case( "moving backwards from right path turning right", -1,
+                          end_pos_r, end_dir_r, turn_step, start_pos, start_dir );
+                run_case( "moving backwards from right path turning left", -1,
+                          end_pos_r, end_dir_r, -turn_step, start_pos, start_dir );
             }
         }
         if( end_pos_l != end_pos_s ) {
-            WHEN( sn( "moving backwards from left path" ) ) {
-                AND_WHEN( sn( "not trying to turn" ) ) {
-                    test_rail_movement( t, -1, end_pos_l, end_dir_l,
-                                        0_degrees, start_pos, start_dir );
-                }
-                if( t.scope & tcscope::check_back_turns ) {
-                    AND_WHEN( sn( "trying to turn right" ) ) {
-                        test_rail_movement( t, -1, end_pos_l, end_dir_l,
-                                            turn_step, start_pos, start_dir );
-                    }
-                    AND_WHEN( sn( "trying to turn left" ) ) {
-                        test_rail_movement( t, -1, end_pos_l, end_dir_l,
-                                            -turn_step, start_pos, start_dir );
-                    }
-                }
+            run_case( "moving backwards from left path without turning", -1,
+                      end_pos_l, end_dir_l, 0_degrees, start_pos, start_dir );
+            if( t.scope & tcscope::check_back_turns ) {
+                run_case( "moving backwards from left path turning right", -1,
+                          end_pos_l, end_dir_l, turn_step, start_pos, start_dir );
+                run_case( "moving backwards from left path turning left", -1,
+                          end_pos_l, end_dir_l, -turn_step, start_pos, start_dir );
             }
         }
     }

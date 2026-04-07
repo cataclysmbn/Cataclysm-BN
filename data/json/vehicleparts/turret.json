@@ -840,5 +840,203 @@
       "removal": { "skills": [ [ "mechanics", 3 ] ], "qualities": [ { "id": "SCREW", "level": 1 } ] }
     },
     "breaks_into": "ig_vp_device"
+  },
+  {
+    "abstract": "turret_tank",
+    "type": "vehicle_part",
+    "copy-from": "turret",
+    "folded_volume": "0 ml",
+    "color": "green",
+    "broken_symbol": "#",
+    "broken_color": "green",
+    "durability": 800,
+    "damage_modifier": 120,
+    "requirements": { "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] } },
+    "delete": { "flags": [ "FOLDABLE" ] }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_tank_manual",
+    "looks_like": "tow_launcher",
+    "copy-from": "turret_tank",
+    "name": "120mm tank gun",
+    "item": "tank_gun_manual",
+    "breaks_into": [ { "item": "steel_lump", "count": [ 375, 750 ] }, { "item": "steel_chunk", "count": [ 1500, 3000 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ], [ "launcher", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      }
+    }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_tank_auto",
+    "looks_like": "mounted_tank_manual",
+    "copy-from": "turret_tank",
+    "name": "120mm autoloading tank gun",
+    "item": "tank_gun_auto",
+    "breaks_into": [ { "item": "steel_lump", "count": [ 400, 800 ] }, { "item": "steel_chunk", "count": [ 2000, 4000 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 6 ], [ "launcher", 3 ], [ "electronics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      }
+    }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_tank_crude",
+    "looks_like": "tow_launcher",
+    "copy-from": "turret_tank",
+    "name": "makeshift 120mm tank gun",
+    "item": "tank_gun_crude",
+    "durability": 400,
+    "damage_modifier": 40,
+    "breaks_into": [ { "item": "steel_lump", "count": [ 125, 250 ] }, { "item": "steel_chunk", "count": [ 625, 1250 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 3 ], [ "launcher", 1 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      },
+      "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_standard", 1 ] ] }
+    }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_tank_manual_105mm",
+    "looks_like": "mounted_tank_manual",
+    "copy-from": "turret_tank",
+    "name": "105mm tank gun",
+    "item": "tank_gun_manual_105mm",
+    "breaks_into": [ { "item": "steel_lump", "count": [ 175, 350 ] }, { "item": "steel_chunk", "count": [ 875, 1750 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ], [ "launcher", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      }
+    }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_tank_crude_105mm",
+    "looks_like": "mounted_tank_manual_105mm",
+    "copy-from": "turret_tank",
+    "name": "makeshift 105mm tank gun",
+    "item": "tank_gun_crude_105mm",
+    "durability": 400,
+    "damage_modifier": 40,
+    "breaks_into": [ { "item": "steel_lump", "count": [ 90, 180 ] }, { "item": "steel_chunk", "count": [ 450, 900 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 3 ], [ "launcher", 1 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_standard", 1 ] ] }
+    }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_howitzer",
+    "looks_like": "tow_launcher",
+    "copy-from": "turret_tank",
+    "name": "155mm howitzer",
+    "item": "howitzer_gun",
+    "breaks_into": [ { "item": "steel_lump", "count": [ 500, 1000 ] }, { "item": "steel_chunk", "count": [ 2500, 5000 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ], [ "launcher", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      }
+    }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_howitzer_crude",
+    "looks_like": "mounted_howitzer",
+    "copy-from": "turret_tank",
+    "name": "makeshift 155mm howitzer",
+    "item": "howitzer_gun_crude",
+    "durability": 400,
+    "damage_modifier": 40,
+    "breaks_into": [ { "item": "steel_lump", "count": [ 175, 350 ] }, { "item": "steel_chunk", "count": [ 875, 1750 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 3 ], [ "launcher", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      },
+      "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_standard", 1 ] ] }
+    }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "tow_turret",
+    "looks_like": "tow_launcher",
+    "copy-from": "turret_tank",
+    "name": "ATGM turret",
+    "item": "atgm_turret",
+    "breaks_into": [ { "item": "steel_lump", "count": [ 25, 50 ] }, { "item": "steel_chunk", "count": [ 125, 250 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ], [ "launcher", 3 ], [ "electronics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      }
+    }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_25mm_autocannon",
+    "looks_like": "mounted_mk19",
+    "copy-from": "turret_tank",
+    "name": "25mm chaingun",
+    "item": "25mm_autocannon",
+    "breaks_into": [ { "item": "steel_lump", "count": [ 15, 30 ] }, { "item": "steel_chunk", "count": [ 75, 150 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ], [ "launcher", 1 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      }
+    }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_25mm_autocannon_sawn",
+    "looks_like": "mounted_25mm_autocannon",
+    "copy-from": "turret_tank",
+    "name": "stripped-down 25mm gun",
+    "item": "25mm_autocannon_sawn",
+    "breaks_into": [ { "item": "steel_lump", "count": [ 6, 12 ] }, { "item": "steel_chunk", "count": [ 30, 60 ] } ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ], [ "launcher", 1 ] ], "time": "10 m" },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m" }
+    }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_25mm_autocannon_crude",
+    "looks_like": "mounted_25mm_autocannon_sawn",
+    "copy-from": "turret_tank",
+    "name": "makeshift 25mm cannon",
+    "item": "25mm_cannon_crude",
+    "durability": 400,
+    "damage_modifier": 40,
+    "breaks_into": [ { "item": "steel_lump", "count": [ 7, 14 ] }, { "item": "steel_chunk", "count": [ 35, 70 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 3 ], [ "launcher", 1 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      },
+      "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 2 ] ] }
+    }
   }
 ]

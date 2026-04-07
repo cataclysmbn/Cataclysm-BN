@@ -59,11 +59,6 @@ static constexpr int sunset_equinox = ( sunset_summer + sunset_winter ) / 2;
 // How long, does sunrise/sunset last?
 static const time_duration twilight_duration = 1_hours;
 
-double default_daylight_level()
-{
-    return 100.0;
-}
-
 moon_phase get_moon_phase( const time_point &p )
 {
     // Seasons last 14 days, not 91 like in real life
@@ -495,6 +490,21 @@ bool calendar::once_every( const time_duration &event_frequency )
         return false;
     }
     return ( calendar::turn - calendar::turn_zero ) % event_frequency == 0_turns;
+}
+
+int calendar::ticks_between( const time_point &from, const time_point &to,
+                             const time_duration &tick_length )
+{
+    if( tick_length <= 0_turns ) {
+        return 0;
+    }
+    return ( to_turn<int>( to ) / to_turns<int>( tick_length ) ) -
+           ( to_turn<int>( from ) / to_turns<int>( tick_length ) );
+}
+
+int calendar::ticks_between( const time_duration &duration, const time_duration &tick_length )
+{
+    return ticks_between( calendar::turn - duration, calendar::turn, tick_length );
 }
 
 std::string calendar::name_season( season_type s )

@@ -99,7 +99,7 @@
     "id": "hair_crewcut",
     "type": "mutation",
     "name": { "str": "Hair style: crew-cut" },
-    "description": "Crewcut hair",
+    "description": "Crew-cut hair",
     "points": 0,
     "starting_trait": true,
     "valid": false,
@@ -111,7 +111,7 @@
     "id": "hair_mohawk",
     "type": "mutation",
     "name": { "str": "Hair style: mohawk" },
-    "description": "Mohawk hair",
+    "description": "Hair buzzes at the sides",
     "points": 0,
     "starting_trait": true,
     "valid": false,
@@ -123,7 +123,7 @@
     "id": "hair_fro",
     "type": "mutation",
     "name": { "str": "Hair style: 'fro" },
-    "description": "'Fro hair",
+    "description": "Well groomed 'fro",
     "points": 0,
     "starting_trait": true,
     "valid": false,
@@ -168,10 +168,82 @@
     "types": [ "hair_style" ]
   },
   {
+    "id": "hair_treated",
+    "type": "mutation",
+    "name": { "str": "Hair style: treated" },
+    "description": "Well treated hair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_style" ]
+  },
+  {
+    "id": "hair_cropped",
+    "type": "mutation",
+    "name": { "str": "Hair style: cropped" },
+    "description": "Cropped hair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_style" ]
+  },
+  {
+    "id": "hair_parted",
+    "type": "mutation",
+    "name": { "str": "Hair style: parted" },
+    "description": "Lightly parted hair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_style" ]
+  },
+  {
+    "id": "hair_ponytail",
+    "type": "mutation",
+    "name": { "str": "Hair style: ponytail" },
+    "description": "Hair done up in a ponytail",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_style" ]
+  },
+  {
+    "id": "hair_swept",
+    "type": "mutation",
+    "name": { "str": "Hair style: swept" },
+    "description": "Hair with flair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_style" ]
+  },
+  {
+    "id": "hair_overflowing",
+    "type": "mutation",
+    "name": { "str": "Hair style: overflowing" },
+    "description": "Very long, flowing hair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_style" ]
+  },
+  {
     "id": "HAIR_BALD",
     "type": "mutation",
     "name": { "str": "Hair style: bald" },
-    "description": "bald",
+    "description": "No hair on head",
     "points": 0,
     "starting_trait": true,
     "valid": false,
@@ -369,7 +441,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_GOATEE",
@@ -381,7 +454,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CIRCLE",
@@ -393,7 +467,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_ROYALE",
@@ -405,7 +480,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_ANCHOR",
@@ -417,7 +493,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SHORTBOXED",
@@ -429,7 +506,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHEVRON",
@@ -441,7 +519,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_3DAYSTUBBLE",
@@ -453,7 +532,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_HORSESHOE",
@@ -465,7 +545,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_MUSTACHE",
@@ -477,7 +558,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_MUTTONCHOPS",
@@ -489,7 +571,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_GUNSLINGER",
@@ -501,7 +584,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHIN_STRIP",
@@ -513,7 +597,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHIN_CURTAIN",
@@ -525,7 +610,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHIN_STRAP",
@@ -537,7 +623,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_BEARD",
@@ -549,7 +636,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_HANDLEBAR",
@@ -561,7 +649,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_NECKBEARD",
@@ -573,7 +662,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_PENCIL",
@@ -585,7 +675,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SHENANDOAH",
@@ -597,7 +688,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SIDEBURNS",
@@ -609,7 +701,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SOUL_PATCH",
@@ -621,7 +714,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_TOOTHBRUSH",
@@ -633,7 +727,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_VANDYKE",
@@ -645,7 +740,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_WALRUS",
@@ -657,7 +753,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_ZAPPA",
@@ -669,6 +766,33 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
+  },
+  {
+    "id": "FACIAL_HAIR_WIZENED",
+    "type": "mutation",
+    "name": { "str": "Facial hair: wizened" },
+    "description": "You have a long, flowing beard that indicates wisdom.",
+    "points": 0,
+    "valid": false,
+    "starting_trait": true,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
+  },
+  {
+    "id": "FACIAL_HAIR_JAW_SCRUFF",
+    "type": "mutation",
+    "name": { "str": "Facial hair: jaw scruff" },
+    "description": "You have wispy hair growing along your jawline.",
+    "points": 0,
+    "valid": false,
+    "starting_trait": true,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   }
 ]

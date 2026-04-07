@@ -153,6 +153,12 @@ class SkillLevel
         void train( int amount, bool skip_scaling = false );
         bool isRusting() const;
         bool rust( bool charged_bio_mem, int character_rate );
+        // Returns the effective time between rust ticks at the current level.
+        time_duration rust_interval( int char_rate ) const;
+        // Simulates catch-up rust over a duration.
+        // max_bio_saves: how many times bio_memory may intervene (0 = disabled, INT_MAX = unlimited).
+        // Returns the number of saves actually used (for power cost at call site).
+        int rust_by( const time_duration &duration, int max_bio_saves, int char_rate );
         void practice();
         bool can_train() const;
 

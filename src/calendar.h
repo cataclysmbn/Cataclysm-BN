@@ -65,6 +65,12 @@ namespace calendar
  */
 bool once_every( const time_duration &event_frequency );
 
+// Returns the number of multiples of tick_length we would "pass" on our way `from` to `to`
+// For example, if `tick_length` is 1 hour, then going from 0:59 to 1:01 should return 1
+int ticks_between( const time_point &from, const time_point &to,
+                   const time_duration &tick_length );
+int ticks_between( const time_duration &duration, const time_duration &tick_length );
+
 /**
  * A number that represents the longest possible action.
  *
@@ -603,7 +609,7 @@ bool is_dawn( const time_point &p );
 /** Returns the current seasonally-adjusted maximum daylight level */
 double current_daylight_level( const time_point &p );
 /** How much light is provided in full daylight */
-double default_daylight_level();
+static constexpr double default_daylight_level() { return 100.0; }
 /** Returns the current sunlight or moonlight level through the preceding functions.
  *  By default, returns sunlight level for vision, with moonlight providing a measurable amount
  *  of light.  with vision == false, returns sunlight for solar panel purposes, and moonlight

@@ -2099,6 +2099,19 @@
     ]
   },
   {
+    "id": "nested_bp_12",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "BP_12", "ammo-group": "on_hand_shot", "charges": [ 0, 10 ] },
+      { "group": "nested_saiga_12_mag" },
+      { "group": "nested_saiga_12_mag", "prob": 50 },
+      { "group": "on_hand_shot" }
+    ]
+  },
+  {
     "id": "nested_streetsweeper",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

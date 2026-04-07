@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 #include <memory>
 #include <type_traits>
 #include <variant>
@@ -207,6 +208,12 @@ class list_circularizer
         T &cur() const {
             // list could be null, but it would be a design time mistake and really, the callers fault.
             return ( *_list )[_index];
+        }
+
+        void set_index( const size_t new_index ) {
+            if( new_index < _list->size() ) {
+                _index = new_index;
+            }
         }
 };
 

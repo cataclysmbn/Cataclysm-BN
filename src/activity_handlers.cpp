@@ -154,6 +154,7 @@ static const activity_id ACT_OPERATION( "ACT_OPERATION" );
 static const activity_id ACT_PICKAXE( "ACT_PICKAXE" );
 static const activity_id ACT_PLANT_SEED( "ACT_PLANT_SEED" );
 static const activity_id ACT_PLAY_WITH_PET( "ACT_PLAY_WITH_PET" );
+static const activity_id ACT_TRAIN_PET( "ACT_TRAIN_PET" );
 static const activity_id ACT_PRY_NAILS( "ACT_PRY_NAILS" );
 static const activity_id ACT_PULP( "ACT_PULP" );
 static const activity_id ACT_QUARTER( "ACT_QUARTER" );
@@ -371,6 +372,7 @@ activity_handlers::finish_functions = {
     { ACT_JACKHAMMER, jackhammer_finish },
     { ACT_FILL_PIT, fill_pit_finish },
     { ACT_PLAY_WITH_PET, play_with_pet_finish },
+    { ACT_TRAIN_PET, train_pet_finish },
     { ACT_SHAVE, shaving_finish },
     { ACT_HAIRCUT, haircut_finish },
     { ACT_ROBOT_CONTROL, robot_control_finish },
@@ -3806,7 +3808,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
     }
 
     const recipe &rec = craft->get_making();
-    const tripoint bench_pos = act->coords.front();
+    const tripoint bench_pos = get_map().getlocal( act->coords.front() );
     // Ugly
     bench_type bench_t = bench_type( act->values[craft_bench_type_idx] );
 
@@ -4213,6 +4215,24 @@ void activity_handlers::play_with_pet_finish( player_activity *act, player *p )
     act->set_to_null();
 }
 
+void activity_handlers::train_pet_finish( player_activity *act, player *p )
+{
+    if( 4 * p->get_skill_level( skill_survival ) >= rng( 0, 100 ) ) {
+        auto mon = act->monsters[0].lock();
+        if( mon ) {
+            mon->monster_flags.insert( MF_COMBAT_MOUNT );
+            p->add_msg_if_player( m_good,
+                                  _( "Training your %s has finally succeeded, they should be less skittish in combat now." ),
+                                  act->str_values[0] );
+        }
+    } else {
+        p->add_msg_if_player( m_good,
+                              _( "Training your %s takes time, it seems they are making a bit of progress at least." ),
+                              act->str_values[0] );
+    }
+    act->set_to_null();
+}
+
 void activity_handlers::shaving_finish( player_activity *act, player *p )
 {
     p->add_msg_if_player( _( "You open up your kit and shave." ) );
@@ -4460,7 +4480,7 @@ void activity_handlers::tree_communion_do_turn( player_activity *act, player *p 
     };
     while( !q.empty() ) {
         tripoint_abs_omt tpt = q.front();
-        if( overmap_buffer.reveal( tpt, 3, filter ) ) {
+        if( ACTIVE_OVERMAP_BUFFER.reveal( tpt, 3, filter ) ) {
             if( p->has_trait( trait_SPIRITUAL ) ) {
                 p->add_morale( MORALE_TREE_COMMUNION, 2, 30, 8_hours, 6_hours );
             } else {
@@ -4477,7 +4497,7 @@ void activity_handlers::tree_communion_do_turn( player_activity *act, player *p 
                 continue;
             }
             seen.insert( neighbor );
-            if( !overmap_buffer.ter( neighbor ).obj().is_wooded() ) {
+            if( !ACTIVE_OVERMAP_BUFFER.ter( neighbor ).obj().is_wooded() ) {
                 continue;
             }
             q.push( neighbor );

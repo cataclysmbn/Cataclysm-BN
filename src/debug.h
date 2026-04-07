@@ -46,6 +46,7 @@
 // Includes                                                         {{{1
 // ---------------------------------------------------------------------
 #include <iostream>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -209,9 +210,22 @@ std::string capture_debugmsg_during( const std::function<void()> &func );
 
 /**
  * Should be called after catacurses::stdscr is initialized.
- * If catacurses::stdscr is available, shows all buffered debugmsg prompts.
+ * If catacurses::stdscr is available, shows all buffered debugmsg prompts,
+ * including any that were queued from worker threads.
  */
 void replay_buffered_debugmsg_prompts();
+
+/**
+ * Flush the debug log stream to disk immediately.
+ * Safe to call from a signal/crash handler.
+ */
+void flush_debug_log();
+
+/**
+ * Show any debugmsg prompts that were deferred from worker threads.
+ * Must be called from the main thread with catacurses::stdscr available.
+ */
+void drain_worker_thread_debugmsgs();
 
 /**
  * Retrieves OS bitness (32, 64 or nullopt if detection failed)
@@ -226,13 +240,23 @@ namespace detail
 /**
  * Debug log guard.
  *
- * Appends newline and flushes the log when goes out of scope.
+ * Appends newline and releases the debug-log mutex when goes out of scope.
  * Dereference to get the underlying stream.
+ *
+ * The two-argument constructor takes ownership of the debug-log mutex lock so
+ * that the header, message body, and trailing newline are written as one
+ * uninterrupted unit.  The single-argument constructor is used for the
+ * null/filtered case and holds no lock.
  */
 class DebugLogGuard
 {
         std::ostream *s;
+        std::unique_lock<std::mutex> lock_;
     public:
+        // Active logging: takes ownership of the debug-log mutex lock.
+        DebugLogGuard( std::ostream &s, std::unique_lock<std::mutex> lock )
+            : s( &s ), lock_( std::move( lock ) ) {}
+        // Null/filtered: no lock held.
         explicit DebugLogGuard( std::ostream &s ) : s( &s ) {}
         ~DebugLogGuard();
 
