@@ -1,6 +1,7 @@
 #include "mongroup.h"
 
 #include <algorithm>
+#include <optional>
 #include <ranges>
 #include <utility>
 
@@ -344,24 +345,30 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
 
     MonsterGroup g;
 
-    g.name = mongroup_id( jo.get_string( "name" ) );
+    if( jo.has_string( "name" ) ) {
+        g.name = mongroup_id( jo.get_string( "name" ) );
+    } else if( jo.has_string( "id" ) ) {
+        g.name = mongroup_id( jo.get_string( "id" ) );
+    } else {
+        jo.throw_error( "missing required field \"name\" or \"id\"" );
+    }
     bool extending = false;  //If already a group with that name, add to it instead of overwriting it
     bool allow_override = jo.get_bool( "override", false );
     if( monsterGroupMap.contains( g.name ) && !allow_override ) {
         g = monsterGroupMap[g.name];
         extending = true;
     }
-    if( !extending
-        || jo.has_string( "default" ) ) { //Not mandatory to specify default if extending existing group
+    const bool has_default = jo.has_string( "default" );
+    if( has_default ) { //Not mandatory to specify default if extending existing group
         g.defaultMonster = mtype_id( jo.get_string( "default" ) );
     }
     g.is_animal = jo.get_bool( "is_animal", false );
+    auto inferred_default = std::optional<mtype_id> {};
     if( jo.has_array( "monsters" ) ) {
         for( JsonObject mon : jo.get_array( "monsters" ) ) {
-            const mtype_id name = mtype_id( mon.get_string( "monster" ) );
-
-            int freq = mon.get_int( "freq" );
-            int cost = mon.get_int( "cost_multiplier" );
+            const bool has_group = mon.has_string( "group" );
+            const int freq = mon.get_int( "freq", mon.get_int( "weight", 0 ) );
+            const int cost = mon.get_int( "cost_multiplier", 1 );
             int pack_min = 1;
             int pack_max = 1;
             if( mon.has_member( "pack_size" ) ) {
@@ -378,6 +385,46 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
             if( mon.has_member( "ends" ) ) {
                 ends = tdfactor * mon.get_int( "ends" ) * ( mon_upgrade_factor > 0 ? mon_upgrade_factor : 1 );
             }
+
+            if( has_group ) {
+                const auto group_id = mongroup_id( mon.get_string( "group" ) );
+                if( monsterGroupMap.contains( group_id ) ) {
+                    const MonsterGroup &nested_group = monsterGroupMap[group_id];
+                    const int nested_total = std::max( nested_group.freq_total, 1 );
+                    if( nested_group.defaultMonster != mtype_id::NULL_ID() ) {
+                        const int scaled_freq = std::max( 1, freq / nested_total );
+                        MonsterGroupEntry new_mon_group = MonsterGroupEntry( nested_group.defaultMonster, scaled_freq, cost,
+                                                          pack_min, pack_max, starts, ends );
+                        if( mon.has_member( "conditions" ) ) {
+                            for( const std::string line : mon.get_array( "conditions" ) ) {
+                                new_mon_group.conditions.push_back( line );
+                            }
+                        }
+                        g.monsters.push_back( new_mon_group );
+                        if( !inferred_default.has_value() ) {
+                            inferred_default = nested_group.defaultMonster;
+                        }
+                    }
+                    for( const MonsterGroupEntry &nested_entry : nested_group.monsters ) {
+                        const int scaled_freq = std::max( 1, nested_entry.frequency * std::max( freq, 1 ) / nested_total );
+                        MonsterGroupEntry new_mon_group = MonsterGroupEntry( nested_entry.name, scaled_freq, cost,
+                                                          pack_min, pack_max, starts, ends );
+                        new_mon_group.conditions = nested_entry.conditions;
+                        if( mon.has_member( "conditions" ) ) {
+                            for( const std::string line : mon.get_array( "conditions" ) ) {
+                                new_mon_group.conditions.push_back( line );
+                            }
+                        }
+                        g.monsters.push_back( new_mon_group );
+                        if( !inferred_default.has_value() ) {
+                            inferred_default = nested_entry.name;
+                        }
+                    }
+                }
+                continue;
+            }
+
+            const mtype_id name = mtype_id( mon.get_string( "monster" ) );
             MonsterGroupEntry new_mon_group = MonsterGroupEntry( name, freq, cost, pack_min, pack_max, starts,
                                               ends );
             if( mon.has_member( "conditions" ) ) {
@@ -387,7 +434,13 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
             }
 
             g.monsters.push_back( new_mon_group );
+            if( !inferred_default.has_value() ) {
+                inferred_default = name;
+            }
         }
+    }
+    if( !has_default && !extending && inferred_default.has_value() ) {
+        g.defaultMonster = *inferred_default;
     }
     g.replace_monster_group = jo.get_bool( "replace_monster_group", false );
     g.new_monster_group = mongroup_id( jo.get_string( "new_monster_group_id",
