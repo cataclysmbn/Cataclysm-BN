@@ -729,7 +729,7 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
             } else {
                 // Already installed from blueprint
                 const auto lock = part_with_feature( door, str_DOOR_LOCKING, true );
-                if( idx >= 0 ) {
+                if( lock >= 0 ) {
                     parts[lock].enabled = lockDoors;
                 } else {
                     // Already installed from blueprint
