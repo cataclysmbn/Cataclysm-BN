@@ -90,6 +90,7 @@
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
 #include "regional_settings.h"
+#include "regional_settings_compat.h"
 #include "requirements.h"
 #include "rotatable_symbols.h"
 #include "scenario.h"
@@ -371,6 +372,9 @@ void DynamicDataLoader::initialize()
     add( "GENERIC", []( const JsonObject & jo, const std::string & src ) {
         item_controller->load_generic( jo, src );
     } );
+    add( "ITEM", []( const JsonObject & jo, const std::string & src ) {
+        item_controller->load_generic( jo, src );
+    } );
     add( "BIONIC_ITEM", []( const JsonObject & jo, const std::string & src ) {
         item_controller->load_bionic( jo, src );
     } );
@@ -404,6 +408,7 @@ void DynamicDataLoader::initialize()
     add( "weapon_category", &weapon_category::load_weapon_categories );
     add( "martial_art", &load_martial_art );
     add( "effect_type", &load_effect_type );
+    add( "effect_on_condition", &load_ignored_type );
     add( "oter_id_migration", &overmap::load_oter_id_migration );
     add( "overmap_terrain", &overmap_terrains::load );
     add( "construction_category", &construction_categories::load );
@@ -417,6 +422,12 @@ void DynamicDataLoader::initialize()
     add( "city_building", &city_buildings::load );
     add( "map_extra", &MapExtras::load );
     add( "map_feature_description", &map_feature_descriptions::load_map_feature_descriptions );
+    add( "weather_generator", &load_weather_generator_compat );
+    add( "map_extra_collection", &load_map_extra_collection_compat );
+    add( "region_settings_map_extras", &load_region_settings_map_extras_compat );
+    add( "region_terrain_furniture", &load_region_terrain_furniture_compat );
+    add( "region_settings_terrain_furniture", &load_region_settings_terrain_furniture_compat );
+    add( "region_settings_forest_mapgen", &load_region_settings_forest_mapgen_compat );
 
     add( "region_settings", &load_region_settings );
     add( "region_overlay", &load_region_overlay );

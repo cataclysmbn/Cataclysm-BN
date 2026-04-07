@@ -3,6 +3,7 @@
 #include <array>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -236,6 +237,16 @@ struct regional_settings {
     region_terrain_and_furniture_settings region_terrain_and_furniture;
 
     std::unordered_map<std::string, map_extras> region_extras;
+    bool place_forests = true;
+    bool place_cities = true;
+    bool place_forest_trails = true;
+    bool place_roads = true;
+    bool neighbor_connections = true;
+    std::optional<std::string> weather_generator_id;
+    std::optional<std::string> region_map_extras_id;
+    std::optional<std::string> region_terrain_and_furniture_id;
+    std::optional<std::string> forest_composition_id;
+    std::optional<std::string> city_settings_id;
 
     regional_settings() : id( "null" ) {
         const auto field = oter_str_id( "field" );
@@ -259,4 +270,3 @@ void load_region_settings( const JsonObject &jo );
 void reset_region_settings();
 void load_region_overlay( const JsonObject &jo );
 void apply_region_overlay( const JsonObject &jo, regional_settings &region );
-

@@ -720,7 +720,26 @@ void oter_type_t::load( const JsonObject &jo, const std::string &src )
     }
 
     assign( jo, "name", name, strict );
-    assign( jo, "see_cost", see_cost, strict );
+    if( jo.has_string( "see_cost" ) ) {
+        static const auto see_cost_aliases = std::map<std::string, int> {
+            { "none", 0 },
+            { "all_clear", 2 },
+            { "low", 3 },
+            { "medium", 4 },
+            { "high", 5 },
+            { "spaced_high", 4 },
+            { "full_high", 10 },
+            { "opaque", 255 }
+        };
+        const auto alias = jo.get_string( "see_cost" );
+        if( const auto iter = see_cost_aliases.find( alias ); iter != see_cost_aliases.end() ) {
+            see_cost = iter->second;
+        } else {
+            jo.throw_error( string_format( "unknown see_cost alias '%s'", alias ), "see_cost" );
+        }
+    } else {
+        assign( jo, "see_cost", see_cost, strict );
+    }
     assign( jo, "travel_cost", travel_cost, strict );
     assign( jo, "extras", extras, strict );
     assign( jo, "mondensity", mondensity, strict );
@@ -3389,15 +3408,25 @@ void overmap::generate( const overmap *north, const overmap *east,
     dbg( DL::Info ) << "overmap::generate start";
 
     connection_cache = overmap_connection_cache{};
-    populate_connections_out_from_neighbors( north, east, south, west );
+    if( settings->neighbor_connections ) {
+        populate_connections_out_from_neighbors( north, east, south, west );
+    }
 
     place_rivers( north, east, south, west );
     place_lakes();
-    place_forests();
-    place_swamps();
-    place_cities();
-    place_forest_trails();
-    place_roads( north, east, south, west );
+    if( settings->place_forests ) {
+        place_forests();
+        place_swamps();
+    }
+    if( settings->place_cities ) {
+        place_cities();
+    }
+    if( settings->place_forest_trails ) {
+        place_forest_trails();
+    }
+    if( settings->place_roads ) {
+        place_roads( north, east, south, west );
+    }
     place_specials( enabled_specials );
     place_forest_trailheads();
 

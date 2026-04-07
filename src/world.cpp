@@ -232,6 +232,9 @@ void load_external_option( const JsonObject &jo )
 {
     auto name = jo.get_string( "name" );
     auto stype = jo.get_string( "stype" );
+    if( stype == "string_input" ) {
+        stype = "string";
+    }
     options_manager &opts = get_options();
     if( !opts.has_option( name ) ) {
         auto sinfo = jo.get_string( "info" );

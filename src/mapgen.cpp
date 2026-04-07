@@ -530,7 +530,7 @@ load_mapgen_function( const JsonObject &jio, point offset, point total )
         jio.allow_omitted_members();
         return nullptr; // nothing
     }
-    const std::string mgtype = jio.get_string( "method" );
+    const std::string mgtype = jio.get_string( "method", jio.has_object( "object" ) ? "json" : "" );
     if( mgtype == "builtin" ) {
         if( const building_gen_pointer ptr = get_mapgen_cfunction( jio.get_string( "name" ) ) ) {
             return std::make_shared<mapgen_function_builtin>( ptr, mgweight );
@@ -568,7 +568,7 @@ void load_and_add_mapgen_function( const JsonObject &jio, const std::string &id_
 
 static void load_nested_mapgen( const JsonObject &jio, const std::string &id_base )
 {
-    const std::string mgtype = jio.get_string( "method" );
+    const std::string mgtype = jio.get_string( "method", jio.has_object( "object" ) ? "json" : "" );
     if( mgtype == "json" ) {
         if( jio.has_object( "object" ) ) {
             int weight = jio.get_int( "weight", 1000 );
@@ -587,7 +587,7 @@ static void load_nested_mapgen( const JsonObject &jio, const std::string &id_bas
 
 static void load_update_mapgen( const JsonObject &jio, const std::string &id_base )
 {
-    const std::string mgtype = jio.get_string( "method" );
+    const std::string mgtype = jio.get_string( "method", jio.has_object( "object" ) ? "json" : "" );
     if( mgtype == "json" ) {
         if( jio.has_object( "object" ) ) {
             JsonObject jo = jio.get_object( "object" );
