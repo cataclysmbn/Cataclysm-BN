@@ -39,7 +39,7 @@
     "damage": { "damage_type": "bullet", "amount": 35, "armor_multiplier": 3 },
     "proportional": { "recoil": 0.6, "loudness": 0.8 },
     "range": 10,
-    "shot": { "count": 18, "half_angle": 6 },
+    "shot": { "count": 10, "half_angle": 6 },
     "extend": { "effects": [ "NOGIB" ] }
   },
   {
