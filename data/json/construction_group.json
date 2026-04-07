@@ -411,6 +411,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_door_window",
+    "name": "Build Windowed Door"
+  },
+  {
+    "type": "construction_group",
     "id": "build_makeshift_door",
     "name": "Build Makeshift Door"
   },
@@ -1011,6 +1016,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_multicooker",
+    "name": "Plug In Multi Cooker"
+  },
+  {
+    "type": "construction_group",
     "id": "install_refrigerator",
     "name": "Plug In Refrigerator"
   },
@@ -1331,6 +1341,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_water_purifier",
+    "name": "Install Water Purifier"
+  },
+  {
+    "type": "construction_group",
     "id": "place_craftrig",
     "name": "Place FOODCO Kitchen Buddy"
   },
@@ -1623,6 +1638,11 @@
     "type": "construction_group",
     "id": "water_fill_pit",
     "name": "Fill Pit With Water"
+  },
+   {
+    "type": "construction_group",
+    "id": "salt_water_fill_pit",
+    "name": "Fill Pit With Salt Water"
   },
   {
     "type": "construction_group",
