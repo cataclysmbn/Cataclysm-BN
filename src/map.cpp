@@ -1530,6 +1530,9 @@ bool map::deregister_vehicle_zone( zone_data &zone )
         for( auto it = bounds.first; it != bounds.second; it++ ) {
             if( &zone == &( it->second ) ) {
                 vp->vehicle().loot_zones.erase( it );
+                if( vp->vehicle().loot_zones.empty() ) {
+                    get_cache( vp->vehicle().sm_pos.z ).zone_vehicles.erase( &vp->vehicle() );
+                }
                 return true;
             }
         }
