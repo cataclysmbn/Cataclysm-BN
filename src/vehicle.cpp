@@ -3708,10 +3708,17 @@ std::vector<rider_data> vehicle::get_riders() const
 
 player *vehicle::get_passenger( int p ) const
 {
-    for( auto part : get_parts_at( mount_to_tripoint( parts[p].mount ), "BOARDABLE",
-                                   part_status_flag::any ) ) {
-        if( part && part->has_flag( vehicle_part::passenger_flag ) ) {
-            return g->critter_by_id<player>( part->passenger_id );
+    // Compare by mount (2D vehicle-local tile) rather than global tripoint.
+    // mount_to_tripoint() uses coord_translate which can produce nonzero z on
+    // ramp terrain, but precalc[0].z is always cleared to 0 in precalc_mounts().
+    // The tripoint mismatch causes get_parts_at() to find no parts on ramps.
+    const point &target_mount = parts[p].mount;
+    for( auto &part : parts ) {
+        if( part.removed || part.mount != target_mount ) {
+            continue;
+        }
+        if( part.info().has_flag( "BOARDABLE" ) && part.has_flag( vehicle_part::passenger_flag ) ) {
+            return g->critter_by_id<player>( part.passenger_id );
         }
     }
     return nullptr;

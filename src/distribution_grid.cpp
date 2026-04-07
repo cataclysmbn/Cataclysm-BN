@@ -449,6 +449,13 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
                                     dimension_id_,
                                     source_sm,
                                     radius );
+
+        // Force-synchronous load of the far submap so power operations work
+        // on the same turn as resume.  request_load() is async (SLM needs at
+        // least one update() cycle); without this, the first make_distribution_grid_at
+        // call for the remote side hits the empty sentinel and drops energy.
+        MAPBUFFER_REGISTRY.get( it->target_dim_id ).lookup_submap( target_sm.raw() );
+
         it->paused = false;
         sync_glt_paused( mb, source_pos, false );
     }
@@ -466,8 +473,13 @@ distribution_grid &distribution_grid_tracker::make_distribution_grid_at(
                 dimension_id_ ).electric_grid_at(
                 project_to<coords::omt>( sm_pos ) );
     if( overmap_positions.empty() ) {
-        // Remote submap not loaded — return the same empty sentinel used when
-        // ELECTRIC_GRID is disabled rather than asserting and crashing.
+        // Remote submap not yet loaded — grid data unavailable.  Return the
+        // same empty sentinel used when ELECTRIC_GRID is disabled so callers
+        // don't crash, but log so power-loss bugs are diagnosable.
+        DebugLog( DL::Warn, DC::Map ) << string_format(
+                                          "make_distribution_grid_at: no overmap grid data for submap %s "
+                                          "(dim '%s') — power operations will be silently dropped this tick",
+                                          sm_pos.to_string(), dimension_id_ );
         static distribution_grid empty_grid( {}, MAPBUFFER );
         return empty_grid;
     }
