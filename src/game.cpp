@@ -868,7 +868,7 @@ bool game::start_game()
             .world_type   = default_wt,
             .display_name = wt_ptr ? wt_ptr->name.translated() : std::string{},
         };
-        ACTIVE_OVERMAP_BUFFER.current_region_type = wt_ptr ? wt_ptr->region_settings_id : "default";
+        get_overmapbuffer( current_dimension_id_ ).current_region_type = wt_ptr ? wt_ptr->region_settings_id : "default";
     }
 
     u.setID( assign_npc_id() ); // should be as soon as possible, but *after* load_master
@@ -889,7 +889,7 @@ bool game::start_game()
                 // New-game generation only: the player is always in the overworld at
                 // this point; no dimension travel has occurred, so primary == active.
                 MAPBUFFER.clear();
-                ACTIVE_OVERMAP_BUFFER.clear();
+                get_overmapbuffer( current_dimension_id_ ).clear();
             } else {
                 return false;
             }
@@ -906,7 +906,7 @@ bool game::start_game()
             } else if( query_gen_failed() ) {
                 // Same new-game context — primary is always the active dimension here.
                 MAPBUFFER.clear();
-                ACTIVE_OVERMAP_BUFFER.clear();
+                get_overmapbuffer( current_dimension_id_ ).clear();
                 omtstart = overmap::invalid_tripoint;
             } else {
                 return false;
@@ -942,7 +942,7 @@ bool game::start_game()
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
     // Start the overmap with out immediate neighborhood visible, this needs to be after place_player
-    ACTIVE_OVERMAP_BUFFER.reveal( u.global_omt_location().xy(),
+    get_overmapbuffer( current_dimension_id_ ).reveal( u.global_omt_location().xy(),
                                   get_option<int>( "DISTANCE_INITIAL_VISIBILITY" ), 0 );
 
     u.moves = 0;
@@ -978,7 +978,7 @@ bool game::start_game()
                 break;
             }
             tmp->spawn_at_precise( { get_levx(), get_levy() }, *point );
-            ACTIVE_OVERMAP_BUFFER.insert_npc( tmp );
+            get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
             tmp->set_fac( faction_id( "your_followers" ) );
             tmp->mission = NPC_MISSION_NULL;
             tmp->set_attitude( NPCATT_FOLLOW );
@@ -1147,7 +1147,7 @@ vehicle *game::place_vehicle_nearby(
 
     // if player spawns underground, park their car on the surface.
     const tripoint_abs_omt omt_origin( origin, 0 );
-    for( const tripoint_abs_omt &goal : ACTIVE_OVERMAP_BUFFER.find_all( omt_origin, find_params ) ) {
+    for( const tripoint_abs_omt &goal : get_overmapbuffer( current_dimension_id_ ).find_all( omt_origin, find_params ) ) {
         // try place vehicle there.
         tinymap target_map;
         target_map.load( project_to<coords::sm>( goal ), false );
@@ -1180,7 +1180,7 @@ void game::load_npcs()
     const int radius = g_half_mapsize - 1;
     // uses submap coordinates
     std::vector<shared_ptr_fast<npc>> just_added;
-    for( const auto &temp : ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( radius ) ) {
+    for( const auto &temp : get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player( radius ) ) {
         const character_id &id = temp->getID();
         const auto found = std::find_if( active_npc.begin(), active_npc.end(),
         [id]( const shared_ptr_fast<npc> &n ) {
@@ -1237,7 +1237,7 @@ void game::load_npcs()
 
         for( auto z : std::views::iota( req.z_min, req.z_max + 1 ) ) {
             const tripoint_abs_sm center_z( req.center.raw().x, req.center.raw().y, z );
-            for( const auto &temp : ACTIVE_OVERMAP_BUFFER.get_npcs_near( center_z, req.radius ) ) {
+            for( const auto &temp : get_overmapbuffer( current_dimension_id_ ).get_npcs_near( center_z, req.radius ) ) {
                 const auto id = temp->getID();
                 const auto already_active = std::ranges::any_of( active_npc,
                 [id]( const shared_ptr_fast<npc> &n ) {
@@ -1323,14 +1323,14 @@ void game::create_starting_npcs()
 
     //We don't want more than one starting npc per starting location
     const int radius = 1;
-    if( !ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( radius ).empty() ) {
+    if( !get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player( radius ).empty() ) {
         return; //There is already an NPC in this starting location
     }
 
     shared_ptr_fast<npc> tmp = make_shared_fast<npc>();
     tmp->randomize( one_in( 2 ) ? NC_DOCTOR : NC_NONE );
     tmp->spawn_at_precise( { get_levx(), get_levy() }, u.pos() - point_south_east );
-    ACTIVE_OVERMAP_BUFFER.insert_npc( tmp );
+    get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
     tmp->form_opinion( u );
     tmp->set_attitude( NPCATT_NULL );
     //This sets the NPC mission. This NPC remains in the starting location.
@@ -1384,7 +1384,7 @@ bool game::cleanup_at_end()
             despawn_monster( critter );
         }
         if( u.has_trait( trait_HAS_NEMESIS ) ) {
-            ACTIVE_OVERMAP_BUFFER.remove_nemesis();
+            get_overmapbuffer( current_dimension_id_ ).remove_nemesis();
         }
         // Reset NPC factions and disposition
         reset_npc_dispositions();
@@ -1860,14 +1860,14 @@ bool game::do_turn()
         u.check_mount_is_spooked();
     }
     if( calendar::once_every( 1_days ) ) {
-        ACTIVE_OVERMAP_BUFFER.process_mongroups();
+        get_overmapbuffer( current_dimension_id_ ).process_mongroups();
     }
 
     // Move hordes every 2.5 min
     if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
-        ACTIVE_OVERMAP_BUFFER.move_hordes();
+        get_overmapbuffer( current_dimension_id_ ).move_hordes();
         if( u.has_trait( trait_HAS_NEMESIS ) ) {
-            ACTIVE_OVERMAP_BUFFER.move_nemesis();
+            get_overmapbuffer( current_dimension_id_ ).move_nemesis();
         }
         // Hordes that reached the reality bubble need to spawn,
         // make them spawn in invisible areas only.
@@ -1968,7 +1968,7 @@ bool game::do_turn()
     if( !u.has_active_bionic( bionic_id( "bio_scent_mask" ) ) &&
         !u.has_trait( trait_id( "DEBUG_NOSCENT" ) ) ) {
         scent.set( u.pos(), u.scent, u.get_type_of_scent() );
-        ACTIVE_OVERMAP_BUFFER.set_scent( u.global_omt_location(),  u.scent );
+        get_overmapbuffer( current_dimension_id_ ).set_scent( u.global_omt_location(),  u.scent );
     }
     scent.update( u.pos(), m );
 
@@ -2467,7 +2467,7 @@ void game::validate_npc_followers()
         add_npc_follower( guy->getID() );
     }
     // Make sure overmapbuffered NPC followers are in the list.
-    for( const auto &temp_guy : ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( 300 ) ) {
+    for( const auto &temp_guy : get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player( 300 ) ) {
         npc *guy = temp_guy.get();
         if( guy->is_player_ally() ) {
             update_faction_api( guy );
@@ -2920,7 +2920,7 @@ bool game::is_game_over()
         }
 
         auto followers = get_follower_list()
-        | std::views::transform( [&]( const auto & elem ) { return ACTIVE_OVERMAP_BUFFER.find_npc( elem ); } )
+        | std::views::transform( [&]( const auto & elem ) { return get_overmapbuffer( current_dimension_id_ ).find_npc( elem ); } )
         | std::views::filter( []( const auto & follower ) { return follower && !follower->is_dead_state(); } )
         | std::ranges::to<std::vector>();
 
@@ -3231,7 +3231,7 @@ bool game::load( const save_t &name )
             cata::views::cartesian_product( z_range, xy_range, xy_range ),
         [&]( auto tup ) {
             auto [gz, gx, gy] = tup;
-            ACTIVE_OVERMAP_BUFFER.discard_monster_map(
+            get_overmapbuffer( current_dimension_id_ ).discard_monster_map(
                 tripoint_abs_sm{ origin.x + gx, origin.y + gy, gz } );
         } );
     }
@@ -3279,7 +3279,7 @@ bool game::load( const save_t &name )
 void game::reset_npc_dispositions()
 {
     for( auto elem : follower_ids ) {
-        shared_ptr_fast<npc> npc_to_get = ACTIVE_OVERMAP_BUFFER.find_npc( elem );
+        shared_ptr_fast<npc> npc_to_get = get_overmapbuffer( current_dimension_id_ ).find_npc( elem );
         if( !npc_to_get )  {
             continue;
         }
@@ -3491,7 +3491,7 @@ void game::disp_NPC_epilogues()
 {
     // TODO: This search needs to be expanded to all NPCs
     for( auto elem : follower_ids ) {
-        shared_ptr_fast<npc> guy = ACTIVE_OVERMAP_BUFFER.find_npc( elem );
+        shared_ptr_fast<npc> guy = get_overmapbuffer( current_dimension_id_ ).find_npc( elem );
         if( !guy ) {
             continue;
         }
@@ -3542,7 +3542,7 @@ void game::disp_NPCs()
 {
     const tripoint_abs_omt ppos = u.global_omt_location();
     const tripoint &lpos = u.pos();
-    std::vector<shared_ptr_fast<npc>> npcs = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( 100 );
+    std::vector<shared_ptr_fast<npc>> npcs = get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player( 100 );
     std::sort( npcs.begin(), npcs.end(), npc_dist_to_player() );
 
     catacurses::window w;
@@ -4039,11 +4039,11 @@ void game::draw_minimap()
             nc_color ter_color;
             tripoint_abs_omt omp( om, get_levz() );
             std::string ter_sym;
-            const bool seen = ACTIVE_OVERMAP_BUFFER.seen( omp );
-            const bool vehicle_here = ACTIVE_OVERMAP_BUFFER.has_vehicle( omp );
-            if( ACTIVE_OVERMAP_BUFFER.has_note( omp ) ) {
+            const bool seen = get_overmapbuffer( current_dimension_id_ ).seen( omp );
+            const bool vehicle_here = get_overmapbuffer( current_dimension_id_ ).has_vehicle( omp );
+            if( get_overmapbuffer( current_dimension_id_ ).has_note( omp ) ) {
 
-                const std::string &note_text = ACTIVE_OVERMAP_BUFFER.note( omp );
+                const std::string &note_text = get_overmapbuffer( current_dimension_id_ ).note( omp );
 
                 const auto note_info = overmap_ui::get_note_display_info( note_text );
                 ter_color = std::get<1>( note_info );
@@ -4055,9 +4055,9 @@ void game::draw_minimap()
                 ter_color = c_cyan;
                 ter_sym = "c";
             } else {
-                const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( omp );
+                const oter_id &cur_ter = get_overmapbuffer( current_dimension_id_ ).ter( omp );
                 ter_sym = cur_ter->get_symbol();
-                if( ACTIVE_OVERMAP_BUFFER.is_explored( omp ) ) {
+                if( get_overmapbuffer( current_dimension_id_ ).is_explored( omp ) ) {
                     ter_color = c_dark_gray;
                 } else {
                     ter_color = cur_ter->get_color();
@@ -4132,11 +4132,11 @@ void game::draw_minimap()
                 continue; // only do hordes on the border, skip inner map
             }
             const tripoint_abs_omt omp( curs2 + point( i, j ), get_levz() );
-            if( ACTIVE_OVERMAP_BUFFER.get_horde_size( omp ) >= HORDE_VISIBILITY_SIZE ) {
-                if( ACTIVE_OVERMAP_BUFFER.seen( omp )
+            if( get_overmapbuffer( current_dimension_id_ ).get_horde_size( omp ) >= HORDE_VISIBILITY_SIZE ) {
+                if( get_overmapbuffer( current_dimension_id_ ).seen( omp )
                     && g->u.overmap_los( omp, sight_points ) ) {
                     mvwputch( w_minimap, point( i + 3, j + 3 ), c_green,
-                              ACTIVE_OVERMAP_BUFFER.get_horde_size( omp ) > HORDE_VISIBILITY_SIZE * 2 ? 'Z' : 'z' );
+                              get_overmapbuffer( current_dimension_id_ ).get_horde_size( omp ) > HORDE_VISIBILITY_SIZE * 2 ? 'Z' : 'z' );
                 }
             }
         }
@@ -5468,7 +5468,7 @@ void game::overmap_npc_move()
     ZoneScoped;
     std::vector<npc *> travelling_npcs;
     static constexpr int move_search_radius = 600;
-    for( auto &elem : ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( move_search_radius ) ) {
+    for( auto &elem : get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player( move_search_radius ) ) {
         if( !elem ) {
             continue;
         }
@@ -6050,7 +6050,7 @@ bool game::spawn_hallucination( const tripoint &p )
             params["npc"] = tmp.get();
         } );
         if( !critter_at( p, true ) ) {
-            ACTIVE_OVERMAP_BUFFER.insert_npc( tmp );
+            get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
             load_npcs();
             return true;
         } else {
@@ -6277,7 +6277,7 @@ void game::save_cyborg( item *cyborg, const tripoint &couch_pos, Character &inst
         shared_ptr_fast<npc> tmp = make_shared_fast<npc>();
         tmp->load_npc_template( npc_cyborg );
         tmp->spawn_at_precise( { get_levx(), get_levy() }, couch_pos );
-        ACTIVE_OVERMAP_BUFFER.insert_npc( tmp );
+        get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
         tmp->hurtall( dmg_lvl * 10, nullptr );
         tmp->add_effect( effect_downed, rng( 1_turns, 4_turns ), bodypart_str_id::NULL_ID(), 0, true );
         cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
@@ -7526,7 +7526,7 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
 
     const auto &terrain = m.ter( lp ).obj();
     const auto terrain_color = terrain.color();
-    const oter_id &cur_ter_m = ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( m.getabs(
+    const oter_id &cur_ter_m = get_overmapbuffer( current_dimension_id_ ).ter( tripoint_abs_omt( ms_to_omt_copy( m.getabs(
                                    lp ) ) ) );
     const auto location_color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes );
     const auto terrain_desc = terrain.description.translated();
@@ -8319,7 +8319,7 @@ void game::pre_print_all_tile_info( const tripoint &lp, const catacurses::window
 {
     // get global area info according to look_around caret position
     // TODO: fix point types
-    const oter_id &cur_ter_m = ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( m.getabs(
+    const oter_id &cur_ter_m = get_overmapbuffer( current_dimension_id_ ).ter( tripoint_abs_omt( ms_to_omt_copy( m.getabs(
                                    lp ) ) ) );
     // we only need the area name and then pass it to print_all_tile_info() function below
     const std::string area_name = cur_ter_m->get_name();
@@ -13172,7 +13172,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
                 active_world->start_save_tx();
             }
             here.save();
-            ACTIVE_OVERMAP_BUFFER.save();
+            get_overmapbuffer( current_dimension_id_ ).save();
             MAPBUFFER_REGISTRY.get( old_dim_id ).save();
             if( !save_dimension_data() ) {
                 if( active_world ) {
@@ -13232,9 +13232,10 @@ bool game::travel_to_dimension( const std::string &dim_id,
     // slot — nothing is lost.
     here.bind_dimension( dim_id );
     // Flush the destination dimension's cached overmaps so they are freshly
-    // loaded from disk on demand.  bind_dimension() already switched
-    // g_active_dimension_id, so ACTIVE_OVERMAP_BUFFER resolves to the NEW dimension.
-    ACTIVE_OVERMAP_BUFFER.clear();
+    // loaded from disk on demand.  current_dimension_id_ is already the new dim
+    // (set in activate_dimension_state()), so get_overmapbuffer(current_dimension_id_)
+    // correctly targets the new dimension's buffer.
+    get_overmapbuffer( current_dimension_id_ ).clear();
     here.clear_grid();
 
     if( !loaded_dimensions_.count( dim_id ) ) {
@@ -13249,7 +13250,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
     }
 
     if( target_type && !target_type->region_settings_id.empty() ) {
-        ACTIVE_OVERMAP_BUFFER.current_region_type = target_type->region_settings_id;
+        get_overmapbuffer( current_dimension_id_ ).current_region_type = target_type->region_settings_id;
     } else if( !target_type ) {
         // Overworld: region type is preserved from initial game setup.
     } else {
@@ -13264,10 +13265,10 @@ bool game::travel_to_dimension( const std::string &dim_id,
     // Clear stale bounds then install the new ones before load_map() so that
     // loadn() knows which submaps are out-of-bounds for bounded dimensions.
     here.clear_dimension_bounds();
-    ACTIVE_OVERMAP_BUFFER.clear_dimension_bounds();
+    get_overmapbuffer( current_dimension_id_ ).clear_dimension_bounds();
     if( bounds ) {
         here.set_dimension_bounds( *bounds );
-        ACTIVE_OVERMAP_BUFFER.set_dimension_bounds( *bounds );
+        get_overmapbuffer( current_dimension_id_ ).set_dimension_bounds( *bounds );
     }
 
     // Invoke pre-load callback (e.g. place overmap specials) before loading submaps
@@ -13580,23 +13581,23 @@ void game::vertical_notes( int z_before, int z_after )
         const tripoint_abs_omt cursp_before( p.xy(), z_before );
         const tripoint_abs_omt cursp_after( p.xy(), z_after );
 
-        if( !ACTIVE_OVERMAP_BUFFER.seen( cursp_before ) ) {
+        if( !get_overmapbuffer( current_dimension_id_ ).seen( cursp_before ) ) {
             continue;
         }
-        if( ACTIVE_OVERMAP_BUFFER.has_note( cursp_after ) ) {
+        if( get_overmapbuffer( current_dimension_id_ ).has_note( cursp_after ) ) {
             // Already has a note -> never add an AUTO-note
             continue;
         }
-        const oter_id &ter = ACTIVE_OVERMAP_BUFFER.ter( cursp_before );
-        const oter_id &ter2 = ACTIVE_OVERMAP_BUFFER.ter( cursp_after );
+        const oter_id &ter = get_overmapbuffer( current_dimension_id_ ).ter( cursp_before );
+        const oter_id &ter2 = get_overmapbuffer( current_dimension_id_ ).ter( cursp_after );
         if( z_after > z_before && ter->has_flag( oter_flags::known_up ) &&
             !ter2->has_flag( oter_flags::known_down ) ) {
-            ACTIVE_OVERMAP_BUFFER.set_seen( cursp_after, true );
-            ACTIVE_OVERMAP_BUFFER.add_note( cursp_after, string_format( ">:W;%s", _( "AUTO: goes down" ) ) );
+            get_overmapbuffer( current_dimension_id_ ).set_seen( cursp_after, true );
+            get_overmapbuffer( current_dimension_id_ ).add_note( cursp_after, string_format( ">:W;%s", _( "AUTO: goes down" ) ) );
         } else if( z_after < z_before && ter->has_flag( oter_flags::known_down ) &&
                    !ter2->has_flag( oter_flags::known_up ) ) {
-            ACTIVE_OVERMAP_BUFFER.set_seen( cursp_after, true );
-            ACTIVE_OVERMAP_BUFFER.add_note( cursp_after, string_format( "<:W;%s", _( "AUTO: goes up" ) ) );
+            get_overmapbuffer( current_dimension_id_ ).set_seen( cursp_after, true );
+            get_overmapbuffer( current_dimension_id_ ).add_note( cursp_after, string_format( "<:W;%s", _( "AUTO: goes up" ) ) );
         }
     }
 }
@@ -13740,7 +13741,7 @@ void game::update_overmap_seen()
     const int dist = u.overmap_sight_range( light_level( u.posz() ) );
     const int dist_squared = dist * dist;
     // We can always see where we're standing
-    ACTIVE_OVERMAP_BUFFER.set_seen( ompos, true );
+    get_overmapbuffer( current_dimension_id_ ).set_seen( ompos, true );
     for( const tripoint_abs_omt &p : points_in_radius( ompos, dist ) ) {
         const point_rel_omt delta = p.xy() - ompos.xy();
         const int h_squared = delta.x() * delta.x() + delta.y() * delta.y();
@@ -13760,13 +13761,13 @@ void game::update_overmap_seen()
         float sight_points = dist;
         for( auto it = line.begin();
              it != line.end() && sight_points >= 0; ++it ) {
-            const oter_id &ter = ACTIVE_OVERMAP_BUFFER.ter( *it );
+            const oter_id &ter = get_overmapbuffer( current_dimension_id_ ).ter( *it );
             sight_points -= static_cast<int>( ter->get_see_cost() ) * multiplier;
         }
         if( sight_points >= 0 ) {
             tripoint_abs_omt seen( p );
             do {
-                ACTIVE_OVERMAP_BUFFER.set_seen( seen, true );
+                get_overmapbuffer( current_dimension_id_ ).set_seen( seen, true );
                 --seen.z();
             } while( seen.z() >= 0 );
         }
@@ -14068,7 +14069,7 @@ void game::perhaps_add_random_npc()
 
     // We want the "NPC_DENSITY" to denote number of NPCs per week, per overmap, or so
     // But soft-cap it at about a standard year (4*14 days) worth
-    const int npc_num = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player(
+    const int npc_num = get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player(
                             npc_overmap::density_search_radius ).size();
     const double chance = npc_overmap::spawn_chance_in_hour( npc_num,
                           get_option<float>( "NPC_DENSITY" ) );
@@ -14090,7 +14091,7 @@ void game::perhaps_add_random_npc()
         spawn_point = u_omt + point( rng( -radius_spawn_range, radius_spawn_range ),
                                      rng( -radius_spawn_range, radius_spawn_range ) );
         spawn_point.z() = 0;
-        const oter_id oter = ACTIVE_OVERMAP_BUFFER.ter( spawn_point );
+        const oter_id oter = get_overmapbuffer( current_dimension_id_ ).ter( spawn_point );
         // Shouldn't spawn on lakes or rivers.
         // TODO: Prefer greater distance
         if( !is_river_or_lake( oter ) || rl_dist( u_omt.xy(), spawn_point.xy() ) < 30 ) {
@@ -14111,7 +14112,7 @@ void game::perhaps_add_random_npc()
     // TODO: fix point types
     tripoint submap_spawn = omt_to_sm_copy( spawn_point.raw() );
     tmp->spawn_at_sm( tripoint( submap_spawn.xy(), 0 ) );
-    ACTIVE_OVERMAP_BUFFER.insert_npc( tmp );
+    get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
     tmp->form_opinion( u );
     tmp->mission = NPC_MISSION_NULL;
     tmp->long_term_goal_action();
@@ -14325,7 +14326,7 @@ void game::quickload()
         MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer & buf ) {
             buf.clear();
         } );
-        ACTIVE_OVERMAP_BUFFER.clear();
+        get_overmapbuffer( current_dimension_id_ ).clear();
         try {
             // Doesn't need to load mod files again for the same world
             setup( false );
@@ -14918,7 +14919,7 @@ overmap &game::get_cur_om() const
     const tripoint sm = m.get_abs_sub() + tripoint( g_half_mapsize, g_half_mapsize, 0 );
     const tripoint pos_om = sm_to_om_copy( sm );
     // TODO: fix point types
-    return ACTIVE_OVERMAP_BUFFER.get( point_abs_om( pos_om.xy() ) );
+    return get_overmapbuffer( current_dimension_id_ ).get( point_abs_om( pos_om.xy() ) );
 }
 
 std::vector<npc *> game::allies()
