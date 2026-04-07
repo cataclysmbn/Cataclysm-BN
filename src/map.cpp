@@ -7255,14 +7255,17 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
     // Cannonicalize the order of the tripoints so the cache is reflexive.
     const tripoint &min = F < T ? F : T;
     const tripoint &max = !( F < T ) ? F : T;
-    // A little gross, just pack the values into a point.
-    const point key(
-        min.x << 16 | min.y << 8 | ( min.z + OVERMAP_DEPTH ),
-        max.x << 16 | max.y << 8 | ( max.z + OVERMAP_DEPTH )
-    );
+    // Pack two tripoints into one int64_t: 29 bits each (12 x + 12 y + 5 z).
+    // Handles coordinates up to 4095 — safe for g_mapsize up to ~340.
+    auto pack_tp = []( const tripoint & p ) -> int64_t {
+        return ( static_cast<int64_t>( p.x ) & 0xFFF ) << 17 |
+               ( static_cast<int64_t>( p.y ) & 0xFFF ) <<  5 |
+               ( static_cast<int64_t>( p.z + OVERMAP_DEPTH ) & 0x1F );
+    };
+    const int64_t key = ( pack_tp( min ) << 29 ) | pack_tp( max );
     // P-6 / PERF-LOSS-1: shared_lock for the cache lookup so concurrent readers
     // don't serialize against each other.  The ray trace runs fully unlocked.
-    const auto slot_idx = std::hash<point> {}( key ) & ( vision_cache_slots - 1 );
+    const auto slot_idx = std::hash<int64_t> {}( key ) & ( vision_cache_slots - 1 );
     {
         std::shared_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
         const auto &slot = skew_vision_cache[slot_idx];

@@ -84,6 +84,9 @@ void map::add_light_from_items( const tripoint &p, const item_stack::iterator &b
 // more than one thread (RISK-1 fix).
 void map::update_weather_transparency_lookup()
 {
+    assert( !is_pool_worker_thread() &&
+                 "update_weather_transparency_lookup() must be called serially "
+                 "before any parallel build_transparency_cache() invocation" );
     const float sight_penalty = get_weather().weather_id->sight_penalty;
     if( sight_penalty != 1.0f &&
         LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty != weather_lookup_.transparency ) {
@@ -1036,6 +1039,9 @@ static const light_model k_sight_model = {
 void map::build_seen_cache( const tripoint &origin, const int target_z )
 {
     ZoneScopedN( "build_seen_cache" );
+    if( !inbounds( origin ) ) {
+        return;
+    }
     auto &target_cache = get_cache( target_z );
 
     constexpr float light_transparency_solid = LIGHT_TRANSPARENCY_SOLID;
@@ -1201,11 +1207,14 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                     if( cx >= 0 && cy >= 0 ) {
                         if( oz != cz && oz > -OVERMAP_DEPTH && cz < OVERMAP_HEIGHT ) {
                             if( oz < cz ) {
-                                if( floor_caches[cz + OVERMAP_DEPTH].at( cx, cy ) ) {
+                                const auto &fc = floor_caches[cz + OVERMAP_DEPTH];
+                                if( cx < fc.sx && cy < fc.sy && fc.at( cx, cy ) ) {
                                     return false;
                                 }
                             } else {
-                                if( floor_caches[oz + OVERMAP_DEPTH].at( ox, oy ) ) {
+                                const auto &fc = floor_caches[oz + OVERMAP_DEPTH];
+                                if( ox >= 0 && oy >= 0 && ox < fc.sx && oy < fc.sy &&
+                                    fc.at( ox, oy ) ) {
                                     return false;
                                 }
                             }
