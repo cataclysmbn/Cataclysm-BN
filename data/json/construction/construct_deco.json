@@ -323,7 +323,7 @@
     "pre_flags": "PIT_DEEP",
     "post_terrain": "t_water_dp"
   },
-   {
+  {
     "type": "construction",
     "id": "constr_fill_pit_sw",
     "group": "salt_water_fill_pit",

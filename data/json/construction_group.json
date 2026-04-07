@@ -1639,7 +1639,7 @@
     "id": "water_fill_pit",
     "name": "Fill Pit With Water"
   },
-   {
+  {
     "type": "construction_group",
     "id": "salt_water_fill_pit",
     "name": "Fill Pit With Salt Water"
