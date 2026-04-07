@@ -380,7 +380,8 @@ bool mission::is_complete( const character_id &_npc_id ) const
         }
 
         case MGOAL_GO_TO_TYPE: {
-            const auto cur_ter = get_overmapbuffer( get_avatar().get_dimension() ).ter( g->u.global_omt_location() );
+            const auto cur_ter = get_overmapbuffer( get_avatar().get_dimension() ).ter(
+                                     g->u.global_omt_location() );
             return is_ot_match( type->target_id.str(), cur_ter, ot_match_type::type );
         }
 

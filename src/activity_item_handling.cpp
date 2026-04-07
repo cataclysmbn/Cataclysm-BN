@@ -420,7 +420,7 @@ void drop_on_map( Character &c, item_drop_reason reason,
                 get_overmapbuffer( c.get_dimension() ).add_note( your_pos, sprite_prefix + it->display_name() );
             } else {
                 get_overmapbuffer( c.get_dimension() ).add_note( your_pos,
-                                                get_overmapbuffer( c.get_dimension() ).note( your_pos ) + "; " + it->display_name() );
+                        get_overmapbuffer( c.get_dimension() ).note( your_pos ) + "; " + it->display_name() );
             }
         }
 
@@ -462,7 +462,7 @@ void drop_on_map( Character &c, item_drop_reason reason,
                 get_overmapbuffer( c.get_dimension() ).add_note( your_pos, note_text );
             } else {
                 get_overmapbuffer( c.get_dimension() ).add_note( your_pos,
-                                                get_overmapbuffer( c.get_dimension() ).note( your_pos ) + "; " + note_text );
+                        get_overmapbuffer( c.get_dimension() ).note( your_pos ) + "; " + note_text );
             }
         }
     }

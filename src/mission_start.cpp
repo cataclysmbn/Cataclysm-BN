@@ -53,7 +53,8 @@ void mission_start::standard( mission * )
 
 void mission_start::place_dog( mission *miss )
 {
-    const tripoint_abs_omt house = mission_util::random_house_in_closest_city( get_overmapbuffer( miss->get_dimension() ) );
+    const tripoint_abs_omt house = mission_util::random_house_in_closest_city( get_overmapbuffer(
+                                       miss->get_dimension() ) );
     npc *dev = g->find_npc( miss->npc_id );
     if( dev == nullptr ) {
         debugmsg( "Couldn't find NPC!  %d", miss->npc_id.get_value() );
@@ -73,7 +74,8 @@ void mission_start::place_dog( mission *miss )
 
 void mission_start::place_zombie_mom( mission *miss )
 {
-    const tripoint_abs_omt house = mission_util::random_house_in_closest_city( get_overmapbuffer( miss->get_dimension() ) );
+    const tripoint_abs_omt house = mission_util::random_house_in_closest_city( get_overmapbuffer(
+                                       miss->get_dimension() ) );
 
     miss->target = house;
     get_overmapbuffer( miss->get_dimension() ).reveal( house, 6 );
@@ -106,7 +108,8 @@ void mission_start::kill_horde_master( mission *miss )
     find_params.search_layers = { 0, 0 };
 
     const tripoint_abs_omt center = p->global_omt_location();
-    tripoint_abs_omt site = get_overmapbuffer( miss->get_dimension() ).find_closest( center, find_params );
+    tripoint_abs_omt site = get_overmapbuffer( miss->get_dimension() ).find_closest( center,
+                            find_params );
 
     miss->target = site;
     get_overmapbuffer( miss->get_dimension() ).reveal( site, 6 );
@@ -236,7 +239,8 @@ void mission_start::place_npc_software( mission *miss )
         find_params.search_range = { 0, 0 };
         find_params.search_layers = { 0, 0 };
 
-        place = get_overmapbuffer( miss->get_dimension() ).find_closest( dev->global_omt_location(), find_params );
+        place = get_overmapbuffer( miss->get_dimension() ).find_closest( dev->global_omt_location(),
+                find_params );
     }
     miss->target = place;
     get_overmapbuffer( miss->get_dimension() ).reveal( place, 6 );
@@ -261,7 +265,8 @@ void mission_start::place_npc_software( mission *miss )
 
 void mission_start::place_priest_diary( mission *miss )
 {
-    const tripoint_abs_omt place = mission_util::random_house_in_closest_city( get_overmapbuffer( miss->get_dimension() ) );
+    const tripoint_abs_omt place = mission_util::random_house_in_closest_city( get_overmapbuffer(
+                                       miss->get_dimension() ) );
     miss->target = place;
     get_overmapbuffer( miss->get_dimension() ).reveal( place, 2 );
     tinymap compmap;
@@ -296,7 +301,8 @@ void mission_start::place_deposit_box( mission *miss )
     find_params.search_range = { 0, 0 };
     find_params.search_layers = { 0, 0 };
 
-    tripoint_abs_omt site = get_overmapbuffer( miss->get_dimension() ).find_closest( p->global_omt_location(), find_params );
+    tripoint_abs_omt site = get_overmapbuffer( miss->get_dimension() ).find_closest(
+                                p->global_omt_location(), find_params );
 
     if( site == overmap::invalid_tripoint ) {
         site = p->global_omt_location();
@@ -660,7 +666,8 @@ void mission_start::reveal_refugee_center( mission *miss )
 
     const tripoint_abs_omt source_road = get_overmapbuffer( miss->get_dimension() ).find_closest(
             get_player_character().global_omt_location(), find_params );
-    const tripoint_abs_omt dest_road = get_overmapbuffer( miss->get_dimension() ).find_closest( *target_pos, find_params );
+    const tripoint_abs_omt dest_road = get_overmapbuffer( miss->get_dimension() ).find_closest(
+                                           *target_pos, find_params );
 
     omt_route_params params;
     params.radius = 1;
@@ -712,14 +719,16 @@ void mission_start::create_lab_console( mission *miss )
     find_params.search_range = { 0, 0 };
     find_params.search_layers = std::nullopt;
 
-    const tripoint_abs_omt place = get_overmapbuffer( miss->get_dimension() ).find_closest( loc, find_params );
+    const tripoint_abs_omt place = get_overmapbuffer( miss->get_dimension() ).find_closest( loc,
+                                   find_params );
 
     create_lab_consoles( miss, place, "lab", 2, translate_marker( "Workstation" ),
                          translate_marker( "Download Memory Contents" ) );
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, get_overmapbuffer( miss->get_dimension() ) );
+    mission_util::reveal_road( player_character.global_omt_location(), target,
+                               get_overmapbuffer( miss->get_dimension() ) );
 }
 
 void mission_start::create_hidden_lab_console( mission *miss )
@@ -737,7 +746,8 @@ void mission_start::create_hidden_lab_console( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, get_overmapbuffer( miss->get_dimension() ) );
+    mission_util::reveal_road( player_character.global_omt_location(), target,
+                               get_overmapbuffer( miss->get_dimension() ) );
 }
 
 void mission_start::create_ice_lab_console( mission *miss )
@@ -752,14 +762,16 @@ void mission_start::create_ice_lab_console( mission *miss )
     find_params.search_range = { 0, 0 };
     find_params.search_layers = std::nullopt;
 
-    const tripoint_abs_omt place = get_overmapbuffer( miss->get_dimension() ).find_closest( loc, find_params );
+    const tripoint_abs_omt place = get_overmapbuffer( miss->get_dimension() ).find_closest( loc,
+                                   find_params );
 
     create_lab_consoles( miss, place, "ice_lab", 3, translate_marker( "Durable Storage Archive" ),
                          translate_marker( "Download Archives" ) );
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, get_overmapbuffer( miss->get_dimension() ) );
+    mission_util::reveal_road( player_character.global_omt_location(), target,
+                               get_overmapbuffer( miss->get_dimension() ) );
 }
 
 void mission_start::reveal_lab_train_depot( mission *miss )
@@ -774,7 +786,8 @@ void mission_start::reveal_lab_train_depot( mission *miss )
     find_params.search_range = { 0, 0 };
     find_params.search_layers = std::nullopt;
 
-    const tripoint_abs_omt place = get_overmapbuffer( miss->get_dimension() ).find_closest( loc, find_params );
+    const tripoint_abs_omt place = get_overmapbuffer( miss->get_dimension() ).find_closest( loc,
+                                   find_params );
 
     tinymap compmap;
     compmap.load( project_to<coords::sm>( place ), false );
@@ -800,5 +813,6 @@ void mission_start::reveal_lab_train_depot( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, get_overmapbuffer( miss->get_dimension() ) );
+    mission_util::reveal_road( player_character.global_omt_location(), target,
+                               get_overmapbuffer( miss->get_dimension() ) );
 }

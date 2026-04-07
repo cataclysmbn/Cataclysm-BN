@@ -501,7 +501,7 @@ void submap_load_manager::update()
                 auto &mb = MAPBUFFER_REGISTRY.get( key.first );
                 if( !mb.lookup_submap_in_memory( key.second ) ) {
                     lazy_futures_.emplace( qk,
-                    get_thread_pool().submit_returning(
+                                           get_thread_pool().submit_returning(
                     [&mb, om_addr = qk.second]() {
                         return mb.load_or_generate_quad( om_addr );
                     } ) );

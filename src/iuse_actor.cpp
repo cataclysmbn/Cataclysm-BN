@@ -6378,7 +6378,8 @@ int iuse_prospect_pick::use( player &p, item &it, bool t,
         get_overmapbuffer( p.get_dimension() ).generate( to_gen );
     }
 
-    const auto places = get_overmapbuffer( p.get_dimension() ).find_all( p.global_omt_location(), params );
+    const auto places = get_overmapbuffer( p.get_dimension() ).find_all( p.global_omt_location(),
+                        params );
     for( auto &place : places ) {
         get_overmapbuffer( p.get_dimension() ).reveal( place, 0 );
     }

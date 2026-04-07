@@ -7260,8 +7260,8 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
     // Handles coordinates up to 4095 — safe for g_mapsize up to ~340.
     auto pack_tp = []( const tripoint & p ) -> int64_t {
         return ( static_cast<int64_t>( p.x ) & 0xFFF ) << 17 |
-               ( static_cast<int64_t>( p.y ) & 0xFFF ) <<  5 |
-               ( static_cast<int64_t>( p.z + OVERMAP_DEPTH ) & 0x1F );
+                ( static_cast<int64_t>( p.y ) & 0xFFF ) <<  5 |
+                ( static_cast<int64_t>( p.z + OVERMAP_DEPTH ) & 0x1F );
     };
     const int64_t key = ( pack_tp( min ) << 29 ) | pack_tp( max );
     // P-6 / PERF-LOSS-1: shared_lock for the cache lookup so concurrent readers

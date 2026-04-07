@@ -85,8 +85,8 @@ void map::add_light_from_items( const tripoint &p, const item_stack::iterator &b
 void map::update_weather_transparency_lookup()
 {
     assert( !is_pool_worker_thread() &&
-                 "update_weather_transparency_lookup() must be called serially "
-                 "before any parallel build_transparency_cache() invocation" );
+            "update_weather_transparency_lookup() must be called serially "
+            "before any parallel build_transparency_cache() invocation" );
     const float sight_penalty = get_weather().weather_id->sight_penalty;
     if( sight_penalty != 1.0f &&
         LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty != weather_lookup_.transparency ) {
@@ -1097,9 +1097,9 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                                         []( char a, char b ) -> char { return a | b; } );
                 auto &zc = get_cache( z );
                 std::ranges::transform( zc.seen_cache, vert_blocked, zc.seen_cache.begin(),
-                                        []( float s, char blocked ) -> float {
-                                            return blocked ? 0.0f : s;
-                                        } );
+                []( float s, char blocked ) -> float {
+                    return blocked ? 0.0f : s;
+                } );
             }
 
             // Going up: floor_cache[z] blocks crossing from z-1 to z.
@@ -1110,9 +1110,9 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                                         []( char a, char b ) -> char { return a | b; } );
                 auto &zc = get_cache( z );
                 std::ranges::transform( zc.seen_cache, vert_blocked, zc.seen_cache.begin(),
-                                        []( float s, char blocked ) -> float {
-                                            return blocked ? 0.0f : s;
-                                        } );
+                []( float s, char blocked ) -> float {
+                    return blocked ? 0.0f : s;
+                } );
             }
         }
     } else {

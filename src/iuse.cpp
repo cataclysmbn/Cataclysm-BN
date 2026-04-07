@@ -1688,7 +1688,8 @@ int iuse::good_fishing_spot( tripoint pos )
     int fishable_locations = g->get_fishable_locations( 60, pos ).size();
     map &here = get_map();
     const oter_id &cur_omt =
-        get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy( here.getabs( pos ) ) ) );
+        get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy(
+                    here.getabs( pos ) ) ) );
     std::string om_id = cur_omt.id().c_str();
     if( fishable_locations < 100 && !g->m.has_flag( "CURRENT", pos ) &&
         om_id.find( "river_" ) == std::string::npos && !cur_omt->is_lake() &&
@@ -6890,7 +6891,8 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
 
     // TODO: fix point types
     const oter_id &cur_ter =
-        get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy( g->m.getabs( aim_point ) ) ) );
+        get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy(
+                    g->m.getabs( aim_point ) ) ) );
     std::string overmap_desc = string_format( _( "In the background you can see a %s" ),
                                colorize( cur_ter->get_name(), cur_ter->get_color() ) );
     if( outside_tiles_num == total_tiles_num ) {
@@ -8895,7 +8897,8 @@ int iuse::report_grid_charge( player *p, item *, bool, const tripoint &pos )
 int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos )
 {
     tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
-    std::vector<tripoint_rel_omt> connections = get_overmapbuffer( p->get_dimension() ).electric_grid_connectivity_at(
+    std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
+                p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
 
     std::vector<std::string> connection_names;
@@ -8963,7 +8966,8 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoin
 int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &pos )
 {
     tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
-    std::vector<tripoint_rel_omt> connections = get_overmapbuffer( p->get_dimension() ).electric_grid_connectivity_at(
+    std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
+                p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
 
     uilist ui;
@@ -8993,7 +8997,8 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
     if( connection_present[ret] ) {
         get_overmapbuffer( p->get_dimension() ).remove_grid_connection( pos_abs, destination_pos_abs );
     } else {
-        std::set<tripoint_abs_omt> lhs_locations = get_overmapbuffer( p->get_dimension() ).electric_grid_at( pos_abs );
+        std::set<tripoint_abs_omt> lhs_locations = get_overmapbuffer( p->get_dimension() ).electric_grid_at(
+                    pos_abs );
         std::set<tripoint_abs_omt> rhs_locations = get_overmapbuffer( p->get_dimension() ).electric_grid_at(
                     destination_pos_abs );
         int cost_mult;
@@ -9049,7 +9054,8 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
         }
         p->invalidate_crafting_inventory();
 
-        bool success = get_overmapbuffer( p->get_dimension() ).add_grid_connection( pos_abs, destination_pos_abs );
+        bool success = get_overmapbuffer( p->get_dimension() ).add_grid_connection( pos_abs,
+                       destination_pos_abs );
         if( success ) {
             return it->type->charges_to_use();
         }

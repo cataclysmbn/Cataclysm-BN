@@ -238,7 +238,7 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
             if( params.overmap_special ) {
                 // ...then attempt to place the whole special.
                 const bool placed = omb.place_special( *params.overmap_special, origin_pos,
-                                    params.min_distance, params.search_range );
+                                                       params.min_distance, params.search_range );
                 // If we succeeded in placing the special, then try and find the particular location
                 // we're interested in.
                 if( placed ) {
@@ -514,7 +514,8 @@ bool mission_util::set_update_mapgen( const JsonObject &jo,
     if( jo.has_member( "om_terrain" ) ) {
         const std::string om_terrain = jo.get_string( "om_terrain" );
         const auto mission_func = [update_map, om_terrain]( mission * miss ) {
-            tripoint_abs_omt update_pos3 = mission_util::reveal_om_ter( om_terrain, 1, false, get_overmapbuffer( miss->get_dimension() ) );
+            tripoint_abs_omt update_pos3 = mission_util::reveal_om_ter( om_terrain, 1, false,
+                                           get_overmapbuffer( miss->get_dimension() ) );
             update_map( update_pos3, miss );
         };
         funcs.emplace_back( mission_func );
