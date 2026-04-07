@@ -266,7 +266,7 @@ void game::unserialize( std::istream &fin )
                 }
             }
         }
-        g_active_dimension_id = current_dimension_id_;
+        set_active_dimension_id( current_dimension_id_ );
         data.read( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
 
         // Restore all dimension metadata.  The current dimension is also included

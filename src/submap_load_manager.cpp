@@ -1,6 +1,7 @@
 #include "submap_load_manager.h"
 
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -667,15 +668,18 @@ auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load
     return { view.begin(), view.end() };
 }
 
+auto submap_load_manager::is_fully_drained() const noexcept -> bool
+{
+    return lazy_futures_.empty() && presave_futures_.empty();
+}
+
 void submap_load_manager::flush_prev_desired()
 {
+    assert( is_fully_drained() );
     prev_desired_.clear();
     prev_simulated_.clear();
     prev_centers_.clear();
     dirty_quads_.clear();
-    // Presave futures should be drained before this point (via drain_lazy_loads).
-    // Clear defensively to prevent stale entries after a dimension switch.
-    presave_futures_.clear();
     presave_in_flight_.clear();
 }
 

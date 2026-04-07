@@ -216,6 +216,13 @@ class submap_load_manager
         void flush_prev_desired();
 
         /**
+         * Returns true if all background work has been drained — i.e. both
+         * lazy_futures_ and presave_futures_ are empty.  Used by flush_prev_desired()
+         * to assert correct call ordering during dimension switches.
+         */
+        auto is_fully_drained() const noexcept -> bool;
+
+        /**
          * Precompute the set of (dx, dy) offsets that form a filled square of
          * the given @p radius and cache them for use in compute_desired_set().
          *

@@ -1163,7 +1163,8 @@ vehicle *game::place_vehicle_nearby(
             tripoint abs_local = m.getlocal( target_map.getabs( tinymap_center ) );
             veh->sm_pos =  ms_to_sm_remain( abs_local );
             veh->pos = abs_local.xy();
-            ACTIVE_OVERMAP_BUFFER.add_vehicle( veh );
+            veh->dimension_id_ = target_map.get_bound_dimension();
+            get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
             veh->tracking_on = true;
             target_map.save();
             return veh;
@@ -13071,6 +13072,45 @@ std::string game::get_dimension_prefix() const
     return current_dimension_id_;
 }
 
+void game::set_active_dimension_id( const std::string &dim_id )
+{
+    current_dimension_id_ = dim_id;
+    g_active_dimension_id = dim_id;
+}
+
+void game::activate_dimension_state( const std::string &new_dim_id,
+                                     const std::string &old_dim_id )
+{
+    // Step 1: drain ALL in-flight background work before touching any shared state.
+    // Workers capture dimension IDs by value at submission time, so it is safe to
+    // drain while the global still names the old dimension.
+    submap_loader.drain_lazy_loads();
+
+    // Step 2: release load handles — must happen before bind_dimension() (see caller
+    // comment at the bind_dimension() call site for the ordering rationale).
+    if( reality_bubble_handle_ != 0 ) {
+        submap_loader.release_load( reality_bubble_handle_ );
+        reality_bubble_handle_ = 0;
+    }
+    if( lazy_border_handle_ != 0 ) {
+        submap_loader.release_load( lazy_border_handle_ );
+        lazy_border_handle_ = 0;
+    }
+
+    // Step 3: flush the stale desired set.  Asserts fully drained (lazy + presave).
+    submap_loader.flush_prev_desired();
+
+    // Step 4: update both dimension-ID fields atomically.
+    set_active_dimension_id( new_dim_id );
+
+    // Step 5: clear the old dimension's distribution-grid tracker.  Safe now that
+    // all workers have finished — no on_submap_loaded() callback can fire for
+    // old_dim_id after drain_lazy_loads() returns.
+    if( grid_trackers_.count( old_dim_id ) ) {
+        grid_trackers_[old_dim_id]->clear();
+    }
+}
+
 bool game::travel_to_dimension( const std::string &dim_id,
                                 const world_type_id &world_type,
                                 const std::optional<dimension_bounds> &bounds,
@@ -13174,36 +13214,18 @@ bool game::travel_to_dimension( const std::string &dim_id,
         }
     }
 
+    assert( !swapping_dimensions );
     // Prevent temperature/weather code from accessing the grid while it's
-    // being cleared and rebuilt.  Must be set BEFORE clear_grid().
+    // being cleared and rebuilt.  Must be set BEFORE activate_dimension_state().
     swapping_dimensions = true;
 
-    current_dimension_id_ = dim_id;
-    g_active_dimension_id = dim_id;
+    // Sequenced critical section: drain → release handles → flush → update ID → clear tracker.
+    // load_map() detects dimension changes by comparing get_dimension_prefix() vs
+    // m.get_bound_dimension(); activate_dimension_state() must complete before bind_dimension()
+    // so that load_map() sees the new ID and correctly re-issues load requests.
+    activate_dimension_state( dim_id, old_dim_id );
 
     add_msg( m_debug, "[DIM] Switched active dimension: '%s' → '%s'", old_dim_id, dim_id );
-
-    // Clear the old dimension's distribution-grid tracker.
-    if( grid_trackers_.count( old_dim_id ) ) {
-        grid_trackers_[old_dim_id]->clear();
-    }
-
-    // Release reality-bubble and lazy-border handles BEFORE rebinding the map.
-    // load_map() detects dimension changes by comparing get_dimension_prefix()
-    // vs m.get_bound_dimension(); if we bind first, load_map() sees matching
-    // IDs and skips the release, leaving stale overworld requests alive whose
-    // center gets updated to pocket coordinates — causing eviction of the
-    // wrong dimension's submaps (use-after-free).
-    if( reality_bubble_handle_ != 0 ) {
-        submap_loader.drain_lazy_loads();
-        submap_loader.release_load( reality_bubble_handle_ );
-        reality_bubble_handle_ = 0;
-    }
-    if( lazy_border_handle_ != 0 ) {
-        submap_loader.release_load( lazy_border_handle_ );
-        lazy_border_handle_ = 0;
-    }
-    submap_loader.flush_prev_desired();
 
     // bind_dimension() redirects all subsequent loadn() / generation calls to
     // the target MAPBUFFER_REGISTRY slot.  Submaps for old_dim_id stay in their
