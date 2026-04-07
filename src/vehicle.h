@@ -1752,7 +1752,7 @@ class vehicle
         // ID of the dimension this vehicle belongs to.  Empty string = primary dimension.
         // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
         // Persisted across saves so cross-dimension processing survives reload.
-        std::string dimension_id_;
+        std::string dimension_id_ = "";  // empty = primary dimension
         auto get_dimension() const -> const std::string & { // *NOPAD*
             return dimension_id_;
         }
