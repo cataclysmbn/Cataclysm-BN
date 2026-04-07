@@ -1,0 +1,18 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockRealXotto", "MSX++DEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "tileset/engineer.png",
+        "tiles": [
+          { "id": "mon_crt_hydrogen_hack", "fg": 0, "rotates": false },
+          { "id": "mon_crt_manhack", "fg": 2, "rotates": false },
+          { "id": "mon_crt_electrohack", "fg": 5, "rotates": false },
+          { "id": "mon_crt_flamehack", "fg": 4, "rotates": false },
+          { "id": "mon_crt_engineer_t3", "fg": 3, "rotates": false },
+        ]
+      }
+    ]
+  }
+]

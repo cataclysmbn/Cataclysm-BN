@@ -1,6 +1,6 @@
 [
   {
-    "id": "crt_mon_engineer_t3",
+    "id": "mon_crt_engineer_t3",
     "type": "MONSTER",
     "name": "C.R.I.T. combat engineer zombie",
     "description": "Clad in heavy assault gear, it has a small experimental pistol in one hand, and a punch knife in the other. While it doesn't look terrifing on the surface the small electrical shocks make you question your thinking.",
@@ -17,9 +17,9 @@
     "aggression": 100,
     "morale": 100,
     "melee_skill": 6,
+    "//": "This dude barely hits, the scary part about him is if he gets to the turrets",
     "melee_dice": 3,
     "melee_dice_sides": 6,
-    "melee_damage": [ { "damage_type": "cut", "amount": 20 } ],
     "dodge": 1,
     "armor_cut": 30,
     "armor_stab": 30,
@@ -28,17 +28,47 @@
     "vision_day": 25,
     "vision_night": 3,
     "harvest": "zombie_maybe_survivalist_bionics",
-    "starting_ammo": { "bot_gasbomb_hack": 10 },
+    "starting_ammo": {
+      "bot_crt_manhack": 5,
+      "bot_crt_flamehack": 5,
+      "bot_crt_electrohack": 2,
+      "bot_crt_hydrogen_hack": 1,
+      "bot_sun_turret_light": 2
+    },
     "special_attacks": [
       {
         "type": "deployer",
         "deployables": {
-          "bot_gasbomb_hack": {
-            "message": "Gasbomb deployed, we don't wish to poison you",
+          "bot_crt_manhack": {
+            "message": "We do not wish to kill you, stop your attacks",
             "chance": 1,
             "ammo_percentage": 1.0,
             "range": 10,
-          }
+          },
+          "bot_crt_flamehack": {
+            "message": "We do not wish to kill you, stop your attacks",
+            "chance": 1,
+            "ammo_percentage": 1.0,
+            "range": 10,
+          },
+          "bot_sun_turret_light": {
+            "message": "Access stabilized, annialation imminent",
+            "chance": 1,
+            "ammo_percentage": 0.40,
+            "range": 10,
+          },
+          "bot_crt_electrohack": {
+            "message": "Warning: lethal electrical shock immient",
+            "chance": 1,
+            "ammo_percentage": 0.24,
+            "range": 10,
+          },
+          "bot_crt_hydrogen_hack": {
+            "message": "If we must.",
+            "chance": 1,
+            "ammo_percentage": 0.08,
+            "range": 10,
+          },
         },
         "cooldown": 10
       }

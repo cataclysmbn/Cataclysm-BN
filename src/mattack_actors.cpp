@@ -316,7 +316,9 @@ bool deployer_actor::call( monster &mon ) const
     const tripoint where = empty_points_in_rad[ rng( 0, empty_points_in_rad.size() - 1 ) ];
 
     if( monster *const hack = g->place_critter_at( actor->mtypeid, where ) ) {
+        mon.ammo[att]--;
         hack->make_ally( mon );
+        add_msg( m_bad, grenades.at( att ).message );
     }
 
     return true;

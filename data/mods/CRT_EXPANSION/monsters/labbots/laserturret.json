@@ -54,7 +54,7 @@
     "id": "sun_gun_turret_light",
     "type": "GUN",
     "weapon_category": [ "SUBMACHINE_GUNS", "ENERGY_WEAPONS" ],
-    "name": "Scrungly",
+    "name": "light sun gun",
     "description": "A very scrungly gun which defies all the laws of reality; You shouldn't see it",
     "weight": "2150 g",
     "volume": "2 L",
@@ -67,7 +67,7 @@
     "color": "blue",
     "skill": "smg",
     "range": 16,
-    "ranged_damage": { "damage_type": "heat", "amount": 13, "armor_penetration": 9 },
+    "ranged_damage": { "damage_type": "heat", "amount": 6, "armor_penetration": 10 },
     "dispersion": 15,
     "durability": 8,
     "modes": [ [ "DEFAULT", "semi", 1 ] ],
@@ -75,5 +75,28 @@
     "reload": 0,
     "ammo_effects": [ "LASER" ],
     "flags": [ "NEVER_JAMS", "NO_UNLOAD", "NON_FOULING" ]
+  },
+  {
+    "id": "bot_sun_turret_light",
+    "type": "TOOL",
+    "name": { "str": "inactive light sun turret" },
+    "description": "This is an inactive light sun turret.  Using this item involves turning it on and placing it on the ground, where it will attach itself.  If reprogrammed and rewired successfully the turret will identify you as a friendly, and attack all enemies with its singular cannons of unknown origin.",
+    "weight": "20000 g",
+    "volume": "30 L",
+    "price": "6 kUSD",
+    "price_postapoc": "120 USD",
+    "to_hit": -3,
+    "bashing": 8,
+    "material": [ "steel", "plastic" ],
+    "symbol": ";",
+    "color": "white",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_sun_turret_light",
+      "difficulty": 6,
+      "moves": 100,
+      "skills": [ "electronics", "computer" ]
+    },
+    "flags": [ "ALLOWS_REMOTE_USE" ]
   }
 ]

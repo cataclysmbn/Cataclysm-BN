@@ -2,7 +2,7 @@
   {
     "type": "overmap_special",
     "id": "crt_lab_demo",
-    "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "crt_lab_veh_wind_north" } ],
+    "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "crt_lab_veh_engine_north" } ],
     "locations": [ "wilderness" ],
     "city_distance": [ 10, -1 ],
     "city_sizes": [ 0, 20 ],
