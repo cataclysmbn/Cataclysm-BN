@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
@@ -15,6 +16,7 @@
 #include <vector>
 
 #include "activity_actor_definitions.h"
+#include "animation.h"
 #include "avatar.h"
 #include "ballistics.h"
 #include "bodypart.h"
@@ -64,6 +66,7 @@
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
+#include "shape_impl.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "translations.h"
@@ -107,15 +110,20 @@ static const ammo_effect_str_id ammo_effect_HEAVY_HIT( "HEAVY_HIT" );
 static const ammo_effect_str_id ammo_effect_IGNITE( "IGNITE" );
 static const ammo_effect_str_id ammo_effect_LASER( "LASER" );
 static const ammo_effect_str_id ammo_effect_LIGHTNING( "LIGHTNING" );
+static const ammo_effect_str_id ammo_effect_JET( "JET" );
 static const ammo_effect_str_id ammo_effect_NO_CRIT( "NO_CRIT" );
 static const ammo_effect_str_id ammo_effect_NO_DAMAGE( "NO_DAMAGE" );
+static const ammo_effect_str_id ammo_effect_NO_OVERSHOOT( "NO_OVERSHOOT" );
 static const ammo_effect_str_id ammo_effect_NO_EMBED( "NO_EMBED" );
 static const ammo_effect_str_id ammo_effect_NO_ITEM_DAMAGE( "NO_ITEM_DAMAGE" );
 static const ammo_effect_str_id ammo_effect_NON_FOULING( "NON_FOULING" );
 static const ammo_effect_str_id ammo_effect_PLASMA( "PLASMA" );
 static const ammo_effect_str_id ammo_effect_RECYCLED( "RECYCLED" );
+static const ammo_effect_str_id ammo_effect_DRAW_AS_LINE( "DRAW_AS_LINE" );
 static const ammo_effect_str_id ammo_effect_SHATTER_SELF( "SHATTER_SELF" );
 static const ammo_effect_str_id ammo_effect_SHOT( "SHOT" );
+static const ammo_effect_str_id ammo_effect_STREAM( "STREAM" );
+static const ammo_effect_str_id ammo_effect_STREAM_BIG( "STREAM_BIG" );
 static const ammo_effect_str_id ammo_effect_TANGLE( "TANGLE" );
 static const ammo_effect_str_id ammo_effect_NET_TANGLE( "NET_TANGLE" );
 static const ammo_effect_str_id ammo_effect_WIDE( "WIDE" );
@@ -164,6 +172,138 @@ namespace
 
 constexpr auto vehicle_recoil_velocity_scale = 1.4;
 constexpr auto vehicle_recoil_lateral_scale = 0.1;
+
+struct shot_target_options {
+    tripoint source;
+    tripoint target;
+    const projectile &proj;
+    const dispersion_sources &dispersion;
+};
+
+struct pellet_target_options {
+    tripoint source;
+    tripoint target;
+    double half_angle;
+};
+
+auto get_shot_data( const item &gun ) -> const islot_ammo::shot_data *
+{
+    const auto *const ammo_type = gun.ammo_data();
+    if( ammo_type == nullptr || ammo_type->ammo == nullptr ) {
+        return nullptr;
+    }
+
+    return ammo_type->ammo->shot ? &*ammo_type->ammo->shot : nullptr;
+}
+
+auto get_shot_count( const item &gun ) -> int
+{
+    const auto *const shot_data = get_shot_data( gun );
+    if( shot_data == nullptr ) {
+        return 1;
+    }
+
+    return shot_data->count;
+}
+
+auto get_shot_half_angle( const item &gun ) -> double
+{
+    const auto *const shot_data = get_shot_data( gun );
+    if( shot_data == nullptr ) {
+        return 0.0;
+    }
+
+    return shot_data->half_angle;
+}
+
+auto get_shot_projectile( projectile proj, const int shot_count ) -> projectile
+{
+    if( shot_count <= 1 ) {
+        return proj;
+    }
+
+    const auto projectile_divisor = static_cast<double>( shot_count );
+    proj.impact.mult_damage( 1.0 / projectile_divisor, true );
+    for( auto &damage_unit : proj.impact ) {
+        damage_unit.res_pen /= projectile_divisor;
+    }
+
+    return proj;
+}
+
+auto get_shot_target( const shot_target_options &options ) -> tripoint
+{
+    const auto range = rl_dist( options.source, options.target );
+    Creature *target_critter = g->critter_at( options.target );
+    const auto target_size = target_critter != nullptr ? target_critter->ranged_target_size() : 0.0;
+    const auto aim = projectile_attack_roll( options.dispersion, range, target_size );
+    if( aim.missed_by_tiles < 1.0 ) {
+        return options.target;
+    }
+
+    auto shot_target = options.target;
+    const auto dx = options.target.x - options.source.x;
+    const auto dy = options.target.y - options.source.y;
+    auto rad = std::atan2( dy, dx );
+    const auto dispersion_angle = units::to_radians( std::min( units::from_arcmin( aim.dispersion ),
+                                  30_degrees ) );
+    rad += ( one_in( 2 ) ? 1 : -1 ) * dispersion_angle;
+
+    const auto no_overshoot = options.proj.has_effect( ammo_effect_NO_OVERSHOOT ) ||
+                              ( g->critter_at( options.target ) == nullptr && get_map().passable( options.target ) );
+    const auto offset = std::min<int>( range, std::sqrt( aim.missed_by_tiles ) );
+    auto new_range = no_overshoot ? range + rng( -offset, offset ) : rng( range - offset,
+                     options.proj.range );
+    new_range = std::max( new_range, 1 );
+    shot_target.x = options.source.x + roll_remainder( new_range * std::cos( rad ) );
+    shot_target.y = options.source.y + roll_remainder( new_range * std::sin( rad ) );
+    if( shot_target == options.source ) {
+        shot_target.x = options.source.x + sgn( dx );
+        shot_target.y = options.source.y + sgn( dy );
+    }
+
+    return shot_target;
+}
+
+auto get_pellet_target( const pellet_target_options &options ) -> tripoint
+{
+    if( options.half_angle <= 0.0 ) {
+        return options.target;
+    }
+
+    const auto dx = options.target.x - options.source.x;
+    const auto dy = options.target.y - options.source.y;
+    const auto range = std::max( static_cast<double>( trig_dist( options.source, options.target ) ),
+                                 1.0 );
+    const auto base_angle = std::atan2( dy, dx );
+    const auto angle_offset = units::to_radians( rng_float( units::from_degrees( -options.half_angle ),
+                              units::from_degrees( options.half_angle ) ) );
+    const auto pellet_angle = base_angle + angle_offset;
+
+    auto pellet_target = options.target;
+    pellet_target.x = options.source.x + roll_remainder( range * std::cos( pellet_angle ) );
+    pellet_target.y = options.source.y + roll_remainder( range * std::sin( pellet_angle ) );
+    if( pellet_target == options.source ) {
+        pellet_target.x = options.source.x + sgn( dx );
+        pellet_target.y = options.source.y + sgn( dy );
+    }
+
+    return pellet_target;
+}
+
+auto get_projectile_animation_symbol( const projectile &proj ) -> char
+{
+    const auto stream = proj.has_effect( ammo_effect_STREAM ) ||
+                        proj.has_effect( ammo_effect_STREAM_BIG ) ||
+                        proj.has_effect( ammo_effect_JET );
+    return stream ? '#' : '*';
+}
+
+auto projectile_draws_as_line( const projectile &proj ) -> bool
+{
+    return proj.has_effect( ammo_effect_DRAW_AS_LINE ) ||
+           get_option<bool>( "BULLETS_AS_LASERS" );
+}
 
 /// more generic version of `item::gunmod_find`
 auto gunmod_find_with(
@@ -439,6 +579,9 @@ target_handler::trajectory target_handler::mode_fire( avatar &you, aim_activity_
     ui.mode = target_ui::TargetMode::Fire;
     ui.activity = &activity;
     ui.relevant = activity.get_weapon();
+    if( ui.relevant != nullptr ) {
+        ui.shape_gen = ranged::get_target_shape_factory( *ui.relevant );
+    }
 
     return ui.run();
 }
@@ -525,7 +668,7 @@ target_handler::trajectory target_handler::mode_spell( avatar &you, spell &casti
     return ui.run();
 }
 
-target_handler::trajectory target_handler::mode_shaped( avatar &you, shape_factory &shape_fac,
+target_handler::trajectory target_handler::mode_shaped( avatar &you, const shape_factory &shape_fac,
         aim_activity_actor &activity )
 {
     target_ui ui = target_ui();
@@ -1059,6 +1202,8 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
                                 ? veh_pointer_or_null( here.veh_at( who.pos() ) )
                                 : nullptr;
         projectile projectile = make_gun_projectile( gun );
+        const auto shot_count = get_shot_count( gun );
+        const auto shot_half_angle = get_shot_half_angle( gun );
 
         // Apply enchantment bonuses to projectile
         int base_bullet_damage = static_cast<int>( projectile.impact.type_damage( DT_BULLET ) );
@@ -1091,13 +1236,56 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
             projectile.add_effect( ammo_effect_NO_CRIT );
         }
         if( !shape ) {
-            auto shot = projectile_attack( projectile, who.pos(), aim, dispersion, &who, &gun, in_veh );
-            if( shot.missed_by <= .1 ) {
+            const auto shot_projectile = get_shot_projectile( projectile, shot_count );
+            const auto render_multishot = shot_count > 1 && get_option<bool>( "ANIMATION_PROJECTILES" );
+            const auto render_projectile = shot_projectile;
+            auto projectile_trajectories = std::vector<std::vector<tripoint>> {};
+            projectile_trajectories.reserve( shot_count );
+            auto animation_suppression = std::optional<scoped_projectile_animation_suppression> {};
+            if( render_multishot ) {
+                animation_suppression.emplace();
+            }
+            auto shell_hit = false;
+            auto shell_headshot = false;
+            const auto shell_target = shot_count > 1 ? get_shot_target( {
+                .source = who.pos(),
+                .target = aim,
+                .proj = projectile,
+                .dispersion = dispersion,
+            } ) : aim;
+            const auto pellet_dispersion = shot_count > 1 ? dispersion_sources {} :
+                                           dispersion;
+            for( int projectile_index = 0; projectile_index < shot_count; projectile_index++ ) {
+                const auto pellet_target = shot_count > 1 ? get_pellet_target( {
+                    .source = who.pos(),
+                    .target = shell_target,
+                    .half_angle = shot_half_angle,
+                } ) : shell_target;
+                auto shot = projectile_attack( render_projectile, who.pos(), pellet_target, pellet_dispersion, &who,
+                                               &gun, in_veh );
+                if( render_multishot ) {
+                    projectile_trajectories.push_back( shot.trajectory );
+                }
+                shell_hit |= shot.hit_critter != nullptr;
+                if( shot.missed_by > .1 || shell_headshot ) {
+                    continue;
+                }
+
                 // TODO: check head existence for headshot
                 g->events().send<event_type::character_gets_headshot>( who.getID() );
+                shell_headshot = true;
             }
 
-            if( shot.hit_critter ) {
+            if( render_multishot ) {
+                draw_bullet_trajectories( {
+                    .trajectories = projectile_trajectories,
+                    .bullet = get_projectile_animation_symbol( shot_projectile ),
+                    .draw_as_line = projectile_draws_as_line( shot_projectile ),
+                    .custom_sprite = {},
+                } );
+            }
+
+            if( shell_hit ) {
                 hits++;
             }
         } else {
@@ -3027,7 +3215,9 @@ bool target_ui::set_cursor_pos( const tripoint &new_pos )
         }
     } else if( mode == TargetMode::Turrets ) {
         update_turrets_in_range();
-    } else if( mode == TargetMode::Shape ) {
+    }
+
+    if( mode == TargetMode::Shape || ( mode == TargetMode::Fire && shape_gen ) ) {
         std::shared_ptr<shape> sh = shape_gen->create( src, dst );
         projectile proj = make_gun_projectile( *relevant );
         // Same as in map::shoot (should probably be a function!)
@@ -3600,7 +3790,7 @@ void target_ui::draw_terrain_overlay()
             }
 #endif
         }
-    } else if( mode == TargetMode::Shape ) {
+    } else if( mode == TargetMode::Shape || ( mode == TargetMode::Fire && shape_gen ) ) {
         drawsq_params params = drawsq_params().highlight( true ).center( center );
         for( const std::pair<const tripoint, double> &pr : shape_coverage ) {
             const tripoint &tile = pr.first;
@@ -4351,4 +4541,22 @@ std::optional<shape_factory> ranged::get_shape_factory( const item &gun )
     }
 
     return {};
+}
+
+std::optional<shape_factory> ranged::get_target_shape_factory( const item &gun )
+{
+    const auto shape = get_shape_factory( gun );
+    if( shape ) {
+        return shape;
+    }
+
+    const auto *const shot_data = get_shot_data( gun );
+    if( shot_data == nullptr || shot_data->count <= 1 || shot_data->half_angle <= 0.0 ) {
+        return {};
+    }
+
+    const auto preview_shape_impl = std::shared_ptr<shape_factory_impl>( std::make_shared<cone_factory>(
+                                        units::from_degrees( shot_data->half_angle ), gun.gun_range() ) );
+    const auto preview_shape = shape_factory( preview_shape_impl );
+    return std::optional<shape_factory>( preview_shape );
 }

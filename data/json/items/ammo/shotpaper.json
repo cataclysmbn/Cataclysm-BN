@@ -27,7 +27,8 @@
     "copy-from": "shot_paper_abstract",
     "type": "AMMO",
     "name": { "str": "20ga paper shot" },
-    "description": "A paper cartridge containing a premeasured amount of black powder and an equal volume of 00 buckshot."
+    "description": "A paper cartridge containing a premeasured amount of black powder and an equal volume of 00 buckshot.",
+    "shot": { "count": 8, "half_angle": 4 }
   },
   {
     "id": "shot_paper_bird",
@@ -35,15 +36,15 @@
     "type": "AMMO",
     "name": { "str": "20ga paper birdshot" },
     "description": "A paper cartridge containing a premeasured amount of black powder and an equal volume of birdshot.  Used mostly for hunting small game or fowl.",
-    "damage": { "damage_type": "bullet", "amount": 40, "armor_multiplier": 3 },
+    "damage": { "damage_type": "bullet", "amount": 35, "armor_multiplier": 3 },
     "proportional": { "recoil": 0.6, "loudness": 0.8 },
-    "range": 0,
-    "shape": [ "cone", { "half_angle": 15, "length": 10 } ],
+    "range": 10,
+    "shot": { "count": 18, "half_angle": 6 },
     "extend": { "effects": [ "NOGIB" ] }
   },
   {
     "id": "shot_paper_dragon",
-    "copy-from": "shot_paper_00",
+    "copy-from": "shot_paper_abstract",
     "type": "AMMO",
     "name": { "str": "20ga paper pyrotechnic cartridge" },
     "description": "A paper cartridge containing a premeasured amount of black powder and an equal volume of flammable metals.  When fired, burning chunks of metal and sparks will shoot out of the barrel, igniting everything in their path.",

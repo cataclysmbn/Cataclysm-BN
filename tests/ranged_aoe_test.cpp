@@ -1,5 +1,8 @@
 #include "catch/catch.hpp"
 
+#include <optional>
+#include <vector>
+
 #include "shape.h"
 #include "shape_impl.h"
 #include "map.h"
@@ -9,7 +12,56 @@
 #include "map_helpers.h"
 #include "overmapbuffer.h"
 #include "game.h"
+#include "itype.h"
+#include "skill.h"
 #include "state_helpers.h"
+
+static const skill_id skill_gun( "gun" );
+static const skill_id skill_shotgun( "shotgun" );
+
+static auto fire_shell_at_target( const itype_id &ammo_id,
+                                  const std::vector<itype_id> &armor_ids ) -> int
+{
+    clear_all_state();
+    REQUIRE( get_map().has_zlevels() );
+    get_player_character().setpos( {60, 60, -2} );
+
+    const auto shooter_pos = tripoint( 60, 60, 0 );
+    const auto target_pos = tripoint( 62, 60, 0 );
+    auto shooter = standard_npc( "shooter", shooter_pos );
+    shooter.set_skill_level( skill_gun, 10 );
+    shooter.set_skill_level( skill_shotgun, 10 );
+
+    auto target = make_shared_fast<standard_npc>( "target", target_pos );
+    target->worn.clear();
+    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_zero );
+    target->setpos( target_pos );
+    for( const auto &armor_id : armor_ids ) {
+        target->worn.push_back( item::spawn( armor_id ) );
+    }
+    ACTIVE_OVERMAP_BUFFER.insert_npc( target );
+    g->load_npcs();
+
+    detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
+    gun->ammo_set( ammo_id );
+
+    REQUIRE( gun->ammo_data() != nullptr );
+    REQUIRE( gun->ammo_data()->ammo != nullptr );
+    REQUIRE( gun->ammo_data()->ammo->shot.has_value() );
+    REQUIRE( gun->ammo_data()->ammo->shot->count > 1 );
+    REQUIRE_FALSE( ranged::get_shape_factory( *gun ).has_value() );
+    REQUIRE( ranged::get_target_shape_factory( *gun ).has_value() );
+    REQUIRE( gun->gun_range() >= rl_dist( shooter_pos, target_pos ) );
+
+    const auto target_hp_total_before = target->get_hp();
+    shooter.wield( std::move( gun ) );
+
+    const auto shots_fired = ranged::fire_gun( shooter, target_pos, 3, shooter.primary_weapon(),
+                             nullptr );
+
+    REQUIRE( shots_fired == 3 );
+    return target_hp_total_before - target->get_hp();
+}
 
 static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
         const tripoint &origin, const tripoint &end )
@@ -97,36 +149,19 @@ TEST_CASE( "expected shape coverage through windows", "[shape]" )
     CHECK( cov[origin + 4 * point_east] == Approx( 0.25 ) );
 }
 
-TEST_CASE( "character using birdshot against another character", "[shape][ranged]" )
+TEST_CASE( "character using birdshot against another character", "[ranged]" )
 {
-    clear_all_state();
-    REQUIRE( get_map().has_zlevels() );
-    get_player_character().setpos( {60, 60, -2} );
+    const auto damage = fire_shell_at_target( itype_id( "shot_bird" ), {} );
 
-    const tripoint shooter_pos( 60, 60, 0 );
-    const tripoint target_pos( 64, 64, 0 );
-    standard_npc shooter( "shooter", shooter_pos );
-    shared_ptr_fast<npc> target = make_shared_fast<npc>();
-    target->randomize();
-    target->worn.clear();
-    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_zero );
-    target->setpos( target_pos );
-    ACTIVE_OVERMAP_BUFFER.insert_npc( target );
-    g->load_npcs();
+    CHECK( damage > 0 );
+}
 
-    detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
-    gun->ammo_set( itype_id( "shot_bird" ) );
+TEST_CASE( "birdshot pellets are much worse against armor", "[ranged][balance]" )
+{
+    const auto unarmored_damage = fire_shell_at_target( itype_id( "shot_bird" ), {} );
+    const auto armored_damage = fire_shell_at_target( itype_id( "shot_bird" ),
+    { itype_id( "survivor_suit" ), itype_id( "depowered_helmet" ) } );
 
-    REQUIRE( gun->gun_range() >= rl_dist( shooter_pos, target_pos ) );
-    REQUIRE( g->all_npcs().items.size() == 1 );
-    REQUIRE( target->pos() == target_pos );
-    REQUIRE( g->critter_at( target_pos ) == &*target );
-    const int target_hp_total_before = target->get_hp();
-    REQUIRE( target->get_hp() >= 100 );
-    shooter.wield( std::move( gun ) );
-    int shots_fired = ranged::fire_gun( shooter, target_pos, 1, shooter.primary_weapon(),
-                                        nullptr );
-
-    REQUIRE( shots_fired > 0 );
-    CHECK( target->get_hp() < target_hp_total_before );
+    CHECK( unarmored_damage > armored_damage );
+    CHECK( unarmored_damage >= armored_damage * 2 );
 }

@@ -1,7 +1,7 @@
 [
   {
     "id": "20x66_beanbag",
-    "copy-from": "20x66_shot",
+    "copy-from": "20x66_shot_abstract",
     "type": "AMMO",
     "name": { "str": "20x66mm beanbag" },
     "description": "20x66mm caseless shotgun rounds, sublethal beanbag type.  Proprietary ammunition for Rivtech shotguns.  Being caseless rounds, these cannot be disassembled or reloaded.",
@@ -81,6 +81,7 @@
     "price_postapoc": "40 USD",
     "count": 10,
     "//": "Balanced as AP.",
+    "shot": { "count": 8, "half_angle": 2 },
     "relative": { "damage": { "damage_type": "bullet", "amount": -18, "armor_penetration": 36, "armor_multiplier": -1.5 } }
   },
   {
@@ -123,7 +124,7 @@
     "stack_size": 20,
     "ammo_type": "20x66mm",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 100, "armor_multiplier": 2 },
+    "damage": { "damage_type": "bullet", "amount": 90, "armor_multiplier": 2 },
     "recoil": 2500,
     "effects": [ "COOKOFF", "SHOT", "NEVER_MISFIRES" ]
   },
@@ -133,7 +134,8 @@
     "type": "AMMO",
     "name": { "str": "20x66mm buckshot" },
     "//": "2.5x the Generic Rate of $1/shot",
-    "description": "20x66mm caseless shotgun rounds, buckshot type.  Proprietary ammunition for Rivtech shotguns.  Being caseless rounds, these cannot be disassembled or reloaded."
+    "description": "20x66mm caseless shotgun rounds, buckshot type.  Proprietary ammunition for Rivtech shotguns.  Being caseless rounds, these cannot be disassembled or reloaded.",
+    "shot": { "count": 12, "half_angle": 3 }
   },
   {
     "id": "20x66_slug",

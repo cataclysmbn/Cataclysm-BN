@@ -80,13 +80,13 @@
     "material": [ "plastic", "powder" ],
     "symbol": "=",
     "color": "red",
-    "dispersion": 10,
+    "dispersion": 20,
     "count": 20,
     "stack_size": 20,
     "ammo_type": "shot",
     "casing": "shot_hull",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 80, "armor_multiplier": 2 },
+    "damage": { "damage_type": "bullet", "amount": 72, "armor_multiplier": 2 },
     "recoil": 2500,
     "loudness": 160,
     "effects": [ "COOKOFF", "SHOT" ]
@@ -96,11 +96,12 @@
     "copy-from": "shot_abstract",
     "type": "AMMO",
     "name": { "str": "00 shot" },
-    "description": "A shell filled with metal pellets.  Extremely damaging, plus the spread makes it very accurate at short range.  Favored by SWAT forces."
+    "description": "A shell filled with metal pellets.  Extremely damaging, plus the spread makes it very accurate at short range.  Favored by SWAT forces.",
+    "shot": { "count": 9, "half_angle": 3 }
   },
   {
     "id": "shot_beanbag",
-    "copy-from": "shot_00",
+    "copy-from": "shot_abstract",
     "type": "AMMO",
     "name": { "str": "shotgun beanbag" },
     "description": "A beanbag round for shotguns, not deadly but designed to disable.",
@@ -120,15 +121,15 @@
     "description": "Weak shotgun ammunition.  Designed for hunting birds and other small game, its applications in combat are very limited.",
     "price": "1 USD",
     "price_postapoc": "4 USD",
-    "range": 0,
-    "damage": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 3 },
+    "range": 10,
+    "damage": { "damage_type": "bullet", "amount": 45, "armor_multiplier": 3 },
     "loudness": 80,
-    "shape": [ "cone", { "half_angle": 15, "length": 10 } ],
+    "shot": { "count": 24, "half_angle": 5 },
     "extend": { "effects": [ "NOGIB" ] }
   },
   {
     "id": "shot_dragon",
-    "copy-from": "shot_00",
+    "copy-from": "shot_abstract",
     "type": "AMMO",
     "name": { "str": "dragon's breath shell" },
     "description": "A shotgun shell filled with magnesium pellets or shards, used mostly as a distress flare or pyrotechnics tool.  When the round is fired, high temperature sparks and flames shoot out of the barrel, igniting everything in their path.",
@@ -150,6 +151,7 @@
     "price_postapoc": "8 USD",
     "count": 10,
     "//": "Balanced as standard AP.",
+    "shot": { "count": 8, "half_angle": 2 },
     "relative": { "damage": { "damage_type": "bullet", "amount": -20, "armor_penetration": 15, "armor_multiplier": -1.5 } }
   },
   {
@@ -173,6 +175,7 @@
     "name": { "str": "00 shot, scrap loaded" },
     "description": "A shotgun shell filled with whatever was lying around.  They are more damaging than birdshot, but fairly inaccurate.",
     "dispersion": 60,
+    "shot": { "count": 12, "half_angle": 6 },
     "proportional": { "price": 0.5, "price_postapoc": 0.5, "damage": { "damage_type": "bullet", "amount": 0.8, "armor_multiplier": 1.25 } },
     "extend": { "effects": [ "RECYCLED" ] }
   },

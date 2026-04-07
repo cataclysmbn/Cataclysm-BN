@@ -8,6 +8,17 @@ struct dealt_projectile_attack;
 struct projectile;
 struct tripoint;
 
+class scoped_projectile_animation_suppression
+{
+    public:
+        scoped_projectile_animation_suppression();
+        ~scoped_projectile_animation_suppression();
+
+        scoped_projectile_animation_suppression( const scoped_projectile_animation_suppression & ) = delete;
+        auto operator=( const scoped_projectile_animation_suppression & ) ->
+        scoped_projectile_animation_suppression & = delete; // *NOPAD*
+};
+
 /// Aim result for a single projectile attack
 struct projectile_attack_aim {
     //< Hit quality, where 0.0 is a perfect hit and 1.0 is a miss
@@ -43,5 +54,4 @@ auto hit_chance( const dispersion_sources &dispersion, double range, double targ
                  double missed_by = 1.0 ) -> double;
 
 } // namespace ranged
-
 
