@@ -174,8 +174,12 @@ void submap_load_manager::update()
     ZoneScoped;
 
     // Non-blocking reap: collect completed presave futures.  When a presave
-    // finishes the quad's dirty mark is cleared — eviction only needs to free
-    // the in-memory objects (no I/O stall).
+    // finishes we remove it from the in-flight set, but intentionally keep
+    // dirty_quads_ intact.  presave_quad() only writes to the pending-writes
+    // cache (no disk I/O); between the snapshot and eventual eviction, border
+    // submaps can still be modified (e.g. fire spreading in from the bubble).
+    // Keeping the dirty mark ensures eviction re-serialises the current state
+    // rather than silently discarding those post-presave modifications.
     {
         ZoneScopedN( "slm_presave_reap" );
         auto it = std::remove_if( presave_futures_.begin(), presave_futures_.end(),
@@ -183,7 +187,7 @@ void submap_load_manager::update()
             if( entry.second.wait_for( std::chrono::seconds( 0 ) ) == std::future_status::ready ) {
                 entry.second.get();
                 presave_in_flight_.erase( entry.first );
-                dirty_quads_.erase( entry.first );  // quad is now on disk
+                // dirty_quads_ deliberately NOT cleared here — see comment above.
                 return true;
             }
             return false;
@@ -490,8 +494,9 @@ void submap_load_manager::update()
                 if( was_dirty ) {
                     if( presave_in_flight_.count( qk ) ) {
                         // A presave worker still holds raw pointers to these submaps.
-                        // Wait for it to finish before freeing them.  This path should
-                        // be rare — presaves normally complete between two update() calls.
+                        // Wait for it to finish before re-serialising and freeing.
+                        // This path should be rare — presaves normally complete between
+                        // two update() calls.
                         for( auto &entry : presave_futures_ ) {
                             if( entry.first == qk ) {
                                 entry.second.get();
@@ -505,18 +510,17 @@ void submap_load_manager::update()
                             return e.first == qk;
                         } ),
                         presave_futures_.end() );
-                        dirty_quads_.erase( qk );
-                        // Quad was presaved — evict without a redundant write.
-                        MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr, false );
-                    } else {
-                        // No presave was submitted for this quad (direct sim→evict path).
-                        // Save synchronously before evicting.
-                        dirty_quads_.erase( qk );
-                        MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr, true );
                     }
+                    // Serialise the current submap state before evicting.  This
+                    // intentionally re-serialises even when a presave already ran, to
+                    // capture modifications made after the presave snapshot (e.g. fire
+                    // spreading into a border submap).  The presave wrote an earlier
+                    // snapshot to pending_writes_; unload_quad(true) overwrites it with
+                    // the fresh state — no data is lost.
+                    dirty_quads_.erase( qk );
+                    MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr, true );
                 } else {
-                    // Not dirty: either never simulated, or presave was already reaped
-                    // (dirty mark cleared in slm_presave_reap) — evict without I/O.
+                    // Not dirty: quad was never simulated — evict without I/O.
                     MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr, false );
                 }
             }
