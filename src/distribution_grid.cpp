@@ -327,26 +327,22 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
 
         // Keep the far end's submap resident so the cross-dimension grid works.
         const auto target_sm = project_to<coords::sm>( node.target_pos );
-        const int tz = target_sm.raw().z;
         node.far_load_handle = submap_loader.request_load(
                                    load_request_source::player_base,
                                    node.target_dim_id,
                                    target_sm,
-                                   radius,
-                                   tz, tz );
+                                   radius );
 
         // Keep the LOCAL source submap resident too.  Without this the source
         // submap unloads when the player leaves → on_submap_unloaded removes
         // the export node → far_load_handle released → far end unloads → the
         // link collapses after one turn.
         const auto source_sm = project_to<coords::sm>( node.source_pos );
-        const int sz = source_sm.raw().z;
         node.local_load_handle = submap_loader.request_load(
                                      load_request_source::player_base,
                                      dimension_id_,
                                      source_sm,
-                                     radius,
-                                     sz, sz );
+                                     radius );
     }
 
     // Give the link a grace period before the first upkeep check.
@@ -441,22 +437,18 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
         const int radius = get_option<int>( "POWER_PORTAL_LOAD_RADIUS" );
 
         const auto target_sm = project_to<coords::sm>( it->target_pos );
-        const int tz = target_sm.raw().z;
         it->far_load_handle = submap_loader.request_load(
                                   load_request_source::player_base,
                                   it->target_dim_id,
                                   target_sm,
-                                  radius,
-                                  tz, tz );
+                                  radius );
 
         const auto source_sm = project_to<coords::sm>( it->source_pos );
-        const int sz = source_sm.raw().z;
         it->local_load_handle = submap_loader.request_load(
                                     load_request_source::player_base,
                                     dimension_id_,
                                     source_sm,
-                                    radius,
-                                    sz, sz );
+                                    radius );
         it->paused = false;
         sync_glt_paused( mb, source_pos, false );
     }

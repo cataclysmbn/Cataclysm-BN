@@ -59,8 +59,8 @@ struct submap_load_request {
     tripoint_abs_sm center;
     int radius = 0;  ///< Half-width in submaps.  For reality_bubble this defines the circle
     ///< radius; for other sources a (2*radius+1)^2 square is loaded per z-level.
-    int z_min = 0;   ///< Lowest z-level to include (inclusive).  Set to center.z for single-level.
-    int z_max = 0;   ///< Highest z-level to include (inclusive).  Set to center.z for single-level.
+    ///< Always covers the full z-range (-OVERMAP_DEPTH to OVERMAP_HEIGHT); quads are
+    ///< full vertical pillars and cannot be loaded one slice at a time.
 };
 
 /**
@@ -82,20 +82,15 @@ class submap_load_manager
         submap_load_manager &operator=( const submap_load_manager & ) = delete;
 
         /**
-         * Register a new load request.
-         *
-         * @p z_min and @p z_max control the z-level range covered by the request.
-         * Pass the same value for both to cover a single z-level.  For reality-bubble
-         * requests in z-level builds, pass @c -OVERMAP_DEPTH and @c OVERMAP_HEIGHT.
+         * Register a new load request.  The request always covers all z-levels
+         * (-OVERMAP_DEPTH to OVERMAP_HEIGHT); quads are full vertical pillars.
          *
          * @return A handle that identifies this request for future updates/releases.
          */
         load_request_handle request_load( load_request_source source,
                                           const std::string &dim_id,
                                           const tripoint_abs_sm &center,
-                                          int radius,
-                                          int z_min,
-                                          int z_max );
+                                          int radius );
 
         /**
          * Move the center of an existing request (e.g. on player movement).

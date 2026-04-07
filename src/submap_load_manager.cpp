@@ -13,6 +13,7 @@
 
 #include "cata_cartesian_product.h"
 #include "coordinate_conversions.h"
+#include "game_constants.h"
 #include "mapbuffer.h"
 #include "clzones.h"
 #include "mapgen_async.h"
@@ -27,9 +28,7 @@ load_request_handle submap_load_manager::request_load(
     load_request_source source,
     const std::string &dim_id,
     const tripoint_abs_sm &center,
-    int radius,
-    int z_min,
-    int z_max )
+    int radius )
 {
     const load_request_handle handle = next_handle_++;
     submap_load_request req;
@@ -37,8 +36,6 @@ load_request_handle submap_load_manager::request_load(
     req.dimension_id = dim_id;
     req.center = center;
     req.radius = radius;
-    req.z_min = z_min;
-    req.z_max = z_max;
     requests_[handle] = std::move( req );
     return handle;
 }
@@ -84,7 +81,7 @@ auto submap_load_manager::compute_desired_set() const -> key_set
             return;
         }
         const tripoint c = req.center.raw();
-        const auto z_range = std::views::iota( req.z_min, req.z_max + 1 );
+        const auto z_range = std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
 
         if( req.source == load_request_source::reality_bubble ) {
             // Use the precomputed square offsets so all submaps in the full
@@ -129,7 +126,7 @@ void submap_load_manager::compute_border_into( key_set &target ) const
         // partial-quad fringes are handled there.
         const auto x_range = std::views::iota( c.x - r, c.x + r + 1 );
         const auto y_range = std::views::iota( c.y - r, c.y + r + 1 );
-        const auto z_range = std::views::iota( req.z_min, req.z_max + 1 );
+        const auto z_range = std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
         std::ranges::for_each(
             cata::views::cartesian_product( x_range, y_range, z_range ),
         [&]( auto tuple ) {
@@ -595,8 +592,7 @@ bool submap_load_manager::is_properly_requested( const std::string &dim_id,
         const tripoint c = req.center.raw();
         const int dx = std::abs( p.x - c.x );
         const int dy = std::abs( p.y - c.y );
-        return dx <= req.radius && dy <= req.radius
-               && p.z >= req.z_min && p.z <= req.z_max;
+        return dx <= req.radius && dy <= req.radius;
     } );
 }
 
@@ -616,8 +612,7 @@ bool submap_load_manager::is_simulated( const std::string &dim_id,
         const tripoint c = req.center.raw();
         const int dx = std::abs( p.x - c.x );
         const int dy = std::abs( p.y - c.y );
-        if( !( dx <= req.radius && dy <= req.radius
-               && p.z >= req.z_min && p.z <= req.z_max ) ) {
+        if( !( dx <= req.radius && dy <= req.radius ) ) {
             continue;
         }
         if( req.source != load_request_source::lazy_border ) {

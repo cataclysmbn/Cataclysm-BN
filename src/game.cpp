@@ -724,17 +724,11 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
         pos_sm.raw().y + reality_bubble_radius_,
         pos_sm.raw().z );
 
-    // Reality bubble covers all loaded z-levels when z-level mode is active.
-    // For non-z-level builds only the player's current z-level is relevant.
-    const int z_lo = m.has_zlevels() ? -OVERMAP_DEPTH : pos_sm.raw().z;
-    const int z_hi = m.has_zlevels() ? OVERMAP_HEIGHT : pos_sm.raw().z;
-
     // Create or update the reality bubble request.
     if( reality_bubble_handle_ == 0 ) {
         reality_bubble_handle_ = submap_loader.request_load(
                                      load_request_source::reality_bubble,
-                                     new_dim_id, bubble_center, reality_bubble_radius_,
-                                     z_lo, z_hi );
+                                     new_dim_id, bubble_center, reality_bubble_radius_ );
     } else {
         submap_loader.update_request( reality_bubble_handle_, bubble_center );
     }
@@ -747,8 +741,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
             lazy_border_handle_ = submap_loader.request_load(
                                       load_request_source::lazy_border,
                                       new_dim_id, bubble_center,
-                                      reality_bubble_radius_ + 2,
-                                      z_lo, z_hi );
+                                      reality_bubble_radius_ + 2 );
         } else {
             submap_loader.update_request( lazy_border_handle_, bubble_center );
         }
@@ -1235,7 +1228,7 @@ void game::load_npcs()
         req_map.load( top_left, false );
         scoped_map_context ctx( req_map );
 
-        for( auto z : std::views::iota( req.z_min, req.z_max + 1 ) ) {
+        for( auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
             const tripoint_abs_sm center_z( req.center.raw().x, req.center.raw().y, z );
             for( const auto &temp : get_overmapbuffer( current_dimension_id_ ).get_npcs_near( center_z, req.radius ) ) {
                 const auto id = temp->getID();
@@ -13661,13 +13654,10 @@ point game::update_map( int &x, int &y )
         // Dynamically manage lazy border based on cached option.
         if( lazy_border_enabled ) {
             if( lazy_border_handle_ == 0 ) {
-                const int z_lo = m.has_zlevels() ? -OVERMAP_DEPTH : new_center.raw().z;
-                const int z_hi = m.has_zlevels() ? OVERMAP_HEIGHT : new_center.raw().z;
                 lazy_border_handle_ = submap_loader.request_load(
                                           load_request_source::lazy_border,
                                           m.get_bound_dimension(), new_center,
-                                          reality_bubble_radius_ + 2,
-                                          z_lo, z_hi );
+                                          reality_bubble_radius_ + 2 );
             } else {
                 submap_loader.update_request( lazy_border_handle_, new_center );
             }
