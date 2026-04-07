@@ -271,21 +271,18 @@ class submap_load_manager
         std::vector<point> bubble_offsets_;
 
         /** In-flight load_or_generate_quad futures for lazy border positions.
+         *  Keyed by quad_key for O(log N) lookup and erase.
          *  Returns true if mapgen ran (newly-generated quad), false if the quad was
-         *  already on disk.  Each future is paired with the quad key so we can remove
-         *  it from lazy_in_flight_ when reaped and mark newly-generated quads dirty. */
-        std::vector<std::pair<quad_key, std::future<bool>>> lazy_futures_;
-
-        /** Quad keys with in-flight lazy futures — prevents duplicate submissions. */
-        std::unordered_set<quad_key, pair_hash> lazy_in_flight_;
+         *  already on disk.  Presence in the map also serves as the in-flight guard
+         *  (replaces the old lazy_in_flight_ unordered_set). */
+        std::map<quad_key, std::future<bool>> lazy_futures_;
 
         /** In-flight presave_quad futures for dirty quads that left simulation.
-         *  Eviction waits for these before freeing the in-memory submaps. */
-        std::vector<std::pair<quad_key, std::future<void>>> presave_futures_;
-
-        /** Quad keys with in-flight presave futures.
-         *  Used to gate re-entry into simulation and to avoid double-submission. */
-        std::unordered_set<quad_key, pair_hash> presave_in_flight_;
+         *  Keyed by quad_key for O(log N) lookup and erase.
+         *  Eviction waits for these before freeing the in-memory submaps.
+         *  Presence in the map also serves as the in-flight guard
+         *  (replaces the old presave_in_flight_ unordered_set). */
+        std::map<quad_key, std::future<void>> presave_futures_;
 
         /**
          * Quads that have entered the simulated zone at least once since they

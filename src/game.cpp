@@ -12058,10 +12058,13 @@ void game::resize_reality_bubble_to( int new_size )
     //   2. Translating surviving monster positions into the new local coordinate system.
     const int old_half = static_cast<int>( g_half_mapsize );
     const int new_half = new_size + 1;
-    const int shift_sm = old_half - new_half;  // > 0 when shrinking, < 0 when growing
+    // Positive when shrinking (old origin < new origin), negative when growing.
+    // Each monster's local position must be translated by this many submaps in X and Y
+    // so it lines up with the new grid origin.
+    const int grid_origin_delta_in_sm = old_half - new_half;
 
     // When shrinking, despawn monsters that fall outside the new bubble radius.
-    if( shift_sm > 0 ) {
+    if( grid_origin_delta_in_sm > 0 ) {
         const tripoint player_sm_in_grid( u.posx() / SEEX, u.posy() / SEEY, get_levz() );
         for( monster &critter : all_monsters() ) {
             const tripoint critter_sm( critter.posx() / SEEX, critter.posy() / SEEY, critter.posz() );
@@ -12077,9 +12080,9 @@ void game::resize_reality_bubble_to( int new_size )
     // translates positions regardless of shrink/grow direction.  The bounds check
     // inside shift_monsters is not used here because the old grid bounds are larger
     // than the new ones when shrinking, so all in-range survivors pass.
-    if( shift_sm != 0 ) {
+    if( grid_origin_delta_in_sm != 0 ) {
         for( monster &critter : all_monsters() ) {
-            critter.shift( { shift_sm, shift_sm } );
+            critter.shift( { grid_origin_delta_in_sm, grid_origin_delta_in_sm } );
         }
         critter_tracker->rebuild_cache();
     }
@@ -12130,7 +12133,7 @@ void game::resize_reality_bubble_to( int new_size )
     // When the bubble grew, submaps outside the old (smaller) bubble just entered.
     // Their stored monsters are still in the overmap monster_map; spawn them now
     // so the expanded bubble isn't empty until the next boundary crossing.
-    if( shift_sm < 0 ) {
+    if( grid_origin_delta_in_sm < 0 ) {
         m.spawn_monsters( false );
     }
 
@@ -13687,10 +13690,15 @@ point game::update_map( int &x, int &y )
     u.shift_destination( -shift_ms );
 
     // Shift NPCs
+    // Allow 2 submaps of slop beyond the grid edge so fast-moving NPCs that
+    // crossed the boundary this tick are not immediately despawned.
+    static constexpr int npc_despawn_margin_sm = 2;
     for( auto it = active_npc.begin(); it != active_npc.end(); ) {
         ( *it )->shift( shift );
-        if( ( *it )->posx() < 0 - SEEX * 2 || ( *it )->posy() < 0 - SEEX * 2 ||
-            ( *it )->posx() > SEEX * ( g_mapsize + 2 ) || ( *it )->posy() > SEEY * ( g_mapsize + 2 ) ) {
+        if( ( *it )->posx() < 0 - SEEX * npc_despawn_margin_sm ||
+            ( *it )->posy() < 0 - SEEY * npc_despawn_margin_sm ||
+            ( *it )->posx() > SEEX * ( g_mapsize + npc_despawn_margin_sm ) ||
+            ( *it )->posy() > SEEY * ( g_mapsize + npc_despawn_margin_sm ) ) {
             //Remove the npc from the active list. It remains in the overmap list.
             ( *it )->on_unload();
             it = active_npc.erase( it );

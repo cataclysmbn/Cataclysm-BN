@@ -569,8 +569,12 @@ void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
     }
 
     // Remove export nodes whose source tile is in this submap before eviction.
-    // The submap is still resident at this point so we can scan active_furniture.
-    submap *sm = mb.lookup_submap( pos );
+    // Use lookup_submap_in_memory() — the submap should still be resident when
+    // called from the SLM listener, and we must not trigger a disk load here.
+    // The null check handles the rare case where this fires after removal
+    // (e.g. mapbuffer::save() spatial eviction) — export nodes were already
+    // cleaned up by the SLM listener path in that scenario.
+    submap *sm = mb.lookup_submap_in_memory( pos.raw() );
     if( sm != nullptr ) {
         std::ranges::for_each( sm->active_furniture, [&]( const auto & kv ) {
             const grid_link_tile *glt = dynamic_cast<const grid_link_tile *>( kv.second.get() );
