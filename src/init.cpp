@@ -727,7 +727,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Achievements" ), &achievement::finalize },
             { _( "Localization" ), &l10n_data::load_mod_catalogues },
             {
-                _( "Yarn dialogue" ), []()
+                _( "Dialogue" ), []()
                 {
                     yarn::register_builtin_functions( yarn::func_registry::global() );
                     yarn::register_builtin_commands( yarn::command_registry::global() );

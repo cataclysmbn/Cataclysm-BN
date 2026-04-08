@@ -392,10 +392,10 @@ void register_builtin_functions( func_registry &registry );
 // etc.) into the given registry. Called once on the global registry at startup.
 void register_builtin_commands( command_registry &registry );
 
-// Entry point called from npc::talk_to_u().
-// If the NPC's chatbin.yarn_story is non-empty and a matching story exists,
-// runs it and returns true. Otherwise returns false (fall through to JSON path).
-auto try_yarn_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool;
+// Primary dialogue entry point called from npc::talk_to_u().
+// If the NPC has an assigned yarn_story, runs it and returns true.
+// Otherwise returns false so the caller can try the legacy JSON path.
+auto run_npc_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool;
 
 // DEPRECATED: Run the __legacy yarn story built from JSON TALK_TOPICs.
 // Called via dialogue_compat::try_legacy_dialogue. Remove when migration is complete.

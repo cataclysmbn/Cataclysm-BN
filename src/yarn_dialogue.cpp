@@ -3717,7 +3717,7 @@ void register_builtin_commands( command_registry &reg )
 // Integration
 // ============================================================
 
-auto try_yarn_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
+auto run_npc_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
 {
     if( n.chatbin.yarn_story.empty() ) {
         return false;
