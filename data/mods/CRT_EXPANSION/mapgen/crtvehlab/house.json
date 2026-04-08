@@ -1,0 +1,106 @@
+[
+  {
+    "type": "overmap_terrain",
+    "id": [ "crt_lab_veh_house" ],
+    "name": "C.R.I.T. Lab",
+    "sym": "L",
+    "color": "red",
+    "see_cost": 5,
+    "extras": "build",
+    "mondensity": 2
+  },
+  {
+    "type": "mapgen",
+    "method": "lua",
+    "om_terrain": [ "crt_lab_veh_house" ],
+    "luamethod": "crt_lab_veh_house"
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_house_living",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 8, 7 ],
+      "rows": [
+        "========",
+        "=~~~~~~=",
+        "=~~~~~~=",
+        "=~~~~~~=",
+        "=~~~~~~=",
+        "=~~~~~~=",
+        "========"
+      ],
+      "terrain": {
+        "=": "t_linoleum_gray",
+        "~": "t_water_pool"
+      },
+      "items": {
+        "=": { "item": "pool_side", "chance": 10 }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_house_living",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 8, 7 ],
+      "rows": [
+        "        ",
+        "        ",
+        " ~~~    ",
+        "C~~~    ",
+        " ~~~    ",
+        "        ",
+        "        "
+      ],
+      "terrain": {
+        " ": [ [ "t_region_groundcover_forest", 20 ], [ "t_region_shrub", 2 ], "t_region_tree" ],
+        "=": "t_linoleum_gray",
+        "~": "t_water_sh"
+      },
+      "furniture": {
+        "C": "f_armchair"
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_lab_veh_house_backdrop" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "########################",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#########DDDDDD#########",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#########DDDDDD#########",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "########################"
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
+    }
+  }
+]
+
