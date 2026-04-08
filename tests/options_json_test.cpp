@@ -46,9 +46,45 @@ TEST_CASE( "json_option_definitions_are_loaded", "[options][json]" )
     CHECK( thread_pool_workers.hasPrerequisite() );
     CHECK( thread_pool_workers.getPrerequisite() == "MULTITHREADING_ENABLED" );
 
+    auto &enable_nested_categories = get_options().get_option( "ENABLE_NESTED_CATEGORIES" );
+    CHECK( enable_nested_categories.getType() == "bool" );
+
+    auto &fov_3d_z_range = get_options().get_option( "FOV_3D_Z_RANGE" );
+    CHECK( fov_3d_z_range.getType() == "int" );
+#if defined(__ANDROID__)
+    CHECK( fov_3d_z_range.iDefault == 3 );
+#else
+    CHECK( fov_3d_z_range.iDefault == 5 );
+#endif
+
     auto &world_end = get_options().get_option( "WORLD_END" );
     CHECK( world_end.getType() == "string_select" );
     CHECK( world_end.getPage() == "world_default" );
+}
+
+TEST_CASE( "general_sound_options_stay_before_jsonized_general_options", "[options][json]" )
+{
+    const auto page_iter = std::ranges::find_if( get_options().pages_, [](
+    const options_manager::Page & page ) {
+        return page.id_ == "general";
+    } );
+    REQUIRE( page_iter != get_options().pages_.end() );
+
+    const auto &items = page_iter->items_;
+    const auto sound_enabled_iter = std::ranges::find_if( items, []( const options_manager::PageItem &
+    item ) {
+        return item.type == options_manager::ItemType::Option && item.data == "SOUND_ENABLED";
+    } );
+    REQUIRE( sound_enabled_iter != items.end() );
+
+    const auto prompt_on_death_iter = std::ranges::find_if( items, []( const options_manager::PageItem &
+    item ) {
+        return item.type == options_manager::ItemType::Option && item.data == "PROMPT_ON_CHARACTER_DEATH";
+    } );
+    REQUIRE( prompt_on_death_iter != items.end() );
+
+    CHECK( std::ranges::distance( items.begin(), sound_enabled_iter ) <
+           std::ranges::distance( items.begin(), prompt_on_death_iter ) );
 }
 
 TEST_CASE( "json_option_groups_keep_headers_and_options_contiguous", "[options][json]" )

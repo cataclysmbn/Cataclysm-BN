@@ -214,7 +214,8 @@
     "tooltip": "How many levels up and down the experimental 3D field of vision reaches.  (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster.",
     "min": 0,
     "max": 21,
-    "default": 4,
+    "default": 5,
+    "default_android": 3,
     "deps": [ { "option": "FOV_3D" } ]
   },
   {

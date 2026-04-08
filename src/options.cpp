@@ -1550,7 +1550,7 @@ std::vector<options_manager::id_and_option> options_manager::build_soundpacks_li
 }
 
 #if defined(__ANDROID__)
-bool android_get_default_setting( const char *settings_name, bool default_value )
+bool options_manager::android_get_default_setting( const char *settings_name, bool default_value )
 {
     JNIEnv *env = static_cast< JNIEnv *>( SDL_AndroidGetJNIEnv() );
     jobject activity = static_cast< jobject>( SDL_AndroidGetActivity() );
@@ -1753,8 +1753,8 @@ void options_manager::init()
         p.items_.clear();
     }
 
-    load_option_definitions();
     add_options_general();
+    load_option_definitions();
     add_options_interface();
     add_options_graphics();
     add_options_performance();
@@ -2144,6 +2144,10 @@ void options_manager::add_options_interface()
        );
     add( "HIGHLIGHT_UNREAD_RECIPES", interface, translate_marker( "Highlight unread recipes" ),
          translate_marker( "Highlight unread recipes to allow tracking of newly learned recipes." ),
+         true
+       );
+    add( "ENABLE_NESTED_CATEGORIES", interface, translate_marker( "Enable nested crafting categories" ),
+         translate_marker( "Show nested crafting categories in the crafting UI.  When disabled, nested recipes appear directly in their normal subcategories." ),
          true
        );
     add( "HIGHLIGHT_UNREAD_ITEMS", interface, translate_marker( "Highlight unread items" ),
