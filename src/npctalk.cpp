@@ -1,5 +1,6 @@
 #include "dialogue.h" // IWYU pragma: associated
 #include "dialogue_compat.h"
+#include "dialogue_json_convert.h"
 #include "yarn_dialogue.h"
 
 #include <algorithm>
@@ -3594,10 +3595,12 @@ void load_talk_topic( const JsonObject &jo )
     if( jo.has_array( "id" ) ) {
         for( auto &id : jo.get_string_array( "id" ) ) {
             json_talk_topics[id].load( jo );
+            dialogue_convert::register_yarn_node( id, jo );
         }
     } else {
         const std::string id = jo.get_string( "id" );
         json_talk_topics[id].load( jo );
+        dialogue_convert::register_yarn_node( id, jo );
     }
 }
 

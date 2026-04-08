@@ -21,31 +21,7 @@ auto try_legacy_dialogue( dialogue_window &d_win, npc &n, player &p, dialogue &d
     if( !enable_legacy_shim ) {
         return false;
     }
-    if( n.chatbin.first_topic.empty() ) {
-        return false;
-    }
-    if( !yarn::has_yarn_story( "__legacy" ) ) {
-        return false;
-    }
-
-    const auto &story = yarn::get_yarn_story( "__legacy" );
-    if( !story.has_node( n.chatbin.first_topic ) ) {
-        return false;
-    }
-
-    d_win.print_header( n.name );
-
-    yarn::yarn_runtime::options opts{
-        .story         = story,
-        .registry      = yarn::func_registry::global(),
-        .starting_node = n.chatbin.first_topic,
-        .npc_ref       = &n,
-        .player_ref    = &p,
-        .dialogue_ref  = &d
-    };
-    yarn::yarn_runtime runtime( std::move( opts ) );
-    runtime.run( d_win );
-    return true;
+    return yarn::try_legacy_yarn_dialogue( d_win, n, p, d );
 }
 
 } // namespace dialogue_compat

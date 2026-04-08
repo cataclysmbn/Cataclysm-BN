@@ -13,6 +13,7 @@
 
 #include "avatar.h"
 #include "calendar.h"
+#include "dialogue_json_convert.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -21,17 +22,26 @@
 #include "game.h"
 #include "map.h"
 #include "mapdata.h"
+#include "mapgen_functions.h"
 #include "mission.h"
 #include "overmapbuffer.h"
 #include "filesystem.h"
 #include "input.h"
+#include "character_effects.h"
+#include "detached_ptr.h"
+#include "enum_conversions.h"
+#include "item.h"
+#include "item_category.h"
+#include "itype.h"
 #include "npc.h"
+#include "visitable.h"
 #include "npctalk.h"
 #include "overmap.h"
 #include "overmapbuffer_registry.h"
 #include "path_info.h"
 #include "player.h"
 #include "recipe_dictionary.h"
+#include "rng.h"
 #include "skill.h"
 #include "translations.h"
 #include "ui_manager.h"
@@ -39,6 +49,11 @@
 #include "vpart_position.h"
 
 namespace yarn {
+
+// Static IDs used by built-in functions/commands.
+static const trait_id    trait_DEBUG_MIND_CONTROL( "DEBUG_MIND_CONTROL" );
+static const skill_id    skill_speech( "speech" );
+static const efftype_id  effect_currently_busy( "currently_busy" );
 
 // ============================================================
 // Value system
@@ -1360,6 +1375,30 @@ auto size_up_text( const npc &p, const player &you ) -> std::string
 } // anonymous namespace
 
 // ============================================================
+// Conversation context (thread-local so global registry lambdas can read it)
+// ============================================================
+
+namespace
+{
+
+struct yarn_conv_ctx {
+    npc         *npc_ref           = nullptr;
+    player      *player_ref        = nullptr;
+    // DEPRECATED: Only used by the legacy JSON dialogue shim. Remove when migration complete.
+    dialogue    *dialogue_ref      = nullptr;
+    // Set by _set_current_item command during repeat_group choice execution.
+    std::string  current_item_type;
+};
+
+thread_local yarn_conv_ctx g_conv_ctx;
+
+struct conv_ctx_guard {
+    ~conv_ctx_guard() { g_conv_ctx = {}; }
+};
+
+} // namespace
+
+// ============================================================
 // yarn_runtime
 // ============================================================
 
@@ -1416,6 +1455,9 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                 auto speaker = elem.speaker.empty() ? ( npc_ ? npc_->name : "NPC" )
                                                     : elem.speaker;
                 auto text    = interpolate( elem.text );
+                if( player_ && npc_ ) {
+                    parse_tags( text, *player_, *npc_, itype_id( g_conv_ctx.current_item_type ) );
+                }
                 auto line    = string_format( "%s: \"%s\"",
                                               colorize( speaker, c_light_green ),
                                               text );
@@ -1424,15 +1466,93 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
             }
 
             case node_element::kind::choice_group: {
-                int chosen = present_choices( elem.choices, d_win );
+                // Build the full choice list: repeat groups first, then regular choices.
+                std::vector<node_element::choice> all_choices;
+
+                // Expand repeat groups into dynamic choices.
+                for( const auto &rg : elem.repeat_groups ) {
+                    // Check group-level condition.
+                    if( rg.condition ) {
+                        try {
+                            auto val = eval( *rg.condition );
+                            if( !std::holds_alternative<bool>( val ) || !std::get<bool>( val ) ) {
+                                continue;
+                            }
+                        } catch( const std::exception &e ) {
+                            DebugLog( DL::Error, DC::Dialogue )
+                                << "yarn: repeat_group condition error: " << e.what();
+                            continue;
+                        }
+                    }
+
+                    player *actor = rg.is_npc
+                                    ? ( npc_ ? static_cast<player *>( npc_ ) : nullptr )
+                                    : player_;
+                    if( !actor ) { continue; }
+
+                    // Collect matching item type IDs.
+                    std::vector<itype_id> item_ids;
+                    for( const auto &item_str : rg.for_item ) {
+                        itype_id id( item_str );
+                        if( actor->charges_of( id ) > 0 || actor->has_amount( id, 1 ) ) {
+                            item_ids.push_back( id );
+                        }
+                    }
+                    for( const auto &cat_str : rg.for_category ) {
+                        item_category_id cat( cat_str );
+                        auto matches = actor->items_with( [&cat, &rg]( const item &it ) {
+                            if( rg.include_containers ) {
+                                return it.get_category().get_id() == cat;
+                            }
+                            return it.type && it.type->category_force == cat;
+                        } );
+                        for( const auto *it : matches ) {
+                            if( !std::ranges::contains( item_ids, it->typeId() ) ) {
+                                item_ids.push_back( it->typeId() );
+                            }
+                        }
+                    }
+
+                    for( const auto &iid : item_ids ) {
+                        node_element::choice ch;
+                        // Substitute <topic_item> with item name.
+                        ch.text = rg.text_template;
+                        auto item_name = item::nname( iid, 1 );
+                        for( std::size_t pos = 0;
+                             ( pos = ch.text.find( "<topic_item>", pos ) ) != std::string::npos; ) {
+                            ch.text.replace( pos, 12, item_name );
+                            pos += item_name.size();
+                        }
+                        // Body is the shared repeat group body, but we prepend a current-item setter.
+                        node_element set_item;
+                        set_item.type         = node_element::kind::command;
+                        set_item.command_name = "_set_current_item";
+                        // Pass item ID as a literal string argument.
+                        expr_node id_lit;
+                        id_lit.type        = expr_node::kind::literal;
+                        id_lit.literal_val = iid.str();
+                        set_item.command_args.push_back( std::move( id_lit ) );
+                        ch.body.push_back( std::move( set_item ) );
+                        ch.body.insert( ch.body.end(), rg.body.begin(), rg.body.end() );
+                        all_choices.push_back( std::move( ch ) );
+                    }
+                }
+
+                // Append regular choices.
+                all_choices.insert( all_choices.end(), elem.choices.begin(), elem.choices.end() );
+
+                int chosen = present_choices( all_choices, d_win );
                 if( chosen < 0 ) {
                     // No available choices — treat as stop
                     return { signal::stop, {} };
                 }
-                const auto &ch = elem.choices[chosen];
+                const auto &ch = all_choices[chosen];
 
                 // Log the player's choice
                 auto choice_text = interpolate( ch.text );
+                if( player_ && npc_ ) {
+                    parse_tags( choice_text, *player_, *npc_, itype_id( g_conv_ctx.current_item_type ) );
+                }
                 d_win.add_to_history(
                     string_format( "%s: \"%s\"",
                                    colorize( _( "You" ), c_green ),
@@ -1621,19 +1741,19 @@ auto yarn_runtime::present_choices( const std::vector<node_element::choice> &cho
                 continue;
             }
             // Special always-available actions (mirrors dialogue::opt behaviour)
-            if( ch == 'L' || ch == 'l' ) {
+            if( ch == 'L' ) {
                 if( npc_ ) {
                     d_win.add_to_history( npc_->short_description() );
                 }
                 continue;
             }
-            if( ch == 'O' || ch == 'o' ) {
+            if( ch == 'O' ) {
                 if( npc_ ) {
                     d_win.add_to_history( npc_->opinion_text() );
                 }
                 continue;
             }
-            if( ch == 'Y' || ch == 'y' ) {
+            if( ch == 'Y' ) {
                 if( player_ ) {
                     player_->shout();
                     d_win.add_to_history( player_->is_deaf()
@@ -1642,7 +1762,7 @@ auto yarn_runtime::present_choices( const std::vector<node_element::choice> &cho
                 }
                 continue;
             }
-            if( ch == 'S' || ch == 's' ) {
+            if( ch == 'S' ) {
                 if( npc_ && player_ ) {
                     d_win.add_to_history( size_up_text( *npc_, *player_ ) );
                 }
@@ -1720,51 +1840,48 @@ auto get_yarn_story( const std::string &name ) -> const yarn_story &
 
 void build_legacy_yarn_stories()
 {
-    // Build a synthetic __legacy story: one yarn_node per JSON TALK_TOPIC.
-    // Each node has a single legacy_topic element that delegates to dialogue::opt()
-    // at runtime, so the yarn runtime drives all navigation for legacy dialogue.
-    // DEPRECATED: Remove this function when JSON-to-Yarn migration is complete.
-    auto ids = get_all_talk_topic_ids();
-    if( ids.empty() ) {
+    // Build the __legacy story from converted TALK_TOPIC JSON nodes.
+    // Each node is a real yarn AST (choice_group, if_block, commands, jumps).
+    // Special topics that need old-system UI keep legacy_topic stub elements.
+    // DEPRECATED: Remove when JSON-to-Yarn migration is complete.
+    auto converted = dialogue_convert::flush_pending_nodes();
+    if( converted.empty() ) {
         return;
     }
 
     yarn_story legacy;
-    for( const auto &id : ids ) {
-        yarn_node node;
-        node.title = id;
-        node_element elem;
-        elem.type = node_element::kind::legacy_topic;
-        elem.jump_target = id;
-        node.elements.push_back( std::move( elem ) );
+
+    // Add synthetic nodes for the two most common special topics.
+    {
+        yarn_node done_node;
+        done_node.title = "TALK_DONE";
+        node_element bye;
+        bye.type = node_element::kind::dialogue;
+        bye.text = "Bye.";
+        done_node.elements.push_back( std::move( bye ) );
+        node_element stop_elem;
+        stop_elem.type = node_element::kind::stop;
+        done_node.elements.push_back( std::move( stop_elem ) );
+        legacy.add_node( std::move( done_node ) );
+    }
+    {
+        yarn_node none_node;
+        none_node.title = "TALK_NONE";
+        node_element ret;
+        ret.type = node_element::kind::yarn_return;
+        none_node.elements.push_back( std::move( ret ) );
+        legacy.add_node( std::move( none_node ) );
+    }
+
+    for( auto &node : converted ) {
         legacy.add_node( std::move( node ) );
     }
     story_registry().emplace( "__legacy", std::move( legacy ) );
 }
 
-// ============================================================
-// Conversation context (thread-local so global registry lambdas can read it)
-// ============================================================
-
-namespace
-{
-
-struct yarn_conv_ctx {
-    npc      *npc_ref      = nullptr;
-    player   *player_ref   = nullptr;
-    // DEPRECATED: Only used by the legacy JSON dialogue shim. Remove when migration complete.
-    dialogue *dialogue_ref = nullptr;
-};
-
-thread_local yarn_conv_ctx g_conv_ctx;
-
-struct conv_ctx_guard {
-    ~conv_ctx_guard() { g_conv_ctx = {}; }
-};
-
 // Convert a yarn value to a string suitable for Creature::set_value storage.
 // Numbers that are whole integers are stored without a decimal point.
-auto value_to_storage_string( const value &v ) -> std::string
+static auto value_to_storage_string( const value &v ) -> std::string
 {
     return std::visit( []( const auto &x ) -> std::string {
         using T = std::decay_t<decltype( x )>;
@@ -1780,8 +1897,6 @@ auto value_to_storage_string( const value &v ) -> std::string
         }
     }, v );
 }
-
-} // anonymous namespace
 
 // ============================================================
 // Built-in functions
@@ -2556,6 +2671,370 @@ void register_builtin_functions( func_registry &reg )
         const recipe &r = recipe_id( std::get<std::string>( args[0] ) ).obj();
         return p->knows_recipe( &r );
     } );
+
+    // ============================================================
+    // NPC following / stow checks
+    // ============================================================
+
+    reg.add( "npc_following", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->is_following();
+    } );
+
+    reg.add( "u_can_stow_weapon", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && !p->unarmed_attack() && p->can_pick_volume( p->primary_weapon() );
+    } );
+
+    reg.add( "npc_can_stow_weapon", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && !n->unarmed_attack() && n->can_pick_volume( n->primary_weapon() );
+    } );
+
+    reg.add( "has_pickup_list", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && !n->rules.pickup_whitelist->empty();
+    } );
+
+    // ============================================================
+    // Any-trait (variadic)
+    // ============================================================
+
+    reg.register_func( {
+        .name        = "u_has_any_trait",
+        .param_types = {},
+        .return_type = vt::boolean,
+        .variadic    = true,
+        .impl        = []( const std::vector<value> &args ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            if( !p ) { return false; }
+            return std::ranges::any_of( args, [p]( const value &v ) {
+                return p->has_trait( trait_id( std::get<std::string>( v ) ) );
+            } );
+        }
+    } );
+
+    reg.register_func( {
+        .name        = "npc_has_any_trait",
+        .param_types = {},
+        .return_type = vt::boolean,
+        .variadic    = true,
+        .impl        = []( const std::vector<value> &args ) -> value {
+            auto *n = g_conv_ctx.npc_ref;
+            if( !n ) { return false; }
+            return std::ranges::any_of( args, [n]( const value &v ) {
+                return n->has_trait( trait_id( std::get<std::string>( v ) ) );
+            } );
+        }
+    } );
+
+    // ============================================================
+    // Attribute minimum checks
+    // ============================================================
+
+    reg.add( "u_has_strength", {vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->str_cur >= static_cast<int>( std::get<double>( args[0] ) );
+    } );
+    reg.add( "npc_has_strength", {vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->str_cur >= static_cast<int>( std::get<double>( args[0] ) );
+    } );
+    reg.add( "u_has_dexterity", {vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->dex_cur >= static_cast<int>( std::get<double>( args[0] ) );
+    } );
+    reg.add( "npc_has_dexterity", {vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->dex_cur >= static_cast<int>( std::get<double>( args[0] ) );
+    } );
+    reg.add( "u_has_intelligence", {vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->int_cur >= static_cast<int>( std::get<double>( args[0] ) );
+    } );
+    reg.add( "npc_has_intelligence", {vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->int_cur >= static_cast<int>( std::get<double>( args[0] ) );
+    } );
+    reg.add( "u_has_perception", {vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->per_cur >= static_cast<int>( std::get<double>( args[0] ) );
+    } );
+    reg.add( "npc_has_perception", {vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->per_cur >= static_cast<int>( std::get<double>( args[0] ) );
+    } );
+
+    // ============================================================
+    // Needs: u_need(type, amount) — fatigue/hunger/thirst threshold
+    // ============================================================
+
+    reg.add( "u_need", {vt::string, vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) { return false; }
+        const auto &need   = std::get<std::string>( args[0] );
+        auto        amount = static_cast<int>( std::get<double>( args[1] ) );
+        int effective_hunger = ( p->max_stored_kcal() - p->get_stored_kcal() ) / 10;
+        return ( need == "fatigue" && p->get_fatigue() > amount ) ||
+               ( need == "hunger"  && effective_hunger > amount ) ||
+               ( need == "thirst"  && p->get_thirst() > amount );
+    } );
+
+    reg.add( "npc_need", {vt::string, vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) { return false; }
+        auto *actor        = static_cast<player *>( n );
+        const auto &need   = std::get<std::string>( args[0] );
+        auto        amount = static_cast<int>( std::get<double>( args[1] ) );
+        int effective_hunger = ( actor->max_stored_kcal() - actor->get_stored_kcal() ) / 10;
+        return ( need == "fatigue" && actor->get_fatigue() > amount ) ||
+               ( need == "hunger"  && effective_hunger > amount ) ||
+               ( need == "thirst"  && actor->get_thirst() > amount );
+    } );
+
+    // ============================================================
+    // Item category checks
+    // ============================================================
+
+    reg.add( "u_has_item_category", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) { return false; }
+        item_category_id cat( std::get<std::string>( args[0] ) );
+        return !p->items_with( [cat]( const item &it ) {
+            return it.type && it.type->category_force == cat;
+        } ).empty();
+    } );
+
+    reg.add( "npc_has_item_category", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) { return false; }
+        item_category_id cat( std::get<std::string>( args[0] ) );
+        return !n->items_with( [cat]( const item &it ) {
+            return it.type && it.type->category_force == cat;
+        } ).empty();
+    } );
+
+    // ============================================================
+    // NPC character variables
+    // ============================================================
+
+    // talk var name construction: "npctalk_var[_type][_context]_name"
+    auto make_talk_varname = []( const std::string &name,
+                                 const std::string &type,
+                                 const std::string &context ) -> std::string {
+        return "npctalk_var" +
+               ( type.empty()    ? std::string{} : "_" + type ) +
+               ( context.empty() ? std::string{} : "_" + context ) +
+               "_" + name;
+    };
+
+    reg.add( "u_has_var", {vt::string, vt::string, vt::string, vt::string}, vt::boolean,
+    [make_talk_varname]( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) { return false; }
+        auto varname = make_talk_varname(
+                           std::get<std::string>( args[0] ),
+                           std::get<std::string>( args[1] ),
+                           std::get<std::string>( args[2] ) );
+        return p->get_value( varname ) == std::get<std::string>( args[3] );
+    } );
+
+    reg.add( "npc_has_var", {vt::string, vt::string, vt::string, vt::string}, vt::boolean,
+    [make_talk_varname]( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) { return false; }
+        auto varname = make_talk_varname(
+                           std::get<std::string>( args[0] ),
+                           std::get<std::string>( args[1] ),
+                           std::get<std::string>( args[2] ) );
+        return n->get_value( varname ) == std::get<std::string>( args[3] );
+    } );
+
+    reg.add( "u_compare_var", {vt::string, vt::string, vt::string, vt::string, vt::number}, vt::boolean,
+    [make_talk_varname]( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) { return false; }
+        auto varname = make_talk_varname(
+                           std::get<std::string>( args[0] ),
+                           std::get<std::string>( args[1] ),
+                           std::get<std::string>( args[2] ) );
+        const auto &op      = std::get<std::string>( args[3] );
+        auto        compare = static_cast<int>( std::get<double>( args[4] ) );
+        const auto &stored  = p->get_value( varname );
+        int current = stored.empty() ? 0 : std::stoi( stored );
+        if( op == "==" ) { return current == compare; }
+        if( op == "!=" ) { return current != compare; }
+        if( op == "<"  ) { return current <  compare; }
+        if( op == ">"  ) { return current >  compare; }
+        if( op == "<=" ) { return current <= compare; }
+        if( op == ">=" ) { return current >= compare; }
+        return false;
+    } );
+
+    reg.add( "npc_compare_var", {vt::string, vt::string, vt::string, vt::string, vt::number}, vt::boolean,
+    [make_talk_varname]( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) { return false; }
+        auto varname = make_talk_varname(
+                           std::get<std::string>( args[0] ),
+                           std::get<std::string>( args[1] ),
+                           std::get<std::string>( args[2] ) );
+        const auto &op      = std::get<std::string>( args[3] );
+        auto        compare = static_cast<int>( std::get<double>( args[4] ) );
+        const auto &stored  = n->get_value( varname );
+        int current = stored.empty() ? 0 : std::stoi( stored );
+        if( op == "==" ) { return current == compare; }
+        if( op == "!=" ) { return current != compare; }
+        if( op == "<"  ) { return current <  compare; }
+        if( op == ">"  ) { return current >  compare; }
+        if( op == "<=" ) { return current <= compare; }
+        if( op == ">=" ) { return current >= compare; }
+        return false;
+    } );
+
+    // ============================================================
+    // Mission queries
+    // ============================================================
+
+    reg.add( "mission_has_generic_rewards", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) { return false; }
+        mission *miss = n->chatbin.mission_selected;
+        return miss && miss->has_generic_rewards();
+    } );
+
+    reg.add( "mission_goal", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) { return false; }
+        mission *miss = n->chatbin.mission_selected;
+        if( !miss ) { return false; }
+        const auto &goal_str = std::get<std::string>( args[0] );
+        const mission_goal mgoal = io::string_to_enum<mission_goal>( goal_str );
+        return miss->get_type().goal == mgoal;
+    } );
+
+    // ============================================================
+    // Dialogue context stubs (unavailable in yarn without dialogue*)
+    // ============================================================
+
+    reg.add( "is_by_radio", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value { return false; } );
+
+    reg.add( "has_reason", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value { return false; } );
+
+    // Unimplemented in original code — condition.cpp returns false for these.
+    reg.add( "mission_failed",      {}, vt::boolean,
+    []( const std::vector<value> & ) -> value { return false; } );
+    reg.add( "npc_has_destination", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value { return false; } );
+    reg.add( "asked_for_item",      {}, vt::boolean,
+    []( const std::vector<value> & ) -> value { return false; } );
+
+    reg.add( "npc_service", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && !n->has_effect( effect_currently_busy );
+    } );
+
+    // ============================================================
+    // Trial roll — dice-based social check.
+    // trial_roll(type_str, difficulty) → bool
+    // Types: PERSUADE, LIE, INTIMIDATE
+    // ============================================================
+
+    reg.add( "trial_roll", {vt::string, vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        auto *n = g_conv_ctx.npc_ref;
+        if( !p || !n ) { return false; }
+
+        const auto &type_str = std::get<std::string>( args[0] );
+        int difficulty = static_cast<int>( std::get<double>( args[1] ) );
+
+        if( p->has_trait( trait_DEBUG_MIND_CONTROL ) ) { return true; }
+
+        const social_modifiers &u_mods = p->get_mutation_social_mods();
+        int chance = difficulty;
+
+        static const bionic_id bio_armor_eyes_t( "bio_armor_eyes" );
+        static const bionic_id bio_deformity_t( "bio_deformity" );
+        static const bionic_id bio_face_mask_t( "bio_face_mask" );
+        static const bionic_id bio_voice_t( "bio_voice" );
+
+        if( type_str == "PERSUADE" ) {
+            chance += character_effects::talk_skill( *p ) -
+                      character_effects::talk_skill( *n ) / 2 +
+                      n->op_of_u.trust * 2 + n->op_of_u.value;
+            chance += u_mods.persuade;
+            if( p->has_bionic( bio_face_mask_t ) ) { chance += 10; }
+            if( p->has_bionic( bio_deformity_t ) ) { chance -= 50; }
+            if( p->has_bionic( bio_voice_t ) )     { chance -= 20; }
+        } else if( type_str == "LIE" ) {
+            chance += character_effects::talk_skill( *p ) -
+                      character_effects::talk_skill( *n ) +
+                      n->op_of_u.trust * 3;
+            chance += u_mods.lie;
+            if( p->has_bionic( bio_voice_t ) )     { chance += 10; }
+            if( p->has_bionic( bio_face_mask_t ) ) { chance += 20; }
+        } else if( type_str == "INTIMIDATE" ) {
+            chance += character_effects::intimidation( *p ) -
+                      character_effects::intimidation( *n ) +
+                      n->op_of_u.fear * 2 - n->personality.bravery * 2;
+            chance += u_mods.intimidate;
+            if( p->has_bionic( bio_face_mask_t ) )  { chance += 10; }
+            if( p->has_bionic( bio_armor_eyes_t ) ) { chance += 10; }
+            if( p->has_bionic( bio_deformity_t ) )  { chance += 20; }
+            if( p->has_bionic( bio_voice_t ) )      { chance += 20; }
+        }
+        chance = std::max( 0, std::min( 100, chance ) );
+        bool success = rng( 0, 99 ) < chance;
+        if( success ) {
+            p->practice( skill_speech, ( 100 - chance ) / 10 );
+        } else {
+            p->practice( skill_speech, ( 100 - chance ) / 7 );
+        }
+        return success;
+    } );
+
+    // ============================================================
+    // Random line selection (variadic)
+    // random_line("text1", "text2", ...) → string
+    // ============================================================
+
+    reg.register_func( {
+        .name        = "random_line",
+        .param_types = {},
+        .return_type = vt::string,
+        .variadic    = true,
+        .impl        = []( const std::vector<value> &args ) -> value {
+            if( args.empty() ) { return std::string{}; }
+            auto idx = rng( 0, static_cast<int>( args.size() ) - 1 );
+            const auto &picked = args[static_cast<std::size_t>( idx )];
+            if( std::holds_alternative<std::string>( picked ) ) {
+                return picked;
+            }
+            return std::string{};
+        }
+    } );
 }
 
 // ============================================================
@@ -2833,6 +3312,405 @@ void register_builtin_commands( command_registry &reg )
     npc_fn( "npc_die",       talk_function::npc_die );
     npc_fn( "npc_thankful",  talk_function::npc_thankful );
     npc_stop( "control_npc", talk_function::control_npc );
+
+    // ============================================================
+    // Legacy conversion — effect commands
+    // ============================================================
+
+    // Traits
+    reg.add( "u_add_trait", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            p->set_mutation( trait_id( std::get<std::string>( args[0] ) ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_add_trait", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->set_mutation( trait_id( std::get<std::string>( args[0] ) ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "u_lose_trait", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            p->unset_mutation( trait_id( std::get<std::string>( args[0] ) ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_lose_trait", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->unset_mutation( trait_id( std::get<std::string>( args[0] ) ) );
+        }
+        return command_signal::none;
+    } );
+
+    // Effects (NPC-targeted)
+    reg.add( "u_add_effect", 2, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            auto id      = efftype_id( std::get<std::string>( args[0] ) );
+            auto turns   = static_cast<int>( std::get<double>( args[1] ) );
+            auto dur     = time_duration::from_turns( turns < 0 ? 1 : turns );
+            p->add_effect( id, dur );
+            if( turns < 0 ) { p->get_effect( id ).set_permanent(); }
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_add_effect", 2, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto id      = efftype_id( std::get<std::string>( args[0] ) );
+            auto turns   = static_cast<int>( std::get<double>( args[1] ) );
+            auto dur     = time_duration::from_turns( turns < 0 ? 1 : turns );
+            n->add_effect( id, dur );
+            if( turns < 0 ) { n->get_effect( id ).set_permanent(); }
+        }
+        return command_signal::none;
+    } );
+    reg.add( "u_lose_effect", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            p->remove_effect( efftype_id( std::get<std::string>( args[0] ) ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_lose_effect", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->remove_effect( efftype_id( std::get<std::string>( args[0] ) ) );
+        }
+        return command_signal::none;
+    } );
+
+    // Variables — talk var naming: "npctalk_var[_type][_context]_name"
+    auto talk_varname = []( const std::vector<value> &args, std::size_t offset ) -> std::string {
+        const auto &name    = std::get<std::string>( args[offset] );
+        const auto &type    = std::get<std::string>( args[offset + 1] );
+        const auto &context = std::get<std::string>( args[offset + 2] );
+        return "npctalk_var" +
+               ( type.empty()    ? std::string{} : "_" + type ) +
+               ( context.empty() ? std::string{} : "_" + context ) +
+               "_" + name;
+    };
+
+    reg.add( "u_add_var", 4, [talk_varname]( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            p->set_value( talk_varname( args, 0 ), std::get<std::string>( args[3] ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_add_var", 4, [talk_varname]( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->set_value( talk_varname( args, 0 ), std::get<std::string>( args[3] ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "u_lose_var", 3, [talk_varname]( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            p->remove_value( talk_varname( args, 0 ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_lose_var", 3, [talk_varname]( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->remove_value( talk_varname( args, 0 ) );
+        }
+        return command_signal::none;
+    } );
+    // u_adjust_var_legacy: name, type, context, amount (uses talk var naming)
+    reg.add( "u_adjust_var_legacy", 4, [talk_varname]( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            auto key    = talk_varname( args, 0 );
+            auto amount = static_cast<long long>( std::get<double>( args[3] ) );
+            const auto &stored = p->get_value( key );
+            auto current = stored.empty() ? 0LL : std::stoll( stored );
+            p->set_value( key, std::to_string( current + amount ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_adjust_var_legacy", 4, [talk_varname]( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto key    = talk_varname( args, 0 );
+            auto amount = static_cast<long long>( std::get<double>( args[3] ) );
+            const auto &stored = n->get_value( key );
+            auto current = stored.empty() ? 0LL : std::stoll( stored );
+            n->set_value( key, std::to_string( current + amount ) );
+        }
+        return command_signal::none;
+    } );
+
+    // Economy
+    reg.add( "u_spend_ecash", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            p->cash -= static_cast<long long>( std::get<double>( args[0] ) );
+        }
+        return command_signal::none;
+    } );
+
+    // Item trade commands (simplified — no container/cost validation)
+    reg.add( "u_buy_item", 3, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            auto id    = itype_id( std::get<std::string>( args[0] ) );
+            auto cost  = static_cast<long long>( std::get<double>( args[1] ) );
+            auto count = static_cast<int>( std::get<double>( args[2] ) );
+            p->cash -= cost;
+            p->add_item_with_id( id, count );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "u_sell_item", 3, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            auto id    = itype_id( std::get<std::string>( args[0] ) );
+            auto cost  = static_cast<long long>( std::get<double>( args[1] ) );
+            auto count = static_cast<int>( std::get<double>( args[2] ) );
+            p->cash += cost;
+            p->use_amount( id, count );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "u_consume_item", 2, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            auto id    = itype_id( std::get<std::string>( args[0] ) );
+            auto count = static_cast<int>( std::get<double>( args[1] ) );
+            p->use_amount( id, count );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_consume_item", 2, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto id    = itype_id( std::get<std::string>( args[0] ) );
+            auto count = static_cast<int>( std::get<double>( args[1] ) );
+            n->use_amount( id, count );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "u_remove_item_with", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            auto id = itype_id( std::get<std::string>( args[0] ) );
+            p->remove_items_with( [id]( detached_ptr<item> &&it ) {
+                if( it->typeId() == id ) {
+                    detached_ptr<item> del = std::move( it );
+                }
+                return VisitResponse::SKIP;
+            } );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_remove_item_with", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto id = itype_id( std::get<std::string>( args[0] ) );
+            n->remove_items_with( [id]( detached_ptr<item> &&it ) {
+                if( it->typeId() == id ) {
+                    detached_ptr<item> del = std::move( it );
+                }
+                return VisitResponse::SKIP;
+            } );
+        }
+        return command_signal::none;
+    } );
+
+    // Topic switching (from npc_first_topic effect)
+    reg.add( "npc_set_first_topic", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->chatbin.first_topic = std::get<std::string>( args[0] );
+        }
+        return command_signal::none;
+    } );
+
+    // NPC ally rules
+    reg.add( "toggle_npc_rule", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto it = ally_rule_strs.find( std::get<std::string>( args[0] ) );
+            if( it != ally_rule_strs.end() ) {
+                n->rules.toggle_flag( it->second.rule );
+                n->wield_better_weapon();
+            }
+        }
+        return command_signal::none;
+    } );
+    reg.add( "set_npc_rule", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto it = ally_rule_strs.find( std::get<std::string>( args[0] ) );
+            if( it != ally_rule_strs.end() ) {
+                n->rules.set_flag( it->second.rule );
+                n->wield_better_weapon();
+            }
+        }
+        return command_signal::none;
+    } );
+    reg.add( "clear_npc_rule", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto it = ally_rule_strs.find( std::get<std::string>( args[0] ) );
+            if( it != ally_rule_strs.end() ) {
+                n->rules.clear_flag( it->second.rule );
+                n->wield_better_weapon();
+            }
+        }
+        return command_signal::none;
+    } );
+    npc_fn( "copy_npc_rules", talk_function::copy_npc_rules );
+
+    reg.add( "set_npc_engagement_rule", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto it = combat_engagement_strs.find( std::get<std::string>( args[0] ) );
+            if( it != combat_engagement_strs.end() ) {
+                n->rules.engagement = it->second;
+                n->invalidate_range_cache();
+            }
+        }
+        return command_signal::none;
+    } );
+    reg.add( "set_npc_aim_rule", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto it = aim_rule_strs.find( std::get<std::string>( args[0] ) );
+            if( it != aim_rule_strs.end() ) {
+                n->rules.aim = it->second;
+                n->invalidate_range_cache();
+            }
+        }
+        return command_signal::none;
+    } );
+    reg.add( "set_npc_cbm_reserve_rule", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto it = cbm_reserve_strs.find( std::get<std::string>( args[0] ) );
+            if( it != cbm_reserve_strs.end() ) {
+                n->rules.cbm_reserve = it->second;
+            }
+        }
+        return command_signal::none;
+    } );
+    reg.add( "set_npc_cbm_recharge_rule", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto it = cbm_recharge_strs.find( std::get<std::string>( args[0] ) );
+            if( it != cbm_recharge_strs.end() ) {
+                n->rules.cbm_recharge = it->second;
+            }
+        }
+        return command_signal::none;
+    } );
+
+    // Internal: set current_item_type_ on the runtime for parse_tags() expansion.
+    // Not intended for use in authored .yarn files.
+    reg.add( "_set_current_item", 1, []( const std::vector<value> &args ) -> command_signal {
+        g_conv_ctx.current_item_type = std::get<std::string>( args[0] );
+        return command_signal::none;
+    } );
+
+    // Opinion adjustment
+    reg.add( "npc_add_trust", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->op_of_u.trust += static_cast<int>( std::get<double>( args[0] ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_add_fear", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->op_of_u.fear += static_cast<int>( std::get<double>( args[0] ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_add_value", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->op_of_u.value += static_cast<int>( std::get<double>( args[0] ) );
+        }
+        return command_signal::none;
+    } );
+    reg.add( "npc_add_anger", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->op_of_u.anger += static_cast<int>( std::get<double>( args[0] ) );
+        }
+        return command_signal::none;
+    } );
+
+    // add_debt("TYPE", factor, ...) — mirrors set_add_debt / parse_mod logic
+    reg.add( "add_debt", 0, -1, []( const std::vector<value> &args ) -> command_signal {
+        auto *n = g_conv_ctx.npc_ref;
+        auto *p = g_conv_ctx.player_ref;
+        if( !n || !p ) { return command_signal::none; }
+        int debt = 0;
+        int total_mult = 1;
+        for( std::size_t i = 0; i + 1 < args.size(); i += 2 ) {
+            const auto &type   = std::get<std::string>( args[i] );
+            auto        factor = static_cast<int>( std::get<double>( args[i + 1] ) );
+            if( type == "TOTAL" ) {
+                total_mult = factor;
+                continue;
+            }
+            int mod = 0;
+            if(      type == "ANGER"       ) { mod = n->op_of_u.anger; }
+            else if( type == "FEAR"        ) { mod = n->op_of_u.fear; }
+            else if( type == "TRUST"       ) { mod = n->op_of_u.trust; }
+            else if( type == "VALUE"       ) { mod = n->op_of_u.value; }
+            else if( type == "POS_FEAR"    ) { mod = std::max( 0, n->op_of_u.fear ); }
+            else if( type == "AGGRESSION"  ) { mod = n->personality.aggression; }
+            else if( type == "ALTRUISM"    ) { mod = n->personality.altruism; }
+            else if( type == "BRAVERY"     ) { mod = n->personality.bravery; }
+            else if( type == "COLLECTOR"   ) { mod = n->personality.collector; }
+            else if( type == "U_INTIMIDATE" || type == "NPC_INTIMIDATE" ) {
+                mod = character_effects::intimidation( *p );
+            }
+            debt += mod * factor;
+        }
+        debt *= total_mult;
+        n->op_of_u += npc_opinion( 0, 0, 0, 0, debt );
+        return command_signal::none;
+    } );
+
+    reg.add( "u_faction_rep", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto *fac = n->get_faction();
+            if( fac && fac->id != faction_id( "no_faction" ) ) {
+                auto delta = static_cast<int>( std::get<double>( args[0] ) );
+                fac->likes_u    += delta;
+                fac->respects_u += delta;
+            }
+        }
+        return command_signal::none;
+    } );
+
+    // Mission management
+    // add_mission("id") — NPC-assigned mission added to NPC's missions_assigned list
+    reg.add( "add_mission", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto *miss = mission::reserve_new( mission_type_id( std::get<std::string>( args[0] ) ),
+                                              n->getID() );
+            miss->assign( get_avatar() );
+            n->chatbin.missions_assigned.push_back( miss );
+        }
+        return command_signal::none;
+    } );
+    // assign_mission("id") — player-facing mission (no specific NPC owner)
+    reg.add( "assign_mission", 1, []( const std::vector<value> &args ) -> command_signal {
+        auto *new_mission = mission::reserve_new( mission_type_id( std::get<std::string>( args[0] ) ),
+                                                 character_id() );
+        new_mission->assign( get_avatar() );
+        return command_signal::none;
+    } );
+    // finish_mission("id", success_bool)
+    reg.add( "finish_mission", 2, []( const std::vector<value> &args ) -> command_signal {
+        auto type    = mission_type_id( std::get<std::string>( args[0] ) );
+        auto success = std::get<bool>( args[1] );
+        for( auto *m : get_avatar().get_active_missions() ) {
+            if( m->mission_id() == type ) {
+                if( success ) { m->wrap_up(); } else { m->fail(); }
+                break;
+            }
+        }
+        return command_signal::none;
+    } );
+    // npc_change_faction("faction_name")
+    reg.add( "npc_change_faction", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->set_fac( faction_id( std::get<std::string>( args[0] ) ) );
+        }
+        return command_signal::none;
+    } );
+    // mapgen_update("id", ...) — variadic; each string arg is a mapgen update id
+    reg.add( "mapgen_update", 0, -1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            auto omt_pos = n->global_omt_location();
+            for( const auto &arg : args ) {
+                run_mapgen_update_func( std::get<std::string>( arg ), omt_pos,
+                                       n->chatbin.mission_selected );
+            }
+        }
+        return command_signal::none;
+    } );
 }
 
 // ============================================================
@@ -2867,6 +3745,50 @@ auto try_yarn_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
     yarn_runtime runtime( std::move( opts ) );
     runtime.run( d_win );
 
+    return true;
+}
+
+auto try_legacy_yarn_dialogue( dialogue_window &d_win, npc &n, player &p, dialogue &d ) -> bool
+{
+    if( n.chatbin.first_topic.empty() ) {
+        return false;
+    }
+    if( !has_yarn_story( "__legacy" ) ) {
+        DebugLog( DL::Warn, DC::Dialogue ) << "yarn: __legacy story not found";
+        return false;
+    }
+
+    const auto &story = get_yarn_story( "__legacy" );
+
+    // Use the dynamic topic from the dialogue stack, not the NPC's static first_topic.
+    // By the time this is called, talk_to_u has already resolved the effective starting topic
+    // (accounting for pick_talk_topic, missions, sleeping, etc.).
+    const auto &starting_topic = d.topic_stack.empty()
+                                 ? n.chatbin.first_topic
+                                 : d.topic_stack.back().id;
+
+    if( !story.has_node( starting_topic ) ) {
+        DebugLog( DL::Warn, DC::Dialogue )
+            << "yarn: __legacy story has no node '" << starting_topic << "'";
+        return false;
+    }
+
+    d_win.print_header( n.name );
+
+    // Set the global context so built-in functions and commands can access NPC/player.
+    g_conv_ctx = { &n, &p };
+    conv_ctx_guard guard;
+
+    yarn_runtime::options opts{
+        .story         = story,
+        .registry      = func_registry::global(),
+        .starting_node = starting_topic,
+        .npc_ref       = &n,
+        .player_ref    = &p,
+        .dialogue_ref  = &d
+    };
+    yarn_runtime runtime( std::move( opts ) );
+    runtime.run( d_win );
     return true;
 }
 

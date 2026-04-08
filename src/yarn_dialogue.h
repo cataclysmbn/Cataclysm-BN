@@ -251,6 +251,19 @@ struct node_element {
         std::vector<node_element> body;
     };
     std::vector<choice> choices;
+
+    // kind::choice_group (optional) — dynamic choices from inventory iteration.
+    // Generated choices are prepended to choices at runtime.
+    struct repeat_group {
+        bool is_npc = false;
+        bool include_containers = false;
+        std::vector<std::string> for_item;      // itype_id strings
+        std::vector<std::string> for_category;  // item_category_id strings
+        std::optional<expr_node> condition;     // group-level filter; if absent, group always runs
+        std::string text_template;              // <topic_item> is replaced with item name
+        std::vector<node_element> body;         // executed when a repeat choice is selected
+    };
+    std::vector<repeat_group> repeat_groups;
 };
 
 struct yarn_node {
@@ -364,6 +377,10 @@ void load_yarn_stories();
 // DEPRECATED: Remove when JSON-to-Yarn migration is complete.
 void build_legacy_yarn_stories();
 
+// Called by dialogue_json_convert to cache a converted yarn node.
+// The node is added to the __legacy story during build_legacy_yarn_stories().
+void add_pending_legacy_node( std::string id, yarn_node node );
+
 auto has_yarn_story( const std::string &name ) -> bool;
 auto get_yarn_story( const std::string &name ) -> const yarn_story &;
 
@@ -379,5 +396,9 @@ void register_builtin_commands( command_registry &registry );
 // If the NPC's chatbin.yarn_story is non-empty and a matching story exists,
 // runs it and returns true. Otherwise returns false (fall through to JSON path).
 auto try_yarn_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool;
+
+// DEPRECATED: Run the __legacy yarn story built from JSON TALK_TOPICs.
+// Called via dialogue_compat::try_legacy_dialogue. Remove when migration is complete.
+auto try_legacy_yarn_dialogue( dialogue_window &d_win, npc &n, player &p, dialogue &d ) -> bool;
 
 } // namespace yarn

@@ -102,6 +102,13 @@
         { "name": "amount", "type": "number" }
       ]
     },
+    {
+      "yarnName": "lua_cmd",
+      "documentation": "Call any Lua global by dotted path (e.g. \"my_mod.apply_bonus\"). Args after the path are forwarded to the Lua function. Return \"stop\" or false from Lua to end the conversation.",
+      "parameters": [
+        { "name": "function_path", "type": "string" }
+      ]
+    },
     { "yarnName": "nothing",              "documentation": "No-op placeholder.",                                                               "parameters": [] },
     { "yarnName": "morale_chat",          "documentation": "Instant morale boost from pleasant conversation.",                                 "parameters": [] },
     { "yarnName": "morale_chat_activity", "documentation": "Morale boost via a 10-minute socialize activity. Ends the conversation.",          "parameters": [] },
@@ -359,6 +366,14 @@
       "return": { "type": "number" }
     },
 
+    {
+      "yarnName": "lua_fn",
+      "documentation": "Call any Lua global by dotted path (e.g. \"my_mod.check_rep\"). The first argument is the function path string; additional args of any type are forwarded to Lua. Returns the Lua function's return value as a bool, number, or string.",
+      "parameters": [
+        { "name": "function_path", "type": "string" }
+      ],
+      "return": { "type": "bool" }
+    },
     { "yarnName": "u_male",   "documentation": "Returns true if the player is male.",   "parameters": [], "return": { "type": "bool" } },
     { "yarnName": "u_female", "documentation": "Returns true if the player is female.", "parameters": [], "return": { "type": "bool" } },
     { "yarnName": "npc_male",   "documentation": "Returns true if the NPC is male.",   "parameters": [], "return": { "type": "bool" } },
