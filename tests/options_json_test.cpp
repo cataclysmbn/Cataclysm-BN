@@ -64,6 +64,7 @@ TEST_CASE( "json_option_definitions_are_loaded", "[options][json]" )
 
 TEST_CASE( "general_sound_options_stay_before_jsonized_general_options", "[options][json]" )
 {
+#if defined(SDL_SOUND)
     const auto page_iter = std::ranges::find_if( get_options().pages_, [](
     const options_manager::Page & page ) {
         return page.id_ == "general";
@@ -85,6 +86,7 @@ TEST_CASE( "general_sound_options_stay_before_jsonized_general_options", "[optio
 
     CHECK( std::ranges::distance( items.begin(), sound_enabled_iter ) <
            std::ranges::distance( items.begin(), prompt_on_death_iter ) );
+#endif
 }
 
 TEST_CASE( "json_option_groups_keep_headers_and_options_contiguous", "[options][json]" )
