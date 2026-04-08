@@ -127,6 +127,45 @@
                "active": false , // Will the target mutation start powered ( turn ON ).
                "moves": 100 // how many moves this costs. (default: 0)
 "enchantments": [ "MEP_INK_GLAND_SPRAY" ], // Applies this enchantment to the player. See magic.md and effects_json.md
-"mutagen_target_modifier": 5         // Increases or decreases how mutations prefer to balance out when mutating from mutant toxins, negative values push the target value lower (default: 0)
+"mutagen_target_modifier": 5,        // Increases or decreases how mutations prefer to balance out when mutating from mutant toxins, negative values push the target value lower (default: 0)
+"flags": [ "LIMB_SCORE_DODGE_AFFECTED" ], // List of mutation flags applied to this mutation. See Mutation Flags below. (default: empty)
+"types": [ "CLAWS" ]                 // List of mutation type IDs this mutation belongs to. Used for conflict detection and mandatory appearance logic. See Mutation Types below. (default: empty)
 }
 ```
+
+## Mutation Flags
+
+Mutation flags are defined in `data/json/flags_mutation.json` and referenced in the `flags` field of a mutation.
+
+### Gender Flags
+
+These flags control how a mutation is assigned during character creation and NPC generation. They apply to cosmetic appearance traits and are checked during randomization and character creation trait selection.
+
+| Flag               | Effect                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------ |
+| `MALE_EXCLUSIVE`   | Mutation cannot be assigned to female characters. Hidden from female characters in character creation. |
+| `FEMALE_EXCLUSIVE` | Mutation cannot be assigned to male characters. Hidden from male characters in character creation.     |
+| `MALE_PREFERRED`   | Mutation is never auto-assigned to female characters, but female players may still manually select it. |
+| `FEMALE_PREFERRED` | Mutation is never auto-assigned to male characters, but male players may still manually select it.     |
+
+`EXCLUSIVE` flags take precedence over `mandatory_one` — if no gender-valid trait exists for a mandatory type, the type is silently skipped rather than assigning an invalid trait.
+
+## Mutation Types
+
+Mutation types group related mutations together. They are defined as separate JSON objects and referenced via a mutation's `types` field.
+
+```json
+{
+  "type": "mutation_type",
+  "id": "hair_color", // Unique string ID for this type
+  "mandatory_one": true, // If true, characters must always have at least one mutation of this type. Implies swap_on_conflict. (default: false)
+  "swap_on_conflict": true, // If true, selecting a new mutation of this type in character creation automatically removes the previously held mutation of the same type instead of showing a conflict error. (default: false)
+  "random_chance": 50 // Percent chance (0–100) that a mutation of this type is randomly assigned during cosmetic randomization. Only used if mandatory_one is false. (default: 0)
+}
+```
+
+### Notes
+
+- `mandatory_one` guarantees every new character receives exactly one mutation of that type during creation and rerolls.
+- `swap_on_conflict` alone (without `mandatory_one`) is useful for optional appearance types where only one option makes sense at a time (e.g. facial hair style).
+- `random_chance` and `mandatory_one` are mutually exclusive in intent: a type should use one or the other, not both.

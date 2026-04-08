@@ -69,22 +69,28 @@
   },
   {
     "type": "mutation_type",
-    "id": "skin_tone"
+    "id": "skin_tone",
+    "mandatory_one": true
   },
   {
     "type": "mutation_type",
-    "id": "eye_color"
+    "id": "eye_color",
+    "mandatory_one": true
   },
   {
     "type": "mutation_type",
-    "id": "hair_style"
+    "id": "hair_style",
+    "mandatory_one": true
   },
   {
     "type": "mutation_type",
-    "id": "hair_color"
+    "id": "hair_color",
+    "mandatory_one": true
   },
   {
     "type": "mutation_type",
-    "id": "facial_hair"
+    "id": "facial_hair",
+    "swap_on_conflict": true,
+    "random_chance": 50
   }
 ]

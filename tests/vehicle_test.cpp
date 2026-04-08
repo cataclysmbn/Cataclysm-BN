@@ -60,6 +60,25 @@ TEST_CASE( "destroy_grabbed_vehicle_section" )
     }
 }
 
+TEST_CASE( "taking_control_of_vehicle_without_engine", "[vehicle]" )
+{
+    clear_all_state();
+    const auto origin = tripoint( 60, 60, 0 );
+    auto &player_character = get_avatar();
+    player_character.setpos( origin );
+
+    auto *veh_ptr = get_map().add_vehicle( vproto_id( "shopping_cart" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+    REQUIRE_FALSE( player_character.controlling_vehicle );
+    REQUIRE_FALSE( veh_ptr->engine_on );
+
+    veh_ptr->start_engines( true );
+
+    CHECK( player_character.controlling_vehicle );
+    CHECK_FALSE( veh_ptr->engine_on );
+    CHECK( !player_character.activity );
+}
+
 TEST_CASE( "add_item_to_broken_vehicle_part" )
 {
     clear_all_state();

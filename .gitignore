@@ -14,6 +14,7 @@ build
 !build.yml
 !build-scripts
 !build-data
+build-data/gettext
 test_user_dir*
 /build-start-time
 /cmake-build-debug/
@@ -27,7 +28,8 @@ test_user_dir*
 /font/
 /graveyard/
 /memorial/
-/mods/
+/mods/*
+!/mods/put-your-third-party-mods-here.txt
 /obj/
 /objwin/
 /save/

@@ -1481,9 +1481,11 @@ class vehicle
         void play_music();
         void play_chimes();
         void operate_planter();
+        std::string brake_hold_toggle_string() const;
         std::string tracking_toggle_string();
         void autopilot_patrol_check();
         void toggle_autopilot();
+        void toggle_brake_hold();
         void enable_patrol();
         void toggle_tracking();
         //scoop operation,pickups, battery drain, etc.
@@ -1719,6 +1721,10 @@ class vehicle
          * not change therefor no call to set_submap_moved is required.
          */
         tripoint sm_pos;
+        // Absolute submap position — set by loadn(), on_submap_loaded(), copy_grid(),
+        // and displace_vehicle()/z-level transitions.  Runtime-only (not serialized).
+        // Always authoritative while the vehicle is in any loaded submap.
+        tripoint_abs_sm abs_sm_pos;
 
         // alternator load as a percentage of engine power, in units of 0.1% so 1000 is 100.0%
         int alternator_load = 0;
@@ -1742,6 +1748,14 @@ class vehicle
         int vertical_velocity = 0;
         // id of the om_vehicle struct corresponding to this vehicle
         int om_id = -1;
+
+        // ID of the dimension this vehicle belongs to.  Empty string = primary dimension.
+        // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
+        // Persisted across saves so cross-dimension processing survives reload.
+        std::string dimension_id_;
+        auto get_dimension() const -> const std::string & { // *NOPAD*
+            return dimension_id_;
+        }
         // direction, to which vehicle is turning (player control). will rotate frame on next move
         // must be a multiple of 15 degrees
         units::angle turn_dir = 0_degrees;
@@ -1807,6 +1821,8 @@ class vehicle
         bool cruise_on = true;
         // at least one engine is on, of any type
         bool engine_on = false;
+        // parked braking drag on/off
+        bool brake_hold = true;
         // vehicle tracking on/off
         bool tracking_on = false;
         // vehicle has no key

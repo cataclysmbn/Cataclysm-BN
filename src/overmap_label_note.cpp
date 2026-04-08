@@ -14,20 +14,48 @@ auto overmap_label_note::make_note( const std::string &label ) -> std::string
 
 auto overmap_label_note::extract_label( const std::string &note ) -> std::optional<std::string>
 {
-    if( note.compare( 0, label_prefix.size(), label_prefix ) != 0 ) {
-        return std::nullopt;
+    auto search_start = std::string::size_type { 0 };
+    while( search_start < note.size() ) {
+        const auto pos = note.find( label_prefix, search_start );
+        if( pos == std::string::npos ) {
+            return std::nullopt;
+        }
+
+        if( pos > 0 ) {
+            const char prev = note[pos - 1];
+            if( prev != ' ' && prev != ';' && prev != ':' ) {
+                search_start = pos + 1;
+                continue;
+            }
+        }
+
+        auto start = pos + label_prefix.size();
+        while( start < note.size() && note[start] == ' ' ) {
+            start++;
+        }
+
+        if( start >= note.size() ) {
+            return std::nullopt;
+        }
+
+        auto end = start;
+        while( end < note.size() && note[end] != ';' ) {
+            end++;
+        }
+
+        while( end > start && note[end - 1] == ' ' ) {
+            end--;
+        }
+
+        if( end == start ) {
+            search_start = start;
+            continue;
+        }
+
+        return note.substr( start, end - start );
     }
 
-    auto start = label_prefix.size();
-    if( start < note.size() && note[start] == ' ' ) {
-        start++;
-    }
-
-    if( start >= note.size() ) {
-        return std::nullopt;
-    }
-
-    return note.substr( start );
+    return std::nullopt;
 }
 
 auto overmap_label_note::is_label_only( const std::string &note ) -> bool

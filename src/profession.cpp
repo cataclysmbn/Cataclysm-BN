@@ -256,6 +256,23 @@ void profession::load( const JsonObject &jo, const std::string & )
 
     optional( jo, was_loaded, "missions", _missions, auto_flags_reader<mission_type_id> {} );
     optional( jo, was_loaded, "npcs", _starting_npcs, auto_flags_reader<npc_class_id> {} );
+    if( jo.has_member( "age" ) ) {
+        if( jo.has_int( "age" ) ) {
+            const auto value = jo.get_int( "age" );
+            _starting_age_range = age_range{ value, value };
+        } else if( jo.has_object( "age" ) ) {
+            JsonObject age_obj = jo.get_object( "age" );
+            const auto min_age = age_obj.get_int( "min" );
+            const auto max_age = age_obj.get_int( "max" );
+            const auto range_min = std::min( min_age, max_age );
+            const auto range_max = std::max( min_age, max_age );
+            _starting_age_range = age_range{ range_min, range_max };
+        } else {
+            jo.throw_error( "\"age\" must be an integer or an object" );
+        }
+    } else if( !was_loaded ) {
+        _starting_age_range.reset();
+    }
 }
 
 const profession_id &profession::generic()
@@ -417,6 +434,11 @@ signed int profession::point_cost() const
 std::optional<int> profession::starting_cash() const
 {
     return _starting_cash;
+}
+
+auto profession::starting_age_range() const -> std::optional<profession::age_range>
+{
+    return _starting_age_range;
 }
 
 static void clear_faults( item &it )

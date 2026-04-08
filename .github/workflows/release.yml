@@ -21,13 +21,13 @@ jobs:
       - uses: actions/checkout@v4
       - id: env_vars
         run: |
-          TAG_NAME=$(date -u --iso-8601 --date='1 day ago')
-          YESTERDAY_TAG_NAME=$(date -u --iso-8601 --date='2 day ago')
+          TAG_NAME=$(date -u --iso-8601)
+          YESTERDAY_TAG_NAME=$(date -u --iso-8601 --date='1 day ago')
           LAST_TAG_NAME=$(git for-each-ref --sort=-creatordate --format '%(creatordate:short)' refs/tags | head -n 1)
-          COMMITS=$(git log --oneline --since="$TAG_NAME" | wc -l)
+          COMMITS=$(git log --oneline --since="$YESTERDAY_TAG_NAME" --until="$TAG_NAME" | wc -l)
           RELEASE_NAME="Nightly $TAG_NAME"
 
-          echo "commits yesterday ($TAG_NAME): $COMMITS" >> "$GITHUB_STEP_SUMMARY"
+          echo "commits yesterday ($YESTERDAY_TAG_NAME): $COMMITS" >> "$GITHUB_STEP_SUMMARY"
 
           echo "count=$COMMITS" >> "$GITHUB_OUTPUT"
           echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"

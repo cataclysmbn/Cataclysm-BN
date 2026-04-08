@@ -30,5 +30,21 @@
     "material": [ "steel" ],
     "symbol": "]",
     "color": "light_cyan"
+  },
+  {
+    "id": "NBC_seal",
+    "type": "GENERIC",
+    "category": "veh_parts",
+    "name": { "str": "NBC_seal" },
+    "description": "A series of lead-based gaskets, seals and other things meant to keep all Nuclear, Biological, and Chemical contaminants out of a vehicle.  Installing this on a tile will protect people seated there from toxic gas and radiation.",
+    "weight": "8000 g",
+    "volume": "1 L",
+    "price": "50 USD",
+    "price_postapoc": "1500 cent",
+    "to_hit": -1,
+    "bashing": 6,
+    "material": [ "rubber", "lead" ],
+    "symbol": "]",
+    "color": "light_cyan"
   }
 ]

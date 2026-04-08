@@ -313,7 +313,8 @@ int turret_data::fire( Character &who, const tripoint &target )
     auto mode = base().gun_current_mode();
 
     prepare_fire( who );
-    shots = ranged::fire_gun( who, target, mode.qty, *mode, nullptr );
+    shots = ranged::fire_gun( who, target, mode.qty, *mode, nullptr,
+                              veh->mount_to_tripoint( part->mount ) );
     post_fire( who, shots );
     return shots;
 }

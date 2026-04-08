@@ -282,6 +282,15 @@
   },
   {
     "type": "COMESTIBLE",
+    "id": "zero_cola",
+    "name": "zero cola",
+    "copy-from": "cola",
+    "calories": 0,
+    "description": "Dark cola, now with sugar substitutes. Mmm, lime flavor.",
+    "fun": 6
+  },
+  {
+    "type": "COMESTIBLE",
     "id": "cola_syrup",
     "name": { "str_sp": "dark cola soda syrup" },
     "weight": "260 g",

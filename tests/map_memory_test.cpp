@@ -1,10 +1,10 @@
 #include "catch/catch.hpp"
 
-#include <bitset>
 #include <cstdio>
 #include <sstream>
 #include <string>
 
+#include "cata_dynamic_bitset.h"
 #include "game_constants.h"
 #include "json.h"
 #include "lru_cache.h"
@@ -114,97 +114,98 @@ TEST_CASE( "lru_cache_perf", "[.]" )
 // 3 | 4
 // The partitions are defined by partition.x and partition.y
 // Each partition has an expected value, and should be homogenous.
-static void check_quadrants( std::bitset<MAPSIZE *SEEX *MAPSIZE *SEEY> &test_cache,
+static void check_quadrants( cata_dynamic_bitset &test_cache,
                              const point &partition,
                              bool first_val, bool second_val, bool third_val, bool fourth_val )
 {
     int y = 0;
     for( ; y < partition.y; ++y ) {
-        size_t y_offset = y * SEEX * MAPSIZE;
+        size_t y_offset = y * g_mapsize_x;
         int x = 0;
         for( ; x < partition.x; ++x ) {
             INFO( x << " " << y );
             CHECK( first_val == test_cache[ y_offset + x ] );
         }
-        for( ; x < SEEX * MAPSIZE; ++x ) {
+        for( ; x < g_mapsize_x; ++x ) {
             INFO( x << " " << y );
             CHECK( second_val == test_cache[ y_offset + x ] );
         }
     }
-    for( ; y < SEEY * MAPSIZE; ++y ) {
-        size_t y_offset = y * SEEX * MAPSIZE;
+    for( ; y < g_mapsize_y; ++y ) {
+        size_t y_offset = y * g_mapsize_x;
         int x = 0;
         for( ; x < partition.x; ++x ) {
             INFO( x << " " << y );
             CHECK( third_val == test_cache[ y_offset + x ] );
         }
-        for( ; x < SEEX * MAPSIZE; ++x ) {
+        for( ; x < g_mapsize_x; ++x ) {
             INFO( x << " " << y );
             CHECK( fourth_val == test_cache[ y_offset + x ] );
         }
     }
 }
 
-constexpr size_t first_twelve = SEEX;
-constexpr size_t last_twelve = ( SEEX *MAPSIZE ) - SEEX;
+static constexpr size_t first_twelve = SEEX;
 
 TEST_CASE( "shift_map_memory_seen_cache" )
 {
-    std::bitset<MAPSIZE *SEEX *MAPSIZE *SEEY> test_cache;
+    // last_twelve is runtime because g_mapsize_x depends on the active bubble size.
+    const size_t last_twelve = g_mapsize_x - SEEX;
+    cata_dynamic_bitset test_cache( g_mapsize_x * g_mapsize_y );
 
     GIVEN( "all bits are set" ) {
         test_cache.set();
         WHEN( "positive x shift" ) {
-            shift_bitset_cache<MAPSIZE_X, SEEX>( test_cache, point_east );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_east );
             THEN( "last 12 columns are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( last_twelve, 0 ),
                                  true, false, true, false );
             }
         }
         WHEN( "negative x shift" ) {
-            shift_bitset_cache<MAPSIZE_X, SEEX>( test_cache, point_west );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_west );
             THEN( "first 12 columns are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( first_twelve, 0 ),
                                  false, true, false, true );
             }
         }
         WHEN( "positive y shift" ) {
-            shift_bitset_cache<MAPSIZE_X, SEEX>( test_cache, point_south );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_south );
             THEN( "last 12 rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( 0, last_twelve ),
                                  true, true, false, false );
             }
         }
         WHEN( "negative y shift" ) {
-            shift_bitset_cache<MAPSIZE_X, SEEX>( test_cache, point_north );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_north );
             THEN( "first 12 rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( 0, first_twelve ),
                                  false, false, true, true );
             }
         }
         WHEN( "positive x, positive y shift" ) {
-            shift_bitset_cache<MAPSIZE_X, SEEX>( test_cache, point_south_east );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_south_east );
             THEN( "last 12 columns and rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( last_twelve, last_twelve ),
                                  true, false, false, false );
             }
         }
         WHEN( "positive x, negative y shift" ) {
-            shift_bitset_cache<MAPSIZE_X, SEEX>( test_cache, point_north_east );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_north_east );
             THEN( "last 12 columns and first 12 rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( last_twelve, first_twelve ),
                                  false, false, true, false );
             }
         }
         WHEN( "negative x, positive y shift" ) {
-            shift_bitset_cache<MAPSIZE_X, SEEX>( test_cache, point_south_west );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_south_west );
             THEN( "first 12 columns and last 12 rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( first_twelve, last_twelve ),
                                  false, true, false, false );
             }
         }
         WHEN( "negative x, negative y shift" ) {
-            shift_bitset_cache<MAPSIZE_X, SEEX>( test_cache, point_north_west );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_north_west );
             THEN( "first 12 columns and rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( first_twelve, first_twelve ),
                                  false, false, false, true );

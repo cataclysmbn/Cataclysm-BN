@@ -231,7 +231,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
         int curdist = INT_MAX;
         int newdist = INT_MAX;
         const tripoint minp = tripoint( 0, 0, you.posz() );
-        const tripoint maxp = tripoint( MAPSIZE_X, MAPSIZE_Y, you.posz() );
+        const tripoint maxp = tripoint( g_mapsize_x, g_mapsize_y, you.posz() );
         for( const tripoint &pt : m.points_in_rectangle( minp, maxp ) ) {
             if( m.ter( pt ) == t_fault ) {
                 int dist = rl_dist( pt, you.pos() );
@@ -811,6 +811,12 @@ void avatar_action::fire_wielded_weapon( avatar &you )
 
     you.assign_activity( std::make_unique<player_activity>
                          ( aim_activity_actor::use_wielded() ), false );
+}
+
+void avatar_action::fire_ranged_gear( avatar &you, item *gun )
+{
+    you.assign_activity( std::make_unique<player_activity>( aim_activity_actor::use_gear( gun ) ),
+                         false );
 }
 
 void avatar_action::fire_ranged_mutation( avatar &you, detached_ptr<item> &&fake_gun )

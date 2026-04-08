@@ -1,0 +1,1 @@
+This is the default folder for third-party (i.e. not included with the game) mods. As such, this should be your first instinct on where to put new mods. If mods in here are not being loaded, consult the rest of the notes in the readme file.

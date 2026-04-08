@@ -954,9 +954,18 @@ class npc : public player
         void reboot();
         void die( Creature *killer ) override;
         /**
-        * Deletes the npc without any death notifications.
+        * Removes the npc from the game without death notifications or a corpse.
+        * Immediate if called outside npc processing, deferred to cleanup_dead() otherwise.
         */
-        void erase();
+        void erase() override;
+        /**
+        * True if this NPC is in a simulated submap — i.e. loaded and eligible
+        * for per-turn AI processing.  Mirrors the check used in npcmove().
+        */
+        bool is_simulated() const;
+        bool is_manually_erased() const {
+            return manually_erased_;
+        }
         bool is_dead() const;
         // How well we smash terrain (not corpses!)
         int smash_ability() const;
@@ -1021,6 +1030,19 @@ class npc : public player
         void move(); // Picks an action & a target and calls execute_action
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
+        /**
+         * Batch catchup: analytically simulate @p n missed turns.
+         * Processes biology at 30-min/5-min/1-turn granularity, then
+         * calls advance_job_progress(n) to fast-forward any ongoing activity.
+         */
+        void batch_turns( int n ) override;
+        /**
+         * Fast-forward the NPC's current activity by @p n turns.
+         * Grants the NPC enough move points (to_moves<int>(n)) to advance
+         * any ongoing player_activity, mirroring what on_load() does for
+         * destination/activity NPCs.
+         */
+        void advance_job_progress( int n );
 
         using Character::invoke_item;
         bool invoke_item( item *, const tripoint &pt ) override;
@@ -1205,6 +1227,11 @@ class npc : public player
         npc_attitude get_previous_attitude();
         npc_mission get_previous_mission();
         void revert_after_activity();
+        void set_suppress_activity_complete_message( bool value );
+        bool consume_suppress_activity_complete_message();
+        void set_activity_failure_message( const std::string &msg );
+        std::string consume_activity_failure_message();
+        std::string peek_activity_failure_message() const;
 
         // #############   VALUES   ################
         activity_id current_activity_id = activity_id::NULL_ID();
@@ -1233,6 +1260,8 @@ class npc : public player
         npc_short_term_cache ai_cache;
 
         std::map<npc_need, npc_need_goal_cache> goal_cache;
+        bool suppress_activity_complete_message = false;
+        std::string activity_failure_message;
     public:
         /**
          * Global position, expressed in map square coordinate system
@@ -1301,6 +1330,15 @@ class npc : public player
         // Dummy point that indicates that the goal is invalid.
         static constexpr tripoint_abs_omt no_goal_point{ tripoint_min };
         time_point last_updated;
+
+        // ID of the dimension this NPC belongs to.  Empty string = primary dimension.
+        // Set when the NPC is spawned or loaded from a non-primary dimension submap.
+        // Persisted across saves so cross-dimension processing survives reload.
+        std::string dimension_id_;
+        const std::string &get_dimension() const override {
+            return dimension_id_;
+        }
+
         /**
          * Do some cleanup and caching as npc is being unloaded from map.
          */
@@ -1346,7 +1384,9 @@ class npc : public player
         // Copy of toggled CBM weapon for comparisons;
         location_ptr<item, false> cbm_fake_toggled;
 
-        bool dead = false;  // If true, we need to be cleaned up
+        bool dead = false;           // If true, we need to be cleaned up
+        bool manually_erased_ =
+            false; // Set by erase(); tells cleanup_dead() not to re-do overmap/follower removal
 
         bool sees_dangerous_field( const tripoint &p ) const;
         bool could_move_onto( const tripoint &p ) const;
@@ -1360,8 +1400,12 @@ class npc : public player
 class standard_npc : public npc
 {
     public:
+        // pos defaults to tripoint_min as a sentinel; the constructor body
+        // resolves it to tripoint( g_half_mapsize_x, g_half_mapsize_y, 0 ) at
+        // runtime so that the correct bubble-center is used regardless of the
+        // current REALITY_BUBBLE_SIZE setting.
         standard_npc( const std::string &name = "",
-                      const tripoint &pos = tripoint( HALF_MAPSIZE_X, HALF_MAPSIZE_Y, 0 ),
+                      const tripoint &pos = tripoint_min,
                       const std::vector<std::string> &clothing = {},
                       int sk_lvl = 4, int s_str = 8, int s_dex = 8, int s_int = 8, int s_per = 8 );
 };
@@ -1422,5 +1466,3 @@ static constexpr int density_search_radius = 120;
 /** Chance that a random NPC spawns somewhere on overmap. */
 double spawn_chance_in_hour( int current_npc_count, double density );
 } // namespace npc_overmap
-
-

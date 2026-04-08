@@ -18,6 +18,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
+#include "data_vars.h"
 
 struct ter_t;
 using ter_str_id = string_id<ter_t>;
@@ -485,6 +486,8 @@ struct map_data_common_t {
 
         iexamine_function examine; // What happens when the terrain/furniture is examined
 
+        data_vars::data_set default_vars;
+
         /**
          * When will this terrain/furniture get harvested and what will drop?
          * Note: This excludes items that take extra tools to harvest.
@@ -811,7 +814,9 @@ extern ter_id t_null,
        t_railroad_track, t_railroad_track_h, t_railroad_track_v, t_railroad_track_d, t_railroad_track_d1,
        t_railroad_track_d2,
        t_railroad_track_on_tie, t_railroad_track_h_on_tie, t_railroad_track_v_on_tie,
-       t_railroad_track_d_on_tie;
+       t_railroad_track_d_on_tie,
+       t_pd_border,
+       t_rock_border;
 
 /*
 runtime index: furn_id

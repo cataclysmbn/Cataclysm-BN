@@ -21,6 +21,7 @@ bool add_armor( monster &z );
 void remove_armor( monster &z );
 void remove_harness( monster &z );
 void play_with( monster &z );
+void train_pet( monster &z );
 void kill_zslave( monster &z );
 void add_leash( monster &z );
 void remove_leash( monster &z );

@@ -421,6 +421,7 @@
     "subtype": "distribution",
     "entries": [
       { "item": "cola", "prob": 60 },
+      { "item": "zero_cola", "prob": 60 },
       { "item": "colamdew", "prob": 55 },
       { "item": "creamsoda", "prob": 50 },
       { "item": "lemonlime", "prob": 50 },
@@ -628,6 +629,8 @@
       { "item": "choc_drink", "count": [ 1, 6 ], "prob": 30 },
       { "item": "cola", "count": [ 1, 6 ], "prob": 25 },
       { "item": "cola", "charges": [ 4, 8 ], "prob": 25, "container-item": "bottle_twoliter" },
+      { "item": "zero_cola", "count": [ 1, 6 ], "prob": 25 },
+      { "item": "zero_cola", "charges": [ 4, 8 ], "prob": 25, "container-item": "bottle_twoliter" },
       { "item": "colamdew", "count": [ 1, 6 ], "prob": 25 },
       { "item": "colamdew", "charges": [ 4, 8 ], "prob": 25, "container-item": "bottle_twoliter" },
       { "item": "cranberry_juice", "count": [ 1, 6 ], "prob": 50 },

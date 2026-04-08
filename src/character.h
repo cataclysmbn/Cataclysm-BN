@@ -508,9 +508,9 @@ class Character : public Creature, public location_visitable<Character>
         /** Updates all "biology" by one turn. Should be called once every turn. */
         void update_body();
         /** Updates all "biology" as if time between `from` and `to` passed. */
-        void update_body( const time_point &from, const time_point &to );
+        void update_body( const time_duration &duration );
         /** Updates the stomach to give accurate hunger messages */
-        void update_stomach( const time_point &from, const time_point &to );
+        void update_stomach( const time_duration &duration );
         /** Increases hunger, thirst, fatigue and stimulants wearing off. `rate_multiplier` is for retroactive updates. */
         void update_needs( int rate_multiplier );
         needs_rates calc_needs_rates() const;
@@ -915,7 +915,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Applies skill-based boosts to stats **/
         void apply_skill_boost();
     protected:
-        void do_skill_rust();
+        void do_skill_rust( const time_duration &duration );
         /** Applies stat mods to character. */
         void apply_mods( const trait_id &mut, bool add_remove );
 
@@ -1045,6 +1045,9 @@ class Character : public Creature, public location_visitable<Character>
         bool has_bionic( const bionic_id &b ) const;
         /** Returns true if the player has the entered bionic id and it is powered on */
         bool has_active_bionic( const bionic_id &b ) const;
+        /** Returns true if the player has any bionic that generates power indefinitely
+         *  (perpetual-fueled passive generator or metabolic power source). */
+        bool has_indefinite_power_source() const;
         /** Returns true if the player has a bionic with that fake item and it is powered on */
         bool has_active_bionic_with_fake( const itype_id &it ) const;
         /** Returns the number of bionics of a certain type the player has */
@@ -2209,7 +2212,7 @@ class Character : public Creature, public location_visitable<Character>
             check_encumbrance = new_check;
         }
         /** Ticks down morale counters and removes them */
-        void update_morale();
+        void update_morale( const time_duration &duration = 1_minutes );
         /** Ensures persistent morale effects are up-to-date */
         void apply_persistent_morale();
         /** Used to apply morale modifications from food and medication **/

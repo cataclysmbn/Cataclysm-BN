@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "calendar.h"
 #include "cata_unreachable.h"
 #include "creature.h"
 #include "character.h"
@@ -378,6 +379,9 @@ bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Cha
 
 bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *carrier )
 {
+    if( carrier ) {
+        itm.set_var( "relic_was_in_inventory", true );
+    }
     if( !calendar::once_every( rech.interval ) ) {
         return false;
     }
@@ -459,17 +463,35 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
             std::abort();
         }
     }
+    int rate_multiplier = 1; // Not quite sure where to put this
+    int ticks;
+    if( rech.type == relic_recharge_type::time ) {
+        int last_relic_process = itm.get_var( "last_relic_process", 0 );
+        if( last_relic_process == 0 &&
+            itm.get_var( "relic_was_in_inventory",
+                         false ) ) { // We do not want batteries to fully charge after it has been in a player's inventory
+            ticks = 1;
+        } else {
+            time_duration elapsed = calendar::turn - time_point::from_turn( last_relic_process );
+            ticks = elapsed / rech.interval;
+        }
+        if( ticks > 0 ) {
+            rate_multiplier = ticks;
+        }
+        itm.set_var( "last_relic_process", to_turn<int>( calendar::turn ) );
+    }
     // If it already has ammo, increment charges of ammo inside.
     if( itm.ammo_data() ) {
-        int ammo_charge = clamp( itm.ammo_remaining() + rech.rate, 0, itm.ammo_capacity() );
+        int ammo_charge = clamp( itm.ammo_remaining() + rech.rate * rate_multiplier, 0,
+                                 itm.ammo_capacity() );
         itm.ammo_set( itm.ammo_current(), ammo_charge );
     } else {
         // If not, either give it default ammo, or increment charges directly.
         if( !itm.ammo_types().empty() ) {
-            itm.ammo_set( itm.ammo_default(), clamp( itm.ammo_remaining() + rech.rate, 0,
+            itm.ammo_set( itm.ammo_default(), clamp( itm.ammo_remaining() + rech.rate * rate_multiplier, 0,
                           itm.ammo_capacity() ) );
         } else {
-            itm.charges = clamp( itm.charges + rech.rate, 0, itm.ammo_capacity() );
+            itm.charges = clamp( itm.charges + rech.rate * rate_multiplier, 0, itm.ammo_capacity() );
         }
     }
     if( rech.message ) {

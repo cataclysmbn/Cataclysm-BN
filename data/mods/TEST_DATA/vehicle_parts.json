@@ -1,0 +1,8 @@
+[
+  {
+    "id": "wheel_caster",
+    "type": "vehicle_part",
+    "copy-from": "wheel_caster",
+    "rolling_resistance": 0.5
+  }
+]

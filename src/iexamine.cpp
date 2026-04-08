@@ -33,6 +33,8 @@
 #include "catacharset.h"
 #include "character.h"
 #include "character_functions.h"
+#include "data_vars.h"
+#include "detached_ptr.h"
 #include "flag.h"
 #include "color.h"
 #include "construction.h"
@@ -72,6 +74,7 @@
 #include "map_functions.h"
 #include "mapdata.h"
 #include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "material.h"
 #include "messages.h"
 #include "submap.h"
@@ -107,6 +110,7 @@
 #include "uistate.h"
 #include "units.h"
 #include "units_utility.h"
+#include "recipe_dictionary.h"
 #include "value_ptr.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -911,12 +915,13 @@ void iexamine::vending( player &p, const tripoint &examp )
 
         for( int line = 0; line < page_size; ++line ) {
             const int i = page_beg + line;
-            const auto color = ( i == cur_pos ) ? h_light_gray : c_light_gray;
             const auto &elem = item_map[i];
-            const int count = elem.size();
-            const char c = ( count < 10 ) ? ( '0' + count ) : '*';
-            trim_and_print( w, point( 1, first_item_offset + line ), w_items_w - 3, color, "%c %s", c,
-                            elem.front()->tname().c_str() );
+            const auto item_color = elem.front()->color_in_inventory( p );
+            const auto line_color = i == cur_pos ? hilite( item_color ) : item_color;
+            const auto count = elem.size();
+            const auto c = count < 10 ? char( '0' + count ) : '*';
+            trim_and_print( w, point( 1, first_item_offset + line ), w_items_w - 3, line_color,
+                            "%c %s", c, elem.front()->tname().c_str() );
         }
 
         draw_scrollbar( w, cur_pos, list_lines, num_items, point( 0, first_item_offset ) );
@@ -929,18 +934,31 @@ void iexamine::vending( player &p, const tripoint &examp )
         werase( w_item_info );
         // | {line}|
         // 12      3
-        fold_and_print( w_item_info, point( 2, 1 ), w_info_w - 3, c_light_gray,
-                        cur_item->info_string( ) );
+        const auto info_text = cur_item->info_string();
+        const auto info_width = std::max( 0, w_info_w - 3 );
+        if( info_width > 0 ) {
+            const auto info_lines = foldstring( info_text, info_width );
+            for( int info_line = 0; info_line < static_cast<int>( info_lines.size() ); ++info_line ) {
+                const auto line_pos = point( 2, 1 + info_line );
+                const auto &line_text = info_lines[info_line];
+                if( line_text == "--" ) {
+                    mvwhline( w_item_info, line_pos, LINE_OXOX, info_width );
+                } else if( !line_text.empty() ) {
+                    trim_and_print( w_item_info, line_pos, info_width, c_light_gray, line_text );
+                }
+            }
+        }
         wborder( w_item_info, LINE_XOXO, LINE_XOXO, LINE_OXOX, LINE_OXOX,
                  LINE_OXXO, LINE_OOXX, LINE_XXOO, LINE_XOOX );
 
         //+<{name}>+
         //12      34
-        const std::string name = utf8_truncate( cur_item->display_name(),
-                                                static_cast<size_t>( w_info_w - 4 ) );
-
+        const auto name_color = cur_item->color_in_inventory( p );
         const auto cost = format_money( cur_item->price( false ) );
-        mvwprintw( w_item_info, point_east, "<%s> %s", name, cost );
+        const std::string header_text = string_format( "<%s> %s",
+                                        colorize( cur_item->display_name(), name_color ),
+                                        cost );
+        trim_and_print( w_item_info, point_east, std::max( 0, w_info_w - 3 ), c_light_gray, header_text );
         wnoutrefresh( w_item_info );
     } );
 
@@ -1273,8 +1291,8 @@ void iexamine::chainfence( player &p, const tripoint &examp )
         here.unboard_vehicle( p.pos() );
     }
     p.setpos( examp );
-    if( examp.x < HALF_MAPSIZE_X || examp.y < HALF_MAPSIZE_Y ||
-        examp.x >= HALF_MAPSIZE_X + SEEX || examp.y >= HALF_MAPSIZE_Y + SEEY ) {
+    if( examp.x < g_half_mapsize_x || examp.y < g_half_mapsize_y ||
+        examp.x >= g_half_mapsize_x + SEEX || examp.y >= g_half_mapsize_y + SEEY ) {
         if( p.is_player() ) {
             g->update_map( p );
         }
@@ -1318,7 +1336,8 @@ void iexamine::deployed_furniture( player &p, const tripoint &pos )
     p.add_msg_if_player( m_info, _( "You take down the %s." ),
                          here.furn( pos ).obj().name() );
     const auto furn_item = here.furn( pos ).obj().deployed_item;
-    here.add_item_or_charges( pos, item::spawn( furn_item, calendar::turn ) );
+    const auto item = here.add_item_or_charges( pos, item::spawn( furn_item, calendar::turn ) );
+    item->item_vars().merge( *here.furn_vars( pos ) );
     here.furn_set( pos, f_null );
 }
 
@@ -1801,6 +1820,7 @@ void iexamine::transform( player &p, const tripoint &pos )
 {
     std::string message;
     std::string prompt;
+    const bool has_lootable_items = !g->m.i_at( pos ).empty();
     const bool furn_is_deployed = !g->m.furn( pos ).obj().deployed_item.is_empty();
     const bool can_climb = g->m.has_flag( flag_CLIMBABLE, pos ) ||
                            g->m.has_flag( flag_CLIMB_SIMPLE, pos );
@@ -1813,53 +1833,65 @@ void iexamine::transform( player &p, const tripoint &pos )
         prompt = g->m.ter( pos ).obj().prompt;
     }
 
-    uilist selection_menu;
-    selection_menu.text = _( "Select an action" );
-    selection_menu.addentry( 0, true, 'g', _( "Get items" ) );
-    selection_menu.addentry( 1, true, 't', !prompt.empty() ? _( prompt ) : _( "Transform furniture" ) );
-    if( furn_is_deployed ) {
-        selection_menu.addentry( 2, true, 'T', _( "Take down the %s" ), g->m.furnname( pos ) );
-    }
-    if( can_climb ) {
-        selection_menu.addentry( 3, true, 'c', _( "Climb %s" ), g->m.furnname( pos ) );
-    }
-    selection_menu.query();
+    if( has_lootable_items || furn_is_deployed || can_climb ) {
 
-    switch( selection_menu.ret ) {
-        case 0:
-            none( p, pos );
-            pickup::pick_up( pos, 0 );
-            return;
-        case 1: {
-            if( g->m.has_furn( pos ) ) {
+        uilist selection_menu;
+        selection_menu.text = _( "Select an action" );
+        if( has_lootable_items ) {
+            selection_menu.addentry( 0, true, 'g', _( "Get items" ) );
+        }
+        selection_menu.addentry( 1, true, 't', !prompt.empty() ? _( prompt ) : _( "Transform furniture" ) );
+        if( furn_is_deployed ) {
+            selection_menu.addentry( 2, true, 'T', _( "Take down the %s" ), g->m.furnname( pos ) );
+        }
+        if( can_climb ) {
+            selection_menu.addentry( 3, true, 'c', _( "Climb %s" ), g->m.furnname( pos ) );
+        }
+        selection_menu.query();
+
+        switch( selection_menu.ret ) {
+            case 0:
+                none( p, pos );
+                pickup::pick_up( pos, 0 );
+                return;
+            case 1: {
                 if( !message.empty() ) {
                     add_msg( _( message ) );
                 }
-                g->m.furn_set( pos, g->m.get_furn_transforms_into( pos ) );
-            } else {
-                if( !message.empty() ) {
-                    add_msg( _( message ) );
+                if( g->m.has_furn( pos ) ) {
+                    g->m.furn_set( pos, g->m.get_furn_transforms_into( pos ) );
+                } else {
+                    g->m.ter_set( pos, g->m.get_ter_transforms_into( pos ) );
                 }
-                g->m.ter_set( pos, g->m.get_ter_transforms_into( pos ) );
+                p.moves -= to_moves<int>( 2_seconds );
+                return;
             }
-            p.moves -= to_moves<int>( 2_seconds );
-            return;
+            case 2: {
+                add_msg( m_info, _( "You take down the %s." ),
+                         g->m.furnname( pos ) );
+                const auto furn_item = g->m.furn( pos ).obj().deployed_item;
+                g->m.add_item_or_charges( pos, item::spawn( furn_item, calendar::turn ) );
+                g->m.furn_set( pos, f_null );
+                return;
+            }
+            case 3: {
+                iexamine::chainfence( p, pos );
+                return;
+            }
+            default:
+                none( p, pos );
+                return;
         }
-        case 2: {
-            add_msg( m_info, _( "You take down the %s." ),
-                     g->m.furnname( pos ) );
-            const auto furn_item = g->m.furn( pos ).obj().deployed_item;
-            g->m.add_item_or_charges( pos, item::spawn( furn_item, calendar::turn ) );
-            g->m.furn_set( pos, f_null );
-            return;
+    } else {
+        if( !message.empty() ) {
+            add_msg( _( message ) );
         }
-        case 3: {
-            iexamine::chainfence( p, pos );
-            return;
+        if( g->m.has_furn( pos ) ) {
+            g->m.furn_set( pos, g->m.get_furn_transforms_into( pos ) );
+        } else {
+            g->m.ter_set( pos, g->m.get_ter_transforms_into( pos ) );
         }
-        default:
-            none( p, pos );
-            return;
+        p.moves -= to_moves<int>( 2_seconds );
     }
 }
 
@@ -1973,7 +2005,7 @@ void iexamine::fswitch( player &p, const tripoint &examp )
     tripoint tmp;
     tmp.z = examp.z;
     for( tmp.y = examp.y; tmp.y <= examp.y + 5; tmp.y++ ) {
-        for( tmp.x = 0; tmp.x < MAPSIZE_X; tmp.x++ ) {
+        for( tmp.x = 0; tmp.x < g_mapsize_x; tmp.x++ ) {
             if( terid == t_switch_rg ) {
                 if( here.ter( tmp ) == t_rock_red ) {
                     here.ter_set( tmp, t_floor_red );
@@ -3632,7 +3664,8 @@ void iexamine::keg( player &p, const tripoint &examp )
             auto target_sm = tripoint_abs_sm{};
             auto target_pos = point_sm_ms{};
             std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
-            auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+            auto *target_submap = MAPBUFFER_REGISTRY.get(
+                                      get_map().get_bound_dimension() ).lookup_submap( target_sm );
             if( target_submap == nullptr )
             {
                 return 0;
@@ -3670,7 +3703,8 @@ void iexamine::keg( player &p, const tripoint &examp )
                 auto target_sm = tripoint_abs_sm{};
                 auto target_pos = point_sm_ms{};
                 std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
-                auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+                auto *target_submap = MAPBUFFER_REGISTRY.get(
+                                          get_map().get_bound_dimension() ).lookup_submap( target_sm );
                 if( target_submap == nullptr ) {
                     return;
                 }
@@ -4609,7 +4643,8 @@ auto iexamine::fluid_grid_fixture( player &p, const tripoint &examp ) -> void
     auto target_sm = tripoint_abs_sm{};
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
-    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    auto *target_submap = MAPBUFFER_REGISTRY.get(
+                              get_map().get_bound_dimension() ).lookup_submap( target_sm );
     if( target_submap == nullptr ) {
         return;
     }
@@ -7442,6 +7477,195 @@ void iexamine::check_power( player &, const tripoint &examp )
     add_msg( m_info, _( "This electric grid stores %d kJ of electric power." ), amt );
 }
 
+void iexamine::power_portal( player &p, const tripoint &examp )
+{
+    const tripoint_abs_ms abs_pos( g->m.getabs( examp ) );
+    const std::string local_dim = g->m.get_bound_dimension();
+
+    // Look up the grid_link_tile for this portal.  Access through the correct
+    // mapbuffer so this works regardless of which dimension the player is in.
+    tripoint_abs_sm sm_abs;
+    point_sm_ms sm_pt;
+    std::tie( sm_abs, sm_pt ) = project_remain<coords::sm>( abs_pos );
+    submap *sm = MAPBUFFER_REGISTRY.get( local_dim ).lookup_submap( sm_abs );
+    if( sm == nullptr ) {
+        add_msg( m_bad, _( "The portal is in an unloaded submap." ) );
+        return;
+    }
+    const auto it = sm->active_furniture.find( sm_pt );
+    if( it == sm->active_furniture.end() ) {
+        add_msg( m_bad, _( "This portal has no active tile data." ) );
+        return;
+    }
+    grid_link_tile *glt = dynamic_cast<grid_link_tile *>( it->second.get() );
+    if( glt == nullptr ) {
+        add_msg( m_bad, _( "This doesn't seem to be a functioning power portal." ) );
+        return;
+    }
+
+    // Build status line for the menu.
+    std::string status;
+    if( !glt->linked ) {
+        status = _( "Status: Unlinked" );
+    } else if( glt->paused ) {
+        status = string_format(
+                     _( "Status: PAUSED — insufficient power\nTarget: [%s] (%d,%d,%d)" ),
+                     glt->target_dim_id.empty() ? _( "primary" ) : glt->target_dim_id,
+                     glt->target_pos.raw().x, glt->target_pos.raw().y, glt->target_pos.raw().z );
+    } else {
+        status = string_format(
+                     _( "Status: Active\nTarget: [%s] (%d,%d,%d)" ),
+                     glt->target_dim_id.empty() ? _( "primary" ) : glt->target_dim_id,
+                     glt->target_pos.raw().x, glt->target_pos.raw().y, glt->target_pos.raw().z );
+    }
+
+
+
+    // Find power-portal keycards in the player's inventory.
+    static const itype_id itype_portal_key( "power_portal_key" );
+    item *keycard = nullptr;
+    p.visit_items( [&]( item * candidate ) {
+        if( keycard == nullptr && candidate->typeId() == itype_portal_key ) {
+            keycard = candidate;
+        }
+        return VisitResponse::NEXT;
+    } );
+    const bool has_keycard = keycard != nullptr;
+    const bool key_has_attunement = has_keycard && keycard->has_var( "portal_target_dim" );
+
+    uilist menu;
+    menu.text = status;
+    menu.desc_enabled = true;
+    menu.addentry_desc( 0, has_keycard, 'a',
+                        _( "Attune keycard to this portal" ),
+                        _( "Stores this portal's location in the keycard.  Overwrites any existing attunement." ) );
+    menu.addentry_desc( 1, has_keycard && key_has_attunement && !glt->linked, 'l',
+                        _( "Link portal using keycard" ),
+                        _( "Establishes a power bridge to the portal stored in the keycard." ) );
+    menu.addentry_desc( 2, glt->linked && glt->paused, 'r',
+                        _( "Resume link" ),
+                        _( "Restarts power transfer.  Both sides need enough power to pay upkeep." ) );
+    menu.addentry_desc( 3, glt->linked && !glt->paused, 'p',
+                        _( "Pause link" ),
+                        _( "Suspends power transfer without severing the connection." ) );
+    menu.addentry_desc( 4, glt->linked, 'u',
+                        _( "Unlink portal" ),
+                        _( "Severs the connection permanently.  Both portals revert to unlinked." ) );
+    menu.query();
+
+    distribution_grid_tracker &local_tracker = get_distribution_grid_tracker();
+
+    switch( menu.ret ) {
+        case 0: { // Attune keycard
+            keycard->set_var( "portal_target_dim", local_dim );
+            keycard->set_var( "portal_target_pos", abs_pos.raw() );
+            add_msg( m_info, _( "You attune the keycard to this power portal." ) );
+            break;
+        }
+        case 1: { // Link using keycard
+            const std::string target_dim = keycard->get_var( "portal_target_dim", std::string{} );
+            const tripoint_abs_ms target_pos( keycard->get_var( "portal_target_pos", tripoint_zero ) );
+            if( target_pos == abs_pos && target_dim == local_dim ) {
+                add_msg( m_bad, _( "You can't link a portal to itself." ) );
+                break;
+            }
+            // Update local tile.
+            glt->linked        = true;
+            glt->paused        = false;
+            glt->target_dim_id = target_dim;
+            glt->target_pos    = target_pos;
+            // Register the local export node (also requests load for far end).
+            cross_dimension_export_node node;
+            node.source_pos    = abs_pos;
+            node.target_dim_id = target_dim;
+            node.target_pos    = target_pos;
+            local_tracker.add_export_node( std::move( node ) );
+            // add_export_node() now auto-registers the reverse node on the
+            // remote tracker (creating the tracker if needed).  We still need
+            // to update the remote grid_link_tile so that it serialises
+            // correctly and on_submap_loaded picks it up on future loads.
+            {
+                tripoint_abs_sm rem_sm_abs;
+                point_sm_ms rem_sm_pt;
+                std::tie( rem_sm_abs, rem_sm_pt ) = project_remain<coords::sm>( target_pos );
+                auto &remote_mb = MAPBUFFER_REGISTRY.get( target_dim );
+                submap *rem_sm = remote_mb.lookup_submap( rem_sm_abs );
+                if( rem_sm != nullptr ) {
+                    const auto rem_it = rem_sm->active_furniture.find( rem_sm_pt );
+                    if( rem_it != rem_sm->active_furniture.end() ) {
+                        grid_link_tile *rglt = dynamic_cast<grid_link_tile *>( rem_it->second.get() );
+                        if( rglt != nullptr ) {
+                            rglt->linked        = true;
+                            rglt->paused        = false;
+                            rglt->target_dim_id = local_dim;
+                            rglt->target_pos    = abs_pos;
+                        }
+                    }
+                }
+            }
+            add_msg( m_info, _( "Power link established." ) );
+            break;
+        }
+        case 2: { // Resume link
+            glt->paused = false;
+            local_tracker.resume_export_node( abs_pos );
+            distribution_grid_tracker *remote_tracker = get_distribution_grid_tracker_for( glt->target_dim_id );
+            if( remote_tracker != nullptr ) {
+                remote_tracker->resume_export_node( glt->target_pos );
+            }
+            add_msg( m_info, _( "Power link resumed." ) );
+            break;
+        }
+        case 3: { // Pause link
+            glt->paused = true;
+            local_tracker.pause_export_node( abs_pos );
+            distribution_grid_tracker *remote_tracker = get_distribution_grid_tracker_for( glt->target_dim_id );
+            if( remote_tracker != nullptr ) {
+                remote_tracker->pause_export_node( glt->target_pos );
+            }
+            add_msg( m_info, _( "Power link paused." ) );
+            break;
+        }
+        case 4: { // Unlink
+            const tripoint_abs_ms old_target_pos    = glt->target_pos;
+            const std::string     old_target_dim_id = glt->target_dim_id;
+            // Sever local side first.
+            local_tracker.remove_export_node( abs_pos );
+            glt->linked = false;
+            glt->paused = false;
+            glt->target_dim_id.clear();
+            // Always update the remote grid_link_tile (submap may be resident
+            // via load handles even if the remote tracker was destroyed).
+            {
+                tripoint_abs_sm rem_sm_abs;
+                point_sm_ms rem_sm_pt;
+                std::tie( rem_sm_abs, rem_sm_pt ) = project_remain<coords::sm>( old_target_pos );
+                submap *rem_sm = MAPBUFFER_REGISTRY.get( old_target_dim_id ).lookup_submap( rem_sm_abs );
+                if( rem_sm != nullptr ) {
+                    const auto rem_it = rem_sm->active_furniture.find( rem_sm_pt );
+                    if( rem_it != rem_sm->active_furniture.end() ) {
+                        grid_link_tile *rglt = dynamic_cast<grid_link_tile *>( rem_it->second.get() );
+                        if( rglt != nullptr ) {
+                            rglt->linked = false;
+                            rglt->paused = false;
+                            rglt->target_dim_id.clear();
+                        }
+                    }
+                }
+            }
+            // Remove remote export node if the tracker exists.
+            distribution_grid_tracker *remote_tracker = get_distribution_grid_tracker_for( old_target_dim_id );
+            if( remote_tracker != nullptr ) {
+                remote_tracker->remove_export_node( old_target_pos );
+            }
+            add_msg( m_info, _( "Power link severed." ) );
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 void iexamine::migo_nerve_cluster( player &p, const tripoint &examp )
 {
     map &here = get_map();
@@ -7471,6 +7695,188 @@ void iexamine::cardreader_plutgen( player &p, const tripoint &examp )
     }
 }
 
+void iexamine::multicooker( player &p, const tripoint &pos )
+{
+    map &here = get_map();
+    const furn_id furniture = here.furn( pos );
+    data_vars::data_set *vars = here.furn_vars( pos );
+    const tripoint_abs_ms abspos( here.getabs( pos ) );
+    auto grid = get_distribution_grid_tracker().grid_at( abspos );
+    int battery = grid.get_resource();
+    enum {
+        mc_start, mc_stop, mc_take, mc_upgrade
+    };
+
+    uilist menu;
+    menu.text = _( "Choose option:" );
+
+    if( vars->get( "ACTIVE", false ) ) {
+        if( vars->contains( "STARTTIME" ) &&
+            vars->get( "STARTTIME", 0 ) + vars->get( "COOKTIME", 0 ) > to_turn<int>( calendar::turn ) ) {
+            menu.addentry( mc_stop, true, 's', _( "Stop crafting" ) );
+        } else {
+            menu.addentry( mc_take, true, 't', _( "Remove Product" ) );
+        }
+    } else {
+        if( battery < vars->get( "CHARGE_START", 0 ) ) {
+            p.add_msg_if_player( _( "Batteries are low." ) );
+            return;
+        }
+        menu.addentry( mc_start, true, 's', _( "Start crafting " ) );
+    }
+
+    menu.query();
+    int choice = menu.ret;
+
+    if( choice < 0 ) {
+        return;
+    }
+
+    if( mc_stop == choice ) {
+        if( query_yn( _( "Really stop?" ) ) ) {
+            vars->erase( "RESULT" );
+            vars->erase( "ACTIVE" );
+            vars->erase( "STARTTIME" );
+            vars->erase( "COOKTIME" );
+            vars->erase( "BATCHCOUNT" );
+            vars->erase( "RECIPE" );
+        }
+        return;
+    }
+
+    if( mc_take == choice ) {
+
+        detached_ptr<item> dish = item::spawn( vars->get( "RESULT" ), calendar::turn,
+                                               vars->get( "BATCHCOUNT", 1 ) );
+
+        const std::string dish_name = dish->tname( dish->charges, false );
+        if( dish->made_of( LIQUID ) ) {
+            if( !p.check_eligible_containers_for_crafting( *recipe_id( vars->get( "RECIPE" ) ), 1 ) ) {
+                p.add_msg_if_player( m_info, _( "You don't have a suitable container to store your %s." ),
+                                     dish_name );
+                return;
+            }
+            liquid_handler::handle_all_liquid( std::move( dish ), PICKUP_RANGE );
+        } else {
+            p.i_add( std::move( dish ) );
+        }
+
+        grid.mod_resource( vars->get( "COOKTIME", 0 ) * vars->get( "CRAFTSPEEDMULT",
+                           1.0 ) / 6000 * vars->get( "CHARGE_PER_MIN", 0.0 ) + vars->get( "CHARGE_START", 0.0 ) );
+        vars->erase( "RESULT" );
+        vars->erase( "ACTIVE" );
+        vars->erase( "STARTTIME" );
+        vars->erase( "COOKTIME" );
+        vars->erase( "BATCHCOUNT" );
+        vars->erase( "RECIPE" );
+        p.add_msg_if_player( m_good, _( "You got the %s from the %s." ),
+                             dish_name, furniture->name() );
+
+        return;
+    }
+
+    if( mc_start == choice ) {
+        uilist dmenu;
+        dmenu.text = _( "Choose desired recipe:" );
+
+        std::vector<const recipe *> dishes;
+
+        inventory crafting_inv = g->u.crafting_inventory();
+
+        for( itype item : furniture->crafting_pseudo_item_types() ) {
+            crafting_inv.add_item( *item::spawn_temporary( item.get_id(), calendar::start_of_cataclysm ),
+                                   false );
+        }
+        crafting_inv.update_quality_cache();
+
+        int counter = 0;
+
+        for( const auto &r : g->u.get_learned_recipes() ) {
+            if( vars->get( "CATEGORYIDS", std::set<std::string>() ).contains( r->subcategory ) ||
+                vars->get( "RECIPEIDS", std::set<std::string>() ).contains( r->result().str() ) ) {
+                dishes.push_back( r );
+                const bool can_make = r->deduped_requirements().can_make_with_inventory(
+                                          crafting_inv, r->get_component_filter() );
+                dmenu.addentry( counter++, can_make, -1, string_format( _( "%s (%1.f charges)" ), r->result_name(),
+                                r->time * vars->get( "CRAFTSPEEDMULT", 1.0 ) / 6000 * vars->get( "CHARGE_PER_MIN",
+                                        0.0 ) + vars->get( "CHARGE_START", 0.0 ) ) );
+            }
+        }
+
+        dmenu.query();
+
+        int choice = dmenu.ret;
+
+        if( choice < 0 ) {
+
+            if( choice == -1024 ) {
+                p.add_msg_if_player( m_warning,
+                                     _( "You don't know of anything you could craft with this." ) );
+            }
+
+            return;
+        } else {
+            const recipe *meal = dishes[choice];
+
+            uilist batchmenu;
+            batchmenu.text = _( "Choose batch count:" );
+            int counter = 0;
+
+            for( int i = 1; i < 51; i++ ) {
+                const bool can_make = meal->deduped_requirements().can_make_with_inventory(
+                                          crafting_inv, meal->get_component_filter(), i );
+                batchmenu.addentry( counter++, can_make, -1, string_format( _( "%s batches (%1.f charges)" ), i,
+                                    meal->batch_time( i, 1, 0 ) * vars->get( "CRAFTSPEEDMULT",
+                                            1.0 ) / 6000 * vars->get( "CHARGE_PER_MIN", 0.0 ) + vars->get( "CHARGE_START", 0.0 ) ) );
+            }
+
+            batchmenu.query();
+
+            int batchcount = batchmenu.ret;
+
+            if( batchcount < 0 ) {
+                return;
+            }
+            batchcount++;
+
+            // Seems to be divided by 100;
+            // See the CHARGE_PER_MIN calc being 6000 instead of 60
+            int mealtime = meal->batch_time( batchcount, 1, 0 ) * vars->get( "CRAFTSPEEDMULT", 1.0 ) / 100;
+            int all_charges = mealtime / 6000 * vars->get( "CHARGE_PER_MIN", 0.0 ) + vars->get( "CHARGE_START",
+                              0.0 );
+
+            if( battery < all_charges ) {
+
+                p.add_msg_if_player( m_warning,
+                                     _( "The %s needs %d charges to create this." ),
+                                     furniture->name(), all_charges );
+                return;
+            }
+
+            const auto filter = is_crafting_component;
+            const requirement_data *reqs =
+                meal->deduped_requirements().select_alternative( p, crafting_inv, filter, batchcount );
+            if( !reqs ) {
+                return;
+            }
+
+            for( const auto &component : reqs->get_components() ) {
+                p.consume_items( component, batchcount, filter );
+            }
+
+            vars->set( "ACTIVE", true );
+            vars->set( "RECIPE", meal->ident().str() );
+            vars->set( "RESULT", meal->result().str() );
+            vars->set( "STARTTIME", to_turn<int>( calendar::turn ) );
+            vars->set( "COOKTIME", mealtime );
+            vars->set( "BATCHCOUNT", meal->makes_amount() * batchcount );
+
+            p.add_msg_if_player( m_good, _( "The %s begins to hum." ), furniture->name() );
+
+            return;
+        }
+    }
+}
 /**
  * Given then name of one of the above functions, returns the matching function
  * pointer. If no match is found, defaults to iexamine::none but prints out a
@@ -7566,8 +7972,10 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "workbench", &iexamine::workbench },
             { "dimensional_portal", &iexamine::dimensional_portal },
             { "check_power", &iexamine::check_power },
+            { "power_portal", &iexamine::power_portal },
             { "migo_nerve_cluster", &iexamine::migo_nerve_cluster },
             { "cardreader_plutgen", &iexamine::cardreader_plutgen },
+            { "multicooker", &iexamine::multicooker },
         }
     };
 

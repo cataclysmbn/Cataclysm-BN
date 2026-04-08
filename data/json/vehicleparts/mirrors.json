@@ -18,7 +18,7 @@
       "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "100 s", "using": [ [ "vehicle_screw", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "20 s", "using": [ [ "adhesive", 1 ], [ "plastics", 1 ] ] }
     },
-    "flags": [ "VISION", "PROTRUSION", "UNMOUNT_ON_DAMAGE", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "flags": [ "VISION", "PROTRUSION", "UNMOUNT_ON_DAMAGE", "FOLDABLE", "SHOCK_RESISTANT", "NOCOLLIDE" ],
     "breaks_into": [ { "item": "glass_shard", "count": [ 0, 1 ] } ]
   },
   {
