@@ -38,6 +38,7 @@
 #include "debug.h"
 #include "dependency_tree.h"
 #include "dialogue.h"
+#include "yarn_dialogue.h"
 #include "disease.h"
 #include "effect.h"
 #include "emit.h"
@@ -725,6 +726,13 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Mutations" ), &mutation_branch::finalize },
             { _( "Achievements" ), &achievement::finalize },
             { _( "Localization" ), &l10n_data::load_mod_catalogues },
+            {
+                _( "Yarn dialogue" ), []()
+                {
+                    yarn::register_builtin_functions( yarn::func_registry::global() );
+                    yarn::load_yarn_stories();
+                }
+            },
 #if defined(TILES)
             { _( "Tileset" ), &load_tileset },
 #endif

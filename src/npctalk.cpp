@@ -1,4 +1,5 @@
 #include "dialogue.h" // IWYU pragma: associated
+#include "yarn_dialogue.h"
 
 #include <algorithm>
 #include <array>
@@ -1107,6 +1108,9 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
     if( enforce_first_topic ) { d.add_topic( chatbin.first_topic ); }
 
     dialogue_window d_win;
+    if( yarn::try_yarn_dialogue( d_win, *this, you ) ) {
+        return;
+    }
     // Main dialogue loop
     do {
         if( chatbin.mission_selected != nullptr ) {

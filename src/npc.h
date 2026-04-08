@@ -726,6 +726,7 @@ struct npc_chatbin {
      */
     spell_id dialogue_spell;
     std::string first_topic = "TALK_NONE";
+    std::string yarn_story;
 
     npc_chatbin() = default;
 

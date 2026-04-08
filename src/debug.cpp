@@ -817,6 +817,7 @@ std::string enum_to_string<DC>( DC x )
         case DC::MapGen: return "MAPGEN";
         case DC::MapMem: return "MAPMEM";
         case DC::NPC: return "NPC";
+        case DC::Dialogue: return "DIALOGUE";
         case DC::SDL: return "SDL";
         case DC::Lua: return "LUA";
         // *INDENT-ON*

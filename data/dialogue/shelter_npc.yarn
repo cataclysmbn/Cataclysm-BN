@@ -1,0 +1,35 @@
+title: Start
+---
+Thank God, another person. I've been holed up here since the first night.
+You doing alright? This place has been... quiet. Too quiet.
+-> Ask about supplies
+    Supplies? I found a few cans in the back room. You're welcome to them.
+    I'm not going anywhere fast anyway.
+    <<goto Start_Supplies>>
+-> Ask what happened
+    <<goto Start_What_Happened>>
+-> Leave them alone
+    <<stop>>
+===
+
+title: Start_Supplies
+---
+There's a shelf near the back wall. Just don't go past the locked door —
+I don't know what's in there and I haven't wanted to find out.
+-> Ask what happened
+    <<goto Start_What_Happened>>
+-> Say thanks and leave
+    <<stop>>
+===
+
+title: Start_What_Happened
+---
+I was at work when the sirens went off. Drove here thinking it'd be temporary.
+That was... I don't even know how long ago now.
+Haven't seen anyone else until you showed up.
+-> Ask about supplies
+    <<goto Start_Supplies>>
+-> Wish them luck and go
+    Good luck out there. You too.
+    <<stop>>
+===
