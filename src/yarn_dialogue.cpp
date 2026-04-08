@@ -81,7 +81,8 @@ void func_registry::add( std::string name,
                           value_type ret,
                           std::function<value( const std::vector<value> & )> impl )
 {
-    register_func( { std::move( name ), std::vector<value_type>( params ), ret, std::move( impl ) } );
+    register_func( { .name = std::move( name ), .param_types = std::vector<value_type>( params ),
+                     .return_type = ret, .impl = std::move( impl ) } );
 }
 
 auto func_registry::has_func( const std::string &name ) const -> bool
@@ -509,10 +510,13 @@ struct expr_parser_state {
             }
 
             // Validate argument count
-            if( args.size() != sig.param_types.size() ) {
+            const bool too_few  = args.size() < sig.param_types.size();
+            const bool too_many = !sig.variadic && args.size() > sig.param_types.size();
+            if( too_few || too_many ) {
                 return fail( "function '" + name + "' expects " +
-                             std::to_string( sig.param_types.size() ) + " argument(s), got " +
-                             std::to_string( args.size() ) );
+                             std::to_string( sig.param_types.size() ) +
+                             ( sig.variadic ? "+" : "" ) +
+                             " argument(s), got " + std::to_string( args.size() ) );
             }
 
             expr_node node;

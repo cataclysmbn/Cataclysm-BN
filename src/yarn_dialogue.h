@@ -103,6 +103,8 @@ struct func_signature {
     std::string name;
     std::vector<value_type> param_types;
     value_type return_type;
+    // If true, args beyond param_types are accepted without type validation.
+    bool variadic = false;
     // Receives fully-evaluated argument values, returns result.
     std::function<value( const std::vector<value> & )> impl;
 };
