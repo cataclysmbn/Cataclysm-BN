@@ -659,6 +659,10 @@ void draw_bullet_trajectories( const draw_bullet_trajectories_options &options )
         return;
     }
 
+#if !defined( TILES )
+    draw_bullet_trajectories_curses( *g, options );
+    return;
+#else
     if( !use_tiles ) {
         draw_bullet_trajectories_curses( *g, options );
         return;
@@ -708,6 +712,7 @@ void draw_bullet_trajectories( const draw_bullet_trajectories_options &options )
         bullet_animation().progress();
         tilecontext->void_bullet();
     }
+#endif
 }
 
 namespace
