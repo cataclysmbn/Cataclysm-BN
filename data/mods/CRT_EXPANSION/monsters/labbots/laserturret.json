@@ -81,6 +81,7 @@
     "type": "TOOL",
     "name": { "str": "inactive light sun turret" },
     "description": "This is an inactive light sun turret.  Using this item involves turning it on and placing it on the ground, where it will attach itself.  If reprogrammed and rewired successfully the turret will identify you as a friendly, and attack all enemies with its singular cannons of unknown origin.",
+    "looks_like": "bot_turret",
     "weight": "20000 g",
     "volume": "30 L",
     "price": "6 kUSD",
@@ -98,5 +99,21 @@
       "skills": [ "electronics", "computer" ]
     },
     "flags": [ "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "broken_sun_turret_light",
+    "type": "TOOL",
+    "looks_like": "bot_turret",
+    "name": { "str": "broken light sun turret" },
+    "description": "This is an broken light sun turret. Now that it has been destroyed, it appears it can no longer generate heat, making it worthless for anything other then scrap",
+    "weight": "20000 g",
+    "volume": "30 L",
+    "price": "600 USD",
+    "price_postapoc": "12 USD",
+    "to_hit": -3,
+    "bashing": 8,
+    "material": [ "steel", "plastic" ],
+    "symbol": ";",
+    "color": "white"
   }
 ]
