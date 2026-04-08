@@ -235,6 +235,57 @@
       "documentation": "Returns an NPC variable as a number. Returns 0 if not set.",
       "parameters": [ { "name": "key", "type": "string" } ],
       "return": { "type": "number" }
+    },
+    {
+      "yarnName": "npc_get_str",
+      "documentation": "Returns the NPC's current Strength value.",
+      "parameters": [],
+      "return": { "type": "number" }
+    },
+    {
+      "yarnName": "npc_get_dex",
+      "documentation": "Returns the NPC's current Dexterity value.",
+      "parameters": [],
+      "return": { "type": "number" }
+    },
+    {
+      "yarnName": "npc_get_int",
+      "documentation": "Returns the NPC's current Intelligence value.",
+      "parameters": [],
+      "return": { "type": "number" }
+    },
+    {
+      "yarnName": "npc_get_per",
+      "documentation": "Returns the NPC's current Perception value.",
+      "parameters": [],
+      "return": { "type": "number" }
+    },
+    {
+      "yarnName": "npc_has_effect",
+      "documentation": "Returns true if the NPC has the given effect active.",
+      "parameters": [ { "name": "effect_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_has_bionic",
+      "documentation": "Returns true if the NPC has the given bionic installed.",
+      "parameters": [ { "name": "bionic_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_has_skill",
+      "documentation": "Returns true if the NPC's skill level is >= the given level.",
+      "parameters": [
+        { "name": "skill_id", "type": "string" },
+        { "name": "level",    "type": "number" }
+      ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_get_skill",
+      "documentation": "Returns the NPC's current level in the given skill.",
+      "parameters": [ { "name": "skill_id", "type": "string" } ],
+      "return": { "type": "number" }
     }
   ]
 }

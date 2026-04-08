@@ -1826,6 +1826,58 @@ void register_builtin_functions( func_registry &reg )
         return n ? static_cast<double>( n->op_of_u.trust ) : 0.0;
     } );
 
+    reg.add( "npc_get_str", {}, vt::number,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? static_cast<double>( n->get_str() ) : 0.0;
+    } );
+
+    reg.add( "npc_get_dex", {}, vt::number,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? static_cast<double>( n->get_dex() ) : 0.0;
+    } );
+
+    reg.add( "npc_get_int", {}, vt::number,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? static_cast<double>( n->get_int() ) : 0.0;
+    } );
+
+    reg.add( "npc_get_per", {}, vt::number,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? static_cast<double>( n->get_per() ) : 0.0;
+    } );
+
+    reg.add( "npc_has_effect", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->has_effect( efftype_id( std::get<std::string>( args[0] ) ) );
+    } );
+
+    reg.add( "npc_has_bionic", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->has_bionic( bionic_id( std::get<std::string>( args[0] ) ) );
+    } );
+
+    reg.add( "npc_has_skill", {vt::string, vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        auto level = static_cast<int>( std::get<double>( args[1] ) );
+        return n->get_skill_level( skill_id( std::get<std::string>( args[0] ) ) ) >= level;
+    } );
+
+    reg.add( "npc_get_skill", {vt::string}, vt::number,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? static_cast<double>( n->get_skill_level( skill_id( std::get<std::string>( args[0] ) ) ) ) : 0.0;
+    } );
+
     // Arbitrary character variables (stored via Creature::set_value)
 
     reg.add( "u_get_var", {vt::string}, vt::string,
