@@ -15,10 +15,13 @@
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "dialogue.h"
 #include "dialogue_win.h"
+#include "mission.h"
 #include "filesystem.h"
 #include "input.h"
 #include "npc.h"
+#include "npctalk.h"
 #include "path_info.h"
 #include "player.h"
 #include "skill.h"
@@ -1067,12 +1070,12 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                     elem.jump_target = pc.raw_args[0];
                     elements.push_back( std::move( elem ) );
                 }
-            } else if( pc.name == "call" ) {
+            } else if( pc.name == "goto" ) {
                 if( pc.raw_args.empty() ) {
-                    p.error( line.line_num, "<<call>> requires a node name" );
+                    p.error( line.line_num, "<<goto>> requires a node name" );
                 } else {
                     node_element elem;
-                    elem.type = node_element::kind::call_node;
+                    elem.type = node_element::kind::goto_node;
                     elem.jump_target = pc.raw_args[0];
                     elements.push_back( std::move( elem ) );
                 }
@@ -1245,6 +1248,11 @@ auto yarn_story::all_nodes() const -> const std::unordered_map<std::string, yarn
     return nodes_;
 }
 
+void yarn_story::add_node( yarn_node node )
+{
+    nodes_.emplace( node.title, std::move( node ) );
+}
+
 // ============================================================
 // yarn_runtime helpers (anonymous namespace)
 // ============================================================
@@ -1344,6 +1352,7 @@ yarn_runtime::yarn_runtime( options opts )
     , registry_( opts.registry )
     , npc_( opts.npc_ref )
     , player_( opts.player_ref )
+    , dialogue_ref_( opts.dialogue_ref )
 {
     node_stack_.push_back( std::move( opts.starting_node ) );
 }
@@ -1361,12 +1370,12 @@ void yarn_runtime::run( dialogue_window &d_win )
 
         switch( result.kind ) {
             case signal::jump:
-                // Replace current frame (matches <<jump>> / VS Code graph editor)
-                node_stack_.back() = result.target;
-                break;
-            case signal::call_node:
-                // Push: caller can <<return>> to resume after <<call>>
+                // Push: target executes and falls off end → pop back to here
                 node_stack_.push_back( result.target );
+                break;
+            case signal::goto_node:
+                // Replace current frame — no return to caller
+                node_stack_.back() = result.target;
                 break;
             case signal::yarn_return:
                 node_stack_.pop_back();
@@ -1375,7 +1384,7 @@ void yarn_runtime::run( dialogue_window &d_win )
                 node_stack_.clear();
                 break;
             case signal::ok:
-                // Fell off the end of the node — treat as implicit <<return>>
+                // Fell off the end of the node — implicit <<return>>
                 node_stack_.pop_back();
                 break;
         }
@@ -1452,8 +1461,42 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
             case node_element::kind::jump:
                 return { signal::jump, elem.jump_target };
 
-            case node_element::kind::call_node:
-                return { signal::call_node, elem.jump_target };
+            case node_element::kind::goto_node:
+                return { signal::goto_node, elem.jump_target };
+
+            case node_element::kind::legacy_topic: {
+                // DEPRECATED: Delegates to the JSON dialogue engine for one topic.
+                // Remove this case when the JSON-to-Yarn migration is complete.
+                if( !dialogue_ref_ || !npc_ || !player_ ) {
+                    DebugLog( DL::Error, DC::Dialogue )
+                        << "yarn: legacy_topic requires dialogue/npc/player context";
+                    return { signal::stop, {} };
+                }
+                // Mirror the mission-selection logic from the original dialogue loop.
+                auto &chatbin = npc_->chatbin;
+                if( chatbin.mission_selected != nullptr &&
+                    chatbin.mission_selected->get_assigned_player_id() != player_->getID() ) {
+                    chatbin.mission_selected = nullptr;
+                }
+                if( chatbin.mission_selected == nullptr ) {
+                    if( !chatbin.missions.empty() ) {
+                        chatbin.mission_selected = chatbin.missions.front();
+                    } else if( !dialogue_ref_->missions_assigned.empty() ) {
+                        chatbin.mission_selected = dialogue_ref_->missions_assigned.front();
+                    }
+                }
+                auto next = dialogue_ref_->opt( d_win, npc_->name, talk_topic( elem.jump_target ) );
+                if( next.id == "TALK_DONE" ) {
+                    npc_->say( _( "Bye." ) );
+                    dialogue_ref_->done = true;
+                    return { signal::stop, {} };
+                }
+                if( next.id == "TALK_NONE" ) {
+                    // Natural pop — return to the calling topic node.
+                    return { signal::ok, {} };
+                }
+                return { signal::jump, next.id };
+            }
 
             case node_element::kind::stop:
                 return { signal::stop, {} };
@@ -1656,6 +1699,30 @@ auto get_yarn_story( const std::string &name ) -> const yarn_story &
     return story_registry().at( name );
 }
 
+void build_legacy_yarn_stories()
+{
+    // Build a synthetic __legacy story: one yarn_node per JSON TALK_TOPIC.
+    // Each node has a single legacy_topic element that delegates to dialogue::opt()
+    // at runtime, so the yarn runtime drives all navigation for legacy dialogue.
+    // DEPRECATED: Remove this function when JSON-to-Yarn migration is complete.
+    auto ids = get_all_talk_topic_ids();
+    if( ids.empty() ) {
+        return;
+    }
+
+    yarn_story legacy;
+    for( const auto &id : ids ) {
+        yarn_node node;
+        node.title = id;
+        node_element elem;
+        elem.type = node_element::kind::legacy_topic;
+        elem.jump_target = id;
+        node.elements.push_back( std::move( elem ) );
+        legacy.add_node( std::move( node ) );
+    }
+    story_registry().emplace( "__legacy", std::move( legacy ) );
+}
+
 // ============================================================
 // Conversation context (thread-local so global registry lambdas can read it)
 // ============================================================
@@ -1664,8 +1731,10 @@ namespace
 {
 
 struct yarn_conv_ctx {
-    npc    *npc_ref    = nullptr;
-    player *player_ref = nullptr;
+    npc      *npc_ref      = nullptr;
+    player   *player_ref   = nullptr;
+    // DEPRECATED: Only used by the legacy JSON dialogue shim. Remove when migration complete.
+    dialogue *dialogue_ref = nullptr;
 };
 
 thread_local yarn_conv_ctx g_conv_ctx;

@@ -2,8 +2,8 @@
   "version": 1,
   "commands": [
     {
-      "yarnName": "call",
-      "documentation": "Push a node onto the call stack. Use <<return>> in the target node to resume here.",
+      "yarnName": "goto",
+      "documentation": "Replace the current node frame with the target node. Use for lateral or cycling navigation where you do not want to return to the calling node. Contrast with <<jump>> which pushes and returns.",
       "parameters": [
         { "name": "node_name", "type": "string" }
       ]

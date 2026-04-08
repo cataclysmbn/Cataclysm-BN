@@ -1,4 +1,5 @@
 #include "dialogue.h" // IWYU pragma: associated
+#include "dialogue_compat.h"
 #include "yarn_dialogue.h"
 
 #include <algorithm>
@@ -125,8 +126,6 @@ static std::map<std::string, json_talk_topic> json_talk_topics;
 enum {
     OWED_VAL = 1000
 };
-
-int topic_category( const talk_topic &the_topic );
 
 const talk_topic &special_talk( char ch );
 
@@ -1108,56 +1107,56 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
     if( enforce_first_topic ) { d.add_topic( chatbin.first_topic ); }
 
     dialogue_window d_win;
-    if( yarn::try_yarn_dialogue( d_win, *this, you ) ) {
-        return;
+    const auto yarn_handled   = yarn::try_yarn_dialogue( d_win, *this, you );
+    const auto legacy_handled = !yarn_handled &&
+                                dialogue_compat::try_legacy_dialogue( d_win, *this, you, d );
+
+    if( !yarn_handled && !legacy_handled ) {
+        // [COMPAT: Original dialogue loop — only reached when enable_legacy_shim is false]
+        do {
+            if( chatbin.mission_selected != nullptr ) {
+                if( chatbin.mission_selected->get_assigned_player_id() != you.getID() ) {
+                    // Don't talk about a mission that is assigned to someone else.
+                    chatbin.mission_selected = nullptr;
+                }
+            }
+            if( chatbin.mission_selected == nullptr ) {
+                // if possible, select a mission to talk about
+                if( !chatbin.missions.empty() ) {
+                    chatbin.mission_selected = chatbin.missions.front();
+                } else if( !d.missions_assigned.empty() ) {
+                    chatbin.mission_selected = d.missions_assigned.front();
+                }
+            }
+            auto next = d.opt( d_win, name, d.topic_stack.back() );
+
+            const auto hook_results = cata::run_hooks( "on_dialogue_option", [ &, this]( auto & params ) {
+                params["npc"] = this;
+                params["next_topic"] = next.id;
+            } );
+            auto final_result = d.topic_stack.back().id;
+            for( const auto &result : hook_results ) {
+                if( !result.second.is<sol::table>() ) { continue; };
+                final_result = result.second.as<sol::table>().get_or<std::string>( "result", final_result );
+            }
+            if( !final_result.empty() && final_result != d.topic_stack.back().id ) {
+                next = talk_topic( final_result );
+            }
+
+            if( next.id == "TALK_NONE" ) {
+                auto cat = topic_category( d.topic_stack.back() );
+                do {
+                    d.topic_stack.pop_back();
+                } while( cat != -1 && topic_category( d.topic_stack.back() ) == cat );
+            }
+            if( next.id == "TALK_DONE" || d.topic_stack.empty() ) {
+                d.beta->say( _( "Bye." ) );
+                d.done = true;
+            } else if( next.id != "TALK_NONE" ) {
+                d.add_topic( next );
+            }
+        } while( !d.done );
     }
-    // Main dialogue loop
-    do {
-        if( chatbin.mission_selected != nullptr ) {
-            if( chatbin.mission_selected->get_assigned_player_id() != you.getID() ) {
-                // Don't talk about a mission that is assigned to someone else.
-                chatbin.mission_selected = nullptr;
-            }
-        }
-        if( chatbin.mission_selected == nullptr ) {
-            // if possible, select a mission to talk about
-            if( !chatbin.missions.empty() ) {
-                chatbin.mission_selected = chatbin.missions.front();
-            } else if( !d.missions_assigned.empty() ) {
-                chatbin.mission_selected = d.missions_assigned.front();
-            }
-        }
-        talk_topic next = d.opt( d_win, name, d.topic_stack.back() );
-
-        const auto hook_results = cata::run_hooks( "on_dialogue_option", [ &, this]( auto & params ) {
-            params["npc"] = this;
-            params["next_topic"] = next.id;
-        } );
-        auto final_result = d.topic_stack.back().id;
-        for( const auto &result : hook_results ) {
-            if( !result.second.is<sol::table>() ) { continue; };
-            final_result = result.second.as<sol::table>().get_or<std::string>( "result", final_result );
-            // Allow higher priority topics to veto, but still trigger subsequent calls?
-            // auto allowed = result.second.as<sol::table>().get<sol::object>( "allowed" );
-            // if ( allowed.is<bool>() && !allowed.as<bool>() ) { break; };
-        }
-        if( !final_result.empty() && final_result != d.topic_stack.back().id ) {
-            next = talk_topic( final_result );
-        }
-
-        if( next.id == "TALK_NONE" ) {
-            int cat = topic_category( d.topic_stack.back() );
-            do {
-                d.topic_stack.pop_back();
-            } while( cat != -1 && topic_category( d.topic_stack.back() ) == cat );
-        }
-        if( next.id == "TALK_DONE" || d.topic_stack.empty() ) {
-            d.beta->say( _( "Bye." ) );
-            d.done = true;
-        } else if( next.id != "TALK_NONE" ) {
-            d.add_topic( next );
-        }
-    } while( !d.done );
 
     cata::run_hooks( "on_dialogue_end", [ &, this]( auto & params ) {
         params["npc"] = this;
@@ -1779,7 +1778,7 @@ bool talk_trial::roll( dialogue &d ) const
     return success;
 }
 
-int topic_category( const talk_topic &the_topic )
+auto topic_category( const talk_topic &the_topic ) -> int
 {
     const auto &topic = the_topic.id;
     // TODO: ideally, this would be a property of the topic itself.
@@ -3579,6 +3578,15 @@ void json_talk_topic::check_consistency() const
 void unload_talk_topics()
 {
     json_talk_topics.clear();
+}
+
+auto get_all_talk_topic_ids() -> std::vector<std::string>
+{
+    std::vector<std::string> ids;
+    ids.reserve( json_talk_topics.size() );
+    std::ranges::transform( json_talk_topics, std::back_inserter( ids ),
+                            []( const auto &pair ) { return pair.first; } );
+    return ids;
 }
 
 void load_talk_topic( const JsonObject &jo )

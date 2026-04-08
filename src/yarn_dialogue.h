@@ -11,6 +11,7 @@
 class npc;
 class player;
 class dialogue_window;
+struct dialogue;
 
 namespace yarn {
 
@@ -202,11 +203,12 @@ struct node_element {
         dialogue,      // NPC or player speech line
         choice_group,  // a set of -> choices presented to the player
         command,       // <<command_name arg1 arg2 ...>>
-        jump,          // <<jump NodeName>>  — replace current frame (matches VS Code graph editor)
-        call_node,     // <<call NodeName>>  — push node onto stack; callee can <<return>>
-        stop,          // <<stop>>           — end conversation
-        yarn_return,   // <<return>>         — pop current frame
+        jump,          // <<jump NodeName>>  — push frame; callee falls off end → pop (return to caller)
+        goto_node,     // <<goto NodeName>>  — replace current frame (lateral/cycling navigation)
+        stop,          // <<stop>>           — end conversation (clear entire stack)
+        yarn_return,   // <<return>>         — explicit early pop of current frame
         if_block,      // <<if>> / <<else>> / <<endif>>
+        legacy_topic,  // DEPRECATED: wraps a JSON TALK_TOPIC; removed when migration is complete
     };
 
     kind type = kind::dialogue;
@@ -223,7 +225,7 @@ struct node_element {
     std::string command_name;
     std::vector<expr_node> command_args;
 
-    // kind::jump / kind::call_node
+    // kind::jump / kind::goto_node / kind::legacy_topic
     std::string jump_target;
 
     // kind::if_block
@@ -272,6 +274,9 @@ class yarn_story {
         auto get_node( const std::string &name ) const -> const yarn_node &;
         auto all_nodes() const -> const std::unordered_map<std::string, yarn_node> &;
 
+        // Insert or replace a node by title. Used by build_legacy_yarn_stories().
+        void add_node( yarn_node node );
+
     private:
         std::unordered_map<std::string, yarn_node> nodes_;
         std::string source_name_;
@@ -282,10 +287,12 @@ class yarn_story {
 // ============================================================
 //
 // Navigation semantics:
-//   <<jump X>>   Replace current frame with X. Matches VS Code graph editor output.
-//   <<call X>>   Push X. Callee can <<return>> to resume after the call site.
-//   <<return>>   Pop current frame. Returns to whatever called the current node.
-//   <<stop>>     Clear the entire stack. Ends the conversation.
+//   <<jump X>>   Push X onto the node stack. When X falls off its end, pop back to caller.
+//                Creates graph edges in the VS Code Yarn Spinner extension.
+//   <<goto X>>   Replace the current frame with X. Use for lateral/cycling navigation
+//                where you don't want to return to the calling node.
+//   <<return>>   Explicit early pop of the current frame. Returns to caller.
+//   <<stop>>     Clear the entire node stack. Ends the conversation.
 
 class yarn_runtime {
     public:
@@ -295,6 +302,9 @@ class yarn_runtime {
             std::string starting_node;
             npc *npc_ref = nullptr;
             player *player_ref = nullptr;
+            // DEPRECATED: Only used by the legacy JSON dialogue shim.
+            // Remove this field once JSON-to-Yarn migration is complete.
+            dialogue *dialogue_ref = nullptr;
         };
 
         explicit yarn_runtime( options opts );
@@ -304,7 +314,7 @@ class yarn_runtime {
         void run( dialogue_window &d_win );
 
     private:
-        enum class signal : uint8_t { ok, jump, call_node, stop, yarn_return };
+        enum class signal : uint8_t { ok, jump, goto_node, stop, yarn_return };
 
         struct exec_result {
             signal kind = signal::ok;
@@ -328,6 +338,8 @@ class yarn_runtime {
         const func_registry &registry_;
         npc *npc_;
         player *player_;
+        // DEPRECATED: Only used by the legacy JSON dialogue shim. Remove when migration complete.
+        dialogue *dialogue_ref_ = nullptr;
 };
 
 // ============================================================
@@ -337,6 +349,11 @@ class yarn_runtime {
 // Scan data/dialogue/*.yarn and load all stories.
 // Called during game init alongside other data loading.
 void load_yarn_stories();
+
+// Build the __legacy yarn_story from all loaded JSON TALK_TOPICs.
+// Must be called after all JSON talk topics are loaded (i.e. after load_yarn_stories()).
+// DEPRECATED: Remove when JSON-to-Yarn migration is complete.
+void build_legacy_yarn_stories();
 
 auto has_yarn_story( const std::string &name ) -> bool;
 auto get_yarn_story( const std::string &name ) -> const yarn_story &;

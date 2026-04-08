@@ -1448,6 +1448,8 @@ void npc_chatbin::deserialize( JsonIn &jsin )
         data.read( "first_topic", first_topic );
     }
 
+    data.read( "yarn_story", yarn_story );
+
     data.read( "skill", skill );
     data.read( "style", style );
 
