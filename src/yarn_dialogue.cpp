@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <cmath>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
@@ -1673,6 +1674,25 @@ struct conv_ctx_guard {
     ~conv_ctx_guard() { g_conv_ctx = {}; }
 };
 
+// Convert a yarn value to a string suitable for Creature::set_value storage.
+// Numbers that are whole integers are stored without a decimal point.
+auto value_to_storage_string( const value &v ) -> std::string
+{
+    return std::visit( []( const auto &x ) -> std::string {
+        using T = std::decay_t<decltype( x )>;
+        if constexpr( std::is_same_v<T, bool> ) {
+            return x ? "true" : "false";
+        } else if constexpr( std::is_same_v<T, double> ) {
+            if( x == std::floor( x ) && std::abs( x ) < 1e15 ) {
+                return std::to_string( static_cast<long long>( x ) );
+            }
+            return std::to_string( x );
+        } else {
+            return x;
+        }
+    }, v );
+}
+
 } // anonymous namespace
 
 // ============================================================
@@ -1805,6 +1825,40 @@ void register_builtin_functions( func_registry &reg )
         auto *n = g_conv_ctx.npc_ref;
         return n ? static_cast<double>( n->op_of_u.trust ) : 0.0;
     } );
+
+    // Arbitrary character variables (stored via Creature::set_value)
+
+    reg.add( "u_get_var", {vt::string}, vt::string,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p ? p->get_value( std::get<std::string>( args[0] ) ) : std::string{};
+    } );
+
+    reg.add( "u_get_var_num", {vt::string}, vt::number,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return 0.0;
+        }
+        const auto &s = p->get_value( std::get<std::string>( args[0] ) );
+        return s.empty() ? 0.0 : static_cast<double>( std::stoll( s ) );
+    } );
+
+    reg.add( "npc_get_var", {vt::string}, vt::string,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? n->get_value( std::get<std::string>( args[0] ) ) : std::string{};
+    } );
+
+    reg.add( "npc_get_var_num", {vt::string}, vt::number,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return 0.0;
+        }
+        const auto &s = n->get_value( std::get<std::string>( args[0] ) );
+        return s.empty() ? 0.0 : static_cast<double>( std::stoll( s ) );
+    } );
 }
 
 // ============================================================
@@ -1889,6 +1943,68 @@ void register_builtin_commands( command_registry &reg )
         }
         DebugLog( DL::Warn, DC::Dialogue )
             << "yarn: npc_set_attitude: unknown attitude '" << att_str << "'";
+    } );
+
+    // Arbitrary character variables
+
+    // u_set_var "key" value  — stores any typed value as a string
+    reg.add( "u_set_var", 2, []( const std::vector<value> &args ) {
+        auto *p = g_conv_ctx.player_ref;
+        if( p ) {
+            p->set_value( std::get<std::string>( args[0] ),
+                          value_to_storage_string( args[1] ) );
+        }
+    } );
+
+    // u_remove_var "key"
+    reg.add( "u_remove_var", 1, []( const std::vector<value> &args ) {
+        auto *p = g_conv_ctx.player_ref;
+        if( p ) {
+            p->remove_value( std::get<std::string>( args[0] ) );
+        }
+    } );
+
+    // u_adjust_var "key" amount  — adds amount to stored numeric variable
+    reg.add( "u_adjust_var", 2, []( const std::vector<value> &args ) {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return;
+        }
+        const auto &key    = std::get<std::string>( args[0] );
+        auto        amount = static_cast<long long>( std::get<double>( args[1] ) );
+        const auto &stored = p->get_value( key );
+        auto current = stored.empty() ? 0LL : std::stoll( stored );
+        p->set_value( key, std::to_string( current + amount ) );
+    } );
+
+    // npc_set_var "key" value
+    reg.add( "npc_set_var", 2, []( const std::vector<value> &args ) {
+        auto *n = g_conv_ctx.npc_ref;
+        if( n ) {
+            n->set_value( std::get<std::string>( args[0] ),
+                          value_to_storage_string( args[1] ) );
+        }
+    } );
+
+    // npc_remove_var "key"
+    reg.add( "npc_remove_var", 1, []( const std::vector<value> &args ) {
+        auto *n = g_conv_ctx.npc_ref;
+        if( n ) {
+            n->remove_value( std::get<std::string>( args[0] ) );
+        }
+    } );
+
+    // npc_adjust_var "key" amount
+    reg.add( "npc_adjust_var", 2, []( const std::vector<value> &args ) {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return;
+        }
+        const auto &key    = std::get<std::string>( args[0] );
+        auto        amount = static_cast<long long>( std::get<double>( args[1] ) );
+        const auto &stored = n->get_value( key );
+        auto current = stored.empty() ? 0LL : std::stoll( stored );
+        n->set_value( key, std::to_string( current + amount ) );
     } );
 }
 

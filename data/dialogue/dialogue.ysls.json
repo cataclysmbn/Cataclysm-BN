@@ -55,6 +55,52 @@
       "parameters": [
         { "name": "attitude_id", "type": "string" }
       ]
+    },
+    {
+      "yarnName": "u_set_var",
+      "documentation": "Store a value in the player's variable bag. Accepts string, number, or bool.",
+      "parameters": [
+        { "name": "key",   "type": "string" },
+        { "name": "value", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "u_remove_var",
+      "documentation": "Delete a variable from the player's variable bag.",
+      "parameters": [
+        { "name": "key", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "u_adjust_var",
+      "documentation": "Add an amount to a numeric variable in the player's variable bag.",
+      "parameters": [
+        { "name": "key",    "type": "string" },
+        { "name": "amount", "type": "number" }
+      ]
+    },
+    {
+      "yarnName": "npc_set_var",
+      "documentation": "Store a value in the NPC's variable bag. Accepts string, number, or bool.",
+      "parameters": [
+        { "name": "key",   "type": "string" },
+        { "name": "value", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "npc_remove_var",
+      "documentation": "Delete a variable from the NPC's variable bag.",
+      "parameters": [
+        { "name": "key", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "npc_adjust_var",
+      "documentation": "Add an amount to a numeric variable in the NPC's variable bag.",
+      "parameters": [
+        { "name": "key",    "type": "string" },
+        { "name": "amount", "type": "number" }
+      ]
     }
   ],
   "functions": [
@@ -164,6 +210,30 @@
       "yarnName": "npc_trust",
       "documentation": "Returns the NPC's trust value toward the player.",
       "parameters": [],
+      "return": { "type": "number" }
+    },
+    {
+      "yarnName": "u_get_var",
+      "documentation": "Returns a player variable as a string. Returns empty string if not set.",
+      "parameters": [ { "name": "key", "type": "string" } ],
+      "return": { "type": "string" }
+    },
+    {
+      "yarnName": "u_get_var_num",
+      "documentation": "Returns a player variable as a number. Returns 0 if not set.",
+      "parameters": [ { "name": "key", "type": "string" } ],
+      "return": { "type": "number" }
+    },
+    {
+      "yarnName": "npc_get_var",
+      "documentation": "Returns an NPC variable as a string. Returns empty string if not set.",
+      "parameters": [ { "name": "key", "type": "string" } ],
+      "return": { "type": "string" }
+    },
+    {
+      "yarnName": "npc_get_var_num",
+      "documentation": "Returns an NPC variable as a number. Returns 0 if not set.",
+      "parameters": [ { "name": "key", "type": "string" } ],
       "return": { "type": "number" }
     }
   ]
