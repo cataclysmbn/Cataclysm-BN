@@ -138,21 +138,28 @@ class func_registry {
 // Commands are effects fired by <<command_name arg1 arg2 ...>> lines.
 // Arguments are pre-evaluated values (string, number, or bool).
 // min_args / max_args are checked at call time; use -1 for no upper limit.
+//
+// Commands that must end the conversation (e.g. activity-assigning commands)
+// return command_signal::stop so the runtime clears the node stack immediately
+// without requiring the author to write <<stop>> afterward.
+
+enum class command_signal : uint8_t {
+    none,  // continue normally after this command
+    stop,  // clear the node stack and end the conversation
+};
 
 class command_registry {
     public:
-        using impl_fn = std::function<void( const std::vector<value> & )>;
+        // impl must return command_signal::none to continue or command_signal::stop to end.
+        using impl_fn = std::function<command_signal( const std::vector<value> & )>;
 
         void add( std::string name, int min_args, int max_args, impl_fn impl );
-
-        // Convenience: exact arg count
         void add( std::string name, int arg_count, impl_fn impl );
-
-        // Convenience: no args
         void add( std::string name, impl_fn impl );
 
         auto has_command( const std::string &name ) const -> bool;
-        void call( const std::string &name, const std::vector<value> &args ) const;
+        // Executes the command and returns its signal.
+        auto call( const std::string &name, const std::vector<value> &args ) const -> command_signal;
 
         static auto global() -> command_registry &;
 

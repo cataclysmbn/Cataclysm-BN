@@ -114,12 +114,14 @@ void command_registry::add( std::string name, impl_fn impl )
     add( std::move( name ), 0, 0, std::move( impl ) );
 }
 
+
 auto command_registry::has_command( const std::string &name ) const -> bool
 {
     return cmds_.contains( name );
 }
 
-void command_registry::call( const std::string &name, const std::vector<value> &args ) const
+auto command_registry::call( const std::string &name, const std::vector<value> &args ) const
+    -> command_signal
 {
     const auto &e = cmds_.at( name );
     auto count = static_cast<int>( args.size() );
@@ -128,9 +130,9 @@ void command_registry::call( const std::string &name, const std::vector<value> &
             << "yarn: command '" << name << "' called with " << count
             << " args (expected " << e.min_args
             << ( e.max_args == -1 ? "+" : "-" + std::to_string( e.max_args ) ) << ")";
-        return;
+        return command_signal::none;
     }
-    e.impl( args );
+    return e.impl( args );
 }
 
 auto command_registry::global() -> command_registry &
@@ -1453,7 +1455,10 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                     }
                 }
                 if( eval_ok ) {
-                    creg.call( elem.command_name, args );
+                    auto sig = creg.call( elem.command_name, args );
+                    if( sig == command_signal::stop ) {
+                        return { signal::stop, {} };
+                    }
                 }
                 break;
             }
@@ -1989,144 +1994,274 @@ void register_builtin_functions( func_registry &reg )
 void register_builtin_commands( command_registry &reg )
 {
     // give_item "item_id" [count]
-    reg.add( "give_item", 1, 2, []( const std::vector<value> &args ) {
+    reg.add( "give_item", 1, 2, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
-            return;
+        if( p ) {
+            auto id    = itype_id( std::get<std::string>( args[0] ) );
+            auto count = args.size() > 1 ? static_cast<int>( std::get<double>( args[1] ) ) : 1;
+            p->add_item_with_id( id, count );
         }
-        auto id    = itype_id( std::get<std::string>( args[0] ) );
-        auto count = args.size() > 1 ? static_cast<int>( std::get<double>( args[1] ) ) : 1;
-        p->add_item_with_id( id, count );
+        return command_signal::none;
     } );
 
     // take_item "item_id" [count]
-    reg.add( "take_item", 1, 2, []( const std::vector<value> &args ) {
+    reg.add( "take_item", 1, 2, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
-            return;
+        if( p ) {
+            auto id    = itype_id( std::get<std::string>( args[0] ) );
+            auto count = args.size() > 1 ? static_cast<int>( std::get<double>( args[1] ) ) : 1;
+            p->use_amount( id, count );
         }
-        auto id    = itype_id( std::get<std::string>( args[0] ) );
-        auto count = args.size() > 1 ? static_cast<int>( std::get<double>( args[1] ) ) : 1;
-        p->use_amount( id, count );
+        return command_signal::none;
     } );
 
     // add_effect "effect_id" [duration_turns]
-    reg.add( "add_effect", 1, 2, []( const std::vector<value> &args ) {
+    reg.add( "add_effect", 1, 2, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
-            return;
+        if( p ) {
+            auto id  = efftype_id( std::get<std::string>( args[0] ) );
+            auto dur = args.size() > 1
+                       ? time_duration::from_turns( static_cast<int>( std::get<double>( args[1] ) ) )
+                       : 1_turns;
+            p->add_effect( id, dur );
         }
-        auto id = efftype_id( std::get<std::string>( args[0] ) );
-        auto dur = args.size() > 1
-                   ? time_duration::from_turns( static_cast<int>( std::get<double>( args[1] ) ) )
-                   : 1_turns;
-        p->add_effect( id, dur );
+        return command_signal::none;
     } );
 
     // remove_effect "effect_id"
-    reg.add( "remove_effect", 1, []( const std::vector<value> &args ) {
+    reg.add( "remove_effect", 1, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
         if( p ) {
             p->remove_effect( efftype_id( std::get<std::string>( args[0] ) ) );
         }
+        return command_signal::none;
     } );
 
     // npc_follow — NPC starts following the player
-    reg.add( "npc_follow", []( const std::vector<value> & ) {
+    reg.add( "npc_follow", []( const std::vector<value> & ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
         if( n ) {
             n->set_attitude( NPCATT_FOLLOW );
         }
+        return command_signal::none;
     } );
 
     // npc_stop_follow — NPC stops following
-    reg.add( "npc_stop_follow", []( const std::vector<value> & ) {
+    reg.add( "npc_stop_follow", []( const std::vector<value> & ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
         if( n ) {
             n->set_attitude( NPCATT_NULL );
         }
+        return command_signal::none;
     } );
 
     // npc_set_attitude "attitude_id"
     // Accepts the same string IDs used by npc_attitude_id() (e.g. "NPCATT_KILL")
-    reg.add( "npc_set_attitude", 1, []( const std::vector<value> &args ) {
+    reg.add( "npc_set_attitude", 1, []( const std::vector<value> &args ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
-            return;
-        }
-        const auto &att_str = std::get<std::string>( args[0] );
-        for( int i = 0; i < NPCATT_END; ++i ) {
-            auto att = static_cast<npc_attitude>( i );
-            if( npc_attitude_id( att ) == att_str ) {
-                n->set_attitude( att );
-                return;
+        if( n ) {
+            const auto &att_str = std::get<std::string>( args[0] );
+            for( int i = 0; i < NPCATT_END; ++i ) {
+                auto att = static_cast<npc_attitude>( i );
+                if( npc_attitude_id( att ) == att_str ) {
+                    n->set_attitude( att );
+                    return command_signal::none;
+                }
             }
+            DebugLog( DL::Warn, DC::Dialogue )
+                << "yarn: npc_set_attitude: unknown attitude '" << att_str << "'";
         }
-        DebugLog( DL::Warn, DC::Dialogue )
-            << "yarn: npc_set_attitude: unknown attitude '" << att_str << "'";
+        return command_signal::none;
     } );
 
     // Arbitrary character variables
 
     // u_set_var "key" value  — stores any typed value as a string
-    reg.add( "u_set_var", 2, []( const std::vector<value> &args ) {
+    reg.add( "u_set_var", 2, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
         if( p ) {
             p->set_value( std::get<std::string>( args[0] ),
                           value_to_storage_string( args[1] ) );
         }
+        return command_signal::none;
     } );
 
     // u_remove_var "key"
-    reg.add( "u_remove_var", 1, []( const std::vector<value> &args ) {
+    reg.add( "u_remove_var", 1, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
         if( p ) {
             p->remove_value( std::get<std::string>( args[0] ) );
         }
+        return command_signal::none;
     } );
 
     // u_adjust_var "key" amount  — adds amount to stored numeric variable
-    reg.add( "u_adjust_var", 2, []( const std::vector<value> &args ) {
+    reg.add( "u_adjust_var", 2, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
-            return;
+        if( p ) {
+            const auto &key    = std::get<std::string>( args[0] );
+            auto        amount = static_cast<long long>( std::get<double>( args[1] ) );
+            const auto &stored = p->get_value( key );
+            auto current = stored.empty() ? 0LL : std::stoll( stored );
+            p->set_value( key, std::to_string( current + amount ) );
         }
-        const auto &key    = std::get<std::string>( args[0] );
-        auto        amount = static_cast<long long>( std::get<double>( args[1] ) );
-        const auto &stored = p->get_value( key );
-        auto current = stored.empty() ? 0LL : std::stoll( stored );
-        p->set_value( key, std::to_string( current + amount ) );
+        return command_signal::none;
     } );
 
     // npc_set_var "key" value
-    reg.add( "npc_set_var", 2, []( const std::vector<value> &args ) {
+    reg.add( "npc_set_var", 2, []( const std::vector<value> &args ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
         if( n ) {
             n->set_value( std::get<std::string>( args[0] ),
                           value_to_storage_string( args[1] ) );
         }
+        return command_signal::none;
     } );
 
     // npc_remove_var "key"
-    reg.add( "npc_remove_var", 1, []( const std::vector<value> &args ) {
+    reg.add( "npc_remove_var", 1, []( const std::vector<value> &args ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
         if( n ) {
             n->remove_value( std::get<std::string>( args[0] ) );
         }
+        return command_signal::none;
     } );
 
     // npc_adjust_var "key" amount
-    reg.add( "npc_adjust_var", 2, []( const std::vector<value> &args ) {
+    reg.add( "npc_adjust_var", 2, []( const std::vector<value> &args ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
-            return;
+        if( n ) {
+            const auto &key    = std::get<std::string>( args[0] );
+            auto        amount = static_cast<long long>( std::get<double>( args[1] ) );
+            const auto &stored = n->get_value( key );
+            auto current = stored.empty() ? 0LL : std::stoll( stored );
+            n->set_value( key, std::to_string( current + amount ) );
         }
-        const auto &key    = std::get<std::string>( args[0] );
-        auto        amount = static_cast<long long>( std::get<double>( args[1] ) );
-        const auto &stored = n->get_value( key );
-        auto current = stored.empty() ? 0LL : std::stoll( stored );
-        n->set_value( key, std::to_string( current + amount ) );
+        return command_signal::none;
     } );
+
+    // ============================================================
+    // talk_function wrappers
+    // ============================================================
+    //
+    // Helpers: wrap a talk_function into a registry entry.
+    // npc_fn   — fires and returns command_signal::none (conversation continues).
+    // npc_stop — fires and returns command_signal::stop (conversation ends automatically).
+    //            Use for commands that assign player activities or otherwise make it
+    //            impossible/meaningless to continue the dialogue.
+
+    auto npc_fn = [&reg]( const char *name, void( *fn )( npc & ) ) {
+        reg.add( name, [fn]( const std::vector<value> & ) -> command_signal {
+            if( auto *n = g_conv_ctx.npc_ref ) {
+                fn( *n );
+            }
+            return command_signal::none;
+        } );
+    };
+
+    auto npc_stop = [&reg]( const char *name, void( *fn )( npc & ) ) {
+        reg.add( name, [fn]( const std::vector<value> & ) -> command_signal {
+            if( auto *n = g_conv_ctx.npc_ref ) {
+                fn( *n );
+            }
+            return command_signal::stop;
+        } );
+    };
+
+    // Conversation / social
+    npc_fn( "nothing",              talk_function::nothing );
+    npc_fn( "morale_chat",          talk_function::morale_chat );
+    npc_stop( "morale_chat_activity", talk_function::morale_chat_activity );
+    npc_fn( "reveal_stats",         talk_function::reveal_stats );
+    npc_stop( "end_conversation",   talk_function::end_conversation );
+
+    // Mission handling
+    npc_fn( "assign_mission",  talk_function::assign_mission );
+    npc_fn( "mission_success", talk_function::mission_success );
+    npc_fn( "mission_failure", talk_function::mission_failure );
+    npc_fn( "clear_mission",   talk_function::clear_mission );
+    npc_fn( "mission_reward",  talk_function::mission_reward );
+    npc_fn( "lead_to_safety",  talk_function::lead_to_safety );
+
+    // Equipment / items
+    npc_fn( "give_equipment",     talk_function::give_equipment );
+    npc_fn( "drop_weapon",        talk_function::drop_weapon );
+    npc_fn( "player_weapon_away", talk_function::player_weapon_away );
+    npc_fn( "player_weapon_drop", talk_function::player_weapon_drop );
+    npc_fn( "drop_stolen_item",   talk_function::drop_stolen_item );
+    npc_fn( "remove_stolen_status", talk_function::remove_stolen_status );
+
+    // Trading / services
+    npc_fn( "start_trade",  talk_function::start_trade );
+    npc_fn( "buy_10_logs",  talk_function::buy_10_logs );
+    npc_fn( "buy_100_logs", talk_function::buy_100_logs );
+    npc_fn( "buy_horse",    talk_function::buy_horse );
+    npc_fn( "buy_cow",      talk_function::buy_cow );
+    npc_fn( "buy_chicken",  talk_function::buy_chicken );
+
+    // Aid / healing (assign activities — auto-stop)
+    npc_stop( "give_aid",     talk_function::give_aid );
+    npc_stop( "give_all_aid", talk_function::give_all_aid );
+
+    // Grooming (UI-opening; buy_haircut / buy_shave assign activities — auto-stop)
+    npc_fn( "barber_hair",  talk_function::barber_hair );
+    npc_fn( "barber_beard", talk_function::barber_beard );
+    npc_stop( "buy_haircut", talk_function::buy_haircut );
+    npc_stop( "buy_shave",   talk_function::buy_shave );
+
+    // Bionics (UI-opening; conversation continues after screen closes)
+    npc_fn( "bionic_install", talk_function::bionic_install );
+    npc_fn( "bionic_remove",  talk_function::bionic_remove );
+
+    // Training (assigns ACT_TRAIN — auto-stop)
+    npc_stop( "start_training", talk_function::start_training );
+
+    // NPC follower management
+    npc_fn( "follow",          talk_function::follow );
+    npc_fn( "follow_only",     talk_function::follow_only );
+    npc_fn( "stop_following",  talk_function::stop_following );
+    npc_fn( "deny_follow",     talk_function::deny_follow );
+    npc_fn( "deny_lead",       talk_function::deny_lead );
+    npc_fn( "deny_equipment",  talk_function::deny_equipment );
+    npc_fn( "deny_train",      talk_function::deny_train );
+    npc_fn( "deny_personal_info", talk_function::deny_personal_info );
+    npc_fn( "copy_npc_rules",  talk_function::copy_npc_rules );
+    npc_fn( "set_npc_pickup",  talk_function::set_npc_pickup );
+    npc_fn( "clear_overrides", talk_function::clear_overrides );
+
+    // NPC activities / orders
+    npc_fn( "sort_loot",             talk_function::sort_loot );
+    npc_fn( "do_construction",       talk_function::do_construction );
+    npc_fn( "do_mining",             talk_function::do_mining );
+    npc_fn( "do_read",               talk_function::do_read );
+    npc_fn( "do_chop_plank",         talk_function::do_chop_plank );
+    npc_fn( "do_vehicle_deconstruct", talk_function::do_vehicle_deconstruct );
+    npc_fn( "do_vehicle_repair",     talk_function::do_vehicle_repair );
+    npc_fn( "do_chop_trees",         talk_function::do_chop_trees );
+    npc_fn( "do_fishing",            talk_function::do_fishing );
+    npc_fn( "do_farming",            talk_function::do_farming );
+    npc_fn( "do_butcher",            talk_function::do_butcher );
+    npc_fn( "revert_activity",       talk_function::revert_activity );
+    npc_fn( "assign_guard",          talk_function::assign_guard );
+    npc_fn( "stop_guard",            talk_function::stop_guard );
+    npc_fn( "goto_location",         talk_function::goto_location );
+    npc_fn( "find_mount",            talk_function::find_mount );
+    npc_fn( "dismount",              talk_function::dismount );
+
+    // Hostile / conflict
+    npc_fn( "hostile",         talk_function::hostile );
+    npc_fn( "flee",            talk_function::flee );
+    npc_fn( "leave",           talk_function::leave );
+    npc_fn( "insult_combat",   talk_function::insult_combat );
+    npc_fn( "start_mugging",   talk_function::start_mugging );
+    npc_fn( "player_leaving",  talk_function::player_leaving );
+    npc_fn( "stranger_neutral", talk_function::stranger_neutral );
+
+    // Misc NPC state
+    npc_fn( "wake_up",       talk_function::wake_up );
+    npc_fn( "npc_die",       talk_function::npc_die );
+    npc_fn( "npc_thankful",  talk_function::npc_thankful );
+    npc_stop( "control_npc", talk_function::control_npc );
 }
 
 // ============================================================
