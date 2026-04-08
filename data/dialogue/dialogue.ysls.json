@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "commands": [
+    {
+      "yarnName": "call",
+      "documentation": "Push a node onto the call stack. Use <<return>> in the target node to resume here.",
+      "parameters": [
+        { "name": "node_name", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "give_item",
+      "documentation": "Add an item to the player's inventory.",
+      "parameters": [
+        { "name": "item_id", "type": "string" },
+        { "name": "count",   "type": "number" }
+      ]
+    },
+    {
+      "yarnName": "take_item",
+      "documentation": "Remove an item from the player's inventory.",
+      "parameters": [
+        { "name": "item_id", "type": "string" },
+        { "name": "count",   "type": "number" }
+      ]
+    },
+    {
+      "yarnName": "add_effect",
+      "documentation": "Apply an effect to the player.",
+      "parameters": [
+        { "name": "effect_id",      "type": "string" },
+        { "name": "duration_turns", "type": "number" }
+      ]
+    },
+    {
+      "yarnName": "remove_effect",
+      "documentation": "Remove an effect from the player.",
+      "parameters": [
+        { "name": "effect_id", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "npc_follow",
+      "documentation": "Make the NPC follow the player.",
+      "parameters": []
+    },
+    {
+      "yarnName": "npc_stop_follow",
+      "documentation": "Make the NPC stop following the player.",
+      "parameters": []
+    },
+    {
+      "yarnName": "npc_set_attitude",
+      "documentation": "Set the NPC's attitude (e.g. NPCATT_FOLLOW, NPCATT_KILL).",
+      "parameters": [
+        { "name": "attitude_id", "type": "string" }
+      ]
+    }
+  ],
+  "functions": [
+    {
+      "yarnName": "u_has_trait",
+      "documentation": "Returns true if the player has the given mutation/trait.",
+      "parameters": [ { "name": "trait_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "u_has_effect",
+      "documentation": "Returns true if the player has the given effect active.",
+      "parameters": [ { "name": "effect_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "u_has_bionic",
+      "documentation": "Returns true if the player has the given bionic installed.",
+      "parameters": [ { "name": "bionic_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "u_has_item",
+      "documentation": "Returns true if the player has at least one of the given item.",
+      "parameters": [ { "name": "item_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "u_has_items",
+      "documentation": "Returns true if the player has at least count of the given item.",
+      "parameters": [
+        { "name": "item_id", "type": "string" },
+        { "name": "count",   "type": "number" }
+      ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "u_has_skill",
+      "documentation": "Returns true if the player's skill level is >= the given level.",
+      "parameters": [
+        { "name": "skill_id", "type": "string" },
+        { "name": "level",    "type": "number" }
+      ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "u_get_str",
+      "documentation": "Returns the player's current Strength value.",
+      "parameters": [],
+      "return": { "type": "number" }
+    },
+    {
+      "yarnName": "u_get_dex",
+      "documentation": "Returns the player's current Dexterity value.",
+      "parameters": [],
+      "return": { "type": "number" }
+    },
+    {
+      "yarnName": "u_get_int",
+      "documentation": "Returns the player's current Intelligence value.",
+      "parameters": [],
+      "return": { "type": "number" }
+    },
+    {
+      "yarnName": "u_get_per",
+      "documentation": "Returns the player's current Perception value.",
+      "parameters": [],
+      "return": { "type": "number" }
+    },
+    {
+      "yarnName": "u_name",
+      "documentation": "Returns the player's name.",
+      "parameters": [],
+      "return": { "type": "string" }
+    },
+    {
+      "yarnName": "npc_has_trait",
+      "documentation": "Returns true if the NPC has the given mutation/trait.",
+      "parameters": [ { "name": "trait_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_is_following",
+      "documentation": "Returns true if the NPC is currently following the player.",
+      "parameters": [],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_is_ally",
+      "documentation": "Returns true if the NPC has a friendly/allied attitude.",
+      "parameters": [],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_is_enemy",
+      "documentation": "Returns true if the NPC has a hostile attitude.",
+      "parameters": [],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_name",
+      "documentation": "Returns the NPC's name.",
+      "parameters": [],
+      "return": { "type": "string" }
+    },
+    {
+      "yarnName": "npc_trust",
+      "documentation": "Returns the NPC's trust value toward the player.",
+      "parameters": [],
+      "return": { "type": "number" }
+    }
+  ]
+}

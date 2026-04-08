@@ -92,6 +92,50 @@ auto func_registry::global() -> func_registry &
 }
 
 // ============================================================
+// command_registry
+// ============================================================
+
+void command_registry::add( std::string name, int min_args, int max_args, impl_fn impl )
+{
+    cmds_.emplace( name, entry{ min_args, max_args, std::move( impl ) } );
+}
+
+void command_registry::add( std::string name, int arg_count, impl_fn impl )
+{
+    add( std::move( name ), arg_count, arg_count, std::move( impl ) );
+}
+
+void command_registry::add( std::string name, impl_fn impl )
+{
+    add( std::move( name ), 0, 0, std::move( impl ) );
+}
+
+auto command_registry::has_command( const std::string &name ) const -> bool
+{
+    return cmds_.contains( name );
+}
+
+void command_registry::call( const std::string &name, const std::vector<value> &args ) const
+{
+    const auto &e = cmds_.at( name );
+    auto count = static_cast<int>( args.size() );
+    if( count < e.min_args || ( e.max_args != -1 && count > e.max_args ) ) {
+        DebugLog( DL::Warn, DC::Dialogue )
+            << "yarn: command '" << name << "' called with " << count
+            << " args (expected " << e.min_args
+            << ( e.max_args == -1 ? "+" : "-" + std::to_string( e.max_args ) ) << ")";
+        return;
+    }
+    e.impl( args );
+}
+
+auto command_registry::global() -> command_registry &
+{
+    static command_registry instance;
+    return instance;
+}
+
+// ============================================================
 // Expression lexer and parser (anonymous namespace)
 // ============================================================
 
@@ -766,10 +810,12 @@ auto extract_command( std::string_view line ) -> std::string_view
     return {};
 }
 
-// Split a command string into name + args (simple space split, respects quotes).
+// Split a command string into name + raw arg tokens.
+// Quotes are retained in arg tokens so parse_expr can parse them as strings.
+// The command name itself is never quoted.
 struct parsed_command {
     std::string name;
-    std::vector<std::string> args;
+    std::vector<std::string> raw_args;
 };
 
 auto parse_command_line( std::string_view cmd ) -> parsed_command
@@ -781,12 +827,15 @@ auto parse_command_line( std::string_view cmd ) -> parsed_command
     for( auto c : cmd ) {
         if( c == '"' ) {
             in_quote = !in_quote;
+            if( !result.name.empty() ) {
+                current += c;  // keep quotes in args for parse_expr
+            }
         } else if( c == ' ' && !in_quote ) {
             if( !current.empty() ) {
                 if( result.name.empty() ) {
                     result.name = std::move( current );
                 } else {
-                    result.args.push_back( std::move( current ) );
+                    result.raw_args.push_back( std::move( current ) );
                 }
                 current.clear();
             }
@@ -798,7 +847,7 @@ auto parse_command_line( std::string_view cmd ) -> parsed_command
         if( result.name.empty() ) {
             result.name = std::move( current );
         } else {
-            result.args.push_back( std::move( current ) );
+            result.raw_args.push_back( std::move( current ) );
         }
     }
     return result;
@@ -1009,21 +1058,21 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
             ++i;
 
             if( pc.name == "jump" ) {
-                if( pc.args.empty() ) {
+                if( pc.raw_args.empty() ) {
                     p.error( line.line_num, "<<jump>> requires a node name" );
                 } else {
                     node_element elem;
                     elem.type = node_element::kind::jump;
-                    elem.jump_target = pc.args[0];
+                    elem.jump_target = pc.raw_args[0];
                     elements.push_back( std::move( elem ) );
                 }
-            } else if( pc.name == "goto" ) {
-                if( pc.args.empty() ) {
-                    p.error( line.line_num, "<<goto>> requires a node name" );
+            } else if( pc.name == "call" ) {
+                if( pc.raw_args.empty() ) {
+                    p.error( line.line_num, "<<call>> requires a node name" );
                 } else {
                     node_element elem;
-                    elem.type = node_element::kind::goto_node;
-                    elem.jump_target = pc.args[0];
+                    elem.type = node_element::kind::call_node;
+                    elem.jump_target = pc.raw_args[0];
                     elements.push_back( std::move( elem ) );
                 }
             } else if( pc.name == "stop" ) {
@@ -1035,12 +1084,25 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                 elem.type = node_element::kind::yarn_return;
                 elements.push_back( std::move( elem ) );
             } else {
-                // Generic command — passed through to the command handler
+                // Generic command — parse each arg as an expression.
                 node_element elem;
                 elem.type = node_element::kind::command;
                 elem.command_name = pc.name;
-                elem.command_args = pc.args;
-                elements.push_back( std::move( elem ) );
+                bool args_ok = true;
+                for( const auto &raw : pc.raw_args ) {
+                    auto result = parse_expr( raw, func_registry::global() );
+                    if( std::holds_alternative<parse_error>( result ) ) {
+                        p.error( line.line_num,
+                                 "<<" + pc.name + ">>: bad argument '" + raw + "': " +
+                                 std::get<parse_error>( result ).message );
+                        args_ok = false;
+                        break;
+                    }
+                    elem.command_args.push_back( std::get<expr_node>( std::move( result ) ) );
+                }
+                if( args_ok ) {
+                    elements.push_back( std::move( elem ) );
+                }
             }
             continue;
         }
@@ -1298,12 +1360,12 @@ void yarn_runtime::run( dialogue_window &d_win )
 
         switch( result.kind ) {
             case signal::jump:
-                // Push: caller can <<return>> to resume
-                node_stack_.push_back( result.target );
-                break;
-            case signal::goto_node:
-                // Replace current frame
+                // Replace current frame (matches <<jump>> / VS Code graph editor)
                 node_stack_.back() = result.target;
+                break;
+            case signal::call_node:
+                // Push: caller can <<return>> to resume after <<call>>
+                node_stack_.push_back( result.target );
                 break;
             case signal::yarn_return:
                 node_stack_.pop_back();
@@ -1360,17 +1422,37 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
             }
 
             case node_element::kind::command: {
-                // TODO: route to registered command handlers
-                DebugLog( DL::Info, DC::Dialogue )
-                    << "yarn command: " << elem.command_name;
+                auto &creg = command_registry::global();
+                if( !creg.has_command( elem.command_name ) ) {
+                    DebugLog( DL::Warn, DC::Dialogue )
+                        << "yarn: unknown command '" << elem.command_name << "'";
+                    break;
+                }
+                std::vector<value> args;
+                args.reserve( elem.command_args.size() );
+                bool eval_ok = true;
+                for( const auto &arg_node : elem.command_args ) {
+                    try {
+                        args.push_back( eval( arg_node ) );
+                    } catch( const std::exception &e ) {
+                        DebugLog( DL::Error, DC::Dialogue )
+                            << "yarn: command '" << elem.command_name
+                            << "' arg eval error: " << e.what();
+                        eval_ok = false;
+                        break;
+                    }
+                }
+                if( eval_ok ) {
+                    creg.call( elem.command_name, args );
+                }
                 break;
             }
 
             case node_element::kind::jump:
                 return { signal::jump, elem.jump_target };
 
-            case node_element::kind::goto_node:
-                return { signal::goto_node, elem.jump_target };
+            case node_element::kind::call_node:
+                return { signal::call_node, elem.jump_target };
 
             case node_element::kind::stop:
                 return { signal::stop, {} };
@@ -1722,6 +1804,91 @@ void register_builtin_functions( func_registry &reg )
     []( const std::vector<value> & ) -> value {
         auto *n = g_conv_ctx.npc_ref;
         return n ? static_cast<double>( n->op_of_u.trust ) : 0.0;
+    } );
+}
+
+// ============================================================
+// Built-in commands
+// ============================================================
+
+void register_builtin_commands( command_registry &reg )
+{
+    // give_item "item_id" [count]
+    reg.add( "give_item", 1, 2, []( const std::vector<value> &args ) {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return;
+        }
+        auto id    = itype_id( std::get<std::string>( args[0] ) );
+        auto count = args.size() > 1 ? static_cast<int>( std::get<double>( args[1] ) ) : 1;
+        p->add_item_with_id( id, count );
+    } );
+
+    // take_item "item_id" [count]
+    reg.add( "take_item", 1, 2, []( const std::vector<value> &args ) {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return;
+        }
+        auto id    = itype_id( std::get<std::string>( args[0] ) );
+        auto count = args.size() > 1 ? static_cast<int>( std::get<double>( args[1] ) ) : 1;
+        p->use_amount( id, count );
+    } );
+
+    // add_effect "effect_id" [duration_turns]
+    reg.add( "add_effect", 1, 2, []( const std::vector<value> &args ) {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return;
+        }
+        auto id = efftype_id( std::get<std::string>( args[0] ) );
+        auto dur = args.size() > 1
+                   ? time_duration::from_turns( static_cast<int>( std::get<double>( args[1] ) ) )
+                   : 1_turns;
+        p->add_effect( id, dur );
+    } );
+
+    // remove_effect "effect_id"
+    reg.add( "remove_effect", 1, []( const std::vector<value> &args ) {
+        auto *p = g_conv_ctx.player_ref;
+        if( p ) {
+            p->remove_effect( efftype_id( std::get<std::string>( args[0] ) ) );
+        }
+    } );
+
+    // npc_follow — NPC starts following the player
+    reg.add( "npc_follow", []( const std::vector<value> & ) {
+        auto *n = g_conv_ctx.npc_ref;
+        if( n ) {
+            n->set_attitude( NPCATT_FOLLOW );
+        }
+    } );
+
+    // npc_stop_follow — NPC stops following
+    reg.add( "npc_stop_follow", []( const std::vector<value> & ) {
+        auto *n = g_conv_ctx.npc_ref;
+        if( n ) {
+            n->set_attitude( NPCATT_NULL );
+        }
+    } );
+
+    // npc_set_attitude "attitude_id"
+    // Accepts the same string IDs used by npc_attitude_id() (e.g. "NPCATT_KILL")
+    reg.add( "npc_set_attitude", 1, []( const std::vector<value> &args ) {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return;
+        }
+        const auto &att_str = std::get<std::string>( args[0] );
+        for( int i = 0; i < NPCATT_END; ++i ) {
+            auto att = static_cast<npc_attitude>( i );
+            if( npc_attitude_id( att ) == att_str ) {
+                n->set_attitude( att );
+                return;
+            }
+        }
+        DebugLog( DL::Warn, DC::Dialogue )
+            << "yarn: npc_set_attitude: unknown attitude '" << att_str << "'";
     } );
 }
 

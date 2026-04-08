@@ -730,6 +730,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
                 _( "Yarn dialogue" ), []()
                 {
                     yarn::register_builtin_functions( yarn::func_registry::global() );
+                    yarn::register_builtin_commands( yarn::command_registry::global() );
                     yarn::load_yarn_stories();
                 }
             },

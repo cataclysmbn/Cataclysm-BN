@@ -8,9 +8,10 @@ You look strong. That helps out here.
 -> Ask about supplies
     Supplies? I found a few cans in the back room. You're welcome to them.
     I'm not going anywhere fast anyway.
-    <<goto Start_Supplies>>
+    <<give_item "veggy_canned" 2>>
+    <<jump Start_Supplies>>
 -> Ask what happened
-    <<goto Start_What_Happened>>
+    <<jump Start_What_Happened>>
 -> Leave them alone
     <<stop>>
 ===
@@ -20,7 +21,7 @@ title: Start_Supplies
 There's a shelf near the back wall. Just don't go past the locked door —
 I don't know what's in there and I haven't wanted to find out.
 -> Ask what happened
-    <<goto Start_What_Happened>>
+    <<jump Start_What_Happened>>
 -> Say thanks and leave
     <<stop>>
 ===
@@ -31,7 +32,7 @@ I was at work when the sirens went off. Drove here thinking it'd be temporary.
 That was... I don't even know how long ago now.
 Haven't seen anyone else until you showed up.
 -> Ask about supplies
-    <<goto Start_Supplies>>
+    <<jump Start_Supplies>>
 -> Wish them luck and go
     Good luck out there. You too.
     <<stop>>

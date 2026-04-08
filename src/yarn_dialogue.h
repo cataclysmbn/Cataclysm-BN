@@ -131,6 +131,40 @@ class func_registry {
 };
 
 // ============================================================
+// Command registry
+// ============================================================
+//
+// Commands are effects fired by <<command_name arg1 arg2 ...>> lines.
+// Arguments are pre-evaluated values (string, number, or bool).
+// min_args / max_args are checked at call time; use -1 for no upper limit.
+
+class command_registry {
+    public:
+        using impl_fn = std::function<void( const std::vector<value> & )>;
+
+        void add( std::string name, int min_args, int max_args, impl_fn impl );
+
+        // Convenience: exact arg count
+        void add( std::string name, int arg_count, impl_fn impl );
+
+        // Convenience: no args
+        void add( std::string name, impl_fn impl );
+
+        auto has_command( const std::string &name ) const -> bool;
+        void call( const std::string &name, const std::vector<value> &args ) const;
+
+        static auto global() -> command_registry &;
+
+    private:
+        struct entry {
+            int min_args = 0;
+            int max_args = 0;  // -1 = no upper limit
+            impl_fn impl;
+        };
+        std::unordered_map<std::string, entry> cmds_;
+};
+
+// ============================================================
 // Expression parser and evaluator
 // ============================================================
 
@@ -168,8 +202,8 @@ struct node_element {
         dialogue,      // NPC or player speech line
         choice_group,  // a set of -> choices presented to the player
         command,       // <<command_name arg1 arg2 ...>>
-        jump,          // <<jump NodeName>>  — push node onto stack
-        goto_node,     // <<goto NodeName>>  — replace current frame
+        jump,          // <<jump NodeName>>  — replace current frame (matches VS Code graph editor)
+        call_node,     // <<call NodeName>>  — push node onto stack; callee can <<return>>
         stop,          // <<stop>>           — end conversation
         yarn_return,   // <<return>>         — pop current frame
         if_block,      // <<if>> / <<else>> / <<endif>>
@@ -184,11 +218,12 @@ struct node_element {
     std::string text;
 
     // kind::command
-    // Command arguments are raw strings; semantics are up to the handler.
+    // Arguments are parsed as expressions and evaluated at dispatch time,
+    // so literals, numbers, and function calls all work uniformly.
     std::string command_name;
-    std::vector<std::string> command_args;
+    std::vector<expr_node> command_args;
 
-    // kind::jump / kind::goto_node
+    // kind::jump / kind::call_node
     std::string jump_target;
 
     // kind::if_block
@@ -247,9 +282,9 @@ class yarn_story {
 // ============================================================
 //
 // Navigation semantics:
-//   <<jump X>>   Push X. Callee can <<return>> to resume after the jump site.
-//   <<goto X>>   Replace current frame with X. No return to current node.
-//   <<return>>   Pop current frame. Returns to whatever pushed the current node.
+//   <<jump X>>   Replace current frame with X. Matches VS Code graph editor output.
+//   <<call X>>   Push X. Callee can <<return>> to resume after the call site.
+//   <<return>>   Pop current frame. Returns to whatever called the current node.
 //   <<stop>>     Clear the entire stack. Ends the conversation.
 
 class yarn_runtime {
@@ -269,7 +304,7 @@ class yarn_runtime {
         void run( dialogue_window &d_win );
 
     private:
-        enum class signal : uint8_t { ok, jump, goto_node, stop, yarn_return };
+        enum class signal : uint8_t { ok, jump, call_node, stop, yarn_return };
 
         struct exec_result {
             signal kind = signal::ok;
@@ -309,6 +344,10 @@ auto get_yarn_story( const std::string &name ) -> const yarn_story &;
 // Register all built-in game predicates and functions (has_trait, get_str,
 // etc.) into the given registry. Called once on the global registry at startup.
 void register_builtin_functions( func_registry &registry );
+
+// Register all built-in effect commands (give_item, add_effect, npc_follow,
+// etc.) into the given registry. Called once on the global registry at startup.
+void register_builtin_commands( command_registry &registry );
 
 // Entry point called from npc::talk_to_u().
 // If the NPC's chatbin.yarn_story is non-empty and a matching story exists,
