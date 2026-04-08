@@ -3578,7 +3578,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             const auto current_visible = std::ranges::find( visible_items, iCurrentLine );
             if( current_visible != visible_items.end() ) {
                 const auto current_visible_index = static_cast<int>( std::ranges::distance( visible_items.begin(),
-                                                 current_visible ) );
+                                                   current_visible ) );
                 const auto page_step = std::max( 1, iContentHeight - 1 );
                 const auto last_visible_index = static_cast<int>( visible_items.size() ) - 1;
                 const auto target_visible_index = action == "PAGE_DOWN" ?
