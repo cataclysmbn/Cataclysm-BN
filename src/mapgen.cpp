@@ -353,6 +353,7 @@ class mapgen_factory
             result.insert( "lab_1side" );
             result.insert( "lab_4side" );
             result.insert( "lab_finale_1level" );
+            result.insert( "crt_lab_veh_house_backdrop" );
             return result;
         }
 
@@ -425,6 +426,26 @@ static mapgen_factory oter_mapgen;
 std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_json_nested>> >
         nested_mapgen;
 std::map<std::string, std::vector<std::unique_ptr<update_mapgen_function_json>> > update_mapgen;
+
+void call_mapgen_function( std::string name, mapgendata &dat, bool nested, point pos )
+{
+    if( nested ) {
+        const auto iter = nested_mapgen.find( name );
+        if( iter == nested_mapgen.end() ) {
+            debugmsg( "Unknown nested mapgen function id %s", name.c_str() );
+            return;
+        }
+
+        // A second roll? Let's allow it for now
+        const auto &ptr = iter->second.pick();
+        if( ptr == nullptr ) {
+            return;
+        }
+        return ( *ptr )->nest( dat, pos );
+    } else {
+        oter_mapgen.generate( dat, name );
+    }
+}
 
 /*
  * setup mapgen_basic_container::weights_ which mapgen uses to diceroll. Also setup mapgen_function_json

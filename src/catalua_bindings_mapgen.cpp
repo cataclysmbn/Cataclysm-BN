@@ -3,6 +3,7 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "mapgen.h"
 #include "mapgendata.h"
 #include "ui.h"
 #include "popup.h"
@@ -43,5 +44,12 @@ void cata::detail::reg_mapgendata( sol::state &lua )
     luna::set_fx( ut, "set_dir", []( mapgendata & dat, int i, int j ) { return dat.set_dir( i, j ); } );
     DOC( "Fills the ground with default terrain." );
     luna::set_fx( ut, "fill_groundcover", []( mapgendata & dat ) { dat.fill_groundcover(); } );
-
+    DOC( "Generates Nested Mapgen" );
+    luna::set_fx( ut, "nest", [&]( mapgendata & dat, std::string nested, point & pos ) {
+        call_mapgen_function( nested, dat, true, pos );
+    } );
+    DOC( "Generates Normal Mapgen" );
+    luna::set_fx( ut, "generate", [&]( mapgendata & dat, std::string mapgen ) {
+        call_mapgen_function( mapgen, dat, false, point_zero );
+    } );
 }
