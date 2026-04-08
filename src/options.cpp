@@ -904,6 +904,17 @@ void options_manager::add_option_group( const std::string &page_id,
         }
     }
     groups_.push_back( group );
+
+    for( Page &p : pages_ ) {
+        if( p.id_ != page_id ) {
+            continue;
+        }
+        if( !p.items_.empty() && p.items_.back().type != ItemType::BlankLine ) {
+            insert_page_item( p, PageItem( ItemType::BlankLine, "", "" ) );
+        }
+        break;
+    }
+
     adding_to_group_ = groups_.back().id_;
 
     for( Page &p : pages_ ) {
@@ -3218,6 +3229,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "PREV_TAB" );
+    ctxt.register_action( "PAGE_UP" );
+    ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( reload_option_definitions_action, to_translation( "Reload option JSON" ) );
     ctxt.register_action( "HELP_KEYBINDINGS" );
@@ -3449,6 +3462,27 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
 
         const std::string action = ctxt.handle_input();
 
+        std::vector<int> visible_items;
+        visible_items.reserve( page_items.size() );
+        const auto is_visible = [&]( int i ) -> bool {
+            const PageItem &it = page_items[i];
+            switch( it.type )
+            {
+                case ItemType::GroupHeader:
+                    return true;
+                case ItemType::BlankLine:
+                case ItemType::Option:
+                    return groups_state[it.group];
+                default:
+                    abort();
+            }
+        };
+        for( int i = 0; i < static_cast<int>( page_items.size() ); ++i ) {
+            if( is_visible( i ) ) {
+                visible_items.push_back( i );
+            }
+        }
+
         if( world_options_only && ( action == "NEXT_TAB" || action == "PREV_TAB" ||
                                     ( action == "QUIT" && ( !on_quit || on_quit() ) ) ) ) {
             return action;
@@ -3540,6 +3574,18 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
                     iCurrentLine = page_items.size() - 1;
                 }
             } while( !is_selectable( iCurrentLine ) );
+        } else if( action == "PAGE_DOWN" || action == "PAGE_UP" ) {
+            const auto current_visible = std::ranges::find( visible_items, iCurrentLine );
+            if( current_visible != visible_items.end() ) {
+                const auto current_visible_index = static_cast<int>( std::ranges::distance( visible_items.begin(),
+                                                 current_visible ) );
+                const auto page_step = std::max( 1, iContentHeight - 1 );
+                const auto last_visible_index = static_cast<int>( visible_items.size() ) - 1;
+                const auto target_visible_index = action == "PAGE_DOWN" ?
+                                                  std::min( current_visible_index + page_step, last_visible_index ) :
+                                                  std::max( current_visible_index - page_step, 0 );
+                iCurrentLine = visible_items[target_visible_index];
+            }
         } else if( action == "NEXT_TAB" ) {
             iCurrentLine = 0;
             iStartPos = 0;
