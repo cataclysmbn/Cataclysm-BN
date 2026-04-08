@@ -82,7 +82,7 @@
     "ammo_type": "shot",
     "casing": "shot_hull",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 9, "armor_multiplier": 2 },
+    "damage": { "damage_type": "bullet", "amount": 10 },
     "recoil": 2500,
     "loudness": 160,
     "effects": [ "COOKOFF", "SHOT" ]
@@ -93,7 +93,7 @@
     "type": "AMMO",
     "name": { "str": "00 shot" },
     "description": "A shell filled with metal pellets.  Extremely damaging, plus the spread makes it very accurate at short range.  Favored by SWAT forces.",
-    "shot": { "count": 12, "half_angle": 3 }
+    "shot": { "count": 8, "half_angle": 3 }
   },
   {
     "id": "shot_beanbag",
@@ -118,9 +118,9 @@
     "price": "1 USD",
     "price_postapoc": "4 USD",
     "range": 10,
-    "damage": { "damage_type": "bullet", "amount": 9, "armor_multiplier": 3 },
+    "damage": { "damage_type": "bullet", "amount": 4 },
     "loudness": 80,
-    "shot": { "count": 24, "half_angle": 5 },
+    "shot": { "count": 15, "half_angle": 5 },
     "extend": { "effects": [ "NOGIB" ] }
   },
   {
@@ -147,8 +147,8 @@
     "price_postapoc": "8 USD",
     "count": 10,
     "//": "Balanced as standard AP.",
-    "damage": { "damage_type": "bullet", "amount": 9, "armor_penetration": 15, "armor_multiplier": 0.5 },
-    "shot": { "count": 12, "half_angle": 2 }
+    "damage": { "damage_type": "bullet", "amount": 9, "armor_penetration": 15 },
+    "shot": { "count": 8, "half_angle": 2 }
   },
   {
     "id": "shot_he",
@@ -171,7 +171,7 @@
     "name": { "str": "00 shot, scrap loaded" },
     "description": "A shotgun shell filled with whatever was lying around.  They are more damaging than birdshot, but fairly inaccurate.",
     "dispersion": 60,
-    "damage": { "damage_type": "bullet", "amount": 9, "armor_multiplier": 2.5 },
+    "damage": { "damage_type": "bullet", "amount": 5 },
     "shot": { "count": 16, "half_angle": 6 },
     "proportional": { "price": 0.5, "price_postapoc": 0.5 },
     "extend": { "effects": [ "RECYCLED" ] }
