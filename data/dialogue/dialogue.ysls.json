@@ -357,6 +357,187 @@
       "documentation": "Returns the NPC's current level in the given skill.",
       "parameters": [ { "name": "skill_id", "type": "string" } ],
       "return": { "type": "number" }
+    },
+
+    { "yarnName": "u_male",   "documentation": "Returns true if the player is male.",   "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "u_female", "documentation": "Returns true if the player is female.", "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "npc_male",   "documentation": "Returns true if the NPC is male.",   "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "npc_female", "documentation": "Returns true if the NPC is female.", "parameters": [], "return": { "type": "bool" } },
+
+    {
+      "yarnName": "u_is_wearing",
+      "documentation": "Returns true if the player is wearing the given item.",
+      "parameters": [ { "name": "item_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_is_wearing",
+      "documentation": "Returns true if the NPC is wearing the given item.",
+      "parameters": [ { "name": "item_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    { "yarnName": "u_has_weapon",   "documentation": "Returns true if the player is armed (wielding something).",  "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "npc_has_weapon", "documentation": "Returns true if the NPC is armed (wielding something).",    "parameters": [], "return": { "type": "bool" } },
+    {
+      "yarnName": "npc_has_item",
+      "documentation": "Returns true if the NPC has at least one of the given item.",
+      "parameters": [ { "name": "item_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_has_items",
+      "documentation": "Returns true if the NPC has at least count of the given item.",
+      "parameters": [
+        { "name": "item_id", "type": "string" },
+        { "name": "count",   "type": "number" }
+      ],
+      "return": { "type": "bool" }
+    },
+
+    {
+      "yarnName": "u_has_trait_flag",
+      "documentation": "Returns true if the player has any trait with the given flag (e.g. CANNIBAL, SAPIOVORE).",
+      "parameters": [ { "name": "flag", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_has_trait_flag",
+      "documentation": "Returns true if the NPC has any trait with the given flag.",
+      "parameters": [ { "name": "flag", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+
+    { "yarnName": "u_get_hunger",   "documentation": "Returns the player's hunger level as a number (higher = hungrier).",  "parameters": [], "return": { "type": "number" } },
+    { "yarnName": "u_get_thirst",   "documentation": "Returns the player's thirst level as a number (higher = thirstier).", "parameters": [], "return": { "type": "number" } },
+    { "yarnName": "u_get_fatigue",  "documentation": "Returns the player's fatigue level as a number (higher = more tired).", "parameters": [], "return": { "type": "number" } },
+    { "yarnName": "npc_get_hunger", "documentation": "Returns the NPC's hunger level as a number.",   "parameters": [], "return": { "type": "number" } },
+    { "yarnName": "npc_get_thirst", "documentation": "Returns the NPC's thirst level as a number.",   "parameters": [], "return": { "type": "number" } },
+    { "yarnName": "npc_get_fatigue","documentation": "Returns the NPC's fatigue level as a number.",  "parameters": [], "return": { "type": "number" } },
+
+    { "yarnName": "u_get_ecash", "documentation": "Returns the player's electronic cash (e-cash) balance.", "parameters": [], "return": { "type": "number" } },
+    { "yarnName": "u_get_owed",  "documentation": "Returns how much this NPC owes the player.",             "parameters": [], "return": { "type": "number" } },
+
+    { "yarnName": "npc_available",     "documentation": "Returns true if the NPC is not busy.",                    "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "npc_is_riding",     "documentation": "Returns true if the NPC is mounted on a creature.",       "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "npc_has_activity",  "documentation": "Returns true if the NPC has an active player_activity.",  "parameters": [], "return": { "type": "bool" } },
+    {
+      "yarnName": "npc_has_class",
+      "documentation": "Returns true if the NPC belongs to the given class (e.g. NC_SOLDIER).",
+      "parameters": [ { "name": "class_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    { "yarnName": "npc_friend",  "documentation": "Returns true if the NPC is a player ally.",    "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "npc_hostile", "documentation": "Returns true if the NPC is hostile to the player.", "parameters": [], "return": { "type": "bool" } },
+
+    { "yarnName": "has_no_assigned_mission",    "documentation": "Returns true if this NPC has no missions assigned to the player.",        "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "has_assigned_mission",       "documentation": "Returns true if this NPC has exactly one mission assigned to the player.", "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "has_many_assigned_missions", "documentation": "Returns true if this NPC has more than one mission assigned.",             "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "has_no_available_mission",   "documentation": "Returns true if this NPC has no missions available to offer.",             "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "has_available_mission",      "documentation": "Returns true if this NPC has exactly one mission available.",              "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "has_many_available_missions","documentation": "Returns true if this NPC has more than one mission available.",            "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "mission_complete",   "documentation": "Returns true if the currently selected mission has been completed.",   "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "mission_incomplete", "documentation": "Returns true if the currently selected mission is not yet complete.", "parameters": [], "return": { "type": "bool" } },
+
+    {
+      "yarnName": "get_season",
+      "documentation": "Returns the current season as a string: \"spring\", \"summer\", \"autumn\", or \"winter\".",
+      "parameters": [],
+      "return": { "type": "string" }
+    },
+    {
+      "yarnName": "is_season",
+      "documentation": "Returns true if the current season matches the given string (\"spring\", \"summer\", \"autumn\", \"winter\").",
+      "parameters": [ { "name": "season", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "days_since_cataclysm",
+      "documentation": "Returns the number of days elapsed since the start of the cataclysm.",
+      "parameters": [],
+      "return": { "type": "number" }
+    },
+    { "yarnName": "is_day", "documentation": "Returns true if it is currently daytime (sun above horizon).", "parameters": [], "return": { "type": "bool" } },
+
+    { "yarnName": "u_driving",   "documentation": "Returns true if the player is currently driving a moving vehicle.", "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "npc_driving", "documentation": "Returns true if the NPC is currently driving a moving vehicle.",   "parameters": [], "return": { "type": "bool" } },
+
+    {
+      "yarnName": "npc_has_rule",
+      "documentation": "Returns true if the NPC's ally rule is active for the given key (e.g. \"use_guns\", \"allow_sleep\"). Considers overrides.",
+      "parameters": [ { "name": "rule", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_has_override",
+      "documentation": "Returns true if an override is set for the given ally rule key (e.g. \"use_guns\").",
+      "parameters": [ { "name": "rule", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_aim_rule",
+      "documentation": "Returns true if the NPC's aim rule matches the given value (e.g. \"AIM_PRECISE\", \"AIM_SPRAY\").",
+      "parameters": [ { "name": "rule", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_engagement_rule",
+      "documentation": "Returns true if the NPC's engagement rule matches the given value (e.g. \"ENGAGE_ALL\", \"ENGAGE_CLOSE\").",
+      "parameters": [ { "name": "rule", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_cbm_reserve_rule",
+      "documentation": "Returns true if the NPC's CBM power reserve rule matches the given value (e.g. \"CBM_RESERVE_ALL\", \"CBM_RESERVE_HALF\").",
+      "parameters": [ { "name": "rule", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_cbm_recharge_rule",
+      "documentation": "Returns true if the NPC's CBM recharge rule matches the given value (e.g. \"CBM_RECHARGE_ALWAYS\", \"CBM_RECHARGE_NEVER\").",
+      "parameters": [ { "name": "rule", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+
+    { "yarnName": "is_outside",    "documentation": "Returns true if the NPC is currently outdoors (not under a roof).", "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "at_safe_space", "documentation": "Returns true if the NPC is in a safe overmap tile.",              "parameters": [], "return": { "type": "bool" } },
+    {
+      "yarnName": "u_at_om_location",
+      "documentation": "Returns true if the player is on the given overmap terrain type (e.g. \"shelter\").",
+      "parameters": [ { "name": "location", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_at_om_location",
+      "documentation": "Returns true if the NPC is on the given overmap terrain type.",
+      "parameters": [ { "name": "location", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_role_nearby",
+      "documentation": "Returns true if any NPC within 48 tiles has the given companion mission role ID.",
+      "parameters": [ { "name": "role", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "npc_allies",
+      "documentation": "Returns true if the player has at least the given number of NPC allies.",
+      "parameters": [ { "name": "min_count", "type": "number" } ],
+      "return": { "type": "bool" }
+    },
+    { "yarnName": "npc_train_skills", "documentation": "Returns true if the NPC has at least one skill they can teach the player.", "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "npc_train_styles", "documentation": "Returns true if the NPC has at least one martial art style they can teach the player.", "parameters": [], "return": { "type": "bool" } },
+    { "yarnName": "u_has_stolen_item", "documentation": "Returns true if the player is carrying any item that belongs to this NPC.", "parameters": [], "return": { "type": "bool" } },
+    {
+      "yarnName": "u_has_mission",
+      "documentation": "Returns true if the player has an active mission of the given mission type ID.",
+      "parameters": [ { "name": "mission_type_id", "type": "string" } ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "u_know_recipe",
+      "documentation": "Returns true if the player knows the given recipe.",
+      "parameters": [ { "name": "recipe_id", "type": "string" } ],
+      "return": { "type": "bool" }
     }
   ]
 }

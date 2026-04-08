@@ -11,22 +11,32 @@
 #include <stdexcept>
 #include <utility>
 
+#include "avatar.h"
 #include "calendar.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "dialogue.h"
 #include "dialogue_win.h"
+#include "game.h"
+#include "map.h"
+#include "mapdata.h"
 #include "mission.h"
+#include "overmapbuffer.h"
 #include "filesystem.h"
 #include "input.h"
 #include "npc.h"
 #include "npctalk.h"
+#include "overmap.h"
+#include "overmapbuffer_registry.h"
 #include "path_info.h"
 #include "player.h"
+#include "recipe_dictionary.h"
 #include "skill.h"
 #include "translations.h"
 #include "ui_manager.h"
+#include "vehicle.h"
+#include "vpart_position.h"
 
 namespace yarn {
 
@@ -1984,6 +1994,563 @@ void register_builtin_functions( func_registry &reg )
         }
         const auto &s = n->get_value( std::get<std::string>( args[0] ) );
         return s.empty() ? 0.0 : static_cast<double>( std::stoll( s ) );
+    } );
+
+    // ============================================================
+    // Gender
+    // ============================================================
+
+    reg.add( "u_male",   {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->male;
+    } );
+    reg.add( "u_female", {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && !p->male;
+    } );
+    reg.add( "npc_male",   {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->male;
+    } );
+    reg.add( "npc_female", {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && !n->male;
+    } );
+
+    // ============================================================
+    // Equipment and inventory
+    // ============================================================
+
+    reg.add( "u_is_wearing", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->is_wearing( itype_id( std::get<std::string>( args[0] ) ) );
+    } );
+
+    reg.add( "npc_is_wearing", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->is_wearing( itype_id( std::get<std::string>( args[0] ) ) );
+    } );
+
+    reg.add( "u_has_weapon", {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->is_armed();
+    } );
+
+    reg.add( "npc_has_weapon", {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->is_armed();
+    } );
+
+    reg.add( "npc_has_item", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->has_item_with_id( itype_id( std::get<std::string>( args[0] ) ) );
+    } );
+
+    reg.add( "npc_has_items", {vt::string, vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        auto id    = itype_id( std::get<std::string>( args[0] ) );
+        auto count = static_cast<int>( std::get<double>( args[1] ) );
+        return static_cast<int>( n->all_items_with_id( id ).size() ) >= count;
+    } );
+
+    // ============================================================
+    // Traits and mutations
+    // ============================================================
+
+    reg.add( "u_has_trait_flag", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->has_trait_flag( trait_flag_str_id( std::get<std::string>( args[0] ) ) );
+    } );
+
+    reg.add( "npc_has_trait_flag", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->has_trait_flag( trait_flag_str_id( std::get<std::string>( args[0] ) ) );
+    } );
+
+    // ============================================================
+    // Needs (hunger / thirst / fatigue as numbers for threshold comparison)
+    // ============================================================
+    // hunger:  (max_stored_kcal - stored_kcal) / 10  — matches the legacy condition formula
+    // thirst / fatigue: direct getters
+
+    reg.add( "u_get_hunger", {}, vt::number, []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p ? static_cast<double>( ( p->max_stored_kcal() - p->get_stored_kcal() ) / 10 )
+                 : 0.0;
+    } );
+
+    reg.add( "u_get_thirst", {}, vt::number, []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p ? static_cast<double>( p->get_thirst() ) : 0.0;
+    } );
+
+    reg.add( "u_get_fatigue", {}, vt::number, []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p ? static_cast<double>( p->get_fatigue() ) : 0.0;
+    } );
+
+    reg.add( "npc_get_hunger", {}, vt::number, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? static_cast<double>( ( n->max_stored_kcal() - n->get_stored_kcal() ) / 10 )
+                 : 0.0;
+    } );
+
+    reg.add( "npc_get_thirst", {}, vt::number, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? static_cast<double>( n->get_thirst() ) : 0.0;
+    } );
+
+    reg.add( "npc_get_fatigue", {}, vt::number, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? static_cast<double>( n->get_fatigue() ) : 0.0;
+    } );
+
+    // ============================================================
+    // Economy
+    // ============================================================
+
+    reg.add( "u_get_ecash", {}, vt::number, []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p ? static_cast<double>( p->cash ) : 0.0;
+    } );
+
+    // How much the NPC owes the player (use: u_get_owed() >= 100)
+    reg.add( "u_get_owed", {}, vt::number, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? static_cast<double>( n->op_of_u.owed ) : 0.0;
+    } );
+
+    // ============================================================
+    // NPC state
+    // ============================================================
+
+    reg.add( "npc_available", {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && !n->has_effect( efftype_id( "currently_busy" ) );
+    } );
+
+    reg.add( "npc_is_riding", {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->is_mounted();
+    } );
+
+    reg.add( "npc_has_activity", {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && static_cast<bool>( n->activity );
+    } );
+
+    reg.add( "npc_has_class", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->myclass == npc_class_id( std::get<std::string>( args[0] ) );
+    } );
+
+    // Convenience aliases matching the legacy simple-string condition names.
+    reg.add( "npc_friend", {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->is_player_ally();
+    } );
+    reg.add( "npc_hostile", {}, vt::boolean, []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        auto att = n->get_attitude();
+        return att == NPCATT_KILL || att == NPCATT_MUG || att == NPCATT_WAIT_FOR_LEAVE;
+    } );
+
+    // ============================================================
+    // Mission state (read from npc.chatbin)
+    // ============================================================
+
+    reg.add( "has_no_assigned_mission", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->chatbin.missions_assigned.empty();
+    } );
+
+    reg.add( "has_assigned_mission", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->chatbin.missions_assigned.size() == 1;
+    } );
+
+    reg.add( "has_many_assigned_missions", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->chatbin.missions_assigned.size() > 1;
+    } );
+
+    reg.add( "has_no_available_mission", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->chatbin.missions.empty();
+    } );
+
+    reg.add( "has_available_mission", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->chatbin.missions.size() == 1;
+    } );
+
+    reg.add( "has_many_available_missions", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->chatbin.missions.size() > 1;
+    } );
+
+    reg.add( "mission_complete", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        auto *p = g_conv_ctx.player_ref;
+        if( !n || !p || !n->chatbin.mission_selected ) {
+            return false;
+        }
+        return n->chatbin.mission_selected->is_complete( p->getID() );
+    } );
+
+    reg.add( "mission_incomplete", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        auto *p = g_conv_ctx.player_ref;
+        if( !n || !p || !n->chatbin.mission_selected ) {
+            return false;
+        }
+        return !n->chatbin.mission_selected->is_complete( p->getID() );
+    } );
+
+    // ============================================================
+    // Time and calendar
+    // ============================================================
+
+    // Returns the current season as a lowercase string: "spring", "summer", "autumn", "winter".
+    reg.add( "get_season", {}, vt::string, []( const std::vector<value> & ) -> value {
+        switch( season_of_year( calendar::turn ) ) {
+            case SPRING: return std::string( "spring" );
+            case SUMMER: return std::string( "summer" );
+            case AUTUMN: return std::string( "autumn" );
+            case WINTER: return std::string( "winter" );
+            default:     return std::string( "spring" );
+        }
+    } );
+
+    // True if the current season matches the given string ("spring", "summer", "autumn", "winter").
+    reg.add( "is_season", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        const auto &s = std::get<std::string>( args[0] );
+        switch( season_of_year( calendar::turn ) ) {
+            case SPRING: return s == "spring";
+            case SUMMER: return s == "summer";
+            case AUTUMN: return s == "autumn";
+            case WINTER: return s == "winter";
+            default:     return false;
+        }
+    } );
+
+    // Integer number of days elapsed since the start of the cataclysm.
+    reg.add( "days_since_cataclysm", {}, vt::number,
+    []( const std::vector<value> & ) -> value {
+        return static_cast<double>(
+            to_days<int>( calendar::turn - calendar::start_of_cataclysm ) );
+    } );
+
+    // True if it is currently daytime (sun above horizon).
+    reg.add( "is_day", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        return is_day( calendar::turn );
+    } );
+
+    // ============================================================
+    // Driving
+    // ============================================================
+
+    reg.add( "u_driving", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return false;
+        }
+        if( const optional_vpart_position vp = get_map().veh_at( p->pos() ) ) {
+            return vp->vehicle().is_moving() && vp->vehicle().player_in_control( *p );
+        }
+        return false;
+    } );
+
+    reg.add( "npc_driving", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        if( const optional_vpart_position vp = get_map().veh_at( n->pos() ) ) {
+            return vp->vehicle().is_moving() && vp->vehicle().player_in_control( *n );
+        }
+        return false;
+    } );
+
+    // ============================================================
+    // NPC rule flags (ally_rule)
+    // ============================================================
+    // npc_has_rule("use_guns")        — rule is active (considering overrides)
+    // npc_has_override("use_guns")    — an override is set for this rule
+
+    reg.add( "npc_has_rule", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        const auto &key = std::get<std::string>( args[0] );
+        auto it = ally_rule_strs.find( key );
+        if( it == ally_rule_strs.end() ) {
+            DebugLog( DL::Warn, DC::Dialogue )
+                << "yarn: npc_has_rule: unknown rule '" << key << "'";
+            return false;
+        }
+        return n->rules.has_flag( it->second.rule );
+    } );
+
+    reg.add( "npc_has_override", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        const auto &key = std::get<std::string>( args[0] );
+        auto it = ally_rule_strs.find( key );
+        if( it == ally_rule_strs.end() ) {
+            DebugLog( DL::Warn, DC::Dialogue )
+                << "yarn: npc_has_override: unknown rule '" << key << "'";
+            return false;
+        }
+        return n->rules.has_override_enable( it->second.rule );
+    } );
+
+    // ============================================================
+    // NPC combat/behaviour rules (aim, engagement, CBM)
+    // ============================================================
+    // npc_aim_rule("AIM_PRECISE")             — checks rules.aim
+    // npc_engagement_rule("ENGAGE_ALL")       — checks rules.engagement
+    // npc_cbm_reserve_rule("CBM_RESERVE_ALL") — checks rules.cbm_reserve
+    // npc_cbm_recharge_rule("CBM_RECHARGE_ALWAYS") — checks rules.cbm_recharge
+
+    reg.add( "npc_aim_rule", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        const auto &key = std::get<std::string>( args[0] );
+        auto it = aim_rule_strs.find( key );
+        if( it == aim_rule_strs.end() ) {
+            DebugLog( DL::Warn, DC::Dialogue )
+                << "yarn: npc_aim_rule: unknown rule '" << key << "'";
+            return false;
+        }
+        return n->rules.aim == it->second;
+    } );
+
+    reg.add( "npc_engagement_rule", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        const auto &key = std::get<std::string>( args[0] );
+        auto it = combat_engagement_strs.find( key );
+        if( it == combat_engagement_strs.end() ) {
+            DebugLog( DL::Warn, DC::Dialogue )
+                << "yarn: npc_engagement_rule: unknown rule '" << key << "'";
+            return false;
+        }
+        return n->rules.engagement == it->second;
+    } );
+
+    reg.add( "npc_cbm_reserve_rule", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        const auto &key = std::get<std::string>( args[0] );
+        auto it = cbm_reserve_strs.find( key );
+        if( it == cbm_reserve_strs.end() ) {
+            DebugLog( DL::Warn, DC::Dialogue )
+                << "yarn: npc_cbm_reserve_rule: unknown rule '" << key << "'";
+            return false;
+        }
+        return n->rules.cbm_reserve == it->second;
+    } );
+
+    reg.add( "npc_cbm_recharge_rule", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        const auto &key = std::get<std::string>( args[0] );
+        auto it = cbm_recharge_strs.find( key );
+        if( it == cbm_recharge_strs.end() ) {
+            DebugLog( DL::Warn, DC::Dialogue )
+                << "yarn: npc_cbm_recharge_rule: unknown rule '" << key << "'";
+            return false;
+        }
+        return n->rules.cbm_recharge == it->second;
+    } );
+
+    // ============================================================
+    // Location
+    // ============================================================
+
+    // True if the NPC (the "beta" in legacy terms) is outdoors.
+    reg.add( "is_outside", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        map &here = get_map();
+        return !here.has_flag( TFLAG_INDOORS, here.getabs( n->pos() ) );
+    } );
+
+    // True if the NPC is in a safe-space overmap tile.
+    reg.add( "at_safe_space", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        return get_overmapbuffer( n->get_dimension() ).is_safe( n->global_omt_location() );
+    } );
+
+    // True if the player is standing on the given overmap terrain type.
+    reg.add( "u_at_om_location", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return false;
+        }
+        const auto &loc = std::get<std::string>( args[0] );
+        const oter_id &ter = get_overmapbuffer( p->get_dimension() ).ter( p->global_omt_location() );
+        return ter == oter_id( oter_no_dir( oter_id( loc ) ) );
+    } );
+
+    // True if the NPC is standing on the given overmap terrain type.
+    reg.add( "npc_at_om_location", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
+        }
+        const auto &loc = std::get<std::string>( args[0] );
+        const oter_id &ter = get_overmapbuffer( n->get_dimension() ).ter( n->global_omt_location() );
+        return ter == oter_id( oter_no_dir( oter_id( loc ) ) );
+    } );
+
+    // ============================================================
+    // World NPC queries (requires live game)
+    // ============================================================
+
+    // True if any nearby NPC has the given companion mission role.
+    reg.add( "npc_role_nearby", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p || !g ) {
+            return false;
+        }
+        const auto &role = std::get<std::string>( args[0] );
+        auto npcs = g->get_npcs_if( [&]( const npc &guy ) {
+            return p->posz() == guy.posz()
+                && guy.companion_mission_role_id == role
+                && rl_dist( p->pos(), guy.pos() ) <= 48;
+        } );
+        return !npcs.empty();
+    } );
+
+    // True if the player has at least the given number of NPC allies.
+    reg.add( "npc_allies", {vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        if( !g ) {
+            return false;
+        }
+        auto min_allies = static_cast<std::size_t>( std::get<double>( args[0] ) );
+        return g->allies().size() >= min_allies;
+    } );
+
+    // ============================================================
+    // NPC training availability
+    // ============================================================
+
+    reg.add( "npc_train_skills", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        auto *p = g_conv_ctx.player_ref;
+        return n && p && !n->skills_offered_to( *p ).empty();
+    } );
+
+    reg.add( "npc_train_styles", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        auto *p = g_conv_ctx.player_ref;
+        return n && p && !n->styles_offered_to( *p ).empty();
+    } );
+
+    // ============================================================
+    // Stolen items
+    // ============================================================
+
+    reg.add( "u_has_stolen_item", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        auto *n = g_conv_ctx.npc_ref;
+        if( !p || !n ) {
+            return false;
+        }
+        return std::ranges::any_of( p->inv_dump(),
+            [n]( const item *it ) { return it->is_old_owner( *n, true ); } );
+    } );
+
+    // ============================================================
+    // Missions (player)
+    // ============================================================
+
+    // True if the player has an active mission of the given type ID.
+    reg.add( "u_has_mission", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return false;
+        }
+        auto *av = dynamic_cast<avatar *>( p );
+        if( !av ) {
+            return false;
+        }
+        auto target = mission_type_id( std::get<std::string>( args[0] ) );
+        return std::ranges::any_of( av->get_active_missions(),
+            [&target]( mission *m ) { return m->mission_id() == target; } );
+    } );
+
+    // ============================================================
+    // Recipe knowledge
+    // ============================================================
+
+    reg.add( "u_know_recipe", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return false;
+        }
+        const recipe &r = recipe_id( std::get<std::string>( args[0] ) ).obj();
+        return p->knows_recipe( &r );
     } );
 }
 
