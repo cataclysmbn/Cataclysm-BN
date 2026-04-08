@@ -6604,8 +6604,7 @@ int item::get_encumber_when_containing(
         default:
             break;
     }
-
-    encumber += get_clothing_mod_val( clothing_mod_type_encumbrance );
+    encumber += std::lround( get_clothing_mod_val( clothing_mod_type_encumbrance ) );
 
     return encumber;
 }
