@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include "calendar.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -59,6 +60,14 @@ auto type_name( value_type t ) -> std::string_view
 void func_registry::register_func( func_signature sig )
 {
     funcs_.emplace( sig.name, std::move( sig ) );
+}
+
+void func_registry::add( std::string name,
+                          std::initializer_list<value_type> params,
+                          value_type ret,
+                          std::function<value( const std::vector<value> & )> impl )
+{
+    register_func( { std::move( name ), std::vector<value_type>( params ), ret, std::move( impl ) } );
 }
 
 auto func_registry::has_func( const std::string &name ) const -> bool
@@ -1174,6 +1183,96 @@ auto yarn_story::all_nodes() const -> const std::unordered_map<std::string, yarn
 }
 
 // ============================================================
+// yarn_runtime helpers (anonymous namespace)
+// ============================================================
+
+namespace
+{
+
+// Mirrors TALK_SIZE_UP logic from npctalk.cpp::dynamic_line().
+auto size_up_text( const npc &p, const player &you ) -> std::string
+{
+    int ability = you.per_cur * 3 + you.int_cur;
+    if( ability <= 10 ) {
+        return _( "You can't make anything out." );
+    }
+
+    if( p.is_player_ally() || ability > 100 ) {
+        ability = 100;
+    }
+
+    std::string info;
+    int str_range = 100 / ability;
+    int str_min   = ( p.str_max / str_range ) * str_range;
+    info += string_format( _( "Str %d - %d" ), str_min, str_min + str_range );
+
+    if( ability >= 40 ) {
+        int dex_range = 160 / ability;
+        int dex_min   = ( p.dex_max / dex_range ) * dex_range;
+        info += string_format( _( "  Dex %d - %d" ), dex_min, dex_min + dex_range );
+    }
+    if( ability >= 50 ) {
+        int int_range = 200 / ability;
+        int int_min   = ( p.int_max / int_range ) * int_range;
+        info += string_format( _( "  Int %d - %d" ), int_min, int_min + int_range );
+    }
+    if( ability >= 60 ) {
+        int per_range = 240 / ability;
+        int per_min   = ( p.per_max / per_range ) * per_range;
+        info += string_format( _( "  Per %d - %d" ), per_min, per_min + per_range );
+    }
+
+    needs_rates rates = p.calc_needs_rates();
+
+    if( ability >= 100 - ( p.get_fatigue() / 10 ) ) {
+        std::string how_tired;
+        if( p.get_fatigue() > fatigue_levels::exhausted ) {
+            how_tired = _( "Exhausted" );
+        } else if( p.get_fatigue() > fatigue_levels::dead_tired ) {
+            how_tired = _( "Dead tired" );
+        } else if( p.get_fatigue() > fatigue_levels::tired ) {
+            how_tired = _( "Tired" );
+        } else {
+            how_tired = _( "Not tired" );
+            if( ability >= 100 ) {
+                time_duration sleep_at = 5_minutes
+                                         * ( fatigue_levels::tired - p.get_fatigue() )
+                                         / rates.fatigue;
+                how_tired += _( ".  Will need sleep in " ) + to_string_approx( sleep_at );
+            }
+        }
+        info += "\n" + how_tired;
+    }
+
+    if( ability >= 100 ) {
+        if( p.get_thirst() < thirst_levels::thirsty ) {
+            time_duration thirst_at = 5_minutes
+                                       * ( thirst_levels::thirsty - p.get_thirst() )
+                                       / rates.thirst;
+            if( thirst_at > 1_hours ) {
+                info += _( "\nWill need water in " ) + to_string_approx( thirst_at );
+            }
+        } else {
+            info += _( "\nThirsty" );
+        }
+        if( p.max_stored_kcal() - p.get_stored_kcal() > 500 ) {
+            time_duration hunger_at = 5_minutes
+                                       * ( 500 - p.max_stored_kcal() + p.get_stored_kcal() )
+                                       / p.bmr();
+            if( hunger_at > 1_hours ) {
+                info += _( "\nWill need food in " ) + to_string_approx( hunger_at );
+            }
+        } else {
+            info += _( "\nHungry" );
+        }
+    }
+
+    return info;
+}
+
+} // anonymous namespace
+
+// ============================================================
 // yarn_runtime
 // ============================================================
 
@@ -1376,6 +1475,34 @@ auto yarn_runtime::present_choices( const std::vector<node_element::choice> &cho
                 }
                 continue;
             }
+            // Special always-available actions (mirrors dialogue::opt behaviour)
+            if( ch == 'L' || ch == 'l' ) {
+                if( npc_ ) {
+                    d_win.add_to_history( npc_->short_description() );
+                }
+                continue;
+            }
+            if( ch == 'O' || ch == 'o' ) {
+                if( npc_ ) {
+                    d_win.add_to_history( npc_->opinion_text() );
+                }
+                continue;
+            }
+            if( ch == 'Y' || ch == 'y' ) {
+                if( player_ ) {
+                    player_->shout();
+                    d_win.add_to_history( player_->is_deaf()
+                                          ? _( "You yell, but can't hear yourself." )
+                                          : _( "You yell." ) );
+                }
+                continue;
+            }
+            if( ch == 'S' || ch == 's' ) {
+                if( npc_ && player_ ) {
+                    d_win.add_to_history( size_up_text( *npc_, *player_ ) );
+                }
+                continue;
+            }
             if( ch == KEY_ENTER || ch == '\n' || ch == '\r' ) {
                 ch = static_cast<int>( selected );
             } else {
@@ -1472,195 +1599,129 @@ struct conv_ctx_guard {
 
 void register_builtin_functions( func_registry &reg )
 {
+    using vt = value_type;
+
     // Player-side predicates and getters (u_ prefix)
 
-    reg.register_func( {
-        "u_has_trait",
-        { value_type::string },
-        value_type::boolean,
-        []( const std::vector<value> &args ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            return p && p->has_trait( trait_id( std::get<std::string>( args[0] ) ) );
-        }
+    reg.add( "u_has_trait", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->has_trait( trait_id( std::get<std::string>( args[0] ) ) );
     } );
 
-    reg.register_func( {
-        "u_has_effect",
-        { value_type::string },
-        value_type::boolean,
-        []( const std::vector<value> &args ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            return p && p->has_effect( efftype_id( std::get<std::string>( args[0] ) ) );
-        }
+    reg.add( "u_has_effect", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->has_effect( efftype_id( std::get<std::string>( args[0] ) ) );
     } );
 
-    reg.register_func( {
-        "u_has_bionic",
-        { value_type::string },
-        value_type::boolean,
-        []( const std::vector<value> &args ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            return p && p->has_bionic( bionic_id( std::get<std::string>( args[0] ) ) );
-        }
+    reg.add( "u_has_bionic", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->has_bionic( bionic_id( std::get<std::string>( args[0] ) ) );
     } );
 
-    reg.register_func( {
-        "u_has_item",
-        { value_type::string },
-        value_type::boolean,
-        []( const std::vector<value> &args ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            return p && p->has_item_with_id( itype_id( std::get<std::string>( args[0] ) ) );
-        }
+    reg.add( "u_has_item", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p && p->has_item_with_id( itype_id( std::get<std::string>( args[0] ) ) );
     } );
 
-    reg.register_func( {
-        "u_has_items",
-        { value_type::string, value_type::number },
-        value_type::boolean,
-        []( const std::vector<value> &args ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            if( !p ) {
-                return false;
-            }
-            auto id    = itype_id( std::get<std::string>( args[0] ) );
-            auto count = static_cast<int>( std::get<double>( args[1] ) );
-            return static_cast<int>( p->all_items_with_id( id ).size() ) >= count;
+    reg.add( "u_has_items", {vt::string, vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return false;
         }
+        auto id    = itype_id( std::get<std::string>( args[0] ) );
+        auto count = static_cast<int>( std::get<double>( args[1] ) );
+        return static_cast<int>( p->all_items_with_id( id ).size() ) >= count;
     } );
 
-    reg.register_func( {
-        "u_has_skill",
-        { value_type::string, value_type::number },
-        value_type::boolean,
-        []( const std::vector<value> &args ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            if( !p ) {
-                return false;
-            }
-            auto level = static_cast<int>( std::get<double>( args[1] ) );
-            return p->get_skill_level( skill_id( std::get<std::string>( args[0] ) ) ) >= level;
+    reg.add( "u_has_skill", {vt::string, vt::number}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) {
+            return false;
         }
+        auto level = static_cast<int>( std::get<double>( args[1] ) );
+        return p->get_skill_level( skill_id( std::get<std::string>( args[0] ) ) ) >= level;
     } );
 
-    reg.register_func( {
-        "u_get_str",
-        {},
-        value_type::number,
-        []( const std::vector<value> & ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            return p ? static_cast<double>( p->get_str() ) : 0.0;
-        }
+    reg.add( "u_get_str", {}, vt::number,
+    []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p ? static_cast<double>( p->get_str() ) : 0.0;
     } );
 
-    reg.register_func( {
-        "u_get_dex",
-        {},
-        value_type::number,
-        []( const std::vector<value> & ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            return p ? static_cast<double>( p->get_dex() ) : 0.0;
-        }
+    reg.add( "u_get_dex", {}, vt::number,
+    []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p ? static_cast<double>( p->get_dex() ) : 0.0;
     } );
 
-    reg.register_func( {
-        "u_get_int",
-        {},
-        value_type::number,
-        []( const std::vector<value> & ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            return p ? static_cast<double>( p->get_int() ) : 0.0;
-        }
+    reg.add( "u_get_int", {}, vt::number,
+    []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p ? static_cast<double>( p->get_int() ) : 0.0;
     } );
 
-    reg.register_func( {
-        "u_get_per",
-        {},
-        value_type::number,
-        []( const std::vector<value> & ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            return p ? static_cast<double>( p->get_per() ) : 0.0;
-        }
+    reg.add( "u_get_per", {}, vt::number,
+    []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p ? static_cast<double>( p->get_per() ) : 0.0;
     } );
 
-    reg.register_func( {
-        "u_name",
-        {},
-        value_type::string,
-        []( const std::vector<value> & ) -> value {
-            auto *p = g_conv_ctx.player_ref;
-            return p ? p->name : std::string{};
-        }
+    reg.add( "u_name", {}, vt::string,
+    []( const std::vector<value> & ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        return p ? p->name : std::string{};
     } );
 
     // NPC-side predicates and getters (npc_ prefix)
 
-    reg.register_func( {
-        "npc_has_trait",
-        { value_type::string },
-        value_type::boolean,
-        []( const std::vector<value> &args ) -> value {
-            auto *n = g_conv_ctx.npc_ref;
-            return n && n->has_trait( trait_id( std::get<std::string>( args[0] ) ) );
-        }
+    reg.add( "npc_has_trait", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->has_trait( trait_id( std::get<std::string>( args[0] ) ) );
     } );
 
-    reg.register_func( {
-        "npc_is_following",
-        {},
-        value_type::boolean,
-        []( const std::vector<value> & ) -> value {
-            auto *n = g_conv_ctx.npc_ref;
-            return n && n->is_following();
-        }
+    reg.add( "npc_is_following", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n && n->is_following();
     } );
 
-    reg.register_func( {
-        "npc_is_ally",
-        {},
-        value_type::boolean,
-        []( const std::vector<value> & ) -> value {
-            auto *n = g_conv_ctx.npc_ref;
-            if( !n ) {
-                return false;
-            }
-            auto att = n->get_attitude();
-            return att == NPCATT_FOLLOW || att == NPCATT_LEAD || att == NPCATT_HEAL;
+    reg.add( "npc_is_ally", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
         }
+        auto att = n->get_attitude();
+        return att == NPCATT_FOLLOW || att == NPCATT_LEAD || att == NPCATT_HEAL;
     } );
 
-    reg.register_func( {
-        "npc_is_enemy",
-        {},
-        value_type::boolean,
-        []( const std::vector<value> & ) -> value {
-            auto *n = g_conv_ctx.npc_ref;
-            if( !n ) {
-                return false;
-            }
-            auto att = n->get_attitude();
-            return att == NPCATT_KILL || att == NPCATT_MUG || att == NPCATT_WAIT_FOR_LEAVE;
+    reg.add( "npc_is_enemy", {}, vt::boolean,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        if( !n ) {
+            return false;
         }
+        auto att = n->get_attitude();
+        return att == NPCATT_KILL || att == NPCATT_MUG || att == NPCATT_WAIT_FOR_LEAVE;
     } );
 
-    reg.register_func( {
-        "npc_name",
-        {},
-        value_type::string,
-        []( const std::vector<value> & ) -> value {
-            auto *n = g_conv_ctx.npc_ref;
-            return n ? n->name : std::string{};
-        }
+    reg.add( "npc_name", {}, vt::string,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? n->name : std::string{};
     } );
 
-    reg.register_func( {
-        "npc_trust",
-        {},
-        value_type::number,
-        []( const std::vector<value> & ) -> value {
-            auto *n = g_conv_ctx.npc_ref;
-            return n ? static_cast<double>( n->op_of_u.trust ) : 0.0;
-        }
+    reg.add( "npc_trust", {}, vt::number,
+    []( const std::vector<value> & ) -> value {
+        auto *n = g_conv_ctx.npc_ref;
+        return n ? static_cast<double>( n->op_of_u.trust ) : 0.0;
     } );
 }
 

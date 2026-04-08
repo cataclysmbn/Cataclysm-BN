@@ -109,6 +109,14 @@ struct func_signature {
 class func_registry {
     public:
         void register_func( func_signature sig );
+
+        // Convenience form: avoids explicit func_signature struct construction.
+        // params is an initializer_list so callers can write {vt::string, vt::number}.
+        void add( std::string name,
+                  std::initializer_list<value_type> params,
+                  value_type ret,
+                  std::function<value( const std::vector<value> & )> impl );
+
         auto has_func( const std::string &name ) const -> bool;
         auto get_func( const std::string &name ) const -> const func_signature &;
         auto call( const std::string &name, const std::vector<value> &args ) const -> value;
