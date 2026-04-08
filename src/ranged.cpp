@@ -216,21 +216,6 @@ auto get_shot_half_angle( const item &gun ) -> double
     return shot_data->half_angle;
 }
 
-auto get_shot_projectile( projectile proj, const int shot_count ) -> projectile
-{
-    if( shot_count <= 1 ) {
-        return proj;
-    }
-
-    const auto projectile_divisor = static_cast<double>( shot_count );
-    proj.impact.mult_damage( 1.0 / projectile_divisor, true );
-    for( auto &damage_unit : proj.impact ) {
-        damage_unit.res_pen /= projectile_divisor;
-    }
-
-    return proj;
-}
-
 auto get_shot_target( const shot_target_options &options ) -> tripoint
 {
     const auto range = rl_dist( options.source, options.target );
@@ -1236,9 +1221,8 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
             projectile.add_effect( ammo_effect_NO_CRIT );
         }
         if( !shape ) {
-            const auto shot_projectile = get_shot_projectile( projectile, shot_count );
             const auto render_multishot = shot_count > 1 && get_option<bool>( "ANIMATION_PROJECTILES" );
-            const auto render_projectile = shot_projectile;
+            const auto render_projectile = projectile;
             auto projectile_trajectories = std::vector<std::vector<tripoint>> {};
             projectile_trajectories.reserve( shot_count );
             auto animation_suppression = std::optional<scoped_projectile_animation_suppression> {};
@@ -1279,8 +1263,8 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
             if( render_multishot ) {
                 draw_bullet_trajectories( {
                     .trajectories = projectile_trajectories,
-                    .bullet = get_projectile_animation_symbol( shot_projectile ),
-                    .draw_as_line = projectile_draws_as_line( shot_projectile ),
+                    .bullet = get_projectile_animation_symbol( projectile ),
+                    .draw_as_line = projectile_draws_as_line( projectile ),
                     .custom_sprite = {},
                 } );
             }

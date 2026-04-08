@@ -60,12 +60,8 @@
     "copy-from": "shot_slug",
     "type": "AMMO",
     "name": { "str": "shotgun slug, black powder" },
-    "proportional": {
-      "price": 0.5,
-      "damage": { "damage_type": "bullet", "amount": 0.8, "armor_penetration": 0.5 },
-      "recoil": 0.76,
-      "dispersion": 1.2
-    },
+    "damage": { "damage_type": "bullet", "amount": 46, "armor_penetration": 9 },
+    "proportional": { "price": 0.5, "recoil": 0.76, "dispersion": 1.2 },
     "extend": { "effects": [ "RECYCLED", "MUZZLE_SMOKE", "BLACKPOWDER" ] }
   },
   {
@@ -86,7 +82,7 @@
     "ammo_type": "shot",
     "casing": "shot_hull",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 72, "armor_multiplier": 2 },
+    "damage": { "damage_type": "bullet", "amount": 9, "armor_multiplier": 2 },
     "recoil": 2500,
     "loudness": 160,
     "effects": [ "COOKOFF", "SHOT" ]
@@ -97,7 +93,7 @@
     "type": "AMMO",
     "name": { "str": "00 shot" },
     "description": "A shell filled with metal pellets.  Extremely damaging, plus the spread makes it very accurate at short range.  Favored by SWAT forces.",
-    "shot": { "count": 9, "half_angle": 3 }
+    "shot": { "count": 12, "half_angle": 3 }
   },
   {
     "id": "shot_beanbag",
@@ -122,9 +118,9 @@
     "price": "1 USD",
     "price_postapoc": "4 USD",
     "range": 10,
-    "damage": { "damage_type": "bullet", "amount": 45, "armor_multiplier": 3 },
+    "damage": { "damage_type": "bullet", "amount": 9, "armor_multiplier": 3 },
     "loudness": 80,
-    "shot": { "count": 12, "half_angle": 5 },
+    "shot": { "count": 24, "half_angle": 5 },
     "extend": { "effects": [ "NOGIB" ] }
   },
   {
@@ -151,8 +147,8 @@
     "price_postapoc": "8 USD",
     "count": 10,
     "//": "Balanced as standard AP.",
-    "shot": { "count": 8, "half_angle": 2 },
-    "relative": { "damage": { "damage_type": "bullet", "amount": -20, "armor_penetration": 15, "armor_multiplier": -1.5 } }
+    "damage": { "damage_type": "bullet", "amount": 9, "armor_penetration": 15, "armor_multiplier": 0.5 },
+    "shot": { "count": 12, "half_angle": 2 }
   },
   {
     "id": "shot_he",
@@ -175,8 +171,9 @@
     "name": { "str": "00 shot, scrap loaded" },
     "description": "A shotgun shell filled with whatever was lying around.  They are more damaging than birdshot, but fairly inaccurate.",
     "dispersion": 60,
-    "shot": { "count": 12, "half_angle": 6 },
-    "proportional": { "price": 0.5, "price_postapoc": 0.5, "damage": { "damage_type": "bullet", "amount": 0.8, "armor_multiplier": 1.25 } },
+    "damage": { "damage_type": "bullet", "amount": 9, "armor_multiplier": 2.5 },
+    "shot": { "count": 16, "half_angle": 6 },
+    "proportional": { "price": 0.5, "price_postapoc": 0.5 },
     "extend": { "effects": [ "RECYCLED" ] }
   },
   {
@@ -202,8 +199,8 @@
     "price": "4 USD",
     "price_postapoc": "4 USD",
     "dispersion": 80,
-    "//": "Balanced as FMJ",
-    "relative": { "range": 12, "damage": { "damage_type": "bullet", "amount": -15, "armor_penetration": 18, "armor_multiplier": -1 } },
+    "range": 32,
+    "damage": { "damage_type": "bullet", "amount": 57, "armor_penetration": 18, "armor_multiplier": 1 },
     "proportional": { "recoil": 1.4 },
     "delete": { "effects": [ "SHOT" ] }
   }

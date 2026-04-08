@@ -111,7 +111,7 @@
 "drop_count": 1,            // (Optional) Number of items to drop. For tools, this sets their charges. 
                              // If omitted, the drop amount defaults to the 'count' defined in its itype.
 "shot": {                   // (Optional) Shot-pattern data for pellet-style ammo.
-  "count": 9,              // Number of projectile attacks spawned by one round.
+  "count": 12,             // Number of projectile attacks spawned by one round.
   "half_angle": 3          // Half-angle in degrees used for the pellet spread preview and pattern.
 },
 "effects" : ["COOKOFF", "SHOT"]

@@ -81,8 +81,8 @@
     "price_postapoc": "40 USD",
     "count": 10,
     "//": "Balanced as AP.",
-    "shot": { "count": 8, "half_angle": 2 },
-    "relative": { "damage": { "damage_type": "bullet", "amount": -18, "armor_penetration": 36, "armor_multiplier": -1.5 } }
+    "damage": { "damage_type": "bullet", "amount": 7, "armor_penetration": 36, "armor_multiplier": 0.5 },
+    "shot": { "count": 12, "half_angle": 2 }
   },
   {
     "id": "20x66_frag",
@@ -124,7 +124,7 @@
     "stack_size": 20,
     "ammo_type": "20x66mm",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 90, "armor_multiplier": 2 },
+    "damage": { "damage_type": "bullet", "amount": 8, "armor_multiplier": 2 },
     "recoil": 2500,
     "effects": [ "COOKOFF", "SHOT", "NEVER_MISFIRES" ]
   },
