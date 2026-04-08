@@ -2,6 +2,9 @@ title: Start
 ---
 Thank God, another person. I've been holed up here since the first night.
 You doing alright? This place has been... quiet. Too quiet.
+<<if u_get_str() >= 8>>
+You look strong. That helps out here.
+<<endif>>
 -> Ask about supplies
     Supplies? I found a few cans in the back room. You're welcome to them.
     I'm not going anywhere fast anyway.

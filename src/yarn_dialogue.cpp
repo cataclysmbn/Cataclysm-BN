@@ -19,6 +19,7 @@
 #include "npc.h"
 #include "path_info.h"
 #include "player.h"
+#include "skill.h"
 #include "translations.h"
 #include "ui_manager.h"
 
@@ -1446,137 +1447,220 @@ auto get_yarn_story( const std::string &name ) -> const yarn_story &
 }
 
 // ============================================================
+// Conversation context (thread-local so global registry lambdas can read it)
+// ============================================================
+
+namespace
+{
+
+struct yarn_conv_ctx {
+    npc    *npc_ref    = nullptr;
+    player *player_ref = nullptr;
+};
+
+thread_local yarn_conv_ctx g_conv_ctx;
+
+struct conv_ctx_guard {
+    ~conv_ctx_guard() { g_conv_ctx = {}; }
+};
+
+} // anonymous namespace
+
+// ============================================================
 // Built-in functions
 // ============================================================
 
 void register_builtin_functions( func_registry &reg )
 {
-    // These are thin wrappers; the actual game state is accessed via the
-    // Lua bindings already bound in catalua_bindings_creature.cpp.
-    // For now we register stubs that can be wired to real game state
-    // in a follow-up pass once the integration plumbing is in place.
-    //
-    // TODO: wire each stub to the corresponding Lua binding or direct
-    // C++ call once try_yarn_dialogue() has access to the npc/player refs
-    // via a thread-local or call-stack context.
+    // Player-side predicates and getters (u_ prefix)
 
     reg.register_func( {
-        "has_trait",
+        "u_has_trait",
         { value_type::string },
         value_type::boolean,
-        []( const std::vector<value> & ) -> value { return false; }
+        []( const std::vector<value> &args ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            return p && p->has_trait( trait_id( std::get<std::string>( args[0] ) ) );
+        }
     } );
+
+    reg.register_func( {
+        "u_has_effect",
+        { value_type::string },
+        value_type::boolean,
+        []( const std::vector<value> &args ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            return p && p->has_effect( efftype_id( std::get<std::string>( args[0] ) ) );
+        }
+    } );
+
+    reg.register_func( {
+        "u_has_bionic",
+        { value_type::string },
+        value_type::boolean,
+        []( const std::vector<value> &args ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            return p && p->has_bionic( bionic_id( std::get<std::string>( args[0] ) ) );
+        }
+    } );
+
+    reg.register_func( {
+        "u_has_item",
+        { value_type::string },
+        value_type::boolean,
+        []( const std::vector<value> &args ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            return p && p->has_item_with_id( itype_id( std::get<std::string>( args[0] ) ) );
+        }
+    } );
+
+    reg.register_func( {
+        "u_has_items",
+        { value_type::string, value_type::number },
+        value_type::boolean,
+        []( const std::vector<value> &args ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            if( !p ) {
+                return false;
+            }
+            auto id    = itype_id( std::get<std::string>( args[0] ) );
+            auto count = static_cast<int>( std::get<double>( args[1] ) );
+            return static_cast<int>( p->all_items_with_id( id ).size() ) >= count;
+        }
+    } );
+
+    reg.register_func( {
+        "u_has_skill",
+        { value_type::string, value_type::number },
+        value_type::boolean,
+        []( const std::vector<value> &args ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            if( !p ) {
+                return false;
+            }
+            auto level = static_cast<int>( std::get<double>( args[1] ) );
+            return p->get_skill_level( skill_id( std::get<std::string>( args[0] ) ) ) >= level;
+        }
+    } );
+
+    reg.register_func( {
+        "u_get_str",
+        {},
+        value_type::number,
+        []( const std::vector<value> & ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            return p ? static_cast<double>( p->get_str() ) : 0.0;
+        }
+    } );
+
+    reg.register_func( {
+        "u_get_dex",
+        {},
+        value_type::number,
+        []( const std::vector<value> & ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            return p ? static_cast<double>( p->get_dex() ) : 0.0;
+        }
+    } );
+
+    reg.register_func( {
+        "u_get_int",
+        {},
+        value_type::number,
+        []( const std::vector<value> & ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            return p ? static_cast<double>( p->get_int() ) : 0.0;
+        }
+    } );
+
+    reg.register_func( {
+        "u_get_per",
+        {},
+        value_type::number,
+        []( const std::vector<value> & ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            return p ? static_cast<double>( p->get_per() ) : 0.0;
+        }
+    } );
+
+    reg.register_func( {
+        "u_name",
+        {},
+        value_type::string,
+        []( const std::vector<value> & ) -> value {
+            auto *p = g_conv_ctx.player_ref;
+            return p ? p->name : std::string{};
+        }
+    } );
+
+    // NPC-side predicates and getters (npc_ prefix)
 
     reg.register_func( {
         "npc_has_trait",
         { value_type::string },
         value_type::boolean,
-        []( const std::vector<value> & ) -> value { return false; }
+        []( const std::vector<value> &args ) -> value {
+            auto *n = g_conv_ctx.npc_ref;
+            return n && n->has_trait( trait_id( std::get<std::string>( args[0] ) ) );
+        }
     } );
 
     reg.register_func( {
-        "has_skill",
-        { value_type::string, value_type::number },
-        value_type::boolean,
-        []( const std::vector<value> & ) -> value { return false; }
-    } );
-
-    reg.register_func( {
-        "get_str",
+        "npc_is_following",
         {},
-        value_type::number,
-        []( const std::vector<value> & ) -> value { return 0.0; }
+        value_type::boolean,
+        []( const std::vector<value> & ) -> value {
+            auto *n = g_conv_ctx.npc_ref;
+            return n && n->is_following();
+        }
     } );
 
     reg.register_func( {
-        "get_dex",
+        "npc_is_ally",
         {},
-        value_type::number,
-        []( const std::vector<value> & ) -> value { return 0.0; }
+        value_type::boolean,
+        []( const std::vector<value> & ) -> value {
+            auto *n = g_conv_ctx.npc_ref;
+            if( !n ) {
+                return false;
+            }
+            auto att = n->get_attitude();
+            return att == NPCATT_FOLLOW || att == NPCATT_LEAD || att == NPCATT_HEAL;
+        }
     } );
 
     reg.register_func( {
-        "get_int",
+        "npc_is_enemy",
         {},
-        value_type::number,
-        []( const std::vector<value> & ) -> value { return 0.0; }
-    } );
-
-    reg.register_func( {
-        "get_per",
-        {},
-        value_type::number,
-        []( const std::vector<value> & ) -> value { return 0.0; }
-    } );
-
-    reg.register_func( {
-        "has_effect",
-        { value_type::string },
         value_type::boolean,
-        []( const std::vector<value> & ) -> value { return false; }
-    } );
-
-    reg.register_func( {
-        "has_bionic",
-        { value_type::string },
-        value_type::boolean,
-        []( const std::vector<value> & ) -> value { return false; }
-    } );
-
-    reg.register_func( {
-        "has_item",
-        { value_type::string },
-        value_type::boolean,
-        []( const std::vector<value> & ) -> value { return false; }
-    } );
-
-    reg.register_func( {
-        "has_items",
-        { value_type::string, value_type::number },
-        value_type::boolean,
-        []( const std::vector<value> & ) -> value { return false; }
+        []( const std::vector<value> & ) -> value {
+            auto *n = g_conv_ctx.npc_ref;
+            if( !n ) {
+                return false;
+            }
+            auto att = n->get_attitude();
+            return att == NPCATT_KILL || att == NPCATT_MUG || att == NPCATT_WAIT_FOR_LEAVE;
+        }
     } );
 
     reg.register_func( {
         "npc_name",
         {},
         value_type::string,
-        []( const std::vector<value> & ) -> value { return std::string{}; }
-    } );
-
-    reg.register_func( {
-        "player_name",
-        {},
-        value_type::string,
-        []( const std::vector<value> & ) -> value { return std::string{}; }
-    } );
-
-    reg.register_func( {
-        "is_following",
-        {},
-        value_type::boolean,
-        []( const std::vector<value> & ) -> value { return false; }
-    } );
-
-    reg.register_func( {
-        "is_ally",
-        {},
-        value_type::boolean,
-        []( const std::vector<value> & ) -> value { return false; }
-    } );
-
-    reg.register_func( {
-        "is_enemy",
-        {},
-        value_type::boolean,
-        []( const std::vector<value> & ) -> value { return false; }
+        []( const std::vector<value> & ) -> value {
+            auto *n = g_conv_ctx.npc_ref;
+            return n ? n->name : std::string{};
+        }
     } );
 
     reg.register_func( {
         "npc_trust",
         {},
         value_type::number,
-        []( const std::vector<value> & ) -> value { return 0.0; }
+        []( const std::vector<value> & ) -> value {
+            auto *n = g_conv_ctx.npc_ref;
+            return n ? static_cast<double>( n->op_of_u.trust ) : 0.0;
+        }
     } );
 }
 
@@ -1598,6 +1682,9 @@ auto try_yarn_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
 
     const auto &story = get_yarn_story( n.chatbin.yarn_story );
     d_win.print_header( n.name );
+
+    g_conv_ctx = { &n, &p };
+    conv_ctx_guard guard;
 
     yarn_runtime::options opts{
         .story        = story,
