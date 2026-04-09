@@ -11,8 +11,9 @@ title: CommonActions
 position: 62,0
 ---
 -> Barter for supplies.
-    I don't have much, but we can work something out.
+    NPC: I don't have much, but we can work something out.
     <<start_trade>>
--> That's all for now.  Stay safe.
+-> That's all for now.  Stay safe. #spoken
+    NPC: You too.  Be careful out there.
     <<stop>>
 ===

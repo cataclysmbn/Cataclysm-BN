@@ -9,6 +9,20 @@
       ]
     },
     {
+      "yarnName": "player",
+      "documentation": "Emit an explicit player speech line to the dialogue history. Useful with #silent on the containing choice to replace the auto-echoed choice label with natural speech.",
+      "parameters": [
+        { "name": "text", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "npc",
+      "documentation": "Emit an explicit NPC speech line to the dialogue history. Equivalent to a plain dialogue line, but useful for clarity when mixing player and NPC lines inside a choice body.",
+      "parameters": [
+        { "name": "text", "type": "string" }
+      ]
+    },
+    {
       "yarnName": "give_item",
       "documentation": "Add an item to the player's inventory.",
       "parameters": [

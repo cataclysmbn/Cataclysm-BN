@@ -973,12 +973,29 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
             }
         }
 
+        // Check for #spoken tag — opts the choice label in to being echoed as player speech.
+        // Default is no echo; the label is a UI button only.
+        bool echo_speech = false;
+        {
+            constexpr std::string_view spoken_tag = "#spoken";
+            auto tag_pos = choice_text.rfind( spoken_tag );
+            if( tag_pos != std::string_view::npos ) {
+                bool leading_space = tag_pos == 0 || std::isspace( choice_text[tag_pos - 1] );
+                bool trailing_end  = tag_pos + spoken_tag.size() == choice_text.size();
+                if( leading_space && trailing_end ) {
+                    echo_speech = true;
+                    choice_text = trim_sv( choice_text.substr( 0, tag_pos ) );
+                }
+            }
+        }
+
         int choice_indent = line.indent;
         ++i;
 
         node_element::choice ch;
-        ch.text = std::string( choice_text );
-        ch.condition = std::move( condition );
+        ch.text        = std::string( choice_text );
+        ch.condition   = std::move( condition );
+        ch.echo_speech = echo_speech;
         ch.body = parse_choice_body( p, lines, i, end, choice_indent );
         group.choices.push_back( std::move( ch ) );
     }
@@ -1105,7 +1122,27 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
             auto pc = parse_command_line( cmd_inner );
             ++i;
 
-            if( pc.name == "jump" ) {
+            // <<player "text">> / <<npc "text">> — explicit speech lines.
+            // Parsed at load time into kind::dialogue elements; never reach command_registry.
+            // <<player>> emits with player (You) formatting.
+            // <<npc>> emits with NPC name formatting, useful after a #silent choice or
+            // to add additional NPC lines inside a complex choice body.
+            if( pc.name == "player" || pc.name == "npc" ) {
+                if( pc.raw_args.size() != 1 ) {
+                    p.error( line.line_num, "<<" + pc.name + ">> requires exactly one string argument" );
+                } else {
+                    // Strip surrounding quotes; the text is a literal string, not an expression.
+                    auto raw = std::string_view( pc.raw_args[0] );
+                    if( raw.size() >= 2 && raw.front() == '"' && raw.back() == '"' ) {
+                        raw = raw.substr( 1, raw.size() - 2 );
+                    }
+                    node_element elem;
+                    elem.type    = node_element::kind::dialogue;
+                    elem.speaker = pc.name;  // "player" or "npc"
+                    elem.text    = std::string( raw );
+                    elements.push_back( std::move( elem ) );
+                }
+            } else if( pc.name == "jump" ) {
                 if( pc.raw_args.empty() ) {
                     p.error( line.line_num, "<<jump>> requires a node name" );
                 } else {
@@ -1495,28 +1532,48 @@ yarn_runtime::yarn_runtime( options opts )
     , player_( opts.player_ref )
     , dialogue_ref_( opts.dialogue_ref )
 {
-    node_stack_.push_back( std::move( opts.starting_node ) );
+    node_stack_.push_back( { &story_, std::move( opts.starting_node ) } );
 }
 
 void yarn_runtime::run( dialogue_window &d_win )
 {
+    // Resolves a jump/goto target string to a stack_frame.
+    // Bare names resolve within the current frame's story.
+    // "story::NodeName" looks up the named story from the global registry.
+    auto resolve_frame = [&]( const std::string &target ) -> stack_frame {
+        if( const auto sep = target.find( "::" ); sep != std::string::npos ) {
+            const auto sname = target.substr( 0, sep );
+            const auto nname = target.substr( sep + 2 );
+            if( !has_yarn_story( sname ) ) {
+                DebugLog( DL::Error, DC::Dialogue )
+                    << "yarn: cross-story target '" << target << "': story '" << sname
+                    << "' not found — staying put";
+                return node_stack_.back();
+            }
+            return { &get_yarn_story( sname ), nname };
+        }
+        // Bare name: inherit current frame's story.
+        return { node_stack_.back().story, target };
+    };
+
     while( !node_stack_.empty() ) {
-        const auto &node_name = node_stack_.back();
-        if( !story_.has_node( node_name ) ) {
-            DebugLog( DL::Error, DC::Dialogue ) << "yarn: node '" << node_name << "' not found";
+        const auto &frame = node_stack_.back();
+        if( !frame.story->has_node( frame.node ) ) {
+            DebugLog( DL::Error, DC::Dialogue )
+                << "yarn: node '" << frame.node << "' not found";
             break;
         }
-        const auto &node = story_.get_node( node_name );
+        const auto &node = frame.story->get_node( frame.node );
         auto result = execute_elements( node.elements, d_win );
 
         switch( result.kind ) {
             case signal::jump:
                 // Replace current frame — standard <<jump>>, no implicit return
-                node_stack_.back() = result.target;
+                node_stack_.back() = resolve_frame( result.target );
                 break;
             case signal::goto_node:
                 // Push: target executes and falls off end → pop back to here
-                node_stack_.push_back( result.target );
+                node_stack_.push_back( resolve_frame( result.target ) );
                 break;
             case signal::yarn_return:
                 node_stack_.pop_back();
@@ -1538,16 +1595,31 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
     for( const auto &elem : elements ) {
         switch( elem.type ) {
             case node_element::kind::dialogue: {
-                auto speaker = elem.speaker.empty() ? ( npc_ ? npc_->name : "NPC" )
-                                                    : elem.speaker;
-                auto text    = interpolate( elem.text );
+                auto text = interpolate( elem.text );
                 if( player_ && npc_ ) {
                     parse_tags( text, *player_, *npc_, itype_id( g_conv_ctx.current_item_type ) );
                 }
-                auto line    = string_format( "%s: \"%s\"",
-                                              colorize( speaker, c_light_green ),
-                                              text );
-                d_win.add_to_history( line );
+                if( elem.speaker.empty() ) {
+                    // Unattributed narration — no speaker prefix, no quotes.
+                    // continuation=true suppresses the blank separator so consecutive
+                    // unattributed lines flow as one block.  Color follows the window's
+                    // own gray/white recency logic (no forced colorize here).
+                    d_win.add_to_history( text, /*continuation=*/true );
+                } else {
+                    std::string line;
+                    if( elem.speaker == "player" || elem.speaker == "You"
+                        || elem.speaker == "Player" ) {
+                        line = string_format( "%s: \"%s\"",
+                                             colorize( _( "You" ), c_green ), text );
+                    } else {
+                        auto speaker = ( elem.speaker == "npc" || elem.speaker == "NPC" )
+                                       ? ( npc_ ? npc_->name : "NPC" )
+                                       : elem.speaker;
+                        line = string_format( "%s: \"%s\"",
+                                             colorize( speaker, c_light_green ), text );
+                    }
+                    d_win.add_to_history( line );
+                }
                 break;
             }
 
@@ -1634,15 +1706,21 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                 }
                 const auto &ch = all_choices[chosen];
 
-                // Log the player's choice
-                auto choice_text = interpolate( ch.text );
-                if( player_ && npc_ ) {
-                    parse_tags( choice_text, *player_, *npc_, itype_id( g_conv_ctx.current_item_type ) );
+                // Start a new turn: everything added from here on renders white.
+                d_win.mark_turn_start();
+
+                // Echo the choice label as player speech only if #spoken was set.
+                if( ch.echo_speech ) {
+                    auto choice_text = interpolate( ch.text );
+                    if( player_ && npc_ ) {
+                        parse_tags( choice_text, *player_, *npc_,
+                                    itype_id( g_conv_ctx.current_item_type ) );
+                    }
+                    d_win.add_to_history(
+                        string_format( "%s: \"%s\"",
+                                       colorize( _( "You" ), c_green ),
+                                       choice_text ) );
                 }
-                d_win.add_to_history(
-                    string_format( "%s: \"%s\"",
-                                   colorize( _( "You" ), c_green ),
-                                   choice_text ) );
 
                 // Execute the choice body
                 auto result = execute_elements( ch.body, d_win );

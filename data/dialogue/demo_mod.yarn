@@ -15,14 +15,37 @@
 // end — the player is returned to the injection target node automatically.
 // If the body explicitly navigates (<<stop>>, <<jump X>>, etc.) the auto-jump
 // is never reached, so deliberate exits still work as authored.
+//
+// Speaker attribution:
+//   NPC: text     — spoken by the NPC (resolves to the NPC's actual runtime name)
+//   You: text     — spoken by the player
+//   plain text    — unattributed narration; no speaker prefix, no quotes
+//   #spoken       — echo the choice label itself as player speech (opt-in)
+//   <<player "...">> / <<npc "...">> — programmatic speech inside command blocks
+//
+// <<goto demo_mod::NodeName>> crosses into this story's nodes and returns when done.
 
 // Injects after native choices (default priority 0).
+// Demonstrates cross-story <<goto>>: pushes demo_mod::LockedDoorDetail,
+// which executes here and returns to shelter_npc::Start when done.
 title: ModExtraDialogue
 inject_into: shelter_npc::Start
 ---
 -> Ask about the locked door.
-    I told you — I don't know what's in there.
-    And I don't want to find out.
+    You: That locked door — what's behind it?
+    <<goto demo_mod::LockedDoorDetail>>
+===
+
+title: LockedDoorDetail
+position: 300,100
+---
+NPC: I told you — I don't know what's in there.
+And I don't want to find out.
+I heard something move behind it on the second night.  Haven't gone near it since.
+-> That's unsettling. #spoken
+-> Probably nothing.
+    You: Probably nothing.  Old buildings make noise.
+    NPC: Maybe.  I hope you're right.
 ===
 
 // Injects before native choices (negative priority).
@@ -33,9 +56,13 @@ inject_into: shelter_npc::Start
 inject_priority: -10
 ---
 -> Did you hear that noise just now?
+    You: Did you hear that?
     <<if npc_following()>>
-    I heard it too.  Stay sharp.
+    NPC: I heard it too.  Stay sharp.
     <<else>>
-    What noise?  I've been trying not to listen.
+    NPC: What noise?  I've been trying not to listen.
     <<endif>>
+    -> Probably nothing. #spoken
+    -> Stay alert either way.
+        You: Stay alert either way.
 ===

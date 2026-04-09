@@ -7,6 +7,12 @@
 //   - <<goto>> for sub-dialogs that pop back to the caller automatically
 //   - Conditional text with <<if>> / <<endif>>
 //
+// Speaker attribution:
+//   NPC: text  — spoken by the NPC (resolves to the NPC's actual runtime name)
+//   You: text  — spoken by the player
+//   plain text — unattributed narration; no speaker prefix, no quotes
+//   #spoken    — echo the choice label itself as player speech (opt-in)
+//
 // Navigation semantics recap:
 //   <<jump X>> — replace current frame; VS Code draws edge; conversation ends when X ends
 //   <<goto X>> — push frame; VS Code does NOT draw edge; caller re-presents when X pops
@@ -33,17 +39,19 @@ position: -336,-472
 title: ShelterMood
 position: -340,-200
 ---
-Honestly?  Not great.  But I'm alive, and that counts for something out here.
+NPC: Honestly?  Not great.  But I'm alive, and that counts for something out here.
 I keep busy.  Helps not to think too much.
+-> I hear you. #spoken
+-> Stay strong. #spoken
 ===
 
 title: Greeting
 position: 63,100
 ---
 <<if npc_following()>>
-Good to have you around.  What's on your mind?
+NPC: Good to have you around.  What's on your mind?
 <<else>>
-Thank God, another person.  I've been holed up here since the first night.
+NPC: Thank God, another person.  I've been holed up here since the first night.
 You doing alright?  This place has been... quiet.  Too quiet.
 <<if u_get_str() >= 10>>
 You look strong.  That helps out here.
@@ -68,11 +76,12 @@ title: Start_Supplies
 position: -332,446
 shared_choices: ShelterActions common::CommonActions
 ---
-I found a few cans in the back room.  You're welcome to them.
-I'm not going anywhere fast anyway.
+NPC: I found a few cans in the back room.  You're welcome to them.
+NPC: I'm not going anywhere fast anyway.
 <<give_item "veggy_canned" 2>>
-There's also a shelf near the back wall.  Just don't go past the locked door —
-I don't know what's in there and I haven't wanted to find out.
+NPC: There's also a shelf near the back wall.  Just don't go past the locked door —
+NPC: I don't know what's in there and I haven't wanted to find out.
+-> Thanks, I appreciate it. #spoken
 -> Ask what happened.
     <<jump Start_WhatHappened>>
 -> Ask if they've seen anyone else.
@@ -85,10 +94,13 @@ title: Start_WhatHappened
 position: 474,437
 shared_choices: ShelterActions common::CommonActions
 ---
-I was at work when the sirens went off.  Drove here thinking it'd be temporary.
+NPC: I was at work when the sirens went off.  Drove here thinking it'd be temporary.
 That was... I don't even know how long ago now.
 The first few days were the worst.  Sounds outside, people screaming.
 Now it's just silence.
+-> That sounds rough.
+    You: I'm sorry.  That sounds rough.
+    <<jump Start>>
 -> Ask about supplies.
     <<jump Start_Supplies>>
 -> Ask if they've seen anyone else.
@@ -102,11 +114,12 @@ position: 71,738
 shared_choices: ShelterActions common::CommonActions
 ---
 <<if npc_following()>>
-You're the only person I've seen since this started.  Well, besides you showing up.
+NPC: You're the only person I've seen since this started.  Well, besides you showing up.
 <<else>>
-Haven't seen anyone else until you showed up.
-I thought I heard voices a few days ago — west side of town — but I didn't dare go look.
+NPC: Haven't seen anyone else until you showed up.
+NPC: I thought I heard voices a few days ago — west side of town — but I didn't dare go look.
 <<endif>>
+-> I'll keep an eye out. #spoken
 -> Ask what happened.
     <<jump Start_WhatHappened>>
 -> Ask about supplies.

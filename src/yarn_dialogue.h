@@ -249,6 +249,11 @@ struct node_element {
         std::string text;  // display text; may contain {expr} interpolation
         std::optional<expr_node> condition;  // absent = always shown
         std::vector<node_element> body;
+        // If true, the choice label is echoed to history as player speech when selected.
+        // Default is false — the label is a UI-only button, not speech.
+        // Add #spoken to the choice line to echo it.  Use You: in the body for
+        // explicit player speech with different wording than the button label.
+        bool echo_speech = false;
     };
     std::vector<choice> choices;
 
@@ -384,8 +389,15 @@ class yarn_runtime {
         auto eval( const expr_node &node ) const -> value;
         auto interpolate( std::string_view text ) const -> std::string;
 
-        std::vector<std::string> node_stack_;
-        const yarn_story &story_;
+        // Each frame carries its own story pointer so <<goto story::X>> and
+        // <<jump story::X>> can cross story boundaries without changing context
+        // for the rest of the stack.
+        struct stack_frame {
+            const yarn_story *story;
+            std::string node;
+        };
+        std::vector<stack_frame> node_stack_;
+        const yarn_story &story_;  // starting story; used only for the initial push
         const func_registry &registry_;
         npc *npc_;
         player *player_;
