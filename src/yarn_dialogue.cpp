@@ -919,13 +919,13 @@ class yarn_parser
 };
 
 // Forward declaration only for parse_elements — the helpers call it before it is defined.
-auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
+auto parse_elements( yarn_parser &p, std::vector<raw_line> &lines,
                      int &i, int end, int min_indent )
     -> std::vector<node_element>;
 
 // Parse the body of a choice option, starting after its -> line.
 // Collects all lines with indent strictly greater than choice_indent.
-auto parse_choice_body( yarn_parser &p, const std::vector<raw_line> &lines,
+auto parse_choice_body( yarn_parser &p, std::vector<raw_line> &lines,
                         int &i, int end, int choice_indent )
     -> std::vector<node_element>
 {
@@ -939,7 +939,7 @@ auto parse_choice_body( yarn_parser &p, const std::vector<raw_line> &lines,
 }
 
 // Parses a run of -> lines (possibly interleaved with blank lines) into a choice_group.
-auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
+auto parse_choice_group( yarn_parser &p, std::vector<raw_line> &lines,
                          int &i, int end, int group_indent )
     -> node_element
 {
@@ -1002,8 +1002,73 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
     return group;
 }
 
+// Parse the body of a line group option, starting after its => line.
+// Collects all lines with indent strictly greater than or equal to line_indent,
+// but breaks at next => line.
+auto parse_line_group_body( yarn_parser &p, std::vector<raw_line> &lines,
+                        int &i, int end, int line_indent )
+    -> std::vector<node_element>
+{
+    // Find end of body: lines with indent > line_indent
+    int body_end = i;
+    while( body_end < end && !starts_with( lines[body_end].content, "=>" ) &&
+                                lines[body_end].indent >= line_indent) {
+        ++body_end;
+    }
+    return parse_elements( p, lines, i, body_end, line_indent );
+}
+
+// Parses => line groups
+auto parse_line_group( yarn_parser &p, std::vector<raw_line> &lines,
+                         int &i, int end, int group_indent )
+    -> node_element
+{
+    node_element group;
+    group.type = node_element::kind::line_group;
+
+    while( i < end ) {
+        auto &line = lines[i];
+        // Skip blank lines
+        if( line.content.empty() ) {
+            ++i;
+            continue;
+        }
+
+        if( line.indent != group_indent || !starts_with( line.content, "=>" ) ) {
+            break;
+        }
+
+        // Parse the => line: "=> Line group text" or "=> Line group text <<if condition>>"
+        std::string_view line_group_text = trim_sv( line.content.substr( 2 ) );
+        std::optional<expr_node> condition;
+
+        // Check for trailing <<if condition>>
+        if( line_group_text.ends_with( ">>" ) ) {
+            auto if_pos = line_group_text.rfind( "<<if " );
+            if( if_pos != std::string_view::npos ) {
+                auto cond_src = trim_sv( line_group_text.substr( if_pos + 5,
+                                         line_group_text.size() - if_pos - 7 ) );
+                condition = p.parse_condition( cond_src, line.line_num );
+                line_group_text = trim_sv( line_group_text.substr( 0, if_pos ) );
+            }
+        }
+
+        // This line's content gets replaced by it's standard text, so dialogue can properly
+        // pick it up, and is the only reason we can't use const for lines.
+        line.content = std::string( line_group_text );
+
+        int line_indent = line.indent;
+
+        node_element::choice ch;
+        ch.condition   = std::move( condition );
+        ch.body = parse_line_group_body( p, lines, i, end, line_indent );
+        group.choices.push_back( std::move( ch ) );
+    }
+    return group;
+}
+
 // Parses <<if>>...<<else>>...<<endif>> blocks.
-auto parse_if_block( yarn_parser &p, const std::vector<raw_line> &lines,
+auto parse_if_block( yarn_parser &p, std::vector<raw_line> &lines,
                      int &i, int end, int block_indent,
                      std::string_view condition_src, int cond_line_num )
     -> node_element
@@ -1072,7 +1137,7 @@ auto parse_if_block( yarn_parser &p, const std::vector<raw_line> &lines,
 }
 
 // Parse node elements from lines[i..end), requiring indent >= min_indent.
-auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
+auto parse_elements( yarn_parser &p, std::vector<raw_line> &lines,
                      int &i, int end, int min_indent )
     -> std::vector<node_element>
 {
@@ -1095,6 +1160,12 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
         // Choice group
         if( starts_with( line.content, "->" ) ) {
             elements.push_back( parse_choice_group( p, lines, i, end, line.indent ) );
+            continue;
+        }
+
+        // Line group
+        if( starts_with( line.content, "=>" ) ) {
+            elements.push_back( parse_line_group( p, lines, i, end, line.indent ) );
             continue;
         }
 
@@ -1589,37 +1660,64 @@ void yarn_runtime::run( dialogue_window &d_win )
     }
 }
 
+void yarn_runtime::parse_dialogue_text( const node_element &elem, dialogue_window &d_win )
+{
+    auto text = interpolate( elem.text );
+    if( player_ && npc_ ) {
+        parse_tags( text, *player_, *npc_, itype_id( g_conv_ctx.current_item_type ) );
+    }
+    if( elem.speaker.empty() ) {
+        // Unattributed narration — no speaker prefix, no quotes.
+        // continuation=true suppresses the blank separator so consecutive
+        // unattributed lines flow as one block.  Color follows the window's
+        // own gray/white recency logic (no forced colorize here).
+        d_win.add_to_history( text, /*continuation=*/true );
+    } else {
+        std::string line;
+        if( elem.speaker == "player" || elem.speaker == "You"
+            || elem.speaker == "Player" ) {
+            line = string_format( "%s: \"%s\"",
+                                    colorize( _( "You" ), c_green ), text );
+        } else {
+            auto speaker = ( elem.speaker == "npc" || elem.speaker == "NPC" )
+                            ? ( npc_ ? npc_->name : "NPC" )
+                            : elem.speaker;
+            line = string_format( "%s: \"%s\"",
+                                    colorize( speaker, c_light_green ), text );
+        }
+        d_win.add_to_history( line );
+    }
+}
+
 auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                                      dialogue_window &d_win ) -> exec_result
 {
     for( const auto &elem : elements ) {
         switch( elem.type ) {
             case node_element::kind::dialogue: {
-                auto text = interpolate( elem.text );
-                if( player_ && npc_ ) {
-                    parse_tags( text, *player_, *npc_, itype_id( g_conv_ctx.current_item_type ) );
-                }
-                if( elem.speaker.empty() ) {
-                    // Unattributed narration — no speaker prefix, no quotes.
-                    // continuation=true suppresses the blank separator so consecutive
-                    // unattributed lines flow as one block.  Color follows the window's
-                    // own gray/white recency logic (no forced colorize here).
-                    d_win.add_to_history( text, /*continuation=*/true );
-                } else {
-                    std::string line;
-                    if( elem.speaker == "player" || elem.speaker == "You"
-                        || elem.speaker == "Player" ) {
-                        line = string_format( "%s: \"%s\"",
-                                             colorize( _( "You" ), c_green ), text );
-                    } else {
-                        auto speaker = ( elem.speaker == "npc" || elem.speaker == "NPC" )
-                                       ? ( npc_ ? npc_->name : "NPC" )
-                                       : elem.speaker;
-                        line = string_format( "%s: \"%s\"",
-                                             colorize( speaker, c_light_green ), text );
+                parse_dialogue_text( elem, d_win );
+                break;
+            }
+            
+            case node_element::kind::line_group: {
+                std::vector<node_element::choice> valid_choices;
+                for( const auto &c : elem.choices ) {
+                    if( c.condition ) {
+                        try {
+                            auto val = eval( *c.condition );
+                            if( !std::holds_alternative<bool>( val ) || !std::get<bool>( val ) ) {
+                                continue;
+                            }
+                        } catch( const std::exception &e ) {
+                            DebugLog( DL::Error, DC::Dialogue )
+                                << "yarn: line_group condition error: " << e.what();
+                            continue;
+                        }
                     }
-                    d_win.add_to_history( line );
+                    valid_choices.push_back( c );
                 }
+                if( valid_choices.empty() ) continue;
+                execute_elements( valid_choices[rng( 0, valid_choices.size() - 1 )].body, d_win );
                 break;
             }
 

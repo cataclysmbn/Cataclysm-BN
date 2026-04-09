@@ -113,17 +113,14 @@ title: Start_Others
 position: 71,738
 shared_choices: ShelterActions common::CommonActions
 ---
-<<if npc_following()>>
-NPC: You're the only person I've seen since this started.  Well, besides you showing up.
-<<else>>
-NPC: Haven't seen anyone else until you showed up.
-NPC: I thought I heard voices a few days ago — west side of town — but I didn't dare go look.
-<<endif>>
+    => NPC: Haven't seen anyone else until you showed up.
+    I thought I heard voices a few days ago — west side of town — but I didn't dare go look.
+    => NPC: You're the only person I've seen since this started.  Well, besides you showing up.
+    => NPC: Nobody seems to be around anymore. Not that I want to look around to much...
 -> I'll keep an eye out. #spoken
+    <<jump Start>>
 -> Ask what happened.
     <<jump Start_WhatHappened>>
 -> Ask about supplies.
     <<jump Start_Supplies>>
--> Go back.
-    <<jump Start>>
 ===

@@ -208,8 +208,9 @@ auto interpolate_text( std::string_view text, const func_registry &registry ) ->
 // per C++17 (vector<T> permits incomplete T at declaration).
 
 struct node_element {
-    enum class kind : uint8_t {
+    enum class kind : uint16_t {
         dialogue,      // NPC or player speech line
+        line_group,    // a set of => lines that are picked at random
         choice_group,  // a set of -> choices presented to the player
         command,       // <<command_name arg1 arg2 ...>>
         jump,          // <<jump NodeName>>  — replace current frame (standard Yarn Spinner navigate; no implicit return)
@@ -223,7 +224,7 @@ struct node_element {
     kind type = kind::dialogue;
 
     // kind::dialogue
-    // speaker is empty for the NPC (default), "player" for avatar lines.
+    // speaker is empty for unattributed lines.
     // text may contain {expr} interpolation sequences.
     std::string speaker;
     std::string text;
@@ -376,6 +377,8 @@ class yarn_runtime {
             signal kind = signal::ok;
             std::string target;  // node name for jump / goto_node
         };
+
+        void parse_dialogue_text( const node_element &elem, dialogue_window &d_win );
 
         auto execute_elements( const std::vector<node_element> &elements,
                                dialogue_window &d_win ) -> exec_result;
