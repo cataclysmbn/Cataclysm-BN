@@ -1688,7 +1688,8 @@ int iuse::good_fishing_spot( tripoint pos )
     int fishable_locations = g->get_fishable_locations( 60, pos ).size();
     map &here = get_map();
     const oter_id &cur_omt =
-        ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( here.getabs( pos ) ) ) );
+        get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy(
+                    here.getabs( pos ) ) ) );
     std::string om_id = cur_omt.id().c_str();
     if( fishable_locations < 100 && !g->m.has_flag( "CURRENT", pos ) &&
         om_id.find( "river_" ) == std::string::npos && !cur_omt->is_lake() &&
@@ -2066,7 +2067,7 @@ int iuse::directional_antenna( player *p, item *it, bool, const tripoint & )
     }
     const item &radio = *radios.front();
     // Find the radio station its tuned to (if any)
-    const auto tref = ACTIVE_OVERMAP_BUFFER.find_radio_station( radio.frequency );
+    const auto tref = get_overmapbuffer( p->get_dimension() ).find_radio_station( radio.frequency );
     if( !tref ) {
         p->add_msg_if_player( m_info, _( "You can't find the direction if your radio isn't tuned." ) );
         return 0;
@@ -2084,7 +2085,7 @@ int iuse::radio_on( player *p, item *it, bool t, const tripoint &pos )
     if( t ) {
         // Normal use
         std::string message = _( "Radio: Kssssssssssssh." );
-        const auto tref = ACTIVE_OVERMAP_BUFFER.find_radio_station( it->frequency );
+        const auto tref = get_overmapbuffer( p->get_dimension() ).find_radio_station( it->frequency );
         if( tref ) {
             const auto selected_tower = tref.tower;
             if( selected_tower->type == radio_type::MESSAGE_BROADCAST ) {
@@ -2135,7 +2136,7 @@ int iuse::radio_on( player *p, item *it, bool t, const tripoint &pos )
                 const int old_frequency = it->frequency;
                 const radio_tower *lowest_tower = nullptr;
                 const radio_tower *lowest_larger_tower = nullptr;
-                for( auto &tref : ACTIVE_OVERMAP_BUFFER.find_all_radio_stations() ) {
+                for( auto &tref : get_overmapbuffer( p->get_dimension() ).find_all_radio_stations() ) {
                     const auto new_frequency = tref.tower->frequency;
                     if( new_frequency == old_frequency ) {
                         continue;
@@ -4772,7 +4773,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
 
             case AEA_MAP: {
                 const tripoint_abs_omt center = p->global_omt_location();
-                const bool new_map = ACTIVE_OVERMAP_BUFFER.reveal( center.xy(), 20, center.z() );
+                const bool new_map = get_overmapbuffer( p->get_dimension() ).reveal( center.xy(), 20, center.z() );
                 if( new_map ) {
                     p->add_msg_if_player( m_warning, _( "You have a vision of the surrounding area…" ) );
                     p->moves -= to_moves<int>( 1_seconds );
@@ -6890,7 +6891,8 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
 
     // TODO: fix point types
     const oter_id &cur_ter =
-        ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( g->m.getabs( aim_point ) ) ) );
+        get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy(
+                    g->m.getabs( aim_point ) ) ) );
     std::string overmap_desc = string_format( _( "In the background you can see a %s" ),
                                colorize( cur_ter->get_name(), cur_ter->get_color() ) );
     if( outside_tiles_num == total_tiles_num ) {
@@ -8418,7 +8420,7 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint & )
     }
     if( it->has_flag( flag_WEATHER_FORECAST ) ) {
         std::string message = string_format( "", message );
-        const auto tref = ACTIVE_OVERMAP_BUFFER.find_radio_station( it->frequency );
+        const auto tref = get_overmapbuffer( p->get_dimension() ).find_radio_station( it->frequency );
         if( tref ) {
             {
                 message = weather_forecast( tref.abs_sm_pos );
@@ -8431,7 +8433,7 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint & )
         if( optional_vpart_position vp = g->m.veh_at( p->pos() ) ) {
             vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
         }
-        const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( p->global_omt_location() );
+        const oter_id &cur_om_ter = get_overmapbuffer( p->get_dimension() ).ter( p->global_omt_location() );
         /* windpower defined in internal velocity units (=.01 mph) */
         const double windpower = 100 * get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
                                  p->pos(), weather.winddirection, g->is_sheltered( p->pos() ) );
@@ -8895,7 +8897,8 @@ int iuse::report_grid_charge( player *p, item *, bool, const tripoint &pos )
 int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos )
 {
     tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
-    std::vector<tripoint_rel_omt> connections = ACTIVE_OVERMAP_BUFFER.electric_grid_connectivity_at(
+    std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
+                p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
 
     std::vector<std::string> connection_names;
@@ -8963,7 +8966,8 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoin
 int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &pos )
 {
     tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
-    std::vector<tripoint_rel_omt> connections = ACTIVE_OVERMAP_BUFFER.electric_grid_connectivity_at(
+    std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
+                p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
 
     uilist ui;
@@ -8991,10 +8995,11 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
     size_t ret = static_cast<size_t>( ui.ret );
     tripoint_abs_omt destination_pos_abs = pos_abs + tripoint_rel_omt( six_cardinal_directions[ret] );
     if( connection_present[ret] ) {
-        ACTIVE_OVERMAP_BUFFER.remove_grid_connection( pos_abs, destination_pos_abs );
+        get_overmapbuffer( p->get_dimension() ).remove_grid_connection( pos_abs, destination_pos_abs );
     } else {
-        std::set<tripoint_abs_omt> lhs_locations = ACTIVE_OVERMAP_BUFFER.electric_grid_at( pos_abs );
-        std::set<tripoint_abs_omt> rhs_locations = ACTIVE_OVERMAP_BUFFER.electric_grid_at(
+        std::set<tripoint_abs_omt> lhs_locations = get_overmapbuffer( p->get_dimension() ).electric_grid_at(
+                    pos_abs );
+        std::set<tripoint_abs_omt> rhs_locations = get_overmapbuffer( p->get_dimension() ).electric_grid_at(
                     destination_pos_abs );
         int cost_mult;
         if( lhs_locations == rhs_locations ) {
@@ -9049,7 +9054,8 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
         }
         p->invalidate_crafting_inventory();
 
-        bool success = ACTIVE_OVERMAP_BUFFER.add_grid_connection( pos_abs, destination_pos_abs );
+        bool success = get_overmapbuffer( p->get_dimension() ).add_grid_connection( pos_abs,
+                       destination_pos_abs );
         if( success ) {
             return it->type->charges_to_use();
         }

@@ -4480,7 +4480,7 @@ void activity_handlers::tree_communion_do_turn( player_activity *act, player *p 
     };
     while( !q.empty() ) {
         tripoint_abs_omt tpt = q.front();
-        if( ACTIVE_OVERMAP_BUFFER.reveal( tpt, 3, filter ) ) {
+        if( get_overmapbuffer( p->get_dimension() ).reveal( tpt, 3, filter ) ) {
             if( p->has_trait( trait_SPIRITUAL ) ) {
                 p->add_morale( MORALE_TREE_COMMUNION, 2, 30, 8_hours, 6_hours );
             } else {
@@ -4497,7 +4497,7 @@ void activity_handlers::tree_communion_do_turn( player_activity *act, player *p 
                 continue;
             }
             seen.insert( neighbor );
-            if( !ACTIVE_OVERMAP_BUFFER.ter( neighbor ).obj().is_wooded() ) {
+            if( !get_overmapbuffer( p->get_dimension() ).ter( neighbor ).obj().is_wooded() ) {
                 continue;
             }
             q.push( neighbor );

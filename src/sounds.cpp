@@ -354,7 +354,7 @@ void sounds::process_sounds()
             // TODO: fix point types
             const point_abs_sm abs_sm( ms_to_sm_copy( abs_ms ) );
             const tripoint_abs_sm target( abs_sm, source.z );
-            ACTIVE_OVERMAP_BUFFER.signal_hordes( target, sig_power );
+            get_overmapbuffer( get_map().get_bound_dimension() ).signal_hordes( target, sig_power );
         }
         // Alert all monsters (that can hear) to the sound.
         for( monster &critter : g->all_monsters() ) {

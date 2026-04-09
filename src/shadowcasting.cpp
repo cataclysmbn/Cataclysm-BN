@@ -4,6 +4,7 @@
 #include <array>
 #include <atomic>
 #include <cmath>
+#include <mutex>
 #include <cstring>
 #include <cstdint>
 
@@ -51,12 +52,14 @@ static const exp_lookup s_openair_lookup{ LIGHT_TRANSPARENCY_OPEN_AIR };
 
 // Z_LEVEL_SCALE is declared in shadowcasting.h (inline constexpr float).
 
+static std::mutex            s_zdist_mutex;
 static std::vector<uint16_t> s_zdist_table;
 static int s_zdist_R = -1;
 static int s_zdist_Z = -1;
 
 static void rebuild_zdist_table()
 {
+    const std::lock_guard<std::mutex> lock( s_zdist_mutex );
     const int R = g_max_view_distance;
     const int Z = fov_3d_z_range;
     if( R == s_zdist_R && Z == s_zdist_Z ) {
@@ -515,7 +518,7 @@ template<bool UseAtomic>
 static void cast_zlight_segment(
     const array_of_grids_of<float> &output_caches,
     const array_of_grids_of<const float> &input_arrays,
-    const array_of_grids_of<const bool> &floor_caches,
+    const array_of_grids_of<const char> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
     const tripoint &offset, int offset_distance,
     float numerator, const light_model &model,
@@ -734,7 +737,7 @@ static void cast_zlight_segment(
 void cast_zlight(
     const array_of_grids_of<float> &output_caches,
     const array_of_grids_of<const float> &input_arrays,
-    const array_of_grids_of<const bool> &floor_caches,
+    const array_of_grids_of<const char> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
     const tripoint &origin, int offset_distance, float numerator,
     const light_model &model )

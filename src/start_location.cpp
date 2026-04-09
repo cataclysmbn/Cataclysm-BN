@@ -217,7 +217,7 @@ tripoint_abs_omt start_location::find_player_initial_location() const
     // Shuffle 8 first ones so that we don't always start at (1,0)
     std::shuffle( overmaps.begin(), overmaps.begin() + 7, rng_get_engine() );
     for( const point_abs_om &omp : overmaps ) {
-        overmap &omap = ACTIVE_OVERMAP_BUFFER.get( omp );
+        overmap &omap = get_primary_overmapbuffer().get( omp );
         const tripoint_om_omt omtstart = omap.find_random_omt( random_target() );
         if( omtstart.raw() != tripoint_min ) {
             return project_combine( omp, omtstart );
@@ -248,7 +248,7 @@ tripoint_abs_omt start_location::find_player_initial_location() const
             // that special is bad, no need to check all other overmaps for same thing
             const point_abs_om &omp = random_entry( overmaps );
             const tripoint_abs_omt abs_mid = project_combine( omp, om_mid );
-            if( ACTIVE_OVERMAP_BUFFER.place_special( special.id, abs_mid, 0, OMAPX / 2 ) ) {
+            if( get_primary_overmapbuffer().place_special( special.id, abs_mid, 0, OMAPX / 2 ) ) {
 
                 omt_find_params find_params{};
                 find_params.types.emplace_back( loc.first, loc.second );
@@ -256,7 +256,7 @@ tripoint_abs_omt start_location::find_player_initial_location() const
                 find_params.search_layers = omt_find_all_layers;
 
                 // Now try to find what we spawned
-                const tripoint_abs_omt start = ACTIVE_OVERMAP_BUFFER.find_closest( abs_mid, find_params );
+                const tripoint_abs_omt start = get_primary_overmapbuffer().find_closest( abs_mid, find_params );
                 if( start != overmap::invalid_tripoint ) {
                     return start;
                 }

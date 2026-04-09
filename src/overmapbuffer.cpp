@@ -89,14 +89,16 @@ overmap &overmapbuffer::get( const point_abs_om &p )
     overmap *new_om;
     {
         write_lock<std::shared_mutex> _l( mutex );
-        // Search for it again, but now with a lock since another thread could've loaded this overmap tile first
+        // Search again under write lock: another thread may have inserted while
+        // we were waiting to acquire it.
         const auto it = overmaps.find( p );
         if( it != overmaps.end() ) {
             return *it->second.get();
         }
 
-        // That constructor loads an existing overmap or creates a new one.
-        assert( overmaps.find( p ) == overmaps.end() );
+        // Insert before populate so that re-entrant calls from populate()
+        // (e.g. get_om_global() asking for the owning overmap's own position)
+        // find the entry immediately and return rather than recursing infinitely.
         overmaps[p] = std::make_unique<overmap>( p, dimension_id_ );
         new_om = overmaps[p].get();
     }
@@ -104,6 +106,7 @@ overmap &overmapbuffer::get( const point_abs_om &p )
     // necessarily the overmap at (x,y)
     new_om->populate( dimension_id_ );
     fix_mongroups( *new_om );
+    fix_nemesis( *new_om );
     fix_npcs( *new_om );
 
     return *new_om;
@@ -138,8 +141,6 @@ void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
         }
         // Capture loc by value — [&] would reference the loop variable, which
         // advances each iteration, creating a latent race if threads outlive the loop.
-        // fix_mongroups / fix_nemesis / fix_npcs access shared overmap state and must
-        // run inside the write lock below, NOT inside the async lambda.
         auto dim_id = dimension_id_;
         futures.push_back( { loc, get_thread_pool().submit_returning( [loc, dim_id] {
                 auto om = std::make_unique<overmap>( loc, dim_id );
@@ -160,15 +161,27 @@ void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
                 return false;
             }
             auto om = p.future.get();
+            overmap *om_ptr;
+            bool inserted;
             {
                 write_lock<std::shared_mutex> _l( mutex );
-                // fix_mongroups, fix_nemesis, and fix_npcs all access shared overmap
-                // state (iterating / relocating mongroups and NPCs across overmaps).
-                // Running them inside the write lock prevents data races with readers.
-                fix_mongroups( *om );
-                fix_nemesis( *om );  // was absent in the original; added here
-                fix_npcs( *om );
-                overmaps.emplace( p.loc, std::move( om ) );
+                auto [it, ins] = overmaps.emplace( p.loc, std::move( om ) );
+                om_ptr = it->second.get();
+                inserted = ins;
+            }
+            // Run fix passes after releasing the write lock.
+            // fix_mongroups / fix_nemesis / fix_npcs all call get() or has(),
+            // which acquire the mutex themselves.  Holding the write lock here
+            // causes same-thread deadlock on the non-recursive std::shared_mutex.
+            //
+            // Only run if we won the insertion race.  If another path (e.g.
+            // get() called from a neighbour's fix_nemesis) already inserted
+            // this overmap, it already ran the fix passes; running them again
+            // can corrupt mongroup data for the already-fixed entry.
+            if( inserted ) {
+                fix_mongroups( *om_ptr );
+                fix_nemesis( *om_ptr );
+                fix_npcs( *om_ptr );
             }
             return true;
         } ), futures.end() );

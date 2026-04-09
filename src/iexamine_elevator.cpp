@@ -83,14 +83,16 @@ auto choose_floor( const tripoint &examp, const tripoint_abs_omt &this_omt,
     choice.title = _( "Please select destination floor" );
     for( int z = OVERMAP_HEIGHT; z >= -OVERMAP_DEPTH; z-- ) {
         const tripoint_abs_omt that_omt{ this_omt.xy(), z };
-        const int turns = get_rot_turns( this_omt, that_omt, ACTIVE_OVERMAP_BUFFER );
+        const int turns = get_rot_turns( this_omt, that_omt,
+                                         get_overmapbuffer( get_map().get_bound_dimension() ) );
         const tripoint zp =
             rotate_point_sm( { examp.xy(), z }, sm_orig, turns );
 
         if( !find_elevators_nearby( zp ) ) {
             continue;
         }
-        const std::string omt_name = ACTIVE_OVERMAP_BUFFER.ter_existing( that_omt )->get_name();
+        const std::string omt_name = get_overmapbuffer( get_map().get_bound_dimension() ).ter_existing(
+                                         that_omt )->get_name();
         const auto floor_name = z == examp.z ? this_floor : "";
         const std::string name = string_format( "%3iF %s%s", z, omt_name, floor_name );
 

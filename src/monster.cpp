@@ -814,17 +814,40 @@ static std::pair<std::string, nc_color> speed_description( float mon_speed_ratin
 int monster::print_info( const catacurses::window &w, int vStart, int vLines, int column ) const
 {
     const int vEnd = vStart + vLines;
+    const int max_width = getmaxx( w ) - column - 1;
 
-    const bool player_knows = !g->u.has_trait( trait_INATTENTIVE );
+    nc_color color = c_white;
+    std::string bar_str;
+    get_HP_Bar( color, bar_str );
+    mvwprintz( w, point( column, vStart ), color, bar_str );
+    const int bar_max_width = 5;
+    const int bar_width = utf8_width( bar_str );
+    for( int i = 0; i < bar_max_width - bar_width; ++i ) {
+        mvwprintz( w, point( column + 4 - i, vStart ), c_white, "." );
+    }
+    mvwprintz( w, point( column + bar_max_width + 1, vStart ), basic_symbol_color(), name() );
 
-    mvwprintz( w, point( column, vStart ), basic_symbol_color(), name() );
-    wprintw( w, " " );
     const auto att = get_attitude();
+    const int att_width = utf8_width( att.first );
+    const int att_start = column + std::max( 0, max_width - att_width );
+    const int effect_start = column + bar_max_width + utf8_width( " " + name() + " " );
+    const int effect_width = std::max( 0, att_start - effect_start - 1 );
+    if( effect_width > 0 ) {
+        trim_and_print( w, point( effect_start, vStart ), effect_width, h_white, get_effect_status() );
+    }
+    mvwprintz( w, point( att_start, vStart ), att.second, att.first );
+
+    const std::string senses_str = sees( g->u ) ? _( "Can see to your current location" ) :
+                                   _( "Can't see to your current location" );
+    mvwprintz( w, point( column, ++vStart ), sees( g->u ) ? c_red : c_green, senses_str );
+
+    const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
+    mvwprintz( w, point( column, ++vStart ), speed_desc.second, speed_desc.first );
 
     if( debug_mode ) {
-        wprintz( w, c_light_gray, _( " Difficulty " ) + std::to_string( type->difficulty ) );
+        mvwprintz( w, point( column, ++vStart ), c_light_gray,
+                   _( " Difficulty " ) + std::to_string( type->difficulty ) );
     }
-
     if( display_mod_source ) {
         const std::string mod_src = enumerate_as_string( type->src.begin(),
         type->src.end(), []( const std::pair<mtype_id, mod_id> &source ) {
@@ -837,32 +860,22 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
         mvwprintz( w, point( column, ++vStart ), c_light_blue, string_format( "[%s]", type->id.str() ) );
     }
 
-    if( sees( g->u ) && player_knows ) {
-        mvwprintz( w, point( column, ++vStart ), c_yellow, _( "Aware of your presence!" ) );
+    std::vector<std::string> lines = foldstring( type->get_description(), max_width );
+    const int numlines = lines.size();
+    for( int i = 0; i < numlines && vStart < vEnd; i++ ) {
+        mvwprintz( w, point( column, ++vStart ), c_light_gray, lines[i] );
     }
 
-    const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
-    mvwprintz( w, point( column, ++vStart ), speed_desc.second, speed_desc.first );
-
-
-    std::string effects = get_effect_status();
-    if( !effects.empty() ) {
-        trim_and_print( w, point( column, ++vStart ), getmaxx( w ) - 2, h_white, effects );
-    }
-
-    const auto hp_desc = hp_description( hp, type->hp );
-    mvwprintz( w, point( column, ++vStart ), hp_desc.second, hp_desc.first );
     if( has_effect( effect_ridden ) && mounted_player ) {
         mvwprintz( w, point( column, ++vStart ), c_white, _( "Rider: %s" ), mounted_player->disp_name() );
     }
 
-    std::vector<std::string> lines = foldstring( type->get_description(), getmaxx( w ) - 1 - column );
-    int numlines = lines.size();
-    for( int i = 0; i < numlines && vStart <= vEnd; i++ ) {
-        mvwprintz( w, point( column, ++vStart ), c_white, lines[i] );
+    if( size_bonus > 0 ) {
+        mvwprintz( w, point( column, ++vStart ), c_light_gray, _( "It is %s." ),
+                   size_names.at( get_size() ) );
     }
 
-    return vStart;
+    return ++vStart;
 }
 
 std::string monster::extended_description() const
@@ -890,23 +903,24 @@ std::string monster::extended_description() const
     }
 
     if( display_mod_source ) {
-        ss += _( "Origin: " );
-        ss += enumerate_as_string( type->src.begin(),
+        const std::string mod_src = enumerate_as_string( type->src.begin(),
         type->src.end(), []( const std::pair<mtype_id, mod_id> &source ) {
             return string_format( "'%s'", source.second->name() );
         }, enumeration_conjunction::arrow );
+        ss += colorize( string_format( _( "Origin: %s" ), mod_src ), c_light_blue );
+        ss += "\n";
     }
     if( display_object_ids ) {
-        if( display_mod_source ) {
-            ss += "\n";
-        }
         ss += colorize( string_format( "[%s]", type->id.str() ), c_light_blue );
     }
 
     ss += "\n--\n";
-
-    ss += string_format( _( "This is a %s.  %s %s" ), name(), att_colored,
-                         difficulty_str ) + "\n";
+    ss += "<color_light_gray>";
+    ss += _( "This is a " );
+    ss += "</color>";
+    ss += colorize( name(), symbol_color() );
+    ss += "<color_light_gray>.</color>";
+    ss += "  " + att_colored + " " + difficulty_str + "\n";
     if( !get_effect_status().empty() ) {
         ss += string_format( _( "<stat>It is %s.</stat>" ), get_effect_status() ) + "\n";
     }
@@ -921,7 +935,7 @@ std::string monster::extended_description() const
     ss += colorize( speed_desc.first, speed_desc.second ) + "\n";
 
     ss += "--\n";
-    ss += string_format( "<dark>%s</dark>", type->get_description() ) + "\n";
+    ss += "<color_light_gray>" + type->get_description() + "</color>\n";
     ss += "--\n";
 
     ss += string_format( _( "It is %s in size." ),

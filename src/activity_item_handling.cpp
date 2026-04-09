@@ -416,11 +416,11 @@ void drop_on_map( Character &c, item_drop_reason reason,
         if( get_option<bool>( "AUTO_NOTES_DROPPED_FAVORITES" ) && it->is_favorite ) {
             const tripoint_abs_omt your_pos = c.global_omt_location();
             const std::string sprite_prefix = "SPRITE:" + it->typeId().str() + ";";
-            if( !ACTIVE_OVERMAP_BUFFER.has_note( your_pos ) ) {
-                ACTIVE_OVERMAP_BUFFER.add_note( your_pos, sprite_prefix + it->display_name() );
+            if( !get_overmapbuffer( c.get_dimension() ).has_note( your_pos ) ) {
+                get_overmapbuffer( c.get_dimension() ).add_note( your_pos, sprite_prefix + it->display_name() );
             } else {
-                ACTIVE_OVERMAP_BUFFER.add_note( your_pos,
-                                                ACTIVE_OVERMAP_BUFFER.note( your_pos ) + "; " + it->display_name() );
+                get_overmapbuffer( c.get_dimension() ).add_note( your_pos,
+                        get_overmapbuffer( c.get_dimension() ).note( your_pos ) + "; " + it->display_name() );
             }
         }
 
@@ -458,11 +458,11 @@ void drop_on_map( Character &c, item_drop_reason reason,
         if( !all_favorited_names.empty() ) {
             const auto note_text = join( all_favorited_names, "; " );
 
-            if( !ACTIVE_OVERMAP_BUFFER.has_note( your_pos ) ) {
-                ACTIVE_OVERMAP_BUFFER.add_note( your_pos, note_text );
+            if( !get_overmapbuffer( c.get_dimension() ).has_note( your_pos ) ) {
+                get_overmapbuffer( c.get_dimension() ).add_note( your_pos, note_text );
             } else {
-                ACTIVE_OVERMAP_BUFFER.add_note( your_pos,
-                                                ACTIVE_OVERMAP_BUFFER.note( your_pos ) + "; " + note_text );
+                get_overmapbuffer( c.get_dimension() ).add_note( your_pos,
+                        get_overmapbuffer( c.get_dimension() ).note( your_pos ) + "; " + note_text );
             }
         }
     }

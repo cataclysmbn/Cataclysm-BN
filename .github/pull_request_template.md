@@ -37,7 +37,7 @@ NOTE: Please read your emails. Anyone mentioned on Github with an @ will receive
 
 <!-- please remove checkboxes unrelated to this PR. -->
 
-- [ ] This PR ports commits from DDA or other cataclysm forks.
+- [ ] This PR ports someone else's contribution (e.g from DDA or other fork).
   - [ ] I have added [`port` scope](https://docs.cataclysmbn.org/contribute/changelog_guidelines/#port%3A-ports-from-dda-or-other-forks) to the PR title.
   - [ ] I have attributed original authors in the commit messages adding [`Co-Authored-By`](https://docs.github.com/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors) in the commit message.
   - [ ] I have linked the URL of original PR(s) in the description.

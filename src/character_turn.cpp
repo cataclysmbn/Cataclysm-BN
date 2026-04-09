@@ -314,7 +314,8 @@ void Character::process_turn()
             }
             // Find the amount of time passed since the player touched any of the overmap tile's submaps.
             const tripoint_abs_omt tpt( it->first, 0 );
-            const time_point last_touched = ACTIVE_OVERMAP_BUFFER.scent_at( tpt ).creation_time;
+            const time_point last_touched = get_overmapbuffer( get_avatar().get_dimension() ).scent_at(
+                                                tpt ).creation_time;
             const time_duration since_visit = now - last_touched;
             // If the player has spent little time in this overmap tile, let it decay after just an hour instead of the usual extended decay time.
             const time_duration modified_decay_time = it->second > 5_minutes ? decay_time : 1_hours;

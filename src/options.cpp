@@ -2712,6 +2712,15 @@ void options_manager::add_options_debug()
          translate_marker( "Use legacy pathfinding" ),
          translate_marker( "If true, opt out of new pathfinding in favor of legacy one. This makes pathfinding mods not work." ),
          false );
+    add( "PATHFINDING_MAX_DIST", debug,
+         translate_marker( "Legacy Pathfinder Distance Cap" ),
+         translate_marker( "Hard cap on straight-line pathfinding distance (in tiles) for the legacy pathfinder.  "
+                           "Monsters and NPCs whose configured range exceeds this value are limited to it.  "
+                           "The old fixed map allowed at most 120 tiles end-to-end; "
+                           "the default of 96 is 50%% larger than the old per-side maximum of 60.  "
+                           "Raise this if mods require longer paths; lower it to reduce pathfinding cost at large bubble sizes." ),
+         16, 1000, 96 );
+    get_option( "PATHFINDING_MAX_DIST" ).setPrerequisite( "USE_LEGACY_PATHFINDING" );
 }
 
 void options_manager::add_options_world_default()

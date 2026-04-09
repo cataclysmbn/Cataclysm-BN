@@ -64,7 +64,13 @@ static std::unordered_map<int, mission> world_missions;
 
 mission *mission::reserve_new( const mission_type_id &type, const character_id &npc_id )
 {
-    const auto tmp = mission_type::get( type )->create( npc_id );
+    auto tmp = mission_type::get( type )->create( npc_id );
+    if( npc_id.is_valid() ) {
+        const npc *giver = g->find_npc( npc_id );
+        if( giver != nullptr ) {
+            tmp.dimension_id_ = giver->get_dimension();
+        }
+    }
     // TODO: Warn about overwrite?
     mission &miss = world_missions[tmp.uid] = tmp;
     return &miss;
@@ -374,7 +380,8 @@ bool mission::is_complete( const character_id &_npc_id ) const
         }
 
         case MGOAL_GO_TO_TYPE: {
-            const auto cur_ter = ACTIVE_OVERMAP_BUFFER.ter( g->u.global_omt_location() );
+            const auto cur_ter = get_overmapbuffer( get_avatar().get_dimension() ).ter(
+                                     g->u.global_omt_location() );
             return is_ot_match( type->target_id.str(), cur_ter, ot_match_type::type );
         }
 
@@ -429,7 +436,7 @@ bool mission::is_complete( const character_id &_npc_id ) const
         }
 
         case MGOAL_RECRUIT_NPC_CLASS: {
-            const auto npcs = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( 100 );
+            const auto npcs = get_overmapbuffer( get_avatar().get_dimension() ).get_npcs_near_player( 100 );
             for( auto &npc : npcs ) {
                 if( npc->myclass == recruit_class && npc->is_player_ally() ) {
                     return true;
@@ -579,6 +586,11 @@ int mission::get_id() const
 const itype_id &mission::get_item_id() const
 {
     return item_id;
+}
+
+const std::string &mission::get_dimension() const
+{
+    return dimension_id_;
 }
 
 bool mission::has_failed() const

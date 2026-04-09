@@ -915,12 +915,13 @@ void iexamine::vending( player &p, const tripoint &examp )
 
         for( int line = 0; line < page_size; ++line ) {
             const int i = page_beg + line;
-            const auto color = ( i == cur_pos ) ? h_light_gray : c_light_gray;
             const auto &elem = item_map[i];
-            const int count = elem.size();
-            const char c = ( count < 10 ) ? ( '0' + count ) : '*';
-            trim_and_print( w, point( 1, first_item_offset + line ), w_items_w - 3, color, "%c %s", c,
-                            elem.front()->tname().c_str() );
+            const auto item_color = elem.front()->color_in_inventory( p );
+            const auto line_color = i == cur_pos ? hilite( item_color ) : item_color;
+            const auto count = elem.size();
+            const auto c = count < 10 ? char( '0' + count ) : '*';
+            trim_and_print( w, point( 1, first_item_offset + line ), w_items_w - 3, line_color,
+                            "%c %s", c, elem.front()->tname().c_str() );
         }
 
         draw_scrollbar( w, cur_pos, list_lines, num_items, point( 0, first_item_offset ) );
@@ -933,18 +934,31 @@ void iexamine::vending( player &p, const tripoint &examp )
         werase( w_item_info );
         // | {line}|
         // 12      3
-        fold_and_print( w_item_info, point( 2, 1 ), w_info_w - 3, c_light_gray,
-                        cur_item->info_string( ) );
+        const auto info_text = cur_item->info_string();
+        const auto info_width = std::max( 0, w_info_w - 3 );
+        if( info_width > 0 ) {
+            const auto info_lines = foldstring( info_text, info_width );
+            for( int info_line = 0; info_line < static_cast<int>( info_lines.size() ); ++info_line ) {
+                const auto line_pos = point( 2, 1 + info_line );
+                const auto &line_text = info_lines[info_line];
+                if( line_text == "--" ) {
+                    mvwhline( w_item_info, line_pos, LINE_OXOX, info_width );
+                } else if( !line_text.empty() ) {
+                    trim_and_print( w_item_info, line_pos, info_width, c_light_gray, line_text );
+                }
+            }
+        }
         wborder( w_item_info, LINE_XOXO, LINE_XOXO, LINE_OXOX, LINE_OXOX,
                  LINE_OXXO, LINE_OOXX, LINE_XXOO, LINE_XOOX );
 
         //+<{name}>+
         //12      34
-        const std::string name = utf8_truncate( cur_item->display_name(),
-                                                static_cast<size_t>( w_info_w - 4 ) );
-
+        const auto name_color = cur_item->color_in_inventory( p );
         const auto cost = format_money( cur_item->price( false ) );
-        mvwprintw( w_item_info, point_east, "<%s> %s", name, cost );
+        const std::string header_text = string_format( "<%s> %s",
+                                        colorize( cur_item->display_name(), name_color ),
+                                        cost );
+        trim_and_print( w_item_info, point_east, std::max( 0, w_info_w - 3 ), c_light_gray, header_text );
         wnoutrefresh( w_item_info );
     } );
 

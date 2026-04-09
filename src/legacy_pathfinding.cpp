@@ -15,8 +15,10 @@
 #include "cata_utility.h"
 #include "coordinates.h"
 #include "debug.h"
+#include "game_constants.h"
 #include "map.h"
 #include "mapdata.h"
+#include "options.h"
 #include "submap.h"
 #include "trap.h"
 #include "veh_type.h"
@@ -246,12 +248,16 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
         }
     }
 
+    // Apply the global distance cap from settings.  min() naturally handles both the normal case
+    // (monster has an explicit max_dist already smaller than the cap) and the unlimited case
+    // (max_dist == INT_MAX from mods that remove the per-monster limit).
+    const int dist_cap = get_option<int>( "PATHFINDING_MAX_DIST" );
     // If expected path length is greater than max distance, allow only line path, like above
-    if( rl_dist( f, t ) > settings.max_dist ) {
+    if( rl_dist( f, t ) > std::min( settings.max_dist, dist_cap ) ) {
         return ret;
     }
 
-    int max_length = settings.max_length;
+    int max_length = std::min( settings.max_length, dist_cap * 5 );
     int bash = settings.bash_strength;
     int climb_cost = settings.climb_cost;
     bool doors = settings.allow_open_doors;
@@ -259,7 +265,9 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
     bool roughavoid = settings.avoid_rough_terrain;
     bool sharpavoid = settings.avoid_sharp;
 
-    const int pad = 16;  // Should be much bigger - low value makes pathfinders dumb!
+    // Search-area inflation: at least 16 tiles, scaled with bubble radius so pathfinders
+    // can route around obstacles near the bubble boundary at large bubble sizes.
+    const int pad = std::max( 16, 4 * g_half_mapsize );
     int minx = std::min( f.x, t.x ) - pad;
     int miny = std::min( f.y, t.y ) - pad;
     // TODO: Make this way bigger

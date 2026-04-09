@@ -461,3 +461,11 @@ class zone_manager
 };
 
 auto get_zone_covered_points( const zone_data &zone ) -> std::vector<tripoint>;
+
+// Thread-safe deferred zone creation for background mapgen workers.
+// Call defer_zone_add() from worker threads; call flush_deferred_zones()
+// on the main thread each turn to apply pending additions.
+void defer_zone_add( const std::string &name, const zone_type_id &type,
+                     const faction_id &faction, bool invert, bool enabled,
+                     const tripoint &start, const tripoint &end );
+void flush_deferred_zones();

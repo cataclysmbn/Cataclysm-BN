@@ -1211,8 +1211,20 @@ class game : public submap_load_listener
         // accessing partially-loaded map data. Reset to false at the start of the next turn.
         bool swapping_dimensions = false;
     private:
+        /// Sets both current_dimension_id_ and g_active_dimension_id to @p dim_id.
+        /// Always use this instead of assigning the two fields separately.
+        void set_active_dimension_id( const std::string &dim_id );
+
+        /// Sequenced critical section of a dimension switch: drain all background
+        /// work, release load handles, flush the desired set, update the active
+        /// dimension ID, and clear the old dimension's distribution-grid tracker.
+        /// Must only be called from travel_to_dimension() after swapping_dimensions
+        /// is set and before bind_dimension().
+        void activate_dimension_state( const std::string &new_dim_id,
+                                       const std::string &old_dim_id );
+
         /// Dimension ID the player is currently in.  "" = overworld (primary).
-        /// Updated by travel_to_dimension(); also written to g_active_dimension_id.
+        /// Always updated via set_active_dimension_id().
         std::string current_dimension_id_;
 
         /// Metadata for all dimensions that currently have at least one submap loaded.

@@ -60,16 +60,12 @@ void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_
         }
     }
 
-    // Request a single submap (radius 0) at the given z-level.
-    const int z = pos.z();
+    // Request a single quad (radius 0) — always covers full z-pillar.
     load_request_handle h = submap_loader.request_load(
                                 load_request_source::fire_spread,
                                 dim,
                                 pos,
-                                0,   // radius 0 → single submap
-                                z,
-                                z
-                            );
+                                0 );
     fire_handles_[key] = h;
 }
 

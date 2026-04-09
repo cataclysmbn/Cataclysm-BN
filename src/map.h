@@ -2221,8 +2221,10 @@ class map : public submap_load_listener
          * called in parallel across monsters (P-6).
          */
         struct vision_cache_slot {
-            point key;
-            char  value = -1;  // -1 = empty/miss
+            // 64-bit key: two tripoints packed as 29 bits each (12x + 12y + 5z).
+            // Handles coordinates up to 4095 per axis — safe for g_mapsize up to ~340.
+            int64_t key  = 0;
+            char    value = -1;  // -1 = empty/miss
         };
         static constexpr std::size_t vision_cache_slots = 1 << 17;  // 131072 entries (~1.5 MB)
         mutable std::vector<vision_cache_slot> skew_vision_cache;

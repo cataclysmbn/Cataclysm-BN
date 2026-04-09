@@ -266,7 +266,7 @@ void game::unserialize( std::istream &fin )
                 }
             }
         }
-        g_active_dimension_id = current_dimension_id_;
+        set_active_dimension_id( current_dimension_id_ );
         data.read( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
 
         // Restore all dimension metadata.  The current dimension is also included
@@ -325,7 +325,7 @@ void game::unserialize( std::istream &fin )
             bounds.boundary_overmap_terrain = oter_str_id(
                                                   bounds_obj.get_string( "boundary_overmap_terrain" ) );
             m.set_dimension_bounds( bounds );
-            ACTIVE_OVERMAP_BUFFER.set_dimension_bounds( bounds );
+            get_overmapbuffer( current_dimension_id_ ).set_dimension_bounds( bounds );
         }
 
         load_map(
@@ -1354,7 +1354,7 @@ void game::unserialize_master( std::istream &fin )
             } else if( name == "seed" ) {
                 jsin.read( seed );
             } else if( name == "placed_unique_specials" ) {
-                ACTIVE_OVERMAP_BUFFER.deserialize_placed_unique_specials( jsin );
+                get_overmapbuffer( current_dimension_id_ ).deserialize_placed_unique_specials( jsin );
             } else if( name == "weather" ) {
                 JsonObject w = jsin.get_object();
                 w.read( "lightning", get_weather().lightning_active );
@@ -1388,7 +1388,7 @@ void game::unserialize_dimension_data( std::istream &fin )
             std::string name = jsin.get_member_name();
             if( name == "region_type" ) {
                 // Load the region type for this dimension
-                jsin.read( ACTIVE_OVERMAP_BUFFER.current_region_type );
+                jsin.read( get_overmapbuffer( current_dimension_id_ ).current_region_type );
             } else {
                 // Skip unknown members for forward/backward compatibility
                 // (e.g., DDA's "overmapbuffer", "weather", "placed_unique_specials")
@@ -1423,7 +1423,7 @@ void game::serialize_master( std::ostream &fout )
         mission::serialize_all( json );
 
         json.member( "placed_unique_specials" );
-        ACTIVE_OVERMAP_BUFFER.serialize_placed_unique_specials( json );
+        get_overmapbuffer( current_dimension_id_ ).serialize_placed_unique_specials( json );
 
         json.member( "factions", *faction_manager_ptr );
         json.member( "seed", seed );
@@ -1449,7 +1449,7 @@ void game::serialize_dimension_data( std::ostream &fout )
 
         // Save the region type for this dimension
         // This allows different dimensions to have different regional settings
-        json.member( "region_type", ACTIVE_OVERMAP_BUFFER.current_region_type );
+        json.member( "region_type", get_overmapbuffer( current_dimension_id_ ).current_region_type );
 
         // Note: BN doesn't use DDA's global_state or weather_manager
         // Those are stored differently in BN's architecture

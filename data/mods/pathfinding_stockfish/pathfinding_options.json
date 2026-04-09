@@ -62,5 +62,12 @@
     "info": "If mob avoidance is unspecified, the value will be this. This makes pathfinding route around living mobs with higher values increasing the route-around range. Negative values will make pathfinding treat mobs as impassable walls.",
     "stype": "float",
     "value": 16.0
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "PATHFINDING_MOB_PRESENCE_PENALTY_NPC_DEFAULT",
+    "info": "Mob avoidance penalty applied to NPC and player pathfinding. Higher values increase the route-around range. Negative values treat mobs as impassable walls.",
+    "stype": "float",
+    "value": 16.0
   }
 ]

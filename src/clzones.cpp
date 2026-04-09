@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iosfwd>
 #include <iterator>
+#include <mutex>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -1242,6 +1243,42 @@ void zone_manager::create_vehicle_loot_zone( vehicle &vehicle, point mount_point
     vehicle.zones_dirty = false;
     added_vzones.push_back( &nz->second );
     cache_vzones();
+}
+
+namespace
+{
+struct deferred_zone {
+    std::string  name;
+    zone_type_id type;
+    faction_id   fac;
+    bool         invert;
+    bool         enabled;
+    tripoint     start;
+    tripoint     end;
+};
+std::mutex                 g_deferred_zones_mutex;
+std::vector<deferred_zone> g_deferred_zones;
+} // namespace
+
+void defer_zone_add( const std::string &name, const zone_type_id &type,
+                     const faction_id &fac, bool invert, bool enabled,
+                     const tripoint &start, const tripoint &end )
+{
+    auto lock = std::lock_guard( g_deferred_zones_mutex );
+    g_deferred_zones.push_back( { name, type, fac, invert, enabled, start, end } );
+}
+
+void flush_deferred_zones()
+{
+    std::vector<deferred_zone> pending;
+    {
+        auto lock = std::lock_guard( g_deferred_zones_mutex );
+        pending.swap( g_deferred_zones );
+    }
+    auto &mgr = zone_manager::get_manager();
+    std::ranges::for_each( pending, [&]( const deferred_zone & z ) {
+        mgr.add( z.name, z.type, z.fac, z.invert, z.enabled, z.start, z.end );
+    } );
 }
 
 void zone_manager::add( const std::string &name, const zone_type_id &type, const faction_id &fac,

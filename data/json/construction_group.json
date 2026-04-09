@@ -1641,6 +1641,11 @@
   },
   {
     "type": "construction_group",
+    "id": "salt_water_fill_pit",
+    "name": "Fill Pit With Salt Water"
+  },
+  {
+    "type": "construction_group",
     "id": "build_high_end_of_a_natural_ramp",
     "name": "Dig High End of a Ramp"
   },
