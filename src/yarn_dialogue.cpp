@@ -322,7 +322,7 @@ struct expr_parser_state {
     const func_registry &reg;
     std::optional<parse_error> error_;
 
-    auto cur() const -> const token& { return tokens[pos]; }
+    auto cur() const -> const token & { return tokens[pos]; }
 
     void advance() {
         if( pos + 1 < static_cast<int>( tokens.size() ) ) {
