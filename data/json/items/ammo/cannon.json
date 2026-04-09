@@ -52,9 +52,9 @@
     "weight": "5651 g",
     "looks_like": "cannon_round_ball",
     "//2": "balanced as hollowpoint, with buckshot level of armor multiplier.",
-    "damage": { "damage_type": "bullet", "amount": 10, "armor_multiplier": 2 },
+    "damage": { "damage_type": "bullet", "amount": 25 },
     "range": 30,
-    "shot": { "count": 40, "half_angle": 10 },
+    "shot": { "count": 10, "half_angle": 10 },
     "dispersion": 450,
     "recoil": 55000,
     "extend": { "effects": [ "SHOT" ] }
@@ -67,9 +67,9 @@
     "description": "A bundle of wadding, black gunpowder, and a load of improvised buckshot.  Certainly still quite dangerous to anything downrange.",
     "weight": "3751 g",
     "looks_like": "cannon_round_ball",
-    "proportional": { "price": 0.5, "price_postapoc": 0.5, "damage": { "damage_type": "bullet", "amount": 0.8, "armor_multiplier": 1.25 } },
+    "proportional": { "price": 0.5, "price_postapoc": 0.5, "damage": { "damage_type": "bullet", "amount": 0.8 } },
     "range": 25,
-    "shot": { "count": 36, "half_angle": 10 },
+    "shot": { "count": 10, "half_angle": 10 },
     "dispersion": 500
   }
 ]

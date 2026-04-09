@@ -34,10 +34,10 @@
     "weight": "2 g",
     "bashing": 1,
     "ammo_type": "blunderbuss",
-    "damage": { "damage_type": "bullet", "amount": 7, "armor_multiplier": 3 },
+    "damage": { "damage_type": "bullet", "amount": 5 },
     "range": 6,
     "dispersion": 1000,
-    "shot": { "count": 16, "half_angle": 12 },
+    "shot": { "count": 12, "half_angle": 12 },
     "recoil": 780,
     "effects": [ "COOKOFF", "SHOT", "RECYCLED" ]
   },
@@ -56,10 +56,10 @@
     "bashing": 1,
     "ammo_type": "blunderbuss",
     "//": "Balanced as standard FMJ to allow lower damage but more penetration over shot.",
-    "damage": { "damage_type": "bullet", "amount": 7, "armor_penetration": 24, "armor_multiplier": 1.5 },
+    "damage": { "damage_type": "bullet", "amount": 3, "armor_penetration": 24, "armor_multiplier": 1.5 },
     "range": 10,
     "dispersion": 1000,
-    "shot": { "count": 12, "half_angle": 8 },
+    "shot": { "count": 16, "half_angle": 8 },
     "recoil": 840,
     "effects": [ "COOKOFF", "SHOT", "RECYCLED" ]
   }
