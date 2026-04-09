@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <charconv>
 #include <cmath>
 #include <ranges>
 #include <sstream>
@@ -1002,8 +1003,18 @@ auto parse_if_block( yarn_parser &p, const std::vector<raw_line> &lines,
     bool in_else = false;
     while( i < end ) {
         const auto &line = lines[i];
-        if( line.content.empty() ) {
+        if( line.content.empty() || starts_with( line.content, "//" ) ) {
             ++i;
+            continue;
+        }
+
+        auto &target_body = in_else ? else_body : if_body;
+
+        // Choice groups and nested <<if>> span multiple lines — handle them directly
+        // here with the correct `end` boundary rather than delegating to parse_elements
+        // with the i+1 limit used below for single-line elements.
+        if( starts_with( line.content, "->" ) ) {
+            target_body.push_back( parse_choice_group( p, lines, i, end, line.indent ) );
             continue;
         }
 
@@ -1021,19 +1032,21 @@ auto parse_if_block( yarn_parser &p, const std::vector<raw_line> &lines,
                 ++i;
                 break;
             }
+            if( starts_with( cmd, "if " ) ) {
+                auto cond_src = trim_sv( cmd.substr( 3 ) );
+                ++i;
+                target_body.push_back(
+                    parse_if_block( p, lines, i, end, line.indent, cond_src, line.line_num ) );
+                continue;
+            }
         }
 
-        if( !in_else ) {
-            auto body_elems = parse_elements( p, lines, i, i + 1, block_indent );
-            if_body.insert( if_body.end(),
+        // All other elements (dialogue, single-line commands) are single-line;
+        // use i+1 so parse_elements never reaches <<else>> / <<endif>>.
+        auto body_elems = parse_elements( p, lines, i, i + 1, block_indent );
+        target_body.insert( target_body.end(),
                             std::make_move_iterator( body_elems.begin() ),
                             std::make_move_iterator( body_elems.end() ) );
-        } else {
-            auto body_elems = parse_elements( p, lines, i, i + 1, block_indent );
-            else_body.insert( else_body.end(),
-                              std::make_move_iterator( body_elems.begin() ),
-                              std::make_move_iterator( body_elems.end() ) );
-        }
     }
 
     elem.if_body = std::move( if_body );
@@ -1215,6 +1228,24 @@ auto yarn_story::from_string( std::string_view content, std::string_view source_
                     while( ss >> tag ) {
                         node.tags.push_back( tag );
                     }
+                } else if( key == "shared_choices" ) {
+                    // Space-separated list of node titles whose choices to append.
+                    std::istringstream ss( val );
+                    std::string name;
+                    while( ss >> name ) {
+                        node.shared_choices.push_back( std::move( name ) );
+                    }
+                } else if( key == "inject_into" ) {
+                    node.inject_into = val;
+                } else if( key == "inject_priority" ) {
+                    int prio = 0;
+                    auto [ptr, ec] = std::from_chars( val.data(), val.data() + val.size(), prio );
+                    if( ec != std::errc{} ) {
+                        parser.error( 0, "inject_priority on '" + node.title +
+                                         "': invalid integer '" + val + "'" );
+                    } else {
+                        node.inject_priority = prio;
+                    }
                 }
             }
             ++i;
@@ -1247,6 +1278,9 @@ auto yarn_story::from_string( std::string_view content, std::string_view source_
             story.nodes_.emplace( node.title, std::move( node ) );
         }
     }
+
+    // shared_choices resolution is deferred to resolve_shared_choices(), called
+    // after all stories are loaded so cross-file "story::NodeName" references work.
 
     result.errors = std::move( parser.errors );
     return { std::move( story ), std::move( result ) };
@@ -1282,6 +1316,58 @@ auto yarn_story::all_nodes() const -> const std::unordered_map<std::string, yarn
 void yarn_story::add_node( yarn_node node )
 {
     nodes_.emplace( node.title, std::move( node ) );
+}
+
+auto yarn_story::get_node_mutable( const std::string &name ) -> yarn_node *
+{
+    auto it = nodes_.find( name );
+    return it != nodes_.end() ? &it->second : nullptr;
+}
+
+void yarn_story::resolve_shared_choices( const node_lookup_fn &lookup,
+                                         const std::string &own_name,
+                                         std::vector<std::string> &out_errors )
+{
+    for( auto &[title, node] : nodes_ ) {
+        if( node.shared_choices.empty() ) {
+            continue;
+        }
+        auto cg_it = std::ranges::find_if( node.elements, []( const node_element &e ) {
+            return e.type == node_element::kind::choice_group;
+        } );
+        if( cg_it == node.elements.end() ) {
+            out_errors.push_back( "shared_choices on '" + title + "': node has no choice_group" );
+            continue;
+        }
+        for( const auto &ref : node.shared_choices ) {
+            if( ref == title ) {
+                out_errors.push_back( "shared_choices on '" + title + "': node lists itself as base" );
+                continue;
+            }
+            // Parse "story::NodeName" or bare "NodeName" (same file).
+            std::string base_story = own_name;
+            std::string base_node  = ref;
+            if( const auto sep = ref.find( "::" ); sep != std::string::npos ) {
+                base_story = ref.substr( 0, sep );
+                base_node  = ref.substr( sep + 2 );
+            }
+            const yarn_node *base = lookup( base_story, base_node );
+            if( base == nullptr ) {
+                out_errors.push_back( "shared_choices on '" + title +
+                                      "': base node '" + ref + "' not found" );
+                continue;
+            }
+            auto base_cg_it = std::ranges::find_if( base->elements, []( const node_element &e ) {
+                return e.type == node_element::kind::choice_group;
+            } );
+            if( base_cg_it == base->elements.end() ) {
+                continue;  // base has no choices; nothing to append
+            }
+            cg_it->choices.insert( cg_it->choices.end(),
+                                   base_cg_it->choices.begin(),
+                                   base_cg_it->choices.end() );
+        }
+    }
 }
 
 // ============================================================
@@ -1829,6 +1915,138 @@ std::unordered_map<std::string, yarn_story> &story_registry()
     return reg;
 }
 
+// Collect all inject_into nodes across the registry and merge their choices into
+// their declared targets.  Called once from load_yarn_stories() after all stories
+// and shared_choices are resolved.
+//
+// Ordering within a target's choice_group after injection:
+//   [ priority < 0, ascending ]  [ native choices ]  [ priority >= 0, ascending ]
+// Within the same priority value, declaration (load) order is preserved.
+void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
+{
+    struct pending_injection {
+        std::vector<node_element::choice> choices;
+        int priority;
+        std::string target_story;
+        std::string target_node;
+    };
+
+    std::vector<pending_injection> injections;
+    for( const auto &[story_name, story] : registry ) {
+        for( const auto &[node_name, node] : story.all_nodes() ) {
+            if( node.inject_into.empty() ) {
+                continue;
+            }
+            auto cg_it = std::ranges::find_if( node.elements, []( const node_element &e ) {
+                return e.type == node_element::kind::choice_group;
+            } );
+            if( cg_it == node.elements.end() ) {
+                DebugLog( DL::Error, DC::Dialogue )
+                    << "yarn inject_into on '" << node_name << "': node has no choice_group";
+                continue;
+            }
+            if( cg_it->choices.empty() ) {
+                continue;
+            }
+            std::string ts = story_name;
+            std::string tn = node.inject_into;
+            if( const auto sep = node.inject_into.find( "::" ); sep != std::string::npos ) {
+                ts = node.inject_into.substr( 0, sep );
+                tn = node.inject_into.substr( sep + 2 );
+            }
+            // Clone the choices and auto-append <<jump TargetNode>> to each body.
+            // This ensures injected choices return to the injection target without
+            // the mod author needing to know the target node name.  If the body
+            // already navigates away (<<stop>>, <<jump X>>, etc.) the auto-jump
+            // is never reached.
+            auto choices_with_return = cg_it->choices;
+            for( auto &ch : choices_with_return ) {
+                node_element return_jump;
+                return_jump.type        = node_element::kind::jump;
+                return_jump.jump_target = tn;
+                ch.body.push_back( std::move( return_jump ) );
+            }
+            injections.push_back( { std::move( choices_with_return ), node.inject_priority,
+                                    std::move( ts ), std::move( tn ) } );
+        }
+    }
+
+    if( injections.empty() ) {
+        return;
+    }
+
+    // Sort by (target_story, target_node, priority) so we can process groups in one pass.
+    std::ranges::stable_sort( injections, []( const pending_injection &a,
+                                              const pending_injection &b ) {
+        if( a.target_story != b.target_story ) { return a.target_story < b.target_story; }
+        if( a.target_node  != b.target_node  ) { return a.target_node  < b.target_node;  }
+        return a.priority < b.priority;
+    } );
+
+    auto it = injections.begin();
+    while( it != injections.end() ) {
+        const std::string &ts = it->target_story;
+        const std::string &tn = it->target_node;
+
+        // Find end of this (target_story, target_node) group.
+        auto group_end = std::ranges::find_if( it, injections.end(),
+                                               [&ts, &tn]( const pending_injection &p ) {
+            return p.target_story != ts || p.target_node != tn;
+        } );
+
+        // Locate the target node (mutable).
+        auto sit = registry.find( ts );
+        if( sit == registry.end() ) {
+            DebugLog( DL::Error, DC::Dialogue )
+                << "yarn inject_into: story '" << ts << "' not found";
+            it = group_end;
+            continue;
+        }
+        auto *target = sit->second.get_node_mutable( tn );
+        if( target == nullptr ) {
+            DebugLog( DL::Error, DC::Dialogue )
+                << "yarn inject_into: node '" << tn << "' not found in story '" << ts << "'";
+            it = group_end;
+            continue;
+        }
+        auto cg_it = std::ranges::find_if( target->elements, []( const node_element &e ) {
+            return e.type == node_element::kind::choice_group;
+        } );
+        if( cg_it == target->elements.end() ) {
+            DebugLog( DL::Error, DC::Dialogue )
+                << "yarn inject_into: target '" << tn << "' in '" << ts << "' has no choice_group";
+            it = group_end;
+            continue;
+        }
+
+        // Already sorted ascending by priority.  Split at the first non-negative value.
+        auto split = std::ranges::find_if( it, group_end, []( const pending_injection &p ) {
+            return p.priority >= 0;
+        } );
+
+        // Collect prepend choices (priority < 0) in ascending order → most-negative first.
+        std::vector<node_element::choice> prepend;
+        for( auto jt = it; jt != split; ++jt ) {
+            prepend.insert( prepend.end(), jt->choices.begin(), jt->choices.end() );
+        }
+
+        // Collect append choices (priority >= 0) in ascending order → lowest first.
+        std::vector<node_element::choice> append;
+        for( auto jt = split; jt != group_end; ++jt ) {
+            append.insert( append.end(), jt->choices.begin(), jt->choices.end() );
+        }
+
+        if( !prepend.empty() ) {
+            cg_it->choices.insert( cg_it->choices.begin(), prepend.begin(), prepend.end() );
+        }
+        if( !append.empty() ) {
+            cg_it->choices.insert( cg_it->choices.end(), append.begin(), append.end() );
+        }
+
+        it = group_end;
+    }
+}
+
 } // anonymous namespace
 
 void load_yarn_stories()
@@ -1851,8 +2069,38 @@ void load_yarn_stories()
             auto dot = path.rfind( '.' );
             auto stem = path.substr( stem_start, dot - stem_start );
             story_registry().emplace( stem, std::move( story ) );
+            DebugLog( DL::Error, DC::Dialogue ) << "yarn: loaded story '" << stem << "'";
+        } else {
+            DebugLog( DL::Error, DC::Dialogue )
+                << "yarn: failed to load '" << path << "' (" << result.errors.size() << " errors)";
         }
     }
+
+    // Resolve shared_choices across all loaded stories now that the full registry is populated.
+    // Lookup function resolves both same-file bare names and cross-file "story::NodeName".
+    // Note: base nodes are expected to be leaf nodes (no shared_choices of their own).
+    // Chained shared_choices are not guaranteed to resolve in dependency order.
+    yarn_story::node_lookup_fn lookup = []( const std::string &story_name,
+                                            const std::string &node_name ) -> const yarn_node * {
+        auto &reg = story_registry();
+        auto sit = reg.find( story_name );
+        if( sit == reg.end() ) {
+            return nullptr;
+        }
+        return sit->second.has_node( node_name ) ? &sit->second.get_node( node_name ) : nullptr;
+    };
+
+    for( auto &[name, story] : story_registry() ) {
+        std::vector<std::string> errors;
+        story.resolve_shared_choices( lookup, name, errors );
+        for( const auto &err : errors ) {
+            DebugLog( DL::Error, DC::Dialogue ) << "yarn shared_choices: " << err;
+        }
+    }
+
+    // Apply inject_into contributions after shared_choices are resolved, so injected
+    // choices benefit from any shared_choices already merged into their source nodes.
+    apply_injections( story_registry() );
 }
 
 auto has_yarn_story( const std::string &name ) -> bool
@@ -3761,14 +4009,18 @@ void register_builtin_commands( command_registry &reg )
 auto run_npc_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
 {
     if( n.chatbin.yarn_story.empty() ) {
+        DebugLog( DL::Error, DC::Dialogue )
+            << "yarn: NPC '" << n.name << "' has no yarn_story — using legacy path";
         return false;
     }
     if( !has_yarn_story( n.chatbin.yarn_story ) ) {
-        DebugLog( DL::Warn, DC::Dialogue )
+        DebugLog( DL::Error, DC::Dialogue )
             << "yarn: NPC '" << n.name << "' references unknown story '"
-            << n.chatbin.yarn_story << "'";
+            << n.chatbin.yarn_story << "' — story not in registry";
         return false;
     }
+    DebugLog( DL::Error, DC::Dialogue )
+        << "yarn: running story '" << n.chatbin.yarn_story << "' for NPC '" << n.name << "'";
 
     const auto &story = get_yarn_story( n.chatbin.yarn_story );
     d_win.print_header( n.name );
@@ -3776,10 +4028,14 @@ auto run_npc_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
     g_conv_ctx = { &n, &p };
     conv_ctx_guard guard;
 
+    // Entry node convention: use "Greeting" if present (shown once on first contact),
+    // otherwise fall back to "Start" (the recurring choice hub).
+    const std::string entry_node = story.has_node( "Greeting" ) ? "Greeting" : "Start";
+
     yarn_runtime::options opts{
-        .story        = story,
-        .registry     = func_registry::global(),
-        .starting_node = "Start",
+        .story         = story,
+        .registry      = func_registry::global(),
+        .starting_node = entry_node,
         .npc_ref       = &n,
         .player_ref    = &p
     };

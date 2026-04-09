@@ -1,39 +1,116 @@
-title: Start
+// Demo yarn story for the shelter NPC archetype.
+//
+// Demonstrates:
+//   - Same-file shared_choices (ShelterActions) with <<goto>> for return-to-dialogue
+//   - Cross-file shared_choices (common::CommonActions) with terminal choices
+//   - Lateral navigation with <<jump>> (graph edges visible in VS Code extension)
+//   - <<goto>> for sub-dialogs that pop back to the caller automatically
+//   - Conditional text with <<if>> / <<endif>>
+//
+// Navigation semantics recap:
+//   <<jump X>> — replace current frame; VS Code draws edge; conversation ends when X ends
+//   <<goto X>> — push frame; VS Code does NOT draw edge; caller re-presents when X pops
+//
+// Entry node convention: the runtime enters at "Greeting" (first-contact speech), which
+// ends with <<jump Start>>.  All return-to-menu jumps target "Start" directly, so the
+// opening speech is not repeated.  If no "Greeting" node exists, the runtime falls back
+// to "Start" as the entry point.
+//
+// ShelterActions is a same-file shared base.  Its <<goto ShelterMood>> choice pushes
+// ShelterMood; when ShelterMood falls off its end it pops back and the merging node
+// (Start) re-presents its choices.
+//
+// CommonActions (cross-file) provides terminal choices only — trade and goodbye.
+// After those complete the conversation ends naturally.
+
+title: ShelterActions
+position: -336,-472
 ---
-Thank God, another person. I've been holed up here since the first night.
-You doing alright? This place has been... quiet. Too quiet.
-<<if u_get_str() >= 8>>
-You look strong. That helps out here.
+-> Ask how they're holding up.
+    <<goto ShelterMood>>
+===
+
+title: ShelterMood
+position: -340,-200
+---
+Honestly?  Not great.  But I'm alive, and that counts for something out here.
+I keep busy.  Helps not to think too much.
+===
+
+title: Greeting
+position: 63,100
+---
+<<if npc_following()>>
+Good to have you around.  What's on your mind?
+<<else>>
+Thank God, another person.  I've been holed up here since the first night.
+You doing alright?  This place has been... quiet.  Too quiet.
+<<if u_get_str() >= 10>>
+You look strong.  That helps out here.
 <<endif>>
--> Ask about supplies
-    Supplies? I found a few cans in the back room. You're welcome to them.
-    I'm not going anywhere fast anyway.
-    <<give_item "veggy_canned" 2>>
-    <<goto Start_Supplies>>
--> Ask what happened
-    <<goto Start_What_Happened>>
--> Leave them alone
-    <<stop>>
+<<endif>>
+<<jump Start>>
+===
+
+title: Start
+position: 63,300
+shared_choices: ShelterActions common::CommonActions
+---
+-> Ask about supplies.
+    <<jump Start_Supplies>>
+-> Ask what happened.
+    <<jump Start_WhatHappened>>
+-> Ask if they've seen anyone else.
+    <<jump Start_Others>>
 ===
 
 title: Start_Supplies
+position: -332,446
+shared_choices: ShelterActions common::CommonActions
 ---
-There's a shelf near the back wall. Just don't go past the locked door —
+I found a few cans in the back room.  You're welcome to them.
+I'm not going anywhere fast anyway.
+<<give_item "veggy_canned" 2>>
+There's also a shelf near the back wall.  Just don't go past the locked door —
 I don't know what's in there and I haven't wanted to find out.
--> Ask what happened
-    <<goto Start_What_Happened>>
--> Say thanks and leave
-    <<stop>>
+-> Ask what happened.
+    <<jump Start_WhatHappened>>
+-> Ask if they've seen anyone else.
+    <<jump Start_Others>>
+-> Go back.
+    <<jump Start>>
 ===
 
-title: Start_What_Happened
+title: Start_WhatHappened
+position: 474,437
+shared_choices: ShelterActions common::CommonActions
 ---
-I was at work when the sirens went off. Drove here thinking it'd be temporary.
+I was at work when the sirens went off.  Drove here thinking it'd be temporary.
 That was... I don't even know how long ago now.
+The first few days were the worst.  Sounds outside, people screaming.
+Now it's just silence.
+-> Ask about supplies.
+    <<jump Start_Supplies>>
+-> Ask if they've seen anyone else.
+    <<jump Start_Others>>
+-> Go back.
+    <<jump Start>>
+===
+
+title: Start_Others
+position: 71,738
+shared_choices: ShelterActions common::CommonActions
+---
+<<if npc_following()>>
+You're the only person I've seen since this started.  Well, besides you showing up.
+<<else>>
 Haven't seen anyone else until you showed up.
--> Ask about supplies
-    <<goto Start_Supplies>>
--> Wish them luck and go
-    Good luck out there. You too.
-    <<stop>>
+I thought I heard voices a few days ago — west side of town — but I didn't dare go look.
+<<endif>>
+-> Ask what happened.
+    <<jump Start_WhatHappened>>
+-> Ask about supplies.
+    <<jump Start_Supplies>>
+-> Go back.
+    <<jump Start>>
 ===

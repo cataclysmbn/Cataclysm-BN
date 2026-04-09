@@ -270,6 +270,20 @@ struct yarn_node {
     std::string title;
     std::vector<std::string> tags;
     std::vector<node_element> elements;
+
+    // "shared_choices: NodeA story::NodeB" — pull: append named nodes' choices to this node.
+    // Resolved at load time via yarn_story::resolve_shared_choices().
+    std::vector<std::string> shared_choices;
+
+    // "inject_into: story::Node" — push: contribute this node's choices into another node.
+    // Resolved at load time via apply_injections() in load_yarn_stories().
+    // Empty string means this node is not an injection source.
+    std::string inject_into;
+
+    // Controls where injected choices land relative to the target's native choices.
+    // priority < 0  → prepend (most-negative first)
+    // priority >= 0 → append  (lowest first); default is 0
+    int inject_priority = 0;
 };
 
 // ============================================================
@@ -299,6 +313,19 @@ class yarn_story {
         // Insert or replace a node by title. Used by build_legacy_yarn_stories().
         void add_node( yarn_node node );
 
+        // Returns a mutable pointer to the named node, or nullptr if not found.
+        // Used by apply_injections() to modify target nodes.
+        auto get_node_mutable( const std::string &name ) -> yarn_node *;
+
+        // Resolve shared_choices references after all stories are loaded.
+        // lookup_fn(story_name, node_name) returns the node or nullptr if not found.
+        // Handles both same-file bare names and cross-file "story::NodeName" references.
+        // Errors are appended to out_errors.
+        using node_lookup_fn = std::function<const yarn_node *( const std::string &story,
+                                                                 const std::string &node )>;
+        void resolve_shared_choices( const node_lookup_fn &lookup, const std::string &own_name,
+                                     std::vector<std::string> &out_errors );
+
     private:
         std::unordered_map<std::string, yarn_node> nodes_;
         std::string source_name_;
@@ -309,10 +336,12 @@ class yarn_story {
 // ============================================================
 //
 // Navigation semantics:
-//   <<jump X>>   Push X onto the node stack. When X falls off its end, pop back to caller.
+//   <<jump X>>   Replace the current frame with X (standard Yarn Spinner behavior).
 //                Creates graph edges in the VS Code Yarn Spinner extension.
-//   <<goto X>>   Replace the current frame with X. Use for lateral/cycling navigation
-//                where you don't want to return to the calling node.
+//                Use for lateral navigation between peer topics.
+//   <<goto X>>   Push X onto the node stack. When X falls off its end, pop back to caller.
+//                Use for sub-dialogs that must return to the calling node.
+//                Not understood by the VS Code extension (no graph edges drawn).
 //   <<return>>   Explicit early pop of the current frame. Returns to caller.
 //   <<stop>>     Clear the entire node stack. Ends the conversation.
 

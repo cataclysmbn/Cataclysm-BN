@@ -1,0 +1,18 @@
+// Shared base nodes imported by other stories via "shared_choices: common::NodeName".
+//
+// These nodes are effect-only: no <<jump>> or <<goto>> navigation.
+// After an effect completes the node falls off its end, which pops the
+// merged-choice context and ends the conversation (or returns to whatever
+// called the node via <<goto>>).
+//
+// <<stop>> is safe from any stack depth — it clears the entire stack.
+
+title: CommonActions
+position: 62,0
+---
+-> Barter for supplies.
+    I don't have much, but we can work something out.
+    <<start_trade>>
+-> That's all for now.  Stay safe.
+    <<stop>>
+===

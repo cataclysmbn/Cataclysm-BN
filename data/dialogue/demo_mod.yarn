@@ -1,0 +1,41 @@
+// Example of how a mod would inject choices into an existing dialogue node.
+//
+// This file lives in the mod's own data/dialogue/ folder.  It does not touch
+// shelter_npc.yarn at all — it just declares inject_into pointing at the target.
+//
+// inject_priority controls placement relative to the target's native choices:
+//   priority < 0  → before native choices (most-negative appears first)
+//   priority >= 0 → after native choices  (lowest appears first; default is 0)
+//
+// Multiple mods injecting into the same node are sorted by priority, then by
+// the order their files were loaded.
+//
+// Return behaviour: the runtime automatically appends <<jump TargetNode>> to
+// every injected choice body.  Mod authors do NOT need to write <<jump>> at the
+// end — the player is returned to the injection target node automatically.
+// If the body explicitly navigates (<<stop>>, <<jump X>>, etc.) the auto-jump
+// is never reached, so deliberate exits still work as authored.
+
+// Injects after native choices (default priority 0).
+title: ModExtraDialogue
+inject_into: shelter_npc::Start
+---
+-> Ask about the locked door.
+    I told you — I don't know what's in there.
+    And I don't want to find out.
+===
+
+// Injects before native choices (negative priority).
+// Use sparingly — most mod choices should follow the base dialogue.
+title: ModUrgentWarning
+position: 4,323
+inject_into: shelter_npc::Start
+inject_priority: -10
+---
+-> Did you hear that noise just now?
+    <<if npc_following()>>
+    I heard it too.  Stay sharp.
+    <<else>>
+    What noise?  I've been trying not to listen.
+    <<endif>>
+===
