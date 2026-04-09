@@ -226,12 +226,14 @@ Supported types: `"PERSUADE"`, `"LIE"`, `"INTIMIDATE"`.
 ## Random Lines
 
 You can use line groups like so:
+
 ```yarn
 => NPC: Haven't seen anyone else until you showed up.
 I thought I heard voices a few days ago — west side of town — but I didn't dare go look.
 => NPC: You're the only person I've seen since this started.  Well, besides you showing up.
 => NPC: Nobody seems to be around anymore. Not that I want to look around to much...
 ```
+
 This will pick one of the given lines at random.
 Mind the indentation, since these pick up every line >= the line group entry's indentation level.
 This is native to Yarn Spinner, and allows randomized dialogue flow in a very compact and clean
@@ -279,6 +281,7 @@ For interoperability with the legacy JSON dialogue system, use the four-argument
 <<u_add_var "asked_about_vault" "sentinel" "old_guard" "yes">>
 <<if u_has_var("asked_about_vault", "sentinel", "old_guard", "yes")>>
 ```
+
 It's recommended that you not use this because it may be depreciated. If you need an equivalent,
 Lua is always an option. Though with the better flow control of Yarn Spinner, it's unlikely
 that a 3 key system will be desirable.

@@ -13,7 +13,8 @@ class player;
 class dialogue_window;
 struct dialogue;
 
-namespace yarn {
+namespace yarn
+{
 
 // ============================================================
 // Value system
@@ -109,7 +110,8 @@ struct func_signature {
     std::function<value( const std::vector<value> & )> impl;
 };
 
-class func_registry {
+class func_registry
+{
     public:
         void register_func( func_signature sig );
 
@@ -150,7 +152,8 @@ enum class command_signal : uint8_t {
     stop,  // clear the node stack and end the conversation
 };
 
-class command_registry {
+class command_registry
+{
     public:
         // impl must return command_signal::none to continue or command_signal::stop to end.
         using impl_fn = std::function<command_signal( const std::vector<value> & )>;
@@ -187,7 +190,7 @@ struct parse_error {
 // Validates function names and argument types against the registry.
 // Returns the AST or the first parse error encountered.
 auto parse_expr( std::string_view source, const func_registry &registry )
-    -> std::variant<expr_node, parse_error>;
+-> std::variant<expr_node, parse_error>;
 
 // Evaluates a parsed expression tree. The registry is used to call
 // registered functions. Throws std::runtime_error on type errors.
@@ -296,7 +299,8 @@ struct yarn_node {
 // yarn_story — parsed story, ready for the runtime
 // ============================================================
 
-class yarn_story {
+class yarn_story
+{
     public:
         struct load_result {
             std::vector<std::string> errors;
@@ -305,12 +309,12 @@ class yarn_story {
 
         // Load from a file path. Source name is used in error messages.
         static auto from_file( const std::string &path )
-            -> std::pair<yarn_story, load_result>;
+        -> std::pair<yarn_story, load_result>;
 
         // Load from an in-memory string (useful for tests and mods that
         // ship .yarn content directly).
         static auto from_string( std::string_view content, std::string_view source_name )
-            -> std::pair<yarn_story, load_result>;
+        -> std::pair<yarn_story, load_result>;
 
         auto has_node( const std::string &name ) const -> bool;
         auto get_node( const std::string &name ) const -> const yarn_node &;
@@ -328,7 +332,7 @@ class yarn_story {
         // Handles both same-file bare names and cross-file "story::NodeName" references.
         // Errors are appended to out_errors.
         using node_lookup_fn = std::function<const yarn_node *( const std::string &story,
-                                                                 const std::string &node )>;
+                               const std::string &node )>;
         void resolve_shared_choices( const node_lookup_fn &lookup, const std::string &own_name,
                                      std::vector<std::string> &out_errors );
 
@@ -351,7 +355,8 @@ class yarn_story {
 //   <<return>>   Explicit early pop of the current frame. Returns to caller.
 //   <<stop>>     Clear the entire node stack. Ends the conversation.
 
-class yarn_runtime {
+class yarn_runtime
+{
     public:
         struct options {
             const yarn_story &story;

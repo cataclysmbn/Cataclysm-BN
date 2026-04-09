@@ -24,7 +24,7 @@ namespace
 
 auto yarn_to_sol( sol::state_view lua, const yarn::value &v ) -> sol::object
 {
-    return std::visit( [&lua]<typename T>( const T &val ) -> sol::object {
+    return std::visit( [&lua]<typename T>( const T & val ) -> sol::object {
         return sol::make_object( lua, val );
     }, v );
 }
@@ -102,7 +102,8 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
             const auto &path = std::get<std::string>( args[0] );
             auto fn_obj = resolve_lua_path( lua, path );
 
-            if( fn_obj.get_type() != sol::type::function ) {
+            if( fn_obj.get_type() != sol::type::function )
+            {
                 debugmsg( "yarn: lua_fn: '%s' is not a Lua function", path );
                 return false;
             }
@@ -112,12 +113,14 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
             lua_args.reserve( args.size() - 1 );
             std::ranges::transform( args | std::views::drop( 1 ),
                                     std::back_inserter( lua_args ),
-                                    [&lua]( const yarn::value &v ) {
+                                    [&lua]( const yarn::value & v )
+            {
                 return yarn_to_sol( lua, v );
             } );
 
             auto result = fn( sol::as_args( lua_args ) );
-            if( !result.valid() ) {
+            if( !result.valid() )
+            {
                 sol::error err = result;
                 debugmsg( "yarn: lua_fn: '%s' threw: %s", path, err.what() );
                 return false;
@@ -142,7 +145,8 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
         const auto &path = std::get<std::string>( args[0] );
         auto fn_obj = resolve_lua_path( lua, path );
 
-        if( fn_obj.get_type() != sol::type::function ) {
+        if( fn_obj.get_type() != sol::type::function )
+        {
             debugmsg( "yarn: lua_cmd: '%s' is not a Lua function", path );
             return yarn::command_signal::none;
         }
@@ -152,22 +156,26 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
         lua_args.reserve( args.size() - 1 );
         std::ranges::transform( args | std::views::drop( 1 ),
                                 std::back_inserter( lua_args ),
-                                [&lua]( const yarn::value &v ) {
+                                [&lua]( const yarn::value & v )
+        {
             return yarn_to_sol( lua, v );
         } );
 
         auto result = fn( sol::as_args( lua_args ) );
-        if( !result.valid() ) {
+        if( !result.valid() )
+        {
             sol::error err = result;
             debugmsg( "yarn: lua_cmd: '%s' threw: %s", path, err.what() );
             return yarn::command_signal::none;
         }
 
         sol::object ret_obj = result;
-        if( ret_obj.get_type() == sol::type::string && ret_obj.as<std::string>() == "stop" ) {
+        if( ret_obj.get_type() == sol::type::string && ret_obj.as<std::string>() == "stop" )
+        {
             return yarn::command_signal::stop;
         }
-        if( ret_obj.get_type() == sol::type::boolean && !ret_obj.as<bool>() ) {
+        if( ret_obj.get_type() == sol::type::boolean && !ret_obj.as<bool>() )
+        {
             return yarn::command_signal::stop;
         }
         return yarn::command_signal::none;
@@ -190,7 +198,7 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
     //   fn(arg1, arg2, ...) → bool (truthy/falsy)
     //   Registers a named condition callable from <<if name(args)>> in .yarn files.
     dialogue_table.set_function( "register_condition",
-    [&lua]( const std::string &name, sol::protected_function fn ) {
+    [&lua]( const std::string & name, sol::protected_function fn ) {
         yarn::func_registry::global().register_func( {
             .name        = name,
             .param_types = {},
@@ -201,17 +209,20 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
                 std::vector<sol::object> lua_args;
                 lua_args.reserve( args.size() );
                 std::ranges::transform( args, std::back_inserter( lua_args ),
-                                        [&sv]( const yarn::value &v ) {
+                                        [&sv]( const yarn::value & v )
+                {
                     return yarn_to_sol( sv, v );
                 } );
                 auto result = fn_cap( sol::as_args( lua_args ) );
-                if( !result.valid() ) {
+                if( !result.valid() )
+                {
                     sol::error err = result;
                     debugmsg( "yarn: register_condition '%s' threw: %s", name, err.what() );
                     return false;
                 }
                 sol::object ret = result;
-                if( ret.get_type() == sol::type::boolean ) {
+                if( ret.get_type() == sol::type::boolean )
+                {
                     return ret.as<bool>();
                 }
                 return ret.get_type() != sol::type::nil;
@@ -223,27 +234,31 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
     //   fn(arg1, arg2, ...) — return "stop" or false to end conversation; otherwise continues.
     //   Registers a named command callable from <<name args>> in .yarn files.
     dialogue_table.set_function( "register_command",
-    [&lua]( const std::string &name, sol::protected_function fn ) {
+    [&lua]( const std::string & name, sol::protected_function fn ) {
         yarn::command_registry::global().add( name, 0, -1,
         [fn_cap = fn, &lua, name]( const std::vector<yarn::value> &args ) -> yarn::command_signal {
             sol::state_view sv( lua );
             std::vector<sol::object> lua_args;
             lua_args.reserve( args.size() );
             std::ranges::transform( args, std::back_inserter( lua_args ),
-                                    [&sv]( const yarn::value &v ) {
+                                    [&sv]( const yarn::value & v )
+            {
                 return yarn_to_sol( sv, v );
             } );
             auto result = fn_cap( sol::as_args( lua_args ) );
-            if( !result.valid() ) {
+            if( !result.valid() )
+            {
                 sol::error err = result;
                 debugmsg( "yarn: register_command '%s' threw: %s", name, err.what() );
                 return yarn::command_signal::none;
             }
             sol::object ret = result;
-            if( ret.get_type() == sol::type::string && ret.as<std::string>() == "stop" ) {
+            if( ret.get_type() == sol::type::string && ret.as<std::string>() == "stop" )
+            {
                 return yarn::command_signal::stop;
             }
-            if( ret.get_type() == sol::type::boolean && !ret.as<bool>() ) {
+            if( ret.get_type() == sol::type::boolean && !ret.as<bool>() )
+            {
                 return yarn::command_signal::stop;
             }
             return yarn::command_signal::none;

@@ -49,7 +49,8 @@
 #include "vehicle.h"
 #include "vpart_position.h"
 
-namespace yarn {
+namespace yarn
+{
 
 // Static IDs used by built-in functions/commands.
 static const trait_id    trait_DEBUG_MIND_CONTROL( "DEBUG_MIND_CONTROL" );
@@ -63,11 +64,14 @@ static const efftype_id  effect_currently_busy( "currently_busy" );
 auto type_of( const value &v ) -> value_type
 {
     return std::visit( []<typename T>( const T & ) -> value_type {
-        if constexpr( std::is_same_v<T, bool> ) {
+        if constexpr( std::is_same_v<T, bool> )
+        {
             return value_type::boolean;
-        } else if constexpr( std::is_same_v<T, double> ) {
+        } else if constexpr( std::is_same_v<T, double> )
+        {
             return value_type::number;
-        } else {
+        } else
+        {
             return value_type::string;
         }
     }, v );
@@ -76,9 +80,12 @@ auto type_of( const value &v ) -> value_type
 auto type_name( value_type t ) -> std::string_view
 {
     switch( t ) {
-        case value_type::boolean: return "bool";
-        case value_type::number:  return "number";
-        case value_type::string:  return "string";
+        case value_type::boolean:
+            return "bool";
+        case value_type::number:
+            return "number";
+        case value_type::string:
+            return "string";
     }
     return "unknown";
 }
@@ -93,9 +100,9 @@ void func_registry::register_func( func_signature sig )
 }
 
 void func_registry::add( std::string name,
-                          std::initializer_list<value_type> params,
-                          value_type ret,
-                          std::function<value( const std::vector<value> & )> impl )
+                         std::initializer_list<value_type> params,
+                         value_type ret,
+                         std::function<value( const std::vector<value> & )> impl )
 {
     register_func( { .name = std::move( name ), .param_types = std::vector<value_type>( params ),
                      .return_type = ret, .impl = std::move( impl ) } );
@@ -148,15 +155,15 @@ auto command_registry::has_command( const std::string &name ) const -> bool
 }
 
 auto command_registry::call( const std::string &name, const std::vector<value> &args ) const
-    -> command_signal
+-> command_signal
 {
     const auto &e = cmds_.at( name );
     auto count = static_cast<int>( args.size() );
     if( count < e.min_args || ( e.max_args != -1 && count > e.max_args ) ) {
         DebugLog( DL::Warn, DC::Dialogue )
-            << "yarn: command '" << name << "' called with " << count
-            << " args (expected " << e.min_args
-            << ( e.max_args == -1 ? "+" : "-" + std::to_string( e.max_args ) ) << ")";
+                << "yarn: command '" << name << "' called with " << count
+                << " args (expected " << e.min_args
+                << ( e.max_args == -1 ? "+" : "-" + std::to_string( e.max_args ) ) << ")";
         return command_signal::none;
     }
     return e.impl( args );
@@ -226,10 +233,18 @@ struct expr_lexer {
                 if( cur() == '\\' && peek() != '\0' ) {
                     ++pos;
                     switch( cur() ) {
-                        case '"':  s += '"';  break;
-                        case '\\': s += '\\'; break;
-                        case 'n':  s += '\n'; break;
-                        default:   s += cur(); break;
+                        case '"':
+                            s += '"';
+                            break;
+                        case '\\':
+                            s += '\\';
+                            break;
+                        case 'n':
+                            s += '\n';
+                            break;
+                        default:
+                            s += cur();
+                            break;
                     }
                 } else {
                     s += cur();
@@ -246,7 +261,7 @@ struct expr_lexer {
         if( std::isdigit( static_cast<unsigned char>( c ) ) ) {
             std::string s;
             while( !at_end() && ( std::isdigit( static_cast<unsigned char>( cur() ) )
-                                   || cur() == '.' ) ) {
+                                  || cur() == '.' ) ) {
                 s += cur();
                 ++pos;
             }
@@ -257,7 +272,7 @@ struct expr_lexer {
         if( std::isalpha( static_cast<unsigned char>( c ) ) || c == '_' ) {
             std::string s;
             while( !at_end() && ( std::isalnum( static_cast<unsigned char>( cur() ) )
-                                   || cur() == '_' ) ) {
+                                  || cur() == '_' ) ) {
                 s += cur();
                 ++pos;
             }
@@ -266,13 +281,20 @@ struct expr_lexer {
 
         ++pos;
         switch( c ) {
-            case '(': return { token_type::lparen,  "(", 0.0, col };
-            case ')': return { token_type::rparen,  ")", 0.0, col };
-            case ',': return { token_type::comma,   ",", 0.0, col };
-            case '+': return { token_type::plus,    "+", 0.0, col };
-            case '-': return { token_type::minus,   "-", 0.0, col };
-            case '*': return { token_type::star,    "*", 0.0, col };
-            case '/': return { token_type::slash,   "/", 0.0, col };
+            case '(':
+                return { token_type::lparen,  "(", 0.0, col };
+            case ')':
+                return { token_type::rparen,  ")", 0.0, col };
+            case ',':
+                return { token_type::comma,   ",", 0.0, col };
+            case '+':
+                return { token_type::plus,    "+", 0.0, col };
+            case '-':
+                return { token_type::minus,   "-", 0.0, col };
+            case '*':
+                return { token_type::star,    "*", 0.0, col };
+            case '/':
+                return { token_type::slash,   "/", 0.0, col };
             case '<':
                 if( cur() == '=' ) { ++pos; return { token_type::lte, "<=", 0.0, col }; }
                 return { token_type::lt, "<", 0.0, col };
@@ -300,7 +322,7 @@ struct expr_parser_state {
     const func_registry &reg;
     std::optional<parse_error> error_;
 
-    auto cur() const -> const token & { return tokens[pos]; }
+    auto cur() const -> const token& { return tokens[pos]; }
 
     void advance() {
         if( pos + 1 < static_cast<int>( tokens.size() ) ) {
@@ -382,13 +404,26 @@ struct expr_parser_state {
 
         std::optional<expr_node::bin_op> op;
         switch( cur().type ) {
-            case token_type::lt:  op = expr_node::bin_op::lt;  break;
-            case token_type::lte: op = expr_node::bin_op::lte; break;
-            case token_type::gt:  op = expr_node::bin_op::gt;  break;
-            case token_type::gte: op = expr_node::bin_op::gte; break;
-            case token_type::eq:  op = expr_node::bin_op::eq;  break;
-            case token_type::neq: op = expr_node::bin_op::neq; break;
-            default: break;
+            case token_type::lt:
+                op = expr_node::bin_op::lt;
+                break;
+            case token_type::lte:
+                op = expr_node::bin_op::lte;
+                break;
+            case token_type::gt:
+                op = expr_node::bin_op::gt;
+                break;
+            case token_type::gte:
+                op = expr_node::bin_op::gte;
+                break;
+            case token_type::eq:
+                op = expr_node::bin_op::eq;
+                break;
+            case token_type::neq:
+                op = expr_node::bin_op::neq;
+                break;
+            default:
+                break;
         }
         if( !op ) {
             return left;
@@ -567,7 +602,7 @@ auto tokenize_expr( std::string_view src ) -> std::vector<token>
 // ============================================================
 
 auto parse_expr( std::string_view source, const func_registry &registry )
-    -> std::variant<expr_node, parse_error>
+-> std::variant<expr_node, parse_error>
 {
     auto tokens = tokenize_expr( source );
     expr_parser_state p{ std::move( tokens ), 0, registry, std::nullopt };
@@ -598,7 +633,7 @@ auto evaluate_expr( const expr_node &node, const func_registry &registry ) -> va
             std::vector<value> args;
             args.reserve( node.args.size() );
             std::ranges::transform( node.args, std::back_inserter( args ),
-                                    [&]( const expr_node &a ) {
+            [&]( const expr_node & a ) {
                 return evaluate_expr( a, registry );
             } );
             return registry.call( node.func_name, args );
@@ -742,7 +777,7 @@ auto interpolate_text( std::string_view text, const func_registry &registry ) ->
         } else {
             try {
                 auto val = evaluate_expr( std::get<expr_node>( parse_result ), registry );
-                std::visit( [&]( const auto &v ) {
+                std::visit( [&]( const auto & v ) {
                     if constexpr( std::is_same_v<std::decay_t<decltype( v )>, bool> ) {
                         result += v ? "true" : "false";
                     } else if constexpr( std::is_same_v<std::decay_t<decltype( v )>, double> ) {
@@ -785,11 +820,11 @@ struct raw_line {
 auto count_indent( std::string_view line ) -> int
 {
     return static_cast<int>(
-        std::ranges::distance( line.begin(),
-                               std::ranges::find_if( line, []( unsigned char c ) {
-                                   return !std::isspace( c );
-                               } ) )
-    );
+               std::ranges::distance( line.begin(),
+    std::ranges::find_if( line, []( unsigned char c ) {
+        return !std::isspace( c );
+    } ) )
+           );
 }
 
 auto trim_sv( std::string_view s ) -> std::string_view
@@ -799,7 +834,7 @@ auto trim_sv( std::string_view s ) -> std::string_view
         return {};
     }
     auto end = std::ranges::find_if( s | std::views::reverse,
-                                     []( unsigned char c ) { return !std::isspace( c ); } ).base();
+    []( unsigned char c ) { return !std::isspace( c ); } ).base();
     return std::string_view( &*start, std::distance( start, end ) );
 }
 
@@ -905,7 +940,7 @@ class yarn_parser
         }
 
         auto parse_condition( std::string_view src, int line_num )
-            -> std::optional<expr_node> {
+        -> std::optional<expr_node> {
             auto result = parse_expr( src, func_registry::global() );
             if( std::holds_alternative<parse_error>( result ) ) {
                 error( line_num, std::get<parse_error>( result ).message );
@@ -921,18 +956,18 @@ class yarn_parser
 // Forward declaration only for parse_elements — the helpers call it before it is defined.
 auto parse_elements( yarn_parser &p, std::vector<raw_line> &lines,
                      int &i, int end, int min_indent )
-    -> std::vector<node_element>;
+-> std::vector<node_element>;
 
 // Parse the body of a choice option, starting after its -> line.
 // Collects all lines with indent strictly greater than choice_indent.
 auto parse_choice_body( yarn_parser &p, std::vector<raw_line> &lines,
                         int &i, int end, int choice_indent )
-    -> std::vector<node_element>
+-> std::vector<node_element>
 {
     // Find end of body: lines with indent > choice_indent
     int body_end = i;
     while( body_end < end && ( lines[body_end].content.empty() ||
-                                lines[body_end].indent > choice_indent ) ) {
+                               lines[body_end].indent > choice_indent ) ) {
         ++body_end;
     }
     return parse_elements( p, lines, i, body_end, choice_indent + 1 );
@@ -941,7 +976,7 @@ auto parse_choice_body( yarn_parser &p, std::vector<raw_line> &lines,
 // Parses a run of -> lines (possibly interleaved with blank lines) into a choice_group.
 auto parse_choice_group( yarn_parser &p, std::vector<raw_line> &lines,
                          int &i, int end, int group_indent )
-    -> node_element
+-> node_element
 {
     node_element group;
     group.type = node_element::kind::choice_group;
@@ -1006,13 +1041,13 @@ auto parse_choice_group( yarn_parser &p, std::vector<raw_line> &lines,
 // Collects all lines with indent strictly greater than or equal to line_indent,
 // but breaks at next => line.
 auto parse_line_group_body( yarn_parser &p, std::vector<raw_line> &lines,
-                        int &i, int end, int line_indent )
-    -> std::vector<node_element>
+                            int &i, int end, int line_indent )
+-> std::vector<node_element>
 {
     // Find end of body: lines with indent > line_indent
     int body_end = i;
     while( body_end < end && !starts_with( lines[body_end].content, "=>" ) &&
-                                lines[body_end].indent >= line_indent) {
+           lines[body_end].indent >= line_indent ) {
         ++body_end;
     }
     return parse_elements( p, lines, i, body_end, line_indent );
@@ -1020,8 +1055,8 @@ auto parse_line_group_body( yarn_parser &p, std::vector<raw_line> &lines,
 
 // Parses => line groups
 auto parse_line_group( yarn_parser &p, std::vector<raw_line> &lines,
-                         int &i, int end, int group_indent )
-    -> node_element
+                       int &i, int end, int group_indent )
+-> node_element
 {
     node_element group;
     group.type = node_element::kind::line_group;
@@ -1071,7 +1106,7 @@ auto parse_line_group( yarn_parser &p, std::vector<raw_line> &lines,
 auto parse_if_block( yarn_parser &p, std::vector<raw_line> &lines,
                      int &i, int end, int block_indent,
                      std::string_view condition_src, int cond_line_num )
-    -> node_element
+-> node_element
 {
     node_element elem;
     elem.type = node_element::kind::if_block;
@@ -1139,7 +1174,7 @@ auto parse_if_block( yarn_parser &p, std::vector<raw_line> &lines,
 // Parse node elements from lines[i..end), requiring indent >= min_indent.
 auto parse_elements( yarn_parser &p, std::vector<raw_line> &lines,
                      int &i, int end, int min_indent )
-    -> std::vector<node_element>
+-> std::vector<node_element>
 {
     std::vector<node_element> elements;
 
@@ -1292,7 +1327,7 @@ auto parse_elements( yarn_parser &p, std::vector<raw_line> &lines,
 // ============================================================
 
 auto yarn_story::from_string( std::string_view content, std::string_view source_name )
-    -> std::pair<yarn_story, load_result>
+-> std::pair<yarn_story, load_result>
 {
     yarn_story story;
     story.source_name_ = std::string( source_name );
@@ -1350,7 +1385,7 @@ auto yarn_story::from_string( std::string_view content, std::string_view source_
                     auto [ptr, ec] = std::from_chars( val.data(), val.data() + val.size(), prio );
                     if( ec != std::errc{} ) {
                         parser.error( 0, "inject_priority on '" + node.title +
-                                         "': invalid integer '" + val + "'" );
+                                      "': invalid integer '" + val + "'" );
                     } else {
                         node.inject_priority = prio;
                     }
@@ -1395,7 +1430,7 @@ auto yarn_story::from_string( std::string_view content, std::string_view source_
 }
 
 auto yarn_story::from_file( const std::string &path )
-    -> std::pair<yarn_story, load_result>
+-> std::pair<yarn_story, load_result>
 {
     if( !file_exist( path ) ) {
         load_result result;
@@ -1433,14 +1468,14 @@ auto yarn_story::get_node_mutable( const std::string &name ) -> yarn_node *
 }
 
 void yarn_story::resolve_shared_choices( const node_lookup_fn &lookup,
-                                         const std::string &own_name,
-                                         std::vector<std::string> &out_errors )
+        const std::string &own_name,
+        std::vector<std::string> &out_errors )
 {
     for( auto &[title, node] : nodes_ ) {
         if( node.shared_choices.empty() ) {
             continue;
         }
-        auto cg_it = std::ranges::find_if( node.elements, []( const node_element &e ) {
+        auto cg_it = std::ranges::find_if( node.elements, []( const node_element & e ) {
             return e.type == node_element::kind::choice_group;
         } );
         if( cg_it == node.elements.end() ) {
@@ -1465,7 +1500,7 @@ void yarn_story::resolve_shared_choices( const node_lookup_fn &lookup,
                                       "': base node '" + ref + "' not found" );
                 continue;
             }
-            auto base_cg_it = std::ranges::find_if( base->elements, []( const node_element &e ) {
+            auto base_cg_it = std::ranges::find_if( base->elements, []( const node_element & e ) {
                 return e.type == node_element::kind::choice_group;
             } );
             if( base_cg_it == base->elements.end() ) {
@@ -1543,8 +1578,8 @@ auto size_up_text( const npc &p, const player &you ) -> std::string
     if( ability >= 100 ) {
         if( p.get_thirst() < thirst_levels::thirsty ) {
             time_duration thirst_at = 5_minutes
-                                       * ( thirst_levels::thirsty - p.get_thirst() )
-                                       / rates.thirst;
+                                      * ( thirst_levels::thirsty - p.get_thirst() )
+                                      / rates.thirst;
             if( thirst_at > 1_hours ) {
                 info += _( "\nWill need water in " ) + to_string_approx( thirst_at );
             }
@@ -1553,8 +1588,8 @@ auto size_up_text( const npc &p, const player &you ) -> std::string
         }
         if( p.max_stored_kcal() - p.get_stored_kcal() > 500 ) {
             time_duration hunger_at = 5_minutes
-                                       * ( 500 - p.max_stored_kcal() + p.get_stored_kcal() )
-                                       / p.bmr();
+                                      * ( 500 - p.max_stored_kcal() + p.get_stored_kcal() )
+                                      / p.bmr();
             if( hunger_at > 1_hours ) {
                 info += _( "\nWill need food in " ) + to_string_approx( hunger_at );
             }
@@ -1611,14 +1646,15 @@ void yarn_runtime::run( dialogue_window &d_win )
     // Resolves a jump/goto target string to a stack_frame.
     // Bare names resolve within the current frame's story.
     // "story::NodeName" looks up the named story from the global registry.
-    auto resolve_frame = [&]( const std::string &target ) -> stack_frame {
-        if( const auto sep = target.find( "::" ); sep != std::string::npos ) {
+    auto resolve_frame = [&]( const std::string & target ) -> stack_frame {
+        if( const auto sep = target.find( "::" ); sep != std::string::npos )
+        {
             const auto sname = target.substr( 0, sep );
             const auto nname = target.substr( sep + 2 );
             if( !has_yarn_story( sname ) ) {
                 DebugLog( DL::Error, DC::Dialogue )
-                    << "yarn: cross-story target '" << target << "': story '" << sname
-                    << "' not found — staying put";
+                        << "yarn: cross-story target '" << target << "': story '" << sname
+                        << "' not found — staying put";
                 return node_stack_.back();
             }
             return { &get_yarn_story( sname ), nname };
@@ -1631,7 +1667,7 @@ void yarn_runtime::run( dialogue_window &d_win )
         const auto &frame = node_stack_.back();
         if( !frame.story->has_node( frame.node ) ) {
             DebugLog( DL::Error, DC::Dialogue )
-                << "yarn: node '" << frame.node << "' not found";
+                    << "yarn: node '" << frame.node << "' not found";
             break;
         }
         const auto &node = frame.story->get_node( frame.node );
@@ -1677,13 +1713,13 @@ void yarn_runtime::parse_dialogue_text( const node_element &elem, dialogue_windo
         if( elem.speaker == "player" || elem.speaker == "You"
             || elem.speaker == "Player" ) {
             line = string_format( "%s: \"%s\"",
-                                    colorize( _( "You" ), c_green ), text );
+                                  colorize( _( "You" ), c_green ), text );
         } else {
             auto speaker = ( elem.speaker == "npc" || elem.speaker == "NPC" )
-                            ? ( npc_ ? npc_->name : "NPC" )
-                            : elem.speaker;
+                           ? ( npc_ ? npc_->name : "NPC" )
+                           : elem.speaker;
             line = string_format( "%s: \"%s\"",
-                                    colorize( speaker, c_light_green ), text );
+                                  colorize( speaker, c_light_green ), text );
         }
         d_win.add_to_history( line );
     }
@@ -1698,7 +1734,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                 parse_dialogue_text( elem, d_win );
                 break;
             }
-            
+
             case node_element::kind::line_group: {
                 std::vector<node_element::choice> valid_choices;
                 for( const auto &c : elem.choices ) {
@@ -1710,13 +1746,13 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                             }
                         } catch( const std::exception &e ) {
                             DebugLog( DL::Error, DC::Dialogue )
-                                << "yarn: line_group condition error: " << e.what();
+                                    << "yarn: line_group condition error: " << e.what();
                             continue;
                         }
                     }
                     valid_choices.push_back( c );
                 }
-                if( valid_choices.empty() ) continue;
+                if( valid_choices.empty() ) { continue; }
                 execute_elements( valid_choices[rng( 0, valid_choices.size() - 1 )].body, d_win );
                 break;
             }
@@ -1736,7 +1772,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                             }
                         } catch( const std::exception &e ) {
                             DebugLog( DL::Error, DC::Dialogue )
-                                << "yarn: repeat_group condition error: " << e.what();
+                                    << "yarn: repeat_group condition error: " << e.what();
                             continue;
                         }
                     }
@@ -1756,7 +1792,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                     }
                     for( const auto &cat_str : rg.for_category ) {
                         item_category_id cat( cat_str );
-                        auto matches = actor->items_with( [&cat, &rg]( const item &it ) {
+                        auto matches = actor->items_with( [&cat, &rg]( const item & it ) {
                             if( rg.include_containers ) {
                                 return it.get_category().get_id() == cat;
                             }
@@ -1833,7 +1869,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                 auto &creg = command_registry::global();
                 if( !creg.has_command( elem.command_name ) ) {
                     DebugLog( DL::Warn, DC::Dialogue )
-                        << "yarn: unknown command '" << elem.command_name << "'";
+                            << "yarn: unknown command '" << elem.command_name << "'";
                     break;
                 }
                 std::vector<value> args;
@@ -1844,8 +1880,8 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                         args.push_back( eval( arg_node ) );
                     } catch( const std::exception &e ) {
                         DebugLog( DL::Error, DC::Dialogue )
-                            << "yarn: command '" << elem.command_name
-                            << "' arg eval error: " << e.what();
+                                << "yarn: command '" << elem.command_name
+                                << "' arg eval error: " << e.what();
                         eval_ok = false;
                         break;
                     }
@@ -1870,7 +1906,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                 // Remove this case when the JSON-to-Yarn migration is complete.
                 if( !dialogue_ref_ || !npc_ || !player_ ) {
                     DebugLog( DL::Error, DC::Dialogue )
-                        << "yarn: legacy_topic requires dialogue/npc/player context";
+                            << "yarn: legacy_topic requires dialogue/npc/player context";
                     return { signal::stop, {} };
                 }
                 auto &chatbin = npc_->chatbin;
@@ -1939,13 +1975,13 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                         auto val = eval( *elem.condition );
                         if( !std::holds_alternative<bool>( val ) ) {
                             DebugLog( DL::Error, DC::Dialogue )
-                                << "yarn: <<if>> condition did not evaluate to bool";
+                                    << "yarn: <<if>> condition did not evaluate to bool";
                         } else {
                             cond = std::get<bool>( val );
                         }
                     } catch( const std::exception &e ) {
                         DebugLog( DL::Error, DC::Dialogue )
-                            << "yarn: condition error: " << e.what();
+                                << "yarn: condition error: " << e.what();
                     }
                 }
                 const auto &body = cond ? elem.if_body : elem.else_body;
@@ -2000,7 +2036,7 @@ auto yarn_runtime::present_choices( const std::vector<node_element::choice> &cho
     const auto response_count = response_lines.size();
 
     ui_adaptor ui;
-    ui.on_screen_resize( [&]( ui_adaptor &ui ) {
+    ui.on_screen_resize( [&]( ui_adaptor & ui ) {
         d_win.resize_dialogue( ui );
     } );
     ui.mark_resize();
@@ -2113,12 +2149,12 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
             if( node.inject_into.empty() ) {
                 continue;
             }
-            auto cg_it = std::ranges::find_if( node.elements, []( const node_element &e ) {
+            auto cg_it = std::ranges::find_if( node.elements, []( const node_element & e ) {
                 return e.type == node_element::kind::choice_group;
             } );
             if( cg_it == node.elements.end() ) {
                 DebugLog( DL::Error, DC::Dialogue )
-                    << "yarn inject_into on '" << node_name << "': node has no choice_group";
+                        << "yarn inject_into on '" << node_name << "': node has no choice_group";
                 continue;
             }
             if( cg_it->choices.empty() ) {
@@ -2152,10 +2188,10 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
     }
 
     // Sort by (target_story, target_node, priority) so we can process groups in one pass.
-    std::ranges::stable_sort( injections, []( const pending_injection &a,
-                                              const pending_injection &b ) {
+    std::ranges::stable_sort( injections, []( const pending_injection & a,
+    const pending_injection & b ) {
         if( a.target_story != b.target_story ) { return a.target_story < b.target_story; }
-        if( a.target_node  != b.target_node  ) { return a.target_node  < b.target_node;  }
+        if( a.target_node  != b.target_node ) { return a.target_node  < b.target_node;  }
         return a.priority < b.priority;
     } );
 
@@ -2166,7 +2202,7 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
 
         // Find end of this (target_story, target_node) group.
         auto group_end = std::ranges::find_if( it, injections.end(),
-                                               [&ts, &tn]( const pending_injection &p ) {
+        [&ts, &tn]( const pending_injection & p ) {
             return p.target_story != ts || p.target_node != tn;
         } );
 
@@ -2174,29 +2210,29 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
         auto sit = registry.find( ts );
         if( sit == registry.end() ) {
             DebugLog( DL::Error, DC::Dialogue )
-                << "yarn inject_into: story '" << ts << "' not found";
+                    << "yarn inject_into: story '" << ts << "' not found";
             it = group_end;
             continue;
         }
         auto *target = sit->second.get_node_mutable( tn );
         if( target == nullptr ) {
             DebugLog( DL::Error, DC::Dialogue )
-                << "yarn inject_into: node '" << tn << "' not found in story '" << ts << "'";
+                    << "yarn inject_into: node '" << tn << "' not found in story '" << ts << "'";
             it = group_end;
             continue;
         }
-        auto cg_it = std::ranges::find_if( target->elements, []( const node_element &e ) {
+        auto cg_it = std::ranges::find_if( target->elements, []( const node_element & e ) {
             return e.type == node_element::kind::choice_group;
         } );
         if( cg_it == target->elements.end() ) {
             DebugLog( DL::Error, DC::Dialogue )
-                << "yarn inject_into: target '" << tn << "' in '" << ts << "' has no choice_group";
+                    << "yarn inject_into: target '" << tn << "' in '" << ts << "' has no choice_group";
             it = group_end;
             continue;
         }
 
         // Already sorted ascending by priority.  Split at the first non-negative value.
-        auto split = std::ranges::find_if( it, group_end, []( const pending_injection &p ) {
+        auto split = std::ranges::find_if( it, group_end, []( const pending_injection & p ) {
             return p.priority >= 0;
         } );
 
@@ -2248,7 +2284,7 @@ void load_yarn_stories()
             DebugLog( DL::Error, DC::Dialogue ) << "yarn: loaded story '" << stem << "'";
         } else {
             DebugLog( DL::Error, DC::Dialogue )
-                << "yarn: failed to load '" << path << "' (" << result.errors.size() << " errors)";
+                    << "yarn: failed to load '" << path << "' (" << result.errors.size() << " errors)";
         }
     }
 
@@ -2256,11 +2292,12 @@ void load_yarn_stories()
     // Lookup function resolves both same-file bare names and cross-file "story::NodeName".
     // Note: base nodes are expected to be leaf nodes (no shared_choices of their own).
     // Chained shared_choices are not guaranteed to resolve in dependency order.
-    yarn_story::node_lookup_fn lookup = []( const std::string &story_name,
-                                            const std::string &node_name ) -> const yarn_node * {
+    yarn_story::node_lookup_fn lookup = []( const std::string & story_name,
+    const std::string & node_name ) -> const yarn_node * {
         auto &reg = story_registry();
         auto sit = reg.find( story_name );
-        if( sit == reg.end() ) {
+        if( sit == reg.end() )
+        {
             return nullptr;
         }
         return sit->second.has_node( node_name ) ? &sit->second.get_node( node_name ) : nullptr;
@@ -2334,16 +2371,19 @@ void build_legacy_yarn_stories()
 // Numbers that are whole integers are stored without a decimal point.
 static auto value_to_storage_string( const value &v ) -> std::string
 {
-    return std::visit( []( const auto &x ) -> std::string {
+    return std::visit( []( const auto & x ) -> std::string {
         using T = std::decay_t<decltype( x )>;
-        if constexpr( std::is_same_v<T, bool> ) {
+        if constexpr( std::is_same_v<T, bool> )
+        {
             return x ? "true" : "false";
-        } else if constexpr( std::is_same_v<T, double> ) {
+        } else if constexpr( std::is_same_v<T, double> )
+        {
             if( x == std::floor( x ) && std::abs( x ) < 1e15 ) {
                 return std::to_string( static_cast<long long>( x ) );
             }
             return std::to_string( x );
-        } else {
+        } else
+        {
             return x;
         }
     }, v );
@@ -2386,7 +2426,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "u_has_items", {vt::string, vt::number}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
+        if( !p )
+        {
             return false;
         }
         auto id    = itype_id( std::get<std::string>( args[0] ) );
@@ -2397,7 +2438,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "u_has_skill", {vt::string, vt::number}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
+        if( !p )
+        {
             return false;
         }
         auto level = static_cast<int>( std::get<double>( args[1] ) );
@@ -2451,7 +2493,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_is_ally", {}, vt::boolean,
     []( const std::vector<value> & ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         auto att = n->get_attitude();
@@ -2461,7 +2504,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_is_enemy", {}, vt::boolean,
     []( const std::vector<value> & ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         auto att = n->get_attitude();
@@ -2519,7 +2563,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_has_skill", {vt::string, vt::number}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         auto level = static_cast<int>( std::get<double>( args[1] ) );
@@ -2543,7 +2588,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "u_get_var_num", {vt::string}, vt::number,
     []( const std::vector<value> &args ) -> value {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
+        if( !p )
+        {
             return 0.0;
         }
         const auto &s = p->get_value( std::get<std::string>( args[0] ) );
@@ -2559,7 +2605,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_get_var_num", {vt::string}, vt::number,
     []( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return 0.0;
         }
         const auto &s = n->get_value( std::get<std::string>( args[0] ) );
@@ -2622,7 +2669,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_has_items", {vt::string, vt::number}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         auto id    = itype_id( std::get<std::string>( args[0] ) );
@@ -2655,7 +2703,7 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "u_get_hunger", {}, vt::number, []( const std::vector<value> & ) -> value {
         auto *p = g_conv_ctx.player_ref;
         return p ? static_cast<double>( ( p->max_stored_kcal() - p->get_stored_kcal() ) / 10 )
-                 : 0.0;
+        : 0.0;
     } );
 
     reg.add( "u_get_thirst", {}, vt::number, []( const std::vector<value> & ) -> value {
@@ -2671,7 +2719,7 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_get_hunger", {}, vt::number, []( const std::vector<value> & ) -> value {
         auto *n = g_conv_ctx.npc_ref;
         return n ? static_cast<double>( ( n->max_stored_kcal() - n->get_stored_kcal() ) / 10 )
-                 : 0.0;
+        : 0.0;
     } );
 
     reg.add( "npc_get_thirst", {}, vt::number, []( const std::vector<value> & ) -> value {
@@ -2731,7 +2779,8 @@ void register_builtin_functions( func_registry &reg )
     } );
     reg.add( "npc_hostile", {}, vt::boolean, []( const std::vector<value> & ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         auto att = n->get_attitude();
@@ -2782,7 +2831,8 @@ void register_builtin_functions( func_registry &reg )
     []( const std::vector<value> & ) -> value {
         auto *n = g_conv_ctx.npc_ref;
         auto *p = g_conv_ctx.player_ref;
-        if( !n || !p || !n->chatbin.mission_selected ) {
+        if( !n || !p || !n->chatbin.mission_selected )
+        {
             return false;
         }
         return n->chatbin.mission_selected->is_complete( p->getID() );
@@ -2792,7 +2842,8 @@ void register_builtin_functions( func_registry &reg )
     []( const std::vector<value> & ) -> value {
         auto *n = g_conv_ctx.npc_ref;
         auto *p = g_conv_ctx.player_ref;
-        if( !n || !p || !n->chatbin.mission_selected ) {
+        if( !n || !p || !n->chatbin.mission_selected )
+        {
             return false;
         }
         return !n->chatbin.mission_selected->is_complete( p->getID() );
@@ -2804,12 +2855,18 @@ void register_builtin_functions( func_registry &reg )
 
     // Returns the current season as a lowercase string: "spring", "summer", "autumn", "winter".
     reg.add( "get_season", {}, vt::string, []( const std::vector<value> & ) -> value {
-        switch( season_of_year( calendar::turn ) ) {
-            case SPRING: return std::string( "spring" );
-            case SUMMER: return std::string( "summer" );
-            case AUTUMN: return std::string( "autumn" );
-            case WINTER: return std::string( "winter" );
-            default:     return std::string( "spring" );
+        switch( season_of_year( calendar::turn ) )
+        {
+            case SPRING:
+                return std::string( "spring" );
+            case SUMMER:
+                return std::string( "summer" );
+            case AUTUMN:
+                return std::string( "autumn" );
+            case WINTER:
+                return std::string( "winter" );
+            default:
+                return std::string( "spring" );
         }
     } );
 
@@ -2817,12 +2874,18 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "is_season", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         const auto &s = std::get<std::string>( args[0] );
-        switch( season_of_year( calendar::turn ) ) {
-            case SPRING: return s == "spring";
-            case SUMMER: return s == "summer";
-            case AUTUMN: return s == "autumn";
-            case WINTER: return s == "winter";
-            default:     return false;
+        switch( season_of_year( calendar::turn ) )
+        {
+            case SPRING:
+                return s == "spring";
+            case SUMMER:
+                return s == "summer";
+            case AUTUMN:
+                return s == "autumn";
+            case WINTER:
+                return s == "winter";
+            default:
+                return false;
         }
     } );
 
@@ -2846,10 +2909,12 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "u_driving", {}, vt::boolean,
     []( const std::vector<value> & ) -> value {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
+        if( !p )
+        {
             return false;
         }
-        if( const optional_vpart_position vp = get_map().veh_at( p->pos() ) ) {
+        if( const optional_vpart_position vp = get_map().veh_at( p->pos() ) )
+        {
             return vp->vehicle().is_moving() && vp->vehicle().player_in_control( *p );
         }
         return false;
@@ -2858,10 +2923,12 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_driving", {}, vt::boolean,
     []( const std::vector<value> & ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
-        if( const optional_vpart_position vp = get_map().veh_at( n->pos() ) ) {
+        if( const optional_vpart_position vp = get_map().veh_at( n->pos() ) )
+        {
             return vp->vehicle().is_moving() && vp->vehicle().player_in_control( *n );
         }
         return false;
@@ -2876,14 +2943,16 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_has_rule", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         const auto &key = std::get<std::string>( args[0] );
         auto it = ally_rule_strs.find( key );
-        if( it == ally_rule_strs.end() ) {
+        if( it == ally_rule_strs.end() )
+        {
             DebugLog( DL::Warn, DC::Dialogue )
-                << "yarn: npc_has_rule: unknown rule '" << key << "'";
+                    << "yarn: npc_has_rule: unknown rule '" << key << "'";
             return false;
         }
         return n->rules.has_flag( it->second.rule );
@@ -2892,14 +2961,16 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_has_override", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         const auto &key = std::get<std::string>( args[0] );
         auto it = ally_rule_strs.find( key );
-        if( it == ally_rule_strs.end() ) {
+        if( it == ally_rule_strs.end() )
+        {
             DebugLog( DL::Warn, DC::Dialogue )
-                << "yarn: npc_has_override: unknown rule '" << key << "'";
+                    << "yarn: npc_has_override: unknown rule '" << key << "'";
             return false;
         }
         return n->rules.has_override_enable( it->second.rule );
@@ -2916,14 +2987,16 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_aim_rule", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         const auto &key = std::get<std::string>( args[0] );
         auto it = aim_rule_strs.find( key );
-        if( it == aim_rule_strs.end() ) {
+        if( it == aim_rule_strs.end() )
+        {
             DebugLog( DL::Warn, DC::Dialogue )
-                << "yarn: npc_aim_rule: unknown rule '" << key << "'";
+                    << "yarn: npc_aim_rule: unknown rule '" << key << "'";
             return false;
         }
         return n->rules.aim == it->second;
@@ -2932,14 +3005,16 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_engagement_rule", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         const auto &key = std::get<std::string>( args[0] );
         auto it = combat_engagement_strs.find( key );
-        if( it == combat_engagement_strs.end() ) {
+        if( it == combat_engagement_strs.end() )
+        {
             DebugLog( DL::Warn, DC::Dialogue )
-                << "yarn: npc_engagement_rule: unknown rule '" << key << "'";
+                    << "yarn: npc_engagement_rule: unknown rule '" << key << "'";
             return false;
         }
         return n->rules.engagement == it->second;
@@ -2948,14 +3023,16 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_cbm_reserve_rule", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         const auto &key = std::get<std::string>( args[0] );
         auto it = cbm_reserve_strs.find( key );
-        if( it == cbm_reserve_strs.end() ) {
+        if( it == cbm_reserve_strs.end() )
+        {
             DebugLog( DL::Warn, DC::Dialogue )
-                << "yarn: npc_cbm_reserve_rule: unknown rule '" << key << "'";
+                    << "yarn: npc_cbm_reserve_rule: unknown rule '" << key << "'";
             return false;
         }
         return n->rules.cbm_reserve == it->second;
@@ -2964,14 +3041,16 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_cbm_recharge_rule", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         const auto &key = std::get<std::string>( args[0] );
         auto it = cbm_recharge_strs.find( key );
-        if( it == cbm_recharge_strs.end() ) {
+        if( it == cbm_recharge_strs.end() )
+        {
             DebugLog( DL::Warn, DC::Dialogue )
-                << "yarn: npc_cbm_recharge_rule: unknown rule '" << key << "'";
+                    << "yarn: npc_cbm_recharge_rule: unknown rule '" << key << "'";
             return false;
         }
         return n->rules.cbm_recharge == it->second;
@@ -2985,7 +3064,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "is_outside", {}, vt::boolean,
     []( const std::vector<value> & ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         map &here = get_map();
@@ -2996,7 +3076,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "at_safe_space", {}, vt::boolean,
     []( const std::vector<value> & ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         return get_overmapbuffer( n->get_dimension() ).is_safe( n->global_omt_location() );
@@ -3006,7 +3087,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "u_at_om_location", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
+        if( !p )
+        {
             return false;
         }
         const auto &loc = std::get<std::string>( args[0] );
@@ -3018,7 +3100,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_at_om_location", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
-        if( !n ) {
+        if( !n )
+        {
             return false;
         }
         const auto &loc = std::get<std::string>( args[0] );
@@ -3034,14 +3117,16 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "npc_role_nearby", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *p = g_conv_ctx.player_ref;
-        if( !p || !g ) {
+        if( !p || !g )
+        {
             return false;
         }
         const auto &role = std::get<std::string>( args[0] );
-        auto npcs = g->get_npcs_if( [&]( const npc &guy ) {
+        auto npcs = g->get_npcs_if( [&]( const npc & guy )
+        {
             return p->posz() == guy.posz()
-                && guy.companion_mission_role_id == role
-                && rl_dist( p->pos(), guy.pos() ) <= 48;
+            && guy.companion_mission_role_id == role
+            && rl_dist( p->pos(), guy.pos() ) <= 48;
         } );
         return !npcs.empty();
     } );
@@ -3049,7 +3134,8 @@ void register_builtin_functions( func_registry &reg )
     // True if the player has at least the given number of NPC allies.
     reg.add( "npc_allies", {vt::number}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
-        if( !g ) {
+        if( !g )
+        {
             return false;
         }
         auto min_allies = static_cast<std::size_t>( std::get<double>( args[0] ) );
@@ -3082,11 +3168,12 @@ void register_builtin_functions( func_registry &reg )
     []( const std::vector<value> & ) -> value {
         auto *p = g_conv_ctx.player_ref;
         auto *n = g_conv_ctx.npc_ref;
-        if( !p || !n ) {
+        if( !p || !n )
+        {
             return false;
         }
         return std::ranges::any_of( p->inv_dump(),
-            [n]( const item *it ) { return it->is_old_owner( *n, true ); } );
+        [n]( const item * it ) { return it->is_old_owner( *n, true ); } );
     } );
 
     // ============================================================
@@ -3097,16 +3184,18 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "u_has_mission", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
+        if( !p )
+        {
             return false;
         }
         auto *av = dynamic_cast<avatar *>( p );
-        if( !av ) {
+        if( !av )
+        {
             return false;
         }
         auto target = mission_type_id( std::get<std::string>( args[0] ) );
         return std::ranges::any_of( av->get_active_missions(),
-            [&target]( mission *m ) { return m->mission_id() == target; } );
+        [&target]( mission * m ) { return m->mission_id() == target; } );
     } );
 
     // ============================================================
@@ -3116,7 +3205,8 @@ void register_builtin_functions( func_registry &reg )
     reg.add( "u_know_recipe", {vt::string}, vt::boolean,
     []( const std::vector<value> &args ) -> value {
         auto *p = g_conv_ctx.player_ref;
-        if( !p ) {
+        if( !p )
+        {
             return false;
         }
         const recipe &r = recipe_id( std::get<std::string>( args[0] ) ).obj();
@@ -3163,7 +3253,8 @@ void register_builtin_functions( func_registry &reg )
         .impl        = []( const std::vector<value> &args ) -> value {
             auto *p = g_conv_ctx.player_ref;
             if( !p ) { return false; }
-            return std::ranges::any_of( args, [p]( const value &v ) {
+            return std::ranges::any_of( args, [p]( const value & v )
+            {
                 return p->has_trait( trait_id( std::get<std::string>( v ) ) );
             } );
         }
@@ -3177,7 +3268,8 @@ void register_builtin_functions( func_registry &reg )
         .impl        = []( const std::vector<value> &args ) -> value {
             auto *n = g_conv_ctx.npc_ref;
             if( !n ) { return false; }
-            return std::ranges::any_of( args, [n]( const value &v ) {
+            return std::ranges::any_of( args, [n]( const value & v )
+            {
                 return n->has_trait( trait_id( std::get<std::string>( v ) ) );
             } );
         }
@@ -3240,8 +3332,8 @@ void register_builtin_functions( func_registry &reg )
         auto        amount = static_cast<int>( std::get<double>( args[1] ) );
         int effective_hunger = ( p->max_stored_kcal() - p->get_stored_kcal() ) / 10;
         return ( need == "fatigue" && p->get_fatigue() > amount ) ||
-               ( need == "hunger"  && effective_hunger > amount ) ||
-               ( need == "thirst"  && p->get_thirst() > amount );
+        ( need == "hunger"  && effective_hunger > amount ) ||
+        ( need == "thirst"  && p->get_thirst() > amount );
     } );
 
     reg.add( "npc_need", {vt::string, vt::number}, vt::boolean,
@@ -3253,8 +3345,8 @@ void register_builtin_functions( func_registry &reg )
         auto        amount = static_cast<int>( std::get<double>( args[1] ) );
         int effective_hunger = ( actor->max_stored_kcal() - actor->get_stored_kcal() ) / 10;
         return ( need == "fatigue" && actor->get_fatigue() > amount ) ||
-               ( need == "hunger"  && effective_hunger > amount ) ||
-               ( need == "thirst"  && actor->get_thirst() > amount );
+        ( need == "hunger"  && effective_hunger > amount ) ||
+        ( need == "thirst"  && actor->get_thirst() > amount );
     } );
 
     // ============================================================
@@ -3266,7 +3358,8 @@ void register_builtin_functions( func_registry &reg )
         auto *p = g_conv_ctx.player_ref;
         if( !p ) { return false; }
         item_category_id cat( std::get<std::string>( args[0] ) );
-        return !p->items_with( [cat]( const item &it ) {
+        return !p->items_with( [cat]( const item & it )
+        {
             return it.type && it.type->category_force == cat;
         } ).empty();
     } );
@@ -3276,7 +3369,8 @@ void register_builtin_functions( func_registry &reg )
         auto *n = g_conv_ctx.npc_ref;
         if( !n ) { return false; }
         item_category_id cat( std::get<std::string>( args[0] ) );
-        return !n->items_with( [cat]( const item &it ) {
+        return !n->items_with( [cat]( const item & it )
+        {
             return it.type && it.type->category_force == cat;
         } ).empty();
     } );
@@ -3286,13 +3380,13 @@ void register_builtin_functions( func_registry &reg )
     // ============================================================
 
     // talk var name construction: "npctalk_var[_type][_context]_name"
-    auto make_talk_varname = []( const std::string &name,
-                                 const std::string &type,
-                                 const std::string &context ) -> std::string {
+    auto make_talk_varname = []( const std::string & name,
+                                 const std::string & type,
+    const std::string & context ) -> std::string {
         return "npctalk_var" +
-               ( type.empty()    ? std::string{} : "_" + type ) +
-               ( context.empty() ? std::string{} : "_" + context ) +
-               "_" + name;
+        ( type.empty()    ? std::string{} : "_" + type ) +
+        ( context.empty() ? std::string{} : "_" + context ) +
+        "_" + name;
     };
 
     reg.add( "u_has_var", {vt::string, vt::string, vt::string, vt::string}, vt::boolean,
@@ -3300,9 +3394,9 @@ void register_builtin_functions( func_registry &reg )
         auto *p = g_conv_ctx.player_ref;
         if( !p ) { return false; }
         auto varname = make_talk_varname(
-                           std::get<std::string>( args[0] ),
-                           std::get<std::string>( args[1] ),
-                           std::get<std::string>( args[2] ) );
+            std::get<std::string>( args[0] ),
+            std::get<std::string>( args[1] ),
+            std::get<std::string>( args[2] ) );
         return p->get_value( varname ) == std::get<std::string>( args[3] );
     } );
 
@@ -3311,9 +3405,9 @@ void register_builtin_functions( func_registry &reg )
         auto *n = g_conv_ctx.npc_ref;
         if( !n ) { return false; }
         auto varname = make_talk_varname(
-                           std::get<std::string>( args[0] ),
-                           std::get<std::string>( args[1] ),
-                           std::get<std::string>( args[2] ) );
+            std::get<std::string>( args[0] ),
+            std::get<std::string>( args[1] ),
+            std::get<std::string>( args[2] ) );
         return n->get_value( varname ) == std::get<std::string>( args[3] );
     } );
 
@@ -3322,38 +3416,39 @@ void register_builtin_functions( func_registry &reg )
         auto *p = g_conv_ctx.player_ref;
         if( !p ) { return false; }
         auto varname = make_talk_varname(
-                           std::get<std::string>( args[0] ),
-                           std::get<std::string>( args[1] ),
-                           std::get<std::string>( args[2] ) );
+            std::get<std::string>( args[0] ),
+            std::get<std::string>( args[1] ),
+            std::get<std::string>( args[2] ) );
         const auto &op      = std::get<std::string>( args[3] );
         auto        compare = static_cast<int>( std::get<double>( args[4] ) );
         const auto &stored  = p->get_value( varname );
         int current = stored.empty() ? 0 : std::stoi( stored );
         if( op == "==" ) { return current == compare; }
         if( op == "!=" ) { return current != compare; }
-        if( op == "<"  ) { return current <  compare; }
-        if( op == ">"  ) { return current >  compare; }
+        if( op == "<" ) { return current <  compare; }
+        if( op == ">" ) { return current >  compare; }
         if( op == "<=" ) { return current <= compare; }
         if( op == ">=" ) { return current >= compare; }
         return false;
     } );
 
-    reg.add( "npc_compare_var", {vt::string, vt::string, vt::string, vt::string, vt::number}, vt::boolean,
+    reg.add( "npc_compare_var", {vt::string, vt::string, vt::string, vt::string, vt::number},
+             vt::boolean,
     [make_talk_varname]( const std::vector<value> &args ) -> value {
         auto *n = g_conv_ctx.npc_ref;
         if( !n ) { return false; }
         auto varname = make_talk_varname(
-                           std::get<std::string>( args[0] ),
-                           std::get<std::string>( args[1] ),
-                           std::get<std::string>( args[2] ) );
+            std::get<std::string>( args[0] ),
+            std::get<std::string>( args[1] ),
+            std::get<std::string>( args[2] ) );
         const auto &op      = std::get<std::string>( args[3] );
         auto        compare = static_cast<int>( std::get<double>( args[4] ) );
         const auto &stored  = n->get_value( varname );
         int current = stored.empty() ? 0 : std::stoi( stored );
         if( op == "==" ) { return current == compare; }
         if( op == "!=" ) { return current != compare; }
-        if( op == "<"  ) { return current <  compare; }
-        if( op == ">"  ) { return current >  compare; }
+        if( op == "<" ) { return current <  compare; }
+        if( op == ">" ) { return current >  compare; }
         if( op == "<=" ) { return current <= compare; }
         if( op == ">=" ) { return current >= compare; }
         return false;
@@ -3387,18 +3482,18 @@ void register_builtin_functions( func_registry &reg )
     // ============================================================
 
     reg.add( "is_by_radio", {}, vt::boolean,
-    []( const std::vector<value> & ) -> value { return false; } );
+             []( const std::vector<value> & ) -> value { return false; } );
 
     reg.add( "has_reason", {}, vt::boolean,
-    []( const std::vector<value> & ) -> value { return false; } );
+             []( const std::vector<value> & ) -> value { return false; } );
 
     // Unimplemented in original code — condition.cpp returns false for these.
     reg.add( "mission_failed",      {}, vt::boolean,
-    []( const std::vector<value> & ) -> value { return false; } );
+             []( const std::vector<value> & ) -> value { return false; } );
     reg.add( "npc_has_destination", {}, vt::boolean,
-    []( const std::vector<value> & ) -> value { return false; } );
+             []( const std::vector<value> & ) -> value { return false; } );
     reg.add( "asked_for_item",      {}, vt::boolean,
-    []( const std::vector<value> & ) -> value { return false; } );
+             []( const std::vector<value> & ) -> value { return false; } );
 
     reg.add( "npc_service", {}, vt::boolean,
     []( const std::vector<value> & ) -> value {
@@ -3431,22 +3526,25 @@ void register_builtin_functions( func_registry &reg )
         static const bionic_id bio_face_mask_t( "bio_face_mask" );
         static const bionic_id bio_voice_t( "bio_voice" );
 
-        if( type_str == "PERSUADE" ) {
+        if( type_str == "PERSUADE" )
+        {
             chance += character_effects::talk_skill( *p ) -
-                      character_effects::talk_skill( *n ) / 2 +
-                      n->op_of_u.trust * 2 + n->op_of_u.value;
+            character_effects::talk_skill( *n ) / 2 +
+            n->op_of_u.trust * 2 + n->op_of_u.value;
             chance += u_mods.persuade;
             if( p->has_bionic( bio_face_mask_t ) ) { chance += 10; }
             if( p->has_bionic( bio_deformity_t ) ) { chance -= 50; }
             if( p->has_bionic( bio_voice_t ) )     { chance -= 20; }
-        } else if( type_str == "LIE" ) {
+        } else if( type_str == "LIE" )
+        {
             chance += character_effects::talk_skill( *p ) -
                       character_effects::talk_skill( *n ) +
                       n->op_of_u.trust * 3;
             chance += u_mods.lie;
             if( p->has_bionic( bio_voice_t ) )     { chance += 10; }
             if( p->has_bionic( bio_face_mask_t ) ) { chance += 20; }
-        } else if( type_str == "INTIMIDATE" ) {
+        } else if( type_str == "INTIMIDATE" )
+        {
             chance += character_effects::intimidation( *p ) -
                       character_effects::intimidation( *n ) +
                       n->op_of_u.fear * 2 - n->personality.bravery * 2;
@@ -3458,9 +3556,11 @@ void register_builtin_functions( func_registry &reg )
         }
         chance = std::max( 0, std::min( 100, chance ) );
         bool success = rng( 0, 99 ) < chance;
-        if( success ) {
+        if( success )
+        {
             p->practice( skill_speech, ( 100 - chance ) / 10 );
-        } else {
+        } else
+        {
             p->practice( skill_speech, ( 100 - chance ) / 7 );
         }
         return success;
@@ -3480,7 +3580,8 @@ void register_builtin_functions( func_registry &reg )
             if( args.empty() ) { return std::string{}; }
             auto idx = rng( 0, static_cast<int>( args.size() ) - 1 );
             const auto &picked = args[static_cast<std::size_t>( idx )];
-            if( std::holds_alternative<std::string>( picked ) ) {
+            if( std::holds_alternative<std::string>( picked ) )
+            {
                 return picked;
             }
             return std::string{};
@@ -3497,7 +3598,8 @@ void register_builtin_commands( command_registry &reg )
     // give_item "item_id" [count]
     reg.add( "give_item", 1, 2, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( p ) {
+        if( p )
+        {
             auto id    = itype_id( std::get<std::string>( args[0] ) );
             auto count = args.size() > 1 ? static_cast<int>( std::get<double>( args[1] ) ) : 1;
             p->add_item_with_id( id, count );
@@ -3508,7 +3610,8 @@ void register_builtin_commands( command_registry &reg )
     // take_item "item_id" [count]
     reg.add( "take_item", 1, 2, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( p ) {
+        if( p )
+        {
             auto id    = itype_id( std::get<std::string>( args[0] ) );
             auto count = args.size() > 1 ? static_cast<int>( std::get<double>( args[1] ) ) : 1;
             p->use_amount( id, count );
@@ -3519,11 +3622,12 @@ void register_builtin_commands( command_registry &reg )
     // add_effect "effect_id" [duration_turns]
     reg.add( "add_effect", 1, 2, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( p ) {
+        if( p )
+        {
             auto id  = efftype_id( std::get<std::string>( args[0] ) );
             auto dur = args.size() > 1
-                       ? time_duration::from_turns( static_cast<int>( std::get<double>( args[1] ) ) )
-                       : 1_turns;
+            ? time_duration::from_turns( static_cast<int>( std::get<double>( args[1] ) ) )
+            : 1_turns;
             p->add_effect( id, dur );
         }
         return command_signal::none;
@@ -3532,7 +3636,8 @@ void register_builtin_commands( command_registry &reg )
     // remove_effect "effect_id"
     reg.add( "remove_effect", 1, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( p ) {
+        if( p )
+        {
             p->remove_effect( efftype_id( std::get<std::string>( args[0] ) ) );
         }
         return command_signal::none;
@@ -3541,7 +3646,8 @@ void register_builtin_commands( command_registry &reg )
     // npc_follow — NPC starts following the player
     reg.add( "npc_follow", []( const std::vector<value> & ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
-        if( n ) {
+        if( n )
+        {
             n->set_attitude( NPCATT_FOLLOW );
         }
         return command_signal::none;
@@ -3550,7 +3656,8 @@ void register_builtin_commands( command_registry &reg )
     // npc_stop_follow — NPC stops following
     reg.add( "npc_stop_follow", []( const std::vector<value> & ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
-        if( n ) {
+        if( n )
+        {
             n->set_attitude( NPCATT_NULL );
         }
         return command_signal::none;
@@ -3560,7 +3667,8 @@ void register_builtin_commands( command_registry &reg )
     // Accepts the same string IDs used by npc_attitude_id() (e.g. "NPCATT_KILL")
     reg.add( "npc_set_attitude", 1, []( const std::vector<value> &args ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
-        if( n ) {
+        if( n )
+        {
             const auto &att_str = std::get<std::string>( args[0] );
             for( int i = 0; i < NPCATT_END; ++i ) {
                 auto att = static_cast<npc_attitude>( i );
@@ -3570,7 +3678,7 @@ void register_builtin_commands( command_registry &reg )
                 }
             }
             DebugLog( DL::Warn, DC::Dialogue )
-                << "yarn: npc_set_attitude: unknown attitude '" << att_str << "'";
+                    << "yarn: npc_set_attitude: unknown attitude '" << att_str << "'";
         }
         return command_signal::none;
     } );
@@ -3580,7 +3688,8 @@ void register_builtin_commands( command_registry &reg )
     // u_set_var "key" value  — stores any typed value as a string
     reg.add( "u_set_var", 2, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( p ) {
+        if( p )
+        {
             p->set_value( std::get<std::string>( args[0] ),
                           value_to_storage_string( args[1] ) );
         }
@@ -3590,7 +3699,8 @@ void register_builtin_commands( command_registry &reg )
     // u_remove_var "key"
     reg.add( "u_remove_var", 1, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( p ) {
+        if( p )
+        {
             p->remove_value( std::get<std::string>( args[0] ) );
         }
         return command_signal::none;
@@ -3599,7 +3709,8 @@ void register_builtin_commands( command_registry &reg )
     // u_adjust_var "key" amount  — adds amount to stored numeric variable
     reg.add( "u_adjust_var", 2, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
-        if( p ) {
+        if( p )
+        {
             const auto &key    = std::get<std::string>( args[0] );
             auto        amount = static_cast<long long>( std::get<double>( args[1] ) );
             const auto &stored = p->get_value( key );
@@ -3612,7 +3723,8 @@ void register_builtin_commands( command_registry &reg )
     // npc_set_var "key" value
     reg.add( "npc_set_var", 2, []( const std::vector<value> &args ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
-        if( n ) {
+        if( n )
+        {
             n->set_value( std::get<std::string>( args[0] ),
                           value_to_storage_string( args[1] ) );
         }
@@ -3622,7 +3734,8 @@ void register_builtin_commands( command_registry &reg )
     // npc_remove_var "key"
     reg.add( "npc_remove_var", 1, []( const std::vector<value> &args ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
-        if( n ) {
+        if( n )
+        {
             n->remove_value( std::get<std::string>( args[0] ) );
         }
         return command_signal::none;
@@ -3631,7 +3744,8 @@ void register_builtin_commands( command_registry &reg )
     // npc_adjust_var "key" amount
     reg.add( "npc_adjust_var", 2, []( const std::vector<value> &args ) -> command_signal {
         auto *n = g_conv_ctx.npc_ref;
-        if( n ) {
+        if( n )
+        {
             const auto &key    = std::get<std::string>( args[0] );
             auto        amount = static_cast<long long>( std::get<double>( args[1] ) );
             const auto &stored = n->get_value( key );
@@ -3653,7 +3767,8 @@ void register_builtin_commands( command_registry &reg )
 
     auto npc_fn = [&reg]( const char *name, void( *fn )( npc & ) ) {
         reg.add( name, [fn]( const std::vector<value> & ) -> command_signal {
-            if( auto *n = g_conv_ctx.npc_ref ) {
+            if( auto *n = g_conv_ctx.npc_ref )
+            {
                 fn( *n );
             }
             return command_signal::none;
@@ -3662,7 +3777,8 @@ void register_builtin_commands( command_registry &reg )
 
     auto npc_stop = [&reg]( const char *name, void( *fn )( npc & ) ) {
         reg.add( name, [fn]( const std::vector<value> & ) -> command_signal {
-            if( auto *n = g_conv_ctx.npc_ref ) {
+            if( auto *n = g_conv_ctx.npc_ref )
+            {
                 fn( *n );
             }
             return command_signal::stop;
@@ -3770,25 +3886,29 @@ void register_builtin_commands( command_registry &reg )
 
     // Traits
     reg.add( "u_add_trait", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             p->set_mutation( trait_id( std::get<std::string>( args[0] ) ) );
         }
         return command_signal::none;
     } );
     reg.add( "npc_add_trait", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->set_mutation( trait_id( std::get<std::string>( args[0] ) ) );
         }
         return command_signal::none;
     } );
     reg.add( "u_lose_trait", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             p->unset_mutation( trait_id( std::get<std::string>( args[0] ) ) );
         }
         return command_signal::none;
     } );
     reg.add( "npc_lose_trait", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->unset_mutation( trait_id( std::get<std::string>( args[0] ) ) );
         }
         return command_signal::none;
@@ -3796,7 +3916,8 @@ void register_builtin_commands( command_registry &reg )
 
     // Effects (NPC-targeted)
     reg.add( "u_add_effect", 2, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             auto id      = efftype_id( std::get<std::string>( args[0] ) );
             auto turns   = static_cast<int>( std::get<double>( args[1] ) );
             auto dur     = time_duration::from_turns( turns < 0 ? 1 : turns );
@@ -3806,7 +3927,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "npc_add_effect", 2, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto id      = efftype_id( std::get<std::string>( args[0] ) );
             auto turns   = static_cast<int>( std::get<double>( args[1] ) );
             auto dur     = time_duration::from_turns( turns < 0 ? 1 : turns );
@@ -3816,13 +3938,15 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "u_lose_effect", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             p->remove_effect( efftype_id( std::get<std::string>( args[0] ) ) );
         }
         return command_signal::none;
     } );
     reg.add( "npc_lose_effect", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->remove_effect( efftype_id( std::get<std::string>( args[0] ) ) );
         }
         return command_signal::none;
@@ -3834,38 +3958,44 @@ void register_builtin_commands( command_registry &reg )
         const auto &type    = std::get<std::string>( args[offset + 1] );
         const auto &context = std::get<std::string>( args[offset + 2] );
         return "npctalk_var" +
-               ( type.empty()    ? std::string{} : "_" + type ) +
-               ( context.empty() ? std::string{} : "_" + context ) +
-               "_" + name;
+        ( type.empty()    ? std::string{} : "_" + type ) +
+        ( context.empty() ? std::string{} : "_" + context ) +
+        "_" + name;
     };
 
     reg.add( "u_add_var", 4, [talk_varname]( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             p->set_value( talk_varname( args, 0 ), std::get<std::string>( args[3] ) );
         }
         return command_signal::none;
     } );
     reg.add( "npc_add_var", 4, [talk_varname]( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->set_value( talk_varname( args, 0 ), std::get<std::string>( args[3] ) );
         }
         return command_signal::none;
     } );
     reg.add( "u_lose_var", 3, [talk_varname]( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             p->remove_value( talk_varname( args, 0 ) );
         }
         return command_signal::none;
     } );
     reg.add( "npc_lose_var", 3, [talk_varname]( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->remove_value( talk_varname( args, 0 ) );
         }
         return command_signal::none;
     } );
     // u_adjust_var_legacy: name, type, context, amount (uses talk var naming)
-    reg.add( "u_adjust_var_legacy", 4, [talk_varname]( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+    reg.add( "u_adjust_var_legacy",
+    4, [talk_varname]( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             auto key    = talk_varname( args, 0 );
             auto amount = static_cast<long long>( std::get<double>( args[3] ) );
             const auto &stored = p->get_value( key );
@@ -3874,8 +4004,10 @@ void register_builtin_commands( command_registry &reg )
         }
         return command_signal::none;
     } );
-    reg.add( "npc_adjust_var_legacy", 4, [talk_varname]( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+    reg.add( "npc_adjust_var_legacy",
+    4, [talk_varname]( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto key    = talk_varname( args, 0 );
             auto amount = static_cast<long long>( std::get<double>( args[3] ) );
             const auto &stored = n->get_value( key );
@@ -3887,7 +4019,8 @@ void register_builtin_commands( command_registry &reg )
 
     // Economy
     reg.add( "u_spend_ecash", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             p->cash -= static_cast<long long>( std::get<double>( args[0] ) );
         }
         return command_signal::none;
@@ -3895,7 +4028,8 @@ void register_builtin_commands( command_registry &reg )
 
     // Item trade commands (simplified — no container/cost validation)
     reg.add( "u_buy_item", 3, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             auto id    = itype_id( std::get<std::string>( args[0] ) );
             auto cost  = static_cast<long long>( std::get<double>( args[1] ) );
             auto count = static_cast<int>( std::get<double>( args[2] ) );
@@ -3905,7 +4039,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "u_sell_item", 3, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             auto id    = itype_id( std::get<std::string>( args[0] ) );
             auto cost  = static_cast<long long>( std::get<double>( args[1] ) );
             auto count = static_cast<int>( std::get<double>( args[2] ) );
@@ -3915,7 +4050,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "u_consume_item", 2, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             auto id    = itype_id( std::get<std::string>( args[0] ) );
             auto count = static_cast<int>( std::get<double>( args[1] ) );
             p->use_amount( id, count );
@@ -3923,7 +4059,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "npc_consume_item", 2, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto id    = itype_id( std::get<std::string>( args[0] ) );
             auto count = static_cast<int>( std::get<double>( args[1] ) );
             n->use_amount( id, count );
@@ -3931,7 +4068,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "u_remove_item_with", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             auto id = itype_id( std::get<std::string>( args[0] ) );
             p->remove_items_with( [id]( detached_ptr<item> &&it ) {
                 if( it->typeId() == id ) {
@@ -3943,7 +4081,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "npc_remove_item_with", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto id = itype_id( std::get<std::string>( args[0] ) );
             n->remove_items_with( [id]( detached_ptr<item> &&it ) {
                 if( it->typeId() == id ) {
@@ -3957,7 +4096,8 @@ void register_builtin_commands( command_registry &reg )
 
     // Topic switching (from npc_first_topic effect)
     reg.add( "npc_set_first_topic", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->chatbin.first_topic = std::get<std::string>( args[0] );
         }
         return command_signal::none;
@@ -3965,7 +4105,8 @@ void register_builtin_commands( command_registry &reg )
 
     // NPC ally rules
     reg.add( "toggle_npc_rule", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto it = ally_rule_strs.find( std::get<std::string>( args[0] ) );
             if( it != ally_rule_strs.end() ) {
                 n->rules.toggle_flag( it->second.rule );
@@ -3975,7 +4116,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "set_npc_rule", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto it = ally_rule_strs.find( std::get<std::string>( args[0] ) );
             if( it != ally_rule_strs.end() ) {
                 n->rules.set_flag( it->second.rule );
@@ -3985,7 +4127,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "clear_npc_rule", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto it = ally_rule_strs.find( std::get<std::string>( args[0] ) );
             if( it != ally_rule_strs.end() ) {
                 n->rules.clear_flag( it->second.rule );
@@ -3997,7 +4140,8 @@ void register_builtin_commands( command_registry &reg )
     npc_fn( "copy_npc_rules", talk_function::copy_npc_rules );
 
     reg.add( "set_npc_engagement_rule", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto it = combat_engagement_strs.find( std::get<std::string>( args[0] ) );
             if( it != combat_engagement_strs.end() ) {
                 n->rules.engagement = it->second;
@@ -4007,7 +4151,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "set_npc_aim_rule", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto it = aim_rule_strs.find( std::get<std::string>( args[0] ) );
             if( it != aim_rule_strs.end() ) {
                 n->rules.aim = it->second;
@@ -4017,7 +4162,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "set_npc_cbm_reserve_rule", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto it = cbm_reserve_strs.find( std::get<std::string>( args[0] ) );
             if( it != cbm_reserve_strs.end() ) {
                 n->rules.cbm_reserve = it->second;
@@ -4026,7 +4172,8 @@ void register_builtin_commands( command_registry &reg )
         return command_signal::none;
     } );
     reg.add( "set_npc_cbm_recharge_rule", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto it = cbm_recharge_strs.find( std::get<std::string>( args[0] ) );
             if( it != cbm_recharge_strs.end() ) {
                 n->rules.cbm_recharge = it->second;
@@ -4044,25 +4191,29 @@ void register_builtin_commands( command_registry &reg )
 
     // Opinion adjustment
     reg.add( "npc_add_trust", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->op_of_u.trust += static_cast<int>( std::get<double>( args[0] ) );
         }
         return command_signal::none;
     } );
     reg.add( "npc_add_fear", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->op_of_u.fear += static_cast<int>( std::get<double>( args[0] ) );
         }
         return command_signal::none;
     } );
     reg.add( "npc_add_value", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->op_of_u.value += static_cast<int>( std::get<double>( args[0] ) );
         }
         return command_signal::none;
     } );
     reg.add( "npc_add_anger", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->op_of_u.anger += static_cast<int>( std::get<double>( args[0] ) );
         }
         return command_signal::none;
@@ -4075,7 +4226,8 @@ void register_builtin_commands( command_registry &reg )
         if( !n || !p ) { return command_signal::none; }
         int debt = 0;
         int total_mult = 1;
-        for( std::size_t i = 0; i + 1 < args.size(); i += 2 ) {
+        for( std::size_t i = 0; i + 1 < args.size(); i += 2 )
+        {
             const auto &type   = std::get<std::string>( args[i] );
             auto        factor = static_cast<int>( std::get<double>( args[i + 1] ) );
             if( type == "TOTAL" ) {
@@ -4083,15 +4235,15 @@ void register_builtin_commands( command_registry &reg )
                 continue;
             }
             int mod = 0;
-            if(      type == "ANGER"       ) { mod = n->op_of_u.anger; }
-            else if( type == "FEAR"        ) { mod = n->op_of_u.fear; }
-            else if( type == "TRUST"       ) { mod = n->op_of_u.trust; }
-            else if( type == "VALUE"       ) { mod = n->op_of_u.value; }
-            else if( type == "POS_FEAR"    ) { mod = std::max( 0, n->op_of_u.fear ); }
-            else if( type == "AGGRESSION"  ) { mod = n->personality.aggression; }
-            else if( type == "ALTRUISM"    ) { mod = n->personality.altruism; }
-            else if( type == "BRAVERY"     ) { mod = n->personality.bravery; }
-            else if( type == "COLLECTOR"   ) { mod = n->personality.collector; }
+            if( type == "ANGER" ) { mod = n->op_of_u.anger; }
+            else if( type == "FEAR" ) { mod = n->op_of_u.fear; }
+            else if( type == "TRUST" ) { mod = n->op_of_u.trust; }
+            else if( type == "VALUE" ) { mod = n->op_of_u.value; }
+            else if( type == "POS_FEAR" ) { mod = std::max( 0, n->op_of_u.fear ); }
+            else if( type == "AGGRESSION" ) { mod = n->personality.aggression; }
+            else if( type == "ALTRUISM" ) { mod = n->personality.altruism; }
+            else if( type == "BRAVERY" ) { mod = n->personality.bravery; }
+            else if( type == "COLLECTOR" ) { mod = n->personality.collector; }
             else if( type == "U_INTIMIDATE" || type == "NPC_INTIMIDATE" ) {
                 mod = character_effects::intimidation( *p );
             }
@@ -4103,7 +4255,8 @@ void register_builtin_commands( command_registry &reg )
     } );
 
     reg.add( "u_faction_rep", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto *fac = n->get_faction();
             if( fac && fac->id != faction_id( "no_faction" ) ) {
                 auto delta = static_cast<int>( std::get<double>( args[0] ) );
@@ -4117,9 +4270,10 @@ void register_builtin_commands( command_registry &reg )
     // Mission management
     // add_mission("id") — NPC-assigned mission added to NPC's missions_assigned list
     reg.add( "add_mission", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto *miss = mission::reserve_new( mission_type_id( std::get<std::string>( args[0] ) ),
-                                              n->getID() );
+                                               n->getID() );
             miss->assign( get_avatar() );
             n->chatbin.missions_assigned.push_back( miss );
         }
@@ -4128,7 +4282,7 @@ void register_builtin_commands( command_registry &reg )
     // assign_mission("id") — player-facing mission (no specific NPC owner)
     reg.add( "assign_mission", 1, []( const std::vector<value> &args ) -> command_signal {
         auto *new_mission = mission::reserve_new( mission_type_id( std::get<std::string>( args[0] ) ),
-                                                 character_id() );
+                character_id() );
         new_mission->assign( get_avatar() );
         return command_signal::none;
     } );
@@ -4136,9 +4290,11 @@ void register_builtin_commands( command_registry &reg )
     reg.add( "finish_mission", 2, []( const std::vector<value> &args ) -> command_signal {
         auto type    = mission_type_id( std::get<std::string>( args[0] ) );
         auto success = std::get<bool>( args[1] );
-        for( auto *m : get_avatar().get_active_missions() ) {
+        for( auto *m : get_avatar().get_active_missions() )
+        {
             if( m->mission_id() == type ) {
-                if( success ) { m->wrap_up(); } else { m->fail(); }
+                if( success ) { m->wrap_up(); }
+                else { m->fail(); }
                 break;
             }
         }
@@ -4146,32 +4302,36 @@ void register_builtin_commands( command_registry &reg )
     } );
     // npc_change_faction("faction_name")
     reg.add( "npc_change_faction", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->set_fac( faction_id( std::get<std::string>( args[0] ) ) );
         }
         return command_signal::none;
     } );
     // mapgen_update("id", ...) — variadic; each string arg is a mapgen update id
     reg.add( "mapgen_update", 0, -1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             auto omt_pos = n->global_omt_location();
             for( const auto &arg : args ) {
                 run_mapgen_update_func( std::get<std::string>( arg ), omt_pos,
-                                       n->chatbin.mission_selected );
+                                        n->chatbin.mission_selected );
             }
         }
         return command_signal::none;
     } );
     // npc_gets_item — player selects an item from inventory to give to the NPC to carry
     reg.add( "npc_gets_item", 0, []( const std::vector<value> & ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             give_item_to( *n, false );
         }
         return command_signal::none;
     } );
     // npc_gets_item_to_use — player selects an item for the NPC to use (eat/wield/wear)
     reg.add( "npc_gets_item_to_use", 0, []( const std::vector<value> & ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             give_item_to( *n, true );
         }
         return command_signal::none;
@@ -4186,17 +4346,17 @@ auto run_npc_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
 {
     if( n.chatbin.yarn_story.empty() ) {
         DebugLog( DL::Error, DC::Dialogue )
-            << "yarn: NPC '" << n.name << "' has no yarn_story — using legacy path";
+                << "yarn: NPC '" << n.name << "' has no yarn_story — using legacy path";
         return false;
     }
     if( !has_yarn_story( n.chatbin.yarn_story ) ) {
         DebugLog( DL::Error, DC::Dialogue )
-            << "yarn: NPC '" << n.name << "' references unknown story '"
-            << n.chatbin.yarn_story << "' — story not in registry";
+                << "yarn: NPC '" << n.name << "' references unknown story '"
+                << n.chatbin.yarn_story << "' — story not in registry";
         return false;
     }
     DebugLog( DL::Error, DC::Dialogue )
-        << "yarn: running story '" << n.chatbin.yarn_story << "' for NPC '" << n.name << "'";
+            << "yarn: running story '" << n.chatbin.yarn_story << "' for NPC '" << n.name << "'";
 
     const auto &story = get_yarn_story( n.chatbin.yarn_story );
     d_win.print_header( n.name );
@@ -4242,7 +4402,7 @@ auto try_legacy_yarn_dialogue( dialogue_window &d_win, npc &n, player &p, dialog
 
     if( !story.has_node( starting_topic ) ) {
         DebugLog( DL::Warn, DC::Dialogue )
-            << "yarn: __legacy story has no node '" << starting_topic << "'";
+                << "yarn: __legacy story has no node '" << starting_topic << "'";
         return false;
     }
 

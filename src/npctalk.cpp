@@ -3548,7 +3548,7 @@ auto get_all_talk_topic_ids() -> std::vector<std::string>
     std::vector<std::string> ids;
     ids.reserve( json_talk_topics.size() );
     std::ranges::transform( json_talk_topics, std::back_inserter( ids ),
-                            []( const auto &pair ) { return pair.first; } );
+    []( const auto & pair ) { return pair.first; } );
     return ids;
 }
 

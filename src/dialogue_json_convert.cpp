@@ -55,8 +55,7 @@ auto lit_num( double v ) -> yarn::expr_node
 }
 
 // func_call(name, {arg1, arg2, ...})
-auto fn( std::string name, std::vector<yarn::expr_node> args = {} ) -> yarn::expr_node
-{
+auto fn( std::string name, std::vector<yarn::expr_node> args = {} ) -> yarn::expr_node {
     yarn::expr_node n;
     n.type      = yarn::expr_node::kind::func_call;
     n.func_name = std::move( name );
@@ -153,8 +152,7 @@ auto make_legacy( std::string topic ) -> yarn::node_element
 }
 
 auto make_command( std::string name,
-                   std::vector<yarn::expr_node> args = {} ) -> yarn::node_element
-{
+std::vector<yarn::expr_node> args = {} ) -> yarn::node_element {
     yarn::node_element e;
     e.type         = yarn::node_element::kind::command;
     e.command_name = std::move( name );
@@ -164,8 +162,7 @@ auto make_command( std::string name,
 
 auto make_if_block( yarn::expr_node condition,
                     std::vector<yarn::node_element> if_body,
-                    std::vector<yarn::node_element> else_body = {} ) -> yarn::node_element
-{
+std::vector<yarn::node_element> else_body = {} ) -> yarn::node_element {
     yarn::node_element e;
     e.type      = yarn::node_element::kind::if_block;
     e.condition = std::move( condition );
@@ -343,7 +340,7 @@ auto json_condition_obj_to_expr( const JsonObject &jo ) -> yarn::expr_node
     }
 
     // Attribute minimum checks: value IS the minimum
-    auto make_attr_check = []( const std::string &fn_name,
+    auto make_attr_check = []( const std::string & fn_name,
     const JsonObject & j, const std::string & key ) -> yarn::expr_node {
         return fn( fn_name, { lit_num( static_cast<double>( j.get_int( key ) ) ) } );
     };
@@ -429,10 +426,12 @@ auto json_condition_obj_to_expr( const JsonObject &jo ) -> yarn::expr_node
         { "MASSIVE_FATIGUE", 1000 },
     };
     auto resolve_need_amount = [&]() -> int {
-        if( jo.has_int( "amount" ) ) {
+        if( jo.has_int( "amount" ) )
+        {
             return jo.get_int( "amount" );
         }
-        if( jo.has_string( "level" ) ) {
+        if( jo.has_string( "level" ) )
+        {
             auto it = fatigue_level_ints.find( jo.get_string( "level" ) );
             if( it != fatigue_level_ints.end() ) {
                 return it->second;
@@ -442,11 +441,13 @@ auto json_condition_obj_to_expr( const JsonObject &jo ) -> yarn::expr_node
     };
     if( jo.has_string( "u_need" ) ) {
         return fn( "u_need", { lit_str( jo.get_string( "u_need" ) ),
-                               lit_num( static_cast<double>( resolve_need_amount() ) ) } );
+                               lit_num( static_cast<double>( resolve_need_amount() ) )
+                             } );
     }
     if( jo.has_string( "npc_need" ) ) {
         return fn( "npc_need", { lit_str( jo.get_string( "npc_need" ) ),
-                                 lit_num( static_cast<double>( resolve_need_amount() ) ) } );
+                                 lit_num( static_cast<double>( resolve_need_amount() ) )
+                               } );
     }
 
     // Economy
@@ -640,7 +641,8 @@ auto json_sub_effect_to_elements( const JsonObject &jo ) -> std::vector<yarn::no
 
     // Duration may be an int or a numeric string (e.g. "25920"). Resolve to turns.
     auto read_duration = [&]() -> int {
-        if( jo.has_string( "duration" ) ) {
+        if( jo.has_string( "duration" ) )
+        {
             const auto s = jo.get_string( "duration" );
             if( s == "PERMANENT" ) { return -1; }  // -1 sentinel → set_permanent() in runtime
             if( !s.empty() ) { return std::stoi( s ); }
@@ -881,7 +883,7 @@ auto json_dynamic_line_obj_to_elements( const JsonObject &jo ) -> std::vector<ya
         }
         auto no_elem = jo.has_member( "no" )
                        ? json_dynamic_line_to_elements( jo.get_member( "no" ) )
-                       : std::vector<yarn::node_element>{};
+                       : std::vector<yarn::node_element> {};
         out.push_back( make_if_block( std::move( cond_expr ),
                                       std::move( yes_elem ),
                                       std::move( no_elem ) ) );
@@ -903,10 +905,10 @@ auto json_dynamic_line_obj_to_elements( const JsonObject &jo ) -> std::vector<ya
         // In that case just emit the "yes" branch unconditionally.
         auto yes_elems = jo.has_member( "yes" )
                          ? json_dynamic_line_to_elements( jo.get_member( "yes" ) )
-                         : std::vector<yarn::node_element>{};
+                         : std::vector<yarn::node_element> {};
         auto no_elems  = jo.has_member( "no" )
                          ? json_dynamic_line_to_elements( jo.get_member( "no" ) )
-                         : std::vector<yarn::node_element>{};
+                         : std::vector<yarn::node_element> {};
         if( !yes_elems.empty() || !no_elems.empty() ) {
             out.push_back( make_if_block( std::move( cond_expr ),
                                           std::move( yes_elems ),
@@ -1005,8 +1007,8 @@ auto json_talk_effect_to_elements( const JsonObject &jo,
 
 // Forward declaration for inline topic handling.
 auto json_topic_to_yarn_node( const std::string &id,
-                               const JsonObject &jo,
-                               std::vector<yarn::yarn_node> &out_nodes ) -> yarn::yarn_node;
+                              const JsonObject &jo,
+                              std::vector<yarn::yarn_node> &out_nodes ) -> yarn::yarn_node;
 
 auto json_talk_effect_to_elements( const JsonObject &jo,
                                    std::vector<yarn::yarn_node> &out_nodes ) -> std::vector<yarn::node_element>
@@ -1096,11 +1098,11 @@ auto json_speaker_effect_to_elements( const JsonObject &jo ) -> std::vector<yarn
 // Returns 1 choice normally, or 2 choices for truefalsetext responses (one per text variant,
 // with opposite conditions, sharing the same body).
 auto json_response_to_choices( const JsonObject &jo,
-                                std::vector<yarn::yarn_node> &out_nodes )
+                               std::vector<yarn::yarn_node> &out_nodes )
 -> std::vector<yarn::node_element::choice>;
 
 auto json_response_to_choice( const JsonObject &jo,
-                               std::vector<yarn::yarn_node> &out_nodes ) -> yarn::node_element::choice
+                              std::vector<yarn::yarn_node> &out_nodes ) -> yarn::node_element::choice
 {
     jo.allow_omitted_members();
     yarn::node_element::choice ch;
@@ -1145,7 +1147,8 @@ auto json_response_to_choice( const JsonObject &jo,
             }
             ch.body = { make_if_block( std::move( cond_expr ),
                                        std::move( success_body ),
-                                       std::move( failure_body ) ) };
+                                       std::move( failure_body ) )
+                      };
         } else {
             // Dice roll: PERSUADE, LIE, INTIMIDATE
             yarn::expr_node trial_expr = fn( "trial_roll", {
@@ -1154,7 +1157,8 @@ auto json_response_to_choice( const JsonObject &jo,
             } );
             ch.body = { make_if_block( std::move( trial_expr ),
                                        std::move( success_body ),
-                                       std::move( failure_body ) ) };
+                                       std::move( failure_body ) )
+                      };
         }
     } else {
         // No trial — single success path
@@ -1175,7 +1179,7 @@ auto json_response_to_choice( const JsonObject &jo,
 // ============================================================
 
 auto json_response_to_choices( const JsonObject &jo,
-                                std::vector<yarn::yarn_node> &out_nodes )
+                               std::vector<yarn::yarn_node> &out_nodes )
 -> std::vector<yarn::node_element::choice>
 {
     if( !jo.has_member( "truefalsetext" ) ) {
@@ -1273,15 +1277,15 @@ auto json_repeat_response_to_group( const JsonObject &jo,
 // ============================================================
 
 auto json_topic_to_yarn_node( const std::string &id,
-                               const JsonObject &jo,
-                               std::vector<yarn::yarn_node> &out_nodes ) -> yarn::yarn_node
+                              const JsonObject &jo,
+                              std::vector<yarn::yarn_node> &out_nodes ) -> yarn::yarn_node
 {
     jo.allow_omitted_members();
     yarn::yarn_node node;
     node.title = id;
 
     // Speaker effects (pre-dialogue effects from "speaker_effect")
-    auto add_speaker_effects = [&]( const JsonObject &ejo, const std::string & ) {
+    auto add_speaker_effects = [&]( const JsonObject & ejo, const std::string & ) {
         auto elems = json_speaker_effect_to_elements( ejo );
         node.elements.insert( node.elements.end(), elems.begin(), elems.end() );
     };
@@ -1344,8 +1348,9 @@ auto json_topic_to_yarn_node( const std::string &id,
                 for( auto &ch : choices ) {
                     auto guard = not1( prev_matched );
                     ch.condition = ch.condition
-                                   ? std::optional<yarn::expr_node>{ and2( std::move( guard ), std::move( *ch.condition ) ) }
-                                   : std::optional<yarn::expr_node>{ std::move( guard ) };
+                                   ? std::optional<yarn::expr_node> { and2( std::move( guard ), std::move( *ch.condition ) ) }
+                                   :
+                                   std::optional<yarn::expr_node> { std::move( guard ) };
                 }
             }
         }
@@ -1435,13 +1440,14 @@ namespace dialogue_convert
 // Only choices that appear BEFORE "OBEY ME!" in the secondary are inserted
 // (OBEY ME and Bye. are universal — they already exist in the primary).
 static auto merge_choice_groups( yarn::yarn_node &primary,
-                                  yarn::yarn_node &secondary ) -> void
+                                 yarn::yarn_node &secondary ) -> void
 {
     // Find the choice_group in each node.
-    auto primary_cg_it = std::ranges::find_if( primary.elements, []( const yarn::node_element &e ) {
+    auto primary_cg_it = std::ranges::find_if( primary.elements, []( const yarn::node_element & e ) {
         return e.type == yarn::node_element::kind::choice_group;
     } );
-    auto secondary_cg_it = std::ranges::find_if( secondary.elements, []( const yarn::node_element &e ) {
+    auto secondary_cg_it = std::ranges::find_if( secondary.elements, []( const yarn::node_element &
+    e ) {
         return e.type == yarn::node_element::kind::choice_group;
     } );
 
@@ -1459,7 +1465,7 @@ static auto merge_choice_groups( yarn::yarn_node &primary,
                                  secondary.elements.begin(),
                                  secondary_cg_it );
         // Recompute iterator after insert.
-        primary_cg_it = std::ranges::find_if( primary.elements, []( const yarn::node_element &e ) {
+        primary_cg_it = std::ranges::find_if( primary.elements, []( const yarn::node_element & e ) {
             return e.type == yarn::node_element::kind::choice_group;
         } );
     }
@@ -1468,22 +1474,22 @@ static auto merge_choice_groups( yarn::yarn_node &primary,
     auto &secondary_choices = secondary_cg_it->choices;
 
     // Find "OBEY ME!" in each — choices before it are the JSON-derived ones.
-    auto primary_obey_it = std::ranges::find_if( primary_choices, []( const auto &ch ) {
+    auto primary_obey_it = std::ranges::find_if( primary_choices, []( const auto & ch ) {
         return ch.text == "OBEY ME!";
     } );
-    auto secondary_obey_it = std::ranges::find_if( secondary_choices, []( const auto &ch ) {
+    auto secondary_obey_it = std::ranges::find_if( secondary_choices, []( const auto & ch ) {
         return ch.text == "OBEY ME!";
     } );
 
     // Check whether secondary contributes any unconditional stop (TALK_DONE).
     // If so, the primary's forced "Bye." fallback becomes redundant.
     const bool secondary_has_unconditional_stop = std::ranges::any_of(
-        std::ranges::subrange( secondary_choices.begin(), secondary_obey_it ),
-        []( const auto &ch ) {
-            return !ch.condition &&
-                   !ch.body.empty() &&
-                   ch.body.back().type == yarn::node_element::kind::stop;
-        } );
+                std::ranges::subrange( secondary_choices.begin(), secondary_obey_it ),
+    []( const auto & ch ) {
+        return !ch.condition &&
+               !ch.body.empty() &&
+               ch.body.back().type == yarn::node_element::kind::stop;
+    } );
 
     // Insert secondary's JSON choices before primary's OBEY ME.
     auto insert_pos = primary_obey_it;
@@ -1494,7 +1500,7 @@ static auto merge_choice_groups( yarn::yarn_node &primary,
 
     // Remove the forced "Bye." from the primary if secondary provided a real unconditional exit.
     if( secondary_has_unconditional_stop ) {
-        std::erase_if( primary_choices, []( const auto &ch ) {
+        std::erase_if( primary_choices, []( const auto & ch ) {
             return !ch.condition &&
                    ch.text == _( "Bye." ) &&
                    !ch.body.empty() &&
