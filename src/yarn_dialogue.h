@@ -212,8 +212,8 @@ struct node_element {
         dialogue,      // NPC or player speech line
         choice_group,  // a set of -> choices presented to the player
         command,       // <<command_name arg1 arg2 ...>>
-        jump,          // <<jump NodeName>>  — push frame; callee falls off end → pop (return to caller)
-        goto_node,     // <<goto NodeName>>  — replace current frame (lateral/cycling navigation)
+        jump,          // <<jump NodeName>>  — replace current frame (standard Yarn Spinner navigate; no implicit return)
+        goto_node,     // <<goto NodeName>>  — push frame; callee falls off end → pop (return to caller)
         stop,          // <<stop>>           — end conversation (clear entire stack)
         yarn_return,   // <<return>>         — explicit early pop of current frame
         if_block,      // <<if>> / <<else>> / <<endif>>

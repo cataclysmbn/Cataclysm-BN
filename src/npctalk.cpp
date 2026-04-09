@@ -1479,6 +1479,16 @@ void dialogue::gen_responses( const talk_topic &the_topic )
     const auto p = beta; // for compatibility, later replace it in the code below
     auto &ret = responses; // for compatibility, later replace it in the code below
     ret.clear();
+    // Group 99 meta-topics (O/L/S/Y hotkeys): always exactly "Okay." → TALK_NONE.
+    // Must precede the JSON check — these topics exist in JSON with an "Okay" response,
+    // and falling through would let JSON add one then our block below add a second.
+    static const std::unordered_set<std::string> topic_99 = {
+        "TALK_OPINION", "TALK_SIZE_UP", "TALK_LOOK_AT", "TALK_SHOUT"
+    };
+    if( topic_99.contains( topic ) ) {
+        add_response_none( _( "Okay." ) );
+        return;
+    }
     const auto iter = json_talk_topics.find( topic );
     if( iter != json_talk_topics.end() ) {
         json_talk_topic &jtt = iter->second;

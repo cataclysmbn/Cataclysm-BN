@@ -20,6 +20,7 @@
 #include "item.h"
 #include "item_category.h"
 #include "json.h"
+#include "translations.h"
 #include "yarn_dialogue.h"
 
 namespace
@@ -120,10 +121,11 @@ auto make_dialogue( std::string text, std::string speaker = "" ) -> yarn::node_e
     return e;
 }
 
-auto make_jump( std::string target ) -> yarn::node_element
+// JSON-converted topic transitions use goto_node (push) so TALK_NONE pops back to the caller.
+auto make_goto( std::string target ) -> yarn::node_element
 {
     yarn::node_element e;
-    e.type        = yarn::node_element::kind::jump;
+    e.type        = yarn::node_element::kind::goto_node;
     e.jump_target = std::move( target );
     return e;
 }
@@ -201,6 +203,9 @@ static const std::unordered_set<std::string> s_legacy_ui_topics = {
     "TALK_MISSION_REWARD",
     "TALK_SUGGEST_FOLLOW", "TALK_HOW_MUCH_FURTHER",
     "TALK_COMBAT_ENGAGEMENT",
+    "TALK_MIND_CONTROL",   // dynamic_line runs talk_function::follow() as a side effect
+    // Group 99: hotkey-activated info topics (O/L/S/Y); gen_responses adds only "Okay." → TALK_NONE.
+    "TALK_OPINION", "TALK_SIZE_UP", "TALK_LOOK_AT", "TALK_SHOUT",
 };
 
 // ============================================================
@@ -990,7 +995,7 @@ auto topic_to_terminal( const std::string &topic_id ) -> std::vector<yarn::node_
     if( s_legacy_ui_topics.contains( topic_id ) ) {
         return { make_legacy( topic_id ) };
     }
-    return { make_jump( topic_id ) };
+    return { make_goto( topic_id ) };
 }
 
 // Convert a talk_effect JSON object to node_elements + terminal.
@@ -1299,8 +1304,52 @@ auto json_topic_to_yarn_node( const std::string &id,
     yarn::node_element cg;
     cg.type = yarn::node_element::kind::choice_group;
 
+    // switch:true responses form mutually exclusive groups: each successive switch choice
+    // is only shown when none of the preceding switch choices' conditions passed.
+    std::vector<yarn::expr_node> switch_group_conditions;
+    bool has_unconditional_done = false;  // tracks whether a bye/done option already exists
+
     for( JsonObject resp_jo : jo.get_array( "responses" ) ) {
+        resp_jo.allow_omitted_members();
+        const bool is_switch = resp_jo.get_bool( "switch", false );
+        // Track whether any unconditional response already exits the conversation.
+        if( !resp_jo.has_member( "condition" ) &&
+            !resp_jo.has_member( "truefalsetext" ) &&
+            resp_jo.get_string( "topic", "" ) == "TALK_DONE" ) {
+            has_unconditional_done = true;
+        }
+
+        if( !is_switch ) {
+            switch_group_conditions.clear();
+        }
+
         auto choices = json_response_to_choices( resp_jo, out_nodes );
+
+        if( is_switch ) {
+            // Track the original (pre-guard) condition for each choice so subsequent
+            // switch choices get a guard based on the raw conditions, not compounded ones.
+            for( const auto &ch : choices ) {
+                switch_group_conditions.push_back(
+                    ch.condition ? *ch.condition : lit( true ) );
+            }
+
+            if( switch_group_conditions.size() > choices.size() ) {
+                // There are previous switch conditions — apply guard to these choices.
+                // Guard = NOT( OR of all previous switch conditions ).
+                auto prev_end = static_cast<std::ptrdiff_t>(
+                                    switch_group_conditions.size() - choices.size() );
+                std::vector<yarn::expr_node> prev( switch_group_conditions.begin(),
+                                                   switch_group_conditions.begin() + prev_end );
+                auto prev_matched = fold_exprs( std::move( prev ), or2 );
+                for( auto &ch : choices ) {
+                    auto guard = not1( prev_matched );
+                    ch.condition = ch.condition
+                                   ? std::optional<yarn::expr_node>{ and2( std::move( guard ), std::move( *ch.condition ) ) }
+                                   : std::optional<yarn::expr_node>{ std::move( guard ) };
+                }
+            }
+        }
+
         for( auto &ch : choices ) {
             cg.choices.push_back( std::move( ch ) );
         }
@@ -1317,6 +1366,26 @@ auto json_topic_to_yarn_node( const std::string &id,
                 json_repeat_response_to_group( rr_jo, out_nodes )
             );
         }
+    }
+
+    // "OBEY ME!" — available when player has DEBUG_MIND_CONTROL and NPC is not yet an ally.
+    // Mirrors the built-in response gen_responses() used to add for every topic.
+    {
+        yarn::node_element::choice obey;
+        obey.text      = "OBEY ME!";
+        obey.condition = and2( fn( "u_has_trait", { lit_str( "DEBUG_MIND_CONTROL" ) } ),
+                               not1( fn( "npc_friend", {} ) ) );
+        obey.body      = topic_to_terminal( "TALK_MIND_CONTROL" );
+        cg.choices.push_back( std::move( obey ) );
+    }
+
+    // Fallback "Bye." — mirrors the unconditional exit gen_responses() always appended.
+    // Omitted when the JSON already defines an unconditional path to TALK_DONE.
+    if( !has_unconditional_done ) {
+        yarn::node_element::choice bye;
+        bye.text = _( "Bye." );
+        bye.body = topic_to_terminal( "TALK_DONE" );
+        cg.choices.push_back( std::move( bye ) );
     }
 
     node.elements.push_back( std::move( cg ) );
@@ -1362,14 +1431,137 @@ void register_yarn_node( const std::string &id, const JsonObject &jo )
 namespace dialogue_convert
 {
 
+// Merge choices from a secondary node's choice_group into a primary node.
+// Only choices that appear BEFORE "OBEY ME!" in the secondary are inserted
+// (OBEY ME and Bye. are universal — they already exist in the primary).
+static auto merge_choice_groups( yarn::yarn_node &primary,
+                                  yarn::yarn_node &secondary ) -> void
+{
+    // Find the choice_group in each node.
+    auto primary_cg_it = std::ranges::find_if( primary.elements, []( const yarn::node_element &e ) {
+        return e.type == yarn::node_element::kind::choice_group;
+    } );
+    auto secondary_cg_it = std::ranges::find_if( secondary.elements, []( const yarn::node_element &e ) {
+        return e.type == yarn::node_element::kind::choice_group;
+    } );
+
+    if( primary_cg_it == primary.elements.end() || secondary_cg_it == secondary.elements.end() ) {
+        return;
+    }
+
+    // If the primary has no speech/pre-choice elements but the secondary does,
+    // prepend secondary's pre-choice elements (dynamic_line, speaker_effects) to primary.
+    // This handles load-order dependency: TALK_COMMON_MISSION.json (no dynamic_line) may
+    // be loaded before TALK_COMMON_OTHER.json (has dynamic_line), making MISSION the primary.
+    const bool primary_has_pre_elements = primary_cg_it != primary.elements.begin();
+    if( !primary_has_pre_elements && secondary_cg_it != secondary.elements.begin() ) {
+        primary.elements.insert( primary.elements.begin(),
+                                 secondary.elements.begin(),
+                                 secondary_cg_it );
+        // Recompute iterator after insert.
+        primary_cg_it = std::ranges::find_if( primary.elements, []( const yarn::node_element &e ) {
+            return e.type == yarn::node_element::kind::choice_group;
+        } );
+    }
+
+    auto &primary_choices   = primary_cg_it->choices;
+    auto &secondary_choices = secondary_cg_it->choices;
+
+    // Find "OBEY ME!" in each — choices before it are the JSON-derived ones.
+    auto primary_obey_it = std::ranges::find_if( primary_choices, []( const auto &ch ) {
+        return ch.text == "OBEY ME!";
+    } );
+    auto secondary_obey_it = std::ranges::find_if( secondary_choices, []( const auto &ch ) {
+        return ch.text == "OBEY ME!";
+    } );
+
+    // Check whether secondary contributes any unconditional stop (TALK_DONE).
+    // If so, the primary's forced "Bye." fallback becomes redundant.
+    const bool secondary_has_unconditional_stop = std::ranges::any_of(
+        std::ranges::subrange( secondary_choices.begin(), secondary_obey_it ),
+        []( const auto &ch ) {
+            return !ch.condition &&
+                   !ch.body.empty() &&
+                   ch.body.back().type == yarn::node_element::kind::stop;
+        } );
+
+    // Insert secondary's JSON choices before primary's OBEY ME.
+    auto insert_pos = primary_obey_it;
+    for( auto it = secondary_choices.begin(); it != secondary_obey_it; ++it ) {
+        insert_pos = primary_choices.insert( insert_pos, std::move( *it ) );
+        ++insert_pos;
+    }
+
+    // Remove the forced "Bye." from the primary if secondary provided a real unconditional exit.
+    if( secondary_has_unconditional_stop ) {
+        std::erase_if( primary_choices, []( const auto &ch ) {
+            return !ch.condition &&
+                   ch.text == _( "Bye." ) &&
+                   !ch.body.empty() &&
+                   ch.body.back().type == yarn::node_element::kind::stop;
+        } );
+    }
+}
+
 auto flush_pending_nodes() -> std::vector<yarn::yarn_node>
 {
-    std::vector<yarn::yarn_node> all;
+    // Merge duplicate titles: topics defined across multiple JSON files
+    // (e.g. TALK_SHELTER in TALK_COMMON_OTHER.json + TALK_COMMON_MISSION.json)
+    // must have their choice_groups combined, mirroring json_talk_topic::load's append semantics.
+    std::unordered_map<std::string, yarn::yarn_node> merged;
+    std::vector<std::string> insertion_order; // preserve first-seen title order
+
     for( auto &entry : s_pending ) {
         for( auto &node : entry.nodes ) {
-            all.push_back( std::move( node ) );
+            if( s_legacy_ui_topics.contains( node.title ) ) {
+                if( !merged.contains( node.title ) ) {
+                    yarn::yarn_node stub;
+                    stub.title = node.title;
+                    yarn::node_element lt;
+                    lt.type        = yarn::node_element::kind::legacy_topic;
+                    lt.jump_target = node.title;
+                    stub.elements.push_back( std::move( lt ) );
+                    insertion_order.push_back( node.title );
+                    merged.emplace( node.title, std::move( stub ) );
+                }
+            } else {
+                auto it = merged.find( node.title );
+                if( it == merged.end() ) {
+                    insertion_order.push_back( node.title );
+                    merged.emplace( node.title, std::move( node ) );
+                } else {
+                    // Duplicate title: merge this node's JSON choices into the existing one.
+                    merge_choice_groups( it->second, node );
+                }
+            }
         }
     }
+
+    // Add stubs for legacy UI topics that have no JSON entries at all
+    // (e.g. TALK_MIND_CONTROL is handled entirely by C++ dynamic_line/gen_responses).
+    // Without a stub, the while-loop in the legacy_topic handler cannot route to them.
+    for( const auto &title : s_legacy_ui_topics ) {
+        if( !merged.contains( title ) ) {
+            yarn::yarn_node stub;
+            stub.title = title;
+            yarn::node_element lt;
+            lt.type        = yarn::node_element::kind::legacy_topic;
+            lt.jump_target = title;
+            stub.elements.push_back( std::move( lt ) );
+            merged.emplace( title, std::move( stub ) );
+            insertion_order.push_back( title );
+        }
+    }
+
+    std::vector<yarn::yarn_node> all;
+    all.reserve( insertion_order.size() );
+    for( const auto &title : insertion_order ) {
+        auto it = merged.find( title );
+        if( it != merged.end() ) {
+            all.push_back( std::move( it->second ) );
+        }
+    }
+
     s_pending.clear();
     return all;
 }

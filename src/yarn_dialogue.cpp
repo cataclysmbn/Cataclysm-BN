@@ -1425,12 +1425,12 @@ void yarn_runtime::run( dialogue_window &d_win )
 
         switch( result.kind ) {
             case signal::jump:
-                // Push: target executes and falls off end → pop back to here
-                node_stack_.push_back( result.target );
+                // Replace current frame — standard <<jump>>, no implicit return
+                node_stack_.back() = result.target;
                 break;
             case signal::goto_node:
-                // Replace current frame — no return to caller
-                node_stack_.back() = result.target;
+                // Push: target executes and falls off end → pop back to here
+                node_stack_.push_back( result.target );
                 break;
             case signal::yarn_return:
                 node_stack_.pop_back();
@@ -1611,30 +1611,57 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                         << "yarn: legacy_topic requires dialogue/npc/player context";
                     return { signal::stop, {} };
                 }
-                // Mirror the mission-selection logic from the original dialogue loop.
                 auto &chatbin = npc_->chatbin;
-                if( chatbin.mission_selected != nullptr &&
-                    chatbin.mission_selected->get_assigned_player_id() != player_->getID() ) {
-                    chatbin.mission_selected = nullptr;
-                }
-                if( chatbin.mission_selected == nullptr ) {
-                    if( !chatbin.missions.empty() ) {
-                        chatbin.mission_selected = chatbin.missions.front();
-                    } else if( !dialogue_ref_->missions_assigned.empty() ) {
-                        chatbin.mission_selected = dialogue_ref_->missions_assigned.front();
+                // Loop through chained legacy topics internally to avoid re-triggering this handler.
+                // When the next topic is also a legacy stub we loop rather than returning signal::jump
+                // (replace), which would discard the current frame and lose context needed for
+                // correct mission-selection refresh on each iteration.
+                auto current_topic = talk_topic( elem.jump_target );
+                while( true ) {
+                    // Refresh mission selection each iteration (the selected mission may change
+                    // between topics, e.g. after accepting a mission the chatbin updates).
+                    if( chatbin.mission_selected != nullptr &&
+                        chatbin.mission_selected->get_assigned_player_id() != player_->getID() ) {
+                        chatbin.mission_selected = nullptr;
                     }
+                    if( chatbin.mission_selected == nullptr ) {
+                        if( !chatbin.missions.empty() ) {
+                            chatbin.mission_selected = chatbin.missions.front();
+                        } else if( !dialogue_ref_->missions_assigned.empty() ) {
+                            chatbin.mission_selected = dialogue_ref_->missions_assigned.front();
+                        }
+                    }
+                    auto next = dialogue_ref_->opt( d_win, npc_->name, current_topic );
+                    if( next.id == "TALK_DONE" ) {
+                        dialogue_ref_->done = true;
+                        return { signal::stop, {} };
+                    }
+                    if( next.id == "TALK_NONE" ) {
+                        // Natural pop — return to the calling topic node.
+                        return { signal::ok, {} };
+                    }
+                    // Group 99 meta-topics (O/L/S/Y hotkeys): opt() already displayed the info;
+                    // call opt() once more to let the player pick "Okay.", then loop back to
+                    // current_topic without replacing it. This preserves the previous topic.
+                    static const std::unordered_set<std::string> s_group99 = {
+                        "TALK_OPINION", "TALK_SIZE_UP", "TALK_LOOK_AT", "TALK_SHOUT"
+                    };
+                    if( s_group99.contains( next.id ) ) {
+                        dialogue_ref_->opt( d_win, npc_->name, next );
+                        continue;
+                    }
+                    // If the next topic is a legacy stub node, loop rather than replace the
+                    // current frame, so the mission-selection refresh runs on each transition.
+                    if( story_.has_node( next.id ) ) {
+                        const auto &next_node = story_.get_node( next.id );
+                        if( !next_node.elements.empty() &&
+                            next_node.elements.front().type == node_element::kind::legacy_topic ) {
+                            current_topic = std::move( next );
+                            continue;
+                        }
+                    }
+                    return { signal::jump, next.id };
                 }
-                auto next = dialogue_ref_->opt( d_win, npc_->name, talk_topic( elem.jump_target ) );
-                if( next.id == "TALK_DONE" ) {
-                    npc_->say( _( "Bye." ) );
-                    dialogue_ref_->done = true;
-                    return { signal::stop, {} };
-                }
-                if( next.id == "TALK_NONE" ) {
-                    // Natural pop — return to the calling topic node.
-                    return { signal::ok, {} };
-                }
-                return { signal::jump, next.id };
             }
 
             case node_element::kind::stop:
@@ -3708,6 +3735,20 @@ void register_builtin_commands( command_registry &reg )
                 run_mapgen_update_func( std::get<std::string>( arg ), omt_pos,
                                        n->chatbin.mission_selected );
             }
+        }
+        return command_signal::none;
+    } );
+    // npc_gets_item — player selects an item from inventory to give to the NPC to carry
+    reg.add( "npc_gets_item", 0, []( const std::vector<value> & ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            give_item_to( *n, false );
+        }
+        return command_signal::none;
+    } );
+    // npc_gets_item_to_use — player selects an item for the NPC to use (eat/wield/wear)
+    reg.add( "npc_gets_item_to_use", 0, []( const std::vector<value> & ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            give_item_to( *n, true );
         }
         return command_signal::none;
     } );
