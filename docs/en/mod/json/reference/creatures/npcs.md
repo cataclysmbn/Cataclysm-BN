@@ -1,8 +1,13 @@
 ---
-title: NPCs
+title: NPCs (Legacy Dialogue)
 tableOfContents:
   maxHeadingLevel: 4
 ---
+
+> **This page documents the legacy JSON-based `TALK_TOPIC` dialogue system.** It remains fully
+> functional but is no longer the recommended authoring path. New dialogue should be written in
+> Yarn Spinner `.yarn` files. See [Dialogue System (Yarn)](../../../dialogue.md) for the current
+> reference.
 
 ## Writing Dialogues
 
