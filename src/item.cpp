@@ -2307,6 +2307,11 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
             info.emplace_back( "GUN", "sum_of_damage", _( " = <num>" ),
                                iteminfo::no_newline | iteminfo::no_name,
                                displayed_damage );
+            if( curammo != nullptr && curammo->ammo->shot ) {
+                info.emplace_back( "GUN", "x", "",
+                                   iteminfo::no_flags,
+                                   curammo->ammo->shot->count );
+            }
 
             if( ench_damage_bonus != 0 ) {
                 info.emplace_back( "GUN", "ench_damage", _( " (enchanted: <num>)" ),
