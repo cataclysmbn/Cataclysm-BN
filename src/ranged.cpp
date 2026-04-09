@@ -188,6 +188,9 @@ struct pellet_target_options {
 
 struct grouped_shot_hit {
     Creature *target = nullptr;
+    std::string target_name;
+    bool target_is_player = false;
+    bool player_saw_hit = false;
     int pellet_hits = 0;
     int total_damage = 0;
 };
@@ -313,6 +316,9 @@ auto add_grouped_shot_hit( std::vector<grouped_shot_hit> &grouped_hits,
     if( it == grouped_hits.end() ) {
         grouped_hits.push_back( grouped_shot_hit {
             .target = shot.hit_critter,
+            .target_name = shot.hit_critter->disp_name(),
+            .target_is_player = shot.hit_critter->is_player(),
+            .player_saw_hit = g->u.sees( *shot.hit_critter ),
             .pellet_hits = 1,
             .total_damage = shot.dealt_dam.total_damage(),
         } );
@@ -320,6 +326,7 @@ auto add_grouped_shot_hit( std::vector<grouped_shot_hit> &grouped_hits,
     }
 
     it->pellet_hits++;
+    it->player_saw_hit |= g->u.sees( *shot.hit_critter );
     it->total_damage += shot.dealt_dam.total_damage();
 }
 
@@ -332,7 +339,7 @@ auto print_grouped_shot_hit_messages( const grouped_shot_message_options &option
             continue;
         }
 
-        if( grouped_hit.target->is_player() ) {
+        if( grouped_hit.target_is_player && grouped_hit.target != nullptr ) {
             if( grouped_hit.total_damage > 0 ) {
                 grouped_hit.target->add_msg_if_player( m_bad,
                                                        _( "%1$d %2$s pellets hit you for %3$d damage." ),
@@ -345,18 +352,18 @@ auto print_grouped_shot_hit_messages( const grouped_shot_message_options &option
             continue;
         }
 
-        if( !g->u.sees( *grouped_hit.target ) ) {
+        if( !grouped_hit.player_saw_hit ) {
             continue;
         }
 
         if( grouped_hit.total_damage > 0 ) {
             add_msg( options.source.is_player() ? m_good : m_neutral,
                      _( "%1$d %2$s pellets hit %3$s for %4$d damage." ), grouped_hit.pellet_hits,
-                     ammo_name, grouped_hit.target->disp_name(), grouped_hit.total_damage );
+                     ammo_name, grouped_hit.target_name, grouped_hit.total_damage );
         } else {
             add_msg( options.source.is_player() ? m_bad : m_neutral,
                      _( "%1$d %2$s pellets hit %3$s but deal no damage." ), grouped_hit.pellet_hits,
-                     ammo_name, grouped_hit.target->disp_name() );
+                     ammo_name, grouped_hit.target_name );
         }
     }
 }
