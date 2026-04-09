@@ -87,6 +87,7 @@ struct dealt_projectile_attack {
     tripoint end_point; // Last hit tile (is hit_critter is null, drops should spawn here)
     double missed_by; // Accuracy of dealt attack
     std::vector<tripoint> trajectory; // Actual simulated path, including source tile
+    bool suppress_damage_message = false;
 };
 
 void apply_ammo_effects( const tripoint &p, const std::set<ammo_effect_str_id> &effects,

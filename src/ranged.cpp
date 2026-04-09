@@ -186,6 +186,18 @@ struct pellet_target_options {
     double half_angle;
 };
 
+struct grouped_shot_hit {
+    Creature *target = nullptr;
+    int pellet_hits = 0;
+    int total_damage = 0;
+};
+
+struct grouped_shot_message_options {
+    Character &source;
+    item &gun;
+    const std::vector<grouped_shot_hit> &grouped_hits;
+};
+
 auto get_shot_data( const item &gun ) -> const islot_ammo::shot_data *
 {
     const auto *const ammo_type = gun.ammo_data();
@@ -288,6 +300,65 @@ auto projectile_draws_as_line( const projectile &proj ) -> bool
 {
     return proj.has_effect( ammo_effect_DRAW_AS_LINE ) ||
            get_option<bool>( "BULLETS_AS_LASERS" );
+}
+
+auto add_grouped_shot_hit( std::vector<grouped_shot_hit> &grouped_hits,
+                           const dealt_projectile_attack &shot ) -> void
+{
+    if( shot.hit_critter == nullptr ) {
+        return;
+    }
+
+    const auto it = std::ranges::find( grouped_hits, shot.hit_critter, &grouped_shot_hit::target );
+    if( it == grouped_hits.end() ) {
+        grouped_hits.push_back( grouped_shot_hit {
+            .target = shot.hit_critter,
+            .pellet_hits = 1,
+            .total_damage = shot.dealt_dam.total_damage(),
+        } );
+        return;
+    }
+
+    it->pellet_hits++;
+    it->total_damage += shot.dealt_dam.total_damage();
+}
+
+auto print_grouped_shot_hit_messages( const grouped_shot_message_options &options ) -> void
+{
+    const auto ammo_name = options.gun.ammo_data() != nullptr ? options.gun.ammo_data()->nname( 1 ) :
+                           options.gun.tname();
+    for( const auto &grouped_hit : options.grouped_hits ) {
+        if( grouped_hit.target == nullptr ) {
+            continue;
+        }
+
+        if( grouped_hit.target->is_player() ) {
+            if( grouped_hit.total_damage > 0 ) {
+                grouped_hit.target->add_msg_if_player( m_bad,
+                                                       _( "%1$d %2$s pellets hit you for %3$d damage." ),
+                                                       grouped_hit.pellet_hits, ammo_name, grouped_hit.total_damage );
+            } else {
+                grouped_hit.target->add_msg_if_player( m_bad,
+                                                       _( "%1$d %2$s pellets hit you but deal no damage." ),
+                                                       grouped_hit.pellet_hits, ammo_name );
+            }
+            continue;
+        }
+
+        if( !g->u.sees( *grouped_hit.target ) ) {
+            continue;
+        }
+
+        if( grouped_hit.total_damage > 0 ) {
+            add_msg( options.source.is_player() ? m_good : m_neutral,
+                     _( "%1$d %2$s pellets hit %3$s for %4$d damage." ), grouped_hit.pellet_hits,
+                     ammo_name, grouped_hit.target->disp_name(), grouped_hit.total_damage );
+        } else {
+            add_msg( options.source.is_player() ? m_good : m_neutral,
+                     _( "%1$d %2$s pellets hit %3$s but deal no damage." ), grouped_hit.pellet_hits,
+                     ammo_name, grouped_hit.target->disp_name() );
+        }
+    }
 }
 
 /// more generic version of `item::gunmod_find`
@@ -1225,6 +1296,7 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
             const auto render_projectile = projectile;
             auto projectile_trajectories = std::vector<std::vector<tripoint>> {};
             projectile_trajectories.reserve( shot_count );
+            auto grouped_shot_hits = std::vector<grouped_shot_hit> {};
             auto animation_suppression = std::optional<scoped_projectile_animation_suppression> {};
             if( render_multishot ) {
                 animation_suppression.emplace();
@@ -1246,9 +1318,12 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
                     .half_angle = shot_half_angle,
                 } ) : shell_target;
                 auto shot = projectile_attack( render_projectile, who.pos(), pellet_target, pellet_dispersion, &who,
-                                               &gun, in_veh );
+                                               &gun, in_veh, shot_count > 1 );
                 if( render_multishot ) {
                     projectile_trajectories.push_back( shot.trajectory );
+                }
+                if( shot_count > 1 ) {
+                    add_grouped_shot_hit( grouped_shot_hits, shot );
                 }
                 shell_hit |= shot.hit_critter != nullptr;
                 if( shot.missed_by > .1 || shell_headshot ) {
@@ -1266,6 +1341,13 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
                     .bullet = get_projectile_animation_symbol( projectile ),
                     .draw_as_line = projectile_draws_as_line( projectile ),
                     .custom_sprite = {},
+                } );
+            }
+            if( shot_count > 1 ) {
+                print_grouped_shot_hit_messages( {
+                    .source = who,
+                    .gun = gun,
+                    .grouped_hits = grouped_shot_hits,
                 } );
             }
 

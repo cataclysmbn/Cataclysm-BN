@@ -291,7 +291,8 @@ auto projectile_attack_roll( const dispersion_sources &dispersion, double range,
 
 auto projectile_attack( const projectile &proj_arg, const tripoint &source,
                         const tripoint &target_arg, const dispersion_sources &dispersion,
-                        Creature *origin, item *source_weapon, const vehicle *in_veh ) -> dealt_projectile_attack
+                        Creature *origin, item *source_weapon, const vehicle *in_veh,
+                        const bool suppress_damage_messages ) -> dealt_projectile_attack
 {
     const bool do_animation = get_option<bool>( "ANIMATION_PROJECTILES" ) &&
                               projectile_animation_suppression_depth == 0;
@@ -314,6 +315,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
         .end_point = source,
         .missed_by = aim.missed_by,
         .trajectory = {},
+        .suppress_damage_message = suppress_damage_messages,
     };
 
     // No suicidal shots

@@ -39,7 +39,8 @@ auto projectile_attack_roll( const dispersion_sources &dispersion, double range,
 auto projectile_attack( const projectile &proj_arg, const tripoint &source,
                         const tripoint &target_arg, const dispersion_sources &dispersion,
                         Creature *origin = nullptr, item *source_weapon = nullptr,
-                        const vehicle *in_veh = nullptr ) -> dealt_projectile_attack;
+                        const vehicle *in_veh = nullptr,
+                        bool suppress_damage_messages = false ) -> dealt_projectile_attack;
 
 namespace ranged
 {
@@ -54,4 +55,3 @@ auto hit_chance( const dispersion_sources &dispersion, double range, double targ
                  double missed_by = 1.0 ) -> double;
 
 } // namespace ranged
-
