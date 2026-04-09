@@ -118,9 +118,9 @@
     "price": "1 USD",
     "price_postapoc": "4 USD",
     "range": 10,
-    "damage": { "damage_type": "bullet", "amount": 4 },
+    "damage": { "damage_type": "bullet", "amount": 5 },
     "loudness": 80,
-    "shot": { "count": 15, "half_angle": 5 },
+    "shot": { "count": 10, "half_angle": 5 },
     "extend": { "effects": [ "NOGIB" ] }
   },
   {
@@ -147,8 +147,8 @@
     "price_postapoc": "8 USD",
     "count": 10,
     "//": "Balanced as standard AP.",
-    "damage": { "damage_type": "bullet", "amount": 9, "armor_penetration": 15 },
-    "shot": { "count": 8, "half_angle": 2 }
+    "damage": { "damage_type": "bullet", "amount": 10, "armor_penetration": 15 },
+    "shot": { "count": 6, "half_angle": 2 }
   },
   {
     "id": "shot_he",
@@ -171,8 +171,8 @@
     "name": { "str": "00 shot, scrap loaded" },
     "description": "A shotgun shell filled with whatever was lying around.  They are more damaging than birdshot, but fairly inaccurate.",
     "dispersion": 60,
-    "damage": { "damage_type": "bullet", "amount": 5 },
-    "shot": { "count": 16, "half_angle": 6 },
+    "damage": { "damage_type": "bullet", "amount": 8 },
+    "shot": { "count": 8, "half_angle": 6 },
     "proportional": { "price": 0.5, "price_postapoc": 0.5 },
     "extend": { "effects": [ "RECYCLED" ] }
   },
