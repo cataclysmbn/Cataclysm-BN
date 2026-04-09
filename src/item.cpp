@@ -2110,19 +2110,38 @@ void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
 
         if( has_flat_dmg && has_dmg_multiplier
             && has_dmg_multiplier && display_dmg_multiplier ) {
-            info.emplace_back( "AMMO", _( "Damage: " ), "",
-                               iteminfo::no_newline, ammo.damage.total_damage() );
-            info.emplace_back( "AMMO", "/", "",
-                               fd,
-                               ammo.damage.damage_units.front().damage_multiplier );
+            if( ammo.shot ) {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   iteminfo::no_newline, ammo.damage.total_damage() );
+                info.emplace_back( "AMMO", "x", "",
+                                   fd,
+                                   ammo.shot->count );
+                info.emplace_back( "AMMO", "/", "",
+                                   fd,
+                                   ammo.damage.damage_units.front().damage_multiplier );
+            } else {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   iteminfo::no_newline, ammo.damage.total_damage() );
+                info.emplace_back( "AMMO", "/", "",
+                                   fd,
+                                   ammo.damage.damage_units.front().damage_multiplier );
+            }
             // Messy ifs...
         } else if( display_dmg_multiplier && has_dmg_multiplier ) {
             info.emplace_back( "AMMO", _( "Damage multiplier: " ), "",
                                fd,
                                ammo.damage.damage_units.front().damage_multiplier );
         } else if( display_flat_dmg && has_flat_dmg ) {
-            info.emplace_back( "AMMO", _( "Damage: " ), "",
-                               f, ammo.damage.total_damage() );
+            if( ammo.shot ) {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   iteminfo::no_newline, ammo.damage.total_damage() );
+                info.emplace_back( "AMMO", "x", "",
+                                   f,
+                                   ammo.shot->count );
+            } else {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   f, ammo.damage.total_damage() );
+            }
         } else {
             didnt_print_dmg = true;
         }
