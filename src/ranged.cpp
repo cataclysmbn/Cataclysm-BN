@@ -338,7 +338,7 @@ auto print_grouped_shot_hit_messages( const grouped_shot_message_options &option
                                                        _( "%1$d %2$s pellets hit you for %3$d damage." ),
                                                        grouped_hit.pellet_hits, ammo_name, grouped_hit.total_damage );
             } else {
-                grouped_hit.target->add_msg_if_player( m_bad,
+                grouped_hit.target->add_msg_if_player( m_warning,
                                                        _( "%1$d %2$s pellets hit you but deal no damage." ),
                                                        grouped_hit.pellet_hits, ammo_name );
             }
@@ -354,7 +354,7 @@ auto print_grouped_shot_hit_messages( const grouped_shot_message_options &option
                      _( "%1$d %2$s pellets hit %3$s for %4$d damage." ), grouped_hit.pellet_hits,
                      ammo_name, grouped_hit.target->disp_name(), grouped_hit.total_damage );
         } else {
-            add_msg( options.source.is_player() ? m_good : m_neutral,
+            add_msg( options.source.is_player() ? m_bad : m_neutral,
                      _( "%1$d %2$s pellets hit %3$s but deal no damage." ), grouped_hit.pellet_hits,
                      ammo_name, grouped_hit.target->disp_name() );
         }
