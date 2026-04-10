@@ -761,6 +761,12 @@ auto interpolate_text( std::string_view text, const func_registry &registry ) ->
             result += *it++;
             continue;
         }
+        // {{ → literal '{'
+        if( std::next( it ) != text.end() && *std::next( it ) == '{' ) {
+            result += '{';
+            std::advance( it, 2 );
+            continue;
+        }
         // Find matching '}'
         auto start = std::next( it );
         auto close = std::find( start, text.end(), '}' );
@@ -2596,7 +2602,8 @@ void register_builtin_functions( func_registry &reg )
             return 0.0;
         }
         const auto &s = p->get_value( std::get<std::string>( args[0] ) );
-        return s.empty() ? 0.0 : static_cast<double>( std::stoll( s ) );
+        try { return s.empty() ? 0.0 : static_cast<double>( std::stoll( s ) ); }
+        catch( const std::exception & ) { return 0.0; }
     } );
 
     reg.add( "npc_get_var", {vt::string}, vt::string,
@@ -2613,7 +2620,8 @@ void register_builtin_functions( func_registry &reg )
             return 0.0;
         }
         const auto &s = n->get_value( std::get<std::string>( args[0] ) );
-        return s.empty() ? 0.0 : static_cast<double>( std::stoll( s ) );
+        try { return s.empty() ? 0.0 : static_cast<double>( std::stoll( s ) ); }
+        catch( const std::exception & ) { return 0.0; }
     } );
 
     // ============================================================
@@ -3425,7 +3433,9 @@ void register_builtin_functions( func_registry &reg )
         const auto &op      = std::get<std::string>( args[3] );
         auto        compare = static_cast<int>( std::get<double>( args[4] ) );
         const auto &stored  = p->get_value( varname );
-        int current = stored.empty() ? 0 : std::stoi( stored );
+        int current = 0;
+        try { current = stored.empty() ? 0 : std::stoi( stored ); }
+        catch( const std::exception & ) {}
         if( op == "==" ) { return current == compare; }
         if( op == "!=" ) { return current != compare; }
         if( op == "<" ) { return current <  compare; }
@@ -3447,7 +3457,9 @@ void register_builtin_functions( func_registry &reg )
         const auto &op      = std::get<std::string>( args[3] );
         auto        compare = static_cast<int>( std::get<double>( args[4] ) );
         const auto &stored  = n->get_value( varname );
-        int current = stored.empty() ? 0 : std::stoi( stored );
+        int current = 0;
+        try { current = stored.empty() ? 0 : std::stoi( stored ); }
+        catch( const std::exception & ) {}
         if( op == "==" ) { return current == compare; }
         if( op == "!=" ) { return current != compare; }
         if( op == "<" ) { return current <  compare; }
@@ -3717,7 +3729,9 @@ void register_builtin_commands( command_registry &reg )
             const auto &key    = std::get<std::string>( args[0] );
             auto        amount = static_cast<long long>( std::get<double>( args[1] ) );
             const auto &stored = p->get_value( key );
-            auto current = stored.empty() ? 0LL : std::stoll( stored );
+            long long current = 0;
+            try { current = stored.empty() ? 0LL : std::stoll( stored ); }
+            catch( const std::exception & ) {}
             p->set_value( key, std::to_string( current + amount ) );
         }
         return command_signal::none;
@@ -3752,7 +3766,9 @@ void register_builtin_commands( command_registry &reg )
             const auto &key    = std::get<std::string>( args[0] );
             auto        amount = static_cast<long long>( std::get<double>( args[1] ) );
             const auto &stored = n->get_value( key );
-            auto current = stored.empty() ? 0LL : std::stoll( stored );
+            long long current = 0;
+            try { current = stored.empty() ? 0LL : std::stoll( stored ); }
+            catch( const std::exception & ) {}
             n->set_value( key, std::to_string( current + amount ) );
         }
         return command_signal::none;
@@ -4002,7 +4018,9 @@ void register_builtin_commands( command_registry &reg )
             auto key    = talk_varname( args, 0 );
             auto amount = static_cast<long long>( std::get<double>( args[3] ) );
             const auto &stored = p->get_value( key );
-            auto current = stored.empty() ? 0LL : std::stoll( stored );
+            long long current = 0;
+            try { current = stored.empty() ? 0LL : std::stoll( stored ); }
+            catch( const std::exception & ) {}
             p->set_value( key, std::to_string( current + amount ) );
         }
         return command_signal::none;
@@ -4014,7 +4032,9 @@ void register_builtin_commands( command_registry &reg )
             auto key    = talk_varname( args, 0 );
             auto amount = static_cast<long long>( std::get<double>( args[3] ) );
             const auto &stored = n->get_value( key );
-            auto current = stored.empty() ? 0LL : std::stoll( stored );
+            long long current = 0;
+            try { current = stored.empty() ? 0LL : std::stoll( stored ); }
+            catch( const std::exception & ) {}
             n->set_value( key, std::to_string( current + amount ) );
         }
         return command_signal::none;
@@ -4247,8 +4267,11 @@ void register_builtin_commands( command_registry &reg )
             else if( type == "ALTRUISM" ) { mod = n->personality.altruism; }
             else if( type == "BRAVERY" ) { mod = n->personality.bravery; }
             else if( type == "COLLECTOR" ) { mod = n->personality.collector; }
-            else if( type == "U_INTIMIDATE" || type == "NPC_INTIMIDATE" ) {
+            else if( type == "U_INTIMIDATE" ) {
                 mod = character_effects::intimidation( *p );
+            }
+            else if( type == "NPC_INTIMIDATE" ) {
+                mod = character_effects::intimidation( *n );
             }
             debt += mod * factor;
         }
