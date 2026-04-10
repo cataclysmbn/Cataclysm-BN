@@ -48,15 +48,15 @@ I keep busy.  Helps not to think too much.
 title: Greeting
 position: 63,100
 ---
-<<if npc_following()>>
-NPC: Good to have you around.  What's on your mind?
-<<else>>
+<<once>>
 NPC: Thank God, another person.  I've been holed up here since the first night.
-You doing alright?  This place has been... quiet.  Too quiet.
 <<if u_get_str() >= 10>>
 You look strong.  That helps out here.
 <<endif>>
-<<endif>>
+You doing alright?  This place has been... quiet.  Too quiet.
+<<else>>
+NPC: Good to have you around.  What's on your mind?
+<<endonce>>
 <<jump Start>>
 ===
 

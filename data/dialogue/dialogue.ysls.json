@@ -311,6 +311,77 @@
       "yarnName": "control_npc",
       "documentation": "Player takes direct control of the NPC. Ends the conversation.",
       "parameters": [  ]
+    },
+    {
+      "yarnName": "npc_change_faction",
+      "documentation": "Changes the NPC's faction. Does not alter class or stats.",
+      "parameters": [ { "name": "faction_id", "type": "string" } ]
+    },
+    {
+      "yarnName": "npc_class_change",
+      "documentation": "Changes the NPC's class archetype. Does not re-initialize stats or inventory; use <<npc_randomize>> after this to apply the new class's defaults.",
+      "parameters": [ { "name": "class_id", "type": "string" } ]
+    },
+    {
+      "yarnName": "npc_randomize",
+      "documentation": "Re-rolls the NPC's stats and inventory based on their current class.",
+      "parameters": [  ]
+    },
+    {
+      "yarnName": "u_learn_recipe",
+      "documentation": "Teaches the player a crafting recipe by ID. Displays a confirmation popup.",
+      "parameters": [ { "name": "recipe_id", "type": "string" } ]
+    },
+    {
+      "yarnName": "set_reason",
+      "documentation": "Sets a reason string that can be tested with has_reason(). Cleared at the start of each conversation.",
+      "parameters": [ { "name": "text", "type": "string" } ]
+    },
+    {
+      "yarnName": "u_buy_monster",
+      "documentation": "Charges the player via the NPC trade ledger, then spawns friendly pet monsters near the player. count, pacified, and name are optional (defaults: 1, false, \"\").",
+      "parameters": [
+        { "name": "mon_id",   "type": "string" },
+        { "name": "cost",     "type": "number" },
+        { "name": "count",    "type": "number" },
+        { "name": "pacified", "type": "bool"   },
+        { "name": "name",     "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "once",
+      "documentation": "Block that executes its body only the first time it is reached (per player save, globally persistent). Use <<once if expr>> to also require a condition — the condition is checked first and the 'once' is only consumed if it is true. Close with <<endonce>>. Supports an optional <<else>> branch.",
+      "parameters": []
+    },
+    {
+      "yarnName": "endonce",
+      "documentation": "Closes a <<once>> block.",
+      "parameters": []
+    },
+    {
+      "yarnName": "repeat_for_item",
+      "documentation": "Generates one choice per matching item in the player's inventory. The single -> inside uses <topic_item> as a placeholder for the item name. Optional: add #include_containers to search inside containers, or append 'if expr' to add a group-level condition. Close with <<endrepeat>>.",
+      "parameters": []
+    },
+    {
+      "yarnName": "repeat_for_category",
+      "documentation": "Like <<repeat_for_item>> but matches items by item category ID. Optional: #include_containers, 'if expr'. Close with <<endrepeat>>.",
+      "parameters": []
+    },
+    {
+      "yarnName": "npc_repeat_for_item",
+      "documentation": "Like <<repeat_for_item>> but searches the NPC's inventory instead of the player's.",
+      "parameters": []
+    },
+    {
+      "yarnName": "npc_repeat_for_category",
+      "documentation": "Like <<repeat_for_category>> but searches the NPC's inventory.",
+      "parameters": []
+    },
+    {
+      "yarnName": "endrepeat",
+      "documentation": "Closes a <<repeat_for_*>> block.",
+      "parameters": []
     }
   ],
   "functions": [
@@ -835,6 +906,18 @@
       "documentation": "Returns true if the player knows the given recipe.",
       "parameters": [ { "name": "recipe_id", "type": "string" } ],
       "return": { "type": "bool" }
-    }
+    },
+    {
+      "yarnName": "is_by_radio",
+      "documentation": "Returns true if this conversation is happening over a radio connection.",
+      "parameters": [  ],
+      "return": { "type": "bool" }
+    },
+    {
+      "yarnName": "has_reason",
+      "documentation": "Returns true if a reason string has been set via <<set_reason>> during this conversation.",
+      "parameters": [  ],
+      "return": { "type": "bool" }
+    },
   ]
 }

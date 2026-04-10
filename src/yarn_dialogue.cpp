@@ -41,6 +41,11 @@
 #include "npctalk.h"
 #include "overmap.h"
 #include "overmapbuffer_registry.h"
+#include "effect.h"
+#include "messages.h"
+#include "monster.h"
+#include "npctrade.h"
+#include "output.h"
 #include "path_info.h"
 #include "player.h"
 #include "recipe_dictionary.h"
@@ -943,6 +948,10 @@ class yarn_parser
 
         std::vector<std::string> errors;
 
+        // Set before parsing each node body so <<once>> keys are node-scoped.
+        std::string current_node;
+        int once_counter = 0;
+
         void error( int line_num, std::string msg ) {
             errors.push_back( source_name_ + ":" + std::to_string( line_num ) + ": " + msg );
         }
@@ -961,10 +970,18 @@ class yarn_parser
         std::string source_name_;
 };
 
-// Forward declaration only for parse_elements — the helpers call it before it is defined.
+// Forward declarations — the helpers call each other before all are defined.
 auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                      int &i, int end, int min_indent )
 -> std::vector<node_element>;
+
+auto make_once_condition( yarn_parser &p, std::optional<expr_node> extra_cond )
+-> expr_node;
+
+auto parse_once_block( yarn_parser &p, const std::vector<raw_line> &lines,
+                       int &i, int end, int block_indent,
+                       expr_node condition )
+-> node_element;
 
 // Parse the body of a choice option, starting after its -> line.
 // Collects all lines with indent strictly greater than choice_indent.
@@ -979,6 +996,79 @@ auto parse_choice_body( yarn_parser &p, const std::vector<raw_line> &lines,
         ++body_end;
     }
     return parse_elements( p, lines, i, body_end, choice_indent + 1 );
+}
+
+// Parses a <<repeat_for_item/category ...>>...<< endrepeat>> block into a repeat_group.
+// i must point to the first line AFTER the <<repeat_for_*>> header when called.
+// Supported header forms:
+//   <<repeat_for_item "id1" "id2" [#include_containers] [if expr]>>
+//   <<repeat_for_category "cat" [#include_containers] [if expr]>>
+//   <<npc_repeat_for_item ...>>  / <<npc_repeat_for_category ...>>
+auto parse_repeat_group( yarn_parser &p, const std::vector<raw_line> &lines,
+                         int &i, int end, int /*group_indent*/,
+                         const parsed_command &pc, int cmd_line_num )
+-> node_element::repeat_group
+{
+    node_element::repeat_group rg;
+    rg.is_npc    = starts_with( pc.name, "npc_" );
+    const bool is_cat = pc.name.find( "category" ) != std::string::npos;
+
+    // Split raw_args into id tokens and condition tokens (separated by the bare "if" token)
+    const auto if_it = std::ranges::find( pc.raw_args, std::string{ "if" } );
+    for( const auto &arg : std::ranges::subrange( pc.raw_args.begin(), if_it ) ) {
+        auto sv = std::string_view{ arg };
+        if( sv == "#include_containers" ) {
+            rg.include_containers = true;
+            continue;
+        }
+        if( sv.size() >= 2 && sv.front() == '"' && sv.back() == '"' ) {
+            sv = sv.substr( 1, sv.size() - 2 );
+        }
+        if( is_cat ) { rg.for_category.emplace_back( sv ); }
+        else          { rg.for_item.emplace_back( sv ); }
+    }
+    if( if_it != pc.raw_args.end() ) {
+        std::string cond_src;
+        for( const auto &tok : std::ranges::subrange( std::next( if_it ), pc.raw_args.end() ) ) {
+            if( !cond_src.empty() ) { cond_src += ' '; }
+            cond_src += tok;
+        }
+        rg.condition = p.parse_condition( cond_src, cmd_line_num );
+    }
+
+    // Collect body: exactly one -> template line followed by its body, closed by <<endrepeat>>
+    bool found_template = false;
+    while( i < end ) {
+        const auto &line = lines[i];
+        if( line.content.empty() || starts_with( line.content, "//" ) ) {
+            ++i;
+            continue;
+        }
+        const auto inner = extract_command( line.content );
+        if( !inner.empty() && inner == "endrepeat" ) {
+            ++i;
+            break;
+        }
+        if( starts_with( line.content, "->" ) ) {
+            if( found_template ) {
+                p.error( line.line_num, "<<repeat_for_*>>: only one -> template line is allowed" );
+                ++i;
+                continue;
+            }
+            found_template      = true;
+            rg.text_template    = std::string( trim_sv( line.content.substr( 2 ) ) );
+            const int tmpl_indent = line.indent;
+            ++i;
+            rg.body = parse_choice_body( p, lines, i, end, tmpl_indent );
+        } else {
+            p.error( line.line_num, "<<repeat_for_*>>: expected -> template or <<endrepeat>>" );
+            ++i;
+        }
+    }
+    if( !found_template ) {
+        p.error( cmd_line_num, "<<repeat_for_*>> block is missing a -> template line" );
+    }
+    return rg;
 }
 
 // Parses a run of -> lines (possibly interleaved with blank lines) into a choice_group.
@@ -996,8 +1086,23 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
             ++i;
             continue;
         }
-        // Stop if this line is not a -> at the group indent level
-        if( line.indent != group_indent || !starts_with( line.content, "->" ) ) {
+        // Stop if indent leaves the group
+        if( line.indent != group_indent ) {
+            break;
+        }
+        // <<repeat_for_*>> / <<npc_repeat_for_*>> — inventory-driven choice block
+        if( !starts_with( line.content, "->" ) ) {
+            auto cmd = extract_command( line.content );
+            if( !cmd.empty() ) {
+                auto pc = parse_command_line( cmd );
+                if( starts_with( pc.name, "repeat_for_" ) ||
+                    starts_with( pc.name, "npc_repeat_for_" ) ) {
+                    ++i; // advance past header
+                    group.repeat_groups.push_back(
+                        parse_repeat_group( p, lines, i, end, group_indent, pc, line.line_num ) );
+                    continue;
+                }
+            }
             break;
         }
 
@@ -1174,6 +1279,17 @@ auto parse_if_block( yarn_parser &p, const std::vector<raw_line> &lines,
                     parse_if_block( p, lines, i, end, line.indent, cond_src, line.line_num ) );
                 continue;
             }
+            if( cmd == "once" || starts_with( cmd, "once if " ) ) {
+                std::optional<expr_node> extra;
+                if( starts_with( cmd, "once if " ) ) {
+                    extra = p.parse_condition( trim_sv( cmd.substr( 8 ) ), line.line_num );
+                }
+                ++i;
+                target_body.push_back(
+                    parse_once_block( p, lines, i, end, line.indent,
+                                      make_once_condition( p, std::move( extra ) ) ) );
+                continue;
+            }
         }
 
         // All other elements (dialogue, single-line commands) are single-line;
@@ -1185,6 +1301,109 @@ auto parse_if_block( yarn_parser &p, const std::vector<raw_line> &lines,
     }
 
     elem.if_body = std::move( if_body );
+    elem.else_body = std::move( else_body );
+    return elem;
+}
+
+// Builds the condition expression for a <<once>> block.
+// Generates a stable per-node key and composes: [extra_cond &&] once("key").
+// extra_cond goes on the LEFT of && so short-circuit prevents consuming the once
+// key when the extra condition is false.
+auto make_once_condition( yarn_parser &p, std::optional<expr_node> extra_cond ) -> expr_node
+{
+    const auto key = "_yarn_once_" + p.current_node + "_" + std::to_string( p.once_counter++ );
+
+    expr_node key_lit;
+    key_lit.type          = expr_node::kind::literal;
+    key_lit.literal_val   = value{ key };
+
+    expr_node once_call;
+    once_call.type      = expr_node::kind::func_call;
+    once_call.func_name = "once";
+    once_call.args.push_back( std::move( key_lit ) );
+
+    if( !extra_cond ) {
+        return once_call;
+    }
+
+    expr_node and_node;
+    and_node.type             = expr_node::kind::binary_op;
+    and_node.binary_operation = expr_node::bin_op::logical_and;
+    and_node.children.push_back( std::move( *extra_cond ) );
+    and_node.children.push_back( std::move( once_call ) );
+    return and_node;
+}
+
+// Parses <<once>>...<<else>>...<<endonce>> blocks.
+// Condition is already built by make_once_condition.
+auto parse_once_block( yarn_parser &p, const std::vector<raw_line> &lines,
+                       int &i, int end, int block_indent,
+                       expr_node condition )
+-> node_element
+{
+    node_element elem;
+    elem.type      = node_element::kind::if_block;
+    elem.condition = std::move( condition );
+
+    std::vector<node_element> if_body;
+    std::vector<node_element> else_body;
+    bool in_else = false;
+
+    while( i < end ) {
+        const auto &line = lines[i];
+        if( line.content.empty() || starts_with( line.content, "//" ) ) {
+            ++i;
+            continue;
+        }
+
+        auto &target_body = in_else ? else_body : if_body;
+
+        if( starts_with( line.content, "->" ) ) {
+            target_body.push_back( parse_choice_group( p, lines, i, end, line.indent ) );
+            continue;
+        }
+
+        auto cmd = extract_command( line.content );
+        if( !cmd.empty() ) {
+            if( cmd == "else" ) {
+                if( in_else ) {
+                    p.error( line.line_num, "duplicate <<else>>" );
+                }
+                in_else = true;
+                ++i;
+                continue;
+            }
+            if( cmd == "endonce" ) {
+                ++i;
+                break;
+            }
+            if( starts_with( cmd, "if " ) ) {
+                auto cond_src = trim_sv( cmd.substr( 3 ) );
+                ++i;
+                target_body.push_back(
+                    parse_if_block( p, lines, i, end, line.indent, cond_src, line.line_num ) );
+                continue;
+            }
+            if( cmd == "once" || starts_with( cmd, "once if " ) ) {
+                std::optional<expr_node> extra;
+                if( starts_with( cmd, "once if " ) ) {
+                    extra = p.parse_condition( trim_sv( cmd.substr( 8 ) ), line.line_num );
+                }
+                ++i;
+                target_body.push_back(
+                    parse_once_block( p, lines, i, end, line.indent,
+                                      make_once_condition( p, std::move( extra ) ) ) );
+                continue;
+            }
+        }
+
+        auto body_elems = parse_elements( p, lines, i, i + 1, block_indent );
+        target_body.insert( target_body.end(),
+                            std::make_move_iterator( body_elems.begin() ),
+                            std::make_move_iterator( body_elems.end() ) );
+    }
+
+    elem.if_body  = std::move( if_body );
     elem.else_body = std::move( else_body );
     return elem;
 }
@@ -1225,12 +1444,29 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
         // Commands
         auto cmd_inner = extract_command( line.content );
         if( !cmd_inner.empty() ) {
-            // <<else>> and <<endif>> are handled by parse_if_block; if we see them here
-            // it means there's a structural error.
+            // <<else>>, <<endif>>, and <<endonce>> are handled by their block parsers;
+            // encountering them here is a structural error.
             if( cmd_inner == "else" || cmd_inner == "endif" ) {
                 p.error( line.line_num,
                          "<<" + std::string( cmd_inner ) + ">> without matching <<if>>" );
                 ++i;
+                continue;
+            }
+            if( cmd_inner == "endonce" ) {
+                p.error( line.line_num, "<<endonce>> without matching <<once>>" );
+                ++i;
+                continue;
+            }
+            if( cmd_inner == "endrepeat" ) {
+                p.error( line.line_num, "<<endrepeat>> without matching <<repeat_for_*>>" );
+                ++i;
+                continue;
+            }
+
+            // <<repeat_for_*>> / <<npc_repeat_for_*>> — start an inventory-driven choice group
+            if( starts_with( cmd_inner, "repeat_for_" ) ||
+                starts_with( cmd_inner, "npc_repeat_for_" ) ) {
+                elements.push_back( parse_choice_group( p, lines, i, end, line.indent ) );
                 continue;
             }
 
@@ -1240,6 +1476,18 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                 elements.push_back(
                     parse_if_block( p, lines, i, end, line.indent,
                                     cond_src, line.line_num ) );
+                continue;
+            }
+
+            if( cmd_inner == "once" || starts_with( cmd_inner, "once if " ) ) {
+                std::optional<expr_node> extra;
+                if( starts_with( cmd_inner, "once if " ) ) {
+                    extra = p.parse_condition( trim_sv( cmd_inner.substr( 8 ) ), line.line_num );
+                }
+                ++i;
+                elements.push_back(
+                    parse_once_block( p, lines, i, end, line.indent,
+                                      make_once_condition( p, std::move( extra ) ) ) );
                 continue;
             }
 
@@ -1426,6 +1674,8 @@ auto yarn_story::from_string( std::string_view content, std::string_view source_
         }
 
         // Parse body elements
+        parser.current_node = node.title;
+        parser.once_counter = 0;
         node.elements = parse_elements( parser, all_lines, i, node_end, 0 );
 
         // Advance past ===
@@ -1698,9 +1948,14 @@ struct yarn_conv_ctx {
     dialogue    *dialogue_ref      = nullptr;
     // Set by _set_current_item command during repeat_group choice execution.
     std::string  current_item_type;
+    // Set by <<set_reason>> command; cleared at conversation start. Read by has_reason().
+    std::string  reason;
 };
 
 thread_local yarn_conv_ctx g_conv_ctx;
+
+static const efftype_id effect_pacified( "pacified" );
+static const efftype_id effect_pet( "pet" );
 
 struct conv_ctx_guard {
     ~conv_ctx_guard() { g_conv_ctx = {}; }
@@ -3567,14 +3822,34 @@ void register_builtin_functions( func_registry &reg )
     } );
 
     // ============================================================
-    // Dialogue context stubs (unavailable in yarn without dialogue*)
+    // Dialogue context queries
     // ============================================================
 
     reg.add( "is_by_radio", {}, vt::boolean,
-             []( const std::vector<value> & ) -> value { return false; } );
+             []( const std::vector<value> & ) -> value {
+                 return get_avatar().dialogue_by_radio;
+             } );
 
+    // has_reason() — true if a <<set_reason>> command has been called this conversation
     reg.add( "has_reason", {}, vt::boolean,
-             []( const std::vector<value> & ) -> value { return false; } );
+             []( const std::vector<value> & ) -> value {
+                 return !g_conv_ctx.reason.empty();
+             } );
+
+    // once("key") — internal runtime backing for <<once>> blocks.
+    // Key is a fully-qualified string generated at parse time by make_once_condition.
+    // Returns true the first time this key is seen; stores "1" in player vars to mark seen.
+    reg.add( "once", {vt::string}, vt::boolean,
+    []( const std::vector<value> &args ) -> value {
+        auto *p = g_conv_ctx.player_ref;
+        if( !p ) { return false; }
+        const auto &key = std::get<std::string>( args[0] );
+        if( !p->get_value( key ).empty() ) {
+            return false;
+        }
+        p->set_value( key, "1" );
+        return true;
+    } );
 
     // Unimplemented in original code — condition.cpp returns false for these.
     reg.add( "mission_failed",      {}, vt::boolean,
@@ -4404,6 +4679,78 @@ void register_builtin_commands( command_registry &reg )
         if( auto *n = g_conv_ctx.npc_ref )
         {
             n->set_fac( faction_id( std::get<std::string>( args[0] ) ) );
+        }
+        return command_signal::none;
+    } );
+    // npc_class_change("class_id") — changes NPC class but does NOT re-initialize stats.
+    // Follow with <<npc_randomize>> to re-roll stats/inventory for the new class.
+    reg.add( "npc_class_change", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->myclass = npc_class_id( std::get<std::string>( args[0] ) );
+        }
+        return command_signal::none;
+    } );
+    // npc_randomize — re-rolls NPC stats and inventory using the NPC's current class
+    reg.add( "npc_randomize", 0, []( const std::vector<value> & ) -> command_signal {
+        if( auto *n = g_conv_ctx.npc_ref ) {
+            n->randomize();
+        }
+        return command_signal::none;
+    } );
+    // u_learn_recipe("recipe_id") — teaches the player a crafting recipe
+    reg.add( "u_learn_recipe", 1, []( const std::vector<value> &args ) -> command_signal {
+        if( auto *p = g_conv_ctx.player_ref ) {
+            const recipe &r = recipe_id( std::get<std::string>( args[0] ) ).obj();
+            p->learn_recipe( &r );
+            popup( _( "You learn how to craft %s." ), r.result_name() );
+        }
+        return command_signal::none;
+    } );
+    // set_reason("text") — sets a reason string read by has_reason(); cleared each conversation
+    reg.add( "set_reason", 1, []( const std::vector<value> &args ) -> command_signal {
+        g_conv_ctx.reason = std::get<std::string>( args[0] );
+        return command_signal::none;
+    } );
+    // u_buy_monster("mon_id", cost, [count=1], [pacified=false], [name=""])
+    // Charges the player via the NPC's trade ledger, then spawns count friendly monsters nearby.
+    reg.add( "u_buy_monster", 2, 5, []( const std::vector<value> &args ) -> command_signal {
+        auto *p = g_conv_ctx.player_ref;
+        auto *n = g_conv_ctx.npc_ref;
+        if( !p || !n ) {
+            return command_signal::none;
+        }
+        const auto  type_str = std::get<std::string>( args[0] );
+        const int   cost     = static_cast<int>( std::get<double>( args[1] ) );
+        const int   count    = args.size() >= 3 ? static_cast<int>( std::get<double>( args[2] ) ) : 1;
+        const bool  pacified = args.size() >= 4 ? std::get<bool>( args[3] ) : false;
+        const auto  name     = args.size() >= 5 ? std::get<std::string>( args[4] ) : std::string{};
+
+        if( !npc_trading::pay_npc( *n, cost ) ) {
+            popup( _( "You can't afford it!" ) );
+            return command_signal::none;
+        }
+
+        const mtype_id mtype( type_str );
+        for( int idx = 0; idx < count; ++idx ) {
+            monster *const mon_ptr = g->place_critter_around( mtype, p->pos(), 3 );
+            if( !mon_ptr ) {
+                add_msg( m_debug, "u_buy_monster: no valid placement location for %s", type_str );
+                break;
+            }
+            mon_ptr->friendly = -1;
+            mon_ptr->add_effect( effect_pet, 1_turns, bodypart_str_id::NULL_ID() );
+            if( pacified ) {
+                mon_ptr->add_effect( effect_pacified, 1_turns, bodypart_str_id::NULL_ID() );
+            }
+            if( !name.empty() ) {
+                mon_ptr->unique_name = name;
+            }
+        }
+
+        if( name.empty() ) {
+            popup( _( "%1$s gives you %2$d %3$s." ), n->name, count, mtype.obj().nname( count ) );
+        } else {
+            popup( _( "%1$s gives you %2$s." ), n->name, name );
         }
         return command_signal::none;
     } );
