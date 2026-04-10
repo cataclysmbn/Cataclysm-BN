@@ -74,6 +74,64 @@
       "parameters": [ { "name": "key", "type": "string" }, { "name": "amount", "type": "number" } ]
     },
     {
+      "yarnName": "u_add_var",
+      "documentation": "Legacy: set a named variable on the player using the old talk_var naming scheme (name, type, context, value).",
+      "parameters": [
+        { "name": "name", "type": "string" },
+        { "name": "type", "type": "string" },
+        { "name": "context", "type": "string" },
+        { "name": "value", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "npc_add_var",
+      "documentation": "Legacy: set a named variable on the NPC using the old talk_var naming scheme (name, type, context, value).",
+      "parameters": [
+        { "name": "name", "type": "string" },
+        { "name": "type", "type": "string" },
+        { "name": "context", "type": "string" },
+        { "name": "value", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "u_lose_var",
+      "documentation": "Legacy: remove a named variable from the player using the old talk_var naming scheme (name, type, context).",
+      "parameters": [
+        { "name": "name", "type": "string" },
+        { "name": "type", "type": "string" },
+        { "name": "context", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "npc_lose_var",
+      "documentation": "Legacy: remove a named variable from the NPC using the old talk_var naming scheme (name, type, context).",
+      "parameters": [
+        { "name": "name", "type": "string" },
+        { "name": "type", "type": "string" },
+        { "name": "context", "type": "string" }
+      ]
+    },
+    {
+      "yarnName": "u_adjust_var_legacy",
+      "documentation": "Legacy: add an amount to a numeric variable on the player using the old talk_var naming scheme (name, type, context, amount).",
+      "parameters": [
+        { "name": "name", "type": "string" },
+        { "name": "type", "type": "string" },
+        { "name": "context", "type": "string" },
+        { "name": "amount", "type": "number" }
+      ]
+    },
+    {
+      "yarnName": "npc_adjust_var_legacy",
+      "documentation": "Legacy: add an amount to a numeric variable on the NPC using the old talk_var naming scheme (name, type, context, amount).",
+      "parameters": [
+        { "name": "name", "type": "string" },
+        { "name": "type", "type": "string" },
+        { "name": "context", "type": "string" },
+        { "name": "amount", "type": "number" }
+      ]
+    },
+    {
       "yarnName": "lua_cmd",
       "documentation": "Call any Lua global by dotted path (e.g. \"my_mod.apply_bonus\"). Args after the path are forwarded to the Lua function. Return \"stop\" or false from Lua to end the conversation.",
       "parameters": [ { "name": "function_path", "type": "string" } ]
