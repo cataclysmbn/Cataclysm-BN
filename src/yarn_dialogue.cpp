@@ -1964,6 +1964,40 @@ struct conv_ctx_guard {
 } // namespace
 
 // ============================================================
+// dynamic_choice_registry
+// ============================================================
+
+auto dynamic_choice_registry::global() -> dynamic_choice_registry &
+{
+    static dynamic_choice_registry inst;
+    return inst;
+}
+
+void dynamic_choice_registry::register_generator( const std::string &node_name, generator_fn fn )
+{
+    generators_[node_name].push_back( std::move( fn ) );
+}
+
+auto dynamic_choice_registry::generate( const std::string &node_name ) const -> std::vector<entry>
+{
+    auto it = generators_.find( node_name );
+    if( it == generators_.end() ) {
+        return {};
+    }
+    std::vector<entry> result;
+    for( const auto &gen : it->second ) {
+        try {
+            auto entries = gen();
+            std::ranges::move( entries, std::back_inserter( result ) );
+        } catch( const std::exception &e ) {
+            DebugLog( DL::Error, DC::Dialogue )
+                    << "yarn: dynamic_choice generator threw: " << e.what();
+        }
+    }
+    return result;
+}
+
+// ============================================================
 // yarn_runtime
 // ============================================================
 
@@ -2097,108 +2131,136 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
             }
 
             case node_element::kind::choice_group: {
-                // Build the full choice list: repeat groups first, then regular choices.
-                std::vector<node_element::choice> all_choices;
-
-                // Expand repeat groups into dynamic choices.
-                for( const auto &rg : elem.repeat_groups ) {
-                    // Check group-level condition.
-                    if( rg.condition ) {
-                        try {
-                            auto val = eval( *rg.condition );
-                            if( !std::holds_alternative<bool>( val ) || !std::get<bool>( val ) ) {
+                // Helper: expands repeat groups into concrete choices.
+                // Declared here so it can be re-run on each loop iteration.
+                auto build_static_choices = [&]() {
+                    std::vector<node_element::choice> out;
+                    for( const auto &rg : elem.repeat_groups ) {
+                        if( rg.condition ) {
+                            try {
+                                auto val = eval( *rg.condition );
+                                if( !std::holds_alternative<bool>( val ) || !std::get<bool>( val ) ) {
+                                    continue;
+                                }
+                            } catch( const std::exception &e ) {
+                                DebugLog( DL::Error, DC::Dialogue )
+                                        << "yarn: repeat_group condition error: " << e.what();
                                 continue;
                             }
-                        } catch( const std::exception &e ) {
-                            DebugLog( DL::Error, DC::Dialogue )
-                                    << "yarn: repeat_group condition error: " << e.what();
-                            continue;
                         }
-                    }
 
-                    player *actor = rg.is_npc
-                                    ? ( npc_ ? static_cast<player *>( npc_ ) : nullptr )
-                                    : player_;
-                    if( !actor ) { continue; }
+                        player *actor = rg.is_npc
+                                        ? ( npc_ ? static_cast<player *>( npc_ ) : nullptr )
+                                        : player_;
+                        if( !actor ) { continue; }
 
-                    // Collect matching item type IDs.
-                    std::vector<itype_id> item_ids;
-                    for( const auto &item_str : rg.for_item ) {
-                        itype_id id( item_str );
-                        if( actor->charges_of( id ) > 0 || actor->has_amount( id, 1 ) ) {
-                            item_ids.push_back( id );
-                        }
-                    }
-                    for( const auto &cat_str : rg.for_category ) {
-                        item_category_id cat( cat_str );
-                        auto matches = actor->items_with( [&cat, &rg]( const item & it ) {
-                            if( rg.include_containers ) {
-                                return it.get_category().get_id() == cat;
-                            }
-                            return it.type && it.type->category_force == cat;
-                        } );
-                        for( const auto *it : matches ) {
-                            if( !std::ranges::contains( item_ids, it->typeId() ) ) {
-                                item_ids.push_back( it->typeId() );
+                        std::vector<itype_id> item_ids;
+                        for( const auto &item_str : rg.for_item ) {
+                            itype_id id( item_str );
+                            if( actor->charges_of( id ) > 0 || actor->has_amount( id, 1 ) ) {
+                                item_ids.push_back( id );
                             }
                         }
-                    }
+                        for( const auto &cat_str : rg.for_category ) {
+                            item_category_id cat( cat_str );
+                            auto matches = actor->items_with( [&cat, &rg]( const item & it ) {
+                                if( rg.include_containers ) {
+                                    return it.get_category().get_id() == cat;
+                                }
+                                return it.type && it.type->category_force == cat;
+                            } );
+                            for( const auto *it : matches ) {
+                                if( !std::ranges::contains( item_ids, it->typeId() ) ) {
+                                    item_ids.push_back( it->typeId() );
+                                }
+                            }
+                        }
 
-                    for( const auto &iid : item_ids ) {
+                        for( const auto &iid : item_ids ) {
+                            node_element::choice ch;
+                            ch.text = rg.text_template;
+                            auto item_name = item::nname( iid, 1 );
+                            for( std::size_t pos = 0;
+                                 ( pos = ch.text.find( "<topic_item>", pos ) ) != std::string::npos; ) {
+                                ch.text.replace( pos, 12, item_name );
+                                pos += item_name.size();
+                            }
+                            node_element set_item;
+                            set_item.type         = node_element::kind::command;
+                            set_item.command_name = "_set_current_item";
+                            expr_node id_lit;
+                            id_lit.type        = expr_node::kind::literal;
+                            id_lit.literal_val = iid.str();
+                            set_item.command_args.push_back( std::move( id_lit ) );
+                            ch.body.push_back( std::move( set_item ) );
+                            ch.body.insert( ch.body.end(), rg.body.begin(), rg.body.end() );
+                            out.push_back( std::move( ch ) );
+                        }
+                    }
+                    out.insert( out.end(), elem.choices.begin(), elem.choices.end() );
+                    return out;
+                };
+
+                const auto &cur_node_name = node_stack_.back().node;
+
+                bool should_loop = true;
+                while( should_loop ) {
+                    should_loop = false;
+
+                    auto static_choices = build_static_choices();
+                    auto dyn_entries    = dynamic_choice_registry::global().generate( cur_node_name );
+                    const auto static_count = static_cast<int>( static_choices.size() );
+
+                    // Build the unified display list.
+                    // Dynamic entries have no condition — the generator pre-filters them.
+                    auto all_choices = static_choices;
+                    for( const auto &dyn : dyn_entries ) {
                         node_element::choice ch;
-                        // Substitute <topic_item> with item name.
-                        ch.text = rg.text_template;
-                        auto item_name = item::nname( iid, 1 );
-                        for( std::size_t pos = 0;
-                             ( pos = ch.text.find( "<topic_item>", pos ) ) != std::string::npos; ) {
-                            ch.text.replace( pos, 12, item_name );
-                            pos += item_name.size();
-                        }
-                        // Body is the shared repeat group body, but we prepend a current-item setter.
-                        node_element set_item;
-                        set_item.type         = node_element::kind::command;
-                        set_item.command_name = "_set_current_item";
-                        // Pass item ID as a literal string argument.
-                        expr_node id_lit;
-                        id_lit.type        = expr_node::kind::literal;
-                        id_lit.literal_val = iid.str();
-                        set_item.command_args.push_back( std::move( id_lit ) );
-                        ch.body.push_back( std::move( set_item ) );
-                        ch.body.insert( ch.body.end(), rg.body.begin(), rg.body.end() );
+                        ch.text = dyn.text;
                         all_choices.push_back( std::move( ch ) );
                     }
-                }
 
-                // Append regular choices.
-                all_choices.insert( all_choices.end(), elem.choices.begin(), elem.choices.end() );
-
-                int chosen = present_choices( all_choices, d_win );
-                if( chosen < 0 ) {
-                    // No available choices — treat as stop
-                    return { signal::stop, {} };
-                }
-                const auto &ch = all_choices[chosen];
-
-                // Start a new turn: everything added from here on renders white.
-                d_win.mark_turn_start();
-
-                // Echo the choice label as player speech only if #spoken was set.
-                if( ch.echo_speech ) {
-                    auto choice_text = interpolate( ch.text );
-                    if( player_ && npc_ ) {
-                        parse_tags( choice_text, *player_, *npc_,
-                                    itype_id( g_conv_ctx.current_item_type ) );
+                    int chosen = present_choices( all_choices, d_win );
+                    if( chosen < 0 ) {
+                        return { signal::stop, {} };
                     }
-                    d_win.add_to_history(
-                        string_format( "%s: \"%s\"",
-                                       colorize( _( "You" ), c_green ),
-                                       choice_text ) );
-                }
 
-                // Execute the choice body
-                auto result = execute_elements( ch.body, d_win );
-                if( result.kind != signal::ok ) {
-                    return result;
+                    d_win.mark_turn_start();
+
+                    if( chosen < static_count ) {
+                        // Static choice
+                        const auto &ch = static_choices[chosen];
+                        if( ch.echo_speech ) {
+                            auto choice_text = interpolate( ch.text );
+                            if( player_ && npc_ ) {
+                                parse_tags( choice_text, *player_, *npc_,
+                                            itype_id( g_conv_ctx.current_item_type ) );
+                            }
+                            d_win.add_to_history(
+                                string_format( "%s: \"%s\"",
+                                               colorize( _( "You" ), c_green ),
+                                               choice_text ) );
+                        }
+                        auto result = execute_elements( ch.body, d_win );
+                        if( result.kind != signal::ok ) {
+                            return result;
+                        }
+                    } else {
+                        // Dynamic choice
+                        const auto &dyn = dyn_entries[chosen - static_count];
+                        const auto sig  = dyn.body();
+                        if( sig == "stop" ) {
+                            return { signal::stop, {} };
+                        }
+                        if( sig == "loop" ) {
+                            should_loop = true;
+                            continue;
+                        }
+                        if( !sig.empty() ) {
+                            return { signal::jump, sig };
+                        }
+                        // empty = continue after the choice group
+                    }
                 }
                 // ok → fall through to next element after the choice group
                 break;

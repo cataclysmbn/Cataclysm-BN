@@ -265,5 +265,79 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
         } );
     } );
 
+    // game.dialogue.register_dynamic_choices(node_name, fn)
+    //   fn() → list of { text = "...", body = fn or string }
+    //
+    //   body as string  → <<jump>> to that Yarn node when selected.
+    //   body as fn()    → call Lua function when selected; return value controls flow:
+    //     nil / no return  = continue after the choice group
+    //     "stop"           = end the conversation
+    //     "loop"           = re-present this choice menu
+    //     other string     = <<jump>> to the named Yarn node
+    dialogue_table.set_function( "register_dynamic_choices",
+    [&lua]( const std::string & node_name, sol::protected_function gen_fn ) {
+        yarn::dynamic_choice_registry::global().register_generator( node_name,
+        [gen_fn, &lua, node_name]() -> std::vector<yarn::dynamic_choice_registry::entry> {
+            sol::state_view sv( lua );
+            auto result = gen_fn();
+            if( !result.valid() ) {
+                sol::error err = result;
+                debugmsg( "yarn: register_dynamic_choices '%s' generator threw: %s",
+                          node_name, err.what() );
+                return {};
+            }
+
+            sol::object ret_obj = result;
+            if( ret_obj.get_type() != sol::type::table ) {
+                debugmsg( "yarn: register_dynamic_choices '%s': generator must return a table",
+                          node_name );
+                return {};
+            }
+
+            std::vector<yarn::dynamic_choice_registry::entry> entries;
+            auto ret_table = ret_obj.as<sol::table>();
+            for( auto &[k, v] : ret_table ) {
+                if( v.get_type() != sol::type::table ) { continue; }
+                auto row = v.as<sol::table>();
+                sol::object text_obj = row["text"];
+                if( text_obj.get_type() != sol::type::string ) { continue; }
+
+                yarn::dynamic_choice_registry::entry entry;
+                entry.text = text_obj.as<std::string>();
+
+                sol::object body_obj = row["body"];
+                if( body_obj.get_type() == sol::type::string ) {
+                    // String body → jump to Yarn node.
+                    auto target = body_obj.as<std::string>();
+                    entry.body = [target]() { return target; };
+                } else if( body_obj.get_type() == sol::type::function ) {
+                    // Function body → call it, map return value to flow signal.
+                    sol::protected_function body_fn( body_obj );
+                    entry.body = [body_fn, node_name]() -> std::string {
+                        auto body_result = body_fn();
+                        if( !body_result.valid() ) {
+                            sol::error err = body_result;
+                            debugmsg( "yarn: dynamic choice body '%s' threw: %s",
+                                      node_name, err.what() );
+                            return "";
+                        }
+                        sol::object ret = body_result;
+                        if( ret.get_type() == sol::type::string ) {
+                            return ret.as<std::string>();
+                        }
+                        // nil or anything else → continue
+                        return "";
+                    };
+                } else {
+                    // No body → continue after selection.
+                    entry.body = []() { return std::string{}; };
+                }
+
+                entries.push_back( std::move( entry ) );
+            }
+            return entries;
+        } );
+    } );
+
     game_table["dialogue"] = dialogue_table;
 }

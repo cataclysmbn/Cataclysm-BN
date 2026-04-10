@@ -417,6 +417,39 @@ class yarn_runtime
 // Global story registry and game integration
 // ============================================================
 
+// ============================================================
+// Dynamic choice registry
+// ============================================================
+//
+// Lua mods register generators here to inject choices into a named node at
+// render time. Multiple generators on the same node are all called; results
+// are concatenated in registration order.
+//
+// Generator return contract:
+//   body() return value:
+//     ""       = continue after the choice group (one-shot / nil equivalent)
+//     "stop"   = end the conversation
+//     "loop"   = re-present this choice menu
+//     other    = <<jump>> to the named Yarn node
+
+class dynamic_choice_registry
+{
+    public:
+        struct entry {
+            std::string text;
+            std::function<std::string()> body;
+        };
+        using generator_fn = std::function<std::vector<entry>()>;
+
+        void register_generator( const std::string &node_name, generator_fn fn );
+        auto generate( const std::string &node_name ) const -> std::vector<entry>;
+
+        static auto global() -> dynamic_choice_registry &;
+
+    private:
+        std::unordered_map<std::string, std::vector<generator_fn>> generators_;
+};
+
 // Scan data/dialogue/*.yarn and load all stories.
 // Called during game init alongside other data loading.
 void load_yarn_stories();
