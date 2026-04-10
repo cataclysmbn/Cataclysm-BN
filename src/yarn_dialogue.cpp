@@ -2216,7 +2216,7 @@ static auto apply_yarn_markup( std::string text ) -> std::string
 
 void yarn_runtime::parse_dialogue_text( const node_element &elem, dialogue_window &d_win )
 {
-    auto text = apply_yarn_markup( interpolate( elem.text ) );
+    auto text = apply_yarn_markup( interpolate( _( elem.text.c_str() ) ) );
     if( player_ && npc_ ) {
         parse_tags( text, *player_, *npc_, itype_id( g_conv_ctx.current_item_type ) );
     }
@@ -2392,7 +2392,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                         // Static choice
                         const auto &ch = static_choices[chosen];
                         if( ch.echo_speech ) {
-                            auto choice_text = apply_yarn_markup( interpolate( ch.text ) );
+                            auto choice_text = apply_yarn_markup( interpolate( _( ch.text.c_str() ) ) );
                             if( player_ && npc_ ) {
                                 parse_tags( choice_text, *player_, *npc_,
                                             itype_id( g_conv_ctx.current_item_type ) );
@@ -2590,7 +2590,7 @@ auto yarn_runtime::present_choices( const std::vector<node_element::choice> &cho
         response_lines.push_back( {
             static_cast<char>( 'a' + i ),
             c_white,
-            apply_yarn_markup( interpolate( choices[available[i]].text ) )
+            apply_yarn_markup( interpolate( _( choices[available[i]].text.c_str() ) ) )
         } );
     }
 

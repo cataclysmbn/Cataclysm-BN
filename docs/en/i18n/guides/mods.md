@@ -72,14 +72,15 @@ You'll need Python 3 with `polib` and `luaparser` modules installed (available v
 
 Scripts for string extraction can be found in the `lang` subdirectory of the repository:
 
-- `extract_json_strings.py` - main string extraction routines
-- `dedup_pot_file.py` - fixes errors in POT file produces by the 1st script
-- `extract_mod_strings.bat` (`extract_mod_strings.sh` for Linux/MacOS) - to automate the other 2
-  scripts
+- `extract_json_strings.py` - extracts translatable strings from JSON and Lua source files
+- `extract_yarn_strings.py` - extracts translatable strings from Yarn Spinner dialogue files (`.yarn`)
+- `concat_pot_files.py` - merges two POT files into one
+- `dedup_pot_file.py` - resolves duplicate entries in a POT file
+- `extract_mod_strings.bat` (`extract_mod_strings.sh` for Linux/MacOS) - automates the above scripts
 
 ## Extracting strings
 
-Copy these 3 scripts into the mod's folder and:
+Copy these 5 scripts into the mod's folder and:
 
 - on Windows, double-click `extract_mod_strings.bat`
 - on Linux/MacOS, open terminal and run `./extract_mod_strings.sh`
