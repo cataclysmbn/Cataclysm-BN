@@ -30,14 +30,14 @@
 // After those complete the conversation ends naturally.
 
 title: ShelterActions
-position: -336,-472
+position: -304,-102
 ---
 -> Ask how they're holding up.
     <<goto ShelterMood>>
 ===
 
 title: ShelterMood
-position: -340,-200
+position: -308,170
 ---
 NPC: Honestly?  Not great.  But I'm alive, and that counts for something out here.
 I keep busy.  Helps not to think too much.
@@ -76,6 +76,7 @@ title: Start_Supplies
 position: -332,446
 shared_choices: ShelterActions common::CommonActions
 ---
+You: Do you have any supplies you can spare?
 NPC: I found a few cans in the back room.  You're welcome to them.
 NPC: I'm not going anywhere fast anyway.
 <<give_item "veggy_canned" 2>>
@@ -113,6 +114,7 @@ title: Start_Others
 position: 71,738
 shared_choices: ShelterActions common::CommonActions
 ---
+You: Have you seen anyone else?
     => NPC: Haven't seen anyone else until you showed up.
     I thought I heard voices a few days ago — west side of town — but I didn't dare go look.
     => NPC: You're the only person I've seen since this started.  Well, besides you showing up.

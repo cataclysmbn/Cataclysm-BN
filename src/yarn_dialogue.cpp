@@ -960,13 +960,13 @@ class yarn_parser
 };
 
 // Forward declaration only for parse_elements — the helpers call it before it is defined.
-auto parse_elements( yarn_parser &p, std::vector<raw_line> &lines,
+auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                      int &i, int end, int min_indent )
 -> std::vector<node_element>;
 
 // Parse the body of a choice option, starting after its -> line.
 // Collects all lines with indent strictly greater than choice_indent.
-auto parse_choice_body( yarn_parser &p, std::vector<raw_line> &lines,
+auto parse_choice_body( yarn_parser &p, const std::vector<raw_line> &lines,
                         int &i, int end, int choice_indent )
 -> std::vector<node_element>
 {
@@ -980,7 +980,7 @@ auto parse_choice_body( yarn_parser &p, std::vector<raw_line> &lines,
 }
 
 // Parses a run of -> lines (possibly interleaved with blank lines) into a choice_group.
-auto parse_choice_group( yarn_parser &p, std::vector<raw_line> &lines,
+auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
                          int &i, int end, int group_indent )
 -> node_element
 {
@@ -1043,24 +1043,22 @@ auto parse_choice_group( yarn_parser &p, std::vector<raw_line> &lines,
     return group;
 }
 
-// Parse the body of a line group option, starting after its => line.
-// Collects all lines with indent strictly greater than or equal to line_indent,
-// but breaks at next => line.
-auto parse_line_group_body( yarn_parser &p, std::vector<raw_line> &lines,
+// Parse any body lines following a => line (continuation lines, commands, etc.).
+// Collects lines with indent >= line_indent that don't start the next => option.
+auto parse_line_group_body( yarn_parser &p, const std::vector<raw_line> &lines,
                             int &i, int end, int line_indent )
 -> std::vector<node_element>
 {
-    // Find end of body: lines with indent > line_indent
     int body_end = i;
     while( body_end < end && !starts_with( lines[body_end].content, "=>" ) &&
-           lines[body_end].indent >= line_indent ) {
+           ( lines[body_end].content.empty() || lines[body_end].indent >= line_indent ) ) {
         ++body_end;
     }
     return parse_elements( p, lines, i, body_end, line_indent );
 }
 
 // Parses => line groups
-auto parse_line_group( yarn_parser &p, std::vector<raw_line> &lines,
+auto parse_line_group( yarn_parser &p, const std::vector<raw_line> &lines,
                        int &i, int end, int group_indent )
 -> node_element
 {
@@ -1068,7 +1066,7 @@ auto parse_line_group( yarn_parser &p, std::vector<raw_line> &lines,
     group.type = node_element::kind::line_group;
 
     while( i < end ) {
-        auto &line = lines[i];
+        const auto &line = lines[i];
         // Skip blank lines
         if( line.content.empty() ) {
             ++i;
@@ -1079,7 +1077,7 @@ auto parse_line_group( yarn_parser &p, std::vector<raw_line> &lines,
             break;
         }
 
-        // Parse the => line: "=> Line group text" or "=> Line group text <<if condition>>"
+        // Parse the => line: "=> [Speaker: ]text" or "=> text <<if condition>>"
         std::string_view line_group_text = trim_sv( line.content.substr( 2 ) );
         std::optional<expr_node> condition;
 
@@ -1094,22 +1092,34 @@ auto parse_line_group( yarn_parser &p, std::vector<raw_line> &lines,
             }
         }
 
-        // This line's content gets replaced by it's standard text, so dialogue can properly
-        // pick it up, and is the only reason we can't use const for lines.
-        line.content = std::string( line_group_text );
-
         int line_indent = line.indent;
+        ++i;  // advance past the => line before parsing the body
+
+        // Construct the text element, respecting "Speaker: text" format.
+        node_element text_elem;
+        text_elem.type = node_element::kind::dialogue;
+        auto colon = line_group_text.find( ':' );
+        if( colon != std::string_view::npos && colon > 0 &&
+            line_group_text.find( ' ' ) > colon ) {
+            text_elem.speaker = std::string( trim_sv( line_group_text.substr( 0, colon ) ) );
+            text_elem.text    = std::string( trim_sv( line_group_text.substr( colon + 1 ) ) );
+        } else {
+            text_elem.text = std::string( line_group_text );
+        }
 
         node_element::choice ch;
-        ch.condition   = std::move( condition );
-        ch.body = parse_line_group_body( p, lines, i, end, line_indent );
+        ch.condition = std::move( condition );
+        ch.body.push_back( std::move( text_elem ) );
+        auto tail = parse_line_group_body( p, lines, i, end, line_indent );
+        ch.body.insert( ch.body.end(), std::make_move_iterator( tail.begin() ),
+                        std::make_move_iterator( tail.end() ) );
         group.choices.push_back( std::move( ch ) );
     }
     return group;
 }
 
 // Parses <<if>>...<<else>>...<<endif>> blocks.
-auto parse_if_block( yarn_parser &p, std::vector<raw_line> &lines,
+auto parse_if_block( yarn_parser &p, const std::vector<raw_line> &lines,
                      int &i, int end, int block_indent,
                      std::string_view condition_src, int cond_line_num )
 -> node_element
@@ -1178,7 +1188,7 @@ auto parse_if_block( yarn_parser &p, std::vector<raw_line> &lines,
 }
 
 // Parse node elements from lines[i..end), requiring indent >= min_indent.
-auto parse_elements( yarn_parser &p, std::vector<raw_line> &lines,
+auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                      int &i, int end, int min_indent )
 -> std::vector<node_element>
 {
