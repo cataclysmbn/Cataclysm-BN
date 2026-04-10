@@ -96,20 +96,12 @@
     {
       "yarnName": "u_lose_var",
       "documentation": "Legacy: remove a named variable from the player using the old talk_var naming scheme (name, type, context).",
-      "parameters": [
-        { "name": "name", "type": "string" },
-        { "name": "type", "type": "string" },
-        { "name": "context", "type": "string" }
-      ]
+      "parameters": [ { "name": "name", "type": "string" }, { "name": "type", "type": "string" }, { "name": "context", "type": "string" } ]
     },
     {
       "yarnName": "npc_lose_var",
       "documentation": "Legacy: remove a named variable from the NPC using the old talk_var naming scheme (name, type, context).",
-      "parameters": [
-        { "name": "name", "type": "string" },
-        { "name": "type", "type": "string" },
-        { "name": "context", "type": "string" }
-      ]
+      "parameters": [ { "name": "name", "type": "string" }, { "name": "type", "type": "string" }, { "name": "context", "type": "string" } ]
     },
     {
       "yarnName": "u_adjust_var_legacy",
@@ -161,9 +153,7 @@
     {
       "yarnName": "assign_mission",
       "documentation": "Creates a new mission of the given type and assigns it to the player.",
-      "parameters": [
-        { "name": "mission_id", "type": "string", "documentation": "The mission type ID to assign." }
-      ]
+      "parameters": [ { "name": "mission_id", "type": "string", "documentation": "The mission type ID to assign." } ]
     },
     {
       "yarnName": "mission_success",

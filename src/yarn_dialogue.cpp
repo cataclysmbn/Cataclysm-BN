@@ -4343,8 +4343,7 @@ void register_builtin_commands( command_registry &reg )
             else if( type == "COLLECTOR" ) { mod = n->personality.collector; }
             else if( type == "U_INTIMIDATE" ) {
                 mod = character_effects::intimidation( *p );
-            }
-            else if( type == "NPC_INTIMIDATE" ) {
+            } else if( type == "NPC_INTIMIDATE" ) {
                 mod = character_effects::intimidation( *n );
             }
             debt += mod * factor;
