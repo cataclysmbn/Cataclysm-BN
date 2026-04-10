@@ -2284,7 +2284,7 @@ void load_yarn_stories()
             auto dot = path.rfind( '.' );
             auto stem = path.substr( stem_start, dot - stem_start );
             story_registry().emplace( stem, std::move( story ) );
-            DebugLog( DL::Error, DC::Dialogue ) << "yarn: loaded story '" << stem << "'";
+            DebugLog( DL::Info, DC::Dialogue ) << "yarn: loaded story '" << stem << "'";
         } else {
             DebugLog( DL::Error, DC::Dialogue )
                     << "yarn: failed to load '" << path << "' (" << result.errors.size() << " errors)";
@@ -3796,7 +3796,7 @@ void register_builtin_commands( command_registry &reg )
     npc_stop( "end_conversation",   talk_function::end_conversation );
 
     // Mission handling
-    npc_fn( "assign_mission",  talk_function::assign_mission );
+    npc_fn( "npc_assign_selected_mission",  talk_function::assign_mission );
     npc_fn( "mission_success", talk_function::mission_success );
     npc_fn( "mission_failure", talk_function::mission_failure );
     npc_fn( "clear_mission",   talk_function::clear_mission );
@@ -4358,7 +4358,7 @@ auto run_npc_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
                 << n.chatbin.yarn_story << "' — story not in registry";
         return false;
     }
-    DebugLog( DL::Error, DC::Dialogue )
+    DebugLog( DL::Info, DC::Dialogue )
             << "yarn: running story '" << n.chatbin.yarn_story << "' for NPC '" << n.name << "'";
 
     const auto &story = get_yarn_story( n.chatbin.yarn_story );

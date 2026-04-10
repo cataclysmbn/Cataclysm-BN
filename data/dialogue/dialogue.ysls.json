@@ -96,9 +96,16 @@
       "parameters": [  ]
     },
     {
-      "yarnName": "assign_mission",
-      "documentation": "Assigns the currently selected mission to the player.",
+      "yarnName": "npc_assign_selected_mission",
+      "documentation": "Assigns the NPC's currently selected mission to the player.",
       "parameters": [  ]
+    },
+    {
+      "yarnName": "assign_mission",
+      "documentation": "Creates a new mission of the given type and assigns it to the player.",
+      "parameters": [
+        { "name": "mission_id", "type": "string", "documentation": "The mission type ID to assign." }
+      ]
     },
     {
       "yarnName": "mission_success",

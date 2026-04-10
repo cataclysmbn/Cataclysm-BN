@@ -551,17 +551,17 @@ Commands are written `<<command_name args>>`. String arguments should be quoted.
 
 ### Missions
 
-| Command                                | Description                                               |
-| -------------------------------------- | --------------------------------------------------------- |
-| `<<assign_mission>>`                   | Assign the selected mission to the player (NPC-owned).    |
-| `<<add_mission "id">>`                 | Create and assign a mission to the player from NPC.       |
-| `<<assign_mission "id">>`              | Create and assign a player-facing mission (no NPC owner). |
-| `<<finish_mission "id" success_bool>>` | Complete a mission as success or failure.                 |
-| `<<mission_success>>`                  | Resolve the selected mission successfully.                |
-| `<<mission_failure>>`                  | Resolve the selected mission as a failure.                |
-| `<<clear_mission>>`                    | Clear the selected mission.                               |
-| `<<mission_reward>>`                   | Give the player the mission reward.                       |
-| `<<lead_to_safety>>`                   | NPC leads the player to safety.                           |
+| Command                                | Description                                                |
+| -------------------------------------- | ---------------------------------------------------------- |
+| `<<npc_assign_selected_mission>>`      | Assign the NPC's currently selected mission to the player. |
+| `<<add_mission "id">>`                 | Create and assign a mission to the player from NPC.        |
+| `<<assign_mission "id">>`              | Create and assign a player-facing mission (no NPC owner).  |
+| `<<finish_mission "id" success_bool>>` | Complete a mission as success or failure.                  |
+| `<<mission_success>>`                  | Resolve the selected mission successfully.                 |
+| `<<mission_failure>>`                  | Resolve the selected mission as a failure.                 |
+| `<<clear_mission>>`                    | Clear the selected mission.                                |
+| `<<mission_reward>>`                   | Give the player the mission reward.                        |
+| `<<lead_to_safety>>`                   | NPC leads the player to safety.                            |
 
 ### Map Updates
 

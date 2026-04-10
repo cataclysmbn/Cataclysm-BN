@@ -452,11 +452,18 @@ auto json_condition_obj_to_expr( const JsonObject &jo ) -> yarn::expr_node
 
     // Economy
     if( jo.has_int( "u_has_ecash" ) ) {
-        return fn( "u_get_ecash", {} ); // Compare at runtime via >= is complex; use simple threshold
-        // TODO: convert to u_get_ecash() >= N comparison once binary ops on numbers are supported
+        yarn::expr_node n;
+        n.type             = yarn::expr_node::kind::binary_op;
+        n.binary_operation = yarn::expr_node::bin_op::gte;
+        n.children         = { fn( "u_get_ecash", {} ), lit_num( static_cast<double>( jo.get_int( "u_has_ecash" ) ) ) };
+        return n;
     }
     if( jo.has_int( "u_are_owed" ) ) {
-        return fn( "u_get_owed", {} );
+        yarn::expr_node n;
+        n.type             = yarn::expr_node::kind::binary_op;
+        n.binary_operation = yarn::expr_node::bin_op::gte;
+        n.children         = { fn( "u_get_owed", {} ), lit_num( static_cast<double>( jo.get_int( "u_are_owed" ) ) ) };
+        return n;
     }
 
     // NPC rules
