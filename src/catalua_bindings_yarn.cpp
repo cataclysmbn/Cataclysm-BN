@@ -280,7 +280,8 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
         [gen_fn, &lua, node_name]() -> std::vector<yarn::dynamic_choice_registry::entry> {
             sol::state_view sv( lua );
             auto result = gen_fn();
-            if( !result.valid() ) {
+            if( !result.valid() )
+            {
                 sol::error err = result;
                 debugmsg( "yarn: register_dynamic_choices '%s' generator threw: %s",
                           node_name, err.what() );
@@ -288,7 +289,8 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
             }
 
             sol::object ret_obj = result;
-            if( ret_obj.get_type() != sol::type::table ) {
+            if( ret_obj.get_type() != sol::type::table )
+            {
                 debugmsg( "yarn: register_dynamic_choices '%s': generator must return a table",
                           node_name );
                 return {};
@@ -296,7 +298,8 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
 
             std::vector<yarn::dynamic_choice_registry::entry> entries;
             auto ret_table = ret_obj.as<sol::table>();
-            for( auto &[k, v] : ret_table ) {
+            for( auto &[k, v] : ret_table )
+            {
                 if( v.get_type() != sol::type::table ) { continue; }
                 auto row = v.as<sol::table>();
                 sol::object text_obj = row["text"];
@@ -315,14 +318,16 @@ void cata::detail::reg_yarn_dialogue( sol::state &lua )
                     sol::protected_function body_fn( body_obj );
                     entry.body = [body_fn, node_name]() -> std::string {
                         auto body_result = body_fn();
-                        if( !body_result.valid() ) {
+                        if( !body_result.valid() )
+                        {
                             sol::error err = body_result;
                             debugmsg( "yarn: dynamic choice body '%s' threw: %s",
                                       node_name, err.what() );
                             return "";
                         }
                         sol::object ret = body_result;
-                        if( ret.get_type() == sol::type::string ) {
+                        if( ret.get_type() == sol::type::string )
+                        {
                             return ret.as<std::string>();
                         }
                         // nil or anything else → continue

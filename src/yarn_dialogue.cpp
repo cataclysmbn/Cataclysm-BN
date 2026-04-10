@@ -1132,12 +1132,14 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
         // Returns true and trims the text if the tag is found as a standalone suffix.
         auto strip_tag = [&]( std::string_view tag ) -> bool {
             auto tag_pos = choice_text.rfind( tag );
-            if( tag_pos == std::string_view::npos ) {
+            if( tag_pos == std::string_view::npos )
+            {
                 return false;
             }
             bool leading_space = tag_pos == 0 || std::isspace( choice_text[tag_pos - 1] );
             bool trailing_end  = tag_pos + tag.size() == choice_text.size();
-            if( leading_space && trailing_end ) {
+            if( leading_space && trailing_end )
+            {
                 choice_text = trim_sv( choice_text.substr( 0, tag_pos ) );
                 return true;
             }
@@ -1151,7 +1153,7 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
         for( bool found = true; found; ) {
             found  = false;
             if( strip_tag( "#spoken" ) ) { echo_speech = true; found = true; }
-            if( strip_tag( "#tail" )   ) { tail        = true; found = true; }
+            if( strip_tag( "#tail" ) ) { tail        = true; found = true; }
         }
 
         int choice_indent = line.indent;
@@ -1749,7 +1751,8 @@ auto yarn_story::from_string( std::string_view content, std::string_view source_
             std::ranges::replace( work, ',', ' ' );
             std::istringstream ss( work );
             std::string tok;
-            while( ss >> tok ) {
+            while( ss >> tok )
+            {
                 if( !tok.empty() && tok.front() == '#' ) { tok.erase( tok.begin() ); }
                 if( !tok.empty() ) { result.push_back( std::move( tok ) ); }
             }
@@ -4091,15 +4094,15 @@ void register_builtin_functions( func_registry &reg )
     // ============================================================
 
     reg.add( "is_by_radio", {}, vt::boolean,
-             []( const std::vector<value> & ) -> value {
-                 return get_avatar().dialogue_by_radio;
-             } );
+    []( const std::vector<value> & ) -> value {
+        return get_avatar().dialogue_by_radio;
+    } );
 
     // has_reason() — true if a <<set_reason>> command has been called this conversation
     reg.add( "has_reason", {}, vt::boolean,
-             []( const std::vector<value> & ) -> value {
-                 return !g_conv_ctx.reason.empty();
-             } );
+    []( const std::vector<value> & ) -> value {
+        return !g_conv_ctx.reason.empty();
+    } );
 
     // once("key") — internal runtime backing for <<once>> blocks.
     // Key is a fully-qualified string generated at parse time by make_once_condition.
@@ -4109,7 +4112,8 @@ void register_builtin_functions( func_registry &reg )
         auto *p = g_conv_ctx.player_ref;
         if( !p ) { return false; }
         const auto &key = std::get<std::string>( args[0] );
-        if( !p->get_value( key ).empty() ) {
+        if( !p->get_value( key ).empty() )
+        {
             return false;
         }
         p->set_value( key, "1" );
@@ -4234,8 +4238,8 @@ void register_builtin_commands( command_registry &reg )
             auto id    = itype_id( std::get<std::string>( args[0] ) );
             auto count = args.size() > 1 ? static_cast<int>( std::get<double>( args[1] ) ) : 1;
             bool silent = args.size() > 2
-                          && std::holds_alternative<std::string>( args[2] )
-                          && std::get<std::string>( args[2] ) == "silent";
+            && std::holds_alternative<std::string>( args[2] )
+            && std::get<std::string>( args[2] ) == "silent";
             p->add_item_with_id( id, count );
             if( !silent && g_conv_ctx.d_win_ref ) {
                 auto item_name = colorize( item::nname( id, count ), id.obj().color );
@@ -4961,21 +4965,24 @@ void register_builtin_commands( command_registry &reg )
     // npc_class_change("class_id") — changes NPC class but does NOT re-initialize stats.
     // Follow with <<npc_randomize>> to re-roll stats/inventory for the new class.
     reg.add( "npc_class_change", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->myclass = npc_class_id( std::get<std::string>( args[0] ) );
         }
         return command_signal::none;
     } );
     // npc_randomize — re-rolls NPC stats and inventory using the NPC's current class
     reg.add( "npc_randomize", 0, []( const std::vector<value> & ) -> command_signal {
-        if( auto *n = g_conv_ctx.npc_ref ) {
+        if( auto *n = g_conv_ctx.npc_ref )
+        {
             n->randomize();
         }
         return command_signal::none;
     } );
     // u_learn_recipe("recipe_id") — teaches the player a crafting recipe
     reg.add( "u_learn_recipe", 1, []( const std::vector<value> &args ) -> command_signal {
-        if( auto *p = g_conv_ctx.player_ref ) {
+        if( auto *p = g_conv_ctx.player_ref )
+        {
             const recipe &r = recipe_id( std::get<std::string>( args[0] ) ).obj();
             p->learn_recipe( &r );
             popup( _( "You learn how to craft %s." ), r.result_name() );
@@ -4992,7 +4999,8 @@ void register_builtin_commands( command_registry &reg )
     reg.add( "u_buy_monster", 2, 5, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
         auto *n = g_conv_ctx.npc_ref;
-        if( !p || !n ) {
+        if( !p || !n )
+        {
             return command_signal::none;
         }
         const auto  type_str = std::get<std::string>( args[0] );
@@ -5001,13 +5009,15 @@ void register_builtin_commands( command_registry &reg )
         const bool  pacified = args.size() >= 4 ? std::get<bool>( args[3] ) : false;
         const auto  name     = args.size() >= 5 ? std::get<std::string>( args[4] ) : std::string{};
 
-        if( !npc_trading::pay_npc( *n, cost ) ) {
+        if( !npc_trading::pay_npc( *n, cost ) )
+        {
             popup( _( "You can't afford it!" ) );
             return command_signal::none;
         }
 
         const mtype_id mtype( type_str );
-        for( int idx = 0; idx < count; ++idx ) {
+        for( int idx = 0; idx < count; ++idx )
+        {
             monster *const mon_ptr = g->place_critter_around( mtype, p->pos(), 3 );
             if( !mon_ptr ) {
                 add_msg( m_debug, "u_buy_monster: no valid placement location for %s", type_str );
@@ -5023,9 +5033,11 @@ void register_builtin_commands( command_registry &reg )
             }
         }
 
-        if( name.empty() ) {
+        if( name.empty() )
+        {
             popup( _( "%1$s gives you %2$d %3$s." ), n->name, count, mtype.obj().nname( count ) );
-        } else {
+        } else
+        {
             popup( _( "%1$s gives you %2$s." ), n->name, name );
         }
         return command_signal::none;
@@ -5067,12 +5079,14 @@ void register_builtin_commands( command_registry &reg )
     auto bulk_trade_impl = []( bool is_trade, bool is_npc ) -> command_signal {
         auto *npc_ptr = g_conv_ctx.npc_ref;
         auto *player_ptr = g_conv_ctx.player_ref;
-        if( !npc_ptr || !player_ptr ) {
+        if( !npc_ptr || !player_ptr )
+        {
             return command_signal::none;
         }
 
         itype_id cur_item( g_conv_ctx.current_item_type );
-        if( cur_item.is_empty() ) {
+        if( cur_item.is_empty() )
+        {
             DebugLog( DL::Warn, DC::Main )
                     << "yarn: bulk trade command called with no current item set";
             return command_signal::none;
@@ -5080,7 +5094,8 @@ void register_builtin_commands( command_registry &reg )
 
         player *seller = player_ptr;
         player *buyer  = static_cast<player *>( npc_ptr );
-        if( is_npc ) {
+        if( is_npc )
+        {
             seller = static_cast<player *>( npc_ptr );
             buyer  = player_ptr;
         }
@@ -5089,7 +5104,8 @@ void register_builtin_commands( command_registry &reg )
         detached_ptr<item> tmp = item::spawn( cur_item );
         tmp->charges = seller_has;
 
-        if( is_trade ) {
+        if( is_trade )
+        {
             int price = tmp->price( true ) * ( is_npc ? -1 : 1 ) + npc_ptr->op_of_u.owed;
             if( npc_ptr->get_faction() && !npc_ptr->get_faction()->currency.is_empty() ) {
                 const itype_id &pay_in = npc_ptr->get_faction()->currency;
