@@ -31,6 +31,12 @@
 
 // Injects after native choices (default priority 0).
 //
+// This example uses tag-based injection: the node declares inject_into: #shelter_dialogue
+// instead of the direct inject_into: shelter_npc::Start.  Any node in any story that
+// carries inject_tags: shelter_dialogue will receive this choice automatically.
+//
+// inject_category: mod_lore allows target nodes to opt out via inject_block: mod_lore.
+//
 // LockedDoorDetail is a multi-turn sub-conversation — the player can ask follow-up
 // questions, the NPC recalls more detail, and the exchange eventually ends naturally.
 // This is why <<detour>> is used rather than shared_choices: shared_choices can only
@@ -40,7 +46,8 @@
 // (If LockedDoorDetail lived in a different story file, use <<cross_detour story::LockedDoorDetail>>.)
 title: ModExtraDialogue
 position: 294,-191
-inject_into: shelter_npc::Start
+inject_into: #shelter_dialogue
+inject_category: #mod_lore
 ---
 -> Ask about the locked door.
     You: That locked door — what's behind it?
@@ -76,17 +83,24 @@ I heard something move behind it on the second night.  Since then I haven't gone
 
 // Injects before native choices (negative priority).
 // Use sparingly — most mod choices should follow the base dialogue.
+//
+// Uses direct injection (inject_into: story::Node) which bypasses inject_block.
+// inject_category: #urgent lets target nodes block it if they choose, but since
+// this uses the direct form it is documented here for illustration only —
+// direct injection ignores inject_block.  Use tag-based inject_into if you want
+// blocking to apply.
 title: ModUrgentWarning
 position: 4,323
 inject_into: shelter_npc::Start
+inject_category: #urgent
 inject_priority: -10
 ---
 -> Did you hear that noise just now?
     You: Did you hear that?
     <<if npc_following()>>
-    NPC: I heard it too.  Stay sharp.
+        NPC: I heard it too.  Stay sharp.
     <<else>>
-    NPC: What noise?  I've been trying not to listen.
+        NPC: What noise?  I've been trying not to listen.
     <<endif>>
     -> Probably nothing. #spoken
     -> Stay alert either way.

@@ -288,10 +288,30 @@ struct yarn_node {
     // Resolved at load time via yarn_story::resolve_shared_choices().
     std::vector<std::string> shared_choices;
 
-    // "inject_into: story::Node" — push: contribute this node's choices into another node.
-    // Resolved at load time via apply_injections() in load_yarn_stories().
-    // Empty string means this node is not an injection source.
-    std::string inject_into;
+    // inject_into: each entry is one OR-group of targets for this injection source.
+    // Multiple inject_into: header lines accumulate as OR entries.
+    // Direct entries (is_direct == true) bypass inject_block on the target.
+    // Tag-based entries match nodes whose inject_tags contain all required_tags (AND).
+    struct inject_target {
+        bool is_direct = false;
+        // Direct injection: identifies a specific node.
+        std::string target_story;  // empty means same story as source
+        std::string target_node;
+        // Tag-based injection: all tags must be present on the target (AND within this entry).
+        std::vector<std::string> required_tags;
+    };
+    std::vector<inject_target> inject_into;
+
+    // Tags this node exposes so tag-based injection sources can target it.
+    std::vector<std::string> inject_tags;
+
+    // Category tags for this injection source; checked against target's inject_block.
+    // inject_into: #inject_category expands to these tags as a targeting AND-group.
+    std::vector<std::string> inject_category;
+
+    // Rejects tag-based injections whose inject_category intersects this list.
+    // Direct injection (inject_into: story::Node) ignores this field.
+    std::vector<std::string> inject_block;
 
     // Controls where injected choices land relative to the target's native choices.
     // priority < 0  → prepend (most-negative first)
@@ -307,7 +327,8 @@ class yarn_story
 {
     public:
         struct load_result {
-            std::vector<std::string> errors;
+            std::vector<std::string> errors;    // fatal — structural failures; story not loaded
+            std::vector<std::string> warnings;  // non-fatal — bad exprs/args; story still loads
             auto ok() const -> bool { return errors.empty(); }
         };
 

@@ -168,7 +168,7 @@ auto command_registry::call( const std::string &name, const std::vector<value> &
     const auto &e = cmds_.at( name );
     auto count = static_cast<int>( args.size() );
     if( count < e.min_args || ( e.max_args != -1 && count > e.max_args ) ) {
-        DebugLog( DL::Warn, DC::Dialogue )
+        DebugLog( DL::Warn, DC::Main )
                 << "yarn: command '" << name << "' called with " << count
                 << " args (expected " << e.min_args
                 << ( e.max_args == -1 ? "+" : "-" + std::to_string( e.max_args ) ) << ")";
@@ -915,7 +915,8 @@ auto parse_command_line( std::string_view cmd ) -> parsed_command
             if( !result.name.empty() ) {
                 current += c;  // keep quotes in args for parse_expr
             }
-        } else if( c == ' ' && !in_quote ) {
+        } else if( ( c == ' ' || c == ',' ) && !in_quote ) {
+            // Commas and spaces both act as argument separators outside quotes.
             if( !current.empty() ) {
                 if( result.name.empty() ) {
                     result.name = std::move( current );
@@ -947,7 +948,8 @@ class yarn_parser
         explicit yarn_parser( std::string_view source_name )
             : source_name_( source_name ) {}
 
-        std::vector<std::string> errors;
+        std::vector<std::string> errors;    // fatal — structural; story cannot load
+        std::vector<std::string> warnings;  // non-fatal — bad expr/arg; element skipped
 
         // Set before parsing each node body so <<once>> keys are node-scoped.
         std::string current_node;
@@ -955,6 +957,10 @@ class yarn_parser
 
         void error( int line_num, std::string msg ) {
             errors.push_back( source_name_ + ":" + std::to_string( line_num ) + ": " + msg );
+        }
+
+        void warn( int line_num, std::string msg ) {
+            warnings.push_back( source_name_ + ":" + std::to_string( line_num ) + ": " + msg );
         }
 
         auto parse_condition( std::string_view src, int line_num )
@@ -1052,7 +1058,7 @@ auto parse_repeat_group( yarn_parser &p, const std::vector<raw_line> &lines,
         }
         if( starts_with( line.content, "->" ) ) {
             if( found_template ) {
-                p.error( line.line_num, "<<repeat_for_*>>: only one -> template line is allowed" );
+                p.warn( line.line_num, "<<repeat_for_*>>: only one -> template line is allowed" );
                 ++i;
                 continue;
             }
@@ -1062,12 +1068,12 @@ auto parse_repeat_group( yarn_parser &p, const std::vector<raw_line> &lines,
             ++i;
             rg.body = parse_choice_body( p, lines, i, end, tmpl_indent );
         } else {
-            p.error( line.line_num, "<<repeat_for_*>>: expected -> template or <<endrepeat>>" );
+            p.warn( line.line_num, "<<repeat_for_*>>: expected -> template or <<endrepeat>>" );
             ++i;
         }
     }
     if( !found_template ) {
-        p.error( cmd_line_num, "<<repeat_for_*>> block is missing a -> template line" );
+        p.warn( cmd_line_num, "<<repeat_for_*>> block is missing a -> template line" );
     }
     return rg;
 }
@@ -1274,7 +1280,7 @@ auto parse_if_block( yarn_parser &p, const std::vector<raw_line> &lines,
         if( !cmd.empty() ) {
             if( cmd == "else" ) {
                 if( in_else ) {
-                    p.error( line.line_num, "duplicate <<else>>" );
+                    p.warn( line.line_num, "duplicate <<else>>" );
                 }
                 in_else = true;
                 ++i;
@@ -1379,7 +1385,7 @@ auto parse_once_block( yarn_parser &p, const std::vector<raw_line> &lines,
         if( !cmd.empty() ) {
             if( cmd == "else" ) {
                 if( in_else ) {
-                    p.error( line.line_num, "duplicate <<else>>" );
+                    p.warn( line.line_num, "duplicate <<else>>" );
                 }
                 in_else = true;
                 ++i;
@@ -1459,18 +1465,18 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
             // <<else>>, <<endif>>, and <<endonce>> are handled by their block parsers;
             // encountering them here is a structural error.
             if( cmd_inner == "else" || cmd_inner == "endif" ) {
-                p.error( line.line_num,
-                         "<<" + std::string( cmd_inner ) + ">> without matching <<if>>" );
+                p.warn( line.line_num,
+                        "<<" + std::string( cmd_inner ) + ">> without matching <<if>>" );
                 ++i;
                 continue;
             }
             if( cmd_inner == "endonce" ) {
-                p.error( line.line_num, "<<endonce>> without matching <<once>>" );
+                p.warn( line.line_num, "<<endonce>> without matching <<once>>" );
                 ++i;
                 continue;
             }
             if( cmd_inner == "endrepeat" ) {
-                p.error( line.line_num, "<<endrepeat>> without matching <<repeat_for_*>>" );
+                p.warn( line.line_num, "<<endrepeat>> without matching <<repeat_for_*>>" );
                 ++i;
                 continue;
             }
@@ -1513,7 +1519,7 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
             // to add additional NPC lines inside a complex choice body.
             if( pc.name == "player" || pc.name == "npc" ) {
                 if( pc.raw_args.size() != 1 ) {
-                    p.error( line.line_num, "<<" + pc.name + ">> requires exactly one string argument" );
+                    p.warn( line.line_num, "<<" + pc.name + ">> requires exactly one string argument" );
                 } else {
                     // Strip surrounding quotes; the text is a literal string, not an expression.
                     auto raw = std::string_view( pc.raw_args[0] );
@@ -1528,7 +1534,7 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                 }
             } else if( pc.name == "jump" ) {
                 if( pc.raw_args.empty() ) {
-                    p.error( line.line_num, "<<jump>> requires a node name" );
+                    p.warn( line.line_num, "<<jump>> requires a node name" );
                 } else {
                     node_element elem;
                     elem.type = node_element::kind::jump;
@@ -1537,7 +1543,7 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                 }
             } else if( pc.name == "detour" ) {
                 if( pc.raw_args.empty() ) {
-                    p.error( line.line_num, "<<detour>> requires a node name" );
+                    p.warn( line.line_num, "<<detour>> requires a node name" );
                 } else {
                     node_element elem;
                     elem.type = node_element::kind::goto_node;
@@ -1546,7 +1552,7 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                 }
             } else if( pc.name == "cross_detour" ) {
                 if( pc.raw_args.empty() ) {
-                    p.error( line.line_num, "<<cross_detour>> requires a story::node target" );
+                    p.warn( line.line_num, "<<cross_detour>> requires a story::node target" );
                 } else {
                     node_element elem;
                     elem.type = node_element::kind::goto_node;
@@ -1555,7 +1561,7 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                 }
             } else if( pc.name == "cross_jump" ) {
                 if( pc.raw_args.empty() ) {
-                    p.error( line.line_num, "<<cross_jump>> requires a story::node target" );
+                    p.warn( line.line_num, "<<cross_jump>> requires a story::node target" );
                 } else {
                     node_element elem;
                     elem.type = node_element::kind::jump;
@@ -1579,9 +1585,9 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                 for( const auto &raw : pc.raw_args ) {
                     auto result = parse_expr( raw, func_registry::global() );
                     if( std::holds_alternative<parse_error>( result ) ) {
-                        p.error( line.line_num,
-                                 "<<" + pc.name + ">>: bad argument '" + raw + "': " +
-                                 std::get<parse_error>( result ).message );
+                        p.warn( line.line_num,
+                                "<<" + pc.name + ">>: bad argument '" + raw + "': " +
+                                std::get<parse_error>( result ).message );
                         args_ok = false;
                         break;
                     }
@@ -1645,6 +1651,7 @@ auto yarn_story::from_string( std::string_view content, std::string_view source_
         // Parse node header (key: value lines until ---)
         yarn_node node;
         bool found_separator = false;
+        std::vector<std::string> raw_inject_into;
 
         while( i < total ) {
             const auto &line = all_lines[i];
@@ -1675,13 +1682,36 @@ auto yarn_story::from_string( std::string_view content, std::string_view source_
                         node.shared_choices.push_back( std::move( name ) );
                     }
                 } else if( key == "inject_into" ) {
-                    node.inject_into = val;
+                    // Deferred: raw values accumulated and resolved after all headers
+                    // are parsed so inject_category is always available for #inject_category.
+                    raw_inject_into.push_back( val );
+                } else if( key == "inject_tags" ) {
+                    std::istringstream ss( val );
+                    std::string tok;
+                    while( ss >> tok ) {
+                        if( !tok.empty() && tok.front() == '#' ) { tok.erase( tok.begin() ); }
+                        if( !tok.empty() ) { node.inject_tags.push_back( std::move( tok ) ); }
+                    }
+                } else if( key == "inject_category" ) {
+                    std::istringstream ss( val );
+                    std::string tok;
+                    while( ss >> tok ) {
+                        if( !tok.empty() && tok.front() == '#' ) { tok.erase( tok.begin() ); }
+                        if( !tok.empty() ) { node.inject_category.push_back( std::move( tok ) ); }
+                    }
+                } else if( key == "inject_block" ) {
+                    std::istringstream ss( val );
+                    std::string tok;
+                    while( ss >> tok ) {
+                        if( !tok.empty() && tok.front() == '#' ) { tok.erase( tok.begin() ); }
+                        if( !tok.empty() ) { node.inject_block.push_back( std::move( tok ) ); }
+                    }
                 } else if( key == "inject_priority" ) {
                     int prio = 0;
                     auto [ptr, ec] = std::from_chars( val.data(), val.data() + val.size(), prio );
                     if( ec != std::errc{} ) {
-                        parser.error( 0, "inject_priority on '" + node.title +
-                                      "': invalid integer '" + val + "'" );
+                        parser.warn( 0, "inject_priority on '" + node.title +
+                                     "': invalid integer '" + val + "'" );
                     } else {
                         node.inject_priority = prio;
                     }
@@ -1695,6 +1725,49 @@ auto yarn_story::from_string( std::string_view content, std::string_view source_
         }
         if( node.title.empty() ) {
             parser.error( all_lines[i - 1].line_num, "node has no title" );
+        }
+
+        // Resolve accumulated inject_into values now that inject_category is fully parsed.
+        // Each raw value is one OR-group:
+        //   "#inject_category"        → tag-based, using own inject_category as AND-group
+        //   "#tag1 #tag2, #tag3"      → tag-based; space/comma separators both accepted
+        //   "story::NodeName" / "Node" → direct injection
+        auto parse_hash_tags = []( std::string_view sv ) -> std::vector<std::string> {
+            std::vector<std::string> result;
+            std::string work( sv );
+            std::ranges::replace( work, ',', ' ' );
+            std::istringstream ss( work );
+            std::string tok;
+            while( ss >> tok ) {
+                if( !tok.empty() && tok.front() == '#' ) { tok.erase( tok.begin() ); }
+                if( !tok.empty() ) { result.push_back( std::move( tok ) ); }
+            }
+            return result;
+        };
+        for( const auto &raw : raw_inject_into ) {
+            yarn_node::inject_target tgt;
+            auto sv = trim_sv( std::string_view( raw ) );
+            if( !sv.empty() && sv.front() == '#' ) {
+                tgt.is_direct = false;
+                if( sv == "#inject_category" ) {
+                    tgt.required_tags = node.inject_category;
+                    if( tgt.required_tags.empty() ) {
+                        parser.warn( 0, "inject_into: #inject_category on '" + node.title +
+                                     "' but inject_category is empty" );
+                    }
+                } else {
+                    tgt.required_tags = parse_hash_tags( sv );
+                }
+            } else {
+                tgt.is_direct = true;
+                if( const auto sep = sv.find( "::" ); sep != std::string_view::npos ) {
+                    tgt.target_story = std::string( sv.substr( 0, sep ) );
+                    tgt.target_node  = std::string( sv.substr( sep + 2 ) );
+                } else {
+                    tgt.target_node = std::string( sv );
+                }
+            }
+            node.inject_into.push_back( std::move( tgt ) );
         }
 
         // Find the end of this node (=== marker)
@@ -1723,7 +1796,8 @@ auto yarn_story::from_string( std::string_view content, std::string_view source_
     // shared_choices resolution is deferred to resolve_shared_choices(), called
     // after all stories are loaded so cross-file "story::NodeName" references work.
 
-    result.errors = std::move( parser.errors );
+    result.errors   = std::move( parser.errors );
+    result.warnings = std::move( parser.warnings );
     return { std::move( story ), std::move( result ) };
 }
 
@@ -2020,7 +2094,7 @@ auto dynamic_choice_registry::generate( const std::string &node_name ) const -> 
             auto entries = gen();
             std::ranges::move( entries, std::back_inserter( result ) );
         } catch( const std::exception &e ) {
-            DebugLog( DL::Error, DC::Dialogue )
+            DebugLog( DL::Error, DC::Main )
                     << "yarn: dynamic_choice generator threw: " << e.what();
         }
     }
@@ -2052,7 +2126,7 @@ void yarn_runtime::run( dialogue_window &d_win )
             const auto sname = target.substr( 0, sep );
             const auto nname = target.substr( sep + 2 );
             if( !has_yarn_story( sname ) ) {
-                DebugLog( DL::Error, DC::Dialogue )
+                DebugLog( DL::Error, DC::Main )
                         << "yarn: cross-story target '" << target << "': story '" << sname
                         << "' not found — staying put";
                 return node_stack_.back();
@@ -2066,7 +2140,7 @@ void yarn_runtime::run( dialogue_window &d_win )
     while( !node_stack_.empty() ) {
         const auto &frame = node_stack_.back();
         if( !frame.story->has_node( frame.node ) ) {
-            DebugLog( DL::Error, DC::Dialogue )
+            DebugLog( DL::Error, DC::Main )
                     << "yarn: node '" << frame.node << "' not found";
             break;
         }
@@ -2145,7 +2219,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                                 continue;
                             }
                         } catch( const std::exception &e ) {
-                            DebugLog( DL::Error, DC::Dialogue )
+                            DebugLog( DL::Error, DC::Main )
                                     << "yarn: line_group condition error: " << e.what();
                             continue;
                         }
@@ -2173,7 +2247,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                                     continue;
                                 }
                             } catch( const std::exception &e ) {
-                                DebugLog( DL::Error, DC::Dialogue )
+                                DebugLog( DL::Error, DC::Main )
                                         << "yarn: repeat_group condition error: " << e.what();
                                 continue;
                             }
@@ -2316,7 +2390,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
             case node_element::kind::command: {
                 auto &creg = command_registry::global();
                 if( !creg.has_command( elem.command_name ) ) {
-                    DebugLog( DL::Warn, DC::Dialogue )
+                    DebugLog( DL::Warn, DC::Main )
                             << "yarn: unknown command '" << elem.command_name << "'";
                     break;
                 }
@@ -2327,7 +2401,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                     try {
                         args.push_back( eval( arg_node ) );
                     } catch( const std::exception &e ) {
-                        DebugLog( DL::Error, DC::Dialogue )
+                        DebugLog( DL::Error, DC::Main )
                                 << "yarn: command '" << elem.command_name
                                 << "' arg eval error: " << e.what();
                         eval_ok = false;
@@ -2353,7 +2427,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                 // DEPRECATED: Delegates to the JSON dialogue engine for one topic.
                 // Remove this case when the JSON-to-Yarn migration is complete.
                 if( !dialogue_ref_ || !npc_ || !player_ ) {
-                    DebugLog( DL::Error, DC::Dialogue )
+                    DebugLog( DL::Error, DC::Main )
                             << "yarn: legacy_topic requires dialogue/npc/player context";
                     return { signal::stop, {} };
                 }
@@ -2422,13 +2496,13 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                     try {
                         auto val = eval( *elem.condition );
                         if( !std::holds_alternative<bool>( val ) ) {
-                            DebugLog( DL::Error, DC::Dialogue )
+                            DebugLog( DL::Error, DC::Main )
                                     << "yarn: <<if>> condition did not evaluate to bool";
                         } else {
                             cond = std::get<bool>( val );
                         }
                     } catch( const std::exception &e ) {
-                        DebugLog( DL::Error, DC::Dialogue )
+                        DebugLog( DL::Error, DC::Main )
                                 << "yarn: condition error: " << e.what();
                     }
                 }
@@ -2462,7 +2536,7 @@ auto yarn_runtime::present_choices( const std::vector<node_element::choice> &cho
                 available.push_back( idx );
             }
         } catch( const std::exception &e ) {
-            DebugLog( DL::Error, DC::Dialogue ) << "yarn: choice condition error: " << e.what();
+            DebugLog( DL::Error, DC::Main ) << "yarn: choice condition error: " << e.what();
         }
     }
 
@@ -2591,6 +2665,19 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
         std::string target_node;
     };
 
+    // Clone base_choices and append a <<jump target_node>> to each choice body.
+    auto make_choices_with_return = []( const std::vector<node_element::choice> &base,
+    const std::string & target_node ) {
+        auto cloned = base;
+        for( auto &ch : cloned ) {
+            node_element return_jump;
+            return_jump.type        = node_element::kind::jump;
+            return_jump.jump_target = target_node;
+            ch.body.push_back( std::move( return_jump ) );
+        }
+        return cloned;
+    };
+
     std::vector<pending_injection> injections;
     for( const auto &[story_name, story] : registry ) {
         for( const auto &[node_name, node] : story.all_nodes() ) {
@@ -2601,33 +2688,49 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
                 return e.type == node_element::kind::choice_group;
             } );
             if( cg_it == node.elements.end() ) {
-                DebugLog( DL::Error, DC::Dialogue )
+                DebugLog( DL::Error, DC::Main )
                         << "yarn inject_into on '" << node_name << "': node has no choice_group";
                 continue;
             }
             if( cg_it->choices.empty() ) {
                 continue;
             }
-            std::string ts = story_name;
-            std::string tn = node.inject_into;
-            if( const auto sep = node.inject_into.find( "::" ); sep != std::string::npos ) {
-                ts = node.inject_into.substr( 0, sep );
-                tn = node.inject_into.substr( sep + 2 );
+            const auto &base_choices = cg_it->choices;
+
+            for( const auto &tgt : node.inject_into ) {
+                if( tgt.is_direct ) {
+                    // Direct injection: resolve story, bypass inject_block.
+                    const std::string &ts = tgt.target_story.empty() ? story_name : tgt.target_story;
+                    const std::string &tn = tgt.target_node;
+                    injections.push_back( { make_choices_with_return( base_choices, tn ),
+                                            node.inject_priority, ts, tn } );
+                } else {
+                    // Tag-based injection: find all nodes whose inject_tags satisfy the AND group.
+                    // Filter out nodes that block this source's inject_category.
+                    for( const auto &[ts2, story2] : registry ) {
+                        for( const auto &[tn2, node2] : story2.all_nodes() ) {
+                            // All required_tags must be present in the target's inject_tags.
+                            bool matches = std::ranges::all_of( tgt.required_tags,
+                            [&]( const std::string & t ) {
+                                return std::ranges::contains( node2.inject_tags, t );
+                            } );
+                            if( !matches ) {
+                                continue;
+                            }
+                            // Reject if any of our inject_category intersects target's inject_block.
+                            bool blocked = std::ranges::any_of( node.inject_category,
+                            [&]( const std::string & cat ) {
+                                return std::ranges::contains( node2.inject_block, cat );
+                            } );
+                            if( blocked ) {
+                                continue;
+                            }
+                            injections.push_back( { make_choices_with_return( base_choices, tn2 ),
+                                                    node.inject_priority, ts2, tn2 } );
+                        }
+                    }
+                }
             }
-            // Clone the choices and auto-append <<jump TargetNode>> to each body.
-            // This ensures injected choices return to the injection target without
-            // the mod author needing to know the target node name.  If the body
-            // already navigates away (<<stop>>, <<jump X>>, etc.) the auto-jump
-            // is never reached.
-            auto choices_with_return = cg_it->choices;
-            for( auto &ch : choices_with_return ) {
-                node_element return_jump;
-                return_jump.type        = node_element::kind::jump;
-                return_jump.jump_target = tn;
-                ch.body.push_back( std::move( return_jump ) );
-            }
-            injections.push_back( { std::move( choices_with_return ), node.inject_priority,
-                                    std::move( ts ), std::move( tn ) } );
         }
     }
 
@@ -2657,14 +2760,14 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
         // Locate the target node (mutable).
         auto sit = registry.find( ts );
         if( sit == registry.end() ) {
-            DebugLog( DL::Error, DC::Dialogue )
+            DebugLog( DL::Error, DC::Main )
                     << "yarn inject_into: story '" << ts << "' not found";
             it = group_end;
             continue;
         }
         auto *target = sit->second.get_node_mutable( tn );
         if( target == nullptr ) {
-            DebugLog( DL::Error, DC::Dialogue )
+            DebugLog( DL::Error, DC::Main )
                     << "yarn inject_into: node '" << tn << "' not found in story '" << ts << "'";
             it = group_end;
             continue;
@@ -2673,7 +2776,7 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
             return e.type == node_element::kind::choice_group;
         } );
         if( cg_it == target->elements.end() ) {
-            DebugLog( DL::Error, DC::Dialogue )
+            DebugLog( DL::Error, DC::Main )
                     << "yarn inject_into: target '" << tn << "' in '" << ts << "' has no choice_group";
             it = group_end;
             continue;
@@ -2716,23 +2819,39 @@ void load_yarn_stories()
 
     for( const auto &path : files ) {
         auto [story, result] = yarn_story::from_file( path );
-        for( const auto &err : result.errors ) {
-            DebugLog( DL::Error, DC::Dialogue ) << "yarn: " << err;
+
+        // Derive story stem here so it is available in all branches.
+        auto slash = path.rfind( '/' );
+        if( slash == std::string::npos ) {
+            slash = path.rfind( '\\' );
         }
+        auto stem_start = ( slash == std::string::npos ) ? 0 : slash + 1;
+        auto dot = path.rfind( '.' );
+        auto stem = path.substr( stem_start, dot - stem_start );
+
         if( result.ok() ) {
-            // Derive story name from filename without extension
-            auto slash = path.rfind( '/' );
-            if( slash == std::string::npos ) {
-                slash = path.rfind( '\\' );
-            }
-            auto stem_start = ( slash == std::string::npos ) ? 0 : slash + 1;
-            auto dot = path.rfind( '.' );
-            auto stem = path.substr( stem_start, dot - stem_start );
             story_registry().emplace( stem, std::move( story ) );
             DebugLog( DL::Info, DC::Dialogue ) << "yarn: loaded story '" << stem << "'";
+            if( !result.warnings.empty() ) {
+                std::string summary;
+                for( const auto &w : result.warnings ) {
+                    DebugLog( DL::Warn, DC::Main ) << "yarn: " << w;
+                    summary += w + "\n";
+                }
+                debugmsg( "Yarn dialogue warnings in '%s' (affected elements skipped):\n\n%s",
+                          path.c_str(), summary.c_str() );
+            }
         } else {
-            DebugLog( DL::Error, DC::Dialogue )
+            for( const auto &err : result.errors ) {
+                DebugLog( DL::Error, DC::Main ) << "yarn: " << err;
+            }
+            DebugLog( DL::Error, DC::Main )
                     << "yarn: failed to load '" << path << "' (" << result.errors.size() << " errors)";
+            std::string summary;
+            for( const auto &err : result.errors ) {
+                summary += err + "\n";
+            }
+            debugmsg( "Yarn dialogue failed to load '%s':\n\n%s", path.c_str(), summary.c_str() );
         }
     }
 
@@ -2754,7 +2873,7 @@ void load_yarn_stories()
         std::vector<std::string> errors;
         story.resolve_shared_choices( lookup, name, errors );
         for( const auto &err : errors ) {
-            DebugLog( DL::Error, DC::Dialogue ) << "yarn shared_choices: " << err;
+            DebugLog( DL::Error, DC::Main ) << "yarn shared_choices: " << err;
         }
     }
 
@@ -3400,7 +3519,7 @@ void register_builtin_functions( func_registry &reg )
         auto it = ally_rule_strs.find( key );
         if( it == ally_rule_strs.end() )
         {
-            DebugLog( DL::Warn, DC::Dialogue )
+            DebugLog( DL::Warn, DC::Main )
                     << "yarn: npc_has_rule: unknown rule '" << key << "'";
             return false;
         }
@@ -3418,7 +3537,7 @@ void register_builtin_functions( func_registry &reg )
         auto it = ally_rule_strs.find( key );
         if( it == ally_rule_strs.end() )
         {
-            DebugLog( DL::Warn, DC::Dialogue )
+            DebugLog( DL::Warn, DC::Main )
                     << "yarn: npc_has_override: unknown rule '" << key << "'";
             return false;
         }
@@ -3444,7 +3563,7 @@ void register_builtin_functions( func_registry &reg )
         auto it = aim_rule_strs.find( key );
         if( it == aim_rule_strs.end() )
         {
-            DebugLog( DL::Warn, DC::Dialogue )
+            DebugLog( DL::Warn, DC::Main )
                     << "yarn: npc_aim_rule: unknown rule '" << key << "'";
             return false;
         }
@@ -3462,7 +3581,7 @@ void register_builtin_functions( func_registry &reg )
         auto it = combat_engagement_strs.find( key );
         if( it == combat_engagement_strs.end() )
         {
-            DebugLog( DL::Warn, DC::Dialogue )
+            DebugLog( DL::Warn, DC::Main )
                     << "yarn: npc_engagement_rule: unknown rule '" << key << "'";
             return false;
         }
@@ -3480,7 +3599,7 @@ void register_builtin_functions( func_registry &reg )
         auto it = cbm_reserve_strs.find( key );
         if( it == cbm_reserve_strs.end() )
         {
-            DebugLog( DL::Warn, DC::Dialogue )
+            DebugLog( DL::Warn, DC::Main )
                     << "yarn: npc_cbm_reserve_rule: unknown rule '" << key << "'";
             return false;
         }
@@ -3498,7 +3617,7 @@ void register_builtin_functions( func_registry &reg )
         auto it = cbm_recharge_strs.find( key );
         if( it == cbm_recharge_strs.end() )
         {
-            DebugLog( DL::Warn, DC::Dialogue )
+            DebugLog( DL::Warn, DC::Main )
                     << "yarn: npc_cbm_recharge_rule: unknown rule '" << key << "'";
             return false;
         }
@@ -4150,7 +4269,7 @@ void register_builtin_commands( command_registry &reg )
                     return command_signal::none;
                 }
             }
-            DebugLog( DL::Warn, DC::Dialogue )
+            DebugLog( DL::Warn, DC::Main )
                     << "yarn: npc_set_attitude: unknown attitude '" << att_str << "'";
         }
         return command_signal::none;
@@ -4906,7 +5025,7 @@ void register_builtin_commands( command_registry &reg )
 
         itype_id cur_item( g_conv_ctx.current_item_type );
         if( cur_item.is_empty() ) {
-            DebugLog( DL::Warn, DC::Dialogue )
+            DebugLog( DL::Warn, DC::Main )
                     << "yarn: bulk trade command called with no current item set";
             return command_signal::none;
         }
@@ -4980,15 +5099,13 @@ void register_builtin_commands( command_registry &reg )
 auto run_npc_dialogue( dialogue_window &d_win, npc &n, player &p ) -> bool
 {
     if( n.chatbin.yarn_story.empty() ) {
-        DebugLog( DL::Error, DC::Dialogue )
+        DebugLog( DL::Error, DC::Main )
                 << "yarn: NPC '" << n.name << "' has no yarn_story — using legacy path";
         return false;
     }
     if( !has_yarn_story( n.chatbin.yarn_story ) ) {
-        DebugLog( DL::Error, DC::Dialogue )
-                << "yarn: NPC '" << n.name << "' references unknown story '"
-                << n.chatbin.yarn_story << "' — story not in registry";
-        return false;
+        debugmsg( "Error: dialogue story %d failed to load.", n.name, n.chatbin.yarn_story );
+        return true;
     }
     DebugLog( DL::Info, DC::Dialogue )
             << "yarn: running story '" << n.chatbin.yarn_story << "' for NPC '" << n.name << "'";
@@ -5022,7 +5139,7 @@ auto try_legacy_yarn_dialogue( dialogue_window &d_win, npc &n, player &p, dialog
         return false;
     }
     if( !has_yarn_story( "__legacy" ) ) {
-        DebugLog( DL::Warn, DC::Dialogue ) << "yarn: __legacy story not found";
+        DebugLog( DL::Warn, DC::Main ) << "yarn: __legacy story not found";
         return false;
     }
 
@@ -5036,7 +5153,7 @@ auto try_legacy_yarn_dialogue( dialogue_window &d_win, npc &n, player &p, dialog
                                  : d.topic_stack.back().id;
 
     if( !story.has_node( starting_topic ) ) {
-        DebugLog( DL::Warn, DC::Dialogue )
+        DebugLog( DL::Warn, DC::Main )
                 << "yarn: __legacy story has no node '" << starting_topic << "'";
         return false;
     }
