@@ -1,6 +1,7 @@
 #include "submap_load_manager.h"
 
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -12,6 +13,7 @@
 
 #include "cata_cartesian_product.h"
 #include "coordinate_conversions.h"
+#include "game_constants.h"
 #include "mapbuffer.h"
 #include "clzones.h"
 #include "mapgen_async.h"
@@ -26,9 +28,7 @@ load_request_handle submap_load_manager::request_load(
     load_request_source source,
     const std::string &dim_id,
     const tripoint_abs_sm &center,
-    int radius,
-    int z_min,
-    int z_max )
+    int radius )
 {
     const load_request_handle handle = next_handle_++;
     submap_load_request req;
@@ -36,8 +36,6 @@ load_request_handle submap_load_manager::request_load(
     req.dimension_id = dim_id;
     req.center = center;
     req.radius = radius;
-    req.z_min = z_min;
-    req.z_max = z_max;
     requests_[handle] = std::move( req );
     return handle;
 }
@@ -83,7 +81,7 @@ auto submap_load_manager::compute_desired_set() const -> key_set
             return;
         }
         const tripoint c = req.center.raw();
-        const auto z_range = std::views::iota( req.z_min, req.z_max + 1 );
+        const auto z_range = std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
 
         if( req.source == load_request_source::reality_bubble ) {
             // Use the precomputed square offsets so all submaps in the full
@@ -128,7 +126,7 @@ void submap_load_manager::compute_border_into( key_set &target ) const
         // partial-quad fringes are handled there.
         const auto x_range = std::views::iota( c.x - r, c.x + r + 1 );
         const auto y_range = std::views::iota( c.y - r, c.y + r + 1 );
-        const auto z_range = std::views::iota( req.z_min, req.z_max + 1 );
+        const auto z_range = std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
         std::ranges::for_each(
             cata::views::cartesian_product( x_range, y_range, z_range ),
         [&]( auto tuple ) {
@@ -145,18 +143,16 @@ void submap_load_manager::drain_lazy_loads()
         entry.second.get();
     } );
     lazy_futures_.clear();
-    lazy_in_flight_.clear();
 
     // Also drain in-flight presave futures so no worker holds submap pointers
     // across a dimension switch, shutdown, or full game save.
-    // Clear dirty marks for each completed presave — the quad is now on disk, so
-    // the next eviction takes the fast unload_quad(false) path instead of re-saving.
-    std::ranges::for_each( presave_futures_, [this]( auto & entry ) {
+    // dirty_quads_ is NOT cleared here — the presaved data is in pending_writes_
+    // (in-memory cache), not on disk yet.  flush_prev_desired() clears dirty_quads_
+    // and the subsequent mapbuffer::save() call flushes pending_writes_ to disk.
+    std::ranges::for_each( presave_futures_, []( auto & entry ) {
         entry.second.get();
-        dirty_quads_.erase( entry.first );
     } );
     presave_futures_.clear();
-    presave_in_flight_.clear();
 
     // load_or_generate_quad workers may have deferred submap destructions.
     // Drain them on the main thread (safe_reference / cata_arena not thread-safe).
@@ -176,21 +172,23 @@ void submap_load_manager::update()
     ZoneScoped;
 
     // Non-blocking reap: collect completed presave futures.  When a presave
-    // finishes the quad's dirty mark is cleared — eviction only needs to free
-    // the in-memory objects (no I/O stall).
+    // finishes we remove it from the in-flight set, but intentionally keep
+    // dirty_quads_ intact.  presave_quad() only writes to the pending-writes
+    // cache (no disk I/O); between the snapshot and eventual eviction, border
+    // submaps can still be modified (e.g. fire spreading in from the bubble).
+    // Keeping the dirty mark ensures eviction re-serialises the current state
+    // rather than silently discarding those post-presave modifications.
     {
         ZoneScopedN( "slm_presave_reap" );
-        auto it = std::remove_if( presave_futures_.begin(), presave_futures_.end(),
-        [this]( auto & entry ) {
-            if( entry.second.wait_for( std::chrono::seconds( 0 ) ) == std::future_status::ready ) {
-                entry.second.get();
-                presave_in_flight_.erase( entry.first );
-                dirty_quads_.erase( entry.first );  // quad is now on disk
+        std::erase_if( presave_futures_, []( auto & entry ) {
+            auto &[key, fut] = entry;
+            if( fut.wait_for( std::chrono::seconds( 0 ) ) == std::future_status::ready ) {
+                fut.get();
+                // dirty_quads_ deliberately NOT cleared here — see comment above.
                 return true;
             }
             return false;
         } );
-        presave_futures_.erase( it, presave_futures_.end() );
     }
 
     // Non-blocking reap: collect completed lazy futures without stalling on
@@ -200,21 +198,19 @@ void submap_load_manager::update()
     // per add_submap().  Eviction below also acquires the mutex via unload_quad().
     {
         ZoneScopedN( "slm_lazy_reap" );
-        auto it = std::remove_if( lazy_futures_.begin(), lazy_futures_.end(),
-        [this]( auto & entry ) {
-            if( entry.second.wait_for( std::chrono::seconds( 0 ) ) == std::future_status::ready ) {
+        std::erase_if( lazy_futures_, [this]( auto & entry ) {
+            auto &[key, fut] = entry;
+            if( fut.wait_for( std::chrono::seconds( 0 ) ) == std::future_status::ready ) {
                 // Mark dirty if mapgen ran — the quad has new content that must be
                 // saved before eviction.  Quads that were already on disk return false
                 // and are left clean so eviction frees them without a redundant write.
-                if( entry.second.get() ) {
-                    dirty_quads_.insert( entry.first );
+                if( fut.get() ) {
+                    dirty_quads_.insert( key );
                 }
-                lazy_in_flight_.erase( entry.first );
                 return true;
             }
             return false;
         } );
-        lazy_futures_.erase( it, lazy_futures_.end() );
     }
 
     // Drain deferred submap destructions from completed load_or_generate_quad workers.
@@ -304,39 +300,18 @@ void submap_load_manager::update()
             // concurrent lazy worker would race with the sync load and cause two
             // apply_map_extra() calls on the same quad → duplicate autonotes and
             // potentially duplicate special spawns.
-            if( lazy_in_flight_.count( qk_presave ) ) {
-                for( auto &entry : lazy_futures_ ) {
-                    if( entry.first == qk_presave ) {
-                        entry.second.get();
-                        break;
-                    }
-                }
-                lazy_in_flight_.erase( qk_presave );
-                lazy_futures_.erase(
-                    std::remove_if( lazy_futures_.begin(), lazy_futures_.end(),
-                [&qk_presave]( const auto & e ) {
-                    return e.first == qk_presave;
-                } ),
-                lazy_futures_.end() );
+            if( auto it = lazy_futures_.find( qk_presave ); it != lazy_futures_.end() ) {
+                it->second.get();  // blocks until the lazy worker finishes
+                lazy_futures_.erase( it );
+                // dirty_quads_ already pre-inserted for all new_quads above.
             }
 
             // If a presave is in-flight for this quad, wait for it before allowing
             // game logic to modify the submaps.  The worker holds raw submap pointers
             // and reads them for serialization; concurrent writes would corrupt the save.
-            if( presave_in_flight_.count( qk_presave ) ) {
-                for( auto &entry : presave_futures_ ) {
-                    if( entry.first == qk_presave ) {
-                        entry.second.get();
-                        break;
-                    }
-                }
-                presave_in_flight_.erase( qk_presave );
-                presave_futures_.erase(
-                    std::remove_if( presave_futures_.begin(), presave_futures_.end(),
-                [&qk_presave]( const auto & e ) {
-                    return e.first == qk_presave;
-                } ),
-                presave_futures_.end() );
+            if( auto it = presave_futures_.find( qk_presave ); it != presave_futures_.end() ) {
+                it->second.get();  // blocks until the presave worker finishes
+                presave_futures_.erase( it );
                 // Leave dirty_quads_ intact — the quad was re-inserted above and
                 // must still be saved on eventual eviction.
             }
@@ -420,7 +395,7 @@ void submap_load_manager::update()
                 continue;  // direct sim→evict; handled synchronously in eviction below
             }
             const quad_key qk{ key.first, sm_to_omt_copy( key.second ) };
-            if( presave_in_flight_.count( qk ) ) {
+            if( presave_futures_.count( qk ) ) {
                 continue;  // already has an in-flight presave
             }
             if( !dirty_quads_.count( qk ) ) {
@@ -430,9 +405,7 @@ void submap_load_manager::update()
                 continue;  // multiple submaps map to the same quad — only submit once
             }
             auto &mb = MAPBUFFER_REGISTRY.get( qk.first );
-            presave_in_flight_.insert( qk );
-            presave_futures_.emplace_back(
-                qk,
+            presave_futures_.emplace( qk,
             get_thread_pool().submit_returning( [&mb, om_addr = qk.second]() {
                 mb.presave_quad( om_addr );
             } ) );
@@ -470,55 +443,33 @@ void submap_load_manager::update()
                 // missed it if it completed after the reap already ran this turn.
                 // Draining here ensures the dirty mark is applied before we decide
                 // whether to save on eviction.
-                if( lazy_in_flight_.count( qk ) ) {
-                    for( auto &entry : lazy_futures_ ) {
-                        if( entry.first == qk ) {
-                            if( entry.second.get() ) {
-                                dirty_quads_.insert( qk );
-                            }
-                            break;
-                        }
+                if( auto it = lazy_futures_.find( qk ); it != lazy_futures_.end() ) {
+                    if( it->second.get() ) {
+                        dirty_quads_.insert( qk );
                     }
-                    lazy_in_flight_.erase( qk );
-                    lazy_futures_.erase(
-                        std::remove_if( lazy_futures_.begin(), lazy_futures_.end(),
-                    [&qk]( const auto & e ) {
-                        return e.first == qk;
-                    } ),
-                    lazy_futures_.end() );
+                    lazy_futures_.erase( it );
                 }
 
                 const bool was_dirty = dirty_quads_.count( qk ) > 0;
                 if( was_dirty ) {
-                    if( presave_in_flight_.count( qk ) ) {
+                    if( auto it = presave_futures_.find( qk ); it != presave_futures_.end() ) {
                         // A presave worker still holds raw pointers to these submaps.
-                        // Wait for it to finish before freeing them.  This path should
-                        // be rare — presaves normally complete between two update() calls.
-                        for( auto &entry : presave_futures_ ) {
-                            if( entry.first == qk ) {
-                                entry.second.get();
-                                break;
-                            }
-                        }
-                        presave_in_flight_.erase( qk );
-                        presave_futures_.erase(
-                            std::remove_if( presave_futures_.begin(), presave_futures_.end(),
-                        [&qk]( const auto & e ) {
-                            return e.first == qk;
-                        } ),
-                        presave_futures_.end() );
-                        dirty_quads_.erase( qk );
-                        // Quad was presaved — evict without a redundant write.
-                        MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr, false );
-                    } else {
-                        // No presave was submitted for this quad (direct sim→evict path).
-                        // Save synchronously before evicting.
-                        dirty_quads_.erase( qk );
-                        MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr, true );
+                        // Wait for it to finish before re-serialising and freeing.
+                        // This path should be rare — presaves normally complete between
+                        // two update() calls.
+                        it->second.get();
+                        presave_futures_.erase( it );
                     }
+                    // Serialise the current submap state before evicting.  This
+                    // intentionally re-serialises even when a presave already ran, to
+                    // capture modifications made after the presave snapshot (e.g. fire
+                    // spreading into a border submap).  The presave wrote an earlier
+                    // snapshot to pending_writes_; unload_quad(true) overwrites it with
+                    // the fresh state — no data is lost.
+                    dirty_quads_.erase( qk );
+                    MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr, true );
                 } else {
-                    // Not dirty: either never simulated, or presave was already reaped
-                    // (dirty mark cleared in slm_presave_reap) — evict without I/O.
+                    // Not dirty: quad was never simulated — evict without I/O.
                     MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr, false );
                 }
             }
@@ -539,30 +490,22 @@ void submap_load_manager::update()
         // without saving, the same never-persisted quad would be regenerated on each
         // border pass, accumulating mongroups and firing duplicate autonotes.
         {
-            std::unordered_set<quad_key, pair_hash> lazy_quads;
             for( const desired_key &key : all_desired ) {
                 if( simulated.count( key ) ) {
                     continue;
                 }
                 const quad_key qk{ key.first, sm_to_omt_copy( key.second ) };
-                if( lazy_in_flight_.count( qk ) ) {
+                if( lazy_futures_.count( qk ) ) {
                     continue;  // already has an in-flight future — don't resubmit
                 }
                 auto &mb = MAPBUFFER_REGISTRY.get( key.first );
                 if( !mb.lookup_submap_in_memory( key.second ) ) {
-                    lazy_quads.insert( qk );
+                    lazy_futures_.emplace( qk,
+                                           get_thread_pool().submit_returning(
+                    [&mb, om_addr = qk.second]() {
+                        return mb.load_or_generate_quad( om_addr );
+                    } ) );
                 }
-            }
-            lazy_futures_.reserve( lazy_futures_.size() + lazy_quads.size() );
-            for( const auto &[dim_id, om_addr] : lazy_quads ) {
-                auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
-                lazy_in_flight_.insert( { dim_id, om_addr } );
-                lazy_futures_.emplace_back(
-                    quad_key{ dim_id, om_addr },
-                    get_thread_pool().submit_returning(
-                [&mb, om_addr]() {
-                    return mb.load_or_generate_quad( om_addr );
-                } ) );
             }
         }
     } // slm_lazy_submit
@@ -594,8 +537,7 @@ bool submap_load_manager::is_properly_requested( const std::string &dim_id,
         const tripoint c = req.center.raw();
         const int dx = std::abs( p.x - c.x );
         const int dy = std::abs( p.y - c.y );
-        return dx <= req.radius && dy <= req.radius
-               && p.z >= req.z_min && p.z <= req.z_max;
+        return dx <= req.radius && dy <= req.radius;
     } );
 }
 
@@ -615,8 +557,7 @@ bool submap_load_manager::is_simulated( const std::string &dim_id,
         const tripoint c = req.center.raw();
         const int dx = std::abs( p.x - c.x );
         const int dy = std::abs( p.y - c.y );
-        if( !( dx <= req.radius && dy <= req.radius
-               && p.z >= req.z_min && p.z <= req.z_max ) ) {
+        if( !( dx <= req.radius && dy <= req.radius ) ) {
             continue;
         }
         if( req.source != load_request_source::lazy_border ) {
@@ -667,16 +608,18 @@ auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load
     return { view.begin(), view.end() };
 }
 
+auto submap_load_manager::is_fully_drained() const noexcept -> bool
+{
+    return lazy_futures_.empty() && presave_futures_.empty();
+}
+
 void submap_load_manager::flush_prev_desired()
 {
+    assert( is_fully_drained() );
     prev_desired_.clear();
     prev_simulated_.clear();
     prev_centers_.clear();
     dirty_quads_.clear();
-    // Presave futures should be drained before this point (via drain_lazy_loads).
-    // Clear defensively to prevent stale entries after a dimension switch.
-    presave_futures_.clear();
-    presave_in_flight_.clear();
 }
 
 void submap_load_manager::add_listener( submap_load_listener *listener )

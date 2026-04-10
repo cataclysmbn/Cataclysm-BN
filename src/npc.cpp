@@ -3266,7 +3266,8 @@ std::pair<PathfindingSettings, RouteSettings> npc::get_pathfinding_pair(
     PathfindingSettings path_settings;
 
     path_settings.door_open_cost = rules.has_flag( ally_rule::avoid_doors ) ? INFINITY : 2.0;
-    path_settings.mob_presence_penalty = 16.0;
+    path_settings.mob_presence_penalty =
+        get_option<float>( "PATHFINDING_MOB_PRESENCE_PENALTY_NPC_DEFAULT" );
     path_settings.rough_terrain_cost = 0.0;
     path_settings.sharp_terrain_cost = INFINITY;
     path_settings.trap_cost = INFINITY;

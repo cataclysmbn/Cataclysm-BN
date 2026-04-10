@@ -14,8 +14,19 @@
 #include "point.h"
 
 /**
- * Interface for objects that need to react when submaps become resident or
- * are evicted from memory.
+ * Interface for objects that need to react when submaps enter or leave the
+ * *simulated* set — i.e. the fully-active zone driven by all non-lazy load
+ * requests (reality_bubble, fire_spread, player_base, script).
+ *
+ * **Important distinction:** these callbacks track simulation membership, not
+ * memory residency.  A submap that transitions simulated → lazy_border fires
+ * on_submap_unloaded even though it remains resident in its mapbuffer.
+ * Similarly, lazy_border → evicted does NOT fire on_submap_unloaded; that
+ * eviction is silent from the listener's perspective.
+ *
+ * Implementors that need to track memory residency rather than simulation
+ * membership must maintain their own residency cache using
+ * mapbuffer::lookup_submap_in_memory().
  *
  * Implementors are registered with submap_load_manager::add_listener() and
  * are notified during submap_load_manager::update().
@@ -27,14 +38,17 @@ class submap_load_listener
 
         /**
          * Called when the submap at @p pos in dimension @p dim_id has just
-         * been loaded into its mapbuffer and is ready for use.
+         * entered the simulated set and game logic should begin tracking it.
+         * The submap is guaranteed to be resident in its mapbuffer at this point.
          */
         virtual void on_submap_loaded( const tripoint_abs_sm &pos,
                                        const std::string &dim_id ) = 0;
 
         /**
-         * Called just before the submap at @p pos in dimension @p dim_id is
-         * removed from its mapbuffer.
+         * Called when the submap at @p pos in dimension @p dim_id has just
+         * left the simulated set.  The submap may still be resident in memory
+         * (e.g. it moved to the lazy-border zone); game logic should stop
+         * treating it as actively simulated.
          */
         virtual void on_submap_unloaded( const tripoint_abs_sm &pos,
                                          const std::string &dim_id ) = 0;
@@ -59,8 +73,8 @@ struct submap_load_request {
     tripoint_abs_sm center;
     int radius = 0;  ///< Half-width in submaps.  For reality_bubble this defines the circle
     ///< radius; for other sources a (2*radius+1)^2 square is loaded per z-level.
-    int z_min = 0;   ///< Lowest z-level to include (inclusive).  Set to center.z for single-level.
-    int z_max = 0;   ///< Highest z-level to include (inclusive).  Set to center.z for single-level.
+    ///< Always covers the full z-range (-OVERMAP_DEPTH to OVERMAP_HEIGHT); quads are
+    ///< full vertical pillars and cannot be loaded one slice at a time.
 };
 
 /**
@@ -82,20 +96,15 @@ class submap_load_manager
         submap_load_manager &operator=( const submap_load_manager & ) = delete;
 
         /**
-         * Register a new load request.
-         *
-         * @p z_min and @p z_max control the z-level range covered by the request.
-         * Pass the same value for both to cover a single z-level.  For reality-bubble
-         * requests in z-level builds, pass @c -OVERMAP_DEPTH and @c OVERMAP_HEIGHT.
+         * Register a new load request.  The request always covers all z-levels
+         * (-OVERMAP_DEPTH to OVERMAP_HEIGHT); quads are full vertical pillars.
          *
          * @return A handle that identifies this request for future updates/releases.
          */
         load_request_handle request_load( load_request_source source,
                                           const std::string &dim_id,
                                           const tripoint_abs_sm &center,
-                                          int radius,
-                                          int z_min,
-                                          int z_max );
+                                          int radius );
 
         /**
          * Move the center of an existing request (e.g. on player movement).
@@ -216,6 +225,13 @@ class submap_load_manager
         void flush_prev_desired();
 
         /**
+         * Returns true if all background work has been drained — i.e. both
+         * lazy_futures_ and presave_futures_ are empty.  Used by flush_prev_desired()
+         * to assert correct call ordering during dimension switches.
+         */
+        auto is_fully_drained() const noexcept -> bool;
+
+        /**
          * Precompute the set of (dx, dy) offsets that form a filled square of
          * the given @p radius and cache them for use in compute_desired_set().
          *
@@ -269,21 +285,18 @@ class submap_load_manager
         std::vector<point> bubble_offsets_;
 
         /** In-flight load_or_generate_quad futures for lazy border positions.
+         *  Keyed by quad_key for O(log N) lookup and erase.
          *  Returns true if mapgen ran (newly-generated quad), false if the quad was
-         *  already on disk.  Each future is paired with the quad key so we can remove
-         *  it from lazy_in_flight_ when reaped and mark newly-generated quads dirty. */
-        std::vector<std::pair<quad_key, std::future<bool>>> lazy_futures_;
-
-        /** Quad keys with in-flight lazy futures — prevents duplicate submissions. */
-        std::unordered_set<quad_key, pair_hash> lazy_in_flight_;
+         *  already on disk.  Presence in the map also serves as the in-flight guard
+         *  (replaces the old lazy_in_flight_ unordered_set). */
+        std::map<quad_key, std::future<bool>> lazy_futures_;
 
         /** In-flight presave_quad futures for dirty quads that left simulation.
-         *  Eviction waits for these before freeing the in-memory submaps. */
-        std::vector<std::pair<quad_key, std::future<void>>> presave_futures_;
-
-        /** Quad keys with in-flight presave futures.
-         *  Used to gate re-entry into simulation and to avoid double-submission. */
-        std::unordered_set<quad_key, pair_hash> presave_in_flight_;
+         *  Keyed by quad_key for O(log N) lookup and erase.
+         *  Eviction waits for these before freeing the in-memory submaps.
+         *  Presence in the map also serves as the in-flight guard
+         *  (replaces the old presave_in_flight_ unordered_set). */
+        std::map<quad_key, std::future<void>> presave_futures_;
 
         /**
          * Quads that have entered the simulated zone at least once since they

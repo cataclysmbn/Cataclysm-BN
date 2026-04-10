@@ -233,22 +233,64 @@ void mapbuffer::unload_quad( const tripoint &om_addr, bool save )
 
 submap *mapbuffer::lookup_submap( const tripoint &p )
 {
-    // Hold submaps_mutex_ for the entire call so that concurrent background
-    // add_submap() calls cannot race with our submaps.find() or the subsequent
-    // unserialize_submaps() → add_submap() path.  std::recursive_mutex allows
-    // the nested add_submap() call (inside unserialize_submaps) to re-acquire.
-    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
-    const auto iter = submaps.find( p );
-    if( iter == submaps.end() ) {
-        try {
-            return unserialize_submaps( p );
-        } catch( const std::exception &err ) {
-            debugmsg( "Failed to load submap %s: %s", p.to_string(), err.what() );
+    // Fast path: submap already resident in memory.
+    if( submap *sm = lookup_submap_in_memory( p ) ) {
+        return sm;
+    }
+
+    // Cache miss — perform disk I/O outside submaps_mutex_ so that concurrent
+    // preload_quad() workers on other quads are not stalled behind this call.
+    const tripoint om_addr = sm_to_omt_copy( p );
+
+    std::string pending_data;
+    {
+        std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
+        const auto it = pending_writes_.find( om_addr );
+        if( it != pending_writes_.end() ) {
+            pending_data = std::move( it->second );
+            pending_writes_.erase( it );
         }
+    }
+
+    std::vector<std::pair<tripoint, std::unique_ptr<submap>>> loaded;
+    auto already_loaded = [this]( const tripoint & q ) {
+        return lookup_submap_in_memory( q ) != nullptr;
+    };
+
+    try {
+        bool found = false;
+        if( !pending_data.empty() ) {
+            std::istringstream iss( pending_data );
+            JsonIn jsin( iss );
+            deserialize_into_vec( jsin, loaded, already_loaded );
+            found = true;
+        } else {
+            found = g->get_active_world()->read_map_quad( dimension_id_, om_addr,
+            [this, &loaded, &already_loaded]( JsonIn & jsin ) {
+                deserialize_into_vec( jsin, loaded, already_loaded );
+            } );
+        }
+        if( !found ) {
+            return nullptr;
+        }
+    } catch( const std::exception &err ) {
+        debugmsg( "Failed to load submap %s: %s", p.to_string(), err.what() );
         return nullptr;
     }
 
-    return iter->second.get();
+    for( auto &[pos, sm] : loaded ) {
+        if( !add_submap( pos, sm ) ) {
+            DebugLog( DL::Warn, DC::Map ) << string_format(
+                                              "lookup_submap: submap %d,%d,%d already loaded; keeping in-memory version",
+                                              pos.x, pos.y, pos.z );
+        }
+    }
+
+    submap *result = lookup_submap_in_memory( p );
+    if( !result ) {
+        debugmsg( "file did not contain the expected submap %d,%d,%d", p.x, p.y, p.z );
+    }
+    return result;
 }
 
 void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_progress )
@@ -462,41 +504,6 @@ void mapbuffer::save_quad( const tripoint &om_addr, std::list<tripoint> &submaps
     } );
 }
 
-// We're reading in way too many entities here to mess around with creating sub-objects and
-// seeking around in them, so we're using the json streaming API.
-submap *mapbuffer::unserialize_submaps( const tripoint &p )
-{
-    // Map the tripoint to the submap quad that stores it.
-    const tripoint om_addr = sm_to_omt_copy( p );
-
-    std::string pending_data;
-    {
-        std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
-        const auto it = pending_writes_.find( om_addr );
-        if( it != pending_writes_.end() ) {
-            pending_data = std::move( it->second );
-            pending_writes_.erase( it );
-        }
-    }
-
-    using namespace std::placeholders;
-    if( !pending_data.empty() ) {
-        std::istringstream iss( pending_data );
-        JsonIn jsin( iss );
-        deserialize( jsin );
-    } else if( !g->get_active_world()->read_map_quad( dimension_id_, om_addr,
-               std::bind( &mapbuffer::deserialize, this, _1 ) ) ) {
-        // If it doesn't exist on disk either, trigger generating it.
-        return nullptr;
-    }
-    if( !submaps.contains( p ) ) {
-        debugmsg( "file did not contain the expected submap %d,%d,%d",
-                  p.x, p.y, p.z );
-        return nullptr;
-    }
-    return submaps[ p ].get();
-}
-
 void mapbuffer::deserialize_into_vec(
     JsonIn &jsin,
     std::vector<std::pair<tripoint, std::unique_ptr<submap>>> &out,
@@ -537,27 +544,6 @@ void mapbuffer::deserialize_into_vec(
         }
         if( !skip ) {
             out.emplace_back( submap_coordinates, std::move( sm ) );
-        }
-    }
-}
-
-void mapbuffer::deserialize( JsonIn &jsin )
-{
-    std::vector<std::pair<tripoint, std::unique_ptr<submap>>> loaded;
-    // submaps_mutex_ is already held (recursive_mutex via lookup_submap),
-    // so lookup_submap_in_memory re-acquires safely.
-    deserialize_into_vec( jsin, loaded, [this]( const tripoint & p ) {
-        return lookup_submap_in_memory( p ) != nullptr;
-    } );
-    for( auto &[pos, sm] : loaded ) {
-        if( !add_submap( pos, sm ) ) {
-            // In-memory version takes precedence; the disk entry is stale.
-            // This can happen legitimately when a quad is partially reloaded after
-            // unload_submap() broke quad consistency (pre-unload_quad fix).
-            // With quad-level eviction (unload_quad) this should not occur in normal play.
-            DebugLog( DL::Warn, DC::Map ) << string_format(
-                                              "submap %d,%d,%d was already loaded; keeping in-memory version",
-                                              pos.x, pos.y, pos.z );
         }
     }
 }

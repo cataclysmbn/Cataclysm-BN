@@ -729,7 +729,7 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
             } else {
                 // Already installed from blueprint
                 const auto lock = part_with_feature( door, str_DOOR_LOCKING, true );
-                if( idx >= 0 ) {
+                if( lock >= 0 ) {
                     parts[lock].enabled = lockDoors;
                 } else {
                     // Already installed from blueprint
@@ -3708,10 +3708,17 @@ std::vector<rider_data> vehicle::get_riders() const
 
 player *vehicle::get_passenger( int p ) const
 {
-    for( auto part : get_parts_at( mount_to_tripoint( parts[p].mount ), "BOARDABLE",
-                                   part_status_flag::any ) ) {
-        if( part && part->has_flag( vehicle_part::passenger_flag ) ) {
-            return g->critter_by_id<player>( part->passenger_id );
+    // Compare by mount (2D vehicle-local tile) rather than global tripoint.
+    // mount_to_tripoint() uses coord_translate which can produce nonzero z on
+    // ramp terrain, but precalc[0].z is always cleared to 0 in precalc_mounts().
+    // The tripoint mismatch causes get_parts_at() to find no parts on ramps.
+    const point &target_mount = parts[p].mount;
+    for( auto &part : parts ) {
+        if( part.removed || part.mount != target_mount ) {
+            continue;
+        }
+        if( part.info().has_flag( "BOARDABLE" ) && part.has_flag( vehicle_part::passenger_flag ) ) {
+            return g->critter_by_id<player>( part.passenger_id );
         }
     }
     return nullptr;
@@ -5619,6 +5626,11 @@ void vehicle::power_parts()
 
 vehicle *vehicle::find_vehicle( const tripoint &where )
 {
+    return find_vehicle( where, MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() ) );
+}
+
+vehicle *vehicle::find_vehicle( const tripoint &where, mapbuffer &mbuf )
+{
     // Is it in the reality bubble?
     tripoint veh_local = g->m.getlocal( where );
     if( const optional_vpart_position vp = g->m.veh_at( veh_local ) ) {
@@ -5629,7 +5641,6 @@ vehicle *vehicle::find_vehicle( const tripoint &where )
     tripoint veh_in_sm = where;
     tripoint veh_sm = ms_to_sm_remain( veh_in_sm );
 
-    auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
     auto sm = mbuf.lookup_submap( veh_sm );
     if( sm == nullptr ) {
         return nullptr;
@@ -7037,7 +7048,7 @@ void vehicle::remove_remote_part( int part_num )
         }
         return;
     }
-    auto veh = find_vehicle( parts[part_num].target.second );
+    auto veh = find_vehicle( parts[part_num].target.second, MAPBUFFER_REGISTRY.get( dimension_id_ ) );
 
     // If the target vehicle is still there, ask it to remove its part
     if( veh != nullptr ) {

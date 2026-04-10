@@ -5341,7 +5341,7 @@ std::string item::display_name( unsigned int quantity ) const
             get_var( "reveal_map_center_omt", you.global_omt_location().raw() );
         tripoint_abs_sm map_pos =
             project_to<coords::sm>( tripoint_abs_omt( map_pos_omt ) );
-        const city *c = ACTIVE_OVERMAP_BUFFER.closest_city( map_pos ).city;
+        const city *c = get_overmapbuffer( you.get_dimension() ).closest_city( map_pos ).city;
         if( c != nullptr ) {
             name = string_format( "%s %s", c->name, name );
         }
@@ -6634,8 +6634,7 @@ int item::get_encumber_when_containing(
         default:
             break;
     }
-
-    encumber += static_cast<int>( std::ceil( get_clothing_mod_val( clothing_mod_type_encumbrance ) ) );
+    encumber += std::lround( get_clothing_mod_val( clothing_mod_type_encumbrance ) );
 
     return encumber;
 }

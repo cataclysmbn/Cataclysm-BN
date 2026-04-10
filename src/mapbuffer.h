@@ -206,10 +206,9 @@ class mapbuffer
         using submap_map_t = std::map<tripoint, std::unique_ptr<submap>>;
 
         /// Guards all accesses to `submaps` that may overlap with background
-        /// worker threads calling add_submap().  std::recursive_mutex is used
-        /// so that the main-thread call chain
-        ///   lookup_submap → unserialize_submaps → add_submap
-        /// can re-acquire the mutex without deadlocking.
+        /// worker threads calling add_submap().  std::recursive_mutex allows
+        /// mapgen code (running under a held lock) to call lookup_submap_in_memory()
+        /// or add_submap() without deadlocking.
         mutable std::recursive_mutex submaps_mutex_;
 
         /// Submaps that preload_quad() could not add (duplicate already in memory).
@@ -277,8 +276,6 @@ class mapbuffer
         // There's a very good reason this is private,
         // if not handled carefully, this can erase in-use submaps and crash the game.
         void remove_submap( tripoint addr );
-        submap *unserialize_submaps( const tripoint &p );
-        void deserialize( JsonIn &jsin );
         /**
          * Parse the quad JSON stream into @p out without acquiring @c submaps_mutex_
          * or touching the in-memory map.  Called by both @c deserialize() (which then

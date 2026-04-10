@@ -266,7 +266,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     } );
 
     DOC( "Get the global overmap buffer" );
-    luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return ACTIVE_OVERMAP_BUFFER; } );
+    luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return get_active_overmapbuffer(); } );
 
     DOC( "Get direction from a tripoint delta" );
     luna::set_fx( lib, "direction_from", []( const tripoint & delta ) -> direction { return direction_from( delta ); } );

@@ -84,6 +84,9 @@ void map::add_light_from_items( const tripoint &p, const item_stack::iterator &b
 // more than one thread (RISK-1 fix).
 void map::update_weather_transparency_lookup()
 {
+    assert( !is_pool_worker_thread() &&
+            "update_weather_transparency_lookup() must be called serially "
+            "before any parallel build_transparency_cache() invocation" );
     const float sight_penalty = get_weather().weather_id->sight_penalty;
     if( sight_penalty != 1.0f &&
         LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty != weather_lookup_.transparency ) {
@@ -1036,6 +1039,9 @@ static const light_model k_sight_model = {
 void map::build_seen_cache( const tripoint &origin, const int target_z )
 {
     ZoneScopedN( "build_seen_cache" );
+    if( !inbounds( origin ) ) {
+        return;
+    }
     auto &target_cache = get_cache( target_z );
 
     constexpr float light_transparency_solid = LIGHT_TRANSPARENCY_SOLID;
@@ -1073,24 +1079,57 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                           lc.vehicle_obscured_cache.data(), lc.cache_x, lc.cache_y,
                           origin.xy(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
         }
+
+        // Floor-blocking pass for non-origin z-levels: accumulate floor_cache going
+        // down then up from origin.z (same vert_blocked sweep as the 3D fast path).
+        // Without this, the independent 2D casts above let players see through floors
+        // to caves below buildings, rooftops above, etc.
+        {
+            const auto &origin_lc = get_cache( origin.z );
+            const int cache_sz = origin_lc.cache_x * origin_lc.cache_y;
+            std::vector<char> vert_blocked( cache_sz, 0 );
+
+            // Going down: floor_cache[z+1] blocks crossing from z+1 to z.
+            std::ranges::fill( vert_blocked, 0 );
+            for( int z = origin.z - 1; z >= -OVERMAP_DEPTH; --z ) {
+                const auto &fc = get_cache( z + 1 ).floor_cache;
+                std::ranges::transform( vert_blocked, fc, vert_blocked.begin(),
+                                        []( char a, char b ) -> char { return a | b; } );
+                auto &zc = get_cache( z );
+                std::ranges::transform( zc.seen_cache, vert_blocked, zc.seen_cache.begin(),
+                []( float s, char blocked ) -> float {
+                    return blocked ? 0.0f : s;
+                } );
+            }
+
+            // Going up: floor_cache[z] blocks crossing from z-1 to z.
+            std::ranges::fill( vert_blocked, 0 );
+            for( int z = origin.z + 1; z <= OVERMAP_HEIGHT; ++z ) {
+                const auto &fc = get_cache( z ).floor_cache;
+                std::ranges::transform( vert_blocked, fc, vert_blocked.begin(),
+                                        []( char a, char b ) -> char { return a | b; } );
+                auto &zc = get_cache( z );
+                std::ranges::transform( zc.seen_cache, vert_blocked, zc.seen_cache.begin(),
+                []( float s, char blocked ) -> float {
+                    return blocked ? 0.0f : s;
+                } );
+            }
+        }
     } else {
         ZoneScopedN( "build_seen_cache_3d" );
         // Cache per-z-level data pointers.
         array_of_grids_of<const float> transparency_caches;
         array_of_grids_of<float> seen_caches;
-        array_of_grids_of<const bool> floor_caches;
-        array_of_grids_of<const bool> vehicle_floor_caches;
+        array_of_grids_of<const char> floor_caches;
+        array_of_grids_of<const char> vehicle_floor_caches;
         array_of_grids_of<const diagonal_blocks> blocked_caches;
         for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
             auto &cur_cache = get_cache( z );
             const int idx = z + OVERMAP_DEPTH;
             transparency_caches[idx] = { cur_cache.transparency_cache.data(), cur_cache.cache_x, cur_cache.cache_y };
             seen_caches[idx]         = { cur_cache.seen_cache.data(),         cur_cache.cache_x, cur_cache.cache_y };
-            // floor_cache / vehicle_floor_cache store char; reinterpret as bool pointer (safe: 0↔false, nonzero↔true).
-            // NOLINTNEXTLINE(cata-use-localized-sorting)
-            floor_caches[idx]         = { reinterpret_cast<const bool *>( cur_cache.floor_cache.data() ),         cur_cache.cache_x, cur_cache.cache_y };
-            // NOLINTNEXTLINE(cata-use-localized-sorting)
-            vehicle_floor_caches[idx] = { reinterpret_cast<const bool *>( cur_cache.vehicle_floor_cache.data() ), cur_cache.cache_x, cur_cache.cache_y };
+            floor_caches[idx]         = { cur_cache.floor_cache.data(),         cur_cache.cache_x, cur_cache.cache_y };
+            vehicle_floor_caches[idx] = { cur_cache.vehicle_floor_cache.data(), cur_cache.cache_x, cur_cache.cache_y };
             blocked_caches[idx] = { cur_cache.vehicle_obscured_cache.data(), cur_cache.cache_x, cur_cache.cache_y };
             std::fill( cur_cache.seen_cache.begin(), cur_cache.seen_cache.end(),
                        light_transparency_solid );
@@ -1201,11 +1240,14 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                     if( cx >= 0 && cy >= 0 ) {
                         if( oz != cz && oz > -OVERMAP_DEPTH && cz < OVERMAP_HEIGHT ) {
                             if( oz < cz ) {
-                                if( floor_caches[cz + OVERMAP_DEPTH].at( cx, cy ) ) {
+                                const auto &fc = floor_caches[cz + OVERMAP_DEPTH];
+                                if( cx < fc.sx && cy < fc.sy && fc.at( cx, cy ) ) {
                                     return false;
                                 }
                             } else {
-                                if( floor_caches[oz + OVERMAP_DEPTH].at( ox, oy ) ) {
+                                const auto &fc = floor_caches[oz + OVERMAP_DEPTH];
+                                if( ox >= 0 && oy >= 0 && ox < fc.sx && oy < fc.sy &&
+                                    fc.at( ox, oy ) ) {
                                     return false;
                                 }
                             }
@@ -1313,6 +1355,12 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                         // Accurate path: restrict to tiles geometrically unreachable by
                         // cast_zlight (dz * Z_LEVEL_SCALE > max(|dx|,|dy|)), then verify
                         // via DDA to block paths shadowed by walls at intermediate levels.
+                        //
+                        // The threshold `fdz * Z_LEVEL_SCALE > fdh` is the exact condition
+                        // under which is_3d_clear's DDA is dominated by the vertical component
+                        // (i.e. total = |dz|*Z_LEVEL_SCALE in max(|dx|,|dy|,|dz|*Z_LEVEL_SCALE)).
+                        // Both share the same Z_LEVEL_SCALE constant; if that constant or the
+                        // DDA distance formula changes, this threshold must be updated to match.
                         const float origin_vis = origin_seen[tile_idx];
                         if( !vert_blocked[tile_idx] && origin_vis > 0.0f ) {
                             if( fov_3d_occlusion ) {
