@@ -382,6 +382,26 @@
       "yarnName": "endrepeat",
       "documentation": "Closes a <<repeat_for_*>> block.",
       "parameters": []
+    },
+    {
+      "yarnName": "u_bulk_trade_accept",
+      "documentation": "Player sells all charges of the current item (set by <<repeat_for_item/category>>) to the NPC. The NPC pays the player in faction currency.",
+      "parameters": []
+    },
+    {
+      "yarnName": "npc_bulk_trade_accept",
+      "documentation": "NPC sells all charges of the current item to the player. The player pays in faction currency.",
+      "parameters": []
+    },
+    {
+      "yarnName": "u_bulk_donate",
+      "documentation": "Player gives all charges of the current item to the NPC with no payment.",
+      "parameters": []
+    },
+    {
+      "yarnName": "npc_bulk_donate",
+      "documentation": "NPC gives all charges of the current item to the player with no payment.",
+      "parameters": []
     }
   ],
   "functions": [

@@ -4844,6 +4844,86 @@ void register_builtin_commands( command_registry &reg )
         }
         return command_signal::none;
     } );
+
+    // Bulk trade / donate — operate on the current item set by <<repeat_for_item/category>>.
+    //   u_bulk_trade_accept   — player sells all charges of current item to NPC, NPC pays
+    //   npc_bulk_trade_accept — NPC sells all charges of current item to player, player pays
+    //   u_bulk_donate         — player gives all charges of current item to NPC, no payment
+    //   npc_bulk_donate       — NPC gives all charges of current item to player, no payment
+    auto bulk_trade_impl = []( bool is_trade, bool is_npc ) -> command_signal {
+        auto *npc_ptr = g_conv_ctx.npc_ref;
+        auto *player_ptr = g_conv_ctx.player_ref;
+        if( !npc_ptr || !player_ptr ) {
+            return command_signal::none;
+        }
+
+        itype_id cur_item( g_conv_ctx.current_item_type );
+        if( cur_item.is_empty() ) {
+            DebugLog( DL::Warn, DC::Dialogue )
+                    << "yarn: bulk trade command called with no current item set";
+            return command_signal::none;
+        }
+
+        player *seller = player_ptr;
+        player *buyer  = static_cast<player *>( npc_ptr );
+        if( is_npc ) {
+            seller = static_cast<player *>( npc_ptr );
+            buyer  = player_ptr;
+        }
+
+        int seller_has = seller->charges_of( cur_item );
+        detached_ptr<item> tmp = item::spawn( cur_item );
+        tmp->charges = seller_has;
+
+        if( is_trade ) {
+            int price = tmp->price( true ) * ( is_npc ? -1 : 1 ) + npc_ptr->op_of_u.owed;
+            if( npc_ptr->get_faction() && !npc_ptr->get_faction()->currency.is_empty() ) {
+                const itype_id &pay_in = npc_ptr->get_faction()->currency;
+                item *pay = item::spawn_temporary( pay_in );
+                if( npc_ptr->value( *pay ) > 0 ) {
+                    int buyer_has = price / npc_ptr->value( *pay );
+                    if( is_npc ) {
+                        buyer_has = std::min( buyer_has, buyer->charges_of( pay_in ) );
+                        buyer->use_charges( pay_in, buyer_has );
+                    } else {
+                        if( buyer_has == 1 ) {
+                            popup( _( "%1$s gives you a %2$s." ),
+                                   npc_ptr->disp_name(), pay->tname() );
+                        } else if( buyer_has > 1 ) {
+                            popup( _( "%1$s gives you %2$d %3$s." ),
+                                   npc_ptr->disp_name(), buyer_has, pay->tname() );
+                        }
+                    }
+                    for( int i = 0; i < buyer_has; i++ ) {
+                        seller->i_add( item::spawn( *pay ) );
+                        price -= npc_ptr->value( *pay );
+                    }
+                }
+                npc_ptr->op_of_u.owed = price;
+            }
+        }
+
+        seller->use_charges( cur_item, seller_has );
+        buyer->i_add( std::move( tmp ) );
+        return command_signal::none;
+    };
+
+    reg.add( "u_bulk_trade_accept", 0,
+    [bulk_trade_impl]( const std::vector<value> & ) -> command_signal {
+        return bulk_trade_impl( true, false );
+    } );
+    reg.add( "npc_bulk_trade_accept", 0,
+    [bulk_trade_impl]( const std::vector<value> & ) -> command_signal {
+        return bulk_trade_impl( true, true );
+    } );
+    reg.add( "u_bulk_donate", 0,
+    [bulk_trade_impl]( const std::vector<value> & ) -> command_signal {
+        return bulk_trade_impl( false, false );
+    } );
+    reg.add( "npc_bulk_donate", 0,
+    [bulk_trade_impl]( const std::vector<value> & ) -> command_signal {
+        return bulk_trade_impl( false, true );
+    } );
 }
 
 // ============================================================
