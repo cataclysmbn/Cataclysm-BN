@@ -1753,7 +1753,10 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                     valid_choices.push_back( c );
                 }
                 if( valid_choices.empty() ) { continue; }
-                execute_elements( valid_choices[rng( 0, valid_choices.size() - 1 )].body, d_win );
+                auto result = execute_elements( valid_choices[rng( 0, valid_choices.size() - 1 )].body, d_win );
+                if( result.kind != signal::ok ) {
+                    return result;
+                }
                 break;
             }
 
