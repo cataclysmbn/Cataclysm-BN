@@ -10,7 +10,8 @@
 // Speaker attribution:
 //   NPC: text  — spoken by the NPC (resolves to the NPC's actual runtime name)
 //   You: text  — spoken by the player
-//   plain text — unattributed narration; no speaker prefix, no quotes
+//   plain text — continuation; white, no label, no extra spacing (flows under the line above)
+//   - text     — narrator/stage-direction; gray, no label, no quotes
 //   #spoken    — echo the choice label itself as player speech (opt-in)
 //
 // Navigation semantics recap:
@@ -82,9 +83,10 @@ shared_choices: ShelterActions common::CommonActions
 You: Do you have any supplies you can spare?
 NPC: I found a few cans in the back room.  You're welcome to them.
 I'm not going anywhere fast anyway.
-There's also a shelf near the back wall.  Just don't go past the locked door —
-I don't know what's in there and I haven't wanted to find out.
+// You can pass in "silent" as another argument in this to hide the automatic "gave item" narration.
 <<give_item "veggy_canned" 2>>
+NPC: There's also a shelf near the back wall.  Just don't go past the locked door -
+I don't know what's in there and I haven't wanted to find out.
 -> Thanks, I appreciate it. #spoken
     <<jump Start>>
 ===

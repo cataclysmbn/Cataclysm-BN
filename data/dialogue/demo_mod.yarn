@@ -19,7 +19,8 @@
 // Speaker attribution:
 //   NPC: text     — spoken by the NPC (resolves to the NPC's actual runtime name)
 //   You: text     — spoken by the player
-//   plain text    — unattributed narration; no speaker prefix, no quotes
+//   plain text    — continuation; white, no label, no extra spacing
+//   - text        — narrator/stage-direction; gray, no label, no quotes
 //   #spoken       — echo the choice label itself as player speech (opt-in)
 //   <<player "...">> / <<npc "...">> — programmatic speech inside command blocks
 //

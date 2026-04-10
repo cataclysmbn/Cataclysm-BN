@@ -1220,16 +1220,21 @@ auto parse_line_group( yarn_parser &p, const std::vector<raw_line> &lines,
         int line_indent = line.indent;
         ++i;  // advance past the => line before parsing the body
 
-        // Construct the text element, respecting "Speaker: text" format.
+        // Construct the text element, respecting "- narrator", "Speaker: text", or plain text.
         node_element text_elem;
         text_elem.type = node_element::kind::dialogue;
-        auto colon = line_group_text.find( ':' );
-        if( colon != std::string_view::npos && colon > 0 &&
-            line_group_text.find( ' ' ) > colon ) {
-            text_elem.speaker = std::string( trim_sv( line_group_text.substr( 0, colon ) ) );
-            text_elem.text    = std::string( trim_sv( line_group_text.substr( colon + 1 ) ) );
+        if( line_group_text.size() >= 2 && line_group_text[0] == '-' && line_group_text[1] == ' ' ) {
+            text_elem.speaker = "__narrator";
+            text_elem.text    = std::string( trim_sv( line_group_text.substr( 2 ) ) );
         } else {
-            text_elem.text = std::string( line_group_text );
+            auto colon = line_group_text.find( ':' );
+            if( colon != std::string_view::npos && colon > 0 &&
+                line_group_text.find( ' ' ) > colon ) {
+                text_elem.speaker = std::string( trim_sv( line_group_text.substr( 0, colon ) ) );
+                text_elem.text    = std::string( trim_sv( line_group_text.substr( colon + 1 ) ) );
+            } else {
+                text_elem.text = std::string( line_group_text );
+            }
         }
 
         node_element::choice ch;
@@ -1600,19 +1605,25 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
             continue;
         }
 
-        // Dialogue line — split "Speaker: text" or plain "text"
+        // Dialogue line — split "- narrator text", "Speaker: text", or plain "text"
         {
             node_element elem;
             elem.type = node_element::kind::dialogue;
 
-            auto colon = line.content.find( ':' );
-            if( colon != std::string::npos && colon > 0 &&
-                line.content.find( ' ' ) > colon ) {
-                // Has "Speaker: " format
-                elem.speaker = std::string( trim_sv( line.content.substr( 0, colon ) ) );
-                elem.text = std::string( trim_sv( line.content.substr( colon + 1 ) ) );
+            if( line.content.size() >= 2 && line.content[0] == '-' && line.content[1] == ' ' ) {
+                // Narrator line: "- text" — rendered gray, no speaker label.
+                elem.speaker = "__narrator";
+                elem.text    = std::string( trim_sv( line.content.substr( 2 ) ) );
             } else {
-                elem.text = line.content;
+                auto colon = line.content.find( ':' );
+                if( colon != std::string::npos && colon > 0 &&
+                    line.content.find( ' ' ) > colon ) {
+                    // Has "Speaker: " format
+                    elem.speaker = std::string( trim_sv( line.content.substr( 0, colon ) ) );
+                    elem.text    = std::string( trim_sv( line.content.substr( colon + 1 ) ) );
+                } else {
+                    elem.text = line.content;
+                }
             }
             elements.push_back( std::move( elem ) );
             ++i;
@@ -2046,14 +2057,16 @@ namespace
 {
 
 struct yarn_conv_ctx {
-    npc         *npc_ref           = nullptr;
-    player      *player_ref        = nullptr;
+    npc             *npc_ref           = nullptr;
+    player          *player_ref        = nullptr;
     // DEPRECATED: Only used by the legacy JSON dialogue shim. Remove when migration complete.
-    dialogue    *dialogue_ref      = nullptr;
+    dialogue        *dialogue_ref      = nullptr;
+    // Set at the start of run() so commands can emit narrator lines to the dialogue window.
+    dialogue_window *d_win_ref         = nullptr;
     // Set by _set_current_item command during repeat_group choice execution.
-    std::string  current_item_type;
+    std::string      current_item_type;
     // Set by <<set_reason>> command; cleared at conversation start. Read by has_reason().
-    std::string  reason;
+    std::string      reason;
 };
 
 thread_local yarn_conv_ctx g_conv_ctx;
@@ -2117,6 +2130,8 @@ yarn_runtime::yarn_runtime( options opts )
 
 void yarn_runtime::run( dialogue_window &d_win )
 {
+    g_conv_ctx.d_win_ref = &d_win;
+
     // Resolves a jump/goto target string to a stack_frame.
     // Bare names resolve within the current frame's story.
     // "story::NodeName" looks up the named story from the global registry.
@@ -2170,32 +2185,54 @@ void yarn_runtime::run( dialogue_window &d_win )
     }
 }
 
+// Converts Yarn-style markup [color_X]text[/color_X] to CDDA tags <color_X>text</color_X>.
+// Passes through existing <color_X> tags and any unrecognised [...] sequences unchanged.
+static auto apply_yarn_markup( std::string text ) -> std::string
+{
+    std::string result;
+    result.reserve( text.size() );
+    std::size_t pos = 0;
+    while( pos < text.size() ) {
+        if( text[pos] == '[' ) {
+            auto close = text.find( ']', pos + 1 );
+            if( close != std::string::npos ) {
+                auto tag = std::string_view( text ).substr( pos + 1, close - pos - 1 );
+                if( tag.starts_with( "color_" ) || tag.starts_with( "/color_" ) ) {
+                    result += '<';
+                    result += tag;
+                    result += '>';
+                    pos = close + 1;
+                    continue;
+                }
+            }
+        }
+        result += text[pos++];
+    }
+    return result;
+}
+
 void yarn_runtime::parse_dialogue_text( const node_element &elem, dialogue_window &d_win )
 {
-    auto text = interpolate( elem.text );
+    auto text = apply_yarn_markup( interpolate( elem.text ) );
     if( player_ && npc_ ) {
         parse_tags( text, *player_, *npc_, itype_id( g_conv_ctx.current_item_type ) );
     }
-    if( elem.speaker.empty() ) {
-        // Unattributed narration — no speaker prefix, no quotes.
-        // continuation=true suppresses the blank separator so consecutive
-        // unattributed lines flow as one block.  Color follows the window's
-        // own gray/white recency logic (no forced colorize here).
+
+    if( elem.speaker == "__narrator" ) {
+        // Narrator line — gray, prefixed with "- ", no speaker label, no quotes.
+        d_win.add_to_history( colorize( "- " + text, c_light_gray ) );
+    } else if( elem.speaker.empty() ) {
+        // Unattributed continuation — white, no label, tight spacing.
         d_win.add_to_history( text, /*continuation=*/true );
+    } else if( elem.speaker == "player" || elem.speaker == "You" || elem.speaker == "Player" ) {
+        d_win.add_to_history( string_format( "%s: \"%s\"",
+                                             colorize( _( "You" ), c_green ), text ) );
     } else {
-        std::string line;
-        if( elem.speaker == "player" || elem.speaker == "You"
-            || elem.speaker == "Player" ) {
-            line = string_format( "%s: \"%s\"",
-                                  colorize( _( "You" ), c_green ), text );
-        } else {
-            auto speaker = ( elem.speaker == "npc" || elem.speaker == "NPC" )
-                           ? ( npc_ ? npc_->name : "NPC" )
-                           : elem.speaker;
-            line = string_format( "%s: \"%s\"",
-                                  colorize( speaker, c_light_green ), text );
-        }
-        d_win.add_to_history( line );
+        auto speaker_name = ( elem.speaker == "npc" || elem.speaker == "NPC" )
+                            ? ( npc_ ? npc_->name : "NPC" )
+                            : elem.speaker;
+        d_win.add_to_history( string_format( "%s: \"%s\"",
+                                             colorize( speaker_name, c_light_green ), text ) );
     }
 }
 
@@ -2352,7 +2389,7 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                         // Static choice
                         const auto &ch = static_choices[chosen];
                         if( ch.echo_speech ) {
-                            auto choice_text = interpolate( ch.text );
+                            auto choice_text = apply_yarn_markup( interpolate( ch.text ) );
                             if( player_ && npc_ ) {
                                 parse_tags( choice_text, *player_, *npc_,
                                             itype_id( g_conv_ctx.current_item_type ) );
@@ -2550,7 +2587,7 @@ auto yarn_runtime::present_choices( const std::vector<node_element::choice> &cho
         response_lines.push_back( {
             static_cast<char>( 'a' + i ),
             c_white,
-            interpolate( choices[available[i]].text )
+            apply_yarn_markup( interpolate( choices[available[i]].text ) )
         } );
     }
 
@@ -4187,14 +4224,25 @@ void register_builtin_functions( func_registry &reg )
 
 void register_builtin_commands( command_registry &reg )
 {
-    // give_item "item_id" [count]
-    reg.add( "give_item", 1, 2, []( const std::vector<value> &args ) -> command_signal {
+    // give_item "item_id" [count] ["silent"]
+    // Default: emits a gray narrator line in the dialogue window confirming receipt.
+    // Pass "silent" as the third argument to suppress the notification.
+    reg.add( "give_item", 1, 3, []( const std::vector<value> &args ) -> command_signal {
         auto *p = g_conv_ctx.player_ref;
         if( p )
         {
             auto id    = itype_id( std::get<std::string>( args[0] ) );
             auto count = args.size() > 1 ? static_cast<int>( std::get<double>( args[1] ) ) : 1;
+            bool silent = args.size() > 2
+                          && std::holds_alternative<std::string>( args[2] )
+                          && std::get<std::string>( args[2] ) == "silent";
             p->add_item_with_id( id, count );
+            if( !silent && g_conv_ctx.d_win_ref ) {
+                auto item_name = colorize( item::nname( id, count ), id.obj().color );
+                g_conv_ctx.d_win_ref->add_to_history(
+                    colorize( string_format( _( "- Received %d %s." ), count, item_name ),
+                              c_light_gray ) );
+            }
         }
         return command_signal::none;
     } );
