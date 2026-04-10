@@ -7,9 +7,11 @@
 #include <cctype>
 #include <charconv>
 #include <cmath>
+#include <functional>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
+#include <unordered_set>
 #include <utility>
 
 #include "avatar.h"
@@ -1487,45 +1489,108 @@ void yarn_story::resolve_shared_choices( const node_lookup_fn &lookup,
         const std::string &own_name,
         std::vector<std::string> &out_errors )
 {
-    for( auto &[title, node] : nodes_ ) {
-        if( node.shared_choices.empty() ) {
-            continue;
-        }
-        auto cg_it = std::ranges::find_if( node.elements, []( const node_element & e ) {
+    std::unordered_set<std::string> resolved;
+    std::unordered_set<std::string> in_progress;
+
+    auto merge_choices = [&]( node_element & dest_cg, const yarn_node & base ) {
+        auto base_cg_it = std::ranges::find_if( base.elements, []( const node_element & e ) {
             return e.type == node_element::kind::choice_group;
         } );
-        if( cg_it == node.elements.end() ) {
-            out_errors.push_back( "shared_choices on '" + title + "': node has no choice_group" );
-            continue;
+        if( base_cg_it != base.elements.end() ) {
+            dest_cg.choices.insert( dest_cg.choices.end(),
+                                    base_cg_it->choices.begin(),
+                                    base_cg_it->choices.end() );
         }
-        for( const auto &ref : node.shared_choices ) {
-            if( ref == title ) {
-                out_errors.push_back( "shared_choices on '" + title + "': node lists itself as base" );
+    };
+
+    std::function<void( const std::string &, int )> resolve_node;
+    resolve_node = [&]( const std::string & node_title, int depth ) {
+        if( resolved.contains( node_title ) ) {
+            return;
+        }
+        if( in_progress.contains( node_title ) ) {
+            // Caller already emitted the cycle error before recursing.
+            return;
+        }
+
+        auto *node = get_node_mutable( node_title );
+        if( !node || node->shared_choices.empty() ) {
+            resolved.insert( node_title );
+            return;
+        }
+
+        in_progress.insert( node_title );
+
+        if( depth > 10 ) {
+            DebugLog( DL::Debug, DC::Dialogue )
+                    << "yarn shared_choices: chain depth exceeds 10 at node '" << node_title << "'";
+        }
+
+        auto cg_it = std::ranges::find_if( node->elements, []( const node_element & e ) {
+            return e.type == node_element::kind::choice_group;
+        } );
+        if( cg_it == node->elements.end() ) {
+            out_errors.push_back( "shared_choices on '" + node_title + "': node has no choice_group" );
+            in_progress.erase( node_title );
+            resolved.insert( node_title );
+            return;
+        }
+
+        for( const auto &ref : node->shared_choices ) {
+            if( ref == node_title ) {
+                out_errors.push_back( "shared_choices on '" + node_title + "': node lists itself as base" );
                 continue;
             }
-            // Parse "story::NodeName" or bare "NodeName" (same file).
-            std::string base_story = own_name;
-            std::string base_node  = ref;
+
+            std::string base_story_name = own_name;
+            std::string base_node_name  = ref;
             if( const auto sep = ref.find( "::" ); sep != std::string::npos ) {
-                base_story = ref.substr( 0, sep );
-                base_node  = ref.substr( sep + 2 );
+                base_story_name = ref.substr( 0, sep );
+                base_node_name  = ref.substr( sep + 2 );
             }
-            const yarn_node *base = lookup( base_story, base_node );
-            if( base == nullptr ) {
-                out_errors.push_back( "shared_choices on '" + title +
-                                      "': base node '" + ref + "' not found" );
-                continue;
+
+            if( base_story_name != own_name ) {
+                // Cross-story: resolution order of other stories is not guaranteed,
+                // so chaining is not supported across story files.
+                const yarn_node *base = lookup( base_story_name, base_node_name );
+                if( base == nullptr ) {
+                    out_errors.push_back( "shared_choices on '" + node_title +
+                                          "': base node '" + ref + "' not found" );
+                    continue;
+                }
+                if( !base->shared_choices.empty() ) {
+                    out_errors.push_back( "shared_choices on '" + node_title +
+                                          "': cross-story base '" + ref +
+                                          "' has its own shared_choices — chaining across stories is not supported" );
+                    continue;
+                }
+                merge_choices( *cg_it, *base );
+            } else {
+                // Within-story: check for cycle before recursing.
+                if( in_progress.contains( base_node_name ) ) {
+                    out_errors.push_back( "shared_choices on '" + node_title +
+                                          "': cycle detected involving '" + base_node_name + "'" );
+                    continue;
+                }
+                // Resolve base first so its choices are fully merged before we copy them.
+                resolve_node( base_node_name, depth + 1 );
+
+                const auto *base = get_node_mutable( base_node_name );
+                if( base == nullptr ) {
+                    out_errors.push_back( "shared_choices on '" + node_title +
+                                          "': base node '" + ref + "' not found" );
+                    continue;
+                }
+                merge_choices( *cg_it, *base );
             }
-            auto base_cg_it = std::ranges::find_if( base->elements, []( const node_element & e ) {
-                return e.type == node_element::kind::choice_group;
-            } );
-            if( base_cg_it == base->elements.end() ) {
-                continue;  // base has no choices; nothing to append
-            }
-            cg_it->choices.insert( cg_it->choices.end(),
-                                   base_cg_it->choices.begin(),
-                                   base_cg_it->choices.end() );
         }
+
+        in_progress.erase( node_title );
+        resolved.insert( node_title );
+    };
+
+    for( const auto &[title, node_ref] : nodes_ ) {
+        resolve_node( title, 0 );
     }
 }
 
@@ -2309,8 +2374,7 @@ void load_yarn_stories()
 
     // Resolve shared_choices across all loaded stories now that the full registry is populated.
     // Lookup function resolves both same-file bare names and cross-file "story::NodeName".
-    // Note: base nodes are expected to be leaf nodes (no shared_choices of their own).
-    // Chained shared_choices are not guaranteed to resolve in dependency order.
+    // Base nodes must be leaf nodes (no shared_choices of their own); chaining is an error.
     yarn_story::node_lookup_fn lookup = []( const std::string & story_name,
     const std::string & node_name ) -> const yarn_node * {
         auto &reg = story_registry();
