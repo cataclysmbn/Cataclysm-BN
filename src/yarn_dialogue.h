@@ -217,7 +217,7 @@ struct node_element {
         choice_group,  // a set of -> choices presented to the player
         command,       // <<command_name arg1 arg2 ...>>
         jump,          // <<jump NodeName>>  — replace current frame (standard Yarn Spinner navigate; no implicit return)
-        goto_node,     // <<goto NodeName>>  — push frame; callee falls off end → pop (return to caller)
+        goto_node,     // <<detour NodeName>>  — push frame; callee falls off end → pop (return to caller)
         stop,          // <<stop>>           — end conversation (clear entire stack)
         yarn_return,   // <<return>>         — explicit early pop of current frame
         if_block,      // <<if>> / <<else>> / <<endif>>
@@ -258,6 +258,10 @@ struct node_element {
         // Add #spoken to the choice line to echo it.  Use You: in the body for
         // explicit player speech with different wording than the button label.
         bool echo_speech = false;
+        // If true, this choice is sorted to the end of the menu after all non-tail
+        // choices, regardless of where it was authored or injected.  Add #tail to
+        // the choice line.  Relative order among tail choices is preserved.
+        bool tail = false;
     };
     std::vector<choice> choices;
 
@@ -349,9 +353,9 @@ class yarn_story
 //   <<jump X>>   Replace the current frame with X (standard Yarn Spinner behavior).
 //                Creates graph edges in the VS Code Yarn Spinner extension.
 //                Use for lateral navigation between peer topics.
-//   <<goto X>>   Push X onto the node stack. When X falls off its end, pop back to caller.
+//   <<detour X>> Push X onto the node stack. When X falls off its end, pop back to caller.
 //                Use for sub-dialogs that must return to the calling node.
-//                Not understood by the VS Code extension (no graph edges drawn).
+//                Standard Yarn Spinner behavior; VS Code extension draws detour edges.
 //   <<return>>   Explicit early pop of the current frame. Returns to caller.
 //   <<stop>>     Clear the entire node stack. Ends the conversation.
 
@@ -397,7 +401,7 @@ class yarn_runtime
         auto eval( const expr_node &node ) const -> value;
         auto interpolate( std::string_view text ) const -> std::string;
 
-        // Each frame carries its own story pointer so <<goto story::X>> and
+        // Each frame carries its own story pointer so <<detour story::X>> and
         // <<jump story::X>> can cross story boundaries without changing context
         // for the rest of the stack.
         struct stack_frame {
@@ -438,6 +442,7 @@ class dynamic_choice_registry
         struct entry {
             std::string text;
             std::function<std::string()> body;
+            bool tail = false;
         };
         using generator_fn = std::function<std::vector<entry>()>;
 

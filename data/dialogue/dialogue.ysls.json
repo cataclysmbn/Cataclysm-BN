@@ -2,9 +2,19 @@
   "version": 1,
   "commands": [
     {
-      "yarnName": "goto",
-      "documentation": "Replace the current node frame with the target node. Use for lateral or cycling navigation where you do not want to return to the calling node. Contrast with <<jump>> which pushes and returns.",
+      "yarnName": "detour",
+      "documentation": "Push the target node onto the conversation stack. When the target node ends, execution returns to the line after this <<detour>>. Use for same-story sub-dialogues. For cross-story use <<cross_detour story::NodeName>> instead.",
       "parameters": [ { "name": "node_name", "type": "string" } ]
+    },
+    {
+      "yarnName": "cross_detour",
+      "documentation": "Cross-story version of <<detour>>. Pushes story::NodeName onto the stack; returns when done. Use when the target node lives in a different .yarn story file. Example: <<cross_detour other_story::SomeNode>>",
+      "parameters": [ { "name": "story_node", "type": "string" } ]
+    },
+    {
+      "yarnName": "cross_jump",
+      "documentation": "Cross-story version of <<jump>>. Replaces the current frame with story::NodeName, no return. Use when the target node lives in a different .yarn story file. Example: <<cross_jump other_story::SomeNode>>",
+      "parameters": [ { "name": "story_node", "type": "string" } ]
     },
     {
       "yarnName": "player",
@@ -938,6 +948,6 @@
       "documentation": "Returns true if a reason string has been set via <<set_reason>> during this conversation.",
       "parameters": [  ],
       "return": { "type": "bool" }
-    },
+    }
   ]
 }

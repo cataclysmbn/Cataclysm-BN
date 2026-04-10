@@ -23,29 +23,55 @@
 //   #spoken       — echo the choice label itself as player speech (opt-in)
 //   <<player "...">> / <<npc "...">> — programmatic speech inside command blocks
 //
-// <<goto demo_mod::NodeName>> crosses into this story's nodes and returns when done.
+// Navigation across stories:
+//   <<cross_detour story::NodeName>> — push a node from another story; returns when done.
+//   <<cross_jump   story::NodeName>> — replace current frame with a node from another story.
+// These are custom commands (not native Yarn keywords), so the VS Code extension linter
+// accepts the story::NodeName argument without errors.
 
 // Injects after native choices (default priority 0).
-// Demonstrates cross-story <<goto>>: pushes demo_mod::LockedDoorDetail,
-// which executes here and returns to shelter_npc::Start when done.
+//
+// LockedDoorDetail is a multi-turn sub-conversation — the player can ask follow-up
+// questions, the NPC recalls more detail, and the exchange eventually ends naturally.
+// This is why <<detour>> is used rather than shared_choices: shared_choices can only
+// contribute individual choices to a menu; it cannot sequence a back-and-forth exchange.
+// When LockedDoorDetail falls off its end the runtime pops back to Start automatically.
+//
+// (If LockedDoorDetail lived in a different story file, use <<cross_detour story::LockedDoorDetail>>.)
 title: ModExtraDialogue
+position: 294,-191
 inject_into: shelter_npc::Start
 ---
 -> Ask about the locked door.
     You: That locked door — what's behind it?
-    <<goto demo_mod::LockedDoorDetail>>
+    <<detour LockedDoorDetail>>
 ===
 
 title: LockedDoorDetail
 position: 300,100
 ---
-NPC: I told you — I don't know what's in there.
-And I don't want to find out.
-I heard something move behind it on the second night.  Haven't gone near it since.
--> That's unsettling. #spoken
--> Probably nothing.
-    You: Probably nothing.  Old buildings make noise.
-    NPC: Maybe.  I hope you're right.
+NPC: I don't know.  And honestly?  I don't want to find out.
+I heard something move behind it on the second night.  Since then I haven't gone near it.
+-> What did it sound like? #spoken
+    NPC: Like something heavy.  Slow.  It wasn't rats.
+    You: Did it sound like it was trying to get out?
+    NPC: No.  Just... shifting.  Like it was settling in.
+    That's almost worse.
+    -> We should check it out.
+        You: We should probably check it out at some point.
+        NPC: Be my guest.  I'll be right here, not doing that.
+    -> Better to leave it alone.
+        You: Probably better to leave it alone.
+        NPC: Exactly what I've been telling myself.
+-> Have you tried opening it? #spoken
+    NPC: Once.  On the first day, before I knew better.
+    It was locked from the inside.
+    You: From the inside?
+    NPC: Yeah.  Whatever's in there locked itself in.
+    Or someone locked it from in there.
+    I try not to think about which.
+-> Probably nothing to worry about. #spoken
+    NPC: Probably.  I still sleep on the other side of the building.
 ===
 
 // Injects before native choices (negative priority).

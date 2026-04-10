@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <numeric>
 #include <cctype>
 #include <charconv>
 #include <cmath>
@@ -1121,20 +1122,30 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
             }
         }
 
-        // Check for #spoken tag — opts the choice label in to being echoed as player speech.
-        // Default is no echo; the label is a UI button only.
-        bool echo_speech = false;
-        {
-            constexpr std::string_view spoken_tag = "#spoken";
-            auto tag_pos = choice_text.rfind( spoken_tag );
-            if( tag_pos != std::string_view::npos ) {
-                bool leading_space = tag_pos == 0 || std::isspace( choice_text[tag_pos - 1] );
-                bool trailing_end  = tag_pos + spoken_tag.size() == choice_text.size();
-                if( leading_space && trailing_end ) {
-                    echo_speech = true;
-                    choice_text = trim_sv( choice_text.substr( 0, tag_pos ) );
-                }
+        // Helper: strip a trailing tag (e.g. "#spoken", "#tail") from choice_text.
+        // Returns true and trims the text if the tag is found as a standalone suffix.
+        auto strip_tag = [&]( std::string_view tag ) -> bool {
+            auto tag_pos = choice_text.rfind( tag );
+            if( tag_pos == std::string_view::npos ) {
+                return false;
             }
+            bool leading_space = tag_pos == 0 || std::isspace( choice_text[tag_pos - 1] );
+            bool trailing_end  = tag_pos + tag.size() == choice_text.size();
+            if( leading_space && trailing_end ) {
+                choice_text = trim_sv( choice_text.substr( 0, tag_pos ) );
+                return true;
+            }
+            return false;
+        };
+
+        // Strip all known tags from the end in any order.
+        // Loop because each strip exposes the next tag as the new trailing token.
+        bool echo_speech = false;
+        bool tail        = false;
+        for( bool found = true; found; ) {
+            found  = false;
+            if( strip_tag( "#spoken" ) ) { echo_speech = true; found = true; }
+            if( strip_tag( "#tail" )   ) { tail        = true; found = true; }
         }
 
         int choice_indent = line.indent;
@@ -1144,6 +1155,7 @@ auto parse_choice_group( yarn_parser &p, const std::vector<raw_line> &lines,
         ch.text        = std::string( choice_text );
         ch.condition   = std::move( condition );
         ch.echo_speech = echo_speech;
+        ch.tail        = tail;
         ch.body = parse_choice_body( p, lines, i, end, choice_indent );
         group.choices.push_back( std::move( ch ) );
     }
@@ -1523,12 +1535,30 @@ auto parse_elements( yarn_parser &p, const std::vector<raw_line> &lines,
                     elem.jump_target = pc.raw_args[0];
                     elements.push_back( std::move( elem ) );
                 }
-            } else if( pc.name == "goto" ) {
+            } else if( pc.name == "detour" ) {
                 if( pc.raw_args.empty() ) {
-                    p.error( line.line_num, "<<goto>> requires a node name" );
+                    p.error( line.line_num, "<<detour>> requires a node name" );
                 } else {
                     node_element elem;
                     elem.type = node_element::kind::goto_node;
+                    elem.jump_target = pc.raw_args[0];
+                    elements.push_back( std::move( elem ) );
+                }
+            } else if( pc.name == "cross_detour" ) {
+                if( pc.raw_args.empty() ) {
+                    p.error( line.line_num, "<<cross_detour>> requires a story::node target" );
+                } else {
+                    node_element elem;
+                    elem.type = node_element::kind::goto_node;
+                    elem.jump_target = pc.raw_args[0];
+                    elements.push_back( std::move( elem ) );
+                }
+            } else if( pc.name == "cross_jump" ) {
+                if( pc.raw_args.empty() ) {
+                    p.error( line.line_num, "<<cross_jump>> requires a story::node target" );
+                } else {
+                    node_element elem;
+                    elem.type = node_element::kind::jump;
                     elem.jump_target = pc.raw_args[0];
                     elements.push_back( std::move( elem ) );
                 }
@@ -2211,19 +2241,36 @@ auto yarn_runtime::execute_elements( const std::vector<node_element> &elements,
                     auto dyn_entries    = dynamic_choice_registry::global().generate( cur_node_name );
                     const auto static_count = static_cast<int>( static_choices.size() );
 
-                    // Build the unified display list.
+                    // Build the unified flat list (static first, then dynamic).
                     // Dynamic entries have no condition — the generator pre-filters them.
                     auto all_choices = static_choices;
                     for( const auto &dyn : dyn_entries ) {
                         node_element::choice ch;
                         ch.text = dyn.text;
+                        ch.tail = dyn.tail;
                         all_choices.push_back( std::move( ch ) );
                     }
 
-                    int chosen = present_choices( all_choices, d_win );
-                    if( chosen < 0 ) {
+                    // Partition a display-order index rather than the choices themselves,
+                    // so the static/dynamic boundary (static_count) stays valid for execution.
+                    // Non-tail choices first (stable), then tail choices (stable).
+                    std::vector<int> display_order( all_choices.size() );
+                    std::iota( display_order.begin(), display_order.end(), 0 );
+                    std::ranges::stable_partition( display_order,
+                    [&]( int i ) { return !all_choices[i].tail; } );
+
+                    std::vector<node_element::choice> display_choices;
+                    display_choices.reserve( display_order.size() );
+                    for( int idx : display_order ) {
+                        display_choices.push_back( all_choices[idx] );
+                    }
+
+                    const int chosen_display = present_choices( display_choices, d_win );
+                    if( chosen_display < 0 ) {
                         return { signal::stop, {} };
                     }
+                    // Map display index back to original flat index for execution.
+                    const int chosen = display_order[chosen_display];
 
                     d_win.mark_turn_start();
 

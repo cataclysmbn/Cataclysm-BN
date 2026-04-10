@@ -1,10 +1,10 @@
 // Demo yarn story for the shelter NPC archetype.
 //
 // Demonstrates:
-//   - Same-file shared_choices (ShelterActions) with <<goto>> for return-to-dialogue
+//   - Same-file shared_choices (ShelterActions) with <<detour>> for return-to-dialogue
 //   - Cross-file shared_choices (common::CommonActions) with terminal choices
 //   - Lateral navigation with <<jump>> (graph edges visible in VS Code extension)
-//   - <<goto>> for sub-dialogs that pop back to the caller automatically
+//   - <<detour>> for sub-dialogs that pop back to the caller automatically
 //   - Conditional text with <<if>> / <<endif>>
 //
 // Speaker attribution:
@@ -15,14 +15,14 @@
 //
 // Navigation semantics recap:
 //   <<jump X>> — replace current frame; VS Code draws edge; conversation ends when X ends
-//   <<goto X>> — push frame; VS Code does NOT draw edge; caller re-presents when X pops
+//   <<detour X>> — push frame; VS Code draws detour edge; caller re-presents when X pops
 //
 // Entry node convention: the runtime enters at "Greeting" (first-contact speech), which
 // ends with <<jump Start>>.  All return-to-menu jumps target "Start" directly, so the
 // opening speech is not repeated.  If no "Greeting" node exists, the runtime falls back
 // to "Start" as the entry point.
 //
-// ShelterActions is a same-file shared base.  Its <<goto ShelterMood>> choice pushes
+// ShelterActions is a same-file shared base.  Its <<detour ShelterMood>> choice pushes
 // ShelterMood; when ShelterMood falls off its end it pops back and the merging node
 // (Start) re-presents its choices.
 //
@@ -33,7 +33,7 @@ title: ShelterActions
 position: -304,-102
 ---
 -> Ask how they're holding up.
-    <<goto ShelterMood>>
+    <<detour ShelterMood>>
 ===
 
 title: ShelterMood
