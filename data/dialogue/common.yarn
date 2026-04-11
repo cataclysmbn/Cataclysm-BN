@@ -1,14 +1,18 @@
 // Shared base nodes imported by other stories via "shared_choices: common::NodeName".
 //
-// These nodes are effect-only: no <<jump>> or <<detour>> navigation.
-// After an effect completes the node falls off its end, which pops the
-// merged-choice context and ends the conversation (or returns to whatever
-// called the node via <<detour>>).
+// Navigation note: bare node names in shared/injected choice bodies are automatically
+// qualified with the source story at load time, so they resolve as expected within
+// this file.  Use explicit "story::Node" syntax only when intentionally targeting a
+// node in a different story.
+//
+// Non-terminal choices (those that should return the player to the calling menu)
+// must fall off their end with no navigation — do NOT use <<stop>> unless the
+// intent is to end the entire conversation.
 //
 // <<stop>> is safe from any stack depth — it clears the entire stack.
 
 title: CommonActions
-position: 62,0
+position: 115,341
 ---
 -> Barter for supplies. #tail
     NPC: I don't have much, but we can work something out.
@@ -16,4 +20,25 @@ position: 62,0
 -> That's all for now.  Stay safe. #spoken #tail
     NPC: You too.  Be careful out there.
     <<stop>>
+===
+
+title: StartActions
+position: -332,224
+---
+-> Ask about supplies. <<if npc_get_var("asked_supplies") != "true">>
+    <<detour Start_Supplies>>
+===
+
+title: Start_Supplies
+position: -332,446
+---
+<<npc_set_var "asked_supplies", "true">>
+You: Do you have any supplies you can spare?
+NPC: I found a few cans in the back room.  You're welcome to them.
+I'm not going anywhere fast anyway.
+// You can pass in "silent" as another argument in this to hide the automatic "gave item" narration.
+<<give_item "veggy_canned" 2>>
+NPC: There's also a shelf near the back wall.  Just don't go past the locked door -
+I don't know what's in there and I haven't wanted to find out.
+-> Thanks, I appreciate it. #spoken
 ===

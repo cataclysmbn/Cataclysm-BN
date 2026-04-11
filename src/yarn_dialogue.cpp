@@ -1853,6 +1853,39 @@ auto yarn_story::get_node_mutable( const std::string &name ) -> yarn_node *
     return it != nodes_.end() ? &it->second : nullptr;
 }
 
+// Recursively qualifies bare jump/goto targets in an element tree with a source story prefix.
+// Bare names (no '::') become "source_story::name".  Already-qualified names are left unchanged.
+// Applied when copying choice bodies from a shared/injection source into a target node so that
+// authors can use bare node names within their own file without needing explicit cross-file syntax.
+static void qualify_elements( std::vector<node_element> &elements, const std::string &source_story )
+{
+    auto qualify = [&]( std::string &target ) {
+        if( target.find( "::" ) == std::string::npos ) {
+            target = source_story + "::" + target;
+        }
+    };
+    for( auto &elem : elements ) {
+        switch( elem.type ) {
+            case node_element::kind::jump:
+            case node_element::kind::goto_node:
+                qualify( elem.jump_target );
+                break;
+            case node_element::kind::if_block:
+                qualify_elements( elem.if_body,   source_story );
+                qualify_elements( elem.else_body,  source_story );
+                break;
+            case node_element::kind::choice_group:
+            case node_element::kind::line_group:
+                for( auto &ch : elem.choices ) {
+                    qualify_elements( ch.body, source_story );
+                }
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 void yarn_story::resolve_shared_choices( const node_lookup_fn &lookup,
         const std::string &own_name,
         std::vector<std::string> &out_errors )
@@ -1860,14 +1893,20 @@ void yarn_story::resolve_shared_choices( const node_lookup_fn &lookup,
     std::unordered_set<std::string> resolved;
     std::unordered_set<std::string> in_progress;
 
-    auto merge_choices = [&]( node_element & dest_cg, const yarn_node & base ) {
+    auto merge_choices = [&]( node_element & dest_cg, const yarn_node & base,
+    const std::string & source_story ) {
         auto base_cg_it = std::ranges::find_if( base.elements, []( const node_element & e ) {
             return e.type == node_element::kind::choice_group;
         } );
         if( base_cg_it != base.elements.end() ) {
+            const auto insert_pos = static_cast<ptrdiff_t>( dest_cg.choices.size() );
             dest_cg.choices.insert( dest_cg.choices.end(),
                                     base_cg_it->choices.begin(),
                                     base_cg_it->choices.end() );
+            for( auto it = dest_cg.choices.begin() + insert_pos;
+                 it != dest_cg.choices.end(); ++it ) {
+                qualify_elements( it->body, source_story );
+            }
         }
     };
 
@@ -1932,7 +1971,7 @@ void yarn_story::resolve_shared_choices( const node_lookup_fn &lookup,
                                           "' has its own shared_choices — chaining across stories is not supported" );
                     continue;
                 }
-                merge_choices( *cg_it, *base );
+                merge_choices( *cg_it, *base, base_story_name );
             } else {
                 // Within-story: check for cycle before recursing.
                 if( in_progress.contains( base_node_name ) ) {
@@ -1949,7 +1988,7 @@ void yarn_story::resolve_shared_choices( const node_lookup_fn &lookup,
                                           "': base node '" + ref + "' not found" );
                     continue;
                 }
-                merge_choices( *cg_it, *base );
+                merge_choices( *cg_it, *base, own_name );
             }
         }
 
@@ -2705,10 +2744,14 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
         std::string target_node;
     };
 
-    // Clone base_choices and append a <<jump target_node>> to each choice body.
+    // Clone base_choices, qualify bare targets with source_story, then append a <<jump target_node>>.
     auto make_choices_with_return = []( const std::vector<node_element::choice> &base,
+    const std::string & source_story,
     const std::string & target_node ) {
         auto cloned = base;
+        for( auto &ch : cloned ) {
+            qualify_elements( ch.body, source_story );
+        }
         for( auto &ch : cloned ) {
             node_element return_jump;
             return_jump.type        = node_element::kind::jump;
@@ -2742,7 +2785,7 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
                     // Direct injection: resolve story, bypass inject_block.
                     const std::string &ts = tgt.target_story.empty() ? story_name : tgt.target_story;
                     const std::string &tn = tgt.target_node;
-                    injections.push_back( { make_choices_with_return( base_choices, tn ),
+                    injections.push_back( { make_choices_with_return( base_choices, story_name, tn ),
                                             node.inject_priority, ts, tn } );
                 } else {
                     // Tag-based injection: find all nodes whose inject_tags satisfy the AND group.
@@ -2765,7 +2808,7 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
                             if( blocked ) {
                                 continue;
                             }
-                            injections.push_back( { make_choices_with_return( base_choices, tn2 ),
+                            injections.push_back( { make_choices_with_return( base_choices, story_name, tn2 ),
                                                     node.inject_priority, ts2, tn2 } );
                         }
                     }

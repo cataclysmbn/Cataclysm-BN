@@ -64,36 +64,18 @@ NPC: Good to have you around.  What's on your mind?
 
 title: Start
 position: 63,300
-shared_choices: ShelterActions common::CommonActions
+shared_choices: ShelterActions common::StartActions common::CommonActions
 inject_tags: shelter_dialogue npc_dialogue
 ---
--> Ask about supplies. <<if npc_get_var("asked_supplies") != "true">>
-    <<jump Start_Supplies>>
 -> Ask what happened.
     <<jump Start_WhatHappened>>
 -> Ask if they've seen anyone else.
     <<jump Start_Others>>
 ===
 
-title: Start_Supplies
-position: -332,446
-shared_choices: ShelterActions common::CommonActions
----
-<<npc_set_var "asked_supplies", "true">>
-You: Do you have any supplies you can spare?
-NPC: I found a few cans in the back room.  You're welcome to them.
-I'm not going anywhere fast anyway.
-// You can pass in "silent" as another argument in this to hide the automatic "gave item" narration.
-<<give_item "veggy_canned" 2>>
-NPC: There's also a shelf near the back wall.  Just don't go past the locked door -
-I don't know what's in there and I haven't wanted to find out.
--> Thanks, I appreciate it. #spoken
-    <<jump Start>>
-===
-
 title: Start_WhatHappened
 position: 474,437
-shared_choices: ShelterActions common::CommonActions
+shared_choices: ShelterActions common::StartActions common::CommonActions
 ---
 NPC: I was at work when the sirens went off.  Drove here thinking it'd be temporary.
 That was... I don't even know how long ago now.
@@ -102,8 +84,6 @@ Now it's just silence.
 -> That sounds rough.
     You: I'm sorry.  That sounds rough.
     <<jump Start>>
--> Ask about supplies.
-    <<jump Start_Supplies>>
 -> Ask if they've seen anyone else.
     <<jump Start_Others>>
 -> Go back.
@@ -112,7 +92,7 @@ Now it's just silence.
 
 title: Start_Others
 position: 71,738
-shared_choices: ShelterActions common::CommonActions
+shared_choices: ShelterActions common::StartActions common::CommonActions
 ---
 You: Have you seen anyone else?
     => NPC: Haven't seen anyone else until you showed up.
@@ -123,6 +103,4 @@ You: Have you seen anyone else?
     <<jump Start>>
 -> Ask what happened.
     <<jump Start_WhatHappened>>
--> Ask about supplies.
-    <<jump Start_Supplies>>
 ===
