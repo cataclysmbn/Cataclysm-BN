@@ -1859,7 +1859,7 @@ auto yarn_story::get_node_mutable( const std::string &name ) -> yarn_node *
 // authors can use bare node names within their own file without needing explicit cross-file syntax.
 static void qualify_elements( std::vector<node_element> &elements, const std::string &source_story )
 {
-    auto qualify = [&]( std::string &target ) {
+    auto qualify = [&]( std::string & target ) {
         if( target.find( "::" ) == std::string::npos ) {
             target = source_story + "::" + target;
         }
@@ -2746,7 +2746,7 @@ void apply_injections( std::unordered_map<std::string, yarn_story> &registry )
 
     // Clone base_choices, qualify bare targets with source_story, then append a <<jump target_node>>.
     auto make_choices_with_return = []( const std::vector<node_element::choice> &base,
-    const std::string & source_story,
+                                        const std::string & source_story,
     const std::string & target_node ) {
         auto cloned = base;
         for( auto &ch : cloned ) {
