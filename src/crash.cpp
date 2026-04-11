@@ -236,9 +236,6 @@ static LONG WINAPI windows_exception_filter( EXCEPTION_POINTERS *exception_info 
 
 void init_crash_handlers()
 {
-#if defined(_WIN32)
-    SetUnhandledExceptionFilter( windows_exception_filter );
-#endif
     for( auto sig : {
              SIGSEGV, SIGILL, SIGABRT, SIGFPE
          } ) {
@@ -246,6 +243,11 @@ void init_crash_handlers()
         std::signal( sig, signal_handler );
     }
     std::set_terminate( crash_terminate_handler );
+#if defined(_WIN32)
+    // Registered last so any SetUnhandledExceptionFilter call made internally
+    // by the CRT's signal() machinery does not overwrite ours.
+    SetUnhandledExceptionFilter( windows_exception_filter );
+#endif
 }
 
 #else // !BACKTRACE
