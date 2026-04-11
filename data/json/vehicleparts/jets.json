@@ -62,7 +62,7 @@
     "location": "under",
     "symbol": "O",
     "broken_symbol": "x",
-    "color": "magenta",
+    "color": "cyan",
     "rotor_diameter": 15,
     "requirements": {
       "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
