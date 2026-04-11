@@ -67,6 +67,8 @@
 #include "mapdata.h"
 #include "mapgen.h"
 #include "mapgen_async.h"
+#include "catalua_threaded_hooks.h"
+#include "catalua_worker.h"
 #include "martialarts.h"
 #include "material.h"
 #include "mission.h"
@@ -911,10 +913,14 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
 
     init::load_main_lua_scripts( *loader.lua, packs );
     cata::clear_mod_being_loaded( *loader.lua );
-    // Update cached hook-presence flag so worker threads know whether to queue
+    // Update cached hook-presence flags so worker threads know whether to queue
     // deferred mapgen postprocess hooks (avoids lock + allocation overhead per quad
     // when no on_mapgen_postprocess hooks are registered).
+    // Threaded presence must be refreshed first — the combined g_has_mapgen_hooks
+    // flag reads the threaded result.
+    cata::refresh_threaded_mapgen_hook_presence();
     refresh_mapgen_postprocess_hook_presence( *loader.lua );
+    cata::invalidate_worker_states();
 }
 
 auto init::load_main_lua_scripts( cata::lua_state &state, const std::vector<mod_id> &packs ) -> int
