@@ -60,5 +60,30 @@
       "S": [ "frame_carbon_cross", "seat", "seatbelt", "controls", "dashboard", "crt_wing_horizontal" ],
       "P": [ "propeller_metal" ]
     }
+  },
+  {
+    "id": "crt_nukedart",
+    "type": "vehicle",
+     "name": "CRIT Nuclear Dart",
+    "blueprint": [
+      "--a  ",
+      "^^^BW ",
+      "BCCSWP",
+      "vvvBW ",
+      "--b   "
+    ],
+    "blueprint_origin": { "x": 3, "y": 2 },
+    "palette": {
+      "W": [ "frame_carbon_vertical", "windshield_horizontal_front", "crt_wing_horizontal" ],
+      "^": [ "frame_carbon_vertical", "board_vertical_left", "crt_wing_horizontal" ],
+      "v": [ "frame_carbon_vertical", "board_vertical_right", "crt_wing_horizontal" ],
+      "B": [ "frame_carbon_vertical", "door_carbon", "crt_wing_horizontal" ],
+      "a": [ "crt_wing_external_left" ],
+      "b": [ "crt_wing_external_right" ],
+      "-": [ "crt_wing_external_horizontal" ],
+      "C": [ "frame_carbon_cross", "cargo_space_carbon", "medium_storage_battery", "crt_wing_horizontal" ],
+      "S": [ "frame_carbon_cross", "seat", "seatbelt", "controls", "crt_plut_engine", "dashboard", "crt_wing_horizontal" ],
+      "P": [ "propeller_metal" ]
+    }
   }
 ]

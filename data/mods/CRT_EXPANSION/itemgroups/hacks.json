@@ -4,7 +4,7 @@
     "id": "crt_robots",
     "subtype": "collection",
     "//": "Gives basic materials used to make manhacks",
-    "entries": [
+    "items": [
       { "distribution": [
         { "item": "processor", "prob": 15 },
         { "item": "RAM", "prob": 22 },
@@ -22,7 +22,7 @@
     "type": "item_group",
     "id": "crt_inactive_robots",
     "subtype": "distribution",
-    "entires": [
+    "items": [
       { "item": "bot_sun_turret_light", "prob": 1 },
       { "item": "bot_crt_hydrogen_hack", "prob": 2 },
       { "item": "bot_crt_electrohack", "prob": 4 },

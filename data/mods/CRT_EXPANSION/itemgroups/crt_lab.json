@@ -1,0 +1,15 @@
+[
+  {
+    "type": "item_group",
+    "id": "crt_sci_reading",
+    "subtype": "distribution",
+    "items": [
+      { "item": "recipe_labchem", "prob": 10 },
+      { "item": "reference_cooking", "prob": 10 },
+      { "item": "survival_book", "prob": 10 },
+      { "item": "SICP", "prob": 10 },
+      { "item": "sa_cryptology_key", "prob": 10 },
+    ]
+  }
+]
+

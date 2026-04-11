@@ -441,7 +441,7 @@ void call_mapgen_function( std::string name, mapgendata &dat, bool nested, point
         if( ptr == nullptr ) {
             return;
         }
-        return ( *ptr )->nest( dat, pos );
+        ( *ptr )->nest( dat, pos );
     } else {
         oter_mapgen.generate( dat, name );
     }

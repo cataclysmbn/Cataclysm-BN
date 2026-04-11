@@ -1,0 +1,39 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_smallveh",
+    "weight": 25,
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "place_vehicles": [
+        { "vehicle": "crt_nukedart", "chance": 100, "x": 3, "y": 2, "rotation": 270, "status": 0 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_smallveh",
+    "weight": 40,
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "place_vehicles": [
+        { "vehicle": "crt_solardart", "chance": 100, "x": 3, "y": 2, "rotation": 270, "status": 0 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_smallveh",
+    "weight": 50,
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "place_vehicles": [
+        { "vehicle": "crt_microblimp_electric", "chance": 100, "x": 3, "y": 3, "rotation": 270, "status": 0 }
+      ]
+    }
+  },
+]
+

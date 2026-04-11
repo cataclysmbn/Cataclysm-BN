@@ -6,7 +6,6 @@
     "sym": "L",
     "color": "red",
     "see_cost": 5,
-    "extras": "build",
     "mondensity": 2
   },
   {
@@ -46,7 +45,7 @@
         { "chunks": [ "crt_lab_veh_hall_engine" ], "x": 1, "y": 1 },
         { "chunks": [ "crt_lab_veh_hall_engine_test" ], "x": 16, "y": 1 },
         { "chunks": [ "crt_lab_veh_hall_office" ], "x": 1, "y": 16 },
-        { "chunks": [ "crt_lab_veh_hall_small_veh" ], "x": 16, "y": 16 }
+        { "chunks": [ "crt_lab_veh_smallveh" ], "x": 16, "y": 16 }
       ],
       "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "G": "t_door_metal_locked" },
       "place_monster": [
