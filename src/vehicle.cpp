@@ -1669,6 +1669,12 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
     if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "NOCOLLIDE" ) ) {
         return false;
     }
+    // EXTENDABLE parts can not have other parts on the same tile
+    // Todo: let there be an exception for mount points when added
+    // Like turret mount points
+    if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "EXTENDABLE" ) ) {
+        return false;
+    }
 
     //No part type can stack with itself, or any other part in the same slot
     for( const auto &elem : parts_in_square ) {
