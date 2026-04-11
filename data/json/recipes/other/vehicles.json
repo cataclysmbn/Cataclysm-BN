@@ -2504,5 +2504,79 @@
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 } ],
     "tools": [ [ [ "mold_plastic", -1 ] ], [ [ "surface_heat", 80, "LIST" ] ] ],
     "components": [ [ [ "chunk_rubber", 80 ] ], [ [ "lead", 1000 ] ], [ [ "steel_standard", 1, "LIST" ] ], [ [ "plastic_sheet", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "jet_thruster",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "book_learn": [ [ "book_icef", 8 ], [ "textbook_mechanics", 8 ] ],
+    "skills_required": [ [ "fabrication", 8 ] ],
+    "skill_used": "mechanics",
+    "difficulty": 9,
+    "time": "4 h",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
+    "components": [
+      [ [ "amplifier", 2 ] ],
+      [ [ "power_supply", 2 ] ],
+      [ [ "pipe", 6 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "motor_small", 4 ] ],
+      [ [ "small_turbine_engine", 1 ] ],
+      [ [ "e_scrap", 10 ] ],
+      [ [ "cable", 150 ] ],
+      [ [ "frame", 2 ] ],
+      [ [ "alloy_sheet", 8 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "vtol_thruster",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "book_learn": [ [ "book_icef", 8 ], [ "textbook_mechanics", 8 ] ],
+    "skills_required": [ [ "fabrication", 7 ] ],
+    "skill_used": "mechanics",
+    "difficulty": 8,
+    "time": "8 h",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
+    "components": [
+      [ [ "amplifier", 2 ] ],
+      [ [ "power_supply", 2 ] ],
+      [ [ "pipe", 6 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "motor_small", 4 ] ],
+      [ [ "small_turbine_engine", 1 ] ],
+      [ [ "e_scrap", 10 ] ],
+      [ [ "cable", 150 ] ],
+      [ [ "frame", 2 ] ],
+      [ [ "alloy_sheet", 8 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "hover_repulsor",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "book_learn": [ [ "recipe_lab_elec", 7 ] ],
+    "skills_required": [ [ "fabrication", 8 ], [ "electronics", 8 ] ],
+    "skill_used": "mechanics",
+    "difficulty": 9,
+    "time": "8 h",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
+    "components": [
+      [ [ "amplifier", 2 ] ],
+      [ [ "power_supply", 4 ] ],
+      [ [ "nanomaterial", 50 ] ],
+      [ [ "plut_cell", 8 ] ],
+      [ [ "portal", 2 ] ],
+      [ [ "e_scrap", 10 ] ],
+      [ [ "frame", 1 ] ],
+      [ [ "teleporter", 1 ], [ "portal", 1 ], [ "telepad", 1 ] ],
+      [ [ "alloy_sheet", 8 ] ]
+    ]
   }
 ]
