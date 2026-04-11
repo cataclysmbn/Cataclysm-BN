@@ -765,6 +765,8 @@ auto json_sub_effect_to_elements( const JsonObject &jo ) -> std::vector<yarn::no
         out.push_back( make_command( "finish_mission", { lit_str( id ), lit( success ) } ) );
     } else if( jo.has_string( "npc_change_faction" ) ) {
         out.push_back( make_command( "npc_change_faction", { lit_str( jo.get_string( "npc_change_faction" ) ) } ) );
+    } else if( jo.has_string( "npc_change_class" ) ) {
+        out.push_back( make_command( "npc_change_class", { lit_str( jo.get_string( "npc_change_class" ) ) } ) );
     } else if( jo.has_member( "mapgen_update" ) ) {
         // Emit update IDs; runtime runs them at NPC position (simplified targeting).
         std::vector<yarn::expr_node> upd_args;

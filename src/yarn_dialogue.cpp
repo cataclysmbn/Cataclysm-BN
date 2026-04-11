@@ -5005,9 +5005,9 @@ void register_builtin_commands( command_registry &reg )
         }
         return command_signal::none;
     } );
-    // npc_class_change("class_id") — changes NPC class but does NOT re-initialize stats.
+    // npc_change_class("class_id") — changes NPC class but does NOT re-initialize stats.
     // Follow with <<npc_randomize>> to re-roll stats/inventory for the new class.
-    reg.add( "npc_class_change", 1, []( const std::vector<value> &args ) -> command_signal {
+    reg.add( "npc_change_class", 1, []( const std::vector<value> &args ) -> command_signal {
         if( auto *n = g_conv_ctx.npc_ref )
         {
             n->myclass = npc_class_id( std::get<std::string>( args[0] ) );

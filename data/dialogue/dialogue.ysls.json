@@ -328,7 +328,7 @@
       "parameters": [ { "name": "faction_id", "type": "string" } ]
     },
     {
-      "yarnName": "npc_class_change",
+      "yarnName": "npc_change_class",
       "documentation": "Changes the NPC's class archetype. Does not re-initialize stats or inventory; use <<npc_randomize>> after this to apply the new class's defaults.",
       "parameters": [ { "name": "class_id", "type": "string" } ]
     },
