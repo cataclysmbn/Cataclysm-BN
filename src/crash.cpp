@@ -3,6 +3,7 @@
 
 #if defined(BACKTRACE)
 
+#include <atomic>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
@@ -26,6 +27,14 @@
 
 // signal handlers are expected to have C linkage, and only use the
 // common subset of C & C++
+
+#if defined(_WIN32)
+// Ensures only the first crash path (exception filter or signal handler) logs and dumps.
+static std::atomic_flag g_crash_logged{};
+// Set by windows_exception_filter; used by dump_to() and debug_write_backtrace().
+static EXCEPTION_POINTERS *g_exception_info = nullptr;
+#endif
+
 extern "C" {
 
 #if defined(_WIN32)
@@ -33,13 +42,19 @@ extern "C" {
     {
         HANDLE handle = CreateFile( file, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
                                     FILE_ATTRIBUTE_NORMAL, nullptr );
-        // TODO: call from a separate process as suggested by the documentation
-        // TODO: capture stack trace and pass as parameter as suggested by the documentation
+        MINIDUMP_EXCEPTION_INFORMATION mdei = {};
+        MINIDUMP_EXCEPTION_INFORMATION *mdei_ptr = nullptr;
+        if( g_exception_info ) {
+            mdei.ThreadId          = GetCurrentThreadId();
+            mdei.ExceptionPointers = g_exception_info;
+            mdei.ClientPointers    = FALSE;
+            mdei_ptr               = &mdei;
+        }
         MiniDumpWriteDump( GetCurrentProcess(),
                            GetCurrentProcessId(),
                            handle,
-                           MiniDumpNormal,
-                           nullptr, nullptr, nullptr );
+                           static_cast<MINIDUMP_TYPE>( MiniDumpNormal | MiniDumpWithUnloadedModules ),
+                           mdei_ptr, nullptr, nullptr );
         CloseHandle( handle );
     }
 #endif
@@ -112,6 +127,12 @@ extern "C" {
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
         signal( sig, SIG_DFL );
 #pragma GCC diagnostic pop
+#if defined(_WIN32)
+        if( g_crash_logged.test_and_set() ) {
+            raise( sig );
+            return;
+        }
+#endif
         const char *msg;
         switch( sig ) {
             case SIGSEGV:
@@ -139,6 +160,41 @@ extern "C" {
         abort();
     }
 } // extern "C"
+
+#if defined(_WIN32)
+static LONG WINAPI windows_exception_filter( EXCEPTION_POINTERS *exception_info )
+{
+    if( g_crash_logged.test_and_set() ) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    g_exception_info = exception_info;
+    set_crash_exception_context( exception_info ? exception_info->ContextRecord : nullptr );
+    const char *msg = "Unknown exception";
+    if( exception_info && exception_info->ExceptionRecord ) {
+        switch( exception_info->ExceptionRecord->ExceptionCode ) {
+            case EXCEPTION_ACCESS_VIOLATION:
+                msg = "EXCEPTION_ACCESS_VIOLATION: Access violation";
+                break;
+            case EXCEPTION_ILLEGAL_INSTRUCTION:
+                msg = "EXCEPTION_ILLEGAL_INSTRUCTION: Illegal instruction";
+                break;
+            case EXCEPTION_STACK_OVERFLOW:
+                msg = "EXCEPTION_STACK_OVERFLOW: Stack overflow";
+                break;
+            case EXCEPTION_INT_DIVIDE_BY_ZERO:
+                msg = "EXCEPTION_INT_DIVIDE_BY_ZERO: Integer divide by zero";
+                break;
+            case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+                msg = "EXCEPTION_FLT_DIVIDE_BY_ZERO: Float divide by zero";
+                break;
+            default:
+                break;
+        }
+    }
+    log_crash( "Signal", msg );
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+#endif
 
 [[noreturn]] static void crash_terminate_handler()
 {
@@ -180,6 +236,9 @@ extern "C" {
 
 void init_crash_handlers()
 {
+#if defined(_WIN32)
+    SetUnhandledExceptionFilter( windows_exception_filter );
+#endif
     for( auto sig : {
              SIGSEGV, SIGILL, SIGABRT, SIGFPE
          } ) {
