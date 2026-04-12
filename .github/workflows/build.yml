@@ -318,17 +318,13 @@ jobs:
 
       - name: Locate PDB (windows msvc)
         if: runner.os == 'Windows'
-        run: |
-          Write-Host "=== Searching for PDB files ==="
-          Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" -Filter "*.pdb" -Recurse | Select-Object FullName, Length
-          Write-Host "=== Build directory root contents ==="
-          Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" | Select-Object Name, Length, LastWriteTime
+        run: Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" -Filter "*.pdb" -Recurse | Select-Object -ExpandProperty FullName
 
       - name: Archive PDB (windows msvc)
         if: runner.os == 'Windows'
         run: |
           Compress-Archive -Force `
-            -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/cataclysm-bn-tiles.pdb" `
+            -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/src/cataclysm-bn-tiles.pdb" `
             -DestinationPath "cbn-${{ matrix.artifact }}-${{ inputs.version-label }}-pdb.zip"
 
       # Build with Make (macOS) - TODO: migrate to CMake once dmgdist target is implemented
