@@ -606,8 +606,13 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `PLANT` A 'furniture' that grows and fruits.
 - `PLANTABLE` This terrain or furniture can have seeds planted in it.
 - `PLOWABLE` Terrain can be plowed.
-- `RAMP_END`
-- `RAMP` Can be used to move up a z-level
+- `RAMP_END` Marks the aligned end of a ramp for ramp-climbing helpers.
+- `RAMP` Marks a tile as ramp-like for movement helpers and pathfinding support; by itself it does not
+  create an automatic z-level transition.
+- `RAMP_DOWN` Entering this tile moves the mover to the same `x,y` on `z - 1`.
+- `RAMP_UP` Entering this tile moves the mover to the same `x,y` on `z + 1`.
+
+  See also the [Ramp guide](../guides/map/ramps.md).
 - `REDUCE_SCENT` Reduces scent diffusion (not total amount of scent in area); only works if also
   bashable.
 - `ROAD` Flat and hard enough to drive or skate (with rollerblades) on.

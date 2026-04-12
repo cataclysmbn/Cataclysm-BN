@@ -528,6 +528,28 @@ TEST_CASE( "id_conversions_no_int_id", "[lua]" )
     run_lua_test_script( lua, "id_conversions_no_int_id.lua" );
 }
 
+TEST_CASE( "zlope_lua_bindings", "[lua]" )
+{
+    sol::state lua = make_lua_state();
+
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "zlope_bindings_test.lua" );
+
+    const auto brute_faction = test_data["brute_faction"].get<std::string>();
+    const auto hulk_faction = test_data["hulk_faction"].get<std::string>();
+    const auto scientist_faction = test_data["scientist_faction"].get<std::string>();
+
+    CHECK( brute_faction == "zombie" );
+    CHECK( hulk_faction == "zombie" );
+    CHECK( scientist_faction == "science" );
+    CHECK_FALSE( static_cast<bool>( test_data["brute_has_bionic_group"] ) );
+    CHECK_FALSE( static_cast<bool>( test_data["hulk_has_bionic_group"] ) );
+    CHECK( static_cast<bool>( test_data["kevlar_has_bionic_group"] ) );
+    CHECK( static_cast<bool>( test_data["zapper_has_bionic_group"] ) );
+}
+
 TEST_CASE( "catalua_regression_sol_1444", "[lua]" )
 {
     // Regression test for https://github.com/ThePhD/sol2/issues/1444

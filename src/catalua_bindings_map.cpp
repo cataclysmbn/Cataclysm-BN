@@ -433,6 +433,9 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "get_ter_at", sol::resolve<ter_id( const tripoint & )const>( &map::ter ) );
         luna::set_fx( ut, "set_ter_at",
                       sol::resolve<bool( const tripoint &, const ter_id & )>( &map::ter_set ) );
+        luna::set_fx( ut, "impassable", sol::resolve<bool( const tripoint & ) const>( &map::impassable ) );
+        luna::set_fx( ut, "has_flag_ter_or_furn",
+                      sol::resolve<bool( const std::string &, const tripoint & ) const>( &map::has_flag_ter_or_furn ) );
 
         luna::set_fx( ut, "get_furn_at", sol::resolve<furn_id( const tripoint & )const>( &map::furn ) );
         luna::set_fx( ut, "set_furn_at", []( map & m, const tripoint & p, const furn_id & id ) { m.furn_set( p, id ); } );

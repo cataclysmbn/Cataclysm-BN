@@ -20,3 +20,4 @@ gapi.add_on_every_x_hook(TimeDuration.from_turns(300), function(...)
 end)
 
 game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)
+game.add_hook("on_mon_death", function(...) return mod.zlope.on_mon_death(...) end)

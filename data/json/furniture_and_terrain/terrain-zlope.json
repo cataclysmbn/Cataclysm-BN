@@ -1,0 +1,32 @@
+[
+  {
+    "type": "terrain",
+    "id": "t_zlope",
+    "name": "zlope",
+    "description": "A wall-backed heap of tangled zombie remains that has compacted into a foul, climbable ramp.",
+    "symbol": "<",
+    "color": "light_green",
+    "move_cost": 6,
+    "bash": {
+      "str_min": 12,
+      "str_max": 36,
+      "sound": "squelch!",
+      "sound_fail": "thump!",
+      "ter_set": "t_floor",
+      "items": [
+        { "item": "human_flesh", "count": [ 1, 4 ] },
+        { "item": "bone_human", "count": [ 1, 3 ] },
+        { "item": "slime_scrap", "prob": 5 }
+      ]
+    },
+    "deconstruct": {
+      "ter_set": "t_floor",
+      "items": [
+        { "item": "human_flesh", "count": [ 2, 6 ] },
+        { "item": "bone_human", "count": [ 2, 4 ] },
+        { "item": "slime_scrap", "prob": 10 }
+      ]
+    },
+    "flags": [ "TRANSPARENT", "PLACE_ITEM", "RAMP", "RAMP_UP", "SEEN_FROM_ABOVE" ]
+  }
+]
