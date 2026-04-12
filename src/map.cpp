@@ -9993,12 +9993,18 @@ void tinymap::drain_to_mapbuffer( mapbuffer &dest )
     ( void )dest;
 }
 
-void tinymap::load_from_mapbuffer( const tripoint &sm_base )
+void tinymap::bind_submaps_for_hook( const tripoint &sm_base )
 {
+    // Directly wire the four 2×2 grid slots to the already-resident submaps.
+    // Does NOT call loadn()/actualize() — freshly generated submaps need no
+    // time-advance, and this tinymap is never rendered, simulated, or saved.
     set_abs_sub( sm_base );
-    for( auto di : std::views::iota( 0, 2 ) ) {
-        for( auto dj : std::views::iota( 0, 2 ) ) {
-            loadn( tripoint( di, dj, sm_base.z ), false );
+    mapbuffer &mb = MAPBUFFER_REGISTRY.get( get_bound_dimension() );
+    for( int di = 0; di < 2; ++di ) {
+        for( int dj = 0; dj < 2; ++dj ) {
+            const tripoint abs( sm_base.x + di, sm_base.y + dj, sm_base.z );
+            setsubmap( get_nonant( { di, dj, sm_base.z } ),
+                       mb.lookup_submap_in_memory( abs ) );
         }
     }
 }

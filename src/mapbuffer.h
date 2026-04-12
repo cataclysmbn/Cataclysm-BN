@@ -172,6 +172,18 @@ class mapbuffer
         auto drain_pending_submap_destroy() -> void;
 
         /**
+         * Generate all quads that were deferred from worker threads because their
+         * overmap terrain has a Lua-based mapgen function (Lua is not reentrant).
+         *
+         * Runs generate_quad() for each deferred entry synchronously on the calling
+         * thread.  Must be called on the main thread only.
+         *
+         * Returns the om_addr of every quad that was actually generated (i.e. was
+         * not already resident in memory).  Callers should mark these dirty.
+         */
+        auto drain_deferred_lua_quads() -> std::vector<tripoint>;
+
+        /**
          * Conditionally save and then remove the submap at @p pos from the buffer.
          * The containing OMT quad is saved to disk first (unless it is fully uniform),
          * then the submap is erased from memory.  Does nothing if @p pos is not loaded.
@@ -225,6 +237,12 @@ class mapbuffer
         /// the player can revert to the pre-session state by quitting without saving.
         mutable std::mutex pending_writes_mutex_;
         std::map<tripoint, std::string> pending_writes_;
+
+        /// Quads whose overmap terrain has a Lua-based mapgen function.
+        /// generate_quad() pushes here instead of generating on the worker (Lua is not
+        /// reentrant).  Drained by drain_deferred_lua_quads() on the main thread.
+        mutable std::mutex deferred_lua_quads_mutex_;
+        std::vector<tripoint> deferred_lua_quads_;
 
     public:
         submap_map_t::iterator begin() {
