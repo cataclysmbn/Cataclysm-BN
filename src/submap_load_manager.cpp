@@ -517,6 +517,12 @@ void submap_load_manager::update()
                 if( lazy_futures_.count( qk ) ) {
                     continue;  // already has an in-flight future — don't resubmit
                 }
+                // Skip lazy pre-loading when Lua mapgen hooks are registered.
+                // Pre-loading many quads at once would batch N hook calls into a
+                // single-frame spike; quads will be generated on demand instead.
+                if( mapgen_hooks_registered() ) {
+                    continue;
+                }
                 auto &mb = MAPBUFFER_REGISTRY.get( key.first );
                 if( !mb.lookup_submap_in_memory( key.second ) ) {
                     lazy_futures_.emplace( qk,

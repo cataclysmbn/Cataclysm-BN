@@ -71,6 +71,10 @@ void refresh_mapgen_postprocess_hook_presence( cata::lua_state &state );
  */
 void run_deferred_mapgen_hooks();
 
+/** Returns true if any on_mapgen_postprocess Lua hooks are registered.
+ *  Safe to call from any thread (relaxed atomic load). */
+bool mapgen_hooks_registered();
+
 /** Push an autonote entry from a worker thread (thread-safe). */
 void push_deferred_autonote( deferred_autonote entry );
 
