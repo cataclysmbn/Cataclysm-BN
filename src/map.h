@@ -548,8 +548,11 @@ class map : public submap_load_listener
 
         void set_suspension_cache_dirty( const int zlev );
 
-        /// Mark the per-submap pf_cache dirty for the submap containing p.
+        /// Mark the per-submap pf_cache dirty for all submaps on zlev.
+        /// Use the tripoint overload for single-tile changes.
         void set_pathfinding_cache_dirty( int zlev );
+        /// Mark the per-submap pf_cache dirty for the single submap containing p.
+        void set_pathfinding_cache_dirty( const tripoint &p );
         /*@}*/
 
         void set_memory_seen_cache_dirty( const tripoint &p );

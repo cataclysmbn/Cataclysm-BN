@@ -2027,7 +2027,7 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
     set_memory_seen_cache_dirty( p );
 
     // TODO: Limit to changes that affect move cost, traps and stairs
-    set_pathfinding_cache_dirty( p.z );
+    set_pathfinding_cache_dirty( p );
 
     // Make sure the furniture falls if it needs to
     support_dirty( p );
@@ -2399,7 +2399,7 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
     set_memory_seen_cache_dirty( p );
 
     // TODO: Limit to changes that affect move cost, traps and stairs
-    set_pathfinding_cache_dirty( p.z );
+    set_pathfinding_cache_dirty( p );
 
     tripoint above( p.xy(), p.z + 1 );
     // Make sure that if we supported something and no longer do so, it falls down
@@ -6556,7 +6556,7 @@ bool map::add_field( const tripoint &p, const field_type_id &type_id, int intens
     }
 
     if( fd_type.is_dangerous() ) {
-        set_pathfinding_cache_dirty( p.z );
+        set_pathfinding_cache_dirty( p );
     }
 
     // Ensure blood type fields don't hang in the air
@@ -6584,7 +6584,7 @@ void map::remove_field( const tripoint &p, const field_type_id &field_to_remove 
             set_seen_cache_dirty( p );
         }
         if( fdata.is_dangerous() ) {
-            set_pathfinding_cache_dirty( p.z );
+            set_pathfinding_cache_dirty( p );
         }
     }
 }
@@ -10511,6 +10511,15 @@ void map::set_pathfinding_cache_dirty( const int zlev )
                 sm->pf_dirty = true;
             }
         }
+    }
+}
+
+void map::set_pathfinding_cache_dirty( const tripoint &p )
+{
+    point l;
+    submap *const sm = get_submap_at( p, l );
+    if( sm ) {
+        sm->pf_dirty = true;
     }
 }
 
