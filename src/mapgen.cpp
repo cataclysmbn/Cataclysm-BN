@@ -354,6 +354,7 @@ class mapgen_factory
             result.insert( "lab_4side" );
             result.insert( "lab_finale_1level" );
             result.insert( "crt_lab_veh_house_backdrop" );
+            result.insert( "crt_lab_veh_hall_frame" );
             return result;
         }
 

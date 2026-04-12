@@ -1,0 +1,52 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_scifood",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "FF   FF",
+        "  C C  ",
+        "  TTT  ",
+        " CTTTC ",
+        "  TTT  ",
+        " CTTTC ",
+        "       "
+      ],
+      "furniture": {
+        "T": "f_table",
+        "F": "f_fridge",
+        "C": "f_chair"
+      },
+      "items": {
+        "T": { "item": "crt_sci_table_food", "chance": 80, "repeat": [ 1, 3 ] },
+        "F": { "item": "crt_sci_fridge_food", "chance": 80, "repeat": [ 1, 3 ] }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_milfood",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "   C   ",
+        " CTTTC ",
+        " CTTTC ",
+        " CTTTC ",
+        " CTTTC ",
+        " CTTTC ",
+        "       "
+      ],
+      "furniture": {
+        "T": "f_table",
+        "C": "f_chair"
+      },
+      "items": {
+        "T": { "item": "mil_food_nodrugs", "chance": 80, "repeat": [ 1, 3 ] },
+      }
+    }
+  },
+]

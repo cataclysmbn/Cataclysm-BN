@@ -1,5 +1,7 @@
 local crt_lab_veh_house = require("mapgen/crtvehlab/house")
+local crt_lab_veh_hall = require("mapgen/crtvehlab/hall")
 
 local mod = game.mod_runtime[game.current_mod]
 
 mod.crt_lab_veh_house = crt_lab_veh_house
+mod.crt_lab_veh_hall = crt_lab_veh_hall

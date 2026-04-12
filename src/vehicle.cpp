@@ -1,5 +1,6 @@
 #include "vehicle.h"
 #include "detached_ptr.h"
+#include "line.h"
 #include "type_id.h"
 #include "units_mass.h"
 #include "vehicle_part.h" // IWYU pragma: associated
@@ -939,6 +940,7 @@ void vehicle::activate_magical_follow()
         if( vp.info().fuel_type == fuel_type_mana ) {
             vp.enabled = true;
             is_following = true;
+            follow_distance = 12 + mount_max.y * 3;
             engine_on = true;
         } else {
             vp.enabled = true;
@@ -956,6 +958,7 @@ void vehicle::activate_animal_follow()
             if( mon && mon->has_effect( effect_harnessed ) ) {
                 vp.enabled = true;
                 is_following = true;
+                follow_distance = 12 + mount_max.y * 3;
                 engine_on = true;
             }
         } else {
@@ -1157,11 +1160,11 @@ void vehicle::drive_to_local_target( const tripoint &target, bool follow_protoco
     }
     if( follow_protocol ) {
         if( ( ( turn_x > 0 || turn_x < 0 ) && velocity > safe_player_follow_speed ) ||
-            rl_dist( vehpos, g->m.getabs( g->u.pos() ) ) < 7 + ( ( mount_max.y * 3 ) + 4 ) ) {
+            rl_dist( vehpos, g->m.getabs( g->u.pos() ) ) < follow_distance - 1 ) {
             accel_y = 1;
         }
         if( ( velocity < std::min( safe_velocity(), safe_player_follow_speed ) && turn_x == 0 &&
-              rl_dist( vehpos, g->m.getabs( g->u.pos() ) ) > 8 + ( ( mount_max.y * 3 ) + 4 ) ) ||
+              rl_dist( vehpos, g->m.getabs( g->u.pos() ) ) > follow_distance ) ||
             velocity < 45 ) {
             accel_y = -1;
         }

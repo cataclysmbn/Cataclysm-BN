@@ -10,6 +10,39 @@
       { "item": "SICP", "prob": 10 },
       { "item": "sa_cryptology_key", "prob": 10 },
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_sci_table_food",
+    "subtype": "collection",
+    "items": [
+      { "item": "fruit_leather", "prob": 10 },
+      { "item": "dry_fruit", "prob": 25 },
+      { "item": "almond", "prob": 20 },
+      { "item": "pecan", "prob": 20 },
+      { "item": "cashews", "prob": 20 },
+      { "item": "pistachio", "prob": 20 },
+      { "item": "peanut", "prob": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_sci_fridge_food",
+    "subtype": "collection",
+    "items": [
+      { "item": "apple", "prob": 20 },
+      { "item": "orange", "prob": 10 },
+      { "item": "banana", "prob": 20 },
+      { "item": "pear", "prob": 20 },
+      { "item": "cherries", "prob": 15 },
+      { "item": "plums", "prob": 15 },
+      { "item": "grapes", "prob": 25 },
+      { "item": "cranberries", "prob": 20 },
+      { "item": "raspberries", "prob": 20 },
+      { "item": "blackberries", "prob": 20 },
+      { "item": "blueberries", "prob": 20 },
+      { "item": "strawberries", "prob": 20 }
+    ]
   }
 ]
 
