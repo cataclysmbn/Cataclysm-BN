@@ -66,7 +66,7 @@ struct mapgen_hook_batch_item {
  * All items must belong to the same bound dimension of tmp.
  */
 void run_on_mapgen_postprocess_hooks_batch( lua_state &state, tinymap &tmp,
-                                            std::span<const mapgen_hook_batch_item> items );
+        std::span<const mapgen_hook_batch_item> items );
 
 /** Return true if at least one on_mapgen_postprocess hook is registered. */
 bool has_mapgen_postprocess_hooks( lua_state &state );

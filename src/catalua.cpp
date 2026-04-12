@@ -914,7 +914,7 @@ void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &
 }
 
 void run_on_mapgen_postprocess_hooks_batch( lua_state &state, tinymap &tmp,
-                                             std::span<const mapgen_hook_batch_item> items )
+        std::span<const mapgen_hook_batch_item> items )
 {
     if( items.empty() ) {
         return;
@@ -958,8 +958,8 @@ void run_on_mapgen_postprocess_hooks_batch( lua_state &state, tinymap &tmp,
                 sol::protected_function func;
                 if( e.is_table ) {
                     func = obj.as<sol::table>()
-                               .get_or<sol::object>( "fn", sol::lua_nil )
-                               .as<sol::protected_function>();
+                           .get_or<sol::object>( "fn", sol::lua_nil )
+                           .as<sol::protected_function>();
                 } else {
                     func = obj.as<sol::protected_function>();
                 }
@@ -970,7 +970,7 @@ void run_on_mapgen_postprocess_hooks_batch( lua_state &state, tinymap &tmp,
                 if( res.valid() ) {
                     params["prev"] = res.get<sol::object>();
                 }
-            } catch( const std::runtime_error & err ) {
+            } catch( const std::runtime_error &err ) {
                 debugmsg( "Failed to run hook on_mapgen_postprocess[%d]: %s",
                           e.index, err.what() );
             }

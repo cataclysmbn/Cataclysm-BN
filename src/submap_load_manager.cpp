@@ -232,7 +232,7 @@ void submap_load_manager::update()
         // Runs after drain_pending_submap_destroy() so any competing duplicate submaps
         // from the same turn have already been queued for main-thread cleanup.
         std::ranges::for_each( dims_to_drain, [this]( const std::string & dim_id ) {
-            for( const tripoint & om_addr :
+            for( const tripoint &om_addr :
                  MAPBUFFER_REGISTRY.get( dim_id ).drain_deferred_lua_quads() ) {
                 dirty_quads_.insert( { dim_id, om_addr } );
             }
@@ -363,7 +363,7 @@ void submap_load_manager::update()
     // only adds entries for quads that were NOT in new_quads (e.g. deferred
     // lazy-border quads whose futures completed this turn).
     std::ranges::for_each( drained_dims, [this]( const std::string & dim_id ) {
-        for( const tripoint & om_addr :
+        for( const tripoint &om_addr :
              MAPBUFFER_REGISTRY.get( dim_id ).drain_deferred_lua_quads() ) {
             dirty_quads_.insert( { dim_id, om_addr } );
         }

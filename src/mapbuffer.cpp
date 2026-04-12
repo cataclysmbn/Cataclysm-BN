@@ -643,7 +643,7 @@ auto mapbuffer::drain_deferred_lua_quads() -> std::vector<tripoint>
     }
 
     std::vector<tripoint> generated;
-    std::ranges::for_each( pending, [&]( const tripoint &om_addr ) {
+    std::ranges::for_each( pending, [&]( const tripoint & om_addr ) {
         if( generate_quad( om_addr ) ) {
             generated.push_back( om_addr );
         }
