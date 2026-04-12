@@ -298,6 +298,45 @@ void avatar::reset_all_missions()
     failed_missions.clear();
 }
 
+auto avatar::sanitize_character_template() -> void
+{
+    setID( character_id(), true );
+    reset_all_missions();
+
+    activity = activity_ptr();
+    stashed_outbounds_activity = activity_ptr();
+    stashed_outbounds_backlog = activity_ptr();
+    backlog.clear();
+    clear_destination_activity();
+    destination_point.reset();
+    get_auto_move_route().clear();
+
+    grab( OBJECT_NONE );
+    in_vehicle = false;
+    controlling_vehicle = false;
+    mounted_creature.reset();
+    mounted_creature_id = 0;
+
+    last_target.reset();
+    last_target_pos.reset();
+    ammo_location = safe_reference<item>();
+    custom_waypoint.reset();
+    follower_ids.clear();
+
+    known_monsters.clear();
+    known_traps.clear();
+    overmap_time.clear();
+    items_identified.clear();
+    warning_record.clear();
+    shadow_npc.reset();
+    omt_path.clear();
+    snippets_read.clear();
+
+    if( player_map_memory ) {
+        player_map_memory->clear();
+    }
+}
+
 tripoint_abs_omt avatar::get_active_mission_target() const
 {
     if( active_mission == nullptr ) {

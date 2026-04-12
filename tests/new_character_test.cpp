@@ -14,11 +14,13 @@
 #include <vector>
 
 #include "avatar.h"
+#include "filesystem.h"
 #include "game.h"
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
 #include "newcharacter.h"
+#include "path_info.h"
 #include "pldata.h"
 #include "profession.h"
 #include "ret_val.h"
@@ -191,4 +193,39 @@ TEST_CASE( "starting_items", "[slow]" )
     }
     INFO( failure_messages.str() );
     REQUIRE( failures.empty() );
+}
+
+TEST_CASE( "character_transfer_templates_drop_runtime_state", "[new_character]" )
+{
+    clear_all_state();
+
+    avatar &source = get_avatar();
+    source = get_sanitized_player();
+    source.name = "Template Test";
+    source.focus_pool = 42;
+    source.follower_ids.insert( character_id( 123 ) );
+    source.known_monsters.insert( mtype_id( "mon_zombie" ) );
+    source.last_target_pos = tripoint( 4, 5, 0 );
+    source.destination_point = tripoint( 1, 2, 0 );
+    source.get_auto_move_route().push_back( tripoint( 0, 1, 0 ) );
+    source.grab( OBJECT_VEHICLE, tripoint( 0, 1, 0 ) );
+
+    const auto template_name = std::string( "unit-test-transfer-template" );
+    const auto template_path = PATH_INFO::templatedir() + template_name + ".template";
+    remove_file( template_path );
+
+    source.character_to_template( template_name );
+
+    auto loaded = get_sanitized_player();
+    auto points = points_left();
+    REQUIRE( loaded.load_template( template_name, points ) );
+
+    CHECK( points.limit == points_left::TRANSFER );
+    CHECK( loaded.follower_ids.empty() );
+    CHECK( loaded.get_known_monsters().empty() );
+    CHECK_FALSE( loaded.destination_point.has_value() );
+    CHECK( loaded.get_auto_move_route().empty() );
+    CHECK( loaded.get_grab_type() == OBJECT_NONE );
+
+    CHECK( remove_file( template_path ) );
 }
