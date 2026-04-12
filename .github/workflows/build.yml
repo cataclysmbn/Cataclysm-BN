@@ -318,7 +318,11 @@ jobs:
 
       - name: Locate PDB (windows msvc)
         if: runner.os == 'Windows'
-        run: Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" -Filter "*.pdb"
+        run: |
+          Write-Host "=== Searching for PDB files ==="
+          Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" -Filter "*.pdb" -Recurse | Select-Object FullName, Length
+          Write-Host "=== Build directory root contents ==="
+          Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" | Select-Object Name, Length, LastWriteTime
 
       - name: Archive PDB (windows msvc)
         if: runner.os == 'Windows'
