@@ -18,10 +18,37 @@ engine = function(data, map, point)
   draw_hall_set( data, map, rooms, point )
 end
 
+gen_amenities = function(data, map, point)
+  rooms = shuffle( {
+    "crt_lab_veh_hall_milfood",
+    "crt_lab_veh_hall_scifood",
+    "crt_lab_veh_hall_exercise",
+    "crt_lab_veh_hall_dodge_train",
+    "crt_lab_veh_hall_bath_good",
+    "crt_lab_veh_hall_bath_bad",
+  } )
+  draw_hall_set( data, map, rooms, point )
+end
+
+mil_amenities = function(data, map, point)
+  rooms = shuffle( {
+    "crt_lab_veh_hall_milfood",
+    "crt_lab_veh_hall_exercise",
+    "crt_lab_veh_hall_shooting_range",
+    "crt_lab_veh_hall_bath_bad"
+  } )
+  draw_hall_set( data, map, rooms, point )
+end
+
 all = function(data, map, point)
   rooms = shuffle( {
     "crt_lab_veh_hall_milfood",
     "crt_lab_veh_hall_scifood",
+    "crt_lab_veh_hall_exercise",
+    "crt_lab_veh_hall_shooting_range",
+    "crt_lab_veh_hall_dodge_train",
+    "crt_lab_veh_hall_bath_good",
+    "crt_lab_veh_hall_bath_bad",
     "crt_lab_veh_hall_engine",
     "crt_lab_veh_hall_engine_test",
     "crt_lab_veh_smallveh"
@@ -29,11 +56,11 @@ all = function(data, map, point)
   draw_hall_set( data, map, rooms, point )
 end
 
-local halls = { engine, all }
+local halls = { engine, all, gen_amenities, mil_amenities }
 
-local halls_weight = { 100, 200 }
+local halls_weight = { 100, 200, 50, 150 }
 
-local total_weight = 300
+local total_weight = 500
 
 draw_hall_set = function(data, map, set, pos)
   data:nest( set[1], Point.new( pos.x, pos.y ) )

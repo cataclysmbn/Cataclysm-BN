@@ -29,16 +29,16 @@
         "#       #      #       #",
         "#       #      #       #",
         "#       #      #       #",
-        "#       #      #       #",
-        "#GGGGGGGw      wGGGGGGG#",
+        "#       w      w       #",
+        "#GGGGGGG#      #GGGGGGG#",
         "#                      #",
         "#                      #",
         "#                      #",
         "#                      #",
         "#                      #",
         "#                      #",
-        "#GGGGGGGw      #GGGGGGG#",
-        "#       #      w       #",
+        "#GGGGGGG#      #GGGGGGG#",
+        "#       w      w       #",
         "#       #      #       #",
         "#       #      #       #",
         "#       #      #       #",
@@ -48,12 +48,6 @@
         "########################"
       ],
       "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control_crt_lab", "W": "t_wall_glass", "G": "t_door_metal_locked" },
-      "place_monster": [
-        { "group": "GROUP_MIL_STRONG", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ] },
-        { "group": "GROUP_MIL_WEAK", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ] },
-        { "group": "GROUP_MIL_STRONG", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ] },
-        { "group": "GROUP_MIL_WEAK", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ] }
-      ]
     }
   }
 ]

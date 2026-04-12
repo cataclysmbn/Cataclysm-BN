@@ -11,6 +11,7 @@
           { "id": "mon_crt_electrohack", "fg": 5, "rotates": false },
           { "id": "mon_crt_flamehack", "fg": 4, "rotates": false },
           { "id": "mon_crt_engineer_t3", "fg": 3, "rotates": false },
+          { "id": "mon_crt_manslap", "fg": 6, "rotates": false },
         ]
       }
     ]
