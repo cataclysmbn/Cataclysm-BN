@@ -184,6 +184,24 @@
   },
   {
     "type": "item_group",
+    "id": "nanofab_template_bionics",
+    "//": "Very rare high level loot. This list doesn't spawn anywhere directly, it is used to create the recipes inside nanofabricator templates. ",
+    "magazine": 100,
+    "subtype": "distribution",
+    "entries": [
+      { "item": "bio_power_armor_interface_mkII", "prob": 10 },
+	    { "item": "bio_probability_travel", "prob": 10 },
+	    { "item": "bio_reactor", "prob": 10 },
+	    { "item": "bio_reactor_upgrade", "prob": 10 },
+  	  { "item": "bio_time_freeze", "prob": 10 },
+  	  { "item": "bio_night", "prob": 10 },
+  	  { "item": "bio_nanobots", "prob": 10 },
+  	  { "item": "bio_cloak", "prob": 10 },
+      { "item": "bio_cqb", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "player_crafted",
     "//": "items that should only be crafted by the player. Excluded from all other item groups. this is just an FYI list, it's not used to spawn items in game.",
     "subtype": "distribution",
