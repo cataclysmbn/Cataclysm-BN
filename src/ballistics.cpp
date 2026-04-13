@@ -471,6 +471,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
     int projectile_skip_calculation = range * projectile_skip_multiplier;
     int projectile_skip_current_frame = rng( 0, projectile_skip_calculation );
     bool has_momentum = true;
+    auto *last_hit_critter = static_cast<Creature *>( nullptr );
     for( size_t i = 1; i < traj_len && ( has_momentum || stream ); ++i ) {
         prev_point = tp;
         tp = trajectory[i];
@@ -603,6 +604,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             // Critter can still dodge the projectile
             // In this case hit_critter won't be set
             if( attack.hit_critter != nullptr ) {
+                last_hit_critter = attack.hit_critter;
                 if( mon != nullptr ) {
                     hit_monsters.push_back( std::make_pair( *mon, attack ) );
                 }
@@ -638,6 +640,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             break;
         }
     }
+    attack.hit_critter = last_hit_critter;
     attack.trajectory.assign( trajectory.begin(), trajectory.begin() + traj_len );
 
     if( do_animation && do_draw_line && traj_len > 2 ) {

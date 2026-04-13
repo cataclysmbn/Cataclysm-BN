@@ -1,8 +1,11 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
 #include <optional>
 #include <vector>
 
+#include "ballistics.h"
+#include "dispersion.h"
 #include "shape.h"
 #include "shape_impl.h"
 #include "map.h"
@@ -13,6 +16,7 @@
 #include "overmapbuffer.h"
 #include "game.h"
 #include "itype.h"
+#include "rng.h"
 #include "skill.h"
 #include "state_helpers.h"
 
@@ -22,6 +26,7 @@ static const skill_id skill_shotgun( "shotgun" );
 static auto fire_shell_at_target( const itype_id &ammo_id,
                                   const std::vector<itype_id> &armor_ids ) -> int
 {
+    rng_set_engine_seed( 0 );
     clear_all_state();
     REQUIRE( get_map().has_zlevels() );
     get_player_character().setpos( {60, 60, -2} );
@@ -32,7 +37,7 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     shooter.set_skill_level( skill_gun, 10 );
     shooter.set_skill_level( skill_shotgun, 10 );
 
-    auto target = make_shared_fast<standard_npc>( "target", target_pos );
+    auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
     target->worn.clear();
     target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_zero );
     target->setpos( target_pos );
@@ -164,4 +169,46 @@ TEST_CASE( "birdshot pellets are much worse against armor", "[ranged][balance]" 
 
     CHECK( unarmored_damage > armored_damage );
     CHECK( unarmored_damage >= armored_damage * 2 );
+}
+
+TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
+           "[ranged][projectile]" )
+{
+    rng_set_engine_seed( 0 );
+    clear_all_state();
+    REQUIRE( get_map().has_zlevels() );
+
+    auto &shooter = get_player_character();
+    const auto shooter_pos = tripoint( 60, 60, 0 );
+    const auto target_pos = tripoint( 62, 60, 0 );
+    shooter.set_body();
+    shooter.setpos( shooter_pos );
+    shooter.set_skill_level( skill_gun, 10 );
+    shooter.set_skill_level( skill_shotgun, 10 );
+
+    auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
+    target->worn.clear();
+    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_zero );
+    target->setpos( target_pos );
+    ACTIVE_OVERMAP_BUFFER.insert_npc( target );
+    g->load_npcs();
+    CHECK( shooter.sees( *target ) );
+
+    detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
+    gun->ammo_set( itype_id( "shot_00" ) );
+    shooter.wield( std::move( gun ) );
+
+    auto probe = projectile {};
+    probe.speed = shooter.primary_weapon().gun_speed();
+    probe.impact = shooter.primary_weapon().gun_damage();
+    probe.range = shooter.primary_weapon().gun_range();
+    for( const auto &ammo_effect : shooter.primary_weapon().ammo_effects() ) {
+        probe.add_effect( ammo_effect );
+    }
+    const auto probe_attack = projectile_attack( probe, shooter_pos, target_pos, dispersion_sources {},
+                              &shooter, &shooter.primary_weapon(), nullptr, true );
+
+    CHECK( probe_attack.hit_critter != nullptr );
+    CHECK( probe_attack.dealt_dam.total_damage() > 0 );
+    CHECK( probe_attack.end_point != target_pos );
 }
