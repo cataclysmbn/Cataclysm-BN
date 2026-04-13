@@ -3433,7 +3433,7 @@ void Item_factory::load_item_group( const JsonObject &jsobj, const item_group_id
 
     Item_group *ig = make_group_or_throw( group_id, isd, type, jsobj.get_int( "ammo", 0 ),
                                           jsobj.get_int( "magazine", 0 ) );
-    const auto load_entries_from_object = [this, ig]( const JsonObject & entry_obj ) {
+    const auto load_entries_from_object = [this, ig]( const JsonObject &entry_obj ) {
         if( entry_obj.has_member( "entries" ) ) {
             for( const JsonObject subobj : entry_obj.get_array( "entries" ) ) {
                 add_entry( *ig, subobj );
