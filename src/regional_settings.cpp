@@ -902,12 +902,15 @@ void load_region_settings( const JsonObject &jo )
         }
     }
 
-    load_forest_mapgen_settings( jo, new_region.forest_composition, strict, false );
+    const auto strict_forest_mapgen = strict && !jo.has_string( "forest_composition" );
+    load_forest_mapgen_settings( jo, new_region.forest_composition, strict_forest_mapgen, false );
 
-    load_forest_trail_settings( jo, new_region.forest_trail, strict, false );
+    const auto strict_forest_trail = strict && !jo.has_member( "forest_trails" );
+    load_forest_trail_settings( jo, new_region.forest_trail, strict_forest_trail, false );
 
+    const auto strict_map_extras = strict && !jo.has_string( "map_extras" );
     if( !jo.has_object( "map_extras" ) ) {
-        if( strict ) {
+        if( strict_map_extras ) {
             jo.throw_error( "\"map_extras\": { … } required for default" );
         }
     } else {
@@ -918,12 +921,12 @@ void load_region_settings( const JsonObject &jo )
             JsonObject zjo = zone.get_object();
             map_extras extras( 0 );
 
-            if( !zjo.read( "chance", extras.chance ) && strict ) {
+            if( !zjo.read( "chance", extras.chance ) && strict_map_extras ) {
                 zjo.throw_error( "chance required for default" );
             }
 
             if( !zjo.has_object( "extras" ) ) {
-                if( strict ) {
+                if( strict_map_extras ) {
                     zjo.throw_error( "\"extras\": { … } required for default" );
                 }
             } else {
@@ -1051,12 +1054,15 @@ void load_region_settings( const JsonObject &jo )
         // BN has no highways settings block here.
     }
 
-    load_overmap_forest_settings( jo, new_region.overmap_forest, strict, false );
+    const auto strict_overmap_forest = strict && !jo.has_member( "forests" );
+    load_overmap_forest_settings( jo, new_region.overmap_forest, strict_overmap_forest, false );
 
-    load_overmap_lake_settings( jo, new_region.overmap_lake, strict, false );
+    const auto strict_overmap_lake = strict && !jo.has_member( "lakes" );
+    load_overmap_lake_settings( jo, new_region.overmap_lake, strict_overmap_lake, false );
 
-    load_region_terrain_and_furniture_settings( jo, new_region.region_terrain_and_furniture, strict,
-            false );
+    const auto strict_region_terrain_and_furniture = strict && !jo.has_string( "terrain_furniture" );
+    load_region_terrain_and_furniture_settings( jo, new_region.region_terrain_and_furniture,
+            strict_region_terrain_and_furniture, false );
 
     if( jo.has_string( "terrain_furniture" ) ) {
         new_region.region_terrain_and_furniture_id = jo.get_string( "terrain_furniture" );
