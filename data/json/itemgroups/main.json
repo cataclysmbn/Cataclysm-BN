@@ -190,13 +190,13 @@
     "subtype": "distribution",
     "entries": [
       { "item": "bio_power_armor_interface_mkII", "prob": 10 },
-	    { "item": "bio_probability_travel", "prob": 10 },
-	    { "item": "bio_reactor", "prob": 10 },
-	    { "item": "bio_reactor_upgrade", "prob": 10 },
-  	  { "item": "bio_time_freeze", "prob": 10 },
-  	  { "item": "bio_night", "prob": 10 },
-  	  { "item": "bio_nanobots", "prob": 10 },
-  	  { "item": "bio_cloak", "prob": 10 },
+      { "item": "bio_probability_travel", "prob": 10 },
+      { "item": "bio_reactor", "prob": 10 },
+      { "item": "bio_reactor_upgrade", "prob": 10 },
+      { "item": "bio_time_freeze", "prob": 10 },
+      { "item": "bio_night", "prob": 10 },
+      { "item": "bio_nanobots", "prob": 10 },
+      { "item": "bio_cloak", "prob": 10 },
       { "item": "bio_cqb", "prob": 10 }
     ]
   },
