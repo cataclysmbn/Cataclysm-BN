@@ -1698,6 +1698,16 @@ void map::unboard_vehicle( const tripoint &p, bool dead_passenger )
 
 bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
 {
+    // abs_sm_pos is always authoritative.  A tinymap (e.g. fire-spread loader) that
+    // loads the same submap sets veh.sm_pos to its own local grid coordinates, which
+    // are meaningless to the main map and corrupt the position lookup.  Recompute
+    // sm_pos from abs_sm_pos before any position-dependent call so the correction
+    // applies regardless of which code path caused the staleness.
+    veh.sm_pos = tripoint(
+                     veh.abs_sm_pos.x() - abs_sub.x,
+                     veh.abs_sm_pos.y() - abs_sub.y,
+                     veh.abs_sm_pos.z() );
+
     const tripoint src = veh.global_pos3();
     tripoint dst = src + dp;
 
@@ -1708,8 +1718,8 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     std::set<int> smzs;
 
     if( src_submap == nullptr ) {
-        add_msg( m_debug, "map::displace_vehicle: src submap not loaded %d,%d,%d->%d,%d,%d",
-                 src.x, src.y, src.z, dst.x, dst.y, dst.z );
+        debugmsg( "displace_vehicle: src submap null for '%s' at %d,%d,%d",
+                  veh.name, src.x, src.y, src.z );
         return false;
     }
 
@@ -1846,10 +1856,8 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     }
     if( need_update ) {
         g->update_map( g->u );
-        // update_map shifts abs_sub but loadn may place this vehicle at slot (0,0,z)
-        // without later updating sm_pos when a subsequent shift makes that slot stale.
-        // abs_sm_pos is always set correctly; recompute sm_pos from it so the cache
-        // lookup lands in the right grid slot.
+        // update_map shifts abs_sub; recompute sm_pos so the cache lookup
+        // lands in the right grid slot after the shift.
         veh.sm_pos = tripoint(
                          veh.abs_sm_pos.x() - abs_sub.x,
                          veh.abs_sm_pos.y() - abs_sub.y,
