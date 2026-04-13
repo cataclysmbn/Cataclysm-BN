@@ -118,7 +118,7 @@
     "price": "1 USD",
     "price_postapoc": "4 USD",
     "range": 10,
-    "damage": { "damage_type": "bullet", "amount": 5 },
+    "damage": { "damage_type": "bullet", "amount": 5, "armor_penetration": 2 },
     "loudness": 80,
     "shot": { "count": 10, "half_angle": 5 },
     "extend": { "effects": [ "NOGIB" ] }
