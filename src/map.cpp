@@ -604,6 +604,15 @@ void map::reset_vehicle_cache( )
     for( int zlev = zmin; zlev <= zmax; zlev++ ) {
         auto &ch = get_cache( zlev );
         for( const auto &elem : ch.vehicle_list ) {
+            // abs_sm_pos is always the authoritative absolute position.
+            // sm_pos can be stale when loadn fires during a shift and abs_sub
+            // subsequently changes (e.g. the vehicle's submap enters the grid
+            // from the fire-spread loader, or the reality bubble resizes).
+            // Recompute sm_pos here so the tile-level cache uses the right slot.
+            elem->sm_pos = tripoint(
+                               elem->abs_sm_pos.x() - abs_sub.x,
+                               elem->abs_sm_pos.y() - abs_sub.y,
+                               elem->abs_sm_pos.z() );
             elem->adjust_zlevel( 0, tripoint_zero );
             add_vehicle_to_cache( elem );
         }
