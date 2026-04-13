@@ -1837,6 +1837,14 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     }
     if( need_update ) {
         g->update_map( g->u );
+        // update_map shifts abs_sub but loadn may place this vehicle at slot (0,0,z)
+        // without later updating sm_pos when a subsequent shift makes that slot stale.
+        // abs_sm_pos is always set correctly; recompute sm_pos from it so the cache
+        // lookup lands in the right grid slot.
+        veh.sm_pos = tripoint(
+                         veh.abs_sm_pos.x() - abs_sub.x,
+                         veh.abs_sm_pos.y() - abs_sub.y,
+                         veh.abs_sm_pos.z() );
     }
     add_vehicle_to_cache( &veh );
 
