@@ -162,5 +162,66 @@
         "b": { "item": "lab_bookshelves", "chance": 50, "repeat": 3 }
       }
     }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_conference",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        ".......",
+        "..hhhh.",
+        "..tttt.",
+        "..t....",
+        "..tttt.",
+        "..hhhh.",
+        "x......"
+      ],
+      "palettes": [ "lab_palette" ],
+      "mapping": { "t": { "items": [ { "item": "office", "chance": 15 } ] } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_pool",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "=======",
+        "=~~~~~=",
+        "=~~~~~=",
+        "=~~~~~=",
+        "=~~~~~=",
+        "=~~~~~=",
+        "======="
+      ],
+      "terrain": {
+        "=": "t_linoleum_gray",
+        "~": "t_water_pool"
+      },
+      "items": {
+        "=": { "item": "pool_side", "chance": 10 }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_hydroponics",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "       ",
+        " ~~~~~ ",
+        " ~~~~~ ",
+        "       ",
+        " ~~~~~ ",
+        " ~~~~~ ",
+        "       "
+      ],
+      "sealed_item": { "~": { "items": { "item": "crt_sci_seed_amenities", "chance": 100 }, "furniture": "f_planter_harvest", "chance": 100 } },
+    }
   }
 ]

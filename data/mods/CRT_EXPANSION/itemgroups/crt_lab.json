@@ -43,6 +43,18 @@
       { "item": "blueberries", "prob": 20 },
       { "item": "strawberries", "prob": 20 }
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_sci_seed_amenities",
+    "subtype": "distribution",
+    "items": [
+      { "item": "seed_cranberries", "prob": 20 },
+      { "item": "seed_raspberries", "prob": 20 },
+      { "item": "seed_blackberries", "prob": 20 },
+      { "item": "seed_blueberries", "prob": 20 },
+      { "item": "seed_strawberries", "prob": 20 }
+    ]
   }
 ]
 

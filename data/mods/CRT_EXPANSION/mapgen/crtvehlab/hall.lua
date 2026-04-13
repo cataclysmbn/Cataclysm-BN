@@ -25,6 +25,8 @@ gen_amenities = function(data, map, point)
     "crt_lab_veh_hall_exercise",
     "crt_lab_veh_hall_dodge_train",
     "crt_lab_veh_hall_library",
+    "crt_lab_veh_hall_conference",
+    "crt_lab_veh_hall_hydroponics",
     "crt_lab_veh_hall_bath_good",
     "crt_lab_veh_hall_bath_bad",
   } )
@@ -47,6 +49,8 @@ all = function(data, map, point)
     "crt_lab_veh_hall_scifood",
     "crt_lab_veh_hall_exercise",
     "crt_lab_veh_hall_library",
+    "crt_lab_veh_hall_conference",
+    "crt_lab_veh_hall_hydroponics",
     "crt_lab_veh_hall_dodge_train",
     "crt_lab_veh_hall_bath_good",
     "crt_lab_veh_hall_bath_bad",
