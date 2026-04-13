@@ -67,7 +67,7 @@
     "weight": "3751 g",
     "looks_like": "cannon_round_ball",
     "proportional": { "price": 0.5, "price_postapoc": 0.5 },
-    "damage": { "damage_type": "bullet", "amount": 20, "armor_penetration": 10, "armor_multliplier": 1.5 },
+    "damage": { "damage_type": "bullet", "amount": 20, "armor_penetration": 10, "armor_multiplier": 1.5 },
     "range": 25,
     "dispersion": 500
   }
