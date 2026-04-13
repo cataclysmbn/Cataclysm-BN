@@ -3732,14 +3732,7 @@
     "description": "You were the best of the best, the military's finest, and your bionics have only enhanced your abilities.  Specializing in close quarters combat, you were sent on the most dangerous and critical missions.",
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
-	  "CBMs": [
-      "bio_cqb",
-      "bio_carbon",
-      "bio_night_vision",
-      "bio_torsionratchet",
-	    "bio_claws",
-      "bio_power_storage_mkII"
-    ],
+    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII" ],
     "skills": [
       { "level": 2, "name": "swimming" },
       { "level": 3, "name": "gun" },
@@ -3758,25 +3751,20 @@
           "winter_jacket_army",
           "gloves_liner",
           "gloves_tactical",
-		  "mask_ski",
-		  "glasses_bal",
+          "mask_ski",
+          "glasses_bal",
           "tac_helmet",
           "socks",
           "boots_combat",
           "webbing_belt",
           "wristwatch",
-		  "canteen",
+          "canteen",
           "molle_pack"
         ],
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "chestrig", "contents-group": "army_mags_rm216" },
-		  {
-            "item": "5x50_50_mag",
-            "ammo-item": "5x50heavy",
-            "charges": 50,
-            "container-item": "needlegun"
-          }
+          { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50, "container-item": "needlegun" }
         ]
       },
       "male": [ "boxer_shorts" ],
