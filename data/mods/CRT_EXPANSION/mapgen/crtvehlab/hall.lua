@@ -24,6 +24,7 @@ gen_amenities = function(data, map, point)
     "crt_lab_veh_hall_scifood",
     "crt_lab_veh_hall_exercise",
     "crt_lab_veh_hall_dodge_train",
+    "crt_lab_veh_hall_library",
     "crt_lab_veh_hall_bath_good",
     "crt_lab_veh_hall_bath_bad",
   } )
@@ -34,7 +35,7 @@ mil_amenities = function(data, map, point)
   rooms = shuffle( {
     "crt_lab_veh_hall_milfood",
     "crt_lab_veh_hall_exercise",
-    "crt_lab_veh_hall_shooting_range",
+    "crt_lab_veh_hall_dodge_train",
     "crt_lab_veh_hall_bath_bad"
   } )
   draw_hall_set( data, map, rooms, point )
@@ -45,7 +46,7 @@ all = function(data, map, point)
     "crt_lab_veh_hall_milfood",
     "crt_lab_veh_hall_scifood",
     "crt_lab_veh_hall_exercise",
-    "crt_lab_veh_hall_shooting_range",
+    "crt_lab_veh_hall_library",
     "crt_lab_veh_hall_dodge_train",
     "crt_lab_veh_hall_bath_good",
     "crt_lab_veh_hall_bath_bad",

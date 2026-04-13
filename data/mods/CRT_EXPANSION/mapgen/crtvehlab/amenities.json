@@ -79,43 +79,9 @@
     "nested_mapgen_id": "crt_lab_veh_hall_dodge_train",
     "object": {
       "mapgensize": [ 7, 7 ],
-      "rows": [
-        "       ",
-        "       ",
-        "       ",
-        "       ",
-        "       ",
-        "       ",
-        "       "
-      ],
       "place_monster": [
         { "monster": "mon_crt_manslap", "x": [ 0, 6 ], "y": [ 0, 6 ], "repeat": [ 3, 15 ] }
       ]
-    }
-  },
-  {
-    "type": "mapgen",
-    "method": "json",
-    "nested_mapgen_id": "crt_lab_veh_hall_shooting_range",
-    "object": {
-      "mapgensize": [ 7, 7 ],
-      "rows": [
-        "@ @ @ @",
-        "   @   ",
-        " @   @ ",
-        "       ",
-        "ccccccc",
-        "T     T",
-        "       "
-      ],
-      "furniture": {
-        "@": "f_target",
-        "T": "f_table"
-      },
-      "items": {
-        "c": { "item": "casings", "chance": 60, "repeat": 4 },
-        "T": { "item": "guns_pistol_common", "chance": 50, "repeat": [1, 4] }
-      }
     }
   },
   {
@@ -170,4 +136,31 @@
       }
     }
   },
+  {
+    "//": "library",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_hall_library",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "bbbbbbb",
+        "       ",
+        "bbb bbb",
+        " C   C ",
+        "TTT TTT",
+        " C   C ",
+        "       "
+      ],
+      "furniture": {
+        "b": "f_bookcase",
+        "C": "f_chair",
+        "T": "f_table"
+      },
+      "items": {
+        "h": { "item": "coat_lab", "chance": 5 },
+        "b": { "item": "lab_bookshelves", "chance": 50, "repeat": 3 }
+      }
+    }
+  }
 ]

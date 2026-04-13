@@ -1,0 +1,61 @@
+[
+  {
+    "type": "overmap_terrain",
+    "id": [ "crt_lab_veh_training" ],
+    "name": "C.R.I.T. Lab",
+    "sym": "L",
+    "color": "red",
+    "see_cost": 5,
+    "mondensity": 2
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_lab_veh_training" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "########################",
+        "#@  @  @        @  @  @#",
+        "# @   @          @   @ #",
+        "#  @ @            @ @  #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#               CCCCCCC#",
+        "#               LLLLLLL#",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#CCCCCCC       TTTTTTTT#",
+        "#LLLLLLL               #",
+        "#     LC              @#",
+        "#     LC             @ #",
+        "#     LC            @  #",
+        "#T    LC            @  #",
+        "#T    LC             @ #",
+        "#TTT  LC              @#",
+        "########################"
+      ],
+      "terrain": {
+        "#": "t_concrete_wall",
+        "w": "t_gates_mech_control_crt_lab",
+        "W": "t_wall_glass",
+        "G": "t_door_metal_locked",
+        "L": "t_pavement_y"
+      },
+      "furniture": {
+        "@": "f_target",
+        "T": "f_table"
+      },
+      "items": {
+        "C": { "item": "casings", "chance": 60, "repeat": 4 },
+        "T": { "item": "guns_energy", "chance": 25, "repeat": [1, 4] }
+      }
+    }
+  }
+]
