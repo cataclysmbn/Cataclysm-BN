@@ -236,18 +236,23 @@ static LONG WINAPI windows_exception_filter( EXCEPTION_POINTERS *exception_info 
 
 void init_crash_handlers()
 {
+#if defined(_WIN32)
+    // On Windows, SIGSEGV/SIGILL/SIGFPE are translated from SEH hardware exceptions
+    // by the CRT via a Vectored Exception Handler (VEH). Registering C signal handlers
+    // for these causes that VEH to intercept them before SetUnhandledExceptionFilter
+    // fires, which loses the EXCEPTION_POINTERS context needed for a useful minidump
+    // and accurate stack trace. Only SIGABRT is registered here since abort() raises
+    // it explicitly rather than through SEH.
+    std::signal( SIGABRT, signal_handler );
+    SetUnhandledExceptionFilter( windows_exception_filter );
+#else
     for( auto sig : {
              SIGSEGV, SIGILL, SIGABRT, SIGFPE
          } ) {
-
         std::signal( sig, signal_handler );
     }
-    std::set_terminate( crash_terminate_handler );
-#if defined(_WIN32)
-    // Registered last so any SetUnhandledExceptionFilter call made internally
-    // by the CRT's signal() machinery does not overwrite ours.
-    SetUnhandledExceptionFilter( windows_exception_filter );
 #endif
+    std::set_terminate( crash_terminate_handler );
 }
 
 #else // !BACKTRACE
