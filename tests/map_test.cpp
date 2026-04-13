@@ -4,12 +4,15 @@
 #include <vector>
 
 #include "avatar.h"
+#include "coordinate_conversions.h"
+#include "dimension_bounds.h"
 #include "enums.h"
 #include "game.h"
 #include "game_constants.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "point.h"
+#include "start_location.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -47,6 +50,27 @@ TEST_CASE( "place_player_can_safely_move_multiple_submaps" )
     // broken active item cache.
     g->place_player( tripoint_zero );
     CHECK( get_map().check_submap_active_item_consistency().empty() );
+}
+
+TEST_CASE( "start_location_prepare_map_uses_active_dimension", "[map][dimension]" )
+{
+    clear_all_state();
+
+    static const world_type_id pocket_dimension( "pocket_dimension" );
+    static const start_location_id sloc_field( "sloc_field" );
+
+    const auto bounds = dimension_bounds{
+        .min_bound = tripoint_abs_sm( 0, 0, 0 ),
+        .max_bound = tripoint_abs_sm( 3, 3, 0 ),
+        .boundary_terrain = ter_str_id( "t_pd_border" ),
+        .boundary_overmap_terrain = oter_str_id( "pd_border" )
+    };
+
+    REQUIRE( g->travel_to_dimension( "start_prepare_map_test", pocket_dimension, bounds,
+                                     tripoint_abs_sm( 0, 0, 0 ) ) );
+
+    const auto omtstart = project_to<coords::omt>( tripoint_abs_sm( 0, 0, 0 ) );
+    CHECK_NOTHROW( sloc_field.obj().prepare_map( omtstart ) );
 }
 
 static std::ostream &operator<<( std::ostream &os, const ter_id &tid )
