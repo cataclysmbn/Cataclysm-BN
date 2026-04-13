@@ -904,8 +904,11 @@ void map::reset_vehicle_cache( )
 
     // Cache all vehicles
     for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; zlev++ ) {
-        auto &ch = get_cache( zlev );
-        for( const auto &elem : ch.vehicle_list ) {
+        auto *ch = get_cache_lazy( zlev );
+        if( ch == nullptr ) {
+            continue;
+        }
+        for( const auto &elem : ch->vehicle_list ) {
             elem->adjust_zlevel( 0, tripoint_rel_ms::zero() );
             add_vehicle_to_cache( elem );
         }
@@ -992,16 +995,19 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint_bub_ms &p
 void map::clear_vehicle_cache( )
 {
     for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; zlev++ ) {
-        level_cache &ch = get_cache( zlev );
-        while( !ch.veh_cached_parts.empty() ) {
-            const auto part = ch.veh_cached_parts.begin();
+        auto *ch = get_cache_lazy( zlev );
+        if( ch == nullptr ) {
+            continue;
+        }
+        while( !ch->veh_cached_parts.empty() ) {
+            const auto part = ch->veh_cached_parts.begin();
             const auto &p = part->first;
             if( inbounds( p ) ) {
-                ch.veh_exists_at[ch.idx( p.x(), p.y() )] = false;
+                ch->veh_exists_at[ch->idx( p.x(), p.y() )] = false;
             }
-            ch.veh_cached_parts.erase( part );
+            ch->veh_cached_parts.erase( part );
         }
-        ch.veh_in_active_range = false;
+        ch->veh_in_active_range = false;
     }
     cached_veh_rope.clear();
 }
