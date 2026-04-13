@@ -418,6 +418,7 @@
       "bio_medic",
       "bionic_mentat",
       "bionic_spy",
+      "bio_specops",
       "military_saboteur",
       "hacker"
     ],
@@ -732,6 +733,7 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
       "bionic_spy",
       "national_guard",
       "hitman",
@@ -775,7 +777,8 @@
       "bionic_hitman",
       "bio_gangster",
       "razorgirl",
-      "bio_sniper"
+      "bio_sniper",
+      "bio_specops"
     ],
     "flags": [ "CITY_START" ],
     "missions": [ "MISSION_ASSASSINATION" ]
@@ -904,6 +907,7 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
       "labtech",
       "bionic_labtech",
       "medic",
@@ -972,6 +976,7 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
       "medic",
       "mili_pilot",
       "prof_combat_engineer",
