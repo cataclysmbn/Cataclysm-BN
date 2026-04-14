@@ -111,17 +111,7 @@ class submap_load_manager
                                           const std::string &dim_id,
                                           const tripoint_abs_sm &center ) {
             return request_load(
-                       source, dim_id, center, 0,
-                       center.z(), center.z() );
-        }
-
-        load_request_handle request_load( load_request_source source,
-                                          const std::string &dim_id,
-                                          const tripoint_abs_sm &center,
-                                          int radius ) {
-            return request_load(
-                       source, dim_id, center, radius,
-                       -OVERMAP_DEPTH, OVERMAP_HEIGHT );
+                       source, dim_id, center, 0 );
         }
 
         /**
