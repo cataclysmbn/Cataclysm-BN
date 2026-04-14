@@ -1120,7 +1120,7 @@
     "symbol": "~",
     "color": "pink",
     "phase": "liquid",
-    "container": "styrofoam_cup",
+    "container": "sippy_cup",
     "vitamins": [ [ "junk_allergen", 1 ] ],
     "fun": 35,
     "stim": -1,

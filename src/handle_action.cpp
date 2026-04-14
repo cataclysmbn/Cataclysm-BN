@@ -1,8 +1,12 @@
 #include "game.h" // IWYU pragma: associated
 
+#include <cctype>
+#include <charconv>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <utility>
@@ -81,6 +85,7 @@
 #include "scores_ui.h"
 #include "sounds.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "translations.h"
@@ -194,7 +199,7 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
     const level_cache &map_cache = m.get_cache_ref( u.posz() );
     const auto &visibility_cache = map_cache.visibility_cache;
 
-    const int TOTAL_VIEW = MAX_VIEW_DISTANCE * 2 + 1;
+    const int TOTAL_VIEW = g_max_view_distance * 2 + 1;
     point iStart( ( TERRAIN_WINDOW_WIDTH > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_WIDTH - TOTAL_VIEW ) / 2 : 0,
                   ( TERRAIN_WINDOW_HEIGHT > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_HEIGHT - TOTAL_VIEW ) / 2 :
                   0 );
@@ -219,8 +224,8 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
     if( tile_iso && use_tiles ) {
         iStart.x = 0;
         iStart.y = 0;
-        iEnd.x = MAPSIZE_X;
-        iEnd.y = MAPSIZE_Y;
+        iEnd.x = g_mapsize_x;
+        iEnd.y = g_mapsize_y;
         offset.x = 0;
         offset.y = 0;
     }
@@ -232,9 +237,13 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
         const point iRand{ rng( iStart.x, iEnd.x - 1 ), rng( iStart.y, iEnd.y - 1 ) };
         const point map( iRand + offset );
 
+        if( !map_cache.inbounds( map ) ) {
+            continue;
+        }
+
         const tripoint mapp( map, u.posz() );
 
-        const lit_level lighting = visibility_cache[mapp.x][mapp.y];
+        const lit_level lighting = visibility_cache[map_cache.idx( mapp.x, mapp.y )];
 
         if( m.is_outside( mapp ) && m.get_visibility( lighting, cache ) == VIS_CLEAR &&
             !g->critter_at( mapp, true ) ) {
@@ -842,6 +851,66 @@ static int try_set_alarm()
     return as_m.ret;
 }
 
+
+static auto parse_custom_wait_duration( const std::string &value ) -> std::optional<time_duration>
+{
+    const auto trimmed_value = trim_whitespaces( value );
+    if( trimmed_value.empty() ) {
+        return std::nullopt;
+    }
+    auto digits_end = decltype( trimmed_value.size() ) { 0 };
+    while( digits_end < trimmed_value.size() &&
+           std::isdigit( static_cast<unsigned char>( trimmed_value[digits_end] ) ) ) {
+        ++digits_end;
+    }
+    if( digits_end == 0 ) {
+        return std::nullopt;
+    }
+    const auto numeric_text = trimmed_value.substr( 0, digits_end );
+    auto amount = std::int64_t( 0 );
+    const auto parse_result = std::from_chars( numeric_text.data(),
+                              numeric_text.data() + numeric_text.size(),
+                              amount );
+    if( parse_result.ec != std::errc() ) {
+        return std::nullopt;
+    }
+    auto suffix_pos = digits_end;
+    while( suffix_pos < trimmed_value.size() &&
+           std::isspace( static_cast<unsigned char>( trimmed_value[suffix_pos] ) ) ) {
+        ++suffix_pos;
+    }
+    auto unit = 'm';
+    auto has_unit = false;
+    if( suffix_pos < trimmed_value.size() ) {
+        unit = trimmed_value[suffix_pos];
+        ++suffix_pos;
+        has_unit = true;
+        while( suffix_pos < trimmed_value.size() ) {
+            if( !std::isspace( static_cast<unsigned char>( trimmed_value[suffix_pos] ) ) ) {
+                return std::nullopt;
+            }
+            ++suffix_pos;
+        }
+    }
+    const auto normalized_unit = static_cast<char>( std::tolower( static_cast<unsigned char>
+                                 ( unit ) ) );
+    switch( normalized_unit ) {
+        case 's':
+            return amount * 1_seconds;
+        case 'm':
+            return amount * 1_minutes;
+        case 'h':
+            return amount * 1_hours;
+        case 'd':
+            return amount * 1_days;
+        default:
+            if( !has_unit ) {
+                return amount * 1_minutes;
+            }
+            return std::nullopt;
+    }
+}
+
 static void wait()
 {
     std::map<int, time_duration> durations;
@@ -946,11 +1015,19 @@ static void wait()
 
     time_duration time_to_wait;
     if( as_m.ret == 13 ) {
-        int minutes = string_input_popup()
-                      .title( _( "How long?  (in minutes)" ) )
-                      .identifier( "wait_duration" )
-                      .query_int();
-        time_to_wait = minutes * 1_minutes;
+        const auto duration_input = string_input_popup()
+                                    .title( _( "How long?  (e.g. 10s, 15m, 1h)" ) )
+                                    .identifier( "wait_duration" )
+                                    .query_string();
+        if( duration_input.empty() ) {
+            return;
+        }
+        const auto parsed_duration = parse_custom_wait_duration( duration_input );
+        if( !parsed_duration ) {
+            add_msg( m_bad, _( "Invalid duration. Use s, m, h, or d suffixes." ) );
+            return;
+        }
+        time_to_wait = *parsed_duration;
     } else {
 
         const auto dur_iter = durations.find( as_m.ret );
@@ -1332,32 +1409,41 @@ static void fire()
         std::vector<std::string> options;
         std::vector<std::function<void()>> actions;
 
+        bool do_autofire = false;
         for( auto &w : u.worn ) {
             if( w->type->can_use( "holster" ) && !w->has_flag( flag_NO_QUICKDRAW ) &&
                 !w->contents.empty() && w->contents.front().is_gun() ) {
                 //~ draw (first) gun contained in holster
                 //~ %1$s: weapon name, %2$s: container name, %3$d: remaining ammo count
-                options.push_back( string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
-                                                  w->contents.front().tname(),
-                                                  w->type_name(),
-                                                  w->contents.front().ammo_remaining() ) );
+                options.push_back( "Draw: " + string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
+                                   w->contents.front().tname(),
+                                   w->type_name(),
+                                   w->contents.front().ammo_remaining() ) );
 
                 actions.emplace_back( [&] { u.invoke_item( w, "holster" ); } );
 
+            } else if( w->is_gun() && w->has_flag( flag_WORN_GUN ) ) {
+                options.push_back( "Fire: " + w->display_name() );
+                actions.emplace_back( [&] { avatar_action::fire_ranged_gear( u, w ); } );
+                do_autofire = true;
             } else if( w->is_gun() && w->gunmod_find( itype_shoulder_strap ) ) {
                 // wield item currently worn using shoulder strap
-                options.push_back( w->display_name() );
+                options.push_back( "Wield: " + w->display_name() );
                 actions.emplace_back( [&] { u.wield( *w ); } );
             } else if( w->is_gun() && w->gunmod_find( itype_pistol_lanyard ) ) {
                 // wield item currently worn using pistol lanyard
-                options.push_back( w->display_name() );
+                options.push_back( "Wield: " + w->display_name() );
                 actions.emplace_back( [&] { u.wield( *w ); } );
             }
         }
         if( !options.empty() ) {
-            int sel = uilist( _( "Draw what?" ), options );
-            if( sel >= 0 ) {
-                actions[sel]();
+            if( options.size() == 1 && do_autofire ) {
+                actions[0]();
+            } else {
+                int sel = uilist( _( "Do what?" ), options );
+                if( sel >= 0 ) {
+                    actions[sel]();
+                }
             }
         }
     }
@@ -1837,15 +1923,26 @@ bool game::handle_action()
             case ACTION_MOVE_DOWN:
                 if( u.is_mounted() ) {
                     const monster *mon = u.mounted_creature.get();
+                    bool ladder = m.has_flag( "DIFFICULT_Z", u.pos() );
 
-                    const bool can_use_stairs =
-                        mon->has_flag( MF_RIDEABLE_MECH ) ||
-                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
-                        mon->has_flag( MF_FLIES );
+                    if( ladder ) {
+                        const bool can_use_ladder =
+                            mon->has_flag( MF_MOUNTABLE_LADDER ) ||
+                            mon->has_flag( MF_FLIES );
 
-                    if( !can_use_stairs ) {
-                        add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
-                        break;
+                        if( !can_use_ladder ) {
+                            add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
+                            break;
+                        }
+                    } else {
+                        const bool can_use_stairs =
+                            mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                            mon->has_flag( MF_FLIES );
+
+                        if( !can_use_stairs ) {
+                            add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
+                            break;
+                        }
                     }
                 }
                 if( !u.in_vehicle ) {
@@ -1881,15 +1978,26 @@ bool game::handle_action()
             case ACTION_MOVE_UP:
                 if( u.is_mounted() ) {
                     const monster *mon = u.mounted_creature.get();
+                    bool ladder = m.has_flag( "DIFFICULT_Z", u.pos() );
 
-                    const bool can_use_stairs =
-                        mon->has_flag( MF_RIDEABLE_MECH ) ||
-                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
-                        mon->has_flag( MF_FLIES );
+                    if( ladder ) {
+                        const bool can_use_ladder =
+                            mon->has_flag( MF_MOUNTABLE_LADDER ) ||
+                            mon->has_flag( MF_FLIES );
 
-                    if( !can_use_stairs ) {
-                        add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
-                        break;
+                        if( !can_use_ladder ) {
+                            add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
+                            break;
+                        }
+                    } else {
+                        const bool can_use_stairs =
+                            mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                            mon->has_flag( MF_FLIES );
+
+                        if( !can_use_stairs ) {
+                            add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
+                            break;
+                        }
                     }
                 }
                 if( !u.in_vehicle ) {
@@ -1943,7 +2051,7 @@ bool game::handle_action()
                     add_msg( m_info, _( "You can't open things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                    if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
                         add_msg( m_info, _( "You can't open things while you're riding." ) );
                         break;
                     } else {
@@ -1959,7 +2067,7 @@ bool game::handle_action()
                     add_msg( m_info, _( "You can't close things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                    if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
                         add_msg( m_info, _( "You can't close things while you're riding." ) );
                         break;
                     } else {

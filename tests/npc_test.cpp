@@ -150,8 +150,7 @@ TEST_CASE( "on_load-similar-to-per-turn", "[.]" )
         const int five_min_ticks = 2;
         on_load_test( on_load_npc, 0_turns, 5_minutes * five_min_ticks );
         for( time_duration turn = 0_turns; turn < 5_minutes * five_min_ticks; turn += 1_turns ) {
-            iterated_npc.update_body( calendar::turn_zero + turn,
-                                      calendar::turn_zero + turn + 1_turns );
+            iterated_npc.update_body( 1_turns );
         }
 
         const int margin = 2;
@@ -171,8 +170,7 @@ TEST_CASE( "on_load-similar-to-per-turn", "[.]" )
         const auto five_min_ticks = 6_hours / 5_minutes;
         on_load_test( on_load_npc, 0_turns, 5_minutes * five_min_ticks );
         for( time_duration turn = 0_turns; turn < 5_minutes * five_min_ticks; turn += 1_turns ) {
-            iterated_npc.update_body( calendar::turn_zero + turn,
-                                      calendar::turn_zero + turn + 1_turns );
+            iterated_npc.update_body( 1_turns );
         }
 
         const int margin = 10;
@@ -383,7 +381,7 @@ TEST_CASE( "npc-movement" )
                 guy->assign_activity( activity_id( "ACT_MEDITATE" ) );
                 //Sometimes they spawn with sledge hammers and bash down the walls
                 guy->remove_primary_weapon();
-                overmap_buffer.insert_npc( guy );
+                ACTIVE_OVERMAP_BUFFER.insert_npc( guy );
                 g->load_npcs();
                 guy->set_attitude( ( type == 'M' || type == 'C' ) ? NPCATT_NULL : NPCATT_FOLLOW );
             }
@@ -483,7 +481,7 @@ TEST_CASE( "npc_move_through_vehicle_holes" )
     guy->randomize();
     guy->spawn_at_precise( {g->get_levx(), g->get_levy()}, mon_origin );
 
-    overmap_buffer.insert_npc( guy );
+    ACTIVE_OVERMAP_BUFFER.insert_npc( guy );
     g->load_npcs();
 
     guy->move_to( mon_origin + tripoint_north_west, true, nullptr );

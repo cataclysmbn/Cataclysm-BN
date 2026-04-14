@@ -1424,6 +1424,18 @@
     ]
   },
   {
+    "id": "everyday_bp_12",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "BP_12", "ammo-group": "on_hand_shot", "charges": [ 0, 10 ] },
+      { "group": "nested_saiga_12_mag", "charges-min": 0, "prob": 80 },
+      { "group": "nested_saiga_12_mag", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_shot", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
     "id": "everyday_saiga_410",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

@@ -75,6 +75,18 @@ static const std::string flag_THIN_OBSTACLE( "THIN_OBSTACLE" );
 
 static const flag_id flag_FLY_STRAIGHT( "FLY_STRAIGHT" );
 
+thread_local int projectile_animation_suppression_depth = 0;
+
+scoped_projectile_animation_suppression::scoped_projectile_animation_suppression()
+{
+    projectile_animation_suppression_depth++;
+}
+
+scoped_projectile_animation_suppression::~scoped_projectile_animation_suppression()
+{
+    projectile_animation_suppression_depth--;
+}
+
 namespace
 {
 
@@ -279,9 +291,11 @@ auto projectile_attack_roll( const dispersion_sources &dispersion, double range,
 
 auto projectile_attack( const projectile &proj_arg, const tripoint &source,
                         const tripoint &target_arg, const dispersion_sources &dispersion,
-                        Creature *origin, item *source_weapon, const vehicle *in_veh ) -> dealt_projectile_attack
+                        Creature *origin, item *source_weapon, const vehicle *in_veh,
+                        const bool suppress_damage_messages ) -> dealt_projectile_attack
 {
-    const bool do_animation = get_option<bool>( "ANIMATION_PROJECTILES" );
+    const bool do_animation = get_option<bool>( "ANIMATION_PROJECTILES" ) &&
+                              projectile_animation_suppression_depth == 0;
 
     double range = rl_dist( source, target_arg );
 
@@ -300,6 +314,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
         .dealt_dam = dealt_damage_instance(),
         .end_point = source,
         .missed_by = aim.missed_by,
+        .trajectory = {},
+        .suppress_damage_message = suppress_damage_messages,
     };
 
     // No suicidal shots
@@ -455,6 +471,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
     int projectile_skip_calculation = range * projectile_skip_multiplier;
     int projectile_skip_current_frame = rng( 0, projectile_skip_calculation );
     bool has_momentum = true;
+    auto *last_hit_critter = static_cast<Creature *>( nullptr );
     for( size_t i = 1; i < traj_len && ( has_momentum || stream ); ++i ) {
         prev_point = tp;
         tp = trajectory[i];
@@ -587,6 +604,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             // Critter can still dodge the projectile
             // In this case hit_critter won't be set
             if( attack.hit_critter != nullptr ) {
+                last_hit_critter = attack.hit_critter;
                 if( mon != nullptr ) {
                     hit_monsters.push_back( std::make_pair( *mon, attack ) );
                 }
@@ -622,6 +640,9 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             break;
         }
     }
+    attack.hit_critter = last_hit_critter;
+    attack.trajectory.assign( trajectory.begin(), trajectory.begin() + traj_len );
+
     if( do_animation && do_draw_line && traj_len > 2 ) {
         trajectory.erase( trajectory.begin() );
         trajectory.resize( traj_len-- );

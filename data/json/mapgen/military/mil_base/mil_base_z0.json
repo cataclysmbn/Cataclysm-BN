@@ -637,8 +637,8 @@
         { "monster": "GROUP_MIL_BASE_HOSPITAL", "x": [ 72, 95 ], "y": [ 48, 71 ], "repeat": [ 4, 5 ], "density": 0.1 }
       ],
       "place_vehicles": [
-        { "vehicle": "military_vehicles", "x": 60, "y": 30, "chance": 50 },
-        { "vehicle": "military_vehicles", "x": 59, "y": 39, "chance": 50 },
+        { "vehicle": "military_vehicles", "x": 61, "y": 30, "chance": 50 },
+        { "vehicle": "military_vehicles", "x": 61, "y": 39, "chance": 50 },
         { "vehicle": "military_vehicles", "x": 9, "y": 32, "chance": 25, "status": 1 },
         { "vehicle": "military_vehicles", "x": 20, "y": 39, "chance": 25, "status": 1 },
         { "vehicle": "military_vehicles", "x": 83, "y": 39, "chance": 25, "rotation": 90 },

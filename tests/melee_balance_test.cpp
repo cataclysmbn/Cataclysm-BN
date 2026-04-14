@@ -16,7 +16,7 @@
 #include "string_formatter.h"
 #include "type_id.h"
 
-static constexpr tripoint dude_pos( HALF_MAPSIZE_X, HALF_MAPSIZE_Y, 0 );
+static const tripoint dude_pos( g_half_mapsize_x, g_half_mapsize_y, 0 );
 
 static std::vector<const itype *> find_weapons()
 {

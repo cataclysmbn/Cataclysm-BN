@@ -308,6 +308,56 @@ bool SkillLevel::rust( bool charged_bio_mem, int character_rate )
     return false;
 }
 
+time_duration SkillLevel::rust_interval( int char_rate ) const
+{
+    return rustRate( _level ) * ( char_rate / 100.0f );
+}
+
+int SkillLevel::rust_by( const time_duration &duration, int max_bio_saves, int char_rate )
+{
+    const std::string &rust_type = get_option<std::string>( "SKILL_RUST" );
+    int bio_saves = 0;
+    time_duration remaining = duration;
+
+    while( _level > 0 ) {
+        const time_duration effective_rate = rust_interval( char_rate );
+        if( to_turns<int>( effective_rate ) <= 0 ) {
+            break;
+        }
+        const int n_ticks = calendar::ticks_between( remaining, effective_rate );
+        if( n_ticks <= 0 ) {
+            break;
+        }
+
+        bool level_dropped = false;
+        for( int i = 0; i < n_ticks; ++i ) {
+            if( max_bio_saves > 0 && one_in( 5 ) ) {
+                ++bio_saves;
+                --max_bio_saves;
+                continue;
+            }
+            _exercise -= _level;
+            if( _exercise < 0 ) {
+                if( rust_type == "vanilla" || rust_type == "int" ) {
+                    _exercise = 100 * _level * _level - 1;
+                    --_level;
+                    remaining -= ( i + 1 ) * effective_rate;
+                    level_dropped = true;
+                    break;
+                } else {
+                    _exercise = 0;
+                }
+            }
+        }
+
+        if( !level_dropped ) {
+            break;
+        }
+    }
+
+    return bio_saves;
+}
+
 void SkillLevel::practice()
 {
     _lastPracticed = calendar::turn;

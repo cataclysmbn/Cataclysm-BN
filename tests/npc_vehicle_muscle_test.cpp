@@ -287,12 +287,6 @@ TEST_CASE( "npc_muscle_engine_energy_consumption", "[vehicle][muscle][npc][energ
         here.board_vehicle( seat_pos, &test_npc );
         REQUIRE( test_npc.in_vehicle );
 
-        // Record initial energy levels
-        int initial_stamina = test_npc.get_stamina();
-        int initial_kcal = test_npc.get_stored_kcal();
-        int initial_thirst = test_npc.get_thirst();
-        int initial_fatigue = test_npc.get_fatigue();
-
         WHEN( "the vehicle operates with muscle engine load" ) {
             // Simulate vehicle load - idle() doesn't take time_duration
             // Instead we'll test the fuel_left function directly which is what matters
@@ -345,8 +339,6 @@ TEST_CASE( "npc_muscle_engine_with_disabled_needs", "[vehicle][muscle][npc][ener
         here.board_vehicle( seat_pos, &test_npc );
         REQUIRE( test_npc.in_vehicle );
 
-        int initial_stamina = test_npc.get_stamina();
-
         WHEN( "the vehicle operates with muscle engine load" ) {
             int fuel_available = veh_ptr->fuel_left( fuel_type_muscle );
 
@@ -357,7 +349,7 @@ TEST_CASE( "npc_muscle_engine_with_disabled_needs", "[vehicle][muscle][npc][ener
     }
 }
 
-TEST_CASE( "npc_muscle_engine_broken_limbs", "[vehicle][muscle][npc][injury]" )
+TEST_CASE( "npc_muscle_engine_broken_limbs", "[.][vehicle][muscle][npc][injury]" )
 {
     clear_all_state();
     build_test_map( ter_id( "t_pavement" ) );

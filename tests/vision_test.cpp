@@ -202,13 +202,13 @@ static void full_map_test( const std::vector<std::string> &setup,
             }
             fields << ' ';
             transparency << std::setw( 6 )
-                         << cache.transparency_cache[p.x][p.y] << ' ';
-            seen << std::setw( 6 ) << cache.seen_cache[p.x][p.y] << ' ';
-            four_quadrants this_lm = cache.lm[p.x][p.y];
+                         << cache.transparency_cache[cache.idx( p.x, p.y )] << ' ';
+            seen << std::setw( 6 ) << cache.seen_cache[cache.idx( p.x, p.y )] << ' ';
+            four_quadrants this_lm = cache.lm[cache.idx( p.x, p.y )];
             lm << this_lm.to_string() << ' ';
             apparent_light << std::setw( 6 ) << al.apparent_light << ' ';
             obstructed << ( al.obstructed ? '#' : '.' ) << ' ';
-            floor_above << ( above_cache.floor_cache[p.x][p.y] ? '#' : '.' ) << ' ';
+            floor_above << ( above_cache.floor_cache[above_cache.idx( p.x, p.y )] ? '#' : '.' ) << ' ';
         }
         fields << '\n';
         transparency << '\n';

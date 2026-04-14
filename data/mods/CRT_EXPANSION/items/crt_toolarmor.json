@@ -12,6 +12,7 @@
     "to_hit": 1,
     "max_charges": 200,
     "initial_charges": 200,
+    "ammo": "battery",
     "use_action": [
       {
         "type": "transform",
@@ -30,7 +31,6 @@
     "coverage": 100,
     "encumbrance": 50,
     "warmth": 20,
-    "ammo": "battery",
     "relic_data": {
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
@@ -76,6 +76,7 @@
     "max_charges": 250,
     "initial_charges": 0,
     "turns_per_charge": 1,
+    "ammo": "battery",
     "revert_to": "crt_gasmask",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "C.R.T HUD deactivating.", "target": "crt_gasmask" },
     "material": [ "plastic", "kevlar" ],
@@ -85,7 +86,6 @@
     "coverage": 100,
     "encumbrance": 5,
     "warmth": 75,
-    "ammo": "battery",
     "relic_data": {
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
@@ -140,6 +140,7 @@
     "covers": [ "torso" ],
     "max_charges": 300,
     "initial_charges": 300,
+    "ammo": "battery",
     "use_action": [
       {
         "type": "transform",
@@ -201,6 +202,7 @@
     "max_charges": 300,
     "initial_charges": 0,
     "turns_per_charge": 1,
+    "ammo": "battery",
     "revert_to": "crt_em_vest",
     "use_action": { "type": "transform", "menu_text": "Turn off armor", "msg": "C.R.I.T. E.M powering off…", "target": "crt_em_vest" },
     "relic_data": {

@@ -133,6 +133,13 @@ std::unique_ptr<aim_activity_actor> aim_activity_actor::use_bionic( detached_ptr
     return act;
 }
 
+std::unique_ptr<aim_activity_actor> aim_activity_actor::use_gear( item *gun )
+{
+    std::unique_ptr<aim_activity_actor> act( new aim_activity_actor() );
+    act->weapon = safe_reference<item>( gun );
+    return act;
+}
+
 std::unique_ptr<aim_activity_actor> aim_activity_actor::use_mutation( detached_ptr<item>
         &&fake_gun )
 {
@@ -173,18 +180,12 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
             return;
         }
     }
-    std::optional<shape_factory> shape_gen;
-    if( weapon->ammo_current() && weapon->ammo_current()->ammo &&
-        weapon->ammo_current()->ammo->shape ) {
-        shape_gen = weapon->ammo_current()->ammo->shape;
-    }
-
     g->temp_exit_fullscreen();
     target_handler::trajectory trajectory;
-    if( !shape_gen ) {
-        trajectory = target_handler::mode_fire( you, *this );
-    } else {
+    if( const auto shape_gen = ranged::get_shape_factory( *weapon ) ) {
         trajectory = target_handler::mode_shaped( you, *shape_gen, *this );
+    } else {
+        trajectory = target_handler::mode_fire( you, *this );
     }
     g->reenter_fullscreen();
 
@@ -314,6 +315,9 @@ std::unique_ptr<activity_actor> aim_activity_actor::deserialize( JsonIn &jsin )
 
 item *aim_activity_actor::get_weapon()
 {
+    if( weapon ) {
+        return &*weapon;
+    }
     if( fake_weapon ) {
         // TODO: check if the player lost relevant bionic/mutation
         return &*fake_weapon;
@@ -2247,4 +2251,3 @@ void deserialize( std::unique_ptr<activity_actor> &actor, JsonIn &jsin )
         }
     }
 }
-

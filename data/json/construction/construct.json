@@ -108,6 +108,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_door_window",
+    "group": "build_door_window",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "45 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ] ],
+    "components": [ [ [ "2x4", 2 ] ], [ [ "wood_panel", 1 ] ], [ [ "nail", 12 ] ], [ [ "hinge", 2 ] ], [ [ "glass_sheet", 1 ] ] ],
+    "pre_terrain": "t_door_frame",
+    "post_terrain": "t_door_window_c"
+  },
+  {
+    "type": "construction",
     "id": "constr_fill_water_sh",
     "group": "fill_shallow_water_with_dirt",
     "category": "CONSTRUCT",

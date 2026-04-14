@@ -44,6 +44,8 @@ double shape::distance_at( const rl_vec3d &p ) const
 }
 
 shape_factory::shape_factory() = default;
+shape_factory::shape_factory( std::shared_ptr<shape_factory_impl> impl ) : impl( std::move(
+                impl ) ) {}
 shape_factory::shape_factory( const shape_factory & ) = default;
 shape_factory::~shape_factory() = default;
 

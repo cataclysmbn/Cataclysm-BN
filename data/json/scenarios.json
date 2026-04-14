@@ -116,6 +116,7 @@
       "sloc_lmoe",
       "sloc_horse_ranch",
       "sloc_cabin_lake",
+      "sloc_lodge_ground",
       "sloc_freshwater_research_station",
       "sloc_marina"
     ],
@@ -417,7 +418,9 @@
       "bio_medic",
       "bionic_mentat",
       "bionic_spy",
-      "military_saboteur"
+      "bio_specops",
+      "military_saboteur",
+      "hacker"
     ],
     "allowed_locs": [ "sloc_lab_random", "sloc_lab_escape_cells", "sloc_lab_finale", "sloc_ice_lab_stairs", "sloc_ice_lab_finale" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
@@ -454,6 +457,8 @@
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
+      "sloc_lodge_ground",
+      "sloc_airport",
       "sloc_campsite",
       "sloc_campground",
       "sloc_bastion_fort",
@@ -491,6 +496,8 @@
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
+      "sloc_lodge_ground",
+      "sloc_airport",
       "sloc_campsite",
       "sloc_campground",
       "sloc_cabin_lake",
@@ -726,12 +733,14 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
       "bionic_spy",
       "national_guard",
       "hitman",
       "assassin",
       "politician",
-      "mili_pilot"
+      "mili_pilot",
+      "major-general"
     ],
     "map_extra": "mx_helicopter",
     "flags": [ "HELI_CRASH", "LONE_START" ],
@@ -768,7 +777,8 @@
       "bionic_hitman",
       "bio_gangster",
       "razorgirl",
-      "bio_sniper"
+      "bio_sniper",
+      "bio_specops"
     ],
     "flags": [ "CITY_START" ],
     "missions": [ "MISSION_ASSASSINATION" ]
@@ -897,10 +907,12 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
       "labtech",
       "bionic_labtech",
       "medic",
-      "mili_pilot"
+      "mili_pilot",
+      "major-general"
     ],
     "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
     "bionics": [
@@ -964,11 +976,39 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
       "medic",
       "mili_pilot",
-      "prof_combat_engineer"
+      "prof_combat_engineer",
+      "major-general"
     ],
     "flags": [ "CHALLENGE", "LONE_START" ],
+    "bionics": [
+      "bio_reactor",
+      "bio_metabolics",
+      "bio_ethanol",
+      "bio_ups",
+      "bio_targeting",
+      "bio_geiger",
+      "bio_power_armor_interface",
+      "bio_cqb",
+      "bio_blade",
+      "bio_weight"
+    ]
+  },
+  {
+    "type": "scenario",
+    "id": "tankmod_armored_warfare",
+    "name": "Armored Apocalypse",
+    "points": 0,
+    "description": "Wandering in search of any other survivors after a disastrous mobilization, your tank and its crew have slowly been worn down by attrition.  After trying to establish communications using an old radio tower, the only other surviving crew member went off in search of supplies and fuel a few days ago.  Now something's stirred up the undead, several are converging on your position.",
+    "vehicle": "tank_m1_abrams",
+    "professions": [ "tankmod_driver", "tankmod_gunner", "tankmod_loader", "tankmod_commander" ],
+    "start_name": "Radio Tower",
+    "allowed_locs": [ "sloc_tankmod_radio_tower" ],
+    "missions": [ "MISSION_TANK_SUPPLY_RUN" ],
+    "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
+    "flags": [ "CITY_START", "LONE_START", "SUM_START" ],
     "bionics": [
       "bio_reactor",
       "bio_metabolics",

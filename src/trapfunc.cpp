@@ -1203,6 +1203,12 @@ bool trapfunc::ledge( const tripoint &p, Creature *c, item * )
     c->add_msg_if_npc( _( "<npcname> falls down a level!" ) );
     player *pl = dynamic_cast<player *>( c );
     if( pl == nullptr ) {
+
+        //Special case: monster falling is a mount
+        //Move player down beforehand to avoid player being dismounted midair
+        if( g->u.is_mounted() && g->u.mounted_creature.get() == c ) {
+            g->u.setpos( where );
+        }
         c->setpos( where );
         c->impact( height * 10, where );
         g->m.tr_at( p ).trigger_aftermath( g->m, p );
@@ -1245,8 +1251,8 @@ bool trapfunc::temple_flood( const tripoint &p, Creature *c, item * )
         tripoint tmp = p;
         int &i = tmp.x;
         int &j = tmp.y;
-        for( i = 0; i < MAPSIZE_X; i++ ) {
-            for( j = 0; j < MAPSIZE_Y; j++ ) {
+        for( i = 0; i < g_mapsize_x; i++ ) {
+            for( j = 0; j < g_mapsize_y; j++ ) {
                 if( g->m.tr_at( tmp ).loadid == tr_temple_flood ) {
                     g->m.remove_trap( tmp );
                 }
@@ -1268,8 +1274,8 @@ bool trapfunc::temple_toggle( const tripoint &p, Creature *c, item * )
         tripoint tmp = p;
         int &i = tmp.x;
         int &j = tmp.y;
-        for( i = 0; i < MAPSIZE_X; i++ ) {
-            for( j = 0; j < MAPSIZE_Y; j++ ) {
+        for( i = 0; i < g_mapsize_x; i++ ) {
+            for( j = 0; j < g_mapsize_y; j++ ) {
                 if( type == t_floor_red ) {
                     if( g->m.ter( tmp ) == t_rock_green ) {
                         g->m.ter_set( tmp, t_floor_green );

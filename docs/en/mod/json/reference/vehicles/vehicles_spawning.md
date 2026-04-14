@@ -18,7 +18,8 @@ Vehicle prototypes do not currently accept copy-from
 ],
 "blueprint_origin": { "x": 10, "y": 3 }    // Used by palettes to locate the offset
 "palette": {                               // Palette used by blueprint to set parts on a tile
-  "O": [ "airship_balloon_external" ]      // Can only be an array of strings, no part objects
+  "O": [ "airship_balloon_external" ]      // Can only be an array not one string
+  "J": [ { "part": "tank", "fuel": "gasoline" }, "battery_car" ], // All part types supported
 }
 "parts": [                                 // Parts list
     { "x": 0, "y": 0, "part": "frame" },   // Part definition, positive x direction is up,

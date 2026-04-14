@@ -1,6 +1,7 @@
 #include "debug.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <cctype>
 #include <cerrno>
@@ -28,6 +29,7 @@
 
 #include "catalua.h"
 #include "cata_utility.h"
+#include "thread_pool.h"
 #include "cached_options.h"
 #include "color.h"
 #include "cursesdef.h"
@@ -102,10 +104,17 @@ static enum_bitset<DL> debugLevel;
 static enum_bitset<DC> debugClass;
 
 /** True during game startup, when debugmsgs cannot be displayed yet. */
-static bool buffering_debugmsgs = true;
+static std::atomic<bool> buffering_debugmsgs = true;
 
 /** Set to true when any error is logged. */
-static bool error_observed = false;
+static std::atomic<bool> error_observed = false;
+
+/**
+ * Mutex serialising all writes to the debug log stream.
+ * Also held by DebugLogGuard for the full duration of a log entry so that
+ * header + message body + newline are never interleaved across threads.
+ */
+static std::mutex g_debug_log_mutex;
 
 /** If true, debug messages will be captured,
  * used to test debugmsg calls in the unit tests
@@ -220,6 +229,13 @@ struct buffered_prompt_info {
     std::string text;
     bool force;
 };
+
+/**
+ * debugmsg prompts queued by worker threads that cannot drive the UI.
+ * Drained on the main thread by drain_worker_thread_debugmsgs().
+ */
+static std::mutex g_worker_prompts_mutex;
+static std::vector<buffered_prompt_info> g_worker_thread_prompts;
 
 namespace
 {
@@ -367,6 +383,29 @@ void replay_buffered_debugmsg_prompts()
         );
     }
     buffered_prompts().clear();
+    // Also show anything that worker threads queued during startup.
+    drain_worker_thread_debugmsgs();
+}
+
+void drain_worker_thread_debugmsgs()
+{
+    if( !catacurses::stdscr ) {
+        return;
+    }
+    std::vector<buffered_prompt_info> pending;
+    {
+        std::lock_guard<std::mutex> lock( g_worker_prompts_mutex );
+        pending = std::move( g_worker_thread_prompts );
+    }
+    for( const auto &prompt : pending ) {
+        debug_error_prompt(
+            prompt.filename.c_str(),
+            prompt.line.c_str(),
+            prompt.funcname.c_str(),
+            prompt.text.c_str(),
+            prompt.force
+        );
+    }
 }
 
 struct time_info {
@@ -452,7 +491,7 @@ struct repetition_folder {
     }
 };
 
-static repetition_folder rep_folder;
+static thread_local repetition_folder rep_folder;
 static void output_repetitions( std::ostream &out );
 
 void realDebugmsg( const char *filename, const char *line, const char *funcname,
@@ -484,6 +523,16 @@ void realDebugmsg( const char *filename, const char *line, const char *funcname,
     // Show excessive repetition prompt once per excessive set
     bool excess_repetition = rep_folder.repeat_count == repetition_folder::repetition_threshold;
 
+    // Worker threads cannot drive the UI. Queue the prompt for the main thread.
+    if( is_pool_worker_thread() ) {
+        std::lock_guard<std::mutex> lock( g_worker_prompts_mutex );
+        g_worker_thread_prompts.push_back( { filename, line, funcname, text, false } );
+        if( excess_repetition ) {
+            g_worker_thread_prompts.push_back( { filename, line, funcname, text, true } );
+        }
+        return;
+    }
+
     if( buffering_debugmsgs ) {
         buffered_prompts().push_back( {filename, line, funcname, text, false } );
         if( excess_repetition ) {
@@ -491,6 +540,9 @@ void realDebugmsg( const char *filename, const char *line, const char *funcname,
         }
         return;
     }
+
+    // Before showing this prompt, drain any queued worker-thread prompts.
+    drain_worker_thread_debugmsgs();
 
     debug_error_prompt( filename, line, funcname, text.c_str(), false );
     if( excess_repetition ) {
@@ -722,6 +774,12 @@ void setupDebug( DebugOutput output_mode )
 void deinitDebug()
 {
     debugFile().deinit();
+}
+
+void flush_debug_log()
+{
+    std::lock_guard<std::mutex> lock( g_debug_log_mutex );
+    debugFile().get_file().flush();
 }
 
 // OStream Operators                                                {{{2
@@ -971,6 +1029,11 @@ class sym_init
         }
 };
 static std::unique_ptr<sym_init> sym_init_;
+static std::once_flag sym_init_once_;
+// Serialises all dbghelp calls: the entire dbghelp.dll API is single-threaded.
+// Also protects the shared static buffers (bt, mod_path, sym_storage) used during
+// backtrace capture so concurrent crashes on different threads don't corrupt each other.
+static std::mutex g_dbghelp_mutex;
 
 constexpr int module_path_len = 512;
 // on some systems the number of frames to capture have to be less than 63 according to the documentation
@@ -991,6 +1054,12 @@ struct backtrace_module_info_t {
 };
 static std::map<DWORD64, backtrace_module_info_t> bt_module_info_map;
 #endif
+static CONTEXT *g_crash_context = nullptr;
+
+void set_crash_exception_context( void *context )
+{
+    g_crash_context = static_cast<CONTEXT *>( context );
+}
 #elif !defined(__ANDROID__) && !defined(LIBBACKTRACE)
 constexpr int bt_cnt = 20;
 static void *bt[bt_cnt];
@@ -1068,96 +1137,201 @@ void debug_write_backtrace( std::ostream &out )
 #endif
 
 #if defined(_WIN32)
-    if( !sym_init_ ) {
+    std::lock_guard<std::mutex> dbghelp_lock( g_dbghelp_mutex );
+    std::call_once( sym_init_once_, []() {
         sym_init_ = std::make_unique<sym_init>();
-    }
+    } );
     sym.SizeOfStruct = sizeof( SYMBOL_INFO );
     sym.MaxNameLen = max_name_len;
-    // libbacktrace's own backtrace capturing doesn't seem to work on Windows
-    const USHORT num_bt = CaptureStackBackTrace( 0, bt_cnt, bt, nullptr );
     const HANDLE proc = GetCurrentProcess();
-    for( USHORT i = 0; i < num_bt; ++i ) {
-        DWORD64 off;
-        out << "\n  #" << i;
-        out << "\n    (dbghelp: ";
-        if( SymFromAddr( proc, reinterpret_cast<DWORD64>( bt[i] ), &off, &sym ) ) {
-            out << demangle( sym.Name ) << "+0x" << std::hex << off << std::dec;
-        }
-        out << "@" << bt[i];
-        const DWORD64 mod_base = SymGetModuleBase64( proc, reinterpret_cast<DWORD64>( bt[i] ) );
-        if( mod_base ) {
-            out << "[";
-            const DWORD mod_len = GetModuleFileName( reinterpret_cast<HMODULE>( mod_base ), mod_path,
-                                  module_path_len );
-            // mod_len == module_path_len means insufficient buffer
-            if( mod_len > 0 && mod_len < module_path_len ) {
-                const char *mod_name = mod_path + mod_len;
-                for( ; mod_name > mod_path && *( mod_name - 1 ) != '\\'; --mod_name ) {
-                }
-                out << mod_name;
-            } else {
-                out << "0x" << std::hex << mod_base << std::dec;
+#ifdef _WIN64
+    if( g_crash_context ) {
+        // Walk the stack from the exception context so frames reflect the actual crash
+        // site rather than the signal/exception handler.
+        CONTEXT ctx = *g_crash_context;
+        STACKFRAME64 frame = {};
+        frame.AddrPC.Offset    = ctx.Rip;
+        frame.AddrPC.Mode      = AddrModeFlat;
+        frame.AddrFrame.Offset = ctx.Rbp;
+        frame.AddrFrame.Mode   = AddrModeFlat;
+        frame.AddrStack.Offset = ctx.Rsp;
+        frame.AddrStack.Mode   = AddrModeFlat;
+        for( int i = 0;
+             StackWalk64( IMAGE_FILE_MACHINE_AMD64, proc, GetCurrentThread(),
+                          &frame, &ctx, nullptr,
+                          SymFunctionTableAccess64, SymGetModuleBase64, nullptr )
+             && i < bt_cnt; ++i ) {
+            const DWORD64 addr = frame.AddrPC.Offset;
+            DWORD64 off = 0;
+            out << "\n  #" << i;
+            out << "\n    (dbghelp: ";
+            if( SymFromAddr( proc, addr, &off, &sym ) ) {
+                out << demangle( sym.Name ) << "+0x" << std::hex << off << std::dec;
             }
-            out << "+0x" << std::hex << reinterpret_cast<uintptr_t>( bt[i] ) - mod_base <<
-                std::dec << "]";
-        }
-        out << "), ";
+            out << "@" << reinterpret_cast<void *>( static_cast<uintptr_t>( addr ) );
+            const DWORD64 mod_base = SymGetModuleBase64( proc, addr );
+            if( mod_base ) {
+                out << "[";
+                const DWORD mod_len = GetModuleFileName( reinterpret_cast<HMODULE>( mod_base ),
+                                      mod_path, module_path_len );
+                // mod_len == module_path_len means insufficient buffer
+                if( mod_len > 0 && mod_len < module_path_len ) {
+                    const char *mod_name = mod_path + mod_len;
+                    for( ; mod_name > mod_path && *( mod_name - 1 ) != '\\'; --mod_name ) {
+                    }
+                    out << mod_name;
+                } else {
+                    out << "0x" << std::hex << mod_base << std::dec;
+                }
+                out << "+0x" << std::hex << static_cast<uintptr_t>( addr ) - mod_base
+                    << std::dec << "]";
+            }
+            out << "), ";
 #if defined(LIBBACKTRACE)
-        backtrace_module_info_t bt_module_info;
-        if( mod_base ) {
-            const auto it = bt_module_info_map.find( mod_base );
-            if( it != bt_module_info_map.end() ) {
-                bt_module_info = it->second;
+            backtrace_module_info_t bt_module_info;
+            if( mod_base ) {
+                const auto it = bt_module_info_map.find( mod_base );
+                if( it != bt_module_info_map.end() ) {
+                    bt_module_info = it->second;
+                } else {
+                    const DWORD mod_len2 = GetModuleFileName( reinterpret_cast<HMODULE>( mod_base ),
+                                           mod_path, module_path_len );
+                    if( mod_len2 > 0 && mod_len2 < module_path_len ) {
+                        bt_module_info.state = bt_create_state( mod_path, 0,
+                                                                // error callback
+                        [&out]( const char *const msg, const int errnum ) {
+                            out << "\n    (backtrace_create_state failed: errno = " << errnum
+                                << ", msg = " << ( msg ? msg : "[no msg]" ) << "),";
+                        } );
+                        bt_module_info.image_base = get_image_base( mod_path );
+                        if( bt_module_info.image_base == 0 ) {
+                            out << "\n    (cannot locate image base),";
+                        }
+                    } else {
+                        out << "\n    (executable path exceeds " << module_path_len << " chars),";
+                    }
+                    bt_module_info_map.emplace( mod_base, bt_module_info );
+                }
             } else {
+                out << "\n    (unable to get module base address),";
+            }
+            if( bt_module_info.state && bt_module_info.image_base != 0 ) {
+                const uintptr_t de_aslr_pc = static_cast<uintptr_t>( addr ) - mod_base +
+                                             bt_module_info.image_base;
+                bt_syminfo( bt_module_info.state, de_aslr_pc,
+                            // syminfo callback
+                            [&out]( const uintptr_t pc, const char *const symname,
+                const uintptr_t symval, const uintptr_t ) {
+                    out << "\n    (libbacktrace: " << ( symname ? symname : "[unknown symbol]" )
+                        << "+0x" << std::hex << pc - symval << std::dec
+                        << "@0x" << std::hex << pc << std::dec
+                        << "),";
+                },
+                // error callback
+                [&out]( const char *const msg, const int errnum ) {
+                    out << "\n    (backtrace_syminfo failed: errno = " << errnum
+                        << ", msg = " << ( msg ? msg : "[no msg]" )
+                        << "),";
+                } );
+                bt_pcinfo( bt_module_info.state, de_aslr_pc, bt_full_print,
+                           // error callback
+                [&out]( const char *const msg, const int errnum ) {
+                    out << "\n    (backtrace_pcinfo failed: errno = " << errnum
+                        << ", msg = " << ( msg ? msg : "[no msg]" )
+                        << "),";
+                } );
+            }
+#endif
+        }
+    } else {
+#endif
+        // libbacktrace's own backtrace capturing doesn't seem to work on Windows
+        const USHORT num_bt = CaptureStackBackTrace( 0, bt_cnt, bt, nullptr );
+        for( USHORT i = 0; i < num_bt; ++i ) {
+            DWORD64 off;
+            out << "\n  #" << i;
+            out << "\n    (dbghelp: ";
+            if( SymFromAddr( proc, reinterpret_cast<DWORD64>( bt[i] ), &off, &sym ) ) {
+                out << demangle( sym.Name ) << "+0x" << std::hex << off << std::dec;
+            }
+            out << "@" << bt[i];
+            const DWORD64 mod_base = SymGetModuleBase64( proc, reinterpret_cast<DWORD64>( bt[i] ) );
+            if( mod_base ) {
+                out << "[";
                 const DWORD mod_len = GetModuleFileName( reinterpret_cast<HMODULE>( mod_base ), mod_path,
                                       module_path_len );
+                // mod_len == module_path_len means insufficient buffer
                 if( mod_len > 0 && mod_len < module_path_len ) {
-                    bt_module_info.state = bt_create_state( mod_path, 0,
-                                                            // error callback
-                    [&out]( const char *const msg, const int errnum ) {
-                        out << "\n    (backtrace_create_state failed: errno = " << errnum
-                            << ", msg = " << ( msg ? msg : "[no msg]" ) << "),";
-                    } );
-                    bt_module_info.image_base = get_image_base( mod_path );
-                    if( bt_module_info.image_base == 0 ) {
-                        out << "\n    (cannot locate image base),";
+                    const char *mod_name = mod_path + mod_len;
+                    for( ; mod_name > mod_path && *( mod_name - 1 ) != '\\'; --mod_name ) {
                     }
+                    out << mod_name;
                 } else {
-                    out << "\n    (executable path exceeds " << module_path_len << " chars),";
+                    out << "0x" << std::hex << mod_base << std::dec;
                 }
-                bt_module_info_map.emplace( mod_base, bt_module_info );
+                out << "+0x" << std::hex << reinterpret_cast<uintptr_t>( bt[i] ) - mod_base <<
+                    std::dec << "]";
             }
-        } else {
-            out << "\n    (unable to get module base address),";
-        }
-        if( bt_module_info.state && bt_module_info.image_base != 0 ) {
-            const uintptr_t de_aslr_pc = reinterpret_cast<uintptr_t>( bt[i] ) - mod_base +
-                                         bt_module_info.image_base;
-            bt_syminfo( bt_module_info.state, de_aslr_pc,
-                        // syminfo callback
-                        [&out]( const uintptr_t pc, const char *const symname,
-            const uintptr_t symval, const uintptr_t ) {
-                out << "\n    (libbacktrace: " << ( symname ? symname : "[unknown symbol]" )
-                    << "+0x" << std::hex << pc - symval << std::dec
-                    << "@0x" << std::hex << pc << std::dec
-                    << "),";
-            },
-            // error callback
-            [&out]( const char *const msg, const int errnum ) {
-                out << "\n    (backtrace_syminfo failed: errno = " << errnum
-                    << ", msg = " << ( msg ? msg : "[no msg]" )
-                    << "),";
-            } );
-            bt_pcinfo( bt_module_info.state, de_aslr_pc, bt_full_print,
-                       // error callback
-            [&out]( const char *const msg, const int errnum ) {
-                out << "\n    (backtrace_pcinfo failed: errno = " << errnum
-                    << ", msg = " << ( msg ? msg : "[no msg]" )
-                    << "),";
-            } );
-        }
+            out << "), ";
+#if defined(LIBBACKTRACE)
+            backtrace_module_info_t bt_module_info;
+            if( mod_base ) {
+                const auto it = bt_module_info_map.find( mod_base );
+                if( it != bt_module_info_map.end() ) {
+                    bt_module_info = it->second;
+                } else {
+                    const DWORD mod_len = GetModuleFileName( reinterpret_cast<HMODULE>( mod_base ), mod_path,
+                                          module_path_len );
+                    if( mod_len > 0 && mod_len < module_path_len ) {
+                        bt_module_info.state = bt_create_state( mod_path, 0,
+                                                                // error callback
+                        [&out]( const char *const msg, const int errnum ) {
+                            out << "\n    (backtrace_create_state failed: errno = " << errnum
+                                << ", msg = " << ( msg ? msg : "[no msg]" ) << "),";
+                        } );
+                        bt_module_info.image_base = get_image_base( mod_path );
+                        if( bt_module_info.image_base == 0 ) {
+                            out << "\n    (cannot locate image base),";
+                        }
+                    } else {
+                        out << "\n    (executable path exceeds " << module_path_len << " chars),";
+                    }
+                    bt_module_info_map.emplace( mod_base, bt_module_info );
+                }
+            } else {
+                out << "\n    (unable to get module base address),";
+            }
+            if( bt_module_info.state && bt_module_info.image_base != 0 ) {
+                const uintptr_t de_aslr_pc = reinterpret_cast<uintptr_t>( bt[i] ) - mod_base +
+                                             bt_module_info.image_base;
+                bt_syminfo( bt_module_info.state, de_aslr_pc,
+                            // syminfo callback
+                            [&out]( const uintptr_t pc, const char *const symname,
+                const uintptr_t symval, const uintptr_t ) {
+                    out << "\n    (libbacktrace: " << ( symname ? symname : "[unknown symbol]" )
+                        << "+0x" << std::hex << pc - symval << std::dec
+                        << "@0x" << std::hex << pc << std::dec
+                        << "),";
+                },
+                // error callback
+                [&out]( const char *const msg, const int errnum ) {
+                    out << "\n    (backtrace_syminfo failed: errno = " << errnum
+                        << ", msg = " << ( msg ? msg : "[no msg]" )
+                        << "),";
+                } );
+                bt_pcinfo( bt_module_info.state, de_aslr_pc, bt_full_print,
+                           // error callback
+                [&out]( const char *const msg, const int errnum ) {
+                    out << "\n    (backtrace_pcinfo failed: errno = " << errnum
+                        << ", msg = " << ( msg ? msg : "[no msg]" )
+                        << "),";
+                } );
+            }
 #endif
+        }
+#ifdef _WIN64
     }
+#endif
     out << "\n";
 #else
 #   if defined(LIBBACKTRACE)
@@ -1386,6 +1560,7 @@ detail::DebugLogGuard detail::realDebugLog( DL lev, DC cl, const char *filename,
     }
 
     if( checkDebugLevelClass( lev, cl ) ) {
+        std::unique_lock<std::mutex> lock( g_debug_log_mutex );
         std::ostream &out = debugFile().get_file();
 
         output_repetitions( out );
@@ -1428,7 +1603,7 @@ detail::DebugLogGuard detail::realDebugLog( DL lev, DC cl, const char *filename,
         }
 #endif
 
-        return DebugLogGuard( out );
+        return DebugLogGuard( out, std::move( lock ) );
     }
 
     static NullStream null_stream;

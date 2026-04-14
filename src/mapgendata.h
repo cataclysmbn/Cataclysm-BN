@@ -15,6 +15,7 @@ struct tripoint;
 class mission;
 struct regional_settings;
 class map;
+class overmapbuffer;
 namespace om_direction
 {
 enum class type : int;
@@ -68,6 +69,10 @@ class mapgendata
         time_point when_;
         ::mission *mission_;
         mapgen_arguments mapgen_args_;
+        // Explicit overmapbuffer for this generation context.
+        // Stored as a reference so worker threads use the dimension-specific
+        // buffer (get_overmapbuffer(dim)) rather than the active-dimension global.
+        overmapbuffer &omapbuf_;
 
     public:
         oter_id t_nesw[8];
@@ -96,10 +101,15 @@ class mapgendata
         struct dummy_settings_t {};
         static constexpr dummy_settings_t dummy_settings = {};
 
+        /** Return the overmapbuffer bound to this generation context. */
+        overmapbuffer &get_overmapbuffer() const {
+            return omapbuf_;
+        }
+
         mapgendata( map &, dummy_settings_t );
 
         mapgendata( const tripoint_abs_omt &over, map &m, float density, const time_point &when,
-                    ::mission *miss );
+                    ::mission *miss, overmapbuffer &omap );
 
         /**
          * Creates a copy of this mapgen data, but stores a different @ref terrain_type.

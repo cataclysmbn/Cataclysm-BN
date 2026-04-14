@@ -925,5 +925,17 @@
     "start": { "assign_mission_target": { "om_terrain": "anthill", "reveal_radius": 3, "z": 0 } },
     "origins": [ "ORIGIN_GAME_START" ],
     "destination": "anthill"
+  },
+  {
+    "id": "MISSION_TANK_SUPPLY_RUN",
+    "type": "mission_definition",
+    "name": { "str": "Supply Run" },
+    "description": "The last of your tank's crew was heading to a helipad in the area in search of supplies, and never returned.  They clearly didn't make it, and by now it's probably overrun, but some fuel and ammo would be better than nothing.",
+    "goal": "MGOAL_GO_TO_TYPE",
+    "destination": "helipad_se",
+    "difficulty": 1,
+    "value": 0,
+    "start": { "assign_mission_target": { "om_terrain": "helipad_se", "om_special": "military helipad", "search_range": 200 } },
+    "origins": [ "ORIGIN_GAME_START" ]
   }
 ]

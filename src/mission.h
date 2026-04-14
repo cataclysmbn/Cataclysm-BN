@@ -160,13 +160,13 @@ struct mission_target_params {
 
 namespace mission_util
 {
-tripoint_abs_omt random_house_in_closest_city();
+tripoint_abs_omt random_house_in_closest_city( overmapbuffer &omb );
 tripoint_abs_omt target_closest_lab_entrance( const tripoint_abs_omt &origin, int reveal_rad,
         mission *miss );
 bool reveal_road( const tripoint_abs_omt &source, const tripoint_abs_omt &dest,
                   overmapbuffer &omb );
 tripoint_abs_omt reveal_om_ter( const std::string &omter, int reveal_rad, bool must_see,
-                                int target_z = 0 );
+                                overmapbuffer &omb, int target_z = 0 );
 tripoint_abs_omt target_om_ter( const std::string &omter, int reveal_rad, mission *miss,
                                 bool must_see, int target_z = 0 );
 tripoint_abs_omt target_om_ter_random(
@@ -348,6 +348,8 @@ class mission
         mission_type_id follow_up;
         // The id of the player that has accepted this mission.
         character_id player_id;
+        // Dimension in which mission targets exist; empty = primary dimension (legacy saves)
+        std::string dimension_id_;
     public:
 
         std::string name();
@@ -370,6 +372,7 @@ class mission
         int get_id() const;
         const itype_id &get_item_id() const;
         character_id get_npc_id() const;
+        const std::string &get_dimension() const;
         const std::vector<std::pair<int, itype_id>> &get_likely_rewards() const;
         bool has_generic_rewards() const;
         void register_kill_needed();

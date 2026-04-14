@@ -184,6 +184,417 @@
     ]
   },
   {
+    "id": "afs_avgas_tanker",
+    "type": "vehicle",
+    "name": "Avgas Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "avgas", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "avgas", "part": "afs_mounted_external_tank" } ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_jp8_tanker",
+    "type": "vehicle",
+    "name": "JP-8 Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "jp8", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "jp8", "part": "afs_mounted_external_tank" } ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_diesel_tanker",
+    "type": "vehicle",
+    "name": "Diesel Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "diesel", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "diesel", "part": "afs_mounted_external_tank" } ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_fertilizer_tanker",
+    "type": "vehicle",
+    "name": "Fertilizer Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "fertilizer_liquid", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [
+        "hdframe_horizontal",
+        "wheel_mount_medium",
+        "wheel_wide",
+        { "fuel": "fertilizer_liquid", "part": "afs_mounted_external_tank" }
+      ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_bleach_tanker",
+    "type": "vehicle",
+    "name": "Bleach Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "bleach", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "bleach", "part": "afs_mounted_external_tank" } ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_ammonia_tanker",
+    "type": "vehicle",
+    "name": "Ammonia Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "ammonia", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "ammonia", "part": "afs_mounted_external_tank" } ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_gas_tanker",
+    "type": "vehicle",
+    "name": "Gas Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "gasoline", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [
+        "hdframe_horizontal",
+        "wheel_mount_medium",
+        "wheel_wide",
+        { "fuel": "gasoline", "part": "afs_mounted_external_tank" }
+      ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_water_tanker",
+    "type": "vehicle",
+    "name": "Water Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "water", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "water", "part": "afs_mounted_external_tank" } ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_ether_tanker",
+    "type": "vehicle",
+    "name": "Ether Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "ether", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "ether", "part": "afs_mounted_external_tank" } ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_formaldehyde_tanker",
+    "type": "vehicle",
+    "name": "Formaldehyde Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "chem_formaldehyde", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [
+        "hdframe_horizontal",
+        "wheel_mount_medium",
+        "wheel_wide",
+        { "fuel": "chem_formaldehyde", "part": "afs_mounted_external_tank" }
+      ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_cooking_oil_tanker",
+    "type": "vehicle",
+    "name": "Cooking Oil Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "cooking_oil", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [
+        "hdframe_horizontal",
+        "wheel_mount_medium",
+        "wheel_wide",
+        { "fuel": "cooking_oil", "part": "afs_mounted_external_tank" }
+      ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_plutonium_slurry_tanker",
+    "type": "vehicle",
+    "name": "Plutonium Slurry Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "plut_slurry", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [
+        "hdframe_horizontal",
+        "wheel_mount_medium",
+        "wheel_wide",
+        { "fuel": "plut_slurry", "part": "afs_mounted_external_tank" }
+      ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_sewage_tanker",
+    "type": "vehicle",
+    "name": "Sewage Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "water_sewage", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [
+        "hdframe_horizontal",
+        "wheel_mount_medium",
+        "wheel_wide",
+        { "fuel": "water_sewage", "part": "afs_mounted_external_tank" }
+      ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_sulfuric_acid_tanker",
+    "type": "vehicle",
+    "name": "Sulfuric Acid Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "chem_sulphuric_acid", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [
+        "hdframe_horizontal",
+        "wheel_mount_medium",
+        "wheel_wide",
+        { "fuel": "chem_sulphuric_acid", "part": "afs_mounted_external_tank" }
+      ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_milk_tanker",
+    "type": "vehicle",
+    "name": "Milk Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "SFFFFFFFF|",
+      "SFFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ],
+      "F": [ "hdframe_cross", { "fuel": "milk", "part": "fridgetank" } ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "milk", "part": "fridgetank" } ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "S": [ "hdframe_horizontal", "large_storage_battery", "controls_electronic" ]
+    }
+  },
+  {
     "id": "pickup",
     "type": "vehicle",
     "name": "Pickup Truck",

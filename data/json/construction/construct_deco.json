@@ -322,5 +322,29 @@
     "components": [ [ [ "water", 4000 ] ] ],
     "pre_flags": "PIT_DEEP",
     "post_terrain": "t_water_dp"
+  },
+  {
+    "type": "construction",
+    "id": "constr_fill_pit_sw",
+    "group": "salt_water_fill_pit",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "5 m",
+    "components": [ [ [ "salt_water", 4000 ] ] ],
+    "pre_flags": "PIT_DEEP",
+    "dark_craftable": true,
+    "post_terrain": "t_swater_dp"
+  },
+  {
+    "type": "construction",
+    "id": "constr_fill_sh_pit_sw",
+    "group": "salt_water_fill_pit",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "5 m",
+    "components": [ [ [ "salt_water", 2000 ] ] ],
+    "pre_flags": "PIT_SHALLOW",
+    "dark_craftable": true,
+    "post_terrain": "t_swater_sh"
   }
 ]

@@ -207,7 +207,7 @@
   {
     "id": "cube_van_cheap",
     "type": "vehicle",
-    "name": "Low-End Cube Van",
+    "name": "Moving Van",
     "blueprint": [
       [ "     o " ],
       [ "O----+-O" ],

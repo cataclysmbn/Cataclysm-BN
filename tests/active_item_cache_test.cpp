@@ -15,8 +15,8 @@ TEST_CASE( "place_active_item_at_various_coordinates", "[item]" )
 {
     clear_all_state();
     for( int z = -OVERMAP_DEPTH; z < OVERMAP_HEIGHT; ++z ) {
-        for( int x = 0; x < MAPSIZE_X; ++x ) {
-            for( int y = 0; y < MAPSIZE_Y; ++y ) {
+        for( int x = 0; x < g_mapsize_x; ++x ) {
+            for( int y = 0; y < g_mapsize_y; ++y ) {
                 g->m.i_clear( { x, y, z } );
             }
         }
@@ -29,8 +29,8 @@ TEST_CASE( "place_active_item_at_various_coordinates", "[item]" )
 
     // For each space in a wide area place the item and check if the cache has been updated.
     int z = 0;
-    for( int x = 0; x < MAPSIZE_X; ++x ) {
-        for( int y = 0; y < MAPSIZE_Y; ++y ) {
+    for( int x = 0; x < g_mapsize_x; ++x ) {
+        for( int y = 0; y < g_mapsize_y; ++y ) {
             REQUIRE( g->m.i_at( { x, y, z } ).empty() );
             CAPTURE( x, y, z );
             tripoint abs_loc = g->m.get_abs_sub() + tripoint( x / SEEX, y / SEEY, z );

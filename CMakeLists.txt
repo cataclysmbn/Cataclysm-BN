@@ -538,9 +538,6 @@ endif()
 if (RELEASE)
     if (USE_PREFIX_DATA_DIR)
         install(DIRECTORY doc TYPE DOC)
-        install(DIRECTORY data TYPE DATA
-            PATTERN "json/external_tileset/README.md" EXCLUDE
-            PATTERN "json/mapgen/lab/README.md" EXCLUDE)
         install(FILES
             ${CMAKE_SOURCE_DIR}/README.md
             ${CMAKE_SOURCE_DIR}/LICENSE.txt
@@ -549,9 +546,6 @@ if (RELEASE)
             TYPE DOC)
     else()
         install(DIRECTORY doc DESTINATION .)
-        install(DIRECTORY data DESTINATION .
-            PATTERN "json/external_tileset/README.md" EXCLUDE
-            PATTERN "json/mapgen/lab/README.md" EXCLUDE)
         install(FILES
             ${CMAKE_SOURCE_DIR}/README.md
             ${CMAKE_SOURCE_DIR}/LICENSE.txt
@@ -571,6 +565,10 @@ if (RELEASE)
     # Install cataclysm-launcher for portable Linux builds
     if (NOT USE_PREFIX_DATA_DIR AND UNIX AND NOT APPLE)
         install(PROGRAMS ${CMAKE_SOURCE_DIR}/cataclysm-launcher
+            DESTINATION .)
+    endif()
+    if ( NOT USE_XDG_DIR AND NOT USE_HOME_DIR )
+        install(DIRECTORY ${CMAKE_SOURCE_DIR}/mods
             DESTINATION .)
     endif()
 endif()

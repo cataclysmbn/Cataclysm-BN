@@ -80,16 +80,45 @@ static const std::string flag_CITY_START( "CITY_START" );
 static const std::string flag_SECRET( "SECRET" );
 
 static const std::string type_hair_style( "hair_style" );
-static const std::string type_hair_color( "hair_color" );
-static const std::string type_skin_tone( "skin_tone" );
-static const std::string type_facial_hair( "facial_hair" );
-static const std::string type_eye_color( "eye_color" );
 
 static const flag_id json_flag_no_auto_equip( "no_auto_equip" );
 static const flag_id json_flag_auto_wield( "auto_wield" );
 
 static const trait_id trait_XS( "XS" );
 static const trait_id trait_XXXL( "XXXL" );
+
+static const trait_flag_str_id flag_MALE_EXCLUSIVE( "MALE_EXCLUSIVE" );
+static const trait_flag_str_id flag_FEMALE_EXCLUSIVE( "FEMALE_EXCLUSIVE" );
+static const trait_flag_str_id flag_MALE_PREFERRED( "MALE_PREFERRED" );
+static const trait_flag_str_id flag_FEMALE_PREFERRED( "FEMALE_PREFERRED" );
+
+static auto profession_age_limits_enabled() -> bool
+{
+    if( world_generator && world_generator->active_world ) {
+        return world_generator->active_world->info->WORLD_OPTIONS["ENFORCE_PROFESSION_AGE_RANGE"]
+               .value_as<bool>();
+    }
+    return false;
+}
+
+static auto profession_age_bounds( const profession &prof ) -> std::pair<int, int>
+{
+    if( profession_age_limits_enabled() ) {
+        if( const auto range = prof.starting_age_range() ) {
+            return { range->min, range->max };
+        }
+    }
+    return { profession::min_age, profession::max_age };
+}
+
+static auto random_age_for_profession( const profession &prof ) -> int
+{
+    const auto [min_age, max_age] = profession_age_bounds( prof );
+    if( min_age == max_age ) {
+        return min_age;
+    }
+    return rng( min_age, max_age );
+}
 
 // Colors used in this file: (Most else defaults to c_light_gray)
 #define COL_STAT_ACT        c_white   // Selected stat
@@ -229,8 +258,6 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
     } else {
         name = MAP_SHARING::getUsername();
     }
-    // if adjusting min and max age from 16 and 55, make sure to see set_description()
-    init_age = rng( 16, 55 );
     // if adjusting min and max height from 145 and 200, make sure to see set_description()
     init_height = rng( 145, 200 );
     bool cities_enabled = world_generator->active_world->info->WORLD_OPTIONS["CITY_SIZE"].getValue() !=
@@ -251,6 +278,8 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
 
     prof = g->scen->weighted_random_profession();
     random_start_location = true;
+    // if adjusting min and max age from 16 and 55, make sure to see set_description()
+    set_base_age( random_age_for_profession( *prof ) );
 
     str_max = rng( 6, HIGH_STAT - 2 );
     dex_max = rng( 6, HIGH_STAT - 2 );
@@ -414,6 +443,7 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
         loops++;
     }
 
+    randomize_cosmetics();
     set_body();
 }
 
@@ -444,18 +474,15 @@ void set_cosmetic_trait( Character &c, std::string mutation_type, const trait_id
 
 } // namespace
 
-std::unordered_set<std::string> cosmetic_trait_types = { type_hair_style, type_hair_color, type_skin_tone, type_eye_color, type_facial_hair };
-std::unordered_set<std::string> required_cosmetic_trait_types = { type_hair_style, type_hair_color, type_skin_tone, type_eye_color };
-// We should define cosmetic traits in JSON so they can be appended by mods
 void avatar::randomize_cosmetics()
 {
-    for( const std::string &mutation_type : required_cosmetic_trait_types ) {
-        randomize_cosmetic_trait( mutation_type );
-    }
-    //arbitrary 50% chance to add beard to male characters
-    if( male && one_in( 2 ) ) {
-        randomize_cosmetic_trait( type_facial_hair );
-    }
+    std::ranges::for_each( get_all_mutation_type_ids(), [this]( const std::string & type_id ) {
+        const bool mandatory = mutation_type_is_mandatory( type_id );
+        const int chance = mutation_type_random_chance( type_id );
+        if( mandatory || ( chance > 0 && x_in_y( chance, 100 ) ) ) {
+            randomize_cosmetic_trait( type_id );
+        }
+    } );
 }
 
 bool avatar::create( character_type type, const std::string &tempname )
@@ -489,7 +516,6 @@ bool avatar::create( character_type type, const std::string &tempname )
         case character_type::RANDOM:
             //random scenario, default name if exist
             randomize( true, points );
-            randomize_cosmetics();
             tab = NEWCHAR_TAB_MAX;
             break;
         case character_type::NOW:
@@ -534,7 +560,7 @@ bool avatar::create( character_type type, const std::string &tempname )
         }
 
         if( points.limit == points_left::TRANSFER ) {
-            tab = 6;
+            tab = NEWCHAR_TAB_MAX;
         }
 
         switch( tab ) {
@@ -1131,6 +1157,17 @@ tab_direction set_traits( avatar &u, points_left &points )
             continue;
         }
 
+        // Hide exclusive traits for the wrong gender
+        if( u.male ) {
+            if( traits_iter.flags.contains( flag_FEMALE_EXCLUSIVE ) ) {
+                continue;
+            }
+        } else {
+            if( traits_iter.flags.contains( flag_MALE_EXCLUSIVE ) ) {
+                continue;
+            }
+        }
+
         // Always show profession locked traits, regardless of if they are forbidden
         const std::vector<trait_id> proftraits = u.prof->get_locked_traits();
         const bool is_proftrait = std::find( proftraits.begin(), proftraits.end(),
@@ -1443,34 +1480,28 @@ tab_direction set_traits( avatar &u, points_left &points )
                     popup( _( "Your profession of %s prevents you from removing this trait." ),
                            u.prof->gender_appropriate_name( u.male ) );
                 } else {
-                    std::string type;
-                    for( const auto t : cur_trait.obj().types ) {
-                        if( required_cosmetic_trait_types.contains( t ) ) {
-                            type = t;
-                            break;
-                        }
-                    }
-                    if( !type.empty() ) {
+                    const bool is_mandatory = std::ranges::any_of( cur_trait.obj().types,
+                    []( const auto & t ) { return mutation_type_is_mandatory( t ); } );
+                    if( is_mandatory ) {
                         inc_type = 0;
                         popup( _( "You must have a trait of this type." ) );
                     }
                 }
             } else if( newcharacter::has_conflicting_trait( u, cur_trait ) ) {
-                // Allow swapping cosmetic traits
-                std::string type;
-                for( const auto t : cur_trait.obj().types ) {
-                    if( cosmetic_trait_types.contains( t ) ) {
-                        type = t;
-                        break;
-                    }
-                }
-                if( !type.empty() ) {
-                    inc_type = 1;
-                    for( const trait_id &tr : u.get_base_traits() ) {
-                        if( tr.obj().types.contains( type ) ) {
-                            u.toggle_trait( tr );
-                            break;
-                        }
+                const auto &new_types = cur_trait.obj().types;
+                const bool do_swap = std::ranges::any_of( new_types,
+                []( const auto & t ) { return mutation_type_swaps_on_conflict( t ); } );
+                if( do_swap ) {
+                    const auto base_traits = u.get_base_traits();
+                    auto it = std::ranges::find_if( base_traits, [&]( const trait_id & tr ) {
+                        return tr != cur_trait && std::ranges::any_of( tr.obj().types,
+                        [&]( const auto & t ) { return new_types.contains( t ); } );
+                    } );
+                    if( it != base_traits.end() ) {
+                        inc_type = 1;
+                        u.toggle_trait( *it );
+                    } else {
+                        popup( _( "You already picked a conflicting trait!" ) );
                     }
                 } else {
                     popup( _( "You already picked a conflicting trait!" ) );
@@ -2473,6 +2504,7 @@ tab_direction set_profession( avatar &u, points_left &points,
             }
             const int netPointCost = sorted_profs[cur_id]->point_cost() - u.prof->point_cost();
             u.prof = sorted_profs[cur_id];
+            u.set_base_age( random_age_for_profession( *u.prof ) );
             // Add traits for the new profession (and perhaps scenario, if, for example,
             // both the scenario and old profession require the same trait)
             newcharacter::add_traits( u, points );
@@ -3692,13 +3724,17 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
     // do not switch IME mode now, but restore previous mode on return
     ime_sentry sentry( ime_sentry::keep );
 
-    int min_allowed_age = 16;
-    int max_allowed_age = 55;
+    int min_allowed_age = profession::min_age;
+    int max_allowed_age = profession::max_age;
     // in centimeters. 2 std. deviations below average female height
     int min_allowed_height = 145;
     int max_allowed_height = 200;
 
     do {
+        const auto [new_min_age, new_max_age] = profession_age_bounds( *you.prof );
+        min_allowed_age = new_min_age;
+        max_allowed_age = new_max_age;
+        you.set_base_age( clamp( you.base_age(), min_allowed_age, max_allowed_age ) );
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();
 #if defined(TILES)
@@ -3858,12 +3894,14 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
                     break;
                 }
                 case char_creation::AGE: {
-                    popup.title( _( "Enter age in years.  Minimum 16, maximum 55" ) )
+                    const std::string title = string_format( _( "Enter age in years.  Minimum %d, maximum %d" ),
+                                              min_allowed_age, max_allowed_age );
+                    popup.title( title )
                     .text( string_format( "%d", you.base_age() ) )
                     .only_digits( true );
                     const int result = popup.query_int();
                     if( result != 0 ) {
-                        you.set_base_age( clamp( result, 16, 55 ) );
+                        you.set_base_age( clamp( result, min_allowed_age, max_allowed_age ) );
                     }
                     break;
                 }
@@ -4000,11 +4038,20 @@ trait_id Character::get_random_trait( const std::function<bool( const mutation_b
 
 void Character::randomize_cosmetic_trait( std::string mutation_type )
 {
-    trait_id trait = get_random_trait( [mutation_type]( const mutation_branch & mb ) {
-        return mb.points == 0 && mb.types.contains( mutation_type );
+    trait_id trait = get_random_trait( [&]( const mutation_branch & mb ) {
+        if( mb.points != 0 || !mb.types.contains( mutation_type ) ) {
+            return false;
+        }
+        if( male ) {
+            return !mb.flags.contains( flag_FEMALE_EXCLUSIVE ) &&
+                   !mb.flags.contains( flag_FEMALE_PREFERRED );
+        } else {
+            return !mb.flags.contains( flag_MALE_EXCLUSIVE ) &&
+                   !mb.flags.contains( flag_MALE_PREFERRED );
+        }
     } );
 
-    if( trait.is_valid() ) { // <-- IMPORTANT
+    if( trait.is_valid() ) {
         clear_cosmetic_traits( mutation_type, trait );
 
         if( !has_trait( trait ) ) {
@@ -4153,6 +4200,7 @@ void reset_scenario( avatar &u, const scenario *scen )
     u.per_max = 8;
     g->scen = scen;
     u.prof = default_prof;
+    u.set_base_age( random_age_for_profession( *u.prof ) );
     for( auto &t : u.get_mutations() ) {
         if( t.obj().hp_modifier != 0 ) {
             u.toggle_trait( t );

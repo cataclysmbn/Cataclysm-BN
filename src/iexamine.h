@@ -117,6 +117,7 @@ void dimensional_portal( player &p, const tripoint &examp );
 void check_power( player &p, const tripoint &examp );
 void migo_nerve_cluster( player &p, const tripoint &examp );
 void cardreader_plutgen( player &p, const tripoint &examp );
+void multicooker( player &p, const tripoint &pos );
 
 detached_ptr<item> pour_into_keg( const tripoint &pos, detached_ptr<item> &&liquid );
 std::optional<tripoint> getGasPumpByNumber( const tripoint &p, int number );
@@ -139,6 +140,8 @@ ret_val<bool> can_fertilize( player &p, const tripoint &tile, const itype_id &fe
 
 // Skill training common functions
 void practice_survival_while_foraging( player *p );
+
+void power_portal( player &p, const tripoint &examp );
 
 } //namespace iexamine
 

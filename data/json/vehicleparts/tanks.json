@@ -159,6 +159,16 @@
     "size": "50000 L"
   },
   {
+    "id": "afs_mounted_external_tank",
+    "categories": [ "Other" ],
+    "copy-from": "external_tank_small",
+    "type": "vehicle_part",
+    "name": { "str": "mounted external tank (200L)" },
+    "item": "55gal_drum",
+    "location": "center",
+    "size": "50000 L"
+  },
+  {
     "id": "tank_barrel",
     "type": "vehicle_part",
     "name": { "str": "wooden barrel (100L)" },

@@ -181,7 +181,10 @@ inline int square_dist( point loc1, point loc2 )
 inline int rl_dist( const tripoint &loc1, const tripoint &loc2 )
 {
     if( trigdist ) {
-        return trig_dist( loc1, loc2 );
+        // Use rounding instead of truncation to avoid scalloped visibility boundaries.
+        // Truncation causes artifacts at 22.5-degree intervals (octant centers) because
+        // the euclidean distance truncates differently at various angles.
+        return static_cast<int>( std::round( trig_dist( loc1, loc2 ) ) );
     }
     return square_dist( loc1, loc2 );
 }

@@ -111,8 +111,8 @@ struct grid_setup {
 static void clear_grid_connections( map &m )
 {
     // TODO: fix point types
-    auto om = overmap_buffer.get_om_global( project_to<coords::omt>( tripoint_abs_sm(
-            m.get_abs_sub() ) ) );
+    auto om = ACTIVE_OVERMAP_BUFFER.get_om_global( project_to<coords::omt>( tripoint_abs_sm(
+                  m.get_abs_sub() ) ) );
     om.om->set_electric_grid_connections( om.local, {} );
 }
 

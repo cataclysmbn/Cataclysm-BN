@@ -31,6 +31,7 @@
 #include "construction_partial.h"
 #include "craft_command.h"
 #include "crafting.h"
+#include "crafting_quality.h"
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
@@ -113,6 +114,10 @@ static const activity_id ACT_CONSUME_FOOD_MENU( "ACT_CONSUME_FOOD_MENU" );
 static const activity_id ACT_CONSUME_MEDS_MENU( "ACT_CONSUME_MEDS_MENU" );
 static const activity_id ACT_CRACKING( "ACT_CRACKING" );
 static const activity_id ACT_CRAFT( "ACT_CRAFT" );
+static constexpr auto craft_is_long_idx = 0;
+static constexpr auto craft_bench_type_idx = 1;
+static constexpr auto craft_tools_mult_percent_idx = 2;
+static constexpr auto craft_tools_mult_next_refresh_idx = 3;
 static const activity_id ACT_DISMEMBER( "ACT_DISMEMBER" );
 static const activity_id ACT_DISSECT( "ACT_DISSECT" );
 static const activity_id ACT_EAT_MENU( "ACT_EAT_MENU" );
@@ -149,6 +154,7 @@ static const activity_id ACT_OPERATION( "ACT_OPERATION" );
 static const activity_id ACT_PICKAXE( "ACT_PICKAXE" );
 static const activity_id ACT_PLANT_SEED( "ACT_PLANT_SEED" );
 static const activity_id ACT_PLAY_WITH_PET( "ACT_PLAY_WITH_PET" );
+static const activity_id ACT_TRAIN_PET( "ACT_TRAIN_PET" );
 static const activity_id ACT_PRY_NAILS( "ACT_PRY_NAILS" );
 static const activity_id ACT_PULP( "ACT_PULP" );
 static const activity_id ACT_QUARTER( "ACT_QUARTER" );
@@ -366,6 +372,7 @@ activity_handlers::finish_functions = {
     { ACT_JACKHAMMER, jackhammer_finish },
     { ACT_FILL_PIT, fill_pit_finish },
     { ACT_PLAY_WITH_PET, play_with_pet_finish },
+    { ACT_TRAIN_PET, train_pet_finish },
     { ACT_SHAVE, shaving_finish },
     { ACT_HAIRCUT, haircut_finish },
     { ACT_ROBOT_CONTROL, robot_control_finish },
@@ -3800,18 +3807,28 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
         return;
     }
 
-    if( !p->can_continue_craft( *craft ) ) {
-        p->cancel_activity();
-        return;
+    const recipe &rec = craft->get_making();
+    const tripoint bench_pos = get_map().getlocal( act->coords.front() );
+    // Ugly
+    bench_type bench_t = bench_type( act->values[craft_bench_type_idx] );
+
+    while( act->values.size() <= craft_tools_mult_next_refresh_idx ) {
+        act->values.push_back( 0 );
     }
 
-    const recipe &rec = craft->get_making();
-    const tripoint bench_pos = act->coords.front();
-    // Ugly
-    bench_type bench_t = bench_type( act->values[1] );
-    const float crafting_speed = crafting_speed_multiplier( *p, *craft, bench_location{bench_t, bench_pos} );
+    const auto now_turn = to_turn<int>( calendar::turn );
+    if( now_turn >= act->values[craft_tools_mult_next_refresh_idx] ) {
+        const auto tools_mult = crafting_tools_speed_multiplier( *p, rec );
+        act->values[craft_tools_mult_percent_idx] = std::round( tools_mult * 100.0f );
+        act->values[craft_tools_mult_next_refresh_idx] = INT_MAX;
+    }
+
+    const auto tools_mult_cached = static_cast<float>( act->values[craft_tools_mult_percent_idx] ) /
+                                   100.0f;
+    const float crafting_speed = crafting_speed_multiplier( *p, *craft, bench_location{bench_t, bench_pos},
+                                 tools_mult_cached );
     const int assistants = p->available_assistant_count( craft->get_making() );
-    const bool is_long = act->values[0];
+    const bool is_long = act->values[craft_is_long_idx];
 
     if( crafting_speed <= 0.0f ) {
         p->cancel_activity();
@@ -3838,28 +3855,13 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
     const auto new_counter_f = current_progress / base_total_moves * 10'000'000.0;
     // This is to ensure we don't over count skill steps
     const auto new_counter = std::min( static_cast<int>( std::round( new_counter_f ) ), 10'000'000 );
+    auto five_percent_steps = new_counter / 500'000 - old_counter / 500'000;
     craft->set_counter( new_counter );
 
     p->set_moves( 0 );
 
-    // Skill and tools are gained/consumed after every 5% progress
-    int five_percent_steps = craft->get_counter() / 500'000 - old_counter / 500'000;
     if( five_percent_steps > 0 ) {
         p->craft_skill_gain( *craft, five_percent_steps );
-    }
-
-    // Unlike skill, tools are consumed once at the start and should not be consumed at the end
-    if( craft->get_counter() >= 10'000'000 ) {
-        --five_percent_steps;
-    }
-
-    if( five_percent_steps > 0 ) {
-        if( !p->craft_consume_tools( *craft, five_percent_steps, false ) ) {
-            // So we don't skip over any tool comsuption
-            craft->set_counter( craft->get_counter() - ( craft->get_counter() % 500'000 + 1 ) );
-            p->cancel_activity();
-            return;
-        }
     }
 
     // if item_counter has reached 100% or more
@@ -4213,6 +4215,24 @@ void activity_handlers::play_with_pet_finish( player_activity *act, player *p )
     act->set_to_null();
 }
 
+void activity_handlers::train_pet_finish( player_activity *act, player *p )
+{
+    if( 4 * p->get_skill_level( skill_survival ) >= rng( 0, 100 ) ) {
+        auto mon = act->monsters[0].lock();
+        if( mon ) {
+            mon->monster_flags.insert( MF_COMBAT_MOUNT );
+            p->add_msg_if_player( m_good,
+                                  _( "Training your %s has finally succeeded, they should be less skittish in combat now." ),
+                                  act->str_values[0] );
+        }
+    } else {
+        p->add_msg_if_player( m_good,
+                              _( "Training your %s takes time, it seems they are making a bit of progress at least." ),
+                              act->str_values[0] );
+    }
+    act->set_to_null();
+}
+
 void activity_handlers::shaving_finish( player_activity *act, player *p )
 {
     p->add_msg_if_player( _( "You open up your kit and shave." ) );
@@ -4460,7 +4480,7 @@ void activity_handlers::tree_communion_do_turn( player_activity *act, player *p 
     };
     while( !q.empty() ) {
         tripoint_abs_omt tpt = q.front();
-        if( overmap_buffer.reveal( tpt, 3, filter ) ) {
+        if( get_overmapbuffer( p->get_dimension() ).reveal( tpt, 3, filter ) ) {
             if( p->has_trait( trait_SPIRITUAL ) ) {
                 p->add_morale( MORALE_TREE_COMMUNION, 2, 30, 8_hours, 6_hours );
             } else {
@@ -4477,7 +4497,7 @@ void activity_handlers::tree_communion_do_turn( player_activity *act, player *p 
                 continue;
             }
             seen.insert( neighbor );
-            if( !overmap_buffer.ter( neighbor ).obj().is_wooded() ) {
+            if( !get_overmapbuffer( p->get_dimension() ).ter( neighbor ).obj().is_wooded() ) {
                 continue;
             }
             q.push( neighbor );

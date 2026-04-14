@@ -45,8 +45,21 @@ struct monster_visible_info {
     std::vector<npc *> unique_types[9];
     std::vector<std::pair<const mtype *, int>> unique_mons[9];
 
-    // If the moster visible in this direction is dangerous
+    // If the monster visible in this direction is dangerous
     bool dangerous[8] = {};
+
+    // Total visible creatures per compass direction (same 0-7/8 indexing as above).
+    // Computed player-relative (not view-offset-relative) so panels compass stays accurate.
+    std::array<int, 9> visible_count_by_dir = {};
+
+    // Count of all visible creatures with A_HOSTILE attitude, updated each mon_info_update().
+    // Used by danger music. No range cap — counts across the full loaded bubble.
+    int nearby_hostile_count = 0;
+
+    // Count of visible hostiles within SEEX * (COMBAT_BUBBLE_SIZE + 1) tiles.
+    // Used by the combat bubble trigger to avoid oscillation: only monsters that
+    // would still be loaded after the bubble shrinks are counted.
+    int combat_hostile_count = 0;
 };
 
 class avatar : public player
@@ -65,6 +78,7 @@ class avatar : public player
         void deserialize( JsonIn &jsin ) override;
         bool save_map_memory();
         void load_map_memory();
+        void clear_map_memory();
 
         // newcharacter.cpp
         bool create( character_type type, const std::string &tempname = "" );
@@ -77,6 +91,10 @@ class avatar : public player
         bool is_avatar() const override {
             return true;
         }
+        // Avatar is always in the game's active dimension; delegate to the
+        // game's authoritative current_dimension_id_ rather than the global
+        // g_active_dimension_id, which lags one line behind during transitions.
+        const std::string &get_dimension() const override;
         avatar *as_avatar() override {
             return this;
         }
@@ -132,7 +150,8 @@ class avatar : public player
         std::unique_ptr<tripoint_abs_omt> custom_waypoint = nullptr;
         tripoint_abs_omt get_active_mission_target() const;
         /** Returns the custom mission target directly set by the player */
-        tripoint_abs_omt get_custom_mission_target();
+        auto get_custom_mission_target() -> tripoint_abs_omt;
+        auto get_custom_mission_target() const -> tripoint_abs_omt;
         /**
          * Set which mission is active. The mission must be listed in @ref active_missions.
          */
@@ -314,5 +333,4 @@ class avatar : public player
 };
 
 avatar &get_avatar();
-
 

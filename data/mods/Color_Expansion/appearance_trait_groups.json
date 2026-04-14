@@ -9,7 +9,8 @@
       { "trait": "hair_blue", "prob": 100 },
       { "trait": "hair_green", "prob": 100 },
       { "trait": "hair_purple", "prob": 100 },
-      { "trait": "hair_cyan", "prob": 100 }
+      { "trait": "hair_cyan", "prob": 100 },
+      { "trait": "hair_orange", "prob": 100 }
     ]
   },
   {

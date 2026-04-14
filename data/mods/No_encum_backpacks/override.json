@@ -1,0 +1,354 @@
+[
+  {
+    "id": "backpack",
+    "type": "ARMOR",
+    "name": { "str": "backpack" },
+    "copy-from": "backpack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "backpack_hiking",
+    "type": "ARMOR",
+    "name": { "str": "hiking backpack" },
+    "copy-from": "backpack_hiking",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "backpack_giant",
+    "type": "ARMOR",
+    "name": { "str": "giant novelty backpack" },
+    "copy-from": "backpack_giant",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "backpack_leather",
+    "type": "ARMOR",
+    "name": { "str": "leather backpack" },
+    "copy-from": "backpack_leather",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "backpack_tactical_large",
+    "type": "ARMOR",
+    "name": { "str": "large tactical backpack" },
+    "copy-from": "backpack_tactical_large",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "basket_laundry",
+    "type": "ARMOR",
+    "name": { "str": "laundry basket" },
+    "copy-from": "basket_laundry",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "bigback",
+    "type": "ARMOR",
+    "name": { "str": "high-volume rucksack" },
+    "copy-from": "bigback",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "bindle",
+    "type": "ARMOR",
+    "name": { "str": "bindle" },
+    "copy-from": "bindle",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "boxpack",
+    "type": "ARMOR",
+    "name": { "str": "box backpack" },
+    "copy-from": "boxpack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "briefcase",
+    "type": "ARMOR",
+    "name": { "str": "briefcase" },
+    "copy-from": "briefcase",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "case_violin",
+    "type": "ARMOR",
+    "name": { "str": "violin case" },
+    "copy-from": "case_violin",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "daypack",
+    "type": "ARMOR",
+    "name": { "str": "daypack" },
+    "copy-from": "daypack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "dive_bag",
+    "type": "ARMOR",
+    "name": { "str": "dive bag" },
+    "copy-from": "dive_bag",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "duffelbag",
+    "type": "ARMOR",
+    "name": { "str": "duffel bag" },
+    "copy-from": "duffelbag",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "dump_pouch",
+    "type": "ARMOR",
+    "name": { "str": "tactical dump pouch", "str_pl": "tactical dump pouches" },
+    "copy-from": "dump_pouch",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "fanny",
+    "type": "ARMOR",
+    "name": { "str": "fanny pack" },
+    "copy-from": "fanny",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "golf_bag",
+    "type": "ARMOR",
+    "name": { "str": "golf bag" },
+    "copy-from": "golf_bag",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "hide_bag",
+    "type": "ARMOR",
+    "name": { "str": "hide bag" },
+    "copy-from": "hide_bag",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "hide_tainted_bag",
+    "type": "ARMOR",
+    "name": { "str": "tainted hide bag" },
+    "copy-from": "hide_tainted_bag",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "jerrypack",
+    "type": "ARMOR",
+    "name": { "str": "jerrypack" },
+    "copy-from": "jerrypack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "leather_pouch",
+    "type": "ARMOR",
+    "name": { "str": "leather pouch", "str_pl": "leather pouches" },
+    "copy-from": "leather_pouch",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "legrig",
+    "type": "ARMOR",
+    "name": { "str": "pair of drop leg pouches", "str_pl": "pairs of drop leg pouches" },
+    "copy-from": "legrig",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "makeshift_knapsack",
+    "type": "ARMOR",
+    "name": { "str": "makeshift knapsack" },
+    "copy-from": "makeshift_knapsack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "makeshift_sling",
+    "type": "ARMOR",
+    "name": { "str": "makeshift sling" },
+    "copy-from": "makeshift_sling",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "mbag",
+    "type": "ARMOR",
+    "name": { "str": "messenger bag" },
+    "copy-from": "mbag",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "molle_pack",
+    "type": "ARMOR",
+    "name": { "str": "MOLLE pack" },
+    "copy-from": "molle_pack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "petpack",
+    "type": "ARMOR",
+    "name": { "str": "petpack" },
+    "copy-from": "petpack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "plastic_shopping_bag",
+    "type": "ARMOR",
+    "name": { "str": "plastic shopping bag" },
+    "copy-from": "plastic_shopping_bag",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "purse",
+    "type": "ARMOR",
+    "name": { "str": "purse" },
+    "copy-from": "purse",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "ragpouch",
+    "type": "ARMOR",
+    "name": { "str": "pouch", "str_pl": "pouches" },
+    "copy-from": "ragpouch",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "rucksack",
+    "type": "ARMOR",
+    "name": { "str": "military rucksack" },
+    "copy-from": "rucksack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "runner_bag",
+    "type": "ARMOR",
+    "name": { "str": "runner pack" },
+    "copy-from": "runner_bag",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "slingpack",
+    "type": "ARMOR",
+    "name": { "str": "sling pack" },
+    "copy-from": "slingpack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "straw_basket",
+    "type": "ARMOR",
+    "name": { "str": "straw basket" },
+    "copy-from": "straw_basket",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "pack_basket",
+    "type": "ARMOR",
+    "name": { "str": "pack basket" },
+    "copy-from": "pack_basket",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "suitcase_l",
+    "type": "ARMOR",
+    "name": { "str": "suitcase" },
+    "copy-from": "suitcase_l",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "suitcase_m",
+    "type": "ARMOR",
+    "name": { "str": "suitcase" },
+    "copy-from": "suitcase_m",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "survivor_hiking_backpack",
+    "type": "ARMOR",
+    "name": { "str": "survivor hiking backpack" },
+    "copy-from": "survivor_hiking_backpack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "survivor_duffel_bag",
+    "type": "ARMOR",
+    "name": { "str": "survivor duffel bag" },
+    "copy-from": "survivor_duffel_bag",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "survivor_pack",
+    "type": "ARMOR",
+    "name": { "str": "survivor backpack" },
+    "copy-from": "survivor_pack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "survivor_rucksack",
+    "type": "ARMOR",
+    "name": { "str": "survivor rucksack" },
+    "copy-from": "survivor_rucksack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "survivor_runner_pack",
+    "type": "ARMOR",
+    "name": { "str": "survivor runner pack" },
+    "copy-from": "survivor_runner_pack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "swag_bag",
+    "type": "ARMOR",
+    "name": { "str": "swag bag" },
+    "copy-from": "swag_bag",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  },
+  {
+    "id": "travelpack",
+    "type": "ARMOR",
+    "name": { "str": "travelpack" },
+    "copy-from": "travelpack",
+    "encumbrance": 0,
+    "max_encumbrance": 0
+  }
+]

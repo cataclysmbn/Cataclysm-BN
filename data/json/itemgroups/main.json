@@ -67,7 +67,18 @@
       { "item": "v29", "prob": 10 },
       { "item": "bot_mininuke_hack", "prob": 10 },
       { "item": "mininuke", "prob": 10 },
-      { "item": "mininuke_launcher", "prob": 15 }
+      { "item": "mininuke_launcher", "prob": 15 },
+      { "item": "electric_primer_120mm", "prob": 1 },
+      { "item": "primer_155mm", "prob": 1 },
+      { "item": "25mm_apds", "prob": 1 },
+      { "item": "25mm_hei", "prob": 1 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 1 },
+      { "item": "120mm_usable_heat", "prob": 3 },
+      { "item": "120mm_usable_ap", "prob": 1 },
+      { "item": "155mm_frag", "prob": 2 },
+      { "item": "155mm_heat", "prob": 1 },
+      { "item": "105mm_heat", "prob": 1 },
+      { "item": "105mm_ap", "prob": 1 }
     ]
   },
   {
@@ -173,6 +184,25 @@
   },
   {
     "type": "item_group",
+    "id": "nanofab_template_bionics",
+    "//": "Very rare high level loot. This list doesn't spawn anywhere directly, it is used to create the recipes inside nanofabricator templates. ",
+    "magazine": 100,
+    "subtype": "distribution",
+    "entries": [
+      { "item": "bio_power_armor_interface_mkII", "prob": 10 },
+      { "item": "bio_probability_travel", "prob": 10 },
+      { "item": "bio_reactor", "prob": 10 },
+      { "item": "bio_reactor_upgrade", "prob": 10 },
+      { "item": "bio_time_freeze", "prob": 10 },
+      { "item": "bio_night", "prob": 10 },
+      { "item": "bio_nanobots", "prob": 10 },
+      { "item": "bio_cloak", "prob": 10 },
+      { "item": "bio_cqb", "prob": 10 },
+      { "item": "bio_wings", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "player_crafted",
     "//": "items that should only be crafted by the player. Excluded from all other item groups. this is just an FYI list, it's not used to spawn items in game.",
     "subtype": "distribution",
@@ -234,7 +264,18 @@
       { "item": "atgm_launcher", "prob": 3 },
       { "item": "atgm_heat", "prob": 6 },
       { "item": "flamethrower", "prob": 50 },
-      { "item": "rm451_flamethrower", "prob": 40 }
+      { "item": "rm451_flamethrower", "prob": 40 },
+      { "item": "120mm_usable_ap", "prob": 3 },
+      { "item": "120mm_usable_heat", "prob": 2 },
+      { "item": "155mm_frag", "prob": 3 },
+      { "item": "155mm_heat", "prob": 2 },
+      { "item": "25mm_apds", "prob": 2 },
+      { "item": "25mm_hei", "prob": 1 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 2 },
+      { "item": "105mm_heat", "prob": 2 },
+      { "item": "105mm_ap", "prob": 1 },
+      { "item": "electric_primer_120mm", "prob": 1 },
+      { "item": "primer_155mm", "prob": 1 }
     ]
   },
   {

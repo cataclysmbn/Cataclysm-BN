@@ -86,6 +86,9 @@ bool can_fire_turret( avatar &you, const map &m, const turret_data &turret );
 /** Checks if the wielded weapon is a gun and can be fired then starts interactive aiming */
 void fire_wielded_weapon( avatar &you );
 
+/** Designates worn gun and starts interactive aiming */
+void fire_ranged_gear( avatar &you, item *gun );
+
 /** Stores fake gun specified by the mutation and starts interactive aiming */
 void fire_ranged_mutation( avatar &you, detached_ptr<item> &&fake_gun );
 

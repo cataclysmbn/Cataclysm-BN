@@ -25,7 +25,10 @@ site
     locales: { ko },
     formats: { HUMAN_DATE: "yyyy-MM-dd", HUMAN_DATETIME: "yyyy-MM-dd ppp" },
   }))
+  .add("prism.css")
   .copy("tools")
   .copy("redirect.js")
+
+site.remoteFile("prism.css", "npm:prismjs/themes/prism.min.css")
 
 export default site

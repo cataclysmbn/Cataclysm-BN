@@ -64,7 +64,31 @@
         { "monster": "mon_turret_medium", "x": 14, "y": 18 },
         { "monster": "mon_turret_medium", "x": 9, "y": 20 },
         { "monster": "mon_turret_medium", "x": 14, "y": 20 }
-      ]
+      ],
+      "place_nested": [ { "chunks": [ [ "null", 90 ], [ "bunker_artillery_emplacement", 10 ] ], "x": 7, "y": 0 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "bunker_artillery_emplacement",
+    "object": {
+      "mapgensize": [ 13, 13 ],
+      "set": [
+        { "line": "terrain", "id": "t_chaingate_o", "x": 1, "x2": 8, "y": 0, "y2": 0 },
+        { "line": "furniture", "id": "f_sandbag_half", "x": 1, "x2": 3, "y": 1, "y2": 1 },
+        { "line": "furniture", "id": "f_sandbag_half", "x": 5, "x2": 7, "y": 1, "y2": 1 },
+        { "line": "furniture", "id": "f_sandbag_half", "x": 1, "x2": 3, "y": 11, "y2": 11 },
+        { "line": "furniture", "id": "f_sandbag_half", "x": 5, "x2": 7, "y": 11, "y2": 11 }
+      ],
+      "place_furniture": [ { "furn": "f_crate_c", "x": 6, "y": 12 } ],
+      "place_loot": [ { "group": "m109_ammo_rack", "x": 6, "y": 12, "chance": 100 } ],
+      "place_monster": [
+        { "group": "GROUP_MIL_WEAK", "x": [ 8, 12 ], "y": [ 5, 12 ], "chance": 50 },
+        { "group": "GROUP_MIL_WEAK", "x": [ 8, 12 ], "y": [ 5, 12 ], "chance": 50 },
+        { "group": "GROUP_MIL_WEAK", "x": [ 8, 12 ], "y": [ 5, 12 ], "chance": 50 }
+      ],
+      "place_vehicles": [ { "vehicle": "howitzer_m109", "x": 3, "y": 4, "chance": 100, "rotation": 270 } ]
     }
   },
   {

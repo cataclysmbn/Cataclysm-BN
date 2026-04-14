@@ -19,12 +19,12 @@
 
 auto termx_to_pixel_value() -> int
 {
-    return projected_window_width() / TERMX;
+    return projected_window_width() / TERMX / get_scaling_factor();
 }
 
 auto termy_to_pixel_value() -> int
 {
-    return projected_window_height() / TERMY;
+    return projected_window_height() / TERMY / get_scaling_factor();
 }
 
 // @brief adapter to get access to protected functions of cata_tiles

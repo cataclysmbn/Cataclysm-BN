@@ -187,7 +187,7 @@
     "melee_dice_sides": 3,
     "melee_damage": [ { "damage_type": "dark", "amount": 9 } ],
     "dodge": 3,
-    "armor_bash": 12,
+    "armor_bash": 24,
     "armor_cut": 8,
     "armor_bullet": 6,
     "vision_day": 50,

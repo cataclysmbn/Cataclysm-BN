@@ -52,6 +52,7 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "npc.h"
+#include "options.h"
 #include "output.h"
 #include "player.h"
 #include "pldata.h"
@@ -78,6 +79,23 @@ static const itype_id itype_rag( "rag" );
 static const matec_id tec_none( "tec_none" );
 static const matec_id WBLOCK_1( "WBLOCK_1" );
 static const matec_id WBLOCK_2( "WBLOCK_2" );
+
+namespace
+{
+
+auto with_cross_z_melee_cost( const int base_cost, const tripoint &source,
+                              const tripoint &target ) -> int
+{
+    if( std::abs( source.z - target.z ) < 1 ) {
+        return base_cost;
+    }
+
+    const auto modifier = get_option<float>( "CROSS_Z_LEVEL_MELEE_DIFFICULTY_MODIFIER" );
+    return static_cast<int>( std::floor( base_cost * modifier ) );
+}
+
+} // namespace
+
 static const matec_id WBLOCK_3( "WBLOCK_3" );
 
 static const skill_id skill_stabbing( "stabbing" );
@@ -503,7 +521,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         return;
     }
 
-    int move_cost = attack_cost( cur_weapon );
+    int move_cost = with_cross_z_melee_cost( attack_cost( cur_weapon ), pos(), t.pos() );
 
     if( !attack_hit ) {
         // Lua imelee on_miss callback
@@ -690,7 +708,8 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         }
     }
 
-    const int mod_sta = -get_melee_stamina_cost( cur_weapon );
+    const int mod_sta = -with_cross_z_melee_cost( get_melee_stamina_cost( cur_weapon ), pos(),
+                        t.pos() );
     mod_stamina( std::min( -50, mod_sta ) );
     add_msg( m_debug, "Stamina burn: %d", std::min( -50, mod_sta ) );
     mod_moves( -move_cost );
@@ -729,7 +748,7 @@ void Character::reach_attack( const tripoint &p )
     // Max out recoil
     recoil = MAX_RECOIL;
 
-    int move_cost = attack_cost( primary_weapon() );
+    int move_cost = with_cross_z_melee_cost( attack_cost( primary_weapon() ), pos(), p );
     int skill = std::min( 10, get_skill_level( skill_stabbing ) );
     int t = 0;
     std::vector<tripoint> path = line_to( pos(), p, t, 0 );

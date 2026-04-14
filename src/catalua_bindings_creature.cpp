@@ -188,6 +188,9 @@ void cata::detail::reg_creature( sol::state &lua )
         DOC( "Retrieves an arbitrary entry using the same key format as set_value." );
         SET_FX_T( get_value, std::string( const std::string & ) const );
 
+        DOC( "Removes this creature from the game without death notifications or a corpse." );
+        SET_FX_T( erase, void() );
+
         SET_FX_T( get_weight, units::mass() const );
 
         SET_FX_T( has_trait, bool( const trait_id & ) const );
@@ -264,6 +267,9 @@ void cata::detail::reg_creature( sol::state &lua )
         SET_FX_T( mod_all_parts_hp_cur, void( int ) );
         SET_FX_T( set_all_parts_hp_to_max, void() );
 
+        SET_FX_T( get_random_body_part, bodypart_id( bool ) const );
+        SET_FX_T( get_all_body_parts, std::vector<bodypart_id>( bool ) const );
+
         SET_FX_T( set_armor_bash_bonus, void( int ) );
         SET_FX_T( set_armor_cut_bonus, void( int ) );
         SET_FX_T( set_armor_bullet_bonus, void( int ) );
@@ -330,7 +336,7 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( swims, bool() const );
 
         SET_FX_T( move_target, tripoint() );
-        SET_FX_N_T( is_wandering, "is_wandering", bool() );
+        SET_FX_N_T( is_wandering, "is_wandering", bool() const );
 
         SET_FX_T( wander_to, void( const tripoint & p, int f ) );
         SET_FX_T( move_to, bool( const tripoint & p, bool force, bool step_on_critter,
@@ -1120,7 +1126,8 @@ void cata::detail::reg_npc( sol::state &lua )
         // Methods
         SET_FX_N_T( set_fac, "set_faction_id", void( const faction_id & id ) );
 
-        SET_FX_T( erase, void() );
+        DOC( "True if this NPC is in a simulated (fully loaded, AI-eligible) submap." );
+        SET_FX_T( is_simulated, bool() const );
 
         SET_FX_T( turned_hostile, bool() const );
 

@@ -1683,5 +1683,22 @@
     "decomp_learn": 3,
     "using": [ [ "magazine_standard", 5 ] ],
     "components": [ [ [ "scrap", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "ammolink25mm",
+    "charges": 10,
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 2 ],
+    "time": "25 m",
+    "batch_time_factors": [ 50, 3 ],
+    "autolearn": [ [ "fabrication", 6 ], [ "gun", 2 ] ],
+    "book_learn": [ [ "textbook_launcher", 4 ], [ "recipe_bullets", 4 ] ],
+    "using": [ [ "forging_standard", 4 ] ],
+    "qualities": [ { "id": "SWAGING", "level": 1 }, { "id": "GRIP_HOT", "level": 2 } ],
+    "components": [ [ [ "sheet_metal", 2 ], [ "sheet_metal_small", 48 ] ] ]
   }
 ]

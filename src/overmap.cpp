@@ -28,9 +28,13 @@
 #include "assign.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua.h"
+#include "catalua_impl.h"
+#include "catalua_sol.h"
 #include "character_id.h"
 #include "coordinate_conversions.h"
 #include "debug.h"
+#include "init.h"
 #include "distribution.h"
 #include "flood_fill.h"
 #include "fstream_utils.h"
@@ -58,6 +62,7 @@
 #include "overmap_noise.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "fluid_grid.h"
 #include "regional_settings.h"
 #include "rng.h"
@@ -71,6 +76,7 @@
 #include "type_id.h"
 #include "weighted_list.h"
 #include "world.h"
+#include "world_type.h"
 
 static const efftype_id effect_pet( "pet" );
 
@@ -2874,15 +2880,32 @@ void overmap_special::check() const
 }
 
 // *** BEGIN overmap FUNCTIONS ***
-overmap::overmap( const point_abs_om &p ) : loc( p )
+overmap::overmap( const point_abs_om &p, const std::string &dim_id )
+    : loc( p )
+    , dimension_id_( dim_id )
 {
-    const std::string rsettings_id = get_option<std::string>( "DEFAULT_REGION" );
+    // Try to use current_region_type if set, otherwise fall back to DEFAULT_REGION option
+    std::string rsettings_id = get_overmapbuffer( dimension_id_ ).current_region_type;
+
+    // If current_region_type is empty or "default", use the DEFAULT_REGION option
+    if( rsettings_id.empty() || rsettings_id == "default" ) {
+        rsettings_id = get_option<std::string>( "DEFAULT_REGION" );
+    }
+
+    // Look up the regional settings by ID
     t_regional_settings_map_citr rsit = region_settings_map.find( rsettings_id );
 
     if( rsit == region_settings_map.end() ) {
-        // gonna die now =[
-        debugmsg( "overmap %s: can't find region '%s'", loc.to_string(), rsettings_id.c_str() );
+        // Fallback to "default" if the specified region doesn't exist
+        rsit = region_settings_map.find( "default" );
+        if( rsit == region_settings_map.end() ) {
+            debugmsg( "overmap %s: can't find region '%s' or 'default'",
+                      loc.to_string(), rsettings_id.c_str() );
+            // Use first available region as last resort
+            rsit = region_settings_map.begin();
+        }
     }
+
     settings = &rsit->second;
 
     init_layers();
@@ -2891,16 +2914,17 @@ overmap::overmap( const point_abs_om &p ) : loc( p )
 overmap::overmap( overmap && )  noexcept = default;
 overmap::~overmap() = default;
 
-void overmap::populate( overmap_special_batch &enabled_specials )
+void overmap::populate( const std::string &dim_id,
+                        overmap_special_batch &enabled_specials )
 {
     try {
-        open( enabled_specials );
+        open( dim_id, enabled_specials );
     } catch( const std::exception &err ) {
         debugmsg( "overmap %s failed to load: %s", loc.to_string(), err.what() );
     }
 }
 
-void overmap::populate()
+void overmap::populate( const std::string &dim_id )
 {
     overmap_special_batch enabled_specials = overmap_specials::get_default_batch( loc );
     const overmap_feature_flag_settings &overmap_feature_flag = settings->overmap_feature_flag;
@@ -2935,7 +2959,7 @@ void overmap::populate()
         }
     }
 
-    populate( enabled_specials );
+    populate( dim_id, enabled_specials );
 }
 
 oter_id overmap::get_default_terrain( int z ) const
@@ -3354,6 +3378,22 @@ void overmap::generate( const overmap *north, const overmap *east,
         return;
     }
 
+    if( const dimension_info *dim = g->get_current_dimension_info() ) {
+        // Bounded pocket dimensions never use full overmap generation — they
+        // have pre-placed terrain via overmap specials.  Also skip if the
+        // world_type explicitly disables generation.
+        if( dim->bounds.has_value() ) {
+            dbg( DL::Info ) << "overmap::generate skipped for bounded dimension '"
+                            << dim->dimension_id << "'";
+            return;
+        }
+        if( dim->world_type.is_valid() && !dim->world_type.obj().generate_overmap ) {
+            dbg( DL::Info ) << "overmap::generate skipped for world_type '"
+                            << dim->world_type.str() << "' (generate_overmap=false)";
+            return;
+        }
+    }
+
     dbg( DL::Info ) << "overmap::generate start";
 
     connection_cache = overmap_connection_cache{};
@@ -3647,7 +3687,53 @@ void overmap::move_hordes()
         mg.dec_interest( 1 );
 
         if( ( mg.pos.xy() == mg.target.xy() ) || mg.interest <= 15 ) {
-            mg.wander( *this );
+            const auto om_abs = pos();
+            const auto group_abs = project_combine( om_abs, mg.pos.xy() );
+            const auto target_abs = project_combine( om_abs, mg.target.xy() );
+            auto used_hook_target = false;
+
+            if( auto *state = DynamicDataLoader::get_instance().lua.get() ) {
+                auto &lua = state->lua;
+                auto game = lua.globals()["game"];
+                auto behaviours_obj = game["horde_behaviours"].get<sol::object>();
+                if( behaviours_obj.is<sol::table>() ) {
+                    auto behaviours = behaviours_obj.as<sol::table>();
+                    const auto fn_obj = behaviours.get_or<sol::object>( mg.horde_behaviour, sol::lua_nil );
+                    if( fn_obj.is<sol::protected_function>() || fn_obj.is<sol::function>() ) {
+                        auto func = fn_obj.as<sol::protected_function>();
+                        auto params = lua.create_table();
+                        auto results = lua.create_table();
+                        params["results"] = results;
+                        params["group"] = &mg;
+                        params["pos_abs_sm"] = tripoint_abs_sm( group_abs, mg.pos.z() ).raw();
+                        params["target_abs_sm"] = tripoint_abs_sm( target_abs, mg.target.z() ).raw();
+                        params["behaviour"] = mg.horde_behaviour;
+
+                        auto res = func( params );
+                        check_func_result( res );
+
+                        const auto hook_target = results.get<sol::optional<tripoint>>( "target" );
+                        const auto hook_interest = results.get<sol::optional<int>>( "interest" );
+                        if( hook_target.has_value() ) {
+                            const auto hook_abs_sm = tripoint_abs_sm( *hook_target );
+                            auto target_om = point_abs_om{};
+                            auto target_within = point_om_sm{};
+                            std::tie( target_om, target_within ) = project_remain<coords::om>( hook_abs_sm.xy() );
+                            if( target_om == om_abs ) {
+                                mg.target = tripoint_om_sm( target_within, hook_abs_sm.z() );
+                                used_hook_target = true;
+                            }
+                        }
+                        if( hook_interest.has_value() ) {
+                            mg.set_interest( *hook_interest );
+                        }
+                    }
+                }
+            }
+
+            if( !used_hook_target ) {
+                mg.wander( *this );
+            }
         }
 
         // Decrease movement chance according to the terrain we're currently on.
@@ -5633,7 +5719,7 @@ bool overmap::can_place_special( const overmap_special &special, const tripoint_
     }
 
     if( special.has_flag( "GLOBALLY_UNIQUE" ) &&
-        overmap_buffer.contains_unique_special( special.id ) ) {
+        get_overmapbuffer( dimension_id_ ).contains_unique_special( special.id ) ) {
         return false;
     }
 
@@ -5675,7 +5761,7 @@ std::vector<tripoint_om_omt> overmap::place_special(
     }
 
     if( special.has_flag( "GLOBALLY_UNIQUE" ) ) {
-        overmap_buffer.add_unique_special( special.id );
+        get_overmapbuffer( dimension_id_ ).add_unique_special( special.id );
     }
 
     const bool grid = special.has_flag( "ELECTRIC_GRID" );
@@ -5831,12 +5917,13 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         }
         std::string chosen = ores.pick()->c_str();
         std::vector<std::string> directions{"_north", "_east", "_south", "_west"};
-        tripoint_om_omt local_pos = overmap_buffer.get_om_global( p ).local;
+        auto &owning_omb = get_overmapbuffer( dimension_id_ );
+        tripoint_om_omt local_pos = owning_omb.get_om_global( p ).local;
         const tripoint target_sub( omt_to_sm_copy( p.raw() ) );
         std::string note_text( chosen );
         std::ranges::replace( note_text, '_', ' ' );
         add_note( local_pos, string_format( "Signs of %s ore nearby.", note_text ) );
-        if( !( MAPBUFFER.lookup_submap( target_sub ) ) ) {
+        if( !( MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( target_sub ) ) ) {
             // No overmap to replace, set the terrain and bail.
             ter_set( local_pos, oter_id( "omt_ore_vein_" + chosen +
                                          directions[rand() % 4] ) );
@@ -5848,7 +5935,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         */
         tinymap tmp;
         map &here = get_map();
-        overmap_buffer.ter_set( p, oter_id( "omt_ore_vein_" + chosen + directions[rand() % 4] ) );
+        owning_omb.ter_set( p, oter_id( "omt_ore_vein_" + chosen + directions[rand() % 4] ) );
         tmp.generate( target_sub, calendar::turn );
 
         here.set_transparency_cache_dirty( p.z() );
@@ -5867,7 +5954,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
                 const tripoint dest_pos = target_sub + point( x, y );
                 const tripoint src_pos = tripoint{ x, y, p.z() };
 
-                submap *destsm = MAPBUFFER.lookup_submap( dest_pos );
+                submap *destsm = MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( dest_pos );
                 submap *srcsm = tmp.get_submap_at_grid( src_pos );
 
                 submap::swap( *destsm,  *srcsm );
@@ -6199,7 +6286,7 @@ void overmap::place_specials( overmap_special_batch &enabled_specials )
 
             //FINGERS CROSSED EMOGI
             amount_to_place = x_in_y( min, max ) && ( !globally_unique ||
-                              !overmap_buffer.contains_unique_special( id ) ) ? 1 : 0;
+                              !get_overmapbuffer( dimension_id_ ).contains_unique_special( id ) ) ? 1 : 0;
         } else {
             // Number of instances normalized to terrain ratio
             float real_max = std::max( static_cast<float>( min ), max * rate );
@@ -6309,29 +6396,28 @@ void overmap::place_radios()
     }
 }
 
-void overmap::open( overmap_special_batch &enabled_specials )
+void overmap::open( const std::string &dim_id,
+                    overmap_special_batch &enabled_specials )
 {
-    // const std::string terfilename = overmapbuffer::terrain_filename( loc );
-
     const auto ter_reader = [&]( std::istream & fin ) {
         overmap::unserialize( fin, string_format( "overmap terrain %d.%d", loc.x(), loc.y() ) );
     };
 
-    if( g->get_active_world()->read_overmap( loc, ter_reader ) ) {
-        // const std::string plrfilename = overmapbuffer::player_filename( loc );
+    if( g->get_active_world()->read_overmap( dim_id, loc, ter_reader ) ) {
         const auto plr_reader = [&]( std::istream & fin ) {
             overmap::unserialize_view( fin, string_format( "overmap visibility %d.%d", loc.x(), loc.y() ) );
         };
-        g->get_active_world()->read_overmap_player_visibility( loc, plr_reader );
+        g->get_active_world()->read_overmap_player_visibility( dim_id, loc, plr_reader );
     } else { // No map exists!  Prepare neighbors, and generate one.
+        auto &owning_omb = get_overmapbuffer( dim_id );
         std::vector<const overmap *> pointers;
         // Fetch south and north
         for( int i = -1; i <= 1; i += 2 ) {
-            pointers.push_back( overmap_buffer.get_existing( loc + point( 0, i ) ) );
+            pointers.push_back( owning_omb.get_existing( loc + point( 0, i ) ) );
         }
         // Fetch east and west
         for( int i = -1; i <= 1; i += 2 ) {
-            pointers.push_back( overmap_buffer.get_existing( loc + point( i, 0 ) ) );
+            pointers.push_back( owning_omb.get_existing( loc + point( i, 0 ) ) );
         }
 
         // pointers looks like (north, south, west, east)
@@ -6340,15 +6426,23 @@ void overmap::open( overmap_special_batch &enabled_specials )
 }
 
 // Note: this may throw io errors from std::ofstream
-void overmap::save() const
+void overmap::save( const std::string &dim_id ) const
 {
-    g->get_active_world()->write_overmap_player_visibility( loc, [&]( std::ostream & stream ) {
+    g->get_active_world()->write_overmap_player_visibility( dim_id, loc, [&]( std::ostream & stream ) {
         serialize_view( stream );
     } );
 
-    g->get_active_world()->write_overmap( loc, [&]( std::ostream & stream ) {
+    g->get_active_world()->write_overmap( dim_id, loc, [&]( std::ostream & stream ) {
         serialize( stream );
     } );
+}
+
+void overmap::save() const
+{
+    // Legacy overload: delegates to the dim-aware version using the
+    // currently-active dimension.  Not safe for background threads; use
+    // save(dim_id) instead when calling from worker contexts.
+    save( g_active_dimension_id );
 }
 
 void overmap::add_mon_group( const mongroup &group )
@@ -6455,7 +6549,8 @@ bool overmap::is_omt_generated( const tripoint_om_omt &loc ) const
         project_to<coords::sm>( project_combine( pos(), loc ) );
 
     // TODO: fix point types
-    const bool is_generated = MAPBUFFER.lookup_submap( global_sm_loc.raw() ) != nullptr;
+    const bool is_generated =
+        MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( global_sm_loc.raw() ) != nullptr;
 
     return is_generated;
 }
@@ -6467,7 +6562,8 @@ void overmap::set_electric_grid_connections( const tripoint_om_omt &p,
     for( size_t i = 0; i < six_cardinal_directions.size(); i++ ) {
         tripoint_om_omt other_p = p + six_cardinal_directions[i];
         tripoint_abs_omt other_p_global = project_combine( pos(), other_p );
-        overmap_with_local_coords other = overmap_buffer.get_om_global( other_p_global );
+        overmap_with_local_coords other = get_overmapbuffer( dimension_id_ ).get_om_global(
+                                              other_p_global );
         size_t opposite_direction = i + ( ( i % 2 ) ? -1 : 1 );
         other.om->electric_grid_connections[other.local][opposite_direction] = connections[i];
     }

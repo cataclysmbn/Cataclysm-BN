@@ -196,5 +196,44 @@
     "color": "white",
     "symbol": "?",
     "flags": [ "TRADER_AVOID", "SNIPPET_NEEDS_LITERACY" ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "movie_poster",
+    "category": "books",
+    "symbol": "`",
+    "name": { "str": "movie poster" },
+    "description": "Posters promoting movies that were in theaters when the Cataclysm hit.",
+    "price": 0,
+    "price_postapoc": 0,
+    "material": [ "paper" ],
+    "weight": "6 g",
+    "volume": "12 ml",
+    "snippet_category": [
+      {
+        "id": "movie_poster_action",
+        "text": "Last Stand 2: Still Standing movie poster — the highly anticipated sequel starring Det. Harvey Baxter delivering pain to those who flee from justice."
+      },
+      {
+        "id": "movie_poster_adventure",
+        "text": "The Black Freighter movie poster — a stylized print promoting the animated adaptation of the grim seafaring tale."
+      },
+      {
+        "id": "movie_poster_comedy",
+        "text": "Simple Guy movie poster — a white sheet featuring a balding man in a stained hoodie waving lackadaisically at the viewer."
+      },
+      {
+        "id": "movie_poster_fantasy",
+        "text": "Fyreguard: A Tale as Old as Time movie poster — a vibrant magical landscape topped with medieval title lettering."
+      },
+      {
+        "id": "movie_poster_horror",
+        "text": "Hunted III movie poster — the third entry’s slasher tagline warns: “You can’t outrun it forever.”"
+      },
+      {
+        "id": "movie_poster_scifi",
+        "text": "Cybercop 3D movie poster — a sci-fi cop dives into a simulated reality to stop dangerous hackers."
+      }
+    ]
   }
 ]
