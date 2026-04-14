@@ -1531,7 +1531,7 @@
     "category": "clothing",
     "symbol": "[",
     "color": "dark_gray",
-    "name": { "str": "enhanced light amp goggles", "str_pl": "enhanced light amp goggles" },
+    "name": { "str_sp": "enhanced light amp goggles" },
     "description": "Modern light enhancement goggles that greatly amplify ambient light, allowing you to see in the dark almost perfectly, all while looking properly tactical.  Use it to turn them on.",
     "flags": [ "FRAGILE", "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ],
     "price": "920 USD",
