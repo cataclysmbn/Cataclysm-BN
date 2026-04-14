@@ -345,7 +345,7 @@ void Character::suffer_while_awake( const int current_stim )
 
         if( current_stim > 50 && one_in( to_turns<int>( 30_minutes ) - ( current_stim * 6 ) ) ) {
             add_effect( effect_shakes, 30_minutes + 1_turns * current_stim );
-        } else if (( days_max - days_left >= 0.5f ) && //matches hunger state in get_hunger_description
+        } else if( ( days_max - days_left >= 0.5f ) && //matches hunger state in get_hunger_description
                    one_turn_in( 60_minutes - 1_seconds * ( max_kcal - total_kcal ) ) ) {
             add_effect( effect_shakes, 40_minutes );
         }
