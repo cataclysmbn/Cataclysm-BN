@@ -285,7 +285,6 @@
           { "id": "mon_zomblimp", "fg": 200 },
           { "id": "vp_survivors_workbench", "fg": 201, "rotates": true },
           { "id": "vp_robobench", "fg": 202, "rotates": true },
-
           { "id": [ "jet_thruster", "overlay_wielded_jet_thruster" ], "fg": 203 },
           {
             "id": "vp_jet_thruster",
