@@ -186,6 +186,7 @@
           { "group": "clothing_glasses", "prob": 60 },
           { "item": "glasses_bal", "prob": 30 },
           { "item": "goggles_nv", "prob": 5 },
+          { "item": "goggles_nv_enhanced", "prob": 1 },
           { "item": "goggles_ir", "prob": 5 }
         ],
         "prob": 20
@@ -228,6 +229,7 @@
           { "group": "clothing_glasses", "prob": 60 },
           { "item": "glasses_bal", "prob": 30 },
           { "item": "goggles_nv", "prob": 5 },
+          { "item": "goggles_nv_enhanced", "prob": 1 },
           { "item": "goggles_ir", "prob": 5 }
         ],
         "prob": 20
@@ -1977,6 +1979,7 @@
       { "item": "adv_UPS_off", "prob": 20, "charges": [ 0, 2000 ] },
       { "group": "used_UPS", "prob": 5 },
       { "item": "goggles_nv", "prob": 20, "charges": [ 0, 150 ] },
+      { "item": "goggles_nv_enhanced", "prob": 5, "charges": [ 0, 150 ] },
       { "item": "goggles_ir", "prob": 20, "charges": [ 0, 150 ] },
       [ "solarpack", 5 ],
       [ "optical_cloak", 3 ],
@@ -2509,6 +2512,7 @@
       [ "mask_fsurvivor", 2 ],
       [ "glasses_bal", 18 ],
       [ "goggles_nv", 2 ],
+      [ "goggles_nv_enhanced", 1 ],
       [ "goggles_ir", 1 ],
       [ "tacvest", 22 ],
       [ "legrig", 22 ],
