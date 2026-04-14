@@ -2002,6 +2002,10 @@ void Character::recalc_sight_limits()
         vision_mode_cache.set( NV_GOGGLES );
         best_bonus_nv = std::max( best_bonus_nv, 10.0f );
     }
+    if( worn_with_flag( flag_GNVE_EFFECT ) ) {
+        vision_mode_cache.set( NV_GOGGLES );
+        best_bonus_nv = std::max( best_bonus_nv, 15.0f );
+    }
     if( has_trait( trait_BIRD_EYE ) ) {
         vision_mode_cache.set( BIRD_EYE );
     }

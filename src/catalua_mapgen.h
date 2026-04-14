@@ -19,6 +19,7 @@ class mapgen_function_lua : public virtual mapgen_function
         mapgen_function_lua( const std::string &func, int weight = 1000 );
 
         void generate( mapgendata &dat ) override;
+        auto is_lua_generator() const -> bool override { return true; }
 
 };
 

@@ -15,6 +15,7 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "coordinate_conversions.h"
+#include "mapgen_functions.h"
 #include "debug.h"
 #include "distribution_grid.h"
 #include "filesystem.h"
@@ -618,10 +619,36 @@ bool mapbuffer::generate_quad( const tripoint &om_addr )
     if( all_loaded ) {
         return false;
     }
+    // Lua mapgen is not reentrant: if the terrain at this quad uses a Lua-based
+    // generator and we are on a worker thread, defer the entire generate_quad()
+    // call to the main thread rather than allocating blank submaps and bailing
+    // partway through map::generate().
+    if( is_pool_worker_thread() && omt_mapgen_uses_lua( dimension_id_, om_addr ) ) {
+        std::lock_guard<std::mutex> lk( deferred_lua_quads_mutex_ );
+        deferred_lua_quads_.push_back( om_addr );
+        return false;
+    }
     tinymap tmp_map;
     tmp_map.bind_dimension( dimension_id_ );
     tmp_map.generate( base, calendar::turn );
     return true;
+}
+
+auto mapbuffer::drain_deferred_lua_quads() -> std::vector<tripoint>
+{
+    std::vector<tripoint> pending;
+    {
+        std::lock_guard<std::mutex> lk( deferred_lua_quads_mutex_ );
+        pending.swap( deferred_lua_quads_ );
+    }
+
+    std::vector<tripoint> generated;
+    std::ranges::for_each( pending, [&]( const tripoint & om_addr ) {
+        if( generate_quad( om_addr ) ) {
+            generated.push_back( om_addr );
+        }
+    } );
+    return generated;
 }
 
 bool mapbuffer::load_or_generate_quad( const tripoint &om_addr )

@@ -293,6 +293,16 @@ class mapgen_basic_container
             ( *ptr )->generate( dat );
             return true;
         }
+        /** Returns true if any generator in the weighted pool is Lua-based. */
+        auto any_lua() const -> bool {
+            bool found = false;
+            weights_.apply( [&]( const std::shared_ptr<mapgen_function> &ptr ) {
+                if( ptr && ptr->is_lua_generator() ) {
+                    found = true;
+                }
+            } );
+            return found;
+        }
         /**
          * Calls @ref mapgen_function::setup and sets up the internal weighted list using
          * the **current** value of @ref mapgen_function::weight. This value may have
@@ -405,6 +415,14 @@ class mapgen_factory
                 return false;
             }
             return iter->second.generate( dat, hardcoded_weight );
+        }
+        /// Returns true if any generator registered under @p key is Lua-based.
+        auto has_lua_generator( const std::string &key ) const -> bool {
+            const auto iter = mapgens_.find( key );
+            if( iter == mapgens_.end() ) {
+                return false;
+            }
+            return iter->second.any_lua();
         }
 
         mapgen_parameters get_map_special_params( const std::string &key ) const {
@@ -7583,6 +7601,13 @@ std::pair<std::map<ter_id, int>, std::map<furn_id, int>> get_changed_ids_from_up
 bool run_mapgen_func( const std::string &mapgen_id, mapgendata &dat )
 {
     return oter_mapgen.generate( dat, mapgen_id );
+}
+
+auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint &om_addr ) -> bool
+{
+    overmapbuffer &omap = get_overmapbuffer( dim_id );
+    const oter_id terrain_type = omap.ter( tripoint_abs_omt( om_addr ) );
+    return oter_mapgen.has_lua_generator( terrain_type->get_mapgen_id() );
 }
 
 mapgen_parameters get_map_special_params( const std::string &mapgen_id )

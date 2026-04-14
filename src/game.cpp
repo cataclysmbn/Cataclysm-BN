@@ -12200,6 +12200,7 @@ void game::resize_reality_bubble_to( int new_size )
     // Discard pathfinding objects sized for the old bubble.
     Pathfinding::clear_pool();
 
+
 #if defined(TILES)
     if( tilecontext ) {
         tilecontext->reset_minimap();

@@ -604,6 +604,15 @@ void map::reset_vehicle_cache( )
     for( int zlev = zmin; zlev <= zmax; zlev++ ) {
         auto &ch = get_cache( zlev );
         for( const auto &elem : ch.vehicle_list ) {
+            // abs_sm_pos is always the authoritative absolute position.
+            // sm_pos can be stale when loadn fires during a shift and abs_sub
+            // subsequently changes (e.g. the vehicle's submap enters the grid
+            // from the fire-spread loader, or the reality bubble resizes).
+            // Recompute sm_pos here so the tile-level cache uses the right slot.
+            elem->sm_pos = tripoint(
+                               elem->abs_sm_pos.x() - abs_sub.x,
+                               elem->abs_sm_pos.y() - abs_sub.y,
+                               elem->abs_sm_pos.z() );
             elem->adjust_zlevel( 0, tripoint_zero );
             add_vehicle_to_cache( elem );
         }
@@ -1689,6 +1698,16 @@ void map::unboard_vehicle( const tripoint &p, bool dead_passenger )
 
 bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
 {
+    // abs_sm_pos is always authoritative.  A tinymap (e.g. fire-spread loader) that
+    // loads the same submap sets veh.sm_pos to its own local grid coordinates, which
+    // are meaningless to the main map and corrupt the position lookup.  Recompute
+    // sm_pos from abs_sm_pos before any position-dependent call so the correction
+    // applies regardless of which code path caused the staleness.
+    veh.sm_pos = tripoint(
+                     veh.abs_sm_pos.x() - abs_sub.x,
+                     veh.abs_sm_pos.y() - abs_sub.y,
+                     veh.abs_sm_pos.z() );
+
     const tripoint src = veh.global_pos3();
     tripoint dst = src + dp;
 
@@ -1699,8 +1718,8 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     std::set<int> smzs;
 
     if( src_submap == nullptr ) {
-        add_msg( m_debug, "map::displace_vehicle: src submap not loaded %d,%d,%d->%d,%d,%d",
-                 src.x, src.y, src.z, dst.x, dst.y, dst.z );
+        debugmsg( "displace_vehicle: src submap null for '%s' at %d,%d,%d",
+                  veh.name, src.x, src.y, src.z );
         return false;
     }
 
@@ -1837,6 +1856,12 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     }
     if( need_update ) {
         g->update_map( g->u );
+        // update_map shifts abs_sub; recompute sm_pos so the cache lookup
+        // lands in the right grid slot after the shift.
+        veh.sm_pos = tripoint(
+                         veh.abs_sm_pos.x() - abs_sub.x,
+                         veh.abs_sm_pos.y() - abs_sub.y,
+                         veh.abs_sm_pos.z() );
     }
     add_vehicle_to_cache( &veh );
 
@@ -2027,7 +2052,7 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
     set_memory_seen_cache_dirty( p );
 
     // TODO: Limit to changes that affect move cost, traps and stairs
-    set_pathfinding_cache_dirty( p.z );
+    set_pathfinding_cache_dirty( p );
 
     // Make sure the furniture falls if it needs to
     support_dirty( p );
@@ -2399,7 +2424,7 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
     set_memory_seen_cache_dirty( p );
 
     // TODO: Limit to changes that affect move cost, traps and stairs
-    set_pathfinding_cache_dirty( p.z );
+    set_pathfinding_cache_dirty( p );
 
     tripoint above( p.xy(), p.z + 1 );
     // Make sure that if we supported something and no longer do so, it falls down
@@ -6556,7 +6581,7 @@ bool map::add_field( const tripoint &p, const field_type_id &type_id, int intens
     }
 
     if( fd_type.is_dangerous() ) {
-        set_pathfinding_cache_dirty( p.z );
+        set_pathfinding_cache_dirty( p );
     }
 
     // Ensure blood type fields don't hang in the air
@@ -6584,7 +6609,7 @@ void map::remove_field( const tripoint &p, const field_type_id &field_to_remove 
             set_seen_cache_dirty( p );
         }
         if( fdata.is_dangerous() ) {
-            set_pathfinding_cache_dirty( p.z );
+            set_pathfinding_cache_dirty( p );
         }
     }
 }
@@ -9993,12 +10018,18 @@ void tinymap::drain_to_mapbuffer( mapbuffer &dest )
     ( void )dest;
 }
 
-void tinymap::load_from_mapbuffer( const tripoint &sm_base )
+void tinymap::bind_submaps_for_hook( const tripoint &sm_base )
 {
+    // Directly wire the four 2×2 grid slots to the already-resident submaps.
+    // Does NOT call loadn()/actualize() — freshly generated submaps need no
+    // time-advance, and this tinymap is never rendered, simulated, or saved.
     set_abs_sub( sm_base );
-    for( auto di : std::views::iota( 0, 2 ) ) {
-        for( auto dj : std::views::iota( 0, 2 ) ) {
-            loadn( tripoint( di, dj, sm_base.z ), false );
+    mapbuffer &mb = MAPBUFFER_REGISTRY.get( get_bound_dimension() );
+    for( int di = 0; di < 2; ++di ) {
+        for( int dj = 0; dj < 2; ++dj ) {
+            const tripoint abs( sm_base.x + di, sm_base.y + dj, sm_base.z );
+            setsubmap( get_nonant( { di, dj, sm_base.z } ),
+                       mb.lookup_submap_in_memory( abs ) );
         }
     }
 }
@@ -10505,6 +10536,15 @@ void map::set_pathfinding_cache_dirty( const int zlev )
                 sm->pf_dirty = true;
             }
         }
+    }
+}
+
+void map::set_pathfinding_cache_dirty( const tripoint &p )
+{
+    point l;
+    submap *const sm = get_submap_at( p, l );
+    if( sm ) {
+        sm->pf_dirty = true;
     }
 }
 

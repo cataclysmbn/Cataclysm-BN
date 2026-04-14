@@ -287,6 +287,13 @@ DebugLogGuard realDebugLog( DL lev, DC cl, const char *filename,
  * Write a stack backtrace to the given ostream
  */
 void debug_write_backtrace( std::ostream &out );
+#if defined(_WIN32)
+/**
+ * Sets the CONTEXT* from the crash's EXCEPTION_POINTERS for accurate stack
+ * walking. Pass nullptr to clear. Must be called before debug_write_backtrace.
+ */
+void set_crash_exception_context( void *context );
+#endif
 #endif
 
 // vim:tw=72:sw=4:fdm=marker:fdl=0:

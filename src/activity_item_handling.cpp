@@ -27,6 +27,7 @@
 #include "character_functions.h"
 #include "clzones.h"
 #include "construction.h"
+#include "construction_group.h"
 #include "construction_partial.h"
 #include "creature.h"
 #include "debug.h"
@@ -1380,6 +1381,59 @@ static auto format_skill_requirements( const std::map<skill_id, int> &skills ) -
         return string_format( "%s %d", entry.first->name(), entry.second );
     } );
     return join( parts, ", " );
+}
+
+static auto construction_activity_name( const construction_id &con_id ) -> std::string
+{
+    if( con_id->group.is_empty() ) {
+        return _( "construction site" );
+    }
+    return con_id->group.obj().name();
+}
+
+static auto construction_activity_name( const std::optional<construction_id> &con_idx ) ->
+std::string
+{
+    return con_idx ? construction_activity_name( *con_idx ) : _( "construction site" );
+}
+
+static auto construction_activity_name( const zone_data *zone,
+                                        const tripoint &src_loc ) -> std::string
+{
+    if( zone ) {
+        const auto &options = dynamic_cast<const blueprint_options &>( zone->get_options() );
+        return construction_activity_name( options.get_index() );
+    }
+    const partial_con *pc = get_map().partial_con_at( src_loc );
+    return pc ? construction_activity_name( pc->id ) : _( "construction site" );
+}
+
+static auto farm_plot_seed( const zone_data *zone ) -> itype_id
+{
+    return zone ? dynamic_cast<const plot_options &>( zone->get_options() ).get_seed() :
+           itype_id::NULL_ID();
+}
+
+static auto farm_plot_name( const zone_data *zone ) -> std::string
+{
+    const auto seed = farm_plot_seed( zone );
+    return seed.is_valid() && !seed.is_empty() ? string_format( _( "farm plot for %s" ),
+            item::nname( seed ) ) : _( "farm plot" );
+}
+
+static auto farm_seed_name( const zone_data *zone ) -> std::string
+{
+    const auto seed = farm_plot_seed( zone );
+    return seed.is_valid() && !seed.is_empty() ? item::nname( seed ) : _( "seeds" );
+}
+
+static auto blocking_item_name( const tripoint &src_loc ) -> std::string
+{
+    const auto items = get_map().i_at( src_loc );
+    if( items.empty() ) {
+        return std::string();
+    }
+    return ( *items.begin() )->display_name();
 }
 
 static void set_activity_failure_message( player &p, const std::string &msg,
@@ -2789,6 +2843,14 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
     const bool post_dark_check = src_set.empty();
     if( !pre_dark_check && post_dark_check ) {
         p.add_msg_if_player( m_info, _( "It is too dark to do this activity." ) );
+        if( act_id == ACT_MULTIPLE_FARM ) {
+            set_activity_failure_message( p,
+                                          _( "Farming blocked for nearby farm plots: it is too dark to work." ) );
+        }
+    }
+    if( act_id == ACT_MULTIPLE_FARM && src_set.empty() ) {
+        set_activity_failure_message( p,
+                                      _( "No nearby farm plots are available for this order.  Add a Farm Plot zone to give the order." ) );
     }
     if( act_id == ACT_MULTIPLE_CONSTRUCTION && src_set.empty() ) {
         if( npc *guy = p.as_npc() ) {
@@ -2816,6 +2878,12 @@ static requirement_check_result generic_multi_activity_check_requirement( player
     };
     const auto record_construction_failure = [&]( const std::string & msg ) {
         if( act_id != ACT_MULTIPLE_CONSTRUCTION ) {
+            return;
+        }
+        record_activity_failure( msg );
+    };
+    const auto record_farm_failure = [&]( const std::string & msg ) {
+        if( act_id != ACT_MULTIPLE_FARM ) {
             return;
         }
         record_activity_failure( msg );
@@ -2851,7 +2919,10 @@ static requirement_check_result generic_multi_activity_check_requirement( player
     if( needs_to_be_in_zone && !zone ) {
         can_do_it = false;
         record_construction_failure(
-            _( "No valid construction site here.  Check your blueprint zones and ignored areas." ) );
+            string_format(
+                _( "No valid site for %s is available here.  Check your blueprint zones and ignored areas." ),
+                construction_activity_name( act_info.con_idx ) ) );
+        record_farm_failure( _( "No valid farm plot is available here.  Check your Farm Plot zones." ) );
         record_vehicle_failure( _( "Vehicle work ended: no valid target zone here." ) );
         return SKIP_LOCATION;
     }
@@ -2877,8 +2948,10 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                 const auto &skills = act_info.con_idx->obj().required_skills;
                 const auto skill_text = format_skill_requirements( skills );
                 failure_msg = skill_text.empty()
-                              ? _( "Construction blocked: insufficient skill for the selected build." )
-                              : string_format( _( "Construction blocked: requires %s." ), skill_text );
+                              ? string_format( _( "Construction blocked for %s: insufficient skill for the selected build." ),
+                                               construction_activity_name( act_info.con_idx ) )
+                              : string_format( _( "Construction blocked for %1$s: requires %2$s." ),
+                                               construction_activity_name( act_info.con_idx ), skill_text );
             } else if( is_vehicle_activity ) {
                 // fall back to generic if we don't have specifics here
                 // may have already been set by a detailed message
@@ -2886,15 +2959,39 @@ static requirement_check_result generic_multi_activity_check_requirement( player
             }
             if( !failure_msg.empty() ) {
                 record_construction_failure( failure_msg );
+                record_farm_failure( failure_msg );
                 record_vehicle_failure( failure_msg );
             }
         } else if( reason == do_activity_reason::BLOCKING_TILE ) {
-            record_construction_failure( _( "Construction blocked: something is occupying the build site." ) );
+            const auto item_name = blocking_item_name( src_loc );
+            if( !item_name.empty() ) {
+                record_construction_failure( string_format(
+                                                 _( "Construction blocked for %1$s: %2$s is occupying the build site." ),
+                                                 construction_activity_name( act_info.con_idx ), item_name ) );
+                record_farm_failure( string_format( _( "Farming blocked for %1$s: %2$s is lying on the plot." ),
+                                                    farm_plot_name( zone ), item_name ) );
+            } else {
+                record_construction_failure( string_format(
+                                                 _( "Construction blocked for %s: the build site is occupied." ),
+                                                 construction_activity_name( act_info.con_idx ) ) );
+                record_farm_failure( string_format( _( "Farming blocked for %s: the plot is occupied." ),
+                                                    farm_plot_name( zone ) ) );
+            }
             record_vehicle_failure( _( "Vehicle work blocked: something is occupying the work site." ) );
         } else if( reason == do_activity_reason::NEEDS_WARM_WEATHER ) {
-            record_construction_failure( _( "Construction blocked: conditions are too cold for this step." ) );
+            record_construction_failure( string_format(
+                                             _( "Construction blocked for %s: conditions are too cold for this step." ),
+                                             construction_activity_name( act_info.con_idx ) ) );
+            record_farm_failure( string_format( _( "Farming blocked for %s: it is too cold to plant here." ),
+                                                farm_seed_name( zone ) ) );
         } else if( reason == do_activity_reason::NEEDS_ABOVE_GROUND ) {
-            record_construction_failure( _( "Construction blocked: this step must be above ground." ) );
+            record_construction_failure( string_format(
+                                             _( "Construction blocked for %s: this step must be above ground." ),
+                                             construction_activity_name( act_info.con_idx ) ) );
+            record_farm_failure(
+                string_format(
+                    _( "Farming blocked for %s: this seed cannot be planted underground without enough heat." ),
+                    farm_seed_name( zone ) ) );
         }
         return SKIP_LOCATION;
     } else if( reason == do_activity_reason::NO_COMPONENTS ||
@@ -3006,19 +3103,34 @@ static requirement_check_result generic_multi_activity_check_requirement( player
         if( !are_requirements_nearby( tool_pickup ? loot_zone_spots : combined_spots, what_we_need, p,
                                       act_id, tool_pickup, src_loc ) ) {
             const auto needs_construction = act_id == ACT_MULTIPLE_CONSTRUCTION;
+            const auto needs_farming = act_id == ACT_MULTIPLE_FARM;
+            const std::string missing_list = what_we_need->list_missing();
             const std::string missing_text = needs_construction
-                                             ? _( "Construction skipped: required components or tools are missing nearby." )
+                                             ? string_format( _( "Construction skipped for %s: missing nearby requirements." ),
+                                                     construction_activity_name( act_info.con_idx ) )
+                                             : needs_farming && reason == do_activity_reason::NEEDS_PLANTING
+                                             ? string_format( _( "Farming skipped for %s: missing nearby seeds." ),
+                                                     farm_plot_name( zone ) )
+                                             : needs_farming && reason == do_activity_reason::NEEDS_TILLING
+                                             ? string_format( _( "Farming skipped for %s: missing nearby tilling tools." ),
+                                                     farm_plot_name( zone ) )
+                                             : needs_farming
+                                             ? string_format( _( "Farming skipped for %s: missing nearby requirements." ),
+                                                     farm_plot_name( zone ) )
                                              : _( "The required items are not available to complete this task." );
-            if( needs_construction ) {
+            if( needs_construction || needs_farming ) {
                 if( npc *guy = p.as_npc() ) {
                     guy->set_suppress_activity_complete_message( true );
                 }
-                const std::string missing_list = what_we_need->list_missing();
                 auto combined = missing_text;
                 if( !missing_list.empty() ) {
                     combined += "\n" + missing_list;
                 }
-                record_construction_failure( combined );
+                if( needs_construction ) {
+                    record_construction_failure( combined );
+                } else {
+                    record_farm_failure( combined );
+                }
             } else if( is_vehicle_activity ) {
                 if( npc *guy = p.as_npc() ) {
                     guy->set_suppress_activity_complete_message( true );
@@ -3196,10 +3308,12 @@ static bool generic_multi_activity_do( player &p, const activity_id &act_id,
 bool generic_multi_activity_handler( player_activity &act, player &p, bool check_only )
 {
     map &here = get_map();
+    zone_manager &mgr = zone_manager::get_manager();
     const tripoint abspos = here.getabs( p.pos() );
     // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
     activity_id activity_to_restore = act.id();
     const bool is_multi_construction = activity_to_restore == ACT_MULTIPLE_CONSTRUCTION;
+    const bool is_multi_farm = activity_to_restore == ACT_MULTIPLE_FARM;
     bool construction_progress = false;
     // Nuke the current activity, leaving the backlog alone
     if( !check_only ) {
@@ -3226,7 +3340,20 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
             }
             const std::vector<tripoint> route = route_adjacent( p, src_loc );
             if( route.empty() ) {
+                const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
+                                        activity_to_restore ) );
                 // can't get there, can't do anything, skip it
+                if( is_multi_construction ) {
+                    set_activity_failure_message( p,
+                                                  string_format(
+                                                      _( "Construction task for %s ended with no progress.  Path to the site is blocked." ),
+                                                      construction_activity_name( zone, src_loc ) ) );
+                }
+                if( is_multi_farm ) {
+                    set_activity_failure_message( p,
+                                                  string_format( _( "Farming task for %s ended with no progress.  Path to the plot is blocked." ),
+                                                          farm_plot_name( zone ) ) );
+                }
                 continue;
             }
             p.set_moves( 0 );
@@ -3249,18 +3376,21 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
 
         if( square_dist( p.pos(), src_loc ) > 1 ) {
             std::vector<tripoint> route = route_adjacent( p, src_loc );
+            const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
+                                    activity_to_restore ) );
 
             // check if we found path to source / adjacent tile
             if( route.empty() ) {
                 if( is_multi_construction ) {
-                    if( npc *guy = p.as_npc() ) {
-                        guy->set_suppress_activity_complete_message( true );
-                        const std::string existing = guy->peek_activity_failure_message();
-                        const std::string msg = existing.empty()
-                                                ? _( "Construction task ended with no progress.  Path to the site is blocked." )
-                                                : existing;
-                        guy->set_activity_failure_message( msg );
-                    }
+                    set_activity_failure_message( p,
+                                                  string_format(
+                                                      _( "Construction task for %s ended with no progress.  Path to the site is blocked." ),
+                                                      construction_activity_name( zone, src_loc ) ) );
+                }
+                if( is_multi_farm ) {
+                    set_activity_failure_message( p,
+                                                  string_format( _( "Farming task for %s ended with no progress.  Path to the plot is blocked." ),
+                                                          farm_plot_name( zone ) ) );
                 }
                 check_npc_revert( p );
                 continue;
@@ -3291,16 +3421,18 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
             activity_to_restore != ACT_MOVE_LOOT &&
             activity_to_restore != ACT_FETCH_REQUIRED &&
             !character_funcs::can_see_fine_details( p ) ) {
+            const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
+                                    activity_to_restore ) );
             p.add_msg_if_player( m_info, _( "It is too dark to work here." ) );
             if( is_multi_construction ) {
-                if( npc *guy = p.as_npc() ) {
-                    guy->set_suppress_activity_complete_message( true );
-                    const std::string existing = guy->peek_activity_failure_message();
-                    const std::string msg = existing.empty()
-                                            ? _( "Construction task ended with no progress.  It was too dark to work." )
-                                            : existing;
-                    guy->set_activity_failure_message( msg );
-                }
+                set_activity_failure_message( p,
+                                              string_format( _( "Construction task for %s ended with no progress.  It was too dark to work." ),
+                                                      construction_activity_name( zone, src_loc ) ) );
+            }
+            if( is_multi_farm ) {
+                set_activity_failure_message( p,
+                                              string_format( _( "Farming task for %s ended with no progress.  It was too dark to work." ),
+                                                      farm_plot_name( zone ) ) );
             }
             return false;
         }

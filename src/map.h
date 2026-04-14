@@ -548,8 +548,11 @@ class map : public submap_load_listener
 
         void set_suspension_cache_dirty( const int zlev );
 
-        /// Mark the per-submap pf_cache dirty for the submap containing p.
+        /// Mark the per-submap pf_cache dirty for all submaps on zlev.
+        /// Use the tripoint overload for single-tile changes.
         void set_pathfinding_cache_dirty( int zlev );
+        /// Mark the per-submap pf_cache dirty for the single submap containing p.
+        void set_pathfinding_cache_dirty( const tripoint &p );
         /*@}*/
 
         void set_memory_seen_cache_dirty( const tripoint &p );
@@ -2377,13 +2380,17 @@ class tinymap : public map
         void drain_to_mapbuffer( mapbuffer &dest );
 
         /**
-         * Position this tinymap at @p sm_base (submap coordinates) and load
-         * its 2×2 submaps from the mapbuffer.  The submaps must already be
-         * present in the mapbuffer (e.g. after saven() was called during
-         * generation).  Used by run_deferred_mapgen_hooks() to reconstruct a
-         * live map reference on the main thread.
+         * Position this tinymap at @p sm_base (submap coordinates) and wire up
+         * its 2×2 grid slots directly from the mapbuffer without going through
+         * loadn().  The submaps must already be present in the mapbuffer.
+         *
+         * Unlike the old load_from_mapbuffer, this skips loadn()/actualize(),
+         * vehicle-cache setup, and render-cache invalidation.  This is correct
+         * for Lua on_mapgen_postprocess hooks: the submaps are freshly generated
+         * (no time-advance processing needed) and the tinymap is short-lived,
+         * never rendered or simulated.
          */
-        void load_from_mapbuffer( const tripoint &sm_base );
+        void bind_submaps_for_hook( const tripoint &sm_base );
 };
 
 class fake_map : public tinymap

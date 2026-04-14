@@ -275,33 +275,16 @@
           { "id": "overlay_worn_phase_immersion_suit", "fg": 193, "rotates": false },
           { "id": "phase_immersion_suit_on", "fg": 194, "rotates": false },
           { "id": "overlay_wielded_phase_immersion_suit_on", "fg": 194, "rotates": false },
-          { "id": "overlay_wielded_jet_thruster", "fg": 195, "rotates": false },
-          { "id": "jet_thruster", "fg": 195, "rotates": false },
-          {
-            "id": "vp_jet_thruster",
-            "fg": 195,
-            "rotates": true,
-            "multitile": true,
-            "additional_tiles": [ { "id": "broken", "fg": 198, "bg": 195 } ]
-          },
-          { "id": "overlay_wielded_vtol_thruster", "fg": 196, "rotates": false },
-          { "id": "vtol_thruster", "fg": 196, "rotates": false },
-          {
-            "id": "vp_vtol_thruster",
-            "fg": 196,
-            "rotates": true,
-            "multitile": true,
-            "additional_tiles": [ { "id": "broken", "fg": 198, "bg": 196 } ]
-          },
-          { "id": "overlay_wielded_hover_repulsor", "fg": 197, "rotates": false },
-          { "id": "hover_repulsor", "fg": 197, "rotates": false },
-          {
-            "id": "vp_hover_repulsor",
-            "fg": 197,
-            "rotates": true,
-            "multitile": true,
-            "additional_tiles": [ { "id": "broken", "fg": 198, "bg": 197 } ]
-          }
+          { "id": "goggles_nv_enhanced", "fg": 195, "rotates": false },
+          { "id": "overlay_wielded_goggles_nv_enhanced", "fg": 195, "rotates": false },
+          { "id": "overlay_worn_goggles_nv_enhanced", "fg": 196, "rotates": false },
+          { "id": "goggles_nv_enhanced_on", "fg": 197, "rotates": false },
+          { "id": "overlay_wielded_goggles_nv_enhanced_on", "fg": 197, "rotates": false },
+          { "id": "overlay_worn_goggles_nv_enhanced_on", "fg": 198, "rotates": false },
+          { "id": "mon_zomballoon", "fg": 199 },
+          { "id": "mon_zomblimp", "fg": 200 },
+          { "id": "vp_survivors_workbench", "fg": 201, "rotates": false },
+          { "id": "vp_robobench", "fg": 202, "rotates": false }
         ],
         "sprite_width": 32,
         "sprite_height": 32

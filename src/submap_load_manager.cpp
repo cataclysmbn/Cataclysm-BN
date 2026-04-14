@@ -228,6 +228,15 @@ void submap_load_manager::update()
         std::ranges::for_each( dims_to_drain, []( const std::string & dim_id ) {
             MAPBUFFER_REGISTRY.get( dim_id ).drain_pending_submap_destroy();
         } );
+        // Generate any Lua-based quads that workers skipped (Lua is not reentrant).
+        // Runs after drain_pending_submap_destroy() so any competing duplicate submaps
+        // from the same turn have already been queued for main-thread cleanup.
+        std::ranges::for_each( dims_to_drain, [this]( const std::string & dim_id ) {
+            for( const tripoint &om_addr :
+                 MAPBUFFER_REGISTRY.get( dim_id ).drain_deferred_lua_quads() ) {
+                dirty_quads_.insert( { dim_id, om_addr } );
+            }
+        } );
     }
 
     // Drain any Lua mapgen postprocess hooks queued by completed lazy generation
@@ -348,6 +357,16 @@ void submap_load_manager::update()
     } );
     std::ranges::for_each( drained_dims, []( const std::string & dim_id ) {
         MAPBUFFER_REGISTRY.get( dim_id ).drain_pending_submap_destroy();
+    } );
+    // Generate Lua-based quads that workers deferred to the main thread.
+    // new_quads are already pre-inserted into dirty_quads_ above; this call
+    // only adds entries for quads that were NOT in new_quads (e.g. deferred
+    // lazy-border quads whose futures completed this turn).
+    std::ranges::for_each( drained_dims, [this]( const std::string & dim_id ) {
+        for( const tripoint &om_addr :
+             MAPBUFFER_REGISTRY.get( dim_id ).drain_deferred_lua_quads() ) {
+            dirty_quads_.insert( { dim_id, om_addr } );
+        }
     } );
 
     // Drain Lua postprocess hooks from any async generation above.
@@ -497,6 +516,12 @@ void submap_load_manager::update()
                 const quad_key qk{ key.first, sm_to_omt_copy( key.second ) };
                 if( lazy_futures_.count( qk ) ) {
                     continue;  // already has an in-flight future — don't resubmit
+                }
+                // Skip lazy pre-loading when Lua mapgen hooks are registered.
+                // Pre-loading many quads at once would batch N hook calls into a
+                // single-frame spike; quads will be generated on demand instead.
+                if( mapgen_hooks_registered() ) {
+                    continue;
                 }
                 auto &mb = MAPBUFFER_REGISTRY.get( key.first );
                 if( !mb.lookup_submap_in_memory( key.second ) ) {

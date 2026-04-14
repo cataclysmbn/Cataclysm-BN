@@ -8,6 +8,17 @@ struct dealt_projectile_attack;
 struct projectile;
 struct tripoint;
 
+class scoped_projectile_animation_suppression
+{
+    public:
+        scoped_projectile_animation_suppression();
+        ~scoped_projectile_animation_suppression();
+
+        scoped_projectile_animation_suppression( const scoped_projectile_animation_suppression & ) = delete;
+        auto operator=( const scoped_projectile_animation_suppression & ) ->
+        scoped_projectile_animation_suppression & = delete; // *NOPAD*
+};
+
 /// Aim result for a single projectile attack
 struct projectile_attack_aim {
     //< Hit quality, where 0.0 is a perfect hit and 1.0 is a miss
@@ -28,7 +39,8 @@ auto projectile_attack_roll( const dispersion_sources &dispersion, double range,
 auto projectile_attack( const projectile &proj_arg, const tripoint &source,
                         const tripoint &target_arg, const dispersion_sources &dispersion,
                         Creature *origin = nullptr, item *source_weapon = nullptr,
-                        const vehicle *in_veh = nullptr ) -> dealt_projectile_attack;
+                        const vehicle *in_veh = nullptr,
+                        bool suppress_damage_messages = false ) -> dealt_projectile_attack;
 
 namespace ranged
 {
@@ -43,5 +55,3 @@ auto hit_chance( const dispersion_sources &dispersion, double range, double targ
                  double missed_by = 1.0 ) -> double;
 
 } // namespace ranged
-
-

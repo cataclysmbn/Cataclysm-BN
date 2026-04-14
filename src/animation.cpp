@@ -493,6 +493,23 @@ void explosion_handler::draw_custom_explosion( const tripoint &,
 namespace
 {
 
+auto get_bullet_sprite( const char bullet, const std::string &custom_sprite ) -> std::string
+{
+    if( !custom_sprite.empty() ) {
+        return custom_sprite;
+    }
+    if( bullet == '*' ) {
+        return "animation_bullet_normal_0deg";
+    }
+    if( bullet == '#' ) {
+        return "animation_bullet_flame";
+    }
+    if( bullet == '`' ) {
+        return "animation_bullet_shrapnel";
+    }
+    return {};
+}
+
 void draw_bullet_curses( map &m, const tripoint &t, const char bullet, const tripoint *const p )
 {
     if( !is_point_visible( t ) ) {
@@ -531,16 +548,7 @@ void game::draw_bullet( const tripoint &t, const int i,
         return;
     }
 
-    auto sprite = std::string{};
-    if( !custom_sprite.empty() ) {
-        sprite = custom_sprite;
-    } else if( bullet == '*' ) {
-        sprite = "animation_bullet_normal_0deg";
-    } else if( bullet == '#' ) {
-        sprite = "animation_bullet_flame";
-    } else if( bullet == '`' ) {
-        sprite = "animation_bullet_shrapnel";
-    }
+    const auto sprite = get_bullet_sprite( bullet, custom_sprite );
 
     const auto rotation = get_bullet_rotation( get_bullet_dir( trajectory, static_cast<size_t>( i ) ) );
     auto bullet_cb = make_shared_fast<draw_callback_t>( [&]() {
@@ -558,6 +566,154 @@ void game::draw_bullet( const tripoint &t, const int i, const std::vector<tripoi
     draw_bullet_curses( m, t, bullet, &trajectory[i] );
 }
 #endif
+
+namespace
+{
+
+auto get_longest_trajectory_size( const std::vector<std::vector<tripoint>> &trajectories ) -> size_t
+{
+    auto longest_trajectory_size = size_t{ 0 };
+    for( const auto &trajectory : trajectories ) {
+        longest_trajectory_size = std::max( longest_trajectory_size, trajectory.size() );
+    }
+    return longest_trajectory_size;
+}
+
+auto append_line_points( const draw_bullet_trajectories_options &options,
+                         std::vector<tripoint> &points,
+                         std::vector<std::string> &sprites,
+                         std::vector<int> &rotations ) -> void
+{
+    const auto sprite = get_bullet_sprite( options.bullet, options.custom_sprite );
+    for( const auto &trajectory : options.trajectories ) {
+        if( trajectory.size() < 2 ) {
+            continue;
+        }
+
+        auto line_points = std::vector<tripoint>( trajectory.begin() + 1, trajectory.end() );
+        for( size_t point_index = 0; point_index < line_points.size(); point_index++ ) {
+            if( !is_point_visible( line_points[point_index] ) ) {
+                continue;
+            }
+
+            points.push_back( line_points[point_index] );
+            sprites.push_back( sprite );
+            rotations.push_back( get_bullet_rotation( get_bullet_dir( line_points, point_index ) ) );
+        }
+    }
+}
+
+auto draw_bullet_trajectories_curses( game &g,
+                                      const draw_bullet_trajectories_options &options ) -> void
+{
+    if( options.draw_as_line ) {
+        auto bullet_cb = make_shared_fast<game::draw_callback_t>( [&]() {
+            auto &here = get_map();
+            for( const auto &trajectory : options.trajectories ) {
+                for( size_t point_index = 1; point_index < trajectory.size(); point_index++ ) {
+                    const auto &point = trajectory[point_index];
+                    if( !is_point_visible( point ) ) {
+                        continue;
+                    }
+
+                    here.drawsq( g.w_terrain, point, drawsq_params().highlight( true ) );
+                }
+            }
+        } );
+        g.add_draw_callback( bullet_cb );
+        bullet_animation().progress( false );
+        return;
+    }
+
+    const auto longest_trajectory_size = get_longest_trajectory_size( options.trajectories );
+    for( size_t step = 1; step < longest_trajectory_size; step++ ) {
+        auto bullet_cb = make_shared_fast<game::draw_callback_t>( [ &, step]() {
+            auto &here = get_map();
+            const auto view_pos = g.u.pos() + g.u.view_offset;
+            for( const auto &trajectory : options.trajectories ) {
+                if( step >= trajectory.size() || !is_point_visible( trajectory[step] ) ) {
+                    continue;
+                }
+
+                if( trajectory[step - 1].z == view_pos.z ) {
+                    here.drawsq( g.w_terrain, trajectory[step - 1], drawsq_params().center( view_pos ) );
+                }
+                if( trajectory[step].z != view_pos.z ) {
+                    continue;
+                }
+
+                mvwputch( g.w_terrain, trajectory[step].xy() - view_pos.xy() + point( POSX, POSY ),
+                          c_red, options.bullet );
+            }
+        } );
+        g.add_draw_callback( bullet_cb );
+        bullet_animation().progress();
+    }
+}
+
+} // namespace
+
+void draw_bullet_trajectories( const draw_bullet_trajectories_options &options )
+{
+    if( options.trajectories.empty() ) {
+        return;
+    }
+
+#if !defined( TILES )
+    draw_bullet_trajectories_curses( *g, options );
+    return;
+#else
+    if( !use_tiles ) {
+        draw_bullet_trajectories_curses( *g, options );
+        return;
+    }
+
+    const auto sprite = get_bullet_sprite( options.bullet, options.custom_sprite );
+    if( options.draw_as_line ) {
+        auto points = std::vector<tripoint> {};
+        auto sprites = std::vector<std::string> {};
+        auto rotations = std::vector<int> {};
+        append_line_points( options, points, sprites, rotations );
+        if( points.empty() ) {
+            return;
+        }
+
+        auto bullets_cb = make_shared_fast<game::draw_callback_t>( [&] {
+            tilecontext->init_draw_bullets( points, sprites, rotations );
+        } );
+        g->add_draw_callback( bullets_cb );
+        bullet_animation().progress( false );
+        tilecontext->void_bullet();
+        return;
+    }
+
+    const auto longest_trajectory_size = get_longest_trajectory_size( options.trajectories );
+    for( size_t step = 1; step < longest_trajectory_size; step++ ) {
+        auto points = std::vector<tripoint> {};
+        auto sprites = std::vector<std::string> {};
+        auto rotations = std::vector<int> {};
+        for( const auto &trajectory : options.trajectories ) {
+            if( step >= trajectory.size() || !is_point_visible( trajectory[step] ) ) {
+                continue;
+            }
+
+            points.push_back( trajectory[step] );
+            sprites.push_back( sprite );
+            rotations.push_back( get_bullet_rotation( get_bullet_dir( trajectory, step ) ) );
+        }
+        if( points.empty() ) {
+            continue;
+        }
+
+        auto bullets_cb = make_shared_fast<game::draw_callback_t>( [&] {
+            tilecontext->init_draw_bullets( points, sprites, rotations );
+        } );
+        g->add_draw_callback( bullets_cb );
+        bullet_animation().progress();
+        tilecontext->void_bullet();
+    }
+#endif
+}
 
 namespace
 {
