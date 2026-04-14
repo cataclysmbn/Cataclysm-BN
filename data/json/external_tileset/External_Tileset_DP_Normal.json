@@ -283,8 +283,8 @@
           { "id": "overlay_worn_goggles_nv_enhanced_on", "fg": 198, "rotates": false },
           { "id": "mon_zomballoon", "fg": 199},
           { "id": "mon_zomblimp", "fg": 200},
-          { "id": "vp_survivors_workbench", "fg": 201},
-          { "id": "vp_robobench", "fg": 202}
+          { "id": "vp_survivors_workbench", "fg": 201, "rotates": false },
+          { "id": "vp_robobench", "fg": 202, "rotates": false }
         ],
         "sprite_width": 32,
         "sprite_height": 32
