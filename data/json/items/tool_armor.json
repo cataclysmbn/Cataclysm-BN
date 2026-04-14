@@ -1577,7 +1577,7 @@
     "copy-from": "goggles_nv_enhanced",
     "repairs_like": "goggles_nv_enhanced",
     "type": "TOOL_ARMOR",
-    "name": { "str_pl": "enhanced light amp goggles (on)", "str": "enhanced light amp goggles (on)" },
+    "name": { "str_sp": "enhanced light amp goggles (on)" },
     "description": "Modern light enhancement goggles that greatly amplify ambient light, allowing you to see in the dark almost perfectly, all while looking properly tactical.  It is turned on, and continually draining batteries.  Use it to turn them off.",
     "flags": [ "GNVE_EFFECT", "FRAGILE", "TRADER_AVOID" ],
     "power_draw": 375,
