@@ -611,8 +611,9 @@ void talk_function::buy_10_logs( npc &p )
     find_params.search_range = { 0, 1 };
     find_params.search_layers = { 0, 0 };
 
-    std::vector<tripoint_abs_omt> places = ACTIVE_OVERMAP_BUFFER.find_all(
-            get_player_character().global_omt_location(), find_params );
+    std::vector<tripoint_abs_omt> places = get_overmapbuffer(
+            get_player_character().get_dimension() ).find_all(
+                    get_player_character().global_omt_location(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;
@@ -620,7 +621,8 @@ void talk_function::buy_10_logs( npc &p )
     const auto &cur_om = g->get_cur_om();
     std::vector<tripoint_abs_omt> places_om;
     for( const tripoint_abs_omt &i : places ) {
-        if( &cur_om == ACTIVE_OVERMAP_BUFFER.get_existing_om_global( i ).om ) {
+        if( &cur_om == get_overmapbuffer( get_player_character().get_dimension() ).get_existing_om_global(
+                i ).om ) {
             places_om.push_back( i );
         }
     }
@@ -643,7 +645,8 @@ void talk_function::buy_100_logs( npc &p )
     find_params.search_layers = { 0, 0 };
 
     std::vector<tripoint_abs_omt> places =
-        ACTIVE_OVERMAP_BUFFER.find_all( get_player_character().global_omt_location(), find_params );
+        get_overmapbuffer( get_player_character().get_dimension() ).find_all(
+            get_player_character().global_omt_location(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;
@@ -651,7 +654,8 @@ void talk_function::buy_100_logs( npc &p )
     const auto &cur_om = g->get_cur_om();
     std::vector<tripoint_abs_omt> places_om;
     for( auto &i : places ) {
-        if( &cur_om == ACTIVE_OVERMAP_BUFFER.get_existing_om_global( i ).om ) {
+        if( &cur_om == get_overmapbuffer( get_player_character().get_dimension() ).get_existing_om_global(
+                i ).om ) {
             places_om.push_back( i );
         }
     }

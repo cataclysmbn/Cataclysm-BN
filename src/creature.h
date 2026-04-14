@@ -252,8 +252,10 @@ class Creature
         }
 
         /** Return the dimension this creature belongs to.
-         *  Default (player/avatar): returns g_active_dimension_id.
-         *  Overridden by npc and monster to return their stored dimension_id_. */
+         *  Base fallback: returns g_active_dimension_id (for creature subtypes
+         *  that don't track dimension explicitly).
+         *  Overridden by avatar (delegates to game::current_dimension_id_),
+         *  npc, and monster (each store their own dimension_id_). */
         virtual const std::string &get_dimension() const;
 
         /** return the direction the creature is facing, for sdl horizontal flip **/

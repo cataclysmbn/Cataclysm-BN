@@ -100,7 +100,7 @@ int distribution_grid::mod_resource( int amt, bool recurse )
                                                 mb );
             if( connector != nullptr ) {
                 for( const tripoint_abs_ms &veh_abs : connector->connected_vehicles ) {
-                    vehicle *veh = vehicle::find_vehicle( veh_abs );
+                    vehicle *veh = vehicle::find_vehicle( veh_abs, mb );
                     if( veh == nullptr ) {
                         // TODO: Disconnect
                         debugmsg( "lost vehicle at %s", veh_abs.to_string() );
@@ -174,7 +174,7 @@ int distribution_grid::get_resource( bool recurse ) const
                                                 mb );
             if( connector != nullptr ) {
                 for( const tripoint_abs_ms &veh_abs : connector->connected_vehicles ) {
-                    vehicle *veh = vehicle::find_vehicle( veh_abs );
+                    vehicle *veh = vehicle::find_vehicle( veh_abs, mb );
                     if( veh == nullptr ) {
                         // TODO: Disconnect
                         debugmsg( "lost vehicle at %s", veh_abs.to_string() );
@@ -219,7 +219,7 @@ auto distribution_grid::get_power_stat_local() const -> power_stat
 
     auto get_vehicle_stats = [&]( const vehicle_connector_tile * connector ) -> power_stat {
         return connector->connected_vehicles
-        | std::views::transform( []( const auto & pos ) { return vehicle::find_vehicle( pos ); } )
+        | std::views::transform( [&]( const auto & pos ) { return vehicle::find_vehicle( pos, mb ); } )
         | std::views::filter( []( auto * v ) { return v; } )
         | std::views::transform( [&]( auto * veh ) { return to_stat( veh->net_battery_charge_rate_w() ); } )
         | cata::ranges::fold_left( power_stat{}, std::plus<>{} );
@@ -327,26 +327,22 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
 
         // Keep the far end's submap resident so the cross-dimension grid works.
         const auto target_sm = project_to<coords::sm>( node.target_pos );
-        const int tz = target_sm.raw().z;
         node.far_load_handle = submap_loader.request_load(
                                    load_request_source::player_base,
                                    node.target_dim_id,
                                    target_sm,
-                                   radius,
-                                   tz, tz );
+                                   radius );
 
         // Keep the LOCAL source submap resident too.  Without this the source
         // submap unloads when the player leaves → on_submap_unloaded removes
         // the export node → far_load_handle released → far end unloads → the
         // link collapses after one turn.
         const auto source_sm = project_to<coords::sm>( node.source_pos );
-        const int sz = source_sm.raw().z;
         node.local_load_handle = submap_loader.request_load(
                                      load_request_source::player_base,
                                      dimension_id_,
                                      source_sm,
-                                     radius,
-                                     sz, sz );
+                                     radius );
     }
 
     // Give the link a grace period before the first upkeep check.
@@ -441,22 +437,25 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
         const int radius = get_option<int>( "POWER_PORTAL_LOAD_RADIUS" );
 
         const auto target_sm = project_to<coords::sm>( it->target_pos );
-        const int tz = target_sm.raw().z;
         it->far_load_handle = submap_loader.request_load(
                                   load_request_source::player_base,
                                   it->target_dim_id,
                                   target_sm,
-                                  radius,
-                                  tz, tz );
+                                  radius );
 
         const auto source_sm = project_to<coords::sm>( it->source_pos );
-        const int sz = source_sm.raw().z;
         it->local_load_handle = submap_loader.request_load(
                                     load_request_source::player_base,
                                     dimension_id_,
                                     source_sm,
-                                    radius,
-                                    sz, sz );
+                                    radius );
+
+        // Force-synchronous load of the far submap so power operations work
+        // on the same turn as resume.  request_load() is async (SLM needs at
+        // least one update() cycle); without this, the first make_distribution_grid_at
+        // call for the remote side hits the empty sentinel and drops energy.
+        MAPBUFFER_REGISTRY.get( it->target_dim_id ).lookup_submap( target_sm.raw() );
+
         it->paused = false;
         sync_glt_paused( mb, source_pos, false );
     }
@@ -473,7 +472,17 @@ distribution_grid &distribution_grid_tracker::make_distribution_grid_at(
     const std::set<tripoint_abs_omt> overmap_positions = get_overmapbuffer(
                 dimension_id_ ).electric_grid_at(
                 project_to<coords::omt>( sm_pos ) );
-    assert( !overmap_positions.empty() );
+    if( overmap_positions.empty() ) {
+        // Remote submap not yet loaded — grid data unavailable.  Return the
+        // same empty sentinel used when ELECTRIC_GRID is disabled so callers
+        // don't crash, but log so power-loss bugs are diagnosable.
+        DebugLog( DL::Warn, DC::Map ) << string_format(
+                                          "make_distribution_grid_at: no overmap grid data for submap %s "
+                                          "(dim '%s') — power operations will be silently dropped this tick",
+                                          sm_pos.to_string(), dimension_id_ );
+        static distribution_grid empty_grid( {}, MAPBUFFER );
+        return empty_grid;
+    }
     std::vector<tripoint_abs_sm> submap_positions;
     for( const tripoint_abs_omt &omp : overmap_positions ) {
         tripoint_abs_sm tp = project_to<coords::sm>( omp );
@@ -577,8 +586,12 @@ void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
     }
 
     // Remove export nodes whose source tile is in this submap before eviction.
-    // The submap is still resident at this point so we can scan active_furniture.
-    submap *sm = mb.lookup_submap( pos );
+    // Use lookup_submap_in_memory() — the submap should still be resident when
+    // called from the SLM listener, and we must not trigger a disk load here.
+    // The null check handles the rare case where this fires after removal
+    // (e.g. mapbuffer::save() spatial eviction) — export nodes were already
+    // cleaned up by the SLM listener path in that scenario.
+    submap *sm = mb.lookup_submap_in_memory( pos.raw() );
     if( sm != nullptr ) {
         std::ranges::for_each( sm->active_furniture, [&]( const auto & kv ) {
             const grid_link_tile *glt = dynamic_cast<const grid_link_tile *>( kv.second.get() );

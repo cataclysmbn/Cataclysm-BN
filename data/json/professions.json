@@ -127,6 +127,15 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "army_mags_rm216",
+    "entries": [
+      { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50 },
+      { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "army_mags_usp45",
     "entries": [
       { "item": "usp45mag", "ammo-item": "45_acp", "charges": 12 },
@@ -3710,6 +3719,52 @@
           { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
           { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
           { "item": "tacvest", "contents-group": [ "army_mags_rm11b" ] }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "bio_specops",
+    "name": "Bionic Operator",
+    "description": "You were the best of the best, the military's finest, and your bionics have only enhanced your abilities.  Specializing in close quarters combat, you were sent on the most dangerous and critical missions.",
+    "points": 8,
+    "traits": [ "PROF_MILITARY" ],
+    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII" ],
+    "skills": [
+      { "level": 2, "name": "swimming" },
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "smg" },
+      { "level": 3, "name": "survival" },
+      { "level": 2, "name": "cutting" },
+      { "level": 2, "name": "melee" },
+      { "level": 2, "name": "dodge" },
+      { "level": 1, "name": "firstaid" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "winter_pants_army",
+          "tshirt",
+          "winter_jacket_army",
+          "gloves_liner",
+          "gloves_tactical",
+          "mask_ski",
+          "glasses_bal",
+          "tac_helmet",
+          "socks",
+          "boots_combat",
+          "webbing_belt",
+          "wristwatch",
+          "canteen",
+          "molle_pack"
+        ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "chestrig", "contents-group": "army_mags_rm216" },
+          { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50, "container-item": "needlegun" }
         ]
       },
       "male": [ "boxer_shorts" ],

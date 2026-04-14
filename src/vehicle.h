@@ -34,6 +34,7 @@ class npc;
 class player;
 class vehicle;
 struct vehicle_part;
+class mapbuffer;
 class vehicle_cursor;
 class vehicle_part_range;
 class vpart_info;
@@ -460,14 +461,24 @@ class vehicle
         }
 
         /**
-         * Find a possibly off-map vehicle. If necessary, loads up its submap through
-         * the global MAPBUFFER and pulls it from there. For this reason, you should only
-         * give it the coordinates of the origin tile of a target vehicle.
-         * @param where Location of the other vehicle's origin tile.
+         * Find a possibly off-map vehicle. If necessary, loads up its submap and pulls
+         * it from there. For this reason, you should only give it the coordinates of the
+         * origin tile of a target vehicle.
+         *
+         * The overload without @p mbuf uses the currently bound map's dimension and is
+         * only correct when that dimension matches the target vehicle's dimension.
+         * Prefer the mapbuffer overload when the caller has explicit dimension context.
+         *
+         * @param where  Location of the other vehicle's origin tile (absolute ms coords).
+         * @param mbuf   Mapbuffer for the dimension that owns the target vehicle.
          */
         static vehicle *find_vehicle( const tripoint &where );
+        static vehicle *find_vehicle( const tripoint &where, mapbuffer &mbuf );
         static vehicle *find_vehicle( const tripoint_abs_ms &where ) {
             return find_vehicle( where.raw() );
+        }
+        static vehicle *find_vehicle( const tripoint_abs_ms &where, mapbuffer &mbuf ) {
+            return find_vehicle( where.raw(), mbuf );
         }
 
         vehicle( const vproto_id &type_id, int init_veh_fuel = -1, int init_veh_status = -1,
@@ -1752,7 +1763,7 @@ class vehicle
         // ID of the dimension this vehicle belongs to.  Empty string = primary dimension.
         // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
         // Persisted across saves so cross-dimension processing survives reload.
-        std::string dimension_id_;
+        std::string dimension_id_ = "";  // empty = primary dimension
         auto get_dimension() const -> const std::string & { // *NOPAD*
             return dimension_id_;
         }

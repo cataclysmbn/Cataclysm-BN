@@ -55,6 +55,11 @@ void refresh_mapgen_postprocess_hook_presence( cata::lua_state &state )
         std::memory_order_relaxed );
 }
 
+bool mapgen_hooks_registered()
+{
+    return g_has_mapgen_hooks.load( std::memory_order_relaxed );
+}
+
 void push_deferred_autonote( deferred_autonote entry )
 {
     std::lock_guard<std::mutex> lk( g_autonote_mutex );
@@ -109,30 +114,45 @@ void run_deferred_mapgen_hooks()
         pending.swap( g_hooks );
     }
 
-    // Skip the expensive tinymap construction when no hooks are registered.
-    // Worker threads always push a deferred entry when generating on a worker
-    // thread, regardless of hook registration.  Checking here (on the main
-    // thread, where Lua access is safe) avoids building O(n) tinymaps per turn
-    // just to call a no-op hook loop.
-    if( !cata::has_mapgen_postprocess_hooks( *DynamicDataLoader::get_instance().lua ) ) {
+    // Fast path: nothing queued.  Skip the Lua state access entirely.
+    if( pending.empty() ) {
         return;
     }
 
-    for( auto &h : pending ) {
-        // The submaps are already in the mapbuffer (saven() was called before
-        // the hook was deferred).  Load them into a temporary tinymap so the
-        // Lua hook receives a live map reference identical in content to what
-        // it would have seen on the main thread.  Modifications to the tinymap
-        // go directly to the mapbuffer-owned submap objects.
-        const tripoint sm_base = omt_to_sm_copy( h.omt_pos.raw() );
-        tinymap tmp;
-        tmp.bind_dimension( h.dim );
-        tmp.load_from_mapbuffer( sm_base );
-        cata::run_on_mapgen_postprocess_hooks(
-            *DynamicDataLoader::get_instance().lua,
-            tmp,
-            h.omt_pos.raw(),
-            h.when
-        );
-    }
+    // Sort by dimension so bind_dimension() is only called when it changes
+    // (in practice almost all quads share the overworld dimension).
+    std::ranges::sort( pending, []( const auto & a, const auto & b ) {
+        return a.dim < b.dim;
+    } );
+
+    // Reuse one tinymap across the entire batch.  Accumulate items per
+    // dimension group and dispatch them together so the batch function can
+    // amortise Lua table allocation and hook-table lookup over all quads.
+    tinymap tmp;
+    std::string cur_dim;
+    std::vector<cata::mapgen_hook_batch_item> batch;
+    batch.reserve( pending.size() );
+
+    const auto flush = [&]() {
+        if( batch.empty() ) {
+            return;
+        }
+        cata::run_on_mapgen_postprocess_hooks_batch(
+            *DynamicDataLoader::get_instance().lua, tmp, batch );
+        batch.clear();
+    };
+
+    std::ranges::for_each( pending, [&]( const auto & h ) {
+        if( h.dim != cur_dim ) {
+            flush();
+            cur_dim = h.dim;
+            tmp.bind_dimension( cur_dim );
+        }
+        batch.push_back( {
+            .sm_base = omt_to_sm_copy( h.omt_pos.raw() ),
+            .omt_pos = h.omt_pos.raw(),
+            .when    = h.when,
+        } );
+    } );
+    flush();
 }

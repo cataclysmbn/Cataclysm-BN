@@ -268,7 +268,13 @@
           { "id": "f_rain_collector_plumbed", "fg": 186 },
           { "id": "bearskin_hat", "fg": 187 },
           { "id": "t_door_window_c", "fg": 189 },
-          { "id": "t_door_window_o", "fg": 190 }
+          { "id": "t_door_window_o", "fg": 190 },
+          { "id": "overlay_worn_phase_immersion_suit_on", "fg": 191, "rotates": false },
+          { "id": "phase_immersion_suit", "fg": 192, "rotates": false },
+          { "id": "overlay_wielded_phase_immersion_suit", "fg": 192, "rotates": false },
+          { "id": "overlay_worn_phase_immersion_suit", "fg": 193, "rotates": false },
+          { "id": "phase_immersion_suit_on", "fg": 194, "rotates": false },
+          { "id": "overlay_wielded_phase_immersion_suit_on", "fg": 194, "rotates": false }
         ],
         "sprite_width": 32,
         "sprite_height": 32

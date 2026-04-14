@@ -240,6 +240,7 @@
       "skills": [ "pistol" ],
       "flags": [ "HOLSTER_PISTOL" ]
     },
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "BELTED", "COMPACT", "ALLOWS_WINGS" ]
   },
   {

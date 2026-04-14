@@ -128,6 +128,11 @@ avatar::~avatar() = default;
 avatar::avatar( avatar && )  noexcept = default;
 avatar &avatar::operator=( avatar && ) noexcept = default;
 
+const std::string &avatar::get_dimension() const
+{
+    return g->get_current_dimension_id();
+}
+
 static void swap_npc( npc &one, npc &two, npc &tmp )
 {
     tmp = std::move( one );
