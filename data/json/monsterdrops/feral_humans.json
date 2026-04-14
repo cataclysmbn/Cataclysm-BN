@@ -762,23 +762,12 @@
     "subtype": "collection",
     "entries": [
       {
-        "distribution": [
-          { "item": "suit", "prob": 70, "damage": [ 1, 2 ] },
-          { "item": "dress", "prob": 20, "damage": [ 1, 2 ] }
-        ]
+        "distribution": [ { "item": "suit", "prob": 70, "damage": [ 1, 2 ] }, { "item": "dress", "prob": 20, "damage": [ 1, 2 ] } ]
       },
       {
-        "distribution": [
-          { "item": "dress_shoes", "prob": 70, "damage": [ 1, 2 ] },
-          { "item": "heels", "prob": 20, "damage": [ 1, 2 ] },
-        ]
+        "distribution": [ { "item": "dress_shoes", "prob": 70, "damage": [ 1, 2 ] }, { "item": "heels", "prob": 20, "damage": [ 1, 2 ] } ]
       },
-      {
-        "distribution": [
-          { "item": "sunglasses", "prob": 20 },
-          { "item": "fancy_sunglasses", "prob": 70 }
-        ]
-      }
+      { "distribution": [ { "item": "sunglasses", "prob": 20 }, { "item": "fancy_sunglasses", "prob": 70 } ] }
     ]
   }
 ]
