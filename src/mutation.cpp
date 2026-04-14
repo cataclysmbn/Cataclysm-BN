@@ -843,7 +843,8 @@ std::map<trait_id, float> Character::mutation_chances() const
     // Traits influence this via mutagen_target_modifier (e.g. Robust Genetics: +8).
     const int current_score  = genetic_score( *this );
     const int expected_score = 4 * 10 + get_option<int>( "MUTATION_SCORE_TARGET" );
-    const int direction      = expected_score - current_score + mutation_value( "mutagen_target_modifier" );
+    const int direction      = expected_score - current_score +
+                               mutation_value( "mutagen_target_modifier" );
     add_msg_if_player( m_debug, "Mutation target value: %s", direction );
 
     // Build candidate pool. Upgrades and additions weight 3x, removals 2x,
@@ -897,13 +898,13 @@ std::map<trait_id, float> Character::mutation_chances() const
 
         if( pm.to.is_valid() ) {
             const float cat_mod = std::accumulate( pm.to->category.begin(), pm.to->category.end(), 0.0f,
-            [&add_weights]( float m, const mutation_category_id &cat ) {
+            [&add_weights]( float m, const mutation_category_id & cat ) {
                 return std::max( m, add_weights.at( cat ) );
             } );
             chances[pm.to] += score_difference_to_chance( direction + score_diff ) * cat_mod;
         } else if( pm.from.is_valid() ) {
             const float cat_mod = std::accumulate( pm.from->category.begin(), pm.from->category.end(), 0.0f,
-            [&rem_weights]( float m, const mutation_category_id &cat ) {
+            [&rem_weights]( float m, const mutation_category_id & cat ) {
                 return std::min( m, rem_weights.at( cat ) );
             } );
             chances[pm.from] += score_difference_to_chance( direction - score_diff ) * cat_mod;
@@ -1136,7 +1137,7 @@ void Character::mutate_category( const mutation_category_id &cat )
         const bool fb = force_bad || legacy_bad;
 
         std::vector<trait_id> valid = mutations_category[cat];
-        std::erase_if( valid, [&]( const trait_id &tid ) {
+        std::erase_if( valid, [&]( const trait_id & tid ) {
             return !mutation_ok( tid, legacy_good, fb );
         } );
         mutate_towards( valid, 2 );
