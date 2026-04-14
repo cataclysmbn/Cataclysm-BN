@@ -43,6 +43,7 @@ class shape_factory
 {
     public:
         shape_factory();
+        explicit shape_factory( std::shared_ptr<shape_factory_impl> impl );
         shape_factory( const shape_factory & );
         ~shape_factory();
 
@@ -58,5 +59,4 @@ class shape_factory
     private:
         std::shared_ptr<shape_factory_impl> impl;
 };
-
 
