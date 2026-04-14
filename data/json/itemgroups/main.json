@@ -197,7 +197,8 @@
       { "item": "bio_night", "prob": 10 },
       { "item": "bio_nanobots", "prob": 10 },
       { "item": "bio_cloak", "prob": 10 },
-      { "item": "bio_cqb", "prob": 10 }
+      { "item": "bio_cqb", "prob": 10 },
+      { "item": "bio_wings", "prob": 10 }
     ]
   },
   {

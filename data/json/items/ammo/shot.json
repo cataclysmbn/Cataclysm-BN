@@ -60,12 +60,8 @@
     "copy-from": "shot_slug",
     "type": "AMMO",
     "name": { "str": "shotgun slug, black powder" },
-    "proportional": {
-      "price": 0.5,
-      "damage": { "damage_type": "bullet", "amount": 0.8, "armor_penetration": 0.5 },
-      "recoil": 0.76,
-      "dispersion": 1.2
-    },
+    "damage": { "damage_type": "bullet", "amount": 46, "armor_penetration": 9 },
+    "proportional": { "price": 0.5, "recoil": 0.76, "dispersion": 1.2 },
     "extend": { "effects": [ "RECYCLED", "MUZZLE_SMOKE", "BLACKPOWDER" ] }
   },
   {
@@ -80,13 +76,13 @@
     "material": [ "plastic", "powder" ],
     "symbol": "=",
     "color": "red",
-    "dispersion": 10,
+    "dispersion": 20,
     "count": 20,
     "stack_size": 20,
     "ammo_type": "shot",
     "casing": "shot_hull",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 80, "armor_multiplier": 2 },
+    "damage": { "damage_type": "bullet", "amount": 16, "armor_penetration": 8 },
     "recoil": 2500,
     "loudness": 160,
     "effects": [ "COOKOFF", "SHOT" ]
@@ -96,11 +92,12 @@
     "copy-from": "shot_abstract",
     "type": "AMMO",
     "name": { "str": "00 shot" },
-    "description": "A shell filled with metal pellets.  Extremely damaging, plus the spread makes it very accurate at short range.  Favored by SWAT forces."
+    "description": "A shell filled with metal pellets.  Extremely damaging, plus the spread makes it very accurate at short range.  Favored by SWAT forces.",
+    "shot": { "count": 5, "half_angle": 3 }
   },
   {
     "id": "shot_beanbag",
-    "copy-from": "shot_00",
+    "copy-from": "shot_abstract",
     "type": "AMMO",
     "name": { "str": "shotgun beanbag" },
     "description": "A beanbag round for shotguns, not deadly but designed to disable.",
@@ -120,15 +117,15 @@
     "description": "Weak shotgun ammunition.  Designed for hunting birds and other small game, its applications in combat are very limited.",
     "price": "1 USD",
     "price_postapoc": "4 USD",
-    "range": 0,
-    "damage": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 3 },
+    "range": 10,
+    "damage": { "damage_type": "bullet", "amount": 5, "armor_penetration": 2 },
     "loudness": 80,
-    "shape": [ "cone", { "half_angle": 15, "length": 10 } ],
+    "shot": { "count": 10, "half_angle": 5 },
     "extend": { "effects": [ "NOGIB" ] }
   },
   {
     "id": "shot_dragon",
-    "copy-from": "shot_00",
+    "copy-from": "shot_abstract",
     "type": "AMMO",
     "name": { "str": "dragon's breath shell" },
     "description": "A shotgun shell filled with magnesium pellets or shards, used mostly as a distress flare or pyrotechnics tool.  When the round is fired, high temperature sparks and flames shoot out of the barrel, igniting everything in their path.",
@@ -150,7 +147,8 @@
     "price_postapoc": "8 USD",
     "count": 10,
     "//": "Balanced as standard AP.",
-    "relative": { "damage": { "damage_type": "bullet", "amount": -20, "armor_penetration": 15, "armor_multiplier": -1.5 } }
+    "damage": { "damage_type": "bullet", "amount": 6, "armor_penetration": 15 },
+    "shot": { "count": 10, "half_angle": 2 }
   },
   {
     "id": "shot_he",
@@ -173,7 +171,9 @@
     "name": { "str": "00 shot, scrap loaded" },
     "description": "A shotgun shell filled with whatever was lying around.  They are more damaging than birdshot, but fairly inaccurate.",
     "dispersion": 60,
-    "proportional": { "price": 0.5, "price_postapoc": 0.5, "damage": { "damage_type": "bullet", "amount": 0.8, "armor_multiplier": 1.25 } },
+    "damage": { "damage_type": "bullet", "amount": 13, "armor_penetration": 6, "armor_multiplier": 2 },
+    "shot": { "count": 5, "half_angle": 6 },
+    "proportional": { "price": 0.5, "price_postapoc": 0.5 },
     "extend": { "effects": [ "RECYCLED" ] }
   },
   {
@@ -199,8 +199,8 @@
     "price": "4 USD",
     "price_postapoc": "4 USD",
     "dispersion": 80,
-    "//": "Balanced as FMJ",
-    "relative": { "range": 12, "damage": { "damage_type": "bullet", "amount": -15, "armor_penetration": 18, "armor_multiplier": -1 } },
+    "range": 32,
+    "damage": { "damage_type": "bullet", "amount": 57, "armor_penetration": 18, "armor_multiplier": 1 },
     "proportional": { "recoil": 1.4 },
     "delete": { "effects": [ "SHOT" ] }
   }
