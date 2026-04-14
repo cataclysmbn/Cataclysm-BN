@@ -742,5 +742,32 @@
       { "item": "meth", "prob": 20, "charges": [ 1, 6 ] },
       { "group": "meth_ingredients", "prob": 5 }
     ]
+  },
+  {
+    "id": "mon_feral_corpo_death_drops",
+    "type": "item_group",
+    "subtype": "collection",
+    "magazine": 100,
+    "ammo": 20,
+    "entries": [
+      { "group": "feral_corpo_clothing", "prob": 100 },
+      { "group": "feral_autogun", "prob": 100, "damage": [ 1, 4 ] },
+      { "item": "software_cryptow" },
+      { "item": "diamond", "prob": 70, "charges": [ 1, 27 ] }
+    ]
+  },
+    {
+    "type": "item_group",
+    "id": "feral_corpo_clothing",
+    "subtype": "collection",
+    "entries": [
+      { "item": "suit", "prob": 70, "damage": [ 1, 2 ] },
+      { "item": "dress", "prob": 20, "damage": [ 1, 2 ] },
+      { "item": "dress_shoes", "prob": 70},
+      { "item": "heels", "prob": 20 },
+	  { "item": "sunglasses", "prob": 20 },
+	  { "item": "fancy_sunglasses", "prob": 70 }
+	  
+    ]
   }
 ]
