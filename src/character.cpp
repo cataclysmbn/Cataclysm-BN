@@ -5154,7 +5154,7 @@ std::pair<std::string, nc_color> Character::get_thirst_description() const
 
 std::pair<std::string, nc_color> Character::get_hunger_description() const
 {
-    int total_kcal = stored_calories + stomach.get_calories(); //zz
+    int total_kcal = stored_calories + stomach.get_calories();
     int max_kcal = max_stored_kcal();
     float days_left = static_cast<float>( total_kcal ) / bmr();
     float days_max = static_cast<float>( max_kcal ) / bmr();
