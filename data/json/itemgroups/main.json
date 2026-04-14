@@ -46,6 +46,7 @@
       { "item": "power_armor_helmet_heavy", "prob": 30 },
       { "item": "power_armor_helmet_light", "prob": 30 },
       { "item": "power_armor_light", "prob": 30 },
+      { "item": "goggles_nv_enhanced", "prob": 50 },
       { "item": "exosuit_military", "prob": 50 },
       { "item": "recipe_medicalmut", "prob": 100 },
       { "item": "remotevehcontrol", "prob": 80 },
@@ -138,6 +139,7 @@
       { "item": "power_armor_helmet_basic", "prob": 10 },
       { "item": "power_armor_helmet_heavy", "prob": 10 },
       { "item": "power_armor_helmet_light", "prob": 10 },
+      { "item": "goggles_nv_enhanced", "prob": 10 },
       { "item": "exosuit_military", "prob": 10 }
     ]
   },
