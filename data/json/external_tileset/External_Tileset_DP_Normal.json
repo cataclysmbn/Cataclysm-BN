@@ -274,7 +274,13 @@
           { "id": "overlay_wielded_phase_immersion_suit", "fg": 192, "rotates": false },
           { "id": "overlay_worn_phase_immersion_suit", "fg": 193, "rotates": false },
           { "id": "phase_immersion_suit_on", "fg": 194, "rotates": false },
-          { "id": "overlay_wielded_phase_immersion_suit_on", "fg": 194, "rotates": false }
+          { "id": "overlay_wielded_phase_immersion_suit_on", "fg": 194, "rotates": false },
+          { "id": "goggles_nv_enhanced", "fg": 195, "rotates": false },
+          { "id": "overlay_wielded_goggles_nv_enhanced", "fg": 195, "rotates": false },
+          { "id": "overlay_worn_goggles_nv_enhanced", "fg": 196, "rotates": false },
+          { "id": "goggles_nv_enhanced_on", "fg": 197, "rotates": false },
+          { "id": "overlay_wielded_goggles_nv_enhanced_on", "fg": 197, "rotates": false },
+          { "id": "overlay_worn_goggles_nv_enhanced_on", "fg": 198, "rotates": false }
         ],
         "sprite_width": 32,
         "sprite_height": 32
