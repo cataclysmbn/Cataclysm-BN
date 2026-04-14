@@ -212,7 +212,7 @@ TEST_CASE( "Mutating marloss does not crash on missing category data", "[mutatio
 static auto mutation_cost_sum( const Character &c ) -> int
 {
     return std::ranges::fold_left(
-               c.get_mutations() | std::views::transform( []( const trait_id &m ) {
+    c.get_mutations() | std::views::transform( []( const trait_id & m ) {
         return m->cost;
     } ), 0, std::plus<int> {} );
 }
