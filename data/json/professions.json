@@ -127,15 +127,6 @@
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "army_mags_rm216",
-    "entries": [
-      { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50 },
-      { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "subtype": "collection",
     "id": "army_mags_usp45",
     "entries": [
       { "item": "usp45mag", "ammo-item": "45_acp", "charges": 12 },
@@ -407,6 +398,37 @@
       { "item": "dogfood" }
     ]
   },
+   {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "irs_loadout",
+    "entries": [
+      { "group": "fedrevolver" },
+      { "group": "fedsemiauto" }
+    ]
+  },
+   {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "fedrevolver",
+    "entries": [
+      { "item": "ruger_redhawk", "ammo-item":"44magnum", "charges": 6,  "container-item": "holster" },
+      { "item": "44_speedloader6", "ammo-item": "44magnum", "charges": 6,  "container-item": "tacvest" },
+	  { "item": "44_speedloader6", "ammo-item": "44magnum", "charges": 6,  "container-item": "tacvest" }
+    ]
+  }, 
+	{
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "fedsemiauto",
+    "entries": [
+      { "item": "usp_45", "ammo-item":"45_acp", "charges": 12,  "container-item": "holster" },
+      { "item": "usp45mag", "ammo-item": "45_acp", "charges": 12, "container-item": "tacvest" },
+	  { "item": "usp45mag", "ammo-item": "45_acp", "charges": 12, "container-item": "tacvest" }
+    ]
+  },
+  
+  
   {
     "type": "profession_item_substitutions",
     "trait": "WOOLALLERGY",
@@ -1211,7 +1233,6 @@
     "name": "Professional Cyclist",
     "description": "You were a promising young cyclist with a bright career in front of you before this all happened.  Perhaps you'll never get to participate in the grand tours now, but as the saying goes: Life is like riding a bicycle, you got to keep moving.",
     "points": 3,
-    "age": { "min": 18, "max": 27 },
     "skills": [ { "level": 1, "name": "swimming" }, { "level": 3, "name": "driving" }, { "level": 2, "name": "dodge" } ],
     "items": {
       "both": {
@@ -2053,7 +2074,6 @@
     "name": "Medical Resident",
     "description": "Fresh out of med school, you've got little in the way of practical experience.  You just hope it will be enough if the old adage of 'Doctor, heal thyself' ends up being required.",
     "points": 2,
-    "age": { "min": 25, "max": 33 },
     "skills": [ { "level": 4, "name": "firstaid" } ],
     "traits": [ "PROF_MED" ],
     "items": {
@@ -2430,7 +2450,6 @@
     "name": "Electrical Engineer",
     "description": "Fresh out of college, you've got little in the way of practical engineering experience.  The Cataclysm might prove to be a rather complicated problem to solve even from an engineering perspective, and you're not sure if you can solder your way out of this one.",
     "points": 2,
-    "age": { "min": 22, "max": 26 },
     "skills": [ { "level": 4, "name": "electronics" }, { "level": 2, "name": "fabrication" }, { "level": 2, "name": "computer" } ],
     "items": {
       "both": { "items": [ "pants", "dress_shirt", "socks", "dress_shoes", "wristwatch", "water_clean", "smart_phone", "file" ] },
@@ -2444,7 +2463,6 @@
     "name": "Mechanical Engineer",
     "description": "Fresh out of college, you've got little in the way of practical engineering experience.  The Cataclysm might prove to be a rather complicated problem to solve even from an engineering perspective, and you're not sure if you will pass this stress test.",
     "points": 2,
-    "age": { "min": 22, "max": 26 },
     "skills": [ { "level": 4, "name": "mechanics" }, { "level": 2, "name": "fabrication" }, { "level": 2, "name": "computer" } ],
     "items": {
       "both": { "items": [ "pants", "dress_shirt", "socks", "dress_shoes", "wristwatch", "water_clean", "smart_phone", "file" ] },
@@ -3220,7 +3238,6 @@
     "name": "Student",
     "description": "You were a high school student, but the tests you'll face now will have much higher stakes.  There might even be something useful in one of these books you've been lugging around all year.",
     "points": 1,
-    "age": { "min": 14, "max": 18 },
     "items": {
       "both": {
         "items": [
@@ -3249,7 +3266,6 @@
     "name": "Library Nerd",
     "description": "They say reading is food for the brain, but those corpses seem to see your brain as food.  In your haste to escape, you grabbed the library's return box, but is there anything in there that might help you?",
     "points": 2,
-    "age": { "min": 14, "max": 18 },
     "traits": [ "LOVES_BOOKS" ],
     "items": {
       "both": {
@@ -3727,52 +3743,6 @@
   },
   {
     "type": "profession",
-    "id": "bio_specops",
-    "name": "Bionic Operator",
-    "description": "You were the best of the best, the military's finest, and your bionics have only enhanced your abilities.  Specializing in close quarters combat, you were sent on the most dangerous and critical missions.",
-    "points": 8,
-    "traits": [ "PROF_MILITARY" ],
-    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII" ],
-    "skills": [
-      { "level": 2, "name": "swimming" },
-      { "level": 3, "name": "gun" },
-      { "level": 3, "name": "smg" },
-      { "level": 3, "name": "survival" },
-      { "level": 2, "name": "cutting" },
-      { "level": 2, "name": "melee" },
-      { "level": 2, "name": "dodge" },
-      { "level": 1, "name": "firstaid" }
-    ],
-    "items": {
-      "both": {
-        "items": [
-          "winter_pants_army",
-          "tshirt",
-          "winter_jacket_army",
-          "gloves_liner",
-          "gloves_tactical",
-          "mask_ski",
-          "glasses_bal",
-          "tac_helmet",
-          "socks",
-          "boots_combat",
-          "webbing_belt",
-          "wristwatch",
-          "canteen",
-          "molle_pack"
-        ],
-        "entries": [
-          { "group": "charged_two_way_radio" },
-          { "item": "chestrig", "contents-group": "army_mags_rm216" },
-          { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50, "container-item": "needlegun" }
-        ]
-      },
-      "male": [ "boxer_shorts" ],
-      "female": [ "sports_bra", "boxer_shorts" ]
-    }
-  },
-  {
-    "type": "profession",
     "id": "bionic_spy",
     "name": "Bionic Agent",
     "description": "Your body has several bionics worth millions of dollars, paid for by public taxes.  The government has turned you into an infiltration and recon specialist: you have night vision, an alarm, an infolink, lock picking capabilities and a hacking module.",
@@ -4006,7 +3976,6 @@
     "name": "Senior Citizen",
     "description": "You haven't seen this much blood since the war.  The whole world's gone crazy!  They ate your grandkids!  But dagnabbit, you'll make them all pay for what they've done.",
     "points": 0,
-    "age": { "min": 65, "max": 80 },
     "items": {
       "both": {
         "items": [ "tobacco", "pipe_tobacco", "ref_lighter", "socks", "dress_shoes", "knit_scarf" ],
@@ -5036,7 +5005,7 @@
           "motorbike_boots",
           "vambrace_larmor",
           "gauntlets_larmor",
-          "helmet_steel",
+          "pickelhaube",
           "mask_hockey",
           "camelbak",
           "dump_pouch",
@@ -5733,7 +5702,6 @@
     "name": "Bionic Student",
     "description": "Your parents were so obsessed with making sure you aced every test that they had you outfitted with bionics to make you smarter and never forget anything.  And now, you are facing the most dire test yet, and once again you had better succeed, or else.",
     "points": 3,
-    "age": { "min": 14, "max": 18 },
     "CBMs": [ "bio_batteries", "bio_power_storage", "bio_int_enhancer", "bio_memory" ],
     "items": {
       "both": [
@@ -6783,7 +6751,7 @@
           "socks",
           "boots",
           "bandana",
-          "helmet_steel",
+          "pickelhaube",
           "jacket_leather",
           "wristwatch",
           "meth",
@@ -7674,5 +7642,57 @@
       "female": [ "sports_bra", "boxer_shorts" ]
     },
     "flags": [ "SCEN_ONLY" ]
+  },
+   {
+    "type": "profession",
+    "id": "irs",
+    "name": "IRS Auditor",
+    "description": "After years of near-death encounters doing field work as a veteran special agent, nothing really fazes you anymore. You've been shot at, slashed at, swung on, and nearly run over while investigating tax fraud; this cataclysm is just a day in the life for you. With no one left to hold you accountable, taxes will be paid or capital punishment will be dispensed. You are inevitable.",
+    "points": 6,
+    "traits": [ "PROF_FED", "PSYCHOPATH" ],
+	"//": "No one works for the IRS and isn't some form of psychopath. The nice jewelry is a sign of their success at their job, and how untouchable they feel legally and physically. And it's still business-professional!",
+    "skills": [
+      { "level": 3, "name": "swimming" },
+	  { "level": 3, "name": "dodge" },
+	  { "level": 2, "name": "melee" },
+	  { "level": 2, "name": "unarmed" },
+      { "level": 2, "name": "gun" },
+      { "level": 3, "name": "pistol" },
+	  { "level": 3, "name": "computer" },
+	  { "level": 1, "name": "firstaid" },
+	  { "level": 3, "name": "speech" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "fancy_sunglasses",
+          "suit",
+		  "tie_necktie",
+          "blue_topaz_platinum_cufflinks",
+          "platinum_ring",
+          "platinum_watch",
+          "kevlar",
+          "tacvest",
+          "socks",
+          "dress_shoes",
+          "briefcase"
+        ],
+        "entries": [
+		  { "group": "irs_loadout" },
+          { "item": "file", "count": 10 },
+          { "item": "record_accounting", "count": 2 },
+          { "item": "paper", "count": 20 },
+          { "item": "pen" },
+          { "item": "permanent_marker" },
+		  { "item": "laptop" },
+		  { "item": "smart_phone" },
+		  { "item": "cig", "charges": 13, "container-item": "box_cigarette" },
+		  { "item": "ref_lighter" },
+		  { "item": "badge_IRS" }
+        ]
+      },
+      "male": [ "boxer_shorts", "platinum_necklace" ],
+      "female": [ "boy_shorts", "sports_bra", "blue_topaz_platinum_earring" ]
+    }
   }
 ]
