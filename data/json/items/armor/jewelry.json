@@ -1398,7 +1398,7 @@
     "price_postapoc": "5 USD",
     "proportional": { "weight": 2 }
   },
-   {
+  {
     "id": "badge_IRS",
     "copy-from": "badge_abstract",
     "type": "ARMOR",
