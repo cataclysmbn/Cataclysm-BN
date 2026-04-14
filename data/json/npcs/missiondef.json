@@ -944,12 +944,13 @@
     "name": { "str": "One Last Audit" },
     "description": "Not even a zombie apocalypse can stop tax audits. You've still got a few undeclared assets to collect for the US Government... by lethal force if necessary.",
     "goal": "MGOAL_KILL_MONSTER",
-	 "goal_condition": { "and": [{ "u_has_item": "software_cryptow" }] },
+    "goal_condition": { "and": [ { "u_has_item": "software_cryptow" } ] },
     "difficulty": 2,
     "value": 0,
-    "start": { "assign_mission_target": { "om_terrain": "loffice_tower_13", "reveal_radius": 5, "z": 0 }, 
-		"update_mapgen": { "place_monster": [ { "monster": "mon_feral_corpo", "x": 16, "y": 20, "chance": 100, "target": true } ] } 
-		     },
+    "start": {
+      "assign_mission_target": { "om_terrain": "loffice_tower_13", "reveal_radius": 5, "z": 0 },
+      "update_mapgen": { "place_monster": [ { "monster": "mon_feral_corpo", "x": 16, "y": 20, "chance": 100, "target": true } ] }
+    },
     "origins": [ "ORIGIN_GAME_START" ]
   }
 ]

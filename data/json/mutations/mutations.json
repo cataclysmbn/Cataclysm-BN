@@ -6604,7 +6604,7 @@
     "purifiable": false,
     "profession": true
   },
-   {
+  {
     "type": "mutation",
     "id": "PROF_FED",
     "name": { "str": "Government Remnant" },
