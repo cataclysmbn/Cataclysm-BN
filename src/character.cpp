@@ -5110,7 +5110,7 @@ void Character::set_stored_kcal( int kcal )
 
 int Character::max_stored_kcal() const
 {
-    return 2500 * 7 * (1.0f + mutation_value( "kcal_scale" ));
+    return 2500 * 7 * ( 1.0f + mutation_value( "kcal_scale" ) );
 }
 
 float Character::get_kcal_percent() const
