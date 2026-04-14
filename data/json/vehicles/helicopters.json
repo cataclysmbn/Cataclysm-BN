@@ -796,7 +796,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "mounted_m134", "ammo": 80, "ammo_types": [ "308" ], "ammo_qty": [ 0, 500 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
         ]
       },
       { "x": -1, "y": -2, "parts": [ "frame_vertical", "plating_military", "board_nw" ] },
@@ -806,7 +806,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "mounted_m134", "ammo": 80, "ammo_types": [ "308" ], "ammo_qty": [ 0, 500 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
         ]
       },
       {
@@ -816,7 +816,22 @@
       },
       { "x": -2, "y": -2, "parts": [ "frame_se", "board_vertical", "plating_military", "wheel_10" ] },
       { "x": -4, "y": 1, "parts": [ "frame_se", "board_se", "plating_military" ] },
-      { "x": 4, "y": -1, "parts": [ "frame_cover", "windshield", "plating_military" ] },
+      {
+        "x": 4,
+        "y": -1,
+        "parts": [
+          "frame_cover",
+          "windshield",
+          "plating_military",
+          "turret_mount",
+          {
+            "part": "mounted_25mm_autocannon",
+            "ammo": 80,
+            "ammo_types": [ "25mm_apds", "25mm_hei" ],
+            "ammo_qty": [ 10, 50 ]
+          }
+        ]
+      },
       { "x": 1, "y": -1, "parts": [ "frame_vertical_2", "plating_military", "roof", "NBC_seal", "windshield" ] },
       { "x": 3, "y": -2, "parts": [ "frame_cross", "windshield", "plating_military" ] },
       {
@@ -889,7 +904,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "mounted_m134", "ammo": 80, "ammo_types": [ "308" ], "ammo_qty": [ 0, 500 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
         ]
       },
       {
@@ -918,7 +933,22 @@
         "parts": [ "frame_ne", { "part": "tank_55gal_drum", "fuel": "jp8" }, "board_vertical", "plating_military" ]
       },
       { "x": 2, "y": -2, "parts": [ "frame_nw", "plating_military", "windshield" ] },
-      { "x": 4, "y": -1, "parts": [ "frame_cover", "windshield", "plating_military" ] },
+      {
+        "x": 4,
+        "y": -1,
+        "parts": [
+          "frame_cover",
+          "windshield",
+          "plating_military",
+          "turret_mount",
+          {
+            "part": "mounted_25mm_autocannon",
+            "ammo": 80,
+            "ammo_types": [ "25mm_apds", "25mm_hei" ],
+            "ammo_qty": [ 10, 50 ]
+          }
+        ]
+      },
       {
         "x": 0,
         "y": -1,
@@ -988,7 +1018,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "mounted_m134", "ammo": 80, "ammo_types": [ "308" ], "ammo_qty": [ 0, 500 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
         ]
       },
       { "x": -3, "y": 4, "parts": [ "frame_se", "board_se", "plating_military" ] },
@@ -1005,7 +1035,7 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "mounted_m134", "ammo": 80, "ammo_types": [ "308" ], "ammo_qty": [ 0, 500 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
         ]
       },
       { "x": -2, "y": 3, "parts": [ "frame_ne", "board_horizontal" ] },
@@ -1071,7 +1101,17 @@
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "board_vertical", "plating_military" ] },
       { "x": -1, "y": 1, "parts": [ "frame_ne", "board_ne", "plating_military" ] },
       { "x": -9, "y": -1, "parts": [ "frame_vertical", "halfboard_vertical" ] },
-      { "x": 2, "y": -1, "parts": [ "frame_vertical", "windshield", "plating_military" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [
+          "frame_vertical",
+          "windshield",
+          "plating_military",
+          "turret_mount",
+          { "part": "mounted_plasma_gun", "ammo": 80, "ammo_types": [ "plasma" ], "ammo_qty": [ 5, 25 ] }
+        ]
+      },
       { "x": -5, "y": -1, "parts": [ "frame_sw", "board_sw", "plating_military" ] },
       { "x": -1, "y": -1, "parts": [ "frame_nw", "board_nw", "plating_military" ] },
       { "x": 3, "y": 1, "parts": [ "frame_ne", "halfboard_ne", "plating_military" ] },
@@ -1125,7 +1165,17 @@
       { "x": 0, "y": -1, "parts": [ "frame_vertical", "windshield", "plating_military" ] },
       { "x": -9, "y": 0, "parts": [ "frame_vertical_2", "halfboard_vertical_2" ] },
       { "x": -5, "y": 1, "parts": [ "frame_se", "board_se", "plating_military" ] },
-      { "x": 2, "y": 1, "parts": [ "frame_vertical", "windshield", "plating_military" ] },
+      {
+        "x": 2,
+        "y": 1,
+        "parts": [
+          "frame_vertical",
+          "windshield",
+          "plating_military",
+          "turret_mount",
+          { "part": "mounted_plasma_gun", "ammo": 80, "ammo_types": [ "plasma" ], "ammo_qty": [ 5, 25 ] }
+        ]
+      },
       { "x": -9, "y": 1, "parts": [ "frame_vertical", "halfboard_vertical" ] },
       { "x": 1, "y": -1, "parts": [ "frame_vertical", "door", "plating_military" ] },
       { "x": -7, "y": 0, "parts": [ "frame_vertical", "halfboard_vertical" ] },
@@ -1208,7 +1258,17 @@
       { "x": 0, "y": -1, "parts": [ "frame_vertical", "windshield", "plating_military" ] },
       { "x": -9, "y": 0, "parts": [ "frame_vertical_2" ] },
       { "x": -5, "y": 1, "parts": [ "frame_se", "board_se", "plating_military" ] },
-      { "x": 2, "y": 1, "parts": [ "frame_vertical", "windshield", "plating_military" ] },
+      {
+        "x": 2,
+        "y": 1,
+        "parts": [
+          "frame_vertical",
+          "windshield",
+          "plating_military",
+          "turret_mount",
+          { "part": "mounted_plasma_gun", "ammo": 80, "ammo_types": [ "plasma" ], "ammo_qty": [ 5, 25 ] }
+        ]
+      },
       { "x": -9, "y": 1, "parts": [ "frame_vertical", "halfboard_vertical" ] },
       { "x": 1, "y": -1, "parts": [ "frame_vertical" ] },
       { "x": -7, "y": 0, "parts": [ "frame_vertical", "halfboard_vertical" ] },
