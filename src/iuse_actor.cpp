@@ -7180,12 +7180,11 @@ int iuse_pocket_dimension::use( player &p, item &it, bool, const tripoint & ) co
         // We're inside - exit to return point
         exit_pocket( p, it );
     } else if( current_dim_id == pd->return_dimension_id ) {
-        // We're at the dimension this pocket exits to - we can enter
+        // We're in the dimension we last entered from - re-enter (ignoring last position)
         enter_pocket( p, it );
     } else {
-        // We're in some other dimension - can't use this pocket key here
         p.add_msg_if_player( m_info,
-                             _( "You can only use this from where you last exited this pocket." ) );
+                             _( "You can only use this to return from or re-enter this pocket." ) );
         return 0;
     }
 
@@ -7513,6 +7512,11 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     }
 
     p.add_msg_if_player( m_good, _( "You exit the pocket dimension." ) );
+
+    // Reset to fresh state: clears the entry-dimension lock so the key can be used
+    // from whatever dimension the player is now in after returning.
+    pd->return_dimension_id.clear();
+    pd->return_world_type = world_type_id{};
 
     // Record when the player exited so the lifetime countdown can start.
     if( pd->lifetime.has_value() ) {
