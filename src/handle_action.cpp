@@ -1489,11 +1489,92 @@ static void open_movement_mode_menu()
     }
 }
 
-static void cast_spell()
+namespace
 {
-    player &u = g->u;
+auto start_spellcasting_activity( player &u, spell &sp ) -> void
+{
+    auto cast_spell = std::make_unique<player_activity>( ACT_SPELLCASTING,
+                      sp.casting_time( u ) );
+    // [0] this is used as a spell level override for items casting spells
+    cast_spell->values.emplace_back( -1 );
+    // [1] if this value is 1, the spell never fails
+    cast_spell->values.emplace_back( 0 );
+    // [2] this value overrides the mana cost if set to 0
+    cast_spell->values.emplace_back( 1 );
+    cast_spell->name = sp.id().c_str();
+    if( u.magic->casting_ignore ) {
+        const auto ignored_distractions = std::vector<distraction_type> {
+            distraction_type::alert,
+            distraction_type::noise,
+            distraction_type::pain,
+            distraction_type::attacked,
+            distraction_type::hostile_spotted_near,
+            distraction_type::hostile_spotted_far,
+            distraction_type::talked_to,
+            distraction_type::asthma,
+            distraction_type::weather_change
+        };
+        for( const auto ignored : ignored_distractions ) {
+            cast_spell->ignore_distraction( ignored );
+        }
+    }
 
-    std::vector<spell_id> spells = u.magic->spells();
+    u.magic->set_last_cast_spell( sp.id() );
+    u.assign_activity( std::move( cast_spell ), false );
+}
+
+auto try_cast_spell( player &u, spell &sp ) -> bool
+{
+    if( !( sp.has_flag( spell_flag::BRAWL ) || sp.has_flag( spell_flag::PHYSICAL ) ) &&
+        u.has_trait( trait_BRAWLER ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "Pfft, that spell is for COWARDS, and a Brawler like you is no coward!" ) );
+        return false;
+    }
+
+    const auto blockers = sp.get_blocker_muts();
+    if( !blockers.empty() ) {
+        for( const auto &blocker : blockers ) {
+            if( u.has_trait( blocker ) ) {
+                add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                         _( "Your %s mutation prevents you from casting this spell!" ), blocker->name() );
+                return false;
+            }
+        }
+    }
+
+    if( u.is_armed() && !( sp.has_flag( spell_flag::NO_HANDS ) ||
+                           sp.has_flag( spell_flag::PHYSICAL ) ) &&
+        !u.primary_weapon().has_flag( flag_MAGIC_FOCUS ) && u.primary_weapon().is_two_handed( u ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "You need at least one hand free to cast this spell!" ) );
+        return false;
+    }
+
+    if( !u.magic->has_enough_energy( u, sp ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "You don't have enough %s to cast the spell." ),
+                 sp.energy_string() );
+        return false;
+    }
+
+    if( sp.energy_source() == hp_energy && !u.has_quality( qual_CUT ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "You cannot cast Blood Magic without a cutting implement." ) );
+        return false;
+    }
+
+    start_spellcasting_activity( u, sp );
+    return true;
+}
+
+} // namespace
+
+auto cast_spell() -> void
+{
+    auto &u = g->u;
+
+    auto spells = u.magic->spells();
 
     if( spells.empty() ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
@@ -1501,10 +1582,10 @@ static void cast_spell()
         return;
     }
 
-    bool can_cast_spells = false;
-    bool has_brawler_spell = false;
-    for( spell_id sp : spells ) {
-        spell temp_spell = u.magic->get_spell( sp );
+    auto can_cast_spells = false;
+    auto has_brawler_spell = false;
+    for( const auto &sp : spells ) {
+        auto temp_spell = u.magic->get_spell( sp );
         if( temp_spell.can_cast( u ) ) {
             can_cast_spells = true;
         }
@@ -1524,79 +1605,29 @@ static void cast_spell()
         return;
     }
 
-    const int spell_index = u.magic->select_spell( u );
+    const auto spell_index = u.magic->select_spell( u );
     if( spell_index < 0 ) {
         return;
     }
 
-    spell &sp = *u.magic->get_spells()[spell_index];
+    auto &sp = *u.magic->get_spells()[spell_index];
 
-    if( !( sp.has_flag( spell_flag::BRAWL ) || sp.has_flag( spell_flag::PHYSICAL ) ) &&
-        u.has_trait( trait_BRAWLER ) ) {
+    try_cast_spell( u, sp );
+}
+
+auto cast_last_spell() -> void
+{
+    auto &u = g->u;
+
+    const auto last_cast_spell = u.magic->last_cast_spell();
+    if( !last_cast_spell ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 _( "Pfft, that spell is for COWARDS, and a Brawler like you is no coward!" ) );
+                 _( "You haven't cast any spells yet." ) );
         return;
     }
 
-    std::set<trait_id> blockers = sp.get_blocker_muts();
-    if( !blockers.empty() ) {
-        for( trait_id blocker : blockers ) {
-            if( u.has_trait( blocker ) ) {
-                add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                         _( "Your %s mutation prevents you from casting this spell!" ), blocker->name() );
-                return;
-            }
-        }
-    }
-
-    if( u.is_armed() && !( sp.has_flag( spell_flag::NO_HANDS ) ||
-                           sp.has_flag( spell_flag::PHYSICAL ) ) &&
-        !u.primary_weapon().has_flag( flag_MAGIC_FOCUS ) && u.primary_weapon().is_two_handed( u ) ) {
-        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 _( "You need at least one hand free to cast this spell!" ) );
-        return;
-    }
-
-    if( !u.magic->has_enough_energy( u, sp ) ) {
-        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 _( "You don't have enough %s to cast the spell." ),
-                 sp.energy_string() );
-        return;
-    }
-
-    if( sp.energy_source() == hp_energy && !u.has_quality( qual_CUT ) ) {
-        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 _( "You cannot cast Blood Magic without a cutting implement." ) );
-        return;
-    }
-
-    std::unique_ptr<player_activity> cast_spell = std::make_unique<player_activity>( ACT_SPELLCASTING,
-            sp.casting_time( u ) );
-    // [0] this is used as a spell level override for items casting spells
-    cast_spell->values.emplace_back( -1 );
-    // [1] if this value is 1, the spell never fails
-    cast_spell->values.emplace_back( 0 );
-    // [2] this value overrides the mana cost if set to 0
-    cast_spell->values.emplace_back( 1 );
-    cast_spell->name = sp.id().c_str();
-    if( u.magic->casting_ignore ) {
-        const std::vector<distraction_type> ignored_distractions = {
-            distraction_type::alert,
-            distraction_type::noise,
-            distraction_type::pain,
-            distraction_type::attacked,
-            distraction_type::hostile_spotted_near,
-            distraction_type::hostile_spotted_far,
-            distraction_type::talked_to,
-            distraction_type::asthma,
-            distraction_type::weather_change
-        };
-        for( const distraction_type ignored : ignored_distractions ) {
-            cast_spell->ignore_distraction( ignored );
-        }
-    }
-    u.assign_activity( std::move( cast_spell ),
-                       false );
+    auto &sp = u.magic->get_spell( *last_cast_spell );
+    try_cast_spell( u, sp );
 }
 
 void game::open_consume_item_menu()
@@ -2281,6 +2312,9 @@ bool game::handle_action()
 
             case ACTION_CAST_SPELL:
                 cast_spell();
+                break;
+            case ACTION_CAST_LAST_SPELL:
+                cast_last_spell();
                 break;
 
             case ACTION_FIRE_BURST: {
