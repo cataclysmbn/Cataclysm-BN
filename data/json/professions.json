@@ -7674,5 +7674,86 @@
       "female": [ "sports_bra", "boxer_shorts" ]
     },
     "flags": [ "SCEN_ONLY" ]
+  },
+     {
+    "type": "profession",
+    "id": "irs",
+    "name": "IRS Auditor",
+    "description": "After years of near-death encounters doing field work as a veteran special agent, nothing really fazes you anymore. You've been shot at, slashed at, swung on, and nearly run over while investigating tax fraud; this cataclysm is just a day in the life for you. With no one left to hold you accountable, taxes will be paid or capital punishment will be dispensed. You are inevitable.",
+    "points": 6,
+    "traits": [ "PROF_IRS", "PSYCHOPATH" ],
+	"//": "No one works for the IRS and isn't some form of psychopath. The nice jewelry is a sign of their success at their job, and how untouchable they feel legally and physically. And it's still business-professional!",
+    "skills": [
+      { "level": 3, "name": "swimming" },
+	  { "level": 3, "name": "dodge" },
+	  { "level": 2, "name": "melee" },
+	  { "level": 2, "name": "unarmed" },
+      { "level": 2, "name": "gun" },
+      { "level": 3, "name": "pistol" },
+	  { "level": 3, "name": "computer" },
+	  { "level": 1, "name": "firstaid" },
+	  { "level": 3, "name": "speech" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "fancy_sunglasses",
+          "suit",
+		  "tie_necktie",
+          "blue_topaz_platinum_cufflinks",
+          "platinum_ring",
+          "platinum_watch",
+          "kevlar",
+          "tacvest",
+          "socks",
+          "dress_shoes",
+          "briefcase"
+        ],
+        "entries": [
+		  { "group": "irs_loadout" },
+          { "item": "file", "count": 10 },
+          { "item": "record_accounting", "count": 2 },
+          { "item": "paper", "count": 20 },
+          { "item": "pen" },
+          { "item": "permanent_marker" },
+		  { "item": "laptop" },
+		  { "item": "smart_phone" },
+		  { "item": "cig", "charges": 13, "container-item": "box_cigarette" },
+		  { "item": "ref_lighter" },
+		  { "item": "badge_IRS" }
+        ]
+      },
+      "male": [ "boxer_shorts", "platinum_necklace" ],
+      "female": [ "boy_shorts", "sports_bra", "blue_topaz_platinum_earring" ]
+    }
+  },
+     {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "irs_loadout",
+    "entries": [
+      { "group": "fedrevolver" },
+      { "group": "fedsemiauto" }
+    ]
+  },
+   {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "fedrevolver",
+    "entries": [
+      { "item": "ruger_redhawk", "ammo-item":"44magnum", "charges": 6,  "container-item": "holster" },
+      { "item": "44_speedloader6", "ammo-item": "44magnum", "charges": 6,  "container-item": "tacvest" },
+	  { "item": "44_speedloader6", "ammo-item": "44magnum", "charges": 6,  "container-item": "tacvest" }
+    ]
+  }, 
+	{
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "fedsemiauto",
+    "entries": [
+      { "item": "usp_45", "ammo-item":"45_acp", "charges": 12,  "container-item": "holster" },
+      { "item": "usp45mag", "ammo-item": "45_acp", "charges": 12, "container-item": "tacvest" },
+	  { "item": "usp45mag", "ammo-item": "45_acp", "charges": 12, "container-item": "tacvest" }
+    ]
   }
 ]
