@@ -889,8 +889,13 @@
       },
       {
         "x": -3,
+        "y": -1,
+        "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ]
+      },
+      {
+        "x": -3,
         "y": 1,
-        "parts": [ "hdframe_sw", "plating_military", "hdboard_vertical" ]
+        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
       },
       {
         "x": -3,
@@ -905,7 +910,7 @@
       {
         "x": -3,
         "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "hdboard_vertical" ]
+        "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ]
       },
       {
         "x": -4,
@@ -1076,6 +1081,11 @@
       },
       {
         "x": -3,
+        "y": -1,
+        "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ]
+      },
+      {
+        "x": -3,
         "y": 1,
         "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
       },
@@ -1092,7 +1102,7 @@
       {
         "x": -3,
         "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "hdboard_vertical" ]
+        "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ]
       },
       {
         "x": -4,
@@ -1263,6 +1273,11 @@
       },
       {
         "x": -3,
+        "y": -1,
+        "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ]
+      },
+      {
+        "x": -3,
         "y": 1,
         "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
       },
@@ -1279,7 +1294,7 @@
       {
         "x": -3,
         "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "hdboard_vertical" ]
+        "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ]
       },
       {
         "x": -4,
