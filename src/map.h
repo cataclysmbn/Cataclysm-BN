@@ -2017,7 +2017,8 @@ class map : public submap_load_listener
         // this level, called build_sunlight_cache() once, and applied character
         // lights.  The function then processes only entities whose position z
         // matches zlev, avoiding cross-level cache writes for parallel safety.
-        void generate_lightmap( int zlev, bool skip_shared_init = false );
+        void generate_lightmap( int zlev );
+        void generate_lightmap_worker( int zlev );
         void build_seen_cache( const tripoint &origin, int target_z );
         // Applies vehicle mirror/camera FOV from @p origin's vehicle.
         // Separated from build_seen_cache for readability and Tracy granularity.

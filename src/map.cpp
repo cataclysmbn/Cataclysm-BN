@@ -9877,7 +9877,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 // from concurrent writes to last_full_vehicle_list.
                 get_vehicles();
                 parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
-                    generate_lightmap( dirty_seen_cache_levels[i], /*skip_shared_init=*/true );
+                    generate_lightmap_worker( dirty_seen_cache_levels[i] );
                 } );
             } else {
                 // Single dirty level: run serially using the standard full path.
