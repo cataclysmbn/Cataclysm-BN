@@ -267,7 +267,7 @@
     "price_postapoc": "0 cent",
     "category": "valuables"
   },
-     {
+  {
     "id": "software_cryptow",
     "copy-from": "software",
     "type": "GENERIC",

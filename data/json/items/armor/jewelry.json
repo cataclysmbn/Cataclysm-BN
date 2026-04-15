@@ -3336,7 +3336,7 @@
     "description": "A shiny, silver tiara adorned with pearls.",
     "color": "white"
   },
-     {
+  {
     "id": "badge_IRS",
     "copy-from": "badge_abstract",
     "type": "ARMOR",

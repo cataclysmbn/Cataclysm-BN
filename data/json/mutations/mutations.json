@@ -6987,7 +6987,7 @@
     "purifiable": false,
     "profession": true
   },
-    {
+  {
     "type": "mutation",
     "id": "PROF_IRS",
     "name": { "str": "IRS Auditor" },

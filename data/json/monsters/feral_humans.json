@@ -690,19 +690,19 @@
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
     "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1" ]
   },
-     {
+  {
     "id": "mon_feral_corpo",
     "type": "MONSTER",
     "name": { "str": "feral corporate executive" },
     "description": "Still dressed in press interview attire, this tall, well-built corpo appears to have cracked under crushing paranoia. With an automatic rifle in hand, they keep mumbling to themselves about something finance-related, unable to stand still for even a moment as a tightly wound bundle of nerves. While they don't look trained in rifle usage, it would be unwise to approach without a plan.",
-	"copy-from": "mon_feral_militia",
+    "copy-from": "mon_feral_militia",
     "attack_cost": 100,
     "melee_skill": 3,
     "melee_dice": 2,
     "melee_dice_sides": 3,
     "melee_cut": 3,
     "dodge": 2,
-	"harvest": "human",
+    "harvest": "human",
     "armor_bash": 6,
     "armor_cut": 4,
     "armor_bullet": 8,
@@ -726,12 +726,11 @@
       }
     ],
     "death_drops": "mon_feral_corpo_death_drops",
-    "zombify_into": "mon_zombie",
+    "zombify_into": "mon_zombie"
   },
-  
-   {
+  {
     "id": "mon_feral_bodyguard",
-	"copy-from": "mon_feral_labsecurity_9mm",
+    "copy-from": "mon_feral_labsecurity_9mm",
     "type": "MONSTER",
     "name": { "str": "feral bodyguard" },
     "description": "This overly tense bodyguard doesn't look any different from a normal one - except for his bloodshot eyes, unnervingly grating teeth, and sheen of sweat. While much calmer than his VIP, he is no less deadly.",
