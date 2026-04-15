@@ -3143,6 +3143,18 @@
   },
   {
     "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"Biocurrency! I AM money! I AM GOD!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"Why contain it? It's cool...\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
     "speaker": "mon_feral_bodyguard",
     "sound": "\"You are not authorized to be here, intruder!\"",
     "volume": 20
