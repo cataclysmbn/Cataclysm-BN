@@ -890,7 +890,7 @@
       {
         "x": -3,
         "y": 1,
-        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
+        "parts": [ "hdframe_sw", "plating_military", "hdboard_vertical" ]
       },
       {
         "x": -3,
