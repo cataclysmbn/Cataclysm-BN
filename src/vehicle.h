@@ -65,6 +65,12 @@ struct rider_data {
     int prt = -1;
     bool moved = false;
 };
+
+struct cargo_recharge_target {
+    safe_reference<item> target;
+    int cargo_part = -1;
+};
+
 //collision factor for vehicle-vehicle collision; delta_v in m/s
 float get_collision_factor( float delta_v );
 
@@ -1296,6 +1302,9 @@ class vehicle
          * hot or perishable liquid to a container.
          */
         void make_active( item &target );
+        /// Rebuild-on-demand cache for cargo recharge candidates.
+        auto get_cargo_recharge_targets() -> std::vector<cargo_recharge_target>;
+        auto invalidate_cargo_recharge_cache() -> void;
         /**
          * Try to add an item to part's cargo.
          */
@@ -1684,6 +1693,8 @@ class vehicle
         std::map<itype_id, float> fuel_used_last_turn;
         std::unordered_multimap<point, zone_data> loot_zones;
         active_item_cache active_items;
+        std::vector<cargo_recharge_target> cargo_recharge_targets_;
+        bool cargo_recharge_targets_dirty = true;
         // a magic vehicle, powered by magic.gif
         bool magic = false;
         // when does the magic vehicle disappear?

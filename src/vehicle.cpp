@@ -117,6 +117,11 @@ static const flag_id f_VEHICLE_HOTWIRE( "VEHICLE_HOTWIRE" );
 static const std::string str_DOOR_LOCKING( "DOOR_LOCKING" );
 static const std::string str_OPENCLOSE_INSIDE( "OPENCLOSE_INSIDE" );
 
+static auto is_cargo_recharge_candidate( const item &it ) -> bool
+{
+    return it.has_flag( flag_RECHARGE ) || it.has_flag( flag_USE_UPS );
+}
+
 static const std::vector<std::string> vs_NO_HOTWIRING = {
     "MUSCLE_LEGS",
     "MUSCLE_ARMS",
@@ -318,6 +323,8 @@ void vehicle::copy_static_from( const vehicle &source )
     fuel_used_last_turn = source.fuel_used_last_turn;
     loot_zones = source.loot_zones;
     active_items = source.active_items;
+    cargo_recharge_targets_.clear();
+    cargo_recharge_targets_dirty = true;
     magic = source.magic;
     summon_time_limit = source.summon_time_limit;
     mass_cache = source.mass_cache;
@@ -6103,6 +6110,53 @@ void vehicle::make_active( item &target )
     active_items.add( target );
 }
 
+auto vehicle::invalidate_cargo_recharge_cache() -> void
+{
+    cargo_recharge_targets_dirty = true;
+}
+
+auto vehicle::get_cargo_recharge_targets() -> std::vector<cargo_recharge_target>
+{
+    if( cargo_recharge_targets_dirty ) {
+        cargo_recharge_targets_.clear();
+        for( const vpart_reference &vp : get_parts_including_carried( VPFLAG_CARGO ) ) {
+            for( item *&outer : get_items( static_cast<int>( vp.part_index() ) ) ) {
+                outer->visit_items( [this, &vp]( item * it ) {
+                    if( is_cargo_recharge_candidate( *it ) ) {
+                        cargo_recharge_targets_.push_back( cargo_recharge_target{
+                            .target = safe_reference<item>( *it ),
+                            .cargo_part = static_cast<int>( vp.part_index() ),
+                        } );
+                    }
+                    return VisitResponse::NEXT;
+                } );
+            }
+        }
+        cargo_recharge_targets_dirty = false;
+    }
+
+    auto targets = std::vector<cargo_recharge_target>();
+    targets.reserve( cargo_recharge_targets_.size() );
+    for( auto it = cargo_recharge_targets_.begin(); it != cargo_recharge_targets_.end(); ) {
+        if( !it->target || it->cargo_part < 0 ||
+            static_cast<size_t>( it->cargo_part ) >= parts.size() ) {
+            it = cargo_recharge_targets_.erase( it );
+            continue;
+        }
+
+        item &target = *it->target;
+        if( !is_cargo_recharge_candidate( target ) ) {
+            it = cargo_recharge_targets_.erase( it );
+            continue;
+        }
+
+        targets.push_back( *it );
+        ++it;
+    }
+
+    return targets;
+}
+
 detached_ptr<item> vehicle::add_charges( int part, detached_ptr<item> &&itm )
 {
     if( !itm->count_by_charges() ) {
@@ -6164,6 +6218,7 @@ detached_ptr<item> vehicle::add_item( int part, detached_ptr<item> &&itm )
                 // NOLINTNEXTLINE(bugprone-use-after-move)
                 return std::move( itm );
             } else {
+                invalidate_cargo_recharge_cache();
                 return detached_ptr<item>();
             }
         }
@@ -6178,6 +6233,7 @@ detached_ptr<item> vehicle::add_item( int part, detached_ptr<item> &&itm )
     }
     p.items.push_back( std::move( itm ) );
 
+    invalidate_cargo_recharge_cache();
     invalidate_mass();
     return detached_ptr<item>();
 }
@@ -6206,6 +6262,7 @@ vehicle_stack::iterator vehicle::remove_item( int part, vehicle_stack::const_ite
     active_items.remove( *it );
 
     vehicle_stack::iterator iter = parts[part].items.erase( std::move( it ), ret );
+    invalidate_cargo_recharge_cache();
     invalidate_mass();
     return iter;
 }
@@ -6458,6 +6515,8 @@ void vehicle::refresh()
     rail_profile.clear();
     has_autoloaders = false;
     has_cargo_recharge = false;
+    cargo_recharge_targets_dirty = true;
+    cargo_recharge_targets_.clear();
 
     // Used to sort part list so it displays properly when examining
     struct sort_veh_part_vector {
