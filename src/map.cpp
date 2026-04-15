@@ -9809,12 +9809,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     if( seen_cache_dirty ) {
         skew_vision_cache.assign( vision_cache_slots, vision_cache_slot{} );
     }
-    // Initial value is illegal player position.
     const tripoint &p = g->u.pos();
-    static tripoint player_prev_pos;
-    if( seen_cache_dirty || player_prev_pos != p ) {
+    if( seen_cache_dirty || m_last_seen_cache_origin != p ) {
         build_seen_cache( p, zlev );
-        player_prev_pos = p;
+        m_last_seen_cache_origin = p;
         // seen_cache changed; any cached visibility derived from it is now stale.
         get_cache( zlev ).visibility_cache_dirty = true;
     }
@@ -10593,6 +10591,7 @@ void map::invalidate_map_cache( const int zlev )
         ch.visibility_cache_dirty = true;
         ch.outside_cache_dirty.set();
         ch.suspension_cache_dirty = true;
+        m_last_seen_cache_origin = tripoint_min;
     }
 }
 

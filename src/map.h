@@ -2041,6 +2041,12 @@ class map : public submap_load_listener
         // Written serially before parallel shadowcasting calls.
         exp_lookup weather_lookup_{ LIGHT_TRANSPARENCY_OPEN_AIR * 1.1f };
 
+        // Last player position for which build_seen_cache was run.
+        // Initialized to tripoint_min so the first build_map_cache call always rebuilds.
+        // Reset to tripoint_min by invalidate_map_cache so any full-cache invalidation
+        // forces a seen_cache rebuild regardless of whether the player moved.
+        tripoint m_last_seen_cache_origin = tripoint_min;
+
         /**
          * Absolute coordinates of first submap (get_submap_at(0,0))
          * This is in submap coordinates (see overmapbuffer for explanation).
