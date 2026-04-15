@@ -2945,7 +2945,8 @@
     "description": "Eating rotting, long-dead flesh is good for the struggle, and safe--if still completely unappealing--for you.",
     "prereqs": [ "POISRESIST" ],
     "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE", "THRESH_SERPENT" ],
-    "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ]
+    "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ],
+    "kcal_scale": 0.15
   },
   {
     "type": "mutation",
@@ -2991,13 +2992,14 @@
     "id": "EATHEALTH",
     "name": { "str": "Hyper-Metabolism" },
     "points": 15,
-    "description": "You metabolize nutrients so rapidly that you can convert food directly into useful tissue.  Excess nutrition will convert to HP, rather than being wasted.  Activate to skip prompt for overeating.",
+    "description": "You metabolize nutrients so rapidly that you can convert food directly into useful tissue.  Excess nutrition will convert to HP, rather than being wasted. You can also store more kcal. Activate to skip prompt for overeating.",
     "prereqs": [ "HUNGER3" ],
     "types": [ "METABOLISM" ],
     "threshreq": [ "THRESH_CHIMERA" ],
     "category": [ "CHIMERA" ],
     "valid": false,
-    "active": true
+    "active": true,
+    "kcal_scale": 0.3
   },
   {
     "type": "mutation",

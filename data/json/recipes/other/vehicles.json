@@ -2515,7 +2515,8 @@
     "skill_used": "mechanics",
     "difficulty": 9,
     "time": "4 h",
-    "autolearn": true,
+    "reversible": true,
+    "decomp_learn": 9,
     "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
     "components": [
       [ [ "amplifier", 2 ] ],
@@ -2540,7 +2541,8 @@
     "skill_used": "mechanics",
     "difficulty": 8,
     "time": "8 h",
-    "autolearn": true,
+    "reversible": true,
+    "decomp_learn": 8,
     "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
     "components": [
       [ [ "amplifier", 2 ] ],
@@ -2565,7 +2567,8 @@
     "skill_used": "mechanics",
     "difficulty": 9,
     "time": "8 h",
-    "autolearn": true,
+    "reversible": true,
+    "decomp_learn": 9,
     "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
     "components": [
       [ [ "amplifier", 2 ] ],
