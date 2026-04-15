@@ -3309,7 +3309,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 ll = ch.inbounds( {x, y} ) ? ch.visibility_cache[ch.idx( x, y )] : lit_level::BLANK;
                 const auto visibility = here.get_visibility( ll, cache );
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
-                    if( !would_apply_vision_effects( visibility ) ) {
+                    if( !would_apply_vision_effects( visibility ) && here.ter( pos ) != t_open_air ) {
                         last_vis = z;
                         last_vis_ll = ll;
                     } else if( !has_memory && z < center.z &&
