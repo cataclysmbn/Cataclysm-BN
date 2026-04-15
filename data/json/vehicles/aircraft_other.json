@@ -799,8 +799,8 @@
         "controls",
         "dashboard",
         "black_box",
-          "programmable_autopilot",
-          "tracker",
+        "programmable_autopilot",
+        "tracker",
         "roof",
         "wheel_mount_medium_steerable",
         "wheel"
