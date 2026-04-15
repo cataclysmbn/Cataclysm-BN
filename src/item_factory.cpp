@@ -1789,7 +1789,6 @@ void islot_ammo::load( const JsonObject &jo )
     assign( jo, "damage", damage );
     assign( jo, "range", range );
     assign( jo, "dispersion", dispersion );
-    assign( jo, "half_angle_modifier", half_angle );
     assign( jo, "recoil", recoil );
     optional( jo, was_loaded, "count", def_charges, 1 );
     optional( jo, was_loaded, "loudness", loudness, -1 );
