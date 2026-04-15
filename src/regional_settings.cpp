@@ -621,9 +621,6 @@ void load_region_settings( const JsonObject &jo )
             false );
 
     jo.read( "display_oter", new_region.display_oter );
-    jo.read( "generate_forests", new_region.generate_forests );
-    jo.read( "generate_lakes", new_region.generate_lakes );
-    jo.read( "generate_trails", new_region.generate_trails );
 
     region_settings_map[new_region.id] = new_region;
 }
@@ -780,9 +777,6 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
     load_region_terrain_and_furniture_settings( jo, region.region_terrain_and_furniture, false, true );
 
     jo.read( "display_oter", region.display_oter );
-    jo.read( "generate_forests", region.generate_forests );
-    jo.read( "generate_lakes", region.generate_lakes );
-    jo.read( "generate_trails", region.generate_trails );
 }
 
 void groundcover_extra::finalize()   // FIXME: return bool for failure

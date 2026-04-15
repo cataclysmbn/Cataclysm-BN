@@ -139,7 +139,7 @@ struct forest_mapgen_settings {
 };
 
 struct forest_trail_settings {
-    int chance = 1;
+    int chance = 0;
     int border_point_chance = 2;
     int minimum_forest_size = 50;
     int random_point_min = 4;
@@ -169,8 +169,8 @@ struct overmap_feature_flag_settings {
 };
 
 struct overmap_forest_settings {
-    double noise_threshold_forest = 0.25;
-    double noise_threshold_forest_thick = 0.3;
+    double noise_threshold_forest = 0.0;
+    double noise_threshold_forest_thick = 0.0;
     double noise_threshold_swamp_adjacent_water = 0.3;
     double noise_threshold_swamp_isolated = 0.6;
     int river_floodplain_buffer_distance_min = 3;
@@ -186,7 +186,7 @@ struct shore_extendable_overmap_terrain_alias {
 };
 
 struct overmap_lake_settings {
-    double noise_threshold_lake = 0.25;
+    double noise_threshold_lake = 0.0;
     int lake_size_min = 20;
     int lake_depth = -5;
     std::vector<std::string> unfinalized_shore_extendable_overmap_terrain;
@@ -245,10 +245,9 @@ struct regional_settings {
     oter_str_id display_oter;
     double river_scale = 1;
     // Set river_scale = 0.0 in JSON to disable river generation entirely.
-    // These flags disable their respective generation passes for this region.
-    bool generate_forests = true;
-    bool generate_lakes   = true;
-    bool generate_trails  = true;
+    // Set overmap_forest.noise_threshold_forest = 0.0 to disable forest generation.
+    // Set overmap_lake.noise_threshold_lake = 0.0 to disable lake generation.
+    // Set forest_trail.chance = 0 to disable trail generation.
     weighted_int_list<ter_id> default_groundcover; // i.e., 'grass_or_dirt'
     shared_ptr_fast<weighted_int_list<ter_str_id>> default_groundcover_str;
 

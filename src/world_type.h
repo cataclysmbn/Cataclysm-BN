@@ -44,8 +44,11 @@ struct world_type {
         bool allow_npc_travel = false;
         bool allow_vehicle_travel = false;
 
-        // Relative scale (informational + used by iuse_dimension_travel remapping)
-        float world_scale = 1.0f;
+        // Coordinate scale relative to the parent dimension.
+        // scale_num parent units = scale_den local units.
+        // e.g. scale_num=8, scale_den=1 → 1 tile here = 8 tiles in parent (Nether-like).
+        int scale_num = 1;
+        int scale_den = 1;
 
         // Per-dimension sunrise/sunset hour overrides (0–23). -1 means use world option default.
         // See calendar::dim_time_config for details.

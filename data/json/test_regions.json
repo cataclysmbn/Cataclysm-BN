@@ -17,9 +17,6 @@
     "default_oter": "field",
     "display_oter": "desert_field",
     "river_scale": 0.0,
-    "generate_forests": false,
-    "generate_lakes": false,
-    "generate_trails": false,
     "default_groundcover": [ [ "t_searth_test", 1 ] ],
     "region_terrain_and_furniture": {
       "terrain": {

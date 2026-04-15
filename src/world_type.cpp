@@ -40,7 +40,8 @@ void world_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "allow_npc_travel", allow_npc_travel, false );
     optional( jo, was_loaded, "allow_vehicle_travel", allow_vehicle_travel, false );
 
-    optional( jo, was_loaded, "world_scale", world_scale, 1.0f );
+    optional( jo, was_loaded, "scale_num", scale_num, 1 );
+    optional( jo, was_loaded, "scale_den", scale_den, 1 );
 
     optional( jo, was_loaded, "sunrise_summer",  sunrise_summer,  -1 );
     optional( jo, was_loaded, "sunrise_winter",  sunrise_winter,  -1 );

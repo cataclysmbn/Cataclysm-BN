@@ -3418,20 +3418,20 @@ void overmap::generate( const overmap *north, const overmap *east,
     populate_connections_out_from_neighbors( north, east, south, west );
 
     place_rivers( north, east, south, west );
-    if( settings->generate_lakes ) {
+    if( settings->overmap_lake.noise_threshold_lake > 0.0 ) {
         place_lakes();
     }
-    if( settings->generate_forests ) {
+    if( settings->overmap_forest.noise_threshold_forest > 0.0 ) {
         place_forests();
         place_swamps();
     }
     place_cities();
-    if( settings->generate_trails ) {
+    if( settings->forest_trail.chance > 0 ) {
         place_forest_trails();
     }
     place_roads( north, east, south, west );
     place_specials( enabled_specials );
-    if( settings->generate_trails ) {
+    if( settings->forest_trail.chance > 0 ) {
         place_forest_trailheads();
     }
 
