@@ -9667,7 +9667,6 @@ static void vehicle_caching_internal_above( level_cache &zch_above, const vpart_
     if( vp.has_feature( VPFLAG_ROOF ) || vp.has_feature( VPFLAG_OPAQUE ) ) {
         const tripoint &part_pos = v->global_part_pos3( vp.part() );
         const int tile_idx = zch_above.idx( part_pos.x, part_pos.y );
-        zch_above.floor_cache[tile_idx] = true;
         zch_above.vehicle_floor_cache[tile_idx] = true;
     }
 }
