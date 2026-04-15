@@ -4280,7 +4280,7 @@ int vehicle::safe_aircraft_velocity( const bool fueled, const bool ideal ) const
 {
     const double max_air_mps = std::sqrt( total_thrust( fueled,
                                           true, ideal ) / coeff_air_drag() );
-    return std::min( 10059, mps_to_cmps( max_air_mps ) );
+    return mps_to_cmps( max_air_mps );
 }
 
 // the same physics as max_water_velocity, but with a smaller engine power

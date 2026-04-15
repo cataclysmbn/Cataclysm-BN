@@ -309,8 +309,10 @@
             "multitile": true,
             "additional_tiles": [ { "id": "broken", "fg": 208 } ]
           },
-          { "id": "overlay_wielded_helmet_steel", "fg": 209 },
-          { "id": "overlay_worn_helmet_steel", "fg": 210 }
+          { "id": [ "helmet_steel", "overlay_wielded_helmet_steel" ], "fg": 209 },
+          { "id": "overlay_worn_helmet_steel", "fg": 210 },
+          { "id": [ "aerial_bomb", "overlay_wielded_aerial_bomb" ], "fg": 211 },
+          { "id": [ "aerial_bomb_armed", "overlay_wielded_aerial_bomb_armed" ], "fg": 212 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

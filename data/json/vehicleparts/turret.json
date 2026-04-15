@@ -1038,5 +1038,21 @@
       },
       "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 2 ] ] }
     }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_25mm_autocannon",
+    "looks_like": "mounted_m134",
+    "copy-from": "turret_tank",
+    "name": "25mm rotary cannon",
+    "item": "25mm_rotary_cannon",
+    "breaks_into": [ { "item": "steel_lump", "count": [ 15, 30 ] }, { "item": "steel_chunk", "count": [ 75, 150 ] } ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ], [ "launcher", 1 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ], [ "welding_standard", 10 ] ]
+      }
+    }
   }
 ]
