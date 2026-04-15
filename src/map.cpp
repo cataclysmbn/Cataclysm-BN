@@ -9815,6 +9815,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     if( seen_cache_dirty || player_prev_pos != p ) {
         build_seen_cache( p, zlev );
         player_prev_pos = p;
+        // seen_cache changed; any cached visibility derived from it is now stale.
+        get_cache( zlev ).visibility_cache_dirty = true;
     }
     if( !skip_lightmap ) {
         ZoneScopedN( "Phase4_lightmap" );

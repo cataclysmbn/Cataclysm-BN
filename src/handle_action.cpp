@@ -283,8 +283,6 @@ input_context game::get_player_input( std::string &action )
         ctxt = get_default_mode_input_context();
     }
 
-    m.update_visibility_cache( u.posz() );
-
     user_turn current_turn;
 
 
