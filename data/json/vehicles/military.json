@@ -889,8 +889,13 @@
       },
       {
         "x": -3,
-        "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+        "y": 1,
+        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
+      },
+      {
+        "x": -3,
+        "y": 0,
+        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
       },
       {
         "x": -3,
@@ -899,16 +904,31 @@
       },
       {
         "x": -3,
+        "y": 3,
+        "parts": [ "hdframe_se", "plating_military", "hdboard_vertical" ]
+      },
+      {
+        "x": -4,
+        "y": 3,
+        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+      },
+      {
+        "x": -4,
+        "y": 2,
+        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
+      },
+      {
+        "x": -4,
         "y": 1,
         "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
       },
       {
-        "x": -3,
+        "x": -4,
         "y": 0,
         "parts": [ "hdframe_horizontal", "muffler", "plating_military", "cargo_space" ]
       },
       {
-        "x": -3,
+        "x": -4,
         "y": -1,
         "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
       },
@@ -918,7 +938,7 @@
         "parts": [ "hdframe_cross", "hdroof", "hddoor_trunk", "plating_military" ]
       },
       {
-        "x": -4,
+        "x": -5,
         "y": 2,
         "part": "mounted_spare_tire"
       }
@@ -1056,8 +1076,13 @@
       },
       {
         "x": -3,
-        "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+        "y": 1,
+        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
+      },
+      {
+        "x": -3,
+        "y": 0,
+        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
       },
       {
         "x": -3,
@@ -1066,16 +1091,31 @@
       },
       {
         "x": -3,
+        "y": 3,
+        "parts": [ "hdframe_se", "plating_military", "hdboard_vertical" ]
+      },
+      {
+        "x": -4,
+        "y": 3,
+        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+      },
+      {
+        "x": -4,
+        "y": 2,
+        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
+      },
+      {
+        "x": -4,
         "y": 1,
         "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
       },
       {
-        "x": -3,
+        "x": -4,
         "y": 0,
         "parts": [ "hdframe_horizontal", "muffler", "plating_military", "cargo_space" ]
       },
       {
-        "x": -3,
+        "x": -4,
         "y": -1,
         "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
       },
@@ -1085,7 +1125,7 @@
         "parts": [ "hdframe_cross", "hdroof", "hddoor_trunk", "plating_military" ]
       },
       {
-        "x": -4,
+        "x": -5,
         "y": 2,
         "part": "mounted_spare_tire"
       }
@@ -1223,8 +1263,13 @@
       },
       {
         "x": -3,
-        "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+        "y": 1,
+        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
+      },
+      {
+        "x": -3,
+        "y": 0,
+        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
       },
       {
         "x": -3,
@@ -1233,16 +1278,31 @@
       },
       {
         "x": -3,
+        "y": 3,
+        "parts": [ "hdframe_se", "plating_military", "hdboard_vertical" ]
+      },
+      {
+        "x": -4,
+        "y": 3,
+        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+      },
+      {
+        "x": -4,
+        "y": 2,
+        "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
+      },
+      {
+        "x": -4,
         "y": 1,
         "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ]
       },
       {
-        "x": -3,
+        "x": -4,
         "y": 0,
         "parts": [ "hdframe_horizontal", "muffler", "plating_military", "cargo_space" ]
       },
       {
-        "x": -3,
+        "x": -4,
         "y": -1,
         "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
       },
@@ -1252,7 +1312,7 @@
         "parts": [ "hdframe_cross", "hdroof", "hddoor_trunk", "plating_military" ]
       },
       {
-        "x": -4,
+        "x": -5,
         "y": 2,
         "part": "mounted_spare_tire"
       }
