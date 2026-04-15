@@ -7681,8 +7681,7 @@
     "name": "IRS Auditor",
     "description": "After years of near-death encounters doing field work as a veteran special agent, nothing really fazes you anymore. You've been shot at, slashed at, swung on, and nearly run over while investigating tax fraud; this cataclysm is just a day in the life for you. With no one left to hold you accountable, taxes will be paid or capital punishment will be dispensed. You are inevitable.",
     "points": 6,
-    "traits": [ "PROF_IRS", "PSYCHOPATH" ],
-    "//": "No one works for the IRS and isn't some form of psychopath. The nice jewelry is a sign of their success at their job, and how untouchable they feel legally and physically. And it's still business-professional!",
+    "traits": [ "PROF_IRS" ],
     "skills": [
       { "level": 3, "name": "swimming" },
       { "level": 3, "name": "dodge" },

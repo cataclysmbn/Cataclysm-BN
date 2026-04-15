@@ -3343,7 +3343,7 @@
     "name": { "str": "IRS badge" },
     "description": "A shiny gold and blue shield marking the bearer as the most feared of Feds - an IRS Special Agent.",
     "material": [ "gold" ],
-    "price_postapoc": "50 USD",
+    "price_postapoc": "5 USD",
     "proportional": { "weight": 2 }
   }
 ]
