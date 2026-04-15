@@ -228,7 +228,12 @@ auto get_shot_half_angle( const item &gun ) -> double
         return 0.0;
     }
 
-    return shot_data->half_angle;
+    auto half_angle = shot_data->half_angle + gun.type->gun->half_angle;
+    for( const item *mod : gun.gunmods() ) {
+        half_angle += mod->type->gunmod->half_angle;
+    }
+
+    return std::max( 0.0, half_angle );
 }
 
 auto get_shot_target( const shot_target_options &options ) -> tripoint
@@ -4624,12 +4629,13 @@ std::optional<shape_factory> ranged::get_target_shape_factory( const item &gun )
     }
 
     const auto *const shot_data = get_shot_data( gun );
-    if( shot_data == nullptr || shot_data->count <= 1 || shot_data->half_angle <= 0.0 ) {
+    const auto shot_half_angle = get_shot_half_angle( gun );
+    if( shot_data == nullptr || shot_data->count <= 1 || shot_half_angle <= 0.0 ) {
         return {};
     }
 
     const auto preview_shape_impl = std::shared_ptr<shape_factory_impl>( std::make_shared<cone_factory>(
-                                        units::from_degrees( shot_data->half_angle ), gun.gun_range() ) );
+                                        units::from_degrees( shot_half_angle ), gun.gun_range() ) );
     const auto preview_shape = shape_factory( preview_shape_impl );
     return std::optional<shape_factory>( preview_shape );
 }

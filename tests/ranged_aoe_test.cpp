@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <sstream>
 #include <vector>
 
 #include "ballistics.h"
@@ -16,6 +17,7 @@
 #include "overmapbuffer.h"
 #include "game.h"
 #include "itype.h"
+#include "json.h"
 #include "rng.h"
 #include "skill.h"
 #include "state_helpers.h"
@@ -66,6 +68,23 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
 
     REQUIRE( shots_fired == 3 );
     return target_hp_total_before - target->get_hp();
+}
+
+static auto pellet_preview_half_angle( const item &gun ) -> int
+{
+    const auto preview_shape = ranged::get_target_shape_factory( gun );
+    REQUIRE( preview_shape.has_value() );
+
+    auto serialized = std::ostringstream {};
+    auto jsout = JsonOut( serialized );
+    preview_shape->serialize( jsout );
+
+    const auto key = std::string( "\"half_angle\":" );
+    const auto serialized_str = serialized.str();
+    const auto offset = serialized_str.find( key );
+    REQUIRE( offset != std::string::npos );
+
+    return std::stoi( serialized_str.substr( offset + key.size() ) );
 }
 
 static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
@@ -169,6 +188,42 @@ TEST_CASE( "birdshot pellets are much worse against armor", "[ranged][balance]" 
 
     CHECK( unarmored_damage > armored_damage );
     CHECK( unarmored_damage >= armored_damage * 2 );
+}
+
+TEST_CASE( "shotgun gunmods can change pellet spread preview", "[ranged][shotgun]" )
+{
+    clear_all_state();
+
+    auto baseline = item::spawn( itype_id( "shotgun_s" ) );
+    baseline->ammo_set( itype_id( "shot_bird" ) );
+    const auto baseline_half_angle = pellet_preview_half_angle( *baseline );
+
+    auto shortened = item::spawn( itype_id( "shotgun_s" ) );
+    shortened->ammo_set( itype_id( "shot_bird" ) );
+    auto shortened_barrel = item::spawn( itype_id( "barrel_small" ) );
+    REQUIRE( shortened->is_gunmod_compatible( *shortened_barrel ).success() );
+    shortened->put_in( std::move( shortened_barrel ) );
+
+    auto suppressed = item::spawn( itype_id( "shotgun_s" ) );
+    suppressed->ammo_set( itype_id( "shot_bird" ) );
+    auto suppressor = item::spawn( itype_id( "shot_suppressor" ) );
+    REQUIRE( suppressed->is_gunmod_compatible( *suppressor ).success() );
+    suppressed->put_in( std::move( suppressor ) );
+
+    CHECK( pellet_preview_half_angle( *shortened ) > baseline_half_angle );
+    CHECK( pellet_preview_half_angle( *suppressed ) < baseline_half_angle );
+}
+
+TEST_CASE( "shorter shotguns can widen pellet spread preview", "[ranged][shotgun]" )
+{
+    clear_all_state();
+
+    auto field = item::spawn( itype_id( "mossberg_500" ) );
+    field->ammo_set( itype_id( "shot_00" ) );
+    auto security = item::spawn( itype_id( "mossberg_500_security" ) );
+    security->ammo_set( itype_id( "shot_00" ) );
+
+    CHECK( pellet_preview_half_angle( *security ) > pellet_preview_half_angle( *field ) );
 }
 
 TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",

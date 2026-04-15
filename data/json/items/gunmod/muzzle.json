@@ -157,6 +157,7 @@
     "color": "dark_gray",
     "location": "muzzle",
     "mod_target_category": [ [ "SHOTGUNS" ] ],
+    "half_angle_modifier": -2,
     "handling_modifier": -5,
     "loudness_modifier": -75
   },
@@ -177,6 +178,7 @@
     "color": "dark_gray",
     "location": "muzzle",
     "mod_target_category": [ [ "SHOTGUNS" ] ],
+    "half_angle_modifier": -1,
     "consume_chance": 20,
     "consume_divisor": 110,
     "dispersion_modifier": 75,

@@ -1789,6 +1789,7 @@ void islot_ammo::load( const JsonObject &jo )
     assign( jo, "damage", damage );
     assign( jo, "range", range );
     assign( jo, "dispersion", dispersion );
+    assign( jo, "half_angle_modifier", half_angle );
     assign( jo, "recoil", recoil );
     optional( jo, was_loaded, "count", def_charges, 1 );
     optional( jo, was_loaded, "loudness", loudness, -1 );
@@ -1911,6 +1912,7 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
     // Damage instance assign reader handles pierce
     assign( jo, "ranged_damage", slot.damage, strict, damage_instance( DT_NULL, -20, -20, -20, -20 ) );
     assign( jo, "dispersion", slot.dispersion, strict );
+    assign( jo, "half_angle_modifier", slot.half_angle );
     assign( jo, "sight_dispersion", slot.sight_dispersion, strict, 0, static_cast<int>( MAX_RECOIL ) );
     assign( jo, "recoil", slot.recoil, strict, 0 );
     assign( jo, "handling", slot.handling, strict );
@@ -2433,6 +2435,7 @@ void Item_factory::load( islot_gunmod &slot, const JsonObject &jo, const std::st
     assign( jo, "loudness_modifier", slot.loudness );
     assign( jo, "location", slot.location );
     assign( jo, "dispersion_modifier", slot.dispersion );
+    assign( jo, "half_angle_modifier", slot.half_angle );
     assign( jo, "sight_dispersion", slot.sight_dispersion );
     assign( jo, "aim_speed", slot.aim_speed, strict, -1 );
     assign( jo, "handling_modifier", slot.handling, strict );
