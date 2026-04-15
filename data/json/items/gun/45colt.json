@@ -79,6 +79,7 @@
     "price": "641 USD",
     "price_postapoc": "25 USD",
     "bashing": 12,
+    "half_angle_modifier": 2,
     "material": [ "steel", "plastic" ],
     "color": "light_gray",
     "weight": "2070 g",

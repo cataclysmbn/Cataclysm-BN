@@ -448,6 +448,10 @@ struct common_ranged_data {
      */
     int dispersion = 0;
     /**
+     * Relative adjustment to ammo shot.half_angle in degrees.
+     */
+    double half_angle = 0.0;
+    /**
     * Bonus to the maximum potential multiplier for aimed critical damage.
     * Additive to the aimed critical damage mult maximum. A bonus of 1 is a potential +100% damage.
     * Does not add damage directly, skills stats or aimed crit bonus is required to take advantage.
