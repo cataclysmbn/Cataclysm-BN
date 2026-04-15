@@ -1237,16 +1237,12 @@
           "seat",
           "seatbelt",
           "turret_mount",
-          { "part": "mounted_25mm_autocannon",
-          "ammo": 80,
-          "ammo_types": [
-            "25mm_apds",
-            "25mm_hei"
-          ],
-          "ammo_qty": [
-            10,
-            50
-          ] },
+          {
+            "part": "mounted_25mm_autocannon",
+            "ammo": 80,
+            "ammo_types": [ "25mm_apds", "25mm_hei" ],
+            "ammo_qty": [ 10, 50 ]
+          },
           "metal_boat_hull"
         ]
       },
