@@ -25,6 +25,7 @@
 #include "pimpl.h"
 #include "player_helpers.h"
 #include "point.h"
+#include "reality_bubble_helpers.h"
 #include "state_helpers.h"
 #include "text_snippets.h"
 #include "type_id.h"
@@ -181,6 +182,14 @@ TEST_CASE( "on_load-similar-to-per-turn", "[.]" )
 
         test_needs( on_load_npc, hunger, thirst, fatigue );
     }
+}
+
+TEST_CASE( "npc_reality_bubble_resize_preserves_zlevel", "[.]" )
+{
+    CHECK( reality_bubble::local_square_from_global( tripoint( 60, 61, 1 ),
+            tripoint( 12, 12, 1 ) ) == tripoint( 48, 49, 1 ) );
+    CHECK( reality_bubble::local_square_from_global( tripoint( 60, 61, -1 ),
+            tripoint( 12, 12, -1 ) ) == tripoint( 48, 49, -1 ) );
 }
 
 TEST_CASE( "snippet-tag-test" )
