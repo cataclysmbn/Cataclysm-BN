@@ -7125,14 +7125,44 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
 
     // Travel to the destination world type.
     // NPCs and vehicles do not travel between dimensions.
-    // When leaving a bounded pocket, use the saved origin position so the
-    // destination loads at the player's original overworld coordinates.
     std::optional<tripoint_abs_sm> load_pos;
-    if( const dimension_info *info = g->get_current_dimension_info() ) {
-        if( info->bounds.has_value() ) {
-            load_pos = info->origin_pos;
+
+    if( const dimension_info *info = g->get_current_dimension_info();
+        info && info->bounds.has_value() ) {
+        // Bounded pocket: restore the saved overworld origin position.
+        load_pos = info->origin_pos;
+    } else {
+        // Scaled dimension: remap player coordinates through the overworld ("") as the
+        // common reference frame.  scale_num:scale_den describes each dimension relative
+        // to a 1:1 overworld baseline, so the two-step conversion is:
+        //   current → overworld: pos * src_num / src_den
+        //   overworld → target:  pos * dst_den / dst_num
+        // Combined:              pos * src_num * dst_den / (src_den * dst_num)
+        int src_num = 1;
+        int src_den = 1;
+        if( const dimension_info *info = g->get_current_dimension_info();
+            info && info->world_type.is_valid() ) {
+            src_num = info->world_type.obj().scale_num;
+            src_den = info->world_type.obj().scale_den;
+        }
+        const int dst_num = destination.obj().scale_num;
+        const int dst_den = destination.obj().scale_den;
+
+        // Only set load_pos when at least one side has a non-trivial scale.
+        // Cross-multiply to compare ratios without floating point.
+        if( src_num * dst_den != src_den * dst_num ) {
+            const tripoint_abs_omt current_omt = u.global_omt_location();
+            const tripoint_abs_omt target_omt(
+                current_omt.x() * src_num * dst_den / ( src_den * dst_num ),
+                current_omt.y() * src_num * dst_den / ( src_den * dst_num ),
+                current_omt.z()
+            );
+            const tripoint_abs_sm target_sm = project_to<coords::sm>( target_omt );
+            load_pos = tripoint_abs_sm(
+                           target_sm.raw() - tripoint( g_half_mapsize, g_half_mapsize, 0 ) );
         }
     }
+
     g->travel_to_dimension( target_dim_id, destination, std::nullopt, load_pos );
 }
 
