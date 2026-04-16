@@ -9,6 +9,7 @@
 #include "avatar.h"
 #include "distribution_grid.h"
 #include "game.h"
+#include "iexamine.h"
 #include "lightmap.h"
 #include "map.h"
 #include "catalua_log.h"
@@ -16,6 +17,7 @@
 #include "npc.h"
 #include "monster.h"
 #include "overmapbuffer.h"
+#include "weather.h"
 #include "line.h"
 #include "lua_action_menu.h"
 
@@ -267,6 +269,11 @@ void cata::detail::reg_game_api( sol::state &lua )
 
     DOC( "Get the global overmap buffer" );
     luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return get_active_overmapbuffer(); } );
+    DOC( "Run a built-in examine action at a position." );
+    luna::set_fx( lib, "call_builtin_examine",
+    []( const std::string & examine_id, player & who, const tripoint & pos ) -> void {
+        iexamine_function_from_string( examine_id )( who, pos );
+    } );
 
     DOC( "Get direction from a tripoint delta" );
     luna::set_fx( lib, "direction_from", []( const tripoint & delta ) -> direction { return direction_from( delta ); } );

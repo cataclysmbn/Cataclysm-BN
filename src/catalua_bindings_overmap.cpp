@@ -14,6 +14,7 @@
 #include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "enums.h"
+#include "fluid_grid.h"
 #include "mongroup.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
@@ -250,6 +251,40 @@ void cata::detail::reg_overmap( sol::state &lua )
     luna::set_fx( lib, "remove_grid_connection",
     []( const tripoint & lhs, const tripoint & rhs ) -> bool {
         return get_active_overmapbuffer().remove_grid_connection( tripoint_abs_omt( lhs ), tripoint_abs_omt( rhs ) );
+    } );
+
+    DOC( "Get all overmap tiles belonging to the fluid grid at the given position. Returns vector of tripoints." );
+    luna::set_fx( lib, "fluid_grid_at",
+    []( const tripoint & p ) -> std::vector<tripoint> {
+        return fluid_grid::grid_at( tripoint_abs_omt( p ) )
+        | std::views::transform( []( const auto & pt ) { return pt.raw(); } )
+        | std::ranges::to<std::vector<tripoint>>();
+    } );
+
+    DOC( "Get all fluid grid connections from the given position. Returns vector of relative tripoint offsets." );
+    luna::set_fx( lib, "fluid_grid_connectivity_at",
+    []( const tripoint & p ) -> std::vector<tripoint> {
+        return fluid_grid::grid_connectivity_at( tripoint_abs_omt( p ) )
+        | std::views::transform( []( const auto & pt ) { return pt.raw(); } )
+        | std::ranges::to<std::vector<tripoint>>();
+    } );
+
+    DOC( "Get the available charges of a liquid in the fluid grid at the given position." );
+    luna::set_fx( lib, "fluid_grid_liquid_charges_at",
+    []( const tripoint & p, const itype_id & liquid_type ) -> int {
+        return fluid_grid::liquid_charges_at( tripoint_abs_omt( p ), liquid_type );
+    } );
+
+    DOC( "Drain liquid charges from the fluid grid at the given position. Returns the number removed." );
+    luna::set_fx( lib, "drain_fluid_grid_liquid_charges",
+    []( const tripoint & p, const itype_id & liquid_type, int charges ) -> int {
+        return fluid_grid::drain_liquid_charges( tripoint_abs_omt( p ), liquid_type, charges );
+    } );
+
+    DOC( "Check whether adding a liquid would contaminate the fluid grid at the given position." );
+    luna::set_fx( lib, "fluid_grid_would_contaminate",
+    []( const tripoint & p, const itype_id & liquid_type ) -> bool {
+        return fluid_grid::would_contaminate( tripoint_abs_omt( p ), liquid_type );
     } );
 
     // Horde and monster group methods

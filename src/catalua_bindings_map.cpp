@@ -20,6 +20,7 @@
 #include "type_id.h"
 #include "units_angle.h"
 #include "vehicle.h"
+#include "weather.h"
 
 #include <cmath>
 
@@ -312,6 +313,11 @@ void cata::detail::reg_map( sol::state &lua )
         DOC( "In map squares" );
         luna::set_fx( ut, "get_map_size", []( const map & m ) -> int { return m.getmapsize() * SEEX; } );
         luna::set_fx( ut, "ambient_light_at", &map::ambient_light_at );
+        DOC( "Get the local ambient temperature in degrees Celsius at a map-square position." );
+        luna::set_fx( ut, "get_temperature_c",
+        []( const map &, const tripoint & p ) -> double {
+            return units::to_celsius<double>( get_weather().get_temperature( p ) );
+        } );
 
         DOC( "Forcibly places an npc using a template at a position on the map. Returns the npc." );
         luna::set_fx( ut, "place_npc", []( map & m, point p, std::string id_str ) -> npc * {

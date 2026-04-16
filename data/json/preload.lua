@@ -9,6 +9,8 @@ game.iuse_functions["VOLTMETER"] = function(...) return mod.voltmeter.menu(...) 
 game.iuse_functions["sonar_scan"] = function(...) return mod.sonar_scan(...) end
 game.iuse_functions["ARTIFACT_ANALYZER"] = function(...) return mod.artifact_analyzer.menu(...) end
 game.mapgen_functions["slimepit"] = function(...) return mod.slimepit.draw(...) end
+game.examine_functions["PLUMBING_FIXTURE_EXAMINE"] = function(...) return mod.plumbing.examine(...) end
+game.activity_functions["PLUMBING_FINISH_WASH"] = function(...) return mod.plumbing.finish_wash(...) end
 
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...)
   if mod.on_nyctophobia_tick then mod.on_nyctophobia_tick(...) end

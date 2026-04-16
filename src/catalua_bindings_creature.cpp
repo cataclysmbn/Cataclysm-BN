@@ -1,9 +1,13 @@
 #include "catalua_bindings.h"
 
+#include <climits>
+#include <iterator>
+
 #include "activity_type.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "calendar.h"
 #include "catalua.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_impl.h"
@@ -31,6 +35,7 @@
 #include "mutation.h"
 #include "npc.h"
 #include "player.h"
+#include "player_activity.h"
 #include "pldata.h"
 #include "recipe.h"
 #include "requirements.h"
@@ -38,8 +43,99 @@
 #include "type_id.h"
 #include "trap.h"
 
+LUNA_VAL( player_activity, "PlayerActivity" )
+
+namespace
+{
+
+template<typename T>
+auto table_to_vector( const sol::optional<sol::table> &maybe_table ) -> std::vector<T>
+{
+    if( !maybe_table ) {
+        return {};
+    }
+
+    const auto table = *maybe_table;
+    auto result = std::vector<T> {};
+    result.reserve( table.size() );
+    for( size_t i = 1; i <= table.size(); ++i ) {
+        result.push_back( table.get<T>( i ) );
+    }
+    return result;
+}
+
+auto to_std_optional( const sol::optional<tripoint> &value ) -> std::optional<tripoint>
+{
+    if( !value ) {
+        return std::nullopt;
+    }
+    return *value;
+}
+
+struct lua_activity_options {
+    activity_id activity;
+    time_duration duration;
+    std::string callback;
+    std::optional<tripoint> position;
+    std::string name;
+    bool interruptable = true;
+    std::vector<int> values;
+    std::vector<std::string> str_values;
+    std::vector<tripoint> coords;
+};
+
+auto parse_lua_activity_options( const sol::table &opts ) -> lua_activity_options
+{
+    auto result = lua_activity_options{
+        .activity = opts.get<activity_id>( "activity" ),
+        .duration = opts.get<time_duration>( "duration" ),
+        .callback = opts.get<std::string>( "callback" ),
+        .position = to_std_optional( opts.get<sol::optional<tripoint>>( "position" ) ),
+        .name = opts.get_or<std::string>( "name", "" ),
+        .interruptable = opts.get<sol::optional<bool>>( "interruptable" ).value_or( true ),
+                .values = table_to_vector<int>( opts.get<sol::optional<sol::table>>( "values" ) ),
+                .str_values = table_to_vector<std::string>( opts.get<sol::optional<sol::table>>( "str_values" ) ),
+                .coords = table_to_vector<tripoint>( opts.get<sol::optional<sol::table>>( "coords" ) ),
+    };
+    return result;
+}
+
+auto make_lua_activity( const lua_activity_options &opts ) -> std::unique_ptr<player_activity>
+{
+    auto act = std::make_unique<player_activity>( opts.activity, to_moves<int>( opts.duration ), -1,
+               INT_MIN, opts.name );
+    act->interruptable_with_kb = opts.interruptable;
+    act->str_values.push_back( opts.callback );
+    std::ranges::copy( opts.values, std::back_inserter( act->values ) );
+    std::ranges::copy( opts.str_values, std::back_inserter( act->str_values ) );
+    if( opts.position ) {
+        act->placement = *opts.position;
+        act->coords.push_back( *opts.position );
+    }
+    std::ranges::copy( opts.coords, std::back_inserter( act->coords ) );
+    return act;
+}
+
+auto reg_player_activity( sol::state &lua ) -> void
+{
+    auto ut = luna::new_usertype<player_activity>( lua, luna::no_bases, luna::no_constructor );
+    luna::set( ut, "moves_total", &player_activity::moves_total );
+    luna::set( ut, "moves_left", &player_activity::moves_left );
+    luna::set( ut, "name", &player_activity::name );
+    luna::set( ut, "values", &player_activity::values );
+    luna::set( ut, "str_values", &player_activity::str_values );
+    luna::set( ut, "coords", &player_activity::coords );
+    luna::set_fx( ut, "id", []( const player_activity & act ) -> activity_id { return act.id(); } );
+    luna::set_fx( ut, "id_str", []( const player_activity & act ) -> std::string {
+        return act.id().str();
+    } );
+}
+
+} // namespace
+
 void cata::detail::reg_creature_family( sol::state &lua )
 {
+    reg_player_activity( lua );
     reg_creature( lua );
     reg_monster( lua );
     reg_character( lua );
@@ -923,6 +1019,14 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( assign_activity,
                   void( const activity_id &, int, int, int, const std::string & ) );
+
+        luna::set_fx( ut, "assign_lua_activity", []( UT_CLASS & c, const sol::table & opts ) -> void {
+            c.assign_activity( make_lua_activity( parse_lua_activity_options( opts ) ) );
+        } );
+
+        luna::set_fx( ut, "get_activity", []( UT_CLASS & c ) -> player_activity * {
+            return c.activity.get();
+        } );
 
         SET_FX_T( has_activity, bool( const activity_id & type ) const );
 

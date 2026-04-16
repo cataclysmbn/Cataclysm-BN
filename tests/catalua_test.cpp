@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "catacharset.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_impl.h"
 #include "catalua_serde.h"
@@ -88,6 +89,27 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_monster_avatar_name == "nil" );
     REQUIRE( lua_character_avatar_name == expected_name );
     REQUIRE( lua_npc_avatar_name == "nil" );
+}
+
+TEST_CASE( "lua_activity_bindings", "[lua]" )
+{
+    auto wrapped_state = cata::make_wrapped_state();
+    cata::init_global_state_tables( *wrapped_state, {} );
+    sol::state &lua = wrapped_state->lua;
+
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "activity_binding_test.lua" );
+
+    REQUIRE( test_data.get<bool>( "has_examine_functions" ) );
+    REQUIRE( test_data.get<bool>( "has_activity_functions" ) );
+    REQUIRE( test_data.get<std::string>( "activity_id" ) == "ACT_WASH_SELF" );
+    REQUIRE( test_data.get<std::string>( "activity_name" ) == "test wash" );
+    REQUIRE( test_data.get<std::string>( "activity_callback" ) == "TEST_CALLBACK" );
+    REQUIRE( test_data.get<std::string>( "activity_str_value" ) == "extra" );
+    CHECK_TUPLE( test_data["activity_value"] == 7 );
+    REQUIRE( test_data.get<std::string>( "activity_coord" ) == "(9,8,0)" );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )
