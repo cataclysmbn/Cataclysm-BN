@@ -2,6 +2,8 @@
 #include "activity_speed_adapters.h"
 
 #include <algorithm>
+#include <cmath>
+#include <numbers>
 #include <optional>
 #include <utility>
 #include <variant>
@@ -398,15 +400,18 @@ void activity_speed::calc_morale_factor( const Character &who )
         return;
     }
 
-    //1% per 4 extra morale
-    if( morale > 20 ) {
-        morale = 0.95f + p_morale / 400.0f;
+    if( p_morale > 20 ) {
+        // 1% per 4 morale above threshold
+        morale = limit_factor( 0.95f + p_morale / 400.0f );
+    } else if( p_morale < -20 ) {
+        // Logarithmic penalty: early drops hurt more than deeper ones
+        // -20 = no penalty, -200 = 0.25x floor
+        const float effective = std::clamp( ( -p_morale - 20 ) / 180.0f, 0.0f, 1.0f );
+        const float log_penalty = std::log( 1.0f + effective * static_cast<float>( std::numbers::e - 1.0 ) );
+        morale = limit_factor( 1.0f - 0.75f * log_penalty );
+    } else {
+        morale = 1.0f;
     }
-    // 1% per 1 insuff morale
-    else if( morale < -20 ) {
-        morale = 1.20f + p_morale / 100.0f;
-    }
-    morale = 1.0f;
 }
 
 void activity_speed::calc_morale_factor( const Character &who,
