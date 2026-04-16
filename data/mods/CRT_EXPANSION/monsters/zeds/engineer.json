@@ -27,19 +27,12 @@
     "vision_day": 25,
     "vision_night": 3,
     "harvest": "zombie_maybe_survivalist_bionics",
-    "starting_ammo": {
-      "bot_crt_manhack": 5
-    },
+    "starting_ammo": { "bot_crt_manhack": 5 },
     "special_attacks": [
       {
         "type": "deployer",
         "deployables": {
-          "bot_crt_manhack": {
-            "message": "We do not wish to kill you, stop your attacks",
-            "chance": 1,
-            "ammo_percentage": 1.0,
-            "range": 10,
-          },
+          "bot_crt_manhack": { "message": "We do not wish to kill you, stop your attacks", "chance": 1, "ammo_percentage": 1.0, "range": 10 }
         },
         "cooldown": 10
       }
@@ -88,36 +81,11 @@
       {
         "type": "deployer",
         "deployables": {
-          "bot_crt_manhack": {
-            "message": "We do not wish to kill you, stop your attacks",
-            "chance": 1,
-            "ammo_percentage": 1.0,
-            "range": 10,
-          },
-          "bot_crt_flamehack": {
-            "message": "We do not wish to kill you, stop your attacks",
-            "chance": 1,
-            "ammo_percentage": 1.0,
-            "range": 10,
-          },
-          "bot_sun_turret_light": {
-            "message": "Access stabilized, annialation imminent",
-            "chance": 1,
-            "ammo_percentage": 0.40,
-            "range": 10,
-          },
-          "bot_crt_electrohack": {
-            "message": "Warning: lethal electrical shock immient",
-            "chance": 1,
-            "ammo_percentage": 0.24,
-            "range": 10,
-          },
-          "bot_crt_hydrogen_hack": {
-            "message": "If we must.",
-            "chance": 1,
-            "ammo_percentage": 0.08,
-            "range": 10,
-          },
+          "bot_crt_manhack": { "message": "We do not wish to kill you, stop your attacks", "chance": 1, "ammo_percentage": 1.0, "range": 10 },
+          "bot_crt_flamehack": { "message": "We do not wish to kill you, stop your attacks", "chance": 1, "ammo_percentage": 1.0, "range": 10 },
+          "bot_sun_turret_light": { "message": "Access stabilized, annialation imminent", "chance": 1, "ammo_percentage": 0.4, "range": 10 },
+          "bot_crt_electrohack": { "message": "Warning: lethal electrical shock immient", "chance": 1, "ammo_percentage": 0.24, "range": 10 },
+          "bot_crt_hydrogen_hack": { "message": "If we must.", "chance": 1, "ammo_percentage": 0.08, "range": 10 }
         },
         "cooldown": 10
       }

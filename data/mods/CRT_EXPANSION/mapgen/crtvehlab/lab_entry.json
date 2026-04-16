@@ -43,9 +43,7 @@
         "X+XXXXXXXXXXXXXXXXXXXX+X"
       ],
       "palettes": [ "crt_universe" ],
-      "place_nested": [
-        { "chunks": [ "crt_lab_veh_entry_dorm" ], "x": 2, "y": 16 },
-      ],
+      "place_nested": [ { "chunks": [ "crt_lab_veh_entry_dorm" ], "x": 2, "y": 16 } ],
       "items": {
         "q": {
           "item": {
@@ -59,8 +57,8 @@
           },
           "chance": 70,
           "repeat": 2
-        },
-      },
+        }
+      }
     }
   },
   {
@@ -90,8 +88,7 @@
         { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 9, "y": 0 },
         { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 9, "y": 5 },
         { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 13, "y": 0 },
-        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 13, "y": 5 },
-        
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 13, "y": 5 }
       ]
     }
   },
@@ -126,7 +123,7 @@
         "X                      X",
         "X                      X",
         "Q                      Q",
-        "XZZZZZZZZZZZZZZZZZZZZZZX",
+        "XZZZZZZZZZZZZZZZZZZZZZZX"
       ],
       "palettes": [ "crt_universe" ]
     }
@@ -136,8 +133,6 @@
     "method": "json",
     "om_terrain": [ "crt_lab_veh_entry_center" ],
     "weight": 100,
-    "object": {
-      "fill_ter": "t_strconc_floor"
-    }
-  },
+    "object": { "fill_ter": "t_strconc_floor" }
+  }
 ]

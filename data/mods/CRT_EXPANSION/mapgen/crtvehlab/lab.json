@@ -19,7 +19,6 @@
       { "point": [ 3, 1, 1 ], "overmap": "crt_lab_veh_roof_runway_edge_west" },
       { "point": [ 3, 2, 1 ], "overmap": "crt_lab_veh_roof_runway_edge_east" },
       { "point": [ 3, 3, 1 ], "overmap": "crt_lab_veh_roof_corner_west" },
-      
       { "point": [ 0, 0, 0 ], "overmap": "crt_lab_veh_entry_elevator_north" },
       { "point": [ 0, 1, 0 ], "overmap": "crt_lab_veh_entry_garage_north" },
       { "point": [ 0, 2, 0 ], "overmap": "crt_lab_veh_entry_garage_north" },
@@ -36,7 +35,6 @@
       { "point": [ 3, 1, 0 ], "overmap": "crt_lab_veh_entry_garage_south" },
       { "point": [ 3, 2, 0 ], "overmap": "crt_lab_veh_entry_garage_south" },
       { "point": [ 3, 3, 0 ], "overmap": "crt_lab_veh_entry_elevator_south" },
-
       { "point": [ 0, 0, -1 ], "overmap": "crt_lab_veh_main_elevator_north" },
       { "point": [ 0, 1, -1 ], "overmap": "crt_lab_veh_main_north" },
       { "point": [ 0, 2, -1 ], "overmap": "crt_lab_veh_main_north" },
@@ -53,7 +51,6 @@
       { "point": [ 3, 1, -1 ], "overmap": "crt_lab_veh_main_north" },
       { "point": [ 3, 2, -1 ], "overmap": "crt_lab_veh_main_north" },
       { "point": [ 3, 3, -1 ], "overmap": "crt_lab_veh_main_elevator_north" },
-
       { "point": [ 0, 0, -2 ], "overmap": "crt_lab_veh_main_elevator_north" },
       { "point": [ 0, 1, -2 ], "overmap": "crt_lab_veh_main_north" },
       { "point": [ 0, 2, -2 ], "overmap": "crt_lab_veh_main_north" },
@@ -69,7 +66,7 @@
       { "point": [ 3, 0, -2 ], "overmap": "crt_lab_veh_main_elevator_north" },
       { "point": [ 3, 1, -2 ], "overmap": "crt_lab_veh_main_north" },
       { "point": [ 3, 2, -2 ], "overmap": "crt_lab_veh_main_north" },
-      { "point": [ 3, 3, -2 ], "overmap": "crt_lab_veh_main_elevator_north" },
+      { "point": [ 3, 3, -2 ], "overmap": "crt_lab_veh_main_elevator_north" }
     ],
     "locations": [ "forest", "swamp" ],
     "city_distance": [ 10, -1 ],

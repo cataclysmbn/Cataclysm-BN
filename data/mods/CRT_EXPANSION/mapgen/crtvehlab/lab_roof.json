@@ -40,12 +40,12 @@
         "         yy     yy      ",
         "                        ",
         "                        ",
-        "                        ",
+        "                        "
       ],
       "palettes": [ "crt_universe" ],
       "place_vehicles": [
         { "vehicle": "crt_medium_heliblimp", "x": 6, "y": 6, "chance": 50, "rotation": 180, "status": 0 },
-        { "vehicle": "crt_medium_heliblimp", "x": 6, "y": 16, "chance": 50, "rotation": 180, "status": 0 },
+        { "vehicle": "crt_medium_heliblimp", "x": 6, "y": 16, "chance": 50, "rotation": 180, "status": 0 }
       ]
     }
   },
@@ -80,7 +80,7 @@
         "I                       ",
         "I                       ",
         "I                       ",
-        "I                       ",
+        "I                       "
       ],
       "palettes": [ "crt_universe" ]
     }
@@ -116,7 +116,7 @@
         " yy                     ",
         " yy                     ",
         "                        ",
-        "                        ",
+        "                        "
       ],
       "palettes": [ "crt_universe" ],
       "place_vehicles": [ { "vehicle": "crt_medium_plane", "x": 12, "y": 8, "chance": 25, "rotation": 270, "status": 0 } ]
@@ -153,10 +153,10 @@
         " yy                     ",
         " yy                     ",
         " yy                     ",
-        " yy                     ",
+        " yy                     "
       ],
       "palettes": [ "crt_universe" ],
       "place_vehicles": [ { "vehicle": "crt_medium_plane", "x": 12, "y": 8, "chance": 25, "rotation": 90, "status": 0 } ]
     }
-  },
+  }
 ]

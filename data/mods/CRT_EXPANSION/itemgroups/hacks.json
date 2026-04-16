@@ -5,16 +5,24 @@
     "subtype": "collection",
     "//": "Gives basic materials used to make manhacks",
     "items": [
-      { "distribution": [
-        { "item": "processor", "prob": 15 },
-        { "item": "RAM", "prob": 22 },
-        { "item": "power_supply", "prob": 16 },
-        { "item": "amplifier", "prob": 8 },
-        { "item": "transponder", "prob": 5 },
-        { "item": "receiver", "prob": 10 },
-        { "item": "antenna", "prob": 18 },
-      ], "prob": 100 },
-      { "item": "c_hydrogen_gas", "charges": [ 10, 100 ], "container-item": "crt_compressed_gas_tank_item", "prob": 50 },
+      {
+        "distribution": [
+          { "item": "processor", "prob": 15 },
+          { "item": "RAM", "prob": 22 },
+          { "item": "power_supply", "prob": 16 },
+          { "item": "amplifier", "prob": 8 },
+          { "item": "transponder", "prob": 5 },
+          { "item": "receiver", "prob": 10 },
+          { "item": "antenna", "prob": 18 }
+        ],
+        "prob": 100
+      },
+      {
+        "item": "c_hydrogen_gas",
+        "charges": [ 10, 100 ],
+        "container-item": "crt_compressed_gas_tank_item",
+        "prob": 50
+      },
       { "item": "carbon_fiber_filament", "count": [ 1, 10 ], "prob": 75 }
     ]
   },

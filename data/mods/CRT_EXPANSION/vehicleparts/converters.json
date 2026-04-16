@@ -13,33 +13,16 @@
     "location": "fuel_source",
     "symbol": "O",
     "broken_color": "red",
-    "converter": {
-      "output": "c_hydrogen_gas",
-      "output_step": 1,
-      "max_steps": 2,
-      "charge_cost": 111
-    },
+    "converter": { "output": "c_hydrogen_gas", "output_step": 1, "max_steps": 2, "charge_cost": 111 },
     "flags": [ "CONVERTER" ],
     "requirements": {
-      "install": {
-        "skills": [ [ "mechanics", 5 ] ],
-        "time": "60 m",
-        "using": [ [ "vehicle_bolt", 1 ] ]
-      },
-      "removal": {
-        "skills": [ [ "mechanics", 3 ] ],
-        "time": "30 m",
-        "using": [ [ "vehicle_bolt", 1 ] ]
-      },
+      "install": { "skills": [ [ "mechanics", 5 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": {
         "skills": [ [ "mechanics", 6 ] ],
         "time": "60 m",
-        "using": [
-          [ "welding_standard", 5 ],
-          [ "vehicle_repair_electronics", 5 ]
-        ]
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 5 ] ]
       }
     }
   }
 ]
-

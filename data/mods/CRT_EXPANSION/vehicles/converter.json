@@ -13,12 +13,7 @@
         "vp_plut_generator",
         { "part": "crt_compressed_gas_tank", "fuel": "c_hydrogen_gas" }
       ],
-      "S": [
-        "frame_carbon_vertical",
-        "controls",
-        "battery_motorbike_small",
-        "crt_hydrogen_converter"
-      ]
+      "S": [ "frame_carbon_vertical", "controls", "battery_motorbike_small", "crt_hydrogen_converter" ]
     }
   },
   {
@@ -34,13 +29,7 @@
         "wheel_small",
         { "part": "crt_compressed_gas_tank", "fuel": "c_hydrogen_gas" }
       ],
-      "S": [
-        "frame_carbon_vertical",
-        "controls",
-        "battery_motorbike_small",
-        "crt_hydro_engine_small",
-        "alternator_motorbike"
-      ]
+      "S": [ "frame_carbon_vertical", "controls", "battery_motorbike_small", "crt_hydro_engine_small", "alternator_motorbike" ]
     }
-  },
+  }
 ]

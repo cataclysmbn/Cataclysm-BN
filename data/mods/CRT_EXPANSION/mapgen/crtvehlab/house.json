@@ -31,13 +31,8 @@
         "=~~~~~~=",
         "========"
       ],
-      "terrain": {
-        "=": "t_linoleum_gray",
-        "~": "t_water_pool"
-      },
-      "items": {
-        "=": { "item": "pool_side", "chance": 10 }
-      }
+      "terrain": { "=": "t_linoleum_gray", "~": "t_water_pool" },
+      "items": { "=": { "item": "pool_side", "chance": 10 } }
     }
   },
   {
@@ -61,9 +56,7 @@
         "=": "t_linoleum_gray",
         "~": "t_water_sh"
       },
-      "furniture": {
-        "C": "f_armchair"
-      }
+      "furniture": { "C": "f_armchair" }
     }
   },
   {
@@ -82,18 +75,13 @@
         "P       ",
         "T       "
       ],
-      "furniture": {
-        "T": "f_utility_shelf",
-        "P": "f_utility_shelf"
-      },
+      "furniture": { "T": "f_utility_shelf", "P": "f_utility_shelf" },
       "items": {
         "T": { "item": "mechanics", "chance": 80, "repeat": [ 1, 10 ] },
         "P": { "item": "supplies_mechanics", "chance": 80, "repeat": [ 1, 10 ] },
         "S": { "item": "crt_lab_veh_engine", "chance": 100 }
       },
-      "place_nested": [
-        { "chunks": [ "crt_lab_veh_smallveh" ], "x": 1, "y": 0 }
-      ]
+      "place_nested": [ { "chunks": [ "crt_lab_veh_smallveh" ], "x": 1, "y": 0 } ]
     }
   },
   {
@@ -129,7 +117,7 @@
         "#                      #",
         "########################"
       ],
-      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" }
     }
   },
   {
@@ -148,7 +136,7 @@
         "#       ",
         "#       "
       ],
-      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" }
     }
   },
   {
@@ -160,19 +148,14 @@
       "mapgensize": [ 7, 2 ],
       "rows": [
         "TCB#D D",
-        "  B#D D",
+        "  B#D D"
       ],
       "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
-      "furniture": {
-        "B": "f_bed",
-        "T": "f_table",
-        "C": "f_chair",
-        "D": "f_dresser"
-      },
+      "furniture": { "B": "f_bed", "T": "f_table", "C": "f_chair", "D": "f_dresser" },
       "mapping": {
         "D": { "items": [ { "item": "crt_eng_set", "chance": 50 } ] },
         "T": { "items": [ { "item": "crt_sci_reading", "chance": 50, "repeat": 2 } ] },
-        "B": { "items": [ { "item": "bed", "chance": 50, "repeat": 5 } ] },
+        "B": { "items": [ { "item": "bed", "chance": 50, "repeat": 5 } ] }
       }
     }
   },
@@ -185,17 +168,13 @@
       "mapgensize": [ 7, 2 ],
       "rows": [
         " C B C ",
-        "TTTBTTT",
+        "TTTBTTT"
       ],
       "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
-      "furniture": {
-        "B": "f_bookcase",
-        "T": "f_table",
-        "C": "f_chair",
-      },
+      "furniture": { "B": "f_bookcase", "T": "f_table", "C": "f_chair" },
       "mapping": {
         "T": { "items": [ { "item": "crt_sci_reading", "chance": 50, "repeat": 5 } ] },
-        "B": { "items": [ { "item": "crt_sci_reading", "chance": 50, "repeat": 5 } ] },
+        "B": { "items": [ { "item": "crt_sci_reading", "chance": 50, "repeat": 5 } ] }
       }
     }
   },
@@ -220,8 +199,7 @@
         { "chunks": [ "crt_lab_veh_barracks_single" ], "x": 1, "y": 0 },
         { "chunks": [ "crt_lab_veh_barracks_single_flipped" ], "x": 1, "y": 5 },
         { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 4, "y": 0 },
-        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 4, "y": 5 },
-        
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 4, "y": 5 }
       ]
     }
   },
@@ -236,15 +214,11 @@
         "BT",
         " D"
       ],
-      "furniture": {
-        "B": "f_bed",
-        "T": "f_table",
-        "D": "f_dresser",
-      },
+      "furniture": { "B": "f_bed", "T": "f_table", "D": "f_dresser" },
       "mapping": {
         "T": { "items": [ { "item": "book_military", "chance": 50, "repeat": 5 } ] },
         "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
-        "B": { "items": [ { "item": "bed", "chance": 100 } ] },
+        "B": { "items": [ { "item": "bed", "chance": 100 } ] }
       }
     }
   },
@@ -259,15 +233,11 @@
         " D",
         "BT"
       ],
-      "furniture": {
-        "B": "f_bed",
-        "T": "f_table",
-        "D": "f_dresser",
-      },
+      "furniture": { "B": "f_bed", "T": "f_table", "D": "f_dresser" },
       "mapping": {
         "T": { "items": [ { "item": "book_military", "chance": 50, "repeat": 5 } ] },
         "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
-        "B": { "items": [ { "item": "bed", "chance": 100 } ] },
+        "B": { "items": [ { "item": "bed", "chance": 100 } ] }
       }
     }
   },
@@ -282,15 +252,11 @@
         "D D",
         "B B"
       ],
-      "furniture": {
-        "B": "f_bed",
-        "D": "f_dresser",
-      },
+      "furniture": { "B": "f_bed", "D": "f_dresser" },
       "mapping": {
         "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
-        "B": { "items": [ { "item": "bed", "chance": 100 } ] },
+        "B": { "items": [ { "item": "bed", "chance": 100 } ] }
       }
     }
   }
 ]
-

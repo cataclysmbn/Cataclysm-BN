@@ -49,15 +49,8 @@
         "       ",
         "       "
       ],
-      "terrain": {
-        "6": "t_console_broken",
-        "M": "t_switchgear_l",
-        "T": "t_potential_trans",
-      },
-      "furniture": {
-        "C": "f_armchair",
-        "A": "f_cable_connector"
-      },
+      "terrain": { "6": "t_console_broken", "M": "t_switchgear_l", "T": "t_potential_trans" },
+      "furniture": { "C": "f_armchair", "A": "f_cable_connector" },
       "place_vehicles": [
         { "vehicle": "crt_hydrotest", "x": 1, "y": 2, "rotation": 270, "chance": 50, "status": 0 },
         { "vehicle": "crt_hydrotest", "x": 5, "y": 2, "rotation": 270, "chance": 50, "status": 0 }
