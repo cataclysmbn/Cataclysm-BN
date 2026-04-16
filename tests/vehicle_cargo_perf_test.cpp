@@ -31,6 +31,15 @@ struct cargo_benchmark_fixture {
     item *rechargeable_item = nullptr;
 };
 
+struct solar_benchmark_options {
+    int solar_panel_count;
+    int storage_battery_count;
+};
+
+struct solar_benchmark_fixture {
+    vehicle *veh = nullptr;
+};
+
 auto cargo_part_indices( vehicle &veh ) -> std::vector<int>
 {
     auto parts = std::vector<int>();
@@ -106,6 +115,44 @@ auto refill_vehicle_battery( vehicle &veh ) -> void
     }
 }
 
+auto reset_vehicle_batteries( vehicle &veh ) -> void
+{
+    for( const vpart_reference &vp : veh.get_all_parts() ) {
+        if( vp.part().is_battery() ) {
+            vp.part().ammo_unset();
+        }
+    }
+}
+
+auto make_solar_benchmark_fixture( const solar_benchmark_options &opts ) -> solar_benchmark_fixture
+{
+    clear_all_state();
+    build_test_map( ter_id( "t_pavement" ) );
+
+    auto &u = get_avatar();
+    u.setpos( tripoint( 10, 10, 0 ) );
+
+    vehicle *const veh = get_map().add_vehicle( vproto_id( "none" ), u.pos(), 0_degrees, 100, 0,
+                         false );
+    REQUIRE( veh != nullptr );
+
+    for( int i = 0; i < opts.solar_panel_count; ++i ) {
+        REQUIRE( veh->install_part( point_zero, vpart_id( "solar_panel" ), true ) >= 0 );
+    }
+
+    for( int i = 0; i < opts.storage_battery_count; ++i ) {
+        const auto battery_part = veh->install_part( point_zero, vpart_id( "storage_battery" ), true );
+        REQUIRE( battery_part >= 0 );
+        veh->part( battery_part ).ammo_unset();
+    }
+
+    veh->update_time( calendar::turn_zero );
+
+    return solar_benchmark_fixture{
+        .veh = veh,
+    };
+}
+
 } // namespace
 
 TEST_CASE( "crafting inventory rebuild benchmark near cargo-heavy vehicle",
@@ -142,6 +189,43 @@ TEST_CASE( "vehicle cargo recharge benchmark in item-heavy area",
             refill_vehicle_battery( *fixture.veh );
             get_map().process_items();
             return fixture.rechargeable_item->ammo_remaining();
+        } );
+    };
+}
+
+TEST_CASE( "vehicle idle benchmark with solar panels and storage batteries",
+           "[.][benchmark][vehicle][solar]" )
+{
+    const auto fixture = make_solar_benchmark_fixture( solar_benchmark_options{
+        .solar_panel_count = 64,
+        .storage_battery_count = 512,
+    } );
+
+    BENCHMARK_ADVANCED( "vehicle idle with 64 solar panels and 512 storage batteries" )
+    ( Catch::Benchmark::Chronometer meter ) {
+        meter.measure( [&fixture]() {
+            fixture.veh->idle( false );
+            return fixture.veh->fuel_left( fuel_type_battery, false );
+        } );
+    };
+}
+
+TEST_CASE( "vehicle solar backfill benchmark with many storage batteries",
+           "[.][benchmark][vehicle][solar]" )
+{
+    const auto fixture = make_solar_benchmark_fixture( solar_benchmark_options{
+        .solar_panel_count = 64,
+        .storage_battery_count = 512,
+    } );
+
+    BENCHMARK_ADVANCED( "vehicle solar backfill with 64 panels and 512 storage batteries" )
+    ( Catch::Benchmark::Chronometer meter ) {
+        meter.measure( [&fixture]() {
+            reset_vehicle_batteries( *fixture.veh );
+            fixture.veh->update_time( calendar::turn_zero + 1_minutes );
+            const auto stored_energy = fixture.veh->fuel_left( fuel_type_battery, false );
+            fixture.veh->update_time( calendar::turn_zero );
+            return stored_energy;
         } );
     };
 }
