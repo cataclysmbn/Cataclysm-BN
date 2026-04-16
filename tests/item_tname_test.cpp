@@ -153,14 +153,14 @@ TEST_CASE( "wheel diameter", "[item][tname][wheel]" )
     REQUIRE( wheel32.type->wheel->diameter == 800 );
 
     {
-        const override_option metric_display( "WHEEL_SIZE_UNITS", "metric" );
+        const override_option metric_display( "DISTANCE_UNITS", "metric" );
         CHECK( wheel17.tname() == "42.5cm wheel" );
         CHECK( wheel24.tname() == "60cm wide wheel" );
         CHECK( wheel32.tname() == "80cm armored wheel" );
     }
 
     {
-        const override_option imperial_display( "WHEEL_SIZE_UNITS", "imperial" );
+        const override_option imperial_display( "DISTANCE_UNITS", "imperial" );
         CHECK( wheel17.tname() == "17\" wheel" );
         CHECK( wheel24.tname() == "24\" wide wheel" );
         CHECK( wheel32.tname() == "32\" armored wheel" );

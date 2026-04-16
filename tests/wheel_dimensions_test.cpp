@@ -32,13 +32,13 @@ TEST_CASE( "wheel dimensions accept metric strings and legacy inches", "[wheel][
 TEST_CASE( "wheel dimensions display in selected units", "[wheel][units]" )
 {
     {
-        const override_option metric_display( "WHEEL_SIZE_UNITS", "metric" );
+        const override_option metric_display( "DISTANCE_UNITS", "metric" );
         CHECK( wheel_dimensions::format_for_display( 425 ) == "42.5cm" );
         CHECK( wheel_dimensions::format_for_display( 500 ) == "50cm" );
     }
 
     {
-        const override_option imperial_display( "WHEEL_SIZE_UNITS", "imperial" );
+        const override_option imperial_display( "DISTANCE_UNITS", "imperial" );
         CHECK( wheel_dimensions::format_for_display( 425 ) == "17\"" );
         CHECK( wheel_dimensions::format_for_display( 500 ) == "20\"" );
     }

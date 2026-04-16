@@ -1603,10 +1603,6 @@ void options_manager::add_options_interface()
          translate_marker( "Metric or Imperial" ),
     { { "metric", translate_marker( "Metric" ) }, { "imperial", translate_marker( "Imperial" ) } },
     "metric" );
-    add( "WHEEL_SIZE_UNITS", interface, translate_marker( "Wheel size units" ),
-         translate_marker( "Metric or Imperial" ),
-    { { "metric", translate_marker( "Metric" ) }, { "imperial", translate_marker( "Imperial" ) } },
-    "imperial" );
 
     add(
         "OVERMAP_COORDINATE_FORMAT",

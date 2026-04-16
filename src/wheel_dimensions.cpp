@@ -77,7 +77,7 @@ auto read_from_json( const JsonObject &jo, const std::string &member ) -> std::o
 
 auto format_for_display( const int millimeters ) -> std::string
 {
-    if( get_option<std::string>( "WHEEL_SIZE_UNITS" ) == "imperial" ) {
+    if( get_option<std::string>( "DISTANCE_UNITS" ) == "imperial" ) {
         const auto inches = static_cast<int>( std::lround( static_cast<double>( millimeters ) /
                                               legacy_millimeters_per_inch ) );
         return string_format( pgettext( "wheel dimension", "%d\"" ), inches );
