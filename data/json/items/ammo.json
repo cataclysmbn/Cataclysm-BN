@@ -148,6 +148,7 @@
     "description": "A cleansing agent made into bars.",
     "volume": "250 ml",
     "weight": "90 g",
+    "flags": [ "WASHING_CLEANER" ],
     "ammo_type": "soap",
     "count": 10,
     "stack_size": 10

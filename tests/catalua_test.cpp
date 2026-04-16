@@ -10,7 +10,9 @@
 #include "clzones.h"
 #include "debug.h"
 #include "faction.h"
+#include "flag.h"
 #include "fstream_utils.h"
+#include "iexamine.h"
 #include "json.h"
 #include "map.h"
 #include "mapdata.h"
@@ -110,6 +112,30 @@ TEST_CASE( "lua_activity_bindings", "[lua]" )
     REQUIRE( test_data.get<std::string>( "activity_str_value" ) == "extra" );
     CHECK_TUPLE( test_data["activity_value"] == 7 );
     REQUIRE( test_data.get<std::string>( "activity_coord" ) == "(9,8,0)" );
+}
+
+TEST_CASE( "plumbing_lua_data_hooks", "[lua]" )
+{
+    const auto &shower = furn_id( "f_shower" ).obj();
+    const auto &bathtub = furn_id( "f_bathtub" ).obj();
+    const auto lua_examine = iexamine_function_from_string( "lua_examine" );
+
+    REQUIRE( shower.examine == lua_examine );
+    REQUIRE( bathtub.examine == lua_examine );
+    REQUIRE( shower.examine_action_id == "PLUMBING_SHOWER_EXAMINE" );
+    REQUIRE( bathtub.examine_action_id == "PLUMBING_BATHTUB_EXAMINE" );
+
+    const auto washing_cleaner_flag = flag_id( "WASHING_CLEANER" );
+    REQUIRE( washing_cleaner_flag.is_valid() );
+    REQUIRE( itype_id( "soap" ).obj().has_flag( washing_cleaner_flag ) );
+    REQUIRE( itype_id( "bleach" ).obj().has_flag( washing_cleaner_flag ) );
+    REQUIRE( itype_id( "detergent" ).obj().has_flag( washing_cleaner_flag ) );
+
+    REQUIRE( morale_type( "morale_shower" ).is_valid() );
+    REQUIRE( morale_type( "morale_bath" ).is_valid() );
+    REQUIRE( morale_type( "morale_cold_shower" ).is_valid() );
+    REQUIRE( morale_type( "morale_warm_bath" ).is_valid() );
+    REQUIRE( morale_type( "morale_cleansed_self" ).is_valid() );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )

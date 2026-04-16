@@ -65,6 +65,41 @@
     "text": "Good feeling"
   },
   {
+    "id": "morale_cold_shower",
+    "type": "morale_type",
+    "text": "Had cold shower"
+  },
+  {
+    "id": "morale_shower",
+    "type": "morale_type",
+    "text": "Had shower"
+  },
+  {
+    "id": "morale_warm_shower",
+    "type": "morale_type",
+    "text": "Had warm shower"
+  },
+  {
+    "id": "morale_cold_bath",
+    "type": "morale_type",
+    "text": "Had cold bath"
+  },
+  {
+    "id": "morale_bath",
+    "type": "morale_type",
+    "text": "Had bath"
+  },
+  {
+    "id": "morale_warm_bath",
+    "type": "morale_type",
+    "text": "Had warm bath"
+  },
+  {
+    "id": "morale_cleansed_self",
+    "type": "morale_type",
+    "text": "Cleansed self"
+  },
+  {
     "id": "morale_support",
     "type": "morale_type",
     "text": "Supported"

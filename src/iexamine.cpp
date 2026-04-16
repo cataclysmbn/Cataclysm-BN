@@ -4676,18 +4676,18 @@ auto iexamine::lua_examine( player &p, const tripoint &examp ) -> void
 {
     map &here = get_map();
     const auto &furn = here.furn( examp ).obj();
-    if( !furn.lua_examine_action.empty() ) {
-        cata::run_lua_examine( furn.lua_examine_action, p, examp );
+    if( !furn.examine_action_id.empty() ) {
+        cata::run_lua_examine( furn.examine_action_id, p, examp );
         return;
     }
 
     const auto &ter = here.ter( examp ).obj();
-    if( !ter.lua_examine_action.empty() ) {
-        cata::run_lua_examine( ter.lua_examine_action, p, examp );
+    if( !ter.examine_action_id.empty() ) {
+        cata::run_lua_examine( ter.examine_action_id, p, examp );
         return;
     }
 
-    debugmsg( "Lua examine called at %s without a lua_examine_action", examp.to_string() );
+    debugmsg( "Lua examine called at %s without a Lua examine action id", examp.to_string() );
 }
 
 std::vector<itype> furn_t::crafting_pseudo_item_types() const
@@ -7905,6 +7905,10 @@ void iexamine::multicooker( player &p, const tripoint &pos )
  */
 iexamine_function iexamine_function_from_string( const std::string &function_name )
 {
+    if( function_name.rfind( "lua:", 0 ) == 0 ) {
+        return &iexamine::lua_examine;
+    }
+
     static const std::map<std::string, iexamine_function> function_map = {{
             { "none", &iexamine::none },
             { "deployed_furniture", &iexamine::deployed_furniture },

@@ -1360,10 +1360,11 @@ std::string enum_to_string<season_type>( season_type data )
 
 void map_data_common_t::load( const JsonObject &jo, const std::string &src )
 {
-    optional( jo, was_loaded, "lua_examine_action", lua_examine_action );
     const auto examine_action = jo.get_string( "examine_action", "" );
+    examine_action_id.clear();
 
-    if( !lua_examine_action.empty() ) {
+    if( examine_action.rfind( "lua:", 0 ) == 0 ) {
+        examine_action_id = examine_action.substr( 4 );
         examine = iexamine_function_from_string( "lua_examine" );
     } else if( !examine_action.empty() ) {
         examine = iexamine_function_from_string( examine_action );

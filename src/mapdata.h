@@ -485,7 +485,7 @@ struct map_data_common_t {
         std::string prompt;
 
         iexamine_function examine; // What happens when the terrain/furniture is examined
-        std::string lua_examine_action;
+        std::string examine_action_id;
 
         data_vars::data_set default_vars;
 
