@@ -8,6 +8,7 @@
 #include <memory>
 #include <numeric>
 #include <unordered_set>
+#include <ranges>
 
 #include "avatar_action.h"
 #include "bionics.h"
