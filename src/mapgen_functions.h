@@ -79,6 +79,14 @@ bool run_mapgen_update_func( const std::string &update_mapgen_id, const tripoint
 bool run_mapgen_update_func( const std::string &update_mapgen_id, mapgendata &dat,
                              bool cancel_on_collision = true );
 bool run_mapgen_func( const std::string &mapgen_id, mapgendata &dat );
+/**
+ * Returns true if the overmap terrain at @p om_addr in dimension @p dim_id
+ * has at least one Lua-based mapgen function in its weighted pool.
+ *
+ * Used by mapbuffer::generate_quad() to detect whether a quad must be
+ * deferred to the main thread (Lua is not reentrant on worker threads).
+ */
+auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint &om_addr ) -> bool;
 std::pair<std::map<ter_id, int>, std::map<furn_id, int>> get_changed_ids_from_update(
             const std::string &update_mapgen_id );
 mapgen_parameters get_map_special_params( const std::string &mapgen_id );

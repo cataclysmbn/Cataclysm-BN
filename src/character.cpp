@@ -880,7 +880,7 @@ bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )
     const std::vector<tripoint> line = line_to( ompos.raw(), omt.raw(), 0, 0 );
     for( size_t i = 0; i < line.size() && sight_points >= 0; i++ ) {
         const tripoint &pt = line[i];
-        const oter_id &ter = ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( pt ) );
+        const oter_id &ter = get_overmapbuffer( get_dimension() ).ter( tripoint_abs_omt( pt ) );
         sight_points -= static_cast<int>( ter->get_see_cost() );
         if( sight_points < 0 ) {
             return false;
@@ -2001,6 +2001,10 @@ void Character::recalc_sight_limits()
         has_effect_with_flag( flag_EFFECT_NIGHT_VISION ) ) {
         vision_mode_cache.set( NV_GOGGLES );
         best_bonus_nv = std::max( best_bonus_nv, 10.0f );
+    }
+    if( worn_with_flag( flag_GNVE_EFFECT ) ) {
+        vision_mode_cache.set( NV_GOGGLES );
+        best_bonus_nv = std::max( best_bonus_nv, 18.0f );
     }
     if( has_trait( trait_BIRD_EYE ) ) {
         vision_mode_cache.set( BIRD_EYE );
@@ -5110,7 +5114,7 @@ void Character::set_stored_kcal( int kcal )
 
 int Character::max_stored_kcal() const
 {
-    return 2500 * 7;
+    return 2500 * 7 * ( 1.0f + mutation_value( "kcal_scale" ) );
 }
 
 float Character::get_kcal_percent() const
@@ -6014,7 +6018,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     if( vp ) {
         vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
     }
-    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() );
+    const oter_id &cur_om_ter = get_overmapbuffer( get_dimension() ).ter( global_omt_location() );
     bool sheltered = weather::is_sheltered( m, pos() );
     double total_windpower = get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
                              pos(),
@@ -7479,6 +7483,7 @@ mutation_value_map = {
     { "hp_modifier_secondary", calc_mutation_value<&mutation_branch::hp_modifier_secondary> },
     { "hp_adjustment", calc_mutation_value<&mutation_branch::hp_adjustment> },
     { "temperature_speed_modifier", calc_mutation_value<&mutation_branch::temperature_speed_modifier> },
+    { "kcal_scale", calc_mutation_value<&mutation_branch::kcal_scale> },
     { "metabolism_modifier", calc_mutation_value<&mutation_branch::metabolism_modifier> },
     { "thirst_modifier", calc_mutation_value<&mutation_branch::thirst_modifier> },
     { "fatigue_regen_modifier", calc_mutation_value<&mutation_branch::fatigue_regen_modifier> },
@@ -8623,7 +8628,7 @@ void Character::signal_nemesis()
 {
     const tripoint_abs_omt ompos = global_omt_location();
     const tripoint_abs_sm smpos = project_to<coords::sm>( ompos );
-    ACTIVE_OVERMAP_BUFFER.signal_nemesis( smpos );
+    get_overmapbuffer( get_dimension() ).signal_nemesis( smpos );
 }
 
 void Character::vomit()
@@ -11112,7 +11117,8 @@ std::pair<PathfindingSettings, RouteSettings> Character::get_pathfinding_pair() 
     PathfindingSettings path_settings;
 
     path_settings.door_open_cost = 2.0;
-    path_settings.mob_presence_penalty = 16.0;
+    path_settings.mob_presence_penalty =
+        get_option<float>( "PATHFINDING_MOB_PRESENCE_PENALTY_NPC_DEFAULT" );
     path_settings.rough_terrain_cost = 0.0;
     path_settings.sharp_terrain_cost = INFINITY;
     path_settings.trap_cost = INFINITY;
@@ -11516,10 +11522,36 @@ std::string Character::short_description() const
     return join( short_description_parts(), ";   " );
 }
 
-int Character::print_info( const catacurses::window &w, int vStart, int, int column ) const
+auto Character::print_info( const catacurses::window &w, int vStart, int vLines,
+                            int column ) const -> int
 {
-    mvwprintw( w, point( column, vStart++ ), _( "You (%s)" ), name );
-    return vStart;
+    const int last_line = vStart + vLines;
+    const int iWidth = getmaxx( w ) - 2;
+    const auto bar = ::get_hp_bar( get_hp(), get_hp_max(), false );
+    mvwprintz( w, point( column, vStart ), bar.second, bar.first );
+    constexpr auto bar_max_width = 5;
+    const auto bar_width = utf8_width( bar.first );
+    for( int i = 0; i < bar_max_width - bar_width; ++i ) {
+        mvwprintz( w, point( column + bar_max_width - 1 - i, vStart ), c_white, "." );
+    }
+    const int name_column = column + bar_max_width + 1;
+    mvwprintz( w, point( name_column, vStart ), basic_symbol_color(), _( "You (%s)" ), name );
+    int line = vStart + 1;
+    const auto description_parts = short_description_parts();
+    for( size_t idx = 1; idx < description_parts.size(); ++idx ) {
+        const auto &part = description_parts[idx];
+        if( line >= last_line ) {
+            break;
+        }
+        const std::vector<std::string> part_lines = foldstring( part, iWidth );
+        for( const std::string &part_line : part_lines ) {
+            if( line >= last_line ) {
+                break;
+            }
+            trim_and_print( w, point( column, line++ ), iWidth, c_light_gray, part_line );
+        }
+    }
+    return line;
 }
 
 void Character::shift_destination( point shift )
@@ -12408,4 +12440,3 @@ detached_ptr<item> Character::reduce_charges( item *it, int quantity )
     taken->charges = quantity;
     return taken;
 }
-

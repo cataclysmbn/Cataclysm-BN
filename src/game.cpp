@@ -160,6 +160,7 @@
 #include "profession.h"
 #include "profile.h"
 #include "ranged.h"
+#include "reality_bubble_helpers.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "ret_val.h"
@@ -724,17 +725,11 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
         pos_sm.raw().y + reality_bubble_radius_,
         pos_sm.raw().z );
 
-    // Reality bubble covers all loaded z-levels when z-level mode is active.
-    // For non-z-level builds only the player's current z-level is relevant.
-    const int z_lo = m.has_zlevels() ? -OVERMAP_DEPTH : pos_sm.raw().z;
-    const int z_hi = m.has_zlevels() ? OVERMAP_HEIGHT : pos_sm.raw().z;
-
     // Create or update the reality bubble request.
     if( reality_bubble_handle_ == 0 ) {
         reality_bubble_handle_ = submap_loader.request_load(
                                      load_request_source::reality_bubble,
-                                     new_dim_id, bubble_center, reality_bubble_radius_,
-                                     z_lo, z_hi );
+                                     new_dim_id, bubble_center, reality_bubble_radius_ );
     } else {
         submap_loader.update_request( reality_bubble_handle_, bubble_center );
     }
@@ -747,8 +742,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
             lazy_border_handle_ = submap_loader.request_load(
                                       load_request_source::lazy_border,
                                       new_dim_id, bubble_center,
-                                      reality_bubble_radius_ + 2,
-                                      z_lo, z_hi );
+                                      reality_bubble_radius_ + 2 );
         } else {
             submap_loader.update_request( lazy_border_handle_, bubble_center );
         }
@@ -868,7 +862,8 @@ bool game::start_game()
             .world_type   = default_wt,
             .display_name = wt_ptr ? wt_ptr->name.translated() : std::string{},
         };
-        ACTIVE_OVERMAP_BUFFER.current_region_type = wt_ptr ? wt_ptr->region_settings_id : "default";
+        get_overmapbuffer( current_dimension_id_ ).current_region_type = wt_ptr ?
+                wt_ptr->region_settings_id : "default";
     }
 
     u.setID( assign_npc_id() ); // should be as soon as possible, but *after* load_master
@@ -889,7 +884,7 @@ bool game::start_game()
                 // New-game generation only: the player is always in the overworld at
                 // this point; no dimension travel has occurred, so primary == active.
                 MAPBUFFER.clear();
-                ACTIVE_OVERMAP_BUFFER.clear();
+                get_overmapbuffer( current_dimension_id_ ).clear();
             } else {
                 return false;
             }
@@ -906,7 +901,7 @@ bool game::start_game()
             } else if( query_gen_failed() ) {
                 // Same new-game context — primary is always the active dimension here.
                 MAPBUFFER.clear();
-                ACTIVE_OVERMAP_BUFFER.clear();
+                get_overmapbuffer( current_dimension_id_ ).clear();
                 omtstart = overmap::invalid_tripoint;
             } else {
                 return false;
@@ -942,8 +937,8 @@ bool game::start_game()
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
     // Start the overmap with out immediate neighborhood visible, this needs to be after place_player
-    ACTIVE_OVERMAP_BUFFER.reveal( u.global_omt_location().xy(),
-                                  get_option<int>( "DISTANCE_INITIAL_VISIBILITY" ), 0 );
+    get_overmapbuffer( current_dimension_id_ ).reveal( u.global_omt_location().xy(),
+            get_option<int>( "DISTANCE_INITIAL_VISIBILITY" ), 0 );
 
     u.moves = 0;
     if( u.has_trait( trait_PROF_FERAL ) ) {
@@ -978,7 +973,7 @@ bool game::start_game()
                 break;
             }
             tmp->spawn_at_precise( { get_levx(), get_levy() }, *point );
-            ACTIVE_OVERMAP_BUFFER.insert_npc( tmp );
+            get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
             tmp->set_fac( faction_id( "your_followers" ) );
             tmp->mission = NPC_MISSION_NULL;
             tmp->set_attitude( NPCATT_FOLLOW );
@@ -1147,7 +1142,8 @@ vehicle *game::place_vehicle_nearby(
 
     // if player spawns underground, park their car on the surface.
     const tripoint_abs_omt omt_origin( origin, 0 );
-    for( const tripoint_abs_omt &goal : ACTIVE_OVERMAP_BUFFER.find_all( omt_origin, find_params ) ) {
+    for( const tripoint_abs_omt &goal : get_overmapbuffer( current_dimension_id_ ).find_all( omt_origin,
+            find_params ) ) {
         // try place vehicle there.
         tinymap target_map;
         target_map.load( project_to<coords::sm>( goal ), false );
@@ -1163,7 +1159,8 @@ vehicle *game::place_vehicle_nearby(
             tripoint abs_local = m.getlocal( target_map.getabs( tinymap_center ) );
             veh->sm_pos =  ms_to_sm_remain( abs_local );
             veh->pos = abs_local.xy();
-            ACTIVE_OVERMAP_BUFFER.add_vehicle( veh );
+            veh->dimension_id_ = target_map.get_bound_dimension();
+            get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
             veh->tracking_on = true;
             target_map.save();
             return veh;
@@ -1176,10 +1173,11 @@ vehicle *game::place_vehicle_nearby(
 void game::load_npcs()
 {
     ZoneScoped;
-    const int radius = g_half_mapsize - 1;
+    const int radius = g_half_mapsize;
     // uses submap coordinates
     std::vector<shared_ptr_fast<npc>> just_added;
-    for( const auto &temp : ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( radius ) ) {
+    for( const auto &temp : get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player(
+             radius ) ) {
         const character_id &id = temp->getID();
         const auto found = std::find_if( active_npc.begin(), active_npc.end(),
         [id]( const shared_ptr_fast<npc> &n ) {
@@ -1234,9 +1232,10 @@ void game::load_npcs()
         req_map.load( top_left, false );
         scoped_map_context ctx( req_map );
 
-        for( auto z : std::views::iota( req.z_min, req.z_max + 1 ) ) {
+        for( auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
             const tripoint_abs_sm center_z( req.center.raw().x, req.center.raw().y, z );
-            for( const auto &temp : ACTIVE_OVERMAP_BUFFER.get_npcs_near( center_z, req.radius ) ) {
+            for( const auto &temp : get_overmapbuffer( current_dimension_id_ ).get_npcs_near( center_z,
+                    req.radius ) ) {
                 const auto id = temp->getID();
                 const auto already_active = std::ranges::any_of( active_npc,
                 [id]( const shared_ptr_fast<npc> &n ) {
@@ -1278,7 +1277,11 @@ void game::unload_npcs()
 
 void game::on_submap_loaded( const tripoint_abs_sm &/*pos*/, const std::string &/*dim_id*/ )
 {
-    // TODO: activate out-of-bubble NPCs once non_bubble_requests() integration lands.
+    // Schedule an NPC activation scan on the next do_turn().  Any NPCs whose
+    // authoritative submap position falls within the newly-simulated submap
+    // will be placed on the map by load_npcs().  This covers both reality-bubble
+    // entries and non-bubble requests (fire_spread, player_base, script).
+    set_npcs_dirty();
 }
 
 void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*dim_id*/ )
@@ -1297,7 +1300,16 @@ void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*
     } );
     std::erase_if( active_npc, in_evicted );
 
-    // TODO: evict monsters from unloaded submaps once on_submap_loaded monster activation lands.
+    // Evict monsters whose absolute submap position matches the unloaded submap.
+    // get_map().getabs() is pure coordinate arithmetic — safe after the submap pointer is gone.
+    // all_monsters() snapshots weak_ptrs at construction; despawn_monster() marks hp=0 so the
+    // non_dead_range iterator skips evicted entries on subsequent steps, mirroring shift_monsters().
+    for( monster &critter : all_monsters() ) {
+        const tripoint sm = ms_to_sm_copy( get_map().getabs( critter.pos() ) );
+        if( sm == raw ) {
+            despawn_monster( critter );
+        }
+    }
 }
 
 void game::reload_npcs()
@@ -1322,14 +1334,14 @@ void game::create_starting_npcs()
 
     //We don't want more than one starting npc per starting location
     const int radius = 1;
-    if( !ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( radius ).empty() ) {
+    if( !get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player( radius ).empty() ) {
         return; //There is already an NPC in this starting location
     }
 
     shared_ptr_fast<npc> tmp = make_shared_fast<npc>();
     tmp->randomize( one_in( 2 ) ? NC_DOCTOR : NC_NONE );
     tmp->spawn_at_precise( { get_levx(), get_levy() }, u.pos() - point_south_east );
-    ACTIVE_OVERMAP_BUFFER.insert_npc( tmp );
+    get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
     tmp->form_opinion( u );
     tmp->set_attitude( NPCATT_NULL );
     //This sets the NPC mission. This NPC remains in the starting location.
@@ -1383,7 +1395,7 @@ bool game::cleanup_at_end()
             despawn_monster( critter );
         }
         if( u.has_trait( trait_HAS_NEMESIS ) ) {
-            ACTIVE_OVERMAP_BUFFER.remove_nemesis();
+            get_overmapbuffer( current_dimension_id_ ).remove_nemesis();
         }
         // Reset NPC factions and disposition
         reset_npc_dispositions();
@@ -1859,14 +1871,14 @@ bool game::do_turn()
         u.check_mount_is_spooked();
     }
     if( calendar::once_every( 1_days ) ) {
-        ACTIVE_OVERMAP_BUFFER.process_mongroups();
+        get_overmapbuffer( current_dimension_id_ ).process_mongroups();
     }
 
     // Move hordes every 2.5 min
     if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
-        ACTIVE_OVERMAP_BUFFER.move_hordes();
+        get_overmapbuffer( current_dimension_id_ ).move_hordes();
         if( u.has_trait( trait_HAS_NEMESIS ) ) {
-            ACTIVE_OVERMAP_BUFFER.move_nemesis();
+            get_overmapbuffer( current_dimension_id_ ).move_nemesis();
         }
         // Hordes that reached the reality bubble need to spawn,
         // make them spawn in invisible areas only.
@@ -1967,7 +1979,7 @@ bool game::do_turn()
     if( !u.has_active_bionic( bionic_id( "bio_scent_mask" ) ) &&
         !u.has_trait( trait_id( "DEBUG_NOSCENT" ) ) ) {
         scent.set( u.pos(), u.scent, u.get_type_of_scent() );
-        ACTIVE_OVERMAP_BUFFER.set_scent( u.global_omt_location(),  u.scent );
+        get_overmapbuffer( current_dimension_id_ ).set_scent( u.global_omt_location(),  u.scent );
     }
     scent.update( u.pos(), m );
 
@@ -2466,7 +2478,8 @@ void game::validate_npc_followers()
         add_npc_follower( guy->getID() );
     }
     // Make sure overmapbuffered NPC followers are in the list.
-    for( const auto &temp_guy : ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( 300 ) ) {
+    for( const auto &temp_guy : get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player(
+             300 ) ) {
         npc *guy = temp_guy.get();
         if( guy->is_player_ally() ) {
             update_faction_api( guy );
@@ -2676,6 +2689,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "throw" );
     ctxt.register_action( "fire" );
     ctxt.register_action( "cast_spell" );
+    ctxt.register_action( "cast_last_spell" );
     ctxt.register_action( "fire_burst" );
     ctxt.register_action( "select_fire_mode" );
     ctxt.register_action( "select_default_ammo" );
@@ -2919,7 +2933,7 @@ bool game::is_game_over()
         }
 
         auto followers = get_follower_list()
-        | std::views::transform( [&]( const auto & elem ) { return ACTIVE_OVERMAP_BUFFER.find_npc( elem ); } )
+        | std::views::transform( [&]( const auto & elem ) { return get_overmapbuffer( current_dimension_id_ ).find_npc( elem ); } )
         | std::views::filter( []( const auto & follower ) { return follower && !follower->is_dead_state(); } )
         | std::ranges::to<std::vector>();
 
@@ -3230,7 +3244,7 @@ bool game::load( const save_t &name )
             cata::views::cartesian_product( z_range, xy_range, xy_range ),
         [&]( auto tup ) {
             auto [gz, gx, gy] = tup;
-            ACTIVE_OVERMAP_BUFFER.discard_monster_map(
+            get_overmapbuffer( current_dimension_id_ ).discard_monster_map(
                 tripoint_abs_sm{ origin.x + gx, origin.y + gy, gz } );
         } );
     }
@@ -3278,7 +3292,7 @@ bool game::load( const save_t &name )
 void game::reset_npc_dispositions()
 {
     for( auto elem : follower_ids ) {
-        shared_ptr_fast<npc> npc_to_get = ACTIVE_OVERMAP_BUFFER.find_npc( elem );
+        shared_ptr_fast<npc> npc_to_get = get_overmapbuffer( current_dimension_id_ ).find_npc( elem );
         if( !npc_to_get )  {
             continue;
         }
@@ -3490,7 +3504,7 @@ void game::disp_NPC_epilogues()
 {
     // TODO: This search needs to be expanded to all NPCs
     for( auto elem : follower_ids ) {
-        shared_ptr_fast<npc> guy = ACTIVE_OVERMAP_BUFFER.find_npc( elem );
+        shared_ptr_fast<npc> guy = get_overmapbuffer( current_dimension_id_ ).find_npc( elem );
         if( !guy ) {
             continue;
         }
@@ -3541,7 +3555,8 @@ void game::disp_NPCs()
 {
     const tripoint_abs_omt ppos = u.global_omt_location();
     const tripoint &lpos = u.pos();
-    std::vector<shared_ptr_fast<npc>> npcs = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( 100 );
+    std::vector<shared_ptr_fast<npc>> npcs = get_overmapbuffer(
+                                       current_dimension_id_ ).get_npcs_near_player( 100 );
     std::sort( npcs.begin(), npcs.end(), npc_dist_to_player() );
 
     catacurses::window w;
@@ -4038,11 +4053,11 @@ void game::draw_minimap()
             nc_color ter_color;
             tripoint_abs_omt omp( om, get_levz() );
             std::string ter_sym;
-            const bool seen = ACTIVE_OVERMAP_BUFFER.seen( omp );
-            const bool vehicle_here = ACTIVE_OVERMAP_BUFFER.has_vehicle( omp );
-            if( ACTIVE_OVERMAP_BUFFER.has_note( omp ) ) {
+            const bool seen = get_overmapbuffer( current_dimension_id_ ).seen( omp );
+            const bool vehicle_here = get_overmapbuffer( current_dimension_id_ ).has_vehicle( omp );
+            if( get_overmapbuffer( current_dimension_id_ ).has_note( omp ) ) {
 
-                const std::string &note_text = ACTIVE_OVERMAP_BUFFER.note( omp );
+                const std::string &note_text = get_overmapbuffer( current_dimension_id_ ).note( omp );
 
                 const auto note_info = overmap_ui::get_note_display_info( note_text );
                 ter_color = std::get<1>( note_info );
@@ -4054,9 +4069,9 @@ void game::draw_minimap()
                 ter_color = c_cyan;
                 ter_sym = "c";
             } else {
-                const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( omp );
+                const oter_id &cur_ter = get_overmapbuffer( current_dimension_id_ ).ter( omp );
                 ter_sym = cur_ter->get_symbol();
-                if( ACTIVE_OVERMAP_BUFFER.is_explored( omp ) ) {
+                if( get_overmapbuffer( current_dimension_id_ ).is_explored( omp ) ) {
                     ter_color = c_dark_gray;
                 } else {
                     ter_color = cur_ter->get_color();
@@ -4131,11 +4146,12 @@ void game::draw_minimap()
                 continue; // only do hordes on the border, skip inner map
             }
             const tripoint_abs_omt omp( curs2 + point( i, j ), get_levz() );
-            if( ACTIVE_OVERMAP_BUFFER.get_horde_size( omp ) >= HORDE_VISIBILITY_SIZE ) {
-                if( ACTIVE_OVERMAP_BUFFER.seen( omp )
+            if( get_overmapbuffer( current_dimension_id_ ).get_horde_size( omp ) >= HORDE_VISIBILITY_SIZE ) {
+                if( get_overmapbuffer( current_dimension_id_ ).seen( omp )
                     && g->u.overmap_los( omp, sight_points ) ) {
                     mvwputch( w_minimap, point( i + 3, j + 3 ), c_green,
-                              ACTIVE_OVERMAP_BUFFER.get_horde_size( omp ) > HORDE_VISIBILITY_SIZE * 2 ? 'Z' : 'z' );
+                              get_overmapbuffer( current_dimension_id_ ).get_horde_size( omp ) > HORDE_VISIBILITY_SIZE * 2 ? 'Z' :
+                              'z' );
                 }
             }
         }
@@ -5467,7 +5483,8 @@ void game::overmap_npc_move()
     ZoneScoped;
     std::vector<npc *> travelling_npcs;
     static constexpr int move_search_radius = 600;
-    for( auto &elem : ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( move_search_radius ) ) {
+    for( auto &elem : get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player(
+             move_search_radius ) ) {
         if( !elem ) {
             continue;
         }
@@ -6049,7 +6066,7 @@ bool game::spawn_hallucination( const tripoint &p )
             params["npc"] = tmp.get();
         } );
         if( !critter_at( p, true ) ) {
-            ACTIVE_OVERMAP_BUFFER.insert_npc( tmp );
+            get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
             load_npcs();
             return true;
         } else {
@@ -6276,7 +6293,7 @@ void game::save_cyborg( item *cyborg, const tripoint &couch_pos, Character &inst
         shared_ptr_fast<npc> tmp = make_shared_fast<npc>();
         tmp->load_npc_template( npc_cyborg );
         tmp->spawn_at_precise( { get_levx(), get_levy() }, couch_pos );
-        ACTIVE_OVERMAP_BUFFER.insert_npc( tmp );
+        get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
         tmp->hurtall( dmg_lvl * 10, nullptr );
         tmp->add_effect( effect_downed, rng( 1_turns, 4_turns ), bodypart_str_id::NULL_ID(), 0, true );
         cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
@@ -7513,81 +7530,100 @@ void game::print_visibility_info( const catacurses::window &w_look, int column, 
             break;
     }
 
-    mvwprintw( w_look, point( column, line ), visibility_message );
+    mvwprintz( w_look, point( column, line ), c_light_gray, visibility_message );
     line += 2;
 }
 
+// lots of this is from https://github.com/CleverRaven/Cataclysm-DDA/pull/39793
 void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_look,
-                               const std::string &area_name, int column,
-                               int &line )
+                               const std::string &area_name, int column, int &line )
 {
     const int max_width = getmaxx( w_look ) - column - 1;
 
-    const auto fmt_tile_info = []( const tripoint & lp ) {
-        map &here = get_map();
-        std::string ret;
-        if( debug_mode ) {
-            ret += lp.to_string();
-            ret += "\n";
-        }
-        ret += here.tername( lp );
-        if( debug_mode || display_object_ids ) {
-            ret += colorize( string_format( " [%s]", here.ter( lp )->id ), c_light_blue );
-        }
-        if( here.has_furn( lp ) ) {
-            ret += string_format( "; %s", here.furnname( lp ) );
-            if( debug_mode || display_object_ids ) {
-                ret += colorize( string_format( " [%s]", here.furn( lp )->id ), c_light_blue );
-            }
-        }
-        return ret;
-    };
+    const auto &terrain = m.ter( lp ).obj();
+    const auto terrain_color = terrain.color();
+    const oter_id &cur_ter_m = get_overmapbuffer( current_dimension_id_ ).ter( tripoint_abs_omt(
+                                   ms_to_omt_copy( m.getabs(
+                                           lp ) ) ) );
+    const auto location_color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes );
+    const auto terrain_desc = terrain.description.translated();
+    const std::string tile = m.tername( lp );
+    const auto coverage = m.coverage( lp );
+    const auto block_chance = m.obstacle_coverage( u.pos(), lp );
+    const auto move_cost = m.move_cost( lp );
+    const auto move_cost_is_zero = move_cost == 0;
+    const auto move_cost_str = move_cost_is_zero ? _( "Impassable " ) :
+                               string_format( _( "Move cost: %d " ), move_cost * 50 );
+    const auto move_cost_color = move_cost_is_zero ? c_light_red : c_light_gray;
+    const int move_cost_len = utf8_width( move_cost_str );
+    const std::pair<std::string, nc_color> ll = get_light_level( std::max( 1.0,
+            LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
+    const int light_len = utf8_width( ll.first );
+    const auto location_width = std::max( 0, max_width - move_cost_len - 1 );
+    trim_and_print( w_look, point( column, line ), location_width, location_color, area_name );
+    const auto move_col = column + std::max( 0, max_width - move_cost_len );
+    mvwprintz( w_look, point( move_col, line ), move_cost_color, move_cost_str );
+    line++;
+    const auto terrain_width = std::max( 0, max_width - light_len - 1 );
+    trim_and_print( w_look, point( column, line ), terrain_width, terrain_color, tile );
+    const auto light_col = column + std::max( 0, max_width - light_len - 1 );
+    mvwprintz( w_look, point( light_col, line ), ll.second, ll.first );
+    if( !terrain_desc.empty() ) {
+        const int desc_lines = fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
+                                               terrain_desc ) - 1;
+        line += desc_lines;
+    }
 
-    std::string tile = string_format( "(%s) %s", area_name, fmt_tile_info( lp ) );
+    if( m.has_furn( lp ) ) {
+        const auto &furniture = m.furn( lp ).obj();
+        const auto furniture_color = furniture.color();
+        const auto furniture_desc = furniture.description.translated();
+        mvwprintz( w_look, point( column, ++line ), furniture_color, m.furnname( lp ) );
+        if( !furniture_desc.empty() ) {
+            const int desc_lines = fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray,
+                                                   furniture_desc ) - 1;
+            line += desc_lines;
+        }
+    }
 
-    if( m.impassable( lp ) ) {
-        line += fold_and_print( w_look, point( column, line ), max_width, c_light_gray,
-                                _( "%s; Impassable" ),
-                                tile );
-    } else {
-        line += fold_and_print( w_look, point( column, line ), max_width, c_light_gray,
-                                _( "%s; Movement cost %d" ),
-                                tile, m.move_cost( lp ) * 50 );
+    if( coverage > 0 ) {
+        fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
+                        _( "Cover: %d%%" ), coverage );
+    }
+    if( block_chance > 0 ) {
+        fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
+                        _( "Block: %d%%" ), block_chance );
+    }
 
-        const auto ll = get_light_level( std::max( 1.0,
-                                         LIGHT_AMBIENT_LIT - m.ambient_light_at( lp ) + 1.0 ) );
-        mvwprintw( w_look, point( column, line++ ), _( "Lighting: " ) );
-        wprintz( w_look, ll.second, ll.first );
+    std::vector<std::string> feature_lines = foldstring( m.features( lp ), max_width );
+    const int numlines = feature_lines.size();
+    for( int i = 0; i < numlines; i++ ) {
+        mvwprintz( w_look, point( column, ++line ), c_dark_gray, feature_lines[i] );
     }
 
     std::string signage = m.get_signage( lp );
     if( !signage.empty() ) {
-        trim_and_print( w_look, point( column, line++ ), max_width, c_dark_gray,
-                        // NOLINTNEXTLINE(cata-text-style): the question mark does not end a sentence
-                        u.has_trait( trait_ILLITERATE ) ? _( "Sign: ???" ) : _( "Sign: %s" ), signage );
+        std::string sign_string = u.has_trait( trait_ILLITERATE ) ? "???" : signage;
+        mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Sign: %s" ), sign_string );
     }
 
     if( m.has_zlevels() && lp.z > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
-        // Print info about stuff below
         tripoint below( lp.xy(), lp.z - 1 );
-        std::string tile_below = fmt_tile_info( below );
+        std::string tile_below = m.tername( below );
+        if( m.has_furn( below ) ) {
+            tile_below += ", " + m.furnname( below );
+        }
 
         if( !m.has_floor_or_support( lp ) ) {
-            line += fold_and_print( w_look, point( column, line ), max_width, c_dark_gray,
-                                    _( "Below: %s; No support" ),
-                                    tile_below );
+            fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
+                            _( "Below: %s; No support" ), tile_below );
         } else {
-            line += fold_and_print( w_look, point( column, line ), max_width, c_dark_gray,
-                                    _( "Below: %s; Walkable" ),
-                                    tile_below );
+            fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
+                            _( "Below: %s; Walkable" ), tile_below );
         }
     }
 
-    line += fold_and_print( w_look, point( column, line ), max_width, c_dark_gray,
-                            m.features( lp ) );
-    line += fold_and_print( w_look, point( column, line ), max_width, c_light_gray,
-                            _( "Coverage: %d%%" ),
-                            m.coverage( lp ) );
+    ++line;
 }
 
 void game::print_fields_info( const tripoint &lp, const catacurses::window &w_look, int column,
@@ -7606,6 +7642,11 @@ void game::print_fields_info( const tripoint &lp, const catacurses::window &w_lo
             mvwprintz( w_look, point( column, ++line ), cur.color(), cur.name() );
         }
     }
+
+    int size = std::distance( tmpfield.begin(), tmpfield.end() );
+    if( size > 0 ) {
+        mvwprintz( w_look, point( column, ++line ), c_white, "\n" );
+    }
 }
 
 void game::print_trap_info( const tripoint &lp, const catacurses::window &w_look,
@@ -7613,6 +7654,7 @@ void game::print_trap_info( const tripoint &lp, const catacurses::window &w_look
                             int &line )
 {
     const trap &tr = m.tr_at( lp );
+    auto printed = false;
     if( tr.can_see( lp, u ) ) {
         partial_con *pc = m.partial_con_at( lp );
         std::string tr_name;
@@ -7625,6 +7667,11 @@ void game::print_trap_info( const tripoint &lp, const catacurses::window &w_look
         }
 
         mvwprintz( w_look, point( column, ++line ), tr.color, tr_name );
+        printed = true;
+    }
+
+    if( printed ) {
+        ++line;
     }
 }
 
@@ -7641,7 +7688,9 @@ void game::print_vehicle_info( const vehicle *veh, int veh_part, const catacurse
                                const int column, int &line, const int last_line )
 {
     if( veh ) {
-        mvwprintw( w_look, point( column, ++line ), _( "There is a %s there.  Parts:" ), veh->name );
+        // Print the name of the vehicle.
+        mvwprintz( w_look, point( column, ++line ), c_white, "%s", veh->name );
+        // Then the list of parts on that tile.
         line = veh->print_part_list( w_look, ++line, last_line, getmaxx( w_look ), veh_part );
     }
 }
@@ -7661,9 +7710,10 @@ void game::print_items_info( const tripoint &lp, const catacurses::window &w_loo
                    _( "There's something there, but you can't see what it is." ) );
         return;
     } else {
-        std::map<std::string, int> item_names;
+        std::map<std::string, std::pair<int, nc_color>> item_names;
         for( auto &item : m.i_at( lp ) ) {
-            ++item_names[item->tname()];
+            ++item_names[item->tname()].first;
+            item_names[item->tname()].second = item->color_in_inventory();
         }
 
         const int max_width = getmaxx( w_look ) - column - 1;
@@ -7674,12 +7724,12 @@ void game::print_items_info( const tripoint &lp, const catacurses::window &w_loo
                 break;
             }
 
-            if( it->second > 1 ) {
-                trim_and_print( w_look, point( column, ++line ), max_width, c_white,
+            if( it->second.first > 1 ) {
+                trim_and_print( w_look, point( column, ++line ), max_width, it->second.second,
                                 pgettext( "%s is the name of the item.  %d is the quantity of that item.", "%s [%d]" ),
-                                it->first.c_str(), it->second );
+                                it->first.c_str(), it->second.first );
             } else {
-                trim_and_print( w_look, point( column, ++line ), max_width, c_white, it->first );
+                trim_and_print( w_look, point( column, ++line ), max_width, it->second.second, it->first );
             }
         }
     }
@@ -8286,8 +8336,9 @@ void game::pre_print_all_tile_info( const tripoint &lp, const catacurses::window
 {
     // get global area info according to look_around caret position
     // TODO: fix point types
-    const oter_id &cur_ter_m = ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( ms_to_omt_copy( m.getabs(
-                                   lp ) ) ) );
+    const oter_id &cur_ter_m = get_overmapbuffer( current_dimension_id_ ).ter( tripoint_abs_omt(
+                                   ms_to_omt_copy( m.getabs(
+                                           lp ) ) ) );
     // we only need the area name and then pass it to print_all_tile_info() function below
     const std::string area_name = cur_ter_m->get_name();
     print_all_tile_info( lp, w_info, area_name, 1, first_line, last_line, cache );
@@ -10095,7 +10146,12 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
                             ::get_hp_bar( critter->get_hp(), critter->get_hp_max(), false );
                     }
                     if( player_knows ) {
-                        mvwprintz( w_monsters, point( width - 19, y ), color, sText );
+                        mvwprintz( w_monsters, point( width - 25, y ), color, sText );
+                        const int bar_max_width = 5;
+                        const int bar_width = utf8_width( sText );
+                        for( int i = 0; i < bar_max_width - bar_width; ++i ) {
+                            mvwprintz( w_monsters, point( width - 21 - i, y ), c_white, "." );
+                        }
                     }
 
                     if( m != nullptr ) {
@@ -12027,10 +12083,13 @@ void game::resize_reality_bubble_to( int new_size )
     //   2. Translating surviving monster positions into the new local coordinate system.
     const int old_half = static_cast<int>( g_half_mapsize );
     const int new_half = new_size + 1;
-    const int shift_sm = old_half - new_half;  // > 0 when shrinking, < 0 when growing
+    // Positive when shrinking (old origin < new origin), negative when growing.
+    // Each monster's local position must be translated by this many submaps in X and Y
+    // so it lines up with the new grid origin.
+    const int grid_origin_delta_in_sm = old_half - new_half;
 
     // When shrinking, despawn monsters that fall outside the new bubble radius.
-    if( shift_sm > 0 ) {
+    if( grid_origin_delta_in_sm > 0 ) {
         const tripoint player_sm_in_grid( u.posx() / SEEX, u.posy() / SEEY, get_levz() );
         for( monster &critter : all_monsters() ) {
             const tripoint critter_sm( critter.posx() / SEEX, critter.posy() / SEEY, critter.posz() );
@@ -12046,17 +12105,33 @@ void game::resize_reality_bubble_to( int new_size )
     // translates positions regardless of shrink/grow direction.  The bounds check
     // inside shift_monsters is not used here because the old grid bounds are larger
     // than the new ones when shrinking, so all in-range survivors pass.
-    if( shift_sm != 0 ) {
+    if( grid_origin_delta_in_sm != 0 ) {
         for( monster &critter : all_monsters() ) {
-            critter.shift( { shift_sm, shift_sm } );
+            critter.shift( { grid_origin_delta_in_sm, grid_origin_delta_in_sm } );
+            // Stale local-coordinate paths become invalid after the origin shift.
+            // Clear them so the monster replans on its next turn rather than
+            // pathing toward wrong tiles.
+            critter.clear_path();
         }
         critter_tracker->rebuild_cache();
     }
 
-    // Unload ALL active NPCs so load_npcs() re-places them with correct positions
-    // in the new coordinate system.  Keeping survivors active is wrong because
-    // load_npcs() skips already-active IDs, leaving them with stale local coords.
-    unload_npcs();
+    // Selectively unload NPCs that fall outside the new bubble.  NPCs that stay
+    // within bounds are re-anchored after load_map() rebuilds abs_sub — this avoids
+    // the redundant on_unload()/on_load() cycle on every activity-bubble transition.
+    {
+        auto out_of_range = std::ranges::stable_partition( active_npc,
+        [&]( const shared_ptr_fast<npc> &n ) {
+            const tripoint npc_sm = ms_to_sm_copy( n->global_square_location() );
+            if( !m.has_zlevels() && npc_sm.z != get_levz() ) {
+                return false;  // wrong z-level — evict
+            }
+            const tripoint diff = npc_sm - player_abs_sm;
+            return std::abs( diff.x ) <= new_half && std::abs( diff.y ) <= new_half;
+        } );
+        std::ranges::for_each( out_of_range, []( const auto & n ) { n->on_unload(); } );
+        active_npc.erase( out_of_range.begin(), out_of_range.end() );
+    }
 
     // Release submap loader handles so load_map() recreates them with the new radius.
     if( reality_bubble_handle_ != 0 ) {
@@ -12089,6 +12164,22 @@ void game::resize_reality_bubble_to( int new_size )
     // rebuilds distribution_grid_tracker and fluid_grid.
     load_map( new_abs_sub, /*pump_events=*/false );
 
+    // Re-anchor surviving NPCs to the new map origin.
+    // We use onswapsetpos() rather than place_on_map() because place_on_map() calls
+    // setpos() + is_empty(): since the NPC is already in active_npc, critter_at()
+    // finds it at its own newly-set position and reports the tile occupied, which
+    // triggers the collision-avoidance nudge and shifts the NPC by 1 tile.
+    // onswapsetpos() bypasses that loop and directly fixes position + submap_coords.
+    {
+        const tripoint new_origin_ms = sm_to_ms_copy( get_map().get_abs_sub() );
+        std::ranges::for_each( active_npc, [&]( const auto & n ) {
+            n->onswapsetpos( reality_bubble::local_square_from_global( n->global_square_location(),
+                             new_origin_ms ) );
+            // Same as monsters above: local-coordinate paths are now stale.
+            n->path.clear();
+        } );
+    }
+
     // Flush the load/eviction diff immediately so the first boundary crossing
     // after resize doesn't stall on a bulk eviction of the old bubble's submaps.
     // on_submap_unloaded is safe here: map::on_submap_unloaded guards grid[]
@@ -12099,17 +12190,19 @@ void game::resize_reality_bubble_to( int new_size )
     // When the bubble grew, submaps outside the old (smaller) bubble just entered.
     // Their stored monsters are still in the overmap monster_map; spawn them now
     // so the expanded bubble isn't empty until the next boundary crossing.
-    if( shift_sm < 0 ) {
+    if( grid_origin_delta_in_sm < 0 ) {
         m.spawn_monsters( false );
     }
 
     load_npcs();
 
-    m.invalidate_map_cache( get_levz() );
     u.recalc_sight_limits();
+    m.invalidate_map_cache( get_levz() );
+    m.build_map_cache( get_levz() );
 
     // Discard pathfinding objects sized for the old bubble.
     Pathfinding::clear_pool();
+
 
 #if defined(TILES)
     if( tilecontext ) {
@@ -13033,6 +13126,45 @@ std::string game::get_dimension_prefix() const
     return current_dimension_id_;
 }
 
+void game::set_active_dimension_id( const std::string &dim_id )
+{
+    current_dimension_id_ = dim_id;
+    g_active_dimension_id = dim_id;
+}
+
+void game::activate_dimension_state( const std::string &new_dim_id,
+                                     const std::string &old_dim_id )
+{
+    // Step 1: drain ALL in-flight background work before touching any shared state.
+    // Workers capture dimension IDs by value at submission time, so it is safe to
+    // drain while the global still names the old dimension.
+    submap_loader.drain_lazy_loads();
+
+    // Step 2: release load handles — must happen before bind_dimension() (see caller
+    // comment at the bind_dimension() call site for the ordering rationale).
+    if( reality_bubble_handle_ != 0 ) {
+        submap_loader.release_load( reality_bubble_handle_ );
+        reality_bubble_handle_ = 0;
+    }
+    if( lazy_border_handle_ != 0 ) {
+        submap_loader.release_load( lazy_border_handle_ );
+        lazy_border_handle_ = 0;
+    }
+
+    // Step 3: flush the stale desired set.  Asserts fully drained (lazy + presave).
+    submap_loader.flush_prev_desired();
+
+    // Step 4: update both dimension-ID fields atomically.
+    set_active_dimension_id( new_dim_id );
+
+    // Step 5: clear the old dimension's distribution-grid tracker.  Safe now that
+    // all workers have finished — no on_submap_loaded() callback can fire for
+    // old_dim_id after drain_lazy_loads() returns.
+    if( grid_trackers_.count( old_dim_id ) ) {
+        grid_trackers_[old_dim_id]->clear();
+    }
+}
+
 bool game::travel_to_dimension( const std::string &dim_id,
                                 const world_type_id &world_type,
                                 const std::optional<dimension_bounds> &bounds,
@@ -13094,7 +13226,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
                 active_world->start_save_tx();
             }
             here.save();
-            ACTIVE_OVERMAP_BUFFER.save();
+            get_overmapbuffer( current_dimension_id_ ).save();
             MAPBUFFER_REGISTRY.get( old_dim_id ).save();
             if( !save_dimension_data() ) {
                 if( active_world ) {
@@ -13136,45 +13268,28 @@ bool game::travel_to_dimension( const std::string &dim_id,
         }
     }
 
+    assert( !swapping_dimensions );
     // Prevent temperature/weather code from accessing the grid while it's
-    // being cleared and rebuilt.  Must be set BEFORE clear_grid().
+    // being cleared and rebuilt.  Must be set BEFORE activate_dimension_state().
     swapping_dimensions = true;
 
-    current_dimension_id_ = dim_id;
-    g_active_dimension_id = dim_id;
+    // Sequenced critical section: drain → release handles → flush → update ID → clear tracker.
+    // load_map() detects dimension changes by comparing get_dimension_prefix() vs
+    // m.get_bound_dimension(); activate_dimension_state() must complete before bind_dimension()
+    // so that load_map() sees the new ID and correctly re-issues load requests.
+    activate_dimension_state( dim_id, old_dim_id );
 
     add_msg( m_debug, "[DIM] Switched active dimension: '%s' → '%s'", old_dim_id, dim_id );
-
-    // Clear the old dimension's distribution-grid tracker.
-    if( grid_trackers_.count( old_dim_id ) ) {
-        grid_trackers_[old_dim_id]->clear();
-    }
-
-    // Release reality-bubble and lazy-border handles BEFORE rebinding the map.
-    // load_map() detects dimension changes by comparing get_dimension_prefix()
-    // vs m.get_bound_dimension(); if we bind first, load_map() sees matching
-    // IDs and skips the release, leaving stale overworld requests alive whose
-    // center gets updated to pocket coordinates — causing eviction of the
-    // wrong dimension's submaps (use-after-free).
-    if( reality_bubble_handle_ != 0 ) {
-        submap_loader.drain_lazy_loads();
-        submap_loader.release_load( reality_bubble_handle_ );
-        reality_bubble_handle_ = 0;
-    }
-    if( lazy_border_handle_ != 0 ) {
-        submap_loader.release_load( lazy_border_handle_ );
-        lazy_border_handle_ = 0;
-    }
-    submap_loader.flush_prev_desired();
 
     // bind_dimension() redirects all subsequent loadn() / generation calls to
     // the target MAPBUFFER_REGISTRY slot.  Submaps for old_dim_id stay in their
     // slot — nothing is lost.
     here.bind_dimension( dim_id );
     // Flush the destination dimension's cached overmaps so they are freshly
-    // loaded from disk on demand.  bind_dimension() already switched
-    // g_active_dimension_id, so ACTIVE_OVERMAP_BUFFER resolves to the NEW dimension.
-    ACTIVE_OVERMAP_BUFFER.clear();
+    // loaded from disk on demand.  current_dimension_id_ is already the new dim
+    // (set in activate_dimension_state()), so get_overmapbuffer(current_dimension_id_)
+    // correctly targets the new dimension's buffer.
+    get_overmapbuffer( current_dimension_id_ ).clear();
     here.clear_grid();
 
     if( !loaded_dimensions_.count( dim_id ) ) {
@@ -13189,7 +13304,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
     }
 
     if( target_type && !target_type->region_settings_id.empty() ) {
-        ACTIVE_OVERMAP_BUFFER.current_region_type = target_type->region_settings_id;
+        get_overmapbuffer( current_dimension_id_ ).current_region_type = target_type->region_settings_id;
     } else if( !target_type ) {
         // Overworld: region type is preserved from initial game setup.
     } else {
@@ -13204,10 +13319,10 @@ bool game::travel_to_dimension( const std::string &dim_id,
     // Clear stale bounds then install the new ones before load_map() so that
     // loadn() knows which submaps are out-of-bounds for bounded dimensions.
     here.clear_dimension_bounds();
-    ACTIVE_OVERMAP_BUFFER.clear_dimension_bounds();
+    get_overmapbuffer( current_dimension_id_ ).clear_dimension_bounds();
     if( bounds ) {
         here.set_dimension_bounds( *bounds );
-        ACTIVE_OVERMAP_BUFFER.set_dimension_bounds( *bounds );
+        get_overmapbuffer( current_dimension_id_ ).set_dimension_bounds( *bounds );
     }
 
     // Invoke pre-load callback (e.g. place overmap specials) before loading submaps
@@ -13520,23 +13635,25 @@ void game::vertical_notes( int z_before, int z_after )
         const tripoint_abs_omt cursp_before( p.xy(), z_before );
         const tripoint_abs_omt cursp_after( p.xy(), z_after );
 
-        if( !ACTIVE_OVERMAP_BUFFER.seen( cursp_before ) ) {
+        if( !get_overmapbuffer( current_dimension_id_ ).seen( cursp_before ) ) {
             continue;
         }
-        if( ACTIVE_OVERMAP_BUFFER.has_note( cursp_after ) ) {
+        if( get_overmapbuffer( current_dimension_id_ ).has_note( cursp_after ) ) {
             // Already has a note -> never add an AUTO-note
             continue;
         }
-        const oter_id &ter = ACTIVE_OVERMAP_BUFFER.ter( cursp_before );
-        const oter_id &ter2 = ACTIVE_OVERMAP_BUFFER.ter( cursp_after );
+        const oter_id &ter = get_overmapbuffer( current_dimension_id_ ).ter( cursp_before );
+        const oter_id &ter2 = get_overmapbuffer( current_dimension_id_ ).ter( cursp_after );
         if( z_after > z_before && ter->has_flag( oter_flags::known_up ) &&
             !ter2->has_flag( oter_flags::known_down ) ) {
-            ACTIVE_OVERMAP_BUFFER.set_seen( cursp_after, true );
-            ACTIVE_OVERMAP_BUFFER.add_note( cursp_after, string_format( ">:W;%s", _( "AUTO: goes down" ) ) );
+            get_overmapbuffer( current_dimension_id_ ).set_seen( cursp_after, true );
+            get_overmapbuffer( current_dimension_id_ ).add_note( cursp_after, string_format( ">:W;%s",
+                    _( "AUTO: goes down" ) ) );
         } else if( z_after < z_before && ter->has_flag( oter_flags::known_down ) &&
                    !ter2->has_flag( oter_flags::known_up ) ) {
-            ACTIVE_OVERMAP_BUFFER.set_seen( cursp_after, true );
-            ACTIVE_OVERMAP_BUFFER.add_note( cursp_after, string_format( "<:W;%s", _( "AUTO: goes up" ) ) );
+            get_overmapbuffer( current_dimension_id_ ).set_seen( cursp_after, true );
+            get_overmapbuffer( current_dimension_id_ ).add_note( cursp_after, string_format( "<:W;%s",
+                    _( "AUTO: goes up" ) ) );
         }
     }
 }
@@ -13600,13 +13717,10 @@ point game::update_map( int &x, int &y )
         // Dynamically manage lazy border based on cached option.
         if( lazy_border_enabled ) {
             if( lazy_border_handle_ == 0 ) {
-                const int z_lo = m.has_zlevels() ? -OVERMAP_DEPTH : new_center.raw().z;
-                const int z_hi = m.has_zlevels() ? OVERMAP_HEIGHT : new_center.raw().z;
                 lazy_border_handle_ = submap_loader.request_load(
                                           load_request_source::lazy_border,
                                           m.get_bound_dimension(), new_center,
-                                          reality_bubble_radius_ + 2,
-                                          z_lo, z_hi );
+                                          reality_bubble_radius_ + 2 );
             } else {
                 submap_loader.update_request( lazy_border_handle_, new_center );
             }
@@ -13636,10 +13750,15 @@ point game::update_map( int &x, int &y )
     u.shift_destination( -shift_ms );
 
     // Shift NPCs
+    // Allow 2 submaps of slop beyond the grid edge so fast-moving NPCs that
+    // crossed the boundary this tick are not immediately despawned.
+    static constexpr int npc_despawn_margin_sm = 2;
     for( auto it = active_npc.begin(); it != active_npc.end(); ) {
         ( *it )->shift( shift );
-        if( ( *it )->posx() < 0 - SEEX * 2 || ( *it )->posy() < 0 - SEEX * 2 ||
-            ( *it )->posx() > SEEX * ( g_mapsize + 2 ) || ( *it )->posy() > SEEY * ( g_mapsize + 2 ) ) {
+        if( ( *it )->posx() < 0 - SEEX * npc_despawn_margin_sm ||
+            ( *it )->posy() < 0 - SEEY * npc_despawn_margin_sm ||
+            ( *it )->posx() > SEEX * ( g_mapsize + npc_despawn_margin_sm ) ||
+            ( *it )->posy() > SEEY * ( g_mapsize + npc_despawn_margin_sm ) ) {
             //Remove the npc from the active list. It remains in the overmap list.
             ( *it )->on_unload();
             it = active_npc.erase( it );
@@ -13680,7 +13799,7 @@ void game::update_overmap_seen()
     const int dist = u.overmap_sight_range( light_level( u.posz() ) );
     const int dist_squared = dist * dist;
     // We can always see where we're standing
-    ACTIVE_OVERMAP_BUFFER.set_seen( ompos, true );
+    get_overmapbuffer( current_dimension_id_ ).set_seen( ompos, true );
     for( const tripoint_abs_omt &p : points_in_radius( ompos, dist ) ) {
         const point_rel_omt delta = p.xy() - ompos.xy();
         const int h_squared = delta.x() * delta.x() + delta.y() * delta.y();
@@ -13700,13 +13819,13 @@ void game::update_overmap_seen()
         float sight_points = dist;
         for( auto it = line.begin();
              it != line.end() && sight_points >= 0; ++it ) {
-            const oter_id &ter = ACTIVE_OVERMAP_BUFFER.ter( *it );
+            const oter_id &ter = get_overmapbuffer( current_dimension_id_ ).ter( *it );
             sight_points -= static_cast<int>( ter->get_see_cost() ) * multiplier;
         }
         if( sight_points >= 0 ) {
             tripoint_abs_omt seen( p );
             do {
-                ACTIVE_OVERMAP_BUFFER.set_seen( seen, true );
+                get_overmapbuffer( current_dimension_id_ ).set_seen( seen, true );
                 --seen.z();
             } while( seen.z() >= 0 );
         }
@@ -14008,7 +14127,7 @@ void game::perhaps_add_random_npc()
 
     // We want the "NPC_DENSITY" to denote number of NPCs per week, per overmap, or so
     // But soft-cap it at about a standard year (4*14 days) worth
-    const int npc_num = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player(
+    const int npc_num = get_overmapbuffer( current_dimension_id_ ).get_npcs_near_player(
                             npc_overmap::density_search_radius ).size();
     const double chance = npc_overmap::spawn_chance_in_hour( npc_num,
                           get_option<float>( "NPC_DENSITY" ) );
@@ -14030,7 +14149,7 @@ void game::perhaps_add_random_npc()
         spawn_point = u_omt + point( rng( -radius_spawn_range, radius_spawn_range ),
                                      rng( -radius_spawn_range, radius_spawn_range ) );
         spawn_point.z() = 0;
-        const oter_id oter = ACTIVE_OVERMAP_BUFFER.ter( spawn_point );
+        const oter_id oter = get_overmapbuffer( current_dimension_id_ ).ter( spawn_point );
         // Shouldn't spawn on lakes or rivers.
         // TODO: Prefer greater distance
         if( !is_river_or_lake( oter ) || rl_dist( u_omt.xy(), spawn_point.xy() ) < 30 ) {
@@ -14051,7 +14170,7 @@ void game::perhaps_add_random_npc()
     // TODO: fix point types
     tripoint submap_spawn = omt_to_sm_copy( spawn_point.raw() );
     tmp->spawn_at_sm( tripoint( submap_spawn.xy(), 0 ) );
-    ACTIVE_OVERMAP_BUFFER.insert_npc( tmp );
+    get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
     tmp->form_opinion( u );
     tmp->mission = NPC_MISSION_NULL;
     tmp->long_term_goal_action();
@@ -14265,7 +14384,7 @@ void game::quickload()
         MAPBUFFER_REGISTRY.for_each( []( const std::string &, mapbuffer & buf ) {
             buf.clear();
         } );
-        ACTIVE_OVERMAP_BUFFER.clear();
+        get_overmapbuffer( current_dimension_id_ ).clear();
         try {
             // Doesn't need to load mod files again for the same world
             setup( false );
@@ -14858,7 +14977,7 @@ overmap &game::get_cur_om() const
     const tripoint sm = m.get_abs_sub() + tripoint( g_half_mapsize, g_half_mapsize, 0 );
     const tripoint pos_om = sm_to_om_copy( sm );
     // TODO: fix point types
-    return ACTIVE_OVERMAP_BUFFER.get( point_abs_om( pos_om.xy() ) );
+    return get_overmapbuffer( current_dimension_id_ ).get( point_abs_om( pos_om.xy() ) );
 }
 
 std::vector<npc *> game::allies()

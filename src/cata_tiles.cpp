@@ -3289,15 +3289,16 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             int last_vis = center.z + 1;
             lit_level last_vis_ll = lit_level::BLANK;
             bool drew_occluded_overlay = false;
+            bool had_visible_open_air = false;
+            const int &x = temp_x;
+            const int &y = temp_y;
+
+            const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
+                                         x <= max_visible_x );
             for( int z = center.z; z >= -OVERMAP_DEPTH; z-- ) {
                 const auto &ch = here.access_cache( z );
 
                 const tripoint pos( temp_x, temp_y, z );
-                const int &x = pos.x;
-                const int &y = pos.y;
-
-                const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
-                                             x <= max_visible_x );
 
                 const bool in_map_bounds = here.inbounds( pos );
 
@@ -3310,22 +3311,22 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const auto visibility = here.get_visibility( ll, cache );
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
                     if( !would_apply_vision_effects( visibility ) ) {
-                        last_vis = z;
-                        last_vis_ll = ll;
+                        if( here.ter( pos ) != t_open_air ) {
+                            last_vis = z;
+                            last_vis_ll = ll;
+                        } else {
+                            had_visible_open_air = true;
+                        }
                     } else if( !has_memory && z < center.z &&
                                visibility == visibility_type::VIS_HIDDEN ) {
-                        if( drew_occluded_overlay ) {
-                            // Overlay already drawn; keep descending to find a floor tile to render,
-                            // but don't draw a second overlay (which would compound to solid blue).
-                            continue;
+                        if( !drew_occluded_overlay ) {
+                            drew_occluded_overlay = true;
+                            // Draw a depth-faded semi-transparent overlay for the topmost occluded tile.
+                            const tile_search_params dark_tile{ "lighting_lowlight_dark", C_LIGHTING,
+                                                                empty_string, 0, 0 };
+                            draw_from_id_string( dark_tile, pos, std::nullopt, std::nullopt,
+                                                 lit_level::LIT, false, center.z - z, false );
                         }
-                        drew_occluded_overlay = true;
-                        // Draw a depth-faded semi-transparent overlay for the topmost occluded tile.
-                        const tile_search_params dark_tile{ "lighting_lowlight_dark", C_LIGHTING,
-                                                            empty_string, 0, 0 };
-                        draw_from_id_string( dark_tile, pos, std::nullopt, std::nullopt,
-                                             lit_level::LIT, false, center.z - z, false );
-                        continue;
                     }
                 }
 
@@ -3376,8 +3377,31 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                             min_z = std::min( pos.z, min_z );
                             draw_points.emplace_back( pos, height_3d, ll, invisible );
                         } else if( last_vis != center.z + 1 ) {
-                            min_z = std::min( last_vis, min_z );
-                            draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d, last_vis_ll, invisible );
+                            if( in_map_bounds && z < center.z - fov_3d_z_range ) {
+                                // The floor is below the 3D FOV limit, but the loop only
+                                // reaches here through a fully transparent column above.
+                                // Treat it as seen-through-sky: render and memorize at the
+                                // floor's actual position with surface lighting + depth tint.
+                                here.set_memory_seen_cache_dirty( pos );
+                                min_z = std::min( pos.z, min_z );
+                                //invisible[0] = true;
+                                draw_points.emplace_back( pos, height_3d, lit_level::MEMORIZED, invisible );
+                                //const ter_id &t = here.ter( pos );
+                                //const auto tile = tile_search_params{ t.id().str(), C_TERRAIN, empty_string, 0, 0 };
+                                //draw_from_id_string( tile, pos, std::nullopt, std::nullopt, lit_level::MEMORIZED, false, center.z - z, false );
+                            } else {
+                                min_z = std::min( last_vis, min_z );
+                                draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d,
+                                                          last_vis_ll, invisible );
+                            }
+                        } else if( had_visible_open_air && in_map_bounds &&
+                                   z < center.z - fov_3d_z_range ) {
+                            // No solid last_vis found, but we passed through visible open air
+                            // and the tile is below the 3D FOV limit (e.g. flying high above
+                            // the map). Render at its own position with a depth tint.
+                            here.set_memory_seen_cache_dirty( pos );
+                            min_z = std::min( pos.z, min_z );
+                            draw_points.emplace_back( pos, height_3d, lit_level::MEMORIZED, invisible );
                         }
 
                     } else {
@@ -4705,6 +4729,22 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
+        } else if( t && !neighborhood_overridden && t != t_open_air ) {
+            // The single memory slot was overwritten by furniture/trap on this tile.
+            // Fall back to rendering the actual terrain as memorized so it isn't invisible.
+            int subtile = 0;
+            int rotation = 0;
+            int connect_group = 0;
+            if( t.obj().connects( connect_group ) ) {
+                get_connect_values( p, subtile, rotation, connect_group, {} );
+            } else {
+                get_terrain_orientation( p, rotation, subtile, {}, invisible );
+            }
+            const std::string &tname = t.id().str();
+            const tile_search_params tile { tname, C_TERRAIN, empty_string, subtile, rotation };
+            return draw_from_id_string(
+                       tile, p, bgCol, fgCol,
+                       lit_level::MEMORIZED, true, z_drop, false, height_3d );
         }
     }
     return false;
@@ -4919,7 +4959,7 @@ bool cata_tiles::draw_graffiti( const tripoint &p, const lit_level ll, int &heig
 bool cata_tiles::draw_field_or_item( const tripoint &p, const lit_level ll, int &height_3d,
                                      const bool ( &invisible )[5], int z_drop )
 {
-    if( !fov_3d && z_drop > 0 ) {
+    if( ( !fov_3d && z_drop > 0 ) || fov_3d_z_range < z_drop ) {
         return false;
     }
     const auto fld_override = field_override.find( p );

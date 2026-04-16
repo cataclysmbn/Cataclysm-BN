@@ -355,6 +355,12 @@ struct level_cache {
     // "inside" tiles are protected from sun, rain, etc. (see "INDOORS" flag)
     std::vector<bool>               outside_cache;
 
+    // True when this tile has an unobstructed ray to the sun for the current in-game hour.
+    // Rebuilt by map::build_angled_sunlight_cache() when the hour changes.
+    // Consulted by build_sunlight_cache() to distinguish direct-sun tiles (full
+    // outside_light_level) from scatter-lit outdoor tiles (reduced ambient level).
+    std::vector<bool>               angled_sunlight_cache;
+
     // true when vehicle below has "ROOF" or "OPAQUE" part, furniture below has "SUN_ROOF_ABOVE"
     //      or terrain doesn't have "NO_FLOOR" flag
     // false otherwise
@@ -548,8 +554,11 @@ class map : public submap_load_listener
 
         void set_suspension_cache_dirty( const int zlev );
 
-        /// Mark the per-submap pf_cache dirty for the submap containing p.
+        /// Mark the per-submap pf_cache dirty for all submaps on zlev.
+        /// Use the tripoint overload for single-tile changes.
         void set_pathfinding_cache_dirty( int zlev );
+        /// Mark the per-submap pf_cache dirty for the single submap containing p.
+        void set_pathfinding_cache_dirty( const tripoint &p );
         /*@}*/
 
         void set_memory_seen_cache_dirty( const tripoint &p );
@@ -2000,6 +2009,12 @@ class map : public submap_load_listener
         bool build_vision_transparency_cache( const Character &player );
         // fills lm with sunlight. pzlev is current player's zlevel
         void build_sunlight_cache( int pzlev );
+        // Recomputes sun direction and scatter factor from the current game time.
+        // Called once per in-game hour from build_sunlight_cache.
+        void update_solar_params();
+        // Traces a parallel sun ray from each tile at zlev upward and writes
+        // angled_sunlight_cache.  Reads floor_cache across all z-levels above zlev.
+        void build_angled_sunlight_cache( int zlev );
     public:
         void build_outside_cache( int zlev );
         // Builds a floor cache and returns true if the cache was invalidated.
@@ -2014,7 +2029,8 @@ class map : public submap_load_listener
         // this level, called build_sunlight_cache() once, and applied character
         // lights.  The function then processes only entities whose position z
         // matches zlev, avoiding cross-level cache writes for parallel safety.
-        void generate_lightmap( int zlev, bool skip_shared_init = false );
+        void generate_lightmap( int zlev );
+        void generate_lightmap_worker( int zlev );
         void build_seen_cache( const tripoint &origin, int target_z );
         // Applies vehicle mirror/camera FOV from @p origin's vehicle.
         // Separated from build_seen_cache for readability and Tracy granularity.
@@ -2037,6 +2053,28 @@ class map : public submap_load_listener
         // Pre-computed 1/exp(t*i) table for the current weather transparency.
         // Written serially before parallel shadowcasting calls.
         exp_lookup weather_lookup_{ LIGHT_TRANSPARENCY_OPEN_AIR * 1.1f };
+
+        // Last player position for which build_seen_cache was run.
+        // Initialized to tripoint_min so the first build_map_cache call always rebuilds.
+        // Reset to tripoint_min by invalidate_map_cache so any full-cache invalidation
+        // forces a seen_cache rebuild regardless of whether the player moved.
+        tripoint m_last_seen_cache_origin = tripoint_min;
+
+        // State for the directional sunlight system.  Rebuilt once per in-game hour by
+        // update_solar_params() and build_angled_sunlight_cache().
+        struct solar_params {
+            // Sun ray horizontal displacement per z-level.
+            // Positive dx_per_z = east (+x); negative = west.
+            // SUN_EAST_SIGN in update_solar_params() flips the axis if needed.
+            // dy_per_z is always 0 (no latitude tilt modelled).
+            float dx_per_z     = 0.f;
+            float dy_per_z     = 0.f;
+            // False at night; true for all daylight hours (day/night boundary only).
+            bool  direct_active  = false;
+            // Game-hour when the cache was last rebuilt; -1 forces a rebuild on first use.
+            int   last_built_hour = -1;
+        };
+        solar_params m_solar;
 
         /**
          * Absolute coordinates of first submap (get_submap_at(0,0))
@@ -2221,8 +2259,10 @@ class map : public submap_load_listener
          * called in parallel across monsters (P-6).
          */
         struct vision_cache_slot {
-            point key;
-            char  value = -1;  // -1 = empty/miss
+            // 64-bit key: two tripoints packed as 29 bits each (12x + 12y + 5z).
+            // Handles coordinates up to 4095 per axis — safe for g_mapsize up to ~340.
+            int64_t key  = 0;
+            char    value = -1;  // -1 = empty/miss
         };
         static constexpr std::size_t vision_cache_slots = 1 << 17;  // 131072 entries (~1.5 MB)
         mutable std::vector<vision_cache_slot> skew_vision_cache;
@@ -2375,13 +2415,17 @@ class tinymap : public map
         void drain_to_mapbuffer( mapbuffer &dest );
 
         /**
-         * Position this tinymap at @p sm_base (submap coordinates) and load
-         * its 2×2 submaps from the mapbuffer.  The submaps must already be
-         * present in the mapbuffer (e.g. after saven() was called during
-         * generation).  Used by run_deferred_mapgen_hooks() to reconstruct a
-         * live map reference on the main thread.
+         * Position this tinymap at @p sm_base (submap coordinates) and wire up
+         * its 2×2 grid slots directly from the mapbuffer without going through
+         * loadn().  The submaps must already be present in the mapbuffer.
+         *
+         * Unlike the old load_from_mapbuffer, this skips loadn()/actualize(),
+         * vehicle-cache setup, and render-cache invalidation.  This is correct
+         * for Lua on_mapgen_postprocess hooks: the submaps are freshly generated
+         * (no time-advance processing needed) and the tinymap is short-lived,
+         * never rendered or simulated.
          */
-        void load_from_mapbuffer( const tripoint &sm_base );
+        void bind_submaps_for_hook( const tripoint &sm_base );
 };
 
 class fake_map : public tinymap

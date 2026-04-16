@@ -44,6 +44,7 @@
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "thread_pool.h"
 #include "effect.h"
 #include "enum_conversions.h"
 #include "enums.h"
@@ -173,6 +174,8 @@ enum debug_menu_index {
     DEBUG_TRAIT_GROUP,
     DEBUG_SHOW_MSG,
     DEBUG_CRASH_GAME,
+    DEBUG_SHOW_WORKER_MSG,
+    DEBUG_CRASH_WORKER,
     DEBUG_RELOAD_TRANSLATIONS,
     DEBUG_MAP_EXTRA,
     DEBUG_DISPLAY_NPC_PATH,
@@ -260,6 +263,8 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_TRAIT_GROUP, true, 't', _( "Test trait group" ) ) },
             { uilist_entry( DEBUG_SHOW_MSG, true, 'd', _( "Show debug message" ) ) },
             { uilist_entry( DEBUG_CRASH_GAME, true, 'C', _( "Crash game (test crash handling)" ) ) },
+            { uilist_entry( DEBUG_SHOW_WORKER_MSG, true, 0, _( "Show debug message (worker thread)" ) ) },
+            { uilist_entry( DEBUG_CRASH_WORKER, true, 0, _( "Crash worker thread (test crash handling)" ) ) },
             { uilist_entry( DEBUG_RELOAD_TRANSLATIONS, true, 'L', _( "Reload translations" ) ) },
             { uilist_entry( DEBUG_DISPLAY_NPC_PATH, true, 'n', _( "Toggle NPC pathfinding on map" ) ) },
             { uilist_entry( DEBUG_PRINT_FACTION_INFO, true, 'f', _( "Print faction info to console" ) ) },
@@ -575,7 +580,7 @@ static void control_npc_menu()
     uilist charmenu;
     int charnum = 0;
     for( const auto &elem : g->get_follower_list() ) {
-        shared_ptr_fast<npc> follower = ACTIVE_OVERMAP_BUFFER.find_npc( elem );
+        shared_ptr_fast<npc> follower = get_overmapbuffer( get_avatar().get_dimension() ).find_npc( elem );
         if( follower ) {
             followers.emplace_back( follower );
             charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, follower->get_name() );
@@ -612,7 +617,7 @@ void character_edit_menu( Character &c )
         if( np->has_destination() ) {
             data << string_format(
                      _( "Destination: %s %s" ), np->goal.to_string(),
-                     ACTIVE_OVERMAP_BUFFER.ter( np->goal )->get_name() ) << '\n';
+                     get_overmapbuffer( np->get_dimension() ).ter( np->goal )->get_name() ) << '\n';
         } else {
             data << _( "No destination." ) << '\n';
         }
@@ -1544,7 +1549,7 @@ void debug()
             shared_ptr_fast<npc> temp = make_shared_fast<npc>();
             temp->randomize();
             temp->spawn_at_precise( { g->get_levx(), g->get_levy() }, u.pos() + point( -4, -4 ) );
-            ACTIVE_OVERMAP_BUFFER.insert_npc( temp );
+            get_overmapbuffer( get_avatar().get_dimension() ).insert_npc( temp );
             temp->form_opinion( u );
             temp->mission = NPC_MISSION_NULL;
             temp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, temp->global_omt_location(),
@@ -1595,7 +1600,7 @@ void debug()
             popup_top(
                 s.c_str(),
                 u.posx(), g->u.posy(), g->get_levx(), g->get_levy(),
-                ACTIVE_OVERMAP_BUFFER.ter( g->u.global_omt_location() )->get_name(),
+                get_overmapbuffer( get_avatar().get_dimension() ).ter( g->u.global_omt_location() )->get_name(),
                 to_turns<int>( calendar::turn - calendar::turn_zero ),
                 get_option<bool>( "RANDOM_NPC" ) ? _( "NPCs are going to spawn." ) :
                 _( "NPCs are NOT going to spawn." ),
@@ -2105,6 +2110,17 @@ void debug()
             break;
         case DEBUG_CRASH_GAME:
             raise( SIGSEGV );
+            break;
+        case DEBUG_SHOW_WORKER_MSG:
+            get_thread_pool().submit_returning( []() {
+                debugmsg( "Test debugmsg from worker thread" );
+            } ).get();
+            drain_worker_thread_debugmsgs();
+            break;
+        case DEBUG_CRASH_WORKER:
+            get_thread_pool().submit( []() {
+                raise( SIGSEGV );
+            } );
             break;
         case DEBUG_RELOAD_TRANSLATIONS:
             l10n_data::reload_catalogues();

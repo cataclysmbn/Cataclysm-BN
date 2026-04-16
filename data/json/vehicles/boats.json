@@ -1237,7 +1237,12 @@
           "seat",
           "seatbelt",
           "turret_mount",
-          { "ammo_types": [ "40x53mm_m430a1" ], "part": "mounted_mk19", "ammo": 60, "ammo_qty": [ 1, 25 ] },
+          {
+            "part": "mounted_25mm_autocannon",
+            "ammo": 80,
+            "ammo_types": [ "25mm_apds", "25mm_hei" ],
+            "ammo_qty": [ 10, 50 ]
+          },
           "metal_boat_hull"
         ]
       },

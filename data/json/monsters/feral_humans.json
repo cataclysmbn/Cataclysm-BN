@@ -689,5 +689,76 @@
     "zombify_into": "mon_zombie_soldier",
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
     "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1" ]
+  },
+  {
+    "id": "mon_feral_corpo",
+    "type": "MONSTER",
+    "name": { "str": "feral corporate executive" },
+    "description": "Still dressed in press interview attire, this tall, well-built corpo appears to have cracked under crushing paranoia. With an automatic rifle in hand, they keep mumbling to themselves about something finance-related, unable to stand still for even a moment as a tightly wound bundle of nerves. While they don't look trained in rifle usage, it would be unwise to approach without a plan.",
+    "copy-from": "mon_feral_militia",
+    "attack_cost": 100,
+    "melee_skill": 3,
+    "melee_dice": 2,
+    "melee_dice_sides": 3,
+    "melee_cut": 3,
+    "dodge": 2,
+    "harvest": "human",
+    "armor_bash": 6,
+    "armor_cut": 4,
+    "armor_bullet": 8,
+    "armor_acid": 0,
+    "starting_ammo": { "8mm_caseless": 60 },
+    "special_attacks": [
+      [ "PARROT_AT_DANGER", 3 ],
+      {
+        "type": "gun",
+        "cooldown": 5,
+        "move_cost": 130,
+        "gun_type": "rm51_assault_rifle",
+        "ammo_type": "8mm_caseless",
+        "fake_skills": [ [ "gun", 2 ], [ "rifle", 2 ] ],
+        "fake_dex": 8,
+        "fake_per": 8,
+        "ranges": [ [ 0, 30, "BURST" ], [ 0, 15, "AUTO" ] ],
+        "require_targeting_player": false,
+        "description": "The feral corporate executive fires their auto rifle!",
+        "no_crits": true
+      }
+    ],
+    "death_drops": "mon_feral_corpo_death_drops",
+    "zombify_into": "mon_zombie"
+  },
+  {
+    "id": "mon_feral_bodyguard",
+    "copy-from": "mon_feral_labsecurity_9mm",
+    "type": "MONSTER",
+    "name": { "str": "feral bodyguard" },
+    "description": "This overly tense bodyguard doesn't look any different from a normal one - except for his bloodshot eyes, unnervingly grating teeth, and sheen of sweat. While much calmer than his VIP, he is no less deadly.",
+    "hp": 120,
+    "armor_bash": 8,
+    "armor_cut": 10,
+    "armor_bullet": 12,
+    "dodge": 2,
+    "harvest": "human",
+    "starting_ammo": { "9mm": 17 },
+    "special_attacks": [
+      [ "PARROT_AT_DANGER", 5 ],
+      {
+        "type": "gun",
+        "cooldown": 8,
+        "move_cost": 100,
+        "gun_type": "usp_9mm",
+        "ammo_type": "9mm",
+        "fake_skills": [ [ "gun", 2 ], [ "pistol", 2 ] ],
+        "fake_dex": 8,
+        "fake_per": 8,
+        "ranges": [ [ 0, 14, "DEFAULT" ] ],
+        "require_targeting_player": false,
+        "description": "The feral bodyguard fires their pistol!",
+        "no_crits": true
+      }
+    ],
+    "death_drops": "feral_bodyguard_death_drops",
+    "zombify_into": "mon_zombie_labsecurity"
   }
 ]

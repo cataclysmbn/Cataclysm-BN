@@ -316,6 +316,7 @@ struct mtype {
         int speed = 0;          /** e.g. human = 100 */
         int agro = 0;           /** chance will attack [-100,100] */
         int morale = 0;         /** initial morale level at spawn */
+        std::optional<int> preferred_z;
 
         // Number of hitpoints regenerated per turn.
         int regenerates = 0;
@@ -484,4 +485,3 @@ struct mtype {
 };
 
 mon_effect_data load_mon_effect_data( const JsonObject &e );
-

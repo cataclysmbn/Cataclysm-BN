@@ -47,6 +47,7 @@ class mapgen_function
         virtual void check( const std::string & /*oter_name*/ ) const { }
 
         virtual void generate( mapgendata & ) = 0;
+        virtual auto is_lua_generator() const -> bool { return false; }
         virtual mapgen_parameters get_mapgen_params( mapgen_parameter_scope ) const {
             return {};
         }

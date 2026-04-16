@@ -6,7 +6,8 @@
     "description": "Own a minigun-propelled armchair for home defense, Just as the founding fathers intended",
     "category": "content",
     "lua_api_version": 2,
-    "dependencies": [ "bn" ]
+    "dependencies": [ "bn" ],
+    "obsolete": true
   },
   {
     "type": "EXTERNAL_OPTION",

@@ -16,7 +16,8 @@
     "ammo_type": "shotcanister",
     "looks_like": "shot_scrap",
     "range": 1,
-    "damage": { "damage_type": "bullet", "amount": 10, "armor_multiplier": 3 },
+    "damage": { "damage_type": "bullet", "amount": 5, "armor_penetration": 2, "armor_multiplier": 1.5 },
+    "shot": { "count": 5, "half_angle": 5 },
     "dispersion": 250,
     "loudness": 0,
     "count": 10
@@ -38,7 +39,8 @@
     "ammo_type": "shotcanister",
     "looks_like": "shot_scrap",
     "range": 2,
-    "damage": { "damage_type": "bullet", "amount": 7, "armor_penetration": 1, "armor_multiplier": 2.5 },
+    "damage": { "damage_type": "bullet", "amount": 4, "armor_penetration": 2, "armor_multiplier": 2 },
+    "shot": { "count": 5, "half_angle": 5 },
     "dispersion": 80,
     "loudness": 0,
     "count": 10
@@ -60,7 +62,8 @@
     "ammo_type": "shotcanister",
     "looks_like": "shot_scrap",
     "range": 3,
-    "damage": { "damage_type": "bullet", "amount": 13, "armor_penetration": 7, "armor_multiplier": 0.5 },
+    "damage": { "damage_type": "bullet", "amount": 2, "armor_penetration": 7 },
+    "shot": { "count": 10, "half_angle": 5 },
     "dispersion": 50,
     "loudness": 0,
     "count": 10
@@ -82,7 +85,8 @@
     "ammo_type": "shotcanister",
     "looks_like": "shot_scrap",
     "range": 2,
-    "damage": { "damage_type": "bullet", "amount": 12, "armor_penetration": 2, "armor_multiplier": 2 },
+    "damage": { "damage_type": "bullet", "amount": 6, "armor_penetration": 3 },
+    "shot": { "count": 5, "half_angle": 5 },
     "dispersion": 100,
     "loudness": 0,
     "count": 10

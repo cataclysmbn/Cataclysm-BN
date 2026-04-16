@@ -514,6 +514,8 @@ class known_magic
         std::map<spell_id, spell> spellbook;
         // invlets assigned to spell_id
         std::map<spell_id, int> invlets;
+        // the last known spell selected for casting
+        std::optional<spell_id> last_cast_spell_id;
         // the base mana a Character would start with
         int mana_base = 0;
         // current mana
@@ -541,6 +543,8 @@ class known_magic
         std::vector<spell_id> spells() const;
         // gets the spell associated with the spell_id to be edited
         spell &get_spell( const spell_id &sp );
+        auto last_cast_spell() const -> std::optional<spell_id>;
+        auto set_last_cast_spell( const spell_id &sp ) -> void;
         // opens up a ui that the Character can choose a spell from
         // returns the index of the spell in the vector of spells
         int select_spell( Character &guy );
@@ -684,5 +688,4 @@ struct area_expander {
 
     void sort_descending();
 };
-
 

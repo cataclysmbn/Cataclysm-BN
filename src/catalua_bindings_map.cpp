@@ -433,6 +433,14 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "get_ter_at", sol::resolve<ter_id( const tripoint & )const>( &map::ter ) );
         luna::set_fx( ut, "set_ter_at",
                       sol::resolve<bool( const tripoint &, const ter_id & )>( &map::ter_set ) );
+        DOC( "Coordinate-based variants that avoid allocating a Tripoint object." );
+        luna::set_fx( ut, "get_ter_at_xyz", []( const map & m, int x, int y, int z ) -> ter_id {
+            return m.ter( tripoint( x, y, z ) );
+        } );
+        luna::set_fx( ut, "set_ter_at_xyz", []( map & m, int x, int y, int z,
+        const ter_id & id ) -> bool {
+            return m.ter_set( tripoint( x, y, z ), id );
+        } );
 
         luna::set_fx( ut, "get_furn_at", sol::resolve<furn_id( const tripoint & )const>( &map::furn ) );
         luna::set_fx( ut, "set_furn_at", []( map & m, const tripoint & p, const furn_id & id ) { m.furn_set( p, id ); } );

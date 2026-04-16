@@ -982,10 +982,10 @@ void reg_islot( sol::state &lua )
     {
         sol::usertype<UT_CLASS> ut = luna::new_usertype<UT_CLASS>( lua, luna::no_bases, luna::no_constructor );
 
-        DOC( "Diameter of wheel in inches" );
+        DOC( "Diameter of wheel in millimeters.  Integer JSON values are legacy inches." );
         SET_MEMB_RO( diameter );
 
-        DOC( "Width of wheel in inches" );
+        DOC( "Width of wheel in millimeters.  Integer JSON values are legacy inches." );
         SET_MEMB_RO( width );
     }
 #undef UT_CLASS

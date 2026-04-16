@@ -1,0 +1,82 @@
+[
+  {
+    "id": "jet_thruster",
+    "copy-from": "propeller_rotors",
+    "symbol": "^",
+    "color": "light_gray",
+    "type": "vehicle_part",
+    "name": "jet thruster",
+    "description": "This jet propulsion module is a concentrated embodiment of military-grade aerospace engineering.  Originally designed for use as the primary propulsion system and attitude control mechanism in next-generation gunships and large transport drones, it boasts an overwhelming thrust-to-weight ratio that far surpasses that of conventional internal combustion engines.",
+    "item": "jet_thruster",
+    "propeller_diameter": 10,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
+    },
+    "durability": 120,
+    "damage_modifier": 80,
+    "breaks_into": [ { "item": "scrap", "count": [ 10, 20 ] } ],
+    "flags": [ "PROPELLER", "PROTUSION", "SHOCK_RESISTANT" ],
+    "damage_reduction": { "bash": 10 }
+  },
+  {
+    "id": "jet_thruster_external",
+    "copy-from": "jet_thruster",
+    "type": "vehicle_part",
+    "name": "external jet thruster",
+    "location": "structural",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF", "NOCOLLIDE", "NOCOLLIDEBELOW" ] }
+  },
+  {
+    "id": "vtol_thruster",
+    "copy-from": "helicopter_rotors",
+    "type": "vehicle_part",
+    "name": "VTOL thruster",
+    "item": "vtol_thruster",
+    "location": "under",
+    "symbol": "O",
+    "broken_symbol": "x",
+    "color": "light_gray",
+    "rotor_diameter": 16,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
+    },
+    "durability": 350,
+    "wheel_type": "off-road",
+    "contact_area": 20,
+    "description": "This is a vertical takeoff and landing (VTOL) propulsion system used in military VTOL aircraft and large transport drones.  It allows for free takeoff and landing on land, at sea, or in the air.",
+    "damage_modifier": 50,
+    "breaks_into": [ { "item": "scrap", "count": [ 15, 30 ] }, { "item": "steel_chunk", "count": [ 8, 16 ] } ],
+    "flags": [ "BALLOON", "WHEEL", "FLOATS", "ROTOR", "STABLE", "SELF_JACK", "VARIABLE_SIZE", "TRACKED" ],
+    "damage_reduction": { "all": 35 }
+  },
+  {
+    "id": "hover_repulsor",
+    "copy-from": "helicopter_rotors",
+    "type": "vehicle_part",
+    "name": "hover repulsor",
+    "item": "hover_repulsor",
+    "location": "under",
+    "symbol": "O",
+    "broken_symbol": "x",
+    "color": "cyan",
+    "rotor_diameter": 15,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
+    },
+    "height": 350,
+    "durability": 300,
+    "wheel_type": "off-road",
+    "contact_area": 20,
+    "description": "This is a lightweight hover repulsor module mounted on the underside of the next-generation hoverbike.  It offers unparalleled maneuverability, allowing the hoverbike to glide effortlessly over swamps and ruins, completely overcoming ground friction.",
+    "damage_modifier": 50,
+    "breaks_into": [ { "item": "scrap", "count": [ 15, 30 ] }, { "item": "steel_chunk", "count": [ 8, 16 ] } ],
+    "flags": [ "BALLOON", "WHEEL", "FLOATS", "ROTOR", "STABLE", "SELF_JACK", "VARIABLE_SIZE", "TRACKED" ],
+    "damage_reduction": { "all": 40 }
+  }
+]

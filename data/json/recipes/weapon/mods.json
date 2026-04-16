@@ -902,6 +902,19 @@
   },
   {
     "type": "recipe",
+    "result": "fluted_grip",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ "archery", 1 ],
+    "difficulty": 2,
+    "autolearn": true,
+    "time": "10 m",
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
+    "components": [ [ [ "chunk_rubber", 1 ] ], [ [ "adhesive_proper", 3, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "filter_suppressor",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_MODS",

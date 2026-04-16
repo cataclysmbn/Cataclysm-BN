@@ -1,6 +1,7 @@
 #include "map_extras.h"
 
 #include <array>
+#include <string>
 #include <cstdlib>
 #include <map>
 #include <memory>
@@ -31,6 +32,7 @@
 #include "json.h"
 #include "line.h"
 #include "map.h"
+#include "mapgen_async.h"
 #include "submap_fields.h"
 #include "map_iterator.h"
 #include "mapdata.h"
@@ -2776,20 +2778,14 @@ void apply_function( const string_id<map_extra> &id, map &m, const tripoint &abs
     overmapbuffer &omap = get_overmapbuffer( m.get_bound_dimension() );
     omap.add_extra( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), id );
 
-    // Auto-notes touch the per-character auto_note_settings singleton (unordered_sets with no
-    // mutex) and call overmapbuffer::add_note (notes vector, now guarded by extras_mutex_).
-    // The set_discovered / has_auto_note_enabled calls are not thread-safe, so skip them on
-    // worker threads.  Background generation happens before the player ever sees the cell, so
-    // discovery will be recorded on the main thread when they first explore the area.
+    // auto_note_settings (unordered_sets) is not thread-safe, so autonote
+    // processing is deferred to the main thread when called from a worker.
     if( !is_pool_worker_thread() ) {
         auto_notes::auto_note_settings &autoNoteSettings = get_auto_notes_settings();
 
-        // The player has discovered a map extra of this type.
         autoNoteSettings.set_discovered( id );
 
         if( get_option<bool>( "AUTO_NOTES" ) && get_option<bool>( "AUTO_NOTES_MAP_EXTRAS" ) ) {
-
-            // Only place note if the user has not disabled it via the auto note manager
             if( autoNoteSettings.has_auto_note_enabled( id ) ) {
                 std::string sprite_prefix;
                 if( extra.looks_like && !extra.looks_like->empty() ) {
@@ -2804,6 +2800,12 @@ void apply_function( const string_id<map_extra> &id, map &m, const tripoint &abs
                 omap.add_note( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), mx_note );
             }
         }
+    } else {
+        push_deferred_autonote( {
+            m.get_bound_dimension(),
+            tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ),
+            id.str()
+        } );
     }
 }
 

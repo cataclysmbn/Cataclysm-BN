@@ -65,6 +65,7 @@ auto modify_fluid_grid_connections( player *, item *, bool, const tripoint & ) -
 #include "value_ptr.h"
 #include "veh_type.h"
 #include "vitamin.h"
+#include "wheel_dimensions.h"
 
 class player;
 struct tripoint;
@@ -1347,6 +1348,19 @@ void Item_factory::check_definitions() const
             if( type->ammo->range != 0 && type->ammo->shape ) {
                 msg += string_format( "shape is set, but range is %d != 0", type->ammo->range );
             }
+            if( type->ammo->shot ) {
+                if( type->ammo->shot->count <= 0 ) {
+                    msg += string_format( "shot.count must be positive, but is %d\n",
+                                          type->ammo->shot->count );
+                }
+                if( type->ammo->shot->half_angle < 0 ) {
+                    msg += string_format( "shot.half_angle must be non-negative, but is %.2f\n",
+                                          type->ammo->shot->half_angle );
+                }
+                if( type->ammo->shape && type->ammo->shot->count > 1 ) {
+                    msg += "shape and shot.count > 1 cannot be combined\n";
+                }
+            }
         }
         if( type->battery ) {
             if( type->battery->max_capacity < 0_J ) {
@@ -1782,6 +1796,12 @@ void islot_ammo::load( const JsonObject &jo )
     assign( jo, "effects", ammo_effects );
     optional( jo, was_loaded, "show_stats", force_stat_display, std::nullopt );
     optional( jo, was_loaded, "shape", shape, std::nullopt );
+    if( jo.has_object( "shot" ) ) {
+        const auto shot_jo = jo.get_object( "shot" );
+        shot = islot_ammo::shot_data {};
+        assign( shot_jo, "count", shot->count );
+        assign( shot_jo, "half_angle", shot->half_angle );
+    }
     assign( jo, "aimedcritmaxbonus", aimedcritmaxbonus );
     assign( jo, "aimedcritbonus", aimedcritbonus );
     assign( jo, "speed", speed );
@@ -1829,8 +1849,12 @@ void Item_factory::load_engine( const JsonObject &jo, const std::string &src )
 
 void Item_factory::load( islot_wheel &slot, const JsonObject &jo, const std::string & )
 {
-    assign( jo, "diameter", slot.diameter );
-    assign( jo, "width", slot.width );
+    if( const auto diameter = wheel_dimensions::read_from_json( jo, "diameter" ) ) {
+        slot.diameter = *diameter;
+    }
+    if( const auto width = wheel_dimensions::read_from_json( jo, "width" ) ) {
+        slot.width = *width;
+    }
 }
 
 void Item_factory::load_wheel( const JsonObject &jo, const std::string &src )

@@ -182,6 +182,13 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
                 VPFLAG_BOARDABLE, true );
     REQUIRE( vp );
     if( vp ) {
+        // Regression: get_passenger() must return the correct passenger regardless
+        // of the vehicle's z-level.  After a ramp transition global_pos3().z is
+        // non-zero, but precalc[0].z is always zeroed by precalc_mounts().  The old
+        // mount_to_tripoint() path returned global_pos3().z while precalc[0].z == 0,
+        // so get_parts_at() found no BOARDABLE part and get_passenger() returned nullptr.
+        // This check is most meaningful for use_ramp == true where z != 0 post-transition.
+        CHECK( veh.get_passenger( static_cast<int>( vp->part_index() ) ) != nullptr );
         const int z_change = map_starting_point.z - player_character.pos().z;
         here.unboard_vehicle( *vp, &player_character, false );
         here.ter_set( map_starting_point, ter_id( "t_pavement" ) );

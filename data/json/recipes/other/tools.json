@@ -1432,6 +1432,21 @@
   },
   {
     "type": "recipe",
+    "result": "shovel",
+    "id_suffix": "handle_swap",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "//": "This method involves hammering a chisel into the wooden shaft of a short shovel until the shovel's head can be pried off - then mounting it on a cut and sanded-to-shape long handle.",
+    "difficulty": 1,
+    "time": "15 m",
+    "autolearn": true,
+    "byproducts": [ [ "splinter", 7 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CHISEL", "level": 1 } ],
+    "components": [ [ [ "shovel_short", 1 ] ], [ [ "wood_structural", 1, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "shovel_short",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TOOLS",
@@ -1547,7 +1562,7 @@
     "autolearn": true,
     "byproducts": [ [ "splinter", 7 ] ],
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CHISEL", "level": 1 } ],
-    "components": [ [ [ "wood_structural_small", 1, "LIST" ] ] ]
+    "components": [ [ [ "hammer_sledge_short", 1 ] ], [ [ "wood_structural_small", 1, "LIST" ] ] ]
   },
   {
     "type": "recipe",

@@ -33,7 +33,9 @@
           { "id": "overlay_mutation_FACIAL_HAIR_TOOTHBRUSH", "fg": 23, "bg": 1, "rotates": true },
           { "id": "overlay_mutation_FACIAL_HAIR_VANDYKE", "fg": 24, "bg": 0, "rotates": true },
           { "id": "overlay_mutation_FACIAL_HAIR_WALRUS", "fg": 25, "rotates": true },
-          { "id": "overlay_mutation_FACIAL_HAIR_ZAPPA", "fg": 26, "bg": 0, "rotates": true }
+          { "id": "overlay_mutation_FACIAL_HAIR_ZAPPA", "fg": 26, "bg": 0, "rotates": true },
+          { "id": "overlay_mutation_FACIAL_HAIR_WIZENED", "fg": 27, "bg": 1, "rotates": true },
+          { "id": "overlay_mutation_FACIAL_HAIR_JAW_SCRUFF", "fg": 28, "bg": 1, "rotates": true }
         ]
       }
     ]
