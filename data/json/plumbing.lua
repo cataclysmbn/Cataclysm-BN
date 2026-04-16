@@ -39,12 +39,6 @@ local wash_mode_data = {
   },
 }
 
-local get_fixture_mode = function(map, pos)
-  local furn_id = map:get_furn_at(pos):str()
-  if furn_id == "f_bathtub" then return "bath" end
-  return "shower"
-end
-
 local get_mode_label = function(mode) return mode == "bath" and locale.gettext("bath") or locale.gettext("shower") end
 
 local get_fixture_resources = function(map, pos)
@@ -220,14 +214,17 @@ local choose_wash = function(user, map, pos, mode, resources)
   end
 end
 
-plumbing.examine = function(params)
+local examine = function(params, mode)
   local user = params.user
   local pos = params.pos
   local map = gapi.get_map()
-  local mode = get_fixture_mode(map, pos)
   local resources = get_fixture_resources(map, pos)
   choose_wash(user, map, pos, mode, resources)
 end
+
+plumbing.examine_shower = function(params) examine(params, "shower") end
+
+plumbing.examine_bathtub = function(params) examine(params, "bath") end
 
 plumbing.finish_wash = function(params)
   local user = params.user
