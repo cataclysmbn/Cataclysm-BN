@@ -1517,6 +1517,9 @@ void known_magic::serialize( JsonOut &json ) const
     json.start_object();
 
     json.member( "mana", mana );
+    if( last_cast_spell_id ) {
+        json.member( "last_cast_spell", last_cast_spell_id->str() );
+    }
 
     json.member( "spellbook" );
     json.start_array();
@@ -1534,13 +1537,17 @@ void known_magic::serialize( JsonOut &json ) const
 
 void known_magic::deserialize( JsonIn &jsin )
 {
-    JsonObject data = jsin.get_object();
+    auto data = jsin.get_object();
     data.read( "mana", mana );
+    last_cast_spell_id.reset();
+
+    auto last_cast_spell_str = std::string();
+    data.read( "last_cast_spell", last_cast_spell_str );
 
     for( JsonObject jo : data.get_array( "spellbook" ) ) {
-        std::string id = jo.get_string( "id" );
-        spell_id sp = spell_id( id );
-        int xp = jo.get_int( "xp" );
+        auto id = jo.get_string( "id" );
+        auto sp = spell_id( id );
+        const auto xp = jo.get_int( "xp" );
         if( !sp.is_valid() ) {
             debugmsg( "Skipping spell with invalid id: %s", sp.c_str() );
         } else if( knows_spell( sp ) ) {
@@ -1550,6 +1557,13 @@ void known_magic::deserialize( JsonIn &jsin )
         }
     }
     data.read( "invlets", invlets );
+
+    if( !last_cast_spell_str.empty() ) {
+        const auto spell = spell_id( last_cast_spell_str );
+        if( knows_spell( spell ) ) {
+            last_cast_spell_id = spell;
+        }
+    }
 }
 
 bool known_magic::knows_spell( const std::string &sp ) const
@@ -1649,6 +1663,9 @@ void known_magic::forget_spell( const spell_id &sp )
     }
     add_msg( m_bad, _( "All knowledge of %s leaves you." ), sp->name );
     spellbook.erase( sp );
+    if( last_cast_spell_id && *last_cast_spell_id == sp ) {
+        last_cast_spell_id.reset();
+    }
 }
 
 bool known_magic::can_learn_spell( const Character &guy, const spell_id &sp ) const
@@ -1668,6 +1685,18 @@ spell &known_magic::get_spell( const spell_id &sp )
         return bugged_spell;
     }
     return spellbook.at( sp );
+}
+
+auto known_magic::last_cast_spell() const -> std::optional<spell_id>
+{
+    return last_cast_spell_id;
+}
+
+auto known_magic::set_last_cast_spell( const spell_id &sp ) -> void
+{
+    if( knows_spell( sp ) ) {
+        last_cast_spell_id = sp;
+    }
 }
 
 std::vector<spell *> known_magic::get_spells()

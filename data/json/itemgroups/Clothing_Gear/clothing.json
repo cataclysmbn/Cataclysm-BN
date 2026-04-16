@@ -184,6 +184,7 @@
       {
         "distribution": [
           { "group": "clothing_glasses", "prob": 60 },
+          { "item": "army_powered_earmuffs", "prob": 20 },
           { "item": "glasses_bal", "prob": 30 },
           { "item": "goggles_nv", "prob": 5 },
           { "item": "goggles_nv_enhanced", "prob": 1 },
@@ -227,6 +228,7 @@
       {
         "distribution": [
           { "group": "clothing_glasses", "prob": 60 },
+          { "item": "army_powered_earmuffs", "prob": 20 },
           { "item": "glasses_bal", "prob": 30 },
           { "item": "goggles_nv", "prob": 5 },
           { "item": "goggles_nv_enhanced", "prob": 1 },
@@ -259,6 +261,7 @@
       },
       { "distribution": [ { "item": "fancy_sunglasses", "prob": 95 }, { "item": "glasses_bal", "prob": 5 } ] },
       { "group": "clothing_watch", "prob": 85 },
+      { "item": "army_powered_earmuffs", "prob": 20 },
       { "item": "goggles_ir", "prob": 10 }
     ]
   },
@@ -282,6 +285,7 @@
         ]
       },
       { "group": "clothing_watch", "prob": 85 },
+      { "item": "army_powered_earmuffs", "prob": 20 },
       { "item": "goggles_ir", "prob": 10, "charges": [ 0, 100 ] }
     ]
   },
@@ -1981,6 +1985,7 @@
       { "item": "goggles_nv", "prob": 20, "charges": [ 0, 150 ] },
       { "item": "goggles_nv_enhanced", "prob": 5, "charges": [ 0, 150 ] },
       { "item": "goggles_ir", "prob": 20, "charges": [ 0, 150 ] },
+      { "item": "army_powered_earmuffs", "prob": 20 },
       [ "solarpack", 5 ],
       [ "optical_cloak", 3 ],
       [ "holo_cloak", 2 ]
@@ -2042,6 +2047,7 @@
       [ "waterproof_gunmod", 8 ],
       [ "grapnel", 3 ],
       [ "glasses_bal", 30 ],
+      { "item": "army_powered_earmuffs", "prob": 20 },
       [ "sheath", 10 ],
       [ "bootsheath", 8 ],
       [ "holster", 15 ],

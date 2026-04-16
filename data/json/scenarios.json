@@ -1021,5 +1021,17 @@
       "bio_blade",
       "bio_weight"
     ]
+  },
+  {
+    "type": "scenario",
+    "id": "irs_auditing",
+    "name": "Death And Taxes",
+    "points": 0,
+    "description": "Conducting an audit of a corporate office's records as part of a career-making official investigation, you found your hosts suddenly much less cooperative. It may be time to render summary judgment and haul ass out of this tower of toil.",
+    "start_name": "Office Tower",
+    "allowed_locs": [ "sloc_office_tower" ],
+    "missions": [ "MISSION_ONE_LAST_AUDIT" ],
+    "professions": [ "irs", "lawyer", "politician" ],
+    "flags": [ "LONE_START", "CITY_START" ]
   }
 ]

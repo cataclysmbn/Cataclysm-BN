@@ -8009,6 +8009,7 @@ void map::shift( point sp )
                 shift_flat_cache( gc.transparency_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
                 shift_flat_cache( gc.floor_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
                 shift_flat_cache( gc.outside_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
+                shift_flat_cache( gc.angled_sunlight_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
             }
             // Iterate in shift-direction order so copy_grid never reads an
             // already-overwritten source slot.  sp >= 0 → forward; sp < 0 → reverse.
@@ -8051,6 +8052,8 @@ void map::shift( point sp )
             } );
         }
     } // shift_grid_copy_load
+    // New edge submaps have stale solar cache data. Force a rebuild before the next draw.
+    m_solar.last_built_hour = -1;
     if( zlevels ) {
         ZoneScopedN( "shift_add_roofs" );
         //Go through the generated maps and fill in the roofs
@@ -9667,7 +9670,6 @@ static void vehicle_caching_internal_above( level_cache &zch_above, const vpart_
     if( vp.has_feature( VPFLAG_ROOF ) || vp.has_feature( VPFLAG_OPAQUE ) ) {
         const tripoint &part_pos = v->global_part_pos3( vp.part() );
         const int tile_idx = zch_above.idx( part_pos.x, part_pos.y );
-        zch_above.floor_cache[tile_idx] = true;
         zch_above.vehicle_floor_cache[tile_idx] = true;
     }
 }
@@ -9809,12 +9811,12 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     if( seen_cache_dirty ) {
         skew_vision_cache.assign( vision_cache_slots, vision_cache_slot{} );
     }
-    // Initial value is illegal player position.
     const tripoint &p = g->u.pos();
-    static tripoint player_prev_pos;
-    if( seen_cache_dirty || player_prev_pos != p ) {
+    if( seen_cache_dirty || m_last_seen_cache_origin != p ) {
         build_seen_cache( p, zlev );
-        player_prev_pos = p;
+        m_last_seen_cache_origin = p;
+        // seen_cache changed; any cached visibility derived from it is now stale.
+        get_cache( zlev ).visibility_cache_dirty = true;
     }
     if( !skip_lightmap ) {
         ZoneScopedN( "Phase4_lightmap" );
@@ -9877,7 +9879,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 // from concurrent writes to last_full_vehicle_list.
                 get_vehicles();
                 parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
-                    generate_lightmap( dirty_seen_cache_levels[i], /*skip_shared_init=*/true );
+                    generate_lightmap_worker( dirty_seen_cache_levels[i] );
                 } );
             } else {
                 // Single dirty level: run serially using the standard full path.
@@ -10507,6 +10509,7 @@ level_cache::level_cache( int mx, int my )
       sm( static_cast<size_t>( mx * my ), 0.0f ),
       light_source_buffer( static_cast<size_t>( mx * my ), 0.0f ),
       outside_cache( static_cast<size_t>( mx * my ), false ),
+      angled_sunlight_cache( static_cast<size_t>( mx * my ), false ),
       floor_cache( static_cast<size_t>( mx * my ), false ),
       vehicle_floor_cache( static_cast<size_t>( mx * my ), '\0' ),
       transparency_cache( static_cast<size_t>( mx * my ), 0.0f ),
@@ -10591,6 +10594,8 @@ void map::invalidate_map_cache( const int zlev )
         ch.visibility_cache_dirty = true;
         ch.outside_cache_dirty.set();
         ch.suspension_cache_dirty = true;
+        m_last_seen_cache_origin = tripoint_min;
+        m_solar.last_built_hour  = -1;
     }
 }
 

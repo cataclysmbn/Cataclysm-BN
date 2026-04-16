@@ -2774,6 +2774,65 @@
     "delete": { "flags": [ "DEAF" ] }
   },
   {
+    "id": "army_powered_earmuffs",
+    "type": "TOOL_ARMOR",
+    "category": "clothing",
+    "symbol": "[",
+    "color": "green",
+    "name": { "str_sp": "tactical headset" },
+    "description": "An active headset used by the military.  Without batteries or when turned off they function like normal earmuffs and block all sound.  They will block sounds over a certain decibel amount as well as function as a two-way radio when turned on.  The earmuffs are currently off.",
+    "flags": [ "DEAF", "OVERSIZE", "BELTED", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE" ],
+    "price": "250 USD",
+    "price_postapoc": "15 USD",
+    "material": [ "plastic" ],
+    "weight": "300 g",
+    "volume": "1 L",
+    "ammo": "battery",
+    "use_action": {
+      "type": "transform",
+      "msg": "You turn the headset on.",
+      "target": "army_powered_earmuffs_on",
+      "active": true,
+      "transform_charges": 1,
+      "need_charges": 1,
+      "need_charges_msg": "The headset's batteries are dead."
+    },
+    "covers": [ "head" ],
+    "warmth": 5,
+    "encumbrance": 5,
+    "coverage": 10,
+    "material_thickness": 2,
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_plus_battery_cell",
+          "light_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
+      ]
+    ],
+    "magazine_well": "250 ml"
+  },
+  {
+    "id": "army_powered_earmuffs_on",
+    "copy-from": "army_powered_earmuffs",
+    "type": "TOOL_ARMOR",
+    "repairs_like": "army_powered_earmuffs",
+    "name": { "str_sp": "tactical headset (on)" },
+    "description": "An active headset used by the military.  Without batteries or when turned off they function like normal earmuffs and block all sound.  They will block sounds over a certain decibel amount as well as function as a two-way radio when turned on.",
+    "//": "3M Peltors claim to go 100 hours on 2 AAs",
+    "power_draw": 60,
+    "revert_to": "army_powered_earmuffs",
+    "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s flicks off.", "target": "army_powered_earmuffs" },
+    "extend": { "flags": [ "PARTIAL_DEAF", "COMBAT_NPC_ON", "TWO_WAY_RADIO" ] },
+    "delete": { "flags": [ "DEAF" ] }
+  },
+  {
     "id": "stethoscope",
     "type": "TOOL_ARMOR",
     "category": "tools",
