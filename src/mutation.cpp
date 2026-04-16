@@ -1162,18 +1162,24 @@ void Character::mutate_category( const mutation_category_id &cat )
         chances[tid] += score_difference_to_chance( tid->cost - direction );
     }
 
-    // Removals: same formula as mutation_chances — peaks when removing a trait whose
-    // cost magnitude matches the gap (e.g. removing a bad trait when direction is high).
+    // Removals: peaks when removing a trait whose cost magnitude matches the gap.
+    // Cross-category traits use full cost; same-category traits use 75% effective cost,
+    // making cross-category removal more likely. This preserves this mutagen's own
+    // mutations when possible, preferring to clean up traits from elsewhere first.
     if( !force_bad ) {
-        for( const trait_id &tid : mutations_category[cat] ) {
+        const auto &cat_pool = mutations_category[cat];
+        for( const mutation_branch &branch : mutation_branch::get_all() ) {
+            const trait_id &tid = branch.id;
             if( !has_trait( tid ) ) {
                 continue;
             }
-            const mutation_branch &branch = tid.obj();
             if( branch.threshold || branch.profession || !branch.purifiable ) {
                 continue;
             }
-            chances[tid] += score_difference_to_chance( direction + branch.cost );
+            const bool in_category = std::ranges::contains( cat_pool, tid );
+            const int effective_cost = in_category ? static_cast<int>( branch.cost * 0.75f )
+                                       : branch.cost;
+            chances[tid] += score_difference_to_chance( direction + effective_cost );
         }
     }
 
