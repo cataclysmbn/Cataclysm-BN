@@ -9480,7 +9480,7 @@ void map::build_outside_cache( const int zlev )
                 for( int sy = 0; sy < SEEY; ++sy ) {
                     ch.outside_cache[static_cast<size_t>( ch.idx( sm_offset.x + sx,
                                                           sm_offset.y + sy ) )] =
-                                                              cur_submap->outside_cache[sx][sy];
+                                                                  cur_submap->outside_cache[sx][sy];
                 }
             }
         }
@@ -9548,7 +9548,7 @@ void map::build_sheltered_cache( const int zlev )
                 for( int sy = 0; sy < SEEY; ++sy ) {
                     ch.sheltered_cache[static_cast<size_t>( ch.idx( sm_offset.x + sx,
                                                             sm_offset.y + sy ) )] =
-                                                                cur_submap->sheltered_cache[sx][sy];
+                                                                    cur_submap->sheltered_cache[sx][sy];
                 }
             }
         }
