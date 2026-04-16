@@ -1,0 +1,98 @@
+[
+  {
+    "type": "overmap_terrain",
+    "id": [ "crt_veh_lab_entry" ],
+    "name": "C.R.I.T. Lab Entrance",
+    "sym": "C",
+    "color": "red",
+    "see_cost": 5,
+    "extras": "build",
+    "mondensity": 2
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_veh_lab_entry" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_strconc_floor",
+      "rows": [
+        "XXXXXXXyyyyyyyyyXXXXXXXX",
+        "XqqqqqXyyyyyyyyyXqqqqqqX",
+        "XqqqqqXyyyyyyyyyXqqqqqqX",
+        "XqqqqqXyyyyyyyyyXqqqqqqX",
+        "XqqqqqXyyyyyyyyyXqqqqqqX",
+        "XZZZZZXZZZZZZZZZXZZZZZZX",
+        "Q÷÷÷÷÷Q÷÷÷÷÷÷÷÷÷Q÷÷÷÷÷÷Q",
+        "X÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷X",
+        "X÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷X",
+        "X÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷X",
+        "X÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷X",
+        "X÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷X",
+        "X÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷X",
+        "X÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷X",
+        "X÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷X",
+        "X+XXXXXXXXXXXXXXXXXXXX+X",
+        "X                      X",
+        "X                      X",
+        "X                      X",
+        "X +                  + X",
+        "X                      X",
+        "X                      X",
+        "X                      X",
+        "X+XXXXXXXXXXXXXXXXXXXX+X"
+      ],
+      "palettes": [ "crt_universe" ],
+      "place_nested": [
+        { "chunks": [ "crt_lab_veh_entry_dorm" ], "x": 2, "y": 16 },
+      ],
+      "items": {
+        "q": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [
+              { "group": "supplies_electronics", "prob": 25 },
+              { "group": "supplies_metal", "prob": 25 },
+              { "group": "supplies_mechanics_milspec", "prob": 100 },
+              { "group": "hardware", "prob": 50 }
+            ]
+          },
+          "chance": 70,
+          "repeat": 2
+        },
+      },
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_entry_dorm",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "#   #   #   #   #  #",
+        "#   #   #   #   #  #",
+        "##D###D###D###D##D##",
+        "                    ",
+        "##D###D###D###D##D##",
+        "#   #   #   #   #  #",
+        "#   #   #   #   #  #"
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
+      "place_nested": [
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 1, "y": 0 },
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 1, "y": 5 },
+        { "chunks": [ "crt_lab_veh_barracks_single" ], "x": 17, "y": 0 },
+        { "chunks": [ "crt_lab_veh_barracks_single_flipped" ], "x": 17, "y": 5 },
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 5, "y": 0 },
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 5, "y": 5 },
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 9, "y": 0 },
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 9, "y": 5 },
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 13, "y": 0 },
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 13, "y": 5 },
+        
+      ]
+    }
+  },
+]

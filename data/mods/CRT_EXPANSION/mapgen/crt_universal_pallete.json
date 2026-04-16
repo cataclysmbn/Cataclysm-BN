@@ -43,7 +43,9 @@
       "L": "t_bars",
       "O": "t_metal_flat_roof",
       "S": "t_gas_pump",
-      "P": "t_sidewalk"
+      "P": "t_sidewalk",
+      ";": "t_elevator",
+      "}": "t_elevator_control"
     },
     "furniture": {
       ":": "f_sign",
