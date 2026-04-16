@@ -407,7 +407,8 @@ void activity_speed::calc_morale_factor( const Character &who )
         // Logarithmic penalty: early drops hurt more than deeper ones
         // -20 = no penalty, -200 = 0.25x floor
         const float effective = std::clamp( ( -p_morale - 20 ) / 180.0f, 0.0f, 1.0f );
-        const float log_penalty = std::log( 1.0f + effective * static_cast<float>( std::numbers::e - 1.0 ) );
+        const float log_penalty = std::log( 1.0f + effective * static_cast<float>
+                                            ( std::numbers::e - 1.0 ) );
         morale = limit_factor( 1.0f - 0.75f * log_penalty );
     } else {
         morale = 1.0f;
