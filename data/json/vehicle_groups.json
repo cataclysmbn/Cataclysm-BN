@@ -724,6 +724,7 @@
     "//": "Lower chance of wrecked helis, include planes and other aircraft",
     "vehicles": [
       [ "plane_small", 500 ],
+      [ "plane_f35_lightning", 25 ],
       [ "2seater2", 100 ],
       [ "SmallFlier1", 300 ],
       [ "2seater2_Wreck", 100 ],
@@ -1145,6 +1146,24 @@
       [ "whillys_mb_display", 15 ],
       [ "tank_m60_patton", 25 ],
       [ "tank_m60_patton_mothballed", 25 ]
+    ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "aircraft_carrier_flight_deck",
+    "vehicles": [
+      [ "plane_f35_lightning", 30 ],
+      [ "helicopter_apache_1a", 5 ],
+      [ "helicopter_apache_1b", 15 ],
+      [ "helicopter_apache_1c", 10 ],
+      [ "helicopter_osprey_2c", 15 ],
+      [ "helicopter_osprey_2b", 10 ],
+      [ "Medevac1", 3 ],
+      [ "Medevac1_Wreck", 2 ],
+      [ "Medevac2", 3 ],
+      [ "Medevac2_Wreck", 2 ],
+      [ "helicopter_atomic", 2 ],
+      [ "helicopter_atomic_wreck", 3 ]
     ]
   }
 ]

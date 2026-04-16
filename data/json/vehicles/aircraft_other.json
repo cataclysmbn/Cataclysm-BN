@@ -757,5 +757,86 @@
       { "x": 0, "y": 2, "part": "lit_wing_carbon_external_right" },
       { "x": 2, "y": 0, "part": "propeller_metal" }
     ]
+  },
+  {
+    "id": "plane_f35_lightning",
+    "type": "vehicle",
+    "name": "F-35 Strike Fighter",
+    "blueprint": [
+      "  |&       ",
+      "! {|!      ",
+      "{-=G=BB147 ",
+      " TEFF--2S8>",
+      "{-=G=BB369 ",
+      "# {|#      ",
+      "  |(       "
+    ],
+    "blueprint_origin": { "x": 8, "y": 3 },
+    "palette": {
+      "-": [ "xlframe_vertical", "carbon_halfboard_vertical" ],
+      ">": [ "xlframe_vertical", "carbon_halfboard_cover" ],
+      "=": [ "xlframe_vertical", "carbon_halfboard_horizontal", "wing_carbon_horizontal" ],
+      "B": [ "xlframe_vertical", "trunk_carbon", "bomber controls" ],
+      "F": [
+        "xlframe_vertical",
+        "carbon_halfboard_vertical",
+        { "part": "tank_30gal_drum", "fuel": "jp8" },
+        "wing_carbon_horizontal"
+      ],
+      "E": [
+        "xlframe_vertical",
+        "carbon_halfboard_vertical",
+        "engine_turbine_small",
+        "alternator_car",
+        "medium_storage_battery",
+        "wing_carbon_horizontal"
+      ],
+      "G": [ "xlframe_vertical", "carbon_halfboard_horizontal", "wheel_mount_medium", "wheel", "wing_carbon_horizontal" ],
+      "S": [
+        "xlframe_vertical",
+        "seat",
+        "seatbelt_heavyduty",
+        "controls",
+        "dashboard",
+        "black_box",
+        "programmable_autopilot",
+        "tracker",
+        "roof",
+        "wheel_mount_medium_steerable",
+        "wheel"
+      ],
+      "T": [ "jet_thruster_external" ],
+      "1": [ "xlframe_vertical", "windshield_sw" ],
+      "2": [ "xlframe_vertical", "windshield_horizontal_rear" ],
+      "3": [ "xlframe_vertical", "windshield_se" ],
+      "4": [ "xlframe_vertical", "door_vertical_left" ],
+      "6": [ "xlframe_vertical", "door_vertical_right" ],
+      "7": [
+        "xlframe_nw",
+        "windshield_nw",
+        "turret_mount",
+        {
+          "part": "mounted_25mm_autocannon",
+          "ammo": 80,
+          "ammo_types": [ "25mm_apds", "25mm_hei" ],
+          "ammo_qty": [ 10, 50 ]
+        }
+      ],
+      "8": [ "xlframe_vertical", "windshield_horizontal_front" ],
+      "9": [ "xlframe_ne", "windshield_ne" ],
+      "|": [ "wing_carbon_external_horizontal" ],
+      "{": [ "lit_wing_carbon_external_horizontal" ],
+      "!": [ "wing_carbon_external_left" ],
+      "&": [ "lit_wing_carbon_external_left" ],
+      "#": [ "wing_carbon_external_right" ],
+      "(": [ "lit_wing_carbon_external_right" ]
+    },
+    "items": [
+      { "x": 0, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": -2, "y": -1, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -3, "y": -1, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -2, "y": 1, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -3, "y": 1, "chance": 50, "items": [ "aerial_bomb" ] }
+    ]
   }
 ]
