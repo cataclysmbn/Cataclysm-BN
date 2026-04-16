@@ -422,6 +422,28 @@
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "BELTED", "ONLY_ONE" ]
   },
   {
+    "id": "heavy_power_armor_frame",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "advanced power armor hauling frame" },
+    "description": "A cutting-edge advanced hauling frame made from superalloy designed to interface with military exoskeletons.  Barely deployed before the Cataclysm struck.",
+    "weight": "1300 g",
+    "volume": "11 L",
+    "price": "20 kUSD",
+    "price_postapoc": "200 USD",
+    "to_hit": 1,
+    "bashing": 1,
+    "material": [ "superalloy" ],
+    "symbol": "[",
+    "looks_like": "power_armor_frame",
+    "color": "light_gray",
+    "covers": [ "torso" ],
+    "coverage": 10,
+    "encumbrance": 0,
+    "storage": "40 L",
+    "material_thickness": 10,
+    "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "BELTED", "ONLY_ONE" ]
+  },
+  {
     "id": "power_armor_back_hardpoint",
     "type": "ARMOR",
     "name": { "str": "power armor weapon rack" },
