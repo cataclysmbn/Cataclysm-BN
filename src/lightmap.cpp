@@ -329,43 +329,43 @@ void map::build_angled_sunlight_cache( const int zlev )
 
     std::ranges::for_each(
         std::views::iota( 0, ch.cache_x ),
-        [&]( int x ) {
-            std::ranges::for_each(
-                std::views::iota( 0, ch.cache_y ),
-                [&]( int y ) {
-                    // A floor directly overhead always blocks, regardless of sun angle.
-                    // Without this, angled rays jump laterally past the roof tile at step 1.
-                    if( zlev + 1 <= OVERMAP_HEIGHT ) {
-                        const level_cache &above = get_cache_ref( zlev + 1 );
-                        if( above.floor_cache[above.idx( x, y )] ) {
-                            solar_cache[ch.idx( x, y )] = false;
-                            return;
-                        }
-                    }
-                    // Trace the sun ray upward one z-level at a time.
-                    // Solar-lit if the ray exits the map bounds without hitting a floor.
-                    const auto blocked = std::ranges::any_of(
-                        std::views::iota( 1, max_step + 1 )
-                        | std::views::transform( [&]( int step ) {
-                              return std::pair{ step, point{
-                                  x + static_cast<int>( std::roundf( step_x * static_cast<float>( step ) ) ),
-                                  y + static_cast<int>( std::roundf( step_y * static_cast<float>( step ) ) )
-                              } };
-                          } )
-                        | std::views::take_while( [&]( const auto &sp ) {
-                              return sp.second.x >= 0 && sp.second.x < ch.cache_x
-                                     && sp.second.y >= 0 && sp.second.y < ch.cache_y;
-                          } ),
-                        [&]( const auto &sp ) {
-                            const level_cache &uch = get_cache_ref( zlev + sp.first );
-                            return static_cast<bool>(
-                                uch.floor_cache[uch.idx( sp.second.x, sp.second.y )] );
-                        }
-                    );
-                    solar_cache[ch.idx( x, y )] = !blocked;
+    [&]( int x ) {
+        std::ranges::for_each(
+            std::views::iota( 0, ch.cache_y ),
+        [&]( int y ) {
+            // A floor directly overhead always blocks, regardless of sun angle.
+            // Without this, angled rays jump laterally past the roof tile at step 1.
+            if( zlev + 1 <= OVERMAP_HEIGHT ) {
+                const level_cache &above = get_cache_ref( zlev + 1 );
+                if( above.floor_cache[above.idx( x, y )] ) {
+                    solar_cache[ch.idx( x, y )] = false;
+                    return;
                 }
-            );
+            }
+            // Trace the sun ray upward one z-level at a time.
+            // Solar-lit if the ray exits the map bounds without hitting a floor.
+            const auto blocked = std::ranges::any_of(
+                                     std::views::iota( 1, max_step + 1 )
+            | std::views::transform( [&]( int step ) {
+                return std::pair{ step, point{
+                        x + static_cast<int>( std::roundf( step_x * static_cast<float>( step ) ) ),
+                        y + static_cast<int>( std::roundf( step_y * static_cast<float>( step ) ) )
+                    } };
+            } )
+            | std::views::take_while( [&]( const auto & sp ) {
+                return sp.second.x >= 0 && sp.second.x < ch.cache_x
+                       && sp.second.y >= 0 && sp.second.y < ch.cache_y;
+            } ),
+            [&]( const auto & sp ) {
+                const level_cache &uch = get_cache_ref( zlev + sp.first );
+                return static_cast<bool>(
+                           uch.floor_cache[uch.idx( sp.second.x, sp.second.y )] );
+            }
+                                 );
+            solar_cache[ch.idx( x, y )] = !blocked;
         }
+        );
+    }
     );
 }
 
@@ -403,7 +403,7 @@ void map::build_sunlight_cache( int pzlev )
             update_solar_params();
             std::ranges::for_each(
                 std::views::iota( zlev_min, zlev_max + 1 ),
-                [this]( int z ) { build_angled_sunlight_cache( z ); }
+            [this]( int z ) { build_angled_sunlight_cache( z ); }
             );
             m_solar.last_built_hour = current_hour;
         }
@@ -545,13 +545,13 @@ void map::build_sunlight_cache( int pzlev )
             const auto &solar_cache = map_cache.angled_sunlight_cache;
             std::ranges::for_each(
                 std::views::iota( 0, map_cache.cache_x * map_cache.cache_y ),
-                [&]( int i ) {
-                    const auto idx = static_cast<size_t>( i );
-                    if( solar_cache[idx] ) {
-                        lm[idx].fill( outside_light_level );
-                        fully_inside = false;
-                    }
+            [&]( int i ) {
+                const auto idx = static_cast<size_t>( i );
+                if( solar_cache[idx] ) {
+                    lm[idx].fill( outside_light_level );
+                    fully_inside = false;
                 }
+            }
             );
         }
     }
