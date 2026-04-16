@@ -9655,6 +9655,14 @@ bool map::build_floor_cache( const int zlev )
             submap *cur_submap = get_submap_at_grid( { smx, smy, zlev } );
             if( cur_submap == nullptr ) {
                 // Null expected for circle corners and bounded-dimension edges.
+                // Treat as open air (no floor) so sky propagates through unloaded areas.
+                if( rebuild_all ) {
+                    const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
+                    for( int sx = 0; sx < SEEX; ++sx ) {
+                        std::fill_n( floor_cache.data() + ch.idx( sm_offset.x + sx, sm_offset.y ),
+                                     SEEY, '\0' );
+                    }
+                }
                 continue;
             }
             cur_submap->rebuild_floor_cache( *this, tripoint( smx, smy, zlev ) );
@@ -9763,6 +9771,7 @@ void map::update_suspension_cache( const int &z )
 static void vehicle_caching_internal( level_cache &zch, const vpart_reference &vp, vehicle *v )
 {
     auto &outside_cache = zch.outside_cache;
+    auto &sheltered_cache = zch.sheltered_cache;
     auto &transparency_cache = zch.transparency_cache;
     auto &floor_cache = zch.floor_cache;
     auto &obscured_cache = zch.vehicle_obscured_cache;
@@ -9783,7 +9792,9 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
     }
 
     if( vehicle_is_opaque || vp.is_inside() ) {
-        outside_cache[zch.idx( part_pos.x, part_pos.y )] = false;
+        const int veh_idx = zch.idx( part_pos.x, part_pos.y );
+        outside_cache[veh_idx] = false;
+        sheltered_cache[veh_idx] = true;
     }
 
     if( vp.has_feature( VPFLAG_BOARDABLE ) && !vp.part().is_broken() ) {

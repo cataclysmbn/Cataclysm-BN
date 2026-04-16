@@ -627,8 +627,7 @@ auto submap::rebuild_sheltered_cache( const level_cache *above, tripoint grid_po
                 for( int dy = -1; dy <= 1 && !result; ++dy ) {
                     const point nb( ax + dx, ay + dy );
                     if( !above->inbounds( nb ) ) {
-                        result = true; // out of bounds = sheltered
-                        break;
+                        continue; // out of bounds = open sky, not sheltered
                     }
                     const int idx = above->idx( nb.x, nb.y );
                     if( above->floor_cache[idx] || above->sheltered_cache[idx] ) {
