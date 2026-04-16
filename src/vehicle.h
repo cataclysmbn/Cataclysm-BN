@@ -1633,6 +1633,7 @@ class vehicle
         void shift_zlevel();
 
         std::vector<int> alternators;      // List of alternator indices
+        std::vector<int> battery_parts;    // List of battery indices
         std::vector<int> engines;          // List of engine indices
         std::vector<int> reactors;         // List of reactor indices
         std::vector<int> solar_panels;     // List of solar panel indices

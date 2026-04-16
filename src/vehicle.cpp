@@ -116,10 +116,53 @@ static const flag_id f_VEHICLE_HOTWIRE( "VEHICLE_HOTWIRE" );
 
 static const std::string str_DOOR_LOCKING( "DOOR_LOCKING" );
 static const std::string str_OPENCLOSE_INSIDE( "OPENCLOSE_INSIDE" );
+constexpr auto battery_charge_bucket_count = 101;
 
 static auto is_cargo_recharge_candidate( const item &it ) -> bool
 {
     return it.has_flag( flag_RECHARGE ) || it.has_flag( flag_USE_UPS );
+}
+
+using battery_charge_buckets = std::array<std::vector<int>, battery_charge_bucket_count>;
+
+auto battery_charge_level( const vehicle_part &part ) -> int
+{
+    const auto capacity = part.ammo_capacity();
+    if( capacity <= 0 ) {
+        return 0;
+    }
+
+    return ( part.ammo_remaining() * 100 ) / capacity;
+}
+
+auto make_chargeable_battery_buckets( const vehicle &veh ) -> battery_charge_buckets
+{
+    auto chargeable_parts = battery_charge_buckets{};
+    for( const auto part_index : veh.battery_parts ) {
+        const auto &part = veh.cpart( part_index );
+        if( !part.is_available() || part.ammo_capacity() <= part.ammo_remaining() ) {
+            continue;
+        }
+
+        chargeable_parts[battery_charge_level( part )].push_back( part_index );
+    }
+
+    return chargeable_parts;
+}
+
+auto make_dischargeable_battery_buckets( const vehicle &veh ) -> battery_charge_buckets
+{
+    auto dischargeable_parts = battery_charge_buckets{};
+    for( const auto part_index : veh.battery_parts ) {
+        const auto &part = veh.cpart( part_index );
+        if( !part.is_available() || part.ammo_remaining() <= 0 ) {
+            continue;
+        }
+
+        dischargeable_parts[battery_charge_level( part )].push_back( part_index );
+    }
+
+    return dischargeable_parts;
 }
 
 static const std::vector<std::string> vs_NO_HOTWIRING = {
@@ -294,6 +337,7 @@ void vehicle::copy_static_from( const vehicle &source )
     hull_area = source.hull_area;
     occupied_points = source.occupied_points;
     alternators = source.alternators;
+    battery_parts = source.battery_parts;
     engines = source.engines;
     reactors = source.reactors;
     solar_panels = source.solar_panels;
@@ -3823,10 +3867,18 @@ point vehicle::pivot_displacement() const
 
 int vehicle::fuel_left( const itype_id &ftype, bool recurse ) const
 {
-    int fl = std::accumulate( parts.begin(), parts.end(), 0, [&ftype]( const int &lhs,
-    const vehicle_part & rhs ) {
-        return lhs + ( rhs.ammo_current() == ftype ? rhs.ammo_remaining() : 0 );
-    } );
+    int fl = 0;
+    if( ftype == fuel_type_battery ) {
+        fl = std::accumulate( battery_parts.begin(), battery_parts.end(), 0,
+        [this]( const int lhs, const int part_index ) {
+            return lhs + cpart( part_index ).ammo_remaining();
+        } );
+    } else {
+        fl = std::accumulate( parts.begin(), parts.end(), 0, [&ftype]( const int &lhs,
+        const vehicle_part & rhs ) {
+            return lhs + ( rhs.ammo_current() == ftype ? rhs.ammo_remaining() : 0 );
+        } );
+    }
 
     if( recurse && ftype == fuel_type_battery ) {
         using tvr = distribution_graph::traverse_visitor_result;
@@ -3877,6 +3929,13 @@ int vehicle::engine_fuel_left( const int e, bool recurse ) const
 
 int vehicle::fuel_capacity( const itype_id &ftype ) const
 {
+    if( ftype == fuel_type_battery ) {
+        return std::accumulate( battery_parts.begin(), battery_parts.end(), 0,
+        [this]( const int lhs, const int part_index ) {
+            return lhs + cpart( part_index ).ammo_capacity();
+        } );
+    }
+
     return std::accumulate( parts.begin(), parts.end(), 0, [&ftype]( const int &lhs,
     const vehicle_part & rhs ) {
         return lhs + ( rhs.ammo_current() == ftype ? rhs.ammo_capacity() : 0 );
@@ -5833,28 +5892,28 @@ void traverse( StartPoint &start,
 
 int vehicle::charge_battery( int amount, bool include_other_vehicles )
 {
-    // Key parts by percentage charge level.
-    std::multimap<int, vehicle_part *> chargeable_parts;
-    for( vehicle_part &p : parts ) {
-        if( p.is_available() && p.is_battery() && p.ammo_capacity() > p.ammo_remaining() ) {
-            chargeable_parts.insert( { ( p.ammo_remaining() * 100 ) / p.ammo_capacity(), &p } );
+    auto chargeable_parts = make_chargeable_battery_buckets( *this );
+    auto lowest_charge_level = 0;
+    while( amount > 0 ) {
+        while( lowest_charge_level < 100 && chargeable_parts[lowest_charge_level].empty() ) {
+            ++lowest_charge_level;
         }
-    }
-    while( amount > 0 && !chargeable_parts.empty() ) {
-        // Grab first part, charge until it reaches the next %, then re-insert with new % key.
-        auto iter = chargeable_parts.begin();
-        int charge_level = iter->first;
-        vehicle_part *p = iter->second;
-        chargeable_parts.erase( iter );
-        // Calculate number of charges to reach the next %, but insure it's at least
-        // one more than current charge.
-        int next_charge_level = ( ( charge_level + 1 ) * p->ammo_capacity() ) / 100;
-        next_charge_level = std::max( next_charge_level, p->ammo_remaining() + 1 );
-        int qty = std::min( amount, next_charge_level - p->ammo_remaining() );
-        p->ammo_set( fuel_type_battery, p->ammo_remaining() + qty );
+        if( lowest_charge_level >= 100 ) {
+            break;
+        }
+
+        const auto part_index = chargeable_parts[lowest_charge_level].back();
+        chargeable_parts[lowest_charge_level].pop_back();
+
+        auto &part = this->part( part_index );
+        const auto charge_level = battery_charge_level( part );
+        auto next_charge_level = ( ( charge_level + 1 ) * part.ammo_capacity() ) / 100;
+        next_charge_level = std::max( next_charge_level, part.ammo_remaining() + 1 );
+        const auto qty = std::min( amount, next_charge_level - part.ammo_remaining() );
+        part.ammo_set( fuel_type_battery, part.ammo_remaining() + qty );
         amount -= qty;
-        if( p->ammo_capacity() > p->ammo_remaining() ) {
-            chargeable_parts.insert( { ( p->ammo_remaining() * 100 ) / p->ammo_capacity(), p } );
+        if( part.ammo_capacity() > part.ammo_remaining() ) {
+            chargeable_parts[battery_charge_level( part )].push_back( part_index );
         }
     }
 
@@ -5880,27 +5939,28 @@ int vehicle::charge_battery( int amount, bool include_other_vehicles )
 
 int vehicle::discharge_battery( int amount, bool recurse )
 {
-    // Key parts by percentage charge level.
-    std::multimap<int, vehicle_part *> dischargeable_parts;
-    for( vehicle_part &p : parts ) {
-        if( p.is_available() && p.is_battery() && p.ammo_remaining() > 0 ) {
-            dischargeable_parts.insert( { ( p.ammo_remaining() * 100 ) / p.ammo_capacity(), &p } );
+    auto dischargeable_parts = make_dischargeable_battery_buckets( *this );
+    auto highest_charge_level = 100;
+    while( amount > 0 ) {
+        while( highest_charge_level > 0 && dischargeable_parts[highest_charge_level].empty() ) {
+            --highest_charge_level;
         }
-    }
-    while( amount > 0 && !dischargeable_parts.empty() ) {
-        // Grab first part, discharge until it reaches the next %, then re-insert with new % key.
-        auto iter = std::prev( dischargeable_parts.end() );
-        int charge_level = iter->first;
-        vehicle_part *p = iter->second;
-        dischargeable_parts.erase( iter );
-        // Calculate number of charges to reach the previous %.
-        int prev_charge_level = ( ( charge_level - 1 ) * p->ammo_capacity() ) / 100;
+        if( dischargeable_parts[highest_charge_level].empty() ) {
+            break;
+        }
+
+        const auto part_index = dischargeable_parts[highest_charge_level].back();
+        dischargeable_parts[highest_charge_level].pop_back();
+
+        auto &part = this->part( part_index );
+        const auto charge_level = battery_charge_level( part );
+        auto prev_charge_level = ( ( charge_level - 1 ) * part.ammo_capacity() ) / 100;
         prev_charge_level = std::max( 0, prev_charge_level );
-        int amount_to_discharge = std::min( p->ammo_remaining() - prev_charge_level, amount );
-        p->ammo_consume( amount_to_discharge, global_part_pos3( *p ) );
+        const auto amount_to_discharge = std::min( part.ammo_remaining() - prev_charge_level, amount );
+        part.ammo_consume( amount_to_discharge, global_part_pos3( part ) );
         amount -= amount_to_discharge;
-        if( p->ammo_remaining() > 0 ) {
-            dischargeable_parts.insert( { ( p->ammo_remaining() * 100 ) / p->ammo_capacity(), p } );
+        if( part.ammo_remaining() > 0 ) {
+            dischargeable_parts[battery_charge_level( part )].push_back( part_index );
         }
     }
 
@@ -6490,6 +6550,7 @@ void vehicle::refresh()
     }
 
     alternators.clear();
+    battery_parts.clear();
     engines.clear();
     reactors.clear();
     solar_panels.clear();
@@ -6557,6 +6618,9 @@ void vehicle::refresh()
 
         if( vpi.has_flag( VPFLAG_FLOATS ) ) {
             floating.push_back( p );
+        }
+        if( vp.part().is_battery() ) {
+            battery_parts.push_back( p );
         }
 
         if( vp.part().is_unavailable() ) {
