@@ -12269,9 +12269,8 @@ void game::update_performance_bubble()
     // Each counter increments while its condition holds; resets to 0 the moment it doesn't.
     // The bubble shrinks once the counter reaches dynamic_grace (no exit hysteresis).
 
-    // Use has_floor on the tile above rather than is_outside: the latter relies on TFLAG_INDOORS
-    // which water-derived terrain (e.g. sewage) may lack, causing false "outside" readings.
-    // A physical floor one level up is a reliable proxy for "enclosed/has ceiling".
+    // Use has_floor on the tile above rather than is_outside: this is a quick single-tile check
+    // for underground bubble sizing; is_outside uses the 3×3 overhang rule which is broader.
     const bool underground_cond = underground_size > 0 && underground_size < normal_size
                                   && u.pos().z < 0
                                   && m.has_floor( tripoint( u.pos().xy(), u.pos().z + 1 ) );

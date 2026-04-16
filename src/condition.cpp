@@ -814,8 +814,7 @@ void conditional_t<T>::set_is_outside()
 {
     condition = []( const T & d ) {
         map &here = get_map();
-        const tripoint pos = here.getabs( d.beta->pos() );
-        return !here.has_flag( TFLAG_INDOORS, pos );
+        return here.is_outside( d.beta->pos() );
     };
 }
 

@@ -117,7 +117,6 @@
       "TRANSPARENT",
       "FLAMMABLE",
       "PLACE_ITEM",
-      "INDOORS",
       "AUTO_WALL_SYMBOL",
       "BASHABLE",
       "THIN_OBSTACLE",

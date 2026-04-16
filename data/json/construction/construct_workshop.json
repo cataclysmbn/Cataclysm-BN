@@ -834,7 +834,7 @@
     "qualities": [ [ { "id": "SCREW", "level": 1 } ] ],
     "components": [ [ [ "cable", 2 ] ], [ [ "power_supply", 1 ] ], [ [ "light_bulb", 1 ] ], [ [ "steel_standard", 1, "LIST" ] ] ],
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
-    "pre_flags": [ "INDOORS" ],
+    "pre_flags": [  ],
     "post_furniture": "f_olight_off"
   },
   {

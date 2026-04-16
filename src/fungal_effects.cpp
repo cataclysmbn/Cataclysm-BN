@@ -47,7 +47,6 @@ static const trait_id trait_TAIL_CATTLE( "TAIL_CATTLE" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 
 static const std::string flag_FLAT( "FLAT" );
-static const std::string flag_INDOORS( "INDOORS" );
 static const std::string flag_SUPPORTS_ROOF( "SUPPORTS_ROOF" );
 static const std::string flag_FLAMMABLE( "FLAMMABLE" );
 static const std::string flag_FLOWER( "FLOWER" );
@@ -157,7 +156,7 @@ void fungal_effects::spread_fungus_one_tile( const tripoint &p, const int growth
         }
     } else if( fungal_opt.spread_on_flat_tiles_allowed &&
                m.has_flag( flag_FLAT, p ) ) {
-        if( m.has_flag( flag_INDOORS, p ) ) {
+        if( !m.is_outside( p ) ) {
             if( x_in_y( growth * 10, 500 ) ) {
                 m.ter_set( p, t_fungus_floor_in );
                 converted = true;

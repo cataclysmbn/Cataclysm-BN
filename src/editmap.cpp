@@ -762,7 +762,7 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
     if( vp ) {
         extras += _( " [vehicle]" );
     }
-    if( here.has_flag( TFLAG_INDOORS, target ) ) {
+    if( !here.is_outside( target ) ) {
         extras += _( " [indoors]" );
     }
     if( here.has_flag( TFLAG_SUPPORTS_ROOF, target ) ) {
@@ -952,16 +952,14 @@ static std::string describe( const T_t &t );
 template<>
 std::string describe( const ter_t &type )
 {
-    return string_format( _( "Move cost: %d\nIndoors: %s\nRoof: %s" ), type.movecost,
-                          type.has_flag( TFLAG_INDOORS ) ? _( "Yes" ) : _( "No" ),
+    return string_format( _( "Move cost: %d\nRoof: %s" ), type.movecost,
                           type.has_flag( TFLAG_SUPPORTS_ROOF ) ? _( "Yes" ) : _( "No" ) );
 }
 
 template<>
 std::string describe( const furn_t &type )
 {
-    return string_format( _( "Move cost: %d\nIndoors: %s\nRoof: %s" ), type.movecost,
-                          type.has_flag( TFLAG_INDOORS ) ? _( "Yes" ) : _( "No" ),
+    return string_format( _( "Move cost: %d\nRoof: %s" ), type.movecost,
                           type.has_flag( TFLAG_SUPPORTS_ROOF ) ? _( "Yes" ) : _( "No" ) );
 }
 

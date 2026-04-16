@@ -227,7 +227,6 @@ static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { 
         { "COLLAPSES",                TFLAG_COLLAPSES },      // This tile includes a ceiling. If the ceiling drops, this tile is destroyed.
         { "FLAMMABLE",                TFLAG_FLAMMABLE },      // fire bad! fire SLOW!
         { "REDUCE_SCENT",             TFLAG_REDUCE_SCENT },   // ...and the other half is update_scent
-        { "INDOORS",                  TFLAG_INDOORS },        // vehicle gain_moves, weather
         { "SHARP",                    TFLAG_SHARP },          // monmove
         { "SUPPORTS_ROOF",            TFLAG_SUPPORTS_ROOF },  // Supports its ceiling and roof above it.
         { "MINEABLE",                 TFLAG_MINEABLE },       // allows mining
