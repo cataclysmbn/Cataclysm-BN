@@ -20,3 +20,6 @@ gapi.add_on_every_x_hook(TimeDuration.from_turns(300), function(...)
 end)
 
 game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)
+game.add_hook("on_stat_changed", function(...)
+  if mod.achievement_runtime then return mod.achievement_runtime.on_stat_changed(...) end
+end)
