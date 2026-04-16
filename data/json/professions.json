@@ -163,6 +163,15 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "mags_glock19",
+    "entries": [
+      { "item": "glockmag", "ammo-item": "9mmfmj", "charges": 15 },
+      { "item": "glockmag", "ammo-item": "9mmfmj", "charges": 15 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "crossbow_hardened_survivor",
     "entries": [ { "item": "crossbow", "ammo-item": "bolt_wood", "charges": 1 } ]
   },
@@ -382,6 +391,12 @@
     "subtype": "collection",
     "id": "bandolier_roadwarrior",
     "entries": [ { "item": "shot_00", "charges": 18 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "ammopouch_irs_ci",
+    "entries": [ { "item": "shot_00", "charges": 13 } ]
   },
   {
     "type": "item_group",
@@ -7674,5 +7689,60 @@
       "female": [ "sports_bra", "boxer_shorts" ]
     },
     "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
+    "id": "irs",
+    "name": "IRS-CI Special Agent",
+    "description": "After years of near-death encounters doing field work as a veteran special agent, nothing really fazes you anymore. You've been shot at, slashed at, swung on, and nearly run over while investigating tax fraud; this cataclysm is just a day in the life for you. With no one left to hold you accountable, taxes will be paid or capital punishment will be dispensed. You are inevitable.",
+    "points": 6,
+    "traits": [ "PROF_IRS" ],
+    "skills": [
+      { "level": 3, "name": "swimming" },
+      { "level": 3, "name": "dodge" },
+      { "level": 2, "name": "melee" },
+      { "level": 2, "name": "unarmed" },
+      { "level": 2, "name": "gun" },
+      { "level": 3, "name": "pistol" },
+      { "level": 2, "name": "shotgun" },
+      { "level": 3, "name": "computer" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 3, "name": "speech" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "fancy_sunglasses",
+          "suit",
+          "tie_necktie",
+          "blue_topaz_platinum_cufflinks",
+          "platinum_ring",
+          "platinum_watch",
+          "kevlar",
+          "socks",
+          "dress_shoes",
+          "briefcase"
+        ],
+        "entries": [
+          { "item": "glock_19", "ammo-item": "9mm", "container-item": "holster", "charges": 15 },
+          { "item": "remington_870_express", "ammo-item": "shot_00", "charges": 7, "contents-item": "shoulder_strap" },
+          { "item": "tacvest", "contents-group": [ "mags_glock19" ] },
+          { "item": "ammo_satchel_leg", "contents-group": "ammopouch_irs_ci" },
+          { "item": "9mm", "charges": 5 },
+          { "item": "file", "count": 10 },
+          { "item": "record_accounting", "count": 2 },
+          { "item": "paper", "count": 20 },
+          { "item": "pen" },
+          { "item": "permanent_marker" },
+          { "item": "laptop" },
+          { "item": "smart_phone" },
+          { "item": "cig", "charges": 13, "container-item": "box_cigarette" },
+          { "item": "ref_lighter" },
+          { "item": "badge_IRS" }
+        ]
+      },
+      "male": [ "boxer_shorts", "platinum_necklace" ],
+      "female": [ "boy_shorts", "sports_bra", "blue_topaz_platinum_earring" ]
+    }
   }
 ]

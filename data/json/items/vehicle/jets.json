@@ -1,0 +1,50 @@
+[
+  {
+    "type": "GENERIC",
+    "id": "jet_thruster",
+    "symbol": "^",
+    "color": "light_gray",
+    "name": { "str": "jet thruster" },
+    "description": "This jet propulsion module is a concentrated embodiment of military-grade aerospace engineering.  Originally designed for use as the primary propulsion system and attitude control mechanism in next-generation gunships and large transport drones, it boasts an overwhelming thrust-to-weight ratio that far surpasses that of conventional internal combustion engines.",
+    "price": "62500 USD",
+    "price_postapoc": "70 USD",
+    "material": [ "plastic" ],
+    "weight": "300 kg",
+    "volume": "100 L",
+    "bashing": 4,
+    "to_hit": -3,
+    "category": "veh_parts",
+    "explosion": { "damage": 100, "radius": 2 },
+    "explode_in_fire": false
+  },
+  {
+    "id": "vtol_thruster",
+    "type": "WHEEL",
+    "category": "veh_parts",
+    "name": { "str": "VTOL thruster" },
+    "description": "This is a vertical takeoff and landing (VTOL) propulsion system used in military VTOL aircraft and large transport drones.  It allows for free takeoff and landing on land, at sea, or in the air.",
+    "price": "61400 USD",
+    "price_postapoc": "75 USD",
+    "weight": "200 kg",
+    "volume": "150 L",
+    "looks_like": "xl_wind_turbine",
+    "material": "steel",
+    "symbol": "O",
+    "color": "light_gray"
+  },
+  {
+    "id": "hover_repulsor",
+    "type": "WHEEL",
+    "category": "veh_parts",
+    "name": { "str": "hover repulsor" },
+    "description": "This is a lightweight hover repulsor module mounted on the underside of the next-generation hoverbike.  It offers unparalleled maneuverability, allowing the hoverbike to glide effortlessly over swamps and ruins, completely overcoming ground friction.",
+    "price": "334000 USD",
+    "price_postapoc": "125 USD",
+    "weight": "60 kg",
+    "volume": "55 L",
+    "looks_like": "xl_wind_turbine",
+    "material": "steel",
+    "symbol": "O",
+    "color": "cyan"
+  }
+]

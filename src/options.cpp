@@ -2383,15 +2383,15 @@ void options_manager::add_options_performance()
                                           to_translation( "Configure three-dimensional visibility across z-levels." ) ),
     [&]( auto & page_id ) {
         add( "FOV_3D", page_id, translate_marker( "3D field of vision" ),
-             translate_marker( "If false, vision is limited to current z-level.  If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
+             translate_marker( "If false, vision is limited to current z-level. If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
              true
            );
         add( "FOV_3D_Z_RANGE", page_id, translate_marker( "Vertical range of 3D field of vision" ),
-             translate_marker( "How many levels up and down the experimental 3D field of vision reaches.  (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
+             translate_marker( "How many levels up and down the experimental 3D field of vision reaches. (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
              0, OVERMAP_LAYERS, is_android ? 3 : 5
            );
-        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV horizontal occlusion" ),
-             translate_marker( "When enabled, obstacles at other z-levels correctly cast 3D shadows.  Requires 3D FoV.  Significantly slower than disabled." ),
+        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV shadow casting" ),
+             translate_marker( "When enabled, obstacles at other z-levels correctly cast 3D shadows. Requires 3D FoV. Significantly slower than disabled." ),
              false
            );
     } );

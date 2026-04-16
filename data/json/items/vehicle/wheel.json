@@ -60,8 +60,8 @@
     "material": [ "steel", "rubber" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 17,
-    "width": 9
+    "diameter": "425 mm",
+    "width": "225 mm"
   },
   {
     "id": "wheel_slick",
@@ -78,8 +78,8 @@
     "material": [ "steel", "rubber" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 16,
-    "width": 11
+    "diameter": "400 mm",
+    "width": "275 mm"
   },
   {
     "type": "WHEEL",
@@ -96,8 +96,8 @@
     "material": [ "hardsteel", "rubber", "kevlar" ],
     "symbol": "]",
     "color": "green",
-    "diameter": 32,
-    "width": 20
+    "diameter": "800 mm",
+    "width": "500 mm"
   },
   {
     "id": "wheel_barrow",
@@ -114,8 +114,8 @@
     "material": [ "steel", "rubber" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 8,
-    "width": 3
+    "diameter": "200 mm",
+    "width": "75 mm"
   },
   {
     "id": "wheel_bicycle",
@@ -132,8 +132,8 @@
     "material": [ "steel", "rubber" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 27,
-    "width": 3
+    "diameter": "675 mm",
+    "width": "75 mm"
   },
   {
     "id": "wheel_bicycle_or",
@@ -157,8 +157,8 @@
     "material": [ "steel", "plastic" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 4,
-    "width": 1
+    "diameter": "100 mm",
+    "width": "25 mm"
   },
   {
     "id": "wheel_skateboard",
@@ -175,8 +175,8 @@
     "material": [ "steel", "plastic" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 2,
-    "width": 1
+    "diameter": "50 mm",
+    "width": "25 mm"
   },
   {
     "id": "wheel_mount_skateboard",
@@ -208,8 +208,8 @@
     "material": [ "rubber", "steel" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 10,
-    "width": 4
+    "diameter": "250 mm",
+    "width": "100 mm"
   },
   {
     "id": "wheel_metal",
@@ -226,8 +226,8 @@
     "material": [ "steel" ],
     "symbol": "]",
     "color": "light_gray",
-    "diameter": 20,
-    "width": 4
+    "diameter": "500 mm",
+    "width": "100 mm"
   },
   {
     "id": "wheel_rail",
@@ -244,8 +244,8 @@
     "material": [ "steel" ],
     "symbol": "]",
     "color": "light_gray",
-    "diameter": 20,
-    "width": 4
+    "diameter": "500 mm",
+    "width": "100 mm"
   },
   {
     "id": "wheel_rail_small_pair",
@@ -257,8 +257,8 @@
     "price_postapoc": "1 USD",
     "weight": "12239 g",
     "symbol": "=",
-    "diameter": 10,
-    "width": 3
+    "diameter": "250 mm",
+    "width": "75 mm"
   },
   {
     "id": "wheel_motorbike",
@@ -275,15 +275,15 @@
     "material": [ "steel", "rubber" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 16,
-    "width": 4
+    "diameter": "400 mm",
+    "width": "100 mm"
   },
   {
     "id": "wheel_motorbike_or",
     "copy-from": "wheel_motorbike",
     "type": "WHEEL",
     "name": { "str": "off-road motorbike wheel" },
-    "diameter": 20,
+    "diameter": "500 mm",
     "description": "A motorbike wheel, studded for improved off-road performance."
   },
   {
@@ -301,8 +301,8 @@
     "material": [ "steel" ],
     "symbol": "m",
     "color": "light_gray",
-    "diameter": 60,
-    "width": 30
+    "diameter": "1500 mm",
+    "width": "750 mm"
   },
   {
     "id": "wheel_small",
@@ -319,8 +319,8 @@
     "material": [ "steel", "rubber" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 10,
-    "width": 3
+    "diameter": "250 mm",
+    "width": "75 mm"
   },
   {
     "id": "wheel_tricycle",
@@ -337,8 +337,8 @@
     "material": [ "plastic" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 7,
-    "width": 1
+    "diameter": "175 mm",
+    "width": "25 mm"
   },
   {
     "id": "wheel_wheelchair",
@@ -355,8 +355,8 @@
     "material": [ "steel", "rubber" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 20,
-    "width": 2
+    "diameter": "500 mm",
+    "width": "50 mm"
   },
   {
     "id": "wheel_wide",
@@ -373,8 +373,8 @@
     "material": [ "steel", "rubber" ],
     "symbol": "]",
     "color": "dark_gray",
-    "diameter": 24,
-    "width": 14
+    "diameter": "600 mm",
+    "width": "350 mm"
   },
   {
     "id": "wheel_wide_or",
@@ -397,8 +397,8 @@
     "material": [ "wood" ],
     "symbol": "]",
     "color": "brown",
-    "diameter": 20,
-    "width": 3
+    "diameter": "500 mm",
+    "width": "75 mm"
   },
   {
     "id": "wheel_wood_b",
@@ -430,8 +430,8 @@
     "material": [ "wood" ],
     "symbol": "]",
     "color": "brown",
-    "diameter": 1,
-    "width": 1
+    "diameter": "25 mm",
+    "width": "25 mm"
   },
   {
     "id": "tread1",
@@ -448,8 +448,8 @@
     "material": [ "rubber", "plastic", "steel" ],
     "symbol": "]",
     "color": "white",
-    "diameter": 30,
-    "width": 15
+    "diameter": "750 mm",
+    "width": "375 mm"
   },
   {
     "id": "tread2",
@@ -466,8 +466,8 @@
     "material": [ "steel" ],
     "symbol": "]",
     "color": "white",
-    "diameter": 50,
-    "width": 25
+    "diameter": "1250 mm",
+    "width": "625 mm"
   },
   {
     "id": "tread3",
@@ -484,7 +484,7 @@
     "material": [ "hardsteel", "steel" ],
     "symbol": "]",
     "color": "white",
-    "diameter": 60,
-    "width": 30
+    "diameter": "1500 mm",
+    "width": "750 mm"
   }
 ]

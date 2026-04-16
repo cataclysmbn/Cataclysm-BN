@@ -1154,7 +1154,7 @@
     "id": "JITTERY",
     "name": { "str": "Jittery" },
     "points": -3,
-    "description": "When very hungry or under the effects of stimulants, you may find your hands shaking uncontrollably, severely reducing your Dexterity.",
+    "description": "When hungry or under the effects of stimulants, you may find your hands shaking uncontrollably, severely reducing your Dexterity.",
     "starting_trait": true,
     "valid": false,
     "category": [ "MEDICAL", "MOUSE", "RABBIT" ]
@@ -1782,7 +1782,7 @@
     "name": { "str": "Light Bones" },
     "points": 2,
     "mixed_effect": true,
-    "description": "Your bones are very light.  This enables you to move and attack 10% faster, but also reduces your carrying weight by 20% and makes bashing attacks hurt a little more.",
+    "description": "Your bones are very light.  This enables you to move and attack 10% faster, but also reduces your carrying weight by 20% and increases the damage you take from bashing attacks by 40%.",
     "category": [ "MOUSE", "RABBIT" ],
     "changes_to": [ "HOLLOW_BONES" ],
     "movecost_modifier": 0.9,
@@ -2945,7 +2945,8 @@
     "description": "Eating rotting, long-dead flesh is good for the struggle, and safe--if still completely unappealing--for you.",
     "prereqs": [ "POISRESIST" ],
     "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE", "THRESH_SERPENT" ],
-    "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ]
+    "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ],
+    "kcal_scale": 0.15
   },
   {
     "type": "mutation",
@@ -2991,13 +2992,14 @@
     "id": "EATHEALTH",
     "name": { "str": "Hyper-Metabolism" },
     "points": 15,
-    "description": "You metabolize nutrients so rapidly that you can convert food directly into useful tissue.  Excess nutrition will convert to HP, rather than being wasted.  Activate to skip prompt for overeating.",
+    "description": "You metabolize nutrients so rapidly that you can convert food directly into useful tissue.  Excess nutrition will convert to HP, rather than being wasted. You can also store more kcal. Activate to skip prompt for overeating.",
     "prereqs": [ "HUNGER3" ],
     "types": [ "METABOLISM" ],
     "threshreq": [ "THRESH_CHIMERA" ],
     "category": [ "CHIMERA" ],
     "valid": false,
-    "active": true
+    "active": true,
+    "kcal_scale": 0.3
   },
   {
     "type": "mutation",
@@ -4692,7 +4694,7 @@
     "name": { "str": "Hollow Bones" },
     "points": 1,
     "mixed_effect": true,
-    "description": "You have Avian Bone Syndrome--your bones are nearly hollow.  Your body is very light as a result, enabling you to move and attack 20% faster, but also frail; you can carry 40% less, and bashing attacks injure you more.",
+    "description": "You have Avian Bone Syndrome--your bones are nearly hollow.  Your body is very light as a result, enabling you to move and attack 20% faster, but also frail; you can carry 40% less, and take 80% more damage from bashing attacks.",
     "prereqs": [ "LIGHT_BONES" ],
     "category": [ "BIRD", "SLIME", "ELFA" ],
     "movecost_modifier": 0.8,
@@ -6986,6 +6988,16 @@
     "description": "You have trained in the ways of the European nobility. Mostly useless even before the Cataclysm, now the only thing worth anything is the swordsmanship.",
     "valid": false,
     "initial_ma_styles": [ "style_swordsmanship" ],
+    "purifiable": false,
+    "profession": true
+  },
+  {
+    "type": "mutation",
+    "id": "PROF_IRS",
+    "name": { "str": "IRS Auditor" },
+    "points": 0,
+    "description": "You possess authority nationwide to lawfully seize assets, detain individuals, and deploy lethal force in the collection of Uncle Sam's undeclared revenue. You are the IRS. You are inevitable.",
+    "valid": false,
     "purifiable": false,
     "profession": true
   }

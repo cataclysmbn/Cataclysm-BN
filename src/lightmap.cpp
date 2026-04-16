@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <ranges>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -51,6 +52,11 @@
 
 static const efftype_id effect_haslight( "haslight" );
 static const efftype_id effect_onfire( "onfire" );
+
+// Fraction of default_daylight_level() seen by outdoor tiles in shadow (not in direct solar LOS).
+// Must be < LIGHT_SOURCE_BRIGHT / default_daylight_level() = 10/100 = 0.10 so shadow tiles
+// render as LOW (dim, visible) rather than BRIGHT (same as direct sunlight).
+static constexpr float SOLAR_SHADOW_SCATTER = 0.09f;
 
 // Build a runtime bounding rectangle for the loaded tile grid from a level_cache.
 // Replaces the former compile-time `lightmap_boundaries` constant (which used
@@ -262,6 +268,109 @@ void map::apply_character_light( Character &p )
 }
 
 // This function raytraces starting at the upper limit of the simulated area descending
+void map::update_solar_params()
+{
+    const time_point now        = calendar::turn;
+    const time_point sr         = sunrise( now );
+    const time_point ss         = sunset( now );
+    const time_duration day_dur = ss - sr;
+
+    if( day_dur <= 0_turns || now <= sr || now >= ss ) {
+        m_solar.direct_active = false;
+        m_solar.dx_per_z      = 0.f;
+        m_solar.dy_per_z      = 0.f;
+        return;
+    }
+
+    // Map daylight progress [0,1] to theta [0°,180°]: sunrise = 0°, noon = 90°, sunset = 180°.
+    const auto progress  = to_turns<double>( now - sr ) / to_turns<double>( day_dur );
+    const auto theta_deg = static_cast<float>( progress * 180.0 );
+    const auto theta_rad = theta_deg * static_cast<float>( M_PI ) / 180.f;
+    const auto sin_t     = std::sin( theta_rad );
+    const auto cos_t     = std::cos( theta_rad );
+
+    // Active throughout all daylight hours; night is handled by the early return above.
+    m_solar.direct_active = true;
+
+    // Clamp theta before computing cot to keep sin well away from zero near the horizon.
+    // This replaces the old threshold cutoff: instead of disabling shadows at shallow angles,
+    // we hold them at maximum length. Shadows exist from sunrise to sunset with no abrupt
+    // appear/disappear transition; only the day/night boundary itself triggers the change.
+    static constexpr auto SUN_CLAMP_MIN_RAD = 15.f * static_cast<float>( M_PI ) / 180.f;
+    static constexpr auto SUN_CLAMP_MAX_RAD = 165.f * static_cast<float>( M_PI ) / 180.f;
+    const auto theta_clamped = std::clamp( theta_rad, SUN_CLAMP_MIN_RAD, SUN_CLAMP_MAX_RAD );
+    const auto sin_c = std::sin( theta_clamped );
+    const auto cos_c = std::cos( theta_clamped );
+
+    // dx_per_z = SOLAR_SHADOW_SCALE * Z_LEVEL_SCALE * cot(theta_clamped).
+    // SOLAR_SHADOW_SCALE (1.5) is a tuning multiplier; SOLAR_SHADOW_MAX caps extreme values.
+    // Flip SUN_EAST_SIGN to -1 if +x does not map to east in the tileset.
+    static constexpr auto SUN_EAST_SIGN      = 1.f;
+    static constexpr auto SOLAR_SHADOW_SCALE = 1.5f;
+    static constexpr auto SOLAR_SHADOW_MAX   = 6.f;
+    const auto raw = SUN_EAST_SIGN * SOLAR_SHADOW_SCALE * Z_LEVEL_SCALE * cos_c / sin_c;
+    m_solar.dx_per_z = std::clamp( raw, -SOLAR_SHADOW_MAX, SOLAR_SHADOW_MAX );
+    m_solar.dy_per_z = 0.f;  // No latitude tilt modelled.
+}
+
+void map::build_angled_sunlight_cache( const int zlev )
+{
+    level_cache &ch      = get_cache( zlev );
+    auto &solar_cache    = ch.angled_sunlight_cache;
+
+    if( !m_solar.direct_active ) {
+        std::ranges::fill( solar_cache, false );
+        return;
+    }
+
+    const auto step_x  = m_solar.dx_per_z;
+    const auto step_y  = m_solar.dy_per_z;
+    const auto max_step = OVERMAP_HEIGHT - zlev;
+
+    std::ranges::for_each(
+        std::views::iota( 0, ch.cache_x ),
+    [&]( int x ) {
+        std::ranges::for_each(
+            std::views::iota( 0, ch.cache_y ),
+        [&]( int y ) {
+            // A floor directly overhead always blocks, regardless of sun angle.
+            // Without this, angled rays jump laterally past the roof tile at step 1.
+            if( zlev + 1 <= OVERMAP_HEIGHT ) {
+                const level_cache &above = get_cache_ref( zlev + 1 );
+                const auto aidx = above.idx( x, y );
+                if( above.floor_cache[aidx] || above.vehicle_floor_cache[aidx] ) {
+                    solar_cache[ch.idx( x, y )] = false;
+                    return;
+                }
+            }
+            // Trace the sun ray upward one z-level at a time.
+            // Solar-lit if the ray exits the map bounds without hitting a floor.
+            const auto blocked = std::ranges::any_of(
+                                     std::views::iota( 1, max_step + 1 )
+            | std::views::transform( [&]( int step ) {
+                return std::pair{ step, point{
+                        x + static_cast<int>( std::roundf( step_x * static_cast<float>( step ) ) ),
+                        y + static_cast<int>( std::roundf( step_y * static_cast<float>( step ) ) )
+                    } };
+            } )
+            | std::views::take_while( [&]( const auto & sp ) {
+                return sp.second.x >= 0 && sp.second.x < ch.cache_x
+                       && sp.second.y >= 0 && sp.second.y < ch.cache_y;
+            } ),
+            [&]( const auto & sp ) {
+                const level_cache &uch = get_cache_ref( zlev + sp.first );
+                const auto uidx = uch.idx( sp.second.x, sp.second.y );
+                return static_cast<bool>( uch.floor_cache[uidx] ) ||
+                       static_cast<bool>( uch.vehicle_floor_cache[uidx] );
+            }
+                                 );
+            solar_cache[ch.idx( x, y )] = !blocked;
+        }
+        );
+    }
+    );
+}
+
 // toward the lower limit. Since it's sunlight, the rays are parallel.
 // Each layer consults the next layer up to determine the intensity of the light that reaches it.
 // Once this is complete, additional operations add more dynamic lighting.
@@ -288,6 +397,19 @@ void map::build_sunlight_cache( int pzlev )
     // when first obstacles occur: fully_outside=false, fully_inside=false  (slow quadrant logic)
     //    ↓
     // when fully below ground: fully_outside=false, fully_inside=true  (fast fill)
+
+    // Rebuild the directional sunlight cache once per in-game hour (expensive path only).
+    if( fov_3d_occlusion ) {
+        const auto current_hour = to_hours<int>( time_past_midnight( calendar::turn ) );
+        if( current_hour != m_solar.last_built_hour ) {
+            update_solar_params();
+            std::ranges::for_each(
+                std::views::iota( zlev_min, zlev_max + 1 ),
+            [this]( int z ) { build_angled_sunlight_cache( z ); }
+            );
+            m_solar.last_built_hour = current_hour;
+        }
+    }
 
     // Iterate top to bottom because sunlight cache needs to construct in that order.
     for( int zlev = zlev_max; zlev >= zlev_min; zlev-- ) {
@@ -323,8 +445,11 @@ void map::build_sunlight_cache( int pzlev )
         // If there were no obstacles before this level, just apply weather illumination since there's no opportunity
         // for light to be blocked.
         if( fully_outside ) {
-            //fill with full light
-            std::fill( lm.begin(), lm.end(), four_quadrants( outside_light_level ) );
+            // No floors above: every tile has unobstructed sky, so all get the natural outdoor level.
+            // Shadow dimming (SOLAR_SHADOW_SCATTER) is applied in ambient_light_at / apparent_light_at,
+            // not here, so lm always carries full outdoor brightness for cascade and bleed purposes.
+            const auto sky_level = outside_light_level;
+            std::fill( lm.begin(), lm.end(), four_quadrants( sky_level ) );
 
             const auto &this_floor_cache = map_cache.floor_cache;
             const auto &this_transparency_cache = map_cache.transparency_cache;
@@ -347,14 +472,14 @@ void map::build_sunlight_cache( int pzlev )
             continue;
         }
 
-        // Replace this with a calculated shift based on time of day and date.
-        // At first compress the angle such that it takes no more than one tile of shift per level.
-        // To exceed that, we'll have to handle casting light from the side instead of the top.
-        point offset;
+        // Directional sunlight is handled via angled_sunlight_cache (see build_angled_sunlight_cache).
+        // The cascade here provides indoor bleed and scatter propagation; it samples directly above.
+        const point offset = point_zero;
         const level_cache &prev_map_cache = get_cache_ref( zlev + 1 );
         const auto &prev_lm = prev_map_cache.lm;
         const auto &prev_transparency_cache = prev_map_cache.transparency_cache;
         const auto &prev_floor_cache = prev_map_cache.floor_cache;
+        const auto &prev_vehicle_floor_cache = prev_map_cache.vehicle_floor_cache;
         const auto &outside_cache = map_cache.outside_cache;
         const float sight_penalty = get_weather().weather_id->sight_penalty;
         // TODO: Replace these with a lookup inside the four_quadrants class.
@@ -398,6 +523,7 @@ void map::build_sunlight_cache( int pzlev )
 
                     if( prev_transparency > LIGHT_TRANSPARENCY_SOLID &&
                         !prev_floor_cache[prev_map_cache.idx( prev_x, prev_y )] &&
+                        !prev_vehicle_floor_cache[prev_map_cache.idx( prev_x, prev_y )] &&
                         ( prev_light_max = prev_lm[prev_map_cache.idx( prev_x, prev_y )].max() ) > 0.0 ) {
                         const float light_level = clamp( prev_light_max * LIGHT_TRANSPARENCY_OPEN_AIR / prev_transparency,
                                                          inside_light_level, prev_light_max );
@@ -415,10 +541,65 @@ void map::build_sunlight_cache( int pzlev )
                 }
             }
         }
+
+        // Override solar-lit outdoor tiles to full outside_light_level.
+        // Shadow tiles are left at cascade-computed values; scatter dimming is applied
+        // in apparent_light_at (rendering only) so distance decay works correctly.
+        if( fov_3d_occlusion && m_solar.direct_active ) {
+            const auto &solar_cache = map_cache.angled_sunlight_cache;
+            std::ranges::for_each(
+                std::views::iota( 0, map_cache.cache_x * map_cache.cache_y ),
+            [&]( int i ) {
+                const auto idx = static_cast<size_t>( i );
+                if( solar_cache[idx] ) {
+                    lm[idx].fill( outside_light_level );
+                    fully_inside = false;
+                }
+            }
+            );
+        }
     }
 }
 
-void map::generate_lightmap( const int zlev, bool skip_shared_init )
+void map::generate_lightmap( const int zlev )
+{
+    auto &map_cache = get_cache( zlev );
+    auto &lm = map_cache.lm;
+    auto &sm = map_cache.sm;
+    auto &light_source_buffer = map_cache.light_source_buffer;
+
+    std::fill( lm.begin(), lm.end(), four_quadrants( 0.0f ) );
+    std::fill( sm.begin(), sm.end(), 0.0f );
+    std::fill( light_source_buffer.begin(), light_source_buffer.end(), 0.0f );
+
+    build_sunlight_cache( zlev );
+
+    apply_character_light( get_player_character() );
+    for( npc &guy : g->all_npcs() ) {
+        apply_character_light( guy );
+    }
+    for( monster &critter : g->all_monsters() ) {
+        if( critter.is_hallucination() ) {
+            continue;
+        }
+        const tripoint &mp = critter.pos();
+        if( inbounds( mp ) ) {
+            if( critter.has_effect( effect_onfire ) ) {
+                apply_light_source( mp, 8 );
+            }
+            // TODO: [lightmap] Attach natural light brightness to creatures
+            // TODO: [lightmap] Allow creatures to have light attacks (i.e.: eyebot)
+            // TODO: [lightmap] Allow creatures to have facing and arc lights
+            if( critter.type->luminance > 0 ) {
+                apply_light_source( mp, critter.type->luminance );
+            }
+        }
+    }
+
+    generate_lightmap_worker( zlev );
+}
+
+void map::generate_lightmap_worker( const int zlev )
 {
     ZoneScoped;
     auto &map_cache = get_cache( zlev );
@@ -426,6 +607,8 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
     auto &sm = map_cache.sm;
     auto &outside_cache = map_cache.outside_cache;
     auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).floor_cache;
+    auto &prev_vehicle_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH,
+                                     OVERMAP_DEPTH ) ).vehicle_floor_cache;
     bool top_floor = zlev == OVERMAP_DEPTH;
 
     /* Bulk light sources wastefully cast rays into neighbors; a burning hospital can produce
@@ -438,27 +621,6 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
      * Step 4: Profit!
      */
     auto &light_source_buffer = map_cache.light_source_buffer;
-
-    if( !skip_shared_init ) {
-        // Serial path: this call is responsible for its own initialization.
-        // build_sunlight_cache() writes to all z-levels' lm, so it must not
-        // run concurrently with other generate_lightmap() calls.
-        std::fill( lm.begin(), lm.end(), four_quadrants( 0.0f ) );
-        std::fill( sm.begin(), sm.end(), 0.0f );
-        std::fill( light_source_buffer.begin(), light_source_buffer.end(), 0.0f );
-
-        build_sunlight_cache( zlev );
-
-        apply_character_light( get_player_character() );
-        for( npc &guy : g->all_npcs() ) {
-            apply_character_light( guy );
-        }
-    }
-    // When skip_shared_init is true the caller has already:
-    //   - cleared sm[zlev] and light_source_buffer[zlev]
-    //   - called build_sunlight_cache() once (fills all lm[])
-    //   - applied character/NPC lights
-    // We only collect dynamic sources that belong to this z-level.
 
     constexpr std::array<int, 4> dir_x = { {  0, -1, 1, 0 } };    //    [0]
     constexpr std::array<int, 4> dir_y = { { -1,  0, 0, 1 } };    // [1][X][2]
@@ -511,15 +673,20 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                         const int y = sy + smy * SEEY;
                         const tripoint p( x, y, zlev );
                         // Project light into any openings into buildings.
+                        // Check both terrain floor_cache and vehicle_floor_cache since vehicle
+                        // roofs are no longer written into floor_cache.
+                        auto has_floor_above = [&]( int idx ) {
+                            return prev_floor_cache[idx] || prev_vehicle_floor_cache[idx];
+                        };
                         if( !outside_cache[map_cache.idx( p.x, p.y )] || ( !top_floor &&
-                                prev_floor_cache[map_cache.idx( p.x, p.y )] ) ) {
+                                has_floor_above( map_cache.idx( p.x, p.y ) ) ) ) {
                             // Apply light sources for external/internal divide
                             for( int i = 0; i < 4; ++i ) {
                                 point neighbour = p.xy() + point( dir_x[i], dir_y[i] );
                                 if( neighbour.x >= 0 && neighbour.y >= 0 &&
                                     neighbour.x < map_cache.cache_x && neighbour.y < map_cache.cache_y
                                     && outside_cache[map_cache.idx( neighbour.x, neighbour.y )] &&
-                                    ( top_floor || !prev_floor_cache[map_cache.idx( neighbour.x, neighbour.y )] )
+                                    ( top_floor || !has_floor_above( map_cache.idx( neighbour.x, neighbour.y ) ) )
                                   ) {
                                     const float source_light =
                                         std::min( natural_light, lm[map_cache.idx( neighbour.x, neighbour.y )].max() );
@@ -605,27 +772,6 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
             } );
         } );
 
-        // Skip in parallel mode: build_map_cache has already applied monster lights
-        // serially before the parallel_for to avoid racing on weak_ptr_fast::lock().
-        if( !skip_shared_init ) {
-            for( monster &critter : g->all_monsters() ) {
-                if( critter.is_hallucination() ) {
-                    continue;
-                }
-                const tripoint &mp = critter.pos();
-                if( inbounds( mp ) ) {
-                    if( critter.has_effect( effect_onfire ) ) {
-                        apply_light_source( mp, 8 );
-                    }
-                    // TODO: [lightmap] Attach natural light brightness to creatures
-                    // TODO: [lightmap] Allow creatures to have light attacks (i.e.: eyebot)
-                    // TODO: [lightmap] Allow creatures to have facing and arc lights
-                    if( critter.type->luminance > 0 ) {
-                        apply_light_source( mp, critter.type->luminance );
-                    }
-                }
-            }
-        }
 
         // Apply any vehicle light sources
         VehicleList vehs = get_vehicles();
@@ -653,9 +799,7 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                 if( !inbounds( src ) ) {
                     continue;
                 }
-                // In parallel mode skip parts not on this z-level to avoid
-                // cross-level cache writes.
-                if( skip_shared_init && src.z != zlev ) {
+                if( src.z != zlev ) {
                     continue;
                 }
 
@@ -697,8 +841,7 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                 if( !inbounds( pp ) ) {
                     continue;
                 }
-                // In parallel mode skip parts not on this z-level.
-                if( skip_shared_init && pp.z != zlev ) {
+                if( pp.z != zlev ) {
                     continue;
                 }
                 if( vp.has_feature( VPFLAG_CARGO ) && !vp.has_feature( "COVERED" ) ) {
@@ -772,7 +915,17 @@ float map::ambient_light_at( const tripoint &p ) const
     }
 
     const auto &map_cache = get_cache_ref( p.z );
-    return map_cache.lm[map_cache.idx( p.x, p.y )].max();
+    float light = map_cache.lm[map_cache.idx( p.x, p.y )].max();
+
+    if( fov_3d_occlusion && m_solar.direct_active ) {
+        const auto idx = static_cast<size_t>( map_cache.idx( p.x, p.y ) );
+        if( map_cache.outside_cache[idx] && !map_cache.angled_sunlight_cache[idx] ) {
+            light = std::min( light,
+                              static_cast<float>( default_daylight_level() ) * SOLAR_SHADOW_SCATTER );
+        }
+    }
+
+    return light;
 }
 
 bool map::is_transparent( const tripoint &p ) const
@@ -869,6 +1022,19 @@ lit_level map::apparent_light_at( const tripoint &p, const visibility_variables 
     const auto &map_cache = get_cache_ref( p.z );
     const apparent_light_info a = apparent_light_helper( map_cache, p );
 
+    float apparent_light = a.apparent_light;
+
+    // Shadow cap: outdoor tiles without direct solar LOS are capped at scatter level.
+    // Uses min rather than multiply so distance decay acts on full daylight first —
+    // shadow tiles stay visible at full render distance and only fade at the edge.
+    if( fov_3d_occlusion && m_solar.direct_active && !a.obstructed ) {
+        const auto idx = static_cast<size_t>( map_cache.idx( p.x, p.y ) );
+        if( map_cache.outside_cache[idx] && !map_cache.angled_sunlight_cache[idx] ) {
+            apparent_light = std::min( apparent_light,
+                                       static_cast<float>( default_daylight_level() ) * SOLAR_SHADOW_SCATTER );
+        }
+    }
+
     // Unimpaired range is an override to strictly limit vision range based on various conditions,
     // but the player can still see light sources.
     if( dist > g->u.unimpaired_range() ) {
@@ -879,8 +1045,8 @@ lit_level map::apparent_light_at( const tripoint &p, const visibility_variables 
         }
     }
     if( a.obstructed ) {
-        if( a.apparent_light > LIGHT_AMBIENT_LIT ) {
-            if( a.apparent_light > cache.g_light_level ) {
+        if( apparent_light > LIGHT_AMBIENT_LIT ) {
+            if( apparent_light > cache.g_light_level ) {
                 // This represents too hazy to see detail,
                 // but enough light getting through to illuminate.
                 return lit_level::BRIGHT_ONLY;
@@ -888,7 +1054,7 @@ lit_level map::apparent_light_at( const tripoint &p, const visibility_variables 
                 // If it's not brighter than the surroundings, it just ends up shadowy.
                 return lit_level::LOW;
             }
-        } else if( a.apparent_light >= cache.vision_threshold ) {
+        } else if( apparent_light >= cache.vision_threshold ) {
             // Tile is hazy but still within the player's actual vision capability
             // (e.g. extended night-vision range pushes the perceptible horizon past 60 tiles).
             return lit_level::LOW;
@@ -897,13 +1063,13 @@ lit_level map::apparent_light_at( const tripoint &p, const visibility_variables 
         }
     }
     // Then we just search for the light level in descending order.
-    if( a.apparent_light > LIGHT_SOURCE_BRIGHT || map_cache.sm[map_cache.idx( p.x, p.y )] > 0.0 ) {
+    if( apparent_light > LIGHT_SOURCE_BRIGHT || map_cache.sm[map_cache.idx( p.x, p.y )] > 0.0 ) {
         return lit_level::BRIGHT;
     }
-    if( a.apparent_light > LIGHT_AMBIENT_LIT ) {
+    if( apparent_light > LIGHT_AMBIENT_LIT ) {
         return lit_level::LIT;
     }
-    if( a.apparent_light >= cache.vision_threshold ) {
+    if( apparent_light >= cache.vision_threshold ) {
         return lit_level::LOW;
     } else {
         return lit_level::BLANK;

@@ -117,6 +117,7 @@
 #include "vpart_position.h"
 #include "weather.h"
 #include "weather_gen.h"
+#include "wheel_dimensions.h"
 
 static const std::string GUN_MODE_VAR_NAME( "item::mode" );
 static const std::string CLOTHING_MOD_VAR_PREFIX( "clothing_mod_" );
@@ -2110,19 +2111,38 @@ void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
 
         if( has_flat_dmg && has_dmg_multiplier
             && has_dmg_multiplier && display_dmg_multiplier ) {
-            info.emplace_back( "AMMO", _( "Damage: " ), "",
-                               iteminfo::no_newline, ammo.damage.total_damage() );
-            info.emplace_back( "AMMO", "/", "",
-                               fd,
-                               ammo.damage.damage_units.front().damage_multiplier );
+            if( ammo.shot ) {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   iteminfo::no_newline, ammo.damage.total_damage() );
+                info.emplace_back( "AMMO", "x", "",
+                                   fd,
+                                   ammo.shot->count );
+                info.emplace_back( "AMMO", "/", "",
+                                   fd,
+                                   ammo.damage.damage_units.front().damage_multiplier );
+            } else {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   iteminfo::no_newline, ammo.damage.total_damage() );
+                info.emplace_back( "AMMO", "/", "",
+                                   fd,
+                                   ammo.damage.damage_units.front().damage_multiplier );
+            }
             // Messy ifs...
         } else if( display_dmg_multiplier && has_dmg_multiplier ) {
             info.emplace_back( "AMMO", _( "Damage multiplier: " ), "",
                                fd,
                                ammo.damage.damage_units.front().damage_multiplier );
         } else if( display_flat_dmg && has_flat_dmg ) {
-            info.emplace_back( "AMMO", _( "Damage: " ), "",
-                               f, ammo.damage.total_damage() );
+            if( ammo.shot ) {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   iteminfo::no_newline, ammo.damage.total_damage() );
+                info.emplace_back( "AMMO", "x", "",
+                                   f,
+                                   ammo.shot->count );
+            } else {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   f, ammo.damage.total_damage() );
+            }
         } else {
             didnt_print_dmg = true;
         }
@@ -2152,6 +2172,12 @@ void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
         if( parts->test( iteminfo_parts::AMMO_DAMAGE_DISPERSION ) && ammo.dispersion != 0 ) {
             info.emplace_back( "AMMO", space + _( "Dispersion: " ), "",
                                iteminfo::lower_is_better, ammo.dispersion );
+        }
+        if( ammo.shot ) {
+            info.emplace_back( "AMMO", space + _( "Pellet count: " ), "<num>", iteminfo::no_flags,
+                               ammo.shot->count );
+            info.emplace_back( "AMMO", space + _( "Pattern half-angle: " ), _( "<num> degrees" ),
+                               iteminfo::is_decimal, ammo.shot->half_angle );
         }
         if( parts->test( iteminfo_parts::AMMO_DAMAGE_RECOIL ) && ammo.recoil != 0 ) {
             info.emplace_back( "AMMO", _( "Recoil: " ), "",
@@ -2282,6 +2308,11 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
             info.emplace_back( "GUN", "sum_of_damage", _( " = <num>" ),
                                iteminfo::no_newline | iteminfo::no_name,
                                displayed_damage );
+            if( curammo != nullptr && curammo->ammo->shot ) {
+                info.emplace_back( "GUN", "x", "",
+                                   iteminfo::no_flags,
+                                   curammo->ammo->shot->count );
+            }
 
             if( ench_damage_bonus != 0 ) {
                 info.emplace_back( "GUN", "ench_damage", _( " (enchanted: <num>)" ),
@@ -4951,7 +4982,8 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
                                  engine_displacement() / 100.0f );
 
     } else if( is_wheel() && type->wheel->diameter > 0 ) {
-        vehtext = string_format( pgettext( "vehicle adjective", "%d\" " ), type->wheel->diameter );
+        vehtext = string_format( pgettext( "vehicle adjective", "%s " ),
+                                 wheel_dimensions::format_for_display( type->wheel->diameter ).c_str() );
     }
 
     std::string burntext;

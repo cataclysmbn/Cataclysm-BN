@@ -337,10 +337,16 @@ void Character::suffer_while_awake( const int current_stim )
     }
 
     if( has_trait( trait_JITTERY ) && !has_effect( effect_shakes ) ) {
+
+        int total_kcal = get_stored_kcal() + stomach.get_calories();
+        int max_kcal = max_stored_kcal();
+        float days_left = static_cast<float>( total_kcal ) / bmr();
+        float days_max = static_cast<float>( max_kcal ) / bmr();
+
         if( current_stim > 50 && one_in( to_turns<int>( 30_minutes ) - ( current_stim * 6 ) ) ) {
             add_effect( effect_shakes, 30_minutes + 1_turns * current_stim );
-        } else if( ( get_kcal_percent() < 0.95f ) &&
-                   one_turn_in( 60_minutes - 1_seconds * ( max_stored_kcal() - get_stored_kcal() ) ) ) {
+        } else if( ( days_max - days_left >= 0.5f ) && //matches hunger state in get_hunger_description
+                   one_turn_in( 60_minutes - 1_seconds * ( max_kcal - total_kcal ) ) ) {
             add_effect( effect_shakes, 40_minutes );
         }
     }

@@ -3289,6 +3289,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             int last_vis = center.z + 1;
             lit_level last_vis_ll = lit_level::BLANK;
             bool drew_occluded_overlay = false;
+            bool had_visible_open_air = false;
             const int &x = temp_x;
             const int &y = temp_y;
 
@@ -3310,8 +3311,12 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const auto visibility = here.get_visibility( ll, cache );
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
                     if( !would_apply_vision_effects( visibility ) ) {
-                        last_vis = z;
-                        last_vis_ll = ll;
+                        if( here.ter( pos ) != t_open_air ) {
+                            last_vis = z;
+                            last_vis_ll = ll;
+                        } else {
+                            had_visible_open_air = true;
+                        }
                     } else if( !has_memory && z < center.z &&
                                visibility == visibility_type::VIS_HIDDEN ) {
                         if( !drew_occluded_overlay ) {
@@ -3389,6 +3394,14 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                                 draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d,
                                                           last_vis_ll, invisible );
                             }
+                        } else if( had_visible_open_air && in_map_bounds &&
+                                   z < center.z - fov_3d_z_range ) {
+                            // No solid last_vis found, but we passed through visible open air
+                            // and the tile is below the 3D FOV limit (e.g. flying high above
+                            // the map). Render at its own position with a depth tint.
+                            here.set_memory_seen_cache_dirty( pos );
+                            min_z = std::min( pos.z, min_z );
+                            draw_points.emplace_back( pos, height_3d, lit_level::MEMORIZED, invisible );
                         }
 
                     } else {
