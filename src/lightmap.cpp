@@ -337,7 +337,8 @@ void map::build_angled_sunlight_cache( const int zlev )
             // Without this, angled rays jump laterally past the roof tile at step 1.
             if( zlev + 1 <= OVERMAP_HEIGHT ) {
                 const level_cache &above = get_cache_ref( zlev + 1 );
-                if( above.floor_cache[above.idx( x, y )] ) {
+                const auto aidx = above.idx( x, y );
+                if( above.floor_cache[aidx] || above.vehicle_floor_cache[aidx] ) {
                     solar_cache[ch.idx( x, y )] = false;
                     return;
                 }
@@ -358,8 +359,9 @@ void map::build_angled_sunlight_cache( const int zlev )
             } ),
             [&]( const auto & sp ) {
                 const level_cache &uch = get_cache_ref( zlev + sp.first );
-                return static_cast<bool>(
-                           uch.floor_cache[uch.idx( sp.second.x, sp.second.y )] );
+                const auto uidx = uch.idx( sp.second.x, sp.second.y );
+                return static_cast<bool>( uch.floor_cache[uidx] ) ||
+                       static_cast<bool>( uch.vehicle_floor_cache[uidx] );
             }
                                  );
             solar_cache[ch.idx( x, y )] = !blocked;
@@ -477,6 +479,7 @@ void map::build_sunlight_cache( int pzlev )
         const auto &prev_lm = prev_map_cache.lm;
         const auto &prev_transparency_cache = prev_map_cache.transparency_cache;
         const auto &prev_floor_cache = prev_map_cache.floor_cache;
+        const auto &prev_vehicle_floor_cache = prev_map_cache.vehicle_floor_cache;
         const auto &outside_cache = map_cache.outside_cache;
         const float sight_penalty = get_weather().weather_id->sight_penalty;
         // TODO: Replace these with a lookup inside the four_quadrants class.
@@ -520,6 +523,7 @@ void map::build_sunlight_cache( int pzlev )
 
                     if( prev_transparency > LIGHT_TRANSPARENCY_SOLID &&
                         !prev_floor_cache[prev_map_cache.idx( prev_x, prev_y )] &&
+                        !prev_vehicle_floor_cache[prev_map_cache.idx( prev_x, prev_y )] &&
                         ( prev_light_max = prev_lm[prev_map_cache.idx( prev_x, prev_y )].max() ) > 0.0 ) {
                         const float light_level = clamp( prev_light_max * LIGHT_TRANSPARENCY_OPEN_AIR / prev_transparency,
                                                          inside_light_level, prev_light_max );
@@ -603,6 +607,7 @@ void map::generate_lightmap_worker( const int zlev )
     auto &sm = map_cache.sm;
     auto &outside_cache = map_cache.outside_cache;
     auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).floor_cache;
+    auto &prev_vehicle_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).vehicle_floor_cache;
     bool top_floor = zlev == OVERMAP_DEPTH;
 
     /* Bulk light sources wastefully cast rays into neighbors; a burning hospital can produce
@@ -667,15 +672,20 @@ void map::generate_lightmap_worker( const int zlev )
                         const int y = sy + smy * SEEY;
                         const tripoint p( x, y, zlev );
                         // Project light into any openings into buildings.
+                        // Check both terrain floor_cache and vehicle_floor_cache since vehicle
+                        // roofs are no longer written into floor_cache.
+                        auto has_floor_above = [&]( int idx ) {
+                            return prev_floor_cache[idx] || prev_vehicle_floor_cache[idx];
+                        };
                         if( !outside_cache[map_cache.idx( p.x, p.y )] || ( !top_floor &&
-                                prev_floor_cache[map_cache.idx( p.x, p.y )] ) ) {
+                                has_floor_above( map_cache.idx( p.x, p.y ) ) ) ) {
                             // Apply light sources for external/internal divide
                             for( int i = 0; i < 4; ++i ) {
                                 point neighbour = p.xy() + point( dir_x[i], dir_y[i] );
                                 if( neighbour.x >= 0 && neighbour.y >= 0 &&
                                     neighbour.x < map_cache.cache_x && neighbour.y < map_cache.cache_y
                                     && outside_cache[map_cache.idx( neighbour.x, neighbour.y )] &&
-                                    ( top_floor || !prev_floor_cache[map_cache.idx( neighbour.x, neighbour.y )] )
+                                    ( top_floor || !has_floor_above( map_cache.idx( neighbour.x, neighbour.y ) ) )
                                   ) {
                                     const float source_light =
                                         std::min( natural_light, lm[map_cache.idx( neighbour.x, neighbour.y )].max() );
