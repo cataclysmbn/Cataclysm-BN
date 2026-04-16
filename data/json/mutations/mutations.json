@@ -6988,5 +6988,15 @@
     "initial_ma_styles": [ "style_swordsmanship" ],
     "purifiable": false,
     "profession": true
+  },
+  {
+    "type": "mutation",
+    "id": "PROF_IRS",
+    "name": { "str": "IRS Auditor" },
+    "points": 0,
+    "description": "You possess authority nationwide to lawfully seize assets, detain individuals, and deploy lethal force in the collection of Uncle Sam's undeclared revenue. You are the IRS. You are inevitable.",
+    "valid": false,
+    "purifiable": false,
+    "profession": true
   }
 ]

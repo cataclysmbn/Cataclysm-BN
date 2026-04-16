@@ -160,6 +160,7 @@
 #include "profession.h"
 #include "profile.h"
 #include "ranged.h"
+#include "reality_bubble_helpers.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "ret_val.h"
@@ -12171,7 +12172,8 @@ void game::resize_reality_bubble_to( int new_size )
     {
         const tripoint new_origin_ms = sm_to_ms_copy( get_map().get_abs_sub() );
         std::ranges::for_each( active_npc, [&]( const auto & n ) {
-            n->onswapsetpos( n->global_square_location() - new_origin_ms );
+            n->onswapsetpos( reality_bubble::local_square_from_global( n->global_square_location(),
+                             new_origin_ms ) );
             // Same as monsters above: local-coordinate paths are now stale.
             n->path.clear();
         } );
