@@ -1155,12 +1155,14 @@ void Character::mutate_category( const mutation_category_id &cat )
 
     // Additions: peaks when cost == direction (mutation that exactly closes the gap).
     // Using cost - direction rather than direction + cost avoids inverting at extreme values.
-    for( const trait_id &tid : mutations_category[cat] ) {
-        if( !tid->valid || !mutation_ok( tid, false, force_bad ) ) {
-            continue;
-        }
+    // Filter debug mutations explicitly; valid=false is for untargeted pulls only.
+    std::ranges::for_each(
+        mutations_category[cat] | std::views::filter( [&]( const trait_id & tid ) {
+            return !tid->debug && mutation_ok( tid, false, force_bad );
+        } ),
+    [&]( const trait_id & tid ) {
         chances[tid] += score_difference_to_chance( tid->cost - direction );
-    }
+    } );
 
     // Removals: peaks when removing a trait whose cost magnitude matches the gap.
     // Cross-category traits use full cost; same-category traits use 75% effective cost,
@@ -1168,35 +1170,47 @@ void Character::mutate_category( const mutation_category_id &cat )
     // mutations when possible, preferring to clean up traits from elsewhere first.
     if( !force_bad ) {
         const auto &cat_pool = mutations_category[cat];
-        for( const mutation_branch &branch : mutation_branch::get_all() ) {
-            const trait_id &tid = branch.id;
-            if( !has_trait( tid ) ) {
-                continue;
-            }
-            if( branch.threshold || branch.profession || !branch.purifiable ) {
-                continue;
-            }
-            const bool in_category = std::ranges::contains( cat_pool, tid );
+        std::ranges::for_each(
+            mutation_branch::get_all() | std::views::filter( [&]( const mutation_branch & branch ) {
+                return has_trait( branch.id )
+                       && !branch.debug
+                       && !branch.threshold
+                       && !branch.profession
+                       && branch.purifiable;
+            } ),
+        [&]( const mutation_branch & branch ) {
+            const bool in_category = std::ranges::contains( cat_pool, branch.id );
             const int effective_cost = in_category ? static_cast<int>( branch.cost * 0.75f )
                                        : branch.cost;
-            chances[tid] += score_difference_to_chance( direction + effective_cost );
-        }
+            chances[branch.id] += score_difference_to_chance( direction + effective_cost );
+        } );
     }
 
-    weighted_float_list<trait_id> picker;
-    for( const auto &[tid, weight] : normalized_map( chances ) ) {
-        picker.add( tid, weight );
-    }
+    // Weighted pick with removal: try candidates in weighted order until one succeeds.
+    // Exhausting the pool guarantees a result whenever any valid candidate exists.
+    std::vector<std::pair<trait_id, float>> candidates( chances.begin(), chances.end() );
 
-    for( int tries = 0; tries < 2; tries++ ) {
-        const trait_id *selected = picker.pick();
-        if( selected == nullptr ) {
-            continue;
+    while( !candidates.empty() ) {
+        const float total = std::ranges::fold_left(
+            candidates | std::views::transform( []( const auto & p ) { return p.second; } ),
+            0.0f, std::plus<float> {} );
+
+        float roll = rng_float( 0.0f, total );
+        auto it = std::ranges::find_if( candidates, [&roll]( const auto & p ) {
+            roll -= p.second;
+            return roll <= 0.0f;
+        } );
+        if( it == candidates.end() ) {
+            it = std::prev( candidates.end() ); // float rounding fallback
         }
-        if( has_trait( *selected ) ) {
-            remove_mutation( *selected );
+
+        const trait_id selected = it->first;
+        candidates.erase( it );
+
+        if( has_trait( selected ) ) {
+            remove_mutation( selected );
             return;
-        } else if( mutate_towards( *selected ) ) {
+        } else if( mutate_towards( selected ) ) {
             return;
         }
     }
