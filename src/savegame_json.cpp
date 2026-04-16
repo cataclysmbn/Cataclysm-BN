@@ -1063,8 +1063,8 @@ void player::load( const JsonObject &data )
     data.read( "last_target_pos", last_target_pos );
     data.read( "ammo_location", ammo_location );
     if( tmptartyp == +1 ) {
-        // Use ACTIVE_OVERMAP_BUFFER because game::active_npc is not filled yet.
-        last_target = ACTIVE_OVERMAP_BUFFER.find_npc( character_id( tmptar ) );
+        // Use the game's current dimension — set before character deserialization begins.
+        last_target = get_overmapbuffer( g->get_current_dimension_id() ).find_npc( character_id( tmptar ) );
     } else if( tmptartyp == -1 ) {
         // Need to do this *after* the monsters have been loaded!
         last_target = g->critter_tracker->from_temporary_id( tmptar );
@@ -2097,6 +2097,7 @@ void monster::load( const JsonObject &data )
     data.read( "dimension_id", dimension_id_ );
     data.read( "mounted_player_id", mounted_player_id );
     data.read( "path", path );
+    data.read( "monster_flags", monster_flags );
 }
 
 /*
@@ -2187,6 +2188,7 @@ void monster::store( JsonOut &json ) const
     // storing the rider
     json.member( "mounted_player_id", mounted_player_id );
     json.member( "path", path );
+    json.member( "monster_flags", monster_flags );
 }
 
 void mon_special_attack::serialize( JsonOut &json ) const
@@ -3311,6 +3313,7 @@ void mission::deserialize( JsonIn &jsin )
     // See player::deserialize and mission::set_player_id_legacy_0c
     legacy_no_player_id = !jo.read( "player_id", player_id ) ||
                           jo.get_bool( "legacy_no_player_id", false );
+    jo.read( "dimension_id", dimension_id_ );
 }
 
 void mission::serialize( JsonOut &json ) const
@@ -3347,6 +3350,9 @@ void mission::serialize( JsonOut &json ) const
     json.member( "follow_up", follow_up );
     json.member( "player_id", player_id );
     json.member( "legacy_no_player_id", legacy_no_player_id );
+    if( !dimension_id_.empty() ) {
+        json.member( "dimension_id", dimension_id_ );
+    }
 
     json.end_object();
 }

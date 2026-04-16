@@ -1601,13 +1601,14 @@ void reveal_map_actor::reveal_targets( const tripoint_abs_omt &map ) const
     // observe a partially-initialised overmap in the map.
     submap_loader.drain_lazy_loads();
 
+    auto &omb = get_overmapbuffer( get_avatar().get_dimension() );
     for( const auto& [_, to_gen] : om_to_generate ) {
-        ACTIVE_OVERMAP_BUFFER.generate( to_gen );
+        omb.generate( to_gen );
     }
 
-    const auto places = ACTIVE_OVERMAP_BUFFER.find_all( map, params );
+    const auto places = omb.find_all( map, params );
     for( auto &place : places ) {
-        ACTIVE_OVERMAP_BUFFER.reveal( place, 0 );
+        omb.reveal( place, 0 );
     }
 }
 
@@ -1625,7 +1626,7 @@ void reveal_map_actor::show_revealed( player &p, item &item, const tripoint_abs_
     params.explored = false;
     params.popup = make_shared_fast<throbber_popup>( _( "Please wait…" ) );
 
-    const auto places = ACTIVE_OVERMAP_BUFFER.find_all( center, params );
+    const auto places = get_overmapbuffer( p.get_dimension() ).find_all( center, params );
 
     // Delete popup after search is done, before showing uilist
     params.popup = nullptr;
@@ -1634,7 +1635,7 @@ void reveal_map_actor::show_revealed( player &p, item &item, const tripoint_abs_
     std::multimap<std::string, tripoint_abs_omt> mm;
     std::set<std::string> utypes;
     for( auto &place : places ) {
-        auto desc = ACTIVE_OVERMAP_BUFFER.ter( place ).id().obj().get_name();
+        auto desc = get_overmapbuffer( p.get_dimension() ).ter( place ).id().obj().get_name();
         mm.insert( { desc, place } );
         utypes.insert( desc );
     }
@@ -4976,7 +4977,7 @@ int gps_device_actor::use( player &p, item &it, bool, const tripoint & ) const
     }
     params.popup          = make_shared_fast<throbber_popup>( _( "Searching…" ) );
 
-    const auto places = ACTIVE_OVERMAP_BUFFER.find_all( center, params );
+    const auto places = get_overmapbuffer( p.get_dimension() ).find_all( center, params );
     params.popup = nullptr;
 
     if( places.empty() ) {
@@ -4988,7 +4989,7 @@ int gps_device_actor::use( player &p, item &it, bool, const tripoint & ) const
     std::multimap<std::string, tripoint_abs_omt> grouped;
     std::set<std::string> unique_names;
     for( const auto &pt : places ) {
-        const std::string name = ACTIVE_OVERMAP_BUFFER.ter( pt ).obj().get_name();
+        const std::string name = get_overmapbuffer( p.get_dimension() ).ter( pt ).obj().get_name();
         grouped.insert( { name, pt } );
         unique_names.insert( name );
         charges_built_up += additional_charges_per_tile;
@@ -5014,7 +5015,7 @@ int gps_device_actor::use( player &p, item &it, bool, const tripoint & ) const
     p.add_msg_if_player( m_good, _( "You add the GPS results to your map." ) );
     // Device has enough charge and nothing has gone wrong, reveal on overmap the locations!
     for( const auto &pt : places ) {
-        ACTIVE_OVERMAP_BUFFER.reveal( pt, 0 );
+        get_overmapbuffer( p.get_dimension() ).reveal( pt, 0 );
     }
     uistate.overmap_highlighted_omts.clear();
 
@@ -6374,12 +6375,13 @@ int iuse_prospect_pick::use( player &p, item &it, bool t,
     }
 
     for( const auto& [_, to_gen] : om_to_generate ) {
-        ACTIVE_OVERMAP_BUFFER.generate( to_gen );
+        get_overmapbuffer( p.get_dimension() ).generate( to_gen );
     }
 
-    const auto places = ACTIVE_OVERMAP_BUFFER.find_all( p.global_omt_location(), params );
+    const auto places = get_overmapbuffer( p.get_dimension() ).find_all( p.global_omt_location(),
+                        params );
     for( auto &place : places ) {
-        ACTIVE_OVERMAP_BUFFER.reveal( place, 0 );
+        get_overmapbuffer( p.get_dimension() ).reveal( place, 0 );
     }
     //* end edited map code */
     p.add_msg_if_player( m_info,
@@ -7084,7 +7086,7 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
 
     // Debug: Show current and target dimensions
     add_msg( m_debug, "[DIM_TRAVEL] Current region_type: %s",
-             ACTIVE_OVERMAP_BUFFER.current_region_type );
+             get_overmapbuffer( p.get_dimension() ).current_region_type );
     add_msg( m_debug, "[DIM_TRAVEL] Current dim_id: '%s'", g->get_current_dimension_id() );
     add_msg( m_debug, "[DIM_TRAVEL] Target destination: %s", destination.str() );
 

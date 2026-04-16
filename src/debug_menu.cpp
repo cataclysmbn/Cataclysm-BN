@@ -580,7 +580,7 @@ static void control_npc_menu()
     uilist charmenu;
     int charnum = 0;
     for( const auto &elem : g->get_follower_list() ) {
-        shared_ptr_fast<npc> follower = ACTIVE_OVERMAP_BUFFER.find_npc( elem );
+        shared_ptr_fast<npc> follower = get_overmapbuffer( get_avatar().get_dimension() ).find_npc( elem );
         if( follower ) {
             followers.emplace_back( follower );
             charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, follower->get_name() );
@@ -617,7 +617,7 @@ void character_edit_menu( Character &c )
         if( np->has_destination() ) {
             data << string_format(
                      _( "Destination: %s %s" ), np->goal.to_string(),
-                     ACTIVE_OVERMAP_BUFFER.ter( np->goal )->get_name() ) << '\n';
+                     get_overmapbuffer( np->get_dimension() ).ter( np->goal )->get_name() ) << '\n';
         } else {
             data << _( "No destination." ) << '\n';
         }
@@ -1549,7 +1549,7 @@ void debug()
             shared_ptr_fast<npc> temp = make_shared_fast<npc>();
             temp->randomize();
             temp->spawn_at_precise( { g->get_levx(), g->get_levy() }, u.pos() + point( -4, -4 ) );
-            ACTIVE_OVERMAP_BUFFER.insert_npc( temp );
+            get_overmapbuffer( get_avatar().get_dimension() ).insert_npc( temp );
             temp->form_opinion( u );
             temp->mission = NPC_MISSION_NULL;
             temp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, temp->global_omt_location(),
@@ -1600,7 +1600,7 @@ void debug()
             popup_top(
                 s.c_str(),
                 u.posx(), g->u.posy(), g->get_levx(), g->get_levy(),
-                ACTIVE_OVERMAP_BUFFER.ter( g->u.global_omt_location() )->get_name(),
+                get_overmapbuffer( get_avatar().get_dimension() ).ter( g->u.global_omt_location() )->get_name(),
                 to_turns<int>( calendar::turn - calendar::turn_zero ),
                 get_option<bool>( "RANDOM_NPC" ) ? _( "NPCs are going to spawn." ) :
                 _( "NPCs are NOT going to spawn." ),

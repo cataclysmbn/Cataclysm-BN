@@ -604,6 +604,15 @@ void map::reset_vehicle_cache( )
     for( int zlev = zmin; zlev <= zmax; zlev++ ) {
         auto &ch = get_cache( zlev );
         for( const auto &elem : ch.vehicle_list ) {
+            // abs_sm_pos is always the authoritative absolute position.
+            // sm_pos can be stale when loadn fires during a shift and abs_sub
+            // subsequently changes (e.g. the vehicle's submap enters the grid
+            // from the fire-spread loader, or the reality bubble resizes).
+            // Recompute sm_pos here so the tile-level cache uses the right slot.
+            elem->sm_pos = tripoint(
+                               elem->abs_sm_pos.x() - abs_sub.x,
+                               elem->abs_sm_pos.y() - abs_sub.y,
+                               elem->abs_sm_pos.z() );
             elem->adjust_zlevel( 0, tripoint_zero );
             add_vehicle_to_cache( elem );
         }
@@ -1530,6 +1539,9 @@ bool map::deregister_vehicle_zone( zone_data &zone )
         for( auto it = bounds.first; it != bounds.second; it++ ) {
             if( &zone == &( it->second ) ) {
                 vp->vehicle().loot_zones.erase( it );
+                if( vp->vehicle().loot_zones.empty() ) {
+                    get_cache( vp->vehicle().sm_pos.z ).zone_vehicles.erase( &vp->vehicle() );
+                }
                 return true;
             }
         }
@@ -1557,8 +1569,6 @@ VehicleList map::get_vehicles( const tripoint &start, const tripoint &end )
                     continue;
                 }
                 for( const auto &elem : current_submap->vehicles ) {
-                    // Ensure the vehicle z-position is correct
-                    elem->sm_pos.z = cz;
                     wrapped_vehicle w;
                     w.v = elem.get();
                     w.pos = w.v->global_pos3();
@@ -1688,6 +1698,16 @@ void map::unboard_vehicle( const tripoint &p, bool dead_passenger )
 
 bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
 {
+    // abs_sm_pos is always authoritative.  A tinymap (e.g. fire-spread loader) that
+    // loads the same submap sets veh.sm_pos to its own local grid coordinates, which
+    // are meaningless to the main map and corrupt the position lookup.  Recompute
+    // sm_pos from abs_sm_pos before any position-dependent call so the correction
+    // applies regardless of which code path caused the staleness.
+    veh.sm_pos = tripoint(
+                     veh.abs_sm_pos.x() - abs_sub.x,
+                     veh.abs_sm_pos.y() - abs_sub.y,
+                     veh.abs_sm_pos.z() );
+
     const tripoint src = veh.global_pos3();
     tripoint dst = src + dp;
 
@@ -1698,8 +1718,8 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     std::set<int> smzs;
 
     if( src_submap == nullptr ) {
-        add_msg( m_debug, "map::displace_vehicle: src submap not loaded %d,%d,%d->%d,%d,%d",
-                 src.x, src.y, src.z, dst.x, dst.y, dst.z );
+        debugmsg( "displace_vehicle: src submap null for '%s' at %d,%d,%d",
+                  veh.name, src.x, src.y, src.z );
         return false;
     }
 
@@ -1836,6 +1856,12 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     }
     if( need_update ) {
         g->update_map( g->u );
+        // update_map shifts abs_sub; recompute sm_pos so the cache lookup
+        // lands in the right grid slot after the shift.
+        veh.sm_pos = tripoint(
+                         veh.abs_sm_pos.x() - abs_sub.x,
+                         veh.abs_sm_pos.y() - abs_sub.y,
+                         veh.abs_sm_pos.z() );
     }
     add_vehicle_to_cache( &veh );
 
@@ -2026,7 +2052,7 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
     set_memory_seen_cache_dirty( p );
 
     // TODO: Limit to changes that affect move cost, traps and stairs
-    set_pathfinding_cache_dirty( p.z );
+    set_pathfinding_cache_dirty( p );
 
     // Make sure the furniture falls if it needs to
     support_dirty( p );
@@ -2398,7 +2424,7 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
     set_memory_seen_cache_dirty( p );
 
     // TODO: Limit to changes that affect move cost, traps and stairs
-    set_pathfinding_cache_dirty( p.z );
+    set_pathfinding_cache_dirty( p );
 
     tripoint above( p.xy(), p.z + 1 );
     // Make sure that if we supported something and no longer do so, it falls down
@@ -6555,7 +6581,7 @@ bool map::add_field( const tripoint &p, const field_type_id &type_id, int intens
     }
 
     if( fd_type.is_dangerous() ) {
-        set_pathfinding_cache_dirty( p.z );
+        set_pathfinding_cache_dirty( p );
     }
 
     // Ensure blood type fields don't hang in the air
@@ -6583,7 +6609,7 @@ void map::remove_field( const tripoint &p, const field_type_id &field_to_remove 
             set_seen_cache_dirty( p );
         }
         if( fdata.is_dangerous() ) {
-            set_pathfinding_cache_dirty( p.z );
+            set_pathfinding_cache_dirty( p );
         }
     }
 }
@@ -7255,14 +7281,17 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
     // Cannonicalize the order of the tripoints so the cache is reflexive.
     const tripoint &min = F < T ? F : T;
     const tripoint &max = !( F < T ) ? F : T;
-    // A little gross, just pack the values into a point.
-    const point key(
-        min.x << 16 | min.y << 8 | ( min.z + OVERMAP_DEPTH ),
-        max.x << 16 | max.y << 8 | ( max.z + OVERMAP_DEPTH )
-    );
+    // Pack two tripoints into one int64_t: 29 bits each (12 x + 12 y + 5 z).
+    // Handles coordinates up to 4095 — safe for g_mapsize up to ~340.
+    auto pack_tp = []( const tripoint & p ) -> int64_t {
+        return ( static_cast<int64_t>( p.x ) & 0xFFF ) << 17 |
+                ( static_cast<int64_t>( p.y ) & 0xFFF ) <<  5 |
+                ( static_cast<int64_t>( p.z + OVERMAP_DEPTH ) & 0x1F );
+    };
+    const int64_t key = ( pack_tp( min ) << 29 ) | pack_tp( max );
     // P-6 / PERF-LOSS-1: shared_lock for the cache lookup so concurrent readers
     // don't serialize against each other.  The ray trace runs fully unlocked.
-    const auto slot_idx = std::hash<point> {}( key ) & ( vision_cache_slots - 1 );
+    const auto slot_idx = std::hash<int64_t> {}( key ) & ( vision_cache_slots - 1 );
     {
         std::shared_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
         const auto &slot = skew_vision_cache[slot_idx];
@@ -7784,6 +7813,28 @@ static void shift_flat_cache( std::vector<T> &cache, int cache_x, int cache_y,
     }
 }
 
+// std::vector<bool> is a packed-bit specialisation with no .data(); use iterator copies.
+static void shift_flat_cache( std::vector<bool> &cache, int cache_x, int cache_y,
+                              int seex, int seey, point s )
+{
+    if( s.x > 0 ) {
+        std::copy( cache.begin() + seex * cache_y, cache.end(), cache.begin() );
+    } else if( s.x < 0 ) {
+        std::copy_backward( cache.begin(), cache.end() - seex * cache_y, cache.end() );
+    }
+    if( s.y > 0 ) {
+        std::ranges::for_each( std::views::iota( 0, cache_x ), [&]( int x ) {
+            auto col = cache.begin() + x * cache_y;
+            std::copy( col + seey, col + cache_y, col );
+        } );
+    } else if( s.y < 0 ) {
+        std::ranges::for_each( std::views::iota( 0, cache_x ), [&]( int x ) {
+            auto col = cache.begin() + x * cache_y;
+            std::copy_backward( col, col + cache_y - seey, col + cache_y );
+        } );
+    }
+}
+
 void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier, point s )
 {
     // sx shifts by MULTIPLIER rows, sy shifts by MULTIPLIER columns.
@@ -7951,73 +8002,53 @@ void map::shift( point sp )
                 // Shift per-submap dirty bitsets so retained submaps stay clean.
                 shift_bitset_cache( gc.transparency_cache_dirty, gc.cache_mapsize, 1, sp );
                 shift_bitset_cache( gc.floor_cache_dirty, gc.cache_mapsize, 1, sp );
+                shift_bitset_cache( gc.outside_cache_dirty, gc.cache_mapsize, 1, sp );
                 // Shift flat cache data so retained submaps' data stays in the
                 // correct tile position.  New edge submaps get stale values that
                 // will be overwritten by the next build_*_cache() call.
                 shift_flat_cache( gc.transparency_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
                 shift_flat_cache( gc.floor_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
+                shift_flat_cache( gc.outside_cache, gc.cache_x, gc.cache_y, SEEX, SEEY, sp );
             }
-            if( sp.x >= 0 ) {
-                for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-                    if( sp.y >= 0 ) {
-                        for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-                            if( ( sp.x > 0 && gridx == 0 ) || ( sp.y > 0 && gridy == 0 ) ) {
-                                submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
-                            }
-                            if( gridx + sp.x < my_MAPSIZE && gridy + sp.y < my_MAPSIZE ) {
-                                copy_grid( tripoint( gridx, gridy, gridz ),
-                                           tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
-                                update_vehicle_list( get_submap_at_grid( {gridx, gridy, gridz} ), gridz );
-                            } else {
-                                loadn( tripoint( gridx, gridy, gridz ), true, true );
-                            }
-                        }
-                    } else { // sy < 0; work through it backwards
-                        for( int gridy = my_MAPSIZE - 1; gridy >= 0; gridy-- ) {
-                            if( ( sp.x > 0 && gridx == 0 ) || gridy == my_MAPSIZE - 1 ) {
-                                submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
-                            }
-                            if( gridx + sp.x < my_MAPSIZE && gridy + sp.y >= 0 ) {
-                                copy_grid( tripoint( gridx, gridy, gridz ),
-                                           tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
-                                update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
-                            } else {
-                                loadn( tripoint( gridx, gridy, gridz ), true, true );
-                            }
-                        }
-                    }
+            // Iterate in shift-direction order so copy_grid never reads an
+            // already-overwritten source slot.  sp >= 0 → forward; sp < 0 → reverse.
+            const auto for_grid_x = [&]( auto callback ) {
+                if( sp.x >= 0 ) {
+                    std::ranges::for_each( std::views::iota( 0, my_MAPSIZE ), callback );
+                } else {
+                    std::ranges::for_each(
+                        std::views::iota( 0, my_MAPSIZE ) | std::views::reverse, callback );
                 }
-            } else { // sx < 0; work through it backwards
-                for( int gridx = my_MAPSIZE - 1; gridx >= 0; gridx-- ) {
-                    if( sp.y >= 0 ) {
-                        for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-                            if( gridx == my_MAPSIZE - 1 || ( sp.y > 0 && gridy == 0 ) ) {
-                                submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
-                            }
-                            if( gridx + sp.x >= 0 && gridy + sp.y < my_MAPSIZE ) {
-                                copy_grid( tripoint( gridx, gridy, gridz ),
-                                           tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
-                                update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
-                            } else {
-                                loadn( tripoint( gridx, gridy, gridz ), true, true );
-                            }
-                        }
-                    } else { // sy < 0; work through it backwards
-                        for( int gridy = my_MAPSIZE - 1; gridy >= 0; gridy-- ) {
-                            if( gridx == my_MAPSIZE - 1 || gridy == my_MAPSIZE - 1 ) {
-                                submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
-                            }
-                            if( gridx + sp.x >= 0 && gridy + sp.y >= 0 ) {
-                                copy_grid( tripoint( gridx, gridy, gridz ),
-                                           tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
-                                update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
-                            } else {
-                                loadn( tripoint( gridx, gridy, gridz ), true, true );
-                            }
-                        }
-                    }
+            };
+            const auto for_grid_y = [&]( auto callback ) {
+                if( sp.y >= 0 ) {
+                    std::ranges::for_each( std::views::iota( 0, my_MAPSIZE ), callback );
+                } else {
+                    std::ranges::for_each(
+                        std::views::iota( 0, my_MAPSIZE ) | std::views::reverse, callback );
                 }
-            }
+            };
+            for_grid_x( [&]( int gridx ) {
+                for_grid_y( [&]( int gridy ) {
+                    // Erase tracking for old occupants that are leaving the bubble.
+                    // An occupant leaves when its post-shift slot (gridx - sp.x,
+                    // gridy - sp.y) falls outside the grid.
+                    if( ( sp.x > 0 && gridx == 0 ) ||
+                        ( sp.x < 0 && gridx == my_MAPSIZE - 1 ) ||
+                        ( sp.y > 0 && gridy == 0 ) ||
+                        ( sp.y < 0 && gridy == my_MAPSIZE - 1 ) ) {
+                        submaps_with_active_items.erase( { abs.x + gridx, abs.y + gridy, gridz } );
+                    }
+                    if( gridx + sp.x >= 0 && gridx + sp.x < my_MAPSIZE &&
+                        gridy + sp.y >= 0 && gridy + sp.y < my_MAPSIZE ) {
+                        copy_grid( tripoint( gridx, gridy, gridz ),
+                                   tripoint( gridx + sp.x, gridy + sp.y, gridz ) );
+                        update_vehicle_list( get_submap_at_grid( { gridx, gridy, gridz } ), gridz );
+                    } else {
+                        loadn( tripoint( gridx, gridy, gridz ), true, true );
+                    }
+                } );
+            } );
         }
     } // shift_grid_copy_load
     if( zlevels ) {
@@ -9987,12 +10018,18 @@ void tinymap::drain_to_mapbuffer( mapbuffer &dest )
     ( void )dest;
 }
 
-void tinymap::load_from_mapbuffer( const tripoint &sm_base )
+void tinymap::bind_submaps_for_hook( const tripoint &sm_base )
 {
+    // Directly wire the four 2×2 grid slots to the already-resident submaps.
+    // Does NOT call loadn()/actualize() — freshly generated submaps need no
+    // time-advance, and this tinymap is never rendered, simulated, or saved.
     set_abs_sub( sm_base );
-    for( auto di : std::views::iota( 0, 2 ) ) {
-        for( auto dj : std::views::iota( 0, 2 ) ) {
-            loadn( tripoint( di, dj, sm_base.z ), false );
+    mapbuffer &mb = MAPBUFFER_REGISTRY.get( get_bound_dimension() );
+    for( int di = 0; di < 2; ++di ) {
+        for( int dj = 0; dj < 2; ++dj ) {
+            const tripoint abs( sm_base.x + di, sm_base.y + dj, sm_base.z );
+            setsubmap( get_nonant( { di, dj, sm_base.z } ),
+                       mb.lookup_submap_in_memory( abs ) );
         }
     }
 }
@@ -10499,6 +10536,15 @@ void map::set_pathfinding_cache_dirty( const int zlev )
                 sm->pf_dirty = true;
             }
         }
+    }
+}
+
+void map::set_pathfinding_cache_dirty( const tripoint &p )
+{
+    point l;
+    submap *const sm = get_submap_at( p, l );
+    if( sm ) {
+        sm->pf_dirty = true;
     }
 }
 

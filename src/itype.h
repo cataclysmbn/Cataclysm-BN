@@ -697,6 +697,11 @@ struct islot_battery {
 };
 
 struct islot_ammo : common_ranged_data {
+    struct shot_data {
+        int count = 1;
+        double half_angle = 0.0;
+    };
+
     /**
      * Ammo type, basically the "form" of the ammo that fits into the gun/tool.
      */
@@ -763,6 +768,9 @@ struct islot_ammo : common_ranged_data {
      * AoE shape or null if it's a projectile.
      */
     std::optional<shape_factory> shape;
+
+    /// Shot-specific pellet pattern data.
+    std::optional<shot_data> shot;
 
     bool was_loaded;
 

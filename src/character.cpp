@@ -880,7 +880,7 @@ bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )
     const std::vector<tripoint> line = line_to( ompos.raw(), omt.raw(), 0, 0 );
     for( size_t i = 0; i < line.size() && sight_points >= 0; i++ ) {
         const tripoint &pt = line[i];
-        const oter_id &ter = ACTIVE_OVERMAP_BUFFER.ter( tripoint_abs_omt( pt ) );
+        const oter_id &ter = get_overmapbuffer( get_dimension() ).ter( tripoint_abs_omt( pt ) );
         sight_points -= static_cast<int>( ter->get_see_cost() );
         if( sight_points < 0 ) {
             return false;
@@ -2001,6 +2001,10 @@ void Character::recalc_sight_limits()
         has_effect_with_flag( flag_EFFECT_NIGHT_VISION ) ) {
         vision_mode_cache.set( NV_GOGGLES );
         best_bonus_nv = std::max( best_bonus_nv, 10.0f );
+    }
+    if( worn_with_flag( flag_GNVE_EFFECT ) ) {
+        vision_mode_cache.set( NV_GOGGLES );
+        best_bonus_nv = std::max( best_bonus_nv, 15.0f );
     }
     if( has_trait( trait_BIRD_EYE ) ) {
         vision_mode_cache.set( BIRD_EYE );
@@ -5110,7 +5114,7 @@ void Character::set_stored_kcal( int kcal )
 
 int Character::max_stored_kcal() const
 {
-    return 2500 * 7;
+    return 2500 * 7 * ( 1.0f + mutation_value( "kcal_scale" ) );
 }
 
 float Character::get_kcal_percent() const
@@ -6014,7 +6018,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     if( vp ) {
         vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
     }
-    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() );
+    const oter_id &cur_om_ter = get_overmapbuffer( get_dimension() ).ter( global_omt_location() );
     bool sheltered = weather::is_sheltered( m, pos() );
     double total_windpower = get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
                              pos(),
@@ -7479,6 +7483,7 @@ mutation_value_map = {
     { "hp_modifier_secondary", calc_mutation_value<&mutation_branch::hp_modifier_secondary> },
     { "hp_adjustment", calc_mutation_value<&mutation_branch::hp_adjustment> },
     { "temperature_speed_modifier", calc_mutation_value<&mutation_branch::temperature_speed_modifier> },
+    { "kcal_scale", calc_mutation_value<&mutation_branch::kcal_scale> },
     { "metabolism_modifier", calc_mutation_value<&mutation_branch::metabolism_modifier> },
     { "thirst_modifier", calc_mutation_value<&mutation_branch::thirst_modifier> },
     { "fatigue_regen_modifier", calc_mutation_value<&mutation_branch::fatigue_regen_modifier> },
@@ -8623,7 +8628,7 @@ void Character::signal_nemesis()
 {
     const tripoint_abs_omt ompos = global_omt_location();
     const tripoint_abs_sm smpos = project_to<coords::sm>( ompos );
-    ACTIVE_OVERMAP_BUFFER.signal_nemesis( smpos );
+    get_overmapbuffer( get_dimension() ).signal_nemesis( smpos );
 }
 
 void Character::vomit()
@@ -11112,7 +11117,8 @@ std::pair<PathfindingSettings, RouteSettings> Character::get_pathfinding_pair() 
     PathfindingSettings path_settings;
 
     path_settings.door_open_cost = 2.0;
-    path_settings.mob_presence_penalty = 16.0;
+    path_settings.mob_presence_penalty =
+        get_option<float>( "PATHFINDING_MOB_PRESENCE_PENALTY_NPC_DEFAULT" );
     path_settings.rough_terrain_cost = 0.0;
     path_settings.sharp_terrain_cost = INFINITY;
     path_settings.trap_cost = INFINITY;

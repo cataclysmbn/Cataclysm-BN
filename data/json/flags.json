@@ -1653,6 +1653,12 @@
     "info": "This gear <good>enhances your vision</good> when worn, and <info>tints your field of view</info>."
   },
   {
+    "id": "GNVE_EFFECT",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>greatly enhances your vision</good> when worn, and <info>tints your field of view</info>."
+  },
+  {
     "id": "RECON_VISION",
     "type": "json_flag",
     "context": [  ],

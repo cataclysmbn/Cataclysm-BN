@@ -46,6 +46,7 @@
       { "item": "power_armor_helmet_heavy", "prob": 30 },
       { "item": "power_armor_helmet_light", "prob": 30 },
       { "item": "power_armor_light", "prob": 30 },
+      { "item": "goggles_nv_enhanced", "prob": 50 },
       { "item": "exosuit_military", "prob": 50 },
       { "item": "recipe_medicalmut", "prob": 100 },
       { "item": "remotevehcontrol", "prob": 80 },
@@ -138,6 +139,7 @@
       { "item": "power_armor_helmet_basic", "prob": 10 },
       { "item": "power_armor_helmet_heavy", "prob": 10 },
       { "item": "power_armor_helmet_light", "prob": 10 },
+      { "item": "goggles_nv_enhanced", "prob": 10 },
       { "item": "exosuit_military", "prob": 10 }
     ]
   },
@@ -180,6 +182,25 @@
       { "item": "solar_panel_v3", "prob": 10 },
       { "item": "embryo_empty", "prob": 10 },
       { "item": "portal", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "nanofab_template_bionics",
+    "//": "Very rare high level loot. This list doesn't spawn anywhere directly, it is used to create the recipes inside nanofabricator templates. ",
+    "magazine": 100,
+    "subtype": "distribution",
+    "entries": [
+      { "item": "bio_power_armor_interface_mkII", "prob": 10 },
+      { "item": "bio_probability_travel", "prob": 10 },
+      { "item": "bio_reactor", "prob": 10 },
+      { "item": "bio_reactor_upgrade", "prob": 10 },
+      { "item": "bio_time_freeze", "prob": 10 },
+      { "item": "bio_night", "prob": 10 },
+      { "item": "bio_nanobots", "prob": 10 },
+      { "item": "bio_cloak", "prob": 10 },
+      { "item": "bio_cqb", "prob": 10 },
+      { "item": "bio_wings", "prob": 10 }
     ]
   },
   {

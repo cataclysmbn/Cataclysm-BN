@@ -937,5 +937,25 @@
     "value": 0,
     "start": { "assign_mission_target": { "om_terrain": "helipad_se", "om_special": "military helipad", "search_range": 200 } },
     "origins": [ "ORIGIN_GAME_START" ]
+  },
+  {
+    "id": "MISSION_ONE_LAST_AUDIT",
+    "type": "mission_definition",
+    "name": { "str": "One Last Audit" },
+    "description": "It's said there are only two guarantees in life - death and taxes. You were about to finally take down one of the biggest corporate executives for tax fraud... and then the cataclysm happened. But not even a city full of the dead will stop you from recovering the rightful dues of the United States Federal Government.",
+    "goal": "MGOAL_KILL_MONSTER",
+    "difficulty": 6,
+    "value": 0,
+    "start": {
+      "assign_mission_target": { "om_terrain": "loffice_tower_13", "om_special": "office_tower", "reveal_radius": 6, "search_range": 200, "z": 5 },
+      "update_mapgen": {
+        "place_monster": [
+          { "monster": "mon_feral_corpo", "name": "The Tax Evader", "x": 14, "y": 12, "target": true },
+          { "monster": "mon_feral_bodyguard", "x": 13, "y": 15 },
+          { "monster": "mon_feral_bodyguard", "x": 15, "y": 17 }
+        ]
+      }
+    },
+    "origins": [ "ORIGIN_GAME_START" ]
   }
 ]

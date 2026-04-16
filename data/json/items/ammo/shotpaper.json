@@ -17,7 +17,7 @@
     "stack_size": 20,
     "ammo_type": "shotpaper",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 65, "armor_multiplier": 2 },
+    "damage": { "damage_type": "bullet", "amount": 13, "armor_penetration": 6 },
     "recoil": 2000,
     "loudness": 128,
     "effects": [ "COOKOFF", "SHOT", "MUZZLE_SMOKE", "BLACKPOWDER" ]
@@ -27,7 +27,8 @@
     "copy-from": "shot_paper_abstract",
     "type": "AMMO",
     "name": { "str": "20ga paper shot" },
-    "description": "A paper cartridge containing a premeasured amount of black powder and an equal volume of 00 buckshot."
+    "description": "A paper cartridge containing a premeasured amount of black powder and an equal volume of 00 buckshot.",
+    "shot": { "count": 5, "half_angle": 5 }
   },
   {
     "id": "shot_paper_bird",
@@ -35,15 +36,15 @@
     "type": "AMMO",
     "name": { "str": "20ga paper birdshot" },
     "description": "A paper cartridge containing a premeasured amount of black powder and an equal volume of birdshot.  Used mostly for hunting small game or fowl.",
-    "damage": { "damage_type": "bullet", "amount": 40, "armor_multiplier": 3 },
+    "damage": { "damage_type": "bullet", "amount": 4, "armor_penetration": 2 },
     "proportional": { "recoil": 0.6, "loudness": 0.8 },
-    "range": 0,
-    "shape": [ "cone", { "half_angle": 15, "length": 10 } ],
+    "range": 10,
+    "shot": { "count": 10, "half_angle": 6 },
     "extend": { "effects": [ "NOGIB" ] }
   },
   {
     "id": "shot_paper_dragon",
-    "copy-from": "shot_paper_00",
+    "copy-from": "shot_paper_abstract",
     "type": "AMMO",
     "name": { "str": "20ga paper pyrotechnic cartridge" },
     "description": "A paper cartridge containing a premeasured amount of black powder and an equal volume of flammable metals.  When fired, burning chunks of metal and sparks will shoot out of the barrel, igniting everything in their path.",
@@ -59,7 +60,8 @@
     "type": "AMMO",
     "name": { "str": "20ga paper slug" },
     "description": "A paper cartridge containing a premeasured amount of black powder and a .605 inch lead ball.",
-    "relative": { "range": 12, "damage": { "damage_type": "bullet", "amount": -8, "armor_penetration": 14, "armor_multiplier": -0.5 } },
+    "range": 32,
+    "damage": { "damage_type": "bullet", "amount": 57, "armor_penetration": 14, "armor_multiplier": 1.5 },
     "delete": { "effects": [ "SHOT" ] },
     "dispersion": 100
   }

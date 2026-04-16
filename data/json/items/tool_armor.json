@@ -1526,6 +1526,74 @@
     "magazine_well": "250 ml"
   },
   {
+    "id": "goggles_nv_enhanced",
+    "type": "TOOL_ARMOR",
+    "category": "clothing",
+    "symbol": "[",
+    "color": "dark_gray",
+    "name": { "str_sp": "enhanced light amp goggles" },
+    "description": "Modern light enhancement goggles that greatly amplify ambient light, allowing you to see in the dark almost perfectly, all while looking properly tactical.  Use it to turn them on.",
+    "flags": [ "FRAGILE", "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ],
+    "price": "920 USD",
+    "price_postapoc": "35 USD",
+    "material": [ "plastic", "steel" ],
+    "weight": "880 g",
+    "volume": "1 L",
+    "to_hit": -3,
+    "ammo": "battery",
+    "use_action": {
+      "type": "transform",
+      "msg": "You activate your %s and pull them down over your eyes.",
+      "target": "goggles_nv_enhanced_on",
+      "active": true,
+      "transform_charges": 1,
+      "need_charges": 1,
+      "need_charges_msg": "The %s's batteries are dead."
+    },
+    "covers": [ "head" ],
+    "warmth": 10,
+    "environmental_protection": 6,
+    "encumbrance": 5,
+    "coverage": 15,
+    "material_thickness": 2,
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_plus_battery_cell",
+          "light_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
+      ]
+    ],
+    "magazine_well": "250 ml"
+  },
+  {
+    "id": "goggles_nv_enhanced_on",
+    "copy-from": "goggles_nv_enhanced",
+    "repairs_like": "goggles_nv_enhanced",
+    "type": "TOOL_ARMOR",
+    "name": { "str_sp": "enhanced light amp goggles (on)" },
+    "description": "Modern light enhancement goggles that greatly amplify ambient light, allowing you to see in the dark almost perfectly, all while looking properly tactical.  It is turned on, and continually draining batteries.  Use it to turn them off.",
+    "flags": [ "GNVE_EFFECT", "FRAGILE", "TRADER_AVOID" ],
+    "power_draw": 375,
+    "revert_to": "goggles_nv_enhanced",
+    "use_action": {
+      "type": "transform",
+      "menu_text": "Turn off",
+      "msg": "Your %s deactivates and you push them up.",
+      "target": "goggles_nv_enhanced"
+    },
+    "covers": [ "eyes" ],
+    "warmth": 25,
+    "encumbrance": 20,
+    "magazine_well": "250 ml"
+  },
+  {
     "id": "goggles_ir",
     "type": "TOOL_ARMOR",
     "category": "clothing",
