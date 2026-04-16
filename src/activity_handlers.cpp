@@ -399,6 +399,7 @@ static auto lua_activity_finish( player_activity *act, player *p ) -> void
     }
 
     cata::run_lua_activity_callback( callback_id, *p, *act );
+    act->set_to_null();
 }
 
 bool activity_handlers::resume_for_multi_activities( player &p )

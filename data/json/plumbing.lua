@@ -41,6 +41,17 @@ local wash_mode_data = {
 
 local get_mode_label = function(mode) return mode == "bath" and locale.gettext("bath") or locale.gettext("shower") end
 
+local ensure_indoor_washroom = function(map, pos, mode)
+  if not map:is_outside(pos) then return true end
+
+  local mode_label = get_mode_label(mode)
+  gapi.add_msg(
+    MsgType.info,
+    string.format(locale.gettext("You need to be indoors to use this %s properly."), mode_label)
+  )
+  return false
+end
+
 local get_fixture_resources = function(map, pos)
   local pos_abs_ms = map:get_abs_ms(pos)
   local pos_abs_omt = coords.ms_to_omt(pos_abs_ms)
@@ -218,6 +229,7 @@ local examine = function(params, mode)
   local user = params.user
   local pos = params.pos
   local map = gapi.get_map()
+  if not ensure_indoor_washroom(map, pos, mode) then return end
   local resources = get_fixture_resources(map, pos)
   choose_wash(user, map, pos, mode, resources)
 end
