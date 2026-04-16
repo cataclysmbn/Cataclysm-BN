@@ -1157,9 +1157,9 @@ void Character::mutate_category( const mutation_category_id &cat )
     // Using cost - direction rather than direction + cost avoids inverting at extreme values.
     // Filter debug mutations explicitly; valid=false is for untargeted pulls only.
     std::ranges::for_each(
-        mutations_category[cat] | std::views::filter( [&]( const trait_id & tid ) {
-            return !tid->debug && mutation_ok( tid, false, force_bad );
-        } ),
+    mutations_category[cat] | std::views::filter( [&]( const trait_id & tid ) {
+        return !tid->debug && mutation_ok( tid, false, force_bad );
+    } ),
     [&]( const trait_id & tid ) {
         chances[tid] += score_difference_to_chance( tid->cost - direction );
     } );
@@ -1171,13 +1171,13 @@ void Character::mutate_category( const mutation_category_id &cat )
     if( !force_bad ) {
         const auto &cat_pool = mutations_category[cat];
         std::ranges::for_each(
-            mutation_branch::get_all() | std::views::filter( [&]( const mutation_branch & branch ) {
-                return has_trait( branch.id )
-                       && !branch.debug
-                       && !branch.threshold
-                       && !branch.profession
-                       && branch.purifiable;
-            } ),
+        mutation_branch::get_all() | std::views::filter( [&]( const mutation_branch & branch ) {
+            return has_trait( branch.id )
+                   && !branch.debug
+                   && !branch.threshold
+                   && !branch.profession
+                   && branch.purifiable;
+        } ),
         [&]( const mutation_branch & branch ) {
             const bool in_category = std::ranges::contains( cat_pool, branch.id );
             const int effective_cost = in_category ? static_cast<int>( branch.cost * 0.75f )
@@ -1192,8 +1192,8 @@ void Character::mutate_category( const mutation_category_id &cat )
 
     while( !candidates.empty() ) {
         const float total = std::ranges::fold_left(
-            candidates | std::views::transform( []( const auto & p ) { return p.second; } ),
-            0.0f, std::plus<float> {} );
+        candidates | std::views::transform( []( const auto & p ) { return p.second; } ),
+        0.0f, std::plus<float> {} );
 
         float roll = rng_float( 0.0f, total );
         auto it = std::ranges::find_if( candidates, [&roll]( const auto & p ) {
