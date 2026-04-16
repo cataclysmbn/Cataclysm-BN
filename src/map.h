@@ -355,6 +355,12 @@ struct level_cache {
     // "inside" tiles are protected from sun, rain, etc. (see "INDOORS" flag)
     std::vector<bool>               outside_cache;
 
+    // True when this tile has an unobstructed ray to the sun for the current in-game hour.
+    // Rebuilt by map::build_angled_sunlight_cache() when the hour changes.
+    // Consulted by build_sunlight_cache() to distinguish direct-sun tiles (full
+    // outside_light_level) from scatter-lit outdoor tiles (reduced ambient level).
+    std::vector<bool>               angled_sunlight_cache;
+
     // true when vehicle below has "ROOF" or "OPAQUE" part, furniture below has "SUN_ROOF_ABOVE"
     //      or terrain doesn't have "NO_FLOOR" flag
     // false otherwise
@@ -2003,6 +2009,12 @@ class map : public submap_load_listener
         bool build_vision_transparency_cache( const Character &player );
         // fills lm with sunlight. pzlev is current player's zlevel
         void build_sunlight_cache( int pzlev );
+        // Recomputes sun direction and scatter factor from the current game time.
+        // Called once per in-game hour from build_sunlight_cache.
+        void update_solar_params();
+        // Traces a parallel sun ray from each tile at zlev upward and writes
+        // angled_sunlight_cache.  Reads floor_cache across all z-levels above zlev.
+        void build_angled_sunlight_cache( int zlev );
     public:
         void build_outside_cache( int zlev );
         // Builds a floor cache and returns true if the cache was invalidated.
@@ -2047,6 +2059,22 @@ class map : public submap_load_listener
         // Reset to tripoint_min by invalidate_map_cache so any full-cache invalidation
         // forces a seen_cache rebuild regardless of whether the player moved.
         tripoint m_last_seen_cache_origin = tripoint_min;
+
+        // State for the directional sunlight system.  Rebuilt once per in-game hour by
+        // update_solar_params() and build_angled_sunlight_cache().
+        struct solar_params {
+            // Sun ray horizontal displacement per z-level.
+            // Positive dx_per_z = east (+x); negative = west.
+            // SUN_EAST_SIGN in update_solar_params() flips the axis if needed.
+            // dy_per_z is always 0 (no latitude tilt modelled).
+            float dx_per_z     = 0.f;
+            float dy_per_z     = 0.f;
+            // False at night; true for all daylight hours (day/night boundary only).
+            bool  direct_active  = false;
+            // Game-hour when the cache was last rebuilt; -1 forces a rebuild on first use.
+            int   last_built_hour = -1;
+        };
+        solar_params m_solar;
 
         /**
          * Absolute coordinates of first submap (get_submap_at(0,0))
