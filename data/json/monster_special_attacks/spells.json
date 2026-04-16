@@ -78,6 +78,17 @@
     "duration_increment": 200
   },
   {
+    "id": "feral_pa_boss_time_dilation",
+    "type": "SPELL",
+    "name": { "str": "Time Dilation" },
+    "description": "Time dilation ability for feral armored boss.",
+    "flags": [ "NO_EXPLOSION_VFX", "NO_FAIL", "SILENT" ],
+    "valid_targets": [ "self" ],
+    "min_damage": 450,
+    "max_damage": 450,
+    "effect": "mod_moves"
+  },
+  {
     "type": "SPELL",
     "id": "mon_summon_zombie_gasbag_crawler",
     "name": { "str": "Summon Gangrenous Crawlers" },
