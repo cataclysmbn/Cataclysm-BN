@@ -12,8 +12,8 @@ engine = function(data, map, point)
   rooms = shuffle({
     "crt_lab_veh_hall_engine",
     "crt_lab_veh_hall_engine_test",
-    "crt_lab_veh_smallveh",
-    "crt_lab_veh_smallveh",
+    "crt_lab_veh_hall_engine",
+    "crt_lab_veh_hall_engine_test",
   })
   draw_hall_set(data, map, rooms, point)
 end
@@ -56,7 +56,6 @@ all = function(data, map, point)
     "crt_lab_veh_hall_bath_bad",
     "crt_lab_veh_hall_engine",
     "crt_lab_veh_hall_engine_test",
-    "crt_lab_veh_smallveh",
   })
   draw_hall_set(data, map, rooms, point)
 end
