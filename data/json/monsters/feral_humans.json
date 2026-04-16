@@ -735,7 +735,7 @@
         "hit_self": true
       },
       "cooldown": 20,
-      "monster_message": "The feral activates its time dilation bionic, and suddenly moves in a burst of speed!"
+      "monster_message": "The feral activates its time dilation bionic, and suddenly moves with a burst of speed!"
     }],
     "death_function": [ "NORMAL" ],
 	"regenerates": 1,
