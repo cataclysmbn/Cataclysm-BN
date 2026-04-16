@@ -338,7 +338,7 @@ void map::build_angled_sunlight_cache( const int zlev )
             if( zlev + 1 <= OVERMAP_HEIGHT ) {
                 const level_cache &above = get_cache_ref( zlev + 1 );
                 const auto aidx = above.idx( x, y );
-                if( above.floor_cache[aidx] || above.vehicle_floor_cache[aidx] ) {
+                if( above.floor_cache[aidx] ) {
                     solar_cache[ch.idx( x, y )] = false;
                     return;
                 }
@@ -360,8 +360,7 @@ void map::build_angled_sunlight_cache( const int zlev )
             [&]( const auto & sp ) {
                 const level_cache &uch = get_cache_ref( zlev + sp.first );
                 const auto uidx = uch.idx( sp.second.x, sp.second.y );
-                return static_cast<bool>( uch.floor_cache[uidx] ) ||
-                       static_cast<bool>( uch.vehicle_floor_cache[uidx] );
+                return static_cast<bool>( uch.floor_cache[uidx] );
             }
                                  );
             solar_cache[ch.idx( x, y )] = !blocked;
