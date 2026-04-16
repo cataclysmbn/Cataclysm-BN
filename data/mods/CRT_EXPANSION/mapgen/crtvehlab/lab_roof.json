@@ -1,7 +1,7 @@
 [
   {
     "type": "overmap_terrain",
-    "id": [ "crt_lab_veh_roof_edge", "crt_lab_veh_roof_corner", "crt_lab_veh_roof_runway", "crt_lab_veh_roof_runway_edge" ],
+    "id": [ "crt_lab_veh_roof_edge", "crt_lab_veh_roof_corner", "crt_lab_veh_roof_runway", "crt_lab_veh_roof_runway_edge", "crt_lab_veh_roof_runway_edge_flip" ],
     "name": "C.R.I.T. Lab Roof",
     "sym": "H",
     "color": "red",
@@ -154,6 +154,43 @@
         " yy                     ",
         " yy                     ",
         " yy                     "
+      ],
+      "palettes": [ "crt_universe" ],
+      "place_vehicles": [ { "vehicle": "crt_medium_plane", "x": 12, "y": 8, "chance": 25, "rotation": 90, "status": 0 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_lab_veh_roof_runway_edge_flip" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_flat_roof",
+      "rows": [
+        "IIIIIIIIIIIIIIIIIIIIIIII",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                     yy ",
+        "                     yy ",
+        "                     yy ",
+        "                     yy ",
+        "                        ",
+        "                        ",
+        "                     yy ",
+        "                     yy ",
+        "                     yy ",
+        "                     yy ",
+        "                        ",
+        "                        ",
+        "                     yy ",
+        "                     yy ",
+        "                     yy ",
+        "                     yy "
       ],
       "palettes": [ "crt_universe" ],
       "place_vehicles": [ { "vehicle": "crt_medium_plane", "x": 12, "y": 8, "chance": 25, "rotation": 90, "status": 0 } ]
