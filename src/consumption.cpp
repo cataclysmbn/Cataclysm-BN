@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdlib>
 #include <memory>
 #include <optional>
@@ -78,6 +79,25 @@ static const efftype_id effect_visuals( "visuals" );
 static const itype_id itype_syringe( "syringe" );
 
 static const mutation_category_id mutation_category_URSINE( "URSINE" );
+
+namespace
+{
+
+auto scale_cooked_food_fun( const float fun, const int cooking_level ) -> float
+{
+    if( cooking_level <= 0 || fun == 0.0f ) {
+        return fun;
+    }
+
+    if( fun > 0.0f ) {
+        return std::floor( fun * ( 1.0f + cooking_level * 0.1f ) );
+    }
+
+    const auto scaled_magnitude = std::max( 0.0f, -fun * ( 1.0f - cooking_level * 0.1f ) );
+    return -std::floor( scaled_magnitude );
+}
+
+} // namespace
 
 static const trait_id trait_ACIDBLOOD( "ACIDBLOOD" );
 static const trait_id trait_AMORPHOUS( "AMORPHOUS" );
@@ -523,6 +543,13 @@ std::pair<int, int> Character::fun_for( const item &comest ) const
             }
         }
     }
+
+    auto cooked_by_skill = comest.get_var( "cooked_by_skill", 0 );
+    if( cooked_by_skill <= 0 && comest.has_flag( flag_COOKED ) ) {
+        cooked_by_skill = get_skill_level( skill_cooking );
+    }
+    fun = scale_cooked_food_fun( fun, cooked_by_skill );
+    fun_max = scale_cooked_food_fun( fun_max, cooked_by_skill );
 
     return { static_cast< int >( fun ), static_cast< int >( fun_max ) };
 }
