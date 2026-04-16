@@ -607,7 +607,8 @@ void map::generate_lightmap_worker( const int zlev )
     auto &sm = map_cache.sm;
     auto &outside_cache = map_cache.outside_cache;
     auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).floor_cache;
-    auto &prev_vehicle_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).vehicle_floor_cache;
+    auto &prev_vehicle_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH,
+                                     OVERMAP_DEPTH ) ).vehicle_floor_cache;
     bool top_floor = zlev == OVERMAP_DEPTH;
 
     /* Bulk light sources wastefully cast rays into neighbors; a burning hospital can produce
