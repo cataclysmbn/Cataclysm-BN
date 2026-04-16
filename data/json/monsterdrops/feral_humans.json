@@ -876,7 +876,7 @@
                       { "item": "steel_armor", "count": [ 1, 7 ], "prob": 50 },
                       { "item": "power_supply", "count": [ 1, 11 ], "prob": 50 },
                       { "item": "element", "count": [ 1, 3 ], "prob": 50 },
-                     { "item": "circuit", "count": [ 1, 8 ], "prob": 50 },
+                      { "item": "circuit", "count": [ 1, 8 ], "prob": 50 },
                       { "item": "small_lcd_screen", "count": [ 1, 2 ], "prob": 50 }
                     ],
                     "prob": 5
@@ -895,7 +895,7 @@
       },
       { "group": "military_specops_guns", "prob": 70, "damage": [ 0, 3 ], "dirt": [ 1500, 7050 ] },
       { "group": "pwr_armor_acc", "count": [ 1, 2 ], "damage": [ 1, 4 ], "prob": 90 },
-		  { "item": "heavy_power_armor_frame", "damage": [ 1, 3 ], "prob": 100 }
+      { "item": "heavy_power_armor_frame", "damage": [ 1, 3 ], "prob": 100 }
     ]
   }
 ]
