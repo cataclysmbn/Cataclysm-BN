@@ -1,18 +1,15 @@
 #pragma once
 
-#include <array>
 #include <functional>
-#include <memory>
+#include <map>
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "calendar.h"
 #include "cata_variant.h"
 #include "enums.h"
-#include "event_bus.h"
 #include "event_statistics.h"
 #include "json.h"
 #include "string_id.h"
@@ -22,13 +19,8 @@ class JsonIn;
 class JsonObject;
 class JsonOut;
 class achievements_tracker;
-class requirement_watcher;
 class stats_tracker;
 class kill_tracker;
-namespace cata
-{
-class event;
-}  // namespace cata
 struct achievement_requirement;
 template <typename E> struct enum_traits;
 
@@ -149,7 +141,7 @@ class achievement
 struct achievement_requirement {
     string_id<event_statistic> statistic;
     achievement_comparison comparison;
-    int target;
+    int target = 0;
     bool becomes_false = false;
 
     void deserialize( JsonIn &jin );
@@ -182,72 +174,49 @@ struct achievement_state {
     void deserialize( JsonIn & );
 };
 
-class achievement_tracker
+class achievements_tracker
 {
     public:
-        // Non-movable because requirement_watcher stores a pointer to us
-        achievement_tracker( const achievement_tracker & ) = delete;
-        achievement_tracker &operator=( const achievement_tracker & ) = delete;
-
-        achievement_tracker( const achievement &a, achievements_tracker &tracker,
-                             stats_tracker &stats );
-
-        void set_requirement( requirement_watcher *watcher, bool is_satisfied );
-
-        bool has_failed() const;
-        std::vector<cata_variant> current_values() const;
-        std::string ui_text() const;
-    private:
-        const achievement *achievement_;
-        achievements_tracker *tracker_;
-        std::vector<std::unique_ptr<requirement_watcher>> watchers_;
-
-        // sorted_watchers_ maintains two sets of watchers, categorised by
-        // whether they watch a satisfied or unsatisfied requirement.  This
-        // allows us to check whether the achievment is met on each new stat
-        // value in O(1) time.
-        std::array<std::unordered_set<requirement_watcher *>, 2> sorted_watchers_;
-};
-
-class achievements_tracker : public event_subscriber
-{
-    public:
-        // Non-movable because achievement_tracker stores a pointer to us
         achievements_tracker( const achievements_tracker & ) = delete;
         achievements_tracker &operator=( const achievements_tracker & ) = delete;
 
         achievements_tracker(
             stats_tracker &, kill_tracker &,
             const std::function<void( const achievement * )> &achievement_attained_callback );
-        ~achievements_tracker() override;
+        ~achievements_tracker();
+
+        auto stats() -> stats_tracker &; // *NOPAD*
+        auto stats() const -> const stats_tracker &; // *NOPAD*
 
         // Return kill tracker pointer (only matters for testing)
-        const kill_tracker *kills() const;
+        auto kills() const -> const kill_tracker *; // *NOPAD*
 
         // Return all scores which are valid now and existed at game start
-        std::vector<const achievement *> valid_achievements() const;
+        auto valid_achievements() const -> std::vector<const achievement *>;
 
-        void report_achievement( const achievement *, achievement_completion );
+        auto report_achievement( const achievement *, achievement_completion ) -> void;
+        auto report_achievement( const string_id<achievement> &, achievement_completion ) -> void;
 
-        achievement_completion is_completed( const string_id<achievement> & ) const;
-        bool is_hidden( const achievement * ) const;
-        std::string ui_text_for( const achievement * ) const;
+        auto recorded_completion( const string_id<achievement> & ) const -> achievement_completion;
+        auto is_completed( const string_id<achievement> & ) const -> achievement_completion;
+        auto is_hidden( const achievement * ) const -> bool;
+        auto ui_text_for( const achievement * ) const -> std::string;
 
-        void clear();
-        void notify( const cata::event & ) override;
+        auto clear() -> void;
 
-        void serialize( JsonOut & ) const;
-        void deserialize( JsonIn & );
+        auto serialize( JsonOut & ) const -> void;
+        auto deserialize( JsonIn & ) -> void;
     private:
-        void init_watchers();
+        auto activate_statistics() -> void;
+        auto current_values_for( const achievement & ) const -> std::vector<cata_variant>;
+        auto has_failed( const achievement & ) const -> bool;
+        auto pending_ui_text_for( const achievement & ) const -> std::string;
 
         stats_tracker *stats_ = nullptr;
         kill_tracker *kill_tracker_ = nullptr;
         std::function<void( const achievement * )> achievement_attained_callback_;
+        achievements_tracker *previous_active_tracker_ = nullptr;
 
-        // Class invariant: each valid achievement has exactly one of a watcher
-        // (if it's pending) or a status (if it's completed or failed).
-        std::unordered_map<string_id<achievement>, achievement_tracker> trackers_;
         std::unordered_map<string_id<achievement>, achievement_state> achievements_status_;
 };
 
@@ -260,4 +229,3 @@ achievement_completion skill_req_completed( const achievement &ach );
 
 /** Uses comparator supplied to compare target and supplied value. Only works on integers.*/
 bool ach_compare( const achievement_comparison symbol, const int target, const int to_compare );
-

@@ -5,8 +5,11 @@
 #include <map>
 #include <utility>
 
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "debug.h"
 #include "event_statistics.h"
+#include "init.h"
 
 static bool event_data_matches( const cata::event::data_type &data,
                                 const cata::event::data_type &criteria )
@@ -156,6 +159,14 @@ cata_variant stats_tracker::value_of( const string_id<event_statistic> &stat )
     return stat->value( *this );
 }
 
+void stats_tracker::activate_stat( const string_id<event_statistic> &id )
+{
+    std::unique_ptr<stats_tracker_state> &state = stat_states[ id ];
+    if( !state ) {
+        state = id->watch( *this );
+    }
+}
+
 void stats_tracker::add_watcher( event_type type, event_multiset_watcher *watcher )
 {
     event_type_watchers[type].insert( watcher );
@@ -177,10 +188,7 @@ void stats_tracker::add_watcher( const string_id<event_statistic> &id, stat_watc
 {
     stat_watchers[id].insert( watcher );
     watcher->on_subscribe( this );
-    std::unique_ptr<stats_tracker_state> &state = stat_states[ id ];
-    if( !state ) {
-        state = id->watch( *this );
-    }
+    activate_stat( id );
 }
 
 void stats_tracker::unwatch( base_watcher *watcher )
@@ -230,6 +238,12 @@ void stats_tracker::stat_value_changed( const string_id<event_statistic> &id,
     auto it = stat_watchers.find( id );
     if( it != stat_watchers.end() ) {
         it->second.send_to_all( &stat_watcher::new_value, new_value, *this );
+    }
+
+    if( DynamicDataLoader::get_instance().lua ) {
+        cata::run_hooks( "on_stat_changed", [&]( auto & params ) {
+            params["statistic_id"] = id.str();
+        }, { .state = DynamicDataLoader::get_instance().lua.get() } );
     }
 }
 

@@ -21,6 +21,9 @@ end)
 
 game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)
 game.add_hook("on_craft_result", function(...) return mod.cooking.on_craft_result(...) end)
+game.add_hook("on_stat_changed", function(...)
+  if mod.achievement_runtime then return mod.achievement_runtime.on_stat_changed(...) end
+end)
 
 -- Mapgen
 game.mapgen_functions["slimepit"] = function(...) return mod.slimepit.draw(...) end

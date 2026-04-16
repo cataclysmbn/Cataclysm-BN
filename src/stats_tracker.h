@@ -154,6 +154,7 @@ class stats_tracker : public event_subscriber
         event_multiset get_events( const string_id<event_transformation> & );
 
         cata_variant value_of( const string_id<event_statistic> & );
+        void activate_stat( const string_id<event_statistic> & );
 
         void add_watcher( event_type, event_multiset_watcher * );
         void add_watcher( const string_id<event_transformation> &, event_multiset_watcher * );
@@ -192,5 +193,4 @@ class stats_tracker : public event_subscriber
 
         std::unordered_set<string_id<score>> initial_scores;
 };
-
 
