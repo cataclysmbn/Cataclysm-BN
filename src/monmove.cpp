@@ -2062,8 +2062,16 @@ bool monster::attack_at( const tripoint &p )
     if( has_flag( MF_PACIFIST ) ) {
         return false;
     }
-    if( p.z != posz() && !get_map().valid_move( pos(), p, false, true, false ) ) {
-        return false;
+    if( p.z != posz() ) {
+        auto &here = get_map();
+        const auto upper_z = std::max( p.z, posz() );
+        const auto vehicle_floor_between =
+            here.veh_at( tripoint( pos().xy(), upper_z ) ).part_with_feature( "BOARDABLE", true ).has_value() ||
+            here.veh_at( tripoint( p.xy(), upper_z ) ).part_with_feature( "BOARDABLE", true ).has_value();
+
+        if( here.floor_between( pos(), p ) || vehicle_floor_between ) {
+            return false;
+        }
     }
 
     if( p == g->u.pos() ) {
