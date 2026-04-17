@@ -65,6 +65,7 @@ struct gate_data {
     int moves;
     int bash_dmg;
     bool was_loaded;
+    bool complex_shape;
 
     void load( const JsonObject &jo, const std::string &src );
     void check() const;
@@ -98,6 +99,7 @@ void gate_data::load( const JsonObject &jo, const std::string & )
 
     optional( jo, was_loaded, "moves", moves, 0 );
     optional( jo, was_loaded, "bashing_damage", bash_dmg, 0 );
+    optional( jo, was_loaded, "complex_shape", complex_shape, false );
 }
 
 void gate_data::check() const
@@ -187,34 +189,79 @@ void gates::toggle_gate( const tripoint &pos )
             continue;
         }
 
-        for( point gate_offset : four_adjacent_offsets ) {
-            const tripoint gate_pos = wall_pos + gate_offset;
+        if( !gate.complex_shape ) {
+            for( point gate_offset : four_adjacent_offsets ) {
+                const tripoint gate_pos = wall_pos + gate_offset;
 
-            if( gate_pos == pos ) {
-                continue; // Never comes back
-            }
+                if( gate_pos == pos ) {
+                    continue; // Never comes back
+                }
 
-            if( !open ) { // Closing the gate...
-                tripoint cur_pos = gate_pos;
-                while( here.ter( cur_pos ) == gate.floor.id() ) {
-                    fail = !g->forced_door_closing( cur_pos, gate.door.id(), gate.bash_dmg ) || fail;
-                    close = !fail;
-                    cur_pos += gate_offset;
+                if( !open ) { // Closing the gate...
+                    tripoint cur_pos = gate_pos;
+                    while( here.ter( cur_pos ) == gate.floor.id() ) {
+                        fail = !g->forced_door_closing( cur_pos, gate.door.id(), gate.bash_dmg ) || fail;
+                        close = !fail;
+                        cur_pos += gate_offset;
+                    }
+                }
+
+                if( !close ) { // Opening the gate...
+                    tripoint cur_pos = gate_pos;
+                    while( true ) {
+                        const ter_id ter = here.ter( cur_pos );
+
+                        if( ter == gate.door.id() ) {
+                            here.ter_set( cur_pos, gate.floor.id() );
+                            open = !fail;
+                        } else if( ter != gate.floor.id() ) {
+                            break;
+                        }
+                        cur_pos += gate_offset;
+                    }
                 }
             }
+        } else {
+            std::set<tripoint> checked;
+            std::vector<tripoint> to_check;
+            for( point sent_offset : four_adjacent_offsets ) {
+                to_check.push_back( wall_pos + sent_offset );
+            }
+            while( !to_check.empty() ) {
+                tripoint gate_pos = to_check.back();
+                to_check.pop_back();
 
-            if( !close ) { // Opening the gate...
-                tripoint cur_pos = gate_pos;
-                while( true ) {
-                    const ter_id ter = here.ter( cur_pos );
+                if( checked.contains( gate_pos ) ) {
+                    continue; // Never comes back
+                }
+                checked.insert( gate_pos );
+
+                if( !open ) { // Closing the gate...
+                    if( here.ter( gate_pos ) == gate.floor.id() ) {
+                        fail = !g->forced_door_closing( gate_pos, gate.door.id(), gate.bash_dmg ) || fail;
+                        close = !fail;
+                        for( point sent_offset : four_adjacent_offsets ) {
+                            tripoint add = sent_offset + gate_pos;
+                            if( !checked.contains( add ) ) {
+                                to_check.push_back( add );
+                            }
+                        }
+                    }
+                }
+
+                if( !close ) { // Opening the gate...
+                    const ter_id ter = here.ter( gate_pos );
 
                     if( ter == gate.door.id() ) {
-                        here.ter_set( cur_pos, gate.floor.id() );
+                        here.ter_set( gate_pos, gate.floor.id() );
                         open = !fail;
-                    } else if( ter != gate.floor.id() ) {
-                        break;
+                        for( point sent_offset : four_adjacent_offsets ) {
+                            tripoint add = sent_offset + gate_pos;
+                            if( !checked.contains( add ) ) {
+                                to_check.push_back( add );
+                            }
+                        }
                     }
-                    cur_pos += gate_offset;
                 }
             }
         }

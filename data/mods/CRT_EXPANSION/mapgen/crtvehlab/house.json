@@ -150,7 +150,7 @@
         "TCB#D D",
         "  B#D D"
       ],
-      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass" },
       "furniture": { "B": "f_bed", "T": "f_table", "C": "f_chair", "D": "f_dresser" },
       "mapping": {
         "D": { "items": [ { "item": "crt_eng_set", "chance": 50 } ] },
