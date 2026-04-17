@@ -7274,7 +7274,8 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
                 int &bresenham_slope ) const
 {
     if( ( range >= 0 && range < rl_dist( F, T ) ) ||
-        !inbounds( T ) ) {
+        !inbounds( T ) ||
+        !inbounds( F ) ) {
         bresenham_slope = 0;
         return false; // Out of range!
     }
