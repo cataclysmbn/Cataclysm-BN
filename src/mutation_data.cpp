@@ -322,7 +322,13 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     if( jo.has_object( "spawn_item" ) ) {
         auto si = jo.get_object( "spawn_item" );
         optional( si, was_loaded, "type", spawn_item );
+        optional( si, was_loaded, "group", spawn_item_group );
+        optional( si, was_loaded, "count", spawn_item_count, 1 );
+        optional( si, was_loaded, "chance", spawn_item_chance, 100 );
         optional( si, was_loaded, "message", raw_spawn_item_message );
+        if( !spawn_item.is_empty() && !spawn_item_group.is_empty() ) {
+            jo.throw_error( "\"spawn_item\" supports only one of \"type\" or \"group\"" );
+        }
     }
     if( jo.has_object( "ranged_mutation" ) ) {
         auto si = jo.get_object( "ranged_mutation" );
