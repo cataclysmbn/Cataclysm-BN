@@ -1,5 +1,6 @@
-#include <vector>
+#include <algorithm>
 #include <set>
+#include <vector>
 
 #include "creature_functions.h"
 #include "avatar.h"
@@ -50,31 +51,52 @@ auto auto_find_hostile_target(
     // iff safety margin (degrees). less accuracy, more paranoia
     units::angle iff_hangle = units::from_degrees( 15 + option.area );
     float best_target_rating = -1.0f; // bigger is better
-    units::angle u_angle = {};         // player angle relative to turret
     int boo_hoo = 0;         // how many targets were passed due to IFF. Tragically.
     bool self_area_iff = false; // Need to check if the target is near the vehicle we're a part of
-    bool area_iff = false;      // Need to check distance from target to player
-    bool angle_iff = true;      // Need to check if player is in a cone between us and target
-    int pldist = rl_dist( creature.pos(), u.pos() );
     map &here = get_map();
     vehicle *in_veh = creature.is_fake()
                       ? veh_pointer_or_null( here.veh_at( creature.pos() ) ) : nullptr;
-    // Skip IFF for adjacent player if weapon is safe (bullets/rockets protected by ballistics).
-    // Always apply IFF for weapons with dangerous trails (lasers) even when adjacent.
-    const bool apply_iff = pldist < iff_dist && ( option.trail || pldist > 1 ) && creature.sees( u );
-    if( apply_iff ) {
-        area_iff = option.area > 0;
-        angle_iff = true;
-        // Player inside vehicle won't be hit by shots from the roof,
-        // so we can fire "through" them just fine.
-        const optional_vpart_position vp = here.veh_at( u.pos() );
-        if( in_veh && veh_pointer_or_null( vp ) == in_veh && vp->is_inside() ) {
-            angle_iff = false; // No angle IFF, but possibly area IFF
-        } else if( pldist < 3 ) {
-            // granularity increases with proximity
-            iff_hangle = ( pldist == 2 ? 30_degrees : 60_degrees );
+
+    struct iff_guard_creature {
+        const Creature *critter = nullptr;
+        int dist = 0;
+        bool area_iff = false;
+        bool angle_iff = true;
+        units::angle angle = {};
+        units::angle iff_hangle = {};
+    };
+
+    auto protected_creatures = std::vector<iff_guard_creature> {};
+    for( Creature *const critter : g->get_creatures_if( [&]( const Creature & other ) {
+    return &other != &creature && creature.attitude_to( other ) == Attitude::A_FRIENDLY;
+    } ) ) {
+        const auto critter_dist = rl_dist( creature.pos(), critter->pos() );
+        // Skip IFF for adjacent friendlies if weapon is safe (bullets/rockets protected by ballistics).
+        // Always apply IFF for weapons with dangerous trails (lasers) even when adjacent.
+        if( critter_dist >= iff_dist || ( !option.trail && critter_dist <= 1 ) ||
+            !creature.sees( *critter ) ) {
+            continue;
         }
-        u_angle = coord_to_angle( creature.pos(), u.pos() );
+
+        auto guard = iff_guard_creature{
+            .critter = critter,
+            .dist = critter_dist,
+            .area_iff = option.area > 0,
+            .angle = coord_to_angle( creature.pos(), critter->pos() ),
+            .iff_hangle = iff_hangle,
+        };
+
+        // Occupants inside the same vehicle are safe from the turret's direct line of fire,
+        // but still need AoE protection.
+        const optional_vpart_position vp = here.veh_at( critter->pos() );
+        if( in_veh && veh_pointer_or_null( vp ) == in_veh && vp->is_inside() ) {
+            guard.angle_iff = false;
+        } else if( critter_dist < 3 ) {
+            // granularity increases with proximity
+            guard.iff_hangle = critter_dist == 2 ? 30_degrees : 60_degrees;
+        }
+
+        protected_creatures.push_back( guard );
     }
 
     if( option.area > 0 && in_veh != nullptr ) {
@@ -141,34 +163,33 @@ auto auto_find_hostile_target(
             // No shooting stuff on vehicle we're a part of
             continue;
         }
-        if( area_iff && rl_dist( u.pos(), m->pos() ) <= option.area ) {
-            // Player in AoE
-            boo_hoo++;
-            continue;
-        }
-        // Hostility check can be expensive, but we need to inform the player of boo_hoo
-        // only when the target is actually "hostile enough"
-        bool maybe_boo = false;
-        if( angle_iff ) {
-            units::angle tangle = coord_to_angle( creature.pos(), m->pos() );
-            units::angle diff = units::fabs( u_angle - tangle );
-            // Player is in the angle and not too far behind the target
-            if( ( diff + iff_hangle > 360_degrees || diff < iff_hangle ) &&
-                ( dist * 3 / 2 + 6 > pldist ) ) {
-                maybe_boo = true;
+        const auto target_angle = coord_to_angle( creature.pos(), m->pos() );
+        const auto blocked_by_friendly = std::ranges::any_of( protected_creatures,
+        [&]( const iff_guard_creature & guard ) {
+            if( guard.area_iff && rl_dist( guard.critter->pos(), m->pos() ) <= option.area ) {
+                return true;
             }
-        }
-        if( !maybe_boo && ( ( mon_rating + hostile_adj ) / dist <= best_target_rating ) ) {
+            if( !guard.angle_iff ) {
+                return false;
+            }
+
+            const auto diff = units::fabs( guard.angle - target_angle );
+            return ( diff + guard.iff_hangle > 360_degrees || diff < guard.iff_hangle ) &&
+                   ( dist * 3 / 2 + 6 > guard.dist );
+        } );
+        if( !blocked_by_friendly && ( ( mon_rating + hostile_adj ) / dist <= best_target_rating ) ) {
             // "Would we skip the target even if it was hostile?"
             // Helps avoid (possibly expensive) attitude calculation
             continue;
         }
         if( m->attitude_to( u ) == Attitude::A_HOSTILE ) {
             target_rating = ( mon_rating + hostile_adj ) / dist;
-            if( maybe_boo ) {
+            if( blocked_by_friendly ) {
                 boo_hoo++;
                 continue;
             }
+        } else if( blocked_by_friendly ) {
+            continue;
         }
         if( target_rating <= best_target_rating || target_rating <= 0 ) {
             continue; // Handle this late so that boo_hoo++ can happen
