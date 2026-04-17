@@ -475,7 +475,7 @@
     "type": "vehicle_part",
     "name": { "str": "bike rack" },
     "item": "bike_rack",
-    "location": "anywhere",
+    "location": "on_roof",
     "symbol": "=",
     "broken_symbol": "#",
     "color": "light_gray",
