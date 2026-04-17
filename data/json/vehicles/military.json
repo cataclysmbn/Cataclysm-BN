@@ -2230,5 +2230,184 @@
       { "x": -1, "y": 1, "chance": 25, "items": [ "belt50" ] },
       { "x": -1, "y": 1, "chance": 25, "items": [ "belt50" ] }
     ]
+  },
+  {
+    "id": "tank_xm_hover",
+    "type": "vehicle",
+    "name": "XMH Hover Tank",
+    "parts": [
+      {
+        "x": -3,
+        "y": -2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_sw" ]
+      },
+      {
+        "x": -2,
+        "y": -2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_vertical" ]
+      },
+      {
+        "x": -1,
+        "y": -2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_vertical" ]
+      },
+      {
+        "x": 0,
+        "y": -2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hover_repulsor" ]
+      },
+      {
+        "x": 1,
+        "y": -2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_vertical" ]
+      },
+      {
+        "x": 2,
+        "y": -2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_nw" ]
+      },
+      {
+        "x": -3,
+        "y": -1,
+        "parts": [ "frame_carbon_cover", "omnicam", "plating_military", "hdhalfboard_horizontal_2" ]
+      },
+      {
+        "x": -2,
+        "y": -1,
+        "parts": [ "frame_carbon_cover", "hdboard_sw", "storage_battery", "plating_military", "reinforced_solar_panel" ]
+      },
+      {
+        "x": -1,
+        "y": -1,
+        "parts": [ "frame_carbon_cover", "hdstowboard_vertical", "plating_military", "reinforced_solar_panel" ]
+      },
+      {
+        "x": 0,
+        "y": -1,
+        "parts": [ "frame_carbon_cover", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
+      {
+        "x": 1,
+        "y": -1,
+        "parts": [ "frame_carbon_cover", "hdboard_nw", "plating_military" ]
+      },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "frame_carbon_cover", "hdhalfboard_horizontal_2", "omnicam", "headlight_reinforced", "plating_military" ]
+      },
+      {
+        "x": -3,
+        "y": 0,
+        "parts": [ "frame_carbon_cover", "plating_military", "hover_repulsor" ]
+      },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "frame_carbon_cover", "hdboard_horizontal", "engine_electric_super", "plating_military" ]
+      },
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [ "frame_carbon_cover", "trunk", "recharge_station", "hdroof", "NBC_seal" ]
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_carbon_cover", "seat", "seatbelt_heavyduty", "drive_by_wire_controls", "dashboard", "vehicle_clock", "cam_control", "horn_big", "turret_mount", "hdroof", "NBC_seal", { "part": "mounted_tank_auto", "ammo": 50, "ammo_types": [ "120mm_usable_heat" ], "ammo_qty": [ 0, 5 ] }, "controls_turret" ]
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [ "frame_carbon_cover", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ]
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [ "frame_carbon_cover", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ]
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "parts": [ "frame_carbon_cover", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ]
+      },
+      {
+        "x": -3,
+        "y": 1,
+        "parts": [ "frame_carbon_cover", "omnicam", "plating_military", "hdhalfboard_horizontal_2" ]
+      },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [ "frame_carbon_cover", "hdboard_se", "storage_battery", "plating_military", "reinforced_solar_panel" ]
+      },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [ "frame_carbon_cover", "hdstowboard_vertical", "plating_military", "reinforced_solar_panel" ]
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "parts": [ "frame_carbon_cover", "hdboard_vertical", "hdroof", "NBC_seal", "plating_military" ]
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "parts": [ "frame_carbon_cover", "hdboard_ne", "turret_mount", "plating_military", { "part": "laser_rifle", "ammo": 50, "ammo_qty": [ 0, 0 ] }, "controls_turret" ]
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "parts": [ "frame_carbon_cover", "hdhalfboard_horizontal_2", "omnicam", "headlight_reinforced", "plating_military" ]
+      },
+      {
+        "x": -3,
+        "y": 2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_se" ]
+      },
+      {
+        "x": -2,
+        "y": 2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_vertical" ]
+      },
+      {
+        "x": -1,
+        "y": 2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_vertical" ]
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hover_repulsor" ]
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_vertical" ]
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_ne" ]
+      }
+    ],
+    "items": [
+      { "x": -1, "y": -1, "chance": 100, "item_groups": [ "m1_abrams_ammo_rack" ] },
+      { "x": -1, "y": -1, "chance": 50, "items": [ "120mm_usable_heat" ] },
+      { "x": -1, "y": -1, "chance": 50, "items": [ "120mm_usable_ap" ] },
+      { "x": -1, "y": 0, "chance": 100, "item_groups": [ "m1_abrams_ammo_rack" ] },
+      { "x": 0, "y": 0, "chance": 25, "items": [ "ear_plugs" ] },
+      { "x": 0, "y": 0, "chance": 10, "items": [ "120mm_usable_heat" ] },
+      { "x": 0, "y": 0, "chance": 25, "items": [ "belt50" ] },
+      { "x": 0, "y": 0, "chance": 2, "items": [ "id_military" ] },
+      { "x": -1, "y": 1, "chance": 50, "item_groups": [ "tools_survival" ] },
+      { "x": -1, "y": 1, "chance": 50, "item_groups": [ "infantry_common_gear" ] },
+      { "x": -1, "y": 1, "chance": 30, "item_groups": [ "ammo_milspec" ] },
+      { "x": -1, "y": 1, "chance": 20, "item_groups": [ "mags_milspec" ] },
+      { "x": -1, "y": 1, "chance": 10, "item_groups": [ "guns_milspec" ] },
+      { "x": -1, "y": 1, "chance": 25, "items": [ "belt50" ] },
+      { "x": -1, "y": 1, "chance": 25, "items": [ "belt50" ] }
+    ]
   }
 ]
