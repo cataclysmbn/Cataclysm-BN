@@ -9655,14 +9655,6 @@ bool map::build_floor_cache( const int zlev )
             submap *cur_submap = get_submap_at_grid( { smx, smy, zlev } );
             if( cur_submap == nullptr ) {
                 // Null expected for circle corners and bounded-dimension edges.
-                // Treat as open air (no floor) so sky propagates through unloaded areas.
-                if( rebuild_all ) {
-                    const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
-                    for( int sx = 0; sx < SEEX; ++sx ) {
-                        std::fill_n( floor_cache.data() + ch.idx( sm_offset.x + sx, sm_offset.y ),
-                                     SEEY, '\0' );
-                    }
-                }
                 continue;
             }
             cur_submap->rebuild_floor_cache( *this, tripoint( smx, smy, zlev ) );
