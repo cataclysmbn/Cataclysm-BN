@@ -134,7 +134,7 @@
     "description": "A crude seat, too uncomfortable to sleep in.",
     "item": "sheet",
     "folded_volume": "2500 ml",
-    "location": "anywhere",
+    "location": "center",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 0 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 5 ] ] },
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
