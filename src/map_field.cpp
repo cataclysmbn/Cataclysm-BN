@@ -1539,7 +1539,7 @@ auto process_fields_in_submap( submap &sm,
                         // create_hot_air() skipped — render/audio effect only.
                     } else {
                         auto self = SubTile{ &sm, local };
-                        sub_add_field( self, fd_flame_burst, 3, cur.get_field_age() );
+                        sub_add_field( self, fd_flame_burst, 1, cur.get_field_age() );
                         cur.set_field_intensity( 0 );
                     }
                 }
