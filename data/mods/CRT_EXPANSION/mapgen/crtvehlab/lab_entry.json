@@ -1,7 +1,12 @@
 [
   {
     "type": "overmap_terrain",
-    "id": [ "crt_lab_veh_entry_garage_left", "crt_lab_veh_entry_garage_right", "crt_lab_veh_entry_elevator", "crt_lab_veh_entry_center" ],
+    "id": [
+      "crt_lab_veh_entry_garage_left",
+      "crt_lab_veh_entry_garage_right",
+      "crt_lab_veh_entry_elevator",
+      "crt_lab_veh_entry_center"
+    ],
     "name": "C.R.I.T. Lab Entrance",
     "sym": "C",
     "color": "red",
@@ -132,7 +137,7 @@
         { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 5, "y": 2 },
         { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 9, "y": 2 },
         { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 13, "y": 2 },
-        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 17, "y": 2 },
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 17, "y": 2 }
       ]
     }
   },
