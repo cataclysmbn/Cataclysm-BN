@@ -505,6 +505,15 @@ class map : public submap_load_listener
         }
 
         /**
+         * Return true if the submap containing local position @p p is actively
+         * simulated (i.e. covered by a non-lazy_border load request).
+         * Use this instead of inbounds() when the question is "should gameplay
+         * logic process this position?" rather than "is this position in the
+         * render-area cache?".
+         */
+        bool is_position_simulated( const tripoint &p ) const;
+
+        /**
          * Bind this map to a specific dimension.
          * Should be called when the player transitions to another dimension.
          */

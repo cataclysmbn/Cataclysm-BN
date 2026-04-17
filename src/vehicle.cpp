@@ -8081,7 +8081,7 @@ bool vehicle_part_with_feature_range<vpart_bitflags>::matches( const size_t part
 
 bool vehicle::is_loaded() const
 {
-    return attached && get_map().inbounds( global_pos3() );
+    return attached && get_map().get_submap_at( global_pos3() ) != nullptr;
 }
 
 void vehicle::refresh_locations_hack()

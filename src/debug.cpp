@@ -1137,6 +1137,8 @@ void debug_write_backtrace( std::ostream &out )
 #endif
 
 #if defined(_WIN32)
+    const std::locale saved_locale = out.getloc();
+    out.imbue( std::locale::classic() );
     std::lock_guard<std::mutex> dbghelp_lock( g_dbghelp_mutex );
     std::call_once( sym_init_once_, []() {
         sym_init_ = std::make_unique<sym_init>();
@@ -1333,6 +1335,7 @@ void debug_write_backtrace( std::ostream &out )
     }
 #endif
     out << "\n";
+    out.imbue( saved_locale );
 #else
 #   if defined(LIBBACKTRACE)
     auto bt_error = [&out]( const char *err_msg, int errnum ) {

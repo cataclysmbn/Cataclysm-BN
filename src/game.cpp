@@ -5019,7 +5019,8 @@ void game::monmove()
             !critter.has_effect( effect_ai_controlled ) &&
             critter.moves > 0 &&
             !critter.has_effect( effect_ridden ) &&
-            critter.lod_tier < 2 ) {
+            critter.lod_tier < 2 &&
+            critter.is_simulated() ) {
             // Tier-2 monsters skip full planning; they use the macro step.
             plannable.push_back( &critter );
         }
@@ -5130,6 +5131,13 @@ void game::monmove()
     // all monsters.  The budget/tier system gates only the move loop below.
     // -----------------------------------------------------------------------
     for( monster &critter : all_monsters() ) {
+        // Skip monsters in lazy-border or otherwise non-simulated submaps — their
+        // submap has no active caches (transparency, lightmap, fields) and
+        // processing them would read stale or missing data.  They will be
+        // despawned into the overmap monster_map when their submap evicts.
+        if( !critter.is_simulated() ) {
+            continue;
+        }
         // Critters in impassable tiles get pushed away, unless it's not impassable for them
         if( !critter.is_dead() && m.impassable( critter.pos() ) && !critter.can_move_to( critter.pos() ) ) {
             std::string msg = string_format( "%s can't move to its location!  %s  %s", critter.name(),
@@ -5192,7 +5200,8 @@ void game::monmove()
         if( !critter.is_dead() &&
             !critter.has_effect( effect_ridden ) &&
             critter.moves > 0 &&
-            critter.next_turn <= current_turn ) {
+            critter.next_turn <= current_turn &&
+            critter.is_simulated() ) {
             eligible.emplace_back( rl_dist( critter.pos(), player_pos ), &critter );
         }
     }
@@ -14084,12 +14093,13 @@ void game::shift_monsters( const tripoint &shift )
             critter.shift( shift.xy() );
         }
 
-        if( m.inbounds( critter.pos() ) && ( shift.z == 0 || m.has_zlevels() )
+        if( ( shift.z == 0 || m.has_zlevels() )
             && m.get_submap_at( critter.pos() ) != nullptr ) {
-            // We're inbounds on a loaded submap, so don't despawn after all.
-            // No need to shift Z-coordinates, they are absolute.
-            // Corner slots within the grid bounds have null submaps (outside the circular
-            // load footprint); treat them like out-of-bounds — save and despawn.
+            // The critter is on a loaded submap — keep it regardless of whether
+            // it's inside the render-area grid (inbounds).  Creatures can validly
+            // reside in loaded-but-OOB submaps (e.g. knocked into a lazy-border
+            // zone) and should not be despawned just because they are outside
+            // the render area.
             continue;
         }
         // Either a vertical shift, the critter is outside the reality bubble, or it

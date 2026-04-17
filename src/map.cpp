@@ -9218,6 +9218,16 @@ bool map::inbounds( const tripoint &p ) const
     return map_boundaries.contains( p );
 }
 
+bool map::is_position_simulated( const tripoint &p ) const
+{
+    const tripoint_abs_sm abs_sm(
+        abs_sub.x + divide_round_to_minus_infinity( p.x, SEEX ),
+        abs_sub.y + divide_round_to_minus_infinity( p.y, SEEY ),
+        p.z
+    );
+    return submap_loader.is_simulated( bound_dimension_, abs_sm );
+}
+
 bool tinymap::inbounds( const tripoint &p ) const
 {
     constexpr tripoint map_boundary_min( 0, 0, -OVERMAP_DEPTH );

@@ -2541,5 +2541,10 @@ effects_map Creature::get_all_effects() const
 
 bool Creature::is_loaded() const
 {
-    return get_map().inbounds( pos() );
+    return get_map().get_submap_at( pos() ) != nullptr;
+}
+
+bool Creature::is_simulated() const
+{
+    return get_map().is_position_simulated( pos() );
 }
