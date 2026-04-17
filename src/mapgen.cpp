@@ -530,7 +530,7 @@ load_mapgen_function( const JsonObject &jio, point offset, point total )
         jio.allow_omitted_members();
         return nullptr; // nothing
     }
-    const std::string mgtype = jio.get_string( "method" );
+    const std::string mgtype = jio.get_string( "method", jio.has_object( "object" ) ? "json" : "" );
     if( mgtype == "builtin" ) {
         if( const building_gen_pointer ptr = get_mapgen_cfunction( jio.get_string( "name" ) ) ) {
             return std::make_shared<mapgen_function_builtin>( ptr, mgweight );
@@ -568,7 +568,7 @@ void load_and_add_mapgen_function( const JsonObject &jio, const std::string &id_
 
 static void load_nested_mapgen( const JsonObject &jio, const std::string &id_base )
 {
-    const std::string mgtype = jio.get_string( "method" );
+    const std::string mgtype = jio.get_string( "method", jio.has_object( "object" ) ? "json" : "" );
     if( mgtype == "json" ) {
         if( jio.has_object( "object" ) ) {
             int weight = jio.get_int( "weight", 1000 );
@@ -587,7 +587,7 @@ static void load_nested_mapgen( const JsonObject &jio, const std::string &id_bas
 
 static void load_update_mapgen( const JsonObject &jio, const std::string &id_base )
 {
-    const std::string mgtype = jio.get_string( "method" );
+    const std::string mgtype = jio.get_string( "method", jio.has_object( "object" ) ? "json" : "" );
     if( mgtype == "json" ) {
         if( jio.has_object( "object" ) ) {
             JsonObject jo = jio.get_object( "object" );
@@ -1808,6 +1808,7 @@ class jmapgen_vending_machine : public jmapgen_piece
         mapgen_value<item_group_id> group_id;
         jmapgen_vending_machine( const JsonObject &jsi ) :
             reinforced( jsi.get_bool( "reinforced", false ) ) {
+            jsi.get_bool( "powered", false );
             if( jsi.has_member( "item_group" ) ) {
                 group_id = mapgen_value<item_group_id>( jsi.get_member( "item_group" ) );
             } else {
@@ -3608,6 +3609,9 @@ bool mapgen_function_json_base::setup_common( const JsonObject &jo )
     JsonArray parray;
     JsonArray sparray;
     JsonObject pjo;
+    if( jo.has_array( "flags" ) ) {
+        static_cast<void>( jo.get_tags<std::string>( "flags" ) );
+    }
 
     // just like mapf::basic_bind("stuff",blargle("foo", etc) ), only json input and faster when applying
     if( jo.has_array( "rows" ) ) {

@@ -602,8 +602,11 @@ void map::reset_vehicle_cache( )
     const int zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
     const int zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
     for( int zlev = zmin; zlev <= zmax; zlev++ ) {
-        auto &ch = get_cache( zlev );
-        for( const auto &elem : ch.vehicle_list ) {
+        auto *ch = get_cache_lazy( zlev );
+        if( ch == nullptr ) {
+            continue;
+        }
+        for( const auto &elem : ch->vehicle_list ) {
             // abs_sm_pos is always the authoritative absolute position.
             // sm_pos can be stale when loadn fires during a shift and abs_sub
             // subsequently changes (e.g. the vehicle's submap enters the grid
@@ -677,16 +680,19 @@ void map::clear_vehicle_cache( )
     const int zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
     const int zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
     for( int zlev = zmin; zlev <= zmax; zlev++ ) {
-        level_cache &ch = get_cache( zlev );
-        while( !ch.veh_cached_parts.empty() ) {
-            const auto part = ch.veh_cached_parts.begin();
+        level_cache *ch = get_cache_lazy( zlev );
+        if( ch == nullptr ) {
+            continue;
+        }
+        while( !ch->veh_cached_parts.empty() ) {
+            const auto part = ch->veh_cached_parts.begin();
             const auto &p = part->first;
             if( inbounds( p ) ) {
-                ch.veh_exists_at[ch.idx( p.x, p.y )] = false;
+                ch->veh_exists_at[ch->idx( p.x, p.y )] = false;
             }
-            ch.veh_cached_parts.erase( part );
+            ch->veh_cached_parts.erase( part );
         }
-        ch.veh_in_active_range = false;
+        ch->veh_in_active_range = false;
     }
     cached_veh_rope.clear();
 }

@@ -2886,8 +2886,13 @@ void debug_spawn_test()
 
 void map_extra::load( const JsonObject &jo, const std::string & )
 {
-    mandatory( jo, was_loaded, "name", _name );
-    mandatory( jo, was_loaded, "description", _description );
+    if( !was_loaded || !jo.has_string( "copy-from" ) ) {
+        mandatory( jo, was_loaded, "name", _name );
+        mandatory( jo, was_loaded, "description", _description );
+    } else {
+        optional( jo, was_loaded, "name", _name );
+        optional( jo, was_loaded, "description", _description );
+    }
     if( jo.has_object( "generator" ) ) {
         JsonObject jg = jo.get_object( "generator" );
         generator_method = jg.get_enum_value<map_extra_method>( "generator_method",
@@ -2898,6 +2903,26 @@ void map_extra::load( const JsonObject &jo, const std::string & )
     color = jo.has_member( "color" ) ? color_from_string( jo.get_string( "color" ) ) : c_white;
     optional( jo, was_loaded, "looks_like", looks_like );
     optional( jo, was_loaded, "autonote", autonote, false );
+
+    if( jo.has_array( "flags" ) ) {
+        for( const std::string &flag : jo.get_array( "flags" ) ) {
+            flags.emplace( flag );
+        }
+    }
+
+    if( jo.has_array( "min_max_zlevel" ) ) {
+        JsonArray zlevels = jo.get_array( "min_max_zlevel" );
+        min_max_zlevel = std::pair<int, int>( zlevels.get_int( 0 ), zlevels.get_int( 1 ) );
+    }
+
+    if( jo.has_object( "extend" ) ) {
+        JsonObject extend = jo.get_object( "extend" );
+        if( extend.has_array( "flags" ) ) {
+            for( const std::string &flag : extend.get_array( "flags" ) ) {
+                flags.emplace( flag );
+            }
+        }
+    }
 }
 
 extern std::map<std::string, std::vector<std::unique_ptr<update_mapgen_function_json>> >

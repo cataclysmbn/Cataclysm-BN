@@ -720,7 +720,26 @@ void oter_type_t::load( const JsonObject &jo, const std::string &src )
     }
 
     assign( jo, "name", name, strict );
-    assign( jo, "see_cost", see_cost, strict );
+    if( jo.has_string( "see_cost" ) ) {
+        static const auto see_cost_aliases = std::map<std::string, int> {
+            { "none", 0 },
+            { "all_clear", 2 },
+            { "low", 3 },
+            { "medium", 4 },
+            { "high", 5 },
+            { "spaced_high", 4 },
+            { "full_high", 10 },
+            { "opaque", 255 }
+        };
+        const auto alias = jo.get_string( "see_cost" );
+        if( const auto iter = see_cost_aliases.find( alias ); iter != see_cost_aliases.end() ) {
+            see_cost = iter->second;
+        } else {
+            jo.throw_error( string_format( "unknown see_cost alias '%s'", alias ), "see_cost" );
+        }
+    } else {
+        assign( jo, "see_cost", see_cost, strict );
+    }
     assign( jo, "travel_cost", travel_cost, strict );
     assign( jo, "extras", extras, strict );
     assign( jo, "mondensity", mondensity, strict );
@@ -2964,15 +2983,7 @@ void overmap::populate( const std::string &dim_id )
 
 oter_id overmap::get_default_terrain( int z ) const
 {
-    if( z == 0 ) {
-        return settings->default_oter.id();
-    } else {
-        // // TODO: Get rid of the hard-coded ids.
-        static const oter_str_id open_air( "open_air" );
-        static const oter_str_id empty_rock( "empty_rock" );
-
-        return z > 0 ? open_air.id() : empty_rock.id();
-    }
+    return settings->default_oter[OVERMAP_DEPTH + z].id();
 }
 
 void overmap::init_layers()
@@ -3397,15 +3408,25 @@ void overmap::generate( const overmap *north, const overmap *east,
     dbg( DL::Info ) << "overmap::generate start";
 
     connection_cache = overmap_connection_cache{};
-    populate_connections_out_from_neighbors( north, east, south, west );
+    if( settings->neighbor_connections ) {
+        populate_connections_out_from_neighbors( north, east, south, west );
+    }
 
     place_rivers( north, east, south, west );
     place_lakes();
-    place_forests();
-    place_swamps();
-    place_cities();
-    place_forest_trails();
-    place_roads( north, east, south, west );
+    if( settings->place_forests ) {
+        place_forests();
+        place_swamps();
+    }
+    if( settings->place_cities ) {
+        place_cities();
+    }
+    if( settings->place_forest_trails ) {
+        place_forest_trails();
+    }
+    if( settings->place_roads ) {
+        place_roads( north, east, south, west );
+    }
     place_specials( enabled_specials );
     place_forest_trailheads();
 
@@ -4209,7 +4230,7 @@ void overmap::place_forest_trailheads()
 
 void overmap::place_forests()
 {
-    const oter_id default_oter_id( settings->default_oter );
+    const auto default_oter_id = get_default_terrain( 0 );
     const oter_id forest( "forest" );
     const oter_id forest_thick( "forest_thick" );
 
@@ -4836,7 +4857,7 @@ void overmap::place_cities()
         //attempt to generate a city with a finale if it's not tiny. If it's tiny just run once via a do while.
         do  {
             //std::unordered_map<tripoint_om_omt, std::string> oter_id_migrations;
-            if( ter( p ) == settings->default_oter ) {
+            if( ter( p ) == get_default_terrain( 0 ) ) {
                 placement_attempts = 0;
                 ter_set( p, oter_id( "road_nesw_manhole" ) ); // every city starts with an intersection
                 ter_set( p + tripoint_below, oter_id( "sewer_isolated" ) );

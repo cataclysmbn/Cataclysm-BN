@@ -274,6 +274,11 @@ void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
     // Now prepare the initial map (change terrain etc.)
     const tripoint_abs_sm player_location = project_to<coords::sm>( omtstart );
     tinymap player_start;
+    player_start.bind_dimension( g->get_current_dimension_id() );
+    if( const dimension_info *current_dimension = g->get_current_dimension_info();
+        current_dimension != nullptr && current_dimension->bounds ) {
+        player_start.set_dimension_bounds( *current_dimension->bounds );
+    }
     // TODO: fix point types
     player_start.load( player_location.raw(), false );
     prepare_map( player_start );

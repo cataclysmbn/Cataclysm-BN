@@ -3031,6 +3031,28 @@ void Item_factory::set_properties_from_json( const JsonObject &jo, const std::st
             }
             def.properties.insert( prop );
         }
+    } else if( jo.has_object( member ) ) {
+        for( const JsonMember prop : jo.get_object( member ) ) {
+            if( prop.is_comment() ) {
+                continue;
+            }
+            auto value = std::string {};
+            if( prop.test_string() ) {
+                value = prop.get_string();
+            } else if( prop.test_int() ) {
+                value = std::to_string( prop.get_int() );
+            } else if( prop.test_bool() ) {
+                value = prop.get_bool() ? "true" : "false";
+            } else if( prop.test_float() ) {
+                value = std::to_string( prop.get_float() );
+            } else {
+                prop.throw_error( "Property value must be a string, number, or boolean" );
+            }
+            if( def.properties.contains( prop.name() ) ) {
+                prop.throw_error( "Duplicated property" );
+            }
+            def.properties.insert( std::pair<std::string, std::string>( prop.name(), value ) );
+        }
     } else {
         jo.throw_error( "Properties list is not an array", member );
     }
@@ -3363,7 +3385,13 @@ void Item_factory::add_entry( Item_group &ig, const JsonObject &obj )
 void Item_factory::load_item_group( const JsonObject &jsobj )
 {
     const item_group_id group_id = item_group_id( jsobj.get_string( "id" ) );
-    const std::string subtype = jsobj.get_string( "subtype", "old" );
+    auto subtype = jsobj.get_string( "subtype", "old" );
+    if( subtype == "old" && jsobj.has_string( "copy-from" ) ) {
+        const auto copy_from_id = item_group_id( jsobj.get_string( "copy-from" ) );
+        if( const auto *copy_from = dynamic_cast<const Item_group *>( get_group( copy_from_id ) ) ) {
+            subtype = copy_from->type == Item_group::G_COLLECTION ? "collection" : "distribution";
+        }
+    }
     load_item_group( jsobj, group_id, subtype );
 }
 
@@ -3396,8 +3424,65 @@ void Item_factory::load_item_group( const JsonObject &jsobj, const item_group_id
         }
     }
 
+    if( jsobj.has_string( "copy-from" ) ) {
+        const auto copy_from_id = item_group_id( jsobj.get_string( "copy-from" ) );
+        if( isd == nullptr ) {
+            if( const auto *copy_from = dynamic_cast<const Item_group *>( get_group( copy_from_id ) ) ) {
+                isd = copy_from->clone();
+            } else {
+                jsobj.throw_error( string_format( "unknown item group copy-from '%s'", copy_from_id.str() ),
+                                   "copy-from" );
+            }
+        }
+    }
+
     Item_group *ig = make_group_or_throw( group_id, isd, type, jsobj.get_int( "ammo", 0 ),
                                           jsobj.get_int( "magazine", 0 ) );
+    const auto load_entries_from_object = [this, ig]( const JsonObject & entry_obj ) {
+        if( entry_obj.has_member( "entries" ) ) {
+            for( const JsonObject subobj : entry_obj.get_array( "entries" ) ) {
+                add_entry( *ig, subobj );
+            }
+        }
+        if( entry_obj.has_member( "items" ) ) {
+            for( const JsonValue entry : entry_obj.get_array( "items" ) ) {
+                if( entry.test_string() ) {
+                    ig->add_item_entry( itype_id( entry.get_string() ), 100 );
+                } else if( entry.test_array() ) {
+                    JsonArray subitem = entry.get_array();
+                    ig->add_item_entry( itype_id( subitem.get_string( 0 ) ), subitem.get_int( 1 ) );
+                } else {
+                    JsonObject subobj = entry.get_object();
+                    add_entry( *ig, subobj );
+                }
+            }
+        }
+        if( entry_obj.has_member( "groups" ) ) {
+            for( const JsonValue entry : entry_obj.get_array( "groups" ) ) {
+                if( entry.test_string() ) {
+                    ig->add_group_entry( item_group_id( entry.get_string() ), 100 );
+                } else if( entry.test_array() ) {
+                    JsonArray subitem = entry.get_array();
+                    ig->add_group_entry( item_group_id( subitem.get_string( 0 ) ), subitem.get_int( 1 ) );
+                } else {
+                    JsonObject subobj = entry.get_object();
+                    add_entry( *ig, subobj );
+                }
+            }
+        }
+        if( entry_obj.has_member( "delete" ) ) {
+            for( const JsonValue entry : entry_obj.get_array( "delete" ) ) {
+                if( entry.test_object() ) {
+                    JsonObject obj = entry.get_object();
+                    if( obj.has_member( "item" ) ) {
+                        ig->remove_specific_item( obj.get_string( "item" ) );
+                    } else if( obj.has_member( "group" ) ) {
+                        ig->remove_specific_group( obj.get_string( "group" ) );
+                    }
+                }
+            }
+        }
+    };
     if( subtype == "old" ) {
         for( const JsonValue entry : jsobj.get_array( "items" ) ) {
             if( entry.test_object() ) {
@@ -3411,48 +3496,9 @@ void Item_factory::load_item_group( const JsonObject &jsobj, const item_group_id
         return;
     }
 
-    if( jsobj.has_member( "entries" ) ) {
-        for( const JsonObject subobj : jsobj.get_array( "entries" ) ) {
-            add_entry( *ig, subobj );
-        }
-    }
-    if( jsobj.has_member( "items" ) ) {
-        for( const JsonValue entry : jsobj.get_array( "items" ) ) {
-            if( entry.test_string() ) {
-                ig->add_item_entry( itype_id( entry.get_string() ), 100 );
-            } else if( entry.test_array() ) {
-                JsonArray subitem = entry.get_array();
-                ig->add_item_entry( itype_id( subitem.get_string( 0 ) ), subitem.get_int( 1 ) );
-            } else {
-                JsonObject subobj = entry.get_object();
-                add_entry( *ig, subobj );
-            }
-        }
-    }
-    if( jsobj.has_member( "groups" ) ) {
-        for( const JsonValue entry : jsobj.get_array( "groups" ) ) {
-            if( entry.test_string() ) {
-                ig->add_group_entry( item_group_id( entry.get_string() ), 100 );
-            } else if( entry.test_array() ) {
-                JsonArray subitem = entry.get_array();
-                ig->add_group_entry( item_group_id( subitem.get_string( 0 ) ), subitem.get_int( 1 ) );
-            } else {
-                JsonObject subobj = entry.get_object();
-                add_entry( *ig, subobj );
-            }
-        }
-    }
-    if( jsobj.has_member( "delete" ) ) {
-        for( const JsonValue entry : jsobj.get_array( "delete" ) ) {
-            if( entry.test_object() ) {
-                JsonObject obj = entry.get_object();
-                if( obj.has_member( "item" ) ) {
-                    ig->remove_specific_item( obj.get_string( "item" ) );
-                } else if( obj.has_member( "group" ) ) {
-                    ig->remove_specific_group( obj.get_string( "group" ) );
-                }
-            }
-        }
+    load_entries_from_object( jsobj );
+    if( jsobj.has_object( "extend" ) ) {
+        load_entries_from_object( jsobj.get_object( "extend" ) );
     }
 }
 
