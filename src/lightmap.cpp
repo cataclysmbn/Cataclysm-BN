@@ -693,13 +693,13 @@ void map::generate_lightmap_worker( const int zlev )
                                     continue;
                                 }
                                 const bool nb_has_open_sky_neighbour = std::ranges::any_of(
-                                    std::views::iota( 0, 4 ), [&]( int j ) {
-                                        const point cn = neighbour + point( dir_x[j], dir_y[j] );
-                                        return cn != p.xy() &&
-                                               cn.x >= 0 && cn.y >= 0 &&
-                                               cn.x < map_cache.cache_x && cn.y < map_cache.cache_y &&
-                                               !has_floor_above( map_cache.idx( cn.x, cn.y ) );
-                                    } );
+                                std::views::iota( 0, 4 ), [&]( int j ) {
+                                    const point cn = neighbour + point( dir_x[j], dir_y[j] );
+                                    return cn != p.xy() &&
+                                           cn.x >= 0 && cn.y >= 0 &&
+                                           cn.x < map_cache.cache_x && cn.y < map_cache.cache_y &&
+                                           !has_floor_above( map_cache.idx( cn.x, cn.y ) );
+                                } );
                                 if( !nb_has_open_sky_neighbour ) {
                                     continue;
                                 }
