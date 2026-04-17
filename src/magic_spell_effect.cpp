@@ -1244,6 +1244,10 @@ void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint &ta
                 guy->mutate_towards( trait_id( sp.effect_data() ) );
             } else {
                 guy->mutate_category( mutation_category_id( sp.effect_data() ) );
+                if( sp.has_flag( spell_flag::MUTATE_THRESH ) ) {
+                    test_crossing_threshold( guy, mutation_category_trait::get_category(
+                    mutation_category_id( sp.effect_data() ) ), 1 );
+                }
             }
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
