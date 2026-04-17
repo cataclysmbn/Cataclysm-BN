@@ -143,10 +143,10 @@
         "r": {
           "items": [
             { "item": "robots", "chance": 20 },
-			{ "item": "electronics", "chance": 20 },
-			{ "item": "tools_cleaning_common", "chance": 10 },
-			{ "item": "tools_common", "chance": 10 },
-			{ "item": "tools_mechanic", "chance": 1 }
+            { "item": "electronics", "chance": 20 },
+            { "item": "tools_cleaning_common", "chance": 10 },
+            { "item": "tools_common", "chance": 10 },
+            { "item": "tools_mechanic", "chance": 1 }
           ]
         }
       },
