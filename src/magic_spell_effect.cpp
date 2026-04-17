@@ -41,6 +41,7 @@
 #include "map_iterator.h"
 #include "messages.h"
 #include "monster.h"
+#include "mutation.h"
 #include "overmapbuffer.h"
 #include "player.h"
 #include "point.h"
