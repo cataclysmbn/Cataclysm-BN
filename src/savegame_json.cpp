@@ -4467,6 +4467,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             const point p( i, j );
             // TODO: jsin should support returning an id like jsin.get_id<trap>()
             trp[p.x][p.y] = trap_str_id( jsin.get_string() ).id();
+            trap_cache.push_back( p ); // null traps are not serialized, so this is always valid
             jsin.end_array();
         }
     } else if( member_name == "fields" ) {
@@ -4495,6 +4496,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                 }
                 if( fld[i][j].find_field( ft ) == nullptr ) {
                     field_count++;
+                    field_cache.push_back( point( i, j ) );
                 }
                 fld[i][j].add_field( ft, intensity, time_duration::from_turns( age ) );
             }

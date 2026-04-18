@@ -6564,6 +6564,7 @@ bool map::add_field( const tripoint &p, const field_type_id &type_id, int intens
     if( current_submap->get_field( l ).add_field( type_id, intensity, age ) ) {
         //Only adding it to the count if it doesn't exist.
         current_submap->field_count++;
+        current_submap->field_cache.push_back( l );
     }
 
     if( hit_player ) {

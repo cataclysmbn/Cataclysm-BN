@@ -341,17 +341,15 @@ static void fill_funnels( int rain_depth_mm_per_hour, bool acid, const trap &tr 
     auto &mbuf = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
     std::ranges::for_each( mbuf, [&]( auto & entry ) {
         auto &[raw_pos, sm_ptr] = entry;
-        if( !sm_ptr || sm_ptr->is_uniform ) {
+        if( !sm_ptr || sm_ptr->is_uniform || sm_ptr->trap_cache.empty() ) {
             return;
         }
-        std::ranges::for_each(
-            cata::views::cartesian_product( std::views::iota( 0, SEEX ),
-                                            std::views::iota( 0, SEEY ) ),
-        [&]( auto xy ) {
-            auto [lx, ly] = xy;
-            if( sm_ptr->get_trap( point( lx, ly ) ) != tr.loadid ) {
+        std::ranges::for_each( sm_ptr->trap_cache, [&]( const point & lp ) {
+            if( sm_ptr->get_trap( lp ) != tr.loadid ) {
                 return;
             }
+            const auto lx = lp.x;
+            const auto ly = lp.y;
             const tripoint loc( ( raw_pos.x - abs_sub.x ) * SEEX + lx,
                                 ( raw_pos.y - abs_sub.y ) * SEEY + ly,
                                 raw_pos.z );

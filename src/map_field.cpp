@@ -1032,7 +1032,7 @@ auto neighbor_tile( submap *base, const tripoint_abs_sm &base_pos,
     return { nbr, { ( nx + SEEX ) % SEEX, ( ny + SEEY ) % SEEY } };
 }
 
-// Add a field to dst, maintaining field_count.
+// Add a field to dst, maintaining field_count and field_cache.
 auto sub_add_field( SubTile &dst, field_type_id type, int intensity,
                     time_duration age ) -> field_entry *
 {
@@ -1041,6 +1041,7 @@ auto sub_add_field( SubTile &dst, field_type_id type, int intensity,
     }
     if( dst.get_field().add_field( type, intensity, age ) ) {
         ++dst.sm->field_count;
+        dst.sm->field_cache.push_back( dst.local );
         dst.sm->is_uniform = false;
     }
     return dst.get_field().find_field( type );
@@ -1096,6 +1097,7 @@ auto gas_spread_sub( field_entry &cur, SubTile &dst ) -> void
         cur.set_field_age( age - age_frac );
     } else if( dst.get_field().add_field( type, 1, 0_turns ) ) {
         ++dst.sm->field_count;
+        dst.sm->field_cache.push_back( dst.local );
         dst.sm->is_uniform = false;
         f = dst.get_field().find_field( type );
         if( f ) {
@@ -1126,16 +1128,14 @@ auto process_fields_in_submap( submap &sm,
 
     auto has_fire = false;
 
-    std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int lx ) {
-        std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int ly ) {
-            const auto local = point{ lx, ly };
-            auto &curfield   = sm.get_field( local );
+    std::ranges::for_each( sm.field_cache, [&]( const point & local ) {
+        auto &curfield = sm.get_field( local );
 
-            if( !curfield.displayed_field_type() ) {
-                return;
-            }
+        if( !curfield.displayed_field_type() ) {
+            return;
+        }
 
-            for( auto it = curfield.begin(); it != curfield.end(); ) {
+        for( auto it = curfield.begin(); it != curfield.end(); ) {
                 auto &cur = it->second;
 
                 // Dead entries — clean up.
@@ -1281,6 +1281,7 @@ auto process_fields_in_submap( submap &sm,
                                     fire_above->mod_field_age( -2_turns );
                                 } else if( above_sm->get_field( local ).add_field( fd_fire, 1, 0_turns ) ) {
                                     ++above_sm->field_count;
+                                    above_sm->field_cache.push_back( local );
                                     above_sm->is_uniform = false;
                                 }
                             }
@@ -1404,6 +1405,7 @@ auto process_fields_in_submap( submap &sm,
                             if( !fire_below ) {
                                 if( below_sm->get_field( local ).add_field( fd_fire, 1, 0_turns ) ) {
                                     ++below_sm->field_count;
+                                    below_sm->field_cache.push_back( local );
                                     below_sm->is_uniform = false;
                                 }
                                 cur.set_field_intensity( cur.get_field_intensity() - 1 );
@@ -1703,6 +1705,7 @@ auto process_fields_in_submap( submap &sm,
                                 if( dst.get_field().add_field( fd_bees, cur.get_field_intensity(),
                                                                cur.get_field_age() ) ) {
                                     ++dst.sm->field_count;
+                                    dst.sm->field_cache.push_back( dst.local );
                                     dst.sm->is_uniform = false;
                                 }
                                 cur.set_field_intensity( 0 );
@@ -1736,6 +1739,7 @@ auto process_fields_in_submap( submap &sm,
                                 }
                             } else if( sm.get_field( wlocal ).add_field( wtype, wintens, 0_turns ) ) {
                                 ++sm.field_count;
+                                sm.field_cache.push_back( wlocal );
                             }
                         }
                     }
@@ -1757,9 +1761,12 @@ auto process_fields_in_submap( submap &sm,
                 } else {
                     ++it;
                 }
-            } // end field-entry loop
-        } );
+        } // end field-entry loop
     } );
+
+    if( sm.field_count == 0 ) {
+        sm.field_cache.clear();
+    }
 
     return has_fire;
 }

@@ -4900,30 +4900,38 @@ void game::world_tick()
 
             // Furniture field emitters — covers all loaded submaps, not just the bubble.
             // Primary dimension only: m.emit_field() operates in primary-map coordinates.
-            // emitter_cache skips the 144-tile scan for submaps with no EMITTER furniture.
-            if( do_emits && dim.empty() && sm_ptr->emitter_cache != 0 ) {
-                ZoneScopedN( "field_emits" );
-                const tripoint local_sm_origin( ( raw_pos.x - abs_sub.x ) * SEEX,
-                                                ( raw_pos.y - abs_sub.y ) * SEEY,
-                                                raw_pos.z );
-                bool found_emitter = false;
-                std::ranges::for_each(
-                    cata::views::cartesian_product( std::views::iota( 0, SEEX ),
-                                                    std::views::iota( 0, SEEY ) ),
-                [&]( auto xy ) {
-                    auto [lx, ly] = xy;
-                    const furn_t &fd = sm_ptr->get_furn( point( lx, ly ) ).obj();
-                    if( fd.has_flag( "EMITTER" ) ) {
-                        found_emitter = true;
-                        const tripoint local_pos( local_sm_origin.x + lx,
-                                                  local_sm_origin.y + ly,
+            // emitter_cache holds the positions of EMITTER furniture, lazily rebuilt on first
+            // use after furniture changes and iterated directly on subsequent ticks.
+            if( do_emits && dim.empty() ) {
+                if( !sm_ptr->emitter_cache.has_value() ) {
+                    ZoneScopedN( "field_emits_rebuild" );
+                    auto &positions = sm_ptr->emitter_cache.emplace();
+                    std::ranges::for_each(
+                        cata::views::cartesian_product( std::views::iota( 0, SEEX ),
+                                                        std::views::iota( 0, SEEY ) ),
+                    [&]( auto xy ) {
+                        auto [lx, ly] = xy;
+                        if( sm_ptr->get_furn( point( lx, ly ) ).obj().has_flag( "EMITTER" ) ) {
+                            positions.emplace_back( lx, ly );
+                        }
+                    } );
+                }
+                if( !sm_ptr->emitter_cache->empty() ) {
+                    ZoneScopedN( "field_emits" );
+                    const tripoint local_sm_origin( ( raw_pos.x - abs_sub.x ) * SEEX,
+                                                    ( raw_pos.y - abs_sub.y ) * SEEY,
+                                                    raw_pos.z );
+                    std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point & lp ) {
+                        const tripoint local_pos( local_sm_origin.x + lp.x,
+                                                  local_sm_origin.y + lp.y,
                                                   raw_pos.z );
-                        std::ranges::for_each( fd.emissions, [&]( const emit_id & e ) {
-                            m.emit_field( local_pos, e );
-                        } );
-                    }
-                } );
-                sm_ptr->emitter_cache = found_emitter ? 1 : 0;
+                        std::ranges::for_each(
+                            sm_ptr->get_furn( lp ).obj().emissions,
+                            [&]( const emit_id & e ) {
+                                m.emit_field( local_pos, e );
+                            } );
+                    } );
+                }
             }
 
             if( fire_spread && has_fire ) {

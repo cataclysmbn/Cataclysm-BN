@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <string>
 #include <iterator>
@@ -27,6 +28,8 @@ class JsonOut;
 class map;
 struct trap;
 struct ter_t;
+// tr_null forward-declared here to keep set_trap inline without pulling in all of trap.h.
+extern trap_id tr_null;
 struct furn_t;
 class vehicle;
 
@@ -96,10 +99,14 @@ class submap : maptile_soa<SEEX, SEEY>
         void set_trap( point p, trap_id trap ) {
             is_uniform = false;
             trp[p.x][p.y] = trap;
+            if( trap != tr_null ) {
+                trap_cache.push_back( p );
+            }
         }
 
         void set_all_traps( const trap_id &trap ) {
             std::uninitialized_fill_n( &trp[0][0], elements, trap );
+            trap_cache.clear();
         }
 
         furn_id get_furn( point p ) const {
@@ -108,7 +115,7 @@ class submap : maptile_soa<SEEX, SEEY>
 
         void set_furn( point p, furn_id furn ) {
             is_uniform = false;
-            emitter_cache = -1;
+            emitter_cache = std::nullopt;
             frn[p.x][p.y] = furn;
             frn_vars[p].merge( furn->default_vars );
             if( furn != f_null ) {
@@ -119,12 +126,12 @@ class submap : maptile_soa<SEEX, SEEY>
 
         void set_all_furn( const furn_id &furn ) {
             std::uninitialized_fill_n( &frn[0][0], elements, furn );
+            emitter_cache = std::nullopt;
             if( furn != f_null ) {
                 return;
             }
             // Reset furniture vars on clear
             frn_vars.clear();
-            emitter_cache = -1;
         }
 
         ter_id get_ter( point p ) const {
@@ -263,9 +270,26 @@ class submap : maptile_soa<SEEX, SEEY>
         active_item_cache active_items;
 
         int field_count = 0;
-        /** -1 = unknown (dirty), 0 = no EMITTER furniture, 1 = has EMITTER furniture.
-         *  Lazily computed by world_tick on first use; invalidated by set_furn / set_all_furn. */
-        int8_t emitter_cache = -1;
+        // Per-submap flat lists used to avoid full 144-tile scans.
+        // Entries may be stale (tile no longer has the relevant data); callers must validate.
+        // A stale entry is benign — it just costs a cheap branch on iteration.
+        // trap_cache: positions of any non-null trap; rebuilt incrementally via set_trap.
+        std::vector<point> trap_cache;
+        // field_cache: positions of tiles that have ever had a field added this load cycle.
+        // Append-only; cleared when field_count drops to zero after processing.
+        std::vector<point> field_cache;
+        // TODO: A future improvement is to unify all per-tile dirty state into a 144-bit
+        // bitmask (e.g. std::bitset<SEEX * SEEY> or three uint64_t words), one per category.
+        // Bitmask iteration with _Find_first()/_Find_next() or ctz on 64-bit words is
+        // significantly faster than vector<point> for dense cases and essentially free for
+        // sparse ones, and multiple masks can be ANDed cheaply to combine conditions.
+        // Deferred because it is a broader refactor touching all cache consumers.
+
+        /** Positions of EMITTER furniture on this submap.
+         *  std::nullopt = dirty (needs rebuild by scanning all tiles).
+         *  Empty vector = no emitters present.
+         *  Rebuilt lazily; invalidated by set_furn / set_all_furn. */
+        std::optional<std::vector<point>> emitter_cache;
         // Serialized as "turn_last_touched" (absolute turn number).
         // Initialized to calendar::turn_zero; legacy saves that predate
         // serialization will receive the maximum-capped catchup on first load.
