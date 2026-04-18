@@ -544,6 +544,12 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "Called when the game has first started." );
     luna::set_fx( lib, "on_game_started", []() {} );
 
+    DOC( "Called when an event statistic changes.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `statistic_id` (string): The changed event statistic id  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_stat_changed", []( const sol::table & ) {} );
+
     DOC( "Called when the weather has changed.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `weather_id` (string): Current weather ID  " );
@@ -963,6 +969,7 @@ void cata::reg_all_bindings( sol::state &lua )
 
     override_default_print( lua );
     forbid_unsafe_functions( lua );
+    reg_achievement_api( lua );
     reg_debug_api( lua );
     reg_game_api( lua );
     reg_locale_api( lua );
