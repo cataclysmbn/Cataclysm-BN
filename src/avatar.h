@@ -87,6 +87,7 @@ class avatar : public player
         bool load_template( const std::string &template_name, points_left &points );
         void save_template( const std::string &name, const points_left &points );
         void character_to_template( const std::string &name );
+        auto sanitize_character_template() -> void;
 
         bool is_avatar() const override {
             return true;
@@ -333,4 +334,3 @@ class avatar : public player
 };
 
 avatar &get_avatar();
-

@@ -4101,6 +4101,7 @@ void avatar::character_to_template( const std::string &name )
     points.trait_points = 0;
     points.skill_points = 0;
     points.limit = points_left::TRANSFER;
+    sanitize_character_template();
     save_template( name, points );
 }
 
@@ -4177,6 +4178,10 @@ bool avatar::load_template( const std::string &template_name, points_left &point
         }
 
         deserialize( jsin );
+
+        if( points.limit == points_left::TRANSFER ) {
+            sanitize_character_template();
+        }
 
         if( MAP_SHARING::isSharing() ) {
             // just to make sure we have the right name
