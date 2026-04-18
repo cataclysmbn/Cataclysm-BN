@@ -3,8 +3,15 @@
 #include "catalua_impl.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
+#include "catalua_sound_bindings.h"
 
+#include <array>
 #include <ranges>
+#include <stdexcept>
+#include <utility>
+#include <vector>
+
+#include "debug.h"
 
 #include "avatar.h"
 #include "distribution_grid.h"
@@ -34,6 +41,122 @@ void add_msg_lua( game_message_type t, sol::variadic_args va )
 }
 
 } // namespace
+
+namespace
+{
+
+struct sound_channel_listener {
+    sfx::channel channel;
+    sol::protected_function callback;
+};
+
+auto &sound_channel_listeners() -> std::vector<sound_channel_listener> &
+{
+    static std::vector<sound_channel_listener> listeners;
+    return listeners;
+}
+
+auto &sound_channel_previous_state() ->
+std::array<bool, static_cast<int>( sfx::channel::MAX_CHANNEL )> &
+{
+    static std::array<bool, static_cast<int>( sfx::channel::MAX_CHANNEL )> state{};
+    return state;
+}
+
+auto channel_matches( const sound_channel_listener &listener, const sfx::channel channel ) -> bool
+{
+    return listener.channel == sfx::channel::any || listener.channel == channel;
+}
+
+auto notify_sound_channel_end( lua_state &state, const sfx::channel channel ) -> void
+{
+    auto &listeners = sound_channel_listeners();
+    if( listeners.empty() ) {
+        return;
+    }
+    auto current_listeners = std::move( listeners );
+    std::vector<sound_channel_listener> survivors;
+    survivors.reserve( current_listeners.size() );
+
+    std::ranges::for_each( current_listeners, [&]( sound_channel_listener & listener ) {
+        bool keep_listener = true;
+        if( channel_matches( listener, channel ) ) {
+            try {
+                sol::protected_function_result res = listener.callback( channel );
+                cata::check_func_result( res );
+                if( res.get_type() == sol::type::boolean ) {
+                    keep_listener = res.get<bool>();
+                }
+            } catch( const std::runtime_error &e ) {
+                debugmsg( "sound channel listener threw exception: %s", e.what() );
+                keep_listener = false;
+            }
+        }
+
+        if( keep_listener ) {
+            survivors.push_back( std::move( listener ) );
+        }
+    } );
+
+    std::vector<sound_channel_listener> merged;
+    merged.reserve( listeners.size() + survivors.size() );
+    merged.insert( merged.end(), listeners.begin(), listeners.end() );
+    merged.insert( merged.end(), survivors.begin(), survivors.end() );
+    listeners = std::move( merged );
+}
+
+} // namespace
+
+namespace cata::detail
+{
+
+auto register_sound_channel_end_listener(
+    [[maybe_unused]] sol::this_state lua_state, sfx::channel channel,
+    sol::protected_function callback ) -> void
+{
+    if( !callback || channel == sfx::channel::MAX_CHANNEL ) {
+        return;
+    }
+    auto &listeners = sound_channel_listeners();
+    listeners.push_back(
+        sound_channel_listener{ channel, std::move( callback ) }
+    );
+
+    auto &prev_state = sound_channel_previous_state();
+    const auto max_channel = static_cast<int>( sfx::channel::MAX_CHANNEL );
+    if( channel == sfx::channel::any ) {
+        std::ranges::for_each( std::views::iota( 0, max_channel ), [&]( int idx ) {
+            prev_state[idx] = sfx::is_channel_playing( static_cast<sfx::channel>( idx ) );
+        } );
+    } else {
+        const auto idx = static_cast<int>( channel );
+        if( idx < max_channel ) {
+            prev_state[idx] = sfx::is_channel_playing( channel );
+        }
+    }
+}
+
+auto poll_sound_channel_listeners( lua_state &state ) -> void
+{
+    auto &listeners = sound_channel_listeners();
+    if( listeners.empty() ) {
+        return;
+    }
+
+    auto &prev_state = sound_channel_previous_state();
+    const auto max_channel = static_cast<int>( sfx::channel::MAX_CHANNEL );
+    std::ranges::for_each( std::views::iota( 0, max_channel ), [&]( int idx ) {
+        const auto channel = static_cast<sfx::channel>( idx );
+        const bool playing = sfx::is_channel_playing( channel );
+        const bool was_playing = prev_state[idx];
+        if( was_playing && !playing ) {
+            notify_sound_channel_end( state, channel );
+        }
+        prev_state[idx] = playing;
+    } );
+}
+
+} // namespace cata::detail
 
 void cata::detail::reg_game_api( sol::state &lua )
 {
@@ -196,6 +319,20 @@ void cata::detail::reg_game_api( sol::state &lua )
                                          units::angle, double, double )>( &sfx::play_variant_sound )
                   ) );
     luna::set_fx( lib, "play_ambient_variant_sound", &sfx::play_ambient_variant_sound );
+
+    DOC( "Return true if the specified sound channel is currently playing audio." );
+    luna::set_fx( lib, "is_sound_channel_playing", &sfx::is_channel_playing );
+
+    DOC( "Call a Lua function whenever a sound channel finishes. Returning false from the callback removes the listener." );
+    luna::set_fx( lib, "on_sound_channel_end",
+                  sol::overload(
+    []( sol::this_state lua_this, sol::protected_function callback ) {
+        register_sound_channel_end_listener( lua_this, sfx::channel::any, callback );
+    },
+    []( sol::this_state lua_this, sfx::channel channel, sol::protected_function callback ) {
+        register_sound_channel_end_listener( lua_this, channel, callback );
+    }
+                  ) );
 
     luna::set_fx( lib, "add_npc_follower", []( npc & p ) { g->add_npc_follower( p.getID() ); } );
     luna::set_fx( lib, "remove_npc_follower", []( npc & p ) { g->remove_npc_follower( p.getID() ); } );

@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -351,43 +352,58 @@ static Mix_Chunk *load_chunk( const std::string &path )
 // - Not Loaded: Load chunk from stored resource path
 static inline Mix_Chunk *get_sfx_resource( int resource_id )
 {
-    sound_effect_resource &resource = sfx_resources.resource[ resource_id ];
+    auto &resource = sfx_resources.resource[ resource_id ];
     if( !resource.chunk ) {
-        std::string path = ( current_soundpack_path + "/" + resource.path );
-        resource.chunk.reset( load_chunk( path ) );
+        resource.chunk.reset( load_chunk( resource.path ) );
     }
     return resource.chunk.get();
 }
 
-static inline int add_sfx_path( const std::string &path )
+static auto resolve_sound_path( const std::string &path,
+                                const std::string &base_path ) -> std::string
 {
-    auto find_result = unique_paths.find( path );
-    if( find_result != unique_paths.end() ) {
-        return find_result->second;
-    } else {
-        int result = sfx_resources.resource.size();
-        sound_effect_resource new_resource;
-        new_resource.path = path;
-        new_resource.chunk.reset();
-        sfx_resources.resource.push_back( std::move( new_resource ) );
-        unique_paths[ path ] = result;
-        return result;
+    auto candidate = std::filesystem::path( path );
+    if( !candidate.is_absolute() ) {
+        candidate = std::filesystem::path( base_path ) / candidate;
     }
+    candidate = candidate.lexically_normal();
+    return candidate.generic_string();
 }
 
-void sfx::load_sound_effects( const JsonObject &jsobj )
+static auto add_sfx_path( const std::string &path, const std::string &base_path ) -> int
+{
+    const auto resolved_path = resolve_sound_path( path, base_path );
+    auto find_result = unique_paths.find( resolved_path );
+    if( find_result != unique_paths.end() ) {
+        return find_result->second;
+    }
+    const auto result = static_cast<int>( sfx_resources.resource.size() );
+    sound_effect_resource new_resource;
+    new_resource.path = resolved_path;
+    new_resource.chunk.reset();
+    sfx_resources.resource.push_back( std::move( new_resource ) );
+    unique_paths[ resolved_path ] = result;
+    return result;
+}
+
+auto sfx::load_sound_effects( const JsonObject &jsobj, const std::string &,
+                              const std::string &base_path, const std::string &full_path ) -> void
 {
     if( !sound_init_success ) {
         return;
     }
-    const id_and_variant key( jsobj.get_string( "id" ), jsobj.get_string( "variant", "default" ) );
-    const int volume = jsobj.get_int( "volume", 100 );
+    const auto key = id_and_variant( jsobj.get_string( "id" ),
+                                     jsobj.get_string( "variant", "default" ) );
+    const auto volume = jsobj.get_int( "volume", 100 );
+    const auto json_parent = std::filesystem::path( full_path ).parent_path();
+    const auto sound_root = json_parent.empty() ? base_path : json_parent.generic_string();
+    const auto &sound_base = sound_root.empty() ? current_soundpack_path : sound_root;
     auto &effects = sfx_resources.sound_effects[ key ];
 
-    for( const std::string file : jsobj.get_array( "files" ) ) {
+    for( const auto &file : jsobj.get_array( "files" ) ) {
         sound_effect new_sound_effect;
         new_sound_effect.volume = volume;
-        new_sound_effect.resource_id = add_sfx_path( file );
+        new_sound_effect.resource_id = add_sfx_path( file, sound_base );
 
         effects.push_back( new_sound_effect );
     }

@@ -129,7 +129,8 @@ enum class group : int {
     fatigue         //SFX related to fatigue
 };
 
-void load_sound_effects( const JsonObject &jsobj );
+auto load_sound_effects( const JsonObject &jsobj, const std::string &src,
+                         const std::string &base_path, const std::string &full_path ) -> void;
 void load_sound_effect_preload( const JsonObject &jsobj );
 void load_playlist( const JsonObject &jsobj );
 void play_variant_sound( const std::string &id, const std::string &variant, int volume,
@@ -169,5 +170,3 @@ template<>
 struct enum_traits<sfx::channel> {
     static constexpr auto last = sfx::channel::MAX_CHANNEL;
 };
-
-
