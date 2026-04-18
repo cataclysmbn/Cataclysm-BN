@@ -1044,11 +1044,13 @@ void complete_craft( Character &who, item &craft )
 
     const bool should_heat = making.hot_result();
     const bool is_dehydrated = making.dehydrate_result();
+    const auto cooking_level = who.get_skill_level( skill_cooking );
+    const auto cooking_kcal_mult = 1.0f + ( cooking_level * 0.02f );
 
     bool first = true;
     size_t newit_counter = 0;
     if( craft.is_comestible() ) {
-        craft.set_kcal_mult( 1 + ( who.get_skill_level( skill_cooking ) * 0.02 ) );
+        craft.set_kcal_mult( cooking_kcal_mult );
     }
     for( detached_ptr<item> &newit : newits ) {
 
@@ -1095,7 +1097,10 @@ void complete_craft( Character &who, item &craft )
         }
 
         if( food_contained.is_comestible() ) {
-            food_contained.set_kcal_mult( 1 + ( who.get_skill_level( skill_cooking ) * 0.02 ) );
+            food_contained.set_kcal_mult( cooking_kcal_mult );
+            if( should_heat || is_dehydrated ) {
+                food_contained.set_var( "cooked_by_skill", cooking_level );
+            }
         }
         // Don't store components for things that ignores components (e.g wow 'conjured bread')
         if( ignore_component ) {

@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 
+#include <cmath>
 #include <cstdlib>
 #include <utility>
 
@@ -14,6 +15,8 @@
 #include "morale_types.h"
 
 static const bionic_id bio_taste_blocker( "bio_taste_blocker" );
+
+static const skill_id skill_cooking( "cooking" );
 
 static const trait_id trait_THRESH_FELINE( "THRESH_FELINE" );
 static const trait_id trait_THRESH_LUPINE( "THRESH_LUPINE" );
@@ -301,6 +304,64 @@ TEST_CASE( "fun for bionic bio taste blocker", "[fun_for][food][bionic]" )
                     CHECK( dummy.get_morale( MORALE_FOOD_BAD ) == 0 );
                 }
             }
+        }
+    }
+}
+
+TEST_CASE( "fun for food cooked by skilled cook", "[fun_for][food][cooking]" )
+{
+    avatar dummy;
+    const auto cooking_level = 3;
+
+    GIVEN( "food with positive fun cooked by a skilled cook" ) {
+        item &toastem = *item::spawn_temporary( "toastem" );
+        REQUIRE( toastem.is_comestible() );
+
+        const auto toastem_fun = toastem.get_comestible_fun();
+        REQUIRE( toastem_fun > 0 );
+
+        toastem.set_var( "cooked_by_skill", cooking_level );
+
+        THEN( "it gets a floored 10 percent bonus per cooking level" ) {
+            const auto actual_fun = dummy.fun_for( toastem );
+            const auto expected_fun = static_cast<int>( std::floor( toastem_fun * 1.3f ) );
+
+            CHECK( actual_fun.first == expected_fun );
+        }
+    }
+
+    GIVEN( "food with negative fun cooked by a skilled cook" ) {
+        item &garlic = *item::spawn_temporary( "garlic" );
+        REQUIRE( garlic.is_comestible() );
+
+        const auto garlic_fun = garlic.get_comestible_fun();
+        REQUIRE( garlic_fun < 0 );
+
+        garlic.set_var( "cooked_by_skill", cooking_level );
+
+        THEN( "it becomes less unpleasant by the same amount" ) {
+            const auto actual_fun = dummy.fun_for( garlic );
+            const auto expected_fun = -static_cast<int>( std::floor( std::abs( garlic_fun ) * 0.7f ) );
+
+            CHECK( actual_fun.first == expected_fun );
+        }
+    }
+
+    GIVEN( "cooked food without stored cook skill" ) {
+        item &toastem = *item::spawn_temporary( "toastem" );
+        REQUIRE( toastem.is_comestible() );
+
+        const auto toastem_fun = toastem.get_comestible_fun();
+        REQUIRE( toastem_fun > 0 );
+
+        toastem.set_flag( flag_COOKED );
+        dummy.set_skill_level( skill_cooking, cooking_level );
+
+        THEN( "current cooking skill still improves the fun value" ) {
+            const auto actual_fun = dummy.fun_for( toastem );
+            const auto expected_fun = static_cast<int>( std::floor( toastem_fun * 1.3f ) );
+
+            CHECK( actual_fun.first == expected_fun );
         }
     }
 }
