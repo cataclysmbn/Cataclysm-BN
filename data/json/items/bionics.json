@@ -1400,5 +1400,14 @@
     "description": "The power of the sun, in the palm of my hand!  Installed within you is a perpetual generator powered by nonsensoleum.  When activated its power gen doubles.  If you are seeing this, you'd better be debugging.",
     "price": "0 cent",
     "looks_like": "bio_int_enhancer"
+  },
+  {
+    "id": "bio_portal_tap",
+    "copy-from": "bionic_general",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Dimensional Portal Tap CBM" },
+    "description": "An implanted interface for siphoning power from a linked dimensional portal.  Must be linked to a specific portal by examining it.  While the linked portal's grid has power, this bionic passively draws energy into your reserves each turn.",
+    "price": "1 kUSD",
+    "looks_like": "bio_int_enhancer"
   }
 ]

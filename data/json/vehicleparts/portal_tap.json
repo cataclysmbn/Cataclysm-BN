@@ -1,0 +1,28 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "vp_portal_tap",
+    "name": { "str": "Dimensional Portal Tap" },
+    "description": "An advanced interface module that siphons power from a linked dimensional portal directly into the vehicle's battery system.  Must be linked to a specific portal by examining it while in the vehicle.",
+    "item": "vp_portal_tap_item",
+    "symbol": "T",
+    "color": "cyan",
+    "broken_symbol": "x",
+    "broken_color": "dark_gray",
+    "durability": 200,
+    "epower": 0,
+    "flags": [ "POWER_DRAW_LINKED_PORTAL" ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 4 ], [ "electronics", 3 ] ],
+        "qualities": [ { "id": "WRENCH", "level": 2 }, { "id": "SCREW", "level": 2 } ]
+      },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "using": [ [ "vehicle_screw", 1 ] ] }
+    },
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 1, 2 ] },
+      { "item": "e_scrap", "count": [ 2, 4 ] },
+      { "item": "cable", "count": [ 1, 3 ] }
+    ]
+  }
+]

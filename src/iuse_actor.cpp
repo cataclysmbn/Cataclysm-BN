@@ -37,6 +37,7 @@
 #include "character_id.h"
 #include "clothing_mod.h"
 #include "crafting.h"
+#include "active_tile_data_def.h"
 #include "creature.h"
 #include "debug.h"
 #include "dimension_bounds.h"
@@ -7124,14 +7125,44 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
 
     // Travel to the destination world type.
     // NPCs and vehicles do not travel between dimensions.
-    // When leaving a bounded pocket, use the saved origin position so the
-    // destination loads at the player's original overworld coordinates.
     std::optional<tripoint_abs_sm> load_pos;
-    if( const dimension_info *info = g->get_current_dimension_info() ) {
-        if( info->bounds.has_value() ) {
-            load_pos = info->origin_pos;
+
+    if( const dimension_info *info = g->get_current_dimension_info();
+        info && info->bounds.has_value() ) {
+        // Bounded pocket: restore the saved overworld origin position.
+        load_pos = info->origin_pos;
+    } else {
+        // Scaled dimension: remap player coordinates through the overworld ("") as the
+        // common reference frame.  scale_num:scale_den describes each dimension relative
+        // to a 1:1 overworld baseline, so the two-step conversion is:
+        //   current → overworld: pos * src_num / src_den
+        //   overworld → target:  pos * dst_den / dst_num
+        // Combined:              pos * src_num * dst_den / (src_den * dst_num)
+        int src_num = 1;
+        int src_den = 1;
+        if( const dimension_info *info = g->get_current_dimension_info();
+            info && info->world_type.is_valid() ) {
+            src_num = info->world_type.obj().scale_num;
+            src_den = info->world_type.obj().scale_den;
+        }
+        const int dst_num = destination.obj().scale_num;
+        const int dst_den = destination.obj().scale_den;
+
+        // Only set load_pos when at least one side has a non-trivial scale.
+        // Cross-multiply to compare ratios without floating point.
+        if( src_num * dst_den != src_den * dst_num ) {
+            const tripoint_abs_omt current_omt = u.global_omt_location();
+            const tripoint_abs_omt target_omt(
+                current_omt.x() * src_num * dst_den / ( src_den * dst_num ),
+                current_omt.y() * src_num * dst_den / ( src_den * dst_num ),
+                current_omt.z()
+            );
+            const tripoint_abs_sm target_sm = project_to<coords::sm>( target_omt );
+            load_pos = tripoint_abs_sm(
+                           target_sm.raw() - tripoint( g_half_mapsize, g_half_mapsize, 0 ) );
         }
     }
+
     g->travel_to_dimension( target_dim_id, destination, std::nullopt, load_pos );
 }
 
@@ -7151,6 +7182,9 @@ void iuse_pocket_dimension::load( const JsonObject &obj )
     obj.read( "pocket_name", pocket_name );
     if( obj.has_string( "boundary_terrain" ) ) {
         boundary_terrain = ter_str_id( obj.get_string( "boundary_terrain" ) );
+    }
+    if( obj.has_float( "lifetime_hours" ) ) {
+        lifetime = time_duration::from_hours( obj.get_float( "lifetime_hours" ) );
     }
 }
 
@@ -7176,12 +7210,11 @@ int iuse_pocket_dimension::use( player &p, item &it, bool, const tripoint & ) co
         // We're inside - exit to return point
         exit_pocket( p, it );
     } else if( current_dim_id == pd->return_dimension_id ) {
-        // We're at the dimension this pocket exits to - we can enter
+        // We're in the dimension we last entered from - re-enter (ignoring last position)
         enter_pocket( p, it );
     } else {
-        // We're in some other dimension - can't use this pocket key here
         p.add_msg_if_player( m_info,
-                             _( "You can only use this from where you last exited this pocket." ) );
+                             _( "You can only use this to return from or re-enter this pocket." ) );
         return 0;
     }
 
@@ -7193,6 +7226,16 @@ ret_val<bool> iuse_pocket_dimension::can_use( const Character &, const item &it,
 {
     if( it.ammo_remaining() < need_charges ) {
         return ret_val<bool>::make_failure( _( "The %s doesn't have enough charges." ), it.tname() );
+    }
+    // Temporary pocket: refuse entry if the pocket has expired.
+    if( const auto *pd = it.get_pocket_dimension_data() ) {
+        if( pd->lifetime.has_value() && pd->last_player_exit.has_value() ) {
+            if( *pd->last_player_exit + *pd->lifetime < calendar::turn ) {
+                return ret_val<bool>::make_failure(
+                           _( "The %s is cold and inert — the pocket dimension has collapsed." ),
+                           it.tname() );
+            }
+        }
     }
     return ret_val<bool>::make_success();
 }
@@ -7270,6 +7313,11 @@ void iuse_pocket_dimension::initialize_pocket( item &it ) const
         pd.bounds_max = tripoint_abs_omt( 0, 0, 0 );
     }
 
+    // Propagate lifetime from actor definition to the item's persistent data.
+    if( lifetime.has_value() ) {
+        pd.lifetime = *lifetime;
+    }
+
     it.set_pocket_dimension_data( std::move( pd ) );
 }
 
@@ -7311,6 +7359,9 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
         pd->return_world_type = world_type_id{};
     }
     pd->return_point = p.global_omt_location();
+
+    // Player is now inside; clear the exit timestamp.
+    pd->last_player_exit = std::nullopt;
 
     // Set dimension bounds on map
     dimension_bounds bounds;
@@ -7371,6 +7422,118 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     g->update_map( p );
 }
 
+// ---- iuse_portal_link -------------------------------------------------------
+
+std::unique_ptr<iuse_actor> iuse_portal_link::clone() const
+{
+    return std::make_unique<iuse_portal_link>( *this );
+}
+
+void iuse_portal_link::load( const JsonObject &obj )
+{
+    obj.read( "required_portal_flag", required_portal_flag );
+    obj.read( "can_return", can_return );
+    obj.read( "charges_per_use", charges_per_use );
+}
+
+auto iuse_portal_link::can_use( const Character &, const item &it, bool,
+                                const tripoint & ) const -> ret_val<bool>
+{
+    if( charges_per_use > 0 && it.ammo_remaining() < charges_per_use ) {
+        return ret_val<bool>::make_failure( _( "The %s doesn't have enough charges." ),
+                                            it.tname() );
+    }
+    return ret_val<bool>::make_success();
+}
+
+auto iuse_portal_link::use( player &p, item &it, bool, const tripoint & ) const -> int
+{
+    const auto player_abs = tripoint_abs_ms( get_map().getabs( p.pos() ) );
+    const auto &cur_dim = g->get_current_dimension_id();
+
+    // --- Mode 1: Link to a nearby portal with a matching flag ---
+    if( !required_portal_flag.empty() ) {
+        portal_tile *nearby_portal = nullptr;
+        for( const tripoint &adj : get_map().points_in_radius( p.pos(), 1 ) ) {
+            auto abs = tripoint_abs_ms( get_map().getabs( adj ) );
+            auto *candidate = active_tiles::furn_at<portal_tile>( abs );
+            if( candidate && candidate->linkable_item_flag == required_portal_flag &&
+                candidate->linked ) {
+                nearby_portal = candidate;
+                break;
+            }
+        }
+        if( nearby_portal != nullptr && !it.get_var( "portal_linked", false ) ) {
+            if( query_yn( _( "Link %s to this portal?" ), it.tname() ) ) {
+                it.set_var( "portal_linked", true );
+                it.set_var( "linked_dim_id", nearby_portal->target_dim_id );
+                it.set_var( "linked_pos_x", nearby_portal->target_pos.x() );
+                it.set_var( "linked_pos_y", nearby_portal->target_pos.y() );
+                it.set_var( "linked_pos_z", nearby_portal->target_pos.z() );
+                add_msg( m_good, _( "The %s locks onto the portal." ), it.tname() );
+            }
+            return 0;
+        }
+    }
+
+    // --- Mode 2: Teleport to linked portal ---
+    if( !it.get_var( "portal_linked", false ) ) {
+        p.add_msg_if_player( m_info, _( "The %s isn't linked to any portal." ), it.tname() );
+        return 0;
+    }
+
+    const auto linked_dim = it.get_var( "linked_dim_id" );
+    const tripoint_abs_ms linked_pos(
+        it.get_var( "linked_pos_x", 0 ),
+        it.get_var( "linked_pos_y", 0 ),
+        it.get_var( "linked_pos_z", 0 ) );
+
+    // Return mode: if at the linked portal and origin is stored, offer return.
+    if( can_return && it.get_var( "origin_stored", false ) &&
+        cur_dim == linked_dim &&
+        rl_dist( player_abs.raw(), linked_pos.raw() ) <= 5 ) {
+        if( query_yn( _( "Return to your origin point?" ) ) ) {
+            const auto origin_dim = it.get_var( "origin_dim_id" );
+            const tripoint_abs_ms origin_pos(
+                it.get_var( "origin_pos_x", 0 ),
+                it.get_var( "origin_pos_y", 0 ),
+                it.get_var( "origin_pos_z", 0 ) );
+            auto wt_id = world_type_id( origin_dim );
+            const auto dest_sm = tripoint_abs_sm(
+                                     project_to<coords::sm>( origin_pos ).raw() - tripoint( g_half_mapsize, g_half_mapsize, 0 ) );
+            g->travel_to_dimension( origin_dim, wt_id, std::nullopt, dest_sm );
+            p.setpos( get_map().getlocal( origin_pos ) );
+            g->update_map( p );
+            it.erase_var( "origin_stored" );
+            return charges_per_use;
+        }
+        return 0;
+    }
+
+    // Store origin before teleporting if can_return.
+    if( can_return && !it.get_var( "origin_stored", false ) ) {
+        it.set_var( "origin_dim_id", cur_dim );
+        it.set_var( "origin_pos_x", player_abs.x() );
+        it.set_var( "origin_pos_y", player_abs.y() );
+        it.set_var( "origin_pos_z", player_abs.z() );
+        it.set_var( "origin_stored", true );
+    }
+
+    p.add_msg_if_player( m_good, _( "The %s tears a path through dimensional space." ),
+                         it.tname() );
+
+    auto wt_id = world_type_id( linked_dim );
+    if( linked_dim.empty() ) {
+        wt_id = world_types::get_default();
+    }
+    const auto dest_sm = tripoint_abs_sm(
+                             project_to<coords::sm>( linked_pos ).raw() - tripoint( g_half_mapsize, g_half_mapsize, 0 ) );
+    g->travel_to_dimension( linked_dim, wt_id, std::nullopt, dest_sm );
+    p.setpos( get_map().getlocal( linked_pos ) );
+    g->update_map( p );
+    return charges_per_use;
+}
+
 void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
 {
     item::pocket_dimension_data *pd = it.get_pocket_dimension_data();
@@ -7379,6 +7542,16 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     }
 
     p.add_msg_if_player( m_good, _( "You exit the pocket dimension." ) );
+
+    // Reset to fresh state: clears the entry-dimension lock so the key can be used
+    // from whatever dimension the player is now in after returning.
+    pd->return_dimension_id.clear();
+    pd->return_world_type = world_type_id{};
+
+    // Record when the player exited so the lifetime countdown can start.
+    if( pd->lifetime.has_value() ) {
+        pd->last_player_exit = calendar::turn;
+    }
 
     // Compute the map top-left corner so the return point ends up near the grid center.
     // See enter_pocket() for the rationale — centering avoids a large shift in

@@ -817,5 +817,85 @@
       { "item": "scouter", "prob": 20, "damage": [ 0, 2 ] },
       { "item": "kevlar", "prob": 20, "damage": [ 1, 4 ] }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_feral_pa_boss_death_drops",
+    "entries": [
+      {
+        "distribution": [
+          {
+            "collection": [
+              { "item": "power_armor_basic", "damage": [ 1, 4 ] },
+              { "item": "power_armor_helmet_basic", "damage": [ 1, 4 ], "prob": 75 }
+            ],
+            "prob": 15
+          },
+          {
+            "collection": [
+              { "item": "power_armor_light", "damage": [ 1, 4 ] },
+              { "item": "power_armor_helmet_light", "damage": [ 1, 4 ], "prob": 75 }
+            ],
+            "prob": 15
+          },
+          {
+            "collection": [
+              { "item": "power_armor_heavy", "damage": [ 1, 4 ] },
+              { "item": "power_armor_helmet_heavy", "damage": [ 1, 4 ], "prob": 75 }
+            ],
+            "prob": 8
+          },
+          {
+            "collection": [
+              {
+                "distribution": [
+                  {
+                    "collection": [
+                      { "item": "steel_armor", "count": [ 1, 10 ], "prob": 50 },
+                      { "item": "power_supply", "count": [ 1, 7 ], "prob": 50 },
+                      { "item": "element", "count": [ 1, 3 ], "prob": 50 },
+                      { "item": "circuit", "count": [ 1, 8 ], "prob": 50 },
+                      { "item": "small_lcd_screen", "count": [ 1, 2 ], "prob": 50 }
+                    ],
+                    "prob": 10
+                  },
+                  {
+                    "collection": [
+                      { "item": "alloy_sheet", "count": [ 1, 6 ], "prob": 50 },
+                      { "item": "power_supply", "count": [ 1, 4 ], "prob": 50 },
+                      { "item": "element", "count": [ 1, 2 ], "prob": 50 },
+                      { "item": "circuit", "count": [ 1, 7 ], "prob": 50 },
+                      { "item": "e_scrap", "count": [ 1, 4 ], "prob": 50 }
+                    ],
+                    "prob": 10
+                  },
+                  {
+                    "collection": [
+                      { "item": "hard_steel_armor", "count": [ 1, 14 ], "prob": 50 },
+                      { "item": "steel_armor", "count": [ 1, 7 ], "prob": 50 },
+                      { "item": "power_supply", "count": [ 1, 11 ], "prob": 50 },
+                      { "item": "element", "count": [ 1, 3 ], "prob": 50 },
+                      { "item": "circuit", "count": [ 1, 8 ], "prob": 50 },
+                      { "item": "small_lcd_screen", "count": [ 1, 2 ], "prob": 50 }
+                    ],
+                    "prob": 5
+                  }
+                ]
+              },
+              { "item": "cable", "charges": [ 1, 12 ], "prob": 50 },
+              { "item": "transponder", "prob": 50 },
+              { "item": "RAM", "prob": 50 },
+              { "item": "depowered_armor", "damage": [ 1, 4 ] },
+              { "item": "depowered_helmet", "damage": [ 1, 4 ], "prob": 75 }
+            ],
+            "prob": 75
+          }
+        ]
+      },
+      { "group": "military_specops_guns", "prob": 70, "damage": [ 0, 3 ], "dirt": [ 1500, 7050 ] },
+      { "group": "pwr_armor_acc", "count": [ 1, 2 ], "damage": [ 1, 4 ], "prob": 90 },
+      { "item": "heavy_power_armor_frame", "damage": [ 1, 3 ], "prob": 100 }
+    ]
   }
 ]

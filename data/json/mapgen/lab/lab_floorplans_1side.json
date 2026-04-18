@@ -105,6 +105,67 @@
     }
   },
   {
+    "//": "hardware storage (tools, batteries, electronics, etc) + two lab rooms (filled in with '.' in order to ensure a normal t_thconc_floor inside)",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_1side" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "|----------..----------|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........+..+.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|---------|..|---------|",
+        "|CCCCCCCC|....|x,x,,x,x|",
+        "|C,,,,,,C|....|,,,,,,,,|",
+        "|C,,,,,,C|6...|x,x,,x,x|",
+        "|C,,,,,,C--LL--,,,,,,,,|",
+        "|---++---|%,,,|---++---|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|,,,,,cccccccccccc,,,,,|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|r,,rr,,rr,,,,rr,,rr,,r|",
+        "|r,,rr,,rr,,,,rr,,rr,,r|",
+        "|r,,rr,,rr,,,,rr,,rr,,r|",
+        "|r,,rr,,rr,,,,rr,,rr,,r|",
+        "|----------------------|"
+      ],
+      "palettes": [ "lab_palette" ],
+      "mapping": {
+        "r": {
+          "items": [
+            { "item": "robots", "chance": 20 },
+            { "item": "electronics", "chance": 20 },
+            { "item": "tools_cleaning_common", "chance": 10 },
+            { "item": "tools_common", "chance": 10 },
+            { "item": "tools_mechanic", "chance": 1 }
+          ]
+        }
+      },
+      "computers": {
+        "6": {
+          "name": "Hardware Storage",
+          "security": 2,
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 } ],
+          "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
+        }
+      },
+      "place_nested": [
+        { "chunks": [ "lab_spawn_9x9_crossdoors" ], "x": 1, "y": 1 },
+        { "chunks": [ "lab_spawn_9x9_crossdoors" ], "x": 14, "y": 1 },
+        { "chunks": [ "lab_1side_border_doors" ], "x": 0, "y": 0 }
+      ]
+    }
+  },
+  {
     "//": "military bunker",
     "type": "mapgen",
     "method": "json",
@@ -212,23 +273,23 @@
         "|c,,,,,,l|6...|r,,,,ddd|",
         "|S,,,,,,l|-LL-|r,,,,,,,|",
         "|c,,,,,,,|x,,%|,,,,,,,,|",
-        "|-ggggGg-|,,,,+,,,,,dh,|",
+        "|-ggggGg-|,,,,M,,,,,dh,|",
         "|,,,,,,,,,,,,,|,,,,,ddd|",
         "|,,,,,,,,,,,,,|-ggGggg-|",
         "|,,,,,,,,,,,,,|,,,,,,,^|",
         "|,,,,,,,,,,,,,g,,,,,,,,|",
-        "|-ggg-|-ggMgg-|,,c,hc,,|",
-        "|,,,,,|,,,,,,,g,,c7cc,,|",
-        "|T,,,,g,,,,,,,|-gggggg-|",
-        "|,,,,,g,,,,,,,,,,,,,,,,|",
-        "|bb,,,|,,,,,,,,,,,,,,,,|",
-        "|--L--|,,,,,,,,,,,,,,,,|",
-        "|,,,,,M,,,,,,,,,,,,,,,,|",
-        "|-L-|,|-gg-|-gg-|M|-gg-|",
-        "|,,l|,|,,,,|,,,,|,|,,,,|",
+        "|,,,,,,,,,,,,,g,,c,hc,,|",
+        "|,,,,,,,,,,,,,|,,c7cc,,|",
+        "|-gg----ggGgg-|-gggggg-|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|-gg|L|-gg-|-gg-|L|-gg-|",
         "|,,,|,|,,,,|,,,,|,|,,,,|",
-        "|X,,|,L,,,b|b,,,L,L,,,b|",
-        "|X,X|,|,T,b|b,T,|,|,T,b|",
+        "|,,,|,|,,,,|,,,,|,|,,,,|",
+        "|b,,L,L,,,b|b,,,L,L,,,b|",
+        "|b,T|X|,T,b|b,T,|X|,T,b|",
         "|---|-|----|----|-|----|"
       ],
       "palettes": [ "lab_palette" ],
@@ -236,14 +297,14 @@
         { "monster": "mon_zombie_shrieker", "x": [ 19, 22 ], "y": [ 20, 22 ] },
         { "monster": "mon_zombie_brute", "x": [ 12, 15 ], "y": [ 20, 22 ] },
         { "monster": "mon_zombie_child", "x": [ 7, 10 ], "y": [ 20, 22 ] },
-        { "monster": "mon_zombie_grabber", "x": [ 1, 5 ], "y": [ 12, 15 ] },
+        { "monster": "mon_zombie_grabber", "x": [ 1, 5 ], "y": [ 20, 22 ] },
         { "monster": "mon_zombie_scientist", "x": [ 11, 12 ], "y": [ 5, 10 ], "pack_size": [ 1, 2 ], "chance": 50 }
       ],
       "furniture": { "^": "f_indoor_plant", "C": "f_centrifuge" },
       "terrain": { "7": "t_console", "8": "t_console", "C": "t_strconc_floor" },
       "mapping": {
-        "X": { "items": [ { "item": "softdrugs", "chance": 40 }, { "item": "harddrugs", "chance": 30 } ] },
-        "r": { "items": [ { "item": "softdrugs", "chance": 40 }, { "item": "harddrugs", "chance": 30 } ] },
+        "X": { "items": [ { "item": "softdrugs", "chance": 60 }, { "item": "harddrugs", "chance": 40 } ] },
+        "r": { "items": [ { "item": "gear_labsecurity", "chance": 100 } ] },
         "b": { "items": [ { "item": "bed", "chance": 50 } ] },
         "l": { "items": [ { "item": "science", "chance": 60 } ] },
         "d": { "items": [ { "item": "office", "chance": 60 } ] },

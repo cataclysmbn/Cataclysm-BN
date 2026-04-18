@@ -1396,6 +1396,23 @@
     ]
   },
   {
+    "id": "CBM_OP_BOSS_FERAL",
+    "type": "harvest",
+    "entries": [
+      { "drop": "harvest_power_storage_mil", "type": "bionic_group", "faults": [ "fault_bionic_nonsterile" ] },
+      { "drop": "harvest_bionics_boss_off", "type": "bionic_group", "faults": [ "fault_bionic_nonsterile" ] },
+      { "drop": "harvest_bionics_boss_def", "type": "bionic_group", "faults": [ "fault_bionic_nonsterile" ] },
+      { "drop": "harvest_bionics_boss_utl", "type": "bionic_group", "faults": [ "fault_bionic_nonsterile" ] },
+      { "drop": "blood", "type": "blood", "mass_ratio": 0.1 },
+      { "drop": "human_flesh", "type": "flesh", "mass_ratio": 0.2 },
+      { "drop": "hstomach", "type": "offal", "mass_ratio": 0.1 },
+      { "drop": "human_fat", "type": "flesh", "mass_ratio": 0.1 },
+      { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
+      { "drop": "bone_human", "type": "bone", "mass_ratio": 0.15 },
+      { "drop": "raw_hleather", "type": "skin", "mass_ratio": 0.03 }
+    ]
+  },
+  {
     "id": "CBM_POWER",
     "type": "harvest",
     "entries": [

@@ -921,5 +921,26 @@
       },
       { "item": "25mm_casing", "count": [ 1, 5 ], "prob": 90 }
     ]
+  },
+  {
+    "id": "pilot_bail_kit",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "flotation_vest", "prob": 25 },
+      { "item": "premium_survival_kit", "prob": 25 },
+      { "item": "mil_gps_device", "prob": 25 },
+      { "item": "knife_combat", "container-item": "sheath", "prob": 25 }
+    ]
+  },
+  {
+    "id": "aircraft_carrier_heavy_munitions",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "atgm_heat", "prob": 25 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 25 },
+      { "item": "aerial_bomb", "prob": 50 }
+    ]
   }
 ]

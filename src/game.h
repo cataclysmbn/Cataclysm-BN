@@ -577,6 +577,10 @@ class game : public submap_load_listener
         /** Tick all active power-portal links: equalise power between linked grids,
          *  charge upkeep, and pause links that cannot sustain their upkeep cost. */
         void tick_portal_links();
+        /** Check all pocket dimension items in the player's inventory; close expired ones. */
+        void tick_temporary_pocket_dimensions();
+        /** Draw power from linked portals into vehicle batteries for vp_portal_tap parts. */
+        void tick_vehicle_portal_taps();
         /** Picks and spawns a random fish from the remaining fish list when a fish is caught. */
         void catch_a_monster( monster *fish, const tripoint &pos, Character *who,
                               const time_duration &catch_duration );

@@ -13,6 +13,7 @@
 
 #include "achievement.h"
 #include "avatar.h"
+#include "calendar.h"
 #include "cata_io.h"
 #include "coordinate_conversions.h"
 #include "creature_tracker.h"
@@ -144,7 +145,6 @@ void game::serialize( std::ostream &fout )
         json.member( "origin_pos_x", info.origin_pos.x() );
         json.member( "origin_pos_y", info.origin_pos.y() );
         json.member( "origin_pos_z", info.origin_pos.z() );
-        json.member( "parent_dimension_id", info.parent_dimension_id );
         if( info.bounds ) {
             json.member( "bounds" );
             json.start_object();
@@ -286,7 +286,6 @@ void game::unserialize( std::istream &fin )
                 dim_data.read( "origin_pos_y", oy );
                 dim_data.read( "origin_pos_z", oz );
                 info.origin_pos = tripoint_abs_sm( ox, oy, oz );
-                dim_data.read( "parent_dimension_id", info.parent_dimension_id );
                 if( dim_data.has_object( "bounds" ) ) {
                     JsonObject bounds_obj = dim_data.get_object( "bounds" );
                     dimension_bounds bounds;
@@ -305,6 +304,14 @@ void game::unserialize( std::istream &fin )
                     info.bounds = bounds;
                 }
                 loaded_dimensions_[info.dimension_id] = info;
+            }
+        }
+
+        // Set the calendar's active world type now that loaded_dimensions_ is populated.
+        {
+            auto it = loaded_dimensions_.find( current_dimension_id_ );
+            if( it != loaded_dimensions_.end() ) {
+                calendar::set_active_world_type( it->second.world_type.str() );
             }
         }
 

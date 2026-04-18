@@ -37,9 +37,6 @@ struct world_type {
         std::optional<ter_str_id> boundary_terrain;  // Visual tile for out-of-bounds
         // Note: bash message comes from the terrain definition itself
 
-        // Simulation
-        bool simulate_when_inactive = false;  // For keep-world-loaded feature
-
         // Save structure
         std::string save_prefix;  // Folder/file naming prefix (empty for default dimension)
 
@@ -47,8 +44,26 @@ struct world_type {
         bool allow_npc_travel = false;
         bool allow_vehicle_travel = false;
 
-        // Hierarchy
-        std::optional<world_type_id> parent_dimension;
+        // Coordinate scale relative to the parent dimension.
+        // scale_num parent units = scale_den local units.
+        // e.g. scale_num=8, scale_den=1 → 1 tile here = 8 tiles in parent (Nether-like).
+        int scale_num = 1;
+        int scale_den = 1;
+
+        // Per-dimension sunrise/sunset hour overrides (0–23). -1 means use world option default.
+        // See calendar::dim_time_config for details.
+        int sunrise_summer  = -1;
+        int sunrise_winter  = -1;
+        int sunrise_equinox = -1;
+        int sunset_summer   = -1;
+        int sunset_winter   = -1;
+        int sunset_equinox  = -1;
+
+        // Permanent day/night modes. These override is_day()/is_night() checks entirely.
+        // NOTE: A full custom-ticks-per-day system would require refactoring calendar
+        // conversion functions throughout the codebase — deferred.
+        bool permanent_daylight = false;
+        bool permanent_night    = false;
 
         void load( const JsonObject &jo, const std::string &src );
         void check() const;

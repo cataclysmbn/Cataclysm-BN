@@ -1706,7 +1706,23 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
 {
     // Can't cross the same tier threshold multiple times
     if( guy.thresh_tier >= tier ) {
-        return;
+        // Check for the incredibly stupid scenario where the player somehow has a tier but not any actual thresholds
+        // Mostly an issue with debug quit and similar scenarios
+        bool has_thresh = false;
+        for( const trait_id &mut : guy.get_mutations() ) {
+            if( mut->threshold ) {
+                has_thresh = true;
+                break;
+            }
+        }
+        if( has_thresh ) {
+            return;
+        } else {
+            // The character does not have a threshold mutation but has a tier greater than 0
+            // This must be a bug, reset their threshold information
+            guy.thresh_tier = 0;
+            guy.thresh_category = mutation_category_id::NULL_ID();
+        }
     }
 
     // No skipping tiers
@@ -1724,7 +1740,23 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
     mutation_category_id mutation_category = m_category.id;
     // If you've already passed a threshold, you can't get a different tree's threshold
     if( ( guy.thresh_tier > 0 ) && ( guy.thresh_category != mutation_category ) ) {
-        return;
+        // Check for the incredibly stupid scenario where the player somehow has a tier but not any actual thresholds
+        // Mostly an issue with debug quit and similar scenarios
+        bool has_thresh = false;
+        for( const trait_id &mut : guy.get_mutations() ) {
+            if( mut->threshold ) {
+                has_thresh = true;
+                break;
+            }
+        }
+        if( has_thresh ) {
+            return;
+        } else {
+            // The character does not have a threshold mutation but has a tier greater than 0
+            // This must be a bug, reset their threshold information
+            guy.thresh_tier = 0;
+            guy.thresh_category = mutation_category_id::NULL_ID();
+        }
     }
 
     int total = 0;

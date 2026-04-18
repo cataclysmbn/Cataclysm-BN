@@ -41,6 +41,7 @@
 #include "map_iterator.h"
 #include "messages.h"
 #include "monster.h"
+#include "mutation.h"
 #include "overmapbuffer.h"
 #include "player.h"
 #include "point.h"
@@ -1243,7 +1244,16 @@ void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint &ta
             if( sp.has_flag( spell_flag::MUTATE_TRAIT ) ) {
                 guy->mutate_towards( trait_id( sp.effect_data() ) );
             } else {
+                // As with serum, test threshold both before and after granting mutation.
+                if( sp.has_flag( spell_flag::MUTATE_THRESH ) ) {
+                    test_crossing_threshold( *guy, mutation_category_trait::get_category(
+                                                 mutation_category_id( sp.effect_data() ) ), std::max( sp.accuracy(), 1 ) );
+                }
                 guy->mutate_category( mutation_category_id( sp.effect_data() ) );
+                if( sp.has_flag( spell_flag::MUTATE_THRESH ) ) {
+                    test_crossing_threshold( *guy, mutation_category_trait::get_category(
+                                                 mutation_category_id( sp.effect_data() ) ), std::max( sp.accuracy(), 1 ) );
+                }
             }
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {

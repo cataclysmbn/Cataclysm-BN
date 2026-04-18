@@ -142,6 +142,8 @@ ret_val<bool> can_fertilize( player &p, const tripoint &tile, const itype_id &fe
 void practice_survival_while_foraging( player *p );
 
 void power_portal( player &p, const tripoint &examp );
+/** Generic dimensional portal (portal_tile active tile). */
+void portal( player &p, const tripoint &examp );
 
 } //namespace iexamine
 

@@ -6643,6 +6643,7 @@ bool map::add_field( const tripoint &p, const field_type_id &type_id, int intens
     if( current_submap->get_field( l ).add_field( type_id, intensity, age ) ) {
         //Only adding it to the count if it doesn't exist.
         current_submap->field_count++;
+        current_submap->field_cache.push_back( l );
     }
 
     if( hit_player ) {
@@ -7353,7 +7354,8 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
                 int &bresenham_slope ) const
 {
     if( ( range >= 0 && range < rl_dist( F, T ) ) ||
-        !inbounds( T ) ) {
+        !inbounds( T ) ||
+        !inbounds( F ) ) {
         bresenham_slope = 0;
         return false; // Out of range!
     }
@@ -9297,6 +9299,16 @@ bool map::inbounds( const tripoint &p ) const
     const auto map_boundary_max = tripoint( max_xy, max_xy, OVERMAP_HEIGHT + 1 );
     const auto map_boundaries = half_open_cuboid<tripoint>( map_boundary_min, map_boundary_max );
     return map_boundaries.contains( p );
+}
+
+bool map::is_position_simulated( const tripoint &p ) const
+{
+    const tripoint_abs_sm abs_sm(
+        abs_sub.x + divide_round_to_minus_infinity( p.x, SEEX ),
+        abs_sub.y + divide_round_to_minus_infinity( p.y, SEEY ),
+        p.z
+    );
+    return submap_loader.is_simulated( bound_dimension_, abs_sm );
 }
 
 bool tinymap::inbounds( const tripoint &p ) const

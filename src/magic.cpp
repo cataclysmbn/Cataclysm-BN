@@ -101,6 +101,7 @@ std::string enum_to_string<spell_flag>( spell_flag data )
         case spell_flag::DIVIDE_DAMAGE: return "DIVIDE_DAMAGE";
         case spell_flag::RANDOM_DURATION: return "RANDOM_DURATION";
         case spell_flag::RANDOM_TARGET: return "RANDOM_TARGET";
+        case spell_flag::MUTATE_THRESH: return "MUTATE_THRESH";
         case spell_flag::MUTATE_TRAIT: return "MUTATE_TRAIT";
         case spell_flag::PAIN_NORESIST: return "PAIN_NORESIST";
         case spell_flag::NO_FAIL: return "NO_FAIL";

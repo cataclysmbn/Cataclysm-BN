@@ -4,6 +4,7 @@
 #include <array>
 #include <iterator>
 #include <memory>
+#include <ranges>
 #include <span>
 #include <utility>
 
@@ -44,6 +45,8 @@ void submap::swap( submap &first, submap &second )
     std::swap( first.is_uniform, second.is_uniform );
     std::swap( first.active_items, second.active_items );
     std::swap( first.field_count, second.field_count );
+    std::swap( first.trap_cache, second.trap_cache );
+    std::swap( first.field_cache, second.field_cache );
     std::swap( first.emitter_cache, second.emitter_cache );
     std::swap( first.last_touched, second.last_touched );
     std::swap( first.spawns, second.spawns );
@@ -560,6 +563,23 @@ void submap::rotate( int turns )
         rot_transformer_last_run.emplace( point_sm_ms( rotate_point( elem.first.raw() ) ), elem.second );
     }
     transformer_last_run = rot_transformer_last_run;
+
+    // Tile data was moved in-place by swap_soa_tile, bypassing set_trap/set_furn.
+    // Rebuild position caches from scratch now that all arrays are in their final state.
+    trap_cache.clear();
+    field_cache.clear();
+    emitter_cache = std::nullopt;
+    std::ranges::for_each(
+        std::views::iota( 0, SEEX * SEEY )
+        | std::views::transform( []( int i ) -> point { return { i % SEEX, i / SEEX }; } ),
+    [this]( const point & p ) {
+        if( trp[p.x][p.y] != tr_null ) {
+            trap_cache.push_back( p );
+        }
+        if( fld[p.x][p.y].displayed_field_type() ) {
+            field_cache.push_back( p );
+        }
+    } );
 }
 
 

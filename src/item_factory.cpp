@@ -1140,6 +1140,7 @@ void Item_factory::init()
     add_actor( std::make_unique<iuse_flowerpot_collect>() );
     add_actor( std::make_unique<iuse_dimension_travel>() );
     add_actor( std::make_unique<iuse_pocket_dimension>() );
+    add_actor( std::make_unique<iuse_portal_link>() );
 
     // An empty dummy group, it will not spawn anything. However, it makes that item group
     // id valid, so it can be used all over the place without need to explicitly check for it.

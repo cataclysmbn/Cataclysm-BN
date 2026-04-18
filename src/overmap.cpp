@@ -2790,10 +2790,27 @@ void overmap_special::load( const JsonObject &jo, const std::string &src )
     assign( jo, "rotate", rotatable_, strict );
     assign( jo, "flags", flags_, strict );
 
+    if( jo.has_array( "dimensions" ) ) {
+        dimensions_.clear();
+        for( const std::string &dim : jo.get_array( "dimensions" ) ) {
+            dimensions_.push_back( dim );
+        }
+    }
+
     // Another hack
     if( !is_special ) {
         flags_.insert( "ELECTRIC_GRID" );
     }
+}
+
+auto overmap_special::can_spawn_in_dimension( const std::string &dim_id,
+        bool dim_inherits_base ) const -> bool
+{
+    if( dimensions_.empty() ) {
+        // No filter: allowed in primary ("") and in dims with inherit_base_mapgen.
+        return dim_id.empty() || dim_inherits_base;
+    }
+    return std::ranges::find( dimensions_, dim_id ) != dimensions_.end();
 }
 
 void overmap_special::finalize()
@@ -2930,7 +2947,8 @@ void overmap::populate( const std::string &dim_id )
     const overmap_feature_flag_settings &overmap_feature_flag = settings->overmap_feature_flag;
 
     const bool should_blacklist = !overmap_feature_flag.blacklist.empty();
-    const bool should_whitelist = !overmap_feature_flag.whitelist.empty();
+    const bool should_whitelist = !overmap_feature_flag.whitelist.empty() ||
+                                  overmap_feature_flag.clear_whitelist;
 
     // If this region's settings has blacklisted or whitelisted overmap feature flags, let's
     // filter our default batch.
@@ -3400,14 +3418,22 @@ void overmap::generate( const overmap *north, const overmap *east,
     populate_connections_out_from_neighbors( north, east, south, west );
 
     place_rivers( north, east, south, west );
-    place_lakes();
-    place_forests();
-    place_swamps();
+    if( settings->overmap_lake.noise_threshold_lake > 0.0 ) {
+        place_lakes();
+    }
+    if( settings->overmap_forest.noise_threshold_forest > 0.0 ) {
+        place_forests();
+        place_swamps();
+    }
     place_cities();
-    place_forest_trails();
+    if( settings->forest_trail.chance > 0 ) {
+        place_forest_trails();
+    }
     place_roads( north, east, south, west );
     place_specials( enabled_specials );
-    place_forest_trailheads();
+    if( settings->forest_trail.chance > 0 ) {
+        place_forest_trailheads();
+    }
 
     polish_rivers( north, east, south, west );
 
@@ -4756,12 +4782,14 @@ void overmap::place_river( point_om_omt pa, point_om_omt pb )
 
 void overmap::place_cities()
 {
-    int op_city_size = get_option<int>( "CITY_SIZE" );
+    const city_settings &city_spec = settings->city_spec;
+    int op_city_size = city_spec.city_size >= 0 ? city_spec.city_size
+                       : get_option<int>( "CITY_SIZE" );
     if( op_city_size <= 0 ) {
         return;
     }
-    int op_city_spacing = get_option<int>( "CITY_SPACING" );
-    const city_settings &city_spec = settings->city_spec;
+    int op_city_spacing = city_spec.city_spacing >= 0 ? city_spec.city_spacing
+                          : get_option<int>( "CITY_SPACING" );
     // spacing dictates how much of the map is covered in cities
     //   city  |  cities  |   size N cities per overmap
     // spacing | % of map |  2  |  4  |  8  |  12 |  16

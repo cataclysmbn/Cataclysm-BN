@@ -284,5 +284,11 @@
     "id": "SHOCK_RESISTANT",
     "context": [ "vehicle_part" ],
     "type": "json_flag"
+  },
+  {
+    "id": "POWER_DRAW_LINKED_PORTAL",
+    "context": [ "vehicle_part" ],
+    "type": "json_flag",
+    "info": "This part can siphon power from a linked dimensional portal into the vehicle's battery system.  Must be linked by examining a compatible portal while the vehicle is nearby."
   }
 ]

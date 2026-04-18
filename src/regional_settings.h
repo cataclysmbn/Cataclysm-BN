@@ -33,6 +33,10 @@ class building_bin
 };
 
 struct city_settings {
+    // -1 means use CITY_SIZE / CITY_SPACING world options
+    int city_size    = -1;
+    int city_spacing = -1;
+
     // About the average US city non-residential, non-park land usage
     int shop_radius = 30;
     int shop_sigma = 20;
@@ -135,7 +139,7 @@ struct forest_mapgen_settings {
 };
 
 struct forest_trail_settings {
-    int chance = 1;
+    int chance = 0;
     int border_point_chance = 2;
     int minimum_forest_size = 50;
     int random_point_min = 4;
@@ -165,8 +169,8 @@ struct overmap_feature_flag_settings {
 };
 
 struct overmap_forest_settings {
-    double noise_threshold_forest = 0.25;
-    double noise_threshold_forest_thick = 0.3;
+    double noise_threshold_forest = 0.0;
+    double noise_threshold_forest_thick = 0.0;
     double noise_threshold_swamp_adjacent_water = 0.3;
     double noise_threshold_swamp_isolated = 0.6;
     int river_floodplain_buffer_distance_min = 3;
@@ -182,7 +186,7 @@ struct shore_extendable_overmap_terrain_alias {
 };
 
 struct overmap_lake_settings {
-    double noise_threshold_lake = 0.25;
+    double noise_threshold_lake = 0.0;
     int lake_size_min = 20;
     int lake_depth = -5;
     std::vector<std::string> unfinalized_shore_extendable_overmap_terrain;
@@ -213,6 +217,22 @@ struct region_terrain_and_furniture_settings {
     region_terrain_and_furniture_settings() = default;
 };
 
+enum class region_effect_type : int {
+    generic,
+    sunlight,
+    night_time,
+    surface,
+    underground,
+    underwater,
+    sleep,
+    num_types
+};
+
+template<>
+struct enum_traits<region_effect_type> {
+    static constexpr auto last = region_effect_type::num_types;
+};
+
 /*
  * Spatially relevant overmap and mapgen variables grouped into a set of suggested defaults;
  * eventually region mapping will modify as required and allow for transitions of biomes / demographics in a smooth fashion
@@ -220,7 +240,14 @@ struct region_terrain_and_furniture_settings {
 struct regional_settings {
     std::string id;           //
     oter_str_id default_oter; // 'field'
+    // When set, overmap tiles equal to default_oter are rendered using this otertype's
+    // symbol/color/name instead. The stored tile ID remains default_oter for all mapgen logic.
+    oter_str_id display_oter;
     double river_scale = 1;
+    // Set river_scale = 0.0 in JSON to disable river generation entirely.
+    // Set overmap_forest.noise_threshold_forest = 0.0 to disable forest generation.
+    // Set overmap_lake.noise_threshold_lake = 0.0 to disable lake generation.
+    // Set forest_trail.chance = 0 to disable trail generation.
     weighted_int_list<ter_id> default_groundcover; // i.e., 'grass_or_dirt'
     shared_ptr_fast<weighted_int_list<ter_str_id>> default_groundcover_str;
 
@@ -233,6 +260,7 @@ struct regional_settings {
     overmap_forest_settings overmap_forest;
     overmap_lake_settings overmap_lake;
     region_terrain_and_furniture_settings region_terrain_and_furniture;
+    std::map<region_effect_type, std::vector<std::pair<efftype_id, int>>> region_effects;
 
     std::unordered_map<std::string, map_extras> region_extras;
 
