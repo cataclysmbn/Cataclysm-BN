@@ -572,7 +572,7 @@ void submap::rotate( int turns )
     std::ranges::for_each(
         std::views::iota( 0, SEEX * SEEY )
         | std::views::transform( []( int i ) -> point { return { i % SEEX, i / SEEX }; } ),
-    [this]( const point &p ) {
+    [this]( const point & p ) {
         if( trp[p.x][p.y] != tr_null ) {
             trap_cache.push_back( p );
         }

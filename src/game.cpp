@@ -4927,9 +4927,9 @@ void game::world_tick()
                                                   raw_pos.z );
                         std::ranges::for_each(
                             sm_ptr->get_furn( lp ).obj().emissions,
-                            [&]( const emit_id & e ) {
-                                m.emit_field( local_pos, e );
-                            } );
+                        [&]( const emit_id & e ) {
+                            m.emit_field( local_pos, e );
+                        } );
                     } );
                 }
             }
