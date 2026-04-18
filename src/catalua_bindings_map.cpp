@@ -307,6 +307,10 @@ void cata::detail::reg_map( sol::state &lua )
         DOC( "Convert absolute ms -> local ms" );
         luna::set_fx( ut, "get_local_ms",
                       sol::resolve<tripoint( const tripoint & ) const>( &map::getlocal ) );
+        DOC( "Returns the dimension id currently bound to this map. Empty string means the overworld." );
+        luna::set_fx( ut, "get_bound_dimension", &map::get_bound_dimension );
+        DOC( "Returns whether a local map position lies outside the current dimension bounds." );
+        luna::set_fx( ut, "is_out_of_bounds", &map::is_out_of_bounds );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
         DOC( "In map squares" );

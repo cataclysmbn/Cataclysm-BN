@@ -158,6 +158,58 @@ local new_npc = map:place_npc(place_point, "thug")
 new_npc:erase()
 ```
 
+## 次元
+
+### 現在の次元を確認する
+
+```lua
+local map = gapi.get_map()
+
+print("game dimension:", gapi.get_current_dimension_id())
+print("map dimension:", map:get_bound_dimension())
+print("is far-away point out of bounds:", map:is_out_of_bounds(Tripoint.new(500, 500, 0)))
+```
+
+### ポケットディメンションへ入って再入場する
+
+新しいポケットディメンションを作る時は `world_type` と両方の境界を渡します。
+作成済みであれば、再入場には `dimension_id` と `target_omt` だけで足ります。
+
+```lua
+local home_dimension = "sky_island_home"
+local home_omt = Tripoint.new(0, 0, 0)
+
+local entered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = Tripoint.new(-2, -2, 0),
+  bounds_max_omt = Tripoint.new(2, 2, 0),
+  boundary_terrain = "t_pd_border",
+  boundary_overmap_terrain = "pd_border",
+})
+
+if entered then
+  gapi.add_msg("Pocket home loaded.")
+end
+
+local reentered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+})
+```
+
+### オーバーワールドへ戻る
+
+```lua
+local overworld_omt = Tripoint.new(0, 0, 0)
+
+gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_omt = overworld_omt,
+})
+```
+
 ## 天気フック
 
 ### 天気の変化に反応する

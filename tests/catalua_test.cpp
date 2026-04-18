@@ -10,6 +10,8 @@
 #include "debug.h"
 #include "faction.h"
 #include "fstream_utils.h"
+#include "game.h"
+#include "game_constants.h"
 #include "json.h"
 #include "map.h"
 #include "mapdata.h"
@@ -88,6 +90,34 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_monster_avatar_name == "nil" );
     REQUIRE( lua_character_avatar_name == expected_name );
     REQUIRE( lua_npc_avatar_name == "nil" );
+}
+
+TEST_CASE( "lua_pocket_dimension_api", "[lua]" )
+{
+    clear_all_state();
+    g->place_player_overmap( tripoint_abs_omt( tripoint_zero ) );
+
+    sol::state lua = make_lua_state();
+
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    test_data["target_dimension_id"] = "lua_test_pocket";
+    test_data["target_omt"] = tripoint_zero;
+    test_data["return_omt"] = tripoint_zero;
+    test_data["bounds_min_omt"] = tripoint( -4, -4, 0 );
+    test_data["bounds_max_omt"] = tripoint( 4, 4, 0 );
+    test_data["outside_local"] = tripoint( 500, 500, 0 );
+
+    run_lua_test_script( lua, "pocket_dimension_api_test.lua" );
+
+    CHECK( test_data["before_dim"].get<std::string>() == "" );
+    CHECK( test_data["before_map_dim"].get<std::string>() == "" );
+    CHECK( test_data["noop_travel"].get<bool>() );
+    CHECK_FALSE( test_data["invalid_bounds_travel"].get<bool>() );
+    CHECK( test_data["after_dim"].get<std::string>() == "" );
+    CHECK( test_data["after_map_dim"].get<std::string>() == "" );
+    CHECK_FALSE( test_data["outside_is_oob"].get<bool>() );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )
