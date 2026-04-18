@@ -23,6 +23,7 @@ struct lua_state_deleter {
 bool has_lua();
 int get_lua_api_version();
 std::string get_lapi_version_string();
+std::string get_lua_achievements_text();
 void startup_lua_test();
 auto generate_lua_docs( const std::filesystem::path &script_path,
                         const std::filesystem::path &to ) -> bool;
@@ -74,5 +75,4 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory );
 void resolve_lua_bionic_and_mutation_callbacks();
 
 } // namespace cata
-
 
