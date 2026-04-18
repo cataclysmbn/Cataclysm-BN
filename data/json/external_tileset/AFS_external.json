@@ -607,7 +607,7 @@
             "rotates": true
           },
           { "id": "mon_uafv_xm246e1", "fg": 401, "rotates": false },
-          { "id": "corpse_mon_uafv_xm246e1", "fg": 402, "rotates": false }
+          { "id": "broken_uafv_xm246e1", "fg": 402, "rotates": false }
         ],
         "//": "range 369 to 415",
         "sprite_width": 64,
