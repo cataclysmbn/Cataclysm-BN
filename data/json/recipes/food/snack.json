@@ -373,5 +373,22 @@
       [ [ "cacao_nibs", 5 ], [ "cooking_oil", 2 ], [ "edible_tallow_lard", 1, "LIST" ] ],
       [ [ "sugar", 10 ] ]
     ]
+  },
+  {
+    "type": "recipe",
+    "result": "trailmix",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_SNACK",
+    "skill_used": "cooking",
+    "difficulty": 0,
+    "autolearn": true,
+    "time": "5 m",
+    "components": [
+      [ [ "nuts_tasty", 4, "LIST" ] ],
+      [ [ "nuts_tasty", 4, "LIST" ] ],
+      [ [ "cacao_nibs", 4 ] ],
+      [ [ "apple_sugar", 4 ], [ "dry_fruit", 4 ], [ "raisins", 4 ] ],
+      [ [ "salt", 8 ] ]
+    ]
   }
 ]
