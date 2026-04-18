@@ -117,6 +117,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Download translation artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: translations
+          path: .
+        continue-on-error: true
+
       - name: Create VERSION.TXT
         shell: bash
         run: |
