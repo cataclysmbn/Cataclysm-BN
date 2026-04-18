@@ -5663,47 +5663,42 @@ static bool process_map_items( item *item_ref, const tripoint &location,
     } );
 }
 
-static void process_vehicle_items( vehicle &cur_veh, int part )
+static auto vehicle_item_needs_recharge( const item &it ) -> bool
 {
+    return it.ammo_capacity() > it.ammo_remaining() ||
+           ( it.type->battery && it.type->battery->max_capacity > it.energy_remaining() );
+}
 
-    const int recharge_part_idx = cur_veh.part_with_feature( part, VPFLAG_RECHARGE, true );
-    static const vehicle_part null_part;
-    const vehicle_part &recharge_part = recharge_part_idx >= 0 ?
-                                        cur_veh.part( recharge_part_idx ) :
-                                        null_part;
-    if( recharge_part_idx >= 0 && recharge_part.enabled &&
-        !recharge_part.removed && !recharge_part.is_broken() ) {
-        for( item *&outer : cur_veh.get_items( part ) ) {
-            bool out_of_battery = false;
-            outer->visit_items( [&cur_veh, &recharge_part, &out_of_battery]( item * it ) {
-                item &n = *it;
-                if( !n.has_flag( flag_RECHARGE ) && !n.has_flag( flag_USE_UPS ) ) {
-                    return VisitResponse::NEXT;
-                }
-                if( n.ammo_capacity() > n.ammo_remaining() ||
-                    ( n.type->battery && n.type->battery->max_capacity > n.energy_remaining() ) ) {
-                    int power = recharge_part.info().bonus;
-                    while( power >= 1000 || x_in_y( power, 1000 ) ) {
-                        const int missing = cur_veh.discharge_battery( 1, false );
-                        if( missing > 0 ) {
-                            out_of_battery = true;
-                            return VisitResponse::ABORT;
-                        }
-                        if( n.is_battery() ) {
-                            n.mod_energy( 1_kJ );
-                        } else {
-                            n.ammo_set( itype_battery, n.ammo_remaining() + 1 );
-                        }
-                        power -= 1000;
-                    }
-                    return VisitResponse::ABORT;
-                }
+static auto process_vehicle_items( vehicle &cur_veh ) -> void
+{
+    for( const cargo_recharge_target &entry : cur_veh.get_cargo_recharge_targets() ) {
+        if( !entry.target || !vehicle_item_needs_recharge( *entry.target ) ) {
+            continue;
+        }
 
-                return VisitResponse::SKIP;
-            } );
-            if( out_of_battery ) {
-                break;
+        const auto recharge_part_idx = cur_veh.part_with_feature( entry.cargo_part, VPFLAG_RECHARGE, true );
+        if( recharge_part_idx < 0 ) {
+            continue;
+        }
+
+        auto &target = *entry.target;
+        auto &recharge_part = cur_veh.part( recharge_part_idx );
+        if( !recharge_part.enabled || recharge_part.removed || recharge_part.is_broken() ) {
+            continue;
+        }
+
+        auto power = recharge_part.info().bonus;
+        while( power >= 1000 || x_in_y( power, 1000 ) ) {
+            const auto missing = cur_veh.discharge_battery( 1, false );
+            if( missing > 0 ) {
+                return;
             }
+            if( target.is_battery() ) {
+                target.mod_energy( 1_kJ );
+            } else {
+                target.ammo_set( itype_battery, target.ammo_remaining() + 1 );
+            }
+            power -= 1000;
         }
     }
 }
@@ -5854,16 +5849,15 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
         return;
     }
 
-    auto cargo_parts = cur_veh.get_parts_including_carried( VPFLAG_CARGO );
     if( cur_veh.has_cargo_recharge ) {
-        for( const vpart_reference &vp : cargo_parts ) {
-            process_vehicle_items( cur_veh, vp.part_index() );
-        }
+        process_vehicle_items( cur_veh );
     }
 
     if( cur_veh.active_items.empty() ) {
         return;
     }
+
+    auto cargo_parts = cur_veh.get_parts_including_carried( VPFLAG_CARGO );
 
     for( item *active_item_ref : cur_veh.active_items.get_for_processing() ) {
         if( empty( cargo_parts ) ) {

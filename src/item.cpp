@@ -4908,6 +4908,14 @@ void item::on_contents_changed()
     }
 
     encumbrance_update_ = true;
+
+    if( !has_position() || where() != item_location_type::vehicle ) {
+        return;
+    }
+
+    if( const optional_vpart_position vp = get_map().veh_at( position() ) ) {
+        vp->vehicle().invalidate_cargo_recharge_cache();
+    }
 }
 
 void item::on_damage( int qty, damage_type )
