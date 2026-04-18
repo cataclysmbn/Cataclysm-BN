@@ -1232,37 +1232,31 @@ template <typename T, typename Output>
 void find_ammo_helper( T &src, const item &obj, bool empty, Output out, bool nested )
 {
     if( obj.is_container() ) {
-        if( !obj.is_container_empty() ) {
-            auto contents_id = obj.contents.front().typeId();
+        const auto contents_are_liquid = obj.contents_made_of( LIQUID );
+        const auto is_empty_container = obj.is_container_empty();
+        const auto contents_id = contents_are_liquid ? obj.contents.front().typeId() : itype_id::NULL_ID();
 
-            // Look for containers with the same type of liquid as that already in our container
-            src.visit_items( [&nested, &out, &contents_id, &obj]( item * node ) {
-                if( node == &obj ) {
-                    // This stops containers and magazines counting *themselves* as ammo sources.
-                    return VisitResponse::SKIP;
-                }
+        src.visit_items( [&nested, &out, &obj, contents_are_liquid, is_empty_container,
+                 &contents_id]( item * node ) {
+            if( node == &obj ) {
+                return VisitResponse::SKIP;
+            }
 
+            if( contents_are_liquid ) {
                 if( node->is_container() && !node->is_container_empty() &&
                     node->contents.front().typeId() == contents_id ) {
                     out = node;
-                } else if( !node->is_container() && !node->is_in_container() && node->made_of( SOLID ) &&
-                           node->typeId() == contents_id ) {
+                }
+            } else if( node->is_container() && node->contents_made_of( LIQUID ) ) {
+                if( is_empty_container && obj.is_watertight_container() ) {
                     out = node;
                 }
-                return nested ? VisitResponse::NEXT : VisitResponse::SKIP;
-            } );
-        } else {
-            // Look for any contents we can hold
-            src.visit_items( [&nested, &out]( item * node ) {
-                if( ( node->is_watertight_container() && node->contents_made_of( LIQUID ) ) ||
-                    ( !node->is_in_container() && ( node->is_ammo() || node->is_comestible() ) &&
-                      node->made_of( SOLID ) ) ||
-                    ( node->is_container() && node->contents_made_of( SOLID ) ) ) {
-                    out = node;
-                }
-                return nested ? VisitResponse::NEXT : VisitResponse::SKIP;
-            } );
-        }
+            } else if( ( node->is_container() && node->contents_made_of( SOLID ) ) ||
+                       ( !node->is_container() && !node->is_in_container() && node->made_of( SOLID ) ) ) {
+                out = node;
+            }
+            return nested ? VisitResponse::NEXT : VisitResponse::SKIP;
+        } );
     }
     if( obj.magazine_integral() ) {
         // find suitable ammo excluding that already loaded in magazines

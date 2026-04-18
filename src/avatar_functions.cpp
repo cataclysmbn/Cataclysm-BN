@@ -666,11 +666,44 @@ bool unload_item( avatar &you, item &loc )
             return false;
         }
 
+        bool unload_all = true;
+        item *selected_stack = nullptr;
+        const auto &contained_items = it.contents.all_items_top();
+        if( contained_items.size() > 1 ) {
+            uilist stack_menu;
+            stack_menu.text = string_format( _( "Unload from %s" ), it.tname() );
+            int entry = 0;
+            for( item *stack : contained_items ) {
+                stack_menu.addentry( entry, true, -1, stack->display_name() );
+                entry++;
+            }
+            const int unload_all_entry = entry;
+            stack_menu.addentry( unload_all_entry, true, 'a', _( "Unload all" ) );
+
+            stack_menu.query();
+            if( stack_menu.ret < 0 ) {
+                return false;
+            } else if( stack_menu.ret == unload_all_entry ) {
+                unload_all = true;
+            } else if( stack_menu.ret >= 0 &&
+                       static_cast<size_t>( stack_menu.ret ) < contained_items.size() ) {
+                unload_all = false;
+                selected_stack = contained_items[ stack_menu.ret ];
+            } else {
+                return false;
+            }
+        }
+
         bool changed = false;
         std::vector<item *> liquids;
-        it.contents.remove_top_items_with( [&changed, &you, &liquids]( detached_ptr<item> &&contained ) {
+        it.contents.remove_top_items_with(
+        [&changed, &you, &liquids, unload_all, selected_stack]( detached_ptr<item> &&contained ) {
+            if( !unload_all && &*contained != selected_stack ) {
+                return std::move( contained );
+            }
             if( contained->made_of( LIQUID ) ) {
                 liquids.push_back( &*contained );
+                changed = true;
                 return std::move( contained );
             }
             int old_charges = contained->charges;
