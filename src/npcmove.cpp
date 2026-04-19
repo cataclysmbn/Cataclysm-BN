@@ -465,7 +465,8 @@ void npc::assess_danger()
     std::array<float, 27> cur_threat_map{};
     // start with a decayed version of last turn's map
     for( direction threat_dir : npc_threat_dir ) {
-        cur_threat_map[std::to_underlying( threat_dir )] = 0.25f * ai_cache.threat_map[std::to_underlying( threat_dir )];
+        cur_threat_map[std::to_underlying( threat_dir )] = 0.25f * ai_cache.threat_map[std::to_underlying(
+                    threat_dir )];
     }
     map &here = get_map();
     // cache string_id -> int_id conversion before hot loop
@@ -477,7 +478,8 @@ void npc::assess_danger()
             continue;
         }
         const int dist = rl_dist( pos(), pt );
-        cur_threat_map[std::to_underlying( direction_from( pos(), pt ) )] += 2.0f * ( NPC_DANGER_MAX - dist );
+        cur_threat_map[std::to_underlying( direction_from( pos(),
+                                           pt ) )] += 2.0f * ( NPC_DANGER_MAX - dist );
         if( dist < 3 && !has_effect( effect_npc_fire_bad ) ) {
             warn_about( "fire_bad", 1_minutes );
             add_effect( effect_npc_fire_bad, 5_turns );
@@ -702,7 +704,8 @@ void npc::assess_danger()
         direction dir_left = npc_threat_dir[( i + 7 ) % 8 ];
         ai_cache.threat_map[std::to_underlying( threat_dir )] =
             cur_threat_map[std::to_underlying( threat_dir )] + 0.1f *
-            ( cur_threat_map[std::to_underlying( dir_right )] + cur_threat_map[std::to_underlying( dir_left )] );
+            ( cur_threat_map[std::to_underlying( dir_right )] + cur_threat_map[std::to_underlying(
+                        dir_left )] );
     }
     if( assessment <= 2.0f ) {
         assessment = -10.0f + 5.0f * assessment; // Low danger if no monsters around
