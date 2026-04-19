@@ -721,5 +721,28 @@
       { "item": "motor_tiny", "prob": 25 }
     ],
     "damage_reduction": { "all": 32 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "logtruckbed",
+    "name": { "str": "log truck bed" },
+    "symbol": "H",
+    "looks_like": "cargo_space",
+    "color": "brown",
+    "broken_symbol": "#",
+    "broken_color": "brown",
+    "durability": 350,
+    "cargo_charges": 3,
+    "item": "frame",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "damage_reduction": { "all": 28 },
+    "damage_modifier": 80,
+    "description": "A truckbed designed to hold very few very large objects, primarily used for logs before the cataclysm, perhaps you can find other uses for it.",
+    "flags": [ "CARGO", "CARGO_BY_CHARGES" ]
   }
 ]

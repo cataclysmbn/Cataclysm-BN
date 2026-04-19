@@ -244,6 +244,9 @@ class vpart_info
         /** Cargo location volume */
         units::volume size = 0_ml;
 
+        /** Cargo location charge count */
+        int cargo_charges = 0;
+
         /** Mechanics skill required to install item */
         int difficulty = 0;
 

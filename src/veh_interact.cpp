@@ -2555,10 +2555,14 @@ void veh_interact::display_stats() const
 
     units::volume total_cargo = 0_ml;
     units::volume free_cargo = 0_ml;
+    int total_items = 0;
+    int free_items = 0;
     for( const vpart_reference &vp : veh->get_any_parts( "CARGO" ) ) {
         const size_t p = vp.part_index();
         total_cargo += veh->max_volume( p );
         free_cargo += veh->free_volume( p );
+        total_items += veh->max_charges( p );
+        free_items += veh->free_charges( p );
     }
 
     const int second_column = 33 + ( extraw / 4 );
@@ -2683,6 +2687,9 @@ void veh_interact::display_stats() const
         _( "Cargo Volume: <color_light_blue>%s</color> / <color_light_blue>%s</color> %s" ),
         format_volume( total_cargo - free_cargo ),
         format_volume( total_cargo ), volume_units_abbr() );
+    print_stat(
+        _( "Cargo Charges: <color_light_blue>%s</color> / <color_light_blue>%s</color>" ),
+        total_items - free_items, total_items );
     // Write the overall damage
     mvwprintz( w_stats, point( x[i], y[i] ), c_light_gray, _( "Status:" ) );
     x[i] += utf8_width( _( "Status:" ) ) + 1;

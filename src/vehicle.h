@@ -135,6 +135,8 @@ class vehicle_stack : public item_stack
         int count_limit() const override {
             return MAX_ITEM_IN_VEHICLE_STORAGE;
         }
+        bool use_total_count() const override;
+        int total_count_limit() const override;
         units::volume max_volume() const override;
 };
 
@@ -1297,6 +1299,9 @@ class vehicle
         units::volume max_volume( int part ) const;
         units::volume free_volume( int part ) const;
         units::volume stored_volume( int part ) const;
+        int max_charges( int part ) const;
+        int free_charges( int part ) const;
+        int stored_charges( int part ) const;
 
         /**
          * Remove an item from active item processing queue as necessary
