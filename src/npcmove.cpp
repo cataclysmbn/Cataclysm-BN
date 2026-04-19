@@ -251,11 +251,9 @@ tripoint npc::good_escape_direction( bool include_pos )
     float best_rating = include_pos ? rate_pt( pos(), 0.0f ) : FLT_MAX;
     candidates.emplace_back( pos() );
 
-    std::map<direction, float> adj_map;
     for( direction pt_dir : npc_threat_dir ) {
         const tripoint &pt = pos() + displace_XY( pt_dir );
-        float cur_rating = rate_pt( pt, ai_cache.threat_map[ pt_dir ] );
-        adj_map[pt_dir] = cur_rating;
+        float cur_rating = rate_pt( pt, ai_cache.threat_map[std::to_underlying( pt_dir )] );
         if( cur_rating == best_rating ) {
             candidates.emplace_back( pos() + displace_XY( pt_dir ) );
         } else if( cur_rating < best_rating ) {
@@ -442,10 +440,10 @@ void npc::assess_danger()
 
         return true;
     };
-    std::map<direction, float> cur_threat_map;
+    std::array<float, 27> cur_threat_map{};
     // start with a decayed version of last turn's map
     for( direction threat_dir : npc_threat_dir ) {
-        cur_threat_map[ threat_dir ] = 0.25f * ai_cache.threat_map[ threat_dir ];
+        cur_threat_map[std::to_underlying( threat_dir )] = 0.25f * ai_cache.threat_map[std::to_underlying( threat_dir )];
     }
     map &here = get_map();
     // cache string_id -> int_id conversion before hot loop
@@ -457,7 +455,7 @@ void npc::assess_danger()
             continue;
         }
         const int dist = rl_dist( pos(), pt );
-        cur_threat_map[direction_from( pos(), pt )] += 2.0f * ( NPC_DANGER_MAX - dist );
+        cur_threat_map[std::to_underlying( direction_from( pos(), pt ) )] += 2.0f * ( NPC_DANGER_MAX - dist );
         if( dist < 3 && !has_effect( effect_npc_fire_bad ) ) {
             warn_about( "fire_bad", 1_minutes );
             add_effect( effect_npc_fire_bad, 5_turns );
@@ -550,7 +548,7 @@ void npc::assess_danger()
             // critter danger is always at least NPC_DANGER_VERY_LOW
             float priority = std::max( critter_danger - 2.0f * ( scaled_distance - 1.0f ),
                                        is_too_close ? critter_danger : 0.0f );
-            cur_threat_map[direction_from( pos(), critter.pos() )] += priority;
+            cur_threat_map[std::to_underlying( direction_from( pos(), critter.pos() ) )] += priority;
             if( priority > highest_priority ) {
                 highest_priority = priority;
                 ai_cache.target = g->shared_from( critter );
@@ -596,7 +594,7 @@ void npc::assess_danger()
             float priority = std::max( foe_threat - 2.0f * ( scaled_distance - 1 ),
                                        is_too_close ? std::max( foe_threat, NPC_DANGER_VERY_LOW ) :
                                        0.0f );
-            cur_threat_map[direction_from( pos(), foe.pos() )] += priority;
+            cur_threat_map[std::to_underlying( direction_from( pos(), foe.pos() ) )] += priority;
             if( priority > highest_priority ) {
                 warn_about( warning, 1_minutes );
                 highest_priority = priority;
@@ -651,8 +649,9 @@ void npc::assess_danger()
         direction threat_dir = npc_threat_dir[i];
         direction dir_right = npc_threat_dir[( i + 1 ) % 8];
         direction dir_left = npc_threat_dir[( i + 7 ) % 8 ];
-        ai_cache.threat_map[threat_dir] = cur_threat_map[threat_dir] + 0.1f *
-                                          ( cur_threat_map[dir_right] + cur_threat_map[dir_left] );
+        ai_cache.threat_map[std::to_underlying( threat_dir )] =
+            cur_threat_map[std::to_underlying( threat_dir )] + 0.1f *
+            ( cur_threat_map[std::to_underlying( dir_right )] + cur_threat_map[std::to_underlying( dir_left )] );
     }
     if( assessment <= 2.0f ) {
         assessment = -10.0f + 5.0f * assessment; // Low danger if no monsters around

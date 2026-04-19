@@ -511,7 +511,7 @@ struct npc_short_term_cache {
     // Use weak_ptr to avoid circular references between Creatures
     std::vector<weak_ptr_fast<Creature>> friends;
     std::vector<sphere> dangerous_explosives;
-    std::map<direction, float> threat_map;
+    std::array<float, 27> threat_map;
     // Cache of locations the NPC has searched recently in npc::find_item()
     lru_cache<tripoint, int> searched_tiles;
 };

@@ -179,9 +179,7 @@ npc::npc()
     attitude = NPCATT_NULL;
 
     *path_settings = pathfinding_settings( 0, 1000, 1000, 10, true, true, true, false, true );
-    for( direction threat_dir : npc_threat_dir ) {
-        ai_cache.threat_map[ threat_dir ] = 0.0f;
-    }
+    ai_cache.threat_map.fill( 0.0f );
 
     // This should be in Character constructor, but because global avatar
     // gets instantiated on game launch and not after data loading stage
@@ -2614,7 +2612,7 @@ void npc::reboot()
     ai_cache.my_weapon_value = 0;
     ai_cache.friends.clear();
     ai_cache.dangerous_explosives.clear();
-    ai_cache.threat_map.clear();
+    ai_cache.threat_map.fill( 0.0f );
     ai_cache.searched_tiles.clear();
     activity = std::make_unique<player_activity>();
     clear_destination();
