@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <map>
+#include <numeric>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -9,9 +11,11 @@
 
 #include "bodypart.h"
 #include "calendar.h"
+#include "character.h"
 #include "mutation.h"
 #include "npc.h"
 #include "options.h"
+#include "options_helpers.h"
 #include "player.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -202,4 +206,108 @@ TEST_CASE( "Mutating marloss does not crash on missing category data", "[mutatio
 
     CHECK( dummy.mutate_towards( trait_marloss ) );
     CHECK( dummy.has_trait( trait_marloss ) );
+}
+
+// Returns the sum of mutation point costs for all mutations a character currently has.
+static auto mutation_cost_sum( const Character &c ) -> int
+{
+    return std::ranges::fold_left(
+    c.get_mutations() | std::views::transform( []( const trait_id & m ) {
+        return m->cost;
+    } ), 0, std::plus<int> {} );
+}
+
+// Marked [.] so it only runs when explicitly requested — statistical and slow.
+TEST_CASE( "mutate_category direction system trends selection toward target", "[mutations][.]" )
+{
+    REQUIRE( get_option<bool>( "BALANCED_MUTATIONS" ) );
+
+    static const mutation_category_id cat_alpha( "ALPHA" );
+    static const trait_id trait_ROT3( "ROT3" );
+    constexpr int trials = 10000;
+
+    SECTION( "High score target yields mostly positive mutations" ) {
+        override_option target_opt( "MUTATION_SCORE_TARGET", "20" );
+
+        auto positive = 0;
+        auto negative = 0;
+
+        for( auto i = 0; i < trials; ++i ) {
+            npc dummy;
+            const auto before = mutation_cost_sum( dummy );
+            dummy.mutate_category( cat_alpha );
+            const auto delta = mutation_cost_sum( dummy ) - before;
+            if( delta > 0 )      { ++positive; }
+            else if( delta < 0 ) { ++negative; }
+        }
+
+        const auto changed = positive + negative;
+        REQUIRE( changed > 0 );
+        const auto positive_rate = static_cast<float>( positive ) / static_cast<float>( changed );
+        INFO( "Positive: " << positive << "  Negative: " << negative
+              << "  Rate: " << positive_rate );
+        CHECK( positive_rate > 0.80f );
+    }
+
+    SECTION( "Low score target yields lower positive rate than high score target" ) {
+        auto positive_high = 0;
+        auto changed_high  = 0;
+        auto positive_low  = 0;
+        auto changed_low   = 0;
+
+        {
+            override_option target_opt( "MUTATION_SCORE_TARGET", "20" );
+            for( auto i = 0; i < trials; ++i ) {
+                npc dummy;
+                const auto before = mutation_cost_sum( dummy );
+                dummy.mutate_category( cat_alpha );
+                const auto delta = mutation_cost_sum( dummy ) - before;
+                if( delta != 0 ) {
+                    ++changed_high;
+                    if( delta > 0 ) { ++positive_high; }
+                }
+            }
+        }
+        {
+            override_option target_opt( "MUTATION_SCORE_TARGET", "-20" );
+            for( auto i = 0; i < trials; ++i ) {
+                npc dummy;
+                const auto before = mutation_cost_sum( dummy );
+                dummy.mutate_category( cat_alpha );
+                const auto delta = mutation_cost_sum( dummy ) - before;
+                if( delta != 0 ) {
+                    ++changed_low;
+                    if( delta > 0 ) { ++positive_low; }
+                }
+            }
+        }
+
+        REQUIRE( changed_high > 0 );
+        REQUIRE( changed_low > 0 );
+        const auto rate_high = static_cast<float>( positive_high ) / static_cast<float>( changed_high );
+        const auto rate_low  = static_cast<float>( positive_low )  / static_cast<float>( changed_low );
+        INFO( "High target positive rate: " << rate_high
+              << "  Low target positive rate: " << rate_low );
+        CHECK( rate_high > rate_low );
+    }
+
+    SECTION( "High score target preferentially removes existing bad mutations" ) {
+        REQUIRE( trait_ROT3.is_valid() );
+        override_option target_opt( "MUTATION_SCORE_TARGET", "20" );
+
+        auto removed = 0;
+
+        for( auto i = 0; i < trials; ++i ) {
+            npc dummy;
+            dummy.set_mutation( trait_ROT3 );
+            dummy.mutate_category( cat_alpha );
+            if( !dummy.has_trait( trait_ROT3 ) ) {
+                ++removed;
+            }
+        }
+
+        const auto removal_rate = static_cast<float>( removed ) / static_cast<float>( trials );
+        INFO( "ROT3 removal rate: " << removal_rate );
+        CHECK( removal_rate > 0.30f );
+    }
 }

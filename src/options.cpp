@@ -3167,6 +3167,13 @@ void options_manager::add_options_world_default()
          true
        );
 
+    add( "MUTATION_SCORE_TARGET", world_default, translate_marker( "Mutation score target" ),
+         translate_marker( "Genetic score offset the balanced mutation system trends toward.  "
+                           "Higher values cause mutations to trend positive for longer before leveling off.  "
+                           "Negative values make uncontrolled mutations trend harmful by default." ),
+         -100, 100, 8
+       );
+
     add_empty_line();
 
     add( "POCKET_SIMULATION_LEVEL", world_default, translate_marker( "Pocket Dimension Simulation" ),

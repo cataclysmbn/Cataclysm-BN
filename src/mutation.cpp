@@ -8,6 +8,7 @@
 #include <memory>
 #include <numeric>
 #include <unordered_set>
+#include <ranges>
 
 #include "avatar_action.h"
 #include "bionics.h"
@@ -835,92 +836,79 @@ struct potential_mutation {
 
 std::map<trait_id, float> Character::mutation_chances() const
 {
-    bool force_bad = false;
-    const bool force_good = false;
-    if( has_trait( trait_CHAOTIC_BAD ) ) {
-        force_bad = true;
-    }
+    // CHAOTIC_BAD hard-forces all candidates to be bad mutations only.
+    const bool force_bad = has_trait( trait_CHAOTIC_BAD );
 
-    int current_score = genetic_score( *this );
-    // 10/10/10/10 in stats, balanced traits, plus tip
-    int expected_score = 4 * 10 + 6;
-    int direction = expected_score - current_score + mutation_value( "mutagen_target_modifier" );
+    // Direction: how far the character's genetic score is from the target.
+    // Positive values trend selection toward better mutations, negative toward worse.
+    // Traits influence this via mutagen_target_modifier (e.g. Robust Genetics: +8).
+    const int current_score  = genetic_score( *this );
+    const int expected_score = 4 * 10 + get_option<int>( "MUTATION_SCORE_TARGET" );
+    const int direction      = expected_score - current_score +
+                               mutation_value( "mutagen_target_modifier" );
     add_msg_if_player( m_debug, "Mutation target value: %s", direction );
 
-    // Duplicates allowed - they'll increase chances of change
+    // Build candidate pool. Upgrades and additions weight 3x, removals 2x,
+    // fresh additions 1x. Duplicates are intentional — they raise that candidate's weight.
     std::vector<potential_mutation> potential;
 
-    for( const mutation_branch &traits_iter : mutation_branch::get_all() ) {
-        const trait_id &base_mutation = traits_iter.id;
-        const mutation_branch &base_mdata = traits_iter;
-        bool thresh_save = base_mdata.threshold;
-        bool prof_save = base_mdata.profession;
-        bool purify_save = !base_mdata.purifiable;
-        bool can_remove = !thresh_save && !prof_save && !purify_save;
+    for( const mutation_branch &branch : mutation_branch::get_all() ) {
+        const trait_id &base_mutation = branch.id;
+        const bool can_remove = !branch.threshold && !branch.profession && branch.purifiable;
 
         if( has_trait( base_mutation ) ) {
-            for( const trait_id &mutation : base_mdata.replacements ) {
-                if( mutation->valid && mutation_ok( mutation, force_good, force_bad ) ) {
+            for( const trait_id &mutation : branch.replacements ) {
+                if( mutation->valid && mutation_ok( mutation, false, force_bad ) ) {
                     potential.emplace_back( base_mutation, mutation, 3 );
                 }
             }
-
-            for( const trait_id &mutation : base_mdata.additions ) {
-                if( mutation->valid && mutation_ok( mutation, force_good, force_bad ) ) {
+            for( const trait_id &mutation : branch.additions ) {
+                if( mutation->valid && mutation_ok( mutation, false, force_bad ) ) {
                     potential.emplace_back( trait_id::NULL_ID(), mutation, 3 );
                 }
             }
-
-            // Removal or downgrade (if possible)
             if( can_remove ) {
                 potential.emplace_back( base_mutation, trait_id::NULL_ID(), 2 );
             }
-        } else {
-            // Addition from nothing
-            // Duplicates addition above, but that's OK, we need to handle dupes anyway
-            if( base_mutation->valid && mutation_ok( base_mutation, force_good, force_bad ) ) {
-                potential.emplace_back( trait_id::NULL_ID(), base_mutation, 1 );
-            }
+        } else if( base_mutation->valid && mutation_ok( base_mutation, false, force_bad ) ) {
+            // Duplicates addition above, but that's OK — we need to handle dupes anyway.
+            potential.emplace_back( trait_id::NULL_ID(), base_mutation, 1 );
         }
     }
 
-    // We need all mutation categories in here
-    std::map<mutation_category_id, int> padded_mut_cat_lvl = mutation_category_level;
-    for( const mutation_branch &traits_iter : mutation_branch::get_all() ) {
-        for( const mutation_category_id &cat : traits_iter.category ) {
-            // Will do nothing if it exists already
-            padded_mut_cat_lvl.insert( std::make_pair( cat, 0 ) );
+    // Pad category levels so every category present in any mutation appears in the map.
+    std::map<mutation_category_id, int> padded_cat_levels = mutation_category_level;
+    for( const mutation_branch &branch : mutation_branch::get_all() ) {
+        for( const mutation_category_id &cat : branch.category ) {
+            padded_cat_levels.insert( { cat, 0 } );
         }
     }
 
-    const std::map<mutation_category_id, float> add_weighs =
-        calc_category_weights( padded_mut_cat_lvl, true );
-    const std::map<mutation_category_id, float> rem_weighs =
-        calc_category_weights( padded_mut_cat_lvl, false );
+    const auto add_weights = calc_category_weights( padded_cat_levels, true );
+    const auto rem_weights = calc_category_weights( padded_cat_levels, false );
 
-    // Not normalized
+    // Score each candidate via a bell curve: mutations that move the character toward
+    // the target genetic score weight higher; those moving away weight lower.
+    // Not normalized yet — duplicates accumulate weight intentionally.
     std::map<trait_id, float> chances;
 
-    // Warning: has duplicates
     for( const potential_mutation &pm : potential ) {
-        int cost_from = pm.from.is_valid() ? pm.from->cost : 0;
-        int cost_to = pm.to.is_valid() ? pm.to->cost : 0;
-        int score_diff = cost_to - cost_from;
+        const int cost_from  = pm.from.is_valid() ? pm.from->cost : 0;
+        const int cost_to    = pm.to.is_valid()   ? pm.to->cost   : 0;
+        const int score_diff = cost_to - cost_from;
 
         if( pm.to.is_valid() ) {
-            float cat_mod = std::accumulate( pm.to->category.begin(), pm.to->category.end(), 0.0f,
-            [&add_weighs]( float m, const mutation_category_id & cat ) {
-                return std::max( m, add_weighs.at( cat ) );
+            const float cat_mod = std::accumulate( pm.to->category.begin(), pm.to->category.end(), 0.0f,
+            [&add_weights]( float m, const mutation_category_id & cat ) {
+                return std::max( m, add_weights.at( cat ) );
             } );
-            float c = score_difference_to_chance( direction + score_diff );
-            chances[pm.to] += c * cat_mod;
+            chances[pm.to] += score_difference_to_chance( direction + score_diff ) * cat_mod;
         } else if( pm.from.is_valid() ) {
-            float cat_mod = std::accumulate( pm.from->category.begin(), pm.from->category.end(), 0.0f,
-            [&rem_weighs]( float m, const mutation_category_id & cat ) {
-                return std::min( m, rem_weighs.at( cat ) );
+            const float cat_mod = std::accumulate( pm.from->category.begin(), pm.from->category.end(), 0.0f,
+            [&rem_weights]( float m, const mutation_category_id & cat ) {
+                return std::min( m, rem_weights.at( cat ) );
             } );
-            float c = score_difference_to_chance( direction - score_diff );
-            chances[pm.from] += c * cat_mod;
+            chances[pm.from] += score_difference_to_chance( direction - score_diff ) * cat_mod;
         }
     }
 
@@ -1136,32 +1124,97 @@ void Character::mutate_category( const mutation_category_id &cat )
         return;
     }
 
-    bool force_bad = one_in( 3 ) && !get_option<bool>( "BALANCED_MUTATIONS" );
-    bool force_good = false;
-    if( has_trait( trait_ROBUST ) && force_bad ) {
-        // Robust Genetics gives you a 33% chance for a good mutation,
-        // instead of the 33% chance of a bad one.
-        force_bad = false;
-        force_good = true;
-    }
-    if( has_trait( trait_CHAOTIC_BAD ) ) {
-        force_bad = true;
-        force_good = false;
+    // CHAOTIC_BAD hard-forces selection to bad mutations only, same as untargeted.
+    const bool force_bad = has_trait( trait_CHAOTIC_BAD );
+
+    if( !get_option<bool>( "BALANCED_MUTATIONS" ) ) {
+        // Legacy behavior: 33% chance of a bad mutation; Robust Genetics converts it to good.
+        bool legacy_bad  = !force_bad && one_in( 3 );
+        bool legacy_good = false;
+        if( legacy_bad && has_trait( trait_ROBUST ) ) {
+            legacy_bad  = false;
+            legacy_good = true;
+        }
+        const bool fb = force_bad || legacy_bad;
+
+        std::vector<trait_id> valid = mutations_category[cat];
+        std::erase_if( valid, [&]( const trait_id & tid ) {
+            return !mutation_ok( tid, legacy_good, fb );
+        } );
+        mutate_towards( valid, 2 );
+        return;
     }
 
-    // Pull the category's list for valid mutations
-    std::vector<trait_id> valid = mutations_category[cat];
+    // Direction-based: weight candidates by the same bell curve used for untargeted mutations,
+    // restricted to this category. Traits shift direction via mutagen_target_modifier.
+    const int direction = 4 * 10 + get_option<int>( "MUTATION_SCORE_TARGET" )
+                          - genetic_score( *this )
+                          + mutation_value( "mutagen_target_modifier" );
 
-    // Remove anything we already have, that we have a child of, or that
-    // goes against our intention of a good/bad mutation
-    for( size_t i = 0; i < valid.size(); i++ ) {
-        if( !mutation_ok( valid[i], force_good, force_bad ) ) {
-            valid.erase( valid.begin() + i );
-            i--;
+    // Accumulate weights before normalizing, matching mutation_chances structure.
+    std::map<trait_id, float> chances;
+
+    // Additions: peaks when cost == direction (mutation that exactly closes the gap).
+    // Using cost - direction rather than direction + cost avoids inverting at extreme values.
+    // Filter debug mutations explicitly; valid=false is for untargeted pulls only.
+    std::ranges::for_each(
+    mutations_category[cat] | std::views::filter( [&]( const trait_id & tid ) {
+        return !tid->debug && mutation_ok( tid, false, force_bad );
+    } ),
+    [&]( const trait_id & tid ) {
+        chances[tid] += score_difference_to_chance( tid->cost - direction );
+    } );
+
+    // Removals: peaks when removing a trait whose cost magnitude matches the gap.
+    // Cross-category traits use full cost; same-category traits use 75% effective cost,
+    // making cross-category removal more likely. This preserves this mutagen's own
+    // mutations when possible, preferring to clean up traits from elsewhere first.
+    if( !force_bad ) {
+        const auto &cat_pool = mutations_category[cat];
+        std::ranges::for_each(
+        mutation_branch::get_all() | std::views::filter( [&]( const mutation_branch & branch ) {
+            return has_trait( branch.id )
+                   && !branch.debug
+                   && !branch.threshold
+                   && !branch.profession
+                   && branch.purifiable;
+        } ),
+        [&]( const mutation_branch & branch ) {
+            const bool in_category = std::ranges::contains( cat_pool, branch.id );
+            const int effective_cost = in_category ? static_cast<int>( branch.cost * 0.75f )
+                                       : branch.cost;
+            chances[branch.id] += score_difference_to_chance( direction + effective_cost );
+        } );
+    }
+
+    // Weighted pick with removal: try candidates in weighted order until one succeeds.
+    // Exhausting the pool guarantees a result whenever any valid candidate exists.
+    std::vector<std::pair<trait_id, float>> candidates( chances.begin(), chances.end() );
+
+    while( !candidates.empty() ) {
+        const float total = std::ranges::fold_left(
+        candidates | std::views::transform( []( const auto & p ) { return p.second; } ),
+        0.0f, std::plus<float> {} );
+
+        float roll = rng_float( 0.0f, total );
+        auto it = std::ranges::find_if( candidates, [&roll]( const auto & p ) {
+            roll -= p.second;
+            return roll <= 0.0f;
+        } );
+        if( it == candidates.end() ) {
+            it = std::prev( candidates.end() ); // float rounding fallback
+        }
+
+        const trait_id selected = it->first;
+        candidates.erase( it );
+
+        if( has_trait( selected ) ) {
+            remove_mutation( selected );
+            return;
+        } else if( mutate_towards( selected ) ) {
+            return;
         }
     }
-
-    mutate_towards( valid, 2 );
 }
 
 static std::vector<trait_id> get_all_mutation_prereqs( const trait_id &id )

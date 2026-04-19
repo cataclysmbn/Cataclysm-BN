@@ -5112,6 +5112,7 @@
     "points": -2,
     "mixed_effect": true,
     "description": "Your DNA has been damaged in a way that causes you to continually develop more mutations.",
+    "mutagen_target_modifier": -3,
     "changes_to": [ "CHAOTIC" ],
     "category": [ "SLIME", "MEDICAL", "CHIMERA" ]
   },
@@ -5121,6 +5122,7 @@
     "name": { "str": "Genetic Chaos" },
     "points": -4,
     "description": "Your body alters itself rapidly, and without your intervention or conscious control.",
+    "mutagen_target_modifier": -6,
     "prereqs": [ "UNSTABLE", "MUT_JUNKIE" ],
     "category": [ "CHIMERA" ]
   },
