@@ -7751,7 +7751,7 @@
     "name": "Elite Operator",
     "description": "You were the best of the best, the military's finest, and among them you were better still.  Movies have been made about the missions you went on, and that's only the declassified ones. After getting back from yet another top secret mission, all you wanted to do was relax. Unfortunately, the Cataclysm had other plans, and now, stuck without your gear, you'll just have to show them what makes you tier one.",
     "points": 8,
-    "traits": [ "PROF_MILITARY" ],
+    "traits": [ "PROF_MILITARY", "PROF_SWIMMER" ],
     "skills": [
       { "level": 8, "name": "swimming" },
       { "level": 8, "name": "gun" },
