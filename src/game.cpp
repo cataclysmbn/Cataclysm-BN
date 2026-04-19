@@ -351,6 +351,7 @@ extern bool add_key_to_quick_shortcuts( int key, const std::string &category, bo
 std::unique_ptr<game> g;
 
 std::atomic<uint32_t> g_npc_friends_dirty_version{ 1 };
+uint32_t g_npcmove_attitude_epoch{ 0 };
 
 //The one and only uistate instance
 uistatedata uistate;
@@ -5371,6 +5372,7 @@ void game::npcmove()
     ZoneScoped;
     // Active NPC processing.  Extracted from monmove() so it can be
     // individually controlled by SLEEP_SKIP_NPC without affecting monsters.
+    ++g_npcmove_attitude_epoch;
     processing_npcs_ = true;
     const std::string &player_dim = m.get_bound_dimension();
     for( npc &guy : g->all_npcs() ) {

@@ -13,6 +13,7 @@
 
 #include "active_item_cache.h"
 #include "activity_handlers.h"
+#include "creature_tracker.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "cata_algo.h"
@@ -117,6 +118,17 @@ static const efftype_id effect_npc_player_looking( "npc_player_still_looking" );
 static const efftype_id effect_npc_run_away( "npc_run_away" );
 static const efftype_id effect_onfire( "onfire" );
 static const efftype_id effect_stunned( "stunned" );
+static const efftype_id effect_attention( "attention" );
+static const efftype_id effect_feral_infighting_punishment( "feral_infighting_punishment" );
+
+static const trait_id trait_BEE( "BEE" );
+static const trait_id trait_FLOWERS( "FLOWERS" );
+static const trait_id trait_MYCUS_FRIEND( "MYCUS_FRIEND" );
+static const trait_id trait_PHEROMONE_INSECT( "PHEROMONE_INSECT" );
+static const trait_id trait_PHEROMONE_MAMMAL( "PHEROMONE_MAMMAL" );
+static const trait_id trait_PROF_FERAL( "PROF_FERAL" );
+static const trait_id trait_TERRIFYING( "TERRIFYING" );
+static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 
 static const itype_id itype_battery( "battery" );
 static const itype_id itype_chem_ethanol( "chem_ethanol" );
@@ -379,6 +391,16 @@ static auto npc_turn_cached_sees( const Creature &seer, const Creature &target )
 void npc::assess_danger()
 {
     ZoneScoped;
+    // True if this NPC has traits/effects that cause monster::attitude() to return a
+    // result different from what a generic NPC would get.  When false, we can use each
+    // monster's per-npcmove-pass cached attitude instead of recomputing it.
+    const bool has_special_attitude_traits = guaranteed_hostile() || is_hallucination() ||
+            has_trait( trait_PROF_FERAL ) || has_trait( trait_BEE ) ||
+            has_trait( trait_FLOWERS ) || has_trait( trait_THRESH_MYCUS ) ||
+            has_trait( trait_MYCUS_FRIEND ) || has_trait( trait_PHEROMONE_MAMMAL ) ||
+            has_trait( trait_PHEROMONE_INSECT ) || has_trait( trait_TERRIFYING ) ||
+            has_effect( effect_attention ) || has_effect( effect_feral_infighting_punishment );
+
     float assessment = 0.0f;
     float highest_priority = 1.0f;
     int def_radius = rules.has_flag( ally_rule::follow_close ) ? follow_distance() : 6;
@@ -501,12 +523,26 @@ void npc::assess_danger()
 
     {
         ZoneScopedN( "assess_all_monsters" );
-        for( const monster &critter : g->all_monsters() ) {
+        for( const shared_ptr_fast<monster> &mon_ptr : g->critter_tracker->get_monsters_list() ) {
+            if( mon_ptr->is_dead() ) {
+                continue;
+            }
+            monster &critter = *mon_ptr;
             const auto dist = rl_dist_fast( pos(), critter.pos() );
             if( dist > default_daylight_level() ) {
                 continue;
             }
-            auto att = critter.attitude_to( *this );
+            Attitude att;
+            if( !has_special_attitude_traits &&
+                critter.cached_npc_attitude_epoch == g_npcmove_attitude_epoch ) {
+                att = critter.cached_npc_attitude;
+            } else {
+                att = critter.attitude_to( *this );
+                if( !has_special_attitude_traits ) {
+                    critter.cached_npc_attitude_epoch = g_npcmove_attitude_epoch;
+                    critter.cached_npc_attitude = att;
+                }
+            }
             if( att == Attitude::A_FRIENDLY ) {
                 ai_cache.friends.emplace_back( g->shared_from( critter ) );
                 continue;

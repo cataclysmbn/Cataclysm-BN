@@ -66,6 +66,9 @@ extern int savegame_loading_version;
 // Monotonically increasing counter; bumped whenever NPC faction membership or active NPC list
 // changes so each NPC can lazily invalidate its cached friends list.
 extern std::atomic<uint32_t> g_npc_friends_dirty_version;
+// Bumped once per npcmove() pass; monsters use it to know when their cached generic-NPC
+// attitude is stale.
+extern uint32_t g_npcmove_attitude_epoch;
 
 class input_context;
 
