@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <optional>
 #include <set>
 #include <string>
@@ -44,6 +45,12 @@ class scent_map
 
         const game &gm;
         map &m_;
+
+        // Per-dimension sets of absolute submap positions that currently have at least
+        // one non-zero scent value. Keyed by dimension_id to match MAPBUFFER_REGISTRY.
+        // Populated by raw_scent_set(); pruned by decay() once all values reach zero.
+        // Lets decay() skip the full mapbuffer scan for each dimension.
+        std::map<std::string, std::set<tripoint>> scent_submaps_;
 
     public:
         scent_map( const game &g, map &m ) : gm( g ), m_( m ) { }
