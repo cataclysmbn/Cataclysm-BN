@@ -7745,7 +7745,7 @@
       "female": [ "boy_shorts", "sports_bra", "blue_topaz_platinum_earring" ]
     }
   },
-    {
+  {
     "type": "profession",
     "id": "elite_specops",
     "name": "Elite Operator",
@@ -7763,15 +7763,7 @@
       { "level": 3, "name": "firstaid" }
     ],
     "items": {
-      "both": {
-        "items": [
-          "pants_army",
-          "tshirt",
-          "jacket_army",
-          "socks",
-          "boots_combat"
-        ]
-      },
+      "both": { "items": [ "pants_army", "tshirt", "jacket_army", "socks", "boots_combat" ] },
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boxer_shorts" ]
     }
