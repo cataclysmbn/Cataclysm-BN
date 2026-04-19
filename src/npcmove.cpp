@@ -537,8 +537,8 @@ void npc::assess_danger()
                 // so this skips the bad weak_ptrs, but this doesn't functionally change the AI Priority
                 // because the horse the NPC is riding is still in the ai_cache.friends vector,
                 // so either one would count as a friendly for this purpose.
-                if( guy.lock() ) {
-                    is_too_close |= too_close( critter.pos(), guy.lock()->pos(), def_radius );
+                if( auto ally = guy.lock() ) {
+                    is_too_close |= too_close( critter.pos(), ally->pos(), def_radius );
                 }
             }
             // ignore distant monsters that our rules prevent us from attacking
@@ -584,9 +584,11 @@ void npc::assess_danger()
             if( self_defense_only ) {
                 break;
             }
-            is_too_close |= too_close( foe.pos(), guy.lock()->pos(), def_radius );
-            if( is_too_close ) {
-                break;
+            if( auto ally = guy.lock() ) {
+                is_too_close |= too_close( foe.pos(), ally->pos(), def_radius );
+                if( is_too_close ) {
+                    break;
+                }
             }
         }
 
@@ -670,7 +672,8 @@ float npc::character_danger( const Character &u ) const
     }
     ret += u_weap_val;
 
-    ret += hp_percentage() * get_hp_max( bodypart_id( "torso" ) ) / 100.0 / my_weap_val;
+    static const bodypart_id torso_id( "torso" );
+    ret += hp_percentage() * get_hp_max( torso_id ) / 100.0 / my_weap_val;
 
     ret += my_gun ? u.get_dodge() / 2 : u.get_dodge();
 
