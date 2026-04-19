@@ -549,7 +549,9 @@ void npc::assess_danger()
                 ai_cache.friends.emplace_back( g->shared_from( critter ) );
                 continue;
             }
-            if( att != Attitude::A_HOSTILE && ( critter.friendly || !is_enemy() ) ) {
+            // Skip non-hostile monsters entirely — includes MATT_IGNORE, MATT_FLEE, and
+            // MATT_FOLLOW (tracking but not yet attacking; take neutral attitude at face value).
+            if( att != Attitude::A_HOSTILE ) {
                 continue;
             }
             if( !npc_turn_cached_sees( *this, critter ) ) {
