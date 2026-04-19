@@ -2855,6 +2855,9 @@ bool map::supports_above( const tripoint &p ) const
 
 bool map::has_floor_or_support( const tripoint &p ) const
 {
+    if( p.z < -OVERMAP_DEPTH || p.z > OVERMAP_HEIGHT ) {
+        return false;
+    }
     const tripoint below( p.xy(), p.z - 1 );
     return !valid_move( p, below, false, true );
 }

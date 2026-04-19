@@ -31,6 +31,7 @@
 #include "int_id.h"
 #include "line.h"
 #include "map.h"
+#include "mapgendata.h"
 #include "memory_fast.h"
 #include "mongroup.h"
 #include "monster.h"
@@ -884,6 +885,27 @@ std::optional<mapgen_arguments> *overmapbuffer::mapgen_args( const tripoint_abs_
 {
     const overmap_with_local_coords om_loc = get_om_global( p );
     return om_loc.om->mapgen_args( om_loc.local );
+}
+
+std::optional<mapgen_arguments> overmapbuffer::get_or_init_mapgen_args(
+    const tripoint_abs_omt &p, const mapgendata &md, const std::string &terrain_type_id )
+{
+    const overmap_with_local_coords om_loc = get_om_global( p );
+    std::optional<mapgen_arguments> *const maybe_args = om_loc.om->mapgen_args( om_loc.local );
+    if( !maybe_args ) {
+        return std::nullopt;
+    }
+    auto lk = std::lock_guard( mapgen_args_mutex_ );
+    if( !*maybe_args ) {
+        const std::optional<overmap_special_id> s = om_loc.om->overmap_special_at( om_loc.local );
+        if( !s ) {
+            debugmsg( "mapgen params expected but no overmap special found for terrain %s",
+                      terrain_type_id );
+            return std::nullopt;
+        }
+        *maybe_args = ( **s ).get_args( md );
+    }
+    return *maybe_args;
 }
 
 bool overmapbuffer::reveal( const point_abs_omt &center, int radius, int z )
