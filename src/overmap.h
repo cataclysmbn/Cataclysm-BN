@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <climits>
 #include <cstdlib>
 #include <functional>
@@ -315,6 +316,20 @@ class overmap
         const oter_id &ter( const tripoint_om_omt &p ) const;
         std::string *join_used_at( const om_pos_dir & );
         std::optional<mapgen_arguments> *mapgen_args( const tripoint_om_omt & );
+
+        /** Slot returned by get_mapgen_args_slot for lock-free fast-path access. */
+        struct mapgen_args_slot {
+            std::optional<mapgen_arguments> *args = nullptr;
+            /** Atomic flag: 0 = not yet initialized, 1 = initialized.
+             *  Access via std::atomic_ref<char>; never read/written directly. */
+            char *init_flag = nullptr;
+            explicit operator bool() const noexcept { return args != nullptr; }
+        };
+        mapgen_args_slot get_mapgen_args_slot( const tripoint_om_omt &p );
+
+        /** Rebuilds mapgen_args_init_flags_ from mapgen_arg_storage after load. */
+        void sync_mapgen_args_init_flags();
+
         bool &seen( const tripoint_om_omt &p );
         bool seen( const tripoint_om_omt &p ) const;
         bool &explored( const tripoint_om_omt &p );
@@ -460,6 +475,10 @@ class overmap
         // to be evaluated.
         std::vector<std::optional<mapgen_arguments>> mapgen_arg_storage;
         std::unordered_map<tripoint_om_omt, int> mapgen_args_index;
+        /** Parallel to mapgen_arg_storage; non-zero means the entry is fully written.
+         *  Stored as plain char so the vector is movable; accessed atomically via
+         *  std::atomic_ref<char> to provide acquire/release ordering. */
+        std::vector<char> mapgen_args_init_flags_;
 
         oter_id get_default_terrain( int z ) const;
 
