@@ -3,8 +3,8 @@
 /**
  * @module
  *
- * Reports which items do not have a direct sprite in a tileset, and which only
- * render through an item `looks_like` fallback.
+ * Reports which items and monsters do not have a direct sprite in a tileset,
+ * and which only render through a `looks_like` fallback.
  *
  * example usage:
  *   `deno run -R scripts/tileset_missing_items.ts --limit 50`
@@ -29,7 +29,7 @@ const SKIP_INPUT_JSON = [/(modinfo|default|replacements|mod_tileset)\.json/]
 export const getJsonPathSkips = (source: "input" | "tileset"): RegExp[] =>
   source === "tileset" ? [] : Array.from(SKIP_INPUT_JSON)
 
-const ITEM_TYPES = new Set([
+const REPORTABLE_TYPES = new Set([
   "AMMO",
   "ARMOR",
   "BATTERY",
@@ -42,8 +42,8 @@ const ITEM_TYPES = new Set([
   "GUN",
   "GUNMOD",
   "MAGAZINE",
+  "MONSTER",
   "PET_ARMOR",
-  "SPECIES",
   "TOOL",
   "TOOLMOD",
   "TOOL_ARMOR",
@@ -72,7 +72,51 @@ interface TileLookup {
   chain: string[]
 }
 
+type OutputFormat = "text" | "json" | "md"
+
+interface VariantOnlyEntry {
+  id: string
+  tileId: string
+  path: string
+}
+
+interface MissingEntry {
+  id: string
+  path: string
+}
+
+interface LooksLikeEntry {
+  id: string
+  tileId: string
+  chain: string[]
+  path: string
+}
+
+interface ReportSection {
+  title: string
+  rows: string[]
+}
+
+interface RenderedReportSection extends ReportSection {
+  shownRows: string[]
+  hiddenCount: number
+}
+
+interface MissingTilesetReport {
+  tilesets: string[]
+  inputs: string[]
+  checkedIds: number
+  directSprites: number
+  variantSpritesOnly: number
+  looksLikeFallbackOnly: number
+  missingEntirely: number
+  variantOnly: VariantOnlyEntry[]
+  missing: MissingEntry[]
+  looksLikeOnly?: LooksLikeEntry[]
+}
+
 const TILE_ID_PREFIXES = ["overlay_wielded_", "overlay_worn_"]
+const OUTPUT_FORMATS = new Set<OutputFormat>(["text", "json", "md"])
 const TILE_ID_SUFFIX_PATTERNS = [
   /^(.+)_season_(spring|summer|autumn|winter)$/,
   /^(.+)_harvested$/,
@@ -270,6 +314,14 @@ export const buildVariantTileLookup = (tileIds: Iterable<string>): Map<string, s
   return variantTileLookup
 }
 
+export const parseOutputFormat = (format: string): OutputFormat => {
+  if (OUTPUT_FORMATS.has(format as OutputFormat)) {
+    return format as OutputFormat
+  }
+
+  throw new Error(`Unsupported --format '${format}'. Use one of: text, json, md.`)
+}
+
 const collectExplicitIgnoredItemIdsFromValue = (
   value: unknown,
   ignoredItemIds: Set<string>,
@@ -354,7 +406,7 @@ export const readJsonPaths = async (
 }
 
 const toDefinition = (value: unknown, path: string): ItemDefinition | null => {
-  if (!isRecord(value) || typeof value.type !== "string" || !ITEM_TYPES.has(value.type)) {
+  if (!isRecord(value) || typeof value.type !== "string" || !REPORTABLE_TYPES.has(value.type)) {
     return null
   }
 
@@ -518,40 +570,195 @@ export const findTileByLooksLike = (
   }
 }
 
-const printSection = (
-  title: string,
-  rows: string[],
-  limit: number,
-): void => {
-  console.log(`\n${title} (${rows.length})`)
-  if (rows.length === 0) {
-    console.log("  (none)")
-    return
-  }
-
-  const shownRows = limit > 0 ? rows.slice(0, limit) : rows
-  for (const row of shownRows) {
-    console.log(row)
-  }
-
-  if (limit > 0 && rows.length > limit) {
-    console.log(`... ${rows.length - limit} more`)
+const renderSection = (section: ReportSection, limit: number): RenderedReportSection => {
+  const shownRows = limit > 0 ? section.rows.slice(0, limit) : section.rows
+  return {
+    ...section,
+    shownRows,
+    hiddenCount: section.rows.length - shownRows.length,
   }
 }
 
-if (import.meta.main) {
+const formatVariantOnlyEntry = (entry: VariantOnlyEntry): string =>
+  `${entry.id}\t${entry.tileId}\t${entry.path}`
+
+const formatMissingEntry = (entry: MissingEntry): string => `${entry.id}\t${entry.path}`
+
+const formatLooksLikeEntry = (entry: LooksLikeEntry): string =>
+  `${entry.chain.join(" -> ")}\t${entry.path}`
+
+const getReportSections = (report: MissingTilesetReport): ReportSection[] => [
+  {
+    title: "Missing id (but variant tile exists)",
+    rows: report.variantOnly.map(formatVariantOnlyEntry),
+  },
+  {
+    title: "Missing id",
+    rows: report.missing.map(formatMissingEntry),
+  },
+  ...(report.looksLikeOnly
+    ? [{
+      title: "Missing id (but looks_like tile exists)",
+      rows: report.looksLikeOnly.map(formatLooksLikeEntry),
+    }]
+    : []),
+]
+
+const limitEntries = <T>(entries: readonly T[], limit: number, total: number = entries.length) => {
+  const shownEntries = limit > 0 ? entries.slice(0, limit) : entries
+  return {
+    total,
+    shown: shownEntries.length,
+    hidden: total - shownEntries.length,
+    entries: shownEntries,
+  }
+}
+
+export const renderTextReport = (report: MissingTilesetReport, limit: number): string => {
+  const lines = [
+    `Tilesets: ${report.tilesets.join(", ")}`,
+    `Inputs: ${report.inputs.join(", ")}`,
+    `Checked ids: ${report.checkedIds}`,
+    `Direct sprites: ${report.directSprites}`,
+    `Variant sprites only: ${report.variantSpritesOnly}`,
+  ]
+
+  if (report.looksLikeOnly !== undefined) {
+    lines.push(`Looks_like fallback only: ${report.looksLikeFallbackOnly}`)
+  }
+
+  lines.push(`Missing entirely: ${report.missingEntirely}`)
+
+  for (const section of getReportSections(report).map((section) => renderSection(section, limit))) {
+    lines.push("", `${section.title} (${section.rows.length})`)
+    if (section.rows.length === 0) {
+      lines.push("  (none)")
+      continue
+    }
+
+    for (const row of section.shownRows) {
+      lines.push(row)
+    }
+
+    if (section.hiddenCount > 0) {
+      lines.push(`... ${section.hiddenCount} more`)
+    }
+  }
+
+  return lines.join("\n")
+}
+
+export const renderJsonReport = (report: MissingTilesetReport, limit: number): string => {
+  const looksLikeOnlyEntries = report.looksLikeOnly?.map((entry) => ({
+    id: entry.id,
+    tile_id: entry.tileId,
+    chain: entry.chain,
+    path: entry.path,
+  })) ?? []
+
+  return JSON.stringify(
+    {
+      tilesets: report.tilesets,
+      inputs: report.inputs,
+      counts: {
+        checked_ids: report.checkedIds,
+        direct_sprites: report.directSprites,
+        variant_sprites_only: report.variantSpritesOnly,
+        looks_like_fallback_only: report.looksLikeFallbackOnly,
+        missing_entirely: report.missingEntirely,
+      },
+      variant_only: limitEntries(
+        report.variantOnly.map((entry) => ({
+          id: entry.id,
+          tile_id: entry.tileId,
+          path: entry.path,
+        })),
+        limit,
+      ),
+      missing: limitEntries(
+        report.missing.map((entry) => ({
+          id: entry.id,
+          path: entry.path,
+        })),
+        limit,
+      ),
+      looks_like_only: limitEntries(
+        looksLikeOnlyEntries,
+        limit,
+        report.looksLikeFallbackOnly,
+      ),
+    },
+    null,
+    2,
+  )
+}
+
+export const renderMarkdownReport = (report: MissingTilesetReport, limit: number): string => {
+  const lines = [
+    "# Tileset Missing Sprites",
+    "",
+    `- Tilesets: ${report.tilesets.map((path) => `\`${path}\``).join(", ")}`,
+    `- Inputs: ${report.inputs.map((path) => `\`${path}\``).join(", ")}`,
+    `- Checked ids: ${report.checkedIds}`,
+    `- Direct sprites: ${report.directSprites}`,
+    `- Variant sprites only: ${report.variantSpritesOnly}`,
+  ]
+
+  if (report.looksLikeOnly !== undefined) {
+    lines.push(`- Looks_like fallback only: ${report.looksLikeFallbackOnly}`)
+  }
+
+  lines.push(`- Missing entirely: ${report.missingEntirely}`)
+
+  for (const section of getReportSections(report).map((section) => renderSection(section, limit))) {
+    lines.push("", `## ${section.title} (${section.rows.length})`, "")
+    if (section.rows.length === 0) {
+      lines.push("(none)")
+      continue
+    }
+
+    lines.push("```text", ...section.shownRows)
+    if (section.hiddenCount > 0) {
+      lines.push(`... ${section.hiddenCount} more`)
+    }
+    lines.push("```")
+  }
+
+  return lines.join("\n")
+}
+
+export const renderReport = (
+  report: MissingTilesetReport,
+  format: OutputFormat,
+  limit: number,
+): string => {
+  switch (format) {
+    case "json":
+      return renderJsonReport(report, limit)
+    case "md":
+      return renderMarkdownReport(report, limit)
+    default:
+      return renderTextReport(report, limit)
+  }
+}
+
+const run = async (): Promise<void> => {
   const parsed = await new Command()
-    .description("Report items missing sprites in one or more tilesets")
+    .description("Report items and monsters missing sprites in one or more tilesets")
     .option("--tileset <path:string>", "Tileset path(s) to inspect", {
       collect: true,
       default: DEFAULT_TILESETS,
     })
-    .option("--input <path:string>", "Item JSON path(s) to inspect", {
+    .option("--input <path:string>", "JSON path(s) with items and monsters to inspect", {
       collect: true,
       default: DEFAULT_INPUTS,
     })
     .option("--looks-like", "Report items that are only covered by looks_like", {
       default: false,
+    })
+    .option("--format <format:string>", "Output format: text, json, or md", {
+      default: "text",
+      value: parseOutputFormat,
     })
     .option("--limit <count:number>", "Max rows to print per section", { default: 0 })
     .parse(Deno.args)
@@ -559,6 +766,7 @@ if (import.meta.main) {
   const tilesets = Array.from((parsed.options.tileset ?? DEFAULT_TILESETS) as string[])
   const input = Array.from((parsed.options.input ?? DEFAULT_INPUTS) as string[])
   const showLooksLike = Boolean(parsed.options.looksLike ?? false)
+  const format = parsed.options.format as OutputFormat
   const limit = Number(parsed.options.limit ?? 0)
 
   const tilesetSourcePaths = Array.from(
@@ -579,9 +787,9 @@ if (import.meta.main) {
     .sort((left, right) => left.id.localeCompare(right.id))
 
   const direct: string[] = []
-  const variantOnly: string[] = []
-  const fallbackOnly: string[] = []
-  const missing: string[] = []
+  const variantOnly: VariantOnlyEntry[] = []
+  const fallbackOnly: LooksLikeEntry[] = []
+  const missing: MissingEntry[] = []
 
   for (const item of reportableItems) {
     if (tileIds.has(item.id)) {
@@ -591,32 +799,49 @@ if (import.meta.main) {
 
     const variantTileId = variantTileLookup.get(item.id)
     if (variantTileId) {
-      variantOnly.push(`${item.id}\t${variantTileId}\t${toDisplayPath(item.path)}`)
+      variantOnly.push({
+        id: item.id,
+        tileId: variantTileId,
+        path: toDisplayPath(item.path),
+      })
       continue
     }
 
     const lookup = findTileByLooksLike(item.id, resolvedItems, tileIds, variantTileLookup)
     if (lookup) {
-      fallbackOnly.push(`${lookup.chain.join(" -> ")}\t${toDisplayPath(item.path)}`)
+      fallbackOnly.push({
+        id: item.id,
+        tileId: lookup.tileId,
+        chain: lookup.chain,
+        path: toDisplayPath(item.path),
+      })
       continue
     }
 
-    missing.push(`${item.id}\t${toDisplayPath(item.path)}`)
+    missing.push({ id: item.id, path: toDisplayPath(item.path) })
   }
 
-  console.log(`Tilesets: ${tilesets.map(toDisplayPath).join(", ")}`)
-  console.log(`Inputs: ${input.map(toDisplayPath).join(", ")}`)
-  console.log(`Checked items: ${reportableItems.length}`)
-  console.log(`Direct sprites: ${direct.length}`)
-  console.log(`Variant sprites only: ${variantOnly.length}`)
-  if (showLooksLike) {
-    console.log(`Looks_like fallback only: ${fallbackOnly.length}`)
+  const report: MissingTilesetReport = {
+    tilesets: tilesets.map(toDisplayPath),
+    inputs: input.map(toDisplayPath),
+    checkedIds: reportableItems.length,
+    directSprites: direct.length,
+    variantSpritesOnly: variantOnly.length,
+    looksLikeFallbackOnly: fallbackOnly.length,
+    missingEntirely: missing.length,
+    variantOnly,
+    missing,
+    looksLikeOnly: showLooksLike ? fallbackOnly : undefined,
   }
-  console.log(`Missing entirely: ${missing.length}`)
 
-  printSection("Missing ITEM id (but variant tile exists)", variantOnly, limit)
-  printSection("Missing ITEM", missing, limit)
-  if (showLooksLike) {
-    printSection("Missing ITEM (but looks_like tile exists)", fallbackOnly, limit)
+  console.log(renderReport(report, format, limit))
+}
+
+if (import.meta.main) {
+  try {
+    await run()
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error))
+    Deno.exit(1)
   }
 }

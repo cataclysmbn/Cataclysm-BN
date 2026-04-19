@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert"
+import { assertEquals, assertThrows } from "@std/assert"
 
 import {
   buildVariantTileLookup,
@@ -6,6 +6,10 @@ import {
   collectTileIdsFromConfigs,
   getJsonPathSkips,
   getTileIdAliases,
+  parseOutputFormat,
+  renderJsonReport,
+  renderMarkdownReport,
+  renderTextReport,
   resolveItemDefinitions,
   shouldIgnoreItemDefinition,
 } from "./tileset_missing_items.ts"
@@ -142,4 +146,92 @@ Deno.test("shouldIgnoreItemDefinition() ignores fake_item inheritance and explic
     shouldIgnoreItemDefinition(resolvedItems.get("acid_artillery")!, new Set(["acid_artillery"])),
     true,
   )
+})
+
+Deno.test("parseOutputFormat() accepts text, json, and md", () => {
+  assertEquals(parseOutputFormat("text"), "text")
+  assertEquals(parseOutputFormat("json"), "json")
+  assertEquals(parseOutputFormat("md"), "md")
+})
+
+Deno.test("parseOutputFormat() rejects unsupported formats", () => {
+  assertThrows(
+    () => parseOutputFormat("yaml"),
+    Error,
+    "Unsupported --format 'yaml'. Use one of: text, json, md.",
+  )
+})
+
+Deno.test("renderers format the report consistently", () => {
+  const report = {
+    tilesets: ["gfx/MSX++UnDeadPeopleEdition", "data/json/external_tileset"],
+    inputs: ["data/json"],
+    checkedIds: 10,
+    directSprites: 7,
+    variantSpritesOnly: 1,
+    looksLikeFallbackOnly: 1,
+    missingEntirely: 1,
+    variantOnly: [
+      {
+        id: "seatbelt",
+        tileId: "overlay_worn_seatbelt",
+        path: "data/json/items/generic/string.json",
+      },
+    ],
+    missing: [{ id: "missing_thing", path: "data/json/items/generic.json" }],
+    looksLikeOnly: [{
+      id: "manual_luty",
+      tileId: "pocket_firearms",
+      chain: ["manual_luty", "pocket_firearms"],
+      path: "data/json/items/book/gun.json",
+    }],
+  }
+
+  assertEquals(
+    renderTextReport(report, 0).includes("Looks_like fallback only: 1"),
+    true,
+  )
+  assertEquals(
+    renderMarkdownReport(report, 1).includes("# Tileset Missing Sprites"),
+    true,
+  )
+
+  const jsonReport = JSON.parse(renderJsonReport(report, 1)) as {
+    counts: { looks_like_fallback_only: number }
+    variant_only: { entries: Array<{ id: string; tile_id: string }>; shown: number; hidden: number }
+    looks_like_only: { entries: Array<{ id: string; tile_id: string; chain: string[] }> }
+  }
+  assertEquals(jsonReport.counts.looks_like_fallback_only, 1)
+  assertEquals(jsonReport.variant_only.entries[0].id, "seatbelt")
+  assertEquals(jsonReport.variant_only.entries[0].tile_id, "overlay_worn_seatbelt")
+  assertEquals(jsonReport.variant_only.shown, 1)
+  assertEquals(jsonReport.variant_only.hidden, 0)
+  assertEquals(jsonReport.looks_like_only.entries[0].id, "manual_luty")
+  assertEquals(jsonReport.looks_like_only.entries[0].tile_id, "pocket_firearms")
+  assertEquals(jsonReport.looks_like_only.entries[0].chain[0], "manual_luty")
+})
+
+Deno.test("renderJsonReport() keeps looks_like schema without detailed entries", () => {
+  const report = {
+    tilesets: ["gfx/MSX++UnDeadPeopleEdition"],
+    inputs: ["data/json"],
+    checkedIds: 4,
+    directSprites: 2,
+    variantSpritesOnly: 1,
+    looksLikeFallbackOnly: 3,
+    missingEntirely: 1,
+    variantOnly: [],
+    missing: [{ id: "missing_thing", path: "data/json/items/generic.json" }],
+  }
+
+  const jsonReport = JSON.parse(renderJsonReport(report, 0)) as {
+    counts: { looks_like_fallback_only: number }
+    looks_like_only: { total: number; shown: number; hidden: number; entries: unknown[] }
+  }
+
+  assertEquals(jsonReport.counts.looks_like_fallback_only, 3)
+  assertEquals(jsonReport.looks_like_only.total, 3)
+  assertEquals(jsonReport.looks_like_only.shown, 0)
+  assertEquals(jsonReport.looks_like_only.hidden, 3)
+  assertEquals(jsonReport.looks_like_only.entries, [])
 })
