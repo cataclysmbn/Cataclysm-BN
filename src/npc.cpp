@@ -512,6 +512,7 @@ void npc::set_fac( const faction_id &id )
         return;
     }
     apply_ownership_to_inv();
+    ++g_npc_friends_dirty_version;
 }
 
 void npc::apply_ownership_to_inv()
@@ -2611,6 +2612,8 @@ void npc::reboot()
     ai_cache.guard_pos = std::nullopt;
     ai_cache.my_weapon_value = 0;
     ai_cache.friends.clear();
+    ai_cache.cached_npc_friends.clear();
+    ai_cache.npc_friends_version = 0;
     ai_cache.dangerous_explosives.clear();
     ai_cache.threat_map.fill( 0.0f );
     ai_cache.searched_tiles.clear();

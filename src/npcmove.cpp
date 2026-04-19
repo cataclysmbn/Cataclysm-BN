@@ -463,18 +463,33 @@ void npc::assess_danger()
         }
     }
 
-    // find our Character friends and enemies
+    // Find our Character friends and enemies.
+    // NPC friends are cached across turns; only rebuild when faction membership or active NPC
+    // list changes (tracked via g_npc_friends_dirty_version).
     std::vector<weak_ptr_fast<Creature>> hostile_guys;
-    for( const npc &guy : g->all_npcs() ) {
-        if( &guy == this ) {
-            continue;
+    {
+        const uint32_t current_version = g_npc_friends_dirty_version.load( std::memory_order_relaxed );
+        const bool friends_dirty = ( ai_cache.npc_friends_version != current_version );
+        if( friends_dirty ) {
+            ai_cache.cached_npc_friends.clear();
         }
-
-        if( has_faction_relationship( guy, npc_factions::watch_your_back ) ) {
-            ai_cache.friends.emplace_back( g->shared_from( guy ) );
-        } else if( attitude_to( guy ) != Attitude::A_NEUTRAL && sees( guy.pos() ) ) {
-            hostile_guys.emplace_back( g->shared_from( guy ) );
+        for( const shared_ptr_fast<npc> &npc_ptr : g->raw_npcs() ) {
+            const npc &guy = *npc_ptr;
+            if( &guy == this || guy.is_dead() ) {
+                continue;
+            }
+            if( has_faction_relationship( guy, npc_factions::watch_your_back ) ) {
+                if( friends_dirty ) {
+                    ai_cache.cached_npc_friends.emplace_back( g->shared_from( guy ) );
+                }
+            } else if( attitude_to( guy ) != Attitude::A_NEUTRAL && sees( guy.pos() ) ) {
+                hostile_guys.emplace_back( g->shared_from( guy ) );
+            }
         }
+        if( friends_dirty ) {
+            ai_cache.npc_friends_version = current_version;
+        }
+        std::ranges::copy( ai_cache.cached_npc_friends, std::back_inserter( ai_cache.friends ) );
     }
     if( sees( player_character.pos() ) ) {
         if( is_enemy() ) {

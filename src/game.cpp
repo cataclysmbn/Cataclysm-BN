@@ -350,6 +350,8 @@ extern bool add_key_to_quick_shortcuts( int key, const std::string &category, bo
 //The one and only game instance
 std::unique_ptr<game> g;
 
+std::atomic<uint32_t> g_npc_friends_dirty_version{ 1 };
+
 //The one and only uistate instance
 uistatedata uistate;
 
@@ -1215,6 +1217,7 @@ void game::load_npcs()
         } else {
             active_npc.push_back( temp );
             just_added.push_back( temp );
+            ++g_npc_friends_dirty_version;
         }
     }
 
@@ -1255,6 +1258,7 @@ void game::load_npcs()
                 } else {
                     active_npc.push_back( temp );
                     just_added.push_back( temp );
+                    ++g_npc_friends_dirty_version;
                 }
             }
         }
