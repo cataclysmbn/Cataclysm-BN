@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <memory>
 #include <optional>
 #include <set>
 #include <utility>
@@ -1350,6 +1351,8 @@ mtype_special_attack MonsterGenerator::create_actor( const JsonObject &obj,
         new_attack = std::make_unique<gun_actor>();
     } else if( attack_type == "spell" ) {
         new_attack = std::make_unique<mon_spellcasting_actor>();
+    } else if( attack_type == "deployer" ) {
+        new_attack = std::make_unique<deployer_actor>();
     } else {
         obj.throw_error( "unknown monster attack", "attack_type" );
     }

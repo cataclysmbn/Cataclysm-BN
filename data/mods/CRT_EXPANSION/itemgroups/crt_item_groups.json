@@ -257,5 +257,19 @@
       [ "crt_pelletgun", 10 ],
       [ "crt_pelletsniper", 10 ]
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_lab_veh_parts",
+    "items": [
+      { "item": "crt_wing_item", "prob": 10 },
+      { "item": "crt_airship_balloon_item", "prob": 10 },
+      { "item": "crt_airship_balloon_small_item", "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_lab_veh_printer",
+    "items": [ { "item": "wing_carbon_item", "prob": 10 }, { "item": "frame_carbon", "prob": 10 } ]
   }
 ]

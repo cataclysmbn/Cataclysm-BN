@@ -1,0 +1,25 @@
+[
+  {
+    "type": "item_group",
+    "id": "crt_lab_veh_parts",
+    "items": [
+      { "item": "crt_wing_item", "prob": 10 },
+      { "item": "crt_airship_balloon_item", "prob": 10 },
+      { "item": "crt_airship_balloon_small_item", "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_lab_veh_printer",
+    "items": [ { "item": "wing_carbon_item", "prob": 10 }, { "item": "frame_carbon", "prob": 10 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_lab_veh_engine",
+    "items": [
+      {
+        "distribution": [ { "item": "crt_plut_engine_item", "prob": 5 }, { "item": "crt_hydro_engine_small_item", "prob": 25 } ]
+      }
+    ]
+  }
+]

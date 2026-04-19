@@ -1,0 +1,82 @@
+[
+  {
+    "type": "overmap_terrain",
+    "id": [ "crt_lab_veh_wind" ],
+    "name": "C.R.I.T. Lab",
+    "sym": "L",
+    "color": "red",
+    "see_cost": 5,
+    "extras": "build",
+    "mondensity": 2
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_lab_veh_wind" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "########################",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#     w#GGGGGGGG#w     #",
+        "#     3#        #3     #",
+        "#     C#        #C     #",
+        "#     c#        #c     #",
+        "#      W        W      #",
+        "#      W        W      #",
+        "#      W        W      #",
+        "#      W        W      #",
+        "#     c#        #c     #",
+        "#     C#        #C     #",
+        "#     3#        #3     #",
+        "#     w##########w     #",
+        "#GGGGG##BBBBBBBB##GGGGG#",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "########################"
+      ],
+      "place_nested": [
+        { "chunks": [ "crt_lab_veh_wind_prod_plane" ], "x": 1, "y": 18 },
+        { "chunks": [ "crt_lab_veh_wind_tun_blimp" ], "x": 8, "y": 6 }
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "G": "t_door_metal_locked" },
+      "furniture": { "B": "f_workbench", "C": "f_crate_c", "3": "f_3d_printer", "c": "f_console_table" },
+      "items": {
+        "C": { "item": "crt_lab_veh_parts", "chance": 75, "repeat": 5 },
+        "3": { "item": "crt_lab_veh_printer", "chance": 50, "repeat": 2 },
+        "B": { "item": "tools_mechanic", "chance": 50, "repeat": 2 }
+      },
+      "place_monster": [
+        { "group": "GROUP_MIL_STRONG", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ] },
+        { "group": "GROUP_MIL_WEAK", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ] },
+        { "group": "GROUP_MIL_STRONG", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ] },
+        { "group": "GROUP_MIL_WEAK", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ] }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_wind_prod_plane",
+    "object": {
+      "mapgensize": [ 20, 5 ],
+      "place_vehicles": [ { "vehicle": "crt_solardart_incomplete", "x": [ 11, 11 ], "y": [ 2, 2 ], "rotation": 0, "chance": 100, "status": 0 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_wind_tun_blimp",
+    "object": {
+      "mapgensize": [ 8, 10 ],
+      "place_vehicles": [ { "vehicle": "crt_microblimp_electric", "x": [ 3, 3 ], "y": [ 5, 5 ], "rotation": 270, "chance": 100, "status": 0 } ]
+    }
+  }
+]

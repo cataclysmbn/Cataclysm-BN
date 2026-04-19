@@ -1,0 +1,35 @@
+[
+  {
+    "id": "crt_hydrocart",
+    "type": "vehicle",
+    "name": "CRIT Hydrogen Cart",
+    "blueprint": [ "WSW" ],
+    "blueprint_origin": { "x": 1, "y": 0 },
+    "palette": {
+      "W": [
+        "frame_carbon_vertical",
+        "wheel_mount_light",
+        "wheel_small",
+        "vp_plut_generator",
+        { "part": "crt_compressed_gas_tank", "fuel": "c_hydrogen_gas" }
+      ],
+      "S": [ "frame_carbon_vertical", "controls", "battery_motorbike_small", "crt_hydrogen_converter" ]
+    }
+  },
+  {
+    "id": "crt_hydrotest",
+    "type": "vehicle",
+    "name": "CRIT hydrogen engine tester",
+    "blueprint": [ "WSW" ],
+    "blueprint_origin": { "x": 1, "y": 0 },
+    "palette": {
+      "W": [
+        "frame_carbon_vertical",
+        "wheel_mount_light",
+        "wheel_small",
+        { "part": "crt_compressed_gas_tank", "fuel": "c_hydrogen_gas" }
+      ],
+      "S": [ "frame_carbon_vertical", "controls", "battery_motorbike_small", "crt_hydro_engine_small", "alternator_motorbike" ]
+    }
+  }
+]

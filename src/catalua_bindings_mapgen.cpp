@@ -3,7 +3,10 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "map.h"
+#include "mapgen.h"
 #include "mapgendata.h"
+#include "om_direction.h"
 #include "ui.h"
 #include "popup.h"
 #include "string_input_popup.h"
@@ -41,7 +44,18 @@ void cata::detail::reg_mapgendata( sol::state &lua )
     luna::set_fx( ut, "zlevel", []( mapgendata & dat ) { return dat.zlevel(); } );
     DOC( "Sets the direction of the mapgen." );
     luna::set_fx( ut, "set_dir", []( mapgendata & dat, int i, int j ) { return dat.set_dir( i, j ); } );
+    DOC( "Gets rotation" );
+    luna::set_fx( ut, "get_rotation", []( mapgendata & dat ) { return dat.terrain_type()->get_rotation(); } );
+    DOC( "Gets rotation string" );
+    luna::set_fx( ut, "get_rot_suffix", []( mapgendata & dat ) { return om_direction::all_suffixes[ dat.terrain_type()->get_rotation() ]; } );
     DOC( "Fills the ground with default terrain." );
     luna::set_fx( ut, "fill_groundcover", []( mapgendata & dat ) { dat.fill_groundcover(); } );
-
+    DOC( "Generates Nested Mapgen" );
+    luna::set_fx( ut, "nest", [&]( mapgendata & dat, std::string nested, point & pos ) {
+        call_mapgen_function( nested, dat, true, pos );
+    } );
+    DOC( "Generates Normal Mapgen" );
+    luna::set_fx( ut, "generate", [&]( mapgendata & dat, std::string mapgen ) {
+        call_mapgen_function( mapgen, dat, false, point_zero );
+    } );
 }

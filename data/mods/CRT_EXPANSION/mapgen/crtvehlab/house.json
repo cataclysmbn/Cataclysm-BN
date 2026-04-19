@@ -1,0 +1,262 @@
+[
+  {
+    "type": "overmap_terrain",
+    "id": [ "crt_lab_veh_house" ],
+    "name": "C.R.I.T. Lab",
+    "sym": "L",
+    "color": "red",
+    "see_cost": 5,
+    "extras": "build",
+    "mondensity": 2
+  },
+  {
+    "type": "mapgen",
+    "method": "lua",
+    "om_terrain": [ "crt_lab_veh_house" ],
+    "luamethod": "crt_lab_veh_house"
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_house_living",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 8, 7 ],
+      "rows": [
+        "========",
+        "=~~~~~~=",
+        "=~~~~~~=",
+        "=~~~~~~=",
+        "=~~~~~~=",
+        "=~~~~~~=",
+        "========"
+      ],
+      "terrain": { "=": "t_linoleum_gray", "~": "t_water_pool" },
+      "items": { "=": { "item": "pool_side", "chance": 10 } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_house_living",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 8, 7 ],
+      "rows": [
+        "        ",
+        "        ",
+        " ~~~    ",
+        "C~~~    ",
+        " ~~~    ",
+        "        ",
+        "        "
+      ],
+      "terrain": {
+        " ": [ [ "t_region_groundcover_forest", 20 ], [ "t_region_shrub", 2 ], "t_region_tree" ],
+        "=": "t_linoleum_gray",
+        "~": "t_water_sh"
+      },
+      "furniture": { "C": "f_armchair" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_house_living",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 8, 7 ],
+      "rows": [
+        "T       ",
+        "P       ",
+        "T       ",
+        "P       ",
+        "T       ",
+        "P       ",
+        "T       "
+      ],
+      "furniture": { "T": "f_utility_shelf", "P": "f_utility_shelf" },
+      "items": {
+        "T": { "item": "mechanics", "chance": 80, "repeat": [ 1, 10 ] },
+        "P": { "item": "supplies_mechanics", "chance": 80, "repeat": [ 1, 10 ] },
+        "S": { "item": "crt_lab_veh_engine", "chance": 100 }
+      },
+      "place_nested": [ { "chunks": [ "crt_lab_veh_smallveh" ], "x": 1, "y": 0 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "crt_lab_veh_house_backdrop" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "########################",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#########DDDDDD#########",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#########DDDDDD#########",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "########################"
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_house_frame",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 8, 7 ],
+      "rows": [
+        "#       ",
+        "#       ",
+        "#D####D#",
+        "        ",
+        "#D####D#",
+        "#       ",
+        "#       "
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_house_research_bed",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 7, 2 ],
+      "rows": [
+        "TCB#D D",
+        "  B#D D"
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass" },
+      "furniture": { "B": "f_bed", "T": "f_table", "C": "f_chair", "D": "f_dresser" },
+      "mapping": {
+        "D": { "items": [ { "item": "crt_eng_set", "chance": 50 } ] },
+        "T": { "items": [ { "item": "crt_sci_reading", "chance": 50, "repeat": 2 } ] },
+        "B": { "items": [ { "item": "bed", "chance": 50, "repeat": 5 } ] }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_house_research_office",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 7, 2 ],
+      "rows": [
+        " C B C ",
+        "TTTBTTT"
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
+      "furniture": { "B": "f_bookcase", "T": "f_table", "C": "f_chair" },
+      "mapping": {
+        "T": { "items": [ { "item": "crt_sci_reading", "chance": 50, "repeat": 5 } ] },
+        "B": { "items": [ { "item": "crt_sci_reading", "chance": 50, "repeat": 5 } ] }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_barracks_dorm",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 8, 7 ],
+      "rows": [
+        "#  #   #",
+        "#  #   #",
+        "#D###D##",
+        "        ",
+        "#D###D##",
+        "#  #   #",
+        "#  #   #"
+      ],
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
+      "place_nested": [
+        { "chunks": [ "crt_lab_veh_barracks_single" ], "x": 1, "y": 0 },
+        { "chunks": [ "crt_lab_veh_barracks_single_flipped" ], "x": 1, "y": 5 },
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 4, "y": 0 },
+        { "chunks": [ "crt_lab_veh_barracks_double" ], "x": 4, "y": 5 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_barracks_single",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 2, 2 ],
+      "rows": [
+        "BT",
+        " D"
+      ],
+      "furniture": { "B": "f_bed", "T": "f_table", "D": "f_dresser" },
+      "mapping": {
+        "T": { "items": [ { "item": "book_military", "chance": 50, "repeat": 5 } ] },
+        "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
+        "B": { "items": [ { "item": "bed", "chance": 100 } ] }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_barracks_single_flipped",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 2, 2 ],
+      "rows": [
+        " D",
+        "BT"
+      ],
+      "furniture": { "B": "f_bed", "T": "f_table", "D": "f_dresser" },
+      "mapping": {
+        "T": { "items": [ { "item": "book_military", "chance": 50, "repeat": 5 } ] },
+        "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
+        "B": { "items": [ { "item": "bed", "chance": 100 } ] }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_barracks_double",
+    "weight": 100,
+    "object": {
+      "mapgensize": [ 3, 2 ],
+      "rows": [
+        "D D",
+        "B B"
+      ],
+      "furniture": { "B": "f_bed", "D": "f_dresser" },
+      "mapping": {
+        "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
+        "B": { "items": [ { "item": "bed", "chance": 100 } ] }
+      }
+    }
+  }
+]

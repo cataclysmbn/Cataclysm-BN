@@ -1,0 +1,32 @@
+[
+  {
+    "id": "crt_plut_engine_item",
+    "type": "TOOL",
+    "looks_like": "t_plut_generator",
+    "name": "C.R.I.T. plutonium engine",
+    "description": "A small supplementary engine used on many C.R.I.T. vehicles.  Using a compact nuclear reactor, refined nuclear fuel is sealed within and configured to provide a constant mediocre yield of torque when properly installed.",
+    "weight": "450 kg",
+    "volume": "300 L",
+    "price": "150000 USD",
+    "price_postapoc": "500 USD",
+    "material": "steel",
+    "symbol": "0",
+    "color": "light_green",
+    "category": "scrap_electronics"
+  },
+  {
+    "id": "crt_hydro_engine_small_item",
+    "type": "TOOL",
+    "looks_like": "t_plut_generator",
+    "name": "C.R.I.T. hydrogen engine",
+    "description": "While not the most powerful motor, this one works well for smaller C.R.I.T. vehicles which need a lightweight renewable power source, yet also a strong engine.",
+    "weight": "50 kg",
+    "volume": "5 L",
+    "price": "150000 USD",
+    "price_postapoc": "500 USD",
+    "material": "steel",
+    "symbol": "0",
+    "color": "light_green",
+    "category": "scrap_electronics"
+  }
+]

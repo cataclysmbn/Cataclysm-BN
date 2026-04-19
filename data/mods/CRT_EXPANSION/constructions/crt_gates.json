@@ -1,0 +1,49 @@
+[
+  {
+    "type": "terrain",
+    "id": "t_gates_mech_control_crt_lab",
+    "looks_like": "t_gates_mech_control_lab",
+    "name": "mechanical winch",
+    "description": "This is a gate control winch.  If it's functioning, it can be used to open or close a nearby gate.",
+    "symbol": "6",
+    "color": "cyan_red",
+    "move_cost": 0,
+    "flags": [ "PERMEABLE", "NOITEM", "INDOORS", "THIN_OBSTACLE" ],
+    "examine_action": "controls_gate",
+    "bash": {
+      "str_min": 18,
+      "str_max": 80,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "ter_set": "t_thconc_floor",
+      "items": [ { "item": "steel_chunk", "count": [ 1, 4 ] }, { "item": "scrap", "count": [ 3, 6 ] } ]
+    }
+  },
+  {
+    "type": "gate",
+    "id": "t_gates_mech_control_crt_lab",
+    "door": "t_door_metal_locked",
+    "floor": "t_thconc_floor",
+    "walls": [
+      "t_wall",
+      "t_wall_r",
+      "t_wall_w",
+      "t_wall_b",
+      "t_wall_g",
+      "t_wall_y",
+      "t_wall_p",
+      "t_concrete_wall",
+      "t_brick_wall",
+      "t_strconc_wall"
+    ],
+    "messages": {
+      "pull": "You turn the handle…",
+      "open": "The gate is opened!",
+      "close": "The gate is closed!",
+      "fail": "The gate can't be closed!"
+    },
+    "moves": 1800,
+    "bashing_damage": 40,
+    "complex_shape": true
+  }
+]

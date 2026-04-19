@@ -1,0 +1,97 @@
+[
+  {
+    "id": "mon_crt_engineer_t1",
+    "type": "MONSTER",
+    "name": "C.R.I.T. technician zombie",
+    "description": "Wearing standard work clothes, it appears almost normal, well it would if not for the manhack floating around it. And it appears more are at their command.",
+    "default_faction": "zombie",
+    "looks_like": "mon_zombie_military_pilot",
+    "species": [ "ZOMBIE", "HUMAN" ],
+    "volume": "62500 ml",
+    "weight": "81500 g",
+    "hp": 75,
+    "speed": 100,
+    "material": [ "bone" ],
+    "symbol": "N",
+    "color": "white",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 6,
+    "melee_dice": 2,
+    "melee_dice_sides": 4,
+    "dodge": 1,
+    "armor_cut": 10,
+    "armor_stab": 10,
+    "armor_bullet": 20,
+    "armor_acid": 4,
+    "vision_day": 25,
+    "vision_night": 3,
+    "harvest": "zombie_maybe_survivalist_bionics",
+    "starting_ammo": { "bot_crt_manhack": 5 },
+    "special_attacks": [
+      {
+        "type": "deployer",
+        "deployables": {
+          "bot_crt_manhack": { "message": "We do not wish to kill you, stop your attacks", "chance": 1, "ammo_percentage": 1.0, "range": 10 }
+        },
+        "cooldown": 10
+      }
+    ],
+    "death_drops": "mon_zombie_cop_death_drops",
+    "death_function": [ "NORMAL" ],
+    "flags": [ "SEES", "HEARS", "BLEED", "REVIVES", "NO_BREATHE", "POISON" ]
+  },
+  {
+    "id": "mon_crt_engineer_t3",
+    "type": "MONSTER",
+    "name": "C.R.I.T. combat engineer zombie",
+    "description": "Clad in heavy assault gear, it has a small experimental pistol in one hand, and a punch knife in the other. While it doesn't look terrifing on the surface the small electrical shocks make you question your thinking.",
+    "default_faction": "zombie",
+    "looks_like": "mon_zombie_military_pilot",
+    "species": [ "ZOMBIE", "HUMAN" ],
+    "volume": "62500 ml",
+    "weight": "81500 g",
+    "hp": 150,
+    "speed": 120,
+    "material": [ "bone" ],
+    "symbol": "N",
+    "color": "white",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 6,
+    "//": "This dude barely hits, the scary part about him is if he gets to the turrets",
+    "melee_dice": 3,
+    "melee_dice_sides": 6,
+    "dodge": 1,
+    "armor_cut": 30,
+    "armor_stab": 30,
+    "armor_bullet": 50,
+    "armor_acid": 4,
+    "vision_day": 25,
+    "vision_night": 3,
+    "harvest": "zombie_maybe_survivalist_bionics",
+    "starting_ammo": {
+      "bot_crt_manhack": 5,
+      "bot_crt_flamehack": 5,
+      "bot_crt_electrohack": 2,
+      "bot_crt_hydrogen_hack": 1,
+      "bot_sun_turret_light": 2
+    },
+    "special_attacks": [
+      {
+        "type": "deployer",
+        "deployables": {
+          "bot_crt_manhack": { "message": "We do not wish to kill you, stop your attacks", "chance": 1, "ammo_percentage": 1.0, "range": 10 },
+          "bot_crt_flamehack": { "message": "We do not wish to kill you, stop your attacks", "chance": 1, "ammo_percentage": 1.0, "range": 10 },
+          "bot_sun_turret_light": { "message": "Access stabilized, annialation imminent", "chance": 1, "ammo_percentage": 0.4, "range": 10 },
+          "bot_crt_electrohack": { "message": "Warning: lethal electrical shock immient", "chance": 1, "ammo_percentage": 0.24, "range": 10 },
+          "bot_crt_hydrogen_hack": { "message": "If we must.", "chance": 1, "ammo_percentage": 0.08, "range": 10 }
+        },
+        "cooldown": 10
+      }
+    ],
+    "death_drops": "mon_zombie_cop_death_drops",
+    "death_function": [ "NORMAL" ],
+    "flags": [ "SEES", "HEARS", "BLEED", "REVIVES", "NO_BREATHE", "POISON" ]
+  }
+]

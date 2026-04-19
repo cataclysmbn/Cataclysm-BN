@@ -1,0 +1,28 @@
+[
+  {
+    "id": "crt_hydrogen_converter",
+    "type": "vehicle_part",
+    "name": "C.R.I.T. hydrogen producer",
+    "description": "Weight is often the most critical factor when producing While not the fastest piece of technology, not the most effective piece of technology, this generator will create hydrogen no matter where it is. Making it highly useful to refuel the multitude of hydrogen vehicles and weapons produced by C.R.I.T.",
+    "item": "crt_hydrogen_converter_item",
+    "durability": 200,
+    "//1": "CBM provides water with 2 L / 60 kW efficiency, which sounds about right",
+    "//2": "Electrolysis kit is 200 kJ",
+    "//3": "Says it's about 50% efficent, lets assume military gets to 90%, so 111.111 kJ",
+    "//6": "Multiply by 1000 as epower is in J",
+    "location": "fuel_source",
+    "symbol": "O",
+    "broken_color": "red",
+    "converter": { "output": "c_hydrogen_gas", "output_step": 1, "max_steps": 2, "charge_cost": 111 },
+    "flags": [ "CONVERTER" ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 5 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 6 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 5 ] ]
+      }
+    }
+  }
+]

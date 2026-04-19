@@ -1,0 +1,12 @@
+[
+  {
+    "type": "vehicle_group",
+    "id": "crt_medium_heliblimp",
+    "vehicles": [ [ "crt_medblimp", 100 ], [ "crt_microblimp_electric", 200 ], [ "crt_bombblimp_electric", 150 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "crt_medium_plane",
+    "vehicles": [ [ "crt_solardart", 100 ], [ "crt_nukedart", 25 ] ]
+  }
+]
