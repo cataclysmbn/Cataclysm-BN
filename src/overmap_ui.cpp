@@ -899,6 +899,15 @@ static void draw_ascii( ui_adaptor &ui,
 
     const oter_id forest = oter_str_id( "forest" ).id();
 
+    // Cache display_oter substitution for this dimension's region settings.
+    // When a region defines display_oter, tiles that are the default terrain (e.g., "field")
+    // render using the display_oter's symbol/color/name instead. The actual tile ID is unchanged.
+    const regional_settings &active_region = ACTIVE_OVERMAP_BUFFER.get_settings( center );
+    const oter_id default_oter_id = active_region.default_oter.id();
+    const bool has_display_oter = !active_region.display_oter.is_empty();
+    const oter_id display_oter_render_id = has_display_oter ? active_region.display_oter.id()
+                                           : ccur_ter;
+
     std::string sZoneName;
     tripoint_abs_omt tripointZone( -1, -1, -1 );
     const auto &zones = zone_manager::get_manager();
@@ -1152,7 +1161,10 @@ static void draw_ascii( ui_adaptor &ui,
                 set_color_and_symbol( forest, omp, ter_sym, ter_color );
             } else {
                 // Nothing special, but is visible to the player.
-                set_color_and_symbol( cur_ter, omp, ter_sym, ter_color );
+                // Substitute display_oter when rendering the region's default terrain.
+                const oter_id render_ter = ( has_display_oter && cur_ter == default_oter_id )
+                                           ? display_oter_render_id : cur_ter;
+                set_color_and_symbol( render_ter, omp, ter_sym, ter_color );
             }
 
             // Are we debugging monster groups?
@@ -1446,14 +1458,23 @@ static void draw_om_sidebar(
                            c_red, "x" );
             }
         } else {
-            const oter_t &ter = ACTIVE_OVERMAP_BUFFER.ter( center ).obj();
+            const oter_id cur_oter_id = ACTIVE_OVERMAP_BUFFER.ter( center );
+            const regional_settings &sidebar_region = ACTIVE_OVERMAP_BUFFER.get_settings( center );
+            const bool sidebar_has_display = !sidebar_region.display_oter.is_empty();
+            const oter_id default_oter_id = sidebar_region.default_oter.id();
+            const oter_id render_oter_id = ( sidebar_has_display && cur_oter_id == default_oter_id )
+                                           ? sidebar_region.display_oter.id()
+                                           : cur_oter_id;
+            const oter_t &ter = render_oter_id.obj();
             const auto sm_pos = project_to<coords::sm>( center );
 
             // NOLINTNEXTLINE(cata-use-named-point-constants)
             mvwputch( wbar, point( 1, 1 ), ter.get_color(), ter.get_symbol() );
 
             lines = fold_and_print( wbar, point( 3, 1 ), getmaxx( wbar ) - 3, c_light_gray,
-                                    ACTIVE_OVERMAP_BUFFER.get_description_at( sm_pos ) );
+                                    sidebar_has_display && cur_oter_id == default_oter_id
+                                    ? ter.get_name()
+                                    : ACTIVE_OVERMAP_BUFFER.get_description_at( sm_pos ) );
         }
     } else {
         // NOLINTNEXTLINE(cata-use-named-point-constants)

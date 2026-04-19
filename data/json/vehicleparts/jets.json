@@ -73,7 +73,7 @@
     "durability": 300,
     "wheel_type": "off-road",
     "contact_area": 20,
-    "description": "This is a lightweight hover repulsor module mounted on the underside of the next-generation hoverbike.  It offers unparalleled maneuverability, allowing the hoverbike to glide effortlessly over swamps and ruins, completely overcoming ground friction.",
+    "description": "This is a lightweight hover repulsor module mounted on the underside of a vehicle.  It offers unparalleled maneuverability, allowing the vehicle to glide effortlessly over swamps and ruins, completely overcoming ground friction.",
     "damage_modifier": 50,
     "breaks_into": [ { "item": "scrap", "count": [ 15, 30 ] }, { "item": "steel_chunk", "count": [ 8, 16 ] } ],
     "flags": [ "BALLOON", "WHEEL", "FLOATS", "ROTOR", "STABLE", "SELF_JACK", "VARIABLE_SIZE", "TRACKED" ],

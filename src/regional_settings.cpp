@@ -526,6 +526,8 @@ void load_region_settings( const JsonObject &jo )
         }
     } else {
         JsonObject cjo = jo.get_object( "city" );
+        cjo.read( "city_size", new_region.city_spec.city_size );
+        cjo.read( "city_spacing", new_region.city_spec.city_spacing );
         if( !cjo.read( "shop_radius", new_region.city_spec.shop_radius ) && strict ) {
             jo.throw_error( "city: shop_radius required for default" );
         }
@@ -568,6 +570,47 @@ void load_region_settings( const JsonObject &jo )
         new_region.weather = weather_generator::load( wjo );
     }
 
+    // Unclear if required. C++ uninitialized values now concern me.
+    new_region.region_effects = {};
+    for( int i = 0; i < ( int )region_effect_type::num_types; i++ ) {
+        new_region.region_effects[( region_effect_type )i] = {};
+    }
+
+    if( jo.has_array( "effects" ) ) {
+        JsonArray effects = jo.get_array( "effects" );
+        for( JsonObject effect_object : effects ) {
+            region_effect_type effect_type;
+            efftype_id effect_id( effect_object.get_string( "effect_id" ) );
+            int one_in = 0;
+            if( effect_object.has_int( "one_in" ) ) {
+                one_in = effect_object.get_int( "one_in" );
+            }
+            if( effect_object.has_string( "effect_type" ) ) {
+                if( effect_object.get_string( "effect_type" ) == "generic" ) {
+                    effect_type = region_effect_type::generic;
+                } else if( effect_object.get_string( "effect_type" ) == "night_time" ) {
+                    effect_type = region_effect_type::night_time;
+                } else if( effect_object.get_string( "effect_type" ) == "sunlight" ) {
+                    effect_type = region_effect_type::sunlight;
+                } else if( effect_object.get_string( "effect_type" ) == "surface" ) {
+                    effect_type = region_effect_type::surface;
+                } else if( effect_object.get_string( "effect_type" ) == "underground" ) {
+                    effect_type = region_effect_type::underground;
+                } else if( effect_object.get_string( "effect_type" ) == "underwater" ) {
+                    effect_type = region_effect_type::underwater;
+                } else if( effect_object.get_string( "effect_type" ) == "sleep" ) {
+                    effect_type = region_effect_type::sleep;
+                } else {
+                    debugmsg( "Unknown effect type: %s", effect_object.get_string( "effect_type" ) );
+                }
+            } else {
+                effect_type = region_effect_type::generic;
+            }
+            std::pair<efftype_id, int> effect( effect_id, one_in );
+            new_region.region_effects[effect_type].emplace_back( effect );
+        }
+    }
+
     load_overmap_feature_flag_settings( jo, new_region.overmap_feature_flag, strict, false );
 
     load_overmap_forest_settings( jo, new_region.overmap_forest, strict, false );
@@ -576,6 +619,8 @@ void load_region_settings( const JsonObject &jo )
 
     load_region_terrain_and_furniture_settings( jo, new_region.region_terrain_and_furniture, strict,
             false );
+
+    jo.read( "display_oter", new_region.display_oter );
 
     region_settings_map[new_region.id] = new_region;
 }
@@ -701,6 +746,8 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
 
     JsonObject cityjo = jo.get_object( "city" );
 
+    cityjo.read( "city_size", region.city_spec.city_size );
+    cityjo.read( "city_spacing", region.city_spec.city_spacing );
     cityjo.read( "shop_radius", region.city_spec.shop_radius );
     cityjo.read( "shop_sigma", region.city_spec.shop_sigma );
     cityjo.read( "park_radius", region.city_spec.park_radius );
@@ -728,6 +775,8 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
     load_overmap_lake_settings( jo, region.overmap_lake, false, true );
 
     load_region_terrain_and_furniture_settings( jo, region.region_terrain_and_furniture, false, true );
+
+    jo.read( "display_oter", region.display_oter );
 }
 
 void groundcover_extra::finalize()   // FIXME: return bool for failure
@@ -1065,11 +1114,14 @@ overmap_special_id building_bin::pick() const
 {
     if( !finalized ) {
         debugmsg( "Tried to pick a special out of a non-finalized bin" );
-        overmap_special_id null_special( "null" );
-        return null_special;
+        return overmap_special_id( "null" );
     }
 
-    return *buildings.pick();
+    const auto *result = buildings.pick();
+    if( !result ) {
+        return overmap_special_id( "null" );
+    }
+    return *result;
 }
 
 void building_bin::clear()
@@ -1086,10 +1138,7 @@ void building_bin::finalize()
         debugmsg( "Tried to finalize a finalized bin (that's a code-side error which can't be fixed with jsons)" );
         return;
     }
-    if( unfinalized_buildings.empty() ) {
-        debugmsg( "There must be at least one entry in this building bin." );
-        return;
-    }
+    // Empty bins are valid — pick() returns null_special, causing no building to be placed.
 
     for( const std::pair<const overmap_special_id, int> &pr : unfinalized_buildings ) {
         overmap_special_id current_id = pr.first;

@@ -37,7 +37,7 @@
     "type": "WHEEL",
     "category": "veh_parts",
     "name": { "str": "hover repulsor" },
-    "description": "This is a lightweight hover repulsor module mounted on the underside of the next-generation hoverbike.  It offers unparalleled maneuverability, allowing the hoverbike to glide effortlessly over swamps and ruins, completely overcoming ground friction.",
+    "description": "This is a lightweight hover repulsor module mounted on the underside of a vehicle.  It offers unparalleled maneuverability, allowing the vehicle to glide effortlessly over swamps and ruins, completely overcoming ground friction.",
     "price": "334000 USD",
     "price_postapoc": "125 USD",
     "weight": "60 kg",

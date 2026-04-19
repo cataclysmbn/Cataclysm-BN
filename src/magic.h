@@ -54,6 +54,7 @@ enum spell_flag {
     DIVIDE_DAMAGE, // divides damage equally among all the targets of the spell
     RANDOM_DURATION, // picks random number between min+increment*level and max instead of normal behavior
     RANDOM_TARGET, // picks a random valid target within your range instead of normal behavior.
+    MUTATE_THRESH, // allows mutate spell_effect to try and cross thresholds for the category provided, accuracy optionally defines highest tier of threshold to test for (default of 1).
     MUTATE_TRAIT, // overrides the mutate spell_effect to use a specific trait_id instead of a category
     WONDER, // instead of casting each of the extra_spells, it picks N of them and casts them (where N is std::min( damage(), number_of_spells ))
     PAIN_NORESIST, // pain altering spells can't be resisted (like with the deadened trait)

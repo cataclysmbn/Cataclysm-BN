@@ -263,7 +263,8 @@
       "prof_fursuiter",
       "clown",
       "broken_cyborg",
-      "true_foodperson"
+      "true_foodperson",
+      "elite_specops"
     ],
     "flags": [ "FIRE_START", "INFECTED", "BAD_DAY", "CHALLENGE", "CITY_START" ]
   },
@@ -734,6 +735,7 @@
       "bio_soldier",
       "bio_sniper",
       "bio_specops",
+      "elite_specops",
       "bionic_spy",
       "national_guard",
       "hitman",
@@ -908,6 +910,7 @@
       "bio_soldier",
       "bio_sniper",
       "bio_specops",
+      "elite_specops",
       "labtech",
       "bionic_labtech",
       "medic",
@@ -977,6 +980,7 @@
       "bio_soldier",
       "bio_sniper",
       "bio_specops",
+      "elite_specops",
       "medic",
       "mili_pilot",
       "prof_combat_engineer",

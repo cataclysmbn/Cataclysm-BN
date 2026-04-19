@@ -1032,7 +1032,7 @@ auto neighbor_tile( submap *base, const tripoint_abs_sm &base_pos,
     return { nbr, { ( nx + SEEX ) % SEEX, ( ny + SEEY ) % SEEY } };
 }
 
-// Add a field to dst, maintaining field_count.
+// Add a field to dst, maintaining field_count and field_cache.
 auto sub_add_field( SubTile &dst, field_type_id type, int intensity,
                     time_duration age ) -> field_entry *
 {
@@ -1041,6 +1041,7 @@ auto sub_add_field( SubTile &dst, field_type_id type, int intensity,
     }
     if( dst.get_field().add_field( type, intensity, age ) ) {
         ++dst.sm->field_count;
+        dst.sm->field_cache.push_back( dst.local );
         dst.sm->is_uniform = false;
     }
     return dst.get_field().find_field( type );
@@ -1096,6 +1097,7 @@ auto gas_spread_sub( field_entry &cur, SubTile &dst ) -> void
         cur.set_field_age( age - age_frac );
     } else if( dst.get_field().add_field( type, 1, 0_turns ) ) {
         ++dst.sm->field_count;
+        dst.sm->field_cache.push_back( dst.local );
         dst.sm->is_uniform = false;
         f = dst.get_field().find_field( type );
         if( f ) {
@@ -1126,640 +1128,645 @@ auto process_fields_in_submap( submap &sm,
 
     auto has_fire = false;
 
-    std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int lx ) {
-        std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int ly ) {
-            const auto local = point{ lx, ly };
-            auto &curfield   = sm.get_field( local );
+    std::ranges::for_each( sm.field_cache, [&]( const point & local ) {
+        auto &curfield = sm.get_field( local );
 
-            if( !curfield.displayed_field_type() ) {
-                return;
+        if( !curfield.displayed_field_type() ) {
+            return;
+        }
+
+        for( auto it = curfield.begin(); it != curfield.end(); ) {
+            auto &cur = it->second;
+
+            // Dead entries — clean up.
+            if( !cur.is_field_alive() ) {
+                --sm.field_count;
+                curfield.remove_field( it++ );
+                continue;
             }
 
-            for( auto it = curfield.begin(); it != curfield.end(); ) {
-                auto &cur = it->second;
+            auto cur_fd_type_id = cur.get_field_type();
 
-                // Dead entries — clean up.
-                if( !cur.is_field_alive() ) {
-                    --sm.field_count;
-                    curfield.remove_field( it++ );
-                    continue;
-                }
+            // Track fire before the newborn suppression below.
+            if( cur_fd_type_id.obj().has_fire ) {
+                has_fire = true;
+            }
 
-                auto cur_fd_type_id = cur.get_field_type();
+            // Newborn fields skip effects this tick.
+            const auto is_newborn = ( cur.get_field_age() == 0_turns );
+            if( is_newborn ) {
+                cur_fd_type_id = fd_null;
+            }
 
-                // Track fire before the newborn suppression below.
-                if( cur_fd_type_id.obj().has_fire ) {
-                    has_fire = true;
-                }
+            const auto &cur_fd_type = *cur_fd_type_id;
 
-                // Newborn fields skip effects this tick.
-                const auto is_newborn = ( cur.get_field_age() == 0_turns );
-                if( is_newborn ) {
-                    cur_fd_type_id = fd_null;
-                }
+            // Intensity upgrade.
+            if( !is_newborn &&
+                cur.intensity_upgrade_chance() > 0 &&
+                one_in( cur.intensity_upgrade_chance() ) &&
+                cur.intensity_upgrade_duration() > 0_turns &&
+                calendar::once_every( cur.intensity_upgrade_duration() ) ) {
+                cur.set_field_intensity( cur.get_field_intensity() + 1 );
+            }
 
-                const auto &cur_fd_type = *cur_fd_type_id;
+            const auto &ter = sm.get_ter( local ).obj();
+            const auto &frn = sm.get_furn( local ).obj();
 
-                // Intensity upgrade.
-                if( !is_newborn &&
-                    cur.intensity_upgrade_chance() > 0 &&
-                    one_in( cur.intensity_upgrade_chance() ) &&
-                    cur.intensity_upgrade_duration() > 0_turns &&
-                    calendar::once_every( cur.intensity_upgrade_duration() ) ) {
-                    cur.set_field_intensity( cur.get_field_intensity() + 1 );
-                }
+            // Dissipate faster in water.
+            if( ter.has_flag( TFLAG_SWIMMABLE ) ) {
+                cur.mod_field_age( cur.get_underwater_age_speedup() );
+            }
 
-                const auto &ter = sm.get_ter( local ).obj();
-                const auto &frn = sm.get_furn( local ).obj();
+            // ---- fd_fire ------------------------------------------------
+            if( cur_fd_type_id == fd_fire ) {
+                cur.set_field_age( std::max( -24_hours, cur.get_field_age() ) );
 
-                // Dissipate faster in water.
-                if( ter.has_flag( TFLAG_SWIMMABLE ) ) {
-                    cur.mod_field_age( cur.get_underwater_age_speedup() );
-                }
+                const auto can_spread = !ter_furn_has_flag( ter, frn, TFLAG_FIRE_CONTAINER );
+                const auto no_floor   = ter.has_flag( TFLAG_NO_FLOOR );
+                const auto can_burn   = !no_floor && can_spread &&
+                                        ( check_flammable( ter ) || check_flammable( frn ) );
+                const auto is_sealed  = ter_furn_has_flag( ter, frn, TFLAG_SEALED ) &&
+                                        !ter_furn_has_flag( ter, frn, TFLAG_ALLOW_FIELD_EFFECT );
 
-                // ---- fd_fire ------------------------------------------------
-                if( cur_fd_type_id == fd_fire ) {
-                    cur.set_field_age( std::max( -24_hours, cur.get_field_age() ) );
+                auto time_added = 0_turns;
 
-                    const auto can_spread = !ter_furn_has_flag( ter, frn, TFLAG_FIRE_CONTAINER );
-                    const auto no_floor   = ter.has_flag( TFLAG_NO_FLOOR );
-                    const auto can_burn   = !no_floor && can_spread &&
-                                            ( check_flammable( ter ) || check_flammable( frn ) );
-                    const auto is_sealed  = ter_furn_has_flag( ter, frn, TFLAG_SEALED ) &&
-                                            !ter_furn_has_flag( ter, frn, TFLAG_ALLOW_FIELD_EFFECT );
-
-                    auto time_added = 0_turns;
-
-                    // --- Item burning ---
-                    auto &items_here = sm.get_items( local );
-                    if( !is_sealed && !items_here.empty() ) {
-                        std::vector<detached_ptr<item>> new_content;
-                        // NOTE: item detonation skipped — requires map context for explosions.
-                        auto frd          = fire_data( cur.get_field_intensity(), !can_spread );
-                        const auto max_c  = cur.get_field_intensity() * 2;
-                        auto consumed     = 0;
-                        auto fuel_it      = items_here.begin();
-                        while( fuel_it != items_here.end() && consumed < max_c ) {
-                            auto *fuel            = *fuel_it;
-                            const auto old_weight = fuel->weight( false );
-                            const auto destroyed  = fuel->burn( frd );
-                            const auto new_weight = destroyed ? 0_gram : fuel->weight( false );
-                            if( old_weight != new_weight ) {
-                                create_burnproducts( new_content, *fuel, old_weight - new_weight );
-                            }
-                            if( destroyed ) {
-                                std::ranges::for_each( fuel->contents.clear_items(),
-                                [&]( detached_ptr<item> &ci ) {
-                                    if( !ci->is_irremovable() ) {
-                                        new_content.push_back( std::move( ci ) );
-                                    }
-                                } );
-                                fuel_it = items_here.erase( fuel_it );
-                                ++consumed;
-                            } else {
-                                ++fuel_it;
-                            }
+                // --- Item burning ---
+                auto &items_here = sm.get_items( local );
+                if( !is_sealed && !items_here.empty() ) {
+                    std::vector<detached_ptr<item>> new_content;
+                    // NOTE: item detonation skipped — requires map context for explosions.
+                    auto frd          = fire_data( cur.get_field_intensity(), !can_spread );
+                    const auto max_c  = cur.get_field_intensity() * 2;
+                    auto consumed     = 0;
+                    auto fuel_it      = items_here.begin();
+                    while( fuel_it != items_here.end() && consumed < max_c ) {
+                        auto *fuel            = *fuel_it;
+                        const auto old_weight = fuel->weight( false );
+                        const auto destroyed  = fuel->burn( frd );
+                        const auto new_weight = destroyed ? 0_gram : fuel->weight( false );
+                        if( old_weight != new_weight ) {
+                            create_burnproducts( new_content, *fuel, old_weight - new_weight );
                         }
-                        std::ranges::for_each( new_content, [&]( detached_ptr<item> &prod ) {
-                            items_here.push_back( std::move( prod ) );
-                        } );
-                        time_added = 1_turns * roll_remainder( frd.fuel_produced );
-                    }
-
-                    // --- Vehicle fire damage (TODO: requires coordinate translation) ---
-
-                    // --- Terrain fuel consumption ---
-                    if( can_burn ) {
-                        if( ter.has_flag( TFLAG_SWIMMABLE ) ) {
-                            cur.set_field_age( cur.get_field_age() + 4_minutes );
-                        }
-                        if( ter_furn_has_flag( ter, frn, TFLAG_FLAMMABLE ) ) {
-                            time_added += 1_turns * ( 5 - cur.get_field_intensity() );
-                            if( cur.get_field_intensity() > 1 &&
-                                one_in( 200 - cur.get_field_intensity() * 50 ) ) {
-                                sm.set_ter( local, t_dirt );
-                            }
-                        } else if( ter_furn_has_flag( ter, frn, TFLAG_FLAMMABLE_HARD ) && one_in( 3 ) ) {
-                            time_added += 1_turns * ( 4 - cur.get_field_intensity() );
-                            if( cur.get_field_intensity() > 1 &&
-                                one_in( 200 - cur.get_field_intensity() * 50 ) ) {
-                                sm.set_ter( local, t_dirt );
-                            }
-                        } else if( ter.has_flag( TFLAG_FLAMMABLE_ASH ) ) {
-                            time_added += 1_turns * ( 5 - cur.get_field_intensity() );
-                            if( cur.get_field_intensity() > 1 &&
-                                one_in( 200 - cur.get_field_intensity() * 50 ) ) {
-                                sm.set_ter( local, t_dirt );
-                            }
-                        } else if( frn.has_flag( TFLAG_FLAMMABLE_ASH ) ) {
-                            time_added += 1_turns * ( 5 - cur.get_field_intensity() );
-                            if( cur.get_field_intensity() > 1 &&
-                                one_in( 200 - cur.get_field_intensity() * 50 ) ) {
-                                sm.set_furn( local, f_ash );
-                            }
-                        }
-                    }
-
-                    if( time_added != 0_turns ) {
-                        cur.set_field_age( cur.get_field_age() - time_added );
-                    } else if( can_burn ) {
-                        cur.mod_field_age( 10_seconds * cur.get_field_intensity() );
-                    }
-
-                    // --- Z-rise: level-3 fire spreads upward ---
-                    if( pos.z() < OVERMAP_HEIGHT && cur.get_field_intensity() == 3 ) {
-                        const tripoint_abs_sm above_pos( pos.raw() + tripoint{ 0, 0, 1 } );
-                        auto *above_sm = mb.lookup_submap_in_memory( above_pos.raw() );
-                        if( above_sm ) {
-                            const auto &above_ter = above_sm->get_ter( local ).obj();
-                            if( above_ter.has_flag( TFLAG_NO_FLOOR ) ||
-                                above_ter.has_flag( TFLAG_FLAMMABLE ) ||
-                                above_ter.has_flag( TFLAG_FLAMMABLE_ASH ) ||
-                                above_ter.has_flag( TFLAG_FLAMMABLE_HARD ) ) {
-                                auto *fire_above = above_sm->get_field( local ).find_field( fd_fire );
-                                if( fire_above ) {
-                                    fire_above->mod_field_age( -2_turns );
-                                } else if( above_sm->get_field( local ).add_field( fd_fire, 1, 0_turns ) ) {
-                                    ++above_sm->field_count;
-                                    above_sm->is_uniform = false;
+                        if( destroyed ) {
+                            std::ranges::for_each( fuel->contents.clear_items(),
+                            [&]( detached_ptr<item> &ci ) {
+                                if( !ci->is_irremovable() ) {
+                                    new_content.push_back( std::move( ci ) );
                                 }
+                            } );
+                            fuel_it = items_here.erase( fuel_it );
+                            ++consumed;
+                        } else {
+                            ++fuel_it;
+                        }
+                    }
+                    std::ranges::for_each( new_content, [&]( detached_ptr<item> &prod ) {
+                        items_here.push_back( std::move( prod ) );
+                    } );
+                    time_added = 1_turns * roll_remainder( frd.fuel_produced );
+                }
+
+                // --- Vehicle fire damage (TODO: requires coordinate translation) ---
+
+                // --- Terrain fuel consumption ---
+                if( can_burn ) {
+                    if( ter.has_flag( TFLAG_SWIMMABLE ) ) {
+                        cur.set_field_age( cur.get_field_age() + 4_minutes );
+                    }
+                    if( ter_furn_has_flag( ter, frn, TFLAG_FLAMMABLE ) ) {
+                        time_added += 1_turns * ( 5 - cur.get_field_intensity() );
+                        if( cur.get_field_intensity() > 1 &&
+                            one_in( 200 - cur.get_field_intensity() * 50 ) ) {
+                            sm.set_ter( local, t_dirt );
+                        }
+                    } else if( ter_furn_has_flag( ter, frn, TFLAG_FLAMMABLE_HARD ) && one_in( 3 ) ) {
+                        time_added += 1_turns * ( 4 - cur.get_field_intensity() );
+                        if( cur.get_field_intensity() > 1 &&
+                            one_in( 200 - cur.get_field_intensity() * 50 ) ) {
+                            sm.set_ter( local, t_dirt );
+                        }
+                    } else if( ter.has_flag( TFLAG_FLAMMABLE_ASH ) ) {
+                        time_added += 1_turns * ( 5 - cur.get_field_intensity() );
+                        if( cur.get_field_intensity() > 1 &&
+                            one_in( 200 - cur.get_field_intensity() * 50 ) ) {
+                            sm.set_ter( local, t_dirt );
+                        }
+                    } else if( frn.has_flag( TFLAG_FLAMMABLE_ASH ) ) {
+                        time_added += 1_turns * ( 5 - cur.get_field_intensity() );
+                        if( cur.get_field_intensity() > 1 &&
+                            one_in( 200 - cur.get_field_intensity() * 50 ) ) {
+                            sm.set_furn( local, f_ash );
+                        }
+                    }
+                }
+
+                if( time_added != 0_turns ) {
+                    cur.set_field_age( cur.get_field_age() - time_added );
+                } else if( can_burn ) {
+                    cur.mod_field_age( 10_seconds * cur.get_field_intensity() );
+                }
+
+                // --- Z-rise: level-3 fire spreads upward ---
+                if( pos.z() < OVERMAP_HEIGHT && cur.get_field_intensity() == 3 ) {
+                    const tripoint_abs_sm above_pos( pos.raw() + tripoint{ 0, 0, 1 } );
+                    auto *above_sm = mb.lookup_submap_in_memory( above_pos.raw() );
+                    if( above_sm ) {
+                        const auto &above_ter = above_sm->get_ter( local ).obj();
+                        if( above_ter.has_flag( TFLAG_NO_FLOOR ) ||
+                            above_ter.has_flag( TFLAG_FLAMMABLE ) ||
+                            above_ter.has_flag( TFLAG_FLAMMABLE_ASH ) ||
+                            above_ter.has_flag( TFLAG_FLAMMABLE_HARD ) ) {
+                            auto *fire_above = above_sm->get_field( local ).find_field( fd_fire );
+                            if( fire_above ) {
+                                fire_above->mod_field_age( -2_turns );
+                            } else if( above_sm->get_field( local ).add_field( fd_fire, 1, 0_turns ) ) {
+                                ++above_sm->field_count;
+                                above_sm->field_cache.push_back( local );
+                                above_sm->is_uniform = false;
                             }
                         }
                     }
+                }
 
-                    // --- Neighbor scan for flashpoint / intensity growth / spreading ---
-                    const auto get_nb = [&]( const point & d ) {
-                        return neighbor_tile( &sm, pos, local, d, mb );
-                    };
-                    const auto in_pit = can_spread && ter.id.id() == t_pit;
-                    auto adjacent_fires = 0;
+                // --- Neighbor scan for flashpoint / intensity growth / spreading ---
+                const auto get_nb = [&]( const point & d ) {
+                    return neighbor_tile( &sm, pos, local, d, mb );
+                };
+                const auto in_pit = can_spread && ter.id.id() == t_pit;
+                auto adjacent_fires = 0;
 
-                    if( can_spread && cur.get_field_intensity() > 1 && one_in( 3 ) ) {
-                        // Flashpoint: fuel adjacent fires from our excess age.
-                        const auto end_it = static_cast<size_t>( rng( 0, 7 ) );
-                        std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
-                            if( cur.get_field_age() >= 0_turns ) {
-                                return;
+                if( can_spread && cur.get_field_intensity() > 1 && one_in( 3 ) ) {
+                    // Flashpoint: fuel adjacent fires from our excess age.
+                    const auto end_it = static_cast<size_t>( rng( 0, 7 ) );
+                    std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
+                        if( cur.get_field_age() >= 0_turns ) {
+                            return;
+                        }
+                        const auto i   = ( end_it + 1 + c ) % 8;
+                        auto dst       = get_nb( eight_dirs_sm[i] );
+                        if( !dst.valid() ) {
+                            return;
+                        }
+                        auto *dstfld = dst.get_field().find_field( fd_fire );
+                        if( dstfld &&
+                            ( dstfld->get_field_intensity() <= cur.get_field_intensity() ||
+                              dstfld->get_field_age() > cur.get_field_age() ) &&
+                            ( in_pit == ( dst.get_ter_t().id.id() == t_pit ) ) ) {
+                            if( dstfld->get_field_intensity() < 2 ) {
+                                dstfld->set_field_intensity( dstfld->get_field_intensity() + 1 );
                             }
-                            const auto i   = ( end_it + 1 + c ) % 8;
-                            auto dst       = get_nb( eight_dirs_sm[i] );
-                            if( !dst.valid() ) {
-                                return;
-                            }
-                            auto *dstfld = dst.get_field().find_field( fd_fire );
-                            if( dstfld &&
-                                ( dstfld->get_field_intensity() <= cur.get_field_intensity() ||
-                                  dstfld->get_field_age() > cur.get_field_age() ) &&
-                                ( in_pit == ( dst.get_ter_t().id.id() == t_pit ) ) ) {
-                                if( dstfld->get_field_intensity() < 2 ) {
-                                    dstfld->set_field_intensity( dstfld->get_field_intensity() + 1 );
-                                }
-                                dstfld->set_field_age( dstfld->get_field_age() - 5_minutes );
-                                cur.set_field_age( cur.get_field_age() + 5_minutes );
-                            }
-                            if( dstfld ) {
+                            dstfld->set_field_age( dstfld->get_field_age() - 5_minutes );
+                            cur.set_field_age( cur.get_field_age() + 5_minutes );
+                        }
+                        if( dstfld ) {
+                            ++adjacent_fires;
+                        }
+                    } );
+                } else if( cur.get_field_age() < 0_turns && cur.get_field_intensity() < 3 ) {
+                    // Intensity growth from neighbours.
+                    auto maximum_intensity = 1;
+                    if( cur.get_field_age() < -500_minutes ) {
+                        maximum_intensity = 3;
+                    } else {
+                        std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
+                            auto dst = get_nb( d );
+                            if( dst.valid() && dst.get_field().find_field( fd_fire ) ) {
                                 ++adjacent_fires;
                             }
                         } );
-                    } else if( cur.get_field_age() < 0_turns && cur.get_field_intensity() < 3 ) {
-                        // Intensity growth from neighbours.
-                        auto maximum_intensity = 1;
-                        if( cur.get_field_age() < -500_minutes ) {
-                            maximum_intensity = 3;
-                        } else {
-                            std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
-                                auto dst = get_nb( d );
-                                if( dst.valid() && dst.get_field().find_field( fd_fire ) ) {
-                                    ++adjacent_fires;
-                                }
-                            } );
-                            maximum_intensity = 1 + ( adjacent_fires >= 3 ) + ( adjacent_fires >= 7 );
-                            if( maximum_intensity < 2 && cur.get_field_age() < -50_minutes ) {
-                                maximum_intensity = 2;
-                            }
-                        }
-                        if( cur.get_field_intensity() < maximum_intensity ) {
-                            cur.set_field_intensity( cur.get_field_intensity() + 1 );
-                            cur.set_field_age( cur.get_field_age() +
-                                               10_minutes * cur.get_field_intensity() );
+                        maximum_intensity = 1 + ( adjacent_fires >= 3 ) + ( adjacent_fires >= 7 );
+                        if( maximum_intensity < 2 && cur.get_field_age() < -50_minutes ) {
+                            maximum_intensity = 2;
                         }
                     }
+                    if( cur.get_field_intensity() < maximum_intensity ) {
+                        cur.set_field_intensity( cur.get_field_intensity() + 1 );
+                        cur.set_field_age( cur.get_field_age() +
+                                           10_minutes * cur.get_field_intensity() );
+                    }
+                }
 
-                    // Fire spreading to adjacent tiles.
-                    if( can_spread ) {
-                        const auto end_i = static_cast<size_t>( rng( 0, 7 ) );
-                        std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
-                            if( one_in( cur.get_field_intensity() * 2 ) ) {
-                                return;
+                // Fire spreading to adjacent tiles.
+                if( can_spread ) {
+                    const auto end_i = static_cast<size_t>( rng( 0, 7 ) );
+                    std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
+                        if( one_in( cur.get_field_intensity() * 2 ) ) {
+                            return;
+                        }
+                        auto dst = get_nb( eight_dirs_sm[( end_i + 1 + c ) % 8] );
+                        if( !dst.valid() ) {
+                            return;
+                        }
+                        if( dst.get_field().find_field( fd_fire ) ) {
+                            return;
+                        }
+                        const auto &dter = dst.get_ter_t();
+                        const auto &dfur = dst.get_furn_t();
+                        if( in_pit != ( dter.id.id() == t_pit ) ) {
+                            return;
+                        }
+                        auto *nearwebfld     = dst.get_field().find_field( fd_web );
+                        auto  spread_chance  = 25 * ( cur.get_field_intensity() - 1 );
+                        if( nearwebfld ) {
+                            spread_chance = 50 + spread_chance / 2;
+                        }
+                        const auto dst_has_flammable_items = std::ranges::any_of(
+                                dst.get_items().as_vector(),
+                        []( const item * i ) { return i && i->flammable(); } );
+                        const auto power = cur.get_field_intensity() + ( one_in( 5 ) ? 1 : 0 );
+                        const auto can_ignite =
+                            rng( 1, 100 ) < spread_chance &&
+                            ( check_flammable( dter ) || check_flammable( dfur ) || nearwebfld ) &&
+                            ( ( power >= 3 && cur.get_field_age() < 0_turns && one_in( 20 ) ) ||
+                              ( power >= 2 && ter_furn_has_flag( dter, dfur, TFLAG_FLAMMABLE ) && one_in( 2 ) ) ||
+                              ( power >= 2 && ter_furn_has_flag( dter, dfur, TFLAG_FLAMMABLE_ASH ) && one_in( 2 ) ) ||
+                              ( power >= 3 && ter_furn_has_flag( dter, dfur, TFLAG_FLAMMABLE_HARD ) && one_in( 5 ) ) ||
+                              nearwebfld ||
+                              ( dst_has_flammable_items && one_in( 5 ) ) );
+                        if( can_ignite ) {
+                            auto *newfire = sub_add_field( dst, fd_fire, 1, 0_turns );
+                            if( newfire ) {
+                                newfire->set_field_age( 2_minutes );
+                                cur.set_field_age( cur.get_field_age() + 1_minutes );
                             }
-                            auto dst = get_nb( eight_dirs_sm[( end_i + 1 + c ) % 8] );
-                            if( !dst.valid() ) {
-                                return;
-                            }
-                            if( dst.get_field().find_field( fd_fire ) ) {
-                                return;
-                            }
-                            const auto &dter = dst.get_ter_t();
-                            const auto &dfur = dst.get_furn_t();
-                            if( in_pit != ( dter.id.id() == t_pit ) ) {
-                                return;
-                            }
-                            auto *nearwebfld     = dst.get_field().find_field( fd_web );
-                            auto  spread_chance  = 25 * ( cur.get_field_intensity() - 1 );
                             if( nearwebfld ) {
-                                spread_chance = 50 + spread_chance / 2;
+                                nearwebfld->set_field_intensity( 0 );
                             }
-                            const auto dst_has_flammable_items = std::ranges::any_of(
-                                    dst.get_items().as_vector(),
-                            []( const item * i ) { return i && i->flammable(); } );
-                            const auto power = cur.get_field_intensity() + ( one_in( 5 ) ? 1 : 0 );
-                            const auto can_ignite =
-                                rng( 1, 100 ) < spread_chance &&
-                                ( check_flammable( dter ) || check_flammable( dfur ) || nearwebfld ) &&
-                                ( ( power >= 3 && cur.get_field_age() < 0_turns && one_in( 20 ) ) ||
-                                  ( power >= 2 && ter_furn_has_flag( dter, dfur, TFLAG_FLAMMABLE ) && one_in( 2 ) ) ||
-                                  ( power >= 2 && ter_furn_has_flag( dter, dfur, TFLAG_FLAMMABLE_ASH ) && one_in( 2 ) ) ||
-                                  ( power >= 3 && ter_furn_has_flag( dter, dfur, TFLAG_FLAMMABLE_HARD ) && one_in( 5 ) ) ||
-                                  nearwebfld ||
-                                  ( dst_has_flammable_items && one_in( 5 ) ) );
-                            if( can_ignite ) {
-                                auto *newfire = sub_add_field( dst, fd_fire, 1, 0_turns );
-                                if( newfire ) {
-                                    newfire->set_field_age( 2_minutes );
-                                    cur.set_field_age( cur.get_field_age() + 1_minutes );
-                                }
-                                if( nearwebfld ) {
-                                    nearwebfld->set_field_intensity( 0 );
-                                }
-                            }
-                        } );
-                    }
+                        }
+                    } );
+                }
 
-                    // --- Z-fall: fire on open-air tile falls to z-level below ---
-                    if( no_floor && pos.z() > -OVERMAP_DEPTH ) {
+                // --- Z-fall: fire on open-air tile falls to z-level below ---
+                if( no_floor && pos.z() > -OVERMAP_DEPTH ) {
+                    const tripoint_abs_sm below_pos( pos.raw() + tripoint{ 0, 0, -1 } );
+                    auto *below_sm = mb.lookup_submap_in_memory( below_pos.raw() );
+                    if( below_sm ) {
+                        auto *fire_below = below_sm->get_field( local ).find_field( fd_fire );
+                        if( !fire_below ) {
+                            if( below_sm->get_field( local ).add_field( fd_fire, 1, 0_turns ) ) {
+                                ++below_sm->field_count;
+                                below_sm->field_cache.push_back( local );
+                                below_sm->is_uniform = false;
+                            }
+                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                        } else {
+                            auto new_i = std::max( cur.get_field_intensity(),
+                                                   fire_below->get_field_intensity() );
+                            if( new_i < 3 &&
+                                cur.get_field_intensity() == fire_below->get_field_intensity() ) {
+                                ++new_i;
+                            }
+                            if( fire_below->get_field_intensity() < 3 || one_in( 10 ) ) {
+                                cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                            }
+                            fire_below->set_field_intensity( new_i );
+                        }
+                    }
+                }
+            } // end fd_fire
+
+            // ---- Gas spreading (simplified — no wind) --------------------
+            if( !is_newborn && cur.gas_can_spread() ) {
+                const auto gas_pct = cur_fd_type.percent_spread;
+                if( gas_pct > 0 && cur.get_field_intensity() > 1 &&
+                    rng( 1, 100 ) <= gas_pct ) {
+                    // Try to fall first.
+                    auto spread_done = false;
+                    if( pos.z() > -OVERMAP_DEPTH ) {
                         const tripoint_abs_sm below_pos( pos.raw() + tripoint{ 0, 0, -1 } );
                         auto *below_sm = mb.lookup_submap_in_memory( below_pos.raw() );
                         if( below_sm ) {
-                            auto *fire_below = below_sm->get_field( local ).find_field( fd_fire );
-                            if( !fire_below ) {
-                                if( below_sm->get_field( local ).add_field( fd_fire, 1, 0_turns ) ) {
-                                    ++below_sm->field_count;
-                                    below_sm->is_uniform = false;
-                                }
-                                cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                            } else {
-                                auto new_i = std::max( cur.get_field_intensity(),
-                                                       fire_below->get_field_intensity() );
-                                if( new_i < 3 &&
-                                    cur.get_field_intensity() == fire_below->get_field_intensity() ) {
-                                    ++new_i;
-                                }
-                                if( fire_below->get_field_intensity() < 3 || one_in( 10 ) ) {
-                                    cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                                }
-                                fire_below->set_field_intensity( new_i );
+                            auto dst = SubTile{ below_sm, local };
+                            if( gas_can_spread_sub( cur, dst ) ) {
+                                gas_spread_sub( cur, dst );
+                                spread_done = true;
                             }
                         }
                     }
-                } // end fd_fire
-
-                // ---- Gas spreading (simplified — no wind) --------------------
-                if( !is_newborn && cur.gas_can_spread() ) {
-                    const auto gas_pct = cur_fd_type.percent_spread;
-                    if( gas_pct > 0 && cur.get_field_intensity() > 1 &&
-                        rng( 1, 100 ) <= gas_pct ) {
-                        // Try to fall first.
-                        auto spread_done = false;
-                        if( pos.z() > -OVERMAP_DEPTH ) {
-                            const tripoint_abs_sm below_pos( pos.raw() + tripoint{ 0, 0, -1 } );
-                            auto *below_sm = mb.lookup_submap_in_memory( below_pos.raw() );
-                            if( below_sm ) {
-                                auto dst = SubTile{ below_sm, local };
-                                if( gas_can_spread_sub( cur, dst ) ) {
-                                    gas_spread_sub( cur, dst );
-                                    spread_done = true;
-                                }
+                    if( !spread_done ) {
+                        const auto start = static_cast<size_t>( rng( 0, 7 ) );
+                        std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
+                            if( spread_done ) {
+                                return;
                             }
-                        }
-                        if( !spread_done ) {
-                            const auto start = static_cast<size_t>( rng( 0, 7 ) );
-                            std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
-                                if( spread_done ) {
-                                    return;
-                                }
-                                auto dst = neighbor_tile( &sm, pos, local,
-                                                          eight_dirs_sm[( start + c ) % 8], mb );
-                                if( gas_can_spread_sub( cur, dst ) ) {
-                                    gas_spread_sub( cur, dst );
-                                    spread_done = true;
-                                }
-                            } );
-                        }
-                        // Outdoor age speedup (simplified — skip wind/shelter check).
-                        const auto outdoor_speedup = cur_fd_type.outdoor_age_speedup;
-                        if( outdoor_speedup > 0_turns ) {
-                            cur.mod_field_age( outdoor_speedup );
-                        }
+                            auto dst = neighbor_tile( &sm, pos, local,
+                                                      eight_dirs_sm[( start + c ) % 8], mb );
+                            if( gas_can_spread_sub( cur, dst ) ) {
+                                gas_spread_sub( cur, dst );
+                                spread_done = true;
+                            }
+                        } );
+                    }
+                    // Outdoor age speedup (simplified — skip wind/shelter check).
+                    const auto outdoor_speedup = cur_fd_type.outdoor_age_speedup;
+                    if( outdoor_speedup > 0_turns ) {
+                        cur.mod_field_age( outdoor_speedup );
                     }
                 }
+            }
 
-                // ---- fd_fungicidal_gas ----------------------------------------
-                if( !is_newborn && cur_fd_type_id == fd_fungicidal_gas ) {
-                    const auto intensity = cur.get_field_intensity();
-                    if( ter.has_flag( flag_FUNGUS ) && one_in( 10 / intensity ) ) {
-                        sm.set_ter( local, t_dirt );
+            // ---- fd_fungicidal_gas ----------------------------------------
+            if( !is_newborn && cur_fd_type_id == fd_fungicidal_gas ) {
+                const auto intensity = cur.get_field_intensity();
+                if( ter.has_flag( flag_FUNGUS ) && one_in( 10 / intensity ) ) {
+                    sm.set_ter( local, t_dirt );
+                }
+                if( frn.has_flag( flag_FUNGUS ) && one_in( 10 / intensity ) ) {
+                    sm.set_furn( local, f_null );
+                }
+            }
+
+            // ---- fd_electricity ------------------------------------------
+            if( !is_newborn && cur_fd_type_id == fd_electricity && !one_in( 5 ) ) {
+                auto self = SubTile{ &sm, local };
+                if( !sub_passable( self ) && cur.get_field_intensity() > 1 ) {
+                    auto tries = 0;
+                    while( tries < 10 &&
+                           cur.get_field_age() < 5_minutes &&
+                           cur.get_field_intensity() > 1 ) {
+                        const auto dx = rng( -1, 1 );
+                        const auto dy = rng( -1, 1 );
+                        if( dx == 0 && dy == 0 ) {
+                            ++tries;
+                            continue;
+                        }
+                        auto dst = neighbor_tile( &sm, pos, local, { dx, dy }, mb );
+                        if( sub_passable( dst ) ) {
+                            sub_add_field( dst, fd_electricity, 1,
+                                           cur.get_field_age() + 1_turns );
+                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                            tries = 0;
+                        } else {
+                            ++tries;
+                        }
                     }
-                    if( frn.has_flag( flag_FUNGUS ) && one_in( 10 / intensity ) ) {
-                        sm.set_furn( local, f_null );
+                } else {
+                    std::vector<point> grounded;
+                    std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
+                        auto dst = neighbor_tile( &sm, pos, local, d, mb );
+                        if( dst.valid() && !sub_passable( dst ) ) {
+                            grounded.push_back( d );
+                        }
+                    } );
+                    if( grounded.empty() ) {
+                        const auto dx  = rng( -1, 1 );
+                        const auto dy  = rng( -1, 1 );
+                        auto dst       = neighbor_tile( &sm, pos, local, { dx, dy }, mb );
+                        auto *elec     = dst.valid() ?
+                                         dst.get_field().find_field( fd_electricity ) : nullptr;
+                        if( sub_passable( dst ) && elec && elec->get_field_intensity() < 3 ) {
+                            elec->set_field_intensity( elec->get_field_intensity() + 1 );
+                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                        } else if( sub_passable( dst ) ) {
+                            sub_add_field( dst, fd_electricity, 1,
+                                           cur.get_field_age() + 1_turns );
+                        }
+                        cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                    }
+                    while( !grounded.empty() && cur.get_field_intensity() > 1 ) {
+                        const auto d = random_entry_removed( grounded );
+                        auto dst = neighbor_tile( &sm, pos, local, d, mb );
+                        sub_add_field( dst, fd_electricity, 1, cur.get_field_age() + 1_turns );
+                        cur.set_field_intensity( cur.get_field_intensity() - 1 );
                     }
                 }
+            }
 
-                // ---- fd_electricity ------------------------------------------
-                if( !is_newborn && cur_fd_type_id == fd_electricity && !one_in( 5 ) ) {
+            // ---- fd_fire_vent -------------------------------------------
+            if( !is_newborn && cur_fd_type_id == fd_fire_vent ) {
+                if( cur.get_field_intensity() > 1 ) {
+                    if( one_in( 3 ) ) {
+                        cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                    }
+                    // create_hot_air() skipped — render/audio effect only.
+                } else {
                     auto self = SubTile{ &sm, local };
-                    if( !sub_passable( self ) && cur.get_field_intensity() > 1 ) {
-                        auto tries = 0;
-                        while( tries < 10 &&
-                               cur.get_field_age() < 5_minutes &&
-                               cur.get_field_intensity() > 1 ) {
-                            const auto dx = rng( -1, 1 );
-                            const auto dy = rng( -1, 1 );
-                            if( dx == 0 && dy == 0 ) {
-                                ++tries;
+                    sub_add_field( self, fd_flame_burst, 1, cur.get_field_age() );
+                    cur.set_field_intensity( 0 );
+                }
+            }
+
+            // ---- fd_flame_burst -----------------------------------------
+            if( !is_newborn && cur_fd_type_id == fd_flame_burst ) {
+                if( cur.get_field_intensity() > 1 ) {
+                    cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                } else {
+                    cur.set_field_intensity( 0 );
+                }
+            }
+
+            // ---- fd_incendiary ------------------------------------------
+            if( !is_newborn && cur_fd_type_id == fd_incendiary ) {
+                const auto dx  = rng( -1, 1 );
+                const auto dy  = rng( -1, 1 );
+                auto dst       = neighbor_tile( &sm, pos, local, { dx, dy }, mb );
+                if( dst.valid() ) {
+                    const auto &dter = dst.get_ter_t();
+                    const auto &dfrn = dst.get_furn_t();
+                    if( ter_furn_has_flag( dter, dfrn, TFLAG_FLAMMABLE ) ||
+                        ter_furn_has_flag( dter, dfrn, TFLAG_FLAMMABLE_ASH ) ||
+                        ter_furn_has_flag( dter, dfrn, TFLAG_FLAMMABLE_HARD ) ) {
+                        sub_add_field( dst, fd_fire, 1, 0_turns );
+                    }
+                    const auto dst_has_flammable = std::ranges::any_of(
+                                                       dst.get_items().as_vector(),
+                    []( const item * i ) { return i && i->flammable(); } );
+                    if( dst_has_flammable ) {
+                        sub_add_field( dst, fd_fire, 1, 0_turns );
+                    }
+                }
+                // create_hot_air() skipped — render/audio effect only.
+            }
+
+            // ---- fd_shock_vent ------------------------------------------
+            if( !is_newborn && cur_fd_type_id == fd_shock_vent ) {
+                if( cur.get_field_intensity() > 1 ) {
+                    if( one_in( 5 ) ) {
+                        cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                    }
+                } else {
+                    cur.set_field_intensity( 3 );
+                    const auto num_bolts = rng( 3, 6 );
+                    for( auto b = 0; b < num_bolts; ++b ) {
+                        auto xdir = 0;
+                        auto ydir = 0;
+                        while( xdir == 0 && ydir == 0 ) {
+                            xdir = rng( -1, 1 );
+                            ydir = rng( -1, 1 );
+                        }
+                        const auto dist = rng( 4, 12 );
+                        auto cx         = local.x;
+                        auto cy         = local.y;
+                        for( auto n = 0; n < dist; ++n ) {
+                            cx += xdir;
+                            cy += ydir;
+                            const auto delta = point{ cx - local.x, cy - local.y };
+                            auto bolt_dst    = neighbor_tile( &sm, pos, local, delta, mb );
+                            sub_add_field( bolt_dst, fd_electricity, rng( 2, 3 ), 0_turns );
+                            if( one_in( 4 ) ) {
+                                xdir = xdir == 0 ? rng( 0, 1 ) * 2 - 1 : 0;
+                            }
+                            if( one_in( 4 ) ) {
+                                ydir = ydir == 0 ? rng( 0, 1 ) * 2 - 1 : 0;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ---- fd_acid_vent ------------------------------------------
+            if( !is_newborn && cur_fd_type_id == fd_acid_vent ) {
+                if( cur.get_field_intensity() > 1 ) {
+                    if( cur.get_field_age() >= 1_minutes ) {
+                        cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                        cur.set_field_age( 0_turns );
+                    }
+                } else {
+                    cur.set_field_intensity( 3 );
+                    for( auto dx = -5; dx <= 5; ++dx ) {
+                        for( auto dy = -5; dy <= 5; ++dy ) {
+                            if( std::abs( dx ) + std::abs( dy ) > 5 ) {
                                 continue;
                             }
                             auto dst = neighbor_tile( &sm, pos, local, { dx, dy }, mb );
-                            if( sub_passable( dst ) ) {
-                                sub_add_field( dst, fd_electricity, 1,
-                                               cur.get_field_age() + 1_turns );
-                                cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                                tries = 0;
-                            } else {
-                                ++tries;
+                            if( !dst.valid() ) {
+                                continue;
                             }
-                        }
-                    } else {
-                        std::vector<point> grounded;
-                        std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
-                            auto dst = neighbor_tile( &sm, pos, local, d, mb );
-                            if( dst.valid() && !sub_passable( dst ) ) {
-                                grounded.push_back( d );
-                            }
-                        } );
-                        if( grounded.empty() ) {
-                            const auto dx  = rng( -1, 1 );
-                            const auto dy  = rng( -1, 1 );
-                            auto dst       = neighbor_tile( &sm, pos, local, { dx, dy }, mb );
-                            auto *elec     = dst.valid() ?
-                                             dst.get_field().find_field( fd_electricity ) : nullptr;
-                            if( sub_passable( dst ) && elec && elec->get_field_intensity() < 3 ) {
-                                elec->set_field_intensity( elec->get_field_intensity() + 1 );
-                                cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                            } else if( sub_passable( dst ) ) {
-                                sub_add_field( dst, fd_electricity, 1,
-                                               cur.get_field_age() + 1_turns );
-                            }
-                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                        }
-                        while( !grounded.empty() && cur.get_field_intensity() > 1 ) {
-                            const auto d = random_entry_removed( grounded );
-                            auto dst = neighbor_tile( &sm, pos, local, d, mb );
-                            sub_add_field( dst, fd_electricity, 1, cur.get_field_age() + 1_turns );
-                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                        }
-                    }
-                }
-
-                // ---- fd_fire_vent -------------------------------------------
-                if( !is_newborn && cur_fd_type_id == fd_fire_vent ) {
-                    if( cur.get_field_intensity() > 1 ) {
-                        if( one_in( 3 ) ) {
-                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                        }
-                        // create_hot_air() skipped — render/audio effect only.
-                    } else {
-                        auto self = SubTile{ &sm, local };
-                        sub_add_field( self, fd_flame_burst, 3, cur.get_field_age() );
-                        cur.set_field_intensity( 0 );
-                    }
-                }
-
-                // ---- fd_flame_burst -----------------------------------------
-                if( !is_newborn && cur_fd_type_id == fd_flame_burst ) {
-                    if( cur.get_field_intensity() > 1 ) {
-                        cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                    } else {
-                        cur.set_field_intensity( 0 );
-                    }
-                }
-
-                // ---- fd_incendiary ------------------------------------------
-                if( !is_newborn && cur_fd_type_id == fd_incendiary ) {
-                    const auto dx  = rng( -1, 1 );
-                    const auto dy  = rng( -1, 1 );
-                    auto dst       = neighbor_tile( &sm, pos, local, { dx, dy }, mb );
-                    if( dst.valid() ) {
-                        const auto &dter = dst.get_ter_t();
-                        const auto &dfrn = dst.get_furn_t();
-                        if( ter_furn_has_flag( dter, dfrn, TFLAG_FLAMMABLE ) ||
-                            ter_furn_has_flag( dter, dfrn, TFLAG_FLAMMABLE_ASH ) ||
-                            ter_furn_has_flag( dter, dfrn, TFLAG_FLAMMABLE_HARD ) ) {
-                            sub_add_field( dst, fd_fire, 1, 0_turns );
-                        }
-                        const auto dst_has_flammable = std::ranges::any_of(
-                                                           dst.get_items().as_vector(),
-                        []( const item * i ) { return i && i->flammable(); } );
-                        if( dst_has_flammable ) {
-                            sub_add_field( dst, fd_fire, 1, 0_turns );
-                        }
-                    }
-                    // create_hot_air() skipped — render/audio effect only.
-                }
-
-                // ---- fd_shock_vent ------------------------------------------
-                if( !is_newborn && cur_fd_type_id == fd_shock_vent ) {
-                    if( cur.get_field_intensity() > 1 ) {
-                        if( one_in( 5 ) ) {
-                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                        }
-                    } else {
-                        cur.set_field_intensity( 3 );
-                        const auto num_bolts = rng( 3, 6 );
-                        for( auto b = 0; b < num_bolts; ++b ) {
-                            auto xdir = 0;
-                            auto ydir = 0;
-                            while( xdir == 0 && ydir == 0 ) {
-                                xdir = rng( -1, 1 );
-                                ydir = rng( -1, 1 );
-                            }
-                            const auto dist = rng( 4, 12 );
-                            auto cx         = local.x;
-                            auto cy         = local.y;
-                            for( auto n = 0; n < dist; ++n ) {
-                                cx += xdir;
-                                cy += ydir;
-                                const auto delta = point{ cx - local.x, cy - local.y };
-                                auto bolt_dst    = neighbor_tile( &sm, pos, local, delta, mb );
-                                sub_add_field( bolt_dst, fd_electricity, rng( 2, 3 ), 0_turns );
-                                if( one_in( 4 ) ) {
-                                    xdir = xdir == 0 ? rng( 0, 1 ) * 2 - 1 : 0;
-                                }
-                                if( one_in( 4 ) ) {
-                                    ydir = ydir == 0 ? rng( 0, 1 ) * 2 - 1 : 0;
+                            const auto *acid = dst.get_field().find_field( fd_acid );
+                            if( acid && acid->get_field_intensity() == 0 ) {
+                                auto new_intensity = 3 - ( std::abs( dx ) + std::abs( dy ) ) / 2 +
+                                                     ( one_in( 3 ) ? 1 : 0 );
+                                new_intensity = std::clamp( new_intensity, 0, 3 );
+                                if( new_intensity > 0 ) {
+                                    sub_add_field( dst, fd_acid, new_intensity, 0_turns );
                                 }
                             }
                         }
                     }
                 }
+            }
 
-                // ---- fd_acid_vent ------------------------------------------
-                if( !is_newborn && cur_fd_type_id == fd_acid_vent ) {
-                    if( cur.get_field_intensity() > 1 ) {
-                        if( cur.get_field_age() >= 1_minutes ) {
-                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                            cur.set_field_age( 0_turns );
-                        }
-                    } else {
-                        cur.set_field_intensity( 3 );
-                        for( auto dx = -5; dx <= 5; ++dx ) {
-                            for( auto dy = -5; dy <= 5; ++dy ) {
-                                if( std::abs( dx ) + std::abs( dy ) > 5 ) {
-                                    continue;
-                                }
-                                auto dst = neighbor_tile( &sm, pos, local, { dx, dy }, mb );
-                                if( !dst.valid() ) {
-                                    continue;
-                                }
-                                const auto *acid = dst.get_field().find_field( fd_acid );
-                                if( acid && acid->get_field_intensity() == 0 ) {
-                                    auto new_intensity = 3 - ( std::abs( dx ) + std::abs( dy ) ) / 2 +
-                                                         ( one_in( 3 ) ? 1 : 0 );
-                                    new_intensity = std::clamp( new_intensity, 0, 3 );
-                                    if( new_intensity > 0 ) {
-                                        sub_add_field( dst, fd_acid, new_intensity, 0_turns );
-                                    }
-                                }
-                            }
-                        }
+            // ---- fd_push_items ------------------------------------------
+            if( !is_newborn && cur_fd_type_id == fd_push_items ) {
+                auto &items = sm.get_items( local );
+                auto push_it = items.begin();
+                while( push_it != items.end() ) {
+                    auto *it = *push_it;
+                    if( it->typeId() != itype_rock || it->age() < 1_turns ) {
+                        ++push_it;
+                        continue;
                     }
-                }
-
-                // ---- fd_push_items ------------------------------------------
-                if( !is_newborn && cur_fd_type_id == fd_push_items ) {
-                    auto &items = sm.get_items( local );
-                    auto push_it = items.begin();
-                    while( push_it != items.end() ) {
-                        auto *it = *push_it;
-                        if( it->typeId() != itype_rock || it->age() < 1_turns ) {
-                            ++push_it;
+                    it->set_age( 0_turns );
+                    std::vector<point> valid_dirs;
+                    std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
+                        auto dst = neighbor_tile( &sm, pos, local, d, mb );
+                        if( dst.valid() && dst.get_field().find_field( fd_push_items ) ) {
+                            valid_dirs.push_back( d );
+                        }
+                    } );
+                    if( !valid_dirs.empty() ) {
+                        const auto target_d = random_entry( valid_dirs );
+                        auto dst            = neighbor_tile( &sm, pos, local, target_d, mb );
+                        if( dst.valid() ) {
+                            detached_ptr<item> detached;
+                            push_it = items.erase( push_it, &detached );
+                            dst.get_items().push_back( std::move( detached ) );
+                            // Creature interactions skipped (no creatures outside render bubble).
                             continue;
                         }
-                        it->set_age( 0_turns );
-                        std::vector<point> valid_dirs;
-                        std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
-                            auto dst = neighbor_tile( &sm, pos, local, d, mb );
-                            if( dst.valid() && dst.get_field().find_field( fd_push_items ) ) {
-                                valid_dirs.push_back( d );
-                            }
-                        } );
-                        if( !valid_dirs.empty() ) {
-                            const auto target_d = random_entry( valid_dirs );
-                            auto dst            = neighbor_tile( &sm, pos, local, target_d, mb );
-                            if( dst.valid() ) {
-                                detached_ptr<item> detached;
-                                push_it = items.erase( push_it, &detached );
-                                dst.get_items().push_back( std::move( detached ) );
-                                // Creature interactions skipped (no creatures outside render bubble).
-                                continue;
-                            }
-                        }
-                        ++push_it;
                     }
+                    ++push_it;
                 }
+            }
 
-                // ---- fd_bees ------------------------------------------------
-                if( !is_newborn && cur_fd_type_id == fd_bees ) {
-                    static const std::array<field_type_id, 18> bee_killers = {{
-                            fd_web, fd_fire, fd_smoke, fd_toxic_gas, fd_tear_gas,
-                            fd_relax_gas, fd_nuke_gas, fd_gas_vent, fd_smoke_vent,
-                            fd_fungicidal_gas, fd_insecticidal_gas, fd_fire_vent,
-                            fd_flame_burst, fd_electricity, fd_fatigue, fd_shock_vent,
-                            fd_plasma, fd_laser
-                        }
-                    };
-                    const auto killed = std::ranges::any_of( bee_killers,
-                    [&]( const field_type_id & k ) {
-                        return curfield.find_field( k ) != nullptr;
-                    } );
-                    if( killed ) {
-                        cur.set_field_intensity( 0 );
-                    } else {
-                        // Wander randomly (player-chasing skipped — no player outside bubble).
-                        const auto start = static_cast<size_t>( rng( 0, 7 ) );
-                        std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
-                            auto dst = neighbor_tile( &sm, pos, local,
-                                                      eight_dirs_sm[( start + c ) % 8], mb );
-                            if( dst.valid() && !dst.get_field().find_field( fd_bees ) ) {
-                                if( dst.get_field().add_field( fd_bees, cur.get_field_intensity(),
-                                                               cur.get_field_age() ) ) {
-                                    ++dst.sm->field_count;
-                                    dst.sm->is_uniform = false;
-                                }
-                                cur.set_field_intensity( 0 );
-                            }
-                        } );
+            // ---- fd_bees ------------------------------------------------
+            if( !is_newborn && cur_fd_type_id == fd_bees ) {
+                static const std::array<field_type_id, 18> bee_killers = {{
+                        fd_web, fd_fire, fd_smoke, fd_toxic_gas, fd_tear_gas,
+                        fd_relax_gas, fd_nuke_gas, fd_gas_vent, fd_smoke_vent,
+                        fd_fungicidal_gas, fd_insecticidal_gas, fd_fire_vent,
+                        fd_flame_burst, fd_electricity, fd_fatigue, fd_shock_vent,
+                        fd_plasma, fd_laser
                     }
-                }
-
-                // ---- Radiation ----------------------------------------------
-                if( !is_newborn && cur.extra_radiation_max() > 0 ) {
-                    const auto extra = rng( cur.extra_radiation_min(), cur.extra_radiation_max() );
-                    sm.set_radiation( local, sm.get_radiation( local ) + extra );
-                }
-
-                // ---- Wandering fields (in-submap only) ----------------------
-                if( !is_newborn && cur_fd_type.wandering_field ) {
-                    const auto wtype   = cur_fd_type.wandering_field;
-                    const auto wintens = cur.get_field_intensity();
-                    const auto wradius = wintens - 1;
-                    for( auto wx = -wradius; wx <= wradius; ++wx ) {
-                        for( auto wy = -wradius; wy <= wradius; ++wy ) {
-                            const auto wlocal = local + point{ wx, wy };
-                            if( wlocal.x < 0 || wlocal.x >= SEEX ||
-                                wlocal.y < 0 || wlocal.y >= SEEY ) {
-                                continue;
-                            }
-                            auto *wfld = sm.get_field( wlocal ).find_field( wtype );
-                            if( wfld ) {
-                                if( wfld->get_field_intensity() < wintens ) {
-                                    wfld->set_field_intensity( wfld->get_field_intensity() + 1 );
-                                }
-                            } else if( sm.get_field( wlocal ).add_field( wtype, wintens, 0_turns ) ) {
-                                ++sm.field_count;
-                            }
-                        }
-                    }
-                }
-
-                // ---- Aging + half-life decay --------------------------------
-                cur.set_field_age( cur.get_field_age() + 1_turns );
-                const auto &fdata = cur.get_field_type().obj();
-                if( fdata.half_life > 0_turns && cur.get_field_age() > 0_turns &&
-                    dice( 2, to_turns<int>( cur.get_field_age() ) ) >
-                    to_turns<int>( fdata.half_life ) ) {
-                    cur.set_field_age( 0_turns );
-                    cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                }
-
-                if( !cur.is_field_alive() ) {
-                    --sm.field_count;
-                    curfield.remove_field( it++ );
+                };
+                const auto killed = std::ranges::any_of( bee_killers,
+                [&]( const field_type_id & k ) {
+                    return curfield.find_field( k ) != nullptr;
+                } );
+                if( killed ) {
+                    cur.set_field_intensity( 0 );
                 } else {
-                    ++it;
+                    // Wander randomly (player-chasing skipped — no player outside bubble).
+                    const auto start = static_cast<size_t>( rng( 0, 7 ) );
+                    std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
+                        auto dst = neighbor_tile( &sm, pos, local,
+                                                  eight_dirs_sm[( start + c ) % 8], mb );
+                        if( dst.valid() && !dst.get_field().find_field( fd_bees ) ) {
+                            if( dst.get_field().add_field( fd_bees, cur.get_field_intensity(),
+                                                           cur.get_field_age() ) ) {
+                                ++dst.sm->field_count;
+                                dst.sm->field_cache.push_back( dst.local );
+                                dst.sm->is_uniform = false;
+                            }
+                            cur.set_field_intensity( 0 );
+                        }
+                    } );
                 }
-            } // end field-entry loop
-        } );
+            }
+
+            // ---- Radiation ----------------------------------------------
+            if( !is_newborn && cur.extra_radiation_max() > 0 ) {
+                const auto extra = rng( cur.extra_radiation_min(), cur.extra_radiation_max() );
+                sm.set_radiation( local, sm.get_radiation( local ) + extra );
+            }
+
+            // ---- Wandering fields (in-submap only) ----------------------
+            if( !is_newborn && cur_fd_type.wandering_field ) {
+                const auto wtype   = cur_fd_type.wandering_field;
+                const auto wintens = cur.get_field_intensity();
+                const auto wradius = wintens - 1;
+                for( auto wx = -wradius; wx <= wradius; ++wx ) {
+                    for( auto wy = -wradius; wy <= wradius; ++wy ) {
+                        const auto wlocal = local + point{ wx, wy };
+                        if( wlocal.x < 0 || wlocal.x >= SEEX ||
+                            wlocal.y < 0 || wlocal.y >= SEEY ) {
+                            continue;
+                        }
+                        auto *wfld = sm.get_field( wlocal ).find_field( wtype );
+                        if( wfld ) {
+                            if( wfld->get_field_intensity() < wintens ) {
+                                wfld->set_field_intensity( wfld->get_field_intensity() + 1 );
+                            }
+                        } else if( sm.get_field( wlocal ).add_field( wtype, wintens, 0_turns ) ) {
+                            ++sm.field_count;
+                            sm.field_cache.push_back( wlocal );
+                        }
+                    }
+                }
+            }
+
+            // ---- Aging + half-life decay --------------------------------
+            cur.set_field_age( cur.get_field_age() + 1_turns );
+            const auto &fdata = cur.get_field_type().obj();
+            if( fdata.half_life > 0_turns && cur.get_field_age() > 0_turns &&
+                dice( 2, to_turns<int>( cur.get_field_age() ) ) >
+                to_turns<int>( fdata.half_life ) ) {
+                cur.set_field_age( 0_turns );
+                cur.set_field_intensity( cur.get_field_intensity() - 1 );
+            }
+
+            if( !cur.is_field_alive() ) {
+                --sm.field_count;
+                curfield.remove_field( it++ );
+            } else {
+                ++it;
+            }
+        } // end field-entry loop
     } );
+
+    if( sm.field_count == 0 ) {
+        sm.field_cache.clear();
+    }
 
     return has_fire;
 }

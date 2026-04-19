@@ -962,7 +962,7 @@ class npc : public player
         * True if this NPC is in a simulated submap — i.e. loaded and eligible
         * for per-turn AI processing.  Mirrors the check used in npcmove().
         */
-        bool is_simulated() const;
+        bool is_simulated() const override;
         bool is_manually_erased() const {
             return manually_erased_;
         }

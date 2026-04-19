@@ -61,6 +61,7 @@ enum class load_request_source : int {
     script,          ///< Lua/scripted event that needs a region loaded
     fire_spread,     ///< Fire-spread loader keeping adjacent submaps resident
     lazy_border,     ///< Kept in memory around the bubble but not simulated
+    portal_preload,  ///< portal_tile keeping its target area resident
 };
 
 /** Opaque handle returned by request_load(); used to update or release. */
@@ -105,6 +106,13 @@ class submap_load_manager
                                           const std::string &dim_id,
                                           const tripoint_abs_sm &center,
                                           int radius );
+
+        load_request_handle request_load( load_request_source source,
+                                          const std::string &dim_id,
+                                          const tripoint_abs_sm &center ) {
+            return request_load(
+                       source, dim_id, center, 0 );
+        }
 
         /**
          * Move the center of an existing request (e.g. on player movement).

@@ -338,7 +338,7 @@ void map::build_angled_sunlight_cache( const int zlev )
             if( zlev + 1 <= OVERMAP_HEIGHT ) {
                 const level_cache &above = get_cache_ref( zlev + 1 );
                 const auto aidx = above.idx( x, y );
-                if( above.floor_cache[aidx] || above.vehicle_floor_cache[aidx] ) {
+                if( above.floor_cache[aidx] ) {
                     solar_cache[ch.idx( x, y )] = false;
                     return;
                 }
@@ -360,8 +360,7 @@ void map::build_angled_sunlight_cache( const int zlev )
             [&]( const auto & sp ) {
                 const level_cache &uch = get_cache_ref( zlev + sp.first );
                 const auto uidx = uch.idx( sp.second.x, sp.second.y );
-                return static_cast<bool>( uch.floor_cache[uidx] ) ||
-                       static_cast<bool>( uch.vehicle_floor_cache[uidx] );
+                return static_cast<bool>( uch.floor_cache[uidx] );
             }
                                  );
             solar_cache[ch.idx( x, y )] = !blocked;
@@ -605,7 +604,6 @@ void map::generate_lightmap_worker( const int zlev )
     auto &map_cache = get_cache( zlev );
     auto &lm = map_cache.lm;
     auto &sm = map_cache.sm;
-    auto &outside_cache = map_cache.outside_cache;
     auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).floor_cache;
     auto &prev_vehicle_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH,
                                      OVERMAP_DEPTH ) ).vehicle_floor_cache;
@@ -678,26 +676,42 @@ void map::generate_lightmap_worker( const int zlev )
                         auto has_floor_above = [&]( int idx ) {
                             return prev_floor_cache[idx] || prev_vehicle_floor_cache[idx];
                         };
-                        if( !outside_cache[map_cache.idx( p.x, p.y )] || ( !top_floor &&
-                                has_floor_above( map_cache.idx( p.x, p.y ) ) ) ) {
-                            // Apply light sources for external/internal divide
+                        if( top_floor || has_floor_above( map_cache.idx( p.x, p.y ) ) ) {
+                            // Apply light sources for external/internal divide.
+                            // A neighbour is an outdoor light source if it has no floor above it
+                            // and is part of a genuine outdoor area (not an isolated skylight hole).
+                            // An isolated skylight has no adjacent open-sky neighbours, so we
+                            // require at least one cardinal neighbour of `nb` (other than p) that
+                            // also has no floor above.
                             for( int i = 0; i < 4; ++i ) {
-                                point neighbour = p.xy() + point( dir_x[i], dir_y[i] );
-                                if( neighbour.x >= 0 && neighbour.y >= 0 &&
-                                    neighbour.x < map_cache.cache_x && neighbour.y < map_cache.cache_y
-                                    && outside_cache[map_cache.idx( neighbour.x, neighbour.y )] &&
-                                    ( top_floor || !has_floor_above( map_cache.idx( neighbour.x, neighbour.y ) ) )
-                                  ) {
-                                    const float source_light =
-                                        std::min( natural_light, lm[map_cache.idx( neighbour.x, neighbour.y )].max() );
-                                    if( light_transparency( p ) > LIGHT_TRANSPARENCY_SOLID ) {
-                                        update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, quadrant::default_ );
-                                        // apply_directional_light writes to arbitrary lm positions — defer.
-                                        local.dir_lights.push_back( { p, dir_d[i], source_light } );
-                                    } else {
-                                        update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, dir_quadrants[i][0] );
-                                        update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, dir_quadrants[i][1] );
-                                    }
+                                const point neighbour = p.xy() + point( dir_x[i], dir_y[i] );
+                                if( neighbour.x < 0 || neighbour.y < 0 ||
+                                    neighbour.x >= map_cache.cache_x || neighbour.y >= map_cache.cache_y ) {
+                                    continue;
+                                }
+                                if( !( top_floor || !has_floor_above( map_cache.idx( neighbour.x, neighbour.y ) ) ) ) {
+                                    continue;
+                                }
+                                const bool nb_has_open_sky_neighbour = std::ranges::any_of(
+                                std::views::iota( 0, 4 ), [&]( int j ) {
+                                    const point cn = neighbour + point( dir_x[j], dir_y[j] );
+                                    return cn != p.xy() &&
+                                           cn.x >= 0 && cn.y >= 0 &&
+                                           cn.x < map_cache.cache_x && cn.y < map_cache.cache_y &&
+                                           !has_floor_above( map_cache.idx( cn.x, cn.y ) );
+                                } );
+                                if( !nb_has_open_sky_neighbour ) {
+                                    continue;
+                                }
+                                const float source_light =
+                                    std::min( natural_light, lm[map_cache.idx( neighbour.x, neighbour.y )].max() );
+                                if( light_transparency( p ) > LIGHT_TRANSPARENCY_SOLID ) {
+                                    update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, quadrant::default_ );
+                                    // apply_directional_light writes to arbitrary lm positions — defer.
+                                    local.dir_lights.push_back( { p, dir_d[i], source_light } );
+                                } else {
+                                    update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, dir_quadrants[i][0] );
+                                    update_light_quadrants( lm[map_cache.idx( p.x, p.y )], source_light, dir_quadrants[i][1] );
                                 }
                             }
                         }

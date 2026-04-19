@@ -864,8 +864,8 @@ void cata::detail::reg_time_types( sol::state &lua )
         luna::set_fx( ut, "is_day", &is_day );
         luna::set_fx( ut, "is_dusk", &is_dusk );
         luna::set_fx( ut, "is_dawn", &is_dawn );
-        luna::set_fx( ut, "sunrise", &sunrise );
-        luna::set_fx( ut, "sunset", &sunset );
+        luna::set_fx( ut, "sunrise", []( const time_point & tp ) { return sunrise( tp ); } );
+        luna::set_fx( ut, "sunset", []( const time_point & tp ) { return sunset( tp ); } );
         luna::set_fx( ut, "moon_phase", &get_moon_phase );
         luna::set_fx( ut, "season", []( const time_point & tp ) { return calendar::name_season( season_of_year( tp ) ); } );
 

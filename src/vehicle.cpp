@@ -7764,8 +7764,7 @@ static bool is_sm_tile_outside( const tripoint &real_global_pos )
         return false;
     }
 
-    return !( sm->get_ter( p ).obj().has_flag( TFLAG_INDOORS ) ||
-              sm->get_furn( p ).obj().has_flag( TFLAG_INDOORS ) );
+    return get_map().is_outside( real_global_pos );
 }
 
 void vehicle::update_time( const time_point &update_to )
@@ -8167,7 +8166,7 @@ bool vehicle_part_with_feature_range<vpart_bitflags>::matches( const size_t part
 
 bool vehicle::is_loaded() const
 {
-    return attached && get_map().inbounds( global_pos3() );
+    return attached && get_map().get_submap_at( global_pos3() ) != nullptr;
 }
 
 void vehicle::refresh_locations_hack()

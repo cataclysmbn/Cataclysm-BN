@@ -497,6 +497,7 @@ class Creature
         virtual void setpos( const tripoint &pos ) = 0;
 
         bool is_loaded() const;
+        virtual bool is_simulated() const;
 
         /** Processes move stopping effects. Returns false if movement is stopped. */
         virtual bool move_effects( bool attacking ) = 0;

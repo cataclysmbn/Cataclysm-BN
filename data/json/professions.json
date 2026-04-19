@@ -7744,5 +7744,28 @@
       "male": [ "boxer_shorts", "platinum_necklace" ],
       "female": [ "boy_shorts", "sports_bra", "blue_topaz_platinum_earring" ]
     }
+  },
+  {
+    "type": "profession",
+    "id": "elite_specops",
+    "name": "Elite Operator",
+    "description": "You were the best of the best, the military's finest, and among them you were better still.  Movies have been made about the missions you went on, and that's only the declassified ones. After getting back from yet another top secret mission, all you wanted to do was relax. Unfortunately, the Cataclysm had other plans, and now, stuck without your gear, you'll just have to show them what makes you tier one.",
+    "points": 8,
+    "traits": [ "PROF_MILITARY", "PROF_SWIMMER" ],
+    "skills": [
+      { "level": 8, "name": "swimming" },
+      { "level": 8, "name": "gun" },
+      { "level": 8, "name": "rifle" },
+      { "level": 6, "name": "survival" },
+      { "level": 3, "name": "cutting" },
+      { "level": 4, "name": "melee" },
+      { "level": 3, "name": "dodge" },
+      { "level": 3, "name": "firstaid" }
+    ],
+    "items": {
+      "both": { "items": [ "pants_army", "tshirt", "jacket_army", "socks", "boots_combat" ] },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
   }
 ]

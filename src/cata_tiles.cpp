@@ -3285,6 +3285,36 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 draw_debug_tile( intensity, string_format( "%.2f", tr ) );
             }
 
+            if( g->display_overlay_state( ACTION_DISPLAY_OUTSIDE ) ) {
+                // Use the flat level_cache directly: it includes Phase3 vehicle overrides
+                // (outside=false / sheltered=true for covered vehicle tiles) that the
+                // lazy per-submap rebuild path does not reflect.
+                const auto &ov_ch = here.access_cache( center.z );
+                if( ov_ch.inbounds( point( temp_x, temp_y ) ) ) {
+                    const int ov_idx = ov_ch.idx( temp_x, temp_y );
+                    const bool outside = ov_ch.outside_cache[ov_idx];
+                    const bool sheltered = ov_ch.sheltered_cache[ov_idx];
+                    // Three states: open field (green), overhang (yellow), indoors (red)
+                    SDL_Color block_color;
+                    std::string label;
+                    if( outside && !sheltered ) {
+                        block_color = { 0, 200, 0, 100 };   // green - fully open
+                        label = "O";
+                    } else if( outside && sheltered ) {
+                        block_color = { 200, 200, 0, 100 };  // yellow - overhang
+                        label = "S";
+                    } else {
+                        block_color = { 200, 0, 0, 100 };    // red - indoors
+                        label = "I";
+                    }
+                    color_blocks.first = SDL_BLENDMODE_BLEND;
+                    color_blocks.second.emplace( player_to_screen( point( temp_x, temp_y ) ), block_color );
+                    overlay_strings.emplace(
+                        player_to_screen( point( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
+                        formatted_text( label, catacurses::black, direction::NORTH ) );
+                }
+            }
+
             lit_level ll = lit_level::BLANK;
             int last_vis = center.z + 1;
             lit_level last_vis_ll = lit_level::BLANK;

@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <map>
-#include <memory>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -10,11 +9,17 @@
 #include "ammo.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "creature_functions.h"
+#include "faction.h"
 #include "game.h"
 #include "item.h"
 #include "itype.h"
 #include "map.h"
+#include "map_helpers.h"
+#include "monster.h"
+#include "npc.h"
 #include "point.h"
+#include "player_helpers.h"
 #include "state_helpers.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -153,4 +158,65 @@ TEST_CASE( "vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret
         }
     }
     REQUIRE( gun.ammo_remaining() == ammo_capacity );
+}
+
+TEST_CASE( "vehicle_turret_iff_protects_followers_in_line_of_fire", "[vehicle][turret][npc][iff]" )
+{
+    clear_all_state();
+    build_test_map( ter_id( "t_dirt" ) );
+    map &here = get_map();
+    set_time( calendar::turn_zero + 12_hours );
+
+    const auto shooter_pos = tripoint( 60, 60, 0 );
+    avatar &shooter = get_avatar();
+    shooter.setpos( shooter_pos );
+    shooter.set_body();
+
+    const auto follower_pos = shooter_pos + point( 3, 0 );
+    npc &follower = spawn_npc( follower_pos.xy(), "thug" );
+    follower.set_fac( faction_id( "your_followers" ) );
+    follower.set_attitude( NPCATT_FOLLOW );
+    REQUIRE( follower.is_player_ally() );
+    REQUIRE( shooter.attitude_to( follower ) == Attitude::A_FRIENDLY );
+
+    const auto hostile_pos = shooter_pos + point( 8, 0 );
+    monster &hostile = spawn_test_monster( "mon_zombie_tough", hostile_pos );
+    here.invalidate_map_cache( shooter_pos.z );
+    here.build_map_cache( shooter_pos.z, true );
+    REQUIRE( shooter.sees( hostile ) );
+
+    const auto target = creature_functions::auto_find_hostile_target(
+                            shooter, { .range = 20, .trail = false, .area = 0 } );
+    REQUIRE_FALSE( target.has_value() );
+    CHECK( target.error() == 1 );
+}
+
+TEST_CASE( "vehicle_turret_iff_allows_clear_shots", "[vehicle][turret][npc][iff]" )
+{
+    clear_all_state();
+    build_test_map( ter_id( "t_dirt" ) );
+    map &here = get_map();
+    set_time( calendar::turn_zero + 12_hours );
+
+    const auto shooter_pos = tripoint( 60, 60, 0 );
+    avatar &shooter = get_avatar();
+    shooter.setpos( shooter_pos );
+    shooter.set_body();
+
+    const auto follower_pos = shooter_pos + point( 0, 5 );
+    npc &follower = spawn_npc( follower_pos.xy(), "thug" );
+    follower.set_fac( faction_id( "your_followers" ) );
+    follower.set_attitude( NPCATT_FOLLOW );
+    REQUIRE( follower.is_player_ally() );
+
+    const auto hostile_pos = shooter_pos + point( 8, 0 );
+    monster &hostile = spawn_test_monster( "mon_zombie_tough", hostile_pos );
+    here.invalidate_map_cache( shooter_pos.z );
+    here.build_map_cache( shooter_pos.z, true );
+    REQUIRE( shooter.sees( hostile ) );
+
+    const auto target = creature_functions::auto_find_hostile_target(
+                            shooter, { .range = 20, .trail = false, .area = 0 } );
+    REQUIRE( target.has_value() );
+    CHECK( &target->get() == &hostile );
 }
