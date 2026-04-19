@@ -6547,7 +6547,6 @@
           "nomex_suit",
           "jumpsuit",
           "boots_combat",
-          "mil_scouter",
           "nomex_gloves",
           "gloves_tactical",
           "nomex_hood",
@@ -6555,6 +6554,7 @@
           "webbing_belt"
         ],
         "entries": [
+          { "item": "mil_scouter", "charges": 200 },
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
           { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
           { "item": "chestrig", "contents-group": "army_mags_m17" }
