@@ -342,7 +342,7 @@ static void fill_water_collectors( int mmPerHour, bool acid )
     ZoneScopedN( "fill_water_collectors" );
     const auto abs_sub = g->m.get_abs_sub();
     auto &mbuf = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
-    std::ranges::for_each( g->m.get_funnel_locations(), [&]( const auto &entry ) {
+    std::ranges::for_each( g->m.get_funnel_locations(), [&]( const auto & entry ) {
         auto &[sm_abs, lp] = entry;
         auto *sm = mbuf.lookup_submap_in_memory( sm_abs );
         if( !sm ) {
