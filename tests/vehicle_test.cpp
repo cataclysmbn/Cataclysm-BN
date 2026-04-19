@@ -79,6 +79,22 @@ TEST_CASE( "taking_control_of_vehicle_without_engine", "[vehicle]" )
     CHECK( !player_character.activity );
 }
 
+TEST_CASE( "folding_seat_tile_accepts_other_utility_parts", "[vehicle]" )
+{
+    clear_all_state();
+    const auto origin = tripoint( 60, 60, 0 );
+    auto *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    const auto mount = point_north;
+    REQUIRE( veh_ptr->install_part( mount, vpart_id( "frame_vertical" ) ) >= 0 );
+    REQUIRE( veh_ptr->install_part( mount, vpart_id( "roof" ) ) >= 0 );
+    REQUIRE( veh_ptr->install_part( mount, vpart_id( "folding_seat" ) ) >= 0 );
+
+    CHECK( veh_ptr->can_mount( mount, vpart_id( "NBC_seal" ) ) );
+    CHECK( veh_ptr->can_mount( mount, vpart_id( "inboard_mirror" ) ) );
+}
+
 TEST_CASE( "add_item_to_broken_vehicle_part" )
 {
     clear_all_state();

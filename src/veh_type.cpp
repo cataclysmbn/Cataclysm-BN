@@ -579,6 +579,9 @@ void vpart_info::finalize()
         } else if( info.location == "on_cargo" ) {
             info.z_order = 8;
             info.list_order = 6;
+        } else if( info.location == "on_ceiling" ) {
+            info.z_order = 8;
+            info.list_order = 5;
         } else if( info.location == "center" ) {
             info.z_order = 7;
             info.list_order = 7;
