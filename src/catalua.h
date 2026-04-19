@@ -11,6 +11,8 @@
 class Item_factory;
 class map;
 class tinymap;
+class player;
+class player_activity;
 class world;
 
 namespace cata
@@ -44,6 +46,10 @@ void run_mod_main_script( lua_state &state, const mod_id &mod );
 void run_on_game_load_hooks( lua_state &state );
 void run_on_game_save_hooks( lua_state &state );
 void run_on_every_x_hooks( lua_state &state );
+auto run_lua_examine( const std::string &callback_id, player &who,
+                      const tripoint &pos ) -> void;
+auto run_lua_activity_callback( const std::string &callback_id, player &who,
+                                player_activity &act ) -> void;
 void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &p,
                                       const time_point &when );
 
@@ -74,5 +80,4 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory );
 void resolve_lua_bionic_and_mutation_callbacks();
 
 } // namespace cata
-
 

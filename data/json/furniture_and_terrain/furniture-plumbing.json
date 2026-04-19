@@ -11,8 +11,9 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "CONTAINER", "PLACE_ITEM", "BLOCKSDOOR", "MOUNTABLE", "LIQUIDCONT" ],
     "max_volume": "200 L",
-    "examine_action": "keg",
+    "examine_action": "lua:PLUMBING_BATHTUB_EXAMINE",
     "keg_capacity": 600,
+    "fluid_grid": { "role": "fixture", "allow_input": false, "allow_output": true, "allowed_liquids": [ "water", "water_clean" ] },
     "bash": {
       "str_min": 12,
       "str_max": 50,
@@ -38,6 +39,8 @@
     "coverage": 35,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "CONTAINER", "PLACE_ITEM", "BLOCKSDOOR" ],
+    "examine_action": "lua:PLUMBING_SHOWER_EXAMINE",
+    "fluid_grid": { "role": "fixture", "allow_input": false, "allow_output": true, "allowed_liquids": [ "water", "water_clean" ] },
     "bash": {
       "str_min": 6,
       "str_max": 30,

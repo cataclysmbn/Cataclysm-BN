@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "catacharset.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_impl.h"
 #include "catalua_serde.h"
@@ -9,7 +10,9 @@
 #include "clzones.h"
 #include "debug.h"
 #include "faction.h"
+#include "flag.h"
 #include "fstream_utils.h"
+#include "iexamine.h"
 #include "json.h"
 #include "map.h"
 #include "mapdata.h"
@@ -88,6 +91,51 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_monster_avatar_name == "nil" );
     REQUIRE( lua_character_avatar_name == expected_name );
     REQUIRE( lua_npc_avatar_name == "nil" );
+}
+
+TEST_CASE( "lua_activity_bindings", "[lua]" )
+{
+    auto wrapped_state = cata::make_wrapped_state();
+    cata::init_global_state_tables( *wrapped_state, {} );
+    sol::state &lua = wrapped_state->lua;
+
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "activity_binding_test.lua" );
+
+    REQUIRE( test_data.get<bool>( "has_examine_functions" ) );
+    REQUIRE( test_data.get<bool>( "has_activity_functions" ) );
+    REQUIRE( test_data.get<std::string>( "activity_id" ) == "ACT_WASH_SELF" );
+    REQUIRE( test_data.get<std::string>( "activity_name" ) == "test wash" );
+    REQUIRE( test_data.get<std::string>( "activity_callback" ) == "TEST_CALLBACK" );
+    REQUIRE( test_data.get<std::string>( "activity_str_value" ) == "extra" );
+    CHECK_TUPLE( test_data["activity_value"] == 7 );
+    REQUIRE( test_data.get<std::string>( "activity_coord" ) == "(9,8,0)" );
+}
+
+TEST_CASE( "plumbing_lua_data_hooks", "[lua]" )
+{
+    const auto &shower = furn_id( "f_shower" ).obj();
+    const auto &bathtub = furn_id( "f_bathtub" ).obj();
+    const auto lua_examine = iexamine_function_from_string( "lua_examine" );
+
+    REQUIRE( shower.examine == lua_examine );
+    REQUIRE( bathtub.examine == lua_examine );
+    REQUIRE( shower.examine_action_id == "PLUMBING_SHOWER_EXAMINE" );
+    REQUIRE( bathtub.examine_action_id == "PLUMBING_BATHTUB_EXAMINE" );
+
+    const auto washing_cleaner_flag = flag_id( "WASHING_CLEANER" );
+    REQUIRE( washing_cleaner_flag.is_valid() );
+    REQUIRE( itype_id( "soap" ).obj().has_flag( washing_cleaner_flag ) );
+    REQUIRE( itype_id( "bleach" ).obj().has_flag( washing_cleaner_flag ) );
+    REQUIRE( itype_id( "detergent" ).obj().has_flag( washing_cleaner_flag ) );
+
+    REQUIRE( morale_type( "morale_shower" ).is_valid() );
+    REQUIRE( morale_type( "morale_bath" ).is_valid() );
+    REQUIRE( morale_type( "morale_cold_shower" ).is_valid() );
+    REQUIRE( morale_type( "morale_warm_bath" ).is_valid() );
+    REQUIRE( morale_type( "morale_cleansed_self" ).is_valid() );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )

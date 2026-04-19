@@ -18,6 +18,12 @@
     "info": "This gear <info>allows flight</info>."
   },
   {
+    "id": "WASHING_CLEANER",
+    "type": "json_flag",
+    "context": [ "AMMO", "COMESTIBLE", "GENERIC", "TOOL" ],
+    "info": "Can be used to clean bloodied washrooms and to freshen up while bathing."
+  },
+  {
     "id": "ALLOWS_TAIL_SNAKE",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],

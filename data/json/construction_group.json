@@ -1626,8 +1626,18 @@
   },
   {
     "type": "construction_group",
+    "id": "build_bathtub",
+    "name": "Build Bathtub"
+  },
+  {
+    "type": "construction_group",
     "id": "build_bathtub_money",
     "name": "Fill Bathtub with Money"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_shower",
+    "name": "Build Shower Booth"
   },
   {
     "type": "construction_group",
