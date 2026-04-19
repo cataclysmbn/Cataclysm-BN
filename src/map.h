@@ -2272,6 +2272,14 @@ class map : public submap_load_listener
         std::set<tripoint> submaps_with_active_items;
 
         /**
+         * Flat list of all funnel trap locations in this dimension's loaded submaps.
+         * Each entry is (abs_sm position, local tile point within that submap).
+         * Populated by on_submap_loaded() and trap_set(); pruned by on_submap_unloaded()
+         * and remove_trap(). Lets fill_water_collectors() skip the mapbuffer scan entirely.
+         */
+        std::vector<std::pair<tripoint, point>> funnel_locations_;
+
+        /**
          * Flat registry of all vehicles in loaded submaps (both in-bubble and
          * out-of-bubble).  Populated by loadn() and on_submap_loaded(); pruned
          * by on_submap_unloaded() and detach_vehicle().  Replaces the old
@@ -2341,6 +2349,10 @@ class map : public submap_load_listener
         const visibility_variables &get_visibility_variables_cache() const;
 
         void update_submap_active_item_status( const tripoint &p );
+
+        const std::vector<std::pair<tripoint, point>> &get_funnel_locations() const {
+            return funnel_locations_;
+        }
 
         // Just exposed for unit test introspection.
         const std::set<tripoint> &get_submaps_with_active_items() const {

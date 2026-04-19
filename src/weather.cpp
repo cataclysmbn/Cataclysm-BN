@@ -333,47 +333,46 @@ double trap::funnel_turns_per_charge( double rain_depth_mm_per_hour ) const
  */
 /**
  * Fill funnels and makeshift funnels from weather effects.
- * Single mapbuffer pass: each loaded submap's trap_cache is visited once and each
- * funnel trap found is processed directly, rather than making one full pass per funnel type.
- * Covers funnels at player bases and other loaded-but-out-of-bubble locations.
+ * Iterates map::funnel_locations_ — a persistent list of known funnel positions —
+ * so no mapbuffer scan is required. Covers funnels at player bases and other
+ * loaded-but-out-of-bubble locations.
  */
 static void fill_water_collectors( int mmPerHour, bool acid )
 {
     ZoneScopedN( "fill_water_collectors" );
     const auto abs_sub = g->m.get_abs_sub();
     auto &mbuf = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
-    std::ranges::for_each( mbuf, [&]( auto &entry ) {
-        auto &[raw_pos, sm_ptr] = entry;
-        if( !sm_ptr || sm_ptr->is_uniform || sm_ptr->trap_cache.empty() ) {
+    std::ranges::for_each( g->m.get_funnel_locations(), [&]( const auto &entry ) {
+        auto &[sm_abs, lp] = entry;
+        auto *sm = mbuf.lookup_submap_in_memory( sm_abs );
+        if( !sm ) {
             return;
         }
-        std::ranges::for_each( sm_ptr->trap_cache, [&]( const point &lp ) {
-            const trap &tr = sm_ptr->get_trap( lp ).obj();
-            if( !tr.is_funnel() ) {
-                return;
+        const trap &tr = sm->get_trap( lp ).obj();
+        if( !tr.is_funnel() ) {
+            return;
+        }
+        if( !one_in( tr.funnel_turns_per_charge( mmPerHour ) ) ) {
+            return;
+        }
+        const tripoint loc(
+            ( sm_abs.x - abs_sub.x ) * SEEX + lp.x,
+            ( sm_abs.y - abs_sub.y ) * SEEY + lp.y,
+            sm_abs.z );
+        // Put the rain in the largest container here which is either empty or
+        // contains some mixture of impure water and acid.
+        units::volume maxcontains = 0_ml;
+        map_stack items = g->m.i_at( loc );
+        auto container = items.end();
+        for( auto candidate = items.begin(); candidate != items.end(); ++candidate ) {
+            if( ( *candidate )->is_funnel_container( maxcontains ) ) {
+                container = candidate;
             }
-            if( !one_in( tr.funnel_turns_per_charge( mmPerHour ) ) ) {
-                return;
-            }
-            const tripoint loc(
-                ( raw_pos.x - abs_sub.x ) * SEEX + lp.x,
-                ( raw_pos.y - abs_sub.y ) * SEEY + lp.y,
-                raw_pos.z );
-            // Put the rain in the largest container here which is either empty or
-            // contains some mixture of impure water and acid.
-            units::volume maxcontains = 0_ml;
-            map_stack items = g->m.i_at( loc );
-            auto container = items.end();
-            for( auto candidate = items.begin(); candidate != items.end(); ++candidate ) {
-                if( ( *candidate )->is_funnel_container( maxcontains ) ) {
-                    container = candidate;
-                }
-            }
-            if( container != items.end() ) {
-                ( *container )->add_rain_to_container( acid, 1 );
-                ( *container )->set_age( 0_turns );
-            }
-        } );
+        }
+        if( container != items.end() ) {
+            ( *container )->add_rain_to_container( acid, 1 );
+            ( *container )->set_age( 0_turns );
+        }
     } );
 }
 
