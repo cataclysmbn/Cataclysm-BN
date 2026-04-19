@@ -346,10 +346,11 @@ static int actually_test_craft( const recipe_id &rid, std::vector<detached_ptr<i
     REQUIRE( you.activity->id() == activity_id( "ACT_CRAFT" ) );
     int turns = 0;
     while( you.activity->id() == activity_id( "ACT_CRAFT" ) ) {
-        if( turns >= interrupt_after_turns ) {
-            set_time( midnight ); // Kill light to interrupt crafting
-        }
         ++turns;
+        if( turns > interrupt_after_turns ) {
+            you.cancel_activity();
+            break;
+        }
         you.moves = 100;
         you.activity->do_turn( you );
     }
