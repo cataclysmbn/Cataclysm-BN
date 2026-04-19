@@ -76,6 +76,9 @@ auto scent_map::raw_scent_set( int x, int y, int z, int value ) -> void
     auto *sm = MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() ).lookup_submap_in_memory( abs_sm );
     if( sm ) {
         sm->scent_values[x - gx * SEEX][y - gy * SEEY] = value;
+        if( value > 0 ) {
+            sm->has_scent = true;
+        }
     }
 }
 
@@ -88,6 +91,7 @@ void scent_map::reset()
             auto &[raw_pos, sm_ptr] = entry;
             if( sm_ptr && !sm_ptr->is_uniform ) {
                 std::ranges::fill( std::span( &sm_ptr->scent_values[0][0], SEEX * SEEY ), 0 );
+                sm_ptr->has_scent = false;
             }
         } );
     } );
@@ -99,15 +103,22 @@ void scent_map::decay()
     ZoneScopedN( "scent_map::decay" );
     // Decay scent on all loaded submaps across every dimension within scent z-range.
     // Called during precipitation, so rain washes away scent globally.
+    // Submaps without any non-zero scent values are skipped via has_scent.
     const int levz = gm.get_levz();
     MAPBUFFER_REGISTRY.for_each( [&]( const std::string &, mapbuffer & buf ) {
         std::ranges::for_each( buf, [&]( auto & entry ) {
             auto &[raw_pos, sm_ptr] = entry;
-            if( !sm_ptr || sm_ptr->is_uniform || std::abs( raw_pos.z - levz ) > SCENT_MAP_Z_REACH ) {
+            if( !sm_ptr || sm_ptr->is_uniform || !sm_ptr->has_scent ||
+                std::abs( raw_pos.z - levz ) > SCENT_MAP_Z_REACH ) {
                 return;
             }
+            bool any_nonzero = false;
             std::ranges::for_each( std::span( &sm_ptr->scent_values[0][0], SEEX * SEEY ),
-            []( auto & v ) { v = std::max( 0, v - 1 ); } );
+            [&any_nonzero]( auto & v ) {
+                v = std::max( 0, v - 1 );
+                any_nonzero |= v > 0;
+            } );
+            sm_ptr->has_scent = any_nonzero;
         } );
     } );
 }
