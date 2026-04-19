@@ -26,6 +26,7 @@
 class JsonIn;
 class JsonOut;
 class map;
+struct level_cache;
 struct trap;
 struct ter_t;
 // tr_null forward-declared here to keep set_trap inline without pulling in all of trap.h.
@@ -303,18 +304,24 @@ class submap : maptile_soa<SEEX, SEEY>
 
         float  transparency_cache[SEEX][SEEY] = {};
         bool   outside_cache[SEEX][SEEY]      = {};
+        bool   sheltered_cache[SEEX][SEEY]    = {};
         char   floor_cache[SEEX][SEEY]         = {};
         pf_special pf_special_cache[SEEX][SEEY]  = {};
         int    scent_values[SEEX][SEEY]        = {};
 
         bool transparency_dirty = true;
         bool outside_dirty      = true;
+        bool sheltered_dirty    = true;
         bool floor_dirty        = true;
         bool pf_dirty           = true;
 
         // Rebuild per-submap caches from terrain/furniture/field data.
         // grid_pos = submap grid coordinates within map m (x,y = submap index, z = z-level).
-        auto rebuild_outside_cache( const map &m, tripoint grid_pos ) -> void;
+        // above: the level_cache for z+1 (nullptr at OVERMAP_HEIGHT — base case).
+        // outside_cache: true when the tile has sky access via the 3×3 overhang rule.
+        // sheltered_cache: true when some overhead cover exists within 3×3 of the tile.
+        auto rebuild_outside_cache( const level_cache *above, tripoint grid_pos ) -> void;
+        auto rebuild_sheltered_cache( const level_cache *above, tripoint grid_pos ) -> void;
         auto rebuild_floor_cache( const map &m, tripoint grid_pos ) -> void;
         auto rebuild_pf_cache( const map &m, tripoint grid_pos ) -> void;
         // rebuild_transparency_cache calls rebuild_outside_cache first if outside_dirty.

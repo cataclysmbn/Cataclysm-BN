@@ -301,6 +301,8 @@ std::string action_ident( action_id act )
             return "debug_lighting";
         case ACTION_DISPLAY_RADIATION:
             return "debug_radiation";
+        case ACTION_DISPLAY_OUTSIDE:
+            return "debug_outside";
         case ACTION_DISPLAY_SUBMAP_GRID:
             return "debug_submap_grid";
         case ACTION_TOGGLE_ZONE_OVERLAY:
@@ -431,6 +433,7 @@ bool can_action_change_worldstate( const action_id act )
         case ACTION_DISPLAY_LIGHTING:
         case ACTION_DISPLAY_RADIATION:
         case ACTION_DISPLAY_TRANSPARENCY:
+        case ACTION_DISPLAY_OUTSIDE:
         case ACTION_DISPLAY_SUBMAP_GRID:
         case ACTION_TOGGLE_ZONE_OVERLAY:
         case ACTION_ZOOM_OUT:
@@ -947,6 +950,7 @@ action_id handle_action_menu()
                 ACTION_TOGGLE_PANEL_ADM, ACTION_DISPLAY_SCENT, ACTION_DISPLAY_SCENT_TYPE,
                 ACTION_DISPLAY_TEMPERATURE, ACTION_DISPLAY_VEHICLE_AI, ACTION_DISPLAY_VISIBILITY,
                 ACTION_DISPLAY_LIGHTING, ACTION_DISPLAY_TRANSPARENCY, ACTION_DISPLAY_RADIATION,
+                ACTION_DISPLAY_OUTSIDE,
                 ACTION_DISPLAY_SUBMAP_GRID, ACTION_TOGGLE_ZONE_OVERLAY, ACTION_TOGGLE_DEBUG_MODE
             } );
             register_lua_action_entries( category_id );

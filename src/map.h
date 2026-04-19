@@ -327,6 +327,7 @@ struct level_cache {
     // ---- per-submap dirty bitsets (size: cache_mapsize²) ----
     cata_dynamic_bitset transparency_cache_dirty;
     cata_dynamic_bitset outside_cache_dirty;
+    cata_dynamic_bitset sheltered_cache_dirty;
     cata_dynamic_bitset floor_cache_dirty;
     bool seen_cache_dirty = false;
     // Set to true at the start of each game turn; cleared after generate_lightmap
@@ -351,9 +352,13 @@ struct level_cache {
     // This is only valid for the duration of generate_lightmap
     std::vector<float>              light_source_buffer;
 
-    // if false, means tile is under the roof ("inside"), true means tile is "outside"
-    // "inside" tiles are protected from sun, rain, etc. (see "INDOORS" flag)
+    // True when the tile has sky access via the 3×3 overhang rule (top-down floor cascade).
+    // False means fully enclosed — protected from rain, wind, weather effects.
     std::vector<bool>               outside_cache;
+
+    // True when at least one tile within 3×3 above has overhead coverage (floor or sheltered
+    // tile at z+1).  Distinct from outside_cache: a tile can be outside yet sheltered (overhang).
+    std::vector<bool>               sheltered_cache;
 
     // True when this tile has an unobstructed ray to the sun for the current in-game hour.
     // Rebuilt by map::build_angled_sunlight_cache() when the hour changes.
@@ -556,6 +561,9 @@ class map : public submap_load_listener
         void set_outside_cache_dirty( const int zlev );
         // Point-level: marks only the tile's submap + boundary neighbours (max 4).
         void set_outside_cache_dirty( const tripoint &p );
+
+        void set_sheltered_cache_dirty( const int zlev );
+        void set_sheltered_cache_dirty( const tripoint &p );
 
         void set_floor_cache_dirty( const int zlev );
         // Point-level: marks only the tile's own submap (no horizontal neighbour dependency).
@@ -1178,6 +1186,12 @@ class map : public submap_load_listener
         bool is_outside( point p ) const {
             return is_outside( tripoint( p, abs_sub.z ) );
         }
+        // True when the tile has some overhead coverage within 3×3 (floor or sheltered tile
+        // at z+1).  A tile can be outside yet sheltered (building overhang).
+        bool is_sheltered( const tripoint &p ) const;
+        bool is_sheltered( point p ) const {
+            return is_sheltered( tripoint( p, abs_sub.z ) );
+        }
         /// Per-submap terrain transparency for game logic (works at any loaded position).
         auto get_transparency( const tripoint &p ) const -> float;
 
@@ -1736,8 +1750,8 @@ class map : public submap_load_listener
         void support_dirty( const tripoint &p );
     public:
 
-        // Returns true if terrain at p has NO flag TFLAG_NO_FLOOR,
-        // if we're not in z-levels mode or if we're at lowest level
+        // Returns true if there is a physical floor at p (tile has no TFLAG_NO_FLOOR).
+        // Returns false for out-of-bounds z or missing submap.
         bool has_floor( const tripoint &p, bool visible_only = false ) const;
 
         /** Checks if there's a floor between the two tiles. They must be at most 1 tile away from each other in any dimension.
@@ -2025,7 +2039,14 @@ class map : public submap_load_listener
         // angled_sunlight_cache.  Reads floor_cache across all z-levels above zlev.
         void build_angled_sunlight_cache( int zlev );
     public:
+        // Rebuilds outside_cache for zlev top-down: a tile is outside if any
+        // neighbour in the 3×3 at z+1 is (outside AND has no floor).
+        // Recursively ensures zlev+1 is current before proceeding.
         void build_outside_cache( int zlev );
+        // Rebuilds sheltered_cache for zlev top-down: a tile is sheltered if any
+        // neighbour in the 3×3 at z+1 has a floor or is itself sheltered.
+        // Recursively ensures zlev+1 is current before proceeding.
+        void build_sheltered_cache( int zlev );
         // Builds a floor cache and returns true if the cache was invalidated.
         // Used to determine if seen cache should be rebuilt.
         bool build_floor_cache( int zlev );

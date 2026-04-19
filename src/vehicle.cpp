@@ -7750,8 +7750,7 @@ static bool is_sm_tile_outside( const tripoint &real_global_pos )
         return false;
     }
 
-    return !( sm->get_ter( p ).obj().has_flag( TFLAG_INDOORS ) ||
-              sm->get_furn( p ).obj().has_flag( TFLAG_INDOORS ) );
+    return get_map().is_outside( real_global_pos );
 }
 
 void vehicle::update_time( const time_point &update_to )

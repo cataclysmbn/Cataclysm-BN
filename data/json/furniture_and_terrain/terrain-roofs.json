@@ -23,7 +23,7 @@
     "trap": "tr_ledge",
     "roof": "t_flat_roof",
     "examine_action": "ledge",
-    "flags": [ "TRANSPARENT", "NO_FLOOR", "INDOORS", "NO_MEMORY" ]
+    "flags": [ "TRANSPARENT", "NO_FLOOR", "NO_MEMORY" ]
   },
   {
     "type": "terrain",

@@ -2748,6 +2748,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "debug_visibility" );
     ctxt.register_action( "debug_lighting" );
     ctxt.register_action( "debug_radiation" );
+    ctxt.register_action( "debug_outside" );
     ctxt.register_action( "debug_submap_grid" );
     ctxt.register_action( "debug_hour_timer" );
     ctxt.register_action( "debug_mode" );
@@ -8458,6 +8459,7 @@ look_around_result game::look_around( bool show_window, tripoint &center,
     ctxt.register_action( "debug_visibility" );
     ctxt.register_action( "debug_lighting" );
     ctxt.register_action( "debug_radiation" );
+    ctxt.register_action( "debug_outside" );
     ctxt.register_action( "debug_submap_grid" );
     ctxt.register_action( "debug_hour_timer" );
     ctxt.register_action( "CONFIRM" );
@@ -8645,6 +8647,10 @@ look_around_result game::look_around( bool show_window, tripoint &center,
         } else if( action == "debug_transparency" ) {
             if( !MAP_SHARING::isCompetitive() || MAP_SHARING::isDebugger() ) {
                 display_transparency();
+            }
+        } else if( action == "debug_outside" ) {
+            if( !MAP_SHARING::isCompetitive() || MAP_SHARING::isDebugger() ) {
+                display_outside();
             }
         } else if( action == "debug_radiation" ) {
             if( !MAP_SHARING::isCompetitive() || MAP_SHARING::isDebugger() ) {
@@ -12289,9 +12295,8 @@ void game::update_performance_bubble()
     // Each counter increments while its condition holds; resets to 0 the moment it doesn't.
     // The bubble shrinks once the counter reaches dynamic_grace (no exit hysteresis).
 
-    // Use has_floor on the tile above rather than is_outside: the latter relies on TFLAG_INDOORS
-    // which water-derived terrain (e.g. sewage) may lack, causing false "outside" readings.
-    // A physical floor one level up is a reliable proxy for "enclosed/has ceiling".
+    // Use has_floor on the tile above rather than is_outside: this is a quick single-tile check
+    // for underground bubble sizing; is_outside uses the 3×3 overhang rule which is broader.
     const bool underground_cond = underground_size > 0 && underground_size < normal_size
                                   && u.pos().z < 0
                                   && m.has_floor( tripoint( u.pos().xy(), u.pos().z + 1 ) );
@@ -14359,6 +14364,13 @@ void game::display_transparency()
 {
     if( use_tiles ) {
         display_toggle_overlay( ACTION_DISPLAY_TRANSPARENCY );
+    }
+}
+
+void game::display_outside()
+{
+    if( use_tiles ) {
+        display_toggle_overlay( ACTION_DISPLAY_OUTSIDE );
     }
 }
 

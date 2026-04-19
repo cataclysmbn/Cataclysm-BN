@@ -117,6 +117,7 @@ bool check_ramp_low( const tripoint & );
 bool check_ramp_high( const tripoint & );
 bool check_empty_ramp_low( const tripoint & );
 bool check_empty_ramp_high( const tripoint & );
+bool check_ceiling( const tripoint & ); // tile has a floor above it
 
 // Special actions to be run post-terrain-mod
 static void done_nothing( const tripoint & ) {}
@@ -1891,6 +1892,12 @@ bool construct::check_empty_ramp_low( const tripoint &p )
     return check_empty( p ) && check_ramp_low( p );
 }
 
+bool construct::check_ceiling( const tripoint &p )
+{
+    map &here = get_map();
+    return check_empty( p ) && here.has_floor( p + tripoint_above );
+}
+
 void construct::done_trunk_plank( const tripoint &/*p*/ )
 {
     int num_logs = rng( 2, 3 );
@@ -2297,7 +2304,8 @@ void construction::load( const JsonObject &jo, const std::string &/*src*/ )
             { "check_ramp_low", construct::check_ramp_low },
             { "check_ramp_high", construct::check_ramp_high },
             { "check_empty_ramp_low", construct::check_empty_ramp_low },
-            { "check_empty_ramp_high", construct::check_empty_ramp_high }
+            { "check_empty_ramp_high", construct::check_empty_ramp_high },
+            { "check_ceiling", construct::check_ceiling },
         }
     };
     static const std::map<std::string, std::function<void( const tripoint & )>> post_special_map = { {
