@@ -66,6 +66,7 @@ struct gate_data {
     int bash_dmg;
     bool was_loaded;
     bool complex_shape;
+    bool needs_no_wall;
 
     void load( const JsonObject &jo, const std::string &src );
     void check() const;
@@ -100,6 +101,7 @@ void gate_data::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "moves", moves, 0 );
     optional( jo, was_loaded, "bashing_damage", bash_dmg, 0 );
     optional( jo, was_loaded, "complex_shape", complex_shape, false );
+    optional( jo, was_loaded, "needs_no_wall", needs_no_wall, false );
 }
 
 void gate_data::check() const
@@ -185,7 +187,9 @@ void gates::toggle_gate( const tripoint &pos )
     for( point wall_offset : four_adjacent_offsets ) {
         const tripoint wall_pos = pos + wall_offset;
 
-        if( !gate.is_suitable_wall( wall_pos ) ) {
+        if( gate.needs_no_wall ) {
+            wall_pos = pos;
+        } else if( !gate.is_suitable_wall( wall_pos ) ) {
             continue;
         }
 
