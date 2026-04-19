@@ -1348,6 +1348,7 @@ void game::create_starting_npcs()
     //This sets the NPC mission. This NPC remains in the starting location.
     tmp->mission = NPC_MISSION_SHELTER;
     tmp->chatbin.first_topic = "TALK_SHELTER";
+    tmp->chatbin.yarn_story = "shelter_npc";
     tmp->toggle_trait( trait_id( "NPC_STARTING_NPC" ) );
     tmp->set_fac( faction_id( "no_faction" ) );
     //One random starting NPC mission

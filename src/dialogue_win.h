@@ -29,8 +29,16 @@ class dialogue_window
         std::optional<size_t> handle_scrolling( int ch );
         void display_responses( const std::vector<talk_data> &responses, size_t selected_response );
         void refresh_response_display();
-        /** Adds message to history. It must be already translated. */
-        void add_to_history( const std::string &msg );
+        /** Adds message to history. It must be already translated.
+         *  Pass continuation=true for unattributed follow-on lines: suppresses the
+         *  blank separator line that normally appears between history entries. */
+        void add_to_history( const std::string &msg, bool continuation = false );
+
+        /** Mark the start of a new dialogue turn.  Everything added to history
+         *  after this call is considered "current" and rendered in white;
+         *  everything before fades to gray.  Call this at the moment a player
+         *  choice is selected, before adding any speech or executing the body. */
+        void mark_turn_start();
 
     private:
         catacurses::window d_win;
@@ -40,6 +48,11 @@ class dialogue_window
          * what each of them does (e.g. the npc drops their weapon).
          */
         std::vector<std::string> history;
+        // Parallel to history: false means omit the blank separator before this entry.
+        std::vector<bool> history_separator_;
+        // Index into history from which entries are considered "current turn" (rendered white).
+        // 0 on construction so the initial NPC greeting is always white.
+        size_t turn_start_ = 0;
         /**
          * Drawing cache: basically all entries from @ref history, but folded to current
          * window width and with separators between. Used for rendering, recalculated each time window size changes.
@@ -61,7 +74,7 @@ class dialogue_window
          * Also adds a separator (empty line).
          * idx is this message's position within @ref history_raw
          */
-        void cache_msg( const std::string &msg, size_t idx );
+        void cache_msg( const std::string &msg, size_t idx, bool with_separator );
 
         std::string npc_name;
 };

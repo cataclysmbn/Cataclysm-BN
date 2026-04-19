@@ -42,6 +42,10 @@ Strings from the JSON files are extracted by the `lang/extract_json_strings.py` 
 translated at run time using `_()`. If translation context is desired for a JSON string,
 `class translation` can be used instead, which is documented below.
 
+Strings from Yarn Spinner dialogue files (`.yarn`) are extracted by the `lang/extract_yarn_strings.py`
+script and translated at run time using `_()` in the same way. Strings containing `{…}` expression
+placeholders carry a translator comment reminding translators to preserve those blocks.
+
 ### `pgettext()`
 
 This function is useful when the original string's meaning is ambiguous in isolation. For example,

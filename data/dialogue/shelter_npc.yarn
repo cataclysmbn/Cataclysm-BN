@@ -1,0 +1,106 @@
+// Demo yarn story for the shelter NPC archetype.
+//
+// Demonstrates:
+//   - Same-file shared_choices (ShelterActions) with <<detour>> for return-to-dialogue
+//   - Cross-file shared_choices (common::CommonActions) with terminal choices
+//   - Lateral navigation with <<jump>> (graph edges visible in VS Code extension)
+//   - <<detour>> for sub-dialogs that pop back to the caller automatically
+//   - Conditional text with <<if>> / <<endif>>
+//
+// Speaker attribution:
+//   NPC: text  — spoken by the NPC (resolves to the NPC's actual runtime name)
+//   You: text  — spoken by the player
+//   plain text — continuation; white, no label, no extra spacing (flows under the line above)
+//   - text     — narrator/stage-direction; gray, no label, no quotes
+//   #spoken    — echo the choice label itself as player speech (opt-in)
+//
+// Navigation semantics recap:
+//   <<jump X>> — replace current frame; VS Code draws edge; conversation ends when X ends
+//   <<detour X>> — push frame; VS Code draws detour edge; caller re-presents when X pops
+//
+// Entry node convention: the runtime enters at "Greeting" (first-contact speech), which
+// ends with <<jump Start>>.  All return-to-menu jumps target "Start" directly, so the
+// opening speech is not repeated.  If no "Greeting" node exists, the runtime falls back
+// to "Start" as the entry point.
+//
+// ShelterActions is a same-file shared base.  Its <<detour ShelterMood>> choice pushes
+// ShelterMood; when ShelterMood falls off its end it pops back and the merging node
+// (Start) re-presents its choices.
+//
+// CommonActions (cross-file) provides terminal choices only — trade and goodbye.
+// After those complete the conversation ends naturally.
+//
+
+title: ShelterActions
+position: -304,-102
+---
+-> Ask how they're holding up.
+    <<detour ShelterMood>>
+===
+
+title: ShelterMood
+position: -308,170
+---
+NPC: Honestly?  Not great.  But I'm alive, and that counts for something out here.
+I keep busy.  Helps not to think too much.
+-> I hear you. #spoken
+-> Stay strong. #spoken
+===
+
+title: Greeting
+position: 63,100
+---
+<<once>>
+NPC: Thank God, another person.  I've been holed up here since the first night.
+<<if u_get_str() >= 10>>
+You look strong.  That helps out here.
+<<endif>>
+You doing alright?  This place has been... quiet.  Too quiet.
+<<else>>
+NPC: Good to have you around.  What's on your mind?
+<<endonce>>
+<<jump Start>>
+===
+
+title: Start
+position: 63,300
+shared_choices: ShelterActions common::StartActions common::CommonActions
+inject_tags: shelter_dialogue npc_dialogue
+---
+-> Ask what happened.
+    <<jump Start_WhatHappened>>
+-> Ask if they've seen anyone else.
+    <<jump Start_Others>>
+===
+
+title: Start_WhatHappened
+position: 474,437
+shared_choices: ShelterActions common::StartActions common::CommonActions
+---
+NPC: I was at work when the sirens went off.  Drove here thinking it'd be temporary.
+That was... I don't even know how long ago now.
+The first few days were the worst.  Sounds outside, people screaming.
+Now it's just silence.
+-> That sounds rough.
+    You: I'm sorry.  That sounds rough.
+    <<jump Start>>
+-> Ask if they've seen anyone else.
+    <<jump Start_Others>>
+-> Go back.
+    <<jump Start>>
+===
+
+title: Start_Others
+position: 71,738
+shared_choices: ShelterActions common::StartActions common::CommonActions
+---
+You: Have you seen anyone else?
+    => NPC: Haven't seen anyone else until you showed up.
+    I thought I heard voices a few days ago — west side of town — but I didn't dare go look.
+    => NPC: You're the only person I've seen since this started.  Well, besides you showing up.
+    => NPC: Nobody seems to be around anymore. Not that I want to look around to much...
+-> I'll keep an eye out. #spoken
+    <<jump Start>>
+-> Ask what happened.
+    <<jump Start_WhatHappened>>
+===

@@ -262,6 +262,9 @@ void npc_template::load( const JsonObject &jsobj )
     guy.set_attitude( static_cast<npc_attitude>( jsobj.get_int( "attitude" ) ) );
     guy.mission = static_cast<npc_mission>( jsobj.get_int( "mission" ) );
     guy.chatbin.first_topic = jsobj.get_string( "chat" );
+    if( jsobj.has_string( "yarn_story" ) ) {
+        guy.chatbin.yarn_story = jsobj.get_string( "yarn_story" );
+    }
     if( jsobj.has_string( "mission_offered" ) ) {
         guy.miss_ids.emplace_back( jsobj.get_string( "mission_offered" ) );
     } else if( jsobj.has_array( "mission_offered" ) ) {
@@ -343,6 +346,7 @@ void npc::load_npc_template( const string_id<npc_template> &ident )
         }
     }
     chatbin.first_topic = tguy.chatbin.first_topic;
+    chatbin.yarn_story = tguy.chatbin.yarn_story;
     for( const mission_type_id &miss_id : tguy.miss_ids ) {
         add_new_mission( mission::reserve_new( miss_id, getID() ) );
     }

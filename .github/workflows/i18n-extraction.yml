@@ -5,6 +5,8 @@ on:
     paths:
       - "src/**/*.cpp"
       - "lang/extract_json_strings.py"
+      - "lang/extract_yarn_strings.py"
+      - "data/dialogue/**/*.yarn"
 
 # We only care about the latest revision of a PR, so cancel previous instances.
 concurrency:

@@ -22,7 +22,7 @@ void dialogue_window::resize_dialogue( ui_adaptor &ui )
     curr_page = 0;
     draw_cache.clear();
     for( size_t idx = 0; idx < history.size(); idx++ ) {
-        cache_msg( history[idx], idx );
+        cache_msg( history[idx], idx, history_separator_[idx] );
     }
 }
 
@@ -65,11 +65,17 @@ void dialogue_window::clear_window_texts()
     print_header( npc_name );
 }
 
-void dialogue_window::add_to_history( const std::string &msg )
+void dialogue_window::add_to_history( const std::string &msg, bool continuation )
 {
     size_t idx = history.size();
     history.push_back( msg );
-    cache_msg( msg, idx );
+    history_separator_.push_back( !continuation );
+    cache_msg( msg, idx, !continuation );
+}
+
+void dialogue_window::mark_turn_start()
+{
+    turn_start_ = history.size();
 }
 
 void dialogue_window::print_history()
@@ -79,8 +85,9 @@ void dialogue_window::print_history()
     }
     int curline = getmaxy( d_win ) - 2;
     int curindex = draw_cache.size() - 1;
-    // Highligh last two messages: indicates the most recent exchange betwen player and NPC
-    size_t first_msg_to_highlight = history.size() - 2;
+    // Highlight everything from the last turn boundary onwards (white = current, gray = older).
+    // turn_start_ is 0 on construction so the initial greeting is always white.
+    size_t first_msg_to_highlight = turn_start_;
     // Print at line 2 and below, line 1 contains the header, line 0 the border
     while( curindex >= 0 && curline >= header_height + 1 ) {
         const std::pair<std::string, size_t> &msg = draw_cache[curindex];
@@ -195,11 +202,13 @@ static void print_keybindings( const catacurses::window &w )
     mvwprintz( w, point( x + col0_width + 2, y + 1 ), c_light_gray, col3 );
 }
 
-void dialogue_window::cache_msg( const std::string &msg, size_t idx )
+void dialogue_window::cache_msg( const std::string &msg, size_t idx, bool with_separator )
 {
     const auto divider_x = dialogue_divider_x( d_win );
     const auto folded = foldstring( msg, divider_x - 1 );
-    draw_cache.emplace_back( "", idx );
+    if( with_separator ) {
+        draw_cache.emplace_back( "", idx );
+    }
     for( const std::string &fs : folded ) {
         draw_cache.emplace_back( fs, idx );
     }

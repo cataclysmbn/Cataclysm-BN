@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "type_id.h"
 
 class npc;
@@ -92,4 +95,13 @@ time_duration calc_skill_training_time( const npc &p, const skill_id &skill );
 int calc_skill_training_cost( const npc &p, const skill_id &skill );
 time_duration calc_ma_style_training_time( const npc &, const matype_id & /* id */ );
 int calc_ma_style_training_cost( const npc &p, const matype_id & /* id */ );
+
+struct talk_topic;
+// Returns the category number for a talk topic (used for TALK_NONE navigation logic).
+// Returns -1 for topics with no defined category.
+auto topic_category( const talk_topic &the_topic ) -> int;
+
+// Returns the IDs of all loaded JSON talk topics. Used by build_legacy_yarn_stories().
+// DEPRECATED: Remove when JSON-to-Yarn migration is complete.
+auto get_all_talk_topic_ids() -> std::vector<std::string>;
 

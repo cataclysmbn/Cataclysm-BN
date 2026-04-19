@@ -1,8 +1,13 @@
 ---
-title: NPCs
+title: NPCs (Legacy Dialogue)
 tableOfContents:
   maxHeadingLevel: 4
 ---
+
+> **This page documents the legacy JSON-based `TALK_TOPIC` dialogue system.** It remains fully
+> functional but is no longer the recommended authoring path. New dialogue should be written in
+> Yarn Spinner `.yarn` files. See [Dialogue System (Yarn)](../../../dialogue.md) for the current
+> reference.
 
 ## Writing Dialogues
 
@@ -692,8 +697,8 @@ effects should be arranged in a list and are processed in the order listed.
 | `basecamp_mission`                     | The NPC will offer you a list of missions for your allied NPCs, depending on the local basecamp.                                                                |
 | `bionic_install`                       | The NPC installs a bionic from your character's inventory onto your character, using very high skill, and charging you according to the operation's difficulty. |
 | `bionic_remove`                        | The NPC removes a bionic from your character, using very high skill, and charging you according to the operation's difficulty.                                  |
-| `npc_class_change: class_string`       | Change the NPC's faction to `class_string`.                                                                                                                     |
-| `npc_faction_change: faction_string`   | Change the NPC's faction membership to `faction_string`.                                                                                                        |
+| `npc_change_class: class_string`       | Change the NPC's class to `class_string`.                                                                                                                       |
+| `npc_change_faction: faction_string`   | Change the NPC's faction membership to `faction_string`.                                                                                                        |
 | `u_faction_rep: rep_num`               | Increases your reputation with the NPC's current faction, or decreases it if `rep_num` is negative.                                                             |
 | `toggle_npc_rule: rule_string`         | Toggles the value of a boolean NPC follower AI rule such as `"use_silent"` or `"allow_bash"`                                                                    |
 | `set_npc_rule: rule_string`            | Sets the value of a boolean NPC follower AI rule such as `"use_silent"` or `"allow_bash"`                                                                       |
