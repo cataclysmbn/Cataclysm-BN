@@ -1750,8 +1750,8 @@ class map : public submap_load_listener
         void support_dirty( const tripoint &p );
     public:
 
-        // Returns true if terrain at p has NO flag TFLAG_NO_FLOOR,
-        // if we're not in z-levels mode or if we're at lowest level
+        // Returns true if there is a physical floor at p (tile has no TFLAG_NO_FLOOR).
+        // Returns false for out-of-bounds z or missing submap.
         bool has_floor( const tripoint &p, bool visible_only = false ) const;
 
         /** Checks if there's a floor between the two tiles. They must be at most 1 tile away from each other in any dimension.

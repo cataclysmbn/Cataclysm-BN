@@ -2800,14 +2800,14 @@ int map::climb_difficulty( const tripoint &p ) const
 
 bool map::has_floor( const tripoint &p, bool visible_only ) const
 {
-    if( !zlevels || p.z < -OVERMAP_DEPTH + 1 || p.z > OVERMAP_HEIGHT ) {
-        return true;
+    if( p.z < -OVERMAP_DEPTH || p.z > OVERMAP_HEIGHT ) {
+        return false;
     }
 
     point l;
     submap *sm = get_submap_at( p, l );
     if( !sm ) {
-        return true;
+        return false;
     }
     if( sm->floor_dirty ) {
         const int smx = divide_round_to_minus_infinity( p.x, SEEX );
@@ -2924,7 +2924,7 @@ void map::drop_furniture( const tripoint &p )
 
     tripoint current( p.xy(), p.z + 1 );
     support_state last_state = SS_NO_SUPPORT;
-    while( last_state == SS_NO_SUPPORT ) {
+    while( last_state == SS_NO_SUPPORT && current.z > -OVERMAP_DEPTH ) {
         current.z--;
         // Check current tile
         last_state = check_tile( current );
@@ -3025,7 +3025,7 @@ void map::drop_items( const tripoint &p )
     // rather than disappearing if it would be overloaded
 
     tripoint below( p );
-    while( !has_floor( below ) ) {
+    while( below.z >= -OVERMAP_DEPTH && !has_floor( below ) ) {
         below.z--;
     }
 
