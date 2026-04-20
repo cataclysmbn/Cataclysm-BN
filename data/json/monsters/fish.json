@@ -380,7 +380,7 @@
     "id": "mon_fish_redbreast",
     "type": "MONSTER",
     "copy-from": "mon_fish_tiny",
-    "name": { "str_sp": "redbreast sunfish_tiny" },
+    "name": { "str_sp": "redbreast sunfish" },
     "reproduction": { "baby_egg": "egg_fish_tiny", "baby_count": 2, "baby_timer": 17 },
     "baby_flags": [ "SUMMER" ],
     "looks_like": "mon_fish_sunfish",
