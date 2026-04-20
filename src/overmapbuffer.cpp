@@ -899,13 +899,27 @@ std::optional<mapgen_arguments> overmapbuffer::get_or_init_mapgen_args(
 
     // Lock-free fast path: args already initialized.
     // acquire ordering ensures we see all writes made before the release store below.
-    if( std::atomic_ref<char>( *slot.init_flag ).load( std::memory_order_acquire ) != 0 ) {
+#if defined(__cpp_lib_atomic_ref)
+    const bool already_init =
+        std::atomic_ref<char>( *slot.init_flag ).load( std::memory_order_acquire ) != 0;
+#else
+    const bool already_init =
+        __atomic_load_n( slot.init_flag, __ATOMIC_ACQUIRE ) != 0;
+#endif
+    if( already_init ) {
         return *slot.args;
     }
 
     // Slow path: first generation from this special — initialize under mutex.
     auto lk = std::lock_guard( mapgen_args_mutex_ );
-    if( std::atomic_ref<char>( *slot.init_flag ).load( std::memory_order_relaxed ) == 0 ) {
+#if defined(__cpp_lib_atomic_ref)
+    const bool still_uninit =
+        std::atomic_ref<char>( *slot.init_flag ).load( std::memory_order_relaxed ) == 0;
+#else
+    const bool still_uninit =
+        __atomic_load_n( slot.init_flag, __ATOMIC_RELAXED ) == 0;
+#endif
+    if( still_uninit ) {
         const std::optional<overmap_special_id> s = om_loc.om->overmap_special_at( om_loc.local );
         if( !s ) {
             debugmsg( "mapgen params expected but no overmap special found for terrain %s",
@@ -913,7 +927,11 @@ std::optional<mapgen_arguments> overmapbuffer::get_or_init_mapgen_args(
             return std::nullopt;
         }
         *slot.args = ( **s ).get_args( md );
+#if defined(__cpp_lib_atomic_ref)
         std::atomic_ref<char>( *slot.init_flag ).store( 1, std::memory_order_release );
+#else
+        __atomic_store_n( slot.init_flag, static_cast<char>( 1 ), __ATOMIC_RELEASE );
+#endif
     }
     return *slot.args;
 }
