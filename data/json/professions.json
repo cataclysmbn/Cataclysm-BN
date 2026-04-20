@@ -101,6 +101,14 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "charged_headseat",
+    "entries": [
+      { "item": "light_disposable_cell", "ammo-item": "battery", "charges": 300, "container-item": "army_powered_earmuffs" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "charged_tazer",
     "entries": [ { "item": "light_disposable_cell", "ammo-item": "battery", "charges": 300, "container-item": "tazer" } ]
   },
@@ -6515,6 +6523,56 @@
     "vehicle": "helicopter_blackhawk_3a",
     "points": 7,
     "copy-from": "mili_pilot"
+  },
+  {
+    "type": "profession",
+    "id": "fighter_pilot",
+    "name": "Fighter Pilot",
+    "description": "They had you pushing your aircraft to the breaking point dropping ordinance on the undead.  After a mid-air collision forced you to eject, you were picked up by the unit you were providing air support for only for them to be wiped out to the last man.",
+    "points": 6,
+    "traits": [ "PROF_MILITARY" ],
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 5, "name": "driving" },
+      { "level": 1, "name": "pistol" },
+      { "level": 1, "name": "launcher" },
+      { "level": 3, "name": "mechanics" },
+      { "level": 3, "name": "gun" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "nomex_socks",
+          "nomex_suit",
+          "jumpsuit",
+          "boots_combat",
+          "nomex_gloves",
+          "gloves_tactical",
+          "nomex_hood",
+          "helmet_army",
+          "webbing_belt"
+        ],
+        "entries": [
+          { "item": "mil_scouter", "charges": 200 },
+          { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
+          { "item": "chestrig", "contents-group": "army_mags_m17" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boy_shorts" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
+    "id": "fighter_pilot_f35",
+    "name": "F-35 Fighter Pilot",
+    "description": "You thought the end of the world would see you dueling the PLAAF while ICBMs streak overhead.  Instead the end was a long day of desperate sorties as monstrosities swarmed every city within your craft's operational range.  Your airbase was overrun too, and every landing strip just seems more hostile than the last.",
+    "vehicle": "plane_f35_lightning",
+    "points": 8,
+    "copy-from": "fighter_pilot"
   },
   {
     "type": "profession",

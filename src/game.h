@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <ctime>
 #include <functional>
@@ -62,6 +63,12 @@ extern std::unique_ptr<game> g;
 
 extern const int savegame_version;
 extern int savegame_loading_version;
+// Monotonically increasing counter; bumped whenever NPC faction membership or active NPC list
+// changes so each NPC can lazily invalidate its cached friends list.
+extern std::atomic<uint32_t> g_npc_friends_dirty_version;
+// Bumped once per npcmove() pass; monsters use it to know when their cached generic-NPC
+// attitude is stale.
+extern uint32_t g_npcmove_attitude_epoch;
 
 class input_context;
 
@@ -466,6 +473,11 @@ class game : public submap_load_listener
         monster_range all_monsters();
         /// Same as @ref all_creatures but iterators only over npcs.
         npc_range all_npcs();
+        /// Direct non-allocating view of the active NPC list. Only use when no NPCs will be
+        /// added or removed during iteration and dead entries are handled by the caller.
+        const std::list<shared_ptr_fast<npc>> &raw_npcs() const {
+            return active_npc;
+        }
 
         /**
          * Returns all creatures matching a predicate. Only living ( not dead ) creatures

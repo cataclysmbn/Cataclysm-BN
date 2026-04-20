@@ -255,6 +255,7 @@ auto map::resize( int new_mapsize ) -> void
     }
     submaps_with_active_items.clear();
     loaded_vehicles.clear();
+    funnel_locations_.clear();
     // Recompute the circular load footprint for the new bubble radius.
     // Radius = (mapsize - 1) / 2, matching g_half_mapsize.
     submap_loader.update_load_shape( ( new_mapsize - 1 ) / 2 );
@@ -353,6 +354,16 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
         submaps_with_active_items.emplace( p );
     }
 
+    // Register any funnel traps so fill_water_collectors can skip the mapbuffer scan.
+    if( sm != nullptr && !sm->trap_cache.empty() ) {
+        const tripoint sm_abs = pos.raw();
+        std::ranges::for_each( sm->trap_cache, [&]( const point & lp ) {
+            if( sm->get_trap( lp ).obj().is_funnel() ) {
+                funnel_locations_.emplace_back( sm_abs, lp );
+            }
+        } );
+    }
+
     if( !contains_abs_sm( pos ) ) {
         return;
     }
@@ -391,6 +402,12 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim
 
     // Stop tracking active items for this submap.
     submaps_with_active_items.erase( pos.raw() );
+
+    // Remove any funnel locations belonging to this submap.
+    const tripoint sm_abs = pos.raw();
+    std::erase_if( funnel_locations_, [&]( const auto & e ) {
+        return e.first == sm_abs;
+    } );
 
     if( !contains_abs_sm( pos ) ) {
         return;
@@ -2855,6 +2872,9 @@ bool map::supports_above( const tripoint &p ) const
 
 bool map::has_floor_or_support( const tripoint &p ) const
 {
+    if( p.z < -OVERMAP_DEPTH || p.z > OVERMAP_HEIGHT ) {
+        return false;
+    }
     const tripoint below( p.xy(), p.z - 1 );
     return !valid_move( p, below, false, true );
 }
@@ -3485,6 +3505,7 @@ bool map::is_flammable( const tripoint &p )
 
 void map::decay_fields_and_scent( const time_duration &amount )
 {
+    ZoneScopedN( "decay_fields_and_scent" );
     // TODO: Make this happen on all z-levels
 
     // Decay scent separately, so that later we can use field count to skip empty submaps
@@ -6410,6 +6431,10 @@ void map::trap_set( const tripoint &p, const trap_id &type )
     }
 
     current_submap->set_trap( l, type );
+    if( type.obj().is_funnel() ) {
+        const tripoint sm_abs( abs_sub.x + p.x / SEEX, abs_sub.y + p.y / SEEY, p.z );
+        funnel_locations_.emplace_back( sm_abs, l );
+    }
 }
 
 void map::disarm_trap( const tripoint &p )
@@ -6480,6 +6505,13 @@ void map::remove_trap( const tripoint &p )
     if( tid != tr_null ) {
         if( g != nullptr && this == &get_map() ) {
             g->u.add_known_trap( p, tr_null.obj() );
+        }
+
+        if( tid.obj().is_funnel() ) {
+            const tripoint sm_abs( abs_sub.x + p.x / SEEX, abs_sub.y + p.y / SEEY, p.z );
+            std::erase_if( funnel_locations_, [&]( const auto & e ) {
+                return e.first == sm_abs && e.second == l;
+            } );
         }
 
         current_submap->set_trap( l, tr_null );
@@ -7844,6 +7876,7 @@ void map::load( const tripoint &w, const bool update_vehicle, const bool pump_ev
     std::fill( grid.begin(), grid.end(), nullptr );
     submaps_with_active_items.clear();
     loaded_vehicles.clear();
+    funnel_locations_.clear();
     set_abs_sub( w );
     for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
         for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {

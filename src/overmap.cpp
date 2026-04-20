@@ -3047,6 +3047,26 @@ std::optional<mapgen_arguments> *overmap::mapgen_args( const tripoint_om_omt &p 
     return &mapgen_arg_storage[it->second];
 }
 
+overmap::mapgen_args_slot overmap::get_mapgen_args_slot( const tripoint_om_omt &p )
+{
+    auto it = mapgen_args_index.find( p );
+    if( it == mapgen_args_index.end() ) {
+        return {};
+    }
+    const int idx = it->second;
+    return { &mapgen_arg_storage[idx], &mapgen_args_init_flags_[idx] };
+}
+
+void overmap::sync_mapgen_args_init_flags()
+{
+    mapgen_args_init_flags_.assign( mapgen_arg_storage.size(), 0 );
+    for( size_t i = 0; i < mapgen_arg_storage.size(); ++i ) {
+        if( mapgen_arg_storage[i].has_value() ) {
+            mapgen_args_init_flags_[i] = 1;
+        }
+    }
+}
+
 bool &overmap::seen( const tripoint_om_omt &p )
 {
     if( !inbounds( p ) ) {
@@ -5867,6 +5887,7 @@ std::vector<tripoint_om_omt> overmap::place_special(
     // Link grid and mapgens
     const int args_index = mapgen_arg_storage.size();
     mapgen_arg_storage.emplace_back();
+    mapgen_args_init_flags_.push_back( 0 );
     for( const tripoint_om_omt &location : result.omts_used ) {
         mapgen_args_index[location] = args_index;
         overmap_special_placements[location] = special.id;

@@ -308,6 +308,9 @@ class submap : maptile_soa<SEEX, SEEY>
         char   floor_cache[SEEX][SEEY]         = {};
         pf_special pf_special_cache[SEEX][SEEY]  = {};
         int    scent_values[SEEX][SEEY]        = {};
+        // True if any scent_values cell is non-zero. Set in raw_scent_set; cleared by
+        // scent_map::decay once all values reach zero. Lets decay() skip unvisited submaps.
+        bool has_scent = false;
 
         bool transparency_dirty = true;
         bool outside_dirty      = true;
