@@ -16,6 +16,8 @@ import { Command } from "@cliffy/command"
 import { walk } from "@std/fs"
 import { isAbsolute, join, relative, resolve } from "@std/path"
 import * as jsonMap from "@scarf/json-map"
+import { partition } from "jsr:@std/collections@^1.1.3"
+import * as v from "jsr:@valibot/valibot@^1.1.0"
 
 const REPO_ROOT = resolve(import.meta.dirname!, "..")
 const DEFAULT_TILESETS = [
@@ -25,11 +27,7 @@ const DEFAULT_TILESETS = [
 ]
 const DEFAULT_INPUTS = ["data/json"]
 const SKIP_INPUT_JSON = [/(modinfo|default|replacements|mod_tileset)\.json/]
-
-export const getJsonPathSkips = (source: "input" | "tileset"): RegExp[] =>
-  source === "tileset" ? [] : Array.from(SKIP_INPUT_JSON)
-
-const REPORTABLE_TYPES = new Set([
+const REPORTABLE_TYPES = [
   "AMMO",
   "ARMOR",
   "BATTERY",
@@ -48,9 +46,14 @@ const REPORTABLE_TYPES = new Set([
   "TOOLMOD",
   "TOOL_ARMOR",
   "WHEEL",
-])
+] as const
+const OUTPUT_FORMATS = ["text", "json", "md"] as const
+
+export const getJsonPathSkips = (source: "input" | "tileset"): RegExp[] =>
+  source === "tileset" ? [] : Array.from(SKIP_INPUT_JSON)
 
 type DefinitionKind = "item" | "abstract"
+type OutputFormat = (typeof OUTPUT_FORMATS)[number]
 
 interface ItemDefinition {
   id: string
@@ -71,8 +74,6 @@ interface TileLookup {
   tileId: string
   chain: string[]
 }
-
-type OutputFormat = "text" | "json" | "md"
 
 interface VariantOnlyEntry {
   id: string
@@ -116,7 +117,6 @@ interface MissingTilesetReport {
 }
 
 const TILE_ID_PREFIXES = ["overlay_wielded_", "overlay_worn_"]
-const OUTPUT_FORMATS = new Set<OutputFormat>(["text", "json", "md"])
 const TILE_ID_SUFFIX_PATTERNS = [
   /^(.+)_season_(spring|summer|autumn|winter)$/,
   /^(.+)_harvested$/,
@@ -127,9 +127,41 @@ const TILE_ID_SUFFIX_PATTERNS = [
   /^(.+)_full$/,
   /^(.+)_empty$/,
 ]
+const OutputFormatSchema = v.picklist(OUTPUT_FORMATS)
+const TileEntrySchema = v.looseObject({
+  id: v.optional(v.union([v.string(), v.array(v.unknown())])),
+  additional_tiles: v.optional(v.array(v.unknown())),
+})
+const TileConfigSchema = v.looseObject({
+  "tiles-new": v.optional(v.array(v.unknown())),
+  tiles: v.optional(v.array(v.unknown())),
+})
+const DefinitionSchema = v.looseObject({
+  type: v.picklist(REPORTABLE_TYPES),
+  id: v.optional(v.string()),
+  abstract: v.optional(v.string()),
+  "copy-from": v.optional(v.string()),
+  looks_like: v.optional(v.string()),
+  flags: v.optional(v.union([v.string(), v.array(v.unknown())])),
+})
+const IgnoredItemValueSchema = v.looseObject({
+  fake_item: v.optional(v.string()),
+  type: v.optional(v.string()),
+  gun_type: v.optional(v.string()),
+  ammo_type: v.optional(v.string()),
+})
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
+
+const isDefined = <T>(value: T | undefined): value is T => value !== undefined
+
+const asStringArray = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : typeof value === "string"
+    ? [value]
+    : []
 
 const mapToObject = (value: unknown): unknown =>
   value instanceof Map
@@ -143,29 +175,24 @@ const toDisplayPath = (path: string): string =>
 
 const resolveRepoPath = (path: string): string => isAbsolute(path) ? path : resolve(REPO_ROOT, path)
 
-const parseProperties = (content: string): Record<string, string> => {
-  const pairs: Record<string, string> = {}
+const parseProperties = (content: string): Record<string, string> =>
+  Object.fromEntries(
+    content.split("\n").flatMap((line) => {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith("#")) {
+        return []
+      }
 
-  for (const line of content.split("\n")) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith("#")) {
-      continue
-    }
+      const separator = trimmed.indexOf(":")
+      if (separator === -1) {
+        return []
+      }
 
-    const separator = trimmed.indexOf(":")
-    if (separator === -1) {
-      continue
-    }
-
-    const key = trimmed.slice(0, separator).trim()
-    const value = trimmed.slice(separator + 1).trim()
-    if (key && value) {
-      pairs[key] = value
-    }
-  }
-
-  return pairs
-}
+      const key = trimmed.slice(0, separator).trim()
+      const value = trimmed.slice(separator + 1).trim()
+      return key && value ? [[key, value] as const] : []
+    }),
+  )
 
 const pathExists = async (path: string): Promise<boolean> => {
   try {
@@ -211,68 +238,41 @@ const resolveTilesetSourcePaths = async (tilesetPath: string): Promise<string[]>
   return await readJsonPaths([resolvedPath], getJsonPathSkips("tileset"))
 }
 
-const collectTileIdsFromEntries = (entries: unknown[], tileIds: Set<string>): void => {
-  for (const entry of entries) {
-    if (!isRecord(entry)) {
-      continue
-    }
-
-    const { id, additional_tiles: additionalTiles } = entry
-    if (typeof id === "string") {
-      tileIds.add(id)
-    } else if (Array.isArray(id)) {
-      for (const candidate of id) {
-        if (typeof candidate === "string") {
-          tileIds.add(candidate)
-        }
-      }
-    }
-
-    if (Array.isArray(additionalTiles)) {
-      collectTileIdsFromEntries(additionalTiles, tileIds)
-    }
+const tileIdsFromEntry = (entry: unknown): string[] => {
+  const parsedEntry = v.safeParse(TileEntrySchema, entry)
+  if (!parsedEntry.success) {
+    return []
   }
+
+  const { id, additional_tiles: additionalTiles } = parsedEntry.output
+  return [
+    ...asStringArray(id),
+    ...(additionalTiles?.flatMap(tileIdsFromEntry) ?? []),
+  ]
 }
 
-const collectTileIdsFromConfig = (config: unknown, tileIds: Set<string>): void => {
+const tileIdsFromConfig = (config: unknown): string[] => {
   if (Array.isArray(config)) {
-    for (const child of config) {
-      collectTileIdsFromConfig(child, tileIds)
-    }
-    return
+    return config.flatMap(tileIdsFromConfig)
   }
 
-  if (!isRecord(config)) {
-    return
+  const parsedConfig = v.safeParse(TileConfigSchema, config)
+  if (!parsedConfig.success) {
+    return []
   }
 
-  if (Array.isArray(config["tiles-new"])) {
-    collectTileIdsFromConfig(config["tiles-new"], tileIds)
-  }
-
-  if (Array.isArray(config.tiles)) {
-    collectTileIdsFromEntries(config.tiles, tileIds)
-  }
+  return [
+    ...(parsedConfig.output["tiles-new"]
+      ? tileIdsFromConfig(parsedConfig.output["tiles-new"])
+      : []),
+    ...(parsedConfig.output.tiles?.flatMap(tileIdsFromEntry) ?? []),
+  ]
 }
 
-export const collectTileIds = (config: unknown): Set<string> => {
-  const tileIds = new Set<string>()
+export const collectTileIds = (config: unknown): Set<string> => new Set(tileIdsFromConfig(config))
 
-  collectTileIdsFromConfig(config, tileIds)
-  return tileIds
-}
-
-export const collectTileIdsFromConfigs = (configs: readonly unknown[]): Set<string> => {
-  const tileIds = new Set<string>()
-
-  for (const config of configs) {
-    for (const tileId of collectTileIds(config)) {
-      tileIds.add(tileId)
-    }
-  }
-
-  return tileIds
-}
+export const collectTileIdsFromConfigs = (configs: readonly unknown[]): Set<string> =>
+  new Set(configs.flatMap(tileIdsFromConfig))
 
 const collectTileIdAliases = (tileId: string, aliases: Set<string>): void => {
   if (aliases.has(tileId)) {
@@ -315,55 +315,39 @@ export const buildVariantTileLookup = (tileIds: Iterable<string>): Map<string, s
 }
 
 export const parseOutputFormat = (format: string): OutputFormat => {
-  if (OUTPUT_FORMATS.has(format as OutputFormat)) {
-    return format as OutputFormat
+  const parsedFormat = v.safeParse(OutputFormatSchema, format)
+  if (parsedFormat.success) {
+    return parsedFormat.output
   }
 
   throw new Error(`Unsupported --format '${format}'. Use one of: text, json, md.`)
 }
 
-const collectExplicitIgnoredItemIdsFromValue = (
-  value: unknown,
-  ignoredItemIds: Set<string>,
-): void => {
+const explicitIgnoredItemIdsFromValue = (value: unknown): string[] => {
   if (Array.isArray(value)) {
-    for (const child of value) {
-      collectExplicitIgnoredItemIdsFromValue(child, ignoredItemIds)
-    }
-    return
+    return value.flatMap(explicitIgnoredItemIdsFromValue)
   }
 
   if (!isRecord(value)) {
-    return
+    return []
   }
 
-  if (typeof value.fake_item === "string") {
-    ignoredItemIds.add(value.fake_item)
-  }
+  const parsedValue = v.safeParse(IgnoredItemValueSchema, value)
+  const explicitItemIds = !parsedValue.success ? [] : [
+    parsedValue.output.fake_item,
+    ...(parsedValue.output.type === "gun"
+      ? [parsedValue.output.gun_type, parsedValue.output.ammo_type]
+      : []),
+  ].filter(isDefined)
 
-  if (value.type === "gun") {
-    if (typeof value.gun_type === "string") {
-      ignoredItemIds.add(value.gun_type)
-    }
-    if (typeof value.ammo_type === "string") {
-      ignoredItemIds.add(value.ammo_type)
-    }
-  }
-
-  for (const child of Object.values(value)) {
-    collectExplicitIgnoredItemIdsFromValue(child, ignoredItemIds)
-  }
+  return [
+    ...explicitItemIds,
+    ...Object.values(value).flatMap(explicitIgnoredItemIdsFromValue),
+  ]
 }
 
-export const collectExplicitIgnoredItemIds = (entries: readonly unknown[]): Set<string> => {
-  const ignoredItemIds = new Set<string>()
-
-  for (const entry of entries) {
-    collectExplicitIgnoredItemIdsFromValue(entry, ignoredItemIds)
-  }
-
-  return ignoredItemIds
-}
+export const collectExplicitIgnoredItemIds = (entries: readonly unknown[]): Set<string> =>
+  new Set(entries.flatMap(explicitIgnoredItemIdsFromValue))
 
 const parseJsonMaps = (content: string): unknown[] => {
   const parsed = jsonMap.parse(content)
@@ -406,59 +390,55 @@ export const readJsonPaths = async (
 }
 
 const toDefinition = (value: unknown, path: string): ItemDefinition | null => {
-  if (!isRecord(value) || typeof value.type !== "string" || !REPORTABLE_TYPES.has(value.type)) {
+  const parsedDefinition = v.safeParse(DefinitionSchema, value)
+  if (!parsedDefinition.success) {
     return null
   }
 
-  const id = typeof value.id === "string"
-    ? value.id
-    : typeof value.abstract === "string"
-    ? value.abstract
-    : undefined
-  if (!id) {
+  const { abstract, flags, id, looks_like: looksLike, type } = parsedDefinition.output
+  const definitionId = id ?? abstract
+  if (!definitionId) {
     return null
   }
 
   return {
-    id,
-    kind: typeof value.id === "string" ? "item" : "abstract",
-    type: value.type,
+    id: definitionId,
+    kind: id ? "item" : "abstract",
+    type,
     path,
-    copyFrom: typeof value["copy-from"] === "string" ? value["copy-from"] : undefined,
-    looksLike: typeof value.looks_like === "string" ? value.looks_like : undefined,
-    flags: Array.isArray(value.flags)
-      ? value.flags.filter((flag): flag is string => typeof flag === "string")
-      : typeof value.flags === "string"
-      ? [value.flags]
-      : [],
+    copyFrom: parsedDefinition.output["copy-from"],
+    looksLike,
+    flags: asStringArray(flags),
   }
 }
 
 const loadDefinitions = async (inputs: readonly string[]) => {
-  const items = new Map<string, ItemDefinition>()
-  const abstracts = new Map<string, ItemDefinition>()
-  const ignoredItemIds = new Set<string>()
-
-  for (const path of await readJsonPaths(inputs)) {
-    const entries = parseJsonMaps(await Deno.readTextFile(path)).map(mapToObject)
-    for (const ignoredItemId of collectExplicitIgnoredItemIds(entries)) {
-      ignoredItemIds.add(ignoredItemId)
-    }
-    for (const rawEntry of entries) {
-      const definition = toDefinition(rawEntry, path)
-      if (!definition) {
-        continue
+  const loaded = await Promise.all(
+    (await readJsonPaths(inputs)).map(async (path) => {
+      const entries = parseJsonMaps(await Deno.readTextFile(path)).map(mapToObject)
+      return {
+        ignoredItemIds: Array.from(collectExplicitIgnoredItemIds(entries)),
+        definitions: entries.flatMap((rawEntry) => {
+          const definition = toDefinition(rawEntry, path)
+          return definition ? [definition] : []
+        }),
       }
+    }),
+  )
 
-      if (definition.kind === "item") {
-        items.set(definition.id, definition)
-      } else {
-        abstracts.set(definition.id, definition)
-      }
-    }
+  const definitions = loaded.flatMap(({ definitions }) => definitions)
+  const [itemDefinitions, abstractDefinitions] = partition(
+    definitions,
+    (definition) => definition.kind === "item",
+  )
+
+  return {
+    items: new Map(itemDefinitions.map((definition) => [definition.id, definition] as const)),
+    abstracts: new Map(
+      abstractDefinitions.map((definition) => [definition.id, definition] as const),
+    ),
+    ignoredItemIds: new Set(loaded.flatMap(({ ignoredItemIds }) => ignoredItemIds)),
   }
-
-  return { items, abstracts, ignoredItemIds }
 }
 
 export const resolveItemDefinitions = (
@@ -587,6 +567,27 @@ const formatMissingEntry = (entry: MissingEntry): string => `${entry.id}\t${entr
 const formatLooksLikeEntry = (entry: LooksLikeEntry): string =>
   `${entry.chain.join(" -> ")}\t${entry.path}`
 
+const renderTextSectionLines = (section: RenderedReportSection): string[] => [
+  "",
+  `${section.title} (${section.rows.length})`,
+  ...(section.rows.length === 0 ? ["  (none)"] : [
+    ...section.shownRows,
+    ...(section.hiddenCount > 0 ? [`... ${section.hiddenCount} more`] : []),
+  ]),
+]
+
+const renderMarkdownSectionLines = (section: RenderedReportSection): string[] => [
+  "",
+  `## ${section.title} (${section.rows.length})`,
+  "",
+  ...(section.rows.length === 0 ? ["(none)"] : [
+    "```text",
+    ...section.shownRows,
+    ...(section.hiddenCount > 0 ? [`... ${section.hiddenCount} more`] : []),
+    "```",
+  ]),
+]
+
 const getReportSections = (report: MissingTilesetReport): ReportSection[] => [
   {
     title: "Missing id (but variant tile exists)",
@@ -615,37 +616,20 @@ const limitEntries = <T>(entries: readonly T[], limit: number, total: number = e
 }
 
 export const renderTextReport = (report: MissingTilesetReport, limit: number): string => {
-  const lines = [
+  return [
     `Tilesets: ${report.tilesets.join(", ")}`,
     `Inputs: ${report.inputs.join(", ")}`,
     `Checked ids: ${report.checkedIds}`,
     `Direct sprites: ${report.directSprites}`,
     `Variant sprites only: ${report.variantSpritesOnly}`,
-  ]
-
-  if (report.looksLikeOnly !== undefined) {
-    lines.push(`Looks_like fallback only: ${report.looksLikeFallbackOnly}`)
-  }
-
-  lines.push(`Missing entirely: ${report.missingEntirely}`)
-
-  for (const section of getReportSections(report).map((section) => renderSection(section, limit))) {
-    lines.push("", `${section.title} (${section.rows.length})`)
-    if (section.rows.length === 0) {
-      lines.push("  (none)")
-      continue
-    }
-
-    for (const row of section.shownRows) {
-      lines.push(row)
-    }
-
-    if (section.hiddenCount > 0) {
-      lines.push(`... ${section.hiddenCount} more`)
-    }
-  }
-
-  return lines.join("\n")
+    ...(report.looksLikeOnly !== undefined
+      ? [`Looks_like fallback only: ${report.looksLikeFallbackOnly}`]
+      : []),
+    `Missing entirely: ${report.missingEntirely}`,
+    ...getReportSections(report)
+      .map((section) => renderSection(section, limit))
+      .flatMap(renderTextSectionLines),
+  ].join("\n")
 }
 
 export const renderJsonReport = (report: MissingTilesetReport, limit: number): string => {
@@ -694,7 +678,7 @@ export const renderJsonReport = (report: MissingTilesetReport, limit: number): s
 }
 
 export const renderMarkdownReport = (report: MissingTilesetReport, limit: number): string => {
-  const lines = [
+  return [
     "# Tileset Missing Sprites",
     "",
     `- Tilesets: ${report.tilesets.map((path) => `\`${path}\``).join(", ")}`,
@@ -702,29 +686,14 @@ export const renderMarkdownReport = (report: MissingTilesetReport, limit: number
     `- Checked ids: ${report.checkedIds}`,
     `- Direct sprites: ${report.directSprites}`,
     `- Variant sprites only: ${report.variantSpritesOnly}`,
-  ]
-
-  if (report.looksLikeOnly !== undefined) {
-    lines.push(`- Looks_like fallback only: ${report.looksLikeFallbackOnly}`)
-  }
-
-  lines.push(`- Missing entirely: ${report.missingEntirely}`)
-
-  for (const section of getReportSections(report).map((section) => renderSection(section, limit))) {
-    lines.push("", `## ${section.title} (${section.rows.length})`, "")
-    if (section.rows.length === 0) {
-      lines.push("(none)")
-      continue
-    }
-
-    lines.push("```text", ...section.shownRows)
-    if (section.hiddenCount > 0) {
-      lines.push(`... ${section.hiddenCount} more`)
-    }
-    lines.push("```")
-  }
-
-  return lines.join("\n")
+    ...(report.looksLikeOnly !== undefined
+      ? [`- Looks_like fallback only: ${report.looksLikeFallbackOnly}`]
+      : []),
+    `- Missing entirely: ${report.missingEntirely}`,
+    ...getReportSections(report)
+      .map((section) => renderSection(section, limit))
+      .flatMap(renderMarkdownSectionLines),
+  ].join("\n")
 }
 
 export const renderReport = (
@@ -742,104 +711,100 @@ export const renderReport = (
   }
 }
 
-const run = async (): Promise<void> => {
-  const parsed = await new Command()
-    .description("Report items and monsters missing sprites in one or more tilesets")
-    .option("--tileset <path:string>", "Tileset path(s) to inspect", {
-      collect: true,
-      default: DEFAULT_TILESETS,
-    })
-    .option("--input <path:string>", "JSON path(s) with items and monsters to inspect", {
-      collect: true,
-      default: DEFAULT_INPUTS,
-    })
-    .option("--looks-like", "Report items that are only covered by looks_like", {
-      default: false,
-    })
-    .option("--format <format:string>", "Output format: text, json, or md", {
-      default: "text",
-      value: parseOutputFormat,
-    })
-    .option("--limit <count:number>", "Max rows to print per section", { default: 0 })
-    .parse(Deno.args)
+const main = new Command()
+  .description("Report items and monsters missing sprites in one or more tilesets")
+  .option("--tileset <path:string>", "Tileset path(s) to inspect", {
+    collect: true,
+    default: DEFAULT_TILESETS,
+  })
+  .option("--input <path:string>", "JSON path(s) with items and monsters to inspect", {
+    collect: true,
+    default: DEFAULT_INPUTS,
+  })
+  .option("--looks-like", "Report items that are only covered by looks_like", {
+    default: false,
+  })
+  .option("--format <format:string>", "Output format: text, json, or md", {
+    default: "text",
+    value: parseOutputFormat,
+  })
+  .option("--limit <count:number>", "Max rows to print per section", { default: 0 })
+  .action(async ({ format, input, limit, looksLike, tileset }) => {
+    const tilesets = Array.from((tileset ?? DEFAULT_TILESETS) as string[])
+    const inputs = Array.from((input ?? DEFAULT_INPUTS) as string[])
+    const showLooksLike = Boolean(looksLike ?? false)
+    const outputFormat = format as OutputFormat
+    const rowLimit = Number(limit ?? 0)
 
-  const tilesets = Array.from((parsed.options.tileset ?? DEFAULT_TILESETS) as string[])
-  const input = Array.from((parsed.options.input ?? DEFAULT_INPUTS) as string[])
-  const showLooksLike = Boolean(parsed.options.looksLike ?? false)
-  const format = parsed.options.format as OutputFormat
-  const limit = Number(parsed.options.limit ?? 0)
+    const tilesetSourcePaths = Array.from(
+      new Set((await Promise.all(tilesets.map(resolveTilesetSourcePaths))).flat()),
+    )
+    const tileIds = collectTileIdsFromConfigs(
+      await Promise.all(
+        tilesetSourcePaths.map(async (tilesetSourcePath) => {
+          return mapToObject(jsonMap.parse(await Deno.readTextFile(tilesetSourcePath)))
+        }),
+      ),
+    )
+    const variantTileLookup = buildVariantTileLookup(tileIds)
+    const { items, abstracts, ignoredItemIds } = await loadDefinitions(inputs)
+    const resolvedItems = resolveItemDefinitions(items, abstracts)
+    const reportableItems = Array.from(resolvedItems.values())
+      .filter((item) => !shouldIgnoreItemDefinition(item, ignoredItemIds))
+      .sort((left, right) => left.id.localeCompare(right.id))
+    const [directItems, unresolvedItems] = partition(
+      reportableItems,
+      (item) => tileIds.has(item.id),
+    )
 
-  const tilesetSourcePaths = Array.from(
-    new Set((await Promise.all(tilesets.map(resolveTilesetSourcePaths))).flat()),
-  )
-  const tileIds = collectTileIdsFromConfigs(
-    await Promise.all(
-      tilesetSourcePaths.map(async (tilesetSourcePath) => {
-        return mapToObject(jsonMap.parse(await Deno.readTextFile(tilesetSourcePath)))
-      }),
-    ),
-  )
-  const variantTileLookup = buildVariantTileLookup(tileIds)
-  const { items, abstracts, ignoredItemIds } = await loadDefinitions(input)
-  const resolvedItems = resolveItemDefinitions(items, abstracts)
-  const reportableItems = Array.from(resolvedItems.values())
-    .filter((item) => !shouldIgnoreItemDefinition(item, ignoredItemIds))
-    .sort((left, right) => left.id.localeCompare(right.id))
+    const variantOnly: VariantOnlyEntry[] = []
+    const fallbackOnly: LooksLikeEntry[] = []
+    const missing: MissingEntry[] = []
 
-  const direct: string[] = []
-  const variantOnly: VariantOnlyEntry[] = []
-  const fallbackOnly: LooksLikeEntry[] = []
-  const missing: MissingEntry[] = []
+    for (const item of unresolvedItems) {
+      const variantTileId = variantTileLookup.get(item.id)
+      if (variantTileId) {
+        variantOnly.push({
+          id: item.id,
+          tileId: variantTileId,
+          path: toDisplayPath(item.path),
+        })
+        continue
+      }
 
-  for (const item of reportableItems) {
-    if (tileIds.has(item.id)) {
-      direct.push(item.id)
-      continue
+      const lookup = findTileByLooksLike(item.id, resolvedItems, tileIds, variantTileLookup)
+      if (lookup) {
+        fallbackOnly.push({
+          id: item.id,
+          tileId: lookup.tileId,
+          chain: lookup.chain,
+          path: toDisplayPath(item.path),
+        })
+        continue
+      }
+
+      missing.push({ id: item.id, path: toDisplayPath(item.path) })
     }
 
-    const variantTileId = variantTileLookup.get(item.id)
-    if (variantTileId) {
-      variantOnly.push({
-        id: item.id,
-        tileId: variantTileId,
-        path: toDisplayPath(item.path),
-      })
-      continue
+    const report: MissingTilesetReport = {
+      tilesets: tilesets.map(toDisplayPath),
+      inputs: inputs.map(toDisplayPath),
+      checkedIds: reportableItems.length,
+      directSprites: directItems.length,
+      variantSpritesOnly: variantOnly.length,
+      looksLikeFallbackOnly: fallbackOnly.length,
+      missingEntirely: missing.length,
+      variantOnly,
+      missing,
+      looksLikeOnly: showLooksLike ? fallbackOnly : undefined,
     }
 
-    const lookup = findTileByLooksLike(item.id, resolvedItems, tileIds, variantTileLookup)
-    if (lookup) {
-      fallbackOnly.push({
-        id: item.id,
-        tileId: lookup.tileId,
-        chain: lookup.chain,
-        path: toDisplayPath(item.path),
-      })
-      continue
-    }
-
-    missing.push({ id: item.id, path: toDisplayPath(item.path) })
-  }
-
-  const report: MissingTilesetReport = {
-    tilesets: tilesets.map(toDisplayPath),
-    inputs: input.map(toDisplayPath),
-    checkedIds: reportableItems.length,
-    directSprites: direct.length,
-    variantSpritesOnly: variantOnly.length,
-    looksLikeFallbackOnly: fallbackOnly.length,
-    missingEntirely: missing.length,
-    variantOnly,
-    missing,
-    looksLikeOnly: showLooksLike ? fallbackOnly : undefined,
-  }
-
-  console.log(renderReport(report, format, limit))
-}
+    console.log(renderReport(report, outputFormat, rowLimit))
+  })
 
 if (import.meta.main) {
   try {
-    await run()
+    await main.parse(Deno.args)
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error))
     Deno.exit(1)
