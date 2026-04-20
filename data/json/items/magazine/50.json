@@ -72,7 +72,7 @@
     "id": "drum_mag50",
     "looks_like": "stanag100drum",
     "type": "MAGAZINE",
-    "name": { "str": "Barrett drumb magazine" },
+    "name": { "str": "Barrett drum magazine" },
     "//": "Fully loaded 20 magazine, presumably loaded with the 114.7 gram M33 Ball cartridge, weighs 1868.801 grams. Source inetres.com",
     "description": "Standard 20-round drum magazine for a Barrett M107A1 anti-materiel rifle.",
     "weight": "927 g",
