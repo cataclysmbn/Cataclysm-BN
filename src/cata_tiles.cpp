@@ -3524,9 +3524,12 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
                 for( const zlevel_layer &f : zlevel_drawing_layers ) {
                     if( here.inbounds( p.pos ) && z != p.pos.z ) {
-                        if( !f.hide_unseen || ch.visibility_cache[ch.idx( p.pos.x, p.pos.y )] != lit_level::BLANK ) {
+                        const auto z_ll = ch.inbounds( {p.pos.x, p.pos.y} )
+                                          ? ch.visibility_cache[ch.idx( p.pos.x, p.pos.y )]
+                                          : lit_level::BLANK;
+                        if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
                             const bool ( invis )[5] = {false, false, false, false, false};
-                            ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, invis, center.z - z );
+                            ( this->*( f.function ) )( {p.pos.xy(), z}, z_ll, p.height_3d, invis, center.z - z );
                         }
                     } else {
                         ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z - z );
