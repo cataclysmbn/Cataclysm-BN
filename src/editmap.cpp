@@ -749,10 +749,11 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
     map::apparent_light_info al = map::apparent_light_helper( map_cache, target );
     int apparent_light = static_cast<int>(
                              here.apparent_light_at( target, here.get_visibility_variables_cache() ) );
-    mvwprintw( w_info, point( 1, off++ ), _( "outside: %d obstructed: %d floor: %d" ),
+    mvwprintw( w_info, point( 1, off++ ), _( "outside: %d sheltered: %d floor: %d obstructed: %d" ),
                static_cast<int>( here.is_outside( target ) ),
-               static_cast<int>( al.obstructed ),
-               static_cast<int>( here.has_floor( target ) )
+               static_cast<int>( here.is_sheltered( target ) ),
+               static_cast<int>( here.has_floor( target ) ),
+               static_cast<int>( al.obstructed )
              );
     mvwprintw( w_info, point( 1, off++ ), _( "light_at: %s" ),
                map_cache.lm[map_cache.idx( target.x, target.y )].to_string() );
@@ -762,8 +763,10 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
     if( vp ) {
         extras += _( " [vehicle]" );
     }
-    if( here.has_flag( TFLAG_INDOORS, target ) ) {
+    if( !here.is_outside( target ) ) {
         extras += _( " [indoors]" );
+    } else if( here.is_sheltered( target ) ) {
+        extras += _( " [sheltered]" );
     }
     if( here.has_flag( TFLAG_SUPPORTS_ROOF, target ) ) {
         extras += _( " [roof]" );
@@ -952,16 +955,14 @@ static std::string describe( const T_t &t );
 template<>
 std::string describe( const ter_t &type )
 {
-    return string_format( _( "Move cost: %d\nIndoors: %s\nRoof: %s" ), type.movecost,
-                          type.has_flag( TFLAG_INDOORS ) ? _( "Yes" ) : _( "No" ),
+    return string_format( _( "Move cost: %d\nRoof: %s" ), type.movecost,
                           type.has_flag( TFLAG_SUPPORTS_ROOF ) ? _( "Yes" ) : _( "No" ) );
 }
 
 template<>
 std::string describe( const furn_t &type )
 {
-    return string_format( _( "Move cost: %d\nIndoors: %s\nRoof: %s" ), type.movecost,
-                          type.has_flag( TFLAG_INDOORS ) ? _( "Yes" ) : _( "No" ),
+    return string_format( _( "Move cost: %d\nRoof: %s" ), type.movecost,
                           type.has_flag( TFLAG_SUPPORTS_ROOF ) ? _( "Yes" ) : _( "No" ) );
 }
 

@@ -334,6 +334,8 @@ enum action_id : int {
     ACTION_DISPLAY_RADIATION,
     /** Toggle transparency map */
     ACTION_DISPLAY_TRANSPARENCY,
+    /** Toggle outside/sheltered/indoors overlay */
+    ACTION_DISPLAY_OUTSIDE,
     /** Toggle submap grid overlay */
     ACTION_DISPLAY_SUBMAP_GRID,
     /** Toggle zone overlay */

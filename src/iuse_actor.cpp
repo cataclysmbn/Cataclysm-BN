@@ -391,6 +391,7 @@ int iuse_transform::use( player &p, item &it, bool t, const tripoint &pos ) cons
     it.set_counter( countdown > 0 ? countdown : it.type->countdown_interval );
     // Check for gaining or losing night vision, eye encumbrance effects, clairvoyance from transforming relics, etc.
     p.recalc_sight_limits();
+    get_map().invalidate_lightmap_caches();
 
     return 0;
 }

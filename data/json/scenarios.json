@@ -263,7 +263,8 @@
       "prof_fursuiter",
       "clown",
       "broken_cyborg",
-      "true_foodperson"
+      "true_foodperson",
+      "elite_specops"
     ],
     "flags": [ "FIRE_START", "INFECTED", "BAD_DAY", "CHALLENGE", "CITY_START" ]
   },
@@ -734,12 +735,14 @@
       "bio_soldier",
       "bio_sniper",
       "bio_specops",
+      "elite_specops",
       "bionic_spy",
       "national_guard",
       "hitman",
       "assassin",
       "politician",
       "mili_pilot",
+      "fighter_pilot",
       "major-general"
     ],
     "map_extra": "mx_helicopter",
@@ -821,6 +824,7 @@
       "gyro_pilot",
       "bird_pilot",
       "mili_pilot_blackhawk",
+      "fighter_pilot_f35",
       "airship_pilot",
       "airboat_pilot",
       "aircanoe_pilot"
@@ -908,10 +912,12 @@
       "bio_soldier",
       "bio_sniper",
       "bio_specops",
+      "elite_specops",
       "labtech",
       "bionic_labtech",
       "medic",
       "mili_pilot",
+      "fighter_pilot",
       "major-general"
     ],
     "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
@@ -977,8 +983,10 @@
       "bio_soldier",
       "bio_sniper",
       "bio_specops",
+      "elite_specops",
       "medic",
       "mili_pilot",
+      "fighter_pilot",
       "prof_combat_engineer",
       "major-general"
     ],

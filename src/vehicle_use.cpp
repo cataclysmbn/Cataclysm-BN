@@ -149,6 +149,7 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
             }
         }
         refresh();
+        get_map().invalidate_lightmap_caches();
     } );
 }
 

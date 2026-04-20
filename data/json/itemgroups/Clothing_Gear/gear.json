@@ -42,17 +42,22 @@
   {
     "type": "item_group",
     "id": "gear_labsecurity",
+    "subtype": "collection",
     "//": "Used for the prisoner containment guard gear lockers",
     "items": [
       { "group": "cop_weapons", "prob": 40 },
-      [ "bootstrap", 15 ],
-      [ "chestpouch", 15 ],
-      [ "helmet_riot", 20 ],
-      [ "armor_riot", 20 ],
-      [ "holster", 15 ],
-      [ "kevlar", 20 ],
-      [ "mask_gas", 10 ],
-      [ "shield_riot", 10 ]
+      [ "helmet_riot", 40 ],
+      [ "armor_riot", 40 ],
+      [ "heavy_flashlight", 30 ],
+      [ "baton", 30 ],
+      [ "two_way_radio", 20 ],
+      [ "tazer", 30 ],
+      [ "tacvest", 30 ],
+      [ "holster", 30 ],
+      [ "kevlar", 40 ],
+      [ "mask_gas", 20 ],
+      [ "shield_riot", 20 ],
+      [ "dragonskin", 5 ]
     ]
   },
   {
