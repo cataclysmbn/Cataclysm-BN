@@ -1128,7 +1128,12 @@ auto process_fields_in_submap( submap &sm,
 
     auto has_fire = false;
 
-    std::ranges::for_each( sm.field_cache, [&]( const point & local ) {
+    // Snapshot before iterating: wandering-field spread can push_back to sm.field_cache
+    // within the same submap (line ~1742), which would invalidate the range iterators.
+    // Newly-added entries are newborn (age 0) and skip all effects anyway, so processing
+    // them next tick is correct behaviour.
+    const auto field_positions = sm.field_cache;
+    std::ranges::for_each( field_positions, [&]( const point & local ) {
         auto &curfield = sm.get_field( local );
 
         if( !curfield.displayed_field_type() ) {
