@@ -2039,6 +2039,7 @@ int vehicle::install_part( point dp, vehicle_part &&new_part )
     pt.mount = dp;
 
     refresh();
+    get_map().invalidate_lightmap_caches();
     coeff_air_changed = true;
     return parts.size() - 1;
 }
@@ -2360,6 +2361,7 @@ bool vehicle::remove_part( const int p, RemovePartHandler &handler )
         }
     }
     refresh();
+    get_map().invalidate_lightmap_caches();
     coeff_air_changed = true;
     return shift_if_needed();
 }
@@ -2386,6 +2388,7 @@ void vehicle::part_removal_cleanup()
     removed_part_count = 0;
     if( changed || parts.empty() ) {
         refresh();
+        here.invalidate_lightmap_caches();
         if( parts.empty() ) {
             here.destroy_vehicle( this );
             return;
