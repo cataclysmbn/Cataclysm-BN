@@ -102,20 +102,20 @@ void batch_turns_field( submap &sm, int n )
     } );
 
     // Compact + deduplicate — mirrors the same fix in process_fields_in_submap.
-    std::bitset<SEEX * SEEY> seen;
+    std::bitset<SEEX *SEEY> seen;
     sm.field_cache.erase(
-        std::ranges::remove_if( sm.field_cache, [&]( const point & local ) {
-            if( !sm.get_field( local ).displayed_field_type() ) {
-                return true;
-            }
-            const auto idx = static_cast<std::size_t>( local.x + local.y * SEEX );
-            if( seen.test( idx ) ) {
-                return true;
-            }
-            seen.set( idx );
-            return false;
-        } ).begin(),
-        sm.field_cache.end()
+    std::ranges::remove_if( sm.field_cache, [&]( const point & local ) {
+        if( !sm.get_field( local ).displayed_field_type() ) {
+            return true;
+        }
+        const auto idx = static_cast<std::size_t>( local.x + local.y * SEEX );
+        if( seen.test( idx ) ) {
+            return true;
+        }
+        seen.set( idx );
+        return false;
+    } ).begin(),
+    sm.field_cache.end()
     );
 }
 
