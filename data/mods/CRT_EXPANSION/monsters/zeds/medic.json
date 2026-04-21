@@ -33,9 +33,7 @@
     "special_attacks": [
       {
         "type": "spell",
-        "spell_data": {
-          "id": "crt_medic_heal"
-        },
+        "spell_data": { "id": "crt_medic_heal" },
         "cooldown": 10,
         "monster_message": "<color_yellow>The C.R.I.T. medic heals an ally!</color>"
       },
@@ -78,7 +76,7 @@
     "dispersion": 1000,
     "modes": [ [ "DEFAULT", "semi", 1 ] ],
     "loudness": 10,
-    "ammo_effects": [ "POISON" ],
+    "ammo_effects": [ "POISON" ]
   },
   {
     "id": "crt_medic_paralyze_gun",
@@ -93,7 +91,7 @@
     "dispersion": 1000,
     "modes": [ [ "DEFAULT", "semi", 1 ] ],
     "loudness": 10,
-    "ammo_effects": [ "PARALYZEPOISON" ],
+    "ammo_effects": [ "PARALYZEPOISON" ]
   },
   {
     "id": "crt_medic_heal",
