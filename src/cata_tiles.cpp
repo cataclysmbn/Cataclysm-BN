@@ -5189,13 +5189,29 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
             return ret;
         }
     } else if( invisible[0] ) {
-        if( here.inbounds( p ) && vp && vp->vehicle().forward_velocity() ) {
-            // Vehicle is here and still moving — clear outside-FOV memory so it doesn't
-            // lag behind as a ghost if the vehicle stops before this tile re-enters FOV.
-            get_avatar().clear_memorized_tile( here.getabs( p ) );
-            return false;
+        if( vp ) {
+            // Vehicle is here but outside FOV — draw it live with memorised lighting so the
+            // entire vehicle remains visible (player hand-wavingly "knows" where their vehicle is).
+            const vehicle &veh = vp->vehicle();
+            const int veh_part = vp->part_index();
+            char part_mod = 0;
+            const Creature *critter = g->critter_at( p, true );
+            const bool has_obstacle_here = vp.part_with_feature( VPFLAG_OBSTACLE, false ).has_value();
+            const bool use_roof_variant = z_drop > 0 && critter == nullptr && !has_obstacle_here;
+            const vpart_id &vp_id = veh.part_id_string( veh_part, use_roof_variant, part_mod );
+            const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
+            const int rotation = std::round( to_degrees( veh.face.dir() ) );
+            const std::string vpname = "vp_" + vp_id.str();
+            if( !veh.forward_velocity() ) {
+                get_avatar().memorize_tile( here.getabs( p ), vpname, subtile, rotation );
+            }
+            const tile_search_params tile { vpname, C_VEHICLE_PART, empty_string, subtile, rotation };
+            return draw_from_id_string(
+                       tile, p, bgCol, fgCol,
+                       lit_level::MEMORIZED, true, z_drop, false, height_3d );
         }
-        // try drawing memory if invisible and not overridden
+        // No live vehicle at this position — fall back to map memory so previously-seen
+        // tiles are shown as a ghost until they scroll out of range (vehicle moved away).
         const auto ret = get_vpart_memory_at( p );
         if( ret.has_value() ) {
             const auto [tile_id, subtile, rotation] = ret.value();
