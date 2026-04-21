@@ -6633,10 +6633,12 @@ void game::control_vehicle()
     }
     if( veh ) {
         // If we reached here, we gained control of a vehicle.
-        // Clear the map memory for the area covered by the vehicle to eliminate ghost vehicles.
-        for( const tripoint &target : veh->get_points() ) {
-            u.clear_memorized_tile( m.getabs( target ) );
-        }
+        // Replace vehicle tile memories with the underlying terrain so that tiles
+        // occluded by the vehicle body show the ground rather than going blank.
+        // Ghost-vehicle prevention is handled by draw_vpart clearing while moving.
+        std::ranges::for_each( veh->get_points(), [&]( const tripoint &target ) {
+            u.memorize_tile( m.getabs( target ), m.ter( target ).id().str(), 0, 0 );
+        } );
         veh->is_following = false;
         veh->is_patrolling = false;
         veh->autopilot_on = false;

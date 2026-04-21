@@ -5144,17 +5144,15 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
         const int rotation = std::round( to_degrees( veh.face.dir() ) );
         const std::string vpname = "vp_" + vp_id.str();
         avatar &you = get_avatar();
-        // Memorize when the tile is in the seen_cache, OR when rendering from above
-        // (z_drop > 0): the 3D FOV is blocked by the vehicle's own floor cache but
-        // the tile is physically visible, so we should record the roof-variant memory.
-        if( here.check_seen_cache( p ) || z_drop > 0 ) {
-            if( !veh.forward_velocity() ) {
-                you.memorize_tile( here.getabs( p ), vpname, subtile, rotation );
-            } else {
-                // Clear stale vehicle memory while moving so parked-vehicle ghost
-                // tiles don't accumulate along the path.
-                you.clear_memorized_tile( here.getabs( p ) );
-            }
+        // Always clear while moving — the check_seen_cache gate would miss residual
+        // stationary memory once map_memory_seen_cache is set by draw_from_id_string,
+        // letting ghost tiles survive until the submap exits the reality bubble.
+        // Always memorize while stationary so returning to a previous position
+        // after a trip refreshes the tile rather than leaving it blank.
+        if( veh.forward_velocity() ) {
+            you.clear_memorized_tile( here.getabs( p ) );
+        } else {
+            you.memorize_tile( here.getabs( p ), vpname, subtile, rotation );
         }
         if( !overridden ) {
             const std::optional<vpart_reference> cargopart = vp.part_with_feature( "CARGO", true );
