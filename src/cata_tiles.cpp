@@ -4639,13 +4639,25 @@ bool cata_tiles::has_memory_at( const tripoint &p )
         return false;
     }
 
-    const memorized_terrain_tile t = g->u.get_memorized_tile( get_map().getabs( p ) );
-    return !t.tile.empty();
+    const tripoint abs = get_map().getabs( p );
+    // Check overlay slot (furniture, vpart, trap) and terrain slot separately,
+    // since terrain is now stored in its own slot and may be the only memory present.
+    if( !g->u.get_memorized_tile( abs ).tile.empty() ) {
+        return true;
+    }
+    return !g->u.get_terrain_tile( abs ).tile.empty();
 }
 
 auto cata_tiles::get_ter_memory_at( const tripoint &p ) -> std::optional<memorized_terrain_tile>
 {
-    return get_map_memory_of_at<ter_t>( p );
+    if( !g->u.should_show_map_memory() ) {
+        return std::nullopt;
+    }
+    const memorized_terrain_tile t = g->u.get_terrain_tile( get_map().getabs( p ) );
+    if( t.tile.empty() ) {
+        return std::nullopt;
+    }
+    return t;
 }
 
 auto cata_tiles::get_furn_memory_at( const tripoint &p ) -> std::optional<memorized_terrain_tile>
@@ -4732,7 +4744,7 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
         const std::string &tname = t.id().str();
         if( here.check_seen_cache( p ) ) {
             if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
-                g->u.memorize_tile( here.getabs( p ), tname, subtile, rotation );
+                g->u.memorize_terrain_tile( here.getabs( p ), tname, subtile, rotation );
             } else {
                 g->u.clear_memorized_tile( here.getabs( p ) );
             }
@@ -4788,24 +4800,6 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
         if( ret.has_value() ) {
             const auto& [tile_id, subtile, rotation] = ret.value();
             const tile_search_params tile { tile_id, C_TERRAIN, empty_string, subtile, rotation };
-            return draw_from_id_string(
-                       tile, p, bgCol, fgCol,
-                       lit_level::MEMORIZED, true, z_drop, false, height_3d );
-        } else if( t && !neighborhood_overridden && t != t_open_air && ll != lit_level::BLANK ) {
-            // The single memory slot was overwritten by furniture/trap on this tile.
-            // Fall back to rendering the actual terrain as memorized so it isn't invisible.
-            // Skip when ll==BLANK: the tile is genuinely unseen (not a memory-overwrite case),
-            // so rendering it at all would produce a ghost sepia artifact.
-            int subtile = 0;
-            int rotation = 0;
-            int connect_group = 0;
-            if( t.obj().connects( connect_group ) ) {
-                get_connect_values( p, subtile, rotation, connect_group, {} );
-            } else {
-                get_terrain_orientation( p, rotation, subtile, {}, invisible );
-            }
-            const std::string &tname = t.id().str();
-            const tile_search_params tile { tname, C_TERRAIN, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
