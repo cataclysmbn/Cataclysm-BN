@@ -1914,6 +1914,20 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     }
 
     veh.shed_loose_parts();
+
+    // Clear map memory for every tile the vehicle is vacating.
+    // precalc[0] still holds the OLD offsets here (before advance_precalc_mounts),
+    // so src + precalc[0] gives the authoritative absolute tile positions being left.
+    // This prevents stale ghost images from persisting in map memory after the vehicle moves.
+    {
+        avatar &you = get_avatar();
+        for( const vpart_reference &vpr : veh.get_all_parts() ) {
+            if( !vpr.part().removed ) {
+                you.clear_memorized_tile( getabs( src + vpr.part().precalc[0] ) );
+            }
+        }
+    }
+
     smzs = veh.advance_precalc_mounts( dst_offset, src );
 
     // Expand bounds with the new footprint (precalc[0] now holds new offsets).
