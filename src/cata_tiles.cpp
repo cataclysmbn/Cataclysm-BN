@@ -3393,45 +3393,59 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                     }
 
                     if( !invisible[0] && apply_vision_effects( pos, visibility ) ) {
-                        if( has_draw_override( pos ) || has_memory ) {
-                            invisible[0] = true;
-                        }
-                        for( int cz = pos.z; !invisible[0] && cz <= -center.z; cz++ ) {
-                            const Creature *critter = g->critter_at( {pos.xy(), cz}, true );
-                            if( critter && ( g->u.sees_with_infrared( *critter ) ||
-                                             g->u.sees_with_specials( *critter ) ) ) {
+                        // Vehicle tiles are blocked from the 3D FOV by their own floor cache,
+                        // but are physically visible when the player descends through open air.
+                        // Check this before the has_memory branch so that a memorized roof tile
+                        // doesn't suppress the live visible render on subsequent frames.
+                        if( had_visible_open_air && in_map_bounds && here.veh_at( pos ).has_value() ) {
+                            const auto &ch_above = here.access_cache( pos.z + 1 );
+                            const lit_level above_ll = ch_above.inbounds( {pos.x, pos.y} )
+                                                       ? ch_above.visibility_cache[ch_above.idx( pos.x, pos.y )]
+                                                       : lit_level::BLANK;
+                            invisible[0] = above_ll == lit_level::BLANK;
+                            min_z = std::min( pos.z, min_z );
+                            draw_points.emplace_back( pos, height_3d,
+                                                      above_ll != lit_level::BLANK ? above_ll : ll,
+                                                      invisible );
+                        } else {
+                            if( has_draw_override( pos ) || has_memory ) {
                                 invisible[0] = true;
                             }
-                        }
-                        if( invisible[0] ) {
-                            min_z = std::min( pos.z, min_z );
-                            draw_points.emplace_back( pos, height_3d, ll, invisible );
-                        } else if( last_vis != center.z + 1 ) {
-                            if( in_map_bounds && z < center.z - fov_3d_z_range ) {
-                                // The floor is below the 3D FOV limit, but the loop only
-                                // reaches here through a fully transparent column above.
-                                // Treat it as seen-through-sky: render and memorize at the
-                                // floor's actual position with surface lighting + depth tint.
-                                here.set_memory_seen_cache_dirty( pos );
-                                min_z = std::min( pos.z, min_z );
-                                //invisible[0] = true;
-                                draw_points.emplace_back( pos, height_3d, lit_level::MEMORIZED, invisible );
-                                //const ter_id &t = here.ter( pos );
-                                //const auto tile = tile_search_params{ t.id().str(), C_TERRAIN, empty_string, 0, 0 };
-                                //draw_from_id_string( tile, pos, std::nullopt, std::nullopt, lit_level::MEMORIZED, false, center.z - z, false );
-                            } else {
-                                min_z = std::min( last_vis, min_z );
-                                draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d,
-                                                          last_vis_ll, invisible );
+                            for( int cz = pos.z; !invisible[0] && cz <= -center.z; cz++ ) {
+                                const Creature *critter = g->critter_at( {pos.xy(), cz}, true );
+                                if( critter && ( g->u.sees_with_infrared( *critter ) ||
+                                                 g->u.sees_with_specials( *critter ) ) ) {
+                                    invisible[0] = true;
+                                }
                             }
-                        } else if( had_visible_open_air && in_map_bounds &&
-                                   z < center.z - fov_3d_z_range ) {
-                            // No solid last_vis found, but we passed through visible open air
-                            // and the tile is below the 3D FOV limit (e.g. flying high above
-                            // the map). Render at its own position with a depth tint.
-                            here.set_memory_seen_cache_dirty( pos );
-                            min_z = std::min( pos.z, min_z );
-                            draw_points.emplace_back( pos, height_3d, lit_level::MEMORIZED, invisible );
+                            if( invisible[0] ) {
+                                min_z = std::min( pos.z, min_z );
+                                draw_points.emplace_back( pos, height_3d, ll, invisible );
+                            } else if( last_vis != center.z + 1 ) {
+                                if( in_map_bounds && z < center.z - fov_3d_z_range ) {
+                                    // The floor is below the 3D FOV limit, but the loop only
+                                    // reaches here through a fully transparent column above.
+                                    // Treat it as seen-through-sky: render and memorize at the
+                                    // floor's actual position with surface lighting + depth tint.
+                                    here.set_memory_seen_cache_dirty( pos );
+                                    min_z = std::min( pos.z, min_z );
+                                    //invisible[0] = true;
+                                    draw_points.emplace_back( pos, height_3d, lit_level::MEMORIZED, invisible );
+                                    //const ter_id &t = here.ter( pos );
+                                    //const auto tile = tile_search_params{ t.id().str(), C_TERRAIN, empty_string, 0, 0 };
+                                    //draw_from_id_string( tile, pos, std::nullopt, std::nullopt, lit_level::MEMORIZED, false, center.z - z, false );
+                                } else {
+                                    min_z = std::min( last_vis, min_z );
+                                    draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d,
+                                                              last_vis_ll, invisible );
+                                }
+                            } else if( had_visible_open_air && in_map_bounds ) {
+                                // No vehicle and no solid last_vis — placeholder so cross-z
+                                // sprite draws (player character above) still execute.
+                                min_z = std::min( pos.z, min_z );
+                                invisible[0] = true;
+                                draw_points.emplace_back( pos, height_3d, ll, invisible );
+                            }
                         }
 
                     } else {
@@ -3535,8 +3549,17 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                                       ? ch.visibility_cache[ch.idx( p.pos.x, p.pos.y )]
                                       : lit_level::BLANK;
                     if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
-                        const bool ( invis )[5] = {false, false, false, false, false};
-                        ( this->*( f.function ) )( {p.pos.xy(), z}, z_ll, p.height_3d, invis, center.z - z );
+                        // When the player is looking down from above (z_drop > 0), a BLANK
+                        // visibility at the cross-z level means the surface is part of a vehicle
+                        // body that the 3D FOV can't see through — but the surface itself should
+                        // still render as a visible floor/roof from above (z_drop > 0).
+                        // Only hide the tile when the player is at the same z-level (z_drop == 0)
+                        // and truly can't see it, which is the "enclosed interior" case.
+                        const int z_drop_here = center.z - z;
+                        const bool ( invis )[5] = {z_ll == lit_level::BLANK && z_drop_here == 0,
+                                                   false, false, false, false
+                                                  };
+                        ( this->*( f.function ) )( {p.pos.xy(), z}, z_ll, p.height_3d, invis, z_drop_here );
                     }
                 } else {
                     ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z - z );
@@ -4768,9 +4791,11 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
-        } else if( t && !neighborhood_overridden && t != t_open_air ) {
+        } else if( t && !neighborhood_overridden && t != t_open_air && ll != lit_level::BLANK ) {
             // The single memory slot was overwritten by furniture/trap on this tile.
             // Fall back to rendering the actual terrain as memorized so it isn't invisible.
+            // Skip when ll==BLANK: the tile is genuinely unseen (not a memory-overwrite case),
+            // so rendering it at all would produce a ghost sepia artifact.
             int subtile = 0;
             int rotation = 0;
             int connect_group = 0;
@@ -5107,14 +5132,29 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
         // get the vpart_id
         char part_mod = 0;
         const Creature *critter = g->critter_at( p, true );
-        const vpart_id &vp_id = veh.part_id_string( veh_part, z_drop > 0 && critter == nullptr, part_mod );
+        // Use the roof/top-down variant only for non-structural interior parts (floor, seat,
+        // cargo etc.). If any part at this mount is an obstacle (board, windshield, door),
+        // pass roof=false so part_displayed_at returns that obstacle part instead of the
+        // on_roof tile. part_info(veh_part) only reflects the cached part (often the frame),
+        // so search all parts at the position via part_with_feature.
+        const bool has_obstacle_here = vp.part_with_feature( VPFLAG_OBSTACLE, false ).has_value();
+        const bool use_roof_variant = z_drop > 0 && critter == nullptr && !has_obstacle_here;
+        const vpart_id &vp_id = veh.part_id_string( veh_part, use_roof_variant, part_mod );
         const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
         const int rotation = std::round( to_degrees( veh.face.dir() ) );
         const std::string vpname = "vp_" + vp_id.str();
         avatar &you = get_avatar();
-        if( !veh.forward_velocity() && !veh.player_in_control( you ) &&
-            here.check_seen_cache( p ) ) {
-            you.memorize_tile( here.getabs( p ), vpname, subtile, rotation );
+        // Memorize when the tile is in the seen_cache, OR when rendering from above
+        // (z_drop > 0): the 3D FOV is blocked by the vehicle's own floor cache but
+        // the tile is physically visible, so we should record the roof-variant memory.
+        if( here.check_seen_cache( p ) || z_drop > 0 ) {
+            if( !veh.forward_velocity() ) {
+                you.memorize_tile( here.getabs( p ), vpname, subtile, rotation );
+            } else {
+                // Clear stale vehicle memory while moving so parked-vehicle ghost
+                // tiles don't accumulate along the path.
+                you.clear_memorized_tile( here.getabs( p ) );
+            }
         }
         if( !overridden ) {
             const std::optional<vpart_reference> cargopart = vp.part_with_feature( "CARGO", true );
