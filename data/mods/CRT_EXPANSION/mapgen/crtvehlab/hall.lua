@@ -25,10 +25,11 @@ gen_amenities = function(data, map, point)
     "crt_lab_veh_hall_exercise",
     "crt_lab_veh_hall_dodge_train",
     "crt_lab_veh_hall_library",
-    "crt_lab_veh_hall_conference",
+    "crt_lab_veh_hall_pool",
+    "crt_lab_veh_hall_living",
     "crt_lab_veh_hall_hydroponics",
     "crt_lab_veh_hall_bath_good",
-    "crt_lab_veh_hall_bath_bad",
+    "crt_lab_veh_hall_bath_mil",
   })
   draw_hall_set(data, map, rooms, point)
 end
@@ -38,7 +39,27 @@ mil_amenities = function(data, map, point)
     "crt_lab_veh_hall_milfood",
     "crt_lab_veh_hall_exercise",
     "crt_lab_veh_hall_dodge_train",
-    "crt_lab_veh_hall_bath_bad",
+    "crt_lab_veh_hall_bath_mil",
+  })
+  draw_hall_set(data, map, rooms, point)
+end
+
+sci_amenities = function(data, map, point)
+  rooms = shuffle({
+    "crt_lab_veh_hall_scifood",
+    "crt_lab_veh_hall_living",
+    "crt_lab_veh_hall_library",
+    "crt_lab_veh_hall_hydroponics",
+  })
+  draw_hall_set(data, map, rooms, point)
+end
+
+doctor = function(data, map, point)
+  rooms = shuffle({
+    "crt_lab_veh_hall_doctor_storage",
+    "crt_lab_veh_hall_exercise",
+    "crt_lab_veh_hall_doctor_autodoc",
+    "crt_lab_veh_hall_doctor_house"
   })
   draw_hall_set(data, map, rooms, point)
 end
@@ -49,11 +70,11 @@ all = function(data, map, point)
     "crt_lab_veh_hall_scifood",
     "crt_lab_veh_hall_exercise",
     "crt_lab_veh_hall_library",
-    "crt_lab_veh_hall_conference",
+    "crt_lab_veh_hall_living",
     "crt_lab_veh_hall_hydroponics",
     "crt_lab_veh_hall_dodge_train",
     "crt_lab_veh_hall_bath_good",
-    "crt_lab_veh_hall_bath_bad",
+    "crt_lab_veh_hall_bath_mil",
     "crt_lab_veh_hall_engine",
     "crt_lab_veh_hall_engine_test",
     "crt_lab_veh_smallveh",
@@ -61,11 +82,15 @@ all = function(data, map, point)
   draw_hall_set(data, map, rooms, point)
 end
 
-local halls = { engine, all, gen_amenities, mil_amenities }
+local halls = { engine, all, gen_amenities, mil_amenities, sci_amenities, doctor }
 
-local halls_weight = { 100, 200, 50, 150 }
+local halls_weight = { 100, 200, 50, 75, 75, 75 }
 
-local total_weight = 500
+local total_weight = 0
+
+for _, weight in ipairs(halls_weight) do
+  total_weight = total_weight + weight
+end
 
 draw_hall_set = function(data, map, set, pos)
   data:nest(set[1], Point.new(pos.x, pos.y))
