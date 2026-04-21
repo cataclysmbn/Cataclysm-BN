@@ -102,7 +102,7 @@ void map_memory::memorize_symbol( const tripoint &pos, const int symbol )
 }
 
 void map_memory::memorize_terrain_tile( const tripoint &pos, const std::string &ter,
-        const int subtile, const int rotation )
+                                        const int subtile, const int rotation )
 {
     coord_pair p( pos );
     mm_submap &sm = get_submap( p.sm );

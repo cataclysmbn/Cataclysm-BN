@@ -261,7 +261,7 @@ int avatar::get_memorized_symbol( const tripoint &p ) const
 }
 
 void avatar::memorize_terrain_tile( const tripoint &pos, const std::string &ter,
-                                     const int subtile, const int rotation )
+                                    const int subtile, const int rotation )
 {
     player_map_memory->memorize_terrain_tile( pos, ter, subtile, rotation );
 }

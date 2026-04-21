@@ -92,8 +92,10 @@ struct mm_submap {
         void deserialize( JsonIn &jsin );
 
     private:
-        std::vector<memorized_terrain_tile> tiles;         // overlay: furniture, vpart, trap — 0 or SEEX*SEEY
-        std::vector<memorized_terrain_tile> terrain_tiles; // base terrain layer             — 0 or SEEX*SEEY
+        std::vector<memorized_terrain_tile>
+        tiles;         // overlay: furniture, vpart, trap — 0 or SEEX*SEEY
+        std::vector<memorized_terrain_tile>
+        terrain_tiles; // base terrain layer             — 0 or SEEX*SEEY
         std::vector<int> symbols; // holds either 0 or SEEX*SEEY elements
         bool valid = true;
 };

@@ -6636,7 +6636,7 @@ void game::control_vehicle()
         // Clear vehicle tile memories so occluded tiles fall back to memorized terrain.
         // The terrain_tiles slot already holds correct terrain from first-sight memorization.
         // Ghost-vehicle prevention is handled by draw_vpart clearing while moving.
-        std::ranges::for_each( veh->get_points(), [&]( const tripoint &target ) {
+        std::ranges::for_each( veh->get_points(), [&]( const tripoint & target ) {
             u.clear_memorized_tile( m.getabs( target ) );
             u.memorize_terrain_tile( m.getabs( target ), m.ter( target ).id().str(), 0, 0 );
         } );

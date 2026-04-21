@@ -3463,8 +3463,9 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     // so tall z=0 sprites (e.g. tree canopies) never overdraw z=1 entities at adjacent
     // tiles. Within the same z-level, y-ascending order (north before south) preserves
     // the intended "tree canopy over player to the north" effect at equal z.
-    auto compare_z_y = []( const tile_render_info &a, const tile_render_info &b ) -> bool {
-        if( a.pos.z != b.pos.z ) {
+    auto compare_z_y = []( const tile_render_info & a, const tile_render_info & b ) -> bool {
+        if( a.pos.z != b.pos.z )
+        {
             return a.pos.z < b.pos.z;
         }
         return a.pos.y < b.pos.y;
@@ -3556,7 +3557,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                         // Only hide the tile when the player is at the same z-level (z_drop == 0)
                         // and truly can't see it, which is the "enclosed interior" case.
                         const int z_drop_here = center.z - z;
-                        const bool ( invis )[5] = {z_ll == lit_level::BLANK && z_drop_here == 0,
+                        const bool ( invis )[5] = {z_ll == lit_level::BLANK &&z_drop_here == 0,
                                                    false, false, false, false
                                                   };
                         ( this->*( f.function ) )( {p.pos.xy(), z}, z_ll, p.height_3d, invis, z_drop_here );
