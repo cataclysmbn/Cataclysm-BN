@@ -1283,6 +1283,13 @@ class game : public submap_load_listener
         // Default 5 matches REALITY_BUBBLE_SIZE=2 (original 11×11 grid).
         int reality_bubble_radius_ = 5;
 
+        // True during the update_map() shift window: abs_sub has been updated by
+        // m.shift() but creature local positions have not yet been adjusted by
+        // shift_monsters().  despawn_monster() skips recomputing pos_abs in this
+        // window because the pre-shift stamp is already correct and getabs() would
+        // return a value displaced by 1 submap in the shift direction.
+        bool shift_in_progress_ = false;
+
     private:
         location_vector<item> fake_items;
     public:
