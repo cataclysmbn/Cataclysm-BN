@@ -78,8 +78,15 @@ weather_manager &get_weather()
 
 static bool is_player_outside()
 {
-    return get_map().is_outside( point( get_player_character().posx(),
-                                        get_player_character().posy() ) ) && g->get_levz() >= 0;
+    if( g->get_levz() < 0 ) {
+        return false;
+    }
+    const tripoint pos = get_player_character().pos();
+    if( !get_map().is_outside( pos ) ) {
+        return false;
+    }
+    const optional_vpart_position vp = get_map().veh_at( pos );
+    return !vp || !vp->is_inside();
 }
 
 void glare( const weather_type_id &w )
