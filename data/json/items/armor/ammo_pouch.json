@@ -155,7 +155,7 @@
       "multi": 4,
       "max_volume": "750 ml",
       "draw_cost": 40,
-      "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
+      "flags": [ "MAG_COMPACT", "MAG_BULKY", "SPEEDLOADER" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_WINGS" ]
@@ -546,7 +546,7 @@
       "min_volume": "250 ml",
       "max_volume": "1 L",
       "draw_cost": 60,
-      "flags": [ "MAG_COMPACT", "MAG_BULKY" ]
+      "flags": [ "MAG_COMPACT", "MAG_BULKY", "SPEEDLOADER" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "ALLOWS_WINGS" ]
