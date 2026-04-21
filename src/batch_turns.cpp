@@ -1,11 +1,14 @@
 #include "batch_turns.h"
 
 #include <algorithm>
+#include <bitset>
+#include <cstddef>
 #include <ranges>
 
 #include "profile.h"
 
 #include "calendar.h"
+#include "game_constants.h"
 #include "field.h"
 #include "field_type.h"
 #include "item.h"
@@ -98,12 +101,19 @@ void batch_turns_field( submap &sm, int n )
         }
     } );
 
-    // Compact: remove positions whose fields have all decayed.
-    // Mirrors the same fix in process_fields_in_submap — prevents unbounded
-    // growth from persistent emitters cycling fields through death/recreation.
+    // Compact + deduplicate — mirrors the same fix in process_fields_in_submap.
+    std::bitset<SEEX * SEEY> seen;
     sm.field_cache.erase(
         std::ranges::remove_if( sm.field_cache, [&]( const point & local ) {
-            return !sm.get_field( local ).displayed_field_type();
+            if( !sm.get_field( local ).displayed_field_type() ) {
+                return true;
+            }
+            const auto idx = static_cast<std::size_t>( local.x + local.y * SEEX );
+            if( seen.test( idx ) ) {
+                return true;
+            }
+            seen.set( idx );
+            return false;
         } ).begin(),
         sm.field_cache.end()
     );
