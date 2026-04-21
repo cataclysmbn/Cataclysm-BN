@@ -59,7 +59,7 @@ doctor = function(data, map, point)
     "crt_lab_veh_hall_doctor_storage",
     "crt_lab_veh_hall_exercise",
     "crt_lab_veh_hall_doctor_autodoc",
-    "crt_lab_veh_hall_doctor_house"
+    "crt_lab_veh_hall_doctor_house",
   })
   draw_hall_set(data, map, rooms, point)
 end
