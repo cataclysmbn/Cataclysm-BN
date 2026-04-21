@@ -5145,7 +5145,7 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
         // Always memorize while stationary so returning to a previous position
         // after a trip refreshes the tile rather than leaving it blank.
         if( veh.forward_velocity() ) {
-            you.clear_memorized_tile( here.getabs( p ) );
+            you.clear_memorized_overlay( here.getabs( p ) );
         } else {
             you.memorize_tile( here.getabs( p ), vpname, subtile, rotation );
         }

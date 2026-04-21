@@ -207,7 +207,14 @@ class map_memory
         int get_symbol( const tripoint &pos );
 
         /**
-         * Clears memorized tile and symbol.
+         * Clears memorized overlay tile (furniture/vpart/trap) and symbol, leaving terrain memory intact.
+         * Use this when a vehicle or furniture leaves a tile so the ground beneath is preserved.
+         * @param pos tile position, in global ms coords.
+         */
+        void clear_memorized_overlay( const tripoint &pos );
+
+        /**
+         * Clears memorized tile, symbol, and terrain.
          * @param pos tile position, in global ms coords.
          */
         void clear_memorized_tile( const tripoint &pos );

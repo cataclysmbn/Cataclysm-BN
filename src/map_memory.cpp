@@ -116,6 +116,14 @@ memorized_terrain_tile map_memory::get_terrain_tile( const tripoint &pos )
     return sm.terrain_tile( p.loc );
 }
 
+void map_memory::clear_memorized_overlay( const tripoint &pos )
+{
+    coord_pair p( pos );
+    mm_submap &sm = get_submap( p.sm );
+    sm.set_symbol( p.loc, mm_submap::default_symbol );
+    sm.set_tile( p.loc, mm_submap::default_tile );
+}
+
 void map_memory::clear_memorized_tile( const tripoint &pos )
 {
     coord_pair p( pos );
