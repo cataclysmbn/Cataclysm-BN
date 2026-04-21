@@ -101,7 +101,7 @@
         "~D   Dt",
         "##   ##",
         "ss   ss",
-        "       ",
+        "       "
       ],
       "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control_crt_lab", "W": "t_wall_glass", "D": "t_door_c" },
       "furniture": { "s": "f_sink", "t": "f_toilet", "~": "f_shower", "L": "f_locker" },
@@ -128,7 +128,7 @@
       "items": {
         "h": { "item": "coat_lab", "chance": 5 },
         "b": { "item": "lab_bookshelves", "chance": 50, "repeat": 6 },
-        "T": { "item": "lab_bookshelves", "chance": 50, }
+        "T": { "item": "lab_bookshelves", "chance": 50 }
       }
     }
   },
@@ -155,17 +155,8 @@
         "S": "t_carpet_purple",
         "V": "t_carpet_purple"
       },
-      "furniture": {
-        "C": "f_sofa",
-        "t": "f_table",
-        "W": "f_water_dispenser",
-        "V": "f_fireplace",
-        "S": "f_table"
-      },
-      "items": {
-        "S": { "item": "stereo", "chance": 100 },
-        "V": { "item": "television", "chance": 100 }
-      }
+      "furniture": { "C": "f_sofa", "t": "f_table", "W": "f_water_dispenser", "V": "f_fireplace", "S": "f_table" },
+      "items": { "S": { "item": "stereo", "chance": 100 }, "V": { "item": "television", "chance": 100 } }
     }
   },
   {

@@ -14,11 +14,7 @@
         "SSS HHH",
         "       "
       ],
-      "furniture": {
-        "B": "f_locker",
-        "H": "f_locker",
-        "S": "f_locker",
-      },
+      "furniture": { "B": "f_locker", "H": "f_locker", "S": "f_locker" },
       "items": {
         "H": [
           { "item": "harddrugs", "chance": 60 },
@@ -50,7 +46,7 @@
         "  L#L  ",
         "#D###D#",
         "  STS  ",
-        "       ",
+        "       "
       ],
       "terrain": {
         "#": "t_concrete_wall",
@@ -61,16 +57,9 @@
         "L": "t_linoleum_white",
         "T": "t_linoleum_white",
         "S": "t_linoleum_white",
-        "c": "t_linoleum_white",
+        "c": "t_linoleum_white"
       },
-      "furniture": {
-        "A": "f_autodoc",
-        "C": "f_autodoc_couch",
-        "L": "f_locker",
-        "T": "f_table",
-        "S": "f_sink",
-        "c": "f_chair"
-      },
+      "furniture": { "A": "f_autodoc", "C": "f_autodoc_couch", "L": "f_locker", "T": "f_table", "S": "f_sink", "c": "f_chair" },
       "items": {
         "L": [
           { "item": "harddrugs", "chance": 60 },
@@ -100,20 +89,12 @@
         "       "
       ],
       "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" },
-      "furniture": {
-        "B": "f_bed",
-        "d": "f_dresser",
-        "t": "f_table",
-        "s": "f_sink",
-        "T": "f_toilet",
-        "S": "f_shower",
-        "c": "f_chair"
-      },
+      "furniture": { "B": "f_bed", "d": "f_dresser", "t": "f_table", "s": "f_sink", "T": "f_toilet", "S": "f_shower", "c": "f_chair" },
       "mapping": {
         "d": { "items": [ { "item": "crt_eng_set", "chance": 50 } ] },
         "t": { "items": [ { "item": "crt_sci_reading", "chance": 50, "repeat": 2 } ] },
         "B": { "items": [ { "item": "bed", "chance": 50, "repeat": 5 } ] }
       }
     }
-  },
+  }
 ]
