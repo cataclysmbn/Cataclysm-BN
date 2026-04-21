@@ -1769,9 +1769,16 @@ auto process_fields_in_submap( submap &sm,
         } // end field-entry loop
     } );
 
-    if( sm.field_count == 0 ) {
-        sm.field_cache.clear();
-    }
+    // Compact: remove positions whose fields have all died this tick.
+    // Without this, persistent emitters cause unbounded field_cache growth — each
+    // field creation/death cycle re-appends the same positions, since add_field()
+    // only pushes when a field is first created, not when it is refreshed.
+    sm.field_cache.erase(
+        std::ranges::remove_if( sm.field_cache, [&]( const point & local ) {
+            return !sm.get_field( local ).displayed_field_type();
+        } ).begin(),
+        sm.field_cache.end()
+    );
 
     return has_fire;
 }

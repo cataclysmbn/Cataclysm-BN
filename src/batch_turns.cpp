@@ -98,9 +98,15 @@ void batch_turns_field( submap &sm, int n )
         }
     } );
 
-    if( sm.field_count == 0 ) {
-        sm.field_cache.clear();
-    }
+    // Compact: remove positions whose fields have all decayed.
+    // Mirrors the same fix in process_fields_in_submap — prevents unbounded
+    // growth from persistent emitters cycling fields through death/recreation.
+    sm.field_cache.erase(
+        std::ranges::remove_if( sm.field_cache, [&]( const point & local ) {
+            return !sm.get_field( local ).displayed_field_type();
+        } ).begin(),
+        sm.field_cache.end()
+    );
 }
 
 void batch_turns_items( submap &sm, int n )
