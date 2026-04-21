@@ -5194,6 +5194,19 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
             return ret;
         }
     } else if( invisible[0] ) {
+        if( here.inbounds( p ) ) {
+            if( !vp ) {
+                // No vehicle in live map but memory has a vehicle tile — stale ghost. Clear it.
+                if( get_vpart_memory_at( p ).has_value() ) {
+                    get_avatar().clear_memorized_tile( here.getabs( p ) );
+                    return false;
+                }
+            } else if( vp->vehicle().forward_velocity() ) {
+                // Vehicle is here and moving — clear outside-FOV memory to prevent future ghost.
+                get_avatar().clear_memorized_tile( here.getabs( p ) );
+                return false;
+            }
+        }
         // try drawing memory if invisible and not overridden
         const auto ret = get_vpart_memory_at( p );
         if( ret.has_value() ) {
