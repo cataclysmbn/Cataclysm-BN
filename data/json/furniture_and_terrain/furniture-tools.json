@@ -10,7 +10,7 @@
     "move_cost_mod": -1,
     "coverage": 50,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "NOITEM", "INDOORS", "SHORT", "PERMEABLE" ],
+    "flags": [ "TRANSPARENT", "NOITEM", "SHORT", "PERMEABLE" ],
     "connects_to": "COUNTER",
     "deconstruct": {
       "furn_set": "f_table",
@@ -61,7 +61,7 @@
     "coverage": 50,
     "required_str": -1,
     "light_emitted": 10,
-    "flags": [ "TRANSPARENT", "CONSOLE", "NOITEM", "INDOORS", "SHORT", "PERMEABLE" ],
+    "flags": [ "TRANSPARENT", "CONSOLE", "NOITEM", "SHORT", "PERMEABLE" ],
     "connects_to": "COUNTER",
     "deconstruct": {
       "furn_set": "f_table",
@@ -112,7 +112,7 @@
     "coverage": 50,
     "required_str": -1,
     "light_emitted": 10,
-    "flags": [ "TRANSPARENT", "NOITEM", "INDOORS", "SHORT", "PERMEABLE" ],
+    "flags": [ "TRANSPARENT", "NOITEM", "SHORT", "PERMEABLE" ],
     "crafting_pseudo_item": "fake_artifact_analyzer_console",
     "examine_action": "use_furn_fake_item",
     "deconstruct": {
