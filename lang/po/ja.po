@@ -1,6 +1,0 @@
-# 
-msgid ""
-msgstr ""
-"Language-Team: Japanese (https://app.transifex.com/bn-team/teams/113585/ja/)\n"
-"Language: ja\n"
-"Plural-Forms: nplurals=1; plural=0;\n"

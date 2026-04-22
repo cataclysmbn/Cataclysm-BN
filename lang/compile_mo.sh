@@ -42,6 +42,10 @@ else
     for f in lang/po/*.po
     do
         n=`basename $f .po`
+        if [ "$n" = "placeholder" ]
+        then
+            continue
+        fi
         mkdir -p $LOCALE_DIR/${n}/LC_MESSAGES
         msgfmt $MSGFMT_NO_CONVERT -f -o $LOCALE_DIR/${n}/LC_MESSAGES/cataclysm-bn.mo ${f}
     done

@@ -324,6 +324,59 @@ Curses バージョンをビルドします。
 
 言語ファイルは、`RELEASE` ビルドタイプをビルドする場合にのみ自動的にコンパイルされることに注意してください。他のビルドタイプでは、 `translations_compile` `make` コマンドに追加する必要があります。例: `make all translations_compile`。
 
+### ローカルで翻訳込みのビルドを行う
+
+2026年以降、翻訳ファイル（`.po` ファイル）はリポジトリに含まれなくなりました。CI が Transifex から取得し、ワークフローのアーティファクトとして保存したうえで、リリースパッケージのビルドに使用します。
+
+ローカルでビルドする場合は、次のいずれかを使用してください。
+
+#### オプション 1: 翻訳なしでビルドする（最速）
+
+翻訳作業をしていない場合は無効化してください。
+
+```sh
+cmake --preset linux-full -DLANGUAGES=none
+cmake --build --preset linux-full
+```
+
+#### オプション 2: Transifex から翻訳を取得する
+
+ローカルで翻訳をテストする必要があり、Transifex へのアクセス権がある場合:
+
+1. Transifex CLI をインストールします。
+
+```sh
+curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd64.tar.gz | sudo tar zxvf - -C /usr/bin tx
+```
+
+2. 翻訳ファイルを取得します。
+
+```sh
+tx pull --force
+```
+
+3. 翻訳を有効にしてビルドします。
+
+```sh
+cmake --preset linux-full -DLANGUAGES=all
+cmake --build --preset linux-full
+```
+
+#### オプション 3: `translations` ワークフローアーティファクトをダウンロードする
+
+Transifex へのアクセス権がない場合は、翻訳ワークフローが生成したアーティファクトを使用してください。
+
+1. [Actions](https://github.com/cataclysmbn/Cataclysm-BN/actions) で最近成功したワークフロー実行を開きます
+2. `translations` アーティファクトをダウンロードします
+3. `lang/po` と `src/lang_stats.inc` をローカルチェックアウトに展開します
+4. 通常どおり `-DLANGUAGES=all` でビルドします
+
+> [!NOTE]
+> ほとんどのコード変更では翻訳は不要です。ローカライズされた出力をテストするのでなければ `-DLANGUAGES=none` を使用してください。
+
+> [!NOTE]
+> リリースアーカイブに含まれるのはパッケージ用にコンパイル済みの `lang/mo` ファイルだけです。ローカルで翻訳を再ビルドするのに必要な `lang/po` のソースは含まれません。
+
 - DYNAMIC_LINKING=`<boolean>`
 
 動的リンクを使用します。または、静的リンクを使用して MinGW の依存関係を削除することもできます。

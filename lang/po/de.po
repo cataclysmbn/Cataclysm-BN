@@ -1,6 +1,0 @@
-# 
-msgid ""
-msgstr ""
-"Language-Team: German (https://app.transifex.com/bn-team/teams/113585/de/)\n"
-"Language: de\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"

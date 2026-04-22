@@ -1,6 +1,0 @@
-# 
-msgid ""
-msgstr ""
-"Language-Team: Icelandic (https://app.transifex.com/bn-team/teams/113585/is/)\n"
-"Language: is\n"
-"Plural-Forms: nplurals=2; plural=(n % 10 != 1 || n % 100 == 11);\n"

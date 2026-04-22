@@ -1,6 +1,0 @@
-# 
-msgid ""
-msgstr ""
-"Language-Team: Norwegian Bokmål (https://app.transifex.com/bn-team/teams/113585/nb/)\n"
-"Language: nb\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"

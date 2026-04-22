@@ -1,6 +1,0 @@
-# 
-msgid ""
-msgstr ""
-"Language-Team: Korean (https://app.transifex.com/bn-team/teams/113585/ko/)\n"
-"Language: ko\n"
-"Plural-Forms: nplurals=1; plural=0;\n"

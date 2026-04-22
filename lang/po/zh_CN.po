@@ -1,6 +1,0 @@
-# 
-msgid ""
-msgstr ""
-"Language-Team: Chinese (China) (https://app.transifex.com/bn-team/teams/113585/zh_CN/)\n"
-"Language: zh_CN\n"
-"Plural-Forms: nplurals=1; plural=0;\n"

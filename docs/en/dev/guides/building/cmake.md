@@ -450,6 +450,59 @@ Note that language files are only compiled automatically when building the `RELE
 other build types, you need to add the `translations_compile` target to the `make` command, for
 example `make all translations_compile`.
 
+### Building with Translations Locally
+
+Starting in 2026, translation files (`.po` files) are no longer kept in the repository. CI pulls them from Transifex, stores them in workflow artifacts, and uses them to build release packages.
+
+For local builds, use one of the following:
+
+#### Option 1: Build Without Translations (Fastest)
+
+If you are not working on translations, disable them:
+
+```sh
+cmake --preset linux-full -DLANGUAGES=none
+cmake --build --preset linux-full
+```
+
+#### Option 2: Pull Translations from Transifex
+
+If you need to test translations locally and have Transifex access:
+
+1. Install the Transifex CLI:
+
+```sh
+curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd64.tar.gz | sudo tar zxvf - -C /usr/bin tx
+```
+
+2. Pull the translation files:
+
+```sh
+tx pull --force
+```
+
+3. Build with translations enabled:
+
+```sh
+cmake --preset linux-full -DLANGUAGES=all
+cmake --build --preset linux-full
+```
+
+#### Option 3: Download the `translations` Workflow Artifact
+
+If you do not have Transifex access, use the artifact produced by the translation workflow:
+
+1. Open a recent successful workflow run in [Actions](https://github.com/cataclysmbn/Cataclysm-BN/actions)
+2. Download the `translations` artifact
+3. Extract `lang/po` and `src/lang_stats.inc` into your local checkout
+4. Build normally with `-DLANGUAGES=all`
+
+> [!NOTE]
+> Most code changes do not need translations. Use `-DLANGUAGES=none` unless you are testing localized output.
+
+> [!NOTE]
+> Release archives only include compiled `lang/mo` files for packaged builds. They do not contain the `lang/po` sources required to rebuild translations locally.
+
 - DYNAMIC_LINKING=`<boolean>`
 
 Use dynamic linking. Or use static to remove MinGW dependency instead.
