@@ -1507,23 +1507,16 @@ void iexamine::slot_machine( player &p, const tripoint & )
     }
 }
 
-static auto find_best_prying_tool( player &p,
-                                   std::vector<detached_ptr<item>> &pseudo_prying_tools ) -> item *
+static auto find_best_prying_tool( player &p) -> item *
 {
     auto prying_items = p.items_with( []( const item & it ) {
         // we want to get worn items (eg crowbar in toolbelt), so no check on item position
-        return it.has_quality( quality_id( "PRY" ), 1 );
+        return it.type->get_use( "CROWBAR" ) != nullptr;
     } );
 
     if( p.has_active_bionic( bio_tools ) ) {
-        pseudo_prying_tools.push_back( item::spawn( itype_toolset, calendar::turn ) );
-        auto *toolset = pseudo_prying_tools.back().get();
-        const auto *iuse_fn = toolset->type->get_use( "CROWBAR" );
-        if( iuse_fn && iuse_fn->can_call( p, *toolset, false, p.pos() ).success() ) {
-            prying_items.push_back( toolset );
-        } else {
-            pseudo_prying_tools.pop_back();
-        }
+        auto toolset = item::spawn_temporary( itype_toolset, calendar::turn );
+        prying_items.push_back( toolset );
     }
 
     if( prying_items.empty() ) {
@@ -1534,28 +1527,19 @@ static auto find_best_prying_tool( player &p,
     const item * b ) -> bool {
         return a->get_quality( quality_id( "PRY" ) ) < b->get_quality( quality_id( "PRY" ) );
     } );
-    return (*best_tool)->get_usable_item("CROWBAR");
+
+    return *best_tool;
 }
 
-static auto apply_prying_tool( player &p, item *it, const tripoint &examp ) -> bool
+static auto apply_prying_tool( player &p, item *it, const tripoint &examp )
 {
     map &here = get_map();
-    const auto *iuse_fn = it->type->get_use( "CROWBAR" );
-    if( !iuse_fn ) {
-        return false;
-    }
-    const auto can_use = iuse_fn->can_call( p, *it, false, examp );
-    if( !can_use.success() ) {
-        p.add_msg_if_player( m_bad, can_use.str() );
-        return false;
-    }
 
     //~ %1$s: terrain/furniture name, %2$s: prying tool name
     p.add_msg_if_player( _( "You attempt to pry open the %1$s using your %2$s…" ),
                          here.has_furn( examp ) ? here.furnname( examp ) : here.tername( examp ), it->tname() );
 
     p.invoke_item( it, "CROWBAR", examp );
-    return true;
 }
 
 static time_duration safecracking_time( const player &p )
@@ -1586,14 +1570,13 @@ void iexamine::safe( player &p, const tripoint &examp )
 {
 
     map &here = get_map();
-    auto pseudo_prying_tools = std::vector<detached_ptr<item>> {};
-    auto *prying_tool = find_best_prying_tool( p, pseudo_prying_tools );
+    auto *prying_tool = find_best_prying_tool( p );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
     if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) ) {
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
-        if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff &&
-            apply_prying_tool( p, prying_tool, examp ) ) {
+        if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
+            apply_prying_tool( p, prying_tool, examp );
             return;
         }
     }
@@ -1651,14 +1634,13 @@ void iexamine::safe( player &p, const tripoint &examp )
 void iexamine::gunsafe_el( player &p, const tripoint &examp )
 {
     map &here = get_map();
-    auto pseudo_prying_tools = std::vector<detached_ptr<item>> {};
-    auto *prying_tool = find_best_prying_tool( p, pseudo_prying_tools );
+    auto *prying_tool = find_best_prying_tool( p );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
     if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) ) {
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
-        if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff &&
-            apply_prying_tool( p, prying_tool, examp ) ) {
+        if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
+            apply_prying_tool( p, prying_tool, examp );
             return;
         }
     }
@@ -1752,14 +1734,13 @@ void iexamine::locked_object( player &p, const tripoint &examp )
         }
     }
 
-    auto pseudo_prying_tools = std::vector<detached_ptr<item>> {};
-    auto *prying_tool = find_best_prying_tool( p, pseudo_prying_tools );
+    auto *prying_tool = find_best_prying_tool( p );
     if( prying_tool ) {
         const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                     examp )->pry.pry_quality;
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
-        if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff &&
-            apply_prying_tool( p, prying_tool, examp ) ) {
+        if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
+            apply_prying_tool( p, prying_tool, examp );
             return;
         }
     }
