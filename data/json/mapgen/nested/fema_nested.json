@@ -269,7 +269,7 @@
       ],
       "palettes": [ "FEMA_camp" ],
       "terrain": { "c": "t_region_soil" },
-      "monster": { ",": { "monster": "mon_zombie_fat", "chance": 2 } },
+      "monster": { ",": { "monster": "mon_zombie_hazmat", "chance": 2 } },
       "items": { "X": { "item": "stash_food", "chance": 50, "repeat": 2 }, "T": { "item": "dining", "chance": 50 } }
     }
   },
@@ -302,7 +302,7 @@
         "...................."
       ],
       "palettes": [ "FEMA_camp" ],
-      "monster": { ",": { "monster": "mon_zombie_fat", "chance": 2 } },
+      "monster": { ",": { "monster": "mon_zombie_hazmat", "chance": 2 } },
       "items": {
         "C": { "item": "kitchen", "chance": 30 },
         "X": { "item": "stash_food", "chance": 50, "repeat": 2 },
@@ -340,7 +340,7 @@
       ],
       "palettes": [ "FEMA_camp" ],
       "terrain": { "c": "t_region_groundcover_barren", "C": "t_floor", "o": "t_floor", "R": "t_floor", "s": "t_floor", "U": "t_floor" },
-      "monster": { ",": { "monster": "mon_zombie_fat", "chance": 2 } },
+      "monster": { ",": { "monster": "mon_zombie_hazmat", "chance": 2 } },
       "items": {
         "C": { "item": "kitchen", "chance": 30 },
         "X": { "item": "stash_food", "chance": 50, "repeat": 2 },
