@@ -290,7 +290,7 @@ TEST_CASE( "competent_shooter_accuracy", "[ranged] [balance]" )
     SECTION( "a skilled shooter with an accurate shotgun" ) {
         arm_character( shooter, "ksg", { "red_dot_sight" } );
         test_shooting_scenario( shooter, 9, 15, 33 );
-        test_fast_shooting( shooter, 75, 0.45 );
+        test_fast_shooting( shooter, 75, 0.5 );
     }
     SECTION( "a skilled shooter with an accurate smg" ) {
         arm_character( shooter, "hk_mp5", { "tele_sight" } );
@@ -324,7 +324,7 @@ TEST_CASE( "expert_shooter_accuracy", "[ranged] [balance]" )
     SECTION( "an expert archer with an excellent crossbow" ) {
         arm_character( shooter, "compcrossbow", { "holo_sight" }, "bolt_cf" );
         test_shooting_scenario( shooter, 12, 20, 100 );
-        test_fast_shooting( shooter, 30, 0.4 );
+        test_fast_shooting( shooter, 30, 0.45 );
     }
     SECTION( "an expert shooter with an excellent shotgun" ) {
         arm_character( shooter, "m1014", { "holo_sight" } );
