@@ -1,0 +1,30 @@
+[
+  {
+    "id": "crt_dress_outfit",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "underwear" },
+      { "item": "crt_jacket" },
+      { "item": "crt_dress_pants" },
+      { "item": "crt_dress_shoes" },
+      { "item": "crt_rec_gloves" },
+      { "item": "crt_belt" },
+      { "item": "crt_rec_hat" }
+    ]
+  },
+  {
+    "id": "crt_med_outfit",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "underwear" },
+      { "item": "crt_aarmor" },
+      { "item": "crt_dress_pants" },
+      { "distribution": [ { "item": "crt_la_boots", "prob": 50 }, { "item": "crt_dress_shoes", "prob": 50 } ] },
+      { "item": "crt_gloves" },
+      { "item": "crt_belt" },
+      { "item": "crt_rec_hat" }
+    ]
+  }
+]
