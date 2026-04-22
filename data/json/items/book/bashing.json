@@ -36,7 +36,7 @@
     "id": "textbook_bashing",
     "type": "BOOK",
     "copy-from": "base_book",
-    "name": { "str": "TC 7-21 (CUI) Special Forces Blunt Weapon Techniques" },
+    "name": { "str": "TC 7-21.1 (CUI) Special Forces Blunt Weapon Techniques" },
     "description": "A large military manual describing advanced techniques and practices for all manner of blunt weapons, from batons and quarterstaffs to makeshift clubs and large rocks. Requires some experience to understand.",
     "weight": "800 g",
     "volume": "500 ml",
