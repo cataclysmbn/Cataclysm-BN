@@ -1507,7 +1507,7 @@ void iexamine::slot_machine( player &p, const tripoint & )
     }
 }
 
-static auto find_best_prying_tool( player &p) -> item *
+static auto find_best_prying_tool( player &p ) -> item *
 {
     auto prying_items = p.items_with( []( const item & it ) {
         // we want to get worn items (eg crowbar in toolbelt), so no check on item position
