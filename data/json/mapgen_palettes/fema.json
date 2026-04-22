@@ -188,9 +188,7 @@
       "~": { "monster": "GROUP_MIL_WEAK", "chance": 1, "density": 0.001 },
       "!": { "monster": "GROUP_MIL_WEAK", "chance": 1, "density": 0.001 },
       ".": { "monster": "GROUP_MIL_BASE", "chance": 1, "density": 0.001 },
-      "#": [
-        { "monster": "GROUP_MIL_BASE", "chance": 1, "density": 0.001 }
-      ]
+      "#": [ { "monster": "GROUP_MIL_BASE", "chance": 1, "density": 0.001 } ]
     }
   },
   {
