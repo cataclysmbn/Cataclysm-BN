@@ -1534,7 +1534,7 @@ static auto find_best_prying_tool( player &p,
     const item * b ) -> bool {
         return a->get_quality( quality_id( "PRY" ) ) < b->get_quality( quality_id( "PRY" ) );
     } );
-    return *best_tool;
+    return (*best_tool)->get_usable_item("CROWBAR");
 }
 
 static auto apply_prying_tool( player &p, item *it, const tripoint &examp ) -> bool
