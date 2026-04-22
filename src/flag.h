@@ -152,6 +152,7 @@ extern const flag_id flag_GAS_DISCOUNT;
 extern const flag_id flag_GAS_PROOF;
 extern const flag_id flag_GIBBED;
 extern const flag_id flag_GNV_EFFECT;
+extern const flag_id flag_GNVE_EFFECT;
 extern const flag_id flag_HEATS_FOOD;
 extern const flag_id flag_HEATS_FOOD_IS_CONSUMED;
 extern const flag_id flag_HEATS_FOOD_USING_CHARGES;

@@ -2507,6 +2507,13 @@
   },
   {
     "type": "keybinding",
+    "id": "cast_last_spell",
+    "name": "Cast Last Spell",
+    "category": "DEFAULTMODE",
+    "bindings": [  ]
+  },
+  {
+    "type": "keybinding",
     "id": "diary",
     "name": "Open Diary",
     "category": "DEFAULTMODE",

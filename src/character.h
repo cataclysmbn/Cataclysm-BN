@@ -1736,6 +1736,12 @@ class Character : public Creature, public location_visitable<Character>
         std::optional<tripoint> destination_point;
         itype_id last_item;
         efftype_id last_emote;
+
+        // bio_portal_tap: persistent link to a powered portal for passive bionic charging.
+        std::string bio_portal_tap_dim_id;
+        tripoint_abs_ms bio_portal_tap_pos;
+        bool bio_portal_tap_linked = false;
+
     public:
 
         int scent = 0;
@@ -2405,6 +2411,7 @@ class Character : public Creature, public location_visitable<Character>
         void suffer_while_underwater();
         void suffer_from_addictions();
         void suffer_while_awake( int current_stim );
+        void suffer_while_asleep();
         void suffer_from_chemimbalance();
         void suffer_from_schizophrenia();
         void suffer_from_asthma( int current_stim );

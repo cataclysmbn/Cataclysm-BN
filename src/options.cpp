@@ -2383,15 +2383,15 @@ void options_manager::add_options_performance()
                                           to_translation( "Configure three-dimensional visibility across z-levels." ) ),
     [&]( auto & page_id ) {
         add( "FOV_3D", page_id, translate_marker( "3D field of vision" ),
-             translate_marker( "If false, vision is limited to current z-level.  If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
+             translate_marker( "If false, vision is limited to current z-level. If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
              true
            );
         add( "FOV_3D_Z_RANGE", page_id, translate_marker( "Vertical range of 3D field of vision" ),
-             translate_marker( "How many levels up and down the experimental 3D field of vision reaches.  (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
+             translate_marker( "How many levels up and down the experimental 3D field of vision reaches. (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
              0, OVERMAP_LAYERS, is_android ? 3 : 5
            );
-        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV horizontal occlusion" ),
-             translate_marker( "When enabled, obstacles at other z-levels correctly cast 3D shadows.  Requires 3D FoV.  Significantly slower than disabled." ),
+        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV shadow casting" ),
+             translate_marker( "When enabled, obstacles at other z-levels correctly cast 3D shadows. Requires 3D FoV. Significantly slower than disabled." ),
              false
            );
     } );
@@ -3061,11 +3061,6 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
-    add( "INITIAL_TIME", world_default, translate_marker( "Initial time" ),
-         translate_marker( "Initial starting time of day on character generation." ),
-         0, 23, 8
-       );
-
     add( "INITIAL_DAY", world_default, translate_marker( "Initial day" ),
          translate_marker( "How many days into the year the cataclysm occurred.  Day 0 is Spring 1.  Day -1 randomizes the start date.  Can be overridden by scenarios.  This does not advance food rot or monster evolution." ),
          -1, 999, 15
@@ -3076,9 +3071,39 @@ void options_manager::add_options_world_default()
          0, 9999, 0
        );
 
+    add( "INITIAL_TIME", world_default, translate_marker( "Initial time" ),
+         translate_marker( "Hour of the day at which the player starts the game." ),
+         0, 23, 8
+       );
+
     add( "SEASON_LENGTH", world_default, translate_marker( "Season length" ),
          translate_marker( "Season length, in days." ),
          14, 127, 30
+       );
+
+    add( "SUNRISE_SUMMER", world_default, translate_marker( "Sunrise hour (summer)" ),
+         translate_marker( "Hour of sunrise at the summer solstice for the base dimension.  Per-dimension overrides can be set in world_types JSON." ),
+         0, 12, 5
+       );
+    add( "SUNRISE_WINTER", world_default, translate_marker( "Sunrise hour (winter)" ),
+         translate_marker( "Hour of sunrise at the winter solstice for the base dimension." ),
+         0, 12, 7
+       );
+    add( "SUNRISE_EQUINOX", world_default, translate_marker( "Sunrise hour (equinox)" ),
+         translate_marker( "Hour of sunrise at the spring and autumn equinox for the base dimension." ),
+         0, 12, 6
+       );
+    add( "SUNSET_SUMMER", world_default, translate_marker( "Sunset hour (summer)" ),
+         translate_marker( "Hour of sunset at the summer solstice for the base dimension." ),
+         12, 23, 21
+       );
+    add( "SUNSET_WINTER", world_default, translate_marker( "Sunset hour (winter)" ),
+         translate_marker( "Hour of sunset at the winter solstice for the base dimension." ),
+         12, 23, 17
+       );
+    add( "SUNSET_EQUINOX", world_default, translate_marker( "Sunset hour (equinox)" ),
+         translate_marker( "Hour of sunset at the spring and autumn equinox for the base dimension." ),
+         12, 23, 19
        );
 
     add( "CONSTRUCTION_SCALING", world_default,

@@ -1,5 +1,6 @@
 #include "fire_spread_loader.h"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <set>
@@ -27,16 +28,10 @@ static bool submap_has_fire( submap &sm )
     if( sm.field_count == 0 ) {
         return false;
     }
-    for( int x = 0; x < SEEX; ++x ) {
-        for( int y = 0; y < SEEY; ++y ) {
-            field &fld = sm.get_field( { x, y } );
-            field_entry *fe = fld.find_field( fd_fire );
-            if( fe != nullptr && fe->is_field_alive() ) {
-                return true;
-            }
-        }
-    }
-    return false;
+    return std::ranges::any_of( sm.field_cache, [&]( const point & local ) {
+        field_entry *fe = sm.get_field( local ).find_field( fd_fire );
+        return fe != nullptr && fe->is_field_alive();
+    } );
 }
 
 void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_sm pos )

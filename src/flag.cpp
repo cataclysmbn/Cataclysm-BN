@@ -151,6 +151,7 @@ const flag_id flag_GAS_DISCOUNT( "GAS_DISCOUNT" );
 const flag_id flag_GAS_PROOF( "GAS_PROOF" );
 const flag_id flag_GIBBED( "GIBBED" );
 const flag_id flag_GNV_EFFECT( "GNV_EFFECT" );
+const flag_id flag_GNVE_EFFECT( "GNVE_EFFECT" );
 const flag_id flag_HEATS_FOOD( "HEATS_FOOD" );
 const flag_id flag_HEATS_FOOD_IS_CONSUMED( "HEATS_FOOD_IS_CONSUMED" );
 const flag_id flag_HEATS_FOOD_USING_CHARGES( "HEATS_FOOD_USING_CHARGES" );

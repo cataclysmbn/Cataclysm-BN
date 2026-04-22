@@ -100,7 +100,6 @@ building_gen_pointer get_mapgen_cfunction( const std::string &ident )
             { "road_end",         &mapgen_road },
             { "road_tee",         &mapgen_road },
             { "road_four_way",    &mapgen_road },
-            { "field",            &mapgen_field },
             { "highway",          &mapgen_highway },
             { "railroad_straight", &mapgen_railroad },
             { "railroad_curved",   &mapgen_railroad },

@@ -1102,6 +1102,13 @@ void avatar::store( JsonOut &json ) const
     // misc player specific stuff
     json.member( "focus_pool", focus_pool );
 
+    // bio_portal_tap persistent link
+    if( bio_portal_tap_linked ) {
+        json.member( "bio_portal_tap_linked", bio_portal_tap_linked );
+        json.member( "bio_portal_tap_dim_id", bio_portal_tap_dim_id );
+        json.member( "bio_portal_tap_pos", bio_portal_tap_pos.raw() );
+    }
+
     if( shadow_npc ) {
         json.member( "shadow_npc", *shadow_npc );
     }
@@ -1182,6 +1189,15 @@ void avatar::load( const JsonObject &data )
           grab_point );
 
     data.read( "focus_pool", focus_pool );
+
+    // bio_portal_tap persistent link
+    if( data.has_member( "bio_portal_tap_linked" ) ) {
+        data.read( "bio_portal_tap_linked", bio_portal_tap_linked );
+        data.read( "bio_portal_tap_dim_id", bio_portal_tap_dim_id );
+        tripoint raw;
+        data.read( "bio_portal_tap_pos", raw );
+        bio_portal_tap_pos = tripoint_abs_ms( raw );
+    }
 
     if( data.has_member( "shadow_npc" ) ) {
         shadow_npc = std::make_unique<npc>();
@@ -2265,6 +2281,12 @@ void item::pocket_dimension_data::serialize( JsonOut &jsout ) const
     jsout.member( "return_dimension_id", return_dimension_id );
     jsout.member( "return_world_type", return_world_type );
     jsout.member( "return_point", return_point );
+    if( last_player_exit.has_value() ) {
+        jsout.member( "last_player_exit", *last_player_exit );
+    }
+    if( lifetime.has_value() ) {
+        jsout.member( "lifetime", *lifetime );
+    }
     jsout.end_object();
 }
 
@@ -2311,6 +2333,16 @@ void item::pocket_dimension_data::deserialize( JsonIn &jsin )
     is_initialized = obj.get_bool( "is_initialized", false );
     terrain_generated = obj.get_bool( "terrain_generated", false );
     obj.read( "return_point", return_point );
+    if( obj.has_member( "last_player_exit" ) ) {
+        time_point tp = calendar::turn_zero;
+        obj.read( "last_player_exit", tp );
+        last_player_exit = tp;
+    }
+    if( obj.has_member( "lifetime" ) ) {
+        time_duration td = 0_turns;
+        obj.read( "lifetime", td );
+        lifetime = td;
+    }
 }
 
 // Full equivalence. Consider only checking identifying data.
@@ -2862,6 +2894,13 @@ void vehicle_part::deserialize( JsonIn &jsin )
     data.read( "target_second_y", target.second.y );
     data.read( "target_second_z", target.second.z );
     data.read( "ammo_pref", ammo_pref );
+    if( data.has_member( "portal_tap_linked" ) ) {
+        data.read( "portal_tap_linked", portal_tap_linked );
+        data.read( "portal_tap_dim_id", portal_tap_dim_id );
+        tripoint raw;
+        data.read( "portal_tap_pos", raw );
+        portal_tap_pos = tripoint_abs_ms( raw );
+    }
 
     if( legacy_fuel.is_empty() ) {
         legacy_fuel = id.obj().fuel_type;
@@ -2939,6 +2978,11 @@ void vehicle_part::serialize( JsonOut &json ) const
         json.member( "target_second_z", target.second.z );
     }
     json.member( "ammo_pref", ammo_pref );
+    if( portal_tap_linked ) {
+        json.member( "portal_tap_linked", portal_tap_linked );
+        json.member( "portal_tap_dim_id", portal_tap_dim_id );
+        json.member( "portal_tap_pos", portal_tap_pos.raw() );
+    }
     json.end_object();
 }
 
@@ -3606,10 +3650,11 @@ void player_morale::load( const JsonObject &jsin )
 
 struct mm_elem {
     memorized_terrain_tile tile;
+    memorized_terrain_tile terrain;
     int symbol;
 
     bool operator==( const mm_elem &rhs ) const {
-        return symbol == rhs.symbol && tile == rhs.tile;
+        return symbol == rhs.symbol && tile == rhs.tile && terrain == rhs.terrain;
     }
 };
 
@@ -3618,6 +3663,8 @@ void mm_submap::serialize( JsonOut &jsout ) const
     jsout.start_array();
 
     // Uses RLE for compression.
+    // Element format: [overlay_tile, subtile, rotation, symbol, ?terrain_str, terrain_sub, terrain_rot, ?count]
+    // terrain fields are only written when non-empty, saving space for the ~92% of tiles with no furniture.
 
     mm_elem last;
     int num_same = 1;
@@ -3628,6 +3675,11 @@ void mm_submap::serialize( JsonOut &jsout ) const
         jsout.write( last.tile.subtile );
         jsout.write( last.tile.rotation );
         jsout.write( last.symbol );
+        if( !last.terrain.tile.empty() ) {
+            jsout.write( last.terrain.tile );
+            jsout.write( last.terrain.subtile );
+            jsout.write( last.terrain.rotation );
+        }
         if( num_same != 1 ) {
             jsout.write( num_same );
         }
@@ -3637,7 +3689,7 @@ void mm_submap::serialize( JsonOut &jsout ) const
     for( size_t y = 0; y < SEEY; y++ ) {
         for( size_t x = 0; x < SEEX; x++ ) {
             point p( x, y );
-            const mm_elem elem = { tile( p ), symbol( p ) };
+            const mm_elem elem = { tile( p ), terrain_tile( p ), symbol( p ) };
             if( x == 0 && y == 0 ) {
                 last = elem;
                 continue;
@@ -3675,6 +3727,18 @@ void mm_submap::deserialize( JsonIn &jsin )
                 elem.tile.subtile = jsin.get_int();
                 elem.tile.rotation = jsin.get_int();
                 elem.symbol = jsin.get_int();
+                elem.terrain = mm_submap::default_tile;
+                if( jsin.test_string() ) {
+                    // New format: optional terrain tile fields follow symbol.
+                    elem.terrain.tile = jsin.get_string();
+                    elem.terrain.subtile = jsin.get_int();
+                    elem.terrain.rotation = jsin.get_int();
+                } else if( elem.tile.tile.starts_with( "t_" ) ) {
+                    // Migration: old saves stored terrain in the overlay slot.
+                    // Move it to the terrain slot where draw_terrain now expects it.
+                    elem.terrain = elem.tile;
+                    elem.tile = mm_submap::default_tile;
+                }
                 if( jsin.test_int() ) {
                     remaining = jsin.get_int() - 1;
                 }
@@ -3684,6 +3748,9 @@ void mm_submap::deserialize( JsonIn &jsin )
             // Try to avoid assigning to save up on memory
             if( elem.tile != mm_submap::default_tile ) {
                 set_tile( p, elem.tile );
+            }
+            if( elem.terrain != mm_submap::default_tile ) {
+                set_terrain_tile( p, elem.terrain );
             }
             if( elem.symbol != mm_submap::default_symbol ) {
                 set_symbol( p, elem.symbol );
@@ -4423,6 +4490,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             const point p( i, j );
             // TODO: jsin should support returning an id like jsin.get_id<trap>()
             trp[p.x][p.y] = trap_str_id( jsin.get_string() ).id();
+            trap_cache.push_back( p ); // null traps are not serialized, so this is always valid
             jsin.end_array();
         }
     } else if( member_name == "fields" ) {
@@ -4451,6 +4519,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                 }
                 if( fld[i][j].find_field( ft ) == nullptr ) {
                     field_count++;
+                    field_cache.push_back( point( i, j ) );
                 }
                 fld[i][j].add_field( ft, intensity, time_duration::from_turns( age ) );
             }

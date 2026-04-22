@@ -868,7 +868,7 @@ class activatable_inventory_preset : public pickup_inventory_preset
                            loc->ammo_required() );
             }
 
-            if( !it.has_flag( flag_ALLOWS_REMOTE_USE ) ) {
+            if( !it.has_flag( flag_ALLOWS_REMOTE_USE ) && !it.has_flag( flag_TEMPORARY_ITEM ) ) {
                 return pickup_inventory_preset::get_denial( loc );
             }
 

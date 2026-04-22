@@ -166,7 +166,18 @@ class overmap_special
         void finalize_mapgen_parameters();
         void check() const;
         std::vector<overmap_special_connection> connections;
+
+        /**
+         * Returns true if this special is allowed to spawn in the given dimension.
+         * @param dim_id           The dimension ID (empty = primary/overworld).
+         * @param dim_inherits_base True if the dimension's world_type has inherit_base_mapgen=true.
+         */
+        auto can_spawn_in_dimension( const std::string &dim_id,
+                                     bool dim_inherits_base ) const -> bool;
+
     private:
+        /// Dimension IDs this special is restricted to.  Empty = primary dimension only.
+        std::vector<std::string> dimensions_;
         overmap_special_subtype subtype_;
         overmap_special_placement_constraints constraints_;
         shared_ptr_fast<const overmap_special_data> data_;

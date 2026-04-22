@@ -1400,7 +1400,18 @@ std::string dialogue::dynamic_line( const talk_topic &the_topic ) const
     } else if( topic == "TALK_OPINION" ) {
         return "&" + p->opinion_text();
     } else if( topic == "TALK_MIND_CONTROL" ) {
-        bool not_following = !g->get_follower_list().contains( p->getID() );
+        const auto player_id = get_avatar().getID();
+        for( auto *miss : p->chatbin.missions_assigned ) {
+            if( miss->get_assigned_player_id() == player_id ) {
+                miss->fail();
+            }
+        }
+        std::erase_if( p->chatbin.missions_assigned, [player_id]( const auto * miss ) { return miss->get_assigned_player_id() == player_id; } );
+        if( p->chatbin.mission_selected != nullptr &&
+            p->chatbin.mission_selected->get_assigned_player_id() == player_id ) {
+            p->chatbin.mission_selected = nullptr;
+        }
+        const bool not_following = !g->get_follower_list().contains( p->getID() );
         talk_function::follow( *p );
         if( not_following ) {
             return _( "YES, MASTER!" );

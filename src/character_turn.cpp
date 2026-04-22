@@ -1,8 +1,12 @@
 #include "character_turn.h"
 
+#include "active_tile_data_def.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "calendar.h"
+#include "distribution_grid.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character_effects.h"
@@ -198,6 +202,23 @@ void Character::process_turn()
     last_item = itype_id( "null" );
 
     suffer();
+
+    // bio_portal_tap: passively draw power from a linked portal's distribution grid.
+    if( bio_portal_tap_linked && has_bionic( bionic_id( "bio_portal_tap" ) ) ) {
+        constexpr int TAP_KJ_PER_TURN = 1;  // draw up to 1 kJ per turn from the grid
+        auto *pt = active_tiles::furn_at<portal_tile>( bio_portal_tap_pos,
+                   MAPBUFFER_REGISTRY.get( bio_portal_tap_dim_id ) );
+        if( pt != nullptr && pt->linked ) {
+            // Look up the grid at the portal position.
+            if( auto *tracker = get_distribution_grid_tracker_for( bio_portal_tap_dim_id ) ) {
+                auto grid = tracker->grid_at( bio_portal_tap_pos );
+                if( grid.get_resource() >= TAP_KJ_PER_TURN ) {
+                    grid.mod_resource( -TAP_KJ_PER_TURN );
+                    mod_power_level( units::from_kilojoule( TAP_KJ_PER_TURN ) );
+                }
+            }
+        }
+    }
 
     // Handle player and NPC morale ticks
 

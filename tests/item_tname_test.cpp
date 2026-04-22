@@ -148,13 +148,23 @@ TEST_CASE( "wheel diameter", "[item][tname][wheel]" )
     item &wheel24 = *item::spawn_temporary( "wheel_wide" );
     item &wheel32 = *item::spawn_temporary( "wheel_armor" );
 
-    REQUIRE( wheel17.type->wheel->diameter == 17 );
-    REQUIRE( wheel24.type->wheel->diameter == 24 );
-    REQUIRE( wheel32.type->wheel->diameter == 32 );
+    REQUIRE( wheel17.type->wheel->diameter == 425 );
+    REQUIRE( wheel24.type->wheel->diameter == 600 );
+    REQUIRE( wheel32.type->wheel->diameter == 800 );
 
-    CHECK( wheel17.tname() == "17\" wheel" );
-    CHECK( wheel24.tname() == "24\" wide wheel" );
-    CHECK( wheel32.tname() == "32\" armored wheel" );
+    {
+        const override_option metric_display( "DISTANCE_UNITS", "metric" );
+        CHECK( wheel17.tname() == "42.5cm wheel" );
+        CHECK( wheel24.tname() == "60cm wide wheel" );
+        CHECK( wheel32.tname() == "80cm armored wheel" );
+    }
+
+    {
+        const override_option imperial_display( "DISTANCE_UNITS", "imperial" );
+        CHECK( wheel17.tname() == "17\" wheel" );
+        CHECK( wheel24.tname() == "24\" wide wheel" );
+        CHECK( wheel32.tname() == "32\" armored wheel" );
+    }
 }
 
 TEST_CASE( "item health or damage bar", "[item][tname][health][damage]" )

@@ -81,6 +81,7 @@
     "price_postapoc": "12 USD",
     "to_hit": -1,
     "bashing": 12,
+    "encumbrance": 25,
     "material": [ "hardsteel" ],
     "color": "dark_gray",
     "material_thickness": 5

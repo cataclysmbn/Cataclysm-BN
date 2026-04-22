@@ -117,6 +117,7 @@
 #include "vpart_position.h"
 #include "weather.h"
 #include "weather_gen.h"
+#include "wheel_dimensions.h"
 
 static const std::string GUN_MODE_VAR_NAME( "item::mode" );
 static const std::string CLOTHING_MOD_VAR_PREFIX( "clothing_mod_" );
@@ -4981,7 +4982,8 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
                                  engine_displacement() / 100.0f );
 
     } else if( is_wheel() && type->wheel->diameter > 0 ) {
-        vehtext = string_format( pgettext( "vehicle adjective", "%d\" " ), type->wheel->diameter );
+        vehtext = string_format( pgettext( "vehicle adjective", "%s " ),
+                                 wheel_dimensions::format_for_display( type->wheel->diameter ).c_str() );
     }
 
     std::string burntext;

@@ -2361,6 +2361,10 @@ class item : public location_visitable<item>, public game_object<item>
             return_world_type;      // World type of the return dimension (may be null for overworld)
             tripoint_abs_omt return_point;        // Where to place player on exit
 
+            // Temporary pocket lifetime: set by iuse_pocket_dimension from JSON "lifetime_hours".
+            std::optional<time_point> last_player_exit;  // nullopt = player is inside
+            std::optional<time_duration> lifetime;       // nullopt = permanent
+
             void serialize( JsonOut &jsout ) const;
             void deserialize( JsonIn &jsin );
 

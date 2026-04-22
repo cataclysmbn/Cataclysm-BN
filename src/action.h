@@ -171,6 +171,8 @@ enum action_id : int {
     ACTION_SELECT_DEFAULT_AMMO,
     /** Cast a spell (only if any spells are known) */
     ACTION_CAST_SPELL,
+    /** Cast the last selected spell */
+    ACTION_CAST_LAST_SPELL,
     /** Open the drop-item menu */
     ACTION_DROP,
     /** Drop items in a given direction */
@@ -332,6 +334,8 @@ enum action_id : int {
     ACTION_DISPLAY_RADIATION,
     /** Toggle transparency map */
     ACTION_DISPLAY_TRANSPARENCY,
+    /** Toggle outside/sheltered/indoors overlay */
+    ACTION_DISPLAY_OUTSIDE,
     /** Toggle submap grid overlay */
     ACTION_DISPLAY_SUBMAP_GRID,
     /** Toggle zone overlay */
@@ -601,4 +605,3 @@ bool can_move_vertical_at( const tripoint &p, int movez );
  * @returns true if the examine action is possible at this point, otherwise false
  */
 bool can_examine_at( const tripoint &p );
-

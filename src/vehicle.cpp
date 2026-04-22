@@ -2039,6 +2039,7 @@ int vehicle::install_part( point dp, vehicle_part &&new_part )
     pt.mount = dp;
 
     refresh();
+    get_map().invalidate_lightmap_caches();
     coeff_air_changed = true;
     return parts.size() - 1;
 }
@@ -2360,6 +2361,7 @@ bool vehicle::remove_part( const int p, RemovePartHandler &handler )
         }
     }
     refresh();
+    get_map().invalidate_lightmap_caches();
     coeff_air_changed = true;
     return shift_if_needed();
 }
@@ -2386,6 +2388,7 @@ void vehicle::part_removal_cleanup()
     removed_part_count = 0;
     if( changed || parts.empty() ) {
         refresh();
+        here.invalidate_lightmap_caches();
         if( parts.empty() ) {
             here.destroy_vehicle( this );
             return;
@@ -4280,7 +4283,7 @@ int vehicle::safe_aircraft_velocity( const bool fueled, const bool ideal ) const
 {
     const double max_air_mps = std::sqrt( total_thrust( fueled,
                                           true, ideal ) / coeff_air_drag() );
-    return std::min( 10059, mps_to_cmps( max_air_mps ) );
+    return mps_to_cmps( max_air_mps );
 }
 
 // the same physics as max_water_velocity, but with a smaller engine power
@@ -7750,8 +7753,7 @@ static bool is_sm_tile_outside( const tripoint &real_global_pos )
         return false;
     }
 
-    return !( sm->get_ter( p ).obj().has_flag( TFLAG_INDOORS ) ||
-              sm->get_furn( p ).obj().has_flag( TFLAG_INDOORS ) );
+    return get_map().is_outside( real_global_pos );
 }
 
 void vehicle::update_time( const time_point &update_to )
@@ -8081,7 +8083,7 @@ bool vehicle_part_with_feature_range<vpart_bitflags>::matches( const size_t part
 
 bool vehicle::is_loaded() const
 {
-    return attached && get_map().inbounds( global_pos3() );
+    return attached && get_map().get_submap_at( global_pos3() ) != nullptr;
 }
 
 void vehicle::refresh_locations_hack()

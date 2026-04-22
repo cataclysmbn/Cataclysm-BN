@@ -65,6 +65,7 @@ auto modify_fluid_grid_connections( player *, item *, bool, const tripoint & ) -
 #include "value_ptr.h"
 #include "veh_type.h"
 #include "vitamin.h"
+#include "wheel_dimensions.h"
 
 class player;
 struct tripoint;
@@ -1139,6 +1140,7 @@ void Item_factory::init()
     add_actor( std::make_unique<iuse_flowerpot_collect>() );
     add_actor( std::make_unique<iuse_dimension_travel>() );
     add_actor( std::make_unique<iuse_pocket_dimension>() );
+    add_actor( std::make_unique<iuse_portal_link>() );
 
     // An empty dummy group, it will not spawn anything. However, it makes that item group
     // id valid, so it can be used all over the place without need to explicitly check for it.
@@ -1848,8 +1850,12 @@ void Item_factory::load_engine( const JsonObject &jo, const std::string &src )
 
 void Item_factory::load( islot_wheel &slot, const JsonObject &jo, const std::string & )
 {
-    assign( jo, "diameter", slot.diameter );
-    assign( jo, "width", slot.width );
+    if( const auto diameter = wheel_dimensions::read_from_json( jo, "diameter" ) ) {
+        slot.diameter = *diameter;
+    }
+    if( const auto width = wheel_dimensions::read_from_json( jo, "width" ) ) {
+        slot.width = *width;
+    }
 }
 
 void Item_factory::load_wheel( const JsonObject &jo, const std::string &src )

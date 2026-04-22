@@ -63,6 +63,7 @@
 #include "vehicle_selector.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+#include "wheel_dimensions.h"
 
 #if defined(TILES)
 #include "vehicle_preview.h"
@@ -3005,13 +3006,13 @@ void veh_interact::display_details( const vpart_info *part )
         // Note: there is no guarantee that whl is non-empty!
         const cata::value_ptr<islot_wheel> &whl = part->item->wheel;
         fold_and_print( w_details, point( col_1, line + 3 ), column_width, c_white,
-                        "%s: <color_light_gray>%d\"</color>",
+                        "%s: <color_light_gray>%s</color>",
                         small_mode ? _( "Dia" ) : _( "Wheel Diameter" ),
-                        whl ? whl->diameter : 0 );
+                        wheel_dimensions::format_for_display( whl ? whl->diameter : 0 ).c_str() );
         fold_and_print( w_details, point( col_2, line + 3 ), column_width, c_white,
-                        "%s: <color_light_gray>%d\"</color>",
+                        "%s: <color_light_gray>%s</color>",
                         small_mode ? _( "Wdt" ) : _( "Wheel Width" ),
-                        whl ? whl->width : 0 );
+                        wheel_dimensions::format_for_display( whl ? whl->width : 0 ).c_str() );
     }
 
     if( part->epower != 0 ) {

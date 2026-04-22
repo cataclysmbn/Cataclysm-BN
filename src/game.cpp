@@ -160,6 +160,7 @@
 #include "profession.h"
 #include "profile.h"
 #include "ranged.h"
+#include "reality_bubble_helpers.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "ret_val.h"
@@ -348,6 +349,9 @@ extern bool add_key_to_quick_shortcuts( int key, const std::string &category, bo
 
 //The one and only game instance
 std::unique_ptr<game> g;
+
+std::atomic<uint32_t> g_npc_friends_dirty_version{ 1 };
+uint32_t g_npcmove_attitude_epoch{ 0 };
 
 //The one and only uistate instance
 uistatedata uistate;
@@ -863,6 +867,7 @@ bool game::start_game()
         };
         get_overmapbuffer( current_dimension_id_ ).current_region_type = wt_ptr ?
                 wt_ptr->region_settings_id : "default";
+        calendar::set_active_world_type( default_wt.str() );
     }
 
     u.setID( assign_npc_id() ); // should be as soon as possible, but *after* load_master
@@ -1213,6 +1218,7 @@ void game::load_npcs()
         } else {
             active_npc.push_back( temp );
             just_added.push_back( temp );
+            ++g_npc_friends_dirty_version;
         }
     }
 
@@ -1253,6 +1259,7 @@ void game::load_npcs()
                 } else {
                     active_npc.push_back( temp );
                     just_added.push_back( temp );
+                    ++g_npc_friends_dirty_version;
                 }
             }
         }
@@ -1300,11 +1307,13 @@ void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*
     std::erase_if( active_npc, in_evicted );
 
     // Evict monsters whose absolute submap position matches the unloaded submap.
-    // get_map().getabs() is pure coordinate arithmetic — safe after the submap pointer is gone.
+    // Use critter.pos_abs (stamped before any shift by update_map) rather than
+    // recomputing via getabs(): during a map shift abs_sub is already updated when
+    // this fires, so getabs(local_pos) would produce a position displaced by 1 submap.
     // all_monsters() snapshots weak_ptrs at construction; despawn_monster() marks hp=0 so the
     // non_dead_range iterator skips evicted entries on subsequent steps, mirroring shift_monsters().
     for( monster &critter : all_monsters() ) {
-        const tripoint sm = ms_to_sm_copy( get_map().getabs( critter.pos() ) );
+        const tripoint sm = ms_to_sm_copy( critter.pos_abs.raw() );
         if( sm == raw ) {
             despawn_monster( critter );
         }
@@ -1998,6 +2007,8 @@ bool game::do_turn()
         }
     }
     tick_portal_links();
+    tick_temporary_pocket_dimensions();
+    tick_vehicle_portal_taps();
     fluid_grid::update( calendar::turn );
 
     // Apply sounds from previous turn to monster and NPC AI.
@@ -2688,6 +2699,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "throw" );
     ctxt.register_action( "fire" );
     ctxt.register_action( "cast_spell" );
+    ctxt.register_action( "cast_last_spell" );
     ctxt.register_action( "fire_burst" );
     ctxt.register_action( "select_fire_mode" );
     ctxt.register_action( "select_default_ammo" );
@@ -2743,6 +2755,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "debug_visibility" );
     ctxt.register_action( "debug_lighting" );
     ctxt.register_action( "debug_radiation" );
+    ctxt.register_action( "debug_outside" );
     ctxt.register_action( "debug_submap_grid" );
     ctxt.register_action( "debug_hour_timer" );
     ctxt.register_action( "debug_mode" );
@@ -4895,30 +4908,38 @@ void game::world_tick()
 
             // Furniture field emitters — covers all loaded submaps, not just the bubble.
             // Primary dimension only: m.emit_field() operates in primary-map coordinates.
-            // emitter_cache skips the 144-tile scan for submaps with no EMITTER furniture.
-            if( do_emits && dim.empty() && sm_ptr->emitter_cache != 0 ) {
-                ZoneScopedN( "field_emits" );
-                const tripoint local_sm_origin( ( raw_pos.x - abs_sub.x ) * SEEX,
-                                                ( raw_pos.y - abs_sub.y ) * SEEY,
-                                                raw_pos.z );
-                bool found_emitter = false;
-                std::ranges::for_each(
-                    cata::views::cartesian_product( std::views::iota( 0, SEEX ),
-                                                    std::views::iota( 0, SEEY ) ),
-                [&]( auto xy ) {
-                    auto [lx, ly] = xy;
-                    const furn_t &fd = sm_ptr->get_furn( point( lx, ly ) ).obj();
-                    if( fd.has_flag( "EMITTER" ) ) {
-                        found_emitter = true;
-                        const tripoint local_pos( local_sm_origin.x + lx,
-                                                  local_sm_origin.y + ly,
+            // emitter_cache holds the positions of EMITTER furniture, lazily rebuilt on first
+            // use after furniture changes and iterated directly on subsequent ticks.
+            if( do_emits && dim.empty() ) {
+                if( !sm_ptr->emitter_cache.has_value() ) {
+                    ZoneScopedN( "field_emits_rebuild" );
+                    auto &positions = sm_ptr->emitter_cache.emplace();
+                    std::ranges::for_each(
+                        cata::views::cartesian_product( std::views::iota( 0, SEEX ),
+                                                        std::views::iota( 0, SEEY ) ),
+                    [&]( auto xy ) {
+                        auto [lx, ly] = xy;
+                        if( sm_ptr->get_furn( point( lx, ly ) ).obj().has_flag( "EMITTER" ) ) {
+                            positions.emplace_back( lx, ly );
+                        }
+                    } );
+                }
+                if( !sm_ptr->emitter_cache->empty() ) {
+                    ZoneScopedN( "field_emits" );
+                    const tripoint local_sm_origin( ( raw_pos.x - abs_sub.x ) * SEEX,
+                                                    ( raw_pos.y - abs_sub.y ) * SEEY,
+                                                    raw_pos.z );
+                    std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point & lp ) {
+                        const tripoint local_pos( local_sm_origin.x + lp.x,
+                                                  local_sm_origin.y + lp.y,
                                                   raw_pos.z );
-                        std::ranges::for_each( fd.emissions, [&]( const emit_id & e ) {
+                        std::ranges::for_each(
+                            sm_ptr->get_furn( lp ).obj().emissions,
+                        [&]( const emit_id & e ) {
                             m.emit_field( local_pos, e );
                         } );
-                    }
-                } );
-                sm_ptr->emitter_cache = found_emitter ? 1 : 0;
+                    } );
+                }
             }
 
             if( fire_spread && has_fire ) {
@@ -5017,7 +5038,8 @@ void game::monmove()
             !critter.has_effect( effect_ai_controlled ) &&
             critter.moves > 0 &&
             !critter.has_effect( effect_ridden ) &&
-            critter.lod_tier < 2 ) {
+            critter.lod_tier < 2 &&
+            critter.is_simulated() ) {
             // Tier-2 monsters skip full planning; they use the macro step.
             plannable.push_back( &critter );
         }
@@ -5128,6 +5150,13 @@ void game::monmove()
     // all monsters.  The budget/tier system gates only the move loop below.
     // -----------------------------------------------------------------------
     for( monster &critter : all_monsters() ) {
+        // Skip monsters in lazy-border or otherwise non-simulated submaps — their
+        // submap has no active caches (transparency, lightmap, fields) and
+        // processing them would read stale or missing data.  They will be
+        // despawned into the overmap monster_map when their submap evicts.
+        if( !critter.is_simulated() ) {
+            continue;
+        }
         // Critters in impassable tiles get pushed away, unless it's not impassable for them
         if( !critter.is_dead() && m.impassable( critter.pos() ) && !critter.can_move_to( critter.pos() ) ) {
             std::string msg = string_format( "%s can't move to its location!  %s  %s", critter.name(),
@@ -5190,7 +5219,8 @@ void game::monmove()
         if( !critter.is_dead() &&
             !critter.has_effect( effect_ridden ) &&
             critter.moves > 0 &&
-            critter.next_turn <= current_turn ) {
+            critter.next_turn <= current_turn &&
+            critter.is_simulated() ) {
             eligible.emplace_back( rl_dist( critter.pos(), player_pos ), &critter );
         }
     }
@@ -5345,6 +5375,7 @@ void game::npcmove()
     ZoneScoped;
     // Active NPC processing.  Extracted from monmove() so it can be
     // individually controlled by SLEEP_SKIP_NPC without affecting monsters.
+    ++g_npcmove_attitude_epoch;
     processing_npcs_ = true;
     const std::string &player_dim = m.get_bound_dimension();
     for( npc &guy : g->all_npcs() ) {
@@ -6604,10 +6635,13 @@ void game::control_vehicle()
     }
     if( veh ) {
         // If we reached here, we gained control of a vehicle.
-        // Clear the map memory for the area covered by the vehicle to eliminate ghost vehicles.
-        for( const tripoint &target : veh->get_points() ) {
+        // Clear vehicle tile memories so occluded tiles fall back to memorized terrain.
+        // The terrain_tiles slot already holds correct terrain from first-sight memorization.
+        // Ghost-vehicle prevention is handled by draw_vpart clearing while moving.
+        std::ranges::for_each( veh->get_points(), [&]( const tripoint & target ) {
             u.clear_memorized_tile( m.getabs( target ) );
-        }
+            u.memorize_terrain_tile( m.getabs( target ), m.ter( target ).id().str(), 0, 0 );
+        } );
         veh->is_following = false;
         veh->is_patrolling = false;
         veh->autopilot_on = false;
@@ -8436,6 +8470,7 @@ look_around_result game::look_around( bool show_window, tripoint &center,
     ctxt.register_action( "debug_visibility" );
     ctxt.register_action( "debug_lighting" );
     ctxt.register_action( "debug_radiation" );
+    ctxt.register_action( "debug_outside" );
     ctxt.register_action( "debug_submap_grid" );
     ctxt.register_action( "debug_hour_timer" );
     ctxt.register_action( "CONFIRM" );
@@ -8623,6 +8658,10 @@ look_around_result game::look_around( bool show_window, tripoint &center,
         } else if( action == "debug_transparency" ) {
             if( !MAP_SHARING::isCompetitive() || MAP_SHARING::isDebugger() ) {
                 display_transparency();
+            }
+        } else if( action == "debug_outside" ) {
+            if( !MAP_SHARING::isCompetitive() || MAP_SHARING::isDebugger() ) {
+                display_outside();
             }
         } else if( action == "debug_radiation" ) {
             if( !MAP_SHARING::isCompetitive() || MAP_SHARING::isDebugger() ) {
@@ -12171,7 +12210,8 @@ void game::resize_reality_bubble_to( int new_size )
     {
         const tripoint new_origin_ms = sm_to_ms_copy( get_map().get_abs_sub() );
         std::ranges::for_each( active_npc, [&]( const auto & n ) {
-            n->onswapsetpos( n->global_square_location() - new_origin_ms );
+            n->onswapsetpos( reality_bubble::local_square_from_global( n->global_square_location(),
+                             new_origin_ms ) );
             // Same as monsters above: local-coordinate paths are now stale.
             n->path.clear();
         } );
@@ -12266,9 +12306,8 @@ void game::update_performance_bubble()
     // Each counter increments while its condition holds; resets to 0 the moment it doesn't.
     // The bubble shrinks once the counter reaches dynamic_grace (no exit hysteresis).
 
-    // Use has_floor on the tile above rather than is_outside: the latter relies on TFLAG_INDOORS
-    // which water-derived terrain (e.g. sewage) may lack, causing false "outside" readings.
-    // A physical floor one level up is a reliable proxy for "enclosed/has ceiling".
+    // Use has_floor on the tile above rather than is_outside: this is a quick single-tile check
+    // for underground bubble sizing; is_outside uses the 3×3 overhang rule which is broader.
     const bool underground_cond = underground_size > 0 && underground_size < normal_size
                                   && u.pos().z < 0
                                   && m.has_floor( tripoint( u.pos().xy(), u.pos().z + 1 ) );
@@ -13275,6 +13314,12 @@ bool game::travel_to_dimension( const std::string &dim_id,
     // m.get_bound_dimension(); activate_dimension_state() must complete before bind_dimension()
     // so that load_map() sees the new ID and correctly re-issues load requests.
     activate_dimension_state( dim_id, old_dim_id );
+    {
+        auto it = loaded_dimensions_.find( dim_id );
+        if( it != loaded_dimensions_.end() ) {
+            calendar::set_active_world_type( it->second.world_type.str() );
+        }
+    }
 
     add_msg( m_debug, "[DIM] Switched active dimension: '%s' → '%s'", old_dim_id, dim_id );
 
@@ -13295,8 +13340,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
             .world_type          = effective_wt,
             .display_name        = target_type ? target_type->name.translated() : dim_id,
             .bounds              = bounds,
-            .origin_pos          = current_abs_sm,
-            .parent_dimension_id = old_dim_id
+            .origin_pos          = current_abs_sm
         };
     }
 
@@ -13693,6 +13737,19 @@ point game::update_map( int &x, int &y )
         return point_zero;
     }
 
+    // Stamp absolute positions for all active monsters before abs_sub changes.
+    // on_submap_unloaded fires after m.shift() updates abs_sub but before
+    // shift_monsters() adjusts local positions; using getabs() in that window
+    // produces a position displaced by 1 submap in the shift direction.
+    // shift_in_progress_ tells despawn_monster() to trust pos_abs as-is.
+    shift_in_progress_ = true;
+    // non_dead_range's iterator lacks the typedefs required by std::ranges concepts,
+    // so std::ranges::for_each cannot be used here — range-for matches all other
+    // all_monsters() call sites in the codebase.
+    for( monster &critter : all_monsters() ) {
+        critter.pos_abs = tripoint_abs_ms( get_map().getabs( critter.pos() ) );
+    }
+
     // this handles loading/unloading submaps that have scrolled on or off the viewport
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     inclusive_rectangle<point> size_1( point( -1, -1 ), point( 1, 1 ) );
@@ -13743,6 +13800,7 @@ point game::update_map( int &x, int &y )
 
     // Shift monsters
     shift_monsters( tripoint( shift, 0 ) );
+    shift_in_progress_ = false;
     const point shift_ms = sm_to_ms_copy( shift );
     u.shift_destination( -shift_ms );
 
@@ -14055,10 +14113,14 @@ void game::update_stair_monsters()
 
 void game::despawn_monster( monster &critter )
 {
-    // Stamp absolute position while we still have a valid map context.
-    // despawn_monster() and on_submap_unloaded() eviction
-    // will use this instead of recomputing via get_map().
-    critter.pos_abs = tripoint_abs_ms( get_map().getabs( critter.pos() ) );
+    // During a map shift (shift_in_progress_), pos_abs was stamped by update_map()
+    // before abs_sub changed, so it is already correct.  Recomputing here would use
+    // the updated abs_sub with the not-yet-shifted local position and produce a value
+    // displaced by 1 submap in the shift direction.
+    // Outside of a shift, abs_sub and local position are consistent, so getabs() is correct.
+    if( !shift_in_progress_ ) {
+        critter.pos_abs = tripoint_abs_ms( get_map().getabs( critter.pos() ) );
+    }
     if( !critter.is_hallucination() ) {
         // hallucinations aren't stored, they come and go as they like,
         get_overmapbuffer( critter.get_dimension() ).despawn_monster( critter );
@@ -14081,12 +14143,13 @@ void game::shift_monsters( const tripoint &shift )
             critter.shift( shift.xy() );
         }
 
-        if( m.inbounds( critter.pos() ) && ( shift.z == 0 || m.has_zlevels() )
+        if( ( shift.z == 0 || m.has_zlevels() )
             && m.get_submap_at( critter.pos() ) != nullptr ) {
-            // We're inbounds on a loaded submap, so don't despawn after all.
-            // No need to shift Z-coordinates, they are absolute.
-            // Corner slots within the grid bounds have null submaps (outside the circular
-            // load footprint); treat them like out-of-bounds — save and despawn.
+            // The critter is on a loaded submap — keep it regardless of whether
+            // it's inside the render-area grid (inbounds).  Creatures can validly
+            // reside in loaded-but-OOB submaps (e.g. knocked into a lazy-border
+            // zone) and should not be despawned just because they are outside
+            // the render area.
             continue;
         }
         // Either a vertical shift, the critter is outside the reality bubble, or it
@@ -14330,6 +14393,13 @@ void game::display_transparency()
 {
     if( use_tiles ) {
         display_toggle_overlay( ACTION_DISPLAY_TRANSPARENCY );
+    }
+}
+
+void game::display_outside()
+{
+    if( use_tiles ) {
+        display_toggle_overlay( ACTION_DISPLAY_OUTSIDE );
     }
 }
 
@@ -15276,6 +15346,55 @@ void game::tick_portal_links()
     // Apply deferred pauses outside the read loops.
     std::ranges::for_each( to_pause, []( const auto & p ) {
         p.first->pause_export_node( p.second );
+    } );
+}
+
+void game::tick_temporary_pocket_dimensions()
+{
+    // Visit all pocket dimension items in the player's possession.
+    // If a pocket has expired (last_player_exit + lifetime < now), close it.
+    u.visit_items( [&]( item * it ) {
+        auto *pd = it->get_pocket_dimension_data();
+        if( !pd || !pd->lifetime.has_value() || !pd->last_player_exit.has_value() ) {
+            return VisitResponse::NEXT;
+        }
+        if( *pd->last_player_exit + *pd->lifetime < calendar::turn ) {
+            add_msg( m_bad, _( "The %s flickers and goes dark — the pocket dimension has collapsed." ),
+                     it->tname() );
+            it->pocket_dim = std::nullopt;
+        }
+        return VisitResponse::NEXT;
+    } );
+}
+
+void game::tick_vehicle_portal_taps()
+{
+    constexpr int TAP_KJ_PER_TURN = 5;
+    static const std::string flag_portal_tap( "POWER_DRAW_LINKED_PORTAL" );
+
+    std::ranges::for_each( m.get_vehicles(), [&]( wrapped_vehicle & wv ) {
+        vehicle &veh = *wv.v;
+        for( int i = 0; i < veh.part_count(); ++i ) {
+            vehicle_part &part = veh.part( i );
+            if( !part.portal_tap_linked ) {
+                continue;
+            }
+            if( !part.info().has_flag( flag_portal_tap ) ) {
+                continue;
+            }
+            auto *tracker = get_distribution_grid_tracker_for( part.portal_tap_dim_id );
+            if( tracker == nullptr ) {
+                continue;
+            }
+            auto grid = tracker->grid_at( part.portal_tap_pos );
+            const auto available = grid.get_resource();
+            if( available <= 0 ) {
+                continue;
+            }
+            const auto to_draw = std::min( available, TAP_KJ_PER_TURN );
+            grid.mod_resource( -to_draw );
+            veh.charge_battery( to_draw );
+        }
     } );
 }
 

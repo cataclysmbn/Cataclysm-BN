@@ -327,6 +327,7 @@ struct level_cache {
     // ---- per-submap dirty bitsets (size: cache_mapsize²) ----
     cata_dynamic_bitset transparency_cache_dirty;
     cata_dynamic_bitset outside_cache_dirty;
+    cata_dynamic_bitset sheltered_cache_dirty;
     cata_dynamic_bitset floor_cache_dirty;
     bool seen_cache_dirty = false;
     // Set to true at the start of each game turn; cleared after generate_lightmap
@@ -351,9 +352,19 @@ struct level_cache {
     // This is only valid for the duration of generate_lightmap
     std::vector<float>              light_source_buffer;
 
-    // if false, means tile is under the roof ("inside"), true means tile is "outside"
-    // "inside" tiles are protected from sun, rain, etc. (see "INDOORS" flag)
+    // True when the tile has sky access via the 3×3 overhang rule (top-down floor cascade).
+    // False means fully enclosed — protected from rain, wind, weather effects.
     std::vector<bool>               outside_cache;
+
+    // True when at least one tile within 3×3 above has overhead coverage (floor or sheltered
+    // tile at z+1).  Distinct from outside_cache: a tile can be outside yet sheltered (overhang).
+    std::vector<bool>               sheltered_cache;
+
+    // True when this tile has an unobstructed ray to the sun for the current in-game hour.
+    // Rebuilt by map::build_angled_sunlight_cache() when the hour changes.
+    // Consulted by build_sunlight_cache() to distinguish direct-sun tiles (full
+    // outside_light_level) from scatter-lit outdoor tiles (reduced ambient level).
+    std::vector<bool>               angled_sunlight_cache;
 
     // true when vehicle below has "ROOF" or "OPAQUE" part, furniture below has "SUN_ROOF_ABOVE"
     //      or terrain doesn't have "NO_FLOOR" flag
@@ -499,6 +510,15 @@ class map : public submap_load_listener
         }
 
         /**
+         * Return true if the submap containing local position @p p is actively
+         * simulated (i.e. covered by a non-lazy_border load request).
+         * Use this instead of inbounds() when the question is "should gameplay
+         * logic process this position?" rather than "is this position in the
+         * render-area cache?".
+         */
+        bool is_position_simulated( const tripoint &p ) const;
+
+        /**
          * Bind this map to a specific dimension.
          * Should be called when the player transitions to another dimension.
          */
@@ -541,6 +561,9 @@ class map : public submap_load_listener
         void set_outside_cache_dirty( const int zlev );
         // Point-level: marks only the tile's submap + boundary neighbours (max 4).
         void set_outside_cache_dirty( const tripoint &p );
+
+        void set_sheltered_cache_dirty( const int zlev );
+        void set_sheltered_cache_dirty( const tripoint &p );
 
         void set_floor_cache_dirty( const int zlev );
         // Point-level: marks only the tile's own submap (no horizontal neighbour dependency).
@@ -1163,6 +1186,12 @@ class map : public submap_load_listener
         bool is_outside( point p ) const {
             return is_outside( tripoint( p, abs_sub.z ) );
         }
+        // True when the tile has some overhead coverage within 3×3 (floor or sheltered tile
+        // at z+1).  A tile can be outside yet sheltered (building overhang).
+        bool is_sheltered( const tripoint &p ) const;
+        bool is_sheltered( point p ) const {
+            return is_sheltered( tripoint( p, abs_sub.z ) );
+        }
         /// Per-submap terrain transparency for game logic (works at any loaded position).
         auto get_transparency( const tripoint &p ) const -> float;
 
@@ -1721,8 +1750,8 @@ class map : public submap_load_listener
         void support_dirty( const tripoint &p );
     public:
 
-        // Returns true if terrain at p has NO flag TFLAG_NO_FLOOR,
-        // if we're not in z-levels mode or if we're at lowest level
+        // Returns true if there is a physical floor at p (tile has no TFLAG_NO_FLOOR).
+        // Returns false for out-of-bounds z or missing submap.
         bool has_floor( const tripoint &p, bool visible_only = false ) const;
 
         /** Checks if there's a floor between the two tiles. They must be at most 1 tile away from each other in any dimension.
@@ -2003,8 +2032,21 @@ class map : public submap_load_listener
         bool build_vision_transparency_cache( const Character &player );
         // fills lm with sunlight. pzlev is current player's zlevel
         void build_sunlight_cache( int pzlev );
+        // Recomputes sun direction and scatter factor from the current game time.
+        // Called once per in-game hour from build_sunlight_cache.
+        void update_solar_params();
+        // Traces a parallel sun ray from each tile at zlev upward and writes
+        // angled_sunlight_cache.  Reads floor_cache across all z-levels above zlev.
+        void build_angled_sunlight_cache( int zlev );
     public:
+        // Rebuilds outside_cache for zlev top-down: a tile is outside if any
+        // neighbour in the 3×3 at z+1 is (outside AND has no floor).
+        // Recursively ensures zlev+1 is current before proceeding.
         void build_outside_cache( int zlev );
+        // Rebuilds sheltered_cache for zlev top-down: a tile is sheltered if any
+        // neighbour in the 3×3 at z+1 has a floor or is itself sheltered.
+        // Recursively ensures zlev+1 is current before proceeding.
+        void build_sheltered_cache( int zlev );
         // Builds a floor cache and returns true if the cache was invalidated.
         // Used to determine if seen cache should be rebuilt.
         bool build_floor_cache( int zlev );
@@ -2017,7 +2059,8 @@ class map : public submap_load_listener
         // this level, called build_sunlight_cache() once, and applied character
         // lights.  The function then processes only entities whose position z
         // matches zlev, avoiding cross-level cache writes for parallel safety.
-        void generate_lightmap( int zlev, bool skip_shared_init = false );
+        void generate_lightmap( int zlev );
+        void generate_lightmap_worker( int zlev );
         void build_seen_cache( const tripoint &origin, int target_z );
         // Applies vehicle mirror/camera FOV from @p origin's vehicle.
         // Separated from build_seen_cache for readability and Tracy granularity.
@@ -2040,6 +2083,28 @@ class map : public submap_load_listener
         // Pre-computed 1/exp(t*i) table for the current weather transparency.
         // Written serially before parallel shadowcasting calls.
         exp_lookup weather_lookup_{ LIGHT_TRANSPARENCY_OPEN_AIR * 1.1f };
+
+        // Last player position for which build_seen_cache was run.
+        // Initialized to tripoint_min so the first build_map_cache call always rebuilds.
+        // Reset to tripoint_min by invalidate_map_cache so any full-cache invalidation
+        // forces a seen_cache rebuild regardless of whether the player moved.
+        tripoint m_last_seen_cache_origin = tripoint_min;
+
+        // State for the directional sunlight system.  Rebuilt once per in-game hour by
+        // update_solar_params() and build_angled_sunlight_cache().
+        struct solar_params {
+            // Sun ray horizontal displacement per z-level.
+            // Positive dx_per_z = east (+x); negative = west.
+            // SUN_EAST_SIGN in update_solar_params() flips the axis if needed.
+            // dy_per_z is always 0 (no latitude tilt modelled).
+            float dx_per_z     = 0.f;
+            float dy_per_z     = 0.f;
+            // False at night; true for all daylight hours (day/night boundary only).
+            bool  direct_active  = false;
+            // Game-hour when the cache was last rebuilt; -1 forces a rebuild on first use.
+            int   last_built_hour = -1;
+        };
+        solar_params m_solar;
 
         /**
          * Absolute coordinates of first submap (get_submap_at(0,0))
@@ -2207,6 +2272,14 @@ class map : public submap_load_listener
         std::set<tripoint> submaps_with_active_items;
 
         /**
+         * Flat list of all funnel trap locations in this dimension's loaded submaps.
+         * Each entry is (abs_sm position, local tile point within that submap).
+         * Populated by on_submap_loaded() and trap_set(); pruned by on_submap_unloaded()
+         * and remove_trap(). Lets fill_water_collectors() skip the mapbuffer scan entirely.
+         */
+        std::vector<std::pair<tripoint, point>> funnel_locations_;
+
+        /**
          * Flat registry of all vehicles in loaded submaps (both in-bubble and
          * out-of-bubble).  Populated by loadn() and on_submap_loaded(); pruned
          * by on_submap_unloaded() and detach_vehicle().  Replaces the old
@@ -2276,6 +2349,10 @@ class map : public submap_load_listener
         const visibility_variables &get_visibility_variables_cache() const;
 
         void update_submap_active_item_status( const tripoint &p );
+
+        const std::vector<std::pair<tripoint, point>> &get_funnel_locations() const {
+            return funnel_locations_;
+        }
 
         // Just exposed for unit test introspection.
         const std::set<tripoint> &get_submaps_with_active_items() const {

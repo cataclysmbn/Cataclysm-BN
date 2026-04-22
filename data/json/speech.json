@@ -3074,5 +3074,113 @@
     "speaker": "mon_uafv_xm246e1",
     "sound": "the metallic squeal of tank tracks!",
     "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"No! Get away! I worked too hard to give this up!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"This should yield a windfall of compound interest... heh heh.\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"They knew... but they couldn't tell! I made sure of that!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"This is how the world works! The rich get rich, and the poor make it happen! Ha ha ha ha!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"Ending you will raise stock value sky high!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"No one rats me out and lives! Die, traitor!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"Time for another liquidation!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"Don't touch me! This fabric costs more than all your organs combined, you underperforming imbecile!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"I didn't authorize a meeting! Where's security?! Fuck it, I'll take care of you myself!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"I took out so many of my rivals to get to where I am. You're nothing to me! Nothing! You hear me?!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"When this is all over, I'm going to buy another town. Need a new toxic waste dump, ha ha ha ha!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"Biocurrency! I AM money! I AM GOD!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_corpo",
+    "sound": "\"Why contain it? It's cool...\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_bodyguard",
+    "sound": "\"You are not authorized to be here, intruder!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_bodyguard",
+    "sound": "\"Applying lethal force, hoyeah!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_bodyguard",
+    "sound": "\"Neutralizing assassin!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_bodyguard",
+    "sound": "\"God dammit, today was supposed to be my vacation!\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_bodyguard",
+    "sound": "\" Time to collect my bonus!\"",
+    "volume": 20
   }
 ]

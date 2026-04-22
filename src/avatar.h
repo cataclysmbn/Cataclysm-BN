@@ -118,15 +118,21 @@ class avatar : public player
         void toggle_map_memory();
         bool should_show_map_memory();
         void prepare_map_memory_region( const tripoint &p1, const tripoint &p2 );
-        /** Memorizes a given tile in tiles mode; finalize_tile_memory needs to be called after it */
+        /** Memorizes an overlay tile (furniture, vpart, trap) in tiles mode */
         void memorize_tile( const tripoint &pos, const std::string &ter, int subtile,
                             int rotation );
-        /** Returns last stored map tile in given location in tiles mode */
+        /** Returns last stored overlay tile in given location in tiles mode */
         const memorized_terrain_tile &get_memorized_tile( const tripoint &p ) const;
+        /** Memorizes the base terrain tile separately from the overlay slot */
+        void memorize_terrain_tile( const tripoint &pos, const std::string &ter, int subtile,
+                                    int rotation );
+        /** Returns memorized base terrain tile in given location */
+        memorized_terrain_tile get_terrain_tile( const tripoint &p ) const;
         /** Memorizes a given tile in curses mode; finalize_terrain_memory_curses needs to be called after it */
         void memorize_symbol( const tripoint &pos, int symbol );
         /** Returns last stored map tile in given location in curses mode */
         int get_memorized_symbol( const tripoint &p ) const;
+        void clear_memorized_overlay( const tripoint &pos );
         void clear_memorized_tile( const tripoint &pos );
         /** Returns last stored map tile in given location in tiles mode */
         bool has_memorized_tile_for_autodrive( const tripoint &p ) const;

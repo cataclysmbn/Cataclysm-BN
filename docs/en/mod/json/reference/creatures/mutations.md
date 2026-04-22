@@ -114,6 +114,7 @@
 "no_cbm_on_bp": [ "TORSO", "HEAD", "EYES", "MOUTH", "ARM_L" ], // List of body parts that can't receive cbms. (default: empty)
 "body_size": "LARGE", // Increase or decrease size, only one size mutation at a time will be valid. Allowed values are: `TINY`, `SMALL`, `LARGE`, `HUGE`. `MEDIUM` can be specified but has no effect, as this is the default size for players and NPCs.
 "lumination": [ [ "HEAD", 20 ], [ "ARM_L", 10 ] ], // List of glowing bodypart and the intensity of the glow as a float. (default: empty)
+"kcal_scale" : 0.5, //Scales maximum kcal storage. 1.0 doubles, -0.5 halves.
 "metabolism_modifier": 0.333, // Extra metabolism rate multiplier. 1.0 doubles usage, -0.5 halves.
 "fatigue_modifier": 0.5, // Extra fatigue rate multiplier. 1.0 doubles usage, -0.5 halves.
 "fatigue_regen_modifier": 0.333, // Modifier for the rate at which fatigue and sleep deprivation drops when resting.

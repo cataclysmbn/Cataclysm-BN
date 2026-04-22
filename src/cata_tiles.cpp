@@ -3141,10 +3141,10 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
     std::vector<tile_render_info> &draw_points = *draw_points_cache;
     int min_z = OVERMAP_HEIGHT;
+    draw_points.clear();
 
     for( int row = min_row; row < max_row; row ++ ) {
-
-        draw_points.clear();
+        // draw_points accumulates across all rows; rendering happens after the loop
         for( int col = min_col; col < max_col; col ++ ) {
             int temp_x;
             int temp_y;
@@ -3285,10 +3285,41 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 draw_debug_tile( intensity, string_format( "%.2f", tr ) );
             }
 
+            if( g->display_overlay_state( ACTION_DISPLAY_OUTSIDE ) ) {
+                // Use the flat level_cache directly: it includes Phase3 vehicle overrides
+                // (outside=false / sheltered=true for covered vehicle tiles) that the
+                // lazy per-submap rebuild path does not reflect.
+                const auto &ov_ch = here.access_cache( center.z );
+                if( ov_ch.inbounds( point( temp_x, temp_y ) ) ) {
+                    const int ov_idx = ov_ch.idx( temp_x, temp_y );
+                    const bool outside = ov_ch.outside_cache[ov_idx];
+                    const bool sheltered = ov_ch.sheltered_cache[ov_idx];
+                    // Three states: open field (green), overhang (yellow), indoors (red)
+                    SDL_Color block_color;
+                    std::string label;
+                    if( outside && !sheltered ) {
+                        block_color = { 0, 200, 0, 100 };   // green - fully open
+                        label = "O";
+                    } else if( outside && sheltered ) {
+                        block_color = { 200, 200, 0, 100 };  // yellow - overhang
+                        label = "S";
+                    } else {
+                        block_color = { 200, 0, 0, 100 };    // red - indoors
+                        label = "I";
+                    }
+                    color_blocks.first = SDL_BLENDMODE_BLEND;
+                    color_blocks.second.emplace( player_to_screen( point( temp_x, temp_y ) ), block_color );
+                    overlay_strings.emplace(
+                        player_to_screen( point( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
+                        formatted_text( label, catacurses::black, direction::NORTH ) );
+                }
+            }
+
             lit_level ll = lit_level::BLANK;
             int last_vis = center.z + 1;
             lit_level last_vis_ll = lit_level::BLANK;
             bool drew_occluded_overlay = false;
+            bool had_visible_open_air = false;
             const int &x = temp_x;
             const int &y = temp_y;
 
@@ -3310,8 +3341,12 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const auto visibility = here.get_visibility( ll, cache );
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
                     if( !would_apply_vision_effects( visibility ) ) {
-                        last_vis = z;
-                        last_vis_ll = ll;
+                        if( here.ter( pos ) != t_open_air ) {
+                            last_vis = z;
+                            last_vis_ll = ll;
+                        } else {
+                            had_visible_open_air = true;
+                        }
                     } else if( !has_memory && z < center.z &&
                                visibility == visibility_type::VIS_HIDDEN ) {
                         if( !drew_occluded_overlay ) {
@@ -3358,36 +3393,58 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                     }
 
                     if( !invisible[0] && apply_vision_effects( pos, visibility ) ) {
-                        if( has_draw_override( pos ) || has_memory ) {
-                            invisible[0] = true;
-                        }
-                        for( int cz = pos.z; !invisible[0] && cz <= -center.z; cz++ ) {
-                            const Creature *critter = g->critter_at( {pos.xy(), cz}, true );
-                            if( critter && ( g->u.sees_with_infrared( *critter ) ||
-                                             g->u.sees_with_specials( *critter ) ) ) {
+                        // Vehicle tiles are blocked from the 3D FOV by their own floor cache,
+                        // but are physically visible when the player descends through open air.
+                        // Check this before the has_memory branch so that a memorized roof tile
+                        // doesn't suppress the live visible render on subsequent frames.
+                        if( had_visible_open_air && in_map_bounds && here.veh_at( pos ).has_value() ) {
+                            const auto &ch_above = here.access_cache( pos.z + 1 );
+                            const lit_level above_ll = ch_above.inbounds( {pos.x, pos.y} )
+                                                       ? ch_above.visibility_cache[ch_above.idx( pos.x, pos.y )]
+                                                       : lit_level::BLANK;
+                            invisible[0] = above_ll == lit_level::BLANK;
+                            min_z = std::min( pos.z, min_z );
+                            draw_points.emplace_back( pos, height_3d,
+                                                      above_ll != lit_level::BLANK ? above_ll : ll,
+                                                      invisible );
+                        } else {
+                            if( has_draw_override( pos ) || has_memory ) {
                                 invisible[0] = true;
                             }
-                        }
-                        if( invisible[0] ) {
-                            min_z = std::min( pos.z, min_z );
-                            draw_points.emplace_back( pos, height_3d, ll, invisible );
-                        } else if( last_vis != center.z + 1 ) {
-                            if( in_map_bounds && z < center.z - fov_3d_z_range ) {
-                                // The floor is below the 3D FOV limit, but the loop only
-                                // reaches here through a fully transparent column above.
-                                // Treat it as seen-through-sky: render and memorize at the
-                                // floor's actual position with surface lighting + depth tint.
-                                here.set_memory_seen_cache_dirty( pos );
+                            for( int cz = pos.z; !invisible[0] && cz <= -center.z; cz++ ) {
+                                const Creature *critter = g->critter_at( {pos.xy(), cz}, true );
+                                if( critter && ( g->u.sees_with_infrared( *critter ) ||
+                                                 g->u.sees_with_specials( *critter ) ) ) {
+                                    invisible[0] = true;
+                                }
+                            }
+                            if( invisible[0] ) {
                                 min_z = std::min( pos.z, min_z );
-                                //invisible[0] = true;
-                                draw_points.emplace_back( pos, height_3d, lit_level::MEMORIZED, invisible );
-                                //const ter_id &t = here.ter( pos );
-                                //const auto tile = tile_search_params{ t.id().str(), C_TERRAIN, empty_string, 0, 0 };
-                                //draw_from_id_string( tile, pos, std::nullopt, std::nullopt, lit_level::MEMORIZED, false, center.z - z, false );
-                            } else {
-                                min_z = std::min( last_vis, min_z );
-                                draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d,
-                                                          last_vis_ll, invisible );
+                                draw_points.emplace_back( pos, height_3d, ll, invisible );
+                            } else if( last_vis != center.z + 1 ) {
+                                if( in_map_bounds && z < center.z - fov_3d_z_range ) {
+                                    // The floor is below the 3D FOV limit, but the loop only
+                                    // reaches here through a fully transparent column above.
+                                    // Treat it as seen-through-sky: render and memorize at the
+                                    // floor's actual position with surface lighting + depth tint.
+                                    here.set_memory_seen_cache_dirty( pos );
+                                    min_z = std::min( pos.z, min_z );
+                                    //invisible[0] = true;
+                                    draw_points.emplace_back( pos, height_3d, lit_level::MEMORIZED, invisible );
+                                    //const ter_id &t = here.ter( pos );
+                                    //const auto tile = tile_search_params{ t.id().str(), C_TERRAIN, empty_string, 0, 0 };
+                                    //draw_from_id_string( tile, pos, std::nullopt, std::nullopt, lit_level::MEMORIZED, false, center.z - z, false );
+                                } else {
+                                    min_z = std::min( last_vis, min_z );
+                                    draw_points.emplace_back( tripoint( pos.xy(), last_vis ), height_3d,
+                                                              last_vis_ll, invisible );
+                                }
+                            } else if( had_visible_open_air && in_map_bounds ) {
+                                // No vehicle and no solid last_vis — placeholder so cross-z
+                                // sprite draws (player character above) still execute.
+                                min_z = std::min( pos.z, min_z );
+                                invisible[0] = true;
+                                draw_points.emplace_back( pos, height_3d, ll, invisible );
                             }
                         }
 
@@ -3400,102 +3457,121 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             }
         }
 
-        auto compare_z = [&]( tile_render_info a, tile_render_info b ) -> bool {
-            return ( a.pos.z < b.pos.z );
-        };
+    }
 
-        const std::array<decltype( &cata_tiles::draw_furniture ), 3> base_drawing_layers = {{
-                &cata_tiles::draw_furniture, &cata_tiles::draw_graffiti, &cata_tiles::draw_trap
-            }
-        };
-        struct zlevel_layer {
-            bool hide_unseen;
-            decltype( &cata_tiles::draw_furniture ) function;
-        };
-        const std::array < zlevel_layer, 3 > zlevel_drawing_layers = {{
-                {true, &cata_tiles::draw_field_or_item}, {false, &cata_tiles::draw_vpart}, {true, &cata_tiles::draw_critter_at}
-            }
-        };
+    // Sort globally by (z, y): all z=0 tiles render before z=1 tiles across every row,
+    // so tall z=0 sprites (e.g. tree canopies) never overdraw z=1 entities at adjacent
+    // tiles. Within the same z-level, y-ascending order (north before south) preserves
+    // the intended "tree canopy over player to the north" effect at equal z.
+    auto compare_z_y = []( const tile_render_info & a, const tile_render_info & b ) -> bool {
+        if( a.pos.z != b.pos.z )
+        {
+            return a.pos.z < b.pos.z;
+        }
+        return a.pos.y < b.pos.y;
+    };
 
-        const std::array<decltype( &cata_tiles::draw_furniture ), 2> final_drawing_layers = {{
-                &cata_tiles::draw_zone_mark, &cata_tiles::draw_zombie_revival_indicators
-            }
-        };
+    const std::array<decltype( &cata_tiles::draw_furniture ), 3> base_drawing_layers = {{
+            &cata_tiles::draw_furniture, &cata_tiles::draw_graffiti, &cata_tiles::draw_trap
+        }
+    };
+    struct zlevel_layer {
+        bool hide_unseen;
+        decltype( &cata_tiles::draw_furniture ) function;
+    };
+    const std::array<zlevel_layer, 3> zlevel_drawing_layers = {{
+            {true, &cata_tiles::draw_field_or_item}, {false, &cata_tiles::draw_vpart}, {true, &cata_tiles::draw_critter_at}
+        }
+    };
+    const std::array<decltype( &cata_tiles::draw_furniture ), 2> final_drawing_layers = {{
+            &cata_tiles::draw_zone_mark, &cata_tiles::draw_zombie_revival_indicators
+        }
+    };
 
-        std::ranges::stable_sort( draw_points, compare_z );
+    std::ranges::stable_sort( draw_points, compare_z_y );
+
+    for( int z = min_z; z <= center.z; z++ ) {
         for( tile_render_info &p : draw_points ) {
-            draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z - p.pos.z );
+            if( p.pos.z > z ) {
+                break;
+            }
+            if( p.pos.z == z ) {
+                draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z - z );
 
-            if( p.pos.z == center.z ) {
-                const point screen_tl = player_to_screen( p.pos.xy() );
-                const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
+                if( z == center.z ) {
+                    const point screen_tl = player_to_screen( p.pos.xy() );
+                    const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
 
-                const bool in_selected_zone = has_selected_zone && p.pos.z == selected_z &&
-                                              ( has_custom_selected_zone
-                                                ? zone_point_lookup.contains( p.pos )
-                                                : ( p.pos.x >= selected_min.x && p.pos.x <= selected_max.x &&
-                                                    p.pos.y >= selected_min.y && p.pos.y <= selected_max.y ) );
+                    const bool in_selected_zone = has_selected_zone && p.pos.z == selected_z &&
+                                                  ( has_custom_selected_zone
+                                                    ? zone_point_lookup.contains( p.pos )
+                                                    : ( p.pos.x >= selected_min.x && p.pos.x <= selected_max.x &&
+                                                        p.pos.y >= selected_min.y && p.pos.y <= selected_max.y ) );
 
-                bool selected_drawn = false;
+                    bool selected_drawn = false;
 
-                if( show_zones_overlay ) {
-                    for( const zone_render_data &zone : zones_to_draw ) {
-                        if( !zone.tiles.contains( p.pos.xy() ) ) {
-                            continue;
+                    if( show_zones_overlay ) {
+                        for( const zone_render_data &zone : zones_to_draw ) {
+                            if( !zone.tiles.contains( p.pos.xy() ) ) {
+                                continue;
+                            }
+                            draw_zone_overlay( {
+                                .renderer = renderer,
+                                .rect = tile_rect,
+                                .color = zone.color,
+                                .overlay_strings = overlay_strings,
+                                .alpha = in_selected_zone ? 128 : 64,
+                                .draw_label = false
+                            } );
+                            selected_drawn = selected_drawn || in_selected_zone;
                         }
+                    }
+                    if( in_selected_zone && !selected_drawn ) {
                         draw_zone_overlay( {
                             .renderer = renderer,
                             .rect = tile_rect,
-                            .color = zone.color,
+                            .color = curses_color_to_SDL( c_light_green ),
                             .overlay_strings = overlay_strings,
-                            .alpha = in_selected_zone ? 128 : 64,
+                            .alpha = 128,
                             .draw_label = false
                         } );
-                        selected_drawn = selected_drawn || in_selected_zone;
                     }
                 }
-                if( in_selected_zone && !selected_drawn ) {
-                    draw_zone_overlay( {
-                        .renderer = renderer,
-                        .rect = tile_rect,
-                        .color = curses_color_to_SDL( c_light_green ),
-                        .overlay_strings = overlay_strings,
-                        .alpha = 128,
-                        .draw_label = false
-                    } );
+
+                for( decltype( &cata_tiles::draw_furniture ) f : base_drawing_layers ) {
+                    ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z - z );
+                }
+            }
+            const auto &ch = here.access_cache( z );
+
+            for( const zlevel_layer &f : zlevel_drawing_layers ) {
+                if( here.inbounds( p.pos ) && z != p.pos.z ) {
+                    const auto z_ll = ch.inbounds( {p.pos.x, p.pos.y} )
+                                      ? ch.visibility_cache[ch.idx( p.pos.x, p.pos.y )]
+                                      : lit_level::BLANK;
+                    if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
+                        // When the player is looking down from above (z_drop > 0), a BLANK
+                        // visibility at the cross-z level means the surface is part of a vehicle
+                        // body that the 3D FOV can't see through — but the surface itself should
+                        // still render as a visible floor/roof from above (z_drop > 0).
+                        // Only hide the tile when the player is at the same z-level (z_drop == 0)
+                        // and truly can't see it, which is the "enclosed interior" case.
+                        const int z_drop_here = center.z - z;
+                        const bool ( invis )[5] = {z_ll == lit_level::BLANK &&z_drop_here == 0,
+                                                   false, false, false, false
+                                                  };
+                        ( this->*( f.function ) )( {p.pos.xy(), z}, z_ll, p.height_3d, invis, z_drop_here );
+                    }
+                } else {
+                    ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z - z );
                 }
             }
         }
+    }
 
-        for( int z = min_z; z <= center.z; z++ ) {
-            for( tile_render_info &p : draw_points ) {
-                if( p.pos.z > z ) {
-                    break;
-                }
-                if( p.pos.z == z ) {
-                    for( decltype( &cata_tiles::draw_furniture ) f : base_drawing_layers ) {
-                        ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z - p.pos.z );
-                    }
-                }
-                const auto &ch = here.access_cache( z );
-
-                for( const zlevel_layer &f : zlevel_drawing_layers ) {
-                    if( here.inbounds( p.pos ) && z != p.pos.z ) {
-                        if( !f.hide_unseen || ch.visibility_cache[ch.idx( p.pos.x, p.pos.y )] != lit_level::BLANK ) {
-                            const bool ( invis )[5] = {false, false, false, false, false};
-                            ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, invis, center.z - z );
-                        }
-                    } else {
-                        ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z - z );
-                    }
-                }
-            }
-        }
-
-        for( tile_render_info &p : draw_points ) {
-            for( decltype( &cata_tiles::draw_furniture ) f : final_drawing_layers ) {
-                ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
-            }
+    for( tile_render_info &p : draw_points ) {
+        for( decltype( &cata_tiles::draw_furniture ) f : final_drawing_layers ) {
+            ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
         }
     }
 
@@ -4564,13 +4640,25 @@ bool cata_tiles::has_memory_at( const tripoint &p )
         return false;
     }
 
-    const memorized_terrain_tile t = g->u.get_memorized_tile( get_map().getabs( p ) );
-    return !t.tile.empty();
+    const tripoint abs = get_map().getabs( p );
+    // Check overlay slot (furniture, vpart, trap) and terrain slot separately,
+    // since terrain is now stored in its own slot and may be the only memory present.
+    if( !g->u.get_memorized_tile( abs ).tile.empty() ) {
+        return true;
+    }
+    return !g->u.get_terrain_tile( abs ).tile.empty();
 }
 
 auto cata_tiles::get_ter_memory_at( const tripoint &p ) -> std::optional<memorized_terrain_tile>
 {
-    return get_map_memory_of_at<ter_t>( p );
+    if( !g->u.should_show_map_memory() ) {
+        return std::nullopt;
+    }
+    const memorized_terrain_tile t = g->u.get_terrain_tile( get_map().getabs( p ) );
+    if( t.tile.empty() ) {
+        return std::nullopt;
+    }
+    return t;
 }
 
 auto cata_tiles::get_furn_memory_at( const tripoint &p ) -> std::optional<memorized_terrain_tile>
@@ -4657,7 +4745,7 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
         const std::string &tname = t.id().str();
         if( here.check_seen_cache( p ) ) {
             if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
-                g->u.memorize_tile( here.getabs( p ), tname, subtile, rotation );
+                g->u.memorize_terrain_tile( here.getabs( p ), tname, subtile, rotation );
             } else {
                 g->u.clear_memorized_tile( here.getabs( p ) );
             }
@@ -4713,22 +4801,6 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
         if( ret.has_value() ) {
             const auto& [tile_id, subtile, rotation] = ret.value();
             const tile_search_params tile { tile_id, C_TERRAIN, empty_string, subtile, rotation };
-            return draw_from_id_string(
-                       tile, p, bgCol, fgCol,
-                       lit_level::MEMORIZED, true, z_drop, false, height_3d );
-        } else if( t && !neighborhood_overridden && t != t_open_air ) {
-            // The single memory slot was overwritten by furniture/trap on this tile.
-            // Fall back to rendering the actual terrain as memorized so it isn't invisible.
-            int subtile = 0;
-            int rotation = 0;
-            int connect_group = 0;
-            if( t.obj().connects( connect_group ) ) {
-                get_connect_values( p, subtile, rotation, connect_group, {} );
-            } else {
-                get_terrain_orientation( p, rotation, subtile, {}, invisible );
-            }
-            const std::string &tname = t.id().str();
-            const tile_search_params tile { tname, C_TERRAIN, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
@@ -5055,13 +5127,26 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
         // get the vpart_id
         char part_mod = 0;
         const Creature *critter = g->critter_at( p, true );
-        const vpart_id &vp_id = veh.part_id_string( veh_part, z_drop > 0 && critter == nullptr, part_mod );
+        // Use the roof/top-down variant only for non-structural interior parts (floor, seat,
+        // cargo etc.). If any part at this mount is an obstacle (board, windshield, door),
+        // pass roof=false so part_displayed_at returns that obstacle part instead of the
+        // on_roof tile. part_info(veh_part) only reflects the cached part (often the frame),
+        // so search all parts at the position via part_with_feature.
+        const bool has_obstacle_here = vp.part_with_feature( VPFLAG_OBSTACLE, false ).has_value();
+        const bool use_roof_variant = z_drop > 0 && critter == nullptr && !has_obstacle_here;
+        const vpart_id &vp_id = veh.part_id_string( veh_part, use_roof_variant, part_mod );
         const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
         const int rotation = std::round( to_degrees( veh.face.dir() ) );
         const std::string vpname = "vp_" + vp_id.str();
         avatar &you = get_avatar();
-        if( !veh.forward_velocity() && !veh.player_in_control( you ) &&
-            here.check_seen_cache( p ) ) {
+        // Always clear while moving — the check_seen_cache gate would miss residual
+        // stationary memory once map_memory_seen_cache is set by draw_from_id_string,
+        // letting ghost tiles survive until the submap exits the reality bubble.
+        // Always memorize while stationary so returning to a previous position
+        // after a trip refreshes the tile rather than leaving it blank.
+        if( veh.forward_velocity() ) {
+            you.clear_memorized_overlay( here.getabs( p ) );
+        } else {
             you.memorize_tile( here.getabs( p ), vpname, subtile, rotation );
         }
         if( !overridden ) {
@@ -5104,7 +5189,29 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
             return ret;
         }
     } else if( invisible[0] ) {
-        // try drawing memory if invisible and not overridden
+        if( vp ) {
+            // Vehicle is here but outside FOV — draw it live with memorised lighting so the
+            // entire vehicle remains visible (player hand-wavingly "knows" where their vehicle is).
+            const vehicle &veh = vp->vehicle();
+            const int veh_part = vp->part_index();
+            char part_mod = 0;
+            const Creature *critter = g->critter_at( p, true );
+            const bool has_obstacle_here = vp.part_with_feature( VPFLAG_OBSTACLE, false ).has_value();
+            const bool use_roof_variant = z_drop > 0 && critter == nullptr && !has_obstacle_here;
+            const vpart_id &vp_id = veh.part_id_string( veh_part, use_roof_variant, part_mod );
+            const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
+            const int rotation = std::round( to_degrees( veh.face.dir() ) );
+            const std::string vpname = "vp_" + vp_id.str();
+            if( !veh.forward_velocity() ) {
+                get_avatar().memorize_tile( here.getabs( p ), vpname, subtile, rotation );
+            }
+            const tile_search_params tile { vpname, C_VEHICLE_PART, empty_string, subtile, rotation };
+            return draw_from_id_string(
+                       tile, p, bgCol, fgCol,
+                       lit_level::MEMORIZED, true, z_drop, false, height_3d );
+        }
+        // No live vehicle at this position — fall back to map memory so previously-seen
+        // tiles are shown as a ghost until they scroll out of range (vehicle moved away).
         const auto ret = get_vpart_memory_at( p );
         if( ret.has_value() ) {
             const auto [tile_id, subtile, rotation] = ret.value();

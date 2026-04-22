@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 
 #include "avatar.h"
+#include "fstream_utils.h"
 #include "game.h"
 #include "magic.h"
 #include "monster.h"
@@ -101,6 +102,39 @@ TEST_CASE( "spell level", "[magic][spell][level]" )
             }
         }
     }
+}
+
+TEST_CASE( "known magic remembers the last cast spell", "[magic][spell][save]" )
+{
+    clear_all_state();
+    clear_avatar();
+
+    const auto pew_id = spell_id( "test_spell_pew" );
+    const auto lava_id = spell_id( "test_spell_lava" );
+
+    g->u.magic->learn_spell( pew_id, g->u, true );
+    g->u.magic->learn_spell( lava_id, g->u, true );
+
+    CHECK( !g->u.magic->last_cast_spell().has_value() );
+
+    g->u.magic->set_last_cast_spell( lava_id );
+    REQUIRE( g->u.magic->last_cast_spell().has_value() );
+    CHECK( *g->u.magic->last_cast_spell() == lava_id );
+
+    const auto serialized_magic = serialize_wrapper( [&]( JsonOut & jsout ) {
+        g->u.magic->serialize( jsout );
+    } );
+
+    auto loaded_magic = known_magic();
+    deserialize_wrapper( [&]( JsonIn & jsin ) {
+        loaded_magic.deserialize( jsin );
+    }, serialized_magic );
+
+    REQUIRE( loaded_magic.last_cast_spell().has_value() );
+    CHECK( *loaded_magic.last_cast_spell() == lava_id );
+
+    loaded_magic.forget_spell( lava_id );
+    CHECK( !loaded_magic.last_cast_spell().has_value() );
 }
 
 // Return experience points needed to level up a spell, starting at from_level
@@ -649,4 +683,3 @@ TEST_CASE( "spell effect - recover_energy", "[magic][spell][effect][recover_ener
         CHECK( dummy.get_pain() == 2 );
     }
 }
-

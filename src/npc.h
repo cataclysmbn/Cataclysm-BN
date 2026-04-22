@@ -510,8 +510,11 @@ struct npc_short_term_cache {
 
     // Use weak_ptr to avoid circular references between Creatures
     std::vector<weak_ptr_fast<Creature>> friends;
+    // NPC-typed friends only; rebuilt when g_npc_friends_dirty_version changes
+    std::vector<weak_ptr_fast<Creature>> cached_npc_friends;
+    uint32_t npc_friends_version = 0;
     std::vector<sphere> dangerous_explosives;
-    std::map<direction, float> threat_map;
+    std::array<float, 27> threat_map;
     // Cache of locations the NPC has searched recently in npc::find_item()
     lru_cache<tripoint, int> searched_tiles;
 };
@@ -962,7 +965,7 @@ class npc : public player
         * True if this NPC is in a simulated submap — i.e. loaded and eligible
         * for per-turn AI processing.  Mirrors the check used in npcmove().
         */
-        bool is_simulated() const;
+        bool is_simulated() const override;
         bool is_manually_erased() const {
             return manually_erased_;
         }

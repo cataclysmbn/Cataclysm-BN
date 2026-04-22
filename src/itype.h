@@ -479,10 +479,10 @@ struct islot_engine {
 
 struct islot_wheel {
     public:
-        /** diameter of wheel (inches) */
+        /** diameter of wheel (millimeters); integer JSON values are legacy inches */
         int diameter = 0;
 
-        /** width of wheel (inches) */
+        /** width of wheel (millimeters); integer JSON values are legacy inches */
         int width = 0;
 };
 

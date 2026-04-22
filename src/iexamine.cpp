@@ -116,6 +116,10 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "weather.h"
+#include "world_type.h"
+#include "dimension_info.h"
+#include "overmap.h"
+#include "veh_type.h"
 
 static const activity_id ACT_ATM( "ACT_ATM" );
 static const activity_id ACT_CLEAR_RUBBLE( "ACT_CLEAR_RUBBLE" );
@@ -228,6 +232,9 @@ static const bionic_id bio_fingerhack( "bio_fingerhack" );
 static const bionic_id bio_lighter( "bio_lighter" );
 static const bionic_id bio_lockpick( "bio_lockpick" );
 static const bionic_id bio_painkiller( "bio_painkiller" );
+static const bionic_id bio_tools( "bio_tools" );
+
+static const itype_id itype_toolset( "toolset" );
 
 static const std::string flag_AUTODOC( "AUTODOC" );
 static const std::string flag_AUTODOC_COUCH( "AUTODOC_COUCH" );
@@ -1500,36 +1507,39 @@ void iexamine::slot_machine( player &p, const tripoint & )
     }
 }
 
-static item *find_best_prying_tool( player &p )
+static auto find_best_prying_tool( player &p ) -> item *
 {
-    std::vector<item *> prying_items = p.items_with( []( const item & it ) {
+    auto prying_items = p.items_with( []( const item & it ) {
         // we want to get worn items (eg crowbar in toolbelt), so no check on item position
-        return it.has_quality( quality_id( "PRY" ), 1 );
+        return it.type->get_use( "CROWBAR" ) != nullptr;
     } );
 
-    // Sort by their quality level.
-    std::ranges::sort( prying_items, []( const item * a, const item * b ) -> bool {
-        return a->get_quality( quality_id( "PRY" ) ) > b->get_quality( quality_id( "PRY" ) );
-    } );
+    if( p.has_active_bionic( bio_tools ) ) {
+        auto toolset = item::spawn_temporary( itype_toolset, calendar::turn );
+        prying_items.push_back( toolset );
+    }
 
-    // if crowbar() ever eats charges or otherwise alters the passed item, rewrite this to reflect
-    // changes to the original item.
     if( prying_items.empty() ) {
         return nullptr;
     }
-    return prying_items[0];
+
+    const auto best_tool = std::ranges::max_element( prying_items, []( const item * a,
+    const item * b ) -> bool {
+        return a->get_quality( quality_id( "PRY" ) ) < b->get_quality( quality_id( "PRY" ) );
+    } );
+
+    return *best_tool;
 }
 
-static void apply_prying_tool( player &p, item *it, const tripoint &examp )
+static auto apply_prying_tool( player &p, item *it, const tripoint &examp )
 {
     map &here = get_map();
+
     //~ %1$s: terrain/furniture name, %2$s: prying tool name
     p.add_msg_if_player( _( "You attempt to pry open the %1$s using your %2$s…" ),
                          here.has_furn( examp ) ? here.furnname( examp ) : here.tername( examp ), it->tname() );
 
-    // if crowbar() ever eats charges or otherwise alters the passed item, rewrite this to reflect
-    // changes to the original item.
-    iuse::crowbar( &p, it, false, examp );
+    p.invoke_item( it, "CROWBAR", examp );
 }
 
 static time_duration safecracking_time( const player &p )
@@ -1560,13 +1570,13 @@ void iexamine::safe( player &p, const tripoint &examp )
 {
 
     map &here = get_map();
-    safe_reference<item> prying_tool = find_best_prying_tool( p );
+    auto *prying_tool = find_best_prying_tool( p );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
     if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) ) {
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
         if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
-            apply_prying_tool( p, prying_tool.get(), examp );
+            apply_prying_tool( p, prying_tool, examp );
             return;
         }
     }
@@ -1624,13 +1634,13 @@ void iexamine::safe( player &p, const tripoint &examp )
 void iexamine::gunsafe_el( player &p, const tripoint &examp )
 {
     map &here = get_map();
-    safe_reference<item> prying_tool = find_best_prying_tool( p );
+    auto *prying_tool = find_best_prying_tool( p );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
     if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) ) {
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
         if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
-            apply_prying_tool( p, prying_tool.get(), examp );
+            apply_prying_tool( p, prying_tool, examp );
             return;
         }
     }
@@ -1724,13 +1734,13 @@ void iexamine::locked_object( player &p, const tripoint &examp )
         }
     }
 
-    safe_reference<item> prying_tool = find_best_prying_tool( p );
+    auto *prying_tool = find_best_prying_tool( p );
     if( prying_tool ) {
         const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                     examp )->pry.pry_quality;
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
         if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
-            apply_prying_tool( p, prying_tool.get(), examp );
+            apply_prying_tool( p, prying_tool, examp );
             return;
         }
     }
@@ -7666,6 +7676,106 @@ void iexamine::power_portal( player &p, const tripoint &examp )
     }
 }
 
+void iexamine::portal( player &p, const tripoint &examp )
+{
+    const tripoint_abs_ms abs_pos( get_map().getabs( examp ) );
+
+    portal_tile *pt = active_tiles::furn_at<portal_tile>( abs_pos );
+    if( pt == nullptr ) {
+        add_msg( m_info, _( "This portal doesn't appear to be active." ) );
+        return;
+    }
+
+    // Dynamic generation: first use generates the destination special.
+    if( !pt->linked && !pt->dynamic_special.is_null() && pt->dynamic_special.is_valid() ) {
+        if( !query_yn( _( "The portal shimmers.  Step through to an unknown destination?" ) ) ) {
+            return;
+        }
+        // Generate the dynamic special in the target dimension at a random overmap location.
+        const std::string &tdim = pt->target_dim_id;
+        auto &omb = get_overmapbuffer( tdim );
+        // Pick an origin far enough from the player so the generated area doesn't overlap.
+        const tripoint_abs_omt gen_origin( rng( 50, 100 ), rng( 50, 100 ), 0 );
+        overmap &om = *omb.get_om_global( gen_origin ).om;
+        const tripoint_om_omt local_pos = omb.get_om_global( gen_origin ).local;
+        om.place_special_forced( pt->dynamic_special, local_pos, om_direction::type::north );
+        // The portal in the generated special sets back-link to this portal's abs_pos.
+        pt->target_pos = project_to<coords::ms>( gen_origin );
+        pt->linked = true;
+        add_msg( m_info, _( "The portal stabilizes." ) );
+    }
+
+    if( !pt->linked ) {
+        add_msg( m_info, _( "This portal has no configured destination." ) );
+        return;
+    }
+
+    // Bionic tap linking opportunity.
+    if( pt->allow_bionic_tap && p.has_bionic( bionic_id( "bio_portal_tap" ) ) ) {
+        if( !p.bio_portal_tap_linked &&
+            query_yn( _( "Link your Dimensional Portal Tap bionic to this portal?" ) ) ) {
+            p.bio_portal_tap_dim_id = pt->target_dim_id;
+            p.bio_portal_tap_pos = pt->target_pos;
+            p.bio_portal_tap_linked = true;
+            add_msg( m_good, _( "Bionic linked." ) );
+            return;
+        }
+    }
+
+    // Vehicle portal tap linking opportunity.
+    if( pt->allow_bionic_tap ) {
+        static const std::string flag_portal_tap( "POWER_DRAW_LINKED_PORTAL" );
+        const optional_vpart_position vp = get_map().veh_at( examp );
+        if( !vp ) {
+            // Also check if player is inside a nearby vehicle.
+            for( const tripoint &adj : get_map().points_in_radius( p.pos(), 1 ) ) {
+                const optional_vpart_position vp2 = get_map().veh_at( adj );
+                if( vp2 ) {
+                    vehicle &veh = vp2->vehicle();
+                    for( int i = 0; i < veh.part_count(); ++i ) {
+                        vehicle_part &vpart = veh.part( i );
+                        if( !vpart.portal_tap_linked &&
+                            vpart.info().has_flag( flag_portal_tap ) &&
+                            query_yn( _( "Link vehicle's Dimensional Portal Tap to this portal?" ) ) ) {
+                            vpart.portal_tap_linked = true;
+                            vpart.portal_tap_dim_id = pt->target_dim_id;
+                            vpart.portal_tap_pos = pt->target_pos;
+                            add_msg( m_good, _( "Vehicle part linked." ) );
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if( pt->one_way ) {
+        add_msg( m_info, _( "The portal shimmers — it appears to be one-way." ) );
+    }
+
+    if( !query_yn( _( "Step through the portal?" ) ) ) {
+        return;
+    }
+
+    p.add_msg_if_player( m_good, _( "You step through the portal." ) );
+
+    // Resolve destination world_type.
+    auto wt_id = world_type_id( pt->target_dim_id );
+    if( pt->target_dim_id.empty() ) {
+        wt_id = world_types::get_default();
+    }
+
+    const auto target_sm = project_to<coords::sm>( pt->target_pos );
+    const auto dest_sm = tripoint_abs_sm( target_sm.raw() - tripoint( g_half_mapsize,
+                                          g_half_mapsize, 0 ) );
+
+    g->travel_to_dimension( pt->target_dim_id, wt_id, std::nullopt, dest_sm );
+
+    tripoint entry_local = get_map().getlocal( pt->target_pos );
+    p.setpos( entry_local );
+    g->update_map( p );
+}
+
 void iexamine::migo_nerve_cluster( player &p, const tripoint &examp )
 {
     map &here = get_map();
@@ -7973,6 +8083,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "dimensional_portal", &iexamine::dimensional_portal },
             { "check_power", &iexamine::check_power },
             { "power_portal", &iexamine::power_portal },
+            { "portal", &iexamine::portal },
             { "migo_nerve_cluster", &iexamine::migo_nerve_cluster },
             { "cardreader_plutgen", &iexamine::cardreader_plutgen },
             { "multicooker", &iexamine::multicooker },

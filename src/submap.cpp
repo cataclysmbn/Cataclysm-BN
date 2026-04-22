@@ -4,6 +4,7 @@
 #include <array>
 #include <iterator>
 #include <memory>
+#include <ranges>
 #include <span>
 #include <utility>
 
@@ -44,6 +45,8 @@ void submap::swap( submap &first, submap &second )
     std::swap( first.is_uniform, second.is_uniform );
     std::swap( first.active_items, second.active_items );
     std::swap( first.field_count, second.field_count );
+    std::swap( first.trap_cache, second.trap_cache );
+    std::swap( first.field_cache, second.field_cache );
     std::swap( first.emitter_cache, second.emitter_cache );
     std::swap( first.last_touched, second.last_touched );
     std::swap( first.spawns, second.spawns );
@@ -560,35 +563,102 @@ void submap::rotate( int turns )
         rot_transformer_last_run.emplace( point_sm_ms( rotate_point( elem.first.raw() ) ), elem.second );
     }
     transformer_last_run = rot_transformer_last_run;
+
+    // Tile data was moved in-place by swap_soa_tile, bypassing set_trap/set_furn.
+    // Rebuild position caches from scratch now that all arrays are in their final state.
+    trap_cache.clear();
+    field_cache.clear();
+    emitter_cache = std::nullopt;
+    std::ranges::for_each(
+        std::views::iota( 0, SEEX * SEEY )
+        | std::views::transform( []( int i ) -> point { return { i % SEEX, i / SEEX }; } ),
+    [this]( const point & p ) {
+        if( trp[p.x][p.y] != tr_null ) {
+            trap_cache.push_back( p );
+        }
+        if( fld[p.x][p.y].displayed_field_type() ) {
+            field_cache.push_back( p );
+        }
+    } );
 }
 
 
-auto submap::rebuild_outside_cache( const map &m, tripoint grid_pos ) -> void
+auto submap::rebuild_outside_cache( const level_cache *above, tripoint grid_pos ) -> void
 {
     if( !outside_dirty ) {
         return;
     }
-    // For each tile, mark inside (outside=false) if any tile in the 3×3
-    // neighbourhood (including itself) has TFLAG_INDOORS on terrain or furniture.
+    // Base case: OVERMAP_HEIGHT — everything is open sky.
+    if( above == nullptr ) {
+        std::ranges::fill( std::span( &outside_cache[0][0], SEEX * SEEY ), true );
+        outside_dirty = false;
+        return;
+    }
+    // A tile is outside if any tile in the 3×3 at z+1 satisfies:
+    //   (outside at z+1) AND (no floor at z+1 blocking the path).
+    // Out-of-bounds neighbours (edge of loaded map) are treated as inside.
+    const int abs_x0 = grid_pos.x * SEEX;
+    const int abs_y0 = grid_pos.y * SEEY;
     for( int sx = 0; sx < SEEX; ++sx ) {
-        const int x = grid_pos.x * SEEX + sx;
         for( int sy = 0; sy < SEEY; ++sy ) {
-            const int y = grid_pos.y * SEEY + sy;
-            auto any_indoors = [&]() -> bool {
-                for( int dx = -1; dx <= 1; ++dx )
-                {
-                    for( int dy = -1; dy <= 1; ++dy ) {
-                        if( m.has_flag( TFLAG_INDOORS, tripoint( x + dx, y + dy, grid_pos.z ) ) ) {
-                            return true;
-                        }
+            const int ax = abs_x0 + sx;
+            const int ay = abs_y0 + sy;
+            bool result = false;
+            for( int dx = -1; dx <= 1 && !result; ++dx ) {
+                for( int dy = -1; dy <= 1 && !result; ++dy ) {
+                    const point nb( ax + dx, ay + dy );
+                    if( !above->inbounds( nb ) ) {
+                        continue; // out of bounds = inside
+                    }
+                    const int idx = above->idx( nb.x, nb.y );
+                    if( above->outside_cache[idx] && !above->floor_cache[idx] ) {
+                        result = true;
                     }
                 }
-                return false;
-            };
-            outside_cache[sx][sy] = !any_indoors();
+            }
+            outside_cache[sx][sy] = result;
         }
     }
     outside_dirty = false;
+}
+
+auto submap::rebuild_sheltered_cache( const level_cache *above, tripoint grid_pos ) -> void
+{
+    if( !sheltered_dirty ) {
+        return;
+    }
+    // Base case: OVERMAP_HEIGHT — nothing above provides shelter.
+    if( above == nullptr ) {
+        std::ranges::fill( std::span( &sheltered_cache[0][0], SEEX * SEEY ), false );
+        sheltered_dirty = false;
+        return;
+    }
+    // A tile is sheltered if any tile in the 3×3 at z+1 has a floor,
+    // or is itself sheltered (coverage propagates downward with a 1-tile overhang).
+    // Out-of-bounds neighbours are treated as sheltered (edge of loaded map).
+    const int abs_x0 = grid_pos.x * SEEX;
+    const int abs_y0 = grid_pos.y * SEEY;
+    for( int sx = 0; sx < SEEX; ++sx ) {
+        for( int sy = 0; sy < SEEY; ++sy ) {
+            const int ax = abs_x0 + sx;
+            const int ay = abs_y0 + sy;
+            bool result = false;
+            for( int dx = -1; dx <= 1 && !result; ++dx ) {
+                for( int dy = -1; dy <= 1 && !result; ++dy ) {
+                    const point nb( ax + dx, ay + dy );
+                    if( !above->inbounds( nb ) ) {
+                        continue; // out of bounds = open sky, not sheltered
+                    }
+                    const int idx = above->idx( nb.x, nb.y );
+                    if( above->floor_cache[idx] || above->sheltered_cache[idx] ) {
+                        result = true;
+                    }
+                }
+            }
+            sheltered_cache[sx][sy] = result;
+        }
+    }
+    sheltered_dirty = false;
 }
 
 auto submap::rebuild_floor_cache( const map &m, tripoint grid_pos ) -> void
@@ -683,7 +753,10 @@ auto submap::rebuild_transparency_cache( const map &m, tripoint grid_pos ) -> vo
     }
     // outside_cache must be current before applying the weather sight penalty.
     if( outside_dirty ) {
-        rebuild_outside_cache( m, grid_pos );
+        const level_cache *above = ( grid_pos.z < OVERMAP_HEIGHT )
+                                   ? &m.get_cache_ref( grid_pos.z + 1 )
+                                   : nullptr;
+        rebuild_outside_cache( above, grid_pos );
     }
 
     const float sight_penalty = get_weather().weather_id->sight_penalty;

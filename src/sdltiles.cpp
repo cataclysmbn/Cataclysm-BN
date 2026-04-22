@@ -65,6 +65,7 @@
 #include "overmap_special.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
+#include "regional_settings.h"
 #include "mongroup.h"
 #include "path_info.h"
 #include "point.h"
@@ -927,6 +928,15 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         return false;
     };
 
+    // Cache display_oter substitution strings for the active region.
+    const regional_settings &active_region_settings = ACTIVE_OVERMAP_BUFFER.get_settings(
+                center_abs_omt );
+    const bool om_has_display_oter = !active_region_settings.display_oter.is_empty();
+    const std::string om_default_oter_str = active_region_settings.default_oter.str();
+    const std::string om_display_oter_str = om_has_display_oter
+                                            ? active_region_settings.display_oter.str()
+                                            : std::string{};
+
     for( int row = min_row; row < max_row; row++ ) {
         for( int col = min_col; col < max_col; col++ ) {
             const tripoint_abs_omt omp = corner_NW + point( col, row );
@@ -950,6 +960,9 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             if( id.empty() ) {
                 if( see ) {
                     id = get_omt_id_rotation_and_subtile( omp, rotation, subtile );
+                    if( om_has_display_oter && id == om_default_oter_str ) {
+                        id = om_display_oter_str;
+                    }
                 } else {
                     id = "unknown_terrain";
                 }

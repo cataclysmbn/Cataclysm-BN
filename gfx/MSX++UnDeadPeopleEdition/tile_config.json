@@ -16694,6 +16694,15 @@
           "rotates": false
         },
         {
+          "id": "desert_field",
+          "fg": [
+            { "weight": 3, "sprite": 13711 },
+            { "weight": 3, "sprite": 13712 }
+          ],
+          "bg": [  ],
+          "rotates": false
+        },
+        {
           "id": [ "campsite", "campsite_a", "campsite_field_biker", "campsite_field_biker_destroyed", "sloc_campsite" ],
           "fg": 9492,
           "rotates": false

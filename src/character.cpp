@@ -2002,6 +2002,10 @@ void Character::recalc_sight_limits()
         vision_mode_cache.set( NV_GOGGLES );
         best_bonus_nv = std::max( best_bonus_nv, 10.0f );
     }
+    if( worn_with_flag( flag_GNVE_EFFECT ) ) {
+        vision_mode_cache.set( NV_GOGGLES );
+        best_bonus_nv = std::max( best_bonus_nv, 18.0f );
+    }
     if( has_trait( trait_BIRD_EYE ) ) {
         vision_mode_cache.set( BIRD_EYE );
     }
@@ -5110,7 +5114,7 @@ void Character::set_stored_kcal( int kcal )
 
 int Character::max_stored_kcal() const
 {
-    return 2500 * 7;
+    return 2500 * 7 * ( 1.0f + mutation_value( "kcal_scale" ) );
 }
 
 float Character::get_kcal_percent() const
@@ -7479,6 +7483,7 @@ mutation_value_map = {
     { "hp_modifier_secondary", calc_mutation_value<&mutation_branch::hp_modifier_secondary> },
     { "hp_adjustment", calc_mutation_value<&mutation_branch::hp_adjustment> },
     { "temperature_speed_modifier", calc_mutation_value<&mutation_branch::temperature_speed_modifier> },
+    { "kcal_scale", calc_mutation_value<&mutation_branch::kcal_scale> },
     { "metabolism_modifier", calc_mutation_value<&mutation_branch::metabolism_modifier> },
     { "thirst_modifier", calc_mutation_value<&mutation_branch::thirst_modifier> },
     { "fatigue_regen_modifier", calc_mutation_value<&mutation_branch::fatigue_regen_modifier> },

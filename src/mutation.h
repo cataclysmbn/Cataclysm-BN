@@ -190,6 +190,8 @@ struct mutation_branch {
 
         // Speed lowers--or raises--for every X F (X C) degrees below or above 65 F (18.3 C)
         float temperature_speed_modifier = 0.0f;
+        // Scales total kcal character can hold. 1.0 doubles, -0.5 halves.
+        float kcal_scale = 0.0f;
         // Extra metabolism rate multiplier. 1.0 doubles usage, -0.5 halves.
         float metabolism_modifier = 0.0f;
         // As above but for thirst.
