@@ -50,7 +50,7 @@
         "require_targeting_player": false,
         "description": "The medic fires a poison dart!",
         "ranges": [ [ 0, 5, "DEFAULT" ] ]
-      },
+      }
     ]
   },
   {

@@ -49,10 +49,6 @@
     "type": "item_group",
     "id": "crt_med_bionic",
     "subtype": "collection",
-    "items": [
-      { "group": "crt_gen_bionic" },
-      { "item": "bio_surgical_razor", "prob": 50 },
-    ]
+    "items": [ { "group": "crt_gen_bionic" }, { "item": "bio_surgical_razor", "prob": 50 } ]
   }
 ]
-

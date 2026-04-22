@@ -12,27 +12,19 @@
           { "item": "money_bundle", "prob": 20, "count": [ 2, 4 ] }
         ],
         "prob": 10
-      },
+      }
     ]
   },
   {
     "id": "crt_medic_t1_drops",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [
-      { "group": "crt_general_zombie_drops" },
-      { "group": "gear_medical" },
-      { "group": "crt_dress_outfit" }
-    ]
+    "entries": [ { "group": "crt_general_zombie_drops" }, { "group": "gear_medical" }, { "group": "crt_dress_outfit" } ]
   },
   {
     "id": "crt_medic_t2_drops",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [
-      { "group": "crt_general_zombie_drops" },
-      { "group": "gear_medical" },
-      { "group": "crt_med_outfit" }
-    ]
+    "entries": [ { "group": "crt_general_zombie_drops" }, { "group": "gear_medical" }, { "group": "crt_med_outfit" } ]
   }
 ]

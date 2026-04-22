@@ -22,5 +22,5 @@
       { "drop": "bone_tainted", "type": "bone", "mass_ratio": 0.1 },
       { "drop": "pheromone", "type": "bionic", "max": 1 }
     ]
-  },
+  }
 ]
