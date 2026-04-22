@@ -84,8 +84,8 @@
         "###o###+####o########o###o####o####o###.sssss..."
       ],
       "terrain": {
-		"5": "t_machinery_electronic",
-		"6": "t_machinery_light",
+        "5": "t_machinery_electronic",
+        "6": "t_machinery_light",
         "7": "t_machinery_heavy",
         "8": "t_machinery_old",
         ".": "t_region_groundcover_urban",
