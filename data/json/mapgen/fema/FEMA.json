@@ -87,7 +87,7 @@
       "furniture": { "d": "f_desk", "L": [ "f_rack", "f_utility_shelf" ] },
       "items": { "L": { "item": "tools_general", "chance": 50, "repeat": [ 1, 3 ] } },
       "monster": { "_": { "monster": "mon_turret_searchlight" } },
-      "palettes": [ "FEMA_camp" ],
+      "palettes": [ "military_camp" ],
       "nested": {
         "1": { "chunks": [ "fema_lodging" ] },
         "2": { "chunks": [ "fema_sanitary" ] },
