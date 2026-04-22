@@ -249,7 +249,12 @@
         "effect_msg_frequency": 3,
         "effect_msg_blocked_frequency": 32,
         "message_type": 3,
-        "protection_data": [ { "check": "RAIN_PROTECT", "odds": 1 }, { "check": "RAINPROOF", "odds": 1 }, { "check": "ACIDPROOF", "odds": 1}, { "check": "DEFAULT", "odds": 2 } ]
+        "protection_data": [
+          { "check": "RAIN_PROTECT", "odds": 1 },
+          { "check": "RAINPROOF", "odds": 1 },
+          { "check": "ACIDPROOF", "odds": 1 },
+          { "check": "DEFAULT", "odds": 2 }
+        ]
       }
     ],
     "animation": { "factor": 0.01, "color": "c_light_green", "glyph": ".", "tile": "weather_acid_drop" },
@@ -284,7 +289,12 @@
         "effect_msg_frequency": 1,
         "effect_msg_blocked_frequency": 32,
         "message_type": 1,
-        "protection_data": [ { "check": "RAIN_PROTECT", "odds": 1 }, { "check": "RAINPROOF", "odds": 1 }, { "check": "ACIDPROOF", "odds": 1}, { "check": "DEFAULT", "odds": 2 } ]
+        "protection_data": [
+          { "check": "RAIN_PROTECT", "odds": 1 },
+          { "check": "RAINPROOF", "odds": 1 },
+          { "check": "ACIDPROOF", "odds": 1 },
+          { "check": "DEFAULT", "odds": 2 }
+        ]
       }
     ],
     "animation": { "factor": 0.02, "color": "c_light_green", "glyph": ",", "tile": "weather_acid_drop" },

@@ -522,19 +522,19 @@ void weather_effect::effect( int intensity, time_duration duration,
                              const std::string &effect_id_str,
                              const std::string &effect_msg, int effect_msg_frequency, int effect_msg_blocked_frequency,
                              game_message_type message_type,
-                             std::string precipitation_name, std::vector<std::tuple<std::string, int>> protection_data)
+                             std::string precipitation_name, std::vector<std::tuple<std::string, int>> protection_data )
 {
     if( !( calendar::once_every( time_duration::from_seconds( intensity ) ) && is_player_outside() ) ) {
         return;
     }
 
-    for (auto data : protection_data) {
+    for( auto data : protection_data ) {
         const std::string trait_or_flag = std::get<0>( data );
         const int odds = std::get<1>( data );
         std::string name;
 
-        if (trait_or_flag == "DEFAULT") {
-            //Special case: if the check string is equal to "DEFAULT" 
+        if( trait_or_flag == "DEFAULT" ) {
+            //Special case: if the check string is equal to "DEFAULT"
             // we dont check for any protection items
             name = "clothing";
         } else {
@@ -544,7 +544,7 @@ void weather_effect::effect( int intensity, time_duration duration,
             bool valid_trait = trait_id.is_valid();
             bool valid_flag = flag_id.is_valid();
 
-            if (!valid_trait && !valid_flag) {
+            if( !valid_trait && !valid_flag ) {
                 debugmsg( "Invalid trait or flag ID: %s", trait_or_flag.c_str() );
                 return;
             }
@@ -554,11 +554,11 @@ void weather_effect::effect( int intensity, time_duration duration,
 
             //Checking if a player has any applicable protection items
             //and resolving the name of that item if true
-            if ( valid_flag && you.item_worn_with_flag( flag_id ) != nullptr ) {
+            if( valid_flag && you.item_worn_with_flag( flag_id ) != nullptr ) {
                 name = you.item_worn_with_flag( flag_id )->tname();
-            } else if (valid_flag && held.has_flag( flag_id )) {
+            } else if( valid_flag && held.has_flag( flag_id ) ) {
                 name = held.tname();
-            } else if (valid_trait && you.has_trait( trait_id )) {
+            } else if( valid_trait && you.has_trait( trait_id ) ) {
                 name = trait_id->name();
             } else {
                 //Player lacks protection items, move to next entry
@@ -566,8 +566,8 @@ void weather_effect::effect( int intensity, time_duration duration,
             }
         }
 
-        if ( one_in(odds) ) {
-            if ( one_in(effect_msg_blocked_frequency) ) {
+        if( one_in( odds ) ) {
+            if( one_in( effect_msg_blocked_frequency ) ) {
                 add_msg( _( "Your %s protects you from the %s." ), name, precipitation_name );
             }
             return;

@@ -87,7 +87,11 @@ Example effect:
   "effect_msg_frequency": 16, // chance to display this message every time the player is afflicted.
   "effect_msg_blocked_frequency": 32, // chance to display this message every time the player blocks the effect with clothing.
   "message_type": 2, // type of message to display: good, bad, mixed, etc.
-  "protection_data": [ { "check": "RAIN_PROTECT", "odds": 1 }, { "check": "ACIDPROOF", "odds": 1}, { "check": "DEFAULT", "odds": 2 } ] //Check is a flag/trait the player may have, odds is the one in x chance this flag/trait will protect the player from this weather effect.
+  "protection_data": [
+    { "check": "RAIN_PROTECT", "odds": 1 },
+    { "check": "ACIDPROOF", "odds": 1 },
+    { "check": "DEFAULT", "odds": 2 }
+  ] //Check is a flag/trait the player may have, odds is the one in x chance this flag/trait will protect the player from this weather effect.
   //"check": "DEFAULT" has special behaviour and will roll the one in x chance without checking if the player has a flag/trait actually called "DEFAULT"
 }
 ```

@@ -202,7 +202,7 @@ void weather_type::load( const JsonObject &jo, const std::string & )
                     odds = jc.get_int( "odds", 0 );
                 }
                 if( check != "" && odds > 0 ) {
-                   protection_data.emplace_back( check, odds);
+                    protection_data.emplace_back( check, odds );
                 }
             }
 
@@ -213,7 +213,7 @@ void weather_type::load( const JsonObject &jo, const std::string & )
             [ = ]( int intensity ) {
                 weather_effect::effect( intensity, duration, bp_id, effect_intensity, id_str, msg,
                                         msg_freq, msg_blocked_freq,
-                                        gmt, precipitation_name, protection_data);
+                                        gmt, precipitation_name, protection_data );
             },
             intensity
             );
