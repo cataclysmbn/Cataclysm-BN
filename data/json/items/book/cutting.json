@@ -62,7 +62,7 @@
     "color": "blue",
     "skill": "cutting",
     "required_level": 3,
-    "max_level": 8,
+    "max_level": 6,
     "intelligence": 9,
     "time": "28 m"
   }
