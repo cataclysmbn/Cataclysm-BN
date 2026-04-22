@@ -5214,8 +5214,9 @@ void game::monmove()
     // distance is calculated exactly once.  The pair is (dist, monster*) so
     // the default comparator orders by distance first.
     std::vector<std::pair<int, monster *>> eligible;
-    eligible.reserve( all_monsters().items.size() );
-    for( monster &critter : all_monsters() ) {
+    auto monsters = all_monsters();
+    eligible.reserve( monsters.items ? monsters.items->size() : 0 );
+    for( monster &critter : monsters ) {
         if( !critter.is_dead() &&
             !critter.has_effect( effect_ridden ) &&
             critter.moves > 0 &&

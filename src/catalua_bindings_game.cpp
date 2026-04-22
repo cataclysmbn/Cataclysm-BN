@@ -208,16 +208,22 @@ void cata::detail::reg_game_api( sol::state &lua )
         auto mon_rng = g->all_monsters();
         int idx = 1;
         out[idx++] = static_cast<Creature *>( &g->u );
-        std::ranges::for_each(
-            npc_rng.items
-        | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
-        | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool { return sp && !sp->is_dead(); } ),
-        [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = static_cast<Creature *>( sp.get() ); } );
-        std::ranges::for_each(
-            mon_rng.items
-        | std::views::transform( []( const weak_ptr_fast<monster> &wp ) { return wp.lock(); } )
-        | std::views::filter( []( const shared_ptr_fast<monster> &sp ) -> bool { return sp && !sp->is_dead(); } ),
-        [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = static_cast<Creature *>( sp.get() ); } );
+        if( npc_rng.items )
+        {
+            std::ranges::for_each(
+                *npc_rng.items
+            | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
+            | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool { return sp && !sp->is_dead(); } ),
+            [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = static_cast<Creature *>( sp.get() ); } );
+        }
+        if( mon_rng.items )
+        {
+            std::ranges::for_each(
+                *mon_rng.items
+            | std::views::transform( []( const weak_ptr_fast<monster> &wp ) { return wp.lock(); } )
+            | std::views::filter( []( const shared_ptr_fast<monster> &sp ) -> bool { return sp && !sp->is_dead(); } ),
+            [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = static_cast<Creature *>( sp.get() ); } );
+        }
         return out;
     } );
 
@@ -227,11 +233,14 @@ void cata::detail::reg_game_api( sol::state &lua )
         auto out = lua.create_table();
         auto rng = g->all_npcs();
         int idx = 1;
-        std::ranges::for_each(
-            rng.items
-        | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
-        | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool { return sp && !sp->is_dead(); } ),
-        [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
+        if( rng.items )
+        {
+            std::ranges::for_each(
+                *rng.items
+            | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
+            | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool { return sp && !sp->is_dead(); } ),
+            [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
+        }
         return out;
     } );
 
@@ -241,11 +250,14 @@ void cata::detail::reg_game_api( sol::state &lua )
         auto out = lua.create_table();
         auto rng = g->all_monsters();
         int idx = 1;
-        std::ranges::for_each(
-            rng.items
-        | std::views::transform( []( const weak_ptr_fast<monster> &wp ) { return wp.lock(); } )
-        | std::views::filter( []( const shared_ptr_fast<monster> &sp ) -> bool { return sp && !sp->is_dead(); } ),
-        [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = sp.get(); } );
+        if( rng.items )
+        {
+            std::ranges::for_each(
+                *rng.items
+            | std::views::transform( []( const weak_ptr_fast<monster> &wp ) { return wp.lock(); } )
+            | std::views::filter( []( const shared_ptr_fast<monster> &sp ) -> bool { return sp && !sp->is_dead(); } ),
+            [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = sp.get(); } );
+        }
         return out;
     } );
 
@@ -255,13 +267,16 @@ void cata::detail::reg_game_api( sol::state &lua )
         auto out = lua.create_table();
         auto rng = g->all_npcs();
         int idx = 1;
-        std::ranges::for_each(
-            rng.items
-        | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
-        | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool {
-            return sp && !sp->is_dead() && sp->is_simulated();
-        } ),
-        [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
+        if( rng.items )
+        {
+            std::ranges::for_each(
+                *rng.items
+            | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
+            | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool {
+                return sp && !sp->is_dead() && sp->is_simulated();
+            } ),
+            [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
+        }
         return out;
     } );
 
