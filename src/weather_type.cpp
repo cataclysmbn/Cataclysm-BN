@@ -6,8 +6,6 @@
 #include "bodypart.h"
 #include "weather.h"
 
-//#include "itype.h"
-
 namespace
 {
 generic_factory<weather_type> weather_type_factory( "weather_type" );
