@@ -49,7 +49,7 @@
     "intelligence": 4,
     "time": "18 m"
   },
-      {
+  {
     "id": "textbook_cutting",
     "type": "BOOK",
     "copy-from": "base_book",

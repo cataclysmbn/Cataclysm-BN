@@ -32,7 +32,7 @@
     "intelligence": 4,
     "time": "18 m"
   },
-      {
+  {
     "id": "textbook_melee",
     "type": "BOOK",
     "copy-from": "base_book",

@@ -48,7 +48,7 @@
     "intelligence": 7,
     "time": "20 m"
   },
-        {
+  {
     "id": "textbook_archery",
     "type": "BOOK",
     "copy-from": "base_book",

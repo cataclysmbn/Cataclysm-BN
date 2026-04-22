@@ -50,7 +50,7 @@
     "time": "6 m",
     "fun": 1
   },
-      {
+  {
     "id": "textbook_dodge",
     "type": "BOOK",
     "copy-from": "base_book",

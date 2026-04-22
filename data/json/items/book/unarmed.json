@@ -32,7 +32,7 @@
     "intelligence": 3,
     "time": "15 m"
   },
-      {
+  {
     "id": "textbook_brawl",
     "type": "BOOK",
     "copy-from": "base_book",
