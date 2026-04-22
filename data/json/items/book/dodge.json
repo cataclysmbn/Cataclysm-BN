@@ -63,7 +63,7 @@
     "color": "blue",
     "skill": "dodge",
     "required_level": 4,
-    "max_level": 8,
+    "max_level": 6,
     "intelligence": 9,
     "time": "28 m"
   }
