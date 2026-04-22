@@ -2,9 +2,9 @@
   {
     "type": "overmap_terrain",
     "id": "fema_entrance",
-    "name": "fema camp",
+    "name": "military camp",
     "sym": "+",
-    "color": "blue",
+    "color": "green",
     "see_cost": 5,
     "extras": "build",
     "flags": [ "RISK_HIGH", "SOURCE_GUN", "SOURCE_AMMO", "SOURCE_FOOD" ]
@@ -12,9 +12,9 @@
   {
     "type": "overmap_terrain",
     "id": [ "fema", "fema_1_3", "fema_2_1", "fema_2_2", "fema_2_3", "fema_3_1", "fema_3_2", "fema_3_3" ],
-    "name": "fema camp",
-    "sym": "F",
-    "color": "i_blue",
+    "name": "military camp",
+    "sym": "M",
+    "color": "i_green",
     "see_cost": 5,
     "extras": "build",
     "flags": [ "RISK_HIGH", "SOURCE_GUN", "SOURCE_AMMO", "SOURCE_FOOD" ]
