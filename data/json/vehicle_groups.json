@@ -489,19 +489,12 @@
   {
     "type": "vehicle_group",
     "id": "experimental_military_vehicles",
-    "vehicles": [
-      [ "tank_xm7_elec", 50 ],
-      [ "tank_xm_hover", 30 ],
-      [ "xapc_hover", 40 ]
-    ]
+    "vehicles": [ [ "tank_xm7_elec", 50 ], [ "tank_xm_hover", 30 ], [ "xapc_hover", 40 ] ]
   },
-    {
+  {
     "type": "vehicle_group",
     "id": "military_decoy_vehicles",
-    "vehicles": [
-      [ "whillys_mb", 50 ],
-      [ "4x4_car", 50 ]
-    ]
+    "vehicles": [ [ "whillys_mb", 50 ], [ "4x4_car", 50 ] ]
   },
   {
     "type": "vehicle_group",

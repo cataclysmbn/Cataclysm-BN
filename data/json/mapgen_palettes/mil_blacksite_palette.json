@@ -112,7 +112,7 @@
       "W": "f_workbench",
       "3": "f_drill_press",
       "δ": "f_wardrobe",
-      "Ñ": "f_NMR", 
+      "Ñ": "f_NMR",
       "Ṁ": "f_MS",
       "я": "f_robotic_assembler",
       "Ḟ": "f_arc_furnace",
@@ -203,6 +203,6 @@
       "¾": "f_pinball_machine",
       "×": "f_triple_bunkbed"
     },
-    "vendingmachines": { "V": {} }
+    "vendingmachines": { "V": {  } }
   }
 ]
