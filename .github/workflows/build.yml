@@ -296,9 +296,40 @@ jobs:
           buildPreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
 
       - name: Setup Deno (Lua docs)
-        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
         uses: denoland/setup-deno@v2
         with: { cache: true }
+
+      - name: Setup Rust (Lua typecheck)
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install EmmyLua checker
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
+        run: cargo install emmylua_check --locked
+
+      - name: Generate Lua reference/annotations for typecheck
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
+        id: lua-docs-typecheck
+        continue-on-error: true
+        env:
+          CATA_EXE: ./cataclysm-bn-tiles
+        run: |
+          ln -sf build/src/cataclysm-bn-tiles ./cataclysm-bn-tiles
+          deno task docs:gen
+
+      - name: Run EmmyLua check
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && steps.lua-docs-typecheck.outcome == 'success'
+        id: emmylua-check
+        continue-on-error: true
+        run: emmylua_check .
+
+      - name: Warn on Lua typecheck failure
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && (steps.lua-docs-typecheck.outcome != 'success' || steps.emmylua-check.outcome == 'failure')
+        run: |
+          echo "::warning::Lua annotation generation or EmmyLua typecheck failed. See the step logs for details."
+          echo "## Lua Typecheck Warning" >> $GITHUB_STEP_SUMMARY
+          echo "Lua annotation generation or \\`emmylua_check .\\` failed in this build. The workflow continues by design." >> $GITHUB_STEP_SUMMARY
 
       - name: Generate Lua reference/annotations
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'

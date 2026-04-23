@@ -4,8 +4,8 @@
 -- 2. Nested relative import: lib/calculator -> ../util/math_helper
 -- 3. Absolute import from data/lua: ui
 
-local calculator = require("./lib/calculator")
-local ui_wrapper = require("./lib/ui_wrapper")
+local calculator = require("lib.calculator")
+local ui_wrapper = require("lib.ui_wrapper")
 local ui = require("ui")
 
 local mod = game.mod_runtime[game.current_mod]

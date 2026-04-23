@@ -38,6 +38,7 @@ mod.remote_wireless_range_z = 2
 mod.get_remote_base_omt = function(item) return item:get_var_tri(mod.var_base, Tripoint.new(0, 0, 0)) end
 
 -- Get abs ms of remote's base
+---@type fun(item: Item): Tripoint
 mod.get_remote_base_abs_ms = function(item)
   local p_omt = mod.get_remote_base_omt(item)
   return coords.omt_to_ms(p_omt) + Point.new(const.OMT_MS_SIZE // 2, const.OMT_MS_SIZE // 2)
@@ -60,8 +61,8 @@ mod.on_mapgen_postprocess_hook = function(params)
       -- TODO: Check whether using has_items_at() gives a speedup in Lua.
       --       In C++, it's supposed to be faster then !i_at( p ).empty()
       if map:has_items_at(p) then
-        local items = map:get_items_at(p):as_item_stack()
-        for _, item in pairs(items) do
+        local items = map:get_items_at(p):as_item_stack():items()
+        for _, item in ipairs(items) do
           if item:get_type():str() == item_id then mod.set_remote_base(item, p_omt) end
         end
       end
@@ -180,18 +181,18 @@ mod.build_target_list = function(map, pos_omt)
       local idx_found = to_close_list[t:str()]
       local can_open = false
       local can_close = false
-      if idx_found then
+      if idx_found ~= nil then
         can_close = true
       else
         idx_found = to_open_list[t:str()]
-        if idx_found then
+        if idx_found ~= nil then
           can_open = true
         else
           idx_found = check_is_tile_inert(tlist, t:str())
         end
       end
 
-      if idx_found then
+      if idx_found ~= nil then
         act_tiles[tostring(p)] = { p = p, idx = idx_found, can_open = can_open, can_close = can_close }
       end
     end
@@ -270,6 +271,7 @@ mod.show_msg_remote_working = function() gapi.add_msg(locale.gettext("The remote
 mod.invoke_block = function(block, grid)
   local tlist = mod.get_transform_list()
   local transform = tlist[block.idx]
+  if not transform then return 0 end
   local power_available = grid:get_resource(true)
 
   if block.can_open then
@@ -293,8 +295,9 @@ mod.invoke_block = function(block, grid)
 end
 
 -- Main iuse function. Returns amount of charges consumed from item.
+---@type fun(params: ItemUseParams): integer
 mod.iuse_function = function(params)
-  local who = params.user
+  local _who = params.user
   local item = params.item
   local pos = params.pos
   local user_pos = gapi.get_map():get_abs_ms(pos)
@@ -309,6 +312,7 @@ mod.iuse_function = function(params)
     ]]
 
   local base_pos = mod.get_remote_base_abs_ms(item)
+  ---@cast base_pos Tripoint
 
   -- Check distance to wireless base the remote is bound to.
   -- The base does not physically exist in game world, but we imagine
@@ -322,7 +326,7 @@ mod.iuse_function = function(params)
   end
 
   local base_pos_omt = mod.get_remote_base_omt(item)
-  local grid = gapi.get_distribution_grid_tracker():get_grid_at_abs_ms(base_pos)
+  local grid = gapi.get_distribution_grid_tracker():grid_at(base_pos)
   local power_available = grid:get_resource(true)
 
   -- If house has no power, the wireless base also has no power and can't emit signal.

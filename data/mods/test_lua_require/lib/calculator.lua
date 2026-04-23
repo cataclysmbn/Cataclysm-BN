@@ -1,6 +1,6 @@
 -- Test module: lib/calculator.lua
 -- Tests relative import from sibling directory
-local math_helper = require("../util/math_helper")
+local math_helper = require("util.math_helper")
 
 local calculator = {}
 

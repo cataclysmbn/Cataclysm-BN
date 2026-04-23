@@ -103,15 +103,7 @@ local function apply_penalty(who, morale_id, penalty)
     return
   end
 
-  who:add_morale(
-    morale_id,
-    -magnitude,
-    -magnitude,
-    TimeDuration.from_minutes(20),
-    TimeDuration.from_minutes(20),
-    true,
-    nil
-  )
+  who:add_morale(morale_id, -magnitude, -magnitude, TimeDuration.from_minutes(20), TimeDuration.from_minutes(20), true)
 end
 
 ---@param who Character
@@ -346,8 +338,7 @@ local function on_character_try_move_with_auto_mop(params)
   local here = gapi.get_map()
   if not is_wielding_mop(ch) then return true end
 
-  local mopped_tiles = auto_mop_surrounding(here, dest)
-  if mopped_tiles > 0 then ch:mod_moves(-150 * mopped_tiles) end
+  ch:mod_moves(-150 * auto_mop_surrounding(here, dest))
   return true
 end
 
