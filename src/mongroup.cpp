@@ -345,6 +345,8 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
     MonsterGroup g;
 
     g.name = mongroup_id( jo.get_string( "name" ) );
+    g.evolve_chance = jo.get_int( "evolve_chance", 0 );
+    g.evolve_repeat = jo.get_int( "evolve_repeat", 0 );
     bool extending = false;  //If already a group with that name, add to it instead of overwriting it
     bool allow_override = jo.get_bool( "override", false );
     if( monsterGroupMap.contains( g.name ) && !allow_override ) {
@@ -444,9 +446,25 @@ const mtype_id &MonsterGroupManager::GetRandomMonsterFromGroup( const mongroup_i
 {
     const auto &group = group_name.obj();
     int spawn_chance = rng( 1, group.freq_total ); //Default 1000 unless specified
+    int count = 0;
     for( const auto &monster_type : group.monsters ) {
+        auto montype = monster_type.name;
         if( monster_type.frequency >= spawn_chance ) {
-            return monster_type.name;
+            while( count < group.evolve_repeat ) {
+                if( rng( 0, 100 ) < group.evolve_chance ) {
+                    if( montype->upgrade_into ) {
+                        //If we upgrade into a blacklisted monster, treat it as though we are non-upgradeable
+                        if( MonsterGroupManager::monster_is_blacklisted( montype->upgrade_into ) ) {
+                            count = group.evolve_repeat;
+                        }
+                        montype = montype->upgrade_into;
+                    } else {
+                        montype = MonsterGroupManager::GetRandomMonsterFromGroup( montype->upgrade_group );
+                    }
+                }
+                count++;
+            }
+            return montype;
         } else {
             spawn_chance -= monster_type.frequency;
         }

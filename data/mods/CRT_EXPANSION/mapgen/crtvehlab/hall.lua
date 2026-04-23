@@ -103,10 +103,10 @@ draw_hall_set = function(data, map, set, pos)
 end
 
 crt_lab_veh_hall.draw = function(data, map)
+  map:rotate( 4 - data:get_rotation() )
   data:generate("crt_lab_veh_hall_frame")
   -- Generate rotates the map but we need unrotated maps for nested generation
   -- Rotation has 4 states, you rotate 3 need 1 more to get back to normal and so on
-  map:rotate(4 - data:get_rotation())
   local weight = gapi.rng(0, total_weight)
   local count = 0
   local hall
