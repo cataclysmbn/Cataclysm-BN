@@ -38,8 +38,8 @@
     "symbol": "O",
     "broken_symbol": "x",
     "color": "light_gray",
-    "rotor_diameter": 16,
-    "propeller_diameter": 8,
+    "rotor_diameter": 5,
+    "propeller_diameter": 5,
     "requirements": {
       "install": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
       "removal": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
