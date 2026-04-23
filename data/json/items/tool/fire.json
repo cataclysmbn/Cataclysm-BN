@@ -266,7 +266,7 @@
         "type": "transform"
       }
     ],
-    "flags": [ "FIRESTARTER", "SLEEP_IGNORE" ]
+    "flags": [ "FIRESTARTER", "SLEEP_IGNORE", "WATER_EXTINGUISH", "LIGHT_2" ]
   },
   {
     "id": "electric_lighter",
