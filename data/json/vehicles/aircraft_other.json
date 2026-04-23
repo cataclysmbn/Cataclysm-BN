@@ -786,7 +786,7 @@
       "E": [
         "xlframe_vertical",
         "carbon_halfboard_vertical",
-        "engine_turbine_small",
+        "engine_turbine_large",
         "alternator_car",
         "medium_storage_battery",
         "wing_carbon_horizontal"
@@ -837,6 +837,89 @@
       { "x": -3, "y": -1, "chance": 50, "items": [ "aerial_bomb" ] },
       { "x": -2, "y": 1, "chance": 50, "items": [ "aerial_bomb" ] },
       { "x": -3, "y": 1, "chance": 50, "items": [ "aerial_bomb" ] }
+    ]
+  },
+  {
+    "id": "plane_av8_harrier",
+    "type": "vehicle",
+    "name": "AV-8 Harrier",
+    "blueprint": [
+      "  |&       ",
+      "  |b!      ",
+      "! |B=--147 ",
+      "|-=FGET2S8>",
+      "# |B=--369 ",
+      "  |b#      ",
+      "  |(       "
+    ],
+    "blueprint_origin": { "x": 8, "y": 3 },
+    "palette": {
+      "-": [ "xlframe_vertical", "carbon_halfboard_vertical" ],
+      ">": [ "xlframe_vertical", "carbon_halfboard_cover" ],
+      "=": [ "xlframe_vertical", "carbon_halfboard_horizontal", "wing_carbon_horizontal" ],
+      "B": [ "xlframe_vertical", "trunk_carbon", "bomber controls", "wing_carbon_horizontal" ],
+      "b": [ "xlframe_vertical", "trunk_carbon", "bomber controls", "wheel_mount_light", "wheel_small", "wing_carbon_horizontal" ],
+      "E": [
+        "xlframe_vertical",
+        "carbon_halfboard_vertical",
+        "engine_turbine_medium",
+        "alternator_car",
+        "medium_storage_battery"
+      ],
+      "F": [
+        "xlframe_vertical",
+        "trunk_carbon",
+        { "part": "tank_30gal_drum", "fuel": "jp8" },
+        "bomber controls",
+        "wing_carbon_horizontal"
+      ],
+      "G": [ "xlframe_vertical", "carbon_halfboard_horizontal", "wheel_mount_medium", "wheel", { "part": "tank_30gal_drum", "fuel": "jp8" }, "wing_carbon_horizontal" ],
+      "S": [
+        "xlframe_vertical",
+        "seat",
+        "seatbelt_heavyduty",
+        "controls",
+        "dashboard",
+        "black_box",
+        "programmable_autopilot",
+        "tracker",
+        "roof"
+      ],
+      "T": [         "xlframe_vertical",
+        "carbon_halfboard_vertical",
+        "vtol_thruster"
+ ],
+      "1": [ "xlframe_vertical", "windshield_sw" ],
+      "2": [ "xlframe_vertical", "windshield_horizontal_rear", "wheel_mount_medium_steerable", "wheel" ],
+      "3": [ "xlframe_vertical", "windshield_se" ],
+      "4": [ "xlframe_vertical", "door_vertical_left" ],
+      "6": [ "xlframe_vertical", "door_vertical_right" ],
+      "7": [
+        "xlframe_nw",
+        "windshield_nw",
+        "turret_mount",
+        {
+          "part": "mounted_25mm_autocannon",
+          "ammo": 80,
+          "ammo_types": [ "25mm_apds", "25mm_hei" ],
+          "ammo_qty": [ 10, 50 ]
+        }
+      ],
+      "8": [ "xlframe_vertical", "windshield_horizontal_front" ],
+      "9": [ "xlframe_ne", "windshield_ne" ],
+      "|": [ "wing_carbon_external_horizontal" ],
+      "!": [ "wing_carbon_external_left" ],
+      "&": [ "lit_wing_carbon_external_left" ],
+      "#": [ "wing_carbon_external_right" ],
+      "(": [ "lit_wing_carbon_external_right" ]
+    },
+    "items": [
+      { "x": 0, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": -5, "y": -2, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -5, "y": -1, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -5, "y": 0, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -5, "y": 1, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -5, "y": 2, "chance": 50, "items": [ "aerial_bomb" ] }
     ]
   }
 ]
