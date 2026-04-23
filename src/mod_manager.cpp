@@ -290,6 +290,7 @@ std::optional<MOD_INFORMATION> load_modfile( const JsonObject &jo, const std::st
     assign( jo, "license", modfile.license );
     assign( jo, "authors", modfile.authors );
     assign( jo, "maintainers", modfile.maintainers );
+    assign( jo, "loading_images", modfile.loading_images );
     assign( jo, "version", modfile.version );
     assign( jo, "lua_api_version", modfile.lua_api_version );
     assign( jo, "dependencies", modfile.dependencies );

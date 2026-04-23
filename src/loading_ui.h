@@ -1,18 +1,33 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 
 class background_pane;
+class loading_image_splash;
 class ui_adaptor;
 class uilist;
+
+class loading_image_splash
+{
+    private:
+        std::unique_ptr<background_pane> ui_background;
+        std::string loading_image_path;
+        std::optional<std::string> loading_image_author;
+        bool loading_image_lookup_attempted = false;
+
+    public:
+        loading_image_splash();
+        ~loading_image_splash();
+};
 
 class loading_ui
 {
     private:
         std::unique_ptr<uilist> menu;
         std::unique_ptr<ui_adaptor> ui;
-        std::unique_ptr<background_pane> ui_background;
+        std::unique_ptr<loading_image_splash> ui_splash;
 
         void init();
     public:
@@ -37,5 +52,3 @@ class loading_ui
          */
         void show();
 };
-
-

@@ -30,6 +30,9 @@ Example:
     "authors": ["That Guy", "His Friend"],
     // If the author(s) abandoned the mod for some reason, this entry lists current maintainers.
     "maintainers": ["Mr. BugFixer", "BugFixer Jr."],
+    // Optional loading screen image paths, relative to the mod directory. Entries may name an image file or a directory to search recursively.
+    // The author credit is taken from the image filename before the first underscore, e.g. "foo_rest.png" displays "by foo" in white text with a black outline.
+    "loading_images": ["load_1.png", "load_2.png", "some_directory"],
     // Mod version string. This is for users' and maintainers' convenience, so you can use whatever is most convenient here (e.g. date).
     "version": "2021-12-02",
     // List of mod's dependencies. Dependencies are guaranteed to be loaded before the mod is loaded.
