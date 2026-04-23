@@ -17,10 +17,7 @@
       },
       {
         "file": "tileset/medic.png",
-        "tiles": [
-          { "id": "mon_crt_medic_t1", "fg": 9, "rotates": false },
-          { "id": "mon_crt_medic_t2", "fg": 10, "rotates": false },
-        ]
+        "tiles": [ { "id": "mon_crt_medic_t1", "fg": 9, "rotates": false }, { "id": "mon_crt_medic_t2", "fg": 10, "rotates": false } ]
       }
     ]
   }
