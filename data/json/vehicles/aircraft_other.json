@@ -859,13 +859,7 @@
       "=": [ "xlframe_vertical", "carbon_halfboard_horizontal", "wing_carbon_horizontal" ],
       "B": [ "xlframe_vertical", "trunk_carbon", "bomber controls", "wing_carbon_horizontal" ],
       "b": [ "xlframe_vertical", "trunk_carbon", "bomber controls", "wheel_mount_light", "wheel_small", "wing_carbon_horizontal" ],
-      "E": [
-        "xlframe_vertical",
-        "carbon_halfboard_vertical",
-        "engine_turbine_medium",
-        "alternator_car",
-        "medium_storage_battery"
-      ],
+      "E": [ "xlframe_vertical", "carbon_halfboard_vertical", "engine_turbine_medium", "alternator_car", "medium_storage_battery" ],
       "F": [
         "xlframe_vertical",
         "trunk_carbon",
@@ -873,7 +867,14 @@
         "bomber controls",
         "wing_carbon_horizontal"
       ],
-      "G": [ "xlframe_vertical", "carbon_halfboard_horizontal", "wheel_mount_medium", "wheel", { "part": "tank_30gal_drum", "fuel": "jp8" }, "wing_carbon_horizontal" ],
+      "G": [
+        "xlframe_vertical",
+        "carbon_halfboard_horizontal",
+        "wheel_mount_medium",
+        "wheel",
+        { "part": "tank_30gal_drum", "fuel": "jp8" },
+        "wing_carbon_horizontal"
+      ],
       "S": [
         "xlframe_vertical",
         "seat",
@@ -885,10 +886,7 @@
         "tracker",
         "roof"
       ],
-      "T": [         "xlframe_vertical",
-        "carbon_halfboard_vertical",
-        "vtol_thruster"
- ],
+      "T": [ "xlframe_vertical", "carbon_halfboard_vertical", "vtol_thruster" ],
       "1": [ "xlframe_vertical", "windshield_sw" ],
       "2": [ "xlframe_vertical", "windshield_horizontal_rear", "wheel_mount_medium_steerable", "wheel" ],
       "3": [ "xlframe_vertical", "windshield_se" ],
