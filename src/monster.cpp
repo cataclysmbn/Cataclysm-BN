@@ -421,13 +421,16 @@ int monster::next_upgrade_time()
     }
     const int scaled_half_life = type->half_life * get_option<float>( "MONSTER_UPGRADE_FACTOR" );
     int day = 1; // 1 day of guaranteed evolve time
-    for( int i = 0; i < UPGRADE_MAX_ITERS; i++ ) {
+    for( int i = 0; i < get_option<int>( "EVOLVE_MAX_ITERS" ); i++ ) {
         if( one_in( 2 ) ) {
             day += rng( 0, scaled_half_life );
             return day;
         } else {
             day += scaled_half_life;
         }
+    }
+    if( get_option<bool>( "ALWAYS_EVOLVE" ) && day >= 0 ) {
+        return day;
     }
     // didn't manage to upgrade, shouldn't ever then
     upgrades = false;
