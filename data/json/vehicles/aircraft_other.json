@@ -816,7 +816,7 @@
         "windshield_nw",
         "turret_mount",
         {
-          "part": "mounted_25mm_autocannon",
+          "part": "mounted_25mm_rotary_cannon",
           "ammo": 80,
           "ammo_types": [ "25mm_apds", "25mm_hei" ],
           "ammo_qty": [ 10, 50 ]
@@ -897,7 +897,7 @@
         "windshield_nw",
         "turret_mount",
         {
-          "part": "mounted_25mm_autocannon",
+          "part": "mounted_25mm_rotary_cannon",
           "ammo": 80,
           "ammo_types": [ "25mm_apds", "25mm_hei" ],
           "ammo_qty": [ 10, 50 ]

@@ -94,6 +94,7 @@
     "looks_like": "m134",
     "ammo": "25mm",
     "durability": 9,
+    "dispersion": 50,
     "modes": [ [ "DEFAULT", "auto", 10 ] ],
     "reload": 500,
     "ups_charges": 12,

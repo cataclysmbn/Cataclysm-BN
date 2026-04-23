@@ -1041,7 +1041,7 @@
   },
   {
     "type": "vehicle_part",
-    "id": "mounted_25mm_autocannon",
+    "id": "mounted_25mm_rotary_cannon",
     "looks_like": "mounted_m134",
     "copy-from": "turret_tank",
     "name": "25mm rotary cannon",
