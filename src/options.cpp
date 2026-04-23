@@ -2589,11 +2589,9 @@ void options_manager::add_options_debug()
         this->add_empty_line( debug );
     };
 
-    add_empty_line();
-
-    add_option_group( debug, Group( "debug_log", to_translation( "Logging" ),
-                                    to_translation( "Configure debug.log verbosity." ) ),
-    [&]( auto & page_id ) {
+    const auto debug_log_group = Group( "debug_log", to_translation( "Logging" ),
+                                        to_translation( "Configure debug.log verbosity." ) );
+    const auto add_debug_log_entries = [&]( const std::string & page_id ) {
         for( const debug_log_level &e : debug_log_levels ) {
             add( e.opt_id, page_id, e.opt_name, e.opt_descr, e.opt_default );
         }
@@ -2603,7 +2601,48 @@ void options_manager::add_options_debug()
         for( const debug_log_class &e : debug_log_classes ) {
             add( e.opt_id, page_id, e.opt_name, e.opt_descr, e.opt_default );
         }
+    };
+
+    auto page_iter = std::ranges::find_if( pages_, []( const Page & page ) {
+        return page.id_ == debug;
     } );
+    if( page_iter == pages_.end() ) {
+        add_empty_line();
+        add_option_group( debug, debug_log_group, add_debug_log_entries );
+        return;
+    }
+
+    const auto chargen_iter = std::ranges::find_if( page_iter->items_, []( const PageItem & item ) {
+        return item.type == ItemType::GroupHeader && item.data == "chargen_debug";
+    } );
+    if( chargen_iter == page_iter->items_.end() ) {
+        add_empty_line();
+        add_option_group( debug, debug_log_group, add_debug_log_entries );
+        return;
+    }
+
+    const auto duplicate_group = std::ranges::any_of( groups_, [&]( const Group & group ) {
+        return group.id_ == debug_log_group.id_;
+    } );
+    if( duplicate_group ) {
+        debugmsg( "Option group with id '%s' already exists", debug_log_group.id_ );
+        return;
+    }
+
+    groups_.push_back( debug_log_group );
+
+    auto insert_pos = std::ranges::distance( page_iter->items_.begin(), chargen_iter );
+    if( insert_pos > 0 && page_iter->items_[insert_pos - 1].type != ItemType::BlankLine ) {
+        page_iter->items_.insert( page_iter->items_.begin() + insert_pos,
+                                  PageItem( ItemType::BlankLine, "", "" ) );
+        ++insert_pos;
+    }
+    page_iter->items_.insert( page_iter->items_.begin() + insert_pos,
+                              PageItem( ItemType::GroupHeader, debug_log_group.id_, debug_log_group.id_ ) );
+
+    adding_to_group_ = debug_log_group.id_;
+    add_debug_log_entries( debug );
+    adding_to_group_.clear();
 
 }
 

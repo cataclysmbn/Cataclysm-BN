@@ -291,7 +291,7 @@
     "stype": "bool",
     "scope": "global",
     "page": "debug",
-    "group": "autodrive_debug",
+    "group": "systems_debug",
     "menu_text": "New bayonet system",
     "tooltip": "If true, bayonets replace weapon attack instead of adding to it.  WIP feature, weakens bayonets heavily at the moment.",
     "default": false
@@ -312,5 +312,19 @@
     "menu_text": "Use legacy pathfinding",
     "tooltip": "If true, opt out of new pathfinding in favor of legacy one. This makes pathfinding mods not work.",
     "default": false
+  },
+  {
+    "type": "OPTION",
+    "name": "PATHFINDING_MAX_DIST",
+    "stype": "int",
+    "scope": "global",
+    "page": "debug",
+    "group": "pathfinding_debug",
+    "menu_text": "Legacy Pathfinder Distance Cap",
+    "tooltip": "Hard cap on straight-line pathfinding distance (in tiles) for the legacy pathfinder.  Monsters and NPCs whose configured range exceeds this value are limited to it.  This limits worst-case CPU and memory usage at large reality-bubble sizes.  At bubble size 6 the default of 96 is 50% larger than the old per-side maximum of 60.  Raise this if mods require longer paths; lower it to reduce pathfinding cost at large bubble sizes.",
+    "min": 16,
+    "max": 1000,
+    "default": 96,
+    "deps": [ { "option": "USE_LEGACY_PATHFINDING" } ]
   }
 ]

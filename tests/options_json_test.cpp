@@ -39,6 +39,27 @@ TEST_CASE( "json_option_definitions_are_loaded", "[options][json]" )
     CHECK( skill_rust.getType() == "string_select" );
     CHECK( skill_rust.getItems().size() == 5 );
 
+    auto &pathfinding_max_dist = get_options().get_option( "PATHFINDING_MAX_DIST" );
+    CHECK( pathfinding_max_dist.getType() == "int" );
+    CHECK( pathfinding_max_dist.hasPrerequisite() );
+    CHECK( pathfinding_max_dist.getPrerequisite() == "USE_LEGACY_PATHFINDING" );
+
+    const auto expected_sun_times = std::vector<std::pair<std::string, int>> {
+        { "SUNRISE_SUMMER", 5 },
+        { "SUNRISE_WINTER", 7 },
+        { "SUNRISE_EQUINOX", 6 },
+        { "SUNSET_SUMMER", 21 },
+        { "SUNSET_WINTER", 17 },
+        { "SUNSET_EQUINOX", 19 },
+    };
+    for( const auto &[option_name, default_value] : expected_sun_times ) {
+        INFO( option_name );
+        auto &option = get_options().get_option( option_name );
+        CHECK( option.getType() == "int" );
+        CHECK( option.getPage() == "world_default" );
+        CHECK( option.iDefault == default_value );
+    }
+
     auto &multithreading_enabled = get_options().get_option( "MULTITHREADING_ENABLED" );
     CHECK( multithreading_enabled.getType() == "bool" );
 
@@ -129,6 +150,35 @@ TEST_CASE( "json_option_groups_keep_headers_and_options_contiguous", "[options][
         CHECK( items[first_auto_pickup_index + static_cast<int>( i )].data == auto_pickup_names[i] );
         CHECK( items[first_auto_pickup_index + static_cast<int>( i )].group == "auto_pickup" );
     }
+}
+
+TEST_CASE( "debug_logging_group_stays_between_display_and_chargen_sections", "[options][json]" )
+{
+    const auto page_iter = std::ranges::find_if( get_options().pages_, [](
+    const options_manager::Page & page ) {
+        return page.id_ == "debug";
+    } );
+    REQUIRE( page_iter != get_options().pages_.end() );
+
+    const auto &items = page_iter->items_;
+    const auto debug_display_index = std::ranges::find_if( items, []( const options_manager::PageItem &
+    item ) {
+        return item.type == options_manager::ItemType::GroupHeader && item.data == "debug_display";
+    } ) - items.begin();
+    const auto debug_log_index = std::ranges::find_if( items, []( const options_manager::PageItem &
+    item ) {
+        return item.type == options_manager::ItemType::GroupHeader && item.data == "debug_log";
+    } ) - items.begin();
+    const auto chargen_index = std::ranges::find_if( items, []( const options_manager::PageItem &
+    item ) {
+        return item.type == options_manager::ItemType::GroupHeader && item.data == "chargen_debug";
+    } ) - items.begin();
+
+    REQUIRE( debug_display_index < static_cast<int>( items.size() ) );
+    REQUIRE( debug_log_index < static_cast<int>( items.size() ) );
+    REQUIRE( chargen_index < static_cast<int>( items.size() ) );
+    CHECK( debug_display_index < debug_log_index );
+    CHECK( debug_log_index < chargen_index );
 }
 
 TEST_CASE( "jsonized_options_keep_existing_saved_values", "[options][json]" )
