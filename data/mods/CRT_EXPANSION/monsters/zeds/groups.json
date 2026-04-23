@@ -20,9 +20,6 @@
     "name": "GROUP_CRT_COMBAT",
     "default": "mon_null",
     "//": "Generic C.R.I.T. Spawns for all combat related purposes",
-    "monsters": [
-      { "monster": "mon_crt_medic_t1", "freq": 50, "cost_multiplier": 2 },
-      
-    ]
+    "monsters": [ { "monster": "mon_crt_medic_t1", "freq": 50, "cost_multiplier": 2 } ]
   }
 ]
