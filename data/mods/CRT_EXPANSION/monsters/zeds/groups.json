@@ -1,0 +1,28 @@
+[
+  {
+    "type": "monstergroup",
+    "name": "GROUP_CRT_MEDICAL",
+    "default": "mon_null",
+    "//": "Monster spawns in C.R.I.T. labs, specifically for medical zeds",
+    "monsters": [
+      { "monster": "mon_crt_medic_t1", "freq": 50, "cost_multiplier": 2 },
+      { "monster": "mon_crt_medic_t2", "freq": 25, "cost_multiplier": 4 },
+      { "monster": "mon_zombie_nurse", "freq": 100, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_surgeon", "freq": 33, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_conjoiner", "freq": 5, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_vivisector", "freq": 5, "cost_multiplier": 1 },
+      { "monster": "mon_nursebot_defective", "freq": 10, "cost_multiplier": 1 },
+      { "monster": "mon_nursebot", "freq": 10, "cost_multiplier": 1 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_CRT_COMBAT",
+    "default": "mon_null",
+    "//": "Generic C.R.I.T. Spawns for all combat related purposes",
+    "monsters": [
+      { "monster": "mon_crt_medic_t1", "freq": 50, "cost_multiplier": 2 },
+      
+    ]
+  }
+]
