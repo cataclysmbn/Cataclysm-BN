@@ -6,12 +6,20 @@
       {
         "file": "tileset/engineer.png",
         "tiles": [
-          { "id": "mon_crt_hydrogen_hack", "fg": 0, "rotates": false },
-          { "id": "mon_crt_manhack", "fg": 2, "rotates": false },
-          { "id": "mon_crt_electrohack", "fg": 5, "rotates": false },
-          { "id": "mon_crt_flamehack", "fg": 4, "rotates": false },
-          { "id": "mon_crt_engineer_t3", "fg": 3, "rotates": false },
-          { "id": "mon_crt_manslap", "fg": 6, "rotates": false }
+          { "id": "mon_crt_hydrogen_hack", "fg": 5, "rotates": false },
+          { "id": "mon_crt_manhack", "fg": 0, "rotates": false },
+          { "id": "mon_crt_electrohack", "fg": 2, "rotates": false },
+          { "id": "mon_crt_flamehack", "fg": 1, "rotates": false },
+          { "id": "mon_crt_engineer_t3", "fg": 8, "rotates": false },
+          { "id": "mon_crt_engineer_t1", "fg": 6, "rotates": false },
+          { "id": "mon_crt_manslap", "fg": 3, "rotates": false }
+        ]
+      },
+      {
+        "file": "tileset/medic.png",
+        "tiles": [
+          { "id": "mon_crt_medic_t1", "fg": 9, "rotates": false },
+          { "id": "mon_crt_medic_t2", "fg": 10, "rotates": false },
         ]
       }
     ]
