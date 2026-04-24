@@ -271,13 +271,10 @@
       "set": [ { "point": "terrain", "id": "t_pit_shallow", "x": [ 2, 17 ], "y": [ 4, 14 ], "repeat": [ 0, 6 ] } ],
       "terrain": { "|": "t_brick_wall", " ": "t_region_groundcover" },
       "furniture": { "A": "f_target", "N": "f_sandbag_wall" },
-
       "//": "Not a mass grave but fits for spawning a distribution of random military casings",
       "items": { " ": { "item": "mass_grave_casings", "chance": 5, "repeat": 2 }, "T": { "item": "military_range_guns", "chance": 5 } }
-
     }
   },
-
   {
     "type": "mapgen",
     "method": "json",
@@ -311,7 +308,6 @@
       "place_vehicles": [ { "vehicle": "helicopters", "x": 9, "y": 7, "chance": 25, "fuel": 0, "status": 1, "rotation": 270 } ]
     }
   },
-
   {
     "type": "mapgen",
     "method": "json",
