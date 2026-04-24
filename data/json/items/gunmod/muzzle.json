@@ -40,7 +40,7 @@
     "color": "light_gray",
     "location": "muzzle",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ], [ "SHOTGUNS" ] ],
-    "dispersion_modifier": 25,
+    "dispersion_modifier": 0,
     "handling_modifier": 10,
     "loudness_modifier": 30
   },
