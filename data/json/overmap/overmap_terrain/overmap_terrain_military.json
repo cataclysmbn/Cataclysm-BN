@@ -618,7 +618,7 @@
     "id": [ "mil_airfield_2_3", "mil_airfield_z1_2_3" ],
     "name": "military airfield entrance",
     "sym": "-",
-    "color": "green",
+    "color": "dark_gray",
     "looks_like": "s_lot"
   },
   {
@@ -657,7 +657,7 @@
     ],
     "name": "military airfield runway",
     "sym": "|",
-    "color": "green",
+    "color": "dark_gray",
     "looks_like": "s_air_runway"
   },
   {
