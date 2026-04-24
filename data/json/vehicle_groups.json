@@ -1187,9 +1187,6 @@
   {
     "type": "vehicle_group",
     "id": "airfield_hangar",
-    "vehicles": [
-      [ "plane_f35_lightning", 50 ],
-      [ "plane_f15e_eagle", 75 ]
-    ]
+    "vehicles": [ [ "plane_f35_lightning", 50 ], [ "plane_f15e_eagle", 75 ] ]
   }
 ]
