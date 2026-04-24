@@ -1183,5 +1183,13 @@
       [ "helicopter_atomic", 2 ],
       [ "helicopter_atomic_wreck", 3 ]
     ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "airfield_hangar",
+    "vehicles": [
+      [ "plane_f35_lightning", 50 ],
+      [ "plane_f15e_eagle", 75 ]
+    ]
   }
 ]
