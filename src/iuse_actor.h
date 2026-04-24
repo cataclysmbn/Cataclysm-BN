@@ -767,11 +767,11 @@ class musical_instrument_actor : public iuse_actor
         /**
         * List of sound descriptions for players
         */
-        std::vector< std::string > player_descriptions;
+        std::vector<std::string> player_descriptions;
         /**
         * List of sound descriptions for NPCs
         */
-        std::vector< std::string > npc_descriptions;
+        std::vector<std::string> npc_descriptions;
         /**
          * Display description once per this duration (@ref calendar::once_every).
          */
