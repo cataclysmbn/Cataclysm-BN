@@ -265,13 +265,13 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "quiver_bow_hunter",
-    "entries": [ { "item": "arrow_cf", "charges": 8 } ]
+    "entries": [ { "item": "arrow_cf", "charges": 20 } ]
   },
   {
     "type": "item_group",
     "subtype": "collection",
     "id": "quiver_crossbow_hunter",
-    "entries": [ { "item": "bolt_metal", "charges": 9 } ]
+    "entries": [ { "item": "bolt_metal", "charges": 19 } ]
   },
   {
     "type": "item_group",
@@ -313,7 +313,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "quiver_bionic_prepper",
-    "entries": [ { "item": "bolt_steel", "charges": 20 } ]
+    "entries": [ { "item": "bolt_steel", "charges": 19 } ]
   },
   {
     "type": "item_group",
@@ -325,7 +325,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "quiver_crossbow_wanderer",
-    "entries": [ { "item": "bolt_wood", "charges": 20 } ]
+    "entries": [ { "item": "bolt_wood", "charges": 19 } ]
   },
   {
     "type": "item_group",
