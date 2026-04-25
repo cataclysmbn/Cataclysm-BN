@@ -967,7 +967,7 @@
     "vision_night": 20,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
-    "starting_ammo": { "8mm_caseless": 25, "bot_flashbang_hack": 10 },
+    "starting_ammo": { "8mm_caseless": 25, "bot_flashbang_hack": 100 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
       [ "PULL_METAL_WEAPON", 25 ],
