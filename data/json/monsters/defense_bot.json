@@ -595,6 +595,7 @@
         "require_targeting_monster": false,
         "target_moving_vehicles": true,
         "targeting_cost": 125,
+        "targeting_timeout_extend": -10,
         "targeting_sound": "\"120mm HEAT, up.  Targeting.  On the way.\"",
         "targeting_volume": 60,
         "description": "The mini-tank fires its 120mm gun!",
