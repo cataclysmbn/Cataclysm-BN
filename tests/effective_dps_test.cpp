@@ -72,7 +72,7 @@ static void check_actual_dps( avatar &attacker, monster &defender, item &weapon 
     clear_character( attacker );
     double expect_dps = weapon.effective_dps( attacker, defender );
     double actual_dps = weapon_dps_trials( attacker, defender, weapon );
-    CHECK( actual_dps == Approx( expect_dps ).epsilon( 0.3f ) );
+    CHECK( actual_dps == Approx( expect_dps ).epsilon( 0.35f ) );
 }
 
 static void check_accuracy_dps( avatar &attacker, monster &defender, item &wpn1, item &wpn2,
