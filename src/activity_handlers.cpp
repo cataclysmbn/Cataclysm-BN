@@ -3831,6 +3831,9 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
     const bool is_long = act->values[craft_is_long_idx];
 
     if( crafting_speed <= 0.0f ) {
+        p->add_msg_player_or_npc( m_bad,
+                                  _( "You cannot continue crafting." ),
+                                  _( "<npcname> cannot continue crafting." ) );
         p->cancel_activity();
         return;
     }

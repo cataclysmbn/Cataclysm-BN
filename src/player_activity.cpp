@@ -170,7 +170,7 @@ std::vector<npc *> player_activity::get_assistants( const Character &who, unsign
             return false;
         }
         // NPCs can help craft if awake, taking orders, within pickup range and have clear path
-        bool ok = guy.is_npc() && !guy.in_sleep_state() && guy.is_obeying( who ) &&
+        bool ok = guy.is_npc() && &guy != &who && !guy.in_sleep_state() && guy.is_obeying( who ) &&
                   guy.activity->id() != ACT_ASSIST &&
                   rl_dist( guy.pos(), who.pos() ) < PICKUP_RANGE &&
                   get_map().clear_path( who.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );

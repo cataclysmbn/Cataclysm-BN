@@ -292,6 +292,11 @@ void talk_function::revert_activity( npc &p )
     p.revert_after_activity();
 }
 
+void talk_function::do_craft( npc &p )
+{
+    p.do_npc_craft();
+}
+
 void talk_function::goto_location( npc &p )
 {
     int i = 0;
