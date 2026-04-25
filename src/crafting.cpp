@@ -1096,7 +1096,7 @@ void complete_craft( Character &who, item &craft )
                 if( x_in_y( making.time, time_to_learn ) ) {
                     who.learn_recipe( &making );
                     who.add_msg_if_player( m_good, _( "You memorized the recipe for %s!" ),
-                             making.result_name() );
+                                           making.result_name() );
                 }
             }
         }
