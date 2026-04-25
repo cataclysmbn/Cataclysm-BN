@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <ranges>
 
 #include "point.h"
@@ -26,7 +27,13 @@ class rect_range : public std::ranges::view_interface<rect_range<RectType>>
                 int width = 0;
                 int height = 0;
                 int count_x = 0;
+                int range_size = 0;
                 int index = 0;
+
+                auto same_range( const iterator &rhs ) const -> bool {
+                    return width == rhs.width && height == rhs.height &&
+                           count_x == rhs.count_x && range_size == rhs.range_size;
+                }
 
             public:
                 using value_type = RectType;
@@ -43,26 +50,36 @@ class rect_range : public std::ranges::view_interface<rect_range<RectType>>
                         width = r->width;
                         height = r->height;
                         count_x = r->count.x;
+                        range_size = r->count.x * r->count.y;
                     }
                 }
 
-                auto operator==( const iterator &rhs ) const -> bool {
-                    return index == rhs.index;
-                }
-
-                auto operator<=>( const iterator &rhs ) const { return index <=> rhs.index; } // *NOPAD*
+                auto operator==( const iterator &rhs ) const -> bool = default;
+                auto operator<=>( const iterator &rhs ) const = default; // *NOPAD*
 
                 auto operator*() const -> reference {
                     return { ( index % count_x ) *width, ( index / count_x ) *height, width, height };
                 }
 
                 auto operator+( const int offset ) const -> iterator {
-                    iterator tmp = *this;
+                    auto tmp = *this;
                     tmp.index += offset;
                     return tmp;
                 }
 
+                auto operator-( const int offset ) const -> iterator {
+                    auto tmp = *this;
+                    tmp.index -= offset;
+                    return tmp;
+                }
+
+                friend auto operator+( const difference_type offset, iterator it ) -> iterator {
+                    it += offset;
+                    return it;
+                }
+
                 auto operator-( const iterator &rhs ) const -> difference_type {
+                    assert( same_range( rhs ) );
                     return index - rhs.index;
                 }
 
@@ -111,5 +128,3 @@ class rect_range : public std::ranges::view_interface<rect_range<RectType>>
             return iterator( this, count.x * count.y );
         }
 };
-
-

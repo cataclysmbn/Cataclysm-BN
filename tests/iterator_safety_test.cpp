@@ -14,9 +14,24 @@
 namespace
 {
 
+struct test_rect {
+    int x;
+    int y;
+    int w;
+    int h;
+
+    auto operator<=>( const test_rect & ) const = default; // *NOPAD*
+};
+
 auto make_temp_tripoint_range() -> tripoint_range<tripoint>
 {
     return tripoint_range<tripoint>( tripoint( 0, 0, 0 ), tripoint( 1, 1, 0 ) );
+}
+
+auto make_temp_rect_range( const int width, const int height,
+                           const point count ) -> rect_range<test_rect>
+{
+    return rect_range<test_rect>( width, height, count );
 }
 
 } // namespace
@@ -43,13 +58,7 @@ TEST_CASE( "tripoint_range_iterator_safety", "[iterator][safety]" )
 
 TEST_CASE( "rect_range_iterator_safety_numeric", "[iterator][safety]" )
 {
-    // rect_range iterator stores width, height by value, so it's safe.
-    // Using a simple struct that can be constructed from brace initializer.
-    struct test_rect {
-        int x, y, w, h;
-    };
-
-    auto it = rect_range<test_rect>( 10, 10, point( 2, 2 ) ).begin();
+    auto it = make_temp_rect_range( 10, 10, point( 2, 2 ) ).begin();
 
     // The dereference returns {x, y, width, height} struct where x,y are computed.
     // For this test we just verify we can dereference without crashing after
@@ -61,6 +70,40 @@ TEST_CASE( "rect_range_iterator_safety_numeric", "[iterator][safety]" )
     ++it;
     auto rect2 = *it;
     REQUIRE( rect2.x == 10 ); // Second element (width=10)
+}
+
+TEST_CASE( "rect_range models a C++20 random_access_range", "[iterator][safety][ranges]" )
+{
+    using test_rect_range = rect_range<test_rect>;
+
+    STATIC_REQUIRE( std::random_access_iterator<test_rect_range::iterator> );
+    STATIC_REQUIRE( std::ranges::random_access_range<test_rect_range> );
+    STATIC_REQUIRE( std::ranges::view<test_rect_range> );
+
+    auto range = test_rect_range( 10, 20, point( 3, 2 ) );
+    auto it = range.begin();
+    auto end = range.end();
+
+    REQUIRE( *it == test_rect{ 0, 0, 10, 20 } );
+    REQUIRE( *( it + 4 ) == test_rect{ 10, 20, 10, 20 } );
+    REQUIRE( *( 2 + it ) == test_rect{ 20, 0, 10, 20 } );
+    REQUIRE( *( end - 2 ) == test_rect{ 10, 20, 10, 20 } );
+    REQUIRE( it[5] == test_rect{ 20, 20, 10, 20 } );
+    REQUIRE( end - it == 6 );
+    REQUIRE( std::ranges::distance( range ) == 6 );
+}
+
+TEST_CASE( "rect_range iterator comparisons include range geometry", "[iterator][safety][ranges]" )
+{
+    const auto base_range = rect_range<test_rect>( 10, 10, point( 2, 2 ) );
+    const auto different_step = rect_range<test_rect>( 20, 10, point( 2, 2 ) );
+    const auto different_size = rect_range<test_rect>( 10, 10, point( 2, 3 ) );
+
+    CHECK( base_range.begin() != different_step.begin() );
+    CHECK( base_range.begin() + 1 != different_step.begin() + 1 );
+    CHECK( base_range.end() != different_size.begin() + 4 );
+    CHECK( *( base_range.begin() + 1 ) == test_rect{ 10, 0, 10, 10 } );
+    CHECK( *( different_step.begin() + 1 ) == test_rect{ 20, 0, 20, 10 } );
 }
 
 TEST_CASE( "vehicle_part_range_iterator_safety", "[iterator][safety]" )
