@@ -7,6 +7,7 @@
     "category": "core",
     "core": true,
     "lua_api_version": 2,
+    "loading_images": [ "loading/" ],
     "path": "../../json"
   }
 ]
