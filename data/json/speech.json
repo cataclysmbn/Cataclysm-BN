@@ -3186,31 +3186,31 @@
   {
     "type": "speech",
     "speaker": "mon_feral_blackops_boss_commander",
-    "sound": "\"Enemy spotted.\"",
+    "sound": "\"Enemy spotted!\"",
     "volume": 100
   },
   {
     "type": "speech",
     "speaker": "mon_feral_blackops_boss_commander",
-    "sound": "\"One more loose end...\"",
+    "sound": "\"Contact!  One more loose end…\"",
     "volume": 100
   },
   {
     "type": "speech",
     "speaker": "mon_feral_blackops_boss_commander",
-    "sound": "\"This shouldn't take long.\"",
+    "sound": "\"This shouldn't take long!\"",
     "volume": 100
   },
   {
     "type": "speech",
     "speaker": "mon_feral_blackops_boss_commander",
-    "sound": "\"This one's lasted longer than the others...\"",
+    "sound": "\"Get 'em!  This one's lasted longer than the others…\"",
     "volume": 100
   },
   {
     "type": "speech",
     "speaker": "mon_feral_blackops_boss_commander",
-    "sound": "\"You chose the wrong military installation, kid.\"",
+    "sound": "\"You chose the wrong military installation, kid!\"",
     "volume": 100
   }
 ]
