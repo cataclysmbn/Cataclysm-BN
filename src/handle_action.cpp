@@ -493,7 +493,7 @@ static void pldrive( const tripoint &p )
             return;
         }
     } else {
-        if( empty( veh->get_avail_parts( "REMOTE_CONTROLS" ) ) ) {
+        if( veh->get_avail_parts( "REMOTE_CONTROLS" ).empty() ) {
             add_msg( m_info, _( "Can't drive this vehicle remotely.  It has no working controls." ) );
             return;
         }

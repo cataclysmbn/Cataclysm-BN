@@ -958,7 +958,7 @@ bool Character::has_alarm_clock() const
     map &here = get_map();
     return ( has_item_with_flag( flag_ALARMCLOCK, true ) ||
              ( here.veh_at( pos() ) &&
-               !empty( here.veh_at( pos() )->vehicle().get_avail_parts( "ALARMCLOCK" ) ) ) ||
+               !here.veh_at( pos() )->vehicle().get_avail_parts( "ALARMCLOCK" ).empty() ) ||
              has_bionic( bio_infolink ) );
 }
 
@@ -967,7 +967,7 @@ bool Character::has_watch() const
     map &here = get_map();
     return ( has_item_with_flag( flag_WATCH, true ) ||
              ( here.veh_at( pos() ) &&
-               !empty( here.veh_at( pos() )->vehicle().get_avail_parts( "WATCH" ) ) ) ||
+               !here.veh_at( pos() )->vehicle().get_avail_parts( "WATCH" ).empty() ) ||
              has_bionic( bio_infolink ) );
 }
 

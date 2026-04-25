@@ -655,7 +655,7 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
         //Leave engine running in some vehicles, if the engine has not been destroyed
         //chance decays from 1 in 4 vehicles on day 0 to 1 in (day + 4) in the future.
         int current_day = std::max( to_days<int>( calendar::turn - calendar::turn_zero ), 0 );
-        if( veh_fuel_mult > 0 && !empty( get_avail_parts( "ENGINE" ) ) &&
+        if( veh_fuel_mult > 0 && !get_avail_parts( "ENGINE" ).empty() &&
             one_in( current_day + 4 ) && !destroyEngine && !needsHotwire &&
             has_engine_type_not( fuel_type_muscle, true ) ) {
             engine_on = true;
@@ -3292,7 +3292,7 @@ std::vector<std::vector<int>> vehicle::find_lines_of_parts( int part, const std:
 {
     const auto possible_parts = get_avail_parts( flag );
     std::vector<std::vector<int>> ret_parts;
-    if( empty( possible_parts ) ) {
+    if( possible_parts.empty() ) {
         return ret_parts;
     }
 
