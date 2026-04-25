@@ -598,6 +598,7 @@
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"120mm HEAT, up.  Targeting.  On the way.\"",
         "targeting_volume": 60,
+        "no_crits": true,
         "description": "The mini-tank fires its 120mm gun!",
         "no_ammo_sound": "a hollow click!"
       }
