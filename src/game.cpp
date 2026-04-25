@@ -7750,24 +7750,20 @@ void game::print_items_info( const tripoint &lp, const catacurses::window &w_loo
         }
 
         const int max_width = getmaxx( w_look ) - column - 1;
-        size_t item_index = 0;
-        const size_t item_count = item_names.size();
-        for( const auto &item_entry : item_names ) {
+        for( auto it = item_names.begin(); it != item_names.end(); ++it ) {
             // last line but not last item
-            if( line + 1 >= last_line && item_index + 1 < item_count ) {
+            if( line + 1 >= last_line && std::next( it ) != item_names.end() ) {
                 mvwprintz( w_look, point( column, ++line ), c_yellow, _( "More items here…" ) );
                 break;
             }
 
-            if( item_entry.second.first > 1 ) {
-                trim_and_print( w_look, point( column, ++line ), max_width, item_entry.second.second,
+            if( it->second.first > 1 ) {
+                trim_and_print( w_look, point( column, ++line ), max_width, it->second.second,
                                 pgettext( "%s is the name of the item.  %d is the quantity of that item.", "%s [%d]" ),
-                                item_entry.first.c_str(), item_entry.second.first );
+                                it->first.c_str(), it->second.first );
             } else {
-                trim_and_print( w_look, point( column, ++line ), max_width, item_entry.second.second,
-                                item_entry.first );
+                trim_and_print( w_look, point( column, ++line ), max_width, it->second.second, it->first );
             }
-            ++item_index;
         }
     }
 }
