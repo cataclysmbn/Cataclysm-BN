@@ -79,7 +79,7 @@
     "difficulty": 8,
     "time": "90 m",
     "batch_time_factors": [ 20, 2 ],
-	"charges": 2,
+    "charges": 2,
     "book_learn": [ [ "recipe_serum", 8 ], [ "recipe_labchem", 9 ] ],
     "using": [ [ "serum_production_standard", 37 ] ],
     "components": [ [ [ "iv_mutagen", 1 ] ] ],
