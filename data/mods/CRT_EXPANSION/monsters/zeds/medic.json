@@ -1,5 +1,51 @@
 [
   {
+    "id": "crt_medic_poison_gun",
+    "copy-from": "fake_item",
+    "type": "GUN",
+    "weapon_category": [ "RIFLES" ],
+    "name": "Poison Dart",
+    "description": "A very scrungly gun which defies all the laws of reality; You shouldn't see it",
+    "skill": "rifle",
+    "range": 100,
+    "ranged_damage": { "damage_type": "stab", "amount": 6, "armor_penetration": 10 },
+    "dispersion": 1000,
+    "modes": [ [ "DEFAULT", "semi", 1 ] ],
+    "loudness": 10,
+    "ammo_effects": [ "POISON" ]
+  },
+  {
+    "id": "crt_medic_paralyze_gun",
+    "copy-from": "fake_item",
+    "type": "GUN",
+    "weapon_category": [ "RIFLES" ],
+    "name": "Paralysis Dart",
+    "description": "A very scrungly gun which defies all the laws of reality; You shouldn't see it",
+    "skill": "rifle",
+    "range": 100,
+    "ranged_damage": { "damage_type": "stab", "amount": 6, "armor_penetration": 10 },
+    "dispersion": 1000,
+    "modes": [ [ "DEFAULT", "semi", 1 ] ],
+    "loudness": 10,
+    "ammo_effects": [ "PARALYZEPOISON" ]
+  },
+  {
+    "id": "crt_medic_heal",
+    "type": "SPELL",
+    "name": { "str": "RX12 Injector Shot" },
+    "description": "This is a monster spell, used by all teirs of the crit medic.",
+    "flags": [ "RANDOM_DAMAGE", "SILENT", "NO_EXPLOSION_VFX" ],
+    "valid_targets": [ "ally" ],
+    "effect": "target_attack",
+    "sprite": "fd_null",
+    "min_damage": -5,
+    "max_damage": -15,
+    "min_range": 5,
+    "max_range": 5,
+    "min_aoe": 1,
+    "max_aoe": 1
+  },
+  {
     "id": "mon_crt_medic_t1",
     "type": "MONSTER",
     "name": "C.R.I.T. field medic zombie",
@@ -118,51 +164,5 @@
         "ranges": [ [ 0, 5, "DEFAULT" ] ]
       }
     ]
-  },
-  {
-    "id": "crt_medic_poison_gun",
-    "copy-from": "fake_item",
-    "type": "GUN",
-    "weapon_category": [ "RIFLES" ],
-    "name": "Poison Dart",
-    "description": "A very scrungly gun which defies all the laws of reality; You shouldn't see it",
-    "skill": "rifle",
-    "range": 100,
-    "ranged_damage": { "damage_type": "stab", "amount": 6, "armor_penetration": 10 },
-    "dispersion": 1000,
-    "modes": [ [ "DEFAULT", "semi", 1 ] ],
-    "loudness": 10,
-    "ammo_effects": [ "POISON" ]
-  },
-  {
-    "id": "crt_medic_paralyze_gun",
-    "copy-from": "fake_item",
-    "type": "GUN",
-    "weapon_category": [ "RIFLES" ],
-    "name": "Paralysis Dart",
-    "description": "A very scrungly gun which defies all the laws of reality; You shouldn't see it",
-    "skill": "rifle",
-    "range": 100,
-    "ranged_damage": { "damage_type": "stab", "amount": 6, "armor_penetration": 10 },
-    "dispersion": 1000,
-    "modes": [ [ "DEFAULT", "semi", 1 ] ],
-    "loudness": 10,
-    "ammo_effects": [ "PARALYZEPOISON" ]
-  },
-  {
-    "id": "crt_medic_heal",
-    "type": "SPELL",
-    "name": { "str": "RX12 Injector Shot" },
-    "description": "This is a monste/r spell, used by all teirs of the crit medic.",
-    "flags": [ "RANDOM_DAMAGE", "SILENT", "NO_EXPLOSION_VFX" ],
-    "valid_targets": [ "ally" ],
-    "effect": "target_attack",
-    "sprite": "fd_null",
-    "min_damage": -5,
-    "max_damage": -15,
-    "min_range": 5,
-    "max_range": 5,
-    "min_aoe": 1,
-    "max_aoe": 1
   }
 ]

@@ -6802,7 +6802,7 @@ void map::rotate( int turns, const bool setpos_safe )
         }
     }
 
-    clear_vehicle_cache( );
+    reset_vehicle_cache( );
     clear_vehicle_list( abs_sub.z );
 
     // Move the submaps around.
@@ -6831,6 +6831,8 @@ void map::rotate( int turns, const bool setpos_safe )
         swap_submaps( p, p4 );
     }
 
+    clear_vehicle_list( abs_sub.z );
+    reset_vehicle_cache( );
     // Then rotate them and recalculate vehicle positions.
     for( int j = 0; j < 2; ++j ) {
         for( int i = 0; i < 2; ++i ) {
@@ -6846,6 +6848,7 @@ void map::rotate( int turns, const bool setpos_safe )
             update_vehicle_list( sm, abs_sub.z );
         }
     }
+    clear_vehicle_list( abs_sub.z );
     reset_vehicle_cache( );
 
     // rotate zones
