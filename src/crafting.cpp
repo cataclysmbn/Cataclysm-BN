@@ -1076,9 +1076,9 @@ void complete_craft( Character &who, item &craft )
             first = false;
             // TODO: reconsider recipe memorization
             if( who.knows_recipe( &making ) ) {
-                add_msg( _( "You craft %s from memory." ), making.result_name() );
+                who.add_msg_if_player( _( "You craft %s from memory." ), making.result_name() );
             } else {
-                add_msg( _( "You craft %s using a book as a reference." ), making.result_name() );
+                who.add_msg_if_player( _( "You craft %s using a book as a reference." ), making.result_name() );
                 // If we made it, but we don't know it,
                 // we're making it from a book and have a chance to learn it.
                 // Base expected time to learn is 1000*(difficulty^4)/skill/int moves.
@@ -1095,7 +1095,7 @@ void complete_craft( Character &who, item &craft )
                 const double time_to_learn = 1000 * 8 * std::pow( difficulty, 4 ) / learning_speed;
                 if( x_in_y( making.time, time_to_learn ) ) {
                     who.learn_recipe( &making );
-                    add_msg( m_good, _( "You memorized the recipe for %s!" ),
+                    who.add_msg_if_player( m_good, _( "You memorized the recipe for %s!" ),
                              making.result_name() );
                 }
             }

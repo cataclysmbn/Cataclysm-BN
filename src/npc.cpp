@@ -1139,54 +1139,6 @@ void npc::do_npc_read()
     }
 }
 
-// static bool is_anyone_crafting( const item_location &itm, const Character *you = nullptr )
-// {
-//     for( const npc &guy : g->all_npcs() ) {
-//         if( !( you && you->getID() == guy.getID() ) &&
-//             guy.activity.id() == ACT_CRAFT ) {
-//             item_location target = guy.activity.targets.back();
-//             if( target == itm ) {
-//                 return true;
-//             }
-//             }
-//     }
-//     return false;
-// }
-
-// item_location npc::get_item_to_craft()
-// {
-//     // check inventory
-//     item_location to_craft;
-//     visit_items( [ this, &to_craft ]( item * itm, item * ) {
-//         if( itm->get_var( "crafter", "" ) == name ) {
-//             to_craft = item_location( *this, itm );
-//             if( !is_anyone_crafting( to_craft, this ) ) {
-//                 return VisitResponse::ABORT;
-//             }
-//         }
-//         return VisitResponse::NEXT;
-//     } );
-//     if( to_craft ) {
-//         return to_craft;
-//     }
-//
-//     // check items around npc
-//     map &here = get_map();
-//     for( const tripoint &adj : here.points_in_radius( pos(), 1 ) ) {
-//         if( here.dangerous_field_at( adj ) ) {
-//             continue;
-//         }
-//         for( item &itm : here.i_at( adj ) ) {
-//             if( itm.get_var( "crafter", "" ) == name ) {
-//                 to_craft = item_location( map_cursor( adj ), &itm );
-//                 if( !is_anyone_crafting( to_craft, this ) ) {
-//                     return to_craft;
-//                 }
-//             }
-//         }
-//     }
-//     return to_craft;
-// }
 
 void npc::do_npc_craft( const std::optional<tripoint> &loc )
 {
@@ -1258,49 +1210,6 @@ void npc::do_npc_craft( const std::optional<tripoint> &loc )
             iuse::craft( this, target, false, target_pos );
         }
     }
-    // else if( menu.ret == 1 ) {
-    //     int selected = 0;
-    //     uilist item_selection;
-    //     do {
-    //         item_selection.init();
-    //         item_selection.text = "Craft what?";
-    //         item_selection.selected = selected;
-    //         item_selection.addentry( 0, true, MENU_AUTOASSIGN, "Start crafting" );
-    //         item_selection.addentry( 1, true, MENU_AUTOASSIGN, "Select all" );
-    //         int index = 2;
-    //
-    //         for( item_location &itm : craft_item_list ) {
-    //             // set flag to craft
-    //             std::string entry;
-    //             bool enable = itm->get_var( "crafter", "" ) == name;
-    //             if( selected == 1 ) {
-    //                 itm->set_var( "crafter", name );
-    //                 enable = true;
-    //             } else if( selected == index ) {
-    //                 if( enable ) {
-    //                     itm->erase_var( "crafter" );
-    //                     enable = false;
-    //                 } else {
-    //                     itm->set_var( "crafter", name );
-    //                     enable = true;
-    //                 }
-    //             }
-    //             if( enable ) {
-    //                 entry = string_format( "[x] %s", itm->tname() );
-    //             } else {
-    //                 entry = string_format( "[ ] %s", itm->tname() );
-    //             }
-    //             item_selection.addentry( index, true, MENU_AUTOASSIGN, entry );
-    //             index++;
-    //         }
-    //         item_selection.query();
-    //
-    //         selected = item_selection.ret;
-    //         if( selected == 0 ) {
-    //             assign_activity( ACT_CRAFT );
-    //         }
-    //     } while( selected >= 1 );
-    // }
 }
 
 detached_ptr<item> npc::wear_if_wanted( detached_ptr<item> &&it, std::string &reason )
