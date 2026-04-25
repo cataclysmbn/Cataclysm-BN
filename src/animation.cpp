@@ -493,6 +493,7 @@ void explosion_handler::draw_custom_explosion( const tripoint &,
 namespace
 {
 
+#if defined( TILES )
 auto get_bullet_sprite( const char bullet, const std::string &custom_sprite ) -> std::string
 {
     if( !custom_sprite.empty() ) {
@@ -509,6 +510,7 @@ auto get_bullet_sprite( const char bullet, const std::string &custom_sprite ) ->
     }
     return {};
 }
+#endif
 
 void draw_bullet_curses( map &m, const tripoint &t, const char bullet, const tripoint *const p )
 {
@@ -579,6 +581,7 @@ auto get_longest_trajectory_size( const std::vector<std::vector<tripoint>> &traj
     return longest_trajectory_size;
 }
 
+#if defined( TILES )
 auto append_line_points( const draw_bullet_trajectories_options &options,
                          std::vector<tripoint> &points,
                          std::vector<std::string> &sprites,
@@ -602,6 +605,7 @@ auto append_line_points( const draw_bullet_trajectories_options &options,
         }
     }
 }
+#endif
 
 auto draw_bullet_trajectories_curses( game &g,
                                       const draw_bullet_trajectories_options &options ) -> void

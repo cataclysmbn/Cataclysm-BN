@@ -26,8 +26,8 @@ static const skill_id skill_shotgun( "shotgun" );
 static auto fire_shell_at_target( const itype_id &ammo_id,
                                   const std::vector<itype_id> &armor_ids ) -> int
 {
-    rng_set_engine_seed( 0 );
     clear_all_state();
+    rng_set_engine_seed( 0 );
     REQUIRE( get_map().has_zlevels() );
     get_player_character().setpos( {60, 60, -2} );
 
@@ -174,8 +174,8 @@ TEST_CASE( "birdshot pellets are much worse against armor", "[ranged][balance]" 
 TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
            "[ranged][projectile]" )
 {
-    rng_set_engine_seed( 0 );
     clear_all_state();
+    rng_set_engine_seed( 0 );
     REQUIRE( get_map().has_zlevels() );
 
     auto &shooter = get_player_character();

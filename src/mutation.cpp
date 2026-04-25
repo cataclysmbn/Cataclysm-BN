@@ -1733,7 +1733,7 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
 
     // If there is no threshold for this category at this tier, don't check it
     const std::vector<trait_id> &mutation_thresh = m_category.threshold_muts;
-    if( mutation_thresh.size() < tier + 1 ) {
+    if( mutation_thresh.size() <= static_cast<std::vector<trait_id>::size_type>( tier ) ) {
         return;
     }
 

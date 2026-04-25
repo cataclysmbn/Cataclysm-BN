@@ -2450,6 +2450,10 @@ static void migrate( std::vector<detached_ptr<item>> &stack )
     }
 }
 } // namespace to_cbc_migration
+
+namespace
+{
+
 namespace damage_instance_serialization
 {
 
@@ -2513,6 +2517,8 @@ damage_instance
 }
 
 } // namespace damage_instance_serialization
+
+} // namespace
 
 template<typename Archive>
 void item::io( Archive &archive )

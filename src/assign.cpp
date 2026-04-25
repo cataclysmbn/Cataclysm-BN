@@ -701,9 +701,9 @@ bool assign( const JsonObject &jo,
              data_vars::data_set &val,
              const bool strict )
 {
+    static_cast<void>( strict );
     for( const JsonMember member : jo.get_object( name ) ) {
         val[member.name()] = member.get_string();
     }
     return true;
 }
-

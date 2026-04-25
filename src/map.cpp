@@ -937,7 +937,7 @@ void map::vehmove()
             for( vehicle *veh : get_cache( z ).vehicle_list ) {
                 veh->gain_moves();
                 veh->slow_leak();
-                vehicle_list.push_back( wrapped_vehicle{ .v = veh } );
+                vehicle_list.push_back( wrapped_vehicle{ .pos = veh->global_pos3(), .v = veh } );
             }
         }
     }
@@ -1041,6 +1041,7 @@ void map::vehmove()
         }
     }
     TracyPlot( "Vehicles Moved", moved_count );
+    static_cast<void>( moved_count );
 
     // A map shift can occur mid-loop when the player is a vehicle passenger:
     if( last_full_vehicle_list_dirty ) {
@@ -3529,7 +3530,6 @@ void map::decay_fields_and_scent( const time_duration &amount )
     // TODO: Z
     const int smz = abs_sub.z;
     level_cache &smz_cache = get_cache( smz );
-    const int cache_mapsize = smz_cache.cache_mapsize;
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto cur_submap = get_submap_at_grid( { smx, smy, smz } );
