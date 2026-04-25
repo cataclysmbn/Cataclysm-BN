@@ -1,8 +1,5 @@
 # Cataclysm: Bright Nights - Agent Guidelines
 
-> **⚠️ CRITICAL**: Follow this guide EXACTLY. Use the exact commands shown below, not alternatives.
-> Do NOT search for alternative build tools or improvise. The commands are tested and work.
-
 - **MUST** RE-READ AGENTS.md BETWEEN subtasks.
 - **MUST** FOLLOW for all code changes.
 
@@ -17,7 +14,7 @@ Before writing **ANY** code, verify:
 | `Type x = value`                       | `auto x = value`                                                                 |
 | `void fn(a, b, c, d, e)`               | `void fn(options_struct)`                                                        |
 
-**Prefer `std::ranges`/`std::views` for collection work. Use range-based `for` when it is clearer than `std::ranges::for_each`. Avoid manual iterator increment loops unless required by mutation semantics.**
+**Prefer `std::ranges`/`std::views`/`std::ranges::to`/cata_algo.h for collection work. Avoid manual iterator increment loops unless required by mutation semantics.**
 
 ## Coding Convention
 
