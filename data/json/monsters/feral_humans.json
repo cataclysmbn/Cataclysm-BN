@@ -843,13 +843,8 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 20,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
-	"emit_fields": [
-    {
-      "emit_id": "emit_shadow_field_darkfield",
-      "delay": "1 s"
-    }
-	],
-	"starting_ammo": { "5x50dart": 100 },
+    "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
+    "starting_ammo": { "5x50dart": 100 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
       {
@@ -871,7 +866,18 @@
     "death_drops": "mon_feral_blackops_boss_commander_death_drops",
     "zombify_into": "mon_zombie_soldier_blackops_2",
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1", "NIGHT_INVISIBILITY" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "HUMAN",
+      "CAN_OPEN_DOORS",
+      "PATH_AVOID_DANGER_1",
+      "NIGHT_INVISIBILITY"
+    ]
   },
   {
     "id": "mon_feral_blackops_boss_bioop",
@@ -892,7 +898,7 @@
     "aggression": 100,
     "morale": 100,
     "melee_skill": 10,
-	"melee_dice": 1,
+    "melee_dice": 1,
     "melee_dice_sides": 1,
     "melee_damage": [ { "damage_type": "electric", "amount": 6 }, { "damage_type": "dark", "amount": 6 } ],
     "melee_cut": 36,
@@ -906,23 +912,26 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 20,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
-	"emit_fields": [
-    {
-      "emit_id": "emit_shadow_field_darkfield",
-      "delay": "1 s"
-    }
-	],
-    "special_attacks": [
-      [ "PARROT_AT_DANGER", 0 ],
-	  [ "BIO_OP_BIOJUTSU", 10 ]
-    ],
-	"special_when_hit": [ "ZAPBACK", 75 ],
+    "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
+    "special_attacks": [ [ "PARROT_AT_DANGER", 0 ], [ "BIO_OP_BIOJUTSU", 10 ] ],
+    "special_when_hit": [ "ZAPBACK", 75 ],
     "death_function": [ "NORMAL" ],
-	"regenerates": 1,
+    "regenerates": 1,
     "death_drops": "mon_feral_blackops_boss_bioop_death_drops",
     "zombify_into": "mon_zombie_soldier_blackops_2",
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1", "NIGHT_INVISIBILITY" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "HUMAN",
+      "CAN_OPEN_DOORS",
+      "PATH_AVOID_DANGER_1",
+      "NIGHT_INVISIBILITY"
+    ]
   },
   {
     "id": "mon_feral_blackops_boss_technician",
@@ -957,19 +966,12 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 20,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
-	"emit_fields": [
-    {
-      "emit_id": "emit_shadow_field_darkfield",
-      "delay": "1 s"
-    }
-	],
-	"starting_ammo": { "8mm_caseless": 25,
-    "bot_flashbang_hack": 10
-	},
+    "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
+    "starting_ammo": { "8mm_caseless": 25, "bot_flashbang_hack": 10 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
-	  [ "PULL_METAL_WEAPON", 25 ],
-	  [ "GRENADIER_ELITE", 10 ],
+      [ "PULL_METAL_WEAPON", 25 ],
+      [ "GRENADIER_ELITE", 10 ],
       {
         "type": "gun",
         "cooldown": 40,
@@ -989,9 +991,20 @@
     "death_drops": "mon_feral_blackops_boss_technician_death_drops",
     "zombify_into": "mon_zombie_soldier_blackops_2",
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1", "NIGHT_INVISIBILITY" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "HUMAN",
+      "CAN_OPEN_DOORS",
+      "PATH_AVOID_DANGER_1",
+      "NIGHT_INVISIBILITY"
+    ]
   },
-    {
+  {
     "id": "mon_feral_blackops_boss_sniper",
     "type": "MONSTER",
     "name": { "str": "feral black-ops" },
@@ -1024,13 +1037,8 @@
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 30,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
-	"emit_fields": [
-    {
-      "emit_id": "emit_shadow_field_darkfield",
-      "delay": "1 s"
-    }
-	],
-	"starting_ammo": { "8mm_caseless": 25 },
+    "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
+    "starting_ammo": { "8mm_caseless": 25 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
       {
@@ -1052,6 +1060,16 @@
     "death_drops": "mon_feral_blackops_boss_sniper_death_drops",
     "zombify_into": "mon_zombie_soldier_blackops_2",
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "BASHES", "GROUP_BASH", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1", "NIGHT_INVISIBILITY" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "BASHES",
+      "GROUP_BASH",
+      "HUMAN",
+      "CAN_OPEN_DOORS",
+      "PATH_AVOID_DANGER_1",
+      "NIGHT_INVISIBILITY"
+    ]
   }
 ]
