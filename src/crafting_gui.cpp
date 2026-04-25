@@ -63,7 +63,8 @@ std::map<std::string, std::string> normalized_names;
 
 static bool query_is_yes( const std::string &query );
 static void draw_hidden_amount( const catacurses::window &w, int amount, int num_recipe );
-static void draw_can_craft_indicator( const catacurses::window &w, const recipe &rec, const Character &crafter );
+static void draw_can_craft_indicator( const catacurses::window &w, const recipe &rec,
+                                      const Character &crafter );
 static void draw_recipe_tabs( const catacurses::window &w, const std::string &tab,
                               TAB_MODE mode, const bool filtered_unread,
                               std::map<std::string, bool> &unread );
@@ -72,7 +73,8 @@ static void draw_recipe_subtabs( const catacurses::window &w, const std::string 
                                  const recipe_subset &available_recipes, TAB_MODE mode,
                                  std::map<std::string, bool> &unread );
 
-std::string peek_related_recipe( const recipe *current, const recipe_subset &available, const Character &crafter );
+std::string peek_related_recipe( const recipe *current, const recipe_subset &available,
+                                 const Character &crafter );
 int related_menu_fill( uilist &rmenu,
                        const std::vector<std::pair<itype_id, std::string>> &related_recipes,
                        const recipe_subset &available );
@@ -269,7 +271,8 @@ auto update_nested_can_craft( Character &crafter,
     const auto can_craft = std::ranges::any_of( rec.nested_category_data, [&](
     const recipe_id & nested_id ) {
         const auto *nested_rec = &nested_id.obj();
-        auto &nested_avail = ensure_availability( crafter, nested_rec, availability_cache, available_recipes,
+        auto &nested_avail = ensure_availability( crafter, nested_rec, availability_cache,
+                             available_recipes,
                              show_unavailable );
         if( nested_rec->is_nested() ) {
             nested_avail.can_craft = update_nested_can_craft( crafter, *nested_rec, availability_cache,
@@ -610,7 +613,7 @@ static input_context make_crafting_context( bool highlight_unread_recipes )
     return ctxt;
 }
 
-const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter  )
+const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
 {
     struct {
         const recipe *recp = nullptr;
@@ -1164,7 +1167,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter  )
                 // cache recipe availability on first display
                 for( const recipe *e : current ) {
                     if( !availability_cache.contains( e ) ) {
-                        availability_cache.emplace( e, availability(crafter, e, 1,
+                        availability_cache.emplace( e, availability( crafter, e, 1,
                                                     !show_unavailable || available_recipes.contains( *e ) ) );
                     }
                 }
@@ -1622,7 +1625,8 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter  )
     return chosen;
 }
 
-std::string peek_related_recipe( const recipe *current, const recipe_subset &available, const Character &crafter )
+std::string peek_related_recipe( const recipe *current, const recipe_subset &available,
+                                 const Character &crafter )
 {
     auto compare_second =
         []( const std::pair<itype_id, std::string> &a,
@@ -1759,7 +1763,8 @@ static void draw_hidden_amount( const catacurses::window &w, int amount, int num
 }
 
 // Anchors top-right
-static void draw_can_craft_indicator( const catacurses::window &w, const recipe &rec, const Character &crafter )
+static void draw_can_craft_indicator( const catacurses::window &w, const recipe &rec,
+                                      const Character &crafter )
 {
     // Draw text
     if( lighting_crafting_speed_multiplier( crafter, rec ) <= 0.0f ) {

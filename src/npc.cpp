@@ -1188,7 +1188,7 @@ void npc::do_npc_read()
 //     return to_craft;
 // }
 
-void npc::do_npc_craft( const std::optional<tripoint> &loc)
+void npc::do_npc_craft( const std::optional<tripoint> &loc )
 {
     uilist menu;
     menu.text = _( "Craft what?" );
