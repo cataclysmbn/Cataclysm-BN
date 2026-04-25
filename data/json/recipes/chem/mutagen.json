@@ -72,6 +72,7 @@
   {
     "type": "recipe",
     "result": "mutagen",
+    "id_suffix": "from_serum",
     "category": "CC_CHEM",
     "subcategory": "CSC_CHEM_MUTAGEN",
     "skill_used": "cooking",
