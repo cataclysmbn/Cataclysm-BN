@@ -963,7 +963,6 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         if( isWide && !current.empty() ) {
             if( current[line]->is_nested() ) {
                 const auto &nested = *current[line];
-                const auto total_items = nested.nested_category_data.size();
                 const auto known_items = std::ranges::count_if(
                 nested.nested_category_data, [&]( const recipe_id & nested_id ) {
                     return available_recipes.contains( nested_id.obj() );

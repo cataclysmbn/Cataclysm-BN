@@ -864,6 +864,8 @@ bool game::start_game()
             .dimension_id = "",
             .world_type   = default_wt,
             .display_name = wt_ptr ? wt_ptr->name.translated() : std::string{},
+            .bounds = std::nullopt,
+            .origin_pos = tripoint_abs_sm{},
         };
         get_overmapbuffer( current_dimension_id_ ).current_region_type = wt_ptr ?
                 wt_ptr->region_settings_id : "default";
@@ -3189,6 +3191,7 @@ bool game::load( const save_t &name )
             // dimensions_ entry has nullopt bounds even though the dimension IS
             // bounded.
             .bounds = get_map().get_dimension_bounds(),
+            .origin_pos = tripoint_abs_sm{},
         };
     }
 
@@ -4798,6 +4801,7 @@ int game::tier_assign_all()
         TracyPlot( "LOD Tier 0 (Full AI)",  static_cast<int64_t>( count ) );
         TracyPlot( "LOD Tier 1 (Coarse)",   static_cast<int64_t>( 0 ) );
         TracyPlot( "LOD Tier 2 (Macro)",    static_cast<int64_t>( cross_dim ) );
+        static_cast<void>( cross_dim );
         return count;
     }
 
@@ -4862,13 +4866,6 @@ void game::world_tick()
     const auto  fire_spread = reality_bubble_fire_spread;
     const auto  do_emits   = calendar::once_every( 10_seconds );
     const auto  abs_sub    = m.get_abs_sub();
-
-    // Cardinal neighbours used for fire-spread boundary requests.
-    static const std::array<tripoint, 4> card = {{
-            tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
-            tripoint{ 0, 1, 0 }, tripoint{ 0, -1, 0 }
-        }
-    };
 
     auto total_field_count = int64_t{0};
     MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
@@ -4956,6 +4953,11 @@ void game::world_tick()
                     ? &dim_it->second.bounds
                     : nullptr;
 
+                // Cardinal neighbours used for fire-spread boundary requests.
+                static constexpr auto card = std::array{
+                    tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
+                    tripoint{ 0, 1, 0 }, tripoint{ 0, -1, 0 }
+                };
                 std::ranges::for_each( card, [&]( const tripoint & delta ) {
                     const tripoint_abs_sm nbr{ pos_sm.raw() + delta };
                     // Do not request a fire-spread load outside the dimension's
@@ -5377,7 +5379,6 @@ void game::npcmove()
     // individually controlled by SLEEP_SKIP_NPC without affecting monsters.
     ++g_npcmove_attitude_epoch;
     processing_npcs_ = true;
-    const std::string &player_dim = m.get_bound_dimension();
     for( npc &guy : g->all_npcs() ) {
         // Don't process NPCs in unloaded submaps like a LEMON
         if( !guy.is_simulated() ) {

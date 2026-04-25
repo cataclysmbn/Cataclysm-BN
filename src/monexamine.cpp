@@ -71,7 +71,10 @@ static const flag_id json_flag_TIE_UP( "TIE_UP" );
 static const flag_id json_flag_TACK( "TACK" );
 static const flag_id json_flag_MECH_BAT( "MECH_BAT" );
 
-bool can_train_pet( monster &z )
+namespace
+{
+
+auto can_train_pet( monster &z ) -> bool
 {
     return get_player_character().get_skill_level( skill_survival ) > 3 &&
            z.has_flag( MF_PET_MOUNTABLE ) &&
@@ -79,6 +82,8 @@ bool can_train_pet( monster &z )
            !z.has_flag( MF_CANT_TRAIN ) &&
            z.type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE );
 }
+
+} // namespace
 
 bool monexamine::pet_menu( monster &z )
 {

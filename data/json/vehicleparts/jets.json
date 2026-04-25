@@ -17,7 +17,7 @@
     "durability": 120,
     "damage_modifier": 80,
     "breaks_into": [ { "item": "scrap", "count": [ 10, 20 ] } ],
-    "flags": [ "PROPELLER", "PROTUSION", "SHOCK_RESISTANT" ],
+    "flags": [ "PROPELLER", "SHOCK_RESISTANT" ],
     "damage_reduction": { "bash": 10 }
   },
   {
@@ -38,19 +38,18 @@
     "symbol": "O",
     "broken_symbol": "x",
     "color": "light_gray",
-    "rotor_diameter": 16,
+    "rotor_diameter": 5,
+    "propeller_diameter": 5,
     "requirements": {
       "install": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
       "removal": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
       "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
     },
     "durability": 350,
-    "wheel_type": "off-road",
-    "contact_area": 20,
-    "description": "This is a vertical takeoff and landing (VTOL) propulsion system used in military VTOL aircraft and large transport drones.  It allows for free takeoff and landing on land, at sea, or in the air.",
+    "description": "This is a vertical takeoff and landing (VTOL) propulsion system used in military VTOL aircraft and large transport drones.  It provides both lift for taking off and thrust when in the air.",
     "damage_modifier": 50,
     "breaks_into": [ { "item": "scrap", "count": [ 15, 30 ] }, { "item": "steel_chunk", "count": [ 8, 16 ] } ],
-    "flags": [ "BALLOON", "WHEEL", "FLOATS", "ROTOR", "STABLE", "SELF_JACK", "VARIABLE_SIZE", "TRACKED" ],
+    "flags": [ "ROTOR", "PROPELLER", "SHOCK_RESISTANT" ],
     "damage_reduction": { "all": 35 }
   },
   {

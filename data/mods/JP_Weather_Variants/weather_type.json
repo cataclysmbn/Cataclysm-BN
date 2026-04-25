@@ -22,7 +22,7 @@
         "decay_start": "60 s",
         "morale_id_str": "morale_weather_rainbow",
         "morale_msg": "You stare in awe at the rainbow.",
-        "morale_msg_frequency": 8,
+        "morale_msg_frequency": 64,
         "message_type": 0
       }
     ],
@@ -65,7 +65,7 @@
         "decay_start": "60 s",
         "morale_id_str": "morale_weather_sundog",
         "morale_msg": "You stare in awe at the sundog and the ice crystals suspended in the air.",
-        "morale_msg_frequency": 8,
+        "morale_msg_frequency": 64,
         "message_type": 0
       }
     ],
@@ -109,7 +109,7 @@
         "decay_start": "60 s",
         "morale_id_str": "morale_weather_geomagnetic_lights",
         "morale_msg": "You stare in awe at the violent pink, green, and blue waves rippling across the sky.",
-        "morale_msg_frequency": 5,
+        "morale_msg_frequency": 64,
         "message_type": 0
       },
       {
@@ -119,13 +119,11 @@
         "effect_id_str": "emp",
         "effect_intensity": 0,
         "precipitation_name": "electromagnetic waves",
-        "ignore_armor": true,
         "effect_msg": "You feel an odd wave-like sensation pass through your body.",
         "effect_msg_frequency": 16,
         "effect_msg_blocked_frequency": 32,
         "message_type": 2,
-        "clothing_protection": 0,
-        "umbrella_protection": 0
+        "protection_data": [  ]
       }
     ],
     "sun_intensity": "light",
@@ -166,7 +164,7 @@
         "decay_start": "60 s",
         "morale_id_str": "morale_weather_geomagnetic_lights",
         "morale_msg": "You stare in awe at the pink, green, and blue waves rippling across the sky.",
-        "morale_msg_frequency": 8,
+        "morale_msg_frequency": 64,
         "message_type": 0
       }
     ],
@@ -205,13 +203,16 @@
         "effect_id_str": "acid_burn_pain_light",
         "effect_intensity": 0,
         "precipitation_name": "acidic flurry",
-        "ignore_armor": false,
         "effect_msg": "The acidic snowflakes burn, but are mostly harmless for now...",
         "effect_msg_frequency": 3,
         "effect_msg_blocked_frequency": 32,
         "message_type": 3,
-        "clothing_protection": 2,
-        "umbrella_protection": 1
+        "protection_data": [
+          { "check": "RAIN_PROTECT", "odds": 1 },
+          { "check": "RAINPROOF", "odds": 1 },
+          { "check": "ACIDPROOF", "odds": 1 },
+          { "check": "DEFAULT", "odds": 2 }
+        ]
       }
     ],
     "animation": { "factor": 0.01, "color": "c_light_green", "glyph": ".", "tile": "weather_acid_snow" },
@@ -242,13 +243,16 @@
         "effect_id_str": "acid_burn_pain",
         "effect_intensity": 0,
         "precipitation_name": "acidic snowflakes",
-        "ignore_armor": false,
         "effect_msg": "The acidic snowflakes burn your skin as they melt!",
         "effect_msg_frequency": 1,
         "effect_msg_blocked_frequency": 32,
         "message_type": 1,
-        "clothing_protection": 2,
-        "umbrella_protection": 1
+        "protection_data": [
+          { "check": "RAIN_PROTECT", "odds": 1 },
+          { "check": "RAINPROOF", "odds": 1 },
+          { "check": "ACIDPROOF", "odds": 1 },
+          { "check": "DEFAULT", "odds": 2 }
+        ]
       }
     ],
     "animation": { "factor": 0.02, "color": "c_light_green", "glyph": ".", "tile": "weather_acid_snow" },
@@ -279,13 +283,16 @@
         "effect_id_str": "acid_burn_pain",
         "effect_intensity": 0,
         "precipitation_name": "acidic snowstorm",
-        "ignore_armor": false,
         "effect_msg": "The acidic snowflakes burn your skin as they melt!",
         "effect_msg_frequency": 1,
         "effect_msg_blocked_frequency": 32,
         "message_type": 1,
-        "clothing_protection": 2,
-        "umbrella_protection": 1
+        "protection_data": [
+          { "check": "RAIN_PROTECT", "odds": 1 },
+          { "check": "RAINPROOF", "odds": 1 },
+          { "check": "ACIDPROOF", "odds": 1 },
+          { "check": "DEFAULT", "odds": 2 }
+        ]
       }
     ],
     "animation": { "factor": 0.02, "color": "c_light_green", "glyph": ".", "tile": "weather_acid_snow" },

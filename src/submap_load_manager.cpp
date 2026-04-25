@@ -58,10 +58,6 @@ void submap_load_manager::release_load( load_request_handle handle )
 auto submap_load_manager::update_load_shape( int radius ) -> void
 {
     const auto axis = std::views::iota( -radius, radius + 1 );
-    auto to_point = []( auto pair ) {
-        auto [dx, dy] = pair;
-        return point{ dx, dy };
-    };
     bubble_offsets_.clear();
     std::ranges::for_each( cata::views::cartesian_product( axis, axis ),
     [&]( auto pair ) {

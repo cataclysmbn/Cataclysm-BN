@@ -1575,6 +1575,8 @@ void Character::suffer()
                     continue;
                 }
                 break;
+            case region_effect_type::num_types:
+                break;
         }
 
         for( const auto &effect : effect_list ) {

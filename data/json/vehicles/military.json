@@ -2398,7 +2398,11 @@
         "parts": [ "frame_carbon_cover", "plating_military", "reinforced_windshield", "v_hdshutter" ]
       },
       { "x": 4, "y": -2, "parts": [ "frame_carbon_cover", "hdboard_nw", "plating_military", "omnicam" ] },
-      { "x": 3, "y": 2, "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military" ] },
+      {
+        "x": 3,
+        "y": 2,
+        "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor" ]
+      },
       {
         "x": 3,
         "y": 1,
@@ -2445,7 +2449,11 @@
           "seatbelt_heavyduty"
         ]
       },
-      { "x": 3, "y": -2, "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military" ] },
+      {
+        "x": 3,
+        "y": -2,
+        "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor" ]
+      },
       { "x": 2, "y": 2, "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military" ] },
       { "x": 2, "y": 1, "parts": [ "frame_carbon_cover", "seat", "hdroof", "NBC_seal", "reinforced_solar_panel" ] },
       {
@@ -2472,7 +2480,11 @@
         "parts": [ "frame_carbon_cover", "hdroof", "NBC_seal", "aisle_vertical", "reinforced_solar_panel" ]
       },
       { "x": 1, "y": -2, "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military" ] },
-      { "x": 0, "y": 2, "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military" ] },
+      {
+        "x": 0,
+        "y": 2,
+        "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military", "wheel_mount_heavy", "wheel_armor" ]
+      },
       { "x": 0, "y": 1, "parts": [ "frame_carbon_cover", "seat", "hdroof", "NBC_seal", "reinforced_solar_panel" ] },
       {
         "x": 0,
@@ -2480,7 +2492,11 @@
         "parts": [ "frame_carbon_cover", "hdroof", "NBC_seal", "aisle_vertical", "reinforced_solar_panel" ]
       },
       { "x": 0, "y": -1, "parts": [ "frame_carbon_cover", "seat", "hdroof", "NBC_seal", "reinforced_solar_panel" ] },
-      { "x": 0, "y": -2, "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military" ] },
+      {
+        "x": 0,
+        "y": -2,
+        "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military", "wheel_mount_heavy", "wheel_armor" ]
+      },
       { "x": -1, "y": 2, "parts": [ "frame_carbon_cover", "hdboard_vertical", "plating_military" ] },
       { "x": -1, "y": 1, "parts": [ "frame_carbon_cover", "hdroof", "NBC_seal", "seat" ] },
       { "x": -1, "y": 0, "parts": [ "frame_carbon_cover", "aisle_horizontal", "hdroof", "NBC_seal" ] },

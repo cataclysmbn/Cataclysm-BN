@@ -52,6 +52,7 @@
 #include "event_bus.h"
 #include "field_type.h"
 #include "flat_set.h"
+#include "flood_fill.h"
 #include "fungal_effects.h"
 #include "game.h"
 #include "game_constants.h"
@@ -1127,8 +1128,13 @@ void iexamine::cardreader( player &p, const tripoint &examp )
         p.mod_moves( -to_turns<int>( 1_seconds ) );
         for( const tripoint &tmp : here.points_in_radius( examp, 3 ) ) {
             if( here.ter( tmp ) == t_door_metal_locked ) {
-                here.ter_set( tmp, t_door_metal_c );
-                open = true;
+                const auto is_door = [&here]( const tripoint & pos ) -> bool { return here.ter( pos ) == t_door_metal_locked; };
+
+                std::unordered_set<tripoint> visited;
+                for( const tripoint &tmp2 : ff::point_flood_fill_4_connected( tmp, visited, is_door ) ) {
+                    here.ter_set( tmp2, t_door_metal_c );
+                    open = true;
+                }
             }
         }
         for( monster &critter : g->all_monsters() ) {

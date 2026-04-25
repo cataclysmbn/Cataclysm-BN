@@ -2805,6 +2805,16 @@ void options_manager::add_options_world_default()
          0.0, 100, 2.0, 0.01
        );
 
+    add( "EVOLVE_MAX_ITERS", world_default,
+         translate_marker( "Maximum Evolution Half Lives" ),
+         translate_marker( "The maximum number of attempts for a zombie to evolve at the next half life for one evolution stage" ),
+         0, 200, 5 );
+
+    add( "ALWAYS_EVOLVE", world_default,
+         translate_marker( "Zombies Always Evolve" ),
+         translate_marker( "When reaching the maximum half lives, instead of never evolving they will evolve at that time." ),
+         false );
+
     add_empty_line();
 
     add( "RESTOCK_DELAY_MULT", world_default, translate_marker( "Merchant restock scaling factor" ),

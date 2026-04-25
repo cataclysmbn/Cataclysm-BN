@@ -490,20 +490,23 @@ static const auto lowercase = []( std::string t )
     return t;
 };
 
-namespace Name
+namespace
 {
-std::string string_search( sol::variadic_args va )
+
+auto string_search( sol::variadic_args va ) -> std::string
 {
-    nameFlags flags = static_cast<nameFlags>( 0 );
+    auto flags = static_cast<nameFlags>( 0 );
     // Only 9 flags exist, so cap
-    for( int i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
+    for( auto i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
         if( !va[i].is<std::string>() ) { continue; }
-        auto in = lowercase( va.get<std::string>( i ) );
-        flags = flags | usage_flag( in ) | gender_flag( in );
+        const auto in = lowercase( va.get<std::string>( i ) );
+        flags = flags | Name::usage_flag( in ) | Name::gender_flag( in );
     }
-    return get( flags );
+    return Name::get( flags );
 }
-}
+
+} // namespace
+
 void cata::detail::reg_names( sol::state &lua )
 {
     luna::userlib lib = luna::begin_lib( lua, "ch_names" );
@@ -524,7 +527,7 @@ void cata::detail::reg_names( sol::state &lua )
     DOC( "Generates a single name using any combination of search flags." );
     luna::set_fx( lib, "pick", []( sol::variadic_args va ) -> std::string {
         if( va.size() < 1 || !va[0].is<std::string>() ) { return std::string(); };
-        return Name::string_search( va );
+        return string_search( va );
     } );
 
     luna::finalize_lib( lib );
