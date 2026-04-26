@@ -151,6 +151,15 @@ enum pickup_answer : int {
     NUM_ANSWERS
 };
 
+struct pick_one_up_options {
+    pickup::pick_drop_selection &selection;
+    bool &got_water;
+    bool &offered_swap;
+    pickup_map &map_pickup;
+    bool autopickup = false;
+    std::optional<pickup_answer> preferred_option;
+};
+
 static pickup_answer handle_problematic_pickup( const item &it, bool &offered_swap,
         bool has_children, const std::string &explain )
 {
@@ -241,10 +250,12 @@ bool pickup::query_thief()
 }
 
 // Returns false if pickup caused a prompt and the player selected to cancel pickup
-static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water,
-                         bool &offered_swap,
-                         pickup_map &map_pickup, bool autopickup )
+static auto pick_one_up( const pick_one_up_options &opts ) -> bool
 {
+    auto &selection = opts.selection;
+    auto &got_water = opts.got_water;
+    auto &offered_swap = opts.offered_swap;
+    auto &map_pickup = opts.map_pickup;
     player &u = get_avatar();
     int moves_taken = 100;
     bool picked_up = false;
@@ -292,7 +303,9 @@ static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water
     auto with_det = [&]( detached_ptr<item> &&newloc ) {
 
         // Ammo can sometimes be picked up into containers
-        newloc = u.i_add_to_container( std::move( newloc ), false );
+        if( !opts.preferred_option ) {
+            newloc = u.i_add_to_container( std::move( newloc ), false );
+        }
 
         if( !newloc || ( newloc->count_by_charges() && newloc->charges == 0 ) ) {
             // We've picked up everything into containers, skip the options part
@@ -300,8 +313,10 @@ static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water
             option = NUM_ANSWERS;
         } else if( newloc->made_of( LIQUID ) ) {
             got_water = true;
+        } else if( opts.preferred_option ) {
+            option = *opts.preferred_option;
         } else if( !u.can_pick_weight( newloc->weight() + children_weight, false ) ) {
-            if( !autopickup ) {
+            if( !opts.autopickup ) {
                 const std::string &explain = string_format( _( "The %s is too heavy!" ),
                                              newloc->display_name() );
                 option = handle_problematic_pickup( *newloc, offered_swap, !children.empty(), explain );
@@ -310,7 +325,7 @@ static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water
                 option = CANCEL;
             }
         } else if( newloc->is_bucket() && !newloc->is_container_empty() ) {
-            if( !autopickup ) {
+            if( !opts.autopickup ) {
                 const std::string &explain = string_format( _( "Can't stash %s while it's not empty" ),
                                              newloc->display_name() );
                 option = handle_problematic_pickup( *newloc, offered_swap, !children.empty(), explain );
@@ -319,7 +334,7 @@ static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water
                 option = CANCEL;
             }
         } else if( !u.can_pick_volume( newloc->volume() + children_volume ) ) {
-            if( !autopickup ) {
+            if( !opts.autopickup ) {
                 const std::string &explain = string_format( _( "Not enough capacity to stash %s" ),
                                              newloc->display_name() );
                 option = handle_problematic_pickup( *newloc, offered_swap, !children.empty(), explain );
@@ -450,7 +465,12 @@ bool do_pickup( std::vector<pick_drop_selection> &targets, bool autopickup )
         }
 
         // TODO: This invocation is very ugly, should get a proper structure or something
-        problem = !pick_one_up( current_target, got_water, offered_swap, map_pickup, autopickup );
+        problem = !pick_one_up( pick_one_up_options{ .selection = current_target,
+                                .got_water = got_water,
+                                .offered_swap = offered_swap,
+                                .map_pickup = map_pickup,
+                                .autopickup = autopickup,
+                                .preferred_option = std::nullopt } );
     }
 
     if( !map_pickup.empty() ) {
@@ -792,6 +812,8 @@ void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
         ctxt.register_action( "ANY_INPUT" );
         ctxt.register_action( "HELP_KEYBINDINGS" );
         ctxt.register_action( "FILTER" );
+        ctxt.register_action( "WEAR", to_translation( "Wear" ) );
+        ctxt.register_action( "WIELD", to_translation( "Wield" ) );
 #if defined(__ANDROID__)
         ctxt.allow_text_entry = true; // allow user to specify pickup amount
 #endif
@@ -1035,6 +1057,49 @@ void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
                 .edit( new_filter );
                 if( !popup.canceled() ) {
                     filter_changed = true;
+                }
+            } else if( selected >= 0 && selected < static_cast<int>( matches.size() ) &&
+                       ( action == "WEAR" || action == "WIELD" ) ) {
+                const auto true_idx = matches[selected];
+                const auto &selected_item = **stacked_here[true_idx].front();
+                const auto preferred_option = action == "WEAR" ? WEAR : WIELD;
+                const auto can_handle = preferred_option == WEAR ? g->u.can_wear( selected_item ) :
+                                        g->u.can_wield( selected_item );
+                if( !can_handle.success() ) {
+                    add_msg( m_info, "%s", can_handle.c_str() );
+                } else {
+                    auto direct_locations = std::vector<item *> {};
+                    auto direct_quantities = std::vector<int> {};
+                    direct_locations.push_back( *stacked_here[true_idx].front() );
+                    direct_quantities.push_back( 0 );
+                    for( const auto child_index : getitem[true_idx].children ) {
+                        direct_locations.push_back( *stacked_here[child_index].front() );
+                        direct_quantities.push_back( 0 );
+                    }
+
+                    auto direct_targets = pickup::optimize_pickup( direct_locations, direct_quantities );
+                    if( !direct_targets.empty() ) {
+                        auto direct_got_water = false;
+                        auto direct_offered_swap = false;
+                        auto direct_map_pickup = pickup_map{};
+                        auto direct_target = direct_targets.front();
+                        const auto handled = pick_one_up( pick_one_up_options{ .selection = direct_target,
+                                                          .got_water = direct_got_water,
+                                                          .offered_swap = direct_offered_swap,
+                                                          .map_pickup = direct_map_pickup,
+                                                          .autopickup = false,
+                                                          .preferred_option = preferred_option } );
+                        if( !direct_map_pickup.empty() ) {
+                            show_pickup_message( direct_map_pickup );
+                        }
+                        if( direct_got_water ) {
+                            add_msg( m_info, _( "You can't pick up a liquid!" ) );
+                        }
+                        if( handled ) {
+                            g->reenter_fullscreen();
+                            return;
+                        }
+                    }
                 }
             } else if( action == "ANY_INPUT" && raw_input_char == '`' ) {
                 std::string ext = string_input_popup()

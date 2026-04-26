@@ -265,6 +265,20 @@
   },
   {
     "type": "keybinding",
+    "id": "WEAR",
+    "category": "PICKUP",
+    "name": "Wear selected item",
+    "bindings": [ { "input_method": "keyboard", "key": "W" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "WIELD",
+    "category": "PICKUP",
+    "name": "Wield selected item",
+    "bindings": [ { "input_method": "keyboard", "key": "w" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "EXAMINE",
     "category": "INVENTORY",
     "name": "Examine item",
