@@ -641,6 +641,7 @@ void vehicle::toggle_autopilot()
     smenu.addentry_col( STOP, true, 'S', _( "Stop…" ),
                         "", string_format( _( "Stop all autopilot related activities." ) ) );
     smenu.query();
+    auto popup = string_input_popup();
     switch( smenu.ret ) {
         case PATROL:
             autopilot_patrol_check();
@@ -656,6 +657,15 @@ void vehicle::toggle_autopilot()
             autopilot_on = true;
             is_following = true;
             is_patrolling = false;
+            popup.title( _( "What distance?" ) )
+            .text( std::to_string( 12 + mount_max.y * 3 ) )
+            .max_length( 3 )
+            .query();
+            if( popup.canceled() ) {
+                follow_distance = 12 + mount_max.y * 3;
+            } else {
+                follow_distance = std::stoi( popup.text() );
+            }
             start_engines();
             refresh();
         default:
