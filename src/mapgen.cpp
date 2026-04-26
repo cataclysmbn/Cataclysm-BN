@@ -4763,7 +4763,7 @@ void map::draw_lab( mapgendata &dat )
             if( dat.zlevel() == 0 ) {
                 temperature = -20;
             } else {
-                temperature = static_cast<int>( -20.0 * log( dat.zlevel() ) - 45.0 );
+                temperature = static_cast<int>( -20.0 * log( -1 * dat.zlevel() ) - 45.0 );
             }
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
