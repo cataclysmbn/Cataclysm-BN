@@ -5439,7 +5439,13 @@ void map::draw_lab( mapgendata &dat )
         tower_lab = is_ot_match( "tower_lab", terrain_type, ot_match_type::prefix );
 
         if( ice_lab ) {
-            int temperature = -20 + 30 * dat.zlevel();
+            int temperature;
+
+            if( dat.zlevel() == 0 ) {
+                temperature = -20;
+            } else {
+                temperature = static_cast<int>( -20.0 * log( -1 * dat.zlevel() ) - 45.0 );
+            }
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
             set_temperature( p2 + point( 0, SEEY ), temperature );
