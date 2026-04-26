@@ -307,9 +307,9 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
         g != nullptr && dimension_id_ == get_map().get_bound_dimension();
 
     map &here = get_map();
-    const tripoint map_origin = is_current_dimension
-                                ? sm_to_omt_copy( here.get_abs_sub() )
-                                : tripoint_zero;
+    const tripoint_abs_omt map_origin = is_current_dimension
+                                ? project_to<coords::omt>( here.get_abs_sub() )
+                                : tripoint_abs_omt{};
     const bool map_has_zlevels = g != nullptr && here.has_zlevels();
 
     // Serial collection of unique OMT quad addresses with per-quad delete flags.
@@ -356,10 +356,10 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
                 // are deleted from memory after saving.
                 const bool zlev_del = !map_has_zlevels && om_addr.z != g->get_levz();
                 quad_delete = quad_delete || zlev_del ||
-                              om_addr.x < map_origin.x ||
-                              om_addr.y < map_origin.y ||
-                              om_addr.x > map_origin.x + g_half_mapsize ||
-                              om_addr.y > map_origin.y + g_half_mapsize;
+                              om_addr.x < map_origin.x() ||
+                              om_addr.y < map_origin.y() ||
+                              om_addr.x > map_origin.x() + g_half_mapsize ||
+                              om_addr.y > map_origin.y() + g_half_mapsize;
             }
 
             quads_to_process.push_back( { om_addr, quad_delete } );

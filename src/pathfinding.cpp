@@ -282,14 +282,13 @@ void Pathfinding::update_z_caches( bool update_open_air )
 {
     const map &here = get_map();
 
-    point cur_z_area = here.get_abs_sub().xy();
-    sm_to_ms( cur_z_area );
+    auto cur_z_area = project_to<coords::ms>( here.get_abs_sub().xy() );
 
-    if( cur_z_area == Pathfinding::z_area ) {
+    if( cur_z_area.raw() == Pathfinding::z_area) {
         return;
     }
 
-    const point anti_shift = Pathfinding::z_area - cur_z_area;
+    const point anti_shift = Pathfinding::z_area - cur_z_area.raw();
     // This cuboid will contain negative values, it's fine
     half_open_cuboid<tripoint> prev_z_volume_local(
         tripoint( here.getlocal( Pathfinding::z_area ), -OVERMAP_DEPTH ),
@@ -439,7 +438,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
         }
     }
 
-    Pathfinding::z_area = cur_z_area;
+    Pathfinding::z_area = cur_z_area.raw();
 }
 /// Pathfinding: main loops
 void Pathfinding::detect_culled_frontier(

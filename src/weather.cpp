@@ -364,8 +364,8 @@ static void fill_water_collectors( int mmPerHour, bool acid )
             return;
         }
         const tripoint loc(
-            ( sm_abs.x - abs_sub.x ) * SEEX + lp.x,
-            ( sm_abs.y - abs_sub.y ) * SEEY + lp.y,
+            ( sm_abs.x - abs_sub.x() ) * SEEX + lp.x,
+            ( sm_abs.y - abs_sub.y() ) * SEEY + lp.y,
             sm_abs.z );
         // Put the rain in the largest container here which is either empty or
         // contains some mixture of impure water and acid.

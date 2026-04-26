@@ -3249,7 +3249,7 @@ bool game::load( const save_t &name )
     // Old saves can have duplicates (same monster in critter_tracker and monster_map);
     // discarding in-bubble entries prevents visible duplication on load.
     {
-        const tripoint &origin = m.get_abs_sub();
+        const tripoint &origin = m.get_abs_sub().raw();
         const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : origin.z;
         const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : origin.z;
         const auto z_range = std::views::iota( zmin, zmax + 1 );
@@ -4923,8 +4923,8 @@ void game::world_tick()
                 }
                 if( !sm_ptr->emitter_cache->empty() ) {
                     ZoneScopedN( "field_emits" );
-                    const tripoint local_sm_origin( ( raw_pos.x - abs_sub.x ) * SEEX,
-                                                    ( raw_pos.y - abs_sub.y ) * SEEY,
+                    const tripoint local_sm_origin( ( raw_pos.x - abs_sub.x() ) * SEEX,
+                                                    ( raw_pos.y - abs_sub.y() ) * SEEY,
                                                     raw_pos.z );
                     std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point & lp ) {
                         const tripoint local_pos( local_sm_origin.x + lp.x,
@@ -12109,11 +12109,11 @@ void game::resize_reality_bubble_to( int new_size )
 {
     // Capture player's absolute submap position and within-submap tile offset
     // before any coordinate system changes.
-    const tripoint old_abs_sub = m.get_abs_sub();
+    const tripoint_abs_sm old_abs_sub = m.get_abs_sub();
     const tripoint player_abs_sm(
-        old_abs_sub.x + u.posx() / SEEX,
-        old_abs_sub.y + u.posy() / SEEY,
-        old_abs_sub.z );
+        old_abs_sub.x() + u.posx() / SEEX,
+        old_abs_sub.y() + u.posy() / SEEY,
+        old_abs_sub.z() );
     const point player_within_sm( u.posx() % SEEX, u.posy() % SEEY );
 
     // The grid origin shifts by (old_half - new_half) submaps when the bubble changes size.
@@ -12210,10 +12210,10 @@ void game::resize_reality_bubble_to( int new_size )
     // triggers the collision-avoidance nudge and shifts the NPC by 1 tile.
     // onswapsetpos() bypasses that loop and directly fixes position + submap_coords.
     {
-        const tripoint new_origin_ms = sm_to_ms_copy( get_map().get_abs_sub() );
+        const auto new_origin_ms = project_to<coords::ms>( get_map().get_abs_sub() );
         std::ranges::for_each( active_npc, [&]( const auto & n ) {
             n->onswapsetpos( reality_bubble::local_square_from_global( n->global_square_location(),
-                             new_origin_ms ) );
+                             new_origin_ms.raw() ) );
             // Same as monsters above: local-coordinate paths are now stale.
             n->path.clear();
         } );
@@ -13387,14 +13387,14 @@ bool game::travel_to_dimension( const std::string &dim_id,
         player.load_map_memory();
 
         {
-            auto const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z;
-            auto const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z;
+            auto const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z();
+            auto const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z();
             for( auto z = zmin; z <= zmax; z++ ) {
                 here.access_cache( z ).map_memory_seen_cache.reset();
                 here.invalidate_map_cache( z );
             }
         }
-        here.build_map_cache( here.get_abs_sub().z );
+        here.build_map_cache( here.get_abs_sub().z() );
 
         load_npcs();
         here.spawn_monsters( true );
@@ -13766,9 +13766,9 @@ point game::update_map( int &x, int &y )
     // Distribution-grid tracker updates are fully incremental via
     // on_submap_loaded/unloaded; the old full-rebuild has been removed.
     if( reality_bubble_handle_ != 0 ) {
-        const tripoint &origin = m.get_abs_sub();
+        const auto &origin = m.get_abs_sub();
         const tripoint_abs_sm new_center(
-            origin.x + reality_bubble_radius_, origin.y + reality_bubble_radius_, origin.z );
+            origin.x() + reality_bubble_radius_, origin.y() + reality_bubble_radius_, origin.z() );
         submap_loader.update_request( reality_bubble_handle_, new_center );
         // Dynamically manage lazy border based on cached option.
         if( lazy_border_enabled ) {
@@ -15027,26 +15027,26 @@ void game::add_artifact_dreams( )
 
 int game::get_levx() const
 {
-    return m.get_abs_sub().x;
+    return m.get_abs_sub().x();
 }
 
 int game::get_levy() const
 {
-    return m.get_abs_sub().y;
+    return m.get_abs_sub().y();
 }
 
 int game::get_levz() const
 {
-    return m.get_abs_sub().z;
+    return m.get_abs_sub().z();
 }
 
 overmap &game::get_cur_om() const
 {
     // The player is located in the middle submap of the map.
-    const tripoint sm = m.get_abs_sub() + tripoint( g_half_mapsize, g_half_mapsize, 0 );
-    const tripoint pos_om = sm_to_om_copy( sm );
+    const tripoint_abs_sm sm = m.get_abs_sub() + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
+    const tripoint_abs_om pos_om = project_to<coords::om>( sm );
     // TODO: fix point types
-    return get_overmapbuffer( current_dimension_id_ ).get( point_abs_om( pos_om.xy() ) );
+    return get_overmapbuffer( current_dimension_id_ ).get( pos_om.xy() );
 }
 
 std::vector<npc *> game::allies()
