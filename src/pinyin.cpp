@@ -14,9 +14,9 @@ namespace
 auto indexed_pinyin_map() -> const std::unordered_map<char32_t, std::vector<std::u32string>> &
 {
     static const auto indexed_map = []() {
-        auto map = std::unordered_map<char32_t, std::vector<std::u32string>>{};
+        auto map = std::unordered_map<char32_t, std::vector<std::u32string>> {};
 
-        std::ranges::for_each( pinyin_data, [&map]( const auto &entry ) {
+        std::ranges::for_each( pinyin_data, [&map]( const auto & entry ) {
             std::ranges::for_each( entry.second, [&map, &entry]( const auto current_char ) {
                 auto &current_pinyins = map[current_char];
                 if( std::ranges::find( current_pinyins, entry.first ) == current_pinyins.end() ) {
@@ -26,7 +26,8 @@ auto indexed_pinyin_map() -> const std::unordered_map<char32_t, std::vector<std:
         } );
 
         return map;
-    }();
+    }
+    ();
 
     return indexed_map;
 }
