@@ -197,7 +197,7 @@ bool map::build_vision_transparency_cache( const Character &player )
 
         point player_mount;
         if( player_vp ) {
-            player_mount = player_vp->vehicle().tripoint_to_mount( p );
+            player_mount = player_vp->vehicle().bubble_to_mount( p );
         }
 
         int i = 0;
@@ -215,16 +215,16 @@ bool map::build_vision_transparency_cache( const Character &player )
 
                     point adjacent_mount;
                     if( adjacent_vp ) {
-                        adjacent_mount = adjacent_vp->vehicle().tripoint_to_mount( p );
+                        adjacent_mount = adjacent_vp->vehicle().bubble_to_mount( p );
                     }
 
                     if( ( player_vp &&
                           !player_vp->vehicle().check_rotated_intervening( player_mount,
-                                  player_vp->vehicle().tripoint_to_mount( p + adjacent ),
+                                  player_vp->vehicle().bubble_to_mount( p + adjacent ),
                                   check_vehicle_coverage ) )
                         || ( adjacent_vp && ( !player_vp ||  &( player_vp->vehicle() ) != &( adjacent_vp->vehicle() ) ) &&
-                             !adjacent_vp->vehicle().check_rotated_intervening( adjacent_vp->vehicle().tripoint_to_mount(
-                                         p ), adjacent_vp->vehicle().tripoint_to_mount( p + adjacent ),
+                             !adjacent_vp->vehicle().check_rotated_intervening( adjacent_vp->vehicle().bubble_to_mount(
+                                         p ), adjacent_vp->vehicle().bubble_to_mount( p + adjacent ),
                                      check_vehicle_coverage ) ) ) {
                         dirty = true;
                         vision_transparency_cache[ i ] = VISION_ADJUST_HIDDEN;

@@ -611,14 +611,14 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                 const bool is_valid_to_step_into_veh =
                     cur_vehicle == nullptr ?
                     true :
-                    cur_vehicle->allowed_move( cur_vehicle->tripoint_to_mount( cur_point_with_z ),
-                                               cur_vehicle->tripoint_to_mount( next_point_with_z ) );
+                    cur_vehicle->allowed_move( cur_vehicle->bubble_to_mount( cur_point_with_z ),
+                                               cur_vehicle->bubble_to_mount( next_point_with_z ) );
 
                 const bool is_valid_to_step_out_of_veh =
                     next_vehicle == nullptr ?
                     true :
-                    next_vehicle->allowed_move( next_vehicle->tripoint_to_mount( cur_point_with_z ),
-                                                next_vehicle->tripoint_to_mount( next_point_with_z ) );
+                    next_vehicle->allowed_move( next_vehicle->bubble_to_mount( cur_point_with_z ),
+                                                next_vehicle->bubble_to_mount( next_point_with_z ) );
 
                 is_move_valid &= is_valid_to_step_into_veh;
                 is_move_valid &= is_valid_to_step_out_of_veh;

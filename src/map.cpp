@@ -8460,7 +8460,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles,
     // edge of a bounded dimension.  Must run before actualize() so actualize() sees
     // the correct terrain.  The underlying saved/generated submap data is not modified.
     if( current_bounds_ ) {
-        apply_boundary_overlay( *tmpsub, grid_abs_sub );
+        apply_boundary_overlay( *tmpsub, tripoint_abs_sm( grid_abs_sub ) );
     }
     if( !tmpsub->active_items.empty() ) {
         submaps_with_active_items.emplace( grid_abs_sub.raw() );
@@ -8473,7 +8473,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles,
         if( veh->part_count() > 0 ) {
             // Always fix submap coordinates for easier Z-level-related operations
             veh->sm_pos = grid;
-            veh->abs_sm_pos = grid_abs_sub;
+            veh->abs_sm_pos = tripoint_abs_sm( grid_abs_sub );
             veh->dimension_id_ = bound_dimension_;
             loaded_vehicles.insert( veh );
             veh->attach();
@@ -9853,7 +9853,7 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
         floor_cache[zch.idx( part_pos.x, part_pos.y )] = true;
     }
 
-    point t = v->tripoint_to_mount( part_pos + point_north_west );
+    point t = v->bubble_to_mount( part_pos + point_north_west );
     if( !v->allowed_light( t, vp.mount() ) ) {
         obscured_cache[zch.idx( part_pos.x, part_pos.y )].nw = true;
     }
@@ -9861,7 +9861,7 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
         obstructed_cache[zch.idx( part_pos.x, part_pos.y )].nw = true;
     }
 
-    t = v->tripoint_to_mount( part_pos + point_north_east );
+    t = v->bubble_to_mount( part_pos + point_north_east );
     if( !v->allowed_light( t, vp.mount() ) ) {
         obscured_cache[zch.idx( part_pos.x, part_pos.y )].ne = true;
     }
@@ -9870,7 +9870,7 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
     }
 
     if( part_pos.x > 0 && part_pos.y < zch.cache_y - 1 ) {
-        t = v->tripoint_to_mount( part_pos + point_south_west );
+        t = v->bubble_to_mount( part_pos + point_south_west );
         if( !v->allowed_light( t, vp.mount() ) ) {
             obscured_cache[zch.idx( part_pos.x - 1, part_pos.y + 1 )].ne = true;
         }
@@ -9880,7 +9880,7 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
     }
 
     if( part_pos.x < zch.cache_x - 1 && part_pos.y < zch.cache_y - 1 ) {
-        t = v->tripoint_to_mount( part_pos + point_south_east );
+        t = v->bubble_to_mount( part_pos + point_south_east );
         if( !v->allowed_light( t, vp.mount() ) ) {
             obscured_cache[zch.idx( part_pos.x + 1, part_pos.y + 1 )].nw = true;
         }
@@ -10137,23 +10137,22 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 
 tripoint map::getabs( const tripoint &p ) const
 {
-    return project_to<coords::ms>( abs_sub ).raw().xy() + p;
+    return bub_to_abs( tripoint_bub_ms( p ) ).raw();
 }
 
 tripoint_abs_ms map::getglobal( const tripoint &p ) const
 {
-    return tripoint_abs_ms( getabs( p ) );
+    return bub_to_abs( tripoint_bub_ms( p ) );
 }
 
 tripoint map::getlocal( const tripoint &p ) const
 {
-    return p - project_to<coords::ms>( abs_sub.xy() ).raw();
+    return abs_to_bub( tripoint_abs_ms( p ) ).raw();
 }
 
 tripoint map::getlocal( const tripoint_abs_ms &p ) const
 {
-    // TODO: fix point types
-    return getlocal( p.raw() );
+    return abs_to_bub( p ).raw();
 }
 
 tripoint_abs_ms map::bub_to_abs( const tripoint_bub_ms &bub ) const

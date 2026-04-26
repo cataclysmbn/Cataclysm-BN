@@ -822,7 +822,7 @@ class vehicle
         tripoint mount_to_tripoint( point mount, point offset ) const;
 
         //Translate tile coordinates into mount coordinates
-        point tripoint_to_mount( const tripoint &p ) const;
+        point bubble_to_mount( const tripoint &p ) const;
 
         tripoint_abs_ms mount_to_abs( const tripoint_veh_ms &mount ) const;
         tripoint_abs_ms mount_to_abs( const tripoint_veh_ms &mount, const tripoint_rel_ms &offset ) const {

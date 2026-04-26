@@ -3489,9 +3489,9 @@ int vehicle::roof_at_part( const int part ) const
 
 point vehicle::coord_translate( point p ) const
 {
-    tripoint q;
-    coord_translate( pivot_rotation[0], pivot_anchor[0], p, q );
-    return q.xy();
+    return rotate_to_world( pivot_rotation[0],
+                            tripoint_veh_ms( tripoint( pivot_anchor[0], 0 ) ),
+                            tripoint_veh_ms( tripoint( p, 0 ) ) ).raw().xy();
 }
 
 const struct {
@@ -3529,56 +3529,17 @@ const struct {
 void vehicle::coord_translate( units::angle dir, point pivot, point p,
                                tripoint &q ) const
 {
-
-    int increment = angle_to_increment( dir );
-    point relative = p - pivot;
-    float skew = std::trunc( relative.x * rotation_info[increment].gradient );
-
-    q.x = relative.x;
-    q.y = relative.y + skew;
-
-    if( rotation_info[increment].swapXY ) {
-        auto swap = q.x;
-        q.x = q.y;
-        q.y = swap;
-    }
-    if( rotation_info[increment].flipH ) {
-        q.x = -q.x;
-    }
-    if( rotation_info[increment].flipV ) {
-        q.y = -q.y;
-    }
+    q = rotate_to_world( dir,
+                         tripoint_veh_ms( tripoint( pivot, 0 ) ),
+                         tripoint_veh_ms( tripoint( p, 0 ) ) ).raw();
 }
 
 void vehicle::coord_translate_reverse( units::angle dir, point pivot, const tripoint &p,
                                        point &q ) const
 {
-    int increment = angle_to_increment( dir );
-
-    q.x = p.x;
-    q.y = p.y;
-
-
-    if( rotation_info[increment].flipV ) {
-        q.y = -q.y;
-    }
-
-    if( rotation_info[increment].flipH ) {
-        q.x = -q.x;
-    }
-
-    if( rotation_info[increment].swapXY ) {
-        auto swap = q.x;
-        q.x = q.y;
-        q.y = swap;
-    }
-
-    float skew = std::trunc( q.x * rotation_info[increment].gradient );
-
-    q.y -= skew;
-
-    q += pivot;
-
+    q = rotate_to_local( dir,
+                         tripoint_veh_ms( tripoint( pivot, 0 ) ),
+                         tripoint_rel_ms( p ) ).raw().xy();
 }
 
 tripoint vehicle::mount_to_tripoint( point mount ) const
@@ -3593,7 +3554,7 @@ tripoint vehicle::mount_to_tripoint( point mount, point offset ) const
     return global_pos3() + mnt_translated;
 }
 
-point vehicle::tripoint_to_mount( const tripoint &p ) const
+point vehicle::bubble_to_mount( const tripoint &p ) const
 {
     tripoint translated = p - global_pos3();
 
