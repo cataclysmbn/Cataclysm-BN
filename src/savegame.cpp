@@ -99,12 +99,12 @@ void game::serialize( std::ostream &fout )
     json.member( "show_zone_overlay", show_zone_overlay );
     // current map coordinates
     auto pos_sm = m.get_abs_sub();
-    const auto pos_om = project_remain<coords::om>( pos_sm ).remainder;
-    json.member( "levx", pos_sm.x() );
-    json.member( "levy", pos_sm.y() );
+    const auto pos_decomp = project_remain<coords::om>( pos_sm );
+    json.member( "levx", pos_decomp.remainder.x() );
+    json.member( "levy", pos_decomp.remainder.y() );
     json.member( "levz", pos_sm.z() );
-    json.member( "om_x", pos_om.x() );
-    json.member( "om_y", pos_om.y() );
+    json.member( "om_x", pos_decomp.quotient.x() );
+    json.member( "om_y", pos_decomp.quotient.y() );
 
     // Save the current dimension ID (replaces the old world_type + pocket_instance_id pair)
     json.member( "current_dimension_id", current_dimension_id_ );
