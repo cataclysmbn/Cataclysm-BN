@@ -1955,6 +1955,12 @@
   },
   {
     "type": "keybinding",
+    "name": "Unload All Items",
+    "category": "DEFAULTMODE",
+    "id": "unload_all"
+  },
+  {
+    "type": "keybinding",
     "name": "Throw Item",
     "category": "DEFAULTMODE",
     "id": "throw",
