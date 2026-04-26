@@ -238,6 +238,7 @@
           { "id": "overlay_wielded_bat_metal_bolted", "fg": 174 },
           { "id": "ar10", "fg": 176 },
           { "id": "overlay_wielded_ar10", "fg": 177 },
+          { "id": [ "saiga_12", "saiga_410" ], "fg": 178 },
           { "id": [ "overlay_wielded_saiga_12", "overlay_wielded_saiga_410" ], "fg": 179 },
           {
             "id": [
