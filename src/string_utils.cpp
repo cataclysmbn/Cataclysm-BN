@@ -1,8 +1,10 @@
 #include "string_utils.h"
 
+#include "cached_options.h"
 #include "catacharset.h"
 #include "color.h"
 #include "name.h"
+#include "pinyin.h"
 #include "translations.h"
 
 #include <algorithm>
@@ -20,17 +22,29 @@ bool lcmatch( const std::string &str, const std::string &qry )
         f.tolower( whaystack.data(), whaystack.data() + whaystack.size() );
         f.tolower( wneedle.data(), wneedle.data() + wneedle.size() );
 
-        return whaystack.find( wneedle ) != std::wstring::npos;
+        if( whaystack.find( wneedle ) != std::wstring::npos ) {
+            return true;
+        }
+    } else {
+        std::string needle;
+        needle.reserve( qry.size() );
+        std::transform( qry.begin(), qry.end(), std::back_inserter( needle ), tolower );
+
+        std::string haystack;
+        haystack.reserve( str.size() );
+        std::transform( str.begin(), str.end(), std::back_inserter( haystack ), tolower );
+
+        if( haystack.find( needle ) != std::string::npos ) {
+            return true;
+        }
     }
-    std::string needle;
-    needle.reserve( qry.size() );
-    std::transform( qry.begin(), qry.end(), std::back_inserter( needle ), tolower );
 
-    std::string haystack;
-    haystack.reserve( str.size() );
-    std::transform( str.begin(), str.end(), std::back_inserter( haystack ), tolower );
+    if( use_pinyin_search ) {
+        return pinyin::pinyin_match( utf8_to_utf32( to_lower_case( str ) ),
+                                     utf8_to_utf32( to_lower_case( qry ) ) );
+    }
 
-    return haystack.find( needle ) != std::string::npos;
+    return false;
 }
 
 bool lcmatch( const translation &str, const std::string &qry )
