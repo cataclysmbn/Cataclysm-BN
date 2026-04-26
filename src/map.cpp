@@ -5989,7 +5989,7 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
             return;
         }
         const auto it = std::ranges::find_if( cargo_parts, [&]( const vpart_reference & part ) {
-            return active_item_ref->position() == cur_veh.mount_to_bubble( part.mount() );
+            return active_item_ref->position() == cur_veh.mount_to_bubble( part.mount() ).raw();
         } );
 
         if( it == cargo_parts.end() ) {
@@ -9858,7 +9858,7 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
         floor_cache[zch.idx( part_pos.x, part_pos.y )] = true;
     }
 
-    point t = v->bubble_to_mount( part_pos + point_north_west );
+    point t = v->bubble_to_mount( tripoint_bub_ms( part_pos + point_north_west ) );
     if( !v->allowed_light( t, vp.mount() ) ) {
         obscured_cache[zch.idx( part_pos.x, part_pos.y )].nw = true;
     }
@@ -9866,7 +9866,7 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
         obstructed_cache[zch.idx( part_pos.x, part_pos.y )].nw = true;
     }
 
-    t = v->bubble_to_mount( part_pos + point_north_east );
+    t = v->bubble_to_mount( tripoint_bub_ms( part_pos + point_north_east ) );
     if( !v->allowed_light( t, vp.mount() ) ) {
         obscured_cache[zch.idx( part_pos.x, part_pos.y )].ne = true;
     }
@@ -9875,7 +9875,7 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
     }
 
     if( part_pos.x > 0 && part_pos.y < zch.cache_y - 1 ) {
-        t = v->bubble_to_mount( part_pos + point_south_west );
+        t = v->bubble_to_mount( tripoint_bub_ms( part_pos + point_south_west ) );
         if( !v->allowed_light( t, vp.mount() ) ) {
             obscured_cache[zch.idx( part_pos.x - 1, part_pos.y + 1 )].ne = true;
         }
@@ -9885,7 +9885,7 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
     }
 
     if( part_pos.x < zch.cache_x - 1 && part_pos.y < zch.cache_y - 1 ) {
-        t = v->bubble_to_mount( part_pos + point_south_east );
+        t = v->bubble_to_mount( tripoint_bub_ms( part_pos + point_south_east ) );
         if( !v->allowed_light( t, vp.mount() ) ) {
             obscured_cache[zch.idx( part_pos.x + 1, part_pos.y + 1 )].nw = true;
         }

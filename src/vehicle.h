@@ -818,11 +818,11 @@ class vehicle
         void coord_translate_reverse( units::angle dir, point pivot, const tripoint &p,
                                       point &q ) const;
 
-        tripoint mount_to_bubble( point mount ) const;
-        tripoint mount_to_bubble( point mount, point offset ) const;
+        tripoint_bub_ms mount_to_bubble( point mount ) const;
+        tripoint_bub_ms mount_to_bubble( point mount, point offset ) const;
 
         //Translate tile coordinates into mount coordinates
-        point bubble_to_mount( const tripoint &p ) const;
+        point bubble_to_mount( const tripoint_bub_ms &p ) const;
 
         tripoint_abs_ms mount_to_abs( const tripoint_veh_ms &mount ) const;
         tripoint_abs_ms mount_to_abs( const tripoint_veh_ms &mount, const tripoint_rel_ms &offset ) const {

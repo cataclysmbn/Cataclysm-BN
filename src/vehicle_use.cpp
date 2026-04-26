@@ -1679,7 +1679,7 @@ void vehicle::open_or_close( const int part_index, const bool opening )
     insides_dirty = true;
     map &here = get_map();
     here.set_transparency_cache_dirty( sm_pos.z );
-    const tripoint part_location = mount_to_bubble( parts[part_index].mount );
+    const tripoint part_location = mount_to_bubble( parts[part_index].mount ).raw();
     here.set_seen_cache_dirty( part_location );
     const int dist = rl_dist( get_player_character().pos(), part_location );
     if( dist < 20 ) {

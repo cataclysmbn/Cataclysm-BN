@@ -2144,7 +2144,7 @@ bool vehicle::merge_rackable_vehicle( vehicle *carry_veh, const std::vector<int>
             point carry_mount;
             for( point offset : four_cardinal_directions ) {
                 carry_mount = parts[ rack_part ].mount + offset;
-                tripoint possible_pos = mount_to_bubble( carry_mount );
+                tripoint possible_pos = mount_to_bubble( carry_mount ).raw();
                 if( possible_pos == carry_pos ) {
                     break;
                 }
@@ -3542,21 +3542,21 @@ void vehicle::coord_translate_reverse( units::angle dir, point pivot, const trip
                          tripoint_rel_ms( p ) ).raw().xy();
 }
 
-tripoint vehicle::mount_to_bubble( point mount ) const
+tripoint_bub_ms vehicle::mount_to_bubble( point mount ) const
 {
     return mount_to_bubble( mount, point_zero );
 }
 
-tripoint vehicle::mount_to_bubble( point mount, point offset ) const
+tripoint_bub_ms vehicle::mount_to_bubble( point mount, point offset ) const
 {
     tripoint mnt_translated;
-    coord_translate( pivot_rotation[0], pivot_anchor[ 0 ], mount + offset, mnt_translated );
-    return global_pos3() + mnt_translated;
+    coord_translate( pivot_rotation[0], pivot_anchor[0], mount + offset, mnt_translated );
+    return tripoint_bub_ms( global_pos3() + mnt_translated );
 }
 
-point vehicle::bubble_to_mount( const tripoint &p ) const
+point vehicle::bubble_to_mount( const tripoint_bub_ms &p ) const
 {
-    tripoint translated = p - global_pos3();
+    tripoint translated = p.raw() - global_pos3();
 
     point result;
     coord_translate_reverse( pivot_rotation[0], pivot_anchor[0], translated, result );
