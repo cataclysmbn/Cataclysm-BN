@@ -162,7 +162,7 @@ TEST_CASE( "grid_and_vehicle_outside_bubble", "[grids][vehicle]" )
     clear_all_state();
     put_player_underground();
     map &m = get_map();
-    const tripoint old_abs_sub = m.get_abs_sub();
+    const auto old_abs_sub = m.get_abs_sub();
     // Ugly: we move the real map instead of the tinymap to reuse clear_map() results
     m.load( m.get_abs_sub() + point( m.getmapsize(), 0 ), true );
     GIVEN( "vehicle and battery are on one grid" ) {
