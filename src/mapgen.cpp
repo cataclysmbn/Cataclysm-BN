@@ -4759,11 +4759,10 @@ void map::draw_lab( mapgendata &dat )
 
         if( ice_lab ) {
             int temperature;
-            
-            if (dat.zlevel() == 0) {
+
+            if( dat.zlevel() == 0 ) {
                 temperature = -20;
-            }
-            else {
+            } else {
                 temperature = static_cast<int>( -20.0 * log( dat.zlevel() ) - 45.0 );
             }
             set_temperature( p2, temperature );
