@@ -3182,5 +3182,115 @@
     "speaker": "mon_feral_bodyguard",
     "sound": "\" Time to collect my bonus!\"",
     "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_feral_blackops_boss_commander",
+      "mon_feral_blackops_boss_bioop",
+      "mon_feral_blackops_boss_technician",
+      "mon_feral_blackops_boss_sniper"
+    ],
+    "sound": "\"Enemy spotted!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_feral_blackops_boss_commander",
+      "mon_feral_blackops_boss_bioop",
+      "mon_feral_blackops_boss_technician",
+      "mon_feral_blackops_boss_sniper"
+    ],
+    "sound": "\"Contact!  One more loose end…\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_feral_blackops_boss_commander",
+      "mon_feral_blackops_boss_bioop",
+      "mon_feral_blackops_boss_technician",
+      "mon_feral_blackops_boss_sniper"
+    ],
+    "sound": "\"This shouldn't take long!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_feral_blackops_boss_commander",
+      "mon_feral_blackops_boss_bioop",
+      "mon_feral_blackops_boss_technician",
+      "mon_feral_blackops_boss_sniper"
+    ],
+    "sound": "\"Tango dead ahead!  This one's lasted longer than the others…\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_feral_blackops_boss_commander",
+      "mon_feral_blackops_boss_bioop",
+      "mon_feral_blackops_boss_technician",
+      "mon_feral_blackops_boss_sniper"
+    ],
+    "sound": "\"You chose the wrong military installation, kid!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_feral_blackops_boss_commander",
+      "mon_feral_blackops_boss_bioop",
+      "mon_feral_blackops_boss_technician",
+      "mon_feral_blackops_boss_sniper"
+    ],
+    "sound": "\"We call this a difficulty tweak!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_feral_blackops_boss_commander",
+      "mon_feral_blackops_boss_bioop",
+      "mon_feral_blackops_boss_technician",
+      "mon_feral_blackops_boss_sniper"
+    ],
+    "sound": "\"You'll be nothing more than a redaction line when I'm done with you!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_feral_blackops_boss_commander",
+      "mon_feral_blackops_boss_bioop",
+      "mon_feral_blackops_boss_technician",
+      "mon_feral_blackops_boss_sniper"
+    ],
+    "sound": "\"Everyone move up!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_feral_blackops_boss_commander",
+      "mon_feral_blackops_boss_bioop",
+      "mon_feral_blackops_boss_technician",
+      "mon_feral_blackops_boss_sniper"
+    ],
+    "sound": "\"CBM power in the red, cover me!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": [
+      "mon_feral_blackops_boss_commander",
+      "mon_feral_blackops_boss_bioop",
+      "mon_feral_blackops_boss_technician",
+      "mon_feral_blackops_boss_sniper"
+    ],
+    "sound": "\"I bet five dollars this guy doesn't last another thirty seconds!\"",
+    "volume": 50
   }
 ]

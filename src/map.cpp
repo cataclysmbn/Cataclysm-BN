@@ -255,6 +255,7 @@ auto map::resize( int new_mapsize ) -> void
     }
     submaps_with_active_items.clear();
     loaded_vehicles.clear();
+    funnel_locations_.clear();
     // Recompute the circular load footprint for the new bubble radius.
     // Radius = (mapsize - 1) / 2, matching g_half_mapsize.
     submap_loader.update_load_shape( ( new_mapsize - 1 ) / 2 );
@@ -353,6 +354,16 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
         submaps_with_active_items.emplace( p );
     }
 
+    // Register any funnel traps so fill_water_collectors can skip the mapbuffer scan.
+    if( sm != nullptr && !sm->trap_cache.empty() ) {
+        const tripoint sm_abs = pos.raw();
+        std::ranges::for_each( sm->trap_cache, [&]( const point & lp ) {
+            if( sm->get_trap( lp ).obj().is_funnel() ) {
+                funnel_locations_.emplace_back( sm_abs, lp );
+            }
+        } );
+    }
+
     if( !contains_abs_sm( pos ) ) {
         return;
     }
@@ -391,6 +402,12 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim
 
     // Stop tracking active items for this submap.
     submaps_with_active_items.erase( pos.raw() );
+
+    // Remove any funnel locations belonging to this submap.
+    const tripoint sm_abs = pos.raw();
+    std::erase_if( funnel_locations_, [&]( const auto & e ) {
+        return e.first == sm_abs;
+    } );
 
     if( !contains_abs_sm( pos ) ) {
         return;
@@ -920,7 +937,7 @@ void map::vehmove()
             for( vehicle *veh : get_cache( z ).vehicle_list ) {
                 veh->gain_moves();
                 veh->slow_leak();
-                vehicle_list.push_back( wrapped_vehicle{ .v = veh } );
+                vehicle_list.push_back( wrapped_vehicle{ .pos = veh->global_pos3(), .v = veh } );
             }
         }
     }
@@ -1024,6 +1041,7 @@ void map::vehmove()
         }
     }
     TracyPlot( "Vehicles Moved", moved_count );
+    static_cast<void>( moved_count );
 
     // A map shift can occur mid-loop when the player is a vehicle passenger:
     if( last_full_vehicle_list_dirty ) {
@@ -1602,15 +1620,17 @@ bool map::deregister_vehicle_zone( zone_data &zone )
 {
     if( const std::optional<vpart_reference> vp = veh_at( getlocal(
                 zone.get_start_point() ) ).part_with_feature( "CARGO", false ) ) {
-        auto bounds = vp->vehicle().loot_zones.equal_range( vp->mount() );
-        for( auto it = bounds.first; it != bounds.second; it++ ) {
-            if( &zone == &( it->second ) ) {
-                vp->vehicle().loot_zones.erase( it );
-                if( vp->vehicle().loot_zones.empty() ) {
-                    get_cache( vp->vehicle().sm_pos.z ).zone_vehicles.erase( &vp->vehicle() );
-                }
-                return true;
+        const auto bounds = vp->vehicle().loot_zones.equal_range( vp->mount() );
+        const auto it = std::ranges::find_if( std::ranges::subrange( bounds.first, bounds.second ),
+        [&zone]( const auto & entry ) {
+            return &zone == &entry.second;
+        } );
+        if( it != bounds.second ) {
+            vp->vehicle().loot_zones.erase( it );
+            if( vp->vehicle().loot_zones.empty() ) {
+                get_cache( vp->vehicle().sm_pos.z ).zone_vehicles.erase( &vp->vehicle() );
             }
+            return true;
         }
     }
     return false;
@@ -1897,6 +1917,20 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
     }
 
     veh.shed_loose_parts();
+
+    // Clear overlay map memory (vpart only) for every tile the vehicle is vacating.
+    // precalc[0] still holds the OLD offsets here (before advance_precalc_mounts),
+    // so src + precalc[0] gives the authoritative absolute tile positions being left.
+    // Terrain memory is preserved so the ground beneath doesn't go black.
+    {
+        avatar &you = get_avatar();
+        for( const vpart_reference &vpr : veh.get_all_parts() ) {
+            if( !vpr.part().removed ) {
+                you.clear_memorized_overlay( getabs( src + vpr.part().precalc[0] ) );
+            }
+        }
+    }
+
     smzs = veh.advance_precalc_mounts( dst_offset, src );
 
     // Expand bounds with the new footprint (precalc[0] now holds new offsets).
@@ -2855,6 +2889,9 @@ bool map::supports_above( const tripoint &p ) const
 
 bool map::has_floor_or_support( const tripoint &p ) const
 {
+    if( p.z < -OVERMAP_DEPTH || p.z > OVERMAP_HEIGHT ) {
+        return false;
+    }
     const tripoint below( p.xy(), p.z - 1 );
     return !valid_move( p, below, false, true );
 }
@@ -3485,6 +3522,7 @@ bool map::is_flammable( const tripoint &p )
 
 void map::decay_fields_and_scent( const time_duration &amount )
 {
+    ZoneScopedN( "decay_fields_and_scent" );
     // TODO: Make this happen on all z-levels
 
     // Decay scent separately, so that later we can use field count to skip empty submaps
@@ -3494,7 +3532,6 @@ void map::decay_fields_and_scent( const time_duration &amount )
     // TODO: Z
     const int smz = abs_sub.z;
     level_cache &smz_cache = get_cache( smz );
-    const int cache_mapsize = smz_cache.cache_mapsize;
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto cur_submap = get_submap_at_grid( { smx, smy, smz } );
@@ -5945,15 +5982,14 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
     }
 
     for( item *active_item_ref : cur_veh.active_items.get_for_processing() ) {
-        if( empty( cargo_parts ) ) {
+        if( cargo_parts.empty() ) {
             return;
         }
-        const auto it = std::find_if( begin( cargo_parts ),
-        end( cargo_parts ), [&]( const vpart_reference & part ) {
+        const auto it = std::ranges::find_if( cargo_parts, [&]( const vpart_reference & part ) {
             return active_item_ref->position() == cur_veh.mount_to_tripoint( part.mount() );
         } );
 
-        if( it == end( cargo_parts ) ) {
+        if( it == cargo_parts.end() ) {
             continue; // Can't find a cargo part matching the active item.
         }
         const item &target = *active_item_ref;
@@ -6410,6 +6446,10 @@ void map::trap_set( const tripoint &p, const trap_id &type )
     }
 
     current_submap->set_trap( l, type );
+    if( type.obj().is_funnel() ) {
+        const tripoint sm_abs( abs_sub.x + p.x / SEEX, abs_sub.y + p.y / SEEY, p.z );
+        funnel_locations_.emplace_back( sm_abs, l );
+    }
 }
 
 void map::disarm_trap( const tripoint &p )
@@ -6480,6 +6520,13 @@ void map::remove_trap( const tripoint &p )
     if( tid != tr_null ) {
         if( g != nullptr && this == &get_map() ) {
             g->u.add_known_trap( p, tr_null.obj() );
+        }
+
+        if( tid.obj().is_funnel() ) {
+            const tripoint sm_abs( abs_sub.x + p.x / SEEX, abs_sub.y + p.y / SEEY, p.z );
+            std::erase_if( funnel_locations_, [&]( const auto & e ) {
+                return e.first == sm_abs && e.second == l;
+            } );
         }
 
         current_submap->set_trap( l, tr_null );
@@ -7844,6 +7891,7 @@ void map::load( const tripoint &w, const bool update_vehicle, const bool pump_ev
     std::fill( grid.begin(), grid.end(), nullptr );
     submaps_with_active_items.clear();
     loaded_vehicles.clear();
+    funnel_locations_.clear();
     set_abs_sub( w );
     for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
         for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {

@@ -760,6 +760,7 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
             jsin.skip_value();
         }
     }
+    sync_mapgen_args_init_flags();
 }
 
 static void unserialize_array_from_compacted_sequence( JsonIn &jsin, bool ( &array )[OMAPX][OMAPY] )

@@ -510,8 +510,11 @@ struct npc_short_term_cache {
 
     // Use weak_ptr to avoid circular references between Creatures
     std::vector<weak_ptr_fast<Creature>> friends;
+    // NPC-typed friends only; rebuilt when g_npc_friends_dirty_version changes
+    std::vector<weak_ptr_fast<Creature>> cached_npc_friends;
+    uint32_t npc_friends_version = 0;
     std::vector<sphere> dangerous_explosives;
-    std::map<direction, float> threat_map;
+    std::array<float, 27> threat_map;
     // Cache of locations the NPC has searched recently in npc::find_item()
     lru_cache<tripoint, int> searched_tiles;
 };
@@ -1232,6 +1235,9 @@ class npc : public player
         void set_activity_failure_message( const std::string &msg );
         std::string consume_activity_failure_message();
         std::string peek_activity_failure_message() const;
+        // Craft related stuff
+        void do_npc_craft( const std::optional<tripoint> &loc = std::nullopt );
+        item_location get_item_to_craft();
 
         // #############   VALUES   ################
         activity_id current_activity_id = activity_id::NULL_ID();

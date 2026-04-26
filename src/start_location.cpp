@@ -122,7 +122,7 @@ static void add_boardable( const map &m, const tripoint &p, std::vector<tripoint
         // Don't board up the outside
         return;
     }
-    if( std::ranges::find( vec, p ) != vec.end() ) {
+    if( std::ranges::contains( vec, p ) ) {
         // Already registered to be boarded
         return;
     }
@@ -164,7 +164,7 @@ static void board_up( map &m, const tripoint_range<tripoint> &range )
     }
     // Find all furniture that can be used to board up some place
     for( const tripoint &p : range ) {
-        if( std::ranges::find( boardables, p ) != boardables.end() ) {
+        if( std::ranges::contains( boardables, p ) ) {
             continue;
         }
         if( !m.has_furn( p ) ) {

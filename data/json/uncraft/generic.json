@@ -2010,7 +2010,7 @@
     "components": [ [ [ "glass_shard", 18 ] ] ]
   },
   {
-    "result": "reinforced_glass_pane",
+    "result": "reinforced_glass_sheet",
     "type": "uncraft",
     "time": "2 m",
     "components": [ [ [ "glass_shard", 18 ] ], [ [ "wire", 8 ] ] ]

@@ -52,6 +52,7 @@
 #include "event_bus.h"
 #include "field_type.h"
 #include "flat_set.h"
+#include "flood_fill.h"
 #include "fungal_effects.h"
 #include "game.h"
 #include "game_constants.h"
@@ -232,6 +233,9 @@ static const bionic_id bio_fingerhack( "bio_fingerhack" );
 static const bionic_id bio_lighter( "bio_lighter" );
 static const bionic_id bio_lockpick( "bio_lockpick" );
 static const bionic_id bio_painkiller( "bio_painkiller" );
+static const bionic_id bio_tools( "bio_tools" );
+
+static const itype_id itype_toolset( "toolset" );
 
 static const std::string flag_AUTODOC( "AUTODOC" );
 static const std::string flag_AUTODOC_COUCH( "AUTODOC_COUCH" );
@@ -1124,8 +1128,13 @@ void iexamine::cardreader( player &p, const tripoint &examp )
         p.mod_moves( -to_turns<int>( 1_seconds ) );
         for( const tripoint &tmp : here.points_in_radius( examp, 3 ) ) {
             if( here.ter( tmp ) == t_door_metal_locked ) {
-                here.ter_set( tmp, t_door_metal_c );
-                open = true;
+                const auto is_door = [&here]( const tripoint & pos ) -> bool { return here.ter( pos ) == t_door_metal_locked; };
+
+                std::unordered_set<tripoint> visited;
+                for( const tripoint &tmp2 : ff::point_flood_fill_4_connected( tmp, visited, is_door ) ) {
+                    here.ter_set( tmp2, t_door_metal_c );
+                    open = true;
+                }
             }
         }
         for( monster &critter : g->all_monsters() ) {
@@ -1504,36 +1513,39 @@ void iexamine::slot_machine( player &p, const tripoint & )
     }
 }
 
-static item *find_best_prying_tool( player &p )
+static auto find_best_prying_tool( player &p ) -> item *
 {
-    std::vector<item *> prying_items = p.items_with( []( const item & it ) {
+    auto prying_items = p.items_with( []( const item & it ) {
         // we want to get worn items (eg crowbar in toolbelt), so no check on item position
-        return it.has_quality( quality_id( "PRY" ), 1 );
+        return it.type->get_use( "CROWBAR" ) != nullptr;
     } );
 
-    // Sort by their quality level.
-    std::ranges::sort( prying_items, []( const item * a, const item * b ) -> bool {
-        return a->get_quality( quality_id( "PRY" ) ) > b->get_quality( quality_id( "PRY" ) );
-    } );
+    if( p.has_active_bionic( bio_tools ) ) {
+        auto toolset = item::spawn_temporary( itype_toolset, calendar::turn );
+        prying_items.push_back( toolset );
+    }
 
-    // if crowbar() ever eats charges or otherwise alters the passed item, rewrite this to reflect
-    // changes to the original item.
     if( prying_items.empty() ) {
         return nullptr;
     }
-    return prying_items[0];
+
+    const auto best_tool = std::ranges::max_element( prying_items, []( const item * a,
+    const item * b ) -> bool {
+        return a->get_quality( quality_id( "PRY" ) ) < b->get_quality( quality_id( "PRY" ) );
+    } );
+
+    return *best_tool;
 }
 
-static void apply_prying_tool( player &p, item *it, const tripoint &examp )
+static auto apply_prying_tool( player &p, item *it, const tripoint &examp )
 {
     map &here = get_map();
+
     //~ %1$s: terrain/furniture name, %2$s: prying tool name
     p.add_msg_if_player( _( "You attempt to pry open the %1$s using your %2$s…" ),
                          here.has_furn( examp ) ? here.furnname( examp ) : here.tername( examp ), it->tname() );
 
-    // if crowbar() ever eats charges or otherwise alters the passed item, rewrite this to reflect
-    // changes to the original item.
-    iuse::crowbar( &p, it, false, examp );
+    p.invoke_item( it, "CROWBAR", examp );
 }
 
 static time_duration safecracking_time( const player &p )
@@ -1564,13 +1576,13 @@ void iexamine::safe( player &p, const tripoint &examp )
 {
 
     map &here = get_map();
-    safe_reference<item> prying_tool = find_best_prying_tool( p );
+    auto *prying_tool = find_best_prying_tool( p );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
     if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) ) {
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
         if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
-            apply_prying_tool( p, prying_tool.get(), examp );
+            apply_prying_tool( p, prying_tool, examp );
             return;
         }
     }
@@ -1628,13 +1640,13 @@ void iexamine::safe( player &p, const tripoint &examp )
 void iexamine::gunsafe_el( player &p, const tripoint &examp )
 {
     map &here = get_map();
-    safe_reference<item> prying_tool = find_best_prying_tool( p );
+    auto *prying_tool = find_best_prying_tool( p );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
     if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) ) {
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
         if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
-            apply_prying_tool( p, prying_tool.get(), examp );
+            apply_prying_tool( p, prying_tool, examp );
             return;
         }
     }
@@ -1728,13 +1740,13 @@ void iexamine::locked_object( player &p, const tripoint &examp )
         }
     }
 
-    safe_reference<item> prying_tool = find_best_prying_tool( p );
+    auto *prying_tool = find_best_prying_tool( p );
     if( prying_tool ) {
         const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                     examp )->pry.pry_quality;
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
         if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
-            apply_prying_tool( p, prying_tool.get(), examp );
+            apply_prying_tool( p, prying_tool, examp );
             return;
         }
     }
@@ -2787,7 +2799,7 @@ itype_id iexamine::choose_fertilizer( player &p, const std::string &pname, bool 
     std::vector<itype_id> f_types;
     std::vector<std::string> f_names;
     for( auto &f : f_inv ) {
-        if( std::ranges::find( f_types, f->typeId() ) == f_types.end() ) {
+        if( !std::ranges::contains( f_types, f->typeId() ) ) {
             f_types.push_back( f->typeId() );
             f_names.push_back( f->tname() );
         }
@@ -3318,7 +3330,7 @@ void iexamine::fvat_empty( player &p, const tripoint &examp )
         std::vector<itype_id> b_types;
         std::vector<std::string> b_names;
         for( auto &b : b_inv ) {
-            if( std::ranges::find( b_types, b->typeId() ) == b_types.end() ) {
+            if( !std::ranges::contains( b_types, b->typeId() ) ) {
                 b_types.push_back( b->typeId() );
                 b_names.push_back( item::nname( b->typeId() ) );
             }

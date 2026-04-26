@@ -18,7 +18,7 @@
     "barrel_volume": "1250 ml",
     "default_mods": [ "bipod", "rifle_scope", "muzzle_brake" ],
     "magazine_well": "250 ml",
-    "magazines": [ [ "50", [ "m107a1mag" ] ] ],
+    "magazines": [ [ "50", [ "m107a1mag", "drum_mag50" ] ] ],
     "flags": [ "NEVER_JAMS" ]
   },
   {

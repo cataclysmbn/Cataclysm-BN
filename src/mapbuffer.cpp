@@ -382,7 +382,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
         }
     } );
 
-    // Evict submaps from memory. std::map mutation is not thread-safe,
+    // Evict submaps from memory. std::unordered_map mutation is not thread-safe,
     // so this is done serially after the parallel write phase completes.
     for( const tripoint &pos : submaps_to_delete ) {
         remove_submap( pos );

@@ -391,6 +391,7 @@ int iuse_transform::use( player &p, item &it, bool t, const tripoint &pos ) cons
     it.set_counter( countdown > 0 ? countdown : it.type->countdown_interval );
     // Check for gaining or losing night vision, eye encumbrance effects, clairvoyance from transforming relics, etc.
     p.recalc_sight_limits();
+    get_map().invalidate_lightmap_caches();
 
     return 0;
 }
@@ -2565,9 +2566,6 @@ int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint &
     if( morale_effect >= 0 && calendar::once_every( description_frequency ) ) {
         if( !player_descriptions.empty() && p.is_player() ) {
             desc = _( random_entry( player_descriptions ) );
-        } else if( !npc_descriptions.empty() && p.is_npc() ) {
-            desc = string_format( _( "%1$s %2$s" ), p.disp_name( false ),
-                                  random_entry( npc_descriptions ) );
         }
     } else if( morale_effect < 0 && calendar::once_every( 1_minutes ) ) {
         // No musical skills = possible morale penalty
@@ -2576,6 +2574,10 @@ int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint &
         } else {
             desc = string_format( _( "%s produces an annoying sound" ), p.disp_name( false ) );
         }
+        // Continuous sound messages only print every so often, so this ensures when it does print it'll be the right one.
+    } else if( !npc_descriptions.empty() && p.is_npc() ) {
+        desc = string_format( _( "%1$s %2$s" ), p.disp_name( false ),
+                              random_entry( npc_descriptions ) );
     }
 
     if( morale_effect >= 0 ) {

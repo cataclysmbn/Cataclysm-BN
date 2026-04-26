@@ -282,7 +282,7 @@
     "max_volume": "200 L",
     "crafting_pseudo_item": "char_kiln",
     "flags": [ "CONTAINER", "FIRE_CONTAINER", "PLACE_ITEM" ],
-    "deconstruct": { "items": [ { "item": "metal_tank", "count": 4 }, { "item": "pipe", "count": 4 } ] },
+    "deconstruct": { "items": [ { "item": "metal_charcoal_kiln", "count": 1 } ] },
     "bash": {
       "str_min": 12,
       "str_max": 40,
@@ -309,7 +309,7 @@
     "required_str": -1,
     "examine_action": "kiln_full",
     "flags": [ "NOITEM", "SEALED", "CONTAINER", "FIRE_CONTAINER", "SUPPRESS_SMOKE", "PLACE_ITEM" ],
-    "deconstruct": { "items": [ { "item": "metal_tank", "count": 4 }, { "item": "pipe", "count": 4 } ] },
+    "deconstruct": { "items": [ { "item": "metal_charcoal_kiln", "count": 1 } ] },
     "bash": {
       "str_min": 12,
       "str_max": 40,

@@ -144,19 +144,6 @@ bool ter_furn_has_flag( const ter_t &ter, const furn_t &furn, const ter_bitflags
     return ter.has_flag( flag ) || furn.has_flag( flag );
 }
 
-static int ter_furn_movecost( const ter_t &ter, const furn_t &furn )
-{
-    if( ter.movecost == 0 ) {
-        return 0;
-    }
-
-    if( furn.movecost < 0 ) {
-        return 0;
-    }
-
-    return ter.movecost + furn.movecost;
-}
-
 static inline bool check_flammable( const map_data_common_t &t )
 {
     return t.has_flag( TFLAG_FLAMMABLE ) || t.has_flag( TFLAG_FLAMMABLE_ASH ) ||
@@ -1128,7 +1115,12 @@ auto process_fields_in_submap( submap &sm,
 
     auto has_fire = false;
 
-    std::ranges::for_each( sm.field_cache, [&]( const point & local ) {
+    // Snapshot before iterating: wandering-field spread can push_back to sm.field_cache
+    // within the same submap (line ~1742), which would invalidate the range iterators.
+    // Newly-added entries are newborn (age 0) and skip all effects anyway, so processing
+    // them next tick is correct behaviour.
+    const auto field_positions = sm.field_cache;
+    std::ranges::for_each( field_positions, [&]( const point & local ) {
         auto &curfield = sm.get_field( local );
 
         if( !curfield.displayed_field_type() ) {
@@ -1764,9 +1756,33 @@ auto process_fields_in_submap( submap &sm,
         } // end field-entry loop
     } );
 
-    if( sm.field_count == 0 ) {
-        sm.field_cache.clear();
-    }
+    // Compact + deduplicate the field_cache in one O(n) pass.
+    //
+    // Two failure modes fixed here:
+    //   1. Dead entries: a position is pushed when a field is first created, but
+    //      never removed when it dies.  The cache grows each creation/death cycle.
+    //   2. Duplicate live entries: when a bolt or spread effect adds a second field
+    //      type to a tile already in the cache, add_field() returns true (new type),
+    //      so the same position is pushed again.  The shock_vent state machine then
+    //      runs N times per tick instead of once, flooding the room with electricity.
+    //
+    // The bitset tracks which of the 144 submap tiles have already been kept so
+    // duplicates are discarded in the same pass that removes dead entries.
+    std::bitset<SEEX *SEEY> seen;
+    sm.field_cache.erase(
+    std::ranges::remove_if( sm.field_cache, [&]( const point & local ) {
+        if( !sm.get_field( local ).displayed_field_type() ) {
+            return true;
+        }
+        const auto idx = static_cast<std::size_t>( local.x + local.y * SEEX );
+        if( seen.test( idx ) ) {
+            return true;
+        }
+        seen.set( idx );
+        return false;
+    } ).begin(),
+    sm.field_cache.end()
+    );
 
     return has_fire;
 }

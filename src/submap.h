@@ -276,8 +276,8 @@ class submap : maptile_soa<SEEX, SEEY>
         // A stale entry is benign — it just costs a cheap branch on iteration.
         // trap_cache: positions of any non-null trap; rebuilt incrementally via set_trap.
         std::vector<point> trap_cache;
-        // field_cache: positions of tiles that have ever had a field added this load cycle.
-        // Append-only; cleared when field_count drops to zero after processing.
+        // field_cache: positions of tiles with active fields; compacted after each
+        // processing pass to remove positions whose fields have fully decayed.
         std::vector<point> field_cache;
         // TODO: A future improvement is to unify all per-tile dirty state into a 144-bit
         // bitmask (e.g. std::bitset<SEEX * SEEY> or three uint64_t words), one per category.
@@ -308,6 +308,9 @@ class submap : maptile_soa<SEEX, SEEY>
         char   floor_cache[SEEX][SEEY]         = {};
         pf_special pf_special_cache[SEEX][SEEY]  = {};
         int    scent_values[SEEX][SEEY]        = {};
+        // True if any scent_values cell is non-zero. Set in raw_scent_set; cleared by
+        // scent_map::decay once all values reach zero. Lets decay() skip unvisited submaps.
+        bool has_scent = false;
 
         bool transparency_dirty = true;
         bool outside_dirty      = true;

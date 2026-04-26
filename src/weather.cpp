@@ -39,6 +39,7 @@
 #include "submap.h"
 #include "translations.h"
 #include "trap.h"
+#include "type_id.h"
 #include "units.h"
 #include "units_temperature.h"
 #include "vpart_position.h"
@@ -78,8 +79,15 @@ weather_manager &get_weather()
 
 static bool is_player_outside()
 {
-    return get_map().is_outside( point( get_player_character().posx(),
-                                        get_player_character().posy() ) ) && g->get_levz() >= 0;
+    if( g->get_levz() < 0 ) {
+        return false;
+    }
+    const tripoint pos = get_player_character().pos();
+    if( !get_map().is_outside( pos ) ) {
+        return false;
+    }
+    const optional_vpart_position vp = get_map().veh_at( pos );
+    return !vp || !vp->is_inside();
 }
 
 void glare( const weather_type_id &w )
@@ -331,62 +339,49 @@ double trap::funnel_turns_per_charge( double rain_depth_mm_per_hour ) const
 /**
  * Main routine for filling funnels from weather effects.
  */
-static void fill_funnels( int rain_depth_mm_per_hour, bool acid, const trap &tr )
-{
-    const double turns_per_charge = tr.funnel_turns_per_charge( rain_depth_mm_per_hour );
-    // Scan all loaded submaps in the current dimension's mapbuffer instead of the
-    // bubble-bounded traplocs.  This covers funnels at player bases and other
-    // loaded-but-out-of-bubble locations.
-    const auto abs_sub = g->m.get_abs_sub();
-    auto &mbuf = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
-    std::ranges::for_each( mbuf, [&]( auto & entry ) {
-        auto &[raw_pos, sm_ptr] = entry;
-        if( !sm_ptr || sm_ptr->is_uniform || sm_ptr->trap_cache.empty() ) {
-            return;
-        }
-        std::ranges::for_each( sm_ptr->trap_cache, [&]( const point & lp ) {
-            if( sm_ptr->get_trap( lp ) != tr.loadid ) {
-                return;
-            }
-            const auto lx = lp.x;
-            const auto ly = lp.y;
-            const tripoint loc( ( raw_pos.x - abs_sub.x ) * SEEX + lx,
-                                ( raw_pos.y - abs_sub.y ) * SEEY + ly,
-                                raw_pos.z );
-            units::volume maxcontains = 0_ml;
-            if( one_in( turns_per_charge ) ) {
-                // FIXME:
-                //add_msg("%d mm/h %d tps %.4f: fill",int(calendar::turn),rain_depth_mm_per_hour,turns_per_charge);
-                // This funnel has collected some rain! Put the rain in the largest
-                // container here which is either empty or contains some mixture of
-                // impure water and acid.
-                map_stack items = g->m.i_at( loc );
-                auto container = items.end();
-                for( auto candidate_container = items.begin(); candidate_container != items.end();
-                     ++candidate_container ) {
-                    if( ( *candidate_container )->is_funnel_container( maxcontains ) ) {
-                        container = candidate_container;
-                    }
-                }
-
-                if( container != items.end() ) {
-                    ( *container )->add_rain_to_container( acid, 1 );
-                    ( *container )->set_age( 0_turns );
-                }
-            }
-        } );
-    } );
-}
-
 /**
  * Fill funnels and makeshift funnels from weather effects.
- * @see fill_funnels
+ * Iterates map::funnel_locations_ — a persistent list of known funnel positions —
+ * so no mapbuffer scan is required. Covers funnels at player bases and other
+ * loaded-but-out-of-bubble locations.
  */
 static void fill_water_collectors( int mmPerHour, bool acid )
 {
-    for( auto &e : trap::get_funnels() ) {
-        fill_funnels( mmPerHour, acid, *e );
-    }
+    ZoneScopedN( "fill_water_collectors" );
+    const auto abs_sub = g->m.get_abs_sub();
+    auto &mbuf = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
+    std::ranges::for_each( g->m.get_funnel_locations(), [&]( const auto & entry ) {
+        auto &[sm_abs, lp] = entry;
+        auto *sm = mbuf.lookup_submap_in_memory( sm_abs );
+        if( !sm ) {
+            return;
+        }
+        const trap &tr = sm->get_trap( lp ).obj();
+        if( !tr.is_funnel() ) {
+            return;
+        }
+        if( !one_in( tr.funnel_turns_per_charge( mmPerHour ) ) ) {
+            return;
+        }
+        const tripoint loc(
+            ( sm_abs.x - abs_sub.x ) * SEEX + lp.x,
+            ( sm_abs.y - abs_sub.y ) * SEEY + lp.y,
+            sm_abs.z );
+        // Put the rain in the largest container here which is either empty or
+        // contains some mixture of impure water and acid.
+        units::volume maxcontains = 0_ml;
+        map_stack items = g->m.i_at( loc );
+        auto container = items.end();
+        for( auto candidate = items.begin(); candidate != items.end(); ++candidate ) {
+            if( ( *candidate )->is_funnel_container( maxcontains ) ) {
+                container = candidate;
+            }
+        }
+        if( container != items.end() ) {
+            ( *container )->add_rain_to_container( acid, 1 );
+            ( *container )->set_age( 0_turns );
+        }
+    } );
 }
 
 /**
@@ -403,6 +398,7 @@ static void fill_water_collectors( int mmPerHour, bool acid )
  */
 void weather_effect::wet_player( int amount )
 {
+    ZoneScopedN( "wet_player" );
     Character &target = get_avatar();
     if( !is_player_outside() ||
         target.has_trait( trait_FEATHERS ) ||
@@ -521,35 +517,53 @@ void weather_effect::effect( int intensity, time_duration duration,
                              const std::string &effect_id_str,
                              const std::string &effect_msg, int effect_msg_frequency, int effect_msg_blocked_frequency,
                              game_message_type message_type,
-                             std::string precipitation_name, bool ignore_armor, int clothing_protection,
-                             int umbrella_protection )
+                             std::string precipitation_name, std::vector<std::tuple<std::string, int>> protection_data )
 {
     if( !( calendar::once_every( time_duration::from_seconds( intensity ) ) && is_player_outside() ) ) {
         return;
     }
 
-    if( !ignore_armor ) {
-        auto &you = get_avatar();
-        bool has_helmet = false;
-        if( one_in( umbrella_protection ) && you.primary_weapon().has_flag( json_flag_RAIN_PROTECT ) ) {
-            if( one_in( effect_msg_blocked_frequency ) ) {
-                add_msg( _( "Your umbrella protects you from the %s." ), precipitation_name );
+    for( auto data : protection_data ) {
+        const std::string trait_or_flag = std::get<0>( data );
+        const int odds = std::get<1>( data );
+        std::string name;
+
+        if( trait_or_flag == "DEFAULT" ) {
+            //Special case: if the check string is equal to "DEFAULT"
+            // we dont check for any protection items
+            name = "clothing";
+        } else {
+            const trait_id trait_id( trait_or_flag );
+            const flag_id flag_id( trait_or_flag );
+
+            bool valid_trait = trait_id.is_valid();
+            bool valid_flag = flag_id.is_valid();
+
+            if( !valid_trait && !valid_flag ) {
+                debugmsg( "Invalid trait or flag ID: %s", trait_or_flag.c_str() );
+                return;
             }
-            return;
-        } else if( one_in( umbrella_protection ) && you.worn_with_flag( json_flag_RAINPROOF ) ) {
-            if( one_in( effect_msg_blocked_frequency ) ) {
-                add_msg( _( "Your rainproof clothing protects you from the %s." ), precipitation_name );
+
+            auto &you = get_avatar();
+            auto held = you.primary_weapon();
+
+            //Checking if a player has any applicable protection items
+            //and resolving the name of that item if true
+            if( valid_flag && you.item_worn_with_flag( flag_id ) != nullptr ) {
+                name = you.item_worn_with_flag( flag_id )->tname();
+            } else if( valid_flag && held.has_flag( flag_id ) ) {
+                name = held.tname();
+            } else if( valid_trait && you.has_trait( trait_id ) ) {
+                name = trait_id->name();
+            } else {
+                //Player lacks protection items, move to next entry
+                continue;
             }
-            return;
-        } else if( one_in( clothing_protection ) ) {
+        }
+
+        if( one_in( odds ) ) {
             if( one_in( effect_msg_blocked_frequency ) ) {
-                add_msg( _( "Your clothing protects you from the %s." ), precipitation_name );
-            }
-            return;
-        } else if( you.is_wearing_power_armor( &has_helmet ) && ( has_helmet ||
-                   !one_in( clothing_protection ) ) ) {
-            if( one_in( effect_msg_blocked_frequency ) ) {
-                add_msg( _( "Your power armor protects you from the %s." ), precipitation_name );
+                add_msg( _( "Your %s protects you from the %s." ), name, precipitation_name );
             }
             return;
         }

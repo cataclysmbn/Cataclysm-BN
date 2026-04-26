@@ -95,7 +95,12 @@
       { "item": "manual_luty", "prob": 10 },
       { "item": "pocket_firearms", "prob": 10 },
       { "item": "textbook_firstaid", "prob": 30 },
-      { "item": "textbook_launcher", "prob": 20 }
+      { "item": "textbook_launcher", "prob": 20 },
+      { "item": "textbook_bashing", "prob": 15 },
+      { "item": "textbook_cutting", "prob": 15 },
+      { "item": "textbook_melee", "prob": 15 },
+      { "item": "textbook_stabbing", "prob": 15 },
+      { "item": "textbook_brawl", "prob": 15 }
     ]
   },
   {
@@ -397,7 +402,14 @@
       { "item": "reference_fabrication1", "prob": 6 },
       { "item": "reference_firstaid1", "prob": 2 },
       { "item": "reference_firstaid2", "prob": 1 },
-      { "item": "textbook_launcher", "prob": 5 }
+      { "item": "textbook_launcher", "prob": 5 },
+      { "item": "textbook_bashing", "prob": 3 },
+      { "item": "textbook_cutting", "prob": 3 },
+      { "item": "textbook_dodge", "prob": 6 },
+      { "item": "textbook_melee", "prob": 3 },
+      { "item": "textbook_stabbing", "prob": 3 },
+      { "item": "textbook_brawl", "prob": 3 },
+      { "item": "textbook_archery", "prob": 6 }
     ]
   },
   {
@@ -452,7 +464,9 @@
       { "item": "book_lockpick", "prob": 2 },
       { "item": "fermenting_book", "prob": 8 },
       { "item": "distilling_cookbook", "prob": 8 },
-      { "item": "sweets_book", "prob": 10 }
+      { "item": "sweets_book", "prob": 10 },
+      { "item": "textbook_archery", "prob": 8 },
+      { "item": "textbook_dodge", "prob": 10 }
     ]
   },
   {

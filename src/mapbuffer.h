@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -215,7 +216,7 @@ class mapbuffer
         void transfer_all_to( mapbuffer &dest );
 
     private:
-        using submap_map_t = std::map<tripoint, std::unique_ptr<submap>>;
+        using submap_map_t = std::unordered_map<tripoint, std::unique_ptr<submap>>;
 
         /// Guards all accesses to `submaps` that may overlap with background
         /// worker threads calling add_submap().  std::recursive_mutex allows

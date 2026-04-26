@@ -2450,6 +2450,10 @@ static void migrate( std::vector<detached_ptr<item>> &stack )
     }
 }
 } // namespace to_cbc_migration
+
+namespace
+{
+
 namespace damage_instance_serialization
 {
 
@@ -2513,6 +2517,8 @@ damage_instance
 }
 
 } // namespace damage_instance_serialization
+
+} // namespace
 
 template<typename Archive>
 void item::io( Archive &archive )
@@ -3650,10 +3656,11 @@ void player_morale::load( const JsonObject &jsin )
 
 struct mm_elem {
     memorized_terrain_tile tile;
+    memorized_terrain_tile terrain;
     int symbol;
 
     bool operator==( const mm_elem &rhs ) const {
-        return symbol == rhs.symbol && tile == rhs.tile;
+        return symbol == rhs.symbol && tile == rhs.tile && terrain == rhs.terrain;
     }
 };
 
@@ -3662,6 +3669,8 @@ void mm_submap::serialize( JsonOut &jsout ) const
     jsout.start_array();
 
     // Uses RLE for compression.
+    // Element format: [overlay_tile, subtile, rotation, symbol, ?terrain_str, terrain_sub, terrain_rot, ?count]
+    // terrain fields are only written when non-empty, saving space for the ~92% of tiles with no furniture.
 
     mm_elem last;
     int num_same = 1;
@@ -3672,6 +3681,11 @@ void mm_submap::serialize( JsonOut &jsout ) const
         jsout.write( last.tile.subtile );
         jsout.write( last.tile.rotation );
         jsout.write( last.symbol );
+        if( !last.terrain.tile.empty() ) {
+            jsout.write( last.terrain.tile );
+            jsout.write( last.terrain.subtile );
+            jsout.write( last.terrain.rotation );
+        }
         if( num_same != 1 ) {
             jsout.write( num_same );
         }
@@ -3681,7 +3695,7 @@ void mm_submap::serialize( JsonOut &jsout ) const
     for( size_t y = 0; y < SEEY; y++ ) {
         for( size_t x = 0; x < SEEX; x++ ) {
             point p( x, y );
-            const mm_elem elem = { tile( p ), symbol( p ) };
+            const mm_elem elem = { tile( p ), terrain_tile( p ), symbol( p ) };
             if( x == 0 && y == 0 ) {
                 last = elem;
                 continue;
@@ -3719,6 +3733,18 @@ void mm_submap::deserialize( JsonIn &jsin )
                 elem.tile.subtile = jsin.get_int();
                 elem.tile.rotation = jsin.get_int();
                 elem.symbol = jsin.get_int();
+                elem.terrain = mm_submap::default_tile;
+                if( jsin.test_string() ) {
+                    // New format: optional terrain tile fields follow symbol.
+                    elem.terrain.tile = jsin.get_string();
+                    elem.terrain.subtile = jsin.get_int();
+                    elem.terrain.rotation = jsin.get_int();
+                } else if( elem.tile.tile.starts_with( "t_" ) ) {
+                    // Migration: old saves stored terrain in the overlay slot.
+                    // Move it to the terrain slot where draw_terrain now expects it.
+                    elem.terrain = elem.tile;
+                    elem.tile = mm_submap::default_tile;
+                }
                 if( jsin.test_int() ) {
                     remaining = jsin.get_int() - 1;
                 }
@@ -3728,6 +3754,9 @@ void mm_submap::deserialize( JsonIn &jsin )
             // Try to avoid assigning to save up on memory
             if( elem.tile != mm_submap::default_tile ) {
                 set_tile( p, elem.tile );
+            }
+            if( elem.terrain != mm_submap::default_tile ) {
+                set_terrain_tile( p, elem.terrain );
             }
             if( elem.symbol != mm_submap::default_symbol ) {
                 set_symbol( p, elem.symbol );

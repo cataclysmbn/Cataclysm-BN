@@ -155,7 +155,7 @@
       "multi": 4,
       "max_volume": "750 ml",
       "draw_cost": 40,
-      "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
+      "flags": [ "MAG_COMPACT", "MAG_BULKY", "SPEEDLOADER" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_WINGS" ]
@@ -220,8 +220,8 @@
     "flags": [ "WATER_FRIENDLY", "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES", "COMPACT" ]
   },
   {
-    "type": "ARMOR",
     "id": "legpouch_large",
+    "type": "ARMOR",
     "name": { "str": "leg magazine pouch", "str_pl": "leg magazine pouches" },
     "description": "A fabric ammo pouch that can be strapped to your leg and capable of holding two magazines close at hand.",
     "weight": "120 g",
@@ -251,8 +251,8 @@
     "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT", "ALLOWS_TAIL_SNAKE" ]
   },
   {
-    "type": "ARMOR",
     "id": "mag_satchel_leg",
+    "type": "ARMOR",
     "copy-from": "legpouch_large",
     "name": { "str": "leg magazine satchel" },
     "description": "A fabric ammo pouch that can be strapped to the leg, capable of holding a single magazine, ammo belt, or speedloader of modest size.",
@@ -546,7 +546,7 @@
       "min_volume": "250 ml",
       "max_volume": "1 L",
       "draw_cost": 60,
-      "flags": [ "MAG_COMPACT", "MAG_BULKY" ]
+      "flags": [ "MAG_COMPACT", "MAG_BULKY", "SPEEDLOADER" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "ALLOWS_WINGS" ]

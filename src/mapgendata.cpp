@@ -82,21 +82,8 @@ mapgendata::mapgendata( const tripoint_abs_omt &over, map &mp, const float densi
             joins.emplace( rotated_dir, *join );
         }
     }
-    if( std::optional<mapgen_arguments> *maybe_args = omap.mapgen_args( over ) ) {
-        if( *maybe_args ) {
-            mapgen_args_ = **maybe_args;
-        } else {
-            // We are the first omt from this overmap_special to be generated,
-            // so now is the time to generate the arguments
-            if( std::optional<overmap_special_id> s = omap.overmap_special_at( over ) ) {
-                const overmap_special &special = **s;
-                *maybe_args = special.get_args( *this );
-                mapgen_args_ = **maybe_args;
-            } else {
-                debugmsg( "mapgen params expected but no overmap special found for terrain %s",
-                          terrain_type_.id().str() );
-            }
-        }
+    if( auto args = omap.get_or_init_mapgen_args( over, *this, terrain_type_.id().str() ) ) {
+        mapgen_args_ = std::move( *args );
     }
 }
 

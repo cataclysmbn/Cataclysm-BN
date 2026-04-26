@@ -35,7 +35,7 @@ struct mm_submap {
 
         /** Whether this mm_submap is empty. Empty submaps are skipped during saving. */
         bool is_empty() const {
-            return tiles.empty() && symbols.empty();
+            return tiles.empty() && symbols.empty() && terrain_tiles.empty();
         }
 
         const memorized_terrain_tile &tile( point p ) const {
@@ -53,6 +53,22 @@ struct mm_submap {
                 tiles.resize( SEEX * SEEY, default_tile );
             }
             tiles[p.y * SEEX + p.x] = value;
+        }
+
+        const memorized_terrain_tile &terrain_tile( point p ) const {
+            if( terrain_tiles.empty() ) {
+                return default_tile;
+            } else {
+                return terrain_tiles[p.y * SEEX + p.x];
+            }
+        }
+
+        void set_terrain_tile( point p, const memorized_terrain_tile &value ) {
+            if( terrain_tiles.empty() ) {
+                terrain_tiles.reserve( SEEX * SEEY );
+                terrain_tiles.resize( SEEX * SEEY, default_tile );
+            }
+            terrain_tiles[p.y * SEEX + p.x] = value;
         }
 
         int symbol( point p ) const {
@@ -76,7 +92,10 @@ struct mm_submap {
         void deserialize( JsonIn &jsin );
 
     private:
-        std::vector<memorized_terrain_tile> tiles; // holds either 0 or SEEX*SEEY elements
+        std::vector<memorized_terrain_tile>
+        tiles;         // overlay: furniture, vpart, trap — 0 or SEEX*SEEY
+        std::vector<memorized_terrain_tile>
+        terrain_tiles; // base terrain layer             — 0 or SEEX*SEEY
         std::vector<int> symbols; // holds either 0 or SEEX*SEEY elements
         bool valid = true;
 };
@@ -144,16 +163,29 @@ class map_memory
         bool prepare_region( const tripoint &p1, const tripoint &p2 );
 
         /**
-         * Memorizes given tile, overwriting old value.
+         * Memorizes given overlay tile (furniture, vehicle part, trap), overwriting old value.
          * @param pos tile position, in global ms coords.
          */
         void memorize_tile( const tripoint &pos, const std::string &ter,
                             int subtile, int rotation );
         /**
-         * Returns memorized tile.
+         * Returns memorized overlay tile (furniture, vehicle part, trap).
          * @param pos tile position, in global ms coords.
          */
         const memorized_terrain_tile &get_tile( const tripoint &pos );
+
+        /**
+         * Memorizes base terrain tile, overwriting old value.
+         * Stored separately from the overlay slot so furniture/vparts don't obscure terrain.
+         * @param pos tile position, in global ms coords.
+         */
+        void memorize_terrain_tile( const tripoint &pos, const std::string &ter,
+                                    int subtile, int rotation );
+        /**
+         * Returns memorized base terrain tile.
+         * @param pos tile position, in global ms coords.
+         */
+        memorized_terrain_tile get_terrain_tile( const tripoint &pos );
 
         /**
          * For autodrive use only.
@@ -175,7 +207,14 @@ class map_memory
         int get_symbol( const tripoint &pos );
 
         /**
-         * Clears memorized tile and symbol.
+         * Clears memorized overlay tile (furniture/vpart/trap) and symbol, leaving terrain memory intact.
+         * Use this when a vehicle or furniture leaves a tile so the ground beneath is preserved.
+         * @param pos tile position, in global ms coords.
+         */
+        void clear_memorized_overlay( const tripoint &pos );
+
+        /**
+         * Clears memorized tile, symbol, and terrain.
          * @param pos tile position, in global ms coords.
          */
         void clear_memorized_tile( const tripoint &pos );

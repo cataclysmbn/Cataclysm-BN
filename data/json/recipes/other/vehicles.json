@@ -1806,7 +1806,7 @@
     "autolearn": true,
     "using": [ [ "welding_standard", 4 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 } ],
-    "components": [ [ [ "solar_panel", 1 ] ], [ [ "reinforced_glass_pane", 1 ] ], [ [ "scrap", 1 ] ] ]
+    "components": [ [ [ "solar_panel", 1 ] ], [ [ "reinforced_glass_sheet", 1 ] ], [ [ "scrap", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -2049,7 +2049,7 @@
     "book_learn": [ [ "textbook_robots", 8 ] ],
     "using": [ [ "welding_standard", 5 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 } ],
-    "components": [ [ [ "solar_panel_v2", 1 ] ], [ [ "reinforced_glass_pane", 1 ] ], [ [ "scrap", 2 ] ], [ [ "wire", 2 ] ] ]
+    "components": [ [ [ "solar_panel_v2", 1 ] ], [ [ "reinforced_glass_sheet", 1 ] ], [ [ "scrap", 2 ] ], [ [ "wire", 2 ] ] ]
   },
   {
     "type": "recipe",

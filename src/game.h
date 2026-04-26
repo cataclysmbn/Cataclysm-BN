@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <ctime>
 #include <functional>
@@ -9,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <shared_mutex>
 #include <string>
@@ -62,6 +64,12 @@ extern std::unique_ptr<game> g;
 
 extern const int savegame_version;
 extern int savegame_loading_version;
+// Monotonically increasing counter; bumped whenever NPC faction membership or active NPC list
+// changes so each NPC can lazily invalidate its cached friends list.
+extern std::atomic<uint32_t> g_npc_friends_dirty_version;
+// Bumped once per npcmove() pass; monsters use it to know when their cached generic-NPC
+// attitude is stale.
+extern uint32_t g_npcmove_attitude_epoch;
 
 class input_context;
 
@@ -385,50 +393,77 @@ class game : public submap_load_listener
         friend class Creature_range;
 
         template<typename T>
-        class non_dead_range
+        class non_dead_range : public std::ranges::view_interface<non_dead_range<T>>
         {
             public:
-                std::vector<weak_ptr_fast<T>> items;
+                std::shared_ptr<std::vector<weak_ptr_fast<T>>> items;
+                non_dead_range() : items( std::make_shared<std::vector<weak_ptr_fast<T>>>() ) {}
 
                 class iterator
                 {
                     private:
-                        bool valid();
-                    public:
-                        std::vector<weak_ptr_fast<T>> &items;
+                        std::shared_ptr<std::vector<weak_ptr_fast<T>>> data_ref;
                         typename std::vector<weak_ptr_fast<T>>::iterator iter;
+
+                        auto valid() -> bool;
+
+                    public:
+                        using value_type = T;
+                        using difference_type = std::ptrdiff_t;
+                        using pointer = T *;
+                        using reference = T &;
+                        using iterator_category = std::forward_iterator_tag;
+                        using iterator_concept = std::forward_iterator_tag;
+
                         shared_ptr_fast<T> current;
 
-                        iterator( std::vector<weak_ptr_fast<T>> &i,
-                                  const typename std::vector<weak_ptr_fast<T>>::iterator t ) : items( i ), iter( t ) {
-                            while( iter != items.end() && !valid() ) {
-                                ++iter;
+                        iterator() = default;
+
+                        iterator( std::shared_ptr<std::vector<weak_ptr_fast<T>>> ref,
+                                  typename std::vector<weak_ptr_fast<T>>::iterator t )
+                            : data_ref( std::move( ref ) ), iter( t ) {
+                            if( data_ref ) {
+                                while( iter != data_ref->end() && !valid() ) {
+                                    ++iter;
+                                }
                             }
                         }
+
                         iterator( const iterator & ) = default;
                         iterator &operator=( const iterator & ) = default;
 
-                        bool operator==( const iterator &rhs ) const {
+                        auto operator==( const iterator &rhs ) const -> bool {
                             return iter == rhs.iter;
                         }
-                        bool operator!=( const iterator &rhs ) const {
-                            return !operator==( rhs );
-                        }
-                        iterator &operator++() {
+
+                        auto operator++() -> iterator& { // *NOPAD*
+                            if( !data_ref ) { return *this; }
+
                             do {
                                 ++iter;
-                            } while( iter != items.end() && !valid() );
+                            } while( iter != data_ref->end() && !valid() );
                             return *this;
                         }
-                        T &operator*() const {
+
+                        auto operator++( int ) -> iterator {
+                            auto tmp = *this;
+                            ++( *this );
+                            return tmp;
+                        }
+
+                        auto operator*() const -> reference {
                             return *current;
                         }
                 };
-                iterator begin() {
-                    return iterator( items, items.begin() );
+
+                auto begin() -> iterator {
+                    if( !items ) { return end(); }
+                    return iterator( items, items->begin() );
                 }
-                iterator end() {
-                    return iterator( items, items.end() );
+
+                auto end() -> iterator {
+                    if( !items ) { return iterator(); }
+                    return iterator( items, items->end() );
                 }
         };
 
@@ -466,6 +501,11 @@ class game : public submap_load_listener
         monster_range all_monsters();
         /// Same as @ref all_creatures but iterators only over npcs.
         npc_range all_npcs();
+        /// Direct non-allocating view of the active NPC list. Only use when no NPCs will be
+        /// added or removed during iteration and dead entries are handled by the caller.
+        const std::list<shared_ptr_fast<npc>> &raw_npcs() const {
+            return active_npc;
+        }
 
         /**
          * Returns all creatures matching a predicate. Only living ( not dead ) creatures
@@ -1270,6 +1310,13 @@ class game : public submap_load_listener
         // Set by init_bubble_config() in start_game() / load().
         // Default 5 matches REALITY_BUBBLE_SIZE=2 (original 11×11 grid).
         int reality_bubble_radius_ = 5;
+
+        // True during the update_map() shift window: abs_sub has been updated by
+        // m.shift() but creature local positions have not yet been adjusted by
+        // shift_monsters().  despawn_monster() skips recomputing pos_abs in this
+        // window because the pre-shift stamp is already correct and getabs() would
+        // return a value displaced by 1 submap in the shift direction.
+        bool shift_in_progress_ = false;
 
     private:
         location_vector<item> fake_items;
