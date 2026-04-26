@@ -188,7 +188,10 @@
   {
     "type": "mapgen",
     "method": "json",
-    "om_terrain": [ [ "crt_lab_veh_entry_center_ne", "crt_lab_veh_entry_center_nw" ], [ "crt_lab_veh_entry_center_se", "crt_lab_veh_entry_center_sw" ] ],
+    "om_terrain": [
+      [ "crt_lab_veh_entry_center_ne", "crt_lab_veh_entry_center_nw" ],
+      [ "crt_lab_veh_entry_center_se", "crt_lab_veh_entry_center_sw" ]
+    ],
     "weight": 100,
     "object": {
       "fill_ter": "t_strconc_floor",
@@ -242,7 +245,7 @@
         "D                                              D",
         "#D#####################DD#####################D#"
       ],
-      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control_crt_lab", "W": "t_wall_glass", "D": "t_door_c" },
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control_crt_lab", "W": "t_wall_glass", "D": "t_door_c" }
     }
   },
   {
@@ -267,7 +270,11 @@
       },
       "mapping": {
         "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
-        "B": { "items": [ { "item": "bed", "chance": 100 } ], "furniture": "f_bed", "monster": { "group": "GROUP_CRT_COMBAT", "chance": 50, "one_or_none": true } }
+        "B": {
+          "items": [ { "item": "bed", "chance": 100 } ],
+          "furniture": "f_bed",
+          "monster": { "group": "GROUP_CRT_COMBAT", "chance": 50, "one_or_none": true }
+        }
       }
     }
   }

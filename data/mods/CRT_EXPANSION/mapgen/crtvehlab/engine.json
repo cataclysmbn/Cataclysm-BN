@@ -32,9 +32,7 @@
         "P": { "item": "supplies_mechanics", "chance": 80, "repeat": [ 1, 10 ] },
         "S": { "item": "crt_lab_veh_engine", "chance": 100 }
       },
-      "place_monster": [
-        { "group": "GROUP_CRT_TECHNICIAN", "x": [ 0, 6 ], "y":  [ 0, 6 ], "repeat": [ 2, 6 ] },
-      ]
+      "place_monster": [ { "group": "GROUP_CRT_TECHNICIAN", "x": [ 0, 6 ], "y": [ 0, 6 ], "repeat": [ 2, 6 ] } ]
     }
   },
   {
@@ -58,9 +56,7 @@
         { "vehicle": "crt_hydrotest", "x": 1, "y": 2, "rotation": 270, "chance": 50, "status": 0 },
         { "vehicle": "crt_hydrotest", "x": 5, "y": 2, "rotation": 270, "chance": 50, "status": 0 }
       ],
-      "place_monster": [
-        { "group": "GROUP_CRT_TECHNICIAN", "x": [ 0, 6 ], "y":  [ 0, 6 ], "repeat": [ 2, 6 ] },
-      ]
+      "place_monster": [ { "group": "GROUP_CRT_TECHNICIAN", "x": [ 0, 6 ], "y": [ 0, 6 ], "repeat": [ 2, 6 ] } ]
     }
   }
 ]

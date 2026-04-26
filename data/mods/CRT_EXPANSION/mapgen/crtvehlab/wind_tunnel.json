@@ -54,10 +54,10 @@
         "B": { "item": "tools_mechanic", "chance": 50, "repeat": 2 }
       },
       "place_monster": [
-        { "group": "GROUP_CRT_COMBAT", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ], "chance": 100  },
+        { "group": "GROUP_CRT_COMBAT", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ], "chance": 100 },
         { "group": "GROUP_CRT_COMBAT", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ], "chance": 100 },
-        { "group": "GROUP_CRT_TECHNICIAN", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ], "chance": 100  },
-        { "group": "GROUP_CRT_TECHNICIAN", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ], "chance": 100 },
+        { "group": "GROUP_CRT_TECHNICIAN", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ], "chance": 100 },
+        { "group": "GROUP_CRT_TECHNICIAN", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ], "chance": 100 }
       ]
     }
   },
