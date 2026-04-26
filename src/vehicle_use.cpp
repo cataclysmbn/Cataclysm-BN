@@ -325,8 +325,8 @@ void vehicle::set_electronics_menu_options( std::vector<uilist_entry> &options,
                 keybind( "TOGGLE_PLOW" ), "ROADHEAD" );
     add_toggle( pgettext( "electronics menu option", "scoop" ),
                 keybind( "TOGGLE_SCOOP" ), "SCOOP" );
-    add_toggle( pgettext( "electronics menu option", "water purifier" ),
-                keybind( "TOGGLE_WATER_PURIFIER" ), "WATER_PURIFIER" );
+    add_toggle( pgettext( "electronics menu option", "converter" ),
+                keybind( "TOGGLE_WATER_PURIFIER" ), "CONVERTER" );
 
     if( has_part( "DOOR_MOTOR" ) ) {
         options.emplace_back( _( "Toggle doors" ), keybind( "TOGGLE_DOORS" ) );
@@ -1908,7 +1908,7 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
 
     enum {
         EXAMINE, TRACK, HANDBRAKE, BRAKE_HOLD, CONTROL, CONTROL_ELECTRONICS, GET_ITEMS, GET_ITEMS_ON_GROUND, FOLD_VEHICLE, UNLOAD_TURRET,
-        RELOAD_TURRET, USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_CRAFTER, USE_PURIFIER, PURIFY_TANK, USE_AUTOCLAVE, USE_AUTODOC,
+        RELOAD_TURRET, USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_CRAFTER, USE_PURIFIER, USE_AUTOCLAVE, USE_AUTODOC,
         USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, USE_TOWEL, PEEK_CURTAIN, PICK_LOCK
     };
     uilist selectmenu;
@@ -1969,8 +1969,6 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
                           itype_water_purifier->charges_to_use();
         selectmenu.addentry( USE_PURIFIER, can_purify,
                              'p', _( "Purify water in carried container" ) );
-        selectmenu.addentry( PURIFY_TANK, can_purify && fuel_left( itype_water ),
-                             'P', _( "Purify water in vehicle tank" ) );
     }
     if( has_monster_capture ) {
         selectmenu.addentry( USE_MONSTER_CAPTURE, true, 'G', _( "Capture or release a creature" ) );
@@ -2099,29 +2097,6 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
         }
         case USE_PURIFIER: {
             veh_tool( itype_water_purifier );
-            return;
-        }
-        case PURIFY_TANK: {
-            auto sel = []( const vehicle_part & pt ) {
-                return pt.is_tank() && pt.ammo_current() == itype_water;
-            };
-            auto title = string_format(
-                             _( "Purify <color_%s>water</color> in tank" ),
-                             get_all_colors().get_name( itype_water->color ) );
-            auto &tank = veh_interact::select_part( *this, sel, title );
-            if( tank ) {
-                double cost = itype_water_purifier->charges_to_use();
-                if( fuel_left( itype_battery, true ) < tank.ammo_remaining() * cost ) {
-                    //~ $1 - vehicle name, $2 - part name
-                    add_msg( m_bad, _( "Insufficient power to purify the contents of the %1$s's %2$s" ),
-                             name, tank.name() );
-                } else {
-                    //~ $1 - vehicle name, $2 - part name
-                    add_msg( m_good, _( "You purify the contents of the %1$s's %2$s" ), name, tank.name() );
-                    discharge_battery( tank.ammo_remaining() * cost );
-                    tank.ammo_set( itype_water_clean, tank.ammo_remaining() );
-                }
-            }
             return;
         }
         case UNLOAD_TURRET: {

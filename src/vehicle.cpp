@@ -303,6 +303,8 @@ void vehicle::copy_static_from( const vehicle &source )
     propellers = source.propellers;
     wings = source.wings;
     balloons = source.balloons;
+    converters = source.converters;
+    tanks = source.tanks;
     droppers = source.droppers;
     rail_wheelcache = source.rail_wheelcache;
     steering = source.steering;
@@ -2017,7 +2019,8 @@ int vehicle::install_part( point dp, vehicle_part &&new_part )
                 "COOLER",
                 "WATER_PURIFIER",
                 "ROCKWHEEL",
-                "ROADHEAD"
+                "ROADHEAD",
+                "CONVERTER"
             }
         };
 
@@ -6470,6 +6473,8 @@ void vehicle::refresh()
     propellers.clear();
     droppers.clear();
     balloons.clear();
+    converters.clear();
+    tanks.clear();
     steering.clear();
     speciality.clear();
     floating.clear();
@@ -6547,7 +6552,12 @@ void vehicle::refresh()
         if( vpi.has_flag( VPFLAG_BALLOON ) ) {
             balloons.push_back( p );
         }
-
+        if( vpi.has_flag( "CONVERTER" ) ) {
+            converters.push_back( p );
+        }
+        if( vpi.has_flag( "FLUIDTANK" ) ) {
+            tanks.push_back( p );
+        }
         if( vpi.has_flag( VPFLAG_DROPPER ) ) {
             droppers.push_back( p );
         }
@@ -7771,6 +7781,64 @@ void vehicle::update_time( const time_point &update_to )
     }
     time_duration elapsed = update_to - last_update;
     last_update = update_to;
+
+    if( !converters.empty() ) {
+        for( int p : converters ) {
+            const auto &part = parts[p];
+            if( !part.is_unavailable() || !part.enabled ) {
+                int repeat = part.info().get_max_conversions() * to_seconds<int>( elapsed ) / 60;
+                auto [ consume_type, consume_charges ] = part.info().get_conversion_input();
+                auto [ output_type, output_charges ] = part.info().get_conversion_output();
+                const item *output = item::spawn_temporary( output_type, calendar::turn, output_charges );
+                vehicle_part *consume_tank = nullptr;
+                if( !consume_type.is_null() ) {
+                    auto consume_tank_idx = std::ranges::find_if( tanks, [&]( int tank ) {
+                        const auto &part = parts[tank];
+                        if( part.ammo_current() == consume_type && part.ammo_remaining() > consume_charges ) {
+                            return true;
+                        }
+                        return false;
+                    } );
+                    if( consume_tank_idx == tanks.end() ) {
+                        continue;
+                    }
+                    consume_tank = &parts[*consume_tank_idx];
+                }
+                vehicle_part *output_tank = nullptr;
+                if( !output_type.is_null() ) {
+                    auto output_tank_idx = std::ranges::find_if( tanks, [&]( int tank ) {
+                        const auto &part = parts[tank];
+                        if( part.can_reload( output ) && part.ammo_capacity() - part.ammo_remaining() > output_charges ) {
+                            return true;
+                        }
+                        return false;
+                    } );
+                    if( output_tank_idx == tanks.end() ) {
+                        continue;
+                    }
+                    output_tank = &parts[*output_tank_idx];
+                }
+                int max_repeats = repeat;
+                if( consume_tank != nullptr ) {
+                    max_repeats = std::min( max_repeats, consume_tank->ammo_remaining() / consume_charges );
+                }
+                if( output_tank ) {
+                    max_repeats = std::min( max_repeats, output_tank->ammo_remaining() / output_charges );
+                }
+                if( part.info().get_conversion_charges() > 0 ) {
+                    max_repeats = std::min( max_repeats,
+                                            fuel_left( itype_battery ) / part.info().get_conversion_charges() );
+                }
+                if( consume_tank != nullptr ) {
+                    consume_tank->ammo_consume( max_repeats * consume_charges, global_part_pos3( *consume_tank ) );
+                }
+                if( output_tank != nullptr ) {
+                    output_tank->ammo_consume( -1 * max_repeats * output_charges, global_part_pos3( *output_tank ) );
+                }
+                discharge_battery( part.info().get_conversion_charges() * max_repeats );
+            }
+        }
+    }
 
     if( sm_pos.z < 0 ) {
         return;
