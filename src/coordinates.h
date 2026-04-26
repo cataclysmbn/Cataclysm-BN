@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <iterator>
 
-#include "coordinate_conversions.h"
 #include "cuboid_rectangle.h"
 #include "enums.h"
 #include "game_constants.h"
@@ -18,16 +17,19 @@ namespace coords
 
 enum class scale {
     map_square,
+    vehicle,
     submap,
     overmap_terrain,
     segment,
     overmap,
-    vehicle
+    mem_map_region
 };
 
 constexpr scale ms = scale::map_square;
+constexpr scale veh = scale::vehicle;
 constexpr scale sm = scale::submap;
 constexpr scale omt = scale::overmap_terrain;
+constexpr scale mmr = scale::mem_map_region;
 constexpr scale seg = scale::segment;
 constexpr scale om = scale::overmap;
 
@@ -39,10 +41,14 @@ constexpr int map_squares_per( scale s )
     switch( s ) {
         case scale::map_square:
             return 1;
+        case scale::vehicle: // Explicitly note the 1:1 here, since that may one day change
+            return map_squares_per( scale::map_square );
         case scale::submap:
             return SEEX;
         case scale::overmap_terrain:
             return SEEX * 2;
+        case scale::mem_map_region:
+            return MM_REG_SIZE * map_squares_per(scale::submap);
         case scale::segment:
             return SEG_SIZE * map_squares_per( scale::overmap_terrain );
         case scale::overmap:
@@ -55,9 +61,13 @@ constexpr int map_squares_per( scale s )
 enum class origin {
     relative, // this is a special origin that can be added to any other
     abs, // the global absolute origin for the entire game
+    bubble, // from corner of reality bubble
+    vehicle, // local space origin for vehicles, includes rotation
     submap, // from corner of submap
     overmap_terrain, // from corner of overmap_terrain
     overmap, // from corner of overmap
+    segment,
+    mem_map_region, // from corner of memory map region
 };
 
 constexpr origin origin_from_scale( scale s )
@@ -69,6 +79,10 @@ constexpr origin origin_from_scale( scale s )
             return origin::overmap_terrain;
         case scale::overmap:
             return origin::overmap;
+        case scale::segment:
+            return origin::segment;
+        case scale::mem_map_region:
+            return origin::mem_map_region;
         default:
             constexpr_fatal( origin::abs, "Requested origin for scale %d", s );
     }
@@ -462,31 +476,64 @@ struct hash<coords::coord_point<Point, Origin, Scale>> {
  * For more details see doc/POINTS_COORDINATES.md.
  */
 /*@{*/
+using point_bub_sm = coords::coord_point<point, coords::origin::bubble, coords::sm>;
+using point_bub_ms = coords::coord_point<point, coords::origin::bubble, coords::ms>;
 using point_rel_ms = coords::coord_point<point, coords::origin::relative, coords::ms>;
 using point_abs_ms = coords::coord_point<point, coords::origin::abs, coords::ms>;
 using point_sm_ms = coords::coord_point<point, coords::origin::submap, coords::ms>;
 using point_omt_ms = coords::coord_point<point, coords::origin::overmap_terrain, coords::ms>;
+using point_mmr_ms = coords::coord_point<point, coords::origin::mem_map_region, coords::ms>;
+using point_seg_ms = coords::coord_point<point, coords::origin::segment, coords::ms>;
+using point_om_ms = coords::coord_point<point, coords::origin::overmap, coords::ms>;
+using point_veh_ms = coords::coord_point<point, coords::origin::vehicle, coords::ms>;
 using point_abs_sm = coords::coord_point<point, coords::origin::abs, coords::sm>;
 using point_omt_sm = coords::coord_point<point, coords::origin::overmap_terrain, coords::sm>;
+using point_mmr_sm = coords::coord_point<point, coords::origin::mem_map_region, coords::sm>;
+using point_seg_sm = coords::coord_point<point, coords::origin::segment, coords::sm>;
 using point_om_sm = coords::coord_point<point, coords::origin::overmap, coords::sm>;
 using point_rel_omt = coords::coord_point<point, coords::origin::relative, coords::omt>;
 using point_abs_omt = coords::coord_point<point, coords::origin::abs, coords::omt>;
 using point_om_omt = coords::coord_point<point, coords::origin::overmap, coords::omt>;
+using point_seg_omt = coords::coord_point<point, coords::origin::segment, coords::omt>;
+using point_mmr_omt = coords::coord_point<point, coords::origin::mem_map_region, coords::omt>;
+using point_rel_mmr = coords::coord_point<point, coords::origin::relative, coords::mmr>;
+using point_abs_mmr = coords::coord_point<point, coords::origin::abs, coords::mmr>;
+using point_seg_mmr = coords::coord_point<point, coords::origin::segment, coords::mmr>;
+using point_om_mmr = coords::coord_point<point, coords::origin::overmap, coords::mmr>;
+using point_rel_seg = coords::coord_point<point, coords::origin::relative, coords::seg>;
 using point_abs_seg = coords::coord_point<point, coords::origin::abs, coords::seg>;
+using point_om_seg = coords::coord_point<point, coords::origin::overmap, coords::seg>;
 using point_rel_om = coords::coord_point<point, coords::origin::relative, coords::om>;
 using point_abs_om = coords::coord_point<point, coords::origin::abs, coords::om>;
 
+using tripoint_bub_sm = coords::coord_point<tripoint, coords::origin::bubble, coords::sm>;
+using tripoint_bub_ms = coords::coord_point<tripoint, coords::origin::bubble, coords::ms>;
 using tripoint_rel_ms = coords::coord_point<tripoint, coords::origin::relative, coords::ms>;
 using tripoint_abs_ms = coords::coord_point<tripoint, coords::origin::abs, coords::ms>;
 using tripoint_sm_ms = coords::coord_point<tripoint, coords::origin::submap, coords::ms>;
 using tripoint_omt_ms = coords::coord_point<tripoint, coords::origin::overmap_terrain, coords::ms>;
+using tripoint_mmr_ms = coords::coord_point<tripoint, coords::origin::mem_map_region, coords::ms>;
+using tripoint_seg_ms = coords::coord_point<tripoint, coords::origin::segment, coords::ms>;
+using tripoint_om_ms = coords::coord_point<tripoint, coords::origin::overmap, coords::ms>;
+using tripoint_veh_ms = coords::coord_point<tripoint, coords::origin::vehicle, coords::ms>;
 using tripoint_rel_sm = coords::coord_point<tripoint, coords::origin::relative, coords::sm>;
 using tripoint_abs_sm = coords::coord_point<tripoint, coords::origin::abs, coords::sm>;
+using tripoint_mmr_sm = coords::coord_point<tripoint, coords::origin::mem_map_region, coords::sm>;
+using tripoint_seg_sm = coords::coord_point<tripoint, coords::origin::segment, coords::sm>;
 using tripoint_om_sm = coords::coord_point<tripoint, coords::origin::overmap, coords::sm>;
 using tripoint_rel_omt = coords::coord_point<tripoint, coords::origin::relative, coords::omt>;
 using tripoint_abs_omt = coords::coord_point<tripoint, coords::origin::abs, coords::omt>;
 using tripoint_om_omt = coords::coord_point<tripoint, coords::origin::overmap, coords::omt>;
+using tripoint_seg_omt = coords::coord_point<tripoint, coords::origin::segment, coords::omt>;
+using tripoint_mmr_omt = coords::coord_point<tripoint, coords::origin::mem_map_region, coords::omt>;
+using tripoint_rel_mmr = coords::coord_point<tripoint, coords::origin::relative, coords::mmr>;
+using tripoint_abs_mmr = coords::coord_point<tripoint, coords::origin::abs, coords::mmr>;
+using tripoint_seg_mmr = coords::coord_point<tripoint, coords::origin::segment, coords::mmr>;
+using tripoint_om_mmr = coords::coord_point<tripoint, coords::origin::overmap, coords::mmr>;
+using tripoint_rel_seg = coords::coord_point<tripoint, coords::origin::relative, coords::seg>;
 using tripoint_abs_seg = coords::coord_point<tripoint, coords::origin::abs, coords::seg>;
+using tripoint_om_seg = coords::coord_point<tripoint, coords::origin::overmap, coords::seg>;
+using tripoint_rel_om = coords::coord_point<tripoint, coords::origin::relative, coords::om>;
 using tripoint_abs_om = coords::coord_point<tripoint, coords::origin::abs, coords::om>;
 /*@}*/
 
@@ -619,8 +666,8 @@ struct real_coords {
 
     // specifically for the subjective position returned by overmap::draw
     void fromomap( point rel_om, point rel_om_pos ) {
-        const point a = om_to_omt_copy( rel_om ) + rel_om_pos;
-        fromabs( omt_to_ms_copy( a ) );
+        const point a = point( rel_om.x * OMAPX, rel_om.y * OMAPY ) + rel_om_pos;
+        fromabs( point( a.x * SEEX * 2, a.y * SEEY * 2 ) );
     }
 
     point_abs_omt abs_omt() const {

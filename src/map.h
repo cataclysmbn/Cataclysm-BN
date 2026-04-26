@@ -1866,6 +1866,9 @@ class map : public submap_load_listener
         point getlocal( point p ) const {
             return getlocal( tripoint( p, abs_sub.z ) ).xy();
         }
+
+        tripoint_abs_ms bub_to_abs( const tripoint_bub_ms &bub ) const;
+        tripoint_bub_ms abs_to_bub( const tripoint_abs_ms &abs ) const;
         virtual bool inbounds( const tripoint &p ) const;
         bool inbounds( const tripoint_abs_ms &p ) const;
         bool inbounds( point p ) const {

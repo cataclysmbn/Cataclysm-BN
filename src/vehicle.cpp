@@ -3603,6 +3603,65 @@ point vehicle::tripoint_to_mount( const tripoint &p ) const
     return result;
 }
 
+tripoint_rel_ms vehicle::rotate_to_world( units::angle dir, const tripoint_veh_ms &pivot,
+        const tripoint_veh_ms &p ) const
+{
+    int increment = angle_to_increment( dir );
+    auto relative = p.raw() - pivot.raw();
+    float skew = std::trunc( relative.x * rotation_info[increment].gradient );
+
+    tripoint result;
+    result.x = relative.x;
+    result.y = relative.y + static_cast<int>( skew );
+
+    if( rotation_info[increment].swapXY ) {
+        std::swap( result.x, result.y );
+    }
+    if( rotation_info[increment].flipH ) {
+        result.x = -result.x;
+    }
+    if( rotation_info[increment].flipV ) {
+        result.y = -result.y;
+    }
+    return tripoint_rel_ms( result );
+}
+
+tripoint_veh_ms vehicle::rotate_to_local( units::angle dir, const tripoint_veh_ms &pivot,
+        const tripoint_rel_ms &p ) const
+{
+    int increment = angle_to_increment( dir );
+
+    tripoint result = p.raw();
+
+    if( rotation_info[increment].flipV ) {
+        result.y = -result.y;
+    }
+    if( rotation_info[increment].flipH ) {
+        result.x = -result.x;
+    }
+    if( rotation_info[increment].swapXY ) {
+        std::swap( result.x, result.y );
+    }
+
+    float skew = std::trunc( result.x * rotation_info[increment].gradient );
+    result.y -= static_cast<int>( skew );
+    result += pivot.raw();
+
+    return tripoint_veh_ms( result );
+}
+
+tripoint_abs_ms vehicle::mount_to_abs( const tripoint_veh_ms &mount ) const
+{
+    return global_square_location() + rotate_to_world( pivot_rotation[0],
+            tripoint_veh_ms( tripoint( pivot_anchor[0], 0 ) ), mount );
+}
+
+tripoint_veh_ms vehicle::abs_to_mount( const tripoint_abs_ms &abs ) const
+{
+    return rotate_to_local( pivot_rotation[0], tripoint_veh_ms( tripoint( pivot_anchor[0], 0 ) ),
+                            abs - global_square_location() );
+}
+
 int vehicle::angle_to_increment( units::angle dir )
 {
     int increment = ( std::lround( to_degrees( dir ) ) % 360 ) / 15;

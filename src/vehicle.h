@@ -824,6 +824,12 @@ class vehicle
         //Translate tile coordinates into mount coordinates
         point tripoint_to_mount( const tripoint &p ) const;
 
+        tripoint_abs_ms mount_to_abs( const tripoint_veh_ms &mount ) const;
+        tripoint_abs_ms mount_to_abs( const tripoint_veh_ms &mount, const tripoint_rel_ms &offset ) const {
+            return mount_to_abs( mount + offset );
+        }
+        tripoint_veh_ms abs_to_mount( const tripoint_abs_ms &abs ) const;
+
         // Seek a vehicle part which obstructs tile with given coordinates relative to vehicle position
         int part_at( point dp ) const;
         int part_displayed_at( point dp ) const;
@@ -1796,6 +1802,11 @@ class vehicle
 
 
     private:
+        tripoint_rel_ms rotate_to_world( units::angle dir, const tripoint_veh_ms &pivot,
+                                         const tripoint_veh_ms &p ) const;
+        tripoint_veh_ms rotate_to_local( units::angle dir, const tripoint_veh_ms &pivot,
+                                         const tripoint_rel_ms &p ) const;
+
         bool no_refresh = false;
 
         // if true, pivot_cache needs to be recalculated
