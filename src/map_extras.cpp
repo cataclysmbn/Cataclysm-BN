@@ -414,8 +414,8 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
     vehicle *wreckage = m.add_vehicle(
                             crashed_hull, tripoint( x1, y1, abs_sub.z() ), dir1, rng( 1, 33 ), 1 );
 
-    const auto controls_at = []( vehicle * wreckage, const tripoint_abs_ms &pos ) {
-        return !wreckage->get_parts_at( pos.raw(), "CONTROLS", part_status_flag::any).empty() ||
+    const auto controls_at = []( vehicle * wreckage, const tripoint_abs_ms & pos ) {
+        return !wreckage->get_parts_at( pos.raw(), "CONTROLS", part_status_flag::any ).empty() ||
                !wreckage->get_parts_at( pos.raw(), "CTRL_ELECTRONIC", part_status_flag::any ).empty();
     };
 
@@ -614,7 +614,7 @@ static bool mx_roadblock( map &m, const tripoint_abs_sm &abs_sub )
 
         int num_bodies = dice( 2, 5 );
         for( int i = 0; i < num_bodies; i++ ) {
-            if( const auto p = random_point( m, [&m]( const tripoint &n ) {
+            if( const auto p = random_point( m, [&m]( const tripoint & n ) {
             return m.passable( n );
             } ) ) {
                 m.place_items( item_group_id( "map_extra_military" ), 100, *p, *p, true,
@@ -659,7 +659,7 @@ static bool mx_roadblock( map &m, const tripoint_abs_sm &abs_sub )
 
         int num_bodies = dice( 1, 6 );
         for( int i = 0; i < num_bodies; i++ ) {
-            if( const auto p = random_point( m, [&m]( const tripoint &n ) {
+            if( const auto p = random_point( m, [&m]( const tripoint & n ) {
             return m.passable( n );
             } ) ) {
                 m.place_items( item_group_id( "map_extra_police" ), 100, *p, *p, true,

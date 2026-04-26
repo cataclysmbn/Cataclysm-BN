@@ -241,7 +241,7 @@ void pixel_minimap::set_settings( const pixel_minimap_settings &settings )
 
 void pixel_minimap::prepare_cache_for_updates( const tripoint &center )
 {
-    const tripoint new_center_sm = get_map().get_abs_sub().raw() + ms_to_sm_copy(center);
+    const tripoint new_center_sm = get_map().get_abs_sub().raw() + ms_to_sm_copy( center );
     const tripoint center_sm_diff = cached_center_sm - new_center_sm;
 
     //invalidate the cache if the game shifted more than one submap in the last update, or if z-level changed.

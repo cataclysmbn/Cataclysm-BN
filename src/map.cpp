@@ -5352,7 +5352,8 @@ map_stack::iterator map::i_rem( const tripoint &p, map_stack::const_iterator it,
     // remove from the active items cache (if it isn't there does nothing)
     current_submap->active_items.remove( *it );
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( tripoint( abs_sub.x() + p.x / SEEX, abs_sub.y() + p.y / SEEY, p.z ) );
+        submaps_with_active_items.erase( tripoint( abs_sub.x() + p.x / SEEX, abs_sub.y() + p.y / SEEY,
+                                         p.z ) );
     }
 
     current_submap->update_lum_rem( l, **it );
@@ -5384,7 +5385,8 @@ std::vector<detached_ptr<item>> map::i_clear( const tripoint &p )
         current_submap->active_items.remove( it );
     }
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( tripoint( abs_sub.x() + p.x / SEEX, abs_sub.y() + p.y / SEEY, p.z ) );
+        submaps_with_active_items.erase( tripoint( abs_sub.x() + p.x / SEEX, abs_sub.y() + p.y / SEEY,
+                                         p.z ) );
     }
 
     current_submap->set_lum( l, 0 );
@@ -5660,7 +5662,8 @@ void map::add_item( const tripoint &p, detached_ptr<item> &&new_item )
     current_submap->update_lum_add( l, *new_item );
     if( new_item->needs_processing() ) {
         if( current_submap->active_items.empty() ) {
-            submaps_with_active_items.insert( tripoint( abs_sub.x() + p.x / SEEX, abs_sub.y() + p.y / SEEY, p.z ) );
+            submaps_with_active_items.insert( tripoint( abs_sub.x() + p.x / SEEX, abs_sub.y() + p.y / SEEY,
+                                              p.z ) );
         }
         current_submap->active_items.add( *new_item );
     }
@@ -6816,7 +6819,8 @@ void map::update_submap_active_item_status( const tripoint &p )
     point l;
     submap *const current_submap = get_submap_at( p, l );
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( tripoint( abs_sub.x() + p.x / SEEX, abs_sub.y() + p.y / SEEY, p.z ) );
+        submaps_with_active_items.erase( tripoint( abs_sub.x() + p.x / SEEX, abs_sub.y() + p.y / SEEY,
+                                         p.z ) );
     }
 }
 
@@ -8299,7 +8303,7 @@ void map::saven( const tripoint &grid )
 
     submap_to_save->last_touched = calendar::turn;
     // Add to the dimension-aware mapbuffer slot, not always primary.
-    MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( abs.raw(), submap_to_save);
+    MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( abs.raw(), submap_to_save );
 }
 
 // Optimized mapgen function that only works properly for very simple overmap types
@@ -8416,15 +8420,15 @@ void map::loadn( const tripoint &grid, const bool update_vehicles,
         // TODO: Replace with json mapgen functions.
         mapbuffer &dim_buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
         if( terrain_type == air ) {
-            generate_uniform( grid_abs_sub_rounded.raw(), t_open_air, dim_buf);
+            generate_uniform( grid_abs_sub_rounded.raw(), t_open_air, dim_buf );
         } else if( terrain_type == rock ) {
-            generate_uniform( grid_abs_sub_rounded.raw(), t_rock, dim_buf);
+            generate_uniform( grid_abs_sub_rounded.raw(), t_rock, dim_buf );
         } else {
             tinymap tmp_map;
             // Bind the tinymap to this map's dimension so generated submaps
             // land in the correct registry slot via loadn()'s dimension-aware lookup.
             tmp_map.bind_dimension( bound_dimension_ );
-            tmp_map.generate( grid_abs_sub_rounded.raw(), calendar::turn);
+            tmp_map.generate( grid_abs_sub_rounded.raw(), calendar::turn );
         }
 
         tmpsub = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap( grid_abs_sub );
@@ -9152,7 +9156,7 @@ void map::spawn_monsters_submap_group( const tripoint &gp, mongroup &group, bool
 
     // Find horde's target submap
     // TODO: fix point types
-    tripoint horde_target( tripoint( -abs_sub.raw().xy(), abs_sub.z()) + group.target.xy().raw());
+    tripoint horde_target( tripoint( -abs_sub.raw().xy(), abs_sub.z() ) + group.target.xy().raw() );
     sm_to_ms( horde_target );
     for( auto &tmp : group.monsters ) {
         for( int tries = 0; tries < 10 && !locations.empty(); tries++ ) {
@@ -9379,7 +9383,8 @@ fake_map::fake_map( const furn_id &fur_type, const ter_id &ter_type, const trap_
     set_abs_sub( tripoint_below_zero );
     for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
         for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-            std::unique_ptr<submap> sm = std::make_unique<submap>( getabs( project_to<coords::ms>( tripoint_abs_sm{ gridx, gridy, fake_map_z } ).raw() ) );
+            std::unique_ptr<submap> sm = std::make_unique<submap>( getabs( project_to<coords::ms>
+                                         ( tripoint_abs_sm{ gridx, gridy, fake_map_z } ).raw() ) );
 
             sm->set_all_ter( ter_type );
             sm->set_all_furn( fur_type );

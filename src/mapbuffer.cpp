@@ -308,8 +308,8 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
 
     map &here = get_map();
     const tripoint_abs_omt map_origin = is_current_dimension
-                                ? project_to<coords::omt>( here.get_abs_sub() )
-                                : tripoint_abs_omt{};
+                                        ? project_to<coords::omt>( here.get_abs_sub() )
+                                        : tripoint_abs_omt{};
     const bool map_has_zlevels = g != nullptr && here.has_zlevels();
 
     // Serial collection of unique OMT quad addresses with per-quad delete flags.

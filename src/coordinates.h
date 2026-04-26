@@ -48,7 +48,7 @@ constexpr int map_squares_per( scale s )
         case scale::overmap_terrain:
             return SEEX * 2;
         case scale::mem_map_region:
-            return MM_REG_SIZE * map_squares_per(scale::submap);
+            return MM_REG_SIZE * map_squares_per( scale::submap );
         case scale::segment:
             return SEG_SIZE * map_squares_per( scale::overmap_terrain );
         case scale::overmap:

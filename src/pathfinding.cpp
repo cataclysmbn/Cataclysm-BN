@@ -284,7 +284,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
 
     auto cur_z_area = project_to<coords::ms>( here.get_abs_sub().xy() );
 
-    if( cur_z_area.raw() == Pathfinding::z_area) {
+    if( cur_z_area.raw() == Pathfinding::z_area ) {
         return;
     }
 
