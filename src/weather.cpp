@@ -39,6 +39,7 @@
 #include "submap.h"
 #include "translations.h"
 #include "trap.h"
+#include "type_id.h"
 #include "units.h"
 #include "units_temperature.h"
 #include "vpart_position.h"
@@ -516,35 +517,53 @@ void weather_effect::effect( int intensity, time_duration duration,
                              const std::string &effect_id_str,
                              const std::string &effect_msg, int effect_msg_frequency, int effect_msg_blocked_frequency,
                              game_message_type message_type,
-                             std::string precipitation_name, bool ignore_armor, int clothing_protection,
-                             int umbrella_protection )
+                             std::string precipitation_name, std::vector<std::tuple<std::string, int>> protection_data )
 {
     if( !( calendar::once_every( time_duration::from_seconds( intensity ) ) && is_player_outside() ) ) {
         return;
     }
 
-    if( !ignore_armor ) {
-        auto &you = get_avatar();
-        bool has_helmet = false;
-        if( one_in( umbrella_protection ) && you.primary_weapon().has_flag( json_flag_RAIN_PROTECT ) ) {
-            if( one_in( effect_msg_blocked_frequency ) ) {
-                add_msg( _( "Your umbrella protects you from the %s." ), precipitation_name );
+    for( auto data : protection_data ) {
+        const std::string trait_or_flag = std::get<0>( data );
+        const int odds = std::get<1>( data );
+        std::string name;
+
+        if( trait_or_flag == "DEFAULT" ) {
+            //Special case: if the check string is equal to "DEFAULT"
+            // we dont check for any protection items
+            name = "clothing";
+        } else {
+            const trait_id trait_id( trait_or_flag );
+            const flag_id flag_id( trait_or_flag );
+
+            bool valid_trait = trait_id.is_valid();
+            bool valid_flag = flag_id.is_valid();
+
+            if( !valid_trait && !valid_flag ) {
+                debugmsg( "Invalid trait or flag ID: %s", trait_or_flag.c_str() );
+                return;
             }
-            return;
-        } else if( one_in( umbrella_protection ) && you.worn_with_flag( json_flag_RAINPROOF ) ) {
-            if( one_in( effect_msg_blocked_frequency ) ) {
-                add_msg( _( "Your rainproof clothing protects you from the %s." ), precipitation_name );
+
+            auto &you = get_avatar();
+            auto held = you.primary_weapon();
+
+            //Checking if a player has any applicable protection items
+            //and resolving the name of that item if true
+            if( valid_flag && you.item_worn_with_flag( flag_id ) != nullptr ) {
+                name = you.item_worn_with_flag( flag_id )->tname();
+            } else if( valid_flag && held.has_flag( flag_id ) ) {
+                name = held.tname();
+            } else if( valid_trait && you.has_trait( trait_id ) ) {
+                name = trait_id->name();
+            } else {
+                //Player lacks protection items, move to next entry
+                continue;
             }
-            return;
-        } else if( one_in( clothing_protection ) ) {
+        }
+
+        if( one_in( odds ) ) {
             if( one_in( effect_msg_blocked_frequency ) ) {
-                add_msg( _( "Your clothing protects you from the %s." ), precipitation_name );
-            }
-            return;
-        } else if( you.is_wearing_power_armor( &has_helmet ) && ( has_helmet ||
-                   !one_in( clothing_protection ) ) ) {
-            if( one_in( effect_msg_blocked_frequency ) ) {
-                add_msg( _( "Your power armor protects you from the %s." ), precipitation_name );
+                add_msg( _( "Your %s protects you from the %s." ), name, precipitation_name );
             }
             return;
         }

@@ -43,9 +43,6 @@
 #include "veh_type.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
-
-#define dbg(x) DebugLogFL((x),DC::Map)
-
 static const itype_id fuel_type_muscle( "muscle" );
 static const itype_id fuel_type_animal( "animal" );
 static const itype_id fuel_type_battery( "battery" );
@@ -1387,7 +1384,6 @@ float get_collision_factor( const float delta_v )
 
 vehicle *vehicle::act_on_map()
 {
-    const tripoint pt = global_pos3();
     map &here = get_map();
     // Note: no inbounds() guard here.  Vehicles outside the reality bubble are
     // valid for loaded submaps.  A vehicle driving into an unloaded submap will naturally

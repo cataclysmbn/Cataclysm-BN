@@ -1216,7 +1216,7 @@ bool Character::mutate_towards( const trait_id &mut )
 
     // Check mutations of the same type - except for the ones we might need for pre-reqs
     for( const auto &consider : same_type ) {
-        if( std::ranges::find( all_prereqs, consider ) == all_prereqs.end() ) {
+        if( !std::ranges::contains( all_prereqs, consider ) ) {
             cancel.push_back( consider );
         }
     }
@@ -1733,7 +1733,7 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
 
     // If there is no threshold for this category at this tier, don't check it
     const std::vector<trait_id> &mutation_thresh = m_category.threshold_muts;
-    if( mutation_thresh.size() < tier + 1 ) {
+    if( mutation_thresh.size() <= static_cast<std::vector<trait_id>::size_type>( tier ) ) {
         return;
     }
 
@@ -1842,7 +1842,7 @@ bool are_same_type_traits( const trait_id &trait_a, const trait_id &trait_b )
 
 bool contains_trait( std::vector<string_id<mutation_branch>> traits, const trait_id &trait )
 {
-    return std::ranges::find( traits, trait ) != traits.end();
+    return std::ranges::contains( traits, trait );
 }
 
 bool can_use_mutation( const trait_id &mut, const Character &character )

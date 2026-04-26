@@ -144,19 +144,6 @@ bool ter_furn_has_flag( const ter_t &ter, const furn_t &furn, const ter_bitflags
     return ter.has_flag( flag ) || furn.has_flag( flag );
 }
 
-static int ter_furn_movecost( const ter_t &ter, const furn_t &furn )
-{
-    if( ter.movecost == 0 ) {
-        return 0;
-    }
-
-    if( furn.movecost < 0 ) {
-        return 0;
-    }
-
-    return ter.movecost + furn.movecost;
-}
-
 static inline bool check_flammable( const map_data_common_t &t )
 {
     return t.has_flag( TFLAG_FLAMMABLE ) || t.has_flag( TFLAG_FLAMMABLE_ASH ) ||

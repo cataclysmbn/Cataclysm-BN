@@ -9,6 +9,7 @@
 #include "map.h"
 #include "options_helpers.h"
 #include "ranged.h"
+#include "rng.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "units_utility.h"
@@ -19,6 +20,7 @@
 TEST_CASE( "firing_from_a_vehicle_applies_recoil_to_the_vehicle", "[vehicle][gun]" )
 {
     clear_all_state();
+    rng_set_engine_seed( 0 );
 
     auto &here = get_map();
     auto &player_character = get_avatar();
@@ -48,6 +50,7 @@ TEST_CASE( "firing_from_a_vehicle_applies_recoil_to_the_vehicle", "[vehicle][gun
 TEST_CASE( "vehicle gun recoil scaling factor can disable vehicle thrust", "[vehicle][gun]" )
 {
     clear_all_state();
+    rng_set_engine_seed( 0 );
 
     override_option vehicle_gun_recoil_factor( "VEHICLE_GUN_RECOIL_FACTOR", "0.0" );
 
@@ -102,6 +105,7 @@ TEST_CASE( "single birdshot can move a swivel chair one tile on office floor at 
            "[vehicle][gun]" )
 {
     clear_all_state();
+    rng_set_engine_seed( 0 );
 
     override_option vehicle_gun_recoil_factor( "VEHICLE_GUN_RECOIL_FACTOR", "10.0" );
 
@@ -152,6 +156,7 @@ TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Brow
            "[vehicle][gun]" )
 {
     clear_all_state();
+    rng_set_engine_seed( 0 );
 
     auto &here = get_map();
     auto &player_character = get_avatar();
@@ -204,6 +209,7 @@ TEST_CASE( "perpendicular gun recoil keeps full sideways push on rigid-wheel veh
                                   const tripoint & target,
     const std::optional<tripoint> &shot_origin ) -> recoil_result {
         clear_all_state();
+        rng_set_engine_seed( 0 );
 
         auto &here = get_map();
         auto &player_character = get_avatar();

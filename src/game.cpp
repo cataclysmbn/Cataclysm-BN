@@ -864,6 +864,8 @@ bool game::start_game()
             .dimension_id = "",
             .world_type   = default_wt,
             .display_name = wt_ptr ? wt_ptr->name.translated() : std::string{},
+            .bounds = std::nullopt,
+            .origin_pos = tripoint_abs_sm{},
         };
         get_overmapbuffer( current_dimension_id_ ).current_region_type = wt_ptr ?
                 wt_ptr->region_settings_id : "default";
@@ -3189,6 +3191,7 @@ bool game::load( const save_t &name )
             // dimensions_ entry has nullopt bounds even though the dimension IS
             // bounded.
             .bounds = get_map().get_dimension_bounds(),
+            .origin_pos = tripoint_abs_sm{},
         };
     }
 
@@ -4798,6 +4801,7 @@ int game::tier_assign_all()
         TracyPlot( "LOD Tier 0 (Full AI)",  static_cast<int64_t>( count ) );
         TracyPlot( "LOD Tier 1 (Coarse)",   static_cast<int64_t>( 0 ) );
         TracyPlot( "LOD Tier 2 (Macro)",    static_cast<int64_t>( cross_dim ) );
+        static_cast<void>( cross_dim );
         return count;
     }
 
@@ -4862,13 +4866,6 @@ void game::world_tick()
     const auto  fire_spread = reality_bubble_fire_spread;
     const auto  do_emits   = calendar::once_every( 10_seconds );
     const auto  abs_sub    = m.get_abs_sub();
-
-    // Cardinal neighbours used for fire-spread boundary requests.
-    static const std::array<tripoint, 4> card = {{
-            tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
-            tripoint{ 0, 1, 0 }, tripoint{ 0, -1, 0 }
-        }
-    };
 
     auto total_field_count = int64_t{0};
     MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
@@ -4956,6 +4953,11 @@ void game::world_tick()
                     ? &dim_it->second.bounds
                     : nullptr;
 
+                // Cardinal neighbours used for fire-spread boundary requests.
+                static constexpr auto card = std::array{
+                    tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
+                    tripoint{ 0, 1, 0 }, tripoint{ 0, -1, 0 }
+                };
                 std::ranges::for_each( card, [&]( const tripoint & delta ) {
                     const tripoint_abs_sm nbr{ pos_sm.raw() + delta };
                     // Do not request a fire-spread load outside the dimension's
@@ -5214,8 +5216,9 @@ void game::monmove()
     // distance is calculated exactly once.  The pair is (dist, monster*) so
     // the default comparator orders by distance first.
     std::vector<std::pair<int, monster *>> eligible;
-    eligible.reserve( all_monsters().items.size() );
-    for( monster &critter : all_monsters() ) {
+    auto monsters = all_monsters();
+    eligible.reserve( monsters.items ? monsters.items->size() : 0 );
+    for( monster &critter : monsters ) {
         if( !critter.is_dead() &&
             !critter.has_effect( effect_ridden ) &&
             critter.moves > 0 &&
@@ -5377,7 +5380,6 @@ void game::npcmove()
     // individually controlled by SLEEP_SKIP_NPC without affecting monsters.
     ++g_npcmove_attitude_epoch;
     processing_npcs_ = true;
-    const std::string &player_dim = m.get_bound_dimension();
     for( npc &guy : g->all_npcs() ) {
         // Don't process NPCs in unloaded submaps like a LEMON
         if( !guy.is_simulated() ) {
@@ -10667,17 +10669,17 @@ void game::butcher()
     // Split into corpses, disassemble-able, and salvageable items
     // It's not much additional work to just generate a corpse list and
     // clear it later, but does make the splitting process nicer.
-    for( map_stack::iterator it = items.begin(); it != items.end(); ++it ) {
-        if( ( *it )->is_corpse() ) {
-            corpses.push_back( *it );
+    for( item *const current_item : items ) {
+        if( current_item->is_corpse() ) {
+            corpses.push_back( current_item );
         } else {
-            if( salvage::try_salvage( **it, q_cache ).success() ) {
-                salvageables.push_back( *it );
+            if( salvage::try_salvage( *current_item, q_cache ).success() ) {
+                salvageables.push_back( current_item );
             }
-            if( crafting::can_disassemble( u, **it, crafting_inv ).success() ) {
-                disassembles.push_back( *it );
+            if( crafting::can_disassemble( u, *current_item, crafting_inv ).success() ) {
+                disassembles.push_back( current_item );
             } else if( !first_item_without_tools ) {
-                first_item_without_tools = *it;
+                first_item_without_tools = current_item;
             }
         }
     }
@@ -15117,20 +15119,20 @@ bool game::non_dead_range<Creature>::iterator::valid()
 game::monster_range::monster_range( game &game_ref )
 {
     const auto &monsters = game_ref.critter_tracker->get_monsters_list();
-    items.insert( items.end(), monsters.begin(), monsters.end() );
+    items->insert( items->end(), monsters.begin(), monsters.end() );
 }
 
 game::Creature_range::Creature_range( game &game_ref ) : u( &game_ref.u, []( Character * ) { } )
 {
     const auto &monsters = game_ref.critter_tracker->get_monsters_list();
-    items.insert( items.end(), monsters.begin(), monsters.end() );
-    items.insert( items.end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
-    items.emplace_back( u );
+    items->insert( items->end(), monsters.begin(), monsters.end() );
+    items->insert( items->end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
+    items->emplace_back( u );
 }
 
 game::npc_range::npc_range( game &game_ref )
 {
-    items.insert( items.end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
+    items->insert( items->end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
 }
 
 game::Creature_range game::all_creatures()

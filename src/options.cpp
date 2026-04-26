@@ -1112,7 +1112,7 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
     std::vector<options_manager::id_and_option> user_tilesets = load_tilesets_from(
                 PATH_INFO::user_gfx() );
     for( const options_manager::id_and_option &id : user_tilesets ) {
-        if( std::ranges::find( result, id ) == result.end() ) {
+        if( !std::ranges::contains( result, id ) ) {
             result.emplace_back( id );
         }
     }
@@ -2804,6 +2804,16 @@ void options_manager::add_options_world_default()
          translate_marker( "A scaling factor that determines the time between monster upgrades.  A higher number means slower evolution.  Set to 0.00 to turn off monster upgrades." ),
          0.0, 100, 2.0, 0.01
        );
+
+    add( "EVOLVE_MAX_ITERS", world_default,
+         translate_marker( "Maximum Evolution Half Lives" ),
+         translate_marker( "The maximum number of attempts for a zombie to evolve at the next half life for one evolution stage" ),
+         0, 200, 5 );
+
+    add( "ALWAYS_EVOLVE", world_default,
+         translate_marker( "Zombies Always Evolve" ),
+         translate_marker( "When reaching the maximum half lives, instead of never evolving they will evolve at that time." ),
+         false );
 
     add_empty_line();
 

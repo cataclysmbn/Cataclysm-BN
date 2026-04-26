@@ -285,16 +285,24 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
                              game_opt_multi;
 
     if( light_multi <= 0.0f ) {
-        who.add_msg_if_player( m_bad, _( "You can no longer see well enough to keep crafting." ) );
+        who.add_msg_player_or_npc( m_bad,
+                                   _( "You can no longer see well enough to keep crafting." ),
+                                   _( "<npcname> can no longer see well enough to keep crafting." ) );
         return 0.0f;
     }
     if( bench_multi <= 0.1f || ( bench_multi <= 0.33f && total_multi <= 0.2f ) ) {
-        who.add_msg_if_player( m_bad, _( "The %s is too large and/or heavy to work on.  You may want to"
-                                         " use a workbench or a smaller batch size" ), craft.tname() );
+        who.add_msg_player_or_npc( m_bad,
+                                   _( "The %s is too large and/or heavy to work on.  You may want to"
+                                      " use a workbench or a smaller batch size" ),
+                                   _( "The %s is too large and/or heavy for <npcname> to work on.  They may need"
+                                      " a workbench or a smaller batch size" ),
+                                   craft.tname() );
         return 0.0f;
     }
     if( morale_multi <= 0.2f || ( morale_multi <= 0.33f && total_multi <= 0.2f ) ) {
-        who.add_msg_if_player( m_bad, _( "Your morale is too low to continue crafting." ) );
+        who.add_msg_player_or_npc( m_bad,
+                                   _( "Your morale is too low to continue crafting." ),
+                                   _( "<npcname>'s morale is too low to continue crafting." ) );
         return 0.0f;
     }
 
@@ -328,7 +336,7 @@ bool Character::has_morale_to_craft() const
 void Character::craft( const tripoint &loc )
 {
     int batch_size = 0;
-    const recipe *rec = select_crafting_recipe( batch_size );
+    const recipe *rec = select_crafting_recipe( batch_size, *this );
     if( rec ) {
         if( crafting_allowed( *this, *rec ) ) {
             make_craft( rec->ident(), batch_size, loc );
@@ -348,7 +356,7 @@ void Character::recraft( const tripoint &loc )
 void Character::long_craft( const tripoint &loc )
 {
     int batch_size = 0;
-    const recipe *rec = select_crafting_recipe( batch_size );
+    const recipe *rec = select_crafting_recipe( batch_size, *this );
     if( rec ) {
         if( crafting_allowed( *this, *rec ) ) {
             make_all_craft( rec->ident(), batch_size, loc );
@@ -364,10 +372,14 @@ bool Character::making_would_work( const recipe_id &id_to_make, int batch_size )
     }
 
     if( !can_make( &making, batch_size ) ) {
-        std::string buffer = _( "You can no longer make that craft!" );
-        buffer += "\n";
-        buffer += making.simple_requirements().list_missing();
-        popup( buffer, PF_NONE );
+        if( is_avatar() ) {
+            std::string buffer = _( "You can no longer make that craft!" );
+            buffer += "\n";
+            buffer += making.simple_requirements().list_missing();
+            popup( buffer, PF_NONE );
+            return false;
+        }
+        add_msg_if_npc( _( "<npcname> can no longer make that craft!" ) );
         return false;
     }
 
@@ -750,6 +762,7 @@ item *Character::start_craft( craft_command &command, const tripoint & )
     item *craft_in_world = &*craft;
     set_item_inventory( *this, std::move( craft ) );
 
+
     assign_activity( ACT_CRAFT );
     activity->targets.emplace_back( craft_in_world );
     activity->coords.push_back( get_map().getabs( bench.position ) );
@@ -758,6 +771,7 @@ item *Character::start_craft( craft_command &command, const tripoint & )
     activity->values.push_back( static_cast<int>( bench.type ) );
     activity->values.push_back( 100 );
     activity->values.push_back( 0 );
+    activity->placement = tripoint_zero;
 
     add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),
@@ -1062,9 +1076,9 @@ void complete_craft( Character &who, item &craft )
             first = false;
             // TODO: reconsider recipe memorization
             if( who.knows_recipe( &making ) ) {
-                add_msg( _( "You craft %s from memory." ), making.result_name() );
+                who.add_msg_if_player( _( "You craft %s from memory." ), making.result_name() );
             } else {
-                add_msg( _( "You craft %s using a book as a reference." ), making.result_name() );
+                who.add_msg_if_player( _( "You craft %s using a book as a reference." ), making.result_name() );
                 // If we made it, but we don't know it,
                 // we're making it from a book and have a chance to learn it.
                 // Base expected time to learn is 1000*(difficulty^4)/skill/int moves.
@@ -1081,8 +1095,8 @@ void complete_craft( Character &who, item &craft )
                 const double time_to_learn = 1000 * 8 * std::pow( difficulty, 4 ) / learning_speed;
                 if( x_in_y( making.time, time_to_learn ) ) {
                     who.learn_recipe( &making );
-                    add_msg( m_good, _( "You memorized the recipe for %s!" ),
-                             making.result_name() );
+                    who.add_msg_if_player( m_good, _( "You memorized the recipe for %s!" ),
+                                           making.result_name() );
                 }
             }
         }
@@ -1210,10 +1224,14 @@ bool Character::can_continue_craft( item &craft )
         const int batch_size = 1;
 
         if( !continue_reqs.can_make_with_inventory( crafting_inventory(), filter, batch_size ) ) {
-            std::string buffer = _( "You don't have the required components to continue crafting!" );
-            buffer += "\n";
-            buffer += continue_reqs.list_missing();
-            popup( buffer, PF_NONE );
+            if( is_avatar() ) {
+                std::string buffer = _( "You don't have the required components to continue crafting!" );
+                buffer += "\n";
+                buffer += continue_reqs.list_missing();
+                popup( buffer, PF_NONE );
+                return false;
+            }
+            add_msg_if_npc( _( "<npcname> don't have the required components to continue crafting!" ) );
             return false;
         }
 
@@ -1281,10 +1299,14 @@ bool Character::can_continue_craft( item &craft )
                 std::vector<std::vector<item_comp>>() );
 
         if( !tool_continue_reqs.can_make_with_inventory( crafting_inventory(), return_true<item> ) ) {
-            std::string buffer = _( "You don't have the necessary tools to continue crafting!" );
-            buffer += "\n";
-            buffer += tool_continue_reqs.list_missing();
-            popup( buffer, PF_NONE );
+            if( is_avatar() ) {
+                std::string buffer = _( "You don't have the necessary tools to continue crafting!" );
+                buffer += "\n";
+                buffer += tool_continue_reqs.list_missing();
+                popup( buffer, PF_NONE );
+                return false;
+            }
+            add_msg_if_npc( _( "<npcname> don't have the necessary tools to continue crafting!" ) );
             return false;
         }
 
@@ -2453,5 +2475,7 @@ int charges_for_continuing( int full_charges )
 {
     return full_charges / 20;
 }
+
+
 
 } // namespace crafting

@@ -114,7 +114,7 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
 {
     // fetch matching parts and abort early if none found
     const auto found = get_avail_parts( flag );
-    if( empty( found ) ) {
+    if( found.empty() ) {
         return;
     }
 
@@ -190,7 +190,7 @@ void vehicle::control_doors()
     // Locations used to display the doors
     std::vector< tripoint > locations;
     // it is possible to have one door to open and one to close for single motor
-    if( empty( door_motors ) ) {
+    if( door_motors.empty() ) {
         debugmsg( "vehicle::control_doors called but no door motors found" );
         return;
     }

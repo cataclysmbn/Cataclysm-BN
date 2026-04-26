@@ -655,7 +655,7 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
         //Leave engine running in some vehicles, if the engine has not been destroyed
         //chance decays from 1 in 4 vehicles on day 0 to 1 in (day + 4) in the future.
         int current_day = std::max( to_days<int>( calendar::turn - calendar::turn_zero ), 0 );
-        if( veh_fuel_mult > 0 && !empty( get_avail_parts( "ENGINE" ) ) &&
+        if( veh_fuel_mult > 0 && !get_avail_parts( "ENGINE" ).empty() &&
             one_in( current_day + 4 ) && !destroyEngine && !needsHotwire &&
             has_engine_type_not( fuel_type_muscle, true ) ) {
             engine_on = true;
@@ -1440,7 +1440,7 @@ bool vehicle::is_alternator_on( const int a ) const
         return false;
     }
 
-    return std::any_of( engines.begin(), engines.end(), [this, &alt]( int idx ) {
+    return std::ranges::any_of( engines, [this, &alt]( int idx ) {
         const auto &eng = parts [ idx ];
         //fuel_left checks that the engine can produce power to be absorbed
         return eng.is_available() && eng.enabled && fuel_left( eng.fuel_current() ) &&
@@ -2837,7 +2837,7 @@ item &vehicle::part_base( int p )
 
 int vehicle::find_part( const item &it ) const
 {
-    auto idx = std::find_if( parts.begin(), parts.end(), [&it]( const vehicle_part & e ) {
+    auto idx = std::ranges::find_if( parts, [&it]( const vehicle_part & e ) {
         return e.base == &it;
     } );
     return idx != parts.end() ? std::distance( parts.begin(), idx ) : INT_MIN;
@@ -3000,14 +3000,14 @@ int vehicle::avail_part_with_feature( point pt, const std::string &flag,
 
 bool vehicle::has_part( const std::string &flag, bool enabled ) const
 {
-    return std::any_of( parts.begin(), parts.end(), [&flag, &enabled]( const vehicle_part & e ) {
+    return std::ranges::any_of( parts, [&flag, &enabled]( const vehicle_part & e ) {
         return !e.removed && ( !enabled || e.enabled ) && !e.is_broken() && e.info().has_flag( flag );
     } );
 }
 
 bool vehicle::has_part( const vpart_bitflags &flag, bool enabled ) const
 {
-    return std::any_of( parts.begin(), parts.end(), [&flag, &enabled]( const vehicle_part & e ) {
+    return std::ranges::any_of( parts, [&flag, &enabled]( const vehicle_part & e ) {
         return !e.removed && ( !enabled || e.enabled ) && !e.is_broken() && e.info().has_flag( flag );
     } );
 }
@@ -3263,9 +3263,9 @@ int vehicle::get_next_shifted_index( int original_index, Character &who )
 {
     int ret_index = original_index;
     bool found_shifted_index = false;
-    for( std::vector<vehicle_part>::reverse_iterator it = parts.rbegin(); it != parts.rend(); ++it ) {
-        if( who.get_value( "veh_index_type" ) == it->info().name() ) {
-            ret_index = index_of_part( &*it );
+    for( vehicle_part &part : parts | std::views::reverse ) {
+        if( who.get_value( "veh_index_type" ) == part.info().name() ) {
+            ret_index = index_of_part( &part );
             found_shifted_index = true;
             break;
         }
@@ -3292,7 +3292,7 @@ std::vector<std::vector<int>> vehicle::find_lines_of_parts( int part, const std:
 {
     const auto possible_parts = get_avail_parts( flag );
     std::vector<std::vector<int>> ret_parts;
-    if( empty( possible_parts ) ) {
+    if( possible_parts.empty() ) {
         return ret_parts;
     }
 

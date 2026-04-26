@@ -488,6 +488,16 @@
   },
   {
     "type": "vehicle_group",
+    "id": "experimental_military_vehicles",
+    "vehicles": [ [ "tank_xm7_elec", 50 ], [ "tank_xm_hover", 30 ], [ "xapc_hover", 40 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "military_decoy_vehicles",
+    "vehicles": [ [ "whillys_mb", 50 ], [ "4x4_car", 50 ] ]
+  },
+  {
+    "type": "vehicle_group",
     "id": "farm_vehicles",
     "vehicles": [
       [ "tractor_plow", 1000 ],
@@ -731,6 +741,7 @@
     "vehicles": [
       [ "plane_small", 500 ],
       [ "plane_f35_lightning", 25 ],
+      [ "plane_av8_harrier", 5 ],
       [ "2seater2", 100 ],
       [ "SmallFlier1", 300 ],
       [ "2seater2_Wreck", 100 ],
@@ -1158,9 +1169,10 @@
     "type": "vehicle_group",
     "id": "aircraft_carrier_flight_deck",
     "vehicles": [
-      [ "plane_f35_lightning", 30 ],
+      [ "plane_f35_lightning", 25 ],
+      [ "plane_av8_harrier", 10 ],
       [ "helicopter_apache_1a", 5 ],
-      [ "helicopter_apache_1b", 15 ],
+      [ "helicopter_apache_1b", 10 ],
       [ "helicopter_apache_1c", 10 ],
       [ "helicopter_osprey_2c", 15 ],
       [ "helicopter_osprey_2b", 10 ],
@@ -1171,5 +1183,10 @@
       [ "helicopter_atomic", 2 ],
       [ "helicopter_atomic_wreck", 3 ]
     ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "airfield_hangar",
+    "vehicles": [ [ "plane_f35_lightning", 50 ], [ "plane_f15e_eagle", 75 ] ]
   }
 ]

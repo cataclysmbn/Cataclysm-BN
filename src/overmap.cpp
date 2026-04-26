@@ -4959,6 +4959,10 @@ bool overmap::place_building( const tripoint_om_omt &p, om_direction::type dir, 
         const overmap_special_id building_tid = pick_random_building_to_place( town_dist,
                                                 attempt_finale_place );
 
+        if( !building_tid.is_valid() ) {
+            return false;
+        }
+
         if( can_place_special( *building_tid, building_pos, building_dir, false ) ) {
             place_special( *building_tid, building_pos, building_dir, town, false, false );
             return( true );
