@@ -208,7 +208,7 @@ class deployer_actor : public mattack_actor
             // Chance from 0 to 100 of deployment
             int chance = 1;
             // At what percent of ammo remaining should this be considered
-            float ammo_percentage = 1;
+            double ammo_percentage = 1;
             // At what range can this be deployed ( 0 being in melee )
             int range = 0;
 
