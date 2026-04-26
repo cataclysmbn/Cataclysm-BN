@@ -428,12 +428,12 @@ bool vehicle_item_location::is_loaded( const item * ) const
     }
 
     //Have to check the bounds, the vehicle might be half outside the bubble
-    return get_map().inbounds( veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount ) );
+    return get_map().inbounds( veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ) );
 }
 
 tripoint vehicle_item_location::position( const item * ) const
 {
-    return veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount );
+    return veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount );
 }
 
 item_location_type vehicle_item_location::where() const
@@ -459,7 +459,7 @@ int vehicle_item_location::obtain_cost( const Character &ch, int qty, const item
     const item *obj = cost_split_helper( it, qty );
     int mv = dynamic_cast<const player *>( &ch )->item_handling_cost( *obj, true,
              VEHICLE_HANDLING_PENALTY );
-    mv += 100 * rl_dist( ch.pos(), veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount ) );
+    mv += 100 * rl_dist( ch.pos(), veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ) );
     return mv;
 }
 

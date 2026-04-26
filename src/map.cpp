@@ -5989,7 +5989,7 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
             return;
         }
         const auto it = std::ranges::find_if( cargo_parts, [&]( const vpart_reference & part ) {
-            return active_item_ref->position() == cur_veh.mount_to_tripoint( part.mount() );
+            return active_item_ref->position() == cur_veh.mount_to_bubble( part.mount() );
         } );
 
         if( it == cargo_parts.end() ) {

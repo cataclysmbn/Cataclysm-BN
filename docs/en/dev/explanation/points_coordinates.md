@@ -65,7 +65,7 @@ Vehicles use two systems of coordinates relative to their origin:
 Vehicle facing is implemented via a combination of rotations (by quarter turns) and shearing to
 interpolate between quarter turns. The logic to convert between vehicle mount and map square
 coordinates is complicated and handled by the `vehicle::coord_translate()` and
-`vehicle::mount_to_tripoint()` families of functions.
+`vehicle::mount_to_bubble()` families of functions.
 
 Currently, vehicle mount coordinates do not have a z-level component, but vehicle map square
 coordinates do. The z coordinate is relative to the vehicle origin.

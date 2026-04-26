@@ -2144,7 +2144,7 @@ bool vehicle::merge_rackable_vehicle( vehicle *carry_veh, const std::vector<int>
             point carry_mount;
             for( point offset : four_cardinal_directions ) {
                 carry_mount = parts[ rack_part ].mount + offset;
-                tripoint possible_pos = mount_to_tripoint( carry_mount );
+                tripoint possible_pos = mount_to_bubble( carry_mount );
                 if( possible_pos == carry_pos ) {
                     break;
                 }
@@ -3542,12 +3542,12 @@ void vehicle::coord_translate_reverse( units::angle dir, point pivot, const trip
                          tripoint_rel_ms( p ) ).raw().xy();
 }
 
-tripoint vehicle::mount_to_tripoint( point mount ) const
+tripoint vehicle::mount_to_bubble( point mount ) const
 {
-    return mount_to_tripoint( mount, point_zero );
+    return mount_to_bubble( mount, point_zero );
 }
 
-tripoint vehicle::mount_to_tripoint( point mount, point offset ) const
+tripoint vehicle::mount_to_bubble( point mount, point offset ) const
 {
     tripoint mnt_translated;
     coord_translate( pivot_rotation[0], pivot_anchor[ 0 ], mount + offset, mnt_translated );
@@ -3738,7 +3738,7 @@ std::vector<rider_data> vehicle::get_riders() const
 player *vehicle::get_passenger( int p ) const
 {
     // Compare by mount (2D vehicle-local tile) rather than global tripoint.
-    // mount_to_tripoint() uses coord_translate which can produce nonzero z on
+    // mount_to_bubble() uses coord_translate which can produce nonzero z on
     // ramp terrain, but precalc[0].z is always cleared to 0 in precalc_mounts().
     // The tripoint mismatch causes get_parts_at() to find no parts on ramps.
     const point &target_mount = parts[p].mount;
