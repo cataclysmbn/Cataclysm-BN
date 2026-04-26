@@ -224,9 +224,9 @@ bool map::build_vision_transparency_cache( const Character &player )
                                   check_vehicle_coverage ) )
                         || ( adjacent_vp && ( !player_vp ||  &( player_vp->vehicle() ) != &( adjacent_vp->vehicle() ) ) &&
                              !adjacent_vp->vehicle().check_rotated_intervening(
-                                     adjacent_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p ) ),
-                                     adjacent_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p + adjacent ) ),
-                                     check_vehicle_coverage ) ) ) {
+                                 adjacent_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p ) ),
+                                 adjacent_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p + adjacent ) ),
+                                 check_vehicle_coverage ) ) ) {
                         dirty = true;
                         vision_transparency_cache[ i ] = VISION_ADJUST_HIDDEN;
                     }
