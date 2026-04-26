@@ -17,21 +17,21 @@
     "object": {
       "fill_ter": "t_floor",
       "rows": [
-        "########################",
+        "#######w#GGGGGG#w#######",
         "#                      #",
         "#                      #",
         "#                      #",
         "#                      #",
         "#     w#GGGGGGGG#w     #",
         "#     3#        #3     #",
-        "#     C#        #C     #",
+        "w     C#        #C     w",
         "#     c#        #c     #",
-        "#      W        W      #",
-        "#      W        W      #",
-        "#      W        W      #",
-        "#      W        W      #",
-        "#     c#        #c     #",
-        "#     C#        #C     #",
+        "G      W        W      G",
+        "G      W        W      G",
+        "G      W        W      G",
+        "G      W        W      G",
+        "G     c#        #c     G",
+        "G     C#        #C     G",
         "#     3#        #3     #",
         "#     w##########w     #",
         "#GGGGG##BBBBBBBB##GGGGG#",
@@ -40,13 +40,13 @@
         "#                      #",
         "#                      #",
         "#                      #",
-        "########################"
+        "#######w#GGGGGG#w#######"
       ],
       "place_nested": [
         { "chunks": [ "crt_lab_veh_wind_prod_plane" ], "x": 1, "y": 18 },
         { "chunks": [ "crt_lab_veh_wind_tun_blimp" ], "x": 8, "y": 6 }
       ],
-      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "G": "t_door_metal_locked" },
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control_crt_lab", "W": "t_wall_glass", "G": "t_door_metal_locked" },
       "furniture": { "B": "f_workbench", "C": "f_crate_c", "3": "f_3d_printer", "c": "f_console_table" },
       "items": {
         "C": { "item": "crt_lab_veh_parts", "chance": 75, "repeat": 5 },
@@ -54,10 +54,10 @@
         "B": { "item": "tools_mechanic", "chance": 50, "repeat": 2 }
       },
       "place_monster": [
-        { "group": "GROUP_MIL_STRONG", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ] },
-        { "group": "GROUP_MIL_WEAK", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ] },
-        { "group": "GROUP_MIL_STRONG", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ] },
-        { "group": "GROUP_MIL_WEAK", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ] }
+        { "group": "GROUP_CRT_COMBAT", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ], "chance": 100  },
+        { "group": "GROUP_CRT_COMBAT", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ], "chance": 100 },
+        { "group": "GROUP_CRT_TECHNICIAN", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ], "chance": 100  },
+        { "group": "GROUP_CRT_TECHNICIAN", "x": [ 18, 22 ], "y": [ 1, 16 ], "repeat": [ 2, 4 ], "chance": 100 },
       ]
     }
   },

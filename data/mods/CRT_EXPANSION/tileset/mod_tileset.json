@@ -4,20 +4,19 @@
     "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockRealXotto", "MSX++DEAD_PEOPLE" ],
     "tiles-new": [
       {
-        "file": "tileset/engineer.png",
+        "file": "tileset/monsters.png",
         "tiles": [
-          { "id": "mon_crt_hydrogen_hack", "fg": 5, "rotates": false },
           { "id": "mon_crt_manhack", "fg": 0, "rotates": false },
-          { "id": "mon_crt_electrohack", "fg": 2, "rotates": false },
           { "id": "mon_crt_flamehack", "fg": 1, "rotates": false },
-          { "id": "mon_crt_engineer_t3", "fg": 8, "rotates": false },
-          { "id": "mon_crt_engineer_t1", "fg": 6, "rotates": false },
-          { "id": "mon_crt_manslap", "fg": 3, "rotates": false }
+          { "id": "mon_crt_electrohack", "fg": 2, "rotates": false },
+          { "id": "mon_crt_manslap", "fg": 3, "rotates": false },
+          { "id": "mon_crt_hydrogen_hack", "fg": 4, "rotates": false },
+          { "id": "mon_crt_engineer_t1", "fg": 9, "rotates": false },
+          { "id": "mon_crt_engineer_t3", "fg": 11, "rotates": false },
+          { "id": "mon_crt_medic_t1", "fg": 12, "rotates": false },
+          { "id": "mon_crt_medic_t2", "fg": 13, "rotates": false },
+          { "id": "mon_crt_soldier", "fg": 15, "rotates": false }
         ]
-      },
-      {
-        "file": "tileset/medic.png",
-        "tiles": [ { "id": "mon_crt_medic_t1", "fg": 9, "rotates": false }, { "id": "mon_crt_medic_t2", "fg": 10, "rotates": false } ]
       }
     ]
   }

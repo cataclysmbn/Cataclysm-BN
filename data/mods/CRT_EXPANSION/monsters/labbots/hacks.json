@@ -1,7 +1,25 @@
 [
   {
+    "abstract": "crt_drone_base",
+    "type": "MONSTER",
+    "name": { "str": "autonomous drone" },
+    "default_faction": "zombie",
+    "species": [ "ROBOT_FLYING" ],
+    "volume": "750 ml",
+    "weight": "1 kg",
+    "hp": 10,
+    "material": [ "steel" ],
+    "symbol": "e",
+    "aggression": 100,
+    "morale": 100,
+    "luminance": 5,
+    "death_drops": { "subtype": "collection", "groups": [ [ "robots", 80 ] ], "//": "80% chance of an item from group robots" },
+    "death_function": [ "BROKEN_AMMO" ],
+    "flags": [ "SEES", "FLIES", "NOHEAD", "ELECTRONIC", "NO_BREATHE", "INTERIOR_AMMO", "BIOPROOF", "CAN_BE_ORDERED" ]
+  },
+  {
     "id": "mon_crt_manhack",
-    "copy-from": "base_drone",
+    "copy-from": "crt_drone_base",
     "type": "MONSTER",
     "looks_like": "mon_manhack",
     "name": { "str": "C.R.I.T. manhack" },
@@ -70,7 +88,7 @@
   },
   {
     "id": "mon_crt_flamehack",
-    "copy-from": "base_drone",
+    "copy-from": "crt_drone_base",
     "type": "MONSTER",
     "looks_like": "mon_flamehack",
     "name": { "str": "C.R.I.T. flamehack" },
@@ -140,7 +158,7 @@
   },
   {
     "id": "mon_crt_electrohack",
-    "copy-from": "base_drone",
+    "copy-from": "crt_drone_base",
     "type": "MONSTER",
     "name": { "str": "C.R.I.T. electrohack" },
     "description": "An automated anti-personnel drone, a small quadcopter robot crafted from carbon fiber surrounded by whirring aluminum blades, the sparks coming off it make you think that it might shock you.",
@@ -209,7 +227,7 @@
   },
   {
     "id": "mon_crt_hydrogen_hack",
-    "copy-from": "base_drone",
+    "copy-from": "crt_drone_base",
     "type": "MONSTER",
     "name": { "str": "C.R.I.T. hydrogen hack" },
     "description": "An automated kamikaze drone, this small blimp drone appears to have an lighter attached to the blimp. I wonder what could go wrong.",
@@ -270,7 +288,7 @@
   },
   {
     "id": "mon_crt_manslap",
-    "copy-from": "base_drone",
+    "copy-from": "crt_drone_base",
     "type": "MONSTER",
     "looks_like": "mon_manslap",
     "name": { "str": "C.R.I.T. manslap" },

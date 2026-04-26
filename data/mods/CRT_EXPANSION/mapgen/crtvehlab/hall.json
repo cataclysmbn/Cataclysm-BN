@@ -47,7 +47,11 @@
         "#       w      w       #",
         "#########GGGGGG#########"
       ],
-      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control_crt_lab", "W": "t_wall_glass", "G": "t_door_metal_locked" }
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control_crt_lab", "W": "t_wall_glass", "G": "t_door_metal_locked" },
+      "place_monster": [
+        { "group": "GROUP_CRT_BOT", "x": [ 1, 22 ], "y": [ 9, 14 ], "repeat": [ 2, 6 ], "chance": 100, "pack_size": [ 1, 4 ] },
+        { "group": "GROUP_CRT_BOT", "x": [ 9, 14 ], "y": [ 1, 22 ], "repeat": [ 2, 6 ], "chance": 100, "pack_size": [ 1, 4 ] }
+      ]
     }
   }
 ]

@@ -30,7 +30,7 @@
       "Z": "t_door_metal_locked",
       "J": "t_chaingate_c",
       "—": "t_chaingate_l",
-      "Q": "t_gates_mech_control",
+      "Q": "t_gates_mech_control_crt_lab",
       "<": "t_stairs_up",
       ">": "t_stairs_down",
       "K": "t_window_domestic",

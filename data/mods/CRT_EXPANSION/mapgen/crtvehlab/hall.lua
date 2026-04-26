@@ -121,6 +121,9 @@ crt_lab_veh_hall.draw = function(data, map)
 
   -- Now that all the nested is dealt with rerotate the map
   map:rotate(data:get_rotation())
+
+  local pt1 = Point.new( 1, 22 )
+  local pt2 = Point.new( 9, 14 )
 end
 
 return crt_lab_veh_hall

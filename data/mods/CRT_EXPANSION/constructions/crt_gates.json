@@ -23,7 +23,7 @@
     "type": "gate",
     "id": "t_gates_mech_control_crt_lab",
     "door": "t_door_metal_locked",
-    "floor": "t_thconc_floor",
+    "floor": "t_door_metal_locked_o",
     "walls": [
       "t_wall",
       "t_wall_r",

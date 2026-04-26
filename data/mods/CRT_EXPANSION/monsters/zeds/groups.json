@@ -1,27 +1,64 @@
 [
   {
     "type": "monstergroup",
-    "name": "GROUP_CRT_MEDICAL",
-    "default": "mon_null",
+    "name": "GROUP_CRT_BOT",
+    "default": "mon_crt_manhack",
     "//": "Monster spawns in C.R.I.T. labs, specifically for medical zeds",
     "monsters": [
-      { "monster": "mon_crt_medic_t1", "freq": 50, "cost_multiplier": 2 },
-      { "monster": "mon_crt_medic_t2", "freq": 25, "cost_multiplier": 4 },
-      { "monster": "mon_zombie_nurse", "freq": 100, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_surgeon", "freq": 33, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_conjoiner", "freq": 5, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_vivisector", "freq": 5, "cost_multiplier": 1 },
-      { "monster": "mon_nursebot_defective", "freq": 10, "cost_multiplier": 1 },
-      { "monster": "mon_nursebot", "freq": 10, "cost_multiplier": 1 }
+      { "monster": "mon_crt_manhack", "freq": 100, "cost_multiplier": 1, },
+      { "monster": "mon_crt_manhack", "freq": 150, "cost_multiplier": 2, },
+      { "monster": "mon_crt_flamehack", "freq": 50, "cost_multiplier": 2, },
+      { "monster": "mon_crt_flamehack", "freq": 75, "cost_multiplier": 3, },
+      { "monster": "mon_crt_electrohack", "freq": 50, "cost_multiplier": 3, },
+      { "monster": "mon_crt_electrohack", "freq": 75, "cost_multiplier": 4, },
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_CRT_MEDICAL",
+    "default": "mon_zombie_nurse",
+    "//": "Monster spawns in C.R.I.T. labs, specifically for medical zeds",
+    "monsters": [
+      { "monster": "mon_crt_medic_t1", "freq": 75, "cost_multiplier": 2 },
+      { "monster": "mon_crt_medic_t2", "freq": 50, "cost_multiplier": 3 },
+      { "monster": "mon_zombie_surgeon", "freq": 50, "cost_multiplier": 3 },
+      { "monster": "mon_zombie_conjoiner", "freq": 25, "cost_multiplier": 4 },
+      { "monster": "mon_zombie_vivisector", "freq": 25, "cost_multiplier": 4 },
+      { "monster": "mon_nursebot_defective", "freq": 15, "cost_multiplier": 5 },
+      { "monster": "mon_nursebot", "freq": 15, "cost_multiplier": 5 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_CRT_TECHNICIAN",
+    "default": "mon_zombie_technician",
+    "//": "Monster spawns in C.R.I.T. labs, specifically for medical zeds",
+    "monsters": [
+      { "monster": "mon_crt_engineer_t1", "freq": 50, "cost_multiplier": 2 },
+      { "monster": "mon_crt_engineer_t3", "freq": 25, "cost_multiplier": 4 },
+      { "monster": "mon_zombie_technician", "freq": 100, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_technician_evolved_electric", "freq": 50, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_technician_evolved_iron", "freq": 50, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_technician_evolved_iron2", "freq": 25, "cost_multiplier": 1 }
     ]
   },
   {
     "type": "monstergroup",
     "name": "GROUP_CRT_COMBAT",
-    "default": "mon_null",
+    "default": "mon_crt_soldier",
     "//": "Generic C.R.I.T. Spawns for all combat related purposes",
-    "monsters": [ { "monster": "mon_zombie_technician", "freq": 50, "cost_multiplier": 2 } ],
-    "evolve_chance": 100,
+    "monsters": [
+      { "monster": "mon_crt_soldier", "freq": 100, "cost_multiplier": 2, "pack_size": [ 1, 4 ] },
+      { "monster": "mon_crt_soldier", "freq": 150, "cost_multiplier": 2, "pack_size": [ 2, 6 ] },
+      { "monster": "mon_zombie_soldier_shieldman", "freq": 75, "cost_multiplier": 5, "pack_size": [ 1, 4 ] },
+      { "monster": "mon_zombie_flamer", "freq": 100, "cost_multiplier": 30 },
+      { "monster": "mon_zombie_military_pilot", "freq": 5, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_bio_op", "freq": 50, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_bio_op2", "freq": 25, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_armored", "freq": 10, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_supply_sergeant", "freq": 25, "cost_multiplier": 5 }
+    ],
+    "evolve_chance": 20,
     "evolve_repeat": 2
   }
 ]

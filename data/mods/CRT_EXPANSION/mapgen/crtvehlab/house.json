@@ -92,21 +92,6 @@
     "object": {
       "fill_ter": "t_floor",
       "rows": [
-        "########################",
-        "#                      #",
-        "#                      #",
-        "#                      #",
-        "#                      #",
-        "#                      #",
-        "#                      #",
-        "#                      #",
-        "#########DDDDDD#########",
-        "#                      #",
-        "#                      #",
-        "#                      #",
-        "#                      #",
-        "#                      #",
-        "#                      #",
         "#########DDDDDD#########",
         "#                      #",
         "#                      #",
@@ -115,9 +100,24 @@
         "#                      #",
         "#                      #",
         "#                      #",
-        "########################"
+        "#w#######DDDDDD#######w#",
+        "G                      G",
+        "G                      G",
+        "G                      G",
+        "G                      G",
+        "G                      G",
+        "G                      G",
+        "#w#######DDDDDD#######w#",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#                      #",
+        "#########DDDDDD#########"
       ],
-      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass", "D": "t_door_c" }
+      "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control_crt_lab", "W": "t_wall_glass", "D": "t_door_c", "G": "t_door_metal_locked" }
     }
   },
   {
@@ -151,11 +151,11 @@
         "  B#D D"
       ],
       "terrain": { "#": "t_concrete_wall", "w": "t_gates_mech_control", "W": "t_wall_glass" },
-      "furniture": { "B": "f_bed", "T": "f_table", "C": "f_chair", "D": "f_dresser" },
+      "furniture": { "T": "f_table", "C": "f_chair", "D": "f_dresser" },
       "mapping": {
         "D": { "items": [ { "item": "crt_eng_set", "chance": 50 } ] },
         "T": { "items": [ { "item": "crt_sci_reading", "chance": 50, "repeat": 2 } ] },
-        "B": { "items": [ { "item": "bed", "chance": 50, "repeat": 5 } ] }
+        "B": { "items": [ { "item": "bed", "chance": 50, "repeat": 5 } ], "furniture": "f_bed", "monster": { "group": "GROUP_CRT_TECHNICIAN", "chance": 50, "one_or_none": true } }
       }
     }
   },
@@ -218,7 +218,7 @@
       "mapping": {
         "T": { "items": [ { "item": "book_military", "chance": 50, "repeat": 5 } ] },
         "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
-        "B": { "items": [ { "item": "bed", "chance": 100 } ] }
+        "B": { "items": [ { "item": "bed", "chance": 100 } ], "furniture": "f_bed", "monster": { "group": "GROUP_CRT_COMBAT", "chance": 100, "one_or_none": true } }
       }
     }
   },
@@ -237,7 +237,7 @@
       "mapping": {
         "T": { "items": [ { "item": "book_military", "chance": 50, "repeat": 5 } ] },
         "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
-        "B": { "items": [ { "item": "bed", "chance": 100 } ] }
+        "B": { "items": [ { "item": "bed", "chance": 100 } ], "furniture": "f_bed", "monster": { "group": "GROUP_CRT_COMBAT", "chance": 100, "one_or_none": true } }
       }
     }
   },
@@ -255,7 +255,7 @@
       "furniture": { "B": "f_bed", "D": "f_dresser" },
       "mapping": {
         "D": { "items": [ { "item": "clothing_soldier_set", "chance": 100 } ] },
-        "B": { "items": [ { "item": "bed", "chance": 100 } ] }
+        "B": { "items": [ { "item": "bed", "chance": 100 } ], "furniture": "f_bed", "monster": { "group": "GROUP_CRT_COMBAT", "chance": 100, "one_or_none": true } }
       }
     }
   }
