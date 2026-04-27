@@ -463,13 +463,15 @@ inline auto project_bounds( const coord_point<tripoint, Origin, CoarseScale> &co
 }
 
 template<typename T>
-concept IsCoordPoint = requires( const T &t ) {
-    { t.raw() } -> std::convertible_to<typename T::value_type>;
+concept IsCoordPoint = requires( const T &t )
+{
+    { t.raw() }
+    -> std::convertible_to<typename T::value_type>;
     typename T::value_type;
 };
 
 template<typename A, typename B>
-concept SameOrigin = IsCoordPoint<A> && IsCoordPoint<B> &&
+concept SameOrigin = IsCoordPoint<A> &&IsCoordPoint<B> &&
                      ( A::origin_tag == B::origin_tag );
 
 } // namespace coords
