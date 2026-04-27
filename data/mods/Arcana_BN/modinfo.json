@@ -3,11 +3,11 @@
     "type": "MOD_INFO",
     "id": "Arcana",
     "name": "<color_cyan>Arcana and Magic Items</color>",
-    "authors": ["Chaosvolt"],
+    "authors": [ "Chaosvolt" ],
     "description": "Adds a host of craftable magic items and spells, centered around the use of Arcana skill to research and exploit otherworldly monsters and anomalies.",
     "version": "BN version, update 11/13/2024",
     "category": "content",
-    "dependencies": ["bn"],
+    "dependencies": [ "bn" ],
     "path": "../../../external/cdda-arcana-mod/Arcana_BN"
   }
 ]
