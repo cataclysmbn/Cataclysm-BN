@@ -17,8 +17,8 @@ title: Monster Spawning System
 | `monsters`      | To choose a monster for spawning, the game creates 1000 entries and picks one. Each monster will have a number of entries equal to it's "freq" and the default monster will fill in the remaining. See the table below for how to build the single monster definitions. |
 | `is_safe`       | (bool) Check to not trigger safe-mode warning.                                                                                                                                                                                                                          |
 | `is_animal`     | (bool) Check if that group has only normal animals.                                                                                                                                                                                                                     |
-| `evolve_repeat` | (int) Number of attempts for extra default evolutions. 0 means off
-| `evolve_chance` | (int) Chance for extra evolutions from 0-100
+| `evolve_repeat` | (int) Number of attempts for extra default evolutions. 0 means off                                                                                                                                                                                                      |
+| `evolve_chance` | (int) Chance for extra evolutions from 0-100                                                                                                                                                                                                                            |
 
 #### Monster definition
 
