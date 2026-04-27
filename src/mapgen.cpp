@@ -367,8 +367,8 @@ class mapgen_factory
             result.insert( "lab_1side" );
             result.insert( "lab_4side" );
             result.insert( "lab_finale_1level" );
-            result.insert( "crt_lab_veh_house_backdrop" );
-            result.insert( "crt_lab_veh_hall_frame" );
+            result = cata::run_hooks( "on_make_mapgen_factory_list", [&]( auto & params ) { params["results"] = &result; } ).get_or( "results",
+                    result );
             return result;
         }
 
