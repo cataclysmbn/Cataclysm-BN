@@ -22,6 +22,8 @@ jobs:
           sudo pip3 install --break-system-packages polib luaparser
 
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Check that translation template extraction works
         run: lang/update_pot.sh

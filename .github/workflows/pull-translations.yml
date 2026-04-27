@@ -23,6 +23,7 @@ jobs:
         with:
           # https://github.com/stefanzweifel/git-auto-commit-action?tab=readme-ov-file#push-to-protected-branches
           token: ${{ secrets.AUTO_COMMIT_PAT }}
+          submodules: recursive
 
       - name: "Get current date"
         id: get-timestamp

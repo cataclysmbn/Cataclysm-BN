@@ -165,8 +165,14 @@ _(This only needs to be done once.)_
 1. Clone your fork locally.
 
 ```sh
-$ git clone https://github.com/YOUR_USERNAME/Cataclysm-BN.git
-# Clones your fork of the repository into the current directory in terminal
+$ git clone --recurse-submodules https://github.com/YOUR_USERNAME/Cataclysm-BN.git
+# Clones your fork and its submodules into the current directory in terminal
+```
+
+If you already cloned without submodules, initialize them before building or testing:
+
+```sh
+$ git submodule update --init --recursive
 ```
 
 3. Set commit message template.

@@ -19,6 +19,8 @@ jobs:
       yesterday_tag_name: ${{ steps.env_vars.outputs.yesterday_tag_name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - id: env_vars
         run: |
           TAG_NAME=$(date -u --iso-8601)
@@ -55,6 +57,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Push tag
         if: ${{ steps.tag_check.outputs.exists == 'false' }}

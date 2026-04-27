@@ -1,0 +1,4 @@
+[submodule "external/cdda-arcana-mod"]
+	path = external/cdda-arcana-mod
+	url = https://github.com/chaosvolt/cdda-arcana-mod.git
+	branch = master

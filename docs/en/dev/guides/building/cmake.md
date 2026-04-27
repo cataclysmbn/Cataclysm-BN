@@ -37,12 +37,15 @@ You can obtain the source code tarball for the latest version from
 [git](https://github.com/cataclysmbn/Cataclysm-BN).
 
 ```sh
-git clone --filter=blob:none https://github.com/cataclysmbn/Cataclysm-BN.git
+git clone --filter=blob:none --recurse-submodules https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 
 > [!TIP]
 > `filter=blob:none` creates a [blobless clone](https://github.blog/open-source/git/get-up-to-speed-with-partial-clone-and-shallow-clone/), which makes the initial clone much faster by downloading files on-demand.
+
+If you already cloned without submodules, run `git submodule update --init --recursive` before
+building.
 
 ### UNIX Environment
 
