@@ -269,7 +269,15 @@
       "palettes": [ "lab_palette" ],
       "mapping": {
         "r": { "items": [ { "item": "books_bank_vault", "chance": 100, "repeat": [ 2, 2 ] } ] },
-        "R": { "items": [ { "item": "still_lab", "chance": 100 }, { "item": "analytical_set_basic", "chance": 100 }, { "item": "microcentrifuge", "chance": 100 }, { "item": "chemistry_set", "chance": 100 } ] }
+        "R": {
+          "items": [
+            { "item": "still_lab", "chance": 100 },
+            { "item": "analytical_set_basic", "chance": 100 },
+            { "item": "microcentrifuge", "chance": 100 },
+            { "item": "chemistry_set", "chance": 100 },
+            { "item": "purifier_smart_shot", "chance": 100 }
+          ]
+        }
       }
     }
   },
