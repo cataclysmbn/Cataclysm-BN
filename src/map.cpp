@@ -10170,6 +10170,16 @@ tripoint_bub_ms map::abs_to_bub( const tripoint_abs_ms &abs ) const
     return tripoint_bub_ms( ( abs - project_to<coords::ms>( abs_sub ) ).raw() );
 }
 
+point_abs_ms map::bub_to_abs( const point_bub_ms &bub ) const
+{
+    return project_to<coords::ms>( abs_sub ).xy() + point_rel_ms( bub.raw() );
+}
+
+point_bub_ms map::abs_to_bub( const point_abs_ms &abs ) const
+{
+    return point_bub_ms( ( abs - project_to<coords::ms>( abs_sub ).xy() ).raw() );
+}
+
 void map::set_abs_sub( const tripoint_abs_sm &p )
 {
     abs_sub = p;

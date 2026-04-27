@@ -106,6 +106,9 @@ class coord_point
 {
     public:
         static constexpr int dimension = Point::dimension;
+        using value_type = Point;
+        static constexpr origin origin_tag = Origin;
+        static constexpr scale scale_tag = Scale;
 
         constexpr coord_point() = default;
         explicit constexpr coord_point( const Point &p ) :
@@ -205,6 +208,17 @@ class coord_point
         friend coord_point operator-( const coord_point &l, const tripoint &r ) {
             return coord_point( l.raw() - r );
         }
+
+        // Explicitly reinterpret this coordinate as a different typed coordinate
+        // with the same underlying point type.  Use only during migration scaffolding
+        // where the origin/scale semantics differ but the raw value must be preserved.
+        // Every call site should be removable once the surrounding code is fully migrated.
+        template<typename Target>
+        requires std::same_as<typename Target::value_type, Point>
+        [[nodiscard]] auto reinterpret_as() const -> Target {
+            return Target( raw_ );
+        }
+
     private:
         Point raw_;
 };
@@ -448,6 +462,16 @@ inline auto project_bounds( const coord_point<tripoint, Origin, CoarseScale> &co
             project_to<FineScale>( coarse + one ) - one );
 }
 
+template<typename T>
+concept IsCoordPoint = requires( const T &t ) {
+    { t.raw() } -> std::convertible_to<typename T::value_type>;
+    typename T::value_type;
+};
+
+template<typename A, typename B>
+concept SameOrigin = IsCoordPoint<A> && IsCoordPoint<B> &&
+                     ( A::origin_tag == B::origin_tag );
+
 } // namespace coords
 
 namespace std
@@ -541,6 +565,8 @@ using coords::project_to;
 using coords::project_remain;
 using coords::project_combine;
 using coords::project_bounds;
+using coords::IsCoordPoint;
+using coords::SameOrigin;
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 inline int square_dist( const coords::coord_point<Point, Origin, Scale> &loc1,

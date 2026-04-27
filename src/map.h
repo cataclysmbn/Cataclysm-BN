@@ -39,6 +39,7 @@
 #include "submap_load_manager.h"
 #include "type_id.h"
 #include "units.h"
+#include "vpart_position.h"
 
 #include <variant>
 
@@ -894,6 +895,9 @@ class map : public submap_load_listener
         */
         optional_vpart_position veh_at( const tripoint &p ) const;
         optional_vpart_position veh_at( const tripoint_abs_ms &p ) const;
+        optional_vpart_position veh_at( const tripoint_bub_ms &p ) const {
+            return veh_at( p.raw() );
+        }
         vehicle *veh_at_internal( const tripoint &p, int &part_num );
         const vehicle *veh_at_internal( const tripoint &p, int &part_num ) const;
         // Put player on vehicle at x,y
@@ -1869,8 +1873,13 @@ class map : public submap_load_listener
 
         tripoint_abs_ms bub_to_abs( const tripoint_bub_ms &bub ) const;
         tripoint_bub_ms abs_to_bub( const tripoint_abs_ms &abs ) const;
+        point_abs_ms bub_to_abs( const point_bub_ms &bub ) const;
+        point_bub_ms abs_to_bub( const point_abs_ms &abs ) const;
         virtual bool inbounds( const tripoint &p ) const;
         bool inbounds( const tripoint_abs_ms &p ) const;
+        bool inbounds( const tripoint_bub_ms &p ) const {
+            return inbounds( p.raw() );
+        }
         bool inbounds( point p ) const {
             return inbounds( tripoint( p, 0 ) );
         }
@@ -2401,6 +2410,23 @@ class map : public submap_load_listener
 };
 
 map &get_map();
+
+inline auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms
+{
+    return get_map().bub_to_abs( p );
+}
+inline auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms
+{
+    return get_map().abs_to_bub( p );
+}
+inline auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms
+{
+    return get_map().bub_to_abs( p );
+}
+inline auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms
+{
+    return get_map().abs_to_bub( p );
+}
 
 /**
  * RAII guard that temporarily redirects get_map() to a different map object
