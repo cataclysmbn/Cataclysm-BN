@@ -861,6 +861,12 @@ ifeq ($(USE_XDG_DIR),0)
   endif
 endif
 
+ARCANA_BN_MOD_SOURCE = external/cdda-arcana-mod/Arcana_BN
+define copy_arcana_bn_mod
+	rm -rf $(1)/mods/Arcana_BN
+	cp -R $(ARCANA_BN_MOD_SOURCE) $(1)/mods/Arcana_BN
+endef
+
 ifeq ($(LTO), 1)
   # Depending on the compiler version, LTO usually requires all the
   # optimization flags to be specified on the link line, and requires them to
@@ -998,6 +1004,7 @@ install: version $(TARGET)
 	cp -R data/font $(DATA_PREFIX)
 	cp -R data/json $(DATA_PREFIX)
 	cp -R data/mods $(DATA_PREFIX)
+	$(call copy_arcana_bn_mod,$(DATA_PREFIX))
 	cp -R data/names $(DATA_PREFIX)
 	cp -R data/raw $(DATA_PREFIX)
 	cp -R data/motd $(DATA_PREFIX)
@@ -1030,6 +1037,7 @@ install: version $(TARGET)
 	cp -R --no-preserve=ownership data/font $(DATA_PREFIX)
 	cp -R --no-preserve=ownership data/json $(DATA_PREFIX)
 	cp -R --no-preserve=ownership data/mods $(DATA_PREFIX)
+	$(call copy_arcana_bn_mod,$(DATA_PREFIX))
 	cp -R --no-preserve=ownership data/names $(DATA_PREFIX)
 	cp -R --no-preserve=ownership data/raw $(DATA_PREFIX)
 	cp -R --no-preserve=ownership data/motd $(DATA_PREFIX)
@@ -1086,6 +1094,7 @@ endif
 	cp -R data/font $(APPDATADIR)
 	cp -R data/json $(APPDATADIR)
 	cp -R data/mods $(APPDATADIR)
+	$(call copy_arcana_bn_mod,$(APPDATADIR))
 	cp -R data/names $(APPDATADIR)
 	cp -R data/raw $(APPDATADIR)
 	cp -R data/motd $(APPDATADIR)

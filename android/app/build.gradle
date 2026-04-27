@@ -193,6 +193,18 @@ unzipDeps.dependsOn makeLocalization
 preBuild.dependsOn unzipDeps
 preBuild.dependsOn unzipSqlite
 
+task prepareAssets(type: Sync) {
+    from('src/main/assets') {
+        exclude 'data/mods/Arcana_BN/**'
+    }
+    from('../../external/cdda-arcana-mod/Arcana_BN') {
+        into 'data/mods/Arcana_BN'
+    }
+    into "$buildDir/generated/assets/main"
+}
+
+preBuild.dependsOn prepareAssets
+
 android {
     namespace "com.cleverraven.cataclysmdda"
     compileSdkVersion override_compileSdkVersion
@@ -336,6 +348,8 @@ android {
             }
         }
     }
+    sourceSets.main.assets.srcDirs = ["$buildDir/generated/assets/main"]
+
     if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
         sourceSets.main {
             jniLibs.srcDir 'libs'
