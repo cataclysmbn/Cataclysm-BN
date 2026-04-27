@@ -855,15 +855,14 @@ Description of the sound made when out of ammo.
 ```json
 {
   "type": "deployer",
-  "deployables": { 
-    "bot_c4_hack": {                                             // Item Id of ammo to deploy
+  "deployables": {
+    "bot_c4_hack": { // Item Id of ammo to deploy
       "message": "The elite zombie grenadier deploys a c4 hack", // Message to display when deploying
-      "chance": 1,                                               // Chance to use ( sum of all active deployables )
-      "ammo_percentage": 0.6,                                    // Percentage of ammo spent to use it
-      "range": 10                                                // How far can it throw this ( note it will throw it unfocused on a target )
-    },
+      "chance": 1, // Chance to use ( sum of all active deployables )
+      "ammo_percentage": 0.6, // Percentage of ammo spent to use it
+      "range": 10 // How far can it throw this ( note it will throw it unfocused on a target )
+    }
   },
-  "cooldown": 3                                                  // Turns between deployments
+  "cooldown": 3 // Turns between deployments
 }
 ```
-
