@@ -128,6 +128,7 @@ ignorable = {
     "vehicle_group",
     "vehicle_placement",
     "WORLD_OPTION",
+    "sound_effect",
 }
 
 # these objects can have their strings automatically extracted.
@@ -191,7 +192,8 @@ automatically_convertible = {
     "vitamin",
     "WHEEL",
     "help",
-    "weather_type"
+    "weather_type",
+    "world_type"
 }
 
 # for these objects a plural form is needed
@@ -500,6 +502,8 @@ def extract_scenario(state, item):
 
 def extract_mapgen(state, item):
     # writestr will not write string if it is None.
+    if "object" not in item or type(item["object"]) != dict:
+        return
     for (objkey, objval) in sorted(item["object"].items(), key=lambda x: x[0]):
         if objkey == "place_specials" or objkey == "place_signs":
             for special in objval:
@@ -1007,6 +1011,7 @@ def extract_use_action_msgs(state, use_action, it_name):
             extract_use_action_msgs(state, v, it_name)
 
 found_types = set();
+warned_unknown_types = set();
 known_types = ignorable | extract_specials.keys() | automatically_convertible
 
 
@@ -1023,7 +1028,12 @@ def extract_json(state, item):
         extract_specials[object_type](state, item)
         return
     elif object_type not in automatically_convertible:
-        raise WrongJSONItem(f"ERROR: Unrecognized object type '{object_type}'!", item)
+        if object_type not in warned_unknown_types:
+            warned_unknown_types.add(object_type)
+            print(
+                f"WARNING: Skipping unrecognized object type '{object_type}' in '{state.current_source_file}'"
+            )
+        return
     if object_type not in known_types:
         print(f"WARNING: known_types does not contain object type '{object_type}'")
     # Use mod id as project name if project name is not specified
@@ -1206,7 +1216,7 @@ def assert_num_args(node, args, n):
 
 def get_string_literal(node, args, pos):
     if isinstance(args[pos], astnodes.String):
-        return args[pos].s
+        return args[pos].s.decode('utf-8')
     else:
         raise Exception(f"argument to translation call should be string. Error source:   {ast.to_lua_source(node)}")
 
@@ -1279,6 +1289,8 @@ class LuaCallVisitor(ast.ASTVisitor):
         return None
 
     def __find_comment(self, line):
+        if line is None:
+            return None
         comments = self.__find_trans_comments_before(line)
         if len(comments) != 0:
             return '\n'.join(comments)
@@ -1289,19 +1301,25 @@ class LuaCallVisitor(ast.ASTVisitor):
             return None
 
     def visit_Call(self, node):
-        found = False
-        if isinstance(node.func, astnodes.Name):
-            func_id = node.func.id
-            func_line = node.func.first_token.line
-            func_args = node.args
-            found = True
-        elif isinstance(node.func, astnodes.Index):
-            if isinstance(node.func.idx, astnodes.Name):
-                func_id = node.func.idx.id
-                func_line = node.func.idx.first_token.line
+        try:
+            found = False
+            if isinstance(node.func, astnodes.Name):
+                func_id = node.func.id
+                first_token = node.func.first_token
+                func_line = first_token.line if first_token else None
                 func_args = node.args
                 found = True
-        if not found:
+            elif isinstance(node.func, astnodes.Index):
+                if isinstance(node.func.idx, astnodes.Name):
+                    func_id = node.func.idx.id
+                    first_token = node.func.idx.first_token
+                    func_line = first_token.line if first_token else None
+                    func_args = node.args
+                    found = True
+            if not found:
+                return
+        except Exception as E:
+            print(f"WARNING: {E}")
             return
         write = False
         msgctxt = None
@@ -1335,11 +1353,38 @@ class LuaCallVisitor(ast.ASTVisitor):
             writestr_basic(self.state, msgid, msgid_plural, msgctxt, comment, check_c_format = True)
 
 
+# https://github.com/boolangery/py-lua-parser/pull/62
+from luaparser.builder import BuilderVisitor  # noqa: E402
+from luaparser.parser.LuaLexer import LuaLexer  # noqa: E402
+from luaparser.parser.LuaParser import LuaParser  # noqa: E402
+from luaparser.ast import SyntaxException  # noqa: E402
+from antlr4.error.ErrorListener import ConsoleErrorListener  # noqa: E402
+from antlr4 import InputStream, CommonTokenStream, Token  # noqa: E402
+
+# workaround till 3.3.1 is released, see:
+# https://github.com/boolangery/py-lua-parser/issues/71
+# https://github.com/boolangery/py-lua-parser/pull/62
+def parse(source: str) -> astnodes.Chunk:
+    """Parse Lua source to a Chunk."""
+    lexer = LuaLexer(InputStream(source))
+    lexer.removeErrorListeners()
+    lexer.addErrorListener(ConsoleErrorListener())
+    token_stream = CommonTokenStream(lexer, channel=Token.DEFAULT_CHANNEL)
+    parser = LuaParser(token_stream)
+    parser.addErrorListener(ConsoleErrorListener())
+    tree = parser.start_()
+    if parser.getNumberOfSyntaxErrors() > 0:
+        raise SyntaxException("syntax errors")
+    else:
+        v = BuilderVisitor(token_stream)
+        val = v.visit(tree)
+        return val
+
 def extract_lua(state, source):
     """Find any extractable strings in the given Lua source code,
     and write them to the PO file provided by the state."""
 
-    tree = ast.parse(source)
+    tree = parse(source)
 
     #print(ast.to_pretty_str(tree))
 
@@ -1405,7 +1450,6 @@ def extract_all_from_json_file(state, json_file):
     log_verbose(f"Loading {json_file}")
 
     with open(json_file, encoding="utf-8") as fp:
-        print(f"extracting data of {json_file}")
         jsondata = json.load(fp)
     # it's either an array of objects, or a single object
     try:
@@ -1428,13 +1472,7 @@ def extract_all_from_lua_file(state, lua_file):
     with open(lua_file, encoding="utf-8") as fp:
         luadata_raw = fp.read()
 
-    try:
-        extract_lua(state, luadata_raw)
-    except Exception as E:
-        print(f"---\nFile: '{lua_file}'")
-        print(E)
-        exit(1)
-
+    extract_lua(state, luadata_raw)
 
 def prepare_git_file_list():
     command_str = "git ls-files"
