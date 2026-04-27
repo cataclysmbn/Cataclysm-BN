@@ -203,16 +203,16 @@
       "mapping": {
         "R": {
           "items": [
-          { "item": "chem_lab", "chance": 40 },
-          { "item": "harddrugs", "chance": 15 },
-          { "item": "softdrugs", "chance": 15 },
-		  { "item": "supplies_reagents_lab_storage", "chance": 70 }
+            { "item": "chem_lab", "chance": 40 },
+            { "item": "harddrugs", "chance": 15 },
+            { "item": "softdrugs", "chance": 15 },
+            { "item": "supplies_reagents_lab_storage", "chance": 70 }
           ]
         },
-		"c": { "items": [ { "item": "chem_lab", "chance": 30 } ] },
-		"ḟ": { "items": [ { "item": "supplies_reagents_lab_storage", "chance": 40 }, { "item": "mut_lab", "chance": 2 } ] }
+        "c": { "items": [ { "item": "chem_lab", "chance": 30 } ] },
+        "ḟ": { "items": [ { "item": "supplies_reagents_lab_storage", "chance": 40 }, { "item": "mut_lab", "chance": 2 } ] }
       },
-	  "furniture": { "C": "f_centrifuge", "R": "f_utility_shelf" },
+      "furniture": { "C": "f_centrifuge", "R": "f_utility_shelf" },
       "computers": {
         "6": {
           "name": "Chemical Storage",
@@ -220,7 +220,7 @@
           "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
-		"8": {
+        "8": {
           "name": "Centrifuge",
           "options": [ { "name": "Analyze blood", "action": "blood_anal" } ],
           "failures": [ { "action": "destroy_blood" } ]
