@@ -36,12 +36,15 @@ title: CMake
 [git](https://github.com/cataclysmbnteam/Cataclysm-BN)から tarball またはクローンで取得できます。
 
 ```sh
-git clone --filter=blob:none https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone --filter=blob:none --recurse-submodules https://github.com/cataclysmbnteam/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 
 > [!TIP]
 > `filter=blob:none` を使用すると、[ブロブなしクローン](https://github.blog/open-source/git/get-up-to-speed-with-partial-clone-and-shallow-clone/)が作成されます。これにより、ファイルが必要に応じてダウンロードされるため、最初のクローンがはるかに高速になります。
+
+サブモジュールなしで既にクローンした場合は、ビルド前に
+`git submodule update --init --recursive` を実行してください。
 
 ### UNIX 環境
 

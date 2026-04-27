@@ -166,8 +166,14 @@ _(이 과정은 한 번만 하면 됩니다.)_
 2. 포크한 저장소를 로컬에 클론합니다.
 
 ```sh
-$ git clone https://github.com/깃허브_사용자명/Cataclysm-BN.git
-# 터미널에서 현재 디렉토리에 저장소의 포크를 복제합니다.
+$ git clone --recurse-submodules https://github.com/깃허브_사용자명/Cataclysm-BN.git
+# 터미널에서 현재 디렉토리에 저장소의 포크와 서브모듈을 복제합니다.
+```
+
+서브모듈 없이 이미 클론했다면 빌드하거나 테스트하기 전에 초기화합니다:
+
+```sh
+$ git submodule update --init --recursive
 ```
 
 3. 커밋 메시지 템플릿을 설정합니다.

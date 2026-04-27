@@ -143,8 +143,14 @@ _(これは一度だけ行う必要があります。)_
 1. フォークしたリポジトリをローカルにクローンします。
 
 ```sh
-$ git clone https://github.com/YOUR_USERNAME/Cataclysm-BN.git
-# ターミナルの現在のディレクトリにリポジトリのフォークをクローンします
+$ git clone --recurse-submodules https://github.com/YOUR_USERNAME/Cataclysm-BN.git
+# ターミナルの現在のディレクトリにリポジトリのフォークとサブモジュールをクローンします
+```
+
+サブモジュールなしで既にクローンした場合は、ビルドまたはテストの前に初期化してください:
+
+```sh
+$ git submodule update --init --recursive
 ```
 
 3. コミットメッセージのテンプレートを設定します。

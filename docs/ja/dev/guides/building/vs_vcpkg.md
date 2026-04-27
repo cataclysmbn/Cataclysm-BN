@@ -45,7 +45,7 @@ vcpkg integrate install
 **注釈:** これにより、CBNリポジトリ全体、つまり 3GB 以上のデータがダウンロードされます。テスト目的のみの場合は、`--depth=1`を追加することを推奨します。
 
 ```cmd
-git clone https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone --recurse-submodules https://github.com/cataclysmbnteam/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 

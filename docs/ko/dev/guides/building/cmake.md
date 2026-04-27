@@ -35,12 +35,15 @@ CataclysmBN을 빌드하려면 다음 라이브러리와 개발 헤더가 설치
 [git](https://github.com/cataclysmbn/Cataclysm-BN)에서 최신 버전의 소스 코드 tarball을 얻을 수 있습니다.
 
 ```sh
-git clone --filter=blob:none https://github.com/cataclysmbn/Cataclysm-BN.git
+git clone --filter=blob:none --recurse-submodules https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 
 > [!TIP]
 > `filter=blob:none`은 [blobless clone](https://github.blog/open-source/git/get-up-to-speed-with-partial-clone-and-shallow-clone/)을 생성하여 파일을 필요에 따라 다운로드함으로써 초기 클론을 훨씬 빠르게 만듭니다.
+
+서브모듈 없이 이미 클론했다면 빌드하기 전에 `git submodule update --init --recursive`를
+실행하세요.
 
 ### UNIX 환경
 
