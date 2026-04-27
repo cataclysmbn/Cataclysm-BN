@@ -7450,7 +7450,7 @@ auto iuse_portal_link::can_use( const Character &, const item &it, bool,
 
 auto iuse_portal_link::use( player &p, item &it, bool, const tripoint & ) const -> int
 {
-    const auto player_abs = tripoint_abs_ms( get_map().getabs( p.pos() ) );
+    const auto player_abs = p.abs_pos();
     const auto &cur_dim = g->get_current_dimension_id();
 
     // --- Mode 1: Link to a nearby portal with a matching flag ---
@@ -7493,7 +7493,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint & ) const 
     // Return mode: if at the linked portal and origin is stored, offer return.
     if( can_return && it.get_var( "origin_stored", false ) &&
         cur_dim == linked_dim &&
-        rl_dist( player_abs.raw(), linked_pos.raw() ) <= 5 ) {
+        rl_dist( player_abs, linked_pos ) <= 5 ) {
         if( query_yn( _( "Return to your origin point?" ) ) ) {
             const auto origin_dim = it.get_var( "origin_dim_id" );
             const tripoint_abs_ms origin_pos(
