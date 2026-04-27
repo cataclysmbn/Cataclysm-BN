@@ -104,6 +104,26 @@ MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
     //Our spawn details specify, by default, a single instance of the default monster
     MonsterGroupResult spawn_details = MonsterGroupResult( group.defaultMonster, 1 );
 
+    if( group.defaultMonster != mtype_id::NULL_ID() ) {
+        int count = 0;
+        auto montype = group.defaultMonster;
+        while( count < group.evolve_repeat ) {
+            if( rng( 0, 100 ) < group.evolve_chance ) {
+                if( montype->upgrade_into ) {
+                    //If we upgrade into a blacklisted monster, treat it as though we are non-upgradeable
+                    if( MonsterGroupManager::monster_is_blacklisted( montype->upgrade_into ) ) {
+                        count = group.evolve_repeat;
+                    }
+                    montype = montype->upgrade_into;
+                } else {
+                    montype = MonsterGroupManager::GetRandomMonsterFromGroup( montype->upgrade_group );
+                }
+            }
+            count++;
+        }
+        spawn_details = MonsterGroupResult( montype, 1 );
+    }
+
     bool monster_found = false;
     // Loop invariant values
     const time_point sunset = ::sunset( calendar::turn );
@@ -178,7 +198,23 @@ MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
                 if( use_pack_size || it->pack_maximum > 1 ) {
                     pack_size = rng( it->pack_minimum, it->pack_maximum );
                 }
-                spawn_details = MonsterGroupResult( it->name, pack_size );
+                int count = 0;
+                auto montype = it->name;
+                while( count < group.evolve_repeat ) {
+                    if( rng( 0, 100 ) < group.evolve_chance ) {
+                        if( montype->upgrade_into ) {
+                            //If we upgrade into a blacklisted monster, treat it as though we are non-upgradeable
+                            if( MonsterGroupManager::monster_is_blacklisted( montype->upgrade_into ) ) {
+                                count = group.evolve_repeat;
+                            }
+                            montype = montype->upgrade_into;
+                        } else {
+                            montype = MonsterGroupManager::GetRandomMonsterFromGroup( montype->upgrade_group );
+                        }
+                    }
+                    count++;
+                }
+                spawn_details = MonsterGroupResult( montype, pack_size );
                 //And if a quantity pointer with remaining value was passed, will modify the external value as a side effect
                 //We will reduce it by the spawn rule's cost multiplier
                 if( quantity ) {
@@ -393,6 +429,8 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
     g.new_monster_group = mongroup_id( jo.get_string( "new_monster_group_id",
                                        mongroup_id::NULL_ID().str() ) );
     assign( jo, "replacement_time", g.monster_group_time, false, 1_days );
+    assign( jo, "evolve_chance", g.evolve_chance, false, 0 );
+    assign( jo, "evolve_repeat", g.evolve_repeat, false, 0 );
     g.is_safe = jo.get_bool( "is_safe", false );
 
     g.freq_total = jo.get_int( "freq_total", ( extending ? g.freq_total : 1000 ) );
