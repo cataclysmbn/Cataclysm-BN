@@ -56,6 +56,7 @@ std::string enum_to_string<activity_bubble_effect>( activity_bubble_effect data 
         // *INDENT-ON*
     }
     debugmsg( "Invalid activity_bubble_effect", data );
+    return "none";
 }
 } // namespace io
 

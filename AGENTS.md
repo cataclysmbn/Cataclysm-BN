@@ -1,20 +1,17 @@
 # Cataclysm: Bright Nights - Agent Guidelines
 
-- **MUST** FOLLOW for all code changes.
-
 ## HARD CONSTRAINTS (NEVER VIOLATE)
 
 Before writing **ANY** code, verify:
 
-| ❌ VIOLATION                       | ✅ REQUIRED                                       |
-| ---------------------------------- | ------------------------------------------------- |
-| nested `for (auto x : collection)` | `std::ranges::*` or `collection \| std::views::*` |
-| `int foo()`                        | `auto foo() -> int`                               |
-| `Type x = value`                   | `auto x = value`                                  |
-| `void fn(a, b, c, d, e)`           | `void fn(options_struct)`                         |
+| ❌ VIOLATION                           | ✅ REQUIRED                                                                      |
+| -------------------------------------- | -------------------------------------------------------------------------------- |
+| manual iterator loops (`it++`, `++it`) | `std::ranges::*`, `collection \| std::views::*`, or range-based `for` if clearer |
+| `int foo()`                            | `auto foo() -> int`                                                              |
+| `Type x = value`                       | `auto x = value`                                                                 |
+| `void fn(a, b, c, d, e)`               | `void fn(options_struct)`                                                        |
 
-- **If you write a nested for-loop over a collection, your code is WRONG. Rewrite with `std::ranges`.**
-- single, unnested `for (auto x : collection)` loop is OK.
+**Prefer `std::ranges`/`std::views`/`std::ranges::to`/cata_algo.h for collection work. Avoid manual iterator increment loops unless required by mutation semantics.**
 
 ## Coding Convention
 
@@ -42,7 +39,7 @@ struct comparable {
 auto values = xs
   | std::views::filter( []( const auto & v ) { return v.is_valid(); } )
   | std::views::transform( []( const auto & v ) { return v.get_value(); } )
-  | std::ranges::to<std::vector>(); //< **MUST** use `std::ranges` over for loops for collections.
+  | std::ranges::to<std::vector>(); //< **SHOULD** prefer `std::ranges`/`std::views`; range-based `for` is allowed when clearer than `std::ranges::for_each`.
 
 namespace { // **MUST** use anonymous namespace for internal linkage over `static`.
 

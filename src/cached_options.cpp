@@ -6,6 +6,7 @@ bool test_mode = false;
 bool debug_mode = false;
 bool json_report_strict = true;
 bool use_tiles = false;
+bool use_pinyin_search = false;
 bool use_tiles_overmap = false;
 bool log_from_top;
 int message_ttl;

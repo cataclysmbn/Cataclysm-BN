@@ -78,6 +78,7 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 
+static const activity_id ACT_CRAFT( "ACT_CRAFT" );
 static const activity_id ACT_PULP( "ACT_PULP" );
 
 static const skill_id skill_firstaid( "firstaid" );
@@ -3537,6 +3538,11 @@ bool npc::do_player_activity()
     }
     /* if the activity is finished, grab any backlog or change the mission */
     if( !has_destination() && ( !activity || !*activity ) ) {
+        // workaround: auto resuming craft activity may cause infinite loop
+        while( !backlog.empty() && backlog.front()->id() == ACT_CRAFT ) {
+            backlog.pop_front();
+        }
+
         if( !backlog.empty() ) {
             activity = std::move( backlog.front() );
             backlog.pop_front();

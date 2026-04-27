@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 
+#include "all_enum_values.h"
 #include "consistency_report.h"
 #include "debug.h"
 #include "enum_conversions.h"
@@ -572,14 +573,14 @@ void load_region_settings( const JsonObject &jo )
 
     // Unclear if required. C++ uninitialized values now concern me.
     new_region.region_effects = {};
-    for( int i = 0; i < ( int )region_effect_type::num_types; i++ ) {
-        new_region.region_effects[( region_effect_type )i] = {};
+    for( const auto effect_type : all_enum_values<region_effect_type>() ) {
+        new_region.region_effects[effect_type] = {};
     }
 
     if( jo.has_array( "effects" ) ) {
         JsonArray effects = jo.get_array( "effects" );
         for( JsonObject effect_object : effects ) {
-            region_effect_type effect_type;
+            auto effect_type = region_effect_type::generic;
             efftype_id effect_id( effect_object.get_string( "effect_id" ) );
             int one_in = 0;
             if( effect_object.has_int( "one_in" ) ) {
@@ -603,8 +604,6 @@ void load_region_settings( const JsonObject &jo )
                 } else {
                     debugmsg( "Unknown effect type: %s", effect_object.get_string( "effect_type" ) );
                 }
-            } else {
-                effect_type = region_effect_type::generic;
             }
             std::pair<efftype_id, int> effect( effect_id, one_in );
             new_region.region_effects[effect_type].emplace_back( effect );

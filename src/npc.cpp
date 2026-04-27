@@ -12,6 +12,7 @@
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "character.h"
 #include "character_id.h"
@@ -85,6 +86,7 @@
 #include "vpart_range.h"
 
 static const activity_id ACT_READ( "ACT_READ" );
+static const activity_id ACT_CRAFT( "ACT_CRAFT" );
 
 static const efftype_id effect_ai_waiting( "ai_waiting" );
 static const efftype_id effect_bouldering( "bouldering" );
@@ -1134,6 +1136,79 @@ void npc::do_npc_read()
         }
     } else {
         add_msg( _( "Never mind." ) );
+    }
+}
+
+
+void npc::do_npc_craft( const std::optional<tripoint> &loc )
+{
+    uilist menu;
+    menu.text = _( "Craft what?" );
+    menu.addentry( 0, true, MENU_AUTOASSIGN, _( "Craft new item" ) );
+    menu.addentry( 1, true, MENU_AUTOASSIGN, _( "Resume a craft" ) );
+    menu.query();
+
+    if( menu.ret == 0 ) {
+        craft( tripoint_zero );
+    } else if( menu.ret == 1 ) {
+        struct resume_entry {
+            item *it;
+            tripoint pos;
+            bool in_inventory;
+        };
+        std::vector<resume_entry> found;
+
+        visit_items( [&]( item * node ) {
+            if( node->is_craft() ) {
+                found.push_back( { node, pos(), true } );
+            }
+            return VisitResponse::NEXT;
+        } );
+
+        map &here = get_map();
+        for( const tripoint &adj : here.points_in_radius( pos(), PICKUP_RANGE ) ) {
+            if( !here.inbounds( adj ) || here.dangerous_field_at( adj ) ) {
+                continue;
+            }
+            for( item *itm : here.i_at( adj ) ) {
+                if( itm->is_craft() ) {
+                    found.push_back( { itm, adj, false } );
+                }
+            }
+        }
+
+        if( found.empty() ) {
+            add_msg( m_info, _( "No in-progress crafts within reach." ) );
+            return;
+        }
+
+        uilist pick;
+        pick.text = _( "Resume which craft?" );
+        for( size_t i = 0; i < found.size(); ++i ) {
+            const std::string where = found[i].in_inventory
+                                      ? _( "inventory" )
+                                      : _( "ground" );
+            pick.addentry( static_cast<int>( i ), true, MENU_AUTOASSIGN,
+                           "%s (%s)", found[i].it->tname(), where );
+        }
+        pick.query();
+        if( pick.ret >= 0 && pick.ret < static_cast<int>( found.size() ) ) {
+            const resume_entry &sel = found[pick.ret];
+            item *target = sel.it;
+            tripoint target_pos = sel.pos;
+
+            if( !sel.in_inventory && can_pick_volume( *sel.it ) &&
+                can_pick_weight( *sel.it, false ) ) {
+                detached_ptr<item> det = here.i_rem( sel.pos, sel.it );
+                if( det ) {
+                    add_msg( _( "%1$s picks up the %2$s." ), name, det->tname() );
+                    target = &i_add( std::move( det ) );
+                    target_pos = pos();
+                }
+            }
+
+            iuse::craft( this, target, false, target_pos );
+        }
     }
 }
 

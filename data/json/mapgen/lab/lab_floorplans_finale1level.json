@@ -230,7 +230,7 @@
       ],
       "palettes": [ "lab_palette" ],
       "mapping": {
-        "r": { "item": [ { "item": "iv_mutagen_raptor", "chance": 100, "repeat": [ 2, 2 ] } ] },
+        "r": { "item": [ { "item": "iv_mutagen_elfa", "chance": 100, "repeat": [ 2, 2 ] } ] },
         "R": { "item": [ { "item": "purifier_smart_shot", "chance": 100 } ] }
       }
     }
@@ -268,8 +268,16 @@
       ],
       "palettes": [ "lab_palette" ],
       "mapping": {
-        "r": { "item": [ { "item": "iv_mutagen_chimera", "chance": 100, "repeat": [ 2, 2 ] } ] },
-        "R": { "item": [ { "item": "purifier_smart_shot", "chance": 100 } ] }
+        "r": { "items": [ { "item": "books_bank_vault", "chance": 100, "repeat": [ 2, 2 ] } ] },
+        "R": {
+          "items": [
+            { "item": "still_lab", "chance": 100 },
+            { "item": "analytical_set_basic", "chance": 100 },
+            { "item": "microcentrifuge", "chance": 100 },
+            { "item": "chemistry_set", "chance": 100 },
+            { "item": "purifier_smart_shot", "chance": 100 }
+          ]
+        }
       }
     }
   },

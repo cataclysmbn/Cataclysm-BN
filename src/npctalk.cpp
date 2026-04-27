@@ -3062,6 +3062,7 @@ void talk_effect_t::parse_string_effect( const std::string &effect_id, const Jso
             WRAP( do_read ),
             WRAP( do_butcher ),
             WRAP( do_farming ),
+            WRAP( do_craft ),
             WRAP( assign_guard ),
             WRAP( stop_guard ),
             WRAP( buy_cow ),

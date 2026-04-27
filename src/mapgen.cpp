@@ -4783,7 +4783,13 @@ void map::draw_lab( mapgendata &dat )
                    is_ot_match( "ants", dat.west(), ot_match_type::contains );
 
         if( ice_lab ) {
-            int temperature = -20 + 15 * ( dat.zlevel() );
+            int temperature;
+
+            if( dat.zlevel() == 0 ) {
+                temperature = -20;
+            } else {
+                temperature = static_cast<int>( -20.0 * log( -1 * dat.zlevel() ) - 45.0 );
+            }
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
             set_temperature( p2 + point( 0, SEEY ), temperature );
@@ -5458,7 +5464,13 @@ void map::draw_lab( mapgendata &dat )
         tower_lab = is_ot_match( "tower_lab", terrain_type, ot_match_type::prefix );
 
         if( ice_lab ) {
-            int temperature = -20 + 30 * dat.zlevel();
+            int temperature;
+
+            if( dat.zlevel() == 0 ) {
+                temperature = -20;
+            } else {
+                temperature = static_cast<int>( -20.0 * log( -1 * dat.zlevel() ) - 45.0 );
+            }
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
             set_temperature( p2 + point( 0, SEEY ), temperature );
@@ -6625,7 +6637,7 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
     //Check for boat type vehicles that should be placeable in deep water
     //WARNING: CURSED CODE
     //If changed to veh->can_float mass calculations are messed up
-    const bool can_float = size( veh->get_avail_parts( "FLOATS" ) ) >= 1;
+    const bool can_float = !veh->get_avail_parts( "FLOATS" ).empty();
 
     //When hitting a wall, only smash the vehicle once (but walls many times)
     bool needs_smashing = false;

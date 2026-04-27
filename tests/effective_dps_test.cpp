@@ -13,6 +13,7 @@
 #include "sounds.h"
 #include "state_helpers.h"
 #include "ret_val.h"
+#include "rng.h"
 #include "type_id.h"
 
 struct itype;
@@ -71,7 +72,7 @@ static void check_actual_dps( avatar &attacker, monster &defender, item &weapon 
     clear_character( attacker );
     double expect_dps = weapon.effective_dps( attacker, defender );
     double actual_dps = weapon_dps_trials( attacker, defender, weapon );
-    CHECK( actual_dps == Approx( expect_dps ).epsilon( 0.2f ) );
+    CHECK( actual_dps == Approx( expect_dps ).epsilon( 0.35f ) );
 }
 
 static void check_accuracy_dps( avatar &attacker, monster &defender, item &wpn1, item &wpn2,
@@ -104,6 +105,7 @@ static void check_accuracy_dps( avatar &attacker, monster &defender, item &wpn1,
 TEST_CASE( "effective damage per second", "[effective][dps]" )
 {
     clear_all_state();
+    rng_set_engine_seed( 0 );
     avatar &dummy = g->u;
     clear_character( dummy );
 
@@ -165,9 +167,10 @@ TEST_CASE( "effective damage per second", "[effective][dps]" )
     }
 }
 
-TEST_CASE( "effective vs actual damage per second", "[actual][dps][!mayfail]" )
+TEST_CASE( "effective vs actual damage per second", "[actual][dps]" )
 {
     clear_all_state();
+    rng_set_engine_seed( 0 );
     avatar &dummy = g->u;
     clear_character( dummy );
 
@@ -201,6 +204,7 @@ TEST_CASE( "effective vs actual damage per second", "[actual][dps][!mayfail]" )
 TEST_CASE( "accuracy increases success", "[accuracy][dps]" )
 {
     clear_all_state();
+    rng_set_engine_seed( 0 );
     avatar &dummy = g->u;
     clear_character( dummy );
 

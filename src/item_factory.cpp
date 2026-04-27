@@ -42,12 +42,6 @@
 #include "point.h"
 
 class player;
-
-namespace iuse
-{
-auto report_fluid_grid_connections( player *, item *, bool, const tripoint & ) -> int;
-auto modify_fluid_grid_connections( player *, item *, bool, const tripoint & ) -> int;
-} // namespace iuse
 #include "material.h"
 #include "options.h"
 #include "recipe.h"

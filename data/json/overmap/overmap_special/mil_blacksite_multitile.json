@@ -435,13 +435,10 @@
       "palettes": [ "mil_blacksite" ],
       "terrain": { "Ỵ": "t_utility_light" },
       "place_monster": [
-        { "monster": "mon_zombie_darkfield", "x": 24, "y": 18, "chance": 100 },
-        { "monster": "mon_zombie_darkfield", "x": 47, "y": 18, "chance": 100 },
-        { "monster": "mon_zombie_bio_op2", "x": 24, "y": 16, "chance": 100 },
-        { "monster": "mon_zombie_bio_op2", "x": 47, "y": 16, "chance": 100 },
-        { "monster": "mon_feral_labsecurity_9mm", "x": 35, "y": 22, "chance": 100 },
-        { "monster": "mon_feral_labsecurity_9mm", "x": 35, "y": 22, "chance": 100 },
-        { "monster": "mon_feral_labsecurity_9mm", "x": 35, "y": 22, "chance": 100 }
+        { "monster": "mon_feral_blackops_boss_technician", "x": 24, "y": 18, "chance": 100 },
+        { "monster": "mon_feral_blackops_boss_sniper", "x": 47, "y": 18, "chance": 100 },
+        { "monster": "mon_feral_blackops_boss_commander", "x": 24, "y": 16, "chance": 100 },
+        { "monster": "mon_feral_blackops_boss_bioop", "x": 35, "y": 22, "chance": 100 }
       ],
       "place_vehicles": [
         { "vehicle": "experimental_military_vehicles", "x": 20, "y": 15, "chance": 100, "rotation": 90, "status": 0 },

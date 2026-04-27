@@ -58,15 +58,6 @@ static const efftype_id effect_onfire( "onfire" );
 // render as LOW (dim, visible) rather than BRIGHT (same as direct sunlight).
 static constexpr float SOLAR_SHADOW_SCATTER = 0.09f;
 
-// Build a runtime bounding rectangle for the loaded tile grid from a level_cache.
-// Replaces the former compile-time `lightmap_boundaries` constant (which used
-// MAPSIZE_X/Y and prevented runtime-sized level-cache allocations).
-static inline half_open_rectangle<point> make_lightmap_bounds( const level_cache &lc )
-{
-    return { point_zero, point( lc.cache_x, lc.cache_y ) };
-}
-
-
 void map::add_light_from_items( const tripoint &p, const item_stack::iterator &begin,
                                 const item_stack::iterator &end )
 {
@@ -286,8 +277,6 @@ void map::update_solar_params()
     const auto progress  = to_turns<double>( now - sr ) / to_turns<double>( day_dur );
     const auto theta_deg = static_cast<float>( progress * 180.0 );
     const auto theta_rad = theta_deg * static_cast<float>( M_PI ) / 180.f;
-    const auto sin_t     = std::sin( theta_rad );
-    const auto cos_t     = std::cos( theta_rad );
 
     // Active throughout all daylight hours; night is handled by the early return above.
     m_solar.direct_active = true;
@@ -603,7 +592,6 @@ void map::generate_lightmap_worker( const int zlev )
     ZoneScoped;
     auto &map_cache = get_cache( zlev );
     auto &lm = map_cache.lm;
-    auto &sm = map_cache.sm;
     auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).floor_cache;
     auto &prev_vehicle_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH,
                                      OVERMAP_DEPTH ) ).vehicle_floor_cache;
