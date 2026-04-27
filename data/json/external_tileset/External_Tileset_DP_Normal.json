@@ -329,8 +329,8 @@
           { "id": "mon_feral_blackops_boss_bioop", "fg": 221 },
           { "id": "mon_feral_blackops_boss_technician", "fg": 222 },
           { "id": "mon_feral_blackops_boss_sniper", "fg": 223 },
-		  { "id": "mon_shade_boss", "fg": 224 },
-		  { "id": "mon_shade_boss_clone", "fg": 224 }
+          { "id": "mon_shade_boss", "fg": 224 },
+          { "id": "mon_shade_boss_clone", "fg": 224 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

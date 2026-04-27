@@ -366,7 +366,7 @@
     "description": "Teleports the caster and summons two clones.",
     "message": "",
     "effect": "teleport_random",
-	"extra_effects": [ { "id": "spell_shade_boss_summon_clones" } ],
+    "extra_effects": [ { "id": "spell_shade_boss_summon_clones" } ],
     "valid_targets": [ "self" ],
     "flags": [ "NO_EXPLOSION_VFX", "SILENT" ],
     "min_range": 5,
@@ -383,7 +383,7 @@
     "max_damage": 2,
     "min_aoe": 3,
     "max_aoe": 3,
-	"min_duration": 5000,
+    "min_duration": 5000,
     "max_duration": 5000,
     "effect": "summon",
     "effect_str": "mon_shade_boss_clone"

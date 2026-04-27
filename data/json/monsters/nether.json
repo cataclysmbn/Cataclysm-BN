@@ -966,7 +966,7 @@
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
-	  {
+      {
         "type": "spell",
         "spell_data": { "id": "spell_shade_boss_summon", "hit_self": true },
         "cooldown": 20,
@@ -976,16 +976,7 @@
     "death_function": [ "MELT" ],
     "death_drops": "mon_shade_boss_death_drops",
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [
-      "SEES",
-      "HEARS",
-      "BASHES",
-      "GROUP_BASH",
-      "CAN_OPEN_DOORS",
-      "PATH_AVOID_DANGER_1",
-	  "NO_BREATHE",
-	  "HARDTOSHOOT"
-    ]
+    "flags": [ "SEES", "HEARS", "BASHES", "GROUP_BASH", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1", "NO_BREATHE", "HARDTOSHOOT" ]
   },
   {
     "id": "mon_shade_boss_clone",
@@ -1018,18 +1009,9 @@
     "dodge": 10,
     "harvest": "exempt",
     "vision_night": 30,
-    "special_attacks": [
-      [ "PARROT_AT_DANGER", 0 ]
-    ],
+    "special_attacks": [ [ "PARROT_AT_DANGER", 0 ] ],
     "death_function": [ "MELT" ],
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [
-      "SEES",
-      "HEARS",
-      "BASHES",
-      "GROUP_BASH",
-	  "NO_BREATHE",
-	  "HARDTOSHOOT"
-    ]
+    "flags": [ "SEES", "HEARS", "BASHES", "GROUP_BASH", "NO_BREATHE", "HARDTOSHOOT" ]
   }
 ]
