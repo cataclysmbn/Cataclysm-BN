@@ -274,7 +274,8 @@
             { "item": "still_lab", "chance": 100 },
             { "item": "analytical_set_basic", "chance": 100 },
             { "item": "microcentrifuge", "chance": 100 },
-            { "item": "chemistry_set", "chance": 100 }
+            { "item": "chemistry_set", "chance": 100 },
+            { "item": "purifier_smart_shot", "chance": 100 }
           ]
         }
       }
