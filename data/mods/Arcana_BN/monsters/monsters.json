@@ -80,7 +80,7 @@
   {
     "id": "mon_moruboru",
     "type": "MONSTER",
-    "name": { "str": "moruboru", "str_pl": "moruboru" },
+    "name": { "str_sp": "moruboru" },
     "description": "A large plantlike creature with a gaping, toothy maw and numerous vines.  A hideous smell permeates the air around it.",
     "default_faction": "moruboru",
     "categories": [ "CLASSIC" ],

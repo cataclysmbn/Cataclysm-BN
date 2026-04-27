@@ -549,7 +549,7 @@
     "id": "mut_dragonfire",
     "weapon_category": [ "FLAMETHROWERS" ],
     "type": "GUN",
-    "name": { "str": "dragonfire", "str_pl": "dragonfire" },
+    "name": { "str_sp": "dragonfire" },
     "description": "Cited by dragonfire mutation, this is a pseudo item.",
     "material": [ "essencemat" ],
     "symbol": "(",

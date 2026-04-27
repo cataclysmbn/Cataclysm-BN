@@ -54,7 +54,7 @@
     "id": "stinger_flute",
     "type": "TOOL",
     "copy-from": "bone_flute",
-    "name": { "str": "stinger flute", "str_pl": "stinger flutes" },
+    "name": { "str": "stinger flute" },
     "description": "A polished flute with five finger holes, carved from the stinger of some exotic monstrosity.  Should be safe to put up to your mouth, probably.",
     "material": [ "flesh" ],
     "color": "light_gray",

@@ -261,7 +261,7 @@
     "copy-from": "revenant_crown",
     "repairs_like": "revenant_crown",
     "type": "TOOL_ARMOR",
-    "name": { "str": "revenant crown (on)", "str_pl": "revenant crown (on)" },
+    "name": { "str": "revenant crown (on)", "str_pl": "revenant crowns (on)" },
     "description": "A wicked-looking crown made of precious metal, decorated with scenes of skeletons in a \"danse macabre\" motif.  A single brilliant gem adorns it, seemingly aglow with a blood-red tinge.  While active it protects against food poisoning and parasites, in exchange for increased hunger.  It will not cure existing ailments, only prevent them.  Use it to turn it back off.",
     "turns_per_charge": 900,
     "revert_to": "revenant_crown",
