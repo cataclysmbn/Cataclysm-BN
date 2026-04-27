@@ -198,4 +198,27 @@ class gun_actor : public mattack_actor
         std::unique_ptr<mattack_actor> clone() const override;
 };
 
+class deployer_actor : public mattack_actor
+{
+    public:
+        struct deployer_helper_struct {
+            // Print this on deployment
+            std::string message;
+            // Chance from 0 to 100 of deployment
+            int chance = 1;
+            // At what percent of ammo remaining should this be considered
+            double ammo_percentage = 1;
+            // At what range can this be deployed ( 0 being in melee )
+            int range = 0;
+
+        };
+        std::map<itype_id, deployer_helper_struct> grenades;
+
+        deployer_actor() = default;
+        ~deployer_actor() override = default;
+
+        void load_internal( const JsonObject &obj, const std::string &src ) override;
+        bool call( monster & ) const override;
+        std::unique_ptr<mattack_actor> clone() const override;
+};
 
