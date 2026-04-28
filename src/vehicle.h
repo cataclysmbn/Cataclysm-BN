@@ -1805,7 +1805,7 @@ class vehicle
         tripoint_rel_ms rotate_to_world( units::angle dir, const tripoint_mnt_veh &pivot,
                                          const tripoint_mnt_veh &p ) const;
         tripoint_mnt_veh rotate_to_local( units::angle dir, const tripoint_mnt_veh &pivot,
-                                         const tripoint_rel_ms &p ) const;
+                                          const tripoint_rel_ms &p ) const;
 
         bool no_refresh = false;
 
