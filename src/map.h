@@ -1871,10 +1871,20 @@ class map : public submap_load_listener
             return getlocal( tripoint( p, abs_sub.z() ) ).xy();
         }
 
-        tripoint_abs_ms bub_to_abs( const tripoint_bub_ms &bub ) const { return project_to<coords::ms>( abs_sub ) + tripoint_rel_ms( bub.raw() ); }
-        tripoint_bub_ms abs_to_bub( const tripoint_abs_ms &abs ) const { return tripoint_bub_ms( ( abs - project_to<coords::ms>( abs_sub ) ).raw() ); }
-        tripoint_abs_sm bub_to_abs( const tripoint_bub_sm &bub ) const { return abs_sub + tripoint_rel_sm( bub.raw() ); }
-        tripoint_bub_sm abs_to_bub( const tripoint_abs_sm &abs ) const { return ( abs - abs_sub.raw() ).reinterpret_as<tripoint_bub_sm>(); }
+        tripoint_abs_ms bub_to_abs( const tripoint_bub_ms &bub ) const {
+            const auto origin = project_to<coords::ms>( abs_sub );
+            return tripoint_abs_ms( tripoint( origin.x() + bub.x(), origin.y() + bub.y(), bub.z() ) );
+        }
+        tripoint_bub_ms abs_to_bub( const tripoint_abs_ms &abs ) const {
+            const auto origin = project_to<coords::ms>( abs_sub );
+            return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+        }
+        tripoint_abs_sm bub_to_abs( const tripoint_bub_sm &bub ) const {
+            return tripoint_abs_sm( tripoint( abs_sub.x() + bub.x(), abs_sub.y() + bub.y(), bub.z() ) );
+        }
+        tripoint_bub_sm abs_to_bub( const tripoint_abs_sm &abs ) const {
+            return tripoint_bub_sm( tripoint( abs.x() - abs_sub.x(), abs.y() - abs_sub.y(), abs.z() ) );
+        }
         point_abs_ms bub_to_abs( const point_bub_ms &bub ) const { return project_to<coords::ms>( abs_sub ).xy() + point_rel_ms( bub.raw() ); }
         point_bub_ms abs_to_bub( const point_abs_ms &abs ) const { return point_bub_ms( ( abs - project_to<coords::ms>( abs_sub ).xy() ).raw() ); }
         point_abs_sm bub_to_abs( const point_bub_sm &bub ) const { return abs_sub.xy() + point_rel_sm( bub.raw() ); }
