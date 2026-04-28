@@ -96,18 +96,6 @@
     "death_drops": "mon_zombie_mancroc_death_drops"
   },
   {
-    "id": "mon_zombie_ears",
-    "copy-from": "mon_zombie_ears",
-    "type": "MONSTER",
-    "death_drops": "mon_zombie_ears_death_drops"
-  },
-  {
-    "id": "mon_zombie_skull",
-    "copy-from": "mon_zombie_skull",
-    "type": "MONSTER",
-    "death_drops": "mon_zombie_skull_death_drops"
-  },
-  {
     "id": "mon_zombie_necro",
     "copy-from": "mon_zombie_necro",
     "type": "MONSTER",
@@ -274,30 +262,6 @@
     "type": "MONSTER",
     "death_drops": "mon_rat_king_death_drops",
     "extend": { "categories": [ "CLASSIC" ] }
-  },
-  {
-    "id": "mon_bee",
-    "copy-from": "mon_bee",
-    "type": "MONSTER",
-    "death_drops": "mon_bee_death_drops"
-  },
-  {
-    "id": "mon_wasp",
-    "copy-from": "mon_wasp",
-    "type": "MONSTER",
-    "death_drops": "mon_wasp_death_drops"
-  },
-  {
-    "id": "mon_wasp_small",
-    "copy-from": "mon_wasp_small",
-    "type": "MONSTER",
-    "death_drops": "mon_wasp_small_death_drops"
-  },
-  {
-    "id": "mon_wasp_small_guard",
-    "copy-from": "mon_wasp_small_guard",
-    "type": "MONSTER",
-    "death_drops": "mon_wasp_small_guard_death_drops"
   },
   {
     "id": "mon_wasp_queen",
@@ -814,40 +778,10 @@
     "extend": { "categories": [ "CLASSIC" ] }
   },
   {
-    "id": "mon_zhark",
-    "copy-from": "mon_zhark",
-    "type": "MONSTER",
-    "death_drops": "mon_zhark_death_drops"
-  },
-  {
     "id": "mon_dog_skeleton",
     "copy-from": "mon_dog_skeleton",
     "type": "MONSTER",
     "death_drops": "mon_dog_skeleton_death_drops"
-  },
-  {
-    "id": "mon_dog_zombie_rot",
-    "copy-from": "mon_dog_zombie_rot",
-    "type": "MONSTER",
-    "death_drops": "mon_dog_zombie_rot_death_drops"
-  },
-  {
-    "id": "mon_zolf",
-    "copy-from": "mon_zolf",
-    "type": "MONSTER",
-    "death_drops": "mon_zolf_death_drops"
-  },
-  {
-    "id": "mon_zombear",
-    "copy-from": "mon_zombear",
-    "type": "MONSTER",
-    "death_drops": "mon_zombear_death_drops"
-  },
-  {
-    "id": "mon_zougar",
-    "copy-from": "mon_zougar",
-    "type": "MONSTER",
-    "death_drops": "mon_zougar_death_drops"
   },
   {
     "id": "mon_cat_mutant_prism",
@@ -956,6 +890,12 @@
     "copy-from": "mon_zombie_smoker_evolved_toxic",
     "type": "MONSTER",
     "death_drops": "mon_zombie_smoker_evolved_toxic_death_drops"
+  },
+  {
+    "id": "mon_zombie_miner_evolved_moleman",
+    "copy-from": "mon_zombie_miner_evolved_moleman",
+    "type": "MONSTER",
+    "death_drops": "mon_zombie_miner_evolved_moleman_death_drops"
   },
   {
     "id": "mon_zombie_miner_evolved_shady",
