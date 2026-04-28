@@ -1626,6 +1626,12 @@ void options_manager::add_options_interface()
 
     add_empty_line();
 
+    add( "USE_PINYIN_SEARCH", interface, translate_marker( "Use pinyin in search" ),
+         translate_marker( "If true, pinyin can be used in searching and filtering Chinese text.  "
+                           "May slow down searches with many entries." ),
+         false
+       );
+
     add( "FORCE_CAPITAL_YN", interface, translate_marker( "Force Y/N in prompts" ),
          translate_marker( "If true, Y/N prompts are case-sensitive and y and n are not accepted." ),
          true
@@ -4206,6 +4212,7 @@ void options_manager::cache_to_globals()
     use_tiles = false;
     use_tiles_overmap = false;
 #endif
+    use_pinyin_search = ::get_option<bool>( "USE_PINYIN_SEARCH" );
     log_from_top = ::get_option<std::string>( "LOG_FLOW" ) == "new_top";
     message_ttl = ::get_option<int>( "MESSAGE_TTL" );
     message_cooldown = ::get_option<int>( "MESSAGE_COOLDOWN" );

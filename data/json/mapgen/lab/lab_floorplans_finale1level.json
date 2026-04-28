@@ -122,7 +122,7 @@
         "...|C.......6.......|...",
         "...|-..............-|...",
         "..Y..................Y..",
-        "..Y.......?..?.......Y..",
+        "..Y..................Y..",
         "...|gggggg----gggggg|...",
         "...|txttttCCCCtttxxt|...",
         "...|r.hh........h .r|...",
@@ -130,7 +130,7 @@
         "...|r..|---MM---|..r|...",
         "-MM|---|........|---|MM-",
         "........................",
-        "........................",
+        "...........?............",
         "........................",
         "....Y..............Y....",
         "........................",
@@ -138,7 +138,7 @@
         "........................"
       ],
       "palettes": [ "lab_palette" ],
-      "monster": { "?": { "monster": "mon_turret_light" } },
+      "monster": { "?": { "monster": "mon_shade_boss" } },
       "terrain": { "o": "t_radio_tower" },
       "computers": {
         "6": {
@@ -174,7 +174,7 @@
         ".....?...|..oooo.hx|....",
         "....|--|M|..oooo..C|....",
         "....|r.M....Oooo..C|....",
-        "....|r.|xh..oooo..C|....",
+        "....|r*|xh..oooo..C|....",
         "....|rY|ttt......YC|....",
         "....|--|-----------|....",
         "........................",
@@ -192,7 +192,7 @@
       ],
       "palettes": [ "lab_palette" ],
       "place_nested": [ { "chunks": [ "lab_finale_loot" ], "x": 5, "y": 8 } ],
-      "monster": { "?": { "monster": "mon_turret_light" } },
+      "monster": { "?": { "monster": "mon_turret_light" }, "*": { "monster": "mon_shade_boss", "chance": 25 } },
       "terrain": { "o": "t_cvdbody", "O": "t_cvdmachine" },
       "place_loot": [ { "item": "id_science", "x": [ 8, 10 ], "y": 10 } ]
     }
@@ -230,7 +230,7 @@
       ],
       "palettes": [ "lab_palette" ],
       "mapping": {
-        "r": { "item": [ { "item": "iv_mutagen_raptor", "chance": 100, "repeat": [ 2, 2 ] } ] },
+        "r": { "item": [ { "item": "iv_mutagen_elfa", "chance": 100, "repeat": [ 2, 2 ] } ] },
         "R": { "item": [ { "item": "purifier_smart_shot", "chance": 100 } ] }
       }
     }
@@ -268,8 +268,16 @@
       ],
       "palettes": [ "lab_palette" ],
       "mapping": {
-        "r": { "item": [ { "item": "iv_mutagen_chimera", "chance": 100, "repeat": [ 2, 2 ] } ] },
-        "R": { "item": [ { "item": "purifier_smart_shot", "chance": 100 } ] }
+        "r": { "items": [ { "item": "books_bank_vault", "chance": 100, "repeat": [ 2, 2 ] } ] },
+        "R": {
+          "items": [
+            { "item": "still_lab", "chance": 100 },
+            { "item": "analytical_set_basic", "chance": 100 },
+            { "item": "microcentrifuge", "chance": 100 },
+            { "item": "chemistry_set", "chance": 100 },
+            { "item": "purifier_smart_shot", "chance": 100 }
+          ]
+        }
       }
     }
   },

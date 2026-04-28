@@ -89,11 +89,11 @@
       "monster": { "_": { "monster": "mon_turret_searchlight" } },
       "palettes": [ "military_camp" ],
       "nested": {
-        "1": { "chunks": [ "fema_lodging" ] },
+        "1": { "chunks": [ [ "fema_lodging", 75 ], [ "fema_range", 20 ], [ "fema_helipad", 5 ] ] },
         "2": { "chunks": [ "fema_sanitary" ] },
         "3": { "chunks": [ "fema_mess_hall" ] },
         "4": { "chunks": [ "fema_supply" ] },
-        "5": { "chunks": [ "fema_lab" ] }
+        "5": { "chunks": [ "fema_command_center" ] }
       }
     }
   }

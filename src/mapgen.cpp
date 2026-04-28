@@ -367,6 +367,9 @@ class mapgen_factory
             result.insert( "lab_1side" );
             result.insert( "lab_4side" );
             result.insert( "lab_finale_1level" );
+            // Stuff used in lua code only
+            // Yes a mod could blow something up...
+            // But it makes itself widely known
             result = cata::run_hooks( "on_make_mapgen_factory_list", [&]( auto & params ) { params["results"] = &result; } ).get_or( "results",
                     result );
             return result;
@@ -4780,7 +4783,13 @@ void map::draw_lab( mapgendata &dat )
                    is_ot_match( "ants", dat.west(), ot_match_type::contains );
 
         if( ice_lab ) {
-            int temperature = -20 + 15 * ( dat.zlevel() );
+            int temperature;
+
+            if( dat.zlevel() == 0 ) {
+                temperature = -20;
+            } else {
+                temperature = static_cast<int>( -20.0 * log( -1 * dat.zlevel() ) - 45.0 );
+            }
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
             set_temperature( p2 + point( 0, SEEY ), temperature );
@@ -5455,7 +5464,13 @@ void map::draw_lab( mapgendata &dat )
         tower_lab = is_ot_match( "tower_lab", terrain_type, ot_match_type::prefix );
 
         if( ice_lab ) {
-            int temperature = -20 + 30 * dat.zlevel();
+            int temperature;
+
+            if( dat.zlevel() == 0 ) {
+                temperature = -20;
+            } else {
+                temperature = static_cast<int>( -20.0 * log( -1 * dat.zlevel() ) - 45.0 );
+            }
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
             set_temperature( p2 + point( 0, SEEY ), temperature );
