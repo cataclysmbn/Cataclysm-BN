@@ -3490,8 +3490,8 @@ int vehicle::roof_at_part( const int part ) const
 point vehicle::coord_translate( point p ) const
 {
     return rotate_to_world( pivot_rotation[0],
-                            tripoint_veh_ms( tripoint( pivot_anchor[0], 0 ) ),
-                            tripoint_veh_ms( tripoint( p, 0 ) ) ).raw().xy();
+                            tripoint_mnt_veh( tripoint( pivot_anchor[0], 0 ) ),
+                            tripoint_mnt_veh( tripoint( p, 0 ) ) ).raw().xy();
 }
 
 const struct {
@@ -3530,15 +3530,15 @@ void vehicle::coord_translate( units::angle dir, point pivot, point p,
                                tripoint &q ) const
 {
     q = rotate_to_world( dir,
-                         tripoint_veh_ms( tripoint( pivot, 0 ) ),
-                         tripoint_veh_ms( tripoint( p, 0 ) ) ).raw();
+                         tripoint_mnt_veh( tripoint( pivot, 0 ) ),
+                         tripoint_mnt_veh( tripoint( p, 0 ) ) ).raw();
 }
 
 void vehicle::coord_translate_reverse( units::angle dir, point pivot, const tripoint &p,
                                        point &q ) const
 {
     q = rotate_to_local( dir,
-                         tripoint_veh_ms( tripoint( pivot, 0 ) ),
+                         tripoint_mnt_veh( tripoint( pivot, 0 ) ),
                          tripoint_rel_ms( p ) ).raw().xy();
 }
 
@@ -3564,8 +3564,8 @@ point vehicle::bubble_to_mount( const tripoint_bub_ms &p ) const
     return result;
 }
 
-tripoint_rel_ms vehicle::rotate_to_world( units::angle dir, const tripoint_veh_ms &pivot,
-        const tripoint_veh_ms &p ) const
+tripoint_rel_ms vehicle::rotate_to_world( units::angle dir, const tripoint_mnt_veh &pivot,
+        const tripoint_mnt_veh &p ) const
 {
     int increment = angle_to_increment( dir );
     auto relative = p.raw() - pivot.raw();
@@ -3587,7 +3587,7 @@ tripoint_rel_ms vehicle::rotate_to_world( units::angle dir, const tripoint_veh_m
     return tripoint_rel_ms( result );
 }
 
-tripoint_veh_ms vehicle::rotate_to_local( units::angle dir, const tripoint_veh_ms &pivot,
+tripoint_mnt_veh vehicle::rotate_to_local( units::angle dir, const tripoint_mnt_veh &pivot,
         const tripoint_rel_ms &p ) const
 {
     int increment = angle_to_increment( dir );
@@ -3608,18 +3608,18 @@ tripoint_veh_ms vehicle::rotate_to_local( units::angle dir, const tripoint_veh_m
     result.y -= static_cast<int>( skew );
     result += pivot.raw();
 
-    return tripoint_veh_ms( result );
+    return tripoint_mnt_veh( result );
 }
 
-tripoint_abs_ms vehicle::mount_to_abs( const tripoint_veh_ms &mount ) const
+tripoint_abs_ms vehicle::mount_to_abs( const tripoint_mnt_veh &mount ) const
 {
     return global_square_location() + rotate_to_world( pivot_rotation[0],
-            tripoint_veh_ms( tripoint( pivot_anchor[0], 0 ) ), mount );
+            tripoint_mnt_veh( tripoint( pivot_anchor[0], 0 ) ), mount );
 }
 
-tripoint_veh_ms vehicle::abs_to_mount( const tripoint_abs_ms &abs ) const
+tripoint_mnt_veh vehicle::abs_to_mount( const tripoint_abs_ms &abs ) const
 {
-    return rotate_to_local( pivot_rotation[0], tripoint_veh_ms( tripoint( pivot_anchor[0], 0 ) ),
+    return rotate_to_local( pivot_rotation[0], tripoint_mnt_veh( tripoint( pivot_anchor[0], 0 ) ),
                             abs - global_square_location() );
 }
 
