@@ -1171,6 +1171,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
     // Recalculate stats (strength, mods from pain etc.) that could have been affected
     reset_encumbrance();
     reset();
+    here.invalidate_lightmap_caches();
 
     // Also reset crafting inventory cache if this bionic spawned a fake item
     if( !bio.info().fake_item.is_empty() ) {
@@ -1256,6 +1257,7 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
     // Recalculate stats (strength, mods from pain etc.) that could have been affected
     reset_encumbrance();
     reset();
+    get_map().invalidate_lightmap_caches();
     if( !bio.id->enchantments.empty() ) {
         recalculate_enchantment_cache();
     }
