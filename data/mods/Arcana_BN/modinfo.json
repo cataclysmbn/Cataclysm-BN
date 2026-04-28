@@ -6,7 +6,7 @@
     "authors": [ "Chaosvolt" ],
     "description": "Adds a host of craftable magic items and spells, centered around the use of Arcana skill to research and exploit otherworldly monsters and anomalies.",
     "license": "CC-BY-SA-3.0",
-    "version": "BN In-Repo Version, Update 4/27/2026",
+    "version": "BN In-Repo Version, Update 4/28/2026",
     "category": "content",
     "dependencies": [ "bn" ]
   }
