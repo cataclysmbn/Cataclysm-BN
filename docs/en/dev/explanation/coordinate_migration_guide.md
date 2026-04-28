@@ -8,11 +8,11 @@ This guide covers the patterns contributors should use when touching coordinate-
 
 Every typed coordinate is a `coord_point<Point, Origin, Scale>` specialisation. The three axes of the type encode what you know statically:
 
-| Axis | Examples | Meaning |
-|---|---|---|
-| **Point** | `point`, `tripoint` | 2D or 3D |
-| **Origin** | `origin::abs`, `origin::bubble`, `origin::relative` | What the coordinates are measured from |
-| **Scale** | `coords::ms`, `coords::sm`, `coords::omt`, `coords::om` | Unit size |
+| Axis       | Examples                                                | Meaning                                |
+| ---------- | ------------------------------------------------------- | -------------------------------------- |
+| **Point**  | `point`, `tripoint`                                     | 2D or 3D                               |
+| **Origin** | `origin::abs`, `origin::bubble`, `origin::relative`     | What the coordinates are measured from |
+| **Scale**  | `coords::ms`, `coords::sm`, `coords::omt`, `coords::om` | Unit size                              |
 
 Common named aliases you'll use most:
 
@@ -43,7 +43,7 @@ This is enforced by `abs_to_bub` and `bub_to_abs`, which transform XY only. Do n
 
 ## Scale Conversions - Replace `coordinate_conversions.h`
 
-The functions in `coordinate_conversions.h` (e.g. `ms_to_sm_copy`, `sm_to_omt_remain`, `omt_to_sm`) are **legacy**. Replace them with the three template functions from `coordinates.h`. These only require you to state the *destination* scale; the source is inferred.
+The functions in `coordinate_conversions.h` (e.g. `ms_to_sm_copy`, `sm_to_omt_remain`, `omt_to_sm`) are **legacy**. Replace them with the three template functions from `coordinates.h`. These only require you to state the _destination_ scale; the source is inferred.
 
 ### `project_to<DestScale>` - convert between scales
 
@@ -57,7 +57,7 @@ auto sm_pos = project_to<coords::sm>( abs_ms_pos );  // tripoint_abs_sm
 
 ### `project_remain<DestScale>` - fine → coarse, saving the remainder
 
-Going from a fine scale to a coarser one loses granularity. `project_remain` captures both the coarse result *and* the intra-tile offset that would otherwise be discarded.
+Going from a fine scale to a coarser one loses granularity. `project_remain` captures both the coarse result _and_ the intra-tile offset that would otherwise be discarded.
 
 ```cpp
 // Before
@@ -111,16 +111,16 @@ bub_to_abs( tripoint_bub_sm )  →  tripoint_abs_sm
 
 ### Deprecated → preferred reference
 
-| Deprecated | Preferred |
-|---|---|
-| `here.getabs( tripoint )` | `bub_to_abs( tripoint_bub_ms( p ) )` |
-| `here.getlocal( tripoint )` | `abs_to_bub( tripoint_abs_ms( p ) )` |
-| `ms_to_sm_copy( p )` | `project_to<coords::sm>( p )` |
-| `sm_to_ms_copy( p )` | `project_to<coords::ms>( p )` |
-| `sm_to_omt_copy` + `sm_to_omt_remain` | `project_remain<coords::omt>( p )` |
-| `omt_to_ms_copy( omt ) + offset` | `project_combine( omt, offset )` |
-| `ch.pos()` wrapped in `tripoint_bub_ms(…)` | `ch.bub_pos()` |
-| `here.getabs( ch.pos() )` | `ch.abs_pos()` |
+| Deprecated                                 | Preferred                            |
+| ------------------------------------------ | ------------------------------------ |
+| `here.getabs( tripoint )`                  | `bub_to_abs( tripoint_bub_ms( p ) )` |
+| `here.getlocal( tripoint )`                | `abs_to_bub( tripoint_abs_ms( p ) )` |
+| `ms_to_sm_copy( p )`                       | `project_to<coords::sm>( p )`        |
+| `sm_to_ms_copy( p )`                       | `project_to<coords::ms>( p )`        |
+| `sm_to_omt_copy` + `sm_to_omt_remain`      | `project_remain<coords::omt>( p )`   |
+| `omt_to_ms_copy( omt ) + offset`           | `project_combine( omt, offset )`     |
+| `ch.pos()` wrapped in `tripoint_bub_ms(…)` | `ch.bub_pos()`                       |
+| `here.getabs( ch.pos() )`                  | `ch.abs_pos()`                       |
 
 ---
 
@@ -128,13 +128,13 @@ bub_to_abs( tripoint_bub_sm )  →  tripoint_abs_sm
 
 When migrating a function, establish what the coordinate represents and apply the correct type. A brief reference:
 
-| Situation | Type |
-|---|---|
-| Absolute world position (overmap, save data) | `tripoint_abs_ms` |
-| Absolute world position, in submap scale | `tripoint_abs_sm` |
+| Situation                                        | Type              |
+| ------------------------------------------------ | ----------------- |
+| Absolute world position (overmap, save data)     | `tripoint_abs_ms` |
+| Absolute world position, in submap scale         | `tripoint_abs_sm` |
 | Position inside the reality bubble (map queries) | `tripoint_bub_ms` |
-| Displacement / offset / direction | `tripoint_rel_ms` |
-| Untyped API requires raw value | `typed_pos.raw()` |
+| Displacement / offset / direction                | `tripoint_rel_ms` |
+| Untyped API requires raw value                   | `typed_pos.raw()` |
 
 There are more, but these are the most commonly used.
 
@@ -144,16 +144,16 @@ There are more, but these are the most commonly used.
 
 All of the following are implemented and available for use:
 
-| Helper | Location | Purpose |
-|---|---|---|
-| `project_to<S>(p)` | `coordinates.h` | Scale conversion, preserves origin |
-| `project_remain<S>(p)` | `coordinates.h` | Quotient + remainder decomposition |
-| `project_combine(coarse, fine)` | `coordinates.h` | Recombine quotient + remainder |
-| `abs_to_bub(p)` / `bub_to_abs(p)` | `map.h` (free functions) | Bubble ↔ absolute |
-| `p.reinterpret_as<T>()` | `coordinates.h` | Explicit type-pun during migration scaffolding only |
-| `IsCoordPoint<T>` concept | `coordinates.h` | Constrains templates to typed coordinates |
-| `rl_dist(a, b)` typed overload | `line.h` | Accepts any same-type `coord_point` pair |
-| `ch.bub_pos()` / `ch.abs_pos()` | `creature.h` | Typed creature position accessors |
+| Helper                            | Location                 | Purpose                                             |
+| --------------------------------- | ------------------------ | --------------------------------------------------- |
+| `project_to<S>(p)`                | `coordinates.h`          | Scale conversion, preserves origin                  |
+| `project_remain<S>(p)`            | `coordinates.h`          | Quotient + remainder decomposition                  |
+| `project_combine(coarse, fine)`   | `coordinates.h`          | Recombine quotient + remainder                      |
+| `abs_to_bub(p)` / `bub_to_abs(p)` | `map.h` (free functions) | Bubble ↔ absolute                                   |
+| `p.reinterpret_as<T>()`           | `coordinates.h`          | Explicit type-pun during migration scaffolding only |
+| `IsCoordPoint<T>` concept         | `coordinates.h`          | Constrains templates to typed coordinates           |
+| `rl_dist(a, b)` typed overload    | `line.h`                 | Accepts any same-type `coord_point` pair            |
+| `ch.bub_pos()` / `ch.abs_pos()`   | `creature.h`             | Typed creature position accessors                   |
 
 `reinterpret_as<T>()` is a migration scaffold: it makes unsafe origin-punning explicit and grep-able. A call site that still uses it is not fully migrated.
 
@@ -162,6 +162,7 @@ All of the following are implemented and available for use:
 ## Absolute vs Bubble Space
 
 Prefer **absolute space** for game logic when the conversion is straightforward. Bubble space is appropriate for:
+
 - Rendering and display code
 - Functions that are inherently tied to the reality bubble e.g. `map::shift`
 - Code where converting is non-trivial and the change is out of scope
