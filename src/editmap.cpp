@@ -1800,7 +1800,8 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
     tinymap tmpmap;
     // TODO: add a do-not-save-generated-submaps parameter
     // TODO: keep track of generated submaps to delete them properly and to avoid memory leaks
-    tmpmap.generate( project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z ) ), calendar::turn );
+    tmpmap.generate( project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z ) ),
+                     calendar::turn );
 
     gmenu.border_color = c_light_gray;
     gmenu.hilight_color = c_black_white;

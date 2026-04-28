@@ -50,7 +50,7 @@ void batch_turns_field( submap &sm, int n )
         return;
     }
 
-    std::ranges::for_each( sm.field_cache, [&]( const point_sm_ms &local ) {
+    std::ranges::for_each( sm.field_cache, [&]( const point_sm_ms & local ) {
         field &curfield = sm.get_field( local );
         if( !curfield.displayed_field_type() ) {
             return;
@@ -104,7 +104,7 @@ void batch_turns_field( submap &sm, int n )
     // Compact + deduplicate — mirrors the same fix in process_fields_in_submap.
     std::bitset<SEEX *SEEY> seen;
     sm.field_cache.erase(
-    std::ranges::remove_if( sm.field_cache, [&]( const point_sm_ms &local ) {
+    std::ranges::remove_if( sm.field_cache, [&]( const point_sm_ms & local ) {
         if( !sm.get_field( local ).displayed_field_type() ) {
             return true;
         }

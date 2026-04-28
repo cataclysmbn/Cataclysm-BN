@@ -206,7 +206,7 @@ bool game::grabbed_veh_move( const tripoint &dp )
         // Grabbed part has to stay at distance 1 to the player
         // and in roughly the same direction.
         const auto new_part_pos = tripoint_bub_ms( grabbed_vehicle->global_pos3() ) +
-                                      grabbed_vehicle->part( grabbed_part ).precalc[ 1 ];
+                                  grabbed_vehicle->part( grabbed_part ).precalc[ 1 ];
         const auto expected_pos = tripoint_bub_ms( u.pos() ) + dp + from;
         const tripoint_rel_ms actual_dir = expected_pos - new_part_pos;
 

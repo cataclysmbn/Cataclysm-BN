@@ -22,7 +22,7 @@
 const data_vars::data_set submap::EMPTY_VARS{};
 
 template<int sx, int sy>
-void maptile_soa<sx, sy>::swap_soa_tile( const point_sm_ms &p1, const point_sm_ms&p2 )
+void maptile_soa<sx, sy>::swap_soa_tile( const point_sm_ms &p1, const point_sm_ms &p2 )
 {
 
     std::swap( ter[p1.x()][p1.y()], ter[p2.x()][p2.y()] );
@@ -236,7 +236,7 @@ maptile_soa<sx, sy>::maptile_soa( const tripoint_abs_ms &offset ) : itm{{
 {
 }
 
-submap::submap( const tripoint_abs_ms & offset ) : maptile_soa<SEEX, SEEY>( offset )
+submap::submap( const tripoint_abs_ms &offset ) : maptile_soa<SEEX, SEEY>( offset )
 {
     std::uninitialized_fill_n( &ter[0][0], elements, t_null );
     std::uninitialized_fill_n( &frn[0][0], elements, f_null );
@@ -273,7 +273,8 @@ void submap::update_lum_rem( const point_sm_ms &p, const item &i )
     }
 }
 
-void submap::insert_cosmetic( const point_sm_ms &p, const std::string &type, const std::string &str )
+void submap::insert_cosmetic( const point_sm_ms &p, const std::string &type,
+                              const std::string &str )
 {
     cosmetic_t ins;
 
@@ -466,7 +467,7 @@ void submap::rotate( int turns )
         return;
     }
 
-    const auto rotate_point = [turns]( const point_sm_ms &p ) {
+    const auto rotate_point = [turns]( const point_sm_ms & p ) {
         return p.rotate( turns, { SEEX, SEEY } );
     };
 
@@ -572,7 +573,7 @@ void submap::rotate( int turns )
     std::ranges::for_each(
         std::views::iota( 0, SEEX * SEEY )
         | std::views::transform( []( int i ) -> point_sm_ms { return { i % SEEX, i / SEEX }; } ),
-    [this]( const point_sm_ms &p ) {
+    [this]( const point_sm_ms & p ) {
         if( trp[p.x()][p.y()] != tr_null ) {
             trap_cache.push_back( p );
         }
@@ -583,7 +584,8 @@ void submap::rotate( int turns )
 }
 
 
-auto submap::rebuild_outside_cache( const level_cache *above, const tripoint_bub_sm &grid_pos ) -> void
+auto submap::rebuild_outside_cache( const level_cache *above,
+                                    const tripoint_bub_sm &grid_pos ) -> void
 {
     if( !outside_dirty ) {
         return;
@@ -620,7 +622,8 @@ auto submap::rebuild_outside_cache( const level_cache *above, const tripoint_bub
     outside_dirty = false;
 }
 
-auto submap::rebuild_sheltered_cache( const level_cache *above, const tripoint_bub_sm &grid_pos ) -> void
+auto submap::rebuild_sheltered_cache( const level_cache *above,
+                                      const tripoint_bub_sm &grid_pos ) -> void
 {
     if( !sheltered_dirty ) {
         return;
@@ -698,7 +701,7 @@ auto submap::rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -
             const auto &terrain   = get_ter( sp ).obj();
             const auto &furniture = get_furn( sp ).obj();
             int vpart = -1;
-            const vehicle *veh = m.veh_at_internal( p.raw(), vpart);
+            const vehicle *veh = m.veh_at_internal( p.raw(), vpart );
             const int cost = m.move_cost_internal( furniture, terrain, veh, vpart );
 
             if( cost > 2 ) {

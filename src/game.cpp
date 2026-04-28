@@ -4914,7 +4914,7 @@ void game::world_tick()
                     std::ranges::for_each(
                         cata::views::cartesian_product( std::views::iota( 0, SEEX ),
                                                         std::views::iota( 0, SEEY ) ),
-                    [&]( const auto &xy ) {
+                    [&]( const auto & xy ) {
                         const point_sm_ms p( std::get<0>( xy ), std::get<1>( xy ) );
                         if( sm_ptr->get_furn( p ).obj().has_flag( "EMITTER" ) ) {
                             positions.emplace_back( p );
@@ -4924,11 +4924,11 @@ void game::world_tick()
                 if( !sm_ptr->emitter_cache->empty() ) {
                     ZoneScopedN( "field_emits" );
                     const tripoint_bub_ms bub_sm_origin = m.abs_to_bub( project_to<coords::ms>( pos_sm ) );
-                    std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point_sm_ms &lp ) {
+                    std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point_sm_ms & lp ) {
                         const tripoint_bub_ms local_pos = bub_sm_origin + tripoint( lp.x(), lp.y(), 0 );
                         std::ranges::for_each(
                             sm_ptr->get_furn( lp ).obj().emissions,
-                        [&]( const emit_id &e ) {
+                        [&]( const emit_id & e ) {
                             m.emit_field( local_pos.raw(), e );
                         } );
                     } );

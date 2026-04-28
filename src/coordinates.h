@@ -213,18 +213,15 @@ class coord_point
             return raw_.y;
         }
         constexpr auto xy() const
-            requires std::same_as<Point, tripoint>
-        {
+        requires std::same_as<Point, tripoint> {
             return coord_point<point, Origin, Scale>( raw_.xy() );
         }
         constexpr auto &z()
-            requires std::same_as<Point, tripoint>
-        {
+        requires std::same_as<Point, tripoint> {
             return raw_.z;
         }
         constexpr auto z() const
-            requires std::same_as<Point, tripoint>
-        {
+        requires std::same_as<Point, tripoint> {
             return raw_.z;
         }
 
@@ -296,8 +293,7 @@ class coord_point
         }
 
         auto rotate( int turns, point dim = {1, 1} ) const -> coord_point
-            requires std::same_as<Point, point>
-        {
+        requires std::same_as<Point, point> {
             return coord_point( raw_.rotate( turns, dim ) );
         }
 

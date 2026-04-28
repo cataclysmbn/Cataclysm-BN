@@ -363,7 +363,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 const ZLevelChange reach_from_below = ZLevelChange{ .from = below_us.raw(), .to = cur, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
 
                 // This is stored separately from other changes because it requires a different type of processing
-                Pathfinding::get_z_cache_open_air( z ).emplace( bubble_pos.raw().xy(), Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
+                Pathfinding::get_z_cache_open_air( z ).emplace( bubble_pos.raw().xy(),
+                        Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
 
                 auto &lower_level = Pathfinding::get_z_cache_open_air( z - 1 );
                 if( lower_level.contains( bubble_pos.raw().xy() ) ) {

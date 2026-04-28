@@ -573,10 +573,12 @@ void component_item_location::attach( detached_ptr<item> &&obj )
     return container->add_component( std::move( obj ) );
 }
 
-partial_con_item_location::partial_con_item_location( const tripoint_bub_ms &position ) : tile_item_location(
+partial_con_item_location::partial_con_item_location( const tripoint_bub_ms &position ) :
+    tile_item_location(
         bub_to_abs( position ) ) {}
 
-partial_con_item_location::partial_con_item_location( const tripoint_abs_ms &position ) : tile_item_location(
+partial_con_item_location::partial_con_item_location( const tripoint_abs_ms &position ) :
+    tile_item_location(
         position ) {}
 
 detached_ptr<item> partial_con_item_location::detach( item * )

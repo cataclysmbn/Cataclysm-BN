@@ -6530,7 +6530,7 @@ void map::add_spawn( const mtype_id &type, int count, const tripoint &p,
                      int faction_id, int mission_id, const std::string &name ) const
 {
     point_sm_ms offset;
-    submap *place_on_submap = get_submap_at( tripoint_bub_ms ( p ), offset );
+    submap *place_on_submap = get_submap_at( tripoint_bub_ms( p ), offset );
 
     if( !place_on_submap ) {
         debugmsg( "centadodecamonant doesn't exist in grid; within add_spawn(%s, %d, %d, %d, %d)",
@@ -6746,7 +6746,7 @@ computer *map::add_computer( const tripoint &p, const std::string &name, int sec
     // TODO: Turn this off?
     ter_set( p, t_console );
     point_sm_ms l;
-    submap *const place_on_submap = get_submap_at( tripoint_bub_ms ( p ), l );
+    submap *const place_on_submap = get_submap_at( tripoint_bub_ms( p ), l );
     place_on_submap->set_computer( l, computer( name, security ) );
     return place_on_submap->get_computer( l );
 }

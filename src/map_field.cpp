@@ -1120,7 +1120,7 @@ auto process_fields_in_submap( submap &sm,
     // Newly-added entries are newborn (age 0) and skip all effects anyway, so processing
     // them next tick is correct behaviour.
     const auto field_positions = sm.field_cache;
-    std::ranges::for_each( field_positions, [&]( const point_sm_ms &local ) {
+    std::ranges::for_each( field_positions, [&]( const point_sm_ms & local ) {
         auto &curfield = sm.get_field( local );
 
         if( !curfield.displayed_field_type() ) {

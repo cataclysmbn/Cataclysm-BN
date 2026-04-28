@@ -358,7 +358,7 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
     // Register any funnel traps so fill_water_collectors can skip the mapbuffer scan.
     if( sm != nullptr && !sm->trap_cache.empty() ) {
         const tripoint sm_abs = pos.raw();
-        std::ranges::for_each( sm->trap_cache, [&]( const point_sm_ms &lp ) {
+        std::ranges::for_each( sm->trap_cache, [&]( const point_sm_ms & lp ) {
             if( sm->get_trap( lp ).obj().is_funnel() ) {
                 funnel_locations_.emplace_back( sm_abs, lp.raw() );
             }
@@ -1924,7 +1924,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         avatar &you = get_avatar();
         for( const vpart_reference &vpr : veh.get_all_parts() ) {
             if( !vpr.part().removed ) {
-                you.clear_memorized_overlay( getabs( src.raw() + vpr.part().precalc[0]));
+                you.clear_memorized_overlay( getabs( src.raw() + vpr.part().precalc[0] ) );
             }
         }
     }
@@ -2090,9 +2090,9 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
     if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
         return;
     }
-    
+
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms ( p ), l );
+    submap *const current_submap = get_submap_at( tripoint_bub_ms( p ), l );
     if( current_submap == nullptr ) {
         return;
     }
@@ -2234,9 +2234,9 @@ ter_id map::ter( const tripoint &p ) const
     if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
         return get_boundary_terrain();
     }
-    
+
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms ( p ), l );
+    submap *const current_submap = get_submap_at( tripoint_bub_ms( p ), l );
     if( current_submap == nullptr ) {
         return t_null;
     }
@@ -2251,7 +2251,7 @@ data_vars::data_set *map::ter_vars( const tripoint &p ) const
     }
 
     point_sm_ms l;
-    const auto sm = get_submap_at( tripoint_bub_ms ( p ), l );
+    const auto sm = get_submap_at( tripoint_bub_ms( p ), l );
     return &sm->get_ter_vars( l );
 }
 
@@ -2261,9 +2261,9 @@ data_vars::data_set *map::furn_vars( const tripoint &p ) const
     if( !inbounds( p ) ) {
         return nullptr;
     }
-    
+
     point_sm_ms l;
-    const auto sm = get_submap_at( tripoint_bub_ms ( p ), l );
+    const auto sm = get_submap_at( tripoint_bub_ms( p ), l );
     return &sm->get_furn_vars( l );
 }
 
@@ -2461,9 +2461,9 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
     if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
         return false;
     }
-    
+
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms ( p ), l );
+    submap *const current_submap = get_submap_at( tripoint_bub_ms( p ), l );
     if( current_submap == nullptr ) {
         return false;
     }
@@ -2629,7 +2629,7 @@ bool map::passable( const tripoint &p ) const
 int map::move_cost_ter_furn( const tripoint &p ) const
 {
     point_sm_ms l;
-    submap *const current_submap = get_submap_at( tripoint_bub_ms ( p ), l );
+    submap *const current_submap = get_submap_at( tripoint_bub_ms( p ), l );
     if( current_submap == nullptr ) {
         return 0;
     }
@@ -8305,7 +8305,8 @@ void map::saven( const tripoint &grid )
 
 // Optimized mapgen function that only works properly for very simple overmap types
 // Does not create or require a temporary map and does its own saving
-static void generate_uniform( const tripoint_abs_sm &p, const ter_id &terrain_type, mapbuffer &dest )
+static void generate_uniform( const tripoint_abs_sm &p, const ter_id &terrain_type,
+                              mapbuffer &dest )
 {
     dbg( DL::Info ) << "generate_uniform p: " << p
                     << "  terrain_type: " << terrain_type.id().str();
@@ -9000,7 +9001,8 @@ void map::add_roofs( const tripoint &grid )
 
     bool check_roof = grid.z > -OVERMAP_DEPTH;
 
-    submap *const sub_below = check_roof ? get_submap_at_grid( tripoint_bub_sm( grid ) + tripoint_below ) : nullptr;
+    submap *const sub_below = check_roof ? get_submap_at_grid( tripoint_bub_sm(
+                                  grid ) + tripoint_below ) : nullptr;
 
     if( check_roof && sub_below == nullptr ) {
         if( !has_dimension_bounds() ) {
@@ -9381,7 +9383,8 @@ fake_map::fake_map( const furn_id &fur_type, const ter_id &ter_type, const trap_
     for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
         for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
             const auto sm_pos = tripoint_bub_sm{ gridx, gridy, fake_map_z };
-            std::unique_ptr<submap> sm = std::make_unique<submap>( bub_to_abs( project_to<coords::ms>( sm_pos ) ) );
+            std::unique_ptr<submap> sm = std::make_unique<submap>( bub_to_abs( project_to<coords::ms>
+                                         ( sm_pos ) ) );
 
             sm->set_all_ter( ter_type );
             sm->set_all_furn( fur_type );
@@ -10385,7 +10388,8 @@ void map::creature_on_trap( Creature &c, const bool may_avoid )
 }
 
 template<typename Functor>
-void map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &end, Functor fun ) const
+void map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &end,
+                         Functor fun ) const
 {
     // start and end are just two points, end can be "before" start
     // Also clip the area to map area
