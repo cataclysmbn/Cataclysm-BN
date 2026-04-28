@@ -199,7 +199,7 @@
       {
         "type": "deployer",
         "deployables": {
-          "bot_c4_hack": { "message": "The zombie grenadier deploys a c4 hack", "chance": 1, "ammo_percentage": 0.5, "range": 10 },
+          "bot_c4_hack": { "message": "The zombie grenadier deploys a c4 hack", "chance": 1, "ammo_percentage": 0.5, "range": 5 },
           "bot_flashbang_hack": { "message": "The zombie grenadier deploys a flashbang hack", "chance": 1, "ammo_percentage": 0.75, "range": 10 },
           "bot_gasbomb_hack": { "message": "The zombie grenadier deploys a gasbomb hack", "chance": 1, "ammo_percentage": 0.5, "range": 10 },
           "bot_grenade_hack": { "message": "The zombie grenadier deploys a grenade hack", "chance": 1, "ammo_percentage": 1.0, "range": 10 }
