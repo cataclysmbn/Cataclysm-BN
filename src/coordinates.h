@@ -73,6 +73,8 @@ enum class origin {
 constexpr origin origin_from_scale( scale s )
 {
     switch( s ) {
+        case scale::vehicle:
+            return origin::vehicle;
         case scale::submap:
             return origin::submap;
         case scale::overmap_terrain:
