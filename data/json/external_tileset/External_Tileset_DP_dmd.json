@@ -8,7 +8,9 @@
         "tiles": [
           { "id": "vp_adv_butchery", "fg": 0, "rotates": false },
           { "id": "broken_dissector", "fg": 1 },
-          { "id": "overlay_wielded_broken_dissector", "fg": 2 }
+          { "id": "overlay_wielded_broken_dissector", "fg": 2 },
+          { "id": [ "sheet_carbon", "overlay_wielded_sheet_carbon" ], "fg": 3 },
+          { "id": [ "carbon_plate", "overlay_wielded_carbon_plate" ], "fg": 4 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
