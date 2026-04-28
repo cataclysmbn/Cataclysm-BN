@@ -1555,10 +1555,7 @@
     "type": "item_group",
     "id": "mon_zhark_death_drops",
     "subtype": "collection",
-    "entries": [
-      { "distribution": [ { "item": "monster_fang", "prob": 50 }, { "item": "graboid_fang", "prob": 50 } ], "prob": 10 },
-      { "item": "essence_blood", "prob": 10, "count": [ 2, 4 ] }
-    ]
+    "entries": [ { "distribution": [ { "item": "monster_fang", "prob": 50 }, { "item": "graboid_fang", "prob": 50 } ], "prob": 10 } ]
   },
   {
     "type": "item_group",
