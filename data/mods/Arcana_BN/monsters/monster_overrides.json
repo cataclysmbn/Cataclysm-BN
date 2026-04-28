@@ -778,6 +778,12 @@
     "extend": { "categories": [ "CLASSIC" ] }
   },
   {
+    "id": "mon_zhark",
+    "copy-from": "mon_zhark",
+    "type": "MONSTER",
+    "death_drops": "mon_zhark_death_drops"
+  },
+  {
     "id": "mon_dog_skeleton",
     "copy-from": "mon_dog_skeleton",
     "type": "MONSTER",
