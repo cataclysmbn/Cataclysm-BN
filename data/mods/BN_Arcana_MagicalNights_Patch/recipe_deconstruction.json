@@ -1,0 +1,319 @@
+[
+  {
+    "result": "spell_scroll_acid_resistance",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 1,
+    "skills_required": [ "spellcraft", 1 ],
+    "time": "10 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "mana_dust",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 0,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 50 ] ] ]
+  },
+  {
+    "result": "crystallized_mana",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 0,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 50 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "helmet_demonchitin",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "chitin_piece", 17 ] ], [ [ "essence_dull", 85 ] ] ]
+  },
+  {
+    "result": "armguard_demonchitin",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "chitin_piece", 18 ] ], [ [ "essence_dull", 90 ] ] ]
+  },
+  {
+    "result": "armor_demonchitin",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "chitin_piece", 70 ] ], [ [ "essence_dull", 350 ] ] ]
+  },
+  {
+    "result": "boots_demonchitin",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "chitin_piece", 17 ] ], [ [ "essence_dull", 10 ] ] ]
+  },
+  {
+    "result": "gauntlets_demonchitin",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "chitin_piece", 10 ] ], [ [ "essence_dull", 50 ] ] ]
+  },
+  {
+    "result": "demonchitin_armor_horse",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "chitin_piece", 84 ] ], [ [ "essence_dull", 420 ] ] ]
+  },
+  {
+    "result": "demonchitin_harness_dog",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "chitin_piece", 12 ] ], [ [ "essence_dull", 60 ] ] ]
+  },
+  {
+    "result": "alumentum",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "skills_required": [ "spellcraft", 2 ],
+    "time": "20 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "ash", 10 ] ], [ [ "essence_dull", 10 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "suit_black_dragon_hide",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "skills_required": [ "spellcraft", 2 ],
+    "time": "20 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 240 ] ], [ [ "essence_dull", 600 ] ] ]
+  },
+  {
+    "result": "suit_black_dragon_scale",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "skills_required": [ "spellcraft", 4 ],
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 240 ] ], [ [ "essence_dull", 600 ] ] ]
+  },
+  {
+    "result": "boots_black_dragon_hide",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "skills_required": [ "spellcraft", 2 ],
+    "time": "20 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 24 ] ], [ [ "essence_dull", 80 ] ] ]
+  },
+  {
+    "result": "boots_black_dragon_scale",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "skills_required": [ "spellcraft", 4 ],
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 36 ] ], [ [ "essence_dull", 160 ] ] ]
+  },
+  {
+    "result": "helmet_black_dragon_hide",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "skills_required": [ "spellcraft", 2 ],
+    "time": "20 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 18 ] ], [ [ "essence_dull", 80 ] ] ]
+  },
+  {
+    "result": "helmet_black_dragon_scale",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "skills_required": [ "spellcraft", 4 ],
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 6 ] ], [ [ "essence_dull", 160 ] ] ]
+  },
+  {
+    "result": "gloves_black_dragon_hide",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "skills_required": [ "spellcraft", 2 ],
+    "time": "20 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 18 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "gauntlets_black_dragon_scale",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "skills_required": [ "spellcraft", 4 ],
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 24 ] ], [ [ "essence_dull", 200 ] ] ]
+  },
+  {
+    "result": "suit_xlblack_dragon_hide",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "skills_required": [ "spellcraft", 3 ],
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 360 ] ], [ [ "essence_dull", 800 ] ] ]
+  },
+  {
+    "result": "suit_xlblack_dragon_scale",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 360 ] ], [ [ "essence_dull", 1000 ] ] ]
+  },
+  {
+    "result": "boots_xlblack_dragon_hide",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "skills_required": [ "spellcraft", 3 ],
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 36 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "boots_xlblack_dragon_scale",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 48 ] ], [ [ "essence_dull", 240 ] ] ]
+  },
+  {
+    "result": "helmet_xlblack_dragon_hide",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "skills_required": [ "spellcraft", 3 ],
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 24 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "helmet_xlblack_dragon_scale",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 12 ] ], [ [ "essence_dull", 240 ] ] ]
+  },
+  {
+    "result": "gloves_xlblack_dragon_hide",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "skills_required": [ "spellcraft", 3 ],
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 24 ] ], [ [ "essence_dull", 160 ] ] ]
+  },
+  {
+    "result": "gauntlets_xlblack_dragon_scale",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "skills_required": [ "spellcraft", 5 ],
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 36 ] ], [ [ "essence_dull", 280 ] ] ]
+  },
+  {
+    "result": "magic_suppressor",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "skills_required": [ "spellcraft", 3 ],
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 12 ] ], [ [ "essence_dull", 50 ] ] ]
+  },
+  {
+    "result": "mana_dot_sight",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "skills_required": [ "spellcraft", 6 ],
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "plastic_chunk", 2 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "scrap", 3 ] ],
+      [ [ "silver_small", 10 ] ],
+      [ [ "gold_small", 10 ] ],
+      [ [ "material_sand", 1 ] ],
+      [ [ "essence_dull", 750 ] ]
+    ]
+  },
+  {
+    "result": "mana_laser_under",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "skills_required": [ "spellcraft", 3 ],
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "amplifier", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "material_sand", 1 ] ],
+      [ [ "scrap", 2 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "essence_dull", 50 ] ]
+    ]
+  }
+]
