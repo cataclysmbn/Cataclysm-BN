@@ -254,7 +254,7 @@
             "message": "A klaxon blares from the elite zombie grenadier and you see a mininuke hack come out",
             "chance": 50,
             "ammo_percentage": 0.5,
-            "range": 10
+            "range": 2
           }
         },
         "cooldown": 3
