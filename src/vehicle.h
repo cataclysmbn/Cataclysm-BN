@@ -825,8 +825,8 @@ class vehicle
         point bubble_to_mount( const tripoint_bub_ms &p ) const;
 
         tripoint_abs_ms mount_to_abs( const tripoint_mnt_veh &mount ) const;
-        tripoint_abs_ms mount_to_abs( const tripoint_mnt_veh &mount, const tripoint_rel_ms &offset ) const {
-            return mount_to_abs( mount + offset.raw() );
+        tripoint_abs_ms mount_to_abs( const tripoint_mnt_veh &mount, const tripoint_rel_veh &offset ) const {
+            return mount_to_abs( mount + offset );
         }
         tripoint_mnt_veh abs_to_mount( const tripoint_abs_ms &abs ) const;
 
