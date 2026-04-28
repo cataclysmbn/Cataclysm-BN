@@ -1,0 +1,173 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO",
+    "responses": [
+      {
+        "text": "[MISSION] The captain said you might be able to help get some information on local laboratories that might have been handling anomalous materials.",
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_1",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "nicholas_mission_2_mid", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_var": "necro_comms_permission", "type": "flag", "context": "rural_church", "value": "yes" },
+            { "u_has_mission": "MISSION_CF_PURIFIER_1_2" },
+            { "u_has_var": "npc_necro_gave_clearance", "value": "yes", "type": "dialogue", "context": "necropolis" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_1",
+    "dynamic_line": "From my understanding, a few research materials passed through this site during construction and there was some communication with military and research facilities in the area.  I don't know if it'll help, what are you trying to find in particular?",
+    "responses": [
+      {
+        "text": "I'm looking for information on something called Project Kairos.",
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_2"
+      },
+      { "text": "Actually, nevermind.", "topic": "TALK_OLD_GUARD_NEC_COMMO" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_2",
+    "dynamic_line": "Let me check the database here.  There are some records of it showing up, more recently I've also heard it come up intermittently on civilian chatter.  Is that your doing?",
+    "responses": [
+      {
+        "text": "The people who sent me to find it might have been asking around.",
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_3"
+      },
+      { "text": "I'm not sure.  What were you able to find out?", "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_4" },
+      {
+        "text": "They gave me this list of information they gathered, is this any help?",
+        "condition": { "u_has_item": "cf_purifier_project_data" },
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_3",
+    "dynamic_line": "I see.  I've heard some very strange shit coming over the refugee communications.  But if you trust whoever is looking into this Marshal, then I'll see what I can do.  I think I found something.",
+    "responses": [ { "text": "What's that?", "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_4" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_4",
+    "dynamic_line": "You mentioned anomalous materials, well a few shipments under that description passed through her as well as afew other sites.  The name came up on one facility's shipment list and sure enough, almost half the anomalous materials this computer has records on went to a single location.  Let me print out the shipment info for you.",
+    "responses": [ { "text": "Alright.", "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_ACCEPT" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_ACCEPT",
+    "dynamic_line": "Alright, here you go.  Be careful with this, though.  This is a lot of sensitive information, not to mention dangerous.  These Priority Sites will only get more hazardous as time goes on and more things break down.  I'll trust you to use your discretion.",
+    "speaker_effect": {
+      "effect": [
+        { "u_add_var": "nicholas_mission_2_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+        { "u_buy_item": "arcane_purifier_intel_2" }
+      ]
+    },
+    "responses": [
+      { "text": "Thanks!  Before I go…", "topic": "TALK_OLD_GUARD_NEC_COMMO" },
+      { "text": "Thanks, I'll be back later!", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5",
+    "dynamic_line": "Where the hell did you get all this?  This lists several classified sites, movement between them… god damn, it even lists coordinates for this place!  Who'd you get this from?",
+    "responses": [
+      {
+        "text": "I can vouch for the people who found this information, we were tracking very dangerous threats to humanity.",
+        "condition": { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ] },
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_1"
+      },
+      {
+        "text": "An organization that had been monitoring anomalous activity.",
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_2"
+      },
+      { "text": "A local researcher trying to fix this mess.", "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_3" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_1",
+    "dynamic_line": "And to think I knew what to expect out of you, Marshal.  This is insane.  These people made a mockery of national security.  But I guess they didn't get that far, if you still need our help.  Alright, to hell with it.  If you let me keep that list of info I'll give you the shipment information in return.  Then I'm going to need get a stiff drink next time I'm off duty.",
+    "responses": [
+      {
+        "text": "Deal.",
+        "effect": [ { "u_sell_item": "cf_purifier_project_data" } ],
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_ACCEPT"
+      },
+      { "text": "I need to think about it.", "topic": "TALK_OLD_GUARD_NEC_COMMO" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_2",
+    "dynamic_line": "Well they've done a much better job monitoring this sort of thing than I'd expect.  I sure hope you know what you're doing Marshal, working with these people.  I'll get you that information, but I'm going to have to ask you to give me these intel documents in exchange.  We need to make sure no other organizations might have gotten their hands on similar information.",
+    "responses": [
+      {
+        "text": "Okay.",
+        "effect": [ { "u_sell_item": "cf_purifier_project_data" } ],
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_ACCEPT"
+      },
+      { "text": "I need to think about it.", "topic": "TALK_OLD_GUARD_NEC_COMMO" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_3",
+    "dynamic_line": "There's no way just one researcher, even if they were an insider, could've gather all this information.  Who are you working for, Marshal?",
+    "responses": [
+      {
+        "text": "A local settlement that has attracted a small number of researchers, attempting to figure out what caused all this.",
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_4"
+      },
+      {
+        "text": "An arcanist order calling themselves The Cleansing Flame.",
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_5"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_4",
+    "dynamic_line": "I see.  I don't know how they organized an intel leak like this or how much insider knowledge it took to get this far, but I'll admit that's impressive.  Look, you want this info I'll trade you for those papers.  I'm willing to give your group the benefit of the doubt here, but I'd like to be able to analyze these leaks just to make sure nothing bad comes of it.  Deal?",
+    "responses": [
+      {
+        "text": "Deal.",
+        "effect": [ { "u_sell_item": "cf_purifier_project_data" } ],
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_ACCEPT"
+      },
+      { "text": "I need to think about it.", "topic": "TALK_OLD_GUARD_NEC_COMMO" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_5",
+    "dynamic_line": "An arcane what?  I need to look this up.  Religious shit, scattered police chatter over the years, small-scale vigilante stuff.  Old records that suggest something federal authorities were keeping an eye on but didn't see as much of a threat.  I don't even remotely know what to make of this.  I guess the world was going crazy for longer than I thought it was.",
+    "responses": [
+      {
+        "text": "I can vouch for their intentions.  We were aware of anomalous threats developing for some time, but we never came close to figuring out what was causing it.  Now we have a chance to correct that.",
+        "condition": { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ] },
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_1"
+      },
+      {
+        "text": "You wouldn't be the first to underestimate them.  Their numbers were small and their reach slight, but they knew something was going wrong well before the world ended.  They just didn't know where to look.",
+        "condition": { "u_has_any_trait": [ "PROF_SANGUINE", "PROF_ARCANIST", "PROF_ARCANIST2" ] },
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_2"
+      },
+      {
+        "text": "They had their reasons for acting as they do.  They do not know the truth of what has ruined this world, but they did what they could.  This is an opportunity to gain valuable insight into how things could be set right.",
+        "condition": { "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL" ] },
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_2"
+      },
+      {
+        "text": "All I know for certain is that they're trying to find possible countermeasures for what's caused all this, or at least something that might help make things better.  They believe this research project might hold the key to that.",
+        "topic": "TALK_OLD_GUARD_NEC_COMMO_NICHOLAS_5_4"
+      }
+    ]
+  }
+]

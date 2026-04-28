@@ -1,0 +1,13 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "Arcana",
+    "name": "<color_cyan>Arcana and Magic Items</color>",
+    "authors": [ "Chaosvolt" ],
+    "description": "Adds a host of craftable magic items and spells, centered around the use of Arcana skill to research and exploit otherworldly monsters and anomalies.",
+    "license": "CC-BY-SA-3.0",
+    "version": "BN In-Repo Version, Update 4/27/2026",
+    "category": "content",
+    "dependencies": [ "bn" ]
+  }
+]

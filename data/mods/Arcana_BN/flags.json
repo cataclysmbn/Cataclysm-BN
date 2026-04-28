@@ -1,0 +1,20 @@
+[
+  {
+    "id": "arcana_birchbark_weave",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "info": "This gear has been altered by druidic magic, increasing its <good>protection</good>."
+  },
+  {
+    "id": "arcana_tanbark_weave",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "info": "This gear has been altered by druidic magic, increasing its <good>acid and fire resistance</good>, and reducing its <info>warmth</info>."
+  },
+  {
+    "id": "arcana_willowbark_weave",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "info": "This gear has been altered by druidic magic, reducing its <good>encumbrance</good>."
+  }
+]

@@ -1,0 +1,144 @@
+[
+  {
+    "id": "LIGHTNING_JUDGMENT",
+    "type": "ammo_effect",
+    "aoe": {
+      "field_type": "fd_electricity",
+      "intensity_min": 1,
+      "intensity_max": 3,
+      "radius": 5,
+      "chance": 25,
+      "check_passable": true,
+      "check_sees": true,
+      "check_sees_radius": 3
+    },
+    "do_emp_blast": true
+  },
+  {
+    "id": "NAPALM_CLAW",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 2, "radius": 2 },
+    "explosion": { "damage": 100, "fragment": { "impact": { "damage_type": "heat", "amount": 500 }, "range": 2 }, "radius": 2 }
+  },
+  {
+    "id": "AMMO_DRAGONFIRE_ARCANA",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_fire", "intensity_min": 2, "intensity_max": 3, "chance": 75 }
+  },
+  {
+    "id": "AMMO_ARCANA_FIRE_EFFECT",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_plasma", "intensity_min": 1, "intensity_max": 3, "chance": 50 }
+  },
+  {
+    "id": "AMMO_ARCANA_WATER_EFFECT",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_fog_arcana", "intensity_min": 1, "intensity_max": 3, "chance": 50 }
+  },
+  {
+    "id": "AMMO_ARCANA_EARTH_EFFECT",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_acid", "intensity_min": 1, "intensity_max": 3, "chance": 50 }
+  },
+  {
+    "id": "AMMO_ARCANA_AIR_EFFECT",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_electricity", "intensity_min": 1, "intensity_max": 3, "chance": 50 },
+    "aoe": { "field_type": "fd_electricity", "intensity_min": 1, "intensity_max": 3, "size": 1, "radius": 0, "chance": 100 }
+  },
+  {
+    "id": "AMMO_ANOMALY_RAILGUN",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_electricity", "intensity_min": 1, "intensity_max": 3, "chance": 75 },
+    "aoe": {
+      "field_type": "fd_electricity",
+      "intensity_min": 1,
+      "intensity_max": 3,
+      "chance": 50,
+      "radius": 1,
+      "size": 1,
+      "check_passable": true,
+      "check_sees": true,
+      "check_sees_radius": 3
+    },
+    "do_emp_blast": true
+  },
+  {
+    "id": "AMMO_ANOMALY_PLASMA",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_plasma", "intensity_min": 1, "intensity_max": 3, "chance": 75 },
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 1, "radius": 0, "chance": 50 }
+  },
+  {
+    "id": "AMMO_ANOMALY_NUKE",
+    "type": "ammo_effect",
+    "aoe": {
+      "field_type": "fd_nuke_gas",
+      "intensity_min": 3,
+      "intensity_max": 3,
+      "chance": 50,
+      "radius": 12,
+      "size": 1,
+      "check_passable": true,
+      "check_sees": true,
+      "check_sees_radius": 3
+    },
+    "trail": { "field_type": "fd_fatigue", "intensity_min": 1, "intensity_max": 1, "chance": 5 },
+    "explosion": { "damage": 50, "fragment": { "impact": { "damage_type": "heat", "amount": 100 }, "range": 12 }, "radius": 12 },
+    "do_emp_blast": true
+  },
+  {
+    "id": "AMMO_RIFT_FOCUS_SHADOWS",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_veil_darkness", "intensity_min": 1, "intensity_max": 2, "chance": 50 }
+  },
+  {
+    "id": "AMMO_RIFT_FOCUS_FATIGUE",
+    "type": "ammo_effect",
+    "//": "In practice this is less risk of fatigue than the fission anomaly inlay, because it's only called once at the point of impact instead of all down the path it travels.",
+    "aoe": { "field_type": "fd_fatigue", "intensity_min": 1, "intensity_max": 1, "chance": 5 }
+  },
+  {
+    "id": "AMMO_RIFT_FOCUS_TINDALOS",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_tindalos_rift", "intensity_min": 3, "intensity_max": 3, "chance": 1 }
+  },
+  {
+    "id": "AMMO_ELECTROTHERMAL_LIGHTNING",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_electricity", "intensity_min": 1, "intensity_max": 2, "chance": 10 },
+    "aoe": { "field_type": "fd_electricity", "intensity_min": 2, "intensity_max": 3, "radius": 2, "chance": 33 },
+    "explosion": { "fragment": { "impact": { "damage_type": "electric", "amount": 10 }, "range": 2 } }
+  },
+  {
+    "id": "AMMO_ELECTROTHERMAL_FIRE",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 2, "chance": 50 },
+    "aoe": { "field_type": "fd_fire", "intensity_min": 2, "intensity_max": 3, "radius": 0, "chance": 100 }
+  },
+  {
+    "id": "AMMO_ELECTROTHERMAL_FIRE_SMALL",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 2, "radius": 0, "chance": 75 }
+  },
+  {
+    "id": "ARCANA_DAZZLE_SHOT",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_dazzling", "intensity_min": 3, "intensity_max": 3, "radius": 0, "chance": 100 }
+  },
+  {
+    "id": "ARCANA_SHRIKE_COLD_BULLET",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fog_arcana", "intensity_min": 1, "intensity_max": 1, "size": 1, "radius": 0, "chance": 100 }
+  },
+  {
+    "id": "ARCANA_BANE_FUNG",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_fungicidal_gas", "intensity_min": 1, "intensity_max": 3, "radius": 5, "chance": 25 }
+  },
+  {
+    "id": "ARCANA_BANE_TEAR",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_tear_gas", "intensity_min": 1, "intensity_max": 3, "radius": 5, "chance": 25 }
+  }
+]

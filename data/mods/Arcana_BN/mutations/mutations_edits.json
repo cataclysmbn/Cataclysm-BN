@@ -1,0 +1,7 @@
+[
+  {
+    "type": "effect_type",
+    "id": "ARCANA_IDIOTPROOFING",
+    "//": "This was actually moved here so that people updating their mod the dumbass lazy way will properly remove the edits that USED to be in the file.  If I just deleted this, I'd drown in bug reports caused by people you don't realize you should always delete and replace outdated mod folders, instead of copypasting the new folder into the old one!"
+  }
+]

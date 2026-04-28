@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 
 #include <algorithm>
+#include <array>
 #include <optional>
 #include <vector>
 
@@ -23,11 +24,14 @@
 static const skill_id skill_gun( "gun" );
 static const skill_id skill_shotgun( "shotgun" );
 
+// Seed 0 preserves the current test-suite RNG state.
+constexpr auto deterministic_rng_seeds = std::array { 1U, 2U, 3U, 4U, 5U, 4242424242U };
+
 static auto fire_shell_at_target( const itype_id &ammo_id,
-                                  const std::vector<itype_id> &armor_ids ) -> int
+                                  const std::vector<itype_id> &armor_ids, const unsigned int seed ) -> int
 {
     clear_all_state();
-    rng_set_engine_seed( 0 );
+    rng_set_engine_seed( seed );
     REQUIRE( get_map().has_zlevels() );
     get_player_character().setpos( {60, 60, -2} );
 
@@ -61,11 +65,24 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     const auto target_hp_total_before = target->get_hp();
     shooter.wield( std::move( gun ) );
 
-    const auto shots_fired = ranged::fire_gun( shooter, target_pos, 3, shooter.primary_weapon(),
+    const auto shots_to_fire = 5;
+    const auto shots_fired = ranged::fire_gun( shooter, target_pos, shots_to_fire,
+                             shooter.primary_weapon(),
                              nullptr );
 
-    REQUIRE( shots_fired == 3 );
+    REQUIRE( shots_fired == shots_to_fire );
     return target_hp_total_before - target->get_hp();
+}
+
+static auto fire_shells_at_target( const itype_id &ammo_id,
+                                   const std::vector<itype_id> &armor_ids ) -> int
+{
+    auto total_damage = 0;
+    for( const auto seed : deterministic_rng_seeds ) {
+        CAPTURE( seed );
+        total_damage += fire_shell_at_target( ammo_id, armor_ids, seed );
+    }
+    return total_damage;
 }
 
 static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
@@ -156,15 +173,15 @@ TEST_CASE( "expected shape coverage through windows", "[shape]" )
 
 TEST_CASE( "character using birdshot against another character", "[ranged]" )
 {
-    const auto damage = fire_shell_at_target( itype_id( "shot_bird" ), {} );
+    const auto damage = fire_shells_at_target( itype_id( "shot_bird" ), {} );
 
     CHECK( damage > 0 );
 }
 
 TEST_CASE( "birdshot pellets are much worse against armor", "[ranged][balance]" )
 {
-    const auto unarmored_damage = fire_shell_at_target( itype_id( "shot_bird" ), {} );
-    const auto armored_damage = fire_shell_at_target( itype_id( "shot_bird" ),
+    const auto unarmored_damage = fire_shells_at_target( itype_id( "shot_bird" ), {} );
+    const auto armored_damage = fire_shells_at_target( itype_id( "shot_bird" ),
     { itype_id( "survivor_suit" ), itype_id( "depowered_helmet" ) } );
 
     CHECK( unarmored_damage > armored_damage );
@@ -175,7 +192,7 @@ TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
            "[ranged][projectile]" )
 {
     clear_all_state();
-    rng_set_engine_seed( 0 );
+    rng_set_engine_seed( deterministic_rng_seeds.front() );
     REQUIRE( get_map().has_zlevels() );
 
     auto &shooter = get_player_character();

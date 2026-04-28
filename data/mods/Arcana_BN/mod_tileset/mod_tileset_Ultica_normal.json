@@ -1,0 +1,28 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UltimateCataclysm", "UltimateCataclysmDemo" ],
+    "tiles-new": [
+      {
+        "file": "mod_tileset/arcana_expan_ultica_normal.png",
+        "tiles": [
+          { "id": "satchel_eternity", "fg": 0 },
+          { "id": "thunder_sigil", "fg": 1 },
+          { "id": "bloodscourge", "fg": 2 },
+          { "id": "hand_of_armok", "fg": 3 },
+          { "id": "scourge_staff", "fg": 4 },
+          { "id": "sun_sword", "fg": 5 },
+          { "id": "staff_druidic", "fg": 6 },
+          { "id": "verge_meteoric", "fg": 7 },
+          { "id": "f_blade_upright", "fg": 8 },
+          { "id": "ethereal_crossbow", "fg": 9 },
+          { "id": "hexenhammer", "fg": 10 },
+          { "id": "fd_veil_light", "fg": 11 },
+          { "id": "tr_portal_crystallized", "fg": 12 }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32
+      }
+    ]
+  }
+]

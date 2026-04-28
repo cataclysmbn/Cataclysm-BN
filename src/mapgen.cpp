@@ -367,6 +367,11 @@ class mapgen_factory
             result.insert( "lab_1side" );
             result.insert( "lab_4side" );
             result.insert( "lab_finale_1level" );
+            // Stuff used in lua code only
+            // Yes a mod could blow something up...
+            // But it makes itself widely known
+            result = cata::run_hooks( "on_make_mapgen_factory_list", [&]( auto & params ) { params["results"] = &result; } ).get_or( "results",
+                    result );
             return result;
         }
 
@@ -447,6 +452,26 @@ static mapgen_factory oter_mapgen;
 std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_json_nested>> >
         nested_mapgen;
 std::map<std::string, std::vector<std::unique_ptr<update_mapgen_function_json>> > update_mapgen;
+
+void call_mapgen_function( std::string name, mapgendata &dat, bool nested, point pos )
+{
+    if( nested ) {
+        const auto iter = nested_mapgen.find( name );
+        if( iter == nested_mapgen.end() ) {
+            debugmsg( "Unknown nested mapgen function id %s", name.c_str() );
+            return;
+        }
+
+        // A second roll? Let's allow it for now
+        const auto &ptr = iter->second.pick();
+        if( ptr == nullptr ) {
+            return;
+        }
+        ( *ptr )->nest( dat, pos );
+    } else {
+        oter_mapgen.generate( dat, name );
+    }
+}
 
 /*
  * setup mapgen_basic_container::weights_ which mapgen uses to diceroll. Also setup mapgen_function_json
@@ -4758,7 +4783,13 @@ void map::draw_lab( mapgendata &dat )
                    is_ot_match( "ants", dat.west(), ot_match_type::contains );
 
         if( ice_lab ) {
-            int temperature = -20 + 15 * ( dat.zlevel() );
+            int temperature;
+
+            if( dat.zlevel() == 0 ) {
+                temperature = -20;
+            } else {
+                temperature = static_cast<int>( -20.0 * log( -1 * dat.zlevel() ) - 45.0 );
+            }
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
             set_temperature( p2 + point( 0, SEEY ), temperature );
@@ -5433,7 +5464,13 @@ void map::draw_lab( mapgendata &dat )
         tower_lab = is_ot_match( "tower_lab", terrain_type, ot_match_type::prefix );
 
         if( ice_lab ) {
-            int temperature = -20 + 30 * dat.zlevel();
+            int temperature;
+
+            if( dat.zlevel() == 0 ) {
+                temperature = -20;
+            } else {
+                temperature = static_cast<int>( -20.0 * log( -1 * dat.zlevel() ) - 45.0 );
+            }
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
             set_temperature( p2 + point( 0, SEEY ), temperature );
@@ -6809,6 +6846,8 @@ void map::rotate( int turns, const bool setpos_safe )
         swap_submaps( p, p4 );
     }
 
+    clear_vehicle_list( abs_sub.z );
+    reset_vehicle_cache( );
     // Then rotate them and recalculate vehicle positions.
     for( int j = 0; j < 2; ++j ) {
         for( int i = 0; i < 2; ++i ) {
@@ -6824,6 +6863,7 @@ void map::rotate( int turns, const bool setpos_safe )
             update_vehicle_list( sm, abs_sub.z() );
         }
     }
+    clear_vehicle_list( abs_sub.z );
     reset_vehicle_cache( );
 
     // rotate zones

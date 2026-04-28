@@ -165,7 +165,7 @@
   {
     "type": "item_group",
     "id": "mass_grave_casings",
-    "items": [ [ "223_casing", 60 ], [ "308_casing", 20 ], [ "shot_hull", 20 ] ]
+    "items": [ [ "9mm_casing", 10 ], [ "223_casing", 50 ], [ "308_casing", 20 ], [ "shot_hull", 20 ] ]
   },
   {
     "type": "item_group",

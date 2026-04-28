@@ -1,0 +1,453 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER",
+    "responses": [
+      {
+        "text": "What do you know of other practices, other strange powers?",
+        "topic": "TALK_BONE_SEER_POWER",
+        "condition": {
+          "and": [
+            { "u_has_trait": "seer_mark" },
+            {
+              "u_has_any_trait": [
+                "PROF_ARCANIST",
+                "PROF_ARCANIST2",
+                "PROF_CLEANSINGFLAME",
+                "PROF_CLEANSINGFLAME2",
+                "PROF_SANGUINE",
+                "PROF_CHALICE",
+                "PROF_CHALICE2",
+                "THRESH_VEIL",
+                "THRESH_DRAGONBLOOD"
+              ]
+            },
+            { "not": { "u_has_var": "gave_monsterpart", "type": "dialogue", "context": "beyond", "value": "yes" } }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER",
+    "dynamic_line": "I know not of what you ask.  I merely gather the bones to hear their song.  There are perhaps other verses to gather, but they can lead one astray.",
+    "responses": [
+      {
+        "text": "There is much I can teach, as recompense for the lesson you have taught me.  My master wishes that I spread His word.",
+        "condition": { "u_has_trait": "THRESH_VEIL" },
+        "switch": true,
+        "topic": "TALK_BONE_SEER_POWER_CHALICE"
+      },
+      {
+        "text": "Morbid as your practice is, there is no actual magic in them.  This is a mere religious rite.",
+        "condition": { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ] },
+        "switch": true,
+        "topic": "TALK_BONE_SEER_POWER_CLEANSINGFLAME"
+      },
+      {
+        "text": "You seek power in life.  Whether it be bones, flesh, or blood, there are far greater truths to learn.",
+        "condition": { "u_has_trait": "PROF_SANGUINE" },
+        "switch": true,
+        "topic": "TALK_BONE_SEER_POWER_SANGUINE"
+      },
+      {
+        "text": "Look at me.  You have surely seen mutants before, but there is something deeper than that here.  Power from beyond this world made me this way.",
+        "condition": { "u_has_trait": "THRESH_DRAGONBLOOD" },
+        "topic": "TALK_BONE_SEER_POWER_DRAGONBLOOD"
+      },
+      {
+        "text": "Perhaps there are other things to learn from studying the bones, especially of things touched by the Beyond.",
+        "topic": "TALK_BONE_SEER_POWER_GENERAL"
+      },
+      { "text": "Nevermind.  It's nothing.", "topic": "TALK_BONE_SEER" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_CHALICE",
+    "dynamic_line": "I have my beliefs that I keep close to heart, but I will not deny you your vision.  So long as it does not impede my work.  What purpose do you pursue?",
+    "responses": [
+      { "text": "I would ask to show you the potential within The Beyond.", "topic": "TALK_BONE_SEER_POWER_POTENTIAL" },
+      {
+        "text": "Do you know of the powers from Beyond, that seek their myriad goals?",
+        "topic": "TALK_BONE_SEER_POWER_MYRIAD"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_POTENTIAL",
+    "dynamic_line": "There is potential within many things, but few things hold the same permanence.  I know nothing of whatever it is you seek, only that it is beholden to the cycle in ways that the bones are not.",
+    "responses": [
+      {
+        "text": "Perhaps I could show you something that would enlighten you, as you have enlightened me.",
+        "topic": "TALK_BONE_SEER_POWER_OFFER"
+      },
+      { "text": "So you claim.  Perhaps another time, I will show you the hidden truths.", "topic": "TALK_BONE_SEER" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_OFFER",
+    "dynamic_line": "Is that so?  I'm listening, then.",
+    "responses": [
+      {
+        "text": "What do you make of this?  It's a fang from a monster that doesn't belong in this world, made of otherworldly crystal.",
+        "condition": { "u_has_item": "graboid_fang" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_GRABOID_FANG"
+      },
+      {
+        "text": "What about this?  A fang torn from an otherworldly monster.",
+        "condition": { "u_has_item": "monster_fang" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_MONSTER_FANG"
+      },
+      {
+        "text": "These bones are a twisted knot of otherworldly presence.  Would this prove my point?",
+        "condition": { "u_has_item": "bone_twisted" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_BONE_TWISTED"
+      },
+      {
+        "text": "These are the finger bones of a creature touched by The Beyond.  Would that suffice?",
+        "condition": { "u_has_item": "gracken_knuckles" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_GRACKEN_KNUCKLES"
+      },
+      {
+        "text": "What do you make of this?  It's a root with the otherworldly woven into its every fiber.",
+        "condition": { "u_has_item": "inflorescent_root" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_ORGANIC"
+      },
+      {
+        "text": "This is a bloom touched by the Beyond.  Would this be adequate?",
+        "condition": { "u_has_item": "triffid_queen_flower" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_ORGANIC"
+      },
+      {
+        "text": "This is a spike of otherworldly living metal, would this show you something new?",
+        "condition": { "u_has_item": "iron_thorn" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_ORGANIC"
+      },
+      {
+        "text": "This twisted barb was taken from something that does not belong in this world.",
+        "condition": { "u_has_item": "dermatik_sting" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_ORGANIC"
+      },
+      {
+        "text": "This crystal fragment has an otherworldly presence to it.  What do you make of it?",
+        "condition": { "u_has_item": "vortex_shard" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_INORGANIC"
+      },
+      {
+        "text": "This piece of crystal is some sort of unnatural amber.  Would this work?",
+        "condition": { "u_has_item": "blob_gem" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_INORGANIC"
+      },
+      {
+        "text": "This piece of crystal was shed from an otherworldly creature, would it be sufficient?",
+        "condition": { "u_has_item": "monster_tear" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_INORGANIC"
+      },
+      {
+        "text": "This dark gem holds the unliving presence of the creature it was taken from.  Show me what you see.",
+        "condition": { "u_has_item": "shadow_gem" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_INORGANIC"
+      },
+      {
+        "text": "This fragment of hide is tainted with otherworldly presence.  What do you make of it?",
+        "condition": { "u_has_item": "wyrmskin_piece" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_ORGANIC"
+      },
+      {
+        "text": "This piece of an otherworldly creature's hide still reflects the influence of the Beyond.",
+        "condition": { "u_has_item": "iridescent_plate" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_ORGANIC"
+      },
+      {
+        "text": "This stone is etched with a living record of the supernatural influence that shaped it.",
+        "condition": { "u_has_item": "engraved_stone" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_INORGANIC"
+      },
+      {
+        "text": "Here.  A stony heart ripped from a creature that was pulled from another world.  Many people died for this, what does it sing to you?",
+        "condition": { "u_has_item": "draconic_heart" },
+        "topic": "TALK_BONE_SEER_POWER_OFFER_INVALID_DRAGON"
+      },
+      { "text": "I'm not sure what would be fitting.  Another time perhaps.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_OFFER_GRABOID_FANG",
+    "dynamic_line": "How peculiar.  Normally I would consider this to be foolish, for what songs can stone sing?  But I can hear its whispers, it's like a song in another language, yet it sings like bones all the same.  I don't know how I could repay you for such a thing, but would you be willing to part with it?",
+    "responses": [
+      {
+        "text": "Go ahead.  It's yours.",
+        "effect": [
+          { "u_consume_item": "graboid_fang" },
+          { "u_add_var": "gave_monsterpart", "type": "dialogue", "context": "beyond", "value": "yes" }
+        ],
+        "topic": "TALK_BONE_SEER_POWER_STUDY"
+      },
+      { "text": "I can't part with it just yet.  I'm sorry.", "topic": "TALK_BONE_SEER_POWER_REFUSAL" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_STUDY",
+    "dynamic_line": "Thank you.  I will need some time to gather its songs.  Perhaps you are correct, that there is more to this than what I have witnessed.  These verses are so far beyond my experience, there is surely great strength in them…",
+    "responses": [
+      { "text": "We still have much to discuss, if you don't mind.", "topic": "TALK_BONE_SEER" },
+      { "text": "You're welcome.  That's all for now, then.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_REFUSAL",
+    "dynamic_line": "I see.  You have my curiosity, regardless.  Another time, then.  I need to hear what you have heard, see if there is merit in the verses these peculiar bones sing.",
+    "responses": [ { "text": "We shall see.", "topic": "TALK_BONE_SEER" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_OFFER_MONSTER_FANG",
+    "dynamic_line": "Ivory, more transient and fleeting than bones, but aligned all the same.  I can hear the whispered verses though, this thing sings with a resonance I've never heard before.  If there is any truth to the strange things you've said, I must find out for myself.  Please, I don't think I can repay you properly for this, but would you be willing to part with that?",
+    "responses": [
+      {
+        "text": "Go ahead.  It's yours.",
+        "effect": [
+          { "u_consume_item": "monster_fang" },
+          { "u_add_var": "gave_monsterpart", "type": "dialogue", "context": "beyond", "value": "yes" }
+        ],
+        "topic": "TALK_BONE_SEER_POWER_STUDY"
+      },
+      { "text": "I can't part with it just yet.  I'm sorry.", "topic": "TALK_BONE_SEER_POWER_REFUSAL" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_OFFER_BONE_TWISTED",
+    "dynamic_line": "Even among the shambling undead, I have never seen such discord and strife within their bones.  You can practically read the verses etched into every tangled surface, what could create such a thing?  Please, you must give it to me.  I don't know if I could repay you for such a kindness…",
+    "responses": [
+      {
+        "text": "Go ahead.  It's yours.",
+        "effect": [
+          { "u_consume_item": "bone_twisted" },
+          { "u_add_var": "gave_monsterpart", "type": "dialogue", "context": "beyond", "value": "yes" }
+        ],
+        "topic": "TALK_BONE_SEER_POWER_STUDY"
+      },
+      { "text": "I can't part with it just yet.  I'm sorry.", "topic": "TALK_BONE_SEER_POWER_REFUSAL" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_OFFER_GRACKEN_KNUCKLES",
+    "dynamic_line": "Ah, this is a very traditional manner of hearing the songs, of grasping the power within.  But these hum with verses I have never heard before.  Is this true, that there is something more to learn from these bones?  I cannot repay you for this, but please.  If you would be willing to part with them…",
+    "responses": [
+      {
+        "text": "Go ahead.  It's yours.",
+        "effect": [
+          { "u_consume_item": "gracken_knuckles" },
+          { "u_add_var": "gave_monsterpart", "type": "dialogue", "context": "beyond", "value": "yes" }
+        ],
+        "topic": "TALK_BONE_SEER_POWER_STUDY"
+      },
+      { "text": "I can't part with it just yet.  I'm sorry.", "topic": "TALK_BONE_SEER_POWER_REFUSAL" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_OFFER_INVALID_INORGANIC",
+    "dynamic_line": "Perhaps there is something akin to life in this petrified thing, something akin to a song.  But it is a distant, hushed song.  Atonal are the melodies of that which never knew life in the first place.  I'm afraid I can not do anything with this.",
+    "responses": [ { "text": "…", "topic": "TALK_BONE_SEER" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_OFFER_INVALID_ORGANIC",
+    "dynamic_line": "Though it sings, and with a most peculiar melody, it is a fleeting song.  The hushed tones of flesh and skin, of bark and rotting wood.  Such songs are too transient and fleeting to be of value to me.",
+    "responses": [ { "text": "…", "topic": "TALK_BONE_SEER" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_OFFER_INVALID_DRAGON",
+    "dynamic_line": "Interesting, but transient and fleeting as songs of flesh are.  Even if it is at once stout and echoing like songs of stone, yet carries the melody living flesh possesses, I do not think it would last as the melodies of bone do.  Even if I did wish to learn its song, I feel you may find more use for it than I would.  It would not be right to ask you to part with this thing.",
+    "responses": [ { "text": "Very well then.", "topic": "TALK_BONE_SEER" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_MYRIAD",
+    "dynamic_line": "Of that, I am sure even though I do not know their names.  But they are all beholden to the cycles that we are trapped in.",
+    "responses": [
+      { "text": "I could show you something you might be able to learn from.", "topic": "TALK_BONE_SEER_POWER_OFFER" },
+      { "text": "Perhaps you're right.  We'll see, in time.", "topic": "TALK_BONE_SEER" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_CLEANSINGFLAME",
+    "dynamic_line": "This is more than ritual.  You have heard the songs, haven't you?  What more do you need?",
+    "responses": [
+      { "text": "I could show you something that might explain what I speak of.", "topic": "TALK_BONE_SEER_POWER_OFFER" },
+      { "text": "Nevermind.  There's no point in arguing over it.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_SANGUINE",
+    "dynamic_line": "I do not gather the strength in these bones, amass the Song, simply out of lust for power.  This is my duty, to gather the verses, together with my Kindred.",
+    "responses": [
+      {
+        "text": "There is something I could show you, that makes the power of your so-called song look like child's play.",
+        "topic": "TALK_BONE_SEER_POWER_OFFER"
+      },
+      {
+        "text": "I have no time to spare for disproving your delusions.  I've nothing more to say to you.",
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_DRAGONBLOOD",
+    "dynamic_line": "Whatever form your flesh takes, underneath your power is the same as it always has been.  As it always shall be.  No matter which face you bear, whose name you answer to, the bones are of the same substance.  From now, until this cycle is broken.",
+    "responses": [
+      {
+        "text": "I don't think my bones are the same as they were, as different as they are now, along with everything else.",
+        "topic": "TALK_BONE_SEER_POWER_DRAGONBLOOD_SMARTASS"
+      },
+      { "text": "But, there is something more to this.  I could show you.", "topic": "TALK_BONE_SEER_POWER_OFFER" },
+      {
+        "text": "You know nothing of true power.  I have no interest in trying to talk you out of your folly.",
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_DRAGONBLOOD_SMARTASS",
+    "dynamic_line": "You think too literally of it.  If your way of thinking about it was true, then to lose a limb would make you of different substance.  Underneath it all, it is the song being sung which transcends your petty distinctions.",
+    "responses": [
+      {
+        "text": "Fine then.  But maybe I still have something that would prove my point.",
+        "topic": "TALK_BONE_SEER_POWER_OFFER"
+      },
+      { "text": "…", "topic": "TALK_BONE_SEER" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_POWER_GENERAL",
+    "dynamic_line": "Perhaps this is true.  But underneath the pollution that undeath brings, the bones still speak their songs.  It is harder for the inexperienced to decipher them, but their true nature is fundamentally unchanged.  I'm curious though, what lesson do you think remains unlearned?",
+    "responses": [
+      { "text": "I might have something that would explain things better.", "topic": "TALK_BONE_SEER_POWER_OFFER" },
+      { "text": "Another time perhaps, I will need to think on this.", "topic": "TALK_BONE_SEER" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_END",
+    "responses": [
+      {
+        "text": "Perhaps this is true.  But what certainty do you have that any mortal hand can end this cycle?",
+        "condition": { "u_has_trait": "THRESH_VEIL" },
+        "topic": "TALK_BONE_SEER_CYCLE_PARAGON"
+      },
+      {
+        "text": "You speak a dangerous folly, destruction of the world.",
+        "condition": { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ] },
+        "topic": "TALK_BONE_SEER_CYCLE_CLEANSINGFLAME"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_CYCLE_PARAGON",
+    "dynamic_line": "I am not alone in this task.  No matter how many deaths my flesh endures, I will carry on my work.  As many times as it takes.  Interesting, however, that you speak as though there are things beyond mortal means, unfazed by the cycle.  The cycle is all-encompassing.  All that may live, whether or not they were ever born, is beholden to this.",
+    "responses": [
+      {
+        "text": "There is another who has assigned a task of great purpose.  Perhaps in time, our missions will align.",
+        "condition": { "u_has_trait": "seer_mark" },
+        "switch": true,
+        "topic": "TALK_BONE_SEER_CYCLE_PARAGON_MARKED"
+      },
+      {
+        "text": "I have a mission of my own, we'll see if it leads us down the same path.",
+        "switch": true,
+        "default": true,
+        "topic": "TALK_BONE_SEER_CYCLE_PARAGON_OTHER"
+      },
+      { "text": "We shall see if this holds true.", "topic": "TALK_BONE_SEER" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_CYCLE_PARAGON_MARKED",
+    "dynamic_line": {
+      "u_has_var": "gave_monsterpart",
+      "type": "dialogue",
+      "context": "beyond",
+      "value": "yes",
+      "no": "One day, in this flesh or in another cycle, we shall see.  Now, there is work I must tend to.",
+      "yes": "You have shown me fascinating verses within those peculiar bones, so we shall see.  I will listen to the Song that your present has offered me, and we'll see where it leads.  If your patron, whoever he may be, truly has the means to break the cycle, then perhaps this is his way of bringing this cycle to greater heights, to bring us closer to amassing the Song…"
+    },
+    "responses": [ { "text": "Very well.  We shall see.", "topic": "TALK_BONE_SEER" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_CYCLE_PARAGON_OTHER",
+    "dynamic_line": "I do not know what purpose you pursue this task, but I am reluctant to believe this.  There is much work to be done, and many false omens to lead us astray.",
+    "responses": [
+      { "text": "If you insist.  There is more to discuss, however.", "topic": "TALK_BONE_SEER" },
+      { "text": "So you say.  That is all for now, then.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_BONE_SEER_CYCLE_CLEANSINGFLAME",
+    "dynamic_line": "We cling to our lives, even knowing we have suffered a thousand deaths.  Only time will tell what future awaits us when this cycle is broken, but is it not better for us, that we be freed of this torment?",
+    "responses": [
+      { "text": "You will find nothing but misery, pursuing this madness.  I will not stop you.", "topic": "TALK_DONE" },
+      {
+        "text": "[ATTACK] I cannot allow you to continue this.  If there is any truth to your delusions, it will only bring more suffering.",
+        "effect": "insult_combat",
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_MISSION_OFFER_SEER",
+    "type": "talk_topic",
+    "responses": [
+      {
+        "text": "This reeks of blood magic.  Do you even understand what you are asking of me?",
+        "condition": {
+          "and": [
+            { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ] },
+            {
+              "not": { "u_has_var": "blood_magic_query", "type": "dialogue", "context": "blood_magic", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_MISSION_SEER_BLOOD_MAGIC"
+      }
+    ]
+  },
+  {
+    "id": "TALK_MISSION_SEER_BLOOD_MAGIC",
+    "type": "talk_topic",
+    "dynamic_line": "I suspect it is you who does not understand.  This is understandable, but this is why I offer you this chance to learn the verses the bones seek to sing.  I know not of what you called it, but this is not a thing of blood.  Blood is an impure thing, far too transient to offer worthy songs.  It is shed wantonly, and does not hold the permanence that bones carry with them.",
+    "//": "This is framed in such a way that it idiotproofs the dialogue, because TALK_NONE can potentially put you into a loop.",
+    "responses": [
+      {
+        "text": "If you insist, we'll see.  Explain again what you're asking of me.",
+        "topic": "TALK_MISSION_OFFER_SEER",
+        "effect": { "u_add_var": "blood_magic_query", "type": "dialogue", "context": "blood_magic", "value": "yes" }
+      },
+      { "text": "I need time to consider this.", "topic": "TALK_DONE" },
+      {
+        "text": "[ATTACK] You are treading dangerously close to things you do not truly understand.  I can't let you corrupt anyone else.  Ecce, sanguinem magum…",
+        "effect": "insult_combat",
+        "topic": "TALK_DONE"
+      }
+    ]
+  }
+]

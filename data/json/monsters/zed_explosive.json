@@ -195,7 +195,18 @@
     "vision_night": 3,
     "harvest": "exempt",
     "starting_ammo": { "bot_c4_hack": 2, "bot_flashbang_hack": 3, "bot_gasbomb_hack": 3, "bot_grenade_hack": 10 },
-    "special_attacks": [ [ "GRENADIER", 6 ] ],
+    "special_attacks": [
+      {
+        "type": "deployer",
+        "deployables": {
+          "bot_c4_hack": { "message": "The zombie grenadier deploys a c4 hack", "chance": 1, "ammo_percentage": 0.5, "range": 5 },
+          "bot_flashbang_hack": { "message": "The zombie grenadier deploys a flashbang hack", "chance": 1, "ammo_percentage": 0.75, "range": 10 },
+          "bot_gasbomb_hack": { "message": "The zombie grenadier deploys a gasbomb hack", "chance": 1, "ammo_percentage": 0.5, "range": 10 },
+          "bot_grenade_hack": { "message": "The zombie grenadier deploys a grenade hack", "chance": 1, "ammo_percentage": 1.0, "range": 10 }
+        },
+        "cooldown": 6
+      }
+    ],
     "death_drops": { "subtype": "collection", "groups": [ [ "mon_zombie_soldier_death_drops", 100 ], [ "mon_zombie_grenadier", 100 ] ] },
     "death_function": [ "DETONATE" ],
     "burn_into": "mon_zombie_scorched",
@@ -231,7 +242,24 @@
     "vision_night": 3,
     "harvest": "exempt",
     "starting_ammo": { "bot_c4_hack": 10, "bot_flashbang_hack": 10, "bot_gasbomb_hack": 10, "bot_grenade_hack": 20, "bot_mininuke_hack": 1 },
-    "special_attacks": [ [ "GRENADIER_ELITE", 3 ] ],
+    "special_attacks": [
+      {
+        "type": "deployer",
+        "deployables": {
+          "bot_c4_hack": { "message": "The elite zombie grenadier deploys a c4 hack", "chance": 1, "ammo_percentage": 0.6, "range": 5 },
+          "bot_flashbang_hack": { "message": "The elite zombie grenadier deploys a flashbang hack", "chance": 1, "ammo_percentage": 0.8, "range": 10 },
+          "bot_gasbomb_hack": { "message": "The elite zombie grenadier deploys a gasbomb hack", "chance": 1, "ammo_percentage": 0.7, "range": 10 },
+          "bot_grenade_hack": { "message": "The elite zombie grenadier deploys a grenade hack", "chance": 1, "ammo_percentage": 1.0, "range": 10 },
+          "bot_mininuke_hack": {
+            "message": "A klaxon blares from the elite zombie grenadier and you see a mininuke hack come out",
+            "chance": 50,
+            "ammo_percentage": 0.5,
+            "range": 2
+          }
+        },
+        "cooldown": 3
+      }
+    ],
     "death_drops": {
       "subtype": "collection",
       "groups": [ [ "mon_zombie_soldier_death_drops", 100 ], [ "mon_zombie_grenadier_elite", 100 ] ]

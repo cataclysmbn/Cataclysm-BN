@@ -242,6 +242,75 @@
   {
     "type": "mapgen",
     "method": "json",
+    "nested_mapgen_id": "fema_range",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "....................",
+        ".||||||||||||||||||.",
+        ".|NNNNNNNNNNNNNNNN|.",
+        ".%!A!A!A!!!!A!A!A!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%!!!!!!!!!!!!!!!!%.",
+        ".%TTTTTTT!!TTTTTTT%.",
+        ".%                %.",
+        ".%                %.",
+        ".%%%%%%%%..%%%%%%%%.",
+        "...................."
+      ],
+      "palettes": [ "military_camp" ],
+      "set": [ { "point": "terrain", "id": "t_pit_shallow", "x": [ 2, 17 ], "y": [ 4, 14 ], "repeat": [ 0, 6 ] } ],
+      "terrain": { "|": "t_brick_wall", " ": "t_region_groundcover" },
+      "furniture": { "A": "f_target", "N": "f_sandbag_wall" },
+      "//": "Not a mass grave but fits for spawning a distribution of random military casings",
+      "items": { " ": { "item": "mass_grave_casings", "chance": 5, "repeat": 2 }, "T": { "item": "military_range_guns", "chance": 5 } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "fema_helipad",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "....................",
+        ".ffffffFFFFFFFfffff.",
+        ".f                f.",
+        ".f                f.",
+        ".f                f.",
+        ".f                f.",
+        ".f    ~~    ~~    f.",
+        ".F    ~~    ~~    F.",
+        ".F    ~~    ~~    F.",
+        ".F    ~~~~~~~~    F.",
+        ".F    ~~~~~~~~    F.",
+        ".F    ~~    ~~    F.",
+        ".F    ~~    ~~    F.",
+        ".f    ~~    ~~    f.",
+        ".f                f.",
+        ".f                f.",
+        ".f                f.",
+        ".f                f.",
+        ".ffffffFFFFFFffffff.",
+        "...................."
+      ],
+      "palettes": [ "military_camp" ],
+      "terrain": { " ": "t_pavement", "~": "t_pavement_y" },
+      "place_vehicles": [ { "vehicle": "helicopters", "x": 9, "y": 7, "chance": 25, "fuel": 0, "status": 1, "rotation": 270 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "fema_mess_hall",
     "object": {
       "mapgensize": [ 20, 20 ],
@@ -493,6 +562,51 @@
         "C": { "item": "dissection", "chance": 90, "repeat": [ 0, 3 ] }
       },
       "monsters": { ",": { "monster": "GROUP_LAB_FEMA", "chance": 1, "density": 0.002 } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "fema_command_center",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "....................",
+        "....................",
+        "..|-----9[[------|..",
+        "..|              |..",
+        "..|              |..",
+        "..|-[----++----+-|..",
+        "..|l  |      |   |..",
+        "..|l  | cTTc |   |..",
+        "..|XX | cTTc |   |..",
+        "..|XX |      |   |..",
+        "..|---||@@@@||-+-|..",
+        "..|8             |..",
+        "..|8             |..",
+        "..|8 ??????????  |..",
+        "..|8 DDD6666DDD  |..",
+        "..|8             |..",
+        "..|8 7777777777  |..",
+        "..|--------------|..",
+        "....................",
+        "...................."
+      ],
+      "palettes": [ "military_camp", "military_camp_interior" ],
+      "terrain": {
+        "9": "t_card_military",
+        "7": "t_floor",
+        "8": "t_floor",
+        "?": "t_floor",
+        "l": "t_floor",
+        "[": "t_door_metal_locked",
+        "+": "t_door_metal_c",
+        "-": "t_concrete_wall",
+        "|": "t_concrete_wall"
+      },
+      "furniture": { "?": [ [ "f_null", 2 ], "f_chair" ], "7": "f_control_station", "8": "f_server" },
+      "items": { "X": { "item": "mil_armor", "chance": 50, "repeat": 2 }, "T": { "item": "maps_milspec", "chance": 10 } },
+      "monsters": { " ": { "monster": "GROUP_MIL_BASE", "chance": 1, "density": 0.002 } }
     }
   }
 ]

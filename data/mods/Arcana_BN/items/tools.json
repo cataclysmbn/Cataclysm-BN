@@ -1,0 +1,1895 @@
+[
+  {
+    "id": "tindalos_whistle",
+    "copy-from": "tindalos_whistle",
+    "type": "TOOL",
+    "name": { "str": "Whistle of Tindalos", "str_pl": "Whistles of Tindalos" },
+    "description": "This is a small whistle, resembling a dog whistle if not for the unusual markings and exotic material it's made out of.  The strange sound it makes is clearly not meant to call canines, or anything native to this dimension for that matter.",
+    "initial_charges": 1,
+    "max_charges": 1,
+    "charges_per_use": 1
+  },
+  {
+    "id": "portal",
+    "copy-from": "portal",
+    "type": "TOOL",
+    "name": { "str": "portal generator" },
+    "initial_charges": 2,
+    "max_charges": 2,
+    "charges_per_use": 1
+  },
+  {
+    "id": "bot_vortex",
+    "//": "ID retained to avoid any weirdness.",
+    "type": "TOOL",
+    "name": { "str": "Archon magic" },
+    "description": "Spawns a shadow, used by the Host of the Archon.  This is a bug if you find one of these.",
+    "material": [ "essencemat" ],
+    "symbol": ",",
+    "color": "cyan",
+    "use_action": { "type": "place_monster", "monster_id": "mon_shadow_summoned", "place_randomly": true }
+  },
+  {
+    "id": "bot_shadows_fake",
+    "//": "ID retained to avoid any weirdness.",
+    "type": "TOOL",
+    "name": { "str": "Archon magic" },
+    "description": "Spawns a fake shadow, used by the Seraphic Shade.  This is a bug if you find one of these.",
+    "material": [ "essencemat" ],
+    "symbol": ",",
+    "color": "cyan",
+    "use_action": { "type": "place_monster", "monster_id": "mon_shadow_summoned_fake", "place_randomly": true }
+  },
+  {
+    "id": "bot_seraphic_mimic",
+    "type": "TOOL",
+    "name": { "str": "Archon mimic" },
+    "description": "Spawns a copy of the seraphic shade.  This is a bug if you find one of these.",
+    "material": [ "essencemat" ],
+    "symbol": ",",
+    "color": "cyan",
+    "use_action": { "type": "place_monster", "monster_id": "mon_seraphic_shade_fake", "place_randomly": true }
+  },
+  {
+    "id": "stinger_flute",
+    "type": "TOOL",
+    "copy-from": "bone_flute",
+    "name": { "str": "stinger flute" },
+    "description": "A polished flute with five finger holes, carved from the stinger of some exotic monstrosity.  Should be safe to put up to your mouth, probably.",
+    "material": [ "flesh" ],
+    "color": "light_gray",
+    "//": "As noted with wearable trinkets made from monsterparts, these are post-cata only.",
+    "price_postapoc": "250 cent",
+    "use_action": {
+      "type": "musical_instrument",
+      "volume": 12,
+      "fun": -6,
+      "fun_bonus": 2,
+      "speed_penalty": 10,
+      "description_frequency": 20,
+      "player_descriptions": [
+        "You play a little tune on your flute.",
+        "You play an eerie piece on your flute.",
+        "You play a piece on your flute that sounds downright otherworldly.",
+        "Your flute resounds with the piping of a terrible swarm."
+      ]
+    }
+  },
+  {
+    "id": "charm_bone",
+    "type": "GENERIC",
+    "name": { "str": "bone charm" },
+    "description": "A small talisman made out of some form of otherworldly bone or ivory, carved with equally unearthly iconography.",
+    "weight": "38 g",
+    "volume": "50 ml",
+    "price_postapoc": "2 USD",
+    "material": [ "bone" ],
+    "symbol": ",",
+    "looks_like": "small_relic",
+    "color": "white",
+    "use_action": "MEDITATE"
+  },
+  {
+    "id": "charm_bone_empowered",
+    "copy-from": "charm_bone",
+    "sub": "charm_bone",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "sanctified bone charm" },
+    "description": "A small talisman made out of some form of otherworldly bone or ivory, carved with equally unearthly iconography.  Elemental magic has been woven into its structure, converting it into a primitive magic item.  Using it will heavily damage and paralyze any hostiles within 4 tiles.  It will take a long time to recharge after each use, and activating it also fatigues the user.  It can hold up to 5 uses, each use takes 20 hours to charge.",
+    "price_postapoc": "20 USD",
+    "max_charges": 100,
+    "charges_per_use": 20,
+    "flags": [ "MAGIC_FOCUS" ],
+    "relic_data": { "recharge_scheme": [ { "type": "time", "req": "none", "interval": "1 h", "rate": 1 } ] },
+    "//": "Flame talisman and earth talisman.  Each use has power equivalent to 200 mana.",
+    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_charm_bone_empowered", "no_fail": true, "level": 0 }
+  },
+  {
+    "id": "stinger_flute_empowered",
+    "copy-from": "stinger_flute",
+    "sub": "stinger_flute",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "quickened stinger flute" },
+    "description": "A polished flute with five finger holes, carved from the stinger of some exotic monstrosity.  Elemental magic has been woven into its structure, converting it into a primitive magic item.  Using it will greatly reduce movecosts and enhance evasion.  Stamina and attack speed are unaffected, however.  It will take a long time to recharge after each use, and activating it also fatigues the user.  It can hold up to 5 uses, each use takes 40 hours to charge.",
+    "price_postapoc": "25 USD",
+    "max_charges": 200,
+    "charges_per_use": 40,
+    "flags": [ "MAGIC_FOCUS" ],
+    "relic_data": { "recharge_scheme": [ { "type": "time", "req": "none", "interval": "1 h", "rate": 1 } ] },
+    "//": "Water talisman and air talisman.  Each use has power equivalent to 400 mana.",
+    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_stinger_flute_empowered", "no_fail": true, "level": 0 }
+  },
+  {
+    "id": "offering_chalice",
+    "type": "TOOL",
+    "name": { "str": "offering chalice" },
+    "description": "This is a strange chalice made of gold, engraved all over with some unfamiliar text.  It is filled with a thick black liquid that you seem unable to pour out.  Using it will allow you to perform a ritual that can convert your own life force into blood essence.  Doing so will take 15 minutes, inflicting harm upon your body at the end, as well as dire consequences if overused…",
+    "weight": "2500 g",
+    "volume": "1 L",
+    "price": "1600 USD",
+    "price_postapoc": "30 USD",
+    "to_hit": -1,
+    "bashing": 6,
+    "material": [ "gold" ],
+    "symbol": ";",
+    "looks_like": "small_relic",
+    "color": "yellow",
+    "flags": [ "MAGIC_FOCUS", "USE_PLAYER_ENERGY", "NO_SALVAGE" ],
+    "relic_data": {
+      "passive_effects": [ { "has": "WIELD", "condition": "ALWAYS", "values": [ { "value": "MANA_REGEN", "multiply": 0.25 } ] } ]
+    },
+    "use_action": [
+      "MEDITATE",
+      {
+        "type": "cast_spell",
+        "spell_id": "arcana_item_chalice_offering",
+        "no_fail": true,
+        "need_wielding": true,
+        "level": 0
+      }
+    ]
+  },
+  {
+    "id": "blood_athame",
+    "type": "TOOL",
+    "//": "By necessity can't yet define this to use copy-from, as qualities will break it.",
+    "category": "weapons",
+    "weapon_category": [ "KNIVES" ],
+    "name": { "str": "silver athame" },
+    "description": "An ornate silver dagger, seemingly made for ritual purposes.  It seems sharper than silver has any right to be.  It can be used to perform a ritual converting your life force into blood essence.  Doing so will take 5 minutes, inflicting blood loss and damage at the end, as well as potential consequences if overused…",
+    "weight": "1302 g",
+    "volume": "750 ml",
+    "price": "240 USD",
+    "price_postapoc": "20 USD",
+    "to_hit": 1,
+    "bashing": 3,
+    "cutting": 16,
+    "material": [ "silver" ],
+    "symbol": "/",
+    "looks_like": "knife_butcher",
+    "color": "red",
+    "techniques": [ "WBLOCK_1", "RAPID" ],
+    "qualities": [ [ "CUT", 1 ], [ "CUT_FINE", 2 ], [ "BUTCHER", 15 ] ],
+    "use_action": [
+      {
+        "type": "cast_spell",
+        "spell_id": "arcana_item_athame_sanguine_art",
+        "no_fail": true,
+        "need_wielding": true,
+        "level": 0
+      }
+    ],
+    "flags": [ "STAB", "SHEATH_KNIFE", "USE_PLAYER_ENERGY", "NO_SALVAGE" ]
+  },
+  {
+    "id": "sun_sword",
+    "type": "TOOL",
+    "category": "weapons",
+    "weapon_category": [ "1H_SWORDS", "MEDIEVAL_SWORDS", "DUELING_SWORDS" ],
+    "name": { "str": "incorruptible sword" },
+    "//": "Stats are a blend of the available swords you can use to make it, same deal as the mantle of shadows.",
+    "description": "This is some manner of sword, decorated with a golden cross motif worked into the blade.  When powered by consecrated magical essence, it has the power to cut through darkness itself.",
+    "weight": "1360 g",
+    "volume": "2 L",
+    "price": "1500 USD",
+    "price_postapoc": "75 USD",
+    "to_hit": 2,
+    "bashing": 10,
+    "cutting": 32,
+    "material": [ "steel", "gold" ],
+    "symbol": "/",
+    "looks_like": "arming_sword",
+    "color": "yellow",
+    "max_charges": 20,
+    "ammo": "essence_dull_type",
+    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 8 ] ],
+    "techniques": [ "WBLOCK_2" ],
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ACTIVE",
+          "hit_you_effect": [
+            {
+              "id": "arcana_react_sun_sword_daze",
+              "once_in": 3,
+              "message": "Your sword lets off a dazzling flare!",
+              "npc_message": "%1$s's sword flashes with holy light."
+            },
+            {
+              "id": "arcana_react_sun_sword_burn",
+              "once_in": 5,
+              "message": "Your sword's radiance burns your foe!",
+              "npc_message": "%1$s's sword gives off a wave of burning heat."
+            }
+          ]
+        }
+      ]
+    },
+    "use_action": [
+      {
+        "target": "sun_sword_on",
+        "msg": "The blade gives off a brilliant glow as you invoke its power!",
+        "active": true,
+        "need_charges": 1,
+        "need_charges_msg": "The sword needs energy to serve its purpose.",
+        "menu_text": "Awaken the holy blade",
+        "type": "transform"
+      }
+    ],
+    "flags": [ "DURABLE_MELEE", "SHEATH_SWORD", "NO_SALVAGE", "COMBAT_NPC_USE" ]
+  },
+  {
+    "id": "sun_sword_on",
+    "type": "TOOL",
+    "copy-from": "sun_sword",
+    "repairs_like": "sun_sword",
+    "category": "weapons",
+    "name": { "str": "incorruptible sword (on)", "str_pl": "incorruptible swords (on)" },
+    "description": "This is some manner of sword, decorated with a golden cross motif worked into the blade.  The blade is giving off an intense white light, and searing heat.",
+    "turns_per_charge": 100,
+    "revert_to": "sun_sword",
+    "techniques": [ "WBLOCK_2", "tec_weapon_incorruptible_slash" ],
+    "use_action": [
+      { "type": "firestarter", "moves": 30 },
+      { "menu_text": "Turn off", "type": "transform", "msg": "The sword's radiance fades.", "target": "sun_sword" }
+    ],
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 2,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 10 },
+            { "damage_type": "cut", "amount": 32 },
+            { "damage_type": "light", "amount": 11 }
+          ]
+        }
+      }
+    ],
+    "extend": { "flags": [ "FIRE", "LIGHT_240", "CHARGEDIM", "NONCONDUCTIVE", "COMBAT_NPC_ON" ] },
+    "delete": { "flags": [ "SHEATH_SWORD" ] }
+  },
+  {
+    "id": "hexenhammer",
+    "type": "TOOL",
+    "category": "weapons",
+    "copy-from": "warhammer",
+    "name": { "str": "hammer of the hunter", "str_pl": "hammers of the hunter" },
+    "description": "A warhammer inlaid with silver, engraved with religious invocations in an archaic form of Latin.  Many magical items can be purified with this item.  It can be used to channel consecrated essence into a stunning flash.  Though using it is a double-edged sword, it will have further effects on creatures of darkness.",
+    "price": "800 USD",
+    "price_postapoc": "45 USD",
+    "material": [ "iron", "silver", "wood" ],
+    "max_charges": 3,
+    "charges_per_use": 3,
+    "ammo": "essence_dull_type",
+    "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_hammerzeit", "no_fail": true, "need_wielding": true, "level": 0 } ],
+    "relative": { "weight": "360 g", "bashing": 2 },
+    "extend": { "flags": [ "NO_SALVAGE" ] }
+  },
+  {
+    "id": "lucern_hexenhammer",
+    "sub": "hexenhammer",
+    "type": "TOOL",
+    "category": "weapons",
+    "copy-from": "lucern_hammer",
+    "name": { "str": "luminous hammer" },
+    "description": "A mighty lucerne hammer, decorated with archaic Latin engravings and silver counterbalancing to make it more usable at close range.  Many magical items can be purified with this item.  Activating it can be used to create a powerful flash, capable of searing anyone in range.  Though the user will not take damage from it, they will still be blinded if lacking protection.",
+    "price": "1200 USD",
+    "price_postapoc": "120 USD",
+    "material": [ "wood", "steel", "silver" ],
+    "max_charges": 10,
+    "charges_per_use": 10,
+    "ammo": "essence_dull_type",
+    "use_action": [
+      {
+        "type": "cast_spell",
+        "spell_id": "arcana_item_hammerzeit_greater",
+        "no_fail": true,
+        "need_wielding": true,
+        "level": 0
+      }
+    ],
+    "//": "Designed to be compatible with Via Gladium et Malleo, so the silver decoration is on the other end to shift the center of balance.  No damage bonus from the extra weight, but also no 0.7x melee damage from POLEARM flag.",
+    "relative": { "weight": "450 g", "to_hit": 1, "bashing": 2 },
+    "extend": { "flags": [ "NO_SALVAGE" ] },
+    "delete": { "flags": [ "ALWAYS_TWOHAND", "POLEARM" ] }
+  },
+  {
+    "id": "spear_pestilence",
+    "type": "TOOL",
+    "copy-from": "spear_steel",
+    "category": "weapons",
+    "name": { "str": "spear of pestilence", "str_pl": "spears of pestilence" },
+    "description": "A stout steel spear with a wicked sting, decorated with elaborate patterns carved from chitin.  Using it will blast nearby enemies with frost and temporarily summon mutant vermin to aid you, while wielding it makes movement easier.",
+    "price": "1200 USD",
+    "price_postapoc": "35 USD",
+    "material": [ "steel", "wood", "chitin" ],
+    "max_charges": 9,
+    "charges_per_use": 1,
+    "ammo": "essence_type",
+    "attacks": [
+      {
+        "id": "STAB",
+        "to_hit": 1,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 8 },
+            { "damage_type": "stab", "amount": 30 },
+            { "damage_type": "biological", "amount": 10 }
+          ]
+        }
+      }
+    ],
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ALWAYS",
+          "values": [ { "value": "MOVE_COST", "add": -25 } ],
+          "hit_you_effect": [
+            {
+              "id": "arcana_react_spear_pestilence_poison",
+              "once_in": 3,
+              "message": "The air around your spear wavers with ethereal force.",
+              "npc_message": "The air around %1$s wavers with ethereal force."
+            }
+          ]
+        }
+      ]
+    },
+    "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_pestilence", "no_fail": true, "need_wielding": true, "level": 0 } ],
+    "relative": { "weight": 540 },
+    "extend": { "flags": [ "NO_SALVAGE", "MAGIC_FOCUS" ] }
+  },
+  {
+    "id": "blast_canister_arcana_flame",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "searing blast canister" },
+    "description": "This is a small canister with elemental energy bound to it.  Arm it to ready it for use, after which it will explode in a few seconds.  Its effect will blast the area around it with flames.  You can also opt to set it up as an explosive trap.",
+    "weight": "550 g",
+    "volume": "250 ml",
+    "price_postapoc": "5 USD",
+    "material": "clay",
+    "symbol": "*",
+    "looks_like": "acidbomb",
+    "color": "brown",
+    "use_action": [
+      {
+        "target": "blast_canister_arcana_flame_act",
+        "msg": "The flame blast canister glows faintly as you arm it.",
+        "target_charges": 3,
+        "active": true,
+        "menu_text": "Arm blast canister",
+        "type": "transform"
+      },
+      {
+        "type": "place_trap",
+        "trap": "tr_blast_canister_arcana_flame",
+        "moves": 100,
+        "practice": 0,
+        "done_message": "You place the canister, primed to explode if disturbed."
+      }
+    ],
+    "flags": [ "BOMB", "DESTROY_ON_DECHARGE" ]
+  },
+  {
+    "id": "blast_canister_arcana_flame_act",
+    "copy-from": "blast_canister_arcana_flame",
+    "type": "TOOL",
+    "name": { "str": "active searing blast canister" },
+    "description": "This is a small canister with elemental energy bound to it.  It will go off in a few seconds, blasting the area around it with flames.",
+    "price_postapoc": "0 cent",
+    "initial_charges": 3,
+    "max_charges": 3,
+    "turns_per_charge": 1,
+    "use_action": {
+      "type": "explosion",
+      "draw_explosion_radius": 2,
+      "fields_type": "fd_fire",
+      "fields_radius": 2,
+      "fields_min_intensity": 1,
+      "fields_max_intensity": 2,
+      "no_deactivate_msg": "It would be much smarter to throw this instead.",
+      "explosion": { "fragment": { "impact": { "damage_type": "heat", "amount": 100 }, "range": 2 } }
+    },
+    "flags": [ "BOMB", "TRADER_AVOID", "NO_REPAIR", "LIGHT_50" ]
+  },
+  {
+    "id": "blast_canister_arcana_water",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "wintry blast canister" },
+    "description": "This is a small canister with elemental energy bound to it.  Arm it to ready it for use, after which it will explode in a few seconds.  Its effect will blast the area around it with supernatural cold.  You can also opt to set it up as an explosive trap.",
+    "weight": "550 g",
+    "volume": "250 ml",
+    "price_postapoc": "5 USD",
+    "material": "clay",
+    "symbol": "*",
+    "looks_like": "acidbomb",
+    "color": "brown",
+    "use_action": [
+      {
+        "target": "blast_canister_arcana_water_act",
+        "msg": "The wintry blast canister glows faintly as you arm it.",
+        "target_charges": 3,
+        "active": true,
+        "menu_text": "Arm blast canister",
+        "type": "transform"
+      },
+      {
+        "type": "place_trap",
+        "trap": "tr_blast_canister_arcana_water",
+        "moves": 100,
+        "practice": 0,
+        "done_message": "You place the canister, primed to explode if disturbed."
+      }
+    ],
+    "flags": [ "BOMB", "DESTROY_ON_DECHARGE" ]
+  },
+  {
+    "id": "blast_canister_arcana_water_act",
+    "copy-from": "blast_canister_arcana_water",
+    "type": "TOOL",
+    "name": { "str": "active wintry blast canister" },
+    "description": "This is a small canister with elemental energy bound to it.  It will go off in a few seconds, blasting the area around it with supernatural cold.",
+    "price_postapoc": "0 cent",
+    "initial_charges": 3,
+    "max_charges": 3,
+    "turns_per_charge": 1,
+    "use_action": {
+      "type": "explosion",
+      "draw_explosion_radius": 2,
+      "fields_type": "fd_fog_arcana",
+      "fields_radius": 2,
+      "fields_min_intensity": 1,
+      "fields_max_intensity": 2,
+      "no_deactivate_msg": "It would be much smarter to throw this instead.",
+      "explosion": { "fragment": { "impact": { "damage_type": "cold", "amount": 125 }, "range": 2 } }
+    },
+    "flags": [ "BOMB", "TRADER_AVOID", "NO_REPAIR", "LIGHT_50" ]
+  },
+  {
+    "id": "blast_canister_arcana_earth",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "earthen blast canister" },
+    "description": "This is a small canister with elemental energy bound to it.  Arm it to ready it for use, after which it will explode in a few seconds.  Its effect will blast the area around it with acid.  You can also opt to set it up as an explosive trap.",
+    "weight": "550 g",
+    "volume": "250 ml",
+    "price_postapoc": "5 USD",
+    "material": "clay",
+    "symbol": "*",
+    "looks_like": "acidbomb",
+    "color": "brown",
+    "use_action": [
+      {
+        "target": "blast_canister_arcana_earth_act",
+        "msg": "The earthen blast canister glows faintly as you arm it.",
+        "target_charges": 3,
+        "active": true,
+        "menu_text": "Arm blast canister",
+        "type": "transform"
+      },
+      {
+        "type": "place_trap",
+        "trap": "tr_blast_canister_arcana_earth",
+        "moves": 100,
+        "practice": 0,
+        "done_message": "You place the canister, primed to explode if disturbed."
+      }
+    ],
+    "flags": [ "BOMB", "DESTROY_ON_DECHARGE" ]
+  },
+  {
+    "id": "blast_canister_arcana_earth_act",
+    "copy-from": "blast_canister_arcana_earth",
+    "type": "TOOL",
+    "name": { "str": "active earthen blast canister" },
+    "description": "This is a small canister with elemental energy bound to it.  It will go off in a few seconds, blasting the area around it with acid.",
+    "price_postapoc": "0 cent",
+    "initial_charges": 3,
+    "max_charges": 3,
+    "turns_per_charge": 1,
+    "use_action": {
+      "type": "explosion",
+      "draw_explosion_radius": 2,
+      "fields_type": "fd_acid",
+      "fields_radius": 2,
+      "fields_min_intensity": 1,
+      "fields_max_intensity": 2,
+      "no_deactivate_msg": "It would be much smarter to throw this instead.",
+      "explosion": { "fragment": { "impact": { "damage_type": "acid", "amount": 150 }, "range": 2 } }
+    },
+    "flags": [ "BOMB", "TRADER_AVOID", "NO_REPAIR", "LIGHT_50" ]
+  },
+  {
+    "id": "blast_canister_arcana_air",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "thunderous blast canister" },
+    "description": "This is a small canister with elemental energy bound to it.  Arm it to ready it for use, after which it will explode in a few seconds.  Its effect will blast the area around it with lightning.  You can also opt to set it up as an explosive trap.",
+    "weight": "550 g",
+    "volume": "250 ml",
+    "price_postapoc": "5 USD",
+    "material": "clay",
+    "symbol": "*",
+    "looks_like": "acidbomb",
+    "color": "brown",
+    "use_action": [
+      {
+        "target": "blast_canister_arcana_air_act",
+        "msg": "The thunderous blast canister glows faintly as you arm it.",
+        "target_charges": 3,
+        "active": true,
+        "menu_text": "Arm blast canister",
+        "type": "transform"
+      },
+      {
+        "type": "place_trap",
+        "trap": "tr_blast_canister_arcana_air",
+        "moves": 100,
+        "practice": 0,
+        "done_message": "You place the canister, primed to explode if disturbed."
+      }
+    ],
+    "flags": [ "BOMB", "DESTROY_ON_DECHARGE" ]
+  },
+  {
+    "id": "blast_canister_arcana_air_act",
+    "copy-from": "blast_canister_arcana_air",
+    "type": "TOOL",
+    "name": { "str": "active thunderous blast canister" },
+    "description": "This is a small canister with elemental energy bound to it.  It will go off in a few seconds, blasting the area around it with lightning.",
+    "price_postapoc": "0 cent",
+    "initial_charges": 3,
+    "max_charges": 3,
+    "turns_per_charge": 1,
+    "use_action": {
+      "type": "explosion",
+      "draw_explosion_radius": 2,
+      "fields_type": "fd_electricity",
+      "fields_radius": 2,
+      "fields_min_intensity": 1,
+      "fields_max_intensity": 2,
+      "no_deactivate_msg": "It would be much smarter to throw this instead.",
+      "explosion": { "fragment": { "impact": { "damage_type": "electric", "amount": 225 }, "range": 2 } }
+    },
+    "flags": [ "BOMB", "TRADER_AVOID", "NO_REPAIR", "LIGHT_50" ]
+  },
+  {
+    "id": "summon_kreck",
+    "type": "TOOL",
+    "copy-from": "silver_glyph",
+    "name": { "str": "glyph of trickery", "str_pl": "glyphs of trickery" },
+    "description": "A strange silver emblem, engraved with depictions of grotesque creatures.  Using it will call forth a kreck, and bind it to your will.  Hopefully.  It is easy to control.",
+    "price": "1500 USD",
+    "price_postapoc": "10 USD",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_kreck_summoned_glyph",
+      "friendly_msg": "The kreck looks up at you expectantly, as if wondering what sort of shenanigans you're plotting.",
+      "hostile_msg": "The kreck mimics your movements erratically, cavorting about to mock you!",
+      "difficulty": 1,
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "magic" ]
+    },
+    "flags": [ "NO_SALVAGE", "ACT_ON_RANGED_HIT", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "summon_blank",
+    "type": "TOOL",
+    "copy-from": "silver_glyph",
+    "name": { "str": "glyph of the root", "str_pl": "glyphs of the root" },
+    "//": "ID retained to prevent tileset breakage, monster summoned was changed due to blank bodies being outright useless.",
+    "description": "A strange silver emblem, engraved with depictions of alien plantlife.  Using it will call forth a triffid, and bind it to your will.  Hopefully.  It is easy to control.",
+    "price": "1500 USD",
+    "price_postapoc": "20 USD",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_triffid_summoned",
+      "friendly_msg": "The movement of the plant creature is hard to read, but you suspect it is either friendly, or doesn't regard you as a threat.",
+      "hostile_msg": "Even without words or recognizable body language, it quickly becomes apparent that the plant monster is hostile.",
+      "difficulty": 2,
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "magic" ]
+    },
+    "flags": [ "NO_SALVAGE", "ACT_ON_RANGED_HIT", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "summon_flaming_eye",
+    "type": "TOOL",
+    "copy-from": "silver_glyph",
+    "name": { "str": "glyph of Gehenna", "str_pl": "glyphs of Gehenna" },
+    "//": "ID retained to prevent tileset breakage, monster summoned was changed due to flaming eyes being useless if friendly.",
+    "description": "A strange silver emblem, engraved with a mockery of angelic figures.  Using it will call forth a flesh angel, and bind it to your will.  Hopefully.  It is somewhat easy to control.",
+    "price": "1500 USD",
+    "price_postapoc": "30 USD",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_flesh_angel_summoned_glyph",
+      "friendly_msg": "A twisted mimicry of the divine is called forth, bound to your will.",
+      "hostile_msg": "The flesh angel levels a wicked gaze upon you, ignoring your commands.",
+      "difficulty": 3,
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "magic" ]
+    },
+    "flags": [ "NO_SALVAGE", "ACT_ON_RANGED_HIT", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "summon_hunting_horror",
+    "type": "TOOL",
+    "copy-from": "silver_glyph",
+    "name": { "str": "glyph of Crawling Chaos", "str_pl": "glyphs of Crawling Chaos" },
+    "//": "Explanation: In Lovecraft's work, The Crawling Chaos is one of Nyarlathotep's names, and hunting horrors are associated with him.  The success and failure messages below spell it out rather plainly.",
+    "description": "A strange silver emblem, erratically engraved with indecipherable runes.  Using it will call forth a hunting horror, and bind it to your will.  Hopefully.  It is somewhat easy to control.",
+    "price": "1500 USD",
+    "price_postapoc": "40 USD",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_hunting_horror_summoned",
+      "friendly_msg": "The hunting horror is at your beck and call.  A gift from the Stalker among the Stars?",
+      "hostile_msg": "You feel the gaze of Nyarlathotep upon you.  How foolish of you, to steal the harrier of the Faceless God!",
+      "difficulty": 4,
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "magic" ]
+    },
+    "flags": [ "NO_SALVAGE", "ACT_ON_RANGED_HIT", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "summon_dark_wyrm",
+    "type": "TOOL",
+    "copy-from": "silver_glyph",
+    "name": { "str": "glyph of the eye", "str_pl": "glyphs of the eye" },
+    "//": "Explanation: Petrified eyes are associated with dark wyrms due to the mine finale that features one.",
+    "description": "A strange silver emblem, engraved with a serpentine motif.  Using it will call forth a dark wyrm, and bind it to your will.  It is somewhat difficult to control.",
+    "price": "1500 USD",
+    "price_postapoc": "50 USD",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_dark_wyrm_summoned_glyph",
+      "friendly_msg": "The wyrm springs forth, seeming to regard you passively, or at least ignoring your presence.",
+      "hostile_msg": "The wyrm springs forth, reacting to unfamiliar sounds and scent with a malevolent screech!",
+      "difficulty": 5,
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "magic" ]
+    },
+    "flags": [ "NO_SALVAGE", "ACT_ON_RANGED_HIT", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "summon_mi_go",
+    "type": "TOOL",
+    "copy-from": "silver_glyph",
+    "name": { "str": "glyph of Yuggoth", "str_pl": "glyphs of Yuggoth" },
+    "//": "Explanation: Yuggoth is a fictional planet from Lovecraft's work, stated to have been colonized by the mi-go.",
+    "description": "A strange silver emblem, engraved with depictions of strange chitinous entities.  Using it will call forth a mi-go, and bind it to your will.  Hopefully.  It is somewhat difficult to control.",
+    "price": "1500 USD",
+    "price_postapoc": "60 USD",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_mi_go_summoned",
+      "friendly_msg": "You recite an incantation, and the mi-go's response is a quiet murmur in some unknown language.  It seems to be friendly.",
+      "hostile_msg": "You begin to recite an incantation, only for the mi-go to parrot your words, mocking your effort to control it!",
+      "difficulty": 6,
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "magic" ]
+    },
+    "flags": [ "NO_SALVAGE", "ACT_ON_RANGED_HIT", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "summon_jabberwock",
+    "type": "TOOL",
+    "copy-from": "silver_glyph",
+    "name": { "str": "glyph of the golem", "str_pl": "glyphs of the golem" },
+    "description": "A strange silver emblem, engraved with reversed writing in an unknown language.  Using it will call forth a jabberwock, and bind it to your will.  Hopefully.  It is difficult to control.",
+    "price": "1500 USD",
+    "price_postapoc": "70 USD",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_jabberwock_summoned_glyph",
+      "friendly_msg": "You hear a strange burbling, the creature bound to your will.",
+      "hostile_msg": "Eyes of flame meet your gaze, the creature resists your attempt to control it!",
+      "difficulty": 7,
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "magic" ]
+    },
+    "flags": [ "NO_SALVAGE", "ACT_ON_RANGED_HIT", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "summon_flying_polyp",
+    "type": "TOOL",
+    "copy-from": "silver_glyph",
+    "name": { "str": "glyph of Pnakotus", "str_pl": "glyphs of Pnakotus" },
+    "//": "Explanation: In Lovecraft's works, the Pnakotic Manuscripts were associated with the city of this name, which was overrun by flying polyps in their conflict with the species that built the city.",
+    "description": "A strange silver emblem, engraved with an strange pattern resembling coral.  Using it will call forth a flying polyp, and bind it to your will.  Hopefully.  It is difficult to control.",
+    "price": "1500 USD",
+    "price_postapoc": "80 USD",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_flying_polyp_summoned",
+      "friendly_msg": "The flying polyp twitches for a moment, before its movement steadies.  It seems to be friendly.",
+      "hostile_msg": "The flying polyp twitches erratically, reacting to your presence with apparent hostility!",
+      "difficulty": 8,
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "magic" ]
+    },
+    "flags": [ "NO_SALVAGE", "ACT_ON_RANGED_HIT", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "summon_yugg",
+    "type": "TOOL",
+    "copy-from": "silver_glyph",
+    "name": { "str": "glyph of Plouton", "str_pl": "glyphs of Plouton" },
+    "//": "Plouton, Latinized as Pluto, is another name for Hades, and reflects the association with wealth the god had by the time the name was in common use.",
+    "description": "A strange silver emblem, engraved with depictions of ancient, cthonian wealth.  Using it will call forth a yugg, and bind it to your will.  Hopefully.  It is very difficult to control.",
+    "price": "1500 USD",
+    "price_postapoc": "90 USD",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_yugg_summoned",
+      "friendly_msg": "With the riches of a dead world as an offering, you bind the yugg to serve you.  You feel like this is the opposite of how it normally works.",
+      "hostile_msg": "An offering of wealth is not enough to placate a servant of Ubb.  The creature turns hostile!",
+      "difficulty": 9,
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "magic" ]
+    },
+    "flags": [ "NO_SALVAGE", "ACT_ON_RANGED_HIT", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "summon_shoggoth",
+    "type": "TOOL",
+    "copy-from": "silver_glyph",
+    "name": { "str": "glyph of the Elder Things", "str_pl": "glyphs of the Elder Things" },
+    "//": "Explanation: The Elder Things in Lovecraft's work were the creators of shoggoths.",
+    "description": "A strange silver emblem, engraved with many strange eye symbols.  Using it will call forth a shoggoth, and bind it to your will.  Hopefully.  It is very difficult to control.",
+    "price": "1500 USD",
+    "price_postapoc": "100 USD",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_shoggoth_summoned",
+      "friendly_msg": "You hear a voice in your mind.  \"Tekili …l-li?\"  Your mind exerts a strange influence upon the shoggoth.",
+      "hostile_msg": "You hear a voice in your mind.  \"Tekeli-li!\"  The shoggoth resists your efforts to control it!",
+      "difficulty": 10,
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true,
+      "skills": [ "magic" ]
+    },
+    "flags": [ "NO_SALVAGE", "ACT_ON_RANGED_HIT", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "summon_kreck_bound",
+    "type": "TOOL",
+    "copy-from": "summon_kreck",
+    "name": { "str": "bound summoned kreck" },
+    "description": "A charm of living essence wrapped around what looks to be a ghostly image of a silver glyph.  A kreck has been bound into this after a successful summon, activate to redeploy it.",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_kreck_summoned_glyph",
+      "friendly_msg": "You undo the energy binding the summoned kreck, causing it to reappear.",
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true
+    }
+  },
+  {
+    "id": "summon_triffid_bound",
+    "type": "TOOL",
+    "copy-from": "summon_blank",
+    "name": { "str": "bound summoned triffid" },
+    "description": "A charm of living essence wrapped around what looks to be a ghostly image of a silver glyph.  A triffid has been bound into this after a successful summon, activate to redeploy it.",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_triffid_summoned",
+      "friendly_msg": "You undo the energy binding the summoned triffid, causing it to reappear.",
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true
+    }
+  },
+  {
+    "id": "summon_flesh_angel_bound",
+    "type": "TOOL",
+    "copy-from": "summon_flaming_eye",
+    "name": { "str": "bound summoned flesh angel" },
+    "description": "A charm of living essence wrapped around what looks to be a ghostly image of a silver glyph.  A flesh angel has been bound into this after a successful summon, activate to redeploy it.",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_flesh_angel_summoned_glyph",
+      "friendly_msg": "You undo the energy binding the summoned flesh angel, causing it to reappear.",
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true
+    }
+  },
+  {
+    "id": "summon_hunting_horror_bound",
+    "type": "TOOL",
+    "copy-from": "summon_hunting_horror",
+    "name": { "str": "bound summoned hunting horror" },
+    "description": "A charm of living essence wrapped around what looks to be a ghostly image of a silver glyph.  A hunting horror has been bound into this after a successful summon, activate to redeploy it.",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_hunting_horror_summoned",
+      "friendly_msg": "You undo the energy binding the summoned hunting horror, causing it to reappear.",
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true
+    }
+  },
+  {
+    "id": "summon_dark_wyrm_bound",
+    "type": "TOOL",
+    "copy-from": "summon_dark_wyrm",
+    "name": { "str": "bound summoned dark wyrm" },
+    "description": "A charm of living essence wrapped around what looks to be a ghostly image of a silver glyph.  A dark wyrm has been bound into this after a successful summon, activate to redeploy it.",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_dark_wyrm_summoned_glyph",
+      "friendly_msg": "You undo the energy binding the summoned dark wyrm, causing it to reappear.",
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true
+    }
+  },
+  {
+    "id": "summon_mi_go_bound",
+    "type": "TOOL",
+    "copy-from": "summon_mi_go",
+    "name": { "str": "bound summoned mi-go" },
+    "description": "A charm of living essence wrapped around what looks to be a ghostly image of a silver glyph.  A mi-go has been bound into this after a successful summon, activate to redeploy it.",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_mi_go_summoned",
+      "friendly_msg": "You undo the energy binding the summoned mi-go, causing it to reappear.",
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true
+    }
+  },
+  {
+    "id": "summon_jabberwock_bound",
+    "type": "TOOL",
+    "copy-from": "summon_jabberwock",
+    "name": { "str": "bound summoned jabberwock" },
+    "description": "A charm of living essence wrapped around what looks to be a ghostly image of a silver glyph.  A jabberwock has been bound into this after a successful summon, activate to redeploy it.",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_jabberwock_summoned_glyph",
+      "friendly_msg": "You undo the energy binding the summoned jabberwock, causing it to reappear.",
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true
+    }
+  },
+  {
+    "id": "summon_flying_polyp_bound",
+    "type": "TOOL",
+    "copy-from": "summon_flying_polyp",
+    "name": { "str": "bound summoned flying polyp" },
+    "description": "A charm of living essence wrapped around what looks to be a ghostly image of a silver glyph.  A flying polyp has been bound into this after a successful summon, activate to redeploy it.",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_flying_polyp_summoned",
+      "friendly_msg": "You undo the energy binding the summoned flying polyp, causing it to reappear.",
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true
+    }
+  },
+  {
+    "id": "summon_yugg_bound",
+    "type": "TOOL",
+    "copy-from": "summon_yugg",
+    "name": { "str": "bound summoned yugg" },
+    "description": "A charm of living essence wrapped around what looks to be a ghostly image of a silver glyph.  A yugg has been bound into this after a successful summon, activate to redeploy it.",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_yugg_summoned",
+      "friendly_msg": "You undo the energy binding the summoned yugg, causing it to reappear.",
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true
+    }
+  },
+  {
+    "id": "summon_shoggoth_bound",
+    "type": "TOOL",
+    "copy-from": "summon_shoggoth",
+    "name": { "str": "bound summoned shoggoth" },
+    "description": "A charm of living essence wrapped around what looks to be a ghostly image of a silver glyph.  A shoggoth has been bound into this after a successful summon, activate to redeploy it.",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_shoggoth_summoned",
+      "friendly_msg": "You undo the energy binding the summoned shoggoth, causing it to reappear.",
+      "moves": 60,
+      "place_randomly": true,
+      "is_pet": true
+    }
+  },
+  {
+    "id": "bloodaxe",
+    "copy-from": "hatchet",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "veinreaver" },
+    "description": "A hatchet with its axehead lightened a bit, stained the dull color of dried blood.  Using it will channel blood essence into a nasty explosion, with a considerable blast radius.",
+    "price": "400 USD",
+    "price_postapoc": "60 USD",
+    "symbol": ";",
+    "color": "brown",
+    "max_charges": 5,
+    "ammo": "essence_blood_type",
+    "weight": "707 g",
+    "volume": "750 ml",
+    "relative": { "bashing": -2 },
+    "use_action": [
+      {
+        "target": "bloodaxe_act",
+        "msg": "You draw upon the axe's energy, and the axehead glows a bright red!",
+        "need_charges": 5,
+        "need_charges_msg": "The axe requires 5 blood essence to invoke this power.",
+        "active": true,
+        "need_wielding": true,
+        "menu_text": "Activate explosive rune",
+        "type": "transform"
+      }
+    ],
+    "extend": { "flags": [ "NO_SALVAGE", "BOMB" ] }
+  },
+  {
+    "id": "bloodaxe_act",
+    "//": "Can't use copy-from because qualities refuse to be deleted, causing it to try and chop wood instead of exploding.",
+    "type": "TOOL",
+    "category": "weapons",
+    "weapon_category": [ "1H_AXES" ],
+    "name": { "str": "glowing veinreaver" },
+    "description": "A modified hatchet, the axehead giving off a wicked red glow.  Throwing it might be a smart idea, as you'll have little time to evade its blast.",
+    "weight": "707 g",
+    "volume": "750 ml",
+    "price": "400 USD",
+    "price_postapoc": "60 USD",
+    "//2": "You really wanna hit something with this instead of throw it?",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 1,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 10 },
+            { "damage_type": "cut", "amount": 18 },
+            { "damage_type": "dark", "amount": 7 }
+          ]
+        }
+      }
+    ],
+    "thrown_damage": [ { "damage_type": "dark", "amount": 35 } ],
+    "material": [ "steel", "wood" ],
+    "symbol": ";",
+    "looks_like": "hatchet",
+    "color": "brown",
+    "max_charges": 5,
+    "turns_per_charge": 1,
+    "ammo": "essence_blood_type",
+    "revert_to": "bloodaxe",
+    "use_action": {
+      "type": "explosion",
+      "fields_type": "fd_blood",
+      "fields_radius": 3,
+      "fields_min_intensity": 3,
+      "fields_max_intensity": 3,
+      "sound_volume": 1,
+      "sound_msg": "Drip.",
+      "no_deactivate_msg": "You can't dispel the effect.  Might want to try throwing it instead.",
+      "explosion": { "damage": 125, "radius": 3 }
+    },
+    "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE", "LIGHT_8", "NO_SALVAGE", "NO_UNLOAD", "NO_RELOAD" ]
+  },
+  {
+    "id": "shrike_misericorde",
+    "looks_like": "rapier",
+    "type": "TOOL",
+    "category": "weapons",
+    "weapon_category": [ "DUELING_SWORDS" ],
+    "name": { "str": "shrike's misericorde" },
+    "description": "An ornate silver weapon featuring a thin blade and two flintlock barrels built into the guard.  Its strikes inflict victims with a deathly chill.  Activating it will transform it into a more compact form, allowing its user to load and fire it.  Its pistol form will impart a freezing effect on shots fired from it, including otherworldly damage that can bypass mundane armor, though robots and certain supernatural monsters will only suffer the bullet's normal damage.",
+    "weight": "2 kg",
+    "volume": "1500 ml",
+    "price": "1000 USD",
+    "price_postapoc": "50 USD",
+    "to_hit": 2,
+    "attacks": [
+      {
+        "id": "STAB",
+        "to_hit": 2,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 12 },
+            { "damage_type": "stab", "amount": 24 },
+            { "damage_type": "cold", "amount": 9 }
+          ]
+        }
+      }
+    ],
+    "material": [ "iron", "silver" ],
+    "symbol": "/",
+    "color": "light_gray",
+    "ammo": [ "flintlock", "flintlockshot" ],
+    "max_charges": 2,
+    "techniques": [ "RAPID", "WBLOCK_2", "PRECISE" ],
+    "qualities": [ [ "CUT", 1 ], [ "CUT_FINE", 1 ], [ "BUTCHER", 9 ] ],
+    "flags": [ "STAB", "DURABLE_MELEE", "SHEATH_SWORD", "NO_SALVAGE", "NO_RELOAD", "NO_UNLOAD" ],
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ALWAYS",
+          "hit_you_effect": [
+            {
+              "id": "arcana_react_shrike_misericorde_chill",
+              "once_in": 5,
+              "message": "An unearthly chill radiates from your weapon.",
+              "npc_message": "An unearthly chill radiates from %1$s's weapon."
+            }
+          ]
+        }
+      ]
+    },
+    "use_action": {
+      "menu_text": "Fold into pistol mode",
+      "type": "transform",
+      "target": "shrike_misericorde_folded",
+      "msg": "The weapon splinters and compacts, reforming into its pistol form.",
+      "need_wielding": true
+    }
+  },
+  {
+    "id": "lichhook",
+    "copy-from": "khopesh",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "lichhook" },
+    "description": "A curved bronze blade, decorated with silver and honed to an unnaturally sharp edge.  Using it will channel blood essence into ensnaring a nearby enemy in venomous tendrils, poisoning them and freezing them in place momentarily.  Robots and other creatures immune to biological damage will not suffer damage from it.",
+    "price": "720 USD",
+    "price_postapoc": "45 USD",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 1,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 9 },
+            { "damage_type": "cut", "amount": 29 },
+            { "damage_type": "biological", "amount": 10 }
+          ]
+        }
+      }
+    ],
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ALWAYS",
+          "hit_you_effect": [
+            {
+              "id": "arcana_react_bane_staff_venom",
+              "once_in": 2,
+              "message": "Your blade oozes venom as you strike.",
+              "npc_message": "%1$s's blade oozes venom as they strike."
+            }
+          ]
+        }
+      ]
+    },
+    "max_charges": 8,
+    "charges_per_use": 2,
+    "ammo": "essence_blood_type",
+    "relative": { "weight": 230 },
+    "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_lichhook", "no_fail": true, "need_wielding": true, "level": 0 } ],
+    "extend": { "flags": [ "NO_SALVAGE", "SHEATH_SWORD" ] }
+  },
+  {
+    "id": "candle_warding",
+    "type": "TOOL",
+    "name": { "str": "candle of warding", "str_pl": "candles of warding" },
+    "description": "A candle with translucent wax, free of any impurities with a soothing aura about it.  It can be used to place a magical barrier, or used to project a faint light.  The barrier this item creates is tough and provides a source of fire.  Examining the barrier will let you retrieve the candle.",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "price": "80 USD",
+    "price_postapoc": "40 USD",
+    "material": [ "essencemat" ],
+    "symbol": ",",
+    "color": "white",
+    "looks_like": "candle",
+    "use_action": [
+      {
+        "target": "candle_warding_active",
+        "msg": "The candle gives off a faint blue flame.",
+        "menu_text": "Light candle of warding",
+        "active": true,
+        "type": "transform"
+      },
+      { "type": "deploy_furn", "furn_type": "f_candle_barrier_playermade" }
+    ],
+    "flags": [ "NO_SALVAGE", "ALLOWS_REMOTE_USE", "DESTROY_ON_DECHARGE" ]
+  },
+  {
+    "id": "candle_warding_active",
+    "type": "TOOL",
+    "name": { "str": "candle of warding (on)", "str_pl": "candles of warding (on)" },
+    "description": "A candle with translucent wax, free of any impurities with a soothing aura about it.  Its wick is lit with a ghostly blue flame, projecting light without heat.  It can also be used to place a tough magical barrier, also providing a source of fire.  Examining the barrier will let you retrieve the candle.",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "price": "80 USD",
+    "price_postapoc": "40 USD",
+    "material": [ "essencemat" ],
+    "looks_like": "candle_lit",
+    "repairs_like": "candle_warding",
+    "symbol": ",",
+    "color": "white",
+    "use_action": [
+      {
+        "target": "candle_warding",
+        "msg": "The candle's wick is extinguished.",
+        "menu_text": "Extinguish candle of warding",
+        "type": "transform"
+      },
+      { "type": "firestarter", "moves": 100 },
+      { "type": "deploy_furn", "furn_type": "f_candle_barrier_playermade" }
+    ],
+    "flags": [ "NO_SALVAGE", "LIGHT_12", "FIRESTARTER", "ALLOWS_REMOTE_USE", "DESTROY_ON_DECHARGE" ]
+  },
+  {
+    "id": "transmutation_crucible",
+    "type": "TOOL",
+    "name": { "str": "transmutation crucible" },
+    "description": "A small container made out of a polished, glassy material resembling stone.  A shimmer of precious metal occasionally appears within the surface, as though its internal structure flowed like liquid.  Deploying it will create a temporary workspace of shifting earth, providing a hard surface usable as an anvil as well as shifting stones that can assist in metalworking and alchemy.  It can be examined afterward to reclaim it.\n\nWhen deployed it provides the following:\n* Level 3 anvil quality.\n* Level 2 boiling quality.\n* Level 2 chemical making quality.\n* Level 1 containing quality.\n* Level 1 hot containing quality.\n* Level 1 food cooking quality.",
+    "weight": "1700 g",
+    "volume": "1500 ml",
+    "price": "6000 USD",
+    "price_postapoc": "25 USD",
+    "to_hit": -2,
+    "bashing": 10,
+    "material": [ "stone", "essencemat" ],
+    "symbol": ";",
+    "color": "brown",
+    "looks_like": "crucible",
+    "flags": [ "ALLOWS_REMOTE_USE", "DESTROY_ON_DECHARGE" ],
+    "use_action": { "type": "deploy_furn", "furn_type": "f_transmutation_crucible_deployed" }
+  },
+  {
+    "id": "transmutation_crucible_deployed_fake",
+    "type": "TOOL",
+    "copy-from": "fake_item",
+    "name": { "str": "deployed transmutation crucible" },
+    "qualities": [ [ "ANVIL", 3 ], [ "COOK", 1 ], [ "CHEM", 2 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ], [ "CONTAIN_HOT", 1 ] ]
+  },
+  {
+    "id": "dimensional_warp_trap",
+    "type": "TOOL",
+    "name": { "str": "sliver of unreality", "str_pl": "slivers of unreality" },
+    "description": "A talisman of 16-pointed silver, twisted to ensnare a sharply-pointed piece of crystallized essence.  Focusing its energy like a lens, using it will rip open a gap in the Veil itself, before stablizing it into a dimensional gateway.  Examining the gate will allow you to teleport to any other such gates you come across.",
+    "weight": "285 g",
+    "volume": "150 ml",
+    "price": "1500 USD",
+    "price_postapoc": "100 USD",
+    "material": [ "silver", "essencemat" ],
+    "symbol": ";",
+    "color": "cyan",
+    "flags": [ "DESTROY_ON_DECHARGE", "NO_SALVAGE" ],
+    "use_action": { "type": "deploy_furn", "furn_type": "f_arcana_dimension_doorway" }
+  },
+  {
+    "id": "orb_veil",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "orb of the veil", "str_pl": "orbs of the veil" },
+    "description": "A mysterious orb made of a dark, almost glassy stone.  An eye pattern is worked into it, using gold for the irises and a diamond pupil.  It is said to represent a desire to protect the old knowledge and old ways, strengthened by a yearning for further enlightenment.  Using it will show you a vision of the surrounding area, along with other random side effects, along with attracting unwanted attention from Beyond…",
+    "weight": "2000 g",
+    "volume": "1 L",
+    "price": "1200 USD",
+    "price_postapoc": "100 USD",
+    "to_hit": -2,
+    "bashing": 6,
+    "material": [ "stone", "gold", "diamond" ],
+    "symbol": "*",
+    "looks_like": "diamond",
+    "color": "dark_gray",
+    "max_charges": 1,
+    "charges_per_use": 1,
+    "ammo": "essence_pure_type",
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ALWAYS",
+          "mutations": [ "SCHIZOPHRENIC" ],
+          "ench_effects": [ { "effect": "arcana_clairvoyance_hidden", "intensity": 1 } ],
+          "values": [
+            { "value": "INTELLIGENCE", "add": 4 },
+            { "value": "PERCEPTION", "add": 2 },
+            { "value": "MANA_REGEN", "multiply": 0.25 }
+          ]
+        }
+      ]
+    },
+    "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_orb_veil_mapping", "no_fail": true, "level": 0 } ],
+    "flags": [ "NO_SALVAGE", "MAGIC_FOCUS" ]
+  },
+  {
+    "id": "staff_druidic",
+    "type": "TOOL",
+    "weapon_category": [ "BATONS" ],
+    "name": { "str": "druidic staff", "str_pl": "druidic staves" },
+    "description": "A short wooden staff decorated with engraved silver, depicting a mixture of exotic natural scenes and various holy symbols.  It is said to represent the instincts deep within the heart, tempered by restraint and reason.  Using it can repair and fortify items made of various plant or animal products and stone, but not more refined materials like metal or glass.",
+    "weight": "1310 g",
+    "volume": "2 L",
+    "price": "800 USD",
+    "price_postapoc": "90 USD",
+    "bashing": 12,
+    "material": [ "wood", "silver" ],
+    "symbol": "/",
+    "looks_like": "cudgel",
+    "color": "light_gray",
+    "max_charges": 300,
+    "charges_per_use": 1,
+    "ammo": "essence_dull_type",
+    "use_action": [
+      {
+        "type": "repair_item",
+        "item_action_type": "repair_metal",
+        "materials": [
+          "alien_resin",
+          "bone",
+          "bone_heavy",
+          "chitin",
+          "acidchitin",
+          "scute",
+          "clay",
+          "cotton",
+          "dry_plant",
+          "fur",
+          "leather",
+          "gutskin",
+          "stone",
+          "wood",
+          "wool"
+        ],
+        "skill": "magic",
+        "tool_quality": 20,
+        "cost_scaling": 0,
+        "move_cost": 1000
+      },
+      {
+        "type": "sew_advanced",
+        "materials": [
+          "alien_resin",
+          "bone",
+          "bone_heavy",
+          "chitin",
+          "acidchitin",
+          "scute",
+          "clay",
+          "cotton",
+          "dry_plant",
+          "fur",
+          "leather",
+          "gutskin",
+          "stone",
+          "wood",
+          "wool"
+        ],
+        "skill": "magic",
+        "clothing_mods": [ "arcana_birchbark_weave", "arcana_tanbark_weave", "arcana_willowbark_weave" ]
+      }
+    ],
+    "flags": [ "NO_SALVAGE", "MAGIC_FOCUS", "SHEATH_SPEAR" ]
+  },
+  {
+    "type": "TOOL",
+    "id": "coalescent_converter",
+    "name": { "str": "coalescent converter" },
+    "description": "A device modified from an exotic compact reactor, inverting its original function entirely.  Using a large surge of power from any battery able to hold enough charge, it can generate crystallized essence.  The process is rather inefficient, and poses a high risk of damaging the fabric of reality.",
+    "weight": "11 kg",
+    "color": "light_cyan",
+    "looks_like": "portal",
+    "symbol": ":",
+    "material": [ "steel" ],
+    "flags": [ "ALLOWS_REMOTE_USE", "NO_SALVAGE" ],
+    "volume": "7 L",
+    "bashing": 5,
+    "price": "8500 USD",
+    "price_postapoc": "80 USD",
+    "ammo": [ "battery" ],
+    "charges_per_use": 3000,
+    "magazines": [
+      [
+        "battery",
+        [
+          "medium_storage_battery",
+          "storage_battery",
+          "large_storage_battery",
+          "medium_atomic_battery_cell",
+          "heavy_disposable_cell",
+          "heavy_atomic_battery_cell",
+          "huge_atomic_battery_cell"
+        ]
+      ]
+    ],
+    "magazine_well": 20,
+    "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_coalescent_conversion", "no_fail": true, "level": 0 } ]
+  },
+  {
+    "type": "TOOL",
+    "id": "offering_chalice_coalescent",
+    "sub": "offering_chalice",
+    "name": { "str": "coalescent chalice" },
+    "description": "An exotic golden chalice, reinforced by an ornate lattice of steel and curious electronics.  A swirling, inky blackness resides inside it, resisting any attempt to pour it out.  Using it will focus your energy into it through a powerful ritual, converting it into crystallized essence.  Doing so will take 15 minutes and greatly exhaust you.  Overuse comes with the risk of lethal side effects.",
+    "weight": "3 kg",
+    "color": "yellow",
+    "looks_like": "offering_chalice",
+    "symbol": ":",
+    "material": [ "gold", "steel" ],
+    "flags": [ "ALLOWS_REMOTE_USE", "MAGIC_FOCUS", "USE_PLAYER_ENERGY", "NO_SALVAGE" ],
+    "volume": "2 L",
+    "bashing": 3,
+    "price": "3200 USD",
+    "price_postapoc": "35 USD",
+    "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_coalescent_offering", "no_fail": true, "level": 0 } ]
+  },
+  {
+    "id": "thermic_essence_cutter",
+    "sub": "oxy_torch",
+    "type": "TOOL",
+    "name": { "str": "thermic essence cutter" },
+    "description": "A small copper device that channels magical flame, focusing it into a white-hot pinprick of searing heat.  Too narrow in focus and short-ranged to be useful as a weapon, instead designed for metalworking and repairing items.  With a source of eye protection it can be used to destroy metal barriers.",
+    "weight": "2400 g",
+    "volume": "1 L",
+    "price": "600 USD",
+    "price_postapoc": "15 USD",
+    "material": [ "copper" ],
+    "looks_like": "copper_knife",
+    "symbol": ";",
+    "color": "red",
+    "ammo": [ "essence_dull_type" ],
+    "max_charges": 300,
+    "charges_per_use": 2,
+    "use_action": [
+      "OXYTORCH",
+      {
+        "type": "repair_item",
+        "item_action_type": "repair_metal",
+        "materials": [
+          "iron",
+          "steel",
+          "budget_steel",
+          "hardsteel",
+          "aluminum",
+          "copper",
+          "bronze",
+          "silver",
+          "gold",
+          "platinum",
+          "superalloy",
+          "glass"
+        ],
+        "skill": "magic",
+        "tool_quality": 20,
+        "cost_scaling": 0,
+        "move_cost": 1000
+      }
+    ],
+    "flags": [ "ALLOWS_REMOTE_USE", "NO_SALVAGE" ]
+  },
+  {
+    "id": "dull_essence_UPS",
+    "type": "TOOL",
+    "name": { "str": "essence focus cell" },
+    "description": "A small copper chamber designed to convert essence into a steady supply of electrical current.  Can store a large concentration of dull essence and power items that run off a Unified Power Supply with it, such as energy weapons or power armor.",
+    "weight": "1 kg",
+    "volume": "2 L",
+    "price": "6000 USD",
+    "price_postapoc": "30 USD",
+    "to_hit": -1,
+    "bashing": 10,
+    "material": [ "copper", "steel" ],
+    "symbol": ";",
+    "color": "light_red",
+    "looks_like": "medium_atomic_battery_cell",
+    "ammo": "essence_dull_type",
+    "max_charges": 6000,
+    "ups_eff_mult": 5,
+    "flags": [ "IS_UPS", "NO_SALVAGE" ]
+  },
+  {
+    "id": "spatial_displacer",
+    "type": "TOOL",
+    "name": { "str": "spatial displacer" },
+    "description": "A cutting-edge piece of dimensional science, heavily modified to incorporate refinements from Beyond.  Using it will teleport you to a targeted location, a vast improvement over the uncertainty and danger of previous devices.  While it won't telefrag you, phasing into solid rock is still problematic if you lack a way back out, and it can attract unwanted attention from things that do not belong in this world…",
+    "weight": "1360 g",
+    "volume": "2 L",
+    "price": "9000 USD",
+    "price_postapoc": "15 USD",
+    "to_hit": -1,
+    "bashing": 4,
+    "material": [ "steel" ],
+    "looks_like": "teleporter",
+    "symbol": ";",
+    "color": "magenta",
+    "ammo": [ "essence_type" ],
+    "max_charges": 20,
+    "charges_per_use": 1,
+    "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_spatial_displacement", "no_fail": true, "level": 0 } ],
+    "flags": [ "NO_SALVAGE" ]
+  },
+  {
+    "id": "bot_mech_arcana",
+    "type": "TOOL",
+    "name": { "str": "inactive anomaly recon mech" },
+    "description": "A hulking, yet unnaturally light, mass of parts running off anomalous technology, with an exotic laser weapon and advanced defensive tools.  Use it to deploy and set up the mech for piloting.",
+    "volume": "500 L",
+    "weight": "7500 g",
+    "price_postapoc": "75 USD",
+    "to_hit": -3,
+    "bashing": 8,
+    "material": [ "steel" ],
+    "symbol": ",",
+    "color": "cyan",
+    "looks_like": "broken_mech_recon",
+    "flags": [ "ALLOWS_REMOTE_USE", "NO_SALVAGE" ],
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_mech_arcana",
+      "is_pet": true,
+      "friendly_msg": "You set up the mech and start powering it up, bringing energy fields flickering to life and animating spindly limbs.",
+      "moves": 1000
+    }
+  },
+  {
+    "id": "verge_meteoric",
+    "type": "TOOL",
+    "category": "weapons",
+    "weapon_category": [ "BATONS" ],
+    "name": { "str": "meteoric verge" },
+    "description": "A short wooden staff, entirely covered in decorative motifs worked from a symbol of judgment.  The symbol's otherworldly presence is still evident in the twisted, flame-like prongs now entwined around a charm of dark, iridescent metal.  Using it will allow you to smite enemies with lightning, protecting you from electrical harm briefly as well.",
+    "weight": "1585 g",
+    "to_hit": 1,
+    "volume": "2500 ml",
+    "//": "Meteoric verge and moonstone scourge require items that did not exist pre-cataclysm.",
+    "price_postapoc": "150 USD",
+    "bashing": 16,
+    "cutting": 4,
+    "attacks": [
+      {
+        "id": "BASH",
+        "to_hit": 1,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 16 },
+            { "damage_type": "stab", "amount": 8 },
+            { "damage_type": "electric", "amount": 6 }
+          ]
+        }
+      }
+    ],
+    "material": [ "hardsteel", "gold" ],
+    "symbol": "/",
+    "looks_like": "i_staff",
+    "color": "yellow",
+    "max_charges": 10,
+    "charges_per_use": 2,
+    "ammo": "essence_type",
+    "use_action": [
+      {
+        "type": "cast_spell",
+        "spell_id": "arcana_item_meteoric_verge_bolt",
+        "no_fail": true,
+        "need_wielding": true,
+        "level": 0
+      }
+    ],
+    "flags": [ "STAB", "NO_SALVAGE", "MAGIC_FOCUS", "SHEATH_SPEAR", "DURABLE_MELEE" ]
+  },
+  {
+    "id": "scourge_moonstone",
+    "type": "TOOL",
+    "category": "weapons",
+    "weapon_category": [ "WHIPS" ],
+    "symbol": "/",
+    "looks_like": "bullwhip_razor",
+    "color": "dark_gray",
+    "name": { "str": "moonstone scourge" },
+    "description": "A lash modified with razor-sharp slivers of opalescent stone, and silver decoration along the handle.  While relatively effective as a weapon, fueling it with blood essence will restore its life-draining properties, and make it a much more deadly weapon.",
+    "weight": "3500 g",
+    "volume": "2 L",
+    "price_postapoc": "150 USD",
+    "material": [ "leather", "stone", "silver" ],
+    "flags": [ "REACH_ATTACK", "REACH3", "NO_SALVAGE", "DURABLE_MELEE", "COMBAT_NPC_USE" ],
+    "techniques": [ "WHIP_DISARM" ],
+    "bashing": 3,
+    "cutting": 21,
+    "max_charges": 24,
+    "ammo": "essence_blood_type",
+    "relic_data": {
+      "passive_effects": [ { "has": "WIELD", "condition": "ACTIVE", "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5 } ] } ]
+    },
+    "use_action": [
+      {
+        "target": "scourge_moonstone_on",
+        "msg": "A wicked resonance flows through the whip, and the spikes of moonstone gain a blood-red luster.",
+        "active": true,
+        "need_wielding": true,
+        "need_charges": 1,
+        "need_charges_msg": "The lash hungers for blood.",
+        "type": "transform"
+      }
+    ]
+  },
+  {
+    "id": "scourge_moonstone_on",
+    "copy-from": "scourge_moonstone",
+    "repairs_like": "scourge_moonstone",
+    "type": "TOOL",
+    "name": { "str": "moonstone scourge (on)", "str_pl": "moonstone scourges (on)" },
+    "description": "A lash modified with razor-sharp slivers of opalescent stone, and silver decoration along the handle.  The stone blades reflect with an eerie red luster, and it seems far more nimble in the hand.",
+    "//": "Turns out that modifying attack speed via relic data doesn't work right for transforming items, so weight-based hacks it is!",
+    "weight": "35 g",
+    "to_hit": 2,
+    "turns_per_charge": 25,
+    "revert_to": "scourge_moonstone",
+    "techniques": [ "RAPID", "SWEEP", "WHIP_DISARM", "SPIN", "WIDE" ],
+    "extend": { "flags": [ "COMBAT_NPC_ON" ] },
+    "use_action": [ { "target": "scourge_moonstone", "msg": "The wicked energy flowing through the whip fades.", "type": "transform" } ]
+  },
+  {
+    "id": "moonstone_fang",
+    "type": "TOOL",
+    "category": "weapons",
+    "weapon_category": [ "KNIVES" ],
+    "name": { "str": "moonstone fang" },
+    "description": "A short, curved spike made of a white opalescent gemstone, richly engraved with swirling serpentine imagery.  Wielding it grant a minor life-draining touch and potentially blind attackers with magic, but it will sicken body and mind.  Activating it will additionally harden the body against cold, draining essence over time.",
+    "weight": "160 g",
+    "volume": "1500 ml",
+    "//": "And the third shrine item, also post-cata only.",
+    "price_postapoc": "100 USD",
+    "to_hit": 2,
+    "bashing": 3,
+    "cutting": 18,
+    "material": [ "stone" ],
+    "symbol": "/",
+    "looks_like": "small_relic",
+    "repairs_like": "blood_athame",
+    "color": "dark_gray",
+    "max_charges": 10,
+    "ammo": "essence_type",
+    "techniques": [ "RAPID", "DEF_DISARM" ],
+    "qualities": [ [ "BUTCHER", 6 ] ],
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ALWAYS",
+          "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5 }, { "id": "arcana_react_moonstone_touch", "once_in": 10 } ],
+          "hit_me_effect": [
+            {
+              "id": "arcana_react_shadowy_shield",
+              "once_in": 5,
+              "message": "Wisps of shadow lash out at %2$s",
+              "npc_message": "Wisps of shadow jump from %1$s to %2$s."
+            }
+          ]
+        },
+        {
+          "has": "WIELD",
+          "condition": "ACTIVE",
+          "values": [ { "value": "ARMOR_COLD", "multiply": -0.5 } ],
+          "ench_effects": [ { "effect": "cold_ward", "intensity": 1 } ]
+        }
+      ]
+    },
+    "use_action": {
+      "target": "moonstone_fang_on",
+      "msg": "The carvings in the stone glow blue for a brief moment, and an uncomfortable warmth spreads through your body.",
+      "active": true,
+      "need_charges": 1,
+      "need_charges_msg": "Essence shall draw out the fang's protective magic.",
+      "menu_text": "Activate ward against cold",
+      "type": "transform"
+    },
+    "flags": [ "STAB", "SHEATH_KNIFE", "DURABLE_MELEE", "COMBAT_NPC_USE", "MISSION_ITEM" ]
+  },
+  {
+    "id": "moonstone_fang_on",
+    "type": "TOOL",
+    "copy-from": "moonstone_fang",
+    "repairs_like": "moonstone_fang",
+    "name": { "str": "moonstone fang (on)", "str_pl": "moonstone fangs (on)" },
+    "description": "A short, curved spike made of a white opalescent gemstone, richly engraved with swirling serpentine imagery.  In addition to its life-draining strikes and blinding attackers, it is currently protecting you against the cold.  It can't be released until deactivated, however.",
+    "turns_per_charge": 450,
+    "revert_to": "moonstone_fang",
+    "use_action": {
+      "target": "moonstone_fang",
+      "msg": "The fang's unnatural glow fades, its protective magic with it.",
+      "type": "transform"
+    },
+    "extend": { "flags": [ "TRADER_AVOID", "NO_UNWIELD", "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "veilblade",
+    "looks_like": "zweihander",
+    "type": "TOOL",
+    "category": "weapons",
+    "weapon_category": [ "2H_SWORDS", "MEDIEVAL_SWORDS" ],
+    "name": { "str": "restored ritual blade" },
+    "description": "A two-handed sword richly engraved with exotic runes, all in scripts not of this world.  Once corrupted and now restored, it can only serve a fragment of its original purpose.  Linger next to a portal to fuel it, or use crystallized essence.  Use it to offer power to the Beyond, restoring mana and seeking communion with its maker.  It will reward you great gifts, but set you down a path you can't return from.",
+    "weight": "2267 g",
+    "volume": "3 L",
+    "//": "Arguably it being restored instead of untainted means it should count as a post-cata item, but the original was pre-cata.",
+    "price": "90000 USD",
+    "price_postapoc": "150 USD",
+    "to_hit": 2,
+    "bashing": 16,
+    "cutting": 37,
+    "material": [ "steel", "essencemat" ],
+    "symbol": "/",
+    "color": "light_gray",
+    "max_charges": 10,
+    "charges_per_use": 1,
+    "ammo": "essence_pure_type",
+    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_ritual_blade", "no_fail": true, "need_wielding": true, "level": 0 },
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ALWAYS",
+          "values": [ { "value": "INTELLIGENCE", "add": 4 }, { "value": "MANA_REGEN", "multiply": 0.5 } ]
+        }
+      ],
+      "recharge_scheme": [
+        { "type": "trap", "interval": "1 s", "rate": 1, "message": "The portal collapses!", "trap": "tr_portal" },
+        { "type": "field", "interval": "1 s", "rate": 0, "field": "fd_fatigue", "int_min": 1, "int_max": 3 },
+        { "type": "field", "interval": "1 s", "rate": 0, "field": "fd_tindalos_rift", "int_min": 1, "int_max": 3 },
+        { "type": "field", "interval": "1 s", "rate": 0, "field": "fd_archon_rift", "int_min": 1, "int_max": 3 }
+      ]
+    },
+    "techniques": [ "WBLOCK_1", "WIDE", "BRUTAL", "SWEEP" ],
+    "flags": [ "UNBREAKABLE_MELEE", "NO_SALVAGE", "MAGIC_FOCUS", "NONCONDUCTIVE", "SHEATH_SWORD" ]
+  },
+  {
+    "id": "draconic_heart_mutator",
+    "type": "TOOL",
+    "name": { "str": "sacramental heart" },
+    "description": "A vibrant red chunk of petrified flesh, purified and set in an ornamental mounting like a morbid brooch.  It resonates with unnatural power, as though imbued with the essence of the creature it was cut away from.  Channeling blood essence through it will start you down the path to becoming something …else.  A path you can't return from.",
+    "weight": "2500 g",
+    "volume": "1 L",
+    "//": "The dracolich was summoned during that nebulous window of time when The Veil was wide enough to allow things to be yanked through, but before Zero Day.  Actually completing what they wanted to do with is a post-cataclysm development, but as with the ritual blades we're still reflecting the value of its original form.",
+    "price": "80000 USD",
+    "price_postapoc": "120 USD",
+    "to_hit": -2,
+    "bashing": 3,
+    "material": [ "stone", "essencemat" ],
+    "symbol": "*",
+    "looks_like": "petrified_eye",
+    "color": "red",
+    "max_charges": 10,
+    "charges_per_use": 5,
+    "ammo": "essence_blood_type",
+    "use_action": {
+      "type": "cast_spell",
+      "spell_id": "arcana_item_sacramental_heart",
+      "no_fail": true,
+      "need_wielding": true,
+      "level": 0
+    }
+  },
+  {
+    "id": "sanguine_staff_lifesbane",
+    "type": "TOOL",
+    "category": "weapons",
+    "weapon_category": [ "QUARTERSTAVES" ],
+    "name": { "str": "horned staff of life's bane", "str_pl": "horned staves of life's bane" },
+    "description": "A wooden staff topped with a golden cage, enveloping a mass of petrified flesh from which sharp horns have grown.  The counter-argument to the Dragonblood Sacrament.  It draws energy from whatever you strike with it, fueling a protective effect that synergizes with the rituals of the silver athame.  The staff itself can absorb smaller tears in reality, and activating it channels a powerful life-draining beam of energy that blights the land around you.",
+    "weight": "2050 g",
+    "volume": "1750 ml",
+    "//": "Conceived of before the cataclysm but only put together post-cata.",
+    "price_postapoc": "150 USD",
+    "attacks": [
+      {
+        "id": "BASH",
+        "to_hit": 2,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 22 },
+            { "damage_type": "stab", "amount": 18 },
+            { "damage_type": "dark", "amount": 10 }
+          ]
+        }
+      }
+    ],
+    "material": [ "wood", "bone", "essencemat" ],
+    "symbol": "/",
+    "looks_like": "scourge_staff",
+    "color": "red",
+    "max_charges": 30,
+    "charges_per_use": 5,
+    "ammo": "essence_blood_type",
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ALWAYS",
+          "mutations": [ "ARCANA_STAFF_EFFECT" ],
+          "hit_you_effect": [ { "id": "arcana_react_sanguine_staff_drain" } ]
+        }
+      ],
+      "recharge_scheme": [
+        {
+          "type": "field",
+          "interval": "1 s",
+          "rate": 3,
+          "message": "The rift evaporates!",
+          "field": "fd_fatigue",
+          "int_min": 1,
+          "int_max": 3
+        },
+        { "type": "field", "interval": "1 s", "rate": 0, "field": "fd_tindalos_rift", "int_min": 1, "int_max": 3 },
+        { "type": "field", "interval": "1 s", "rate": 0, "field": "fd_veil_light", "int_min": 1, "int_max": 3 }
+      ]
+    },
+    "use_action": [
+      {
+        "type": "cast_spell",
+        "spell_id": "arcana_item_sanguine_staff_beam",
+        "no_fail": true,
+        "need_wielding": true,
+        "level": 0
+      }
+    ],
+    "flags": [ "STAB", "NO_SALVAGE", "MAGIC_FOCUS", "SHEATH_SPEAR", "UNBREAKABLE_MELEE" ]
+  },
+  {
+    "id": "stormbringer",
+    "type": "TOOL",
+    "copy-from": "zweihander",
+    "name": { "str": "cursed blade" },
+    "description": "A two-handed sword made of a dark metal.  It is engraved with unfamiliar symbols that seem faintly foreboding.  Activating it will grant the wielder a burst of powerful, corruptive, addictive life-draining magic, but you'll be unable to let go of it until the effect wears off.",
+    "snippet_category": [
+      {
+        "id": "stormbringer_1",
+        "text": "A two-handed sword made of a dark metal.  It is engraved with unfamiliar symbols, and a single phrase in a script you can actually read: \"neherit asheiri\"  Activating it will grant the wielder a burst of powerful, corruptive, addictive life-draining magic, but you'll be unable to let go of it until the effect wears off."
+      }
+    ],
+    "material": [ "steel", "essencemat" ],
+    "//": "In this case being cursed basically halves its pre-cataclysm value, as it's no longer useful for what the Keepers used it for, and the Sanguine Order's appropriation of it had a very specific focus.",
+    "weight": "2267 g",
+    "volume": "3 L",
+    "price": "45000 USD",
+    "price_postapoc": "120 USD",
+    "to_hit": 2,
+    "bashing": 16,
+    "cutting": 37,
+    "color": "dark_gray",
+    "max_charges": 9,
+    "ammo": "essence_blood_type",
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ACTIVE",
+          "mutations": [ "ARCANA_BERSERK_EFFECT" ],
+          "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "DEXTERITY", "add": 2 } ],
+          "hit_you_effect": [ { "id": "arcana_react_drain_life_improved" } ],
+          "intermittent_activation": { "effects": [ { "frequency": "3 minutes", "spell_effects": [ { "id": "arcana_react_evil_mimic" } ] } ] },
+          "ench_effects": [ { "effect": "arcana_evil_mimic_active", "intensity": 1 } ]
+        }
+      ]
+    },
+    "use_action": [
+      {
+        "target": "stormbringer_on",
+        "msg": "The runes on the blade glow for a moment, the leather wrap of the hilt contorting into winding tendrils that envelop your hand!  You feel a strange bloodlust overtake you!",
+        "active": true,
+        "need_wielding": true,
+        "need_charges": 9,
+        "need_charges_msg": "Nine motes of blood shall awaken the blade.",
+        "menu_text": "Awaken the dark blade",
+        "type": "transform"
+      }
+    ],
+    "extend": { "flags": [ "UNBREAKABLE_MELEE", "NO_SALVAGE", "SNIPPET_NEEDS_LITERACY", "MISSION_ITEM" ] },
+    "delete": { "flags": [ "DURABLE_MELEE", "ALWAYS_TWOHAND" ] }
+  },
+  {
+    "id": "stormbringer_on",
+    "type": "TOOL",
+    "category": "weapons",
+    "weapon_category": [ "2H_SWORDS", "MEDIEVAL_SWORDS" ],
+    "name": { "str": "cursed blade (on)", "str_pl": "cursed blades (on)" },
+    "//": "Funny as it'd be to add the bad weather effect too, that would be a tad silly.  Also still can't use copy-from.",
+    "description": "A two-handed sword, blade made of a dark metal, engraved with unfamiliar symbols.  You feel as if the blade thirsts for blood, refusing to leave your grasp until it is sated.",
+    "max_charges": 9,
+    "turns_per_charge": 200,
+    "ammo": "essence_blood_type",
+    "revert_to": "stormbringer",
+    "revert_msg": "The malevolent energy fades from the cursed blade, returning it to normal.",
+    "weight": "2267 g",
+    "volume": "3 L",
+    "price": "45000 USD",
+    "price_postapoc": "120 USD",
+    "to_hit": 2,
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 2,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 16 },
+            { "damage_type": "cut", "amount": 37 },
+            { "damage_type": "dark", "amount": 14 }
+          ]
+        }
+      }
+    ],
+    "material": [ "steel", "essencemat" ],
+    "symbol": "/",
+    "looks_like": "stormbringer",
+    "repairs_like": "stormbringer",
+    "color": "dark_gray",
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ACTIVE",
+          "mutations": [ "ARCANA_BERSERK_EFFECT" ],
+          "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "DEXTERITY", "add": 2 } ],
+          "hit_you_effect": [ { "id": "arcana_react_drain_life_improved" } ],
+          "intermittent_activation": { "effects": [ { "frequency": "3 minutes", "spell_effects": [ { "id": "arcana_react_evil_mimic" } ] } ] },
+          "ench_effects": [ { "effect": "arcana_evil_mimic_active", "intensity": 1 } ]
+        }
+      ]
+    },
+    "techniques": [ "WBLOCK_1", "WIDE", "BRUTAL", "SWEEP", "tec_weapon_stormbringer_slash" ],
+    "flags": [ "UNBREAKABLE_MELEE", "NO_SALVAGE", "NO_UNWIELD", "NO_UNLOAD", "NO_RELOAD" ]
+  }
+]

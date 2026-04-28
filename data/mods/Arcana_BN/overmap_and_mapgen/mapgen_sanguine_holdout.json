@@ -1,0 +1,268 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "sanguine_holdout_1" ],
+    "weight": 100,
+    "object": {
+      "rows": [
+        ",,,,,,,,,,,,,,,,,,,,,,,,",
+        ",,,YYYYYYYYYYGGGGGYYYY,,",
+        ",,,Y%,,%%%%%,,,,,,!,%Y,,",
+        ",,,Y%,,,,,,,,,,,,,,,%Y,,",
+        ",,,Y%,|-www-|,,,,,,,%Y,,",
+        ",,,Y,,|CsfCn|EEEEE,,%Y,,",
+        ",,|-w-|o....+EEEEE,,,Y,,",
+        ",,|t.&|C...n|-www-|-w-|,",
+        ",?|t..+....n|D....+..{|,",
+        ",,|..s|.....+.....+..{|,",
+        ",,|-+-|.....|BB.|-||--|,",
+        ",,|.........|---|..+.>|,",
+        ",,W...hh.....]]]|..+.>|,",
+        ",,|..heeh.......|..|--|,",
+        ",,WC.heeh.......x....]|,",
+        ",,WC..hh.......C|eh..]|,",
+        ",,|............C|-----|,",
+        ",,W............C|.DBB.|,",
+        ",,|.............+..BB.W,",
+        ",,|-+|-W-xx-W-|-|.....W,",
+        ",,|{.|EEEEEEEE|{+.....|,",
+        ",,|--|EEEEEEEE|-|--W--|,",
+        ",,,,,EEIEEEEIEE,,,,,,,,,",
+        ",,,,,,,,,,,,,,,,,,,,,,,,"
+      ],
+      "palettes": [ "arcana_palette" ],
+      "mapping": {
+        "]": { "items": { "item": "mansion_bookcase" } },
+        "f": { "items": [ { "item": "fridgesnacks", "chance": 30 }, { "item": "fridge", "chance": 50 } ] },
+        "n": { "items": [ { "item": "cannedfood", "chance": 50 }, { "item": "cannedfood", "chance": 25 } ] },
+        "{": { "items": [ { "item": "butcher_tools", "chance": 50 }, { "item": "butcher_tools", "chance": 50 } ] }
+      },
+      "terrain": {
+        "|": "t_wall_log",
+        "-": "t_wall_log",
+        "?": "t_gutter_downspout",
+        "!": "t_palisade_pulley",
+        "%": [
+          [ "t_shrub_peanut", 10 ],
+          [ "t_shrub_blueberry", 15 ],
+          [ "t_shrub_strawberry", 20 ],
+          [ "t_shrub_blackberry", 10 ],
+          [ "t_shrub_huckleberry", 5 ],
+          [ "t_shrub_raspberry", 5 ],
+          [ "t_shrub_grape", 10 ],
+          [ "t_shrub_rose", 25 ]
+        ],
+        "G": "t_palisade_gate",
+        "Y": "t_palisade",
+        "W": "t_window_boarded",
+        "w": "t_window_domestic"
+      },
+      "place_loot": [ { "item": "candle_warding_active", "x": 17, "y": 15 } ],
+      "place_zones": [
+        { "type": "NPC_NO_INVESTIGATE", "faction": "sanguine_order_remnant", "x": [ 0, 23 ], "y": [ 0, 10 ] },
+        { "type": "NPC_NO_INVESTIGATE", "faction": "sanguine_order_remnant", "x": [ 0, 16 ], "y": [ 11, 12 ] },
+        { "type": "NPC_NO_INVESTIGATE", "faction": "sanguine_order_remnant", "x": [ 19, 23 ], "y": [ 11, 12 ] },
+        { "type": "NPC_NO_INVESTIGATE", "faction": "sanguine_order_remnant", "x": [ 0, 23 ], "y": [ 13, 23 ] },
+        { "type": "NPC_INVESTIGATE_ONLY", "faction": "sanguine_order_remnant", "x": [ 17, 18 ], "y": [ 11, 12 ] }
+      ],
+      "place_npcs": [ { "class": "sanguine_order_apprentice", "x": 17, "y": 11, "add_trait": "BGSS_BLOOD_MAGE_1" } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "sanguine_holdout_b1" ],
+    "weight": 100,
+    "object": {
+      "rows": [
+        "########################",
+        "##=========##==========#",
+        "##=8.8i8.8=##=8.=8.=8.=#",
+        "##=.......=##=..=..=..=#",
+        "##=[.aa..C=====5==5==5=#",
+        "##=[.aa..C=..+........=#",
+        "##=......v=..+........=#",
+        "#=====+====..=5==..=5==#",
+        "#=........+..=..=..=..=#",
+        "#=hee.....+..=.8=..=.8=#",
+        "#=hee..{{{=======..====#",
+        "#=.hh..====i...b=..+.<=#",
+        "#=.....=..+..Z..=..+.<=#",
+        "#===+===..+..Z..=..====#",
+        "#=]...]=..=i...b=..=####",
+        "#=]...]=++=======++====#",
+        "#=........=..=.......p=#",
+        "#=hh......=..+.......p=#",
+        "#=dd....]]=..=.......p=#",
+        "#====++====..===+======#",
+        "####=........=....s=####",
+        "####=........=&....=####",
+        "####================####",
+        "########################"
+      ],
+      "palettes": [ "arcana_palette" ],
+      "terrain": { "5": "t_door_metal_pickable" },
+      "furniture": { "i": "f_arcane_candlestick_lit" },
+      "mapping": {
+        "]": { "items": [ { "item": "sanguine_cult_books", "chance": 60 }, { "item": "sanguine_cult_books", "chance": 30 } ] },
+        "{": {
+          "items": [ { "item": "sanguine_cult_consumables", "chance": 30 }, { "item": "sanguine_cult_consumables", "chance": 15 } ]
+        },
+        "C": { "item": [ { "item": "dragonblood_mutagen", "chance": 50 } ] },
+        "a": { "items": [ { "item": "butcher_tools", "chance": 50 } ] },
+        "b": { "items": { "item": "cult_sacrifice", "chance": 100 } }
+      },
+      "place_loot": [ { "item": "corpse_bloody", "x": [ 5, 6 ], "y": [ 4, 5 ], "chance": 50, "repeat": 2 } ],
+      "place_zones": [
+        { "type": "NPC_NO_INVESTIGATE", "faction": "sanguine_order_remnant", "x": [ 13, 22 ], "y": [ 1, 4 ] },
+        { "type": "NPC_NO_INVESTIGATE", "faction": "sanguine_order_remnant", "x": [ 13, 16 ], "y": [ 7, 10 ] },
+        { "type": "NPC_NO_INVESTIGATE", "faction": "sanguine_order_remnant", "x": [ 19, 22 ], "y": [ 7, 10 ] },
+        { "type": "NPC_NO_INVESTIGATE", "faction": "sanguine_order_remnant", "x": [ 19, 22 ], "y": [ 11, 13 ] },
+        { "type": "NPC_INVESTIGATE_ONLY", "faction": "sanguine_order_remnant", "x": [ 11, 15 ], "y": [ 11, 14 ] },
+        { "type": "NPC_INVESTIGATE_ONLY", "faction": "sanguine_order_remnant", "x": [ 3, 6 ], "y": [ 2, 6 ] },
+        { "type": "NPC_INVESTIGATE_ONLY", "faction": "sanguine_order_remnant", "x": [ 2, 9 ], "y": [ 8, 21 ] },
+        { "type": "NPC_INVESTIGATE_ONLY", "faction": "sanguine_order_remnant", "x": [ 10, 21 ], "y": [ 16, 21 ] },
+        { "type": "NPC_INVESTIGATE_ONLY", "faction": "sanguine_order_remnant", "x": [ 10, 12 ], "y": [ 5, 9 ] },
+        { "type": "NPC_INVESTIGATE_ONLY", "faction": "sanguine_order_remnant", "x": [ 13, 21 ], "y": [ 5, 6 ] },
+        { "type": "NPC_INVESTIGATE_ONLY", "faction": "sanguine_order_remnant", "x": [ 17, 18 ], "y": [ 7, 15 ] }
+      ],
+      "place_monster": [
+        { "monster": "mon_dementia", "x": 14, "y": 3 },
+        { "monster": "mon_dementia", "x": 21, "y": 3 },
+        { "monster": "mon_dementia", "x": 20, "y": 9 },
+        { "monster": "mon_homunculus", "x": 14, "y": 8 },
+        { "monster": "mon_flesh_angel", "x": 18, "y": 2 }
+      ],
+      "place_npcs": [
+        { "class": "sanguine_order_apprentice_generic", "x": 21, "y": 18, "add_trait": "MUTE" },
+        { "class": "sanguine_order_apprentice_generic", "x": 3, "y": 17, "add_trait": "MUTE" },
+        { "class": "sanguine_order_apprentice_generic", "x": 2, "y": 9, "add_trait": "MUTE" },
+        { "class": "sanguine_order_apprentice_generic", "x": 17, "y": 20, "add_trait": "MUTE" },
+        { "class": "sanguine_order_apprentice_generic", "x": 18, "y": 6, "add_trait": "MUTE" },
+        { "class": "sanguine_order_shrike", "x": 7, "y": 5, "add_trait": "BGSS_BLOOD_MAGE_2" }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "sanguine_holdout_2" ],
+    "weight": 100,
+    "object": {
+      "rows": [
+        ",,,,,,,,,,,,,,,,,,,,,,,,",
+        ",,,YYYYYYYYYYGGGGGYYYY,,",
+        ",,,Y%,,%%%%%,,,,,,!,%Y,,",
+        ",,,Y%,,,,,,,,,,,,,,,%Y,,",
+        ",,,Y%,|-www-|,,,,,,,%Y,,",
+        ",,,Y,,|}..DB|EEEEE,,%Y,,",
+        ",,|---|h...B|EEEEE,,,Y,,",
+        ",,|&.s|dd...|-w+w-|---|,",
+        ",?|...+.....|BD...|s.&|,",
+        ",,|tt.|.....|B....+...|,",
+        ",,|-------+-|.....|.tt|,",
+        ",,|nnsfo....|-+-|--+--|,",
+        ",,|.............|...DB|,",
+        ",,W{..hh........|....BW,",
+        ",,W{.heeh.......+.....|,",
+        ",,W{.heeh.......|-----|,",
+        ",,W{..hh........+.dh.]|,",
+        ",,|.............|.d..]W,",
+        ",,|.............|....]W,",
+        ",,|..|-W-xx-W-|-|]....W,",
+        ",,|ee|EEEEEEEE|D+].BB.|,",
+        ",,|--|EEEEEEEE|--|----|,",
+        ",,,,,EEIEEEEIEE,,,,,,,,,",
+        ",,,,,,,,,,,,,,,,,,,,,,,,"
+      ],
+      "palettes": [ "arcana_palette" ],
+      "mapping": {
+        "]": {
+          "items": [ { "item": "mansion_books" }, { "item": "mansion_books", "chance": 50 }, { "item": "mansion_books", "chance": 25 } ]
+        },
+        "{": {
+          "items": [
+            { "item": "antique_guns", "chance": 50 },
+            { "item": "antique_ammo", "chance": 50 },
+            { "item": "antique_ammo", "chance": 50 },
+            { "item": "antique", "chance": 50 },
+            { "item": "antique", "chance": 50 },
+            { "item": "antique_rare", "chance": 50 }
+          ]
+        },
+        "f": { "items": [ { "item": "fridgesnacks", "chance": 30 }, { "item": "fridge", "chance": 50 } ] },
+        "n": { "items": [ { "item": "cannedfood", "chance": 50 }, { "item": "cannedfood", "chance": 25 } ] }
+      },
+      "place_loot": [
+        { "group": "sanguine_cult_consumables", "x": 7, "y": 5 },
+        { "item": "sanguine_mission_notes", "x": 7, "y": 5 },
+        { "item": "candle_warding_active", "x": 7, "y": 15 }
+      ],
+      "faction_owner": [ { "id": "sanguine_shrike_splinter", "x": [ 3, 21 ], "y": [ 5, 20 ] } ],
+      "terrain": {
+        "|": "t_wall_log",
+        "-": "t_wall_log",
+        "?": "t_gutter_downspout",
+        "!": "t_palisade_pulley",
+        "%": [
+          [ "t_shrub_peanut", 10 ],
+          [ "t_shrub_blueberry", 15 ],
+          [ "t_shrub_strawberry", 20 ],
+          [ "t_shrub_blackberry", 10 ],
+          [ "t_shrub_huckleberry", 5 ],
+          [ "t_shrub_raspberry", 5 ],
+          [ "t_shrub_grape", 10 ],
+          [ "t_shrub_rose", 25 ]
+        ],
+        "G": "t_palisade_gate",
+        "Y": "t_palisade",
+        "W": "t_window_boarded",
+        "w": "t_window_domestic"
+      },
+      "place_zones": [ { "type": "NPC_INVESTIGATE_ONLY", "faction": "sanguine_order_remnant", "x": [ 3, 21 ], "y": [ 5, 20 ] } ],
+      "place_npcs": [
+        { "class": "sanguine_order_shrike_huntmaster", "x": 5, "y": 14, "add_trait": "SHRIKE_MISSION_MARKER" },
+        { "class": "sanguine_order_shrike_renegade", "x": 7, "y": 6 },
+        { "class": "sanguine_order_shrike_renegade", "x": 19, "y": 16 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "sanguine_holdout_roof" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "      |-----|           ",
+        "      |.....|           ",
+        "  |---|.....|           ",
+        "  |.........|---------| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |...................| ",
+        "  |-------------------| ",
+        "                        ",
+        "                        "
+      ],
+      "palettes": [ "arcana_palette" ],
+      "terrain": { "|": "t_wall_log_half", "-": "t_wall_log_half", ".": "t_tar_flat_roof" }
+    }
+  }
+]

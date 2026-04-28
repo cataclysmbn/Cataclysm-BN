@@ -485,6 +485,7 @@ void cata::detail::reg_map( sol::state &lua )
         point bottomright, float density, bool single ) { m.place_spawns( mongroup_id( id ), chance, topleft, bottomright, density, single ); } );
         luna::set_fx( ut, "place_items", []( map & m, std::string id, int chance, point topleft,
         point bottomright, bool onflat ) { m.place_items( item_group_id( id ), chance, topleft, bottomright, onflat, calendar::start_of_cataclysm ); } );
+        luna::set_fx( ut, "rotate", []( map & m, int turns ) { m.rotate( turns ); } );
     }
 
     // Register 'tinymap' class to be used in Lua

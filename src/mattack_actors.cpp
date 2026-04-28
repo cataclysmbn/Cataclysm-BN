@@ -17,6 +17,8 @@
 #include "generic_factory.h"
 #include "gun_mode.h"
 #include "int_id.h"
+#include "itype.h"
+#include "iuse_actor.h"
 #include "item.h"
 #include "json.h"
 #include "line.h"
@@ -225,6 +227,98 @@ bool mon_spellcasting_actor::call( monster &mon ) const
     }
 
     spell_data.cast_all_effects( mon, target );
+
+    return true;
+}
+
+std::unique_ptr<mattack_actor> deployer_actor::clone() const
+{
+    return std::make_unique<deployer_actor>( *this );
+}
+
+void deployer_actor::load_internal( const JsonObject &obj, const std::string & )
+{
+    for( const JsonMember member : obj.get_object( "deployables" ) ) {
+        const JsonObject jo = member.get_object();
+        grenades[itype_id( member.name() )] = {
+            _( jo.get_string( "message" ) ),
+            jo.get_int( "chance" ),
+            jo.get_float( "ammo_percentage" ),
+            jo.get_int( "range" )
+        };
+    }
+}
+
+bool deployer_actor::call( monster &mon ) const
+{
+    if( !mon.can_act() ) {
+        return false;
+    }
+    bool has_attack_target = mon.attack_target();
+    has_attack_target = has_attack_target || ( !mon.friendly && mon.sees( g->u ) );
+    if( !has_attack_target ) {
+        // this is an attack. there is no reason to attack if there isn't a real target.
+        return false;
+    }
+
+    int total_ammo = 0;
+    for( const auto &ammo_entry : mon.type->starting_ammo ) {
+        total_ammo += ammo_entry.second;
+    }
+    if( total_ammo == 0 ) {
+        // Should never happen, but protect us from a div/0 if it does.
+        return false;
+    }
+
+    // Find how much ammo we currently have to get the total ratio
+    int curr_ammo = 0;
+    for( const auto &amm : mon.ammo ) {
+        curr_ammo += amm.second;
+    }
+    float rat = curr_ammo / static_cast<float>( total_ammo );
+
+    weighted_float_list<itype_id> possible_attacks;
+    for( const auto &amm : mon.ammo ) {
+        if( amm.second > 0 && grenades.at( amm.first ).ammo_percentage >= rat ) {
+            possible_attacks.add( amm.first, 1.0 / grenades.at( amm.first ).chance );
+        }
+    }
+    if( possible_attacks.empty() ) {
+        return false;
+    }
+
+    itype_id att = *possible_attacks.pick();
+
+    std::vector<tripoint> empty_points_in_rad;
+
+    auto points_in_rad = g->m.points_in_radius( mon.pos(), grenades.at( att ).range );
+    for( tripoint p : points_in_rad ) {
+        if( g->is_empty( p ) ) {
+            empty_points_in_rad.push_back( p );
+        }
+    }
+
+    // Get our monster type
+    const use_function *usage = att->get_use( "place_monster" );
+    if( usage == nullptr ) {
+        // Invalid bomb item usage, Toggle this special off so we stop processing
+        add_msg( m_debug, "Invalid bomb item usage in deployer special for %s.", mon.name() );
+        return false;
+    }
+    auto *actor = dynamic_cast<const place_monster_iuse *>( usage->get_actor_ptr() );
+    if( actor == nullptr ) {
+        // Invalid bomb item, Toggle this special off so we stop processing
+        add_msg( m_debug, "Invalid bomb type in deployer special for %s.", mon.name() );
+        return false;
+    }
+
+    const tripoint where = empty_points_in_rad[ rng( 0, empty_points_in_rad.size() - 1 ) ];
+
+    if( monster *const hack = g->place_critter_at( actor->mtypeid, where ) ) {
+        mon.ammo[att]--;
+        hack->make_ally( mon );
+        add_msg( m_bad, grenades.at( att ).message );
+    }
 
     return true;
 }
