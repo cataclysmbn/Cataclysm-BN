@@ -1404,7 +1404,7 @@ static auto construction_activity_name( const zone_data *zone,
         const auto &options = dynamic_cast<const blueprint_options &>( zone->get_options() );
         return construction_activity_name( options.get_index() );
     }
-    const partial_con *pc = get_map().partial_con_at( src_loc );
+    const partial_con *pc = get_map().partial_con_at( tripoint_bub_ms( src_loc ) );
     return pc ? construction_activity_name( pc->id ) : _( "construction site" );
 }
 
@@ -1762,7 +1762,7 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
     if( act == ACT_MULTIPLE_CONSTRUCTION ) {
         zones = mgr.get_zones( zone_type_CONSTRUCTION_BLUEPRINT,
                                here.getabs( src_loc ) );
-        const partial_con *part_con = here.partial_con_at( src_loc );
+        const partial_con *part_con = here.partial_con_at( tripoint_bub_ms( src_loc ) );
         std::optional<construction_id> part_con_idx;
         if( part_con ) {
             part_con_idx = part_con->id;
@@ -2141,7 +2141,7 @@ static bool construction_activity( player &p, const zone_data * /*zone*/, const 
     const construction &built_chosen = act_info.con_idx->obj();
     std::vector<detached_ptr<item>> used;
     // create the partial construction struct
-    std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( src_loc );
+    std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( tripoint_bub_ms( src_loc ) );
     pc->id = built_chosen.id;
     pc->counter = 0;
     map &here = get_map();
@@ -2785,7 +2785,7 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
             static const zone_type_id zone_type_CONSTRUCTION_IGNORE( "CONSTRUCTION_IGNORE" );
             const auto before_filter_count = src_set.size();
             for( const tripoint &elem : here.points_in_radius( localpos, ACTIVITY_SEARCH_DISTANCE ) ) {
-                partial_con *pc = here.partial_con_at( elem );
+                partial_con *pc = here.partial_con_at( tripoint_bub_ms( elem ) );
                 if( pc ) {
                     src_set.insert( here.getabs( elem ) );
                 }
@@ -2913,7 +2913,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                                      act_id == ACT_MULTIPLE_FISH ||
                                      act_id == ACT_MULTIPLE_MINE ||
                                      ( act_id == ACT_MULTIPLE_CONSTRUCTION &&
-                                       !here.partial_con_at( src_loc ) );
+                                       !here.partial_con_at( tripoint_bub_ms( src_loc ) ) );
     // some activities require the target tile to be part of a zone.
     // tidy up activity doesn't - it wants things that may not be in a zone already - things that may have been left lying around.
     if( needs_to_be_in_zone && !zone ) {
@@ -3246,7 +3246,7 @@ static bool generic_multi_activity_do( player &p, const activity_id &act_id,
         }
     } else if( reason == do_activity_reason::CAN_DO_CONSTRUCTION ||
                reason == do_activity_reason::CAN_DO_PREREQ ) {
-        if( here.partial_con_at( src_loc ) ) {
+        if( here.partial_con_at( tripoint_bub_ms( src_loc ) ) ) {
             p.backlog.emplace_front( std::make_unique<player_activity>( act_id ) );
             p.assign_activity( std::make_unique<player_activity>( std::make_unique<construction_activity_actor>
                                ( tripoint_abs_ms( src ) ) ) );

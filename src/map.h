@@ -490,7 +490,7 @@ class map : public submap_load_listener
          * Check if a local tripoint is out of dimension bounds.
          * Returns false if no bounds are set (infinite dimension).
          */
-        bool is_out_of_bounds( const tripoint &p ) const;
+        bool is_out_of_bounds( const tripoint_bub_ms &p ) const;
         /**
          * Get the boundary terrain ID for out-of-bounds areas.
          * Only valid if has_dimension_bounds() is true.
@@ -691,10 +691,10 @@ class map : public submap_load_listener
         void clear_spawns();
         void clear_traps();
 
-        maptile maptile_at( const tripoint &p ) const;
-        maptile maptile_at( const tripoint &p );
-        maptile maptile_at_internal( const tripoint &p ) const;
-        maptile maptile_at_internal( const tripoint &p );
+        maptile maptile_at( const tripoint_bub_ms &p ) const;
+        maptile maptile_at( const tripoint_bub_ms &p );
+        maptile maptile_at_internal( const tripoint_bub_ms &p ) const;
+        maptile maptile_at_internal( const tripoint_bub_ms &p );
     private:
         void create_hot_air( const tripoint &p, int intensity );
         int burn_body_part( player &u, field_entry &cur, body_part bp, int scale );
@@ -910,7 +910,7 @@ class map : public submap_load_listener
         void unboard_vehicle( const tripoint &p, bool dead_passenger = false );
         // Change vehicle coordinates and move vehicle's driver along.
         // WARNING: not checking collisions!
-        bool displace_vehicle( vehicle &veh, const tripoint &dp );
+        bool displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp );
 
         // Shift the vehicle's z-level without moving any parts
         void shift_vehicle_z( vehicle &veh, int z_shift );
@@ -1602,7 +1602,7 @@ class map : public submap_load_listener
         // Partial construction functions
         void partial_con_set( const tripoint &p, std::unique_ptr<partial_con> con );
         void partial_con_remove( const tripoint &p );
-        partial_con *partial_con_at( const tripoint &p );
+        partial_con *partial_con_at( const tripoint_bub_ms &p );
         // Traps
         void trap_set( const tripoint &p, const trap_id &type );
 
@@ -1727,7 +1727,7 @@ class map : public submap_load_listener
          * Should be way faster than if done in `game.cpp` using public map functions.
          */
         void scent_blockers( std::vector<char> &scent_transfer, int st_sy,
-                             point min, point max );
+                             point_bub_ms min, point_bub_ms max );
 
         // Computers
         computer *computer_at( const tripoint &p );
@@ -1787,7 +1787,7 @@ class map : public submap_load_listener
         bool is_cornerfloor( const tripoint &p ) const;
 
         // mapgen.cpp functions
-        void generate( const tripoint &p, const time_point &when );
+        void generate( const tripoint_abs_sm &p, const time_point &when );
         void place_spawns( const mongroup_id &group, int chance,
                            point p1, point p2, float density,
                            bool individual = false, bool friendly = false, const std::string &name = "NONE",
@@ -1851,30 +1851,34 @@ class map : public submap_load_listener
         std::set<vehicle *> dirty_vehicle_list;
 
         /** return @ref abs_sub */
-        tripoint_abs_sm get_abs_sub() const;
+        tripoint_abs_sm get_abs_sub() const { return abs_sub; }
         /**
          * Translates local (to this map) coordinates of a square to global absolute coordinates.
          * Coordinates is in the system that is used by the ter/furn/i_at functions.
          * Output is in the same scale, but in global system.
          */
-        tripoint getabs( const tripoint &p ) const;
-        tripoint_abs_ms getglobal( const tripoint &p ) const;
+        tripoint getabs( const tripoint &p ) const { return bub_to_abs( tripoint_bub_ms( p ) ).raw(); }
+        tripoint_abs_ms getglobal( const tripoint &p ) const {  return bub_to_abs( tripoint_bub_ms( p ) ); }
         point getabs( point p ) const {
             return getabs( tripoint( p, abs_sub.z() ) ).xy();
         }
         /**
          * Inverse of @ref getabs
          */
-        tripoint getlocal( const tripoint &p ) const;
-        tripoint getlocal( const tripoint_abs_ms &p ) const;
+        tripoint getlocal( const tripoint &p ) const { return abs_to_bub( tripoint_abs_ms( p ) ).raw(); }
+        tripoint getlocal( const tripoint_abs_ms &p ) const { return abs_to_bub( p ).raw(); }
         point getlocal( point p ) const {
             return getlocal( tripoint( p, abs_sub.z() ) ).xy();
         }
 
-        tripoint_abs_ms bub_to_abs( const tripoint_bub_ms &bub ) const;
-        tripoint_bub_ms abs_to_bub( const tripoint_abs_ms &abs ) const;
-        point_abs_ms bub_to_abs( const point_bub_ms &bub ) const;
-        point_bub_ms abs_to_bub( const point_abs_ms &abs ) const;
+        tripoint_abs_ms bub_to_abs( const tripoint_bub_ms &bub ) const { return project_to<coords::ms>( abs_sub ) + tripoint_rel_ms( bub.raw() ); }
+        tripoint_bub_ms abs_to_bub( const tripoint_abs_ms &abs ) const { return tripoint_bub_ms( ( abs - project_to<coords::ms>( abs_sub ) ).raw() ); }
+        tripoint_abs_sm bub_to_abs( const tripoint_bub_sm &bub ) const { return abs_sub + tripoint_rel_sm( bub.raw() ); }
+        tripoint_bub_sm abs_to_bub( const tripoint_abs_sm &abs ) const { return ( abs - abs_sub.raw() ).reinterpret_as<tripoint_bub_sm>(); }
+        point_abs_ms bub_to_abs( const point_bub_ms &bub ) const { return project_to<coords::ms>( abs_sub ).xy() + point_rel_ms( bub.raw() ); }
+        point_bub_ms abs_to_bub( const point_abs_ms &abs ) const { return point_bub_ms( ( abs - project_to<coords::ms>( abs_sub ).xy() ).raw() ); }
+        point_abs_sm bub_to_abs( const point_bub_sm &bub ) const { return abs_sub.xy() + point_rel_sm( bub.raw() ); }
+        point_bub_sm abs_to_bub( const point_abs_sm &abs ) const { return ( abs - abs_sub.raw().xy() ).reinterpret_as<point_bub_sm>(); }
         virtual bool inbounds( const tripoint &p ) const;
         bool inbounds( const tripoint_abs_ms &p ) const;
         bool inbounds( const tripoint_bub_ms &p ) const {
@@ -2130,7 +2134,7 @@ class map : public submap_load_listener
         /**
          * Sets @ref abs_sub, see there. Uses the same coordinate system as @ref abs_sub.
          */
-        void set_abs_sub( const tripoint_abs_sm &p );
+        void set_abs_sub( const tripoint_abs_sm &p ) { abs_sub = p; }
 
     public:
         field &get_field( const tripoint &p );
@@ -2143,18 +2147,18 @@ class map : public submap_load_listener
          * Get the submap pointer containing the specified position within the reality bubble.
          * (p) must be a valid coordinate, check with @ref inbounds.
          */
-        submap *get_submap_at( const tripoint &p ) const;
-        submap *get_submap_at( point p ) const {
-            return get_submap_at( tripoint( p, abs_sub.z() ) );
+        submap *get_submap_at( const tripoint_bub_ms &p ) const;
+        submap *get_submap_at( const point_bub_ms &p ) const {
+            return get_submap_at( tripoint_bub_ms( p, abs_sub.z() ) );
         }
         /**
          * Get the submap pointer containing the specified position within the reality bubble.
          * The same as other get_submap_at, (p) must be valid (@ref inbounds).
          * Also writes the position within the submap to offset_p
          */
-        submap *get_submap_at( const tripoint &p, point &offset_p ) const;
-        submap *get_submap_at( point p, point &offset_p ) const {
-            return get_submap_at( { p, abs_sub.z() }, offset_p );
+        submap *get_submap_at( const tripoint_bub_ms &p, point_sm_ms &offset_p ) const;
+        submap *get_submap_at( const point_bub_ms &p, point_sm_ms &offset_p ) const {
+            return get_submap_at( tripoint_bub_ms( p, abs_sub.z() ), offset_p );
         }
         /**
          * Get submap pointer at given grid coordinates.  For coordinates
@@ -2162,19 +2166,19 @@ class map : public submap_load_listener
          * For out-of-bubble coordinates, falls back to a mapbuffer lookup
          * (may return nullptr if the submap is not loaded in memory).
          */
-        submap *get_submap_at_grid( point gridp ) const {
-            return get_submap_at_grid( tripoint{ gridp, abs_sub.z() } );
+        submap *get_submap_at_grid( const point_bub_sm &gridp ) const {
+            return get_submap_at_grid( tripoint_bub_sm( gridp, abs_sub.z() ) );
         }
-        submap *get_submap_at_grid( const tripoint &gridp ) const;
+        submap *get_submap_at_grid( const tripoint_bub_sm &gridp ) const;
     protected:
         /**
          * Get the index of a submap pointer in the grid given by grid coordinates. The grid
          * coordinates must be valid: 0 <= x < my_MAPSIZE, same for y.
          * Version with z-levels checks for z between -OVERMAP_DEPTH and OVERMAP_HEIGHT
          */
-        size_t get_nonant( const tripoint &gridp ) const;
-        size_t get_nonant( point gridp ) const {
-            return get_nonant( { gridp, abs_sub.z() } );
+        size_t get_nonant( const tripoint_bub_sm &gridp ) const;
+        size_t get_nonant( const point_bub_sm &gridp ) const {
+            return get_nonant( tripoint_bub_sm( gridp, abs_sub.z() ) );
         }
         /**
          * Set the submap pointer in @ref grid at the give index. This is the inverse of
@@ -2264,7 +2268,7 @@ class map : public submap_load_listener
         */
         /*@{*/
         template<typename Functor>
-        void function_over( const tripoint &start, const tripoint &end, Functor fun ) const;
+        void function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &end, Functor fun ) const;
         /*@}*/
 
         /**

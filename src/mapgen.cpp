@@ -118,12 +118,12 @@ static void science_room( map *m, const point &p1, const point &p2, int z, int r
 
 // (x,y,z) are absolute coordinates of a submap
 // x%2 and y%2 must be 0!
-void map::generate( const tripoint &p, const time_point &when )
+void map::generate( const tripoint_abs_sm &p, const time_point &when )
 {
     dbg( DL::Info ) << "map::generate( g[" << g.get() << "], p[" << p <<
                     "], when[" << to_string( when ) << "] )";
 
-    set_abs_sub( tripoint_abs_sm( p ) );
+    set_abs_sub( p );
 
     // First we have to create new submaps and initialize them to 0 all over
     // We create all the submaps, even if we're not a tinymap, so that map
@@ -133,18 +133,18 @@ void map::generate( const tripoint &p, const time_point &when )
     //  because other submaps won't be touched.
     for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
         for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-            const size_t grid_pos = get_nonant( { gridx, gridy, p.z } );
+            const size_t grid_pos = get_nonant( tripoint_bub_sm{ gridx, gridy, p.z() } );
             if( getsubmap( grid_pos ) ) {
-                debugmsg( "Submap already exists at (%d, %d, %d)", gridx, gridy, p.z );
+                debugmsg( "Submap already exists at (%d, %d, %d)", gridx, gridy, p.z() );
                 continue;
             }
-            setsubmap( grid_pos, new submap( getabs( sm_to_ms_copy( {gridx, gridy, p.z} ) ) ) );
+            setsubmap( grid_pos, new submap( project_to<coords::ms>( bub_to_abs( tripoint_bub_sm{ gridx, gridy, p.z() } ) ) ) );
             // TODO: memory leak if the code below throws before the submaps get stored/deleted!
         }
     }
     // x, and y are submap coordinates, convert to overmap terrain coordinates
     // TODO: fix point types
-    tripoint_abs_omt abs_omt( sm_to_omt_copy( p ) );
+    tripoint_abs_omt abs_omt( project_to<coords::omt>( p ) );
     // Use the dimension-specific overmapbuffer so worker threads do not read the
     // active-dimension global (g_active_dimension_id).
     overmapbuffer &omap = get_overmapbuffer( bound_dimension_ );
@@ -223,9 +223,9 @@ void map::generate( const tripoint &p, const time_point &when )
         for( int j = 0; j < my_MAPSIZE; j++ ) {
             dbg( DL::Info ) << "map::generate: submap (" << i << "," << j << ")";
 
-            const tripoint pos( i, j, p.z );
+            const tripoint_bub_sm pos( i, j, p.z() );
             if( i <= 1 && j <= 1 ) {
-                saven( pos );
+                saven( pos.raw() );
             } else {
                 const size_t grid_pos = get_nonant( pos );
                 delete getsubmap( grid_pos );
@@ -237,7 +237,7 @@ void map::generate( const tripoint &p, const time_point &when )
     // Run the Lua on_mapgen_postprocess hook.
     // Main thread: run immediately.  Worker thread: defer (Lua is not thread-safe).
     // map::shift() drains deferred hooks after drain_completed().
-    const tripoint_abs_omt omt_pos( sm_to_omt_copy( p ) );
+    const tripoint_abs_omt omt_pos( project_to<coords::omt>( p ) );
     if( is_pool_worker_thread() ) {
         push_deferred_mapgen_hook( { bound_dimension_, omt_pos, when } );
     } else {
@@ -6492,8 +6492,8 @@ void map::add_spawn( const mtype_id &type, int count, const tripoint &p,
                      spawn_disposition disposition,
                      int faction_id, int mission_id, const std::string &name ) const
 {
-    point offset;
-    submap *place_on_submap = get_submap_at( p, offset );
+    point_sm_ms offset;
+    submap *place_on_submap = get_submap_at( tripoint_bub_ms ( p ), offset );
 
     if( !place_on_submap ) {
         debugmsg( "centadodecamonant doesn't exist in grid; within add_spawn(%s, %d, %d, %d, %d)",
@@ -6562,7 +6562,7 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
     vehicle *placed_vehicle = placed_vehicle_up.get();
 
     if( placed_vehicle != nullptr ) {
-        submap *place_on_submap = get_submap_at_grid( placed_vehicle->sm_pos );
+        submap *place_on_submap = get_submap_at_grid( tripoint_bub_sm( placed_vehicle->sm_pos ) );
         place_on_submap->vehicles.push_back( std::move( placed_vehicle_up ) );
         place_on_submap->is_uniform = false;
         invalidate_max_populated_zlev( p.z );
@@ -6708,8 +6708,8 @@ computer *map::add_computer( const tripoint &p, const std::string &name, int sec
 {
     // TODO: Turn this off?
     ter_set( p, t_console );
-    point l;
-    submap *const place_on_submap = get_submap_at( p, l );
+    point_sm_ms l;
+    submap *const place_on_submap = get_submap_at( tripoint_bub_ms ( p ), l );
     place_on_submap->set_computer( l, computer( name, security ) );
     return place_on_submap->get_computer( l );
 }
@@ -6787,7 +6787,7 @@ void map::rotate( int turns, const bool setpos_safe )
     // 2,2 <-> 1,1
     // 1,1
     //
-    auto swap_submaps = [&]( const point & p1, const point & p2 ) {
+    auto swap_submaps = [&]( const point_bub_sm & p1, const point_bub_sm & p2 ) {
 
         submap *sm1 = get_submap_at_grid( p1 );
         submap *sm2 = get_submap_at_grid( p2 );
@@ -6796,13 +6796,13 @@ void map::rotate( int turns, const bool setpos_safe )
     };
 
     if( turns == 2 ) {
-        swap_submaps( point_zero, point_south_east );
-        swap_submaps( point_south, point_east );
+        swap_submaps( point_bub_sm::zero(), point_bub_sm::south_east() );
+        swap_submaps( point_bub_sm::south(), point_bub_sm::east() );
     } else {
-        point p;
-        point p2 = p.rotate( turns, {2, 2} );
-        point p3 = p2.rotate( turns, {2, 2} );
-        point p4 = p3.rotate( turns, {2, 2} );
+        point_bub_sm p;
+        point_bub_sm p2 = p.rotate( turns, {2, 2} );
+        point_bub_sm p3 = p2.rotate( turns, {2, 2} );
+        point_bub_sm p4 = p3.rotate( turns, {2, 2} );
 
         swap_submaps( p, p2 );
         swap_submaps( p, p3 );
@@ -6812,13 +6812,13 @@ void map::rotate( int turns, const bool setpos_safe )
     // Then rotate them and recalculate vehicle positions.
     for( int j = 0; j < 2; ++j ) {
         for( int i = 0; i < 2; ++i ) {
-            point p( i, j );
+            tripoint_bub_sm p( i, j, abs_sub.z() );
             auto sm = get_submap_at_grid( p );
 
             sm->rotate( turns );
 
             for( auto &veh : sm->vehicles ) {
-                veh->sm_pos = tripoint( p, abs_sub.z() );
+                veh->sm_pos = p.raw();
             }
 
             update_vehicle_list( sm, abs_sub.z() );

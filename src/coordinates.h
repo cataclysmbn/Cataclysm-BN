@@ -110,6 +110,76 @@ class coord_point
         static constexpr origin origin_tag = Origin;
         static constexpr scale scale_tag = Scale;
 
+        static constexpr auto zero() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_zero );
+            } else {
+                return coord_point( tripoint_zero );
+            }
+        }
+        static constexpr auto north() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_north );
+            } else {
+                return coord_point( tripoint_north );
+            }
+        }
+        static constexpr auto north_east() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_north_east );
+            } else {
+                return coord_point( tripoint_north_east );
+            }
+        }
+        static constexpr auto east() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_east );
+            } else {
+                return coord_point( tripoint_east );
+            }
+        }
+        static constexpr auto south_east() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_south_east );
+            } else {
+                return coord_point( tripoint_south_east );
+            }
+        }
+        static constexpr auto south() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_south );
+            } else {
+                return coord_point( tripoint_south );
+            }
+        }
+        static constexpr auto south_west() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_south_west );
+            } else {
+                return coord_point( tripoint_south_west );
+            }
+        }
+        static constexpr auto west() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_west );
+            } else {
+                return coord_point( tripoint_west );
+            }
+        }
+        static constexpr auto north_west() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_north_west );
+            } else {
+                return coord_point( tripoint_north_west );
+            }
+        }
+        static constexpr auto above() requires std::same_as<Point, tripoint> {
+            return coord_point( tripoint_above );
+        }
+        static constexpr auto below() requires std::same_as<Point, tripoint> {
+            return coord_point( tripoint_below );
+        }
+
         constexpr coord_point() = default;
         explicit constexpr coord_point( const Point &p ) :
             raw_( p )
@@ -142,13 +212,19 @@ class coord_point
         constexpr auto y() const {
             return raw_.y;
         }
-        constexpr auto xy() const {
+        constexpr auto xy() const
+            requires std::same_as<Point, tripoint>
+        {
             return coord_point<point, Origin, Scale>( raw_.xy() );
         }
-        constexpr auto &z() {
+        constexpr auto &z()
+            requires std::same_as<Point, tripoint>
+        {
             return raw_.z;
         }
-        constexpr auto z() const {
+        constexpr auto z() const
+            requires std::same_as<Point, tripoint>
+        {
             return raw_.z;
         }
 
@@ -217,6 +293,12 @@ class coord_point
         requires std::same_as<typename Target::value_type, Point>
         [[nodiscard]] auto reinterpret_as() const -> Target {
             return Target( raw_ );
+        }
+
+        auto rotate( int turns, point dim = {1, 1} ) const -> coord_point
+            requires std::same_as<Point, point>
+        {
+            return coord_point( raw_.rotate( turns, dim ) );
         }
 
     private:
@@ -512,6 +594,7 @@ using point_mmr_ms = coords::coord_point<point, coords::origin::mem_map_region, 
 using point_seg_ms = coords::coord_point<point, coords::origin::segment, coords::ms>;
 using point_om_ms = coords::coord_point<point, coords::origin::overmap, coords::ms>;
 using point_veh_ms = coords::coord_point<point, coords::origin::vehicle, coords::ms>;
+using point_rel_sm = coords::coord_point<point, coords::origin::relative, coords::sm>;
 using point_abs_sm = coords::coord_point<point, coords::origin::abs, coords::sm>;
 using point_omt_sm = coords::coord_point<point, coords::origin::overmap_terrain, coords::sm>;
 using point_mmr_sm = coords::coord_point<point, coords::origin::mem_map_region, coords::sm>;
@@ -544,6 +627,7 @@ using tripoint_om_ms = coords::coord_point<tripoint, coords::origin::overmap, co
 using tripoint_veh_ms = coords::coord_point<tripoint, coords::origin::vehicle, coords::ms>;
 using tripoint_rel_sm = coords::coord_point<tripoint, coords::origin::relative, coords::sm>;
 using tripoint_abs_sm = coords::coord_point<tripoint, coords::origin::abs, coords::sm>;
+using tripoint_omt_sm = coords::coord_point<tripoint, coords::origin::overmap_terrain, coords::sm>;
 using tripoint_mmr_sm = coords::coord_point<tripoint, coords::origin::mem_map_region, coords::sm>;
 using tripoint_seg_sm = coords::coord_point<tripoint, coords::origin::segment, coords::sm>;
 using tripoint_om_sm = coords::coord_point<tripoint, coords::origin::overmap, coords::sm>;

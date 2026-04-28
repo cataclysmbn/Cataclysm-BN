@@ -7739,7 +7739,7 @@ static bool is_sm_tile_over_water( const tripoint &real_global_pos )
 {
 
     const tripoint smp = ms_to_sm_copy( real_global_pos );
-    const point p( modulo( real_global_pos.x, SEEX ), modulo( real_global_pos.y, SEEY ) );
+    const point_sm_ms p( modulo( real_global_pos.x, SEEX ), modulo( real_global_pos.y, SEEY ) );
     auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
     auto sm = mbuf.lookup_submap( smp );
     if( sm == nullptr ) {
@@ -7747,8 +7747,8 @@ static bool is_sm_tile_over_water( const tripoint &real_global_pos )
         return false;
     }
 
-    if( p.x < 0 || p.x >= SEEX || p.y < 0 || p.y >= SEEY ) {
-        debugmsg( "err %d,%d", p.x, p.y );
+    if( p.x() < 0 || p.x() >= SEEX || p.y() < 0 || p.y() >= SEEY ) {
+        debugmsg( "err %d,%d", p.x(), p.y() );
         return false;
     }
 
@@ -8103,7 +8103,7 @@ bool vehicle_part_with_feature_range<vpart_bitflags>::matches( const size_t part
 
 bool vehicle::is_loaded() const
 {
-    return attached && get_map().get_submap_at( global_pos3() ) != nullptr;
+    return attached && get_map().get_submap_at( tripoint_bub_ms( global_pos3() ) ) != nullptr;
 }
 
 void vehicle::refresh_locations_hack()

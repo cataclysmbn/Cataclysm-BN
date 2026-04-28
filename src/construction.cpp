@@ -1643,7 +1643,7 @@ void place_construction( const construction_group_str_id &group )
     // Maybe there is already a partial_con on an existing trap, that isn't caught by the usual trap-checking.
     // because the pre-requisite construction is already a trap anyway.
     // This shouldn't normally happen, unless it's a spike pit being built on a pit for example.
-    partial_con *pre_c = here.partial_con_at( pnt );
+    partial_con *pre_c = here.partial_con_at( tripoint_bub_ms( pnt ) );
     if( pre_c ) {
         add_msg( m_info,
                  _( "There is already an unfinished construction there, examine it to continue working on it" ) );
@@ -1652,7 +1652,7 @@ void place_construction( const construction_group_str_id &group )
     std::vector<detached_ptr<item>> used;
     const construction &con = *valid.find( pnt )->second;
     // create the partial construction struct
-    std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( here.getabs( pnt ) );
+    std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( tripoint_bub_ms( pnt ) );
     pc->id = con.id;
     pc->counter = 0;
     // Set the trap that has the examine function
@@ -1688,7 +1688,7 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
     }
     map &here = get_map();
     auto local = here.getlocal( where );
-    partial_con *pc = here.partial_con_at( local );
+    partial_con *pc = here.partial_con_at( tripoint_bub_ms( local ) );
     if( !pc ) {
         debugmsg( "No partial construction found at activity placement in complete_construction()" );
         if( here.tr_at( local ).loadid == tr_unfinished_construction ) {

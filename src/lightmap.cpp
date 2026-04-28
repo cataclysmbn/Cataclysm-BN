@@ -117,7 +117,7 @@ bool map::build_transparency_cache( const int zlev )
     // own submap's terrain data, so the smx loop is embarrassingly parallel.
     const auto process_smx = [&]( int smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-            auto *cur_submap = get_submap_at_grid( {smx, smy, zlev} );
+            auto *cur_submap = get_submap_at_grid( tripoint_bub_sm{smx, smy, zlev} );
             const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
 
             if( cur_submap == nullptr ) {
@@ -138,7 +138,7 @@ bool map::build_transparency_cache( const int zlev )
             }
 
             cur_submap->transparency_dirty = true;
-            cur_submap->rebuild_transparency_cache( *this, tripoint( smx, smy, zlev ) );
+            cur_submap->rebuild_transparency_cache( *this, tripoint_bub_sm( smx, smy, zlev ) );
 
             if( cur_submap->is_uniform ) {
                 const float value = cur_submap->transparency_cache[0][0];
@@ -650,7 +650,7 @@ void map::generate_lightmap_worker( const int zlev )
         auto process_smx = [&]( int smx ) {
             auto &local = smx_accs[smx];
             for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-                const auto cur_submap = get_submap_at_grid( { smx, smy, zlev } );
+                const auto cur_submap = get_submap_at_grid( tripoint_bub_sm{ smx, smy, zlev } );
                 if( cur_submap == nullptr ) {
                     continue;
                 }

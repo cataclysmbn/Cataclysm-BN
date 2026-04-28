@@ -46,5 +46,5 @@ struct dimension_bounds {
      * @param p local tripoint
      * @param map_origin the map's absolute submap origin
      */
-    bool contains_local( const tripoint &p, const tripoint_abs_sm &map_origin ) const;
+    bool contains_local( const tripoint_bub_ms &p, const tripoint_abs_sm &map_origin ) const;
 };

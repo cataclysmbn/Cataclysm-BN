@@ -2546,7 +2546,7 @@ tripoint_abs_ms Creature::abs_pos() const
 
 bool Creature::is_loaded() const
 {
-    return get_map().get_submap_at( pos() ) != nullptr;
+    return get_map().get_submap_at( tripoint_bub_ms( pos() ) ) != nullptr;
 }
 
 bool Creature::is_simulated() const

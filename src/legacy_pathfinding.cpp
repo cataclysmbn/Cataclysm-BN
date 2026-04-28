@@ -371,7 +371,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
                     continue;
                 }
 
-                const maptile &tile = maptile_at_internal( p );
+                const maptile &tile = maptile_at_internal( tripoint_bub_ms( p ) );
                 const auto &terrain = tile.get_ter_t();
                 const auto &furniture = tile.get_furn_t();
 
@@ -494,7 +494,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
             continue;
         }
 
-        const maptile &parent_tile = maptile_at_internal( cur );
+        const maptile &parent_tile = maptile_at_internal( tripoint_bub_ms( cur ) );
         const auto &parent_terrain = parent_tile.get_ter_t();
         if( settings.allow_climb_stairs && cur.z > minz && parent_terrain.has_flag( TFLAG_GOES_DOWN ) ) {
             tripoint dest( cur.xy(), cur.z - 1 );

@@ -41,8 +41,8 @@ void old_scent_map_update( const tripoint &center, map &m,
     const int diffusivity = 100;
 
     // The new scent flag searching function. Should be wayyy faster than the old one.
-    m.scent_blockers( monkey, MAPSIZE_Y, point( scentmap_minx - 1, scentmap_miny - 1 ),
-                      point( scentmap_maxx + 1, scentmap_maxy + 1 ) );
+    m.scent_blockers( monkey, MAPSIZE_Y, point_bub_ms( scentmap_minx - 1, scentmap_miny - 1 ),
+                      point_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1 ) );
 
     for( int x = 0; x < MAPSIZE_X; x++ ) {
         for( int y = 0; y < MAPSIZE_Y; y++ ) {

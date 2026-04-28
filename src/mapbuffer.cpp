@@ -532,7 +532,7 @@ void mapbuffer::deserialize_into_vec(
                 if( skip_if && skip_if( loc ) ) {
                     skip = true;
                 } else {
-                    sm = std::make_unique<submap>( sm_to_ms_copy( submap_coordinates ) );
+                    sm = std::make_unique<submap>( project_to<coords::ms>( tripoint_abs_sm( submap_coordinates ) ) );
                 }
             } else if( skip ) {
                 jsin.skip_value();
@@ -610,12 +610,12 @@ bool mapbuffer::preload_quad( const tripoint &om_addr )
 bool mapbuffer::generate_quad( const tripoint &om_addr )
 {
     ZoneScoped;
-    const tripoint base = omt_to_sm_copy( om_addr );
+    const auto base = project_to<coords::sm>( tripoint_abs_om( om_addr ) );
     const bool all_loaded =
-        lookup_submap_in_memory( base )
-        && lookup_submap_in_memory( { base.x + 1, base.y,     base.z } )
-        &&lookup_submap_in_memory( { base.x,     base.y + 1, base.z } )
-        &&lookup_submap_in_memory( { base.x + 1, base.y + 1, base.z } );
+        lookup_submap_in_memory( base.raw() )
+        && lookup_submap_in_memory( ( base + tripoint_rel_sm::east() ).raw() )
+        && lookup_submap_in_memory( ( base + tripoint_rel_sm::south() ).raw() )
+        && lookup_submap_in_memory( ( base + tripoint_rel_sm::south_east() ).raw() );
     if( all_loaded ) {
         return false;
     }

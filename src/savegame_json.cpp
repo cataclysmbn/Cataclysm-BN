@@ -4156,7 +4156,7 @@ void submap::store( JsonOut &jsout ) const
     int count = 0;
     for( int j = 0; j < SEEY; j++ ) {
         for( int i = 0; i < SEEX; i++ ) {
-            const point p( i, j );
+            const point_sm_ms p( i, j );
             // Save radiation, re-examine this because it doesn't look like it works right
             int r = get_radiation( p );
             if( r == lastrad ) {
@@ -4207,12 +4207,12 @@ void submap::store( JsonOut &jsout ) const
     jsout.start_array();
     for( int j = 0; j < SEEY; j++ ) {
         for( int i = 0; i < SEEX; i++ ) {
-            const point p( i, j );
+            const point_sm_ms p( i, j );
             // Save furniture
             if( get_furn( p ) ) {
                 jsout.start_array();
-                jsout.write( p.x );
-                jsout.write( p.y );
+                jsout.write( p.x() );
+                jsout.write( p.y() );
                 jsout.write( get_furn( p ).obj().id );
                 jsout.end_array();
             }
@@ -4238,12 +4238,12 @@ void submap::store( JsonOut &jsout ) const
     jsout.start_array();
     for( int j = 0; j < SEEY; j++ ) {
         for( int i = 0; i < SEEX; i++ ) {
-            const point p( i, j );
+            const point_sm_ms p( i, j );
             // Save traps
             if( get_trap( p ) ) {
                 jsout.start_array();
-                jsout.write( p.x );
-                jsout.write( p.y );
+                jsout.write( p.x() );
+                jsout.write( p.y() );
                 // TODO: jsout should support writing an id like jsout.write( trap_id )
                 jsout.write( get_trap( p ).id().str() );
                 jsout.end_array();
@@ -4278,8 +4278,8 @@ void submap::store( JsonOut &jsout ) const
     jsout.start_array();
     for( const auto &cosm : cosmetics ) {
         jsout.start_array();
-        jsout.write( cosm.pos.x );
-        jsout.write( cosm.pos.y );
+        jsout.write( cosm.pos.x() );
+        jsout.write( cosm.pos.y() );
         jsout.write( cosm.type );
         jsout.write( cosm.str );
         jsout.end_array();
@@ -4294,8 +4294,8 @@ void submap::store( JsonOut &jsout ) const
         // TODO: json should know how to write string_ids
         jsout.write( elem.type.str() );
         jsout.write( elem.count );
-        jsout.write( elem.pos.x );
-        jsout.write( elem.pos.y );
+        jsout.write( elem.pos.x() );
+        jsout.write( elem.pos.y() );
         jsout.write( elem.faction_id );
         jsout.write( elem.mission_id );
         jsout.write( elem.is_friendly() );
@@ -4316,9 +4316,9 @@ void submap::store( JsonOut &jsout ) const
     jsout.member( "partial_constructions" );
     jsout.start_array();
     for( auto &elem : partial_constructions ) {
-        jsout.write( elem.first.x );
-        jsout.write( elem.first.y );
-        jsout.write( elem.first.z );
+        jsout.write( elem.first.x() );
+        jsout.write( elem.first.y() );
+        jsout.write( elem.first.z() );
         jsout.write( elem.second->counter );
         jsout.write( elem.second->id.id() );
         jsout.start_array();
@@ -4458,7 +4458,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
         while( !jsin.end_array() ) {
             int i = jsin.get_int();
             int j = jsin.get_int();
-            const point p( i, j );
+            const point_sm_ms p( i, j );
             jsin.start_array();
             while( !jsin.end_array() ) {
                 detached_ptr<item> tmp;
@@ -4472,7 +4472,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                     tmp->legacy_fast_forward_time();
                 }
                 item &obj = *tmp;
-                itm[p.x][p.y].push_back( std::move( tmp ) );
+                itm[p.x()][p.y()].push_back( std::move( tmp ) );
                 if( obj.needs_processing() ) {
                     active_items.add( obj );
                 }
@@ -4493,9 +4493,9 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             jsin.start_array();
             int i = jsin.get_int();
             int j = jsin.get_int();
-            const point p( i, j );
+            const point_sm_ms p( i, j );
             // TODO: jsin should support returning an id like jsin.get_id<trap>()
-            trp[p.x][p.y] = trap_str_id( jsin.get_string() ).id();
+            trp[p.x()][p.y()] = trap_str_id( jsin.get_string() ).id();
             trap_cache.push_back( p ); // null traps are not serialized, so this is always valid
             jsin.end_array();
         }
@@ -4525,7 +4525,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                 }
                 if( fld[i][j].find_field( ft ) == nullptr ) {
                     field_count++;
-                    field_cache.push_back( point( i, j ) );
+                    field_cache.push_back( point_sm_ms( i, j ) );
                 }
                 fld[i][j].add_field( ft, intensity, time_duration::from_turns( age ) );
             }
@@ -4536,7 +4536,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             jsin.start_array();
             int i = jsin.get_int();
             int j = jsin.get_int();
-            const point p( i, j );
+            const point_sm_ms p( i, j );
             set_graffiti( p, jsin.get_string() );
             jsin.end_array();
         }
@@ -4548,7 +4548,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             jsin.start_array();
             int i = jsin.get_int();
             int j = jsin.get_int();
-            const point p( i, j );
+            const point_sm_ms p( i, j );
             std::string type, str;
             // Try to read as current format
             if( jsin.test_string() ) {
@@ -4575,7 +4575,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             int count = jsin.get_int();
             int i = jsin.get_int();
             int j = jsin.get_int();
-            const point p( i, j );
+            const point_sm_ms p( i, j );
             int faction_id = jsin.get_int();
             int mission_id = jsin.get_int();
             bool friendly = jsin.get_bool();
@@ -4598,8 +4598,9 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             int i = jsin.get_int();
             int j = jsin.get_int();
             int k = jsin.get_int();
-            tripoint pt = tripoint( i, j, k );
-            std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( offset + pt );
+            auto sm_pt = tripoint_sm_ms( i, j, k );
+            auto abs_pt = tripoint_abs_ms( offset.x + i, offset.y + j, k );
+            std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( abs_pt );
             pc->counter = jsin.get_int();
             if( jsin.test_int() ) {
                 // Oops, int id incorrectly saved by legacy code, just load it and hope for the best
@@ -4613,7 +4614,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                 jsin.read( tmp );
                 pc->components.push_back( std::move( tmp ) );
             }
-            partial_constructions[pt] = std::move( pc );
+            partial_constructions[sm_pt] = std::move( pc );
         }
     } else if( member_name == "computers" ) {
         if( jsin.test_array() ) {
@@ -4640,7 +4641,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
     } else if( member_name == "furniture_vars" ) {
         jsin.start_array();
         while( !jsin.end_array() ) {
-            point loc;
+            point_sm_ms loc;
             jsin.read( loc );
             auto &vars = frn_vars[loc];
             jsin.read( vars );
@@ -4648,7 +4649,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
     } else if( member_name == "terrain_vars" ) {
         jsin.start_array();
         while( !jsin.end_array() ) {
-            point loc;
+            point_sm_ms loc;
             jsin.read( loc );
             auto &vars = ter_vars[loc];
             jsin.read( vars );

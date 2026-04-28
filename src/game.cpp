@@ -1210,7 +1210,7 @@ void game::load_npcs()
         temp->place_on_map();
         // Validity guard: skip if the NPC's submap is not resident.
         // Bubble eviction is handled by on_submap_unloaded(); no inbounds check needed.
-        if( m.get_submap_at( temp->pos() ) == nullptr ) {
+        if( m.get_submap_at( tripoint_bub_ms( temp->pos() ) ) == nullptr ) {
             continue;
         }
         // In the rare case the npc was marked for death while
@@ -1253,7 +1253,7 @@ void game::load_npcs()
                 }
                 temp->place_on_map();
                 if( !req_map.inbounds( temp->pos() )
-                    || req_map.get_submap_at( temp->pos() ) == nullptr ) {
+                    || req_map.get_submap_at( tripoint_bub_ms( temp->pos() ) ) == nullptr ) {
                     continue;
                 }
                 if( temp->marked_for_death ) {
@@ -2358,7 +2358,7 @@ int get_heat_radiation( const tripoint &location, bool direct )
     for( const tripoint &dest : here.points_in_radius( location, 6 ) ) {
         int heat_intensity = 0;
 
-        maptile mt = here.maptile_at( dest );
+        maptile mt = here.maptile_at( tripoint_bub_ms( dest ) );
 
         int ffire = maptile_field_intensity( mt, fd_fire_int );
         if( ffire > 0 ) {
@@ -4914,26 +4914,22 @@ void game::world_tick()
                     std::ranges::for_each(
                         cata::views::cartesian_product( std::views::iota( 0, SEEX ),
                                                         std::views::iota( 0, SEEY ) ),
-                    [&]( auto xy ) {
-                        auto [lx, ly] = xy;
-                        if( sm_ptr->get_furn( point( lx, ly ) ).obj().has_flag( "EMITTER" ) ) {
-                            positions.emplace_back( lx, ly );
+                    [&]( const auto &xy ) {
+                        const point_sm_ms p( std::get<0>( xy ), std::get<1>( xy ) );
+                        if( sm_ptr->get_furn( p ).obj().has_flag( "EMITTER" ) ) {
+                            positions.emplace_back( p );
                         }
                     } );
                 }
                 if( !sm_ptr->emitter_cache->empty() ) {
                     ZoneScopedN( "field_emits" );
-                    const tripoint local_sm_origin( ( raw_pos.x - abs_sub.x() ) * SEEX,
-                                                    ( raw_pos.y - abs_sub.y() ) * SEEY,
-                                                    raw_pos.z );
-                    std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point & lp ) {
-                        const tripoint local_pos( local_sm_origin.x + lp.x,
-                                                  local_sm_origin.y + lp.y,
-                                                  raw_pos.z );
+                    const tripoint_bub_ms bub_sm_origin = m.abs_to_bub( project_to<coords::ms>( pos_sm ) );
+                    std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point_sm_ms &lp ) {
+                        const tripoint_bub_ms local_pos = bub_sm_origin + tripoint( lp.x(), lp.y(), 0 );
                         std::ranges::for_each(
                             sm_ptr->get_furn( lp ).obj().emissions,
-                        [&]( const emit_id & e ) {
-                            m.emit_field( local_pos, e );
+                        [&]( const emit_id &e ) {
+                            m.emit_field( local_pos.raw(), e );
                         } );
                     } );
                 }
@@ -7690,7 +7686,7 @@ void game::print_trap_info( const tripoint &lp, const catacurses::window &w_look
     const trap &tr = m.tr_at( lp );
     auto printed = false;
     if( tr.can_see( lp, u ) ) {
-        partial_con *pc = m.partial_con_at( lp );
+        partial_con *pc = m.partial_con_at( tripoint_bub_ms( lp ) );
         std::string tr_name;
         if( pc && tr.loadid == tr_unfinished_construction ) {
             const construction &built = pc->id.obj();
@@ -14146,7 +14142,7 @@ void game::shift_monsters( const tripoint &shift )
         }
 
         if( ( shift.z == 0 || m.has_zlevels() )
-            && m.get_submap_at( critter.pos() ) != nullptr ) {
+            && m.get_submap_at( tripoint_bub_ms( critter.pos() ) ) != nullptr ) {
             // The critter is on a loaded submap — keep it regardless of whether
             // it's inside the render-area grid (inbounds).  Creatures can validly
             // reside in loaded-but-OOB submaps (e.g. knocked into a lazy-border

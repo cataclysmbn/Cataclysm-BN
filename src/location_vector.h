@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "detached_ptr.h"
+#include "coordinates.h"
 
 template<typename T>
 class location;

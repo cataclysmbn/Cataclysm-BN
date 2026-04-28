@@ -4981,7 +4981,7 @@ bool cata_tiles::draw_field_or_item( const tripoint &p, const lit_level ll, int 
             hilite = std::get<2>( it_override->second );
             it_type = &*it_id;
         } else if( !invisible[0] && here.sees_some_items( p, g->u ) ) {
-            const maptile &tile = here.maptile_at( p );
+            const maptile &tile = here.maptile_at( tripoint_bub_ms( p ) );
             const item &itm = tile.get_uppermost_item();
             const mtype *const mon = itm.get_mtype();
             it_id = itm.typeId();

@@ -246,8 +246,8 @@ void scent_map::update( const tripoint &center, map &m )
     const int scentmap_maxy = center.y + SCENT_RADIUS;
 
     // The new scent flag searching function. Should be wayyy faster than the old one.
-    m.scent_blockers( scent_transfer, st_sy, point( scentmap_minx - 1, scentmap_miny - 1 ),
-                      point( scentmap_maxx + 1, scentmap_maxy + 1 ) );
+    m.scent_blockers( scent_transfer, st_sy, point_bub_ms( scentmap_minx - 1, scentmap_miny - 1 ),
+                      point_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1 ) );
 
     for( int x = 0; x < SCENT_RADIUS * 2 + 3; ++x ) {
         sum_3_scent_y[0][x] = 0;
@@ -278,9 +278,9 @@ void scent_map::update( const tripoint &center, map &m )
 
     for( int smx = init_sm_x_min; smx <= init_sm_x_max; ++smx ) {
         for( int smy = init_sm_y_min; smy <= init_sm_y_max; ++smy ) {
-            const tripoint abs_sm( abs_sub_base.x() + smx, abs_sub_base.y() + smy, cz );
+            const tripoint_abs_sm abs_sm( abs_sub_base.x() + smx, abs_sub_base.y() + smy, cz );
             const auto *sm = MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() )
-                             .lookup_submap_in_memory( abs_sm );
+                             .lookup_submap_in_memory( abs_sm.raw() );
             if( !sm ) {
                 continue;
             }
@@ -297,7 +297,7 @@ void scent_map::update( const tripoint &center, map &m )
                     const int cx = ax - cache_x_offset;
                     const int cy = ay - cache_y_offset;
                     scent_cache[cx][cy] = sm->scent_values[lx][ly];
-                    liquid_mask[cx][cy] = sm->get_ter( point( lx, ly ) ).obj().has_flag( TFLAG_LIQUID );
+                    liquid_mask[cx][cy] = sm->get_ter( point_sm_ms( lx, ly ) ).obj().has_flag( TFLAG_LIQUID );
                 }
             }
         }

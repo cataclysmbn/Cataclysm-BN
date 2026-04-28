@@ -22,13 +22,13 @@ static const tripoint_abs_sm FAR_SM_POS{ 200, 200, 0 };
 // Ownership is transferred to @p mb.
 static auto make_blank_submap( mapbuffer &mb, const tripoint_abs_sm &pos ) -> submap *
 {
-    auto sm = std::make_unique<submap>( pos.raw() );
+    auto sm = std::make_unique<submap>( project_to<coords::ms>( pos ) );
     mb.add_submap( pos.raw(), sm );
     return mb.lookup_submap_in_memory( pos.raw() );
 }
 
 // Add fd_fire to @p sm at @p local and keep field_count / field_cache / is_uniform consistent.
-static auto plant_fire( submap &sm, const point &local, int intensity = 1 ) -> void
+static auto plant_fire( submap &sm, const point_sm_ms &local, int intensity = 1 ) -> void
 {
     if( sm.get_field( local ).add_field( fd_fire, intensity, 0_turns ) ) {
         ++sm.field_count;
@@ -54,7 +54,7 @@ TEST_CASE( "fire_processes_in_loaded_submap_outside_bubble", "[simulation][field
     auto *sm = make_blank_submap( MAPBUFFER, FAR_SM_POS );
     REQUIRE( sm != nullptr );
 
-    const auto fire_pt = point{ 5, 5 };
+    const auto fire_pt = point_sm_ms{ 5, 5 };
     plant_fire( *sm, fire_pt );
     REQUIRE( sm->get_field( fire_pt ).find_field( fd_fire ) != nullptr );
 
@@ -84,7 +84,7 @@ TEST_CASE( "fire_isolated_between_dimensions", "[simulation][field][dimension]" 
     auto *dim_sm = make_blank_submap( dim, FAR_SM_POS );
     REQUIRE( dim_sm != nullptr );
 
-    const auto fire_pt = point{ 5, 5 };
+    const auto fire_pt = point_sm_ms{ 5, 5 };
     plant_fire( *dim_sm, fire_pt );
 
     // Primary dimension must have no fire at the same absolute position.
