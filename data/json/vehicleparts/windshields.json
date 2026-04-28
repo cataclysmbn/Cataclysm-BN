@@ -255,7 +255,7 @@
     "symbol": "B",
     "type": "vehicle_part"
   },
-    {
+  {
     "copy-from": "reinforced_windshield_abstract",
     "id": "reinforced_windshield",
     "symbol": "T",
@@ -267,7 +267,7 @@
     "symbol": "h",
     "type": "vehicle_part"
   },
-    {
+  {
     "copy-from": "reinforced_windshield_abstract",
     "id": "reinforced_windshield_vertical_left",
     "symbol": "[",
