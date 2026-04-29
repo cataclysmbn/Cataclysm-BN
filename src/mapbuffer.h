@@ -54,8 +54,6 @@ class mapbuffer
          * is not stored and the given unique_ptr retains ownsership.
          */
         bool add_submap( const tripoint &p, std::unique_ptr<submap> &sm );
-        // Old overload that we should stop using, but it's complicated
-        bool add_submap( const tripoint &p, submap *sm );
 
         /** Get a submap stored in this buffer.
          *
@@ -185,13 +183,6 @@ class mapbuffer
         auto drain_deferred_lua_quads() -> std::vector<tripoint>;
 
         /**
-         * Conditionally save and then remove the submap at @p pos from the buffer.
-         * The containing OMT quad is saved to disk first (unless it is fully uniform),
-         * then the submap is erased from memory.  Does nothing if @p pos is not loaded.
-         */
-        void unload_submap( const tripoint_abs_sm &pos );
-
-        /**
          * Evict all submaps in the OMT quad at @p om_addr.
          *
          * If @p save is true (default), the quad is serialised into the in-memory
@@ -201,9 +192,6 @@ class mapbuffer
          * simulated — their in-memory content is identical to what is already on
          * disk, so no write is needed.
          *
-         * This is the correct way to evict a quad: calling unload_submap() per-submap
-         * repeatedly overwrites the quad file without the previously-removed siblings,
-         * causing data loss and "file did not contain expected submap" errors on reload.
          * Does nothing for quads that are fully uniform (they regenerate on demand).
          */
         void unload_quad( const tripoint &om_addr, bool save = true );

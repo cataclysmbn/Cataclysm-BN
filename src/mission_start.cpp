@@ -69,7 +69,6 @@ void mission_start::place_dog( mission *miss )
     tinymap doghouse;
     doghouse.load( project_to<coords::sm>( house ), false );
     doghouse.add_spawn( mon_dog, 1, { SEEX, SEEY, house.z() }, true, -1, miss->uid );
-    doghouse.save();
 }
 
 void mission_start::place_zombie_mom( mission *miss )
@@ -84,7 +83,6 @@ void mission_start::place_zombie_mom( mission *miss )
     zomhouse.load( project_to<coords::sm>( house ), false );
     zomhouse.add_spawn( mon_zombie, 1, { SEEX, SEEY, house.z() }, false, -1, miss->uid,
                         Name::get( nameIsFemaleName | nameIsGivenName ) );
-    zomhouse.save();
 }
 
 void mission_start::kill_horde_master( mission *miss )
@@ -128,7 +126,6 @@ void mission_start::kill_horde_master( mission *miss )
     }
     tile.add_spawn( mon_zombie_necro, 2, { SEEX, SEEY, site.z() } );
     tile.add_spawn( mon_zombie_hulk, 1, { SEEX, SEEY, site.z() } );
-    tile.save();
 }
 
 void mission_start::kill_nemesis( mission *miss )
@@ -260,7 +257,6 @@ void mission_start::place_npc_software( mission *miss )
                         dev->name ), 0 );
     tmpcomp->set_mission( miss->get_id() );
     tmpcomp->add_option( _( "Download Software" ), COMPACT_DOWNLOAD_SOFTWARE, 0 );
-    compmap.save();
 }
 
 void mission_start::place_priest_diary( mission *miss )
@@ -282,7 +278,6 @@ void mission_start::place_priest_diary( mission *miss )
     const tripoint fallback( rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ), place.z() );
     const tripoint comppoint = random_entry( valid, fallback );
     compmap.spawn_item( comppoint, "priest_diary" );
-    compmap.save();
 }
 
 void mission_start::place_deposit_box( mission *miss )
@@ -328,7 +323,6 @@ void mission_start::place_deposit_box( mission *miss )
     const tripoint fallback( rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ), site.z() );
     const tripoint comppoint = random_entry( valid, fallback );
     compmap.spawn_item( comppoint, "safe_box" );
-    compmap.save();
 }
 
 void mission_start::find_safety( mission *miss )
@@ -393,7 +387,6 @@ void mission_start::ranch_nurse_1( mission *miss )
     bay.draw_square_furn( f_rack, point( 16, 9 ), point( 17, 9 ) );
     bay.spawn_item( point( 16, 9 ), "bandages", rng( 1, 3 ) );
     bay.spawn_item( point( 17, 9 ), "aspirin", rng( 1, 2 ) );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_2( mission *miss )
@@ -406,7 +399,6 @@ void mission_start::ranch_nurse_2( mission *miss )
     bay.draw_square_furn( f_counter, point( 3, 7 ), point( 5, 7 ) );
     bay.draw_square_furn( f_rack, point( 8, 4 ), point( 8, 5 ) );
     bay.spawn_item( point( 8, 4 ), "manual_first_aid" );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_3( mission *miss )
@@ -419,13 +411,11 @@ void mission_start::ranch_nurse_3( mission *miss )
     bay.draw_square_ter( t_dirt, point( 2, 16 ), point( 9, 23 ) );
     bay.draw_square_ter( t_dirt, point( 13, 16 ), point( 20, 23 ) );
     bay.draw_square_ter( t_dirt, point( 10, 17 ), point( 12, 23 ) );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
     bay.draw_square_ter( t_dirt, point( 2, 0 ), point( 20, 2 ) );
     bay.draw_square_ter( t_dirt, point( 10, 3 ), point( 12, 4 ) );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_4( mission *miss )
@@ -443,7 +433,6 @@ void mission_start::ranch_nurse_4( mission *miss )
     bay.draw_square_ter( t_dirt, point( 10, 18 ), point( 12, 23 ) );
     bay.ter_set( point( 9, 19 ), t_door_frame );
     bay.ter_set( point( 13, 19 ), t_door_frame );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -454,7 +443,6 @@ void mission_start::ranch_nurse_4( mission *miss )
     bay.draw_square_ter( t_dirt, point( 14, 0 ), point( 17, 2 ) );
     bay.ter_set( point( 9, 1 ), t_door_frame );
     bay.ter_set( point( 13, 1 ), t_door_frame );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_5( mission *miss )
@@ -470,13 +458,11 @@ void mission_start::ranch_nurse_5( mission *miss )
     bay.ter_set( point( 20, 18 ), t_window_frame );
     bay.ter_set( point( 20, 21 ), t_window_frame );
     bay.ter_set( point( 11, 17 ), t_window_frame );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
     bay.translate( t_wall_half, t_wall_wood );
     bay.draw_square_ter( t_dirt, point( 10, 0 ), point( 12, 4 ) );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_6( mission *miss )
@@ -491,7 +477,6 @@ void mission_start::ranch_nurse_6( mission *miss )
     bay.draw_square_ter( t_dirtfloor, point( 3, 17 ), point( 8, 22 ) );
     bay.draw_square_ter( t_dirtfloor, point( 14, 17 ), point( 19, 22 ) );
     bay.draw_square_ter( t_dirtfloor, point( 10, 18 ), point( 12, 23 ) );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -499,7 +484,6 @@ void mission_start::ranch_nurse_6( mission *miss )
     bay.draw_square_ter( t_dirtfloor, point( 5, 0 ), point( 8, 2 ) );
     bay.draw_square_ter( t_dirtfloor, point( 10, 0 ), point( 12, 4 ) );
     bay.draw_square_ter( t_dirtfloor, point( 14, 0 ), point( 17, 2 ) );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_7( mission *miss )
@@ -510,14 +494,12 @@ void mission_start::ranch_nurse_7( mission *miss )
     tinymap bay;
     bay.load( project_to<coords::sm>( site ), false );
     bay.translate( t_dirtfloor, t_floor );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
     bay.translate( t_dirtfloor, t_floor );
     bay.draw_square_ter( t_floor, point( 10, 5 ), point( 12, 5 ) );
     bay.draw_square_furn( f_rack, point( 17, 0 ), point( 17, 2 ) );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_8( mission *miss )
@@ -535,7 +517,6 @@ void mission_start::ranch_nurse_8( mission *miss )
     bay.draw_square_furn( f_makeshift_bed, point( 7, 17 ), point( 7, 18 ) );
     bay.draw_square_furn( f_makeshift_bed, point( 15, 17 ), point( 15, 18 ) );
     bay.draw_square_furn( f_makeshift_bed, point( 18, 17 ), point( 18, 18 ) );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -544,7 +525,6 @@ void mission_start::ranch_nurse_8( mission *miss )
                      calendar::start_of_cataclysm );
     bay.place_items( item_group_id( "surgery" ), 75, point( 15, 4 ), point( 18, 4 ), true,
                      calendar::start_of_cataclysm );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_9( mission *miss )
@@ -563,7 +543,6 @@ void mission_start::ranch_nurse_9( mission *miss )
     bay.furn_set( point( 14, 17 ), f_dresser );
     bay.furn_set( point( 19, 17 ), f_dresser );
     bay.place_npc( point( 16, 19 ), string_id<npc_template>( "ranch_doctor" ) );
-    bay.save();
 
     mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
 }
@@ -577,7 +556,6 @@ void mission_start::ranch_scavenger_1( mission *miss )
     bay.draw_square_ter( t_chainfence, point( 15, 13 ), point( 15, 22 ) );
     bay.draw_square_ter( t_chainfence, point( 16, 13 ), point( 23, 13 ) );
     bay.draw_square_ter( t_chainfence, point( 16, 22 ), point( 23, 22 ) );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -586,7 +564,6 @@ void mission_start::ranch_scavenger_1( mission *miss )
     bay.draw_square_ter( t_chainfence, point( 0, 22 ), point( 7, 22 ) );
     bay.draw_square_ter( t_dirt, point( 2, 22 ), point( 3, 22 ) );
     bay.spawn_item( point( 7, 19 ), "30gal_drum" );
-    bay.save();
 }
 
 void mission_start::ranch_scavenger_2( mission *miss )
@@ -599,7 +576,6 @@ void mission_start::ranch_scavenger_2( mission *miss )
     bay.draw_square_ter( t_wall_half, point( 18, 19 ), point( 21, 22 ) );
     bay.draw_square_ter( t_dirt, point( 19, 20 ), point( 20, 21 ) );
     bay.ter_set( point( 19, 19 ), t_door_frame );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -607,7 +583,6 @@ void mission_start::ranch_scavenger_2( mission *miss )
                      calendar::start_of_cataclysm );
     bay.draw_square_ter( t_chaingate_l, point( 2, 22 ), point( 3, 22 ) );
     bay.spawn_item( point( 7, 20 ), "30gal_drum" );
-    bay.save();
 }
 
 void mission_start::ranch_scavenger_3( mission *miss )
@@ -625,7 +600,6 @@ void mission_start::ranch_scavenger_3( mission *miss )
     bay.furn_set( point( 23, 17 ), furn_str_id( "f_arcade_machine" ) );
     bay.ter_set( point( 23, 16 ), ter_str_id( "t_machinery_light" ) );
     bay.furn_set( point( 20, 21 ), f_woodstove );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -636,7 +610,6 @@ void mission_start::ranch_scavenger_3( mission *miss )
     bay.furn_set( point( 1, 15 ), f_fridge );
     bay.spawn_item( point( 2, 15 ), "hdframe" );
     bay.furn_set( point( 3, 15 ), f_washer );
-    bay.save();
 }
 
 void mission_start::place_book( mission * )
@@ -702,8 +675,6 @@ void static create_lab_consoles(
         tmpcomp->add_failure( COMPFAIL_ALARM );
         tmpcomp->add_failure( COMPFAIL_DAMAGE );
         tmpcomp->add_failure( COMPFAIL_MANHACKS );
-
-        compmap.save();
     }
 }
 
@@ -808,8 +779,6 @@ void mission_start::reveal_lab_train_depot( mission *miss )
     computer *tmpcomp = compmap.computer_at( *comppoint );
     tmpcomp->set_mission( miss->get_id() );
     tmpcomp->add_option( _( "Download Routing Software" ), COMPACT_DOWNLOAD_SOFTWARE, 0 );
-
-    compmap.save();
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );

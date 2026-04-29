@@ -290,7 +290,6 @@ void defense_game::init_map()
             tm.generate( tripoint_abs_sm( mx, my, 0 ), calendar::turn );
             tm.clear_spawns();
             tm.clear_traps();
-            tm.save();
         }
     }
 

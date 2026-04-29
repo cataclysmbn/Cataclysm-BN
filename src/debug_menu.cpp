@@ -539,7 +539,6 @@ void spawn_nested_mapgen()
             return;
         }
         ( *ptr )->nest( md, local_ms.xy() );
-        target_map.save();
         g->load_npcs();
         here.invalidate_map_cache( g->get_levz() );
     }

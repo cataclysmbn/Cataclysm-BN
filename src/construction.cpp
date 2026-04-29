@@ -2130,7 +2130,6 @@ void construct::done_digormine_stair( const tripoint &p, bool dig )
     // Again, need to use submap-local coordinates.
     tmpmap.ter_set( local_tmp, impassable ? t_stairs_up : t_ladder_up ); // and there's the bottom half.
     // And save to the center coordinate of the current active map.
-    tmpmap.save();
 }
 
 void construct::done_dig_stair( const tripoint &p )
@@ -2183,7 +2182,6 @@ void construct::done_mine_upstair( const tripoint &p )
     // We need to write to submap-local coordinates.
     // TODO: Add roof above
     tmpmap.ter_set( local_tmp, t_stairs_down ); // and there's the top half.
-    tmpmap.save();
 }
 
 void construct::done_wood_stairs( const tripoint &p )

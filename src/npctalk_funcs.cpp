@@ -636,7 +636,6 @@ void talk_function::buy_10_logs( npc &p )
     tinymap bay;
     bay.load( project_to<coords::sm>( site ), false );
     bay.spawn_item( point( 7, 15 ), "log", 10 );
-    bay.save();
 
     p.add_effect( effect_currently_busy, 1_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -669,7 +668,6 @@ void talk_function::buy_100_logs( npc &p )
     tinymap bay;
     bay.load( project_to<coords::sm>( site ), false );
     bay.spawn_item( point( 7, 15 ), "log", 100 );
-    bay.save();
 
     p.add_effect( effect_currently_busy, 7_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );

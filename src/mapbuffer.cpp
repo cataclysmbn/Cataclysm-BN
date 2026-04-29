@@ -56,18 +56,6 @@ bool mapbuffer::add_submap( const tripoint &p, std::unique_ptr<submap> &sm )
     return true;
 }
 
-bool mapbuffer::add_submap( const tripoint &p, submap *sm )
-{
-    // FIXME: get rid of this overload and make submap ownership semantics sane.
-    std::unique_ptr<submap> temp( sm );
-    bool result = add_submap( p, temp );
-    if( !result ) {
-        // NOLINTNEXTLINE( bugprone-unused-return-value )
-        temp.release();
-    }
-    return result;
-}
-
 void mapbuffer::remove_submap( tripoint addr )
 {
     auto m_target = submaps.find( addr );
@@ -115,24 +103,6 @@ submap *mapbuffer::load_submap( const tripoint_abs_sm &pos )
     ZoneScoped;
     // lookup_submap already handles the disk-read path transparently.
     return lookup_submap( pos.raw() );
-}
-
-void mapbuffer::unload_submap( const tripoint_abs_sm &pos )
-{
-    ZoneScoped;
-    const tripoint &p = pos.raw();
-    if( !submaps.contains( p ) ) {
-        return;
-    }
-
-    // Save the quad containing this submap to disk before evicting it.
-    const tripoint om_addr = sm_to_omt_copy( p );
-    std::list<tripoint> ignored_delete;
-    // Save without deleting the other three submaps from the buffer —
-    // only this specific submap is being evicted by the caller.
-    save_quad( om_addr, ignored_delete, false );
-
-    remove_submap( p );
 }
 
 void mapbuffer::unload_quad( const tripoint &om_addr, bool save )

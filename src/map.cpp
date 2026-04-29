@@ -393,6 +393,17 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim
         return;
     }
 
+    // Stamp the departure time so actualize() computes the correct time-since-simulated
+    // on the next load.  Only meaningful for submaps that were actually simulated;
+    // border-preloaded submaps that were never in the simulation set should not be
+    // touched (their last_touched reflects their real generate-or-load time).
+    if( submap_loader.is_in_simulated_set( dim_id, pos.raw() ) ) {
+        submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( pos.raw() );
+        if( sm ) {
+            sm->last_touched = calendar::turn;
+        }
+    }
+
     // Vehicle tracking: remove all vehicles whose home submap matches the unloaded position.
     {
         const tripoint p = pos.raw();
@@ -7870,21 +7881,6 @@ std::vector<tripoint> map::get_dir_circle( const tripoint &f, const tripoint &t 
     return circle;
 }
 
-void map::save()
-{
-    for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-        for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-            if( zlevels ) {
-                for( int gridz = -OVERMAP_DEPTH; gridz <= OVERMAP_HEIGHT; gridz++ ) {
-                    saven( tripoint_bub_sm( gridx, gridy, gridz ) );
-                }
-            } else {
-                saven( tripoint_bub_sm( gridx, gridy, abs_sub.z() ) );
-            }
-        }
-    }
-}
-
 void map::load( const tripoint &w, const bool update_vehicle, const bool pump_events )
 {
     std::fill( grid.begin(), grid.end(), nullptr );
@@ -8224,80 +8220,6 @@ void map::shift( point sp )
     invalidate_lightmap_caches();
 }
 
-void map::vertical_shift( const int newz )
-{
-    if( !zlevels ) {
-        debugmsg( "Called map::vertical_shift in a non-z-level world" );
-        return;
-    }
-
-    if( newz < -OVERMAP_DEPTH || newz > OVERMAP_HEIGHT ) {
-        debugmsg( "Tried to get z-level %d outside allowed range of %d-%d",
-                  newz, -OVERMAP_DEPTH, OVERMAP_HEIGHT );
-        return;
-    }
-
-    tripoint_abs_sm trp = get_abs_sub();
-    set_abs_sub( tripoint_abs_sm( trp.xy(), newz ) );
-
-    // TODO: Remove the function when it's safe
-    return;
-}
-
-// saven saves a single nonant.  worldx and worldy are used for the file
-// name and specifies where in the world this nonant is.  gridx and gridy are
-// the offset from the top left nonant:
-// 0,0 1,0 2,0
-// 0,1 1,1 2,1
-// 0,2 1,2 2,2
-// (worldx,worldy,worldz) denotes the absolute coordinate of the submap
-// in grid[0].
-void map::saven( const tripoint_bub_sm &grid )
-{
-    dbg( DL::Debug ) << "map::saven( world=" << abs_sub << ", grid=" << grid << " )";
-    const tripoint_abs_sm grid_abs = bub_to_abs( grid );
-    // Skip saving submaps outside dimension bounds - they are generated on load
-    if( current_bounds_ ) {
-        if( !current_bounds_->contains( grid_abs ) ) {
-            return;
-        }
-    }
-
-    const int gridn = get_nonant( grid );
-    submap *submap_to_save = getsubmap( gridn );
-    if( submap_to_save == nullptr ) {
-        // Corner slot outside the circular load footprint — nothing to save.
-        return;
-    }
-    if( submap_to_save->get_ter( point_sm_ms::zero() ) == t_null ) {
-        // This is a serious error and should be signaled as soon as possible
-        debugmsg( "map::saven grid (%s) uninitialized!", grid.to_string() );
-        return;
-    }
-
-    if( !zlevels && grid_abs.z() != abs_sub.z() ) {
-        debugmsg( "Tried to save submap (%d,%d,%d) as (%d,%d,%d), which isn't supported in non-z-level builds",
-                  grid_abs.x(), grid_abs.y(), abs_sub.z(), grid_abs.x(), grid_abs.y(), grid_abs.z() );
-    }
-
-    dbg( DL::Debug ) << "map::saven abs: " << grid_abs << "  gridn: " << gridn;
-
-    // An edge case: restock_fruits relies on last_touched, so we must call it before save
-    if( season_of_year( calendar::turn ) != season_of_year( submap_to_save->last_touched ) ) {
-        const time_duration time_since_last_actualize = calendar::turn - submap_to_save->last_touched;
-        for( int x = 0; x < SEEX; x++ ) {
-            for( int y = 0; y < SEEY; y++ ) {
-                const auto pnt = project_combine( grid, point_sm_ms( x, y ) );
-                restock_fruits( pnt.raw(), time_since_last_actualize );
-            }
-        }
-    }
-
-    submap_to_save->last_touched = calendar::turn;
-    // Add to the dimension-aware mapbuffer slot, not always primary.
-    MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( grid_abs.raw(), submap_to_save );
-}
-
 // Optimized mapgen function that only works properly for very simple overmap types
 // Does not create or require a temporary map and does its own saving
 static void generate_uniform( const tripoint_abs_sm &p, const ter_id &terrain_type,
@@ -8306,16 +8228,17 @@ static void generate_uniform( const tripoint_abs_sm &p, const ter_id &terrain_ty
     dbg( DL::Info ) << "generate_uniform p: " << p
                     << "  terrain_type: " << terrain_type.id().str();
 
-    for( int xd = 0; xd <= 1; xd++ ) {
-        for( int yd = 0; yd <= 1; yd++ ) {
+    std::ranges::for_each(
+        cata::views::cartesian_product( std::views::iota( 0, 2 ), std::views::iota( 0, 2 ) ),
+        [&]( const auto & xy ) {
+            const auto [xd, yd] = xy;
             auto pos = p + point( xd, yd );
-            submap *sm = new submap( project_to<coords::ms>( pos ) );
+            auto sm = std::make_unique<submap>( project_to<coords::ms>( pos ) );
             sm->is_uniform = true;
             sm->set_all_ter( terrain_type );
             sm->last_touched = calendar::turn;
             dest.add_submap( pos.raw(), sm );
-        }
-    }
+        } );
 }
 
 auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> void
@@ -10207,13 +10130,6 @@ size_t map::get_nonant( const tripoint_bub_sm &gridp ) const
 tinymap::tinymap( int mapsize, bool zlevels )
     : map( mapsize, zlevels )
 {
-}
-
-void tinymap::drain_to_mapbuffer( mapbuffer &dest )
-{
-    // No-op: generate() via loadn() already places submaps in the correct
-    // registry slot for the bound dimension.
-    ( void )dest;
 }
 
 void tinymap::bind_submaps_for_hook( const tripoint &sm_base )
