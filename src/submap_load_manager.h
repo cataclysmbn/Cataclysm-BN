@@ -142,15 +142,11 @@ class submap_load_manager
         void update();
 
         /**
-         * Block until all background lazy-border preload_quad tasks complete.
+         * Block until all in-flight background presave_quad tasks complete.
          *
-         * Normal gameplay does NOT need this — update() reaps completed
-         * futures non-blockingly, and world_tick() uses for_each_submap()
-         * (locked iteration) for thread safety.
-         *
-         * Use this only when ALL background work must finish before
-         * proceeding: saving the game, switching dimensions, or shutting
-         * down the thread pool.
+         * Must be called before saving the game, switching dimensions, or
+         * shutting down the thread pool so that no worker holds raw submap
+         * pointers across those operations.
          */
         void drain_lazy_loads();
 
@@ -233,9 +229,9 @@ class submap_load_manager
         void flush_prev_desired();
 
         /**
-         * Returns true if all background work has been drained — i.e. both
-         * lazy_futures_ and presave_futures_ are empty.  Used by flush_prev_desired()
-         * to assert correct call ordering during dimension switches.
+         * Returns true if all background presave work has been drained
+         * (presave_futures_ is empty).  Used by flush_prev_desired() to assert
+         * correct call ordering during dimension switches.
          */
         auto is_fully_drained() const noexcept -> bool;
 
@@ -291,13 +287,6 @@ class submap_load_manager
 
         /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
         std::vector<point> bubble_offsets_;
-
-        /** In-flight load_or_generate_quad futures for lazy border positions.
-         *  Keyed by quad_key for O(log N) lookup and erase.
-         *  Returns true if mapgen ran (newly-generated quad), false if the quad was
-         *  already on disk.  Presence in the map also serves as the in-flight guard
-         *  (replaces the old lazy_in_flight_ unordered_set). */
-        std::map<quad_key, std::future<bool>> lazy_futures_;
 
         /** In-flight presave_quad futures for dirty quads that left simulation.
          *  Keyed by quad_key for O(log N) lookup and erase.

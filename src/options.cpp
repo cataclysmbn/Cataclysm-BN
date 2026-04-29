@@ -2465,10 +2465,8 @@ void options_manager::add_options_performance()
              true );
         add( "LAZY_BORDER", page_id,
              translate_marker( "Pre-load Border" ),
-             translate_marker( "Keep a border of submaps loaded around the reality bubble.  "
-                               "These are pre-loaded from disk in the background so that map "
-                               "shifts are faster (the data is already in memory).  Uses more "
-                               "memory but reduces stalls when the map scrolls.  " ),
+             translate_marker( "No effect — lazy border loading is pending async mapgen rework "
+                               "and is currently disabled regardless of this setting." ),
              !is_android );
     } );
 
@@ -4258,7 +4256,7 @@ void options_manager::cache_to_globals()
     monster_plan_chunk_size   = ::get_option<int>( "MONSTER_PLAN_CHUNK_SIZE" );
     parallel_map_cache        = ::get_option<bool>( "PARALLEL_MAP_CACHE" );
     parallel_scent_update     = ::get_option<bool>( "PARALLEL_SCENT_UPDATE" );
-    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
+    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" ) && false;
 
     merge_comestible_mode = ( [] {
         const auto opt = ::get_option<std::string>( "MERGE_COMESTIBLES" );
