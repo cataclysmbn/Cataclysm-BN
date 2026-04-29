@@ -723,7 +723,8 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     // The load-manager center is the middle of the loaded region, not the
     // top-left corner.  pos_sm is the top-left corner (abs_sub), so offset
     // by reality_bubble_radius_ in each horizontal direction.
-    const tripoint_abs_sm bubble_center = pos_sm + point_rel_sm( reality_bubble_radius_, reality_bubble_radius_ );
+    const tripoint_abs_sm bubble_center = pos_sm + point_rel_sm( reality_bubble_radius_,
+                                          reality_bubble_radius_ );
 
     // Create or update the reality bubble request.
     if( reality_bubble_handle_ == 0 ) {

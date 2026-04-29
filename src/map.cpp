@@ -8230,15 +8230,15 @@ static void generate_uniform( const tripoint_abs_sm &p, const ter_id &terrain_ty
 
     std::ranges::for_each(
         cata::views::cartesian_product( std::views::iota( 0, 2 ), std::views::iota( 0, 2 ) ),
-        [&]( const auto & xy ) {
-            const auto [xd, yd] = xy;
-            auto pos = p + point( xd, yd );
-            auto sm = std::make_unique<submap>( project_to<coords::ms>( pos ) );
-            sm->is_uniform = true;
-            sm->set_all_ter( terrain_type );
-            sm->last_touched = calendar::turn;
-            dest.add_submap( pos.raw(), sm );
-        } );
+    [&]( const auto & xy ) {
+        const auto [xd, yd] = xy;
+        auto pos = p + point( xd, yd );
+        auto sm = std::make_unique<submap>( project_to<coords::ms>( pos ) );
+        sm->is_uniform = true;
+        sm->set_all_ter( terrain_type );
+        sm->last_touched = calendar::turn;
+        dest.add_submap( pos.raw(), sm );
+    } );
 }
 
 auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> void

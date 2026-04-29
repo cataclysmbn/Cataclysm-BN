@@ -264,7 +264,7 @@ void submap_load_manager::update()
     // Drain duplicate submaps created by concurrent preload_quad workers.
     // Must happen on the main thread (safe_reference / cata_arena not thread-safe).
     {
-        auto drained_dims = std::set<std::string>{};
+        auto drained_dims = std::set<std::string> {};
         std::ranges::transform( new_quads, std::inserter( drained_dims, drained_dims.end() ),
         []( const auto & qk ) { return qk.first; } );
         std::ranges::for_each( drained_dims, []( const std::string & dim_id ) {
