@@ -1961,7 +1961,7 @@ class map : public submap_load_listener
         void spawn_monsters_submap_group( const tripoint &gp, mongroup &group, bool ignore_sight );
 
     protected:
-        void saven( const tripoint &grid );
+        void saven( const tripoint_bub_sm &grid );
         void loadn( const tripoint &grid, bool update_vehicles, bool incremental = false );
         void loadn( point grid, bool update_vehicles ) {
             if( zlevels ) {

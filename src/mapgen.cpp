@@ -225,7 +225,7 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
 
             const tripoint_bub_sm pos( i, j, p.z() );
             if( i <= 1 && j <= 1 ) {
-                saven( pos.raw() );
+                saven( pos );
             } else {
                 const size_t grid_pos = get_nonant( pos );
                 delete getsubmap( grid_pos );

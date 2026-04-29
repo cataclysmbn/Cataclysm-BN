@@ -7876,10 +7876,10 @@ void map::save()
         for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
             if( zlevels ) {
                 for( int gridz = -OVERMAP_DEPTH; gridz <= OVERMAP_HEIGHT; gridz++ ) {
-                    saven( tripoint( gridx, gridy, gridz ) );
+                    saven( tripoint_bub_sm( gridx, gridy, gridz ) );
                 }
             } else {
-                saven( tripoint( gridx, gridy, abs_sub.z() ) );
+                saven( tripoint_bub_sm( gridx, gridy, abs_sub.z() ) );
             }
         }
     }
@@ -8252,55 +8252,50 @@ void map::vertical_shift( const int newz )
 // 0,2 1,2 2,2
 // (worldx,worldy,worldz) denotes the absolute coordinate of the submap
 // in grid[0].
-void map::saven( const tripoint &grid )
+void map::saven( const tripoint_bub_sm &grid )
 {
     dbg( DL::Debug ) << "map::saven( world=" << abs_sub << ", grid=" << grid << " )";
-
-    const auto grid_bub_sm = tripoint_bub_sm( grid );
-
+    const tripoint_abs_sm grid_abs = bub_to_abs( grid );
     // Skip saving submaps outside dimension bounds - they are generated on load
     if( current_bounds_ ) {
-        const tripoint_abs_sm grid_abs_sub = bub_to_abs( grid_bub_sm );
-        if( !current_bounds_->contains( tripoint_abs_sm( grid_abs_sub ) ) ) {
+        if( !current_bounds_->contains( grid_abs ) ) {
             return;
         }
     }
 
-    const int gridn = get_nonant( grid_bub_sm );
+    const int gridn = get_nonant( grid );
     submap *submap_to_save = getsubmap( gridn );
     if( submap_to_save == nullptr ) {
         // Corner slot outside the circular load footprint — nothing to save.
         return;
     }
-    if( submap_to_save->get_ter( point_sm_ms{} ) == t_null ) {
+    if( submap_to_save->get_ter( point_sm_ms::zero() ) == t_null ) {
         // This is a serious error and should be signaled as soon as possible
         debugmsg( "map::saven grid (%s) uninitialized!", grid.to_string() );
         return;
     }
 
-    const tripoint_abs_sm abs = abs_sub.xy() + tripoint_rel_sm( grid );
-
-    if( !zlevels && grid.z != abs_sub.z() ) {
+    if( !zlevels && grid_abs.z() != abs_sub.z() ) {
         debugmsg( "Tried to save submap (%d,%d,%d) as (%d,%d,%d), which isn't supported in non-z-level builds",
-                  abs.x(), abs.y(), abs_sub.z(), abs.x(), abs.y(), grid.z );
+                  grid_abs.x(), grid_abs.y(), abs_sub.z(), grid_abs.x(), grid_abs.y(), grid_abs.z() );
     }
 
-    dbg( DL::Debug ) << "map::saven abs: " << abs << "  gridn: " << gridn;
+    dbg( DL::Debug ) << "map::saven abs: " << grid_abs << "  gridn: " << gridn;
 
     // An edge case: restock_fruits relies on last_touched, so we must call it before save
     if( season_of_year( calendar::turn ) != season_of_year( submap_to_save->last_touched ) ) {
         const time_duration time_since_last_actualize = calendar::turn - submap_to_save->last_touched;
         for( int x = 0; x < SEEX; x++ ) {
             for( int y = 0; y < SEEY; y++ ) {
-                const tripoint pnt = sm_to_ms_copy( grid ) + point( x, y );
-                restock_fruits( pnt, time_since_last_actualize );
+                const auto pnt = project_combine( grid, point_sm_ms( x, y ) );
+                restock_fruits( pnt.raw(), time_since_last_actualize );
             }
         }
     }
 
     submap_to_save->last_touched = calendar::turn;
     // Add to the dimension-aware mapbuffer slot, not always primary.
-    MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( abs.raw(), submap_to_save );
+    MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( grid_abs.raw(), submap_to_save );
 }
 
 // Optimized mapgen function that only works properly for very simple overmap types
