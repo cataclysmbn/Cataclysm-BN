@@ -169,7 +169,6 @@ TEST_CASE( "grid_and_vehicle_outside_bubble", "[grids][vehicle]" )
         tinymap tm;
         tm.load( old_abs_sub, false );
         auto setup = set_up_grid( tm );
-        tm.save();
         test_grid_veh( setup.grid, setup.veh, setup.battery );
     }
 }

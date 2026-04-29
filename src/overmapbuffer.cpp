@@ -313,14 +313,6 @@ void overmapbuffer::save( const std::string &dim_id )
     }
 }
 
-void overmapbuffer::save()
-{
-    // Legacy overload: routes through g_active_dimension_id.
-    // save_all_overmapbuffers() calls save(dim_id) directly to avoid needing
-    // to mutate the global and to allow parallel execution.
-    save( g_active_dimension_id );
-}
-
 void overmapbuffer::clear()
 {
     write_lock<std::shared_mutex> _l( mutex );

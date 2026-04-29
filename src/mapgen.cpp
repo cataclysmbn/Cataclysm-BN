@@ -50,6 +50,7 @@
 #include "map.h"
 #include "map_extras.h"
 #include "map_iterator.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
 #include "mapgen_async.h"
 #include "mapgen_functions.h"
@@ -225,7 +226,18 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
 
             const tripoint_bub_sm pos( i, j, p.z() );
             if( i <= 1 && j <= 1 ) {
-                saven( pos.raw() );
+                const tripoint_abs_sm grid_abs = bub_to_abs( pos );
+                const int gridn = get_nonant( pos );
+                submap *const sm = getsubmap( gridn );
+                if( sm == nullptr || sm->get_ter( point_sm_ms::zero() ) == t_null ) {
+                    return;
+                }
+                // Transfer ownership of the freshly generated submap to the mapbuffer.
+                // grid[] holds a borrowed reference to the mapbuffer-owned submap after this.
+                auto owned = std::unique_ptr<submap>( sm );
+                if( !MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( grid_abs.raw(), owned ) ) {
+                    owned.release(); // Already present; don't double-free.
+                }
             } else {
                 const size_t grid_pos = get_nonant( pos );
                 delete getsubmap( grid_pos );

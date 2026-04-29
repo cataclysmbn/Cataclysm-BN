@@ -723,10 +723,8 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     // The load-manager center is the middle of the loaded region, not the
     // top-left corner.  pos_sm is the top-left corner (abs_sub), so offset
     // by reality_bubble_radius_ in each horizontal direction.
-    const tripoint_abs_sm bubble_center(
-        pos_sm.raw().x + reality_bubble_radius_,
-        pos_sm.raw().y + reality_bubble_radius_,
-        pos_sm.raw().z );
+    const tripoint_abs_sm bubble_center = pos_sm + point_rel_sm( reality_bubble_radius_,
+                                          reality_bubble_radius_ );
 
     // Create or update the reality bubble request.
     if( reality_bubble_handle_ == 0 ) {
@@ -1168,7 +1166,6 @@ vehicle *game::place_vehicle_nearby(
             veh->dimension_id_ = target_map.get_bound_dimension();
             get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
             veh->tracking_on = true;
-            target_map.save();
             return veh;
         }
     }
@@ -3365,7 +3362,6 @@ bool game::save_maps()
         // Drain any in-flight lazy-border preload tasks before save so that
         // save_quad workers do not race with background workers calling add_submap().
         submap_loader.drain_lazy_loads();
-        m.save();
         save_all_overmapbuffers(); // can throw — saves every loaded dimension's overmapbuffer
         // Save mapbuffers for all registered dimensions (active + any kept/non-active).
         // save_all() dispatches dimension saves in parallel; each slot uses
@@ -13259,8 +13255,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
             if( active_world ) {
                 active_world->start_save_tx();
             }
-            here.save();
-            get_overmapbuffer( current_dimension_id_ ).save();
+            get_overmapbuffer( current_dimension_id_ ).save( current_dimension_id_ );
             MAPBUFFER_REGISTRY.get( old_dim_id ).save();
             if( !save_dimension_data() ) {
                 if( active_world ) {
@@ -13644,8 +13639,10 @@ void game::vertical_shift( const int z_after )
         shift_monsters( tripoint( 0, 0, z_after - z_before ) );
         reload_npcs();
     } else {
-        // Shift the map itself
-        m.vertical_shift( z_after );
+        // Adjust the map's z-reference so get_levz() returns the new z-level.
+        // All z-levels are loaded simultaneously in z-level builds; no map load
+        // or unload is required for vertical movement.
+        m.set_abs_sub( tripoint_abs_sm( m.get_abs_sub().xy(), z_after ) );
     }
 
     m.spawn_monsters( true );

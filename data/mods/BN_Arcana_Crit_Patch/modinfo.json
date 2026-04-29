@@ -1,0 +1,13 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "Arcana_Crit_Patch",
+    "name": "<color_cyan>Arcana</color>/<color_red>C.R.I.T.</color> Patchmod",
+    "authors": [ "Chaosvolt" ],
+    "description": "Optional patch mod that allows content in Arcana and C.R.I.T. to interact with each other.",
+    "license": "CC-BY-SA-3.0",
+    "version": "BN In-Repo version, update 4/28/2028",
+    "category": "misc_additions",
+    "dependencies": [ "bn", "Arcana", "crt_expansion" ]
+  }
+]
