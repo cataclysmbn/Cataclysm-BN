@@ -12,7 +12,7 @@
 namespace
 {
 
-constexpr auto max_pinyin_combinations = size_t{ 64 };
+constexpr auto max_pinyin_combinations = size_t { 64 };
 
 auto indexed_pinyin_map() -> const std::unordered_map<char32_t, std::vector<std::u32string>> &
 {
