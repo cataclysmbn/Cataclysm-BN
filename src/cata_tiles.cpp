@@ -3033,7 +3033,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     if( g->display_overlay_state( ACTION_DISPLAY_VEHICLE_AI ) ) {
         for( const wrapped_vehicle &elem : here.get_vehicles() ) {
             const vehicle &veh = *elem.v;
-            const point veh_pos = veh.global_pos3().xy();
+            const point veh_pos = veh.bub_ms_location().xy().raw();
             for( const auto &overlay_data : veh.get_debug_overlay_data() ) {
                 const point pt = veh_pos + std::get<0>( overlay_data );
                 const int color = std::get<1>( overlay_data );
@@ -4005,6 +4005,11 @@ bool cata_tiles::draw_from_id_string(
         return p.x + p.y * 65536;
     };
 
+    // Remove this once the tripoint migration is complete
+    auto simple_point_hash_new = []( const auto & p ) {
+        return p.x() + p.y() * 65536;
+    };
+
     bool has_variations = display_tile.sprite.fg.size() > 1 || display_tile.sprite.bg.size() > 1;
     bool variations_enabled = !display_tile.animated || idle_animations.enabled();
     // with animated tiles, seed is used for stagger
@@ -4040,7 +4045,7 @@ bool cata_tiles::draw_from_id_string(
             } else {
                 const optional_vpart_position vp = here.veh_at( pos );
                 if( vp ) {
-                    seed = simple_point_hash( vp->mount() );
+                    seed = simple_point_hash_new( vp->mount() );
                 }
             }
 
@@ -5132,7 +5137,7 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
         vehicle *veh = veh_pair.first;
         int veh_part = veh_pair.second;
 
-        int veh_z = veh->global_pos3().z;
+        int veh_z = veh->bub_ms_location().z();
         auto part = veh->part( veh_part ).info();
         if( veh_z - p.z <= 0 ) {
             return false;

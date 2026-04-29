@@ -515,7 +515,7 @@ static void pldrive( const tripoint &p )
             return;
         }
     }
-    veh->pldrive( get_avatar(), p.xy(), p.z );
+    veh->pldrive( get_avatar(), point_rel_ms( p.xy() ), p.z );
 }
 
 inline static void pldrive( point d )

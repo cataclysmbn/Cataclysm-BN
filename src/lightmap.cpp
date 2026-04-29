@@ -1,4 +1,5 @@
 #include "lightmap.h" // IWYU pragma: associated
+#include "coordinates.h"
 #include "shadowcasting.h" // IWYU pragma: associated
 
 #include <algorithm>
@@ -189,13 +190,13 @@ bool map::build_vision_transparency_cache( const Character &player )
 
     if( player.movement_mode_is( CMM_CROUCH ) ) {
 
-        const auto check_vehicle_coverage = []( const vehicle * veh, point  p ) -> bool {
+        const auto check_vehicle_coverage = []( const vehicle * veh, tripoint_mnt_veh p ) -> bool {
             return veh->obstacle_at_position( p ) == -1 && ( veh->part_with_feature( p,  "AISLE", true ) != -1 || veh->part_with_feature( p,  "PROTRUSION", true ) != -1 );
         };
 
         const optional_vpart_position player_vp = veh_at( p );
 
-        point player_mount;
+        tripoint_mnt_veh player_mount;
         if( player_vp ) {
             player_mount = player_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p ) );
         }
@@ -213,7 +214,7 @@ bool map::build_vision_transparency_cache( const Character &player )
                                        adjacent ) != four_diagonal_offsets.end() ) {
                     const optional_vpart_position adjacent_vp = veh_at( p + adjacent );
 
-                    point adjacent_mount;
+                    tripoint_mnt_veh adjacent_mount;
                     if( adjacent_vp ) {
                         adjacent_mount = adjacent_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p ) );
                     }
@@ -797,32 +798,32 @@ void map::generate_lightmap_worker( const int zlev )
 
             for( const auto pt : lights ) {
                 const auto &vp = pt->info();
-                tripoint src = v->global_part_pos3( *pt );
+                tripoint_bub_ms src = v->global_part_pos3( *pt );
 
                 if( !inbounds( src ) ) {
                     continue;
                 }
-                if( src.z != zlev ) {
+                if( src.z() != zlev ) {
                     continue;
                 }
 
                 if( vp.has_flag( VPFLAG_CONE_LIGHT ) ) {
                     if( veh_luminance > lit_level::LIT ) {
-                        add_light_source( src, M_SQRT2 ); // Add a little surrounding light
-                        apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
+                        add_light_source( src.raw(), M_SQRT2 ); // Add a little surrounding light
+                        apply_light_arc( src.raw(), v->face.dir() + pt->direction, veh_luminance,
                                          45_degrees );
                     }
 
                 } else if( vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
                     if( veh_luminance > lit_level::LIT ) {
-                        add_light_source( src, M_SQRT2 ); // Add a little surrounding light
-                        apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
+                        add_light_source( src.raw(), M_SQRT2 ); // Add a little surrounding light
+                        apply_light_arc( src.raw(), v->face.dir() + pt->direction, veh_luminance,
                                          90_degrees );
                     }
 
                 } else if( vp.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
-                    add_light_source( src, M_SQRT2 ); // Add a little surrounding light
-                    apply_light_arc( src, v->face.dir() + pt->direction, vp.bonus, 180_degrees );
+                    add_light_source( src.raw(), M_SQRT2 ); // Add a little surrounding light
+                    apply_light_arc( src.raw(), v->face.dir() + pt->direction, vp.bonus, 180_degrees );
 
                 } else if( vp.has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
                     const bool odd_turn = calendar::once_every( 2_turns );
@@ -830,25 +831,25 @@ void map::generate_lightmap_worker( const int zlev )
                         ( !odd_turn && vp.has_flag( VPFLAG_EVENTURN ) ) ||
                         ( !( vp.has_flag( VPFLAG_EVENTURN ) || vp.has_flag( VPFLAG_ODDTURN ) ) ) ) {
 
-                        add_light_source( src, vp.bonus );
+                        add_light_source( src.raw(), vp.bonus );
                     }
 
                 } else {
-                    add_light_source( src, vp.bonus );
+                    add_light_source( src.raw(), vp.bonus );
                 }
             }
 
             for( const vpart_reference &vp : v->get_all_parts() ) {
                 const size_t p = vp.part_index();
-                const tripoint pp = vp.pos();
+                const tripoint_bub_ms pp = vp.pos();
                 if( !inbounds( pp ) ) {
                     continue;
                 }
-                if( pp.z != zlev ) {
+                if( pp.z() != zlev ) {
                     continue;
                 }
                 if( vp.has_feature( VPFLAG_CARGO ) && !vp.has_feature( "COVERED" ) ) {
-                    add_light_from_items( pp, v->get_items( static_cast<int>( p ) ).begin(),
+                    add_light_from_items( pp.raw(), v->get_items( static_cast<int>( p ) ).begin(),
                                           v->get_items( static_cast<int>( p ) ).end() );
                 }
             }
@@ -1682,18 +1683,18 @@ void map::apply_vehicle_optics( const tripoint &origin, const int target_z )
     // Cameras are also handled here, so that we only need to get through all vehicle parts once.
     int cam_control = -1;
     for( const vpart_reference &vp : veh->get_avail_parts( VPFLAG_EXTENDS_VISION ) ) {
-        const tripoint mirror_pos = vp.pos();
+        const tripoint_bub_ms mirror_pos = vp.pos();
         // We can utilize the current state of the seen cache to determine
         // if the player can see the mirror from their position.
         // Use g_visible_threshold for consistency with apparent_light_helper.
         if( !vp.info().has_flag( "CAMERA" ) &&
-            target_cache.seen_cache[target_cache.idx( mirror_pos.x,
-                                                      mirror_pos.y )] < LIGHT_TRANSPARENCY_SOLID + g_visible_threshold ) {
+            target_cache.seen_cache[target_cache.idx( mirror_pos.x(),
+                                                      mirror_pos.y() )] < LIGHT_TRANSPARENCY_SOLID + g_visible_threshold ) {
             continue;
         } else if( !vp.info().has_flag( "CAMERA_CONTROL" ) ) {
             mirrors.emplace_back( static_cast<int>( vp.part_index() ) );
         } else {
-            if( square_dist( origin, mirror_pos ) <= 1 && veh->camera_on ) {
+            if( square_dist( origin, mirror_pos.raw() ) <= 1 && veh->camera_on ) {
                 cam_control = static_cast<int>( vp.part_index() );
             }
         }
@@ -1705,18 +1706,18 @@ void map::apply_vehicle_optics( const tripoint &origin, const int target_z )
             continue; // Player not at camera control, so cameras don't work.
         }
 
-        const tripoint mirror_pos = veh->global_part_pos3( mirror );
+        const tripoint_bub_ms mirror_pos = veh->global_part_pos3( mirror );
 
         // Determine how far the light has already traveled so mirrors
         // don't cheat the light distance falloff.
         int offset_distance;
         if( !is_camera ) {
-            offset_distance = rl_dist( origin, mirror_pos );
+            offset_distance = rl_dist( origin, mirror_pos.raw() );
         } else {
             offset_distance = g_max_view_distance - veh->part_info( mirror ).bonus *
                               veh->part( mirror ).hp() / veh->part_info( mirror ).durability;
-            target_cache.camera_cache[target_cache.idx( mirror_pos.x,
-                                                        mirror_pos.y )] = LIGHT_TRANSPARENCY_OPEN_AIR;
+            target_cache.camera_cache[target_cache.idx( mirror_pos.x(),
+                                                        mirror_pos.y() )] = LIGHT_TRANSPARENCY_OPEN_AIR;
         }
 
         // TODO: Factor in the mirror facing and only cast in the
@@ -1727,7 +1728,7 @@ void map::apply_vehicle_optics( const tripoint &origin, const int target_z )
         castLightAll( target_cache.camera_cache.data(), target_cache.transparency_cache.data(),
                       target_cache.vehicle_obscured_cache.data(),
                       target_cache.cache_x, target_cache.cache_y,
-                      mirror_pos.xy(), offset_distance, VISIBILITY_FULL,
+                      mirror_pos.xy().raw(), offset_distance, VISIBILITY_FULL,
                       k_sight_model, &weather_lookup_ );
     }
 }

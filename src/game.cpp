@@ -1046,8 +1046,8 @@ bool game::start_game()
             std::string search = std::string( "helicopter" );
             if( name.find( search ) != std::string::npos ) {
                 for( const vpart_reference &vp : v.v->get_any_parts( VPFLAG_CONTROLS ) ) {
-                    const tripoint pos = vp.pos();
-                    u.setpos( pos );
+                    const tripoint_bub_ms pos = vp.pos();
+                    u.setpos( pos.raw() );
 
                     // Delete the items that would have spawned here from a "corpse"
                     for( auto sp : v.v->parts_at_relative( vp.mount(), true ) ) {
@@ -1058,7 +1058,7 @@ bool game::start_game()
                         }
                     }
 
-                    auto mons = critter_tracker->find( pos );
+                    auto mons = critter_tracker->find( pos.raw() );
                     if( mons != nullptr ) {
                         critter_tracker->remove( *mons );
                     }
@@ -1163,8 +1163,8 @@ vehicle *game::place_vehicle_nearby(
                            0, false, false, true );
         if( veh ) {
             tripoint abs_local = m.getlocal( target_map.getabs( tinymap_center ) );
-            veh->sm_pos =  ms_to_sm_remain( abs_local );
-            veh->pos = abs_local.xy();
+            veh->sm_pos =  tripoint_bub_sm( ms_to_sm_remain( abs_local ) );
+            veh->pos = point_sm_ms( abs_local.xy() );
             veh->dimension_id_ = target_map.get_bound_dimension();
             get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
             veh->tracking_on = true;
@@ -2831,8 +2831,8 @@ void game::setremoteveh( vehicle *veh )
     }
 
     std::stringstream remote_veh_string;
-    const tripoint vehpos = veh->global_pos3();
-    remote_veh_string << vehpos.x << ' ' << vehpos.y << ' ' << vehpos.z;
+    const tripoint_bub_ms vehpos = veh->bub_ms_location();
+    remote_veh_string << vehpos.x() << ' ' << vehpos.y() << ' ' << vehpos.z();
     u.set_value( "remote_controlling_vehicle", remote_veh_string.str() );
 }
 
@@ -6557,7 +6557,7 @@ void game::control_vehicle()
     }
     if( veh != nullptr && veh->player_in_control( u ) &&
         veh->avail_part_with_feature( veh_part, "CONTROLS", true ) >= 0 ) {
-        veh->use_controls( u.pos() );
+        veh->use_controls( tripoint_bub_ms( u.pos() ) );
     } else if( veh && veh->player_in_control( u ) &&
                veh->avail_part_with_feature( veh_part, "CONTROL_ANIMAL", true ) >= 0 ) {
         u.controlling_vehicle = false;
@@ -6626,7 +6626,7 @@ void game::control_vehicle()
             if( !veh->handle_potential_theft( u ) ) {
                 return;
             }
-            veh->use_controls( *vehicle_position );
+            veh->use_controls( tripoint_bub_ms( *vehicle_position ) );
             //May be folded up (destroyed), so need to re-get it
             veh = g->remoteveh();
         }
@@ -6636,9 +6636,9 @@ void game::control_vehicle()
         // Clear vehicle tile memories so occluded tiles fall back to memorized terrain.
         // The terrain_tiles slot already holds correct terrain from first-sight memorization.
         // Ghost-vehicle prevention is handled by draw_vpart clearing while moving.
-        std::ranges::for_each( veh->get_points(), [&]( const tripoint & target ) {
-            u.clear_memorized_tile( m.getabs( target ) );
-            u.memorize_terrain_tile( m.getabs( target ), m.ter( target ).id().str(), 0, 0 );
+        std::ranges::for_each( veh->get_points(), [&]( const tripoint_bub_ms & target ) {
+            u.clear_memorized_tile( m.bub_to_abs( target ).raw() );
+            u.memorize_terrain_tile( m.bub_to_abs( target ).raw(), m.ter( target.raw() ).id().str(), 0, 0 );
         } );
         veh->is_following = false;
         veh->is_patrolling = false;
@@ -7242,11 +7242,11 @@ void game::examine( const tripoint &examp )
         if( !u.mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
             add_msg( m_warning, _( "You cannot interact with a vehicle while mounted." ) );
         } else {
-            vp->vehicle().interact_with( examp, vp->part_index() );
+            vp->vehicle().interact_with( tripoint_bub_ms( examp ), vp->part_index() );
             return;
         }
     } else if( vp && !u.is_mounted() ) {
-        vp->vehicle().interact_with( examp, vp->part_index() );
+        vp->vehicle().interact_with( tripoint_bub_ms( examp ), vp->part_index() );
         return;
     }
 
@@ -9127,14 +9127,14 @@ static auto find_visible_vehicles( avatar &viewer, map &here, int radius ) -> ve
             if( vpr.part().removed ) {
                 continue;
             }
-            const tripoint part_pos = veh->global_part_pos3( vpr.part() );
-            const int dist = rl_dist( viewer.pos(), part_pos );
-            if( dist > radius || !viewer.sees( part_pos ) ) {
+            const tripoint_bub_ms part_pos = veh->global_part_pos3( vpr.part() );
+            const int dist = rl_dist( viewer.pos(), part_pos.raw() );
+            if( dist > radius || !viewer.sees( part_pos.raw() ) ) {
                 continue;
             }
             if( dist < best_dist ) {
                 best_dist = dist;
-                best_pos = part_pos;
+                best_pos = part_pos.raw();
                 if( dist == 0 ) {
                     break;
                 }

@@ -434,7 +434,7 @@ bool vehicle::collision( std::vector<veh_collision> &colls,
         empty = false;
         // Coordinates of where part will go due to movement (dx/dy/dz)
         //  and turning (precalc[1])
-        const tripoint dsp = global_pos3() + dp + parts[p].precalc[1];
+        const tripoint dsp = bub_ms_location() + dp + parts[p].precalc[1];
         veh_collision coll = part_collision( p, dsp, just_detect, bash_floor );
         if( coll.type == veh_coll_nothing ) {
             continue;
@@ -1101,8 +1101,8 @@ bool vehicle::check_is_heli_landed()
 {
     // @TODO - when there are chasms that extend below z-level 0 - perhaps the heli
     // will be able to descend into them but for now, assume z-level-0 == the ground.
-    if( ( global_pos3().z == 0 || !get_map().has_flag_ter_or_furn( TFLAG_NO_FLOOR, global_pos3() ) ) &&
-        !get_map().has_flag_ter_or_furn( TFLAG_DEEP_WATER, global_pos3() ) ) {
+    if( ( bub_ms_location().z == 0 || !get_map().has_flag_ter_or_furn( TFLAG_NO_FLOOR, bub_ms_location() ) ) &&
+        !get_map().has_flag_ter_or_furn( TFLAG_DEEP_WATER, bub_ms_location() ) ) {
         is_flying = false;
         return true;
     }
@@ -1117,7 +1117,7 @@ bool vehicle::check_heli_descend( Character &who )
     }
     map &here = get_map();
     for( const tripoint &pt : get_points( true ) ) {
-        const int idx = part_at( ( pt - global_pos3() ).xy() );
+        const int idx = part_at( ( pt - bub_ms_location() ).xy() );
         if( part_info( idx ).has_flag( VPFLAG_NOCOLLIDEBELOW ) ) {
             continue;
         }
@@ -1164,7 +1164,7 @@ bool vehicle::check_heli_ascend( Character &who )
             who.add_msg_if_player( m_bad, _( "It would be unsafe to try and ascend further." ) );
             return false;
         }
-        if( part_info( part_at( ( pt - global_pos3() ).xy() ) ).has_flag( VPFLAG_NOCOLLIDEABOVE ) ) {
+        if( part_info( part_at( ( pt - bub_ms_location() ).xy() ) ).has_flag( VPFLAG_NOCOLLIDEABOVE ) ) {
             continue;
         }
         bool has_ceiling = !here.has_flag_ter( TFLAG_NO_FLOOR, above );
@@ -1411,7 +1411,7 @@ vehicle *vehicle::act_on_map()
             {
                 // Compute this vehicle's submap footprint to avoid invalidating
                 // the entire z-level when it sinks.
-                const tripoint gpos = global_pos3();
+                const tripoint gpos = bub_ms_location();
                 point sink_sm_min = { INT_MAX, INT_MAX };
                 point sink_sm_max = { INT_MIN, INT_MIN };
                 std::ranges::for_each(
@@ -1600,7 +1600,7 @@ void vehicle::shift_zlevel()
 bool vehicle::check_on_ramp( int idir, const tripoint &offset ) const
 {
     for( auto &prt : get_all_parts() ) {
-        tripoint partPoint = global_pos3() + offset + prt.part().precalc[idir];
+        tripoint partPoint = bub_ms_location() + offset + prt.part().precalc[idir];
 
         if( g->m.has_flag( TFLAG_RAMP_UP, partPoint ) || g->m.has_flag( TFLAG_RAMP_DOWN, partPoint ) ) {
             return true;
@@ -1636,7 +1636,7 @@ void vehicle::adjust_zlevel( int idir, const tripoint &offset )
     // it.
 
     auto &m = get_map();
-    tripoint global_pos = global_pos3();
+    tripoint global_pos = bub_ms_location();
 
     tripoint new_center = global_pos + offset;
 
@@ -1968,7 +1968,7 @@ static bool scan_rails_at_shift(
         point vyp_l = point_east.rotate( num_cw_rots );
         point vyp_r = point_south.rotate( num_cw_rots );
 
-        tripoint scan_start = veh.global_pos3();
+        tripoint scan_start = veh.bub_ms_location();
         if( shift_sign > 0 ) {
             scan_start += rd_r * velocity_sign;
         } else if( shift_sign < 0 ) {
@@ -1982,20 +1982,20 @@ static bool scan_rails_at_shift(
 
         if( scan_res_l || scan_res_r ) {
             if( shift_amt ) {
-                *shift_amt = scan_start - veh.global_pos3();
+                *shift_amt = scan_start - veh.bub_ms_location();
             }
             return true;
         }
     } else {
         point veh_plus_y_vec = ray_delta.rotate( 1 );
         point scan_vec = ray_delta * velocity_sign;
-        tripoint scan_start = veh.global_pos3();
+        tripoint scan_start = veh.bub_ms_location();
         if( shift_sign != 0 ) {
             scan_start += scan_vec + veh_plus_y_vec * shift_sign;
         }
         if( scan_rails_from_veh_internal( m, veh, scan_start, veh_plus_y_vec, scan_vec ) ) {
             if( shift_amt ) {
-                *shift_amt = scan_start - veh.global_pos3();
+                *shift_amt = scan_start - veh.bub_ms_location();
             }
             return true;
         }

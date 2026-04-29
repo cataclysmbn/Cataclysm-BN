@@ -607,13 +607,13 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
         bool found_controls = false;
 
         for( const vpart_reference &vp : v.v->get_avail_parts( "CONTROLS" ) ) {
-            if( !z.sees( vp.pos() ) ) {
+            if( !z.sees( vp.pos().raw() ) ) {
                 continue;
             }
 
-            int new_dist = rl_dist( z.pos(), vp.pos() );
+            int new_dist = rl_dist( z.pos(), vp.pos().raw() );
             if( new_dist <= range ) {
-                aim_at = vp.pos();
+                aim_at = vp.pos().raw();
                 range = new_dist;
                 found = true;
                 found_controls = true;
@@ -622,7 +622,7 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
 
 
         if( !found_controls ) {
-            std::vector<tripoint> line = here.find_clear_path( z.pos(), v.v->global_pos3() );
+            std::vector<tripoint> line = here.find_clear_path( z.pos(), v.v->bub_ms_location().raw() );
             tripoint prev_point = z.pos();
             for( tripoint &i : line ) {
                 if( !z.sees( i ) ||  here.floor_between( prev_point, i ) ) {

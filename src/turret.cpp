@@ -55,7 +55,7 @@ std::vector<vehicle_part *> vehicle::turrets( const tripoint &target )
     // exclude turrets not ready to fire or where target is out of range
     res.erase( std::remove_if( res.begin(), res.end(), [&]( const vehicle_part * e ) {
         return turret_query( *e ).query() != turret_data::status::ready ||
-               rl_dist( global_part_pos3( *e ), target ) > e->base->gun_range();
+               rl_dist( global_part_pos3( *e ).raw(), target ) > e->base->gun_range();
     } ), res.end() );
     return res;
 }
@@ -222,7 +222,7 @@ bool turret_data::in_range( const tripoint &target ) const
         return false;
     }
     int range = veh->turret_query( *part ).range();
-    int dist = rl_dist( veh->global_part_pos3( *part ), target );
+    int dist = rl_dist( veh->global_part_pos3( *part ).raw(), target );
     return range >= dist;
 }
 
@@ -398,7 +398,7 @@ int vehicle::turrets_aim_and_fire( std::vector<vehicle_part *> &turrets )
                 turret_data turret = turret_query( *t );
                 std::unique_ptr<npc> cpu = get_targeting_npc( *t );
                 shots += turret.fire( *cpu, t->target.second );
-                t->reset_target( global_part_pos3( *t ) );
+                t->reset_target( global_part_pos3( *t ).raw() );
             }
         }
     }
@@ -413,7 +413,7 @@ bool vehicle::turrets_aim( std::vector<vehicle_part *> &turrets )
             debugmsg( "Expected a valid vehicle turret" );
             return false;
         }
-        t->reset_target( global_part_pos3( *t ) );
+        t->reset_target( global_part_pos3( *t ).raw() );
     }
 
     // Get target
@@ -458,7 +458,7 @@ void vehicle::turrets_set_targeting()
     for( auto &p : parts ) {
         if( p.is_turret() && !is_manual_turret( p ) ) {
             turrets.push_back( &p );
-            locations.push_back( global_part_pos3( p ) );
+            locations.push_back( global_part_pos3( p ).raw() );
         }
     }
 

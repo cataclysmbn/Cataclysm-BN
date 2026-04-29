@@ -414,9 +414,9 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
     vehicle *wreckage = m.add_vehicle(
                             crashed_hull, tripoint( x1, y1, abs_sub.z() ), dir1, rng( 1, 33 ), 1 );
 
-    const auto controls_at = []( vehicle * wreckage, const tripoint_abs_ms & pos ) {
-        return !wreckage->get_parts_at( pos.raw(), "CONTROLS", part_status_flag::any ).empty() ||
-               !wreckage->get_parts_at( pos.raw(), "CTRL_ELECTRONIC", part_status_flag::any ).empty();
+    const auto controls_at = []( vehicle * wreckage, const tripoint_bub_ms & pos ) {
+        return !wreckage->get_parts_at( pos, "CONTROLS", part_status_flag::any ).empty() ||
+               !wreckage->get_parts_at( pos, "CTRL_ELECTRONIC", part_status_flag::any ).empty();
     };
 
     if( wreckage != nullptr ) {
@@ -428,7 +428,7 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
             case 3:
                 // Full clown car
                 for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_SEATBELT ) ) {
-                    const auto pos = tripoint_abs_ms( vp.pos() );
+                    const auto pos = vp.pos();
                     // Spawn pilots in seats with controls.CTRL_ELECTRONIC
                     if( controls_at( wreckage, pos ) ) {
                         m.add_spawn( mon_zombie_military_pilot, 1, pos.raw() );
@@ -456,7 +456,7 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
             case 5:
                 // 2/3rds clown car
                 for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_SEATBELT ) ) {
-                    const auto pos = tripoint_abs_ms( vp.pos() );
+                    const auto pos = vp.pos();
                     // Spawn pilots in seats with controls.
                     if( controls_at( wreckage, pos ) ) {
                         m.add_spawn( mon_zombie_military_pilot, 1, pos.raw() );
@@ -479,8 +479,8 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
             case 6:
                 // Just pilots
                 for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_CONTROLS ) ) {
-                    const tripoint pos = vp.pos();
-                    m.add_spawn( mon_zombie_military_pilot, 1, pos );
+                    const tripoint_bub_ms pos = vp.pos();
+                    m.add_spawn( mon_zombie_military_pilot, 1, pos.raw() );
 
                     // Delete the items that would have spawned here from a "corpse"
                     for( auto sp : wreckage->parts_at_relative( vp.mount(), true ) ) {
@@ -1820,19 +1820,19 @@ static void burned_ground_parser( map &m, const tripoint_abs_sm &loc )
 
     VehicleList vehs = m.get_vehicles();
     std::vector<vehicle *> vehicles;
-    std::vector<tripoint> points;
+    std::vector<tripoint_bub_ms> points;
     for( wrapped_vehicle vehicle : vehs ) {
         vehicles.push_back( vehicle.v );
-        std::set<tripoint> occupied = vehicle.v->get_points();
-        for( const tripoint &t : occupied ) {
+        std::set<tripoint_bub_ms> occupied = vehicle.v->get_points();
+        for( const tripoint_bub_ms &t : occupied ) {
             points.push_back( t );
         }
     }
     for( vehicle *vrem : vehicles ) {
         m.destroy_vehicle( vrem );
     }
-    for( const tripoint &tri : points ) {
-        m.furn_set( tri, f_wreckage );
+    for( const tripoint_bub_ms &tri : points ) {
+        m.furn_set( tri.raw(), f_wreckage );
     }
 
     // grass is converted separately
@@ -1956,19 +1956,19 @@ static bool mx_burned_ground( map &m, const tripoint_abs_sm &abs_sub )
     }
     VehicleList vehs = m.get_vehicles();
     std::vector<vehicle *> vehicles;
-    std::vector<tripoint> points;
+    std::vector<tripoint_bub_ms> points;
     for( wrapped_vehicle vehicle : vehs ) {
         vehicles.push_back( vehicle.v );
-        std::set<tripoint> occupied = vehicle.v->get_points();
-        for( const tripoint &t : occupied ) {
+        std::set<tripoint_bub_ms> occupied = vehicle.v->get_points();
+        for( const tripoint_bub_ms &t : occupied ) {
             points.push_back( t );
         }
     }
     for( vehicle *vrem : vehicles ) {
         m.destroy_vehicle( vrem );
     }
-    for( const tripoint &tri : points ) {
-        m.furn_set( tri, f_wreckage );
+    for( const tripoint_bub_ms &tri : points ) {
+        m.furn_set( tri.raw(), f_wreckage );
     }
 
     return true;

@@ -22,6 +22,7 @@
 #include "construction_category.h"
 #include "construction_group.h"
 #include "coordinate_conversions.h"
+#include "coordinates.h"
 #include "crafting_quality.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -1998,9 +1999,9 @@ void construct::done_vehicle( const tripoint &p )
     veh->set_owner( u );
     if( u.has_trait( trait_DEBUG_HS ) ) {
         // TODO: Allow DEBUG_HS to consume items that don't exist
-        veh->install_part( point_zero, vpart_id( "frame_vertical_2" ) );
+        veh->install_part( tripoint_mnt_veh( tripoint_zero ), vpart_id( "frame_vertical_2" ) );
     } else {
-        veh->install_part( point_zero, vpart_from_item( u.lastconsumed ) );
+        veh->install_part( tripoint_mnt_veh( tripoint_zero ), vpart_from_item( u.lastconsumed ) );
     }
 
     // Update the vehicle cache immediately,

@@ -4,6 +4,7 @@
 
 #include "creature_functions.h"
 #include "avatar.h"
+#include "coordinates.h"
 #include "game.h"
 #include "map.h"
 #include "map_iterator.h"
@@ -20,11 +21,11 @@ namespace
 // Helper function to check if potential area of effect of a weapon overlaps vehicle
 // Maybe TODO: If this is too slow, precalculate a bounding box and clip the tested area to it
 // TODO: make tripoint_range (and other iterators) to be range-compatible
-auto overlaps_vehicle( const std::set<tripoint> &veh_area, const tripoint &pos,
+auto overlaps_vehicle( const std::set<tripoint_bub_ms> &veh_area, const tripoint &pos,
                        const int area ) -> bool
 {
-    for( const tripoint &tmp : tripoint_range<tripoint>( pos - tripoint( area, area, 0 ),
-            pos + tripoint( area - 1, area - 1, 0 ) ) ) {
+    for( const tripoint_bub_ms &tmp : tripoint_range<tripoint_bub_ms>( tripoint_bub_ms( pos ) - tripoint_rel_ms( area, area, 0 ),
+            tripoint_bub_ms( pos ) + tripoint_rel_ms( area - 1, area - 1, 0 ) ) ) {
         if( veh_area.contains( tmp ) ) {
             return true;
         }

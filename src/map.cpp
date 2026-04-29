@@ -340,10 +340,9 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
     // For in-bubble submaps loadn() has already done this; the set insert is idempotent.
     if( sm != nullptr && !sm->vehicles.empty() ) {
         // Extended local grid index: may be outside [0, my_MAPSIZE) for out-of-bubble.
-        const tripoint local_sm( p.x - abs_sub.x(), p.y - abs_sub.y(), p.z );
         for( const auto &veh : sm->vehicles ) {
-            veh->sm_pos = local_sm;
-            veh->abs_sm_pos = tripoint_abs_sm( p );
+            veh->sm_pos = abs_to_bub( pos );
+            veh->abs_sm_pos = pos;
             veh->dimension_id_ = dim_id;
             loaded_vehicles.insert( veh.get() );
         }
@@ -694,10 +693,7 @@ void map::reset_vehicle_cache( )
             // subsequently changes (e.g. the vehicle's submap enters the grid
             // from the fire-spread loader, or the reality bubble resizes).
             // Recompute sm_pos here so the tile-level cache uses the right slot.
-            elem->sm_pos = tripoint(
-                               elem->abs_sm_pos.x() - abs_sub.x(),
-                               elem->abs_sm_pos.y() - abs_sub.y(),
-                               elem->abs_sm_pos.z() );
+            elem->sm_pos = abs_to_bub( abs_sm_pos );
             elem->adjust_zlevel( 0, tripoint_zero );
             add_vehicle_to_cache( elem );
         }
@@ -716,7 +712,7 @@ void map::add_vehicle_to_cache( vehicle *veh )
         if( vpr.part().removed ) {
             continue;
         }
-        const tripoint p = veh->global_part_pos3( vpr.part() );
+        const tripoint_bub_ms p = veh->global_part_pos3( vpr.part() );
         int part = veh->part_with_feature( vpr.part_index(), VPFLAG_LADDER, true );
         if( part != -1 ) {
             cached_veh_rope[p.xy()] = std::make_pair( veh, static_cast<int>( part ) );
@@ -938,7 +934,7 @@ void map::vehmove()
             for( vehicle *veh : get_cache( z ).vehicle_list ) {
                 veh->gain_moves();
                 veh->slow_leak();
-                vehicle_list.push_back( wrapped_vehicle{ .pos = veh->global_pos3(), .v = veh } );
+                vehicle_list.push_back( wrapped_vehicle{ .pos = veh->bub_ms_location(), .v = veh } );
             }
         }
     }
@@ -1274,7 +1270,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
         veh.stop_autodriving();
         const int volume = std::min<int>( 100, std::sqrt( impulse ) );
         // TODO: Center the sound at weighted (by impulse) average of collisions
-        sounds::sound( veh.global_pos3(), volume, sounds::sound_t::combat, _( "crash!" ),
+        sounds::sound( veh.bub_ms_location().raw(), volume, sounds::sound_t::combat, _( "crash!" ),
                        false, "smash_success", "hit_vehicle" );
     }
 
@@ -1353,9 +1349,9 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
         const float vehicle_mass_kg = to_kilogram( veh.total_mass() );
 
         for( auto &w : wheel_indices ) {
-            const tripoint wheel_p = veh.global_part_pos3( w );
+            const tripoint_bub_ms wheel_p = veh.global_part_pos3( w );
             if( one_in( 2 ) && displace_water( wheel_p ) ) {
-                sounds::sound( wheel_p, 4,  sounds::sound_t::movement, _( "splash!" ), false,
+                sounds::sound( wheel_p.raw(), 4,  sounds::sound_t::movement, _( "splash!" ), false,
                                "environment", "splash" );
             }
 
@@ -1448,8 +1444,8 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
         int &y_cof2 = cof2.y;
         rl_vec2d collision_axis_y;
 
-        collision_axis_y.x = ( veh.global_pos3().x + x_cof1 ) - ( veh2.global_pos3().x + x_cof2 );
-        collision_axis_y.y = ( veh.global_pos3().y + y_cof1 ) - ( veh2.global_pos3().y + y_cof2 );
+        collision_axis_y.x = ( veh.bub_ms_location().x() + x_cof1 ) - ( veh2.bub_ms_location().x() + x_cof2 );
+        collision_axis_y.y = ( veh.bub_ms_location().y() + y_cof1 ) - ( veh2.bub_ms_location().y() + y_cof2 );
         collision_axis_y = collision_axis_y.normalized();
         rl_vec2d collision_axis_x = collision_axis_y.rotated( M_PI / 2 );
         // imp? & delta? & final? reworked:
@@ -1659,7 +1655,7 @@ VehicleList map::get_vehicles( const tripoint &start, const tripoint &end )
                 for( const auto &elem : current_submap->vehicles ) {
                     wrapped_vehicle w;
                     w.v = elem.get();
-                    w.pos = w.v->global_pos3();
+                    w.pos = w.v->bub_ms_location().raw();
                     vehs.push_back( w );
                 }
             }
@@ -1674,7 +1670,7 @@ optional_vpart_position map::veh_at( const tripoint_abs_ms &p ) const
     return veh_at( getlocal( p ) );
 }
 
-optional_vpart_position map::veh_at( const tripoint &p ) const
+optional_vpart_position map::veh_at( const tripoint_bub_ms &p ) const
 {
     if( !inbounds( p ) || !const_cast<map *>( this )->get_cache( p.z ).veh_in_active_range ) {
         return optional_vpart_position( std::nullopt );
@@ -1689,11 +1685,11 @@ optional_vpart_position map::veh_at( const tripoint &p ) const
 
 }
 
-const vehicle *map::veh_at_internal( const tripoint &p, int &part_num ) const
+const vehicle *map::veh_at_internal( const tripoint_bub_ms &p, int &part_num ) const
 {
     // This function is called A LOT. Move as much out of here as possible.
-    const level_cache &ch = get_cache( p.z );
-    if( !ch.veh_in_active_range || !ch.veh_exists_at[ch.idx( p.x, p.y )] ) {
+    const level_cache &ch = get_cache( p.z() );
+    if( !ch.veh_in_active_range || !ch.veh_exists_at[ch.idx( p.x(), p.y() )] ) {
         part_num = -1;
         return nullptr; // Clear cache indicates no vehicle. This should optimize a great deal.
     }
@@ -1704,7 +1700,7 @@ const vehicle *map::veh_at_internal( const tripoint &p, int &part_num ) const
         return it->second.first;
     }
 
-    debugmsg( "vehicle part cache indicated vehicle not found: %d %d %d", p.x, p.y, p.z );
+    debugmsg( "vehicle part cache indicated vehicle not found: %d %d %d", p.x(), p.y(), p.z() );
     part_num = -1;
     return nullptr;
 }
@@ -1793,7 +1789,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     // applies regardless of which code path caused the staleness.
     veh.sm_pos = abs_to_bub( veh.abs_sm_pos ).raw();
 
-    const auto src = tripoint_bub_ms( veh.global_pos3() );
+    const auto src = veh.bub_ms_location();
     auto dst = src + dp;
 
     point_sm_ms src_offset;
@@ -1855,19 +1851,19 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
             const int prt = r.prt;
 
             Creature *psg = r.psg;
-            const tripoint part_pos = veh.global_part_pos3( prt );
+            const tripoint_bub_ms part_pos = veh.global_part_pos3( prt );
             if( psg == nullptr ) {
                 debugmsg( "Empty passenger for part #%d at %d,%d,%d player at %d,%d,%d?",
-                          prt, part_pos.x, part_pos.y, part_pos.z,
+                          prt, part_pos.x(), part_pos.y(), part_pos.z(),
                           g->u.posx(), g->u.posy(), g->u.posz() );
                 veh.part( prt ).remove_flag( vehicle_part::passenger_flag );
                 r.moved = true;
                 continue;
             }
 
-            if( psg->pos() != part_pos ) {
+            if( psg->pos() != part_pos.raw() ) {
                 add_msg( m_debug, "Part/passenger position mismatch: part #%d at %d,%d,%d "
-                         "passenger at %d,%d,%d", prt, part_pos.x, part_pos.y, part_pos.z,
+                         "passenger at %d,%d,%d", prt, part_pos.x(), part_pos.y(), part_pos.z(),
                          psg->posx(), psg->posy(), psg->posz() );
             }
             const vehicle_part &veh_part = veh.part( prt );
@@ -1884,7 +1880,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
             if( psg->is_avatar() ) {
                 // If passenger is you, we need to update the map
                 need_update = true;
-                z_change = psgp.z() != part_pos.z;
+                z_change = psgp.z() != part_pos.z();
                 z_to = psgp.z();
             }
 
@@ -8016,7 +8012,7 @@ static inline void shift_tripoint_map( std::map<tripoint, T> &map, point offset,
 void map::shift_vehicle_z( vehicle &veh, int z_shift )
 {
 
-    auto src = tripoint_bub_ms( veh.global_pos3() );
+    auto src = veh.bub_ms_location();
     auto dst = src + tripoint_above * z_shift;
 
     submap *src_submap = get_submap_at( src );
@@ -9835,62 +9831,62 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
     auto &obstructed_cache = zch.vehicle_obstructed_cache;
 
     const size_t part = vp.part_index();
-    const tripoint &part_pos =  v->global_part_pos3( vp.part() );
+    const tripoint_bub_ms &part_pos =  v->global_part_pos3( vp.part() );
 
     bool vehicle_is_opaque = vp.has_feature( VPFLAG_OPAQUE ) && !vp.part().is_broken();
 
     if( vehicle_is_opaque ) {
         int dpart = v->part_with_feature( part, VPFLAG_OPENABLE, true );
         if( dpart < 0 || !v->part( dpart ).open ) {
-            transparency_cache[zch.idx( part_pos.x, part_pos.y )] = LIGHT_TRANSPARENCY_SOLID;
+            transparency_cache[zch.idx( part_pos.x(), part_pos.y() )] = LIGHT_TRANSPARENCY_SOLID;
         } else {
             vehicle_is_opaque = false;
         }
     }
 
     if( vehicle_is_opaque || vp.is_inside() ) {
-        const int veh_idx = zch.idx( part_pos.x, part_pos.y );
+        const int veh_idx = zch.idx( part_pos.x(), part_pos.y() );
         outside_cache[veh_idx] = false;
         sheltered_cache[veh_idx] = true;
     }
 
     if( vp.has_feature( VPFLAG_BOARDABLE ) && !vp.part().is_broken() ) {
-        floor_cache[zch.idx( part_pos.x, part_pos.y )] = true;
+        floor_cache[zch.idx( part_pos.x(), part_pos.y() )] = true;
     }
 
-    point t = v->bubble_to_mount( tripoint_bub_ms( part_pos + point_north_west ) );
+    point t = v->bubble_to_mount( part_pos + point_north_west );
     if( !v->allowed_light( t, vp.mount() ) ) {
-        obscured_cache[zch.idx( part_pos.x, part_pos.y )].nw = true;
+        obscured_cache[zch.idx( part_pos.x(), part_pos.y() )].nw = true;
     }
-    if( !v->allowed_move( t, vp.mount() ) ) {
-        obstructed_cache[zch.idx( part_pos.x, part_pos.y )].nw = true;
-    }
-
-    t = v->bubble_to_mount( tripoint_bub_ms( part_pos + point_north_east ) );
-    if( !v->allowed_light( t, vp.mount() ) ) {
-        obscured_cache[zch.idx( part_pos.x, part_pos.y )].ne = true;
-    }
-    if( !v->allowed_move( t, vp.mount() ) ) {
-        obstructed_cache[zch.idx( part_pos.x, part_pos.y )].ne = true;
+    if( !v->allowed_move( t, vp.mount().xy().raw() ) ) {
+        obstructed_cache[zch.idx( part_pos.x(), part_pos.y() )].nw = true;
     }
 
-    if( part_pos.x > 0 && part_pos.y < zch.cache_y - 1 ) {
-        t = v->bubble_to_mount( tripoint_bub_ms( part_pos + point_south_west ) );
-        if( !v->allowed_light( t, vp.mount() ) ) {
-            obscured_cache[zch.idx( part_pos.x - 1, part_pos.y + 1 )].ne = true;
+    t = v->bubble_to_mount( part_pos + point_north_east );
+    if( !v->allowed_light( t, vp.mount().xy().raw() ) ) {
+        obscured_cache[zch.idx( part_pos.x(), part_pos.y() )].ne = true;
+    }
+    if( !v->allowed_move( t, vp.mount().xy().raw() ) ) {
+        obstructed_cache[zch.idx( part_pos.x(), part_pos.y() )].ne = true;
+    }
+
+    if( part_pos.x() > 0 && part_pos.y() < zch.cache_y - 1 ) {
+        t = v->bubble_to_mount( part_pos + point_south_west );
+        if( !v->allowed_light( t, vp.mount().xy().raw() ) ) {
+            obscured_cache[zch.idx( part_pos.x() - 1, part_pos.y() + 1 )].ne = true;
         }
-        if( !v->allowed_move( t, vp.mount() ) ) {
-            obstructed_cache[zch.idx( part_pos.x - 1, part_pos.y + 1 )].ne = true;
+        if( !v->allowed_move( t, vp.mount().xy().raw() ) ) {
+            obstructed_cache[zch.idx( part_pos.x() - 1, part_pos.y() + 1 )].ne = true;
         }
     }
 
-    if( part_pos.x < zch.cache_x - 1 && part_pos.y < zch.cache_y - 1 ) {
+    if( part_pos.x() < zch.cache_x - 1 && part_pos.y() < zch.cache_y - 1 ) {
         t = v->bubble_to_mount( tripoint_bub_ms( part_pos + point_south_east ) );
-        if( !v->allowed_light( t, vp.mount() ) ) {
-            obscured_cache[zch.idx( part_pos.x + 1, part_pos.y + 1 )].nw = true;
+        if( !v->allowed_light( t, vp.mount().xy().raw() ) ) {
+            obscured_cache[zch.idx( part_pos.x() + 1, part_pos.y() + 1 )].nw = true;
         }
-        if( !v->allowed_move( t, vp.mount() ) ) {
-            obstructed_cache[zch.idx( part_pos.x + 1, part_pos.y + 1 )].nw = true;
+        if( !v->allowed_move( t, vp.mount().xy().raw() ) ) {
+            obstructed_cache[zch.idx( part_pos.x() + 1, part_pos.y() + 1 )].nw = true;
         }
     }
 }
@@ -9899,8 +9895,8 @@ static void vehicle_caching_internal_above( level_cache &zch_above, const vpart_
         vehicle *v )
 {
     if( vp.has_feature( VPFLAG_ROOF ) || vp.has_feature( VPFLAG_OPAQUE ) ) {
-        const tripoint &part_pos = v->global_part_pos3( vp.part() );
-        const int tile_idx = zch_above.idx( part_pos.x, part_pos.y );
+        const tripoint_bub_ms &part_pos = v->global_part_pos3( vp.part() );
+        const int tile_idx = zch_above.idx( part_pos.x(), part_pos.y() );
         zch_above.vehicle_floor_cache[tile_idx] = true;
     }
 }
@@ -9910,13 +9906,13 @@ void map::do_vehicle_caching( int z )
     level_cache &ch = get_cache( z );
     for( vehicle *v : ch.vehicle_list ) {
         for( const vpart_reference &vp : v->get_all_parts() ) {
-            const tripoint &part_pos = v->global_part_pos3( vp.part() );
-            if( !inbounds( part_pos.xy() ) || vp.part().removed ) {
+            const tripoint_bub_ms &part_pos = v->global_part_pos3( vp.part() );
+            if( !inbounds( part_pos.xy().raw() ) || vp.part().removed ) {
                 continue;
             }
-            vehicle_caching_internal( get_cache( part_pos.z ), vp, v );
-            if( part_pos.z < OVERMAP_HEIGHT ) {
-                vehicle_caching_internal_above( get_cache( part_pos.z + 1 ), vp, v );
+            vehicle_caching_internal( get_cache( part_pos.z() ), vp, v );
+            if( part_pos.z() < OVERMAP_HEIGHT ) {
+                vehicle_caching_internal_above( get_cache( part_pos.z() + 1 ), vp, v );
             }
         }
     }
@@ -10667,7 +10663,7 @@ bool map::has_rope_at( tripoint pt ) const
         auto veh_pair = get_rope_at( pt.xy() );
         vehicle *veh = veh_pair.first;
         int veh_part = veh_pair.second;
-        return veh->part( veh_part ).info().ladder_length() >= veh->global_pos3().z - pt.z;
+        return veh->part( veh_part ).info().ladder_length() >= veh->bub_ms_location().z() - pt.z;
     }
     return false;
 }

@@ -38,6 +38,7 @@
 #include "character_martial_arts.h"
 #include "color.h"
 #include "coordinate_conversions.h"
+#include "coordinates.h"
 #include "crafting.h"
 #include "creature.h"
 #include "damage.h"
@@ -5189,8 +5190,8 @@ int iuse::unfold_generic( player *p, item *it, bool, const tripoint & )
         if( vp.info().location != "structure" && !vp.info().has_flag( VPFLAG_EXTENDABLE ) ) {
             continue;
         }
-        const tripoint pp = vp.pos();
-        if( invalid_pos( pp, can_float ) ) {
+        const tripoint_bub_ms pp = vp.pos();
+        if( invalid_pos( pp.raw(), can_float ) ) {
             p->add_msg_if_player( m_info, _( "There's no room to unfold the %s." ), it->tname() );
             g->m.destroy_vehicle( veh );
             return 0;
@@ -7804,7 +7805,7 @@ static vehicle *pickveh( const tripoint &center, bool advanced )
 
     for( auto &veh : g->m.get_vehicles() ) {
         auto &v = veh.v;
-        if( rl_dist( center, v->global_pos3() ) < 40 &&
+        if( rl_dist( center, v->bub_ms_location().raw() ) < 40 &&
             v->fuel_left( itype_battery, true ) > 0 &&
             ( !v->get_avail_parts( advctrl ).empty() ||
               ( !advanced && !v->get_avail_parts( ctrl ).empty() ) ) ) {
@@ -7814,7 +7815,7 @@ static vehicle *pickveh( const tripoint &center, bool advanced )
     std::vector<tripoint> locations;
     for( int i = 0; i < static_cast<int>( vehs.size() ); i++ ) {
         auto veh = vehs[i];
-        locations.push_back( veh->global_pos3() );
+        locations.push_back( veh->bub_ms_location().raw() );
         pmenu.addentry( i, true, MENU_AUTOASSIGN, veh->name );
     }
 
@@ -7902,9 +7903,9 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint &pos )
         const auto rctrl_parts = veh->get_avail_parts( "REMOTE_CONTROLS" );
         // Revert to original behavior if we can't find remote controls.
         if( rctrl_parts.empty() ) {
-            veh->use_controls( pos );
+            veh->use_controls( tripoint_bub_ms( pos ) );
         } else {
-            veh->use_controls( rctrl_parts.begin()->pos() );
+            veh->use_controls( tripoint_bub_ms( rctrl_parts.begin()->pos() ) );
         }
     }
 
@@ -8101,7 +8102,7 @@ int iuse::tow_attach( player *who, item *cable, bool, const tripoint & )
         }
         const vpart_id vpid( cable->typeId().str() );
 
-        point vcoords = vp1->mount();
+        tripoint_mnt_veh vcoords = vp1->mount();
         vehicle_part v1_part( vpid, vcoords, item::spawn( *cable ), v1 );
         v1->install_part( vcoords, std::move( v1_part ) );
         vcoords = vp2->mount();
@@ -8271,17 +8272,17 @@ int iuse::cable_attach( player *who, item *cable, bool, const tripoint & )
             const vpart_id vpid( cable->typeId().str() );
 
             //Vehicle part1
-            point vcoords = vp1->mount();
+            tripoint_mnt_veh vcoords = vp1->mount();
             vehicle_part p1( vpid, vcoords, item::spawn( *cable ), v1 );
             p1.target.first = data->con2.point.raw();
-            p1.target.second = v2->global_square_location().raw();
+            p1.target.second = v2->abs_ms_location().raw();
             v1->install_part( vcoords, std::move( p1 ) );
 
             //Vehicle part2
             vcoords = vp2->mount();
             vehicle_part p2( vpid, vcoords, item::spawn( *cable ), v2 );
             p2.target.first = data->con1.point.raw();
-            p2.target.second = v1->global_square_location().raw();
+            p2.target.second = v1->abs_ms_location().raw();
             v2->install_part( vcoords, std::move( p2 ) );
 
             if( who != nullptr && who->has_item( *cable ) ) {
@@ -8325,7 +8326,7 @@ int iuse::cable_attach( player *who, item *cable, bool, const tripoint & )
             }
 
             const vpart_id vpid( cable->typeId().str() );
-            point vcoords = vp->mount();
+            tripoint_mnt_veh vcoords = vp->mount();
             vehicle_part v_part( vpid, vcoords, item::spawn( *cable ), v );
             v_part.target.first = connector.raw();
             v_part.target.second = connector.raw();
@@ -8333,7 +8334,7 @@ int iuse::cable_attach( player *who, item *cable, bool, const tripoint & )
             if( who && who->has_item( *cable ) ) {
                 who->add_msg_if_player( m_good, _( "You connect the %s to the electric grid." ),
                                         v->name );
-                grid_connector->connected_vehicles.emplace_back( g->m.getabs( v->global_pos3() ) );
+                grid_connector->connected_vehicles.emplace_back( g->m.getabs( v->bub_ms_location().raw() ) );
                 v->install_part( vcoords, std::move( v_part ) );
             }
             return 1;    // Let the cable be destroyed.

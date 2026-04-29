@@ -29,6 +29,7 @@
 #include "construction.h"
 #include "construction_group.h"
 #include "construction_partial.h"
+#include "coordinates.h"
 #include "creature.h"
 #include "debug.h"
 #include "drop_token.h"
@@ -175,9 +176,9 @@ static void put_into_vehicle( Character &c, item_drop_reason reason,
         return;
     }
 
-    const tripoint where = veh.global_part_pos3( part );
+    const tripoint_bub_ms where = veh.global_part_pos3( part );
     map &here = get_map();
-    const std::string ter_name = here.name( where );
+    const std::string ter_name = here.name( where.raw() );
     int fallen_count = 0;
     bool into_vehicle = false;
 
@@ -205,7 +206,7 @@ static void put_into_vehicle( Character &c, item_drop_reason reason,
             }
             if( it ) {
                 fallen_count += it->count();
-                here.add_item_or_charges( where, std::move( it ) );
+                here.add_item_or_charges( where.raw(), std::move( it ) );
             }
         }
         obj.handle_pickup_ownership( c );
@@ -971,7 +972,7 @@ static bool vehicle_activity( player &p, const tripoint &src_loc, int vpindex, c
     // for someone else who stored that position at the start of their activity.
     // so we may need to go looking a bit further afield to find it , at activities end.
     for( const auto pt : veh->get_points( true ) ) {
-        p.activity->coord_set.insert( here.getabs( pt ) );
+        p.activity->coord_set.insert( here.bub_to_abs( pt ).raw() );
     }
     // values[0]
     p.activity->values.push_back( here.getabs( src_loc ).x );
@@ -1512,7 +1513,7 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
         }
         if( act == ACT_VEHICLE_DECONSTRUCTION ) {
             // find out if there is a vehicle part here we can remove.
-            std::vector<vehicle_part *> parts = veh->get_parts_at( src_loc, "", part_status_flag::any );
+            std::vector<vehicle_part *> parts = veh->get_parts_at( tripoint_bub_ms( src_loc ), "", part_status_flag::any );
             for( vehicle_part *part_elem : parts ) {
                 const vpart_info &vpinfo = part_elem->info();
                 int vpindex = veh->index_of_part( part_elem, true );
@@ -1583,7 +1584,7 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
             }
         } else if( act == ACT_VEHICLE_REPAIR ) {
             // find out if there is a vehicle part here we can repair.
-            std::vector<vehicle_part *> parts = veh->get_parts_at( src_loc, "", part_status_flag::any );
+            std::vector<vehicle_part *> parts = veh->get_parts_at( tripoint_bub_ms( src_loc ), "", part_status_flag::any );
             for( vehicle_part *part_elem : parts ) {
                 const vpart_info &vpinfo = part_elem->info();
                 int vpindex = veh->index_of_part( part_elem, true );

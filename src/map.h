@@ -407,7 +407,7 @@ struct level_cache {
 
     bool veh_in_active_range = false;
     std::vector<bool>               veh_exists_at;
-    std::map< tripoint, std::pair<vehicle *, int> > veh_cached_parts;
+    std::map<tripoint_bub_ms, std::pair<vehicle *, int>> veh_cached_parts;
     std::set<vehicle *> vehicle_list;
     std::set<vehicle *> zone_vehicles;
 

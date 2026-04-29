@@ -29,6 +29,7 @@
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
+#include "coordinates.h"
 #include "creature.h"
 #include "cursesdef.h"
 #include "damage.h"
@@ -696,13 +697,13 @@ target_handler::trajectory target_handler::mode_turrets( avatar &you, vehicle &v
     int range_total = 0;
     for( vehicle_part *t : turrets ) {
         int range = veh.turret_query( *t ).range();
-        tripoint pos = veh.global_part_pos3( *t );
+        tripoint_bub_ms pos = veh.global_part_pos3( *t );
 
         int res = 0;
-        res = std::max( res, rl_dist( you.pos(), pos + point( range, 0 ) ) );
-        res = std::max( res, rl_dist( you.pos(), pos + point( -range, 0 ) ) );
-        res = std::max( res, rl_dist( you.pos(), pos + point( 0, range ) ) );
-        res = std::max( res, rl_dist( you.pos(), pos + point( 0, -range ) ) );
+        res = std::max( res, rl_dist( you.pos(), pos.raw() + point( range, 0 ) ) );
+        res = std::max( res, rl_dist( you.pos(), pos.raw() + point( -range, 0 ) ) );
+        res = std::max( res, rl_dist( you.pos(), pos.raw() + point( 0, range ) ) );
+        res = std::max( res, rl_dist( you.pos(), pos.raw() + point( 0, -range ) ) );
         range_total = std::max( range_total, res );
     }
 
@@ -1036,7 +1037,7 @@ auto is_mountable( const map &m, const tripoint &pos ) -> bool
 
     if( const optional_vpart_position vp = m.veh_at( pos ) ) {
         // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
-        return m.passable( pos ) && vp->vehicle().has_part( pos, "MOUNTABLE" );
+        return m.passable( pos ) && vp->vehicle().has_part( tripoint_bub_ms( pos ), "MOUNTABLE" );
     }
     return false;
 }
@@ -3578,8 +3579,8 @@ void target_ui::update_turrets_in_range()
     for( vehicle_part *t : *vturrets ) {
         turret_data td = veh->turret_query( *t );
         if( td.in_range( dst ) ) {
-            tripoint src = veh->global_part_pos3( *t );
-            turrets_in_range.push_back( { t, line_to( src, dst ) } );
+            tripoint_bub_ms src = veh->global_part_pos3( *t );
+            turrets_in_range.push_back( { t, line_to( src.raw(), dst ) } );
         }
     }
 }

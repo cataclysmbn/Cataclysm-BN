@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "color.h"
+#include "coordinates.h"
 #include "memory_fast.h"
 #include "point.h"
 #include "string_id.h"
@@ -405,7 +406,7 @@ class zone_manager
                   const tripoint &start, const tripoint &end,
                   shared_ptr_fast<zone_options> options = nullptr );
         const zone_data *get_zone_at( const tripoint &where, const zone_type_id &type ) const;
-        void create_vehicle_loot_zone( class vehicle &vehicle, point mount_point,
+        void create_vehicle_loot_zone( class vehicle &vehicle, tripoint_mnt_veh mount_point,
                                        zone_data &new_zone );
 
         bool remove( zone_data &zone );

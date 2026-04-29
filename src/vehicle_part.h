@@ -41,7 +41,7 @@ struct vehicle_part {
         vehicle_part();
         vehicle_part( vehicle * );
 
-        vehicle_part( const vpart_id &vp, point dp, detached_ptr<item> &&obj, vehicle * );
+        vehicle_part( const vpart_id &vp, tripoint_mnt_veh dp, detached_ptr<item> &&obj, vehicle * );
         vehicle_part( const vehicle_part &, vehicle * );
 
         vehicle_part( vehicle_part && );
@@ -213,7 +213,7 @@ struct vehicle_part {
 
     public:
         /** mount point: x is on the forward/backward axis, y is on the left/right axis */
-        point mount;
+        tripoint_mnt_veh mount;
 
         /** mount translated to face.dir [0] and turn_dir [1] */
         // NOLINTNEXTLINE(cata-use-named-point-constants)

@@ -16,6 +16,7 @@
 #include "cata_utility.h"
 #include "construction.h"
 #include "construction_group.h"
+#include "coordinates.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "faction.h"
@@ -1233,7 +1234,7 @@ const zone_data *zone_manager::get_bottom_zone( const tripoint &where,
 // which constructor of the key-value pair we use which depends on new_zone being an rvalue or lvalue and constness.
 // If you are passing new_zone from a non-const iterator, be prepared for a move! This
 // may break some iterators like map iterators if you are less specific!
-void zone_manager::create_vehicle_loot_zone( vehicle &vehicle, point mount_point,
+void zone_manager::create_vehicle_loot_zone( vehicle &vehicle, tripoint_mnt_veh mount_point,
         zone_data &new_zone )
 {
     //create a vehicle loot zone

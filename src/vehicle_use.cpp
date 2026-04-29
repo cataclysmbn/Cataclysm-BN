@@ -1220,7 +1220,7 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
     }
 
     if( !has_starting_engine_position ) {
-        starting_engine_position = global_pos3();
+        starting_engine_position = bub_ms_location();
     }
 
     if( take_control && !g->u.controlling_vehicle ) {
@@ -1587,7 +1587,7 @@ void vehicle::alarm()
                     _( "WHOOP WHOOP" ), _( "NEEeu NEEeu NEEeu" ), _( "BLEEEEEEP" ), _( "WREEP" )
                 }
             };
-            sounds::sound( global_pos3(), rng( 45, 80 ),
+            sounds::sound( bub_ms_location(), rng( 45, 80 ),
                            sounds::sound_t::alarm,  random_entry_ref( sound_msgs ), false, "vehicle", "car_alarm" );
             if( one_in( 1000 ) ) {
                 is_alarm_on = false;

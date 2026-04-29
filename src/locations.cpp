@@ -476,7 +476,7 @@ std::string vehicle_item_location::describe( const Character *ch, const item * )
         return "Error: vehicle part without storage";
     }
     if( ch ) {
-        res += " " + direction_suffix( ch->pos(), part_pos.pos() );
+        res += " " + direction_suffix( ch->pos(), part_pos.pos().raw() );
     }
     return res;
 }

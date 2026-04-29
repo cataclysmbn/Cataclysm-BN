@@ -1,3 +1,4 @@
+#include "coordinates.h"
 #include "enums.h"
 #include "game.h" // IWYU pragma: associated
 
@@ -50,7 +51,7 @@ auto get_grabbed_vehicle_movecost( vehicle *veh ) -> int
 {
     const int str_req = base_str_req( veh );
     const auto &map = get_map();
-    const tripoint &vehpos = veh->global_pos3();
+    const tripoint_bub_ms &vehpos = veh->bub_ms_location();
 
     const auto get_wheel_pos = [&]( const int p ) {
         return vehpos + veh->part( p ).precalc[0];
@@ -59,8 +60,8 @@ auto get_grabbed_vehicle_movecost( vehicle *veh ) -> int
     const auto &wheel_indices = veh->wheelcache;
     return std::accumulate( wheel_indices.begin(), wheel_indices.end(), 0,
     [&]( const int sum, const int p ) {
-        const tripoint wheel_pos = get_wheel_pos( p );
-        const int mapcost = map.move_cost( wheel_pos, veh );
+        const tripoint_bub_ms wheel_pos = get_wheel_pos( p );
+        const int mapcost = map.move_cost( wheel_pos.raw(), veh );
         const int movecost = str_req / static_cast<int>( wheel_indices.size() ) * mapcost;
 
         return sum + movecost;
@@ -169,7 +170,7 @@ bool game::grabbed_veh_move( const tripoint &dp )
     ///\EFFECT_STR determines ability to drag vehicles
     if( str_req <= str ) {
         if( !grabbed_vehicle->valid_wheel_config() && !grabbed_vehicle->has_sufficient_lift( true ) ) {
-            make_scraping_noise( grabbed_vehicle->global_pos3(), str_req * 2 );
+            make_scraping_noise( grabbed_vehicle->bub_ms_location().raw(), str_req * 2 );
         }
 
         //calculate exertion factor and movement penalty
@@ -205,7 +206,7 @@ bool game::grabbed_veh_move( const tripoint &dp )
 
         // Grabbed part has to stay at distance 1 to the player
         // and in roughly the same direction.
-        const auto new_part_pos = tripoint_bub_ms( grabbed_vehicle->global_pos3() ) +
+        const auto new_part_pos = grabbed_vehicle->bub_ms_location() +
                                   grabbed_vehicle->part( grabbed_part ).precalc[ 1 ];
         const auto expected_pos = tripoint_bub_ms( u.pos() ) + dp + from;
         const tripoint_rel_ms actual_dir = expected_pos - new_part_pos;
@@ -216,7 +217,7 @@ bool game::grabbed_veh_move( const tripoint &dp )
         const tripoint player_prev = u.pos();
         u.setpos( tripoint_zero );
         std::vector<veh_collision> colls;
-        const bool failed = grabbed_vehicle->collision( colls, actual_dir.raw(), true );
+        const bool failed = grabbed_vehicle->collision( colls, actual_dir, true );
         u.setpos( player_prev );
         if( !colls.empty() ) {
             blocker_name = colls.front().target_name;
@@ -253,7 +254,7 @@ bool game::grabbed_veh_move( const tripoint &dp )
 
     for( int p : grabbed_vehicle->wheelcache ) {
         if( one_in( 2 ) ) {
-            tripoint wheel_p = grabbed_vehicle->global_part_pos3( grabbed_part );
+            tripoint_bub_ms wheel_p = grabbed_vehicle->global_part_pos3( grabbed_part );
             grabbed_vehicle->handle_trap( wheel_p, p );
         }
     }

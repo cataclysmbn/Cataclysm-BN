@@ -647,7 +647,7 @@ void editmap::draw_main_ui_overlay()
                         g->draw_vpart_override( map_p, vp_id, part_mod, veh_dir, draw_highlight, vp->mount() );
                     } else {
                         g->draw_vpart_override( map_p, vpart_id::NULL_ID(), 0, 0_degrees, false,
-                                                point_zero );
+                                                { 0, 0, 0 } );
                     }
                     g->draw_below_override( map_p, here.has_zlevels() &&
                                             tmpmap.ter( tmp_p ).obj().has_flag( TFLAG_NO_FLOOR ) );
@@ -1901,7 +1901,7 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
 
                     //TODO!: move this into the submap swap
                     for( auto &veh : destsm->vehicles ) {
-                        veh->sm_pos = dest_pos.raw();
+                        veh->sm_pos = dest_pos;
                     }
 
                     if( !destsm->spawns.empty() ) {                              // trigger spawnpoints

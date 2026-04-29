@@ -880,10 +880,10 @@ void sfx::do_vehicle_exterior_engine_sfx()
     for( wrapped_vehicle vehicle : vehs ) {
         if( vehicle.v->vehicle_noise > 0 &&
             vehicle.v->vehicle_noise -
-            sound_distance( player_character.pos(), vehicle.v->global_pos3() ) > noise_factor ) {
+            sound_distance( player_character.pos(), vehicle.v->bub_ms_location().raw() ) > noise_factor ) {
 
             noise_factor = vehicle.v->vehicle_noise - sound_distance( player_character.pos(),
-                           vehicle.v->global_pos3() );
+                           vehicle.v->bub_ms_location().raw() );
             veh = vehicle.v;
         }
     }
@@ -916,7 +916,7 @@ void sfx::do_vehicle_exterior_engine_sfx()
 
     if( is_channel_playing( ch ) ) {
         if( engine_external_id_and_variant == id_and_variant ) {
-            Mix_SetPosition( ch_int, to_degrees( get_heard_angle( veh->global_pos3() ) ), 0 );
+            Mix_SetPosition( ch_int, to_degrees( get_heard_angle( veh->bub_ms_location().raw() ) ), 0 );
             set_channel_volume( ch, vol );
             add_msg( m_debug, "PLAYING exterior_engine_sound, vol: ex:%d true:%d", vol, Mix_Volume( ch_int,
                      -1 ) );
@@ -925,7 +925,7 @@ void sfx::do_vehicle_exterior_engine_sfx()
             Mix_HaltChannel( ch_int );
             add_msg( m_debug, "STOP exterior_engine_sound, change id/var" );
             play_ambient_variant_sound( id_and_variant.first, id_and_variant.second, 128, ch, 0 );
-            Mix_SetPosition( ch_int, to_degrees( get_heard_angle( veh->global_pos3() ) ), 0 );
+            Mix_SetPosition( ch_int, to_degrees( get_heard_angle( veh->bub_ms_location().raw() ) ), 0 );
             set_channel_volume( ch, vol );
             add_msg( m_debug, "START exterior_engine_sound %s %s vol: %d", id_and_variant.first,
                      id_and_variant.second,
@@ -934,7 +934,7 @@ void sfx::do_vehicle_exterior_engine_sfx()
     } else {
         play_ambient_variant_sound( id_and_variant.first, id_and_variant.second, 128, ch, 0 );
         add_msg( m_debug, "Vol: %d %d", vol, Mix_Volume( ch_int, -1 ) );
-        Mix_SetPosition( ch_int, to_degrees( get_heard_angle( veh->global_pos3() ) ), 0 );
+        Mix_SetPosition( ch_int, to_degrees( get_heard_angle( veh->bub_ms_location().raw() ) ), 0 );
         add_msg( m_debug, "Vol: %d %d", vol, Mix_Volume( ch_int, -1 ) );
         set_channel_volume( ch, vol );
         add_msg( m_debug, "START exterior_engine_sound NEW %s %s vol: ex:%d true:%d", id_and_variant.first,

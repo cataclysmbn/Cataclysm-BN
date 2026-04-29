@@ -704,7 +704,7 @@ static tripoint_abs_omt show_notes_manager( const tripoint_abs_omt &origin )
     tripoint_abs_omt selected = origin;
     sort_mode_t sort_mode = sort_mode_t::name;
 
-    const tripoint_abs_omt p_player = g->u.global_omt_location();
+    const tripoint_abs_omt p_player = g->u.global_omt_labsn();
 
     bool quit = false;
     while( !quit ) {
@@ -2087,7 +2087,7 @@ static std::vector<tripoint_abs_omt> get_overmap_path_to( const tripoint_abs_omt
         }
     }
     // literal "edge" case: the vehicle may be in a different OMT than the player
-    const tripoint_abs_omt start_omt_pos = driving ? player_veh->global_omt_location() : player_omt_pos;
+    const tripoint_abs_omt start_omt_pos = driving ? player_veh->abs_omt_location() : player_omt_pos;
     if( dest == player_omt_pos || dest == start_omt_pos ) {
         return {};
     } else {

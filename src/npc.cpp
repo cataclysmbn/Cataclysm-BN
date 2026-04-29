@@ -1565,7 +1565,7 @@ float npc::vehicle_danger( int radius ) const
             // FIXME: this can't be the right way to do this
             units::angle facing = wrapped_veh.v->face.dir();
 
-            point a( wrapped_veh.v->global_pos3().xy() );
+            point a( wrapped_veh.v->global_pos3().xy().raw() );
             point b( static_cast<int>( a.x + units::cos( facing ) * radius ),
                      static_cast<int>( a.y + units::sin( facing ) * radius ) );
 
