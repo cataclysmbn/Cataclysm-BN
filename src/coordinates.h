@@ -7,6 +7,7 @@
 #include "cuboid_rectangle.h"
 #include "enums.h"
 #include "game_constants.h"
+#include "map_iterator.h"
 #include "point.h"
 #include "debug.h"
 
@@ -799,4 +800,15 @@ struct real_coords {
         return point( abs_om.x * subs_in_om * tiles_in_sub, abs_om.y * subs_in_om * tiles_in_sub );
     }
 };
+
+// Returns a view over every tile position within a single submap, in x-major order.
+// Equivalent to a nested loop over x in [0, SEEX) and y in [0, SEEY).
+//
+// Usage:
+//   for( const auto p : submap_tiles() ) { sm.get_ter( p ); }
+//   std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) { ... } );
+inline auto submap_tiles() -> point_range<point_sm_ms>
+{
+    return { point_sm_ms::zero(), point_sm_ms( SEEX - 1, SEEY - 1 ) };
+}
 
