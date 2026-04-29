@@ -24,7 +24,8 @@ namespace
 auto overlaps_vehicle( const std::set<tripoint_bub_ms> &veh_area, const tripoint &pos,
                        const int area ) -> bool
 {
-    for( const tripoint_bub_ms &tmp : tripoint_range<tripoint_bub_ms>( tripoint_bub_ms( pos ) - tripoint_rel_ms( area, area, 0 ),
+    for( const tripoint_bub_ms &tmp : tripoint_range<tripoint_bub_ms>( tripoint_bub_ms(
+                pos ) - tripoint_rel_ms( area, area, 0 ),
             tripoint_bub_ms( pos ) + tripoint_rel_ms( area - 1, area - 1, 0 ) ) ) {
         if( veh_area.contains( tmp ) ) {
             return true;

@@ -1444,8 +1444,10 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
         int &y_cof2 = cof2.y;
         rl_vec2d collision_axis_y;
 
-        collision_axis_y.x = ( veh.bub_ms_location().x() + x_cof1 ) - ( veh2.bub_ms_location().x() + x_cof2 );
-        collision_axis_y.y = ( veh.bub_ms_location().y() + y_cof1 ) - ( veh2.bub_ms_location().y() + y_cof2 );
+        collision_axis_y.x = ( veh.bub_ms_location().x() + x_cof1 ) - ( veh2.bub_ms_location().x() +
+                             x_cof2 );
+        collision_axis_y.y = ( veh.bub_ms_location().y() + y_cof1 ) - ( veh2.bub_ms_location().y() +
+                             y_cof2 );
         collision_axis_y = collision_axis_y.normalized();
         rl_vec2d collision_axis_x = collision_axis_y.rotated( M_PI / 2 );
         // imp? & delta? & final? reworked:

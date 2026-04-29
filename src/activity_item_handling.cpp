@@ -1513,7 +1513,8 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
         }
         if( act == ACT_VEHICLE_DECONSTRUCTION ) {
             // find out if there is a vehicle part here we can remove.
-            std::vector<vehicle_part *> parts = veh->get_parts_at( tripoint_bub_ms( src_loc ), "", part_status_flag::any );
+            std::vector<vehicle_part *> parts = veh->get_parts_at( tripoint_bub_ms( src_loc ), "",
+                                                part_status_flag::any );
             for( vehicle_part *part_elem : parts ) {
                 const vpart_info &vpinfo = part_elem->info();
                 int vpindex = veh->index_of_part( part_elem, true );
@@ -1584,7 +1585,8 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
             }
         } else if( act == ACT_VEHICLE_REPAIR ) {
             // find out if there is a vehicle part here we can repair.
-            std::vector<vehicle_part *> parts = veh->get_parts_at( tripoint_bub_ms( src_loc ), "", part_status_flag::any );
+            std::vector<vehicle_part *> parts = veh->get_parts_at( tripoint_bub_ms( src_loc ), "",
+                                                part_status_flag::any );
             for( vehicle_part *part_elem : parts ) {
                 const vpart_info &vpinfo = part_elem->info();
                 int vpindex = veh->index_of_part( part_elem, true );

@@ -7070,7 +7070,8 @@ void vehicle::remove_remote_part( int part_num )
             active_tiles::furn_at<vehicle_connector_tile>( tripoint_abs_ms( parts[part_num].target.second ) );
         if( connector != nullptr ) {
             auto &vehs = connector->connected_vehicles;
-            auto iter = std::find( vehs.begin(), vehs.end(), tripoint_abs_ms( g->m.getabs( bub_ms_location() ) ) );
+            auto iter = std::find( vehs.begin(), vehs.end(),
+                                   tripoint_abs_ms( g->m.getabs( bub_ms_location() ) ) );
             if( iter != vehs.end() ) {
                 vehs.erase( iter );
             }

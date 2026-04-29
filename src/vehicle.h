@@ -627,7 +627,8 @@ class vehicle
         int install_part( tripoint_mnt_veh dp, vehicle_part &&part );
 
         /** install item specified item to vehicle as a vehicle part */
-        int install_part( tripoint_mnt_veh dp, const vpart_id &id, detached_ptr<item> &&obj, bool force = false );
+        int install_part( tripoint_mnt_veh dp, const vpart_id &id, detached_ptr<item> &&obj,
+                          bool force = false );
 
         // find a single tile wide vehicle adjacent to a list of part indices
         bool try_to_rack_nearby_vehicle( const std::vector<std::vector<int>> &list_of_racks );
@@ -1590,8 +1591,9 @@ class vehicle
         bool allowed_light( tripoint_mnt_veh from, tripoint_mnt_veh to ) const;
 
         //Checks if the conditional holds for tiles that can be skipped due to rotation
-        bool check_rotated_intervening( tripoint_mnt_veh from, tripoint_mnt_veh to, bool( *check )( const vehicle *,
-                                        tripoint_mnt_veh ) ) const;
+        bool check_rotated_intervening( tripoint_mnt_veh from, tripoint_mnt_veh to,
+                                        bool( *check )( const vehicle *,
+                                                tripoint_mnt_veh ) ) const;
 
         std::string disp_name() const;
 

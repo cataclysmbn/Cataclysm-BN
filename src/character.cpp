@@ -5685,7 +5685,8 @@ void Character::update_needs( int rate_multiplier )
         && !( has_trait( trait_NOPAIN ) || has_effect( effect_narcosis ) ) ) {
         vehicle *veh = veh_pointer_or_null( get_map().veh_at( pos() ) );
         // it's painful to work the controls, but passengers in open topped vehicles are fine
-        if( veh && ( veh->enclosed_at( tripoint_bub_ms( pos() ) ) || veh->player_in_control( *this->as_player() ) ) ) {
+        if( veh && ( veh->enclosed_at( tripoint_bub_ms( pos() ) ) ||
+                     veh->player_in_control( *this->as_player() ) ) ) {
             add_msg_if_player( m_bad,
                                _( "You're cramping up from stuffing yourself in this vehicle." ) );
             if( is_npc() ) {
