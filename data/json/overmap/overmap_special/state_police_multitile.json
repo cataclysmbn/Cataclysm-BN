@@ -14,7 +14,7 @@
     "connections": [ { "point": [ 0, 2, 0 ], "from": [ 0, 1, 0 ], "connection": "local_road" } ],
     "city_distance": [ 2, -1 ],
     "city_sizes": [ 1, -1 ],
-    "occurrences": [ 1, 5 ],
+    "occurrences": [ 0, 4 ],
     "flags": [ "CLASSIC" ]
   },
   {
