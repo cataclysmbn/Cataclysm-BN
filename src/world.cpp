@@ -492,7 +492,7 @@ static std::string dim_prefix_path( const std::string &dim_id )
 
 static std::string get_quad_dirname( const std::string &dim_id, const tripoint &om_addr )
 {
-    const auto segment_addr = project_to<coords::seg>( tripoint_abs_om( om_addr ) );
+    const auto segment_addr = project_to<coords::seg>( tripoint_abs_omt( om_addr ) );
     return string_format( "%smaps/%d.%d.%d",
                           dim_prefix_path( dim_id ),
                           segment_addr.x(), segment_addr.y(), segment_addr.z() );
