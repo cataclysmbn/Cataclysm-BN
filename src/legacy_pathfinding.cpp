@@ -320,7 +320,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
         const auto cur_special = get_pf_special( cur );
 
         int cur_part;
-        const vehicle *cur_veh = veh_at_internal( cur, cur_part );
+        const vehicle *cur_veh = veh_at_internal( tripoint_bub_ms( cur ), cur_part );
 
         // 7 3 5
         // 1 . 2
@@ -341,7 +341,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
             }
 
             int part = -1;
-            const vehicle *veh = veh_at_internal( p, part );
+            const vehicle *veh = veh_at_internal( tripoint_bub_ms( p ), part );
             // TODO: migrate pathfinding positions to abs so these conversions can use abs_to_mount
             if( cur_veh &&
                 !cur_veh->allowed_move( cur_veh->bubble_to_mount( tripoint_bub_ms( cur ) ),
@@ -403,7 +403,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
                         int dummy = -1;
                         if( doors && veh->part_flag( part, VPFLAG_OPENABLE ) &&
                             ( !veh->part_flag( part, "OPENCLOSE_INSIDE" ) ||
-                              veh_at_internal( cur, dummy ) == veh ) ) {
+                              veh_at_internal( tripoint_bub_ms( cur ), dummy ) == veh ) ) {
                             // Handle car doors, but don't try to path through curtains
                             newg += 10; // One turn to open, 4 to move there
                         } else if( part >= 0 && bash > 0 ) {

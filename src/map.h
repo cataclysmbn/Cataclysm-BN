@@ -407,7 +407,7 @@ struct level_cache {
 
     bool veh_in_active_range = false;
     std::vector<bool>               veh_exists_at;
-    std::map<tripoint_bub_ms, std::pair<vehicle *, int>> veh_cached_parts;
+    std::map<tripoint, std::pair<vehicle *, int>> veh_cached_parts;
     std::set<vehicle *> vehicle_list;
     std::set<vehicle *> zone_vehicles;
 
@@ -880,11 +880,9 @@ class map : public submap_load_listener
         */
         optional_vpart_position veh_at( const tripoint &p ) const;
         optional_vpart_position veh_at( const tripoint_abs_ms &p ) const;
-        optional_vpart_position veh_at( const tripoint_bub_ms &p ) const {
-            return veh_at( p.raw() );
-        }
-        vehicle *veh_at_internal( const tripoint &p, int &part_num );
-        const vehicle *veh_at_internal( const tripoint &p, int &part_num ) const;
+        optional_vpart_position veh_at( const tripoint_bub_ms &p ) const;
+        vehicle *veh_at_internal( const tripoint_bub_ms &p, int &part_num );
+        const vehicle *veh_at_internal( const tripoint_bub_ms &p, int &part_num ) const;
         // Put player on vehicle at x,y
         void board_vehicle( const tripoint &p, Character *pl );
         // Remove given passenger from given vehicle part.

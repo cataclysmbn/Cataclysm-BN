@@ -211,7 +211,7 @@ bool game::grabbed_veh_move( const tripoint &dp )
         const auto expected_pos = tripoint_bub_ms( u.pos() ) + dp + from;
         const tripoint_rel_ms actual_dir = expected_pos - new_part_pos;
 
-        grabbed_vehicle->adjust_zlevel( 1, dp );
+        grabbed_vehicle->adjust_zlevel( 1, tripoint_rel_ms( dp ) );
 
         // Set player location to illegal value so it can't collide with vehicle.
         const tripoint player_prev = u.pos();

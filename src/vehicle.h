@@ -820,7 +820,7 @@ class vehicle
                                       tripoint_mnt_veh &q ) const;
 
         tripoint_bub_ms mount_to_bubble( tripoint_mnt_veh mount ) const;
-        tripoint_bub_ms mount_to_bubble( tripoint_mnt_veh mount, point offset ) const;
+        tripoint_bub_ms mount_to_bubble( tripoint_mnt_veh mount, tripoint_rel_veh offset ) const;
 
         //Translate tile coordinates into mount coordinates
         tripoint_mnt_veh bubble_to_mount( const tripoint_bub_ms &p ) const;
@@ -976,9 +976,9 @@ class vehicle
         units::mass total_mass() const;
 
         // Gets the center of mass calculated for precalc[0] coordinates
-        tripoint_bub_ms rotated_center_of_mass() const;
+        tripoint_mnt_veh rotated_center_of_mass() const;
         // Gets the center of mass calculated for mount point coordinates
-        tripoint_bub_ms local_center_of_mass() const;
+        tripoint_mnt_veh local_center_of_mass() const;
 
         // Get the pivot point of vehicle; coordinates are unrotated mount coordinates.
         // This may result in refreshing the pivot point if it is currently stale.
@@ -1224,10 +1224,10 @@ class vehicle
         void slow_leak();
 
         //checks if we are, or will be after movement, on a ramp
-        bool check_on_ramp( int idir = 0, const tripoint &offset = tripoint_zero ) const;
+        bool check_on_ramp( int idir = 0, const tripoint_rel_ms &offset = tripoint_rel_ms::zero() ) const;
 
         //calculates the precalc zlevels wrt ramps
-        void adjust_zlevel( int idir = 0, const tripoint &offset = tripoint_zero );
+        void adjust_zlevel( int idir = 0, const tripoint_rel_ms &offset = tripoint_rel_ms::zero() );
 
         // thrust (1) or brake (-1) vehicle
         // @param z = z thrust for helicopters etc
@@ -1639,7 +1639,7 @@ class vehicle
         bool valid_part( int part_num ) const;
         // Updates the internal precalculated mount offsets after the vehicle has been displaced
         // used in map::displace_vehicle()
-        std::set<int> advance_precalc_mounts( tripoint_mnt_veh new_pos, const tripoint_bub_ms &src );
+        std::set<int> advance_precalc_mounts( point_sm_ms new_pos, const tripoint_bub_ms &src );
         // Adjust the vehicle's global z-level to match its center
         void shift_zlevel();
 

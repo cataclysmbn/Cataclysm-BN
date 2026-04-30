@@ -704,8 +704,8 @@ void map::reset_vehicle_cache( )
             // subsequently changes (e.g. the vehicle's submap enters the grid
             // from the fire-spread loader, or the reality bubble resizes).
             // Recompute sm_pos here so the tile-level cache uses the right slot.
-            elem->sm_pos = abs_to_bub( abs_sm_pos );
-            elem->adjust_zlevel( 0, tripoint_zero );
+            elem->sm_pos = abs_to_bub( elem->abs_sm_pos );
+            elem->adjust_zlevel( 0, tripoint_rel_ms::zero() );
             add_vehicle_to_cache( elem );
         }
     }
@@ -726,19 +726,20 @@ void map::add_vehicle_to_cache( vehicle *veh )
         const tripoint_bub_ms p = veh->global_part_pos3( vpr.part() );
         int part = veh->part_with_feature( vpr.part_index(), VPFLAG_LADDER, true );
         if( part != -1 ) {
-            cached_veh_rope[p.xy()] = std::make_pair( veh, static_cast<int>( part ) );
+            // NOTE: This cache may need to be submapfied at some point
+            cached_veh_rope[p.xy().raw()] = std::make_pair( veh, static_cast<int>( part ) );
         }
-        level_cache &ch = get_cache( p.z );
+        level_cache &ch = get_cache( p.z() );
         ch.veh_in_active_range = true;
 
         // DANGER: Unlike what you think where you can just use vpr.has_flag( VPFLAG_NOCOLLIDE )
         // THAT DOES NOT WORK DO NOT TRY AND CHANGE THIS MESS
-        if( !ch.veh_cached_parts.contains( p ) ||
+        if( !ch.veh_cached_parts.contains( p.raw() ) ||
             ( !veh->part_info( vpr.part_index() ).has_flag( VPFLAG_NOCOLLIDE ) ) ) {
-            ch.veh_cached_parts[p] = std::make_pair( veh,  static_cast<int>( vpr.part_index() ) );
+            ch.veh_cached_parts[p.raw()] = std::make_pair( veh,  static_cast<int>( vpr.part_index() ) );
         }
         if( inbounds( p ) ) {
-            ch.veh_exists_at[ch.idx( p.x, p.y )] = true;
+            ch.veh_exists_at[ch.idx( p.x(), p.y() )] = true;
         }
     }
 
@@ -816,12 +817,12 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
         return std::unique_ptr<vehicle>();
     }
 
-    int z = veh->sm_pos.z;
+    int z = veh->sm_pos.z();
     if( z < -OVERMAP_DEPTH || z > OVERMAP_HEIGHT ) {
         debugmsg( "detach_vehicle got a vehicle outside allowed z-level range!  name=%s, submap:%d,%d,%d",
-                  veh->name, veh->sm_pos.x, veh->sm_pos.y, veh->sm_pos.z );
+                  veh->name, veh->sm_pos.x(), veh->sm_pos.y(), veh->sm_pos.z() );
         // Try to fix by moving the vehicle here
-        z = veh->sm_pos.z = abs_sub.z();
+        z = veh->sm_pos.z() = abs_sub.z();
     }
 
     // Unboard all passengers before detaching
@@ -835,7 +836,7 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
     submap *const current_submap = get_submap_at_grid( tripoint_bub_sm( veh->sm_pos ) );
     if( current_submap == nullptr ) {
         debugmsg( "detach_vehicle can't find submap!  name=%s, submap:%d,%d,%d",
-                  veh->name, veh->sm_pos.x, veh->sm_pos.y, veh->sm_pos.z );
+                  veh->name, veh->sm_pos.x(), veh->sm_pos.y(), veh->sm_pos.z() );
         loaded_vehicles.erase( veh );
         dirty_vehicle_list.erase( veh );
         return std::unique_ptr<vehicle>();
@@ -858,8 +859,8 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
             return result;
         }
     }
-    debugmsg( "detach_vehicle can't find it!  name=%s, submap:%d,%d,%d", veh->name, veh->sm_pos.x,
-              veh->sm_pos.y, veh->sm_pos.z );
+    debugmsg( "detach_vehicle can't find it!  name=%s, submap:%d,%d,%d", veh->name, veh->sm_pos.x(),
+              veh->sm_pos.y(), veh->sm_pos.z() );
     return std::unique_ptr<vehicle>();
 }
 
@@ -945,7 +946,7 @@ void map::vehmove()
             for( vehicle *veh : get_cache( z ).vehicle_list ) {
                 veh->gain_moves();
                 veh->slow_leak();
-                vehicle_list.push_back( wrapped_vehicle{ .pos = veh->bub_ms_location(), .v = veh } );
+                vehicle_list.push_back( wrapped_vehicle{ .pos = veh->bub_ms_location().raw(), .v = veh } );
             }
         }
     }
@@ -1137,8 +1138,8 @@ bool map::vehproceed( VehicleList &vehicle_list )
 static bool sees_veh( const Creature &c, vehicle &veh, bool force_recalc )
 {
     const auto &veh_points = veh.get_points( force_recalc );
-    return std::ranges::any_of( veh_points, [&c]( const tripoint & pt ) {
-        return c.sees( pt );
+    return std::ranges::any_of( veh_points, [&c]( const tripoint_bub_ms & pt ) {
+        return c.sees( pt.raw() );
     } );
 }
 
@@ -1170,7 +1171,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
     // Ensured by the splitting above
     assert( vertical == ( dp.xy() == point_zero ) );
 
-    const int target_z = dp.z + veh.sm_pos.z;
+    const int target_z = dp.z + veh.sm_pos.z();
     if( target_z < -OVERMAP_DEPTH || target_z > OVERMAP_HEIGHT ) {
         return &veh;
     }
@@ -1178,7 +1179,8 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
     veh.precalc_mounts( 1, veh.skidding ? veh.turn_dir : facing.dir(), veh.pivot_point() );
 
     // cancel out any movement of the vehicle due only to a change in pivot
-    tripoint dp1 = dp - veh.pivot_displacement();
+    // Pivot displacement is a point_rel_veh... Dunno how to convert that
+    tripoint_rel_ms dp1 = tripoint_rel_ms( dp - veh.pivot_displacement().raw() );
 
     if( !vertical ) {
         veh.adjust_zlevel( 1, dp1 );
@@ -1237,7 +1239,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
                 continue;
             }
 
-            point collision_point = veh.part( coll.part ).mount;
+            tripoint_mnt_veh collision_point = veh.part( coll.part ).mount;
             const int coll_dmg = coll.imp;
             // Shock damage, if the target part is a rotor treat as an aimed hit.
             if( veh.part_info( coll.part ).rotor_diameter() > 0 ) {
@@ -1296,9 +1298,9 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
         dp.z == 0 ) {
         veh.velocity += veh.velocity < 0 ? 2000 : -2000;
         for( const auto &p : veh.get_points() ) {
-            const ter_id &pter = ter( p );
+            const ter_id &pter = ter( p.xy().raw() );
             if( pter == t_dirt || pter == t_grass ) {
-                ter_set( p, t_dirtmound );
+                ter_set( p.xy().raw(), t_dirtmound );
             }
         }
     }
@@ -1361,13 +1363,13 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
 
         for( auto &w : wheel_indices ) {
             const tripoint_bub_ms wheel_p = veh.global_part_pos3( w );
-            if( one_in( 2 ) && displace_water( wheel_p ) ) {
+            if( one_in( 2 ) && displace_water( wheel_p.raw() ) ) {
                 sounds::sound( wheel_p.raw(), 4,  sounds::sound_t::movement, _( "splash!" ), false,
                                "environment", "splash" );
             }
 
             veh.handle_trap( wheel_p, w );
-            if( !has_flag( "SEALED", wheel_p ) ) {
+            if( !has_flag( "SEALED", wheel_p.raw() ) ) {
                 const float wheel_area =  veh.part( w ).wheel_area();
 
                 // Damage is calculated based on the weight of the vehicle,
@@ -1377,7 +1379,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
                                          vehicle_mass_kg ) * weight_to_damage_factor );
 
                 //~ %1$s: vehicle name
-                smash_items( wheel_p, wheel_damage, string_format( _( "weight of %1$s" ), veh.disp_name() ),
+                smash_items( wheel_p.raw(), wheel_damage, string_format( _( "weight of %1$s" ), veh.disp_name() ),
                              false );
             }
         }
@@ -1422,11 +1424,11 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
              veh.name,  veh.part_info( c.part ).name(),
              veh2.name, veh2.part_info( c.target_part ).name() );
 
-    const bool vertical = veh.sm_pos.z != veh2.sm_pos.z;
+    const bool vertical = veh.sm_pos.z() != veh2.sm_pos.z();
 
     // Used to calculate the epicenter of the collision.
-    point epicenter1;
-    point epicenter2;
+    tripoint_rel_veh epicenter1;
+    tripoint_rel_veh epicenter2;
 
     float veh1_impulse = 0;
     float veh2_impulse = 0;
@@ -1447,12 +1449,12 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
         const float m2 = to_kilogram( veh2.total_mass() );
 
         // Collision_axis
-        point cof1 = veh .rotated_center_of_mass();
-        point cof2 = veh2.rotated_center_of_mass();
-        int &x_cof1 = cof1.x;
-        int &y_cof1 = cof1.y;
-        int &x_cof2 = cof2.x;
-        int &y_cof2 = cof2.y;
+        tripoint_mnt_veh cof1 = veh.rotated_center_of_mass();
+        tripoint_mnt_veh cof2 = veh2.rotated_center_of_mass();
+        int &x_cof1 = cof1.x();
+        int &y_cof1 = cof1.y();
+        int &x_cof2 = cof2.x();
+        int &y_cof2 = cof2.y();
         rl_vec2d collision_axis_y;
 
         collision_axis_y.x = ( veh.bub_ms_location().x() + x_cof1 ) - ( veh2.bub_ms_location().x() +
@@ -1565,19 +1567,22 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
             parm2 = veh_veh_coll.target_part;
         }
 
-        epicenter1 += veh.part( parm1 ).mount;
+        // NOTE: This should just be add
+        // But for some reason you cant add mnt_veh to rel_veh?
+        epicenter1 += veh.part( parm1 ).mount.raw();
         veh.damage( parm1, dmg1_part, DT_BASH );
 
-        epicenter2 += veh2.part( parm2 ).mount;
+        epicenter2 += veh2.part( parm2 ).mount.raw();
         veh2.damage( parm2, dmg2_part, DT_BASH );
     }
 
-    epicenter2.x /= coll_parts_cnt;
-    epicenter2.y /= coll_parts_cnt;
+    epicenter2.x() /= coll_parts_cnt;
+    epicenter2.y() /= coll_parts_cnt;
 
     if( dmg2_part > 100 ) {
         // Shake vehicle because of collision
-        veh2.damage_all( dmg2_part / 2, dmg2_part, DT_BASH, epicenter2 );
+        // FIXME: I dunno how else to do this, it comes out to a mount but is relative in the meantime
+        veh2.damage_all( dmg2_part / 2, dmg2_part, DT_BASH, tripoint_mnt_veh( epicenter2.raw() ) );
     }
 
     if( dmg_veh1 > 800 ) {
@@ -1638,7 +1643,7 @@ bool map::deregister_vehicle_zone( zone_data &zone )
         if( it != bounds.second ) {
             vp->vehicle().loot_zones.erase( it );
             if( vp->vehicle().loot_zones.empty() ) {
-                get_cache( vp->vehicle().sm_pos.z ).zone_vehicles.erase( &vp->vehicle() );
+                get_cache( vp->vehicle().sm_pos.z() ).zone_vehicles.erase( &vp->vehicle() );
             }
             return true;
         }
@@ -1678,14 +1683,19 @@ VehicleList map::get_vehicles( const tripoint &start, const tripoint &end )
     return vehs;
 }
 
+optional_vpart_position map::veh_at( const tripoint &p ) const
+{
+    return veh_at( tripoint_bub_ms( p ) );
+}
+
 optional_vpart_position map::veh_at( const tripoint_abs_ms &p ) const
 {
-    return veh_at( getlocal( p ) );
+    return veh_at( abs_to_bub( p ) );
 }
 
 optional_vpart_position map::veh_at( const tripoint_bub_ms &p ) const
 {
-    if( !inbounds( p ) || !const_cast<map *>( this )->get_cache( p.z ).veh_in_active_range ) {
+    if( !inbounds( p ) || !const_cast<map *>( this )->get_cache( p.z() ).veh_in_active_range ) {
         return optional_vpart_position( std::nullopt );
     }
 
@@ -1707,7 +1717,7 @@ const vehicle *map::veh_at_internal( const tripoint_bub_ms &p, int &part_num ) c
         return nullptr; // Clear cache indicates no vehicle. This should optimize a great deal.
     }
 
-    const auto it = ch.veh_cached_parts.find( p );
+    const auto it = ch.veh_cached_parts.find( p.raw() );
     if( it != ch.veh_cached_parts.end() ) {
         part_num = it->second.second;
         return it->second.first;
@@ -1718,7 +1728,7 @@ const vehicle *map::veh_at_internal( const tripoint_bub_ms &p, int &part_num ) c
     return nullptr;
 }
 
-vehicle *map::veh_at_internal( const tripoint &p, int &part_num )
+vehicle *map::veh_at_internal( const tripoint_bub_ms &p, int &part_num )
 {
     return const_cast<vehicle *>( const_cast<const map *>( this )->veh_at_internal( p, part_num ) );
 }
@@ -1800,7 +1810,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     // are meaningless to the main map and corrupt the position lookup.  Recompute
     // sm_pos from abs_sm_pos before any position-dependent call so the correction
     // applies regardless of which code path caused the staleness.
-    veh.sm_pos = abs_to_bub( veh.abs_sm_pos ).raw();
+    veh.sm_pos = abs_to_bub( veh.abs_sm_pos );
 
     const auto src = veh.bub_ms_location();
     auto dst = src + dp;
@@ -1938,7 +1948,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         }
     }
 
-    smzs = veh.advance_precalc_mounts( dst_offset.raw(), src.raw() );
+    smzs = veh.advance_precalc_mounts( dst_offset, src.raw() );
 
     // Expand bounds with the new footprint (precalc[0] now holds new offsets).
     for( const vpart_reference &vpr : veh.get_all_parts() ) {
@@ -10388,10 +10398,10 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
     for( auto &wrapped_veh : vehs ) {
         vehicle &veh = *( wrapped_veh.v );
         for( const vpart_reference &vp : veh.get_any_parts( VPFLAG_OBSTACLE ) ) {
-            const tripoint part_pos = vp.pos();
-            if( local_bounds.contains( part_pos.xy() ) &&
-                scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
-                scent_transfer[part_pos.x * st_sy + part_pos.y] = 1;
+            const tripoint_bub_ms part_pos = vp.pos();
+            if( local_bounds.contains( part_pos.xy().raw() ) &&
+                scent_transfer[part_pos.x() * st_sy + part_pos.y()] == 5 ) {
+                scent_transfer[part_pos.x() * st_sy + part_pos.y()] = 1;
             }
         }
 
@@ -10401,10 +10411,10 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
                 continue;
             }
 
-            const tripoint part_pos = vp.pos();
-            if( local_bounds.contains( part_pos.xy() ) &&
-                scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
-                scent_transfer[part_pos.x * st_sy + part_pos.y] = 1;
+            const tripoint_bub_ms part_pos = vp.pos();
+            if( local_bounds.contains( part_pos.xy().raw() ) &&
+                scent_transfer[part_pos.x() * st_sy + part_pos.y()] == 5 ) {
+                scent_transfer[part_pos.x() * st_sy + part_pos.y()] = 1;
             }
         }
     }
