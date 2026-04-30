@@ -6,6 +6,7 @@
 #include <queue>
 #include <vector>
 
+#include "coordinates.h"
 #include "game.h"
 #include "game_constants.h"
 #include "map.h"
@@ -586,7 +587,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
 
         int _;
         const vehicle *next_vehicle;
-        next_vehicle = here.veh_at_internal( next_point_with_z, _ );
+        next_vehicle = here.veh_at_internal( tripoint_bub_ms( next_point_with_z ), _ );
 
         for( const point &dir : DIRS_2D ) {
             // It's cur_point because we're working backwards from destination
@@ -603,7 +604,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
 
             int cur_vehicle_part;
             const vehicle *cur_vehicle;
-            cur_vehicle = here.veh_at_internal( cur_point_with_z, cur_vehicle_part );
+            cur_vehicle = here.veh_at_internal( tripoint_bub_ms( cur_point_with_z ), cur_vehicle_part );
 
             {
                 bool is_move_valid = true;
@@ -693,7 +694,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                             int _;
                             const bool part_is_door = cur_vehicle->part_flag( obstacle_part, VPFLAG_OPENABLE );
                             const bool part_opens_from_inside = cur_vehicle->part_flag( obstacle_part, "OPENCLOSE_INSIDE" );
-                            const bool is_cur_point_inside = here.veh_at_internal( cur_point_with_z, _ ) == next_vehicle;
+                            const bool is_cur_point_inside = here.veh_at_internal( tripoint_bub_ms( cur_point_with_z ), _ ) == next_vehicle;
                             const bool valid_to_open = part_is_door && ( part_opens_from_inside ? is_cur_point_inside : true );
 
                             if( can_open_doors && valid_to_open ) {

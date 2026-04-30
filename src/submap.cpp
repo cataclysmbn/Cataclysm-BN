@@ -532,7 +532,7 @@ void submap::rotate( int turns )
     for( auto &elem : vehicles ) {
         const point_sm_ms new_pos = rotate_point( point_sm_ms( elem->pos ) );
 
-        elem->pos = new_pos.raw();
+        elem->pos = new_pos;
         elem->set_facing( elem->turn_dir + turns * 90_degrees );
     }
 
@@ -701,7 +701,7 @@ auto submap::rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -
             const auto &terrain   = get_ter( sp ).obj();
             const auto &furniture = get_furn( sp ).obj();
             int vpart = -1;
-            const vehicle *veh = m.veh_at_internal( p.raw(), vpart );
+            const vehicle *veh = m.veh_at_internal( p, vpart );
             const int cost = m.move_cost_internal( furniture, terrain, veh, vpart );
 
             if( cost > 2 ) {

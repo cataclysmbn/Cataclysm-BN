@@ -2357,7 +2357,7 @@ static void cycle_action( item &weap, const tripoint &pos )
     const optional_vpart_position vp = here.veh_at( pos );
     std::vector<vehicle_part *> cargo;
     if( vp && weap.has_flag( flag_VEHICLE ) ) {
-        cargo = vp->vehicle().get_parts_at( pos, "CARGO", part_status_flag::any );
+        cargo = vp->vehicle().get_parts_at( tripoint_bub_ms( pos ), "CARGO", part_status_flag::any );
     }
 
     item &parent = ( weap.parent_item() != nullptr &&

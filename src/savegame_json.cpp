@@ -1,6 +1,7 @@
 // Associated headers here are the ones for which their only non-inline
 // functions are serialization functions.  This allows IWYU to check the
 // includes in such headers.
+#include "coordinates.h"
 #include "enums.h" // IWYU pragma: associated
 #include "npc_favor.h" // IWYU pragma: associated
 #include "pldata.h" // IWYU pragma: associated
@@ -2866,8 +2867,8 @@ void vehicle_part::deserialize( JsonIn &jsin )
         set_base( item::spawn( id.obj().item ) );
     }
 
-    data.read( "mount_dx", mount.x );
-    data.read( "mount_dy", mount.y );
+    data.read( "mount_dx", mount.x() );
+    data.read( "mount_dy", mount.y() );
     data.read( "open", open );
     int direction_int;
     data.read( "direction", direction_int );
@@ -2948,8 +2949,8 @@ void vehicle_part::serialize( JsonOut &json ) const
     json.start_object();
     json.member( "id", id.str() );
     json.member( "base", base );
-    json.member( "mount_dx", mount.x );
-    json.member( "mount_dy", mount.y );
+    json.member( "mount_dx", mount.x() );
+    json.member( "mount_dy", mount.y() );
     json.member( "open", open );
     json.member( "direction", std::lround( to_degrees( direction ) ) );
     json.member( "blood", blood );
@@ -3025,8 +3026,8 @@ void vehicle::deserialize( JsonIn &jsin )
     int mdir = 0;
 
     data.read( "type", type );
-    data.read( "posx", pos.x );
-    data.read( "posy", pos.y );
+    data.read( "posx", pos.x() );
+    data.read( "posy", pos.y() );
     data.read( "om_id", om_id );
     data.read( "faceDir", fdir );
     data.read( "moveDir", mdir );
@@ -3177,7 +3178,7 @@ void vehicle::deserialize( JsonIn &jsin )
     data.read( "tags", tags );
     data.read( "labels", labels );
 
-    point p;
+    tripoint_mnt_veh p;
     zone_data zd;
     for( JsonObject sdata : data.get_array( "zones" ) ) {
         sdata.allow_omitted_members();
@@ -3225,8 +3226,8 @@ void vehicle::serialize( JsonOut &json ) const
 {
     json.start_object();
     json.member( "type", type );
-    json.member( "posx", pos.x );
-    json.member( "posy", pos.y );
+    json.member( "posx", pos.x() );
+    json.member( "posy", pos.y() );
     json.member( "om_id", om_id );
     json.member( "faceDir", std::lround( to_degrees( face.dir() ) ) );
     json.member( "moveDir", std::lround( to_degrees( move.dir() ) ) );
@@ -3259,7 +3260,7 @@ void vehicle::serialize( JsonOut &json ) const
         json.end_object();
     }
     json.end_array();
-    tripoint other_tow_temp_point;
+    tripoint_bub_ms other_tow_temp_point;
     if( is_towed() ) {
         vehicle *tower = tow_data.get_towed_by();
         if( tower ) {

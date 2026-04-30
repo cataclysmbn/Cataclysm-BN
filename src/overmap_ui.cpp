@@ -704,7 +704,7 @@ static tripoint_abs_omt show_notes_manager( const tripoint_abs_omt &origin )
     tripoint_abs_omt selected = origin;
     sort_mode_t sort_mode = sort_mode_t::name;
 
-    const tripoint_abs_omt p_player = g->u.global_omt_labsn();
+    const tripoint_abs_omt p_player = g->u.global_omt_location();
 
     bool quit = false;
     while( !quit ) {

@@ -1565,7 +1565,7 @@ float npc::vehicle_danger( int radius ) const
             // FIXME: this can't be the right way to do this
             units::angle facing = wrapped_veh.v->face.dir();
 
-            point a( wrapped_veh.v->global_pos3().xy().raw() );
+            point a( wrapped_veh.v->bub_ms_location().xy().raw() );
             point b( static_cast<int>( a.x + units::cos( facing ) * radius ),
                      static_cast<int>( a.y + units::sin( facing ) * radius ) );
 
@@ -1578,7 +1578,7 @@ float npc::vehicle_danger( int radius ) const
             for( const vpart_reference &vpr : wrapped_veh.v->get_all_parts() ) {
                 last_part = &vpr.part();
             }
-            int size = std::max( last_part->mount.x, last_part->mount.y );
+            int size = std::max( last_part->mount.x(), last_part->mount.y() );
 
             double normal = std::sqrt( static_cast<float>( ( b.x - a.x ) * ( b.x - a.x ) + ( b.y - a.y ) *
                                        ( b.y - a.y ) ) );
