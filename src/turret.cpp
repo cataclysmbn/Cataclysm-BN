@@ -1,3 +1,4 @@
+#include "coordinates.h"
 #include "vehicle.h"
 #include "vehicle_part.h" // IWYU pragma: associated
 
@@ -75,7 +76,7 @@ turret_data vehicle::turret_query( const vehicle_part &pt ) const
 
 turret_data vehicle::turret_query( const tripoint &pos )
 {
-    auto res = get_parts_at( pos, "TURRET", part_status_flag::any );
+    auto res = get_parts_at( tripoint_bub_ms( pos ), "TURRET", part_status_flag::any );
     return !res.empty() ? turret_query( *res.front() ) : turret_data();
 }
 
@@ -487,7 +488,7 @@ void vehicle::turrets_set_targeting()
         }
 
         sel = menu.ret;
-        if( has_part( locations[ sel ], "TURRET_CONTROLS" ) ) {
+        if( has_part( tripoint_bub_ms( locations[ sel ] ), "TURRET_CONTROLS" ) ) {
             turrets[sel]->enabled = !turrets[sel]->enabled;
         } else {
             turrets[sel]->enabled = false;
@@ -514,7 +515,7 @@ void vehicle::turrets_set_mode()
     for( auto &p : parts ) {
         if( p.base->is_gun() && !is_manual_turret( p ) ) {
             turrets.push_back( &p );
-            locations.push_back( global_part_pos3( p ) );
+            locations.push_back( global_part_pos3( p ).raw() );
         }
     }
 
@@ -560,7 +561,7 @@ std::unique_ptr<npc> vehicle::get_targeting_npc( const vehicle_part &pt )
     cpu->str_cur = 20;
     cpu->dex_cur = 10;
     cpu->per_cur = 15;
-    cpu->setpos( global_part_pos3( pt ) );
+    cpu->setpos( global_part_pos3( pt ).raw() );
     if( has_part( global_part_pos3( pt ), "LASER_DESIGNATOR" ) ) {
         if( fuel_left( fuel_type_battery, true ) >= 1 ) {
             cpu->set_mutation( trait_LASER_GUIDED );
@@ -594,7 +595,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
     }
 
     // The position of the vehicle part.
-    tripoint pos = global_part_pos3( pt );
+    tripoint pos = global_part_pos3( pt ).raw();
 
     // Create the targeting computer's npc
     std::unique_ptr<npc> cpu = get_targeting_npc( pt );
