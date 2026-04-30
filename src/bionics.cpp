@@ -2907,7 +2907,8 @@ void Character::remove_bionic( const bionic_id &b )
     for( bionic &i : *my_bionics ) {
 
         // Remove the specified bionic and any linked bionics
-        if( ( b == i.id || b->is_included( i.id ) || i.id->is_included( b ) ) && !removed_bionics.contains( i.id ) ) {
+        if( ( b == i.id || b->is_included( i.id ) || i.id->is_included( b ) ) &&
+            !removed_bionics.contains( i.id ) ) {
             const units::energy pow_up = i.id->capacity;
             mod_max_power_level( -1 * pow_up );
             if( i.powered ) {
