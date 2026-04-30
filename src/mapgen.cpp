@@ -6604,7 +6604,7 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
     veh->place_spawn_items();
     // for backwards compatibility, we always spawn with a pivot point of (0,0) so
     // that the mount at (0,0) is located at the spawn position.
-    veh->set_facing_and_pivot( dir, point_rel_veh::zero, false );
+    veh->set_facing_and_pivot( dir, point_rel_veh::zero(), false );
     //debugmsg("adding veh: %d, sm: %d,%d,%d, pos: %d, %d", veh, veh->smx, veh->smy, veh->smz, veh->posx, veh->posy);
     std::unique_ptr<vehicle> placed_vehicle_up =
         add_vehicle_to_map( std::move( veh ), merge_wrecks );
@@ -6616,14 +6616,14 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
         place_on_submap->is_uniform = false;
         invalidate_max_populated_zlev( p.z );
 
-        auto &ch = get_cache( placed_vehicle->sm_pos.z );
+        auto &ch = get_cache( placed_vehicle->sm_pos.z() );
         ch.vehicle_list.insert( placed_vehicle );
         add_vehicle_to_cache( placed_vehicle );
 
         placed_vehicle->abs_sm_pos = tripoint_abs_sm(
-                                         abs_sub.x() + placed_vehicle->sm_pos.x,
-                                         abs_sub.y() + placed_vehicle->sm_pos.y,
-                                         placed_vehicle->sm_pos.z );
+                                         abs_sub.x() + placed_vehicle->sm_pos.x(),
+                                         abs_sub.y() + placed_vehicle->sm_pos.y(),
+                                         placed_vehicle->sm_pos.z() );
         loaded_vehicles.insert( placed_vehicle );
 
         //debugmsg ("grid[%d]->vehicles.size=%d veh.parts.size=%d", nonant, grid[nonant]->vehicles.size(),veh.parts.size());
@@ -6662,13 +6662,13 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
         const auto p = veh->global_part_pos3( *part );
 
         //Don't spawn anything in water
-        if( has_flag_ter( TFLAG_DEEP_WATER, p ) && !can_float ) {
+        if( has_flag_ter( TFLAG_DEEP_WATER, p.raw() ) && !can_float ) {
             return nullptr;
         }
 
         // Don't spawn shopping carts on top of another vehicle or other obstacle.
         if( veh->type == vproto_id( "shopping_cart" ) ) {
-            if( veh_at( p ) || impassable( p ) ) {
+            if( veh_at( p ) || impassable( p.raw() ) ) {
                 return nullptr;
             }
         }
@@ -6699,20 +6699,19 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
             wreckage->sm_pos = other_veh->sm_pos;
 
             //Where are we on the global scale?
-            const tripoint global_pos = wreckage->global_pos3();
+            const tripoint_bub_ms bubble_pos = wreckage->bub_ms_location();
 
             // We must remove the vehicle from the map before we move away its parts
             std::unique_ptr<vehicle> old_veh = detach_vehicle( other_veh );
 
             for( const vpart_reference &vpr : veh->get_all_parts() ) {
-                const tripoint part_pos = veh->global_part_pos3( vpr.part() ) - global_pos;
-                // TODO: change mount points to be tripoint
-                wreckage->install_part( part_pos.xy(), std::move( vpr.part() ) );
+                const tripoint_mnt_veh part_pos = veh->bubble_to_mount( veh->global_part_pos3( vpr.part() ) );
+                wreckage->install_part( part_pos, std::move( vpr.part() ) );
             }
 
             for( const vpart_reference &vpr : old_veh->get_all_parts() ) {
-                const tripoint part_pos = old_veh->global_part_pos3( vpr.part() ) - global_pos;
-                wreckage->install_part( part_pos.xy(), vehicle_part{vpr.part(), &*wreckage} );
+                const tripoint_mnt_veh part_pos = veh->bubble_to_mount( veh->global_part_pos3( vpr.part() ) );
+                wreckage->install_part( part_pos, vehicle_part{vpr.part(), &*wreckage} );
             }
 
             wreckage->name = _( "Wreckage" );
@@ -6729,16 +6728,16 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
             add_vehicle_to_map( std::move( old_veh ), false );
             return nullptr;
 
-        } else if( impassable( p ) ) {
+        } else if( impassable( p.raw() ) ) {
             if( !merge_wrecks ) {
                 return nullptr;
             }
 
             // There's a wall or other obstacle here; destroy it
-            destroy( p, true );
+            destroy( p.raw(), true );
 
             // Some weird terrain, don't place the vehicle
-            if( impassable( p ) ) {
+            if( impassable( p.raw() ) ) {
                 return nullptr;
             }
 
@@ -6869,7 +6868,7 @@ void map::rotate( int turns, const bool setpos_safe )
             sm->rotate( turns );
 
             for( auto &veh : sm->vehicles ) {
-                veh->sm_pos = p.raw();
+                veh->sm_pos = p;
             }
 
             update_vehicle_list( sm, abs_sub.z() );
