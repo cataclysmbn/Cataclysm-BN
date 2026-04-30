@@ -1948,7 +1948,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         }
     }
 
-    smzs = veh.advance_precalc_mounts( dst_offset, src.raw() );
+    smzs = veh.advance_precalc_mounts( dst_offset, src );
 
     // Expand bounds with the new footprint (precalc[0] now holds new offsets).
     for( const vpart_reference &vpr : veh.get_all_parts() ) {
@@ -1958,7 +1958,8 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     }
 
     if( src_submap != dst_submap ) {
-        veh.set_submap_moved( divide_xy_round_to_minus_infinity( dst.raw(), SEEX ) );
+        auto dst_sub = project_to<coords::scale::submap>( dst );
+        veh.set_submap_moved( dst_sub );
         auto src_submap_veh_it = src_submap->vehicles.begin() + our_i;
         dst_submap->vehicles.push_back( std::move( *src_submap_veh_it ) );
         src_submap->vehicles.erase( src_submap_veh_it );
@@ -1967,16 +1968,13 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
 
         // Update abs_sm_pos for the submap boundary crossing.
         // Use floor division so negative extended-local coords (out-of-bubble) map correctly.
-        const tripoint dst_abs_sm( abs_sub.x() + divide_round_to_minus_infinity( dst.x(), SEEX ),
-                                   abs_sub.y() + divide_round_to_minus_infinity( dst.y(), SEEY ),
-                                   dst.z() );
-        veh.abs_sm_pos = tripoint_abs_sm( dst_abs_sm );
+        veh.abs_sm_pos = bub_to_abs( dst_sub );
     }
     if( need_update ) {
         g->update_map( g->u );
         // update_map shifts abs_sub; recompute sm_pos so the cache lookup
         // lands in the right grid slot after the shift.
-        veh.sm_pos = abs_to_bub( veh.abs_sm_pos ).raw();
+        veh.sm_pos = abs_to_bub( veh.abs_sm_pos );
     }
     add_vehicle_to_cache( &veh );
 
@@ -2774,14 +2772,14 @@ bool map::valid_move( const tripoint &from, const tripoint &to,
     }
 
     int part_up;
-    const vehicle *veh_up = veh_at_internal( up_p.raw(), part_up );
+    const vehicle *veh_up = veh_at_internal( up_p, part_up );
     if( veh_up != nullptr && !veh_at( up_p ).part_with_feature( VPFLAG_NOCOLLIDEBELOW, false ) ) {
         // TODO: Hatches below the vehicle
         return false;
     }
 
     int part_down;
-    const vehicle *veh_down = veh_at_internal( down_p.raw(), part_down );
+    const vehicle *veh_down = veh_at_internal( down_p, part_down );
     if( veh_down != nullptr && veh_down->roof_at_part( part_down ) >= 0 ) {
         // TODO: OPEN (and only open) hatches from above
         return false;
@@ -6012,7 +6010,7 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
         const item &target = *active_item_ref;
         // Find the cargo part and coordinates corresponding to the current active item.
         const vehicle_part &pt = it->part();
-        const tripoint item_loc = it->pos();
+        const tripoint item_loc = it->pos().raw();
         auto items = cur_veh.get_items( static_cast<int>( it->part_index() ) );
         temperature_flag flag = temperature_flag::TEMP_NORMAL;
         if( target.is_food() || target.is_food_container() || target.is_corpse() ) {
@@ -7272,7 +7270,7 @@ bool map::draw_maptile( const catacurses::window &w, const tripoint &p,
 
     int memory_sym = sym;
     int veh_part = 0;
-    const vehicle *veh = veh_at_internal( p, veh_part );
+    const vehicle *veh = veh_at_internal( tripoint_bub_ms( p ), veh_part );
     if( veh != nullptr ) {
         sym = special_symbol( veh->face.dir_symbol( veh->part_sym( veh_part ) ) );
         tercol = veh->part_color( veh_part );
@@ -7350,7 +7348,7 @@ void map::draw_from_above( const catacurses::window &w, const tripoint &p,
     } else if( curr_furn.movecost < 0 ) {
         sym = '.';
         tercol = curr_furn.color();
-    } else if( ( veh = veh_at_internal( p, part_below ) ) != nullptr ) {
+    } else if( ( veh = veh_at_internal( tripoint_bub_ms( p ), part_below ) ) != nullptr ) {
         const int roof = veh->roof_at_part( part_below );
         const int displayed_part = roof >= 0 ? roof : part_below;
         sym = special_symbol( veh->face.dir_symbol( veh->part_sym( displayed_part, true ) ) );
@@ -8043,7 +8041,7 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
         prt.part().precalc[0].z -= z_shift;
     }
 
-    veh.set_submap_moved( divide_xy_round_to_minus_infinity( dst.raw(), SEEX ) );
+    veh.set_submap_moved( project_to<coords::scale::submap>( dst ) );
     auto src_submap_veh_it = src_submap->vehicles.begin() + our_i;
     dst_submap->vehicles.push_back( std::move( *src_submap_veh_it ) );
     src_submap->vehicles.erase( src_submap_veh_it );
@@ -8400,7 +8398,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles,
         vehicle *veh = iter->get();
         if( veh->part_count() > 0 ) {
             // Always fix submap coordinates for easier Z-level-related operations
-            veh->sm_pos = grid;
+            veh->sm_pos = tripoint_bub_sm( grid );
             veh->abs_sm_pos = tripoint_abs_sm( grid_abs_sub );
             veh->dimension_id_ = bound_dimension_;
             loaded_vehicles.insert( veh );
@@ -8968,7 +8966,7 @@ void map::copy_grid( const tripoint &to, const tripoint &from )
         return;
     }
     for( auto &it : smap->vehicles ) {
-        it->sm_pos = to;
+        it->sm_pos = tripoint_bub_sm( to );
         it->abs_sm_pos = tripoint_abs_sm( abs_sub.x() + to.x, abs_sub.y() + to.y, to.z );
     }
 }
@@ -9784,38 +9782,38 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
         floor_cache[zch.idx( part_pos.x(), part_pos.y() )] = true;
     }
 
-    point t = v->bubble_to_mount( part_pos + point_north_west );
+    tripoint_mnt_veh t = v->bubble_to_mount( part_pos + point_north_west );
     if( !v->allowed_light( t, vp.mount() ) ) {
         obscured_cache[zch.idx( part_pos.x(), part_pos.y() )].nw = true;
     }
-    if( !v->allowed_move( t, vp.mount().xy().raw() ) ) {
+    if( !v->allowed_move( t, vp.mount() ) ) {
         obstructed_cache[zch.idx( part_pos.x(), part_pos.y() )].nw = true;
     }
 
     t = v->bubble_to_mount( part_pos + point_north_east );
-    if( !v->allowed_light( t, vp.mount().xy().raw() ) ) {
+    if( !v->allowed_light( t, vp.mount() ) ) {
         obscured_cache[zch.idx( part_pos.x(), part_pos.y() )].ne = true;
     }
-    if( !v->allowed_move( t, vp.mount().xy().raw() ) ) {
+    if( !v->allowed_move( t, vp.mount() ) ) {
         obstructed_cache[zch.idx( part_pos.x(), part_pos.y() )].ne = true;
     }
 
     if( part_pos.x() > 0 && part_pos.y() < zch.cache_y - 1 ) {
         t = v->bubble_to_mount( part_pos + point_south_west );
-        if( !v->allowed_light( t, vp.mount().xy().raw() ) ) {
+        if( !v->allowed_light( t, vp.mount() ) ) {
             obscured_cache[zch.idx( part_pos.x() - 1, part_pos.y() + 1 )].ne = true;
         }
-        if( !v->allowed_move( t, vp.mount().xy().raw() ) ) {
+        if( !v->allowed_move( t, vp.mount() ) ) {
             obstructed_cache[zch.idx( part_pos.x() - 1, part_pos.y() + 1 )].ne = true;
         }
     }
 
     if( part_pos.x() < zch.cache_x - 1 && part_pos.y() < zch.cache_y - 1 ) {
         t = v->bubble_to_mount( tripoint_bub_ms( part_pos + point_south_east ) );
-        if( !v->allowed_light( t, vp.mount().xy().raw() ) ) {
+        if( !v->allowed_light( t, vp.mount() ) ) {
             obscured_cache[zch.idx( part_pos.x() + 1, part_pos.y() + 1 )].nw = true;
         }
-        if( !v->allowed_move( t, vp.mount().xy().raw() ) ) {
+        if( !v->allowed_move( t, vp.mount() ) ) {
             obstructed_cache[zch.idx( part_pos.x() + 1, part_pos.y() + 1 )].nw = true;
         }
     }
