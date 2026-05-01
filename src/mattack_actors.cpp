@@ -5,8 +5,6 @@
 #include <limits>
 #include <memory>
 #include <optional>
-#include <ranges>
-#include <vector>
 
 #include "ammo_effect.h"
 #include "avatar.h"
@@ -22,8 +20,6 @@
 #include "itype.h"
 #include "iuse_actor.h"
 #include "item.h"
-#include "itype.h"
-#include "iuse_actor.h"
 #include "json.h"
 #include "line.h"
 #include "map.h"

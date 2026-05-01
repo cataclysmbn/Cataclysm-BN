@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
-#include <memory>
 #include <optional>
 #include <set>
 #include <utility>

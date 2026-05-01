@@ -222,3 +222,4 @@ class deployer_actor : public mattack_actor
         bool call( monster & ) const override;
         std::unique_ptr<mattack_actor> clone() const override;
 };
+

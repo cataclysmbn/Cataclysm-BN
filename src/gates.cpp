@@ -184,11 +184,9 @@ void gates::toggle_gate( const tripoint &pos )
 
     map &here = get_map();
     for( point wall_offset : four_adjacent_offsets ) {
-        tripoint wall_pos = pos + wall_offset;
+        const tripoint wall_pos = pos + wall_offset;
 
-        if( gate.needs_no_wall ) {
-            wall_pos = pos;
-        } else if( !gate.is_suitable_wall( wall_pos ) ) {
+        if( !gate.is_suitable_wall( wall_pos ) ) {
             continue;
         }
         if( !gate.complex_shape ) {
