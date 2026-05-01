@@ -643,7 +643,7 @@ bool vehicle::autodrive_controller::check_drivable( tripoint pt ) const
         return &ovp->vehicle() == &driven_veh;
     }
 
-    const tripoint_abs_ms pt_abs( here.getabs( pt ) );
+    const tripoint_abs_ms pt_abs( here.bub_to_abs( pt ) );
     const tripoint_abs_omt pt_omt = project_to<coords::omt>( pt_abs );
     // only check visibility for the current OMT, we'll check other OMTs when
     // we reach them
@@ -725,7 +725,7 @@ void vehicle::autodrive_controller::compute_obstacles()
         for( int dy = 0; dy < NAV_VIEW_SIZE_Y; dy++ ) {
             // TODO: store z-values in the nav map and retrieve here (needed for ramp navigation)
             const tripoint abs_map_pt = data.view_to_map.transform( point( dx, dy ), data.current_omt.z() );
-            data.is_obstacle[dx][dy] = !check_drivable( here.getlocal( abs_map_pt ) );
+            data.is_obstacle[dx][dy] = !check_drivable( here.abs_to_bub( abs_map_pt ) );
         }
     }
 }

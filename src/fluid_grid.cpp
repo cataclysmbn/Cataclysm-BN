@@ -239,7 +239,7 @@ auto batches_for_inputs( const std::vector<fluid_grid_transform_io> &inputs,
 
 auto is_outdoors_at( const tripoint_abs_ms &p ) -> bool
 {
-    return get_map().is_outside( get_map().getlocal( p.raw() ) );
+    return get_map().is_outside( get_map().abs_to_bub( p.raw() ) );
 }
 
 auto rain_charges_for( double collector_area_m2, const weather_sum &weather ) -> int

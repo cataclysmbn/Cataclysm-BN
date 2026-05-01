@@ -7023,9 +7023,9 @@ void map::drawsq( const catacurses::window &w, const tripoint_bub_ms &p,
         return;
     }
 
-    const tripoint view_center = params.center();
-    const int k = p.x() + getmaxx( w ) / 2 - view_center.x;
-    const int j = p.y() + getmaxy( w ) / 2 - view_center.y;
+    const auto view_center = params.center();
+    const int k = p.x() + getmaxx( w ) / 2 - view_center.x();
+    const int j = p.y() + getmaxy( w ) / 2 - view_center.y();
     wmove( w, point( k, j ) );
 
     const maptile tile = maptile_at( tripoint_bub_ms( p ) );
@@ -10315,20 +10315,15 @@ std::vector<item *> map::get_active_items_in_radius( const tripoint_bub_ms &cent
     return result;
 }
 
-std::vector<tripoint> map::find_furnitures_with_flag_in_omt( const tripoint_bub_ms &p,
+std::vector<tripoint_bub_ms> map::find_furnitures_with_flag_in_omt( const tripoint_bub_ms &p,
         const std::string &flag )
 {
     // Some stupid code to get to the corner
-    const point omt_diff = ( ms_to_omt_copy( bub_to_abs( point( ( p.x() + SEEX ),
-                             ( p.y() + SEEY ) ) ) ) ) - ( ms_to_omt_copy( bub_to_abs( p.xy() ) ) );
-    const point omt_p = omt_to_ms_copy( ( ms_to_omt_copy( p.xy() ) ) ) ;
-    const tripoint omt_o = tripoint( omt_p.x() + ( 1 - omt_diff.x ) * SEEX,
-                                     omt_p.y() + ( 1 - omt_diff.y ) * SEEY,
-                                     p.z() );
+    const auto omt_p = abs_to_bub( project_to<coords::ms>( project_to<coords::omt>( bub_to_abs( p ) ) ) );
 
-    std::vector<tripoint> furn_locs;
-    for( const auto &furn_loc : points_in_rectangle( omt_o,
-            tripoint( omt_o.x + 2 * SEEX - 1, omt_o.y + 2 * SEEY - 1, p.z() ) ) ) {
+    std::vector<tripoint_bub_ms> furn_locs;
+    for( const auto &furn_loc : points_in_rectangle( omt_p,
+            tripoint_bub_ms( omt_p.x() + 2 * SEEX - 1, omt_p.y() + 2 * SEEY - 1, omt_p.z() ) ) ) {
         if( has_flag_furn( flag, furn_loc ) ) {
             furn_locs.push_back( furn_loc );
         }
@@ -10336,12 +10331,12 @@ std::vector<tripoint> map::find_furnitures_with_flag_in_omt( const tripoint_bub_
     return furn_locs;
 };
 
-std::list<tripoint> map::find_furnitures_with_flag_in_radius( const tripoint &center,
+std::list<tripoint_bub_ms> map::find_furnitures_with_flag_in_radius( const tripoint_bub_ms &center,
         size_t radius,
         const std::string &flag,
         size_t radiusz )
 {
-    std::list<tripoint> furn_locs;
+    std::list<tripoint_bub_ms> furn_locs;
     for( const auto &furn_loc : points_in_radius( center, radius, radiusz ) ) {
         if( has_flag_furn( flag, furn_loc ) ) {
             furn_locs.push_back( furn_loc );
@@ -10350,10 +10345,10 @@ std::list<tripoint> map::find_furnitures_with_flag_in_radius( const tripoint &ce
     return furn_locs;
 }
 
-std::list<tripoint> map::find_furnitures_or_vparts_with_flag_in_radius( const tripoint &center,
+std::list<tripoint_bub_ms> map::find_furnitures_or_vparts_with_flag_in_radius( const tripoint_bub_ms &center,
         size_t radius, const std::string &flag, size_t radiusz )
 {
-    std::list<tripoint> locs;
+    std::list<tripoint_bub_ms> locs;
     for( const auto &loc : points_in_radius( center, radius, radiusz ) ) {
         // workaround for ramp bridges
         int dz = 0;
@@ -10368,7 +10363,7 @@ std::list<tripoint> map::find_furnitures_or_vparts_with_flag_in_radius( const tr
                 locs.push_back( loc );
             }
         } else {
-            const tripoint newloc( loc + tripoint( 0, 0, dz ) );
+            const auto newloc( loc + tripoint_rel_ms( 0, 0, dz ) );
             if( has_flag_furn_or_vpart( flag, newloc ) ) {
                 locs.push_back( newloc );
             }
@@ -10378,7 +10373,7 @@ std::list<tripoint> map::find_furnitures_or_vparts_with_flag_in_radius( const tr
     return locs;
 }
 
-std::list<Creature *> map::get_creatures_in_radius( const tripoint &center, size_t radius,
+std::list<Creature *> map::get_creatures_in_radius( const tripoint_bub_ms &center, size_t radius,
         size_t radiusz )
 {
     std::list<Creature *> creatures;
@@ -10392,13 +10387,13 @@ std::list<Creature *> map::get_creatures_in_radius( const tripoint &center, size
     return creatures;
 }
 
-bool map::has_rope_at( tripoint pt ) const
+bool map::has_rope_at( tripoint_bub_ms pt ) const
 {
     if( cached_veh_rope.contains( pt.xy() ) ) {
         auto veh_pair = get_rope_at( tripoint_bub_ms( pt ).xy() );
         vehicle *veh = veh_pair.first;
         int veh_part = veh_pair.second;
-        return veh->part( veh_part ).info().ladder_length() >= veh->bub_ms_location().z() - pt.z;
+        return veh->part( veh_part ).info().ladder_length() >= veh->bub_ms_location().z() - pt.z();
     }
     return false;
 }
@@ -10529,7 +10524,7 @@ void map::invalidate_map_cache( const int zlev )
         ch.visibility_cache_dirty = true;
         ch.outside_cache_dirty.set();
         ch.suspension_cache_dirty = true;
-        m_last_seen_cache_origin = tripoint_min;
+        m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
         m_solar.last_built_hour  = -1;
     }
 }
@@ -10579,7 +10574,7 @@ bool map::is_cornerfloor( const tripoint_bub_ms &p ) const
     if( impassable( p ) ) {
         return false;
     }
-    std::set<tripoint> impassable_adjacent;
+    std::set<tripoint_bub_ms> impassable_adjacent;
     for( const tripoint_bub_ms &pt : points_in_radius( p, 1 ) ) {
         if( impassable( pt ) ) {
             impassable_adjacent.insert( pt );
@@ -10587,12 +10582,12 @@ bool map::is_cornerfloor( const tripoint_bub_ms &p ) const
     }
     if( !impassable_adjacent.empty() ) {
         //to check if a floor is a corner we first search if any of its diagonal adjacent points is impassable
-        std::set< tripoint> diagonals = { p + tripoint_north_east, p + tripoint_north_west, p + tripoint_south_east, p + tripoint_south_west };
-        for( const tripoint &impassable_diagonal : diagonals ) {
+        std::set< tripoint_bub_ms> diagonals = { p + tripoint_north_east, p + tripoint_north_west, p + tripoint_south_east, p + tripoint_south_west };
+        for( const auto &impassable_diagonal : diagonals ) {
             if( impassable_adjacent.contains( impassable_diagonal ) ) {
                 //for every impassable diagonal found, we check if that diagonal terrain has at least two impassable neighbors that also neighbor point p
                 int f = 0;
-                for( const tripoint &l : points_in_radius( impassable_diagonal, 1 ) ) {
+                for( const auto &l : points_in_radius( impassable_diagonal, 1 ) ) {
                     if( impassable_adjacent.contains( l ) ) {
                         f++;
                     }
@@ -10644,9 +10639,9 @@ void map::invalidate_max_populated_zlev( int zlev )
     }
 }
 
-tripoint drawsq_params::center() const
+tripoint_bub_ms drawsq_params::center() const
 {
-    if( view_center == tripoint_min ) {
+    if( view_center == tripoint_bub_ms( tripoint_min ) ) {
         return g->u.bub_pos() + g->u.view_offset;
     } else {
         return view_center;

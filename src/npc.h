@@ -938,7 +938,7 @@ class npc : public player
         Creature *current_target();
         const Creature *current_ally() const;
         Creature *current_ally();
-        tripoint good_escape_direction( bool include_pos = true );
+        tripoint_bub_ms good_escape_direction( bool include_pos = true );
 
         // Interaction and assessment of the world around us
         float danger_assessment();
@@ -1014,14 +1014,14 @@ class npc : public player
         // wrapper for complain_about that warns about a specific type of threat, with
         // different warnings for hostile or friendly NPCs and hostile NPCs always complaining
         void warn_about( const std::string &type, const time_duration &d = 10_minutes,
-                         const std::string &name = "", int range = -1, const tripoint &danger_pos = tripoint_zero );
+                         const std::string &name = "", int range = -1, const tripoint_bub_ms &danger_pos = tripoint_bub_ms::zero() );
         // Finds something to complain about and complains. Returns if complained.
         bool complain();
 
         int calc_spell_training_cost( bool knows, int difficulty, int level );
 
         void handle_sound( sounds::sound_t priority, const std::string &description,
-                           int heard_volume, const tripoint &spos );
+                           int heard_volume, const tripoint_bub_ms &spos );
 
         /* shift() works much like monster::shift(), and is called when the player moves
          * from one submap to an adjacent submap.  It updates our position (shifting by
@@ -1108,20 +1108,20 @@ class npc : public player
          * @param force If there is no valid path, empty the current path.
          * @returns If it updated the path.
          */
-        bool update_path( const tripoint &p, bool no_bashing = false, bool force = true );
-        bool can_open_door( const tripoint &p, bool inside ) const;
-        bool can_move_to( const tripoint &p, bool no_bashing = false ) const;
+        bool update_path( const tripoint_bub_ms &p, bool no_bashing = false, bool force = true );
+        bool can_open_door( const tripoint_bub_ms &p, bool inside ) const;
+        bool can_move_to( const tripoint_bub_ms &p, bool no_bashing = false ) const;
 
         // nomove is used to resolve recursive invocation
-        void move_to( const tripoint &p, bool no_bashing = false, std::set<tripoint> *nomove = nullptr );
+        void move_to( const tripoint_bub_ms &p, bool no_bashing = false, std::set<tripoint_bub_ms> *nomove = nullptr );
         // Next in <path>
         void move_to_next();
         // Maneuver so we won't shoot u
         void avoid_friendly_fire();
         void escape_explosion();
         // nomove is used to resolve recursive invocation
-        void move_away_from( const tripoint &p, bool no_bash_atk = false,
-                             std::set<tripoint> *nomove = nullptr );
+        void move_away_from( const tripoint_bub_ms &p, bool no_bash_atk = false,
+                             std::set<tripoint_bub_ms> *nomove = nullptr );
         void move_away_from( const std::vector<sphere> &spheres, bool no_bashing = false );
         // Same as if the player pressed '.'
         void move_pause();
@@ -1311,7 +1311,7 @@ class npc : public player
         bool has_new_items = false; // If true, we have something new and should re-equip
         int worst_item_value = 0; // The value of our least-wanted item
 
-        std::vector<tripoint> path; // Our movement plans
+        std::vector<tripoint_bub_ms> path; // Our movement plans
 
         // Personality & other defining characteristics
         std::string companion_mission_role_id; //Set mission source or squad leader for a patrol
@@ -1394,8 +1394,8 @@ class npc : public player
         bool manually_erased_ =
             false; // Set by erase(); tells cleanup_dead() not to re-do overmap/follower removal
 
-        bool sees_dangerous_field( const tripoint &p ) const;
-        bool could_move_onto( const tripoint &p ) const;
+        bool sees_dangerous_field( const tripoint_bub_ms &p ) const;
+        bool could_move_onto( const tripoint_bub_ms &p ) const;
 
         std::vector<sphere> find_dangerous_explosives() const;
 

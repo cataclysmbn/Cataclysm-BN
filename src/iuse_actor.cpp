@@ -7416,7 +7416,7 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     entry_abs_ms += tripoint( SEEX, SEEY, 0 );
     // The map is already loaded centered on the destination (via load_pos parameter),
     // so local coordinates are valid without needing a map shift first.
-    tripoint entry_local = get_map().getlocal( entry_abs_ms );
+    tripoint entry_local = get_map().abs_to_bub( entry_abs_ms );
     tripoint safe_pos = find_safe_spawn( entry_local );
     p.setpos( safe_pos );
 
@@ -7457,7 +7457,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint & ) const 
     if( !required_portal_flag.empty() ) {
         portal_tile *nearby_portal = nullptr;
         for( const tripoint &adj : get_map().points_in_radius( p.pos(), 1 ) ) {
-            auto abs = tripoint_abs_ms( get_map().getabs( adj ) );
+            auto abs = tripoint_abs_ms( get_map().bub_to_abs( adj ) );
             auto *candidate = active_tiles::furn_at<portal_tile>( abs );
             if( candidate && candidate->linkable_item_flag == required_portal_flag &&
                 candidate->linked ) {
@@ -7504,7 +7504,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint & ) const 
             const auto dest_sm = tripoint_abs_sm(
                                      project_to<coords::sm>( origin_pos ).raw() - tripoint( g_half_mapsize, g_half_mapsize, 0 ) );
             g->travel_to_dimension( origin_dim, wt_id, std::nullopt, dest_sm );
-            p.setpos( get_map().getlocal( origin_pos ) );
+            p.setpos( get_map().abs_to_bub( origin_pos ) );
             g->update_map( p );
             it.erase_var( "origin_stored" );
             return charges_per_use;
@@ -7531,7 +7531,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint & ) const 
     const auto dest_sm = tripoint_abs_sm(
                              project_to<coords::sm>( linked_pos ).raw() - tripoint( g_half_mapsize, g_half_mapsize, 0 ) );
     g->travel_to_dimension( linked_dim, wt_id, std::nullopt, dest_sm );
-    p.setpos( get_map().getlocal( linked_pos ) );
+    p.setpos( get_map().abs_to_bub( linked_pos ) );
     g->update_map( p );
     return charges_per_use;
 }
@@ -7572,7 +7572,7 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     return_abs_ms += tripoint( SEEX, SEEY, 0 );
     // The map is already loaded centered on the destination (via load_pos parameter),
     // so local coordinates are valid without needing a map shift first.
-    tripoint return_local = get_map().getlocal( return_abs_ms );
+    tripoint return_local = get_map().abs_to_bub( return_abs_ms );
     tripoint safe_pos = find_safe_spawn( return_local );
     p.setpos( safe_pos );
 

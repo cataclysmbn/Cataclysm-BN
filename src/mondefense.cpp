@@ -84,7 +84,7 @@ void mdefense::zapback( monster &m, Creature *const source,
         return;
     }
 
-    if( get_avatar().sees( source->pos() ) ) {
+    if( get_avatar().sees( source->bub_pos() ) ) {
         const auto msg_type = source == &get_avatar() ? m_bad : m_info;
         add_msg( msg_type, _( "Striking %1$s shocks %2$s!" ),
                  m.disp_name(), source->disp_name() );
@@ -133,8 +133,8 @@ void mdefense::acidsplash( monster &m, Creature *const source,
     }
 
     // Don't splatter directly on the `m`, that doesn't work well
-    std::vector<tripoint> pts = closest_points_first( source->pos(), 1 );
-    pts.erase( std::remove( pts.begin(), pts.end(), m.pos() ), pts.end() );
+    std::vector<tripoint_bub_ms> pts = closest_points_first( source->bub_pos(), 1 );
+    pts.erase( std::remove( pts.begin(), pts.end(), m.bub_pos() ), pts.end() );
 
     projectile prj;
     prj.speed = 10;
@@ -143,11 +143,11 @@ void mdefense::acidsplash( monster &m, Creature *const source,
     prj.add_effect( ammo_effect_NO_DAMAGE_SCALING );
     prj.impact.add_damage( DT_ACID, rng( 1, 3 ) );
     for( size_t i = 0; i < num_drops; i++ ) {
-        const tripoint &target = random_entry( pts );
-        projectile_attack( prj, m.pos(), target, dispersion_sources{ 1200 }, &m );
+        const auto &target = random_entry( pts );
+        projectile_attack( prj, m.bub_pos().raw(), target.raw(), dispersion_sources{ 1200 }, &m );
     }
 
-    if( get_avatar().sees( m.pos() ) ) {
+    if( get_avatar().sees( m.bub_pos() ) ) {
         add_msg( m_warning, _( "Acid sprays out of %s as it is hit!" ), m.disp_name() );
     }
 }
@@ -161,7 +161,7 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
 
     // No return fire from dead monsters.
     // Second set is due to how the EMP projector kills critters
-    if( m.is_dead_state() || !g->critter_tracker->find( m.pos() ) ) {
+    if( m.is_dead_state() || !g->critter_tracker->find( m.bub_pos() ) ) {
         return;
     }
 
@@ -176,10 +176,10 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
         return;
     }
 
-    const int distance_to_source = rl_dist( m.pos(), source->pos() );
+    const int distance_to_source = rl_dist( m.bub_pos(), source->bub_pos() );
 
     // TODO: implement different rule, dependent on sound and probably some other things
-    const tripoint fire_point = source->pos();
+    const auto fire_point = source->bub_pos();
     // Add some innacuracy since it is blind fire
     int dispersion = 150;
 
@@ -190,10 +190,10 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
             if( gunactor->get_max_range() < distance_to_source ) {
                 continue;
             }
-            sounds::sound( m.pos(), 50, sounds::sound_t::alert,
+            sounds::sound( m.bub_pos().raw(), 50, sounds::sound_t::alert,
                            _( "Detected shots from unseen attacker, return fire mode engaged." ) );
 
-            gunactor->shoot( m, fire_point, gun_mode_id( "DEFAULT" ), dispersion );
+            gunactor->shoot( m, fire_point.raw(), gun_mode_id( "DEFAULT" ), dispersion );
 
             // We only return fire once with one gun.
             return;
@@ -210,13 +210,13 @@ void mdefense::revenge_aggro( monster &m, Creature *source, const dealt_projecti
 
     size_t aggroed = 0;
     for( monster &ally : g->all_monsters() ) {
-        if( rl_dist_fast( ally.pos(), m.pos() ) <= 40 &&
+        if( rl_dist_fast( ally.bub_pos(), m.bub_pos() ) <= 40 &&
             ally.attitude_to( m ) == Attitude::A_FRIENDLY ) {
             ally.anger = std::max( ally.anger, 100 );
             ally.morale = std::max( ally.morale, 100 );
-            if( ally.move_target() != source->pos() &&
+            if( ally.move_target() != source->bub_pos() &&
                 ally.attitude_to( *source ) == Attitude::A_HOSTILE ) {
-                ally.set_dest( source->pos() );
+                ally.set_dest( source->bub_pos() );
                 aggroed++;
             }
 

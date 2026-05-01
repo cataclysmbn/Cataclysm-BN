@@ -2926,7 +2926,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 if( pos.z != center.z ) {
                     return;
                 }
-                local_tiles.insert( here.getlocal( pos ).xy() );
+                local_tiles.insert( here.abs_to_bub( pos ).xy() );
             } );
 
             if( !local_tiles.empty() ) {
@@ -3657,8 +3657,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                                   ( g->is_zones_manager_open() && g->is_zone_submap_grid_overlay_enabled() );
 
     if( draw_submap_grid && !iso_mode ) {
-        point sm_start = ms_to_sm_copy( here.getabs( point( min_col, min_row ) + o ) );
-        point sm_end = ms_to_sm_copy( here.getabs( point( max_col, max_row ) + o ) );
+        point sm_start = ms_to_sm_copy( here.bub_to_abs( point( min_col, min_row ) + o ) );
+        point sm_end = ms_to_sm_copy( here.bub_to_abs( point( max_col, max_row ) + o ) );
 
         bool zlevs = here.has_zlevels();
         int mapsize = here.getmapsize();
@@ -3688,8 +3688,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             for( int sm_y = sm_start.y; sm_y <= sm_end.y; sm_y++ ) {
                 point sm_p = point( sm_x, sm_y );
                 auto sm_tp = tripoint_abs_sm( sm_x, sm_y, center.z );
-                point p1 = player_to_screen( here.getlocal( sm_to_ms_copy( sm_p ) ) );
-                point p3 = player_to_screen( here.getlocal( sm_to_ms_copy( sm_p + point_south_east ) ) );
+                point p1 = player_to_screen( here.abs_to_bub( sm_to_ms_copy( sm_p ) ) );
+                point p3 = player_to_screen( here.abs_to_bub( sm_to_ms_copy( sm_p + point_south_east ) ) );
                 p3 -= point( THICC, THICC ); // Don't draw over other lines
 
                 // Leave a small gap to indicate omt boundaries
@@ -4065,7 +4065,7 @@ bool cata_tiles::draw_from_id_string(
             if( fid.is_valid() ) {
                 const furn_t &f = fid.obj();
                 if( !f.is_movable() ) {
-                    seed = simple_point_hash( here.getabs( pos ) );
+                    seed = simple_point_hash( here.bub_to_abs( pos ) );
                 }
             }
         }
@@ -4120,7 +4120,7 @@ bool cata_tiles::draw_from_id_string(
     // or has an idle animation and idle animations are enabled
     if( has_variations && variations_enabled ) {
         if( seed_from_map_coords ) {
-            seed = simple_point_hash( g->m.getabs( pos ) );
+            seed = simple_point_hash( g->m.bub_to_abs( pos ) );
         }
         static const auto rot32 = []( const unsigned int x, const int k ) {
             return ( x << k ) | ( x >> ( 32 - k ) );
@@ -4518,7 +4518,7 @@ auto get_map_memory_of_at( const tripoint &p ) -> std::optional<memorized_terrai
         return std::nullopt;
     }
 
-    const memorized_terrain_tile t = g->u.get_memorized_tile( get_map().getabs( p ) );
+    const memorized_terrain_tile t = g->u.get_memorized_tile( get_map().bub_to_abs( p ) );
     if( !string_id<T>( t.tile ).is_valid() ) {
         return std::nullopt;
     }
@@ -5311,7 +5311,7 @@ bool cata_tiles::draw_zone_mark( const tripoint &p, lit_level ll, int &height_3d
     }
 
     const zone_manager &mgr = zone_manager::get_manager();
-    const tripoint &abs = get_map().getabs( p );
+    const tripoint &abs = get_map().bub_to_abs( p );
     const auto zone = mgr.get_bottom_zone( abs );
 
     if( zone && zone->has_options() ) {
@@ -6363,7 +6363,7 @@ void cata_tiles::draw_zones_frame( std::multimap<point, formatted_text> &overlay
 
     // get_zone_at expects absolute coordinates
     const zone_data *zone = zone_manager::get_manager().get_zone_at(
-                                get_map().getabs( lookup_local ) );
+                                get_map().bub_to_abs( lookup_local ) );
 
     if( has_custom_points ) {
         if( zone ) {

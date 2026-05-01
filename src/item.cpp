@@ -10079,7 +10079,7 @@ detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool sea
             //Use weather if above ground, use map temp if below
             units::temperature env_temperature_raw;
             if( pos.z >= 0 ) {
-                tripoint_abs_ms location = tripoint_abs_ms( get_map().getabs( pos ) );
+                tripoint_abs_ms location = tripoint_abs_ms( get_map().bub_to_abs( pos ) );
                 units::temperature weather_temperature = wgen.get_weather_temperature( location, time,
                         calendar::config, seed );
                 env_temperature_raw = weather_temperature + local_mod;
@@ -10532,7 +10532,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
         }
     }
     if( nonchar.map_point() ) {
-        distance = rl_dist( pos, here.getlocal( nonchar.point ) );
+        distance = rl_dist( pos, here.abs_to_bub( nonchar.point ) );
         self->charges = self->type->maximum_charges() - distance;
         if( self->charges < 1 ) {
             if( carrier ) {

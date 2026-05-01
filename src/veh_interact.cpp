@@ -166,10 +166,10 @@ std::unique_ptr<player_activity> veh_interact::serialize_activity()
 
     // if we're working on an existing part, use that part as the reference point
     // otherwise (e.g. installing a new frame), just use part 0
-    const tripoint q = here.getabs( veh->bub_part_location( pt ? *pt : veh->part( 0 ) ) );
+    const tripoint q = here.bub_to_abs( veh->bub_part_location( pt ? *pt : veh->part( 0 ) ) );
     const vehicle_part *vpt = pt ? pt : &veh->part( 0 );
     for( const tripoint &p : veh->get_points( true ) ) {
-        res->coord_set.insert( here.getabs( p ) );
+        res->coord_set.insert( here.bub_to_abs( p ) );
     }
     res->values.push_back( q.x );   // values[0]
     res->values.push_back( q.y );   // values[1]
@@ -3201,14 +3201,14 @@ void veh_interact::complete_vehicle( Character &who )
     }
 
     map &here = get_map();
-    optional_vpart_position vp = here.veh_at( here.getlocal( tripoint( who.activity->values[0],
+    optional_vpart_position vp = here.veh_at( here.abs_to_bub( tripoint( who.activity->values[0],
                                  who.activity->values[1], who.activity->values[7] ) ) );
     if( !vp ) {
         // so the vehicle could have lost some of its parts from other NPCS works during this player/NPCs activity.
         // check the vehicle points that were stored at beginning of activity.
         if( !who.activity->coord_set.empty() ) {
             for( const auto pt : who.activity->coord_set ) {
-                vp = here.veh_at( here.getlocal( pt ) );
+                vp = here.veh_at( here.abs_to_bub( pt ) );
                 if( vp ) {
                     break;
                 }

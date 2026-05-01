@@ -182,6 +182,7 @@ bool map::build_transparency_cache( const int zlev )
     return true;
 }
 
+
 bool map::build_vision_transparency_cache( const Character &player )
 {
     const auto &p = player.bub_pos();
@@ -190,7 +191,7 @@ bool map::build_vision_transparency_cache( const Character &player )
 
     if( player.movement_mode_is( CMM_CROUCH ) ) {
 
-        const auto check_vehicle_coverage = []( const vehicle * veh, tripoint_mnt_veh p ) -> bool {
+        const auto check_vehicle_coverage = []( const vehicle *veh, const tripoint_mnt_veh &p ) -> bool {
             return veh->obstacle_at_position( p ) == -1 && ( veh->part_with_feature( p,  "AISLE", true ) != -1 || veh->part_with_feature( p,  "PROTRUSION", true ) != -1 );
         };
 

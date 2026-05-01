@@ -35,7 +35,7 @@ TEST_CASE( "auto_consume_priority", "[auto_consume][food][zone]" )
     auto &zmgr = zone_manager::get_manager();
 
     constexpr auto zone_origin = tripoint{ 60, 60, 0 };
-    tripoint zone_origin_absolute = here.getabs( zone_origin );
+    tripoint zone_origin_absolute = here.bub_to_abs( zone_origin );
     constexpr auto zone_size = tripoint{ 6, 6, 0 };
 
     avatar &you = get_avatar();

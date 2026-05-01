@@ -162,9 +162,8 @@ auto move_creatures_away( const elevator::tiles &dest ) -> void
     };
 
     for( Creature &critter : g->all_creatures() ) {
-        const tripoint local_pos = here.getlocal( here.getglobal( critter.pos() ) );
 
-        const auto eit = std::ranges::find( dest, local_pos );
+        const auto eit = std::ranges::find( dest, critter.bub_pos().raw() );
         if( eit == dest.cend() ) {
             continue;
         }
@@ -234,9 +233,9 @@ auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> v
 void iexamine::elevator( player &p, const tripoint &examp )
 {
     map &here = get_map();
-    const tripoint_abs_ms old_abs_pos = here.getglobal( p.pos() );
-    const tripoint_abs_omt this_omt = project_to<coords::omt>( here.getglobal( examp ) );
-    const tripoint sm_orig = here.getlocal( project_to<coords::ms>( this_omt ) );
+    const tripoint_abs_ms old_abs_pos = here.abs_to_bub( p.pos() );
+    const tripoint_abs_omt this_omt = project_to<coords::omt>( here.abs_to_bub( examp ) );
+    const tripoint sm_orig = here.abs_to_bub( project_to<coords::ms>( this_omt ) );
 
     const auto elevator_here = elevator::here( p );
     const auto vehs = elevator::vehicles_on( elevator_here );

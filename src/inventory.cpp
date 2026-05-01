@@ -456,7 +456,7 @@ void inventory::form_from_zone( map &m, std::unordered_set<tripoint> &zone_pts, 
     std::vector<tripoint> pts;
     pts.reserve( zone_pts.size() );
     for( const tripoint &elem : zone_pts ) {
-        pts.push_back( m.getlocal( elem ) );
+        pts.push_back( m.abs_to_bub( elem ) );
     }
     form_from_map( m, pts, pl, assign_invlet );
 }
@@ -501,7 +501,7 @@ void inventory::form_from_map( map &m, std::vector<tripoint> pts, const Characte
                     const itype_id &ammo = furn_item.ammo_default();
                     if( furn_item.has_flag( flag_USES_GRID_POWER ) ) {
                         // TODO: The grid tracker should correspond to map!
-                        auto &grid = get_distribution_grid_tracker().grid_at( tripoint_abs_ms( m.getabs( p ) ) );
+                        auto &grid = get_distribution_grid_tracker().grid_at( tripoint_abs_ms( m.bub_to_abs( p ) ) );
                         furn_item.charges = grid.get_resource();
                     } else {
                         furn_item.charges = ammo ? count_charges_in_list( &*ammo, m.i_at( p ) ) : 0;

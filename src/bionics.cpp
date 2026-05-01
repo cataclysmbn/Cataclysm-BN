@@ -964,7 +964,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         if( target.has_value() ) {
             add_msg_activate();
             assign_activity( std::make_unique<player_activity>( lockpick_activity_actor::use_bionic(
-                                 item::spawn( bio.info().fake_item ), g->m.getabs( *target ) ) ) );
+                                 item::spawn( bio.info().fake_item ), g->m.bub_to_abs( *target ) ) ) );
             if( close_bionics_ui ) {
                 *close_bionics_ui = true;
             }

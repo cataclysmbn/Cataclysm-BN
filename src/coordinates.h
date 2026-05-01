@@ -827,9 +827,9 @@ coords::coord_point<Point, Origin, Scale> p, int rad )
  * was created to give a definitive answer.
  *
  * 'absolute' is defined as the -actual- submap x,y * SEEX + position in submap, and
- * can be obtained from map.getabs(x, y);
+ * can be obtained from map.bub_to_abs(x, y);
  *   usage:
- *    real_coords rc( g->m.getabs(g->u.bub_pos().x(), g->u.bub_pos().y() ) );
+ *    real_coords rc( g->m.bub_to_abs(g->u.bub_pos().x(), g->u.bub_pos().y() ) );
  */
 struct real_coords {
     static const int tiles_in_sub = SEEX;

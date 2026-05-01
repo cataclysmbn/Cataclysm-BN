@@ -402,7 +402,7 @@ void monexamine::shear_animal( monster &z )
                                          qual_shear ) ) );
 
     you.assign_activity( activity_id( "ACT_SHEAR" ), moves, -1 );
-    you.activity->coords.push_back( get_map().getabs( z.pos() ) );
+    you.activity->coords.push_back( get_map().bub_to_abs( z.pos() ) );
     // pin the sheep in place if it isn't already
     if( !z.has_effect( effect_tied ) ) {
         z.add_effect( effect_tied, 1_turns );
@@ -1055,7 +1055,7 @@ void monexamine::milk_source( monster &source_mon )
     if( milkable_ammo->second > 0 ) {
         const int moves = to_moves<int>( time_duration::from_minutes( milkable_ammo->second / 2 ) );
         you.assign_activity( ACT_MILK, moves, -1 );
-        you.activity->coords.push_back( get_map().getabs( source_mon.pos() ) );
+        you.activity->coords.push_back( get_map().bub_to_abs( source_mon.pos() ) );
         // pin the cow in place if it isn't already
         bool temp_tie = !source_mon.has_effect( effect_tied );
         if( temp_tie ) {

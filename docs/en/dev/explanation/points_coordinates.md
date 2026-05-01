@@ -254,8 +254,8 @@ To iterate over nearby points of the same type you can use `closest_points_first
 
 | Deprecated                            | Preferred                                 |
 | ------------------------------------- | ----------------------------------------- |
-| `here.getabs( tripoint )`             | `here.bub_to_abs( tripoint_bub_ms( p ) )` |
-| `here.getlocal( tripoint )`           | `here.abs_to_bub( tripoint_abs_ms( p ) )` |
+| `here.bub_to_abs( tripoint )`             | `here.bub_to_abs( tripoint_bub_ms( p ) )` |
+| `here.abs_to_bub( tripoint )`           | `here.abs_to_bub( tripoint_abs_ms( p ) )` |
 | `ms_to_sm_copy( p )`                  | `project_to<coords::sm>( p )`             |
 | `sm_to_ms_copy( p )`                  | `project_to<coords::ms>( p )`             |
 | `sm_to_omt_copy` + `sm_to_omt_remain` | `project_remain<coords::omt>( p )`        |

@@ -1690,7 +1690,7 @@ int iuse::good_fishing_spot( tripoint pos )
     map &here = get_map();
     const oter_id &cur_omt =
         get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy(
-                    here.getabs( pos ) ) ) );
+                    here.bub_to_abs( pos ) ) ) );
     std::string om_id = cur_omt.id().c_str();
     if( fishable_locations < 100 && !g->m.has_flag( "CURRENT", pos ) &&
         om_id.find( "river_" ) == std::string::npos && !cur_omt->is_lake() &&
@@ -2492,7 +2492,7 @@ int iuse::makemound( player *p, item *it, bool t, const tripoint & )
     if( g->m.has_flag( flag_PLOWABLE, pnt ) && !g->m.has_flag( flag_PLANT, pnt ) ) {
         p->add_msg_if_player( _( "You start churning up the earth here." ) );
         p->assign_activity( ACT_CHURN, 18000, -1, p->get_item_position( it ) );
-        p->activity->placement = g->m.getabs( pnt );
+        p->activity->placement = g->m.bub_to_abs( pnt );
         return it->type->charges_to_use();
     } else {
         p->add_msg_if_player( _( "You can't churn up this ground." ) );
@@ -2895,7 +2895,7 @@ int iuse::jackhammer( player *p, item *it, bool, const tripoint &pos )
 
     p->assign_activity( ACT_JACKHAMMER, moves );
     p->activity->add_tool( it );
-    p->activity->placement = g->m.getabs( pnt );
+    p->activity->placement = g->m.bub_to_abs( pnt );
     p->add_msg_if_player( _( "You start drilling into the %1$s with your %2$s." ),
                           g->m.tername( pnt ), it->tname() );
 
@@ -2934,7 +2934,7 @@ int iuse::pick_lock( player *p, item *it, bool, const tripoint &pos )
     }
 
     you.assign_activity( std::make_unique<player_activity>( lockpick_activity_actor::use_item( duration,
-                         *it, g->m.getabs( *target ) ) ) );
+                         *it, g->m.bub_to_abs( *target ) ) ) );
     return it->type->charges_to_use();
 }
 
@@ -2987,7 +2987,7 @@ int iuse::pickaxe( player *p, item *it, bool, const tripoint &pos )
 
     p->assign_activity( ACT_PICKAXE, moves, -1 );
     p->activity->add_tool( it );
-    p->activity->placement = g->m.getabs( pnt );
+    p->activity->placement = g->m.bub_to_abs( pnt );
     p->add_msg_if_player( _( "You strike the %1$s with your %2$s." ),
                           g->m.tername( pnt ), it->tname() );
     return 0; // handled when the activity finishes
@@ -4364,7 +4364,7 @@ void iuse::cut_log_into_planks( player &p )
     p.add_msg_if_player( _( "You cut the log into planks." ) );
 
     p.assign_activity( ACT_CHOP_PLANKS, moves, -1 );
-    p.activity->placement = g->m.getabs( p.pos() );
+    p.activity->placement = g->m.bub_to_abs( p.pos() );
 }
 
 int iuse::lumber( player *p, item *it, bool t, const tripoint & )
@@ -4460,7 +4460,7 @@ int iuse::chop_tree( player *p, item *it, bool t, const tripoint & )
 
     p->assign_activity( ACT_CHOP_TREE, moves, -1, p->get_item_position( it ) );
     p->activity->add_tool( it );
-    p->activity->placement = g->m.getabs( pnt );
+    p->activity->placement = g->m.bub_to_abs( pnt );
 
     return it->type->charges_to_use();
 }
@@ -4505,7 +4505,7 @@ int iuse::chop_logs( player *p, item *it, bool t, const tripoint & )
     moves = moves * ( 10 - helpers.size() ) / 10;
 
     p->assign_activity( ACT_CHOP_LOGS, moves, -1, p->get_item_position( it ) );
-    p->activity->placement = g->m.getabs( pnt );
+    p->activity->placement = g->m.bub_to_abs( pnt );
     p->activity->add_tool( it );
 
     return it->type->charges_to_use();
@@ -6896,7 +6896,7 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
     // TODO: fix point types
     const oter_id &cur_ter =
         get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy(
-                    g->m.getabs( aim_point ) ) ) );
+                    g->m.bub_to_abs( aim_point ) ) ) );
     std::string overmap_desc = string_format( _( "In the background you can see a %s" ),
                                colorize( cur_ter->get_name(), cur_ter->get_color() ) );
     if( outside_tiles_num == total_tiles_num ) {
@@ -7935,7 +7935,7 @@ static tripoint_abs_ms process_map_connection( const Character *who, cable_state
         return tripoint_abs_ms_min;
     }
     map &here = get_map();
-    const auto posp = here.getglobal( *posp_ );
+    const auto posp = here.bub_to_abs( *posp_ );
 
     switch( state ) {
         case state_vehicle: {
@@ -8334,7 +8334,7 @@ int iuse::cable_attach( player *who, item *cable, bool, const tripoint & )
             if( who && who->has_item( *cable ) ) {
                 who->add_msg_if_player( m_good, _( "You connect the %s to the electric grid." ),
                                         v->name );
-                grid_connector->connected_vehicles.emplace_back( g->m.getabs( v->bub_ms_location().raw() ) );
+                grid_connector->connected_vehicles.emplace_back( g->m.bub_to_abs( v->bub_ms_location().raw() ) );
                 v->install_part( vcoords, std::move( v_part ) );
             }
             return 1;    // Let the cable be destroyed.
@@ -8393,7 +8393,7 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint & )
         // TODO: Don't output air temp if we aren't near air
         if( g->m.has_flag( TFLAG_SWIMMABLE, p->pos() ) ) {
             const units::temperature water_temp = weather.get_cur_weather_gen().get_water_temperature(
-                    tripoint_abs_ms( here.getabs( p->pos() ) ),
+                    tripoint_abs_ms( here.bub_to_abs( p->pos() ) ),
                     calendar::turn, calendar::config, g->get_seed() );
             p->add_msg_if_player( m_neutral, _( "Water temperature: %s." ),
                                   print_temperature( water_temp ) );
@@ -8738,7 +8738,7 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
         }
     }
     p->activity->targets.emplace_back( where );
-    p->activity->coords.push_back( get_map().getabs( best_bench.position ) );
+    p->activity->coords.push_back( get_map().bub_to_abs( best_bench.position ) );
     p->activity->values.push_back( 0 ); // Not a long craft
     // Ugly
     p->activity->values.push_back( static_cast<int>( best_bench.type ) );
@@ -8871,7 +8871,7 @@ int iuse::toggle_ups_charging( player *p, item *it, bool, const tripoint & )
 
 int iuse::report_grid_charge( player *p, item *, bool, const tripoint &pos )
 {
-    const tripoint_abs_ms pos_abs( get_map().getabs( pos ) );
+    const tripoint_abs_ms pos_abs( get_map().bub_to_abs( pos ) );
     const distribution_grid &gr = get_distribution_grid_tracker().grid_at( pos_abs );
     const int amt = gr.get_resource();
     const auto stat = gr.get_power_stat();
@@ -8900,7 +8900,7 @@ int iuse::report_grid_charge( player *p, item *, bool, const tripoint &pos )
 
 int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos )
 {
-    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
+    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs( pos ) ) );
     std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
                 p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
@@ -8926,7 +8926,7 @@ int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos 
 
 auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoint &pos ) -> int
 {
-    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs( pos ) ) );
     const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
     const auto fluid_stats = fluid_grid::storage_stats_at( pos_abs );
 
@@ -8969,7 +8969,7 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoin
 
 int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &pos )
 {
-    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
+    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs( pos ) ) );
     std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
                 p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
@@ -9070,7 +9070,7 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
 
 auto iuse::modify_fluid_grid_connections( player *p, item *it, bool, const tripoint &pos ) -> int
 {
-    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs( pos ) ) );
     const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
 
     uilist ui;

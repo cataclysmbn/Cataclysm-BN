@@ -291,7 +291,7 @@ bool tile_item_location::is_loaded( const item * ) const
 
 tripoint tile_item_location::position( const item * ) const
 {
-    return get_map().getlocal( pos );
+    return get_map().abs_to_bub( pos );
 }
 
 item_location_type tile_item_location::where() const

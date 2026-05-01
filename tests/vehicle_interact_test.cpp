@@ -132,7 +132,7 @@ TEST_CASE( "debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_int
     const auto install_part_id = vpart_id( "storage_battery" );
     const auto reference_part_index = 0;
     const auto reference_part = &veh_ptr->part( reference_part_index );
-    const auto reference_pos = here.getabs( veh_ptr->bub_part_location( *reference_part ) );
+    const auto reference_pos = here.bub_to_abs( veh_ptr->bub_part_location( *reference_part ) );
 
     you.assign_activity( ACT_VEHICLE, 1, static_cast<int>( 'i' ) );
     you.activity->values = {
@@ -147,7 +147,7 @@ TEST_CASE( "debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_int
     };
     you.activity->str_values.push_back( install_part_id.str() );
     for( const tripoint &p : veh_ptr->get_points( true ) ) {
-        you.activity->coord_set.insert( here.getabs( p ) );
+        you.activity->coord_set.insert( here.bub_to_abs( p ) );
     }
 
     veh_interact::complete_vehicle( you );

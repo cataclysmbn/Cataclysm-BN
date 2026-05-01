@@ -524,14 +524,14 @@ void spawn_nested_mapgen()
         }
 
         map &here = get_map();
-        const tripoint_abs_ms abs_ms( here.getabs( *where ) );
+        const tripoint_abs_ms abs_ms( here.bub_to_abs( *where ) );
         const tripoint_abs_omt abs_omt = project_to<coords::omt>( abs_ms );
         const tripoint_abs_sm abs_sub = project_to<coords::sm>( abs_ms );
 
         map target_map;
         target_map.load( abs_sub, true );
         // TODO: fix point types
-        const tripoint local_ms = target_map.getlocal( abs_ms.raw() );
+        const tripoint local_ms = target_map.abs_to_bub( abs_ms.raw() );
         mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr,
                        get_overmapbuffer( target_map.get_bound_dimension() ) );
         const auto &ptr = nested_mapgen[nest_str[nest_choice]].pick();

@@ -293,7 +293,7 @@ struct drawsq_params {
             view_center = tripoint_bub_ms( tripoint_min );
             return *this;
         }
-        tripoint center() const;
+        tripoint_bub_ms center() const;
         //@}
 };
 
@@ -1831,24 +1831,6 @@ class map : public submap_load_listener
 
         /** return @ref abs_sub */
         tripoint_abs_sm get_abs_sub() const { return abs_sub; }
-        /**
-         * Translates local (to this map) coordinates of a square to global absolute coordinates.
-         * Coordinates is in the system that is used by the ter/furn/i_at functions.
-         * Output is in the same scale, but in global system.
-         */
-        tripoint getabs( const tripoint &p ) const { return bub_to_abs( tripoint_bub_ms( p ) ).raw(); }
-        tripoint_abs_ms getglobal( const tripoint &p ) const {  return bub_to_abs( tripoint_bub_ms( p ) ); }
-        point getabs( point p ) const {
-            return getabs( tripoint( p, abs_sub.z() ) ).xy();
-        }
-        /**
-         * Inverse of @ref getabs
-         */
-        tripoint getlocal( const tripoint &p ) const { return abs_to_bub( tripoint_abs_ms( p ) ).raw(); }
-        tripoint getlocal( const tripoint_abs_ms &p ) const { return abs_to_bub( p ).raw(); }
-        point getlocal( point p ) const {
-            return getlocal( tripoint( p, abs_sub.z() ) ).xy();
-        }
 
         tripoint_abs_ms bub_to_abs( const tripoint_bub_ms &bub ) const {
             const auto origin = project_to<coords::ms>( abs_sub );
@@ -2349,7 +2331,7 @@ class map : public submap_load_listener
         std::string bound_dimension_;
 
     public:
-        bool has_rope_at( tripoint pt ) const;
+        bool has_rope_at( tripoint_bub_ms pt ) const;
         std::pair<vehicle *, int> get_rope_at( const point_bub_ms &pt ) const;
 
         const level_cache &get_cache_ref( int zlev ) const {
@@ -2392,15 +2374,15 @@ class map : public submap_load_listener
                 special_item_type type ) const;
 
         /** returns positions of furnitures with matching flag in the overmap terrain*/
-        std::vector<tripoint> find_furnitures_with_flag_in_omt( const tripoint_bub_ms &p,
+        std::vector<tripoint_bub_ms> find_furnitures_with_flag_in_omt( const tripoint_bub_ms &p,
                 const std::string &flag );
 
         /**returns positions of furnitures with matching flag in the specified radius*/
-        std::list<tripoint> find_furnitures_with_flag_in_radius( const tripoint_bub_ms &center, size_t radius,
+        std::list<tripoint_bub_ms> find_furnitures_with_flag_in_radius( const tripoint_bub_ms &center, size_t radius,
                 const std::string &flag,
                 size_t radiusz = 0 );
         /**returns positions of furnitures or vehicle parts with matching flag in the specified radius*/
-        std::list<tripoint> find_furnitures_or_vparts_with_flag_in_radius( const tripoint_bub_ms &center,
+        std::list<tripoint_bub_ms> find_furnitures_or_vparts_with_flag_in_radius( const tripoint_bub_ms &center,
                 size_t radius,
                 const std::string &flag, size_t radiusz = 0 );
         /**returns creatures in specified radius*/

@@ -693,7 +693,7 @@ void disassemble_activity_actor::do_turn( player_activity &act, Character &who )
         if( !target.loc ) {
             debugmsg( "Lost target of ACT_DISASSEMBLY" );
         } else {
-            crafting::complete_disassemble( who, target, get_map().getlocal( pos.raw() ) );
+            crafting::complete_disassemble( who, target, get_map().abs_to_bub( pos.raw() ) );
         }
         targets.erase( targets.begin() );
         progress.pop();
@@ -1485,7 +1485,7 @@ std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_bionic(
 
 void lockpick_activity_actor::start( player_activity &/*act*/, Character & )
 {
-    const tripoint target = get_map().getlocal( this->target );
+    const tripoint target = get_map().abs_to_bub( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
     const optional_vpart_position veh = get_map().veh_at( target );
@@ -1528,7 +1528,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
 
-    const tripoint target = get_map().getlocal( this->target );
+    const tripoint target = get_map().abs_to_bub( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
     const optional_vpart_position veh = get_map().veh_at( target );
@@ -2053,7 +2053,7 @@ inline void construction_activity_actor::calc_all_moves( player_activity &act, C
     // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
     if( !pc ) {
         map &here = get_map();
-        auto local = here.getlocal( target );
+        auto local = here.abs_to_bub( target );
         pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
     //if something goes terribly wrong we don't CTD
@@ -2068,7 +2068,7 @@ inline void construction_activity_actor::calc_all_moves( player_activity &act, C
 void construction_activity_actor::start( player_activity &/*act*/, Character &/*who*/ )
 {
     map &here = get_map();
-    auto local = here.getlocal( target );
+    auto local = here.abs_to_bub( target );
     pc = here.partial_con_at( tripoint_bub_ms( local ) );
     auto &built = *pc->id;
 
@@ -2105,7 +2105,7 @@ void construction_activity_actor::do_turn( player_activity &act, Character &who 
     // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
     if( !pc ) {
         map &here = get_map();
-        auto local = here.getlocal( target );
+        auto local = here.abs_to_bub( target );
         pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
 

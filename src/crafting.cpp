@@ -765,7 +765,7 @@ item *Character::start_craft( craft_command &command, const tripoint & )
 
     assign_activity( ACT_CRAFT );
     activity->targets.emplace_back( craft_in_world );
-    activity->coords.push_back( get_map().getabs( bench.position ) );
+    activity->coords.push_back( get_map().bub_to_abs( bench.position ) );
     activity->values.push_back( command.is_long() );
     // Ugly
     activity->values.push_back( static_cast<int>( bench.type ) );
@@ -2131,7 +2131,7 @@ static bool prompt_disassemble_single( avatar &you, item *target, bool interacti
     loc.loc = target;
     loc.count = res.batches ? *res.batches : 1;
 
-    tripoint_abs_ms pos_abs( get_map().getabs( you.pos() ) );
+    tripoint_abs_ms pos_abs( get_map().bub_to_abs( you.pos() ) );
 
     you.assign_activity( std::make_unique<player_activity>
     ( std::make_unique<disassemble_activity_actor>( std::vector<iuse_location> {{ loc }}, pos_abs,
@@ -2168,7 +2168,7 @@ bool crafting::disassemble_all( avatar &you, bool recursively )
     }
 
     if( !targets.empty() ) {
-        tripoint_abs_ms pos_abs( get_map().getabs( you.pos() ) );
+        tripoint_abs_ms pos_abs( get_map().bub_to_abs( you.pos() ) );
 
         you.assign_activity( std::make_unique<player_activity>
                              ( std::make_unique<disassemble_activity_actor>( std::move(

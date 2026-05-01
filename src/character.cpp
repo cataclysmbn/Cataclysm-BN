@@ -11416,13 +11416,13 @@ std::vector<Creature *> Character::get_hostile_creatures( int range ) const
 
 bool Character::knows_trap( const tripoint &pos ) const
 {
-    const tripoint p = get_map().getabs( pos );
+    const tripoint p = get_map().bub_to_abs( pos );
     return known_traps.contains( p );
 }
 
 void Character::add_known_trap( const tripoint &pos, const trap &t )
 {
-    const tripoint p = get_map().getabs( pos );
+    const tripoint p = get_map().bub_to_abs( pos );
     if( t.is_null() ) {
         known_traps.erase( p );
     } else {

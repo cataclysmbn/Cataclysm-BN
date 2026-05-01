@@ -145,10 +145,10 @@ bool vertical_move_destination( const map &m, tripoint &t )
         return false;
     }
 
-    real_coords rc( m.getabs( t.xy() ) );
+    real_coords rc( m.bub_to_abs( t.xy() ) );
 
     // Align to OMT boundaries
-    point start = m.getlocal( rc.begin_om_pos() );
+    point start = m.abs_to_bub( rc.begin_om_pos() );
     point end = start + point( SEEX * 2, SEEY * 2 );
 
     // Exclude submaps not loaded into bubble

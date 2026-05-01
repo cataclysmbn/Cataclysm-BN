@@ -485,7 +485,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
                                dest_loc ).id().str();
             }
             // TODO: Figure out how to make subtile and rotation work right here
-            you.memorize_tile( m.getabs( dest_loc ), obstacle, 0, 0 );
+            you.memorize_tile( m.bub_to_abs( dest_loc ), obstacle, 0, 0 );
         }
     } else if( m.ter( dest_loc ) == t_door_locked || m.ter( dest_loc ) == t_door_locked_peep ||
                m.ter( dest_loc ) == t_door_locked_alarm || m.ter( dest_loc ) == t_door_locked_interior ) {
