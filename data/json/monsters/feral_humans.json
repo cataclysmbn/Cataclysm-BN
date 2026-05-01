@@ -847,6 +847,7 @@
     "starting_ammo": { "5x50dart": 100 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
+      [ "BIO_OP_TAKEDOWN", 10 ],
       {
         "type": "gun",
         "cooldown": 5,
@@ -973,6 +974,7 @@
       [ "PARROT_AT_DANGER", 0 ],
       [ "PULL_METAL_WEAPON", 25 ],
       [ "GRENADIER_ELITE", 10 ],
+      [ "BIO_OP_TAKEDOWN", 10 ],
       {
         "type": "gun",
         "cooldown": 40,
@@ -1042,6 +1044,7 @@
     "starting_ammo": { "8mm_caseless": 25 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
+      [ "BIO_OP_TAKEDOWN", 10 ],
       {
         "type": "gun",
         "cooldown": 60,
