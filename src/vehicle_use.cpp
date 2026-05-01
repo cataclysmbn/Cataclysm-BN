@@ -157,7 +157,7 @@ void handbrake()
 {
     const map &here = get_map();
     Character &pl = get_player_character();
-    const optional_vpart_position vp = here.veh_at( pl.pos() );
+    const optional_vpart_position vp = here.veh_at( pl.bub_pos() );
     if( !vp ) {
         return;
     }
@@ -186,9 +186,9 @@ void vehicle::control_doors()
 {
     const auto door_motors = get_avail_parts( "DOOR_MOTOR" );
     // Indices of doors
-    std::vector< int > doors_with_motors;
+    std::vector<int> doors_with_motors;
     // Locations used to display the doors
-    std::vector< tripoint > locations;
+    std::vector<tripoint_bub_ms> locations;
     // it is possible to have one door to open and one to close for single motor
     if( door_motors.empty() ) {
         debugmsg( "vehicle::control_doors called but no door motors found" );
@@ -682,7 +682,7 @@ void vehicle::toggle_brake_hold()
     add_msg( brake_hold ? _( "Brake hold turned on." ) : _( "Brake hold turned off." ) );
 }
 
-void vehicle::use_controls( const tripoint &pos )
+void vehicle::use_controls( const tripoint_bub_ms &pos )
 {
     std::vector<uilist_entry> options;
     std::vector<std::function<void()>> actions;
@@ -746,7 +746,7 @@ void vehicle::use_controls( const tripoint &pos )
                 } else if( engine_on && has_engine_type_not( fuel_type_muscle, true ) )
                 {
                     add_msg( _( "You turn the engine off and let go of the controls." ) );
-                    sounds::sound( pos, 2, sounds::sound_t::movement,
+                    sounds::sound( pos.raw(), 2, sounds::sound_t::movement,
                                    _( "the engine go silent" ) );
                 } else
                 {
@@ -788,7 +788,7 @@ void vehicle::use_controls( const tripoint &pos )
                 if( engine_on )
                 {
                     engine_on = false;
-                    sounds::sound( pos, 2, sounds::sound_t::movement,
+                    sounds::sound( pos.raw(), 2, sounds::sound_t::movement,
                                    _( "the engine go silent" ) );
                     stop_engines();
                 } else

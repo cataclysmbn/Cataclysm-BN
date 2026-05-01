@@ -286,10 +286,10 @@ class turret_data
  * Struct used for storing labels
  * (easier to json opposed to a std::map<point, std::string>)
  */
-struct label : public point {
+struct label : public tripoint_mnt_veh {
     label() = default;
-    explicit label( point p ) : point( p ) {}
-    label( point p, std::string text ) : point( p ), text( std::move( text ) ) {}
+    explicit label( tripoint_mnt_veh p ) : tripoint_mnt_veh( p ) {}
+    label( tripoint_mnt_veh p, std::string text ) : tripoint_mnt_veh( p ), text( std::move( text ) ) {}
 
     std::string text;
 
@@ -385,8 +385,8 @@ class RemovePartHandler;
 class vehicle
 {
     private:
-        bool has_structural_part( point dp ) const;
-        bool has_structural_or_extendable_part( point dp ) const;
+        bool has_structural_part( const tripoint_mnt_veh &dp ) const;
+        bool has_structural_or_extendable_part( const tripoint_mnt_veh &dp ) const;
         bool is_structural_part_removed() const;
         void open_or_close( int part_index, bool opening );
         bool is_connected( const vehicle_part &to, const vehicle_part &from,
@@ -535,7 +535,7 @@ class vehicle
 
         // damages all parts of a vehicle by a random amount
         void smash( map &m, float hp_percent_loss_min = 0.1f, float hp_percent_loss_max = 1.2f,
-                    float percent_of_parts_to_affect = 1.0f, point damage_origin = point_zero, float damage_size = 0 );
+                    float percent_of_parts_to_affect = 1.0f, tripoint_rel_ms damage_origin = tripoint_rel_ms::zero(), float damage_size = 0 );
 
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );
@@ -581,12 +581,13 @@ class vehicle
          */
         bool handle_potential_theft( avatar &you, bool check_only = false, bool prompt = true );
         // project a tileray forward to predict obstacles
-        std::set<point> immediate_path( units::angle rotate = 0_degrees );
-        std::set<tripoint_mnt_veh> collision_check_points;
+        std::set<point_abs_ms> immediate_path( units::angle rotate = 0_degrees );
+        // This would require a proper rework to make 3D. Stays 2D for now.
+        std::set<point_abs_ms> collision_check_points;
         void autopilot_patrol();
-        units::angle get_angle_from_targ( const tripoint &targ );
-        void drive_to_local_target( const tripoint &target, bool follow_protocol );
-        tripoint get_autodrive_target();
+        units::angle get_angle_from_targ( const tripoint_abs_ms &targ );
+        void drive_to_local_target( const tripoint_abs_ms &target, bool follow_protocol );
+        tripoint_abs_ms get_autodrive_target();
         // Drive automatically towards some destination for one turn.
         autodrive_result do_autodrive( Character &driver );
         // Stop any kind of automatic vehicle control and apply the brakes.
@@ -614,20 +615,20 @@ class vehicle
         const vpart_info &part_info( int index, bool include_removed = false ) const;
 
         // check if certain part can be mounted at certain position (not accounting frame direction)
-        bool can_mount( tripoint_mnt_veh dp, const vpart_id &id ) const;
+        bool can_mount( const tripoint_mnt_veh &dp, const vpart_id &id ) const;
 
         // check if certain part can be unmounted
         bool can_unmount( int p ) const;
         bool can_unmount( int p, std::string &reason ) const;
 
         // install a new part to vehicle
-        int install_part( tripoint_mnt_veh dp, const vpart_id &id, bool force = false );
+        int install_part( const tripoint_mnt_veh &dp, const vpart_id &id, bool force = false );
 
         // Install a copy of the given part, skips possibility check
-        int install_part( tripoint_mnt_veh dp, vehicle_part &&part );
+        int install_part( const tripoint_mnt_veh &dp, vehicle_part &&part );
 
         /** install item specified item to vehicle as a vehicle part */
-        int install_part( tripoint_mnt_veh dp, const vpart_id &id, detached_ptr<item> &&obj,
+        int install_part( const tripoint_mnt_veh &dp, const vpart_id &id, detached_ptr<item> &&obj,
                           bool force = false );
 
         // find a single tile wide vehicle adjacent to a list of part indices
@@ -720,7 +721,7 @@ class vehicle
         /**@}*/
 
         // returns the list of indices of parts at certain position (not accounting frame direction)
-        std::vector<int> parts_at_relative( tripoint_mnt_veh dp, bool use_cache ) const;
+        std::vector<int> parts_at_relative( const tripoint_mnt_veh &dp, bool use_cache ) const;
 
         // returns index of part, inner to given, with certain flag, or -1
         int part_with_feature( int p, const std::string &f, bool unbroken ) const;
@@ -833,8 +834,8 @@ class vehicle
         tripoint_mnt_veh abs_to_mount( const tripoint_abs_ms &abs ) const;
 
         // Seek a vehicle part which obstructs tile with given coordinates relative to vehicle position
-        int part_at( tripoint_mnt_veh dp ) const;
-        int part_displayed_at( tripoint_mnt_veh dp ) const;
+        int part_at( const tripoint_mnt_veh &dp ) const;
+        int part_displayed_at( const tripoint_mnt_veh &dp ) const;
         int roof_at_part( int p ) const;
 
         // Given a part, finds its index in the vehicle
@@ -1255,7 +1256,7 @@ class vehicle
             }
         }
 
-        void set_pivot( point_rel_veh pivot, bool refresh = true ) {
+        void set_pivot( const tripoint_mnt_veh &pivot, bool refresh = true ) {
             pivot_cache = pivot;
             pivot_anchor[0] = pivot;
             if( refresh ) {
@@ -1263,7 +1264,7 @@ class vehicle
             }
         }
 
-        void set_facing_and_pivot( units::angle deg, point_rel_veh pivot, bool refresh = true ) {
+        void set_facing_and_pivot( units::angle deg, tripoint_mnt_veh pivot, bool refresh = true ) {
             set_facing( deg, false );
             set_pivot( pivot, refresh );
         }
@@ -1710,7 +1711,7 @@ class vehicle
     private:
         mutable units::mass mass_cache;
         // cached pivot point
-        mutable point_rel_veh pivot_cache;
+        mutable tripoint_mnt_veh pivot_cache;
         /*
          * The co-ordinates of the bounding box of the vehicle's mount points
          */
@@ -1718,7 +1719,7 @@ class vehicle
         mutable tripoint_mnt_veh mount_min;
         mutable tripoint_mnt_veh mass_center_precalc;
         mutable tripoint_mnt_veh mass_center_no_precalc;
-        tripoint autodrive_local_target = tripoint_zero; // current node the autopilot is aiming for
+        tripoint_abs_ms autodrive_local_target = tripoint_abs_ms::zero(); // current node the autopilot is aiming for
         class autodrive_controller;
         std::shared_ptr<autodrive_controller> active_autodrive_controller;
 
