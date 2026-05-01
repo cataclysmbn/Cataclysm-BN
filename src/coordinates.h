@@ -5,10 +5,12 @@
 #include <iterator>
 
 #include "cuboid_rectangle.h"
+#include "drawing_primitives.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "map_iterator.h"
 #include "point.h"
+#include "point_float.h"
 #include "debug.h"
 
 enum class direction : unsigned;
@@ -237,6 +239,10 @@ class coord_point
         }
         void deserialize( JsonIn &jsin ) {
             raw().deserialize( jsin );
+        }
+    
+        auto operator-() const -> coord_point {
+            return coord_point( -raw_ );
         }
 
         coord_point &operator+=( const coord_point<Point, origin::relative, Scale> &r ) {
@@ -663,6 +669,13 @@ inline int square_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
+inline int square_dist_fast( const coords::coord_point<Point, Origin, Scale> &loc1,
+                        const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return square_dist_fast( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
 inline int trig_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
                       const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
@@ -674,6 +687,13 @@ inline int rl_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
                     const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return rl_dist( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+inline int rl_dist_exact( const coords::coord_point<Point, Origin, Scale> &loc1,
+                    const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return rl_dist_exact( loc1.raw(), loc2.raw() );
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
@@ -712,6 +732,21 @@ std::vector<coords::coord_point<Point, Origin, Scale>>
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
+direction calc_ray_end( units::angle angle, const int range,
+                          const coords::coord_point<Point, Origin, Scale> &loc1,
+                          const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return calc_ray_end( angle, range, loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+units::angle coord_to_angle( const coords::coord_point<Point, Origin, Scale> &loc1,
+                             const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return coord_to_angle( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
 coords::coord_point<Point, Origin, Scale>
 midpoint( const coords::coord_point<Point, Origin, Scale> &loc1,
           const coords::coord_point<Point, Origin, Scale> &loc2 )
@@ -719,30 +754,71 @@ midpoint( const coords::coord_point<Point, Origin, Scale> &loc1,
     return coords::coord_point<Point, Origin, Scale>( ( loc1.raw() + loc2.raw() ) / 2 );
 }
 
-template<typename Point>
-Point midpoint( const inclusive_rectangle<Point> &box )
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_line( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 )
 {
-    constexpr point one( 1, 1 ); // NOLINT(cata-use-named-point-constants)
-    return midpoint( box.p_min, box.p_max + one );
+    std::vector<coords::coord_point<Point, Origin, Scale>> line = line_to( p1, p2 );
+    for( auto &i : line ) {
+        set( i );
+    }
+    set( p1 );
 }
 
-template<typename Point>
-Point midpoint( const half_open_rectangle<Point> &box )
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_square( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 )
 {
-    return midpoint( box.p_min, box.p_max );
+    if( p1.x() > p2.x() ) {
+        std::swap( p1.x(), p2.x() );
+    }
+    if( p1.y() > p2.y() ) {
+        std::swap( p1.y(), p2.y() );
+    }
+    for( int x = p1.x(); x <= p2.x(); x++ ) {
+        for( int y = p1.y(); y <= p2.y(); y++ ) {
+            set( coords::coord_point<Point, Origin, Scale>( x, y ) );
+        }
+    }
 }
 
-template<typename Tripoint>
-Tripoint midpoint( const inclusive_cuboid<Tripoint> &box )
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_rough_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+coords::coord_point<Point, Origin, Scale> p, int rad )
 {
-    constexpr tripoint one( 1, 1, 1 );
-    return midpoint( box.p_min, box.p_max + one );
+    for( int i = p.x() - rad; i <= p.x() + rad; i++ ) {
+        for( int j = p.y() - rad; j <= p.y() + rad; j++ ) {
+            if( trig_dist( p, coords::coord_point<Point, Origin, Scale>( i, j ) ) + rng( 0, 3 ) <= rad ) {
+                set( coords::coord_point<Point, Origin, Scale>( i, j ) );
+            }
+        }
+    }
 }
 
-template<typename Tripoint>
-Tripoint midpoint( const half_open_cuboid<Tripoint> &box )
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+const rl_vec2d &p, double rad )
 {
-    return midpoint( box.p_min, box.p_max );
+    for( int i = p.x - rad - 1; i <= p.x + rad + 1; i++ ) {
+        for( int j = p.y - rad - 1; j <= p.y + rad + 1; j++ ) {
+            if( ( p.x - i ) * ( p.x - i ) + ( p.y - j ) * ( p.y - j ) <= rad * rad ) {
+                set( coords::coord_point<Point, Origin, Scale>( i, j ) );
+            }
+        }
+    }
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+coords::coord_point<Point, Origin, Scale> p, int rad )
+{
+    for( int i = p.x() - rad; i <= p.x() + rad; i++ ) {
+        for( int j = p.y() - rad; j <= p.y() + rad; j++ ) {
+            if( trig_dist( p, coords::coord_point<Point, Origin, Scale>( i, j ) ) <= rad ) {
+                set( coords::coord_point<Point, Origin, Scale>( i, j ) );
+            }
+        }
+    }
 }
 
 /* find appropriate subdivided coordinates for absolute tile coordinate.

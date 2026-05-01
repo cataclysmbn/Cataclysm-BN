@@ -907,7 +907,7 @@ void run_on_game_load_hooks( lua_state &state )
     run_hooks( "on_game_load", nullptr, { .state = &state } );
 }
 
-void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &p,
+void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint_abs_omt &p,
                                       const time_point &when )
 {
     run_hooks( "on_mapgen_postprocess", [&]( sol::table & params ) {

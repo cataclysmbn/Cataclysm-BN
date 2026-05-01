@@ -191,7 +191,7 @@ void avatar::control_npc( npc &np )
         np.remove_effect( effect_hot_speed, bp.id() );
     }
 
-    np.onswapsetpos( np.pos() );
+    np.onswapsetpos( np.bub_pos() );
     // the avatar character is no longer a follower NPC
     g->remove_npc_follower( getID() );
     // the previous avatar character is now a follower (unless they're dead)
@@ -205,7 +205,7 @@ void avatar::control_npc( npc &np )
     // perception and mutations may have changed, so reset light level caches
     g->reset_light_level();
     // center the map on the new avatar character
-    g->vertical_shift( posz() );
+    g->vertical_shift( bub_pos().z() );
     g->update_map( *this );
 }
 
@@ -221,12 +221,12 @@ bool avatar::should_show_map_memory()
 
 bool avatar::save_map_memory()
 {
-    return player_map_memory->save( g->m.getabs( pos() ) );
+    return player_map_memory->save( g->m.bub_to_abs( tripoint_bub_ms( bub_pos() ) ) );
 }
 
 void avatar::load_map_memory()
 {
-    player_map_memory->load( g->m.getabs( pos() ) );
+    player_map_memory->load( g->m.bub_to_abs( tripoint_bub_ms( bub_pos() ) ) );
 }
 
 void avatar::clear_map_memory()
@@ -234,54 +234,54 @@ void avatar::clear_map_memory()
     player_map_memory->clear();
 }
 
-void avatar::prepare_map_memory_region( const tripoint &p1, const tripoint &p2 )
+void avatar::prepare_map_memory_region( const tripoint_abs_ms &p1, const tripoint_abs_ms &p2 )
 {
     player_map_memory->prepare_region( p1, p2 );
 }
 
-const memorized_terrain_tile &avatar::get_memorized_tile( const tripoint &pos ) const
+const memorized_terrain_tile &avatar::get_memorized_tile( const tripoint_abs_ms &pos ) const
 {
     return player_map_memory->get_tile( pos );
 }
 
-void avatar::memorize_tile( const tripoint &pos, const std::string &ter, const int subtile,
+void avatar::memorize_tile( const tripoint_abs_ms &pos, const std::string &ter, const int subtile,
                             const int rotation )
 {
     player_map_memory->memorize_tile( pos, ter, subtile, rotation );
 }
 
-void avatar::memorize_symbol( const tripoint &pos, const int symbol )
+void avatar::memorize_symbol( const tripoint_abs_ms &pos, const int symbol )
 {
     player_map_memory->memorize_symbol( pos, symbol );
 }
 
-int avatar::get_memorized_symbol( const tripoint &p ) const
+int avatar::get_memorized_symbol( const tripoint_abs_ms &p ) const
 {
     return player_map_memory->get_symbol( p );
 }
 
-void avatar::memorize_terrain_tile( const tripoint &pos, const std::string &ter,
+void avatar::memorize_terrain_tile( const tripoint_abs_ms &pos, const std::string &ter,
                                     const int subtile, const int rotation )
 {
     player_map_memory->memorize_terrain_tile( pos, ter, subtile, rotation );
 }
 
-memorized_terrain_tile avatar::get_terrain_tile( const tripoint &pos ) const
+memorized_terrain_tile avatar::get_terrain_tile( const tripoint_abs_ms &pos ) const
 {
     return player_map_memory->get_terrain_tile( pos );
 }
 
-void avatar::clear_memorized_overlay( const tripoint &pos )
+void avatar::clear_memorized_overlay( const tripoint_abs_ms &pos )
 {
     player_map_memory->clear_memorized_overlay( pos );
 }
 
-void avatar::clear_memorized_tile( const tripoint &pos )
+void avatar::clear_memorized_tile( const tripoint_abs_ms &pos )
 {
     player_map_memory->clear_memorized_tile( pos );
 }
 
-bool avatar::has_memorized_tile_for_autodrive( const tripoint &p ) const
+bool avatar::has_memorized_tile_for_autodrive( const tripoint_abs_ms &p ) const
 {
     return player_map_memory->has_memory_for_autodrive( p );
 }
@@ -390,7 +390,7 @@ const Character *avatar::get_book_reader( const item &book,
     }
 
     // Check for conditions that immediately disqualify the player from reading:
-    const optional_vpart_position vp = get_map().veh_at( pos() );
+    const optional_vpart_position vp = get_map().veh_at( bub_pos() );
     if( vp && vp->vehicle().player_in_control( *this ) ) {
         reasons.emplace_back( _( "It's a bad idea to read while driving!" ) );
         return nullptr;
@@ -1041,7 +1041,7 @@ void avatar::do_read( item *loc )
         add_msg( m_debug, _( "Chance to learn one in: %d" ), difficulty );
 
         if( one_in( difficulty ) ) {
-            m->second.call( *this, book, false, pos() );
+            m->second.call( *this, book, false, bub_pos().raw() );
             continuous = false;
         } else {
             if( activity->index == getID().get_value() ) {
@@ -1344,7 +1344,7 @@ void avatar::set_movement_mode( character_movemode new_mode )
     }
     if( move_mode == CMM_CROUCH || new_mode == CMM_CROUCH ) {
         // crouching affects visibility
-        get_map().set_seen_cache_dirty( pos().z );
+        get_map().set_seen_cache_dirty( bub_pos().z() );
     }
     move_mode = new_mode;
 }

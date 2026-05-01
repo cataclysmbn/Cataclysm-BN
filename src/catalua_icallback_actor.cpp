@@ -332,7 +332,7 @@ bool lua_istate_actor::has_on_tick() const
     return on_tick_func != sol::lua_nil;
 }
 
-int lua_istate_actor::call_on_tick( Character &who, item &it, const tripoint &pos ) const
+int lua_istate_actor::call_on_tick( Character &who, item &it, const tripoint_bub_ms &pos ) const
 {
     if( on_tick_func == sol::lua_nil ) {
         return 0;
@@ -370,7 +370,7 @@ void lua_istate_actor::call_on_pickup( Character &who, item &it ) const
     }
 }
 
-bool lua_istate_actor::call_on_drop( Character &who, item &it, const tripoint &pos ) const
+bool lua_istate_actor::call_on_drop( Character &who, item &it, const tripoint_bub_ms &pos ) const
 {
     if( on_drop_func == sol::lua_nil ) {
         return false;

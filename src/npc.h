@@ -781,13 +781,13 @@ class npc : public player
          * Set @ref submap_coords and @ref pos.
          * @param m global submap coordinates.
          */
-        void spawn_at_sm( const tripoint &p );
+        void spawn_at_sm( const tripoint_abs_sm &p );
         /**
          * As spawn_at, but also sets position within the submap.
          * Note: final submap may differ from submap_offset if @ref square has
          * x/y values outside [0, SEEX-1]/[0, SEEY-1] range.
          */
-        void spawn_at_precise( point submap_offset, const tripoint &square );
+        void spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm_ms &square );
         /**
          * Places the NPC on the @ref map. This update its
          * pos values to fit the current offset of
@@ -905,7 +905,7 @@ class npc : public player
         void stow_weapon( );
         bool wield( item &it ) override;
         detached_ptr<item> wield( detached_ptr<item> &&target ) override;
-        void drop( const drop_locations &what, const tripoint &target,
+        void drop( const drop_locations &what, const tripoint_bub_ms &target,
                    bool stash ) override;
         bool adjust_worn();
         bool has_healing_item( healing_options try_to_fix );
@@ -1130,7 +1130,7 @@ class npc : public player
 
         const pathfinding_settings &get_legacy_pathfinding_settings() const override;
         const pathfinding_settings &get_legacy_pathfinding_settings( bool no_bashing ) const;
-        std::set<tripoint> get_legacy_path_avoid() const override;
+        std::set<tripoint_bub_ms> get_legacy_path_avoid() const override; // tripoint_bub_ms
 
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair( bool no_bashing ) const;
@@ -1220,9 +1220,9 @@ class npc : public player
          * Note: this places NPC on a given position in CURRENT MAP coordinates.
          * Do not use when placing a NPC in mapgen.
          */
-        void setpos( const tripoint &pos ) override;
-        void onswapsetpos( const tripoint &pos );
-        void travel_overmap( const tripoint &pos );
+        void setpos( const tripoint_bub_ms &pos ) override;
+        void onswapsetpos( const tripoint_bub_ms &pos );
+        void travel_overmap( const tripoint_abs_sm &pos );
         npc_attitude get_attitude() const;
         void set_attitude( npc_attitude new_attitude );
         void set_mission( npc_mission new_mission );
@@ -1259,7 +1259,7 @@ class npc : public player
          * overmap if needed.
          * submap_coords defines the overmap the npc is stored on.
          */
-        point submap_coords;
+        point_abs_sm submap_coords;
         // Type of complaint->last time we complained about this type
         std::map<std::string, time_point> complaints;
 
@@ -1286,7 +1286,7 @@ class npc : public player
          * pos() += SEEX; submap_coords.x -= 1;
          * This does not change the global position of the NPC.
          */
-        tripoint global_square_location() const override;
+        tripoint_abs_ms global_square_location() const override;
         std::optional<tripoint> last_player_seen_pos; // Where we last saw the player
         // Player orders a friendly NPC to move to this position
         std::optional<tripoint_abs_ms> goto_to_this_pos;
@@ -1411,7 +1411,7 @@ class standard_npc : public npc
         // runtime so that the correct bubble-center is used regardless of the
         // current REALITY_BUBBLE_SIZE setting.
         standard_npc( const std::string &name = "",
-                      const tripoint &pos = tripoint_min,
+                      const tripoint_bub_ms &pos = tripoint_bub_ms( tripoint_min ),
                       const std::vector<std::string> &clothing = {},
                       int sk_lvl = 4, int s_str = 8, int s_dex = 8, int s_int = 8, int s_per = 8 );
 };

@@ -604,7 +604,7 @@ void item::deactivate()
             get_map().make_inactive( *this );
             break;
         case item_location_type::vehicle:
-            get_map().veh_at( position() )->vehicle().make_inactive( *this );
+            get_map().veh_at( tripoint_bub_ms( position() ) )->vehicle().make_inactive( *this );
             break;
         default:
             break;
@@ -633,7 +633,7 @@ void item::activate()
             get_map().make_active( *this );
             break;
         case item_location_type::vehicle:
-            get_map().veh_at( position() )->vehicle().make_active( *this );
+            get_map().veh_at( tripoint_bub_ms( position() ) )->vehicle().make_active( *this );
             break;
         default:
             break;
@@ -4719,7 +4719,7 @@ void item::on_wear( Character &who )
             }
         }
         if( transform && actor->restricted ) {
-            actor->bypass( *who.as_player(), *this, false, who.pos() );
+            actor->bypass( *who.as_player(), *this, false, who.bub_pos().raw() );
         }
     }
 
@@ -4754,7 +4754,7 @@ void item::on_takeoff( Character &who )
             debugmsg( "iuse_actor type descriptor and actual type mismatch" );
             return;
         }
-        actor->bypass( *who.as_player(), *this, false, who.pos() );
+        actor->bypass( *who.as_player(), *this, false, who.bub_pos().raw() );
     }
 
     if( type->iwearable_callbacks ) {
@@ -4848,8 +4848,8 @@ void item::handle_pickup_ownership( Character &c )
             std::vector<npc *> witnesses;
             for( npc &elem : g->all_npcs() ) {
                 // If they already want to murder you, no point in confronting you about theft
-                if( rl_dist( elem.pos(), you.pos() ) < g_max_view_distance && elem.get_faction() &&
-                    is_owned_by( elem ) && elem.sees( you.pos() ) && !elem.guaranteed_hostile() ) {
+                if( rl_dist( elem.bub_pos(), you.bub_pos() ) < g_max_view_distance && elem.get_faction() &&
+                    is_owned_by( elem ) && elem.sees( you.bub_pos() ) && !elem.guaranteed_hostile() ) {
                     elem.say( "<witnessed_thievery>", 7 );
                     npc *npc_to_add = &elem;
                     witnesses.push_back( npc_to_add );
@@ -4891,7 +4891,7 @@ void item::on_pickup( Character &who )
         handle_pickup_ownership( who );
     }
     if( is_bucket_nonempty() ) {
-        contents.spill_contents( who.pos() );
+        contents.spill_contents( who.bub_pos().raw() );
     }
 
     who.flag_encumbrance();
@@ -6775,7 +6775,7 @@ bool item::ready_to_revive( const tripoint &pos ) const
     if( !can_revive() ) {
         return false;
     }
-    if( get_map().veh_at( pos ) ) {
+    if( get_map().veh_at( tripoint_bub_ms( pos ) ) ) {
         return false;
     }
     if( !calendar::once_every( 1_seconds ) ) {
@@ -6791,7 +6791,7 @@ bool item::ready_to_revive( const tripoint &pos ) const
         // If we're a special revival zombie, wait to get up until the player is nearby.
         const bool isReviveSpecial = has_flag( flag_REVIVE_SPECIAL );
         if( isReviveSpecial ) {
-            const int distance = rl_dist( pos, get_player_character().pos() );
+            const int distance = rl_dist( tripoint_bub_ms( pos ), get_player_character().bub_pos() );
             if( distance > 3 ) {
                 return false;
             }
@@ -7929,7 +7929,7 @@ bool item::spill_contents( Character &c )
     }
 
     if( c.is_npc() ) {
-        return spill_contents( c.pos() );
+        return spill_contents( c.bub_pos().raw() );
     }
 
     contents.handle_liquid_or_spill( c );
@@ -7945,7 +7945,7 @@ bool item::spill_contents( const tripoint &pos )
     }
 
     for( detached_ptr<item> &it : contents.clear_items() ) {
-        get_map().add_item_or_charges( pos, std::move( it ) );
+        get_map().add_item_or_charges( tripoint_bub_ms( pos ), std::move( it ) );
     }
 
     return true;
@@ -8421,7 +8421,7 @@ int item::ammo_consume( int qty, const tripoint &pos )
             if( mag->has_flag( flag_MAG_DESTROY ) ) {
                 remove_item( *mag );
             } else if( mag->has_flag( flag_MAG_EJECT ) ) {
-                get_map().add_item( pos, remove_item( *mag ) );
+                get_map().add_item( tripoint_bub_ms( pos ), remove_item( *mag ) );
             }
         }
         return res;
@@ -9644,7 +9644,7 @@ void item::set_charges( int value )
 
 detached_ptr<item> item::use_charges( detached_ptr<item> &&self, const itype_id &what, int &qty,
                                       std::vector<detached_ptr<item>> &used,
-                                      const tripoint &pos, const std::function<bool( const item & )> &filter )
+                                      const tripoint_bub_ms &pos, const std::function<bool( const item & )> &filter )
 {
 
 
@@ -9659,11 +9659,11 @@ detached_ptr<item> item::use_charges( detached_ptr<item> &&self, const itype_id 
 
                 if( n == e->ammo_remaining() ) {
                     used.push_back( item::spawn( *e ) );
-                    e->ammo_consume( really_used, pos );
+                    e->ammo_consume( really_used, pos.raw() );
                 } else {
                     detached_ptr<item> split = item::spawn( *e );
                     split->ammo_set( e->ammo_current(), really_used );
-                    e->ammo_consume( really_used, pos );
+                    e->ammo_consume( really_used, pos.raw() );
                     used.push_back( std::move( split ) );
                 }
             }
@@ -10068,7 +10068,7 @@ detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool sea
         // It's a modifier, so we need to subtract 0_f
         units::temperature local_mod = units::from_fahrenheit( g->new_game
                                        ? 0
-                                       : get_map().get_temperature( pos ) ) - 0_f;
+                                       : get_map().get_temperature( tripoint_bub_ms( pos ) ) ) - 0_f;
 
         // Process the past of this item since the last time it was processed
         while( now - time > 1_hours ) {
@@ -10195,7 +10195,7 @@ detached_ptr<item> item::process_corpse( detached_ptr<item> &&self, player *carr
     if( rng( 0, self->volume() / units::legacy_volume_factor ) > self->burnt &&
         g->revive_corpse( pos, *self ) ) {
         if( carrier == nullptr ) {
-            if( get_avatar().sees( pos ) ) {
+            if( get_avatar().sees( tripoint_bub_ms( pos ) ) ) {
                 if( self->corpse->in_species( ROBOT ) ) {
                     add_msg( m_warning, _( "A nearby robot has repaired itself and stands up!" ) );
                 } else {
@@ -10225,8 +10225,8 @@ detached_ptr<item> item::process_fake_mill( detached_ptr<item> &&self, player * 
         return std::move( self );
     }
     map &here = get_map();
-    if( here.furn( pos ) != furn_str_id( "f_wind_mill_active" ) &&
-        here.furn( pos ) != furn_str_id( "f_water_mill_active" ) ) {
+    if( here.furn( tripoint_bub_ms( pos ) ) != furn_str_id( "f_wind_mill_active" ) &&
+        here.furn( tripoint_bub_ms( pos ) ) != furn_str_id( "f_water_mill_active" ) ) {
         self->set_counter( 0 );
         return detached_ptr<item>(); //destroy fake mill
     }
@@ -10246,7 +10246,7 @@ detached_ptr<item> item::process_fake_cloning_vat( detached_ptr<item> &&self, pl
         return std::move( self );
     }
     map &here = get_map();
-    if( here.furn( pos ) != furn_str_id( "f_cloning_vat_active" ) ) {
+    if( here.furn( tripoint_bub_ms( pos ) ) != furn_str_id( "f_cloning_vat_active" ) ) {
         self->item_counter = 0;
         return detached_ptr<item>(); //destroy fake smoke
     }
@@ -10266,8 +10266,8 @@ detached_ptr<item> item::process_fake_smoke( detached_ptr<item> &&self, player *
         return std::move( self );
     }
     map &here = get_map();
-    if( here.furn( pos ) != furn_str_id( "f_smoking_rack_active" ) &&
-        here.furn( pos ) != furn_str_id( "f_metal_smoking_rack_active" ) ) {
+    if( here.furn( tripoint_bub_ms( pos ) ) != furn_str_id( "f_smoking_rack_active" ) &&
+        here.furn( tripoint_bub_ms( pos ) ) != furn_str_id( "f_metal_smoking_rack_active" ) ) {
         self->set_counter( 0 );
         return detached_ptr<item>(); //destroy fake smoke
     }
@@ -10320,24 +10320,24 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         if( ( carrier->has_effect( effect_shakes ) && one_in( 10 ) ) ) {
             carrier->add_msg_if_player( m_bad, _( "Your shaking hand causes you to drop your %s." ),
                                         it.tname() );
-            here.add_item_or_charges( pos + point( rng( -1, 1 ), rng( -1, 1 ) ), std::move( self ) );
+            here.add_item_or_charges( tripoint_bub_ms( pos ) + point( rng( -1, 1 ), rng( -1, 1 ) ), std::move( self ) );
             return detached_ptr<item>(); // removes the item that has just been added to the map
         }
 
         if( carrier->has_effect( effect_sleep ) ) {
             carrier->add_msg_if_player( m_bad, _( "You fall asleep and drop your %s." ),
                                         it.tname() );
-            here.add_item_or_charges( pos + point( rng( -1, 1 ), rng( -1, 1 ) ), std::move( self ) );
+            here.add_item_or_charges( tripoint_bub_ms( pos ) + point( rng( -1, 1 ), rng( -1, 1 ) ), std::move( self ) );
             self = detached_ptr<item>();
         }
     } else {
         // If not carried by someone, but laying on the ground:
         if( it.item_counter % 5 == 0 ) {
             // lit cigarette can start fires
-            if( here.flammable_items_at( pos ) ||
-                here.has_flag( flag_FLAMMABLE, pos ) ||
-                here.has_flag( flag_FLAMMABLE_ASH, pos ) ) {
-                here.add_field( pos, fd_fire, 1 );
+            if( here.flammable_items_at( tripoint_bub_ms( pos ) ) ||
+                here.has_flag( flag_FLAMMABLE, tripoint_bub_ms( pos ) ) ||
+                here.has_flag( flag_FLAMMABLE_ASH, tripoint_bub_ms( pos ) ) ) {
+                here.add_field( tripoint_bub_ms( pos ), fd_fire, 1 );
             }
         }
     }
@@ -10352,7 +10352,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         if( it.has_flag( flag_MARIJUANA ) ) {
             if( carrier != nullptr ) {
                 carrier->add_effect( effect_weed_high, 1_minutes ); // one last puff
-                here.add_field( pos + point( rng( -1, 1 ), rng( -1, 1 ) ), fd_weedsmoke, 2 );
+                here.add_field( tripoint_bub_ms( pos ) + point( rng( -1, 1 ), rng( -1, 1 ) ), fd_weedsmoke, 2 );
                 weed_msg( *carrier );
             }
         }
@@ -10393,11 +10393,11 @@ detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, player *
             break;
     }
     map &here = get_map();
-    if( in_inv && !in_veh && here.has_flag( flag_DEEP_WATER, pos ) ) {
+    if( in_inv && !in_veh && here.has_flag( flag_DEEP_WATER, tripoint_bub_ms( pos ) ) ) {
         extinguish = true;
         submerged = true;
     }
-    if( ( !in_inv && here.has_flag( flag_LIQUID, pos ) && !here.veh_at( pos ) ) ||
+    if( ( !in_inv && here.has_flag( flag_LIQUID, tripoint_bub_ms( pos ) ) && !here.veh_at( tripoint_bub_ms( pos ) ) ) ||
         ( precipitation && !g->is_sheltered( pos ) ) ) {
         extinguish = true;
     }
@@ -10502,7 +10502,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
                 //Sitting in vehicle shenenigans
                 //If character is sitting at vehicle - no need(and no way) to figure out cable distance and if it's the same vehicle we previously connected
                 //So we just ignore distance
-                const auto vp_pos = here.veh_at( pos );
+                const auto vp_pos = here.veh_at( tripoint_bub_ms( pos ) );
                 if( vp_pos ) {
                     const auto seat = vp_pos.part_with_feature( "BOARDABLE", true );
                     if( seat && carrier == seat->vehicle().get_passenger( seat->part_index() ) ) {
@@ -10857,7 +10857,7 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
 
     map &here = get_map();
     for( const emit_id &e : self->type->emits ) {
-        here.emit_field( pos, e );
+        here.emit_field( tripoint_bub_ms( pos ), e );
     }
 
     if( self->has_flag( flag_FAKE_SMOKE ) ) {
@@ -10924,9 +10924,9 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
         // If the item has rotted away, then self becomes a null pointer.
         if( !self ) {
             if( obj.is_comestible() ) {
-                here.rotten_item_spawn( obj, pos );
+                here.rotten_item_spawn( obj, tripoint_bub_ms( pos ) );
             } else if( obj.is_corpse() ) {
-                here.handle_decayed_corpse( obj, pos );
+                here.handle_decayed_corpse( obj, tripoint_bub_ms( pos ) );
             }
         }
     }
@@ -11192,12 +11192,12 @@ skill_id item::contextualize_skill( const skill_id &id ) const
 }
 
 
-bool item::on_drop( const tripoint &pos )
+bool item::on_drop( const tripoint_bub_ms &pos )
 {
     return on_drop( pos, get_map() );
 }
 
-bool item::on_drop( const tripoint &pos, map &m )
+bool item::on_drop( const tripoint_bub_ms &pos, map &m )
 {
     avatar &you = get_avatar();
 
@@ -11216,7 +11216,7 @@ bool item::on_drop( const tripoint &pos, map &m )
     }
     you.flag_encumbrance();
 
-    return type->drop_action && type->drop_action.call( you, *this, false, pos );
+    return type->drop_action && type->drop_action.call( you, *this, false, pos.raw() );
 }
 
 time_duration item::age() const

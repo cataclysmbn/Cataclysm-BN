@@ -55,7 +55,7 @@ void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_
         }
     }
 
-    // Request a single quad (radius 0) — always covers full z-pillar.
+    // Request a single omt (radius 0) — always covers full z-pillar.
     load_request_handle h = submap_loader.request_load(
                                 load_request_source::fire_spread,
                                 dim,

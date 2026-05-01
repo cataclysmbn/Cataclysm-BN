@@ -23,7 +23,7 @@ mapgen_function_lua::mapgen_function_lua( const std::string &func,
 
 void mapgen_function_lua::generate( mapgendata &dat )
 {
-    // generate_quad() must always be called on the main thread; this guard
+    // generate_omt() must always be called on the main thread; this guard
     // enforces that invariant for the Lua mapgen path.
     assert( !is_pool_worker_thread() );
     if( generate_func.valid() ) {

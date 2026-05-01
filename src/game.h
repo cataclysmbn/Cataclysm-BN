@@ -327,9 +327,9 @@ class game : public submap_load_listener
          * @param allow_hallucination Whether to return monsters that are actually hallucinations.
          */
         template<typename T = Creature>
-        T * critter_at( const tripoint &p, bool allow_hallucination = false );
+        T * critter_at( const tripoint_bub_ms &p, bool allow_hallucination = false );
         template<typename T = Creature>
-        const T * critter_at( const tripoint &p, bool allow_hallucination = false ) const;
+        const T * critter_at( const tripoint_bub_ms &p, bool allow_hallucination = false ) const;
         /**
         * Returns a shared pointer to the given critter (which can be of any of the subclasses of
         * @ref Creature). The function may return an empty pointer if the given critter
@@ -379,12 +379,12 @@ class game : public submap_load_listener
          */
         size_t num_creatures() const;
         /** Redirects to the creature_tracker update_pos() function. */
-        bool update_zombie_pos( const monster &critter, const tripoint &pos );
+        bool update_zombie_pos( const monster &critter, const tripoint_bub_ms &pos );
         void remove_zombie( const monster &critter );
         /** Redirects to the creature_tracker clear() function. */
         void clear_zombies();
         /** Spawns a hallucination at a determined position. */
-        bool spawn_hallucination( const tripoint &p );
+        bool spawn_hallucination( const tripoint_bub_ms &p );
         /** Swaps positions of two creatures */
         bool swap_critters( Creature &, Creature & );
 
@@ -521,7 +521,7 @@ class game : public submap_load_listener
         Creature *get_creature_if( const std::function<bool( const Creature & )> &pred );
 
         /** Returns true if there is no player, NPC, or monster on the tile and move_cost > 0. */
-        bool is_empty( const tripoint &p );
+        bool is_empty( const tripoint_bub_ms &p );
         /** Returns true if p is outdoors and it is sunny. */
         bool is_in_sunlight( const tripoint &p );
         /** Returns true if p is indoors, underground, or in a car. */
@@ -654,23 +654,23 @@ class game : public submap_load_listener
         void add_artifact_messages( const std::vector<art_effect_passive> &effects );
         void add_artifact_dreams( );
 
-        static tripoint find_closest_stair( const tripoint &near_this, const ter_bitflags stair_type );
-        std::optional<tripoint> find_local_stairs_leading_to( map &mp, const int z_after );
+        static tripoint_bub_ms find_closest_stair( const tripoint_bub_ms &near_this, const ter_bitflags stair_type );
+        std::optional<tripoint_bub_ms> find_local_stairs_leading_to( map &mp, const int z_after );
         void suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction );
 
         void peek();
-        void peek( const tripoint &p );
-        std::optional<tripoint> look_debug();
+        void peek( const tripoint_bub_ms &p );
+        std::optional<tripoint_bub_ms> look_debug();
 
-        bool check_zone( const zone_type_id &type, const tripoint &where ) const;
+        bool check_zone( const zone_type_id &type, const tripoint_bub_ms &where ) const;
         /** Checks whether or not there is a zone of particular type nearby */
-        bool check_near_zone( const zone_type_id &type, const tripoint &where ) const;
+        bool check_near_zone( const zone_type_id &type, const tripoint_bub_ms &where ) const;
         bool is_zones_manager_open() const;
         bool is_zone_submap_grid_overlay_enabled() const;
         void zones_manager();
 
         // Look at nearby terrain ';', or select zone points
-        std::optional<tripoint> look_around( bool force_3d = false );
+        std::optional<tripoint_bub_ms> look_around( bool force_3d = false );
         /**
          * @brief
          *
@@ -684,25 +684,25 @@ class game : public submap_load_listener
          * @param end_point the end point of the targeting zone, only used if is_moving_zone is true, default is tripoint_zero
          * @return look_around_result
          */
-        look_around_result look_around( bool show_window, tripoint &center,
-                                        const tripoint &start_point, bool has_first_point, bool select_zone, bool peeking,
-                                        bool is_moving_zone = false, const tripoint &end_point = tripoint_zero, bool force_3d = false );
+        look_around_result look_around( bool show_window, tripoint_bub_ms &center,
+                                        const tripoint_bub_ms &start_point, bool has_first_point, bool select_zone, bool peeking,
+                                        bool is_moving_zone = false, const tripoint_bub_ms &end_point = tripoint_bub_ms::zero(), bool force_3d = false );
 
         // Shared method to print "look around" info
-        void pre_print_all_tile_info( const tripoint &lp, const catacurses::window &w_info,
+        void pre_print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::window &w_info,
                                       int &line, int last_line, const visibility_variables &cache );
 
         // Shared method to print "look around" info
-        void print_all_tile_info( const tripoint &lp, const catacurses::window &w_look,
+        void print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::window &w_look,
                                   const std::string &area_name, int column,
                                   int &line, int last_line, const visibility_variables &cache );
 
-        void draw_look_around_cursor( const tripoint &lp, const visibility_variables &cache );
+        void draw_look_around_cursor( const tripoint_bub_ms &lp, const visibility_variables &cache );
 
         /** Long description of (visible) things at tile. */
-        void extended_description( const tripoint &p );
+        void extended_description( const tripoint_bub_ms &p );
 
-        void draw_trail_to_square( const tripoint &t, bool bDrawX );
+        void draw_trail_to_square( const tripoint_bub_ms &t, bool bDrawX );
 
         /** Custom-filtered menu for inventory and nearby items and those that within specified radius */
         item *inv_map_splice( const item_filter &filter, const std::string &title, int radius = 0,
@@ -927,7 +927,7 @@ class game : public submap_load_listener
         void butcher(); // Butcher a corpse  'B'
     public:
         // Places the player at the specified point; hurts feet, lists items etc.
-        point place_player( const tripoint &dest );
+        point_rel_ms place_player( const tripoint_bub_ms &dest );
         void place_player_overmap( const tripoint_abs_omt &om_dest );
 
         unsigned int get_seed() const;

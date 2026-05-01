@@ -452,6 +452,12 @@ void location_vector<T>::move_by( tripoint offset )
 }
 
 template<typename T>
+void location_vector<T>::init_location( location<T> *new_loc )
+{
+    loc = std::unique_ptr<location<T>>( new_loc );
+}
+
+template<typename T>
 void location_vector<T>::set_loc_hack( location<T> *new_loc )
 {
     loc = std::unique_ptr<location<T>>( new_loc );

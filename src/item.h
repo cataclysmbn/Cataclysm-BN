@@ -762,7 +762,7 @@ class item : public location_visitable<item>, public game_object<item>
          */
         static detached_ptr<item> use_charges( detached_ptr<item> &&self, const itype_id &what, int &qty,
                                                std::vector<detached_ptr<item>> &used,
-                                               const tripoint &pos,
+                                               const tripoint_bub_ms &pos,
                                                const std::function<bool( const item & )> &filter = return_true<item> );
 
         /**
@@ -771,7 +771,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param pos Where is the item being placed. Note: the item isn't there yet.
          * @return true if the item was destroyed during placement.
          */
-        bool on_drop( const tripoint &pos );
+        bool on_drop( const tripoint_bub_ms &pos );
 
         /**
          * Invokes item type's @ref itype::drop_action.
@@ -780,7 +780,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param map A map object associated with that position.
          * @return true if the item was destroyed during placement.
          */
-        bool on_drop( const tripoint &pos, map &map );
+        bool on_drop( const tripoint_bub_ms &pos, map &map );
 
         /**
          * Consume a specific amount of items of a specific type.

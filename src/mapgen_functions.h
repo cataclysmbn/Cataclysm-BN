@@ -69,9 +69,9 @@ void mapgen_tutorial( mapgendata &dat );
 void mapgen_lake_shore( mapgendata &dat );
 
 // Temporary wrappers
-void mremove_trap( map *m, point );
-void mtrap_set( map *m, point, trap_id type );
-void madd_field( map *m, point, field_type_id type, int intensity );
+void mremove_trap( map *m, const point_bub_ms & );
+void mtrap_set( map *m, const point_bub_ms &, trap_id type );
+void madd_field( map *m, const point_bub_ms &, field_type_id type, int intensity );
 
 mapgen_update_func add_mapgen_update_func( const JsonObject &jo, bool &defer );
 bool run_mapgen_update_func( const std::string &update_mapgen_id, const tripoint_abs_omt &omt_pos,
@@ -83,7 +83,7 @@ bool run_mapgen_func( const std::string &mapgen_id, mapgendata &dat );
  * Returns true if the overmap terrain at @p om_addr in dimension @p dim_id
  * has at least one Lua-based mapgen function in its weighted pool.
  *
- * Used by mapbuffer::generate_quad() to detect whether a quad must be
+ * Used by mapbuffer::generate_omt() to detect whether a omt must be
  * deferred to the main thread (Lua is not reentrant on worker threads).
  */
 auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint &om_addr ) -> bool;

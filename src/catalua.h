@@ -44,13 +44,13 @@ void run_mod_main_script( lua_state &state, const mod_id &mod );
 void run_on_game_load_hooks( lua_state &state );
 void run_on_game_save_hooks( lua_state &state );
 void run_on_every_x_hooks( lua_state &state );
-void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &p,
+void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint_abs_omt &p,
                                       const time_point &when );
 
 /** Single item passed to run_on_mapgen_postprocess_hooks_batch(). */
 struct mapgen_hook_batch_item {
-    tripoint   sm_base;  // submap coords — passed to tinymap::bind_submaps_for_hook
-    tripoint   omt_pos;  // raw OmT position — forwarded to params["omt"]
+    tripoint_abs_sm sm_base; // submap coords — passed to tinymap::bind_submaps_for_hook
+    tripoint_abs_omt omt_pos; // raw OmT position — forwarded to params["omt"]
     time_point when;
 };
 

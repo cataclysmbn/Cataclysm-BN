@@ -139,7 +139,7 @@ static void serialize( const weak_ptr_fast<monster> &obj, JsonOut &jsout )
     if( const auto monster_ptr = obj.lock() ) {
         jsout.start_object();
 
-        jsout.member( "monster_at", monster_ptr->pos() );
+        jsout.member( "monster_at", monster_ptr->bub_pos() );
         // TODO: if monsters/Creatures ever get unique ids,
         // create a differently named member, e.g.
         //     jsout.member("unique_id", monster_ptr->getID());
@@ -458,12 +458,12 @@ void Character::load( const JsonObject &data )
     data.allow_omitted_members();
     Creature::load( data );
 
-    if( !data.read( "posx", position.x ) ) {  // uh-oh.
+    if( !data.read( "posx", position.x() ) ) {  // uh-oh.
         debugmsg( "BAD PLAYER/NPC JSON: no 'posx'?" );
     }
-    data.read( "posy", position.y );
-    if( !data.read( "posz", position.z ) && g != nullptr ) {
-        position.z = g->get_levz();
+    data.read( "posy", position.y() );
+    if( !data.read( "posz", position.z() ) && g != nullptr ) {
+        position.z() = g->get_levz();
     }
     // stats
     data.read( "str_cur", str_cur );
@@ -821,9 +821,9 @@ void Character::store( JsonOut &json ) const
 
     // assumes already in Character object
     // positional data
-    json.member( "posx", position.x );
-    json.member( "posy", position.y );
-    json.member( "posz", position.z );
+    json.member( "posx", position.x() );
+    json.member( "posy", position.y() );
+    json.member( "posz", position.z() );
 
     // stat
     json.member( "str_cur", str_cur );
@@ -1619,11 +1619,11 @@ void npc::load( const JsonObject &data )
         if( data.read( "omy", o ) ) {
             old_coords.y += o * OMAPY * 2;
         }
-        submap_coords = old_coords + point( posx() / SEEX, posy() / SEEY );
+        submap_coords = point_abs_sm( old_coords + point( bub_pos().x() / SEEX, bub_pos().y() / SEEY ) );
     }
 
-    if( !data.read( "mapz", position.z ) ) {
-        data.read( "omz", position.z ); // omz/mapz got moved to position.z
+    if( !data.read( "mapz", position.z() ) ) {
+        data.read( "omz", position.z() ); // omz/mapz got moved to position.z
     }
 
     if( data.has_member( "plx" ) ) {
@@ -1631,7 +1631,7 @@ void npc::load( const JsonObject &data )
         data.read( "plx", last_player_seen_pos->x );
         data.read( "ply", last_player_seen_pos->y );
         if( !data.read( "plz", last_player_seen_pos->z ) ) {
-            last_player_seen_pos->z = posz();
+            last_player_seen_pos->z = bub_pos().z();
         }
         // old code used tripoint_min to indicate "not a valid point"
         if( *last_player_seen_pos == tripoint_min ) {
@@ -1966,17 +1966,17 @@ void monster::load( const JsonObject &data )
     type = &mtype_id( sidtmp ).obj();
 
     data.read( "unique_name", unique_name );
-    data.read( "posx", position.x );
-    data.read( "posy", position.y );
-    if( !data.read( "posz", position.z ) ) {
-        position.z = g->get_levz();
+    data.read( "posx", position.x() );
+    data.read( "posy", position.y() );
+    if( !data.read( "posz", position.z() ) ) {
+        position.z() = g->get_levz();
     }
 
     data.read( "wandf", wandf );
-    data.read( "wandx", wander_pos.x );
-    data.read( "wandy", wander_pos.y );
-    if( data.read( "wandz", wander_pos.z ) ) {
-        wander_pos.z = position.z;
+    data.read( "wandx", wander_pos.x() );
+    data.read( "wandy", wander_pos.y() );
+    if( data.read( "wandz", wander_pos.z() ) ) {
+        wander_pos.z() = position.z();
     }
     if( data.has_object( "tied_item" ) ) {
         JsonIn *tied_item_json = data.get_raw( "tied_item" );
@@ -2063,7 +2063,7 @@ void monster::load( const JsonObject &data )
     std::vector<tripoint> plans;
     data.read( "plans", plans );
     if( !plans.empty() ) {
-        goal = plans.back();
+        goal = tripoint_bub_ms( plans.back() );
     }
 
     data.read( "summon_time_limit", summon_time_limit );
@@ -2071,7 +2071,7 @@ void monster::load( const JsonObject &data )
     // This is relative to the monster so it isn't invalidated by map shifting.
     tripoint destination;
     data.read( "destination", destination );
-    goal = pos() + destination;
+    goal = bub_pos() + destination;
 
     upgrades = data.get_bool( "upgrades", type->upgrades );
     upgrade_time = data.get_int( "upgrade_time", -1 );
@@ -2134,12 +2134,12 @@ void monster::store( JsonOut &json ) const
     Creature::store( json );
     json.member( "typeid", type->id );
     json.member( "unique_name", unique_name );
-    json.member( "posx", position.x );
-    json.member( "posy", position.y );
-    json.member( "posz", position.z );
-    json.member( "wandx", wander_pos.x );
-    json.member( "wandy", wander_pos.y );
-    json.member( "wandz", wander_pos.z );
+    json.member( "posx", position.x() );
+    json.member( "posy", position.y() );
+    json.member( "posz", position.z() );
+    json.member( "wandx", wander_pos.x() );
+    json.member( "wandy", wander_pos.y() );
+    json.member( "wandz", wander_pos.z() );
     json.member( "wandf", wandf );
     json.member( "hp", hp );
     json.member( "special_attacks", special_attacks );
@@ -2180,7 +2180,7 @@ void monster::store( JsonOut &json ) const
         json.member( "battery_item", *battery_item );
     }
     // Store the relative position of the goal so it loads correctly after a map shift.
-    json.member( "destination", goal - pos() );
+    json.member( "destination", goal - bub_pos() );
     json.member( "ammo", ammo );
     json.member( "upgrades", upgrades );
     json.member( "upgrade_time", upgrade_time );
@@ -3695,7 +3695,7 @@ void mm_submap::serialize( JsonOut &jsout ) const
 
     for( size_t y = 0; y < SEEY; y++ ) {
         for( size_t x = 0; x < SEEX; x++ ) {
-            point p( x, y );
+            point_sm_ms p( x, y );
             const mm_elem elem = { tile( p ), terrain_tile( p ), symbol( p ) };
             if( x == 0 && y == 0 ) {
                 last = elem;
@@ -3751,7 +3751,7 @@ void mm_submap::deserialize( JsonIn &jsin )
                 }
                 jsin.end_array();
             }
-            point p( x, y );
+            point_sm_ms p( x, y );
             // Try to avoid assigning to save up on memory
             if( elem.tile != mm_submap::default_tile ) {
                 set_tile( p, elem.tile );
@@ -3810,16 +3810,16 @@ void map_memory::load_legacy( JsonIn &jsin )
         int symbol;
         memorized_terrain_tile tile;
     };
-    std::map<tripoint, mig_elem> elems;
+    std::map<tripoint_abs_ms, mig_elem> elems;
 
     jsin.start_array();
     jsin.start_array();
     while( !jsin.end_array() ) {
         jsin.start_array();
-        tripoint p;
-        p.x = jsin.get_int();
-        p.y = jsin.get_int();
-        p.z = jsin.get_int();
+        tripoint_abs_ms p;
+        p.x() = jsin.get_int();
+        p.y() = jsin.get_int();
+        p.z() = jsin.get_int();
         mig_elem &elem = elems[p];
         elem.tile.tile = jsin.get_string();
         elem.tile.subtile = jsin.get_int();
@@ -3829,26 +3829,26 @@ void map_memory::load_legacy( JsonIn &jsin )
     jsin.start_array();
     while( !jsin.end_array() ) {
         jsin.start_array();
-        tripoint p;
-        p.x = jsin.get_int();
-        p.y = jsin.get_int();
-        p.z = jsin.get_int();
+        tripoint_abs_ms p;
+        p.x() = jsin.get_int();
+        p.y() = jsin.get_int();
+        p.z() = jsin.get_int();
         elems[p].symbol = jsin.get_int();
         jsin.end_array();
     }
     jsin.end_array();
 
-    for( const std::pair<const tripoint, mig_elem> &elem : elems ) {
-        coord_pair cp( elem.first );
-        shared_ptr_fast<mm_submap> sm = find_submap( cp.sm );
+    for( const std::pair<const tripoint_abs_ms, mig_elem> &elem : elems ) {
+        const auto cp = project_remain<coords::sm>( elem.first );
+        shared_ptr_fast<mm_submap> sm = find_submap( cp.quotient_tripoint );
         if( !sm ) {
-            sm = allocate_submap( cp.sm );
+            sm = allocate_submap( cp.quotient_tripoint );
         }
         if( elem.second.tile != mm_submap::default_tile ) {
-            sm->set_tile( cp.loc, elem.second.tile );
+            sm->set_tile( cp.remainder, elem.second.tile );
         }
         if( elem.second.symbol != mm_submap::default_symbol ) {
-            sm->set_symbol( cp.loc, elem.second.symbol );
+            sm->set_symbol( cp.remainder, elem.second.symbol );
         }
     }
 }
@@ -4383,7 +4383,7 @@ void submap::store( JsonOut &jsout ) const
 }
 
 void submap::load( JsonIn &jsin, const std::string &member_name, int version,
-                   const tripoint offset )
+                   const tripoint_abs_ms offset )
 {
     if( member_name == "turn_last_touched" ) {
         last_touched = calendar::turn_zero + time_duration::from_turns( jsin.get_int() );
@@ -4600,7 +4600,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             int j = jsin.get_int();
             int k = jsin.get_int();
             auto sm_pt = tripoint_sm_ms( i, j, k );
-            auto abs_pt = tripoint_abs_ms( offset.x + i, offset.y + j, k );
+            auto abs_pt = tripoint_abs_ms( offset.x() + i, offset.y() + j, k );
             std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( abs_pt );
             pc->counter = jsin.get_int();
             if( jsin.test_int() ) {

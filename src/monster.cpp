@@ -171,7 +171,7 @@ static const std::map<monster_attitude, std::pair<std::string, color_id>> attitu
 };
 
 // Returns all the players around pos who don't have grabbing monsters adjacent to them
-static std::vector<player *> find_targets_to_ungrab( const tripoint &pos )
+static std::vector<player *> find_targets_to_ungrab( const tripoint_bub_ms &pos )
 {
     std::vector<player *> result;
     for( auto &player_pos : g->m.points_in_radius( pos, 1, 0 ) ) {
@@ -206,9 +206,7 @@ monster::monster() : corpse_components( new monster_component_item_location( thi
     battery_item( new monster_battery_item_location( this ) ),
     inv( new monster_item_location( this ) )
 {
-    position.x = 20;
-    position.y = 10;
-    position.z = -500; // Some arbitrary number that will cause debugmsgs
+    position = tripoint_bub_ms( 20, 10, -500 ); // Some arbitrary number that will cause debugmsgs
     unset_dest();
     wandf = 0;
     hp = 60;
@@ -256,7 +254,7 @@ monster::monster( const mtype_id &id ) : monster()
     }
 }
 
-monster::monster( const mtype_id &id, const tripoint &p ) : monster( id )
+monster::monster( const mtype_id &id, const tripoint_bub_ms &p ) : monster( id )
 {
     position = p;
     unset_dest();
@@ -328,16 +326,16 @@ monster::monster( const monster &source ) : Creature( source ),
 
 monster::~monster() = default;
 
-void monster::setpos( const tripoint &p )
+void monster::setpos( const tripoint_bub_ms &p )
 {
-    if( p == pos() ) {
+    if( p == bub_pos() ) {
         return;
     }
 
     bool wandering = is_wandering();
     g->update_zombie_pos( *this, p );
     position = p;
-    if( has_effect( effect_ridden ) && mounted_player && mounted_player->pos() != pos() ) {
+    if( has_effect( effect_ridden ) && mounted_player && mounted_player->bub_pos() != bub_pos() ) {
         add_msg( m_debug, "Ridden monster %s moved independently and dumped player", get_name() );
         mounted_player->forced_dismount();
     }
@@ -346,7 +344,7 @@ void monster::setpos( const tripoint &p )
     }
 }
 
-const tripoint &monster::pos() const
+const tripoint_bub_ms &monster::bub_pos() const
 {
     return position;
 }
@@ -584,7 +582,7 @@ void monster::reproduce()
                                           : spawn_disposition::SpawnDisp_Default;
 
     if( type->baby_monster ) {
-        g->m.add_spawn( type->baby_monster, spawn_cnt, pos(), disposition );
+        g->m.add_spawn( type->baby_monster, spawn_cnt, bub_pos(), disposition );
     } else {
         detached_ptr<item> item_to_spawn = item::spawn( type->baby_egg, birth, spawn_cnt );
 
@@ -592,7 +590,7 @@ void monster::reproduce()
             item_to_spawn->set_flag( flag_SPAWN_FRIENDLY );
         }
 
-        g->m.add_item_or_charges( pos(), std::move( item_to_spawn ), true );
+        g->m.add_item_or_charges( bub_pos(), std::move( item_to_spawn ), true );
     }
 }
 
@@ -645,7 +643,7 @@ void monster::refill_udders()
     }
 }
 
-void monster::spawn( const tripoint &p )
+void monster::spawn( const tripoint_bub_ms &p )
 {
     position = p;
     unset_dest();
@@ -1099,7 +1097,7 @@ nc_color monster::color_with_effects() const
     return ret;
 }
 
-bool monster::avoid_trap( const tripoint & /* pos */, const trap &tr ) const
+bool monster::avoid_trap( const tripoint_bub_ms & /* pos */, const trap &tr ) const
 {
     // The trap position is not used, monsters are to stupid to remember traps. Actually, they do
     // not even see them.
@@ -1214,42 +1212,42 @@ bool monster::made_of( phase_id p ) const
     return type->phase == p;
 }
 
-void monster::set_goal( const tripoint &p )
+void monster::set_goal( const tripoint_bub_ms &p )
 {
     const map &here = get_map();
     if( !here.inbounds( p ) ) {
         return;
     }
 
-    if( p != this->goal && p != this->pos() ) {
-        this->repath_requested = true;
+    if( p != goal && p != bub_pos() ) {
+        repath_requested = true;
     }
     goal = p;
 }
 
-void monster::shift( point sm_shift )
+void monster::shift( point_rel_sm sm_shift )
 {
     const map &here = get_map();
 
-    const point ms_shift = sm_to_ms_copy( sm_shift );
-    position -= ms_shift;
+    const auto ms_shift = project_to<coords::ms>( sm_shift );
+    position = position - ms_shift;
     if( wandf > 0 ) {
-        wander_pos -= ms_shift;
+        wander_pos = wander_pos - ms_shift;
     }
 
     // Pathfinding shifts, we bypass `set_dest` to prevent repathing
-    this->goal -= ms_shift;
-    if( !here.inbounds( this->goal ) ) {
+    goal = goal - ms_shift;
+    if( !here.inbounds( goal ) ) {
         // May accidentally occur during long-teleports
-        this->goal = pos();
-        this->path.clear();
+        goal = bub_pos();
+        path.clear();
         return;
     }
 
     // Shift our found paths too, but also validate them
     if( !this->path.empty() ) {
-        for( tripoint &p : this->path ) {
-            p -= ms_shift;
+        for( tripoint_bub_ms &p : path ) {
+            p = p - ms_shift;
 
             if( !here.inbounds( p ) ) {
                 // Path started going through OoB regions, so...
@@ -1366,7 +1364,7 @@ item *monster::get_battery_item() const
     return nullptr;
 }
 
-tripoint monster::move_target()
+tripoint_bub_ms monster::move_target()
 {
     return goal;
 }
@@ -1395,7 +1393,7 @@ bool monster::is_fleeing( Character &who ) const
         return false;
     }
     monster_attitude att = attitude( &who );
-    return att == MATT_FLEE || ( att == MATT_FOLLOW && rl_dist( pos(), who.pos() ) <= 4 );
+    return att == MATT_FLEE || ( att == MATT_FOLLOW && rl_dist( bub_pos(), who.bub_pos() ) <= 4 );
 }
 
 Attitude monster::attitude_to( const Creature &other ) const
@@ -1658,7 +1656,7 @@ void monster::process_triggers()
 
     process_trigger( mon_trigger::FIRE, [this]() {
         int ret = 0;
-        for( const auto &p : g->m.points_in_radius( pos(), 3 ) ) {
+        for( const auto &p : g->m.points_in_radius( bub_pos(), 3 ) ) {
             ret += 5 * g->m.get_field_intensity( p, fd_fire );
         }
         return ret;
@@ -1948,7 +1946,7 @@ void monster::melee_attack( Creature &target, float accuracy )
         return;
     }
 
-    if( !can_squeeze_to( target.pos() ) ) {
+    if( !can_squeeze_to( target.bub_pos() ) ) {
         return;
     }
 
@@ -2002,13 +2000,13 @@ void monster::melee_attack( Creature &target, float accuracy )
         if( u_see_me ) {
             if( target.is_player() ) {
                 sfx::play_variant_sound( "melee_attack", "monster_melee_hit",
-                                         sfx::get_heard_volume( target.pos() ) );
+                                         sfx::get_heard_volume( target.bub_pos().raw() ) );
                 sfx::do_player_death_hurt( dynamic_cast<player &>( target ), false );
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative.
                 add_msg( m_bad, _( "%1$s hits your %2$s." ), disp_name( false, true ),
                          bp_hit->accusative.translated() );
             } else if( target.is_npc() ) {
-                if( has_effect( effect_ridden ) && has_flag( MF_RIDEABLE_MECH ) && pos() == g->u.pos() ) {
+                if( has_effect( effect_ridden ) && has_flag( MF_RIDEABLE_MECH ) && bub_pos() == g->u.bub_pos() ) {
                     //~ %1$s: name of your mount, %2$s: target NPC name, %3$d: damage value
                     add_msg( m_good, _( "Your %1$s hits %2$s for %3$d damage!" ), name(), target.disp_name(),
                              total_dealt );
@@ -2019,7 +2017,7 @@ void monster::melee_attack( Creature &target, float accuracy )
                              bp_hit->accusative.translated() );
                 }
             } else {
-                if( has_effect( effect_ridden ) && has_flag( MF_RIDEABLE_MECH ) && pos() == g->u.pos() ) {
+                if( has_effect( effect_ridden ) && has_flag( MF_RIDEABLE_MECH ) && bub_pos() == g->u.bub_pos() ) {
                     //~ %1$s: name of your mount, %2$s: target creature name, %3$d: damage value
                     add_msg( m_good, _( "Your %1$s hits %2$s for %3$d damage!" ), get_name(), target.disp_name(),
                              total_dealt );
@@ -2273,7 +2271,7 @@ bool monster::move_effects( bool )
                 if( u_see_me ) {
                     add_msg( _( "The %s easily slips out of its bonds." ), name() );
                 }
-                g->m.add_item_or_charges( pos(), remove_tied_item() );
+                g->m.add_item_or_charges( bub_pos(), remove_tied_item() );
             }
         } else {
             if( tied_item ) {
@@ -2282,7 +2280,7 @@ bool monster::move_effects( bool )
                 const bool broken = rng( type->melee_dice * type->melee_sides, std::min( 10000,
                                          type->melee_dice * type->melee_sides * 250 ) ) > 800;
                 if( !broken ) {
-                    g->m.add_item_or_charges( pos(), it->detach() );
+                    g->m.add_item_or_charges( bub_pos(), it->detach() );
                 } else {
                     it->detach();
                 }
@@ -2323,8 +2321,8 @@ bool monster::move_effects( bool )
     if( has_effect( effect_lightsnare ) ) {
         if( x_in_y( type->melee_dice * type->melee_sides, 12 ) ) {
             remove_effect( effect_lightsnare );
-            g->m.spawn_item( pos(), "string_36" );
-            g->m.spawn_item( pos(), "snare_trigger" );
+            g->m.spawn_item( bub_pos(), "string_36" );
+            g->m.spawn_item( bub_pos(), "snare_trigger" );
             if( u_see_me ) {
                 add_msg( _( "The %s escapes the light snare!" ), name() );
             }
@@ -2335,8 +2333,8 @@ bool monster::move_effects( bool )
         if( type->melee_dice * type->melee_sides >= 7 ) {
             if( x_in_y( type->melee_dice * type->melee_sides, 32 ) ) {
                 remove_effect( effect_heavysnare );
-                g->m.spawn_item( pos(), "rope_6" );
-                g->m.spawn_item( pos(), "snare_trigger" );
+                g->m.spawn_item( bub_pos(), "rope_6" );
+                g->m.spawn_item( bub_pos(), "snare_trigger" );
                 if( u_see_me ) {
                     add_msg( _( "The %s escapes the heavy snare!" ), name() );
                 }
@@ -2348,7 +2346,7 @@ bool monster::move_effects( bool )
         if( type->melee_dice * type->melee_sides >= 18 ) {
             if( x_in_y( type->melee_dice * type->melee_sides, 200 ) ) {
                 remove_effect( effect_beartrap );
-                g->m.spawn_item( pos(), "beartrap" );
+                g->m.spawn_item( bub_pos(), "beartrap" );
                 if( u_see_me ) {
                     add_msg( _( "The %s escapes the bear trap!" ), name() );
                 }
@@ -2600,7 +2598,7 @@ float monster::fall_damage_mod() const
     return 0.0f;
 }
 
-int monster::impact( const int force, const tripoint &p )
+int monster::impact( const int force, const tripoint_bub_ms &p )
 {
     if( force <= 0 ) {
         return force;
@@ -2741,11 +2739,11 @@ void monster::process_turn()
                 if( has_effect( effect_emp ) ) {
                     continue; // don't emit electricity while EMPed
                 } else if( has_effect( effect_supercharged ) ) {
-                    g->m.emit_field( pos(), emit_id( "emit_shock_cloud_big" ) );
+                    g->m.emit_field( bub_pos(), emit_id( "emit_shock_cloud_big" ) );
                     continue;
                 }
             }
-            g->m.emit_field( pos(), emid );
+            g->m.emit_field( bub_pos(), emid );
         }
     }
 
@@ -2768,7 +2766,7 @@ void monster::process_turn()
     }
     // Persist grabs as long as there's an adjacent target.
     if( has_effect( effect_grabbing ) ) {
-        for( auto &dest : g->m.points_in_radius( pos(), 1, 0 ) ) {
+        for( auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
             const player *const p = g->critter_at<player>( dest );
             if( p && p->has_effect( effect_grabbed ) ) {
                 add_effect( effect_grabbing, 2_turns );
@@ -2779,26 +2777,26 @@ void monster::process_turn()
     if( has_flag( MF_ELECTRIC_FIELD ) ) {
         if( has_effect( effect_emp ) ) {
             if( calendar::once_every( 10_turns ) ) {
-                sounds::sound( pos(), 5, sounds::sound_t::combat, _( "hummmmm." ), false, "humming", "electric" );
+                sounds::sound( bub_pos().raw(), 5, sounds::sound_t::combat, _( "hummmmm." ), false, "humming", "electric" );
             }
         } else {
-            for( const tripoint &zap : g->m.points_in_radius( pos(), 1 ) ) {
+            for( const auto &zap : g->m.points_in_radius( bub_pos(), 1 ) ) {
                 const bool player_sees = g->u.sees( zap );
                 const auto items = g->m.i_at( zap );
                 for( const auto &item : items ) {
                     if( item->made_of( LIQUID ) && item->flammable() ) { // start a fire!
                         g->m.add_field( zap, fd_fire, 2, 1_minutes );
-                        sounds::sound( pos(), 30, sounds::sound_t::combat,  _( "fwoosh!" ), false, "fire", "ignition" );
+                        sounds::sound( bub_pos().raw(), 30, sounds::sound_t::combat,  _( "fwoosh!" ), false, "fire", "ignition" );
                         break;
                     }
                 }
-                if( zap != pos() ) {
-                    explosion_handler::emp_blast( zap ); // Fries electronics due to the intensity of the field
+                if( zap != bub_pos() ) {
+                    explosion_handler::emp_blast( zap.raw() ); // Fries electronics due to the intensity of the field
                 }
                 const auto t = g->m.ter( zap );
                 if( t == ter_str_id( "t_gas_pump" ) || t == ter_str_id( "t_gas_pump_a" ) ) {
                     if( one_in( 4 ) ) {
-                        explosion_handler::explosion( pos(), nullptr, 40, 0.8, true );
+                        explosion_handler::explosion( bub_pos().raw(), nullptr, 40, 0.8, true );
                         if( player_sees ) {
                             add_msg( m_warning, _( "The %s explodes in a fiery inferno!" ), g->m.tername( zap ) );
                         }
@@ -2812,20 +2810,20 @@ void monster::process_turn()
                 }
             }
             if( get_weather().lightning_active && !has_effect( effect_supercharged ) &&
-                g->m.is_outside( pos() ) ) {
+                g->m.is_outside( bub_pos() ) ) {
                 get_weather().lightning_active = false; // only one supercharge per strike
-                sounds::sound( pos(), 300, sounds::sound_t::combat, _( "BOOOOOOOM!!!" ), false, "environment",
+                sounds::sound( bub_pos().raw(), 300, sounds::sound_t::combat, _( "BOOOOOOOM!!!" ), false, "environment",
                                "thunder_near" );
-                sounds::sound( pos(), 20, sounds::sound_t::combat, _( "vrrrRRRUUMMMMMMMM!" ), false, "explosion",
+                sounds::sound( bub_pos().raw(), 20, sounds::sound_t::combat, _( "vrrrRRRUUMMMMMMMM!" ), false, "explosion",
                                "default" );
-                if( g->u.sees( pos() ) ) {
+                if( g->u.sees( bub_pos() ) ) {
                     add_msg( m_bad, _( "Lightning strikes the %s!" ), name() );
                     add_msg( m_bad, _( "Your vision goes white!" ) );
                     g->u.add_effect( effect_blind, rng( 1_minutes, 2_minutes ) );
                 }
                 add_effect( effect_supercharged, 12_hours );
             } else if( has_effect( effect_supercharged ) && calendar::once_every( 5_turns ) ) {
-                sounds::sound( pos(), 20, sounds::sound_t::combat, _( "VMMMMMMMMM!" ), false, "humming",
+                sounds::sound( bub_pos().raw(), 20, sounds::sound_t::combat, _( "VMMMMMMMMM!" ), false, "humming",
                                "electric" );
             }
         }
@@ -3003,7 +3001,7 @@ void monster::die( Creature *nkiller )
     }
     if( has_effect( effect_grabbing ) ) {
         remove_effect( effect_grabbing );
-        for( player *p : find_targets_to_ungrab( pos() ) ) {
+        for( player *p : find_targets_to_ungrab( bub_pos() ) ) {
             p->add_msg_player_or_npc( m_good, _( "The last enemy holding you collapses!" ),
                                       _( "The last enemy holding <npcname> collapses!" ) );
             p->remove_effect( effect_grabbed );
@@ -3011,7 +3009,7 @@ void monster::die( Creature *nkiller )
     }
     if( !is_hallucination() ) {
         for( detached_ptr<item> &it : inv.clear() ) {
-            g->m.add_item_or_charges( pos(), std::move( it ) );
+            g->m.add_item_or_charges( bub_pos(), std::move( it ) );
         }
     }
 
@@ -3019,9 +3017,9 @@ void monster::die( Creature *nkiller )
     if( !is_hallucination() && has_flag( MF_QUEEN ) ) {
         // The submap coordinates of this monster, monster groups coordinates are
         // submap coordinates.
-        const tripoint abssub = ms_to_sm_copy( g->m.getabs( pos() ) );
+        const auto abssub = project_to<coords::sm>( g->m.bub_to_abs( bub_pos() ) );
         // Do it for overmap above/below too
-        for( const tripoint &p : points_in_radius( abssub, g_half_mapsize, 1 ) ) {
+        for( const auto &p : points_in_radius( abssub, g_half_mapsize, 1 ) ) {
             // TODO: fix point types
             for( auto &mgp : get_overmapbuffer( dimension_id_ ).groups_at( tripoint_abs_sm( p ) ) ) {
                 if( MonsterGroupManager::IsMonsterInGroup( mgp->type, type->id ) ) {
@@ -3077,13 +3075,13 @@ void monster::die( Creature *nkiller )
     }
 
     if( anger_adjust != 0 || morale_adjust != 0 ) {
-        int light = g->light_level( posz() );
+        int light = g->light_level( bub_pos().z() );
         for( monster &critter : g->all_monsters() ) {
             if( critter.faction != this->faction ) {
                 continue;
             }
 
-            if( g->m.sees( critter.pos(), pos(), light ) ) {
+            if( g->m.sees( critter.bub_pos(), bub_pos(), light ) ) {
                 critter.morale += morale_adjust;
 
                 if( critter.has_flag( MF_FACTION_MEMORY ) && killer_faction.is_valid() ) {
@@ -3106,7 +3104,7 @@ bool monster::use_mech_power( int amt )
         return false;
     }
     amt = -amt;
-    battery_item->ammo_consume( amt, pos() );
+    battery_item->ammo_consume( amt, bub_pos().raw() );
     return battery_item->ammo_remaining() > 0;
 }
 
@@ -3135,7 +3133,7 @@ static void process_item_valptr( item *ptr, monster &mon )
 {
     if( ptr && ptr->needs_processing() ) {
         ptr->attempt_detach( [&mon]( detached_ptr<item> &&it ) {
-            return item::process( std::move( it ), nullptr, mon.pos(), false );
+            return item::process( std::move( it ), nullptr, mon.bub_pos().raw(), false );
         } );
     }
 }
@@ -3146,7 +3144,7 @@ void monster::process_items()
     if( !inv.empty() ) {
         inv.remove_with( [this]( detached_ptr<item> &&it ) {
             if( it->needs_processing() ) {
-                return item::process( std::move( it ), nullptr, pos(), false );
+                return item::process( std::move( it ), nullptr, bub_pos().raw(), false );
             }
             return std::move( it );
         } );
@@ -3221,7 +3219,7 @@ void monster::drop_items_on_death()
         return;
     }
 
-    g->m.spawn_items( pos(), std::move( items ) );
+    g->m.spawn_items( bub_pos(), std::move( items ) );
 }
 
 void monster::process_one_effect( effect &it, bool is_new )
@@ -3323,7 +3321,7 @@ void monster::process_effects_internal()
     }
 
     if( type->regenerates_in_dark ) {
-        const float light = g->m.ambient_light_at( pos() );
+        const float light = g->m.ambient_light_at( bub_pos() );
         add_msg( m_debug, _( "%1$s local light level: %2$s" ), name(), light );
         // Requires standing in a properly dark tile, scales as it gets darker
         if( light < 11.0f && one_in( 2 ) && hp < type->hp ) {
@@ -3365,7 +3363,7 @@ void monster::process_effects_internal()
     }
 
     // If this critter dies in sunlight, check & assess damage.
-    if( has_flag( MF_SUNDEATH ) && g->is_in_sunlight( pos() ) ) {
+    if( has_flag( MF_SUNDEATH ) && g->is_in_sunlight( bub_pos().raw() ) ) {
         if( g->u.sees( *this ) ) {
             add_msg( m_good, _( "The %s burns horribly in the sunlight!" ), name() );
         }
@@ -3400,7 +3398,7 @@ bool monster::make_fungus()
     const std::string old_name = name();
     poly( type->fungalize_into );
 
-    if( g->u.sees( pos() ) ) {
+    if( g->u.sees( bub_pos() ) ) {
         add_msg( m_info, _( "The spores transform %1$s into a %2$s!" ),
                  old_name, name() );
     }
@@ -3657,13 +3655,13 @@ void monster::on_hit( Creature *source, bodypart_id, dealt_projectile_attack con
     }
 
     if( anger_adjust != 0 || morale_adjust != 0 ) {
-        int light = g->light_level( posz() );
+        int light = g->light_level( bub_pos().z() );
         for( monster &critter : g->all_monsters() ) {
             if( critter.faction != this->faction ) {
                 continue;
             }
 
-            if( g->m.sees( critter.pos(), pos(), light ) ) {
+            if( g->m.sees( critter.bub_pos(), bub_pos(), light ) ) {
                 critter.morale += morale_adjust;
 
                 if( critter.has_flag( MF_FACTION_MEMORY ) && attacker_faction.is_valid() ) {
@@ -3686,7 +3684,7 @@ void monster::on_damage_of_type( int amt, damage_type dt, const bodypart_id &bp 
     if( has_effect( effect_grabbing ) && ( dt == DT_BASH || dt == DT_CUT || dt == DT_STAB ) &&
         x_in_y( amt * 10, full_hp ) ) {
         remove_effect( effect_grabbing );
-        for( player *p : find_targets_to_ungrab( pos() ) ) {
+        for( player *p : find_targets_to_ungrab( bub_pos() ) ) {
             p->add_msg_player_or_npc( m_good, _( "%s flinches, letting you go!" ),
                                       _( "%s flinches, letting <npcname> go!" ),
                                       disp_name( false, true ) );
@@ -3731,7 +3729,7 @@ void monster::hear_sound( const tripoint &source, const int vol, const int dist 
                               g->u.has_trait( trait_PROF_FERAL ) && !g->u.has_effect( effect_feral_infighting_punishment );
 
     // Hackery: If player is currently a feral and you're a zombie, ignore any sounds close to their position.
-    if( feral_friend && rl_dist( g->u.pos(), source ) <= 10 ) {
+    if( feral_friend && rl_dist( g->u.bub_pos().raw(), source ) <= 10 ) {
         return;
     }
 
@@ -3763,10 +3761,10 @@ void monster::hear_sound( const tripoint &source, const int vol, const int dist 
     if( morale >= 0 && anger >= 10 ) {
         // TODO: Add a proper check for fleeing attitude
         // but cache it nicely, because this part is called a lot
-        wander_to( tripoint( target_x, target_y, source.z ), wander_turns );
+        wander_to( tripoint_bub_ms( target_x, target_y, source.z ), wander_turns );
     } else if( morale < 0 ) {
         // Monsters afraid of sound should not go towards sound
-        wander_to( tripoint( 2 * posx() - target_x, 2 * posy() - target_y, 2 * posz() - source.z ),
+        wander_to( tripoint_bub_ms( 2 * bub_pos().x() - target_x, 2 * bub_pos().y() - target_y, 2 * bub_pos().z() - source.z ),
                    wander_turns );
     }
 }
@@ -3791,7 +3789,7 @@ bool monster::will_join_horde( int size )
         return false;
     } else if( mha == MHA_ALWAYS ) {
         return true;
-    } else if( !g->m.is_outside( pos() ) && ( mha == MHA_OUTDOORS ||
+    } else if( !g->m.is_outside( bub_pos() ) && ( mha == MHA_OUTDOORS ||
                mha == MHA_OUTDOORS_AND_LARGE ) ) {
         return false;
     } else if( size < 3 && ( mha == MHA_LARGE || mha == MHA_OUTDOORS_AND_LARGE ) ) {
@@ -3837,9 +3835,9 @@ const
 
 }
 
-std::set<tripoint> monster::get_legacy_path_avoid() const
+std::set<tripoint_bub_ms> monster::get_legacy_path_avoid() const
 {
-    return std::set<tripoint>();
+    return std::set<tripoint_bub_ms>();
 }
 
 const std::vector<item *> &monster::get_items() const
@@ -3880,7 +3878,7 @@ std::vector<detached_ptr<item>> monster::clear_items()
     return inv.clear();
 }
 
-void monster::drop_items( const tripoint &p )
+void monster::drop_items( const tripoint_bub_ms &p )
 {
     for( detached_ptr<item> &it : inv.clear() ) {
         g->m.add_item_or_charges( p, std::move( it ) );
@@ -3889,7 +3887,7 @@ void monster::drop_items( const tripoint &p )
 
 void monster::drop_items()
 {
-    drop_items( pos() );
+    drop_items( bub_pos() );
 }
 
 void monster::add_corpse_component( detached_ptr<item> &&it )

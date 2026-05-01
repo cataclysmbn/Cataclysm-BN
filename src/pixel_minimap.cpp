@@ -95,15 +95,15 @@ SDL_Texture_Ptr create_cache_texture( const SDL_Renderer_Ptr &renderer, int tile
 SDL_Color get_map_color_at( const tripoint &p )
 {
     const map &here = get_map();
-    if( const auto vp = here.veh_at( p ) ) {
+    if( const auto vp = here.veh_at( tripoint_bub_ms( p ) ) ) {
         return curses_color_to_SDL( vp->vehicle().part_color( vp->part_index() ) );
     }
 
-    if( const auto furn_id = here.furn( p ) ) {
+    if( const auto furn_id = here.furn( tripoint_bub_ms( p ) ) ) {
         return curses_color_to_SDL( furn_id->color() );
     }
 
-    return curses_color_to_SDL( here.ter( p )->color() );
+    return curses_color_to_SDL( here.ter( tripoint_bub_ms( p ) )->color() );
 }
 
 bool is_critter_animated( Creature *critter )
@@ -545,7 +545,7 @@ void pixel_minimap::render_critters( const tripoint &center )
     for( int y = 0; y < view_tiles_count.y; y++ ) {
         for( int x = 0; x < view_tiles_count.x; x++ ) {
             const tripoint p = tripoint{ start_x + x, start_y + y, center.z };
-            if( !access_cache.inbounds( p.xy() ) ) {
+            if( !access_cache.inbounds( tripoint_bub_ms( p ).xy() ) ) {
                 continue;
             }
             const lit_level lighting = access_cache.visibility_cache[access_cache.idx( p.x, p.y )];
@@ -554,7 +554,7 @@ void pixel_minimap::render_critters( const tripoint &center )
                 continue;
             }
 
-            const auto critter = g->critter_at( p, true );
+            const auto critter = g->critter_at( tripoint_bub_ms( p ), true );
 
             if( critter == nullptr || !get_avatar().sees( *critter ) ) {
                 continue;
