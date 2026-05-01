@@ -9,7 +9,7 @@ CataclysmBN:
 
 - General
   - `cmake` >= 3.0.0
-  - `gcc` >= 14
+  - `gcc` >= 15.1
   - `clang` >= 19
   - `gcc-libs`
   - `glibc`
@@ -51,7 +51,9 @@ Obtain packages specified above with your system package manager.
 - For Ubuntu-based distros (24.04 onwards):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 ccache \
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+sudo apt update
+sudo apt install git cmake ninja-build mold g++-15 clang-20 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -68,7 +70,7 @@ sqlite-devel zlib-devel
 
 #### Verifying Compiler Version
 
-You need to have at least `gcc` 14 **and** `clang` 19 to build CataclysmBN. You can check your compiler version with:
+You need to have at least `gcc` 15.1 **and** `clang` 19 to build CataclysmBN. You can check your compiler version with:
 
 ```sh
 $ g++ --version
@@ -92,20 +94,20 @@ Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 > Use `update-alternatives` to set the default gcc version:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-> sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+> sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100
+> sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 100
 > sudo update-alternatives --display gcc
 > gcc - auto mode
->   link best version is /usr/bin/gcc-14
->   link currently points to /usr/bin/gcc-14
+>   link best version is /usr/bin/gcc-15
+>   link currently points to /usr/bin/gcc-15
 >   link gcc is /usr/bin/gcc
-> /usr/bin/gcc-14 - priority 100
+> /usr/bin/gcc-15 - priority 100
 > sudo update-alternatives --display g++
 > g++ - auto mode
->   link best version is /usr/bin/g++-14
->   link currently points to /usr/bin/g++-14
+>   link best version is /usr/bin/g++-15
+>   link currently points to /usr/bin/g++-15
 >   link g++ is /usr/bin/g++
-> /usr/bin/g++-14 - priority 100
+> /usr/bin/g++-15 - priority 100
 > ```
 >
 > The same applies to `clang`.

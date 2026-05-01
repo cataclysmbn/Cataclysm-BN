@@ -41,12 +41,14 @@ jobs:
           java-version: "11"
           distribution: "adopt"
 
+      - name: Set up GCC 15
+        uses: egor-tensin/setup-gcc@v2
+        with: { version: 15, platform: x64 }
+
       - name: Setup build and dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install gcc-14 gettext libsqlite3-dev zlib1g-dev
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
+          sudo apt-get -o Acquire::Retries=3 update
+          sudo apt-get -o Acquire::Retries=3 install gettext libsqlite3-dev zlib1g-dev
           g++ --version
 
       - name: Setup ccache

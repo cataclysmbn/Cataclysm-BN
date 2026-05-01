@@ -8,7 +8,7 @@ title: CMake
 
 - 一般
   - `cmake` >= 3.0.0
-  - `gcc` >= 14
+  - `gcc` >= 15.1
   - `clang` >= 19
   - `gcc-libs`
   - `glibc`
@@ -50,7 +50,9 @@ cd Cataclysm-BN
 - Ubuntu ベースのディストリビューション (24.04 以降):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 ccache \
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+sudo apt update
+sudo apt install git cmake ninja-build mold g++-15 clang-20 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -67,7 +69,7 @@ sqlite-devel zlib-devel
 
 #### コンパイラバージョンの確認
 
-Cataclysm-BN』をビルドするには、少なくとも `gcc` 14 **および** `clang` が必要です。コンパイラのバージョンは、以下のコマンドで確認できます:
+Cataclysm-BN』をビルドするには、少なくとも `gcc` 15.1 **および** `clang` 19 が必要です。コンパイラのバージョンは、以下のコマンドで確認できます:
 
 ```sh
 $ g++ --version
@@ -91,20 +93,20 @@ Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 > `update-alternatives` を使用して、デフォルトのgcc バージョンを設定します:
 >
 > ```sh
-> sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-> sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+> sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100
+> sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 100
 > sudo update-alternatives --display gcc
 > gcc - auto mode
->   link best version is /usr/bin/gcc-14
->   link currently points to /usr/bin/gcc-14
+>   link best version is /usr/bin/gcc-15
+>   link currently points to /usr/bin/gcc-15
 >   link gcc is /usr/bin/gcc
-> /usr/bin/gcc-14 - priority 100
+> /usr/bin/gcc-15 - priority 100
 > sudo update-alternatives --display g++
 > g++ - auto mode
->   link best version is /usr/bin/g++-14
->   link currently points to /usr/bin/g++-14
+>   link best version is /usr/bin/g++-15
+>   link currently points to /usr/bin/g++-15
 >   link g++ is /usr/bin/g++
-> /usr/bin/g++-14 - priority 100
+> /usr/bin/g++-15 - priority 100
 > ```
 >
 > `clang`も同様に適用されます。

@@ -72,15 +72,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: set up GCC 15
+        if: ${{ env.SKIP == 'false' }}
+        uses: egor-tensin/setup-gcc@v2
+        with: { version: 15, platform: x64 }
+
       - name: install dependencies (ubuntu)
         if: ${{ env.SKIP == 'false' }}
         run: |
-          sudo apt-get update
-          sudo apt-get install gcc-14 libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev ninja-build
+          sudo apt-get -o Acquire::Retries=3 update
+          sudo apt-get -o Acquire::Retries=3 install libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev ninja-build
           sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
 
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
 
       - name: install SDL2 dependencies (ubuntu)
