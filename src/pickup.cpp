@@ -664,7 +664,7 @@ void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
 
     if( min == -1 ) {
         // Recursively pick up adjacent items if that option is on.
-        if( get_option<bool>( "AUTO_PICKUP_ADJACENT" ) && g->u.pos() == p ) {
+        if( get_option<bool>( "AUTO_PICKUP_ADJACENT" ) && g->u.bub_pos() == p ) {
             //Autopickup adjacent
             direction adjacentDir[8] = {direction::NORTH, direction::NORTHEAST, direction::EAST, direction::SOUTHEAST, direction::SOUTH, direction::SOUTHWEST, direction::WEST, direction::NORTHWEST};
             for( auto &elem : adjacentDir ) {
@@ -693,7 +693,7 @@ void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
         } else {
             g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
             std::vector<pickup::pick_drop_selection> { { *here.front(), std::nullopt, {} } },
-            g->u.pos() ) ) );
+            g->u.bub_pos() ) ) );
         }
         return;
     }
@@ -1234,7 +1234,7 @@ void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
     std::vector<pickup::pick_drop_selection> targets = pickup::optimize_pickup( locations, quantities );
     g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
                           ( targets,
-                            g->u.pos() ) ) );
+                            g->u.bub_pos() ) ) );
     if( min == -1 ) {
         // Auto pickup will need to auto resume since there can be several of them on the stack.
         g->u.activity->auto_resume = true;

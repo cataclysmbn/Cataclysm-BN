@@ -1298,7 +1298,7 @@ void iexamine::chainfence( player &p, const tripoint &examp )
             return;
         }
         p.moves += climb * 10;
-        sfx::play_variant_sound( "plmove", "clear_obstacle", sfx::get_heard_volume( g->u.pos() ) );
+        sfx::play_variant_sound( "plmove", "clear_obstacle", sfx::get_heard_volume( g->u.bub_pos() ) );
     }
     if( p.in_vehicle ) {
         here.unboard_vehicle( p.pos() );
@@ -2551,7 +2551,7 @@ void iexamine::plant_seed( player &p, const tripoint &examp, const itype_id &see
 void iexamine::dirtmound( player &p, const tripoint &examp )
 {
 
-    if( !warm_enough_to_plant( g->u.pos() ) ) {
+    if( !warm_enough_to_plant( g->u.bub_pos() ) ) {
         add_msg( m_info, _( "It is too cold to plant anything now." ) );
         return;
     }
@@ -4356,7 +4356,7 @@ void iexamine::tree_maple_tapped( player &p, const tripoint &examp )
 
         case REMOVE_CONTAINER: {
             g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
-            std::vector<pickup::pick_drop_selection> { { container, std::nullopt, {} } }, g->u.pos() ) ) );
+            std::vector<pickup::pick_drop_selection> { { container, std::nullopt, {} } }, g->u.bub_pos() ) ) );
             return;
         }
 
@@ -4782,7 +4782,7 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
             for( auto &itm : items ) {
                 if( itm->type == cur_ammo ) {
                     g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
-                    std::vector<pickup::pick_drop_selection> { { itm, std::nullopt, {} } }, g->u.pos() ) ) );
+                    std::vector<pickup::pick_drop_selection> { { itm, std::nullopt, {} } }, g->u.bub_pos() ) ) );
                     return;
                 }
             }
@@ -6788,7 +6788,7 @@ static void smoker_load_food( player &p, const tripoint &examp,
     comps.emplace_back( what->typeId(), amount );
 
     // select from where to get the items from and place them
-    inv.form_from_map( g->u.pos(), PICKUP_RANGE, &g->u );
+    inv.form_from_map( g->u.bub_pos(), PICKUP_RANGE, &g->u );
     inv.remove_items_with( []( const item & it ) {
         return it.rotten();
     } );
@@ -6897,7 +6897,7 @@ static void mill_load_food( player &p, const tripoint &examp,
     comps.emplace_back( what->typeId(), amount );
 
     // select from where to get the items from and place them
-    inv.form_from_map( g->u.pos(), PICKUP_RANGE, &g->u );
+    inv.form_from_map( g->u.bub_pos(), PICKUP_RANGE, &g->u );
     inv.remove_items_with( []( const item & it ) {
         return it.rotten();
     } );

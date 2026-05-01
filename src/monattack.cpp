@@ -213,7 +213,7 @@ static const bionic_id bio_uncanny_dodge( "bio_uncanny_dodge" );
 // shared utility functions
 static bool within_visual_range( monster *z, int max_range )
 {
-    return !( rl_dist( z->pos(), g->u.pos() ) > max_range || !z->sees( g->u ) );
+    return !( rl_dist( z->pos(), g->u.bub_pos() ) > max_range || !z->sees( g->u ) );
 }
 
 static bool within_target_range( const monster *const z, const Creature *const target, int range )
@@ -352,7 +352,7 @@ bool mattack::eat_food( monster *z )
             continue;
         }
         // Don't snap up food RIGHT under the player's nose.
-        if( z->friendly && rl_dist( g->u.pos(), p ) <= 2 ) {
+        if( z->friendly && rl_dist( g->u.bub_pos(), p ) <= 2 ) {
             continue;
         }
         auto items = g->m.i_at( p );
@@ -1546,7 +1546,7 @@ bool mattack::growplants( monster *z )
 bool mattack::grow_vine( monster *z )
 {
     if( z->friendly ) {
-        if( rl_dist( g->u.pos(), z->pos() ) <= 3 ) {
+        if( rl_dist( g->u.bub_pos(), z->pos() ) <= 3 ) {
             // Friendly vines keep the area around you free, so you can move.
             return false;
         }
@@ -1653,14 +1653,14 @@ bool mattack::triffid_heartbeat( monster *z )
         return true;
         // TODO: when friendly: open a way to the stairs, don't spawn monsters
     }
-    if( g->u.posz() != z->posz() ) {
+    if( g->u.bub_pos().z() != z->posz() ) {
         // Maybe remove this and allow spawning monsters above?
         return true;
     }
 
     static pathfinding_settings root_pathfind( 10, 20, 50, 0, false, false, false, false, false );
-    if( rl_dist( z->pos(), g->u.pos() ) > 5 &&
-        !g->m.route( g->u.pos(), z->pos(), root_pathfind ).empty() ) {
+    if( rl_dist( z->pos(), g->u.bub_pos() ) > 5 &&
+        !g->m.route( g->u.bub_pos(), z->pos(), root_pathfind ).empty() ) {
         add_msg( m_warning, _( "The root walls creak around you." ) );
         for( const tripoint &dest : g->m.points_in_radius( z->pos(), 3 ) ) {
             if( g->is_empty( dest ) && one_in( 4 ) ) {
@@ -1671,13 +1671,13 @@ bool mattack::triffid_heartbeat( monster *z )
         }
         // Open blank tiles as long as there's no possible route
         int tries = 0;
-        while( g->m.route( g->u.pos(), z->pos(), root_pathfind ).empty() &&
+        while( g->m.route( g->u.bub_pos(), z->pos(), root_pathfind ).empty() &&
                tries < 20 ) {
-            point p( rng( g->u.posx(), z->posx() - 3 ), rng( g->u.posy(), z->posy() - 3 ) );
+            point p( rng( g->u.bub_pos().x(), z->posx() - 3 ), rng( g->u.bub_pos().y(), z->posy() - 3 ) );
             tripoint dest( p, z->posz() );
             tries++;
             g->m.ter_set( dest, t_dirt );
-            if( rl_dist( dest, g->u.pos() ) > 3 && g->num_creatures() < 30 &&
+            if( rl_dist( dest, g->u.bub_pos() ) > 3 && g->num_creatures() < 30 &&
                 !g->critter_at( dest ) && one_in( 20 ) ) { // Spawn an extra monster
                 mtype_id montype = mon_triffid;
                 if( one_in( 4 ) ) {
@@ -1866,7 +1866,7 @@ bool mattack::fungus_inject( monster *z )
 {
     // For faster copy+paste
     Creature *target = &g->u;
-    if( rl_dist( z->pos(), g->u.pos() ) > 1 ) {
+    if( rl_dist( z->pos(), g->u.bub_pos() ) > 1 ) {
         return false;
     }
 
@@ -1931,7 +1931,7 @@ bool mattack::fungus_bristle( monster *z )
         z->friendly = 1;
     }
     if( ( g->u.has_trait( trait_MARLOSS ) ) && ( g->u.has_trait( trait_MARLOSS_BLUE ) ) &&
-        !g->u.crossed_threshold() && rl_dist( z->pos(), g->u.pos() ) < 6 ) {
+        !g->u.crossed_threshold() && rl_dist( z->pos(), g->u.bub_pos() ) < 6 ) {
         add_msg( m_info, _( "The %s recedes, as if anticipating your arrival…" ), z->name() );
         z->no_corpse_quiet = true;
         z->no_extra_death_drops = true;
@@ -2044,7 +2044,7 @@ bool mattack::fungus_fortify( monster *z )
         // You have the other two.  Is it really necessary for us to fight?
         add_msg( m_info, _( "The %s spreads its tendrils.  It seems as though it's expecting you…" ),
                  z->name() );
-        if( rl_dist( z->pos(), g->u.pos() ) < 3 ) {
+        if( rl_dist( z->pos(), g->u.bub_pos() ) < 3 ) {
             if( query_yn( _( "The tower extends and aims several tendrils from its depths.  Hold still?" ) ) ) {
                 add_msg( m_warning,
                          _( "The %s works several tendrils into your arms, legs, torso, and even neck…" ),
@@ -2055,7 +2055,7 @@ bool mattack::fungus_fortify( monster *z )
                 g->u.unset_mutation( trait_MARLOSS );
                 g->u.unset_mutation( trait_MARLOSS_BLUE );
                 g->u.set_mutation( trait_THRESH_MARLOSS );
-                g->m.ter_set( g->u.pos(),
+                g->m.ter_set( g->u.bub_pos(),
                               t_marloss ); // We only show you the door.  You walk through it on your own.
                 g->memorial().add(
                     pgettext( "memorial_male", "Was shown to the Marloss Gateway." ),
@@ -2077,7 +2077,7 @@ bool mattack::fungus_fortify( monster *z )
     bool fortified = false;
     bool push_player = false; // To avoid map shift weirdness
     for( const tripoint &dest : g->m.points_in_radius( z->pos(), 1 ) ) {
-        if( g->u.pos() == dest ) {
+        if( g->u.bub_pos() == dest ) {
             push_player = true;
         }
         if( monster *const wall = g->place_critter_at( mon_fungal_hedgerow, dest ) ) {
@@ -2087,14 +2087,14 @@ bool mattack::fungus_fortify( monster *z )
     }
     if( push_player ) {
         add_msg( m_bad, _( "You're shoved away as a fungal hedgerow grows!" ) );
-        g->fling_creature( &g->u, coord_to_angle( z->pos(), g->u.pos() ), rng( 10, 50 ) );
+        g->fling_creature( &g->u, coord_to_angle( z->pos(), g->u.bub_pos() ), rng( 10, 50 ) );
     }
     if( fortified || mycus || peaceful ) {
         return true;
     }
 
     // TODO: De-playerize the whole block
-    const int dist = rl_dist( z->pos(), g->u.pos() );
+    const int dist = rl_dist( z->pos(), g->u.bub_pos() );
     if( dist >= 12 ) {
         return false;
     }
@@ -2495,7 +2495,7 @@ bool mattack::callblobs( monster *z )
     // if we want to deal with NPCS and friendly monsters as well.
     // The strategy is to send about 1/3 of the available blobs after the player,
     // and keep the rest near the brain blob for protection.
-    tripoint enemy = g->u.pos();
+    tripoint enemy = g->u.bub_pos();
     std::list<monster *> allies;
     std::vector<tripoint> nearby_points = closest_points_first( z->pos(), 3 );
     for( monster &candidate : g->all_monsters() ) {
@@ -3741,16 +3741,16 @@ bool mattack::searchlight( monster *z )
                 }
 
             } else {
-                if( x < g->u.posx() ) {
+                if( x < g->u.bub_pos().x() ) {
                     x++;
                 }
-                if( x > g->u.posx() ) {
+                if( x > g->u.bub_pos().x() ) {
                     x--;
                 }
-                if( y < g->u.posy() ) {
+                if( y < g->u.bub_pos().y() ) {
                     y++;
                 }
-                if( y > g->u.posy() ) {
+                if( y > g->u.bub_pos().y() ) {
                     y--;
                 }
             }
@@ -3984,7 +3984,7 @@ bool mattack::chickenbot( monster *z )
     }
 
     int dist = rl_dist( z->pos(), target->pos() );
-    int player_dist = rl_dist( target->pos(), g->u.pos() );
+    int player_dist = rl_dist( target->pos(), g->u.bub_pos() );
     if( dist == 1 && one_in( 2 ) ) {
         // Use tazer at point-blank range, and even then, not continuously.
         mode = 1;
@@ -4117,7 +4117,7 @@ bool mattack::ratking( monster *z )
         return false;
     }
     // Disable z-level ratting or it can get silly
-    if( rl_dist( z->pos(), g->u.pos() ) > 50 || z->posz() != g->u.posz() ) {
+    if( rl_dist( z->pos(), g->u.bub_pos() ) > 50 || z->posz() != g->u.bub_pos().z() ) {
         return false;
     }
 
@@ -4138,7 +4138,7 @@ bool mattack::ratking( monster *z )
             add_msg( m_warning, _( "\"FOUL INTERLOPER…\"" ) );
             break;
     }
-    if( rl_dist( z->pos(), g->u.pos() ) <= 10 ) {
+    if( rl_dist( z->pos(), g->u.bub_pos() ) <= 10 ) {
         g->u.add_effect( effect_rat, 3_minutes );
     }
 
@@ -4733,7 +4733,7 @@ bool mattack::darkman( monster *z )
         return false;
     }
     // Wont do stuff unless it can see you and is in range
-    if( rl_dist( z->pos(), g->u.pos() ) > 40 ) {
+    if( rl_dist( z->pos(), g->u.bub_pos() ) > 40 ) {
         return false;
     }
     if( !z->sees( g->u ) ) {
@@ -4778,7 +4778,7 @@ bool mattack::darkman( monster *z )
 
 bool mattack::slimespring( monster *z )
 {
-    if( rl_dist( z->pos(), g->u.pos() ) > 30 ) {
+    if( rl_dist( z->pos(), g->u.bub_pos() ) > 30 ) {
         return false;
     }
 
@@ -4805,7 +4805,7 @@ bool mattack::slimespring( monster *z )
                 break;
         }
     }
-    if( rl_dist( z->pos(), g->u.pos() ) <= 3 && z->sees( g->u ) ) {
+    if( rl_dist( z->pos(), g->u.bub_pos() ) <= 3 && z->sees( g->u ) ) {
         if( ( g->u.has_effect( effect_bleed ) ) || ( g->u.has_effect( effect_bite ) ) ) {
             //~ Lowercase is intended: they're small voices.
             add_msg( _( "\"let me help!\"" ) );

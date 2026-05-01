@@ -2348,7 +2348,7 @@ void activity_handlers::start_engines_finish( player_activity *act, player *p )
     vehicle *veh = g->remoteveh();
     map &here = get_map();
     if( !veh ) {
-        const tripoint pos = act->placement + g->u.pos();
+        const tripoint pos = act->placement + g->u.bub_pos();
         veh = veh_pointer_or_null( here.veh_at( pos ) );
         if( !veh ) {
             return;

@@ -179,7 +179,7 @@ void set_time( const time_point &time )
 {
     calendar::turn = time;
     g->reset_light_level();
-    const auto z = g->u.posz();
+    const auto z = g->u.bub_pos().z();
     g->m.update_visibility_cache( z );
     g->m.invalidate_map_cache( z );
     g->m.build_map_cache( z );

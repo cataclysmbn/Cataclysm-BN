@@ -624,10 +624,10 @@ class map : public submap_load_listener
 
         /** Draw a visible part of the map into `w`.
          *
-         * This method uses `g->u.posx()/posy()` for visibility calculations, so it can
+         * This method uses `g->u.bub_pos().x()/posy()` for visibility calculations, so it can
          * not be used for anything but the player's viewport. Likewise, only
          * `g->m` and maps with equivalent coordinates can be used, as other maps
-         * would have coordinate systems incompatible with `g->u.posx()`
+         * would have coordinate systems incompatible with `g->u.bub_pos().x()`
          *
          * @param w Window we are drawing in
          * @param center The coordinate of the center of the viewport, this can
@@ -663,15 +663,14 @@ class map : public submap_load_listener
          * this function returns (for example, UIs that draw the map should be
          * disabled).
          */
-        void load( const tripoint &w, bool update_vehicles, bool pump_events = false );
         void load( const tripoint_abs_sm &w, bool update_vehicles, bool pump_events = false );
         /**
-         * Shift the map along the vector s.
+         * Shift the map along the vector sp.
          * This is like loading the map with coordinates derived from the current
          * position of the map (@ref abs_sub) plus the shift vector.
          * Note: the map must have been loaded before this can be called.
          */
-        void shift( point s );
+        void shift( const point_rel_sm &sp );
         void clear_spawns();
         void clear_traps();
 
@@ -810,7 +809,7 @@ class map : public submap_load_listener
          * 1. Checks if a point_bub_ms & is reachable using a flood fill and if it is, adds it to a vector.
          *
          */
-        void reachable_flood_steps( std::vector<tripoint> &reachable_pts, const tripoint_bub_ms &f,
+        void reachable_flood_steps( std::vector<tripoint_bub_ms> &reachable_pts, const tripoint_bub_ms &f,
                                     int range,
                                     int cost_min, int cost_max ) const;
 
@@ -819,7 +818,7 @@ class map : public submap_load_listener
          * until it finds a clear line or decides there isn't one.
          * returns the line found, which may be the straight line, but blocked.
          */
-        std::vector<tripoint> find_clear_path( const tripoint_bub_ms &source, const tripoint_bub_ms &destination ) const;
+        std::vector<tripoint_bub_ms> find_clear_path( const tripoint_bub_ms &source, const tripoint_bub_ms &destination ) const;
 
         /**
          * Check whether the player can access the items located @p. Certain furniture/terrain
@@ -978,13 +977,13 @@ class map : public submap_load_listener
         // at specific positions. This is used to display terrain overview in
         // the map editor.
         uint8_t get_known_connections( const tripoint_bub_ms &p, int connect_group,
-                                       const std::map<tripoint, ter_id> &override = {} ) const;
+                                       const std::map<tripoint_bub_ms, ter_id> &override = {} ) const;
         /**
          * Returns the full harvest list, for spawning.
          */
         // as above, but for furniture
         uint8_t get_known_connections_f( const tripoint_bub_ms &p, int connect_group,
-                                         const std::map<tripoint, furn_id> &override = {} ) const;
+                                         const std::map<tripoint_bub_ms, furn_id> &override = {} ) const;
 
         const harvest_id &get_harvest( const tripoint_bub_ms &p ) const;
         /**
@@ -1219,7 +1218,7 @@ class map : public submap_load_listener
         bool flammable_items_at( const tripoint_bub_ms &p, int threshold = 0 );
         /** Returns true if there is a flammable item or field or the furn/terrain is flammable at p */
         bool is_flammable( const tripoint_bub_ms &p );
-        point_bub_ms & random_outdoor_tile();
+        point_bub_ms random_outdoor_tile();
         // mapgen
 
         void draw_line_ter( const ter_id &type, const point_bub_ms &p1, const point_bub_ms &p2 );
@@ -1400,7 +1399,7 @@ class map : public submap_load_listener
 
         // Returns points for all submaps with inconsistent state relative to
         // the list in map.  Used in tests.
-        std::vector<tripoint_bub_ms> check_submap_active_item_consistency();
+        std::vector<tripoint_abs_sm> check_submap_active_item_consistency();
         // Accessor that returns a wrapped reference to an item stack for safe modification.
         map_stack i_at( const tripoint_bub_ms &p );
         map_stack i_at( const point_bub_ms &p ) {
@@ -1947,9 +1946,9 @@ class map : public submap_load_listener
         void rotten_item_spawn( const item &item, const tripoint_bub_ms &p );
     private:
         // Helper #1 - spawns monsters on one submap
-        void spawn_monsters_submap( const tripoint_bub_ms &gp, bool ignore_sight );
+        void spawn_monsters_submap( const tripoint_bub_sm &gp, bool ignore_sight );
         // Helper #2 - spawns monsters on one submap and from one group on this submap
-        void spawn_monsters_submap_group( const tripoint_bub_ms &gp, mongroup &group, bool ignore_sight );
+        void spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &group, bool ignore_sight );
 
     protected:
         void loadn( const tripoint_bub_sm &grid, bool update_vehicles, bool incremental = false );
@@ -2028,7 +2027,7 @@ class map : public submap_load_listener
         void player_in_field( player &u );
         void monster_in_field( monster &z );
 
-        void copy_grid( const tripoint_bub_ms &to, const tripoint_bub_ms &from );
+        void copy_grid( const tripoint_bub_sm &to, const tripoint_bub_sm &from );
         void draw_map( mapgendata &dat );
 
         void draw_office_tower( const mapgendata &dat );

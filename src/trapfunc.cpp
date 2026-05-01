@@ -289,7 +289,7 @@ bool trapfunc::tripwire( const tripoint &p, Creature *c, item * )
             }
             if( !valid.empty() ) {
                 g->u.setpos( random_entry( valid ) );
-                z->setpos( g->u.pos() );
+                z->setpos( g->u.bub_pos() );
             }
             g->u.moves -= 150;
             g->update_map( g->u );

@@ -62,7 +62,7 @@ advanced_inv_area::advanced_inv_area( aim_location id, point h, tripoint off,
 
 void advanced_inv_area::init()
 {
-    pos = g->u.pos() + off;
+    pos = g->u.bub_pos() + off;
     veh = nullptr;
     vstor = -1;
     // must update in main function
@@ -84,7 +84,7 @@ void advanced_inv_area::init()
             // offset for dragged vehicles is not statically initialized, so get it
             off = g->u.grab_point;
             // Reset position because offset changed
-            pos = g->u.pos() + off;
+            pos = g->u.bub_pos() + off;
             if( const std::optional<vpart_reference> vp = here.veh_at( pos ).part_with_feature( "CARGO",
                     false ) ) {
                 veh = &vp->vehicle();
@@ -119,7 +119,7 @@ void advanced_inv_area::init()
             break;
         case AIM_ABOVE:
         case AIM_BELOW:
-            if( !g->m.has_zlevels() || !g->m.valid_move( g->u.pos(), pos ) ) {
+            if( !g->m.has_zlevels() || !g->m.valid_move( g->u.bub_pos(), pos ) ) {
                 canputitemsloc = false;
                 break;
             }
@@ -412,7 +412,7 @@ void advanced_inv_area::set_container_position()
         off = aim_vector( static_cast<aim_location>( uistate.adv_inv_container_location ) );
     }
     // update the absolute position
-    pos = g->u.pos() + off;
+    pos = g->u.bub_pos() + off;
     // update vehicle information
     if( const std::optional<vpart_reference> vp = get_map().veh_at( pos ).part_with_feature( "CARGO",
             false ) ) {

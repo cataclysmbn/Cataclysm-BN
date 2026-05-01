@@ -65,7 +65,7 @@ void timed_event::actualize()
                 g->events().send<event_type::becomes_wanted>( g->u.getID() );
                 point rob( u_pos.x > map_point.x ? 0 - SEEX * 2 : SEEX * 4,
                            u_pos.y > map_point.y ? 0 - SEEY * 2 : SEEY * 4 );
-                g->place_critter_at( robot_type, tripoint( rob, g->u.posz() ) );
+                g->place_critter_at( robot_type, tripoint( rob, g->u.bub_pos().z() ) );
             }
         }
         break;
@@ -85,7 +85,7 @@ void timed_event::actualize()
             }
             // You could drop the flag, you know.
             if( g->u.has_amount( itype_petrified_eye, 1 ) ) {
-                sounds::sound( g->u.pos(), 60, sounds::sound_t::alert, _( "a tortured scream!" ), false, "shout",
+                sounds::sound( g->u.bub_pos(), 60, sounds::sound_t::alert, _( "a tortured scream!" ), false, "shout",
                                "scream_tortured" );
                 if( !g->u.is_deaf() ) {
                     add_msg( _( "The eye you're carrying lets out a tortured scream!" ) );
@@ -109,7 +109,7 @@ void timed_event::actualize()
             }
             for( int i = 0; fault_point && i < num_horrors; i++ ) {
                 for( int tries = 0; tries < 10; ++tries ) {
-                    tripoint monp = g->u.pos();
+                    tripoint monp = g->u.bub_pos();
                     if( horizontal ) {
                         monp.x = rng( fault_point->x, fault_point->x + 2 * SEEX - 8 );
                         for( int n = -1; n <= 1; n++ ) {
@@ -201,8 +201,8 @@ void timed_event::actualize()
                 return;
             }
             // Check if we should print a message
-            if( flood_buf[g->u.posx() * flood_sy + g->u.posy()] != g->m.ter( g->u.pos() ) ) {
-                if( flood_buf[g->u.posx() * flood_sy + g->u.posy()] == t_water_sh ) {
+            if( flood_buf[g->u.bub_pos().x() * flood_sy + g->u.bub_pos().y()] != g->m.ter( g->u.bub_pos() ) ) {
+                if( flood_buf[g->u.bub_pos().x() * flood_sy + g->u.bub_pos().y()] == t_water_sh ) {
                     add_msg( m_warning, _( "Water quickly floods up to your knees." ) );
                     g->memorial().add(
                         pgettext( "memorial_male", "Water level reached knees." ),
@@ -213,7 +213,7 @@ void timed_event::actualize()
                     g->memorial().add(
                         pgettext( "memorial_male", "Water level reached the ceiling." ),
                         pgettext( "memorial_female", "Water level reached the ceiling." ) );
-                    avatar_action::swim( g->m, g->u, g->u.pos() );
+                    avatar_action::swim( g->m, g->u, g->u.bub_pos() );
                 }
             }
             // flood_buf is filled with correct tiles; now copy them back to g->m
@@ -231,7 +231,7 @@ void timed_event::actualize()
                 }
             };
             const mtype_id &montype = random_entry( temple_monsters );
-            g->place_critter_around( montype, g->u.pos(), 2 );
+            g->place_critter_around( montype, g->u.bub_pos(), 2 );
         }
         break;
 
@@ -252,8 +252,8 @@ void timed_event::per_turn()
                     // We're safely indoors!
                     return;
                 }
-                g->place_critter_at( mon_eyebot, tripoint( place, g->u.posz() ) );
-                if( g->u.sees( tripoint( place, g->u.posz() ) ) ) {
+                g->place_critter_at( mon_eyebot, tripoint( place, g->u.bub_pos().z() ) );
+                if( g->u.sees( tripoint( place, g->u.bub_pos().z() ) ) ) {
                     add_msg( m_warning, _( "An eyebot swoops down nearby!" ) );
                 }
                 // One eyebot per trigger is enough, really

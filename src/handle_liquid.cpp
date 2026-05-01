@@ -159,7 +159,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
     } );
     // This handles liquids stored in vehicle parts directly (e.g. tanks).
     std::set<vehicle *> opts;
-    for( const auto &e : here.points_in_radius( g->u.pos(), 1 ) ) {
+    for( const auto &e : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
         auto veh = veh_pointer_or_null( here.veh_at( e ) );
         if( veh ) {
             vehicle_part_range vpr = veh->get_all_parts();
@@ -195,7 +195,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
         }
     }
 
-    for( auto &target_pos : here.points_in_radius( g->u.pos(), 1 ) ) {
+    for( auto &target_pos : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
         if( !iexamine::has_keg( target_pos ) ) {
             continue;
         }
@@ -203,7 +203,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
             liquid.position() == target_pos ) {
             continue;
         }
-        const std::string dir = direction_name( direction_from( g->u.pos(), target_pos ) );
+        const std::string dir = direction_name( direction_from( g->u.bub_pos(), target_pos ) );
         menu.addentry( -1, true, MENU_AUTOASSIGN, _( "Pour into an adjacent keg (%s)" ), dir );
         actions.emplace_back( [ &, target_pos]() {
             target.pos = target_pos;

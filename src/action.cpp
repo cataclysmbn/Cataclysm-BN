@@ -667,13 +667,13 @@ bool can_interact_at( action_id action, const tripoint &p )
     map &here = get_map();
     switch( action ) {
         case ACTION_OPEN:
-            return here.can_open_door( &get_avatar(), p, !here.is_outside( g->u.pos() ) );
+            return here.can_open_door( &get_avatar(), p, !here.is_outside( g->u.bub_pos() ) );
         case ACTION_CLOSE: {
             const optional_vpart_position vp = here.veh_at( p );
             return ( vp &&
                      vp->vehicle().next_part_to_close( vp->part_index(),
-                             veh_pointer_or_null( here.veh_at( g->u.pos() ) ) != &vp->vehicle() ) >= 0 ) ||
-                   here.close_door( p, !here.is_outside( g->u.pos() ), true );
+                             veh_pointer_or_null( here.veh_at( g->u.bub_pos() ) ) != &vp->vehicle() ) >= 0 ) ||
+                   here.close_door( p, !here.is_outside( g->u.bub_pos() ), true );
         }
         case ACTION_BUTCHER:
             return can_butcher_at( p );
@@ -799,17 +799,17 @@ action_id handle_action_menu()
 
     map &here = get_map();
     // Check if we're on a vehicle, if so, vehicle controls should be top.
-    if( here.veh_at( g->u.pos() ) ) {
+    if( here.veh_at( g->u.bub_pos() ) ) {
         // Make it 300 to prioritize it before examining the vehicle.
         action_weightings[ACTION_CONTROL_VEHICLE] = 300;
     }
 
     // Check if we can perform one of our actions on nearby terrain. If so,
     // display that action at the top of the list.
-    for( const tripoint &pos : here.points_in_radius( g->u.pos(), 1 ) ) {
-        if( pos != g->u.pos() ) {
+    for( const tripoint &pos : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
+        if( pos != g->u.bub_pos() ) {
             // Check for actions that work on nearby tiles, skipping tiles blocked by vehicles
-            if( here.obstructed_by_vehicle_rotation( g->u.pos(), pos ) ) {
+            if( here.obstructed_by_vehicle_rotation( g->u.bub_pos(), pos ) ) {
                 continue;
             }
 
@@ -1116,12 +1116,12 @@ std::optional<tripoint> choose_adjacent( const std::string &message, const bool 
         return std::nullopt;
     }
 
-    if( get_map().obstructed_by_vehicle_rotation( g->u.pos(), *dir + g->u.pos() ) ) {
+    if( get_map().obstructed_by_vehicle_rotation( g->u.bub_pos(), *dir + g->u.bub_pos() ) ) {
         add_msg( _( "You can't reach through that vehicle's wall." ) );
         return std::nullopt;
     }
 
-    return *dir + g->u.pos();
+    return *dir + g->u.bub_pos();
 }
 
 std::optional<tripoint> choose_adjacent_highlight( const std::string &message,
@@ -1142,8 +1142,8 @@ std::optional<tripoint> choose_adjacent_highlight(
     std::vector<tripoint> valid;
     map &here = get_map();
     if( allowed ) {
-        for( const tripoint &pos : here.points_in_radius( g->u.pos(), 1 ) ) {
-            if( !here.obstructed_by_vehicle_rotation( g->u.pos(), pos ) && allowed( pos ) ) {
+        for( const tripoint &pos : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
+            if( !here.obstructed_by_vehicle_rotation( g->u.bub_pos(), pos ) && allowed( pos ) ) {
                 valid.emplace_back( pos );
             }
         }

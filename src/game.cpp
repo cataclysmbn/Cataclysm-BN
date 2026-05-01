@@ -3770,8 +3770,8 @@ shared_ptr_fast<game::draw_callback_t>
             }
         }
         if( zone_start && zone_end ) {
-            const point offset2( g->u.view_offset.xy() + point( g->u.pos().x() - getmaxx( g->w_terrain ) / 2,
-                                 g->u.pos().y() - getmaxy( g->w_terrain ) / 2 ) );
+            const point offset2( g->u.view_offset.xy() + point( g->u.bub_pos().x() - getmaxx( g->w_terrain ) / 2,
+                                 g->u.bub_pos().y() - getmaxy( g->w_terrain ) / 2 ) );
 
             tripoint offset;
 #if defined(TILES)
@@ -4149,7 +4149,7 @@ void game::draw_minimap()
         }
     }
 
-    const int sight_points = g->u.overmap_sight_range( g->light_level( g->u.pos().z() ) );
+    const int sight_points = g->u.overmap_sight_range( g->light_level( g->u.bub_pos().z() ) );
     for( int i = -3; i <= 3; i++ ) {
         for( int j = -3; j <= 3; j++ ) {
             if( i > -3 && i < 3 && j > -3 && j < 3 ) {
@@ -8811,7 +8811,7 @@ void draw_trail( const tripoint &start, const tripoint &end, const bool bDrawX )
             mvwputch( g->w_terrain, point( POSX, POSY ), c_white, sym );
         } else {
             mvwputch( g->w_terrain, pts.back().xy() - g->u.view_offset.xy() +
-                      point( POSX - g->u.pos().x(), POSY - g->u.pos().y() ),
+                      point( POSX - g->u.bub_pos().x(), POSY - g->u.bub_pos().y() ),
                       c_white, sym );
         }
     }

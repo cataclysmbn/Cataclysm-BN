@@ -427,11 +427,11 @@ static int debug_menu_uilist( bool display_all_entries = true )
 void teleport_short()
 {
     const std::optional<tripoint> where = g->look_around( true );
-    if( !where || *where == g->u.pos() ) {
+    if( !where || *where == g->u.bub_pos() ) {
         return;
     }
     g->place_player( *where );
-    const tripoint new_pos( g->u.pos() );
+    const tripoint new_pos( g->u.bub_pos() );
     add_msg( _( "You teleport to point (%d,%d,%d)." ), new_pos.x, new_pos.y, new_pos.z );
 }
 
@@ -550,7 +550,7 @@ static Character &pick_character( Character &preselected )
     uilist charmenu;
     int charnum = 0;
     charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, "%s", _( "You" ) );
-    locations.emplace_back( g->u.pos() );
+    locations.emplace_back( g->u.bub_pos() );
     for( const npc &guy : g->all_npcs() ) {
         charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, guy.name );
         locations.emplace_back( guy.pos() );
@@ -1490,7 +1490,7 @@ static std::optional<tripoint_range<tripoint>> select_area()
     popup.on_top( true );
     popup.message( "%s", _( "Select first point." ) );
 
-    tripoint initial_pos = g->u.pos();
+    tripoint initial_pos = g->u.bub_pos();
     const look_around_result first = g->look_around( false, initial_pos, initial_pos,
                                      false, true, false, false, tripoint_zero, true );
 
@@ -1600,7 +1600,7 @@ void debug()
             s += vgettext( "%d creature exists.\n", "%d creatures exist.\n", g->num_creatures() );
             popup_top(
                 s.c_str(),
-                u.posx(), g->u.posy(), g->get_levx(), g->get_levy(),
+                u.posx(), g->u.bub_pos().y(), g->get_levx(), g->get_levy(),
                 get_overmapbuffer( get_avatar().get_dimension() ).ter( g->u.global_omt_location() )->get_name(),
                 to_turns<int>( calendar::turn - calendar::turn_zero ),
                 get_option<bool>( "RANDOM_NPC" ) ? _( "NPCs are going to spawn." ) :

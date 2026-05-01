@@ -286,7 +286,7 @@ void mdeath::boomer( monster &z )
         }
     }
 
-    if( rl_dist( z.pos(), g->u.pos() ) == 1 ) {
+    if( rl_dist( z.pos(), g->u.bub_pos() ) == 1 ) {
         g->u.add_env_effect( effect_boomered, body_part_eyes, 2, 24_turns );
     }
 
@@ -449,7 +449,7 @@ void mdeath::guilt( monster &z )
         g->u.has_trait_flag( trait_flag_PRED4 ) || g->u.has_trait( trait_KILLER ) ) {
         return;
     }
-    if( rl_dist( z.pos(), g->u.pos() ) > MAX_GUILT_DISTANCE ) {
+    if( rl_dist( z.pos(), g->u.bub_pos() ) > MAX_GUILT_DISTANCE ) {
         // Too far away, we can deal with it.
         return;
     }

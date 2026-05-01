@@ -2304,7 +2304,7 @@ int iuse::hammer( player *p, item *it, bool, const tripoint & )
     }
 
     const std::function<bool( const tripoint & )> f = []( const tripoint & pnt ) {
-        if( pnt == g->u.pos() ) {
+        if( pnt == g->u.bub_pos() ) {
             return false;
         }
         const ter_id ter = g->m.ter( pnt );
@@ -2713,7 +2713,7 @@ int iuse::fill_pit( player *p, item *it, bool t, const tripoint & )
     }
 
     const std::function<bool( const tripoint & )> f = []( const tripoint & pnt ) {
-        if( pnt == g->u.pos() ) {
+        if( pnt == g->u.bub_pos() ) {
             return false;
         }
         const ter_id type = g->m.ter( pnt );
@@ -2808,7 +2808,7 @@ int iuse::siphon( player *p, item *it, bool, const tripoint & )
 
     vehicle *v = nullptr;
     bool found_more_than_one = false;
-    for( const tripoint &pos : g->m.points_in_radius( g->u.pos(), 1 ) ) {
+    for( const tripoint &pos : g->m.points_in_radius( g->u.bub_pos(), 1 ) ) {
         const optional_vpart_position vp = g->m.veh_at( pos );
         if( !vp ) {
             continue;
@@ -3105,7 +3105,7 @@ int iuse::geiger( player *p, item *it, bool t, const tripoint &pos )
                 return 0;
             }
             const tripoint &pnt = *pnt_;
-            if( pnt == g->u.pos() ) {
+            if( pnt == g->u.bub_pos() ) {
                 p->add_msg_if_player( m_info, _( "Your radiation level: %d mSv (%d mSv from items)" ), p->get_rad(),
                                       p->leak_level( flag_RADIOACTIVE ) );
                 break;
@@ -3312,7 +3312,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                         /** @EFFECT_PER_MAX increases possible per buff for NPCs */
                         buff_stat( person->per_max, rng( 0, person->per_max / 2 ) );
                         apply_debug_grenade_skill_modifier( *person, debug_grenade_skill_modifier_type::buff );
-                    } else if( g->u.pos() == dest ) {
+                    } else if( g->u.bub_pos() == dest ) {
                         /** @EFFECT_STR_MAX increases possible str buff */
                         buff_stat( g->u.str_max, rng( 0, g->u.str_max / 2 ) );
                         /** @EFFECT_DEX_MAX increases possible dex buff */
@@ -3353,7 +3353,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                         /** @EFFECT_PER_MAX increases possible per debuff for NPCs (NEGATIVE) */
                         person->per_max -= rng( 0, person->per_max / 2 );
                         apply_debug_grenade_skill_modifier( *person, debug_grenade_skill_modifier_type::nerf );
-                    } else if( g->u.pos() == dest ) {
+                    } else if( g->u.bub_pos() == dest ) {
                         /** @EFFECT_STR_MAX increases possible str debuff (NEGATIVE) */
                         g->u.str_max -= rng( 0, g->u.str_max / 2 );
                         /** @EFFECT_DEX_MAX increases possible dex debuff (NEGATIVE) */
@@ -3385,7 +3385,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                         critter.clear_effects();
                     } else if( npc *const person = g->critter_at<npc>( dest ) ) {
                         person->environmental_revert_effect();
-                    } else if( g->u.pos() == dest ) {
+                    } else if( g->u.bub_pos() == dest ) {
                         g->u.environmental_revert_effect();
                         do_purify( g->u );
                     }
@@ -3406,7 +3406,7 @@ int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
                 for( const tripoint &dest : g->m.points_in_radius( pos, explosion_radius ) ) {
                     if( npc *const person = g->critter_at<npc>( dest ) ) {
                         person->fall_asleep( 5_minutes );
-                    } else if( g->u.pos() == dest ) {
+                    } else if( g->u.bub_pos() == dest ) {
                         g->u.fall_asleep( 5_minutes );
                     }
                 }
@@ -4430,7 +4430,7 @@ int iuse::chop_tree( player *p, item *it, bool t, const tripoint & )
         return 0;
     }
     const std::function<bool( const tripoint & )> f = []( const tripoint & pnt ) {
-        if( pnt == g->u.pos() ) {
+        if( pnt == g->u.bub_pos() ) {
             return false;
         }
         return g->m.has_flag( "TREE", pnt );

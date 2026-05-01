@@ -1539,7 +1539,7 @@ void sfx::do_footstep()
             start_sfx_timestamp = std::chrono::high_resolution_clock::now();
         };
 
-        auto veh_displayed_part = g->m.veh_at( g->u.pos() ).part_displayed();
+        auto veh_displayed_part = g->m.veh_at( g->u.bub_pos() ).part_displayed();
 
         if( !veh_displayed_part && ( water.contains( terrain ) ) ) {
             play_plmove_sound_variant( "walk_water" );

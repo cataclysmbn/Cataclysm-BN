@@ -1780,7 +1780,7 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
         clear_window_area( w );
         tilecontext->draw_minimap(
             point( win->pos.x * fontwidth, win->pos.y * fontheight ),
-            tripoint( g->u.pos().xy(), g->ter_view_p.z ),
+            tripoint( g->u.bub_pos().xy(), g->ter_view_p.z ),
             win->width * font->width, win->height * font->height );
         update = true;
 
@@ -2210,7 +2210,7 @@ input_context touch_input_context;
 
 std::string get_quick_shortcut_name( const std::string &category )
 {
-    if( category == "DEFAULTMODE" && g->check_zone( zone_type_id( "NO_AUTO_PICKUP" ), g->u.pos() ) &&
+    if( category == "DEFAULTMODE" && g->check_zone( zone_type_id( "NO_AUTO_PICKUP" ), g->u.bub_pos() ) &&
         get_option<bool>( "ANDROID_SHORTCUT_ZONE" ) ) {
         return "DEFAULTMODE____SHORTCUTS";
     }
@@ -3019,9 +3019,9 @@ static void CheckMessages()
                 // display that action at the top of the list.
                 for( int dx = -1; dx <= 1; dx++ ) {
                     for( int dy = -1; dy <= 1; dy++ ) {
-                        int x = g->u.posx() + dx;
-                        int y = g->u.posy() + dy;
-                        int z = g->u.posz();
+                        int x = g->u.bub_pos().x() + dx;
+                        int y = g->u.bub_pos().y() + dy;
+                        int z = g->u.bub_pos().z();
                         const tripoint pos( x, y, z );
 
                         // Check if we're near a vehicle, if so, vehicle controls should be top.

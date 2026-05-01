@@ -888,7 +888,7 @@ bool advanced_inventory::move_all_items( bool nested_call )
             dropped = dropped_favorite;
         }
 
-        g->u.drop( dropped, g->u.pos() + darea.off );
+        g->u.drop( dropped, g->u.bub_pos() + darea.off );
     } else {
         if( dpane.get_area() == AIM_WORN ) {
             // TODO: Start ACT_WEAR in this case
@@ -950,7 +950,7 @@ bool advanced_inventory::move_all_items( bool nested_call )
                         quantities );
                 g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
                                           targets,
-                                          panes[src].in_vehicle() ? std::nullopt : std::optional<tripoint>( g->u.pos() )
+                                          panes[src].in_vehicle() ? std::nullopt : std::optional<tripoint>( g->u.bub_pos() )
                                       ) ) );
             } else {
                 g->u.assign_activity( std::make_unique<player_activity>
@@ -1169,7 +1169,7 @@ void advanced_inventory::start_activity( const aim_location destarea,
                     quantities );
             g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
                                       targets,
-                                      from_vehicle ? std::nullopt : std::optional<tripoint>( g->u.pos() )
+                                      from_vehicle ? std::nullopt : std::optional<tripoint>( g->u.bub_pos() )
                                   ) ) );
         } else {
             // Stash the destination
@@ -1841,7 +1841,7 @@ void advanced_inventory::draw_minimap()
     // get the center of the window
     tripoint pc = {getmaxx( minimap ) / 2, getmaxy( minimap ) / 2, 0};
     // draw the 3x3 tiles centered around player
-    get_map().draw( minimap, g->u.pos() );
+    get_map().draw( minimap, g->u.bub_pos() );
     for( auto s : sides ) {
         char sym = get_minimap_sym( s );
         if( sym == '\0' ) {
@@ -1867,7 +1867,7 @@ void advanced_inventory::draw_minimap()
     }
 
     if( !invert_left || !invert_right ) {
-        g->u.draw( minimap, g->u.pos(), invert_left || invert_right );
+        g->u.draw( minimap, g->u.bub_pos(), invert_left || invert_right );
     }
 }
 

@@ -196,8 +196,8 @@ static bool has_pre_terrain( const construction &con, const tripoint &p )
 
 static bool has_pre_terrain( const construction &con )
 {
-    for( const tripoint &p : get_map().points_in_radius( g->u.pos(), 1 ) ) {
-        if( p != g->u.pos() && has_pre_terrain( con, p ) ) {
+    for( const tripoint &p : get_map().points_in_radius( g->u.bub_pos(), 1 ) ) {
+        if( p != g->u.bub_pos() && has_pre_terrain( con, p ) ) {
             return true;
         }
     }
@@ -1600,8 +1600,8 @@ bool can_construct( const construction &con, const tripoint &p )
 
 bool can_construct( const construction &con )
 {
-    for( const tripoint &p : get_map().points_in_radius( g->u.pos(), 1 ) ) {
-        if( p != g->u.pos() && can_construct( con, p ) ) {
+    for( const tripoint &p : get_map().points_in_radius( g->u.bub_pos(), 1 ) ) {
+        if( p != g->u.bub_pos() && can_construct( con, p ) ) {
             return true;
         }
     }
@@ -1615,9 +1615,9 @@ void place_construction( const construction_group_str_id &group )
     std::vector<const construction *> cons = constructions_by_group( group );
     std::map<tripoint, const construction *> valid;
     map &here = get_map();
-    for( const tripoint &p : here.points_in_radius( g->u.pos(), 1 ) ) {
+    for( const tripoint &p : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
         for( const construction *con : cons ) {
-            if( p != g->u.pos() && can_construct( *con, p ) && player_can_build( g->u, total_inv, *con ) ) {
+            if( p != g->u.bub_pos() && can_construct( *con, p ) && player_can_build( g->u, total_inv, *con ) ) {
                 valid[ p ] = con;
             }
         }
@@ -2084,9 +2084,9 @@ static void unroll_digging( const int numer_of_2x4s )
 {
     // refund components!
     map &here = get_map();
-    here.add_item_or_charges( g->u.pos(), item::spawn( "rope_30" ) );
+    here.add_item_or_charges( g->u.bub_pos(), item::spawn( "rope_30" ) );
     // presuming 2x4 to conserve lumber.
-    here.spawn_item( g->u.pos(), itype_2x4, numer_of_2x4s );
+    here.spawn_item( g->u.bub_pos(), itype_2x4, numer_of_2x4s );
 }
 
 void construct::done_digormine_stair( const tripoint &p, bool dig )
@@ -2196,10 +2196,10 @@ void construct::done_window_curtains( const tripoint & )
 {
     map &here = get_map();
     // copied from iexamine::curtains
-    here.spawn_item( g->u.pos(), itype_nail, 1, 4 );
-    here.spawn_item( g->u.pos(), itype_sheet, 2 );
-    here.spawn_item( g->u.pos(), itype_stick );
-    here.spawn_item( g->u.pos(), itype_string_36 );
+    here.spawn_item( g->u.bub_pos(), itype_nail, 1, 4 );
+    here.spawn_item( g->u.bub_pos(), itype_sheet, 2 );
+    here.spawn_item( g->u.bub_pos(), itype_stick );
+    here.spawn_item( g->u.bub_pos(), itype_string_36 );
     g->u.add_msg_if_player(
         _( "After boarding up the window the curtains and curtain rod are left." ) );
 }

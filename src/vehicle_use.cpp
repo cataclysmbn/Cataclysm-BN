@@ -972,7 +972,7 @@ bool vehicle::fold_up()
     for( const vpart_reference &vp : get_any_parts( "CARGO" ) ) {
         const size_t p = vp.part_index();
         for( auto &elem : get_items( p ).clear() ) {
-            g->m.add_item_or_charges( g->u.pos(), std::move( elem ) );
+            g->m.add_item_or_charges( g->u.bub_pos(), std::move( elem ) );
         }
     }
 
@@ -1019,7 +1019,7 @@ double vehicle::engine_cold_factor( const int e ) const
         return 0.0;
     }
 
-    int eff_temp = units::to_fahrenheit( get_weather().get_temperature( g->u.pos() ) );
+    int eff_temp = units::to_fahrenheit( get_weather().get_temperature( g->u.bub_pos() ) );
     if( !parts[ engines[ e ] ].faults().contains( fault_glowplug ) ) {
         eff_temp = std::min( eff_temp, 20 );
     }
@@ -1235,7 +1235,7 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
 
     if( !autodrive ) {
         g->u.assign_activity( ACT_START_ENGINES, start_time );
-        g->u.activity->placement = starting_engine_position - g->u.pos();
+        g->u.activity->placement = starting_engine_position - g->u.bub_pos();
         g->u.activity->values.push_back( take_control );
     }
 }

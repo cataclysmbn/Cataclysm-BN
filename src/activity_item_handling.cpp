@@ -923,7 +923,7 @@ static int move_cost_cart( const item &it, const tripoint &src, const tripoint &
 static int move_cost( const item &it, const tripoint &src, const tripoint &dest )
 {
     if( g->u.get_grab_type() == OBJECT_VEHICLE ) {
-        tripoint cart_position = g->u.pos() + g->u.grab_point;
+        tripoint cart_position = g->u.bub_pos() + g->u.grab_point;
 
         if( const std::optional<vpart_reference> vp = get_map().veh_at(
                     cart_position ).part_with_feature( "CARGO", false ) ) {
@@ -1494,7 +1494,7 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
             // If their position or intended position or player position/intended position
             // then discount, don't need to move each other out of the way.
             if( here.getlocal( g->u.activity->placement ) == src_loc ||
-                guy_work_spot == src_loc || guy.pos() == src_loc || ( p.is_npc() && g->u.pos() == src_loc ) ) {
+                guy_work_spot == src_loc || guy.pos() == src_loc || ( p.is_npc() && g->u.bub_pos() == src_loc ) ) {
                 set_activity_failure_message( p,
                                               _( "Vehicle work blocked: someone is already working here." ),
                                               failure_notice_sent );

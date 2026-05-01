@@ -93,7 +93,7 @@ static bool is_player_outside()
 void glare( const weather_type_id &w )
 {
     //General prepequisites for glare
-    if( !is_player_outside() || !g->is_in_sunlight( g->u.pos() ) || g->u.in_sleep_state() ||
+    if( !is_player_outside() || !g->is_in_sunlight( g->u.bub_pos() ) || g->u.in_sleep_state() ||
         g->u.worn_with_flag( json_flag_SUN_GLASSES ) ||
         g->u.has_bionic( bio_sunglasses ) ||
         g->u.is_blind() ) {
@@ -1149,7 +1149,7 @@ void weather_manager::update_weather()
     // TODO: predict when the weather changes and use that time.
     nextweather = calendar::turn + 5_minutes;
     if( weather_id != old_weather && weather_id->dangerous &&
-        g->get_levz() >= 0 && get_map().is_outside( g->u.pos() )
+        g->get_levz() >= 0 && get_map().is_outside( g->u.bub_pos() )
         && !g->u.has_activity( ACT_WAIT_WEATHER ) ) {
         g->cancel_activity_or_ignore_query( distraction_type::weather_change,
                                             string_format( _( "The weather changed to %s!" ), weather_id->name ) );

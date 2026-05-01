@@ -374,7 +374,7 @@ void explosion_handler::draw_custom_explosion( const tripoint &,
         }
     } else {
         // In tiles mode, the coordinates have to be absolute
-        const tripoint view_center = relative_view_pos( g->u, g->u.pos() );
+        const tripoint view_center = relative_view_pos( g->u, g->u.bub_pos() );
         for( const auto &pr : all_area ) {
             // Relative point is only used for z level check
             const tripoint relative_point = relative_view_pos( g->u, pr.first );
@@ -519,7 +519,7 @@ void draw_bullet_curses( map &m, const tripoint &t, const char bullet, const tri
         return;
     }
 
-    const tripoint vp = g->u.pos() + g->u.view_offset;
+    const tripoint vp = g->u.bub_pos() + g->u.view_offset;
 
     if( vp.z != t.z ) {
         return;

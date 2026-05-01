@@ -669,7 +669,7 @@ void Character::suffer_from_asthma( const int current_stim )
 
     if( in_sleep_state() && !has_effect( effect_narcosis ) ) {
         inventory map_inv;
-        map_inv.form_from_map( g->u.pos(), 2, &g->u );
+        map_inv.form_from_map( g->u.bub_pos(), 2, &g->u );
         // check if an inhaler is somewhere near
         bool nearby_use = auto_use || oxygenator || map_inv.has_charges( itype_inhaler, 1 ) ||
                           map_inv.has_charges( itype_oxygen_tank, 1 ) ||
@@ -692,11 +692,11 @@ void Character::suffer_from_asthma( const int current_stim )
             // create new variable to resolve a reference issue
             int amount = 1;
             map &here = get_map();
-            if( !here.use_charges( g->u.pos(), 2, itype_inhaler, amount ).empty() ) {
+            if( !here.use_charges( g->u.bub_pos(), 2, itype_inhaler, amount ).empty() ) {
                 add_msg_if_player( m_info, _( "You use your inhaler and go back to sleep." ) );
                 add_effect( effect_took_antiasthmatic, rng( 1_hours, 2_hours ) );
-            } else if( !here.use_charges( g->u.pos(), 2, itype_oxygen_tank, amount ).empty() ||
-                       !here.use_charges( g->u.pos(), 2, itype_smoxygen_tank, amount ).empty() ) {
+            } else if( !here.use_charges( g->u.bub_pos(), 2, itype_oxygen_tank, amount ).empty() ||
+                       !here.use_charges( g->u.bub_pos(), 2, itype_smoxygen_tank, amount ).empty() ) {
                 add_msg_if_player( m_info, _( "You take a deep breath from your oxygen tank "
                                               "and go back to sleep." ) );
             }

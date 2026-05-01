@@ -174,10 +174,10 @@ void defense_game::pre_action( action_id &act )
         case ACTION_MOVE_LEFT:
         case ACTION_MOVE_FORTH_LEFT: {
             const point delta = get_delta_from_movement_action( act, iso_rotate::yes );
-            if( ( delta.y < 0 && g->u.posy() == g_half_mapsize_y && g->get_levy() <= 93 )
-                || ( delta.y > 0 && g->u.posy() == g_half_mapsize_y + SEEY - 1 && g->get_levy() >= 98 )
-                || ( delta.x < 0 && g->u.posx() == g_half_mapsize_x && g->get_levx() <= 93 )
-                || ( delta.x > 0 && g->u.posx() == g_half_mapsize_x + SEEX - 1 && g->get_levx() >= 98 ) ) {
+            if( ( delta.y < 0 && g->u.bub_pos().y() == g_half_mapsize_y && g->get_levy() <= 93 )
+                || ( delta.y > 0 && g->u.bub_pos().y() == g_half_mapsize_y + SEEY - 1 && g->get_levy() >= 98 )
+                || ( delta.x < 0 && g->u.bub_pos().x() == g_half_mapsize_x && g->get_levx() <= 93 )
+                || ( delta.x > 0 && g->u.bub_pos().x() == g_half_mapsize_x + SEEX - 1 && g->get_levx() >= 98 ) ) {
                 action_error_message = string_format( _( "You cannot leave the %s behind!" ),
                                                       defense_location_name( location ) );
             }
@@ -301,7 +301,7 @@ void defense_game::init_map()
     player_character.sety( SEEY );
 
     g->update_map( g-> u );
-    monster *const generator = g->place_critter_around( mtype_id( "mon_generator" ), g->u.pos(), 2 );
+    monster *const generator = g->place_critter_around( mtype_id( "mon_generator" ), g->u.bub_pos(), 2 );
     assert( generator );
     generator->friendly = -1;
 }
@@ -1068,7 +1068,7 @@ void defense_game::caravan()
                     g->u.i_add( std::move( tmp ) );
                 } else { // Could fit it in the inventory!
                     dropped_some = true;
-                    get_map().add_item_or_charges( g->u.pos(), std::move( tmp ) );
+                    get_map().add_item_or_charges( g->u.bub_pos(), std::move( tmp ) );
                 }
             }
         }
@@ -1377,7 +1377,7 @@ void defense_game::spawn_wave_monster( const mtype_id &type )
             continue;
         }
         monster &tmp = *mon;
-        tmp.wander_pos = g->u.pos();
+        tmp.wander_pos = g->u.bub_pos();
         tmp.wandf = 150;
         // We want to kill!
         tmp.anger = 100;

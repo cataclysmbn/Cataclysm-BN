@@ -735,7 +735,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         add_msg_activate();
         const w_point &weatherPoint = get_weather().get_precise();
         int humidity = get_local_humidity( weatherPoint.humidity, get_weather().weather_id,
-                                           g->is_sheltered( g->u.pos() ) );
+                                           g->is_sheltered( g->u.bub_pos() ) );
         // thirst units = 5 mL
         int water_available = std::lround( humidity * 3.0 / 100.0 );
         if( water_available == 0 ) {
@@ -999,7 +999,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         }
         const oter_id &cur_om_ter = get_overmapbuffer( get_dimension() ).ter( global_omt_location() );
         /* cache g->get_temperature( player location ) since it is used twice. No reason to recalc */
-        const auto player_local_temp = weather.get_temperature( g->u.pos() );
+        const auto player_local_temp = weather.get_temperature( g->u.bub_pos() );
         /* windpower defined in internal velocity units (=.01 mph) */
         double windpower = 100.0f * get_local_windpower( weather.windspeed + vehwindspeed,
                            cur_om_ter, pos(), weather.winddirection, g->is_sheltered( pos() ) );
@@ -1007,7 +1007,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         add_msg_if_player( m_info, _( "Relative Humidity: %s." ),
                            print_humidity(
                                get_local_humidity( weatherPoint.humidity, weather.weather_id,
-                                       g->is_sheltered( g->u.pos() ) ) ) );
+                                       g->is_sheltered( g->u.bub_pos() ) ) ) );
         add_msg_if_player( m_info, _( "Pressure: %s." ),
                            print_pressure( static_cast<int>( weatherPoint.pressure ) ) );
         add_msg_if_player( m_info, _( "Wind Speed: %.1f %s." ),
@@ -1878,7 +1878,7 @@ void Character::process_bionic( bionic &bio )
         if( calendar::once_every( 5_minutes ) ) {
             const w_point &weatherPoint = get_weather().get_precise();
             int humidity = get_local_humidity( weatherPoint.humidity, get_weather().weather_id,
-                                               g->is_sheltered( g->u.pos() ) );
+                                               g->is_sheltered( g->u.bub_pos() ) );
             // in thirst units = 5 mL water
             int water_available = std::lround( humidity * 3.0 / 100.0 );
             // At 50% relative humidity or more, the player will draw 10 mL

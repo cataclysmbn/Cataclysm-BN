@@ -22,7 +22,7 @@ TEST_CASE( "opening_floor_invalidates_below_seen_cache", "[vision][zlevel]" )
     // Place the player on z=1 so we have a meaningful "below".
     g->place_player( tripoint( 60, 60, 1 ) );
 
-    const tripoint hole_pos = g->u.pos() + point_east;
+    const tripoint hole_pos = g->u.bub_pos() + point_east;
 
     // Ensure deterministic starting terrain.
     here.ter_set( hole_pos, t_floor );
@@ -57,13 +57,13 @@ TEST_CASE( "opening_floor_rebuilds_below_light", "[vision][zlevel]" )
 
     calendar::turn = calendar::turn_zero + 12_hours;
 
-    const tripoint hole_pos = g->u.pos() + point_east;
+    const tripoint hole_pos = g->u.bub_pos() + point_east;
 
     here.ter_set( hole_pos, t_open_air );
     here.ter_set( hole_pos + tripoint_below, t_floor );
 
-    here.build_map_cache( g->u.posz() );
-    here.update_visibility_cache( g->u.posz() );
+    here.build_map_cache( g->u.bub_pos().z() );
+    here.update_visibility_cache( g->u.bub_pos().z() );
 
     const level_cache &below_cache = here.access_cache( hole_pos.z - 1 );
 

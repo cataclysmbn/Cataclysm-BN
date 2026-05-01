@@ -271,7 +271,7 @@ bool editmap::eget_direction( tripoint &p, const std::string &action ) const
 {
     p = tripoint_zero;
     if( action == "CENTER" ) {
-        p = g->u.pos() - target;
+        p = g->u.bub_pos() - target;
     } else if( action == "LEFT_WIDE" ) {
         p.x = -tmax.x / 2;
     } else if( action == "DOWN_WIDE" ) {
@@ -339,7 +339,7 @@ shared_ptr_fast<ui_adaptor> editmap::create_or_get_ui_adaptor()
 std::optional<tripoint> editmap::edit()
 {
     restore_on_out_of_scope<tripoint> view_offset_prev( g->u.view_offset );
-    target = g->u.pos() + g->u.view_offset;
+    target = g->u.bub_pos() + g->u.view_offset;
     input_context ctxt( "EDITMAP" );
     ctxt.set_iso( true );
     ctxt.register_directions();
@@ -496,7 +496,7 @@ void editmap::uber_draw_ter( const catacurses::window &w, map *m )
 
 void editmap::do_ui_invalidation()
 {
-    g->u.view_offset = target - g->u.pos();
+    g->u.view_offset = target - g->u.bub_pos();
     g->invalidate_main_ui_adaptor();
     create_or_get_ui_adaptor()->invalidate_ui();
 }
@@ -626,7 +626,7 @@ void editmap::draw_main_ui_overlay()
                     g->draw_trap_override( map_p, tmpmap.tr_at( tmp_p ).loadid );
                     g->draw_field_override( map_p, tmpmap.field_at( tmp_p ).displayed_field_type() );
                     const maptile &tile = tmpmap.maptile_at( tripoint_bub_ms( tmp_p ) );
-                    if( tmpmap.sees_some_items( tmp_p, g->u.pos() - origin_p ) ) {
+                    if( tmpmap.sees_some_items( tmp_p, g->u.bub_pos() - origin_p ) ) {
                         const item &itm = tile.get_uppermost_item();
                         const mtype *const mon = itm.get_mtype();
                         g->draw_item_override( map_p, itm.typeId(), mon ? mon->id : mtype_id::NULL_ID(),

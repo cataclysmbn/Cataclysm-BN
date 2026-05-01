@@ -779,7 +779,7 @@ void talk_function::drop_stolen_item( npc &p )
             detached_ptr<item> to_drop = elem->detach( );
             to_drop->remove_old_owner();
             to_drop->set_owner( p );
-            here.add_item_or_charges( g->u.pos(), std::move( to_drop ) );
+            here.add_item_or_charges( g->u.bub_pos(), std::move( to_drop ) );
         }
     }
     if( g->u.is_hauling() ) {
@@ -823,7 +823,7 @@ void talk_function::player_weapon_drop( npc &/*p*/ )
     for( item *weapon : g->u.wielded_items() ) {
         const auto ret = g->u.can_unwield( *weapon );
         if( ret.success() ) {
-            get_map().add_item_or_charges( g->u.pos(), g->u.remove_primary_weapon() );
+            get_map().add_item_or_charges( g->u.bub_pos(), g->u.remove_primary_weapon() );
         }
     }
 

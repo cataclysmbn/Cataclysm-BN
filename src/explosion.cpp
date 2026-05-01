@@ -884,7 +884,7 @@ void ExplosionProcess::blast_tile( const tripoint position, const int rl_distanc
             }
         }
     }
-    request_redraw |= position.z == g->u.posz();
+    request_redraw |= position.z == g->u.bub_pos().z();
 }
 
 void ExplosionProcess::add_field( const tripoint position,
@@ -894,14 +894,14 @@ void ExplosionProcess::add_field( const tripoint position,
 {
     map &here = get_map();
     here.add_field( position, field, intensity, 0_turns, hit_player );
-    request_redraw |= position.z == g->u.posz();
+    request_redraw |= position.z == g->u.bub_pos().z();
 }
 
 void ExplosionProcess::remove_field( const tripoint position, field_type_id target )
 {
     map &here = get_map();
     here.remove_field( position, target );
-    request_redraw |= position.z == g->u.posz();
+    request_redraw |= position.z == g->u.bub_pos().z();
 }
 
 void ExplosionProcess::move_entity( const tripoint position,
@@ -1086,8 +1086,8 @@ void ExplosionProcess::move_entity( const tripoint position,
             recombination_targets.push_back( position );
             recombination_targets.push_back( new_position );
         }
-        request_redraw |= position.z == g->u.posz();
-        request_redraw |= new_position.z == g->u.posz();
+        request_redraw |= position.z == g->u.bub_pos().z();
+        request_redraw |= new_position.z == g->u.bub_pos().z();
     }
 
     if( do_next ) {
@@ -1465,7 +1465,7 @@ static std::map<const Creature *, int> legacy_blast( const tripoint &p, const fl
         }
     }
 
-    draw_custom_explosion( g->u.pos(), explosion_colors, "explosion" );
+    draw_custom_explosion( g->u.bub_pos(), explosion_colors, "explosion" );
 
     for( const tripoint &pt : closed ) {
         const float force = power * obstacle_blast_percentage( radius, dist_map.at( pt ) );
@@ -1659,12 +1659,12 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
     map &here = get_map();
 
     draw_explosion( p, 8, c_white, qe.graphics_name );
-    int dist = rl_dist( g->u.pos(), p );
+    int dist = rl_dist( g->u.bub_pos(), p );
     if( dist <= 8 && qe.affects_player ) {
         if( !g->u.has_bionic( bio_ears ) && !g->u.is_wearing( itype_rm13_armor_on ) ) {
             g->u.add_effect( effect_deaf, time_duration::from_turns( 40 - dist * 4 ) );
         }
-        if( here.sees( g->u.pos(), p, 8 ) ) {
+        if( here.sees( g->u.bub_pos(), p, 8 ) ) {
             int flash_mod = 0;
             if( g->u.has_trait( trait_PER_SLIME ) ) {
                 if( one_in( 2 ) ) {
@@ -1744,11 +1744,11 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
             g->knockback( p, guy.pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
         }
     }
-    if( rl_dist( g->u.pos(), p ) <= sw.radius && sw.affects_player &&
+    if( rl_dist( g->u.bub_pos(), p ) <= sw.radius && sw.affects_player &&
         ( !g->u.has_trait( trait_LEG_TENT_BRACE ) || g->u.footwear_factor() == 1 ||
           ( g->u.footwear_factor() == .5 && one_in( 2 ) ) ) ) {
         add_msg( m_bad, _( "You're caught in the shockwave!" ) );
-        g->knockback( p, g->u.pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
+        g->knockback( p, g->u.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
     }
 }
 
@@ -1902,10 +1902,10 @@ void explosion_funcs::resonance_cascade( const queued_explosion &qe )
     map &here = get_map();
     const tripoint &p = qe.pos;
 
-    const time_duration maxglow = time_duration::from_turns( 100 - 5 * trig_dist( p, g->u.pos() ) );
+    const time_duration maxglow = time_duration::from_turns( 100 - 5 * trig_dist( p, g->u.bub_pos() ) );
     if( maxglow > 0_turns ) {
         const time_duration minglow = std::max( 0_turns, time_duration::from_turns( 60 - 5 * trig_dist( p,
-                                                g->u.pos() ) ) );
+                                                g->u.bub_pos() ) ) );
         g->u.add_effect( effect_teleglow, rng( minglow, maxglow ) * 100 );
     }
 
