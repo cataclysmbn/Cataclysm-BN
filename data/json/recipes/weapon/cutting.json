@@ -988,5 +988,5 @@
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "CUT_FINE", "level": 3 } ],
     "using": [ [ "blacksmithing_advanced", 8 ], [ "steel_standard", 2 ] ],
     "components": [ [ [ "2x4", 2 ], [ "stick", 4 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ], [ [ "radiant_core", 1 ] ] ]
-  },
+  }
 ]

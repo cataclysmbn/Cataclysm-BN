@@ -2343,7 +2343,7 @@
     "material": "steel",
     "symbol": "/",
     "color": "light_gray",
-    "techniques": [ "RAPID", "WBLOCK_2", "WIDE", "BRUTAL"],
+    "techniques": [ "RAPID", "WBLOCK_2", "WIDE", "BRUTAL" ],
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 9 ] ],
     "flags": [ "DURABLE_MELEE", "SHEATH_SWORD", "NONCONDUCTIVE", "TRADER_AVOID", "LIGHT_240" ]
   }

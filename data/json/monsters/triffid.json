@@ -330,12 +330,7 @@
     "melee_skill": 6,
     "melee_dice": 2,
     "melee_dice_sides": 8,
-    "melee_damage": [
-    {
-      "damage_type": "light",
-      "amount": 6
-    }
-    ],
+    "melee_damage": [ { "damage_type": "light", "amount": 6 } ],
     "melee_cut": 8,
     "armor_bash": 12,
     "armor_cut": 8,
@@ -344,8 +339,9 @@
     "vision_day": 30,
     "vision_night": 30,
     "luminance": 1000,
-    "special_attacks": [ [ "GROWPLANTS", 20 ],
-    {
+    "special_attacks": [
+      [ "GROWPLANTS", 20 ],
+      {
         "type": "gun",
         "cooldown": 5,
         "gun_type": "radiant_triffid_boss_sunray",
@@ -353,19 +349,17 @@
         "ranges": [ [ 0, 12, "DEFAULT" ] ],
         "targeting_sound": "an aggressive shimmering",
         "description": "The triffid focuses a beam of shining light!"
-    },
-    {
-      "type": "spell",
-      "spell_data": {
-        "id": "spell_radiant_triffid_boss_blind",
       },
-      "cooldown": 40,
-      "monster_message": "The triffid seems to suck in the light and emits a blinding ray!"
-    }
+      {
+        "type": "spell",
+        "spell_data": { "id": "spell_radiant_triffid_boss_blind" },
+        "cooldown": 40,
+        "monster_message": "The triffid seems to suck in the light and emits a blinding ray!"
+      }
     ],
     "death_function": [ "NORMAL" ],
     "death_drops": "rare",
     "fungalize_into": "mon_fungaloid",
     "flags": [ "SEES", "HEARS", "SMELLS", "BASHES", "NOHEAD", "PARALYZEVENOM" ]
-  },
+  }
 ]

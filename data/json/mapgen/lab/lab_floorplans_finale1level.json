@@ -88,18 +88,9 @@
       "furniture": { "R": "f_rack" },
       "terrain": { ",": "t_grass" },
       "place_nested": [ { "chunks": [ "lab_finale_loot" ], "x": 4, "y": 11 } ],
-      "place_loot": [
-        { "item": "id_science", "x": 19, "y": [ 11, 13 ] }
-      ],
-      "place_monster": [
-        { "monster": "mon_triffid_radiant_boss", "x": 12, "y": 12, "chance": 100 }
-      ],
-      "computers": {
-        "6": {
-          "name": "High Risk Subject Containment",
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock" } ]
-        }
-      },
+      "place_loot": [ { "item": "id_science", "x": 19, "y": [ 11, 13 ] } ],
+      "place_monster": [ { "monster": "mon_triffid_radiant_boss", "x": 12, "y": 12, "chance": 100 } ],
+      "computers": { "6": { "name": "High Risk Subject Containment", "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock" } ] } }
     }
   },
   {
