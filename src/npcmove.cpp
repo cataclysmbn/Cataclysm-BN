@@ -915,8 +915,10 @@ void npc::move()
             if( elem->has_flag( flag_COMBAT_NPC_USE ) && elem->has_flag( flag_COMBAT_NPC_ON ) ) {
                 if( elem->get_use( "transform" ) ) {
                     invoke_item( elem, "transform" );
+                    recalculate_enchantment_cache();
                 } else if( elem->get_use( "set_transform" ) ) {
                     invoke_item( elem, "set_transform" );
+                    recalculate_enchantment_cache();
                 }
             }
         }
@@ -925,8 +927,10 @@ void npc::move()
             weapon.has_flag( flag_COMBAT_NPC_ON ) ) {
             if( weapon.get_use( "transform" ) ) {
                 invoke_item( &weapon, "transform" );
+                recalculate_enchantment_cache();
             } else if( weapon.get_use( "fireweapon_on" ) ) {
                 invoke_item( &weapon, "fireweapon_on" );
+                recalculate_enchantment_cache();
             }
         }
 
