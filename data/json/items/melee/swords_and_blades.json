@@ -2335,7 +2335,7 @@
           "values": [
             { "damage_type": "bash", "amount": 4 },
             { "damage_type": "cut", "amount": 4 },
-            { "damage_type": "light", "amount": 40 }
+            { "damage_type": "light", "amount": 30 }
           ]
         }
       }
