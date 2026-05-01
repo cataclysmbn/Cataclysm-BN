@@ -166,12 +166,13 @@ auto get_loading_image_paths( const std::vector<mod_id> &mods ) -> std::unordere
     using namespace cata::ranges;
     using namespace std::views;
 
-    return mods
+    const auto paths = mods
     | filter( []( const mod_id & mod ) { return mod.is_valid(); } )
     | transform( []( const mod_id & mod ) { return &*mod; } )
     | filter( []( const MOD_INFORMATION * mod ) { return !mod->loading_images.empty(); } )
     | flat_map( get_loading_image_matches_for_mod )
-    | std::ranges::to<std::unordered_set>();
+    | std::ranges::to<std::vector>();
+    return std::unordered_set<std::string>( paths.begin(), paths.end() );
 }
 
 auto choose_loading_image_paths() -> std::vector<std::string>
