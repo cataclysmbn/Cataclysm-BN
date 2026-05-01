@@ -1,5 +1,5 @@
 [
-    {
+  {
     "type": "nested_category",
     "id": "nested_mutagens_strains",
     "nested_name": "strain mutagens",
@@ -34,5 +34,5 @@
       "mutagen_bunnygirl",
       "iv_mutagen_bunnygirl"
     ]
-  },
+  }
 ]
