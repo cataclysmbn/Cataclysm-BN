@@ -2965,33 +2965,50 @@ static requirement_check_result generic_multi_activity_check_requirement( player
         } else if( reason == do_activity_reason::BLOCKING_TILE ) {
             const auto item_name = blocking_item_name( src_loc );
             if( !item_name.empty() ) {
-                record_construction_failure( string_format(
-                                                 _( "Construction blocked for %1$s: %2$s is occupying the build site." ),
-                                                 construction_activity_name( act_info.con_idx ), item_name ) );
-                record_farm_failure( string_format( _( "Farming blocked for %1$s: %2$s is lying on the plot." ),
-                                                    farm_plot_name( zone ), item_name ) );
+                if( act_id == ACT_MULTIPLE_CONSTRUCTION ) {
+                    record_construction_failure( string_format(
+                                                     _( "Construction blocked for %1$s: %2$s is occupying the build site." ),
+                                                     construction_activity_name( act_info.con_idx ), item_name ) );
+
+                }
+                if( act_id == ACT_MULTIPLE_FARM ) {
+                    record_farm_failure( string_format( _( "Farming blocked for %1$s: %2$s is lying on the plot." ),
+                                                        farm_plot_name( zone ), item_name ) );
+                }
             } else {
-                record_construction_failure( string_format(
-                                                 _( "Construction blocked for %s: the build site is occupied." ),
-                                                 construction_activity_name( act_info.con_idx ) ) );
-                record_farm_failure( string_format( _( "Farming blocked for %s: the plot is occupied." ),
-                                                    farm_plot_name( zone ) ) );
+                if( act_id == ACT_MULTIPLE_CONSTRUCTION ) {
+                    record_construction_failure( string_format(
+                                                     _( "Construction blocked for %s: the build site is occupied." ),
+                                                     construction_activity_name( act_info.con_idx ) ) );
+                }
+                if( act_id == ACT_MULTIPLE_FARM ) {
+                    record_farm_failure( string_format( _( "Farming blocked for %s: the plot is occupied." ),
+                                                        farm_plot_name( zone ) ) );
+                }
             }
             record_vehicle_failure( _( "Vehicle work blocked: something is occupying the work site." ) );
         } else if( reason == do_activity_reason::NEEDS_WARM_WEATHER ) {
-            record_construction_failure( string_format(
-                                             _( "Construction blocked for %s: conditions are too cold for this step." ),
-                                             construction_activity_name( act_info.con_idx ) ) );
-            record_farm_failure( string_format( _( "Farming blocked for %s: it is too cold to plant here." ),
-                                                farm_seed_name( zone ) ) );
+            if( act_id == ACT_MULTIPLE_CONSTRUCTION ) {
+                record_construction_failure( string_format(
+                                                 _( "Construction blocked for %s: conditions are too cold for this step." ),
+                                                 construction_activity_name( act_info.con_idx ) ) );
+            }
+            if( act_id == ACT_MULTIPLE_FARM ) {
+                record_farm_failure( string_format( _( "Farming blocked for %s: it is too cold to plant here." ),
+                                                    farm_seed_name( zone ) ) );
+            }
         } else if( reason == do_activity_reason::NEEDS_ABOVE_GROUND ) {
-            record_construction_failure( string_format(
-                                             _( "Construction blocked for %s: this step must be above ground." ),
-                                             construction_activity_name( act_info.con_idx ) ) );
-            record_farm_failure(
-                string_format(
-                    _( "Farming blocked for %s: this seed cannot be planted underground without enough heat." ),
-                    farm_seed_name( zone ) ) );
+            if( act_id == ACT_MULTIPLE_CONSTRUCTION ) {
+                record_construction_failure( string_format(
+                                                 _( "Construction blocked for %s: this step must be above ground." ),
+                                                 construction_activity_name( act_info.con_idx ) ) );
+            }
+            if( act_id == ACT_MULTIPLE_FARM ) {
+                record_farm_failure(
+                    string_format(
+                        _( "Farming blocked for %s: this seed cannot be planted underground without enough heat." ),
+                        farm_seed_name( zone ) ) );
+            }
         }
         return SKIP_LOCATION;
     } else if( reason == do_activity_reason::NO_COMPONENTS ||
