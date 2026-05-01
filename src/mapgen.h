@@ -496,7 +496,6 @@ class mapgen_function_json_nested : public mapgen_function_json_base
  */
 std::shared_ptr<mapgen_function> load_mapgen_function( const JsonObject &jio, point offset,
         point total );
-
 void load_and_add_mapgen_function(
     const JsonObject &jio, const std::string &id_base, point offset, point total );
 void call_mapgen_function( std::string name, mapgendata &dat, bool nested, point pos );

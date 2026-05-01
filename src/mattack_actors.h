@@ -119,7 +119,6 @@ class bite_actor : public melee_actor
         bite_actor();
         ~bite_actor() override = default;
 
-
         void on_damage( monster &z, Creature &target, dealt_damage_instance &dealt ) const override;
 
         void load_internal( const JsonObject &obj, const std::string &src ) override;
