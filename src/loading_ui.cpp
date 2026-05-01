@@ -323,12 +323,11 @@ auto loading_image_splash::draw_current_loading_image() -> bool
 
 loading_image_splash::loading_image_splash()
 {
-    if( !get_option<bool>( "LOADING_SCREEN_IMAGES" ) ) {
-        return;
-    }
-
     ui_background = std::make_unique<background_pane>( [this]() {
 #if defined( TILES )
+        if( !get_option<bool>( "LOADING_SCREEN_IMAGES" ) ) {
+            return;
+        }
         if( !this->loading_image_lookup_attempted && can_choose_loading_image_path() ) {
             loading_image_paths = choose_loading_image_paths();
             next_loading_image_path = 0;
