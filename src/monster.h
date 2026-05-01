@@ -234,7 +234,7 @@ class monster : public Creature, public location_visitable<monster>
          * @param f The priority of the destination, as well as how long we should
          *          wander towards there.
          */
-        void wander_to( const tripoint_bub_ms &p, int f ); // Try to get to (x, y), we don't know
+        void wander_to( const tripoint_abs_ms &p, int f ); // Try to get to (x, y), we don't know
         // the route.  Give up after f steps.
 
         // How good of a target is given creature (checks for visibility).
@@ -583,7 +583,7 @@ class monster : public Creature, public location_visitable<monster>
         void add_msg_player_or_npc( const game_message_params &params, const std::string &player_msg,
                                     const std::string &npc_msg ) const override;
         // TEMP VALUES
-        tripoint_bub_ms wander_pos; // Wander destination - Just try to move in that direction
+        tripoint_abs_ms wander_pos; // Wander destination - Just try to move in that direction
         int wandf;           // Urge to wander - Increased by sound, decrements each move
 
         // LOD-1 scheduling: game turn on which this monster next enters the

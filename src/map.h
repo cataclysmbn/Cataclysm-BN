@@ -84,7 +84,7 @@ template<typename T>
 class visitable;
 
 struct wrapped_vehicle {
-    tripoint pos;
+    tripoint_bub_ms pos;
     vehicle *v;
 };
 
@@ -342,7 +342,7 @@ struct level_cache {
     bool has_any_floor = true;
     bool suspension_cache_initialized = false;
     bool suspension_cache_dirty = false;
-    std::list<point> suspension_cache;
+    std::list<point_abs_ms> suspension_cache;
 
     // ---- 12 tile-coordinate arrays (size: cache_x * cache_y) ----
     // All indexed as: vec[x * cache_y + y]  (X-outer layout, matching old C-array [MAPSIZE_X][MAPSIZE_Y])
@@ -1929,7 +1929,7 @@ class map : public submap_load_listener
          * monster_map entries that correspond to already-active monsters.
          * @param shift_amount The shift that just occurred, in submap units.
          */
-        void spawn_monsters_new_submaps( point_bub_ms & shift_amount );
+        void spawn_monsters_new_submaps( const point_rel_sm &shift_amount );
 
         /**
         * Checks to see if the corpse that is rotting away generates items when it does.
@@ -2102,7 +2102,7 @@ class map : public submap_load_listener
         // Initialized to tripoint_min so the first build_map_cache call always rebuilds.
         // Reset to tripoint_min by invalidate_map_cache so any full-cache invalidation
         // forces a seen_cache rebuild regardless of whether the player moved.
-        tripoint m_last_seen_cache_origin = tripoint_min;
+        tripoint_bub_ms m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
 
         // State for the directional sunlight system.  Rebuilt once per in-game hour by
         // update_solar_params() and build_angled_sunlight_cache().

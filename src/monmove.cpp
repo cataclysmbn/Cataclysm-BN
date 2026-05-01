@@ -298,7 +298,7 @@ void monster::unset_dest()
 
 // Move towards p for f more turns--generally if we hear a sound there
 // "Stupid" movement; "if (wander_pos.x < posx) posx--;" etc.
-void monster::wander_to( const tripoint_bub_ms &p, int f )
+void monster::wander_to( const tripoint_abs_ms &p, int f )
 {
     wander_pos = p;
     wandf = f;
