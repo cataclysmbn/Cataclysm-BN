@@ -381,7 +381,7 @@ void vehicle_part::ammo_unset()
     }
 }
 
-int vehicle_part::ammo_consume( int qty, const tripoint &pos )
+int vehicle_part::ammo_consume( int qty, const tripoint_bub_ms &pos )
 {
     if( is_tank() && !base->contents.empty() ) {
         const int res = std::min( ammo_remaining(), qty );
@@ -392,7 +392,7 @@ int vehicle_part::ammo_consume( int qty, const tripoint &pos )
         }
         return res;
     }
-    return base->ammo_consume( qty, pos );
+    return base->ammo_consume( qty, pos.raw() );
 }
 
 double vehicle_part::consume_energy( const itype_id &ftype, double energy_j )

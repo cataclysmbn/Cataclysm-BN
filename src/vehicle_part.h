@@ -101,10 +101,10 @@ struct vehicle_part {
         /**
          * Consume fuel, charges or ammunition (if available)
          * @param qty maximum amount of ammo that should be consumed
-         * @param pos current global location of part from which ammo is being consumed
+         * @param pos current bubble location of part from which ammo is being consumed
          * @return amount consumed which will be between 0 and specified qty
          */
-        int ammo_consume( int qty, const tripoint &pos );
+        int ammo_consume( int qty, const tripoint_bub_ms &pos );
 
         /**
          * Consume fuel by energy content.
@@ -277,7 +277,7 @@ struct vehicle_part {
          * Two coordinate pairs are stored: actual target point, and target vehicle center.
          * Both cases use absolute coordinates (relative to world origin)
          */
-        std::pair<tripoint, tripoint> target = { tripoint_min, tripoint_min };
+        std::pair<tripoint_abs_ms, tripoint_abs_ms> target = { tripoint_abs_ms( tripoint_min ), tripoint_abs_ms( tripoint_min ) };
 
     private:
 

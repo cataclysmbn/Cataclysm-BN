@@ -292,9 +292,10 @@ class coord_point
         }
 
         // Explicitly reinterpret this coordinate as a different typed coordinate
-        // with the same underlying point type.  Use only during migration scaffolding
+        // with the same underlying point type. Mostly used during migration scaffolding
         // where the origin/scale semantics differ but the raw value must be preserved.
-        // Every call site should be removable once the surrounding code is fully migrated.
+        // The final pass of the migration might want to grep for this, but not all uses
+        // are guaranteed to be problematic.
         template<typename Target>
         requires std::same_as<typename Target::value_type, Point>
         [[nodiscard]] auto reinterpret_as() const -> Target {
