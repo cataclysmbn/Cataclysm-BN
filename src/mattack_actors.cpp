@@ -19,6 +19,8 @@
 #include "generic_factory.h"
 #include "gun_mode.h"
 #include "int_id.h"
+#include "itype.h"
+#include "iuse_actor.h"
 #include "item.h"
 #include "itype.h"
 #include "iuse_actor.h"
@@ -256,8 +258,9 @@ bool deployer_actor::call( monster &mon ) const
     if( !mon.can_act() ) {
         return false;
     }
-
-    if( !mon.attack_target() ) {
+    bool has_attack_target = mon.attack_target();
+    has_attack_target = has_attack_target || ( !mon.friendly && mon.sees( g->u ) );
+    if( !has_attack_target ) {
         // this is an attack. there is no reason to attack if there isn't a real target.
         return false;
     }

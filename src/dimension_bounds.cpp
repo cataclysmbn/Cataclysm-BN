@@ -25,12 +25,10 @@ bool dimension_bounds::contains_omt( const tripoint_abs_omt &p ) const
     return contains( sm_pos );
 }
 
-bool dimension_bounds::contains_local( const tripoint &p, const tripoint_abs_sm &map_origin ) const
+bool dimension_bounds::contains_local( const tripoint_bub_ms &p,
+                                       const tripoint_abs_sm &map_origin ) const
 {
     // Convert local map position to absolute submap coordinates
     // Local position is in map squares, origin is in submaps
-    int abs_x = map_origin.x() * SEEX + p.x;
-    int abs_y = map_origin.y() * SEEY + p.y;
-    tripoint_abs_ms abs_ms( abs_x, abs_y, p.z );
-    return contains_ms( abs_ms );
+    return contains_ms( project_to<coords::ms>( map_origin ) + p.raw().xy() );
 }

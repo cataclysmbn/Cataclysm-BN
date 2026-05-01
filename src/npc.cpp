@@ -828,8 +828,8 @@ void npc::place_on_map()
     // Use get_map() rather than g->m directly so that this function works
     // correctly when called under a scoped_map_context (e.g. for out-of-bubble
     // loaded regions whose tinymap is temporarily the active map).
-    const tripoint map_origin = get_map().get_abs_sub();
-    const point dm( submap_coords + point( -map_origin.x, -map_origin.y ) );
+    const auto map_origin = get_map().get_abs_sub();
+    const point dm( submap_coords + point( -map_origin.x(), -map_origin.y() ) );
     const point offset( position.x % SEEX, position.y % SEEY );
     // value of "submap_coords.x * SEEX + posx()" is unchanged
     setpos( tripoint( offset.x + dm.x * SEEX, offset.y + dm.y * SEEY, posz() ) );

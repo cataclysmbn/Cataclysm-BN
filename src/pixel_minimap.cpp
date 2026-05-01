@@ -241,7 +241,7 @@ void pixel_minimap::set_settings( const pixel_minimap_settings &settings )
 
 void pixel_minimap::prepare_cache_for_updates( const tripoint &center )
 {
-    const tripoint new_center_sm = get_map().get_abs_sub() + ms_to_sm_copy( center );
+    const tripoint new_center_sm = get_map().get_abs_sub().raw() + ms_to_sm_copy( center );
     const tripoint center_sm_diff = cached_center_sm - new_center_sm;
 
     //invalidate the cache if the game shifted more than one submap in the last update, or if z-level changed.
@@ -312,21 +312,22 @@ void pixel_minimap::flush_cache_updates()
     }
 }
 
-void pixel_minimap::update_cache_at( const tripoint &sm_pos )
+void pixel_minimap::update_cache_at( const tripoint &pos )
 {
     const map &here = get_map();
-    const level_cache &access_cache = here.access_cache( sm_pos.z );
+    auto sm_pos = tripoint_abs_sm( pos );
+    const level_cache &access_cache = here.access_cache( sm_pos.z() );
     const bool nv_goggle = get_avatar().get_vision_modes()[NV_GOGGLES];
 
-    submap_cache &cache_item = get_cache_at( here.get_abs_sub() + sm_pos );
-    const tripoint ms_pos = sm_to_ms_copy( sm_pos );
+    submap_cache &cache_item = get_cache_at( here.get_abs_sub().raw() + sm_pos.raw() );
+    const auto ms_pos = project_to<coords::ms>( sm_pos );
 
     cache_item.touched = true;
 
     for( int y = 0; y < SEEY; ++y ) {
         for( int x = 0; x < SEEX; ++x ) {
-            const tripoint p = ms_pos + tripoint{ x, y, 0 };
-            const lit_level lighting = access_cache.visibility_cache[access_cache.idx( p.x, p.y )];
+            const auto p = ms_pos + tripoint{ x, y, 0 };
+            const lit_level lighting = access_cache.visibility_cache[access_cache.idx( p.x(), p.y() )];
 
             SDL_Color color;
 
@@ -334,7 +335,7 @@ void pixel_minimap::update_cache_at( const tripoint &sm_pos )
                 // TODO: Map memory?
                 color = { 0x00, 0x00, 0x00, 0xFF };
             } else {
-                color = get_map_color_at( p );
+                color = get_map_color_at( p.raw() );
 
                 //color terrain according to lighting conditions
                 if( nv_goggle ) {
@@ -470,7 +471,7 @@ void pixel_minimap::render( const tripoint &center )
 
 void pixel_minimap::render_cache( const tripoint &center )
 {
-    const tripoint sm_center = get_map().get_abs_sub() + ms_to_sm_copy( center );
+    const tripoint sm_center = get_map().get_abs_sub().raw() + ms_to_sm_copy( center );
     const auto sm_offset = tripoint{
         view_tiles_count.x / SEEX / 2,
         view_tiles_count.y / SEEY / 2, 0

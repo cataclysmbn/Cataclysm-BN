@@ -378,6 +378,7 @@
           "cam_control",
           "turret_mount",
           { "part": "tow_turret", "ammo": 60, "ammo_qty": [ 1, 2 ] },
+          "laser_designator_part",
           "hdroof",
           "NBC_seal"
         ]
@@ -1082,6 +1083,7 @@
           "NBC_seal",
           "turret_mount",
           { "part": "tow_turret", "ammo": 60, "ammo_qty": [ 1, 2 ] },
+          "laser_designator_part",
           "turret_autoloader",
           "controls_turret"
         ]

@@ -43,7 +43,7 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
 
     auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
     target->worn.clear();
-    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_zero );
+    target->spawn_at_precise( get_map().get_abs_sub().xy().raw(), tripoint_zero );
     target->setpos( target_pos );
     for( const auto &armor_id : armor_ids ) {
         target->worn.push_back( item::spawn( armor_id ) );
@@ -205,7 +205,7 @@ TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
 
     auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
     target->worn.clear();
-    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_zero );
+    target->spawn_at_precise( get_map().get_abs_sub().xy().raw(), tripoint_zero );
     target->setpos( target_pos );
     ACTIVE_OVERMAP_BUFFER.insert_npc( target );
     g->load_npcs();

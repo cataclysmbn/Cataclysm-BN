@@ -16,6 +16,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "cached_options.h"
+#include "coordinates.h"
 #include "enums.h"
 #include "memory_fast.h"
 
@@ -493,6 +494,10 @@ class Creature
         virtual int posy() const = 0;
         virtual int posz() const = 0;
         virtual const tripoint &pos() const = 0;
+        tripoint_bub_ms bub_pos() const {
+            return tripoint_bub_ms( pos() );
+        }
+        tripoint_abs_ms abs_pos() const;
 
         virtual void setpos( const tripoint &pos ) = 0;
 

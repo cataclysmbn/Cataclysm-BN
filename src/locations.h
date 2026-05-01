@@ -1,5 +1,6 @@
 #pragma once
 
+#include "coordinates.h"
 #include "point.h"
 #include "type_id.h"
 
@@ -86,9 +87,9 @@ class worn_item_location :  public character_item_location
 class tile_item_location : public item_location
 {
     protected:
-        tripoint pos;//abs coords
+        tripoint_abs_ms pos;
     public:
-        tile_item_location( tripoint position );
+        tile_item_location( const tripoint_abs_ms &position );
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
         bool is_loaded( const item *it ) const override;
@@ -102,7 +103,8 @@ class tile_item_location : public item_location
 class partial_con_item_location : public tile_item_location
 {
     public:
-        partial_con_item_location( tripoint position );
+        explicit partial_con_item_location( const tripoint_bub_ms &position );
+        explicit partial_con_item_location( const tripoint_abs_ms &position );
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
 };

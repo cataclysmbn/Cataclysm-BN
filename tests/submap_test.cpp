@@ -10,18 +10,18 @@ TEST_CASE( "submap rotation", "[submap]" )
 {
     // Corners are labelled starting from the upper-left one, clockwise.
     // NOLINTNEXTLINE(cata-point-initialization)
-    constexpr auto corner_1 = point_zero;
-    constexpr auto corner_2 = point{ SEEX - 1, 0 };
-    constexpr auto corner_3 = point{ SEEX - 1, SEEY - 1 };
-    constexpr auto corner_4 = point{ 0, SEEY - 1 };
+    constexpr auto corner_1 = point_sm_ms::zero();
+    constexpr auto corner_2 = point_sm_ms{ SEEX - 1, 0 };
+    constexpr auto corner_3 = point_sm_ms{ SEEX - 1, SEEY - 1 };
+    constexpr auto corner_4 = point_sm_ms{ 0, SEEY - 1 };
 
-    constexpr auto center_1 = point{ SEEX / 2 - 1, SEEY / 2 - 1 };
-    constexpr auto center_2 = point{ SEEX / 2, SEEY / 2 - 1 };
-    constexpr auto center_3 = point{ SEEX / 2, SEEY / 2 };
-    constexpr auto center_4 = point{ SEEX / 2 - 1, SEEY / 2 };
+    constexpr auto center_1 = point_sm_ms{ SEEX / 2 - 1, SEEY / 2 - 1 };
+    constexpr auto center_2 = point_sm_ms{ SEEX / 2, SEEY / 2 - 1 };
+    constexpr auto center_3 = point_sm_ms{ SEEX / 2, SEEY / 2 };
+    constexpr auto center_4 = point_sm_ms{ SEEX / 2 - 1, SEEY / 2 };
 
     GIVEN( "a submap with marks" ) {
-        submap sm( tripoint_zero );
+        submap sm( tripoint_abs_ms::zero() );
 
         sm.set_ter( corner_1, ter_id( 1 ) );
         sm.set_ter( corner_2, ter_id( 2 ) );

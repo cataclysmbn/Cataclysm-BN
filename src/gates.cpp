@@ -15,6 +15,7 @@
 #include "creature.h"
 #include "debug.h"
 #include "enums.h"
+#include "flood_fill.h"
 #include "game.h" // TODO: This is a circular dependency
 #include "generic_factory.h"
 #include "iexamine.h"
@@ -66,7 +67,6 @@ struct gate_data {
     int bash_dmg;
     bool was_loaded;
     bool complex_shape;
-    bool needs_no_wall;
 
     void load( const JsonObject &jo, const std::string &src );
     void check() const;
@@ -101,7 +101,6 @@ void gate_data::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "moves", moves, 0 );
     optional( jo, was_loaded, "bashing_damage", bash_dmg, 0 );
     optional( jo, was_loaded, "complex_shape", complex_shape, false );
-    optional( jo, was_loaded, "needs_no_wall", needs_no_wall, false );
 }
 
 void gate_data::check() const
@@ -192,7 +191,6 @@ void gates::toggle_gate( const tripoint &pos )
         } else if( !gate.is_suitable_wall( wall_pos ) ) {
             continue;
         }
-
         if( !gate.complex_shape ) {
             for( point gate_offset : four_adjacent_offsets ) {
                 const tripoint gate_pos = wall_pos + gate_offset;
@@ -226,44 +224,26 @@ void gates::toggle_gate( const tripoint &pos )
                 }
             }
         } else {
-            std::set<tripoint> checked;
-            std::vector<tripoint> to_check;
-            for( point sent_offset : four_adjacent_offsets ) {
-                to_check.push_back( wall_pos + sent_offset );
-            }
-            while( !to_check.empty() ) {
-                tripoint gate_pos = to_check.back();
-                to_check.pop_back();
-
-                if( checked.contains( gate_pos ) ) {
-                    continue; // Never comes back
-                }
-                checked.insert( gate_pos );
-
-                if( !open ) { // Closing the gate...
-                    if( here.ter( gate_pos ) == gate.floor.id() ) {
-                        fail = !g->forced_door_closing( gate_pos, gate.door.id(), gate.bash_dmg ) || fail;
-                        close = !fail;
-                        for( point sent_offset : four_adjacent_offsets ) {
-                            tripoint add = sent_offset + gate_pos;
-                            if( !checked.contains( add ) ) {
-                                to_check.push_back( add );
-                            }
+            const auto is_door = [&]( const tripoint & pos ) -> bool {
+                return here.ter( pos ) == gate.floor.id() ||
+                here.ter( pos ) == gate.door.id();
+            };
+            std::unordered_set<tripoint> visited;
+            for( point gate_offset : four_adjacent_offsets ) {
+                const tripoint gate_pos = wall_pos + gate_offset;
+                for( const tripoint &tmp : ff::point_flood_fill_4_connected( gate_pos, visited, is_door ) ) {
+                    if( !open && here.ter( tmp ) == gate.floor.id() ) {
+                        close = true;
+                        fail = !g->forced_door_closing( tmp, gate.door.id(), gate.bash_dmg ) || fail;
+                        if( fail ) {
+                            break;
                         }
                     }
-                }
-
-                if( !close ) { // Opening the gate...
-                    const ter_id ter = here.ter( gate_pos );
-
-                    if( ter == gate.door.id() ) {
-                        here.ter_set( gate_pos, gate.floor.id() );
-                        open = !fail;
-                        for( point sent_offset : four_adjacent_offsets ) {
-                            tripoint add = sent_offset + gate_pos;
-                            if( !checked.contains( add ) ) {
-                                to_check.push_back( add );
-                            }
+                    if( !close && here.ter( tmp ) == gate.door.id() ) {
+                        open = true;
+                        here.ter_set( tmp, gate.floor.id() );
+                        if( here.ter( tmp ) != gate.floor.id() ) {
+                            break;
                         }
                     }
                 }

@@ -6957,6 +6957,16 @@
   },
   {
     "type": "mutation",
+    "id": "LASER_GUIDED",
+    "name": { "str": "Laser guided" },
+    "points": 0,
+    "description": "Used by fake shooters spawned by laser-guided vehicle turrets, to increase accuracy.  If you have this, it's a bug.",
+    "valid": false,
+    "purifiable": false,
+    "profession": false
+  },
+  {
+    "type": "mutation",
     "id": "HAS_NEMESIS",
     "name": { "str": "Hunted" },
     "points": -1,

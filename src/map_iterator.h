@@ -135,4 +135,104 @@ static_assert( std::forward_iterator<tripoint_range<tripoint>::point_generator> 
 static_assert( std::ranges::forward_range<tripoint_range<tripoint>> );
 static_assert( std::ranges::view<tripoint_range<tripoint>> );
 
+// 2D analog of tripoint_range for any Point type with dimension == 2.
+// Iterates all points in [minp, maxp] (inclusive both ends), x-major order.
+template<typename Point>
+class point_range : public std::ranges::view_interface<point_range<Point>>
+{
+        static_assert( Point::dimension == 2, "Requires 2D point type" );
+    private:
+        using traits = point_traits<Point>;
+
+        Point minp;
+        Point maxp;
+
+    public:
+        class point_generator
+        {
+                friend class point_range;
+            private:
+                Point p;
+                Point range_min;
+                Point range_max;
+
+            public:
+                using value_type = Point;
+                using difference_type = std::ptrdiff_t;
+                using pointer = const Point *;
+                using reference = const Point &;
+                using iterator_category = std::forward_iterator_tag;
+                using iterator_concept = std::forward_iterator_tag;
+
+                point_generator() = default;
+
+                point_generator( const Point &_p, const point_range *_range )
+                    : p( _p ) {
+                    if( _range ) {
+                        range_min = _range->minp;
+                        range_max = _range->maxp;
+                    }
+                }
+
+                // Increment x first; when x exceeds range_max wrap to range_min and increment y.
+                auto operator++() -> point_generator & { // *NOPAD*
+                    traits::x( p )++;
+                    if( traits::x( p ) <= traits::x( range_max ) ) {
+                        return *this;
+                    }
+                    traits::y( p )++;
+                    traits::x( p ) = traits::x( range_min );
+                    return *this;
+                }
+
+                auto operator++( int ) -> point_generator {
+                    auto tmp = *this;
+                    ++( *this );
+                    return tmp;
+                }
+
+                auto operator*() const -> reference { return p; }
+
+                auto operator==( const point_generator &other ) const -> bool {
+                    return p == other.p;
+                }
+        };
+
+        using iterator = point_generator;
+        using value_type = typename point_generator::value_type;
+        using difference_type = typename point_generator::difference_type;
+        using pointer = typename point_generator::pointer;
+        using reference = typename point_generator::reference;
+        using iterator_category = typename point_generator::iterator_category;
+
+        point_range( const Point &_minp, const Point &_maxp ) :
+            minp( _minp ), maxp( _maxp ) {}
+
+        auto begin() const -> point_generator {
+            return point_generator( minp, this );
+        }
+
+        auto end() const -> point_generator {
+            // Sentinel: x resets to range_min, y goes one past range_max.
+            Point end_p;
+            traits::x( end_p ) = traits::x( minp );
+            traits::y( end_p ) = traits::y( maxp ) + 1;
+            return point_generator( end_p, this );
+        }
+
+        auto size() const -> size_t {
+            const int w = traits::x( maxp ) - traits::x( minp ) + 1;
+            const int h = traits::y( maxp ) - traits::y( minp ) + 1;
+            return static_cast<size_t>( std::max( w * h, 0 ) );
+        }
+
+        const Point &min() const { return minp; }
+        const Point &max() const { return maxp; }
+};
+
+// C++20 ranges compatibility verification for point_range
+static_assert( std::forward_iterator<point_range<point>::point_generator> );
+static_assert( std::ranges::forward_range<point_range<point>> );
+static_assert( std::ranges::view<point_range<point>> );
+
 

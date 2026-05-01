@@ -54,8 +54,6 @@ class mapbuffer
          * is not stored and the given unique_ptr retains ownsership.
          */
         bool add_submap( const tripoint &p, std::unique_ptr<submap> &sm );
-        // Old overload that we should stop using, but it's complicated
-        bool add_submap( const tripoint &p, submap *sm );
 
         /** Get a submap stored in this buffer.
          *
@@ -118,27 +116,15 @@ class mapbuffer
 
         /**
          * Generate all submaps in the OMT quad at @p om_addr if any are not yet
-         * resident in memory.  Called internally by load_or_generate_quad().
+         * resident in memory.
          *
-         * Thread-safe: uses per-thread RNG, npc_mutex_ for NPC writes, and
-         * submaps_mutex_ for add_submap().  If two workers race on the same quad
-         * the duplicate submaps are deferred to drain_pending_submap_destroy().
-         */
-        /**
+         * Must be called on the main thread — mapgen (including Lua mapgen) is
+         * not reentrant and cannot run safely on worker threads.
+         *
          * Returns true if mapgen actually ran (quad was not fully resident),
          * false if all submaps were already in memory and nothing was generated.
          */
         bool generate_quad( const tripoint &om_addr );
-
-        /**
-         * Try to load submaps from disk (@ref preload_quad), then generate any
-         * still missing via @ref generate_quad.  Returns true if mapgen ran,
-         * false if the quad was already fully resident after the disk load.
-         *
-         * Safe to call concurrently from worker threads for distinct quad addresses.
-         * Identical thread-safety contract as preload_quad().
-         */
-        bool load_or_generate_quad( const tripoint &om_addr );
 
         /**
          * Serialise the OMT quad at @p om_addr into the in-memory write-back cache
@@ -173,25 +159,6 @@ class mapbuffer
         auto drain_pending_submap_destroy() -> void;
 
         /**
-         * Generate all quads that were deferred from worker threads because their
-         * overmap terrain has a Lua-based mapgen function (Lua is not reentrant).
-         *
-         * Runs generate_quad() for each deferred entry synchronously on the calling
-         * thread.  Must be called on the main thread only.
-         *
-         * Returns the om_addr of every quad that was actually generated (i.e. was
-         * not already resident in memory).  Callers should mark these dirty.
-         */
-        auto drain_deferred_lua_quads() -> std::vector<tripoint>;
-
-        /**
-         * Conditionally save and then remove the submap at @p pos from the buffer.
-         * The containing OMT quad is saved to disk first (unless it is fully uniform),
-         * then the submap is erased from memory.  Does nothing if @p pos is not loaded.
-         */
-        void unload_submap( const tripoint_abs_sm &pos );
-
-        /**
          * Evict all submaps in the OMT quad at @p om_addr.
          *
          * If @p save is true (default), the quad is serialised into the in-memory
@@ -201,9 +168,6 @@ class mapbuffer
          * simulated — their in-memory content is identical to what is already on
          * disk, so no write is needed.
          *
-         * This is the correct way to evict a quad: calling unload_submap() per-submap
-         * repeatedly overwrites the quad file without the previously-removed siblings,
-         * causing data loss and "file did not contain expected submap" errors on reload.
          * Does nothing for quads that are fully uniform (they regenerate on demand).
          */
         void unload_quad( const tripoint &om_addr, bool save = true );
@@ -238,12 +202,6 @@ class mapbuffer
         /// the player can revert to the pre-session state by quitting without saving.
         mutable std::mutex pending_writes_mutex_;
         std::map<tripoint, std::string> pending_writes_;
-
-        /// Quads whose overmap terrain has a Lua-based mapgen function.
-        /// generate_quad() pushes here instead of generating on the worker (Lua is not
-        /// reentrant).  Drained by drain_deferred_lua_quads() on the main thread.
-        mutable std::mutex deferred_lua_quads_mutex_;
-        std::vector<tripoint> deferred_lua_quads_;
 
     public:
         submap_map_t::iterator begin() {

@@ -1,0 +1,137 @@
+[
+  {
+    "id": "TALK_SCAVENGER_MERC",
+    "type": "talk_topic",
+    "responses": [
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_SCAVENGER_MERC_GM_PRELUDE"
+      },
+      {
+        "text": "[MISSION] I've been asked to help attract work for another community of survivors.  Know anyone who could help?",
+        "topic": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "TALK_SCAVENGER_MERC_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "I've heard a bit, got intel on one in fact.  Old associate of mine came back telling tall tales of weird shadow monsters, coming out of the woodwork in this one raider hideout they were clearing.  He saw one of those things catch the guy on point, wrung his neck till his head popped off.  Then one of the others hit the dirt and lit up the whole freakshow with the 240."
+  },
+  {
+    "id": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4",
+    "type": "talk_topic",
+    "dynamic_line": "Sounds like something that needs a proper crew.  Much as I wouldn't mind a steady paycheck, not my kind of job.  Probably other people that'd be better suited for work like that.",
+    "responses": [
+      { "text": "Any other people that come to mind?", "topic": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_HELP" },
+      { "text": "Oh, okay.  Nevermind then…", "topic": "TALK_SCAVENGER_MERC" }
+    ]
+  },
+  {
+    "id": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_HELP",
+    "type": "talk_topic",
+    "dynamic_line": "Around here, I wouldn't trust most scavs to run a job like that.  I know a few groups who handle jobs like this, though.  We're not exactly best friends, but I could work something out with them.",
+    "responses": [
+      { "text": "Tell me more, then.", "topic": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_OFFER" },
+      { "text": "What kind of group is it?", "topic": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_EXPLAIN" },
+      { "text": "I'll ask around.  Thanks though.", "topic": "TALK_SCAVENGER_MERC" }
+    ]
+  },
+  {
+    "id": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_EXPLAIN",
+    "type": "talk_topic",
+    "dynamic_line": "Hired hands like me, more organized.  Involved in local security work for the few groups that can pay out.  Interested?",
+    "responses": [
+      { "text": "What's your offer?", "topic": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_OFFER" },
+      { "text": "Nevermind for now, thanks though.", "topic": "TALK_SCAVENGER_MERC" }
+    ]
+  },
+  {
+    "id": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_OFFER",
+    "type": "talk_topic",
+    "dynamic_line": "I can arrange a down payment, say 375 Merch, and they'll take care of the rest.",
+    "responses": [
+      {
+        "text": "[FMC375] You have a deal.",
+        "topic": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_DEAL",
+        "condition": { "u_has_items": { "item": "FMCNote", "count": 375 } },
+        "effect": { "u_consume_item": "FMCNote", "count": 375 }
+      },
+      { "text": "What the heck is a Merch?", "topic": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_MERCH" },
+      { "text": "I might be back.", "topic": "TALK_SCAVENGER_MERC" }
+    ]
+  },
+  {
+    "id": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_DEAL",
+    "type": "talk_topic",
+    "dynamic_line": "Alright, just tell me about the location and I'll get them on it.  Suppose it's handy to direct them towards steady work instead of competing over small-time jobs.",
+    "responses": [
+      {
+        "text": "Small community built out of a fortified church on the roadside, not too far from here.",
+        "effect": [
+          { "u_add_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" },
+          {
+            "mapgen_update": "arcana_cf_4_wasteland_scavengers_1b",
+            "om_terrain": "cf_church_1",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_wasteland_scavengers_2b",
+            "om_terrain": "cf_church_3",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_1",
+            "om_terrain": "cf_church_1_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_2",
+            "om_terrain": "cf_church_3_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          }
+        ],
+        "topic": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_END"
+      }
+    ]
+  },
+  {
+    "id": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_END",
+    "type": "talk_topic",
+    "dynamic_line": "Think I got it from here then.  That it?",
+    "responses": [ { "text": "I should go check on things over there, actually.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_MERCH",
+    "type": "talk_topic",
+    "dynamic_line": "Local currency these guys use, Free Merchant Credit Notes.  If you want to buy stuff around here and you don't want to barter away your guns, you need Merch.",
+    "responses": [
+      { "text": "I see.  Let's try this again from the start.", "topic": "TALK_SCAVENGER_MERC" },
+      { "text": "Okay, how much Merch do I need?", "topic": "TALK_SCAVENGER_MERC_CF_REP_MISSION_4_OFFER" },
+      { "text": "Well, thanks for the info.  Bye!", "topic": "TALK_DONE" }
+    ]
+  }
+]

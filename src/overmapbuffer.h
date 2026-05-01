@@ -191,10 +191,6 @@ class overmapbuffer
          */
         void save( const std::string &dim_id );
 
-        /** Legacy overload — delegates to save(g_active_dimension_id).
-         *  Do NOT call from background threads. */
-        void save();
-
         void clear();
         void create_custom_overmap( const point_abs_om &, overmap_special_batch &specials );
 

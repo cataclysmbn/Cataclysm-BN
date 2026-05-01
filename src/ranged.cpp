@@ -153,6 +153,7 @@ static const bionic_id bio_railgun( "bio_railgun" );
 static const bionic_id bio_targeting( "bio_targeting" );
 static const bionic_id bio_ups( "bio_ups" );
 
+static const trait_id trait_LASER_GUIDED( "LASER_GUIDED" );
 static const trait_id trait_PYROMANIA( "PYROMANIA" );
 static const trait_id trait_NORANGEDCRIT( "NO_RANGED_CRIT" );
 
@@ -2534,6 +2535,10 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
         dispersion.add_multiplier( 0.75 );
     }
 
+    // Remotely-fired turrets with installed laser designator
+    if( who.has_trait( trait_LASER_GUIDED ) ) {
+        dispersion.add_multiplier( 0.25 );
+    }
     // If using a bow you lack the strength for, increase based on how much weaker shooter is.
     dispersion.add_multiplier( 1 / ranged::str_draw_dispersion_modifier( obj, who ) );
 

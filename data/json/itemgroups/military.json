@@ -818,8 +818,11 @@
       [ "motor_oil", 100 ],
       [ "solar_panel", 3 ],
       [ "recharge_station", 8 ],
-      [ "turret_mount", 12 ],
-      [ "turret_controls", 3 ]
+      [ "turret_mount", 15 ],
+      [ "laser_designator_item", 5 ],
+      [ "turret_autoloader", 5 ],
+      [ "bomber_controls", 5 ],
+      [ "turret_controls", 5 ]
     ]
   },
   {

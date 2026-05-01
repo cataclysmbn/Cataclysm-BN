@@ -1,0 +1,162 @@
+[
+  {
+    "id": "sanguine_cult_books",
+    "type": "item_group",
+    "items": [
+      [ "poetry_book", 3 ],
+      [ "novel_drama", 12 ],
+      [ "essay_book", 5 ],
+      [ "philosophy_book", 5 ],
+      [ "cookbook_human", 5 ],
+      [ "textbook_speech", 5 ],
+      [ "book_bloodmagic", 25 ],
+      [ "book_potioncraft", 15 ],
+      [ "book_summoning", 8 ],
+      [ "book_magicfordummies", 3 ],
+      [ "manual_shrike", 10 ],
+      [ "manual_silat", 2 ],
+      [ "manual_dragon", 2 ]
+    ]
+  },
+  {
+    "id": "sanguine_cult_books_postapoc",
+    "type": "item_group",
+    "items": [
+      [ "poetry_book", 3 ],
+      [ "novel_drama", 12 ],
+      [ "essay_book", 5 ],
+      [ "philosophy_book", 5 ],
+      [ "cookbook_human", 5 ],
+      [ "textbook_speech", 5 ],
+      [ "book_bloodmagic", 25 ],
+      [ "book_potioncraft", 15 ],
+      [ "book_summoning", 10 ],
+      [ "book_magicfordummies", 3 ],
+      [ "book_syncretism", 2 ],
+      [ "manual_shrike", 5 ],
+      [ "manual_silat", 3 ],
+      [ "manual_dragon", 2 ]
+    ]
+  },
+  {
+    "id": "sanguine_cult_spells",
+    "type": "item_group",
+    "items": [
+      [ "scroll_spell_confusion", 1 ],
+      [ "scroll_spell_agile", 1 ],
+      [ "scroll_spell_elecresist", 1 ],
+      [ "scroll_spell_clarity", 1 ],
+      [ "scroll_spell_acidspray", 1 ]
+    ]
+  },
+  {
+    "id": "sanguine_cult_gear",
+    "type": "item_group",
+    "items": [
+      [ "dao", 35 ],
+      [ "khopesh", 10 ],
+      [ "q_staff", 5 ],
+      { "collection": [ { "group": "guns_pistol_improvised" }, { "group": "ammo_pistol_reloaded" } ], "prob": 10 },
+      [ "pistol_flintlock", 5 ],
+      [ "flintlock_ammo", 10 ],
+      [ "robe", 10 ],
+      [ "armor_larmor", 5 ],
+      [ "armor_cuirass", 5 ],
+      [ "armguard_larmor", 5 ],
+      [ "legguard_bronze", 5 ],
+      [ "gauntlets_larmor", 5 ],
+      [ "gloves_plate", 5 ],
+      [ "boots_larmor", 5 ],
+      [ "boots_plate", 5 ]
+    ]
+  },
+  {
+    "id": "sanguine_cult_gear_magic",
+    "type": "item_group",
+    "items": [
+      [ "blood_athame", 35 ],
+      [ "bloodaxe", 10 ],
+      [ "lichhook", 5 ],
+      [ "bloodscourge", 20 ],
+      [ "shrike_misericorde", 5 ],
+      [ "armor_wyrm", 15 ],
+      [ "revenant_crown", 10 ]
+    ]
+  },
+  {
+    "id": "sanguine_cult_consumables",
+    "type": "item_group",
+    "items": [
+      [ "numbness_potion", 4 ],
+      [ "strength_potion", 2 ],
+      [ "speed_potion", 3 ],
+      [ "healing_potion", 1 ],
+      [ "summon_kreck", 2 ],
+      [ "summon_blank", 2 ],
+      [ "summon_flaming_eye", 2 ],
+      [ "summon_hunting_horror", 2 ],
+      [ "summon_flying_polyp", 1 ],
+      [ "summon_mi_go", 1 ],
+      [ "summon_yugg", 1 ],
+      [ "summon_shoggoth", 1 ],
+      [ "portal", 1 ]
+    ]
+  },
+  {
+    "id": "sanguine_cult_crafting",
+    "type": "item_group",
+    "items": [
+      [ "vacutainer", 25 ],
+      [ "pot", 5 ],
+      [ "bowl_clay", 10 ],
+      [ "candle", 5 ],
+      [ "matches", 5 ],
+      { "item": "silver_small", "prob": 20, "charges": [ 25, 100 ] },
+      [ "peridot", 2 ],
+      [ "emerald", 2 ],
+      [ "jade_brooch", 1 ],
+      [ "pearl", 3 ],
+      [ "diamond", 2 ],
+      { "item": "scrap", "prob": 5, "count": [ 1, 10 ] },
+      { "item": "leather", "prob": 15, "charges": [ 10, 20 ] },
+      [ "chem_nitric_acid", 10 ],
+      { "item": "bone_human", "prob": 15, "count": [ 1, 5 ] },
+      [ "chem_ethanol", 5 ],
+      { "group": "arcana_hunt_random", "prob": 25 },
+      { "item": "essence", "prob": 25, "count": [ 1, 3 ] },
+      { "item": "essence_blood", "prob": 50, "count": [ 3, 9 ] }
+    ]
+  },
+  {
+    "id": "sanguine_cult_casualties",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "clothing_outdoor_set", "damage": [ 1, 4 ] },
+      { "group": "sanguine_cult_gear", "prob": 15, "damage": [ 1, 4 ] },
+      { "group": "sanguine_cult_gear_magic", "prob": 10, "damage": [ 1, 4 ] },
+      { "group": "sanguine_cult_consumables", "prob": 25 },
+      { "group": "sanguine_cult_crafting", "prob": 25 },
+      { "item": "bone_human", "prob": 100, "count": [ 3, 9 ] }
+    ]
+  },
+  {
+    "id": "sanguine_cult_casualties_fresh",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "clothing_outdoor_set", "damage": [ 1, 4 ] },
+      { "group": "sanguine_cult_gear", "prob": 15, "damage": [ 1, 4 ] },
+      { "group": "sanguine_cult_gear_magic", "prob": 10, "damage": [ 1, 4 ] },
+      { "group": "sanguine_cult_consumables", "prob": 25 },
+      { "group": "sanguine_cult_crafting", "prob": 25 },
+      { "group": "arcanist_corpses_adult_random", "damage": 4 }
+    ]
+  },
+  {
+    "id": "sanguine_ritual",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "silver_glyph" }, { "item": "essence_blood" }, { "item": "cleric_ring" } ]
+  }
+]

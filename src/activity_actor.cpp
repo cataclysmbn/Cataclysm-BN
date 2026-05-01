@@ -2054,7 +2054,7 @@ inline void construction_activity_actor::calc_all_moves( player_activity &act, C
     if( !pc ) {
         map &here = get_map();
         auto local = here.getlocal( target );
-        pc = here.partial_con_at( local );
+        pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
     //if something goes terribly wrong we don't CTD
     if( !pc ) {
@@ -2069,7 +2069,7 @@ void construction_activity_actor::start( player_activity &/*act*/, Character &/*
 {
     map &here = get_map();
     auto local = here.getlocal( target );
-    pc = here.partial_con_at( local );
+    pc = here.partial_con_at( tripoint_bub_ms( local ) );
     auto &built = *pc->id;
 
     std::string name;
@@ -2106,7 +2106,7 @@ void construction_activity_actor::do_turn( player_activity &act, Character &who 
     if( !pc ) {
         map &here = get_map();
         auto local = here.getlocal( target );
-        pc = here.partial_con_at( local );
+        pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
 
     // Maybe the player and the NPC are working on the same construction at the same time or toubles during load

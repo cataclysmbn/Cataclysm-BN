@@ -820,7 +820,8 @@
           "ammo": 80,
           "ammo_types": [ "25mm_apds", "25mm_hei" ],
           "ammo_qty": [ 10, 50 ]
-        }
+        },
+        "laser_designator_part"
       ],
       "8": [ "xlframe_vertical", "windshield_horizontal_front" ],
       "9": [ "xlframe_ne", "windshield_ne" ],
@@ -901,7 +902,8 @@
           "ammo": 80,
           "ammo_types": [ "25mm_apds", "25mm_hei" ],
           "ammo_qty": [ 10, 50 ]
-        }
+        },
+        "laser_designator_part"
       ],
       "8": [ "xlframe_vertical", "windshield_horizontal_front" ],
       "9": [ "xlframe_ne", "windshield_ne" ],
@@ -952,7 +954,8 @@
             "ammo": 80,
             "ammo_types": [ "25mm_apds", "25mm_hei" ],
             "ammo_qty": [ 10, 50 ]
-          }
+          },
+          "laser_designator_part"
         ]
       },
       {

@@ -42,14 +42,14 @@ enum class spawn_disposition {
 };
 
 struct spawn_point {
-    point pos;
+    point_sm_ms pos;
     int count;
     mtype_id type;
     int faction_id;
     int mission_id;
     spawn_disposition disposition;
     std::string name;
-    spawn_point( const mtype_id &T = mtype_id::NULL_ID(), int C = 0, point P = point_zero,
+    spawn_point( const mtype_id &T = mtype_id::NULL_ID(), int C = 0, const point_sm_ms &P = point_sm_ms{},
                  int FAC = -1, int MIS = -1, spawn_disposition DISP = spawn_disposition::SpawnDisp_Default,
                  const std::string &N = "NONE" ) :
         pos( P ), count( C ), type( T ), faction_id( FAC ),
@@ -74,7 +74,7 @@ struct spawn_point {
 template<int sx, int sy>
 struct maptile_soa {
     protected:
-        maptile_soa( tripoint offset );
+        maptile_soa( const tripoint_abs_ms &offset );
     public:
         ter_id             ter[sx][sy];  // Terrain on each square
         furn_id            frn[sx][sy];  // Furniture on each square
@@ -84,22 +84,22 @@ struct maptile_soa {
         trap_id            trp[sx][sy];  // Trap on each square
         int                rad[sx][sy];  // Irradiation of each square
 
-        void swap_soa_tile( point p1, point p2 );
+        void swap_soa_tile( const point_sm_ms &p1, const point_sm_ms &p2 );
 };
 
 class submap : maptile_soa<SEEX, SEEY>
 {
     public:
-        submap( tripoint offset );
+        submap( const tripoint_abs_ms &offset );
         ~submap();
 
-        trap_id get_trap( point p ) const {
-            return trp[p.x][p.y];
+        trap_id get_trap( const point_sm_ms &p ) const {
+            return trp[p.x()][p.y()];
         }
 
-        void set_trap( point p, trap_id trap ) {
+        void set_trap( const point_sm_ms &p, trap_id trap ) {
             is_uniform = false;
-            trp[p.x][p.y] = trap;
+            trp[p.x()][p.y()] = trap;
             if( trap != tr_null ) {
                 trap_cache.push_back( p );
             }
@@ -110,14 +110,14 @@ class submap : maptile_soa<SEEX, SEEY>
             trap_cache.clear();
         }
 
-        furn_id get_furn( point p ) const {
-            return frn[p.x][p.y];
+        furn_id get_furn( const point_sm_ms &p ) const {
+            return frn[p.x()][p.y()];
         }
 
-        void set_furn( point p, furn_id furn ) {
+        void set_furn( const point_sm_ms &p, furn_id furn ) {
             is_uniform = false;
             emitter_cache = std::nullopt;
-            frn[p.x][p.y] = furn;
+            frn[p.x()][p.y()] = furn;
             frn_vars[p].merge( furn->default_vars );
             if( furn != f_null ) {
                 return;
@@ -135,73 +135,73 @@ class submap : maptile_soa<SEEX, SEEY>
             frn_vars.clear();
         }
 
-        ter_id get_ter( point p ) const {
-            return ter[p.x][p.y];
+        ter_id get_ter( const point_sm_ms &p ) const {
+            return ter[p.x()][p.y()];
         }
 
-        void set_ter( point p, ter_id terr ) {
+        void set_ter( const point_sm_ms &p, ter_id terr ) {
             is_uniform = false;
-            ter[p.x][p.y] = terr;
+            ter[p.x()][p.y()] = terr;
         }
 
         void set_all_ter( const ter_id &terr ) {
             std::uninitialized_fill_n( &ter[0][0], elements, terr );
         }
 
-        int get_radiation( point p ) const {
-            return rad[p.x][p.y];
+        int get_radiation( const point_sm_ms &p ) const {
+            return rad[p.x()][p.y()];
         }
 
-        void set_radiation( point p, const int radiation ) {
+        void set_radiation( const point_sm_ms &p, const int radiation ) {
             is_uniform = false;
-            rad[p.x][p.y] = radiation;
+            rad[p.x()][p.y()] = radiation;
         }
 
-        uint8_t get_lum( point p ) const {
-            return lum[p.x][p.y];
+        uint8_t get_lum( const point_sm_ms &p ) const {
+            return lum[p.x()][p.y()];
         }
 
-        void set_lum( point p, uint8_t luminance ) {
+        void set_lum( const point_sm_ms &p, uint8_t luminance ) {
             is_uniform = false;
-            lum[p.x][p.y] = luminance;
+            lum[p.x()][p.y()] = luminance;
         }
 
-        void update_lum_add( point p, const item &i ) {
+        void update_lum_add( const point_sm_ms &p, const item &i ) {
             is_uniform = false;
-            if( i.is_emissive() && lum[p.x][p.y] < 255 ) {
-                lum[p.x][p.y]++;
+            if( i.is_emissive() && lum[p.x()][p.y()] < 255 ) {
+                lum[p.x()][p.y()]++;
             }
         }
 
-        void update_lum_rem( point p, const item &i );
+        void update_lum_rem( const point_sm_ms &p, const item &i );
 
         // TODO: Replace this as it essentially makes itm public
-        location_vector<item> &get_items( const point &p ) {
-            return itm[p.x][p.y];
+        location_vector<item> &get_items( const point_sm_ms &p ) {
+            return itm[p.x()][p.y()];
         }
 
-        const location_vector<item> &get_items( const point &p ) const {
-            return itm[p.x][p.y];
+        const location_vector<item> &get_items( const point_sm_ms &p ) const {
+            return itm[p.x()][p.y()];
         }
 
         // TODO: Replace this as it essentially makes fld public
-        field &get_field( point p ) {
-            return fld[p.x][p.y];
+        field &get_field( const point_sm_ms &p ) {
+            return fld[p.x()][p.y()];
         }
 
-        const field &get_field( point p ) const {
-            return fld[p.x][p.y];
+        const field &get_field( const point_sm_ms &p ) const {
+            return fld[p.x()][p.y()];
         }
 
-        data_vars::data_set &get_ter_vars( point p ) {
+        data_vars::data_set &get_ter_vars( const point_sm_ms &p ) {
             return ter_vars[p];
         };
 
-        data_vars::data_set &get_furn_vars( point p ) {
+        data_vars::data_set &get_furn_vars( const point_sm_ms &p ) {
             return frn_vars[p];
         };
 
-        const data_vars::data_set &get_ter_vars( point p ) const {
+        const data_vars::data_set &get_ter_vars( const point_sm_ms &p ) const {
             const auto it = ter_vars.find( p );
             if( it == ter_vars.end() ) {
                 return EMPTY_VARS;
@@ -209,7 +209,7 @@ class submap : maptile_soa<SEEX, SEEY>
             return it->second;
         };
 
-        const data_vars::data_set &get_furn_vars( point p ) const {
+        const data_vars::data_set &get_furn_vars( const point_sm_ms &p ) const {
             const auto it = ter_vars.find( p );
             if( it == ter_vars.end() ) {
                 return EMPTY_VARS;
@@ -218,12 +218,12 @@ class submap : maptile_soa<SEEX, SEEY>
         };
 
         struct cosmetic_t {
-            point pos;
+            point_sm_ms pos;
             std::string type;
             std::string str;
         };
 
-        void insert_cosmetic( point p, const std::string &type, const std::string &str );
+        void insert_cosmetic( const point_sm_ms &p, const std::string &type, const std::string &str );
 
         int get_temperature() const {
             return temperature;
@@ -233,27 +233,27 @@ class submap : maptile_soa<SEEX, SEEY>
             temperature = new_temperature;
         }
 
-        bool has_graffiti( point p ) const;
-        const std::string &get_graffiti( point p ) const;
-        void set_graffiti( point p, const std::string &new_graffiti );
-        void delete_graffiti( point p );
+        bool has_graffiti( const point_sm_ms &p ) const;
+        const std::string &get_graffiti( const point_sm_ms &p ) const;
+        void set_graffiti( const point_sm_ms &p, const std::string &new_graffiti );
+        void delete_graffiti( const point_sm_ms &p );
 
         // Signage is a pretend union between furniture on a square and stored
         // writing on the square. When both are present, we have signage.
         // Its effect is meant to be cosmetic and atmospheric only.
-        bool has_signage( point p ) const;
+        bool has_signage( const point_sm_ms &p ) const;
         // Dependent on furniture + cosmetics.
-        std::string get_signage( point p ) const;
+        std::string get_signage( const point_sm_ms &p ) const;
         // Can be used anytime (prevents code from needing to place sign first.)
-        void set_signage( point p, const std::string &s );
+        void set_signage( const point_sm_ms &p, const std::string &s );
         // Can be used anytime (prevents code from needing to place sign first.)
-        void delete_signage( point p );
+        void delete_signage( const point_sm_ms &p );
 
-        bool has_computer( point p ) const;
-        const computer *get_computer( point p ) const;
-        computer *get_computer( point p );
-        void set_computer( point p, const computer &c );
-        void delete_computer( point p );
+        bool has_computer( const point_sm_ms &p ) const;
+        const computer *get_computer( const point_sm_ms &p ) const;
+        computer *get_computer( const point_sm_ms &p );
+        void set_computer( const point_sm_ms &p, const computer &c );
+        void delete_computer( const point_sm_ms &p );
 
         bool contains_vehicle( vehicle * );
 
@@ -275,10 +275,10 @@ class submap : maptile_soa<SEEX, SEEY>
         // Entries may be stale (tile no longer has the relevant data); callers must validate.
         // A stale entry is benign — it just costs a cheap branch on iteration.
         // trap_cache: positions of any non-null trap; rebuilt incrementally via set_trap.
-        std::vector<point> trap_cache;
+        std::vector<point_sm_ms> trap_cache;
         // field_cache: positions of tiles with active fields; compacted after each
         // processing pass to remove positions whose fields have fully decayed.
-        std::vector<point> field_cache;
+        std::vector<point_sm_ms> field_cache;
         // TODO: A future improvement is to unify all per-tile dirty state into a 144-bit
         // bitmask (e.g. std::bitset<SEEX * SEEY> or three uint64_t words), one per category.
         // Bitmask iteration with _Find_first()/_Find_next() or ctz on 64-bit words is
@@ -290,7 +290,7 @@ class submap : maptile_soa<SEEX, SEEY>
          *  std::nullopt = dirty (needs rebuild by scanning all tiles).
          *  Empty vector = no emitters present.
          *  Rebuilt lazily; invalidated by set_furn / set_all_furn. */
-        std::optional<std::vector<point>> emitter_cache;
+        std::optional<std::vector<point_sm_ms>> emitter_cache;
         // Serialized as "turn_last_touched" (absolute turn number).
         // Initialized to calendar::turn_zero; legacy saves that predate
         // serialization will receive the maximum-capped catchup on first load.
@@ -323,19 +323,19 @@ class submap : maptile_soa<SEEX, SEEY>
         // above: the level_cache for z+1 (nullptr at OVERMAP_HEIGHT — base case).
         // outside_cache: true when the tile has sky access via the 3×3 overhang rule.
         // sheltered_cache: true when some overhead cover exists within 3×3 of the tile.
-        auto rebuild_outside_cache( const level_cache *above, tripoint grid_pos ) -> void;
-        auto rebuild_sheltered_cache( const level_cache *above, tripoint grid_pos ) -> void;
-        auto rebuild_floor_cache( const map &m, tripoint grid_pos ) -> void;
-        auto rebuild_pf_cache( const map &m, tripoint grid_pos ) -> void;
+        auto rebuild_outside_cache( const level_cache *above, const tripoint_bub_sm &grid_pos ) -> void;
+        auto rebuild_sheltered_cache( const level_cache *above, const tripoint_bub_sm &grid_pos ) -> void;
+        auto rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
+        auto rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
         // rebuild_transparency_cache calls rebuild_outside_cache first if outside_dirty.
-        auto rebuild_transparency_cache( const map &m, tripoint grid_pos ) -> void;
+        auto rebuild_transparency_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
         /**
          * Vehicles on this submap (their (0,0) point is on this submap).
          * This vehicle objects are deleted by this submap when it gets
          * deleted.
          */
         std::vector<std::unique_ptr<vehicle>> vehicles;
-        std::map<tripoint, std::unique_ptr<partial_con>> partial_constructions;
+        std::map<tripoint_sm_ms, std::unique_ptr<partial_con>> partial_constructions;
         std::map<point_sm_ms, cata::poly_serialized<active_tile_data>> active_furniture;
         std::map<point_sm_ms, time_point> transformer_last_run;
 
@@ -343,10 +343,10 @@ class submap : maptile_soa<SEEX, SEEY>
 
     private:
         static const data_vars::data_set EMPTY_VARS;
-        std::unordered_map<point, data_vars::data_set> ter_vars;
-        std::unordered_map<point, data_vars::data_set> frn_vars;
+        std::unordered_map<point_sm_ms, data_vars::data_set> ter_vars;
+        std::unordered_map<point_sm_ms, data_vars::data_set> frn_vars;
 
-        std::map<point, computer> computers;
+        std::map<point_sm_ms, computer> computers;
         std::unique_ptr<computer> legacy_computer;
         int temperature = 0;
 
@@ -365,13 +365,13 @@ struct maptile {
         friend map; // To allow "sliding" the tile in x/y without bounds checks
         friend submap;
         submap *const sm;
-        point pos_;
+        point_sm_ms pos_;
 
-        point pos() const {
+        point_sm_ms pos() const {
             return pos_;
         }
 
-        maptile( submap *sub, point p ) :
+        maptile( submap *sub, const point_sm_ms &p ) :
             sm( sub ), pos_( p ) { }
     public:
         trap_id get_trap() const {

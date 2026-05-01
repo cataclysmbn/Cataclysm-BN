@@ -876,11 +876,10 @@ bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )
         return false;
     }
 
-    // TODO: fix point types
-    const std::vector<tripoint> line = line_to( ompos.raw(), omt.raw(), 0, 0 );
+    const auto line = line_to( ompos, omt, 0, 0 );
     for( size_t i = 0; i < line.size() && sight_points >= 0; i++ ) {
-        const tripoint &pt = line[i];
-        const oter_id &ter = get_overmapbuffer( get_dimension() ).ter( tripoint_abs_omt( pt ) );
+        const tripoint_abs_omt &pt = line[i];
+        const oter_id &ter = get_overmapbuffer( get_dimension() ).ter( pt );
         sight_points -= static_cast<int>( ter->get_see_cost() );
         if( sight_points < 0 ) {
             return false;

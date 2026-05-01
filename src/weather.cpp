@@ -350,9 +350,10 @@ static void fill_water_collectors( int mmPerHour, bool acid )
     ZoneScopedN( "fill_water_collectors" );
     const auto abs_sub = g->m.get_abs_sub();
     auto &mbuf = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
-    std::ranges::for_each( g->m.get_funnel_locations(), [&]( const auto & entry ) {
-        auto &[sm_abs, lp] = entry;
-        auto *sm = mbuf.lookup_submap_in_memory( sm_abs );
+    std::ranges::for_each( g->m.get_funnel_locations(), [&]( const std::pair<tripoint, point> &entry ) {
+        const auto sm_abs = tripoint_abs_sm( entry.first );
+        const auto &lp = point_sm_ms( entry.second );
+        auto *sm = mbuf.lookup_submap_in_memory( sm_abs.raw() );
         if( !sm ) {
             return;
         }
@@ -363,14 +364,11 @@ static void fill_water_collectors( int mmPerHour, bool acid )
         if( !one_in( tr.funnel_turns_per_charge( mmPerHour ) ) ) {
             return;
         }
-        const tripoint loc(
-            ( sm_abs.x - abs_sub.x ) * SEEX + lp.x,
-            ( sm_abs.y - abs_sub.y ) * SEEY + lp.y,
-            sm_abs.z );
+        const auto loc = project_combine( sm_abs, lp );
         // Put the rain in the largest container here which is either empty or
         // contains some mixture of impure water and acid.
         units::volume maxcontains = 0_ml;
-        map_stack items = g->m.i_at( loc );
+        map_stack items = g->m.i_at( loc.raw() );
         auto container = items.end();
         for( auto candidate = items.begin(); candidate != items.end(); ++candidate ) {
             if( ( *candidate )->is_funnel_container( maxcontains ) ) {

@@ -608,7 +608,7 @@ task_reason veh_interact::cant_do( char mode )
     if( cpart != -1 || cpart > veh->part_count() ) {
         const vehicle_part *pt = &veh->part( cpart );
         if( pt ) {
-            const tripoint q = veh->mount_to_tripoint( pt->mount );
+            const tripoint q = veh->mount_to_bubble( pt->mount ).raw();
             const vehicle *cacheveh = &g->m.veh_at( q )->vehicle();
             if( veh != cacheveh ) {
                 return DOUBLE_STACK;
