@@ -47,7 +47,8 @@ vehicle_part::vehicle_part( vehicle *veh )
 vehicle_part::vehicle_part()
     : id( vpart_id::NULL_ID() ), base( new fake_item_location() ), items( new fake_item_location() ) {}
 
-vehicle_part::vehicle_part( const vpart_id &vp, const tripoint_mnt_veh &dp, detached_ptr<item> &&obj, vehicle *veh )
+vehicle_part::vehicle_part( const vpart_id &vp, const tripoint_mnt_veh &dp,
+                            detached_ptr<item> &&obj, vehicle *veh )
     : mount( dp ), id( vp ),
       base( new vehicle_base_item_location( veh, hack_id ) ),
       items( new vehicle_item_location( veh, hack_id ) )

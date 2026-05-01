@@ -179,7 +179,8 @@ bool ter_furn_transform::add_message( const std::map<K, ter_furn_data<T>> &list,
     return false;
 }
 
-void ter_furn_transform::add_all_messages( const Creature &critter, const tripoint_bub_ms &location ) const
+void ter_furn_transform::add_all_messages( const Creature &critter,
+        const tripoint_bub_ms &location ) const
 {
     add_all_messages( get_map(), critter, location );
 }

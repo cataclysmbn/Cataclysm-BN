@@ -71,7 +71,8 @@ class ter_furn_transform
         bool was_loaded = false;
 
         void add_all_messages( const Creature &critter, const tripoint_bub_ms &location ) const;
-        void add_all_messages( const map &m, const Creature &critter, const tripoint_bub_ms &location ) const;
+        void add_all_messages( const map &m, const Creature &critter,
+                               const tripoint_bub_ms &location ) const;
 
         void transform( const tripoint_bub_ms &location ) const;
         void transform( map &m, const tripoint_bub_ms &location ) const;

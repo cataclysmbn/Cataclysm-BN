@@ -1926,7 +1926,8 @@ int monster::calc_climb_cost( const tripoint_bub_ms &f, const tripoint_bub_ms &t
  * Return points of an area extending 1 tile to either side and
  * (maxdepth) tiles behind basher.
  */
-static std::vector<tripoint_bub_ms> get_bashing_zone( const tripoint_bub_ms &bashee, const tripoint_bub_ms &basher,
+static std::vector<tripoint_bub_ms> get_bashing_zone( const tripoint_bub_ms &bashee,
+        const tripoint_bub_ms &basher,
         int maxdepth )
 {
     std::vector<tripoint> direction;
@@ -2067,8 +2068,10 @@ bool monster::attack_at( const tripoint_bub_ms &p )
         auto &here = get_map();
         const auto upper_z = std::max( p.z(), bub_pos().z() );
         const auto vehicle_floor_between =
-            here.veh_at( tripoint_bub_ms( bub_pos().xy(), upper_z ) ).part_with_feature( "BOARDABLE", true ).has_value() ||
-            here.veh_at( tripoint_bub_ms( p.xy(), upper_z ) ).part_with_feature( "BOARDABLE", true ).has_value();
+            here.veh_at( tripoint_bub_ms( bub_pos().xy(), upper_z ) ).part_with_feature( "BOARDABLE",
+                    true ).has_value() ||
+            here.veh_at( tripoint_bub_ms( p.xy(), upper_z ) ).part_with_feature( "BOARDABLE",
+                    true ).has_value();
 
         if( here.floor_between( bub_pos(), p ) || vehicle_floor_between ) {
             return false;
@@ -2118,7 +2121,8 @@ bool monster::attack_at( const tripoint_bub_ms &p )
     return false;
 }
 
-static tripoint_bub_ms find_closest_stair( const tripoint_bub_ms &near_this, const ter_bitflags stair_type )
+static tripoint_bub_ms find_closest_stair( const tripoint_bub_ms &near_this,
+        const ter_bitflags stair_type )
 {
     map &here = get_map();
     for( const tripoint_bub_ms &candidate : closest_points_first( near_this, 10 ) ) {
@@ -2211,8 +2215,9 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
         // Note: Keep this as float here or else it will cancel valid moves
         const float cost = stagger_adjustment *
                            static_cast<float>( climbs() &&
-                                               g->m.has_flag( TFLAG_NO_FLOOR, p ) ? calc_climb_cost( bub_pos(), destination ) : calc_movecost( bub_pos(),
-                                                       destination ) );
+                                               g->m.has_flag( TFLAG_NO_FLOOR, p ) ? calc_climb_cost( bub_pos(),
+                                                       destination ) : calc_movecost( bub_pos(),
+                                                               destination ) );
         if( cost > 0.0f ) {
             moves -= static_cast<int>( std::ceil( cost ) );
         } else {
@@ -2331,7 +2336,8 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
 
     if( has_flag( MF_SLUDGETRAIL ) ) {
         for( const auto &sludge_p : g->m.points_in_radius( bub_pos(), 1 ) ) {
-            const int fstr = 3 - ( std::abs( sludge_p.x() - bub_pos().x() ) + std::abs( sludge_p.y() - bub_pos().y() ) );
+            const int fstr = 3 - ( std::abs( sludge_p.x() - bub_pos().x() ) + std::abs(
+                                       sludge_p.y() - bub_pos().y() ) );
             if( fstr >= 2 ) {
                 g->m.add_field( sludge_p, fd_sludge, fstr );
             }
@@ -2639,7 +2645,8 @@ bool monster::will_reach( const point_bub_ms &p )
         return false;
     }
 
-    auto path = g->m.route( bub_pos(), tripoint_bub_ms( p, bub_pos().z() ), get_legacy_pathfinding_settings() );
+    auto path = g->m.route( bub_pos(), tripoint_bub_ms( p, bub_pos().z() ),
+                            get_legacy_pathfinding_settings() );
     if( path.empty() ) {
         return false;
     }
@@ -2664,7 +2671,8 @@ bool monster::will_reach( const point_bub_ms &p )
 int monster::turns_to_reach( const point_bub_ms &p )
 {
     // HACK: This function is a(n old) temporary hack that should soon be removed
-    auto path = g->m.route( bub_pos(), tripoint_bub_ms( p, bub_pos().z() ), get_legacy_pathfinding_settings() );
+    auto path = g->m.route( bub_pos(), tripoint_bub_ms( p, bub_pos().z() ),
+                            get_legacy_pathfinding_settings() );
     if( path.empty() ) {
         return 999;
     }
@@ -2737,15 +2745,15 @@ void monster::shove_vehicle( const tripoint_bub_ms &remote_destination,
                 if( g->u.sees( bub_pos() ) ) {
                     //~ %1$s - monster name, %2$s - vehicle name
                     g->u.add_msg_if_player( m_bad, _( "%1$s shoves %2$s out of their way!" ),
-                                                 disp_name( false, true ), veh.disp_name() );
+                                            disp_name( false, true ), veh.disp_name() );
                 }
                 int shove_moves = shove_veh_mass_moves_factor * veh_mass / 10_kilogram;
                 shove_moves = std::max( shove_moves, shove_moves_minimal );
                 this->mod_moves( -shove_moves );
                 const auto destination_delta( remote_destination - nearby_destination );
                 const tripoint_bub_ms shove_destination( clamp( destination_delta.x(), -1, 1 ),
-                                                  clamp( destination_delta.y(), -1, 1 ),
-                                                  clamp( destination_delta.z(), -1, 1 ) );
+                        clamp( destination_delta.y(), -1, 1 ),
+                        clamp( destination_delta.z(), -1, 1 ) );
                 veh.skidding = true;
                 veh.velocity = shove_velocity;
                 if( shove_destination != tripoint_bub_ms::zero() ) {

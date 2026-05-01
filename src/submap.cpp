@@ -62,7 +62,7 @@ void submap::swap( submap &first, submap &second )
     std::swap( first.frn_vars, second.frn_vars );
     std::swap( first.ter_vars, second.ter_vars );
 
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms &p ) {
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms & p ) {
         std::swap( first.itm[p.x()][p.y()], second.itm[p.x()][p.y()] );
     } );
 }
@@ -70,7 +70,7 @@ void submap::swap( submap &first, submap &second )
 template<int sx, int sy>
 maptile_soa<sx, sy>::maptile_soa( const tripoint_abs_sm &position )
 {
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms &p ) {
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms & p ) {
         itm[p.x()][p.y()].init_location( new tile_item_location( project_combine( position, p ) ) );
     } );
 }
@@ -230,7 +230,7 @@ void submap::delete_signage( const point_sm_ms &p )
 void submap::update_legacy_computer()
 {
     if( legacy_computer ) {
-        std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms &p ) {
+        std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms & p ) {
             if( ter[p.x()][p.y()] == t_console ) {
                 computers.emplace( p, *legacy_computer );
             }
@@ -436,7 +436,7 @@ auto submap::rebuild_outside_cache( const level_cache *above,
         return;
     }
     const auto abs_p = project_to<coords::ms>( grid_pos ).xy();
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms &p ) {
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms & p ) {
         // A tile is outside if any tile in the 3×3 at z+1 satisfies:
         // (outside at z+1) AND (no floor at z+1 blocking the path).
         // Out-of-bounds neighbours (edge of loaded map) are treated as inside.
@@ -488,7 +488,7 @@ auto submap::rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos 
     const submap *below = lowest_z ? nullptr
                           : m.get_submap_at_grid( grid_pos - tripoint_rel_sm( 0, 0, 1 ) );
 
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms &sp ) {
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms & sp ) {
         const auto &ter_obj = get_ter( sp ).obj();
         if( ter_obj.has_flag( TFLAG_NO_FLOOR ) || ter_obj.has_flag( TFLAG_Z_TRANSPARENT ) ) {
             if( !below || !below->get_furn( sp ).obj().has_flag( TFLAG_SUN_ROOF_ABOVE ) ) {
@@ -504,7 +504,7 @@ auto submap::rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -
     if( !pf_dirty ) {
         return;
     }
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms &sp ) {
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms & sp ) {
         const tripoint_bub_ms p = project_combine( grid_pos, sp );
         auto cur_value = PF_NORMAL;
 
@@ -569,7 +569,7 @@ auto submap::rebuild_transparency_cache( const map &m, const tripoint_bub_sm &gr
 
     const float sight_penalty = get_weather().weather_id->sight_penalty;
 
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms &sp ) {
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms & sp ) {
         if( ( get_ter( sp ).obj().transparent || !get_furn( sp ).obj().transparent ) ) {
             auto value = LIGHT_TRANSPARENCY_OPEN_AIR;
             if( outside_cache[sp.x()][sp.y()] ) {
@@ -579,9 +579,9 @@ auto submap::rebuild_transparency_cache( const map &m, const tripoint_bub_sm &gr
             for( const auto &fld : get_field( sp ) ) {
                 if( !fld.first.is_valid() ) {
                     debugmsg( "rebuild_transparency_cache: invalid field type id %d at "
-                                "grid(%d,%d,%d) tile(%d,%d) field_count=%d is_uniform=%d",
-                                fld.first.to_i(), grid_pos.x(), grid_pos.y(), grid_pos.z(),
-                                sp.x(), sp.y(), field_count, static_cast<int>( is_uniform ) );
+                              "grid(%d,%d,%d) tile(%d,%d) field_count=%d is_uniform=%d",
+                              fld.first.to_i(), grid_pos.x(), grid_pos.y(), grid_pos.z(),
+                              sp.x(), sp.y(), field_count, static_cast<int>( is_uniform ) );
                     break;
                 }
                 const auto &cur = fld.second;

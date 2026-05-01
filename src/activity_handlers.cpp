@@ -3941,7 +3941,8 @@ void activity_handlers::pry_nails_finish( player_activity *act, player *p )
 void activity_handlers::chop_tree_do_turn( player_activity *act, player * )
 {
     map &here = get_map();
-    sfx::play_activity_sound( "tool", "axe", sfx::get_heard_volume( here.abs_to_bub( act->placement ) ) );
+    sfx::play_activity_sound( "tool", "axe",
+                              sfx::get_heard_volume( here.abs_to_bub( act->placement ) ) );
     if( calendar::once_every( 1_minutes ) ) {
         //~ Sound of a wood chopping tool at work!
         sounds::sound( here.abs_to_bub( act->placement ), 15, sounds::sound_t::activity, _( "CHK!" ) );

@@ -227,7 +227,7 @@ shared_ptr_fast<mm_submap> map_memory::load_submap( const tripoint_abs_sm &sm_po
     if( test_mode ) {
         return nullptr;
     }
-    
+
     const auto reg = project_to<coords::mmr>( sm_pos );
 
     mm_region mmr;
@@ -245,7 +245,7 @@ shared_ptr_fast<mm_submap> map_memory::load_submap( const tripoint_abs_sm &sm_po
                   reg.x(), reg.y(), reg.z(), err.what() );
         return nullptr;
     }
-    
+
     dbg( DL::Info ) << "Loaded mm_region " << reg << " [" << project_to<coords::sm>( reg ) << "]";
 
     shared_ptr_fast<mm_submap> ret;
@@ -319,7 +319,8 @@ bool map_memory::save( const tripoint_abs_ms &pos )
     submaps.clear();
 
     const point mm_hsize_p( g_mapsize, g_mapsize );
-    half_open_rectangle<point_abs_sm> rect_keep( sm_center.xy() - mm_hsize_p, sm_center.xy() + mm_hsize_p );
+    half_open_rectangle<point_abs_sm> rect_keep( sm_center.xy() - mm_hsize_p,
+            sm_center.xy() + mm_hsize_p );
 
     dbg( DL::Info ) << "[SAVE] Saving memory map around " << sm_center << ". Keeping submaps within "
                     << rect_keep.p_min << "->" << rect_keep.p_max;

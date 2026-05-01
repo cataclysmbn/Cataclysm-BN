@@ -1338,7 +1338,8 @@ bool Character::check_mount_will_move( const tripoint_bub_ms &dest_loc )
     if( mounted_creature && mounted_creature->type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE ) ) {
         for( const monster &critter : g->all_monsters() ) {
             Attitude att = critter.attitude_to( *this );
-            if( att == Attitude::A_HOSTILE && sees( critter ) && rl_dist( bub_pos(), critter.bub_pos() ) <= 15 &&
+            if( att == Attitude::A_HOSTILE && sees( critter ) &&
+                rl_dist( bub_pos(), critter.bub_pos() ) <= 15 &&
                 rl_dist( dest_loc, critter.bub_pos() ) < rl_dist( bub_pos(), critter.bub_pos() ) ) {
                 add_msg_if_player( _( "You fail to budge your %s!" ), mounted_creature->get_name() );
                 return false;
@@ -1373,7 +1374,8 @@ bool Character::check_mount_is_spooked()
             double chance = 1.0;
             Attitude att = critter.attitude_to( *this );
             // actually too close now - horse might spook.
-            if( att == Attitude::A_HOSTILE && sees( critter ) && rl_dist( bub_pos(), critter.bub_pos() ) <= 10 ) {
+            if( att == Attitude::A_HOSTILE && sees( critter ) &&
+                rl_dist( bub_pos(), critter.bub_pos() ) <= 10 ) {
                 chance += 10 - rl_dist( bub_pos(), critter.bub_pos() );
                 if( critter.get_size() >= mount_size ) {
                     chance *= 2;
@@ -8488,7 +8490,8 @@ void Character::cough( bool harmful, int loudness )
     if( !is_npc() ) {
         add_msg( m_bad, _( "You cough heavily." ) );
     }
-    sounds::sound( bub_pos().raw(), loudness, sounds::sound_t::speech, _( "a hacking cough." ), false, "misc",
+    sounds::sound( bub_pos().raw(), loudness, sounds::sound_t::speech, _( "a hacking cough." ), false,
+                   "misc",
                    "cough" );
 
     moves -= 80;
@@ -8618,7 +8621,8 @@ void Character::shout( std::string msg, bool order )
         add_msg_if_player( m_warning, _( "The sound of your voice is significantly muffled!" ) );
     }
 
-    sounds::sound( bub_pos().raw(), noise, order ? sounds::sound_t::order : sounds::sound_t::alert, msg, false,
+    sounds::sound( bub_pos().raw(), noise, order ? sounds::sound_t::order : sounds::sound_t::alert, msg,
+                   false,
                    "shout", shout );
 }
 
@@ -8640,7 +8644,8 @@ void Character::vomit()
         fungal_effects( *g, here ).fungalize( bub_pos().raw(), this );
     } else if( stomach.get_calories() > 0 || get_thirst() < 0 ) {
         add_msg_player_or_npc( m_bad, _( "You throw up heavily!" ), _( "<npcname> throws up heavily!" ) );
-        here.add_field( tripoint_bub_ms( character_funcs::pick_safe_adjacent_tile( *this ).value_or( bub_pos().raw() ) ), fd_bile, 1 );
+        here.add_field( tripoint_bub_ms( character_funcs::pick_safe_adjacent_tile( *this ).value_or(
+                                             bub_pos().raw() ) ), fd_bile, 1 );
     } else {
         return;
     }
@@ -9089,7 +9094,8 @@ void Character::absorb_hit( const bodypart_id &bp, damage_instance &dam )
 
             if( destroy ) {
                 if( g->u.sees( *this ) ) {
-                    SCT.add( point( bub_pos().x(), bub_pos().y() ), direction::NORTH, remove_color_tags( pre_damage_name ),
+                    SCT.add( point( bub_pos().x(), bub_pos().y() ), direction::NORTH,
+                             remove_color_tags( pre_damage_name ),
                              m_neutral, _( "destroyed" ), m_info );
                 }
                 destroyed_armor_msg( *this, pre_damage_name, armor.contents.empty(), armor.weight(),
@@ -9195,7 +9201,8 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
     add_msg_if_player( m_bad, format_string, pre_damage_name, damage_verb );
     //item is damaged
     if( is_player() ) {
-        SCT.add( point( bub_pos().x(), bub_pos().y() ), direction::NORTH, remove_color_tags( pre_damage_name ), m_neutral,
+        SCT.add( point( bub_pos().x(), bub_pos().y() ), direction::NORTH,
+                 remove_color_tags( pre_damage_name ), m_neutral,
                  damage_verb,
                  m_info );
     }
@@ -9509,7 +9516,8 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
         if( is_player() && source ) {
             //monster hits player melee
             SCT.add( point( bub_pos().x(), bub_pos().y() ),
-                     direction_from( point_zero, point( bub_pos().x() - source->bub_pos().x(), bub_pos().y() - source->bub_pos().y() ) ),
+                     direction_from( point_zero, point( bub_pos().x() - source->bub_pos().x(),
+                                     bub_pos().y() - source->bub_pos().y() ) ),
                      get_hp_bar( dam, get_hp_max( bp ) ).first, m_bad, body_part_name( bp ), m_neutral );
         }
     }
@@ -10374,8 +10382,9 @@ std::string Character::is_snuggling() const
     auto end = here.i_at( bub_pos() ).end();
 
     if( in_vehicle ) {
-        if( const std::optional<vpart_reference> vp = here.veh_at( bub_pos() ).part_with_feature( VPFLAG_CARGO,
-                false ) ) {
+        if( const std::optional<vpart_reference> vp = here.veh_at( bub_pos() ).part_with_feature(
+                    VPFLAG_CARGO,
+                    false ) ) {
             vehicle *const veh = &vp->vehicle();
             const int cargo = vp->part_index();
             if( !veh->get_items( cargo ).empty() ) {
@@ -11387,7 +11396,8 @@ bool Character::sees_with_infrared( const Creature &critter ) const
                                       sight_range( current_daylight_level( calendar::turn ) ) );
     }
 
-    return here.sees( bub_pos(), critter.bub_pos(), sight_range( current_daylight_level( calendar::turn ) ) );
+    return here.sees( bub_pos(), critter.bub_pos(),
+                      sight_range( current_daylight_level( calendar::turn ) ) );
 }
 
 bool Character::is_visible_in_range( const Creature &critter, const int range ) const

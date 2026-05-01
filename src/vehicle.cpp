@@ -1014,10 +1014,12 @@ void vehicle::autopilot_patrol()
     }
     const bool x_side = ( max.x() - min.x() ) < ( max.y() - min.y() );
     const int point_along = x_side ? rng( min.x(), max.x() ) : rng( min.y(), max.y() );
-    const tripoint_abs_ms max_tri = x_side ? tripoint_abs_ms( point_along, max.y(), min.z() ) : tripoint_abs_ms( max.x(),
-                             point_along, min.z() );
-    const tripoint_abs_ms min_tri = x_side ? tripoint_abs_ms( point_along, min.y(), min.z() ) : tripoint_abs_ms( min.x(),
-                             point_along, min.z() );
+    const tripoint_abs_ms max_tri = x_side ? tripoint_abs_ms( point_along, max.y(),
+                                    min.z() ) : tripoint_abs_ms( max.x(),
+                                            point_along, min.z() );
+    const tripoint_abs_ms min_tri = x_side ? tripoint_abs_ms( point_along, min.y(),
+                                    min.z() ) : tripoint_abs_ms( min.x(),
+                                            point_along, min.z() );
     tripoint_abs_ms chosen_tri = min_tri;
     if( rl_dist( max_tri, abs_ms_location() ) >= rl_dist( min_tri, abs_ms_location() ) ) {
         chosen_tri = max_tri;
@@ -1038,7 +1040,7 @@ std::set<point_abs_ms> vehicle::immediate_path( units::angle rotate )
     auto fl_bub = bub_ms_location() + coord_translate( front_left );
     auto fr_bub = bub_ms_location() + coord_translate( front_right );
     std::vector<point_abs_ms> front_row = line_to( g->m.bub_to_abs( fl_bub ).xy(),
-                                            g->m.bub_to_abs( fr_bub ).xy() );
+                                          g->m.bub_to_abs( fr_bub ).xy() );
     for( point_abs_ms elem : front_row ) {
         for( int i = 0; i < distance_to_check; ++i ) {
             collision_vector.advance( i );
@@ -1851,7 +1853,7 @@ bool vehicle::can_unmount( const int p, std::string &reason ) const
 
             for( int i = 0; i < 4; i++ ) {
                 const auto next = parts[p].mount + point_rel_veh( i < 2 ? ( i == 0 ? -1 : 1 ) : 0,
-                                   i < 2 ? 0 : ( i == 2 ? -1 : 1 ) );
+                                  i < 2 ? 0 : ( i == 2 ? -1 : 1 ) );
                 std::vector<int> parts_over_there = parts_at_relative( next, false );
                 //Ignore empty squares
                 if( !parts_over_there.empty() ) {
@@ -1976,7 +1978,8 @@ int vehicle::install_part( const tripoint_mnt_veh &dp, const vpart_id &id, bool 
     return ret;
 }
 
-int vehicle::install_part( const tripoint_mnt_veh &dp, const vpart_id &id, detached_ptr<item> &&obj, bool force )
+int vehicle::install_part( const tripoint_mnt_veh &dp, const vpart_id &id, detached_ptr<item> &&obj,
+                           bool force )
 {
     if( !( force || can_mount( dp, id ) ) ) {
         return -1;
@@ -2179,7 +2182,8 @@ bool vehicle::merge_rackable_vehicle( vehicle *carry_veh, const std::vector<int>
     if( found_all_parts ) {
         decltype( loot_zones ) new_zones;
         for( const auto &carry_map : carry_data ) {
-            std::string offset = string_format( "%s%3d", carry_map.old_mount == tripoint_mnt_veh::zero() ? axis : " ",
+            std::string offset = string_format( "%s%3d",
+                                                carry_map.old_mount == tripoint_mnt_veh::zero() ? axis : " ",
                                                 axis == "X" ? carry_map.old_mount.x() : carry_map.old_mount.y() );
             std::string unique_id = string_format( "%s%3d%s", offset,
                                                    static_cast<int>( to_degrees( relative_dir ) ),
@@ -2753,7 +2757,8 @@ bool vehicle::split_vehicles( const std::vector<std::vector <int>> &new_vehs,
             // Prepare the zones to be moved to the new vehicle
             const std::pair<std::unordered_multimap<tripoint_mnt_veh, zone_data>::iterator, std::unordered_multimap<tripoint_mnt_veh, zone_data>::iterator>
             zones_on_point = loot_zones.equal_range( cur_mount );
-            for( std::unordered_multimap<tripoint_mnt_veh, zone_data>::const_iterator lz_iter = zones_on_point.first;
+            for( std::unordered_multimap<tripoint_mnt_veh, zone_data>::const_iterator lz_iter =
+                     zones_on_point.first;
                  lz_iter != zones_on_point.second; ++lz_iter ) {
                 new_zones.emplace( new_mount, lz_iter->second );
             }
@@ -2961,7 +2966,8 @@ int vehicle::part_with_feature( int part, const std::string &flag, bool unbroken
     return part_with_feature( parts[part].mount, flag, unbroken );
 }
 
-int vehicle::part_with_feature( const tripoint_mnt_veh &pt, const std::string &flag, bool unbroken ) const
+int vehicle::part_with_feature( const tripoint_mnt_veh &pt, const std::string &flag,
+                                bool unbroken ) const
 {
     std::vector<int> parts_here = parts_at_relative( pt, true );
     for( auto &elem : parts_here ) {
@@ -3059,7 +3065,8 @@ int vehicle::opaque_at_position( const tripoint_mnt_veh &pos ) const
     return i;
 }
 
-std::vector<vehicle_part *> vehicle::get_parts_at( const tripoint_bub_ms &pos, const std::string &flag,
+std::vector<vehicle_part *> vehicle::get_parts_at( const tripoint_bub_ms &pos,
+        const std::string &flag,
         const part_status_flag condition )
 {
     const auto relative_pos = pos - bub_ms_location();
@@ -3522,13 +3529,15 @@ tripoint_rel_ms vehicle::coord_translate( const tripoint_mnt_veh &p ) const
     return rotate_to_world( pivot_rotation[0], pivot_anchor[0], p );
 }
 
-void vehicle::coord_translate( units::angle dir, const tripoint_mnt_veh &pivot, const tripoint_mnt_veh &p,
+void vehicle::coord_translate( units::angle dir, const tripoint_mnt_veh &pivot,
+                               const tripoint_mnt_veh &p,
                                tripoint_rel_ms &q ) const
 {
     q = rotate_to_world( dir, pivot, p );
 }
 
-void vehicle::coord_translate_reverse( units::angle dir, const tripoint_mnt_veh &pivot, const tripoint_rel_ms &p,
+void vehicle::coord_translate_reverse( units::angle dir, const tripoint_mnt_veh &pivot,
+                                       const tripoint_rel_ms &p,
                                        tripoint_mnt_veh &q ) const
 {
     q = rotate_to_local( dir, pivot, p );
@@ -3539,7 +3548,8 @@ tripoint_bub_ms vehicle::mount_to_bubble( const tripoint_mnt_veh &mount ) const
     return bub_ms_location() + rotate_to_world( pivot_rotation[0], pivot_anchor[0], mount );
 }
 
-tripoint_bub_ms vehicle::mount_to_bubble( const tripoint_mnt_veh &mount, const tripoint_rel_veh &offset ) const
+tripoint_bub_ms vehicle::mount_to_bubble( const tripoint_mnt_veh &mount,
+        const tripoint_rel_veh &offset ) const
 {
     return mount_to_bubble( mount + offset );
 }
@@ -3680,14 +3690,14 @@ bool vehicle::check_rotated_intervening( const tripoint_mnt_veh &from, const tri
 
 bool vehicle::allowed_light( const tripoint_mnt_veh &from, const tripoint_mnt_veh &to ) const
 {
-    return check_rotated_intervening( from, to, []( const vehicle * veh, const tripoint_mnt_veh &p ) {
+    return check_rotated_intervening( from, to, []( const vehicle * veh, const tripoint_mnt_veh & p ) {
         return ( veh->opaque_at_position( p ) == -1 );
     } );
 }
 
 bool vehicle::allowed_move( const tripoint_mnt_veh &from, const tripoint_mnt_veh &to ) const
 {
-    return check_rotated_intervening( from, to, []( const vehicle * veh, const tripoint_mnt_veh &p ) {
+    return check_rotated_intervening( from, to, []( const vehicle * veh, const tripoint_mnt_veh & p ) {
         return ( veh->obstacle_at_position( p ) == -1 );
     } );
 }
@@ -5443,7 +5453,8 @@ int vehicle::total_solar_epower_w() const
 int vehicle::total_wind_epower_w() const
 {
     map &here = get_map();
-    const oter_id &cur_om_ter = get_overmapbuffer( dimension_id_ ).ter( project_to<coords::omt>( abs_ms_location() ) );
+    const oter_id &cur_om_ter = get_overmapbuffer( dimension_id_ ).ter( project_to<coords::omt>
+                                ( abs_ms_location() ) );
     const weather_manager &weather = get_weather();
     int epower_w = 0;
     for( int part : wind_turbines ) {
@@ -5455,7 +5466,8 @@ int vehicle::total_wind_epower_w() const
             continue;
         }
 
-        double windpower = get_local_windpower( weather.windspeed, cur_om_ter, bub_part_location( part ).raw(),
+        double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
+                                                bub_part_location( part ).raw(),
                                                 weather.winddirection, false );
         if( windpower <= ( weather.windspeed / 10.0 ) ) {
             continue;
@@ -6094,7 +6106,8 @@ units::volume vehicle::free_volume( const int part ) const
 
 void vehicle::make_inactive( item &target )
 {
-    auto cargo_parts = get_parts_at( tripoint_bub_ms( target.position() ), "CARGO", part_status_flag::any );
+    auto cargo_parts = get_parts_at( tripoint_bub_ms( target.position() ), "CARGO",
+                                     part_status_flag::any );
     if( cargo_parts.empty() ) {
         return;
     }
@@ -6106,7 +6119,8 @@ void vehicle::make_active( item &target )
     if( !target.needs_processing() ) {
         return;
     }
-    auto cargo_parts = get_parts_at( tripoint_bub_ms( target.position() ), "CARGO", part_status_flag::any );
+    auto cargo_parts = get_parts_at( tripoint_bub_ms( target.position() ), "CARGO",
+                                     part_status_flag::any );
     if( cargo_parts.empty() ) {
         return;
     }
@@ -6808,7 +6822,7 @@ void vehicle::do_towing_move()
     } else {
         towed_veh->skidding = true;
         std::vector<tripoint_bub_ms> lineto = line_to( g->m.abs_to_bub( towed_tow_point ),
-                                                g->m.abs_to_bub( tower_tow_point ) );
+                                              g->m.abs_to_bub( tower_tow_point ) );
         tripoint_bub_ms nearby_destination;
         if( lineto.size() >= 2 ) {
             nearby_destination = lineto[1];
@@ -6819,8 +6833,8 @@ void vehicle::do_towing_move()
         const int destination_delta_y = g->m.abs_to_bub( tower_tow_point ).y() - nearby_destination.y();
         const int destination_delta_z = towed_veh->bub_ms_location().z();
         const tripoint_rel_ms move_destination( clamp( destination_delta_x, -1, 1 ),
-                                         clamp( destination_delta_y, -1, 1 ),
-                                         clamp( destination_delta_z, -1, 1 ) );
+                                                clamp( destination_delta_y, -1, 1 ),
+                                                clamp( destination_delta_z, -1, 1 ) );
         g->m.move_vehicle( *towed_veh, move_destination, towed_veh->face );
         towed_veh->move = tileray( point( destination_delta_x, destination_delta_y ) );
     }
@@ -7454,7 +7468,8 @@ bool vehicle::explode_fuel( int p, damage_type type )
                                               ( parts[p].ammo_remaining() * data.fuel_size_factor ) ) );
         //debugmsg( "damage check dmg=%d pow=%d amount=%d", dmg, pow, parts[p].amount );
 
-        explosion_handler::explosion( bub_part_location( p ).raw(), nullptr, pow, 0.7, data.fiery_explosion );
+        explosion_handler::explosion( bub_part_location( p ).raw(), nullptr, pow, 0.7,
+                                      data.fiery_explosion );
         mod_hp( parts[p], 0 - parts[ p ].hp(), DT_HEAT );
         parts[p].ammo_unset();
     }
@@ -7714,7 +7729,7 @@ static bool is_sm_tile_over_water( const tripoint_abs_ms &pos )
     auto sm = mbuf.lookup_submap( proj.quotient_tripoint );
     if( sm == nullptr ) {
         debugmsg( "is_sm_tile_over_water(): couldn't find submap %d,%d,%d",
-            proj.quotient_tripoint.x(), proj.quotient_tripoint.y(), proj.quotient_tripoint.z() );
+                  proj.quotient_tripoint.x(), proj.quotient_tripoint.y(), proj.quotient_tripoint.z() );
         return false;
     }
 
@@ -7730,7 +7745,7 @@ static bool is_sm_tile_outside( const tripoint_abs_ms &pos )
     auto sm = mbuf.lookup_submap( proj.quotient_tripoint );
     if( sm == nullptr ) {
         debugmsg( "is_sm_tile_over_water(): couldn't find submap %d,%d,%d",
-            proj.quotient_tripoint.x(), proj.quotient_tripoint.y(), proj.quotient_tripoint.z() );
+                  proj.quotient_tripoint.x(), proj.quotient_tripoint.y(), proj.quotient_tripoint.z() );
         return false;
     }
 
@@ -7990,7 +8005,8 @@ bool vehicle::valid_part( int part_num ) const
     return part_num >= 0 && part_num < static_cast<int>( parts.size() );
 }
 
-std::set<int> vehicle::advance_precalc_mounts( const point_sm_ms &new_pos, const tripoint_bub_ms &src )
+std::set<int> vehicle::advance_precalc_mounts( const point_sm_ms &new_pos,
+        const tripoint_bub_ms &src )
 {
     map &here = get_map();
     std::set<int> smzs;

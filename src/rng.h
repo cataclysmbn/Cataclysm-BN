@@ -209,9 +209,9 @@ inline detached_ptr<C> random_entry_detached( location_vector<C> &container )
 tripoint_range<tripoint_bub_ms> points_in_range( const map &m );
 /// Returns a random point in the given range that satisfies the given predicate ( if any ).
 std::optional<tripoint_bub_ms> random_point( const tripoint_range<tripoint_bub_ms> &range,
-                                      const std::function<bool( const tripoint_bub_ms & )> &predicate );
+        const std::function<bool( const tripoint_bub_ms & )> &predicate );
 /// Same as other random_point with a range enclosing all valid points of the map.
 std::optional<tripoint_bub_ms> random_point( const map &m,
-                                      const std::function<bool( const tripoint_bub_ms & )> &predicate );
+        const std::function<bool( const tripoint_bub_ms & )> &predicate );
 
 

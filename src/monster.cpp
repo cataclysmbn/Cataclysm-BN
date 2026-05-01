@@ -2777,7 +2777,8 @@ void monster::process_turn()
     if( has_flag( MF_ELECTRIC_FIELD ) ) {
         if( has_effect( effect_emp ) ) {
             if( calendar::once_every( 10_turns ) ) {
-                sounds::sound( bub_pos().raw(), 5, sounds::sound_t::combat, _( "hummmmm." ), false, "humming", "electric" );
+                sounds::sound( bub_pos().raw(), 5, sounds::sound_t::combat, _( "hummmmm." ), false, "humming",
+                               "electric" );
             }
         } else {
             for( const auto &zap : g->m.points_in_radius( bub_pos(), 1 ) ) {
@@ -2786,7 +2787,8 @@ void monster::process_turn()
                 for( const auto &item : items ) {
                     if( item->made_of( LIQUID ) && item->flammable() ) { // start a fire!
                         g->m.add_field( zap, fd_fire, 2, 1_minutes );
-                        sounds::sound( bub_pos().raw(), 30, sounds::sound_t::combat,  _( "fwoosh!" ), false, "fire", "ignition" );
+                        sounds::sound( bub_pos().raw(), 30, sounds::sound_t::combat,  _( "fwoosh!" ), false, "fire",
+                                       "ignition" );
                         break;
                     }
                 }
@@ -2812,9 +2814,11 @@ void monster::process_turn()
             if( get_weather().lightning_active && !has_effect( effect_supercharged ) &&
                 g->m.is_outside( bub_pos() ) ) {
                 get_weather().lightning_active = false; // only one supercharge per strike
-                sounds::sound( bub_pos().raw(), 300, sounds::sound_t::combat, _( "BOOOOOOOM!!!" ), false, "environment",
+                sounds::sound( bub_pos().raw(), 300, sounds::sound_t::combat, _( "BOOOOOOOM!!!" ), false,
+                               "environment",
                                "thunder_near" );
-                sounds::sound( bub_pos().raw(), 20, sounds::sound_t::combat, _( "vrrrRRRUUMMMMMMMM!" ), false, "explosion",
+                sounds::sound( bub_pos().raw(), 20, sounds::sound_t::combat, _( "vrrrRRRUUMMMMMMMM!" ), false,
+                               "explosion",
                                "default" );
                 if( g->u.sees( bub_pos() ) ) {
                     add_msg( m_bad, _( "Lightning strikes the %s!" ), name() );
@@ -3764,7 +3768,8 @@ void monster::hear_sound( const tripoint &source, const int vol, const int dist 
         wander_to( tripoint_bub_ms( target_x, target_y, source.z ), wander_turns );
     } else if( morale < 0 ) {
         // Monsters afraid of sound should not go towards sound
-        wander_to( tripoint_bub_ms( 2 * bub_pos().x() - target_x, 2 * bub_pos().y() - target_y, 2 * bub_pos().z() - source.z ),
+        wander_to( tripoint_bub_ms( 2 * bub_pos().x() - target_x, 2 * bub_pos().y() - target_y,
+                                    2 * bub_pos().z() - source.z ),
                    wander_turns );
     }
 }

@@ -115,7 +115,8 @@ static const trait_id trait_NPC_STATIC_NPC( "NPC_STATIC_NPC" );
 
 static constexpr int MON_RADIUS = 3;
 
-static void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z, int rotate );
+static void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z,
+                          int rotate );
 
 // (x,y,z) are absolute coordinates of a submap
 // x%2 and y%2 must be 0!
@@ -2037,7 +2038,8 @@ class jmapgen_item_group : public jmapgen_piece
         }
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
-            dat.m.place_items( group_id, chance.get(), point_bub_ms( x.val, y.val ), point_bub_ms( x.valmax, y.valmax ), true,
+            dat.m.place_items( group_id, chance.get(), point_bub_ms( x.val, y.val ), point_bub_ms( x.valmax,
+                               y.valmax ), true,
                                calendar::start_of_cataclysm );
         }
 };
@@ -2081,7 +2083,7 @@ class jmapgen_loot : public jmapgen_piece
                 const Item_spawn_data *const isd = &result_group;
                 std::vector<detached_ptr<item>> spawn = isd->create( calendar::start_of_cataclysm );
                 dat.m.spawn_items( tripoint_bub_ms( rng( x.val, x.valmax ), rng( y.val, y.valmax ),
-                                             dat.m.get_abs_sub().z() ), std::move( spawn ) );
+                                                    dat.m.get_abs_sub().z() ), std::move( spawn ) );
             }
         }
 
@@ -2617,7 +2619,8 @@ class jmapgen_computer : public jmapgen_piece
             const point_bub_ms r{ x.get(), y.get() };
             dat.m.ter_set( r, t_console );
             dat.m.furn_set( r, f_null );
-            computer *cpu = dat.m.add_computer( tripoint_bub_ms( r, dat.m.get_abs_sub().z() ), name.translated(),
+            computer *cpu = dat.m.add_computer( tripoint_bub_ms( r, dat.m.get_abs_sub().z() ),
+                                                name.translated(),
                                                 security );
             for( const auto &opt : options ) {
                 cpu->add_option( opt );
@@ -2823,7 +2826,8 @@ class jmapgen_zone : public jmapgen_piece
                   ) const override {
             const auto start = dat.m.bub_to_abs( tripoint_bub_ms( x.val, y.val, 0 ) );
             const auto end = dat.m.bub_to_abs( tripoint_bub_ms( x.valmax, y.valmax, 0 ) );
-            defer_zone_add( name, zone_type.get( dat ), faction.get( dat ), false, true, start.raw(), end.raw() );
+            defer_zone_add( name, zone_type.get( dat ), faction.get( dat ), false, true, start.raw(),
+                            end.raw() );
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters
@@ -3080,7 +3084,8 @@ class jmapgen_nested : public jmapgen_piece
         }
 };
 
-jmapgen_objects::jmapgen_objects( const point_rel_ms &offset, const point_rel_ms &mapsize, const point_rel_ms &tot_size )
+jmapgen_objects::jmapgen_objects( const point_rel_ms &offset, const point_rel_ms &mapsize,
+                                  const point_rel_ms &tot_size )
     : m_offset( offset )
     , mapgensize( mapsize )
     , total_size( tot_size )
@@ -3900,17 +3905,20 @@ bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset ) 
 
             case JMAPGEN_SETMAP_LINE_TER: {
                 // TODO: the ter_id should be stored separately and not be wrapped in an jmapgen_int
-                m.draw_line_ter( ter_id( val.get() ), point_bub_ms( x_get(), y_get() ), point_bub_ms( x2_get(), y2_get() ) );
+                m.draw_line_ter( ter_id( val.get() ), point_bub_ms( x_get(), y_get() ), point_bub_ms( x2_get(),
+                                 y2_get() ) );
             }
             break;
             case JMAPGEN_SETMAP_LINE_FURN: {
                 // TODO: the furn_id should be stored separately and not be wrapped in an jmapgen_int
-                m.draw_line_furn( furn_id( val.get() ), point_bub_ms( x_get(), y_get() ), point_bub_ms( x2_get(), y2_get() ) );
+                m.draw_line_furn( furn_id( val.get() ), point_bub_ms( x_get(), y_get() ), point_bub_ms( x2_get(),
+                                  y2_get() ) );
             }
             break;
             case JMAPGEN_SETMAP_LINE_TRAP: {
-                const std::vector<point_bub_ms> line = line_to( point_bub_ms( x_get(), y_get() ), point_bub_ms( x2_get(), y2_get() ),
-                                                0 );
+                const std::vector<point_bub_ms> line = line_to( point_bub_ms( x_get(), y_get() ),
+                                                       point_bub_ms( x2_get(), y2_get() ),
+                                                       0 );
                 for( auto &i : line ) {
                     // TODO: the trap_id should be stored separately and not be wrapped in an jmapgen_int
                     mtrap_set( &m, i, trap_id( val.get() ) );
@@ -3918,8 +3926,9 @@ bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset ) 
             }
             break;
             case JMAPGEN_SETMAP_LINE_RADIATION: {
-                const std::vector<point_bub_ms> line = line_to( point_bub_ms( x_get(), y_get() ), point_bub_ms( x2_get(), y2_get() ),
-                                                0 );
+                const std::vector<point_bub_ms> line = line_to( point_bub_ms( x_get(), y_get() ),
+                                                       point_bub_ms( x2_get(), y2_get() ),
+                                                       0 );
                 for( auto &i : line ) {
                     m.set_radiation( i, val.get() );
                 }
@@ -3927,12 +3936,14 @@ bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset ) 
             break;
             case JMAPGEN_SETMAP_SQUARE_TER: {
                 // TODO: the ter_id should be stored separately and not be wrapped in an jmapgen_int
-                m.draw_square_ter( ter_id( val.get() ), point_bub_ms( x_get(), y_get() ), point_bub_ms( x2_get(), y2_get() ) );
+                m.draw_square_ter( ter_id( val.get() ), point_bub_ms( x_get(), y_get() ), point_bub_ms( x2_get(),
+                                   y2_get() ) );
             }
             break;
             case JMAPGEN_SETMAP_SQUARE_FURN: {
                 // TODO: the furn_id should be stored separately and not be wrapped in an jmapgen_int
-                m.draw_square_furn( furn_id( val.get() ), point_bub_ms( x_get(), y_get() ), point_bub_ms( x2_get(), y2_get() ) );
+                m.draw_square_furn( furn_id( val.get() ), point_bub_ms( x_get(), y_get() ), point_bub_ms( x2_get(),
+                                    y2_get() ) );
             }
             break;
             case JMAPGEN_SETMAP_SQUARE_TRAP: {
@@ -3967,7 +3978,8 @@ bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset ) 
     return true;
 }
 
-bool jmapgen_setmap::has_vehicle_collision( const mapgendata &dat, const point_rel_ms &offset ) const
+bool jmapgen_setmap::has_vehicle_collision( const mapgendata &dat,
+        const point_rel_ms &offset ) const
 {
     const auto get = []( const jmapgen_int & v, int v_offset ) {
         return v.get() + v_offset;
@@ -4124,7 +4136,8 @@ void jmapgen_objects::apply( const mapgendata &dat, const point_rel_ms &offset )
     }
 }
 
-bool jmapgen_objects::has_vehicle_collision( const mapgendata &dat, const point_rel_ms &offset ) const
+bool jmapgen_objects::has_vehicle_collision( const mapgendata &dat,
+        const point_rel_ms &offset ) const
 {
     for( auto &obj : objects ) {
         auto where = obj.first;
@@ -4321,17 +4334,23 @@ void map::draw_office_tower( const mapgendata &dat )
                          calendar::start_of_cataclysm );
             place_items( item_group_id( "cleaning" ), 75, point_bub_ms( 19, 17 ), point_bub_ms( 20, 17 ), false,
                          calendar::start_of_cataclysm );
-            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 6, 12 ), point_bub_ms( 7, 12 ), false,
+            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 6, 12 ), point_bub_ms( 7, 12 ),
+                         false,
                          calendar::start_of_cataclysm );
-            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 12, 11 ), point_bub_ms( 12, 12 ), false,
+            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 12, 11 ), point_bub_ms( 12, 12 ),
+                         false,
                          calendar::start_of_cataclysm );
-            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 16, 11 ), point_bub_ms( 17, 12 ), false,
+            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 16, 11 ), point_bub_ms( 17, 12 ),
+                         false,
                          calendar::start_of_cataclysm );
-            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 4, 5 ), point_bub_ms( 5, 5 ), false,
+            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 4, 5 ), point_bub_ms( 5, 5 ),
+                         false,
                          calendar::start_of_cataclysm );
-            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 11, 5 ), point_bub_ms( 12, 5 ), false,
+            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 11, 5 ), point_bub_ms( 12, 5 ),
+                         false,
                          calendar::start_of_cataclysm );
-            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 14, 5 ), point_bub_ms( 16, 5 ), false,
+            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 14, 5 ), point_bub_ms( 16, 5 ),
+                         false,
                          calendar::start_of_cataclysm );
             place_office_chairs();
 
@@ -4379,12 +4398,14 @@ void map::draw_office_tower( const mapgendata &dat )
                          calendar::start_of_cataclysm );
             place_items( item_group_id( "office" ), 90, point_bub_ms( 8, 7 ), point_bub_ms( 9, 7 ), false,
                          calendar::start_of_cataclysm );
-            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 19, 5 ), point_bub_ms( 19, 7 ), false,
+            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 19, 5 ), point_bub_ms( 19, 7 ),
+                         false,
                          calendar::start_of_cataclysm );
             place_items( item_group_id( "cleaning" ), 80, point_bub_ms( 1, 7 ), point_bub_ms( 2, 7 ), false,
                          calendar::start_of_cataclysm );
             if( dat.monster_density() > 1 ) {
-                place_spawns( GROUP_ZOMBIE, 2, point_bub_ms::zero(), point_bub_ms( 14, 10 ), dat.monster_density() );
+                place_spawns( GROUP_ZOMBIE, 2, point_bub_ms::zero(), point_bub_ms( 14, 10 ),
+                              dat.monster_density() );
             } else {
                 place_spawns( GROUP_PLAIN, 1, point_bub_ms( 10, 10 ), point_bub_ms( 14, 10 ), 0.15 );
                 place_spawns( GROUP_ZOMBIE_COP, 2, point_bub_ms( 10, 10 ), point_bub_ms( 14, 10 ), 0.1 );
@@ -4431,11 +4452,14 @@ void map::draw_office_tower( const mapgendata &dat )
                          calendar::start_of_cataclysm );
             place_items( item_group_id( "office" ), 75, point_bub_ms( 10, 7 ), point_bub_ms( 16, 8 ), false,
                          calendar::start_of_cataclysm );
-            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 15, 15 ), point_bub_ms( 19, 15 ), false,
+            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 15, 15 ), point_bub_ms( 19, 15 ),
+                         false,
                          calendar::start_of_cataclysm );
-            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 16, 12 ), point_bub_ms( 16, 13 ), false,
+            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 16, 12 ), point_bub_ms( 16, 13 ),
+                         false,
                          calendar::start_of_cataclysm );
-            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 17, 19 ), point_bub_ms( 19, 19 ), false,
+            place_items( item_group_id( "cubical_office" ), 75, point_bub_ms( 17, 19 ), point_bub_ms( 19, 19 ),
+                         false,
                          calendar::start_of_cataclysm );
             place_items( item_group_id( "office" ), 75, point_bub_ms( 17, 21 ), point_bub_ms( 19, 21 ), false,
                          calendar::start_of_cataclysm );
@@ -4486,7 +4510,8 @@ void map::draw_office_tower( const mapgendata &dat )
                                     "ssssssssssssssssssssssss\n"
                                     "ssssssssssssssssssssssss\n", ter_key, fur_key );
         if( dat.monster_density() > 1 ) {
-            place_spawns( GROUP_ZOMBIE, 2, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ), dat.monster_density() );
+            place_spawns( GROUP_ZOMBIE, 2, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ),
+                          dat.monster_density() );
         } else {
             place_spawns( GROUP_PLAIN, 1, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ), 0.1 );
         }
@@ -4532,7 +4557,8 @@ void map::draw_office_tower( const mapgendata &dat )
                                         "sss|........|.R<|EEE|___\n"
                                         "sss|........|.R.|EEED___\n", b_ter_key, b_fur_key );
             if( dat.monster_density() > 1 ) {
-                place_spawns( GROUP_ZOMBIE, 2, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ), dat.monster_density() );
+                place_spawns( GROUP_ZOMBIE, 2, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ),
+                              dat.monster_density() );
             } else {
                 place_spawns( GROUP_PLAIN, 1, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ), 0.1 );
             }
@@ -4619,7 +4645,8 @@ void map::draw_office_tower( const mapgendata &dat )
                                         "ssssssssssssssssssssssss\n"
                                         "ssssssssssssssssssssssss\n", b_ter_key, b_fur_key );
             if( dat.monster_density() > 1 ) {
-                place_spawns( GROUP_ZOMBIE, 2, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ), dat.monster_density() );
+                place_spawns( GROUP_ZOMBIE, 2, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ),
+                              dat.monster_density() );
             } else {
                 place_spawns( GROUP_PLAIN, 1, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ), 0.1 );
             }
@@ -4698,7 +4725,8 @@ void map::draw_office_tower( const mapgendata &dat )
                                         "___|xEE|.R<|........|sss\n"
                                         "___DEEE|.R.|...,,...|sss\n", b_ter_key, b_fur_key );
             if( dat.monster_density() > 1 ) {
-                place_spawns( GROUP_ZOMBIE, 2, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ), dat.monster_density() );
+                place_spawns( GROUP_ZOMBIE, 2, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ),
+                              dat.monster_density() );
             } else {
                 place_spawns( GROUP_PLAIN, 1, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, SOUTH_EDGE ), 0.1 );
             }
@@ -4850,7 +4878,8 @@ void map::draw_lab( mapgendata &dat )
             ter_set( point_bub_ms( SEEX - 1, SEEY * 2 - 3 ), t_stairs_down );
             ter_set( point_bub_ms( SEEX, SEEY * 2 - 3 ), t_stairs_down );
             science_room( this, point_bub_ms( 2, 2 ), point_bub_ms( SEEX - 3, SEEY * 2 - 3 ), dat.zlevel(), 1 );
-            science_room( this, point_bub_ms( SEEX + 2, 2 ), point_bub_ms( SEEX * 2 - 3, SEEY * 2 - 3 ), dat.zlevel(), 3 );
+            science_room( this, point_bub_ms( SEEX + 2, 2 ), point_bub_ms( SEEX * 2 - 3, SEEY * 2 - 3 ),
+                          dat.zlevel(), 3 );
 
             place_spawns( GROUP_TURRET, 1, point_bub_ms( SEEX, 5 ), point_bub_ms( SEEX, 5 ), 1, true );
 
@@ -4912,7 +4941,7 @@ void map::draw_lab( mapgendata &dat )
 
             const auto maybe_insert_stairs = [this]( const oter_id & terrain,  const ter_id & t_stair_type ) {
                 if( is_ot_match( "stairs", terrain, ot_match_type::contains ) ) {
-                    const auto predicate = [this]( const tripoint_bub_ms &p ) {
+                    const auto predicate = [this]( const tripoint_bub_ms & p ) {
                         return ter( p ) == t_thconc_floor && furn( p ) == f_null && tr_at( p ).is_null();
                     };
                     const auto range = points_in_rectangle( { 0, 0, abs_sub.z() }, { SEEX * 2 - 2, SEEY * 2 - 2, abs_sub.z() } );
@@ -5046,11 +5075,13 @@ void map::draw_lab( mapgendata &dat )
                             // Bottom right
                             if( one_in( 2 ) ) {
                                 ter_set( point_bub_ms( SEEX + int( SEEX / 2 ), SEEY + 1 ), t_door_glass_frosted_c );
-                                science_room( this, point_bub_ms( SEEX + 2, SEEY + 2 ), point_bub_ms( EAST_EDGE - rw, SOUTH_EDGE - bw ),
+                                science_room( this, point_bub_ms( SEEX + 2, SEEY + 2 ), point_bub_ms( EAST_EDGE - rw,
+                                              SOUTH_EDGE - bw ),
                                               dat.zlevel(), 0 );
                             } else {
                                 ter_set( point_bub_ms( SEEX + 1, SEEY + int( SEEY / 2 ) ), t_door_glass_frosted_c );
-                                science_room( this, point_bub_ms( SEEX + 2, SEEY + 2 ), point_bub_ms( EAST_EDGE - rw, SOUTH_EDGE - bw ),
+                                science_room( this, point_bub_ms( SEEX + 2, SEEY + 2 ), point_bub_ms( EAST_EDGE - rw,
+                                              SOUTH_EDGE - bw ),
                                               dat.zlevel(), 3 );
                             }
                             if( rw == 1 ) {
@@ -5136,17 +5167,20 @@ void map::draw_lab( mapgendata &dat )
                             ter_set( point_bub_ms( SEEX + 3, SEEY + int( SEEY / 2 ) ), t_door_glass_frosted_c );
                             science_room( this, point_bub_ms( lw, tw ), point_bub_ms( SEEX - 5, SEEY - 5 ), dat.zlevel(),
                                           rng( 1, 2 ) );
-                            science_room( this, point_bub_ms( SEEX - 3, tw ), point_bub_ms( SEEX + 2, SEEY - 5 ), dat.zlevel(), 2 );
+                            science_room( this, point_bub_ms( SEEX - 3, tw ), point_bub_ms( SEEX + 2, SEEY - 5 ), dat.zlevel(),
+                                          2 );
                             science_room( this, point_bub_ms( SEEX + 4, tw ), point_bub_ms( EAST_EDGE - rw, SEEY - 5 ),
                                           dat.zlevel(), rng( 2, 3 ) );
-                            science_room( this, point_bub_ms( lw, SEEY - 3 ), point_bub_ms( SEEX - 5, SEEY + 2 ), dat.zlevel(), 1 );
+                            science_room( this, point_bub_ms( lw, SEEY - 3 ), point_bub_ms( SEEX - 5, SEEY + 2 ), dat.zlevel(),
+                                          1 );
                             science_room( this, point_bub_ms( SEEX + 4, SEEY - 3 ), point_bub_ms( EAST_EDGE - rw, SEEY + 2 ),
                                           dat.zlevel(), 3 );
                             science_room( this, point_bub_ms( lw, SEEY + 4 ), point_bub_ms( SEEX - 5, SOUTH_EDGE - bw ),
                                           dat.zlevel(), rng( 0, 1 ) );
                             science_room( this, point_bub_ms( SEEX - 3, SEEY + 4 ), point_bub_ms( SEEX + 2, SOUTH_EDGE - bw ),
                                           dat.zlevel(), 0 );
-                            science_room( this, point_bub_ms( SEEX + 4, SEEX + 4 ), point_bub_ms( EAST_EDGE - rw, SOUTH_EDGE - bw ),
+                            science_room( this, point_bub_ms( SEEX + 4, SEEX + 4 ), point_bub_ms( EAST_EDGE - rw,
+                                          SOUTH_EDGE - bw ),
                                           dat.zlevel(), 3 * rng( 0, 1 ) );
                             if( rw == 1 ) {
                                 ter_set( point_bub_ms( EAST_EDGE, SEEY - 1 ), t_door_metal_c );
@@ -5202,7 +5236,8 @@ void map::draw_lab( mapgendata &dat )
                     if( i + j > 10 && i + j < 36 && std::abs( i - j ) < 13 ) {
                         // Doors and walls get sometimes destroyed:
                         // 100% at the edge, usually in a central cross, occasionally elsewhere.
-                        if( ( has_flag_ter( "DOOR", point_bub_ms( i, j ) ) || has_flag_ter( "WALL", point_bub_ms( i, j ) ) ) ) {
+                        if( ( has_flag_ter( "DOOR", point_bub_ms( i, j ) ) ||
+                              has_flag_ter( "WALL", point_bub_ms( i, j ) ) ) ) {
                             if( ( i == 0 || j == 0 || i == 23 || j == 23 ) ||
                                 ( !one_in( 3 ) && ( i == 11 || i == 12 || j == 11 || j == 12 ) ) ||
                                 one_in( 4 ) ) {
@@ -5262,7 +5297,8 @@ void map::draw_lab( mapgendata &dat )
             for( int i = 0; i < SEEX * 2; i++ ) {
                 for( int j = 0; j < SEEY * 2; j++ ) {
                     if( !( ( i * j ) % 2 || ( i + j ) % 4 ) && one_in( light_odds ) ) {
-                        if( t_thconc_floor == ter( point_bub_ms( i, j ) ) || t_strconc_floor == ter( point_bub_ms( i, j ) ) ) {
+                        if( t_thconc_floor == ter( point_bub_ms( i, j ) ) ||
+                            t_strconc_floor == ter( point_bub_ms( i, j ) ) ) {
                             ter_set( point_bub_ms( i, j ), t_thconc_floor_olight );
                         }
                     }
@@ -5271,7 +5307,8 @@ void map::draw_lab( mapgendata &dat )
         }
 
         if( tower_lab ) {
-            place_spawns( GROUP_LAB, 1, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, EAST_EDGE ), abs_sub.z() * 0.02f );
+            place_spawns( GROUP_LAB, 1, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, EAST_EDGE ),
+                          abs_sub.z() * 0.02f );
         }
 
         // Lab special effects.
@@ -5317,7 +5354,7 @@ void map::draw_lab( mapgendata &dat )
                     for( int i = 0; i < 2; ++i ) {
                         // Please somebody help make this less horrifying. Presumably this is too
                         // hardcoded as is, so hopefully this is temporary.
-                        draw_rough_circle( std::function<void( point_bub_ms )>([this, fluid_type]( auto p ) {
+                        draw_rough_circle( std::function<void( point_bub_ms )>( [this, fluid_type]( auto p ) {
                             if( t_thconc_floor == ter( p ) || t_strconc_floor == ter( p ) ||
                                 t_thconc_floor_olight == ter( p ) ) {
                                 ter_set( p, fluid_type );
@@ -5360,7 +5397,7 @@ void map::draw_lab( mapgendata &dat )
                         ARTPROP_WHISPERING,
                         ARTPROP_GLOWING
                     };
-                    draw_rough_circle( std::function<void( point_bub_ms )>([this]( auto p ) {
+                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
                         if( has_flag_ter( "GOES_DOWN", p ) ||
                             has_flag_ter( "GOES_UP", p ) ||
                             has_flag_ter( "CONSOLE", p ) ) {
@@ -5381,19 +5418,19 @@ void map::draw_lab( mapgendata &dat )
                         // just skip it, we don't want to risk embedding radiation out of sight.
                         break;
                     }
-                    draw_rough_circle( std::function<void( point_bub_ms )>([this]( auto p ) {
+                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
                         set_radiation( p, 10 );
                     } ), center.xy(), rng( 7, 12 ) );
-                    draw_rough_circle( std::function<void( point_bub_ms )>([this]( auto p ) {
+                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
                         set_radiation( p, 20 );
                     } ), center.xy(), rng( 5, 8 ) );
-                    draw_rough_circle( std::function<void( point_bub_ms )>([this]( auto p ) {
+                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
                         set_radiation( p, 30 );
                     } ), center.xy(), rng( 2, 4 ) );
-                    draw_rough_circle( std::function<void( point_bub_ms )>([this]( auto p ) {
+                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
                         set_radiation( p, 50 );
                     } ), center.xy(), 1 );
-                    draw_rough_circle( std::function<void( point_bub_ms )>([this]( auto p ) {
+                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
                         if( has_flag_ter( "GOES_DOWN", p ) ||
                             has_flag_ter( "GOES_UP", p ) ||
                             has_flag_ter( "CONSOLE", p ) ) {
@@ -5443,7 +5480,7 @@ void map::draw_lab( mapgendata &dat )
                     tripoint_bub_ms center( rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ), abs_sub.z() );
 
                     // Make a portal surrounded by more dense fungal stuff and a fungaloid.
-                    draw_rough_circle( std::function<void( point_bub_ms )>([this]( auto p ) {
+                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
                         if( has_flag_ter( "GOES_DOWN", p ) ||
                             has_flag_ter( "GOES_UP", p ) ||
                             has_flag_ter( "CONSOLE", p ) ) {
@@ -5568,7 +5605,8 @@ void map::draw_lab( mapgendata &dat )
             for( int i = 0; i < SEEX * 2; i++ ) {
                 for( int j = 0; j < SEEY * 2; j++ ) {
                     if( !( ( i * j ) % 2 || ( i + j ) % 4 ) && one_in( light_odds ) ) {
-                        if( t_thconc_floor == ter( point_bub_ms( i, j ) ) || t_strconc_floor == ter( point_bub_ms( i, j ) ) ) {
+                        if( t_thconc_floor == ter( point_bub_ms( i, j ) ) ||
+                            t_strconc_floor == ter( point_bub_ms( i, j ) ) ) {
                             ter_set( point_bub_ms( i, j ), t_thconc_floor_olight );
                         }
                     }
@@ -5614,7 +5652,8 @@ void map::draw_temple( const mapgendata &dat )
                     place_spawns( GROUP_SEWER, 1, point_bub_ms( 4, 4 ), point_bub_ms( 4, 4 ), 1, true );
 
                     square( this, t_water_dp, point_bub_ms( SEEX * 2 - 5, 4 ), point_bub_ms( SEEX * 2 - 4, 6 ) );
-                    place_spawns( GROUP_SEWER, 1, point_bub_ms( 1, SEEX * 2 - 5 ), point_bub_ms( 1, SEEX * 2 - 5 ), 1, true );
+                    place_spawns( GROUP_SEWER, 1, point_bub_ms( 1, SEEX * 2 - 5 ), point_bub_ms( 1, SEEX * 2 - 5 ), 1,
+                                  true );
 
                     square( this, t_water_dp, point_bub_ms( 4, SEEY * 2 - 5 ), point_bub_ms( 6, SEEY * 2 - 4 ) );
 
@@ -5622,7 +5661,8 @@ void map::draw_temple( const mapgendata &dat )
                             SEEY * 2 - 4 ) );
 
                     square( this, t_rock, point_bub_ms( 0, SEEY * 2 - 2 ), point_bub_ms( SEEX - 1, SOUTH_EDGE ) );
-                    square( this, t_rock, point_bub_ms( SEEX + 2, SEEY * 2 - 2 ), point_bub_ms( EAST_EDGE, SOUTH_EDGE ) );
+                    square( this, t_rock, point_bub_ms( SEEX + 2, SEEY * 2 - 2 ), point_bub_ms( EAST_EDGE,
+                            SOUTH_EDGE ) );
                     line( this, t_grate, point_bub_ms( SEEX, 1 ), point_bub_ms( SEEX + 1, 1 ) ); // To drain the water
                     mtrap_set( this, point_bub_ms( SEEX, SEEY * 2 - 2 ), tr_temple_flood );
                     mtrap_set( this, point_bub_ms( SEEX + 1, SEEY * 2 - 2 ), tr_temple_flood );
@@ -5730,7 +5770,8 @@ void map::draw_temple( const mapgendata &dat )
                     square( this, t_rock, point_bub_ms( 0, SEEY * 2 - 2 ), point_bub_ms( SEEX     - 1, SOUTH_EDGE ) );
                     square( this, t_rock, point_bub_ms( 0, 2 ), point_bub_ms( SEEX     - 4, SEEY * 2 - 3 ) );
                     square( this, t_rock, point_bub_ms( SEEX + 2, 0 ), point_bub_ms( EAST_EDGE, 1 ) );
-                    square( this, t_rock, point_bub_ms( SEEX + 2, SEEY * 2 - 2 ), point_bub_ms( EAST_EDGE, SOUTH_EDGE ) );
+                    square( this, t_rock, point_bub_ms( SEEX + 2, SEEY * 2 - 2 ), point_bub_ms( EAST_EDGE,
+                            SOUTH_EDGE ) );
                     square( this, t_rock, point_bub_ms( SEEX + 5, 2 ), point_bub_ms( EAST_EDGE, SEEY * 2 - 3 ) );
                     int x = rng( SEEX - 1, SEEX + 2 ), y = 2;
                     std::vector<tripoint_bub_ms> path; // Path, from end to start
@@ -5889,9 +5930,10 @@ void map::draw_mine( mapgendata &dat )
                     int ly2 = end_location.y() + rng( -1, 1 );
                     line( this, t_lava, point_bub_ms( lx1, ly1 ), point_bub_ms( lx2, ly2 ) );
                 }
-                for( const tripoint_bub_ms &ore : points_in_rectangle( tripoint_bub_ms( start_location, abs_sub.z() ),
+                for( const tripoint_bub_ms &ore : points_in_rectangle( tripoint_bub_ms( start_location,
+                        abs_sub.z() ),
                         tripoint_bub_ms( end_location,
-                                  abs_sub.z() ) ) ) {
+                                         abs_sub.z() ) ) ) {
                     if( ter( ore ) == t_rock_floor && one_in( 10 ) ) {
                         spawn_item( ore, "chunk_sulfur" );
                     }
@@ -5916,7 +5958,7 @@ void map::draw_mine( mapgendata &dat )
                 // Dead miners
                 const int num_bodies = rng( 4, 8 );
                 for( int i = 0; i < num_bodies; i++ ) {
-                    if( const auto body = random_point( *this, [this]( const tripoint_bub_ms &p ) {
+                    if( const auto body = random_point( *this, [this]( const tripoint_bub_ms & p ) {
                     return move_cost( p ) == 2;
                     } ) ) {
                         add_item( *body, item::make_corpse() );
@@ -5975,12 +6017,16 @@ void map::draw_mine( mapgendata &dat )
                         line( this, t_slope_down, point_bub_ms( SEEX - 2, 6 ), point_bub_ms( SEEX + 1, 6 ) );
                         break;
                     case direction::EAST:
-                        square( this, t_rock_floor, point_bub_ms( SEEX + 1, SEEY - 3 ), point_bub_ms( SEEX * 2 - 7, SEEY + 2 ) );
-                        line( this, t_slope_down, point_bub_ms( SEEX * 2 - 7, SEEY - 2 ), point_bub_ms( SEEX * 2 - 7, SEEY + 1 ) );
+                        square( this, t_rock_floor, point_bub_ms( SEEX + 1, SEEY - 3 ), point_bub_ms( SEEX * 2 - 7,
+                                SEEY + 2 ) );
+                        line( this, t_slope_down, point_bub_ms( SEEX * 2 - 7, SEEY - 2 ), point_bub_ms( SEEX * 2 - 7,
+                                SEEY + 1 ) );
                         break;
                     case direction::SOUTH:
-                        square( this, t_rock_floor, point_bub_ms( SEEX - 3, SEEY + 1 ), point_bub_ms( SEEX + 2, SEEY * 2 - 7 ) );
-                        line( this, t_slope_down, point_bub_ms( SEEX - 2, SEEY * 2 - 7 ), point_bub_ms( SEEX + 1, SEEY * 2 - 7 ) );
+                        square( this, t_rock_floor, point_bub_ms( SEEX - 3, SEEY + 1 ), point_bub_ms( SEEX + 2,
+                                SEEY * 2 - 7 ) );
+                        line( this, t_slope_down, point_bub_ms( SEEX - 2, SEEY * 2 - 7 ), point_bub_ms( SEEX + 1,
+                                SEEY * 2 - 7 ) );
                         break;
                     case direction::WEST:
                         square( this, t_rock_floor, point_bub_ms( 6, SEEY - 3 ), point_bub_ms( SEEX, SEEY + 2 ) );
@@ -6038,10 +6084,12 @@ void map::draw_mine( mapgendata &dat )
                         line( this, t_slope_up, point_bub_ms( SEEX - 2, 6 ), point_bub_ms( SEEX + 1, 6 ) );
                         break;
                     case direction::EAST:
-                        line( this, t_slope_up, point_bub_ms( SEEX * 2 - 7, SEEY - 2 ), point_bub_ms( SEEX * 2 - 7, SEEY + 1 ) );
+                        line( this, t_slope_up, point_bub_ms( SEEX * 2 - 7, SEEY - 2 ), point_bub_ms( SEEX * 2 - 7,
+                                SEEY + 1 ) );
                         break;
                     case direction::SOUTH:
-                        line( this, t_slope_up, point_bub_ms( SEEX - 2, SEEY * 2 - 7 ), point_bub_ms( SEEX + 1, SEEY * 2 - 7 ) );
+                        line( this, t_slope_up, point_bub_ms( SEEX - 2, SEEY * 2 - 7 ), point_bub_ms( SEEX + 1,
+                                SEEY * 2 - 7 ) );
                         break;
                     case direction::WEST:
                         line( this, t_slope_up, point_bub_ms( 6, SEEY - 2 ), point_bub_ms( 6, SEEY + 1 ) );
@@ -6070,11 +6118,13 @@ void map::draw_mine( mapgendata &dat )
         }
 
         if( dat.east() == "mine" ) {
-            square( this, t_rock_floor, point_bub_ms( SEEX * 2 - 4, SEEY ), point_bub_ms( EAST_EDGE, SEEY + 1 ) );
+            square( this, t_rock_floor, point_bub_ms( SEEX * 2 - 4, SEEY ), point_bub_ms( EAST_EDGE,
+                    SEEY + 1 ) );
         }
 
         if( dat.south() == "mine" ) {
-            square( this, t_rock_floor, point_bub_ms( SEEX, SEEY * 2 - 4 ), point_bub_ms( SEEX + 1, SOUTH_EDGE ) );
+            square( this, t_rock_floor, point_bub_ms( SEEX, SEEY * 2 - 4 ), point_bub_ms( SEEX + 1,
+                    SOUTH_EDGE ) );
         }
 
         if( dat.west() == "mine" ) {
@@ -6090,13 +6140,15 @@ void map::draw_mine( mapgendata &dat )
             place_items( item_group_id( "mon_zombie_miner_death_drops" ), 60, p3,
                          p3, false, calendar::start_of_cataclysm );
         }
-        place_spawns( GROUP_DOG_THING, 1, point_bub_ms( SEEX, SEEX ), point_bub_ms( SEEX + 1, SEEX + 1 ), 1, true, true );
+        place_spawns( GROUP_DOG_THING, 1, point_bub_ms( SEEX, SEEX ), point_bub_ms( SEEX + 1, SEEX + 1 ), 1,
+                      true, true );
         spawn_artifact( tripoint_bub_ms( rng( SEEX, SEEX + 1 ), rng( SEEY, SEEY + 1 ), abs_sub.z() ) );
     }
     // Add patches of cave moss
     for( int i = 0; i < SEEX * 2; i++ ) {
         for( int j = 0; j < SEEY * 2; j++ ) {
-            if( one_in( 10 ) && ter( tripoint_bub_ms( point_bub_ms( i, j ), get_abs_sub().z() ) ) == t_rock_floor ) {
+            if( one_in( 10 ) &&
+                ter( tripoint_bub_ms( point_bub_ms( i, j ), get_abs_sub().z() ) ) == t_rock_floor ) {
                 ter_set( point_bub_ms( i, j ), t_moss_underground );
                 if( one_in( 15 ) ) {
                     // Some of that moss has mushrooms too.
@@ -6344,7 +6396,8 @@ void map::place_vending( const point_bub_ms &p, const item_group_id &type, bool 
     }
 }
 
-character_id map::place_npc( const point_bub_ms &p, const string_id<npc_template> &type, bool force )
+character_id map::place_npc( const point_bub_ms &p, const string_id<npc_template> &type,
+                             bool force )
 {
     if( !force && !get_option<bool>( "STATIC_NPC" ) ) {
         return character_id(); //Do not generate an npc.
@@ -6369,10 +6422,12 @@ character_id map::place_npc( const point_bub_ms &p, const string_id<npc_template
     return temp->getID();
 }
 
-void map::apply_faction_ownership( const point_bub_ms &p1, const point_bub_ms &p2, const faction_id &id )
+void map::apply_faction_ownership( const point_bub_ms &p1, const point_bub_ms &p2,
+                                   const faction_id &id )
 {
-    for( const tripoint_bub_ms &p : points_in_rectangle( tripoint_bub_ms( p1, abs_sub.z() ), tripoint_bub_ms( p2,
-            abs_sub.z() ) ) ) {
+    for( const tripoint_bub_ms &p : points_in_rectangle( tripoint_bub_ms( p1, abs_sub.z() ),
+            tripoint_bub_ms( p2,
+                             abs_sub.z() ) ) ) {
         auto items = i_at( p.xy() );
         for( item * const &elem : items ) {
             elem->set_owner( id );
@@ -6977,7 +7032,7 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
         case room_lobby:
             if( rotate % 2 == 0 ) { // Vertical
                 int desk = p1.y() + rng( ( height / 2 ) - ( height / 4 ),
-                                       ( height / 2 ) + 1 );
+                                         ( height / 2 ) + 1 );
                 for( int x = p1.x() + ( width / 4 ); x < p2.x() - ( width / 4 ); x++ ) {
                     m->furn_set( point_bub_ms( x, desk ), f_counter );
                 }
@@ -6993,7 +7048,7 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
                                  point_bub_ms( ( ( p1.x() + p2.x() ) / 2 ), desk ), 1, true );
             } else {
                 int desk = p1.x() + rng( ( height / 2 ) - ( height / 4 ),
-                                       ( height / 2 ) + 1 );
+                                         ( height / 2 ) + 1 );
                 for( int y = p1.y() + ( width / 4 ); y < p2.y() - ( width / 4 ); y++ ) {
                     m->furn_set( point_bub_ms( desk, y ), f_counter );
                 }
@@ -7017,10 +7072,12 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
                             m->furn_set( point_bub_ms( x, y ), f_counter );
                         }
                         if( one_in( 3 ) ) {
-                            m->place_items( item_group_id( "mut_lab" ), 35, point_bub_ms( x, p1.y() + 1 ), point_bub_ms( x, p2.y() - 1 ), false,
+                            m->place_items( item_group_id( "mut_lab" ), 35, point_bub_ms( x, p1.y() + 1 ), point_bub_ms( x,
+                                            p2.y() - 1 ), false,
                                             calendar::start_of_cataclysm );
                         } else {
-                            m->place_items( item_group_id( "chem_lab" ), 70, point_bub_ms( x, p1.y() + 1 ), point_bub_ms( x, p2.y() - 1 ), false,
+                            m->place_items( item_group_id( "chem_lab" ), 70, point_bub_ms( x, p1.y() + 1 ), point_bub_ms( x,
+                                            p2.y() - 1 ), false,
                                             calendar::start_of_cataclysm );
                         }
                     }
@@ -7032,10 +7089,12 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
                             m->furn_set( point_bub_ms( x, y ), f_counter );
                         }
                         if( one_in( 3 ) ) {
-                            m->place_items( item_group_id( "mut_lab" ), 35, point_bub_ms( p1.x() + 1, y ), point_bub_ms( p2.x() - 1, y ), false,
+                            m->place_items( item_group_id( "mut_lab" ), 35, point_bub_ms( p1.x() + 1, y ),
+                                            point_bub_ms( p2.x() - 1, y ), false,
                                             calendar::start_of_cataclysm );
                         } else {
-                            m->place_items( item_group_id( "chem_lab" ), 70, point_bub_ms( p1.x() + 1, y ), point_bub_ms( p2.x() - 1, y ), false,
+                            m->place_items( item_group_id( "chem_lab" ), 70, point_bub_ms( p1.x() + 1, y ),
+                                            point_bub_ms( p2.x() - 1, y ), false,
                                             calendar::start_of_cataclysm );
                         }
                     }
@@ -7045,12 +7104,12 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
         case room_teleport:
             m->furn_set( point_bub_ms( ( p1.x() + p2.x() ) / 2, ( ( p1.y() + p2.y() ) / 2 ) ), f_counter );
             m->furn_set( point_bub_ms( ( ( p1.x() + p2.x() ) / 2 ) + 1,
-                                ( ( p1.y() + p2.y() ) / 2 ) ),
+                                       ( ( p1.y() + p2.y() ) / 2 ) ),
                          f_counter );
             m->furn_set( point_bub_ms( ( p1.x() + p2.x() ) / 2, ( ( p1.y() + p2.y() ) / 2 ) + 1 ),
                          f_counter );
             m->furn_set( point_bub_ms( ( ( p1.x() + p2.x() ) / 2 ) + 1,
-                                ( ( p1.y() + p2.y() ) / 2 ) + 1 ),
+                                       ( ( p1.y() + p2.y() ) / 2 ) + 1 ),
                          f_counter );
             mtrap_set( m, trap, tr_telepad );
             m->place_items( item_group_id( "teleport" ), 70, point_bub_ms( ( p1.x() + p2.x() ) / 2,
@@ -7068,7 +7127,8 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
             if( rotate == 0 ) {
                 mremove_trap( m, point_bub_ms( p1.x(), p2.y() ) );
                 m->furn_set( point_bub_ms( p1.x(), p2.y() ), f_freezer );
-                m->place_items( item_group_id( "goo" ), 60, point_bub_ms( p1.x(), p2.y() ), point_bub_ms( p1.x(), p2.y() ), false,
+                m->place_items( item_group_id( "goo" ), 60, point_bub_ms( p1.x(), p2.y() ), point_bub_ms( p1.x(),
+                                p2.y() ), false,
                                 calendar::start_of_cataclysm );
             } else if( rotate == 1 ) {
                 mremove_trap( m, p1 );
@@ -7078,7 +7138,8 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
             } else if( rotate == 2 ) {
                 mremove_trap( m, point_bub_ms( p2.x(), p1.y() ) );
                 m->furn_set( point_bub_ms( p2.x(), p1.y() ), f_freezer );
-                m->place_items( item_group_id( "goo" ), 60, point_bub_ms( p2.x(), p1.y() ), point_bub_ms( p2.x(), p1.y() ), false,
+                m->place_items( item_group_id( "goo" ), 60, point_bub_ms( p2.x(), p1.y() ), point_bub_ms( p2.x(),
+                                p1.y() ), false,
                                 calendar::start_of_cataclysm );
             } else {
                 mremove_trap( m, p2 );
@@ -7092,7 +7153,8 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
                 for( int y = p1.y() + 1; y <= p2.y() - 1; y++ ) {
                     if( x % 3 == 0 && y % 3 == 0 ) {
                         m->furn_set( point_bub_ms( x, y ), furn_str_id( "f_cloning_vat" ) );
-                        m->place_items( item_group_id( "cloning_vat" ), 20, point_bub_ms( x, y ), point_bub_ms( x, y ), false,
+                        m->place_items( item_group_id( "cloning_vat" ), 20, point_bub_ms( x, y ), point_bub_ms( x, y ),
+                                        false,
                                         calendar::start_of_cataclysm );
                     }
                 }
@@ -7103,34 +7165,38 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
                 for( int x = p1.x(); x <= p2.x(); x++ ) {
                     m->furn_set( point_bub_ms( x, p2.y() - 1 ), f_counter );
                 }
-                m->place_items( item_group_id( "dissection" ), 80, point_bub_ms( p1.x(), p2.y() - 1 ), p2 + point_north, false,
+                m->place_items( item_group_id( "dissection" ), 80, point_bub_ms( p1.x(), p2.y() - 1 ),
+                                p2 + point_north, false,
                                 calendar::start_of_cataclysm );
             } else if( rotate == 1 ) {
                 for( int y = p1.y(); y <= p2.y(); y++ ) {
                     m->furn_set( point_bub_ms( p1.x() + 1, y ), f_counter );
                 }
-                m->place_items( item_group_id( "dissection" ), 80, p1 + point_east, point_bub_ms( p1.x() + 1, p2.y() ), false,
+                m->place_items( item_group_id( "dissection" ), 80, p1 + point_east, point_bub_ms( p1.x() + 1,
+                                p2.y() ), false,
                                 calendar::start_of_cataclysm );
             } else if( rotate == 2 ) {
                 for( int x = p1.x(); x <= p2.x(); x++ ) {
                     m->furn_set( point_bub_ms( x, p1.y() + 1 ), f_counter );
                 }
-                m->place_items( item_group_id( "dissection" ), 80, p1 + point_south, point_bub_ms( p2.x(), p1.y() + 1 ), false,
+                m->place_items( item_group_id( "dissection" ), 80, p1 + point_south, point_bub_ms( p2.x(),
+                                p1.y() + 1 ), false,
                                 calendar::start_of_cataclysm );
             } else if( rotate == 3 ) {
                 for( int y = p1.y(); y <= p2.y(); y++ ) {
                     m->furn_set( point_bub_ms( p2.x() - 1, y ), f_counter );
                 }
-                m->place_items( item_group_id( "dissection" ), 80, point_bub_ms( p2.x() - 1, p1.y() ), p2 + point_west, false,
+                m->place_items( item_group_id( "dissection" ), 80, point_bub_ms( p2.x() - 1, p1.y() ),
+                                p2 + point_west, false,
                                 calendar::start_of_cataclysm );
             }
             mtrap_set( m, point_bub_ms( ( p1.x() + p2.x() ) / 2, ( ( p1.y() + p2.y() ) / 2 ) ),
                        tr_dissector );
             m->place_spawns( GROUP_LAB_CYBORG, 10,
                              point_bub_ms( ( ( ( p1.x() + p2.x() ) / 2 ) + 1 ),
-                                    ( ( ( p1.y() + p2.y() ) / 2 ) + 1 ) ),
+                                           ( ( ( p1.y() + p2.y() ) / 2 ) + 1 ) ),
                              point_bub_ms( ( ( ( p1.x() + p2.x() ) / 2 ) + 1 ),
-                                    ( ( ( p1.y() + p2.y() ) / 2 ) + 1 ) ), 1, true );
+                                           ( ( ( p1.y() + p2.y() ) / 2 ) + 1 ) ), 1, true );
             break;
 
         case room_bionics:
@@ -7143,12 +7209,14 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
                                             "-=-\n",
                                             mapf::ter_bind( "- | =", t_concrete_wall, t_concrete_wall, t_reinforced_glass ),
                                             mapf::furn_bind( "c", f_counter ) );
-                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ), point_bub_ms( biox, bioy ),
+                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ),
+                                point_bub_ms( biox, bioy ),
                                 false,
                                 calendar::start_of_cataclysm );
 
                 m->ter_set( point_bub_ms( biox, bioy + 2 ), t_console );
-                computer *tmpcomp = m->add_computer( tripoint_bub_ms( biox,  bioy + 2, z ), _( "Bionic access" ), 2 );
+                computer *tmpcomp = m->add_computer( tripoint_bub_ms( biox,  bioy + 2, z ), _( "Bionic access" ),
+                                                     2 );
                 tmpcomp->add_option( _( "Manifest" ), COMPACT_LIST_BIONICS, 0 );
                 tmpcomp->add_option( _( "Open Chambers" ), COMPACT_RELEASE_BIONICS, 3 );
                 tmpcomp->add_failure( COMPFAIL_MANHACKS );
@@ -7163,12 +7231,14 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
                                             "---\n",
                                             mapf::ter_bind( "- | =", t_concrete_wall, t_concrete_wall, t_reinforced_glass ),
                                             mapf::furn_bind( "c", f_counter ) );
-                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ), point_bub_ms( biox, bioy ),
+                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ),
+                                point_bub_ms( biox, bioy ),
                                 false,
                                 calendar::start_of_cataclysm );
 
                 m->ter_set( point_bub_ms( biox, bioy - 2 ), t_console );
-                computer *tmpcomp2 = m->add_computer( tripoint_bub_ms( biox,  bioy - 2, z ), _( "Bionic access" ), 2 );
+                computer *tmpcomp2 = m->add_computer( tripoint_bub_ms( biox,  bioy - 2, z ), _( "Bionic access" ),
+                                                      2 );
                 tmpcomp2->add_option( _( "Manifest" ), COMPACT_LIST_BIONICS, 0 );
                 tmpcomp2->add_option( _( "Open Chambers" ), COMPACT_RELEASE_BIONICS, 3 );
                 tmpcomp2->add_failure( COMPFAIL_MANHACKS );
@@ -7184,12 +7254,14 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
                                             "|-|\n",
                                             mapf::ter_bind( "- | =", t_concrete_wall, t_concrete_wall, t_reinforced_glass ),
                                             mapf::furn_bind( "c", f_counter ) );
-                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ), point_bub_ms( biox, bioy ),
+                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ),
+                                point_bub_ms( biox, bioy ),
                                 false,
                                 calendar::start_of_cataclysm );
 
                 m->ter_set( point_bub_ms( biox + 2, bioy ), t_console );
-                computer *tmpcomp = m->add_computer( tripoint_bub_ms( biox + 2,  bioy, z ), _( "Bionic access" ), 2 );
+                computer *tmpcomp = m->add_computer( tripoint_bub_ms( biox + 2,  bioy, z ), _( "Bionic access" ),
+                                                     2 );
                 tmpcomp->add_option( _( "Manifest" ), COMPACT_LIST_BIONICS, 0 );
                 tmpcomp->add_option( _( "Open Chambers" ), COMPACT_RELEASE_BIONICS, 3 );
                 tmpcomp->add_failure( COMPFAIL_MANHACKS );
@@ -7204,11 +7276,13 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
                                             "|-|\n",
                                             mapf::ter_bind( "- | =", t_concrete_wall, t_concrete_wall, t_reinforced_glass ),
                                             mapf::furn_bind( "c", f_counter ) );
-                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ), point_bub_ms( biox, bioy ),
+                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ),
+                                point_bub_ms( biox, bioy ),
                                 false, calendar::start_of_cataclysm );
 
                 m->ter_set( point_bub_ms( biox - 2, bioy ), t_console );
-                computer *tmpcomp2 = m->add_computer( tripoint_bub_ms( biox - 2,  bioy, z ), _( "Bionic access" ), 2 );
+                computer *tmpcomp2 = m->add_computer( tripoint_bub_ms( biox - 2,  bioy, z ), _( "Bionic access" ),
+                                                      2 );
                 tmpcomp2->add_option( _( "Manifest" ), COMPACT_LIST_BIONICS, 0 );
                 tmpcomp2->add_option( _( "Open Chambers" ), COMPACT_RELEASE_BIONICS, 3 );
                 tmpcomp2->add_failure( COMPFAIL_MANHACKS );
@@ -7221,43 +7295,55 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
             if( rotate % 2 == 0 ) {
                 for( int y = p1.y() + 1; y <= p2.y() - 1; y += 3 ) {
                     m->furn_set( point_bub_ms( p1.x(), y ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p1.x(), y ), point_bub_ms( p1.x(), y ), false,
+                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p1.x(), y ), point_bub_ms( p1.x(), y ),
+                                    false,
                                     calendar::start_of_cataclysm );
                     m->furn_set( point_bub_ms( p1.x() + 1, y ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p1.x() + 1, y ), point_bub_ms( p1.x() + 1, y ), false,
+                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p1.x() + 1, y ), point_bub_ms( p1.x() + 1,
+                                    y ), false,
                                     calendar::start_of_cataclysm );
                     m->furn_set( point_bub_ms( p2.x(), y ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p2.x(), y ), point_bub_ms( p2.x(), y ), false,
+                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p2.x(), y ), point_bub_ms( p2.x(), y ),
+                                    false,
                                     calendar::start_of_cataclysm );
                     m->furn_set( point_bub_ms( p2.x() - 1, y ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p2.x() - 1, y ), point_bub_ms( p2.x() - 1, y ), false,
+                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p2.x() - 1, y ), point_bub_ms( p2.x() - 1,
+                                    y ), false,
                                     calendar::start_of_cataclysm );
                     m->furn_set( point_bub_ms( p1.x(), y + 1 ), f_dresser );
                     m->furn_set( point_bub_ms( p2.x(), y + 1 ), f_dresser );
-                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( p1.x(), y + 1 ), point_bub_ms( p1.x(), y + 1 ), false,
+                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( p1.x(), y + 1 ), point_bub_ms( p1.x(),
+                                    y + 1 ), false,
                                     calendar::start_of_cataclysm );
-                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( p2.x(), y + 1 ), point_bub_ms( p2.x(), y + 1 ), false,
+                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( p2.x(), y + 1 ), point_bub_ms( p2.x(),
+                                    y + 1 ), false,
                                     calendar::start_of_cataclysm );
                 }
             } else if( rotate % 2 == 1 ) {
                 for( int x = p1.x() + 1; x <= p2.x() - 1; x += 3 ) {
                     m->furn_set( point_bub_ms( x, p1.y() ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p1.y() ), point_bub_ms( x, p1.y() ), false,
+                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p1.y() ), point_bub_ms( x, p1.y() ),
+                                    false,
                                     calendar::start_of_cataclysm );
                     m->furn_set( point_bub_ms( x, p1.y() + 1 ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p1.y() + 1 ), point_bub_ms( x, p1.y() + 1 ), false,
+                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p1.y() + 1 ), point_bub_ms( x,
+                                    p1.y() + 1 ), false,
                                     calendar::start_of_cataclysm );
                     m->furn_set( point_bub_ms( x, p2.y() ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p2.y() ), point_bub_ms( x, p2.y() ), false,
+                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p2.y() ), point_bub_ms( x, p2.y() ),
+                                    false,
                                     calendar::start_of_cataclysm );
                     m->furn_set( point_bub_ms( x, p2.y() - 1 ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p2.y() - 1 ), point_bub_ms( x, p2.y() - 1 ), false,
+                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p2.y() - 1 ), point_bub_ms( x,
+                                    p2.y() - 1 ), false,
                                     calendar::start_of_cataclysm );
                     m->furn_set( point_bub_ms( x + 1, p1.y() ), f_dresser );
                     m->furn_set( point_bub_ms( x + 1, p2.y() ), f_dresser );
-                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( x + 1, p1.y() ), point_bub_ms( x + 1, p1.y() ), false,
+                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( x + 1, p1.y() ), point_bub_ms( x + 1,
+                                    p1.y() ), false,
                                     calendar::start_of_cataclysm );
-                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( x + 1, p2.y() ), point_bub_ms( x + 1, p2.y() ), false,
+                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( x + 1, p2.y() ), point_bub_ms( x + 1,
+                                    p2.y() ), false,
                                     calendar::start_of_cataclysm );
                 }
             }
@@ -7294,7 +7380,8 @@ void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z
     }
 }
 
-void map::create_anomaly( const tripoint_bub_ms &cp, artifact_natural_property prop, bool create_rubble )
+void map::create_anomaly( const tripoint_bub_ms &cp, artifact_natural_property prop,
+                          bool create_rubble )
 {
     // TODO: Z
     point_bub_ms c( cp.xy() );
@@ -7454,7 +7541,8 @@ void square( map *m, ter_id( *f )(), const point_bub_ms &p1, const point_bub_ms 
 {
     m->draw_square_ter( f, p1, p2 );
 }
-void square( map *m, const weighted_int_list<ter_id> &f, const point_bub_ms &p1, const point_bub_ms &p2 )
+void square( map *m, const weighted_int_list<ter_id> &f, const point_bub_ms &p1,
+             const point_bub_ms &p2 )
 {
     m->draw_square_ter( f, p1, p2 );
 }
@@ -7506,7 +7594,8 @@ bool update_mapgen_function_json::setup_internal( const JsonObject &/*jo*/ )
     return true;
 }
 
-bool update_mapgen_function_json::update_map( const tripoint_abs_omt &omt_pos, const tripoint_rel_ms &offset,
+bool update_mapgen_function_json::update_map( const tripoint_abs_omt &omt_pos,
+        const tripoint_rel_ms &offset,
         mission *miss, bool verify ) const
 {
     if( omt_pos == overmap::invalid_tripoint ) {
@@ -7605,7 +7694,8 @@ bool run_mapgen_update_func( const std::string &update_mapgen_id, const tripoint
     if( update_function == update_mapgen.end() || update_function->second.empty() ) {
         return false;
     }
-    return update_function->second[0]->update_map( omt_pos, tripoint_rel_ms::zero(), miss, cancel_on_collision );
+    return update_function->second[0]->update_map( omt_pos, tripoint_rel_ms::zero(), miss,
+            cancel_on_collision );
 }
 
 bool run_mapgen_update_func( const std::string &update_mapgen_id, mapgendata &dat,

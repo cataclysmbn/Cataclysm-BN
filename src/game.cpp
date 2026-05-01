@@ -970,7 +970,7 @@ bool game::start_game()
         for( npc_class_id npcid : u.prof->npcs() ) {
             shared_ptr_fast<npc> tmp = make_shared_fast<npc>();
             tmp->randomize( npcid );
-            auto point = random_point( m.points_in_radius( u.bub_pos(), 10 ), [&]( const tripoint_bub_ms &p ) {
+            auto point = random_point( m.points_in_radius( u.bub_pos(), 10 ), [&]( const tripoint_bub_ms & p ) {
                 return m.has_floor( p ) && !is_dangerous_tile( p ) && m.passable( p );
             } );
             if( !point ) {
@@ -2874,8 +2874,10 @@ bool game::try_get_right_click_action( action_id &act, const tripoint &mouse_tar
         return false;
     }
 
-    const bool is_adjacent = square_dist( mouse_target.xy(), point( u.bub_pos().x(), u.bub_pos().y() ) ) <= 1;
-    const bool is_self = square_dist( mouse_target.xy(), point( u.bub_pos().x(), u.bub_pos().y() ) ) <= 0;
+    const bool is_adjacent = square_dist( mouse_target.xy(), point( u.bub_pos().x(),
+                                          u.bub_pos().y() ) ) <= 1;
+    const bool is_self = square_dist( mouse_target.xy(), point( u.bub_pos().x(),
+                                      u.bub_pos().y() ) ) <= 0;
     if( const monster *const mon = critter_at<monster>( mouse_target ) ) {
         if( !u.sees( *mon ) ) {
             add_msg( _( "Nothing relevant here." ) );
@@ -3770,7 +3772,8 @@ shared_ptr_fast<game::draw_callback_t>
             }
         }
         if( zone_start && zone_end ) {
-            const point offset2( g->u.view_offset.xy() + point( g->u.bub_pos().x() - getmaxx( g->w_terrain ) / 2,
+            const point offset2( g->u.view_offset.xy() + point( g->u.bub_pos().x() - getmaxx(
+                                     g->w_terrain ) / 2,
                                  g->u.bub_pos().y() - getmaxy( g->w_terrain ) / 2 ) );
 
             tripoint offset;
@@ -5152,7 +5155,8 @@ void game::monmove()
             continue;
         }
         // Critters in impassable tiles get pushed away, unless it's not impassable for them
-        if( !critter.is_dead() && m.impassable( critter.bub_pos() ) && !critter.can_move_to( critter.bub_pos() ) ) {
+        if( !critter.is_dead() && m.impassable( critter.bub_pos() ) &&
+            !critter.can_move_to( critter.bub_pos() ) ) {
             std::string msg = string_format( "%s can't move to its location!  %s  %s", critter.name(),
                                              critter.bub_pos().to_string(), m.tername( critter.bub_pos() ) );
             dbg( DL::Error ) << msg;
@@ -7374,7 +7378,8 @@ void game::peek()
         }
     }
 
-    if( m.impassable( u.bub_pos() + *p ) || m.obstructed_by_vehicle_rotation( u.bub_pos(), u.bub_pos() + *p ) ) {
+    if( m.impassable( u.bub_pos() + *p ) ||
+        m.obstructed_by_vehicle_rotation( u.bub_pos(), u.bub_pos() + *p ) ) {
         return;
     }
 
@@ -8046,15 +8051,15 @@ void game::zones_manager()
                     true, true, false );
             if( second.position ) {
                 tripoint first_abs = m.bub_to_abs( tripoint( std::min( first.position->x,
-                                               second.position->x ),
-                                               std::min( first.position->y, second.position->y ),
-                                               std::min( first.position->z,
-                                                       second.position->z ) ) );
+                                                   second.position->x ),
+                                                   std::min( first.position->y, second.position->y ),
+                                                   std::min( first.position->z,
+                                                           second.position->z ) ) );
                 tripoint second_abs = m.bub_to_abs( tripoint( std::max( first.position->x,
-                                                second.position->x ),
-                                                std::max( first.position->y, second.position->y ),
-                                                std::max( first.position->z,
-                                                        second.position->z ) ) );
+                                                    second.position->x ),
+                                                    std::max( first.position->y, second.position->y ),
+                                                    std::max( first.position->z,
+                                                            second.position->z ) ) );
                 return std::pair<tripoint, tripoint>( first_abs, second_abs );
             }
         }
@@ -8629,7 +8634,8 @@ look_around_result game::look_around( bool show_window, tripoint &center,
                 continue;
             }
 
-            auto route = m.route( u.bub_pos(), lp, u.get_legacy_pathfinding_settings(), u.get_legacy_path_avoid() );
+            auto route = m.route( u.bub_pos(), lp, u.get_legacy_pathfinding_settings(),
+                                  u.get_legacy_path_avoid() );
             if( route.size() > 1 ) {
                 route.pop_back();
                 u.set_destination( route );
@@ -11012,8 +11018,9 @@ std::vector<std::string> game::get_dangerous_tile( const tripoint &dest_loc ) co
             ( u.get_armor_bash( bodypart_id( "foot_l" ) ) < 5 ||
               u.get_armor_bash( bodypart_id( "foot_r" ) ) < 5 ) ) {
             harmful_stuff.emplace_back( m.name( dest_loc ) );
-        } else if( m.has_flag( "SHARP", dest_loc ) && !m.has_flag( "SHARP", u.bub_pos() ) && !( u.in_vehicle ||
-                   m.veh_at( dest_loc ) ) &&
+        } else if( m.has_flag( "SHARP", dest_loc ) && !m.has_flag( "SHARP", u.bub_pos() ) &&
+                   !( u.in_vehicle ||
+                      m.veh_at( dest_loc ) ) &&
                    u.dex_cur < 78 && !std::all_of( sharp_bps.begin(), sharp_bps.end(), sharp_bp_check ) ) {
             harmful_stuff.emplace_back( m.name( dest_loc ) );
         }
@@ -14085,7 +14092,8 @@ void game::update_stair_monsters()
                 push2.y = rng( -1, 1 );
                 point ipos2( mpos + push2 );
                 tripoint pos( ipos2, get_levz() );
-                if( ( push2.x == 0 && push2.y == 0 ) || ( ( ipos2.x == u.bub_pos().x() ) && ( ipos2.y == u.bub_pos().y() ) ) ) {
+                if( ( push2.x == 0 && push2.y == 0 ) || ( ( ipos2.x == u.bub_pos().x() ) &&
+                        ( ipos2.y == u.bub_pos().y() ) ) ) {
                     continue;
                 }
                 if( !critter_at( pos ) && other.can_move_to( pos ) ) {
@@ -14722,7 +14730,8 @@ bool check_art_charge_req( item &it )
             []( const std::pair<const bodypart_str_id, bodypart> &elem ) {
                 return elem.second.get_wetness() != 0;
             } );
-            if( !reqsmet && sum_conditions( calendar::turn - 1_turns, calendar::turn, p.bub_pos() ).rain_amount > 0
+            if( !reqsmet &&
+                sum_conditions( calendar::turn - 1_turns, calendar::turn, p.bub_pos() ).rain_amount > 0
                 && !( p.in_vehicle && here.veh_at( p.bub_pos() )->is_inside() ) ) {
                 reqsmet = true;
             }

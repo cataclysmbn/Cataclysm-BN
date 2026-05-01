@@ -2993,13 +2993,13 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     // so that new tiles can be memorized, and at least the size of the display
     // since at farthest zoom displayed area may be bigger than view range.
     const auto min_mm_reg = point_bub_ms(
-                                 std::min( o.x, min_visible_x ),
-                                 std::min( o.y, min_visible_y )
-                             );
+                                std::min( o.x, min_visible_x ),
+                                std::min( o.y, min_visible_y )
+                            );
     const auto max_mm_reg = point_bub_ms(
-                                 std::max( s.x + o.x, max_visible_x ),
-                                 std::max( s.y + o.y, max_visible_y )
-                             );
+                                std::max( s.x + o.x, max_visible_x ),
+                                std::max( s.y + o.y, max_visible_y )
+                            );
     g->u.prepare_map_memory_region(
         here.bub_to_abs( tripoint_bub_ms( min_mm_reg, center.z ) ),
         here.bub_to_abs( tripoint_bub_ms( max_mm_reg, center.z ) )
@@ -3646,7 +3646,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     if( g->u.controlling_vehicle ) {
         if( std::optional<tripoint> indicator_offset = g->get_veh_dir_indicator_location( true ) ) {
             const tile_search_params tile { "cursor", C_NONE, empty_string, 0, 0 };
-            const auto pos = indicator_offset->xy() + tripoint( g->u.bub_pos().x(), g->u.bub_pos().y(), center.z );
+            const auto pos = indicator_offset->xy() + tripoint( g->u.bub_pos().x(), g->u.bub_pos().y(),
+                             center.z );
             draw_from_id_string(
                 tile, pos, std::nullopt, std::nullopt,
                 lit_level::LIT, false, 0, false );
@@ -4533,7 +4534,8 @@ auto get_map_memory_of_at<vpart_info>( const tripoint &p ) -> std::optional<memo
         return std::nullopt;
     }
 
-    const memorized_terrain_tile t = g->u.get_memorized_tile( get_map().bub_to_abs( tripoint_bub_ms( p ) ) );
+    const memorized_terrain_tile t = g->u.get_memorized_tile( get_map().bub_to_abs( tripoint_bub_ms(
+                                         p ) ) );
     if( !t.tile.starts_with( "vp_" ) ) {
         return std::nullopt;
     }
@@ -4566,7 +4568,8 @@ auto cata_tiles::get_ter_memory_at( const tripoint &p ) -> std::optional<memoriz
     if( !g->u.should_show_map_memory() ) {
         return std::nullopt;
     }
-    const memorized_terrain_tile t = g->u.get_terrain_tile( get_map().bub_to_abs( tripoint_bub_ms( p ) ) );
+    const memorized_terrain_tile t = g->u.get_terrain_tile( get_map().bub_to_abs( tripoint_bub_ms(
+                                         p ) ) );
     if( t.tile.empty() ) {
         return std::nullopt;
     }
@@ -4915,7 +4918,8 @@ bool cata_tiles::draw_graffiti( const tripoint &p, const lit_level ll, int &heig
 {
     const auto override = graffiti_override.find( p );
     const bool overridden = override != graffiti_override.end();
-    if( overridden ? !override->second : ( invisible[0] || !get_map().has_graffiti_at( tripoint_bub_ms( p ) ) ) ) {
+    if( overridden ? !override->second : ( invisible[0] ||
+                                           !get_map().has_graffiti_at( tripoint_bub_ms( p ) ) ) ) {
         return false;
     }
     const lit_level lit = overridden ? lit_level::LIT : ll;
@@ -6542,7 +6546,8 @@ void cata_tiles::get_rotation_and_subtile( const char val, int &rotation, int &s
 void cata_tiles::get_connect_values( const tripoint &p, int &subtile, int &rotation,
                                      const int connect_group, const std::map<tripoint, ter_id> &ter_override )
 {
-    uint8_t connections = get_map().get_known_connections( tripoint_bub_ms( p ), connect_group, ter_override );
+    uint8_t connections = get_map().get_known_connections( tripoint_bub_ms( p ), connect_group,
+                          ter_override );
     get_rotation_and_subtile( connections, rotation, subtile );
 }
 
@@ -6550,7 +6555,8 @@ void cata_tiles::get_furn_connect_values( const tripoint &p, int &subtile, int &
         const int connect_group, const std::map<tripoint,
         furn_id> &furn_override )
 {
-    uint8_t connections = get_map().get_known_connections_f( tripoint_bub_ms( p ), connect_group, furn_override );
+    uint8_t connections = get_map().get_known_connections_f( tripoint_bub_ms( p ), connect_group,
+                          furn_override );
     get_rotation_and_subtile( connections, rotation, subtile );
 }
 

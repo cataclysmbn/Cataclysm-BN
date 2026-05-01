@@ -296,7 +296,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
     half_open_cuboid<tripoint_bub_ms> prev_z_volume_local(
         tripoint_bub_ms( here.abs_to_bub( Pathfinding::z_area ), -OVERMAP_DEPTH ),
         tripoint_bub_ms( here.abs_to_bub( Pathfinding::z_area + point( g_mapsize_x, g_mapsize_y ) ),
-                  OVERMAP_HEIGHT + 1 )
+                         OVERMAP_HEIGHT + 1 )
     );
 
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
@@ -445,7 +445,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
 }
 /// Pathfinding: main loops
 void Pathfinding::detect_culled_frontier(
-    const point_bub_ms &start, const RouteSettings &route_settings, std::unordered_set<point_bub_ms> &out )
+    const point_bub_ms &start, const RouteSettings &route_settings,
+    std::unordered_set<point_bub_ms> &out )
 {
     std::unordered_set<point_bub_ms> flood_fill;
     std::vector<point_bub_ms> stack;

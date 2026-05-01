@@ -262,7 +262,8 @@ class submap : maptile_soa<SEEX, SEEY>
         void rotate( int turns );
 
         void store( JsonOut &jsout ) const;
-        void load( JsonIn &jsin, const std::string &member_name, int version, const tripoint_abs_ms offset );
+        void load( JsonIn &jsin, const std::string &member_name, int version,
+                   const tripoint_abs_ms offset );
 
         // If is_uniform is true, this submap is a solid block of terrain
         // Uniform submaps aren't saved/loaded, because regenerating them is faster

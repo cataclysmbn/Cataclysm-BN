@@ -836,7 +836,8 @@ void npc::place_on_map()
         }
     }
 
-    debugmsg( "Failed to place NPC in a valid location near (%d,%d,%d)", bub_pos().x(), bub_pos().y(), bub_pos().z() );
+    debugmsg( "Failed to place NPC in a valid location near (%d,%d,%d)", bub_pos().x(), bub_pos().y(),
+              bub_pos().z() );
 }
 
 skill_id npc::best_skill() const
@@ -992,7 +993,8 @@ void npc::finish_read( item *it )
     const skill_id &skill = reading->skill;
     // NPCs don't need to identify the book or learn recipes yet.
     // NPCs don't read to other NPCs yet.
-    const bool display_messages = my_fac->id == faction_id( "your_followers" ) && g->u.sees( bub_pos() );
+    const bool display_messages = my_fac->id == faction_id( "your_followers" ) &&
+                                  g->u.sees( bub_pos() );
     bool continuous = false; //whether to continue reading or not
 
     int book_fun_for = character_funcs::get_book_fun_for( *this, book );
@@ -1573,7 +1575,8 @@ float npc::vehicle_danger( int radius ) const
 
             double normal = std::sqrt( static_cast<float>( ( b.x - a.x ) * ( b.x - a.x ) + ( b.y - a.y ) *
                                        ( b.y - a.y ) ) );
-            int closest = static_cast<int>( std::abs( ( bub_pos().x() - a.x ) * ( b.y - a.y ) - ( bub_pos().y() - a.y ) *
+            int closest = static_cast<int>( std::abs( ( bub_pos().x() - a.x ) * ( b.y - a.y ) -
+                                            ( bub_pos().y() - a.y ) *
                                             ( b.x - a.x ) ) / normal );
 
             if( size > closest ) {

@@ -240,7 +240,8 @@ static void remove_submap_turrets()
     map &here = get_map();
     for( monster &critter : g->all_monsters() ) {
         // Check 1) same overmap coords, 2) turret, 3) hostile
-        if( ms_to_omt_copy( here.bub_to_abs( critter.pos() ) ) == ms_to_omt_copy( here.bub_to_abs( g->u.bub_pos() ) ) &&
+        if( ms_to_omt_copy( here.bub_to_abs( critter.pos() ) ) == ms_to_omt_copy( here.bub_to_abs(
+                    g->u.bub_pos() ) ) &&
             critter.has_flag( MF_CONSOLE_DESPAWN ) &&
             critter.attitude_to( g->u ) == Attitude::A_HOSTILE ) {
             g->remove_zombie( critter );
@@ -392,7 +393,8 @@ void computer_session::action_sample()
 void computer_session::action_release()
 {
     g->events().send<event_type::releases_subspace_specimens>();
-    sounds::sound( g->u.bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), false, "environment",
+    sounds::sound( g->u.bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), false,
+                   "environment",
                    "alarm" );
     get_map().translate_radius( t_reinforced_glass, t_thconc_floor, 25.0, g->u.bub_pos(), true );
     query_any( _( "Containment shields opened.  Press any key…" ) );
@@ -406,7 +408,8 @@ void computer_session::action_release_disarm()
 
 void computer_session::action_release_bionics()
 {
-    sounds::sound( g->u.bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), false, "environment",
+    sounds::sound( g->u.bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), false,
+                   "environment",
                    "alarm" );
     get_map().translate_radius( t_reinforced_glass, t_thconc_floor, 3.0, g->u.bub_pos(), true );
     query_any( _( "Containment shields opened.  Press any key…" ) );
@@ -1041,7 +1044,8 @@ void computer_session::action_irradiator()
                         print_error( _( "  >> Radiation spike detected!\n" ) );
                         print_error( _( "WARNING [912]: Catastrophic malfunction!  Contamination detected!" ) );
                         print_error( _( "EMERGENCY PROCEDURE [1]:  Evacuate.  Evacuate.  Evacuate.\n" ) );
-                        sounds::sound( g->u.bub_pos(), 30, sounds::sound_t::alarm, _( "an alarm sound!" ), false, "environment",
+                        sounds::sound( g->u.bub_pos(), 30, sounds::sound_t::alarm, _( "an alarm sound!" ), false,
+                                       "environment",
                                        "alarm" );
                         here.i_rem( dest, it );
                         here.make_rubble( dest );
@@ -1307,7 +1311,8 @@ void computer_session::failure_shutdown()
 void computer_session::failure_alarm()
 {
     g->events().send<event_type::triggers_alarm>( g->u.getID() );
-    sounds::sound( g->u.bub_pos(), 60, sounds::sound_t::alarm, _( "an alarm sound!" ), false, "environment",
+    sounds::sound( g->u.bub_pos(), 60, sounds::sound_t::alarm, _( "an alarm sound!" ), false,
+                   "environment",
                    "alarm" );
     if( g->get_levz() > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
         g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,

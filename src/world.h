@@ -113,9 +113,9 @@ class world
         // Obtain dim_id from the owning buffer, not global state.
 
         bool read_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt_addr,
-                            file_read_json_fn reader ) const;
+                           file_read_json_fn reader ) const;
         bool write_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt_addr,
-                             file_write_fn writer ) const;
+                            file_write_fn writer ) const;
 
         bool overmap_exists( const std::string &dim_id, const point_abs_om &p ) const;
         bool read_overmap( const std::string &dim_id, const point_abs_om &p,
@@ -128,9 +128,9 @@ class world
                                               file_write_fn writer );
 
         bool read_player_mm_omt( const std::string &dim_id, const tripoint_abs_mmr &p,
-                                  file_read_json_fn reader );
+                                 file_read_json_fn reader );
         bool write_player_mm_omt( const std::string &dim_id, const tripoint_abs_mmr &p,
-                                   file_write_fn writer );
+                                  file_write_fn writer );
 
         // Legacy overloads without dim_id — do not call from background threads.
 

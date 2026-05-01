@@ -8900,7 +8900,8 @@ int iuse::report_grid_charge( player *p, item *, bool, const tripoint &pos )
 
 int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos )
 {
-    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs( pos ) ) );
+    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs(
+                                   pos ) ) );
     std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
                 p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
@@ -8969,7 +8970,8 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoin
 
 int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &pos )
 {
-    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs( pos ) ) );
+    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs(
+                                   pos ) ) );
     std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
                 p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );

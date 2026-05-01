@@ -287,7 +287,8 @@ class Pathfinding
 
         // Get a reference to ZCache for this level
         static std::vector<ZLevelChange> &get_z_cache( const int z );
-        static std::unordered_map<point_bub_ms, ZLevelChangeOpenAirPair> &get_z_cache_open_air( const int z );
+        static std::unordered_map<point_bub_ms, ZLevelChangeOpenAirPair> &get_z_cache_open_air(
+            const int z );
 
         static void produce_d_map( point_bub_ms dest, int z, PathfindingSettings settings );
 
@@ -336,8 +337,8 @@ class Pathfinding
         // get `route` from `from` to `to` if available in accordance to `route_settings` while `path_settings` defines our capabilities, otherwise empty vector.
         // Found route will include `from` and `to`.
         static std::vector<tripoint_bub_ms> route( tripoint_bub_ms from, tripoint_bub_ms to,
-                                            const std::optional<PathfindingSettings> path_settings = std::nullopt,
-                                            const std::optional<RouteSettings> route_settings = std::nullopt );
+                const std::optional<PathfindingSettings> path_settings = std::nullopt,
+                const std::optional<RouteSettings> route_settings = std::nullopt );
 
         // Reset whole pathfinding pretty much
         static void clear_d_maps();

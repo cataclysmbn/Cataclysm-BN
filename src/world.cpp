@@ -521,7 +521,7 @@ static std::string get_mm_filename( const std::string &dim_id, const tripoint_ab
 }
 
 bool world::read_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt_addr,
-                           file_read_json_fn reader ) const
+                          file_read_json_fn reader ) const
 {
     const std::string dirname = get_omt_dirname( dim_id, omt_addr );
     std::string omt_path = dirname + "/" + get_omt_filename( omt_addr );
@@ -543,7 +543,7 @@ bool world::read_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt
 }
 
 bool world::write_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt_addr,
-                            file_write_fn writer ) const
+                           file_write_fn writer ) const
 {
     const std::string dirname = get_omt_dirname( dim_id, omt_addr );
     const std::string omt_path = dirname + "/" + get_omt_filename( omt_addr );
@@ -616,7 +616,7 @@ bool world::write_overmap_player_visibility( const std::string &dim_id, const po
 }
 
 bool world::read_player_mm_omt( const std::string &dim_id, const tripoint_abs_mmr &p,
-                                 file_read_json_fn reader )
+                                file_read_json_fn reader )
 {
     const auto fname = get_mm_filename( dim_id, p );
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
@@ -697,7 +697,7 @@ bool world::read_player_mm_omt( const tripoint_abs_mmr &p, file_read_json_fn rea
 }
 
 bool world::write_player_mm_omt( const std::string &dim_id, const tripoint_abs_mmr &p,
-                                  file_write_fn writer )
+                                 file_write_fn writer )
 {
     const auto fname = get_mm_filename( dim_id, p );
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {

@@ -191,7 +191,7 @@ bool map::build_vision_transparency_cache( const Character &player )
 
     if( player.movement_mode_is( CMM_CROUCH ) ) {
 
-        const auto check_vehicle_coverage = []( const vehicle *veh, const tripoint_mnt_veh &p ) -> bool {
+        const auto check_vehicle_coverage = []( const vehicle * veh, const tripoint_mnt_veh & p ) -> bool {
             return veh->obstacle_at_position( p ) == -1 && ( veh->part_with_feature( p,  "AISLE", true ) != -1 || veh->part_with_feature( p,  "PROTRUSION", true ) != -1 );
         };
 
@@ -1016,7 +1016,8 @@ map::apparent_light_info map::apparent_light_helper( const level_cache &map_cach
     return { obstructed, apparent_light };
 }
 
-lit_level map::apparent_light_at( const tripoint_bub_ms &p, const visibility_variables &cache ) const
+lit_level map::apparent_light_at( const tripoint_bub_ms &p,
+                                  const visibility_variables &cache ) const
 {
     const int dist = rl_dist( g->u.bub_pos(), p );
 
@@ -1093,7 +1094,8 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
 
     const auto &map_cache = get_cache_ref( t.z() );
     const apparent_light_info a = apparent_light_helper( map_cache, t );
-    const float light_at_player = map_cache.lm[map_cache.idx( g->u.bub_pos().x(), g->u.bub_pos().y() )].max();
+    const float light_at_player = map_cache.lm[map_cache.idx( g->u.bub_pos().x(),
+                                                 g->u.bub_pos().y() )].max();
     return !a.obstructed &&
            ( a.apparent_light >= g->u.get_vision_threshold( light_at_player ) ||
              map_cache.sm[map_cache.idx( t.x(), t.y() )] > 0.0 );
@@ -1914,15 +1916,15 @@ void map::apply_light_arc( const tripoint_bub_ms &p, units::angle angle, float l
         if( trigdist ) {
             double fdist = ( ao * M_PI_2 ) / wangle;
             end.x() = static_cast<int>(
-                        p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle + ao ) );
+                          p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle + ao ) );
             end.y() = static_cast<int>(
-                        p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle + ao ) );
+                          p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle + ao ) );
             apply_light_ray( lit, p, end, luminance );
 
             end.x() = static_cast<int>(
-                        p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle - ao ) );
+                          p.x() + ( static_cast<double>( range ) - fdist * 2.0 ) * cos( nangle - ao ) );
             end.y() = static_cast<int>(
-                        p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle - ao ) );
+                          p.y() + ( static_cast<double>( range ) - fdist * 2.0 ) * sin( nangle - ao ) );
             apply_light_ray( lit, p, end, luminance );
         } else {
             calc_ray_end( nangle + ao, range, p, end );

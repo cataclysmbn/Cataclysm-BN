@@ -1014,7 +1014,8 @@ class npc : public player
         // wrapper for complain_about that warns about a specific type of threat, with
         // different warnings for hostile or friendly NPCs and hostile NPCs always complaining
         void warn_about( const std::string &type, const time_duration &d = 10_minutes,
-                         const std::string &name = "", int range = -1, const tripoint_bub_ms &danger_pos = tripoint_bub_ms::zero() );
+                         const std::string &name = "", int range = -1,
+                         const tripoint_bub_ms &danger_pos = tripoint_bub_ms::zero() );
         // Finds something to complain about and complains. Returns if complained.
         bool complain();
 
@@ -1113,7 +1114,8 @@ class npc : public player
         bool can_move_to( const tripoint_bub_ms &p, bool no_bashing = false ) const;
 
         // nomove is used to resolve recursive invocation
-        void move_to( const tripoint_bub_ms &p, bool no_bashing = false, std::set<tripoint_bub_ms> *nomove = nullptr );
+        void move_to( const tripoint_bub_ms &p, bool no_bashing = false,
+                      std::set<tripoint_bub_ms> *nomove = nullptr );
         // Next in <path>
         void move_to_next();
         // Maneuver so we won't shoot u

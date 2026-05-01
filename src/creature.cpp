@@ -328,16 +328,19 @@ bool Creature::sees( const Creature &critter ) const
     const int wanted_range = rl_dist( bub_pos(), critter.bub_pos() );
     // Can always see adjacent monsters on the same level, unless they're through a vehicle wall.
     // We also bypass lighting for vertically adjacent monsters, but still check for floors.
-    if( wanted_range <= 1 && ( bub_pos().z() == critter.bub_pos().z() || here.sees( bub_pos(), critter.bub_pos(), 1 ) ) ) {
+    if( wanted_range <= 1 && ( bub_pos().z() == critter.bub_pos().z() ||
+                               here.sees( bub_pos(), critter.bub_pos(), 1 ) ) ) {
         if( here.obscured_by_vehicle_rotation( bub_pos(), critter.bub_pos() ) ) {
             return false;
         }
         return visible( ch );
     } else if( ( wanted_range > 1 && critter.digging() ) ||
-               ( critter.has_flag( MF_NIGHT_INVISIBILITY ) && here.light_at( critter.bub_pos() ) <= lit_level::LOW ) ||
+               ( critter.has_flag( MF_NIGHT_INVISIBILITY ) &&
+                 here.light_at( critter.bub_pos() ) <= lit_level::LOW ) ||
                ( critter.is_underwater() && !is_underwater() && here.is_divable( critter.bub_pos() ) ) ||
                ( here.has_flag_ter_or_furn( TFLAG_HIDE_PLACE, critter.bub_pos() ) &&
-                 !( std::abs( bub_pos().x() - critter.bub_pos().x() ) <= 1 && std::abs( bub_pos().y() - critter.bub_pos().y() ) <= 1 &&
+                 !( std::abs( bub_pos().x() - critter.bub_pos().x() ) <= 1 &&
+                    std::abs( bub_pos().y() - critter.bub_pos().y() ) <= 1 &&
                     std::abs( bub_pos().z() - critter.bub_pos().z() ) <= 1 ) && !critter.has_flag( MF_FLIES ) &&
                  critter.get_size() <= creature_size::medium ) ) {
         return false;
@@ -2325,7 +2328,8 @@ void Creature::draw( const catacurses::window &w, const tripoint &origin, bool i
         return;
     }
 
-    point draw( -origin.xy() + point( getmaxx( w ) / 2 + bub_pos().x(), getmaxy( w ) / 2 + bub_pos().y() ) );
+    point draw( -origin.xy() + point( getmaxx( w ) / 2 + bub_pos().x(),
+                                      getmaxy( w ) / 2 + bub_pos().y() ) );
     if( inverted ) {
         mvwputch_inv( w, draw, basic_symbol_color(), symbol() );
     } else if( is_symbol_highlighted() ) {

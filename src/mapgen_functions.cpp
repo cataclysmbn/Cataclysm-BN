@@ -209,7 +209,8 @@ void mapgen_crater( mapgendata &dat )
             }
         }
     }
-    m->place_items( item_group_id( "wreckage" ), 83, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1, SEEY * 2 - 1 ),
+    m->place_items( item_group_id( "wreckage" ), 83, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1,
+                    SEEY * 2 - 1 ),
                     true, dat.when() );
 }
 
@@ -259,7 +260,8 @@ void mapgen_field( mapgendata &dat )
     }
 
     // FIXME: take 'rock' out and add as regional biome setting
-    m->place_items( item_group_id( "field" ), 60, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1, SEEY * 2 - 1 ), true,
+    m->place_items( item_group_id( "field" ), 60, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1,
+                    SEEY * 2 - 1 ), true,
                     dat.when() );
 }
 
@@ -410,11 +412,13 @@ void mapgen_hive( mapgendata &dat )
                 }
 
                 if( is_center ) {
-                    m->place_items( item_group_id( "hive_center" ), 90, point_bub_ms( i - 2, j - 2 ), point_bub_ms( i + 2, j + 2 ),
+                    m->place_items( item_group_id( "hive_center" ), 90, point_bub_ms( i - 2, j - 2 ),
+                                    point_bub_ms( i + 2, j + 2 ),
                                     false,
                                     dat.when() );
                 } else {
-                    m->place_items( item_group_id( "hive" ), 80, point_bub_ms( i - 2, j - 2 ), point_bub_ms( i + 2, j + 2 ), false,
+                    m->place_items( item_group_id( "hive" ), 80, point_bub_ms( i - 2, j - 2 ), point_bub_ms( i + 2,
+                                    j + 2 ), false,
                                     dat.when() );
                 }
             }
@@ -817,8 +821,9 @@ void mapgen_road( mapgendata &dat )
 
     // add some items
     bool plaza = ( plaza_dir > -1 );
-    m->place_items( item_group_id( plaza ? "trash" : "road" ), 5, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1,
-                    SEEX * 2 - 1 ), plaza,
+    m->place_items( item_group_id( plaza ? "trash" : "road" ), 5, point_bub_ms::zero(),
+                    point_bub_ms( SEEX * 2 - 1,
+                                  SEEX * 2 - 1 ), plaza,
                     dat.when() );
 
     // add a manhole if appropriate
@@ -1189,7 +1194,8 @@ void mapgen_subway( mapgendata &dat )
     // Add patches of cave moss
     for( int i = 0; i < SEEX * 2; i++ ) {
         for( int j = 0; j < SEEY * 2; j++ ) {
-            if( one_in( 12 ) && m->ter( tripoint_bub_ms( point_bub_ms( i, j ), m->get_abs_sub().z() ) ) == t_rock_floor ) {
+            if( one_in( 12 ) &&
+                m->ter( tripoint_bub_ms( point_bub_ms( i, j ), m->get_abs_sub().z() ) ) == t_rock_floor ) {
                 m->ter_set( point_bub_ms( i, j ), t_moss_underground );
                 // Some of that moss has mushrooms too.
                 if( one_in( 15 ) ) {
@@ -1270,7 +1276,8 @@ void mapgen_highway( mapgendata &dat )
     if( dat.terrain_type() == "hiway_ew" ) {
         m->rotate( 1 );
     }
-    m->place_items( item_group_id( "road" ), 8, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1, SEEX * 2 - 1 ), false,
+    m->place_items( item_group_id( "road" ), 8, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1,
+                    SEEX * 2 - 1 ), false,
                     dat.when() );
 }
 
@@ -1793,7 +1800,8 @@ void mapgen_parking_lot( mapgendata &dat )
 
     VehicleSpawn::apply( vspawn_id( "default_parkinglot" ), *m, "parkinglot" );
 
-    m->place_items( item_group_id( "road" ), 8, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1, SEEY * 2 - 1 ), false,
+    m->place_items( item_group_id( "road" ), 8, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1,
+                    SEEY * 2 - 1 ), false,
                     dat.when() );
     for( int i = 1; i < 4; i++ ) {
         const std::string &id = dat.t_nesw[i].id().str();
@@ -1867,7 +1875,8 @@ void mapgen_cavern( mapgendata &dat )
             }
         }
     }
-    m->place_items( item_group_id( "cavern" ), 60, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1, SEEY * 2 - 1 ),
+    m->place_items( item_group_id( "cavern" ), 60, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1,
+                    SEEY * 2 - 1 ),
                     false, dat.when() );
     if( one_in( 6 ) ) { // Miner remains
         point_bub_ms p2;
@@ -2222,7 +2231,7 @@ void mapgen_forest( mapgendata &dat )
     static constexpr int margin_y = SEEY * 2 / 3;
 
     const auto get_blended_feature = [&no_ter_furn, &max_factor, &factor,
-                  &get_feature_for_neighbor, &dat]( const point_bub_ms &p ) {
+                  &get_feature_for_neighbor, &dat]( const point_bub_ms & p ) {
         // Pick one random feature from each biome according to the biome defs and save it into a lookup.
         // We'll blend these features together below based on the current and adjacent terrains.
         std::map<oter_id, ter_furn_id> biome_features;
@@ -2395,7 +2404,8 @@ void mapgen_forest( mapgendata &dat )
 
     // Place items on this terrain as defined in the biome.
     for( int i = 0; i < current_biome_def.item_spawn_iterations; i++ ) {
-        m->place_items( current_biome_def.item_group, current_biome_def.item_group_chance, point_bub_ms::zero(),
+        m->place_items( current_biome_def.item_group, current_biome_def.item_group_chance,
+                        point_bub_ms::zero(),
                         point_bub_ms( SEEX * 2 - 1, SEEY * 2 - 1 ), true, dat.when() );
     }
 }
@@ -2909,11 +2919,11 @@ void mapgen_lake_shore( mapgendata &dat )
 
     // Given two points, return a point that is midway between the two points and then
     // jittered by a random amount in proportion to the length of the line segment.
-    const auto jittered_midpoint = [&]( const point_bub_ms &from, const point_bub_ms &to ) {
+    const auto jittered_midpoint = [&]( const point_bub_ms & from, const point_bub_ms & to ) {
         const int jitter = rl_dist( from, to ) / 4;
         std::uniform_int_distribution<int> roll( -jitter, jitter );
         const point_bub_ms midpoint( ( from.x() + to.x() ) / 2 + roll( prng ),
-                              ( from.y() + to.y() ) / 2 + roll( prng ) );
+                                     ( from.y() + to.y() ) / 2 + roll( prng ) );
         return midpoint;
     };
 
@@ -2941,16 +2951,16 @@ void mapgen_lake_shore( mapgendata &dat )
     // out any furniture that we placed by the extended mapgen.
     std::unordered_set<point_bub_ms> visited;
 
-    const auto should_fill = [&]( const point_bub_ms &p ) {
+    const auto should_fill = [&]( const point_bub_ms & p ) {
         if( !map_boundaries.contains( p ) ) {
             return false;
         }
         return m->ter( p ) != t_null;
     };
 
-    const auto fill_deep_water = [&]( const point_bub_ms &starting_point ) {
+    const auto fill_deep_water = [&]( const point_bub_ms & starting_point ) {
         std::vector<point_bub_ms> water_points = ff::point_flood_fill_4_connected( starting_point, visited,
-                                          should_fill );
+                should_fill );
         for( auto &wp : water_points ) {
             m->ter_set( wp, water_tile );
             m->furn_set( wp, f_null );

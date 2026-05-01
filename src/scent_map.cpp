@@ -112,7 +112,7 @@ void scent_map::decay()
         if( dim_it == scent_submaps_.end() ) {
             return;
         }
-        std::erase_if( dim_it->second, [&]( const tripoint_abs_sm &abs_sm ) {
+        std::erase_if( dim_it->second, [&]( const tripoint_abs_sm & abs_sm ) {
             if( std::abs( abs_sm.z() - levz ) > SCENT_MAP_Z_REACH ) {
                 return false;
             }
@@ -132,7 +132,8 @@ void scent_map::decay()
     } );
 }
 
-void scent_map::draw( const catacurses::window &win, const int div, const tripoint_bub_ms &center ) const
+void scent_map::draw( const catacurses::window &win, const int div,
+                      const tripoint_bub_ms &center ) const
 {
     assert( div != 0 );
     const point max( getmaxx( win ), getmaxy( win ) );

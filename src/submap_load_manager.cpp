@@ -351,7 +351,7 @@ void submap_load_manager::update()
             }
             for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
                 const omt_key qk{ key.first,
-                                   tripoint_abs_omt{ project_to<coords::omt>( key.second ), z } };
+                                  tripoint_abs_omt{ project_to<coords::omt>( key.second ), z } };
                 if( presave_futures_.count( qk ) ) {
                     continue;  // already has an in-flight presave
                 }

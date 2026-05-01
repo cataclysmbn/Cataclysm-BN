@@ -240,7 +240,7 @@ class coord_point
         void deserialize( JsonIn &jsin ) {
             raw().deserialize( jsin );
         }
-    
+
         auto operator-() const -> coord_point {
             return coord_point( -raw_ );
         }
@@ -671,7 +671,7 @@ inline int square_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 inline int square_dist_fast( const coords::coord_point<Point, Origin, Scale> &loc1,
-                        const coords::coord_point<Point, Origin, Scale> &loc2 )
+                             const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return square_dist_fast( loc1.raw(), loc2.raw() );
 }
@@ -692,7 +692,7 @@ inline int rl_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 inline int rl_dist_exact( const coords::coord_point<Point, Origin, Scale> &loc1,
-                    const coords::coord_point<Point, Origin, Scale> &loc2 )
+                          const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return rl_dist_exact( loc1.raw(), loc2.raw() );
 }
@@ -734,8 +734,8 @@ std::vector<coords::coord_point<Point, Origin, Scale>>
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 direction calc_ray_end( units::angle angle, const int range,
-                          const coords::coord_point<Point, Origin, Scale> &loc1,
-                          const coords::coord_point<Point, Origin, Scale> &loc2 )
+                        const coords::coord_point<Point, Origin, Scale> &loc1,
+                        const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return calc_ray_end( angle, range, loc1.raw(), loc2.raw() );
 }
@@ -757,7 +757,7 @@ midpoint( const coords::coord_point<Point, Origin, Scale> &loc1,
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 void draw_line( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
-coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 )
+                coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 )
 {
     std::vector<coords::coord_point<Point, Origin, Scale>> line = line_to( p1, p2 );
     for( auto &i : line ) {
@@ -768,7 +768,7 @@ coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin,
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 void draw_square( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
-coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 )
+                  coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 )
 {
     if( p1.x() > p2.x() ) {
         std::swap( p1.x(), p2.x() );
@@ -785,7 +785,7 @@ coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin,
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 void draw_rough_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
-coords::coord_point<Point, Origin, Scale> p, int rad )
+                        coords::coord_point<Point, Origin, Scale> p, int rad )
 {
     for( int i = p.x() - rad; i <= p.x() + rad; i++ ) {
         for( int j = p.y() - rad; j <= p.y() + rad; j++ ) {
@@ -798,7 +798,7 @@ coords::coord_point<Point, Origin, Scale> p, int rad )
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 void draw_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
-const rl_vec2d &p, double rad )
+                  const rl_vec2d &p, double rad )
 {
     for( int i = p.x - rad - 1; i <= p.x + rad + 1; i++ ) {
         for( int j = p.y - rad - 1; j <= p.y + rad + 1; j++ ) {
@@ -811,7 +811,7 @@ const rl_vec2d &p, double rad )
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 void draw_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
-coords::coord_point<Point, Origin, Scale> p, int rad )
+                  coords::coord_point<Point, Origin, Scale> p, int rad )
 {
     for( int i = p.x() - rad; i <= p.x() + rad; i++ ) {
         for( int j = p.y() - rad; j <= p.y() + rad; j++ ) {

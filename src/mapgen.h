@@ -344,7 +344,8 @@ class mapgen_palette
 
 struct jmapgen_objects {
 
-        jmapgen_objects( const point_rel_ms &offset, const point_rel_ms &mapsize, const point_rel_ms &tot_size );
+        jmapgen_objects( const point_rel_ms &offset, const point_rel_ms &mapsize,
+                         const point_rel_ms &tot_size );
 
         bool check_bounds( const jmapgen_place &place, const JsonObject &jso );
 
@@ -377,7 +378,7 @@ struct jmapgen_objects {
          * checks if applying these objects to data would cause cause a collision with vehicles
          * on the same map
          **/
-        bool has_vehicle_collision( const mapgendata &dat, const point_rel_ms&offset ) const;
+        bool has_vehicle_collision( const mapgendata &dat, const point_rel_ms &offset ) const;
 
     private:
         /**
@@ -419,7 +420,7 @@ class mapgen_function_json_base
         mapgen_arguments get_args( const mapgendata &md, mapgen_parameter_scope ) const;
 
         bool is_ready;
-        
+
         point_rel_ms m_offset;
         point_rel_ms mapgensize;
         point_rel_ms total_size;
@@ -494,11 +495,14 @@ class mapgen_function_json_nested : public mapgen_function_json_base
 /*
  * Load mapgen function of any type from a json object
  */
-std::shared_ptr<mapgen_function> load_mapgen_function( const JsonObject &jio, const point_rel_ms &offset,
+std::shared_ptr<mapgen_function> load_mapgen_function( const JsonObject &jio,
+        const point_rel_ms &offset,
         point total );
 void load_and_add_mapgen_function(
-    const JsonObject &jio, const std::string &id_base, const point_rel_ms &offset, const point_rel_ms &total );
-void call_mapgen_function( std::string name, mapgendata &dat, bool nested, const point_rel_ms &pos );
+    const JsonObject &jio, const std::string &id_base, const point_rel_ms &offset,
+    const point_rel_ms &total );
+void call_mapgen_function( std::string name, mapgendata &dat, bool nested,
+                           const point_rel_ms &pos );
 /*
  * Load the above directly from a file via init, as opposed to riders attached to overmap_terrain. Added check
  * for oter_mapgen / oter_mapgen_weights key, multiple possible ( i.e., [ "house_w_1", "duplex" ] )
@@ -553,7 +557,8 @@ void fill_background( map *m, const ter_id &type );
 void fill_background( map *m, ter_id( *f )() );
 void square( map *m, const ter_id &type, const point_bub_ms &p1, const point_bub_ms &p2 );
 void square( map *m, ter_id( *f )(), const point_bub_ms &p1, const point_bub_ms &p2 );
-void square( map *m, const weighted_int_list<ter_id> &f, const point_bub_ms &p1, const point_bub_ms &p2 );
+void square( map *m, const weighted_int_list<ter_id> &f, const point_bub_ms &p1,
+             const point_bub_ms &p2 );
 void square_furn( map *m, const furn_id &type, const point_bub_ms &p1, const point_bub_ms &p2 );
 void rough_circle( map *m, const ter_id &type, const point_bub_ms &, int rad );
 void rough_circle_furn( map *m, const furn_id &type, const point_bub_ms &, int rad );

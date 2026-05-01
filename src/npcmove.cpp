@@ -203,7 +203,8 @@ bool compare_sound_alert( const dangerous_sound &sound_a, const dangerous_sound 
     return sound_a.volume < sound_b.volume;
 }
 
-static bool clear_shot_reach( const tripoint_bub_ms &from, const tripoint_bub_ms &to, bool check_ally = true )
+static bool clear_shot_reach( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
+                              bool check_ally = true )
 {
     ZoneScopedN( "clear_shot_reach" );
     std::vector<tripoint_bub_ms> path = line_to( from, to );
@@ -360,7 +361,8 @@ float npc::evaluate_enemy( const Creature &target ) const
     }
 }
 
-static bool too_close( const tripoint_bub_ms &critter_pos, const tripoint_bub_ms &ally_pos, const int def_radius )
+static bool too_close( const tripoint_bub_ms &critter_pos, const tripoint_bub_ms &ally_pos,
+                       const int def_radius )
 {
     return rl_dist( critter_pos, ally_pos ) <= def_radius;
 }
@@ -474,7 +476,8 @@ void npc::assess_danger()
     // first, check if we're about to be consumed by fire
     // `map::get_field` checks field_count first, so in general case (no fire) it provides an early exit
     for( const tripoint_bub_ms &pt : here.points_in_radius( bub_pos(), 6 ) ) {
-        if( pt == bub_pos() || !here.get_field( pt, fd_fire ) || here.has_flag( TFLAG_FIRE_CONTAINER,  pt ) ) {
+        if( pt == bub_pos() || !here.get_field( pt, fd_fire ) ||
+            here.has_flag( TFLAG_FIRE_CONTAINER,  pt ) ) {
             continue;
         }
         const int dist = rl_dist( bub_pos(), pt );
@@ -2434,7 +2437,8 @@ bool npc::can_move_to( const tripoint &p, bool no_bashing ) const
     // Allow moving into any bashable spots, but penalize them during pathing
     // Doors are not passable for hallucinations
     return( rl_dist( bub_pos(), p ) <= 1 && here.has_floor( p ) && !g->is_dangerous_tile( p ) &&
-            ( here.passable( p ) || ( can_open_door( p, !here.is_outside( bub_pos() ) ) && !is_hallucination() ) ||
+            ( here.passable( p ) || ( can_open_door( p, !here.is_outside( bub_pos() ) ) &&
+                                      !is_hallucination() ) ||
               ( !no_bashing && here.bash_rating( smash_ability(), p ) > 0 ) )
           );
 }
@@ -4255,7 +4259,8 @@ void npc::reach_omt_destination()
         if( is_player_ally() ) {
             Character &player_character = get_player_character();
             talk_function::assign_guard( *this );
-            if( rl_dist( player_character.bub_pos(), bub_pos() ) > SEEX * 2 || !player_character.sees( bub_pos() ) ) {
+            if( rl_dist( player_character.bub_pos(), bub_pos() ) > SEEX * 2 ||
+                !player_character.sees( bub_pos() ) ) {
                 if( ( player_character.has_item_with_flag( flag_TWO_WAY_RADIO, true ) ||
                       player_character.has_bionic( bio_infolink ) ) &&
                     ( has_item_with_flag( flag_TWO_WAY_RADIO, true ) || has_bionic( bio_infolink ) ) ) {
@@ -4454,7 +4459,8 @@ void npc::go_to_omt_destination()
             }
         }
     }
-    path = here.route( bub_pos(), centre_sub, get_legacy_pathfinding_settings(), get_legacy_path_avoid() );
+    path = here.route( bub_pos(), centre_sub, get_legacy_pathfinding_settings(),
+                       get_legacy_path_avoid() );
     add_msg( m_debug, "%s going %s->%s", name, omt_pos.to_string(), goal.to_string() );
 
     if( !path.empty() ) {

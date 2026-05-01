@@ -15,7 +15,8 @@
 map_selector::map_selector( const tripoint &pos, int radius, bool accessible )
 {
     for( const tripoint &e : closest_points_first( pos, radius ) ) {
-        if( !accessible || get_map().clear_path( tripoint_bub_ms( pos ), tripoint_bub_ms( e ), radius, 1, 100 ) ) {
+        if( !accessible ||
+            get_map().clear_path( tripoint_bub_ms( pos ), tripoint_bub_ms( e ), radius, 1, 100 ) ) {
             data.emplace_back( e );
         }
     }
@@ -27,24 +28,26 @@ tripoint_range<tripoint_bub_ms> points_in_range( const map &m )
     const bool hasz = m.has_zlevels();
     return tripoint_range<tripoint_bub_ms>(
                tripoint_bub_ms( 0, 0, hasz ? -OVERMAP_DEPTH : z ),
-               tripoint_bub_ms( SEEX * m.getmapsize() - 1, SEEY * m.getmapsize() - 1, hasz ? OVERMAP_HEIGHT : z ) );
+               tripoint_bub_ms( SEEX * m.getmapsize() - 1, SEEY * m.getmapsize() - 1,
+                                hasz ? OVERMAP_HEIGHT : z ) );
 }
 
 std::optional<tripoint_bub_ms> random_point( const map &m,
-                                      const std::function<bool( const tripoint_bub_ms & )> &predicate )
+        const std::function<bool( const tripoint_bub_ms & )> &predicate )
 {
     return random_point( points_in_range( m ), predicate );
 }
 
 std::optional<tripoint_bub_ms> random_point( const tripoint_range<tripoint_bub_ms> &range,
-                                      const std::function<bool( const tripoint_bub_ms & )> &predicate )
+        const std::function<bool( const tripoint_bub_ms & )> &predicate )
 {
     // Optimist approach: just assume there are plenty of suitable places and a randomly
     // chosen point will have a good chance to hit one of them.
     // If there are only few suitable places, we have to find them all, otherwise this loop may never finish.
     for( int tries = 0; tries < 10; ++tries ) {
-        const tripoint_bub_ms p( rng( range.min().x(), range.max().x() ), rng( range.min().y(), range.max().y() ),
-                          rng( range.min().z(), range.max().z() ) );
+        const tripoint_bub_ms p( rng( range.min().x(), range.max().x() ), rng( range.min().y(),
+                                 range.max().y() ),
+                                 rng( range.min().z(), range.max().z() ) );
         if( predicate( p ) ) {
             return p;
         }

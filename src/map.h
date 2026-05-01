@@ -321,7 +321,7 @@ struct level_cache {
         return sx * cache_mapsize + sy;
     }
     /// True if the tile-coordinate point_bub_ms & is within this cache's rendered area.
-    bool inbounds( const point_bub_ms & p ) const {
+    bool inbounds( const point_bub_ms &p ) const {
         return p.x() >= 0 && p.x() < cache_x && p.y() >= 0 && p.y() < cache_y;
     }
 
@@ -642,7 +642,8 @@ class map : public submap_load_listener
          * @param p The tile on this map to draw.
          * @param params Draw parameters.
          */
-        void drawsq( const catacurses::window &w, const tripoint_bub_ms &p, const drawsq_params &params ) const;
+        void drawsq( const catacurses::window &w, const tripoint_bub_ms &p,
+                     const drawsq_params &params ) const;
 
         /**
          * Add currently loaded submaps (in @ref grid) to the @ref mapbuffer.
@@ -766,7 +767,8 @@ class map : public submap_load_listener
          * the two points, and may subsequently be used to form a path between them.
          * Set to zero if the function returns false.
         **/
-        bool sees( const tripoint_bub_ms &F, const tripoint_bub_ms &T, int range, int &bresenham_slope ) const;
+        bool sees( const tripoint_bub_ms &F, const tripoint_bub_ms &T, int range,
+                   int &bresenham_slope ) const;
     public:
         /**
         * Returns coverage of target in relation to the observer. Target is loc2, observer is loc1.
@@ -818,7 +820,8 @@ class map : public submap_load_listener
          * until it finds a clear line or decides there isn't one.
          * returns the line found, which may be the straight line, but blocked.
          */
-        std::vector<tripoint_bub_ms> find_clear_path( const tripoint_bub_ms &source, const tripoint_bub_ms &destination ) const;
+        std::vector<tripoint_bub_ms> find_clear_path( const tripoint_bub_ms &source,
+                const tripoint_bub_ms &destination ) const;
 
         /**
          * Check whether the player can access the items located @p. Certain furniture/terrain
@@ -830,7 +833,8 @@ class map : public submap_load_listener
          * Points closer to the target come first.
          * This method leads to straighter lines and prevents weird looking movements away from the target.
          */
-        std::vector<tripoint_bub_ms> get_dir_circle( const tripoint_bub_ms &f, const tripoint_bub_ms &t ) const;
+        std::vector<tripoint_bub_ms> get_dir_circle( const tripoint_bub_ms &f,
+                const tripoint_bub_ms &t ) const;
 
         /**
          * Calculate the best path using A*
@@ -841,7 +845,7 @@ class map : public submap_load_listener
          * @param pre_closed Never path through those points. They can still be the source or the destination.
          */
         std::vector<tripoint_bub_ms> route( const tripoint_bub_ms &f, const tripoint_bub_ms &t,
-                                     const pathfinding_settings &settings,
+                                            const pathfinding_settings &settings,
         const std::set<tripoint_bub_ms> &pre_closed = {{ }} ) const;
 
         // Vehicles: Common to 2D and 3D
@@ -1166,7 +1170,7 @@ class map : public submap_load_listener
         }
 
         bool is_outside( const tripoint_bub_ms &p ) const;
-        bool is_outside( const point_bub_ms & p ) const {
+        bool is_outside( const point_bub_ms &p ) const {
             return is_outside( tripoint_bub_ms( p, abs_sub.z() ) );
         }
         // True when the tile has some overhead coverage within 3×3 (floor or sheltered tile
@@ -1283,7 +1287,8 @@ class map : public submap_load_listener
         /** Keeps bashing a square until there is no more furniture */
         void destroy_furn( const tripoint_bub_ms &p, bool silent = false );
         void crush( const tripoint_bub_ms &p );
-        void shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projectile &proj, bool hit_items );
+        void shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projectile &proj,
+                    bool hit_items );
         /** Checks if a square should collapse, returns the X for the one_in(X) collapse chance */
         int collapse_check( const tripoint_bub_ms &p );
         /** Causes a collapse at p, such as from destroying a wall */
@@ -1298,7 +1303,8 @@ class map : public submap_load_listener
         /** Tries to smash the trap at the given tripoint. */
         void smash_trap( const tripoint_bub_ms &p, const int power, const std::string &cause_message );
         /** Tries to smash the items at the given tripoint. */
-        void smash_items( const tripoint_bub_ms &p, int power, const std::string &cause_message, bool do_destroy );
+        void smash_items( const tripoint_bub_ms &p, int power, const std::string &cause_message,
+                          bool do_destroy );
         /**
          * Returns a pair where first is whether anything was smashed and second is if it was destroyed.
          *
@@ -1414,7 +1420,7 @@ class map : public submap_load_listener
         // returning an iterator to the next item after removal.
         map_stack::iterator i_rem( const tripoint_bub_ms &p, map_stack::const_iterator it,
                                    detached_ptr<item> *out = nullptr );
-        map_stack::iterator i_rem( point_bub_ms & location, map_stack::const_iterator it,
+        map_stack::iterator i_rem( point_bub_ms &location, map_stack::const_iterator it,
                                    detached_ptr<item> *out = nullptr ) {
             return i_rem( tripoint_bub_ms( location, abs_sub.z() ), it, out );
         }
@@ -1460,7 +1466,8 @@ class map : public submap_load_listener
          */
         detached_ptr<item> add_item_or_charges( const tripoint_bub_ms &pos, detached_ptr<item> &&obj,
                                                 bool overflow = true );
-        detached_ptr<item> add_item_or_charges( const point_bub_ms &p, detached_ptr<item> &&obj, bool overflow = true ) {
+        detached_ptr<item> add_item_or_charges( const point_bub_ms &p, detached_ptr<item> &&obj,
+                                                bool overflow = true ) {
             return add_item_or_charges( tripoint_bub_ms( p, abs_sub.z() ), std::move( obj ), overflow );
         }
 
@@ -1482,7 +1489,8 @@ class map : public submap_load_listener
         void add_item( const point_bub_ms &p, detached_ptr<item> &&new_item ) {
             add_item( tripoint_bub_ms( p, abs_sub.z() ), std::move( new_item ) );
         }
-        detached_ptr<item> spawn_an_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item, int charges,
+        detached_ptr<item> spawn_an_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item,
+                                          int charges,
                                           int damlevel );
         detached_ptr<item> spawn_an_item( const point_bub_ms &p, detached_ptr<item> &&new_item, int charges,
                                           int damlevel ) {
@@ -1522,7 +1530,8 @@ class map : public submap_load_listener
         /*@{*/
         std::vector<detached_ptr<item>> use_amount_square( const tripoint_bub_ms &p, const itype_id &type,
                                      int &quantity, const std::function<bool( const item & )> &filter = return_true<item> );
-        std::vector<detached_ptr<item>> use_amount( const tripoint_bub_ms &origin, int range, const itype_id &type,
+        std::vector<detached_ptr<item>> use_amount( const tripoint_bub_ms &origin, int range,
+                                     const itype_id &type,
                                      int &quantity, const std::function<bool( const item & )> &filter = return_true<item> );
         std::vector<detached_ptr<item>> use_charges( const tripoint_bub_ms &origin, int range,
                                      const itype_id &type,
@@ -1552,7 +1561,8 @@ class map : public submap_load_listener
         std::vector<item *> place_items( const item_group_id &loc, int chance, const point_bub_ms &p1,
                                          const point_bub_ms &p2, bool ongrass, const time_point &turn,
                                          int magazine = 0, int ammo = 0 ) {
-            return place_items( loc, chance, tripoint_bub_ms( p1, abs_sub.z() ), tripoint_bub_ms( p2, abs_sub.z() ), ongrass,
+            return place_items( loc, chance, tripoint_bub_ms( p1, abs_sub.z() ), tripoint_bub_ms( p2,
+                                abs_sub.z() ), ongrass,
                                 turn, magazine, ammo );
         }
         /**
@@ -1569,12 +1579,15 @@ class map : public submap_load_listener
         // Similar to spawn_an_item, but spawns a list of items, or nothing if the list is empty.
         std::vector<detached_ptr<item>> spawn_items( const tripoint_bub_ms &p,
                                      std::vector<detached_ptr<item>> new_items );
-        std::vector<detached_ptr<item>> spawn_items( const point_bub_ms &p, std::vector<detached_ptr<item>> new_items ) {
+        std::vector<detached_ptr<item>> spawn_items( const point_bub_ms &p,
+        std::vector<detached_ptr<item>> new_items ) {
             return spawn_items( tripoint_bub_ms( p, abs_sub.z() ), std::move( new_items ) );
         }
 
-        void create_anomaly( const tripoint_bub_ms &p, artifact_natural_property prop, bool create_rubble = true );
-        void create_anomaly( const point_bub_ms &cp, artifact_natural_property prop, bool create_rubble = true ) {
+        void create_anomaly( const tripoint_bub_ms &p, artifact_natural_property prop,
+                             bool create_rubble = true );
+        void create_anomaly( const point_bub_ms &cp, artifact_natural_property prop,
+                             bool create_rubble = true ) {
             create_anomaly( tripoint_bub_ms( cp, abs_sub.z() ), prop, create_rubble );
         }
 
@@ -1686,8 +1699,10 @@ class map : public submap_load_listener
 
         // Splatters of various kind
         void add_splatter( const field_type_id &type, const tripoint_bub_ms &where, int intensity = 1 );
-        void add_splatter_trail( const field_type_id &type, const tripoint_bub_ms &from, const tripoint_bub_ms &to );
-        void add_splash( const field_type_id &type, const tripoint_bub_ms &center, int radius, int intensity );
+        void add_splatter_trail( const field_type_id &type, const tripoint_bub_ms &from,
+                                 const tripoint_bub_ms &to );
+        void add_splash( const field_type_id &type, const tripoint_bub_ms &center, int radius,
+                         int intensity );
 
         void propagate_field( const tripoint_bub_ms &center, const field_type_id &type,
                               int amount, int max_intensity = 0 );
@@ -1779,7 +1794,8 @@ class map : public submap_load_listener
         // places an NPC, if static NPCs are enabled or if force is true
         character_id place_npc( const point_bub_ms &p, const string_id<npc_template> &type,
                                 bool force = false );
-        void apply_faction_ownership( const point_bub_ms &p1, const point_bub_ms &p2, const faction_id &id );
+        void apply_faction_ownership( const point_bub_ms &p1, const point_bub_ms &p2,
+                                      const faction_id &id );
         void add_spawn( const mtype_id &type, int count, const tripoint_bub_ms &p,
                         bool friendly = false, int faction_id = -1, int mission_id = -1,
                         const std::string &name = "NONE" ) const;
@@ -1976,7 +1992,8 @@ class map : public submap_load_listener
          * @param temperature flag that overrides temperature processing at certain locations
          */
         template <typename Container>
-        void remove_rotten_items( Container &items, const tripoint_bub_ms &p, temperature_flag temperature );
+        void remove_rotten_items( Container &items, const tripoint_bub_ms &p,
+                                  temperature_flag temperature );
         /**
          * Try to fill funnel based items here. Simulates rain from @p since till now.
          * @param p The location in this map where to fill funnels.
@@ -2004,7 +2021,8 @@ class map : public submap_load_listener
          * Radiation-related plant (and fungus?) death.
          */
         void rad_scorch( const tripoint_bub_ms &p, const time_duration &time_since_last_actualize );
-        void decay_cosmetic_fields( const tripoint_bub_ms &p, const time_duration &time_since_last_actualize );
+        void decay_cosmetic_fields( const tripoint_bub_ms &p,
+                                    const time_duration &time_since_last_actualize );
 
         void player_in_field( player &u );
         void monster_in_field( monster &z );
@@ -2378,13 +2396,15 @@ class map : public submap_load_listener
                 const std::string &flag );
 
         /**returns positions of furnitures with matching flag in the specified radius*/
-        std::list<tripoint_bub_ms> find_furnitures_with_flag_in_radius( const tripoint_bub_ms &center, size_t radius,
+        std::list<tripoint_bub_ms> find_furnitures_with_flag_in_radius( const tripoint_bub_ms &center,
+                size_t radius,
                 const std::string &flag,
                 size_t radiusz = 0 );
         /**returns positions of furnitures or vehicle parts with matching flag in the specified radius*/
-        std::list<tripoint_bub_ms> find_furnitures_or_vparts_with_flag_in_radius( const tripoint_bub_ms &center,
-                size_t radius,
-                const std::string &flag, size_t radiusz = 0 );
+        std::list<tripoint_bub_ms> find_furnitures_or_vparts_with_flag_in_radius(
+            const tripoint_bub_ms &center,
+            size_t radius,
+            const std::string &flag, size_t radiusz = 0 );
         /**returns creatures in specified radius*/
         std::list<Creature *> get_creatures_in_radius( const tripoint_bub_ms &center, size_t radius,
                 size_t radiusz = 0 );
@@ -2443,7 +2463,8 @@ class scoped_map_context
 };
 
 // Shift a square grid bitset (side length `size`, submap stride `multiplier`) by `s` submaps.
-void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier, const point_bub_ms &s );
+void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier,
+                         const point_bub_ms &s );
 
 bool ter_furn_has_flag( const ter_t &ter, const furn_t &furn, ter_bitflags flag );
 class tinymap : public map

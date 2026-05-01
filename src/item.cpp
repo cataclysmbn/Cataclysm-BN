@@ -10320,14 +10320,16 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         if( ( carrier->has_effect( effect_shakes ) && one_in( 10 ) ) ) {
             carrier->add_msg_if_player( m_bad, _( "Your shaking hand causes you to drop your %s." ),
                                         it.tname() );
-            here.add_item_or_charges( tripoint_bub_ms( pos ) + point( rng( -1, 1 ), rng( -1, 1 ) ), std::move( self ) );
+            here.add_item_or_charges( tripoint_bub_ms( pos ) + point( rng( -1, 1 ), rng( -1, 1 ) ),
+                                      std::move( self ) );
             return detached_ptr<item>(); // removes the item that has just been added to the map
         }
 
         if( carrier->has_effect( effect_sleep ) ) {
             carrier->add_msg_if_player( m_bad, _( "You fall asleep and drop your %s." ),
                                         it.tname() );
-            here.add_item_or_charges( tripoint_bub_ms( pos ) + point( rng( -1, 1 ), rng( -1, 1 ) ), std::move( self ) );
+            here.add_item_or_charges( tripoint_bub_ms( pos ) + point( rng( -1, 1 ), rng( -1, 1 ) ),
+                                      std::move( self ) );
             self = detached_ptr<item>();
         }
     } else {
@@ -10397,7 +10399,8 @@ detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, player *
         extinguish = true;
         submerged = true;
     }
-    if( ( !in_inv && here.has_flag( flag_LIQUID, tripoint_bub_ms( pos ) ) && !here.veh_at( tripoint_bub_ms( pos ) ) ) ||
+    if( ( !in_inv && here.has_flag( flag_LIQUID, tripoint_bub_ms( pos ) ) &&
+          !here.veh_at( tripoint_bub_ms( pos ) ) ) ||
         ( precipitation && !g->is_sheltered( pos ) ) ) {
         extinguish = true;
     }

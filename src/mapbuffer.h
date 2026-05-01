@@ -260,7 +260,7 @@ class mapbuffer
             std::vector<std::pair<tripoint_abs_sm, std::unique_ptr<submap>>> &out,
             const std::function<bool( const tripoint_abs_sm & )> &skip_if = nullptr );
         void save_omt( const tripoint_abs_omt &omt_addr, std::list<tripoint_abs_sm> &submaps_to_delete,
-                        bool delete_after_save );
+                       bool delete_after_save );
         submap_map_t submaps;
 
         /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).

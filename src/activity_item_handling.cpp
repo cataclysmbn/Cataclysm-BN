@@ -3198,7 +3198,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                         return SKIP_LOCATION;
                     }
                     act_prev.coords.push_back( here.bub_to_abs( candidates[std::max( 0,
-                                                                      static_cast<int>( candidates.size() / 2 ) )] ) );
+                                                         static_cast<int>( candidates.size() / 2 ) )] ) );
                 }
                 act_prev.placement = src;
             }

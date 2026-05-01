@@ -223,7 +223,7 @@ submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
     }
 
     std::vector<std::pair<tripoint_abs_sm, std::unique_ptr<submap>>> loaded;
-    auto already_loaded = [this]( const tripoint_abs_sm &q ) {
+    auto already_loaded = [this]( const tripoint_abs_sm & q ) {
         return lookup_submap_in_memory( q ) != nullptr;
     };
 
@@ -395,8 +395,9 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
     } );
 }
 
-void mapbuffer::save_omt( const tripoint_abs_omt &omt_addr, std::list<tripoint_abs_sm> &submaps_to_delete,
-                           bool delete_after_save )
+void mapbuffer::save_omt( const tripoint_abs_omt &omt_addr,
+                          std::list<tripoint_abs_sm> &submaps_to_delete,
+                          bool delete_after_save )
 {
     ZoneScoped;
     // Build the 4 submap addresses that form this OMT omt.

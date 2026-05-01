@@ -127,7 +127,8 @@ class vehicle_stack : public item_stack
         vehicle *myorigin;
         int part_num;
     public:
-        vehicle_stack( location_vector<item> *newstack, tripoint_bub_ms newloc, vehicle *neworigin, int part ) :
+        vehicle_stack( location_vector<item> *newstack, tripoint_bub_ms newloc, vehicle *neworigin,
+                       int part ) :
             item_stack( newstack ), location( newloc ), myorigin( neworigin ), part_num( part ) {}
         iterator erase( const_iterator it, detached_ptr<item> *out = nullptr ) override;
         detached_ptr<item> remove( item *to_remove ) override;
@@ -529,7 +530,8 @@ class vehicle
 
         // damages all parts of a vehicle by a random amount
         void smash( map &m, float hp_percent_loss_min = 0.1f, float hp_percent_loss_max = 1.2f,
-                    float percent_of_parts_to_affect = 1.0f, tripoint_rel_ms damage_origin = tripoint_rel_ms::zero(), float damage_size = 0 );
+                    float percent_of_parts_to_affect = 1.0f, tripoint_rel_ms damage_origin = tripoint_rel_ms::zero(),
+                    float damage_size = 0 );
 
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );
@@ -724,7 +726,8 @@ class vehicle
 
         // returns index of part, inner to given, with certain flag, or -1
         int avail_part_with_feature( int p, const std::string &f, bool unbroken ) const;
-        int avail_part_with_feature( const tripoint_mnt_veh &pt, const std::string &f, bool unbroken ) const;
+        int avail_part_with_feature( const tripoint_mnt_veh &pt, const std::string &f,
+                                     bool unbroken ) const;
         int avail_part_with_feature( int p, vpart_bitflags f, bool unbroken ) const;
 
         int obstacle_at_position( const tripoint_mnt_veh &pos ) const;
@@ -811,11 +814,13 @@ class vehicle
                               tripoint_rel_ms &q ) const;
 
         // Translate rotated tile coordinates "p" into mount coordinates "q" using given pivot direction and anchor
-        void coord_translate_reverse( units::angle dir, const tripoint_mnt_veh &pivot, const tripoint_rel_ms &p,
+        void coord_translate_reverse( units::angle dir, const tripoint_mnt_veh &pivot,
+                                      const tripoint_rel_ms &p,
                                       tripoint_mnt_veh &q ) const;
 
         tripoint_bub_ms mount_to_bubble( const tripoint_mnt_veh &mount ) const;
-        tripoint_bub_ms mount_to_bubble( const tripoint_mnt_veh &mount, const tripoint_rel_veh &offset ) const;
+        tripoint_bub_ms mount_to_bubble( const tripoint_mnt_veh &mount,
+                                         const tripoint_rel_veh &offset ) const;
 
         //Translate tile coordinates into mount coordinates
         tripoint_mnt_veh bubble_to_mount( const tripoint_bub_ms &p ) const;
@@ -1713,7 +1718,8 @@ class vehicle
         mutable tripoint_mnt_veh mount_min;
         mutable tripoint_mnt_veh mass_center_precalc;
         mutable tripoint_mnt_veh mass_center_no_precalc;
-        tripoint_abs_ms autodrive_local_target = tripoint_abs_ms::zero(); // current node the autopilot is aiming for
+        tripoint_abs_ms autodrive_local_target =
+            tripoint_abs_ms::zero(); // current node the autopilot is aiming for
         class autodrive_controller;
         std::shared_ptr<autodrive_controller> active_autodrive_controller;
 
