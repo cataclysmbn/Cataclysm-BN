@@ -33,13 +33,6 @@ namespace
 
 #if defined( TILES )
 
-struct loading_image_cache {
-    std::string path;
-    SDL_Texture_Ptr texture;
-    point image_size = point_zero;
-    bool attempted = false;
-};
-
 auto log_loading_image( const std::string &message ) -> void
 {
     static auto logged_messages = std::unordered_set<std::string> {};
@@ -48,17 +41,18 @@ auto log_loading_image( const std::string &message ) -> void
     }
 }
 
-auto get_loading_image_search_roots( const MOD_INFORMATION &mod ) -> std::vector<std::string>
+auto get_loading_image_search_roots( const MOD_INFORMATION &mod ) -> std::unordered_set<std::string>
 {
     using namespace std::views;
 
     const auto modinfo_root = mod.path_full.empty() ? std::string{} :
                               std::filesystem::path( mod.path_full ).parent_path().generic_string();
 
-    return std::vector<std::string> { mod.path, modinfo_root }
+    const auto root_paths = std::array<std::string, 2> { mod.path, modinfo_root };
+    return root_paths
     | filter( []( const std::string & root_path ) { return !root_path.empty(); } )
     | transform( []( const std::string & root_path ) { return std::filesystem::path( root_path ).lexically_normal().generic_string(); } )
-    | std::ranges::to<std::vector>();
+    | std::ranges::to<std::unordered_set>();
 }
 
 auto path_is_inside_root( const std::filesystem::path &root_path,
@@ -120,7 +114,8 @@ auto get_loading_image_matches_at_root( const std::string &image_name,
     }
 
     const auto normalized_direct_path = direct_path.generic_string();
-    if( file_exist( normalized_direct_path ) ) {
+    if( file_exist( normalized_direct_path ) &&
+        has_loading_image_extension( normalized_direct_path ) ) {
         return { normalized_direct_path };
     }
     if( dir_exist( normalized_direct_path ) ) {
@@ -132,8 +127,18 @@ auto get_loading_image_matches_at_root( const std::string &image_name,
         return {};
     }
 
-    return get_files_from_path( image_filename, root_path, true )
-    | filter( [&normalized_root]( const std::string & path ) { return path_is_inside_root( normalized_root, std::filesystem::path( path ) ); } )
+    const auto author_prefixed_filename = "_" + image_filename;
+
+    return get_files_from_path( image_filename, root_path, true, true )
+           | filter( [&normalized_root, &image_filename,
+                      &author_prefixed_filename]( const std::string & path ) {
+        const auto normalized_path = std::filesystem::path( path ).lexically_normal();
+        const auto filename = normalized_path.filename().generic_string();
+        return path_is_inside_root( normalized_root, normalized_path )
+               && file_exist( path )
+               && has_loading_image_extension( path )
+               && ( filename == image_filename || filename.ends_with( author_prefixed_filename ) );
+    } )
     | std::ranges::to<std::vector>();
 }
 
@@ -156,35 +161,33 @@ auto get_loading_image_matches_for_mod( const MOD_INFORMATION *mod ) -> std::vec
     | std::ranges::to<std::vector>();
 }
 
-auto get_loading_image_paths( const std::vector<mod_id> &mods ) -> std::vector<std::string>
+auto get_loading_image_paths( const std::vector<mod_id> &mods ) -> std::unordered_set<std::string>
 {
     using namespace cata::ranges;
     using namespace std::views;
 
-    const auto valid_mods = mods
+    return mods
     | filter( []( const mod_id & mod ) { return mod.is_valid(); } )
     | transform( []( const mod_id & mod ) { return &*mod; } )
-    | std::ranges::to<std::vector>();
-
-    return valid_mods
     | filter( []( const MOD_INFORMATION * mod ) { return !mod->loading_images.empty(); } )
     | flat_map( get_loading_image_matches_for_mod )
-    | std::ranges::to<std::vector>();
+    | std::ranges::to<std::unordered_set>();
 }
 
-auto choose_loading_image_path() -> std::string
+auto choose_loading_image_paths() -> std::vector<std::string>
 {
     if( !can_choose_loading_image_path() ) { return {}; }
 
     const auto &world_info = *world_generator->active_world->info;
-    const auto candidates = get_loading_image_paths( world_info.active_mod_order );
-    return random_entry( candidates, std::string() );
+    const auto candidate_set = get_loading_image_paths( world_info.active_mod_order );
+    auto candidates = std::vector<std::string>( candidate_set.begin(), candidate_set.end() );
+    std::shuffle( candidates.begin(), candidates.end(), rng_get_engine() );
+    return candidates;
 }
 
-auto get_loading_image_cache( const std::string &loading_image_path ) -> const loading_image_cache *
+auto get_loading_image_cache( loading_image_cache &cache,
+                              const std::string &loading_image_path ) -> const loading_image_cache *
 {
-    static loading_image_cache cache;
-
     if( loading_image_path.empty() ) {
         cache = {};
         return nullptr;
@@ -247,16 +250,6 @@ auto get_loading_image_rect( const point &image_size ) -> std::optional<SDL_Rect
     return rect;
 }
 
-auto draw_loading_image( const std::string &loading_image_path ) -> bool
-{
-    const auto *const cache = get_loading_image_cache( loading_image_path );
-    if( cache == nullptr ) { return false; }
-
-    return get_loading_image_rect( cache->image_size )
-    .transform( [cache]( const SDL_Rect & rect ) { RenderCopy( get_sdl_renderer(), cache->texture, nullptr, &rect ); return true; } )
-    .value_or( false );
-}
-
 auto draw_loading_image_author( const std::string &author ) -> bool
 {
     if( author.empty() ) { return false; }
@@ -294,16 +287,55 @@ auto draw_loading_image_author_if_present( const std::optional<std::string> &aut
 
 } // namespace
 
+#if defined( TILES )
+auto loading_image_splash::advance_loading_image() -> bool
+{
+    if( next_loading_image_path >= loading_image_paths.size() ) {
+        loading_image_path.clear();
+        loading_image_author.reset();
+        return false;
+    }
+
+    loading_image_path = loading_image_paths[next_loading_image_path++];
+    loading_image_author = get_loading_image_author( loading_image_path );
+    return true;
+}
+
+auto loading_image_splash::draw_current_loading_image() -> bool
+{
+    while( !loading_image_path.empty() ) {
+        const auto *const cache = get_loading_image_cache( loading_image_cache_state, loading_image_path );
+        if( cache != nullptr ) {
+            return get_loading_image_rect( cache->image_size )
+            .transform( [cache]( const SDL_Rect & rect ) {
+                RenderCopy( get_sdl_renderer(), cache->texture, nullptr, &rect );
+                return true;
+            } ).value_or( false );
+        }
+        if( !advance_loading_image() ) {
+            break;
+        }
+    }
+
+    return false;
+}
+#endif
+
 loading_image_splash::loading_image_splash()
 {
+    if( !get_option<bool>( "LOADING_SCREEN_IMAGES" ) ) {
+        return;
+    }
+
     ui_background = std::make_unique<background_pane>( [this]() {
 #if defined( TILES )
         if( !this->loading_image_lookup_attempted && can_choose_loading_image_path() ) {
-            loading_image_path = choose_loading_image_path();
-            loading_image_author = get_loading_image_author( loading_image_path );
+            loading_image_paths = choose_loading_image_paths();
+            next_loading_image_path = 0;
             this->loading_image_lookup_attempted = true;
+            advance_loading_image();
         }
-        if( draw_loading_image( loading_image_path ) ) {
+        if( draw_current_loading_image() ) {
             draw_loading_image_author_if_present( loading_image_author );
         }
 #endif

@@ -206,9 +206,12 @@ static void InitSDL()
 
     // cata_tiles won't be able to load the tiles, but the normal SDL
     // code will display fine.
-    ret = IMG_Init( IMG_INIT_PNG );
+    const auto image_init_flags = IMG_INIT_PNG | IMG_INIT_WEBP;
+    ret = IMG_Init( image_init_flags );
     printErrorIf( ( ret & IMG_INIT_PNG ) != IMG_INIT_PNG,
                   "IMG_Init failed to initialize PNG support, tiles won't work" );
+    printErrorIf( ( ret & IMG_INIT_WEBP ) != IMG_INIT_WEBP,
+                  "IMG_Init failed to initialize WebP support, some loading images won't work" );
 
     ret = SDL_InitSubSystem( SDL_INIT_JOYSTICK );
     printErrorIf( ret != 0, "Initializing joystick subsystem failed" );

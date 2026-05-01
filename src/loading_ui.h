@@ -1,8 +1,22 @@
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
+
+#if defined( TILES )
+#include "point.h"
+#include "sdl_wrappers.h"
+
+struct loading_image_cache {
+    std::string path;
+    SDL_Texture_Ptr texture;
+    point image_size = point_zero;
+    bool attempted = false;
+};
+#endif
 
 class background_pane;
 class loading_image_splash;
@@ -16,6 +30,14 @@ class loading_image_splash
         std::string loading_image_path;
         std::optional<std::string> loading_image_author;
         bool loading_image_lookup_attempted = false;
+#if defined( TILES )
+        std::vector<std::string> loading_image_paths;
+        std::size_t next_loading_image_path = 0;
+        loading_image_cache loading_image_cache_state;
+
+        auto advance_loading_image() -> bool;
+        auto draw_current_loading_image() -> bool;
+#endif
 
     public:
         loading_image_splash();
