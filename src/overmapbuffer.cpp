@@ -779,7 +779,7 @@ void overmapbuffer::move_vehicle( vehicle *veh, const point_abs_ms &old_msp )
 
 void overmapbuffer::remove_vehicle( const vehicle *veh )
 {
-    const tripoint_abs_omt omt = veh->abs_omt_location();
+    const tripoint_abs_omt omt = project_to<coords::omt>( veh->abs_ms_location() );
     const overmap_with_local_coords om_loc = get_existing_om_global( omt );
     if( !om_loc.om ) {
         debugmsg( "Can't find overmap for vehicle at %s", omt.to_string() );
@@ -790,7 +790,7 @@ void overmapbuffer::remove_vehicle( const vehicle *veh )
 
 void overmapbuffer::add_vehicle( vehicle *veh )
 {
-    const tripoint_abs_omt omt = veh->abs_omt_location();
+    const tripoint_abs_omt omt = project_to<coords::omt>( veh->abs_ms_location() );
     const overmap_with_local_coords om_loc = get_existing_om_global( omt );
     if( !om_loc.om ) {
         debugmsg( "Can't find overmap for vehicle at %s", omt.to_string() );

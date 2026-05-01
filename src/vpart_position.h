@@ -88,7 +88,6 @@ class vpart_position
          * Returns the mount point: the point in the vehicles own coordinate system.
          * This system is independent of movement / rotation.
          */
-        // TODO: change to return tripoint.
         tripoint_mnt_veh mount() const;
 };
 

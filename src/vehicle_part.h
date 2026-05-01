@@ -41,7 +41,7 @@ struct vehicle_part {
         vehicle_part();
         vehicle_part( vehicle * );
 
-        vehicle_part( const vpart_id &vp, tripoint_mnt_veh dp, detached_ptr<item> &&obj, vehicle * );
+        vehicle_part( const vpart_id &vp, const tripoint_mnt_veh &dp, detached_ptr<item> &&obj, vehicle * );
         vehicle_part( const vehicle_part &, vehicle * );
 
         vehicle_part( vehicle_part && );
@@ -165,7 +165,7 @@ struct vehicle_part {
         void unset_crew();
 
         /** Reset the target for this part. */
-        void reset_target( const tripoint &pos );
+        void reset_target( const tripoint_abs_ms &pos );
 
         /**
          * @name Part capabilities
