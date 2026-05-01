@@ -9123,7 +9123,7 @@ static auto find_visible_vehicles( avatar &viewer, map &here, int radius ) -> ve
             if( vpr.part().removed ) {
                 continue;
             }
-            const tripoint_bub_ms part_pos = veh->global_part_pos3( vpr.part() );
+            const tripoint_bub_ms part_pos = veh->bub_part_location( vpr.part() );
             const int dist = rl_dist( viewer.bub_pos(), part_pos.raw() );
             if( dist > radius || !viewer.sees( part_pos.raw() ) ) {
                 continue;

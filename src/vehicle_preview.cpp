@@ -96,7 +96,7 @@ class veh_preview_adapter : public cata_tiles
          */
         static color_tint_pair get_part_colors( const vehicle &veh, int part_idx ) {
             map &here = get_map();
-            const tripoint part_pos = veh.global_part_pos3( part_idx );
+            const tripoint part_pos = veh.bub_part_location( part_idx );
             const optional_vpart_position vp = here.veh_at( part_pos );
             return cata_tiles::get_vpart_color( vp, here, part_pos );
         }

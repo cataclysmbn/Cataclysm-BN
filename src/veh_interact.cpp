@@ -166,7 +166,7 @@ std::unique_ptr<player_activity> veh_interact::serialize_activity()
 
     // if we're working on an existing part, use that part as the reference point
     // otherwise (e.g. installing a new frame), just use part 0
-    const tripoint q = here.getabs( veh->global_part_pos3( pt ? *pt : veh->part( 0 ) ) );
+    const tripoint q = here.getabs( veh->bub_part_location( pt ? *pt : veh->part( 0 ) ) );
     const vehicle_part *vpt = pt ? pt : &veh->part( 0 );
     for( const tripoint &p : veh->get_points( true ) ) {
         res->coord_set.insert( here.getabs( p ) );
@@ -3460,7 +3460,7 @@ void veh_interact::complete_vehicle( Character &who )
                 here.reset_vehicle_cache( );
             } else {
                 point mount = veh->part( vehicle_part ).mount;
-                const tripoint &part_pos = veh->global_part_pos3( vehicle_part );
+                const tripoint &part_pos = veh->bub_part_location( vehicle_part );
                 veh->remove_part( vehicle_part );
                 // part_removal_cleanup calls refresh, so parts_at_relative is valid
                 veh->part_removal_cleanup();

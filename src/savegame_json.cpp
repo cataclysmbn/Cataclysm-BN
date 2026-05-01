@@ -3130,7 +3130,7 @@ void vehicle::deserialize( JsonIn &jsin )
         install_part( vp.mount(), vpart_id( "turret_mount" ), false );
 
         //Forcibly set turrets' targeting mode to manual if no turret control unit is present on turret's tile on loading save
-        if( !has_part( global_part_pos3( vp.part() ), "TURRET_CONTROLS" ) ) {
+        if( !has_part( bub_part_location( vp.part() ), "TURRET_CONTROLS" ) ) {
             vp.part().enabled = false;
         }
         //Set turret control unit's state equal to turret's targeting mode on loading save
@@ -3264,7 +3264,7 @@ void vehicle::serialize( JsonOut &json ) const
     if( is_towed() ) {
         vehicle *tower = tow_data.get_towed_by();
         if( tower ) {
-            other_tow_temp_point = tower->global_part_pos3( tower->get_tow_part() );
+            other_tow_temp_point = tower->bub_part_location( tower->get_tow_part() );
         }
     }
     json.member( "other_tow_point", other_tow_temp_point );

@@ -292,8 +292,7 @@ void overmapbuffer::fix_npcs( overmap &new_overmap )
                 project_to<coords::sm>( loc + point_south_east ) - point_south_east;
             npc_sm.x() = clamp( npc_sm.x(), min.x(), max.x() );
             npc_sm.y() = clamp( npc_sm.y(), min.y(), max.y() );
-            // TODO: fix point types
-            np.spawn_at_sm( tripoint_abs_sm( npc_sm, np.posz() ).raw() );
+            np.spawn_at_sm( tripoint_abs_sm( npc_sm, np.bub_pos().z() ) );
             new_overmap.npcs.push_back( ptr );
             continue;
         }
@@ -1917,25 +1916,16 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
     std::for_each( monster_bucket.first, monster_bucket.second,
     [&]( std::pair<const tripoint_om_sm, monster> &monster_entry ) {
         monster &this_monster = monster_entry.second;
-        // The absolute position in map squares, (x,y) is already global, but it's a
-        // submap coordinate, so translate it and add the exact monster position on
-        // the submap. modulo because the zombies position might be negative, as it
-        // is stored *after* it has gone out of bounds during shifting. When reloading
-        // we only need the part that tells where on the submap to put it.
-        point ms( modulo( this_monster.posx(), SEEX ), modulo( this_monster.posy(), SEEY ) );
-        assert( ms.x >= 0 && ms.x < SEEX );
-        assert( ms.y >= 0 && ms.y < SEEX );
-        // TODO: fix point types
-        ms += project_to<coords::ms>( p.xy() ).raw();
+        const auto proj = project_remain<coords::sm>( this_monster.bub_pos() );
+        const auto ms = project_combine( p, proj.remainder );
         const map &here = get_map();
-        // The monster position must be local to the main map when added to the game
-        const tripoint local = tripoint( here.getlocal( ms ), p.z() );
+        const auto local = here.abs_to_bub( ms );
         assert( here.inbounds( local ) );
         monster *const placed = g->place_critter_at( make_shared_fast<monster>( this_monster ),
-                                local );
+                                local.raw() );
         if( placed ) {
             // Keep pos_abs in sync with the placed local position.
-            placed->pos_abs = tripoint_abs_ms( ms.x, ms.y, p.z() );
+            placed->pos_abs = ms;
             placed->on_load();
         }
     } );

@@ -6662,7 +6662,7 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
 
     for( std::vector<int>::const_iterator part = frame_indices.begin();
          part != frame_indices.end(); part++ ) {
-        const auto p = veh->global_part_pos3( *part );
+        const auto p = veh->bub_part_location( *part );
 
         //Don't spawn anything in water
         if( has_flag_ter( TFLAG_DEEP_WATER, p ) && !can_float ) {
@@ -6708,12 +6708,12 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
             std::unique_ptr<vehicle> old_veh = detach_vehicle( other_veh );
 
             for( const vpart_reference &vpr : veh->get_all_parts() ) {
-                const tripoint_mnt_veh part_pos = veh->bubble_to_mount( veh->global_part_pos3( vpr.part() ) );
+                const tripoint_mnt_veh part_pos = veh->bubble_to_mount( veh->bub_part_location( vpr.part() ) );
                 wreckage->install_part( part_pos, std::move( vpr.part() ) );
             }
 
             for( const vpart_reference &vpr : old_veh->get_all_parts() ) {
-                const tripoint_mnt_veh part_pos = veh->bubble_to_mount( veh->global_part_pos3( vpr.part() ) );
+                const tripoint_mnt_veh part_pos = veh->bubble_to_mount( veh->bub_part_location( vpr.part() ) );
                 wreckage->install_part( part_pos, vehicle_part{vpr.part(), &*wreckage} );
             }
 
@@ -7661,10 +7661,10 @@ bool run_mapgen_func( const std::string &mapgen_id, mapgendata &dat )
     return oter_mapgen.generate( dat, mapgen_id );
 }
 
-auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint &om_addr ) -> bool
+auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint_abs_omt &omt_addr ) -> bool
 {
     overmapbuffer &omap = get_overmapbuffer( dim_id );
-    const oter_id terrain_type = omap.ter( tripoint_abs_omt( om_addr ) );
+    const oter_id terrain_type = omap.ter( omt_addr );
     return oter_mapgen.has_lua_generator( terrain_type->get_mapgen_id() );
 }
 

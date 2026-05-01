@@ -1761,7 +1761,7 @@ float map::vehicle_wheel_traction( const vehicle &veh,
     }
 
     for( int p : wheel_indices ) {
-        const tripoint &pp = veh.global_part_pos3( p );
+        const tripoint &pp = veh.bub_part_location( p );
         const int wheel_area = veh.cpart( p ).wheel_area();
 
         const auto &tr = ter( pp ).obj();
@@ -1812,7 +1812,7 @@ units::angle map::shake_vehicle( vehicle &veh, const int velocity_before,
             continue;
         }
 
-        const tripoint part_pos = veh.global_part_pos3( ps );
+        const tripoint part_pos = veh.bub_part_location( ps );
         if( rider->pos() != part_pos ) {
             debugmsg( "throw passenger: passenger at %d,%d,%d, part at %d,%d,%d",
                       rider->posx(), rider->posy(), rider->posz(),

@@ -1377,7 +1377,7 @@ void npc::execute_action( npc_action action )
 
                 const int cur_part = seats[i].second;
 
-                tripoint_bub_ms pp = veh->global_part_pos3( cur_part );
+                tripoint_bub_ms pp = veh->bub_part_location( cur_part );
                 update_path( pp.raw(), true );
                 if( !path.empty() ) {
                     // All is fine

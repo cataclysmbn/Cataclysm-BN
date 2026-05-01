@@ -809,18 +809,18 @@ class vehicle
         bool part_flag( int p, vpart_bitflags f ) const;
 
         // Translate mount coordinates "p" using current pivot direction and anchor and return tile coordinates
-        tripoint_mnt_veh coord_translate( tripoint_mnt_veh p ) const;
+        tripoint_rel_ms coord_translate( const tripoint_mnt_veh &p ) const;
 
         // Translate mount coordinates "p" into tile coordinates "q" using given pivot direction and anchor
-        void coord_translate( units::angle dir, point_rel_veh pivot, tripoint_mnt_veh p,
-                              tripoint_bub_ms &q ) const;
+        void coord_translate( units::angle dir, const tripoint_mnt_veh &pivot, const tripoint_mnt_veh &p,
+                              tripoint_rel_ms &q ) const;
 
         // Translate rotated tile coordinates "p" into mount coordinates "q" using given pivot direction and anchor
-        void coord_translate_reverse( units::angle dir, point_rel_veh pivot, const tripoint_bub_ms &p,
+        void coord_translate_reverse( units::angle dir, const tripoint_mnt_veh &pivot, const tripoint_rel_ms &p,
                                       tripoint_mnt_veh &q ) const;
 
-        tripoint_bub_ms mount_to_bubble( tripoint_mnt_veh mount ) const;
-        tripoint_bub_ms mount_to_bubble( tripoint_mnt_veh mount, tripoint_rel_veh offset ) const;
+        tripoint_bub_ms mount_to_bubble( const tripoint_mnt_veh &mount ) const;
+        tripoint_bub_ms mount_to_bubble( const tripoint_mnt_veh &mount, const tripoint_rel_veh &offset ) const;
 
         //Translate tile coordinates into mount coordinates
         tripoint_mnt_veh bubble_to_mount( const tripoint_bub_ms &p ) const;
@@ -860,7 +860,7 @@ class vehicle
         void refresh_position();
 
         // Pre-calculate mount points for (idir=0) - current direction or (idir=1) - next turn direction
-        void precalc_mounts( int idir, units::angle dir, point_rel_veh pivot );
+        void precalc_mounts( int idir, units::angle dir, const tripoint_mnt_veh &pivot );
 
         // get a list of part indices where is a passenger inside
         std::vector<int> boarded_parts() const;
@@ -876,15 +876,13 @@ class vehicle
         bool enclosed_at( const tripoint_bub_ms &pos ); // not const because it calls refresh_insides
         // Returns the location of the vehicle in global map square coordinates.
         tripoint_abs_ms abs_ms_location() const;
-        // Returns the location of the vehicle in global overmap terrain coordinates.
-        tripoint_abs_omt abs_omt_location() const;
         // Returns the coordinates (in map squares) of the vehicle relative to the local map.
         tripoint_bub_ms bub_ms_location() const;
         /**
          * Get the coordinates of the studied part of the vehicle
          */
-        tripoint_bub_ms global_part_pos3( const int &index ) const;
-        tripoint_bub_ms global_part_pos3( const vehicle_part &pt ) const;
+        tripoint_bub_ms bub_part_location( const int &index ) const;
+        tripoint_bub_ms bub_part_location( const vehicle_part &pt ) const;
         /**
          * All the fuels that are in all the tanks in the vehicle, nicely summed up.
          * Note that empty tanks don't count at all. The value is the amount as it would be
@@ -982,12 +980,12 @@ class vehicle
 
         // Get the pivot point of vehicle; coordinates are unrotated mount coordinates.
         // This may result in refreshing the pivot point if it is currently stale.
-        point_rel_veh pivot_point() const;
+        tripoint_rel_veh pivot_point() const;
 
         // Get the (artificial) displacement of the vehicle due to the pivot point changing
         // between precalc[0] and precalc[1]. This needs to be subtracted from any actual
         // vehicle motion after precalc[1] is prepared.
-        point_rel_veh pivot_displacement() const;
+        tripoint_rel_ms pivot_displacement() const;
 
         // Get combined power of all engines, the ideal amount of power, not the current power
         int ideal_engine_power( bool safe = false ) const;
@@ -1797,7 +1795,7 @@ class vehicle
         tripoint_mnt_veh front_right;
         towing_data tow_data;
         // points used for rotation of mount precalc values
-        std::array<point_rel_veh, 2> pivot_anchor;
+        std::array<tripoint_mnt_veh, 2> pivot_anchor;
         // frame direction
         tileray face;
         // direction we are moving

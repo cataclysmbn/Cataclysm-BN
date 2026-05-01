@@ -176,7 +176,7 @@ static void put_into_vehicle( Character &c, item_drop_reason reason,
         return;
     }
 
-    const tripoint_bub_ms where = veh.global_part_pos3( part );
+    const tripoint_bub_ms where = veh.bub_part_location( part );
     map &here = get_map();
     const std::string ter_name = here.name( where.raw() );
     int fallen_count = 0;

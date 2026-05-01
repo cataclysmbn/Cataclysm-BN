@@ -403,7 +403,7 @@ TEST_CASE( "monster_vertical_melee_respects_floors", "[monster][z-level]" )
         const auto cockpit_part = blimp->part_with_feature( point_zero, "BOARDABLE", true );
         REQUIRE( cockpit_part != -1 );
 
-        const auto blimp_tile = blimp->global_part_pos3( cockpit_part );
+        const auto blimp_tile = blimp->bub_part_location( cockpit_part );
         you.setpos( blimp_tile );
         grabber.setpos( blimp_tile + tripoint_below );
 

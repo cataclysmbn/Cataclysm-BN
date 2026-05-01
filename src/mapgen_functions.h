@@ -23,7 +23,7 @@ class JsonObject;
  * Calculates the coordinates of a rotated point.
  * Should match the `mapgen_*` rotation.
  */
-tripoint rotate_point( const tripoint &p, int rotations );
+tripoint_bub_ms rotate_point( const tripoint_bub_ms &p, int rotations );
 
 int terrain_type_to_nesw_array( oter_id terrain_type, bool array[4] );
 
@@ -54,8 +54,8 @@ void mapgen_river_straight( mapgendata &dat );
 void mapgen_river_curved( mapgendata &dat );
 void mapgen_river_shore( mapgendata &dat );
 void mapgen_parking_lot( mapgendata &dat );
-void mapgen_cave( mapgendata &dat );
-void mapgen_cave_rat( mapgendata &dat );
+//void mapgen_cave( mapgendata &dat );
+//void mapgen_cave_rat( mapgendata &dat );
 void mapgen_cavern( mapgendata &dat );
 void mapgen_rock( mapgendata &dat );
 void mapgen_rock_partial( mapgendata &dat );
@@ -86,7 +86,7 @@ bool run_mapgen_func( const std::string &mapgen_id, mapgendata &dat );
  * Used by mapbuffer::generate_omt() to detect whether a omt must be
  * deferred to the main thread (Lua is not reentrant on worker threads).
  */
-auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint &om_addr ) -> bool;
+auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint_abs_omt &om_addr ) -> bool;
 std::pair<std::map<ter_id, int>, std::map<furn_id, int>> get_changed_ids_from_update(
             const std::string &update_mapgen_id );
 mapgen_parameters get_map_special_params( const std::string &mapgen_id );

@@ -128,7 +128,7 @@ TEST_CASE( "npc_muscle_engine_fuel_availability", "[vehicle][muscle][npc]" )
             }
 
             // Position NPC at rear seat and board them
-            const tripoint rear_seat_pos = veh_ptr->global_part_pos3( rear_seat_part );
+            const tripoint rear_seat_pos = veh_ptr->bub_part_location( rear_seat_part );
             test_npc.setpos( rear_seat_pos );
             here.board_vehicle( rear_seat_pos, &test_npc );
             REQUIRE( test_npc.in_vehicle );
@@ -226,7 +226,7 @@ TEST_CASE( "player_and_npc_muscle_power_combined", "[vehicle][muscle][npc][playe
         REQUIRE( player.in_vehicle );
 
         // Position NPC at rear seat and board them
-        const tripoint rear_seat_pos = veh_ptr->global_part_pos3( rear_seat_part );
+        const tripoint rear_seat_pos = veh_ptr->bub_part_location( rear_seat_part );
         test_npc.setpos( rear_seat_pos );
         here.board_vehicle( rear_seat_pos, &test_npc );
         REQUIRE( test_npc.in_vehicle );
@@ -282,7 +282,7 @@ TEST_CASE( "npc_muscle_engine_energy_consumption", "[vehicle][muscle][npc][energ
         }
         REQUIRE( seat_part >= 0 );
 
-        const tripoint seat_pos = veh_ptr->global_part_pos3( seat_part );
+        const tripoint seat_pos = veh_ptr->bub_part_location( seat_part );
         test_npc.setpos( seat_pos );
         here.board_vehicle( seat_pos, &test_npc );
         REQUIRE( test_npc.in_vehicle );
@@ -334,7 +334,7 @@ TEST_CASE( "npc_muscle_engine_with_disabled_needs", "[vehicle][muscle][npc][ener
         }
         REQUIRE( seat_part >= 0 );
 
-        const tripoint seat_pos = veh_ptr->global_part_pos3( seat_part );
+        const tripoint seat_pos = veh_ptr->bub_part_location( seat_part );
         test_npc.setpos( seat_pos );
         here.board_vehicle( seat_pos, &test_npc );
         REQUIRE( test_npc.in_vehicle );
@@ -392,7 +392,7 @@ TEST_CASE( "npc_muscle_engine_broken_limbs", "[.][vehicle][muscle][npc][injury]"
         }
         REQUIRE( seat_part >= 0 );
 
-        const tripoint seat_pos = veh_ptr->global_part_pos3( seat_part );
+        const tripoint seat_pos = veh_ptr->bub_part_location( seat_part );
         test_npc.setpos( seat_pos );
         here.board_vehicle( seat_pos, &test_npc );
         REQUIRE( test_npc.in_vehicle );

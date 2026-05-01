@@ -210,7 +210,7 @@ void vehicle::control_doors()
 
             int val = doors_with_motors.size();
             doors_with_motors.push_back( door );
-            locations.push_back( global_part_pos3( p ) );
+            locations.push_back( bub_part_location( p ) );
             const char *actname = parts[door].open ? _( "Close" ) : _( "Open" );
             pmenu.addentry( val, true, MENU_AUTOASSIGN, "%s %s", actname, parts[ door ].name() );
         }
@@ -1004,7 +1004,7 @@ bool vehicle::fold_up()
         folding_veh_item->set_var( "description", string_format( _( "A folded %s." ), name ) );
     }
 
-    g->m.add_item_or_charges( global_part_pos3( 0 ), std::move( folding_veh_item ) );
+    g->m.add_item_or_charges( bub_part_location( 0 ), std::move( folding_veh_item ) );
     g->m.destroy_vehicle( this );
 
     // TODO: take longer to fold bigger vehicles
@@ -1095,7 +1095,7 @@ bool vehicle::start_engine( const int e )
     const int start_moves = engine_start_time( e );
     const int noise = einfo.engine_noise_factor();
 
-    const tripoint pos = global_part_pos3( engines[e] );
+    const tripoint pos = bub_part_location( engines[e] );
     if( einfo.engine_backfire_threshold() ) {
         if( ( 1 - dmg ) < einfo.engine_backfire_threshold() && one_in( einfo.engine_backfire_freq() ) ) {
             backfire( e );
@@ -1212,7 +1212,7 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
     for( size_t e = 0; e < engines.size(); ++e ) {
         if( !has_starting_engine_position && !parts[ engines[ e ] ].is_broken() &&
             parts[ engines[ e ] ].enabled ) {
-            starting_engine_position = global_part_pos3( engines[ e ] );
+            starting_engine_position = bub_part_location( engines[ e ] );
             has_starting_engine_position = true;
         }
         has_engine = has_engine || is_engine_on( e );
@@ -1530,11 +1530,11 @@ void vehicle::operate_scoop()
                 _( "Whirrrr" ), _( "Ker-chunk" ), _( "Swish" ), _( "Cugugugugug" )
             }
         };
-        sounds::sound( global_part_pos3( scoop ), rng( 20, 35 ), sounds::sound_t::combat,
+        sounds::sound( bub_part_location( scoop ), rng( 20, 35 ), sounds::sound_t::combat,
                        random_entry_ref( sound_msgs ), false, "vehicle", "scoop" );
         std::vector<tripoint> parts_points;
         for( const tripoint &current :
-             g->m.points_in_radius( global_part_pos3( scoop ), 1 ) ) {
+             g->m.points_in_radius( bub_part_location( scoop ), 1 ) ) {
             parts_points.push_back( current );
         }
         for( const tripoint &position : parts_points ) {
@@ -1637,7 +1637,7 @@ bool vehicle::can_close( int part_index, Character &who )
 {
     for( auto const &vec : find_lines_of_parts( part_index, "OPENABLE" ) ) {
         for( auto const &partID : vec ) {
-            const Creature *const mon = g->critter_at( global_part_pos3( parts[partID] ) );
+            const Creature *const mon = g->critter_at( bub_part_location( parts[partID] ) );
             if( mon ) {
                 if( mon->is_player() ) {
                     who.add_msg_if_player( m_info, _( "There's some buffoon in the way!" ) );

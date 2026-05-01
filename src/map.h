@@ -406,7 +406,7 @@ struct level_cache {
 
     bool veh_in_active_range = false;
     std::vector<bool>               veh_exists_at;
-    std::map<tripoint, std::pair<vehicle *, int>> veh_cached_parts;
+    std::map<tripoint_bub_ms, std::pair<vehicle *, int>> veh_cached_parts;
     std::set<vehicle *> vehicle_list;
     std::set<vehicle *> zone_vehicles;
 
@@ -598,7 +598,7 @@ class map : public submap_load_listener
          * sm_min/sm_max are the bounding submap grid coords of the vehicle footprint
          * (union of old and new positions); smz is the z-level.
          */
-        void on_vehicle_moved( point_bub_ms & sm_min, point_bub_ms & sm_max, int smz );
+        void on_vehicle_moved( const point_bub_sm &sm_min, const point_bub_sm &sm_max, const int &smz );
 
         struct apparent_light_info {
             bool obstructed;
@@ -913,7 +913,7 @@ class map : public submap_load_listener
 
         // Actually moves the vehicle
         // Unlike displace_vehicle, this one handles collisions
-        vehicle *move_vehicle( vehicle &veh, const tripoint_bub_ms &dp, const tileray &facing );
+        vehicle *move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tileray &facing );
 
         // Furniture
         void set( const tripoint_bub_ms &p, const ter_id &new_terrain, const furn_id &new_furniture );
@@ -2330,7 +2330,7 @@ class map : public submap_load_listener
          */
         VehicleList last_full_vehicle_list;
         bool last_full_vehicle_list_dirty = true;
-        std::map<point, std::pair<vehicle *, int> > cached_veh_rope;
+        std::map<point_bub_ms, std::pair<vehicle *, int> > cached_veh_rope;
 
         // Note: no bounds check
         level_cache &get_cache( int zlev ) const {

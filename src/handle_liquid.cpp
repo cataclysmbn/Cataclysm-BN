@@ -44,7 +44,7 @@ static void serialize_liquid_source( player_activity &act, vehicle &veh,
 {
     act.values.push_back( LST_VEHICLE );
     act.values.push_back( part_id );
-    act.coords.push_back( veh.global_part_pos3( 0 ).raw() );
+    act.coords.push_back( veh.bub_part_location( 0 ).raw() );
 }
 
 static void serialize_liquid_source( player_activity &act, tripoint pos )
@@ -57,7 +57,7 @@ static void serialize_liquid_source( player_activity &act, tripoint pos )
 static void serialize_liquid_target( player_activity &act, const vehicle &veh )
 {
     act.values.push_back( LTT_VEHICLE );
-    act.coords.push_back( veh.global_part_pos3( 0 ).raw() );
+    act.coords.push_back( veh.bub_part_location( 0 ).raw() );
 }
 
 static void serialize_liquid_target( player_activity &act, item &container )
