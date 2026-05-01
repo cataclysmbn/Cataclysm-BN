@@ -579,7 +579,7 @@ bool mapbuffer::preload_quad( const tripoint &om_addr )
 bool mapbuffer::generate_quad( const tripoint &om_addr )
 {
     ZoneScoped;
-    const auto base = project_to<coords::sm>( tripoint_abs_om( om_addr ) );
+    const auto base = project_to<coords::sm>( tripoint_abs_omt( om_addr ) );
     const bool all_loaded =
         lookup_submap_in_memory( base.raw() )
         && lookup_submap_in_memory( ( base + tripoint_rel_sm::east() ).raw() )

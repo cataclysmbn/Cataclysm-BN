@@ -2468,7 +2468,6 @@ class tinymap : public map
         bool inbounds( const tripoint &p ) const override;
 
         /**
-        /**
          * Position this tinymap at @p sm_base (submap coordinates) and wire up
          * its 2×2 grid slots directly from the mapbuffer without going through
          * loadn().  The submaps must already be present in the mapbuffer.
