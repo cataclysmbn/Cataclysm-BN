@@ -208,10 +208,10 @@ static void InitSDL()
     // code will display fine.
     const auto image_init_flags = IMG_INIT_PNG | IMG_INIT_WEBP;
     ret = IMG_Init( image_init_flags );
-    printErrorIf( ( ret & IMG_INIT_PNG ) != IMG_INIT_PNG,
-                  "IMG_Init failed to initialize PNG support, tiles won't work" );
-    printErrorIf( ( ret & IMG_INIT_WEBP ) != IMG_INIT_WEBP,
-                  "IMG_Init failed to initialize WebP support, some loading images won't work" );
+    printImgErrorIf( ( ret & IMG_INIT_PNG ) != IMG_INIT_PNG,
+                     "IMG_Init failed to initialize PNG support, tiles won't work" );
+    printImgErrorIf( ( ret & IMG_INIT_WEBP ) != IMG_INIT_WEBP,
+                     "IMG_Init failed to initialize WebP support, some loading images won't work" );
 
     ret = SDL_InitSubSystem( SDL_INIT_JOYSTICK );
     printErrorIf( ret != 0, "Initializing joystick subsystem failed" );
@@ -4237,8 +4237,8 @@ bool save_screenshot( const std::string &file_path )
     }
 
     // Save screenshot as PNG file
-    if( printErrorIf( IMG_SavePNG( surface.get(), file_path.c_str() ) != 0,
-                      std::string( "save_screenshot: cannot save screenshot file: " + file_path ).c_str() ) ) {
+    if( printImgErrorIf( IMG_SavePNG( surface.get(), file_path.c_str() ) != 0,
+                         std::string( "save_screenshot: cannot save screenshot file: " + file_path ).c_str() ) ) {
         return false;
     }
 
