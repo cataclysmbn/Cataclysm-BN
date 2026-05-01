@@ -19,6 +19,7 @@
 #include "input.h"
 #include "mod_manager.h"
 #include "output.h"
+#include "point.h"
 #include "rng.h"
 #include "sdltiles.h"
 #include "sdl_wrappers.h"
@@ -27,6 +28,15 @@
 #include "ui.h"
 #include "ui_manager.h"
 #include "worldfactory.h"
+
+#if defined( TILES )
+struct loading_image_cache {
+    std::string path;
+    SDL_Texture_Ptr texture;
+    point image_size = point_zero;
+    bool attempted = false;
+};
+#endif
 
 namespace
 {
@@ -305,7 +315,7 @@ auto loading_image_splash::advance_loading_image() -> bool
 auto loading_image_splash::draw_current_loading_image() -> bool
 {
     while( !loading_image_path.empty() ) {
-        const auto *const cache = get_loading_image_cache( loading_image_cache_state, loading_image_path );
+        const auto *const cache = get_loading_image_cache( *loading_image_cache_state, loading_image_path );
         if( cache != nullptr ) {
             return get_loading_image_rect( cache->image_size )
             .transform( [cache]( const SDL_Rect & rect ) {
@@ -324,6 +334,10 @@ auto loading_image_splash::draw_current_loading_image() -> bool
 
 loading_image_splash::loading_image_splash()
 {
+#if defined( TILES )
+    loading_image_cache_state = std::make_unique<loading_image_cache>();
+#endif
+
     ui_background = std::make_unique<background_pane>( [this]() {
 #if defined( TILES )
         if( !get_option<bool>( "LOADING_SCREEN_IMAGES" ) ) {

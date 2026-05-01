@@ -7,15 +7,7 @@
 #include <vector>
 
 #if defined( TILES )
-#include "point.h"
-#include "sdl_wrappers.h"
-
-struct loading_image_cache {
-    std::string path;
-    SDL_Texture_Ptr texture;
-    point image_size = point_zero;
-    bool attempted = false;
-};
+struct loading_image_cache;
 #endif
 
 class background_pane;
@@ -33,7 +25,7 @@ class loading_image_splash
 #if defined( TILES )
         std::vector<std::string> loading_image_paths;
         std::size_t next_loading_image_path = 0;
-        loading_image_cache loading_image_cache_state;
+        std::unique_ptr<loading_image_cache> loading_image_cache_state;
 
         auto advance_loading_image() -> bool;
         auto draw_current_loading_image() -> bool;
