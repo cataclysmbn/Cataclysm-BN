@@ -387,5 +387,43 @@
     "max_duration": 5000,
     "effect": "summon",
     "effect_str": "mon_shade_boss_clone"
+  },
+  {
+    "id": "spell_radiant_triffid_boss_blind",
+    "type": "SPELL",
+    "name": { "str": "Blinding Sunlight" },
+    "description": "Used by the radiant triffid boss to blind.",
+    "message": "",
+    "effect": "target_attack",
+    "effect_str": "blind",
+    "extra_effects": [ { "id": "spell_radiant_triffid_boss_heal" } ],
+    "valid_targets": [ "hostile", "ground" ],
+    "flags": [ "NO_EXPLOSION_VFX", "SILENT" ],
+    "min_range": 15,
+    "max_range": 15,
+    "min_aoe": 6,
+    "max_aoe": 6,
+    "min_duration": 1000,
+    "max_duration": 2000,
+    "field_id": "fd_shadow",
+    "field_chance": 1,
+    "min_field_intensity": 1,
+    "max_field_intensity": 1
+  },
+  {
+    "id": "spell_radiant_triffid_boss_heal",
+    "type": "SPELL",
+    "name": { "str": "Soothing Sunlight" },
+    "description": "Used by the radiant triffid boss to heal.",
+    "flags": [ "RANDOM_DAMAGE", "SILENT", "NO_EXPLOSION_VFX" ],
+    "valid_targets": [ "self" ],
+    "effect": "target_attack",
+    "sprite": "fd_null",
+    "min_damage": -80,
+    "max_damage": -100,
+    "min_range": 15,
+    "max_range": 15,
+    "min_aoe": 100,
+    "max_aoe": 100
   }
 ]
