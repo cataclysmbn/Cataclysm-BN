@@ -161,24 +161,22 @@ local function manage_item_vars(selected)
     local vars = selected.get_vars()
     local menu = UiList.new()
     menu:title(color_text(locale.gettext("Item var viewer"), "yellow"))
-    menu:text(format_label(selected.subject_name, vars))
-    menu:add(0, locale.gettext("View variables"))
-    menu:add(1, locale.gettext("Add / update variable"))
-    menu:add(2, locale.gettext("Remove variable"))
-
     if type(vars) ~= "table" or next(vars) == nil then
-      menu.entries[1].enable = false
-      menu.entries[3].enable = false
+      menu:text(format_label(selected.subject_name, vars))
+    else
+      menu:text(table.concat(build_display_lines(selected.subject_name, vars), "\n"))
     end
+    menu:add(0, locale.gettext("Add / update variable"))
+    menu:add(1, locale.gettext("Remove variable"))
+
+    if type(vars) ~= "table" or next(vars) == nil then menu.entries[2].enable = false end
 
     local action = menu:query()
     if action < 0 then return 0 end
 
     if action == 0 then
-      show_vars_popup(selected)
-    elseif action == 1 then
       add_or_update_item_var(selected)
-    elseif action == 2 then
+    elseif action == 1 then
       remove_item_var(selected)
     end
   end
