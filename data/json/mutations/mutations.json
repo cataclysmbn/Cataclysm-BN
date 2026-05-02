@@ -4441,7 +4441,7 @@
     "restricts_gear": [ "torso" ],
     "allowed_items": [ "ALLOWS_WINGS" ],
     "social_modifiers": { "lie": 15, "persuade": 5, "intimidate": -20 },
-    "cost": 100,
+    "cost": 125,
     "stamina": true,
     "active": true,
     "flags": [ "MUTATION_FLIGHT" ],
