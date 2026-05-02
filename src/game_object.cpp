@@ -159,7 +159,7 @@ bool game_object<T>::has_position() const
 }
 
 template<typename T>
-tripoint game_object<T>::position( ) const
+tripoint_bub_ms game_object<T>::position( ) const
 {
     if( !loc ) {
         if( !saved_loc ) {

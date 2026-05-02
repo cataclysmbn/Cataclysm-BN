@@ -35,7 +35,7 @@ class detached_ptr;
 namespace target_handler
 {
 // Trajectory to target. Empty if selection was aborted or player ran out of moves
-using trajectory = std::vector<tripoint>;
+using trajectory = std::vector<tripoint_bub_ms>;
 
 /**
  * Firing ranged weapon. This mode allows spending moves on aiming.
@@ -199,6 +199,6 @@ auto throw_damage( const item &it, const int skill, const int str ) -> int;
  */
 auto throw_item( Character &who, const tripoint_bub_ms &target,
                  detached_ptr<item> &&to_throw,
-                 std::optional<tripoint> blind_throw_from_pos ) -> dealt_projectile_attack;
+                 std::optional<tripoint_bub_ms> blind_throw_from_pos ) -> dealt_projectile_attack;
 
 } // namespace ranged

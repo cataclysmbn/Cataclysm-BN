@@ -1304,7 +1304,9 @@ class npc : public player
          * if no goal exist, this is no_goal_point.
          */
         tripoint_abs_omt goal;
-        auto wander_pos = tripoint_min;
+        // Doesnt seem to be used anywhere
+        // Welp will put it as the same thing monsters put it to
+        tripoint_abs_ms wander_pos = tripoint_abs_ms::zero();
         int wander_time = 0;
         /**
          * Location and index of the corpse we'd like to pulp (if any).

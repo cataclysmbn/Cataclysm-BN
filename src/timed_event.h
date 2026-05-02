@@ -31,7 +31,7 @@ struct timed_event {
     /** Where the event happens, in global submap coordinates */
     tripoint_abs_sm map_point = tripoint_abs_sm( tripoint_min );
 
-    timed_event( timed_event_type e_t, const time_point &w, int f_id, tripoint p );
+    timed_event( timed_event_type e_t, const time_point &w, int f_id, tripoint_abs_sm p );
 
     // When the time runs out
     void actualize();
@@ -55,7 +55,7 @@ class timed_event_manager
          * through to @ref timed_event::timed_event.
          */
         void add( timed_event_type type, const time_point &when, int faction_id,
-                  const tripoint_abs_ms &where );
+                  const tripoint_abs_sm &where );
         /// @returns Whether at least one element of the given type is queued.
         bool queued( timed_event_type type ) const;
         /// @returns One of the queued events of the given type, or `nullptr`

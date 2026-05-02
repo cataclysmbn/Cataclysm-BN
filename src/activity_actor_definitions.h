@@ -26,7 +26,7 @@ class aim_activity_actor : public activity_actor
         location_ptr<item> fake_weapon;
         units::energy bp_cost_per_shot = 0_J;
         int stamina_cost_per_shot = 0;
-        std::vector<tripoint> fin_trajectory;
+        std::vector<tripoint_bub_ms> fin_trajectory;
 
     public:
         std::string action;
@@ -34,7 +34,7 @@ class aim_activity_actor : public activity_actor
         bool aiming_at_critter = false; // Whether aiming at critter or a tile
         bool snap_to_target = false;
         bool shifting_view = false;
-        tripoint initial_view_offset;
+        tripoint_rel_ms initial_view_offset;
         /** Target UI requested to abort aiming */
         bool aborted = false;
         /** RELOAD_AND_SHOOT weapon is kept loaded by the activity */
@@ -116,9 +116,9 @@ class dig_activity_actor : public activity_actor
     private:
         int moves_total;
         /** location of the dig **/
-        tripoint location;
+        tripoint_bub_ms location;
         std::string result_terrain;
-        tripoint byproducts_location;
+        tripoint_bub_ms byproducts_location;
         std::string byproducts_item_group;
 
         /**
@@ -142,8 +142,8 @@ class dig_activity_actor : public activity_actor
 
     public:
         dig_activity_actor(
-            int dig_moves, const tripoint &dig_loc,
-            const std::string &resulting_ter, const tripoint &dump_loc,
+            int dig_moves, const tripoint_bub_ms &dig_loc,
+            const std::string &resulting_ter, const tripoint_bub_ms &dump_loc,
             const std::string &dump_item_group
         ):
             moves_total( dig_moves ), location( dig_loc ),
@@ -168,9 +168,9 @@ class dig_channel_activity_actor : public activity_actor
     private:
         int moves_total;
         /** location of the dig **/
-        tripoint location;
+        tripoint_bub_ms location;
         std::string result_terrain;
-        tripoint byproducts_location;
+        tripoint_bub_ms byproducts_location;
         std::string byproducts_item_group;
 
         /**
@@ -195,8 +195,8 @@ class dig_channel_activity_actor : public activity_actor
 
     public:
         dig_channel_activity_actor(
-            int dig_moves, const tripoint &dig_loc,
-            const std::string &resulting_ter, const tripoint &dump_loc,
+            int dig_moves, const tripoint_bub_ms &dig_loc,
+            const std::string &resulting_ter, const tripoint_bub_ms &dump_loc,
             const std::string &dump_item_group
         ):
             moves_total( dig_moves ), location( dig_loc ),
@@ -252,12 +252,12 @@ class drop_activity_actor : public activity_actor
     private:
         std::list<pickup::act_item> items;
         bool force_ground = false;
-        tripoint relpos;
+        tripoint_rel_ms relpos;
 
     public:
         drop_activity_actor() = default;
         drop_activity_actor( Character &ch, const drop_locations &items,
-                             bool force_ground, const tripoint &relpos );
+                             bool force_ground, const tripoint_rel_ms &relpos );
 
         activity_id get_type() const override {
             return activity_id( "ACT_DROP" );
@@ -297,7 +297,7 @@ class hacking_activity_actor : public activity_actor
 class hacksaw_activity_actor : public activity_actor
 {
     public:
-        explicit hacksaw_activity_actor( const tripoint &target,
+        explicit hacksaw_activity_actor( const tripoint_bub_ms &target,
                                          const safe_reference<item> &tool ) : target( target ), tool( tool ) {};
 
         activity_id get_type() const override {
@@ -314,7 +314,7 @@ class hacksaw_activity_actor : public activity_actor
         // debugmsg causes a backtrace when fired during cata_test
         bool testing = false;  // NOLINT(cata-serialize)
     private:
-        tripoint target;
+        tripoint_bub_ms target;
         safe_reference<item> tool;
 
         bool can_resume_with_internal( const activity_actor &other,
@@ -328,7 +328,7 @@ class hacksaw_activity_actor : public activity_actor
 class boltcutting_activity_actor : public activity_actor
 {
     public:
-        explicit boltcutting_activity_actor( const tripoint &target,
+        explicit boltcutting_activity_actor( const tripoint_bub_ms &target,
                                              const safe_reference<item> tool ) : target( target ), tool( tool ) {};
 
         activity_id get_type() const override {
@@ -346,7 +346,7 @@ class boltcutting_activity_actor : public activity_actor
         bool testing = false;
 
     private:
-        tripoint target;
+        tripoint_bub_ms target;
         safe_reference<item> tool;
 
         bool can_resume_with_internal( const activity_actor &other,
@@ -363,13 +363,13 @@ class lockpick_activity_actor : public activity_actor
         int moves_total;
         safe_reference<item> lockpick;
         location_ptr<item> fake_lockpick;
-        tripoint target;
+        tripoint_abs_ms target;
 
         lockpick_activity_actor(
             int moves_total,
             safe_reference<item> lockpick,
             detached_ptr<item> &&fake_lockpick,
-            const tripoint &target
+            const tripoint_abs_ms &target
         ) : moves_total( moves_total ), lockpick( lockpick ), fake_lockpick( new fake_item_location() ),
             target( target ) {
             this->fake_lockpick = std::move( fake_lockpick );
@@ -380,13 +380,13 @@ class lockpick_activity_actor : public activity_actor
         static std::unique_ptr<lockpick_activity_actor> use_item(
             int moves_total,
             item &lockpick,
-            const tripoint &target
+            const tripoint_abs_ms &target
         );
 
         /** Use bionic lockpick. 'target' is in global coords */
         static std::unique_ptr<lockpick_activity_actor> use_bionic(
             detached_ptr<item> &&fake_lockpick,
-            const tripoint &target
+            const tripoint_abs_ms &target
         );
 
         activity_id get_type() const override {
@@ -398,7 +398,7 @@ class lockpick_activity_actor : public activity_actor
         void finish( player_activity &act, Character &who ) override;
 
         static bool is_pickable( const tripoint_bub_ms &p );
-        static std::optional<tripoint> select_location( avatar &you );
+        static std::optional<tripoint_bub_ms> select_location( avatar &you );
 
         void serialize( JsonOut &jsout ) const override;
         static std::unique_ptr<activity_actor> deserialize( JsonIn &jsin );
@@ -427,11 +427,11 @@ class move_items_activity_actor : public activity_actor
         std::vector<safe_reference<item>> target_items;
         std::vector<int> quantities;
         bool to_vehicle;
-        tripoint relative_destination;
+        tripoint_rel_ms relative_destination;
 
     public:
         move_items_activity_actor( std::vector<item *> items, std::vector<int> quantities,
-                                   bool to_vehicle, tripoint relative_destination ) :
+                                   bool to_vehicle, tripoint_rel_ms relative_destination ) :
             quantities( quantities ), to_vehicle( to_vehicle ),
             relative_destination( relative_destination ) {
 
@@ -457,7 +457,7 @@ class toggle_gate_activity_actor : public activity_actor
 {
     private:
         int moves_total;
-        tripoint placement;
+        tripoint_bub_ms placement;
 
         /**
          * @pre @p other is a toggle_gate_activity_actor
@@ -469,7 +469,7 @@ class toggle_gate_activity_actor : public activity_actor
         }
 
     public:
-        toggle_gate_activity_actor( int gate_moves, const tripoint &gate_placement ) :
+        toggle_gate_activity_actor( int gate_moves, const tripoint_bub_ms &gate_placement ) :
             moves_total( gate_moves ), placement( gate_placement ) {}
 
         activity_id get_type() const override {
@@ -497,11 +497,11 @@ class pickup_activity_actor : public activity_actor
          * (e.g. if the player is in a moving vehicle). This should be null
          * if not grabbing from the ground.
          */
-        std::optional<tripoint> starting_pos;
+        std::optional<tripoint_bub_ms> starting_pos;
 
     public:
         pickup_activity_actor( const std::vector<pickup::pick_drop_selection> &target_items,
-                               const std::optional<tripoint> &starting_pos )
+                               const std::optional<tripoint_bub_ms> &starting_pos )
             : target_items( target_items )
             , starting_pos( starting_pos ) {}
 
@@ -545,13 +545,13 @@ class throw_activity_actor : public activity_actor
     private:
 
         safe_reference<item> target;
-        std::optional<tripoint> blind_throw_from_pos;
+        std::optional<tripoint_bub_ms> blind_throw_from_pos;
 
     public:
         throw_activity_actor() = default;
         throw_activity_actor(
             item &target,
-            std::optional<tripoint> blind_throw_from_pos
+            std::optional<tripoint_bub_ms> blind_throw_from_pos
         ) : target( &target ),
             blind_throw_from_pos( blind_throw_from_pos ) {}
         ~throw_activity_actor() = default;
@@ -572,7 +572,7 @@ class throw_activity_actor : public activity_actor
 class oxytorch_activity_actor : public activity_actor
 {
     public:
-        explicit oxytorch_activity_actor( const tripoint &target,
+        explicit oxytorch_activity_actor( const tripoint_bub_ms &target,
                                           const safe_reference<item> &tool ) : target( target ), tool( tool ) {};
 
         activity_id get_type() const override {
@@ -589,7 +589,7 @@ class oxytorch_activity_actor : public activity_actor
         // debugmsg causes a backtrace when fired during cata_test
         bool testing = false;  // NOLINT(cata-serialize)
     private:
-        tripoint target;
+        tripoint_bub_ms target;
         safe_reference<item> tool;
 
         bool can_resume_with_internal( const activity_actor &other,
