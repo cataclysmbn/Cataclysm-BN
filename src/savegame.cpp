@@ -16,7 +16,6 @@
 #include "calendar.h"
 #include "cata_io.h"
 #include "coordinates.h"
-#include "coordinate_conversions.h"
 #include "creature_tracker.h"
 #include "debug.h"
 #include "drop_token.h"

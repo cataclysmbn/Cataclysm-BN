@@ -38,7 +38,6 @@
 #include "clothing_mod.h"
 #include "clzones.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "craft_command.h"
 #include "damage.h"
 #include "debug.h"

@@ -32,7 +32,6 @@
 #include "catalua_impl.h"
 #include "catalua_sol.h"
 #include "character_id.h"
-#include "coordinate_conversions.h"
 #include "debug.h"
 #include "init.h"
 #include "distribution.h"

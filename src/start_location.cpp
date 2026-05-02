@@ -7,7 +7,6 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "enum_conversions.h"

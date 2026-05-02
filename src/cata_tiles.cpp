@@ -27,7 +27,6 @@
 #include "character.h"
 #include "character_id.h"
 #include "clzones.h"
-#include "coordinate_conversions.h"
 #include "cuboid_rectangle.h"
 #include "cursesdef.h"
 #include "cursesport.h"

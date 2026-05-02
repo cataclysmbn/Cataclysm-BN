@@ -12,7 +12,6 @@
 #include "catacharset.h"
 #include "character.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "enums.h"

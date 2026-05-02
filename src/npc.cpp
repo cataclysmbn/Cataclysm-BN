@@ -21,7 +21,6 @@
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "clzones.h"
-#include "coordinate_conversions.h"
 #include "damage.h"
 #include "debug.h"
 #include "detached_ptr.h"

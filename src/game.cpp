@@ -63,7 +63,6 @@
 #include "computer_session.h"
 #include "construction.h"
 #include "construction_group.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "crafting.h"
 #include "creature_tracker.h"

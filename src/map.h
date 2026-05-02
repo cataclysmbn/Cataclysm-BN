@@ -20,7 +20,6 @@
 
 #include "bodypart.h"
 #include "calendar.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "dimension_bounds.h"
 #include "enums.h"

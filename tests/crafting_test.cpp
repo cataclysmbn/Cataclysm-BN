@@ -15,7 +15,6 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "character_functions.h"
-#include "coordinate_conversions.h"
 #include "craft_command.h"
 #include "crafting.h"
 #include "distribution_grid.h"

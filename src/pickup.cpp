@@ -21,7 +21,6 @@
 #include "character.h"
 #include "color.h"
 #include "coordinates.h"
-#include "coordinate_conversions.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "drop_token.h"

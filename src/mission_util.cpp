@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "avatar.h"
-#include "coordinate_conversions.h"
 #include "debug.h"
 #include "dialogue.h"
 #include "enum_conversions.h"

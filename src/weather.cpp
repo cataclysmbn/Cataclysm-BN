@@ -16,7 +16,6 @@
 #include "cata_utility.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "enums.h"
 #include "game.h"

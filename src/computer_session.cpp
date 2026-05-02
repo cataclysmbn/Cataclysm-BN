@@ -12,7 +12,6 @@
 #include "calendar.h"
 #include "character_id.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "debug.h"
 #include "enums.h"
 #include "event.h"

@@ -12,7 +12,6 @@
 #include <unordered_map>
 
 #include "avatar.h"
-#include "coordinate_conversions.h"
 #include "character.h"
 #include "creature.h"
 #include "debug.h"

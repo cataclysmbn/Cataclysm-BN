@@ -21,7 +21,6 @@
 #include "consistency_report.h"
 #include "construction_category.h"
 #include "construction_group.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "crafting_quality.h"
 #include "cursesdef.h"

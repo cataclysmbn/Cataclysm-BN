@@ -28,7 +28,6 @@
 #include "clzones.h"
 #include "numeric_interval.h"
 #include "computer.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "drawing_primitives.h"

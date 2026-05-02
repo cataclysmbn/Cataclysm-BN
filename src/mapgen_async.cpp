@@ -10,7 +10,6 @@
 #include "auto_note.h"
 #include "catalua.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "init.h"
 #include "map.h"
 #include "map_extras.h"

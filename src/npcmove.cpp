@@ -24,7 +24,6 @@
 #include "character_turn.h"
 #include "character_id.h"
 #include "clzones.h"
-#include "coordinate_conversions.h"
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"

@@ -11,7 +11,6 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "enums.h"
 #include "mongroup.h"

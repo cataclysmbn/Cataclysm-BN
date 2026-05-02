@@ -22,7 +22,6 @@
 #include "color.h"
 #include "map_iterator.h"
 #include "numeric_interval.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "distribution_grid.h"

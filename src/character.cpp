@@ -37,7 +37,6 @@
 #include "craft_command.h"
 #include "construction.h"
 #include "consumption.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "creature.h"
 #include "damage.h"

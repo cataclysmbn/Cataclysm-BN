@@ -10,7 +10,6 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "character_functions.h"
-#include "coordinate_conversions.h"
 #include "debug.h"
 #include "game.h"
 #include "game_constants.h"

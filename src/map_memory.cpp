@@ -1,6 +1,5 @@
 #include "map_memory.h"
 
-#include "coordinate_conversions.h"
 #include "cuboid_rectangle.h"
 #include "debug.h"
 #include "filesystem.h"

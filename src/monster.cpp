@@ -13,7 +13,6 @@
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character.h"
-#include "coordinate_conversions.h"
 #include "creature_tracker.h"
 #include "cursesdef.h"
 #include "debug.h"

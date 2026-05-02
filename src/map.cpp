@@ -38,7 +38,6 @@
 #include "color.h"
 #include "construction.h"
 #include "coordinates.h"
-#include "coordinate_conversions.h"
 #include "creature.h"
 #include "cursesdef.h"
 #include "damage.h"

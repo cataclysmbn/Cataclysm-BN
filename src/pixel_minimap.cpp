@@ -19,7 +19,6 @@
 #include "cata_utility.h"
 #include "character.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "creature.h"
 #include "debug.h"
 #include "game.h"

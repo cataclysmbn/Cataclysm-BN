@@ -14,7 +14,6 @@
 
 #include "calendar.h"
 #include "cata_utility.h"
-#include "coordinate_conversions.h"
 #include "debug.h"
 #include "distribution_grid.h"
 #include "filesystem.h"

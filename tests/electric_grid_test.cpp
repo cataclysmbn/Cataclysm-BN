@@ -5,7 +5,6 @@
 #include "active_tile_data.h"
 #include "active_tile_data_def.h"
 #include "cata_utility.h"
-#include "coordinate_conversions.h"
 #include "distribution_grid.h"
 #include "map.h"
 #include "mapbuffer.h"

@@ -9,7 +9,6 @@
 #include "calendar.h"
 #include "character.h"
 #include "character_id.h"
-#include "coordinate_conversions.h"
 #include "dialogue.h"
 #include "effect.h"
 #include "faction.h"

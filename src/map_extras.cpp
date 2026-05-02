@@ -16,7 +16,6 @@
 #include "cata_utility.h"
 #include "cellular_automata.h"
 #include "character_id.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "enum_conversions.h"

@@ -30,7 +30,6 @@
 #include "catacharset.h"
 #include "clzones.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "cursesport.h"

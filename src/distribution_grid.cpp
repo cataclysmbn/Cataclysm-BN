@@ -8,7 +8,6 @@
 #include "character.h"
 #include "debug.h"
 #include "distribution_grid.h"
-#include "coordinate_conversions.h"
 #include "active_tile_data.h"
 #include "active_tile_data_def.h"
 #include "map.h"

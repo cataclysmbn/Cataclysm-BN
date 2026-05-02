@@ -17,7 +17,6 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
-#include "coordinate_conversions.h"
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"

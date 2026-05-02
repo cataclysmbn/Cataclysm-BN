@@ -11,7 +11,6 @@
 #include <ranges>
 
 #include "calendar.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "cuboid_rectangle.h"
 #include "debug.h"

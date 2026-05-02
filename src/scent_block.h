@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <array>
 
-#include "coordinate_conversions.h"
 #include "point.h"
 #include "scent_map.h"
 

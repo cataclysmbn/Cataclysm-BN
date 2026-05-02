@@ -37,7 +37,6 @@
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "crafting.h"
 #include "creature.h"
