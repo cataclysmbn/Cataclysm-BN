@@ -1119,7 +1119,7 @@ static void butchery_drops_harvest( item *corpse_item, const mtype &mt, player &
                     obj.set_var( "activity_var", p.name );
                 }
                 for( int i = 0; i != roll; ++i ) {
-                    here.add_item_or_charges( p.pos(), item::spawn( obj ) );
+                    here.add_item_or_charges(  p.bub_pos(), item::spawn( obj ) );
                 }
             }
             p.add_msg_if_player( m_good, _( "You harvest: %s" ), drop->nname( roll ) );
@@ -1493,8 +1493,7 @@ void activity_handlers::milk_finish( player_activity *act, player *p )
         return;
     }
     map &here = get_map();
-    const tripoint source_pos = here.abs_to_bub( act->coords.at( 0 ) );
-    monster *source_mon = g->critter_at<monster>( source_pos );
+    monster *source_mon = g->critter_at<monster>( act->coords.at( 0 ) );
     if( source_mon == nullptr ) {
         debugmsg( "could not find source creature for liquid transfer" );
         return;
@@ -2490,14 +2489,14 @@ std::optional<hack_type_t> get_hack_type( const player_activity &activity )
     return static_cast<hack_type_t>( activity.values[2] );
 }
 
-tripoint get_position( const player_activity &activity )
+tripoint_bub_ms get_position( const player_activity &activity )
 {
     return activity.coords.at( 0 );
 }
 
 item *get_fake_tool( hack_type_t hack_type, const player_activity &activity )
 {
-    const tripoint position = get_position( activity );
+    const tripoint_bub_ms position = get_position( activity );
     const map &m = get_map();
     //TODO!: chhhecks of big
     item *fake_item = &null_item_reference();
@@ -2531,7 +2530,7 @@ item *get_fake_tool( hack_type_t hack_type, const player_activity &activity )
 
             for( const itype &item_type : item_type_list ) {
                 if( item_type.get_id() == static_cast<itype_id>( activity.str_values[1] ) ) {
-                    const tripoint_abs_ms abspos( m.bub_to_abs( position ) );
+                    const tripoint_abs_ms abspos = m.bub_to_abs( position );
                     const distribution_grid &grid = get_distribution_grid_tracker().grid_at( abspos );
                     fake_item = item::spawn_temporary( item_type.get_id(), calendar::turn, 0 );
                     fake_item->charges = grid.get_resource( true );
@@ -2548,7 +2547,7 @@ item *get_fake_tool( hack_type_t hack_type, const player_activity &activity )
 
 void discharge_real_power_source(
     hack_type_t hack_type,
-    const tripoint &position,
+    const tripoint_bub_ms &position,
     item &tool,
     const int original_charges
 )
@@ -2573,7 +2572,7 @@ void discharge_real_power_source(
             break;
         }
         case hack_type_t::furniture: {
-            const tripoint_abs_ms abspos( m.bub_to_abs( position ) );
+            const tripoint_abs_ms abspos = m.bub_to_abs( position );
             distribution_grid &grid = get_distribution_grid_tracker().grid_at( abspos );
             unfulfilled_demand = grid.mod_resource( -used_charges );
             break;
@@ -2591,7 +2590,7 @@ void discharge_real_power_source(
 
 void patch_activity_for_vehicle(
     player_activity &activity,
-    const tripoint &veh_part_position,
+    const tripoint_bub_ms &veh_part_position,
     const vehicle &veh,
     int interact_part_idx,
     const itype_id &it )
@@ -2618,7 +2617,7 @@ void patch_activity_for_vehicle(
 }
 
 void patch_activity_for_furniture( player_activity &activity,
-                                   const tripoint &furniture_position,
+                                   const tripoint_bub_ms &furniture_position,
                                    const itype_id &itt )
 {
     // Player may start another activity on welder/soldering iron
@@ -2649,7 +2648,7 @@ void activity_handlers::train_skill_do_turn( player_activity *act, player *p )
     namespace hack = activity_handlers::repair_activity_hack;
 
     std::optional<hack::hack_type_t> hack_type = hack::get_hack_type( *act );
-    const tripoint hack_pos = hack_type ? hack::get_position( * act ) : tripoint{};
+    const tripoint_bub_ms hack_pos = hack_type ? hack::get_position( * act ) : tripoint_bub_ms{};
     int hack_original_charges = 0;
     item *main_tool = nullptr;
     if( hack_type ) {

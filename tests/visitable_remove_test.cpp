@@ -334,7 +334,7 @@ TEST_CASE( "visitable_remove", "[visitable]" )
     }
 
     GIVEN( "A player surrounded by several bottles of water" ) {
-        std::vector<tripoint> tiles = closest_points_first( p.pos(), 1 );
+        std::vector<tripoint> tiles = closest_points_first( p.bub_pos(), 1 );
         tiles.erase( tiles.begin() ); // player tile
 
         int our = 0; // bottles placed on player tile
@@ -344,7 +344,7 @@ TEST_CASE( "visitable_remove", "[visitable]" )
             if( i == 0 || tiles.empty() ) {
                 // always place at least one bottle on player tile
                 our++;
-                g->m.add_item( p.pos(), item::spawn( obj ) );
+                g->m.add_item( p.bub_pos(), item::spawn( obj ) );
             } else {
                 // randomly place bottles on adjacent tiles
                 adj++;
@@ -353,8 +353,8 @@ TEST_CASE( "visitable_remove", "[visitable]" )
         }
         REQUIRE( our + adj == count );
 
-        map_selector sel( p.pos(), 1 );
-        map_cursor cur( p.pos() );
+        map_selector sel(  p.bub_pos(), 1 );
+        map_cursor cur( p.bub_pos() );
 
         REQUIRE( count_items( sel, container_id ) == count );
         REQUIRE( count_items( sel, liquid_id ) == count );
@@ -468,7 +468,7 @@ TEST_CASE( "visitable_remove", "[visitable]" )
     }
 
     GIVEN( "An adjacent vehicle contains several bottles of water" ) {
-        std::vector<tripoint> tiles = closest_points_first( p.pos(), 1 );
+        std::vector<tripoint> tiles = closest_points_first( p.bub_pos(), 1 );
         tiles.erase( tiles.begin() ); // player tile
         tripoint veh = random_entry( tiles );
         REQUIRE( g->m.add_vehicle( vproto_id( "shopping_cart" ), veh, 0_degrees, 0, 0 ) );
@@ -488,7 +488,7 @@ TEST_CASE( "visitable_remove", "[visitable]" )
             v->add_item( part, item::spawn( obj ) );
         }
 
-        vehicle_selector sel( p.pos(), 1 );
+        vehicle_selector sel( p.bub_pos(), 1 );
 
         REQUIRE( count_items( sel, container_id ) == count );
         REQUIRE( count_items( sel, liquid_id ) == count );

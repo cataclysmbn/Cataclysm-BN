@@ -3742,8 +3742,8 @@ void game::add_draw_callback( const shared_ptr_fast<draw_callback_t> &cb )
 static void draw_trail( const tripoint_bub_ms &start, const tripoint_bub_ms &end, bool bDrawX );
 
 struct zone_callback_options {
-    std::optional<tripoint> &zone_start;
-    std::optional<tripoint> &zone_end;
+    std::optional<tripoint_bub_ms> &zone_start;
+    std::optional<tripoint_bub_ms> &zone_end;
     bool &zone_blink;
     bool &zone_cursor;
     std::function<std::vector<tripoint>( const tripoint &, const tripoint & )> point_generator;
@@ -3763,7 +3763,8 @@ shared_ptr_fast<game::draw_callback_t>
     [ &, point_generator = std::move( point_generator ), is_moving_zone]() {
         if( zone_cursor ) {
             if( is_moving_zone ) {
-                g->draw_cursor( ( zone_start.value() + zone_end.value() ) / 2 );
+                // Use midpoint function? At least this works, but it's ugly.
+                g->draw_cursor( tripoint_bub_ms( ( zone_start.value().raw() + zone_end.value().raw() ) / 2 ) );
             } else {
                 if( zone_end ) {
                     g->draw_cursor( zone_end.value() );
@@ -3773,17 +3774,17 @@ shared_ptr_fast<game::draw_callback_t>
             }
         }
         if( zone_start && zone_end ) {
-            const point offset2( g->u.view_offset.xy() + point_bub_ms( g->u.bub_pos().x() - getmaxx(
+            const point_bub_ms offset2( g->u.view_offset.xy() + point_bub_ms( g->u.bub_pos().x() - getmaxx(
                                      g->w_terrain ) / 2,
                                  g->u.bub_pos().y() - getmaxy( g->w_terrain ) / 2 ) );
 
-            tripoint offset;
+            tripoint_bub_ms offset;
 #if defined(TILES)
             if( use_tiles ) {
-                offset = tripoint_zero; //TILES
+                offset = tripoint_bub_ms::zero(); //TILES
             } else {
 #endif
-                offset = tripoint( offset2, 0 ); //CURSES
+                offset = tripoint_bub_ms( offset2, 0 ); //CURSES
 #if defined(TILES)
             }
 #endif
