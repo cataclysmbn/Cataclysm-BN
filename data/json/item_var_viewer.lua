@@ -74,6 +74,29 @@ end
 ---@return boolean
 local function is_item_choice(selected) return selected.type == "item" or selected.type == "ground_item" end
 
+---@param selected ItemVarViewerChoice
+---@param key string
+---@param value string
+---@return nil
+local function set_subject_var(selected, key, value)
+  if is_item_choice(selected) then
+    selected.subject:set_var_str(key, value)
+    return
+  end
+  selected.subject:set_value(key, value)
+end
+
+---@param selected ItemVarViewerChoice
+---@param key string
+---@return nil
+local function remove_subject_var(selected, key)
+  if is_item_choice(selected) then
+    selected.subject:erase_var(key)
+    return
+  end
+  selected.subject:remove_value(key)
+end
+
 ---@param title string
 ---@param desc string
 ---@return string?
@@ -103,7 +126,7 @@ end
 
 ---@param selected ItemVarViewerChoice
 ---@return nil
-local function add_or_update_item_var(selected)
+local function add_or_update_var(selected)
   local key = prompt_string(
     locale.gettext("Variable name"),
     string.format(locale.gettext("Enter the variable name for %s."), selected.subject_name)
@@ -114,13 +137,13 @@ local function add_or_update_item_var(selected)
     prompt_string(locale.gettext("Variable value"), string.format(locale.gettext("Enter the value for %s."), key))
   if value == nil then return end
 
-  selected.subject:set_var_str(key, value)
-  gapi.add_msg(MsgType.good, string.format(locale.gettext("Set item var %s on %s."), key, selected.subject_name))
+  set_subject_var(selected, key, value)
+  gapi.add_msg(MsgType.good, string.format(locale.gettext("Set variable %s on %s."), key, selected.subject_name))
 end
 
 ---@param selected ItemVarViewerChoice
 ---@return nil
-local function remove_item_var(selected)
+local function remove_var(selected)
   local vars = selected.get_vars()
   if type(vars) ~= "table" or next(vars) == nil then
     ui.popup(
@@ -131,7 +154,7 @@ local function remove_item_var(selected)
 
   local keys = sorted_keys(vars)
   local menu = UiList.new()
-  menu:title(color_text(locale.gettext("Remove item variable"), "yellow"))
+  menu:title(color_text(locale.gettext("Remove variable"), "yellow"))
   menu:text(format_label(selected.subject_name, vars))
 
   for idx, key in ipairs(keys) do
@@ -146,17 +169,17 @@ local function remove_item_var(selected)
 
   local key = keys[choice + 1]
   if not key then return end
-  if not ui.query_yn(string.format(locale.gettext("Remove item var %s from %s?"), key, selected.subject_name)) then
+  if not ui.query_yn(string.format(locale.gettext("Remove variable %s from %s?"), key, selected.subject_name)) then
     return
   end
 
-  selected.subject:erase_var(key)
-  gapi.add_msg(MsgType.good, string.format(locale.gettext("Removed item var %s from %s."), key, selected.subject_name))
+  remove_subject_var(selected, key)
+  gapi.add_msg(MsgType.good, string.format(locale.gettext("Removed variable %s from %s."), key, selected.subject_name))
 end
 
 ---@param selected ItemVarViewerChoice
 ---@return integer
-local function manage_item_vars(selected)
+local function manage_vars(selected)
   while true do
     local vars = selected.get_vars()
     local menu = UiList.new()
@@ -175,9 +198,9 @@ local function manage_item_vars(selected)
     if action < 0 then return 0 end
 
     if action == 0 then
-      add_or_update_item_var(selected)
+      add_or_update_var(selected)
     elseif action == 1 then
-      remove_item_var(selected)
+      remove_var(selected)
     end
   end
 end
@@ -338,10 +361,7 @@ viewer.menu = function(params)
   local selected = choices[choice + 1]
   if not selected then return 0 end
 
-  if is_item_choice(selected) then return manage_item_vars(selected) end
-
-  show_vars_popup(selected)
-  return 0
+  return manage_vars(selected)
 end
 
 return viewer
