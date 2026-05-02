@@ -589,7 +589,7 @@ std::unique_ptr<iuse_actor> explosion_iuse::clone() const
 // Those points must have a clear line of sight and a clear path to
 // the center of the explosion.
 // They must also be passable.
-static std::vector<tripoint> points_for_gas_cloud( const tripoint &center, int radius )
+static std::vector<tripoint> points_for_gas_cloud( const tripoint_bub_ms &center, int radius )
 {
     map &here = get_map();
     std::vector<tripoint> result;
@@ -4828,7 +4828,7 @@ int deploy_tent_actor::use( player &p, item &it, bool, const tripoint & ) const
     // We place the center of the structure (radius + 1)
     // spaces away from the player.
     // First check there's enough room.
-    const tripoint center = p.bub_pos() + tripoint_rel_ms( ( radius + 1 ) * direction.x,
+    const tripoint_bub_ms &center = p.bub_pos() + tripoint_rel_ms( ( radius + 1 ) * direction.x,
                             ( radius + 1 ) * direction.y, 0 );
     for( const tripoint &dest : here.points_in_radius( center, radius ) ) {
         if( const auto vp = here.veh_at( dest ) ) {
@@ -7325,7 +7325,7 @@ void iuse_pocket_dimension::initialize_pocket( item &it ) const
 }
 
 // Helper function to find a safe, passable position near the target
-static tripoint find_safe_spawn( const tripoint &target )
+static tripoint find_safe_spawn( const tripoint_bub_ms &target )
 {
     map &here = get_map();
 

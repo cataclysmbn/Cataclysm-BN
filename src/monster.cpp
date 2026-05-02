@@ -3721,7 +3721,7 @@ float monster::get_mountable_weight_ratio() const
     return type->mountable_weight_ratio;
 }
 
-void monster::hear_sound( const tripoint &source, const int vol, const int dist )
+void monster::hear_sound( const tripoint_bub_ms &source, const int vol, const int dist )
 {
     if( !can_hear() ) {
         return;

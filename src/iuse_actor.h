@@ -1231,7 +1231,7 @@ class deploy_tent_actor : public iuse_actor
         int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
 
-        bool check_intact( const tripoint &center ) const;
+        bool check_intact( const tripoint_bub_ms &center ) const;
 };
 
 /**

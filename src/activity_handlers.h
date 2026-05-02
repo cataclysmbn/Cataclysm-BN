@@ -24,7 +24,7 @@ class detached_ptr;
 
 std::vector<tripoint> get_sorted_tiles_by_distance( const tripoint_bub_ms &abspos,
         const std::unordered_set<tripoint> &tiles );
-std::vector<tripoint> route_adjacent( const player &p, const tripoint &dest );
+std::vector<tripoint> route_adjacent( const player &p, const tripoint_bub_ms &dest );
 
 enum requirement_check_result : int {
     SKIP_LOCATION = 0,

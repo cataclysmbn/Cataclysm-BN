@@ -2352,7 +2352,7 @@ int get_heat_radiation( const tripoint_bub_ms &location, bool direct )
     map &here = get_map();
     // Convert it to an int id once, instead of 139 times per turn
     const field_type_id fd_fire_int = fd_fire.id();
-    for( const tripoint &dest : here.points_in_radius( location, 6 ) ) {
+    for( const tripoint_bub_ms &dest : here.points_in_radius( location, 6 ) ) {
         int heat_intensity = 0;
 
         maptile mt = here.maptile_at( tripoint_bub_ms( dest ) );
@@ -2385,7 +2385,7 @@ int get_heat_radiation( const tripoint_bub_ms &location, bool direct )
     return temp_mod;
 }
 
-int get_convection_temperature( const tripoint &location )
+int get_convection_temperature( const tripoint_bub_ms &location )
 {
     int temp_mod = 0;
     map &here = get_map();
@@ -5164,7 +5164,7 @@ void game::monmove()
             dbg( DL::Error ) << msg;
             add_msg( m_debug, msg );
             bool okay = false;
-            for( const tripoint &dest : m.points_in_radius( critter.bub_pos(), 3 ) ) {
+            for( const tripoint_bub_ms &dest : m.points_in_radius( critter.bub_pos(), 3 ) ) {
                 if( critter.can_move_to( dest ) && is_empty( dest ) ) {
                     critter.setpos( dest );
                     okay = true;

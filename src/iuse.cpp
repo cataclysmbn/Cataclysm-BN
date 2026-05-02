@@ -531,7 +531,7 @@ int iuse::alcohol_strong( player *p, item *it, bool, const tripoint_bub_ms & )
     return alcohol( *p, *it, 2 );
 }
 
-int iuse::antibiotic( player *p, item *it, bool, const tripoint & )
+int iuse::antibiotic( player *p, item *it, bool, const tripoint_bub_ms &)
 {
     p->add_msg_player_or_npc( m_neutral,
                               _( "You take some antibiotics." ),
@@ -4947,13 +4947,13 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                 break;
 
             case AEA_NOISE:
-                sounds::sound( p->pos(), 100, sounds::sound_t::combat,
+                sounds::sound( p->bub_pos(), 100, sounds::sound_t::combat,
                                string_format( _( "a deafening boom from %s %s" ),
                                               p->disp_name( true ), it->tname() ), true, "misc", "shockwave" );
                 break;
 
             case AEA_SCREAM:
-                sounds::sound( p->pos(), 40, sounds::sound_t::alert,
+                sounds::sound( p->bub_pos(), 40, sounds::sound_t::alert,
                                string_format( _( "a disturbing scream from %s %s" ),
                                               p->disp_name( true ), it->tname() ), true, "shout", "scream" );
                 if( !p->is_deaf() ) {
@@ -4968,7 +4968,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
 
             case AEA_FLASH:
                 p->add_msg_if_player( _( "The %s flashes brightly!" ), it->tname() );
-                explosion_handler::flashbang( p->pos(), false, "explosion" );
+                explosion_handler::flashbang( p->bub_pos(), false, "explosion" );
                 break;
 
             case AEA_VOMIT:
@@ -4981,7 +4981,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                 int num_spawned = 0;
                 for( int j = 0; j < num_shadows; j++ ) {
                     for( int tries = 0; tries < 10; ++tries ) {
-                        tripoint monp = p->pos();
+                        tripoint monp = p->bub_pos();
                         if( one_in( 2 ) ) {
                             monp.x = rng( p->posx() - 5, p->posx() + 5 );
                             monp.y = ( one_in( 2 ) ? p->posy() - 5 : p->posy() + 5 );
@@ -4989,7 +4989,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                             monp.x = ( one_in( 2 ) ? p->posx() - 5 : p->posx() + 5 );
                             monp.y = rng( p->posy() - 5, p->posy() + 5 );
                         }
-                        if( !g->m.sees( monp, p->pos(), 10 ) ) {
+                        if( !g->m.sees( monp, p->bub_pos(), 10 ) ) {
                             continue;
                         }
                         if( monster *const  spawned = g->place_critter_at( mon_shadow, monp ) ) {
@@ -8854,7 +8854,7 @@ int iuse::toggle_heats_food( player *p, item *it, bool, const tripoint & )
     return 0;
 }
 
-int iuse::toggle_ups_charging( player *p, item *it, bool, const tripoint & )
+int iuse::toggle_ups_charging( player *p, item *it, bool, const tripoint_bub_ms &)
 {
     static const flag_id json_flag_USE_UPS( flag_USE_UPS );
     if( !it->has_flag( json_flag_USE_UPS ) ) {

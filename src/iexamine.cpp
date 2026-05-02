@@ -1833,7 +1833,7 @@ void iexamine::notify( player &, const tripoint_bub_ms &pos )
 * Transform the examined object into the object specified by its transforms_into property. If the new object has a message property,
 * it is displayed as if the notify examine_action was used.
 */
-void iexamine::transform( player &p, const tripoint &pos )
+void iexamine::transform( player &p, const tripoint_bub_ms &pos )
 {
     std::string message;
     std::string prompt;
@@ -1928,7 +1928,7 @@ void iexamine::pedestal_wyrm( player &p, const tripoint_bub_ms &examp )
 
             // Send in a few wyrms to start things off.
             get_event_bus().send<event_type::awakes_dark_wyrms>();
-            for( const tripoint &p : here.points_on_zlevel() ) {
+            for( const tripoint_bub_ms &p : here.points_on_zlevel() ) {
                 if( here.ter( p ) == ter_id( "t_orifice" ) ) {
                     g->place_critter_around( mon_dark_wyrm, p, 1 );
                 }
@@ -2727,7 +2727,7 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
     }
 }
 
-ret_val<bool> iexamine::can_fertilize( player &p, const tripoint &tile,
+ret_val<bool> iexamine::can_fertilize( player &p, const tripoint_bub_ms &tile,
                                        const itype_id &fertilizer )
 {
     map &here = get_map();
@@ -3555,7 +3555,7 @@ static auto confirm_fluid_grid_contamination_for_items( const tripoint_abs_omt &
     return confirm_fluid_grid_contamination( pos_abs_omt, ( *contaminating )->typeId() );
 }
 
-static auto get_keg_capacity( const tripoint &pos ) -> units::volume
+static auto get_keg_capacity( const tripoint_bub_ms &pos ) -> units::volume
 {
     const furn_t &furn = get_map().furn( pos ).obj();
     const auto capacity = fluid_grid_tank_capacity( furn );
@@ -5115,7 +5115,7 @@ void iexamine::sign( player &p, const tripoint_bub_ms &examp )
     }
 }
 
-static int getNearPumpCount( const tripoint &p )
+static int getNearPumpCount( const tripoint_bub_ms &p )
 {
     int result = 0;
     map &here = get_map();
@@ -5128,7 +5128,7 @@ static int getNearPumpCount( const tripoint &p )
     return result;
 }
 
-std::optional<tripoint> iexamine::getNearFilledGasTank( const tripoint &center, int &gas_units )
+std::optional<tripoint> iexamine::getNearFilledGasTank( const tripoint_bub_ms &center, int &gas_units )
 {
     map &here = get_map();
     std::optional<tripoint> tank_loc;
@@ -5686,7 +5686,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
     }
 }
 
-static player &player_on_couch( player &p, const tripoint &autodoc_loc, player &null_patient,
+static player &player_on_couch( player &p, const tripoint_bub_ms &autodoc_loc, player &null_patient,
                                 bool &adjacent_couch, tripoint &couch_pos )
 {
     map &here = get_map();
@@ -5706,7 +5706,7 @@ static player &player_on_couch( player &p, const tripoint &autodoc_loc, player &
     return null_patient;
 }
 
-static Character &operator_present( Character &p, const tripoint &autodoc_loc,
+static Character &operator_present( Character &p, const tripoint_bub_ms &autodoc_loc,
                                     Character &null_patient )
 {
     map &here = get_map();

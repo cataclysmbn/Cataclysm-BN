@@ -47,7 +47,7 @@ static void serialize_liquid_source( player_activity &act, vehicle &veh,
     act.coords.push_back( veh.bub_part_location( 0 ).raw() );
 }
 
-static void serialize_liquid_source( player_activity &act, tripoint pos )
+static void serialize_liquid_source( player_activity &act, const tripoint_bub_ms &pos )
 {
     act.values.push_back( LST_INFINITE_MAP );
     act.values.push_back( 0 ); //dummy
@@ -66,7 +66,7 @@ static void serialize_liquid_target( player_activity &act, item &container )
     act.targets.emplace_back( &container );
 }
 
-static void serialize_liquid_target( player_activity &act, const tripoint &pos )
+static void serialize_liquid_target( player_activity &act, const tripoint_bub_ms &pos )
 {
     act.values.push_back( LTT_MAP );
     act.coords.push_back( pos );
@@ -332,7 +332,7 @@ static bool perform_liquid_transfer( detached_ptr<item> &&liquid, liquid_dest_op
             return false;
     }
 }
-static bool perform_liquid_transfer( tripoint pos, liquid_dest_opt &target )
+static bool perform_liquid_transfer( const tripoint_bub_ms &pos, liquid_dest_opt &target )
 {
     map &here = get_map();
     switch( target.dest_opt ) {

@@ -1301,7 +1301,7 @@ void weather_manager::clear_temp_cache()
 namespace weather
 {
 
-bool is_sheltered( const map &m, const tripoint &p )
+bool is_sheltered( const map &m, const tripoint_bub_ms &p )
 {
     const optional_vpart_position vp = m.veh_at( p );
 
@@ -1310,7 +1310,7 @@ bool is_sheltered( const map &m, const tripoint &p )
              ( vp && vp->is_inside() ) );
 }
 
-bool is_in_sunlight( const map &m, const tripoint &p, const weather_type_id &weather )
+bool is_in_sunlight( const map &m, const tripoint_bub_ms &p, const weather_type_id &weather )
 {
     // TODO: Remove that game reference and include light in weather data
     return m.is_outside( p ) && g->light_level( p.z ) >= 40 && !is_night( calendar::turn ) &&

@@ -122,7 +122,7 @@ void multicooker( player &p, const tripoint &pos );
 detached_ptr<item> pour_into_keg( const tripoint &pos, detached_ptr<item> &&liquid );
 std::optional<tripoint> getGasPumpByNumber( const tripoint &p, int number );
 bool toPumpFuel( const tripoint &src, const tripoint &dst, int units );
-std::optional<tripoint> getNearFilledGasTank( const tripoint &center, int &gas_units );
+std::optional<tripoint> getNearFilledGasTank( const tripoint_bub_ms &center, int &gas_units );
 
 bool has_keg( const tripoint &pos );
 
@@ -134,9 +134,9 @@ std::vector<seed_tuple> get_seed_entries( const std::vector<item *> &seed_inv );
 int query_seed( const std::vector<seed_tuple> &seed_entries, int min_req = 1 );
 void plant_seed( player &p, const tripoint_bub_ms &examp, const itype_id &seed_id );
 void harvest_plant( player &p, const tripoint_bub_ms &examp, bool from_activity = false );
-void fertilize_plant( player &p, const tripoint &tile, const itype_id &fertilizer );
+void fertilize_plant( player &p, const tripoint_bub_ms &tile, const itype_id &fertilizer );
 itype_id choose_fertilizer( player &p, const std::string &pname, bool ask_player );
-ret_val<bool> can_fertilize( player &p, const tripoint &tile, const itype_id &fertilizer );
+ret_val<bool> can_fertilize( player &p, const tripoint_bub_ms &tile, const itype_id &fertilizer );
 
 // Skill training common functions
 void practice_survival_while_foraging( player *p );

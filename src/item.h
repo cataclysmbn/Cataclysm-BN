@@ -904,7 +904,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param weather Weather manager to supply temperature.
          * @return true if the item has rotten away and should be removed, false otherwise.
          */
-        static detached_ptr<item> actualize_rot( detached_ptr<item> &&self, const tripoint &pnt,
+        static detached_ptr<item> actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
                 temperature_flag temperature,
                 const weather_manager &weather );
 
@@ -1572,7 +1572,7 @@ class item : public location_visitable<item>, public game_object<item>
         // NOLINTNEXTLINE(cata-no-long)
         //void set_var( const std::string &name, long value ) { item_vars_.set<long>( name, value ); };
         void set_var( const std::string &name, double value ) { item_vars_.set<double>( name, value ); };
-        void set_var( const std::string &name, const tripoint &value ) { item_vars_.set<tripoint>( name, value ); };
+        void set_var( const std::string &name, const tripoint_abs_ms &value ) { item_vars_.set<tripoint>( name, value ); };
         void set_var( const std::string &name, const std::string &value ) { item_vars_.set( name, value ); };
 
         double get_var( const std::string &name, double default_value ) const { return item_vars_.get<double>( name, default_value ); }

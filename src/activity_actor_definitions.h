@@ -397,7 +397,7 @@ class lockpick_activity_actor : public activity_actor
         void do_turn( player_activity &, Character & ) override;
         void finish( player_activity &act, Character &who ) override;
 
-        static bool is_pickable( const tripoint &p );
+        static bool is_pickable( const tripoint_bub_ms &p );
         static std::optional<tripoint> select_location( avatar &you );
 
         void serialize( JsonOut &jsout ) const override;

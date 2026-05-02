@@ -1630,7 +1630,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     }
 }
 
-bool lockpick_activity_actor::is_pickable( const tripoint &p )
+bool lockpick_activity_actor::is_pickable( const tripoint_bub_ms &p )
 {
     const ter_id ter_type = get_map().ter( p );
     const furn_id furn_type = get_map().furn( p );

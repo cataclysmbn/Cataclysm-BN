@@ -791,7 +791,7 @@ class game : public submap_load_listener
                           char bullet, const std::string &custom_sprite = {} );
         void draw_hit_mon( const tripoint_bub_ms &p, const monster &m, bool dead = false );
         void draw_hit_player( const Character &p, int dam );
-        void draw_line( const tripoint_bub_ms &p, const tripoint &center_point,
+        void draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center_point,
                         const std::vector<tripoint> &points, bool noreveal = false );
         void draw_line( const tripoint_bub_ms &p, const std::vector<tripoint> &points );
         void draw_weather( const weather_printable &wPrint );
@@ -857,9 +857,9 @@ class game : public submap_load_listener
         bool npc_menu( npc &who, const bool &force = false );
 
         // Handle phasing through walls, returns true if it handled the move
-        bool phasing_move( const tripoint &dest, bool via_ramp = false );
+        bool phasing_move( const tripoint_bub_ms &dest, bool via_ramp = false );
         // Regular movement. Returns false if it failed for any reason
-        bool walk_move( const tripoint &dest, bool via_ramp = false );
+        bool walk_move( const tripoint_bub_ms &dest, bool via_ramp = false );
         void on_move_effects();
     private:
         // Game-start procedures
@@ -1333,7 +1333,7 @@ class game : public submap_load_listener
 // adjacent hottest heat source
 int get_heat_radiation( const tripoint_bub_ms &location, bool direct );
 // Returns temperature modifier from hot air fields of given location
-int get_convection_temperature( const tripoint &location );
+int get_convection_temperature( const tripoint_bub_ms &location );
 
 namespace cata_event_dispatch
 {

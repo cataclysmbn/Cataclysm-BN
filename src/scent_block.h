@@ -30,7 +30,7 @@ struct scent_block {
 
     void commit_modifications();
 
-    point index( const tripoint &p ) const {
+    point index( const tripoint_bub_ms &p ) const {
         return -origin.xy() + p.xy();
     }
 

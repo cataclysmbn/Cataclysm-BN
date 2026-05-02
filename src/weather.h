@@ -98,8 +98,8 @@ struct weather_sum {
 
 namespace weather
 {
-bool is_sheltered( const map &m, const tripoint &p );
-bool is_in_sunlight( const map &m, const tripoint &p, const weather_type_id &weather );
+bool is_sheltered( const map &m, const tripoint_bub_ms &p );
+bool is_in_sunlight( const map &m, const tripoint_bub_ms &p, const weather_type_id &weather );
 } // namespace weather
 
 std::string get_shortdirstring( int angle );

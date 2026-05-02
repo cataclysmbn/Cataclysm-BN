@@ -1083,7 +1083,7 @@ class npc : public player
         int confident_gun_mode_range( const gun_mode &gun, int at_recoil ) const;
         int confident_throw_range( const item &, Creature * ) const;
         void invalidate_range_cache();
-        bool wont_hit_friend( const tripoint &tar, const item &it, bool throwing ) const;
+        bool wont_hit_friend( const tripoint_bub_ms &tar, const item &it, bool throwing ) const;
         bool enough_time_to_reload( const item &gun ) const;
         /** Can reload currently wielded gun? */
         bool can_reload_current();

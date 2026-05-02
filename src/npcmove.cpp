@@ -1069,7 +1069,7 @@ void npc::move()
 void npc::execute_action( npc_action action )
 {
     int oldmoves = moves;
-    tripoint tar = bub_pos();
+    const tripoint_bub_ms &tar = bub_pos();
     Creature *cur = current_target();
     if( action == npc_flee ) {
         tar = good_escape_direction( false );
@@ -3722,7 +3722,7 @@ void npc::scan_new_items()
     // TODO: Armor?
 }
 
-static void npc_throw( npc &np, item &it, const tripoint &pos )
+static void npc_throw( npc &np, item &it, const tripoint_bub_ms &pos )
 {
     if( get_player_character().sees( np ) ) {
         add_msg( _( "%1$s throws a %2$s." ), np.name, it.tname() );

@@ -47,9 +47,9 @@ struct workbench_info_wrapper {
 
 struct bench_loc {
     workbench_info_wrapper wb_info;
-    tripoint position;
+    const tripoint_bub_ms &position;
 
-    explicit bench_loc( workbench_info_wrapper info, tripoint position )
+    explicit bench_loc( workbench_info_wrapper info, const tripoint_bub_ms &position )
         : wb_info( info ), position( position ) {
     }
 };

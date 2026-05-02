@@ -1182,7 +1182,7 @@ void explosion( const tripoint_bub_ms &p, const explosion_data &ex, Creature *so
     get_explosion_queue().add( std::move( qe ) );
 }
 
-static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
+static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &src,
         const projectile &fragment,
         Creature *source )
 {

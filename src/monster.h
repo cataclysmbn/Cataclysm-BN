@@ -567,7 +567,7 @@ class monster : public Creature, public location_visitable<monster>
          * @param vol Volume at the center of the sound source
          * @param distance Distance to sound source (currently just rl_dist)
          */
-        void hear_sound( const tripoint &source, int vol, int distance );
+        void hear_sound( const tripoint_bub_ms &source, int vol, int distance );
 
         bool is_hallucination() const override;    // true if the monster isn't actually real
 

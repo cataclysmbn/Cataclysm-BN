@@ -1088,7 +1088,7 @@ auto has_only_rigid_wheels( const vehicle &veh ) -> bool
     return has_wheels;
 }
 
-auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoint &target,
+auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoint_bub_ms &target,
                                   const tripoint &shot_origin, const int gun_recoil, const int shots ) -> void
 {
     if( gun_recoil <= 0 || shots <= 0 ) {
@@ -1185,12 +1185,12 @@ static int calc_gun_volume( const item &gun )
     return noise;
 }
 
-int ranged::fire_gun( Character &who, const tripoint &target, int shots )
+int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int shots )
 {
     return fire_gun( who, target, shots, who.primary_weapon(), nullptr, std::nullopt );
 }
 
-int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, item &gun,
+int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_shots, item &gun,
                       item *ammo, const std::optional<tripoint> &shot_origin )
 {
     int attack_moves = time_to_attack( who, gun, ammo );
@@ -1701,7 +1701,7 @@ auto throw_damage( const item &it, const int skill, const int str ) -> int
     return throw_damage_projectile( it, skill, str ).impact.total_damage();
 }
 
-dealt_projectile_attack throw_item( Character &who, const tripoint &target,
+dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &target,
                                     detached_ptr<item> &&to_throw,
                                     std::optional<tripoint> blind_throw_from_pos )
 {
@@ -2124,7 +2124,7 @@ static bool pl_sees( const Creature &cr )
 }
 
 // Handle capping aim level when the player cannot see the target tile or there is nothing to aim at.
-static double calculate_aim_cap( const Character &p, const tripoint &target )
+static double calculate_aim_cap( const Character &p, const tripoint_bub_ms &target )
 {
     double min_recoil = 0.0;
     const Creature *victim = g->critter_at( target, true );

@@ -1093,7 +1093,7 @@ bool spell::bp_is_affected( body_part bp ) const
     return type->affected_bps.contains( convert_bp( bp ) );
 }
 
-void spell::create_field( const tripoint &at ) const
+void spell::create_field( const tripoint_bub_ms &at ) const
 {
     if( !type->field ) {
         return;
@@ -1172,7 +1172,7 @@ bool spell::is_valid_effect_target( valid_target t ) const
     return type->effect_targets[t];
 }
 
-bool spell::target_by_monster_id( const tripoint &p ) const
+bool spell::target_by_monster_id( const tripoint_bub_ms &p ) const
 {
     if( type->targeted_monster_ids.empty() ) {
         return true;

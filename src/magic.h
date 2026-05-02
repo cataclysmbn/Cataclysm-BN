@@ -478,7 +478,7 @@ class spell
         int get_difficulty() const;
 
         // tries to create a field at the location specified
-        void create_field( const tripoint &at ) const;
+        void create_field( const tripoint_bub_ms &at ) const;
 
         // makes a spell sound at the location
         void make_sound( const tripoint_bub_ms &target ) const;
@@ -499,7 +499,7 @@ class spell
         bool is_valid_target( const Creature &caster, const tripoint_bub_ms &p ) const;
         bool is_valid_target( valid_target t ) const;
         bool is_valid_effect_target( valid_target t ) const;
-        bool target_by_monster_id( const tripoint &p ) const;
+        bool target_by_monster_id( const tripoint_bub_ms &p ) const;
 
         // picks a random valid tripoint from @area
         std::optional<tripoint> random_valid_target( const Creature &caster,
