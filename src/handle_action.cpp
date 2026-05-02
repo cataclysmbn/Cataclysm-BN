@@ -1223,7 +1223,8 @@ static void loot()
     flags |= g->check_near_zone( zone_type_id( "LOOT_WOOD" ), u.bub_pos() ) ? Multichopplanks : 0;
     flags |= g->check_near_zone( zone_type_id( "VEHICLE_DECONSTRUCT" ),
                                  u.bub_pos() ) ? Multideconvehicle : 0;
-    flags |= g->check_near_zone( zone_type_id( "VEHICLE_REPAIR" ), u.bub_pos() ) ? Multirepairvehicle : 0;
+    flags |= g->check_near_zone( zone_type_id( "VEHICLE_REPAIR" ),
+                                 u.bub_pos() ) ? Multirepairvehicle : 0;
     flags |= g->check_near_zone( zone_type_id( "LOOT_CORPSE" ), u.bub_pos() ) ? MultiButchery : 0;
     flags |= g->check_near_zone( zone_type_id( "MINING" ), u.bub_pos() ) ? MultiMining : 0;
     if( flags == 0 ) {

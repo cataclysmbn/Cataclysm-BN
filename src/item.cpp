@@ -10354,7 +10354,8 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         if( it.has_flag( flag_MARIJUANA ) ) {
             if( carrier != nullptr ) {
                 carrier->add_effect( effect_weed_high, 1_minutes ); // one last puff
-                here.add_field( tripoint_bub_ms( pos ) + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ), fd_weedsmoke, 2 );
+                here.add_field( tripoint_bub_ms( pos ) + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ), fd_weedsmoke,
+                                2 );
                 weed_msg( *carrier );
             }
         }

@@ -1326,7 +1326,8 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
                     .target = shell_target,
                     .half_angle = shot_half_angle,
                 } ) : shell_target;
-                auto shot = projectile_attack( render_projectile, who.bub_pos(), pellet_target, pellet_dispersion, &who,
+                auto shot = projectile_attack( render_projectile, who.bub_pos(), pellet_target, pellet_dispersion,
+                                               &who,
                                                &gun, in_veh, shot_count > 1 );
                 if( render_multishot ) {
                     projectile_trajectories.push_back( shot.trajectory );
@@ -1425,7 +1426,8 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
 
         // If user is currently able to fire a mounted gun freely, penalize dispersion
         // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
-        if( gun.has_flag( flag_MOUNTED_GUN ) && !can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) ) {
+        if( gun.has_flag( flag_MOUNTED_GUN ) &&
+            !can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) ) {
             if( who.get_size() == creature_size::large ) {
                 gun_recoil = gun_recoil * 2;
             } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&

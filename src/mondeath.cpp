@@ -140,7 +140,8 @@ static void scatter_chunks( const itype_id &chunk_name, int chunk_amt, monster &
     map &here = get_map();
     for( int i = 0; i < chunk_amt; i += pile_size ) {
         bool drop_chunks = true;
-        tripoint tarp( z.bub_pos() + point_rel_ms( rng( -distance, distance ), rng( -distance, distance ) ) );
+        tripoint tarp( z.bub_pos() + point_rel_ms( rng( -distance, distance ), rng( -distance,
+                       distance ) ) );
         const auto traj = line_to( z.bub_pos(), tarp );
         tripoint prev_point = z.bub_pos();
         for( size_t j = 0; j < traj.size(); j++ ) {
@@ -392,7 +393,8 @@ void mdeath::fungus( monster &z )
 
     fungal_effects fe( *g, g->m );
     for( const tripoint &sporep : g->m.points_in_radius( z.bub_pos(), 1 ) ) { // *NOPAD*
-        if( g->m.impassable( sporep ) && !get_map().obstructed_by_vehicle_rotation( z.bub_pos(), sporep ) ) {
+        if( g->m.impassable( sporep ) &&
+            !get_map().obstructed_by_vehicle_rotation( z.bub_pos(), sporep ) ) {
             continue;
         }
         // z is dead, don't credit it with the kill

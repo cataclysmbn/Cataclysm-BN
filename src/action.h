@@ -434,7 +434,8 @@ action_id action_from_key( char ch );
  * @param[in] message Message used in assembling the prompt to the player
  * @param[in] allow_vertical Allows player to select tiles above/below them if true
  */
-std::optional<tripoint_bub_ms> choose_adjacent( const std::string &message, bool allow_vertical = false );
+std::optional<tripoint_bub_ms> choose_adjacent( const std::string &message,
+        bool allow_vertical = false );
 
 /**
  * Request player input of a direction, possibly including vertical component

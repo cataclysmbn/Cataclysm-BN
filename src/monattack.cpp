@@ -548,7 +548,8 @@ bool mattack::howl( monster *z )
 
     // It takes a while
     z->moves -= 200;
-    sounds::sound( z->bub_pos(), 35, sounds::sound_t::alert, _( "an ear-piercing howl!" ), false, "shout",
+    sounds::sound( z->bub_pos(), 35, sounds::sound_t::alert, _( "an ear-piercing howl!" ), false,
+                   "shout",
                    "howl" );
 
     // TODO: Make this use mon's faction when those are in
@@ -615,7 +616,8 @@ bool mattack::acid( monster *z )
     proj.impact.add_damage( DT_ACID, 5 );
     proj.range = 10;
     proj.add_effect( ammo_effect_NO_OVERSHOOT );
-    auto dealt = projectile_attack( proj, z->bub_pos(), target->bub_pos(), dispersion_sources{ 5400 }, z );
+    auto dealt = projectile_attack( proj, z->bub_pos(), target->bub_pos(), dispersion_sources{ 5400 },
+                                    z );
     const tripoint &hitp = dealt.end_point;
     const Creature *hit_critter = dealt.hit_critter;
     if( hit_critter == nullptr && g->m.hit_with_acid( hitp ) && g->u.sees( hitp ) ) {
@@ -3165,8 +3167,9 @@ bool mattack::nurse_operate( monster *z )
 
         z->friendly = 0;
         z->anger = 100;
-        std::list<tripoint_bub_ms> couch_pos = g->m.find_furnitures_or_vparts_with_flag_in_radius( z->bub_pos(), 10,
-                                        flag_AUTODOC_COUCH );
+        std::list<tripoint_bub_ms> couch_pos = g->m.find_furnitures_or_vparts_with_flag_in_radius(
+                z->bub_pos(), 10,
+                flag_AUTODOC_COUCH );
 
         if( couch_pos.empty() ) {
             add_msg( m_info, _( "The %s looks for something but doesn't seem to find it." ), z->name() );
@@ -3451,9 +3454,11 @@ void mattack::rifle( monster *z, Creature *target )
 
     if( z->ammo[ammo_type] <= 0 ) {
         if( one_in( 3 ) ) {
-            sounds::sound( z->bub_pos(), 2, sounds::sound_t::combat, _( "a chk!" ), false, "fire_gun", "empty" );
+            sounds::sound( z->bub_pos(), 2, sounds::sound_t::combat, _( "a chk!" ), false, "fire_gun",
+                           "empty" );
         } else if( one_in( 4 ) ) {
-            sounds::sound( z->bub_pos(), 6, sounds::sound_t::combat,  _( "boop!" ), false, "fire_gun", "empty" );
+            sounds::sound( z->bub_pos(), 6, sounds::sound_t::combat,  _( "boop!" ), false, "fire_gun",
+                           "empty" );
         }
         return;
     }
@@ -3513,7 +3518,8 @@ void mattack::frag( monster *z, Creature *target ) // This is for the bots, not 
 
     if( z->ammo[ammo_type] <= 0 ) {
         if( one_in( 3 ) ) {
-            sounds::sound( z->bub_pos(), 2, sounds::sound_t::combat, _( "a chk!" ), false, "fire_gun", "empty" );
+            sounds::sound( z->bub_pos(), 2, sounds::sound_t::combat, _( "a chk!" ), false, "fire_gun",
+                           "empty" );
         } else if( one_in( 4 ) ) {
             sounds::sound( z->bub_pos(), 6, sounds::sound_t::combat, _( "boop!" ), false, "fire_gun", "empty" );
         }
@@ -3576,9 +3582,11 @@ void mattack::tankgun( monster *z, Creature *target )
 
     if( z->ammo[ammo_type] <= 0 ) {
         if( one_in( 3 ) ) {
-            sounds::sound( z->bub_pos(), 2, sounds::sound_t::combat, _( "a chk!" ), false, "fire_gun", "empty" );
+            sounds::sound( z->bub_pos(), 2, sounds::sound_t::combat, _( "a chk!" ), false, "fire_gun",
+                           "empty" );
         } else if( one_in( 4 ) ) {
-            sounds::sound( z->bub_pos(), 6, sounds::sound_t::combat, _( "clank!" ), false, "fire_gun", "empty" );
+            sounds::sound( z->bub_pos(), 6, sounds::sound_t::combat, _( "clank!" ), false, "fire_gun",
+                           "empty" );
         }
         return;
     }
@@ -5230,7 +5238,8 @@ bool mattack::tindalos_teleport( monster *z )
         return false;
     }
     if( one_in( 7 ) ) {
-        if( monster *const afterimage = g->place_critter_around( mon_hound_tindalos_afterimage, z->bub_pos(),
+        if( monster *const afterimage = g->place_critter_around( mon_hound_tindalos_afterimage,
+                                        z->bub_pos(),
                                         1 ) ) {
             z->moves -= 140;
             afterimage->make_ally( *z );

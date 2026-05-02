@@ -1262,7 +1262,8 @@ void inventory_selector::add_nearby_items( int radius )
     if( radius >= 0 ) {
         for( const tripoint &pos : closest_points_first( u.bub_pos(), radius ) ) {
             // can not reach this -> can not access its contents
-            if( u.bub_pos() != pos && !g->m.clear_path( u.bub_pos(), pos, rl_dist( u.bub_pos(), pos ), 1, 100 ) ) {
+            if( u.bub_pos() != pos &&
+                !g->m.clear_path( u.bub_pos(), pos, rl_dist( u.bub_pos(), pos ), 1, 100 ) ) {
                 continue;
             }
             add_map_items( pos );

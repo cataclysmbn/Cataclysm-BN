@@ -1494,7 +1494,8 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
             // If their position or intended position or player position/intended position
             // then discount, don't need to move each other out of the way.
             if( here.abs_to_bub( g->u.activity->placement ) == src_loc ||
-                guy_work_spot == src_loc || guy.bub_pos() == src_loc || ( p.is_npc() && g->u.bub_pos() == src_loc ) ) {
+                guy_work_spot == src_loc || guy.bub_pos() == src_loc || ( p.is_npc() &&
+                        g->u.bub_pos() == src_loc ) ) {
                 set_activity_failure_message( p,
                                               _( "Vehicle work blocked: someone is already working here." ),
                                               failure_notice_sent );

@@ -637,12 +637,14 @@ void Character::invalidate_crafting_inventory()
     cached_position = tripoint_min;
 }
 
-void Character::make_craft( const recipe_id &id_to_make, int batch_size, const tripoint_bub_ms &loc )
+void Character::make_craft( const recipe_id &id_to_make, int batch_size,
+                            const tripoint_bub_ms &loc )
 {
     make_craft_with_command( id_to_make, batch_size, false, loc );
 }
 
-void Character::make_all_craft( const recipe_id &id_to_make, int batch_size, const tripoint_bub_ms &loc )
+void Character::make_all_craft( const recipe_id &id_to_make, int batch_size,
+                                const tripoint_bub_ms &loc )
 {
     make_craft_with_command( id_to_make, batch_size, true, loc );
 }
@@ -2410,7 +2412,8 @@ void remove_ammo( item &dis_item, Character &who )
 bench_location find_best_bench( const Character &who, const item &craft )
 {
     bool can_lift = who.can_wield( craft ).success() && who.weight_capacity() >= craft.weight();
-    std::pair<bench_type, float> bench_here = crafting::best_bench_here( craft, who.bub_pos(), can_lift );
+    std::pair<bench_type, float> bench_here = crafting::best_bench_here( craft, who.bub_pos(),
+            can_lift );
     bench_type best_type = bench_here.first;
     float best_bench_multi = bench_here.second;
     tripoint best_loc = who.bub_pos();

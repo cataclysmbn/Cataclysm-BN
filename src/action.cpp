@@ -1066,7 +1066,8 @@ action_id handle_main_menu()
     }
 }
 
-std::optional<tripoint_rel_ms> choose_direction( const std::string &message, const bool allow_vertical )
+std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
+        const bool allow_vertical )
 {
     input_context ctxt( "DEFAULTMODE" );
     ctxt.set_iso( true );
@@ -1108,7 +1109,8 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message, con
     return std::nullopt;
 }
 
-std::optional<tripoint_bub_ms> choose_adjacent( const std::string &message, const bool allow_vertical )
+std::optional<tripoint_bub_ms> choose_adjacent( const std::string &message,
+        const bool allow_vertical )
 {
     const std::optional<tripoint_rel_ms> dir = choose_direction( message, allow_vertical );
 

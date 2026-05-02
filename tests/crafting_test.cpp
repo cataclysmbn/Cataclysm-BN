@@ -516,7 +516,8 @@ static int resume_craft()
     REQUIRE( crafts.size() == 1 );
     item *craft = crafts.front();
     set_time( midday ); // Ensure light for crafting
-    REQUIRE( crafting_speed_multiplier( you, *craft, bench_location{bench_type::hands, you.bub_pos()} ) ==
+    REQUIRE( crafting_speed_multiplier( you, *craft, bench_location{bench_type::hands, you.bub_pos()} )
+             ==
              1.0 );
     REQUIRE( !you.activity );
     avatar_funcs::use_item( you, *craft );

@@ -179,7 +179,7 @@ class spell_type
         std::string sound_variant;
         // spell effect string. used to look up spell function
         std::string effect_name;
-        std::function<void( const spell &, Creature &, const tripoint_bub_ms &)> effect;
+        std::function<void( const spell &, Creature &, const tripoint_bub_ms & )> effect;
         // extra information about spell effect. allows for combinations for effects
         std::string effect_str;
         // list of additional "spell effects"
@@ -598,7 +598,8 @@ void area_pull( const spell &sp, Creature &caster, const tripoint &center );
 void area_push( const spell &sp, Creature &caster, const tripoint &center );
 void directed_push( const spell &sp, Creature &caster, const tripoint &target );
 
-std::set<tripoint> spell_effect_blast( const spell &, const tripoint_bub_ms &, const tripoint &target,
+std::set<tripoint> spell_effect_blast( const spell &, const tripoint_bub_ms &,
+                                       const tripoint &target,
                                        int aoe_radius, bool ignore_walls );
 std::set<tripoint> spell_effect_cone( const spell &sp, const tripoint &source,
                                       const tripoint &target,

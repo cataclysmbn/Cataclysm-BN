@@ -1294,8 +1294,10 @@ class npc : public player
         std::optional<tripoint_abs_ms> goto_to_this_pos;
         int last_seen_player_turn = 0; // Timeout to forgetting
         tripoint_bub_ms wanted_item_pos; // The square containing an item we want
-        tripoint_bub_ms guard_pos;  // These are the local coordinates that a guard will return to inside of their goal tripoint
-        tripoint_bub_ms chair_pos = tripoint_bub_ms::zero(); // This is the spot the NPC wants to move to to sit and relax.
+        tripoint_bub_ms
+        guard_pos;  // These are the local coordinates that a guard will return to inside of their goal tripoint
+        tripoint_bub_ms chair_pos =
+            tripoint_bub_ms::zero(); // This is the spot the NPC wants to move to to sit and relax.
         std::optional<tripoint_abs_omt> base_location; // our faction base location in OMT coords.
         /**
          * Global overmap terrain coordinate, where we want to get to

@@ -482,7 +482,7 @@ void unpack_actor::load( const JsonObject &obj )
     obj.read( "items_fit", items_fit );
 }
 
-int unpack_actor::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int unpack_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     std::vector<detached_ptr<item>> items = item_group::items_from( unpack_group, calendar::turn );
     item *last_armor = &null_item_reference();
@@ -731,7 +731,7 @@ void unfold_vehicle_iuse::load( const JsonObject &obj )
     obj.read( "tools_needed", tools_needed );
 }
 
-int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     if( p.is_underwater() ) {
         p.add_msg_if_player( m_info, _( "You can't do that while underwater." ) );
@@ -750,7 +750,8 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &
         }
     }
 
-    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, 0, 0, false, false, true );
+    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, 0, 0, false, false,
+                                          true );
     if( veh == nullptr ) {
         p.add_msg_if_player( m_info, _( "There's no room to unfold the %s." ), it.tname() );
         return 0;
@@ -910,7 +911,7 @@ void consume_drug_iuse::info( const item &, std::vector<iteminfo> &dump ) const
     }
 }
 
-int consume_drug_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int consume_drug_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     auto need_these = tools_needed;
     if( need_these.contains( itype_syringe ) && p.has_bionic( bio_syringe ) ) {
@@ -1356,7 +1357,7 @@ void place_npc_iuse::load( const JsonObject &obj )
     obj.read( "place_randomly", place_randomly );
 }
 
-int place_npc_iuse::use( player &p, item &, bool, const tripoint_bub_ms &) const
+int place_npc_iuse::use( player &p, item &, bool, const tripoint_bub_ms & ) const
 {
     map &here = get_map();
     std::optional<tripoint> target_pos;
@@ -1710,7 +1711,7 @@ void reveal_map_actor::show_revealed( player &p, item &item, const tripoint_abs_
     }
 }
 
-int reveal_map_actor::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int reveal_map_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     if( !it.already_used_by_player( p ) && g->get_levz() < 0 ) {
         p.add_msg_if_player( _( "You should read your %s when you get to the surface." ),
@@ -1990,7 +1991,7 @@ bool inscribe_actor::item_inscription( item &tool, item &cut ) const
     return true;
 }
 
-int inscribe_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &) const
+int inscribe_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
 {
     if( t ) {
         return 0;
@@ -2089,7 +2090,7 @@ bool cauterize_actor::cauterize_effect( player &p, item &it, bool force )
     return false;
 }
 
-int cauterize_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &) const
+int cauterize_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
 {
     if( t ) {
         return 0;
@@ -2170,7 +2171,7 @@ std::unique_ptr<iuse_actor> enzlave_actor::clone() const
     return std::make_unique<enzlave_actor>( *this );
 }
 
-int enzlave_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &) const
+int enzlave_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
 {
     if( t ) {
         return 0;
@@ -2328,7 +2329,7 @@ std::unique_ptr<iuse_actor> fireweapon_off_actor::clone() const
     return std::make_unique<fireweapon_off_actor>( *this );
 }
 
-int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &) const
+int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
 {
     if( t ) {
         return 0;
@@ -2391,7 +2392,7 @@ std::unique_ptr<iuse_actor> fireweapon_on_actor::clone() const
     return std::make_unique<fireweapon_on_actor>( *this );
 }
 
-int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &) const
+int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
 {
     bool extinguish = true;
     if( it.charges == 0 ) {
@@ -2442,7 +2443,7 @@ std::unique_ptr<iuse_actor> manualnoise_actor::clone() const
     return std::make_unique<manualnoise_actor>( *this );
 }
 
-int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &) const
+int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
 {
     if( t ) {
         return 0;
@@ -2490,7 +2491,7 @@ void musical_instrument_actor::load( const JsonObject &obj )
     npc_descriptions = obj.get_string_array( "npc_descriptions" );
 }
 
-int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &) const
+int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
 {
     if( p.is_mounted() ) {
         p.add_msg_player_or_npc( m_bad, _( "You can't play music while mounted." ),
@@ -2640,7 +2641,7 @@ void learn_spell_actor::info( const item &, std::vector<iteminfo> &dump ) const
     }
 }
 
-int learn_spell_actor::use( player &p, item &, bool, const tripoint_bub_ms &) const
+int learn_spell_actor::use( player &p, item &, bool, const tripoint_bub_ms & ) const
 {
     if( !character_funcs::can_see_fine_details( p ) ) {
         p.add_msg_if_player( _( "It's too dark to read." ) );
@@ -2750,7 +2751,7 @@ void cast_spell_actor::info( const item &, std::vector<iteminfo> &dump ) const
     }
 }
 
-int cast_spell_actor::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int cast_spell_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     if( need_worn && !p.is_worn( it ) ) {
         p.add_msg_if_player( m_info, _( "You need to wear the %1$s before activating it." ), it.tname() );
@@ -2886,7 +2887,7 @@ detached_ptr<item> holster_actor::store( player &p, item &holster, detached_ptr<
     return detached_ptr<item>();
 }
 
-int holster_actor::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int holster_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     if( p.is_wielding( it ) ) {
         p.add_msg_if_player( _( "You need to unwield your %s before using it." ), it.tname() );
@@ -3083,7 +3084,7 @@ bool bandolier_actor::reload( player &p, item &obj ) const
     return true;
 }
 
-int bandolier_actor::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int bandolier_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     if( p.is_wielding( it ) ) {
         p.add_msg_if_player( _( "You need to unwield your %s before using it." ),
@@ -3155,7 +3156,7 @@ void ammobelt_actor::info( const item &, std::vector<iteminfo> &dump ) const
                        item::nname( belt ) ) );
 }
 
-int ammobelt_actor::use( player &p, item &, bool, const tripoint_bub_ms &) const
+int ammobelt_actor::use( player &p, item &, bool, const tripoint_bub_ms & ) const
 {
     detached_ptr<item> mag = item::spawn( belt );
     mag->ammo_unset();
@@ -3229,7 +3230,7 @@ bool repair_item_actor::can_use_tool( const player &p, const item &tool, bool pr
     return true;
 }
 
-int repair_item_actor::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int repair_item_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     if( !can_use_tool( p, it, true ) ) {
         return 0;
@@ -4297,7 +4298,7 @@ static void place_and_add_as_known( player &p, const tripoint &pos, const trap_s
     }
 }
 
-int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     const bool could_bury = !bury_question.empty();
     if( !allow_underwater && p.is_underwater() ) {
@@ -4403,7 +4404,7 @@ void saw_barrel_actor::load( const JsonObject &jo )
     assign( jo, "cost", cost );
 }
 
-int saw_barrel_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &) const
+int saw_barrel_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
 {
     if( t ) {
         return 0;
@@ -4460,7 +4461,7 @@ void saw_stock_actor::load( const JsonObject &jo )
     assign( jo, "cost", cost );
 }
 
-int saw_stock_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &) const
+int saw_stock_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
 {
     if( t ) {
         return 0;
@@ -4532,7 +4533,7 @@ std::unique_ptr<iuse_actor> saw_stock_actor::clone() const
     return std::make_unique<saw_stock_actor>( *this );
 }
 
-int install_bionic_actor::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int install_bionic_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     if( p.can_install_bionics( *it.type, p, false ) ) {
         return p.install_bionics( *it.type, p, false ) ? it.type->charges_to_use() : 0;
@@ -4585,7 +4586,7 @@ void install_bionic_actor::finalize( const itype_id &my_item_type )
     }
 }
 
-int detach_gunmods_actor::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int detach_gunmods_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     auto mods = it.gunmods();
 
@@ -4659,7 +4660,7 @@ void mutagen_actor::load( const JsonObject &obj )
     is_strong = obj.get_bool( "is_strong", false );
 }
 
-int mutagen_actor::use( player &p, item &it, bool, const tripoint_bub_ms &) const
+int mutagen_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     mutagen_attempt checks =
         mutagen_common_checks( p, it, false, mutagen_technique::consumed_mutagen );
@@ -6770,7 +6771,7 @@ auto iuse_flowerpot_plant::query_adjacent_pot( const player &who,
 
     std::optional<tripoint> pot_pos;
     if( has_map_pots ) {
-        const auto fn = [&]( const tripoint_bub_ms &p ) {
+        const auto fn = [&]( const tripoint_bub_ms & p ) {
             bool ok = false;
             ok |= map.has_item_with( p, selector_fn );
             ok |= ( who.bub_pos() == p ) && who.has_item_with( selector_fn );
