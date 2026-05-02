@@ -2098,6 +2098,13 @@ void options_manager::add_options_graphics()
 
     get_option( "USE_CHARACTER_PREVIEW" ).setPrerequisite( "USE_TILES" );
 
+    add( "LOADING_SCREEN_IMAGES", graphics, translate_marker( "Loading screen images" ),
+         translate_marker( "If true, shows loading splash images when available." ),
+         true, COPT_CURSES_HIDE
+       );
+
+    get_option( "LOADING_SCREEN_IMAGES" ).setPrerequisite( "USE_TILES" );
+
     add_empty_line();
 
     add( "MEMORY_MAP_MODE", graphics, translate_marker( "Memory map drawing mode" ),

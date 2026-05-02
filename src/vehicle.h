@@ -1838,6 +1838,7 @@ class vehicle
         // vehicle being driven by player/npc automatically
         bool is_autodriving = false;
         bool is_following = false;
+        int follow_distance = 0;
         bool is_patrolling = false;
         // TODO: change these to a bitset + enum?
         // cruise control on/off

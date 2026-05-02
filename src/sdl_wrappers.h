@@ -71,6 +71,12 @@ using TTF_Font_Ptr = std::unique_ptr<TTF_Font, TTF_Font_deleter>;
  */
 bool printErrorIf( bool condition, const char *message );
 /**
+ * If the @p condition is `true`, an SDL_image error (including the given @p message
+ * and the output of @ref IMG_GetError) is logged to the debug log.
+ * @returns \p condition, in other words: return whether an error was logged.
+ */
+auto printImgErrorIf( bool condition, const char *message ) -> bool;
+/**
  * If the @p condition is `true`, an exception (including the given @p message
  * and the output of @ref SDL_GetError) is thrown.
  */
@@ -142,5 +148,4 @@ inline bool operator!=( const SDL_Rect &lhs, const SDL_Rect &rhs )
 /**@}*/
 
 #endif // if defined(TILES)
-
 

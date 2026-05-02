@@ -3097,6 +3097,7 @@ void vehicle::deserialize( JsonIn &jsin )
     pivot_anchor[1] = pivot_anchor[0];
     pivot_rotation[1] = pivot_rotation[0] = fdir_angle;
     data.read( "is_following", is_following );
+    data.read( "follow_distance", follow_distance );
     data.read( "is_patrolling", is_patrolling );
     data.read( "autodrive_local_target", autodrive_local_target );
     data.read( "summon_time_limit", summon_time_limit );
@@ -3277,6 +3278,7 @@ void vehicle::serialize( JsonOut &json ) const
     }
     json.member( "pivot", pivot_anchor[0] );
     json.member( "is_following", is_following );
+    json.member( "follow_distance", follow_distance );
     json.member( "is_patrolling", is_patrolling );
     json.member( "autodrive_local_target", autodrive_local_target );
     json.member( "summon_time_limit", summon_time_limit );

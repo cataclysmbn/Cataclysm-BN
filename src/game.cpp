@@ -844,7 +844,7 @@ bool game::start_game()
 
     init_autosave();
 
-    background_pane background;
+    loading_image_splash background;
     static_popup popup;
     popup.message( "%s", _( "Please wait as we build your world" ) );
     ui_manager::redraw();
@@ -2695,6 +2695,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "reload_weapon" );
     ctxt.register_action( "reload_wielded" );
     ctxt.register_action( "unload" );
+    ctxt.register_action( "unload_all" );
     ctxt.register_action( "throw" );
     ctxt.register_action( "fire" );
     ctxt.register_action( "cast_spell" );
