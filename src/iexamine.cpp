@@ -5128,7 +5128,8 @@ static int getNearPumpCount( const tripoint_bub_ms &p )
     return result;
 }
 
-std::optional<tripoint> iexamine::getNearFilledGasTank( const tripoint_bub_ms &center, int &gas_units )
+std::optional<tripoint> iexamine::getNearFilledGasTank( const tripoint_bub_ms &center,
+        int &gas_units )
 {
     map &here = get_map();
     std::optional<tripoint> tank_loc;

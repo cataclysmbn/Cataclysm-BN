@@ -2133,7 +2133,8 @@ static std::vector<std::tuple<tripoint, itype_id, int>> requirements_map( player
     return final_map;
 }
 
-static bool construction_activity( player &p, const zone_data * /*zone*/, const tripoint_bub_ms &src_loc,
+static bool construction_activity( player &p, const zone_data * /*zone*/,
+                                   const tripoint_bub_ms &src_loc,
                                    const activity_reason_info &act_info,
                                    const activity_id &activity_to_restore )
 {
@@ -3542,7 +3543,8 @@ static std::optional<tripoint> find_best_fire( const std::vector<tripoint> &from
     return best_fire;
 }
 
-static inline bool has_clear_path_to_pickup_items( const tripoint_bub_ms &from, const tripoint_bub_ms &to )
+static inline bool has_clear_path_to_pickup_items( const tripoint_bub_ms &from,
+        const tripoint_bub_ms &to )
 {
     map &here = get_map();
     return here.has_items( to ) &&

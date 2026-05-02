@@ -4829,7 +4829,7 @@ int deploy_tent_actor::use( player &p, item &it, bool, const tripoint & ) const
     // spaces away from the player.
     // First check there's enough room.
     const tripoint_bub_ms &center = p.bub_pos() + tripoint_rel_ms( ( radius + 1 ) * direction.x,
-                            ( radius + 1 ) * direction.y, 0 );
+                                    ( radius + 1 ) * direction.y, 0 );
     for( const tripoint &dest : here.points_in_radius( center, radius ) ) {
         if( const auto vp = here.veh_at( dest ) ) {
             add_msg( m_info, _( "The %s is in the way." ), vp->vehicle().name );
