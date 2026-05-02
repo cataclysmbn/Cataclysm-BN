@@ -1120,7 +1120,7 @@ static void butchery_drops_harvest( item *corpse_item, const mtype &mt, player &
                     obj.set_var( "activity_var", p.name );
                 }
                 for( int i = 0; i != roll; ++i ) {
-                    here.add_item_or_charges(  p.bub_pos(), item::spawn( obj ) );
+                    here.add_item_or_charges( p.bub_pos(), item::spawn( obj ) );
                 }
             }
             p.add_msg_if_player( m_good, _( "You harvest: %s" ), drop->nname( roll ) );
