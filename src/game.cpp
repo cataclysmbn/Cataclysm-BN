@@ -3789,11 +3789,11 @@ shared_ptr_fast<game::draw_callback_t>
 #endif
 
             const tripoint_bub_ms start( std::min( zone_start->x, zone_end->x ),
-                                  std::min( zone_start->y, zone_end->y ),
-                                  zone_end->z );
+                                         std::min( zone_start->y, zone_end->y ),
+                                         zone_end->z );
             const tripoint_bub_ms end( std::max( zone_start->x, zone_end->x ),
-                                std::max( zone_start->y, zone_end->y ),
-                                zone_end->z );
+                                       std::max( zone_start->y, zone_end->y ),
+                                       zone_end->z );
             auto points = std::vector<tripoint>();
             if( point_generator ) {
                 points = point_generator( start, end );
@@ -8054,15 +8054,15 @@ void game::zones_manager()
                     true, true, false );
             if( second.position ) {
                 auto first_abs = m.bub_to_abs( tripoint( std::min( first.position->x,
-                                                   second.position->x ),
-                                                   std::min( first.position->y, second.position->y ),
-                                                   std::min( first.position->z,
-                                                           second.position->z ) ) );
+                                               second.position->x ),
+                                               std::min( first.position->y, second.position->y ),
+                                               std::min( first.position->z,
+                                                       second.position->z ) ) );
                 auto second_abs = m.bub_to_abs( tripoint( std::max( first.position->x,
-                                                    second.position->x ),
-                                                    std::max( first.position->y, second.position->y ),
-                                                    std::max( first.position->z,
-                                                            second.position->z ) ) );
+                                                second.position->x ),
+                                                std::max( first.position->y, second.position->y ),
+                                                std::max( first.position->z,
+                                                        second.position->z ) ) );
                 return std::pair<tripoint, tripoint>( first_abs, second_abs );
             }
         }

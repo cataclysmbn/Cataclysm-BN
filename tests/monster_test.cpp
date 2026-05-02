@@ -101,7 +101,7 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
     test_player.set_moves( 0 );
     // Give the player a head start.
     const auto monster_start = { -10 * direction_of_flight + test_player.bub_pos()
-                                   };
+                               };
     monster &test_monster = spawn_test_monster( monster_type, monster_start );
     // Get it riled up and give it a goal.
     test_monster.anger = 100;

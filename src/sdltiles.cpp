@@ -1229,7 +1229,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     if( !viewing_weather && uistate.overmap_show_city_labels ) {
         const auto abs_sm_to_draw_label = [&]( const tripoint_abs_sm & city_pos, const int label_length ) {
             const auto tile_draw_pos = global_omt_to_draw_position( project_to<coords::omt>
-                                           ( city_pos ) ) - o;
+                                       ( city_pos ) ) - o;
             point draw_point( tile_draw_pos.x * tile_width + dest.x,
                               tile_draw_pos.y * tile_height + dest.y );
             // center text on the tile
@@ -1362,7 +1362,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         auto center_sm = coords::project_to<coords::sm>( tripoint_abs_omt( center_abs_omt.x() + 1,
                          center_abs_omt.y(), center_abs_omt.z() ) );
         const auto tile_draw_pos = global_omt_to_draw_position( project_to<coords::omt>
-                                       ( center_sm ) ) - o;
+                                   ( center_sm ) ) - o;
         point draw_point( tile_draw_pos.x * tile_width + dest.x,
                           tile_draw_pos.y * tile_height + dest.y );
         draw_point += point( padding, padding );
