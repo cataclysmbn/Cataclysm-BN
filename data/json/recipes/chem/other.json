@@ -7,7 +7,6 @@
     "skill_used": "cooking",
     "time": "1 m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [ [ [ "water_clean", 1 ], [ "water", 1 ] ], [ [ "salt", 10 ] ] ]
   },
   {
@@ -18,7 +17,6 @@
     "skill_used": "cooking",
     "time": "1 m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [
       [ [ "water_clean", 1 ], [ "water", 1 ] ],
       [ [ "soap", 1 ], [ "soap_flakes", 15 ], [ "detergent", 1 ], [ "shimmer", 1 ] ]
@@ -46,6 +44,7 @@
     "skill_used": "cooking",
     "difficulty": 6,
     "time": "24 m",
+    "flags": [ "BLIND_HARD" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [
       [ "adv_chemistry", 5 ],
@@ -66,6 +65,7 @@
     "skill_used": "cooking",
     "difficulty": 3,
     "time": "6 m",
+    "flags": [ "BLIND_HARD" ],
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [ [ "adv_chemistry", 3 ], [ "textbook_chemistry", 3 ], [ "atomic_survival", 4 ], [ "reference_cooking", 4 ] ],
     "using": [ [ "sewing_standard", 1 ] ],
@@ -87,6 +87,7 @@
     "batch_time_factors": [ 50, 3 ],
     "charges": 1,
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "tools": [ [ [ "matches", 1 ] ], [ [ "mortar_pestle", -1 ] ] ]
   },
   {
@@ -115,6 +116,7 @@
     "time": "30 m",
     "batch_time_factors": [ 83, 5 ],
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "charges": 10,
     "//": "Veterinary handbook teaching this recipe is more of an easter egg but is intentional",
     "book_learn": [ [ "recipe_arrows", 1 ], [ "textbook_survival", 1 ], [ "survival_book", 1 ], [ "reference_firstaid2", 2 ] ],
@@ -143,6 +145,7 @@
     "time": "15 m",
     "batch_time_factors": [ 83, 5 ],
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "charges": 10,
     "book_learn": [ [ "recipe_arrows", 1 ], [ "textbook_survival", 1 ], [ "survival_book", 1 ] ],
     "qualities": [ { "id": "COOK", "level": 2 } ],
@@ -158,6 +161,7 @@
     "difficulty": 2,
     "time": "12 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "CHEM", "level": 1 } ],
     "batch_time_factors": [ 83, 5 ],
     "charges": 10,

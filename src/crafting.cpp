@@ -92,8 +92,13 @@ static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
 static const trait_id trait_HYPEROPIC( "HYPEROPIC" );
 
 static const flag_id flag_BIONIC_TOGGLED( "BIONIC_TOGGLED" );
+
+static const std::string flag_BLIND_NO_EFFECT( "BLIND_NO_EFFECT" );
 static const std::string flag_BLIND_EASY( "BLIND_EASY" );
 static const std::string flag_BLIND_HARD( "BLIND_HARD" );
+static const std::string flag_BLIND_NEARLY_IMPOSSIBLE( "BLIND_NEARLY_IMPOSSIBLE" );
+static const std::string flag_BLIND_IMPOSSIBLE( "BLIND_IMPOSSIBLE" );
+
 static const std::string flag_FULL_MAGAZINE( "FULL_MAGAZINE" );
 static const std::string flag_NO_RESIZE( "NO_RESIZE" );
 static const std::string flag_UNCRAFT_LIQUIDS_CONTAINED( "UNCRAFT_LIQUIDS_CONTAINED" );
@@ -119,7 +124,7 @@ static bool crafting_allowed( const Character &who, const recipe &rec )
 
 float lighting_crafting_speed_multiplier( const Character &who, const recipe &rec )
 {
-    if( character_funcs::can_see_fine_details( who ) ) {
+    if( rec.has_flag( flag_BLIND_NO_EFFECT ) || character_funcs::can_see_fine_details( who ) ) {
         return 1.0f;
     }
 
@@ -133,19 +138,53 @@ float lighting_crafting_speed_multiplier( const Character &who, const recipe &re
             character_funcs::FINE_VISION_THRESHOLD
         ) / 7.0f;
 
-    if( rec.has_flag( flag_BLIND_EASY ) ) {
-        // 100% speed in well lit area at skill+0
-        // 25% speed in pitch black at skill+0
-        // skill+2 removes speed penalty
-        return 1.0f - darkness * 0.75f * std::max( 0, 2 - skill_bonus ) / 2.0f;
-    } else if( rec.has_flag( flag_BLIND_HARD ) && skill_bonus >= 2 ) {
-        // 100% speed in well lit area at skill+2
-        // 25% speed in pitch black at skill+2
-        // skill+8 removes speed penalty
-        return 1.0f - darkness * 0.75f * std::max( 0, 8 - skill_bonus ) / 6.0f;
+    float skill_deficit = std::max( 0.0f, static_cast<float>( -skill_bonus ) );
+
+    // block_divisor: at full darkness, blocks when skill_deficit >= block_divisor
+    // base_penalty: base speed reduction at full darkness when meeting requirements
+    // deficit_scale: scales how much each point of skill deficit adds to penalty
+    // deficit_scale is set so speed hits 5% floor just before blocking threshold
+    auto calc_light_with_blocking = [&]( float block_divisor, float base_penalty,
+    float deficit_scale ) -> float {
+        // Block when skill deficit exceeds threshold for current darkness
+        if( skill_deficit >= darkness * block_divisor )
+        {
+            return 0.0f;
+        }
+        // Base darkness penalty + skill deficit penalty
+        float deficit_penalty = ( deficit_scale > 0.0f ) ? ( skill_deficit / deficit_scale ) : 0.0f;
+        float total_penalty = darkness * ( base_penalty + deficit_penalty );
+        float result = 1.0f - total_penalty;
+        // Block if penalty drives result to 0 or below
+        if( result <= 0.0f )
+        {
+            return 0.0f;
+        }
+        // Otherwise apply 5% floor (20x max slowdown)
+        return std::max( 0.05f, result );
+    };
+
+    if( rec.has_flag( flag_BLIND_IMPOSSIBLE ) ) {
+        // Auto-blocks at minimal light (~0.5 darkness) or worse
+        if( darkness >= 0.5f ) {
+            return 0.0f;
+        }
+        // In good light: 100% base penalty means mathematically blocks at full dark
+        // No explicit blocking - relies on mathematical blocking (result <= 0)
+        // deficit_scale=5 gives steep falloff with deficit
+        return calc_light_with_blocking( 1000.0f, 1.0f, 5.0f );
+    } else if( rec.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ) {
+        // Very harsh: blocks at deficit >= 3*darkness, 25% base at full dark
+        return calc_light_with_blocking( 3.0f, 0.75f, 10.0f );
+    } else if( rec.has_flag( flag_BLIND_HARD ) ) {
+        // Harsh: blocks at deficit >= 6*darkness, 40% base at full dark
+        return calc_light_with_blocking( 6.0f, 0.60f, 14.0f );
+    } else if( rec.has_flag( flag_BLIND_EASY ) ) {
+        // Lenient: blocks at deficit >= 20*darkness, 75% base at full dark
+        return calc_light_with_blocking( 20.0f, 0.25f, 27.0f );
     } else {
-        // Needs proper vision or the character is not skilled enough
-        return 0.0f;
+        // Default: blocks at deficit >= 12*darkness, 60% base at full dark
+        return calc_light_with_blocking( 12.0f, 0.40f, 20.0f );
     }
 }
 

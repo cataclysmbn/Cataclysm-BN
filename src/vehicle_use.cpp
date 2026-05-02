@@ -652,12 +652,25 @@ void vehicle::toggle_autopilot()
             autodrive_local_target = tripoint_zero;
             stop_engines();
             break;
-        case FOLLOW:
+        case FOLLOW: {
             autopilot_on = true;
             is_following = true;
             is_patrolling = false;
+            const auto default_follow_distance = 12 + mount_max.y * 3;
+            const auto initial_follow_distance = follow_distance > 0 ? follow_distance :
+                                                 default_follow_distance;
+            const auto requested_follow_distance = string_input_popup()
+                                                   .title( _( "What distance?" ) )
+                                                   .text( std::to_string( initial_follow_distance ) )
+                                                   .only_digits( true )
+                                                   .max_length( 3 )
+                                                   .query_int();
+            follow_distance = requested_follow_distance > 0 ? requested_follow_distance :
+                              default_follow_distance;
             start_engines();
             refresh();
+            break;
+        }
         default:
             return;
     }

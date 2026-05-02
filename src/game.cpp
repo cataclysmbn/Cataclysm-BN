@@ -844,7 +844,7 @@ bool game::start_game()
 
     init_autosave();
 
-    background_pane background;
+    loading_image_splash background;
     static_popup popup;
     popup.message( "%s", _( "Please wait as we build your world" ) );
     ui_manager::redraw();

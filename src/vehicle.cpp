@@ -368,6 +368,7 @@ void vehicle::copy_static_from( const vehicle &source )
     attached = source.attached;
     is_autodriving = source.is_autodriving;
     is_following = source.is_following;
+    follow_distance = source.follow_distance;
     is_patrolling = source.is_patrolling;
     cruise_on = source.cruise_on;
     engine_on = source.engine_on;
@@ -935,6 +936,7 @@ void vehicle::activate_magical_follow()
         if( vp.info().fuel_type == fuel_type_mana ) {
             vp.enabled = true;
             is_following = true;
+            follow_distance = 12 + mount_max.y * 3;
             engine_on = true;
         } else {
             vp.enabled = true;
@@ -952,6 +954,7 @@ void vehicle::activate_animal_follow()
             if( mon && mon->has_effect( effect_harnessed ) ) {
                 vp.enabled = true;
                 is_following = true;
+                follow_distance = 12 + mount_max.y * 3;
                 engine_on = true;
             }
         } else {

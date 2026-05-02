@@ -1112,7 +1112,7 @@
     "reversible": true,
     "autolearn": true,
     "components": [ [ [ "tshirt", 1 ], [ "flag_shirt", 1 ], [ "linuxtshirt", 1 ], [ "tshirt_text", 1 ] ] ],
-    "flags": [ "BLIND_HARD", "NO_RESIZE" ]
+    "flags": [ "NO_RESIZE" ]
   },
   {
     "result": "mask_ski",
@@ -1213,8 +1213,7 @@
     "time": "2 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 4 ] ], [ [ "pot", 1 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 4 ] ], [ [ "pot", 1 ] ] ]
   },
   {
     "result": "rebreather",
@@ -1454,8 +1453,7 @@
     "time": "1 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 8 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 8 ] ] ]
   },
   {
     "result": "welding_mask_crude",
@@ -1530,8 +1528,7 @@
     "time": "2 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 10 ] ], [ [ "pot_canning", 1 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 10 ] ], [ [ "pot_canning", 1 ] ] ]
   },
   {
     "result": "helmet_corinthian",
