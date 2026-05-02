@@ -353,7 +353,7 @@ TEST_CASE( "visitable_remove", "[visitable]" )
         }
         REQUIRE( our + adj == count );
 
-        map_selector sel(  p.bub_pos(), 1 );
+        map_selector sel( p.bub_pos(), 1 );
         map_cursor cur( p.bub_pos() );
 
         REQUIRE( count_items( sel, container_id ) == count );

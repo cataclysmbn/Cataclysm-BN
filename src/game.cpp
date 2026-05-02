@@ -3775,8 +3775,8 @@ shared_ptr_fast<game::draw_callback_t>
         }
         if( zone_start && zone_end ) {
             const point_bub_ms offset2( g->u.view_offset.xy() + point_bub_ms( g->u.bub_pos().x() - getmaxx(
-                                     g->w_terrain ) / 2,
-                                 g->u.bub_pos().y() - getmaxy( g->w_terrain ) / 2 ) );
+                                            g->w_terrain ) / 2,
+                                        g->u.bub_pos().y() - getmaxy( g->w_terrain ) / 2 ) );
 
             tripoint_bub_ms offset;
 #if defined(TILES)
