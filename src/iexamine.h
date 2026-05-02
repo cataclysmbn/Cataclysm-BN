@@ -122,7 +122,8 @@ void multicooker( player &p, const tripoint &pos );
 detached_ptr<item> pour_into_keg( const tripoint &pos, detached_ptr<item> &&liquid );
 std::optional<tripoint_bub_ms> getGasPumpByNumber( const tripoint_bub_ms &p, int number );
 bool toPumpFuel( const tripoint_bub_ms &src, const tripoint_bub_ms &dst, int units );
-std::optional<tripoint_bub_ms> getNearFilledGasTank( const tripoint_bub_ms &center, int &gas_units );
+std::optional<tripoint_bub_ms> getNearFilledGasTank( const tripoint_bub_ms &center,
+        int &gas_units );
 
 bool has_keg( const tripoint &pos );
 

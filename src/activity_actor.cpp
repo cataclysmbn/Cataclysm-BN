@@ -619,7 +619,8 @@ void dig_channel_activity_actor::serialize( JsonOut &jsout ) const
 
 std::unique_ptr<activity_actor> dig_channel_activity_actor::deserialize( JsonIn &jsin )
 {
-    std::unique_ptr<dig_channel_activity_actor> actor( new dig_channel_activity_actor( 0, tripoint_bub_ms::zero(),
+    std::unique_ptr<dig_channel_activity_actor> actor( new dig_channel_activity_actor( 0,
+            tripoint_bub_ms::zero(),
             {}, tripoint_bub_ms::zero(), {} ) );
 
     JsonObject data = jsin.get_object();
@@ -1657,7 +1658,7 @@ std::optional<tripoint_bub_ms> lockpick_activity_actor::select_location( avatar 
     }
 
     const std::optional<tripoint_bub_ms> target = choose_adjacent_highlight(
-            _( "Use your lockpick where?" ), _( "There is nothing to lockpick nearby." ), is_pickable, false );
+                _( "Use your lockpick where?" ), _( "There is nothing to lockpick nearby." ), is_pickable, false );
     if( !target ) {
         return std::nullopt;
     }
