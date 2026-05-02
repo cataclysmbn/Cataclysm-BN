@@ -7,6 +7,9 @@
 #include <vector>
 #include <optional>
 
+#include "coordinates.h"
+#include "map.h"
+
 struct tripoint;
 struct point;
 

@@ -147,5 +147,5 @@ void portal( player &p, const tripoint &examp );
 
 } //namespace iexamine
 
-using iexamine_function = void ( * )( player &, const tripoint & );
+using iexamine_function = void ( * )( player &, const tripoint_bub_ms & );
 iexamine_function iexamine_function_from_string( const std::string &function_name );

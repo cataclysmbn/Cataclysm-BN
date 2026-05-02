@@ -879,7 +879,6 @@ class map : public submap_load_listener
         */
         optional_vpart_position veh_at( const tripoint_bub_ms &p ) const;
         optional_vpart_position veh_at( const tripoint_abs_ms &p ) const;
-        optional_vpart_position veh_at( const tripoint_bub_ms &p ) const;
         vehicle *veh_at_internal( const tripoint_bub_ms &p, int &part_num );
         const vehicle *veh_at_internal( const tripoint_bub_ms &p, int &part_num ) const;
         // Put player on vehicle at x,y

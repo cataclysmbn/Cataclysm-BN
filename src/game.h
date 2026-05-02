@@ -756,7 +756,6 @@ class game : public submap_load_listener
          * disabled).
          */
         void load_map( const tripoint_abs_sm &pos_sm, bool pump_events = false );
-        void load_map( const tripoint_abs_sm &pos_sm, bool pump_events = false );
         /**
          * The overmap which contains the center submap of the reality bubble.
          */

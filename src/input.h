@@ -625,7 +625,7 @@ class input_context
          * the delta vector associated with it. Otherwise returns an empty value.
          * The returned vector will always have a z component of 0.
          */
-        std::optional<tripoint> get_direction( const std::string &action ) const;
+        std::optional<tripoint_rel_ms> get_direction( const std::string &action ) const;
 
         /**
          * Get the coordinates associated with the last mouse click (if any).

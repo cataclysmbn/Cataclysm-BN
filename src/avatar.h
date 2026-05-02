@@ -207,7 +207,7 @@ class avatar : public player
 
         void wake_up() override;
         // Grab furniture / vehicle
-        void grab( object_type grab_type, const tripoint_bub_ms &grab_point = tripoint_zero );
+        void grab( object_type grab_type, const tripoint_bub_ms &grab_point = tripoint_bub_ms::zero() );
         object_type get_grab_type() const;
         /** Handles player vomiting effects */
         void vomit();

@@ -14,6 +14,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
+#include "coordinates.h"
 #include "crafting.h"
 #include "creature.h"
 #include "cursesdef.h"
@@ -516,26 +517,26 @@ std::optional<std::string> press_x_if_bound( action_id act )
 
 action_id get_movement_action_from_delta( const tripoint_bub_ms &d, const iso_rotate rot )
 {
-    if( d.z == -1 ) {
+    if( d.z() == -1 ) {
         return ACTION_MOVE_DOWN;
-    } else if( d.z == 1 ) {
+    } else if( d.z() == 1 ) {
         return ACTION_MOVE_UP;
     }
 
     const bool iso_mode = rot == iso_rotate::yes && use_tiles && tile_iso;
-    if( d.xy() == point_north ) {
+    if( d.xy() == point_bub_ms::north() ) {
         return iso_mode ? ACTION_MOVE_FORTH_LEFT : ACTION_MOVE_FORTH;
-    } else if( d.xy() == point_north_east ) {
+    } else if( d.xy() == point_bub_ms::north_east() ) {
         return iso_mode ? ACTION_MOVE_FORTH : ACTION_MOVE_FORTH_RIGHT;
-    } else if( d.xy() == point_east ) {
+    } else if( d.xy() == point_bub_ms::east() ) {
         return iso_mode ? ACTION_MOVE_FORTH_RIGHT : ACTION_MOVE_RIGHT;
-    } else if( d.xy() == point_south_east ) {
+    } else if( d.xy() == point_bub_ms::south_east() ) {
         return iso_mode ? ACTION_MOVE_RIGHT : ACTION_MOVE_BACK_RIGHT;
-    } else if( d.xy() == point_south ) {
+    } else if( d.xy() == point_bub_ms::south() ) {
         return iso_mode ? ACTION_MOVE_BACK_RIGHT : ACTION_MOVE_BACK;
-    } else if( d.xy() == point_south_west ) {
+    } else if( d.xy() == point_bub_ms::south_west() ) {
         return iso_mode ? ACTION_MOVE_BACK : ACTION_MOVE_BACK_LEFT;
-    } else if( d.xy() == point_west ) {
+    } else if( d.xy() == point_bub_ms::west() ) {
         return iso_mode ? ACTION_MOVE_BACK_LEFT : ACTION_MOVE_LEFT;
     } else {
         return iso_mode ? ACTION_MOVE_LEFT : ACTION_MOVE_FORTH_LEFT;
@@ -547,23 +548,23 @@ point_rel_ms get_delta_from_movement_action( const action_id act, const iso_rota
     const bool iso_mode = rot == iso_rotate::yes && use_tiles && tile_iso;
     switch( act ) {
         case ACTION_MOVE_FORTH:
-            return iso_mode ? point_north_east : point_north;
+            return iso_mode ? point_rel_ms::north_east() : point_rel_ms::north();
         case ACTION_MOVE_FORTH_RIGHT:
-            return iso_mode ? point_east : point_north_east;
+            return iso_mode ? point_rel_ms::east() : point_rel_ms::north_east();
         case ACTION_MOVE_RIGHT:
-            return iso_mode ? point_south_east : point_east;
+            return iso_mode ? point_rel_ms::south_east() : point_rel_ms::east();
         case ACTION_MOVE_BACK_RIGHT:
-            return iso_mode ? point_south : point_south_east;
+            return iso_mode ? point_rel_ms::south() : point_rel_ms::south_east();
         case ACTION_MOVE_BACK:
-            return iso_mode ? point_south_west : point_south;
+            return iso_mode ? point_rel_ms::south_west() : point_rel_ms::south();
         case ACTION_MOVE_BACK_LEFT:
-            return iso_mode ? point_west : point_south_west;
+            return iso_mode ? point_rel_ms::west() : point_rel_ms::south_west();
         case ACTION_MOVE_LEFT:
-            return iso_mode ? point_north_west : point_west;
+            return iso_mode ? point_rel_ms::north_west() : point_rel_ms::west();
         case ACTION_MOVE_FORTH_LEFT:
-            return iso_mode ? point_north : point_north_west;
+            return iso_mode ? point_rel_ms::north() : point_rel_ms::north_west();
         default:
-            return point_zero;
+            return point_rel_ms::zero();
     }
 }
 
@@ -1090,18 +1091,18 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
         action = ctxt.handle_input();
         if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
             // Make player's sprite face left/right if interacting with something to the left or right
-            if( vec->x > 0 ) {
+            if( vec->x() > 0 ) {
                 g->u.facing = FD_RIGHT;
-            } else if( vec->x < 0 ) {
+            } else if( vec->x() < 0 ) {
                 g->u.facing = FD_LEFT;
             }
             return vec;
         } else if( action == "pause" ) {
-            return tripoint_zero;
+            return tripoint_rel_ms::zero();
         } else if( action == "LEVEL_UP" ) {
-            return tripoint_above;
+            return tripoint_rel_ms::above();
         } else if( action == "LEVEL_DOWN" ) {
-            return tripoint_below;
+            return tripoint_rel_ms::below();
         }
     } while( action != "QUIT" );
 
@@ -1135,13 +1136,13 @@ std::optional<tripoint_bub_ms> choose_adjacent_highlight( const std::string &mes
     return choose_adjacent_highlight( message, failure_message, f, allow_vertical );
 }
 
-std::optional<tripoint> choose_adjacent_highlight(
+std::optional<tripoint_bub_ms> choose_adjacent_highlight(
     const std::string &message,
     const std::string &failure_message,
     const std::function < auto( const tripoint_bub_ms & ) -> bool > &allowed,
     const bool allow_vertical )
 {
-    std::vector<tripoint> valid;
+    std::vector<tripoint_bub_ms> valid;
     map &here = get_map();
     if( allowed ) {
         for( const tripoint_bub_ms &pos : here.points_in_radius( g->u.bub_pos(), 1 ) ) {

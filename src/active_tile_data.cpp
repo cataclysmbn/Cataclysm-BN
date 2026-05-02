@@ -166,7 +166,7 @@ void solar_tile::update_internal( time_point to, const tripoint_abs_ms &p, distr
 
     // TODO: Use something that doesn't calc a ton of worthless crap
     const auto total_sunlight = sum_conditions( zero + rounded_then, zero + rounded_now,
-                                p.raw() ).sunlight;
+                                get_map().abs_to_bub( p ) ).sunlight;
 
     const auto raw_produced = compute_solar_energy( power, total_sunlight );
     const auto produced = static_cast<int64_t>( raw_produced ) / 1000;

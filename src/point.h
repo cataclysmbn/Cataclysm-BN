@@ -290,7 +290,7 @@ static constexpr tripoint tripoint_below{ 0, 0, -1 };
 
 struct sphere {
     int radius = 0;
-    auto center = tripoint_zero;
+    tripoint center = tripoint_zero;
 
     sphere() = default;
     explicit sphere( const tripoint &center ) : radius( 1 ), center( center ) {}
