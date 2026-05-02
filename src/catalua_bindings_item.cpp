@@ -338,7 +338,7 @@ void reg_item( sol::state &lua )
         {
             sol::state_view lua( state );
             sol::table vars = lua.create_table();
-            std::ranges::for_each( it.get_vars_map(), [&]( const auto & entry ) {
+            std::ranges::for_each( it.item_vars(), [&]( const auto & entry ) {
                 vars[entry.first] = entry.second;
             } );
             return vars;
