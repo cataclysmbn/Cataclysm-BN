@@ -1041,7 +1041,7 @@ void apply<ter_t>( const ter_t &t, const shapetype editshape, const tripoint &ta
             }
         }
         here.ter_set( elem, wter );
-        const tripoint above = elem + tripoint_above;
+        const auto above = elem + tripoint_above;
 
         if( wter->roof && here.ter( above ) == t_open_air ) {
             here.ter_set( above, wter->roof );
@@ -2038,7 +2038,7 @@ void editmap::mapgen_retarget()
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
         if( const std::optional<tripoint> vec = ctxt.get_direction( action ) ) {
             point vec_ms = project_to<coords::ms>( vec->xy() );
-            tripoint ptarget = target + vec_ms;
+            auto ptarget = target + vec_ms;
             if( editmap_boundaries().contains( ptarget ) &&
                 editmap_boundaries().contains( ptarget + point( SEEX, SEEY ) ) ) {
                 target = ptarget;

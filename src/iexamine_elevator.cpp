@@ -235,7 +235,7 @@ void iexamine::elevator( player &p, const tripoint &examp )
     map &here = get_map();
     const tripoint_abs_ms old_abs_pos = here.abs_to_bub( p.bub_pos() );
     const tripoint_abs_omt this_omt = project_to<coords::omt>( here.abs_to_bub( examp ) );
-    const tripoint sm_orig = here.abs_to_bub( project_to<coords::ms>( this_omt ) );
+    const auto sm_orig = here.abs_to_bub( project_to<coords::ms>( this_omt ) );
 
     const auto elevator_here = elevator::here( p );
     const auto vehs = elevator::vehicles_on( elevator_here );

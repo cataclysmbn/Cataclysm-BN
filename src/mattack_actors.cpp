@@ -133,7 +133,7 @@ bool leap_actor::call( monster &z ) const
         bool blocked_path = false;
         // check if monster has a clear path to the proposed point
         std::vector<tripoint> line = here.find_clear_path( z.bub_pos(), dest );
-        tripoint prev_point = z.bub_pos();
+        auto prev_point = z.bub_pos();
         for( auto &i : line ) {
             if( here.impassable( i ) || here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
                 blocked_path = true;
@@ -205,7 +205,7 @@ bool mon_spellcasting_actor::call( monster &mon ) const
         return false;
     }
 
-    const tripoint target = self ? mon.bub_pos() : mon.attack_target()->pos();
+    const auto target = self ? mon.bub_pos() : mon.attack_target()->pos();
 
     std::string fx = spell_data.effect();
     // is the spell an attack that needs to hit the target?
@@ -623,7 +623,7 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
 
         if( !found_controls ) {
             std::vector<tripoint> line = here.find_clear_path( z.bub_pos(), v.v->bub_ms_location().raw() );
-            tripoint prev_point = z.bub_pos();
+            auto prev_point = z.bub_pos();
             for( tripoint &i : line ) {
                 if( !z.sees( i ) ||  here.floor_between( prev_point, i ) ) {
                     break;

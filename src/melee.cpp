@@ -1436,9 +1436,9 @@ bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique,
         // Impale hits the target and a single target behind them
         // Check if the square cardinally behind our target, or to the left / right,
         // contains a possible target.
-        tripoint left = t.bub_pos() + tripoint_rel_ms( offset_a[lookup], offset_b[lookup], 0 );
+        auto left = t.bub_pos() + tripoint_rel_ms( offset_a[lookup], offset_b[lookup], 0 );
         tripoint_bub_ms target_pos = t.bub_pos() + ( t.bub_pos() - pos() );
-        tripoint right = t.bub_pos() + tripoint_rel_ms( offset_b[lookup], -offset_b[lookup], 0 );
+        auto right = t.bub_pos() + tripoint_rel_ms( offset_b[lookup], -offset_b[lookup], 0 );
 
         monster *const mon_l = g->critter_at<monster>( left );
         monster *const mon_t = g->critter_at<monster>( target_pos );
@@ -1562,7 +1562,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
     }
 
     if( technique.side_switch ) {
-        const tripoint b = t.bub_pos();
+        const auto b = t.bub_pos();
         int newx;
         int newy;
 
@@ -1593,7 +1593,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
     }
 
     if( technique.knockback_dist ) {
-        const tripoint prev_pos = t.bub_pos(); // track target startpoint for knockback_follow
+        const auto prev_pos = t.bub_pos(); // track target startpoint for knockback_follow
         const int kb_offset_x = rng( -technique.knockback_spread, technique.knockback_spread );
         const int kb_offset_y = rng( -technique.knockback_spread, technique.knockback_spread );
         tripoint kb_point( posx() + kb_offset_x, posy() + kb_offset_y, posz() );

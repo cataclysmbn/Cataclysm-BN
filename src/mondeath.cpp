@@ -143,7 +143,7 @@ static void scatter_chunks( const itype_id &chunk_name, int chunk_amt, monster &
         tripoint tarp( z.bub_pos() + point_rel_ms( rng( -distance, distance ), rng( -distance,
                        distance ) ) );
         const auto traj = line_to( z.bub_pos(), tarp );
-        tripoint prev_point = z.bub_pos();
+        auto prev_point = z.bub_pos();
         for( size_t j = 0; j < traj.size(); j++ ) {
             tarp = traj[j];
 
@@ -639,7 +639,7 @@ void mdeath::focused_beam( monster &z )
         tripoint p( p2, z.posz() );
 
         std::vector <tripoint> traj = line_to( z.bub_pos(), p, 0, 0 );
-        tripoint last_point = z.bub_pos();
+        auto last_point = z.bub_pos();
         for( auto &elem : traj ) {
             if( !g->m.is_transparent( elem ) || get_map().obscured_by_vehicle_rotation( last_point, elem ) ) {
                 break;

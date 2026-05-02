@@ -578,7 +578,7 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
         }
         // we just ran into a fish, so move it out of the way
         if( here.has_flag( "SWIMMABLE", critter->bub_pos() ) ) {
-            tripoint end_pos = critter->bub_pos();
+            auto end_pos = critter->bub_pos();
             tripoint start_pos;
             const units::angle angle =
                 move.dir() + 45_degrees * ( parts[part].mount.x > pivot_point().x ? -1 : 1 );
@@ -1969,7 +1969,7 @@ static bool scan_rails_at_shift(
         point vyp_l = point_east.rotate( num_cw_rots );
         point vyp_r = point_south.rotate( num_cw_rots );
 
-        tripoint scan_start = veh.bub_ms_location();
+        auto scan_start = veh.bub_ms_location();
         if( shift_sign > 0 ) {
             scan_start += rd_r * velocity_sign;
         } else if( shift_sign < 0 ) {
@@ -1990,7 +1990,7 @@ static bool scan_rails_at_shift(
     } else {
         point veh_plus_y_vec = ray_delta.rotate( 1 );
         point scan_vec = ray_delta * velocity_sign;
-        tripoint scan_start = veh.bub_ms_location();
+        auto scan_start = veh.bub_ms_location();
         if( shift_sign != 0 ) {
             scan_start += scan_vec + veh_plus_y_vec * shift_sign;
         }

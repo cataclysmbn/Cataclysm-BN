@@ -702,7 +702,7 @@ std::string weather_forecast( const point_abs_sm &abs_sm_pos )
     //weather_report += "Across <region>, skies ranged from <cloudiest> to <clearest>.  ";
     // TODO: Add fake reports for nearby cities
     // TODO: fix point types
-    const tripoint abs_ms_pos = tripoint( project_to<coords::ms>( abs_sm_pos ).raw(), 0 );
+    const auto abs_ms_pos = tripoint( project_to<coords::ms>( abs_sm_pos ).raw(), 0 );
 
     const time_point now_hour = calendar::turn - time_duration::from_minutes( minute_of_hour<int>
                                 ( calendar::turn ) );
@@ -1263,7 +1263,7 @@ units::temperature
         return temperatures::annual_average;
     }
 
-    tripoint abs_ms = project_to<coords::ms>( location ).raw();
+    auto abs_ms = project_to<coords::ms>( location ).raw();
     w_point w = get_cur_weather_gen().get_weather( abs_ms, calendar::turn, g->get_seed() );
 
     if( location.z() >= 0 ) {

@@ -530,7 +530,7 @@ void spawn_nested_mapgen()
         map target_map;
         target_map.load( abs_sub, true );
         // TODO: fix point types
-        const tripoint local_ms = target_map.abs_to_bub( abs_ms.raw() );
+        const auto local_ms = target_map.abs_to_bub( abs_ms.raw() );
         mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr,
                        get_overmapbuffer( target_map.get_bound_dimension() ) );
         const auto &ptr = nested_mapgen[nest_str[nest_choice]].pick();
@@ -1489,7 +1489,7 @@ static std::optional<tripoint_range<tripoint>> select_area()
     popup.on_top( true );
     popup.message( "%s", _( "Select first point." ) );
 
-    tripoint initial_pos = g->u.bub_pos();
+    auto initial_pos = g->u.bub_pos();
     const look_around_result first = g->look_around( false, initial_pos, initial_pos,
                                      false, true, false, false, tripoint_zero, true );
 
@@ -1712,7 +1712,7 @@ void debug()
                 if( veh_menu.ret >= 0 && veh_menu.ret < static_cast<int>( veh_strings.size() ) ) {
                     // Didn't cancel
                     const vproto_id &selected_opt = veh_strings[veh_menu.ret].second;
-                    tripoint dest = u.bub_pos();
+                    auto dest = u.bub_pos();
                     uilist veh_cond_menu;
                     veh_cond_menu.text = _( "Vehicle condition" );
                     veh_cond_menu.addentry( 0, true, MENU_AUTOASSIGN, _( "Light damage" ) );

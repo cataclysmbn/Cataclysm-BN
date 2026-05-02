@@ -239,7 +239,7 @@ static void test_rail_movement( const test_case &t,
             }
         }
 
-        tripoint pos = veh.bub_ms_location();
+        auto pos = veh.bub_ms_location();
         scan_log << string_format( "pos: %s dir: %d vel: %d/%d  on_rails:%d\n",
                                    pos.to_string(),
                                    static_cast<int>( units::to_degrees( veh.face.dir() ) ),
@@ -253,7 +253,7 @@ static void test_rail_movement( const test_case &t,
         }
     }
 
-    tripoint got_pos = veh.bub_ms_location();
+    auto got_pos = veh.bub_ms_location();
     units::angle got_dir = normalize( veh.face.dir() );
     CAPTURE( got_pos );
     CAPTURE( got_dir );

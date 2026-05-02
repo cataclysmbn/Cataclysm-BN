@@ -1835,7 +1835,7 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
 
     // Throw from the player's position, unless we're blind throwing, in which case
     // throw from the the blind throw position instead.
-    const tripoint throw_from = blind_throw_from_pos.value_or( who.bub_pos() );
+    const auto throw_from = blind_throw_from_pos.value_or( who.bub_pos() );
 
     float range = rl_dist( throw_from, target );
     proj.range = range;
@@ -2740,7 +2740,7 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
 
         // TODO: It should use projectile passability checks when finding path, not vision checks.
         std::vector<tripoint> path = here.find_clear_path( c.bub_pos(), critter.bub_pos() );
-        tripoint prev_point = c.bub_pos();
+        auto prev_point = c.bub_pos();
         for( const tripoint &point : path )
         {
             if( here.obstructed_by_vehicle_rotation( prev_point, point ) ) {
@@ -3397,7 +3397,7 @@ bool target_ui::try_reacquire_target( bool critter, tripoint &new_dst )
     }
 
     // Try to re-acquire target tile or tile where the target creature used to be
-    tripoint local_lt = get_map().abs_to_bub( *you->last_target_pos );
+    auto local_lt = get_map().abs_to_bub( *you->last_target_pos );
     if( dist_fn( local_lt ) <= range ) {
         new_dst = local_lt;
         // Abort aiming if a creature moved in

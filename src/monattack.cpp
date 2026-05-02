@@ -878,7 +878,7 @@ bool mattack::boomer( monster *z )
     if( u_see ) {
         add_msg( m_warning, _( "The %s spews bile!" ), z->name() );
     }
-    tripoint prev_point = z->bub_pos();
+    auto prev_point = z->bub_pos();
     bool obstructed = false;
     for( auto &i : line ) {
         if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
@@ -937,7 +937,7 @@ bool mattack::boomer_glow( monster *z )
     if( u_see ) {
         add_msg( m_warning, _( "The %s spews bile!" ), z->name() );
     }
-    tripoint prev_point = z->bub_pos();
+    auto prev_point = z->bub_pos();
     bool obstructed = false;
     for( auto &i : line ) {
         if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
@@ -2497,7 +2497,7 @@ bool mattack::callblobs( monster *z )
     // if we want to deal with NPCS and friendly monsters as well.
     // The strategy is to send about 1/3 of the available blobs after the player,
     // and keep the rest near the brain blob for protection.
-    tripoint enemy = g->u.bub_pos();
+    auto enemy = g->u.bub_pos();
     std::list<monster *> allies;
     std::vector<tripoint> nearby_points = closest_points_first( z->bub_pos(), 3 );
     for( monster &candidate : g->all_monsters() ) {
@@ -2544,7 +2544,7 @@ bool mattack::jackson( monster *z )
     int dancers = 0;
     bool converted = false;
     for( auto ally = allies.begin(); ally != allies.end(); ++ally, ++dancers ) {
-        tripoint post = z->bub_pos();
+        auto post = z->bub_pos();
         if( dancers < num_dancers ) {
             // Each dancer is assigned a spot in the nearby_points vector based on their order.
             int assigned_spot = ( nearby_points.size() * dancers ) / num_dancers;
@@ -2700,7 +2700,7 @@ bool mattack::ranged_pull( monster *z )
     player *foe = dynamic_cast< player * >( target );
     std::vector<tripoint_bub_ms> line = here.find_clear_path( z->bub_pos(), target->bub_pos() );
     bool seen = g->u.sees( *z );
-    tripoint prev_point = z->bub_pos();
+    auto prev_point = z->bub_pos();
     for( auto &i : line ) {
         // Player can't be pulled though bars, furniture, cars or creatures
         // TODO: Add bashing? Currently a window is enough to prevent grabbing
@@ -2731,7 +2731,7 @@ bool mattack::ranged_pull( monster *z )
     // Limit the range in case some weird math thing would cause the target to fly past us
     int range = std::min( ( z->type->melee_sides * z->type->melee_dice ) / 10,
                           rl_dist( z->bub_pos(), target->bub_pos() ) + 1 );
-    tripoint pt = target->bub_pos();
+    auto pt = target->bub_pos();
     while( range > 0 ) {
         // Recalculate the ray each step
         // We can't depend on either the target position being constant (obviously),
@@ -2885,7 +2885,7 @@ bool mattack::grab_drag( monster *z )
     if( !target->has_effect( effect_grabbed ) ) { //Can't drag if isn't grabbed, otherwise try and move
         return false;
     }
-    const tripoint target_square = z->bub_pos() - ( target->bub_pos() - z->bub_pos() );
+    const auto target_square = z->bub_pos() - ( target->bub_pos() - z->bub_pos() );
     if( z->can_move_to( target_square ) &&
         target->stability_roll() < dice( z->type->melee_sides, z->type->melee_dice ) ) {
         player *foe = dynamic_cast<player *>( target );
@@ -3840,7 +3840,7 @@ void mattack::flame( monster *z, Creature *target )
             debugmsg( "mattack::flame invoked on invisible target" );
         }
         std::vector<tripoint_bub_ms> traj = here.find_clear_path( z->bub_pos(), target->bub_pos() );
-        tripoint prev_point = z->bub_pos();
+        auto prev_point = z->bub_pos();
         for( auto &i : traj ) {
             if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
                 if( one_in( 2 ) ) {
@@ -3874,7 +3874,7 @@ void mattack::flame( monster *z, Creature *target )
         debugmsg( "mattack::flame invoked on invisible target" );
     }
     std::vector<tripoint_bub_ms> traj = here.find_clear_path( z->bub_pos(), target->bub_pos() );
-    tripoint prev_point = z->bub_pos();
+    auto prev_point = z->bub_pos();
     for( auto &i : traj ) {
         if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
             tripoint intervening = i;
@@ -4300,7 +4300,7 @@ bool mattack::stretch_bite( monster *z )
 
     z->moves -= 150;
 
-    tripoint prev_point = z->bub_pos();
+    auto prev_point = z->bub_pos();
     bool obstructed = false;
     for( auto &pnt : g->m.find_clear_path( z->bub_pos(), target->bub_pos() ) ) {
 
@@ -4598,7 +4598,7 @@ bool mattack::longswipe( monster *z )
     }
     map &here = get_map();
     //Is there something impassable blocking the claw?
-    tripoint prev_point = z->bub_pos();
+    auto prev_point = z->bub_pos();
     bool obstructed = false;
     for( tripoint &pnt : g->m.find_clear_path( z->bub_pos(), target->bub_pos() ) ) {
 
@@ -5081,7 +5081,7 @@ bool mattack::riotbot( monster *z )
         sounds::sound( z->bub_pos(), 3, sounds::sound_t::combat, _( "fzzzzzt" ), false, "misc", "flash" );
 
         std::vector<tripoint> traj = line_to( z->bub_pos(), dest, 0, 0 );
-        tripoint prev_point = z->bub_pos();
+        auto prev_point = z->bub_pos();
         for( auto &elem : traj ) {
             if( !here.is_transparent( elem ) || here.obscured_by_vehicle_rotation( prev_point, elem ) ) {
                 break;
@@ -5934,7 +5934,7 @@ bool mattack::stretch_attack( monster *z )
 
     int dam = rng( 5, 10 );
     z->moves -= 100;
-    tripoint prev_point = z->bub_pos();
+    auto prev_point = z->bub_pos();
     bool bounce = false;
     for( auto &pnt : g->m.find_clear_path( z->bub_pos(), target->bub_pos() ) ) {
         if( g->m.obstructed_by_vehicle_rotation( prev_point, pnt ) ) {

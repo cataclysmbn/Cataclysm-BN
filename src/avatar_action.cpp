@@ -509,7 +509,7 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint &dest_loc )
         tripoint below( dest_loc.xy(), dest_loc.z - 1 );
         if( m.has_flag( TFLAG_RAMP, below ) ) {
             // But we're moving onto one from above
-            const tripoint dp = dest_loc - you.bub_pos();
+            const auto dp = dest_loc - you.bub_pos();
             move( you, m, tripoint( dp.xy(), -1 ) );
             // No penalty for misaligned stairs here
             // Also cheaper than climbing up
@@ -540,8 +540,8 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint &dest_loc )
         return false;
     }
 
-    const tripoint dp = dest_loc - you.bub_pos();
-    const tripoint old_pos = you.bub_pos();
+    const auto dp = dest_loc - you.bub_pos();
+    const auto old_pos = you.bub_pos();
     move( you, m, tripoint( dp.xy(), 1 ) );
     // We can't just take the result of the above function here
     if( you.bub_pos() != old_pos ) {
@@ -674,7 +674,7 @@ void avatar_action::autoattack( avatar &you, map &m )
         return rate_critter( *l ) > rate_critter( *r );
     } );
 
-    const tripoint diff = best.bub_pos() - you.bub_pos();
+    const auto diff = best.bub_pos() - you.bub_pos();
     if( std::abs( diff.x ) <= 1 && std::abs( diff.y ) <= 1 && diff.z == 0 ) {
         move( you, m, tripoint( diff.xy(), 0 ) );
         return;

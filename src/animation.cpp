@@ -192,7 +192,7 @@ void draw_custom_explosion_curses( game &g,
                                    const std::list< std::map<tripoint, explosion_tile> > &layers )
 {
     // calculate screen offset relative to player + view offset position
-    const tripoint center = g.u.bub_pos() + g.u.view_offset;
+    const auto center = g.u.bub_pos() + g.u.view_offset;
     const tripoint topleft( center.x - ( getmaxx( g.w_terrain ) / 2 ),
                             center.y - ( getmaxy( g.w_terrain ) / 2 ), 0 );
 
@@ -374,7 +374,7 @@ void explosion_handler::draw_custom_explosion( const tripoint &,
         }
     } else {
         // In tiles mode, the coordinates have to be absolute
-        const tripoint view_center = relative_view_pos( g->u, g->u.bub_pos() );
+        const auto view_center = relative_view_pos( g->u, g->u.bub_pos() );
         for( const auto &pr : all_area ) {
             // Relative point is only used for z level check
             const tripoint relative_point = relative_view_pos( g->u, pr.first );
@@ -519,7 +519,7 @@ void draw_bullet_curses( map &m, const tripoint &t, const char bullet, const tri
         return;
     }
 
-    const tripoint vp = g->u.bub_pos() + g->u.view_offset;
+    const auto vp = g->u.bub_pos() + g->u.view_offset;
 
     if( vp.z != t.z ) {
         return;
@@ -1023,7 +1023,7 @@ namespace
 {
 void draw_sct_curses( const game &g )
 {
-    const tripoint off = relative_view_pos( g.u, tripoint_zero );
+    const auto off = relative_view_pos( g.u, tripoint_zero );
 
     for( const auto &text : SCT.vSCT ) {
         const int dy = off.y + text.getPosY();
@@ -1330,7 +1330,7 @@ static void draw_cone_aoe_curses( const tripoint &, const bucketed_points &waves
 {
     // Calculate screen offset relative to player + view offset position
     const avatar &u = get_avatar();
-    const tripoint center = u.bub_pos() + u.view_offset;
+    const auto center = u.bub_pos() + u.view_offset;
     const tripoint topleft( center.x - ( catacurses::getmaxx( g->w_terrain ) / 2 ),
                             center.y - ( catacurses::getmaxy( g->w_terrain ) / 2 ), 0 );
 

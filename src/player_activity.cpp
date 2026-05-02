@@ -207,7 +207,7 @@ static std::string craft_progress_message( const avatar &u, const player_activit
 
     // Horrid copypaste warning! TODO: Functions
     const recipe &rec = craft->get_making();
-    const tripoint bench_pos = get_map().abs_to_bub( act.coords.front() );
+    const auto bench_pos = get_map().abs_to_bub( act.coords.front() );
     // Ugly
     const auto bench_t = bench_type( act.values[craft_bench_type_idx] );
 

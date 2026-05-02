@@ -811,8 +811,8 @@ static void smash()
                 }
 
                 if( to_safety ) {
-                    tripoint oldpos = u.bub_pos();
-                    tripoint newpos = u.bub_pos() + *to_safety;
+                    auto oldpos = u.bub_pos();
+                    auto newpos = u.bub_pos() + *to_safety;
                     // game::walk_move will return true even if you don't move
                     if( g->walk_move( newpos ) && u.bub_pos() != oldpos ) {
                         break;
@@ -1990,7 +1990,7 @@ bool game::handle_action()
                     const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
                     if( idx != -1 ) {
                         const vpart_info info = vp->vehicle().part_info( idx );
-                        tripoint where = u.bub_pos();
+                        auto where = u.bub_pos();
                         tripoint below = where;
                         if( get_map().ter( where ).id().str() != "t_open_air" ) {
                             break;
@@ -2050,7 +2050,7 @@ bool game::handle_action()
                     if( get_map().has_rope_at( u.bub_pos() ) ) {
                         point xy = u.bub_pos().xy();
                         map &here = get_map();
-                        tripoint where = u.bub_pos();
+                        auto where = u.bub_pos();
                         tripoint above = where;
                         above.z++;
                         if( get_map().ter( above ).id().str() != "t_open_air" ) {

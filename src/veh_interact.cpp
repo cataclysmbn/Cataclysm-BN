@@ -166,7 +166,7 @@ std::unique_ptr<player_activity> veh_interact::serialize_activity()
 
     // if we're working on an existing part, use that part as the reference point
     // otherwise (e.g. installing a new frame), just use part 0
-    const tripoint q = here.bub_to_abs( veh->bub_part_location( pt ? *pt : veh->part( 0 ) ) );
+    const auto q = here.bub_to_abs( veh->bub_part_location( pt ? *pt : veh->part( 0 ) ) );
     const vehicle_part *vpt = pt ? pt : &veh->part( 0 );
     for( const tripoint &p : veh->get_points( true ) ) {
         res->coord_set.insert( here.bub_to_abs( p ) );
@@ -2257,7 +2257,7 @@ void veh_interact::move_cursor( point_rel_ms d, int dstart_at )
     cpart = part_at( point_zero );
     const point vd = -dd;
     const point q = veh->coord_translate( vd );
-    const tripoint vehp = veh->bub_ms_location() + q;
+    const auto vehp = veh->bub_ms_location() + q;
     const bool has_critter = g->critter_at( vehp );
     bool obstruct = here.impassable_ter_furn( vehp );
     const optional_vpart_position ovp = here.veh_at( vehp );
@@ -2446,7 +2446,7 @@ void veh_interact::display_veh()
     const int hh = getmaxy( w_disp ) / 2;
     const point vd = -dd;
     const point q = veh->coord_translate( vd );
-    const tripoint vehp = veh->bub_ms_location() + q;
+    const auto vehp = veh->bub_ms_location() + q;
 
     const auto &here = get_map();
     bool obstruct = here.impassable_ter_furn( vehp );
@@ -3285,7 +3285,7 @@ void veh_interact::complete_vehicle( Character &who )
 
                 // Stash offset and set it to the location of the part so look_around will start there.
                 tripoint old_view_offset;
-                const tripoint offset = veh->bub_ms_location() + q;
+                const auto offset = veh->bub_ms_location() + q;
 
                 auto *u = who.as_avatar();
                 if( u ) {
@@ -3316,7 +3316,7 @@ void veh_interact::complete_vehicle( Character &who )
                 veh->part( partnum ).direction = dir;
             }
 
-            const tripoint vehp = veh->bub_ms_location() + tripoint( q, 0 );
+            const auto vehp = veh->bub_ms_location() + tripoint( q, 0 );
             // TODO: allow boarding for non-players as well.
             player *const pl = g->critter_at<player>( vehp );
             if( vpinfo.has_flag( VPFLAG_BOARDABLE ) && pl ) {

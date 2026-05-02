@@ -434,7 +434,7 @@ TEST_CASE( "npc-movement" )
     }
 
     SECTION( "Player in vehicle & NPCs escaping dangerous terrain" ) {
-        const tripoint origin = player_character.bub_pos();
+        const auto origin = player_character.bub_pos();
 
         for( int y = 0; y < height; ++y ) {
             for( int x = 0; x < width; ++x ) {

@@ -205,7 +205,7 @@ static int test_efficiency( const vproto_id &veh_id, int &expected_mass,
     const float starting_fuel_per = fuel_percentage_left( veh, starting_fuel );
     REQUIRE( std::abs( starting_fuel_per - 1.0f ) < 0.001f );
 
-    const tripoint starting_point = veh.bub_ms_location();
+    const auto starting_point = veh.bub_ms_location();
     veh.tags.insert( "IN_CONTROL_OVERRIDE" );
     veh.engine_on = true;
 

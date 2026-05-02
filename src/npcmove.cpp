@@ -1103,7 +1103,7 @@ void npc::execute_action( npc_action action )
         break;
 
         case npc_return_to_guard_pos: {
-            const tripoint local_guard_pos = here.abs_to_bub( *ai_cache.guard_pos );
+            const auto local_guard_pos = here.abs_to_bub( *ai_cache.guard_pos );
             update_path( local_guard_pos );
             if( bub_pos() == local_guard_pos || path.empty() ) {
                 move_pause();
@@ -1473,7 +1473,7 @@ npc_action npc::method_of_attack()
         return npc_pause;
     }
 
-    tripoint tar = critter->bub_pos();
+    auto tar = critter->bub_pos();
     int dist = rl_dist( bub_pos(), tar );
     const bool has_los = clear_shot_reach( bub_pos(), tar, false );
     const bool same_z = tar.z == bub_pos().z;
@@ -3750,7 +3750,7 @@ bool npc::alt_attack()
         return false;
     }
 
-    tripoint tar = critter->bub_pos();
+    auto tar = critter->bub_pos();
 
     const int dist = rl_dist( bub_pos(), tar );
     item *used = nullptr;

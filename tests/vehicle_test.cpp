@@ -42,7 +42,7 @@ TEST_CASE( "destroy_grabbed_vehicle_section" )
         const tripoint test_origin( 60, 60, 0 );
         avatar &player_character = get_avatar();
         player_character.setpos( test_origin );
-        const tripoint vehicle_origin = test_origin + tripoint_south_east;
+        const auto vehicle_origin = test_origin + tripoint_south_east;
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), vehicle_origin, -90_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
         tripoint_bub_ms grab_point = test_origin + tripoint_rel_ms::east();

@@ -982,7 +982,7 @@ std::unique_ptr<activity_actor> hacking_activity_actor::deserialize( JsonIn &jsi
 
 void move_items_activity_actor::do_turn( player_activity &act, Character &who )
 {
-    const tripoint dest = relative_destination + who.bub_pos();
+    const auto dest = relative_destination + who.bub_pos();
 
     while( who.moves > 0 && !target_items.empty() ) {
         safe_reference<item> target = std::move( target_items.back() );
@@ -1486,7 +1486,7 @@ std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_bionic(
 
 void lockpick_activity_actor::start( player_activity &/*act*/, Character & )
 {
-    const tripoint target = get_map().abs_to_bub( this->target );
+    const auto target = get_map().abs_to_bub( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
     const optional_vpart_position veh = get_map().veh_at( target );
@@ -1529,7 +1529,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
 
-    const tripoint target = get_map().abs_to_bub( this->target );
+    const auto target = get_map().abs_to_bub( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
     const optional_vpart_position veh = get_map().veh_at( target );
@@ -1998,7 +1998,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     // Shift our position to our "peeking" position, so that the UI
     // for picking a throw point lets us target the location we couldn't
     // otherwise see.
-    const tripoint original_player_position = who.bub_pos();
+    const auto original_player_position = who.bub_pos();
     if( blind_throw_pos ) {
         who.setpos( *blind_throw_pos );
     }

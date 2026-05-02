@@ -240,8 +240,8 @@ void pixel_minimap::set_settings( const pixel_minimap_settings &settings )
 
 void pixel_minimap::prepare_cache_for_updates( const tripoint &center )
 {
-    const tripoint new_center_sm = get_map().get_abs_sub().raw() + project_to<coords::sm>( center );
-    const tripoint center_sm_diff = cached_center_sm - new_center_sm;
+    const auto new_center_sm = get_map().get_abs_sub().raw() + project_to<coords::sm>( center );
+    const auto center_sm_diff = cached_center_sm - new_center_sm;
 
     //invalidate the cache if the game shifted more than one submap in the last update, or if z-level changed.
     if( std::abs( center_sm_diff.x ) > 1 ||
@@ -470,7 +470,7 @@ void pixel_minimap::render( const tripoint &center )
 
 void pixel_minimap::render_cache( const tripoint &center )
 {
-    const tripoint sm_center = get_map().get_abs_sub().raw() + project_to<coords::sm>( center );
+    const auto sm_center = get_map().get_abs_sub().raw() + project_to<coords::sm>( center );
     const auto sm_offset = tripoint{
         view_tiles_count.x / SEEX / 2,
         view_tiles_count.y / SEEY / 2, 0
@@ -501,7 +501,7 @@ void pixel_minimap::render_cache( const tripoint &center )
         }
 
         const tripoint sm_pos = rel_pos + sm_offset;
-        const tripoint ms_pos = project_to<coords::ms>( sm_pos ) + ms_offset;
+        const auto ms_pos = project_to<coords::ms>( sm_pos ) + ms_offset;
 
         const SDL_Rect chunk_rect = projector->get_chunk_rect( ms_pos.xy(), { SEEX, SEEY } );
 

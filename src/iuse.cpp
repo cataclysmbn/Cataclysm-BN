@@ -2552,7 +2552,7 @@ int iuse::dig( player *p, item *it, bool t, const tripoint & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    const tripoint dig_point = p->bub_pos();
+    const auto dig_point = p->bub_pos();
 
     const bool can_dig_here = g->m.ter( dig_point )->is_diggable() &&
                               !g->m.has_furn( dig_point ) &&
@@ -2647,12 +2647,12 @@ int iuse::dig_channel( player *p, item *it, bool t, const tripoint & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    const tripoint dig_point = p->bub_pos();
+    const auto dig_point = p->bub_pos();
 
-    tripoint north = dig_point + point_north;
-    tripoint south = dig_point + point_south;
-    tripoint west = dig_point + point_west;
-    tripoint east = dig_point + point_east;
+    auto north = dig_point + point_north;
+    auto south = dig_point + point_south;
+    auto west = dig_point + point_west;
+    auto east = dig_point + point_east;
 
     const bool can_dig_here = g->m.ter( dig_point )->is_diggable() &&
                               !g->m.has_furn( dig_point ) &&
@@ -4981,7 +4981,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                 int num_spawned = 0;
                 for( int j = 0; j < num_shadows; j++ ) {
                     for( int tries = 0; tries < 10; ++tries ) {
-                        tripoint monp = p->bub_pos();
+                        auto monp = p->bub_pos();
                         if( one_in( 2 ) ) {
                             monp.x = rng( p->posx() - 5, p->posx() + 5 );
                             monp.y = ( one_in( 2 ) ? p->posy() - 5 : p->posy() + 5 );
@@ -7125,9 +7125,9 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
         for( std::vector<tripoint>::iterator point_it = trajectory.begin();
              point_it != trajectory.end();
              ++point_it ) {
-            const tripoint trajectory_point = *point_it;
+            const auto trajectory_point = *point_it;
             if( point_it != trajectory.end() ) {
-                const tripoint next_point = *( point_it + 1 ); // Trajectory ends on last visible tile
+                const auto next_point = *( point_it + 1 ); // Trajectory ends on last visible tile
                 if( !g->m.sees( p->bub_pos(), next_point, rl_dist( p->bub_pos(), next_point ) + 3 ) ) {
                     p->add_msg_if_player( _( "You have the wrong camera focus." ) );
                     incorrect_focus = true;

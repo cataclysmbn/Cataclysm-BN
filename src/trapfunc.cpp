@@ -1145,7 +1145,7 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
             }
         } else {
             c->add_msg_if_npc( _( "<npcname> falls down a level!" ) );
-            tripoint dest = c->bub_pos();
+            auto dest = c->bub_pos();
             dest.z--;
             c->impact( 20, dest );
             c->setpos( dest );

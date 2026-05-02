@@ -1262,7 +1262,7 @@ static std::optional<tripoint_abs_omt> get_note_pos_from_item( const item &it )
         return std::nullopt;
     }
     const map &here = get_map();
-    const tripoint abs_ms = here.bub_to_abs( it.position() );
+    const auto abs_ms = here.bub_to_abs( it.position() );
     return tripoint_abs_omt( project_to<coords::omt>( abs_ms ) );
 }
 

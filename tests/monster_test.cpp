@@ -100,7 +100,7 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
     test_player.setpos( center );
     test_player.set_moves( 0 );
     // Give the player a head start.
-    const tripoint monster_start = { -10 * direction_of_flight + test_player.bub_pos()
+    const auto monster_start = { -10 * direction_of_flight + test_player.bub_pos()
                                    };
     monster &test_monster = spawn_test_monster( monster_type, monster_start );
     // Get it riled up and give it a goal.
@@ -119,7 +119,7 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
                 test_player.bub_pos().y < SEEY * int( MAPSIZE / 2 ) ||
                 test_player.bub_pos().x >= SEEX * ( 1 + int( MAPSIZE / 2 ) ) ||
                 test_player.bub_pos().y >= SEEY * ( 1 + int( MAPSIZE / 2 ) ) ) {
-                tripoint offset = center - test_player.bub_pos();
+                auto offset = center - test_player.bub_pos();
                 test_player.setpos( center );
                 test_monster.setpos( test_monster.bub_pos() + offset );
                 // Verify that only the player and one monster are present.

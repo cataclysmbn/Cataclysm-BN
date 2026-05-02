@@ -93,7 +93,7 @@ TEST_CASE( "monsters_dont_see_through_vehicle_holes", "[vision]" )
 
     monster &inside = spawn_test_monster( "mon_zombie", mon_origin );
 
-    tripoint second_origin = mon_origin + tripoint_north_west;
+    auto second_origin = mon_origin + tripoint_north_west;
 
     monster &outside = spawn_test_monster( "mon_zombie", second_origin );
 

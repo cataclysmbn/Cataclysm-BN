@@ -1469,7 +1469,7 @@ void activity_handlers::shear_finish( player_activity *act, player *p )
     }
     item *shears = &*loc;
     map &here = get_map();
-    const tripoint source_pos = here.abs_to_bub( act->coords.at( 0 ) );
+    const auto source_pos = here.abs_to_bub( act->coords.at( 0 ) );
     monster *source_mon = g->critter_at<monster>( source_pos );
     if( source_mon == nullptr ) {
         debugmsg( "could not find source creature for shearing" );
@@ -2351,7 +2351,7 @@ void activity_handlers::start_engines_finish( player_activity *act, player *p )
     vehicle *veh = g->remoteveh();
     map &here = get_map();
     if( !veh ) {
-        const tripoint pos = act->placement + g->u.bub_pos();
+        const auto pos = act->placement + g->u.bub_pos();
         veh = veh_pointer_or_null( here.veh_at( pos ) );
         if( !veh ) {
             return;
@@ -3137,7 +3137,7 @@ void activity_handlers::travel_do_turn( player_activity *act, player *p )
         }
         map &here = get_map();
         // TODO: fix point types
-        tripoint centre_sub = here.abs_to_bub( waypoint.raw() );
+        auto centre_sub = here.abs_to_bub( waypoint.raw() );
         if( !here.passable( centre_sub ) ) {
             tripoint_range<tripoint> candidates = here.points_in_radius( centre_sub, 2 );
             for( const tripoint &elem : candidates ) {
@@ -3707,7 +3707,7 @@ void activity_handlers::churn_finish( player_activity *act, player *p )
 void activity_handlers::plant_seed_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    tripoint examp = here.abs_to_bub( act->placement );
+    auto examp = here.abs_to_bub( act->placement );
     const itype_id seed_id( act->str_values[0] );
     std::vector<detached_ptr<item>> used_seed;
     if( item::count_by_charges( seed_id ) ) {
@@ -3816,7 +3816,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
     }
 
     const recipe &rec = craft->get_making();
-    const tripoint bench_pos = get_map().abs_to_bub( act->coords.front() );
+    const auto bench_pos = get_map().abs_to_bub( act->coords.front() );
     // Ugly
     bench_type bench_t = bench_type( act->values[craft_bench_type_idx] );
 
@@ -4299,7 +4299,7 @@ static void perform_zone_activity_turn( player *p,
 {
     const zone_manager &mgr = zone_manager::get_manager();
     map &here = get_map();
-    const tripoint abspos = here.bub_to_abs( p->bub_pos() );
+    const auto abspos = here.bub_to_abs( p->bub_pos() );
     std::unordered_set<tripoint> unsorted_tiles = mgr.get_near( ztype, abspos );
 
     cleanup_tiles( unsorted_tiles, tile_filter );
@@ -4566,7 +4566,7 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
 
     // choose target for spell (if the spell has a range > 0)
 
-    tripoint target = p->bub_pos();
+    auto target = p->bub_pos();
     bool target_is_valid = false;
     if( spell_being_cast.range() > 0 && !spell_being_cast.is_valid_target( target_none ) &&
         !spell_being_cast.has_flag( RANDOM_TARGET ) ) {

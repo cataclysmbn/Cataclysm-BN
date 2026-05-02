@@ -33,7 +33,7 @@ bool teleport::teleport( Creature &critter, int min_distance, int max_distance, 
     player *const p = critter.as_player();
     const bool c_is_u = p != nullptr && p->is_avatar();
     int tries = 0;
-    tripoint origin = critter.bub_pos();
+    auto origin = critter.bub_pos();
     tripoint new_pos = origin;
     map &here = get_map();
     //The teleportee is dimensionally anchored so nothing happens

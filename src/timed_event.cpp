@@ -110,7 +110,7 @@ void timed_event::actualize()
             }
             for( int i = 0; fault_point && i < num_horrors; i++ ) {
                 for( int tries = 0; tries < 10; ++tries ) {
-                    tripoint monp = g->u.bub_pos();
+                    auto monp = g->u.bub_pos();
                     if( horizontal ) {
                         monp.x = rng( fault_point->x, fault_point->x + 2 * SEEX - 8 );
                         for( int n = -1; n <= 1; n++ ) {

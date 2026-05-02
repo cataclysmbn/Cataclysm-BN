@@ -518,7 +518,7 @@ plot_options::query_seed_result plot_options::query_seed()
     const std::unordered_set<tripoint> &zone_src_set = mgr.get_near( zone_LOOT_SEEDS,
             here.bub_to_abs( p.bub_pos() ), 60 );
     for( const tripoint &elem : zone_src_set ) {
-        tripoint elem_loc = here.abs_to_bub( elem );
+        auto elem_loc = here.abs_to_bub( elem );
         for( item * const &it : here.i_at( elem_loc ) ) {
             if( it->is_seed() ) {
                 seed_inv.push_back( it );
@@ -1366,8 +1366,8 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
     if( turns == 0 ) {
         return;
     }
-    const tripoint a_start = target_map.bub_to_abs( tripoint_zero );
-    const tripoint a_end = target_map.bub_to_abs( tripoint( 23, 23, 0 ) );
+    const auto a_start = target_map.bub_to_abs( tripoint_zero );
+    const auto a_end = target_map.bub_to_abs( tripoint( 23, 23, 0 ) );
     const point dim( 24, 24 );
     for( zone_data &zone : zones ) {
         const tripoint z_start = zone.get_start_point();
@@ -1378,8 +1378,8 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
             ( a_end.x >= z_end.x && a_end.y >= z_end.y ) &&
             ( a_start.z == z_start.z )
           ) {
-            tripoint z_l_start3 = target_map.abs_to_bub( z_start );
-            tripoint z_l_end3 = target_map.abs_to_bub( z_end );
+            auto z_l_start3 = target_map.abs_to_bub( z_start );
+            auto z_l_end3 = target_map.abs_to_bub( z_end );
             // don't rotate centered squares
             if( z_l_start3.x == z_l_start3.y && z_l_end3.x == z_l_end3.y && z_l_start3.x + z_l_end3.x == 23 ) {
                 continue;

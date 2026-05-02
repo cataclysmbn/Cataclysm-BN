@@ -140,7 +140,7 @@ auto auto_find_hostile_target(
                     }
                 } while( continueFlag );
 
-                tripoint oldPos = creature.bub_pos();
+                auto oldPos = creature.bub_pos();
                 const_cast<Creature &>( creature ).setpos(
                     path_to_target.back() ); //Temporary moving targeting npc on vehicle boundary postion
                 bool seesFromVehBound = creature.sees( *m ); // And look from there

@@ -114,7 +114,7 @@ static void full_map_test( const std::vector<std::string> &setup,
     {
         // Sanity check on player placement
         REQUIRE( origin.z < OVERMAP_HEIGHT );
-        tripoint player_offset = player_character.bub_pos() - origin;
+        auto player_offset = player_character.bub_pos() - origin;
         REQUIRE( player_offset.y >= 0 );
         REQUIRE( player_offset.y < height );
         REQUIRE( player_offset.x >= 0 );
@@ -128,7 +128,7 @@ static void full_map_test( const std::vector<std::string> &setup,
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             const tripoint p = origin + point( x, y );
-            const tripoint above = p + tripoint_above;
+            const auto above = p + tripoint_above;
             switch( setup[y][x] ) {
                 case ' ':
                     break;

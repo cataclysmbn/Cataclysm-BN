@@ -2196,7 +2196,7 @@ bool crafting::disassemble_all( avatar &you, bool recursively )
 {
     std::vector<iuse_location> targets;
 
-    tripoint pos = you.bub_pos();
+    auto pos = you.bub_pos();
 
     for( item * const &itm : get_map().i_at( pos ) ) {
         disass_prompt_result res = prompt_disassemble_in_seq( you, *itm, false, true );
@@ -2416,7 +2416,7 @@ bench_location find_best_bench( const Character &who, const item &craft )
             can_lift );
     bench_type best_type = bench_here.first;
     float best_bench_multi = bench_here.second;
-    tripoint best_loc = who.bub_pos();
+    auto best_loc = who.bub_pos();
     std::vector<tripoint> reachable( PICKUP_RANGE * PICKUP_RANGE );
     g->m.reachable_flood_steps( reachable, who.bub_pos(), PICKUP_RANGE, 1, 100 );
     for( const tripoint &adj : reachable ) {

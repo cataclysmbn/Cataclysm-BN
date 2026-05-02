@@ -1758,7 +1758,7 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
     if( !built.post_terrain.is_empty() ) {
         const ter_id new_ter = built.post_terrain;
         here.ter_set( local, new_ter );
-        const tripoint above = local + tripoint_above;
+        const auto above = local + tripoint_above;
         // TODO: What to do if tile above has no floor, but isn't open air?
         if( new_ter->roof && here.ter( above ) == t_open_air ) {
             here.ter_set( above, new_ter->roof );
@@ -2092,11 +2092,11 @@ static void unroll_digging( const int numer_of_2x4s )
 void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
 {
     map &here = get_map();
-    const tripoint abs_pos = here.bub_to_abs( p );
-    const tripoint pos_sm = project_to<coords::sm>( abs_pos );
+    const auto abs_pos = here.bub_to_abs( p );
+    const auto pos_sm = project_to<coords::sm>( abs_pos );
     tinymap tmpmap;
     tmpmap.load( tripoint( pos_sm.xy(), pos_sm.z - 1 ), false );
-    const tripoint local_tmp = tmpmap.abs_to_bub( abs_pos );
+    const auto local_tmp = tmpmap.abs_to_bub( abs_pos );
 
     bool dig_muts = g->u.has_trait( trait_PAINRESIST_TROGLO ) || g->u.has_trait( trait_STOCKY_TROGLO );
 
@@ -2146,11 +2146,11 @@ void construct::done_mine_downstair( const tripoint_bub_ms &p )
 void construct::done_mine_upstair( const tripoint_bub_ms &p )
 {
     map &here = get_map();
-    const tripoint abs_pos = here.bub_to_abs( p );
-    const tripoint pos_sm = project_to<coords::sm>( abs_pos );
+    const auto abs_pos = here.bub_to_abs( p );
+    const auto pos_sm = project_to<coords::sm>( abs_pos );
     tinymap tmpmap;
     tmpmap.load( tripoint( pos_sm.xy(), pos_sm.z + 1 ), false );
-    const tripoint local_tmp = tmpmap.abs_to_bub( abs_pos );
+    const auto local_tmp = tmpmap.abs_to_bub( abs_pos );
 
     if( tmpmap.ter( local_tmp ) == t_lava ) {
         here.ter_set( p.xy(), t_rock_floor ); // You dug a bit before discovering the problem

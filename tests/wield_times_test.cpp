@@ -56,7 +56,7 @@ static void do_test( const bool generating_cases )
 {
     player &dummy = get_avatar();
     map &m = get_map();
-    const tripoint spot = dummy.bub_pos();
+    const auto spot = dummy.bub_pos();
 
     dummy.worn.clear();
     dummy.reset_encumbrance();

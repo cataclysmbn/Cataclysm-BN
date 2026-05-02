@@ -786,7 +786,7 @@ static std::vector<detached_ptr<item>> obtain_activity_items( Character &who,
 
 void drop_activity_actor::do_turn( player_activity &, Character &who )
 {
-    const tripoint pos = who.bub_pos() + relpos;
+    const auto pos = who.bub_pos() + relpos;
 
     std::vector<detached_ptr<item>> dropped = obtain_activity_items( who, items ) ;
 
@@ -829,7 +829,7 @@ void activity_on_turn_wear( player_activity &act, player &p )
 
 void stash_activity_actor::do_turn( player_activity &, Character &who )
 {
-    const tripoint pos = who.bub_pos() + relpos;
+    const auto pos = who.bub_pos() + relpos;
 
     monster *pet = g->critter_at<monster>( pos );
     if( pet != nullptr && pet->has_effect( effect_pet ) ) {
@@ -923,7 +923,7 @@ static int move_cost_cart( const item &it, const tripoint_bub_ms &src, const tri
 static int move_cost( const item &it, const tripoint_bub_ms &src, const tripoint_bub_ms &dest )
 {
     if( g->u.get_grab_type() == OBJECT_VEHICLE ) {
-        tripoint cart_position = g->u.bub_pos() + g->u.grab_point;
+        auto cart_position = g->u.bub_pos() + g->u.grab_point;
 
         if( const std::optional<vpart_reference> vp = get_map().veh_at(
                     cart_position ).part_with_feature( "CARGO", false ) ) {
@@ -2177,7 +2177,7 @@ static bool tidy_activity( player &p, const tripoint_bub_ms &src_loc,
 {
     auto &mgr = zone_manager::get_manager();
     map &here = get_map();
-    tripoint loot_abspos = here.bub_to_abs( src_loc );
+    auto loot_abspos = here.bub_to_abs( src_loc );
     tripoint loot_src_lot;
     const auto &zone_src_set = mgr.get_near( zone_type_LOOT_UNSORTED, loot_abspos, distance );
     if( !zone_src_set.empty() ) {
@@ -2726,9 +2726,9 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
     std::unordered_set<tripoint> src_set;
 
     zone_manager &mgr = zone_manager::get_manager();
-    const tripoint localpos = p.bub_pos();
+    const auto localpos = p.bub_pos();
     map &here = get_map();
-    const tripoint abspos = here.bub_to_abs( localpos );
+    const auto abspos = here.bub_to_abs( localpos );
     if( act_id == ACT_TIDY_UP ) {
         dark_capable = true;
         tripoint unsorted_spot;
@@ -2827,7 +2827,7 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
     const bool pre_dark_check = src_set.empty();
     for( auto it2 = src_set.begin(); it2 != src_set.end(); ) {
         // remove dangerous tiles
-        const tripoint set_pt = here.abs_to_bub( *it2 );
+        const auto set_pt = here.abs_to_bub( *it2 );
         if( here.dangerous_field_at( set_pt ) ) {
             it2 = src_set.erase( it2 );
             // remove tiles in darkness, if we aren't lit-up ourselves
@@ -2900,7 +2900,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
     };
 
     map &here = get_map();
-    const tripoint abspos = here.bub_to_abs( p.bub_pos() );
+    const auto abspos = here.bub_to_abs( p.bub_pos() );
     zone_manager &mgr = zone_manager::get_manager();
 
     bool &can_do_it = act_info.can_do;
@@ -3330,7 +3330,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
 {
     map &here = get_map();
     zone_manager &mgr = zone_manager::get_manager();
-    const tripoint abspos = here.bub_to_abs( p.bub_pos() );
+    const auto abspos = here.bub_to_abs( p.bub_pos() );
     // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
     activity_id activity_to_restore = act.id();
     const bool is_multi_construction = activity_to_restore == ACT_MULTIPLE_CONSTRUCTION;
@@ -3554,7 +3554,7 @@ static std::optional<tripoint> find_refuel_spot_zone( const tripoint_bub_ms &cen
 {
     const zone_manager &mgr = zone_manager::get_manager();
     map &here = get_map();
-    const tripoint center_abs = here.bub_to_abs( center );
+    const auto center_abs = here.bub_to_abs( center );
 
     const std::unordered_set<tripoint> &tiles_abs_unordered =
         mgr.get_near( zone_type_source_firewood, center_abs, PICKUP_RANGE );
@@ -3562,7 +3562,7 @@ static std::optional<tripoint> find_refuel_spot_zone( const tripoint_bub_ms &cen
         get_sorted_tiles_by_distance( center_abs, tiles_abs_unordered );
 
     for( const tripoint &tile_abs : tiles_abs ) {
-        const tripoint tile = here.abs_to_bub( tile_abs );
+        const auto tile = here.abs_to_bub( tile_abs );
         if( has_clear_path_to_pickup_items( center, tile ) ) {
             return tile;
         }
@@ -3596,7 +3596,7 @@ bool find_auto_consume( player &p, const consume_type type )
     if( p.has_effect( effect_nausea ) ) {
         return true;
     }
-    const tripoint pos = p.bub_pos();
+    const auto pos = p.bub_pos();
     map &here = get_map();
     zone_manager &mgr = zone_manager::get_manager();
     const zone_type_id consume_type_zone( type == consume_type::FOOD ? "AUTO_EAT" : "AUTO_DRINK" );
@@ -3679,7 +3679,7 @@ bool find_auto_consume( player &p, const consume_type type )
 
 void try_fuel_fire( player_activity &act, player &p, const bool starting_fire )
 {
-    const tripoint pos = p.bub_pos();
+    const auto pos = p.bub_pos();
     std::vector<tripoint> adjacent = closest_points_first( pos, PICKUP_RANGE );
     adjacent.erase( adjacent.begin() );
 

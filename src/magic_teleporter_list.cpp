@@ -84,7 +84,7 @@ bool teleporter_list::place_avatar_overmap( Character &you, const tripoint_abs_o
     if( !global_dest ) {
         return false;
     }
-    tripoint local_dest = omt_dest.abs_to_bub( *global_dest ) + point( 60, 60 );
+    auto local_dest = omt_dest.abs_to_bub( *global_dest ) + point( 60, 60 );
     you.add_effect( efftype_id( "ignore_fall_damage" ), 1_seconds, bodypart_str_id::NULL_ID(), 0,
                     true );
     g->place_player_overmap( omt_pt );

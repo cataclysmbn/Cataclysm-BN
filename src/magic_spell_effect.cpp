@@ -536,7 +536,7 @@ void spell_effect::projectile_attack( const spell &sp, Creature &caster,
                                       const tripoint &target )
 {
     std::vector<tripoint> trajectory = line_to( caster.bub_pos(), target );
-    tripoint prev_point = caster.bub_pos();
+    auto prev_point = caster.bub_pos();
     map &here = get_map();
     for( std::vector<tripoint>::iterator iter = trajectory.begin(); iter != trajectory.end(); iter++ ) {
         if( ( here.impassable( *iter ) && !here.has_flag( "THIN_OBSTACLE", *iter ) ) ||

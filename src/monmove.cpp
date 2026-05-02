@@ -1195,7 +1195,7 @@ monster_action_t monster::decide_action() const
             }
 
             bool via_ramp        = false;
-            tripoint ramp_offset = tripoint_zero;
+            auto ramp_offset = tripoint_zero;
             if( here.has_flag( TFLAG_RAMP_UP, candidate ) ) {
                 via_ramp = true;
                 candidate.z() += 1;

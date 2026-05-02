@@ -38,7 +38,7 @@ struct aoe_flood_node {
     {}
     aoe_flood_node( const aoe_flood_node & ) = default;
     aoe_flood_node &operator = ( const aoe_flood_node & ) = default;
-    tripoint parent = tripoint_min;
+    auto parent = tripoint_min;
     double parent_coverage = 0.0;
 };
 

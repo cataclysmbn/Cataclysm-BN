@@ -724,7 +724,7 @@ void vehicle::autodrive_controller::compute_obstacles()
     for( int dx = 0; dx < NAV_VIEW_SIZE_X; dx++ ) {
         for( int dy = 0; dy < NAV_VIEW_SIZE_Y; dy++ ) {
             // TODO: store z-values in the nav map and retrieve here (needed for ramp navigation)
-            const tripoint abs_map_pt = data.view_to_map.transform( point( dx, dy ), data.current_omt.z() );
+            const auto abs_map_pt = data.view_to_map.transform( point( dx, dy ), data.current_omt.z() );
             data.is_obstacle[dx][dy] = !check_drivable( here.abs_to_bub( abs_map_pt ) );
         }
     }
@@ -1018,7 +1018,7 @@ void vehicle::autodrive_controller::check_safe_speed()
 
 collision_check_result vehicle::autodrive_controller::check_collision_zone( orientation turn_dir )
 {
-    const tripoint veh_pos = driven_veh.bub_ms_location();
+    const auto veh_pos = driven_veh.bub_ms_location();
 
     // first check if we have any visibility in front, to prevent blind driving
     tileray face_dir = driven_veh.face;

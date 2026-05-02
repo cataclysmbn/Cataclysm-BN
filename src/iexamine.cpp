@@ -5497,7 +5497,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
         get_map().unboard_vehicle( p.bub_pos() );
     }
     if( get_map().ter( p.bub_pos() ).id().str() == "t_open_air" && !character_funcs::can_fly( p ) ) {
-        tripoint where = p.bub_pos();
+        auto where = p.bub_pos();
         tripoint below = where;
         below.z--;
 
@@ -7779,7 +7779,7 @@ void iexamine::portal( player &p, const tripoint &examp )
 
     g->travel_to_dimension( pt->target_dim_id, wt_id, std::nullopt, dest_sm );
 
-    tripoint entry_local = get_map().abs_to_bub( pt->target_pos );
+    auto entry_local = get_map().abs_to_bub( pt->target_pos );
     p.setpos( entry_local );
     g->update_map( p );
 }

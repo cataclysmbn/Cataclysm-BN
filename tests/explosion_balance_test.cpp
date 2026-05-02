@@ -276,7 +276,7 @@ TEST_CASE( "rotated_vehicle_walls_block_explosions" )
 
     REQUIRE( veh_pointer_or_null( here.veh_at( mon_origin ) ) != nullptr );
 
-    tripoint explode_at = mon_origin + tripoint_north_west;
+    auto explode_at = mon_origin + tripoint_north_west;
 
     REQUIRE( veh_pointer_or_null( here.veh_at( explode_at ) ) == nullptr );
 

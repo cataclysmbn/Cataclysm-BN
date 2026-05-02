@@ -7417,7 +7417,7 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     entry_abs_ms += tripoint_rel_ms( SEEX, SEEY, 0 );
     // The map is already loaded centered on the destination (via load_pos parameter),
     // so local coordinates are valid without needing a map shift first.
-    tripoint entry_local = get_map().abs_to_bub( entry_abs_ms );
+    auto entry_local = get_map().abs_to_bub( entry_abs_ms );
     tripoint safe_pos = find_safe_spawn( entry_local );
     p.setpos( safe_pos );
 
@@ -7573,7 +7573,7 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     return_abs_ms += tripoint_rel_ms( SEEX, SEEY, 0 );
     // The map is already loaded centered on the destination (via load_pos parameter),
     // so local coordinates are valid without needing a map shift first.
-    tripoint return_local = get_map().abs_to_bub( return_abs_ms );
+    auto return_local = get_map().abs_to_bub( return_abs_ms );
     tripoint safe_pos = find_safe_spawn( return_local );
     p.setpos( safe_pos );
 
