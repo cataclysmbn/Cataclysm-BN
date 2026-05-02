@@ -123,7 +123,7 @@ bool is_layer_visible( const std::map<tripoint, explosion_tile> &layer )
 // Convert p to screen position relative to u's current position and view
 tripoint relative_view_pos( const avatar &u, const tripoint &p ) noexcept
 {
-    return p - ( u.pos() + u.view_offset ) + point( POSX, POSY );
+    return p - ( u.bub_pos() + u.view_offset ) + point( POSX, POSY );
 }
 
 // Convert p to screen position relative to the current terrain view
@@ -192,7 +192,7 @@ void draw_custom_explosion_curses( game &g,
                                    const std::list< std::map<tripoint, explosion_tile> > &layers )
 {
     // calculate screen offset relative to player + view offset position
-    const tripoint center = g.u.pos() + g.u.view_offset;
+    const tripoint center = g.u.bub_pos() + g.u.view_offset;
     const tripoint topleft( center.x - ( getmaxx( g.w_terrain ) / 2 ),
                             center.y - ( getmaxy( g.w_terrain ) / 2 ), 0 );
 
@@ -634,7 +634,7 @@ auto draw_bullet_trajectories_curses( game &g,
     for( size_t step = 1; step < longest_trajectory_size; step++ ) {
         auto bullet_cb = make_shared_fast<game::draw_callback_t>( [ &, step]() {
             auto &here = get_map();
-            const auto view_pos = g.u.pos() + g.u.view_offset;
+            const auto view_pos = g.u.bub_pos() + g.u.view_offset;
             for( const auto &trajectory : options.trajectories ) {
                 if( step >= trajectory.size() || !is_point_visible( trajectory[step] ) ) {
                     continue;
@@ -1330,7 +1330,7 @@ static void draw_cone_aoe_curses( const tripoint &, const bucketed_points &waves
 {
     // Calculate screen offset relative to player + view offset position
     const avatar &u = get_avatar();
-    const tripoint center = u.pos() + u.view_offset;
+    const tripoint center = u.bub_pos() + u.view_offset;
     const tripoint topleft( center.x - ( catacurses::getmaxx( g->w_terrain ) / 2 ),
                             center.y - ( catacurses::getmaxy( g->w_terrain ) / 2 ), 0 );
 

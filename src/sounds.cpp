@@ -170,11 +170,11 @@ std::string enum_to_string<sfx::channel>( sfx::channel chan )
 
 // Static globals tracking sounds events of various kinds.
 // The sound events since the last monster turn.
-static std::vector<std::pair<tripoint, int>> recent_sounds;
+static std::vector<std::pair<tripoint_bub_ms, int>> recent_sounds;
 // The sound events since the last interactive player turn. (doesn't count sleep etc)
-static std::vector<std::pair<tripoint, sound_event>> sounds_since_last_turn;
+static std::vector<std::pair<tripoint_bub_ms, sound_event>> sounds_since_last_turn;
 // The sound events currently displayed to the player.
-static std::unordered_map<tripoint, sound_event> sound_markers;
+static std::unordered_map<tripoint_bub_ms, sound_event> sound_markers;
 
 // This is an attempt to handle attenuation of sound for underground areas.
 // The main issue it adresses is that you can hear activity
@@ -182,7 +182,7 @@ static std::unordered_map<tripoint, sound_event> sound_markers;
 // My research indicates that attenuation through soil-like materials is as
 // high as 100x the attenuation through air, plus vertical distances are
 // roughly five times as large as horizontal ones.
-static int sound_distance( const tripoint &source, const tripoint &sink )
+static int sound_distance( const tripoint_bub_ms &source, const tripoint_bub_ms &sink )
 {
     const int lower_z = std::min( source.z, sink.z );
     const int upper_z = std::max( source.z, sink.z );
@@ -200,7 +200,7 @@ static int sound_distance( const tripoint &source, const tripoint &sink )
     return rl_dist( source.xy(), sink.xy() ) + vertical_attenuation;
 }
 
-void sounds::ambient_sound( const tripoint &p, int vol, sound_t category,
+void sounds::ambient_sound( const tripoint_bub_ms &p, int vol, sound_t category,
                             const std::string &description )
 {
     sound( p, vol, category, description, true );
@@ -230,7 +230,7 @@ void sounds::sound( const tripoint &p, int vol, sound_t category, const translat
     sounds::sound( p, vol, category, description.translated(), ambient, id, variant );
 }
 
-void sounds::add_footstep( const tripoint &p, int volume, int, monster *,
+void sounds::add_footstep( const tripoint_bub_ms &p, int volume, int, monster *,
                            const std::string &footstep )
 {
     sounds_since_last_turn.emplace_back( p, sound_event { volume,
@@ -284,7 +284,7 @@ static std::vector<centroid> cluster_sounds( std::vector<std::pair<tripoint, int
         for( auto centroid_iter = sound_clusters.begin(); centroid_iter != cluster_end;
              ++centroid_iter ) {
             // Scale the distance between the two by the max possible distance.
-            tripoint centroid_pos { static_cast<int>( centroid_iter->x ), static_cast<int>( centroid_iter->y ), static_cast<int>( centroid_iter->z ) };
+            tripoint_bub_ms centroid_pos { static_cast<int>( centroid_iter->x ), static_cast<int>( centroid_iter->y ), static_cast<int>( centroid_iter->z ) };
             const int dist = sound_distance( sound_event_pair.first, centroid_pos );
             if( dist * dist < dist_factor ) {
                 found_centroid = centroid_iter;
@@ -344,7 +344,7 @@ void sounds::process_sounds()
         // If they later get physical effects from loud noises we'll have to change this
         // to use the unmodified volume for those effects.
         const int vol = this_centroid.volume - weather_vol;
-        const tripoint source = tripoint( this_centroid.x, this_centroid.y, this_centroid.z );
+        const tripoint_bub_ms source = tripoint_bub_ms( this_centroid.x, this_centroid.y, this_centroid.z );
         // --- Monster sound handling here ---
         // Alert all hordes
         int sig_power = get_signal_for_hordes( this_centroid );
@@ -598,8 +598,8 @@ void sounds::process_sound_markers( Character *who )
 
         // Enumerate the valid points the player *cannot* see.
         // Unless the source is on a different z-level, then any point is fine
-        std::vector<tripoint> unseen_points;
-        for( const tripoint &newp : get_map().points_in_radius( pos, err_offset ) ) {
+        std::vector<tripoint_bub_ms> unseen_points;
+        for( const tripoint_bub_ms &newp : get_map().points_in_radius( pos, err_offset ) ) {
             if( diff_z || !who->sees( newp ) ) {
                 unseen_points.emplace_back( newp );
             }
@@ -627,10 +627,10 @@ void sounds::reset_markers()
     sound_markers.clear();
 }
 
-std::vector<tripoint> sounds::get_footstep_markers()
+std::vector<tripoint_bub_ms> sounds::get_footstep_markers()
 {
     // Optimization, make this static and clear it in reset_markers?
-    std::vector<tripoint> footsteps;
+    std::vector<tripoint_bub_ms> footsteps;
     footsteps.reserve( sound_markers.size() );
     for( const auto &mark : sound_markers ) {
         footsteps.push_back( mark.first );
@@ -638,15 +638,15 @@ std::vector<tripoint> sounds::get_footstep_markers()
     return footsteps;
 }
 
-std::pair<std::vector<tripoint>, std::vector<tripoint>> sounds::get_monster_sounds()
+std::pair<std::vector<tripoint_bub_ms>, std::vector<tripoint_bub_ms>> sounds::get_monster_sounds()
 {
     auto sound_clusters = cluster_sounds( recent_sounds );
-    std::vector<tripoint> sound_locations;
+    std::vector<tripoint_bub_ms> sound_locations;
     sound_locations.reserve( recent_sounds.size() );
     for( const auto &sound : recent_sounds ) {
         sound_locations.push_back( sound.first );
     }
-    std::vector<tripoint> cluster_centroids;
+    std::vector<tripoint_bub_ms> cluster_centroids;
     cluster_centroids.reserve( sound_clusters.size() );
     for( const auto &sound : sound_clusters ) {
         cluster_centroids.emplace_back( static_cast<int>( sound.x ), static_cast<int>( sound.y ),
@@ -655,7 +655,7 @@ std::pair<std::vector<tripoint>, std::vector<tripoint>> sounds::get_monster_soun
     return { sound_locations, cluster_centroids };
 }
 
-std::string sounds::sound_at( const tripoint &location )
+std::string sounds::sound_at( const tripoint_bub_ms &location )
 {
     auto this_sound = sound_markers.find( location );
     if( this_sound == sound_markers.end() ) {
@@ -1687,7 +1687,7 @@ void sfx::do_obstacle( const std::string & ) { }
 /** Functions from sfx that do not use the SDL_mixer API at all. They can be used in builds
   * without sound support. */
 /*@{*/
-int sfx::get_heard_volume( const tripoint &source )
+int sfx::get_heard_volume( const tripoint_bub_ms &source )
 {
     int distance = sound_distance( get_avatar().pos(), source );
     // fract = -100 / 24
@@ -1700,7 +1700,7 @@ int sfx::get_heard_volume( const tripoint &source )
     return ( heard_volume );
 }
 
-units::angle sfx::get_heard_angle( const tripoint &source )
+units::angle sfx::get_heard_angle( const tripoint_bub_ms &source )
 {
     units::angle angle = coord_to_angle( get_player_character().pos(), source ) + 90_degrees;
     //add_msg(m_warning, "angle: %i", angle);

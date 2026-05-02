@@ -41,7 +41,7 @@ auto here( const Character &you ) -> elevator::tiles
     const auto is_elevator = [&here]( const tripoint & pos ) -> bool { return here.has_flag( TFLAG_ELEVATOR, pos ); };
 
     std::unordered_set<tripoint> visited;
-    return ff::point_flood_fill_4_connected( you.pos(), visited, is_elevator );
+    return ff::point_flood_fill_4_connected( you.bub_pos(), visited, is_elevator );
 }
 
 auto dest( const elevator::tiles &elevator_here,

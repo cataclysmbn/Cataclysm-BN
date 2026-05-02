@@ -1265,7 +1265,7 @@ void vehicle::honk_horn()
             honked = true;
         }
         //Get global position of horn
-        const tripoint horn_pos = vp.pos();
+        const tripoint_bub_ms horn_pos = vp.pos();
         //Determine sound
         if( horn_type.bonus >= 110 ) {
             //~ Loud horn sound
@@ -1287,7 +1287,7 @@ void vehicle::honk_horn()
     }
 }
 
-void vehicle::reload_seeds( const tripoint &pos )
+void vehicle::reload_seeds( const tripoint_bub_ms &pos )
 {
     player &p = g->u;
 
@@ -1373,7 +1373,7 @@ void vehicle::crash_terrain_around()
     }
     for( const vpart_reference &vp : get_enabled_parts( "CRASH_TERRAIN_AROUND" ) ) {
         tripoint crush_target( 0, 0, -OVERMAP_LAYERS );
-        const tripoint start_pos = vp.pos();
+        const tripoint_bub_ms start_pos = vp.pos();
         const transform_terrain_data &ttd = vp.info().transform_terrain;
         for( size_t i = 0; i < eight_horizontal_neighbors.size() &&
              !g->m.inbounds_z( crush_target.z ); i++ ) {
@@ -1403,7 +1403,7 @@ void vehicle::crash_terrain_around()
 void vehicle::transform_terrain()
 {
     for( const vpart_reference &vp : get_enabled_parts( "TRANSFORM_TERRAIN" ) ) {
-        const tripoint start_pos = vp.pos();
+        const tripoint_bub_ms start_pos = vp.pos();
         const transform_terrain_data &ttd = vp.info().transform_terrain;
         bool prereq_fulfilled = ttd.diggable && g->m.ter( start_pos )->is_diggable();
         for( const std::string &flag : ttd.pre_flags ) {
@@ -1439,7 +1439,7 @@ void vehicle::operate_reaper()
 {
     for( const vpart_reference &vp : get_enabled_parts( "REAPER" ) ) {
         const size_t reaper_id = vp.part_index();
-        const tripoint reaper_pos = vp.pos();
+        const tripoint_bub_ms reaper_pos = vp.pos();
         const int plant_produced = rng( 1, vp.info().bonus );
         const int seed_produced = rng( 1, 3 );
         const units::volume max_pickup_volume = vp.info().size / 20;
@@ -1482,7 +1482,7 @@ void vehicle::operate_planter()
 {
     for( const vpart_reference &vp : get_enabled_parts( "PLANTER" ) ) {
         const size_t planter_id = vp.part_index();
-        const tripoint loc = vp.pos();
+        const tripoint_bub_ms loc = vp.pos();
         vehicle_stack v = get_items( planter_id );
         for( auto it = v.begin(); it != v.end(); it++ ) {
             //TODO!: check allllla this
@@ -1679,7 +1679,7 @@ void vehicle::open_or_close( const int part_index, const bool opening )
     insides_dirty = true;
     map &here = get_map();
     here.set_transparency_cache_dirty( sm_pos.z );
-    const tripoint part_location = mount_to_bubble( parts[part_index].mount ).raw();
+    const auto part_location = mount_to_bubble( parts[part_index].mount );
     here.set_seen_cache_dirty( part_location );
     const int dist = rl_dist( get_player_character().pos(), part_location );
     if( dist < 20 ) {
@@ -1697,7 +1697,7 @@ void vehicle::open_or_close( const int part_index, const bool opening )
 }
 
 
-void vehicle::use_monster_capture( int part, const tripoint &pos )
+void vehicle::use_monster_capture( int part, const tripoint_bub_ms &pos )
 {
     if( parts[part].is_broken() || parts[part].removed ) {
         return;

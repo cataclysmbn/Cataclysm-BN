@@ -730,7 +730,7 @@ static std::optional<std::pair<tripoint_abs_omt, std::string>> get_mission_arrow
     }
 
     const std::vector<tripoint> traj = line_to( center.raw(),
-                                       tripoint( mission_target.raw().xy(), center.raw().z ) );
+                                       tripoint_abs_omt( mission_target.raw().xy(), center.raw().z ) );
 
     if( traj.empty() ) {
         debugmsg( "Failed to gen overmap mission trajectory %s %s",

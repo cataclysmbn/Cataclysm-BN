@@ -93,7 +93,7 @@ template void comp_selection<item_comp>::serialize( JsonOut &jsout ) const;
 template void comp_selection<tool_comp>::deserialize( JsonIn &jsin );
 template void comp_selection<item_comp>::deserialize( JsonIn &jsin );
 
-void craft_command::execute( const tripoint &new_loc )
+void craft_command::execute( const tripoint_bub_ms &new_loc )
 {
     if( empty() ) {
         return;

@@ -1018,7 +1018,7 @@ void vehicle::autodrive_controller::check_safe_speed()
 
 collision_check_result vehicle::autodrive_controller::check_collision_zone( orientation turn_dir )
 {
-    const tripoint veh_pos = driven_veh.global_pos3();
+    const tripoint veh_pos = driven_veh.bub_ms_location();
 
     // first check if we have any visibility in front, to prevent blind driving
     tileray face_dir = driven_veh.face;

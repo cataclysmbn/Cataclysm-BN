@@ -523,7 +523,7 @@ void talk_function::give_all_aid( npc &p )
 
     give_aid_to( get_player_character() );
     for( npc &guy : g->all_npcs() ) {
-        if( guy.is_walking_with() && rl_dist( guy.pos(), u.pos() ) < PICKUP_RANGE ) {
+        if( guy.is_walking_with() && rl_dist( guy.pos(), u.bub_pos() ) < PICKUP_RANGE ) {
             give_aid_to( guy );
         }
     }

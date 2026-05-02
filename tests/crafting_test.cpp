@@ -515,7 +515,7 @@ static int resume_craft()
     REQUIRE( crafts.size() == 1 );
     item *craft = crafts.front();
     set_time( midday ); // Ensure light for crafting
-    REQUIRE( crafting_speed_multiplier( you, *craft, bench_location{bench_type::hands, you.pos()} ) ==
+    REQUIRE( crafting_speed_multiplier( you, *craft, bench_location{bench_type::hands, you.bub_pos()} ) ==
              1.0 );
     REQUIRE( !you.activity );
     avatar_funcs::use_item( you, *craft );
@@ -676,8 +676,8 @@ TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )
             // Any way to clean it up without re-running the slow test for every check?
             AND_WHEN( "the player is near a pot and a chunk of meat" ) {
                 u.invalidate_crafting_inventory();
-                m.add_item( u.pos(), item::spawn( "pot" ) );
-                m.add_item( u.pos(), item::spawn( "meat" ) );
+                m.add_item( u.bub_pos(), item::spawn( "pot" ) );
+                m.add_item( u.bub_pos(), item::spawn( "meat" ) );
                 THEN( "cooked meat can be crafted" ) {
                     const recipe &r = *recipe_id( "meat_cooked" );
                     const inventory &crafting_inv = u.crafting_inventory();

@@ -70,7 +70,7 @@ class player_activity
         std::vector<tripoint> coords;
         std::unordered_set<tripoint> coord_set;
         std::vector<weak_ptr_fast<monster>> monsters;
-        tripoint placement;
+        tripoint_abs_ms placement;
 
         bool no_drink_nearby_for_auto_consume = false;
         bool no_food_nearby_for_auto_consume = false;

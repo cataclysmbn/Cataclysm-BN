@@ -132,7 +132,7 @@ TEST_CASE( "single birdshot can move a swivel chair one tile on office floor at 
     player_character.wield( std::move( gun ) );
     REQUIRE( player_character.primary_weapon().typeId() == itype_id( "m1014" ) );
 
-    const auto starting_pos = veh->global_pos3();
+    const auto starting_pos = veh->bub_ms_location();
 
     const auto shots_fired = ranged::fire_gun( player_character, vehicle_origin + tripoint( 5, 0, 0 ),
                              1 );
@@ -143,13 +143,13 @@ TEST_CASE( "single birdshot can move a swivel chair one tile on office floor at 
     for( const auto _ : std::views::iota( 0, 20 ) ) {
         ( void ) _;
         here.vehmove();
-        if( veh->global_pos3() != starting_pos ) {
+        if( veh->bub_ms_location() != starting_pos ) {
             break;
         }
     }
 
-    CHECK( square_dist( starting_pos, veh->global_pos3() ) >= 1 );
-    CHECK( player_character.pos() == veh->global_pos3() );
+    CHECK( square_dist( starting_pos, veh->bub_ms_location() ) >= 1 );
+    CHECK( player_character.pos() == veh->bub_ms_location() );
 }
 
 TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Browning near 6 km/h",

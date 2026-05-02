@@ -1865,7 +1865,7 @@ void emp_blast( const tripoint &p )
             add_msg( _( "The %s is unaffected by the EMP blast." ), critter.name() );
         }
     }
-    if( u.pos() == p ) {
+    if( u.bub_pos() == p ) {
         if( u.get_power_level() > 0_kJ ) {
             add_msg( m_bad, _( "The EMP blast drains your power." ) );
             int max_drain = ( u.get_power_level() > 1000_kJ ? 1000 : units::to_kilojoule(

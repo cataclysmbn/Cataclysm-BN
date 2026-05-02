@@ -1437,7 +1437,7 @@ bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique,
         // Check if the square cardinally behind our target, or to the left / right,
         // contains a possible target.
         tripoint left = t.pos() + tripoint( offset_a[lookup], offset_b[lookup], 0 );
-        tripoint target_pos = t.pos() + ( t.pos() - pos() );
+        tripoint_bub_ms target_pos = t.pos() + ( t.pos() - pos() );
         tripoint right = t.pos() + tripoint( offset_b[lookup], -offset_b[lookup], 0 );
 
         monster *const mon_l = g->critter_at<monster>( left );
@@ -2629,7 +2629,7 @@ void avatar_funcs::try_disarm_npc( avatar &you, npc &target )
         } else if( my_roll >= their_roll / 2 ) {
             add_msg( _( "You grab at %s and pull with all your force, but it drops nearby!" ),
                      it.tname() );
-            const tripoint tp = target.pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
+            const tripoint_bub_ms tp = target.pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
             g->m.add_item_or_charges( tp, it.detach( ) );
             you.mod_moves( -100 );
         } else {
@@ -2646,7 +2646,7 @@ void avatar_funcs::try_disarm_npc( avatar &you, npc &target )
     if( my_roll >= their_roll ) {
         add_msg( _( "You smash %s with all your might forcing their %s to drop down nearby!" ),
                  target.name, it.tname() );
-        const tripoint tp = target.pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
+        const tripoint_bub_ms tp = target.pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
         g->m.add_item_or_charges( tp, it.detach( ) );
     } else {
         add_msg( _( "You smash %s with all your might but %s remains in their hands!" ),

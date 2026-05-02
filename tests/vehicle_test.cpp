@@ -45,7 +45,7 @@ TEST_CASE( "destroy_grabbed_vehicle_section" )
         const tripoint vehicle_origin = test_origin + tripoint_south_east;
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), vehicle_origin, -90_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
-        tripoint grab_point = test_origin + tripoint_east;
+        tripoint_bub_ms grab_point = test_origin + tripoint_rel_ms::east();
         player_character.grab( OBJECT_VEHICLE, grab_point );
         REQUIRE( player_character.get_grab_type() != OBJECT_NONE );
         REQUIRE( player_character.grab_point == grab_point );
@@ -87,7 +87,7 @@ TEST_CASE( "add_item_to_broken_vehicle_part" )
     vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
 
-    const tripoint pos = vehicle_origin + tripoint_west;
+    const tripoint_bub_ms pos = vehicle_origin + tripoint_rel_ms::west();
     auto cargo_parts = veh_ptr->get_parts_at( pos, "CARGO", part_status_flag::any );
     REQUIRE( !cargo_parts.empty( ) );
     vehicle_part *cargo_part = cargo_parts.front();
@@ -114,7 +114,7 @@ TEST_CASE( "damage_vehicle_oob" )
     REQUIRE( veh_ptr != nullptr );
 
     //Put an item in the vehicle
-    const tripoint cargo_pos = vehicle_origin + tripoint_west;
+    const tripoint_bub_ms cargo_pos = vehicle_origin + tripoint_rel_ms::west();
     auto cargo_parts = veh_ptr->get_parts_at( cargo_pos, "CARGO", part_status_flag::any );
     REQUIRE( !cargo_parts.empty( ) );
     vehicle_part *cargo_part = cargo_parts.front();

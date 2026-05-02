@@ -514,7 +514,7 @@ std::optional<std::string> press_x_if_bound( action_id act )
     return press_x( act );
 }
 
-action_id get_movement_action_from_delta( const tripoint &d, const iso_rotate rot )
+action_id get_movement_action_from_delta( const tripoint_bub_ms &d, const iso_rotate rot )
 {
     if( d.z == -1 ) {
         return ACTION_MOVE_DOWN;
@@ -542,7 +542,7 @@ action_id get_movement_action_from_delta( const tripoint &d, const iso_rotate ro
     }
 }
 
-point get_delta_from_movement_action( const action_id act, const iso_rotate rot )
+point_rel_ms get_delta_from_movement_action( const action_id act, const iso_rotate rot )
 {
     const bool iso_mode = rot == iso_rotate::yes && use_tiles && tile_iso;
     switch( act ) {
@@ -577,7 +577,7 @@ int hotkey_for_action( action_id action, const bool restrict_to_printable )
     return valid == keys.end() ? -1 : *valid;
 }
 
-bool can_butcher_at( const tripoint &p )
+bool can_butcher_at( const tripoint_bub_ms &p )
 {
     avatar &you = get_avatar();
     // TODO: unify this with game::butcher
@@ -600,7 +600,7 @@ bool can_butcher_at( const tripoint &p )
     return has_corpse || has_item;
 }
 
-bool can_move_vertical_at( const tripoint &p, int movez )
+bool can_move_vertical_at( const tripoint_bub_ms &p, int movez )
 {
     map &here = get_map();
     // TODO: unify this with game::move_vertical
@@ -620,7 +620,7 @@ bool can_move_vertical_at( const tripoint &p, int movez )
     }
 }
 
-bool can_examine_at( const tripoint &p )
+bool can_examine_at( const tripoint_bub_ms &p )
 {
     map &here = get_map();
     Character &u = get_player_character();
@@ -643,14 +643,14 @@ bool can_examine_at( const tripoint &p )
     }
 
     Creature *c = g->critter_at( p );
-    if( c != nullptr && p != u.pos() ) {
+    if( c != nullptr && p != u.bub_pos() ) {
         return true;
     }
 
     return here.can_see_trap_at( p, u );
 }
 
-static bool can_pickup_at( const tripoint &p )
+static bool can_pickup_at( const tripoint_bub_ms &p )
 {
     bool veh_has_items = false;
     map &here = get_map();
@@ -662,7 +662,7 @@ static bool can_pickup_at( const tripoint &p )
     return ( here.has_items( p ) && !here.has_flag( flag_SEALED, p ) ) || veh_has_items;
 }
 
-bool can_interact_at( action_id action, const tripoint &p )
+bool can_interact_at( action_id action, const tripoint_bub_ms &p )
 {
     map &here = get_map();
     switch( action ) {
@@ -806,7 +806,7 @@ action_id handle_action_menu()
 
     // Check if we can perform one of our actions on nearby terrain. If so,
     // display that action at the top of the list.
-    for( const tripoint &pos : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
+    for( const tripoint_bub_ms &pos : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
         if( pos != g->u.bub_pos() ) {
             // Check for actions that work on nearby tiles, skipping tiles blocked by vehicles
             if( here.obstructed_by_vehicle_rotation( g->u.bub_pos(), pos ) ) {
@@ -1066,7 +1066,7 @@ action_id handle_main_menu()
     }
 }
 
-std::optional<tripoint> choose_direction( const std::string &message, const bool allow_vertical )
+std::optional<tripoint_rel_ms> choose_direction( const std::string &message, const bool allow_vertical )
 {
     input_context ctxt( "DEFAULTMODE" );
     ctxt.set_iso( true );
@@ -1087,7 +1087,7 @@ std::optional<tripoint> choose_direction( const std::string &message, const bool
     do {
         ui_manager::redraw();
         action = ctxt.handle_input();
-        if( const std::optional<tripoint> vec = ctxt.get_direction( action ) ) {
+        if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
             // Make player's sprite face left/right if interacting with something to the left or right
             if( vec->x > 0 ) {
                 g->u.facing = FD_RIGHT;
@@ -1108,9 +1108,9 @@ std::optional<tripoint> choose_direction( const std::string &message, const bool
     return std::nullopt;
 }
 
-std::optional<tripoint> choose_adjacent( const std::string &message, const bool allow_vertical )
+std::optional<tripoint_bub_ms> choose_adjacent( const std::string &message, const bool allow_vertical )
 {
-    const std::optional<tripoint> dir = choose_direction( message, allow_vertical );
+    const std::optional<tripoint_rel_ms> dir = choose_direction( message, allow_vertical );
 
     if( !dir ) {
         return std::nullopt;
@@ -1124,10 +1124,10 @@ std::optional<tripoint> choose_adjacent( const std::string &message, const bool 
     return *dir + g->u.bub_pos();
 }
 
-std::optional<tripoint> choose_adjacent_highlight( const std::string &message,
+std::optional<tripoint_bub_ms> choose_adjacent_highlight( const std::string &message,
         const std::string &failure_message, const action_id action, bool allow_vertical )
 {
-    const std::function<bool( const tripoint & )> f = [&action]( const tripoint & p ) {
+    const std::function<bool( const tripoint_bub_ms & )> f = [&action]( const tripoint_bub_ms & p ) {
         return can_interact_at( action, p );
     };
     return choose_adjacent_highlight( message, failure_message, f, allow_vertical );
@@ -1136,13 +1136,13 @@ std::optional<tripoint> choose_adjacent_highlight( const std::string &message,
 std::optional<tripoint> choose_adjacent_highlight(
     const std::string &message,
     const std::string &failure_message,
-    const std::function < auto( const tripoint & ) -> bool > &allowed,
+    const std::function < auto( const tripoint_bub_ms & ) -> bool > &allowed,
     const bool allow_vertical )
 {
     std::vector<tripoint> valid;
     map &here = get_map();
     if( allowed ) {
-        for( const tripoint &pos : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
+        for( const tripoint_bub_ms &pos : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
             if( !here.obstructed_by_vehicle_rotation( g->u.bub_pos(), pos ) && allowed( pos ) ) {
                 valid.emplace_back( pos );
             }
@@ -1160,7 +1160,7 @@ std::optional<tripoint> choose_adjacent_highlight(
     shared_ptr_fast<game::draw_callback_t> hilite_cb;
     if( !valid.empty() ) {
         hilite_cb = make_shared_fast<game::draw_callback_t>( [&]() {
-            for( const tripoint &pos : valid ) {
+            for( const tripoint_bub_ms &pos : valid ) {
                 here.drawsq( g->w_terrain, pos, drawsq_params().highlight( true ) );
             }
         } );

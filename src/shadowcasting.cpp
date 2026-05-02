@@ -245,7 +245,7 @@ static void castLight(
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
-    point offset, int offset_distance, float numerator,
+    tripoint_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     octant_xform xf,
     int row, float start, float end,
@@ -414,7 +414,7 @@ void castLightAll(
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
-    point offset, int offset_distance, float numerator,
+    tripoint_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     const exp_lookup *weather_lookup )
 {
@@ -447,7 +447,7 @@ void castLightAll_q(
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
-    point offset, int offset_distance, float numerator,
+    tripoint_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     const exp_lookup *weather_lookup )
 {
@@ -478,7 +478,7 @@ void castLightOctants_q(
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
-    point offset, int offset_distance, float numerator,
+    tripoint_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     uint8_t octant_mask,
     const exp_lookup *weather_lookup )

@@ -869,7 +869,7 @@ bool mattack::boomer( monster *z )
 
     map &here = get_map();
 
-    std::vector<tripoint> line = here.find_clear_path( z->pos(), target->pos() );
+    std::vector<tripoint_bub_ms> line = here.find_clear_path( z->pos(), target->pos() );
     // It takes a while
     z->moves -= 250;
     bool u_see = g->u.sees( *z );
@@ -928,7 +928,7 @@ bool mattack::boomer_glow( monster *z )
 
     map &here = get_map();
 
-    std::vector<tripoint> line = here.find_clear_path( z->pos(), target->pos() );
+    std::vector<tripoint_bub_ms> line = here.find_clear_path( z->pos(), target->pos() );
     // It takes a while
     z->moves -= 250;
     bool u_see = g->u.sees( *z );
@@ -1002,7 +1002,7 @@ bool mattack::resurrect( monster *z )
     int range = 10;
     bool found_eligible_corpse = false;
     int lowest_raise_score = INT_MAX;
-    for( const tripoint &p : g->m.points_in_radius( z->pos(), range ) ) {
+    for( const tripoint_bub_ms &p : g->m.points_in_radius( z->pos(), range ) ) {
         if( !g->is_empty( p ) || g->m.get_field_intensity( p, fd_fire ) > 1 ||
             !g->m.sees( z->pos(), p, -1 ) ) {
             continue;
@@ -2103,7 +2103,7 @@ bool mattack::fungus_fortify( monster *z )
         // Oops, can't reach. ):
         // How's about we spawn more tendrils? :)
         // Aimed at the player, too?  Sure!
-        const tripoint hit_pos = target->pos() + point( rng( -1, 1 ), rng( -1, 1 ) );
+        const tripoint_bub_ms hit_pos = target->pos() + point( rng( -1, 1 ), rng( -1, 1 ) );
         if( hit_pos == target->pos() && !target->uncanny_dodge() ) {
             const bodypart_str_id hit = body_part_hit_by_plant();
             //~ %s is bodypart name in accusative.
@@ -2696,7 +2696,7 @@ bool mattack::ranged_pull( monster *z )
     map &here = get_map();
 
     player *foe = dynamic_cast< player * >( target );
-    std::vector<tripoint> line = here.find_clear_path( z->pos(), target->pos() );
+    std::vector<tripoint_bub_ms> line = here.find_clear_path( z->pos(), target->pos() );
     bool seen = g->u.sees( *z );
     tripoint prev_point = z->pos();
     for( auto &i : line ) {
@@ -2888,7 +2888,7 @@ bool mattack::grab_drag( monster *z )
         target->stability_roll() < dice( z->type->melee_sides, z->type->melee_dice ) ) {
         player *foe = dynamic_cast<player *>( target );
         monster *zz = dynamic_cast<monster *>( target );
-        tripoint zpt = z->pos();
+        tripoint_abs_ms zpt = z->pos();
         z->move_to( target_square );
         if( !g->is_empty( zpt ) ) { //Cancel the grab if the space is occupied by something
             return false;
@@ -3029,7 +3029,7 @@ bool mattack::nurse_check_up( monster *z )
 {
     bool found_target = false;
     player *target = nullptr;
-    tripoint tmp_pos( z->pos() + point( 12, 12 ) );
+    tripoint_bub_ms tmp_pos( z->pos() + point( 12, 12 ) );
     for( auto critter : g->m.get_creatures_in_radius( z->pos(), 6 ) ) {
         player *tmp_player = dynamic_cast<player *>( critter );
         if( tmp_player != nullptr && z->sees( *tmp_player ) &&
@@ -3080,7 +3080,7 @@ bool mattack::nurse_assist( monster *z )
 
     bool found_target = false;
     player *target = nullptr;
-    tripoint tmp_pos( z->pos() + point( 12, 12 ) );
+    tripoint_bub_ms tmp_pos( z->pos() + point( 12, 12 ) );
     for( auto critter : g->m.get_creatures_in_radius( z->pos(), 6 ) ) {
         player *tmp_player = dynamic_cast<player *>( critter );
         // No need to scan players we can't reach
@@ -3135,7 +3135,7 @@ bool mattack::nurse_operate( monster *z )
 
     bool found_target = false;
     player *target = nullptr;
-    tripoint tmp_pos( z->pos() + point( 12, 12 ) );
+    tripoint_bub_ms tmp_pos( z->pos() + point( 12, 12 ) );
     for( auto critter : g->m.get_creatures_in_radius( z->pos(), 6 ) ) {
         player *tmp_player = dynamic_cast< player *>( critter );
         // No need to scan players we can't reach
@@ -3165,7 +3165,7 @@ bool mattack::nurse_operate( monster *z )
 
         z->friendly = 0;
         z->anger = 100;
-        std::list<tripoint> couch_pos = g->m.find_furnitures_or_vparts_with_flag_in_radius( z->pos(), 10,
+        std::list<tripoint_bub_ms> couch_pos = g->m.find_furnitures_or_vparts_with_flag_in_radius( z->pos(), 10,
                                         flag_AUTODOC_COUCH );
 
         if( couch_pos.empty() ) {
@@ -3621,7 +3621,7 @@ bool mattack::searchlight( monster *z )
             settings->set_var( "SL_PREFER_RIGHT", "TRUE" );
             settings->set_var( "SL_PREFER_LEFT", "TRUE" );
 
-            for( const tripoint &dest : g->m.points_in_radius( z->pos(), 24 ) ) {
+            for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->pos(), 24 ) ) {
                 const monster *const mon = g->critter_at<monster>( dest );
                 if( mon && mon->type->id == mon_turret_searchlight ) {
                     if( dest.x < zposx ) {
@@ -3831,7 +3831,7 @@ void mattack::flame( monster *z, Creature *target )
             // shouldn't happen
             debugmsg( "mattack::flame invoked on invisible target" );
         }
-        std::vector<tripoint> traj = here.find_clear_path( z->pos(), target->pos() );
+        std::vector<tripoint_bub_ms> traj = here.find_clear_path( z->pos(), target->pos() );
         tripoint prev_point = z->pos();
         for( auto &i : traj ) {
             if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
@@ -3865,7 +3865,7 @@ void mattack::flame( monster *z, Creature *target )
         // shouldn't happen
         debugmsg( "mattack::flame invoked on invisible target" );
     }
-    std::vector<tripoint> traj = here.find_clear_path( z->pos(), target->pos() );
+    std::vector<tripoint_bub_ms> traj = here.find_clear_path( z->pos(), target->pos() );
     tripoint prev_point = z->pos();
     for( auto &i : traj ) {
         if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
@@ -5241,9 +5241,9 @@ bool mattack::tindalos_teleport( monster *z )
         }
     }
     const int distance_to_target = rl_dist( z->pos(), target->pos() );
-    const tripoint oldpos = z->pos();
+    const tripoint_bub_ms oldpos = z->pos();
     if( distance_to_target > 5 ) {
-        for( const tripoint &dest : g->m.points_in_radius( target->pos(), 4 ) ) {
+        for( const tripoint_bub_ms &dest : g->m.points_in_radius( target->pos(), 4 ) ) {
             if( g->m.is_cornerfloor( dest ) ) {
                 if( g->is_empty( dest ) ) {
                     z->setpos( dest );
@@ -5598,7 +5598,7 @@ bool mattack::bio_op_disarm( monster *z )
 
     if( my_roll >= their_roll && !it.has_flag( flag_NO_UNWIELD ) ) {
         target->add_msg_if_player( m_bad, _( "and throws it to the ground!" ) );
-        const tripoint tp = foe->pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
+        const tripoint_bub_ms tp = foe->pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
         g->m.add_item_or_charges( tp, it.detach( ) );
     } else {
         target->add_msg_if_player( m_good, _( "but you break its grip!" ) );

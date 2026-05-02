@@ -24,14 +24,14 @@ void scent_block::commit_modifications()
                 case NONE:
                     break;
                 case SET: {
-                    tripoint p = origin + tripoint( x, y, 0 );
+                    tripoint_bub_ms p = origin + tripoint( x, y, 0 );
                     if( scents.inbounds( p ) ) {
                         scents.set_unsafe( p, assignment[x][y].intensity );
                     }
                     break;
                 }
                 case MAX: {
-                    tripoint p = origin + tripoint( x, y, 0 );
+                    tripoint_bub_ms p = origin + tripoint( x, y, 0 );
                     if( scents.inbounds( p ) ) {
                         scents.set_unsafe( p, std::max( assignment[x][y].intensity, scents.get_unsafe( p ) ) );
                     }

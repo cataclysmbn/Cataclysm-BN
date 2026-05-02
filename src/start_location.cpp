@@ -389,7 +389,7 @@ void start_location::place_player( player &u ) const
     // If we haven't got a good location by now, screw it and brute force it
     // This only happens in exotic locations (deep of a science lab), but it does happen
     if( !found_good_spot ) {
-        tripoint tmp = u.pos();
+        tripoint_bub_ms tmp = u.bub_pos();
         int &x = tmp.x;
         int &y = tmp.y;
         for( x = 0; x < g_mapsize_x; x++ ) {
@@ -482,7 +482,7 @@ static void add_monsters( const tripoint_abs_omt &omtstart, const mongroup_id &t
     m.load( spawn_location, false );
     // map::place_spawns internally multiplies density by rng(10, 50)
     const float density = expected_points / ( ( 10 + 50 ) / 2.0 );
-    m.place_spawns( type, 1, point_zero, point( SEEX * 2 - 1, SEEY * 2 - 1 ), density );
+    m.place_spawns( type, 1, point_omt_ms, point_omt_ms( SEEX * 2 - 1, SEEY * 2 - 1 ), density );
 }
 
 void start_location::surround_with_monsters(

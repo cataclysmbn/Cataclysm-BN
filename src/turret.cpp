@@ -74,13 +74,13 @@ turret_data vehicle::turret_query( const vehicle_part &pt ) const
     return const_cast<vehicle *>( this )->turret_query( const_cast<vehicle_part &>( pt ) );
 }
 
-turret_data vehicle::turret_query( const tripoint &pos )
+turret_data vehicle::turret_query( const tripoint_abs_ms &pos )
 {
     auto res = get_parts_at( tripoint_bub_ms( pos ), "TURRET", part_status_flag::any );
     return !res.empty() ? turret_query( *res.front() ) : turret_data();
 }
 
-turret_data vehicle::turret_query( const tripoint &pos ) const
+turret_data vehicle::turret_query( const tripoint_abs_ms &pos ) const
 {
     return const_cast<vehicle *>( this )->turret_query( pos );
 }
@@ -217,7 +217,7 @@ int turret_data::range() const
     return part->base->gun_range();
 }
 
-bool turret_data::in_range( const tripoint &target ) const
+bool turret_data::in_range( const tripoint_abs_ms &target ) const
 {
     if( !veh || !part ) {
         return false;
@@ -307,7 +307,7 @@ void turret_data::post_fire( Character &who, int shots )
     veh->drain( fuel_type_battery, mode->get_gun_ups_drain() * shots );
 }
 
-int turret_data::fire( Character &who, const tripoint &target )
+int turret_data::fire( Character &who, const tripoint_bub_ms &target )
 {
     if( !veh || !part ) {
         return 0;
@@ -422,7 +422,7 @@ bool vehicle::turrets_aim( std::vector<vehicle_part *> &turrets )
 
     bool got_target = !trajectory.empty();
     if( got_target ) {
-        tripoint target = trajectory.back();
+        tripoint_bub_ms target = trajectory.back();
         // Set target for any turret in range
         for( vehicle_part *t : turrets ) {
             if( turret_query( *t ).in_range( target ) ) {
@@ -454,7 +454,7 @@ std::vector<vehicle_part *> vehicle::find_all_ready_turrets( turret_filter_types
 void vehicle::turrets_set_targeting()
 {
     std::vector<vehicle_part *> turrets;
-    std::vector<tripoint> locations;
+    std::vector<tripoint_bub_ms> locations;
 
     for( auto &p : parts ) {
         if( p.is_turret() && !is_manual_turret( p ) ) {
@@ -502,7 +502,7 @@ void vehicle::turrets_set_targeting()
         }
 
         // clear the turret's current targets to prevent unwanted auto-firing
-        tripoint pos = locations[ sel ];
+        tripoint_bub_ms pos = locations[ sel ];
         turrets[ sel ]->reset_target( pos );
     }
 }
@@ -510,7 +510,7 @@ void vehicle::turrets_set_targeting()
 void vehicle::turrets_set_mode()
 {
     std::vector<vehicle_part *> turrets;
-    std::vector<tripoint> locations;
+    std::vector<tripoint_bub_ms> locations;
 
     for( auto &p : parts ) {
         if( p.base->is_gun() && !is_manual_turret( p ) ) {

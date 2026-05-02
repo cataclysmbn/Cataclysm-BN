@@ -114,7 +114,7 @@ void timed_event::actualize()
                     if( horizontal ) {
                         monp.x = rng( fault_point->x, fault_point->x + 2 * SEEX - 8 );
                         for( int n = -1; n <= 1; n++ ) {
-                            if( g->m.ter( point( monp.x, fault_point->y + n ) ) == t_rock_floor ) {
+                            if( g->m.ter( point_bub_ms( monp.x, fault_point->y + n ) ) == t_rock_floor ) {
                                 monp.y = fault_point->y + n;
                             }
                         }
@@ -122,7 +122,7 @@ void timed_event::actualize()
                         // Vertical fault
                         monp.y = rng( fault_point->y, fault_point->y + 2 * SEEY - 8 );
                         for( int n = -1; n <= 1; n++ ) {
-                            if( g->m.ter( point( fault_point->x + n, monp.y ) ) == t_rock_floor ) {
+                            if( g->m.ter( point_bub_ms( fault_point->x + n, monp.y ) ) == t_rock_floor ) {
                                 monp.x = fault_point->x + n;
                             }
                         }

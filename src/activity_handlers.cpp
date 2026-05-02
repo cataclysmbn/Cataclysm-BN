@@ -567,14 +567,14 @@ butchery_setup consider_butchery( const item &corpse_item, player &u, butcher_ty
     }
 
     bool has_tree_nearby = false;
-    for( const tripoint &pt : here.points_in_radius( u.pos(), PICKUP_RANGE ) ) {
+    for( const tripoint &pt : here.points_in_radius( u.bub_pos(), PICKUP_RANGE ) ) {
         if( here.has_flag( flag_TREE, pt ) ) {
             has_tree_nearby = true;
             break;
         }
     }
     bool b_rack_present = false;
-    for( const tripoint &pt : here.points_in_radius( u.pos(), PICKUP_RANGE ) ) {
+    for( const tripoint &pt : here.points_in_radius( u.bub_pos(), PICKUP_RANGE ) ) {
         if( here.has_flag_furn( flag_BUTCHER_EQ, pt ) ) {
             b_rack_present = true;
             break;
@@ -615,7 +615,7 @@ butchery_setup consider_butchery( const item &corpse_item, player &u, butcher_ty
                     _( "To perform a full butchery on a corpse this big, you need either a butchering rack, a nearby hanging meathook, or both a long rope in your inventory and a nearby tree to hang the corpse from." ),
                     butcherable_rating::no_tree_rope_rack );
             }
-            if( !( here.has_nearby_table( u.pos(), PICKUP_RANGE ) || inv.has_item_with( []( const item & it ) {
+            if( !( here.has_nearby_table( u.bub_pos(), PICKUP_RANGE ) || inv.has_item_with( []( const item & it ) {
             return it.has_flag( flag_FLAT_SURFACE );
             } ) ) ) {
                 not_this_one(

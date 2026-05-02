@@ -364,7 +364,7 @@ bool aim_activity_actor::load_RAS_weapon()
         {
             return false;
         }
-        if( square_dist( you.pos(), you.ammo_location->position() ) > 1 )
+        if( square_dist( you.bub_pos(), you.ammo_location->position() ) > 1 )
         {
             return false;
         }
@@ -1666,7 +1666,7 @@ std::optional<tripoint> lockpick_activity_actor::select_location( avatar &you )
     }
 
     const ter_id terr_type = get_map().ter( *target );
-    if( *target == you.pos() ) {
+    if( *target == you.bub_pos() ) {
         you.add_msg_if_player( m_info, _( "You pick your nose and your sinuses swing open." ) );
     } else if( g->critter_at<npc>( *target ) ) {
         you.add_msg_if_player( m_info,

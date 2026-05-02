@@ -2911,7 +2911,7 @@ int iuse::pick_lock( player *p, item *it, bool, const tripoint &pos )
 
     std::optional<tripoint> target;
     // Prompt for a target lock to pick, or use the given tripoint
-    if( pos == you.pos() ) {
+    if( pos == you.bub_pos() ) {
         target = lockpick_activity_actor::select_location( you );
     } else {
         target = pos;

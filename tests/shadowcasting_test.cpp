@@ -83,7 +83,7 @@ static void oldCastLight( float ( &output_cache )[MAPSIZE * SEEX][MAPSIZE * SEEY
  * This is checking whether bresenham visibility checks match shadowcasting (they don't).
  */
 static bool bresenham_visibility_check(
-    const point &offset, const point &p,
+    const point_bub_ms &offset, const point_bub_ms &p,
     const float ( &transparency_cache )[MAPSIZE * SEEX][MAPSIZE * SEEY] )
 {
     if( offset == p ) {
@@ -92,7 +92,7 @@ static bool bresenham_visibility_check(
     bool visible = true;
     const int junk = 0;
     bresenham( p, offset, junk,
-    [&transparency_cache, &visible]( const point & new_point ) {
+    [&transparency_cache, &visible]( const point_bub_ms & new_point ) {
         if( transparency_cache[new_point.x][new_point.y] <=
             LIGHT_TRANSPARENCY_SOLID ) {
             visible = false;
@@ -163,7 +163,7 @@ void print_grid_comparison( const point &offset,
             const bool shadowcasting_disagrees =
                 is_nonzero( control[x][y] ) != is_nonzero( experiment[x][y] );
             const bool bresenham_disagrees =
-                bresenham_visibility_check( offset, point( x, y ), transparency_cache ) !=
+                bresenham_visibility_check( offset, point_bub_ms( x, y ), transparency_cache ) !=
                 is_nonzero( experiment[x][y] );
 
             if( shadowcasting_disagrees && bresenham_disagrees ) {
@@ -248,7 +248,7 @@ static void shadowcasting_runoff( const int iterations, const bool test_bresenha
 
     map dummy;
 
-    const point offset( 65, 65 );
+    const point_bub_ms offset( 65, 65 );
 
     const auto start1 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
@@ -291,7 +291,7 @@ static void shadowcasting_runoff( const int iterations, const bool test_bresenha
     for( int x = 0; test_bresenham && passed && x < MAPSIZE * SEEX; ++x ) {
         for( int y = 0; y < MAPSIZE * SEEX; ++y ) {
             // Check that both agree on the outcome, but not necessarily the same values.
-            if( bresenham_visibility_check( offset, point( x, y ), transparency_cache ) !=
+            if( bresenham_visibility_check( offset, point_bub_ms( x, y ), transparency_cache ) !=
                 ( seen_squares_experiment[x][y] > LIGHT_TRANSPARENCY_SOLID ) ) {
                 passed = false;
                 break;
@@ -329,7 +329,7 @@ static void shadowcasting_float_quad(
 
     map dummy;
 
-    const point offset( 65, 65 );
+    const point_bub_ms offset( 65, 65 );
 
     const auto start1 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
@@ -458,11 +458,11 @@ static constexpr float O = LIGHT_TRANSPARENCY_SOLID;
 static constexpr float V = LIGHT_TRANSPARENCY_OPEN_AIR;
 static constexpr float X = LIGHT_TRANSPARENCY_SOLID;
 
-const point ORIGIN( 65, 65 );
+const tripoint_bub_ms ORIGIN( 65, 65 );
 
 struct grid_overlay {
     std::vector<std::vector<float>> data;
-    point offset;
+    tripoint offset;
     float default_value;
 
     // origin_offset is specified as the coordinates of the "camera" within the overlay.
@@ -481,7 +481,7 @@ struct grid_overlay {
         return data[0].size();
     }
 
-    float get_global( const point &p ) const {
+    float get_global( const tripoint &p ) const {
         if( p.y >= offset.y && p.y < offset.y + height() &&
             p.x >= offset.x && p.x < offset.x + width() ) {
             return data[ p.y - offset.y ][ p.x - offset.x ];
@@ -489,7 +489,7 @@ struct grid_overlay {
         return default_value;
     }
 
-    float get_local( const point &p ) const {
+    float get_local( const tripoint &p ) const {
         return data[ p.y ][ p.x ];
     }
 };

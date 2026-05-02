@@ -373,14 +373,14 @@ TEST_CASE( "monster_vertical_melee_respects_floors", "[monster][z-level]" )
 
     SECTION( "open air does not block vertical melee" ) {
         CHECK_FALSE( here.floor_between( zombie_pos, avatar_pos ) );
-        CHECK( grabber.attack_at( you.pos() ) );
+        CHECK( grabber.attack_at( you.bub_pos() ) );
     }
 
     SECTION( "terrain floors block vertical melee" ) {
         here.ter_set( avatar_pos, ter_id( "t_floor" ) );
 
         CHECK( here.floor_between( zombie_pos, avatar_pos ) );
-        CHECK_FALSE( grabber.attack_at( you.pos() ) );
+        CHECK_FALSE( grabber.attack_at( you.bub_pos() ) );
     }
 
     SECTION( "vehicle floors block vertical melee" ) {
@@ -393,7 +393,7 @@ TEST_CASE( "monster_vertical_melee_respects_floors", "[monster][z-level]" )
         veh->install_part( point_zero, vpart_seat );
         here.add_vehicle_to_cache( veh );
 
-        CHECK_FALSE( grabber.attack_at( you.pos() ) );
+        CHECK_FALSE( grabber.attack_at( you.bub_pos() ) );
     }
 
     SECTION( "grabber below player on blimp cannot attack through the floor" ) {
@@ -407,7 +407,7 @@ TEST_CASE( "monster_vertical_melee_respects_floors", "[monster][z-level]" )
         you.setpos( blimp_tile );
         grabber.setpos( blimp_tile + tripoint_below );
 
-        CHECK( here.veh_at( you.pos() ).part_with_feature( "BOARDABLE", true ).has_value() );
-        CHECK_FALSE( grabber.attack_at( you.pos() ) );
+        CHECK( here.veh_at( you.bub_pos() ).part_with_feature( "BOARDABLE", true ).has_value() );
+        CHECK_FALSE( grabber.attack_at( you.bub_pos() ) );
     }
 }

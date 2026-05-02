@@ -174,7 +174,7 @@ static void eff_fun_fungus( player &u, effect &it )
             break;
         case 3: {
             // Permanent symptoms
-            bool is_fungal_ter = g->m.has_flag_ter( "FUNGUS", u.pos() );
+            bool is_fungal_ter = g->m.has_flag_ter( "FUNGUS", u.bub_pos() );
             if( !is_fungal_ter && one_in( 600 + 4 * bonus ) ) {
                 u.add_effect( effect_nausea, 5_minutes );
             }
@@ -268,7 +268,7 @@ static void eff_fun_hallu( player &u, effect &it )
             int loudness = 20 + u.str_cur - u.int_cur;
             loudness = ( loudness > 5 ? loudness : 5 );
             loudness = ( loudness < 30 ? loudness : 30 );
-            sounds::sound( u.pos(), loudness, sounds::sound_t::speech, _( random_entry_ref( npc_hallu ) ),
+            sounds::sound( u.bub_pos(), loudness, sounds::sound_t::speech, _( random_entry_ref( npc_hallu ) ),
                            false, "speech",
                            loudness < 15 ? ( u.male ? "NPC_m" : "NPC_f" ) : ( u.male ? "NPC_m_loud" : "NPC_f_loud" ) );
         }
@@ -284,7 +284,7 @@ static void eff_fun_hallu( player &u, effect &it )
         u.add_miss_reason( _( "Dancing fractals distract you." ), 2 );
         u.mod_str_bonus( -1 );
         if( u.is_player() && one_in( 50 ) ) {
-            g->spawn_hallucination( u.pos() + tripoint( rng( -10, 10 ), rng( -10, 10 ), 0 ) );
+            g->spawn_hallucination( u.bub_pos() + tripoint( rng( -10, 10 ), rng( -10, 10 ), 0 ) );
         }
     } else if( dur == comedownTime ) {
         if( one_in( 42 ) ) {
@@ -1224,7 +1224,7 @@ void Character::hardcoded_effects( effect &it )
                 } else {
                     int max_count = rng( 1, 3 );
                     int count = 0;
-                    for( const tripoint &mp : g->m.points_in_radius( pos(), 1 ) ) {
+                    for( const tripoint_bub_ms &mp : g->m.points_in_radius( pos(), 1 ) ) {
                         if( mp == pos() ) {
                             continue;
                         }

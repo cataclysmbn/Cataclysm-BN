@@ -1191,7 +1191,7 @@ struct fixed_overmap_special_data : overmap_special_data {
 
     void check( const std::string &context ) const override {
         std::set<oter_str_id> invalid_terrains;
-        std::set<tripoint> points;
+        std::set<point_om_omt> points;
 
         for( const overmap_special_terrain &elem : terrains ) {
             const oter_str_id &oter = elem.terrain;
@@ -2727,8 +2727,8 @@ void overmap_special::load( const JsonObject &jo, const std::string &src )
             optional( jo, was_loaded, "check_for_locations", mutable_data->check_for_locations );
             for( JsonObject joc : jo.get_array( "check_for_locations_area" ) ) {
                 cata::flat_set<overmap_location_id> type;
-                tripoint from;
-                tripoint to;
+                point_abs_om from;
+                point_abs_om to;
                 mandatory( joc, false, "type", type );
                 mandatory( joc, false, "from", from );
                 mandatory( joc, false, "to", to );

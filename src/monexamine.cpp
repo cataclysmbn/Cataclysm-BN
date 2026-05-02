@@ -727,7 +727,7 @@ void monexamine::remove_bag_from( monster &z )
         }
         avatar &you = get_avatar();
         add_msg( _( "You remove the %1$s from %2$s." ), z.get_storage_item()->display_name(), pet_name );
-        get_map().add_item_or_charges( you.pos(), z.remove_storage_item() );
+        get_map().add_item_or_charges( you.bub_pos(), z.remove_storage_item() );
         you.moves -= 200;
     } else {
         add_msg( m_bad, _( "Your %1$s doesn't have a bag!" ), pet_name );
@@ -739,7 +739,7 @@ void monexamine::dump_items( monster &z )
 {
     std::string pet_name = z.get_name();
     avatar &you = get_avatar();
-    z.drop_items( you.pos() );
+    z.drop_items( you.bub_pos() );
     add_msg( _( "You dump the contents of the %s's bag on the ground." ), pet_name );
     you.moves -= 200;
 }

@@ -96,7 +96,7 @@ static void connect_grid_vehicle( map &m, vehicle &veh, vehicle_connector_tile &
     source_part.target.second = connector_abs_pos.raw();
     source_part.set_flag( vehicle_part::targets_grid );
     connector.connected_vehicles.clear();
-    connector.connected_vehicles.emplace_back( m.bub_to_abs( veh.global_pos3() ) );
+    connector.connected_vehicles.emplace_back( m.bub_to_abs( veh.bub_ms_location() ) );
     int part_index = veh.install_part( cable_part_pos, std::move( source_part ) );
 
     REQUIRE( part_index >= 0 );

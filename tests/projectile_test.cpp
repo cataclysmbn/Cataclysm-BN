@@ -22,7 +22,7 @@
 #include "vehicle.h"
 #include "vpart_position.h"
 
-static tripoint projectile_end_point( const std::vector<tripoint> &range, const item &gun,
+static tripoint_bub_ms projectile_end_point( const std::vector<tripoint_bub_ms> &range, const item &gun,
                                       int proj_range )
 {
     projectile test_proj;

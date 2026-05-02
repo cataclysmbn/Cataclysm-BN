@@ -159,14 +159,14 @@ static vehicle &add_moving_vehicle(
     veh.velocity = tgt_velocity;
     veh.vertical_velocity = 0;
 
-    const auto pivot_global_pos3 = []( const vehicle & veh ) -> tripoint {
-        return veh.global_pos3() + veh.coord_translate( veh.pivot_point() );
+    const auto pivot_bub_ms_location = []( const vehicle & veh ) -> tripoint {
+        return veh.bub_ms_location() + veh.coord_translate( veh.pivot_point() );
     };
 
-    CAPTURE( veh.global_pos3() );
+    CAPTURE( veh.bub_ms_location() );
     CAPTURE( veh.pivot_point() );
     CAPTURE( veh.coord_translate( veh.pivot_point() ) );
-    CAPTURE( pivot_global_pos3( veh ) );
+    CAPTURE( pivot_bub_ms_location( veh ) );
 
     here.vehmove();
     veh.idle( true );
@@ -175,15 +175,15 @@ static vehicle &add_moving_vehicle(
     here.vehmove();
     veh.idle( true );
 
-    here.displace_vehicle( veh, vehicle_pos - tripoint_bub_ms( veh.global_pos3() ) );
+    here.displace_vehicle( veh, vehicle_pos - tripoint_bub_ms( veh.bub_ms_location() ) );
 
-    CAPTURE( veh.global_pos3() );
+    CAPTURE( veh.bub_ms_location() );
     CAPTURE( veh.pivot_point() );
     CAPTURE( veh.coord_translate( veh.pivot_point() ) );
-    CAPTURE( pivot_global_pos3( veh ) );
+    CAPTURE( pivot_bub_ms_location( veh ) );
 
-    REQUIRE( pivot_global_pos3( veh ) == veh.global_pos3() );
-    REQUIRE( pivot_global_pos3( veh ) == vehicle_pos.raw() );
+    REQUIRE( pivot_bub_ms_location( veh ) == veh.bub_ms_location() );
+    REQUIRE( pivot_bub_ms_location( veh ) == vehicle_pos.raw() );
 
     return veh;
 }
@@ -239,7 +239,7 @@ static void test_rail_movement( const test_case &t,
             }
         }
 
-        tripoint pos = veh.global_pos3();
+        tripoint pos = veh.bub_ms_location();
         scan_log << string_format( "pos: %s dir: %d vel: %d/%d  on_rails:%d\n",
                                    pos.to_string(),
                                    static_cast<int>( units::to_degrees( veh.face.dir() ) ),
@@ -253,7 +253,7 @@ static void test_rail_movement( const test_case &t,
         }
     }
 
-    tripoint got_pos = veh.global_pos3();
+    tripoint got_pos = veh.bub_ms_location();
     units::angle got_dir = normalize( veh.face.dir() );
     CAPTURE( got_pos );
     CAPTURE( got_dir );

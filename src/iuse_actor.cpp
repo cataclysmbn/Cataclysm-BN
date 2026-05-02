@@ -7109,7 +7109,7 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
     avatar &u = get_avatar();
 
     // Check if avatar is within travel radius
-    const int dist_to_avatar = rl_dist( pos, u.pos() );
+    const int dist_to_avatar = rl_dist( pos, u.bub_pos() );
     if( dist_to_avatar > travel_radius ) {
         if( fail_message.empty() ) {
             p.add_msg_if_player( m_bad, _( "You are too far from the portal!" ) );

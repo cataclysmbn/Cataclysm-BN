@@ -494,7 +494,7 @@ void pixel_minimap::render_cache( const tripoint &center )
             continue;   // What you gonna do with all that junk?
         }
 
-        const tripoint rel_pos = elem.first - sm_center;
+        const tripoint_rel_sm rel_pos = elem.first - sm_center;
 
         if( std::abs( rel_pos.x ) > sm_offset.x + 1 ||
             std::abs( rel_pos.y ) > sm_offset.y + 1 ||
@@ -511,7 +511,7 @@ void pixel_minimap::render_cache( const tripoint &center )
     }
 }
 
-void pixel_minimap::render_critters( const tripoint &center )
+void pixel_minimap::render_critters( const tripoint_bub_ms &center )
 {
     //handles the enemy faction red highlights
     //this value should be divisible by 200
@@ -571,7 +571,7 @@ void pixel_minimap::render_critters( const tripoint &center )
 }
 
 //the main call for drawing the pixel minimap to the screen
-void pixel_minimap::draw( const SDL_Rect &screen_rect, const tripoint &center )
+void pixel_minimap::draw( const SDL_Rect &screen_rect, const tripoint_bub_ms &center )
 {
     if( !g ) {
         return;

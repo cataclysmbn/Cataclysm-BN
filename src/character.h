@@ -1183,7 +1183,7 @@ class Character : public Creature, public location_visitable<Character>
          */
         virtual bool invoke_item( item *, const tripoint &pt );
         /** As above, but with a pre-selected method. Debugmsg if this item doesn't have this method. */
-        virtual bool invoke_item( item *, const std::string &, const tripoint &pt );
+        virtual bool invoke_item( item *, const std::string &, const tripoint_bub_ms &pt );
         /** As above two, but with position equal to current position */
         virtual bool invoke_item( item * );
         virtual bool invoke_item( item *, const std::string & );
@@ -1401,7 +1401,7 @@ class Character : public Creature, public location_visitable<Character>
 
         /// Alternate version if you need to specify a different orign point for nearby vehicle sources of lifting
         /// used for operations on distant objects (e.g. vehicle installation/uninstallation)
-        int best_nearby_lifting_assist( const tripoint &world_pos ) const;
+        int best_nearby_lifting_assist( const tripoint_bub_ms &world_pos ) const;
 
         // Inventory + weapon + worn (for death, etc)
         std::vector<item *> inv_dump();
@@ -1715,7 +1715,7 @@ class Character : public Creature, public location_visitable<Character>
         activity_ptr stashed_outbounds_backlog;
         activity_ptr activity;
         std::list<activity_ptr> backlog;
-        std::optional<tripoint> destination_point;
+        std::optional<tripoint_abs_ms> destination_point;
         itype_id last_item;
         efftype_id last_emote;
 
@@ -1743,7 +1743,7 @@ class Character : public Creature, public location_visitable<Character>
         int cash = 0;
         std::set<character_id> follower_ids;
         weak_ptr_fast<Creature> last_target;
-        std::optional<tripoint> last_target_pos;
+        std::optional<tripoint_abs_ms> last_target_pos;
         /* crafting inventory cached time */
         time_point cached_time;
 
@@ -2218,7 +2218,7 @@ class Character : public Creature, public location_visitable<Character>
         bool has_morale_to_read() const;
         bool has_morale_to_craft() const;
         const inventory &crafting_inventory( bool clear_path );
-        const inventory &crafting_inventory( const tripoint &src_pos = tripoint_zero,
+        const inventory &crafting_inventory( const tripoint_bub_ms &src_pos = tripoint_bub_ms::zero(),
                                              int radius = PICKUP_RANGE, bool clear_path = true );
         void invalidate_crafting_inventory();
 
@@ -2255,9 +2255,9 @@ class Character : public Creature, public location_visitable<Character>
         // Returns a multiplier indicating the keenness of a player's hearing.
         float hearing_ability() const;
 
-        using trap_map = std::map<tripoint, std::string>;
-        bool knows_trap( const tripoint &pos ) const;
-        void add_known_trap( const tripoint &pos, const trap &t );
+        using trap_map = std::map<tripoint_abs_ms, std::string>;
+        bool knows_trap( const tripoint_bub_ms &pos ) const;
+        void add_known_trap( const tripoint_bub_ms &pos, const trap &t );
 
         /** Called when character triggers a trap, returns true if they don't set it off */
         bool avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const override;
@@ -2271,7 +2271,7 @@ class Character : public Creature, public location_visitable<Character>
         // used in debugging all health
         int get_lowest_hp() const;
         bool has_weapon() const override;
-        void shift_destination( point shift );
+        void shift_destination( point_rel_ms shift );
         // Auto move methods
         void set_destination( const std::vector<tripoint_bub_ms> &route );
         void set_destination( const std::vector<tripoint_bub_ms> &route,
@@ -2526,7 +2526,7 @@ class Character : public Creature, public location_visitable<Character>
         void make_craft( const recipe_id &id, int batch_size, const tripoint &loc = tripoint_zero );
         void make_all_craft( const recipe_id &id, int batch_size, const tripoint &loc = tripoint_zero );
         /** consume components and create an active, in progress craft containing them */
-        item *start_craft( craft_command &command, const tripoint &loc );
+        item *start_craft( craft_command &command, const tripoint_bub_ms &loc );
         /**
          * Calculate a value representing the success of the player at crafting the given recipe,
          * taking player skill, recipe difficulty, npc helpers, and player mutations into account.
@@ -2571,7 +2571,7 @@ class Character : public Creature, public location_visitable<Character>
         bool craft_consume_tools( item &craft, int mulitplier, bool start_craft );
         void consume_tools( const comp_selection<tool_comp> &tool, int batch );
         void consume_tools( map &m, const comp_selection<tool_comp> &tool, int batch,
-                            const tripoint &origin = tripoint_zero, int radius = PICKUP_RANGE );
+                            const tripoint_bub_ms &origin = tripoint_bub_ms::zero(), int radius = PICKUP_RANGE );
         void consume_tools( const std::vector<tool_comp> &tools, int batch = 1,
                             const std::string &hotkeys = DEFAULT_HOTKEYS );
         void make_craft_with_command( const recipe_id &id_to_make, int batch_size, bool is_long = false,

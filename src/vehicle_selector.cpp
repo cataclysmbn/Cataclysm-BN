@@ -8,7 +8,7 @@
 #include "point.h"
 #include "vpart_position.h"
 
-vehicle_selector::vehicle_selector( const tripoint &pos, int radius, bool accessible,
+vehicle_selector::vehicle_selector( const tripoint_bub_ms &pos, int radius, bool accessible,
                                     bool visibility_only )
 {
     map &here = get_map();
@@ -22,7 +22,7 @@ vehicle_selector::vehicle_selector( const tripoint &pos, int radius, bool access
     }
 }
 
-vehicle_selector::vehicle_selector( const tripoint &pos, int radius, bool accessible,
+vehicle_selector::vehicle_selector( const tripoint_bub_ms &pos, int radius, bool accessible,
                                     const vehicle &ignore )
 {
     map &here = get_map();

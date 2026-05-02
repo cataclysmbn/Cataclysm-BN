@@ -141,7 +141,7 @@ monster &spawn_test_monster( const std::string &monster_type, const tripoint &st
 // terrain, and no furniture, traps, or items.
 void build_test_map( const ter_id &terrain )
 {
-    for( const tripoint &p : g->m.points_in_rectangle( tripoint_zero,
+    for( const tripoint_bub_ms &p : g->m.points_in_rectangle( tripoint_bub_ms::zero(),
             tripoint( MAPSIZE * SEEX, MAPSIZE * SEEY, 0 ) ) ) {
         g->m.furn_set( p, furn_id( "f_null" ) );
         g->m.ter_set( p, terrain );

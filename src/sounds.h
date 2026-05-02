@@ -51,16 +51,16 @@ enum class sound_t : int {
  * @param variant Variant of sound effect given in id
  * @returns true if the player could hear the sound.
  */
-void sound( const tripoint &p, int vol, sound_t category, const std::string &description,
+void sound( const tripoint_bub_ms &p, int vol, sound_t category, const std::string &description,
             bool ambient = false, const std::string &id = "",
             const std::string &variant = "default" );
-void sound( const tripoint &p, int vol, sound_t category, const translation &description,
+void sound( const tripoint_bub_ms &p, int vol, sound_t category, const translation &description,
             bool ambient = false, const std::string &id = "",
             const std::string &variant = "default" );
 /** Functions identical to sound(..., true). */
-void ambient_sound( const tripoint &p, int vol, sound_t category, const std::string &description );
+void ambient_sound( const tripoint_bub_ms &p, int vol, sound_t category, const std::string &description );
 /** Creates a list of coordinates at which to draw footsteps. */
-void add_footstep( const tripoint &p, int volume, int distance, monster *source,
+void add_footstep( const tripoint_bub_ms &p, int volume, int distance, monster *source,
                    const std::string &footstep );
 
 /* Make sure the sounds are all reset when we start a new game. */
@@ -74,11 +74,11 @@ void process_sounds();
 void process_sound_markers( Character *who );
 
 // Return list of points that have sound events the player can hear.
-std::vector<tripoint> get_footstep_markers();
+std::vector<tripoint_bub_ms> get_footstep_markers();
 // Return list of all sounds and the list of sound cluster centroids.
-std::pair<std::vector<tripoint>, std::vector<tripoint>> get_monster_sounds();
+std::pair<std::vector<tripoint_bub_ms>, std::vector<tripoint_bub_ms>> get_monster_sounds();
 // retrieve the sound event(s?) at a location.
-std::string sound_at( const tripoint &location );
+std::string sound_at( const tripoint_bub_ms &location );
 /** Tells us if sound has been enabled in options */
 extern bool sound_enabled;
 } // namespace sounds
@@ -145,8 +145,8 @@ void generate_melee_sound( const tripoint &source, const tripoint &target, bool 
 void do_hearing_loss( int turns = -1 );
 void remove_hearing_loss();
 void do_projectile_hit( const Creature &target );
-int get_heard_volume( const tripoint &source );
-units::angle get_heard_angle( const tripoint &source );
+int get_heard_volume( const tripoint_bub_ms &source );
+units::angle get_heard_angle( const tripoint_bub_ms &source );
 void do_footstep();
 void do_danger_music();
 void do_ambient();

@@ -556,7 +556,7 @@ static Character &pick_character( Character &preselected )
         locations.emplace_back( guy.pos() );
     }
     avatar &u = get_avatar();
-    u.view_offset = u.pos() - preselected.pos();
+    u.view_offset = u.bub_pos() - preselected.pos();
     auto iter = std::find_if( locations.begin(), locations.end(), [&preselected]( const tripoint & p ) {
         return p == preselected.pos();
     } );
@@ -1549,7 +1549,7 @@ void debug()
         case DEBUG_SPAWN_NPC: {
             shared_ptr_fast<npc> temp = make_shared_fast<npc>();
             temp->randomize();
-            temp->spawn_at_precise( { g->get_levx(), g->get_levy() }, u.pos() + point( -4, -4 ) );
+            temp->spawn_at_precise( { g->get_levx(), g->get_levy() }, u.bub_pos() + point( -4, -4 ) );
             get_overmapbuffer( get_avatar().get_dimension() ).insert_npc( temp );
             temp->form_opinion( u );
             temp->mission = NPC_MISSION_NULL;
@@ -1688,7 +1688,7 @@ void debug()
             break;
 
         case DEBUG_SPAWN_VEHICLE:
-            if( m.veh_at( u.pos() ) ) {
+            if( m.veh_at( u.bub_pos() ) ) {
                 add_msg( m_bad, "There's already vehicle here." );
             } else {
                 // Vector of name, id so that we can sort by name
@@ -1713,7 +1713,7 @@ void debug()
                 if( veh_menu.ret >= 0 && veh_menu.ret < static_cast<int>( veh_strings.size() ) ) {
                     // Didn't cancel
                     const vproto_id &selected_opt = veh_strings[veh_menu.ret].second;
-                    tripoint dest = u.pos();
+                    tripoint dest = u.bub_pos();
                     uilist veh_cond_menu;
                     veh_cond_menu.text = _( "Vehicle condition" );
                     veh_cond_menu.addentry( 0, true, MENU_AUTOASSIGN, _( "Light damage" ) );
@@ -2252,7 +2252,7 @@ void debug()
         }
 
         case DEBUG_VEHICLE_BATTERY_CHARGE: {
-            optional_vpart_position v_part_pos = g->m.veh_at( u.pos() );
+            optional_vpart_position v_part_pos = g->m.veh_at( u.bub_pos() );
             if( !v_part_pos ) {
                 add_msg( m_bad, _( "There's no vehicle there." ) );
                 break;
@@ -2275,7 +2275,7 @@ void debug()
             break;
         }
         case DEBUG_VEHICLE_EXPORT_JSON: {
-            const optional_vpart_position v_part_pos = g->m.veh_at( u.pos() );
+            const optional_vpart_position v_part_pos = g->m.veh_at( u.bub_pos() );
             if( !v_part_pos ) {
                 add_msg( m_bad, _( "There's no vehicle there." ) );
                 break;

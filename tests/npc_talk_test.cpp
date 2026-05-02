@@ -44,7 +44,7 @@ static const trait_id trait_PROF_SWAT( "PROF_SWAT" );
 static npc &create_test_talker()
 {
     const string_id<npc_template> test_talker( "test_talker" );
-    const character_id model_id = get_map().place_npc( point( 25, 25 ), test_talker, true );
+    const character_id model_id = get_map().place_npc( point_bub_ms( 25, 25 ), test_talker, true );
     g->load_npcs();
 
     npc *model_npc = g->find_npc( model_id );

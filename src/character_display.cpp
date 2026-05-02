@@ -959,7 +959,7 @@ static void draw_speed_tab( const catacurses::window &w_speed,
                    left_justify( _( "Starving" ), 20 ), pen );
         ++line;
     }
-    if( you.has_trait( trait_id( "SUNLIGHT_DEPENDENT" ) ) && !g->is_in_sunlight( you.pos() ) ) {
+    if( you.has_trait( trait_id( "SUNLIGHT_DEPENDENT" ) ) && !g->is_in_sunlight( you.bub_pos() ) ) {
         pen = ( g->light_level( you.posz() ) >= 12 ? 5 : 10 );
         //~ %s: Out of Sunlight (already left-justified), %2d%%: speed penalty
         mvwprintz( w_speed, point( 1, line ), c_red, pgettext( "speed penalty", "%s-%2d%%" ),
@@ -971,7 +971,7 @@ static void draw_speed_tab( const catacurses::window &w_speed,
     if( temperature_speed_modifier != 0 ) {
         nc_color pen_color;
         std::string pen_sign;
-        const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( you.pos() ) );
+        const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( you.bub_pos() ) );
         if( you.has_trait( trait_id( "COLDBLOOD4" ) ) && player_local_temp > 65 ) {
             pen_color = c_green;
             pen_sign = "+";

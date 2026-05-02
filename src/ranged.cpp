@@ -700,10 +700,10 @@ target_handler::trajectory target_handler::mode_turrets( avatar &you, vehicle &v
         tripoint_bub_ms pos = veh.bub_part_location( *t );
 
         int res = 0;
-        res = std::max( res, rl_dist( you.pos(), pos.raw() + point( range, 0 ) ) );
-        res = std::max( res, rl_dist( you.pos(), pos.raw() + point( -range, 0 ) ) );
-        res = std::max( res, rl_dist( you.pos(), pos.raw() + point( 0, range ) ) );
-        res = std::max( res, rl_dist( you.pos(), pos.raw() + point( 0, -range ) ) );
+        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point( range, 0 ) ) );
+        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point( -range, 0 ) ) );
+        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point( 0, range ) ) );
+        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point( 0, -range ) ) );
         range_total = std::max( range_total, res );
     }
 
@@ -4339,7 +4339,7 @@ bool ranged::gunmode_checks_common( avatar &you, const map &m, std::vector<std::
         result = false;
     }
 
-    const optional_vpart_position vp = m.veh_at( you.pos() );
+    const optional_vpart_position vp = m.veh_at( you.bub_pos() );
     if( vp && vp->vehicle().player_in_control( you ) && ( gmode->is_two_handed( you ) ||
             gmode->has_flag( flag_FIRE_TWOHAND ) ) ) {
 

@@ -160,9 +160,9 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
             if( vp.info().location != "structure" ) {
                 continue;
             }
-            const point &pmount = vp.mount();
+            const point_rel_ms &pmount = vp.mount();
             CAPTURE( pmount );
-            const tripoint &ppos = vp.pos();
+            const tripoint_bub_ms &ppos = vp.pos();
             CAPTURE( ppos );
             if( cycles > ( transition_cycle - pmount.x ) ) {
                 CHECK( ppos.z == target_z );
@@ -176,16 +176,16 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
     }
 
     const int expected_move = use_ramp ? ( up ? 1 : -1 ) : 0;
-    CHECK( veh.global_pos3().z - map_starting_point.z == expected_move );
+    CHECK( veh.bub_ms_location().z - map_starting_point.z == expected_move );
 
     const std::optional<vpart_reference> vp = here.veh_at( player_character.pos() ).part_with_feature(
                 VPFLAG_BOARDABLE, true );
     REQUIRE( vp );
     if( vp ) {
         // Regression: get_passenger() must return the correct passenger regardless
-        // of the vehicle's z-level.  After a ramp transition global_pos3().z is
+        // of the vehicle's z-level.  After a ramp transition bub_ms_location().z is
         // non-zero, but precalc[0].z is always zeroed by precalc_mounts().  The old
-        // mount_to_bubble() path returned global_pos3().z while precalc[0].z == 0,
+        // mount_to_bubble() path returned bub_ms_location().z while precalc[0].z == 0,
         // so get_parts_at() found no BOARDABLE part and get_passenger() returned nullptr.
         // This check is most meaningful for use_ramp == true where z != 0 post-transition.
         CHECK( veh.get_passenger( static_cast<int>( vp->part_index() ) ) != nullptr );

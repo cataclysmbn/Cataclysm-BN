@@ -565,14 +565,14 @@ void veh_interact::cache_tool_availability()
     auto &you = get_avatar();
     crafting_inv = you.crafting_inventory();
 
-    cache_tool_availability_update_lifting( you.pos() );
+    cache_tool_availability_update_lifting( you.bub_pos() );
     int mech_jack = 0;
     if( you.is_mounted() ) {
         mech_jack = you.mounted_creature->mech_str_addition() + 10;
     }
     max_jack = std::max( { you.max_quality( qual_JACK ), mech_jack,
-                           map_selector( you.pos(), PICKUP_RANGE, false ).max_quality( qual_JACK ),
-                           vehicle_selector( you.pos(), PICKUP_RANGE, false, *veh ).max_quality( qual_JACK )
+                           map_selector( you.bub_pos(), PICKUP_RANGE, false ).max_quality( qual_JACK ),
+                           vehicle_selector( you.bub_pos(), PICKUP_RANGE, false, *veh ).max_quality( qual_JACK )
                          } );
 }
 
@@ -2241,7 +2241,7 @@ bool veh_interact::can_potentially_install( const vpart_info &vpart )
  * @param d How far to move the cursor.
  * @param dstart_at How far to change the start position for vehicle part descriptions
  */
-void veh_interact::move_cursor( point d, int dstart_at )
+void veh_interact::move_cursor( point_rel_ms d, int dstart_at )
 {
     const auto &here = get_map();
 
@@ -2257,7 +2257,7 @@ void veh_interact::move_cursor( point d, int dstart_at )
     cpart = part_at( point_zero );
     const point vd = -dd;
     const point q = veh->coord_translate( vd );
-    const tripoint vehp = veh->global_pos3() + q;
+    const tripoint vehp = veh->bub_ms_location() + q;
     const bool has_critter = g->critter_at( vehp );
     bool obstruct = here.impassable_ter_furn( vehp );
     const optional_vpart_position ovp = here.veh_at( vehp );
@@ -2384,8 +2384,8 @@ void veh_interact::display_veh()
     if( debug_mode ) {
         // show CoM, pivot in debug mode
 
-        point pivot = veh->pivot_point();
-        point com = veh->local_center_of_mass();
+        point_rel_ms pivot = veh->pivot_point();
+        point_rel_ms com = veh->local_center_of_mass();
         const point cur = -dd;
 
         mvwprintz( w_disp, point_zero, c_green, "CoM   %d,%d", com.x, com.y );
@@ -2393,8 +2393,8 @@ void veh_interact::display_veh()
         mvwprintz( w_disp, point( 0, 1 ), c_red,   "Pivot %d,%d", pivot.x, pivot.y );
         mvwprintz( w_disp, point( 0, 2 ), c_dark_gray, "Cur   %d,%d", cur.x, cur.y );
 
-        const point com_s = ( com + dd ).rotate( 3 ) + h_size;
-        const point pivot_s = ( pivot + dd ).rotate( 3 ) + h_size;
+        const point_rel_ms com_s = ( com + dd ).rotate( 3 ) + h_size;
+        const point_rel_ms pivot_s = ( pivot + dd ).rotate( 3 ) + h_size;
 
         for( int x = 0; x < getmaxx( w_disp ); ++x ) {
             if( x <= com_s.x ) {
@@ -2446,7 +2446,7 @@ void veh_interact::display_veh()
     const int hh = getmaxy( w_disp ) / 2;
     const point vd = -dd;
     const point q = veh->coord_translate( vd );
-    const tripoint vehp = veh->global_pos3() + q;
+    const tripoint vehp = veh->bub_ms_location() + q;
 
     const auto &here = get_map();
     bool obstruct = here.impassable_ter_furn( vehp );
@@ -3285,7 +3285,7 @@ void veh_interact::complete_vehicle( Character &who )
 
                 // Stash offset and set it to the location of the part so look_around will start there.
                 tripoint old_view_offset;
-                const tripoint offset = veh->global_pos3() + q;
+                const tripoint offset = veh->bub_ms_location() + q;
 
                 auto *u = who.as_avatar();
                 if( u ) {
@@ -3316,7 +3316,7 @@ void veh_interact::complete_vehicle( Character &who )
                 veh->part( partnum ).direction = dir;
             }
 
-            const tripoint vehp = veh->global_pos3() + tripoint( q, 0 );
+            const tripoint vehp = veh->bub_ms_location() + tripoint( q, 0 );
             // TODO: allow boarding for non-players as well.
             player *const pl = g->critter_at<player>( vehp );
             if( vpinfo.has_flag( VPFLAG_BOARDABLE ) && pl ) {

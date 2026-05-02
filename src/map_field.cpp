@@ -192,13 +192,13 @@ If you wish for a field effect to do something over time (propagate, interact wi
 void map::player_in_field( player &u )
 {
     // A copy of the current field for reference. Do not add fields to it, use map::add_field
-    field &curfield = get_field( u.pos() );
+    field &curfield = get_field( u.bub_pos() );
     // Are we inside?
     bool inside = false;
     // If we are in a vehicle figure out if we are inside (reduces effects usually)
     // and what part of the vehicle we need to deal with.
     if( u.in_vehicle ) {
-        if( const optional_vpart_position vp = veh_at( u.pos() ) ) {
+        if( const optional_vpart_position vp = veh_at( u.bub_pos() ) ) {
             inside = vp->is_inside();
         }
     }

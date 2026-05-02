@@ -37,7 +37,7 @@ class vehicle_selector : public location_visitable<vehicle_selector>
          *  @param accessible whether found items must be accessible from pos to be considered
          *  @param visibility_only accessibility based on line of sight, not walkability
          */
-        vehicle_selector( const tripoint &pos, int radius = 0, bool accessible = true,
+        vehicle_selector( const tripoint_bub_ms &pos, int radius = 0, bool accessible = true,
                           bool visibility_only = false );
 
         /**

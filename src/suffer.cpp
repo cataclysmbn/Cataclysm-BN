@@ -1206,7 +1206,7 @@ void Character::suffer_from_radiation()
         if( rad_mut_proc && !kept_in ) {
             // Irradiate a random nearby point
             // If you can't, irradiate the player instead
-            tripoint rad_point = pos() + point( rng( -3, 3 ), rng( -3, 3 ) );
+            tripoint_bub_ms rad_point = pos() + point( rng( -3, 3 ), rng( -3, 3 ) );
             // TODO: Radioactive vehicles?
             if( here.get_radiation( rad_point ) < rad_mut ) {
                 here.adjust_radiation( rad_point, 1 );

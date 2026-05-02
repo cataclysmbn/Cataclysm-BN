@@ -38,7 +38,7 @@ static void test_repair( std::vector<detached_ptr<item>> &tools, bool expect_cra
         g->u.i_add( std::move( gear ) );
     }
 
-    const tripoint vehicle_origin = test_origin + tripoint_south_east;
+    const tripoint_bub_ms vehicle_origin = test_origin + tripoint_rel_ms::south_east();
     vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, -90_degrees,
                        0, 0 );
     REQUIRE( veh_ptr != nullptr );
