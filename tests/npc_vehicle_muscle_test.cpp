@@ -349,7 +349,7 @@ TEST_CASE( "npc_muscle_engine_with_disabled_needs", "[vehicle][muscle][npc][ener
     }
 }
 
-TEST_CASE( "npc_muscle_engine_broken_limbs", "[vehicle][muscle][npc][injury]" )
+TEST_CASE( "npc_muscle_engine_broken_limbs", "[.][vehicle][muscle][npc][injury]" )
 {
     clear_all_state();
     build_test_map( ter_id( "t_pavement" ) );

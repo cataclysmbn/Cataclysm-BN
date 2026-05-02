@@ -236,7 +236,7 @@
     "dispersion": 520,
     "sight_dispersion": 520,
     "armor_data": { "covers": [ "arm_either", "hand_either" ], "coverage": 10, "encumbrance": 30, "material_thickness": 2 },
-    "flags": [ "OVERSIZE", "RELOAD_EJECT", "BELTED", "RESTRICT_HANDS" ],
+    "flags": [ "OVERSIZE", "RELOAD_EJECT", "BELTED", "RESTRICT_HANDS", "WORN_GUN" ],
     "valid_mod_locations": [  ],
     "magazines": [ [ "9mm", [ "mp5mag" ] ] ]
   },

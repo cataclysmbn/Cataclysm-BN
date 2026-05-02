@@ -1237,7 +1237,12 @@
           "seat",
           "seatbelt",
           "turret_mount",
-          { "ammo_types": [ "40x53mm_m430a1" ], "part": "mounted_mk19", "ammo": 60, "ammo_qty": [ 1, 25 ] },
+          {
+            "part": "mounted_25mm_autocannon",
+            "ammo": 80,
+            "ammo_types": [ "25mm_apds", "25mm_hei" ],
+            "ammo_qty": [ 10, 50 ]
+          },
           "metal_boat_hull"
         ]
       },
@@ -1762,7 +1767,7 @@
       {
         "x": 1,
         "y": 0,
-        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "controls", "seat", "seatbelt", "roof_cloth" ]
+        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "sonar_array", "controls", "seat", "seatbelt", "roof_cloth" ]
       },
       { "x": -2, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
@@ -1839,7 +1844,7 @@
       {
         "x": 1,
         "y": 0,
-        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "controls", "seat", "seatbelt", "roof_cloth" ]
+        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "sonar_array", "controls", "seat", "seatbelt", "roof_cloth" ]
       },
       { "x": -2, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },

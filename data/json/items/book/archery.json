@@ -47,5 +47,22 @@
     "max_level": 3,
     "intelligence": 7,
     "time": "20 m"
+  },
+  {
+    "id": "textbook_archery",
+    "type": "BOOK",
+    "copy-from": "base_book",
+    "name": { "str": "The Professional Bowhunter's Journal" },
+    "description": "A lengthy autobiography from an award-winning hunter, filled with detailed and advanced descriptions of bow techniques.",
+    "weight": "1600 g",
+    "volume": "1250 ml",
+    "price": "85 USD",
+    "price_postapoc": "5 USD",
+    "color": "blue",
+    "skill": "archery",
+    "required_level": 3,
+    "max_level": 6,
+    "intelligence": 9,
+    "time": "28 m"
   }
 ]

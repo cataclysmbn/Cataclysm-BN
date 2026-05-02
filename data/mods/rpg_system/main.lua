@@ -109,6 +109,15 @@ end
 
 local function set_char_value(char, key, value) char:set_value(key, tostring(value)) end
 
+local SYSTEM_INTERFACE_ITEM_ID = ItypeId.new("system_interface")
+
+---@param char Character
+local function give_system_interface(char)
+  if char:has_item_with_id(SYSTEM_INTERFACE_ITEM_ID, true) then return end
+
+  char:add_item_with_id(SYSTEM_INTERFACE_ITEM_ID, 1)
+end
+
 -- Common requirement checking and formatting
 local function check_requirements(player, mutation, current_level)
   local reqs = mutation.requirements
@@ -212,7 +221,7 @@ mod.on_game_started = function()
   set_char_value(player, "rpg_assigned_per", 0)
   set_char_value(player, "rpg_level_scaling", 100)
 
-  player:add_item_with_id(ItypeId.new("system_interface"), 1)
+  give_system_interface(player)
 
   gapi.add_msg(
     MsgType.mixed,
@@ -243,7 +252,7 @@ mod.on_game_load = function()
     set_char_value(player, "rpg_assigned_per", 0)
     set_char_value(player, "rpg_level_scaling", 100)
 
-    player:add_item_with_id(ItypeId.new("system_interface"), 1)
+    give_system_interface(player)
 
     gapi.add_msg(
       MsgType.mixed,
@@ -262,21 +271,24 @@ mod.on_game_load = function()
   gdebug.log_info("RPG System: Loaded character at level " .. level)
 end
 
-mod.on_monster_killed = function(params)
-  local killer = params.killer
-  local monster = params.mon
+---@param params { npc: Npc }
+mod.on_dialogue_end = function(params)
+  local npc = params.npc
+  if not npc then return end
+  if not npc:is_player_ally() then return end
 
-  if not killer or not monster then return end
-  if not killer:is_avatar() then return end
+  give_system_interface(npc)
+end
 
-  local player = killer:as_character()
-  if not player then return end
-
+---@param player Character
+---@param monster_hp integer
+---@param xp_gain number
+local function level_up(player, monster_hp, xp_gain)
   local exp = get_char_value(player, "rpg_exp", 0)
   local old_level = get_char_value(player, "rpg_level", 0)
+  -- only show messages if killer is player-controlled
+  local show_messages = player:is_avatar()
 
-  local monster_hp = monster:get_hp_max()
-  local xp_gain = math.max(1, math.floor(monster_hp / 10))
   exp = exp + xp_gain
   set_char_value(player, "rpg_exp", exp)
 
@@ -289,21 +301,24 @@ mod.on_monster_killed = function(params)
       .. color_good(" ★")
       .. " "
       .. string.format(gettext("You are now %s!"), color_info(gettext("Level") .. " " .. new_level))
-    gapi.add_msg(MsgType.good, level_msg)
 
     -- Calculate trait slots
     local old_max_traits = 1 + math.floor(old_level / LEVELS_PER_TRAIT_SLOT)
     local new_max_traits = 1 + math.floor(new_level / LEVELS_PER_TRAIT_SLOT)
     set_char_value(player, "rpg_max_traits", new_max_traits)
 
-    if new_max_traits > old_max_traits then
-      local traits_gained = new_max_traits - old_max_traits
-      gapi.add_msg(
-        MsgType.good,
-        color_good(vgettext("New trait slot unlocked!", "New trait slots unlocked!", traits_gained))
-          .. " "
-          .. string.format(gettext("You now have %s trait slots."), color_highlight(new_max_traits))
-      )
+    if show_messages then
+      gapi.add_msg(MsgType.good, level_msg)
+
+      if new_max_traits > old_max_traits then
+        local traits_gained = new_max_traits - old_max_traits
+        gapi.add_msg(
+          MsgType.good,
+          color_good(vgettext("New trait slot unlocked!", "New trait slots unlocked!", traits_gained))
+            .. " "
+            .. string.format(gettext("You now have %s trait slots."), color_highlight(new_max_traits))
+        )
+      end
     end
 
     -- Calculate stat points earned by iterating through levels crossed
@@ -316,27 +331,34 @@ mod.on_monster_killed = function(params)
       local stat_points = get_char_value(player, "rpg_stat_points", 0)
       stat_points = stat_points + stat_points_earned
       set_char_value(player, "rpg_stat_points", stat_points)
-      gapi.add_msg(
-        MsgType.good,
-        color_good(
-          string.format(
-            vgettext("✦ %d stat point earned!", "✦ %d stat points earned!", stat_points_earned),
-            stat_points_earned
+
+      if show_messages then
+        gapi.add_msg(
+          MsgType.good,
+          color_good(
+            string.format(
+              vgettext("✦ %d stat point earned!", "✦ %d stat points earned!", stat_points_earned),
+              stat_points_earned
+            )
           )
+            .. " "
+            .. string.format(
+              vgettext("You have %s unassigned stat point.", "You have %s unassigned stat points.", stat_points),
+              color_highlight(stat_points)
+            )
         )
-          .. " "
-          .. string.format(
-            vgettext("You have %s unassigned stat point.", "You have %s unassigned stat points.", stat_points),
-            color_highlight(stat_points)
-          )
-      )
+      end
     end
   end
 
   local xp_needed = rpg_xp_needed(new_level + 1)
   local xp_to_next = xp_needed - exp
   set_char_value(player, "rpg_xp_to_next_level", xp_to_next)
+end
 
+---@param player Character
+---@param monster_hp integer
+local function apply_kill_monster_bonuses(player, monster_hp)
   -- Apply kill monster bonuses (e.g., healing on kill)
   local level = get_char_value(player, "rpg_level", 0)
   local level_scaling = get_char_value(player, "rpg_level_scaling", 100) / 100.0
@@ -352,6 +374,51 @@ mod.on_monster_killed = function(params)
       end
     end
   end
+end
+
+---@param killer Creature
+---@param monster_hp integer
+---@param xp_gain number
+local function level_up_allies(killer, monster_hp, xp_gain)
+  local avatar = gapi.get_avatar()
+  if not avatar then return end
+
+  local half_xp_gain = xp_gain / 2
+  if killer:is_avatar() then
+    for _, npc in ipairs(gapi.get_all_npcs()) do
+      if npc:is_player_ally() then level_up(npc, monster_hp, half_xp_gain) end
+    end
+    return
+  end
+
+  if not killer:is_npc() then return end
+
+  local killer_npc = killer:as_npc()
+  if not killer_npc:is_player_ally() then return end
+
+  level_up(avatar, monster_hp, half_xp_gain)
+
+  local killer_id = killer_npc:getID()
+  for _, npc in ipairs(gapi.get_all_npcs()) do
+    if npc:is_player_ally() and npc:getID() ~= killer_id then level_up(npc, monster_hp, half_xp_gain) end
+  end
+end
+
+mod.on_monster_killed = function(params)
+  local killer = params.killer
+  local monster = params.mon
+
+  if not killer or not monster then return end
+
+  local player = killer:as_character()
+  if not player then return end
+
+  local monster_hp = monster:get_hp_max()
+  local xp_gain = math.max(1, math.floor(monster_hp / 10))
+
+  level_up(player, monster_hp, xp_gain)
+  apply_kill_monster_bonuses(player, monster_hp)
+  level_up_allies(killer, monster_hp, xp_gain)
 end
 
 mod.on_character_reset_stats = function(params)

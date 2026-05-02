@@ -6916,7 +6916,7 @@
           "fg": 2055
         },
         {
-          "id": ["reinforced_glass_sheet", "reinforced_glass_pane" ],
+          "id": ["reinforced_glass_sheet"],
           "fg": 2056
         },
         {

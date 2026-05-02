@@ -33,6 +33,7 @@
         ".cccccccccccccccccccccccccccccccccccccccccccccccc_d____________________...........................____________________..ccccccccccccccccccccccc.",
         "................................................c_d____________________..........................._b________________b_.........................."
       ],
+      "place_vehicles": [ { "vehicle": "runway_large", "x": 132, "y": 12, "chance": 80, "rotation": 270 } ],
       "terrain": { ".": "t_region_groundcover_urban", "_": "t_pavement", "b": "t_pavement_y", "c": "t_chainfence", "d": "t_conveyor" }
     }
   },

@@ -24,6 +24,9 @@
 #include "line.h"
 #include "point.h"
 #include "state_helpers.h"
+#include "vehicle.h"
+#include "vehicle_part.h"
+#include "vpart_position.h"
 
 using move_statistics = statistics<int>;
 
@@ -353,4 +356,58 @@ TEST_CASE( "monster_move_through_vehicle_holes" )
     const monster *m2 = g->critter_at<monster>( mon_origin + tripoint_north_west );
     CHECK( m2 == nullptr );
 
+}
+
+TEST_CASE( "monster_vertical_melee_respects_floors", "[monster][z-level]" )
+{
+    clear_all_state();
+    clear_map();
+
+    avatar &you = get_avatar();
+    auto &here = get_map();
+    const auto avatar_pos = tripoint{ 60, 60, 2 };
+    const auto zombie_pos = tripoint{ 60, 60, 1 };
+    you.setpos( avatar_pos );
+
+    monster &grabber = spawn_test_monster( "mon_zombie_grabber", zombie_pos );
+
+    SECTION( "open air does not block vertical melee" ) {
+        CHECK_FALSE( here.floor_between( zombie_pos, avatar_pos ) );
+        CHECK( grabber.attack_at( you.pos() ) );
+    }
+
+    SECTION( "terrain floors block vertical melee" ) {
+        here.ter_set( avatar_pos, ter_id( "t_floor" ) );
+
+        CHECK( here.floor_between( zombie_pos, avatar_pos ) );
+        CHECK_FALSE( grabber.attack_at( you.pos() ) );
+    }
+
+    SECTION( "vehicle floors block vertical melee" ) {
+        const vpart_id vpart_frame_vertical( "frame_vertical" );
+        const vpart_id vpart_seat( "seat" );
+        auto *veh = here.add_vehicle( vproto_id( "none" ), avatar_pos, 0_degrees, 0, 0 );
+
+        REQUIRE( veh != nullptr );
+        veh->install_part( point_zero, vpart_frame_vertical );
+        veh->install_part( point_zero, vpart_seat );
+        here.add_vehicle_to_cache( veh );
+
+        CHECK_FALSE( grabber.attack_at( you.pos() ) );
+    }
+
+    SECTION( "grabber below player on blimp cannot attack through the floor" ) {
+        auto *blimp = here.add_vehicle( vproto_id( "blimp" ), avatar_pos, 0_degrees, 0, 0 );
+
+        REQUIRE( blimp != nullptr );
+        const auto cockpit_part = blimp->part_with_feature( point_zero, "BOARDABLE", true );
+        REQUIRE( cockpit_part != -1 );
+
+        const auto blimp_tile = blimp->global_part_pos3( cockpit_part );
+        you.setpos( blimp_tile );
+        grabber.setpos( blimp_tile + tripoint_below );
+
+        CHECK( here.veh_at( you.pos() ).part_with_feature( "BOARDABLE", true ).has_value() );
+        CHECK_FALSE( grabber.attack_at( you.pos() ) );
+    }
 }

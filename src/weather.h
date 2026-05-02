@@ -81,8 +81,7 @@ void effect( int intensity, time_duration duration, bodypart_str_id bp_id,
              const std::string &effect_id_str,
              const std::string &effect_msg,
              int effect_msg_frequency, int effect_msg_blocked_frequency, game_message_type message_type,
-             std::string precipitation_name,
-             bool ignore_armor, int clothing_protection, int umbrella_protection );
+             std::string precipitation_name, std::vector<std::tuple<std::string, int>> );
 void morale( int intensity, int bonus, int bonus_max, time_duration duration,
              time_duration decay_start,
              const std::string &morale_id_str, const std::string &morale_msg,

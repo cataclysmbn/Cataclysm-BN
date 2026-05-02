@@ -15,6 +15,7 @@
 #include "catalua_type_operators.h"
 #include "color.h" // nc_color
 #include "damage.h"
+#include "data_vars.h"
 #include "enums.h" // point
 #include "explosion.h"
 #include "game_constants.h"
@@ -478,10 +479,10 @@ struct islot_engine {
 
 struct islot_wheel {
     public:
-        /** diameter of wheel (inches) */
+        /** diameter of wheel (millimeters); integer JSON values are legacy inches */
         int diameter = 0;
 
-        /** width of wheel (inches) */
+        /** width of wheel (millimeters); integer JSON values are legacy inches */
         int width = 0;
 };
 
@@ -696,6 +697,11 @@ struct islot_battery {
 };
 
 struct islot_ammo : common_ranged_data {
+    struct shot_data {
+        int count = 1;
+        double half_angle = 0.0;
+    };
+
     /**
      * Ammo type, basically the "form" of the ammo that fits into the gun/tool.
      */
@@ -762,6 +768,9 @@ struct islot_ammo : common_ranged_data {
      * AoE shape or null if it's a projectile.
      */
     std::optional<shape_factory> shape;
+
+    /// Shot-specific pellet pattern data.
+    std::optional<shot_data> shot;
 
     bool was_loaded;
 
@@ -1043,7 +1052,7 @@ struct itype {
         bool rigid = true;
 
         // Default item vars for the resulting item
-        std::map<std::string, std::string> item_vars;
+        data_vars::data_set item_vars;
 
         /** Damage output in melee for zero or more damage types */
         std::array<int, NUM_DT> melee;

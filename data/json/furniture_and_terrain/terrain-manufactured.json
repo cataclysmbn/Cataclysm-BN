@@ -662,7 +662,7 @@
     "move_cost": 0,
     "coverage": 50,
     "roof": "t_flat_roof",
-    "flags": [ "NOITEM", "INDOORS" ],
+    "flags": [ "NOITEM" ],
     "examine_action": "slot_machine",
     "bash": {
       "str_min": 8,
@@ -1151,7 +1151,7 @@
     "symbol": "=",
     "color": "brown",
     "move_cost": 6,
-    "flags": [ "TRANSPARENT", "BASHABLE", "PLACE_ITEM", "INDOORS", "ADV_DECONSTRUCT" ],
+    "flags": [ "TRANSPARENT", "BASHABLE", "PLACE_ITEM", "ADV_DECONSTRUCT" ],
     "coverage": 30,
     "deconstruct": {
       "ter_set": "t_rock_floor",
@@ -1457,7 +1457,7 @@
     "color": "green",
     "looks_like": "t_pit",
     "move_cost": 0,
-    "flags": [ "TRANSPARENT", "CONTAINER", "PLACE_ITEM", "INDOORS", "DECONSTRUCT" ],
+    "flags": [ "TRANSPARENT", "CONTAINER", "PLACE_ITEM", "DECONSTRUCT" ],
     "deconstruct": {
       "ter_set": "t_pit",
       "items": [ { "item": "rock", "count": 40 }, { "item": "stick", "count": 6 }, { "item": "straw_pile", "count": 12 } ]
@@ -1511,7 +1511,6 @@
       "FLAMMABLE_ASH",
       "THIN_OBSTACLE",
       "REDUCE_SCENT",
-      "INDOORS",
       "MOUNTABLE",
       "BLOCK_WIND",
       "HIDE_PLACE"
@@ -1545,7 +1544,7 @@
         { "item": "pine_bough", "count": [ 0, 2 ] }
       ]
     },
-    "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "REDUCE_SCENT", "INDOORS", "MOUNTABLE", "BLOCK_WIND" ]
+    "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "REDUCE_SCENT", "MOUNTABLE", "BLOCK_WIND" ]
   },
   {
     "type": "terrain",

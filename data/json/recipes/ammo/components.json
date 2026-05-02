@@ -368,7 +368,7 @@
     "time": "75 m",
     "batch_time_factors": [ 90, 4 ],
     "reversible": true,
-    "book_learn": [ [ "manual_launcher", 6 ], [ "textbook_anarch", 7 ] ],
+    "book_learn": [ [ "manual_launcher", 6 ], [ "textbook_launcher", 6 ], [ "textbook_anarch", 7 ] ],
     "using": [ [ "blacksmithing_intermediate", 12 ], [ "steel_tiny", 12 ] ],
     "components": [
       [ [ "volatile_explosive", 75, "LIST" ], [ "stable_explosive", 75, "LIST" ], [ "military_explosive", 75, "LIST" ] ],
@@ -393,6 +393,7 @@
     "batch_time_factors": [ 90, 4 ],
     "reversible": true,
     "autolearn": true,
+    "book_learn": [ [ "manual_launcher", 2 ], [ "textbook_launcher", 2 ] ],
     "using": [ [ "forging_standard", 8 ], [ "steel_tiny", 8 ] ],
     "qualities": [ { "id": "CONTAIN_HOT", "level": 1 } ]
   },
@@ -759,7 +760,7 @@
     "time": "10 m",
     "reversible": true,
     "decomp_learn": 8,
-    "book_learn": [ [ "manual_traps_mil", 5 ], [ "manual_launcher", 6 ], [ "textbook_anarch", 7 ] ],
+    "book_learn": [ [ "manual_traps_mil", 5 ], [ "manual_launcher", 6 ], [ "textbook_launcher", 6 ], [ "textbook_anarch", 7 ] ],
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "//": "Components called for explicitly instead of volatile_explosive in order to use smaller amounts, and to place HTMD first",
     "components": [
@@ -785,7 +786,7 @@
     "time": "10 m",
     "reversible": true,
     "decomp_learn": 9,
-    "book_learn": [ [ "manual_traps_mil", 6 ], [ "manual_launcher", 7 ], [ "textbook_anarch", 8 ] ],
+    "book_learn": [ [ "manual_traps_mil", 6 ], [ "manual_launcher", 7 ], [ "textbook_launcher", 6 ], [ "textbook_anarch", 8 ] ],
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [ [ "copper", 2 ], [ "cartridgebrass", 4 ], [ "aluminum_foil", 4 ] ],

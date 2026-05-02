@@ -515,7 +515,7 @@ void computer_session::action_maps()
     Character &player_character = get_player_character();
     player_character.moves -= 30;
     const tripoint_abs_omt center = player_character.global_omt_location();
-    ACTIVE_OVERMAP_BUFFER.reveal( center.xy(), 40, 0 );
+    get_overmapbuffer( get_map().get_bound_dimension() ).reveal( center.xy(), 40, 0 );
     query_any(
         _( "Surface map data downloaded.  Local anomalous-access error logged.  Press any key…" ) );
     comp.remove_option( COMPACT_MAPS );
@@ -530,10 +530,10 @@ void computer_session::action_map_sewer()
     for( int i = -60; i <= 60; i++ ) {
         for( int j = -60; j <= 60; j++ ) {
             point offset( i, j );
-            const oter_id &oter = ACTIVE_OVERMAP_BUFFER.ter( center + offset );
+            const oter_id &oter = get_overmapbuffer( get_map().get_bound_dimension() ).ter( center + offset );
             if( is_ot_match( "sewer", oter, ot_match_type::type ) ||
                 is_ot_match( "sewage", oter, ot_match_type::prefix ) ) {
-                ACTIVE_OVERMAP_BUFFER.set_seen( center + offset, true );
+                get_overmapbuffer( get_map().get_bound_dimension() ).set_seen( center + offset, true );
             }
         }
     }
@@ -549,10 +549,10 @@ void computer_session::action_map_subway()
     for( int i = -60; i <= 60; i++ ) {
         for( int j = -60; j <= 60; j++ ) {
             point offset( i, j );
-            const oter_id &oter = ACTIVE_OVERMAP_BUFFER.ter( center + offset );
+            const oter_id &oter = get_overmapbuffer( get_map().get_bound_dimension() ).ter( center + offset );
             if( is_ot_match( "subway", oter, ot_match_type::type ) ||
                 is_ot_match( "lab_train_depot", oter, ot_match_type::contains ) ) {
-                ACTIVE_OVERMAP_BUFFER.set_seen( center + offset, true );
+                get_overmapbuffer( get_map().get_bound_dimension() ).set_seen( center + offset, true );
             }
         }
     }

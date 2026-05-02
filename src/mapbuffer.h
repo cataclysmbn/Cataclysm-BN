@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -53,8 +54,6 @@ class mapbuffer
          * is not stored and the given unique_ptr retains ownsership.
          */
         bool add_submap( const tripoint &p, std::unique_ptr<submap> &sm );
-        // Old overload that we should stop using, but it's complicated
-        bool add_submap( const tripoint &p, submap *sm );
 
         /** Get a submap stored in this buffer.
          *
@@ -108,32 +107,33 @@ class mapbuffer
          * in SQLITE_THREADSAFE ≥ 1 (serialised or multi-thread) mode — the
          * default for all supported SQLite builds.
          */
-        void preload_quad( const tripoint &om_addr );
+        /**
+         * Returns true if data was loaded from the in-memory write-back cache
+         * (pending_writes_) rather than from disk.  A cache-loaded quad has not yet
+         * been flushed to actual disk files and must be re-saved before eviction.
+         */
+        bool preload_quad( const tripoint &om_addr );
 
         /**
          * Generate all submaps in the OMT quad at @p om_addr if any are not yet
-         * resident in memory.  Called internally by load_or_generate_quad().
+         * resident in memory.
          *
-         * Thread-safe: uses per-thread RNG, npc_mutex_ for NPC writes, and
-         * submaps_mutex_ for add_submap().  If two workers race on the same quad
-         * the duplicate submaps are deferred to drain_pending_submap_destroy().
+         * Must be called on the main thread — mapgen (including Lua mapgen) is
+         * not reentrant and cannot run safely on worker threads.
+         *
+         * Returns true if mapgen actually ran (quad was not fully resident),
+         * false if all submaps were already in memory and nothing was generated.
          */
-        void generate_quad( const tripoint &om_addr );
+        bool generate_quad( const tripoint &om_addr );
 
         /**
-         * Try to load submaps from disk (@ref preload_quad), then generate any
-         * still missing via @ref generate_quad.
-         *
-         * Safe to call concurrently from worker threads for distinct quad addresses.
-         * Identical thread-safety contract as preload_quad().
-         */
-        void load_or_generate_quad( const tripoint &om_addr );
-
-        /**
-         * Serialize and write the OMT quad at @p om_addr to disk without evicting
-         * submaps from memory.  Intended to be called from a background worker thread
-         * while the quad is in the border zone (not simulated), so that the subsequent
-         * eviction only needs to free the in-memory objects without an I/O stall.
+         * Serialise the OMT quad at @p om_addr into the in-memory write-back cache
+         * (@c pending_writes_) without evicting submaps or touching disk.  Intended
+         * to be called from a background worker thread while the quad is in the border
+         * zone (not simulated), so that the subsequent eviction only needs to free the
+         * in-memory objects without an I/O stall.  The cached data is flushed to disk
+         * only on an explicit save; discarding it (via @c clear()) lets the player
+         * revert to the pre-session state.
          *
          * Thread-safety contract:
          * - Briefly acquires @c submaps_mutex_ to collect raw submap pointers.
@@ -142,7 +142,7 @@ class mapbuffer
          * - The caller (submap_load_manager) guarantees the submaps remain alive
          *   in memory for the duration of this call by withholding eviction until
          *   the returned future is resolved.
-         * - @c write_map_quad is thread-safe (SQLite SERIALIZED mode or per-file I/O).
+         * - Writes to @c pending_writes_ under @c pending_writes_mutex_ (brief hold).
          */
         void presave_quad( const tripoint &om_addr );
 
@@ -159,23 +159,15 @@ class mapbuffer
         auto drain_pending_submap_destroy() -> void;
 
         /**
-         * Conditionally save and then remove the submap at @p pos from the buffer.
-         * The containing OMT quad is saved to disk first (unless it is fully uniform),
-         * then the submap is erased from memory.  Does nothing if @p pos is not loaded.
-         */
-        void unload_submap( const tripoint_abs_sm &pos );
-
-        /**
          * Evict all submaps in the OMT quad at @p om_addr.
          *
-         * If @p save is true (default), the quad is serialised to disk first.
+         * If @p save is true (default), the quad is serialised into the in-memory
+         * write-back cache (@c pending_writes_) before the submap objects are freed.
+         * The cache is flushed to disk only on an explicit save.
          * Pass @p save = false only for border-preloaded quads that were never
          * simulated — their in-memory content is identical to what is already on
-         * disk, so the write is redundant.
+         * disk, so no write is needed.
          *
-         * This is the correct way to evict a quad: calling unload_submap() per-submap
-         * repeatedly overwrites the quad file without the previously-removed siblings,
-         * causing data loss and "file did not contain expected submap" errors on reload.
          * Does nothing for quads that are fully uniform (they regenerate on demand).
          */
         void unload_quad( const tripoint &om_addr, bool save = true );
@@ -188,13 +180,12 @@ class mapbuffer
         void transfer_all_to( mapbuffer &dest );
 
     private:
-        using submap_map_t = std::map<tripoint, std::unique_ptr<submap>>;
+        using submap_map_t = std::unordered_map<tripoint, std::unique_ptr<submap>>;
 
         /// Guards all accesses to `submaps` that may overlap with background
-        /// worker threads calling add_submap().  std::recursive_mutex is used
-        /// so that the main-thread call chain
-        ///   lookup_submap → unserialize_submaps → add_submap
-        /// can re-acquire the mutex without deadlocking.
+        /// worker threads calling add_submap().  std::recursive_mutex allows
+        /// mapgen code (running under a held lock) to call lookup_submap_in_memory()
+        /// or add_submap() without deadlocking.
         mutable std::recursive_mutex submaps_mutex_;
 
         /// Submaps that preload_quad() could not add (duplicate already in memory).
@@ -203,6 +194,14 @@ class mapbuffer
         /// inside safe_reference<T>, cache_reference<T>, and cata_arena<T>.
         mutable std::mutex pending_destroy_mutex_;
         std::vector<std::unique_ptr<submap>> pending_destroy_submaps_;
+
+        /// Serialised quads awaiting disk flush.  Written by presave_quad() (worker
+        /// threads) and the save=true branch of unload_quad() (main thread); read back
+        /// by preload_quad() (worker threads) before falling through to disk.  Flushed
+        /// to disk by save() and discarded by clear(), leaving disk files untouched so
+        /// the player can revert to the pre-session state by quitting without saving.
+        mutable std::mutex pending_writes_mutex_;
+        std::map<tripoint, std::string> pending_writes_;
 
     public:
         submap_map_t::iterator begin() {
@@ -254,8 +253,6 @@ class mapbuffer
         // There's a very good reason this is private,
         // if not handled carefully, this can erase in-use submaps and crash the game.
         void remove_submap( tripoint addr );
-        submap *unserialize_submaps( const tripoint &p );
-        void deserialize( JsonIn &jsin );
         /**
          * Parse the quad JSON stream into @p out without acquiring @c submaps_mutex_
          * or touching the in-memory map.  Called by both @c deserialize() (which then

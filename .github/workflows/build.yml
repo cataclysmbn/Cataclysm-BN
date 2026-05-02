@@ -316,6 +316,17 @@ jobs:
           cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix cataclysmbn-${{ inputs.version-label }} --config Release
           Compress-Archive -Force -Path cataclysmbn-${{ inputs.version-label }}/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
+      - name: Locate PDB (windows msvc)
+        if: runner.os == 'Windows'
+        run: Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" -Filter "*.pdb" -Recurse | Select-Object -ExpandProperty FullName
+
+      - name: Archive PDB (windows msvc)
+        if: runner.os == 'Windows'
+        run: |
+          Compress-Archive -Force `
+            -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/src/cataclysm-bn-tiles.pdb" `
+            -DestinationPath "cbn-${{ matrix.artifact }}-${{ inputs.version-label }}-pdb.zip"
+
       # Build with Make (macOS) - TODO: migrate to CMake once dmgdist target is implemented
       - name: Build CBN (osx)
         if: runner.os == 'macOS'
@@ -395,6 +406,18 @@ jobs:
             gh release edit experimental --title "Experimental @ $TIMESTAMP ($SHA_SHORT)" --notes "Experimental build for commit $SHA_SHORT on $TIMESTAMP"
           else
             gh release upload ${{ inputs.release-tag }} --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+
+      - name: Upload PDB to release (windows msvc)
+        if: runner.os == 'Windows' && inputs.upload-to-release
+        run: |
+          if [ "${{ inputs.version-label }}" = "experimental" ]; then
+            gh release upload experimental --clobber "cbn-${{ matrix.artifact }}-${{ inputs.version-label }}-pdb.zip"
+          else
+            gh release upload ${{ inputs.release-tag }} --clobber "cbn-${{ matrix.artifact }}-${{ inputs.version-label }}-pdb.zip"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

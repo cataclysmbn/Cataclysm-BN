@@ -109,7 +109,6 @@ struct vpslot_engine {
     std::vector<std::string> exclusions;
     std::vector<itype_id> fuel_opts;
 };
-
 struct vpslot_wheel {
     float rolling_resistance = 1.0f;
     int contact_area = 1;
@@ -448,5 +447,3 @@ struct vehicle_prototype {
 
     static std::vector<vproto_id> get_all();
 };
-
-

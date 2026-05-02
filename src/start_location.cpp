@@ -122,7 +122,7 @@ static void add_boardable( const map &m, const tripoint &p, std::vector<tripoint
         // Don't board up the outside
         return;
     }
-    if( std::ranges::find( vec, p ) != vec.end() ) {
+    if( std::ranges::contains( vec, p ) ) {
         // Already registered to be boarded
         return;
     }
@@ -164,7 +164,7 @@ static void board_up( map &m, const tripoint_range<tripoint> &range )
     }
     // Find all furniture that can be used to board up some place
     for( const tripoint &p : range ) {
-        if( std::ranges::find( boardables, p ) != boardables.end() ) {
+        if( std::ranges::contains( boardables, p ) ) {
             continue;
         }
         if( !m.has_furn( p ) ) {
@@ -197,7 +197,7 @@ static void board_up( map &m, const tripoint_range<tripoint> &range )
 
 void start_location::prepare_map( tinymap &m ) const
 {
-    const int z = m.get_abs_sub().z;
+    const int z = m.get_abs_sub().z();
     if( flags().contains( "BOARDED" ) ) {
         m.build_outside_cache( z );
         board_up( m, m.points_on_zlevel( z ) );
@@ -217,7 +217,7 @@ tripoint_abs_omt start_location::find_player_initial_location() const
     // Shuffle 8 first ones so that we don't always start at (1,0)
     std::shuffle( overmaps.begin(), overmaps.begin() + 7, rng_get_engine() );
     for( const point_abs_om &omp : overmaps ) {
-        overmap &omap = ACTIVE_OVERMAP_BUFFER.get( omp );
+        overmap &omap = get_primary_overmapbuffer().get( omp );
         const tripoint_om_omt omtstart = omap.find_random_omt( random_target() );
         if( omtstart.raw() != tripoint_min ) {
             return project_combine( omp, omtstart );
@@ -248,7 +248,7 @@ tripoint_abs_omt start_location::find_player_initial_location() const
             // that special is bad, no need to check all other overmaps for same thing
             const point_abs_om &omp = random_entry( overmaps );
             const tripoint_abs_omt abs_mid = project_combine( omp, om_mid );
-            if( ACTIVE_OVERMAP_BUFFER.place_special( special.id, abs_mid, 0, OMAPX / 2 ) ) {
+            if( get_primary_overmapbuffer().place_special( special.id, abs_mid, 0, OMAPX / 2 ) ) {
 
                 omt_find_params find_params{};
                 find_params.types.emplace_back( loc.first, loc.second );
@@ -256,7 +256,7 @@ tripoint_abs_omt start_location::find_player_initial_location() const
                 find_params.search_layers = omt_find_all_layers;
 
                 // Now try to find what we spawned
-                const tripoint_abs_omt start = ACTIVE_OVERMAP_BUFFER.find_closest( abs_mid, find_params );
+                const tripoint_abs_omt start = get_primary_overmapbuffer().find_closest( abs_mid, find_params );
                 if( start != overmap::invalid_tripoint ) {
                     return start;
                 }
@@ -277,7 +277,6 @@ void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
     // TODO: fix point types
     player_start.load( player_location.raw(), false );
     prepare_map( player_start );
-    player_start.save();
 }
 
 /** Helper for place_player
@@ -348,8 +347,8 @@ void start_location::place_player( player &u ) const
     u.setx( g_half_mapsize_x );
     u.sety( g_half_mapsize_y );
     u.setz( g->get_levz() );
-    m.invalidate_map_cache( m.get_abs_sub().z );
-    m.build_map_cache( m.get_abs_sub().z );
+    m.invalidate_map_cache( m.get_abs_sub().z() );
+    m.build_map_cache( m.get_abs_sub().z() );
     const bool must_be_inside = !flags().contains( "ALLOW_OUTSIDE" );
     ///\EFFECT_STR allows player to start behind less-bashable furniture and terrain
     // TODO: Allow using items here
@@ -411,7 +410,7 @@ void start_location::burn( const tripoint_abs_omt &omtstart, const size_t count,
     const tripoint_abs_sm player_location = project_to<coords::sm>( omtstart );
     tinymap m;
     m.load( player_location, false );
-    m.build_outside_cache( m.get_abs_sub().z );
+    m.build_outside_cache( m.get_abs_sub().z() );
     const point u( g->u.posx() % g_half_mapsize_x, g->u.posy() % g_half_mapsize_y );
     std::vector<tripoint> valid;
     for( const tripoint &p : m.points_on_zlevel() ) {
@@ -428,7 +427,6 @@ void start_location::burn( const tripoint_abs_omt &omtstart, const size_t count,
     for( size_t i = 0; i < std::min( count, valid.size() ); i++ ) {
         m.add_field( valid[i], fd_fire, 3 );
     }
-    m.save();
 }
 
 void start_location::add_map_extra( const tripoint_abs_omt &omtstart,
@@ -439,9 +437,7 @@ void start_location::add_map_extra( const tripoint_abs_omt &omtstart,
     m.load( player_location, false );
 
     // TODO: fix point types
-    MapExtras::apply_function( map_extra, m, player_location.raw() );
-
-    m.save();
+    MapExtras::apply_function( map_extra, m, player_location );
 }
 
 void start_location::handle_heli_crash( player &u ) const
@@ -487,7 +483,6 @@ static void add_monsters( const tripoint_abs_omt &omtstart, const mongroup_id &t
     // map::place_spawns internally multiplies density by rng(10, 50)
     const float density = expected_points / ( ( 10 + 50 ) / 2.0 );
     m.place_spawns( type, 1, point_zero, point( SEEX * 2 - 1, SEEY * 2 - 1 ), density );
-    m.save();
 }
 
 void start_location::surround_with_monsters(

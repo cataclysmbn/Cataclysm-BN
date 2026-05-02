@@ -167,7 +167,7 @@
     "looks_like": "ram_spiked",
     "damage_modifier": 100,
     "durability": 400,
-    "description": "A large metal jagged metalhead, powered by the vehicle's engines.  Use the vehicle controls to turn it on or off.  When turned on, it will stop the vehicle unless it has a strong engine.  When turned on, it will destroy walls near it.",
+    "description": "A large metal jagged metalhead, powered by the vehicle's engines.  Use the vehicle controls to turn it on or off.  When turned on, it will destroy walls near it.",
     "folded_volume": "50 L",
     "power": -100000,
     "breaks_into": [

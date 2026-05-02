@@ -3,6 +3,7 @@
 #include <bitset>
 #include <climits>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <optional>
@@ -33,6 +34,7 @@
 #include "value_ptr.h"
 #include "monster_action.h"
 #include "monster_plan.h"
+#include "mtype.h"
 #include "visitable.h"
 
 class Character;
@@ -516,7 +518,7 @@ class monster : public Creature, public location_visitable<monster>
         int shortest_special_cooldown() const;
 
         void process_turn() override;
-        /** Batch catchup: simulate up to MAX_CATCHUP_MONSTER missed turns. */
+        /** Batch catchup: analytically simulate @p n missed turns. */
         void batch_turns( int n ) override;
         /** Resets the value of all bonus fields to 0, clears special effect flags. */
         void reset_bonuses() override;
@@ -524,6 +526,7 @@ class monster : public Creature, public location_visitable<monster>
         void reset_stats() override;
 
         void die( Creature *killer ) override; //this is the die from Creature, it calls kill_mo
+        void erase() override;
         void drop_items_on_death();
 
         // Other
@@ -608,6 +611,10 @@ class monster : public Creature, public location_visitable<monster>
         int friendly;
         int anger = 0;
         int morale = 0;
+        // Per-npcmove-pass cache of attitude_to() result for a generic NPC (no special traits).
+        // Valid when cached_npc_attitude_epoch == g_npcmove_attitude_epoch.
+        uint32_t cached_npc_attitude_epoch = 0;
+        Attitude cached_npc_attitude = A_NEUTRAL;
         std::unordered_map<mfaction_id, int> faction_anger;  //< Per-faction anger tracking
         // Our faction (species, for most monsters)
         mfaction_id faction;
@@ -676,7 +683,7 @@ class monster : public Creature, public location_visitable<monster>
         // ID of the dimension this monster belongs to.  Empty string = primary dimension.
         // Set when the monster is spawned or loaded from a non-primary dimension submap.
         // Persisted across saves so cross-dimension LOD assignment survives reload.
-        std::string dimension_id_;
+        std::string dimension_id_ = "";  // empty = primary dimension
         const std::string &get_dimension() const override {
             return dimension_id_;
         }
@@ -697,6 +704,12 @@ class monster : public Creature, public location_visitable<monster>
         std::set<tripoint> get_legacy_path_avoid() const override;
 
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
+
+        // Discard the cached movement path so the monster replans on its next turn.
+        void clear_path() {
+            path.clear();
+            repath_requested = false;
+        }
 
         // summoned monsters via spells
         void set_summon_time( const time_duration &length );
@@ -730,6 +743,8 @@ class monster : public Creature, public location_visitable<monster>
         // Faction-specific anger tracking
         void add_faction_anger( mfaction_id target_faction, int amount );
         auto get_faction_anger( mfaction_id target_faction ) const -> int;
+
+        std::set<m_flag> monster_flags;
 
     private:
         void process_trigger( mon_trigger trig, int amount );

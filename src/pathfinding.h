@@ -341,6 +341,11 @@ class Pathfinding
         // Reset whole pathfinding pretty much
         static void clear_d_maps();
 
+        // Drain active d-maps back to the store, then destroy the pool.
+        // Call when the reality-bubble size changes so that stale Pathfinding
+        // objects sized for the old g_mapsize_x/y are not reused.
+        static void clear_pool();
+
         // Reset Z-level information. Should only be done when new Z-level changes could have appeared
         //   such as change in terrain
         static void mark_dirty_z_cache();

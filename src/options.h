@@ -218,6 +218,10 @@ class options_manager
         bool has_option( const std::string &name ) const;
 
         cOpt &get_option( const std::string &name );
+#if defined(__ANDROID__)
+        bool android_get_default_setting( const char *settings_name, bool default_value );
+#endif
+
 
         //add hidden external option with value
         void add_external( const std::string &sNameIn, const std::string &sPageIn, const std::string &sType,

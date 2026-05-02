@@ -1112,7 +1112,7 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
     std::vector<options_manager::id_and_option> user_tilesets = load_tilesets_from(
                 PATH_INFO::user_gfx() );
     for( const options_manager::id_and_option &id : user_tilesets ) {
-        if( std::ranges::find( result, id ) == result.end() ) {
+        if( !std::ranges::contains( result, id ) ) {
             result.emplace_back( id );
         }
     }
@@ -1162,7 +1162,7 @@ std::vector<options_manager::id_and_option> options_manager::build_soundpacks_li
 }
 
 #if defined(__ANDROID__)
-bool android_get_default_setting( const char *settings_name, bool default_value )
+bool options_manager::android_get_default_setting( const char *settings_name, bool default_value )
 {
     JNIEnv *env = static_cast< JNIEnv *>( SDL_AndroidGetJNIEnv() );
     jobject activity = static_cast< jobject>( SDL_AndroidGetActivity() );
@@ -1626,6 +1626,12 @@ void options_manager::add_options_interface()
 
     add_empty_line();
 
+    add( "USE_PINYIN_SEARCH", interface, translate_marker( "Use pinyin in search" ),
+         translate_marker( "If true, pinyin can be used in searching and filtering Chinese text.  "
+                           "May slow down searches with many entries." ),
+         false
+       );
+
     add( "FORCE_CAPITAL_YN", interface, translate_marker( "Force Y/N in prompts" ),
          translate_marker( "If true, Y/N prompts are case-sensitive and y and n are not accepted." ),
          true
@@ -1869,6 +1875,10 @@ void options_manager::add_options_interface()
        );
     add( "HIGHLIGHT_UNREAD_RECIPES", interface, translate_marker( "Highlight unread recipes" ),
          translate_marker( "Highlight unread recipes to allow tracking of newly learned recipes." ),
+         true
+       );
+    add( "ENABLE_NESTED_CATEGORIES", interface, translate_marker( "Enable nested crafting categories" ),
+         translate_marker( "Show nested crafting categories in the crafting UI.  When disabled, nested recipes appear directly in their normal subcategories." ),
          true
        );
     add( "HIGHLIGHT_UNREAD_ITEMS", interface, translate_marker( "Highlight unread items" ),
@@ -2304,6 +2314,7 @@ void options_manager::add_options_performance()
         add( "LOAD_FROM_EXTERNAL", page_id, translate_marker( "External Storage Saving" ),
              translate_marker( "Save in data/catalcysm... instead of Documents/..." ),
              false );
+
 #endif
     } );
 
@@ -2315,8 +2326,8 @@ void options_manager::add_options_performance()
         add( "MONSTER_LOD_ENABLED", page_id,
              translate_marker( "Enable Monster LOD" ),
              translate_marker( "Enable level-of-detail processing for monsters.  "
-                               "When enabled, distant or wandering monsters are assigned reduced-fidelity "
-                               "AI tiers (coarse path reuse or a simple macro step) to save CPU.  "
+                               "When enabled, distant or wandering monsters are assigned "
+                               "AI tiers. Higher tiers are processed less often and skip certain functions.  "
                                "When disabled, every monster runs full AI every turn regardless of distance." ),
              true );
         add( "LOD_ACTION_BUDGET", page_id,
@@ -2324,7 +2335,7 @@ void options_manager::add_options_performance()
              translate_marker( "Minimum number of monsters that enter the move loop per turn.  "
                                "The actual budget is the larger of this value and the current Tier-0 "
                                "(full-AI) monster count, so full-AI monsters are never skipped.  "
-                               "Higher values process more distant monsters each turn at a CPU cost.  "
+                               "Higher values process more distant monsters each turn.  "
                                "0 means only Tier-0 monsters run (no extra Tier-1 budget)." ),
              32, 2048, is_android ? 96 : 128 );
         add( "LOD_MACRO_INTERVAL", page_id,
@@ -2335,14 +2346,12 @@ void options_manager::add_options_performance()
              1, 8, is_android ? 3 : 4 );
         add( "LOD_TIER_FULL_DIST", page_id,
              translate_marker( "Full AI Radius" ),
-             translate_marker( "Chebyshev distance threshold for full-AI (Tier 0) monsters.  "
-                               "Monsters within this radius run the complete AI every turn.  "
+             translate_marker( "Monsters within this radius run the complete AI every turn.  "
                                "Must be less than the Coarse AI Radius." ),
              5, 208, is_android ? 20 : 30 );
         add( "LOD_TIER_COARSE_DIST", page_id,
              translate_marker( "Coarse AI Radius" ),
-             translate_marker( "Chebyshev distance threshold for coarse-AI (Tier 1) monsters.  "
-                               "Monsters between the Full AI Radius and this distance use cached "
+             translate_marker( "Monsters between the Full AI Radius and this distance use cached "
                                "paths and skip expensive faction queries.  Monsters beyond this "
                                "distance are Tier-2 (macro step only)." ),
              10, 208, is_android ? 40 : 75 );
@@ -2356,14 +2365,13 @@ void options_manager::add_options_performance()
              translate_marker( "Coarse Scent Check Interval" ),
              translate_marker( "How many turns elapse between scent-tracking checks for Tier-1 (coarse) "
                                "monsters.  At 1 they check scent every turn (full fidelity); at 3 (default) "
-                               "only once every 3 turns.  Higher values reduce CPU cost for mid-range hordes." ),
+                               "only once every 3 turns. " ),
              1, 5, is_android ? 3 : 4 );
         add( "LOD_GROUP_MORALE_MAX_TIER", page_id,
              translate_marker( "Group Morale Max Tier" ),
              translate_marker( "Highest LOD tier that participates in group-morale and swarming calculations.  "
                                "0 = Tier-0 only (default, cheapest).  1 = Tier-0 and Tier-1 monsters also "
-                               "run group-morale/swarm checks at the cost of the extra O(M²) faction scan "
-                               "for mid-range monsters." ),
+                               "run group-morale/swarm checks. " ),
              0, 1, 0 );
     } );
 
@@ -2381,15 +2389,15 @@ void options_manager::add_options_performance()
                                           to_translation( "Configure three-dimensional visibility across z-levels." ) ),
     [&]( auto & page_id ) {
         add( "FOV_3D", page_id, translate_marker( "3D field of vision" ),
-             translate_marker( "If false, vision is limited to current z-level.  If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
+             translate_marker( "If false, vision is limited to current z-level. If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
              true
            );
         add( "FOV_3D_Z_RANGE", page_id, translate_marker( "Vertical range of 3D field of vision" ),
-             translate_marker( "How many levels up and down the experimental 3D field of vision reaches.  (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
-             0, OVERMAP_LAYERS, 4
+             translate_marker( "How many levels up and down the experimental 3D field of vision reaches. (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
+             0, OVERMAP_LAYERS, is_android ? 3 : 5
            );
-        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV horizontal occlusion" ),
-             translate_marker( "When enabled, obstacles at other z-levels correctly block horizontal line of sight.  Requires 3D FoV.  Slower than disabled." ),
+        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV shadow casting" ),
+             translate_marker( "When enabled, obstacles at other z-levels correctly cast 3D shadows. Requires 3D FoV. Significantly slower than disabled." ),
              false
            );
     } );
@@ -2415,7 +2423,7 @@ void options_manager::add_options_performance()
         add( "MULTITHREADING_ENABLED", page_id,
              translate_marker( "Enable Multithreading" ),
              translate_marker( "Enable worker-thread parallelism for expensive per-turn computations "
-                               "(monster planning, map-cache building, scent map updates).  "
+                               "(monster planning, map-cache building, scent map updates, etc).  "
                                "Disable to run everything on the main thread — useful for debugging, "
                                "reproducibility testing, or machines where thread overhead exceeds gain.  "
                                "Requires restart." ),
@@ -2457,11 +2465,8 @@ void options_manager::add_options_performance()
              true );
         add( "LAZY_BORDER", page_id,
              translate_marker( "Pre-load Border" ),
-             translate_marker( "Keep a border of submaps loaded around the reality bubble.  "
-                               "These are pre-loaded from disk in the background so that map "
-                               "shifts are faster (the data is already in memory).  Uses more "
-                               "memory but reduces stalls when the map scrolls.  "
-                               "Takes effect immediately without restart." ),
+             translate_marker( "No effect — lazy border loading is pending async mapgen rework "
+                               "and is currently disabled regardless of this setting." ),
              !is_android );
     } );
 
@@ -2475,21 +2480,73 @@ void options_manager::add_options_performance()
     add_empty_line();
 
     add_option_group( performance, Group( "reality_bubble", to_translation( "Reality Bubble" ),
-                                          to_translation( "Configure how submaps are loaded and processed." ) ),
+                                          to_translation( "Configure how the reality bubble functions." ) ),
     [&]( auto & page_id ) {
-        add( "REALITY_BUBBLE_TICK_INTERVAL", page_id,
-             translate_marker( "World Tick Interval" ),
-             translate_marker( "How many turns elapse between out-of-bubble world ticks.  "
-                               "1 processes every loaded submap outside the player's reality bubble "
-                               "each turn at full fidelity. Higher values amortize cost by batching "
-                               "N turns of simulation into a single pass — useful on slow hardware." ),
-             1, 10, 1 );
+        add( "REALITY_BUBBLE_SIZE", page_id,
+             translate_marker( "Reality Bubble Size" ),
+             translate_marker( "Submap radius of the reality bubble (submaps visible beyond your position). "
+                               "Grid size = 2 × size + 3 submaps per side (size 4 → 11×11, legacy default). "
+                               "Maximum player sight range = 12 × (size + 1) tiles.  "
+                               "Larger values increase the loaded area and memory usage; "
+                               "smaller values reduce both. " ),
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 6 );
+        add( "ACTIVITY_MOBILE_BUBBLE_SIZE", page_id,
+             translate_marker( "Mobile Activity Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while the player is performing a "
+                               "mobile activity (crafting, construction, etc.).  "
+                               "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 3 : 4 );
+        add( "ACTIVITY_IDLE_BUBBLE_SIZE", page_id,
+             translate_marker( "Idle Activity Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while the player is performing an "
+                               "idle activity (sleeping, reading, waiting, etc.).  "
+                               "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 2 : 3 );
+        add( "UNDERGROUND_BUBBLE_SIZE", page_id,
+             translate_marker( "Underground Reality Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while the player is underground "
+                               "and indoors (no sky visible).  "
+                               "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 2 : 4 );
+        add( "VEHICLE_BUBBLE_SIZE", page_id,
+             translate_marker( "Vehicle Reality Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while the player is actively driving a vehicle  "
+                               "or mounted on a creature. Useful with a high render distance to reduce lag at speed.  "
+                               "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
+             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 3 : 0 );
+        add( "COMBAT_BUBBLE_SIZE", page_id,
+             translate_marker( "Combat Reality Bubble Size" ),
+             translate_marker( "Shrink the reality bubble to this radius while hostile creatures are visible nearby.  "
+                               "Uses the same detection range as safe mode.  "
+                               "0 disables the feature.  Must be smaller than Reality Bubble Size to take effect." ),
+             0, REALITY_BUBBLE_SIZE_MAX, 0 );
+        add( "ACTIVITY_BUBBLE_GRACE", page_id,
+             translate_marker( "Activity Bubble Grace Period" ),
+             translate_marker( "Minimum length of activity in minutes before the reality bubble shrinks.  "
+                               "Acts as a safety net to avoid unnecessary resizes for short tasks.  "
+                               "Default is 5 minutes." ),
+             1, 60, 5 );
+        add( "DYNAMIC_BUBBLE_GRACE", page_id,
+             translate_marker( "Dynamic Bubble Grace Period" ),
+             translate_marker( "Consecutive turns a condition must be met before the reality bubble shrinks "
+                               "for underground, vehicle, and combat modes.  "
+                               "Prevents rapid resizing when briefly entering or leaving a trigger zone.  "
+                               "Default is 5 turns." ),
+             1, 30, 5 );
+    } );
+
+    add_empty_line();
+
+    add_option_group( performance, Group( "submap_loading", to_translation( "Submap Loading" ),
+                                          to_translation( "Configure how submaps are loaded and "
+                                                  "processed outside of the reality bubble." ) ),
+    [&]( auto & page_id ) {
         add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
              translate_marker( "Out-of-Bubble Fire Spread" ),
-             translate_marker( "Controls whether fire in loaded submaps can spread into adjacent "
-                               "unloaded submaps. 'None': fire only decays, never spreads beyond "
-                               "the loaded set. 'Adjacent': fire requests one extra layer of "
-        "loaded submaps at each boundary to preserve correct spread behavior." ), {
+             translate_marker( "Controls whether fire can keep areas loaded outside of render "
+                               "distance. 'None': fire burns out in place. "
+                               "'Adjacent': fire can spread into unloaded areas, and keeps "
+        "close enough." ), {
             { "none", translate_marker( "None (pause spread)" ) },
             { "adjacent", translate_marker( "Adjacent (one layer)" ) }
         },
@@ -2499,31 +2556,18 @@ void options_manager::add_options_performance()
              translate_marker( "Fire Spread Submap Cap" ),
              translate_marker( "Maximum number of submaps that fire spread may keep loaded "
                                "simultaneously across all dimensions. Higher values allow larger "
-                               "fires to be simulated correctly at the cost of CPU "
-                               "and memory. 0 disables out-of-bubble fire spread loading entirely. "
-                               "Takes effect immediately without restart." ),
+                               "fires to be simulated correctly. "
+                               "0 disables out-of-bubble fire spread loading entirely. " ),
              0, 250, 25 );
-        add( "REALITY_BUBBLE_SIZE", page_id,
-             translate_marker( "Reality Bubble Size" ),
-             translate_marker( "Submap radius of the reality bubble (submaps visible beyond your position). "
-                               "Grid size = 2 × size + 3 submaps per side (size 4 → 11×11, legacy default). "
-                               "Maximum player sight range = 12 × (size + 1) tiles.  "
-                               "Larger values increase the loaded area and memory usage; "
-                               "smaller values reduce both. "
-                               "REQUIRES A GAME RESTART to take effect — "
-                               "changing this mid-session will NOT resize caches or the loaded map." ),
-             0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 6 );
+        add( "POWER_PORTAL_LOAD_RADIUS", performance,
+             translate_marker( "Power portal load radius (submaps)" ),
+             translate_marker( "Radius in submaps around each end of a power-portal link that is "
+                               "force-loaded while the link is active." ),
+             0, static_cast<int>( REALITY_BUBBLE_SIZE_MAX ) + 1, is_android ? 2 : 3
+           );
     } );
 
     get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
-
-    add( "POWER_PORTAL_LOAD_RADIUS", performance,
-         translate_marker( "Power portal load radius (submaps)" ),
-         translate_marker( "Radius in submaps around each end of a power-portal link that is "
-                           "force-loaded while the link is active.  Larger values keep more terrain "
-                           "around a remote portal resident, at the cost of memory." ),
-         0, static_cast<int>( REALITY_BUBBLE_SIZE_MAX ) + 1, is_android ? 2 : 3
-       );
 }
 
 void options_manager::add_options_debug()
@@ -2672,6 +2716,15 @@ void options_manager::add_options_debug()
          translate_marker( "Use legacy pathfinding" ),
          translate_marker( "If true, opt out of new pathfinding in favor of legacy one. This makes pathfinding mods not work." ),
          false );
+    add( "PATHFINDING_MAX_DIST", debug,
+         translate_marker( "Legacy Pathfinder Distance Cap" ),
+         translate_marker( "Hard cap on straight-line pathfinding distance (in tiles) for the legacy pathfinder.  "
+                           "Monsters and NPCs whose configured range exceeds this value are limited to it.  "
+                           "The old fixed map allowed at most 120 tiles end-to-end; "
+                           "the default of 96 is 50%% larger than the old per-side maximum of 60.  "
+                           "Raise this if mods require longer paths; lower it to reduce pathfinding cost at large bubble sizes." ),
+         16, 1000, 96 );
+    get_option( "PATHFINDING_MAX_DIST" ).setPrerequisite( "USE_LEGACY_PATHFINDING" );
 }
 
 void options_manager::add_options_world_default()
@@ -2725,6 +2778,12 @@ void options_manager::add_options_world_default()
          0.0, 5.0, 1.0, 0.01
        );
 
+    add( "VEHICLE_GUN_RECOIL_FACTOR", world_default,
+         translate_marker( "Vehicle gun recoil scaling factor" ),
+         translate_marker( "A scaling factor that determines how strongly firing guns pushes the vehicle you are on.  0.0 disables this behavior, 1.0 uses the default mass-based recoil propulsion, and higher values exaggerate it." ),
+         0.0, 100.0, 1.0, 0.1
+       );
+
     add( "SPAWN_DENSITY", world_default, translate_marker( "Spawn rate scaling factor" ),
          translate_marker( "A scaling factor that determines density of monster spawns." ),
          0.0, 50.0, 1.0, 0.1
@@ -2749,6 +2808,16 @@ void options_manager::add_options_world_default()
          translate_marker( "A scaling factor that determines the time between monster upgrades.  A higher number means slower evolution.  Set to 0.00 to turn off monster upgrades." ),
          0.0, 100, 2.0, 0.01
        );
+
+    add( "EVOLVE_MAX_ITERS", world_default,
+         translate_marker( "Maximum Evolution Half Lives" ),
+         translate_marker( "The maximum number of attempts for a zombie to evolve at the next half life for one evolution stage" ),
+         0, 200, 5 );
+
+    add( "ALWAYS_EVOLVE", world_default,
+         translate_marker( "Zombies Always Evolve" ),
+         translate_marker( "When reaching the maximum half lives, instead of never evolving they will evolve at that time." ),
+         false );
 
     add_empty_line();
 
@@ -3006,11 +3075,6 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
-    add( "INITIAL_TIME", world_default, translate_marker( "Initial time" ),
-         translate_marker( "Initial starting time of day on character generation." ),
-         0, 23, 8
-       );
-
     add( "INITIAL_DAY", world_default, translate_marker( "Initial day" ),
          translate_marker( "How many days into the year the cataclysm occurred.  Day 0 is Spring 1.  Day -1 randomizes the start date.  Can be overridden by scenarios.  This does not advance food rot or monster evolution." ),
          -1, 999, 15
@@ -3021,9 +3085,39 @@ void options_manager::add_options_world_default()
          0, 9999, 0
        );
 
+    add( "INITIAL_TIME", world_default, translate_marker( "Initial time" ),
+         translate_marker( "Hour of the day at which the player starts the game." ),
+         0, 23, 8
+       );
+
     add( "SEASON_LENGTH", world_default, translate_marker( "Season length" ),
          translate_marker( "Season length, in days." ),
          14, 127, 30
+       );
+
+    add( "SUNRISE_SUMMER", world_default, translate_marker( "Sunrise hour (summer)" ),
+         translate_marker( "Hour of sunrise at the summer solstice for the base dimension.  Per-dimension overrides can be set in world_types JSON." ),
+         0, 12, 5
+       );
+    add( "SUNRISE_WINTER", world_default, translate_marker( "Sunrise hour (winter)" ),
+         translate_marker( "Hour of sunrise at the winter solstice for the base dimension." ),
+         0, 12, 7
+       );
+    add( "SUNRISE_EQUINOX", world_default, translate_marker( "Sunrise hour (equinox)" ),
+         translate_marker( "Hour of sunrise at the spring and autumn equinox for the base dimension." ),
+         0, 12, 6
+       );
+    add( "SUNSET_SUMMER", world_default, translate_marker( "Sunset hour (summer)" ),
+         translate_marker( "Hour of sunset at the summer solstice for the base dimension." ),
+         12, 23, 21
+       );
+    add( "SUNSET_WINTER", world_default, translate_marker( "Sunset hour (winter)" ),
+         translate_marker( "Hour of sunset at the winter solstice for the base dimension." ),
+         12, 23, 17
+       );
+    add( "SUNSET_EQUINOX", world_default, translate_marker( "Sunset hour (equinox)" ),
+         translate_marker( "Hour of sunset at the spring and autumn equinox for the base dimension." ),
+         12, 23, 19
        );
 
     add( "CONSTRUCTION_SCALING", world_default,
@@ -3110,6 +3204,11 @@ void options_manager::add_options_world_default()
     { { "any", translate_marker( "Any" ) }, { "multi_pool", translate_marker( "Multi-pool only" ) }, { "no_freeform", translate_marker( "No freeform" ) } },
     "any"
        );
+
+    add( "ENFORCE_PROFESSION_AGE_RANGE", world_default,
+         translate_marker( "Enforce profession age ranges" ),
+         translate_marker( "When enabled, character ages are constrained by profession-defined age ranges when available." ),
+         true );
 
     add( "DISABLE_LIFTING", world_default,
          translate_marker( "Disables lifting requirements for vehicle parts." ),
@@ -4111,6 +4210,7 @@ void options_manager::cache_to_globals()
     use_tiles = false;
     use_tiles_overmap = false;
 #endif
+    use_pinyin_search = ::get_option<bool>( "USE_PINYIN_SEARCH" );
     log_from_top = ::get_option<std::string>( "LOG_FLOW" ) == "new_top";
     message_ttl = ::get_option<int>( "MESSAGE_TTL" );
     message_cooldown = ::get_option<int>( "MESSAGE_COOLDOWN" );
@@ -4156,7 +4256,7 @@ void options_manager::cache_to_globals()
     monster_plan_chunk_size   = ::get_option<int>( "MONSTER_PLAN_CHUNK_SIZE" );
     parallel_map_cache        = ::get_option<bool>( "PARALLEL_MAP_CACHE" );
     parallel_scent_update     = ::get_option<bool>( "PARALLEL_SCENT_UPDATE" );
-    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
+    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" ) && false;
 
     merge_comestible_mode = ( [] {
         const auto opt = ::get_option<std::string>( "MERGE_COMESTIBLES" );

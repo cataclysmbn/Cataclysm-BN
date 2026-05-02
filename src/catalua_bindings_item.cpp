@@ -535,24 +535,33 @@ void reg_item( sol::state &lua )
         SET_FX( convert );
 
         DOC( "Get variable as string" );
-        luna::set_fx( ut, "get_var_str",
-                      sol::resolve<std::string( const std::string &, const std::string & ) const>
-                      ( &item::get_var ) );
+        luna::set_fx( ut, "get_var_str", []( const UT_CLASS & c, const std::string & name, const std::string & def_val )
+        {
+            return c.get_var( name, def_val );
+        } );
         DOC( "Get variable as float number" );
-        luna::set_fx( ut, "get_var_num",
-                      sol::resolve<double( const std::string &, double ) const>( &item::get_var ) );
+        luna::set_fx( ut, "get_var_num", []( const UT_CLASS & c, const std::string & name, const double & def_val )
+        {
+            return c.get_var( name, def_val );
+        } );
         DOC( "Get variable as tripoint" );
-        luna::set_fx( ut, "get_var_tri",
-                      sol::resolve<tripoint( const std::string &, const tripoint & ) const>
-                      ( &item::get_var ) );
+        luna::set_fx( ut, "get_var_tri", []( const UT_CLASS & c, const std::string & name, const tripoint & def_val )
+        {
+            return c.get_var( name, def_val );
+        } );
 
-        luna::set_fx( ut, "set_var_str", sol::resolve<void( const std::string &, const std::string & )>
-                      ( &item::set_var ) );
-        luna::set_fx( ut, "set_var_num",
-                      sol::resolve<void( const std::string &, double )>( &item::set_var ) );
-        luna::set_fx( ut, "set_var_tri",
-                      sol::resolve<void( const std::string &, const tripoint & )>( &item::set_var ) );
-
+        luna::set_fx( ut, "set_var_str", []( UT_CLASS & c, const std::string & name, const std::string & val )
+        {
+            c.set_var( name, val );
+        } );
+        luna::set_fx( ut, "set_var_num", []( UT_CLASS & c, const std::string & name, const double & val )
+        {
+            c.set_var( name, val );
+        } );
+        luna::set_fx( ut, "set_var_tri", []( UT_CLASS & c, const std::string & name, const tripoint & val )
+        {
+            c.set_var( name, val );
+        } );
         SET_FX( attack_cost );
         SET_FX( stamina_cost );
 
@@ -983,10 +992,10 @@ void reg_islot( sol::state &lua )
     {
         sol::usertype<UT_CLASS> ut = luna::new_usertype<UT_CLASS>( lua, luna::no_bases, luna::no_constructor );
 
-        DOC( "Diameter of wheel in inches" );
+        DOC( "Diameter of wheel in millimeters.  Integer JSON values are legacy inches." );
         SET_MEMB_RO( diameter );
 
-        DOC( "Width of wheel in inches" );
+        DOC( "Width of wheel in millimeters.  Integer JSON values are legacy inches." );
         SET_MEMB_RO( width );
     }
 #undef UT_CLASS

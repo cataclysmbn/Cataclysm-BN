@@ -11,8 +11,9 @@
 
 #include "auto_pickup.h"
 #include "avatar.h"
-#include "batch_turns.h"
 #include "bodypart.h"
+#include "cached_options.h"
+#include "calendar.h"
 #include "character.h"
 #include "character_id.h"
 #include "character_functions.h"
@@ -85,6 +86,7 @@
 #include "vpart_range.h"
 
 static const activity_id ACT_READ( "ACT_READ" );
+static const activity_id ACT_CRAFT( "ACT_CRAFT" );
 
 static const efftype_id effect_ai_waiting( "ai_waiting" );
 static const efftype_id effect_bouldering( "bouldering" );
@@ -179,9 +181,7 @@ npc::npc()
     attitude = NPCATT_NULL;
 
     *path_settings = pathfinding_settings( 0, 1000, 1000, 10, true, true, true, false, true );
-    for( direction threat_dir : npc_threat_dir ) {
-        ai_cache.threat_map[ threat_dir ] = 0.0f;
-    }
+    ai_cache.threat_map.fill( 0.0f );
 
     // This should be in Character constructor, but because global avatar
     // gets instantiated on game launch and not after data loading stage
@@ -457,7 +457,7 @@ void npc::randomize( const npc_class_id &type )
     clear_mutations();
 
     // Add fixed traits
-    for( const trait_id &tid : trait_group::traits_from( myclass->traits ) ) {
+    for( const trait_id &tid : trait_group::traits_from( myclass->traits, male ) ) {
         if( !has_trait( tid ) ) {
             toggle_trait( tid );
         }
@@ -514,6 +514,7 @@ void npc::set_fac( const faction_id &id )
         return;
     }
     apply_ownership_to_inv();
+    ++g_npc_friends_dirty_version;
 }
 
 void npc::apply_ownership_to_inv()
@@ -696,6 +697,35 @@ void npc::revert_after_activity()
     backlog.clear();
 }
 
+void npc::set_suppress_activity_complete_message( const bool value )
+{
+    suppress_activity_complete_message = value;
+}
+
+bool npc::consume_suppress_activity_complete_message()
+{
+    const bool suppressed = suppress_activity_complete_message;
+    suppress_activity_complete_message = false;
+    return suppressed;
+}
+
+void npc::set_activity_failure_message( const std::string &msg )
+{
+    activity_failure_message = msg;
+}
+
+std::string npc::consume_activity_failure_message()
+{
+    std::string msg = activity_failure_message;
+    activity_failure_message.clear();
+    return msg;
+}
+
+std::string npc::peek_activity_failure_message() const
+{
+    return activity_failure_message;
+}
+
 npc_mission npc::get_previous_mission()
 {
     return previous_mission;
@@ -798,8 +828,8 @@ void npc::place_on_map()
     // Use get_map() rather than g->m directly so that this function works
     // correctly when called under a scoped_map_context (e.g. for out-of-bubble
     // loaded regions whose tinymap is temporarily the active map).
-    const tripoint map_origin = get_map().get_abs_sub();
-    const point dm( submap_coords + point( -map_origin.x, -map_origin.y ) );
+    const auto map_origin = get_map().get_abs_sub();
+    const point dm( submap_coords + point( -map_origin.x(), -map_origin.y() ) );
     const point offset( position.x % SEEX, position.y % SEEY );
     // value of "submap_coords.x * SEEX + posx()" is unchanged
     setpos( tripoint( offset.x + dm.x * SEEX, offset.y + dm.y * SEEY, posz() ) );
@@ -1106,6 +1136,79 @@ void npc::do_npc_read()
         }
     } else {
         add_msg( _( "Never mind." ) );
+    }
+}
+
+
+void npc::do_npc_craft( const std::optional<tripoint> &loc )
+{
+    uilist menu;
+    menu.text = _( "Craft what?" );
+    menu.addentry( 0, true, MENU_AUTOASSIGN, _( "Craft new item" ) );
+    menu.addentry( 1, true, MENU_AUTOASSIGN, _( "Resume a craft" ) );
+    menu.query();
+
+    if( menu.ret == 0 ) {
+        craft( tripoint_zero );
+    } else if( menu.ret == 1 ) {
+        struct resume_entry {
+            item *it;
+            tripoint pos;
+            bool in_inventory;
+        };
+        std::vector<resume_entry> found;
+
+        visit_items( [&]( item * node ) {
+            if( node->is_craft() ) {
+                found.push_back( { node, pos(), true } );
+            }
+            return VisitResponse::NEXT;
+        } );
+
+        map &here = get_map();
+        for( const tripoint &adj : here.points_in_radius( pos(), PICKUP_RANGE ) ) {
+            if( !here.inbounds( adj ) || here.dangerous_field_at( adj ) ) {
+                continue;
+            }
+            for( item *itm : here.i_at( adj ) ) {
+                if( itm->is_craft() ) {
+                    found.push_back( { itm, adj, false } );
+                }
+            }
+        }
+
+        if( found.empty() ) {
+            add_msg( m_info, _( "No in-progress crafts within reach." ) );
+            return;
+        }
+
+        uilist pick;
+        pick.text = _( "Resume which craft?" );
+        for( size_t i = 0; i < found.size(); ++i ) {
+            const std::string where = found[i].in_inventory
+                                      ? _( "inventory" )
+                                      : _( "ground" );
+            pick.addentry( static_cast<int>( i ), true, MENU_AUTOASSIGN,
+                           "%s (%s)", found[i].it->tname(), where );
+        }
+        pick.query();
+        if( pick.ret >= 0 && pick.ret < static_cast<int>( found.size() ) ) {
+            const resume_entry &sel = found[pick.ret];
+            item *target = sel.it;
+            tripoint target_pos = sel.pos;
+
+            if( !sel.in_inventory && can_pick_volume( *sel.it ) &&
+                can_pick_weight( *sel.it, false ) ) {
+                detached_ptr<item> det = here.i_rem( sel.pos, sel.it );
+                if( det ) {
+                    add_msg( _( "%1$s picks up the %2$s." ), name, det->tname() );
+                    target = &i_add( std::move( det ) );
+                    target_pos = pos();
+                }
+            }
+
+            iuse::craft( this, target, false, target_pos );
+        }
     }
 }
 
@@ -2347,55 +2450,82 @@ nc_color npc::basic_symbol_color() const
     return c_pink;
 }
 
-int npc::print_info( const catacurses::window &w, int line, int vLines, int column ) const
+auto npc::print_info( const catacurses::window &w, int line, int vLines, int column ) const -> int
 {
     const int last_line = line + vLines;
     const int iWidth = getmaxx( w ) - 2;
-    // First line of w is the border; the next 4 are terrain info, and after that
-    // is a blank line. w is 13 characters tall, and we can't use the last one
-    // because it's a border as well; so we have lines 6 through 11.
-    // w is also 48 characters wide - 2 characters for border = 46 characters for us
-    mvwprintz( w, point( column, line++ ), c_white, _( "NPC: " ) );
-    wprintz( w, basic_symbol_color(), name );
 
-    const bool player_knows = !g->u.has_trait( trait_INATTENTIVE );
-
-    if( display_object_ids ) {
-        mvwprintz( w, point( column, line++ ), c_light_blue, string_format( "[%s]", myclass ) );
+    const auto bar = get_hp_bar( hp_percentage(), 100 );
+    mvwprintz( w, point( column, line ), bar.second, bar.first );
+    constexpr auto bar_max_width = 5;
+    const auto bar_width = utf8_width( bar.first );
+    for( int i = 0; i < bar_max_width - bar_width; ++i ) {
+        mvwprintz( w, point( column + bar_max_width - 1 - i, line ), c_white, "." );
+    }
+    const auto name_column = column + bar_max_width + 1;
+    mvwprintz( w, point( name_column, line ), basic_symbol_color(), name );
+    const std::string att_goal = npc_attitude_name( get_attitude() );
+    if( !att_goal.empty() ) {
+        const auto info_width = getmaxx( w ) - column - 1;
+        const auto name_width = utf8_width( name );
+        const auto name_end = name_column + name_width;
+        const auto available_for_goal = column + info_width - ( name_end + 1 );
+        if( available_for_goal > 0 ) {
+            const auto goal_text = utf8_truncate( att_goal, static_cast<size_t>( available_for_goal ) );
+            if( !goal_text.empty() ) {
+                const auto goal_width = utf8_width( goal_text );
+                const auto right_align_offset = std::max( 0, info_width - goal_width );
+                auto goal_column = column + right_align_offset;
+                goal_column = std::max( goal_column, name_end + 1 );
+                mvwprintz( w, point( goal_column, line ), basic_symbol_color(), goal_text );
+            }
+        }
     }
 
-    if( sees( g->u ) && player_knows )  {
-        mvwprintz( w, point( column, line++ ), c_yellow, _( "Aware of your presence!" ) );
+    Attitude att = attitude_to( g->u );
+    const std::pair<translation, nc_color> res = Creature::get_attitude_ui_data( att );
+
+    const std::string senses_str = sees( g->u ) ? _( "Aware of your presence" ) :
+                                   _( "Unaware of you" );
+    line = line + 1;
+    mvwprintz( w, point( column, line ), sees( g->u ) ? c_yellow : c_green, senses_str );
+    const auto info_width = getmaxx( w ) - column - 1;
+    const auto senses_end = column + utf8_width( senses_str );
+    const auto info_end = column + info_width;
+    const int available_for_att = std::max( 0, info_end - ( senses_end + 1 ) );
+    if( available_for_att > 0 ) {
+        const auto att_text = utf8_truncate( res.first.translated(),
+                                             static_cast<size_t>( available_for_att ) );
+        if( !att_text.empty() ) {
+            const int att_width = utf8_width( att_text );
+            const int att_column = info_end - att_width;
+            mvwprintz( w, point( att_column, line ), res.second, att_text );
+        }
     }
 
-    if( is_armed() ) {
-        trim_and_print( w, point( column, line++ ), iWidth, c_red, _( "Wielding a %s" ),
+    if( display_object_ids && line < last_line ) {
+        mvwprintz( w, point( column, ++line ), c_light_blue, string_format( "[%s]", myclass ) );
+    }
+
+    if( is_armed() && line < last_line ) {
+        mvwprintz( w, point( column, ++line ), c_light_gray, _( "Wielding: " ) );
+        trim_and_print( w, point( column + utf8_width( _( "Wielding: " ) ), line ), iWidth, c_red,
                         primary_weapon().tname() );
     }
-
-    const auto enumerate_print = [ w, last_line, column, iWidth, &line ]( const std::string & str_in,
-    nc_color color ) {
-        const std::vector<std::string> folded = foldstring( str_in, iWidth );
-        for( auto it = folded.begin(); it < folded.end() && line < last_line; ++it, ++line ) {
-            trim_and_print( w, point( column, line ), iWidth, color, *it );
-        }
-    };
 
     const std::string worn_str = enumerate_as_string( worn.begin(),
     worn.end(), []( const item * const & it ) {
         return it->tname();
     } );
     if( !worn_str.empty() ) {
-        const std::string wearing = _( "Wearing: " ) + worn_str;
-        enumerate_print( wearing, c_light_blue );
+        std::vector<std::string> worn_lines = foldstring( _( "Wearing: " ) + worn_str, iWidth );
+        int worn_numlines = worn_lines.size();
+        // keeps the light gray color intact; changing this breaks the colorization again
+        for( int i = 0; i < worn_numlines && line < last_line; i++ ) {
+            trim_and_print( w, point( column, ++line ), iWidth, c_light_gray, worn_lines[i] );
+        }
     }
 
-    // as of now, visibility of mutations is between 0 and 10
-    // 10 perception and 10 distance would see all mutations - cap 0
-    // 10 perception and 30 distance - cap 5, some mutations visible
-    // 3 perception and 3 distance would see all mutations - cap 0
-    // 3 perception and 15 distance - cap 5, some mutations visible
-    // 3 perception and 20 distance would be barely able to discern huge antlers on a person - cap 10
     const int per = g->u.get_per();
     const int dist = rl_dist( g->u.pos(), pos() );
     int visibility_cap;
@@ -2405,10 +2535,13 @@ int npc::print_info( const catacurses::window &w, int line, int vLines, int colu
         visibility_cap = std::round( dist * dist / 20.0 / ( per - 1 ) );
     }
 
-    const auto trait_str = visible_mutations( visibility_cap );
+    const std::string trait_str = visible_mutations( visibility_cap );
     if( !trait_str.empty() ) {
-        const std::string mutations = _( "Traits: " ) + trait_str;
-        enumerate_print( mutations, c_green );
+        std::vector<std::string> trait_lines = foldstring( _( "Traits: " ) + trait_str, iWidth );
+        int trait_numlines = trait_lines.size();
+        for( int i = 0; i < trait_numlines && line < last_line; i++ ) {
+            trim_and_print( w, point( column, ++line ), iWidth, c_light_gray, trait_lines[i] );
+        }
     }
 
     return line;
@@ -2554,8 +2687,10 @@ void npc::reboot()
     ai_cache.guard_pos = std::nullopt;
     ai_cache.my_weapon_value = 0;
     ai_cache.friends.clear();
+    ai_cache.cached_npc_friends.clear();
+    ai_cache.npc_friends_version = 0;
     ai_cache.dangerous_explosives.clear();
-    ai_cache.threat_map.clear();
+    ai_cache.threat_map.fill( 0.0f );
     ai_cache.searched_tiles.clear();
     activity = std::make_unique<player_activity>();
     clear_destination();
@@ -2638,6 +2773,12 @@ void npc::die( Creature *nkiller )
     place_corpse();
 }
 
+bool npc::is_simulated() const
+{
+    return submap_loader.is_simulated( get_dimension(),
+                                       tripoint_abs_sm( global_sm_location() ) );
+}
+
 void npc::erase()
 {
     if( dead ) {
@@ -2663,10 +2804,16 @@ void npc::erase()
             my_fac->remove_member( getID() );
         }
     }
+    manually_erased_ = true;
     dead = true;
+    on_unload();
     g->remove_npc_follower( getID() );
     get_overmapbuffer( get_dimension() ).remove_npc( getID() );
-    g->cleanup_dead();
+    if( g->is_processing_npcs() ) {
+        // Deferred: cleanup_dead() at the end of npcmove() will remove from active_npc.
+        return;
+    }
+    g->erase_npc( getID() );
 }
 
 std::string npc_attitude_id( npc_attitude att )
@@ -2817,66 +2964,23 @@ void npc::add_new_mission( class mission *miss )
 
 void npc::on_unload()
 {
+    last_updated = calendar::turn;
 }
 
 // A throtled version of player::update_body since npc's don't need to-the-turn updates.
 void npc::npc_update_body()
 {
     if( calendar::once_every( 10_seconds ) ) {
-        update_body( last_updated, calendar::turn );
+        update_body( 10_seconds );
         last_updated = calendar::turn;
     }
 }
 
 void npc::on_load()
 {
-    const auto advance_effects = [&]( const time_duration & elapsed_dur ) {
-        for( auto &elem : *effects ) {
-            for( auto &_effect_it : elem.second ) {
-                effect &e = _effect_it.second;
-                const time_duration &time_left = e.get_duration();
-                if( time_left > 1_turns ) {
-                    if( time_left < elapsed_dur ) {
-                        e.set_duration( 1_turns );
-                    } else {
-                        e.set_duration( time_left - elapsed_dur );
-                    }
-                }
-            }
-        }
-    };
-    // Cap at some reasonable number, say 2 days
-    const time_duration dt = std::min( calendar::turn - last_updated, 2_days );
-    // TODO: Sleeping, healing etc.
+    batch_turns( to_turns<int>( calendar::turn - last_updated ) );
+
     last_updated = calendar::turn;
-    time_point cur = calendar::turn - dt;
-    add_msg( m_debug, "on_load() by %s, %d turns", name, to_turns<int>( dt ) );
-    // First update with 30 minute granularity, then 5 minutes, then turns
-    for( ; cur < calendar::turn - 30_minutes; cur += 30_minutes + 1_turns ) {
-        update_body( cur, cur + 30_minutes );
-        advance_effects( 30_minutes );
-    }
-    for( ; cur < calendar::turn - 5_minutes; cur += 5_minutes + 1_turns ) {
-        update_body( cur, cur + 5_minutes );
-        advance_effects( 5_minutes );
-    }
-    for( ; cur < calendar::turn; cur += 1_turns ) {
-        update_body( cur, cur + 1_turns );
-        process_effects();
-    }
-
-    if( dt > 0_turns ) {
-        // This ensures food is properly rotten at load
-        // Otherwise NPCs try to eat rotten food and fail
-        process_items();
-        // give NPCs that are doing activities a pile of moves
-        if( has_destination() || activity ) {
-            mod_moves( to_moves<int>( dt ) );
-        }
-    }
-
-    // Not necessarily true, but it's not a bad idea to set this
-    has_new_items = true;
 
     // for spawned npcs
     if( g->m.has_flag( "UNSTABLE", pos() ) ) {
@@ -3012,28 +3116,51 @@ void npc::batch_turns( int n )
     if( n <= 0 || is_dead_state() ) {
         return;
     }
-    n = std::min( n, MAX_CATCHUP_NPC );
 
-    // Biological catchup (hunger, thirst, healing, etc.) in one coarse pass.
-    // Call update_body directly (bypassing the once_every throttle used in
-    // npc_update_body) since we're doing a deliberate catch-up pass.
-    if( last_updated < calendar::turn ) {
-        update_body( last_updated, calendar::turn );
-        last_updated = calendar::turn;
-    }
-
-    // Per-turn effect/bonus processing.
-    for( int i = 0; i < n; ++i ) {
-        if( is_dead_state() ) {
-            break;
+    const auto advance_effects = [&]( const time_duration & elapsed_dur ) {
+        for( auto &elem : *effects ) {
+            for( auto &_effect_it : elem.second ) {
+                effect &e = _effect_it.second;
+                const time_duration &time_left = e.get_duration();
+                if( time_left > 1_turns ) {
+                    if( time_left < elapsed_dur ) {
+                        e.set_duration( 1_turns );
+                    } else {
+                        e.set_duration( time_left - elapsed_dur );
+                    }
+                }
+            }
         }
-        process_turn();
+    };
+    auto dt = time_duration::from_turns<int>( n );
+    // TODO: Sleeping, healing etc.
+    // First update with 30 minute granularity, then 5 minutes, then turns
+    for( ; dt >= 31_minutes; dt -= 30_minutes ) {
+        update_body( 30_minutes );
+        update_morale( 30_minutes );
+        advance_effects( 30_minutes );
     }
+    for( ; dt >= 6_minutes; dt -= 5_minutes ) {
+        update_body( 5_minutes );
+        update_morale( 5_minutes );
+        advance_effects( 5_minutes );
+    }
+    for( ; dt >= 1_turns; dt -= 1_turns ) {
+        update_body( 1_turns );
+        update_morale( 1_turns );
+        process_effects();
+    }
+    // This ensures food is properly rotten at load
+    // Otherwise NPCs try to eat rotten food and fail
+    process_items();
+
+    // Not necessarily true, but it's not a bad idea to set this
+    has_new_items = true;
+
+    moves = 0;
 
     // Fast-forward any ongoing activity.
     advance_job_progress( n );
-
-    moves = 0;
 }
 
 void npc::advance_job_progress( int n )
@@ -3215,7 +3342,8 @@ std::pair<PathfindingSettings, RouteSettings> npc::get_pathfinding_pair(
     PathfindingSettings path_settings;
 
     path_settings.door_open_cost = rules.has_flag( ally_rule::avoid_doors ) ? INFINITY : 2.0;
-    path_settings.mob_presence_penalty = 16.0;
+    path_settings.mob_presence_penalty =
+        get_option<float>( "PATHFINDING_MOB_PRESENCE_PENALTY_NPC_DEFAULT" );
     path_settings.rough_terrain_cost = 0.0;
     path_settings.sharp_terrain_cost = INFINITY;
     path_settings.trap_cost = INFINITY;

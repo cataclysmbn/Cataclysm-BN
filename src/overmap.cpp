@@ -28,9 +28,13 @@
 #include "assign.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua.h"
+#include "catalua_impl.h"
+#include "catalua_sol.h"
 #include "character_id.h"
 #include "coordinate_conversions.h"
 #include "debug.h"
+#include "init.h"
 #include "distribution.h"
 #include "flood_fill.h"
 #include "fstream_utils.h"
@@ -2786,10 +2790,27 @@ void overmap_special::load( const JsonObject &jo, const std::string &src )
     assign( jo, "rotate", rotatable_, strict );
     assign( jo, "flags", flags_, strict );
 
+    if( jo.has_array( "dimensions" ) ) {
+        dimensions_.clear();
+        for( const std::string &dim : jo.get_array( "dimensions" ) ) {
+            dimensions_.push_back( dim );
+        }
+    }
+
     // Another hack
     if( !is_special ) {
         flags_.insert( "ELECTRIC_GRID" );
     }
+}
+
+auto overmap_special::can_spawn_in_dimension( const std::string &dim_id,
+        bool dim_inherits_base ) const -> bool
+{
+    if( dimensions_.empty() ) {
+        // No filter: allowed in primary ("") and in dims with inherit_base_mapgen.
+        return dim_id.empty() || dim_inherits_base;
+    }
+    return std::ranges::find( dimensions_, dim_id ) != dimensions_.end();
 }
 
 void overmap_special::finalize()
@@ -2926,7 +2947,8 @@ void overmap::populate( const std::string &dim_id )
     const overmap_feature_flag_settings &overmap_feature_flag = settings->overmap_feature_flag;
 
     const bool should_blacklist = !overmap_feature_flag.blacklist.empty();
-    const bool should_whitelist = !overmap_feature_flag.whitelist.empty();
+    const bool should_whitelist = !overmap_feature_flag.whitelist.empty() ||
+                                  overmap_feature_flag.clear_whitelist;
 
     // If this region's settings has blacklisted or whitelisted overmap feature flags, let's
     // filter our default batch.
@@ -3023,6 +3045,26 @@ std::optional<mapgen_arguments> *overmap::mapgen_args( const tripoint_om_omt &p 
         return nullptr;
     }
     return &mapgen_arg_storage[it->second];
+}
+
+overmap::mapgen_args_slot overmap::get_mapgen_args_slot( const tripoint_om_omt &p )
+{
+    auto it = mapgen_args_index.find( p );
+    if( it == mapgen_args_index.end() ) {
+        return {};
+    }
+    const int idx = it->second;
+    return { &mapgen_arg_storage[idx], &mapgen_args_init_flags_[idx] };
+}
+
+void overmap::sync_mapgen_args_init_flags()
+{
+    mapgen_args_init_flags_.assign( mapgen_arg_storage.size(), 0 );
+    for( size_t i = 0; i < mapgen_arg_storage.size(); ++i ) {
+        if( mapgen_arg_storage[i].has_value() ) {
+            mapgen_args_init_flags_[i] = 1;
+        }
+    }
 }
 
 bool &overmap::seen( const tripoint_om_omt &p )
@@ -3396,14 +3438,22 @@ void overmap::generate( const overmap *north, const overmap *east,
     populate_connections_out_from_neighbors( north, east, south, west );
 
     place_rivers( north, east, south, west );
-    place_lakes();
-    place_forests();
-    place_swamps();
+    if( settings->overmap_lake.noise_threshold_lake > 0.0 ) {
+        place_lakes();
+    }
+    if( settings->overmap_forest.noise_threshold_forest > 0.0 ) {
+        place_forests();
+        place_swamps();
+    }
     place_cities();
-    place_forest_trails();
+    if( settings->forest_trail.chance > 0 ) {
+        place_forest_trails();
+    }
     place_roads( north, east, south, west );
     place_specials( enabled_specials );
-    place_forest_trailheads();
+    if( settings->forest_trail.chance > 0 ) {
+        place_forest_trailheads();
+    }
 
     polish_rivers( north, east, south, west );
 
@@ -3683,7 +3733,53 @@ void overmap::move_hordes()
         mg.dec_interest( 1 );
 
         if( ( mg.pos.xy() == mg.target.xy() ) || mg.interest <= 15 ) {
-            mg.wander( *this );
+            const auto om_abs = pos();
+            const auto group_abs = project_combine( om_abs, mg.pos.xy() );
+            const auto target_abs = project_combine( om_abs, mg.target.xy() );
+            auto used_hook_target = false;
+
+            if( auto *state = DynamicDataLoader::get_instance().lua.get() ) {
+                auto &lua = state->lua;
+                auto game = lua.globals()["game"];
+                auto behaviours_obj = game["horde_behaviours"].get<sol::object>();
+                if( behaviours_obj.is<sol::table>() ) {
+                    auto behaviours = behaviours_obj.as<sol::table>();
+                    const auto fn_obj = behaviours.get_or<sol::object>( mg.horde_behaviour, sol::lua_nil );
+                    if( fn_obj.is<sol::protected_function>() || fn_obj.is<sol::function>() ) {
+                        auto func = fn_obj.as<sol::protected_function>();
+                        auto params = lua.create_table();
+                        auto results = lua.create_table();
+                        params["results"] = results;
+                        params["group"] = &mg;
+                        params["pos_abs_sm"] = tripoint_abs_sm( group_abs, mg.pos.z() ).raw();
+                        params["target_abs_sm"] = tripoint_abs_sm( target_abs, mg.target.z() ).raw();
+                        params["behaviour"] = mg.horde_behaviour;
+
+                        auto res = func( params );
+                        check_func_result( res );
+
+                        const auto hook_target = results.get<sol::optional<tripoint>>( "target" );
+                        const auto hook_interest = results.get<sol::optional<int>>( "interest" );
+                        if( hook_target.has_value() ) {
+                            const auto hook_abs_sm = tripoint_abs_sm( *hook_target );
+                            auto target_om = point_abs_om{};
+                            auto target_within = point_om_sm{};
+                            std::tie( target_om, target_within ) = project_remain<coords::om>( hook_abs_sm.xy() );
+                            if( target_om == om_abs ) {
+                                mg.target = tripoint_om_sm( target_within, hook_abs_sm.z() );
+                                used_hook_target = true;
+                            }
+                        }
+                        if( hook_interest.has_value() ) {
+                            mg.set_interest( *hook_interest );
+                        }
+                    }
+                }
+            }
+
+            if( !used_hook_target ) {
+                mg.wander( *this );
+            }
         }
 
         // Decrease movement chance according to the terrain we're currently on.
@@ -4706,12 +4802,14 @@ void overmap::place_river( point_om_omt pa, point_om_omt pb )
 
 void overmap::place_cities()
 {
-    int op_city_size = get_option<int>( "CITY_SIZE" );
+    const city_settings &city_spec = settings->city_spec;
+    int op_city_size = city_spec.city_size >= 0 ? city_spec.city_size
+                       : get_option<int>( "CITY_SIZE" );
     if( op_city_size <= 0 ) {
         return;
     }
-    int op_city_spacing = get_option<int>( "CITY_SPACING" );
-    const city_settings &city_spec = settings->city_spec;
+    int op_city_spacing = city_spec.city_spacing >= 0 ? city_spec.city_spacing
+                          : get_option<int>( "CITY_SPACING" );
     // spacing dictates how much of the map is covered in cities
     //   city  |  cities  |   size N cities per overmap
     // spacing | % of map |  2  |  4  |  8  |  12 |  16
@@ -4860,6 +4958,10 @@ bool overmap::place_building( const tripoint_om_omt &p, om_direction::type dir, 
     for( size_t retries = 10; retries > 0; --retries ) {
         const overmap_special_id building_tid = pick_random_building_to_place( town_dist,
                                                 attempt_finale_place );
+
+        if( !building_tid.is_valid() ) {
+            return false;
+        }
 
         if( can_place_special( *building_tid, building_pos, building_dir, false ) ) {
             place_special( *building_tid, building_pos, building_dir, town, false, false );
@@ -5789,6 +5891,7 @@ std::vector<tripoint_om_omt> overmap::place_special(
     // Link grid and mapgens
     const int args_index = mapgen_arg_storage.size();
     mapgen_arg_storage.emplace_back();
+    mapgen_args_init_flags_.push_back( 0 );
     for( const tripoint_om_omt &location : result.omts_used ) {
         mapgen_args_index[location] = args_index;
         overmap_special_placements[location] = special.id;
@@ -5869,7 +5972,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         std::vector<std::string> directions{"_north", "_east", "_south", "_west"};
         auto &owning_omb = get_overmapbuffer( dimension_id_ );
         tripoint_om_omt local_pos = owning_omb.get_om_global( p ).local;
-        const tripoint target_sub( omt_to_sm_copy( p.raw() ) );
+        const auto target_sub( project_to<coords::sm>( p ) );
         std::string note_text( chosen );
         std::ranges::replace( note_text, '_', ' ' );
         add_note( local_pos, string_format( "Signs of %s ore nearby.", note_text ) );
@@ -5901,8 +6004,8 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
             for( int y = 0; y < 2; y++ ) {
                 // Apply previewed mapgen to map. Since this is a function for testing, we try avoid triggering
                 // functions that would alter the results
-                const tripoint dest_pos = target_sub + point( x, y );
-                const tripoint src_pos = tripoint{ x, y, p.z() };
+                const auto dest_pos = target_sub + point_rel_sm( x, y );
+                const auto src_pos = tripoint_bub_sm{ x, y, p.z() };
 
                 submap *destsm = MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( dest_pos );
                 submap *srcsm = tmp.get_submap_at_grid( src_pos );
@@ -5910,7 +6013,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
                 submap::swap( *destsm,  *srcsm );
 
                 for( auto &veh : destsm->vehicles ) {
-                    veh->sm_pos = dest_pos;
+                    veh->sm_pos = dest_pos.raw();
                 }
 
                 if( !destsm->spawns.empty() ) {                              // trigger spawnpoints
@@ -5922,7 +6025,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         // Since we cleared the vehicle cache of the whole z-level (not just the generate map), we add it back here
         for( int x = 0; x < here.getmapsize(); x++ ) {
             for( int y = 0; y < here.getmapsize(); y++ ) {
-                const tripoint dest_pos = tripoint( x, y, p.z() );
+                const auto dest_pos = tripoint_bub_sm( x, y, p.z() );
                 const submap *destsm = here.get_submap_at_grid( dest_pos );
                 here.update_vehicle_list( destsm, p.z() ); // update real map's vcaches
             }

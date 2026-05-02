@@ -2033,6 +2033,14 @@
     "entries": [ { "item": "ksg-25", "charges": [ 0, 12 ] }, { "group": "on_hand_shot" } ]
   },
   {
+    "id": "nested_dp-12",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [ { "item": "dp-12", "ammo-group": "on_hand_shot", "charges": [ 0, 7 ] }, { "group": "on_hand_shot" } ]
+  },
+  {
     "id": "nested_tavor_12",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

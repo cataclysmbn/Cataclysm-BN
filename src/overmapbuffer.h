@@ -26,6 +26,7 @@
 class character_id;
 enum class cube_direction : int;
 class map_extra;
+class mapgendata;
 class monster;
 class npc;
 class overmap;
@@ -190,10 +191,6 @@ class overmapbuffer
          */
         void save( const std::string &dim_id );
 
-        /** Legacy overload — delegates to save(g_active_dimension_id).
-         *  Do NOT call from background threads. */
-        void save();
-
         void clear();
         void create_custom_overmap( const point_abs_om &, overmap_special_batch &specials );
 
@@ -225,6 +222,15 @@ class overmapbuffer
         void ter_set( const tripoint_abs_omt &p, const oter_id &id );
         std::string *join_used_at( const std::pair<tripoint_abs_omt, cube_direction> & );
         std::optional<mapgen_arguments> *mapgen_args( const tripoint_abs_omt & );
+        /**
+         * Thread-safe lazy initializer for overmap_special mapgen arguments.
+         * Returns the arguments for @p p, initializing them from the special's
+         * parameter definitions (using @p md as context) if not yet set.
+         * Returns std::nullopt if no args are defined for this position.
+         */
+        std::optional<mapgen_arguments> get_or_init_mapgen_args(
+            const tripoint_abs_omt &p, const mapgendata &md,
+            const std::string &terrain_type_id );
         /**
          * Uses global overmap terrain coordinates.
          */
@@ -464,6 +470,8 @@ class overmapbuffer
          * @param p The player's location in absolute submap coordinates.
          */
         void signal_nemesis( tripoint_abs_sm p );
+        /// Create a new monster group (useful for hordes) and return a pointer to it, or nullptr on failure.
+        mongroup *create_horde( const mongroup &group );
         /**
          * Process nearby monstergroups (dying mostly).
          */
@@ -592,6 +600,16 @@ class overmapbuffer
          * and add_note() concurrently without blocking unrelated overmapbuffer reads.
          */
         mutable std::mutex extras_mutex_;
+        /**
+         * Protects lazy initialization of overmap_special mapgen arguments stored in
+         * overmap::mapgen_arg_storage.  Must be acquired AFTER any @ref mutex operation
+         * completes — in practice get_om_global() acquires+releases @ref mutex internally,
+         * so mapgen_args_mutex_ is acquired only after that returns.
+         *
+         * Separate from @ref mutex so that generation workers can initialize args
+         * concurrently without blocking unrelated overmapbuffer reads.
+         */
+        mutable std::mutex mapgen_args_mutex_;
         /**
          * Common function used by the find_closest/all/random to determine if the location is
          * findable based on the specified criteria.

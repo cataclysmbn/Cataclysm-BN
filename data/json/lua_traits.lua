@@ -13,6 +13,19 @@ local effect_shakes = EffectTypeId.new("shakes")
 local morale_indoor_misery = MoraleTypeDataId.new("morale_indoor_misery")
 local morale_outdoor_misery = MoraleTypeDataId.new("morale_outdoor_misery")
 local morale_clutter_intolerant = MoraleTypeDataId.new("morale_clutter_intolerant")
+local moppable_field_ids = {
+  FieldTypeId.new("fd_blood"):int_id(),
+  FieldTypeId.new("fd_blood_veggy"):int_id(),
+  FieldTypeId.new("fd_blood_insect"):int_id(),
+  FieldTypeId.new("fd_blood_invertebrate"):int_id(),
+  FieldTypeId.new("fd_gibs_flesh"):int_id(),
+  FieldTypeId.new("fd_gibs_veggy"):int_id(),
+  FieldTypeId.new("fd_gibs_insect"):int_id(),
+  FieldTypeId.new("fd_gibs_invertebrate"):int_id(),
+  FieldTypeId.new("fd_bile"):int_id(),
+  FieldTypeId.new("fd_slime"):int_id(),
+  FieldTypeId.new("fd_sludge"):int_id(),
+}
 
 local clutter_radius = 8
 local clutter_threshold = 12
@@ -50,6 +63,34 @@ local function is_passable(map, pt)
   local furn = map:get_furn_at(pt):obj()
   if furn:has_flag("IMPASSABLE") then return false end
   return true
+end
+
+---@param who Character
+local function is_wielding_mop(who)
+  for _, it in pairs(who:all_items(false)) do
+    if who:is_wielding(it) then
+      local itype = it:get_type():obj()
+      if itype and itype:can_use("MOP") then return true end
+    end
+  end
+  return false
+end
+
+---@param here Map
+---@param center Tripoint
+local function auto_mop_surrounding(here, center)
+  local mopped_tiles = 0
+  for _, pt in ipairs(here:points_in_radius(center, 1)) do
+    local mopped_tile = false
+    for _, field_id in ipairs(moppable_field_ids) do
+      if here:has_field_at(pt, field_id) then
+        here:remove_field_at(pt, field_id)
+        mopped_tile = true
+      end
+    end
+    if mopped_tile then mopped_tiles = mopped_tiles + 1 end
+  end
+  return mopped_tiles
 end
 
 ---@param who Character
@@ -260,20 +301,21 @@ local function tick_clutter_intolerant()
   end
 end
 
----@param params table
----@return boolean
+---@param params OnCharacterTryMoveParams
 local function on_character_try_move(params)
   ---@type Character
   local ch = params.char
   if not ch then return true end
+
+  local here = gapi.get_map()
+  local dest = params.to
+
   if not ch:has_trait(trait_nyctophobia) then return true end
   if ch:get_effect_int(effect_depressants) > 3 then return true end
   if params.movement_mode == CharacterMoveMode.run then return true end
 
-  local dest = params.to
   if not dest then return true end
 
-  local here = gapi.get_map()
   local threshold = nyctophobia_threshold()
   if here:ambient_light_at(dest) >= threshold then return true end
 
@@ -288,9 +330,30 @@ local function on_character_try_move(params)
   return false
 end
 
+---@param params OnCharacterTryMoveParams
+local function on_character_try_move_with_auto_mop(params)
+  local allowed = on_character_try_move(params)
+  if not allowed then return false end
+
+  ---@type Character
+  local ch = params.char
+  if not ch then return true end
+  if params.movement_mode ~= CharacterMoveMode.walk then return true end
+
+  local dest = params.to
+  if not dest then return true end
+
+  local here = gapi.get_map()
+  if not is_wielding_mop(ch) then return true end
+
+  local mopped_tiles = auto_mop_surrounding(here, dest)
+  if mopped_tiles > 0 then ch:mod_moves(-150 * mopped_tiles) end
+  return true
+end
+
 ---@param mod table
 function lua_traits.register(mod)
-  mod.on_character_try_move = on_character_try_move
+  mod.on_character_try_move = on_character_try_move_with_auto_mop
   mod.on_nyctophobia_tick = tick_nyctophobia
   mod.on_morale_traits_tick = tick_morale_traits
   mod.on_clutter_intolerant_tick = tick_clutter_intolerant

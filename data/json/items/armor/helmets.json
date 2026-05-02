@@ -69,6 +69,24 @@
     "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
   },
   {
+    "id": "helmet_steel",
+    "copy-from": "helmet_army",
+    "repairs_like": "barbute",
+    "type": "ARMOR",
+    "name": { "str": "steel combat helmet" },
+    "description": "A heavy helmet made of hardened steel with a chin strap.  Various designs were once used by armies around the world, modern ballistic helmets have mostly relegated this to military surplus.",
+    "weight": "1500 g",
+    "volume": "1 L",
+    "price": "80 USD",
+    "price_postapoc": "12 USD",
+    "to_hit": -1,
+    "bashing": 12,
+    "encumbrance": 25,
+    "material": [ "hardsteel" ],
+    "color": "dark_gray",
+    "material_thickness": 5
+  },
+  {
     "id": "tac_fullhelmet",
     "repairs_like": "xlkevlar",
     "type": "ARMOR",
@@ -139,7 +157,7 @@
     "warmth": 15,
     "material_thickness": 6,
     "environmental_protection": 6,
-    "flags": [ "VARSIZE", "WATERPROOF", "FANCY", "STURDY" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
   },
   {
     "id": "helmet_ball",
@@ -416,6 +434,29 @@
     "warmth": 30,
     "material_thickness": 2,
     "flags": [ "VARSIZE", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
+  },
+  {
+    "id": "armored_helmet_liner",
+    "repairs_like": "phase_immersion_suit",
+    "type": "ARMOR",
+    "name": { "str": "armored helmet liner" },
+    "description": "This experimental helmet liner is made out of advanced materials to provide protection while maintaining flexibility. Initially designed as supplemental head protection for the phase immersion suit, it's too thick to wear with power armor.",
+    "weight": "200 g",
+    "volume": "300 ml",
+    "price": "1000 USD",
+    "price_postapoc": "50 cent",
+    "to_hit": -1,
+    "bashing": 2,
+    "material": [ "carbide" ],
+    "symbol": "[",
+    "looks_like": "helmet_liner",
+    "color": "dark_gray",
+    "covers": [ "head" ],
+    "coverage": 100,
+    "encumbrance": 10,
+    "warmth": 30,
+    "material_thickness": 2,
+    "flags": [ "SKINTIGHT", "STURDY", "WATERPROOF" ]
   },
   {
     "id": "cap_arming",

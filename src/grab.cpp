@@ -205,10 +205,10 @@ bool game::grabbed_veh_move( const tripoint &dp )
 
         // Grabbed part has to stay at distance 1 to the player
         // and in roughly the same direction.
-        const tripoint new_part_pos = grabbed_vehicle->global_pos3() +
-                                      grabbed_vehicle->part( grabbed_part ).precalc[ 1 ];
-        const tripoint expected_pos = u.pos() + dp + from;
-        const tripoint actual_dir = expected_pos - new_part_pos;
+        const auto new_part_pos = tripoint_bub_ms( grabbed_vehicle->global_pos3() ) +
+                                  grabbed_vehicle->part( grabbed_part ).precalc[ 1 ];
+        const auto expected_pos = tripoint_bub_ms( u.pos() ) + dp + from;
+        const tripoint_rel_ms actual_dir = expected_pos - new_part_pos;
 
         grabbed_vehicle->adjust_zlevel( 1, dp );
 
@@ -216,24 +216,24 @@ bool game::grabbed_veh_move( const tripoint &dp )
         const tripoint player_prev = u.pos();
         u.setpos( tripoint_zero );
         std::vector<veh_collision> colls;
-        const bool failed = grabbed_vehicle->collision( colls, actual_dir, true );
+        const bool failed = grabbed_vehicle->collision( colls, actual_dir.raw(), true );
         u.setpos( player_prev );
         if( !colls.empty() ) {
             blocker_name = colls.front().target_name;
         }
-        return failed ? tripoint_zero : actual_dir;
+        return failed ? tripoint_rel_ms::zero() : actual_dir;
     };
 
     // First try the move as intended
     // But if that fails and the move is a zig-zag, try to recover:
     // Try to place the vehicle in the position player just left rather than "flattening" the zig-zag
-    tripoint final_dp_veh = get_move_dir( dp_veh, next_grab );
-    if( final_dp_veh == tripoint_zero && zigzag ) {
+    tripoint_rel_ms final_dp_veh = get_move_dir( dp_veh, next_grab );
+    if( final_dp_veh == tripoint_rel_ms::zero() && zigzag ) {
         final_dp_veh = get_move_dir( -prev_grab, -dp );
         next_grab = -dp;
     }
 
-    if( final_dp_veh == tripoint_zero ) {
+    if( final_dp_veh == tripoint_rel_ms::zero() ) {
         add_msg( _( "The %s collides with %s." ), grabbed_vehicle->name, blocker_name );
         u.grab_point = prev_grab;
         return true;

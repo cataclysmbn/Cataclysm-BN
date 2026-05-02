@@ -204,7 +204,7 @@ const item_category *inventory_entry::get_category_ptr() const
 
 bool inventory_column::activatable() const
 {
-    return std::any_of( entries.begin(), entries.end(), []( const inventory_entry & e ) {
+    return std::ranges::any_of( entries, []( const inventory_entry & e ) {
         return e.is_selectable();
     } );
 }

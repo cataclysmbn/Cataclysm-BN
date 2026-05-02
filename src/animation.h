@@ -2,6 +2,7 @@
 
 #include <list>
 #include <map>
+#include <string>
 #include <vector>
 
 #include "color.h"
@@ -67,3 +68,13 @@ struct draw_sprite_line_options {
 };
 /// Draw a line of sprites along the given points
 void draw_line_of( const draw_sprite_line_options &options );
+
+struct draw_bullet_trajectories_options {
+    const std::vector<std::vector<tripoint>> &trajectories;
+    char bullet;
+    bool draw_as_line = false;
+    std::string custom_sprite;
+};
+
+/// Draw multiple projectile trajectories in a single animation sequence.
+void draw_bullet_trajectories( const draw_bullet_trajectories_options &options );

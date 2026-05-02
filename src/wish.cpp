@@ -35,6 +35,7 @@
 #include "skill.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
@@ -693,8 +694,24 @@ class wish_item_callback: public uilist_callback
 
                 std::vector<iteminfo> info = tmp.info();
                 std::string info_string = format_item_info( info, {} );
-                fold_and_print( menu->window, point( startx, starty ), menu->pad_right - 1, c_light_gray,
-                                info_string );
+                const auto info_lines = foldstring( info_string, menu->pad_right - 1 );
+                int line_y = starty;
+                for( const std::string &line_text : info_lines ) {
+                    if( line_y >= menu->w_height - 1 ) {
+                        break;
+                    }
+                    const std::string stripped = trim_whitespaces(
+                                                     remove_color_tags( line_text ) );
+                    if( stripped == "--" ) {
+                        mvwhline( menu->window, point( startx, line_y ), LINE_OXOX,
+                                  menu->pad_right - 1 );
+                    } else if( !stripped.empty() ) {
+                        nc_color cur_color = c_light_gray;
+                        print_colored_text( menu->window, point( startx, line_y ), cur_color,
+                                            c_light_gray, line_text );
+                    }
+                    ++line_y;
+                }
             }
 
             if( spawn_everything ) {

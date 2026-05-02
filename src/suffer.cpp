@@ -44,6 +44,7 @@
 #include "overmapbuffer.h"
 #include "pldata.h"
 #include "point.h"
+#include "regional_settings.h"
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
@@ -337,10 +338,16 @@ void Character::suffer_while_awake( const int current_stim )
     }
 
     if( has_trait( trait_JITTERY ) && !has_effect( effect_shakes ) ) {
+
+        int total_kcal = get_stored_kcal() + stomach.get_calories();
+        int max_kcal = max_stored_kcal();
+        float days_left = static_cast<float>( total_kcal ) / bmr();
+        float days_max = static_cast<float>( max_kcal ) / bmr();
+
         if( current_stim > 50 && one_in( to_turns<int>( 30_minutes ) - ( current_stim * 6 ) ) ) {
             add_effect( effect_shakes, 30_minutes + 1_turns * current_stim );
-        } else if( ( get_kcal_percent() < 0.95f ) &&
-                   one_turn_in( 60_minutes - 1_seconds * ( max_stored_kcal() - get_stored_kcal() ) ) ) {
+        } else if( ( days_max - days_left >= 0.5f ) && //matches hunger state in get_hunger_description
+                   one_turn_in( 60_minutes - 1_seconds * ( max_kcal - total_kcal ) ) ) {
             add_effect( effect_shakes, 40_minutes );
         }
     }
@@ -541,7 +548,8 @@ void Character::suffer_from_schizophrenia()
     }
     // Follower turns hostile
     if( one_turn_in( 4_hours ) ) {
-        std::vector<shared_ptr_fast<npc>> followers = ACTIVE_OVERMAP_BUFFER.get_npcs_near_player( 12 );
+        std::vector<shared_ptr_fast<npc>> followers = get_overmapbuffer(
+                                           get_dimension() ).get_npcs_near_player( 12 );
 
         std::string who_gets_angry = name;
         if( !followers.empty() ) {
@@ -596,13 +604,13 @@ void Character::suffer_from_schizophrenia()
         // Weapon is concerned for player if bleeding
         // Weapon is concerned for itself if damaged
         // Otherwise random chit-chat
-        std::vector<weak_ptr_fast<monster>> mons = g->all_monsters().items;
+        auto mons = g->all_monsters().items;
 
         std::string i_talk_w;
         bool does_talk = false;
-        if( !mons.empty() && one_turn_in( 12_minutes ) ) {
+        if( !mons->empty() && one_turn_in( 12_minutes ) ) {
             std::vector<std::string> seen_mons;
-            for( weak_ptr_fast<monster> &n : mons ) {
+            for( auto &n : *mons ) {
                 if( sees( *n.lock() ) ) {
                     seen_mons.emplace_back( n.lock()->get_name() );
                 }
@@ -1528,6 +1536,53 @@ void Character::suffer()
     for( const std::pair<const bodypart_str_id, bodypart> &elem : get_body() ) {
         if( elem.second.get_hp_cur() <= 0 ) {
             add_effect( effect_disabled, 1_turns, elem.first );
+        }
+    }
+
+    const auto dim = get_dimension();
+    const auto &effects = get_overmapbuffer( dim ).get_settings( global_omt_location() ).region_effects;
+    for( const auto& [type, effect_list] : effects ) {
+        switch( type ) {
+            case region_effect_type::generic:
+                break;
+            case region_effect_type::sunlight:
+                if( !g->is_in_sunlight( pos() ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::surface:
+                if( pos().z < 0 || !g->is_sheltered( pos() ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::night_time:
+                if( !is_night( calendar::turn ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::sleep:
+                if( !in_sleep_state() ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::underwater:
+                if( !is_underwater() ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::underground:
+                if( pos().z >= 0 ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::num_types:
+                break;
+        }
+
+        for( const auto &effect : effect_list ) {
+            if( effect.second <= 1 || one_in( effect.second ) ) {
+                add_effect( effect.first, 1_turns );
+            }
         }
     }
 

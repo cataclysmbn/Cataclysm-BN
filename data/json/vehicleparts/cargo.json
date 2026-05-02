@@ -695,7 +695,7 @@
     "id": "fridgetank",
     "name": { "str": "refrigerated tank (60L)" },
     "symbol": "O",
-    "looks_like": "f_fridge",
+    "looks_like": "external_tank_small",
     "color": "light_gray",
     "broken_symbol": "#",
     "broken_color": "light_blue",
@@ -706,7 +706,7 @@
     "epower": -30,
     "size": "75 L",
     "item": "fridgetank",
-    "location": "fuel_source",
+    "location": "center",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },

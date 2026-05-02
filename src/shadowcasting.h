@@ -251,7 +251,7 @@ void castLightOctants_q(
 void cast_zlight(
     const array_of_grids_of<float> &output_caches,
     const array_of_grids_of<const float> &input_arrays,
-    const array_of_grids_of<const bool> &floor_caches,
+    const array_of_grids_of<const char> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
     const tripoint &origin, int offset_distance, float numerator,
     const light_model &model );

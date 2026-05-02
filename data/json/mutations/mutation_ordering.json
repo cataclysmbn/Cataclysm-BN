@@ -121,12 +121,28 @@
           "FACIAL_HAIR_TOOTHBRUSH",
           "FACIAL_HAIR_VANDYKE",
           "FACIAL_HAIR_WALRUS",
-          "FACIAL_HAIR_ZAPPA"
+          "FACIAL_HAIR_ZAPPA",
+          "FACIAL_HAIR_JAW_SCRUFF",
+          "FACIAL_HAIR_WIZENED"
         ],
         "order": 1550
       },
       {
-        "id": [ "hair_crewcut", "hair_mohawk", "hair_fro", "hair_short", "hair_medium", "hair_long", "hair_bald" ],
+        "id": [
+          "hair_crewcut",
+          "hair_mohawk",
+          "hair_fro",
+          "hair_short",
+          "hair_medium",
+          "hair_long",
+          "hair_bald",
+          "hair_trated",
+          "hair_cropped",
+          "hair_parted",
+          "hair_ponytail",
+          "hair_swept",
+          "hair_overflowing"
+        ],
         "order": 1600
       },
       { "id": [ "LEAVES", "TAIL_SNAKE", "TAIL_SNAKE_OK" ], "order": 1900 },

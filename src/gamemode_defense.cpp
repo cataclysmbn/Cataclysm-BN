@@ -228,7 +228,7 @@ void defense_game::init_map()
     ui_manager::redraw();
     refresh_display();
 
-    auto &starting_om = ACTIVE_OVERMAP_BUFFER.get( point_abs_om() );
+    auto &starting_om = get_primary_overmapbuffer().get( point_abs_om() );
     for( int x = 0; x < OMAPX; x++ ) {
         for( int y = 0; y < OMAPY; y++ ) {
             tripoint_om_omt p( x, y, 0 );
@@ -287,10 +287,9 @@ void defense_game::init_map()
             mx -= mx % 2;
             my -= my % 2;
             tinymap tm;
-            tm.generate( tripoint( mx, my, 0 ), calendar::turn );
+            tm.generate( tripoint_abs_sm( mx, my, 0 ), calendar::turn );
             tm.clear_spawns();
             tm.clear_traps();
-            tm.save();
         }
     }
 

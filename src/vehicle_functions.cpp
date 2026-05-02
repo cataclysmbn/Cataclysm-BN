@@ -53,12 +53,12 @@ auto check_reload_timing( item &gun, const item &ammo_item, bool is_ammo_refill,
 
     // 1. Handling empty gun startup delay (Cycle logic)
     if( gun_was_empty ) {
-        const int64_t cycle_start = gun.get_var( "autoloader_cycle_start", 0LL );
+        const int64_t cycle_start = gun.item_vars().get( "autoloader_cycle_start", 0 );
 
         // State: First detection of ammo
         if( cycle_start == 0LL ) {
             const int64_t current_turn = to_turns<int64_t>( calendar::turn - calendar::turn_zero );
-            gun.set_var( "autoloader_cycle_start", current_turn );
+            gun.item_vars().set( "autoloader_cycle_start", current_turn );
 
             add_msg( m_debug, "Autoload: Empty gun found ammo, starting cycle at turn %lld", current_turn );
 
@@ -84,7 +84,7 @@ auto check_reload_timing( item &gun, const item &ammo_item, bool is_ammo_refill,
 
     // 2. Handling standard cooldown (Inter-shot/Inter-mag delay)
     const time_point last_reload = time_point::from_turn(
-                                       static_cast<int>( gun.get_var( "last_autoload_turn", 0LL ) )
+                                       static_cast<int>( gun.item_vars().get( "last_autoload_turn", 0 ) )
                                    );
 
     return calendar::turn >= last_reload + reload_interval;
@@ -126,8 +126,9 @@ void perform_reload( vehicle &veh, vehicle_part &cargo_part, item &gun, item &so
 
     // State update
     veh.drain( fuel_type_battery, power_cost );
-    gun.set_var( "last_autoload_turn", to_turns<int64_t>( calendar::turn - calendar::turn_zero ) );
-    gun.set_var( "autoloader_cycle_start", 0LL ); // Reset cycle
+    gun.item_vars().set( "last_autoload_turn",
+                         to_turns<int64_t>( calendar::turn - calendar::turn_zero ) );
+    gun.item_vars().set( "autoloader_cycle_start", 0 ); // Reset cycle
 
     // Feedback
     if( get_avatar().sees( veh.global_pos3() ) ) {
@@ -156,7 +157,7 @@ auto try_autoload_turret( vehicle &veh, vehicle_part &pt ) -> bool
                               ? ( ammo_capacity > 0 && gun.ammo_remaining() < ammo_capacity )
                               : !gun.ammo_sufficient();
     if( !needs_reload ) {
-        gun.set_var( "autoloader_cycle_start", 0LL );
+        gun.item_vars().set( "autoloader_cycle_start", 0 );
         return false;
     }
 
@@ -180,14 +181,14 @@ auto try_autoload_turret( vehicle &veh, vehicle_part &pt ) -> bool
 
     // Maintain "Last Ammo" state to detect empty transitions
     const bool gun_is_empty = gun.ammo_remaining() == 0;
-    const int64_t last_ammo_check = gun.get_var( "autoloader_last_ammo", -1LL );
+    const int64_t last_ammo_check = gun.item_vars().get( "autoloader_last_ammo", -1 );
 
     if( gun_is_empty && last_ammo_check != 0LL ) {
-        gun.set_var( "autoloader_last_ammo", 0LL );
-        gun.set_var( "autoloader_cycle_start", 0LL );
+        gun.item_vars().set( "autoloader_last_ammo", 0LL );
+        gun.item_vars().set( "autoloader_cycle_start", 0LL );
         add_msg( m_debug, "try_autoload_turret: Gun became empty, reset cycle" );
     } else if( !gun_is_empty ) {
-        gun.set_var( "autoloader_last_ammo", gun.ammo_remaining() );
+        gun.item_vars().set( "autoloader_last_ammo", gun.ammo_remaining() );
     }
 
     // Search cargo for compatible items

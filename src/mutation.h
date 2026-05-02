@@ -190,6 +190,8 @@ struct mutation_branch {
 
         // Speed lowers--or raises--for every X F (X C) degrees below or above 65 F (18.3 C)
         float temperature_speed_modifier = 0.0f;
+        // Scales total kcal character can hold. 1.0 doubles, -0.5 halves.
+        float kcal_scale = 0.0f;
         // Extra metabolism rate multiplier. 1.0 doubles usage, -0.5 halves.
         float metabolism_modifier = 0.0f;
         // As above but for thirst.
@@ -501,6 +503,10 @@ void load_mutation_type( const JsonObject &jsobj );
 void reset_mutation_types();
 bool mutation_category_is_valid( const mutation_category_id &cat );
 bool mutation_type_exists( const std::string &id );
+bool mutation_type_is_mandatory( const std::string &id );
+bool mutation_type_swaps_on_conflict( const std::string &id );
+int mutation_type_random_chance( const std::string &id );
+std::vector<std::string> get_all_mutation_type_ids();
 std::vector<trait_id> get_mutations_in_types( const std::set<std::string> &ids );
 std::vector<trait_id> get_mutations_in_type( const std::string &id );
 bool trait_display_sort( const trait_id &a, const trait_id &b ) noexcept;

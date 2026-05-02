@@ -1,0 +1,17 @@
+[
+  {
+    "id": "vp_portal_tap_item",
+    "type": "GENERIC",
+    "name": { "str": "dimensional portal tap" },
+    "description": "An advanced interface module designed to siphon power from a linked dimensional portal directly into a vehicle's battery system.  It requires installation into a vehicle and linking to a specific portal before it will function.",
+    "symbol": ",",
+    "color": "cyan",
+    "material": [ "steel", "plastic", "copper" ],
+    "weight": "2500 g",
+    "volume": "2 L",
+    "price": "500 USD",
+    "price_postapoc": "80 USD",
+    "category": "veh_parts",
+    "flags": [ "PSEUDO" ]
+  }
+]

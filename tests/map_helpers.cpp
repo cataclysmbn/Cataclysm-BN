@@ -26,8 +26,15 @@
 // Remove all vehicles from the map
 void clear_vehicles()
 {
+    std::vector<vehicle *> vehicles;
+    vehicles.reserve( g->m.get_vehicles().size() );
+
     for( wrapped_vehicle &veh : g->m.get_vehicles() ) {
-        g->m.destroy_vehicle( veh.v );
+        vehicles.push_back( veh.v );
+    }
+
+    for( vehicle *veh : vehicles ) {
+        g->m.destroy_vehicle( veh );
     }
 }
 
@@ -36,7 +43,7 @@ void wipe_map_terrain()
     map &here = get_map();
     const int mapsize = here.getmapsize() * SEEX;
     for( int z = -1; z <= OVERMAP_HEIGHT; ++z ) {
-        ter_id terrain = z == 0 ? t_grass : z < 0 ? t_rock : t_open_air;
+        const ter_id terrain = z == 0 ? t_grass : z < 0 ? t_rock : t_open_air;
         for( int x = 0; x < mapsize; ++x ) {
             for( int y = 0; y < mapsize; ++y ) {
                 g->m.set( { x, y, z}, terrain, f_null );
@@ -172,7 +179,7 @@ void set_time( const time_point &time )
 {
     calendar::turn = time;
     g->reset_light_level();
-    int z = g->u.posz();
+    const auto z = g->u.posz();
     g->m.update_visibility_cache( z );
     g->m.invalidate_map_cache( z );
     g->m.build_map_cache( z );

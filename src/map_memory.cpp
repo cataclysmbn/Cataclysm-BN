@@ -101,12 +101,36 @@ void map_memory::memorize_symbol( const tripoint &pos, const int symbol )
     sm.set_symbol( p.loc, symbol );
 }
 
+void map_memory::memorize_terrain_tile( const tripoint &pos, const std::string &ter,
+                                        const int subtile, const int rotation )
+{
+    coord_pair p( pos );
+    mm_submap &sm = get_submap( p.sm );
+    sm.set_terrain_tile( p.loc, memorized_terrain_tile{ ter, subtile, rotation } );
+}
+
+memorized_terrain_tile map_memory::get_terrain_tile( const tripoint &pos )
+{
+    coord_pair p( pos );
+    const mm_submap &sm = get_submap( p.sm );
+    return sm.terrain_tile( p.loc );
+}
+
+void map_memory::clear_memorized_overlay( const tripoint &pos )
+{
+    coord_pair p( pos );
+    mm_submap &sm = get_submap( p.sm );
+    sm.set_symbol( p.loc, mm_submap::default_symbol );
+    sm.set_tile( p.loc, mm_submap::default_tile );
+}
+
 void map_memory::clear_memorized_tile( const tripoint &pos )
 {
     coord_pair p( pos );
     mm_submap &sm = get_submap( p.sm );
     sm.set_symbol( p.loc, mm_submap::default_symbol );
     sm.set_tile( p.loc, mm_submap::default_tile );
+    sm.set_terrain_tile( p.loc, mm_submap::default_tile );
 }
 
 bool map_memory::prepare_region( const tripoint &p1, const tripoint &p2 )

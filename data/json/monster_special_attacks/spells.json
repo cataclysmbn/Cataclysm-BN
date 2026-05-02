@@ -78,6 +78,17 @@
     "duration_increment": 200
   },
   {
+    "id": "feral_pa_boss_time_dilation",
+    "type": "SPELL",
+    "name": { "str": "Time Dilation" },
+    "description": "Time dilation ability for feral armored boss.",
+    "flags": [ "NO_EXPLOSION_VFX", "NO_FAIL", "SILENT" ],
+    "valid_targets": [ "self" ],
+    "min_damage": 450,
+    "max_damage": 450,
+    "effect": "mod_moves"
+  },
+  {
     "type": "SPELL",
     "id": "mon_summon_zombie_gasbag_crawler",
     "name": { "str": "Summon Gangrenous Crawlers" },
@@ -347,5 +358,34 @@
     "max_range": 25,
     "min_aoe": 4,
     "max_aoe": 4
+  },
+  {
+    "type": "SPELL",
+    "id": "spell_shade_boss_summon",
+    "name": { "str": "Shade Teleport" },
+    "description": "Teleports the caster and summons two clones.",
+    "message": "",
+    "effect": "teleport_random",
+    "extra_effects": [ { "id": "spell_shade_boss_summon_clones" } ],
+    "valid_targets": [ "self" ],
+    "flags": [ "NO_EXPLOSION_VFX", "SILENT" ],
+    "min_range": 5,
+    "max_range": 8
+  },
+  {
+    "type": "SPELL",
+    "id": "spell_shade_boss_summon_clones",
+    "name": "Summon shaded figure clones",
+    "description": "Summons two shaded figure clones.",
+    "flags": [ "NO_EXPLOSION_VFX", "HOSTILE_SUMMON" ],
+    "valid_targets": [ "ground", "self" ],
+    "min_damage": 2,
+    "max_damage": 2,
+    "min_aoe": 3,
+    "max_aoe": 3,
+    "min_duration": 5000,
+    "max_duration": 5000,
+    "effect": "summon",
+    "effect_str": "mon_shade_boss_clone"
   }
 ]

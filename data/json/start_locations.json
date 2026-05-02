@@ -647,5 +647,11 @@
     "id": "sloc_airport",
     "name": "Regional Airport",
     "terrain": [ "waiting_area", "s_air_term_south" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_office_tower",
+    "name": "Office Tower",
+    "terrain": [ "loffice_tower_5" ]
   }
 ]

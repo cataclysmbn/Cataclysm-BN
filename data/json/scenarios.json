@@ -263,7 +263,8 @@
       "prof_fursuiter",
       "clown",
       "broken_cyborg",
-      "true_foodperson"
+      "true_foodperson",
+      "elite_specops"
     ],
     "flags": [ "FIRE_START", "INFECTED", "BAD_DAY", "CHALLENGE", "CITY_START" ]
   },
@@ -418,6 +419,7 @@
       "bio_medic",
       "bionic_mentat",
       "bionic_spy",
+      "bio_specops",
       "military_saboteur",
       "hacker"
     ],
@@ -732,12 +734,16 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "bionic_spy",
       "national_guard",
       "hitman",
       "assassin",
       "politician",
-      "mili_pilot"
+      "mili_pilot",
+      "fighter_pilot",
+      "major-general"
     ],
     "map_extra": "mx_helicopter",
     "flags": [ "HELI_CRASH", "LONE_START" ],
@@ -774,7 +780,8 @@
       "bionic_hitman",
       "bio_gangster",
       "razorgirl",
-      "bio_sniper"
+      "bio_sniper",
+      "bio_specops"
     ],
     "flags": [ "CITY_START" ],
     "missions": [ "MISSION_ASSASSINATION" ]
@@ -817,6 +824,7 @@
       "gyro_pilot",
       "bird_pilot",
       "mili_pilot_blackhawk",
+      "fighter_pilot_f35",
       "airship_pilot",
       "airboat_pilot",
       "aircanoe_pilot"
@@ -903,10 +911,14 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "labtech",
       "bionic_labtech",
       "medic",
-      "mili_pilot"
+      "mili_pilot",
+      "fighter_pilot",
+      "major-general"
     ],
     "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
     "bionics": [
@@ -970,9 +982,13 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "medic",
       "mili_pilot",
-      "prof_combat_engineer"
+      "fighter_pilot",
+      "prof_combat_engineer",
+      "major-general"
     ],
     "flags": [ "CHALLENGE", "LONE_START" ],
     "bionics": [
@@ -1013,5 +1029,17 @@
       "bio_blade",
       "bio_weight"
     ]
+  },
+  {
+    "type": "scenario",
+    "id": "irs_auditing",
+    "name": "Death And Taxes",
+    "points": 0,
+    "description": "Conducting an audit of a corporate office's records as part of a career-making official investigation, you found your hosts suddenly much less cooperative. It may be time to render summary judgment and haul ass out of this tower of toil.",
+    "start_name": "Office Tower",
+    "allowed_locs": [ "sloc_office_tower" ],
+    "missions": [ "MISSION_ONE_LAST_AUDIT" ],
+    "professions": [ "irs", "lawyer", "politician" ],
+    "flags": [ "LONE_START", "CITY_START" ]
   }
 ]

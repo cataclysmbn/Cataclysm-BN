@@ -293,6 +293,16 @@ on_npc_try_move = {}
 ---@field force boolean
 on_monster_try_move = {}
 
+---@class OnCharacterTryMoveParams
+---@field char Character
+---@field from Tripoint
+---@field to Tripoint
+---@field movement_mode CharacterMoveMode
+---@field via_ramp boolean
+---@field mounted boolean
+---@field mount Creature?
+on_character_try_move = {}
+
 ---@class OnCharacterResetStatsParams
 ---@field character Character
 on_character_reset_stats = {}

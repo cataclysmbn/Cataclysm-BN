@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "coordinates.h"
 #include "catacharset.h"
 #include "color.h"
 #include <optional>
@@ -30,7 +31,7 @@ struct enum_traits<map_extra_method> {
     static constexpr map_extra_method last = map_extra_method::num_map_extra_methods;
 };
 
-using map_extra_pointer = bool( * )( map &, const tripoint & );
+using map_extra_pointer = bool( * )( map &, const tripoint_abs_sm & );
 
 class map_extra
 {
@@ -70,8 +71,8 @@ map_extra_pointer get_function( const std::string &name );
 FunctionMap all_functions();
 std::vector<std::string> get_all_function_names();
 
-void apply_function( const string_id<map_extra> &id, map &m, const tripoint &abs_sub );
-void apply_function( const std::string &id, map &m, const tripoint &abs_sub );
+void apply_function( const string_id<map_extra> &id, map &m, const tripoint_abs_sm &abs_sub );
+void apply_function( const std::string &id, map &m, const tripoint_abs_sm &abs_sub );
 
 void load( const JsonObject &jo, const std::string &src );
 void check_consistency();

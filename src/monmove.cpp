@@ -821,12 +821,26 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
 
     } else if( target != nullptr ) {
 
-        tripoint dest = target->pos();
-        auto att_to_target = attitude_to( *target );
+        const auto dest = target->pos();
+        const auto att_to_target = attitude_to( *target );
         if( att_to_target == Attitude::A_HOSTILE && !fleeing ) {
             local_goal = dest;
         } else if( fleeing ) {
-            local_goal = tripoint( posx() * 2 - dest.x, posy() * 2 - dest.y, posz() );
+            const auto current_pos = pos();
+            const auto away = current_pos - dest;
+            auto flee_goal = current_pos + tripoint( away.x, away.y, 0 );
+            if( flies() ) {
+                if( const auto preferred_z = type->preferred_z ) {
+                    flee_goal.z = *preferred_z;
+                } else if( away.z != 0 ) {
+                    flee_goal.z = current_pos.z + away.z;
+                } else {
+                    flee_goal.z = current_pos.z + 1;
+                }
+            } else {
+                flee_goal.z = current_pos.z;
+            }
+            local_goal = flee_goal;
         }
         if( angers_hostile_weak && att_to_target != Attitude::A_FRIENDLY ) {
             int hp_per = target->hp_percentage();
@@ -2048,8 +2062,16 @@ bool monster::attack_at( const tripoint &p )
     if( has_flag( MF_PACIFIST ) ) {
         return false;
     }
-    if( p.z != posz() && !get_map().valid_move( pos(), p, false, true, false ) ) {
-        return false;
+    if( p.z != posz() ) {
+        auto &here = get_map();
+        const auto upper_z = std::max( p.z, posz() );
+        const auto vehicle_floor_between =
+            here.veh_at( tripoint( pos().xy(), upper_z ) ).part_with_feature( "BOARDABLE", true ).has_value() ||
+            here.veh_at( tripoint( p.xy(), upper_z ) ).part_with_feature( "BOARDABLE", true ).has_value();
+
+        if( here.floor_between( pos(), p ) || vehicle_floor_between ) {
+            return false;
+        }
     }
 
     if( p == g->u.pos() ) {

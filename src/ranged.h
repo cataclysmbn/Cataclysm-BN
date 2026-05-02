@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "game_constants.h"
+#include "point.h"
 #include "type_id.h"
 
 class aim_activity_actor;
@@ -23,7 +24,6 @@ class vehicle;
 class shape;
 class shape_factory;
 struct itype;
-struct tripoint;
 struct projectile;
 struct vehicle_part;
 struct dealt_damage_instance;
@@ -58,7 +58,7 @@ trajectory mode_turrets( avatar &you, vehicle &veh, const std::vector<vehicle_pa
 trajectory mode_spell( avatar &you, spell &casting, bool no_fail, bool no_mana );
 
 /** Executing an AoE attack given by shape. */
-trajectory mode_shaped( avatar &you, shape_factory &shape_fac, aim_activity_actor &activity );
+trajectory mode_shaped( avatar &you, const shape_factory &shape_fac, aim_activity_actor &activity );
 
 } // namespace target_handler
 
@@ -104,6 +104,9 @@ float str_draw_range_modifier( const item &it, const Character &p );
 
 /** Returns shaped attack used by the gun+ammo, if set */
 std::optional<shape_factory> get_shape_factory( const item &gun );
+
+/** Returns preview shape used by target UI, including shot pellet spread previews. */
+std::optional<shape_factory> get_target_shape_factory( const item &gun );
 
 /** AoE attack, with area given by shape */
 void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &attacker,
@@ -183,7 +186,7 @@ int fire_gun( Character &who, const tripoint &target, int shots = 1 );
  * @return Number of shots actually fired
  */
 int fire_gun( Character &who, const tripoint &target, int shots, item &gun,
-              item *ammo );
+              item *ammo, const std::optional<tripoint> &shot_origin = std::nullopt );
 
 /** Expected thrown damage with a given item, given the thrower's effective strength and skill. */
 auto throw_damage( const item &it, const int skill, const int str ) -> int;
@@ -199,5 +202,3 @@ auto throw_item( Character &who, const tripoint &target,
                  std::optional<tripoint> blind_throw_from_pos ) -> dealt_projectile_attack;
 
 } // namespace ranged
-
-

@@ -1,0 +1,147 @@
+[
+  {
+    "type": "furniture",
+    "id": "t_dimensional_portal",
+    "name": "dimensional portal",
+    "description": "A shimmering aperture in space, held open by an arcane-industrial framework. Unlinked.",
+    "symbol": "O",
+    "color": "magenta",
+    "move_cost_mod": -1,
+    "coverage": 40,
+    "required_str": -1,
+    "active": [ "portal", { "load_radius": 2, "allow_bionic_tap": true } ],
+    "examine_action": "portal",
+    "flags": [ "TRANSPARENT" ],
+    "deconstruct": {
+      "items": [
+        { "item": "cable", "charges": 20 },
+        { "item": "sheet_metal", "count": 2 },
+        { "item": "pipe", "count": 4 },
+        { "item": "scrap", "count": 6 },
+        { "item": "processor", "count": 1 },
+        { "item": "dimensional_anchor", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 20,
+      "str_max": 60,
+      "sound": "a resonant crack!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "cable", "charges": [ 3, 12 ] },
+        { "item": "sheet_metal", "count": [ 1, 2 ] },
+        { "item": "scrap", "count": [ 3, 8 ] },
+        { "item": "pipe", "count": [ 1, 4 ] }
+      ],
+      "ranged": { "reduction": [ 10, 20 ], "destroy_threshold": 20, "block_unaimed_chance": "40%" }
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "t_dimensional_portal_linked",
+    "looks_like": "t_dimensional_portal",
+    "name": "dimensional portal (active)",
+    "description": "A shimmering aperture in space, held open by an arcane-industrial framework. Examining it will transport you to the linked dimension.",
+    "symbol": "O",
+    "color": "magenta_white",
+    "move_cost_mod": -1,
+    "coverage": 40,
+    "required_str": -1,
+    "active": [ "portal", { "load_radius": 2, "allow_bionic_tap": true } ],
+    "examine_action": "portal",
+    "flags": [ "TRANSPARENT" ]
+  },
+  {
+    "type": "furniture",
+    "id": "t_dimensional_portal_closed",
+    "looks_like": "t_dimensional_portal",
+    "name": "dimensional portal (closed)",
+    "description": "The arcane-industrial framework of a dimensional portal, its aperture now sealed. The dimensional connection it once maintained has collapsed.",
+    "symbol": "O",
+    "color": "dark_gray",
+    "move_cost_mod": 0,
+    "coverage": 20,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT" ],
+    "bash": {
+      "str_min": 15,
+      "str_max": 50,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "cable", "charges": [ 2, 8 ] },
+        { "item": "sheet_metal", "count": [ 1, 2 ] },
+        { "item": "scrap", "count": [ 2, 6 ] },
+        { "item": "pipe", "count": [ 1, 3 ] }
+      ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_power_portal",
+    "looks_like": "t_dimensional_portal",
+    "name": "power portal",
+    "description": "A large arcane-industrial apparatus that can form a persistent electrical bridge to a paired node, even across dimensional boundaries. Unlinked.",
+    "symbol": "O",
+    "color": "cyan",
+    "move_cost_mod": -1,
+    "coverage": 60,
+    "required_str": -1,
+    "active": [ "grid_link", {  } ],
+    "examine_action": "power_portal",
+    "flags": [ "TRANSPARENT" ],
+    "deconstruct": {
+      "items": [
+        { "item": "cable", "charges": 40 },
+        { "item": "sheet_metal", "count": 4 },
+        { "item": "pipe", "count": 8 },
+        { "item": "scrap", "count": 10 },
+        { "item": "processor", "count": 2 },
+        { "item": "dimensional_anchor", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 20,
+      "str_max": 60,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "cable", "charges": [ 5, 20 ] },
+        { "item": "sheet_metal", "count": [ 1, 3 ] },
+        { "item": "scrap", "count": [ 4, 10 ] },
+        { "item": "pipe", "count": [ 2, 6 ] }
+      ],
+      "ranged": { "reduction": [ 10, 20 ], "destroy_threshold": 20, "block_unaimed_chance": "40%" }
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_power_portal_linked",
+    "looks_like": "t_dimensional_portal",
+    "name": "power portal (active)",
+    "description": "A large arcane-industrial apparatus forming a persistent electrical bridge to a paired node. The hum of power flowing through the dimensional membrane is faintly audible.",
+    "symbol": "O",
+    "color": "cyan_white",
+    "move_cost_mod": -1,
+    "coverage": 60,
+    "required_str": -1,
+    "active": [ "grid_link", {  } ],
+    "examine_action": "power_portal",
+    "flags": [ "TRANSPARENT" ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_power_portal_paused",
+    "looks_like": "t_dimensional_portal",
+    "name": "power portal (paused)",
+    "description": "A large arcane-industrial apparatus configured to form an electrical bridge, but currently inactive due to insufficient power or a manual pause.",
+    "symbol": "O",
+    "color": "cyan_red",
+    "move_cost_mod": -1,
+    "coverage": 60,
+    "required_str": -1,
+    "active": [ "grid_link", {  } ],
+    "examine_action": "power_portal",
+    "flags": [ "TRANSPARENT" ]
+  }
+]

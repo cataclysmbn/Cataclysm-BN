@@ -1203,6 +1203,12 @@ bool trapfunc::ledge( const tripoint &p, Creature *c, item * )
     c->add_msg_if_npc( _( "<npcname> falls down a level!" ) );
     player *pl = dynamic_cast<player *>( c );
     if( pl == nullptr ) {
+
+        //Special case: monster falling is a mount
+        //Move player down beforehand to avoid player being dismounted midair
+        if( g->u.is_mounted() && g->u.mounted_creature.get() == c ) {
+            g->u.setpos( where );
+        }
         c->setpos( where );
         c->impact( height * 10, where );
         g->m.tr_at( p ).trigger_aftermath( g->m, p );

@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <tuple>
@@ -73,6 +74,7 @@
 #include "ui.h"
 #include "ui_manager.h"
 #include "uistate.h"
+#include "note_label_utils.h"
 #include "units.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -326,6 +328,7 @@ static void update_note_preview( const std::string &note,
     const nc_color note_color = std::get<1>( om_symbol );
     const char symbol = std::get<0>( om_symbol );
     const std::string note_text = note.substr( std::get<2>( om_symbol ), std::string::npos );
+    const std::string visible_note_text = note_label_utils::strip_label_commands( note_text );
 
     auto w_preview       = std::get<0>( preview_windows );
     auto w_preview_title = std::get<1>( preview_windows );
@@ -338,9 +341,9 @@ static void update_note_preview( const std::string &note,
 
     werase( *w_preview_title );
     nc_color default_color = note_color;
-    print_colored_text( *w_preview_title, point_zero, default_color, note_color, note_text,
+    print_colored_text( *w_preview_title, point_zero, default_color, note_color, visible_note_text,
                         report_color_error::no );
-    int note_text_width = utf8_width( note_text );
+    int note_text_width = utf8_width( visible_note_text );
     mvwputch( *w_preview_title, point( note_text_width, 0 ), c_white, LINE_XOXO );
     for( int i = 0; i < note_text_width; i++ ) {
         mvwputch( *w_preview_title, point( i, 1 ), c_white, LINE_OXOX );
@@ -896,6 +899,15 @@ static void draw_ascii( ui_adaptor &ui,
 
     const oter_id forest = oter_str_id( "forest" ).id();
 
+    // Cache display_oter substitution for this dimension's region settings.
+    // When a region defines display_oter, tiles that are the default terrain (e.g., "field")
+    // render using the display_oter's symbol/color/name instead. The actual tile ID is unchanged.
+    const regional_settings &active_region = ACTIVE_OVERMAP_BUFFER.get_settings( center );
+    const oter_id default_oter_id = active_region.default_oter.id();
+    const bool has_display_oter = !active_region.display_oter.is_empty();
+    const oter_id display_oter_render_id = has_display_oter ? active_region.display_oter.id()
+                                           : ccur_ter;
+
     std::string sZoneName;
     tripoint_abs_omt tripointZone( -1, -1, -1 );
     const auto &zones = zone_manager::get_manager();
@@ -1149,7 +1161,10 @@ static void draw_ascii( ui_adaptor &ui,
                 set_color_and_symbol( forest, omp, ter_sym, ter_color );
             } else {
                 // Nothing special, but is visible to the player.
-                set_color_and_symbol( cur_ter, omp, ter_sym, ter_color );
+                // Substitute display_oter when rendering the region's default terrain.
+                const oter_id render_ter = ( has_display_oter && cur_ter == default_oter_id )
+                                           ? display_oter_render_id : cur_ter;
+                set_color_and_symbol( render_ter, omp, ter_sym, ter_color );
             }
 
             // Are we debugging monster groups?
@@ -1300,7 +1315,11 @@ static void draw_ascii( ui_adaptor &ui,
                         note_text );
             const size_t pos = std::get<2>( note_info );
             if( pos != std::string::npos ) {
-                corner_text.emplace_back( std::get<1>( note_info ), note_text.substr( pos ) );
+                const auto display_note_text = note_label_utils::strip_label_commands(
+                                                   note_text.substr( pos ) );
+                if( !display_note_text.empty() ) {
+                    corner_text.emplace_back( std::get<1>( note_info ), display_note_text );
+                }
             }
             if( ACTIVE_OVERMAP_BUFFER.is_marked_dangerous( center ) ) {
                 corner_text.emplace_back( c_red, _( "DANGEROUS AREA!" ) );
@@ -1431,20 +1450,31 @@ static void draw_om_sidebar(
                 }
                 mvwprintz( wbar, point( 3, line_number++ ),
                            c_blue, "  Interest: %d", mgroup->interest );
+                mvwprintz( wbar, point( 3, line_number++ ),
+                           c_blue, "  Behaviour: %s", mgroup->horde_behaviour );
                 mvwprintz( wbar, point( 3, line_number ),
                            c_blue, "  Target: %s", mgroup->target.to_string() );
                 mvwprintz( wbar, point( 3, line_number++ ),
                            c_red, "x" );
             }
         } else {
-            const oter_t &ter = ACTIVE_OVERMAP_BUFFER.ter( center ).obj();
+            const oter_id cur_oter_id = ACTIVE_OVERMAP_BUFFER.ter( center );
+            const regional_settings &sidebar_region = ACTIVE_OVERMAP_BUFFER.get_settings( center );
+            const bool sidebar_has_display = !sidebar_region.display_oter.is_empty();
+            const oter_id default_oter_id = sidebar_region.default_oter.id();
+            const oter_id render_oter_id = ( sidebar_has_display && cur_oter_id == default_oter_id )
+                                           ? sidebar_region.display_oter.id()
+                                           : cur_oter_id;
+            const oter_t &ter = render_oter_id.obj();
             const auto sm_pos = project_to<coords::sm>( center );
 
             // NOLINTNEXTLINE(cata-use-named-point-constants)
             mvwputch( wbar, point( 1, 1 ), ter.get_color(), ter.get_symbol() );
 
             lines = fold_and_print( wbar, point( 3, 1 ), getmaxx( wbar ) - 3, c_light_gray,
-                                    ACTIVE_OVERMAP_BUFFER.get_description_at( sm_pos ) );
+                                    sidebar_has_display && cur_oter_id == default_oter_id
+                                    ? ter.get_name()
+                                    : ACTIVE_OVERMAP_BUFFER.get_description_at( sm_pos ) );
         }
     } else {
         // NOLINTNEXTLINE(cata-use-named-point-constants)
@@ -1616,12 +1646,14 @@ static void create_note( const tripoint_abs_omt &curs )
                                       _( color_pair.second ), replace_all( color_pair.second, " ", "_" ) );
     }
 
-    std::string helper_text = string_format( ".\n\n%s\n%s\n%s\n%s\n",
-                              _( "Type GLYPH:TEXT to set a custom glyph." ),
-                              _( "Type COLOR;TEXT to set a custom color." ),
-                              _( "Type SPRITE:TILE_ID to set a custom sprite." ),
-                              // NOLINTNEXTLINE(cata-text-style): literal exclaimation mark
-                              _( "Examples: B:Base | g;Loot | SPRITE:toolbox;g;Tools" ) );
+    const auto helper_text = string_format( ".\n\n%s\n%s\n%s\n%s\n%s\n\n%s\n",
+                                            _( "Type <color_white>COLOR;TEXT</color> to set a custom color." ),
+                                            _( "Type <color_white>GLYPH:TEXT</color> to set a custom glyph." ),
+                                            _( "Type <color_white>SPRITE:TILE_ID</color> to set a custom sprite." ),
+                                            _( "Type <color_white>LABEL:TEXT</color> to set a custom label." ),
+                                            _( "Use <color_white>;</color> as a separator to combine elements." ),
+                                            // NOLINTNEXTLINE(cata-text-style): literal exclaimation mark
+                                            _( "Examples: <color_white>$:Bank</color> | <color_white>R;Red</color> | <color_white>SPRITE:toolbox</color> | <color_white>LABEL:Survivor City</color>" ) );
     color_notes = color_notes.replace( color_notes.end() - 2, color_notes.end(), helper_text );
     std::string title = _( "Note:" );
 
