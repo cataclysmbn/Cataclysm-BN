@@ -1320,21 +1320,21 @@ void character_display::disp_info( Character &ch )
         effect_name_and_text.emplace_back( starvation_name, starvation_text );
     }
 
-    if( ( ch.has_trait( trait_id( "TROGLO" ) ) && g->is_in_sunlight( ch.pos() ) &&
+    if( ( ch.has_trait( trait_id( "TROGLO" ) ) && g->is_in_sunlight( ch.bub_pos() ) &&
           get_weather().weather_id->sun_intensity >= sun_intensity_type::high ) ||
-        ( ch.has_trait( trait_id( "TROGLO2" ) ) && g->is_in_sunlight( ch.pos() ) &&
+        ( ch.has_trait( trait_id( "TROGLO2" ) ) && g->is_in_sunlight( ch.bub_pos() ) &&
           get_weather().weather_id->sun_intensity < sun_intensity_type::high )
       ) {
         effect_name_and_text.emplace_back( _( "In Sunlight" ),
                                            _( "The sunlight irritates you.\n"
                                               "Strength - 1;    Dexterity - 1;    Intelligence - 1;    Perception - 1" )
                                          );
-    } else if( ch.has_trait( trait_id( "TROGLO2" ) ) && g->is_in_sunlight( ch.pos() ) ) {
+    } else if( ch.has_trait( trait_id( "TROGLO2" ) ) && g->is_in_sunlight( ch.bub_pos() ) ) {
         effect_name_and_text.emplace_back( _( "In Sunlight" ),
                                            _( "The sunlight irritates you badly.\n"
                                               "Strength - 2;    Dexterity - 2;    Intelligence - 2;    Perception - 2" )
                                          );
-    } else if( ch.has_trait( trait_id( "TROGLO3" ) ) && g->is_in_sunlight( ch.pos() ) ) {
+    } else if( ch.has_trait( trait_id( "TROGLO3" ) ) && g->is_in_sunlight( ch.bub_pos() ) ) {
         effect_name_and_text.emplace_back( _( "In Sunlight" ),
                                            _( "The sunlight irritates you terribly.\n"
                                               "Strength - 4;    Dexterity - 4;    Intelligence - 4;    Perception - 4" )

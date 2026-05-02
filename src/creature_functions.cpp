@@ -57,7 +57,7 @@ auto auto_find_hostile_target(
     bool self_area_iff = false; // Need to check if the target is near the vehicle we're a part of
     map &here = get_map();
     vehicle *in_veh = creature.is_fake()
-                      ? veh_pointer_or_null( here.veh_at( creature.pos() ) ) : nullptr;
+                      ? veh_pointer_or_null( here.veh_at( creature.bub_pos() ) ) : nullptr;
 
     struct iff_guard_creature {
         const Creature *critter = nullptr;
@@ -72,7 +72,7 @@ auto auto_find_hostile_target(
     for( Creature *const critter : g->get_creatures_if( [&]( const Creature & other ) {
     return &other != &creature && creature.attitude_to( other ) == Attitude::A_FRIENDLY;
     } ) ) {
-        const auto critter_dist = rl_dist( creature.pos(), critter->pos() );
+        const auto critter_dist = rl_dist( creature.bub_pos(), critter->bub_pos() );
         // Skip IFF for adjacent friendlies if weapon is safe (bullets/rockets protected by ballistics).
         // Always apply IFF for weapons with dangerous trails (lasers) even when adjacent.
         if( critter_dist >= iff_dist || ( !option.trail && critter_dist <= 1 ) ||
@@ -84,13 +84,13 @@ auto auto_find_hostile_target(
             .critter = critter,
             .dist = critter_dist,
             .area_iff = option.area > 0,
-            .angle = coord_to_angle( creature.pos(), critter->pos() ),
+            .angle = coord_to_angle( creature.bub_pos(), critter->bub_pos() ),
             .iff_hangle = iff_hangle,
         };
 
         // Occupants inside the same vehicle are safe from the turret's direct line of fire,
         // but still need AoE protection.
-        const optional_vpart_position vp = here.veh_at( critter->pos() );
+        const optional_vpart_position vp = here.veh_at( critter->bub_pos() );
         if( in_veh && veh_pointer_or_null( vp ) == in_veh && vp->is_inside() ) {
             guard.angle_iff = false;
         } else if( critter_dist < 3 ) {
@@ -125,8 +125,8 @@ auto auto_find_hostile_target(
                 // Hack: trying yo avoid turret LOS blocking by frames bug by trying to see target from vehicle boundary
                 // Or turret wallhack for turret's car
                 // TODO: to visibility checking another way, probably using 3D FOV
-                std::vector<tripoint> path_to_target = line_to( creature.pos(), m->pos() );
-                path_to_target.insert( path_to_target.begin(), creature.pos() );
+                std::vector<tripoint> path_to_target = line_to( creature.bub_pos(), m->pos() );
+                path_to_target.insert( path_to_target.begin(), creature.bub_pos() );
 
                 // Getting point on vehicle boundaries and on line between target and turret
                 bool continueFlag = true;
@@ -140,7 +140,7 @@ auto auto_find_hostile_target(
                     }
                 } while( continueFlag );
 
-                tripoint oldPos = creature.pos();
+                tripoint oldPos = creature.bub_pos();
                 const_cast<Creature &>( creature ).setpos(
                     path_to_target.back() ); //Temporary moving targeting npc on vehicle boundary postion
                 bool seesFromVehBound = creature.sees( *m ); // And look from there
@@ -148,7 +148,7 @@ auto auto_find_hostile_target(
                 if( !seesFromVehBound ) { continue; }
             } else { continue; }
         }
-        int dist = rl_dist( creature.pos(), m->pos() ) + 1; // rl_dist can be 0
+        int dist = rl_dist( creature.bub_pos(), m->pos() ) + 1; // rl_dist can be 0
         if( dist > option.range + 1 || dist < option.area ) {
             // Too near or too far
             continue;
@@ -165,10 +165,10 @@ auto auto_find_hostile_target(
             // No shooting stuff on vehicle we're a part of
             continue;
         }
-        const auto target_angle = coord_to_angle( creature.pos(), m->pos() );
+        const auto target_angle = coord_to_angle( creature.bub_pos(), m->pos() );
         const auto blocked_by_friendly = std::ranges::any_of( protected_creatures,
         [&]( const iff_guard_creature & guard ) {
-            if( guard.area_iff && rl_dist( guard.critter->pos(), m->pos() ) <= option.area ) {
+            if( guard.area_iff && rl_dist( guard.critter->bub_pos(), m->pos() ) <= option.area ) {
                 return true;
             }
             if( !guard.angle_iff ) {

@@ -553,12 +553,12 @@ static Character &pick_character( Character &preselected )
     locations.emplace_back( g->u.bub_pos() );
     for( const npc &guy : g->all_npcs() ) {
         charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, guy.name );
-        locations.emplace_back( guy.pos() );
+        locations.emplace_back( guy.bub_pos() );
     }
     avatar &u = get_avatar();
-    u.view_offset = u.bub_pos() - preselected.pos();
+    u.view_offset = u.bub_pos() - preselected.bub_pos();
     auto iter = std::find_if( locations.begin(), locations.end(), [&preselected]( const tripoint & p ) {
-        return p == preselected.pos();
+        return p == preselected.bub_pos();
     } );
     size_t preselect_index = iter != locations.end() ? std::distance( locations.begin(), iter ) : 0;
 
@@ -696,7 +696,7 @@ void character_edit_menu( Character &c )
     switch( nmenu.ret ) {
         case edit_character::pick: {
             Character &other = pick_character( c );
-            get_avatar().view_offset = other.pos() - get_avatar().pos();
+            get_avatar().view_offset = other.bub_pos() - get_avatar().pos();
             // TODO: Make it not able to cause a stack overflow
             character_edit_menu( other );
             get_avatar().view_offset = start_view_offset;
@@ -1632,7 +1632,7 @@ void debug()
             const tripoint_range<tripoint> points = points_opt.value();
             std::vector<Creature *> creatures = g->get_creatures_if(
             [&points]( const Creature & critter ) -> bool {
-                return !critter.is_avatar() && critter.is_monster() && points.is_point_inside( critter.pos() );
+                return !critter.is_avatar() && critter.is_monster() && points.is_point_inside( critter.bub_pos() );
             } );
 
             for( Creature *critter : creatures ) {
@@ -1666,7 +1666,7 @@ void debug()
             const tripoint_range<tripoint> points = points_opt.value();
             std::vector<Creature *> creatures = g->get_creatures_if(
             [&points]( const Creature & critter ) -> bool {
-                return !critter.is_avatar() && points.is_point_inside( critter.pos() );
+                return !critter.is_avatar() && points.is_point_inside( critter.bub_pos() );
             } );
 
             for( Creature *critter : creatures ) {

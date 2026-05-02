@@ -102,7 +102,7 @@ static void full_map_test( const std::vector<std::string> &setup,
                 case 'U':
                 case 'H':
                 case 'u':
-                    origin = player_character.pos() - point( x, y );
+                    origin = player_character.bub_pos() - point( x, y );
                     if( setup[y][x] == 'V' ) {
                         player_character.worn.push_back( item::spawn( "wearable_light_on" ) );
                     }
@@ -114,7 +114,7 @@ static void full_map_test( const std::vector<std::string> &setup,
     {
         // Sanity check on player placement
         REQUIRE( origin.z < OVERMAP_HEIGHT );
-        tripoint player_offset = player_character.pos() - origin;
+        tripoint player_offset = player_character.bub_pos() - origin;
         REQUIRE( player_offset.y >= 0 );
         REQUIRE( player_offset.y < height );
         REQUIRE( player_offset.x >= 0 );
@@ -221,7 +221,7 @@ static void full_map_test( const std::vector<std::string> &setup,
 
     INFO( "zlevels: " << here.has_zlevels() );
     INFO( "origin: " << origin );
-    INFO( "player: " << player_character.pos() );
+    INFO( "player: " << player_character.bub_pos() );
     INFO( "unimpaired_range: " << player_character.unimpaired_range() );
     INFO( "vision_threshold: " << vvcache.vision_threshold );
     INFO( "time: " << to_string( time ) );

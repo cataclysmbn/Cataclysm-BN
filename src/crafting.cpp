@@ -728,7 +728,7 @@ static void set_item_inventory( Character &who, detached_ptr<item> &&newit )
         return;
     }
 
-    return set_item_map_or_vehicle( who, who.pos(), std::move( newit ) );
+    return set_item_map_or_vehicle( who, who.bub_pos(), std::move( newit ) );
 }
 
 item *Character::start_craft( craft_command &command, const tripoint & )
@@ -2371,12 +2371,12 @@ void remove_ammo( item &dis_item, Character &who )
 bench_location find_best_bench( const Character &who, const item &craft )
 {
     bool can_lift = who.can_wield( craft ).success() && who.weight_capacity() >= craft.weight();
-    std::pair<bench_type, float> bench_here = crafting::best_bench_here( craft, who.pos(), can_lift );
+    std::pair<bench_type, float> bench_here = crafting::best_bench_here( craft, who.bub_pos(), can_lift );
     bench_type best_type = bench_here.first;
     float best_bench_multi = bench_here.second;
-    tripoint best_loc = who.pos();
+    tripoint best_loc = who.bub_pos();
     std::vector<tripoint> reachable( PICKUP_RANGE * PICKUP_RANGE );
-    g->m.reachable_flood_steps( reachable, who.pos(), PICKUP_RANGE, 1, 100 );
+    g->m.reachable_flood_steps( reachable, who.bub_pos(), PICKUP_RANGE, 1, 100 );
     for( const tripoint &adj : reachable ) {
         if( const cata::value_ptr<furn_workbench_info> &wb = g->m.furn( adj )->workbench ) {
             if( wb->multiplier > best_bench_multi ) {

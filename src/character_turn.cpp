@@ -1086,7 +1086,7 @@ void do_pause( Character &who )
 
     // Train swimming if underwater
     if( !who.in_vehicle ) {
-        if( ( get_map().ter( who.pos() ).id().str() == "t_open_air" ) ) {
+        if( ( get_map().ter( who.bub_pos() ).id().str() == "t_open_air" ) ) {
             if( character_funcs::can_fly( who ) ) {
                 // add flying flavor text here
                 for( const trait_id &tid : who.get_mutations() ) {
@@ -1107,7 +1107,7 @@ void do_pause( Character &who )
                     bodypart_str_id( "foot_l" ), bodypart_str_id( "foot_r" ), bodypart_str_id( "hand_l" ), bodypart_str_id( "hand_r" )
                 }
             }, true );
-        } else if( here.has_flag( TFLAG_DEEP_WATER, who.pos() ) ) {
+        } else if( here.has_flag( TFLAG_DEEP_WATER, who.bub_pos() ) ) {
             // Same as above, except no head/eyes/mouth
             who.drench( 100, { {
                     bodypart_str_id( "leg_l" ), bodypart_str_id( "leg_r" ), bodypart_str_id( "torso" ), bodypart_str_id( "arm_l" ),
@@ -1115,7 +1115,7 @@ void do_pause( Character &who )
                     bodypart_str_id( "hand_r" )
                 }
             }, true );
-        } else if( here.has_flag( "SWIMMABLE", who.pos() ) ) {
+        } else if( here.has_flag( "SWIMMABLE", who.bub_pos() ) ) {
             who.drench( 40, { { bodypart_str_id( "foot_l" ), bodypart_str_id( "foot_r" ), bodypart_str_id( "leg_l" ), bodypart_str_id( "leg_r" ) } },
             false );
         }
@@ -1141,7 +1141,7 @@ void do_pause( Character &who )
         }
 
         // Don't drop on the ground when the ground is on fire
-        if( total_left > 3_turns && !who.is_dangerous_fields( here.field_at( who.pos() ) ) ) {
+        if( total_left > 3_turns && !who.is_dangerous_fields( here.field_at( who.bub_pos() ) ) ) {
             who.add_effect( effect_downed, 2_turns, bodypart_str_id::NULL_ID(), 0, true );
             who.add_msg_player_or_npc( m_warning,
                                        _( "You roll on the ground, trying to smother the fire!" ),
@@ -1193,15 +1193,15 @@ void search_surroundings( Character &who )
     // Search for traps in a larger area than before because this is the only
     // way we can "find" traps that aren't marked as visible.
     // Detection formula takes care of likelihood of seeing within this range.
-    for( const tripoint &tp : here.points_in_radius( who.pos(), 5 ) ) {
+    for( const tripoint &tp : here.points_in_radius( who.bub_pos(), 5 ) ) {
         const trap &tr = here.tr_at( tp );
-        if( tr.is_null() || tp == who.pos() ) {
+        if( tr.is_null() || tp == who.bub_pos() ) {
             continue;
         }
         if( who.has_active_bionic( bio_ground_sonar ) && !who.knows_trap( tp ) &&
             ( tr.loadid == tr_beartrap_buried ||
               tr.loadid == tr_landmine_buried || tr.loadid == tr_sinkhole ) ) {
-            const std::string direction = direction_name( direction_from( who.pos(), tp ) );
+            const std::string direction = direction_name( direction_from( who.bub_pos(), tp ) );
             who.add_msg_if_player( m_warning, _( "Your ground sonar detected a %1$s to the %2$s!" ),
                                    tr.name(), direction );
             who.add_known_trap( tp, tr );
@@ -1218,7 +1218,7 @@ void search_surroundings( Character &who )
             if( tr.get_visibility() > 0 ) {
                 // Only bug player about traps that aren't trivial to spot.
                 const std::string direction = direction_name(
-                                                  direction_from( who.pos(), tp ) );
+                                                  direction_from( who.bub_pos(), tp ) );
                 who.add_msg_if_player( _( "You've spotted a %1$s to the %2$s!" ),
                                        tr.name(), direction );
                 // Get a bit of experience for spotting traps.

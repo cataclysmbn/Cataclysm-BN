@@ -1688,12 +1688,12 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
             continue;
         }
         // TODO: can the following code be called for all types of creatures
-        dist = rl_dist( critter.pos(), p );
+        dist = rl_dist( critter.bub_pos(), p );
         if( dist <= 8 ) {
             if( dist <= 4 ) {
                 critter.add_effect( effect_stunned, time_duration::from_turns( 10 - dist ) );
             }
-            if( critter.has_flag( MF_SEES ) && here.sees( critter.pos(), p, 8 ) ) {
+            if( critter.has_flag( MF_SEES ) && here.sees( critter.bub_pos(), p, 8 ) ) {
                 critter.add_effect( effect_blind, time_duration::from_turns( 18 - dist ) );
             }
             if( critter.has_flag( MF_HEARS ) ) {
@@ -1729,9 +1729,9 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
         if( critter.posz() != p.z ) {
             continue;
         }
-        if( rl_dist( critter.pos(), p ) <= sw.radius ) {
+        if( rl_dist( critter.bub_pos(), p ) <= sw.radius ) {
             add_msg( _( "%s is caught in the shockwave!" ), critter.name() );
-            g->knockback( p, critter.pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
+            g->knockback( p, critter.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
         }
     }
     // TODO: combine the two loops and the case for g->u using all_creatures()
@@ -1739,9 +1739,9 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
         if( guy.posz() != p.z ) {
             continue;
         }
-        if( rl_dist( guy.pos(), p ) <= sw.radius ) {
+        if( rl_dist( guy.bub_pos(), p ) <= sw.radius ) {
             add_msg( _( "%s is caught in the shockwave!" ), guy.name );
-            g->knockback( p, guy.pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
+            g->knockback( p, guy.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
         }
     }
     if( rl_dist( g->u.bub_pos(), p ) <= sw.radius && sw.affects_player &&

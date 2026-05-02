@@ -385,7 +385,7 @@ bool aim_activity_actor::load_RAS_weapon()
 void autodrive_activity_actor::start( player_activity &/* act */, Character &who )
 {
     const bool in_vehicle = who.in_vehicle && who.controlling_vehicle;
-    const optional_vpart_position vp = get_map().veh_at( who.pos() );
+    const optional_vpart_position vp = get_map().veh_at( who.bub_pos() );
     if( !( vp && in_vehicle ) ) {
         who.cancel_activity();
         return;
@@ -908,7 +908,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
             // currently all things that can be hacked have equivalent alarm failure states.
             // this may not always be the case with new hackable things.
             g->events().send<event_type::triggers_alarm>( who.getID() );
-            sounds::sound( who.pos(), 60, sounds::sound_t::music, _( "an alarm sound!" ), true, "environment",
+            sounds::sound( who.bub_pos(), 60, sounds::sound_t::music, _( "an alarm sound!" ), true, "environment",
                            "alarm" );
             if( examp.z > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
@@ -981,7 +981,7 @@ std::unique_ptr<activity_actor> hacking_activity_actor::deserialize( JsonIn &jsi
 
 void move_items_activity_actor::do_turn( player_activity &act, Character &who )
 {
-    const tripoint dest = relative_destination + who.pos();
+    const tripoint dest = relative_destination + who.bub_pos();
 
     while( who.moves > 0 && !target_items.empty() ) {
         safe_reference<item> target = std::move( target_items.back() );
@@ -1027,7 +1027,7 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
     if( target_items.empty() ) {
         // Nuke the current activity, leaving the backlog alone.
         act.set_to_null();
-        if( who.is_hauling() && !has_haulable_items( who.pos() ) ) {
+        if( who.is_hauling() && !has_haulable_items( who.bub_pos() ) ) {
             who.stop_hauling();
         }
     }
@@ -1072,7 +1072,7 @@ void pickup_activity_actor::do_turn( player_activity &act, Character &who )
 
     // If the player moves while picking up (i.e.: in a moving vehicle) cancel
     // the activity, only populate starting_pos when grabbing from the ground
-    if( starting_pos && *starting_pos != who.pos() ) {
+    if( starting_pos && *starting_pos != who.bub_pos() ) {
         who.cancel_activity();
         who.add_msg_if_player( _( "Moving canceled auto-pickup." ) );
         return;
@@ -1193,7 +1193,7 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.pos() ) ) {
+            if( get_avatar().sees( who.bub_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1342,7 +1342,7 @@ void boltcutting_activity_actor::do_turn( player_activity &/* act */, Character 
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.pos() ) ) {
+            if( get_avatar().sees( who.bub_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1613,7 +1613,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         && ( lock_roll + dice( 1, 30 ) ) > pick_roll ) {
 
         if( get_map().has_flag( "ALARMED", target ) ) {
-            sounds::sound( who.pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ),
+            sounds::sound( who.bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ),
                            true, "environment", "alarm" );
             if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
@@ -1754,7 +1754,7 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.pos() ) ) {
+            if( get_avatar().sees( who.bub_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1997,7 +1997,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     // Shift our position to our "peeking" position, so that the UI
     // for picking a throw point lets us target the location we couldn't
     // otherwise see.
-    const tripoint original_player_position = who.pos();
+    const tripoint original_player_position = who.bub_pos();
     if( blind_throw_pos ) {
         who.setpos( *blind_throw_pos );
     }

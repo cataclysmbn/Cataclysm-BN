@@ -119,13 +119,13 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
     Character &player_character = get_player_character();
     player_character.setpos( map_starting_point );
 
-    REQUIRE( player_character.pos() == map_starting_point );
-    if( player_character.pos() != map_starting_point ) {
+    REQUIRE( player_character.bub_pos() == map_starting_point );
+    if( player_character.bub_pos() != map_starting_point ) {
         return;
     }
     get_map().board_vehicle( map_starting_point, player_character.as_player() );
-    REQUIRE( player_character.pos() == map_starting_point );
-    if( player_character.pos() != map_starting_point ) {
+    REQUIRE( player_character.bub_pos() == map_starting_point );
+    if( player_character.bub_pos() != map_starting_point ) {
         return;
     }
     const int transition_cycle = 3;
@@ -168,7 +168,7 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
                 CHECK( ppos.z == target_z );
             }
             if( pmount.x == 0 && pmount.y == 0 ) {
-                CHECK( player_character.pos() == ppos );
+                CHECK( player_character.bub_pos() == ppos );
             }
         }
         vpts = veh.get_points();
@@ -178,7 +178,7 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
     const int expected_move = use_ramp ? ( up ? 1 : -1 ) : 0;
     CHECK( veh.bub_ms_location().z - map_starting_point.z == expected_move );
 
-    const std::optional<vpart_reference> vp = here.veh_at( player_character.pos() ).part_with_feature(
+    const std::optional<vpart_reference> vp = here.veh_at( player_character.bub_pos() ).part_with_feature(
                 VPFLAG_BOARDABLE, true );
     REQUIRE( vp );
     if( vp ) {
@@ -189,7 +189,7 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
         // so get_parts_at() found no BOARDABLE part and get_passenger() returned nullptr.
         // This check is most meaningful for use_ramp == true where z != 0 post-transition.
         CHECK( veh.get_passenger( static_cast<int>( vp->part_index() ) ) != nullptr );
-        const int z_change = map_starting_point.z - player_character.pos().z;
+        const int z_change = map_starting_point.z - player_character.bub_pos().z;
         here.unboard_vehicle( *vp, &player_character, false );
         here.ter_set( map_starting_point, ter_id( "t_pavement" ) );
         player_character.setpos( map_starting_point );

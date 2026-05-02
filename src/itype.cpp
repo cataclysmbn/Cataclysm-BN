@@ -192,7 +192,7 @@ int itype::invoke( player &p, item &it, const tripoint_bub_ms &pos ) const
     return invoke( p, it, pos, use_methods.begin()->first );
 }
 
-int itype::invoke( player &p, item &it, const tripoint &pos, const std::string &iuse_name ) const
+int itype::invoke( player &p, item &it, const tripoint_bub_ms &pos, const std::string &iuse_name ) const
 {
     const use_function *use = get_use( iuse_name );
     if( use == nullptr ) {

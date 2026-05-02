@@ -441,7 +441,7 @@ void iexamine::gaspump( player &p, const tripoint &examp )
 
                 //This could invalidate the iterator, but it's not used again as we return right after
                 detached_ptr<item> spill = content->split( qty );
-                here.add_item_or_charges( p.pos(), std::move( spill ) );
+                here.add_item_or_charges( p.bub_pos(), std::move( spill ) );
                 return;
             } else {
                 liquid_handler::handle_liquid( *content, 1 );
@@ -1139,7 +1139,7 @@ void iexamine::cardreader( player &p, const tripoint &examp )
         }
         for( monster &critter : g->all_monsters() ) {
             // Check 1) same overmap coords, 2) turret, 3) hostile
-            if( ms_to_omt_copy( here.bub_to_abs( critter.pos() ) ) == ms_to_omt_copy( here.bub_to_abs(
+            if( ms_to_omt_copy( here.bub_to_abs( critter.bub_pos() ) ) == ms_to_omt_copy( here.bub_to_abs(
                         examp ) ) &&
                 critter.has_flag( MF_ID_CARD_DESPAWN ) &&
                 critter.attitude_to( p ) == Attitude::A_HOSTILE ) {
@@ -1196,7 +1196,7 @@ void iexamine::cardreader_foodplace( player &p, const tripoint &examp )
             if( query_yn( _( "Lock doors?" ) ) ) {
                 for( const tripoint &tmp : here.points_in_radius( examp, 3 ) ) {
                     if( here.ter( tmp ) == t_door_metal_o || here.ter( tmp ) == t_door_metal_c ) {
-                        if( p.pos() == tmp ) {
+                        if( p.bub_pos() == tmp ) {
                             p.add_msg_if_player( m_bad, _( "You are in the way of the door, move before trying again." ) );
                         } else {
                             here.ter_set( tmp, t_door_metal_locked );
@@ -1223,7 +1223,7 @@ void iexamine::cardreader_foodplace( player &p, const tripoint &examp )
 void iexamine::intercom( player &p, const tripoint &examp )
 {
     const std::vector<npc *> intercom_npcs = g->get_npcs_if( [examp]( const npc & guy ) {
-        return guy.myclass == npc_class_id( "NC_ROBOFAC_INTERCOM" ) && rl_dist( guy.pos(), examp ) < 10;
+        return guy.myclass == npc_class_id( "NC_ROBOFAC_INTERCOM" ) && rl_dist( guy.bub_pos(), examp ) < 10;
     } );
     if( intercom_npcs.empty() ) {
         p.add_msg_if_player( m_info, _( "No one responds." ) );
@@ -1264,7 +1264,7 @@ void iexamine::chainfence( player &p, const tripoint &examp )
 {
     // We're not going to do anything if we're already on that point.
     // Also prompt the player before taking an action.
-    if( p.pos() == examp || !query_yn( _( "Climb obstacle?" ) ) ) {
+    if( p.bub_pos() == examp || !query_yn( _( "Climb obstacle?" ) ) ) {
         none( p, examp );
         return;
     }
@@ -1302,7 +1302,7 @@ void iexamine::chainfence( player &p, const tripoint &examp )
         sfx::play_variant_sound( "plmove", "clear_obstacle", sfx::get_heard_volume( g->u.bub_pos() ) );
     }
     if( p.in_vehicle ) {
-        here.unboard_vehicle( p.pos() );
+        here.unboard_vehicle( p.bub_pos() );
     }
     p.setpos( examp );
     if( examp.x < g_half_mapsize_x || examp.y < g_half_mapsize_y ||
@@ -1461,7 +1461,7 @@ void iexamine::pit_covered( player &p, const tripoint &examp )
 
     map &here = get_map();
     add_msg( _( "You remove the plank." ) );
-    here.add_item_or_charges( p.pos(), item::spawn( "2x4", calendar::turn ) );
+    here.add_item_or_charges( p.bub_pos(), item::spawn( "2x4", calendar::turn ) );
 
     if( here.ter( examp ) == t_pit_covered ) {
         here.ter_set( examp, t_pit );
@@ -1977,7 +1977,7 @@ void iexamine::pedestal_temple( player &p, const tripoint &examp )
 void iexamine::door_peephole( player &p, const tripoint &examp )
 {
     map &here = get_map();
-    if( here.is_outside( p.pos() ) ) {
+    if( here.is_outside( p.bub_pos() ) ) {
         // if door is a locked type attempt to open
         if( here.has_flag( flag_OPENCLOSE_INSIDE, examp ) ) {
             locked_object( p, examp );
@@ -2145,7 +2145,7 @@ static void handle_harvest( player &p, const std::string &itemid, bool force_dro
         p.i_add( std::move( harvest ) );
     } else {
         p.add_msg_if_player( _( "You harvest and drop: %s." ), harvest->tname() );
-        get_map().add_item_or_charges( p.pos(), std::move( harvest ) );
+        get_map().add_item_or_charges( p.bub_pos(), std::move( harvest ) );
     }
 }
 
@@ -2191,7 +2191,7 @@ void iexamine::flower_poppy( player &p, const tripoint &examp )
         add_msg( m_warning, _( "This flower has a heady aroma." ) );
     }
 
-    auto recentWeather = sum_conditions( calendar::turn - 10_minutes, calendar::turn, p.pos() );
+    auto recentWeather = sum_conditions( calendar::turn - 10_minutes, calendar::turn, p.bub_pos() );
 
     // If it has been raining recently, then this event is twice less likely.
     if( ( ( recentWeather.rain_amount > 1 ) ? one_in( 6 ) : one_in( 3 ) ) && resist < 5 ) {
@@ -2409,7 +2409,7 @@ void iexamine::flower_marloss( player &p, const tripoint &examp )
         return;
     }
     here.furn_set( examp, f_null );
-    here.spawn_item( p.pos(), itype_marloss_seed, 1, 3, calendar::turn );
+    here.spawn_item( p.bub_pos(), itype_marloss_seed, 1, 3, calendar::turn );
     handle_harvest( p, "withered", false );
 }
 
@@ -3433,7 +3433,7 @@ void iexamine::fvat_full( player &p, const tripoint &examp )
             add_msg( _( "You remove %s from the vat." ), ( *it )->tname() );
             detached_ptr<item> det;
             it = here.i_rem( examp, it, &det );
-            here.add_item_or_charges( p.pos(), std::move( det ) );
+            here.add_item_or_charges( p.bub_pos(), std::move( det ) );
         } else {
             it++;
         }
@@ -4198,11 +4198,11 @@ static void pick_plant( player &p, const tripoint &examp,
     int plantCount = rng( plantBase, plantBase + survival / 2 );
     plantCount = std::min( plantCount, 12 );
 
-    here.spawn_item( p.pos(), itemType, plantCount, 0, calendar::turn );
+    here.spawn_item( p.bub_pos(), itemType, plantCount, 0, calendar::turn );
 
     if( seeds ) {
         // FIXME: shouldn't derive seed type by string manipulation
-        here.spawn_item( p.pos(), itype_id( "seed_" + itemType.str() ), 1,
+        here.spawn_item( p.bub_pos(), itype_id( "seed_" + itemType.str() ), 1,
                          rng( plantCount / 4, plantCount / 2 ), calendar::turn );
     }
 
@@ -4225,7 +4225,7 @@ void iexamine::tree_hickory( player &p, const tripoint &examp )
     }
 
     ///\EFFECT_SURVIVAL increases hickory root number per tree
-    here.spawn_item( p.pos(), itype_hickory_root, rng( 1, 3 + p.get_skill_level( skill_survival ) ), 0,
+    here.spawn_item( p.bub_pos(), itype_hickory_root, rng( 1, 3 + p.get_skill_level( skill_survival ) ), 0,
                      calendar::turn );
     here.ter_set( examp, t_tree_hickory_dead );
     ///\EFFECT_SURVIVAL speeds up hickory root digging
@@ -4325,10 +4325,10 @@ void iexamine::tree_maple_tapped( player &p, const tripoint &examp )
 
             detached_ptr<item> tree_spile = item::spawn( "tree_spile" );
             add_msg( _( "You remove the %s." ), tree_spile->tname( 1 ) );
-            here.add_item_or_charges( p.pos(), std::move( tree_spile ) );
+            here.add_item_or_charges( p.bub_pos(), std::move( tree_spile ) );
 
             if( container ) {
-                here.add_item_or_charges( p.pos(), container->detach() );
+                here.add_item_or_charges( p.bub_pos(), container->detach() );
             }
             here.i_clear( examp );
 
@@ -4372,7 +4372,7 @@ void iexamine::shrub_marloss( player &p, const tripoint &examp )
         pick_plant( p, examp, itype_mycus_fruit, t_shrub_fungal );
     } else if( p.has_trait( trait_THRESH_MARLOSS ) ) {
         map &here = get_map();
-        here.spawn_item( p.pos(), itype_mycus_fruit, 1, 0, calendar::turn );
+        here.spawn_item( p.bub_pos(), itype_mycus_fruit, 1, 0, calendar::turn );
         here.ter_set( examp, t_fungus );
         add_msg( m_info, _( "The shrub offers up a fruit, then crumbles into a fungal bed." ) );
     } else {
@@ -4393,7 +4393,7 @@ void iexamine::tree_marloss( player &p, const tripoint &examp )
             here.ter_set( examp, t_marloss_tree );
         }
     } else if( p.has_trait( trait_THRESH_MARLOSS ) ) {
-        here.spawn_item( p.pos(), itype_mycus_fruit, 1, 0, calendar::turn );
+        here.spawn_item( p.bub_pos(), itype_mycus_fruit, 1, 0, calendar::turn );
         here.ter_set( examp, t_tree_fungal );
         add_msg( m_info, _( "The tree offers up a fruit, then shrivels into a fungal tree." ) );
     } else {
@@ -4559,7 +4559,7 @@ void iexamine::trap( player &p, const tripoint &examp )
                 if( query_yn( _( "Cancel construction?" ) ) ) {
                     here.disarm_trap( examp );
                     for( detached_ptr<item> &it : pc->components.clear() ) {
-                        here.add_item_or_charges( p.pos(), std::move( it ) );
+                        here.add_item_or_charges( p.bub_pos(), std::move( it ) );
                     }
                     here.partial_con_remove( examp );
                     return;
@@ -5024,7 +5024,7 @@ void iexamine::curtains( player &p, const tripoint &examp )
 {
     map &here = get_map();
     const bool closed_window_with_curtains = here.has_flag( flag_BARRICADABLE_WINDOW_CURTAINS, examp );
-    if( here.is_outside( p.pos() ) && ( here.has_flag( flag_WALL, examp ) ||
+    if( here.is_outside( p.bub_pos() ) && ( here.has_flag( flag_WALL, examp ) ||
                                         closed_window_with_curtains ) ) {
         locked_object( p, examp );
         return;
@@ -5050,10 +5050,10 @@ void iexamine::curtains( player &p, const tripoint &examp )
             here.ter_set( examp, here.ter( examp )->curtain_transform );
         }
 
-        here.spawn_item( p.pos(), itype_nail, 1, 4, calendar::turn );
-        here.spawn_item( p.pos(), itype_sheet, 2, 0, calendar::turn );
-        here.spawn_item( p.pos(), itype_stick, 1, 0, calendar::turn );
-        here.spawn_item( p.pos(), itype_string_36, 1, 0, calendar::turn );
+        here.spawn_item( p.bub_pos(), itype_nail, 1, 4, calendar::turn );
+        here.spawn_item( p.bub_pos(), itype_sheet, 2, 0, calendar::turn );
+        here.spawn_item( p.bub_pos(), itype_stick, 1, 0, calendar::turn );
+        here.spawn_item( p.bub_pos(), itype_string_36, 1, 0, calendar::turn );
         p.moves -= to_moves<int>( 10_seconds );
         p.add_msg_if_player( _( "You tear the curtains and curtain rod off the windowframe." ) );
     } else {
@@ -5441,7 +5441,7 @@ void iexamine::pay_gas( player &p, const tripoint &examp )
             return;
         }
 
-        sounds::sound( p.pos(), 6, sounds::sound_t::activity, _( "Glug Glug Glug" ), true, "tool",
+        sounds::sound( p.bub_pos(), 6, sounds::sound_t::activity, _( "Glug Glug Glug" ), true, "tool",
                        "gaspump" );
 
         int cost = liters * pricePerUnit;
@@ -5471,7 +5471,7 @@ void iexamine::pay_gas( player &p, const tripoint &examp )
                 uistate.ags_pay_gas_selected_pump );
         int amount = pGasPump ? fromPumpFuel( pTank, *pGasPump ) : 0;
         if( amount >= 0 ) {
-            sounds::sound( p.pos(), 6, sounds::sound_t::activity, _( "Glug Glug Glug" ), true, "tool",
+            sounds::sound( p.bub_pos(), 6, sounds::sound_t::activity, _( "Glug Glug Glug" ), true, "tool",
                            "gaspump" );
             cashcard->charges += amount * pricePerUnit / 1000.0f;
             add_msg( m_info, _( "Your cash cards now hold %s." ),
@@ -5493,10 +5493,10 @@ void iexamine::ledge( player &p, const tripoint &examp )
             !query_yn( _( "Do you really want to jump off the vehicle?" ) ) ) {
             return;
         }
-        get_map().unboard_vehicle( p.pos() );
+        get_map().unboard_vehicle( p.bub_pos() );
     }
-    if( get_map().ter( p.pos() ).id().str() == "t_open_air" && !character_funcs::can_fly( p ) ) {
-        tripoint where = p.pos();
+    if( get_map().ter( p.bub_pos() ).id().str() == "t_open_air" && !character_funcs::can_fly( p ) ) {
+        tripoint where = p.bub_pos();
         tripoint below = where;
         below.z--;
 
@@ -5507,7 +5507,7 @@ void iexamine::ledge( player &p, const tripoint &examp )
             below.z--;
         }
         // where now represents the first NON-open-air tile or the last valid move before hitting one
-        const int height = p.pos().z - below.z;
+        const int height = p.bub_pos().z - below.z;
 
         if( height > 0 ) {
             g->vertical_move( -height, true );  // fall onto the solid tile
@@ -5645,7 +5645,7 @@ void iexamine::ledge( player &p, const tripoint &examp )
             p.add_msg_if_player( m_info, _( "You pull up the %s." ),
                                  here.furn( below_rope ).obj().name() );
             const auto furn_item = here.furn( below_rope ).obj().deployed_item;
-            here.add_item_or_charges( p.pos(), item::spawn( furn_item, calendar::turn ) );
+            here.add_item_or_charges( p.bub_pos(), item::spawn( furn_item, calendar::turn ) );
             here.furn_set( below_rope, f_null );
             break;
         }
@@ -5693,11 +5693,11 @@ static player &player_on_couch( player &p, const tripoint &autodoc_loc, player &
             flag_AUTODOC_COUCH ) ) {
         adjacent_couch = true;
         couch_pos = couch_loc;
-        if( p.pos() == couch_loc ) {
+        if( p.bub_pos() == couch_loc ) {
             return p;
         }
         for( const npc *e : g->allies() ) {
-            if( e->pos() == couch_loc ) {
+            if( e->bub_pos() == couch_loc ) {
                 return  *g->critter_by_id<player>( e->getID() );
             }
         }
@@ -5711,11 +5711,11 @@ static Character &operator_present( Character &p, const tripoint &autodoc_loc,
     map &here = get_map();
     for( const auto &loc : here.points_in_radius( autodoc_loc, 1 ) ) {
         if( !here.has_flag_furn_or_vpart( flag_AUTODOC_COUCH, loc ) ) {
-            if( p.pos() == loc ) {
+            if( p.bub_pos() == loc ) {
                 return p;
             }
             for( const npc *e : g->allies() ) {
-                if( e->pos() == loc ) {
+                if( e->bub_pos() == loc ) {
                     return  *g->critter_by_id<player>( e->getID() );
                 }
             }
@@ -6265,7 +6265,7 @@ static void mill_activate( player &p, const tripoint &examp )
             add_msg( m_bad, _( "This mill contains %s, which can't be milled!" ), it->tname( 1, false ) );
             add_msg( _( "You remove the %s from the mill." ), it->tname() );
             p.mod_moves( -p.item_handling_cost( *it ) );
-            here.add_item_or_charges( p.pos(), here.i_rem( examp, it ) );
+            here.add_item_or_charges( p.bub_pos(), here.i_rem( examp, it ) );
             return;
         }
     }
@@ -7150,7 +7150,7 @@ void iexamine::quern_examine( player &p, const tripoint &examp )
                     add_msg( _( "You remove %s from the mill." ), ( *it )->tname() );
                     detached_ptr<item> det;
                     it = items_here.erase( it, &det );
-                    here.add_item_or_charges( p.pos(), std::move( det ) );
+                    here.add_item_or_charges( p.bub_pos(), std::move( det ) );
                     p.mod_moves( handling_cost );
                 } else {
                     ++it;
@@ -7398,7 +7398,7 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
                     add_msg( _( "You remove %s from the rack." ), ( *it )->tname() );
                     detached_ptr<item> det;
                     it = items_here.erase( it, &det );
-                    here.add_item_or_charges( p.pos(), std::move( det ) );
+                    here.add_item_or_charges( p.bub_pos(), std::move( det ) );
                     p.mod_moves( handling_cost );
                 } else {
                     ++it;
@@ -7735,7 +7735,7 @@ void iexamine::portal( player &p, const tripoint &examp )
         const optional_vpart_position vp = get_map().veh_at( examp );
         if( !vp ) {
             // Also check if player is inside a nearby vehicle.
-            for( const tripoint &adj : get_map().points_in_radius( p.pos(), 1 ) ) {
+            for( const tripoint &adj : get_map().points_in_radius( p.bub_pos(), 1 ) ) {
                 const optional_vpart_position vp2 = get_map().veh_at( adj );
                 if( vp2 ) {
                     vehicle &veh = vp2->vehicle();

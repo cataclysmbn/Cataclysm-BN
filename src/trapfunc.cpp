@@ -1041,13 +1041,13 @@ static bool sinkhole_safety_roll( player *p, const itype_id &itemname, const int
     if( roll < diff ) {
         p->add_msg_if_player( m_bad, _( "You fail to attach it…" ) );
         p->use_amount( itemname, 1 );
-        here.spawn_item( random_neighbor( p->pos() ), itemname );
+        here.spawn_item( random_neighbor( p->bub_pos() ), itemname );
         return false;
     }
 
     std::vector<tripoint> safe;
-    for( const tripoint_bub_ms &tmp : g->m.points_in_radius( p->pos(), 1 ) ) {
-        if( here.passable( tmp ) && !here.obstructed_by_vehicle_rotation( p->pos(), tmp ) &&
+    for( const tripoint_bub_ms &tmp : g->m.points_in_radius( p->bub_pos(), 1 ) ) {
+        if( here.passable( tmp ) && !here.obstructed_by_vehicle_rotation( p->bub_pos(), tmp ) &&
             here.tr_at( tmp ).loadid != tr_pit ) {
             safe.push_back( tmp );
         }
@@ -1055,7 +1055,7 @@ static bool sinkhole_safety_roll( player *p, const itype_id &itemname, const int
     if( safe.empty() ) {
         p->add_msg_if_player( m_bad, _( "There's nowhere to pull yourself to, and you sink!" ) );
         p->use_amount( itemname, 1 );
-        here.spawn_item( random_neighbor( p->pos() ), itemname );
+        here.spawn_item( random_neighbor( p->bub_pos() ), itemname );
         return false;
     } else {
         p->add_msg_player_or_npc( m_good, _( "You pull yourself to safety!" ),
@@ -1145,7 +1145,7 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
             }
         } else {
             c->add_msg_if_npc( _( "<npcname> falls down a level!" ) );
-            tripoint dest = c->pos();
+            tripoint dest = c->bub_pos();
             dest.z--;
             c->impact( 20, dest );
             c->setpos( dest );
@@ -1188,7 +1188,7 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
         }
 
         if( valid.empty() ) {
-            critter->setpos( c->pos() );
+            critter->setpos( c->bub_pos() );
             add_msg( m_bad, _( "You fall down under %s!" ), critter->disp_name() );
         } else {
             critter->setpos( random_entry( valid ) );
@@ -1444,7 +1444,7 @@ bool trapfunc::cast_spell( const tripoint_bub_ms &p, Creature *critter, item * )
                                     g->m.tr_at( p ).name() );
     const spell trap_spell = g->m.tr_at( p ).spell_data.get_spell( 0 );
     npc dummy;
-    trap_spell.cast_all_effects( dummy, critter->pos() );
+    trap_spell.cast_all_effects( dummy, critter->bub_pos() );
     trap_spell.make_sound( p );
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
     return true;

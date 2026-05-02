@@ -2055,7 +2055,7 @@ static std::vector<tripoint_abs_omt> get_overmap_path_to( const tripoint_abs_omt
     overmap_path_params params;
     vehicle *player_veh = nullptr;
     if( driving ) {
-        const optional_vpart_position vp = here.veh_at( player_character.pos() );
+        const optional_vpart_position vp = here.veh_at( player_character.bub_pos() );
         if( !vp.has_value() ) {
             debugmsg( "Failed to find driven vehicle" );
             return {};
@@ -2082,7 +2082,7 @@ static std::vector<tripoint_abs_omt> get_overmap_path_to( const tripoint_abs_omt
         params = overmap_path_params::for_player();
         const oter_id dest_ter = ACTIVE_OVERMAP_BUFFER.ter_existing( dest );
         // already in water or going to a water tile
-        if( here.has_flag( "SWIMMABLE", player_character.pos() ) || is_river_or_lake( dest_ter ) ) {
+        if( here.has_flag( "SWIMMABLE", player_character.bub_pos() ) || is_river_or_lake( dest_ter ) ) {
             params.water_cost = 100;
         }
     }

@@ -2491,7 +2491,7 @@ bool game::handle_action()
                     add_msg( m_info, _( "Ignoring enemy!" ) );
                     for( auto &elem : u.get_mon_visible().new_seen_mon ) {
                         monster &critter = *elem;
-                        critter.ignoring = rl_dist( u.bub_pos(), critter.pos() );
+                        critter.ignoring = rl_dist( u.bub_pos(), critter.bub_pos() );
                     }
                     set_safe_mode( SAFE_MODE_ON );
                 } else if( u.has_effect( effect_laserlocked ) ) {

@@ -573,7 +573,7 @@ void npc::check_or_use_weapon_cbm()
 
     if( !avail_active_cbms.empty() ) {
         Creature *critter = current_target();
-        int dist = rl_dist( pos(), critter->pos() );
+        int dist = rl_dist( pos(), critter->bub_pos() );
         int active_index = -1;
         int best_dps = -1;
         bool wield_gun = primary_weapon().is_gun();
@@ -2415,7 +2415,7 @@ bool Character::uninstall_bionic( const bionic &target_cbm, monster &installer, 
         if( itemtype.is_valid() ) {
             cbm->faults.emplace( fault_bionic_nonsterile );
         }
-        get_map().add_item( patient.pos(), std::move( cbm ) );
+        get_map().add_item( patient.bub_pos(), std::move( cbm ) );
     } else {
         bionics_uninstall_failure( installer, patient, difficulty, success, adjusted_skill );
     }

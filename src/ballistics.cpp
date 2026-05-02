@@ -680,8 +680,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
         }
         Creature *mon_ptr = g->get_creature_if( [&]( const Creature & z ) {
             // search for creatures in radius 4 around impact site
-            if( rl_dist( z.pos(), tp ) <= 4 &&
-                here.sees( z.pos(), tp, -1 ) ) {
+            if( rl_dist( z.bub_pos(), tp ) <= 4 &&
+                here.sees( z.bub_pos(), tp, -1 ) ) {
                 // don't hit targets that have already been hit
                 if( !z.has_effect( effect_bounced ) ) {
                     return true;
@@ -693,9 +693,9 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             Creature &z = *mon_ptr;
             add_msg( _( "The attack bounced to %s!" ), z.get_name() );
             z.add_effect( effect_bounced, 1_turns );
-            projectile_attack( proj, tp, z.pos(), dispersion, origin, source_weapon, in_veh );
+            projectile_attack( proj, tp, z.bub_pos(), dispersion, origin, source_weapon, in_veh );
             sfx::play_variant_sound( "fire_gun", "bio_lightning_tail",
-                                     sfx::get_heard_volume( z.pos() ), sfx::get_heard_angle( z.pos() ) );
+                                     sfx::get_heard_volume( z.bub_pos() ), sfx::get_heard_angle( z.bub_pos() ) );
         }
     }
     explosion_handler::get_explosion_queue().execute();

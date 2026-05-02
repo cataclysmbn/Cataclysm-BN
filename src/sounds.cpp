@@ -359,7 +359,7 @@ void sounds::process_sounds()
         // Alert all monsters (that can hear) to the sound.
         for( monster &critter : g->all_monsters() ) {
             // TODO: Generalize this to Creature::hear_sound
-            const int dist = sound_distance( source, critter.pos() );
+            const int dist = sound_distance( source, critter.bub_pos() );
             if( vol * 2 > dist ) {
                 // Exclude monsters that certainly won't hear the sound
                 critter.hear_sound( source, vol, dist );
@@ -440,7 +440,7 @@ void sounds::process_sound_markers( Character *who )
     for( const auto &sound_event_pair : sounds_copy ) {
         const tripoint &pos = sound_event_pair.first;
         const sound_event &sound = sound_event_pair.second;
-        const int distance_to_sound = sound_distance( who->pos(), pos );
+        const int distance_to_sound = sound_distance( who->bub_pos(), pos );
         const int raw_volume = sound.volume;
 
         // The felt volume of a sound is not affected by negative multipliers, such as already
@@ -480,7 +480,7 @@ void sounds::process_sound_markers( Character *who )
         const int heard_volume = static_cast<int>( ( raw_volume - weather_vol ) *
                                  volume_multiplier ) - distance_to_sound;
 
-        if( heard_volume <= 0 && pos != who->pos() ) {
+        if( heard_volume <= 0 && pos != who->bub_pos() ) {
             continue;
         }
 
@@ -491,7 +491,7 @@ void sounds::process_sound_markers( Character *who )
 
         // Noises from vehicle player is in.
         if( who->controlling_vehicle ) {
-            vehicle *veh = veh_pointer_or_null( get_map().veh_at( who->pos() ) );
+            vehicle *veh = veh_pointer_or_null( get_map().veh_at( who->bub_pos() ) );
             const int noise = veh ? static_cast<int>( veh->vehicle_noise ) : 0;
 
             who->volume = std::max( who->volume, noise );
@@ -523,7 +523,7 @@ void sounds::process_sound_markers( Character *who )
         }
 
         // don't print our own noise or things without descriptions
-        if( !sound.ambient && ( pos != who->pos() ) && !get_map().pl_sees( pos, distance_to_sound ) ) {
+        if( !sound.ambient && ( pos != who->bub_pos() ) && !get_map().pl_sees( pos, distance_to_sound ) ) {
             if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
                 !get_safemode().is_sound_safe( sound.description, distance_to_sound ) ) {
                 const std::string final_description = ensure_punctuation( description, '!' );
@@ -533,7 +533,7 @@ void sounds::process_sound_markers( Character *who )
         }
 
         // skip some sounds to avoid message spam
-        if( describe_sound( sound.category, pos == who->pos() ) ) {
+        if( describe_sound( sound.category, pos == who->bub_pos() ) ) {
             game_message_type severity = m_info;
             if( sound.category == sound_t::combat || sound.category == sound_t::alarm ) {
                 severity = m_warning;
@@ -542,12 +542,12 @@ void sounds::process_sound_markers( Character *who )
             std::string final_description = ensure_punctuation( description, '.' );
 
             // if we can see it, don't print a direction
-            if( pos == who->pos() ) {
+            if( pos == who->bub_pos() ) {
                 add_msg( severity, _( "From your position you hear %1$s" ), final_description );
             } else if( who->sees( pos ) ) {
                 add_msg( severity, _( "You hear %1$s" ), final_description );
             } else {
-                std::string direction = direction_name( direction_from( who->pos(), pos ) );
+                std::string direction = direction_name( direction_from( who->bub_pos(), pos ) );
                 add_msg( severity, _( "From the %1$s you hear %2$s" ), direction, final_description );
             }
         }
@@ -579,7 +579,7 @@ void sounds::process_sound_markers( Character *who )
         }
 
         // Place footstep markers.
-        if( pos == who->pos() || who->sees( pos ) ) {
+        if( pos == who->bub_pos() || who->sees( pos ) ) {
             // If we are or can see the source, don't draw a marker.
             continue;
         }
@@ -745,7 +745,7 @@ void sfx::do_vehicle_engine_sfx()
     } else if( player_character.in_sleep_state() && audio_muted ) {
         return;
     }
-    optional_vpart_position vpart_opt = get_map().veh_at( player_character.pos() );
+    optional_vpart_position vpart_opt = get_map().veh_at( player_character.bub_pos() );
     vehicle *veh;
     if( vpart_opt.has_value() ) {
         veh = &vpart_opt->vehicle();
@@ -780,7 +780,7 @@ void sfx::do_vehicle_engine_sfx()
 
     if( !is_channel_playing( ch ) ) {
         play_ambient_variant_sound( id_and_variant.first, id_and_variant.second,
-                                    sfx::get_heard_volume( player_character.pos() ), ch, 1000 );
+                                    sfx::get_heard_volume( player_character.bub_pos() ), ch, 1000 );
         add_msg( m_debug, "START %s %s", id_and_variant.first, id_and_variant.second );
     } else {
         add_msg( m_debug, "PLAYING" );
@@ -817,11 +817,11 @@ void sfx::do_vehicle_engine_sfx()
     }
 
     if( current_gear > previous_gear ) {
-        play_variant_sound( "vehicle", "gear_shift", get_heard_volume( player_character.pos() ),
+        play_variant_sound( "vehicle", "gear_shift", get_heard_volume( player_character.bub_pos() ),
                             0_degrees, 0.8, 0.8 );
         add_msg( m_debug, "GEAR UP" );
     } else if( current_gear < previous_gear ) {
-        play_variant_sound( "vehicle", "gear_shift", get_heard_volume( player_character.pos() ),
+        play_variant_sound( "vehicle", "gear_shift", get_heard_volume( player_character.bub_pos() ),
                             0_degrees, 1.2, 1.2 );
         add_msg( m_debug, "GEAR DOWN" );
     }
@@ -842,7 +842,7 @@ void sfx::do_vehicle_engine_sfx()
         Mix_HaltChannel( static_cast<int>( ch ) );
         add_msg( m_debug, "STOP speed %d =/= %d", current_speed, previous_speed );
         play_ambient_variant_sound( id_and_variant.first, id_and_variant.second,
-                                    sfx::get_heard_volume( player_character.pos() ), ch, 1000, pitch );
+                                    sfx::get_heard_volume( player_character.bub_pos() ), ch, 1000, pitch );
         add_msg( m_debug, "PITCH %f", pitch );
     }
     previous_speed = current_speed;
@@ -880,9 +880,9 @@ void sfx::do_vehicle_exterior_engine_sfx()
     for( wrapped_vehicle vehicle : vehs ) {
         if( vehicle.v->vehicle_noise > 0 &&
             vehicle.v->vehicle_noise -
-            sound_distance( player_character.pos(), vehicle.v->bub_ms_location().raw() ) > noise_factor ) {
+            sound_distance( player_character.bub_pos(), vehicle.v->bub_ms_location().raw() ) > noise_factor ) {
 
-            noise_factor = vehicle.v->vehicle_noise - sound_distance( player_character.pos(),
+            noise_factor = vehicle.v->vehicle_noise - sound_distance( player_character.bub_pos(),
                            vehicle.v->bub_ms_location().raw() );
             veh = vehicle.v;
         }
@@ -958,9 +958,9 @@ void sfx::do_ambient()
     }
     audio_muted = false;
     const bool is_deaf = player_character.is_deaf();
-    const int heard_volume = get_heard_volume( player_character.pos() );
-    const bool is_underground = player_character.pos().z < 0;
-    const bool is_sheltered = g->is_sheltered( player_character.pos() );
+    const int heard_volume = get_heard_volume( player_character.bub_pos() );
+    const bool is_underground = player_character.bub_pos().z < 0;
+    const bool is_sheltered = g->is_sheltered( player_character.bub_pos() );
     const bool weather_changed = get_weather().weather_id != previous_weather;
     // Step in at night time / we are not indoors
     if( is_night( calendar::turn ) && !is_sheltered &&
@@ -1077,7 +1077,7 @@ void sfx::generate_gun_sound( const tripoint &source, const item &firing )
     std::string selected_sound;
     const avatar &player_character = get_avatar();
     // this does not mean p == avatar (it could be a vehicle turret)
-    if( player_character.pos() == source ) {
+    if( player_character.bub_pos() == source ) {
         selected_sound = "fire_gun";
 
         const auto mods = firing.gunmods();
@@ -1090,7 +1090,7 @@ void sfx::generate_gun_sound( const tripoint &source, const item &firing )
 
     } else {
         angle = get_heard_angle( source );
-        distance = sound_distance( player_character.pos(), source );
+        distance = sound_distance( player_character.bub_pos(), source );
         if( distance <= 17 ) {
             selected_sound = "fire_gun";
         } else {
@@ -1231,8 +1231,8 @@ void sfx::do_projectile_hit( const Creature &target )
         return;
     }
 
-    const int heard_volume = sfx::get_heard_volume( target.pos() );
-    const units::angle angle = get_heard_angle( target.pos() );
+    const int heard_volume = sfx::get_heard_volume( target.bub_pos() );
+    const units::angle angle = get_heard_angle( target.bub_pos() );
     if( target.is_monster() ) {
         const monster &mon = dynamic_cast<const monster &>( target );
         static const std::set<material_id> fleshy = {
@@ -1269,7 +1269,7 @@ void sfx::do_player_death_hurt( const player &target, bool death )
         return;
     }
 
-    int heard_volume = get_heard_volume( target.pos() );
+    int heard_volume = get_heard_volume( target.bub_pos() );
     const bool male = target.male;
     if( !male && !death ) {
         play_variant_sound( "deal_damage", "hurt_f", heard_volume );
@@ -1430,8 +1430,8 @@ void sfx::do_footstep()
     sfx_time = end_sfx_timestamp - start_sfx_timestamp;
     if( std::chrono::duration_cast<std::chrono::milliseconds> ( sfx_time ).count() > 400 ) {
         const avatar &player_character = get_avatar();
-        int heard_volume = sfx::get_heard_volume( player_character.pos() );
-        const auto terrain = get_map().ter( player_character.pos() ).id();
+        int heard_volume = sfx::get_heard_volume( player_character.bub_pos() );
+        const auto terrain = get_map().ter( player_character.bub_pos() ).id();
         static const std::set<ter_str_id> grass = {
             ter_str_id( "t_grass" ),
             ter_str_id( "t_shrub" ),

@@ -277,10 +277,10 @@ TEST_CASE( "player::get_dodge while grabbed", "[player][melee][dodge][grab]" )
     const float base_dodge = dummy.get_dodge_base();
 
     // Four nearby spots
-    tripoint mon1_pos = dummy.pos() + tripoint_north;
-    tripoint mon2_pos = dummy.pos() + tripoint_east;
-    tripoint mon3_pos = dummy.pos() + tripoint_south;
-    tripoint mon4_pos = dummy.pos() + tripoint_west;
+    tripoint mon1_pos = dummy.bub_pos() + tripoint_north;
+    tripoint mon2_pos = dummy.bub_pos() + tripoint_east;
+    tripoint mon3_pos = dummy.bub_pos() + tripoint_south;
+    tripoint mon4_pos = dummy.bub_pos() + tripoint_west;
 
     // Surrounded by zombies!
     monster *zed1 = g->place_critter_at( mtype_id( "debug_mon" ), mon1_pos );

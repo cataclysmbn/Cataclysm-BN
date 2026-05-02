@@ -131,7 +131,7 @@ item_action_map item_action_generator::map_actions_to_items( player &p,
 
             const use_function *func = actual_item->get_use( use );
             if( !( func && func->get_actor_ptr() &&
-                   func->get_actor_ptr()->can_use( p, *actual_item, false, p.pos() ).success() ) ) {
+                   func->get_actor_ptr()->can_use( p, *actual_item, false, p.bub_pos() ).success() ) ) {
                 continue;
             }
             if( !actual_item->ammo_sufficient() ) {

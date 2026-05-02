@@ -1632,7 +1632,7 @@ static mutagen_rejection try_reject_mutagen( Character &guy, const item &it, boo
         if( guy.has_trait( trait_M_SPORES ) || guy.has_trait( trait_M_FERTILE ) ||
             guy.has_trait( trait_M_BLOSSOMS ) || guy.has_trait( trait_M_BLOOM ) ) {
             guy.add_msg_if_player( m_good, _( "We decontaminate it with spores." ) );
-            g->m.ter_set( guy.pos(), t_fungus );
+            g->m.ter_set( guy.bub_pos(), t_fungus );
             if( guy.is_avatar() ) {
                 g->memorial().add(
                     pgettext( "memorial_male", "Destroyed a harmful invader." ),

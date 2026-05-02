@@ -235,7 +235,7 @@ bool trap::detect_trap( const tripoint_bub_ms &pos, const Character &p ) const
            // ...malus if we are tired...
            ( p.has_effect( effect_lack_sleep ) ? rng( 1, 5 ) : 0 ) -
            // ...malus farther we are from trap...
-           rl_dist( p.pos(), pos ) +
+           rl_dist( p.bub_pos(), pos ) +
            // Police are trained to notice Something Wrong.
            ( p.has_trait( trait_PROF_POLICE ) ? 1 : 0 ) +
            ( p.has_trait( trait_PROF_PD_DET ) ? 2 : 0 ) >

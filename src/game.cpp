@@ -3593,7 +3593,7 @@ void game::disp_NPCs()
         }
         for( const monster &m : all_monsters() ) {
             mvwprintz( w, point( 0, i + 3 ), c_white, "%s: %d, %d, %d", m.name(),
-                       m.pos().x(), m.pos().y(), m.pos().z() );
+                       m.bub_pos().x(), m.bub_pos().y(), m.bub_pos().z() );
             ++i;
         }
         wnoutrefresh( w );
@@ -3941,14 +3941,14 @@ static void draw_critter_internal( const catacurses::window &w, const Creature &
                                    bool inverted,
                                    const map &m, const avatar &u )
 {
-    const int my = POSY + ( critter.pos().y() - center.y );
-    const int mx = POSX + ( critter.pos().x() - center.x );
+    const int my = POSY + ( critter.bub_pos().y() - center.y );
+    const int mx = POSX + ( critter.bub_pos().x() - center.x );
     if( !is_valid_in_w_terrain( point( mx, my ) ) ) {
         return;
     }
-    if( critter.pos().z() != center.z && m.has_zlevels() ) {
+    if( critter.bub_pos().z() != center.z && m.has_zlevels() ) {
         static constexpr tripoint up_tripoint( tripoint_above );
-        if( critter.pos().z() == center.z - 1 &&
+        if( critter.bub_pos().z() == center.z - 1 &&
             ( debug_mode || u.sees( critter ) ) &&
             m.valid_move( critter.bub_pos(), critter.bub_pos() + up_tripoint, false, true ) ) {
             // Monster is below
@@ -5358,10 +5358,10 @@ void game::monmove()
     // If so, despawn them. This is not the same as dying, they will be stored for later and the
     // monster::die function is not called.
     for( monster &critter : all_monsters() ) {
-        if( critter.pos().x() < 0 - ( g_mapsize_x ) / 6 ||
-            critter.pos().y() < 0 - ( g_mapsize_y ) / 6 ||
-            critter.pos().x() > ( g_mapsize_x * 7 ) / 6 ||
-            critter.pos().y() > ( g_mapsize_y * 7 ) / 6 ) {
+        if( critter.bub_pos().x() < 0 - ( g_mapsize_x ) / 6 ||
+            critter.bub_pos().y() < 0 - ( g_mapsize_y ) / 6 ||
+            critter.bub_pos().x() > ( g_mapsize_x * 7 ) / 6 ||
+            critter.bub_pos().y() > ( g_mapsize_y * 7 ) / 6 ) {
             despawn_monster( critter );
         }
     }
@@ -12131,7 +12131,7 @@ void game::resize_reality_bubble_to( int new_size )
     if( grid_origin_delta_in_sm > 0 ) {
         const tripoint player_sm_in_grid( u.bub_pos().x() / SEEX, u.bub_pos().y() / SEEY, get_levz() );
         for( monster &critter : all_monsters() ) {
-            const tripoint critter_sm( critter.pos().x() / SEEX, critter.pos().y() / SEEY, critter.pos().z() );
+            const tripoint critter_sm( critter.bub_pos().x() / SEEX, critter.bub_pos().y() / SEEY, critter.bub_pos().z() );
             const tripoint diff = critter_sm - player_sm_in_grid;
             if( std::abs( diff.x ) > new_half || std::abs( diff.y ) > new_half ) {
                 despawn_monster( critter );
@@ -13704,7 +13704,7 @@ void game::vertical_notes( int z_before, int z_after )
 
 point game::update_map( Character &who )
 {
-    point p2( who.pos().x(), who.pos().y() );
+    point p2( who.bub_pos().x(), who.bub_pos().y() );
     return update_map( p2.x, p2.y );
 }
 
@@ -13964,10 +13964,10 @@ void game::update_stair_monsters()
         };
 
         // We might be not be visible.
-        if( ( critter.pos().x() < 0 - ( g_mapsize_x ) / 6 ||
-              critter.pos().y() < 0 - ( g_mapsize_y ) / 6 ||
-              critter.pos().x() > ( g_mapsize_x * 7 ) / 6 ||
-              critter.pos().y() > ( g_mapsize_y * 7 ) / 6 ) ) {
+        if( ( critter.bub_pos().x() < 0 - ( g_mapsize_x ) / 6 ||
+              critter.bub_pos().y() < 0 - ( g_mapsize_y ) / 6 ||
+              critter.bub_pos().x() > ( g_mapsize_x * 7 ) / 6 ||
+              critter.bub_pos().y() > ( g_mapsize_y * 7 ) / 6 ) ) {
             continue;
         }
 
@@ -14587,9 +14587,9 @@ void game::process_artifact( item &it, Character &who )
 
             case AEP_SMOKE:
                 if( one_in( 10 ) ) {
-                    tripoint pt( who.pos().x() + rng( -1, 1 ),
-                                 who.pos().y() + rng( -1, 1 ),
-                                 who.pos().z() );
+                    tripoint pt( who.bub_pos().x() + rng( -1, 1 ),
+                                 who.bub_pos().y() + rng( -1, 1 ),
+                                 who.bub_pos().z() );
                     m.add_field( pt, fd_smoke, rng( 1, 3 ) );
                 }
                 break;
@@ -14737,7 +14737,7 @@ bool check_art_charge_req( item &it )
             }
             break;
         case( ACR_SKY ):
-            reqsmet = ( p.pos().z() > 0 );
+            reqsmet = ( p.bub_pos().z() > 0 );
             break;
     }
     return reqsmet;

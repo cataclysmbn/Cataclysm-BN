@@ -516,7 +516,7 @@ plot_options::query_seed_result plot_options::query_seed()
     } );
     auto &mgr = zone_manager::get_manager();
     const std::unordered_set<tripoint> &zone_src_set = mgr.get_near( zone_LOOT_SEEDS,
-            here.bub_to_abs( p.pos() ), 60 );
+            here.bub_to_abs( p.bub_pos() ), 60 );
     for( const tripoint &elem : zone_src_set ) {
         tripoint elem_loc = here.abs_to_bub( elem );
         for( item * const &it : here.i_at( elem_loc ) ) {

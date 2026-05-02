@@ -594,7 +594,7 @@ void npc::assess_danger()
                 // because the horse the NPC is riding is still in the ai_cache.friends vector,
                 // so either one would count as a friendly for this purpose.
                 if( auto ally = guy.lock() ) {
-                    is_too_close |= too_close( critter.bub_pos(), ally->pos(), def_radius );
+                    is_too_close |= too_close( critter.bub_pos(), ally->bub_pos(), def_radius );
                 }
             }
             // ignore distant monsters that our rules prevent us from attacking
@@ -641,7 +641,7 @@ void npc::assess_danger()
                 break;
             }
             if( auto ally = guy.lock() ) {
-                is_too_close |= too_close( foe.bub_pos(), ally->pos(), def_radius );
+                is_too_close |= too_close( foe.bub_pos(), ally->bub_pos(), def_radius );
                 if( is_too_close ) {
                     break;
                 }
@@ -1075,7 +1075,7 @@ void npc::execute_action( npc_action action )
     if( action == npc_flee ) {
         tar = good_escape_direction( false );
     } else if( cur != nullptr ) {
-        tar = cur->pos();
+        tar = cur->bub_pos();
     }
     /*
       debugmsg("%s ran execute_action() with target = %d! Action %s",
@@ -1260,7 +1260,7 @@ void npc::execute_action( npc_action action )
         case npc_heal_player: {
             player *patient = dynamic_cast<player *>( current_ally() );
             if( patient ) {
-                update_path( patient->pos() );
+                update_path( patient->bub_pos() );
                 if( path.size() == 1 ) { // We're adjacent to u, and thus can heal u
                     heal_player( *patient );
                 } else if( !path.empty() ) {
@@ -1474,7 +1474,7 @@ npc_action npc::method_of_attack()
         return npc_pause;
     }
 
-    tripoint tar = critter->pos();
+    tripoint tar = critter->bub_pos();
     int dist = rl_dist( bub_pos(), tar );
     const bool has_los = clear_shot_reach( bub_pos(), tar, false );
     const bool same_z = tar.z == bub_pos().z;
@@ -2344,7 +2344,7 @@ bool npc::enough_time_to_reload( const item &gun ) const
         return true;
     }
 
-    const auto distance = rl_dist( bub_pos(), target->pos() );
+    const auto distance = rl_dist( bub_pos(), target->bub_pos() );
     const float target_speed = target->speed_rating();
     const float turns_til_reached = distance / target_speed;
     if( target->is_player() || target->is_npc() ) {
@@ -2596,7 +2596,7 @@ void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomo
             }
         }
 
-        if( critter->pos() == p ) {
+        if( critter->bub_pos() == p ) {
             move_pause();
             return;
         }
@@ -3006,9 +3006,9 @@ void npc::find_item()
         }
         Character &player_character = get_player_character();
         for( auto &elem : followers ) {
-            if( !it.is_owned_by( *this, true ) && ( player_character.sees( this->pos() ) ||
+            if( !it.is_owned_by( *this, true ) && ( player_character.sees( bub_pos() ) ||
                                                     player_character.sees( wanted_item_pos ) ||
-                                                    elem->sees( this->pos() ) || elem->sees( wanted_item_pos ) ) ) {
+                                                    elem->sees( bub_pos() ) || elem->sees( wanted_item_pos ) ) ) {
                 return;
             }
         }
@@ -3575,7 +3575,7 @@ bool npc::do_player_activity()
 bool npc::wield_better_weapon()
 {
     const Creature *critter = current_target();
-    const int dist = critter ? rl_dist( bub_pos(), critter->pos() ) : - 1;
+    const int dist = critter ? rl_dist( bub_pos(), critter->bub_pos() ) : - 1;
 
     if( get_npc_ai_info_cache( npc_ai_info::range ) == dist ) {
         add_msg( m_debug, "Distance unchanged from last check, cancelling." );
@@ -3751,7 +3751,7 @@ bool npc::alt_attack()
         return false;
     }
 
-    tripoint tar = critter->pos();
+    tripoint tar = critter->bub_pos();
 
     const int dist = rl_dist( bub_pos(), tar );
     item *used = nullptr;

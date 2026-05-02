@@ -340,7 +340,7 @@ TEST_CASE( "npc-movement" )
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             const char type = setup[y][x];
-            const tripoint_bub_ms p = player_character.pos() + point( x, y );
+            const tripoint_bub_ms p = player_character.bub_pos() + point( x, y );
             // create walls
             if( type == '#' ) {
                 here.ter_set( p, t_reinforced_glass );
@@ -401,7 +401,7 @@ TEST_CASE( "npc-movement" )
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             const char type = setup[y][x];
-            const tripoint_bub_ms p = player_character.pos() + point( x, y );
+            const tripoint_bub_ms p = player_character.bub_pos() + point( x, y );
             if( type == '#' ) {
                 REQUIRE( !here.passable( p ) );
             } else {
@@ -430,16 +430,16 @@ TEST_CASE( "npc-movement" )
     }
 
     SECTION( "NPCs escape dangerous terrain by pushing other NPCs" ) {
-        check_npc_movement( player_character.pos() );
+        check_npc_movement( player_character.bub_pos() );
     }
 
     SECTION( "Player in vehicle & NPCs escaping dangerous terrain" ) {
-        const tripoint origin = player_character.pos();
+        const tripoint origin = player_character.bub_pos();
 
         for( int y = 0; y < height; ++y ) {
             for( int x = 0; x < width; ++x ) {
                 if( setup[y][x] == 'V' ) {
-                    g->place_player( player_character.pos() + point( x, y ) );
+                    g->place_player( player_character.bub_pos() + point( x, y ) );
                     break;
                 }
             }
@@ -463,8 +463,8 @@ TEST_CASE( "npc_can_target_player" )
     clear_creatures();
 
     Character &player_character = get_player_character();
-    npc &hostile = spawn_npc( player_character.pos().xy() + point_south, "thug" );
-    REQUIRE( rl_dist( player_character.pos(), hostile.pos() ) <= 1 );
+    npc &hostile = spawn_npc( player_character.bub_pos().xy() + point_south, "thug" );
+    REQUIRE( rl_dist( player_character.bub_pos(), hostile.bub_pos() ) <= 1 );
     hostile.set_attitude( NPCATT_KILL );
     hostile.name = "Enemy NPC";
 

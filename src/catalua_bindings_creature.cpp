@@ -1040,7 +1040,7 @@ void cata::detail::reg_character( sol::state &lua )
             map &here = get_map();
             for( auto &itm : tmp )
             {
-                here.add_item_or_charges( ch.pos(), std::move( itm ) );
+                here.add_item_or_charges( ch.bub_pos(), std::move( itm ) );
             }
         } );
 

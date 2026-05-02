@@ -477,7 +477,7 @@ int iuse::sewage( player *p, item *it, bool, const tripoint & )
 
 int iuse::honeycomb( player *p, item *it, bool, const tripoint & )
 {
-    g->m.spawn_item( p->pos(), itype_wax, 2 );
+    g->m.spawn_item( p->bub_pos(), itype_wax, 2 );
     return it->type->charges_to_use();
 }
 
@@ -590,14 +590,14 @@ int iuse::fungicide( player *p, item *it, bool, const tripoint & )
         }
         p->remove_effect( effect_spores );
         int spore_count = rng( 1, 6 );
-        for( const tripoint &dest : g->m.points_in_radius( p->pos(), 1 ) ) {
+        for( const tripoint &dest : g->m.points_in_radius( p->bub_pos(), 1 ) ) {
             if( spore_count == 0 ) {
                 break;
             }
-            if( dest == p->pos() ) {
+            if( dest == p->bub_pos() ) {
                 continue;
             }
-            if( g->m.passable( dest ) && !get_map().obstructed_by_vehicle_rotation( p->pos(), dest ) &&
+            if( g->m.passable( dest ) && !get_map().obstructed_by_vehicle_rotation( p->bub_pos(), dest ) &&
                 x_in_y( spore_count, 8 ) ) {
                 if( monster *const mon_ptr = g->critter_at<monster>( dest ) ) {
                     monster &critter = *mon_ptr;
@@ -1149,11 +1149,11 @@ static void spawn_spores( const player &p )
     int spores_spawned = 0;
     map &here = get_map();
     fungal_effects fe( *g, here );
-    for( const tripoint &dest : closest_points_first( p.pos(), 4 ) ) {
+    for( const tripoint &dest : closest_points_first( p.bub_pos(), 4 ) ) {
         if( here.impassable( dest ) ) {
             continue;
         }
-        float dist = rl_dist( dest, p.pos() );
+        float dist = rl_dist( dest, p.bub_pos() );
         if( x_in_y( 1, dist ) ) {
             fe.marlossify( dest );
         }
@@ -1220,7 +1220,7 @@ static void marloss_common( player &p, item &it, const trait_id &current_color )
     } else if( effect <= 6 ) { // Radiation cleanse is below
         p.add_msg_if_player( m_good, _( "You feel better all over." ) );
         p.mod_painkiller( 30 );
-        iuse::purifier( &p, &it, false, p.pos() );
+        iuse::purifier( &p, &it, false, p.bub_pos() );
         if( effect == 6 ) {
             p.set_rad( 0 );
         }
@@ -1262,7 +1262,7 @@ static void marloss_common( player &p, item &it, const trait_id &current_color )
         }
 
         p.set_mutation( trait_THRESH_MARLOSS );
-        g->m.ter_set( p.pos(), t_marloss );
+        g->m.ter_set( p.bub_pos(), t_marloss );
         g->events().send<event_type::crosses_marloss_threshold>( p.getID() );
         p.add_msg_if_player( m_good,
                              _( "You wake up in a marloss bush.  Almost *cradled* in it, actually, as though it grew there for you." ) );
@@ -1406,7 +1406,7 @@ int iuse::mycus( player *p, item *it, bool t, const tripoint &pos )
         p->add_msg_if_player( m_good,
                               _( "As, in time, shall we adapt to better welcome those who have not received us." ) );*/
         fungal_effects fe( *g, g->m );
-        for( const tripoint &nearby_pos : g->m.points_in_radius( p->pos(), 3 ) ) {
+        for( const tripoint &nearby_pos : g->m.points_in_radius( p->bub_pos(), 3 ) ) {
             fe.marlossify( nearby_pos );
         }
         p->rem_addiction( add_type::MARLOSS_R );
@@ -1726,7 +1726,7 @@ int iuse::fishing_rod( player *p, item *it, bool, const tripoint & )
         return 0;
     }
     std::optional<tripoint> found;
-    for( const tripoint &pnt : g->m.points_in_radius( p->pos(), 1 ) ) {
+    for( const tripoint &pnt : g->m.points_in_radius( p->bub_pos(), 1 ) ) {
         if( g->m.has_flag( flag_FISHABLE, pnt ) && iuse::good_fishing_spot( pnt ) != 0 ) {
             found = pnt;
             break;
@@ -2055,7 +2055,7 @@ int iuse::directional_antenna( player *p, item *it, bool, const tripoint & )
     } );
     // If we don't wield the radio, also check on the ground
     if( radios.empty() ) {
-        map_stack items = get_map().i_at( p->pos() );
+        map_stack items = get_map().i_at( p->bub_pos() );
         for( item * const &an_item : items ) {
             if( an_item->typeId() == itype_radio_on ) {
                 radios.push_back( an_item );
@@ -2265,7 +2265,7 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint &pos )
                 //~ %1 is corpse name, %2 is direction, %3 is bionic name
                 p->add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
                                       corpse->display_name().c_str(),
-                                      direction_name( direction_from( p->pos(), pt ) ).c_str(),
+                                      direction_name( direction_from( p->bub_pos(), pt ) ).c_str(),
                                       bionics_string.c_str()
                                     );
             }
@@ -2319,7 +2319,7 @@ int iuse::hammer( player *p, item *it, bool, const tripoint & )
     }
     const tripoint &pnt = *pnt_;
     if( !f( pnt ) ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             p->add_msg_if_player( _( "You try to hit yourself with the hammer." ) );
             p->add_msg_if_player( _( "But you can't touch this." ) );
         } else {
@@ -2347,7 +2347,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint &pos )
     bool pry_furn;
 
     const std::function<bool( const tripoint & )> can_pry = [&p]( const tripoint & pnt ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             return false;
         }
         const ter_id ter = g->m.ter( pnt );
@@ -2357,7 +2357,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint &pos )
         return is_allowed;
     };
 
-    const std::optional<tripoint> pnt_ = ( pos != p->pos() ) ? pos : choose_adjacent_highlight(
+    const std::optional<tripoint> pnt_ = ( pos != p->bub_pos() ) ? pos : choose_adjacent_highlight(
             _( "Pry where?" ), _( "There is nothing to pry nearby." ), can_pry, false );
     if( !pnt_ ) {
         return 0;
@@ -2367,7 +2367,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint &pos )
     const furn_id furn = g->m.furn( pnt );
 
     if( !can_pry( pnt ) ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             p->add_msg_if_player( m_info, _( "You attempt to pry open your wallet "
                                              "but alas.  You are just too miserly." ) );
         } else if( !ter->has_flag( "LOCKED" ) && ter->open ) {
@@ -2427,7 +2427,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint &pos )
         g->m.spawn_items( pnt, item_group::items_from( pry->pry_items, calendar::turn ) );
         if( pry->alarm ) {
             g->events().send<event_type::triggers_alarm>( p->getID() );
-            sounds::sound( p->pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
+            sounds::sound( p->bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
                            "alarm" );
             if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
@@ -2453,7 +2453,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint &pos )
                 g->m.spawn_items( pnt, item_group::items_from( pry->break_items, calendar::turn ) );
                 if( pry->alarm ) {
                     g->events().send<event_type::triggers_alarm>( p->getID() );
-                    sounds::sound( p->pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
+                    sounds::sound( p->bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
                                    "alarm" );
                     if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                         g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
@@ -2483,7 +2483,7 @@ int iuse::makemound( player *p, item *it, bool t, const tripoint & )
     }
     const tripoint pnt = *pnt_;
 
-    if( pnt == p->pos() ) {
+    if( pnt == p->bub_pos() ) {
         p->add_msg_if_player( m_info,
                               _( "You think about jumping on a shovel, but then change up your mind." ) );
         return 0;
@@ -2551,7 +2551,7 @@ int iuse::dig( player *p, item *it, bool t, const tripoint & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    const tripoint dig_point = p->pos();
+    const tripoint dig_point = p->bub_pos();
 
     const bool can_dig_here = g->m.ter( dig_point )->is_diggable() &&
                               !g->m.has_furn( dig_point ) &&
@@ -2646,7 +2646,7 @@ int iuse::dig_channel( player *p, item *it, bool t, const tripoint & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    const tripoint dig_point = p->pos();
+    const tripoint dig_point = p->bub_pos();
 
     tripoint north = dig_point + point_north;
     tripoint south = dig_point + point_south;
@@ -2728,7 +2728,7 @@ int iuse::fill_pit( player *p, item *it, bool t, const tripoint & )
     const tripoint &pnt = *pnt_;
     const ter_id ter = g->m.ter( pnt );
     if( !f( pnt ) ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             p->add_msg_if_player( m_info, _( "You decide not to bury yourself that early." ) );
         } else {
             p->add_msg_if_player( m_info, _( "There is nothing to fill." ) );
@@ -2862,7 +2862,7 @@ int iuse::jackhammer( player *p, item *it, bool, const tripoint &pos )
     }
 
     tripoint pnt = pos;
-    if( pos == p->pos() ) {
+    if( pos == p->bub_pos() ) {
         const std::optional<tripoint> pnt_ = choose_adjacent( _( "Drill where?" ) );
         if( !pnt_ ) {
             return 0;
@@ -2954,7 +2954,7 @@ int iuse::pickaxe( player *p, item *it, bool, const tripoint &pos )
     }
 
     tripoint pnt = pos;
-    if( pos == p->pos() ) {
+    if( pos == p->bub_pos() ) {
         const std::optional<tripoint> pnt_ = choose_adjacent( _( "Mine where?" ) );
         if( !pnt_ ) {
             return 0;
@@ -3009,7 +3009,7 @@ int iuse::burrow( player *p, item *it, bool, const tripoint &pos )
     }
 
     tripoint pnt = pos;
-    if( pos == p->pos() ) {
+    if( pos == p->bub_pos() ) {
         const std::optional<tripoint> pnt_ = choose_adjacent( _( "Burrow where?" ) );
         if( !pnt_ ) {
             return 0;
@@ -3120,7 +3120,7 @@ int iuse::geiger( player *p, item *it, bool t, const tripoint &pos )
         }
         case 1:
             p->add_msg_if_player( m_info, _( "The ground's radiation level: %d mSv/h" ),
-                                  g->m.get_radiation( p->pos() ) );
+                                  g->m.get_radiation( p->bub_pos() ) );
             break;
         case 2:
             p->add_msg_if_player( _( "The geiger counter's scan LED turns on." ) );
@@ -3435,7 +3435,7 @@ int iuse::acidbomb_act( player *p, item *it, bool, const tripoint &pos )
 {
     if( !p->has_item( *it ) ) {
         it->charges = -1;
-        for( const tripoint &tmp : g->m.points_in_radius( pos.x == -999 ? p->pos() : pos, 1 ) ) {
+        for( const tripoint &tmp : g->m.points_in_radius( pos.x == -999 ? p->bub_pos() : pos, 1 ) ) {
             g->m.add_field( tmp, fd_acid, 3 );
         }
         return 1;
@@ -3695,7 +3695,7 @@ int iuse::tazer( player *p, item *it, bool, const tripoint &pos )
     }
 
     tripoint pnt = pos;
-    if( pos == p->pos() ) {
+    if( pos == p->bub_pos() ) {
         const std::optional<tripoint> pnt_ = choose_adjacent( _( "Shock where?" ) );
         if( !pnt_ ) {
             return 0;
@@ -3703,7 +3703,7 @@ int iuse::tazer( player *p, item *it, bool, const tripoint &pos )
         pnt = *pnt_;
     }
 
-    if( pnt == p->pos() ) {
+    if( pnt == p->bub_pos() ) {
         p->add_msg_if_player( m_info, _( "Umm.  No." ) );
         return 0;
     }
@@ -3814,7 +3814,7 @@ void iuse::play_music( player &p, const tripoint &source, const int volume, cons
         if( !music.empty() ) {
             sound = music;
             // descriptions aren't printed for sounds at our position
-            if( p.pos() == source && p.can_hear( source, volume ) ) {
+            if( p.bub_pos() == source && p.can_hear( source, volume ) ) {
                 p.add_msg_if_player( _( "You listen to %s" ), music );
             }
         }
@@ -3988,7 +3988,7 @@ int iuse::gasmask( player *p, item *it, bool t, const tripoint &pos )
                 }
             }
             if( it->get_var( "gas_absorbed", 0 ) >= 100 ) {
-                it->ammo_consume( 1, p->pos() );
+                it->ammo_consume( 1, p->bub_pos() );
                 it->set_var( "gas_absorbed", 0 );
             }
             if( it->charges == 0 ) {
@@ -4151,7 +4151,7 @@ int iuse::vortex( player *p, item *it, bool, const tripoint & )
 
     while( !spawn.empty() ) {
         const tripoint offset( random_entry_removed( spawn ), 0 );
-        monster *const mon = g->place_critter_at( mon_vortex, offset + p->pos() );
+        monster *const mon = g->place_critter_at( mon_vortex, offset + p->bub_pos() );
         if( !mon ) {
             continue;
         }
@@ -4196,7 +4196,7 @@ int iuse::dog_whistle( player *p, item *it, bool, const tripoint & )
 
 int iuse::call_of_tindalos( player *p, item *it, bool, const tripoint & )
 {
-    for( const tripoint &dest : g->m.points_in_radius( p->pos(), 12 ) ) {
+    for( const tripoint &dest : g->m.points_in_radius( p->bub_pos(), 12 ) ) {
         if( g->m.is_cornerfloor( dest ) ) {
             g->m.add_field( dest, fd_tindalos_rift, 3 );
             add_msg( m_info, _( "You hear a low-pitched echoing howl." ) );
@@ -4364,7 +4364,7 @@ void iuse::cut_log_into_planks( player &p )
     p.add_msg_if_player( _( "You cut the log into planks." ) );
 
     p.assign_activity( ACT_CHOP_PLANKS, moves, -1 );
-    p.activity->placement = g->m.bub_to_abs( p.pos() );
+    p.activity->placement = g->m.bub_to_abs( p.bub_pos() );
 }
 
 int iuse::lumber( player *p, item *it, bool t, const tripoint & )
@@ -4378,14 +4378,14 @@ int iuse::lumber( player *p, item *it, bool t, const tripoint & )
     }
     // Check if player is standing on any lumber
     item *standing = nullptr;
-    for( auto &i : g->m.i_at( p->pos() ) ) {
+    for( auto &i : g->m.i_at( p->bub_pos() ) ) {
         if( i->typeId() == itype_log ) {
             standing = &*i;
             break;
         }
     }
     if( standing ) {
-        g->m.i_rem( p->pos(), standing );
+        g->m.i_rem( p->bub_pos(), standing );
         cut_log_into_planks( *p );
         return it->type->charges_to_use();
     }
@@ -4443,7 +4443,7 @@ int iuse::chop_tree( player *p, item *it, bool t, const tripoint & )
     }
     const tripoint &pnt = *pnt_;
     if( !f( pnt ) ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             p->add_msg_if_player( m_info, _( "You're not stern enough to shave yourself with THIS." ) );
         } else {
             p->add_msg_if_player( m_info, _( "You can't chop down that." ) );
@@ -4530,7 +4530,7 @@ int iuse::oxytorch( player *p, item *it, bool, const tripoint & )
     map &here = get_map();
     const std::function<bool( const tripoint & )> f =
     [&here, p]( const tripoint & pnt ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             return false;
         } else if( here.has_furn( pnt ) ) {
             return here.furn( pnt )->oxytorch->valid();
@@ -4547,7 +4547,7 @@ int iuse::oxytorch( player *p, item *it, bool, const tripoint & )
     }
     const tripoint &pnt = *pnt_;
     if( !f( pnt ) ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             p->add_msg_if_player( m_info, _( "Yuck.  Acetylene gas smells weird." ) );
         } else {
             p->add_msg_if_player( m_info, _( "You can't cut that." ) );
@@ -4585,7 +4585,7 @@ int iuse::hacksaw( player *p, item *it, bool t, const tripoint & )
     map &here = get_map();
     const std::function<bool( const tripoint & )> f =
     [&here, p]( const tripoint & pnt ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             return false;
         } else if( here.has_furn( pnt ) ) {
             return here.furn( pnt )->hacksaw->valid();
@@ -4602,7 +4602,7 @@ int iuse::hacksaw( player *p, item *it, bool t, const tripoint & )
     }
     const tripoint &pnt = *pnt_;
     if( !f( pnt ) ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             p->add_msg_if_player( m_info, _( "Why would you do that?" ) );
             p->add_msg_if_player( m_info, _( "You're not even chained to a boiler." ) );
         } else {
@@ -4628,7 +4628,7 @@ int iuse::boltcutters( player *p, item *it, bool, const tripoint & )
     map &here = get_map();
     const std::function<bool( const tripoint & )> f =
     [&here, p]( const tripoint & pnt ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             return false;
         } else if( here.has_furn( pnt ) ) {
             return here.furn( pnt )->boltcut->valid();
@@ -4645,7 +4645,7 @@ int iuse::boltcutters( player *p, item *it, bool, const tripoint & )
     }
     const tripoint &pnt = *pnt_;
     if( !f( pnt ) ) {
-        if( pnt == p->pos() ) {
+        if( pnt == p->bub_pos() ) {
             p->add_msg_if_player( m_info,
                                   _( "You neatly sever all of the veins and arteries in your body.  Oh wait, Never mind." ) );
         } else {
@@ -4679,7 +4679,7 @@ auto mop_blindly( const tripoint &pos ) -> bool
 auto iuse::mop( player *p, item *it, bool, const tripoint & ) -> int
 {
     const auto mop = p->is_blind() ? mop_blindly : mop_normal;
-    const auto xs = closest_points_first( p->pos(), 1 );
+    const auto xs = closest_points_first( p->bub_pos(), 1 );
 
     const int mopped_tiles = std::count_if( xs.begin(), xs.end(), mop );
 
@@ -4725,7 +4725,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
 
         switch( used ) {
             case AEA_STORM: {
-                sounds::sound( p->pos(), 10, sounds::sound_t::combat, _( "Ka-BOOM!" ), true, "environment",
+                sounds::sound( p->bub_pos(), 10, sounds::sound_t::combat, _( "Ka-BOOM!" ), true, "environment",
                                "thunder_near" );
                 int num_bolts = rng( 2, 4 );
                 for( int j = 0; j < num_bolts; j++ ) {
@@ -4784,7 +4784,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
 
             case AEA_BLOOD: {
                 bool blood = false;
-                for( const tripoint &tmp : g->m.points_in_radius( p->pos(), 4 ) ) {
+                for( const tripoint &tmp : g->m.points_in_radius( p->bub_pos(), 4 ) ) {
                     if( !one_in( 4 ) && g->m.add_field( tmp, fd_blood, 3 ) &&
                         ( blood || g->u.sees( tmp ) ) ) {
                         blood = true;
@@ -4813,9 +4813,9 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
             break;
 
             case AEA_PULSE:
-                sounds::sound( p->pos(), 30, sounds::sound_t::combat, _( "The earth shakes!" ), true, "misc",
+                sounds::sound( p->bub_pos(), 30, sounds::sound_t::combat, _( "The earth shakes!" ), true, "misc",
                                "earthquake" );
-                for( const tripoint &pt : g->m.points_in_radius( p->pos(), 2 ) ) {
+                for( const tripoint &pt : g->m.points_in_radius( p->bub_pos(), 2 ) ) {
                     g->m.bash( pt, 40 );
                     g->m.bash( pt, 40 );  // Multibash effect, so that doors &c will fall
                     g->m.bash( pt, 40 );
@@ -4831,7 +4831,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                 break;
 
             case AEA_CONFUSED:
-                for( const tripoint &dest : g->m.points_in_radius( p->pos(), 8 ) ) {
+                for( const tripoint &dest : g->m.points_in_radius( p->bub_pos(), 8 ) ) {
                     if( monster *const mon = g->critter_at<monster>( dest, true ) ) {
                         mon->add_effect( effect_stunned, rng( 5_turns, 15_turns ) );
                     }
@@ -4839,7 +4839,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                 break;
 
             case AEA_ENTRANCE:
-                for( const tripoint &dest : g->m.points_in_radius( p->pos(), 8 ) ) {
+                for( const tripoint &dest : g->m.points_in_radius( p->bub_pos(), 8 ) ) {
                     monster *const mon = g->critter_at<monster>( dest, true );
                     if( mon && mon->friendly == 0 && rng( 0, 600 ) > mon->get_hp() ) {
                         mon->make_friendly();
@@ -4868,7 +4868,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                 }
                 if( bug ) {
                     for( int j = 0; j < num; j++ ) {
-                        if( monster *const b = g->place_critter_around( bug, p->pos(), 1 ) ) {
+                        if( monster *const b = g->place_critter_around( bug, p->bub_pos(), 1 ) ) {
                             b->friendly = -1;
                             b->add_effect( effect_pet, 1_turns );
                         }
@@ -4887,7 +4887,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                 break;
 
             case AEA_GROWTH: {
-                monster tmptriffid( mtype_id::NULL_ID(), p->pos() );
+                monster tmptriffid( mtype_id::NULL_ID(), p->bub_pos() );
                 mattack::growplants( &tmptriffid );
             }
             break;
@@ -4900,7 +4900,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
 
             case AEA_RADIATION:
                 add_msg( m_warning, _( "Horrible gases are emitted!" ) );
-                for( const tripoint &dest : g->m.points_in_radius( p->pos(), 1 ) ) {
+                for( const tripoint &dest : g->m.points_in_radius( p->bub_pos(), 1 ) ) {
                     g->m.add_field( dest, fd_nuke_gas, rng( 2, 3 ) );
                 }
                 break;
@@ -4926,7 +4926,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
 
             case AEA_FIRESTORM: {
                 p->add_msg_if_player( m_bad, _( "Fire rains down around you!" ) );
-                std::vector<tripoint> ps = closest_points_first( p->pos(), 3 );
+                std::vector<tripoint> ps = closest_points_first( p->bub_pos(), 3 );
                 for( auto p_it : ps ) {
                     if( !one_in( 3 ) ) {
                         g->m.add_field( p_it, fd_fire, 1 + rng( 0, 1 ) * rng( 0, 1 ), 3_minutes );
@@ -5170,7 +5170,7 @@ int iuse::unfold_generic( player *p, item *it, bool, const tripoint & )
         return 0;
     }
     map &here = get_map();
-    vehicle *veh = here.add_vehicle( vproto_id( "none" ), p->pos(), 0_degrees, 0, 0, false );
+    vehicle *veh = here.add_vehicle( vproto_id( "none" ), p->bub_pos(), 0_degrees, 0, 0, false );
     if( veh == nullptr ) {
         p->add_msg_if_player( m_info, _( "There's no room to unfold the %s." ), it->tname() );
         return 0;
@@ -5207,8 +5207,8 @@ int iuse::unfold_generic( player *p, item *it, bool, const tripoint & )
         unfold_msg = _( unfold_msg );
     }
     veh->set_owner( *p );
-    if( g->m.veh_at( p->pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
-        g->m.board_vehicle( p->pos(), p );
+    if( g->m.veh_at( p->bub_pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
+        g->m.board_vehicle( p->bub_pos(), p );
     }
     p->add_msg_if_player( m_neutral, unfold_msg, veh->name );
 
@@ -5350,11 +5350,11 @@ int iuse::talking_doll( player *p, item *it, bool, const tripoint & )
 
     const SpeechBubble &speech = get_speech( it->typeId().str() );
 
-    sounds::sound( p->pos(), speech.volume, sounds::sound_t::electronic_speech,
+    sounds::sound( p->bub_pos(), speech.volume, sounds::sound_t::electronic_speech,
                    speech.text.translated(), true, "speech", it->typeId().str() );
 
     // Sound code doesn't describe noises at the player position
-    if( p->can_hear( p->pos(), speech.volume ) ) {
+    if( p->can_hear( p->bub_pos(), speech.volume ) ) {
         p->add_msg_if_player( _( "You hear \"%s\"" ), speech.text );
     }
 
@@ -5435,14 +5435,14 @@ int iuse::gun_repair( player *p, item *it, bool, const tripoint & )
     const float vision_mod = character_funcs::fine_detail_vision_mod( *p );
     // TODO: this may render player unable to move for minutes, and so should start an activity instead
     if( fix.damage() <= 0 ) {
-        sounds::sound( p->pos(), 6, sounds::sound_t::activity, "crunch", true, "tool", "repair_kit" );
+        sounds::sound( p->bub_pos(), 6, sounds::sound_t::activity, "crunch", true, "tool", "repair_kit" );
         p->moves -= to_moves<int>( 20_seconds * vision_mod );
         p->practice( skill_mechanics, 10 );
         fix.mod_damage( -itype::damage_scale );
         p->add_msg_if_player( m_good, _( "You accurize your %s." ), fix.tname( 1, false ) );
 
     } else if( fix.damage() > itype::damage_scale ) {
-        sounds::sound( p->pos(), 8, sounds::sound_t::activity, "crunch", true, "tool", "repair_kit" );
+        sounds::sound( p->bub_pos(), 8, sounds::sound_t::activity, "crunch", true, "tool", "repair_kit" );
         p->moves -= to_moves<int>( 10_seconds * vision_mod );
         p->practice( skill_mechanics, 10 );
         fix.mod_damage( -itype::damage_scale );
@@ -5451,7 +5451,7 @@ int iuse::gun_repair( player *p, item *it, bool, const tripoint & )
                               startdurability, resultdurability );
 
     } else {
-        sounds::sound( p->pos(), 8, sounds::sound_t::activity, "crunch", true, "tool", "repair_kit" );
+        sounds::sound( p->bub_pos(), 8, sounds::sound_t::activity, "crunch", true, "tool", "repair_kit" );
         p->moves -= to_moves<int>( 5_seconds * vision_mod );
         p->practice( skill_mechanics, 10 );
         fix.set_damage( 0 );
@@ -5533,7 +5533,7 @@ int iuse::toolmod_attach( player *p, item *it, bool, const tripoint & )
 int iuse::bell( player *p, item *it, bool, const tripoint & )
 {
     if( it->typeId() == itype_cow_bell ) {
-        sounds::sound( p->pos(), 12, sounds::sound_t::music, _( "Clank!  Clank!" ), true, "misc",
+        sounds::sound( p->bub_pos(), 12, sounds::sound_t::music, _( "Clank!  Clank!" ), true, "misc",
                        "cow_bell" );
         if( !p->is_deaf() ) {
             auto cattle_level =
@@ -5547,7 +5547,7 @@ int iuse::bell( player *p, item *it, bool, const tripoint & )
             }
         }
     } else {
-        sounds::sound( p->pos(), 4, sounds::sound_t::music, _( "Ring!  Ring!" ), true, "misc", "bell" );
+        sounds::sound( p->bub_pos(), 4, sounds::sound_t::music, _( "Ring!  Ring!" ), true, "misc", "bell" );
     }
     return it->type->charges_to_use();
 }
@@ -5597,7 +5597,7 @@ bool iuse::robotcontrol_can_target( player *p, const monster &m )
     return !m.is_dead()
            && is_hackable_robot( m )
            && m.friendly == 0
-           && rl_dist( p->pos(), m.pos() ) <= 10;
+           && rl_dist( p->bub_pos(), m.bub_pos() ) <= 10;
 }
 
 int iuse::robotcontrol( player *p, item *it, bool, const tripoint & )
@@ -5640,9 +5640,9 @@ int iuse::robotcontrol( player *p, item *it, bool, const tripoint & )
                     tripoint seen_loc;
                     // Show locations of seen robots, center on player if robot is not seen
                     if( p->sees( candidate ) ) {
-                        seen_loc = candidate.pos();
+                        seen_loc = candidate.bub_pos();
                     } else {
-                        seen_loc = p->pos();
+                        seen_loc = p->bub_pos();
                     }
                     locations.push_back( seen_loc );
                 }
@@ -5952,7 +5952,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint &pos )
     if( t ) {
         if( !it->get_var( "EIPC_MUSIC_ON" ).empty() && ( it->ammo_remaining() > 0 ) ) {
             if( calendar::once_every( 5_minutes ) ) {
-                it->ammo_consume( 1, p->pos() );
+                it->ammo_consume( 1, p->bub_pos() );
             }
 
             //the more varied music, the better max mood.
@@ -7114,11 +7114,11 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
         bool incorrect_focus = false;
         tripoint_range<tripoint> aim_bounds = g->m.points_in_radius( aim_point, 2 );
 
-        std::vector<tripoint> trajectory = line_to( p->pos(), aim_point, 0, 0 );
+        std::vector<tripoint> trajectory = line_to( p->bub_pos(), aim_point, 0, 0 );
         trajectory.push_back( aim_point );
 
         p->moves -= 50;
-        sounds::sound( p->pos(), 8, sounds::sound_t::activity, _( "Click." ), true, "tool",
+        sounds::sound( p->bub_pos(), 8, sounds::sound_t::activity, _( "Click." ), true, "tool",
                        "camera_shutter" );
 
         for( std::vector<tripoint>::iterator point_it = trajectory.begin();
@@ -7127,7 +7127,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
             const tripoint trajectory_point = *point_it;
             if( point_it != trajectory.end() ) {
                 const tripoint next_point = *( point_it + 1 ); // Trajectory ends on last visible tile
-                if( !g->m.sees( p->pos(), next_point, rl_dist( p->pos(), next_point ) + 3 ) ) {
+                if( !g->m.sees( p->bub_pos(), next_point, rl_dist( p->bub_pos(), next_point ) + 3 ) ) {
                     p->add_msg_if_player( _( "You have the wrong camera focus." ) );
                     incorrect_focus = true;
                     // recalculate target point
@@ -7139,7 +7139,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
             monster *const mon = g->critter_at<monster>( trajectory_point, true );
             player *const guy = g->critter_at<player>( trajectory_point );
             if( mon || guy || trajectory_point == aim_point ) {
-                int dist = rl_dist( p->pos(), trajectory_point );
+                int dist = rl_dist( p->bub_pos(), trajectory_point );
 
                 int camera_bonus = it->has_flag( flag_CAMERA_PRO ) ? 10 : 0;
                 int photo_quality = 20 - rng( dist, dist * 2 ) * 2 + rng( camera_bonus / 2, camera_bonus );
@@ -7192,7 +7192,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
                 std::vector<extended_photo_def> extended_photos;
                 std::vector<monster *> monster_vec;
                 std::vector<player *> player_vec;
-                extended_photo_def photo = photo_def_for_camera_point( trajectory_point, p->pos(), monster_vec,
+                extended_photo_def photo = photo_def_for_camera_point( trajectory_point, p->bub_pos(), monster_vec,
                                            player_vec );
                 photo.quality = photo_quality;
 
@@ -7590,7 +7590,7 @@ static void emit_radio_signal( player &p, const flag_id &signal )
     const auto visitor = [&]( item & it, const tripoint & loc ) -> VisitResponse {
         if( it.has_flag( flag_RADIO_ACTIVATION ) && it.has_flag( signal ) )
         {
-            sounds::sound( p.pos(), 6, sounds::sound_t::alarm, _( "beep" ), true, "misc", "beep" );
+            sounds::sound( p.bub_pos(), 6, sounds::sound_t::alarm, _( "beep" ), true, "misc", "beep" );
             bool invoke_proc = it.has_flag( flag_RADIO_INVOKE_PROC );
             // Invoke to transform item
             it.type->invoke( p, it, loc );
@@ -7630,7 +7630,7 @@ static void emit_radio_signal( player &p, const flag_id &signal )
 
     // Items on creatures
     for( Creature &cr : g->all_creatures() ) {
-        const tripoint &cr_pos = cr.pos();
+        const tripoint &cr_pos = cr.bub_pos();
         if( cr.is_monster() ) {
             monster &mon = *cr.as_monster();
             mon.visit_items( [&]( item * it ) {
@@ -8031,7 +8031,7 @@ static void set_cable_active( player *const who, item *const it,
     data.set_vars( it );
     it->activate();
     it->attempt_detach( [&who]( detached_ptr<item> &&e ) {
-        return item::process( std::move( e ), who, who->pos(), false );
+        return item::process( std::move( e ), who, who->bub_pos(), false );
     } );
     who->mod_moves( -15 );
 };
@@ -8375,7 +8375,7 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint & )
     const w_point &weatherPoint = get_weather().get_precise();
 
     /* Possibly used twice. Worth spending the time to precalculate. */
-    const auto player_local_temp = weather.get_temperature( p->pos() );
+    const auto player_local_temp = weather.get_temperature( p->bub_pos() );
 
     map &here = get_map();
     if( it->typeId() == itype_weather_reader ) {
@@ -8391,9 +8391,9 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint & )
                                   print_temperature( player_local_temp ) );
         }
         // TODO: Don't output air temp if we aren't near air
-        if( g->m.has_flag( TFLAG_SWIMMABLE, p->pos() ) ) {
+        if( g->m.has_flag( TFLAG_SWIMMABLE, p->bub_pos() ) ) {
             const units::temperature water_temp = weather.get_cur_weather_gen().get_water_temperature(
-                    tripoint_abs_ms( here.bub_to_abs( p->pos() ) ),
+                    tripoint_abs_ms( here.bub_to_abs( p->bub_pos() ) ),
                     calendar::turn, calendar::config, g->get_seed() );
             p->add_msg_if_player( m_neutral, _( "Water temperature: %s." ),
                                   print_temperature( water_temp ) );
@@ -8404,12 +8404,12 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint & )
             p->add_msg_if_player(
                 m_neutral, _( "The %1$s reads %2$s." ), it->tname(),
                 print_humidity( get_local_humidity( weatherPoint.humidity, get_weather().weather_id,
-                                                    g->is_sheltered( p->pos() ) ) ) );
+                                                    g->is_sheltered( p->bub_pos() ) ) ) );
         } else {
             p->add_msg_if_player(
                 m_neutral, _( "Relative Humidity: %s." ),
                 print_humidity( get_local_humidity( weatherPoint.humidity, get_weather().weather_id,
-                                                    g->is_sheltered( p->pos() ) ) ) );
+                                                    g->is_sheltered( p->bub_pos() ) ) ) );
         }
     }
     if( it->has_flag( flag_BAROMETER ) ) {
@@ -8434,13 +8434,13 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint & )
     }
     if( it->has_flag( flag_WINDMETER ) ) {
         int vehwindspeed = 0;
-        if( optional_vpart_position vp = g->m.veh_at( p->pos() ) ) {
+        if( optional_vpart_position vp = g->m.veh_at( p->bub_pos() ) ) {
             vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
         }
         const oter_id &cur_om_ter = get_overmapbuffer( p->get_dimension() ).ter( p->global_omt_location() );
         /* windpower defined in internal velocity units (=.01 mph) */
         const double windpower = 100 * get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
-                                 p->pos(), weather.winddirection, g->is_sheltered( p->pos() ) );
+                                 p->bub_pos(), weather.winddirection, g->is_sheltered( p->bub_pos() ) );
         const int windpower_vehicle_units = std::lround( windpower * 0.44704 );
         std::string dirstring = get_dirstring( weather.winddirection );
         p->add_msg_if_player( m_neutral, _( "Wind: %.1f %2$s from the %3$s.\nFeels like: %4$s." ),
@@ -8554,7 +8554,7 @@ int iuse::capture_monster_act( player *p, item *it, bool, const tripoint &pos )
             return 0;
         }
         if( it->has_flag( flag_PLACE_RANDOMLY ) ) {
-            if( it->release_monster( p->pos(), 1 ) ) {
+            if( it->release_monster( p->bub_pos(), 1 ) ) {
                 return 0;
             }
             p->add_msg_if_player( _( "There is no place to put the %s." ), contained_name );

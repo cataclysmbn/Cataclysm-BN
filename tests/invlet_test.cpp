@@ -214,24 +214,24 @@ static invlet_state check_invlet( player &p, item &it, const char invlet )
 
 static void drop_at_feet( player &p, item &it )
 {
-    size_t size_before = get_map().i_at( p.pos() ).size();
+    size_t size_before = get_map().i_at( p.bub_pos() ).size();
 
     p.moves = 100;
-    p.drop( it, p.pos() );
+    p.drop( it, p.bub_pos() );
     p.activity->do_turn( p );
 
-    REQUIRE( get_map().i_at( p.pos() ).size() == size_before + 1 );
+    REQUIRE( get_map().i_at( p.bub_pos() ).size() == size_before + 1 );
 }
 
 static void pick_up_from_feet( player &p, item &it )
 {
-    map_stack items = get_map().i_at( p.pos() );
+    map_stack items = get_map().i_at( p.bub_pos() );
     size_t size_before = items.size();
 
     p.moves = 100;
     p.assign_activity( std::make_unique<player_activity>(
     std::make_unique<pickup_activity_actor>( std::vector<pickup::pick_drop_selection> { { it, 0, {} } },
-    p.pos() ) ) );
+    p.bub_pos() ) ) );
     p.activity->do_turn( p );
 
     REQUIRE( items.size() == size_before - 1 );
@@ -239,7 +239,7 @@ static void pick_up_from_feet( player &p, item &it )
 
 static void wear_from_feet( player &p, item &it )
 {
-    map_stack items = get_map().i_at( p.pos() );
+    map_stack items = get_map().i_at( p.bub_pos() );
     size_t size_before = items.size();
 
     p.wear_item( it.detach(), false );
@@ -249,7 +249,7 @@ static void wear_from_feet( player &p, item &it )
 
 static void wield_from_feet( player &p, item &it )
 {
-    map_stack items = get_map().i_at( p.pos() );
+    map_stack items = get_map().i_at( p.bub_pos() );
     size_t size_before = items.size();
 
 
@@ -262,7 +262,7 @@ static void add_item( player &p, detached_ptr<item> &&it, const inventory_locati
 {
     switch( loc ) {
         case GROUND:
-            get_map().add_item( p.pos(), std::move( it ) );
+            get_map().add_item( p.bub_pos(), std::move( it ) );
             break;
         case INVENTORY:
             p.i_add( std::move( it ) );
@@ -403,7 +403,7 @@ static void invlet_test( player &dummy, const inventory_location from, const inv
         dummy.inv_clear();
         dummy.worn.clear();
         dummy.remove_primary_weapon();
-        get_map().i_clear( dummy.pos() );
+        get_map().i_clear( dummy.bub_pos() );
 
 
         // some two items that can be wielded, worn, and picked up
@@ -484,7 +484,7 @@ static void stack_invlet_test( player &dummy, inventory_location from, inventory
     dummy.inv_clear();
     dummy.worn.clear();
     dummy.remove_primary_weapon();
-    get_map().i_clear( dummy.pos() );
+    get_map().i_clear( dummy.bub_pos() );
 
     // some stackable item that can be wielded and worn
     detached_ptr<item> sd1 = item::spawn( "tshirt" );
@@ -532,7 +532,7 @@ static void swap_invlet_test( player &dummy, inventory_location loc )
     dummy.inv_clear();
     dummy.worn.clear();
     dummy.remove_primary_weapon();
-    get_map().i_clear( dummy.pos() );
+    get_map().i_clear( dummy.bub_pos() );
 
     // two items of the same type that do not stack
     detached_ptr<item> sd1 = item::spawn( "tshirt" );
@@ -613,7 +613,7 @@ static void merge_invlet_test( player &dummy, inventory_location from )
         dummy.inv_clear();
         dummy.worn.clear();
         dummy.remove_primary_weapon();
-        get_map().i_clear( dummy.pos() );
+        get_map().i_clear( dummy.bub_pos() );
 
         // some stackable item
         detached_ptr<item> sd1 = item::spawn( "tshirt" );

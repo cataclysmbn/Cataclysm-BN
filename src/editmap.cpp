@@ -476,8 +476,8 @@ void editmap::uber_draw_ter( const catacurses::window &w, map *m )
                 }
                 if( refresh_mplans ) {
                     monster *mon = dynamic_cast<monster *>( critter );
-                    if( mon != nullptr && mon->pos() != mon->move_target() ) {
-                        for( auto &location : line_to( mon->pos(), mon->move_target() ) ) {
+                    if( mon != nullptr && mon->bub_pos() != mon->move_target() ) {
+                        for( auto &location : line_to( mon->bub_pos(), mon->move_target() ) ) {
                             hilights["mplan"].points[location] = 1;
                         }
                     }
@@ -738,7 +738,7 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
 
     const std::string u_see_msg = player_character.sees( target ) ? _( "yes" ) : _( "no" );
     mvwprintw( w_info, point( 1, off++ ), _( "dist: %d u_see: %s veh: %s scent: %d" ),
-               rl_dist( player_character.pos(), target ), u_see_msg, veh_msg, g->scent.get( target ) );
+               rl_dist( player_character.bub_pos(), target ), u_see_msg, veh_msg, g->scent.get( target ) );
     mvwprintw( w_info, point( 1, off++ ), _( "sight_range: %d, daylight_sight_range: %d," ),
                player_character.sight_range( g->light_level( player_character.posz() ) ),
                player_character.sight_range( current_daylight_level( calendar::turn ) ) );

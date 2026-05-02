@@ -402,7 +402,7 @@ void monexamine::shear_animal( monster &z )
                                          qual_shear ) ) );
 
     you.assign_activity( activity_id( "ACT_SHEAR" ), moves, -1 );
-    you.activity->coords.push_back( get_map().bub_to_abs( z.pos() ) );
+    you.activity->coords.push_back( get_map().bub_to_abs( z.bub_pos() ) );
     // pin the sheep in place if it isn't already
     if( !z.has_effect( effect_tied ) ) {
         z.add_effect( effect_tied, 1_turns );
@@ -640,7 +640,7 @@ bool Character::can_mount( const monster &critter ) const
 mountable_status Character::get_mountable_status( const monster &critter ) const
 {
     const auto &avoid = get_legacy_path_avoid();
-    auto route = get_map().route( pos(), critter.pos(), get_legacy_pathfinding_settings(), avoid );
+    auto route = get_map().route( pos(), critter.bub_pos(), get_legacy_pathfinding_settings(), avoid );
 
     if( route.empty() ) {
         return {};
@@ -780,7 +780,7 @@ bool monexamine::give_items_to( monster &z )
         }
     }
     z.add_effect( effect_ai_waiting, 2_turns );
-    you.drop( to_move, z.pos(), true );
+    you.drop( to_move, z.bub_pos(), true );
 
     return false;
 }
@@ -859,7 +859,7 @@ void monexamine::remove_armor( monster &z )
     if( z.get_armor_item() ) {
         z.get_armor_item()->erase_var( "pet_armor" );
         item *armor = z.get_armor_item();
-        get_map().add_item_or_charges( z.pos(), armor->detach() );
+        get_map().add_item_or_charges( z.bub_pos(), armor->detach() );
         add_msg( pgettext( "pet armor", "You remove the %1$s from %2$s." ), armor->display_name(),
                  pet_name );
         // TODO: removing armor from a horse takes a lot longer than 2 seconds. This should be a long action.
@@ -1031,11 +1031,11 @@ void monexamine::deactivate_pet( monster &z )
         remove_battery( z );
     }
     map &here = get_map();
-    here.add_item_or_charges( z.pos(), z.to_item() );
+    here.add_item_or_charges( z.bub_pos(), z.to_item() );
     if( !z.has_flag( MF_INTERIOR_AMMO ) ) {
         for( auto &ammodef : z.ammo ) {
             if( ammodef.second > 0 ) {
-                here.spawn_item( z.pos(), ammodef.first, 1, ammodef.second, calendar::turn );
+                here.spawn_item( z.bub_pos(), ammodef.first, 1, ammodef.second, calendar::turn );
             }
         }
     }
@@ -1055,7 +1055,7 @@ void monexamine::milk_source( monster &source_mon )
     if( milkable_ammo->second > 0 ) {
         const int moves = to_moves<int>( time_duration::from_minutes( milkable_ammo->second / 2 ) );
         you.assign_activity( ACT_MILK, moves, -1 );
-        you.activity->coords.push_back( get_map().bub_to_abs( source_mon.pos() ) );
+        you.activity->coords.push_back( get_map().bub_to_abs( source_mon.bub_pos() ) );
         // pin the cow in place if it isn't already
         bool temp_tie = !source_mon.has_effect( effect_tied );
         if( temp_tie ) {

@@ -798,7 +798,7 @@ bool spell::is_spell_class( const trait_id &mid ) const
 bool spell::can_cast( Character &guy ) const
 {
     if( !type->spell_components.is_empty() &&
-        !type->spell_components->can_make_with_inventory( guy.crafting_inventory( guy.pos(), 0 ),
+        !type->spell_components->can_make_with_inventory( guy.crafting_inventory( guy.bub_pos(), 0 ),
                 return_true<item> ) ) {
         return false;
     }
@@ -1143,7 +1143,7 @@ energy_type spell::energy_source() const
 
 bool spell::is_target_in_range( const Creature &caster, const tripoint &p ) const
 {
-    return rl_dist( caster.pos(), p ) <= range();
+    return rl_dist( caster.bub_pos(), p ) <= range();
 }
 
 bool spell::is_valid_target( valid_target t ) const
@@ -1158,8 +1158,8 @@ bool spell::is_valid_target( const Creature &caster, const tripoint &p ) const
         Attitude cr_att = cr->attitude_to( caster );
         valid = valid || ( cr_att != Attitude::A_FRIENDLY && is_valid_target( target_hostile ) );
         valid = valid || ( cr_att == Attitude::A_FRIENDLY && is_valid_target( target_ally ) &&
-                           p != caster.pos() );
-        valid = valid || ( is_valid_target( target_self ) && p == caster.pos() );
+                           p != caster.bub_pos() );
+        valid = valid || ( is_valid_target( target_self ) && p == caster.bub_pos() );
         valid = valid && target_by_monster_id( p );
     } else {
         valid = is_valid_target( target_ground );
@@ -1457,12 +1457,12 @@ void spell::cast_all_effects( Creature &source, const tripoint &target ) const
 
             if( sp.has_flag( RANDOM_TARGET ) ) {
                 if( const std::optional<tripoint> new_target = sp.random_valid_target( source,
-                        _self ? source.pos() : target ) ) {
+                        _self ? source.bub_pos() : target ) ) {
                     sp.cast_all_effects( source, *new_target );
                 }
             } else {
                 if( _self ) {
-                    sp.cast_all_effects( source, source.pos() );
+                    sp.cast_all_effects( source, source.bub_pos() );
                 } else {
                     sp.cast_all_effects( source, target );
                 }
@@ -1475,12 +1475,12 @@ void spell::cast_all_effects( Creature &source, const tripoint &target ) const
             spell sp = extra_spell.get_spell( get_level() );
             if( sp.has_flag( RANDOM_TARGET ) ) {
                 if( const std::optional<tripoint> new_target = sp.random_valid_target( source,
-                        extra_spell.self ? source.pos() : target ) ) {
+                        extra_spell.self ? source.bub_pos() : target ) ) {
                     sp.cast_all_effects( source, *new_target );
                 }
             } else {
                 if( extra_spell.self ) {
-                    sp.cast_all_effects( source, source.pos() );
+                    sp.cast_all_effects( source, source.bub_pos() );
                 } else {
                     sp.cast_all_effects( source, target );
                 }

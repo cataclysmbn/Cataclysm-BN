@@ -134,7 +134,7 @@ static void swap_pos( Creature &caster, const tripoint &target )
 {
     Creature *const critter = g->critter_at<Creature>( target );
     if( critter != nullptr ) {
-        critter->setpos( caster.pos() );
+        critter->setpos( caster.bub_pos() );
     }
     caster.setpos( target );
     //update map in case a monster swapped positions with the player
@@ -147,7 +147,7 @@ void spell_effect::pain_split( const spell &sp, Creature &caster, const tripoint
     if( p == nullptr ) {
         return;
     }
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.bub_pos() );
     add_msg( m_info, _( "Your injuries even out." ) );
     int num_limbs = 0; // number of limbs effected (broken don't count)
     int total_hp = 0; // total hp among limbs
@@ -401,7 +401,7 @@ std::set<tripoint> calculate_spell_effect_area( const spell &sp, const tripoint 
     std::set<tripoint> targets = { target }; // initialize with epicenter
 
     const int aoe_radius = sp.aoe();
-    targets = aoe_func( sp, caster.pos(), target, aoe_radius, ignore_walls );
+    targets = aoe_func( sp, caster.bub_pos(), target, aoe_radius, ignore_walls );
 
     for( std::set<tripoint>::iterator it = targets.begin(); it != targets.end(); ) {
         if( !sp.is_valid_target( caster, *it ) ) {
@@ -535,8 +535,8 @@ static void damage_targets( const spell &sp, Creature &caster,
 void spell_effect::projectile_attack( const spell &sp, Creature &caster,
                                       const tripoint &target )
 {
-    std::vector<tripoint> trajectory = line_to( caster.pos(), target );
-    tripoint prev_point = caster.pos();
+    std::vector<tripoint> trajectory = line_to( caster.bub_pos(), target );
+    tripoint prev_point = caster.bub_pos();
     map &here = get_map();
     for( std::vector<tripoint>::iterator iter = trajectory.begin(); iter != trajectory.end(); iter++ ) {
         if( ( here.impassable( *iter ) && !here.has_flag( "THIN_OBSTACLE", *iter ) ) ||
@@ -756,7 +756,7 @@ void spell_effect::area_pull( const spell &sp, Creature &caster, const tripoint 
 
         spell_move( sp, caster, node.position, node.from );
     }
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.bub_pos() );
 }
 
 void spell_effect::area_push( const spell &sp, Creature &caster, const tripoint &center )
@@ -774,7 +774,7 @@ void spell_effect::area_push( const spell &sp, Creature &caster, const tripoint 
 
         spell_move( sp, caster, node.from, node.position );
     }
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.bub_pos() );
 }
 
 static void character_push_effects( Creature *caster, Character &guy, tripoint &push_dest,
@@ -810,15 +810,15 @@ void spell_effect::directed_push( const spell &sp, Creature &caster, const tripo
 
     std::multimap<int, tripoint> targets_ordered_by_range;
     for( const tripoint &pt : area ) {
-        targets_ordered_by_range.emplace( sign * rl_dist( pt, caster.pos() ), pt );
+        targets_ordered_by_range.emplace( sign * rl_dist( pt, caster.bub_pos() ), pt );
     }
 
     for( const std::pair<const int, tripoint> &pair : targets_ordered_by_range ) {
         const tripoint &push_point = pair.second;
-        const  units::angle start_angle = coord_to_angle( caster.pos(), target );
+        const  units::angle start_angle = coord_to_angle( caster.bub_pos(), target );
         // positive is push, negative is pull
         int push_distance = sp.damage();
-        const int prev_distance = rl_dist( caster.pos(), target );
+        const int prev_distance = rl_dist( caster.bub_pos(), target );
         if( push_distance < 0 ) {
             push_distance = std::max( -std::abs( push_distance ), -std::abs( prev_distance ) );
         }
@@ -838,7 +838,7 @@ void spell_effect::directed_push( const spell &sp, Creature &caster, const tripo
             monster *mon = g->critter_at<monster>( push_point );
             Character *guy = g->critter_at<Character>( push_point );
 
-            if( ( sp.is_valid_target( target_self ) && push_point == caster.pos() ) ||
+            if( ( sp.is_valid_target( target_self ) && push_point == caster.bub_pos() ) ||
                 ( attitude_to_target == Attitude::A_FRIENDLY &&
                   sp.is_valid_target( target_ally ) ) ||
                 ( ( attitude_to_target == Attitude::A_HOSTILE ||
@@ -918,7 +918,7 @@ void spell_effect::spawn_ethereal_item( const spell &sp, Creature &caster, const
             you.i_add( item::spawn( as_item ) );
         }
     }
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.bub_pos() );
 }
 
 void spell_effect::recover_energy( const spell &sp, Creature &caster, const tripoint &target )
@@ -958,7 +958,7 @@ void spell_effect::recover_energy( const spell &sp, Creature &caster, const trip
     } else {
         debugmsg( "Invalid effect_str %s for spell %s", energy_source, sp.name() );
     }
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.bub_pos() );
 }
 
 void spell_effect::timed_event( const spell &sp, Creature &caster, const tripoint & )
@@ -984,7 +984,7 @@ void spell_effect::timed_event( const spell &sp, Creature &caster, const tripoin
         spell_event = iter->second;
     }
 
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.bub_pos() );
     g->timed_events.add( spell_event, calendar::turn + sp.duration_turns() );
 }
 
@@ -1088,7 +1088,7 @@ void spell_effect::transform_blast( const spell &sp, Creature &caster,
                                     const tripoint &target )
 {
     ter_furn_transform_id transform( sp.effect_data() );
-    const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), true );
+    const std::set<tripoint> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), true );
     for( const tripoint &location : area ) {
         if( one_in( sp.damage() ) ) {
             transform->transform( location );
@@ -1104,7 +1104,7 @@ void spell_effect::noise( const spell &sp, Creature &, const tripoint &target )
 
 void spell_effect::vomit( const spell &sp, Creature &caster, const tripoint &target )
 {
-    const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), true );
+    const std::set<tripoint> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), true );
     bool sound_played = false;
     for( const tripoint &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
@@ -1140,7 +1140,7 @@ void spell_effect::flashbang( const spell &sp, Creature &caster, const tripoint 
 
 void spell_effect::mod_moves( const spell &sp, Creature &caster, const tripoint &target )
 {
-    const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), false );
+    const std::set<tripoint> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), false );
     bool sound_played = false;
     for( const tripoint &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
@@ -1171,7 +1171,7 @@ void spell_effect::map_area( const spell &sp, Creature &caster, const tripoint &
 
 void spell_effect::morale( const spell &sp, Creature &caster, const tripoint &target )
 {
-    const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), false );
+    const std::set<tripoint> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), false );
     if( sp.effect_data().empty() ) {
         debugmsg( "ERROR: %s must have a valid morale_type as effect_str.  None specified.",
                   sp.id().c_str() );
@@ -1200,7 +1200,7 @@ void spell_effect::morale( const spell &sp, Creature &caster, const tripoint &ta
 
 void spell_effect::charm_monster( const spell &sp, Creature &caster, const tripoint &target )
 {
-    const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), false );
+    const std::set<tripoint> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), false );
     bool sound_played = false;
     for( const tripoint &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
@@ -1223,7 +1223,7 @@ void spell_effect::charm_monster( const spell &sp, Creature &caster, const tripo
 
 void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint &target )
 {
-    const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), false );
+    const std::set<tripoint> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), false );
     bool sound_played = false;
     for( const tripoint &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
@@ -1265,7 +1265,7 @@ void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint &ta
 
 void spell_effect::bash( const spell &sp, Creature &caster, const tripoint &target )
 {
-    const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), true );
+    const std::set<tripoint> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), true );
     for( const tripoint &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
             continue;
@@ -1277,7 +1277,7 @@ void spell_effect::bash( const spell &sp, Creature &caster, const tripoint &targ
 
 void spell_effect::dash( const spell &sp, Creature &caster, const tripoint &target )
 {
-    const tripoint &source = caster.pos();
+    const tripoint &source = caster.bub_pos();
     const std::vector<tripoint> trajectory_local = line_to( source, target );
     ::map &here = get_map();
     // uses abs() coordinates

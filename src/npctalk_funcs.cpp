@@ -195,7 +195,7 @@ void talk_function::buy_cow( npc &p )
 
 void spawn_animal( npc &p, const mtype_id &mon )
 {
-    if( monster *const mon_ptr = g->place_critter_around( mon, p.pos(), 1 ) ) {
+    if( monster *const mon_ptr = g->place_critter_around( mon, p.bub_pos(), 1 ) ) {
         mon_ptr->friendly = -1;
         mon_ptr->add_effect( effect_pet, 1_turns, bodypart_str_id::NULL_ID() );
     } else {
@@ -523,7 +523,7 @@ void talk_function::give_all_aid( npc &p )
 
     give_aid_to( get_player_character() );
     for( npc &guy : g->all_npcs() ) {
-        if( guy.is_walking_with() && rl_dist( guy.pos(), u.bub_pos() ) < PICKUP_RANGE ) {
+        if( guy.is_walking_with() && rl_dist( guy.bub_pos(), u.bub_pos() ) < PICKUP_RANGE ) {
             give_aid_to( guy );
         }
     }
@@ -810,7 +810,7 @@ void talk_function::drop_weapon( npc &p )
     if( p.is_hallucination() ) {
         return;
     }
-    get_map().add_item_or_charges( p.pos(), p.remove_primary_weapon() );
+    get_map().add_item_or_charges( p.bub_pos(), p.remove_primary_weapon() );
 }
 
 void talk_function::player_weapon_away( npc &/*p*/ )
@@ -923,7 +923,7 @@ npc *pick_follower()
     for( npc &guy : g->all_npcs() ) {
         if( guy.is_player_ally() && g->u.sees( guy ) ) {
             followers.push_back( &guy );
-            locations.push_back( guy.pos() );
+            locations.push_back( guy.bub_pos() );
         }
     }
 

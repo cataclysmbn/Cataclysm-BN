@@ -136,7 +136,7 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
         // Skip friendly creatures within 1 tile of attacker to prevent adjacent friendly fire in AOE
         if( critter != nullptr &&
             attacker.attitude_to( *critter ) == Attitude::A_FRIENDLY &&
-            rl_dist( attacker.pos(), point ) <= 1 ) {
+            rl_dist( attacker.bub_pos(), point ) <= 1 ) {
             continue;
         }
         if( critter != nullptr ) {

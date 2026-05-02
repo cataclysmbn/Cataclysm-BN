@@ -271,7 +271,7 @@ int iuse_transform::use( player &p, item &it, bool t, const tripoint &pos ) cons
     }
 
     const bool possess = p.has_item( it ) ||
-                         ( it.has_flag( flag_ALLOWS_REMOTE_USE ) && square_dist( p.pos(), pos ) == 1 );
+                         ( it.has_flag( flag_ALLOWS_REMOTE_USE ) && square_dist( p.bub_pos(), pos ) == 1 );
 
     if( possess && need_worn && !p.is_worn( it ) ) {
         p.add_msg_if_player( m_info, _( "You need to wear the %1$s before activating it." ), it.tname() );
@@ -408,7 +408,7 @@ ret_val<bool> iuse_transform::can_use( const Character &p, const item &, bool,
 
     std::map<quality_id, int> unmet_reqs;
     inventory inv;
-    inv.form_from_map( p.pos(), 1, &p, true, true );
+    inv.form_from_map( p.bub_pos(), 1, &p, true, true );
     for( const auto &quality : qualities_needed ) {
         if( !p.has_quality( quality.first, quality.second ) &&
             !inv.has_quality( quality.first, quality.second ) ) {
@@ -505,7 +505,7 @@ int unpack_actor::use( player &p, item &it, bool, const tripoint & ) const
         }
 
 
-        here.add_item_or_charges( p.pos(), std::move( content ) );
+        here.add_item_or_charges( p.bub_pos(), std::move( content ) );
     }
 
     it.detach( );
@@ -750,7 +750,7 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) cons
         }
     }
 
-    vehicle *veh = get_map().add_vehicle( vehicle_id, p.pos(), 0_degrees, 0, 0, false, false, true );
+    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, 0, 0, false, false, true );
     if( veh == nullptr ) {
         p.add_msg_if_player( m_info, _( "There's no room to unfold the %s." ), it.tname() );
         return 0;
@@ -804,8 +804,8 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) cons
             debugmsg( "Error restoring vehicle: %s", e.c_str() );
         }
     }
-    if( g->m.veh_at( p.pos() ).part_with_feature( "BOARDABLE", true ) ) {
-        g->m.board_vehicle( p.pos(), &p );
+    if( g->m.veh_at( p.bub_pos() ).part_with_feature( "BOARDABLE", true ) ) {
+        g->m.board_vehicle( p.bub_pos(), &p );
     }
     return 1;
 }
@@ -1118,7 +1118,7 @@ int set_transform_iuse::use( player &p, item &it, bool t, const tripoint &pos ) 
     }
 
     const bool possess = p.has_item( it ) ||
-                         ( it.has_flag( flag_ALLOWS_REMOTE_USE ) && square_dist( p.pos(), pos ) == 1 );
+                         ( it.has_flag( flag_ALLOWS_REMOTE_USE ) && square_dist( p.bub_pos(), pos ) == 1 );
 
     if( set_charges ) {
         if( it.is_power_armor() && character_funcs::can_interface_armor( p ) ) {
@@ -1239,7 +1239,7 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
     monster &newmon = *newmon_ptr;
     newmon.init_from_item( it );
 
-    tripoint pnt = it.is_active() ? pos : p.pos();
+    tripoint pnt = it.is_active() ? pos : p.bub_pos();
 
     if( it.has_var( "place_monster_override" ) ) {
         newmon.no_extra_death_drops = true;
@@ -1337,7 +1337,7 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
         newmon.unique_name = it.get_var( "item_label" );
     }
     // TODO: add a flag instead of monster id or something?
-    if( newmon.type->id == mtype_id( "mon_laserturret" ) && !g->is_in_sunlight( newmon.pos() ) ) {
+    if( newmon.type->id == mtype_id( "mon_laserturret" ) && !g->is_in_sunlight( newmon.bub_pos() ) ) {
         p.add_msg_if_player( _( "A flashing LED on the laser turret appears to indicate low light." ) );
     }
     return 1;
@@ -1361,7 +1361,7 @@ int place_npc_iuse::use( player &p, item &, bool, const tripoint & ) const
     map &here = get_map();
     std::optional<tripoint> target_pos;
     if( place_randomly ) {
-        const tripoint_range<tripoint> target_range = points_in_radius( p.pos(), 1 );
+        const tripoint_range<tripoint> target_range = points_in_radius( p.bub_pos(), 1 );
         target_pos = random_point( target_range, []( const tripoint & t ) {
             return !get_map().passable( t );
         } );
@@ -1454,7 +1454,7 @@ int deploy_furn_actor::use( player &p, item &it, bool t, const tripoint &pos ) c
         return 0;
     }
 
-    if( pnt == p.pos() ) {
+    if( pnt == p.bub_pos() ) {
         p.add_msg_if_player( m_info,
                              _( "You attempt to become one with the furniture.  It doesn't work." ) );
         return 0;
@@ -1753,14 +1753,14 @@ std::unique_ptr<iuse_actor> firestarter_actor::clone() const
 bool firestarter_actor::prep_firestarter_use( const player &p, tripoint &pos )
 {
     // checks for fuel are handled by use and the activity, not here
-    if( pos == p.pos() ) {
+    if( pos == p.bub_pos() ) {
         if( const std::optional<tripoint> pnt_ = choose_adjacent( _( "Light where?" ) ) ) {
             pos = *pnt_;
         } else {
             return false;
         }
     }
-    if( pos == p.pos() ) {
+    if( pos == p.bub_pos() ) {
         p.add_msg_if_player( m_info, _( "You would set yourself on fire." ) );
         p.add_msg_if_player( _( "But you're already smokin' hot." ) );
         return false;
@@ -1813,7 +1813,7 @@ ret_val<bool> firestarter_actor::can_use( const Character &p, const item &it, bo
         return ret_val<bool>::make_failure( _( "This tool doesn't have enough charges." ) );
     }
 
-    if( need_sunlight && light_mod( p.pos() ) <= 0.0f ) {
+    if( need_sunlight && light_mod( p.bub_pos() ) <= 0.0f ) {
         return ret_val<bool>::make_failure( _( "You need direct sunlight to light a fire with this." ) );
     }
 
@@ -1856,7 +1856,7 @@ int firestarter_actor::use( player &p, item &it, bool t, const tripoint &spos ) 
     }
 
     tripoint pos = spos;
-    float light = light_mod( p.pos() );
+    float light = light_mod( p.bub_pos() );
     if( !prep_firestarter_use( p, pos ) ) {
         return 0;
     }
@@ -2342,7 +2342,7 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint & ) c
     p.moves -= moves;
     if( rng( 0, 10 ) - it.damage_level( 4 ) > success_chance && !p.is_underwater() ) {
         if( noise > 0 ) {
-            sounds::sound( p.pos(), noise, sounds::sound_t::combat, _( success_message ) );
+            sounds::sound( p.bub_pos(), noise, sounds::sound_t::combat, _( success_message ) );
         }
         p.add_msg_if_player( _( success_message ) );
         if( p.is_npc() && get_player_character().sees( p ) ) {
@@ -2418,7 +2418,7 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint & ) co
         return 0;
     } else if( one_in( noise_chance ) ) {
         if( noise > 0 ) {
-            sounds::sound( p.pos(), noise, sounds::sound_t::combat, _( noise_message ) );
+            sounds::sound( p.bub_pos(), noise, sounds::sound_t::combat, _( noise_message ) );
         }
         p.add_msg_if_player( _( noise_message ) );
     }
@@ -2454,7 +2454,7 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint & ) cons
     {
         p.moves -= moves;
         if( noise > 0 ) {
-            sounds::sound( p.pos(), noise, sounds::sound_t::activity,
+            sounds::sound( p.bub_pos(), noise, sounds::sound_t::activity,
                            noise_message.empty() ? _( "Hsss" ) : _( noise_message ), true, noise_id, noise_variant );
         }
         p.add_msg_if_player( _( use_message ) );
@@ -2581,14 +2581,14 @@ int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint &
     }
 
     if( morale_effect >= 0 ) {
-        sounds::sound( p.pos(), volume, sounds::sound_t::music, desc, true, "musical_instrument",
+        sounds::sound( p.bub_pos(), volume, sounds::sound_t::music, desc, true, "musical_instrument",
                        it.typeId().str() );
     } else {
-        sounds::sound( p.pos(), volume, sounds::sound_t::music, desc, true, "musical_instrument_bad",
+        sounds::sound( p.bub_pos(), volume, sounds::sound_t::music, desc, true, "musical_instrument_bad",
                        it.typeId().str() );
     }
 
-    if( !p.has_effect( effect_music ) && p.can_hear( p.pos(), volume ) ) {
+    if( !p.has_effect( effect_music ) && p.can_hear( p.bub_pos(), volume ) ) {
         // Sound code doesn't describe noises at the player position
         if( p.is_player() && desc != "music" ) {
             add_msg( m_info, desc );
@@ -3801,7 +3801,7 @@ void heal_actor::load( const JsonObject &obj )
 
 static player &get_patient( player &healer, const tripoint &pos )
 {
-    if( healer.pos() == pos ) {
+    if( healer.bub_pos() == pos ) {
         return healer;
     }
 
@@ -4251,7 +4251,7 @@ static bool has_neighbor( const tripoint &pos, const ter_id &terrain_id )
 
 bool place_trap_actor::is_allowed( player &p, const tripoint &pos, const std::string &name ) const
 {
-    if( !allow_under_player && pos == p.pos() ) {
+    if( !allow_under_player && pos == p.bub_pos() ) {
         p.add_msg_if_player( m_info, _( "Yeah.  Place the %s at your feet.  Real damn smart move." ),
                              name );
         return false;
@@ -4753,7 +4753,7 @@ int mutagen_iv_actor::use( player &p, item &it, bool, const tripoint & ) const
     if( p.is_player() && !( p.has_trait( trait_NOPAIN ) ) && m_category.iv_sound ) {
         p.mod_pain( m_category.iv_pain );
         /** @EFFECT_STR increases volume of painful shouting when using IV mutagen */
-        sounds::sound( p.pos(), m_category.iv_noise + p.str_cur, sounds::sound_t::alert,
+        sounds::sound( p.bub_pos(), m_category.iv_noise + p.str_cur, sounds::sound_t::alert,
                        m_category.iv_sound_message(), true, m_category.iv_sound_id(), m_category.iv_sound_variant() );
     }
 
@@ -4827,7 +4827,7 @@ int deploy_tent_actor::use( player &p, item &it, bool, const tripoint & ) const
     // We place the center of the structure (radius + 1)
     // spaces away from the player.
     // First check there's enough room.
-    const tripoint center = p.pos() + tripoint( ( radius + 1 ) * direction.x,
+    const tripoint center = p.bub_pos() + tripoint( ( radius + 1 ) * direction.x,
                             ( radius + 1 ) * direction.y, 0 );
     for( const tripoint &dest : here.points_in_radius( center, radius ) ) {
         if( const auto vp = here.veh_at( dest ) ) {
@@ -4859,7 +4859,7 @@ int deploy_tent_actor::use( player &p, item &it, bool, const tripoint & ) const
     if( floor_center ) {
         here.furn_set( center, *floor_center );
     }
-    here.furn_set( p.pos() + direction, door_closed );
+    here.furn_set( p.bub_pos() + direction, door_closed );
     add_msg( m_info, _( "You set up the %s on the ground." ), it.tname() );
     add_msg( m_info, _( "Examine the center square to pack it up again." ) );
     return 1;
@@ -5751,14 +5751,14 @@ static bool multicooker_hallu( player &p )
         case 6:
             if( !one_in( 5 ) ) {
                 add_msg( m_warning, _( "The multi-cooker runs away!" ) );
-                if( monster *const m = g->place_critter_around( mon_hallu_multicooker, p.pos(), 1 ) ) {
+                if( monster *const m = g->place_critter_around( mon_hallu_multicooker, p.bub_pos(), 1 ) ) {
                     m->hallucination = true;
                     m->add_effect( effect_run, 100_turns );
                 }
             } else {
                 p.add_msg_if_player( m_info, _( "You're surrounded by aggressive multi-cookers!" ) );
 
-                for( const tripoint &pn : g->m.points_in_radius( p.pos(), 1 ) ) {
+                for( const tripoint &pn : g->m.points_in_radius( p.bub_pos(), 1 ) ) {
                     if( monster *const m = g->place_critter_at( mon_hallu_multicooker, pn ) ) {
                         m->hallucination = true;
                     }
@@ -6229,7 +6229,7 @@ int iuse_music_player::use( player &p, item &it, bool t, const tripoint &pos ) c
     }
 
     const bool possess = p.has_item( it ) ||
-                         ( it.has_flag( flag_ALLOWS_REMOTE_USE ) && square_dist( p.pos(), pos ) == 1 );
+                         ( it.has_flag( flag_ALLOWS_REMOTE_USE ) && square_dist( p.bub_pos(), pos ) == 1 );
 
     if( possess && need_worn && !p.is_worn( it ) ) {
         p.add_msg_if_player( m_info, _( "You need to wear the %1$s before activating it." ), it.tname() );
@@ -6415,7 +6415,7 @@ int iuse_reveal_contents::use( player &p, item &it, bool,
             p.add_msg_if_player( ( string_format( open_message,
                                                   it.tname() ) + content->tname() + "!" ) );
         }
-        here.add_item_or_charges( p.pos(), std::move( content ) );
+        here.add_item_or_charges( p.bub_pos(), std::move( content ) );
     }
 
     it.detach( );
@@ -6682,7 +6682,7 @@ auto iuse_flowerpot_plant::on_use_harvest( player &p, item &i, const tripoint & 
     }
 
     for( auto &j : harvest ) {
-        put_into_vehicle_or_drop( p, item_drop_reason::deliberate, std::move( j ), p.pos() );
+        put_into_vehicle_or_drop( p, item_drop_reason::deliberate, std::move( j ), p.bub_pos() );
     }
 
     p.moves -= to_moves<int>( 10_seconds * info.harvest_mult );
@@ -6762,7 +6762,7 @@ auto iuse_flowerpot_plant::query_adjacent_pot( const player &who,
 
     auto &map = get_map();
     const auto has_inv_pots = who.has_item_with( selector_fn );
-    const auto has_map_pots = map.has_adjacent_item_with( who.pos(), selector_fn );
+    const auto has_map_pots = map.has_adjacent_item_with( who.bub_pos(), selector_fn );
 
     if( !has_inv_pots && !has_map_pots ) {
         return std::nullopt;
@@ -6773,7 +6773,7 @@ auto iuse_flowerpot_plant::query_adjacent_pot( const player &who,
         const auto fn = [&]( const tripoint & p ) {
             bool ok = false;
             ok |= map.has_item_with( p, selector_fn );
-            ok |= ( who.pos() == p ) && who.has_item_with( selector_fn );
+            ok |= ( who.bub_pos() == p ) && who.has_item_with( selector_fn );
             return ok;
         };
 
@@ -6784,7 +6784,7 @@ auto iuse_flowerpot_plant::query_adjacent_pot( const player &who,
                 fn
             );
     } else if( has_inv_pots ) {
-        pot_pos = who.pos();
+        pot_pos = who.bub_pos();
     }
 
     if( !pot_pos.has_value() ) {
@@ -6795,7 +6795,7 @@ auto iuse_flowerpot_plant::query_adjacent_pot( const player &who,
     std::vector<item *> choices{};
     const auto map_stack = map.i_at( pot_pos.value() );
     std::ranges::copy_if( map_stack, std::back_inserter( choices ), p_selector_fn );
-    if( pot_pos.value() == who.pos() ) {
+    if( pot_pos.value() == who.bub_pos() ) {
         std::ranges::copy( who.items_with( selector_fn ), std::back_inserter( choices ) );
     }
 
@@ -7456,7 +7456,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint & ) const 
     // --- Mode 1: Link to a nearby portal with a matching flag ---
     if( !required_portal_flag.empty() ) {
         portal_tile *nearby_portal = nullptr;
-        for( const tripoint &adj : get_map().points_in_radius( p.pos(), 1 ) ) {
+        for( const tripoint &adj : get_map().points_in_radius( p.bub_pos(), 1 ) ) {
             auto abs = tripoint_abs_ms( get_map().bub_to_abs( adj ) );
             auto *candidate = active_tiles::furn_at<portal_tile>( abs );
             if( candidate && candidate->linkable_item_flag == required_portal_flag &&

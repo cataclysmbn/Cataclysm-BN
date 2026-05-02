@@ -49,7 +49,7 @@ static int moves_to_destination( const std::string &monster_type,
             const int moves_before = test_monster.moves;
             test_monster.move();
             moves_spent += moves_before - test_monster.moves;
-            if( test_monster.pos() == test_monster.move_target() ) {
+            if( test_monster.bub_pos() == test_monster.move_target() ) {
                 g->remove_zombie( test_monster );
                 return moves_spent;
             }
@@ -100,12 +100,12 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
     test_player.setpos( center );
     test_player.set_moves( 0 );
     // Give the player a head start.
-    const tripoint monster_start = { -10 * direction_of_flight + test_player.pos()
+    const tripoint monster_start = { -10 * direction_of_flight + test_player.bub_pos()
                                    };
     monster &test_monster = spawn_test_monster( monster_type, monster_start );
     // Get it riled up and give it a goal.
     test_monster.anger = 100;
-    test_monster.set_dest( test_player.pos() );
+    test_monster.set_dest( test_player.bub_pos() );
     test_monster.set_moves( 0 );
     const int monster_speed = test_monster.get_speed();
     const int target_speed = 100;
@@ -114,39 +114,39 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
     for( int turn = 0; turn < 1000; ++turn ) {
         test_player.mod_moves( target_speed );
         while( test_player.moves >= 0 ) {
-            test_player.setpos( test_player.pos() + direction_of_flight );
-            if( test_player.pos().x < SEEX * int( MAPSIZE / 2 ) ||
-                test_player.pos().y < SEEY * int( MAPSIZE / 2 ) ||
-                test_player.pos().x >= SEEX * ( 1 + int( MAPSIZE / 2 ) ) ||
-                test_player.pos().y >= SEEY * ( 1 + int( MAPSIZE / 2 ) ) ) {
-                tripoint offset = center - test_player.pos();
+            test_player.setpos( test_player.bub_pos() + direction_of_flight );
+            if( test_player.bub_pos().x < SEEX * int( MAPSIZE / 2 ) ||
+                test_player.bub_pos().y < SEEY * int( MAPSIZE / 2 ) ||
+                test_player.bub_pos().x >= SEEX * ( 1 + int( MAPSIZE / 2 ) ) ||
+                test_player.bub_pos().y >= SEEY * ( 1 + int( MAPSIZE / 2 ) ) ) {
+                tripoint offset = center - test_player.bub_pos();
                 test_player.setpos( center );
-                test_monster.setpos( test_monster.pos() + offset );
+                test_monster.setpos( test_monster.bub_pos() + offset );
                 // Verify that only the player and one monster are present.
                 REQUIRE( g->num_creatures() == 2 );
             }
             const int move_cost = get_map().combined_movecost(
-                                      test_player.pos(), test_player.pos() + direction_of_flight, nullptr, 0 );
-            tracker.push_back( {'p', move_cost, rl_dist( test_monster.pos(), test_player.pos() ),
-                                test_player.pos()
+                                      test_player.bub_pos(), test_player.bub_pos() + direction_of_flight, nullptr, 0 );
+            tracker.push_back( {'p', move_cost, rl_dist( test_monster.bub_pos(), test_player.bub_pos() ),
+                                test_player.bub_pos()
                                } );
             test_player.mod_moves( -move_cost );
         }
         get_map().clear_traps();
-        test_monster.set_dest( test_player.pos() );
+        test_monster.set_dest( test_player.bub_pos() );
         test_monster.mod_moves( monster_speed );
         while( test_monster.moves >= 0 ) {
             const int moves_before = test_monster.moves;
             test_monster.move();
             tracker.push_back( {'m', moves_before - test_monster.moves,
-                                rl_dist( test_monster.pos(), test_player.pos() ),
-                                test_monster.pos()
+                                rl_dist( test_monster.bub_pos(), test_player.bub_pos() ),
+                                test_monster.bub_pos()
                                } );
-            if( rl_dist( test_monster.pos(), test_player.pos() ) == 1 ) {
+            if( rl_dist( test_monster.bub_pos(), test_player.bub_pos() ) == 1 ) {
                 INFO( tracker );
                 clear_map();
                 return turn;
-            } else if( rl_dist( test_monster.pos(), test_player.pos() ) > 20 ) {
+            } else if( rl_dist( test_monster.bub_pos(), test_player.bub_pos() ) > 20 ) {
                 INFO( tracker );
                 clear_map();
                 return -turn;

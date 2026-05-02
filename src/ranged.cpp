@@ -1063,7 +1063,7 @@ auto firing_vehicle( map &here, const Character &who ) -> vehicle * // *NOPAD*
         return nullptr;
     }
 
-    const auto vp = here.veh_at( who.pos() );
+    const auto vp = here.veh_at( who.bub_pos() );
     if( !vp ) {
         return nullptr;
     }
@@ -1159,7 +1159,7 @@ auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoin
 dispersion_sources calculate_dispersion( const map &m, const Character &who, const item &gun,
         int at_recoil, bool burst )
 {
-    const bool bipod = can_use_heavy_weapon( who, m, who.pos() );
+    const bool bipod = can_use_heavy_weapon( who, m, who.bub_pos() );
 
     const int gun_recoil = gun.gun_recoil( bipod );
     const int eff_recoil = at_recoil + ( burst ? ranged::burst_penalty( who, gun, gun_recoil ) : 0 );
@@ -1245,7 +1245,7 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
 
     bool aoe_attack = gun.gun_skill() == skill_launcher || shape;
     tripoint aim = target;
-    const auto recoil_origin = shot_origin.value_or( who.pos() );
+    const auto recoil_origin = shot_origin.value_or( who.bub_pos() );
     int curshot = 0;
     int hits = 0; // total shots on target
     while( curshot != shots ) {
@@ -1264,7 +1264,7 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
 
         // If this is a vehicle mounted turret, which vehicle is it mounted on?
         const vehicle *in_veh = who.has_effect( effect_on_roof )
-                                ? veh_pointer_or_null( here.veh_at( who.pos() ) )
+                                ? veh_pointer_or_null( here.veh_at( who.bub_pos() ) )
                                 : nullptr;
         projectile projectile = make_gun_projectile( gun );
         const auto shot_count = get_shot_count( gun );
@@ -1313,7 +1313,7 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
             auto shell_hit = false;
             auto shell_headshot = false;
             const auto shell_target = shot_count > 1 ? get_shot_target( {
-                .source = who.pos(),
+                .source = who.bub_pos(),
                 .target = aim,
                 .proj = projectile,
                 .dispersion = dispersion,
@@ -1322,11 +1322,11 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
                                            dispersion;
             for( int projectile_index = 0; projectile_index < shot_count; projectile_index++ ) {
                 const auto pellet_target = shot_count > 1 ? get_pellet_target( {
-                    .source = who.pos(),
+                    .source = who.bub_pos(),
                     .target = shell_target,
                     .half_angle = shot_half_angle,
                 } ) : shell_target;
-                auto shot = projectile_attack( render_projectile, who.pos(), pellet_target, pellet_dispersion, &who,
+                auto shot = projectile_attack( render_projectile, who.bub_pos(), pellet_target, pellet_dispersion, &who,
                                                &gun, in_veh, shot_count > 1 );
                 if( render_multishot ) {
                     projectile_trajectories.push_back( shot.trajectory );
@@ -1371,8 +1371,8 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
             double dy = aim.y - who.posy();
             double new_angle = atan2( dy, dx ) + angle_offset;
             // Always using trig here, rotations in maximum metric are weird
-            double length = trig_dist( who.pos(), aim );
-            rl_vec3d vec_pos( who.pos() );
+            double length = trig_dist( who.bub_pos(), aim );
+            rl_vec3d vec_pos( who.bub_pos() );
             rl_vec3d new_aim = vec_pos + rl_vec3d( length, 0, 0 ).rotated( new_angle );
             ranged::execute_shaped_attack( *shape->create( vec_pos, new_aim ), projectile, who, &gun, in_veh );
         }
@@ -1388,7 +1388,7 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
         }
         ranged::make_gun_sound_effect( who, shots > 1, gun );
 
-        cycle_action( gun, who.pos() );
+        cycle_action( gun, who.bub_pos() );
 
         if( who.has_trait( trait_PYROMANIA ) &&
             !who.has_morale( MORALE_PYROMANIA_STARTFIRE ) &&
@@ -1399,7 +1399,7 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
             who.rem_morale( MORALE_PYROMANIA_NOFIRE );
         }
 
-        if( gun.ammo_consume( gun.ammo_required(), who.pos() ) != gun.ammo_required() ) {
+        if( gun.ammo_consume( gun.ammo_required(), who.bub_pos() ) != gun.ammo_required() ) {
             debugmsg( "Unexpected shortage of ammo whilst firing %s", gun.tname() );
             break;
         }
@@ -1421,11 +1421,11 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
         const Character &shooter = who;
         // Now actually apply recoil for the future shots
         // But only for one shot, because bursts kinda suck
-        int gun_recoil = gun.gun_recoil( can_use_heavy_weapon( shooter, here, shooter.pos() ) );
+        int gun_recoil = gun.gun_recoil( can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) );
 
         // If user is currently able to fire a mounted gun freely, penalize dispersion
         // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
-        if( gun.has_flag( flag_MOUNTED_GUN ) && !can_use_heavy_weapon( shooter, here, shooter.pos() ) ) {
+        if( gun.has_flag( flag_MOUNTED_GUN ) && !can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) ) {
             if( who.get_size() == creature_size::large ) {
                 gun_recoil = gun_recoil * 2;
             } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&
@@ -1653,8 +1653,8 @@ int throwing_dispersion( const Character &c, const item &to_throw, Creature *cri
     if( critter != nullptr ) {
         // It's easier to dodge at close range (thrower needs to adjust more)
         // Dodge x10 at point blank, x5 at 1 dist, then flat
-        float effective_dodge = critter->get_dodge() * std::max( 1, 10 - 5 * rl_dist( c.pos(),
-                                critter->pos() ) );
+        float effective_dodge = critter->get_dodge() * std::max( 1, 10 - 5 * rl_dist( c.bub_pos(),
+                                critter->bub_pos() ) );
         dispersion += throw_dispersion_per_dodge( c, true ) * effective_dodge;
     }
     // 1 perception per 1 eye encumbrance
@@ -1833,7 +1833,7 @@ dealt_projectile_attack throw_item( Character &who, const tripoint &target,
 
     // Throw from the player's position, unless we're blind throwing, in which case
     // throw from the the blind throw position instead.
-    const tripoint throw_from = blind_throw_from_pos.value_or( who.pos() );
+    const tripoint throw_from = blind_throw_from_pos.value_or( who.bub_pos() );
 
     float range = rl_dist( throw_from, target );
     proj.range = range;
@@ -2129,7 +2129,7 @@ static double calculate_aim_cap( const Character &p, const tripoint &target )
     // No p.sees_with_specials() here because special senses are not precise enough
     // to give creature's exact size & position, only which tile it occupies
     if( victim == nullptr || ( !p.sees( *victim ) && !p.sees_with_infrared( *victim ) ) ) {
-        const int range = rl_dist( p.pos(), target );
+        const int range = rl_dist( p.bub_pos(), target );
         // Get angle of triangle that spans the target square.
         const double angle = atan2( 1, range );
         // Convert from radians to arcmin.
@@ -2180,7 +2180,7 @@ static int print_aim( const Character &p, const catacurses::window &w, int line_
         return ranged::gun_engagement_moves( p, weapon, at_recoil, p.recoil ) +
                ranged::time_to_attack( p, weapon, load_loc );
     };
-    const double range = rl_dist( p.pos(), pos );
+    const double range = rl_dist( p.bub_pos(), pos );
     line_number = print_steadiness( w, line_number, steadiness );
     return print_ranged_chance( w, line_number, ctxt, weapon, ranged::get_aim_types( p, weapon ),
                                 dispersion_fun, cost_fun, confidence_config, range, target_size );
@@ -2197,7 +2197,7 @@ static int draw_throw_aim( const player &p, const catacurses::window &w, int lin
 
     const dispersion_sources dispersion(
         ranged::throwing_dispersion( p, weapon, target, is_blind_throw ) );
-    const double range = rl_dist( p.pos(), target_pos );
+    const double range = rl_dist( p.bub_pos(), target_pos );
 
     const double target_size = target != nullptr ? target->ranged_target_size() : 1.0f;
 
@@ -2400,10 +2400,10 @@ void ranged::make_gun_sound_effect( const Character &who, bool burst, const item
 {
     const item::sound_data data = gun.gun_noise( burst );
     if( data.volume > 0 ) {
-        sounds::sound( who.pos(), data.volume, sounds::sound_t::combat,
+        sounds::sound( who.bub_pos(), data.volume, sounds::sound_t::combat,
                        data.sound.empty() ? _( "Bang!" ) : data.sound );
     }
-    sfx::generate_gun_sound( who.pos(), gun );
+    sfx::generate_gun_sound( who.bub_pos(), gun );
 }
 
 item::sound_data item::gun_noise( const bool burst ) const
@@ -2552,7 +2552,7 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
 
     // If user is currently able to fire a mounted gun freely, penalize dispersion
     // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
-    if( obj.has_flag( flag_MOUNTED_GUN ) && !can_use_heavy_weapon( who, get_map(), who.pos() ) ) {
+    if( obj.has_flag( flag_MOUNTED_GUN ) && !can_use_heavy_weapon( who, get_map(), who.bub_pos() ) ) {
         if( who.get_size() == creature_size::large ) {
             dispersion.add_range( 500 );
         } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&
@@ -2681,7 +2681,7 @@ double ranged::recoil_vehicle( const Character &who )
     // TODO: vary penalty dependent upon vehicle part on which player is boarded
 
     if( who.in_vehicle ) {
-        if( const optional_vpart_position vp = get_map().veh_at( who.pos() ) ) {
+        if( const optional_vpart_position vp = get_map().veh_at( who.bub_pos() ) ) {
             // NOLINTNEXTLINE(bugprone-unchecked-optional-access)
             return static_cast<double>( std::abs( vp->vehicle().velocity ) ) * 3 / 100;
         }
@@ -2711,14 +2711,14 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
 {
     const vehicle *veh_from_turret = turret ? turret.get_veh() : nullptr;
     return g->get_creatures_if( [&c, range, veh_from_turret]( const Creature & critter ) -> bool {
-        if( std::round( rl_dist_exact( c.pos(), critter.pos() ) ) > range )
+        if( std::round( rl_dist_exact( c.bub_pos(), critter.bub_pos() ) ) > range )
         {
             return false;
         }
 
         // Special case: if range is 1, it's a melee attack.
         // Melee attacks can only target on same z-level or directly up/down, not "z-diagonally".
-        if( range <= 1 && c.posz() != critter.posz() && c.pos().xy() != critter.pos().xy() )
+        if( range <= 1 && c.posz() != critter.posz() && c.bub_pos().xy() != critter.bub_pos().xy() )
         {
             return false;
         }
@@ -2729,7 +2729,7 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
         }
 
         // TODO: get rid of fake npcs (pos() check)
-        if( &c == &critter || c.pos() == critter.pos() || c.attitude_to( critter ) == Attitude::A_FRIENDLY )
+        if( &c == &critter || c.bub_pos() == critter.bub_pos() || c.attitude_to( critter ) == Attitude::A_FRIENDLY )
         {
             return false;
         }
@@ -2737,8 +2737,8 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
         map &here = get_map();
 
         // TODO: It should use projectile passability checks when finding path, not vision checks.
-        std::vector<tripoint> path = here.find_clear_path( c.pos(), critter.pos() );
-        tripoint prev_point = c.pos();
+        std::vector<tripoint> path = here.find_clear_path( c.bub_pos(), critter.bub_pos() );
+        tripoint prev_point = c.bub_pos();
         for( const tripoint &point : path )
         {
             if( here.obstructed_by_vehicle_rotation( prev_point, point ) ) {
@@ -2815,7 +2815,7 @@ target_handler::trajectory target_ui::run()
 
     avatar &player_character = *you;
     on_out_of_scope cleanup( [&here, &player_character]() {
-        here.invalidate_map_cache( player_character.pos().z + player_character.view_offset.z );
+        here.invalidate_map_cache( player_character.bub_pos().z + player_character.view_offset.z );
     } );
 
     shared_ptr_fast<game::draw_callback_t> target_ui_cb = make_shared_fast<game::draw_callback_t>(
@@ -3336,7 +3336,7 @@ void target_ui::update_target_list()
     const auto player_pos = you->pos();
 
     std::ranges::sort( targets, {}, [&]( const Creature * c ) -> std::tuple<bool, bool, bool, int> {
-        const auto target_pos = c->pos();
+        const auto target_pos = c->bub_pos();
         const auto z_diff = std::abs( player_pos.z - target_pos.z );
         const auto is_hostile = c->attitude_to( *you ) == Attitude::A_HOSTILE;
         const auto has_los = here.sees( player_pos, target_pos, range );
@@ -3598,7 +3598,7 @@ void target_ui::recalc_aim_turning_penalty()
     shared_ptr_fast<Creature> ptr_lock = you->last_target.lock();
     const Creature *lt_ptr = ptr_lock.get();
     if( lt_ptr ) {
-        curr_recoil_pos = lt_ptr->pos();
+        curr_recoil_pos = lt_ptr->bub_pos();
     } else if( you->last_target_pos ) {
         curr_recoil_pos = get_map().abs_to_bub( *you->last_target_pos );
     } else {
@@ -4436,7 +4436,7 @@ auto ranged::gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::
 
     if( gmode->has_flag( flag_MOUNTED_GUN ) ) {
         const Character &shooter = you;
-        if( !can_use_heavy_weapon( shooter, m, shooter.pos() ) &&
+        if( !can_use_heavy_weapon( shooter, m, shooter.bub_pos() ) &&
             !( you.get_size() > creature_size::medium ) &&
             !you.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) ) {
             messages.push_back( string_format(

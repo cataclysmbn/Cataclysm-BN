@@ -674,13 +674,13 @@ void avatar_action::autoattack( avatar &you, map &m )
         return rate_critter( *l ) > rate_critter( *r );
     } );
 
-    const tripoint diff = best.pos() - you.bub_pos();
+    const tripoint diff = best.bub_pos() - you.bub_pos();
     if( std::abs( diff.x ) <= 1 && std::abs( diff.y ) <= 1 && diff.z == 0 ) {
         move( you, m, tripoint( diff.xy(), 0 ) );
         return;
     }
 
-    you.reach_attack( best.pos() );
+    you.reach_attack( best.bub_pos() );
 }
 
 bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weapon )

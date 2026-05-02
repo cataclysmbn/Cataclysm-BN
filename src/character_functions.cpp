@@ -170,7 +170,7 @@ bool can_fly( Character &ch )
 
 auto is_driving( const Character &p ) -> bool
 {
-    const optional_vpart_position vp = get_map().veh_at( p.pos() );
+    const optional_vpart_position vp = get_map().veh_at( p.bub_pos() );
     return vp && vp->vehicle().is_moving() && vp->vehicle().player_in_control( p );
 }
 
@@ -229,7 +229,7 @@ int get_book_fun_for( const Character &ch, const item &book )
 
 float fine_detail_vision_mod( const Character &who )
 {
-    return fine_detail_vision_mod( who, who.pos() );
+    return fine_detail_vision_mod( who, who.bub_pos() );
 }
 
 float fine_detail_vision_mod( const Character &who, const tripoint &p )
@@ -264,7 +264,7 @@ float fine_detail_vision_mod( const Character &who, const tripoint &p )
 
 bool can_see_fine_details( const Character &who )
 {
-    return can_see_fine_details( who, who.pos() );
+    return can_see_fine_details( who, who.bub_pos() );
 }
 
 bool can_see_fine_details( const Character &who, const tripoint &p )
@@ -520,7 +520,7 @@ bool roll_can_sleep( Character &who )
     }
     who.last_sleep_check = now;
 
-    int sleepy = character_funcs::rate_sleep_spot( who, who.pos() );
+    int sleepy = character_funcs::rate_sleep_spot( who, who.bub_pos() );
     sleepy += rng( -8, 8 );
     bool result = sleepy > 0;
 
@@ -759,8 +759,8 @@ std::optional<tripoint> pick_safe_adjacent_tile( const Character &who )
     std::vector<tripoint> ret;
     int dangerous_fields = 0;
     map &here = get_map();
-    for( const tripoint &p : here.points_in_radius( who.pos(), 1 ) ) {
-        if( p == who.pos() ) {
+    for( const tripoint &p : here.points_in_radius( who.bub_pos(), 1 ) ) {
+        if( p == who.bub_pos() ) {
             // Don't consider player position
             continue;
         }
@@ -777,7 +777,7 @@ std::optional<tripoint> pick_safe_adjacent_tile( const Character &who )
                 }
             }
 
-            if( dangerous_fields == 0 && ! get_map().obstructed_by_vehicle_rotation( who.pos(), p ) ) {
+            if( dangerous_fields == 0 && ! get_map().obstructed_by_vehicle_rotation( who.bub_pos(), p ) ) {
                 ret.push_back( p );
             }
         }
@@ -816,8 +816,8 @@ std::vector<npc *> get_crafting_helpers( const Character &who, int max )
             return false;
         }
         bool ok = !guy.in_sleep_state() && guy.is_obeying( who ) &&
-                  rl_dist( guy.pos(), who.pos() ) < PICKUP_RANGE &&
-                  get_map().clear_path( who.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
+                  rl_dist( guy.bub_pos(), who.bub_pos() ) < PICKUP_RANGE &&
+                  get_map().clear_path( who.bub_pos(), guy.bub_pos(), PICKUP_RANGE, 1, 100 );
         if( ok ) {
             n += 1;
         }
@@ -1338,10 +1338,10 @@ std::vector<item *> find_ammo_items_or_mags( const Character &who, const item &o
     find_ammo_helper( const_cast<Character &>( who ), obj, empty, std::back_inserter( res ), true );
 
     if( radius >= 0 ) {
-        for( auto &cursor : map_selector( who.pos(), radius ) ) {
+        for( auto &cursor : map_selector( who.bub_pos(), radius ) ) {
             find_ammo_helper( cursor, obj, empty, std::back_inserter( res ), false );
         }
-        for( auto &cursor : vehicle_selector( who.pos(), radius ) ) {
+        for( auto &cursor : vehicle_selector( who.bub_pos(), radius ) ) {
             find_ammo_helper( cursor, obj, empty, std::back_inserter( res ), false );
         }
     }

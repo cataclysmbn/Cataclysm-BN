@@ -1918,7 +1918,7 @@ bool veh_interact::can_remove_part( int idx, const Character &who )
 
     bool inside_vehicle = false;
     if( who.in_vehicle ) {
-        if( const optional_vpart_position vp = g->m.veh_at( who.pos() ) ) {
+        if( const optional_vpart_position vp = g->m.veh_at( who.bub_pos() ) ) {
             if( vp->is_inside() ) {
                 inside_vehicle = true;
             }
@@ -3290,7 +3290,7 @@ void veh_interact::complete_vehicle( Character &who )
                 auto *u = who.as_avatar();
                 if( u ) {
                     old_view_offset = u->view_offset;
-                    u->view_offset = offset - who.pos();
+                    u->view_offset = offset - who.bub_pos();
                 }
 
 

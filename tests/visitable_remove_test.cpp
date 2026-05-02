@@ -76,9 +76,9 @@ TEST_CASE( "visitable_remove", "[visitable]" )
     // Move to ground level to avoid weirdnesses around being underground.
     p.setz( 0 );
     // move player randomly until we find a suitable position
-    while( !suitable( p.pos(), 1 ) ) {
+    while( !suitable( p.bub_pos(), 1 ) ) {
         CHECK( !p.in_vehicle );
-        p.setpos( random_entry( closest_points_first( p.pos(), 1 ) ) );
+        p.setpos( random_entry( closest_points_first( p.bub_pos(), 1 ) ) );
     }
 
     detached_ptr<item> temp_liquid_d = item::spawn( liquid_id );

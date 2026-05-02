@@ -154,7 +154,7 @@ void cata::detail::reg_spell_fake( sol::state &lua )
              */
             avatar &avvy = get_avatar();
             // If target is avatar's location, assume we want to hit self
-            bool hit_self = avvy.pos() == target;
+            bool hit_self = avvy.bub_pos() == target;
             sp = fake_spell( spid, hit_self );
 
             // If a level is given, forcefully clamp to that level.

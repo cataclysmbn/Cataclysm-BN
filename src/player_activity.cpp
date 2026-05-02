@@ -122,7 +122,7 @@ void player_activity::init_all_moves( Character &who )
         speed.assistant_count = assistants().size();
     }
     if( type->bench_affected() ) {
-        speed.find_best_bench( who.pos() );
+        speed.find_best_bench( who.bub_pos() );
     }
     if( actor ) {
         speed.morale_factor_custom_formula = [&]( const Character & who ) {
@@ -172,8 +172,8 @@ std::vector<npc *> player_activity::get_assistants( const Character &who, unsign
         // NPCs can help craft if awake, taking orders, within pickup range and have clear path
         bool ok = guy.is_npc() && &guy != &who && !guy.in_sleep_state() && guy.is_obeying( who ) &&
                   guy.activity->id() != ACT_ASSIST &&
-                  rl_dist( guy.pos(), who.pos() ) < PICKUP_RANGE &&
-                  get_map().clear_path( who.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
+                  rl_dist( guy.bub_pos(), who.bub_pos() ) < PICKUP_RANGE &&
+                  get_map().clear_path( who.bub_pos(), guy.bub_pos(), PICKUP_RANGE, 1, 100 );
         if( ok ) {
             n++;
         }

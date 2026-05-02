@@ -113,7 +113,7 @@ TEST_CASE( "Aiming at a target behind wall", "[ranged][aiming]" )
     set_up_player_vision();
     monster &z = spawn_test_monster( "debug_mon", shooter_pos + point( 2, 0 ) );
     WHEN( "There is no direct, passable line to target" ) {
-        const auto path = g->m.find_clear_path( shooter.pos(), z.pos() );
+        const auto path = g->m.find_clear_path( shooter.bub_pos(), z.bub_pos() );
         int impassable_tiles = std::count_if( path.begin(), path.end(),
         []( const tripoint & p ) {
             return g->m.impassable( p );
@@ -150,7 +150,7 @@ TEST_CASE( "Aiming at a target behind bars", "[ranged][aiming]" )
     }
     monster &z = spawn_test_monster( "debug_mon", shooter_pos + point( 2, 0 ) );
     WHEN( "There is no direct, passable line to target" ) {
-        const auto path = g->m.find_clear_path( shooter.pos(), z.pos() );
+        const auto path = g->m.find_clear_path( shooter.bub_pos(), z.bub_pos() );
         int impassable_tiles = std::count_if( path.begin(), path.end(),
         []( const tripoint & p ) {
             return g->m.impassable( p );
@@ -183,7 +183,7 @@ TEST_CASE( "Aiming a turret from a solid vehicle", "[ranged][aiming]" )
 
     monster &z = spawn_test_monster( "debug_mon", shooter_pos + point( 5, 0 ) );
 
-    const auto path = g->m.find_clear_path( shooter.pos(), z.pos() );
+    const auto path = g->m.find_clear_path( shooter.bub_pos(), z.bub_pos() );
     int impassable_tiles_before = std::count_if( path.begin(), path.end(),
     []( const tripoint & p ) {
         return g->m.impassable( p );
@@ -250,7 +250,7 @@ TEST_CASE( "Aiming a turret from a solid vehicle", "[ranged][aiming]" )
 //                     unseen++;
 //                     continue;
 //                 }
-//                 const auto path = g->m.find_clear_path( shooter.pos(), z.pos() );
+//                 const auto path = g->m.find_clear_path( shooter.bub_pos(), z.bub_pos() );
 //                 std::vector<Creature *> t = ranged::targetable_creatures( shooter, max_range );
 //                 if( std::count( t.begin(), t.end(), &z ) == 0 ) {
 //                     failed.emplace_back( wall_pos, monster_pos );

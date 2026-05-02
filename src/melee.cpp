@@ -521,7 +521,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         return;
     }
 
-    int move_cost = with_cross_z_melee_cost( attack_cost( cur_weapon ), pos(), t.pos() );
+    int move_cost = with_cross_z_melee_cost( attack_cost( cur_weapon ), pos(), t.bub_pos() );
 
     if( !attack_hit ) {
         // Lua imelee on_miss callback
@@ -530,7 +530,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         }
 
         int stumble_pen = stumble( *this, cur_weapon );
-        sfx::generate_melee_sound( pos(), t.pos(), false, false );
+        sfx::generate_melee_sound( pos(), t.bub_pos(), false, false );
         if( is_player() ) { // Only display messages if this is the player
 
             if( one_in( 2 ) ) {
@@ -666,7 +666,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
                     material = "steel";
                 }
             }
-            sfx::generate_melee_sound( pos(), t.pos(), true, t.is_monster(), material );
+            sfx::generate_melee_sound( pos(), t.bub_pos(), true, t.is_monster(), material );
             int dam = dealt_dam.total_damage();
             melee::melee_stats.damage_amount += dam;
 
@@ -709,7 +709,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
     }
 
     const int mod_sta = -with_cross_z_melee_cost( get_melee_stamina_cost( cur_weapon ), pos(),
-                        t.pos() );
+                        t.bub_pos() );
     mod_stamina( std::min( -50, mod_sta ) );
     add_msg( m_debug, "Stamina burn: %d", std::min( -50, mod_sta ) );
     mod_moves( -move_cost );
@@ -1436,9 +1436,9 @@ bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique,
         // Impale hits the target and a single target behind them
         // Check if the square cardinally behind our target, or to the left / right,
         // contains a possible target.
-        tripoint left = t.pos() + tripoint( offset_a[lookup], offset_b[lookup], 0 );
-        tripoint_bub_ms target_pos = t.pos() + ( t.pos() - pos() );
-        tripoint right = t.pos() + tripoint( offset_b[lookup], -offset_b[lookup], 0 );
+        tripoint left = t.bub_pos() + tripoint( offset_a[lookup], offset_b[lookup], 0 );
+        tripoint_bub_ms target_pos = t.bub_pos() + ( t.bub_pos() - pos() );
+        tripoint right = t.bub_pos() + tripoint( offset_b[lookup], -offset_b[lookup], 0 );
 
         monster *const mon_l = g->critter_at<monster>( left );
         monster *const mon_t = g->critter_at<monster>( target_pos );
@@ -1472,7 +1472,7 @@ bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique,
 
     if( targets.empty() && technique.aoe == "spin" ) {
         for( const tripoint &tmp : g->m.points_in_radius( pos(), 1 ) ) {
-            if( tmp == t.pos() ) {
+            if( tmp == t.bub_pos() ) {
                 continue;
             }
             monster *const mon = g->critter_at<monster>( tmp );
@@ -1562,7 +1562,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
     }
 
     if( technique.side_switch ) {
-        const tripoint b = t.pos();
+        const tripoint b = t.bub_pos();
         int newx;
         int newy;
 
@@ -1593,7 +1593,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
     }
 
     if( technique.knockback_dist ) {
-        const tripoint prev_pos = t.pos(); // track target startpoint for knockback_follow
+        const tripoint prev_pos = t.bub_pos(); // track target startpoint for knockback_follow
         const int kb_offset_x = rng( -technique.knockback_spread, technique.knockback_spread );
         const int kb_offset_y = rng( -technique.knockback_spread, technique.knockback_spread );
         tripoint kb_point( posx() + kb_offset_x, posy() + kb_offset_y, posz() );
@@ -1617,7 +1617,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
                 has_effect( effect_amigara );
 
             if( !move_issue ) {
-                if( t.pos() != prev_pos ) {
+                if( t.bub_pos() != prev_pos ) {
                     g->place_player( prev_pos );
                     g->on_move_effects();
                 }
@@ -1640,7 +1640,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
     }
 
     if( technique.disarms && p != nullptr && p->is_armed() ) {
-        g->m.add_item_or_charges( p->pos(), p->remove_primary_weapon() );
+        g->m.add_item_or_charges( p->bub_pos(), p->remove_primary_weapon() );
         if( p->is_player() ) {
             add_msg_if_npc( _( "<npcname> disarms you!" ) );
         } else {
@@ -2537,14 +2537,14 @@ double npc_ai::melee_value( const Character &who, const item &weap )
     if( weapon.has_flag( flag_COMBAT_NPC_USE ) && !weapon.has_flag( flag_COMBAT_NPC_ON ) ) {
         if( weapon.get_use( "transform" ) ) {
             const use_function *use = weapon.type->get_use( "transform" );
-            if( use->can_call( who, weapon, false, who.pos() ).success() ) {
+            if( use->can_call( who, weapon, false, who.bub_pos() ).success() ) {
                 // Stolen from item.cpp
                 weapon.convert( dynamic_cast<const iuse_transform *>
                                 ( use->get_actor_ptr() )->target );
             }
         } else if( weapon.get_use( "fireweapon_off" ) ) {
             const use_function *use = weapon.type->get_use( "fireweapon_off" );
-            if( use->can_call( who, weapon, false, who.pos() ).success() ) {
+            if( use->can_call( who, weapon, false, who.bub_pos() ).success() ) {
                 weapon.convert( dynamic_cast<const fireweapon_off_actor *>
                                 ( use->get_actor_ptr() )->target_id );
             }
@@ -2629,7 +2629,7 @@ void avatar_funcs::try_disarm_npc( avatar &you, npc &target )
         } else if( my_roll >= their_roll / 2 ) {
             add_msg( _( "You grab at %s and pull with all your force, but it drops nearby!" ),
                      it.tname() );
-            const tripoint_bub_ms tp = target.pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
+            const tripoint_bub_ms tp = target.bub_pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
             g->m.add_item_or_charges( tp, it.detach( ) );
             you.mod_moves( -100 );
         } else {
@@ -2646,7 +2646,7 @@ void avatar_funcs::try_disarm_npc( avatar &you, npc &target )
     if( my_roll >= their_roll ) {
         add_msg( _( "You smash %s with all your might forcing their %s to drop down nearby!" ),
                  target.name, it.tname() );
-        const tripoint_bub_ms tp = target.pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
+        const tripoint_bub_ms tp = target.bub_pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
         g->m.add_item_or_charges( tp, it.detach( ) );
     } else {
         add_msg( _( "You smash %s with all your might but %s remains in their hands!" ),

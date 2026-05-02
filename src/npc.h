@@ -1293,9 +1293,9 @@ class npc : public player
         // Player orders a friendly NPC to move to this position
         std::optional<tripoint_abs_ms> goto_to_this_pos;
         int last_seen_player_turn = 0; // Timeout to forgetting
-        tripoint wanted_item_pos; // The square containing an item we want
-        tripoint guard_pos;  // These are the local coordinates that a guard will return to inside of their goal tripoint
-        tripoint chair_pos = tripoint_min; // This is the spot the NPC wants to move to to sit and relax.
+        tripoint_bub_ms wanted_item_pos; // The square containing an item we want
+        tripoint_bub_ms guard_pos;  // These are the local coordinates that a guard will return to inside of their goal tripoint
+        tripoint_bub_ms chair_pos = tripoint_bub_ms::zero(); // This is the spot the NPC wants to move to to sit and relax.
         std::optional<tripoint_abs_omt> base_location; // our faction base location in OMT coords.
         /**
          * Global overmap terrain coordinate, where we want to get to
@@ -1307,7 +1307,7 @@ class npc : public player
         /**
          * Location and index of the corpse we'd like to pulp (if any).
          */
-        std::optional<tripoint> pulp_location;
+        std::optional<tripoint_bub_ms> pulp_location;
         time_point restock;
         bool fetching_item = false;
         bool has_new_items = false; // If true, we have something new and should re-equip

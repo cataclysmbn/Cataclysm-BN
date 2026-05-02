@@ -77,7 +77,7 @@ void check_lethality( const std::string &explosive_id, const int range, float le
         } );
         num_survivors += survivors.size();
         for( Creature *survivor : survivors ) {
-            survivor_stats << survivor->pos() << " " << survivor->get_hp() << ", ";
+            survivor_stats << survivor->bub_pos() << " " << survivor->get_hp() << ", ";
             bool wounded = survivor->get_hp() < survivor->get_hp_max();
             num_wounded += wounded ? 1 : 0;
             total_hp += survivor->get_hp();
@@ -246,9 +246,9 @@ TEST_CASE( "shrapnel at max grenade range", "[grenade][explosion]" )
     for( const tripoint &pt : closest_points_first( origin, range + 1 ) ) {
         const monster *m = g->critter_at<monster>( pt );
         REQUIRE( m != nullptr );
-        CAPTURE( m->pos() );
-        CAPTURE( rl_dist( origin, m->pos() ) );
-        if( rl_dist( origin, m->pos() ) <= range ) {
+        CAPTURE( m->bub_pos() );
+        CAPTURE( rl_dist( origin, m->bub_pos() ) );
+        if( rl_dist( origin, m->bub_pos() ) <= range ) {
             CHECK( m->hp_percentage() < 100 );
         } else {
             CHECK( m->hp_percentage() == 100 );

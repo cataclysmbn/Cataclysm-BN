@@ -1776,7 +1776,7 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
     if( built.byproduct_item_group ) {
         std::vector<detached_ptr<item>> items_list = item_group::items_from( built.byproduct_item_group,
                                      calendar::turn );
-        here.spawn_items( who.pos(), std::move( items_list ) );
+        here.spawn_items( who.bub_pos(), std::move( items_list ) );
     }
 
     add_msg( m_info, _( "%s finished construction: %s." ), who.disp_name(), built.group->name() );

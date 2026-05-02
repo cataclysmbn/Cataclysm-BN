@@ -77,7 +77,7 @@ void activity_speed::calc_all_moves( Character &who )
 void activity_speed::calc_all_moves( Character &who, activity_reqs_adapter &reqs )
 {
     if( type->bench_affected() ) {
-        find_best_bench( who.pos(), reqs.metrics );
+        find_best_bench( who.bub_pos(), reqs.metrics );
         calc_bench_factor( who );
     }
     if( type->tools_affected() ) {

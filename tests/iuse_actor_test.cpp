@@ -44,7 +44,7 @@ TEST_CASE( "manhack", "[iuse_actor][manhack]" )
     int test_item_pos = dummy.inv_position_by_item( &test_item );
     REQUIRE( test_item_pos != INT_MIN );
 
-    monster *new_manhack = find_adjacent_monster( dummy.pos() );
+    monster *new_manhack = find_adjacent_monster( dummy.bub_pos() );
     REQUIRE( new_manhack == nullptr );
 
     dummy.invoke_item( &test_item );
@@ -52,7 +52,7 @@ TEST_CASE( "manhack", "[iuse_actor][manhack]" )
     test_item_pos = dummy.inv_position_by_item( &test_item );
     REQUIRE( test_item_pos == INT_MIN );
 
-    new_manhack = find_adjacent_monster( dummy.pos() );
+    new_manhack = find_adjacent_monster( dummy.bub_pos() );
     REQUIRE( new_manhack != nullptr );
     REQUIRE( new_manhack->type->id == mtype_id( "mon_manhack" ) );
     g->clear_zombies();

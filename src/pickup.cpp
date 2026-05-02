@@ -1327,9 +1327,9 @@ detached_ptr<item> pickup::handle_spillable_contents( Character &c, detached_ptr
             c.add_msg_player_or_npc(
                 _( "To avoid spilling its contents, you set your %1$s on the %2$s." ),
                 _( "To avoid spilling its contents, <npcname> sets their %1$s on the %2$s." ),
-                it->display_name(), m.name( c.pos() )
+                it->display_name(), m.name( c.bub_pos() )
             );
-            m.add_item_or_charges( c.pos(), std::move( it ) );
+            m.add_item_or_charges( c.bub_pos(), std::move( it ) );
             return detached_ptr<item>();
         }
     }

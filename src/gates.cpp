@@ -286,7 +286,7 @@ void gates::toggle_gate( const tripoint &pos, Character &who )
 void doors::close_door( map &m, Character &who, const tripoint &closep )
 {
     bool didit = false;
-    const bool inside = !m.is_outside( who.pos() );
+    const bool inside = !m.is_outside( who.bub_pos() );
 
     const Creature *const mon = g->critter_at( closep );
     if( mon ) {
@@ -305,7 +305,7 @@ void doors::close_door( map &m, Character &who, const tripoint &closep )
         vehicle *const veh = &vp->vehicle();
         const int vpart = vp->part_index();
         const int closable = veh->next_part_to_close( vpart,
-                             veh_pointer_or_null( m.veh_at( who.pos() ) ) != veh );
+                             veh_pointer_or_null( m.veh_at( who.bub_pos() ) ) != veh );
         const int inside_closable = veh->next_part_to_close( vpart );
         const int openable = veh->next_part_to_open( vpart );
         if( closable >= 0 ) {

@@ -459,7 +459,7 @@ void conditional_t<T>::set_npc_role_nearby( const JsonObject &jo )
     condition = [role]( const T & d ) {
         const std::vector<npc *> available = g->get_npcs_if( [&]( const npc & guy ) {
             return d.alpha->posz() == guy.posz() && guy.companion_mission_role_id == role &&
-                   ( rl_dist( d.alpha->pos(), guy.pos() ) <= 48 );
+                   ( rl_dist( d.alpha->pos(), guy.bub_pos() ) <= 48 );
         } );
         return !available.empty();
     };
@@ -778,7 +778,7 @@ void conditional_t<T>::set_is_driving( bool is_npc )
         if( is_npc ) {
             actor = dynamic_cast<player *>( d.beta );
         }
-        if( const optional_vpart_position vp = get_map().veh_at( actor->pos() ) ) {
+        if( const optional_vpart_position vp = get_map().veh_at( actor->bub_pos() ) ) {
             return vp->vehicle().is_moving() && vp->vehicle().player_in_control( *actor );
         }
         return false;

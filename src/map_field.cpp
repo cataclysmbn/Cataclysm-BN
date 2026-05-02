@@ -542,7 +542,7 @@ void map::creature_in_field( Creature &critter )
             // If we are in a vehicle figure out if we are inside (reduces effects usually)
             // and what part of the vehicle we need to deal with.
             if( in_vehicle ) {
-                if( const optional_vpart_position vp = veh_at( u->pos() ) ) {
+                if( const optional_vpart_position vp = veh_at( u->bub_pos() ) ) {
                     if( vp->is_inside() ) {
                         inside_vehicle = true;
                     }
@@ -556,7 +556,7 @@ void map::creature_in_field( Creature &critter )
         }
     }
 
-    field &curfield = get_field( critter.pos() );
+    field &curfield = get_field( critter.bub_pos() );
     for( auto &field_entry_it : curfield ) {
         field_entry &cur_field_entry = field_entry_it.second;
         if( !cur_field_entry.is_field_alive() ) {
@@ -608,11 +608,11 @@ void map::monster_in_field( monster &z )
         // Digging monsters are immune to fields
         return;
     }
-    if( veh_at( z.pos() ) ) {
+    if( veh_at( z.bub_pos() ) ) {
         // FIXME: Immune when in a vehicle for now.
         return;
     }
-    field &curfield = get_field( z.pos() );
+    field &curfield = get_field( z.bub_pos() );
 
     int dam = 0;
     // Iterate through all field effects on this tile.

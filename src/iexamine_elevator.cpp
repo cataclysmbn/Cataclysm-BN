@@ -192,7 +192,7 @@ auto move_items( const elevator::tiles &from, const elevator::tiles &dest ) -> v
 auto move_creatures( const elevator::tiles &from, const elevator::tiles &dest ) -> void
 {
     for( Creature &critter : g->all_creatures() ) {
-        const auto eit = std::ranges::find( from, critter.pos() );
+        const auto eit = std::ranges::find( from, critter.bub_pos() );
         if( eit != from.cend() ) {
             critter.setpos( dest[ std::distance( from.cbegin(), eit ) ] );
         }
@@ -220,7 +220,7 @@ auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> v
 
     g->vertical_shift( movez );
     // yes, this is inefficient, but i'm lazy
-    elevator::find_elevators_nearby( p.pos() )
+    elevator::find_elevators_nearby( p.bub_pos() )
     .transform( []( const tripoint & pos ) -> point { return g->place_player( pos ); } );
 
     cata_event_dispatch::avatar_moves( *p.as_avatar(), here, old_abs_pos.raw() );
@@ -233,7 +233,7 @@ auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> v
 void iexamine::elevator( player &p, const tripoint &examp )
 {
     map &here = get_map();
-    const tripoint_abs_ms old_abs_pos = here.abs_to_bub( p.pos() );
+    const tripoint_abs_ms old_abs_pos = here.abs_to_bub( p.bub_pos() );
     const tripoint_abs_omt this_omt = project_to<coords::omt>( here.abs_to_bub( examp ) );
     const tripoint sm_orig = here.abs_to_bub( project_to<coords::ms>( this_omt ) );
 

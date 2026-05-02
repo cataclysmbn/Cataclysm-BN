@@ -851,7 +851,7 @@ class activatable_inventory_preset : public pickup_inventory_preset
             const auto &uses = it.type->use_methods;
 
             if( uses.size() == 1 ) {
-                const auto ret = uses.begin()->second.can_call( p, it, false, p.pos() );
+                const auto ret = uses.begin()->second.can_call( p, it, false, p.bub_pos() );
                 if( !ret.success() ) {
                     return trim_punctuation_marks( ret.str() );
                 }
@@ -1684,8 +1684,8 @@ void game_menus::inv::compare( player &p, const std::optional<tripoint> &offset 
     inv_s.set_hint( _( "Select two items to compare them." ) );
 
     if( offset ) {
-        inv_s.add_map_items( p.pos() + *offset );
-        inv_s.add_vehicle_items( p.pos() + *offset );
+        inv_s.add_map_items( p.bub_pos() + *offset );
+        inv_s.add_vehicle_items( p.bub_pos() + *offset );
     } else {
         inv_s.add_nearby_items();
     }

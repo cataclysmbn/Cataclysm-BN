@@ -623,7 +623,7 @@ TEST_CASE( "debug hammerspace", "[crafting]" )
 
         WHEN( "The character tries to craft a no-dachi" ) {
             craft_command command( &*test_recipe, 1, false, &dummy );
-            item *craft_item = dummy.start_craft( command, dummy.pos() );
+            item *craft_item = dummy.start_craft( command, dummy.bub_pos() );
 
             THEN( "The craft item is created" ) {
                 REQUIRE( ( craft_item && !craft_item->is_null() ) );

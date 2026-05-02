@@ -577,8 +577,8 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
             return ret;
         }
         // we just ran into a fish, so move it out of the way
-        if( here.has_flag( "SWIMMABLE", critter->pos() ) ) {
-            tripoint end_pos = critter->pos();
+        if( here.has_flag( "SWIMMABLE", critter->bub_pos() ) ) {
+            tripoint end_pos = critter->bub_pos();
             tripoint start_pos;
             const units::angle angle =
                 move.dir() + 45_degrees * ( parts[part].mount.x > pivot_point().x ? -1 : 1 );
@@ -1024,7 +1024,7 @@ void vehicle::handle_trap( const tripoint &p, int part )
             }
             if( seen && !known ) {
                 // hard to miss!
-                const std::string direction = direction_name( direction_from( player_character.pos(), p ) );
+                const std::string direction = direction_name( direction_from( player_character.bub_pos(), p ) );
                 add_msg( _( "You've spotted a %1$s to the %2$s!" ), tr.name(), direction );
             }
         }
@@ -1177,7 +1177,7 @@ bool vehicle::check_heli_ascend( Character &who )
         }
         bool has_critter = g->critter_at( above );
         if( has_ceiling || has_blocking_ter_furn || has_veh || has_critter ) {
-            direction obstacle_direction = direction_from( ( pt - who.pos() ).xy() );
+            direction obstacle_direction = direction_from( ( pt - who.bub_pos() ).xy() );
             const std::string direction_string = direction_name( obstacle_direction );
             std::string blocker_string;
             if( has_ceiling ) {
@@ -1813,7 +1813,7 @@ units::angle map::shake_vehicle( vehicle &veh, const int velocity_before,
         }
 
         const tripoint part_pos = veh.bub_part_location( ps );
-        if( rider->pos() != part_pos ) {
+        if( rider->bub_pos() != part_pos ) {
             debugmsg( "throw passenger: passenger at %d,%d,%d, part at %d,%d,%d",
                       rider->posx(), rider->posy(), rider->posz(),
                       part_pos.x, part_pos.y, part_pos.z );

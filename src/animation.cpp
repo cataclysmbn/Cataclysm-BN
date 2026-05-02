@@ -788,7 +788,7 @@ void draw_hit_player_curses( const game &g, const Character &who, const int dam 
 {
     nc_color const col = !dam ? yellow_background( who.symbol_color() ) : red_background(
                              who.symbol_color() );
-    hit_animation( g.u, who.pos(), col, who.symbol() );
+    hit_animation( g.u, who.bub_pos(), col, who.symbol() );
 }
 } //namespace
 
@@ -814,7 +814,7 @@ void game::draw_hit_player( const Character &p, const int dam )
                               : p.male ? npc_male : npc_female;
 
     shared_ptr_fast<draw_callback_t> hit_cb = make_shared_fast<draw_callback_t>( [&]() {
-        tilecontext->init_draw_hit( p.pos(), type );
+        tilecontext->init_draw_hit( p.bub_pos(), type );
     } );
     add_draw_callback( hit_cb );
 

@@ -103,7 +103,7 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
             REQUIRE( qry.range() > 0 );
 
             player_character.setpos( veh->bub_part_location( idx ) );
-            REQUIRE( qry.fire( player_character, player_character.pos() + point( qry.range(), 0 ) ) > 0 );
+            REQUIRE( qry.fire( player_character, player_character.bub_pos() + point( qry.range(), 0 ) ) > 0 );
 
             here.destroy_vehicle( veh );
         }
