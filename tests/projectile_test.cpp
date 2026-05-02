@@ -22,8 +22,9 @@
 #include "vehicle.h"
 #include "vpart_position.h"
 
-static tripoint_bub_ms projectile_end_point( const std::vector<tripoint_bub_ms> &range, const item &gun,
-                                      int proj_range )
+static tripoint_bub_ms projectile_end_point( const std::vector<tripoint_bub_ms> &range,
+        const item &gun,
+        int proj_range )
 {
     projectile test_proj;
     test_proj.speed = gun.gun_speed();

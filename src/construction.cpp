@@ -109,7 +109,8 @@ namespace construct
 bool check_nothing( const tripoint_bub_ms & );
 bool check_empty( const tripoint_bub_ms & ); // tile is empty
 bool check_support( const tripoint_bub_ms & ); // at least two orthogonal supports
-bool check_deconstruct( const tripoint_bub_ms & ); // either terrain or furniture must be deconstructible
+bool check_deconstruct( const tripoint_bub_ms
+                        & ); // either terrain or furniture must be deconstructible
 bool check_empty_up_OK( const tripoint_bub_ms & ); // tile is empty and below OVERMAP_HEIGHT
 bool check_up_OK( const tripoint_bub_ms & ); // tile is below OVERMAP_HEIGHT
 bool check_down_OK( const tripoint_bub_ms & ); // tile is above OVERMAP_DEPTH
@@ -2291,7 +2292,8 @@ void construction::load( const JsonObject &jo, const std::string &/*src*/ )
                                "collection" );
     }
 
-    static const std::map<std::string, std::function<bool( const tripoint_bub_ms & )>> pre_special_map = { {
+    static const std::map<std::string, std::function<bool( const tripoint_bub_ms & )>> pre_special_map
+    = { {
             { "", construct::check_nothing },
             { "check_empty", construct::check_empty },
             { "check_support", construct::check_support },
@@ -2307,7 +2309,8 @@ void construction::load( const JsonObject &jo, const std::string &/*src*/ )
             { "check_ceiling", construct::check_ceiling },
         }
     };
-    static const std::map<std::string, std::function<void( const tripoint_bub_ms & )>> post_special_map = { {
+    static const std::map<std::string, std::function<void( const tripoint_bub_ms & )>> post_special_map
+    = { {
             { "", construct::done_nothing },
             { "done_trunk_plank", construct::done_trunk_plank },
             { "done_grave", construct::done_grave },

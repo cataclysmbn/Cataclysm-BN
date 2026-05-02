@@ -54,7 +54,8 @@ class timed_event_manager
          * Add an entry to the event queue. Parameters are basically passed
          * through to @ref timed_event::timed_event.
          */
-        void add( timed_event_type type, const time_point &when, int faction_id, const tripoint_abs_ms &where );
+        void add( timed_event_type type, const time_point &when, int faction_id,
+                  const tripoint_abs_ms &where );
         /// @returns Whether at least one element of the given type is queued.
         bool queued( timed_event_type type ) const;
         /// @returns One of the queued events of the given type, or `nullptr`

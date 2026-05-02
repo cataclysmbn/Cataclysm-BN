@@ -4014,8 +4014,9 @@ void game::draw_ter( const tripoint_bub_ms &center, const bool looking, const bo
         const tripoint &final_destination = destination_preview.back();
         tripoint line_center = u.bub_pos() + u.view_offset;
         draw_line( final_destination, line_center, destination_preview, true );
-        mvwputch( w_terrain, final_destination.xy() - u.view_offset.xy() + point_rel_ms( POSX - u.bub_pos().x(),
-                  POSY - u.bub_pos().y() ), c_white, 'X' );
+        mvwputch( w_terrain, final_destination.xy() - u.view_offset.xy() + point_rel_ms(
+                      POSX - u.bub_pos().x(),
+                      POSY - u.bub_pos().y() ), c_white, 'X' );
     }
 
     if( u.controlling_vehicle && !looking ) {
@@ -5962,7 +5963,7 @@ static bool can_place_monster( const monster &mon, const tripoint_bub_ms &p )
 static std::optional<tripoint> choose_where_to_place_monster( const monster &mon,
         const tripoint_range<tripoint> &range )
 {
-    return random_point( range, [&]( const tripoint_bub_ms &p ) {
+    return random_point( range, [&]( const tripoint_bub_ms & p ) {
         return can_place_monster( mon, p );
     } );
 }
@@ -5977,7 +5978,8 @@ monster *game::place_critter_at( const shared_ptr_fast<monster> &mon, const trip
     return place_critter_around( mon, p, 0 );
 }
 
-monster *game::place_critter_around( const mtype_id &id, const tripoint_bub_ms &center, const int radius )
+monster *game::place_critter_around( const mtype_id &id, const tripoint_bub_ms &center,
+                                     const int radius )
 {
     // TODO: change this into an assert, it must never happen.
     if( id.is_null() ) {
@@ -6377,7 +6379,7 @@ void game::exam_vehicle( vehicle &veh, point c )
 
 bool game::forced_door_closing( const tripoint_bub_ms &p, const ter_id &door_type, int bash_dmg )
 {
-    const auto valid_location = [&]( const tripoint_bub_ms &p ) {
+    const auto valid_location = [&]( const tripoint_bub_ms & p ) {
         return g->is_empty( p );
     };
     const auto get_random_point = [&]() -> tripoint {
@@ -8305,7 +8307,8 @@ void game::zones_manager()
                 //show zone position on overmap;
                 tripoint_abs_omt player_overmap_position = u.global_omt_location();
                 // TODO: fix point types
-                tripoint_abs_omt zone_overmap( project_to<coords::omt>( zones[active_index].get().get_center_point() ) );
+                tripoint_abs_omt zone_overmap( project_to<coords::omt>
+                                               ( zones[active_index].get().get_center_point() ) );
 
                 ui::omap::display_zones( player_overmap_position, zone_overmap, active_index );
             } else if( action == "ENABLE_ZONE" ) {
@@ -11568,7 +11571,7 @@ point_rel_ms game::place_player( const tripoint_bub_ms &dest_loc )
 
         const std::string forage_type = get_option<std::string>( "AUTO_FORAGING" );
         if( forage_type != "off" ) {
-            const auto forage = [&]( const tripoint_bub_ms &pos ) {
+            const auto forage = [&]( const tripoint_bub_ms & pos ) {
                 const auto &xter_t = m.ter( pos ).obj().examine;
                 const auto &xfurn_t = m.furn( pos ).obj().examine;
                 const bool forage_everything = forage_type == "both";
@@ -11614,7 +11617,7 @@ point_rel_ms game::place_player( const tripoint_bub_ms &dest_loc )
                 }
             }
         } else if( pulp_butcher == "pulp" || pulp_butcher == "pulp_adjacent" ) {
-            const auto pulp = [&]( const tripoint_bub_ms &pos ) {
+            const auto pulp = [&]( const tripoint_bub_ms & pos ) {
                 for( const auto &maybe_corpse : m.i_at( pos ) ) {
                     if( maybe_corpse->is_corpse() && maybe_corpse->can_revive() &&
                         !maybe_corpse->get_mtype()->bloodType().obj().has_acid ) {
@@ -12132,7 +12135,8 @@ void game::resize_reality_bubble_to( int new_size )
     if( grid_origin_delta_in_sm > 0 ) {
         const tripoint player_sm_in_grid( u.bub_pos().x() / SEEX, u.bub_pos().y() / SEEY, get_levz() );
         for( monster &critter : all_monsters() ) {
-            const tripoint critter_sm( critter.bub_pos().x() / SEEX, critter.bub_pos().y() / SEEY, critter.bub_pos().z() );
+            const tripoint critter_sm( critter.bub_pos().x() / SEEX, critter.bub_pos().y() / SEEY,
+                                       critter.bub_pos().z() );
             const tripoint diff = critter_sm - player_sm_in_grid;
             if( std::abs( diff.x ) > new_half || std::abs( diff.y ) > new_half ) {
                 despawn_monster( critter );

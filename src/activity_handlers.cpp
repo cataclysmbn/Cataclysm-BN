@@ -615,7 +615,8 @@ butchery_setup consider_butchery( const item &corpse_item, player &u, butcher_ty
                     _( "To perform a full butchery on a corpse this big, you need either a butchering rack, a nearby hanging meathook, or both a long rope in your inventory and a nearby tree to hang the corpse from." ),
                     butcherable_rating::no_tree_rope_rack );
             }
-            if( !( here.has_nearby_table( u.bub_pos(), PICKUP_RANGE ) || inv.has_item_with( []( const item & it ) {
+            if( !( here.has_nearby_table( u.bub_pos(), PICKUP_RANGE ) ||
+            inv.has_item_with( []( const item & it ) {
             return it.has_flag( flag_FLAT_SURFACE );
             } ) ) ) {
                 not_this_one(
@@ -1259,8 +1260,9 @@ void activity_handlers::butcher_finish( player_activity *act, player *p )
         for( int i = 1; i <= corpse->size; i++ ) {
             here.add_splatter_trail( type_gib, p->bub_pos(), random_entry( here.points_in_radius( p->bub_pos(),
                                      corpse->size + 1 ) ) );
-            here.add_splatter_trail( type_blood, p->bub_pos(), random_entry( here.points_in_radius( p->bub_pos(),
-                                     corpse->size + 1 ) ) );
+            here.add_splatter_trail( type_blood, p->bub_pos(),
+                                     random_entry( here.points_in_radius( p->bub_pos(),
+                                                   corpse->size + 1 ) ) );
         }
 
         // Ready to move on to the next item, if there is one
@@ -1348,8 +1350,9 @@ void activity_handlers::butcher_finish( player_activity *act, player *p )
                 for( int i = 1; i <= corpse->size; i++ ) {
                     here.add_splatter_trail( type_gib, p->bub_pos(), random_entry( here.points_in_radius( p->bub_pos(),
                                              corpse->size + 1 ) ) );
-                    here.add_splatter_trail( type_blood, p->bub_pos(), random_entry( here.points_in_radius( p->bub_pos(),
-                                             corpse->size + 1 ) ) );
+                    here.add_splatter_trail( type_blood, p->bub_pos(),
+                                             random_entry( here.points_in_radius( p->bub_pos(),
+                                                           corpse->size + 1 ) ) );
                 }
 
             } else {
@@ -1374,8 +1377,9 @@ void activity_handlers::butcher_finish( player_activity *act, player *p )
                 for( int i = 1; i <= corpse->size; i++ ) {
                     here.add_splatter_trail( type_gib, p->bub_pos(), random_entry( here.points_in_radius( p->bub_pos(),
                                              corpse->size + 1 ) ) );
-                    here.add_splatter_trail( type_blood, p->bub_pos(), random_entry( here.points_in_radius( p->bub_pos(),
-                                             corpse->size + 1 ) ) );
+                    here.add_splatter_trail( type_blood, p->bub_pos(),
+                                             random_entry( here.points_in_radius( p->bub_pos(),
+                                                           corpse->size + 1 ) ) );
                 }
 
             }
@@ -3182,13 +3186,14 @@ static void rod_fish( player *p,
         const mtype_id fish_mon = random_entry_ref( fish_group );
         here.add_item_or_charges(
             p->bub_pos(), item::make_corpse( fish_mon, calendar::turn +
-                                         rng( 0_turns, 3_hours ) ) );
+                                             rng( 0_turns, 3_hours ) ) );
 
         p->add_msg_if_player( m_good, _( "You caught a %s." ), fish_mon.obj().nname() );
     } else {
         itype_id possible( caught->first );
         if( possible.is_valid() ) {
-            here.add_item_or_charges( p->bub_pos(), item::spawn( caught->first, calendar::turn, caught->second ),
+            here.add_item_or_charges( p->bub_pos(), item::spawn( caught->first, calendar::turn,
+                                      caught->second ),
                                       true );
             p->add_msg_if_player( m_good, _( "You reeled in %s." ) );
         }
@@ -3500,9 +3505,10 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
     // check if player is on an autodoc couch
     if( autodoc && here.inbounds( p->bub_pos() ) ) {
         // this checks if there's an autodoc in a 3D radius around the player (during the operation), excluding just above/below him
-        const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius( p->bub_pos(),
-                                             1,
-                                             flag_AUTODOC );
+        const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
+                p->bub_pos(),
+                1,
+                flag_AUTODOC );
         if( !here.has_flag_furn_or_vpart( flag_AUTODOC_COUCH, p->bub_pos() ) || autodocs.empty() ) {
             p->remove_effect( effect_under_op );
             act->set_to_null();
@@ -3634,9 +3640,10 @@ void activity_handlers::operation_finish( player_activity *act, player *p )
         if( act->values[1] > 0 ) {
             add_msg( m_good,
                      _( "The Autodoc returns to its resting position after successfully performing the operation." ) );
-            const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius( p->bub_pos(),
-                                                 1,
-                                                 flag_AUTODOC );
+            const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
+                    p->bub_pos(),
+                    1,
+                    flag_AUTODOC );
             sounds::sound( autodocs.front(), 10, sounds::sound_t::music,
                            _( "a short upbeat jingle: \"Operation successful\"" ), true,
                            "Autodoc",
@@ -3645,9 +3652,10 @@ void activity_handlers::operation_finish( player_activity *act, player *p )
             if( act->str_values[0] == "install" ) {
                 add_msg( m_warning,
                          _( "The Autodoc completes installation and activates bionic but reports about complications during operation." ) );
-                const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius( p->bub_pos(),
-                                                     1,
-                                                     flag_AUTODOC );
+                const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
+                        p->bub_pos(),
+                        1,
+                        flag_AUTODOC );
                 sounds::sound( autodocs.front(), 10, sounds::sound_t::music,
                                _( "a sad beeping noise: \"Complications detected!  Report to medical personnel immediately!\"" ),
                                true,
@@ -3656,9 +3664,10 @@ void activity_handlers::operation_finish( player_activity *act, player *p )
             } else {
                 add_msg( m_bad,
                          _( "The Autodoc jerks back to its resting position after failing the operation." ) );
-                const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius( p->bub_pos(),
-                                                     1,
-                                                     flag_AUTODOC );
+                const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
+                        p->bub_pos(),
+                        1,
+                        flag_AUTODOC );
                 sounds::sound( autodocs.front(), 10, sounds::sound_t::music,
                                _( "a sad beeping noise: \"Operation failed\"" ), true,
                                "Autodoc",
@@ -4302,7 +4311,8 @@ static void perform_zone_activity_turn( player *p,
     for( const tripoint &tile : tiles ) {
         const tripoint &tile_loc = here.abs_to_bub( tile );
 
-        std::vector<tripoint> route = here.route( p->bub_pos(), tile_loc, p->get_legacy_pathfinding_settings(),
+        std::vector<tripoint> route = here.route( p->bub_pos(), tile_loc,
+                                      p->get_legacy_pathfinding_settings(),
                                       p->get_legacy_path_avoid() );
         if( route.size() > 1 ) {
             route.pop_back();
@@ -4607,7 +4617,8 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
     }
 
     if( spell_being_cast.has_flag( spell_flag::VERBAL ) ) {
-        sounds::sound( p->bub_pos(), p->get_shout_volume() / 2, sounds::sound_t::speech, _( "cast a spell" ),
+        sounds::sound( p->bub_pos(), p->get_shout_volume() / 2, sounds::sound_t::speech,
+                       _( "cast a spell" ),
                        false );
     }
 

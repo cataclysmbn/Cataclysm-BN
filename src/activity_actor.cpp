@@ -908,7 +908,8 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
             // currently all things that can be hacked have equivalent alarm failure states.
             // this may not always be the case with new hackable things.
             g->events().send<event_type::triggers_alarm>( who.getID() );
-            sounds::sound( who.bub_pos(), 60, sounds::sound_t::music, _( "an alarm sound!" ), true, "environment",
+            sounds::sound( who.bub_pos(), 60, sounds::sound_t::music, _( "an alarm sound!" ), true,
+                           "environment",
                            "alarm" );
             if( examp.z > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,

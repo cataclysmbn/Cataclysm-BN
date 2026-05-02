@@ -944,7 +944,8 @@ class item : public location_visitable<item>, public game_object<item>
          */
         /*@{*/
         static detached_ptr<item> process_rot( detached_ptr<item> &&self,  const tripoint_bub_ms &pos );
-        static detached_ptr<item> process_rot( detached_ptr<item> &&self,  bool seals, const tripoint_bub_ms &pos,
+        static detached_ptr<item> process_rot( detached_ptr<item> &&self,  bool seals,
+                                               const tripoint_bub_ms &pos,
                                                player *carrier, temperature_flag flag,
                                                const weather_manager &weather_generator );
         /*@}*/
@@ -1245,10 +1246,12 @@ class item : public location_visitable<item>, public game_object<item>
          * Returns false if the item is not destroyed.
          */
         /*@{*/
-        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier, const tripoint_bub_ms &pos,
+        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier,
+                                           const tripoint_bub_ms &pos,
                                            bool activate,
                                            temperature_flag flag = temperature_flag::TEMP_NORMAL );
-        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier, const tripoint_bub_ms &pos,
+        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier,
+                                           const tripoint_bub_ms &pos,
                                            bool activate,
                                            temperature_flag flag, const weather_manager &weather_generator );
         /*@}*/

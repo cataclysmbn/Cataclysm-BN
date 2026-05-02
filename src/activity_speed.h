@@ -100,7 +100,8 @@ class activity_speed
         void calc_assistants_factor( const Character &who );
         void calc_assistants_factor( const Character &who, const activity_target &target );
         void calc_bench_factor( const Character &who );
-        void find_best_bench( const tripoint_bub_ms &pos, metric metrics = std::make_pair( 0_milligram, 0_ml ) );
+        void find_best_bench( const tripoint_bub_ms &pos, metric metrics = std::make_pair( 0_milligram,
+                              0_ml ) );
         void calc_light_factor( const Character &who );
         void calc_light_factor( const Character &who, const activity_target &target );
         void calc_morale_factor( const Character &who );

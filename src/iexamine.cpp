@@ -1128,7 +1128,7 @@ void iexamine::cardreader( player &p, const tripoint_bub_ms &examp )
         p.mod_moves( -to_turns<int>( 1_seconds ) );
         for( const tripoint &tmp : here.points_in_radius( examp, 3 ) ) {
             if( here.ter( tmp ) == t_door_metal_locked ) {
-                const auto is_door = [&here]( const tripoint_bub_ms &pos ) -> bool { return here.ter( pos ) == t_door_metal_locked; };
+                const auto is_door = [&here]( const tripoint_bub_ms & pos ) -> bool { return here.ter( pos ) == t_door_metal_locked; };
 
                 std::unordered_set<tripoint> visited;
                 for( const tripoint &tmp2 : ff::point_flood_fill_4_connected( tmp, visited, is_door ) ) {
@@ -1139,8 +1139,9 @@ void iexamine::cardreader( player &p, const tripoint_bub_ms &examp )
         }
         for( monster &critter : g->all_monsters() ) {
             // Check 1) same overmap coords, 2) turret, 3) hostile
-            if( project_to<coords::omt>( here.bub_to_abs( critter.bub_pos() ) ) == project_to<coords::omt>( here.bub_to_abs(
-                        examp ) ) &&
+            if( project_to<coords::omt>( here.bub_to_abs( critter.bub_pos() ) ) == project_to<coords::omt>
+                ( here.bub_to_abs(
+                      examp ) ) &&
                 critter.has_flag( MF_ID_CARD_DESPAWN ) &&
                 critter.attitude_to( p ) == Attitude::A_HOSTILE ) {
                 g->remove_zombie( critter );
@@ -4225,7 +4226,8 @@ void iexamine::tree_hickory( player &p, const tripoint_bub_ms &examp )
     }
 
     ///\EFFECT_SURVIVAL increases hickory root number per tree
-    here.spawn_item( p.bub_pos(), itype_hickory_root, rng( 1, 3 + p.get_skill_level( skill_survival ) ), 0,
+    here.spawn_item( p.bub_pos(), itype_hickory_root, rng( 1, 3 + p.get_skill_level( skill_survival ) ),
+                     0,
                      calendar::turn );
     here.ter_set( examp, t_tree_hickory_dead );
     ///\EFFECT_SURVIVAL speeds up hickory root digging
@@ -5025,7 +5027,7 @@ void iexamine::curtains( player &p, const tripoint_bub_ms &examp )
     map &here = get_map();
     const bool closed_window_with_curtains = here.has_flag( flag_BARRICADABLE_WINDOW_CURTAINS, examp );
     if( here.is_outside( p.bub_pos() ) && ( here.has_flag( flag_WALL, examp ) ||
-                                        closed_window_with_curtains ) ) {
+                                            closed_window_with_curtains ) ) {
         locked_object( p, examp );
         return;
     }

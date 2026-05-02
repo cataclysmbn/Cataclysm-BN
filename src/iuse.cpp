@@ -461,7 +461,7 @@ void remove_radio_mod( item &it, player &p )
  * Regardless, returning 0 indicates the item has not been used up,
  * though it may have been successfully activated.
  */
-int iuse::sewage( player *p, item *it, bool, const tripoint_bub_ms &)
+int iuse::sewage( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     if( !p->query_yn( _( "Are you sure you want to drink… this?" ) ) ) {
         return 0;
@@ -475,13 +475,13 @@ int iuse::sewage( player *p, item *it, bool, const tripoint_bub_ms &)
     return it->type->charges_to_use();
 }
 
-int iuse::honeycomb( player *p, item *it, bool, const tripoint_bub_ms &)
+int iuse::honeycomb( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     g->m.spawn_item( p->bub_pos(), itype_wax, 2 );
     return it->type->charges_to_use();
 }
 
-int iuse::xanax( player *p, item *it, bool, const tripoint_bub_ms &)
+int iuse::xanax( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     p->add_msg_if_player( _( "You take some %s." ), it->tname() );
     p->add_effect( effect_took_xanax, 90_minutes );
@@ -517,17 +517,17 @@ static int alcohol( player &p, const item &it, const int strength )
     return it.type->charges_to_use();
 }
 
-int iuse::alcohol_weak( player *p, item *it, bool, const tripoint_bub_ms &)
+int iuse::alcohol_weak( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     return alcohol( *p, *it, 0 );
 }
 
-int iuse::alcohol_medium( player *p, item *it, bool, const tripoint_bub_ms &)
+int iuse::alcohol_medium( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     return alcohol( *p, *it, 1 );
 }
 
-int iuse::alcohol_strong( player *p, item *it, bool, const tripoint_bub_ms &)
+int iuse::alcohol_strong( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     return alcohol( *p, *it, 2 );
 }
@@ -1019,7 +1019,7 @@ static void do_purify( player &p )
     }
 }
 
-int iuse::purifier( player *p, item *it, bool, const tripoint_bub_ms &)
+int iuse::purifier( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     mutagen_attempt checks =
         mutagen_common_checks( *p, *it, false, mutagen_technique::consumed_purifier );
@@ -2427,7 +2427,8 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint &pos )
         g->m.spawn_items( pnt, item_group::items_from( pry->pry_items, calendar::turn ) );
         if( pry->alarm ) {
             g->events().send<event_type::triggers_alarm>( p->getID() );
-            sounds::sound( p->bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
+            sounds::sound( p->bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), true,
+                           "environment",
                            "alarm" );
             if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
@@ -2453,7 +2454,8 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint &pos )
                 g->m.spawn_items( pnt, item_group::items_from( pry->break_items, calendar::turn ) );
                 if( pry->alarm ) {
                     g->events().send<event_type::triggers_alarm>( p->getID() );
-                    sounds::sound( p->bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
+                    sounds::sound( p->bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ), true,
+                                   "environment",
                                    "alarm" );
                     if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                         g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,

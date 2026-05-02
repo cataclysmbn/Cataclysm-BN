@@ -186,7 +186,8 @@ struct trap {
          * @param pos The location of the trap in the main map.
          * @param item The item that triggered the trap
          */
-        void trigger( const tripoint_bub_ms &pos, Creature *creature = nullptr, item *item = nullptr ) const;
+        void trigger( const tripoint_bub_ms &pos, Creature *creature = nullptr,
+                      item *item = nullptr ) const;
         /**
          * If the given item is throw onto the trap, does it trigger the trap?
          */
