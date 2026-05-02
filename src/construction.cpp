@@ -2093,7 +2093,7 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
 {
     map &here = get_map();
     const tripoint abs_pos = here.bub_to_abs( p );
-    const tripoint pos_sm = ms_to_sm_copy( abs_pos );
+    const tripoint pos_sm = project_to<coords::sm>( abs_pos );
     tinymap tmpmap;
     tmpmap.load( tripoint( pos_sm.xy(), pos_sm.z - 1 ), false );
     const tripoint local_tmp = tmpmap.abs_to_bub( abs_pos );
@@ -2147,7 +2147,7 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p )
 {
     map &here = get_map();
     const tripoint abs_pos = here.bub_to_abs( p );
-    const tripoint pos_sm = ms_to_sm_copy( abs_pos );
+    const tripoint pos_sm = project_to<coords::sm>( abs_pos );
     tinymap tmpmap;
     tmpmap.load( tripoint( pos_sm.xy(), pos_sm.z + 1 ), false );
     const tripoint local_tmp = tmpmap.abs_to_bub( abs_pos );

@@ -1160,9 +1160,10 @@ vehicle *game::place_vehicle_nearby(
                            id, tinymap_center, random_entry( angles ), rng( 50, 80 ),
                            0, false, false, true );
         if( veh ) {
-            tripoint abs_local = m.abs_to_bub( target_map.bub_to_abs( tinymap_center ) );
-            veh->sm_pos =  tripoint_bub_sm( ms_to_sm_remain( abs_local ) );
-            veh->pos = point_sm_ms( abs_local.xy() );
+            auto abs_local = m.abs_to_bub( target_map.bub_to_abs( tinymap_center ) );
+            const auto proj = project_remain<coords::sm>( abs_local );
+            veh->sm_pos = proj.quotient_tripoint;
+            veh->pos = proj.remainder;
             veh->dimension_id_ = target_map.get_bound_dimension();
             get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
             veh->tracking_on = true;
@@ -1296,7 +1297,7 @@ void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*
     // npc::global_square_location() uses submap_coords directly (not get_map()), so
     // ms_to_sm_copy() of that result is context-independent and safe to call here.
     auto in_evicted = [&raw]( const shared_ptr_fast<npc> &n ) {
-        const tripoint sm = ms_to_sm_copy( n->global_square_location() );
+        const tripoint sm = project_to<coords::sm>( n->global_square_location() );
         return sm.x == raw.x && sm.y == raw.y && sm.z == raw.z;
     };
     std::ranges::for_each( active_npc | std::views::filter( in_evicted ),
@@ -1312,7 +1313,7 @@ void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*
     // all_monsters() snapshots weak_ptrs at construction; despawn_monster() marks hp=0 so the
     // non_dead_range iterator skips evicted entries on subsequent steps, mirroring shift_monsters().
     for( monster &critter : all_monsters() ) {
-        const tripoint sm = ms_to_sm_copy( critter.pos_abs.raw() );
+        const tripoint sm = project_to<coords::sm>( critter.pos_abs.raw() );
         if( sm == raw ) {
             despawn_monster( critter );
         }
@@ -3772,7 +3773,7 @@ shared_ptr_fast<game::draw_callback_t>
             }
         }
         if( zone_start && zone_end ) {
-            const point offset2( g->u.view_offset.xy() + point( g->u.bub_pos().x() - getmaxx(
+            const point offset2( g->u.view_offset.xy() + point_bub_ms( g->u.bub_pos().x() - getmaxx(
                                      g->w_terrain ) / 2,
                                  g->u.bub_pos().y() - getmaxy( g->w_terrain ) / 2 ) );
 
@@ -4013,7 +4014,7 @@ void game::draw_ter( const tripoint_bub_ms &center, const bool looking, const bo
         const tripoint &final_destination = destination_preview.back();
         tripoint line_center = u.bub_pos() + u.view_offset;
         draw_line( final_destination, line_center, destination_preview, true );
-        mvwputch( w_terrain, final_destination.xy() - u.view_offset.xy() + point( POSX - u.bub_pos().x(),
+        mvwputch( w_terrain, final_destination.xy() - u.view_offset.xy() + point_rel_ms( POSX - u.bub_pos().x(),
                   POSY - u.bub_pos().y() ), c_white, 'X' );
     }
 
@@ -4022,7 +4023,7 @@ void game::draw_ter( const tripoint_bub_ms &center, const bool looking, const bo
         draw_veh_dir_indicator( true );
     }
     // Place the cursor over the player as is expected by screen readers.
-    wmove( w_terrain, -center.xy() + g->u.bub_pos().xy() + point( POSX, POSY ) );
+    wmove( w_terrain, -center.xy() + g->u.bub_pos().xy() + point_rel_ms( POSX, POSY ) );
 }
 
 std::optional<tripoint> game::get_veh_dir_indicator_location( bool next ) const
@@ -4924,7 +4925,7 @@ void game::world_tick()
                     ZoneScopedN( "field_emits" );
                     const tripoint_bub_ms bub_sm_origin = m.abs_to_bub( project_to<coords::ms>( pos_sm ) );
                     std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point_sm_ms & lp ) {
-                        const tripoint_bub_ms local_pos = bub_sm_origin + tripoint( lp.x(), lp.y(), 0 );
+                        const tripoint_bub_ms local_pos = bub_sm_origin + tripoint_rel_ms( lp.x(), lp.y(), 0 );
                         std::ranges::for_each(
                             sm_ptr->get_furn( lp ).obj().emissions,
                         [&]( const emit_id & e ) {
@@ -6525,7 +6526,7 @@ void game::moving_vehicle_dismount( const tripoint_bub_ms &dest_loc )
         debugmsg( "Need somewhere to dismount towards." );
         return;
     }
-    tileray ray( dest_loc.xy() + point( -u.bub_pos().x(), -u.bub_pos().y() ) );
+    tileray ray( dest_loc.xy() + point_rel_ms( -u.bub_pos().x(), -u.bub_pos().y() ) );
     // TODO:: make dir() const correct!
     const units::angle d = ray.dir();
     add_msg( _( "You dive from the %s." ), veh->name );
@@ -7574,7 +7575,7 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
     const auto &terrain = m.ter( lp ).obj();
     const auto terrain_color = terrain.color();
     const oter_id &cur_ter_m = get_overmapbuffer( current_dimension_id_ ).ter( tripoint_abs_omt(
-                                   ms_to_omt_copy( m.bub_to_abs(
+                                   project_to<coords::omt>( m.bub_to_abs(
                                            lp ) ) ) );
     const auto location_color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes );
     const auto terrain_desc = terrain.description.translated();
@@ -8304,7 +8305,7 @@ void game::zones_manager()
                 //show zone position on overmap;
                 tripoint_abs_omt player_overmap_position = u.global_omt_location();
                 // TODO: fix point types
-                tripoint_abs_omt zone_overmap( ms_to_omt_copy( zones[active_index].get().get_center_point() ) );
+                tripoint_abs_omt zone_overmap( project_to<coords::omt>( zones[active_index].get().get_center_point() ) );
 
                 ui::omap::display_zones( player_overmap_position, zone_overmap, active_index );
             } else if( action == "ENABLE_ZONE" ) {
@@ -8368,7 +8369,7 @@ void game::pre_print_all_tile_info( const tripoint &lp, const catacurses::window
     // get global area info according to look_around caret position
     // TODO: fix point types
     const oter_id &cur_ter_m = get_overmapbuffer( current_dimension_id_ ).ter( tripoint_abs_omt(
-                                   ms_to_omt_copy( m.bub_to_abs(
+                                   project_to<coords::omt>( m.bub_to_abs(
                                            lp ) ) ) );
     // we only need the area name and then pass it to print_all_tile_info() function below
     const std::string area_name = cur_ter_m->get_name();
@@ -11393,7 +11394,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
 
     tripoint oldpos = u.bub_pos();
     point submap_shift = place_player( dest_loc );
-    point ms_shift = sm_to_ms_copy( submap_shift );
+    point ms_shift = project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift;
 
     if( pulling ) {
@@ -12161,7 +12162,7 @@ void game::resize_reality_bubble_to( int new_size )
     {
         auto out_of_range = std::ranges::stable_partition( active_npc,
         [&]( const shared_ptr_fast<npc> &n ) {
-            const tripoint npc_sm = ms_to_sm_copy( n->global_square_location() );
+            const tripoint npc_sm = project_to<coords::sm>( n->global_square_location() );
             if( !m.has_zlevels() && npc_sm.z != get_levz() ) {
                 return false;  // wrong z-level — evict
             }
@@ -12815,7 +12816,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     // > and < are used for diving underwater.
     if( m.has_flag( TFLAG_SWIMMABLE, u.bub_pos() ) ) {
         swimming = true;
-        const ter_id &target_ter = m.ter( u.bub_pos() + tripoint( 0, 0, movez ) );
+        const ter_id &target_ter = m.ter( u.bub_pos() + tripoint_rel_ms( 0, 0, movez ) );
 
         // If we're in a water tile that has both air above and deep enough water to submerge in...
         if( m.has_flag( TFLAG_DEEP_WATER, u.bub_pos() ) &&
@@ -12888,7 +12889,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
             }
             // ...and we're trying to move up
             else if( movez == 1 ) {
-                const std::optional<vpart_reference> vp = get_map().veh_at( u.bub_pos() + tripoint( 0, 0,
+                const std::optional<vpart_reference> vp = get_map().veh_at( u.bub_pos() + tripoint_rel_ms( 0, 0,
                         movez ) ).part_with_feature( VPFLAG_BOARDABLE,
                                                      true );
                 if( vp ) {
@@ -13137,7 +13138,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     }
 
     if( u.is_hauling() ) {
-        const tripoint adjusted_pos = old_pos - sm_to_ms_copy( submap_shift );
+        const tripoint adjusted_pos = old_pos - project_to<coords::ms>( submap_shift );
         start_hauling( adjusted_pos );
     }
     if( m.has_flag( "UNSTABLE", u.bub_pos() ) && !u.is_mounted() ) {
@@ -13804,7 +13805,7 @@ point game::update_map( int &x, int &y )
     // Shift monsters
     shift_monsters( tripoint( shift, 0 ) );
     shift_in_progress_ = false;
-    const point shift_ms = sm_to_ms_copy( shift );
+    const point shift_ms = project_to<coords::ms>( shift );
     u.shift_destination( -shift_ms );
 
     // Shift NPCs
@@ -14232,7 +14233,7 @@ void game::perhaps_add_random_npc()
     // adds the npc to the correct overmap.
     // Only spawn random NPCs on z-level 0
     // TODO: fix point types
-    tripoint submap_spawn = omt_to_sm_copy( spawn_point.raw() );
+    tripoint submap_spawn = project_to<coords::sm>( spawn_point.raw() );
     tmp->spawn_at_sm( tripoint( submap_spawn.xy(), 0 ) );
     get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
     tmp->form_opinion( u );

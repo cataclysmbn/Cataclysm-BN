@@ -3646,7 +3646,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     if( g->u.controlling_vehicle ) {
         if( std::optional<tripoint> indicator_offset = g->get_veh_dir_indicator_location( true ) ) {
             const tile_search_params tile { "cursor", C_NONE, empty_string, 0, 0 };
-            const auto pos = indicator_offset->xy() + tripoint( g->u.bub_pos().x(), g->u.bub_pos().y(),
+            const auto pos = indicator_offset->xy() + tripoint_rel_ms( g->u.bub_pos().x(), g->u.bub_pos().y(),
                              center.z );
             draw_from_id_string(
                 tile, pos, std::nullopt, std::nullopt,
@@ -3658,8 +3658,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                                   ( g->is_zones_manager_open() && g->is_zone_submap_grid_overlay_enabled() );
 
     if( draw_submap_grid && !iso_mode ) {
-        point sm_start = ms_to_sm_copy( here.bub_to_abs( point( min_col, min_row ) + o ) );
-        point sm_end = ms_to_sm_copy( here.bub_to_abs( point( max_col, max_row ) + o ) );
+        point sm_start = project_to<coords::sm>( here.bub_to_abs( point( min_col, min_row ) + o ) );
+        point sm_end = project_to<coords::sm>( here.bub_to_abs( point( max_col, max_row ) + o ) );
 
         bool zlevs = here.has_zlevels();
         int mapsize = here.getmapsize();
@@ -3689,8 +3689,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             for( int sm_y = sm_start.y; sm_y <= sm_end.y; sm_y++ ) {
                 point sm_p = point( sm_x, sm_y );
                 auto sm_tp = tripoint_abs_sm( sm_x, sm_y, center.z );
-                point p1 = player_to_screen( here.abs_to_bub( sm_to_ms_copy( sm_p ) ) );
-                point p3 = player_to_screen( here.abs_to_bub( sm_to_ms_copy( sm_p + point_south_east ) ) );
+                point p1 = player_to_screen( here.abs_to_bub( project_to<coords::ms>( sm_p ) ) );
+                point p3 = player_to_screen( here.abs_to_bub( project_to<coords::ms>( sm_p + point_south_east ) ) );
                 p3 -= point( THICC, THICC ); // Don't draw over other lines
 
                 // Leave a small gap to indicate omt boundaries
@@ -6334,7 +6334,7 @@ void cata_tiles::draw_sct_frame( std::multimap<point, formatted_text> &overlay_s
                     if( tileset_ptr->find_tile_type( generic_id ) ) {
                         draw_from_id_string(
                         {generic_id, C_NONE, empty_string, 0, 0},
-                        iD + tripoint( iOffsetX, iOffsetY, g->u.bub_pos().z() ), std::nullopt, std::nullopt,
+                        iD + tripoint_rel_ms( iOffsetX, iOffsetY, g->u.bub_pos().z() ), std::nullopt, std::nullopt,
                         lit_level::LIT, false, 0, false
                         );
                     }

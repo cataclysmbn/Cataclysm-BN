@@ -455,7 +455,7 @@ void iexamine::gaspump( player &p, const tripoint_bub_ms &examp )
 void iexamine::translocator( player &, const tripoint_bub_ms &examp )
 {
     // TODO: fix point types
-    const tripoint_abs_omt omt_loc( ms_to_omt_copy( get_map().bub_to_abs( examp ) ) );
+    const tripoint_abs_omt omt_loc( project_to<coords::omt>( get_map().bub_to_abs( examp ) ) );
     avatar &player_character = get_avatar();
     const bool activated = player_character.translocators->knows_translocator( omt_loc );
     if( !activated ) {
@@ -1139,7 +1139,7 @@ void iexamine::cardreader( player &p, const tripoint_bub_ms &examp )
         }
         for( monster &critter : g->all_monsters() ) {
             // Check 1) same overmap coords, 2) turret, 3) hostile
-            if( ms_to_omt_copy( here.bub_to_abs( critter.bub_pos() ) ) == ms_to_omt_copy( here.bub_to_abs(
+            if( project_to<coords::omt>( here.bub_to_abs( critter.bub_pos() ) ) == project_to<coords::omt>( here.bub_to_abs(
                         examp ) ) &&
                 critter.has_flag( MF_ID_CARD_DESPAWN ) &&
                 critter.attitude_to( p ) == Attitude::A_HOSTILE ) {

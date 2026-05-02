@@ -119,7 +119,7 @@ bool map::build_transparency_cache( const int zlev )
     const auto process_smx = [&]( int smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             auto *cur_submap = get_submap_at_grid( tripoint_bub_sm{smx, smy, zlev} );
-            const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
+            const point sm_offset = project_to<coords::ms>( point( smx, smy ) );
 
             if( cur_submap == nullptr ) {
                 // Null slots occur at bounded-dimension edges.

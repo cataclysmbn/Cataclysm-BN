@@ -149,7 +149,7 @@ void run_deferred_mapgen_hooks()
             tmp.bind_dimension( cur_dim );
         }
         batch.push_back( {
-            .sm_base = omt_to_sm_copy( h.omt_pos.raw() ),
+            .sm_base = project_to<coords::sm>( h.omt_pos.raw() ),
             .omt_pos = h.omt_pos.raw(),
             .when    = h.when,
         } );

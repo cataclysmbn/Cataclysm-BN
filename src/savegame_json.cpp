@@ -1619,7 +1619,7 @@ void npc::load( const JsonObject &data )
         if( data.read( "omy", o ) ) {
             old_coords.y += o * OMAPY * 2;
         }
-        submap_coords = point_abs_sm( old_coords + point( bub_pos().x() / SEEX, bub_pos().y() / SEEY ) );
+        submap_coords = point_abs_sm( old_coords + point_rel_ms( bub_pos().x() / SEEX, bub_pos().y() / SEEY ) );
     }
 
     if( !data.read( "mapz", position.z() ) ) {

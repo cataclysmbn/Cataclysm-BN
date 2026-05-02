@@ -2635,7 +2635,7 @@ static void maybe_shift( tripoint &pos, point d )
 
 void npc::shift( point s )
 {
-    const point shift = sm_to_ms_copy( s );
+    const point shift = project_to<coords::ms>( s );
 
     setpos( bub_pos() - shift );
 

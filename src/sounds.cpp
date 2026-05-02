@@ -352,7 +352,7 @@ void sounds::process_sounds()
 
             const point abs_ms = get_map().bub_to_abs( source.xy() );
             // TODO: fix point types
-            const point_abs_sm abs_sm( ms_to_sm_copy( abs_ms ) );
+            const point_abs_sm abs_sm( project_to<coords::sm>( abs_ms ) );
             const tripoint_abs_sm target( abs_sm, source.z );
             get_overmapbuffer( get_map().get_bound_dimension() ).signal_hordes( target, sig_power );
         }

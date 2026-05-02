@@ -102,7 +102,7 @@ static void full_map_test( const std::vector<std::string> &setup,
                 case 'U':
                 case 'H':
                 case 'u':
-                    origin = player_character.bub_pos() - point( x, y );
+                    origin = player_character.bub_pos() - point_rel_ms( x, y );
                     if( setup[y][x] == 'V' ) {
                         player_character.worn.push_back( item::spawn( "wearable_light_on" ) );
                     }

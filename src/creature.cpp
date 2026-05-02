@@ -2328,7 +2328,7 @@ void Creature::draw( const catacurses::window &w, const tripoint_bub_ms &origin,
         return;
     }
 
-    point draw( -origin.xy() + point( getmaxx( w ) / 2 + bub_pos().x(),
+    point draw( -origin.xy() + point_rel_ms( getmaxx( w ) / 2 + bub_pos().x(),
                                       getmaxy( w ) / 2 + bub_pos().y() ) );
     if( inverted ) {
         mvwputch_inv( w, draw, basic_symbol_color(), symbol() );

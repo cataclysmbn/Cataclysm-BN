@@ -2038,7 +2038,7 @@ void editmap::mapgen_retarget()
         ui_manager::redraw();
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
         if( const std::optional<tripoint> vec = ctxt.get_direction( action ) ) {
-            point vec_ms = omt_to_ms_copy( vec->xy() );
+            point vec_ms = project_to<coords::ms>( vec->xy() );
             tripoint ptarget = target + vec_ms;
             if( editmap_boundaries().contains( ptarget ) &&
                 editmap_boundaries().contains( ptarget + point( SEEX, SEEY ) ) ) {

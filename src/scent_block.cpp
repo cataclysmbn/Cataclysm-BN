@@ -2,7 +2,7 @@
 
 scent_block::scent_block( const tripoint &sub, scent_map &scents )
 // NOLINTNEXTLINE(cata-use-named-point-constants)
-    : origin( sm_to_ms_copy( sub ) + point( -1, -1 ) )
+    : origin( project_to<coords::ms>( sub ) + point( -1, -1 ) )
     , scents( scents )
     , modification_count( 0 )
 {
@@ -24,14 +24,14 @@ void scent_block::commit_modifications()
                 case NONE:
                     break;
                 case SET: {
-                    tripoint_bub_ms p = origin + tripoint( x, y, 0 );
+                    tripoint_bub_ms p = origin + tripoint_rel_ms( x, y, 0 );
                     if( scents.inbounds( p ) ) {
                         scents.set_unsafe( p, assignment[x][y].intensity );
                     }
                     break;
                 }
                 case MAX: {
-                    tripoint_bub_ms p = origin + tripoint( x, y, 0 );
+                    tripoint_bub_ms p = origin + tripoint_rel_ms( x, y, 0 );
                     if( scents.inbounds( p ) ) {
                         scents.set_unsafe( p, std::max( assignment[x][y].intensity, scents.get_unsafe( p ) ) );
                     }

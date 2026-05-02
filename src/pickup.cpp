@@ -1264,7 +1264,7 @@ static std::optional<tripoint_abs_omt> get_note_pos_from_item( const item &it )
     }
     const map &here = get_map();
     const tripoint abs_ms = here.bub_to_abs( it.position() );
-    return tripoint_abs_omt( ms_to_omt_copy( abs_ms ) );
+    return tripoint_abs_omt( project_to<coords::omt>( abs_ms ) );
 }
 
 static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,

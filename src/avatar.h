@@ -322,7 +322,7 @@ class avatar : public player
 
     public:
         // ---------------VALUES-----------------
-        tripoint view_offset;
+        tripoint_rel_ms view_offset;
 
         // Snippets the player has seen
         std::set<snippet_id> snippets_read;

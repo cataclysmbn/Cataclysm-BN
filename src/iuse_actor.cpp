@@ -4827,7 +4827,7 @@ int deploy_tent_actor::use( player &p, item &it, bool, const tripoint & ) const
     // We place the center of the structure (radius + 1)
     // spaces away from the player.
     // First check there's enough room.
-    const tripoint center = p.bub_pos() + tripoint( ( radius + 1 ) * direction.x,
+    const tripoint center = p.bub_pos() + tripoint_rel_ms( ( radius + 1 ) * direction.x,
                             ( radius + 1 ) * direction.y, 0 );
     for( const tripoint &dest : here.points_in_radius( center, radius ) ) {
         if( const auto vp = here.veh_at( dest ) ) {
@@ -7413,7 +7413,7 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     // Convert entry_point (OMT coords) to absolute map squares, then to local
     tripoint_abs_ms entry_abs_ms = project_to<coords::ms>( pd->entry_point );
     // Add offset to center of the OMT (OMT is 24x24 map squares)
-    entry_abs_ms += tripoint( SEEX, SEEY, 0 );
+    entry_abs_ms += tripoint_rel_ms( SEEX, SEEY, 0 );
     // The map is already loaded centered on the destination (via load_pos parameter),
     // so local coordinates are valid without needing a map shift first.
     tripoint entry_local = get_map().abs_to_bub( entry_abs_ms );
@@ -7569,7 +7569,7 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     // Convert return_point (OMT coords) to absolute map squares, then to local
     tripoint_abs_ms return_abs_ms = project_to<coords::ms>( pd->return_point );
     // Add offset to center of the OMT (OMT is 24x24 map squares)
-    return_abs_ms += tripoint( SEEX, SEEY, 0 );
+    return_abs_ms += tripoint_rel_ms( SEEX, SEEY, 0 );
     // The map is already loaded centered on the destination (via load_pos parameter),
     // so local coordinates are valid without needing a map shift first.
     tripoint return_local = get_map().abs_to_bub( return_abs_ms );

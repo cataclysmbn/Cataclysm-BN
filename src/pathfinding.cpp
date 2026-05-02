@@ -295,7 +295,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
     // This cuboid will contain negative values, it's fine
     half_open_cuboid<tripoint_bub_ms> prev_z_volume_local(
         tripoint_bub_ms( here.abs_to_bub( Pathfinding::z_area ), -OVERMAP_DEPTH ),
-        tripoint_bub_ms( here.abs_to_bub( Pathfinding::z_area + point( g_mapsize_x, g_mapsize_y ) ),
+        tripoint_bub_ms( here.abs_to_bub( Pathfinding::z_area + point_rel_ms( g_mapsize_x, g_mapsize_y ) ),
                          OVERMAP_HEIGHT + 1 )
     );
 

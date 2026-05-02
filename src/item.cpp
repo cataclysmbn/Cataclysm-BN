@@ -10320,7 +10320,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         if( ( carrier->has_effect( effect_shakes ) && one_in( 10 ) ) ) {
             carrier->add_msg_if_player( m_bad, _( "Your shaking hand causes you to drop your %s." ),
                                         it.tname() );
-            here.add_item_or_charges( tripoint_bub_ms( pos ) + point( rng( -1, 1 ), rng( -1, 1 ) ),
+            here.add_item_or_charges( tripoint_bub_ms( pos ) + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ),
                                       std::move( self ) );
             return detached_ptr<item>(); // removes the item that has just been added to the map
         }
@@ -10328,7 +10328,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         if( carrier->has_effect( effect_sleep ) ) {
             carrier->add_msg_if_player( m_bad, _( "You fall asleep and drop your %s." ),
                                         it.tname() );
-            here.add_item_or_charges( tripoint_bub_ms( pos ) + point( rng( -1, 1 ), rng( -1, 1 ) ),
+            here.add_item_or_charges( tripoint_bub_ms( pos ) + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ),
                                       std::move( self ) );
             self = detached_ptr<item>();
         }
@@ -10354,7 +10354,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         if( it.has_flag( flag_MARIJUANA ) ) {
             if( carrier != nullptr ) {
                 carrier->add_effect( effect_weed_high, 1_minutes ); // one last puff
-                here.add_field( tripoint_bub_ms( pos ) + point( rng( -1, 1 ), rng( -1, 1 ) ), fd_weedsmoke, 2 );
+                here.add_field( tripoint_bub_ms( pos ) + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ), fd_weedsmoke, 2 );
                 weed_msg( *carrier );
             }
         }

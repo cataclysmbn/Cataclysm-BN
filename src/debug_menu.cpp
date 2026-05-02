@@ -1549,7 +1549,7 @@ void debug()
         case DEBUG_SPAWN_NPC: {
             shared_ptr_fast<npc> temp = make_shared_fast<npc>();
             temp->randomize();
-            temp->spawn_at_precise( { g->get_levx(), g->get_levy() }, u.bub_pos() + point( -4, -4 ) );
+            temp->spawn_at_precise( { g->get_levx(), g->get_levy() }, u.bub_pos() + point_rel_ms( -4, -4 ) );
             get_overmapbuffer( get_avatar().get_dimension() ).insert_npc( temp );
             temp->form_opinion( u );
             temp->mission = NPC_MISSION_NULL;

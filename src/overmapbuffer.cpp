@@ -71,7 +71,7 @@ const city_reference city_reference::invalid{ nullptr, tripoint_abs_sm(), -1 };
 int city_reference::get_distance_from_bounds() const
 {
     assert( city != nullptr );
-    return distance - omt_to_sm_copy( city->size );
+    return distance - project_to<coords::sm>( city->size );
 }
 
 omt_find_params::~omt_find_params() = default;
@@ -1824,7 +1824,7 @@ std::vector<city_reference> overmapbuffer::get_cities_near( const tripoint_abs_s
 
 city_reference overmapbuffer::closest_city( const tripoint_abs_sm &center )
 {
-    const auto cities = get_cities_near( center, omt_to_sm_copy( OMAPX ) );
+    const auto cities = get_cities_near( center, project_to<coords::sm>( OMAPX ) );
 
     if( !cities.empty() ) {
         return cities.front();
@@ -1835,7 +1835,7 @@ city_reference overmapbuffer::closest_city( const tripoint_abs_sm &center )
 
 city_reference overmapbuffer::closest_known_city( const tripoint_abs_sm &center )
 {
-    const auto cities = get_cities_near( center, omt_to_sm_copy( OMAPX ) );
+    const auto cities = get_cities_near( center, project_to<coords::sm>( OMAPX ) );
     const auto it = std::ranges::find_if( cities,
     [this]( const city_reference & elem ) {
         const tripoint_abs_omt p = project_to<coords::omt>( elem.abs_sm_pos );
@@ -1870,7 +1870,7 @@ std::string overmapbuffer::get_description_at( const tripoint_abs_sm &where )
     const direction dir = direction_from( closest_cref.abs_sm_pos, where );
     const std::string dir_name = colorize( direction_name( dir ), c_light_gray );
 
-    const int sm_size = omt_to_sm_copy( closest_cref.city->size );
+    const int sm_size = project_to<coords::sm>( closest_cref.city->size );
     const int sm_dist = closest_cref.distance;
 
     //~ First parameter is a terrain name, second parameter is a direction, and third parameter is a city name.
@@ -1946,7 +1946,7 @@ void overmapbuffer::discard_monster_map( const tripoint_abs_sm &p )
 void overmapbuffer::despawn_monster( const monster &critter )
 {
     // pos_abs is stamped by game::despawn_monster() before this call, so no map context needed.
-    const tripoint_abs_sm abs_sm( ms_to_sm_copy( critter.pos_abs.raw() ) );
+    const tripoint_abs_sm abs_sm( project_to<coords::sm>( critter.pos_abs.raw() ) );
     // Get the overmap coordinates and get the overmap, sm is now local to that overmap
     point_abs_om omp;
     tripoint_om_sm sm;
@@ -1954,7 +1954,7 @@ void overmapbuffer::despawn_monster( const monster &critter )
     overmap &om = get( omp );
     // Store the monster using coordinates local to the overmap.
     if( critter.is_nemesis() ) {
-        const tripoint_abs_omt abs_omt( ms_to_omt_copy( critter.pos_abs.raw() ) );
+        const tripoint_abs_omt abs_omt( project_to<coords::omt>( critter.pos_abs.raw() ) );
         om.place_nemesis( abs_omt );
     } else {
         om.monster_map->insert( std::make_pair( sm, critter ) );
@@ -2056,7 +2056,7 @@ bool overmapbuffer::place_special( const overmap_special_id &special_id,
 
     // Get all of the overmaps within the defined radius of the center.
     for( const auto &om : get_overmaps_near(
-             project_to<coords::sm>( center ), omt_to_sm_copy( max_radius ) ) ) {
+             project_to<coords::sm>( center ), project_to<coords::sm>( max_radius ) ) ) {
 
         // We'll include points that within our radius. We reduce the radius by
         // the length of the longest side of our special so that we don't end up in a

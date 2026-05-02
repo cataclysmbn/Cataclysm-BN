@@ -9374,7 +9374,7 @@ void map::build_outside_cache( const int zlev )
             }
             cur_submap->rebuild_outside_cache( above, tripoint_bub_sm( smx, smy, zlev ) );
 
-            const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
+            const point sm_offset = project_to<coords::ms>( point( smx, smy ) );
             for( int sx = 0; sx < SEEX; ++sx ) {
                 for( int sy = 0; sy < SEEY; ++sy ) {
                     ch.outside_cache[static_cast<size_t>( ch.idx( sm_offset.x + sx,
@@ -9492,7 +9492,7 @@ bool map::build_floor_cache( const int zlev )
             }
             cur_submap->rebuild_floor_cache( *this, tripoint_bub_sm( smx, smy, zlev ) );
 
-            const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
+            const point sm_offset = project_to<coords::ms>( point( smx, smy ) );
 
             if( !rebuild_all ) {
                 // Reset this submap's region to "has floor" before stamping no-floor tiles,

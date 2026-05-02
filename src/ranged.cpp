@@ -700,10 +700,10 @@ target_handler::trajectory target_handler::mode_turrets( avatar &you, vehicle &v
         tripoint_bub_ms pos = veh.bub_part_location( *t );
 
         int res = 0;
-        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point( range, 0 ) ) );
-        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point( -range, 0 ) ) );
-        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point( 0, range ) ) );
-        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point( 0, -range ) ) );
+        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point_rel_ms( range, 0 ) ) );
+        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point_rel_ms( -range, 0 ) ) );
+        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point_rel_ms( 0, range ) ) );
+        res = std::max( res, rl_dist( you.bub_pos(), pos.raw() + point_rel_ms( 0, -range ) ) );
         range_total = std::max( range_total, res );
     }
 

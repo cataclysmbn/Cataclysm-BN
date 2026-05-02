@@ -140,7 +140,7 @@ static void scatter_chunks( const itype_id &chunk_name, int chunk_amt, monster &
     map &here = get_map();
     for( int i = 0; i < chunk_amt; i += pile_size ) {
         bool drop_chunks = true;
-        tripoint tarp( z.bub_pos() + point( rng( -distance, distance ), rng( -distance, distance ) ) );
+        tripoint tarp( z.bub_pos() + point_rel_ms( rng( -distance, distance ), rng( -distance, distance ) ) );
         const auto traj = line_to( z.bub_pos(), tarp );
         tripoint prev_point = z.bub_pos();
         for( size_t j = 0; j < traj.size(); j++ ) {

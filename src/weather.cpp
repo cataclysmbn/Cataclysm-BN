@@ -192,7 +192,7 @@ weather_sum sum_conditions( const time_point &start, const time_point &end,
         const weather_manager &weather = get_weather();
         data.wind_amount += get_local_windpower( weather.windspeed,
                             // TODO: fix point types
-                            get_overmapbuffer( get_avatar().get_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy(
+                            get_overmapbuffer( get_avatar().get_dimension() ).ter( tripoint_abs_omt( project_to<coords::omt>(
                                         location ) ) ),
                             location,
                             weather.winddirection, false ) * to_turns<int>( tick_size );

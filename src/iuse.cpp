@@ -1689,7 +1689,7 @@ int iuse::good_fishing_spot( tripoint pos )
     int fishable_locations = g->get_fishable_locations( 60, pos ).size();
     map &here = get_map();
     const oter_id &cur_omt =
-        get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy(
+        get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( project_to<coords::omt>(
                     here.bub_to_abs( pos ) ) ) );
     std::string om_id = cur_omt.id().c_str();
     if( fishable_locations < 100 && !g->m.has_flag( "CURRENT", pos ) &&
@@ -6895,7 +6895,7 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
 
     // TODO: fix point types
     const oter_id &cur_ter =
-        get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( ms_to_omt_copy(
+        get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( project_to<coords::omt>(
                     g->m.bub_to_abs( aim_point ) ) ) );
     std::string overmap_desc = string_format( _( "In the background you can see a %s" ),
                                colorize( cur_ter->get_name(), cur_ter->get_color() ) );

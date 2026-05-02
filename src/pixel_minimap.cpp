@@ -241,7 +241,7 @@ void pixel_minimap::set_settings( const pixel_minimap_settings &settings )
 
 void pixel_minimap::prepare_cache_for_updates( const tripoint &center )
 {
-    const tripoint new_center_sm = get_map().get_abs_sub().raw() + ms_to_sm_copy( center );
+    const tripoint new_center_sm = get_map().get_abs_sub().raw() + project_to<coords::sm>( center );
     const tripoint center_sm_diff = cached_center_sm - new_center_sm;
 
     //invalidate the cache if the game shifted more than one submap in the last update, or if z-level changed.
@@ -471,22 +471,21 @@ void pixel_minimap::render( const tripoint &center )
 
 void pixel_minimap::render_cache( const tripoint &center )
 {
-    const tripoint sm_center = get_map().get_abs_sub().raw() + ms_to_sm_copy( center );
+    const tripoint sm_center = get_map().get_abs_sub().raw() + project_to<coords::sm>( center );
     const auto sm_offset = tripoint{
         view_tiles_count.x / SEEX / 2,
         view_tiles_count.y / SEEY / 2, 0
     };
 
-    auto ms_remain = center.xy();
-    ms_to_sm_remain( ms_remain );
+    const auto ms_remain = project_remain<coords::sm>( point_bub_ms( center.xy() ) ).remainder;
     // Compute the tile offset so the player lands exactly at the texture centre
     // (view_tiles_count / 2).  The old formula used SEEX/2 as an approximation,
     // which is only correct when view_tiles_count is an exact odd multiple of
     // SEEX — producing a systematic upper-left drift otherwise (most visible at
     // bubble size 4, where view_tiles_count = screen_rect.w / 3).
     const auto ms_offset = point{
-        view_tiles_count.x / 2 - sm_offset.x *SEEX - ms_remain.x,
-        view_tiles_count.y / 2 - sm_offset.y *SEEY - ms_remain.y
+        view_tiles_count.x / 2 - sm_offset.x *SEEX - ms_remain.x(),
+        view_tiles_count.y / 2 - sm_offset.y *SEEY - ms_remain.y()
     };
 
     for( const auto &elem : cache ) {
@@ -503,7 +502,7 @@ void pixel_minimap::render_cache( const tripoint &center )
         }
 
         const tripoint sm_pos = rel_pos + sm_offset;
-        const tripoint ms_pos = sm_to_ms_copy( sm_pos ) + ms_offset;
+        const tripoint ms_pos = project_to<coords::ms>( sm_pos ) + ms_offset;
 
         const SDL_Rect chunk_rect = projector->get_chunk_rect( ms_pos.xy(), { SEEX, SEEY } );
 

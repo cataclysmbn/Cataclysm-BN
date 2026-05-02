@@ -260,7 +260,7 @@ static void check_npc_movement( const tripoint_bub_ms &origin )
                 case 'M':
                 case 'B':
                 case 'C':
-                    tripoint_bub_ms p = origin + point( x, y );
+                    tripoint_bub_ms p = origin + point_rel_ms( x, y );
                     npc *guy = g->critter_at<npc>( p );
                     REQUIRE( guy != nullptr );
                     guy->move();
@@ -273,7 +273,7 @@ static void check_npc_movement( const tripoint_bub_ms &origin )
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             if( setup[y][x] == 'A' ) {
-                tripoint_bub_ms p = origin + point( x, y );
+                tripoint_bub_ms p = origin + point_rel_ms( x, y );
                 npc *guy = g->critter_at<npc>( p );
                 REQUIRE( guy != nullptr );
                 CHECK( !guy->has_effect( effect_bouldering ) );
@@ -285,7 +285,7 @@ static void check_npc_movement( const tripoint_bub_ms &origin )
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             if( setup[y][x] == 'R' ) {
-                tripoint_bub_ms p = origin + point( x, y );
+                tripoint_bub_ms p = origin + point_rel_ms( x, y );
                 npc *guy = g->critter_at<npc>( p );
                 REQUIRE( guy != nullptr );
                 CHECK( guy->has_effect( effect_bouldering ) );
@@ -300,7 +300,7 @@ static void check_npc_movement( const tripoint_bub_ms &origin )
                 case 'W':
                 case 'M':
                     CAPTURE( setup[y][x] );
-                    tripoint_bub_ms p = origin + point( x, y );
+                    tripoint_bub_ms p = origin + point_rel_ms( x, y );
                     npc *guy = g->critter_at<npc>( p );
                     CHECK( guy != nullptr );
                     break;
@@ -314,7 +314,7 @@ static void check_npc_movement( const tripoint_bub_ms &origin )
             switch( setup[y][x] ) {
                 case 'B':
                 case 'C':
-                    tripoint_bub_ms p = origin + point( x, y );
+                    tripoint_bub_ms p = origin + point_rel_ms( x, y );
                     npc *guy = g->critter_at<npc>( p );
                     CHECK( guy == nullptr );
                     break;
@@ -340,7 +340,7 @@ TEST_CASE( "npc-movement" )
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             const char type = setup[y][x];
-            const tripoint_bub_ms p = player_character.bub_pos() + point( x, y );
+            const tripoint_bub_ms p = player_character.bub_pos() + point_rel_ms( x, y );
             // create walls
             if( type == '#' ) {
                 here.ter_set( p, t_reinforced_glass );
@@ -401,7 +401,7 @@ TEST_CASE( "npc-movement" )
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             const char type = setup[y][x];
-            const tripoint_bub_ms p = player_character.bub_pos() + point( x, y );
+            const tripoint_bub_ms p = player_character.bub_pos() + point_rel_ms( x, y );
             if( type == '#' ) {
                 REQUIRE( !here.passable( p ) );
             } else {
@@ -439,7 +439,7 @@ TEST_CASE( "npc-movement" )
         for( int y = 0; y < height; ++y ) {
             for( int x = 0; x < width; ++x ) {
                 if( setup[y][x] == 'V' ) {
-                    g->place_player( player_character.bub_pos() + point( x, y ) );
+                    g->place_player( player_character.bub_pos() + point_rel_ms( x, y ) );
                     break;
                 }
             }

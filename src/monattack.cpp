@@ -2103,7 +2103,7 @@ bool mattack::fungus_fortify( monster *z )
         // Oops, can't reach. ):
         // How's about we spawn more tendrils? :)
         // Aimed at the player, too?  Sure!
-        const tripoint_bub_ms hit_pos = target->bub_pos() + point( rng( -1, 1 ), rng( -1, 1 ) );
+        const tripoint_bub_ms hit_pos = target->bub_pos() + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) );
         if( hit_pos == target->bub_pos() && !target->uncanny_dodge() ) {
             const bodypart_str_id hit = body_part_hit_by_plant();
             //~ %s is bodypart name in accusative.
@@ -3029,7 +3029,7 @@ bool mattack::nurse_check_up( monster *z )
 {
     bool found_target = false;
     player *target = nullptr;
-    tripoint_bub_ms tmp_pos( z->bub_pos() + point( 12, 12 ) );
+    tripoint_bub_ms tmp_pos( z->bub_pos() + point_rel_ms( 12, 12 ) );
     for( auto critter : g->m.get_creatures_in_radius( z->bub_pos(), 6 ) ) {
         player *tmp_player = dynamic_cast<player *>( critter );
         if( tmp_player != nullptr && z->sees( *tmp_player ) &&
@@ -3080,7 +3080,7 @@ bool mattack::nurse_assist( monster *z )
 
     bool found_target = false;
     player *target = nullptr;
-    tripoint_bub_ms tmp_pos( z->bub_pos() + point( 12, 12 ) );
+    tripoint_bub_ms tmp_pos( z->bub_pos() + point_rel_ms( 12, 12 ) );
     for( auto critter : g->m.get_creatures_in_radius( z->bub_pos(), 6 ) ) {
         player *tmp_player = dynamic_cast<player *>( critter );
         // No need to scan players we can't reach
@@ -3135,7 +3135,7 @@ bool mattack::nurse_operate( monster *z )
 
     bool found_target = false;
     player *target = nullptr;
-    tripoint_bub_ms tmp_pos( z->bub_pos() + point( 12, 12 ) );
+    tripoint_bub_ms tmp_pos( z->bub_pos() + point_rel_ms( 12, 12 ) );
     for( auto critter : g->m.get_creatures_in_radius( z->bub_pos(), 6 ) ) {
         player *tmp_player = dynamic_cast< player *>( critter );
         // No need to scan players we can't reach
@@ -5598,7 +5598,7 @@ bool mattack::bio_op_disarm( monster *z )
 
     if( my_roll >= their_roll && !it.has_flag( flag_NO_UNWIELD ) ) {
         target->add_msg_if_player( m_bad, _( "and throws it to the ground!" ) );
-        const tripoint_bub_ms tp = foe->bub_pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
+        const tripoint_bub_ms tp = foe->bub_pos() + tripoint_rel_ms( rng( -1, 1 ), rng( -1, 1 ), 0 );
         g->m.add_item_or_charges( tp, it.detach( ) );
     } else {
         target->add_msg_if_player( m_good, _( "but you break its grip!" ) );
