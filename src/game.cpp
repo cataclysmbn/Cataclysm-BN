@@ -9202,7 +9202,7 @@ static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_
     catacurses::window w_vehicle_info_border;
 
     vehicle *cur_vehicle = nullptr;
-    auto active_pos = tripoint_zero;
+    tripoint active_pos = tripoint_zero;
     bool hide_ui = false;
 
     ui_adaptor ui;

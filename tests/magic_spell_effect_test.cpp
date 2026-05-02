@@ -40,7 +40,7 @@ TEST_CASE( "line_attack", "[magic]" )
     c.setpos( tripoint_zero );
 
     // target point 5 tiles east of zero
-    auto target = tripoint_east * 5;
+    tripoint target = tripoint_east * 5;
 
     // Ensure that AOE=0 spell covers the 5 tiles along vector towards target
     SECTION( "aoe=0" ) {

@@ -70,7 +70,7 @@ void deserialize<item>( safe_reference<item> &out, JsonIn &js )
         auto obj = js.get_object();
         auto type = obj.get_string( "type" );
         int idx = -1;
-        auto pos = tripoint_min;
+        tripoint pos = tripoint_min;
 
         obj.read( "idx", idx );
         obj.read( "pos", pos );
