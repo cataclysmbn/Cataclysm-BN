@@ -52,7 +52,7 @@ void complete_craft( Character &who, item &craft );
 
 namespace crafting
 {
-std::pair<bench_type, float> best_bench_here( const item &craft, const tripoint &loc,
+std::pair<bench_type, float> best_bench_here( const item &craft, const tripoint_bub_ms &loc,
         bool can_lift );
 /**
 * Returns the set of book types in crafting_inv that provide the

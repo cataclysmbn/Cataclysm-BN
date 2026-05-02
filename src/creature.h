@@ -735,7 +735,7 @@ class Creature
 
         int moves = 0;
         void draw( const catacurses::window &w, point origin, bool inverted ) const;
-        void draw( const catacurses::window &w, const tripoint &origin, bool inverted ) const;
+        void draw( const catacurses::window &w, const tripoint_bub_ms &origin, bool inverted ) const;
         /**
          * Write information about this creature.
          * @param w the window to print the text into.

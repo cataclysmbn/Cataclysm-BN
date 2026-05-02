@@ -405,7 +405,7 @@ class zone_manager
                   bool invert, bool enabled,
                   const tripoint &start, const tripoint &end,
                   shared_ptr_fast<zone_options> options = nullptr );
-        const zone_data *get_zone_at( const tripoint &where, const zone_type_id &type ) const;
+        const zone_data *get_zone_at( const tripoint_bub_ms &where, const zone_type_id &type ) const;
         void create_vehicle_loot_zone( class vehicle &vehicle, tripoint_mnt_veh mount_point,
                                        zone_data &new_zone );
 
@@ -422,31 +422,31 @@ class zone_manager
         bool has_defined( const zone_type_id &type, const faction_id &fac = your_fac ) const;
         void cache_data();
         void cache_vzones();
-        bool has( const zone_type_id &type, const tripoint &where,
+        bool has( const zone_type_id &type, const tripoint_bub_ms &where,
                   const faction_id &fac = your_fac ) const;
-        bool has_near( const zone_type_id &type, const tripoint &where, int range = MAX_DISTANCE,
+        bool has_near( const zone_type_id &type, const tripoint_bub_ms &where, int range = MAX_DISTANCE,
                        const faction_id &fac = your_fac ) const;
-        bool has_loot_dest_near( const tripoint &where ) const;
-        bool custom_loot_has( const tripoint &where, const item *it ) const;
-        std::unordered_set<tripoint> get_near( const zone_type_id &type, const tripoint &where,
+        bool has_loot_dest_near( const tripoint_bub_ms &where ) const;
+        bool custom_loot_has( const tripoint_bub_ms &where, const item *it ) const;
+        std::unordered_set<tripoint> get_near( const zone_type_id &type, const tripoint_bub_ms &where,
                                                int range = MAX_DISTANCE, const item *it = nullptr, const faction_id &fac = your_fac ) const;
-        std::optional<tripoint> get_nearest( const zone_type_id &type, const tripoint &where,
+        std::optional<tripoint> get_nearest( const zone_type_id &type, const tripoint_bub_ms &where,
                                              int range = MAX_DISTANCE, const faction_id &fac = your_fac ) const;
-        zone_type_id get_near_zone_type_for_item( const item &it, const tripoint &where,
+        zone_type_id get_near_zone_type_for_item( const item &it, const tripoint_bub_ms &where,
                 int range = MAX_DISTANCE ) const;
-        std::vector<zone_data> get_zones( const zone_type_id &type, const tripoint &where,
+        std::vector<zone_data> get_zones( const zone_type_id &type, const tripoint_bub_ms &where,
                                           const faction_id &fac = your_fac ) const;
-        const zone_data *get_zone_at( const tripoint &where ) const;
-        const zone_data *get_bottom_zone( const tripoint &where,
+        const zone_data *get_zone_at( const tripoint_bub_ms &where ) const;
+        const zone_data *get_bottom_zone( const tripoint_bub_ms &where,
                                           const faction_id &fac = your_fac ) const;
         std::optional<std::string> query_name( const std::string &default_name = "" ) const;
         std::optional<zone_type_id> query_type() const;
         void swap( zone_data &a, zone_data &b );
         void rotate_zones( map &target_map, int turns );
         // list of tripoints of zones that are loot zones only
-        std::unordered_set<tripoint> get_point_set_loot( const tripoint &where, int radius,
+        std::unordered_set<tripoint> get_point_set_loot( const tripoint_bub_ms &where, int radius,
                 const faction_id &fac = your_fac ) const;
-        std::unordered_set<tripoint> get_point_set_loot( const tripoint &where, int radius,
+        std::unordered_set<tripoint> get_point_set_loot( const tripoint_bub_ms &where, int radius,
                 bool npc_search, const faction_id &fac = your_fac ) const;
 
         // 'direct' access to zone_manager::zones, giving direct access was nono

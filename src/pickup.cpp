@@ -593,7 +593,7 @@ std::vector<std::list<item_stack::iterator>> flatten( const std::vector<stacked_
 } // namespace pickup
 
 // Pick up items at (pos).
-void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
+void pickup::pick_up( const tripoint_bub_ms &p, int min, from_where get_items_from )
 {
     int cargo_part = -1;
 

@@ -71,10 +71,10 @@ struct gate_data {
     void load( const JsonObject &jo, const std::string &src );
     void check() const;
 
-    bool is_suitable_wall( const tripoint &pos ) const;
+    bool is_suitable_wall( const tripoint_bub_ms &pos ) const;
 };
 
-gate_id get_gate_id( const tripoint &pos )
+gate_id get_gate_id( const tripoint_bub_ms &pos )
 {
     return gate_id( get_map().ter( pos ).id().str() );
 }

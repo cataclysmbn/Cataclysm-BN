@@ -8142,7 +8142,7 @@ bool Character::invoke_item( item *used, const std::string &method )
     return invoke_item( used, method, bub_pos().raw() );
 }
 
-bool Character::invoke_item( item *used, const std::string &method, const tripoint &pt )
+bool Character::invoke_item( item *used, const std::string &method, const tripoint_bub_ms &pt )
 {
     if( method != iuse_TOGGLE_UPS_CHARGING && !has_enough_charges( *used, true ) ) {
         return false;

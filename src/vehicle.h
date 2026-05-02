@@ -236,7 +236,7 @@ class turret_data
          * Check if target is in range of this turret (considers current ammo)
          * Assumes this turret's status is 'ready'
          */
-        bool in_range( const tripoint &target ) const;
+        bool in_range( const tripoint_abs_ms &target ) const;
 
         /**
          * Prepare the turret for firing, called by firing function.
@@ -259,7 +259,7 @@ class turret_data
          * @param target coordinates that will be fired on.
          * @return the number of shots actually fired (may be zero).
          */
-        int fire( Character &who, const tripoint &target );
+        int fire( Character &who, const tripoint_abs_ms &target );
 
         bool can_reload() const;
         bool can_unload() const;
@@ -1375,14 +1375,14 @@ class vehicle
         std::vector<vehicle_part *> turrets();
 
         /** Get all vehicle turrets loaded and ready to fire at target */
-        std::vector<vehicle_part *> turrets( const tripoint &target );
+        std::vector<vehicle_part *> turrets( const tripoint_bub_ms &target );
 
         /** Get firing data for a turret */
         turret_data turret_query( vehicle_part &pt );
         turret_data turret_query( const vehicle_part &pt ) const;
 
-        turret_data turret_query( const tripoint &pos );
-        turret_data turret_query( const tripoint &pos ) const;
+        turret_data turret_query( const tripoint_abs_ms &pos );
+        turret_data turret_query( const tripoint_abs_ms &pos ) const;
 
         /** Returns true if any part on the tile the turret is installed on has the MANUAL flag. */
         bool is_manual_turret( const vehicle_part &pt ) const;

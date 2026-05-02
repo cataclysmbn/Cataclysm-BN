@@ -694,7 +694,7 @@ class Character : public Creature, public location_visitable<Character>
         void perform_special_attacks( Creature &t, dealt_damage_instance &dealt_dam );
 
         /** Handles reach melee attack on point p */
-        void reach_attack( const tripoint &p );
+        void reach_attack( const tripoint_bub_ms &p );
         // HACK for mdefense::zapback
         bool reach_attacking = false;
 
@@ -1181,7 +1181,7 @@ class Character : public Creature, public location_visitable<Character>
          * Returns true if it destroys the item. Consumes charges from the item.
          * Multi-use items are ONLY supported when all use_methods are iuse_actor!
          */
-        virtual bool invoke_item( item *, const tripoint &pt );
+        virtual bool invoke_item( item *, const tripoint_bub_ms &pt );
         /** As above, but with a pre-selected method. Debugmsg if this item doesn't have this method. */
         virtual bool invoke_item( item *, const std::string &, const tripoint_bub_ms &pt );
         /** As above two, but with position equal to current position */
@@ -2520,11 +2520,11 @@ class Character : public Creature, public location_visitable<Character>
          * Start various types of crafts
          * @param loc the location of the workbench. tripoint_zero indicates crafting from inventory.
          */
-        void craft( const tripoint &loc = tripoint_zero );
-        void recraft( const tripoint &loc = tripoint_zero );
-        void long_craft( const tripoint &loc = tripoint_zero );
-        void make_craft( const recipe_id &id, int batch_size, const tripoint &loc = tripoint_zero );
-        void make_all_craft( const recipe_id &id, int batch_size, const tripoint &loc = tripoint_zero );
+        void craft( const tripoint_bub_ms &loc = tripoint_zero );
+        void recraft( const tripoint_bub_ms &loc = tripoint_zero );
+        void long_craft( const tripoint_bub_ms &loc = tripoint_zero );
+        void make_craft( const recipe_id &id, int batch_size, const tripoint_bub_ms &loc = tripoint_zero );
+        void make_all_craft( const recipe_id &id, int batch_size, const tripoint_bub_ms &loc = tripoint_zero );
         /** consume components and create an active, in progress craft containing them */
         item *start_craft( craft_command &command, const tripoint_bub_ms &loc );
         /**
@@ -2575,7 +2575,7 @@ class Character : public Creature, public location_visitable<Character>
         void consume_tools( const std::vector<tool_comp> &tools, int batch = 1,
                             const std::string &hotkeys = DEFAULT_HOTKEYS );
         void make_craft_with_command( const recipe_id &id_to_make, int batch_size, bool is_long = false,
-                                      const tripoint &loc = tripoint_zero );
+                                      const tripoint_bub_ms &loc = tripoint_zero );
         pimpl<craft_command> last_craft;
 
         recipe_id lastrecipe;

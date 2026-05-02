@@ -175,7 +175,7 @@ void make_gun_sound_effect( const Character &who, bool burst, const item &gun );
  * @param shots Maximum number of shots to fire (less may be fired in some circumstances)
  * @return Number of shots actually fired
  */
-int fire_gun( Character &who, const tripoint &target, int shots = 1 );
+int fire_gun( Character &who, const tripoint_bub_ms &target, int shots = 1 );
 
 /**
  * Fire a gun or auxiliary gunmod (ignoring any current mode)
@@ -185,7 +185,7 @@ int fire_gun( Character &who, const tripoint &target, int shots = 1 );
  * @param gun Item to fire (which does not necessary have to be in the characters possession)
  * @return Number of shots actually fired
  */
-int fire_gun( Character &who, const tripoint &target, int shots, item &gun,
+int fire_gun( Character &who, const tripoint_bub_ms &target, int shots, item &gun,
               item *ammo, const std::optional<tripoint> &shot_origin = std::nullopt );
 
 /** Expected thrown damage with a given item, given the thrower's effective strength and skill. */
@@ -197,7 +197,7 @@ auto throw_damage( const item &it, const int skill, const int str ) -> int;
  * @param to_throw Item being thrown
  * @param blind_throw_from_pos Position of blind throw (if blind throwing)
  */
-auto throw_item( Character &who, const tripoint &target,
+auto throw_item( Character &who, const tripoint_bub_ms &target,
                  detached_ptr<item> &&to_throw,
                  std::optional<tripoint> blind_throw_from_pos ) -> dealt_projectile_attack;
 

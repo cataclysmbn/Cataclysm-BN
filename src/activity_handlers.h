@@ -22,7 +22,7 @@ class vehicle;
 template<typename T>
 class detached_ptr;
 
-std::vector<tripoint> get_sorted_tiles_by_distance( const tripoint &abspos,
+std::vector<tripoint> get_sorted_tiles_by_distance( const tripoint_bub_ms &abspos,
         const std::unordered_set<tripoint> &tiles );
 std::vector<tripoint> route_adjacent( const player &p, const tripoint &dest );
 

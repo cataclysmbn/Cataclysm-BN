@@ -450,7 +450,7 @@ bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) c
 // Helper function to check if potential area of effect of a weapon overlaps vehicle
 // Maybe TODO: If this is too slow, precalculate a bounding box and clip the tested area to it
 // TODO: make tripoint_range (and other iterators) to be range-compatible
-static bool overlaps_vehicle( const std::set<tripoint_bub_ms> &veh_area, const tripoint &pos,
+static bool overlaps_vehicle( const std::set<tripoint_bub_ms> &veh_area, const tripoint_bub_ms &pos,
                               const int area )
 {
     for( const tripoint_bub_ms &tmp : tripoint_range<tripoint_bub_ms>( tripoint_bub_ms(
@@ -2322,7 +2322,7 @@ void Creature::draw( const catacurses::window &w, point origin, bool inverted ) 
     draw( w, tripoint( origin, bub_pos().z() ), inverted );
 }
 
-void Creature::draw( const catacurses::window &w, const tripoint &origin, bool inverted ) const
+void Creature::draw( const catacurses::window &w, const tripoint_bub_ms &origin, bool inverted ) const
 {
     if( is_draw_tiles_mode() ) {
         return;

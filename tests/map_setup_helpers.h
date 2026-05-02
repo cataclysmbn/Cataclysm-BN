@@ -66,7 +66,7 @@ struct canvas {
         void assert_size( const tripoint &sz ) const;
         std::string to_string() const;
 
-        inline bool in_bounds( const tripoint &p ) const {
+        inline bool in_bounds( const tripoint_bub_ms &p ) const {
             return p.x >= 0 &&
                    p.y >= 0 &&
                    p.z >= 0 &&
@@ -75,11 +75,11 @@ struct canvas {
                    p.z < size().z;
         }
 
-        inline void set( const tripoint &p, char32_t val ) {
+        inline void set( const tripoint_bub_ms &p, char32_t val ) {
             assert( in_bounds( p ) );
             data[p.z][p.y][p.x] = val;
         }
-        inline char32_t get( const tripoint &p ) const {
+        inline char32_t get( const tripoint_bub_ms &p ) const {
             assert( in_bounds( p ) );
             return data[p.z][p.y][p.x];
         }

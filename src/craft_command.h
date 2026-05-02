@@ -75,7 +75,7 @@ class craft_command
             rec( to_make ), batch_size( batch_size ), longcraft( is_long ), crafter( crafter ), loc( loc ) {}
 
         /** Selects components to use for the craft, then assigns the crafting activity to 'crafter'. */
-        void execute( const tripoint &new_loc = tripoint_zero );
+        void execute( const tripoint_bub_ms &new_loc = tripoint_zero );
 
         /**
          * Consumes the selected components and returns the resulting in progress craft item.

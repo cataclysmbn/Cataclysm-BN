@@ -792,7 +792,7 @@ bool avatar::read( item *loc, const bool continuous )
     return true;
 }
 
-void avatar::grab( object_type grab_type, const tripoint &grab_point )
+void avatar::grab( object_type grab_type, const tripoint_bub_ms &grab_point )
 {
     this->grab_type = grab_type;
     this->grab_point = grab_point;
@@ -1481,7 +1481,7 @@ detached_ptr<item> avatar::wield( detached_ptr<item> &&target )
     return detached_ptr<item>();
 }
 
-bool avatar::invoke_item( item *used, const tripoint &pt )
+bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt )
 {
     std::map<std::string, use_function> use_methods;
     use_methods.insert( used->type->use_methods.begin(), used->type->use_methods.end() );
@@ -1528,7 +1528,7 @@ bool avatar::invoke_item( item *used )
     return Character::invoke_item( used );
 }
 
-bool avatar::invoke_item( item *used, const std::string &method, const tripoint &pt )
+bool avatar::invoke_item( item *used, const std::string &method, const tripoint_bub_ms &pt )
 {
     return Character::invoke_item( used, method, pt );
 }

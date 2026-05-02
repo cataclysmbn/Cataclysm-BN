@@ -3177,7 +3177,7 @@ void npc::advance_job_progress( int n )
     }
 }
 
-bool npc::invoke_item( item *used, const tripoint &pt )
+bool npc::invoke_item( item *used, const tripoint_bub_ms &pt )
 {
     const auto &use_methods = used->type->use_methods;
 

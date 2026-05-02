@@ -232,7 +232,7 @@ float fine_detail_vision_mod( const Character &who )
     return fine_detail_vision_mod( who, who.bub_pos() );
 }
 
-float fine_detail_vision_mod( const Character &who, const tripoint &p )
+float fine_detail_vision_mod( const Character &who, const tripoint_bub_ms &p )
 {
     if( who.has_effect_with_flag( flag_EFFECT_SUPER_CLAIRVOYANCE )
         || who.has_effect_with_flag( flag_EFFECT_CLAIRVOYANCE )
@@ -267,12 +267,12 @@ bool can_see_fine_details( const Character &who )
     return can_see_fine_details( who, who.bub_pos() );
 }
 
-bool can_see_fine_details( const Character &who, const tripoint &p )
+bool can_see_fine_details( const Character &who, const tripoint_bub_ms &p )
 {
     return fine_detail_vision_mod( who, p ) <= FINE_VISION_THRESHOLD;
 }
 
-comfort_response_t base_comfort_value( const Character &who, const tripoint &p )
+comfort_response_t base_comfort_value( const Character &who, const tripoint_bub_ms &p )
 {
     // Comfort of sleeping spots is "objective", while sleep_spot( p ) is "subjective"
     // As in the latter also checks for fatigue and other variables while this function
@@ -436,7 +436,7 @@ comfort_response_t base_comfort_value( const Character &who, const tripoint &p )
     return comfort_response;
 }
 
-int rate_sleep_spot( const Character &who, const tripoint &p )
+int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
 {
     const int current_stim = who.get_stim();
     const comfort_response_t comfort_info = base_comfort_value( who, p );

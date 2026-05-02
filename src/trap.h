@@ -196,7 +196,7 @@ struct trap {
          * if remove_on_trigger is set to true removes the trap via
          * @ref map::remove_trap.
          */
-        void trigger_aftermath( map &m, const tripoint &p ) const;
+        void trigger_aftermath( map &m, const tripoint_bub_ms &p ) const;
         /**
          * Called when a trap at the given point in the map has been disarmed.
          * It should spawn trap items (if any) and remove the trap from the map via

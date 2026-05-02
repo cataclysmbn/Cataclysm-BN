@@ -279,7 +279,7 @@ void activity_speed::calc_morale_factor( const Character &who )
     morale = 1.0f;
 }
 
-void activity_speed::find_best_bench( const tripoint &pos, const metric metrics )
+void activity_speed::find_best_bench( const tripoint_bub_ms &pos, const metric metrics )
 {
     static const std::string feature_wb = "WORKBENCH";
     static const workbench_info_wrapper ground_bench(

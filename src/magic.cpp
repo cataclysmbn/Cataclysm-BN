@@ -627,7 +627,7 @@ int spell::aoe() const
     }
 }
 
-bool spell::in_aoe( const tripoint &source, const tripoint &target ) const
+bool spell::in_aoe( const tripoint &source, const tripoint_bub_ms &target ) const
 {
     if( has_flag( spell_flag::RANDOM_AOE ) ) {
         return rl_dist( source, target ) <= type->max_aoe;
@@ -1114,7 +1114,7 @@ void spell::create_field( const tripoint &at ) const
     }
 }
 
-void spell::make_sound( const tripoint &target ) const
+void spell::make_sound( const tripoint_bub_ms &target ) const
 {
     if( !has_flag( spell_flag::SILENT ) ) {
         int loudness = std::abs( damage() ) / 3;
@@ -1125,7 +1125,7 @@ void spell::make_sound( const tripoint &target ) const
     }
 }
 
-void spell::make_sound( const tripoint &target, int loudness ) const
+void spell::make_sound( const tripoint_bub_ms &target, int loudness ) const
 {
     sounds::sound( target, loudness, type->sound_type, type->sound_description.translated(),
                    type->sound_ambient, type->sound_id, type->sound_variant );
@@ -1141,7 +1141,7 @@ energy_type spell::energy_source() const
     return type->energy_source;
 }
 
-bool spell::is_target_in_range( const Creature &caster, const tripoint &p ) const
+bool spell::is_target_in_range( const Creature &caster, const tripoint_bub_ms &p ) const
 {
     return rl_dist( caster.bub_pos(), p ) <= range();
 }
@@ -1151,7 +1151,7 @@ bool spell::is_valid_target( valid_target t ) const
     return type->valid_targets[t];
 }
 
-bool spell::is_valid_target( const Creature &caster, const tripoint &p ) const
+bool spell::is_valid_target( const Creature &caster, const tripoint_bub_ms &p ) const
 {
     bool valid = false;
     if( Creature *const cr = g->critter_at<Creature>( p ) ) {
@@ -1419,7 +1419,7 @@ vproto_id spell::summon_vehicle_id() const
     return vproto_id( type->effect_str );
 }
 
-int spell::heal( const tripoint &target ) const
+int spell::heal( const tripoint_bub_ms &target ) const
 {
     monster *const mon = g->critter_at<monster>( target );
     if( mon ) {
@@ -1433,12 +1433,12 @@ int spell::heal( const tripoint &target ) const
     return -1;
 }
 
-void spell::cast_spell_effect( Creature &source, const tripoint &target ) const
+void spell::cast_spell_effect( Creature &source, const tripoint_bub_ms &target ) const
 {
     type->effect( *this, source, target );
 }
 
-void spell::cast_all_effects( Creature &source, const tripoint &target ) const
+void spell::cast_all_effects( Creature &source, const tripoint_bub_ms &target ) const
 {
     if( has_flag( spell_flag::WONDER ) ) {
         const auto iter = type->additional_spells.begin();

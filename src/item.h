@@ -442,7 +442,7 @@ class item : public location_visitable<item>, public game_object<item>
          * the return value can differ on successive calls.
          * @param pos The location of the item (see REVIVE_SPECIAL flag).
          */
-        bool ready_to_revive( const tripoint &pos ) const;
+        bool ready_to_revive( const tripoint_bub_ms &pos ) const;
 
         bool is_money() const;
 
@@ -943,8 +943,8 @@ class item : public location_visitable<item>, public game_object<item>
          * @return true if the item is fully rotten and is ready to be removed
          */
         /*@{*/
-        static detached_ptr<item> process_rot( detached_ptr<item> &&self,  const tripoint &pos );
-        static detached_ptr<item> process_rot( detached_ptr<item> &&self,  bool seals, const tripoint &pos,
+        static detached_ptr<item> process_rot( detached_ptr<item> &&self,  const tripoint_bub_ms &pos );
+        static detached_ptr<item> process_rot( detached_ptr<item> &&self,  bool seals, const tripoint_bub_ms &pos,
                                                player *carrier, temperature_flag flag,
                                                const weather_manager &weather_generator );
         /*@}*/
@@ -1245,10 +1245,10 @@ class item : public location_visitable<item>, public game_object<item>
          * Returns false if the item is not destroyed.
          */
         /*@{*/
-        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier, const tripoint &pos,
+        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier, const tripoint_bub_ms &pos,
                                            bool activate,
                                            temperature_flag flag = temperature_flag::TEMP_NORMAL );
-        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier, const tripoint &pos,
+        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier, const tripoint_bub_ms &pos,
                                            bool activate,
                                            temperature_flag flag, const weather_manager &weather_generator );
         /*@}*/
@@ -1271,7 +1271,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param carrier The character carrying the artifact, can be null.
          * @param pos The location of the artifact (should be the player location if carried).
          */
-        void process_artifact( player *carrier, const tripoint &pos );
+        void process_artifact( player *carrier, const tripoint_bub_ms &pos );
         void process_relic( Character *carrier );
 
         bool destroyed_at_zero_charges() const;
@@ -1439,7 +1439,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param pos Position to dump the contents on.
          * @return If the item is now empty.
          */
-        bool spill_contents( const tripoint &pos );
+        bool spill_contents( const tripoint_bub_ms &pos );
 
         /** Checks if item is a holster and currently capable of storing obj
          *  @param obj object that we want to holster
@@ -1984,7 +1984,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param pos current location of item, used for ejecting magazines and similar effects
          * @return amount of ammo consumed which will be between 0 and qty
          */
-        int ammo_consume( int qty, const tripoint &pos );
+        int ammo_consume( int qty, const tripoint_bub_ms &pos );
 
         /** Specific ammo data, returns nullptr if item is neither ammo nor loaded with any */
         const itype *ammo_data() const;
@@ -2250,7 +2250,7 @@ class item : public location_visitable<item>, public game_object<item>
          * See @game::place_critter for meaning of @p target and @p pos.
          * @return Whether the monster has been spawned (may fail if no space available).
          */
-        bool release_monster( const tripoint &target, int radius = 0 );
+        bool release_monster( const tripoint_bub_ms &target, int radius = 0 );
         /* add the monster at target to this item, despawning it */
         int contain_monster( const tripoint &target );
 

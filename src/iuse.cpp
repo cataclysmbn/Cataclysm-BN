@@ -423,11 +423,11 @@ static std::string effects_description_for_creature( Creature *creature, std::st
 
 static object_names_collection enumerate_objects_around_point( const tripoint &point,
         int radius, const tripoint &bounds_center_point, int bounds_radius,
-        const tripoint &camera_pos, const units::volume &min_visible_volume, bool create_figure_desc,
+        const tripoint_bub_ms &camera_pos, const units::volume &min_visible_volume, bool create_figure_desc,
         std::unordered_set<tripoint> &ignored_points,
         std::unordered_set<const vehicle *> &vehicles_recorded );
 static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
-        const tripoint &camera_pos,
+        const tripoint_bub_ms &camera_pos,
         std::vector<monster *> &monster_vec, std::vector<player *> &player_vec );
 
 static const std::vector<std::string> camera_ter_whitelist_flags = {
@@ -461,7 +461,7 @@ void remove_radio_mod( item &it, player &p )
  * Regardless, returning 0 indicates the item has not been used up,
  * though it may have been successfully activated.
  */
-int iuse::sewage( player *p, item *it, bool, const tripoint & )
+int iuse::sewage( player *p, item *it, bool, const tripoint_bub_ms &)
 {
     if( !p->query_yn( _( "Are you sure you want to drink… this?" ) ) ) {
         return 0;
@@ -475,13 +475,13 @@ int iuse::sewage( player *p, item *it, bool, const tripoint & )
     return it->type->charges_to_use();
 }
 
-int iuse::honeycomb( player *p, item *it, bool, const tripoint & )
+int iuse::honeycomb( player *p, item *it, bool, const tripoint_bub_ms &)
 {
     g->m.spawn_item( p->bub_pos(), itype_wax, 2 );
     return it->type->charges_to_use();
 }
 
-int iuse::xanax( player *p, item *it, bool, const tripoint & )
+int iuse::xanax( player *p, item *it, bool, const tripoint_bub_ms &)
 {
     p->add_msg_if_player( _( "You take some %s." ), it->tname() );
     p->add_effect( effect_took_xanax, 90_minutes );
@@ -517,17 +517,17 @@ static int alcohol( player &p, const item &it, const int strength )
     return it.type->charges_to_use();
 }
 
-int iuse::alcohol_weak( player *p, item *it, bool, const tripoint & )
+int iuse::alcohol_weak( player *p, item *it, bool, const tripoint_bub_ms &)
 {
     return alcohol( *p, *it, 0 );
 }
 
-int iuse::alcohol_medium( player *p, item *it, bool, const tripoint & )
+int iuse::alcohol_medium( player *p, item *it, bool, const tripoint_bub_ms &)
 {
     return alcohol( *p, *it, 1 );
 }
 
-int iuse::alcohol_strong( player *p, item *it, bool, const tripoint & )
+int iuse::alcohol_strong( player *p, item *it, bool, const tripoint_bub_ms &)
 {
     return alcohol( *p, *it, 2 );
 }
@@ -1019,7 +1019,7 @@ static void do_purify( player &p )
     }
 }
 
-int iuse::purifier( player *p, item *it, bool, const tripoint & )
+int iuse::purifier( player *p, item *it, bool, const tripoint_bub_ms &)
 {
     mutagen_attempt checks =
         mutagen_common_checks( *p, *it, false, mutagen_technique::consumed_purifier );
@@ -6530,7 +6530,7 @@ struct object_names_collection {
 
 static object_names_collection enumerate_objects_around_point( const tripoint &point,
         const int radius, const tripoint &bounds_center_point, const int bounds_radius,
-        const tripoint &camera_pos, const units::volume &min_visible_volume, bool create_figure_desc,
+        const tripoint_bub_ms &camera_pos, const units::volume &min_visible_volume, bool create_figure_desc,
         std::unordered_set<tripoint> &ignored_points,
         std::unordered_set<const vehicle *> &vehicles_recorded )
 {
@@ -6674,7 +6674,7 @@ static object_names_collection enumerate_objects_around_point( const tripoint &p
 }
 
 static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
-        const tripoint &camera_pos,
+        const tripoint_bub_ms &camera_pos,
         std::vector<monster *> &monster_vec, std::vector<player *> &player_vec )
 {
     // look for big items on top of stacks in the background for the selfie description
@@ -8473,7 +8473,7 @@ int iuse::directional_hologram( player *p, item *it, bool, const tripoint &pos )
         p->add_msg_if_player( m_info, _( "Can't create a hologram there." ) );
         return 0;
     }
-    tripoint target = pos;
+    const tripoint_bub_ms &target = pos;
     target.x = p->posx() + 4 * SEEX * ( posp.x - p->posx() );
     target.y = p->posy() + 4 * SEEY * ( posp.y - p->posy() );
     hologram->friendly = -1;

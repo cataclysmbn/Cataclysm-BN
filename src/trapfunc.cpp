@@ -1019,7 +1019,7 @@ static bool query_for_item( const player *pl, const itype_id &itemname, const ch
     return pl->has_amount( itemname, 1 ) && ( !pl->is_player() || query_yn( que ) );
 }
 
-static tripoint random_neighbor( tripoint center )
+static tripoint random_neighbor( const tripoint_bub_ms &center )
 {
     center.x += rng( -1, 1 );
     center.y += rng( -1, 1 );

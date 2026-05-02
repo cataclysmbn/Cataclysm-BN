@@ -333,7 +333,7 @@ bool Character::has_morale_to_craft() const
     return get_morale_level() >= -50;
 }
 
-void Character::craft( const tripoint &loc )
+void Character::craft( const tripoint_bub_ms &loc )
 {
     int batch_size = 0;
     const recipe *rec = select_crafting_recipe( batch_size, *this );
@@ -344,7 +344,7 @@ void Character::craft( const tripoint &loc )
     }
 }
 
-void Character::recraft( const tripoint &loc )
+void Character::recraft( const tripoint_bub_ms &loc )
 {
     if( lastrecipe.str().empty() ) {
         popup( _( "Craft something first" ) );
@@ -353,7 +353,7 @@ void Character::recraft( const tripoint &loc )
     }
 }
 
-void Character::long_craft( const tripoint &loc )
+void Character::long_craft( const tripoint_bub_ms &loc )
 {
     int batch_size = 0;
     const recipe *rec = select_crafting_recipe( batch_size, *this );
@@ -501,7 +501,7 @@ std::vector<const item *> Character::get_eligible_containers_for_crafting() cons
 
     map &here = get_map();
     // get all potential containers within PICKUP_RANGE tiles including vehicles
-    for( const tripoint &loc : closest_points_first( pos(), PICKUP_RANGE ) ) {
+    for( const tripoint_bub_ms &loc : closest_points_first( pos(), PICKUP_RANGE ) ) {
         // can not reach this -> can not access its contents
         if( pos() != loc && !here.clear_path( pos(), loc, PICKUP_RANGE, 1, 100 ) ) {
             continue;
@@ -598,18 +598,18 @@ void Character::invalidate_crafting_inventory()
     cached_position = tripoint_min;
 }
 
-void Character::make_craft( const recipe_id &id_to_make, int batch_size, const tripoint &loc )
+void Character::make_craft( const recipe_id &id_to_make, int batch_size, const tripoint_bub_ms &loc )
 {
     make_craft_with_command( id_to_make, batch_size, false, loc );
 }
 
-void Character::make_all_craft( const recipe_id &id_to_make, int batch_size, const tripoint &loc )
+void Character::make_all_craft( const recipe_id &id_to_make, int batch_size, const tripoint_bub_ms &loc )
 {
     make_craft_with_command( id_to_make, batch_size, true, loc );
 }
 
 void Character::make_craft_with_command( const recipe_id &id_to_make, int batch_size, bool is_long,
-        const tripoint &loc )
+        const tripoint_bub_ms &loc )
 {
     const auto &recipe_to_make = *id_to_make;
 
@@ -654,7 +654,7 @@ static void set_components( item &of, const std::vector<item *> &used,
  * Helper for @ref set_item_map_or_vehicle
  * This is needed to still get a vaild item_location if overflow occurs
  */
-static void set_item_map( const tripoint &loc, detached_ptr<item> &&newit )
+static void set_item_map( const tripoint_bub_ms &loc, detached_ptr<item> &&newit )
 {
     // Includes loc
     for( const tripoint &tile : closest_points_first( loc, 2 ) ) {
@@ -671,7 +671,7 @@ static void set_item_map( const tripoint &loc, detached_ptr<item> &&newit )
 /**
  * Set an item on the map or in a vehicle and return the new location
  */
-static void set_item_map_or_vehicle( const Character &who, const tripoint &loc,
+static void set_item_map_or_vehicle( const Character &who, const tripoint_bub_ms &loc,
                                      detached_ptr<item> &&newit )
 {
     if( !newit ) {
@@ -1586,7 +1586,7 @@ std::vector<detached_ptr<item>> Character::consume_items( map &m,
 
     item_comp selected_comp = is.comp;
 
-    const tripoint &loc = origin;
+    const tripoint_bub_ms &loc = origin;
     const bool by_charges = item::count_by_charges( selected_comp.type ) && selected_comp.count > 0;
     // Count given to use_amount/use_charges, changed by those functions!
     int real_count = ( selected_comp.count > 0 ) ? selected_comp.count * batch : std::abs(

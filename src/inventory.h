@@ -136,7 +136,7 @@ class inventory : public temp_visitable<inventory>
         void restack( player &p );
         void form_from_zone( map &m, std::unordered_set<tripoint> &zone_pts, const Character *pl = nullptr,
                              bool assign_invlet = true );
-        void form_from_map( const tripoint &origin, int range, const Character *pl = nullptr,
+        void form_from_map( const tripoint_bub_ms &origin, int range, const Character *pl = nullptr,
                             bool assign_invlet = true,
                             bool clear_path = true );
         void form_from_map( map &m, const tripoint &origin, int range, const Character *pl = nullptr,

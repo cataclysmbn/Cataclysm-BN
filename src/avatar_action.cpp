@@ -551,7 +551,7 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint &dest_loc )
     return true;
 }
 
-void avatar_action::swim( map &m, avatar &you, const tripoint &p )
+void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
 {
     if( !m.has_flag( flag_SWIMMABLE, p ) ) {
         debugmsg( "Tried to swim in %s!", m.tername( p ) );
@@ -1364,7 +1364,7 @@ void avatar_action::reload_weapon( bool try_everything )
     // If we make it here and haven't found anything to reload, start looking elsewhere.
     vehicle *veh = veh_pointer_or_null( here.veh_at( u.bub_pos() ) );
     turret_data turret;
-    if( veh && ( turret = veh->turret_query( u.bub_pos() ) ) && turret.can_reload() ) {
+    if( veh && ( turret = veh->turret_query( u.abs_pos() ) ) && turret.can_reload() ) {
         item_reload_option opt = character_funcs::select_ammo( u, turret.base(), true );
         if( opt ) {
             u.assign_activity( std::make_unique<player_activity>( activity_id( "ACT_RELOAD" ), opt.moves(),

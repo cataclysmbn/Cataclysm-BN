@@ -21,14 +21,14 @@ struct tripoint;
 namespace iuse
 {
 // FOOD AND DRUGS (ADMINISTRATION)
-int sewage( player *, item *, bool, const tripoint & );
-int honeycomb( player *, item *, bool, const tripoint & );
-int alcohol_weak( player *, item *, bool, const tripoint & );
-int alcohol_medium( player *, item *, bool, const tripoint & );
-int alcohol_strong( player *, item *, bool, const tripoint & );
-int xanax( player *, item *, bool, const tripoint & );
-int antibiotic( player *, item *, bool, const tripoint & );
-int eyedrops( player *, item *, bool, const tripoint & );
+int sewage( player *, item *, bool, const tripoint_bub_ms &);
+int honeycomb( player *, item *, bool, const tripoint_bub_ms &);
+int alcohol_weak( player *, item *, bool, const tripoint_bub_ms &);
+int alcohol_medium( player *, item *, bool, const tripoint_bub_ms &);
+int alcohol_strong( player *, item *, bool, const tripoint_bub_ms &);
+int xanax( player *, item *, bool, const tripoint_bub_ms &);
+int antibiotic( player *, item *, bool, const tripoint_bub_ms &);
+int eyedrops( player *, item *, bool, const tripoint_bub_ms &);
 int fungicide( player *, item *, bool, const tripoint & );
 int antifungal( player *, item *, bool, const tripoint & );
 int antiparasitic( player *, item *, bool, const tripoint & );
@@ -47,7 +47,7 @@ int inhaler( player *, item *, bool, const tripoint & );
 int blech( player *, item *, bool, const tripoint & );
 int blech_because_unclean( player *, item *, bool, const tripoint & );
 int plantblech( player *, item *, bool, const tripoint & );
-int purifier( player *, item *, bool, const tripoint & );
+int purifier( player *, item *, bool, const tripoint_bub_ms &);
 int purify_iv( player *, item *, bool, const tripoint & );
 int purify_smart( player *, item *, bool, const tripoint & );
 int marloss( player *, item *, bool, const tripoint & );
@@ -233,8 +233,8 @@ class iuse_actor
 
         virtual ~iuse_actor() = default;
         virtual void load( const JsonObject &jo ) = 0;
-        virtual int use( player &, item &, bool, const tripoint & ) const = 0;
-        virtual ret_val<bool> can_use( const Character &, const item &, bool, const tripoint & ) const;
+        virtual int use( player &, item &, bool, const tripoint_bub_ms &) const = 0;
+        virtual ret_val<bool> can_use( const Character &, const item &, bool, const tripoint_bub_ms &) const;
         virtual void info( const item &, std::vector<iteminfo> & ) const {}
         /**
          * Returns a deep copy of this object. Example implementation:
@@ -271,8 +271,8 @@ struct use_function {
         use_function( const std::string &type, use_function_pointer f );
         use_function( std::unique_ptr<iuse_actor> f ) : actor( std::move( f ) ) {}
 
-        int call( player &, item &, bool, const tripoint & ) const;
-        ret_val<bool> can_call( const Character &, const item &, bool t, const tripoint &pos ) const;
+        int call( player &, item &, bool, const tripoint_bub_ms &) const;
+        ret_val<bool> can_call( const Character &, const item &, bool t, const tripoint_bub_ms &pos ) const;
 
         iuse_actor *get_actor_ptr() {
             return actor.get();

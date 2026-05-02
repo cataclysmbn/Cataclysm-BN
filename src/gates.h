@@ -16,9 +16,9 @@ void check();
 void reset();
 
 /** opens/closes the gate via player's activity */
-void toggle_gate( const tripoint &pos, Character &who );
+void toggle_gate( const tripoint_bub_ms &pos, Character &who );
 /** opens/closes the gate immediately */
-void toggle_gate( const tripoint &pos );
+void toggle_gate( const tripoint_bub_ms &pos );
 
 } // namespace gates
 

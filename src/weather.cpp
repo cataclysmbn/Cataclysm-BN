@@ -82,7 +82,7 @@ static bool is_player_outside()
     if( g->get_levz() < 0 ) {
         return false;
     }
-    const tripoint pos = get_player_character().pos();
+    const tripoint_bub_ms &pos = get_player_character().pos();
     if( !get_map().is_outside( pos ) ) {
         return false;
     }
@@ -161,7 +161,7 @@ inline void proc_weather_sum( const weather_type_id wtype, weather_sum &data,
     data.sunlight += tick_sunlight * to_turns<int>( tick_size );
 }
 
-const weather_type_id &current_weather( const tripoint &location, const time_point &t )
+const weather_type_id &current_weather( const tripoint_bub_ms &location, const time_point &t )
 {
     const weather_manager &weather = get_weather();
     const auto wgen = weather.get_cur_weather_gen();
@@ -172,7 +172,7 @@ const weather_type_id &current_weather( const tripoint &location, const time_poi
 }
 
 weather_sum sum_conditions( const time_point &start, const time_point &end,
-                            const tripoint &location )
+                            const tripoint_bub_ms &location )
 {
     time_duration tick_size = 0_turns;
     weather_sum data;
@@ -204,7 +204,7 @@ weather_sum sum_conditions( const time_point &start, const time_point &end,
  * Determine what a funnel has filled out of game, using funnelcontainer.bday as a starting point.
  */
 void retroactively_fill_from_funnel( item &it, const trap &tr, const time_point &start,
-                                     const time_point &end, const tripoint &pos )
+                                     const time_point &end, const tripoint_bub_ms &pos )
 {
     if( start > end || !tr.is_funnel() ) {
         return;
@@ -1004,7 +1004,7 @@ int get_local_humidity( double humidity, const weather_type_id &weather, bool sh
     return tmphumidity;
 }
 
-double get_local_windpower( double windpower, const oter_id &omter, const tripoint &location,
+double get_local_windpower( double windpower, const oter_id &omter, const tripoint_bub_ms &location,
                             const int &winddirection, bool sheltered )
 {
     /**
@@ -1031,7 +1031,7 @@ double get_local_windpower( double windpower, const oter_id &omter, const tripoi
     return static_cast<double>( tmpwind );
 }
 
-bool is_wind_blocker( const tripoint &location )
+bool is_wind_blocker( const tripoint_bub_ms &location )
 {
     return g->m.has_flag( "BLOCK_WIND", location );
 }
@@ -1207,7 +1207,7 @@ void weather_manager::set_nextweather( time_point t )
     update_weather();
 }
 
-auto weather_manager::get_temperature( const tripoint &location ) const -> units::temperature
+auto weather_manager::get_temperature( const tripoint_bub_ms &location ) const -> units::temperature
 {
     const auto &cached = temperature_cache.find( location );
     if( cached != temperature_cache.end() ) {

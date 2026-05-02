@@ -74,7 +74,7 @@ constexpr float FINE_VISION_PERFECT = 1.0f;
  * @{
  */
 float fine_detail_vision_mod( const Character &who );
-float fine_detail_vision_mod( const Character &who, const tripoint &p );
+float fine_detail_vision_mod( const Character &who, const tripoint_bub_ms &p );
 /** @} */
 
 /**
@@ -88,7 +88,7 @@ float fine_detail_vision_mod( const Character &who, const tripoint &p );
  * @{
  */
 bool can_see_fine_details( const Character &who );
-bool can_see_fine_details( const Character &who, const tripoint &p );
+bool can_see_fine_details( const Character &who, const tripoint_bub_ms &p );
 /** @} */
 
 enum class comfort_level {
@@ -106,10 +106,10 @@ struct comfort_response_t {
 };
 
 /** Rate point's ability to serve as a bed. Only takes certain mutations into account, and not fatigue nor stimulants. */
-comfort_response_t base_comfort_value( const Character &who, const tripoint &p );
+comfort_response_t base_comfort_value( const Character &who, const tripoint_bub_ms &p );
 
 /** Rate point's ability to serve as a bed. Takes all mutations, fatigue and stimulants into account. */
-int rate_sleep_spot( const Character &who, const tripoint &p );
+int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p );
 
 /** Checked each turn during "lying_down", returns true if the avatar falls asleep */
 bool roll_can_sleep( Character &who );

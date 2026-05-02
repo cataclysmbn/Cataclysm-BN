@@ -17,6 +17,7 @@
 #include "gun_mode.h"
 #include "item.h"
 #include "itype.h"
+#include "map.h"
 #include "messages.h"
 #include "npc.h"
 #include "player.h"
@@ -50,7 +51,7 @@ std::vector<vehicle_part *> vehicle::turrets()
     return res;
 }
 
-std::vector<vehicle_part *> vehicle::turrets( const tripoint &target )
+std::vector<vehicle_part *> vehicle::turrets( const tripoint_bub_ms &target )
 {
     std::vector<vehicle_part *> res = turrets();
     // exclude turrets not ready to fire or where target is out of range
@@ -76,7 +77,7 @@ turret_data vehicle::turret_query( const vehicle_part &pt ) const
 
 turret_data vehicle::turret_query( const tripoint_abs_ms &pos )
 {
-    auto res = get_parts_at( tripoint_bub_ms( pos ), "TURRET", part_status_flag::any );
+    auto res = get_parts_at( g->m.abs_to_bub( pos ), "TURRET", part_status_flag::any );
     return !res.empty() ? turret_query( *res.front() ) : turret_data();
 }
 

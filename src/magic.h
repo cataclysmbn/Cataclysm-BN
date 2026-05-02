@@ -179,7 +179,7 @@ class spell_type
         std::string sound_variant;
         // spell effect string. used to look up spell function
         std::string effect_name;
-        std::function<void( const spell &, Creature &, const tripoint & )> effect;
+        std::function<void( const spell &, Creature &, const tripoint_bub_ms &)> effect;
         // extra information about spell effect. allows for combinations for effects
         std::string effect_str;
         // list of additional "spell effects"
@@ -431,7 +431,7 @@ class spell
         // check if the spell's class is the same as input
         bool is_spell_class( const trait_id &mid ) const;
 
-        bool in_aoe( const tripoint &source, const tripoint &target ) const;
+        bool in_aoe( const tripoint &source, const tripoint_bub_ms &target ) const;
 
         // get spell id (from type)
         spell_id id() const;
@@ -481,29 +481,29 @@ class spell
         void create_field( const tripoint &at ) const;
 
         // makes a spell sound at the location
-        void make_sound( const tripoint &target ) const;
-        void make_sound( const tripoint &target, int loudness ) const;
+        void make_sound( const tripoint_bub_ms &target ) const;
+        void make_sound( const tripoint_bub_ms &target, int loudness ) const;
         // heals the critter at the location, returns amount healed (Character heals each body part)
-        int heal( const tripoint &target ) const;
+        int heal( const tripoint_bub_ms &target ) const;
 
         // casts the spell effect. returns true if successful
-        void cast_spell_effect( Creature &source, const tripoint &target ) const;
+        void cast_spell_effect( Creature &source, const tripoint_bub_ms &target ) const;
         // goes through the spell effect and all of its internal spells
-        void cast_all_effects( Creature &source, const tripoint &target ) const;
+        void cast_all_effects( Creature &source, const tripoint_bub_ms &target ) const;
         // uses up the components in @you's inventory
         void use_components( Character &who ) const;
         // checks if a target point is in spell range
-        bool is_target_in_range( const Creature &caster, const tripoint &p ) const;
+        bool is_target_in_range( const Creature &caster, const tripoint_bub_ms &p ) const;
 
         // is the target valid for this spell?
-        bool is_valid_target( const Creature &caster, const tripoint &p ) const;
+        bool is_valid_target( const Creature &caster, const tripoint_bub_ms &p ) const;
         bool is_valid_target( valid_target t ) const;
         bool is_valid_effect_target( valid_target t ) const;
         bool target_by_monster_id( const tripoint &p ) const;
 
         // picks a random valid tripoint from @area
         std::optional<tripoint> random_valid_target( const Creature &caster,
-                const tripoint &caster_pos ) const;
+                const tripoint_bub_ms &caster_pos ) const;
 
         LUA_TYPE_OPS( spell, type );
 };
@@ -598,7 +598,7 @@ void area_pull( const spell &sp, Creature &caster, const tripoint &center );
 void area_push( const spell &sp, Creature &caster, const tripoint &center );
 void directed_push( const spell &sp, Creature &caster, const tripoint &target );
 
-std::set<tripoint> spell_effect_blast( const spell &, const tripoint &, const tripoint &target,
+std::set<tripoint> spell_effect_blast( const spell &, const tripoint_bub_ms &, const tripoint &target,
                                        int aoe_radius, bool ignore_walls );
 std::set<tripoint> spell_effect_cone( const spell &sp, const tripoint &source,
                                       const tripoint &target,
@@ -676,7 +676,7 @@ struct area_expander {
 
     area_expander();
     // Check whether we have already visited this node.
-    int contains( const tripoint &pt ) const;
+    int contains( const tripoint_abs_sm &pt ) const;
 
     // Adds node to a search tree. Returns true if new node is allocated.
     bool enqueue( const tripoint &from, const tripoint &to, float cost );

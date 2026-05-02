@@ -440,8 +440,8 @@ class inventory_selector
         virtual ~inventory_selector();
         /** These functions add items from map / vehicles. */
         void add_character_items( Character &character );
-        void add_map_items( const tripoint &target );
-        void add_vehicle_items( const tripoint &target );
+        void add_map_items( const tripoint_bub_ms &target );
+        void add_vehicle_items( const tripoint_bub_ms &target );
         void add_nearby_items( int radius = 1 );
         void add_bionics_items( Character &character );
         /** Remove all items */

@@ -1055,7 +1055,7 @@ void sfx::do_ambient()
 
 // firing is the item that is fired. It may be the wielded gun, but it can also be an attached
 // gunmod.
-void sfx::generate_gun_sound( const tripoint &source, const item &firing )
+void sfx::generate_gun_sound( const tripoint_bub_ms &source, const item &firing )
 {
     if( test_mode ) {
         return;

@@ -59,7 +59,7 @@ class weather_generator
         /**
          * TODO: Remove the regular tripoint overload, replace with *_abs_ms one.
          */
-        w_point get_weather( const tripoint &, const time_point &, unsigned seed ) const;
+        w_point get_weather( const tripoint_abs_ms &, const time_point &, unsigned seed ) const;
         w_point get_weather( const tripoint_abs_ms &location, const time_point &t,
                              const calendar_config &calendar_config, unsigned seed ) const;
         const weather_type_id &get_weather_conditions( const tripoint &, const time_point &,

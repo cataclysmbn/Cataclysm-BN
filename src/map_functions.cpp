@@ -13,7 +13,7 @@ static const mtype_id mon_mi_go_myrmidon( "mon_mi_go_myrmidon" );
 namespace map_funcs
 {
 
-auto climbing_cost( const map &m, const tripoint &from, const tripoint &to ) -> std::optional<int>
+auto climbing_cost( const map &m, const tripoint_bub_ms &from, const tripoint &to ) -> std::optional<int>
 {
     // TODO: All sorts of mutations, equipment weight etc. for characters
     if( !m.valid_move( from, to, false, true ) ) {

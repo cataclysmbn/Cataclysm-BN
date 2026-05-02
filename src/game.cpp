@@ -651,7 +651,7 @@ special_game_type game::gametype() const
     return gamemode ? gamemode->id() : special_game_type::NONE;
 }
 
-void game::load_map( const tripoint &pos_sm, const bool pump_events )
+void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
 {
     // TODO: fix point types
     load_map( tripoint_abs_sm( pos_sm ), pump_events );
@@ -2210,7 +2210,7 @@ void game::autopilot_vehicles()
     }
 }
 
-void game::catch_a_monster( monster *fish, const tripoint &pos, Character *who,
+void game::catch_a_monster( monster *fish, const tripoint_bub_ms &pos, Character *who,
                             const time_duration &catch_duration ) // catching function
 {
     //spawn the corpse, rotten by a part of the duration
@@ -2341,7 +2341,7 @@ static int maptile_field_intensity( maptile &mt, field_type_id fld )
     return field_ptr == nullptr ? 0 : field_ptr->get_field_intensity();
 }
 
-int get_heat_radiation( const tripoint &location, bool direct )
+int get_heat_radiation( const tripoint_bub_ms &location, bool direct )
 {
     // Direct heat from fire sources
     // Cache fires to avoid scanning the map around us bp times
@@ -3738,7 +3738,7 @@ void game::add_draw_callback( const shared_ptr_fast<draw_callback_t> &cb )
     invalidate_main_ui_adaptor();
 }
 
-static void draw_trail( const tripoint &start, const tripoint &end, bool bDrawX );
+static void draw_trail( const tripoint_bub_ms &start, const tripoint_bub_ms &end, bool bDrawX );
 
 struct zone_callback_options {
     std::optional<tripoint> &zone_start;
@@ -3937,7 +3937,7 @@ void game::draw_pixel_minimap( const catacurses::window &w )
 }
 
 static void draw_critter_internal( const catacurses::window &w, const Creature &critter,
-                                   const tripoint &center,
+                                   const tripoint_bub_ms &center,
                                    bool inverted,
                                    const map &m, const avatar &u )
 {
@@ -3969,17 +3969,17 @@ static void draw_critter_internal( const catacurses::window &w, const Creature &
     }
 }
 
-void game::draw_critter( const Creature &critter, const tripoint &center )
+void game::draw_critter( const Creature &critter, const tripoint_bub_ms &center )
 {
     draw_critter_internal( w_terrain, critter, center, false, m, u );
 }
 
-void game::draw_critter_highlighted( const Creature &critter, const tripoint &center )
+void game::draw_critter_highlighted( const Creature &critter, const tripoint_bub_ms &center )
 {
     draw_critter_internal( w_terrain, critter, center, true, m, u );
 }
 
-bool game::is_in_viewport( const tripoint &p, int margin ) const
+bool game::is_in_viewport( const tripoint_bub_ms &p, int margin ) const
 {
     const tripoint diff( u.bub_pos() + u.view_offset - p );
 
@@ -3993,7 +3993,7 @@ void game::draw_ter( const bool draw_sounds )
               draw_sounds );
 }
 
-void game::draw_ter( const tripoint &center, const bool looking, const bool draw_sounds )
+void game::draw_ter( const tripoint_bub_ms &center, const bool looking, const bool draw_sounds )
 {
     ZoneScopedN( "draw_ter" );
     ter_view_p = center;
@@ -5816,7 +5816,7 @@ void game::knockback( std::vector<tripoint> &traj, int stun, int dam_mult,
     }
 }
 
-void game::use_computer( const tripoint &p )
+void game::use_computer( const tripoint_bub_ms &p )
 {
     if( u.has_trait( trait_id( "ILLITERATE" ) ) ) {
         add_msg( m_info, _( "You can not read a computer screen!" ) );
@@ -5942,7 +5942,7 @@ template player *game::critter_by_id<player>( const character_id & );
 template npc *game::critter_by_id<npc>( const character_id & );
 template Creature *game::critter_by_id<Creature>( const character_id & );
 
-static bool can_place_monster( const monster &mon, const tripoint &p )
+static bool can_place_monster( const monster &mon, const tripoint_bub_ms &p )
 {
     if( const monster *const critter = g->critter_at<monster>( p ) ) {
         // Creature_tracker handles this. The hallucination monster will simply vanish
@@ -5961,22 +5961,22 @@ static bool can_place_monster( const monster &mon, const tripoint &p )
 static std::optional<tripoint> choose_where_to_place_monster( const monster &mon,
         const tripoint_range<tripoint> &range )
 {
-    return random_point( range, [&]( const tripoint & p ) {
+    return random_point( range, [&]( const tripoint_bub_ms &p ) {
         return can_place_monster( mon, p );
     } );
 }
 
-monster *game::place_critter_at( const mtype_id &id, const tripoint &p )
+monster *game::place_critter_at( const mtype_id &id, const tripoint_bub_ms &p )
 {
     return place_critter_around( id, p, 0 );
 }
 
-monster *game::place_critter_at( const shared_ptr_fast<monster> &mon, const tripoint &p )
+monster *game::place_critter_at( const shared_ptr_fast<monster> &mon, const tripoint_bub_ms &p )
 {
     return place_critter_around( mon, p, 0 );
 }
 
-monster *game::place_critter_around( const mtype_id &id, const tripoint &center, const int radius )
+monster *game::place_critter_around( const mtype_id &id, const tripoint_bub_ms &center, const int radius )
 {
     // TODO: change this into an assert, it must never happen.
     if( id.is_null() ) {
@@ -6197,17 +6197,17 @@ bool game::is_empty( const tripoint_bub_ms &p )
            critter_at( p.raw() ) == nullptr;
 }
 
-bool game::is_in_sunlight( const tripoint &p )
+bool game::is_in_sunlight( const tripoint_bub_ms &p )
 {
     return weather::is_in_sunlight( m, p, get_weather().weather_id );
 }
 
-bool game::is_sheltered( const tripoint &p )
+bool game::is_sheltered( const tripoint_bub_ms &p )
 {
     return weather::is_sheltered( m, p );
 }
 
-bool game::revive_corpse( const tripoint &p, item &it )
+bool game::revive_corpse( const tripoint_bub_ms &p, item &it )
 {
     if( !it.is_corpse() ) {
         debugmsg( "Tried to revive a non-corpse." );
@@ -6374,9 +6374,9 @@ void game::exam_vehicle( vehicle &veh, point c )
     }
 }
 
-bool game::forced_door_closing( const tripoint &p, const ter_id &door_type, int bash_dmg )
+bool game::forced_door_closing( const tripoint_bub_ms &p, const ter_id &door_type, int bash_dmg )
 {
-    const auto valid_location = [&]( const tripoint & p ) {
+    const auto valid_location = [&]( const tripoint_bub_ms &p ) {
         return g->is_empty( p );
     };
     const auto get_random_point = [&]() -> tripoint {
@@ -6508,12 +6508,12 @@ bool game::forced_door_closing( const tripoint &p, const ter_id &door_type, int 
     return true;
 }
 
-void game::toggle_gate( const tripoint &p )
+void game::toggle_gate( const tripoint_bub_ms &p )
 {
     gates::toggle_gate( p, u );
 }
 
-void game::moving_vehicle_dismount( const tripoint &dest_loc )
+void game::moving_vehicle_dismount( const tripoint_bub_ms &dest_loc )
 {
     const optional_vpart_position vp = m.veh_at( u.bub_pos() );
     if( !vp ) {
@@ -7342,7 +7342,7 @@ void game::pickup()
     pickup( *examp_ );
 }
 
-void game::pickup( const tripoint &p )
+void game::pickup( const tripoint_bub_ms &p )
 {
     // Highlight target
     shared_ptr_fast<game::draw_callback_t> hilite_cb = make_shared_fast<game::draw_callback_t>( [&]() {
@@ -7386,7 +7386,7 @@ void game::peek()
     peek( u.bub_pos() + *p );
 }
 
-void game::peek( const tripoint &p )
+void game::peek( const tripoint_bub_ms &p )
 {
     u.moves -= 200;
     tripoint prev = u.bub_pos();
@@ -9097,7 +9097,7 @@ void game::reset_item_list_state( const catacurses::window &window, int height,
 
 struct nearby_vehicle_entry {
     vehicle *veh = nullptr;
-    tripoint pos = tripoint_zero;
+    const tripoint_bub_ms &pos = tripoint_zero;
     int dist = 0;
 };
 
@@ -10940,12 +10940,12 @@ void game::set_safe_mode( safe_mode_type mode )
     safe_mode_warning_logged = false;
 }
 
-bool game::is_dangerous_tile( const tripoint &dest_loc ) const
+bool game::is_dangerous_tile( const tripoint_bub_ms &dest_loc ) const
 {
     return !( get_dangerous_tile( dest_loc ).empty() );
 }
 
-bool game::prompt_dangerous_tile( const tripoint &dest_loc ) const
+bool game::prompt_dangerous_tile( const tripoint_bub_ms &dest_loc ) const
 {
     static const iexamine_function ledge_examine = iexamine_function_from_string( "ledge" );
     std::vector<std::string> harmful_stuff = get_dangerous_tile( dest_loc );
@@ -10978,7 +10978,7 @@ bool game::prompt_dangerous_tile( const tripoint &dest_loc ) const
     return false;
 }
 
-std::vector<std::string> game::get_dangerous_tile( const tripoint &dest_loc ) const
+std::vector<std::string> game::get_dangerous_tile( const tripoint_bub_ms &dest_loc ) const
 {
     std::vector<std::string> harmful_stuff;
     const auto fields_here = m.field_at( u.bub_pos() );
@@ -11072,7 +11072,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
 
     bool grabbed = u.get_grab_type() != OBJECT_NONE;
     if( grabbed ) {
-        const tripoint dp = dest_loc - u.bub_pos();
+        const tripoint_bub_ms &dp = dest_loc - u.bub_pos();
         pushing = dp ==  u.grab_point;
         pulling = dp == -u.grab_point;
     }
@@ -11567,7 +11567,7 @@ point_rel_ms game::place_player( const tripoint_bub_ms &dest_loc )
 
         const std::string forage_type = get_option<std::string>( "AUTO_FORAGING" );
         if( forage_type != "off" ) {
-            const auto forage = [&]( const tripoint & pos ) {
+            const auto forage = [&]( const tripoint_bub_ms &pos ) {
                 const auto &xter_t = m.ter( pos ).obj().examine;
                 const auto &xfurn_t = m.furn( pos ).obj().examine;
                 const bool forage_everything = forage_type == "both";
@@ -11613,7 +11613,7 @@ point_rel_ms game::place_player( const tripoint_bub_ms &dest_loc )
                 }
             }
         } else if( pulp_butcher == "pulp" || pulp_butcher == "pulp_adjacent" ) {
-            const auto pulp = [&]( const tripoint & pos ) {
+            const auto pulp = [&]( const tripoint_bub_ms &pos ) {
                 for( const auto &maybe_corpse : m.i_at( pos ) ) {
                     if( maybe_corpse->is_corpse() && maybe_corpse->can_revive() &&
                         !maybe_corpse->get_mtype()->bloodType().obj().has_acid ) {
@@ -12563,10 +12563,10 @@ static std::optional<tripoint> point_selection_menu( const std::vector<tripoint>
     return pts[ret];
 }
 
-static std::optional<tripoint> find_empty_spot_nearby( const tripoint &pos )
+static std::optional<tripoint> find_empty_spot_nearby( const tripoint_bub_ms &pos )
 {
     map &here = get_map();
-    for( const tripoint &p : here.points_in_radius( pos, 1 ) ) {
+    for( const tripoint_bub_ms &p : here.points_in_radius( pos, 1 ) ) {
         if( p == pos ) {
             continue;
         }
@@ -15170,7 +15170,7 @@ world *game::get_active_world() const
 
 void game::shift_destination_preview( point delta )
 {
-    for( tripoint &p : destination_preview ) {
+    for( const tripoint_bub_ms &p : destination_preview ) {
         p += delta;
     }
 }
@@ -15205,7 +15205,7 @@ void game::remove_fake_item( item *it )
 }
 namespace cata_event_dispatch
 {
-void avatar_moves( const avatar &u, const map &m, const tripoint &p )
+void avatar_moves( const avatar &u, const map &m, const tripoint_bub_ms &p )
 {
     mtype_id mount_type;
     if( u.is_mounted() ) {

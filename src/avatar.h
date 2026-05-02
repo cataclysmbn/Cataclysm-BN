@@ -207,7 +207,7 @@ class avatar : public player
 
         void wake_up() override;
         // Grab furniture / vehicle
-        void grab( object_type grab_type, const tripoint &grab_point = tripoint_zero );
+        void grab( object_type grab_type, const tripoint_bub_ms &grab_point = tripoint_zero );
         object_type get_grab_type() const;
         /** Handles player vomiting effects */
         void vomit();
@@ -259,9 +259,9 @@ class avatar : public player
         bool add_faction_warning( const faction_id &id );
 
         using Character::invoke_item;
-        bool invoke_item( item *, const tripoint &pt ) override;
+        bool invoke_item( item *, const tripoint_bub_ms &pt ) override;
         bool invoke_item( item * ) override;
-        bool invoke_item( item *, const std::string &, const tripoint &pt ) override;
+        bool invoke_item( item *, const std::string &, const tripoint_bub_ms &pt ) override;
         bool invoke_item( item *, const std::string & ) override;
 
         monster_visible_info &get_mon_visible() {

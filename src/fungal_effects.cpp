@@ -64,7 +64,7 @@ fungal_effects::fungal_effects( game &g, map &mp )
 {
 }
 
-void fungal_effects::fungalize( const tripoint &p, Creature *origin, double spore_chance )
+void fungal_effects::fungalize( const tripoint_bub_ms &p, Creature *origin, double spore_chance )
 {
     if( monster *const mon_ptr = g->critter_at<monster>( p ) ) {
         monster &critter = *mon_ptr;
@@ -121,14 +121,14 @@ void fungal_effects::fungalize( const tripoint &p, Creature *origin, double spor
     }
 }
 
-void fungal_effects::create_spores( const tripoint &p, Creature *origin )
+void fungal_effects::create_spores( const tripoint_bub_ms &p, Creature *origin )
 {
     for( const tripoint &tmp : get_map().points_in_radius( p, 1 ) ) {
         fungalize( tmp, origin, fungal_opt.spore_chance );
     }
 }
 
-void fungal_effects::marlossify( const tripoint &p )
+void fungal_effects::marlossify( const tripoint_bub_ms &p )
 {
     auto &terrain = m.ter( p ).obj();
     if( one_in( 25 ) && ( terrain.movecost != 0 && !m.has_furn( p ) )
@@ -145,7 +145,7 @@ void fungal_effects::marlossify( const tripoint &p )
     }
 }
 
-void fungal_effects::spread_fungus_one_tile( const tripoint &p, const int growth )
+void fungal_effects::spread_fungus_one_tile( const tripoint_bub_ms &p, const int growth )
 {
     bool converted = false;
     // Terrain conversion
@@ -250,7 +250,7 @@ void fungal_effects::spread_fungus_one_tile( const tripoint &p, const int growth
     }
 }
 
-void fungal_effects::spread_fungus( const tripoint &p )
+void fungal_effects::spread_fungus( const tripoint_bub_ms &p )
 {
     int growth = 1;
     map &here = get_map();

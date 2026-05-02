@@ -957,7 +957,7 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
     return ret;
 }
 
-void vehicle::handle_trap( const tripoint &p, int part )
+void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
 {
     int pwh = part_with_feature( part, VPFLAG_WHEEL, true );
     if( pwh < 0 ) {

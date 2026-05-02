@@ -214,7 +214,7 @@ class game : public submap_load_listener
         void mark_main_ui_adaptor_resize() const;
         void draw( ui_adaptor &ui );
         void draw_ter( bool draw_sounds = true );
-        void draw_ter( const tripoint &center, bool looking = false, bool draw_sounds = true );
+        void draw_ter( const tripoint_bub_ms &center, bool looking = false, bool draw_sounds = true );
 
         class draw_callback_t
         {
@@ -259,7 +259,7 @@ class game : public submap_load_listener
          * If peeking == true, forbids some exotic movement options
          */
         void vertical_move( int z, bool force, bool peeking = false );
-        void start_hauling( const tripoint &pos );
+        void start_hauling( const tripoint_bub_ms &pos );
         /**
         * Moves the player to an alternate dimension.
         *
@@ -312,7 +312,7 @@ class game : public submap_load_listener
         /** Add goes up/down auto_notes (if turned on) */
         void vertical_notes( int z_before, int z_after );
         /** Checks to see if a player can use a computer (not illiterate, etc.) and uses if able. */
-        void use_computer( const tripoint &p );
+        void use_computer( const tripoint_bub_ms &p );
         /**
          * @return The living creature with the given id. Returns null if no living
          * creature with such an id exists. Never returns a dead creature.
@@ -363,10 +363,10 @@ class game : public submap_load_listener
          * the one contained in @p mon).
          */
         /** @{ */
-        monster *place_critter_at( const mtype_id &id, const tripoint &p );
-        monster *place_critter_at( const shared_ptr_fast<monster> &mon, const tripoint &p );
-        monster *place_critter_around( const mtype_id &id, const tripoint &center, int radius );
-        monster *place_critter_around( const shared_ptr_fast<monster> &mon, const tripoint &center,
+        monster *place_critter_at( const mtype_id &id, const tripoint_bub_ms &p );
+        monster *place_critter_at( const shared_ptr_fast<monster> &mon, const tripoint_bub_ms &p );
+        monster *place_critter_around( const mtype_id &id, const tripoint_bub_ms &center, int radius );
+        monster *place_critter_around( const shared_ptr_fast<monster> &mon, const tripoint_bub_ms &center,
                                        int radius, bool forced = false );
         monster *place_critter_within( const mtype_id &id, const tripoint_range<tripoint> &range );
         monster *place_critter_within( const shared_ptr_fast<monster> &mon,
@@ -523,9 +523,9 @@ class game : public submap_load_listener
         /** Returns true if there is no player, NPC, or monster on the tile and move_cost > 0. */
         bool is_empty( const tripoint_bub_ms &p );
         /** Returns true if p is outdoors and it is sunny. */
-        bool is_in_sunlight( const tripoint &p );
+        bool is_in_sunlight( const tripoint_bub_ms &p );
         /** Returns true if p is indoors, underground, or in a car. */
-        bool is_sheltered( const tripoint &p );
+        bool is_sheltered( const tripoint_bub_ms &p );
         /**
          * Revives a corpse at given location. The monster type and some of its properties are
          * deducted from the corpse. If reviving succeeds, the location is guaranteed to have a
@@ -537,7 +537,7 @@ class game : public submap_load_listener
          * If the monster was revived, the caller should remove the corpse item.
          * If reviving failed, the item is unchanged, as is the environment (no new monsters).
          */
-        bool revive_corpse( const tripoint &p, item &it );
+        bool revive_corpse( const tripoint_bub_ms &p, item &it );
         /**Turns Broken Cyborg monster into Cyborg NPC via surgery*/
         void save_cyborg( item *cyborg, const tripoint &couch_pos, Character &installer );
         /** Asks if the player wants to cancel their activity, and if so cancels it. */
@@ -546,7 +546,7 @@ class game : public submap_load_listener
          *  if the player wants to ignore further distractions. */
         bool cancel_activity_or_ignore_query( distraction_type type, const std::string &text );
         /** Handles players exiting from moving vehicles. */
-        void moving_vehicle_dismount( const tripoint &dest_loc );
+        void moving_vehicle_dismount( const tripoint_bub_ms &dest_loc );
 
         /** Returns the current remotely controlled vehicle. */
         vehicle *remoteveh();
@@ -622,7 +622,7 @@ class game : public submap_load_listener
         /** Draw power from linked portals into vehicle batteries for vp_portal_tap parts. */
         void tick_vehicle_portal_taps();
         /** Picks and spawns a random fish from the remaining fish list when a fish is caught. */
-        void catch_a_monster( monster *fish, const tripoint &pos, Character *who,
+        void catch_a_monster( monster *fish, const tripoint_bub_ms &pos, Character *who,
                               const time_duration &catch_duration );
         /**
          * Get the contiguous fishable locations starting at fish_pos, out to the specificed distance.
@@ -755,7 +755,7 @@ class game : public submap_load_listener
          * this function returns (for example, UIs that draw the map should be
          * disabled).
          */
-        void load_map( const tripoint &pos_sm, bool pump_events = false );
+        void load_map( const tripoint_abs_sm &pos_sm, bool pump_events = false );
         void load_map( const tripoint_abs_sm &pos_sm, bool pump_events = false );
         /**
          * The overmap which contains the center submap of the reality bubble.
@@ -774,7 +774,7 @@ class game : public submap_load_listener
 
         /**@}*/
 
-        void toggle_gate( const tripoint &p );
+        void toggle_gate( const tripoint_bub_ms &p );
 
         // Knockback functions: knock target at t along a line, either calculated
         // from source position s using force parameter or passed as an argument;
@@ -782,45 +782,45 @@ class game : public submap_load_listener
         // force also determines damage along with dam_mult;
         // stun determines base number of turns target is stunned regardless of impact
         // stun == 0 means no stun, stun == -1 indicates only impact stun (wall or npc/monster)
-        void knockback( const tripoint &s, const tripoint &t, int force, int stun, int dam_mult,
+        void knockback( const tripoint &s, const tripoint_bub_ms &t, int force, int stun, int dam_mult,
                         Creature *source );
         void knockback( std::vector<tripoint> &traj, int stun, int dam_mult, Creature *source );
 
         // Animation related functions
         void draw_bullet( const tripoint &t, int i, const std::vector<tripoint> &trajectory,
                           char bullet, const std::string &custom_sprite = {} );
-        void draw_hit_mon( const tripoint &p, const monster &m, bool dead = false );
+        void draw_hit_mon( const tripoint_bub_ms &p, const monster &m, bool dead = false );
         void draw_hit_player( const Character &p, int dam );
-        void draw_line( const tripoint &p, const tripoint &center_point,
+        void draw_line( const tripoint_bub_ms &p, const tripoint &center_point,
                         const std::vector<tripoint> &points, bool noreveal = false );
-        void draw_line( const tripoint &p, const std::vector<tripoint> &points );
+        void draw_line( const tripoint_bub_ms &p, const std::vector<tripoint> &points );
         void draw_weather( const weather_printable &wPrint );
         void draw_sct();
         void draw_zones( const zone_draw_options &options );
         // In curses mode, draw critter (if visible!) on its current position into w_terrain.
         // @param center the center of view, same as when calling map::draw
-        void draw_critter( const Creature &critter, const tripoint &center );
+        void draw_critter( const Creature &critter, const tripoint_bub_ms &center );
         // As @ref draw_critter, but with inverted colors.
-        void draw_critter_highlighted( const Creature &critter, const tripoint &center );
-        void draw_cursor( const tripoint &p );
+        void draw_critter_highlighted( const Creature &critter, const tripoint_bub_ms &center );
+        void draw_cursor( const tripoint_bub_ms &p );
         // Draw a highlight graphic at p, for example when examining something.
         // TILES only, in curses this does nothing
-        void draw_highlight( const tripoint &p );
-        void draw_radiation_override( const tripoint &p, int rad );
-        void draw_terrain_override( const tripoint &p, const ter_id &id );
-        void draw_furniture_override( const tripoint &p, const furn_id &id );
-        void draw_graffiti_override( const tripoint &p, bool has );
-        void draw_trap_override( const tripoint &p, const trap_id &id );
-        void draw_field_override( const tripoint &p, const field_type_id &id );
-        void draw_item_override( const tripoint &p, const itype_id &id, const mtype_id &mid,
+        void draw_highlight( const tripoint_bub_ms &p );
+        void draw_radiation_override( const tripoint_bub_ms &p, int rad );
+        void draw_terrain_override( const tripoint_bub_ms &p, const ter_id &id );
+        void draw_furniture_override( const tripoint_bub_ms &p, const furn_id &id );
+        void draw_graffiti_override( const tripoint_bub_ms &p, bool has );
+        void draw_trap_override( const tripoint_bub_ms &p, const trap_id &id );
+        void draw_field_override( const tripoint_bub_ms &p, const field_type_id &id );
+        void draw_item_override( const tripoint_bub_ms &p, const itype_id &id, const mtype_id &mid,
                                  bool hilite );
-        void draw_vpart_override( const tripoint &p, const vpart_id &id, int part_mod,
+        void draw_vpart_override( const tripoint_bub_ms &p, const vpart_id &id, int part_mod,
                                   units::angle veh_dir, bool hilite, tripoint_mnt_veh mount );
-        void draw_below_override( const tripoint &p, bool draw );
-        void draw_monster_override( const tripoint &p, const mtype_id &id, int count,
+        void draw_below_override( const tripoint_bub_ms &p, bool draw );
+        void draw_monster_override( const tripoint_bub_ms &p, const mtype_id &id, int count,
                                     bool more, Attitude att );
 
-        bool is_in_viewport( const tripoint &p, int margin = 0 ) const;
+        bool is_in_viewport( const tripoint_bub_ms &p, int margin = 0 ) const;
         /**
          * Check whether movement is allowed according to safe mode settings.
          * @return true if the movement is allowed, otherwise false.
@@ -848,7 +848,7 @@ class game : public submap_load_listener
         // will do so, if bash_dmg is greater than 0, items won't stop the door
         // from closing at all.
         // If the door gets closed the items on the door tile get moved away or destroyed.
-        bool forced_door_closing( const tripoint &p, const ter_id &door_type, int bash_dmg );
+        bool forced_door_closing( const tripoint_bub_ms &p, const ter_id &door_type, int bash_dmg );
 
         /** Attempt to load first valid save (if any) in world */
         bool load( const std::string &world );
@@ -911,16 +911,16 @@ class game : public submap_load_listener
         /** Check for dangerous stuff at dest_loc, return false if the player decides
         not to step there */
         // Handle pushing during move, returns true if it handled the move
-        bool grabbed_move( const tripoint &dp );
+        bool grabbed_move( const tripoint_bub_ms &dp );
         bool grabbed_veh_move( const tripoint &dp );
         bool grabbed_furn_move( const tripoint &dp );
 
         void control_vehicle(); // Use vehicle controls  '^'
-        void examine( const tripoint &p ); // Examine nearby terrain  'e'
+        void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
         void examine();
 
         void pickup(); // Pickup nearby items 'g', min 0
-        void pickup( const tripoint &p );
+        void pickup( const tripoint_bub_ms &p );
         void pickup_feet(); // Pick items at player position ',', min 1
 
         void drop(); // Drop an item  'd'
@@ -942,9 +942,9 @@ class game : public submap_load_listener
                        int hor_padding = 0 ); // Prints a list of nearby monsters
         void mon_info_update( );    //Update seen monsters information
         void cleanup_dead();     // Delete any dead NPCs/monsters
-        bool is_dangerous_tile( const tripoint &dest_loc ) const;
-        std::vector<std::string> get_dangerous_tile( const tripoint &dest_loc ) const;
-        bool prompt_dangerous_tile( const tripoint &dest_loc ) const;
+        bool is_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
+        std::vector<std::string> get_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
+        bool prompt_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
     private:
         void chat(); // Talk to a nearby NPC  'C'
 
@@ -1331,7 +1331,7 @@ class game : public submap_load_listener
 // @param location Location affected by heat sources
 // @param direct forces return of heat intensity (and not temperature modifier) of
 // adjacent hottest heat source
-int get_heat_radiation( const tripoint &location, bool direct );
+int get_heat_radiation( const tripoint_bub_ms &location, bool direct );
 // Returns temperature modifier from hot air fields of given location
 int get_convection_temperature( const tripoint &location );
 
@@ -1341,5 +1341,5 @@ namespace cata_event_dispatch
 // @param u The avatar moving
 // @param m The map the avatar is moving on
 // @param p The point the avatar is moving to on map m
-void avatar_moves( const avatar &u, const map &m, const tripoint &p );
+void avatar_moves( const avatar &u, const map &m, const tripoint_bub_ms &p );
 } // namespace cata_event_dispatch

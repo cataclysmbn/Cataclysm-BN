@@ -14,7 +14,7 @@
 #include "string_id.h"
 #include "type_id.h"
 
-static monster *find_adjacent_monster( const tripoint &pos )
+static monster *find_adjacent_monster( const tripoint_bub_ms &pos )
 {
     tripoint target = pos;
     for( target.x = pos.x - 1; target.x <= pos.x + 1; target.x++ ) {

@@ -6770,7 +6770,7 @@ bool item::can_revive() const
               has_flag( flag_SKINNED ) || has_flag( flag_PULPED ) );
 }
 
-bool item::ready_to_revive( const tripoint &pos ) const
+bool item::ready_to_revive( const tripoint_bub_ms &pos ) const
 {
     if( !can_revive() ) {
         return false;
@@ -7938,7 +7938,7 @@ bool item::spill_contents( Character &c )
     return true;
 }
 
-bool item::spill_contents( const tripoint &pos )
+bool item::spill_contents( const tripoint_bub_ms &pos )
 {
     if( !is_container() || is_container_empty() ) {
         return true;
@@ -8407,7 +8407,7 @@ bool item::ammo_sufficient( int qty ) const
     return ammo_remaining() >= ammo_required() * qty;
 }
 
-int item::ammo_consume( int qty, const tripoint &pos )
+int item::ammo_consume( int qty, const tripoint_bub_ms &pos )
 {
     if( qty < 0 ) {
         debugmsg( "Cannot consume negative quantity of ammo for %s", tname() );
@@ -10004,7 +10004,7 @@ int item::processing_speed() const
     return 1;
 }
 
-detached_ptr<item> item::process_rot( detached_ptr<item> &&self, const tripoint &pos )
+detached_ptr<item> item::process_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pos )
 {
     return process_rot( std::move( self ), false, pos, nullptr, temperature_flag::TEMP_NORMAL,
                         get_weather() );
@@ -10034,7 +10034,7 @@ static units::temperature clip_by_temperature_flag( units::temperature temperatu
 }
 
 detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool seals,
-                                       const tripoint &pos,
+                                       const tripoint_bub_ms &pos,
                                        player *carrier, const temperature_flag flag,
                                        const weather_manager &weather )
 {

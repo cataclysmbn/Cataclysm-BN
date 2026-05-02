@@ -1225,7 +1225,7 @@ void inventory_selector::add_character_items( Character &character )
     }
 }
 
-void inventory_selector::add_map_items( const tripoint &target )
+void inventory_selector::add_map_items( const tripoint_bub_ms &target )
 {
     if( g->m.accessible_items( target ) ) {
         const auto items = g->m.i_at( target );
@@ -1238,7 +1238,7 @@ void inventory_selector::add_map_items( const tripoint &target )
     }
 }
 
-void inventory_selector::add_vehicle_items( const tripoint &target )
+void inventory_selector::add_vehicle_items( const tripoint_bub_ms &target )
 {
     const std::optional<vpart_reference> vp = g->m.veh_at( target ).part_with_feature( "CARGO", true );
     if( !vp ) {

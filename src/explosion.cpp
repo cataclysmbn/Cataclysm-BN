@@ -1158,7 +1158,7 @@ void ExplosionProcess::run()
     }
 }
 
-void explosion( const tripoint &p, Creature *source, float power, float factor, bool fire,
+void explosion( const tripoint_bub_ms &p, Creature *source, float power, float factor, bool fire,
                 int legacy_casing_mass,
                 float )
 {
@@ -1175,7 +1175,7 @@ void explosion( const tripoint &p, Creature *source, float power, float factor, 
     explosion( p, data, source );
 }
 
-void explosion( const tripoint &p, const explosion_data &ex, Creature *source )
+void explosion( const tripoint_bub_ms &p, const explosion_data &ex, Creature *source )
 {
     queued_explosion qe( p, ExplosionType::Regular, source );
     qe.exp_data = ex;
@@ -1357,7 +1357,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
 }
 
 // (C1001) Compiler Internal Error on Visual Studio 2015 with Update 2
-static std::map<const Creature *, int> legacy_blast( const tripoint &p, const float power,
+static std::map<const Creature *, int> legacy_blast( const tripoint_bub_ms &p, const float power,
         const float radius, const bool fire, Creature *source )
 {
     std::map<const Creature *, int> blasted;
@@ -1548,7 +1548,7 @@ static std::map<const Creature *, int> legacy_blast( const tripoint &p, const fl
 
 void explosion_funcs::regular( const queued_explosion &qe )
 {
-    const tripoint &p = qe.pos;
+    const tripoint_bub_ms &p = qe.pos;
     const explosion_data &ex = qe.exp_data;
     auto &shr = ex.fragment;
 

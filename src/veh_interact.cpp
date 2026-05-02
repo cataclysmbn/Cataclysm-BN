@@ -576,7 +576,7 @@ void veh_interact::cache_tool_availability()
                          } );
 }
 
-void veh_interact::cache_tool_availability_update_lifting( const tripoint &world_cursor_pos )
+void veh_interact::cache_tool_availability_update_lifting( const tripoint_bub_ms &world_cursor_pos )
 {
     max_lift = get_avatar().best_nearby_lifting_assist( world_cursor_pos );
 }

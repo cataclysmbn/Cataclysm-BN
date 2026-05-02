@@ -25,7 +25,7 @@ void lua_iuse_actor::load( const JsonObject & )
     // TODO: custom data
 }
 
-int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint &pos ) const
+int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint_bub_ms &pos ) const
 {
     if( tick ) {
         // Legacy tick is no longer supported; use game.istate_functions on_tick instead.

@@ -165,7 +165,7 @@ static const std::string flag_SHOOT_ME( "SHOOT_ME" );
 static constexpr int AIF_DURATION_LIMIT = 10;
 
 static projectile make_gun_projectile( const item &gun );
-static void cycle_action( item &weap, const tripoint &pos );
+static void cycle_action( item &weap, const tripoint_bub_ms &pos );
 static dispersion_sources calculate_dispersion( const map &m, const Character &who, const item &gun,
         int at_recoil, bool burst );
 
@@ -177,14 +177,14 @@ constexpr auto vehicle_recoil_lateral_scale = 0.1;
 
 struct shot_target_options {
     tripoint source;
-    tripoint target;
+    const tripoint_bub_ms &target;
     const projectile &proj;
     const dispersion_sources &dispersion;
 };
 
 struct pellet_target_options {
     tripoint source;
-    tripoint target;
+    const tripoint_bub_ms &target;
     double half_angle;
 };
 
@@ -1025,7 +1025,7 @@ void npc::pretend_fire( npc *source, int shots, item &gun )
 namespace
 {
 
-auto is_mountable( const map &m, const tripoint &pos ) -> bool
+auto is_mountable( const map &m, const tripoint_bub_ms &pos ) -> bool
 {
     // usage of any attached bipod is dependent upon terrain
     // only allow mounting passable OR climable terrain
@@ -1042,14 +1042,14 @@ auto is_mountable( const map &m, const tripoint &pos ) -> bool
     return false;
 }
 
-auto is_mountable_nearby( const map &m, const tripoint &pos ) -> bool
+auto is_mountable_nearby( const map &m, const tripoint_bub_ms &pos ) -> bool
 {
     const auto &xs = closest_points_first( pos, 1 );
     return std::any_of( xs.begin(), xs.end(),
                         [&m]( const tripoint & x ) -> bool { return is_mountable( m, x ); } );
 }
 
-auto can_use_heavy_weapon( const Character &who, const map &m, const tripoint &pos ) -> bool
+auto can_use_heavy_weapon( const Character &who, const map &m, const tripoint_bub_ms &pos ) -> bool
 {
     if( who.is_mounted() && who.mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
         return true;
@@ -2140,7 +2140,7 @@ static double calculate_aim_cap( const Character &p, const tripoint &target )
 
 static int print_aim( const Character &p, const catacurses::window &w, int line_number,
                       input_context &ctxt, item &weapon,
-                      const double target_size, const tripoint &pos, double predicted_recoil,
+                      const double target_size, const tripoint_bub_ms &pos, double predicted_recoil,
                       item *load_loc )
 {
     // This is absolute accuracy for the player.
@@ -2342,7 +2342,7 @@ int ranged::time_to_attack( const Character &p, const item &firing, const item *
     return std::max( info.min_time, base_time + ench_reload_bonus );
 }
 
-static void cycle_action( item &weap, const tripoint &pos )
+static void cycle_action( item &weap, const tripoint_bub_ms &pos )
 {
     map &here = get_map();
     // eject casings and linkages in random direction avoiding walls using player position as fallback
