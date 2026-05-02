@@ -2523,7 +2523,8 @@ class Character : public Creature, public location_visitable<Character>
         void craft( const tripoint_bub_ms &loc = tripoint_bub_ms::zero() );
         void recraft( const tripoint_bub_ms &loc = tripoint_bub_ms::zero() );
         void long_craft( const tripoint_bub_ms &loc = tripoint_bub_ms::zero() );
-        void make_craft( const recipe_id &id, int batch_size, const tripoint_bub_ms &loc = tripoint_bub_ms::zero() );
+        void make_craft( const recipe_id &id, int batch_size,
+                         const tripoint_bub_ms &loc = tripoint_bub_ms::zero() );
         void make_all_craft( const recipe_id &id, int batch_size,
                              const tripoint_bub_ms &loc = tripoint_bub_ms::zero() );
         /** consume components and create an active, in progress craft containing them */
