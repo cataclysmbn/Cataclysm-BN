@@ -531,7 +531,7 @@ int iuse::alcohol_strong( player *p, item *it, bool, const tripoint_bub_ms & )
     return alcohol( *p, *it, 2 );
 }
 
-int iuse::antibiotic( player *p, item *it, bool, const tripoint_bub_ms &)
+int iuse::antibiotic( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     p->add_msg_player_or_npc( m_neutral,
                               _( "You take some antibiotics." ),
@@ -8854,7 +8854,7 @@ int iuse::toggle_heats_food( player *p, item *it, bool, const tripoint & )
     return 0;
 }
 
-int iuse::toggle_ups_charging( player *p, item *it, bool, const tripoint_bub_ms &)
+int iuse::toggle_ups_charging( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     static const flag_id json_flag_USE_UPS( flag_USE_UPS );
     if( !it->has_flag( json_flag_USE_UPS ) ) {
