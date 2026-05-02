@@ -30,6 +30,18 @@ local function count_vars(vars)
   return sum
 end
 
+---@param vars StoredVars?
+---@return string[]
+local function sorted_keys(vars)
+  local keys = {}
+  if type(vars) ~= "table" then return keys end
+  for key in pairs(vars) do
+    table.insert(keys, key)
+  end
+  table.sort(keys)
+  return keys
+end
+
 ---@param display_name string
 ---@param vars StoredVars?
 ---@return string
@@ -48,13 +60,7 @@ local function build_display_lines(display_name, vars)
     "",
   }
 
-  local keys = {}
-  for key in pairs(vars) do
-    table.insert(keys, key)
-  end
-  table.sort(keys)
-
-  for _, key in ipairs(keys) do
+  for _, key in ipairs(sorted_keys(vars)) do
     table.insert(
       lines,
       string.format("%s %s", color_text(string.format("%s:", key), "light_blue"), color_text(vars[key], "white"))
@@ -62,6 +68,120 @@ local function build_display_lines(display_name, vars)
   end
 
   return lines
+end
+
+---@param selected ItemVarViewerChoice
+---@return boolean
+local function is_item_choice(selected) return selected.type == "item" or selected.type == "ground_item" end
+
+---@param title string
+---@param desc string
+---@return string?
+local function prompt_string(title, desc)
+  local popup = PopupInputStr.new()
+  popup:title(title)
+  popup:desc(desc)
+  local value = popup:query_str()
+  if value == nil or value == "" then return nil end
+  return value
+end
+
+---@param selected ItemVarViewerChoice
+---@return nil
+local function show_vars_popup(selected)
+  local vars = selected.get_vars()
+  if type(vars) ~= "table" or next(vars) == nil then
+    ui.popup(
+      color_text(string.format(locale.gettext("No stored variables found on %s."), selected.subject_name), "light_gray")
+    )
+    return
+  end
+
+  local lines = build_display_lines(selected.subject_name, vars)
+  ui.popup(table.concat(lines, "\n"))
+end
+
+---@param selected ItemVarViewerChoice
+---@return nil
+local function add_or_update_item_var(selected)
+  local key = prompt_string(
+    locale.gettext("Variable name"),
+    string.format(locale.gettext("Enter the variable name for %s."), selected.subject_name)
+  )
+  if not key then return end
+
+  local value =
+    prompt_string(locale.gettext("Variable value"), string.format(locale.gettext("Enter the value for %s."), key))
+  if value == nil then return end
+
+  selected.subject:set_var_str(key, value)
+  gapi.add_msg(MsgType.good, string.format(locale.gettext("Set item var %s on %s."), key, selected.subject_name))
+end
+
+---@param selected ItemVarViewerChoice
+---@return nil
+local function remove_item_var(selected)
+  local vars = selected.get_vars()
+  if type(vars) ~= "table" or next(vars) == nil then
+    ui.popup(
+      color_text(string.format(locale.gettext("No stored variables found on %s."), selected.subject_name), "light_gray")
+    )
+    return
+  end
+
+  local keys = sorted_keys(vars)
+  local menu = UiList.new()
+  menu:title(color_text(locale.gettext("Remove item variable"), "yellow"))
+  menu:text(format_label(selected.subject_name, vars))
+
+  for idx, key in ipairs(keys) do
+    menu:add(
+      idx - 1,
+      string.format("%s %s", color_text(string.format("%s:", key), "light_blue"), color_text(vars[key], "white"))
+    )
+  end
+
+  local choice = menu:query()
+  if choice < 0 then return end
+
+  local key = keys[choice + 1]
+  if not key then return end
+  if not ui.query_yn(string.format(locale.gettext("Remove item var %s from %s?"), key, selected.subject_name)) then
+    return
+  end
+
+  selected.subject:erase_var(key)
+  gapi.add_msg(MsgType.good, string.format(locale.gettext("Removed item var %s from %s."), key, selected.subject_name))
+end
+
+---@param selected ItemVarViewerChoice
+---@return integer
+local function manage_item_vars(selected)
+  while true do
+    local vars = selected.get_vars()
+    local menu = UiList.new()
+    menu:title(color_text(locale.gettext("Item var viewer"), "yellow"))
+    menu:text(format_label(selected.subject_name, vars))
+    menu:add(0, locale.gettext("View variables"))
+    menu:add(1, locale.gettext("Add / update variable"))
+    menu:add(2, locale.gettext("Remove variable"))
+
+    if type(vars) ~= "table" or next(vars) == nil then
+      menu.entries[1].enable = false
+      menu.entries[3].enable = false
+    end
+
+    local action = menu:query()
+    if action < 0 then return 0 end
+
+    if action == 0 then
+      show_vars_popup(selected)
+    elseif action == 1 then
+      add_or_update_item_var(selected)
+    elseif action == 2 then
+      remove_item_var(selected)
+    end
+  end
 end
 
 ---@type fun(who: Character, item: Item, pos: Tripoint): integer
@@ -220,17 +340,9 @@ viewer.menu = function(params)
   local selected = choices[choice + 1]
   if not selected then return 0 end
 
-  ---@type StoredVars?
-  local vars = selected.get_vars()
-  if type(vars) ~= "table" or next(vars) == nil then
-    ui.popup(
-      color_text(string.format(locale.gettext("No stored variables found on %s."), selected.subject_name), "light_gray")
-    )
-    return 0
-  end
+  if is_item_choice(selected) then return manage_item_vars(selected) end
 
-  local lines = build_display_lines(selected.subject_name, vars)
-  ui.popup(table.concat(lines, "\n"))
+  show_vars_popup(selected)
   return 0
 end
 

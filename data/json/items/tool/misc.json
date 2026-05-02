@@ -934,7 +934,7 @@
     "type": "TOOL",
     "category": "electronics",
     "name": { "str": "object variable viewer" },
-    "description": "A compact analyzer that scans any nearby object and reveals every stored variable for quick debugging without needing to drop the object.",
+    "description": "A compact analyzer that scans any nearby object and reveals every stored variable for quick debugging without needing to drop the object.  It can also add, update, or remove item variables.",
     "weight": "400 g",
     "volume": "750 ml",
     "price": "900 USD",
