@@ -1,12 +1,26 @@
 local ui = require("lib.ui")
 
+---@alias StoredVars table<string, string>
+---@alias ItemVarViewerSubject Item | Avatar | Character | Monster | Npc
+
+---@class ItemVarViewerChoice
+---@field type "item" | "player" | "monster" | "npc" | "ground_item"
+---@field subject ItemVarViewerSubject
+---@field subject_name string
+---@field get_vars fun(): StoredVars
+
 local viewer = {}
 
+---@param text string?
+---@param color string?
+---@return string
 local function color_text(text, color)
   if text == nil then return "" end
   return string.format("<color_%s>%s</color>", color or "white", text)
 end
 
+---@param vars StoredVars?
+---@return integer
 local function count_vars(vars)
   if type(vars) ~= "table" then return 0 end
   local sum = 0
@@ -16,12 +30,18 @@ local function count_vars(vars)
   return sum
 end
 
+---@param display_name string
+---@param vars StoredVars?
+---@return string
 local function format_label(display_name, vars)
   local header = string.format(locale.gettext("Stored vars for %s"), display_name)
   local count_line = string.format(locale.gettext("Stored entries: %d"), count_vars(vars))
   return color_text(header, "light_green") .. "  " .. color_text(count_line, "light_gray")
 end
 
+---@param display_name string
+---@param vars StoredVars
+---@return string[]
 local function build_display_lines(display_name, vars)
   local lines = {
     format_label(display_name, vars),
@@ -44,14 +64,21 @@ local function build_display_lines(display_name, vars)
   return lines
 end
 
-viewer.menu = function(who, item, pos)
+---@type fun(who: Character, item: Item, pos: Tripoint): integer
+viewer.menu = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   local inventory = who:all_items(false)
   local menu = UiList.new()
   menu:title(color_text(locale.gettext("Item var viewer"), "yellow"))
 
+  ---@type ItemVarViewerChoice[]
   local choices = {}
   local next_id = 0
 
+  ---@param label_text string
+  ---@param choice ItemVarViewerChoice
   local function push_choice(label_text, choice)
     menu:add(next_id, label_text)
     choices[next_id + 1] = choice
@@ -59,9 +86,11 @@ viewer.menu = function(who, item, pos)
   end
 
   for _, candidate in ipairs(inventory) do
+    ---@type ItemVarViewerChoice
     local choice = {
       type = "item",
       subject = candidate,
+      subject_name = "",
       get_vars = function() return candidate:vars_table() end,
     }
     choice.subject_name = candidate:tname(1, false, 0)
@@ -75,9 +104,11 @@ viewer.menu = function(who, item, pos)
     push_choice(label, choice)
   end
 
+  ---@type ItemVarViewerChoice
   local player_choice = {
     type = "player",
     subject = who,
+    subject_name = "",
     get_vars = function() return who:values_table() end,
   }
   player_choice.subject_name = who:disp_name(false, true)
@@ -91,20 +122,27 @@ viewer.menu = function(who, item, pos)
   push_choice(player_label, player_choice)
 
   local map = gapi.get_map()
+  ---@type Tripoint[]
   local points = map:points_in_radius(pos, 5)
+  ---@type table<string, boolean>
   local seen_monsters = {}
+  ---@type table<string, boolean>
   local seen_npcs = {}
+  ---@type table<string, boolean>
   local seen_items = {}
 
   for _, pt in ipairs(points) do
+    ---@type Monster?
     local monster_obj = gapi.get_monster_at(pt, false)
     if monster_obj then
       local key = tostring(monster_obj)
       if not seen_monsters[key] then
         seen_monsters[key] = true
+        ---@type ItemVarViewerChoice
         local monster_choice = {
           type = "monster",
           subject = monster_obj,
+          subject_name = "",
           get_vars = function() return monster_obj:values_table() end,
         }
         monster_choice.subject_name = monster_obj:disp_name(false, true)
@@ -118,14 +156,17 @@ viewer.menu = function(who, item, pos)
         push_choice(monster_label, monster_choice)
       end
     end
+    ---@type Npc?
     local npc_obj = gapi.get_npc_at(pt, false)
     if npc_obj then
       local key = tostring(npc_obj)
       if not seen_npcs[key] then
         seen_npcs[key] = true
+        ---@type ItemVarViewerChoice
         local npc_choice = {
           type = "npc",
           subject = npc_obj,
+          subject_name = "",
           get_vars = function() return npc_obj:values_table() end,
         }
         npc_choice.subject_name = npc_obj:disp_name(false, true)
@@ -145,11 +186,13 @@ viewer.menu = function(who, item, pos)
     local stack = map:get_items_at(pt)
     for _, it in ipairs(stack:items()) do
       local key = tostring(it)
-      if not seen_items[key] then
+      if not seen_items[key] and it ~= item then
         seen_items[key] = true
+        ---@type ItemVarViewerChoice
         local item_choice = {
           type = "ground_item",
           subject = it,
+          subject_name = "",
           get_vars = function() return it:vars_table() end,
         }
         item_choice.subject_name = it:tname(1, false, 0)
@@ -173,9 +216,11 @@ viewer.menu = function(who, item, pos)
   local choice = menu:query()
   if choice < 0 then return 0 end
 
+  ---@type ItemVarViewerChoice?
   local selected = choices[choice + 1]
   if not selected then return 0 end
 
+  ---@type StoredVars?
   local vars = selected.get_vars()
   if type(vars) ~= "table" or next(vars) == nil then
     ui.popup(
