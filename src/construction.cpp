@@ -2054,7 +2054,7 @@ void construct::done_deconstruct( const tripoint_bub_ms &p )
         here.ter_set( p, t.deconstruct.ter_set );
         // Interpret a result of t_null as underlying terrain if any instead of placing nothinginess
         if( here.ter( p ) == t_null ) {
-            tripoint below( p.xy(), p.z - 1 );
+            tripoint below( p.xy(), p.z() - 1 );
             here.ter_set( p, here.get_roof( below, true ) );
         }
         add_msg( _( "The %s is disassembled." ), t.name() );
@@ -2095,7 +2095,7 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
     const auto abs_pos = here.bub_to_abs( p );
     const auto pos_sm = project_to<coords::sm>( abs_pos );
     tinymap tmpmap;
-    tmpmap.load( tripoint( pos_sm.xy(), pos_sm.z - 1 ), false );
+    tmpmap.load( tripoint( pos_sm.xy(), pos_sm.z() - 1 ), false );
     const auto local_tmp = tmpmap.abs_to_bub( abs_pos );
 
     bool dig_muts = g->u.has_trait( trait_PAINRESIST_TROGLO ) || g->u.has_trait( trait_STOCKY_TROGLO );
@@ -2149,7 +2149,7 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p )
     const auto abs_pos = here.bub_to_abs( p );
     const auto pos_sm = project_to<coords::sm>( abs_pos );
     tinymap tmpmap;
-    tmpmap.load( tripoint( pos_sm.xy(), pos_sm.z + 1 ), false );
+    tmpmap.load( tripoint( pos_sm.xy(), pos_sm.z() + 1 ), false );
     const auto local_tmp = tmpmap.abs_to_bub( abs_pos );
 
     if( tmpmap.ter( local_tmp ) == t_lava ) {

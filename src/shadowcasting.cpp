@@ -298,8 +298,8 @@ static void castLight(
 
         for( ; delta.x <= x_limit; ++delta.x ) {
             const point current{
-                offset.x + delta.x *xf.xx + delta.y * xf.xy,
-                offset.y + delta.x *xf.yx + delta.y *xf.yy
+                offset.x() + delta.x *xf.xx + delta.y * xf.xy,
+                offset.y() + delta.x *xf.yx + delta.y *xf.yy
             };
 
             if( current.x < 0 || current.y < 0 ||
@@ -425,7 +425,7 @@ void castLightAll(
         // The first tile for row=1, delta.x=0 is at offset + apply(0,-1) = offset - (xy, yy).
         const exp_lookup *fast = nullptr;
         if( model.lookup_calc != nullptr ) {
-            const point first{ offset.x - xf.xy, offset.y - xf.yy };
+            const point first{ offset.x() - xf.xy, offset.y() - xf.yy };
             if( first.x >= 0 && first.y >= 0 && first.x < sx && first.y < sy ) {
                 const float t = input_array[first.x * sy + first.y];
                 if( t == LIGHT_TRANSPARENCY_OPEN_AIR ) {
@@ -456,7 +456,7 @@ void castLightAll_q(
     for( const auto &xf : k_octant_xforms ) {
         const exp_lookup *fast = nullptr;
         if( model.lookup_calc != nullptr ) {
-            const point first{ offset.x - xf.xy, offset.y - xf.yy };
+            const point first{ offset.x() - xf.xy, offset.y() - xf.yy };
             if( first.x >= 0 && first.y >= 0 && first.x < sx && first.y < sy ) {
                 const float t = input_array[first.x * sy + first.y];
                 if( t == LIGHT_TRANSPARENCY_OPEN_AIR ) {
@@ -492,7 +492,7 @@ void castLightOctants_q(
         const auto &xf = k_octant_xforms[i];
         const exp_lookup *fast = nullptr;
         if( model.lookup_calc != nullptr ) {
-            const point first{ offset.x - xf.xy, offset.y - xf.yy };
+            const point first{ offset.x() - xf.xy, offset.y() - xf.yy };
             if( first.x >= 0 && first.y >= 0 && first.x < sx && first.y < sy ) {
                 const float t = input_array[first.x * sy + first.y];
                 if( t == LIGHT_TRANSPARENCY_OPEN_AIR ) {

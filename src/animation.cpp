@@ -193,8 +193,8 @@ void draw_custom_explosion_curses( game &g,
 {
     // calculate screen offset relative to player + view offset position
     const auto center = g.u.bub_pos() + g.u.view_offset;
-    const tripoint topleft( center.x - ( getmaxx( g.w_terrain ) / 2 ),
-                            center.y - ( getmaxy( g.w_terrain ) / 2 ), 0 );
+    const tripoint topleft( center.x() - ( getmaxx( g.w_terrain ) / 2 ),
+                            center.y() - ( getmaxy( g.w_terrain ) / 2 ), 0 );
 
     explosion_animation anim;
 
@@ -521,12 +521,12 @@ void draw_bullet_curses( map &m, const tripoint &t, const char bullet, const tri
 
     const auto vp = g->u.bub_pos() + g->u.view_offset;
 
-    if( vp.z != t.z ) {
+    if( vp.z() != t.z ) {
         return;
     }
 
     shared_ptr_fast<game::draw_callback_t> bullet_cb = make_shared_fast<game::draw_callback_t>( [&]() {
-        if( p != nullptr && p->z == vp.z ) {
+        if( p != nullptr && p->z == vp.z() ) {
             m.drawsq( g->w_terrain, *p, drawsq_params().center( vp ) );
         }
         mvwputch( g->w_terrain, t.xy() - vp.xy() + point( POSX, POSY ), c_red, bullet );
@@ -640,10 +640,10 @@ auto draw_bullet_trajectories_curses( game &g,
                     continue;
                 }
 
-                if( trajectory[step - 1].z == view_pos.z ) {
+                if( trajectory[step - 1].z == view_pos.z() ) {
                     here.drawsq( g.w_terrain, trajectory[step - 1], drawsq_params().center( view_pos ) );
                 }
-                if( trajectory[step].z != view_pos.z ) {
+                if( trajectory[step].z != view_pos.z() ) {
                     continue;
                 }
 
@@ -1068,20 +1068,20 @@ void draw_zones_curses( const catacurses::window &w, const zone_draw_options &op
     const bool has_points = !options.points.empty();
     if( has_points ) {
         std::ranges::for_each( options.points, [&]( const tripoint & location ) {
-            mvwputch( w, point( location.x - options.offset.x, location.y - options.offset.y ),
+            mvwputch( w, point( location.x - options.offset.x(), location.y - options.offset.y() ),
                       col, '~' );
         } );
     } else {
-        if( options.end.x < options.start.x || options.end.y < options.start.y ||
-            options.end.z < options.start.z ) {
+        if( options.end.x() < options.start.x() || options.end.y() < options.start.y() ||
+            options.end.z() < options.start.z() ) {
             return;
         }
 
-        const std::string line( options.end.x - options.start.x + 1, '~' );
-        const int x = options.start.x - options.offset.x;
+        const std::string line( options.end.x() - options.start.x() + 1, '~' );
+        const int x = options.start.x() - options.offset.x();
 
-        for( int y = options.start.y; y <= options.end.y; ++y ) {
-            mvwprintz( w, point( x, y - options.offset.y ), col, line );
+        for( int y = options.start.y(); y <= options.end.y(); ++y ) {
+            mvwprintz( w, point( x, y - options.offset.y() ), col, line );
         }
     }
 
@@ -1114,7 +1114,7 @@ void draw_zones_curses( const catacurses::window &w, const zone_draw_options &op
     const point label_pos = point(
                                 std::clamp( center_local.x - static_cast<int>( label.size() ) / 2,
                                             0, getmaxx( w ) - static_cast<int>( label.size() ) ),
-                                std::clamp( center_local.y - options.offset.y, 0,
+                                std::clamp( center_local.y - options.offset.y(), 0,
                                             getmaxy( w ) - 1 ) );
     mvwprintz( w, label_pos, c_white, label );
 }
@@ -1331,8 +1331,8 @@ static void draw_cone_aoe_curses( const tripoint &, const bucketed_points &waves
     // Calculate screen offset relative to player + view offset position
     const avatar &u = get_avatar();
     const auto center = u.bub_pos() + u.view_offset;
-    const tripoint topleft( center.x - ( catacurses::getmaxx( g->w_terrain ) / 2 ),
-                            center.y - ( catacurses::getmaxy( g->w_terrain ) / 2 ), 0 );
+    const tripoint topleft( center.x() - ( catacurses::getmaxx( g->w_terrain ) / 2 ),
+                            center.y() - ( catacurses::getmaxy( g->w_terrain ) / 2 ), 0 );
 
     auto it = waves.begin();
     shared_ptr_fast<game::draw_callback_t> wave_cb =

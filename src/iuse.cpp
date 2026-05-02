@@ -4983,11 +4983,11 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                     for( int tries = 0; tries < 10; ++tries ) {
                         auto monp = p->bub_pos();
                         if( one_in( 2 ) ) {
-                            monp.x = rng( p->posx() - 5, p->posx() + 5 );
-                            monp.y = ( one_in( 2 ) ? p->posy() - 5 : p->posy() + 5 );
+                            monp.x() = rng( p->posx() - 5, p->posx() + 5 );
+                            monp.y() = ( one_in( 2 ) ? p->posy() - 5 : p->posy() + 5 );
                         } else {
-                            monp.x = ( one_in( 2 ) ? p->posx() - 5 : p->posx() + 5 );
-                            monp.y = rng( p->posy() - 5, p->posy() + 5 );
+                            monp.x() = ( one_in( 2 ) ? p->posx() - 5 : p->posx() + 5 );
+                            monp.y() = rng( p->posy() - 5, p->posy() + 5 );
                         }
                         if( !g->m.sees( monp, p->bub_pos(), 10 ) ) {
                             continue;
@@ -7910,8 +7910,8 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint &pos )
         }
     }
 
-    g->u.view_offset.x = p2.x;
-    g->u.view_offset.y = p2.y;
+    g->u.view_offset.x() = p2.x;
+    g->u.view_offset.y() = p2.y;
     return it->type->charges_to_use();
 }
 
@@ -8475,8 +8475,8 @@ int iuse::directional_hologram( player *p, item *it, bool, const tripoint &pos )
         return 0;
     }
     const tripoint_bub_ms &target = pos;
-    target.x = p->posx() + 4 * SEEX * ( posp.x - p->posx() );
-    target.y = p->posy() + 4 * SEEY * ( posp.y - p->posy() );
+    target.x() = p->posx() + 4 * SEEX * ( posp.x - p->posx() );
+    target.y() = p->posy() + 4 * SEEY * ( posp.y - p->posy() );
     hologram->friendly = -1;
     hologram->add_effect( effect_docile, 1_hours );
     hologram->wandf = -30;

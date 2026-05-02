@@ -518,9 +518,9 @@ int npc::faction_display( const catacurses::window &fac_w, const int width ) con
         if( u_has_radio && guy_has_radio ) {
             // TODO: better range calculation than just elevation.
             int max_range = 200;
-            max_range *= ( 1 + ( g->u.bub_pos().z * 0.1 ) );
+            max_range *= ( 1 + ( g->u.bub_pos().z() * 0.1 ) );
             max_range *= ( 1 + ( pos().z * 0.1 ) );
-            if( ( ( g->u.bub_pos().z >= 0 && pos().z >= 0 ) || ( g->u.bub_pos().z == pos().z ) ) &&
+            if( ( ( g->u.bub_pos().z() >= 0 && pos().z >= 0 ) || ( g->u.bub_pos().z() == pos().z ) ) &&
                 square_dist( g->u.global_sm_location(), global_sm_location() ) <= max_range ) {
                 retval = 2;
                 can_see = _( "Within radio range" );

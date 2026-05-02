@@ -7440,7 +7440,7 @@ void iuse_portal_link::load( const JsonObject &obj )
 }
 
 auto iuse_portal_link::can_use( const Character &, const item &it, bool,
-                                const tripoint & ) const -> ret_val<bool>
+                                const tripoint_bub_ms & ) const -> ret_val<bool>
 {
     if( charges_per_use > 0 && it.ammo_remaining() < charges_per_use ) {
         return ret_val<bool>::make_failure( _( "The %s doesn't have enough charges." ),

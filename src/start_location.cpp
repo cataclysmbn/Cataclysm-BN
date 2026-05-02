@@ -389,8 +389,8 @@ void start_location::place_player( player &u ) const
     // This only happens in exotic locations (deep of a science lab), but it does happen
     if( !found_good_spot ) {
         tripoint_bub_ms tmp = u.bub_pos();
-        int &x = tmp.x;
-        int &y = tmp.y;
+        int &x = tmp.x();
+        int &y = tmp.y();
         for( x = 0; x < g_mapsize_x; x++ ) {
             for( y = 0; y < g_mapsize_y; y++ ) {
                 check_spot( tmp );

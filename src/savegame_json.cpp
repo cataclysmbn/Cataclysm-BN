@@ -945,9 +945,9 @@ void Character::store( JsonOut &json ) const
     json.start_array();
     for( const auto &elem : known_traps ) {
         json.start_object();
-        json.member( "x", elem.first.x );
-        json.member( "y", elem.first.y );
-        json.member( "z", elem.first.z );
+        json.member( "x", elem.first.x() );
+        json.member( "y", elem.first.y() );
+        json.member( "z", elem.first.z() );
         json.member( "trap", elem.second );
         json.end_object();
     }
@@ -1180,7 +1180,7 @@ void avatar::load( const JsonObject &data )
 
     data.read( "grab_point", grab_point );
     std::string grab_typestr = "OBJECT_NONE";
-    if( grab_point.x != 0 || grab_point.y != 0 ) {
+    if( grab_point.x() != 0 || grab_point.y() != 0 ) {
         grab_typestr = "OBJECT_VEHICLE";
         data.read( "grab_type", grab_typestr );
     }
@@ -1646,9 +1646,9 @@ void npc::load( const JsonObject &data )
     data.read( "goaly", goal.y() );
     data.read( "goalz", goal.z() );
 
-    data.read( "guardx", guard_pos.x );
-    data.read( "guardy", guard_pos.y );
-    data.read( "guardz", guard_pos.z );
+    data.read( "guardx", guard_pos.x() );
+    data.read( "guardy", guard_pos.y() );
+    data.read( "guardz", guard_pos.z() );
     if( data.read( "current_activity_id", act_id ) ) {
         current_activity_id = activity_id( act_id );
     } else if( activity ) {
@@ -1657,9 +1657,9 @@ void npc::load( const JsonObject &data )
 
     if( data.has_member( "pulp_locationx" ) ) {
         pulp_location.emplace();
-        data.read( "pulp_locationx", pulp_location->x );
-        data.read( "pulp_locationy", pulp_location->y );
-        data.read( "pulp_locationz", pulp_location->z );
+        data.read( "pulp_locationx", pulp_location->x() );
+        data.read( "pulp_locationy", pulp_location->y() );
+        data.read( "pulp_locationz", pulp_location->z() );
         // old code used tripoint_min to indicate "not a valid point"
         if( *pulp_location == tripoint_min ) {
             pulp_location.reset();
@@ -1834,9 +1834,9 @@ void npc::store( JsonOut &json ) const
     json.member( "goaly", goal.y() );
     json.member( "goalz", goal.z() );
 
-    json.member( "guardx", guard_pos.x );
-    json.member( "guardy", guard_pos.y );
-    json.member( "guardz", guard_pos.z );
+    json.member( "guardx", guard_pos.x() );
+    json.member( "guardy", guard_pos.y() );
+    json.member( "guardz", guard_pos.z() );
     json.member( "current_activity_id", current_activity_id.str() );
     json.member( "pulp_location", pulp_location );
     json.member( "chair_pos", chair_pos );
@@ -2885,8 +2885,8 @@ void vehicle_part::deserialize( JsonIn &jsin )
         if( std::abs( z_offset ) > 10 ) {
             data.throw_error( "z_offset out of range", "z_offset" );
         }
-        precalc[0].z = z_offset;
-        precalc[1].z = z_offset;
+        precalc[0].z() = z_offset;
+        precalc[1].z() = z_offset;
     }
     JsonArray ja = data.get_array( "carry" );
     size_t sz = ja.size();
@@ -2895,12 +2895,12 @@ void vehicle_part::deserialize( JsonIn &jsin )
     }
     data.read( "crew_id", crew_id );
     data.read( "items", items );
-    data.read( "target_first_x", target.first.x );
-    data.read( "target_first_y", target.first.y );
-    data.read( "target_first_z", target.first.z );
-    data.read( "target_second_x", target.second.x );
-    data.read( "target_second_y", target.second.y );
-    data.read( "target_second_z", target.second.z );
+    data.read( "target_first_x", target.first.x() );
+    data.read( "target_first_y", target.first.y() );
+    data.read( "target_first_z", target.first.z() );
+    data.read( "target_second_x", target.second.x() );
+    data.read( "target_second_y", target.second.y() );
+    data.read( "target_second_z", target.second.z() );
     data.read( "ammo_pref", ammo_pref );
     if( data.has_member( "portal_tap_linked" ) ) {
         data.read( "portal_tap_linked", portal_tap_linked );
@@ -2971,19 +2971,19 @@ void vehicle_part::serialize( JsonOut &json ) const
     }
     json.member( "passenger_id", passenger_id );
     json.member( "crew_id", crew_id );
-    if( precalc[0].z ) {
-        json.member( "z_offset", precalc[0].z );
+    if( precalc[0].z() ) {
+        json.member( "z_offset", precalc[0].z() );
     }
     json.member( "items", items );
     if( target.first != tripoint_min ) {
-        json.member( "target_first_x", target.first.x );
-        json.member( "target_first_y", target.first.y );
-        json.member( "target_first_z", target.first.z );
+        json.member( "target_first_x", target.first.x() );
+        json.member( "target_first_y", target.first.y() );
+        json.member( "target_first_z", target.first.z() );
     }
     if( target.second != tripoint_min ) {
-        json.member( "target_second_x", target.second.x );
-        json.member( "target_second_y", target.second.y );
-        json.member( "target_second_z", target.second.z );
+        json.member( "target_second_x", target.second.x() );
+        json.member( "target_second_y", target.second.y() );
+        json.member( "target_second_z", target.second.z() );
     }
     json.member( "ammo_pref", ammo_pref );
     if( portal_tap_linked ) {

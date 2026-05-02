@@ -10077,7 +10077,7 @@ detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool sea
 
             //Use weather if above ground, use map temp if below
             units::temperature env_temperature_raw;
-            if( pos.z >= 0 ) {
+            if( pos.z() >= 0 ) {
                 tripoint_abs_ms location = tripoint_abs_ms( get_map().bub_to_abs( pos ) );
                 units::temperature weather_temperature = wgen.get_weather_temperature( location, time,
                         calendar::config, seed );

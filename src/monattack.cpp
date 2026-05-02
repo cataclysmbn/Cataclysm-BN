@@ -883,9 +883,9 @@ bool mattack::boomer( monster *z )
     for( auto &i : line ) {
         if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
             if( one_in( 2 ) ) {
-                i.x = prev_point.x;
+                i.x() = prev_point.x();
             } else {
-                i.y = prev_point.y;
+                i.y() = prev_point.y();
             }
             obstructed = true;
         }
@@ -942,9 +942,9 @@ bool mattack::boomer_glow( monster *z )
     for( auto &i : line ) {
         if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
             if( one_in( 2 ) ) {
-                i.x = prev_point.x;
+                i.x() = prev_point.x();
             } else {
-                i.y = prev_point.y;
+                i.y() = prev_point.y();
             }
             obstructed = true;
         }
@@ -2739,8 +2739,8 @@ bool mattack::ranged_pull( monster *z )
         const units::angle dir = coord_to_angle( target->bub_pos(), z->bub_pos() );
         tileray tdir( dir );
         tdir.advance();
-        pt.x = target->posx() + tdir.dx();
-        pt.y = target->posy() + tdir.dy();
+        pt.x() = target->posx() + tdir.dx();
+        pt.y() = target->posy() + tdir.dy();
         if( !g->is_empty( pt ) ) { //Cancel the grab if the space is occupied by something
             break;
         }
@@ -2750,9 +2750,9 @@ bool mattack::ranged_pull( monster *z )
                 here.unboard_vehicle( foe->bub_pos() );
             }
 
-            if( target->is_player() && ( pt.x < g_half_mapsize_x || pt.y < g_half_mapsize_y ||
-                                         pt.x >= g_half_mapsize_x + SEEX || pt.y >= g_half_mapsize_y + SEEY ) ) {
-                g->update_map( pt.x, pt.y );
+            if( target->is_player() && ( pt.x() < g_half_mapsize_x || pt.y() < g_half_mapsize_y ||
+                                         pt.x() >= g_half_mapsize_x + SEEX || pt.y() >= g_half_mapsize_y + SEEY ) ) {
+                g->update_map( pt.x(), pt.y() );
             }
         }
 
@@ -2895,10 +2895,10 @@ bool mattack::grab_drag( monster *z )
         if( !g->is_empty( zpt ) ) { //Cancel the grab if the space is occupied by something
             return false;
         }
-        if( target->is_player() && ( zpt.x < g_half_mapsize_x ||
-                                     zpt.y < g_half_mapsize_y ||
-                                     zpt.x >= g_half_mapsize_x + SEEX || zpt.y >= g_half_mapsize_y + SEEY ) ) {
-            g->update_map( zpt.x, zpt.y );
+        if( target->is_player() && ( zpt.x() < g_half_mapsize_x ||
+                                     zpt.y() < g_half_mapsize_y ||
+                                     zpt.x() >= g_half_mapsize_x + SEEX || zpt.y() >= g_half_mapsize_y + SEEY ) ) {
+            g->update_map( zpt.x(), zpt.y() );
         }
         if( foe != nullptr ) {
             if( foe->in_vehicle ) {
@@ -3632,16 +3632,16 @@ bool mattack::searchlight( monster *z )
             for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->bub_pos(), 24 ) ) {
                 const monster *const mon = g->critter_at<monster>( dest );
                 if( mon && mon->type->id == mon_turret_searchlight ) {
-                    if( dest.x < zposx ) {
+                    if( dest.x() < zposx ) {
                         settings->set_var( "SL_PREFER_LEFT", "FALSE" );
                     }
-                    if( dest.x > zposx ) {
+                    if( dest.x() > zposx ) {
                         settings->set_var( "SL_PREFER_RIGHT", "FALSE" );
                     }
-                    if( dest.y < zposy ) {
+                    if( dest.y() < zposy ) {
                         settings->set_var( "SL_PREFER_UP", "FALSE" );
                     }
-                    if( dest.y > zposy ) {
+                    if( dest.y() > zposy ) {
                         settings->set_var( "SL_PREFER_DOWN", "FALSE" );
                     }
                 }
@@ -3844,9 +3844,9 @@ void mattack::flame( monster *z, Creature *target )
         for( auto &i : traj ) {
             if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
                 if( one_in( 2 ) ) {
-                    i.x = prev_point.x;
+                    i.x() = prev_point.x();
                 } else {
-                    i.y = prev_point.y;
+                    i.y() = prev_point.y();
                 }
             }
 
@@ -3879,9 +3879,9 @@ void mattack::flame( monster *z, Creature *target )
         if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
             tripoint intervening = i;
             if( one_in( 2 ) ) {
-                intervening.x = prev_point.x;
+                intervening.x = prev_point.x();
             } else {
-                intervening.y = prev_point.y;
+                intervening.y = prev_point.y();
             }
             if( here.hit_with_fire( tripoint( intervening.xy(), z->posz() ) ) ) {
                 if( g->u.sees( i ) ) {
@@ -4306,9 +4306,9 @@ bool mattack::stretch_bite( monster *z )
 
         if( get_map().obstructed_by_vehicle_rotation( prev_point, pnt ) ) {
             if( one_in( 2 ) ) {
-                pnt.x = prev_point.x;
+                pnt.x() = prev_point.x();
             } else {
-                pnt.y = prev_point.y;
+                pnt.y() = prev_point.y();
             }
             obstructed = true;
         }
@@ -4604,9 +4604,9 @@ bool mattack::longswipe( monster *z )
 
         if( here.obstructed_by_vehicle_rotation( prev_point, pnt ) ) {
             if( one_in( 2 ) ) {
-                pnt.x = prev_point.x;
+                pnt.x = prev_point.x();
             } else {
-                pnt.y = prev_point.y;
+                pnt.y = prev_point.y();
             }
             obstructed = true;
         }
@@ -5941,9 +5941,9 @@ bool mattack::stretch_attack( monster *z )
             bounce = true;
             //50% chance of bouncing off each intervening tile
             if( one_in( 2 ) ) {
-                pnt.x = prev_point.x;
+                pnt.x() = prev_point.x();
             } else {
-                pnt.y = prev_point.y;
+                pnt.y() = prev_point.y();
             }
         }
         if( bounce || g->m.impassable( pnt ) ) {

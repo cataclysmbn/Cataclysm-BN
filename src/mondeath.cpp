@@ -150,9 +150,9 @@ static void scatter_chunks( const itype_id &chunk_name, int chunk_amt, monster &
             bool obstructed = false;
             if( here.obstructed_by_vehicle_rotation( prev_point, tarp ) ) {
                 if( one_in( 2 ) ) {
-                    tarp.x = prev_point.x;
+                    tarp.x = prev_point.x();
                 } else {
-                    tarp.y = prev_point.y;
+                    tarp.y = prev_point.y();
                 }
                 obstructed = true;
             }

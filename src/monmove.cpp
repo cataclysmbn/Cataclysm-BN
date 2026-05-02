@@ -1857,9 +1857,9 @@ int monster::calc_movecost( const tripoint_bub_ms &f, const tripoint_bub_ms &t )
     const int dest_cost = g->m.move_cost( t );
     // Flying monsters ignore terrain cost, but have increased cost for moving up and decreased cost for moving down.
     if( flies() ) {
-        if( f.z == t.z ) {
+        if( f.z() == t.z() ) {
             movecost = 100;
-        } else if( t.z < f.z ) {
+        } else if( t.z() < f.z() ) {
             // Moving down -> .75x faster
             movecost = 75;
         } else {

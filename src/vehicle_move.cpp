@@ -508,7 +508,7 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
 {
     // Vertical collisions need to be handled differently
     // All collisions have to be either fully vertical or fully horizontal for now
-    const bool vert_coll = bash_floor || p.z != sm_pos.z;
+    const bool vert_coll = bash_floor || p.z != sm_pos.z();
     Character &player_character = get_player_character();
     const bool pl_ctrl = player_in_control( player_character );
     Creature *critter = g->critter_at( p, true );
@@ -581,7 +581,7 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
             auto end_pos = critter->bub_pos();
             tripoint start_pos;
             const units::angle angle =
-                move.dir() + 45_degrees * ( parts[part].mount.x > pivot_point().x ? -1 : 1 );
+                move.dir() + 45_degrees * ( parts[part].mount.x() > pivot_point().x() ? -1 : 1 );
             std::set<tripoint> &cur_points = get_points( true );
             // push the animal out of way until it's no longer in our vehicle and not in
             // anyone else's position
@@ -1101,7 +1101,7 @@ bool vehicle::check_is_heli_landed()
 {
     // @TODO - when there are chasms that extend below z-level 0 - perhaps the heli
     // will be able to descend into them but for now, assume z-level-0 == the ground.
-    if( ( bub_ms_location().z == 0 ||
+    if( ( bub_ms_location().z() == 0 ||
           !get_map().has_flag_ter_or_furn( TFLAG_NO_FLOOR, bub_ms_location() ) ) &&
         !get_map().has_flag_ter_or_furn( TFLAG_DEEP_WATER, bub_ms_location() ) ) {
         is_flying = false;
@@ -1418,15 +1418,15 @@ vehicle *vehicle::act_on_map()
                 std::ranges::for_each(
                 parts | std::views::filter( []( const auto & prt ) { return !prt.removed; } ),
                 [&]( const auto & prt ) {
-                    const int px = ( gpos.x + prt.precalc[0].x ) / SEEX;
-                    const int py = ( gpos.y + prt.precalc[0].y ) / SEEY;
+                    const int px = ( gpos.x + prt.precalc[0].x() ) / SEEX;
+                    const int py = ( gpos.y + prt.precalc[0].y() ) / SEEY;
                     sink_sm_min.x = std::min( sink_sm_min.x, px );
                     sink_sm_min.y = std::min( sink_sm_min.y, py );
                     sink_sm_max.x = std::max( sink_sm_max.x, px );
                     sink_sm_max.y = std::max( sink_sm_max.y, py );
                 }
                 );
-                here.on_vehicle_moved( sink_sm_min, sink_sm_max, sm_pos.z );
+                here.on_vehicle_moved( sink_sm_min, sink_sm_max, sm_pos.z() );
             }
             // Destroy vehicle (sank to nowhere)
             here.destroy_vehicle( this );
@@ -1590,7 +1590,7 @@ void vehicle::shift_zlevel()
             z_shift = 1;
         }
     } else {
-        z_shift = parts[center].precalc[0].z;
+        z_shift = parts[center].precalc[0].z();
     }
 
     if( z_shift != 0 ) {
@@ -1655,7 +1655,7 @@ void vehicle::adjust_zlevel( int idir, const tripoint &offset )
 
         auto cache_entry = z_cache.find( part_point.xy() );
         if( cache_entry != z_cache.end() ) {
-            prt.part().precalc[idir].z = cache_entry->second;
+            prt.part().precalc[idir].z() = cache_entry->second;
             continue;
         }
 
@@ -1678,7 +1678,7 @@ void vehicle::adjust_zlevel( int idir, const tripoint &offset )
                 line.z -= 1;
             }
         }
-        prt.part().precalc[idir].z = line.z - global_pos.z;
+        prt.part().precalc[idir].z() = line.z - global_pos.z;
         z_cache[part_point.xy()] = line.z - global_pos.z;
     }
 }
@@ -1916,7 +1916,7 @@ static bool scan_rails_from_veh_internal(
     point scan_vec )
 {
     for( size_t rail_id = 0; rail_id < veh.rail_profile.size(); rail_id++ ) {
-        int rail_y_rel_to_pivot = veh.rail_profile[rail_id] - veh.pivot_point().y;
+        int rail_y_rel_to_pivot = veh.rail_profile[rail_id] - veh.pivot_point().y();
         tripoint scan_pos = scan_initial_pos + rail_y_rel_to_pivot * veh_plus_y_vec;
         for( int step = 0; step < 3; step++ ) {
             tripoint p = scan_pos + scan_vec * step;

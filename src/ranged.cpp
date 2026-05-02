@@ -244,8 +244,8 @@ auto get_shot_target( const shot_target_options &options ) -> tripoint
     }
 
     auto shot_target = options.target;
-    const auto dx = options.target.x - options.source.x;
-    const auto dy = options.target.y - options.source.y;
+    const auto dx = options.target.x() - options.source.x;
+    const auto dy = options.target.y() - options.source.y;
     auto rad = std::atan2( dy, dx );
     const auto dispersion_angle = units::to_radians( std::min( units::from_arcmin( aim.dispersion ),
                                   30_degrees ) );
@@ -257,11 +257,11 @@ auto get_shot_target( const shot_target_options &options ) -> tripoint
     auto new_range = no_overshoot ? range + rng( -offset, offset ) : rng( range - offset,
                      options.proj.range );
     new_range = std::max( new_range, 1 );
-    shot_target.x = options.source.x + roll_remainder( new_range * std::cos( rad ) );
-    shot_target.y = options.source.y + roll_remainder( new_range * std::sin( rad ) );
+    shot_target.x() = options.source.x + roll_remainder( new_range * std::cos( rad ) );
+    shot_target.y() = options.source.y + roll_remainder( new_range * std::sin( rad ) );
     if( shot_target == options.source ) {
-        shot_target.x = options.source.x + sgn( dx );
-        shot_target.y = options.source.y + sgn( dy );
+        shot_target.x() = options.source.x + sgn( dx );
+        shot_target.y() = options.source.y + sgn( dy );
     }
 
     return shot_target;
@@ -273,8 +273,8 @@ auto get_pellet_target( const pellet_target_options &options ) -> tripoint
         return options.target;
     }
 
-    const auto dx = options.target.x - options.source.x;
-    const auto dy = options.target.y - options.source.y;
+    const auto dx = options.target.x() - options.source.x;
+    const auto dy = options.target.y() - options.source.y;
     const auto range = std::max( static_cast<double>( trig_dist( options.source, options.target ) ),
                                  1.0 );
     const auto base_angle = std::atan2( dy, dx );
@@ -283,11 +283,11 @@ auto get_pellet_target( const pellet_target_options &options ) -> tripoint
     const auto pellet_angle = base_angle + angle_offset;
 
     auto pellet_target = options.target;
-    pellet_target.x = options.source.x + roll_remainder( range * std::cos( pellet_angle ) );
-    pellet_target.y = options.source.y + roll_remainder( range * std::sin( pellet_angle ) );
+    pellet_target.x() = options.source.x + roll_remainder( range * std::cos( pellet_angle ) );
+    pellet_target.y() = options.source.y + roll_remainder( range * std::sin( pellet_angle ) );
     if( pellet_target == options.source ) {
-        pellet_target.x = options.source.x + sgn( dx );
-        pellet_target.y = options.source.y + sgn( dy );
+        pellet_target.x() = options.source.x + sgn( dx );
+        pellet_target.y() = options.source.y + sgn( dy );
     }
 
     return pellet_target;
@@ -2817,7 +2817,7 @@ target_handler::trajectory target_ui::run()
 
     avatar &player_character = *you;
     on_out_of_scope cleanup( [&here, &player_character]() {
-        here.invalidate_map_cache( player_character.bub_pos().z + player_character.view_offset.z );
+        here.invalidate_map_cache( player_character.bub_pos().z() + player_character.view_offset.z() );
     } );
 
     shared_ptr_fast<game::draw_callback_t> target_ui_cb = make_shared_fast<game::draw_callback_t>(
@@ -3154,7 +3154,7 @@ bool target_ui::handle_cursor_movement( const std::string &action, bool &skip_re
         shift_view_or_cursor( *delta );
     } else if( action == "SELECT" && ( mouse_pos = ctxt.get_coordinates( g->w_terrain ) ) ) {
         // Set pos by clicking with mouse
-        mouse_pos->z = you->pos().z + you->view_offset.z;
+        mouse_pos->z = you->pos().z + you->view_offset.z();
         set_cursor_pos( *mouse_pos );
     } else if( action == "LEVEL_UP" || action == "LEVEL_DOWN" ) {
         // Shift view/cursor up/down one z level
@@ -3339,7 +3339,7 @@ void target_ui::update_target_list()
 
     std::ranges::sort( targets, {}, [&]( const Creature * c ) -> std::tuple<bool, bool, bool, int> {
         const auto target_pos = c->bub_pos();
-        const auto z_diff = std::abs( player_pos.z - target_pos.z );
+        const auto z_diff = std::abs( player_pos.z - target_pos.z() );
         const auto is_hostile = c->attitude_to( *you ) == Attitude::A_HOSTILE;
         const auto has_los = here.sees( player_pos, target_pos, range );
         return { !has_los, !is_hostile, z_diff, rl_dist_exact( target_pos, player_pos ) };
@@ -3566,7 +3566,7 @@ void target_ui::set_view_offset( const tripoint &new_offset )
     tripoint new_( new_offset.xy(), clamp( new_offset.z, -fov_3d_z_range, fov_3d_z_range ) );
     new_.z = clamp( new_.z + src.z, -OVERMAP_DEPTH, OVERMAP_HEIGHT ) - src.z;
 
-    bool changed_z = you->view_offset.z != new_.z;
+    bool changed_z = you->view_offset.z() != new_.z;
     you->view_offset = new_;
     if( changed_z ) {
         // We need to do a bunch of cache updates since we're

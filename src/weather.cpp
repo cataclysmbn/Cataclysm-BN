@@ -1020,8 +1020,8 @@ double get_local_windpower( double windpower, const oter_id &omter, const tripoi
         is_ot_match( "forest_water", omter, ot_match_type::type ) ) {
         tmpwind = tmpwind / 2;
     }
-    if( location.z > 0 ) {
-        tmpwind = tmpwind + ( location.z * std::min( 5, tmpwind ) );
+    if( location.z() > 0 ) {
+        tmpwind = tmpwind + ( location.z() * std::min( 5, tmpwind ) );
     }
     // An adjacent wall will block wind
     if( is_wind_blocker( triblocker ) ) {
@@ -1226,7 +1226,7 @@ auto weather_manager::get_temperature( const tripoint_bub_ms &location ) const -
 
     // Calculate base temperature with underground influence
     units::temperature base_temp;
-    if( location.z >= 0 ) {
+    if( location.z() >= 0 ) {
         // Surface: full influence from current weather
         base_temp = temperature;
     } else if( !get_option<bool>( "UNDERGROUND_TEMPERATURE_INFLUENCED_BY_SURFACE" ) ) {
@@ -1234,12 +1234,12 @@ auto weather_manager::get_temperature( const tripoint_bub_ms &location ) const -
         base_temp = temperatures::annual_average;
     } else {
         // Underground: gradual transition to annual average
-        if( location.z <= -3 ) {
+        if( location.z() <= -3 ) {
             // Deep underground: always annual average (0% surface influence)
             base_temp = temperatures::annual_average;
         } else {
             // z=-1: 50%, z=-2: 25%
-            const double influence_factor = location.z == -1 ? 0.5 : 0.25;
+            const double influence_factor = location.z() == -1 ? 0.5 : 0.25;
 
             const double annual_avg_c = units::to_celsius( temperatures::annual_average );
             const double current_temp_c = units::to_celsius( temperature );
@@ -1306,14 +1306,14 @@ bool is_sheltered( const map &m, const tripoint_bub_ms &p )
     const optional_vpart_position vp = m.veh_at( p );
 
     return ( !m.is_outside( p ) ||
-             p.z < 0 ||
+             p.z() < 0 ||
              ( vp && vp->is_inside() ) );
 }
 
 bool is_in_sunlight( const map &m, const tripoint_bub_ms &p, const weather_type_id &weather )
 {
     // TODO: Remove that game reference and include light in weather data
-    return m.is_outside( p ) && g->light_level( p.z ) >= 40 && !is_night( calendar::turn ) &&
+    return m.is_outside( p ) && g->light_level( p.z() ) >= 40 && !is_night( calendar::turn ) &&
            weather->sun_intensity >= sun_intensity_type::light;
 }
 

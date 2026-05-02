@@ -5657,8 +5657,8 @@ void map::make_inactive( item &loc )
     // remove from the active items cache (if it isn't there does nothing)
     current_submap->active_items.remove( &loc );
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.erase( tripoint_abs_sm( abs_sub.x() + loc.position().x / SEEX,
-                                         abs_sub.y() + loc.position().y / SEEY, loc.position().z ) );
+        submaps_with_active_items.erase( tripoint_abs_sm( abs_sub.x() + loc.position().x() / SEEX,
+                                         abs_sub.y() + loc.position().y() / SEEY, loc.position().z() ) );
     }
 }
 
@@ -5674,8 +5674,8 @@ void map::make_active( item &loc )
     submap *const current_submap = get_submap_at( tripoint_bub_ms( loc.position() ), l );
 
     if( current_submap->active_items.empty() ) {
-        submaps_with_active_items.insert( tripoint_abs_sm( abs_sub.x() + loc.position().x / SEEX,
-                                          abs_sub.y() + loc.position().y / SEEY, loc.position().z ) );
+        submaps_with_active_items.insert( tripoint_abs_sm( abs_sub.x() + loc.position().x() / SEEX,
+                                          abs_sub.y() + loc.position().y() / SEEY, loc.position().z() ) );
     }
     current_submap->active_items.add( *target );
 }

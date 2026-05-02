@@ -1193,7 +1193,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
 
     map &here = get_map();
 
-    auto &_exp_cache = here.access_cache( src.z );
+    auto &_exp_cache = here.access_cache( src.z() );
     const int exp_sx = _exp_cache.cache_x;
     const int exp_sy = _exp_cache.cache_y;
     auto obstacle_cache = std::vector<float>( static_cast<size_t>( exp_sx ) * exp_sy, 0.0f );
@@ -1202,7 +1202,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
     // TODO: Calculate range based on max effective range for projectiles.
     // Basically bisect between 0 and map diameter using shrapnel_calc().
     // Need to update shadowcasting to support limiting range without adjusting initial distance.
-    const tripoint_range<tripoint> area = here.points_on_zlevel( src.z );
+    const tripoint_range<tripoint> area = here.points_on_zlevel( src.z() );
 
     here.build_obstacle_cache( area.min(), area.max() + tripoint_south_east,
                                obstacle_cache.data(), exp_sy );
@@ -1210,7 +1210,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
     // Shadowcasting normally ignores the origin square,
     // so apply it manually to catch monsters standing on the explosive.
     // This "blocks" some fragments, but does not apply deceleration.
-    visited_cache[src.x * exp_sy + src.y] = 1.0f;
+    visited_cache[src.x() * exp_sy + src.y()] = 1.0f;
 
     // This is used to limit radius
     // By default, the radius is 60, so negative values can be helpful here

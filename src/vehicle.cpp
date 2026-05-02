@@ -935,7 +935,7 @@ void vehicle::activate_magical_follow()
         if( vp.info().fuel_type == fuel_type_mana ) {
             vp.enabled = true;
             is_following = true;
-            follow_distance = 12 + mount_max.y * 3;
+            follow_distance = 12 + mount_max.y() * 3;
             engine_on = true;
         } else {
             vp.enabled = true;
@@ -953,7 +953,7 @@ void vehicle::activate_animal_follow()
             if( mon && mon->has_effect( effect_harnessed ) ) {
                 vp.enabled = true;
                 is_following = true;
-                follow_distance = 12 + mount_max.y * 3;
+                follow_distance = 12 + mount_max.y() * 3;
                 engine_on = true;
             }
         } else {

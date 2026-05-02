@@ -597,7 +597,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
             popup( _( "You need to breathe but you can't swim!  Get to dry land, quick!" ) );
         }
     }
-    bool diagonal = ( p.x != you.posx() && p.y != you.posy() );
+    bool diagonal = ( p.x() != you.posx() && p.y() != you.posy() );
     if( you.in_vehicle ) {
         m.unboard_vehicle( you.bub_pos() );
     }
@@ -675,7 +675,7 @@ void avatar_action::autoattack( avatar &you, map &m )
     } );
 
     const auto diff = best.bub_pos() - you.bub_pos();
-    if( std::abs( diff.x ) <= 1 && std::abs( diff.y ) <= 1 && diff.z == 0 ) {
+    if( std::abs( diff.x() ) <= 1 && std::abs( diff.y() ) <= 1 && diff.z() == 0 ) {
         move( you, m, tripoint( diff.xy(), 0 ) );
         return;
     }

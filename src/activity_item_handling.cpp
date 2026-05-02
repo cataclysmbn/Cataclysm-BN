@@ -975,9 +975,9 @@ static bool vehicle_activity( player &p, const tripoint_bub_ms &src_loc, int vpi
         p.activity->coord_set.insert( here.bub_to_abs( pt ).raw() );
     }
     // values[0]
-    p.activity->values.push_back( here.bub_to_abs( src_loc ).x );
+    p.activity->values.push_back( here.bub_to_abs( src_loc ).x() );
     // values[1]
-    p.activity->values.push_back( here.bub_to_abs( src_loc ).y );
+    p.activity->values.push_back( here.bub_to_abs( src_loc ).y() );
     // values[2]
     p.activity->values.push_back( point_zero.x );
     // values[3]
@@ -990,7 +990,7 @@ static bool vehicle_activity( player &p, const tripoint_bub_ms &src_loc, int vpi
     p.activity->values.push_back( veh->index_of_part( &veh->part( vpindex ) ) );
     p.activity->str_values.push_back( vp.get_id().str() );
     // values[7]
-    p.activity->values.push_back( here.bub_to_abs( src_loc ).z );
+    p.activity->values.push_back( here.bub_to_abs( src_loc ).z() );
     // this would only be used for refilling tasks
     p.activity->targets.emplace_back( );
     p.activity->placement = here.bub_to_abs( src_loc );
@@ -1809,7 +1809,7 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
                 } else if( !warm_enough_to_plant( src_loc ) ) {
                     return activity_reason_info::fail( do_activity_reason::NEEDS_WARM_WEATHER );
                     // Plants underground need to be either valid to plant underground, or given artificial heating
-                } else if( !seed.obj().has_flag( flag_CAN_PLANT_UNDERGROUND ) && src_loc.z < 0 &&
+                } else if( !seed.obj().has_flag( flag_CAN_PLANT_UNDERGROUND ) && src_loc.z() < 0 &&
                            get_weather().get_temperature( src_loc ) < 10_c ) {
                     return activity_reason_info::fail( do_activity_reason::NEEDS_ABOVE_GROUND );
                 } else {
@@ -3657,7 +3657,7 @@ bool find_auto_consume( player &p, const consume_type type )
 
     std::optional<item *> stalest = mgr.get_near( consume_type_zone, here.bub_to_abs( pos ),
                                     ACTIVITY_SEARCH_DISTANCE )
-                                    | views::filter( [&]( const auto & loc ) -> bool { return loc.z == p.bub_pos().z; } )
+                                    | views::filter( [&]( const auto & loc ) -> bool { return loc.z == p.bub_pos().z(); } )
                                     | flat_map( get_items_at )
                                     | views::filter( ok_to_consume )
                                     | min_by( get_spoil );

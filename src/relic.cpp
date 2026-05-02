@@ -368,7 +368,7 @@ bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Cha
             return soaked;
         }
         case relic_recharge_req::sky: {
-            return itm.position().z > 0;
+            return itm.position().z() > 0;
         }
         default: {
             std::abort();

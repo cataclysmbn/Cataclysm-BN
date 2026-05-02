@@ -183,8 +183,8 @@ static std::unordered_map<tripoint_bub_ms, sound_event> sound_markers;
 // roughly five times as large as horizontal ones.
 static int sound_distance( const tripoint_bub_ms &source, const tripoint_bub_ms &sink )
 {
-    const int lower_z = std::min( source.z, sink.z );
-    const int upper_z = std::max( source.z, sink.z );
+    const int lower_z = std::min( source.z(), sink.z() );
+    const int upper_z = std::max( source.z(), sink.z() );
     const int vertical_displacement = upper_z - lower_z;
     int vertical_attenuation = vertical_displacement;
     if( lower_z < 0 && vertical_displacement > 0 ) {
@@ -352,7 +352,7 @@ void sounds::process_sounds()
             const point abs_ms = get_map().bub_to_abs( source.xy() );
             // TODO: fix point types
             const point_abs_sm abs_sm( project_to<coords::sm>( abs_ms ) );
-            const tripoint_abs_sm target( abs_sm, source.z );
+            const tripoint_abs_sm target( abs_sm, source.z() );
             get_overmapbuffer( get_map().get_bound_dimension() ).signal_hordes( target, sig_power );
         }
         // Alert all monsters (that can hear) to the sound.
@@ -958,7 +958,7 @@ void sfx::do_ambient()
     audio_muted = false;
     const bool is_deaf = player_character.is_deaf();
     const int heard_volume = get_heard_volume( player_character.bub_pos() );
-    const bool is_underground = player_character.bub_pos().z < 0;
+    const bool is_underground = player_character.bub_pos().z() < 0;
     const bool is_sheltered = g->is_sheltered( player_character.bub_pos() );
     const bool weather_changed = get_weather().weather_id != previous_weather;
     // Step in at night time / we are not indoors

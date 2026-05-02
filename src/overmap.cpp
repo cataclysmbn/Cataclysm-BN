@@ -2731,18 +2731,18 @@ void overmap_special::load( const JsonObject &jo, const std::string &src )
                 mandatory( joc, false, "type", type );
                 mandatory( joc, false, "from", from );
                 mandatory( joc, false, "to", to );
-                if( from.x > to.x ) {
-                    std::swap( from.x, to.x );
+                if( from.x() > to.x() ) {
+                    std::swap( from.x(), to.x() );
                 }
-                if( from.y > to.y ) {
-                    std::swap( from.y, to.y );
+                if( from.y() > to.y() ) {
+                    std::swap( from.y(), to.y() );
                 }
-                if( from.z > to.z ) {
-                    std::swap( from.z, to.z );
+                if( from.z() > to.z() ) {
+                    std::swap( from.z(), to.z() );
                 }
-                for( int x = from.x; x <= to.x; x++ ) {
-                    for( int y = from.y; y <= to.y; y++ ) {
-                        for( int z = from.z; z <= to.z; z++ ) {
+                for( int x = from.x(); x <= to.x(); x++ ) {
+                    for( int y = from.y(); y <= to.y(); y++ ) {
+                        for( int z = from.z(); z <= to.z(); z++ ) {
                             overmap_special_locations loc;
                             loc.p = tripoint( x, y, z );
                             loc.locations = type;

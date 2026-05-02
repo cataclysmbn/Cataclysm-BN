@@ -171,14 +171,14 @@ std::unique_ptr<player_activity> veh_interact::serialize_activity()
     for( const tripoint &p : veh->get_points( true ) ) {
         res->coord_set.insert( here.bub_to_abs( p ) );
     }
-    res->values.push_back( q.x );   // values[0]
-    res->values.push_back( q.y );   // values[1]
+    res->values.push_back( q.x() );   // values[0]
+    res->values.push_back( q.y() );   // values[1]
     res->values.push_back( dd.x );   // values[2]
     res->values.push_back( dd.y );   // values[3]
     res->values.push_back( -dd.x );   // values[4]
     res->values.push_back( -dd.y );   // values[5]
     res->values.push_back( veh->index_of_part( vpt ) ); // values[6]
-    res->values.push_back( q.z );   // values[7]
+    res->values.push_back( q.z() );   // values[7]
     res->str_values.push_back( vp->get_id().str() );
     if( target ) {
         res->targets.emplace_back( target );
@@ -836,7 +836,7 @@ bool veh_interact::update_part_requirements()
         for( auto &p : veh->steering ) {
             if( !veh->part_flag( p, "TRACKED" ) ) {
                 // tracked parts don't contribute to axle complexity
-                axles.insert( veh->part( p ).mount.x );
+                axles.insert( veh->part( p ).mount.x() );
             }
         }
 
@@ -2388,31 +2388,31 @@ void veh_interact::display_veh()
         point_rel_ms com = veh->local_center_of_mass();
         const point cur = -dd;
 
-        mvwprintz( w_disp, point_zero, c_green, "CoM   %d,%d", com.x, com.y );
+        mvwprintz( w_disp, point_zero, c_green, "CoM   %d,%d", com.x(), com.y() );
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        mvwprintz( w_disp, point( 0, 1 ), c_red,   "Pivot %d,%d", pivot.x, pivot.y );
+        mvwprintz( w_disp, point( 0, 1 ), c_red,   "Pivot %d,%d", pivot.x(), pivot.y() );
         mvwprintz( w_disp, point( 0, 2 ), c_dark_gray, "Cur   %d,%d", cur.x, cur.y );
 
         const point_rel_ms com_s = ( com + dd ).rotate( 3 ) + h_size;
         const point_rel_ms pivot_s = ( pivot + dd ).rotate( 3 ) + h_size;
 
         for( int x = 0; x < getmaxx( w_disp ); ++x ) {
-            if( x <= com_s.x ) {
-                mvwputch( w_disp, point( x, com_s.y ), c_green, LINE_OXOX );
+            if( x <= com_s.x() ) {
+                mvwputch( w_disp, point( x, com_s.y() ), c_green, LINE_OXOX );
             }
 
-            if( x >= pivot_s.x ) {
-                mvwputch( w_disp, point( x, pivot_s.y ), c_red, LINE_OXOX );
+            if( x >= pivot_s.x() ) {
+                mvwputch( w_disp, point( x, pivot_s.y() ), c_red, LINE_OXOX );
             }
         }
 
         for( int y = 0; y < getmaxy( w_disp ); ++y ) {
-            if( y <= com_s.y ) {
-                mvwputch( w_disp, point( com_s.x, y ), c_green, LINE_XOXO );
+            if( y <= com_s.y() ) {
+                mvwputch( w_disp, point( com_s.x(), y ), c_green, LINE_XOXO );
             }
 
-            if( y >= pivot_s.y ) {
-                mvwputch( w_disp, point( pivot_s.x, y ), c_red, LINE_XOXO );
+            if( y >= pivot_s.y() ) {
+                mvwputch( w_disp, point( pivot_s.x(), y ), c_red, LINE_XOXO );
             }
         }
     }

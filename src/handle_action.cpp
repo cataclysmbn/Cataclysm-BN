@@ -918,7 +918,7 @@ static void wait()
     map &here = get_map();
 
     if( u.controlling_vehicle && ( here.veh_at( u.bub_pos() )->vehicle().velocity ||
-                                   here.veh_at( u.bub_pos() )->vehicle().cruise_velocity ) && u.bub_pos().z < 4 ) {
+                                   here.veh_at( u.bub_pos() )->vehicle().cruise_velocity ) && u.bub_pos().z() < 4 ) {
         popup( _( "You can't pass time while controlling a moving vehicle." ) );
         return;
     }
@@ -960,7 +960,7 @@ static void wait()
             as_m.addentry( 12, true, 'w', _( "Wait until you catch your breath" ) );
             durations.emplace( 12, 15_minutes ); // to hide it from showing
         }
-        if( u.controlling_vehicle && u.bub_pos().z > 3 ) {
+        if( u.controlling_vehicle && u.bub_pos().z() > 3 ) {
             add_menu_item( 14, 'x', "", 10_seconds );
             add_menu_item( 15, 'y', "", 30_seconds );
             add_menu_item( 16, 'z', "", 1_minutes );
@@ -1826,8 +1826,8 @@ bool game::handle_action()
                 break;
 
             case ACTION_CENTER:
-                u.view_offset.x = driving_view_offset.x;
-                u.view_offset.y = driving_view_offset.y;
+                u.view_offset.x() = driving_view_offset.x;
+                u.view_offset.y() = driving_view_offset.y;
                 break;
 
             case ACTION_SHIFT_N:
@@ -1998,10 +1998,10 @@ bool game::handle_action()
                         below.z--;
                         // Keep going down until we find a tile that is NOT open air
                         while( get_map().ter( below ).id().str() == "t_open_air" ) {
-                            where.z--;
+                            where.z()--;
                             below.z--;
                         }
-                        const int dist = u.bub_pos().z - below.z;
+                        const int dist = u.bub_pos().z() - below.z;
                         if( info.ladder_length() >= dist ) {
                             get_map().unboard_vehicle( u.bub_pos() );
                             vertical_move( -dist, true );
@@ -2063,7 +2063,7 @@ bool game::handle_action()
                             above.z++;
                         }
                         const optional_vpart_position vp = here.veh_at( tripoint( xy, above.z ) );
-                        const int dist = above.z - u.bub_pos().z;
+                        const int dist = above.z - u.bub_pos().z();
                         if( vp ) {
                             const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
                             if( idx != -1 ) {

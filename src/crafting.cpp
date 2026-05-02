@@ -705,7 +705,7 @@ static void set_item_map( const tripoint_bub_ms &loc, detached_ptr<item> &&newit
             return;
         }
     }
-    debugmsg( "Could not place %s on map near (%d, %d, %d)", newit->tname(), loc.x, loc.y, loc.z );
+    debugmsg( "Could not place %s on map near (%d, %d, %d)", newit->tname(), loc.x(), loc.y(), loc.z() );
     return;
 }
 

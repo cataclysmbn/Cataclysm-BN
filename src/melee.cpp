@@ -1566,23 +1566,23 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         int newx;
         int newy;
 
-        if( b.x > posx() ) {
+        if( b.x() > posx() ) {
             newx = posx() - 1;
-        } else if( b.x < posx() ) {
+        } else if( b.x() < posx() ) {
             newx = posx() + 1;
         } else {
-            newx = b.x;
+            newx = b.x();
         }
 
-        if( b.y > posy() ) {
+        if( b.y() > posy() ) {
             newy = posy() - 1;
-        } else if( b.y < posy() ) {
+        } else if( b.y() < posy() ) {
             newy = posy() + 1;
         } else {
-            newy = b.y;
+            newy = b.y();
         }
 
-        const tripoint &dest = tripoint( newx, newy, b.z );
+        const tripoint &dest = tripoint( newx, newy, b.z() );
         if( g->is_empty( dest ) ) {
             t.setpos( dest );
         }

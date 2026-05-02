@@ -1305,8 +1305,8 @@ void iexamine::chainfence( player &p, const tripoint_bub_ms &examp )
         here.unboard_vehicle( p.bub_pos() );
     }
     p.setpos( examp );
-    if( examp.x < g_half_mapsize_x || examp.y < g_half_mapsize_y ||
-        examp.x >= g_half_mapsize_x + SEEX || examp.y >= g_half_mapsize_y + SEEY ) {
+    if( examp.x() < g_half_mapsize_x || examp.y() < g_half_mapsize_y ||
+        examp.x() >= g_half_mapsize_x + SEEX || examp.y() >= g_half_mapsize_y + SEEY ) {
         if( p.is_player() ) {
             g->update_map( p );
         }
@@ -2020,8 +2020,8 @@ void iexamine::fswitch( player &p, const tripoint_bub_ms &examp )
     ter_id terid = here.ter( examp );
     p.moves -= to_moves<int>( 1_seconds );
     tripoint tmp;
-    tmp.z = examp.z;
-    for( tmp.y = examp.y; tmp.y <= examp.y + 5; tmp.y++ ) {
+    tmp.z = examp.z();
+    for( tmp.y = examp.y(); tmp.y <= examp.y() + 5; tmp.y++ ) {
         for( tmp.x = 0; tmp.x < g_mapsize_x; tmp.x++ ) {
             if( terid == t_switch_rg ) {
                 if( here.ter( tmp ) == t_rock_red ) {
@@ -2054,7 +2054,7 @@ void iexamine::fswitch( player &p, const tripoint_bub_ms &examp )
                     here.ter_set( tmp, t_rock_red );
                 }
             } else if( terid == t_switch_even ) {
-                if( ( tmp.y - examp.y ) % 2 == 1 ) {
+                if( ( tmp.y - examp.y() ) % 2 == 1 ) {
                     if( here.ter( tmp ) == t_rock_red ) {
                         here.ter_set( tmp, t_floor_red );
                     } else if( here.ter( tmp ) == t_floor_red ) {
@@ -2586,7 +2586,7 @@ void iexamine::dirtmound( player &p, const tripoint_bub_ms &examp )
     const auto &seed_id = std::get<0>( seed_entries[seed_index] );
 
     // Separate temp check because for now we permit growing regular plants underground with artificial heating
-    if( !seed_id.obj().has_flag( flag_CAN_PLANT_UNDERGROUND ) && examp.z < 0 &&
+    if( !seed_id.obj().has_flag( flag_CAN_PLANT_UNDERGROUND ) && examp.z() < 0 &&
         get_weather().get_temperature( examp ) < 10_c ) {
         add_msg( _( "It's too cold down here to plant this type of seed underground." ) );
         return;
@@ -2670,7 +2670,7 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
     } );
 
     if( seed_it == items.end() ) {
-        debugmsg( "Missing seed for plant at (%d, %d, %d)", examp.x, examp.y, examp.z );
+        debugmsg( "Missing seed for plant at (%d, %d, %d)", examp.x(), examp.y(), examp.z() );
         here.i_clear( examp );
         here.furn_set( examp, f_null );
         return;
@@ -2833,7 +2833,7 @@ void iexamine::aggie_plant( player &p, const tripoint_bub_ms &examp )
     } );
 
     if( seed_it == items.end() ) {
-        debugmsg( "Missing seed for plant at (%d, %d, %d)", examp.x, examp.y, examp.z );
+        debugmsg( "Missing seed for plant at (%d, %d, %d)", examp.x(), examp.y(), examp.z() );
         here.i_clear( examp );
         here.furn_set( examp, f_null );
         return;
@@ -5505,11 +5505,11 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
         // Keep going down until we find a tile that is NOT open air
         while( get_map().ter( below ).id().str() == "t_open_air" &&
                get_map().valid_move( where, below, false, true ) ) {
-            where.z--;
+            where.z()--;
             below.z--;
         }
         // where now represents the first NON-open-air tile or the last valid move before hitting one
-        const int height = p.bub_pos().z - below.z;
+        const int height = p.bub_pos().z() - below.z;
 
         if( height > 0 ) {
             g->vertical_move( -height, true );  // fall onto the solid tile
@@ -5537,7 +5537,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
     map &here = get_map();
     switch( cmenu.ret ) {
         case ledge_action::jump_over: {
-            tripoint dest( p.posx() + 2 * sgn( examp.x - p.posx() ), p.posy() + 2 * sgn( examp.y - p.posy() ),
+            tripoint dest( p.posx() + 2 * sgn( examp.x() - p.posx() ), p.posy() + 2 * sgn( examp.y() - p.posy() ),
                            p.posz() );
             if( p.get_str() < 4 ) {
                 add_msg( m_warning, _( "You are too weak to jump over an obstacle." ) );
@@ -5565,7 +5565,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
                 below.z--;
             }
 
-            const int height = examp.z - where.z;
+            const int height = examp.z() - where.z;
             if( height == 0 ) {
                 p.add_msg_if_player( _( "You can't climb down there." ) );
                 return;
@@ -5661,8 +5661,8 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             bool success = false;
             for( int i = 2; i <= range; i++ ) {
                 //break at the first non empty space encountered
-                if( g->m.ter( tripoint( p.posx() + i * sgn( examp.x - p.posx() ),
-                                        p.posy() + i * sgn( examp.y - p.posy() ), p.posz() ) ) != t_open_air ) {
+                if( g->m.ter( tripoint( p.posx() + i * sgn( examp.x() - p.posx() ),
+                                        p.posy() + i * sgn( examp.y() - p.posy() ), p.posz() ) ) != t_open_air ) {
                     success_range = i;
                     success = true;
                     break;
@@ -5672,7 +5672,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
                 p.add_msg_if_player( _( "There is nothing for your to attach your web to!" ) );
             } else {
                 for( int i = 1; i < success_range; i++ ) {
-                    tripoint dest( p.posx() + i * sgn( examp.x - p.posx() ), p.posy() + i * sgn( examp.y - p.posy() ),
+                    tripoint dest( p.posx() + i * sgn( examp.x() - p.posx() ), p.posy() + i * sgn( examp.y() - p.posy() ),
                                    p.posz() );
 
                     g->m.ter_set( dest, t_web_bridge );

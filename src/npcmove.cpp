@@ -1476,7 +1476,7 @@ npc_action npc::method_of_attack()
     auto tar = critter->bub_pos();
     int dist = rl_dist( bub_pos(), tar );
     const bool has_los = clear_shot_reach( bub_pos(), tar, false );
-    const bool same_z = tar.z == bub_pos().z;
+    const bool same_z = tar.z() == bub_pos().z();
     const int cur_recoil = ranged::recoil_total( *this );
 
     // TODO: Change the in_vehicle check to actual "are we driving" check
@@ -2395,7 +2395,7 @@ bool npc::update_path( const tripoint_bub_ms &p, const bool no_bashing, bool for
 
     if( !path.empty() ) {
         const tripoint &last = path[path.size() - 1];
-        if( last == p && ( path[0].z != posz() || rl_dist( path[0], bub_pos() ) <= 1 ) ) {
+        if( last == p && ( path[0].z() != posz() || rl_dist( path[0], bub_pos() ) <= 1 ) ) {
             // Our path already leads to that point, no need to recalculate
             return true;
         }
@@ -2407,10 +2407,10 @@ bool npc::update_path( const tripoint_bub_ms &p, const bool no_bashing, bool for
         if( !ai_cache.sound_alerts.empty() ) {
             ai_cache.sound_alerts.erase( ai_cache.sound_alerts.begin() );
             add_msg( m_debug, "failed to path to sound alert %d,%d,%d->%d,%d,%d",
-                     posx(), posy(), posz(), p.x, p.y, p.z );
+                     posx(), posy(), posz(), p.x(), p.y(), p.z() );
         }
         add_msg( m_debug, "Failed to path %d,%d,%d->%d,%d,%d",
-                 posx(), posy(), posz(), p.x, p.y, p.z );
+                 posx(), posy(), posz(), p.x(), p.y(), p.z() );
     }
 
     while( !new_path.empty() && new_path[0] == bub_pos() ) {
@@ -3170,7 +3170,7 @@ void npc::pick_up_item()
     }
 
     add_msg( m_debug, "%s::pick_up_item(); [%d, %d, %d] => [%d, %d, %d]", name,
-             posx(), posy(), posz(), wanted_item_pos.x, wanted_item_pos.y, wanted_item_pos.z );
+             posx(), posy(), posz(), wanted_item_pos.x(), wanted_item_pos.y(), wanted_item_pos.z() );
     if( const std::optional<tripoint> dest = nearest_passable( wanted_item_pos, bub_pos() ) ) {
         update_path( *dest );
     }
@@ -3181,7 +3181,7 @@ void npc::pick_up_item()
                       get_map().obstructed_by_vehicle_rotation( bub_pos(), wanted_item_pos );
     if( cant_reach && !path.empty() ) {
         add_msg( m_debug, "Moving; [%d, %d, %d] => [%d, %d, %d]",
-                 posx(), posy(), posz(), path[0].x, path[0].y, path[0].z );
+                 posx(), posy(), posz(), path[0].x(), path[0].y(), path[0].z() );
 
         move_to_next();
         return;
@@ -3499,7 +3499,7 @@ bool npc::do_pulp()
         return false;
     }
 
-    if( rl_dist( *pulp_location, bub_pos() ) > 1 || pulp_location->z != posz() ) {
+    if( rl_dist( *pulp_location, bub_pos() ) > 1 || pulp_location->z() != posz() ) {
         return false;
     }
     // TODO: Don't recreate the activity every time

@@ -494,9 +494,9 @@ void pixel_minimap::render_cache( const tripoint &center )
 
         const tripoint_rel_sm rel_pos = elem.first - sm_center;
 
-        if( std::abs( rel_pos.x ) > sm_offset.x + 1 ||
-            std::abs( rel_pos.y ) > sm_offset.y + 1 ||
-            rel_pos.z != 0 ) {
+        if( std::abs( rel_pos.x() ) > sm_offset.x + 1 ||
+            std::abs( rel_pos.y() ) > sm_offset.y + 1 ||
+            rel_pos.z() != 0 ) {
             continue;
         }
 
@@ -526,10 +526,10 @@ void pixel_minimap::render_critters( const tripoint_bub_ms &center )
         mixture = lerp_clamped( 0, 100, std::max( s, 0.0f ) );
     }
 
-    const level_cache &access_cache = get_map().access_cache( center.z );
+    const level_cache &access_cache = get_map().access_cache( center.z() );
 
-    const auto start_x = center.x - view_tiles_count.x / 2;
-    const auto start_y = center.y - view_tiles_count.y / 2;
+    const auto start_x = center.x() - view_tiles_count.x / 2;
+    const auto start_y = center.y() - view_tiles_count.y / 2;
     const point beacon_size = {
         std::max<int>( projector->get_tile_size().x *settings.beacon_size / 2, 2 ),
         std::max<int>( projector->get_tile_size().y *settings.beacon_size / 2, 2 )
@@ -542,7 +542,7 @@ void pixel_minimap::render_critters( const tripoint_bub_ms &center )
     // view_tiles_count can exceed the cache dimensions.
     for( int y = 0; y < view_tiles_count.y; y++ ) {
         for( int x = 0; x < view_tiles_count.x; x++ ) {
-            const tripoint p = tripoint{ start_x + x, start_y + y, center.z };
+            const tripoint p = tripoint{ start_x + x, start_y + y, center.z() };
             if( !access_cache.inbounds( tripoint_bub_ms( p ).xy() ) ) {
                 continue;
             }

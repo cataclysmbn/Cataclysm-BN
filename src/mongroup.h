@@ -117,10 +117,6 @@ struct mongroup {
         , radius( prad )
         , population( ppop ) {
     }
-    mongroup( const mongroup_id &ptype, const tripoint_om_sm &ppos,
-              unsigned int prad, unsigned int ppop ) :
-        // TODO: fix point types
-        mongroup( ptype, ppos.raw(), prad, ppop ) {}
     mongroup( const std::string &ptype, const tripoint_om_sm &ppos, unsigned int prad,
               unsigned int ppop,
               tripoint ptarget, int pint, bool pdie, bool phorde, bool pdiff ) :

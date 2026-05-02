@@ -1021,8 +1021,8 @@ static bool query_for_item( const player *pl, const itype_id &itemname, const ch
 
 static tripoint random_neighbor( const tripoint_bub_ms &center )
 {
-    center.x += rng( -1, 1 );
-    center.y += rng( -1, 1 );
+    center.x() += rng( -1, 1 );
+    center.y() += rng( -1, 1 );
     return center;
 }
 
@@ -1146,7 +1146,7 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
         } else {
             c->add_msg_if_npc( _( "<npcname> falls down a level!" ) );
             auto dest = c->bub_pos();
-            dest.z--;
+            dest.z()--;
             c->impact( 20, dest );
             c->setpos( dest );
             if( m != nullptr ) {
@@ -1374,11 +1374,11 @@ bool trapfunc::shadow( const tripoint_bub_ms &p, Creature *c, item * )
     for( int tries = 0; tries < 10; tries++ ) {
         tripoint_bub_ms monp = p;
         if( one_in( 2 ) ) {
-            monp.x = p.x + rng( -5, +5 );
-            monp.y = p.y + ( one_in( 2 ) ? -5 : +5 );
+            monp.x() = p.x() + rng( -5, +5 );
+            monp.y() = p.y() + ( one_in( 2 ) ? -5 : +5 );
         } else {
-            monp.x = p.x + ( one_in( 2 ) ? -5 : +5 );
-            monp.y = p.y + rng( -5, +5 );
+            monp.x() = p.x() + ( one_in( 2 ) ? -5 : +5 );
+            monp.y() = p.y() + rng( -5, +5 );
         }
         if( !g->m.sees( monp, p, 10 ) ) {
             continue;
@@ -1410,7 +1410,7 @@ bool trapfunc::map_regen( const tripoint_bub_ms &p, Creature *c, item * )
                 return false;
             }
             here.set_seen_cache_dirty( p );
-            here.set_transparency_cache_dirty( p.z );
+            here.set_transparency_cache_dirty( p.z() );
             return true;
         }
     }
@@ -1461,11 +1461,11 @@ bool trapfunc::snake( const tripoint_bub_ms &p, Creature *, item * )
         for( int tries = 0; tries < 10; tries++ ) {
             tripoint_bub_ms monp = p;
             if( one_in( 2 ) ) {
-                monp.x = p.x + rng( -5, +5 );
-                monp.y = p.y + ( one_in( 2 ) ? -5 : +5 );
+                monp.x() = p.x() + rng( -5, +5 );
+                monp.y() = p.y() + ( one_in( 2 ) ? -5 : +5 );
             } else {
-                monp.x = p.x + ( one_in( 2 ) ? -5 : +5 );
-                monp.y = p.y + rng( -5, +5 );
+                monp.x() = p.x() + ( one_in( 2 ) ? -5 : +5 );
+                monp.y() = p.y() + rng( -5, +5 );
             }
             if( !g->m.sees( monp, p, 10 ) ) {
                 continue;

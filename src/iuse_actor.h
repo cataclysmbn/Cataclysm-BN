@@ -1627,6 +1627,6 @@ class iuse_portal_link : public iuse_actor
         void load( const JsonObject &obj ) override;
         auto use( player &p, item &it, bool, const tripoint_bub_ms &pos ) const -> int override;
         auto can_use( const Character &, const item &it, bool,
-                      const tripoint &pos ) const -> ret_val<bool> override;
+                      const tripoint_bub_ms &pos ) const -> ret_val<bool> override;
         auto clone() const -> std::unique_ptr<iuse_actor> override;
 };

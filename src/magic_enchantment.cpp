@@ -239,11 +239,11 @@ bool enchantment::is_active( const Character &guy, const bool active ) const
     }
 
     if( active_conditions.second == condition::UNDERGROUND ) {
-        return guy.bub_pos().z < 0;
+        return guy.bub_pos().z() < 0;
     }
 
     if( active_conditions.second == condition::ABOVEGROUND ) {
-        return guy.bub_pos().z > -1;
+        return guy.bub_pos().z() > -1;
     }
 
     if( active_conditions.second == condition::UNDERWATER ) {

@@ -1083,7 +1083,7 @@ void pointmenu_cb::impl_t::select( uilist *const menu )
         const tripoint &center = points[menu->selected];
         g->u.view_offset = center - g->u.bub_pos();
         // TODO: Remove this line when it's safe
-        g->u.view_offset.z = 0;
+        g->u.view_offset.z() = 0;
     }
     g->invalidate_main_ui_adaptor();
 }

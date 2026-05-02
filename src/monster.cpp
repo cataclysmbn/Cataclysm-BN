@@ -3754,8 +3754,8 @@ void monster::hear_sound( const tripoint_bub_ms &source, const int vol, const in
         max_error = 1;
     }
 
-    int target_x = source.x + rng( -max_error, max_error );
-    int target_y = source.y + rng( -max_error, max_error );
+    int target_x = source.x() + rng( -max_error, max_error );
+    int target_y = source.y() + rng( -max_error, max_error );
     // target_z will require some special check due to soil muffling sounds
 
     int wander_turns = volume * ( goodhearing ? 6 : 1 );
@@ -3764,11 +3764,11 @@ void monster::hear_sound( const tripoint_bub_ms &source, const int vol, const in
     if( morale >= 0 && anger >= 10 ) {
         // TODO: Add a proper check for fleeing attitude
         // but cache it nicely, because this part is called a lot
-        wander_to( tripoint_bub_ms( target_x, target_y, source.z ), wander_turns );
+        wander_to( tripoint_bub_ms( target_x, target_y, source.z() ), wander_turns );
     } else if( morale < 0 ) {
         // Monsters afraid of sound should not go towards sound
         wander_to( tripoint_bub_ms( 2 * bub_pos().x() - target_x, 2 * bub_pos().y() - target_y,
-                                    2 * bub_pos().z() - source.z ),
+                                    2 * bub_pos().z() - source.z() ),
                    wander_turns );
     }
 }

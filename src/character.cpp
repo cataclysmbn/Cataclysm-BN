@@ -1232,7 +1232,7 @@ bool Character::check_outbounds_activity( player_activity &act )
 
         add_msg( m_debug,
                  "npc %s at pos %d %d, activity target is not inbounds at %d %d therefore activity was stashed",
-                 disp_name(), bub_pos().x(), bub_pos().y(), act.placement.x, act.placement.y );
+                 disp_name(), bub_pos().x(), bub_pos().y(), act.placement.x(), act.placement.y() );
         return true;
     }
     return false;
