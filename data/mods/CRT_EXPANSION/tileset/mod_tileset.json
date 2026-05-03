@@ -6,10 +6,42 @@
       {
         "file": "tileset/monsters.png",
         "tiles": [
-          { "id": "mon_crt_manhack", "fg": 0, "rotates": false },
-          { "id": "mon_crt_flamehack", "fg": 1, "rotates": false },
-          { "id": "mon_crt_electrohack", "fg": 2, "rotates": false },
-          { "id": "mon_crt_manslap", "fg": 3, "rotates": false },
+          {
+            "id": "mon_crt_manhack",
+            "fg": 0,
+            "rotates": false,
+            "masks": [
+              { "type": "tint", "fg": 1 }
+            ],
+            "default_tint": [ 255, 255, 255 ]
+          },
+          {
+            "id": "mon_crt_electrohack",
+            "fg": 0,
+            "rotates": false,
+            "masks": [
+              { "type": "tint", "fg": 1 }
+            ],
+            "default_tint": [ 0, 207, 207 ]
+          },
+          {
+            "id": "mon_crt_flamehack",
+            "fg": 0,
+            "rotates": false,
+            "masks": [
+              { "type": "tint", "fg": 1 }
+            ],
+            "default_tint": [ 249, 51, 51 ]
+          },
+          {
+            "id": "mon_crt_manslap",
+            "fg": 0,
+            "rotates": false,
+            "masks": [
+              { "type": "tint", "fg": 1 }
+            ],
+            "default_tint": [ 94, 51, 94 ]
+          },
           { "id": "mon_crt_hydrogen_hack", "fg": 4, "rotates": false },
           { "id": "mon_crt_engineer_t1", "fg": 9, "rotates": false },
           { "id": "mon_crt_engineer_t3", "fg": 11, "rotates": false },
