@@ -146,7 +146,9 @@ auto cata_tiles::get_vpart_color(
         const vehicle &veh = vp->vehicle();
         int veh_part = vp->part_index();
         auto part_info = veh.part_info( veh_part );
-        // TODO: add tint handling once vehicle vars are implemented
+        auto part_color = vp.part_displayed()->part().get_color();
+        return { part_color, part_color };
+
     }
     return { std::nullopt, std::nullopt };
 }

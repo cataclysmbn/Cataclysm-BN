@@ -853,6 +853,12 @@
       "  |b#      ",
       "  |(       "
     ],
+    "color_palette": [
+      {
+        "fuzzy_ids": [ "carbon", "windshield", "door" ],
+        "colors": [ { "color": "#3f4535", "weight": 100 }, { "color": "#111111", "weight": 100 }, { "color": "#800080", "weight": 100 } ]
+      }
+    ],
     "blueprint_origin": { "x": 8, "y": 3 },
     "palette": {
       "-": [ "xlframe_vertical", "carbon_halfboard_vertical" ],

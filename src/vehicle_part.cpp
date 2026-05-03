@@ -714,3 +714,11 @@ std::string vehicle_part::carried_name() const
     }
     return carry_names.top().substr( name_offset );
 }
+
+RGBColor vehicle_part::get_color() const
+{
+    if( part_color ) {
+        return *part_color;
+    }
+    return info().default_color;
+}

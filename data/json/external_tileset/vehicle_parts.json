@@ -1,0 +1,1751 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "external_tileset/vehicle_parts.png",
+        "tiles": [
+          {
+            "id": "vp_board",
+            "rotates": true,
+            "multitile": true,
+            "fg": 0,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 450, "bg": 719 } ], "fg": 1, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 450, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 2,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 452, "bg": 719 } ], "fg": 3, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 452, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_horizontal_2",
+            "rotates": true,
+            "multitile": true,
+            "fg": 2,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 452, "bg": 719 } ], "fg": 3, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 452, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_horizontal_front",
+            "rotates": true,
+            "multitile": true,
+            "fg": 4,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 454, "bg": 719 } ], "fg": 5, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 454, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_horizontal_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 6,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 456, "bg": 719 } ], "fg": 7, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 456, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 8,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 458, "bg": 719 } ], "fg": 9, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 458, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 10,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 460, "bg": 719 } ], "fg": 11, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 460, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 12,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 462, "bg": 719 } ], "fg": 13, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 462, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 14,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 464, "bg": 719 } ], "fg": 15, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 464, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 16,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 466, "bg": 719 } ], "fg": 17, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 466, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 18,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 468, "bg": 719 } ], "fg": 19, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 468, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 20,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 470, "bg": 719 } ], "fg": 21, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 470, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_ne_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 22,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 472, "bg": 719 } ], "fg": 23, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 472, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_nw_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 24,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 474, "bg": 719 } ], "fg": 25, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 474, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_wheel_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 26,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 476, "bg": 719 } ], "fg": 27, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 476, "bg": 719 } ]
+          },
+          {
+            "id": "vp_board_wheel_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 28,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 478, "bg": 719 } ], "fg": 29, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 478, "bg": 719 } ]
+          },
+          {
+            "id": "vp_clothboard",
+            "rotates": true,
+            "multitile": true,
+            "fg": 30,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 480, "bg": 719 } ], "fg": 31, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 480, "bg": 719 } ]
+          },
+          {
+            "id": "vp_clothboard_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 32,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 482, "bg": 719 } ], "fg": 33, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 482, "bg": 719 } ]
+          },
+          {
+            "id": [ "vp_clothboard_ne", "vp_clothboard_ne_edge" ],
+            "rotates": true,
+            "multitile": true,
+            "fg": 34,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 484, "bg": 719 } ], "fg": 35, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 484, "bg": 719 } ]
+          },
+          {
+            "id": [ "vp_clothboard_nw", "vp_clothboard_nw_edge" ],
+            "rotates": true,
+            "multitile": true,
+            "fg": 36,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 486, "bg": 719 } ], "fg": 37, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 486, "bg": 719 } ]
+          },
+          {
+            "id": [ "vp_clothboard_se", "vp_clothboard_se_edge" ],
+            "rotates": true,
+            "multitile": true,
+            "fg": 38,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 488, "bg": 719 } ], "fg": 39, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 488, "bg": 719 } ]
+          },
+          {
+            "id": [ "vp_clothboard_sw", "vp_clothboard_sw_edge" ],
+            "rotates": true,
+            "multitile": true,
+            "fg": 40,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 490, "bg": 719 } ], "fg": 41, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 490, "bg": 719 } ]
+          },
+          {
+            "id": "vp_clothboard_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 42,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 492, "bg": 719 } ], "fg": 43, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 492, "bg": 719 } ]
+          },
+          {
+            "id": "vp_clothboard_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 44,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 494, "bg": 719 } ], "fg": 45, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 494, "bg": 719 } ]
+          },
+          {
+            "id": "vp_clothboard_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 46,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 496, "bg": 719 } ], "fg": 47, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 496, "bg": 719 } ]
+          },
+          {
+            "id": "vp_clothboard_wheel_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 48,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 498, "bg": 719 } ], "fg": 49, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 498, "bg": 719 } ]
+          },
+          {
+            "id": "vp_clothboard_wheel_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 50,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 500, "bg": 719 } ], "fg": 51, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 500, "bg": 719 } ]
+          },
+          {
+            "id": "vp_cloth_halfboard_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 52,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 502, "bg": 719 } ], "fg": 55, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 502, "bg": 719 } ]
+          },
+          {
+            "id": "vp_cloth_halfboard_horizontal_2",
+            "rotates": true,
+            "multitile": true,
+            "fg": 53,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 503, "bg": 719 } ], "fg": 54, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 503, "bg": 719 } ]
+          },
+          {
+            "id": "vp_cloth_halfboard_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 56,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 506, "bg": 719 } ], "fg": 57, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 506, "bg": 719 } ]
+          },
+          {
+            "id": "vp_cloth_halfboard_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 58,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 508, "bg": 719 } ], "fg": 59, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 508, "bg": 719 } ]
+          },
+          {
+            "id": "vp_cloth_halfboard_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 60,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 510, "bg": 719 } ], "fg": 61, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 510, "bg": 719 } ]
+          },
+          {
+            "id": "vp_cloth_halfboard_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 62,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 512, "bg": 719 } ], "fg": 63, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 512, "bg": 719 } ]
+          },
+          {
+            "id": "vp_cloth_halfboard_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 64,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 514, "bg": 719 } ], "fg": 67, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 514, "bg": 719 } ]
+          },
+          {
+            "id": "vp_cloth_halfboard_vertical_2",
+            "rotates": true,
+            "multitile": true,
+            "fg": 65,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 515, "bg": 719 } ], "fg": 66, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 515, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard",
+            "rotates": true,
+            "multitile": true,
+            "fg": 68,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 518, "bg": 719 } ], "fg": 69, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 518, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_cover",
+            "rotates": true,
+            "multitile": true,
+            "fg": 70,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 520, "bg": 719 } ], "fg": 71, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 520, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 72,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 522, "bg": 719 } ], "fg": 79, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 522, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_horizontal_2",
+            "rotates": true,
+            "multitile": true,
+            "fg": 73,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 523, "bg": 719 } ], "fg": 74, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 523, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_horizontal_2_front",
+            "rotates": true,
+            "multitile": true,
+            "fg": 75,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 525, "bg": 719 } ], "fg": 76, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 525, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_horizontal_2_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 77,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 527, "bg": 719 } ], "fg": 78, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 527, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_horizontal_front",
+            "rotates": true,
+            "multitile": true,
+            "fg": 80,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 530, "bg": 719 } ], "fg": 81, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 530, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_horizontal_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 82,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 532, "bg": 719 } ], "fg": 83, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 532, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 84,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 534, "bg": 719 } ], "fg": 85, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 534, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 86,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 536, "bg": 719 } ], "fg": 87, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 536, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 88,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 538, "bg": 719 } ], "fg": 89, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 538, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 90,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 541, "bg": 719 } ], "fg": 91, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 541, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 92,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 542, "bg": 719 } ], "fg": 99, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 542, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_vertical_2",
+            "rotates": true,
+            "multitile": true,
+            "fg": 93,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 543, "bg": 719 } ], "fg": 94, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 543, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_vertical_2_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 95,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 545, "bg": 719 } ], "fg": 96, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 545, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_vertical_2_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 97,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 547, "bg": 719 } ], "fg": 98, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 547, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 100,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 550, "bg": 719 } ], "fg": 101, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 550, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 102,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 552, "bg": 719 } ], "fg": 103, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 552, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_vertical_T_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 104,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 554, "bg": 719 } ], "fg": 105, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 554, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_vertical_T_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 106,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 556, "bg": 719 } ], "fg": 107, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 556, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_hatch_wheel_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 108,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 558, "bg": 719 } ], "fg": 109, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 558, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_hatch_wheel_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 110,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 560, "bg": 719 } ], "fg": 111, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 560, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_cover_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 112,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 562, "bg": 719 } ], "fg": 113, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 562, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_cover_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 114,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 564, "bg": 719 } ], "fg": 115, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 564, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_wheel_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 116,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 566, "bg": 719 } ], "fg": 117, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 566, "bg": 719 } ]
+          },
+          {
+            "id": "vp_halfboard_wheel_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 118,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 568, "bg": 719 } ], "fg": 119, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 568, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard",
+            "rotates": true,
+            "multitile": true,
+            "fg": 120,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 570, "bg": 719 } ], "fg": 121, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 570, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 122,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 572, "bg": 719 } ], "fg": 123, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 572, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard_horizontal_front",
+            "rotates": true,
+            "multitile": true,
+            "fg": 124,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 574, "bg": 719 } ], "fg": 125, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 574, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard_horizontal_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 126,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 576, "bg": 719 } ], "fg": 127, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 576, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 128,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 578, "bg": 719 } ], "fg": 129, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 578, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 130,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 580, "bg": 719 } ], "fg": 131, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 580, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 132,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 582, "bg": 719 } ], "fg": 133, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 582, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 134,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 584, "bg": 719 } ], "fg": 135, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 584, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 136,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 586, "bg": 719 } ], "fg": 137, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 586, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 138,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 588, "bg": 719 } ], "fg": 139, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 588, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdboard_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 140,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 590, "bg": 719 } ], "fg": 141, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 590, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard",
+            "rotates": true,
+            "multitile": true,
+            "fg": 142,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 592, "bg": 719 } ], "fg": 143, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 592, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 144,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 594, "bg": 719 } ], "fg": 145, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 594, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_horizontal_2",
+            "rotates": true,
+            "multitile": true,
+            "fg": 146,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 596, "bg": 719 } ], "fg": 147, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 596, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_horizontal_front",
+            "rotates": true,
+            "multitile": true,
+            "fg": 148,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 598, "bg": 719 } ], "fg": 149, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 598, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_horizontal_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 150,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 600, "bg": 719 } ], "fg": 151, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 600, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 152,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 602, "bg": 719 } ], "fg": 153, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 602, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 154,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 604, "bg": 719 } ], "fg": 155, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 604, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 156,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 606, "bg": 719 } ], "fg": 157, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 606, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 158,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 608, "bg": 719 } ], "fg": 159, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 608, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 160,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 610, "bg": 719 } ], "fg": 161, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 610, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_vertical_2",
+            "rotates": true,
+            "multitile": true,
+            "fg": 162,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 612, "bg": 719 } ], "fg": 163, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 612, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 164,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 614, "bg": 719 } ], "fg": 165, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 614, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhalfboard_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 166,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 616, "bg": 719 } ], "fg": 167, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 616, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdstowboard",
+            "rotates": true,
+            "multitile": true,
+            "fg": 168,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 618, "bg": 719 } ], "fg": 169, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 618, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdstowboard_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 170,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 620, "bg": 719 } ], "fg": 171, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 620, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdstowboard_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 172,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 622, "bg": 719 } ], "fg": 173, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 622, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdstowboard_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 174,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 624, "bg": 719 } ], "fg": 175, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 624, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdstowboard_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 176,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 626, "bg": 719 } ], "fg": 177, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 626, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdstowboard_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 178,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 628, "bg": 719 } ], "fg": 179, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 628, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdstowboard_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 180,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 630, "bg": 719 } ], "fg": 181, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 630, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard",
+            "rotates": true,
+            "multitile": true,
+            "fg": 182,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 632, "bg": 719 } ], "fg": 183, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 632, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 184,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 634, "bg": 719 } ], "fg": 185, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 634, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_horizontal_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 186,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 636, "bg": 719 } ], "fg": 187, "bg": 186 } ],
+            "masks": [ { "type": "tint", "fg": 636, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 188,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 638, "bg": 719 } ], "fg": 189, "bg": 188 } ],
+            "masks": [ { "type": "tint", "fg": 638, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 190,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 640, "bg": 719 } ], "fg": 191, "bg": 190 } ],
+            "masks": [ { "type": "tint", "fg": 640, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 192,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 642, "bg": 719 } ], "fg": 193, "bg": 192 } ],
+            "masks": [ { "type": "tint", "fg": 642, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 194,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 644, "bg": 719 } ], "fg": 195, "bg": 194 } ],
+            "masks": [ { "type": "tint", "fg": 644, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 196,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 646, "bg": 719 } ], "fg": 197, "bg": 196 } ],
+            "masks": [ { "type": "tint", "fg": 646, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 198,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 648, "bg": 719 } ], "fg": 199, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 648, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 200,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 650, "bg": 719 } ], "fg": 201, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 650, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_wheel_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 202,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 652, "bg": 719 } ], "fg": 203, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 652, "bg": 719 } ]
+          },
+          {
+            "id": "vp_stowboard_wheel_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 204,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 654, "bg": 719 } ], "fg": 205, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 654, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodboard",
+            "rotates": true,
+            "multitile": true,
+            "fg": 206,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 656, "bg": 719 } ], "fg": 207, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 656, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodboard_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 208,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 658, "bg": 719 } ], "fg": 209, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 658, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodboard_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 210,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 660, "bg": 719 } ], "fg": 211, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 660, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodboard_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 212,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 662, "bg": 719 } ], "fg": 213, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 662, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodboard_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 214,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 664, "bg": 719 } ], "fg": 215, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 664, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodboard_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 216,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 666, "bg": 719 } ], "fg": 217, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 666, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodboard_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 218,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 668, "bg": 719 } ], "fg": 219, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 668, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodhalfboard",
+            "rotates": true,
+            "multitile": true,
+            "fg": 220,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 670, "bg": 719 } ], "fg": 221, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 670, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodhalfboard_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 222,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 672, "bg": 719 } ], "fg": 205, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 672, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodhalfboard_horizontal_2",
+            "rotates": true,
+            "multitile": true,
+            "fg": 223,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 673, "bg": 719 } ], "fg": 224, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 673, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodhalfboard_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 226,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 676, "bg": 719 } ], "fg": 227, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 676, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodhalfboard_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 228,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 678, "bg": 719 } ], "fg": 229, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 678, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodhalfboard_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 230,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 680, "bg": 719 } ], "fg": 231, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 680, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodhalfboard_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 232,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 682, "bg": 719 } ], "fg": 233, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 682, "bg": 719 } ]
+          },
+          {
+            "id": "vp_woodhalfboard_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 234,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 684, "bg": 719 } ], "fg": 235, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 684, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard",
+            "rotates": true,
+            "multitile": true,
+            "fg": 236,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 686, "bg": 719 } ], "fg": 237, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 686, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_horizontal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 238,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 688, "bg": 719 } ], "fg": 245, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 688, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_horizontal_2",
+            "rotates": true,
+            "multitile": true,
+            "fg": 239,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 689, "bg": 719 } ], "fg": 240, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 689, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_horizontal_2_front",
+            "rotates": true,
+            "multitile": true,
+            "fg": 241,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 691, "bg": 719 } ], "fg": 242, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 691, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_horizontal_2_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 243,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 693, "bg": 719 } ], "fg": 244, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 693, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_horizontal_front",
+            "rotates": true,
+            "multitile": true,
+            "fg": 246,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 696, "bg": 719 } ], "fg": 247, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 696, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_horizontal_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 249,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 699, "bg": 719 } ], "fg": 249, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 699, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 250,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 700, "bg": 719 } ], "fg": 251, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 700, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 252,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 702, "bg": 719 } ], "fg": 253, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 702, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 254,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 704, "bg": 719 } ], "fg": 255, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 704, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 256,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 706, "bg": 719 } ], "fg": 257, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 706, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_vertical",
+            "rotates": true,
+            "multitile": true,
+            "fg": 258,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 708, "bg": 719 } ], "fg": 261, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 708, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_vertical_2",
+            "rotates": true,
+            "multitile": true,
+            "fg": 259,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 709, "bg": 719 } ], "fg": 260, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 709, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 262,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 712, "bg": 719 } ], "fg": 263, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 712, "bg": 719 } ]
+          },
+          {
+            "id": "vp_xlhalfboard_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 264,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 714, "bg": 719 } ], "fg": 265, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 714, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door",
+            "rotates": true,
+            "multitile": true,
+            "fg": 270,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 720, "bg": 719 } ], "fg": 271, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 720, "bg": 719 } ], "fg": 272, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 720, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_front",
+            "rotates": true,
+            "multitile": true,
+            "fg": 273,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 723, "bg": 719 } ], "fg": 274, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 723, "bg": 719 } ], "fg": 275, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 723, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_front_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 276,
+            "bg": 0,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 726, "bg": 719 } ], "fg": 277, "bg": 269 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 726, "bg": 719 } ], "fg": 278, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 726, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_front_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 279,
+            "bg": 0,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 729, "bg": 719 } ], "fg": 280, "bg": 269 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 729, "bg": 719 } ], "fg": 281, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 729, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 279,
+            "bg": 0,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 729, "bg": 719 } ], "fg": 280, "bg": 269 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 729, "bg": 719 } ], "fg": 281, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 729, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 276,
+            "bg": 0,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 726, "bg": 719 } ], "fg": 277, "bg": 269 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 726, "bg": 719 } ], "fg": 278, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 726, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 282,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 732, "bg": 719 } ], "fg": 283, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 732, "bg": 719 } ], "fg": 284, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 732, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_rear_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 285,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 735, "bg": 719 } ], "fg": 286, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 735, "bg": 719 } ], "fg": 287, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 735, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_rear_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 288,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 738, "bg": 719 } ], "fg": 289, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 738, "bg": 719 } ], "fg": 290, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 738, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 288,
+            "bg": 0,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 738, "bg": 719 } ], "fg": 289, "bg": 269 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 738, "bg": 719 } ], "fg": 290, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 738, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 285,
+            "bg": 0,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 735, "bg": 719 } ], "fg": 286, "bg": 269 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 735, "bg": 719 } ], "fg": 287, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 735, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 291,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 741, "bg": 719 } ], "fg": 292, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 741, "bg": 719 } ], "fg": 293, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 741, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 294,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 744, "bg": 719 } ], "fg": 295, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 744, "bg": 719 } ], "fg": 296, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 744, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_internal",
+            "rotates": true,
+            "multitile": true,
+            "fg": 297,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 747, "bg": 719 } ], "fg": 298, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 747, "bg": 719 } ], "fg": 299, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 747, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_opaque",
+            "rotates": true,
+            "multitile": true,
+            "fg": 300,
+            "bg": 0,
+            "additional_tiles": [
+              { "id": "open", "masks": [ { "type": "tint", "fg": 750, "bg": 719 } ], "fg": 302, "bg": 269 },
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 750, "bg": 719 } ], "fg": 301, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 750, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_shutter",
+            "rotates": true,
+            "multitile": true,
+            "fg": 303,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 753, "bg": 719 } ], "fg": 304, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 753, "bg": 719 } ], "fg": 305, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 753, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_sliding",
+            "rotates": true,
+            "multitile": true,
+            "fg": 306,
+            "bg": 0,
+            "additional_tiles": [
+              { "id": "open", "masks": [ { "type": "tint", "fg": 756, "bg": 719 } ], "fg": 308, "bg": 269 },
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 756, "bg": 719 } ], "fg": 307, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 756, "bg": 719 } ]
+          },
+          {
+            "id": "vp_door_trunk",
+            "rotates": true,
+            "multitile": true,
+            "fg": 309,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 759, "bg": 719 } ], "fg": 310, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 759, "bg": 719 } ], "fg": 311, "bg": 269 }
+            ],
+            "masks": [ { "type": "tint", "fg": 759, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hatch",
+            "rotates": true,
+            "multitile": true,
+            "fg": 312,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 762, "bg": 719 } ], "fg": 313, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 762, "bg": 719 } ], "fg": 314, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 762, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hatch_opaque",
+            "rotates": true,
+            "multitile": true,
+            "fg": 315,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 765, "bg": 719 } ], "fg": 316, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 765, "bg": 719 } ], "fg": 317, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 765, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hddoor",
+            "rotates": true,
+            "multitile": true,
+            "fg": 318,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 768, "bg": 719 } ], "fg": 319, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 768, "bg": 719 } ], "fg": 320, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 768, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hddoor_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 321,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 771, "bg": 719 } ], "fg": 322, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 771, "bg": 719 } ], "fg": 323, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 771, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hddoor_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 324,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 774, "bg": 719 } ], "fg": 325, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 774, "bg": 719 } ], "fg": 326, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 774, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hddoor_opaque",
+            "rotates": true,
+            "multitile": true,
+            "fg": 327,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 777, "bg": 719 } ], "fg": 328, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 777, "bg": 719 } ], "fg": 329, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 777, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hddoor_opaque_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 330,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 780, "bg": 719 } ], "fg": 331, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 780, "bg": 719 } ], "fg": 332, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 780, "bg": 719 } ]
+          },
+          {
+            "id": "hddoor_opaque_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 333,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 783, "bg": 719 } ], "fg": 334, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 783, "bg": 719 } ], "fg": 335, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 783, "bg": 719 } ]
+          },
+          {
+            "id": "overlay_wielded_hddoor_opaque_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 333,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 783, "bg": 719 } ], "fg": 334, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 783, "bg": 719 } ], "fg": 335, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 783, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hddoor_opaque_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 336,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 786, "bg": 719 } ], "fg": 337, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 786, "bg": 719 } ], "fg": 338, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 786, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hddoor_trunk",
+            "rotates": true,
+            "multitile": true,
+            "fg": 339,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 789, "bg": 719 } ], "fg": 340, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 789, "bg": 719 } ], "fg": 341, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 789, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhatch",
+            "rotates": true,
+            "multitile": true,
+            "fg": 342,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 792, "bg": 719 } ], "fg": 343, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 792, "bg": 719 } ], "fg": 344, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 792, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhatch_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 345,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 795, "bg": 719 } ], "fg": 346, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 795, "bg": 719 } ], "fg": 347, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 795, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhatch_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 348,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 798, "bg": 719 } ], "fg": 349, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 798, "bg": 719 } ], "fg": 350, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 798, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhatch_opaque",
+            "rotates": true,
+            "multitile": true,
+            "fg": 351,
+            "bg": 0,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 801, "bg": 719 } ], "fg": 352, "bg": 351 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 801, "bg": 719 } ], "fg": 353, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 801, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhatch_opaque_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 354,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 804, "bg": 719 } ], "fg": 355, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 804, "bg": 719 } ], "fg": 356, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 804, "bg": 719 } ]
+          },
+          {
+            "id": "vp_hdhatch_opaque_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 357,
+            "additional_tiles": [
+              { "id": "broken", "masks": [ { "type": "tint", "fg": 807, "bg": 719 } ], "fg": 358, "bg": 0 },
+              { "id": "open", "masks": [ { "type": "tint", "fg": 807, "bg": 719 } ], "fg": 359, "bg": 0 }
+            ],
+            "masks": [ { "type": "tint", "fg": 807, "bg": 719 } ]
+          },
+          {
+            "id": "vp_reinforced_windshield",
+            "rotates": true,
+            "multitile": true,
+            "fg": 360,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 810, "bg": 719 } ], "fg": 361, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 810, "bg": 719 } ]
+          },
+          {
+            "id": "vp_reinforced_windshield_horizontal_front",
+            "rotates": true,
+            "multitile": true,
+            "fg": 362,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 812, "bg": 719 } ], "fg": 363, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 812, "bg": 719 } ]
+          },
+          {
+            "id": "vp_reinforced_windshield_horizontal_rear_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 364,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 814, "bg": 719 } ], "fg": 365, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 814, "bg": 719 } ]
+          },
+          {
+            "id": "vp_reinforced_windshield_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 366,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 816, "bg": 719 } ], "fg": 367, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 816, "bg": 719 } ]
+          },
+          {
+            "id": "vp_reinforced_windshield_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 368,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 818, "bg": 719 } ], "fg": 369, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 818, "bg": 719 } ]
+          },
+          {
+            "id": "vp_reinforced_windshield_se_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 370,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 820, "bg": 719 } ], "fg": 371, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 820, "bg": 719 } ]
+          },
+          {
+            "id": "vp_reinforced_windshield_sw_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 372,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 822, "bg": 719 } ], "fg": 373, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 822, "bg": 719 } ]
+          },
+          {
+            "id": "vp_reinforced_windshield_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 374,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 824, "bg": 719 } ], "fg": 375, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 824, "bg": 719 } ]
+          },
+          {
+            "id": "vp_reinforced_windshield_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 376,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 826, "bg": 719 } ], "fg": 377, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 826, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield",
+            "rotates": true,
+            "multitile": true,
+            "fg": 390,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 840, "bg": 719 } ], "fg": 391, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 840, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_cover_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 392,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 842, "bg": 719 } ], "fg": 393, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 842, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_cover_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 394,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 844, "bg": 719 } ], "fg": 395, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 844, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_full_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 396,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 846, "bg": 719 } ], "fg": 397, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 846, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_full_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 398,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 848, "bg": 719 } ], "fg": 399, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 848, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_full_wheel_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 400,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 850, "bg": 719 } ], "fg": 401, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 850, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_full_wheel_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 402,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 852, "bg": 719 } ], "fg": 403, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 852, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_horizontal_front",
+            "rotates": true,
+            "multitile": true,
+            "fg": 404,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 854, "bg": 719 } ], "fg": 405, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 854, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_horizontal_front_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 406,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 856, "bg": 719 } ], "fg": 407, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 856, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_horizontal_rear",
+            "rotates": true,
+            "multitile": true,
+            "fg": 408,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 858, "bg": 719 } ], "fg": 409, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 858, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_horizontal_rear_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 410,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 860, "bg": 719 } ], "fg": 411, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 860, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_ne",
+            "rotates": true,
+            "multitile": true,
+            "fg": 412,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 862, "bg": 719 } ], "fg": 413, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 862, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_ne_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 414,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 864, "bg": 719 } ], "fg": 415, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 864, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_nw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 416,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 866, "bg": 719 } ], "fg": 417, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 866, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_nw_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 418,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 868, "bg": 719 } ], "fg": 419, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 868, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_se",
+            "rotates": true,
+            "multitile": true,
+            "fg": 420,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 870, "bg": 719 } ], "fg": 421, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 870, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_se_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 422,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 872, "bg": 719 } ], "fg": 423, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 872, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_sw",
+            "rotates": true,
+            "multitile": true,
+            "fg": 424,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 874, "bg": 719 } ], "fg": 425, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 874, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_sw_edge",
+            "rotates": true,
+            "multitile": true,
+            "fg": 426,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 876, "bg": 719 } ], "fg": 427, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 876, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_vertical_2_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 428,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 878, "bg": 719 } ], "fg": 429, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 878, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_vertical_2_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 430,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 880, "bg": 719 } ], "fg": 431, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 880, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_vertical_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 432,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 882, "bg": 719 } ], "fg": 433, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 882, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_vertical_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 434,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 884, "bg": 719 } ], "fg": 435, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 884, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_wheel_left",
+            "rotates": true,
+            "multitile": true,
+            "fg": 436,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 886, "bg": 719 } ], "fg": 437, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 886, "bg": 719 } ]
+          },
+          {
+            "id": "vp_windshield_wheel_right",
+            "rotates": true,
+            "multitile": true,
+            "fg": 438,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 888, "bg": 719 } ], "fg": 439, "bg": 0 } ],
+            "masks": [ { "type": "tint", "fg": 888, "bg": 719 } ]
+          }
+        ]
+      }
+    ]
+  }
+]

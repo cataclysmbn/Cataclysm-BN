@@ -14,11 +14,13 @@
 #include "color.h"
 #include "damage.h"
 #include "point.h"
+#include "hsv_color.h"
 #include "requirements.h"
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "weighted_list.h"
 
 class player;
 class JsonObject;
@@ -191,6 +193,7 @@ class vpart_info
         nc_color color = c_light_gray;
         nc_color color_broken = c_light_gray;
 
+        RGBColor default_color = { 0, 0, 0, 0 };
         /**
          * Symbol of part which will be translated as follows:
          * y, u, n, b to NW, NE, SE, SW lines correspondingly
@@ -419,6 +422,7 @@ struct vehicle_prototype {
     struct part_def {
         point pos;
         vpart_id part;
+        RGBColor color;
         int with_ammo = 0;
         std::set<itype_id> ammo_types;
         std::pair<int, int> ammo_qty = { -1, -1 };
@@ -438,6 +442,10 @@ struct vehicle_prototype {
     std::vector<part_def> parts;
     std::vector<vehicle_item_spawn> item_spawns;
     std::set<flag_id> flags;
+
+    std::map<std::string, int> color_match;
+
+    std::vector<weighted_int_list<RGBColor>> colors;
 
     std::unique_ptr<vehicle> blueprint;
 
