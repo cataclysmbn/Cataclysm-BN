@@ -1054,7 +1054,7 @@ void npc::move()
             ( action == npc_follow_embarked && in_vehicle ) ||
             ( action == npc_follow_player &&
               ( rl_dist( bub_pos(), player_character.bub_pos() ) <= follow_distance() ||
-                posz() != player_character.posz() ) )
+                bub_pos().z() != player_character.bub_pos().z() ) )
         ) ) {
         action = method_of_attack();
     }
@@ -1277,7 +1277,7 @@ void npc::execute_action( npc_action action )
                         ( ( static_cast<int>( path.size() ) > follow_distance() * 4 ) ? CMM_RUN : CMM_WALK ) :
                         player_character.get_movement_mode();
             if( static_cast<int>( path.size() ) <= follow_distance() &&
-                player_character.posz() == posz() ) { // We're close enough to u.
+                player_character.bub_pos().z() == bub_pos().z() ) { // We're close enough to u.
                 move_pause();
             } else if( !path.empty() ) {
                 move_to_next();
@@ -1965,7 +1965,7 @@ npc_action npc::address_needs( float danger )
                 }
             }
             for( const npc &guy : g->all_npcs() ) {
-                if( &guy == this || !guy.is_ally( *this ) || guy.posz() != posz() || !sees( guy ) ) {
+                if( &guy == this || !guy.is_ally( *this ) || guy.bub_pos().z() != bub_pos().z() || !sees( guy ) ) {
                     continue;
                 }
                 healing_options try_to_fix_other = patient_assessment( guy );
@@ -2395,7 +2395,7 @@ bool npc::update_path( const tripoint_bub_ms &p, const bool no_bashing, bool for
 
     if( !path.empty() ) {
         const tripoint &last = path[path.size() - 1];
-        if( last == p && ( path[0].z() != posz() || rl_dist( path[0], bub_pos() ) <= 1 ) ) {
+        if( last == p && ( path[0].z() != bub_pos().z() || rl_dist( path[0], bub_pos() ) <= 1 ) ) {
             // Our path already leads to that point, no need to recalculate
             return true;
         }
@@ -2407,10 +2407,10 @@ bool npc::update_path( const tripoint_bub_ms &p, const bool no_bashing, bool for
         if( !ai_cache.sound_alerts.empty() ) {
             ai_cache.sound_alerts.erase( ai_cache.sound_alerts.begin() );
             add_msg( m_debug, "failed to path to sound alert %d,%d,%d->%d,%d,%d",
-                     posx(), posy(), posz(), p.x(), p.y(), p.z() );
+                     bub_pos().x(), bub_pos().y(), bub_pos().z(), p.x(), p.y(), p.z() );
         }
         add_msg( m_debug, "Failed to path %d,%d,%d->%d,%d,%d",
-                 posx(), posy(), posz(), p.x(), p.y(), p.z() );
+                 bub_pos().x(), bub_pos().y(), bub_pos().z(), p.x(), p.y(), p.z() );
     }
 
     while( !new_path.empty() && new_path[0] == bub_pos() ) {
@@ -2504,9 +2504,9 @@ void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomo
     recoil = MAX_RECOIL;
 
     if( has_effect( effect_stunned ) ) {
-        p.x = rng( posx() - 1, posx() + 1 );
-        p.y = rng( posy() - 1, posy() + 1 );
-        p.z = posz();
+        p.x = rng( bub_pos().x() - 1, bub_pos().x() + 1 );
+        p.y = rng( bub_pos().y() - 1, bub_pos().y() + 1 );
+        p.z = bub_pos().z();
     }
 
     // nomove is used to resolve recursive invocation, so reset destination no
@@ -2517,7 +2517,7 @@ void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomo
 
     // "Long steps" are allowed when crossing z-levels
     // Stairs teleport the player too
-    if( rl_dist( bub_pos(), p ) > 1 && p.z == posz() ) {
+    if( rl_dist( bub_pos(), p ) > 1 && p.z == bub_pos().z() ) {
         // On the same level? Not so much. Something weird happened
         path.clear();
         move_pause();
@@ -2613,7 +2613,7 @@ void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomo
         }
     }
 
-    if( p.z != posz() ) {
+    if( p.z != bub_pos().z() ) {
         // Z-level move
         // For now just teleport to the destination
         // TODO: Make it properly find the tile to move to
@@ -2624,7 +2624,7 @@ void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomo
         moves -= 100;
         moved = true;
     } else if( here.passable( p ) && !here.has_flag( "DOOR", p ) ) {
-        bool diag = trigdist && posx() != p.x && posy() != p.y;
+        bool diag = trigdist && bub_pos().x() != p.x && bub_pos().y() != p.y;
         if( is_mounted() ) {
             const double base_moves = run_cost( here.combined_movecost( bub_pos(), p ),
                                                 diag ) * 100.0 / mounted_creature->get_speed();
@@ -2974,7 +2974,7 @@ void npc::find_item()
     units::mass   weight_allowed = weight_capacity() - weight_carried();
     // For some reason range limiting by vision doesn't work properly
     const int range = 6;
-    //int range = sight_range( g->light_level( posz() ) );
+    //int range = sight_range( g->light_level( bub_pos().z() ) );
     //range = std::max( 1, std::min( 12, range ) );
 
     static const zone_type_id zone_type_no_npc_pickup( "NO_NPC_PICKUP" );
@@ -3170,7 +3170,7 @@ void npc::pick_up_item()
     }
 
     add_msg( m_debug, "%s::pick_up_item(); [%d, %d, %d] => [%d, %d, %d]", name,
-             posx(), posy(), posz(), wanted_item_pos.x(), wanted_item_pos.y(), wanted_item_pos.z() );
+             bub_pos().x(), bub_pos().y(), bub_pos().z(), wanted_item_pos.x(), wanted_item_pos.y(), wanted_item_pos.z() );
     if( const std::optional<tripoint> dest = nearest_passable( wanted_item_pos, bub_pos() ) ) {
         update_path( *dest );
     }
@@ -3181,7 +3181,7 @@ void npc::pick_up_item()
                       get_map().obstructed_by_vehicle_rotation( bub_pos(), wanted_item_pos );
     if( cant_reach && !path.empty() ) {
         add_msg( m_debug, "Moving; [%d, %d, %d] => [%d, %d, %d]",
-                 posx(), posy(), posz(), path[0].x(), path[0].y(), path[0].z() );
+                 bub_pos().x(), bub_pos().y(), bub_pos().z(), path[0].x(), path[0].y(), path[0].z() );
 
         move_to_next();
         return;
@@ -3499,7 +3499,7 @@ bool npc::do_pulp()
         return false;
     }
 
-    if( rl_dist( *pulp_location, bub_pos() ) > 1 || pulp_location->z() != posz() ) {
+    if( rl_dist( *pulp_location, bub_pos() ) > 1 || pulp_location->z() != bub_pos().z() ) {
         return false;
     }
     // TODO: Don't recreate the activity every time
@@ -4229,7 +4229,7 @@ void npc::look_for_player( const Character &sought )
         if (one_in(6)) {
             say("<wait>");
         }
-        update_path( tripoint( random_entry( possibilities ), posz() ) );
+        update_path( tripoint( random_entry( possibilities ), bub_pos().z() ) );
         move_to_next();
     }
     */
@@ -4324,7 +4324,7 @@ void npc::set_omt_destination()
 
     // all of the following luxuries are at ground level.
     // so please wallow in hunger & fear if below ground.
-    if( posz() != 0 && !get_map().has_zlevels() ) {
+    if( bub_pos().z() != 0 && !get_map().has_zlevels() ) {
         goal = no_goal_point;
         return;
     }

@@ -722,13 +722,13 @@ void Character::hardcoded_effects( effect &it )
         if( intense > 4 ) {
             // Once every 4 hours baseline, once every 2 hours max
             if( one_turn_in( 14_hours - ( intense * 90_minutes ) ) ) {
-                tripoint_bub_ms dest( 0, 0, posz() );
+                tripoint_bub_ms dest( 0, 0, bub_pos().z() );
                 int &x = dest.x();
                 int &y = dest.y();
                 int tries = 0;
                 do {
-                    x = posx() + rng( -4, 4 );
-                    y = posy() + rng( -4, 4 );
+                    x = bub_pos().x() + rng( -4, 4 );
+                    y = bub_pos().y() + rng( -4, 4 );
                     tries++;
                     if( tries >= 10 ) {
                         break;
@@ -1118,7 +1118,7 @@ void Character::hardcoded_effects( effect &it )
             g->m.is_outside( pos() ) ) {
             if( has_trait( trait_CHLOROMORPH ) ) {
                 // Hunger and thirst fall before your Chloromorphic physiology!
-                if( g->natural_light_level( posz() ) >= 12 &&
+                if( g->natural_light_level( bub_pos().z() ) >= 12 &&
                     get_weather().weather_id->sun_intensity >= sun_intensity_type::light ) {
                     if( get_stored_kcal() < max_stored_kcal() - 50 ) {
                         mod_stored_kcal( 50 );

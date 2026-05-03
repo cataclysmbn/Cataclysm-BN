@@ -458,7 +458,7 @@ void conditional_t<T>::set_npc_role_nearby( const JsonObject &jo )
     const std::string &role = jo.get_string( "npc_role_nearby" );
     condition = [role]( const T & d ) {
         const std::vector<npc *> available = g->get_npcs_if( [&]( const npc & guy ) {
-            return d.alpha->posz() == guy.posz() && guy.companion_mission_role_id == role &&
+            return d.alpha->bub_pos().z() == guy.bub_pos().z() && guy.companion_mission_role_id == role &&
                    ( rl_dist( d.alpha->pos(), guy.bub_pos() ) <= 48 );
         } );
         return !available.empty();

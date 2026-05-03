@@ -891,7 +891,7 @@ static void draw_ascii( ui_adaptor &ui,
     const bool has_debug_vision = player_character.has_trait( trait_DEBUG_NIGHTVISION );
     // sight_points is hoisted for speed reasons.
     const int sight_points = !has_debug_vision ?
-                             player_character.overmap_sight_range( g->light_level( player_character.posz() ) ) :
+                             player_character.overmap_sight_range( g->light_level( player_character.bub_pos().z() ) ) :
                              100;
     // Whether showing hordes is currently enabled
     const bool showhordes = uistate.overmap_show_hordes;
@@ -1001,7 +1001,7 @@ static void draw_ascii( ui_adaptor &ui,
     if( blink ) {
         // get seen NPCs
         for( const auto &np : npcs_near_player ) {
-            if( np->posz() != center.z() ) {
+            if( np->bub_pos().z() != center.z() ) {
                 continue;
             }
 
@@ -1048,7 +1048,7 @@ static void draw_ascii( ui_adaptor &ui,
             player_path_route[ elem.xy() ] = elem.z();
         }
         for( const auto &np : followers ) {
-            if( np->posz() != center.z() ) {
+            if( np->bub_pos().z() != center.z() ) {
                 continue;
             }
             const tripoint_abs_omt pos = np->global_omt_location();
@@ -1404,7 +1404,7 @@ static void draw_om_sidebar(
     const bool has_debug_vision = player_character.has_trait( trait_DEBUG_NIGHTVISION );
     // sight_points is hoisted for speed reasons.
     const int sight_points = !has_debug_vision ?
-                             player_character.overmap_sight_range( g->light_level( player_character.posz() ) ) :
+                             player_character.overmap_sight_range( g->light_level( player_character.bub_pos().z() ) ) :
                              100;
     const bool center_seen = has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen( center );
     const tripoint_abs_omt target = player_character.get_active_mission_target();
@@ -2213,7 +2213,7 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
             int scroll_d = fast_scroll ? fast_scroll_offset : 1;
             curs += vec->xy() * scroll_d;
         } else if( action == "MOUSE_MOVE" || action == "TIMEOUT" ) {
-            tripoint edge_scroll = g->mouse_edge_scrolling_overmap( ictxt );
+            auto edge_scroll = g->mouse_edge_scrolling_overmap( ictxt );
             if( edge_scroll != tripoint_zero ) {
                 if( action == "MOUSE_MOVE" ) {
                     edge_scroll *= 2;

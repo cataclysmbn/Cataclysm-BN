@@ -291,7 +291,7 @@ static bool is_adjacent( const monster *z, const Creature *target, const bool al
         return false;
     }
 
-    if( z->posz() == target->posz() ) {
+    if( z->bub_pos().z() == target->bub_pos().z() ) {
         return true;
     }
 
@@ -301,7 +301,7 @@ static bool is_adjacent( const monster *z, const Creature *target, const bool al
 
     // The square above must have no floor (currently only open air).
     // The square below must have no ceiling (i.e. be outside).
-    const bool target_above = target->posz() > z->posz();
+    const bool target_above = target->bub_pos().z() > z->bub_pos().z();
     const auto &up   = target_above ? target->bub_pos() : z->bub_pos();
     const auto &down = target_above ? z->bub_pos() : target->bub_pos();
     return g->m.ter( up ) == t_open_air && g->m.is_outside( down );
@@ -503,7 +503,7 @@ bool mattack::shriek_stun( monster *z )
     int dist = rl_dist( z->bub_pos(), target->bub_pos() );
     // Currently the cone is 2D, so don't use it for 3D attacks
     if( dist > 7 ||
-        z->posz() != target->posz() ||
+        z->bub_pos().z() != target->bub_pos().z() ||
         !z->sees( *target ) ) {
         return false;
     }
@@ -764,9 +764,9 @@ bool mattack::shockstorm( monster *z )
     if( !g->u.is_deaf() ) {
         sfx::play_variant_sound( "fire_gun", "bio_lightning", sfx::get_heard_volume( z->bub_pos() ) );
     }
-    tripoint_bub_ms tarp( target->posx() + rng( -1, 1 ) + rng( -1, 1 ),
-                          target->posy() + rng( -1, 1 ) + rng( -1, 1 ),
-                          target->posz() );
+    tripoint_bub_ms tarp( target->bub_pos().x() + rng( -1, 1 ) + rng( -1, 1 ),
+                          target->bub_pos().y() + rng( -1, 1 ) + rng( -1, 1 ),
+                          target->bub_pos().z() );
     std::vector<tripoint> bolt = line_to( z->bub_pos(), tarp, 0, 0 );
     // Fill the LOS with electricity
     for( auto &i : bolt ) {
@@ -1655,7 +1655,7 @@ bool mattack::triffid_heartbeat( monster *z )
         return true;
         // TODO: when friendly: open a way to the stairs, don't spawn monsters
     }
-    if( g->u.bub_pos().z() != z->posz() ) {
+    if( g->u.bub_pos().z() != z->bub_pos().z() ) {
         // Maybe remove this and allow spawning monsters above?
         return true;
     }
@@ -1675,8 +1675,8 @@ bool mattack::triffid_heartbeat( monster *z )
         int tries = 0;
         while( g->m.route( g->u.bub_pos(), z->bub_pos(), root_pathfind ).empty() &&
                tries < 20 ) {
-            point p( rng( g->u.bub_pos().x(), z->posx() - 3 ), rng( g->u.bub_pos().y(), z->posy() - 3 ) );
-            tripoint_bub_ms dest( p, z->posz() );
+            point p( rng( g->u.bub_pos().x(), z->bub_pos().x() - 3 ), rng( g->u.bub_pos().y(), z->bub_pos().y() - 3 ) );
+            tripoint_bub_ms dest( p, z->bub_pos().z() );
             tries++;
             g->m.ter_set( dest, t_dirt );
             if( rl_dist( dest, g->u.bub_pos() ) > 3 && g->num_creatures() < 30 &&
@@ -2739,8 +2739,8 @@ bool mattack::ranged_pull( monster *z )
         const units::angle dir = coord_to_angle( target->bub_pos(), z->bub_pos() );
         tileray tdir( dir );
         tdir.advance();
-        pt.x() = target->posx() + tdir.dx();
-        pt.y() = target->posy() + tdir.dy();
+        pt.x() = target->bub_pos().x() + tdir.dx();
+        pt.y() = target->bub_pos().y() + tdir.dy();
         if( !g->is_empty( pt ) ) { //Cancel the grab if the space is occupied by something
             break;
         }
@@ -3614,8 +3614,8 @@ bool mattack::searchlight( monster *z )
         max_lamp_count--;
     }
 
-    const int zposx = z->posx();
-    const int zposy = z->posy();
+    const int zposx = z->bub_pos().x();
+    const int zposy = z->bub_pos().y();
 
     //this searchlight is not initialized
     if( z->get_items().empty() ) {
@@ -3661,7 +3661,7 @@ bool mattack::searchlight( monster *z )
 
         for( int x = zposx - 24; x < zposx + 24; x++ ) {
             for( int y = zposy - 24; y < zposy + 24; y++ ) {
-                tripoint_bub_ms dest( x, y, z->posz() );
+                tripoint_bub_ms dest( x, y, z->bub_pos().z() );
                 if( g->m.ter( dest ) == ter_str_id( "t_plut_generator" ) ) {
                     generator_ok = true;
                 }
@@ -3782,7 +3782,7 @@ bool mattack::searchlight( monster *z )
         settings.set_var( "SL_SPOT_X", x - zposx );
         settings.set_var( "SL_SPOT_Y", y - zposy );
 
-        g->m.add_field( tripoint( x, y, z->posz() ), fd_spotlight, 1 );
+        g->m.add_field( tripoint( x, y, z->bub_pos().z() ), fd_spotlight, 1 );
 
     }
 
@@ -3852,7 +3852,7 @@ void mattack::flame( monster *z, Creature *target )
 
             // break out of attack if flame hits a wall
             // TODO: Z
-            if( here.hit_with_fire( tripoint( i.xy(), z->posz() ) ) ) {
+            if( here.hit_with_fire( tripoint( i.xy(), z->bub_pos().z() ) ) ) {
                 if( g->u.sees( i ) ) {
                     add_msg( _( "The tongue of flame hits the %s!" ),
                              here.tername( i.xy() ) );
@@ -3883,7 +3883,7 @@ void mattack::flame( monster *z, Creature *target )
             } else {
                 intervening.y() = prev_point.y();
             }
-            if( here.hit_with_fire( tripoint( intervening.xy(), z->posz() ) ) ) {
+            if( here.hit_with_fire( tripoint( intervening.xy(), z->bub_pos().z() ) ) ) {
                 if( g->u.sees( i ) ) {
                     add_msg( _( "The tongue of flame hits the %s!" ),
                              here.tername( intervening.xy() ) );
@@ -3892,7 +3892,7 @@ void mattack::flame( monster *z, Creature *target )
             }
         }
         // break out of attack if flame hits a wall
-        if( here.hit_with_fire( tripoint( i.xy(), z->posz() ) ) ) {
+        if( here.hit_with_fire( tripoint( i.xy(), z->bub_pos().z() ) ) ) {
             if( g->u.sees( i ) ) {
                 add_msg( _( "The tongue of flame hits the %s!" ),
                          here.tername( i.xy() ) );
@@ -4125,7 +4125,7 @@ bool mattack::ratking( monster *z )
         return false;
     }
     // Disable z-level ratting or it can get silly
-    if( rl_dist( z->bub_pos(), g->u.bub_pos() ) > 50 || z->posz() != g->u.bub_pos().z() ) {
+    if( rl_dist( z->bub_pos(), g->u.bub_pos() ) > 50 || z->bub_pos().z() != g->u.bub_pos().z() ) {
         return false;
     }
 
@@ -4977,8 +4977,8 @@ bool mattack::riotbot( monster *z )
             detached_ptr<item> handcuffs = item::spawn( "e_handcuffs", calendar::start_of_cataclysm );
             handcuffs->charges = handcuffs->type->maximum_charges();
             handcuffs->activate();
-            handcuffs->set_var( "HANDCUFFS_X", foe->posx() );
-            handcuffs->set_var( "HANDCUFFS_Y", foe->posy() );
+            handcuffs->set_var( "HANDCUFFS_X", foe->bub_pos().x() );
+            handcuffs->set_var( "HANDCUFFS_Y", foe->bub_pos().y() );
 
             const bool is_uncanny = foe->has_active_bionic( bio_uncanny_dodge ) &&
                                     foe->get_power_level() > bio_uncanny_dodge.obj().power_trigger &&
@@ -5073,9 +5073,9 @@ bool mattack::riotbot( monster *z )
             delta = 1;
         }
 
-        tripoint dest( target->posx() + rng( 0, delta ) - rng( 0, delta ),
-                       target->posy() + rng( 0, delta ) - rng( 0, delta ),
-                       target->posz() );
+        tripoint dest( target->bub_pos().x() + rng( 0, delta ) - rng( 0, delta ),
+                       target->bub_pos().y() + rng( 0, delta ) - rng( 0, delta ),
+                       target->bub_pos().z() );
 
         //~ Sound of a riotbot using its blinding flash
         sounds::sound( z->bub_pos(), 3, sounds::sound_t::combat, _( "fzzzzzt" ), false, "misc", "flash" );

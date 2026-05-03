@@ -196,7 +196,7 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
     avatar &u = get_avatar();
 
     const visibility_variables &cache = m.get_visibility_variables_cache();
-    const level_cache &map_cache = m.get_cache_ref( u.posz() );
+    const level_cache &map_cache = m.get_cache_ref( u.bub_pos().z() );
     const auto &visibility_cache = map_cache.visibility_cache;
 
     const int TOTAL_VIEW = g_max_view_distance * 2 + 1;
@@ -218,8 +218,8 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
     }
 
     const weather_animation_t &anim = wtype->animation;
-    point offset( u.view_offset.xy() + point( -getmaxx( g->w_terrain ) / 2 + u.posx(),
-                  -getmaxy( g->w_terrain ) / 2 + u.posy() ) );
+    point offset( u.view_offset.xy() + point( -getmaxx( g->w_terrain ) / 2 + u.bub_pos().x(),
+                  -getmaxy( g->w_terrain ) / 2 + u.bub_pos().y() ) );
 
     if( tile_iso && use_tiles ) {
         iStart.x = 0;
@@ -241,7 +241,7 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
             continue;
         }
 
-        const tripoint_bub_ms mapp( map, u.posz() );
+        const tripoint_bub_ms mapp( map, u.bub_pos().z() );
 
         const lit_level lighting = visibility_cache[map_cache.idx( mapp.x(), mapp.y() )];
 
@@ -343,7 +343,7 @@ input_context game::get_player_input( std::string &action )
                     const direction oCurDir = iter->getDirecton();
                     const int width = utf8_width( iter->getText() );
                     for( int i = 0; i < width; ++i ) {
-                        tripoint_bub_ms tmp( iter->getPosX() + i, iter->getPosY(), get_levz() );
+                        tripoint_bub_ms tmp( iter->getbub_pos().x() + i, iter->getbub_pos().y(), get_levz() );
                         const Creature *critter = critter_at( tmp, true );
 
                         if( critter != nullptr && u.sees( *critter ) ) {
@@ -694,13 +694,13 @@ static void smash()
     auto smashp = *smashp_;
 
     bool smash_floor = false;
-    if( smashp.z != u.posz() ) {
-        if( smashp.z > u.posz() ) {
+    if( smashp.z != u.bub_pos().z() ) {
+        if( smashp.z > u.bub_pos().z() ) {
             // TODO: Knock on the ceiling
             return;
         }
 
-        smashp.z = u.posz();
+        smashp.z = u.bub_pos().z();
         smash_floor = true;
     }
     if( u.is_mounted() ) {
@@ -1929,9 +1929,9 @@ bool game::handle_action()
                     auto dest_delta = get_delta_from_movement_action( act, iso_rotate::yes );
                     if( auto_travel_mode && !u.is_auto_moving() ) {
                         for( int i = 0; i < SEEX; i++ ) {
-                            tripoint_bub_ms auto_travel_destination( u.posx() + dest_delta.x() * ( SEEX - i ),
-                                    u.posy() + dest_delta.y() * ( SEEX - i ),
-                                    u.posz() );
+                            tripoint_bub_ms auto_travel_destination( u.bub_pos().x() + dest_delta.x() * ( SEEX - i ),
+                                    u.bub_pos().y() + dest_delta.y() * ( SEEX - i ),
+                                    u.bub_pos().z() );
                             destination_preview = m.route( u.bub_pos(),
                                                            auto_travel_destination,
                                                            u.get_legacy_pathfinding_settings(),

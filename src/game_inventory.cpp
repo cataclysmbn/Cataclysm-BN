@@ -1673,7 +1673,7 @@ drop_locations game_menus::inv::multidrop( player &p )
 }
 
 
-void game_menus::inv::compare( player &p, const std::optional<tripoint> &offset )
+void game_menus::inv::compare( player &p, const std::optional<tripoint_rel_ms> &offset )
 {
     p.inv_restack( );
 

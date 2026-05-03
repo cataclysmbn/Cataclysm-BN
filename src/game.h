@@ -250,7 +250,7 @@ class game : public submap_load_listener
          * @param next If true, bases it on the vehicle the vehicle will turn to next turn,
          * instead of the one it is currently facing.
          */
-        std::optional<tripoint> get_veh_dir_indicator_location( bool next ) const;
+        std::optional<tripoint_rel_ms> get_veh_dir_indicator_location( bool next ) const;
         void draw_veh_dir_indicator( bool next );
 
         /**
@@ -368,9 +368,9 @@ class game : public submap_load_listener
         monster *place_critter_around( const mtype_id &id, const tripoint_bub_ms &center, int radius );
         monster *place_critter_around( const shared_ptr_fast<monster> &mon, const tripoint_bub_ms &center,
                                        int radius, bool forced = false );
-        monster *place_critter_within( const mtype_id &id, const tripoint_range<tripoint> &range );
+        monster *place_critter_within( const mtype_id &id, const tripoint_range<tripoint_bub_ms> &range );
         monster *place_critter_within( const shared_ptr_fast<monster> &mon,
-                                       const tripoint_range<tripoint> &range );
+                                       const tripoint_range<tripoint_bub_ms> &range );
         /** @} */
         /**
          * Returns the approximate number of creatures in the reality bubble.
@@ -539,7 +539,7 @@ class game : public submap_load_listener
          */
         bool revive_corpse( const tripoint_bub_ms &p, item &it );
         /**Turns Broken Cyborg monster into Cyborg NPC via surgery*/
-        void save_cyborg( item *cyborg, const tripoint &couch_pos, Character &installer );
+        void save_cyborg( item *cyborg, const tripoint_bub_ms &couch_pos, Character &installer );
         /** Asks if the player wants to cancel their activity, and if so cancels it. */
         bool cancel_activity_query( const std::string &text );
         /** Asks if the player wants to cancel their activity and if so cancels it. Additionally checks
@@ -630,7 +630,7 @@ class game : public submap_load_listener
          * @param fish_pos The location being fished.
          * @return A set of locations representing the valid contiguous fishable locations.
          */
-        std::unordered_set<tripoint>get_fishable_locations( int radius, const tripoint &fish_pos );
+        std::unordered_set<tripoint_bub_ms>get_fishable_locations( int radius, const tripoint_bub_ms &fish_pos );
 
         /** Flings the input creature in the given direction. */
         void fling_creature( Creature *c, const units::angle &dir, float flvel, bool controlled = false );
@@ -912,8 +912,8 @@ class game : public submap_load_listener
         not to step there */
         // Handle pushing during move, returns true if it handled the move
         bool grabbed_move( const tripoint_bub_ms &dp );
-        bool grabbed_veh_move( const tripoint &dp );
-        bool grabbed_furn_move( const tripoint &dp );
+        bool grabbed_veh_move( const tripoint_bub_ms &dp );
+        bool grabbed_furn_move( const tripoint_bub_ms &dp );
 
         void control_vehicle(); // Use vehicle controls  '^'
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
@@ -949,12 +949,12 @@ class game : public submap_load_listener
         void chat(); // Talk to a nearby NPC  'C'
 
         // Internal methods to show "look around" info
-        void print_fields_info( const tripoint &lp, const catacurses::window &w_look, int column,
+        void print_fields_info( const tripoint_bub_ms &lp, const catacurses::window &w_look, int column,
                                 int &line );
-        void print_terrain_info( const tripoint &lp, const catacurses::window &w_look,
+        void print_terrain_info( const tripoint_bub_ms &lp, const catacurses::window &w_look,
                                  const std::string &area_name, int column,
                                  int &line );
-        void print_trap_info( const tripoint &lp, const catacurses::window &w_look, int column,
+        void print_trap_info( const tripoint_bub_ms &lp, const catacurses::window &w_look, int column,
                               int &line );
         void print_creature_info( const Creature *creature, const catacurses::window &w_look, int column,
                                   int &line, int last_line );
@@ -962,9 +962,9 @@ class game : public submap_load_listener
                                  int column, int &line, int last_line );
         void print_visibility_info( const catacurses::window &w_look, int column, int &line,
                                     visibility_type visibility );
-        void print_items_info( const tripoint &lp, const catacurses::window &w_look, int column, int &line,
+        void print_items_info( const tripoint_bub_ms &lp, const catacurses::window &w_look, int column, int &line,
                                int last_line );
-        void print_graffiti_info( const tripoint &lp, const catacurses::window &w_look, int column,
+        void print_graffiti_info( const tripoint_bub_ms &lp, const catacurses::window &w_look, int column,
                                   int &line, int last_line );
 
         input_context get_player_input( std::string &action );
@@ -979,7 +979,7 @@ class game : public submap_load_listener
          * Note on z-levels: this works with vertical shifts, but currently all
          * monsters are despawned upon a vertical shift.
          */
-        void shift_monsters( const tripoint &shift );
+        void shift_monsters( const tripoint_rel_sm &shift );
     public:
         /**
          * Despawn a specific monster, it's stored on the overmap. Also removes
@@ -1009,8 +1009,8 @@ class game : public submap_load_listener
         void handle_key_blocking_activity(); // Abort reading etc.
         void open_consume_item_menu(); // Custom menu for consuming specific group of items
         bool handle_action();
-        bool try_get_right_click_action( action_id &act, const tripoint &mouse_target );
-        bool try_get_left_click_action( action_id &act, const tripoint &mouse_target );
+        bool try_get_right_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
+        bool try_get_left_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
 
         void item_action_menu(); // Displays item action menu
 
@@ -1117,7 +1117,7 @@ class game : public submap_load_listener
         std::vector<shared_ptr_fast<monster>> coming_to_stairs;
         int monstairz = 0;
 
-        tripoint ter_view_p;
+        tripoint_bub_ms ter_view_p;
         catacurses::window w_terrain;
         catacurses::window w_overmap;
         catacurses::window w_omlegend;
@@ -1221,13 +1221,15 @@ class game : public submap_load_listener
         unsigned int seed = 0;
 
         // Preview for auto move route
-        std::vector<tripoint> destination_preview;
+        std::vector<tripoint_bub_ms> destination_preview;
 
         std::chrono::time_point<std::chrono::steady_clock> last_mouse_edge_scroll;
-        tripoint last_mouse_edge_scroll_vector_terrain;
-        tripoint last_mouse_edge_scroll_vector_overmap;
-        std::pair<tripoint, tripoint> mouse_edge_scrolling( input_context &ctxt, int speed,
-                const tripoint &last, bool iso );
+        tripoint_rel_ms last_mouse_edge_scroll_vector_terrain;
+        tripoint_rel_omt last_mouse_edge_scroll_vector_overmap;
+        std::pair<tripoint_rel_ms, tripoint_rel_ms> mouse_edge_scrolling( input_context &ctxt, int speed,
+                const tripoint_rel_ms &last, bool iso );
+        std::pair<tripoint_rel_omt, tripoint_rel_omt> mouse_edge_scrolling( input_context &ctxt, int speed,
+                const tripoint_rel_omt &last, bool iso );
 
         weak_ptr_fast<ui_adaptor> main_ui_adaptor;
 
@@ -1241,12 +1243,12 @@ class game : public submap_load_listener
          *  This variant adjust scrolling speed according to zoom
          *  level, making it suitable when viewing the "terrain".
          */
-        tripoint mouse_edge_scrolling_terrain( input_context &ctxt );
+        tripoint_rel_ms mouse_edge_scrolling_terrain( input_context &ctxt );
         /** This variant is suitable for the overmap. */
-        tripoint mouse_edge_scrolling_overmap( input_context &ctxt );
+        tripoint_rel_omt mouse_edge_scrolling_overmap( input_context &ctxt );
 
         // called on map shifting
-        void shift_destination_preview( point delta );
+        void shift_destination_preview( const point_rel_ms &delta );
 
         /**
         Checks if player is able to successfully climb to/from some terrain and not slip down

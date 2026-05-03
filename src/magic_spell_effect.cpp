@@ -588,7 +588,7 @@ int area_expander::contains( const tripoint &pt ) const
 }
 
 // Adds node to a search tree. Returns true if new node is allocated.
-bool area_expander::enqueue( const tripoint &from, const tripoint &to, float cost )
+bool area_expander::enqueue( const tripoint &from, const tripoint_bub_ms &to, float cost )
 {
     if( contains( to ) ) {
         // We will modify existing node if its cost is lower.
@@ -673,7 +673,7 @@ void area_expander::sort_descending()
     } );
 }
 
-static void move_items( map &here, const tripoint &from, const tripoint &to )
+static void move_items( map &here, const tripoint &from, const tripoint_bub_ms &to )
 {
     auto src_items = here.i_at( from );
     auto dst_items = here.i_at( to );
@@ -777,7 +777,7 @@ void spell_effect::area_push( const spell &sp, Creature &caster, const tripoint 
     sp.make_sound( caster.bub_pos() );
 }
 
-static void character_push_effects( Creature *caster, Character &guy, tripoint &push_dest,
+static void character_push_effects( Creature *caster, Character &guy, const tripoint_bub_ms &push_dest,
                                     const int push_distance, const std::vector<tripoint> &push_vec )
 {
     int dist_left = std::abs( push_distance );

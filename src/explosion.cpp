@@ -1328,7 +1328,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
         } );
 
         // Don't bother animating explosions that are on other levels
-        const bool to_animate = get_player_character().posz() == position.z;
+        const bool to_animate = get_player_character().bub_pos().z() == position.z;
 
         // Animate the explosion by drawing the shock wave rather than the whole explosion
         if( to_animate && distance > animated_explosion_range ) {
@@ -1726,7 +1726,7 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
                    "misc", "shockwave" );
 
     for( monster &critter : g->all_monsters() ) {
-        if( critter.posz() != p.z ) {
+        if( critter.bub_pos().z() != p.z ) {
             continue;
         }
         if( rl_dist( critter.bub_pos(), p ) <= sw.radius ) {
@@ -1736,7 +1736,7 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
     }
     // TODO: combine the two loops and the case for g->u using all_creatures()
     for( npc &guy : g->all_npcs() ) {
-        if( guy.posz() != p.z ) {
+        if( guy.bub_pos().z() != p.z ) {
             continue;
         }
         if( rl_dist( guy.bub_pos(), p ) <= sw.radius ) {

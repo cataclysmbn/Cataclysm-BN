@@ -42,7 +42,7 @@ item *titled_filter_menu( const item_filter &filter, avatar &you,
 /*@{*/
 
 void common( avatar &you );
-void compare( player &p, const std::optional<tripoint> &offset );
+void compare( player &p, const std::optional<tripoint_rel_ms> &offset );
 void compare( const item &left, const item &right );
 /** Assign (or reassign from existing) letter to item in character's inventory. */
 void reassign_letter( Character &who, item &it, int invlet );

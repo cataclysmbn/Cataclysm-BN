@@ -956,40 +956,40 @@ class cata_tiles
         void draw_zones_frame( std::multimap<point, formatted_text> &overlay_strings );
         void void_zones();
 
-        void init_draw_radiation_override( const tripoint &p, int rad );
+        void init_draw_radiation_override( const tripoint_bub_ms &p, int rad );
         void void_radiation_override();
 
-        void init_draw_terrain_override( const tripoint &p, const ter_id &id );
+        void init_draw_terrain_override( const tripoint_bub_ms &p, const ter_id &id );
         void void_terrain_override();
 
-        void init_draw_furniture_override( const tripoint &p, const furn_id &id );
+        void init_draw_furniture_override( const tripoint_bub_ms &p, const furn_id &id );
         void void_furniture_override();
 
-        void init_draw_graffiti_override( const tripoint &p, bool has );
+        void init_draw_graffiti_override( const tripoint_bub_ms &p, bool has );
         void void_graffiti_override();
 
-        void init_draw_trap_override( const tripoint &p, const trap_id &id );
+        void init_draw_trap_override( const tripoint_bub_ms &p, const trap_id &id );
         void void_trap_override();
 
-        void init_draw_field_override( const tripoint &p, const field_type_id &id );
+        void init_draw_field_override( const tripoint_bub_ms &p, const field_type_id &id );
         void void_field_override();
 
-        void init_draw_item_override( const tripoint &p, const itype_id &id, const mtype_id &mid,
+        void init_draw_item_override( const tripoint_bub_ms &p, const itype_id &id, const mtype_id &mid,
                                       bool hilite );
         void void_item_override();
 
-        void init_draw_vpart_override( const tripoint &p, const vpart_id &id, int part_mod,
+        void init_draw_vpart_override( const tripoint_bub_ms &p, const vpart_id &id, int part_mod,
                                        units::angle veh_dir, bool hilite, point mount );
         void void_vpart_override();
 
-        void init_draw_below_override( const tripoint &p, bool draw );
+        void init_draw_below_override( const tripoint_bub_ms &p, bool draw );
         void void_draw_below_override();
 
-        void init_draw_monster_override( const tripoint &p, const mtype_id &id, int count,
+        void init_draw_monster_override( const tripoint_bub_ms &p, const mtype_id &id, int count,
                                          bool more, Attitude att );
         void void_monster_override();
 
-        bool has_draw_override( const tripoint &p ) const;
+        bool has_draw_override( const tripoint_bub_ms &p ) const;
     public:
         /**
          * Initialize the current tileset (load tile images, load mapping), using the current
@@ -1089,58 +1089,58 @@ class cata_tiles
         bool do_draw_zones = false;
         bool do_draw_cone_aoe = false;
 
-        tripoint exp_pos;
+        tripoint_bub_ms exp_pos;
         int exp_rad = 0;
         std::string exp_name;
 
-        std::map<tripoint, explosion_tile> custom_explosion_layer;
+        std::map<tripoint_bub_ms, explosion_tile> custom_explosion_layer;
 
-        tripoint cone_aoe_origin;
+        tripoint_bub_ms cone_aoe_origin;
         one_bucket cone_aoe_layer;
 
-        std::vector<tripoint> bul_pos;
+        std::vector<tripoint_bub_ms> bul_pos;
         std::vector<std::string> bul_id;
         std::vector<int> bul_rotation;
 
-        tripoint hit_pos;
+        tripoint_bub_ms hit_pos;
         std::string hit_entity_id;
 
-        tripoint line_pos;
+        tripoint_bub_ms line_pos;
         bool is_target_line = false;
-        std::vector<tripoint> line_trajectory;
+        std::vector<tripoint_bub_ms> line_trajectory;
         std::string line_endpoint_id;
 
-        std::vector<tripoint> cursors;
-        std::vector<tripoint> highlights;
+        std::vector<tripoint_bub_ms> cursors;
+        std::vector<tripoint_bub_ms> highlights;
 
         weather_printable anim_weather;
         std::string weather_name;
 
-        tripoint zone_start;
-        tripoint zone_end;
-        tripoint zone_offset;
-        std::vector<tripoint> zone_points;
-        std::unordered_set<tripoint> zone_point_lookup;
+        tripoint_bub_ms zone_start;
+        tripoint_bub_ms zone_end;
+        tripoint_bub_ms zone_offset;
+        std::vector<tripoint_bub_ms> zone_points;
+        std::unordered_set<tripoint_bub_ms> zone_point_lookup;
 
         // offset values, in tile coordinates, not pixels
         point o;
         // offset for drawing, in pixels.
         point op;
 
-        std::map<tripoint, int> radiation_override;
-        std::map<tripoint, ter_id> terrain_override;
-        std::map<tripoint, furn_id> furniture_override;
-        std::map<tripoint, bool> graffiti_override;
-        std::map<tripoint, trap_id> trap_override;
-        std::map<tripoint, field_type_id> field_override;
+        std::map<tripoint_bub_ms, int> radiation_override;
+        std::map<tripoint_bub_ms, ter_id> terrain_override;
+        std::map<tripoint_bub_ms, furn_id> furniture_override;
+        std::map<tripoint_bub_ms, bool> graffiti_override;
+        std::map<tripoint_bub_ms, trap_id> trap_override;
+        std::map<tripoint_bub_ms, field_type_id> field_override;
         // bool represents item highlight
-        std::map<tripoint, std::tuple<itype_id, mtype_id, bool>> item_override;
+        std::map<tripoint_bub_ms, std::tuple<itype_id, mtype_id, bool>> item_override;
         // int, angle, bool represents part_mod, veh_dir, and highlight respectively
         // point represents the mount direction
-        std::map<tripoint, std::tuple<vpart_id, int, units::angle, bool, point>> vpart_override;
-        std::map<tripoint, bool> draw_below_override;
+        std::map<tripoint_bub_ms, std::tuple<vpart_id, int, units::angle, bool, point>> vpart_override;
+        std::map<tripoint_bub_ms, bool> draw_below_override;
         // int represents spawn count
-        std::map<tripoint, std::tuple<mtype_id, int, bool, Attitude>> monster_override;
+        std::map<tripoint_bub_ms, std::tuple<mtype_id, int, bool, Attitude>> monster_override;
         pimpl<std::vector<tile_render_info>> draw_points_cache;
 
     private:

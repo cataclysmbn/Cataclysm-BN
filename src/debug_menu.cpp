@@ -1599,7 +1599,7 @@ void debug()
             s += vgettext( "%d creature exists.\n", "%d creatures exist.\n", g->num_creatures() );
             popup_top(
                 s.c_str(),
-                u.posx(), g->u.bub_pos().y(), g->get_levx(), g->get_levy(),
+                u.bub_pos().x(), g->u.bub_pos().y(), g->get_levx(), g->get_levy(),
                 get_overmapbuffer( get_avatar().get_dimension() ).ter( g->u.global_omt_location() )->get_name(),
                 to_turns<int>( calendar::turn - calendar::turn_zero ),
                 get_option<bool>( "RANDOM_NPC" ) ? _( "NPCs are going to spawn." ) :
@@ -1608,10 +1608,10 @@ void debug()
             for( const npc &guy : g->all_npcs() ) {
                 auto t = guy.global_sm_location();
                 add_msg( m_info, _( "%s: map ( %d:%d ) pos ( %d:%d )" ), guy.name, t.x(),
-                         t.y(), guy.posx(), guy.posy() );
+                         t.y(), guy.bub_pos().x(), guy.bub_pos().y() );
             }
 
-            add_msg( m_info, _( "(you: %d:%d)" ), u.posx(), u.posy() );
+            add_msg( m_info, _( "(you: %d:%d)" ), u.bub_pos().x(), u.bub_pos().y() );
             add_msg( m_info, _( "Thirst: %d, kCal: %d / %d" ), u.get_thirst(), u.get_stored_kcal(),
                      u.max_stored_kcal() );
             add_msg( m_info, _( "Body Mass Index: %.0f\nBasal Metabolic Rate: %i" ), u.bmi(), u.bmr() );
@@ -1914,7 +1914,7 @@ void debug()
 
             shared_ptr_fast<game::draw_callback_t> sound_cb = make_shared_fast<game::draw_callback_t>( [&]() {
                 const point offset {
-                    u.view_offset.xy() + point( POSX - u.posx(), POSY - u.posy() )
+                    u.view_offset.xy() + point( POSX - u.bub_pos().x(), POSY - u.bub_pos().y() )
                 };
                 for( const auto &sound : sounds_to_draw.first ) {
                     mvwputch( g->w_terrain, offset + sound.xy(), c_yellow, '?' );

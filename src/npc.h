@@ -1277,8 +1277,8 @@ class npc : public player
          *
          * The (global) position of an NPC is always:
          * point(
-         *     submap_coords.x * SEEX + posx() % SEEX,
-         *     submap_coords.y * SEEY + posy() % SEEY,
+         *     submap_coords.x * SEEX + bub_pos().x() % SEEX,
+         *     submap_coords.y * SEEY + bub_pos().y() % SEEY,
          *     pos.z)
          * (Expressed in map squares, the system that @ref map uses.)
          * Any of om, map, pos can be in any range.

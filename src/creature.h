@@ -735,7 +735,7 @@ class Creature
         virtual pf_pair get_pathfinding_pair() const = 0;
 
         int moves = 0;
-        void draw( const catacurses::window &w, point origin, bool inverted ) const;
+        void draw( const catacurses::window &w, const point_bub_ms &origin, bool inverted ) const;
         void draw( const catacurses::window &w, const tripoint_bub_ms &origin, bool inverted ) const;
         /**
          * Write information about this creature.

@@ -99,7 +99,7 @@ auto get_vehicle_str_requirement( vehicle *veh ) -> int
 } // namespace
 
 
-bool game::grabbed_veh_move( const tripoint &dp )
+bool game::grabbed_veh_move( const tripoint_bub_ms &dp )
 {
     const optional_vpart_position grabbed_vehicle_vp = m.veh_at( u.bub_pos() + u.grab_point );
     if( !grabbed_vehicle_vp ) {

@@ -107,9 +107,9 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     const bool is_riding = you.is_mounted();
     tripoint_bub_ms dest_loc;
     if( d.z == 0 && you.has_effect( effect_stunned ) ) {
-        dest_loc.x() = rng( you.posx() - 1, you.posx() + 1 );
-        dest_loc.y() = rng( you.posy() - 1, you.posy() + 1 );
-        dest_loc.z() = you.posz();
+        dest_loc.x() = rng( you.bub_pos().x() - 1, you.bub_pos().x() + 1 );
+        dest_loc.y() = rng( you.bub_pos().y() - 1, you.bub_pos().y() + 1 );
+        dest_loc.z() = you.bub_pos().z();
     } else {
         dest_loc = you.bub_pos() + d;
     }
@@ -166,7 +166,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     }
 
     // If the player is *attempting to* move on the X axis, update facing direction of their sprite to match.
-    point new_d( dest_loc.xy() + point( -you.posx(), -you.posy() ) );
+    point new_d( dest_loc.xy() + point( -you.bub_pos().x(), -you.bub_pos().y() ) );
 
     if( !tile_iso ) {
         if( new_d.x > 0 ) {
@@ -230,8 +230,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     if( you.has_effect( effect_amigara ) ) {
         int curdist = INT_MAX;
         int newdist = INT_MAX;
-        const auto minp = tripoint( 0, 0, you.posz() );
-        const tripoint maxp = tripoint( g_mapsize_x, g_mapsize_y, you.posz() );
+        const auto minp = tripoint( 0, 0, you.bub_pos().z() );
+        const tripoint maxp = tripoint( g_mapsize_x, g_mapsize_y, you.bub_pos().z() );
         for( const tripoint &pt : m.points_in_rectangle( minp, maxp ) ) {
             if( m.ter( pt ) == t_fault ) {
                 int dist = rl_dist( pt, you.bub_pos() );
@@ -466,7 +466,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     // Invalid move
     const bool waste_moves = ( you.is_blind() && you.clairvoyance() < 1 ) ||
                              you.has_effect( effect_stunned );
-    if( waste_moves || dest_loc.z() != you.posz() ) {
+    if( waste_moves || dest_loc.z() != you.bub_pos().z() ) {
         add_msg( _( "You bump into the %s!" ), m.obstacle_name( dest_loc ) );
         // Only lose movement if we're blind
         if( waste_moves ) {
@@ -499,7 +499,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
 
 bool avatar_action::ramp_move( avatar &you, map &m, const tripoint &dest_loc )
 {
-    if( dest_loc.z != you.posz() ) {
+    if( dest_loc.z != you.bub_pos().z() ) {
         // No recursive ramp_moves
         return false;
     }
@@ -534,7 +534,7 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint &dest_loc )
         }
     }
 
-    const tripoint_bub_ms above_u( you.posx(), you.posy(), you.posz() + 1 );
+    const tripoint_bub_ms above_u( you.bub_pos().x(), you.bub_pos().y(), you.bub_pos().z() + 1 );
     if( m.has_floor_or_support( above_u ) ) {
         add_msg( m_warning, _( "You can't climb here - there's a ceiling above." ) );
         return false;
@@ -597,7 +597,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
             popup( _( "You need to breathe but you can't swim!  Get to dry land, quick!" ) );
         }
     }
-    bool diagonal = ( p.x() != you.posx() && p.y() != you.posy() );
+    bool diagonal = ( p.x() != you.bub_pos().x() && p.y() != you.bub_pos().y() );
     if( you.in_vehicle ) {
         m.unboard_vehicle( you.bub_pos() );
     }
@@ -949,7 +949,7 @@ void avatar_action::eat( avatar &you, item *loc )
 }
 
 void avatar_action::plthrow( avatar &you, item *loc,
-                             const std::optional<tripoint> &blind_throw_from_pos )
+                             const std::optional<tripoint_bub_ms> &blind_throw_from_pos )
 {
     if( you.has_active_mutation( trait_SHELL2 ) ) {
         add_msg( m_info, _( "You can't effectively throw while you're in your shell." ) );

@@ -147,7 +147,7 @@ void Character::recalc_speed_bonus()
     // Threshold-crossing has its charms ;-)
     if( g != nullptr ) {
         if( has_trait( trait_SUNLIGHT_DEPENDENT ) && !g->is_in_sunlight( pos() ) ) {
-            mod_speed_bonus( -( g->light_level( posz() ) >= 12 ? 5 : 10 ) );
+            mod_speed_bonus( -( g->light_level( bub_pos().z() ) >= 12 ? 5 : 10 ) );
         }
         const float temperature_speed_modifier = mutation_value( "temperature_speed_modifier" );
         if( temperature_speed_modifier != 0 ) {

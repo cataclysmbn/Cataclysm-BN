@@ -167,7 +167,7 @@ class towing_data
         }
         towing_point_side tow_direction;
         // temp variable used for saving/loading
-        tripoint other_towing_point;
+        tripoint_bub_ms other_towing_point;
 };
 
 struct bounding_box {

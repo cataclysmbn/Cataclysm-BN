@@ -1028,7 +1028,7 @@ int consume_drug_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & )
     for( const auto &field : fields_produced ) {
         const field_type_id fid = field_type_id( field.first );
         for( int i = 0; i < 3; i++ ) {
-            here.add_field( {p.posx() + rng( -2, 2 ), p.posy() + rng( -2, 2 ), p.posz()},
+            here.add_field( {p.bub_pos().x() + rng( -2, 2 ), p.bub_pos().y() + rng( -2, 2 ), p.bub_pos().z()},
                             fid,
                             field.second );
         }
@@ -2180,7 +2180,7 @@ int enzlave_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) c
         p.add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    map_stack items = get_map().i_at( point( p.posx(), p.posy() ) );
+    map_stack items = get_map().i_at( point( p.bub_pos().x(), p.bub_pos().y() ) );
     std::vector<const item *> corpses;
 
     for( item * const &corpse_candidate : items ) {
@@ -4325,8 +4325,8 @@ int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
                                   outer_layer_trap.obj().get_trap_radius() + 1;
     if( unburied_data.trap.obj().get_trap_radius() > 0 ) {
         // Math correction for multi-tile traps
-        pos.x = ( pos.x - p.posx() ) * distance_to_trap_center + p.posx();
-        pos.y = ( pos.y - p.posy() ) * distance_to_trap_center + p.posy();
+        pos.x = ( pos.x - p.bub_pos().x() ) * distance_to_trap_center + p.bub_pos().x();
+        pos.y = ( pos.y - p.bub_pos().y() ) * distance_to_trap_center + p.bub_pos().y();
         for( const tripoint &t : here.points_in_radius( pos, outer_layer_trap.obj().get_trap_radius(),
                 0 ) ) {
             if( !is_allowed( p, t, it.tname() ) ) {

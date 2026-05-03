@@ -899,7 +899,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     const bool has_debug_vision = you.has_trait( trait_id( "DEBUG_NIGHTVISION" ) );
     // sight_points is hoisted for speed reasons.
     const int sight_points = !has_debug_vision ?
-                             you.overmap_sight_range( g->light_level( you.posz() ) ) :
+                             you.overmap_sight_range( g->light_level( you.bub_pos().z() ) ) :
                              100;
     const bool showhordes = uistate.overmap_show_hordes;
     const bool viewing_weather = ( ( uistate.overmap_debug_weather || uistate.overmap_visible_weather )
@@ -1783,7 +1783,7 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
         clear_window_area( w );
         tilecontext->draw_minimap(
             point( win->pos.x * fontwidth, win->pos.y * fontheight ),
-            tripoint( g->u.bub_pos().xy(), g->ter_view_p.z ),
+            tripoint( g->u.bub_pos().xy(), g->ter_view_p.z() ),
             win->width * font->width, win->height * font->height );
         update = true;
 

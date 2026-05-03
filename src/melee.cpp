@@ -1399,8 +1399,8 @@ bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique,
     std::array<int, 9> offset_b = { {-1, -1, 0, -1, 0, 1, 0, 1, 1 } };
 
     // filter the values to be between -1 and 1 to avoid indexing the array out of bounds
-    int dy = std::max( -1, std::min( 1, t.posy() - posy() ) );
-    int dx = std::max( -1, std::min( 1, t.posx() - posx() ) );
+    int dy = std::max( -1, std::min( 1, t.bub_pos().y() - bub_pos().y() ) );
+    int dx = std::max( -1, std::min( 1, t.bub_pos().x() - bub_pos().x() ) );
     int lookup = dy + 1 + 3 * ( dx + 1 );
 
     //wide hits all targets adjacent to the attacker and the target
@@ -1566,18 +1566,18 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         int newx;
         int newy;
 
-        if( b.x() > posx() ) {
-            newx = posx() - 1;
-        } else if( b.x() < posx() ) {
-            newx = posx() + 1;
+        if( b.x() > bub_pos().x() ) {
+            newx = bub_pos().x() - 1;
+        } else if( b.x() < bub_pos().x() ) {
+            newx = bub_pos().x() + 1;
         } else {
             newx = b.x();
         }
 
-        if( b.y() > posy() ) {
-            newy = posy() - 1;
-        } else if( b.y() < posy() ) {
-            newy = posy() + 1;
+        if( b.y() > bub_pos().y() ) {
+            newy = bub_pos().y() - 1;
+        } else if( b.y() < bub_pos().y() ) {
+            newy = bub_pos().y() + 1;
         } else {
             newy = b.y();
         }
@@ -1596,7 +1596,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         const auto prev_pos = t.bub_pos(); // track target startpoint for knockback_follow
         const int kb_offset_x = rng( -technique.knockback_spread, technique.knockback_spread );
         const int kb_offset_y = rng( -technique.knockback_spread, technique.knockback_spread );
-        tripoint_bub_ms kb_point( posx() + kb_offset_x, posy() + kb_offset_y, posz() );
+        tripoint_bub_ms kb_point( bub_pos().x() + kb_offset_x, bub_pos().y() + kb_offset_y, bub_pos().z() );
         for( int dist = rng( 1, technique.knockback_dist ); dist > 0; dist-- ) {
             t.knock_back_from( kb_point );
         }
@@ -2431,14 +2431,14 @@ void player_hit_message( Character *attacker, const std::string &message,
 
     if( dam > 0 && attacker->is_player() ) {
         //player hits monster melee
-        SCT.add( point( t.posx(), t.posy() ),
-                 direction_from( point_zero, point( t.posx() - attacker->posx(), t.posy() - attacker->posy() ) ),
+        SCT.add( point( t.bub_pos().x(), t.bub_pos().y() ),
+                 direction_from( point_zero, point( t.bub_pos().x() - attacker->bub_pos().x(), t.bub_pos().y() - attacker->bub_pos().y() ) ),
                  get_hp_bar( dam, t.get_hp_max(), true ).first, m_good,
                  sSCTmod, gmtSCTcolor );
 
         if( t.get_hp() > 0 ) {
-            SCT.add( point( t.posx(), t.posy() ),
-                     direction_from( point_zero, point( t.posx() - attacker->posx(), t.posy() - attacker->posy() ) ),
+            SCT.add( point( t.bub_pos().x(), t.bub_pos().y() ),
+                     direction_from( point_zero, point( t.bub_pos().x() - attacker->bub_pos().x(), t.bub_pos().y() - attacker->bub_pos().y() ) ),
                      get_hp_bar( t.get_hp(), t.get_hp_max(), true ).first, m_good,
                      //~ "hit points", used in scrolling combat text
                      _( "hp" ), m_neutral,

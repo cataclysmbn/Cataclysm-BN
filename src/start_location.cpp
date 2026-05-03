@@ -382,7 +382,7 @@ void start_location::place_player( player &u ) const
     while( !found_good_spot && tries < 100 ) {
         tripoint rand_point( g_half_mapsize_x + rng( 0, SEEX * 2 - 1 ),
                              g_half_mapsize_y + rng( 0, SEEY * 2 - 1 ),
-                             u.posz() );
+                             u.bub_pos().z() );
         check_spot( rand_point );
     }
     // If we haven't got a good location by now, screw it and brute force it

@@ -258,35 +258,35 @@ void editmap_hilight::draw( editmap &em, bool update )
 /*
  * map position to screen position
  */
-tripoint editmap::pos2screen( const tripoint &p )
+tripoint editmap::pos2screen( const tripoint_bub_ms &p )
 {
-    return p + tmax / 2 - target.xy();
+    return p.raw() + tmax / 2 - target.xy().raw();
 }
 
 /*
  * get_direction with extended moving via HJKL keys
  */
-bool editmap::eget_direction( tripoint &p, const std::string &action ) const
+bool editmap::eget_direction( tripoint_rel_ms &p, const std::string &action ) const
 {
-    p = tripoint_zero;
+    p = tripoint_rel_ms::zero();
     if( action == "CENTER" ) {
         p = g->u.bub_pos() - target;
     } else if( action == "LEFT_WIDE" ) {
-        p.x = -tmax.x / 2;
+        p.x() = -tmax.x / 2;
     } else if( action == "DOWN_WIDE" ) {
-        p.y = tmax.y / 2;
+        p.y() = tmax.y / 2;
     } else if( action == "UP_WIDE" ) {
-        p.y = -tmax.y / 2;
+        p.y() = -tmax.y / 2;
     } else if( action == "RIGHT_WIDE" ) {
-        p.x = tmax.x / 2;
+        p.x() = tmax.x / 2;
     } else if( action == "LEVEL_DOWN" ) {
-        p.z = -1;
+        p.z() = -1;
     } else if( action == "LEVEL_UP" ) {
-        p.z = 1;
+        p.z() = 1;
     } else {
         input_context ctxt( "EGET_DIRECTION" );
         ctxt.set_iso( true );
-        const std::optional<tripoint> vec = ctxt.get_direction( action );
+        const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action );
         if( !vec ) {
             return false;
         }
@@ -335,9 +335,9 @@ shared_ptr_fast<ui_adaptor> editmap::create_or_get_ui_adaptor()
     return current_ui;
 }
 
-std::optional<tripoint> editmap::edit()
+std::optional<tripoint_bub_ms> editmap::edit()
 {
-    restore_on_out_of_scope<tripoint> view_offset_prev( g->u.view_offset );
+    restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( g->u.view_offset );
     target = g->u.bub_pos() + g->u.view_offset;
     input_context ctxt( "EDITMAP" );
     ctxt.set_iso( true );
@@ -447,8 +447,8 @@ std::optional<tripoint> editmap::edit()
 void editmap::uber_draw_ter( const catacurses::window &w, map *m )
 {
     auto center = target;
-    tripoint start = center.xy() + tripoint( -getmaxx( w ) / 2, -getmaxy( w ) / 2, target.z );
-    tripoint end = center.xy() + tripoint( getmaxx( w ) / 2, getmaxy( w ) / 2, target.z );
+    auto start = center.xy() + tripoint_rel_ms( -getmaxx( w ) / 2, -getmaxy( w ) / 2, target.z() );
+    auto end = center.xy() + tripoint_rel_ms( getmaxx( w ) / 2, getmaxy( w ) / 2, target.z() );
     /*
         // pending filter options
         bool draw_furn=true;
@@ -463,9 +463,9 @@ void editmap::uber_draw_ter( const catacurses::window &w, map *m )
         hilights["mplan"].points.clear();
     }
     drawsq_params params = drawsq_params().center( center );
-    for( const tripoint &p : tripoint_range<tripoint>( start, end ) ) {
+    for( const auto &p : tripoint_range<tripoint_bub_ms>( start, end ) ) {
         int sym = game_map ? '%' : ' ';
-        if( p.x >= 0 && p.x < msize && p.y >= 0 && p.y < msize ) {
+        if( p.x() >= 0 && p.x() < msize && p.y() >= 0 && p.y() < msize ) {
             if( game_map ) {
                 Creature *critter = g->critter_at( p );
                 if( critter != nullptr ) {
@@ -612,7 +612,7 @@ void editmap::draw_main_ui_overlay()
             const point origin_p = target.xy() + point( 1 - SEEX, 1 - SEEY );
             for( int x = 0; x < SEEX * 2; x++ ) {
                 for( int y = 0; y < SEEY * 2; y++ ) {
-                    const tripoint_bub_ms tmp_p( x, y, target.z );
+                    const tripoint_bub_ms tmp_p( x, y, target.z() );
                     const auto map_p = origin_p + tmp_p;
                     g->draw_radiation_override( map_p, tmpmap.get_radiation( tmp_p ) );
                     // scent is managed in `game` instead of `map`, so there's no override for it
@@ -656,7 +656,7 @@ void editmap::draw_main_ui_overlay()
             std::map<tripoint, std::tuple<mtype_id, int, bool, Attitude>> spawns;
             for( int x = 0; x < 2; x++ ) {
                 for( int y = 0; y < 2; y++ ) {
-                    const auto sm_pos = tripoint_bub_sm{ x, y, target.z };
+                    const auto sm_pos = tripoint_bub_sm{ x, y, target.z() };
                     submap *sm = tmpmap.get_submap_at_grid( sm_pos );
                     if( sm ) {
                         const auto sm_origin =  project_to<coords::ms>( sm_pos ) + origin_p;
@@ -681,7 +681,7 @@ void editmap::draw_main_ui_overlay()
 #endif
             hilights["mapgentgt"].draw( *this, true );
             tmpmap.reset_vehicle_cache( );
-            drawsq_params params = drawsq_params().center( tripoint( SEEX - 1, SEEY - 1, target.z ) );
+            drawsq_params params = drawsq_params().center( tripoint( SEEX - 1, SEEY - 1, target.z() ) );
             for( const tripoint &p : tmpmap.points_on_zlevel() ) {
                 tmpmap.drawsq( g->w_terrain, p, params );
             }
@@ -715,7 +715,7 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
     int off = 1;
     draw_border( w_info );
 
-    mvwprintz( w_info, point( 2, 0 ), c_light_gray, "< %d,%d >", target.x, target.y );
+    mvwprintz( w_info, point( 2, 0 ), c_light_gray, "< %d,%d >", target.x(), target.y() );
 
     mvwputch( w_info, point( 2, off ), terrain_type.color(), terrain_type.symbol() );
     mvwprintw( w_info, point( 4, off ), _( "%d: %s; movecost %d" ), here.ter( target ).to_i(),
@@ -733,18 +733,18 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
                  );
         off++; // 3
     }
-    const auto &map_cache = here.get_cache( target.z );
+    const auto &map_cache = here.get_cache( target.z() );
 
     const std::string u_see_msg = player_character.sees( target ) ? _( "yes" ) : _( "no" );
     mvwprintw( w_info, point( 1, off++ ), _( "dist: %d u_see: %s veh: %s scent: %d" ),
                rl_dist( player_character.bub_pos(), target ), u_see_msg, veh_msg, g->scent.get( target ) );
     mvwprintw( w_info, point( 1, off++ ), _( "sight_range: %d, daylight_sight_range: %d," ),
-               player_character.sight_range( g->light_level( player_character.posz() ) ),
+               player_character.sight_range( g->light_level( player_character.bub_pos().z() ) ),
                player_character.sight_range( current_daylight_level( calendar::turn ) ) );
     mvwprintw( w_info, point( 1, off++ ), _( "cache{transp:%.4f seen:%.4f cam:%.4f}" ),
-               map_cache.transparency_cache[map_cache.idx( target.x, target.y )],
-               map_cache.seen_cache[map_cache.idx( target.x, target.y )],
-               map_cache.camera_cache[map_cache.idx( target.x, target.y )]
+               map_cache.transparency_cache[map_cache.idx( target.x(), target.y() )],
+               map_cache.seen_cache[map_cache.idx( target.x(), target.y() )],
+               map_cache.camera_cache[map_cache.idx( target.x(), target.y() )]
              );
     map::apparent_light_info al = map::apparent_light_helper( map_cache, target );
     int apparent_light = static_cast<int>(
@@ -756,7 +756,7 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
                static_cast<int>( al.obstructed )
              );
     mvwprintw( w_info, point( 1, off++ ), _( "light_at: %s" ),
-               map_cache.lm[map_cache.idx( target.x, target.y )].to_string() );
+               map_cache.lm[map_cache.idx( target.x(), target.y() )].to_string() );
     mvwprintw( w_info, point( 1, off++ ), _( "apparent light: %.5f (%d)" ),
                al.apparent_light, apparent_light );
     std::string extras;
@@ -1535,7 +1535,7 @@ void editmap::edit_veh()
  */
 void editmap::recalc_target( shapetype shape )
 {
-    const int z = target.z;
+    const int z = target.z();
     target_list.clear();
     switch( shape ) {
         case editmap_circle: {
@@ -1556,19 +1556,19 @@ void editmap::recalc_target( shapetype shape )
             int sy;
             int ex;
             int ey;
-            if( target.x < origin.x ) {
-                sx = target.x;
-                ex = origin.x;
+            if( target.x() < origin.x() ) {
+                sx = target.x();
+                ex = origin.x();
             } else {
-                sx = origin.x;
-                ex = target.x;
+                sx = origin.x();
+                ex = target.x();
             }
-            if( target.y < origin.y ) {
-                sy = target.y;
-                ey = origin.y;
+            if( target.y() < origin.y() ) {
+                sy = target.y();
+                ey = origin.y();
             } else {
-                sy = origin.y;
-                ey = target.y;
+                sy = origin.y();
+                ey = target.y();
             }
             for( int x = sx; x <= ex; x++ ) {
                 for( int y = sy; y <= ey; y++ ) {
@@ -1613,9 +1613,9 @@ bool editmap::move_target( const std::string &action, int moveorigin )
     bool move_origin = moveorigin == 1 ? true :
                        moveorigin == 0 ? false : moveall;
     if( eget_direction( mp, action ) ) {
-        target.x = limited_shift( target.x, mp.x, 0, g_mapsize_x );
-        target.y = limited_shift( target.y, mp.y, 0, g_mapsize_y );
-        target.z = limited_shift( target.z, mp.z, -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
+        target.x() = limited_shift( target.x(), mp.x, 0, g_mapsize_x );
+        target.y() = limited_shift( target.y(), mp.y, 0, g_mapsize_y );
+        target.z() = limited_shift( target.z(), mp.z, -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
         if( move_origin ) {
             origin += mp;
         }
@@ -1629,8 +1629,8 @@ bool editmap::move_target( const std::string &action, int moveorigin )
  */
 int editmap::select_shape( shapetype shape, int mode )
 {
-    tripoint orig = target;
-    tripoint origor = origin;
+    auto orig = target;
+    auto origor = origin;
     shapetype origshape = editshape;
     editshape = shape;
     input_context ctxt( "EDITMAP_SHAPE" );
@@ -1740,7 +1740,7 @@ int editmap::select_shape( shapetype shape, int mode )
             target = origin;
             update = true;
         } else if( action == "SWAP" ) {
-            tripoint tmporigin = origin;
+            auto tmporigin = origin;
             origin = target;
             target = tmporigin;
             update = true;
@@ -1791,7 +1791,7 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
 
     // Coordinates of the overmap terrain that should be generated.
     const point_abs_omt omt_pos2 = tc.abs_omt();
-    const tripoint_abs_omt omt_pos( omt_pos2, target.z );
+    const tripoint_abs_omt omt_pos( omt_pos2, target.z() );
     const oter_id &omt_ref = get_overmapbuffer( get_map().get_bound_dimension() ).ter( omt_pos );
     // Copy to store the original value, to restore it upon canceling
     const oter_id orig_oters = omt_ref;
@@ -1799,7 +1799,7 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
     tinymap tmpmap;
     // TODO: add a do-not-save-generated-submaps parameter
     // TODO: keep track of generated submaps to delete them properly and to avoid memory leaks
-    tmpmap.generate( project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z ) ),
+    tmpmap.generate( project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z() ) ),
                      calendar::turn );
 
     gmenu.border_color = c_light_gray;
@@ -1844,7 +1844,7 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
             get_overmapbuffer( get_map().get_bound_dimension() ).ter_set( omt_pos, oter_id( gmenu.selected ) );
             cleartmpmap( tmpmap );
             tmpmap.generate(
-                project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z ) ),
+                project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z() ) ),
                 calendar::turn );
         }
 
@@ -1870,28 +1870,28 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
         if( gpmenu.ret == 0 ) {
             cleartmpmap( tmpmap );
             tmpmap.generate(
-                project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z ) ),
+                project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z() ) ),
                 calendar::turn );
         } else if( gpmenu.ret == 1 ) {
             tmpmap.rotate( 1 );
         } else if( gpmenu.ret == 2 ) {
-            const point target_sub( target.x / SEEX, target.y / SEEY );
+            const point target_sub( target.x() / SEEX, target.y() / SEEY );
 
-            here.set_transparency_cache_dirty( target.z );
-            here.set_outside_cache_dirty( target.z );
-            here.set_floor_cache_dirty( target.z );
-            here.set_pathfinding_cache_dirty( target.z );
-            here.set_suspension_cache_dirty( target.z );
+            here.set_transparency_cache_dirty( target.z() );
+            here.set_outside_cache_dirty( target.z() );
+            here.set_floor_cache_dirty( target.z() );
+            here.set_pathfinding_cache_dirty( target.z() );
+            here.set_suspension_cache_dirty( target.z() );
 
             here.clear_vehicle_cache();
-            here.clear_vehicle_list( target.z );
+            here.clear_vehicle_list( target.z() );
 
             for( int x = 0; x < 2; x++ ) {
                 for( int y = 0; y < 2; y++ ) {
                     // Apply previewed mapgen to map. Since this is a function for testing, we try avoid triggering
                     // functions that would alter the results
-                    const auto dest_pos = tripoint_bub_sm( x, y, target.z ) + target_sub;
-                    const auto src_pos = tripoint_bub_sm{ x, y, target.z };
+                    const auto dest_pos = tripoint_bub_sm( x, y, target.z() ) + target_sub;
+                    const auto src_pos = tripoint_bub_sm{ x, y, target.z() };
 
                     submap *destsm = here.get_submap_at_grid( dest_pos );
                     submap *srcsm = tmpmap.get_submap_at_grid( src_pos );
@@ -1912,9 +1912,9 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
             // Since we cleared the vehicle cache of the whole z-level (not just the generate map), we add it back here
             for( int x = 0; x < here.getmapsize(); x++ ) {
                 for( int y = 0; y < here.getmapsize(); y++ ) {
-                    const auto dest_pos = tripoint_bub_sm( x, y, target.z );
+                    const auto dest_pos = tripoint_bub_sm( x, y, target.z() );
                     const submap *destsm = here.get_submap_at_grid( dest_pos );
-                    here.update_vehicle_list( destsm, target.z ); // update real map's vcaches
+                    here.update_vehicle_list( destsm, target.z() ); // update real map's vcaches
                 }
             }
 
@@ -1954,7 +1954,7 @@ vehicle *editmap::mapgen_veh_query( const tripoint_abs_omt &omt_tgt )
     std::vector<vehicle *> possible_vehicles;
     for( int x = 0; x < 2; x++ ) {
         for( int y = 0; y < 2; y++ ) {
-            submap *destsm = target_bay.get_submap_at_grid( tripoint_bub_sm{ x, y, target.z } );
+            submap *destsm = target_bay.get_submap_at_grid( tripoint_bub_sm{ x, y, target.z() } );
             for( const auto &vehicle : destsm->vehicles ) {
                 possible_vehicles.push_back( vehicle.get() );
             }
@@ -1987,7 +1987,7 @@ bool editmap::mapgen_veh_destroy( const tripoint_abs_omt &omt_tgt, vehicle *car_
     target_bay.load( project_to<coords::sm>( omt_tgt ), false );
     for( int x = 0; x < 2; x++ ) {
         for( int y = 0; y < 2; y++ ) {
-            submap *destsm = target_bay.get_submap_at_grid( tripoint_bub_sm{ x, y, target.z } );
+            submap *destsm = target_bay.get_submap_at_grid( tripoint_bub_sm{ x, y, target.z() } );
             for( auto &z : destsm->vehicles ) {
                 if( z.get() == car_target ) {
                     std::unique_ptr<vehicle> old_veh = target_bay.detach_vehicle( z.get() );
@@ -2016,7 +2016,7 @@ void editmap::mapgen_retarget()
     // Needed for timeout to be useful
     ctxt.register_action( "ANY_INPUT" );
     std::string action;
-    tripoint origm = target;
+    auto origm = target;
 
     shared_ptr_fast<game::draw_callback_t> editmap_cb = draw_cb_container().create_or_get();
     shared_ptr_fast<ui_adaptor> current_ui = create_or_get_ui_adaptor();
@@ -2044,11 +2044,11 @@ void editmap::mapgen_retarget()
                 target = ptarget;
 
                 target_list.clear();
-                for( int x = target.x - SEEX + 1; x < target.x + SEEX + 1; x++ ) {
-                    for( int y = target.y - SEEY + 1; y < target.y + SEEY + 1; y++ ) {
-                        if( x == target.x - SEEX + 1 || x == target.x + SEEX ||
-                            y == target.y - SEEY + 1 || y == target.y + SEEY ) {
-                            target_list.emplace_back( x, y, target.z );
+                for( int x = target.x() - SEEX + 1; x < target.x() + SEEX + 1; x++ ) {
+                    for( int y = target.y() - SEEY + 1; y < target.y() + SEEY + 1; y++ ) {
+                        if( x == target.x() - SEEX + 1 || x == target.x() + SEEX ||
+                            y == target.y() - SEEY + 1 || y == target.y() + SEEY ) {
+                            target_list.emplace_back( x, y, target.z() );
                         }
                     }
                 }
@@ -2103,18 +2103,18 @@ void editmap::edit_mapgen()
     do {
         tc.fromabs( here.bub_to_abs( target.xy() ) );
         point omt_lpos = here.abs_to_bub( tc.begin_om_pos() );
-        tripoint om_ltarget = omt_lpos + tripoint( -1 + SEEX, -1 + SEEY, target.z );
+        tripoint om_ltarget = omt_lpos + tripoint( -1 + SEEX, -1 + SEEY, target.z() );
 
-        if( target.x != om_ltarget.x || target.y != om_ltarget.y ) {
+        if( target.x() != om_ltarget.x || target.y() != om_ltarget.y ) {
             target = om_ltarget;
             tc.fromabs( here.bub_to_abs( target.xy() ) );
         }
         target_list.clear();
-        for( int x = target.x - SEEX + 1; x < target.x + SEEX + 1; x++ ) {
-            for( int y = target.y - SEEY + 1; y < target.y + SEEY + 1; y++ ) {
-                if( x == target.x - SEEX + 1 || x == target.x + SEEX ||
-                    y == target.y - SEEY + 1 || y == target.y + SEEY ) {
-                    target_list.emplace_back( x, y, target.z );
+        for( int x = target.x() - SEEX + 1; x < target.x() + SEEX + 1; x++ ) {
+            for( int y = target.y() - SEEY + 1; y < target.y() + SEEY + 1; y++ ) {
+                if( x == target.x() - SEEX + 1 || x == target.x() + SEEX ||
+                    y == target.y() - SEEY + 1 || y == target.y() + SEEY ) {
+                    target_list.emplace_back( x, y, target.z() );
                 }
             }
         }
@@ -2155,7 +2155,7 @@ void editmap::cleartmpmap( tinymap &tmpmap )
         smap = nullptr;
     }
 
-    auto &ch = tmpmap.get_cache( target.z );
+    auto &ch = tmpmap.get_cache( target.z() );
     std::fill( ch.veh_exists_at.begin(), ch.veh_exists_at.end(), false );
     ch.veh_cached_parts.clear();
     ch.vehicle_list.clear();

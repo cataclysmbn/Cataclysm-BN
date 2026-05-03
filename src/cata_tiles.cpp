@@ -2946,7 +2946,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     if( has_selected_zone ) {
         const tripoint sel_start = zone_start + zone_offset;
         const tripoint sel_end = zone_end + zone_offset;
-        selected_z = has_custom_selected_zone ? zone_points.front().z : sel_start.z;
+        selected_z = has_custom_selected_zone ? zone_points.front().z() : sel_start.z;
         if( has_custom_selected_zone ) {
             const auto min_x = std::ranges::minmax_element( zone_points, {}, &tripoint::x );
             const auto min_y = std::ranges::minmax_element( zone_points, {}, &tripoint::y );
@@ -3278,7 +3278,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                         if( has_memory ) {
                             ll = lit_level::MEMORIZED;
                             invisible[0] = true;
-                        } else if( has_draw_override( pos.raw() ) ) {
+                        } else if( has_draw_override( pos ) ) {
                             ll = lit_level::DARK;
                             invisible[0] = true;
                         } else {
@@ -3313,7 +3313,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                                                       above_ll != lit_level::BLANK ? above_ll : ll,
                                                       invisible );
                         } else {
-                            if( has_draw_override( pos.raw() ) || has_memory ) {
+                            if( has_draw_override( pos ) || has_memory ) {
                                 invisible[0] = true;
                             }
                             for( int cz = pos.z(); !invisible[0] && cz <= -center.z; cz++ ) {
@@ -5918,45 +5918,45 @@ void cata_tiles::init_draw_zones( const zone_draw_options &options )
         } );
     }
 }
-void cata_tiles::init_draw_radiation_override( const tripoint &p, const int rad )
+void cata_tiles::init_draw_radiation_override( const tripoint_bub_ms &p, const int rad )
 {
     radiation_override.emplace( p, rad );
 }
-void cata_tiles::init_draw_terrain_override( const tripoint &p, const ter_id &id )
+void cata_tiles::init_draw_terrain_override( const tripoint_bub_ms &p, const ter_id &id )
 {
     terrain_override.emplace( p, id );
 }
-void cata_tiles::init_draw_furniture_override( const tripoint &p, const furn_id &id )
+void cata_tiles::init_draw_furniture_override( const tripoint_bub_ms &p, const furn_id &id )
 {
     furniture_override.emplace( p, id );
 }
-void cata_tiles::init_draw_graffiti_override( const tripoint &p, const bool has )
+void cata_tiles::init_draw_graffiti_override( const tripoint_bub_ms &p, const bool has )
 {
     graffiti_override.emplace( p, has );
 }
-void cata_tiles::init_draw_trap_override( const tripoint &p, const trap_id &id )
+void cata_tiles::init_draw_trap_override( const tripoint_bub_ms &p, const trap_id &id )
 {
     trap_override.emplace( p, id );
 }
-void cata_tiles::init_draw_field_override( const tripoint &p, const field_type_id &id )
+void cata_tiles::init_draw_field_override( const tripoint_bub_ms &p, const field_type_id &id )
 {
     field_override.emplace( p, id );
 }
-void cata_tiles::init_draw_item_override( const tripoint &p, const itype_id &id,
+void cata_tiles::init_draw_item_override( const tripoint_bub_ms &p, const itype_id &id,
         const mtype_id &mid, const bool hilite )
 {
     item_override.emplace( p, std::make_tuple( id, mid, hilite ) );
 }
-void cata_tiles::init_draw_vpart_override( const tripoint &p, const vpart_id &id,
+void cata_tiles::init_draw_vpart_override( const tripoint_bub_ms &p, const vpart_id &id,
         const int part_mod, const units::angle veh_dir, const bool hilite, point mount )
 {
     vpart_override.emplace( p, std::make_tuple( id, part_mod, veh_dir, hilite, mount ) );
 }
-void cata_tiles::init_draw_below_override( const tripoint &p, const bool draw )
+void cata_tiles::init_draw_below_override( const tripoint_bub_ms &p, const bool draw )
 {
     draw_below_override.emplace( p, draw );
 }
-void cata_tiles::init_draw_monster_override( const tripoint &p, const mtype_id &id, const int count,
+void cata_tiles::init_draw_monster_override( const tripoint_bub_ms &p, const mtype_id &id, const int count,
         const bool more, const Attitude att )
 {
     monster_override.emplace( p, std::make_tuple( id, count, more, att ) );
@@ -6306,7 +6306,7 @@ void cata_tiles::draw_sct_frame( std::multimap<point, formatted_text> &overlay_s
     const bool use_font = get_option<bool>( "ANIMATION_SCT_USE_FONT" );
 
     for( auto iter = SCT.vSCT.begin(); iter != SCT.vSCT.end(); ++iter ) {
-        const point iD( iter->getPosX(), iter->getPosY() );
+        const point iD( iter->getbub_pos().x(), iter->getbub_pos().y() );
         const int full_text_length = utf8_width( iter->getText() );
 
         int iOffsetX = 0;
@@ -6362,7 +6362,7 @@ void cata_tiles::draw_zones_frame( std::multimap<point, formatted_text> &overlay
     const tripoint center_local( ( min_local.x + max_local.x ) / 2,
                                  ( min_local.y + max_local.y ) / 2, get_avatar().bub_pos().z() );
     const auto lookup_local = has_custom_points ?
-                              tripoint( zone_points.front().xy(), zone_points.front().z ) :
+                              tripoint( zone_points.front().xy(), zone_points.front().z() ) :
                               center_local;
 
     // get_zone_at expects absolute coordinates

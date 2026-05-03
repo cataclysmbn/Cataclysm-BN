@@ -2,8 +2,8 @@
 
 #include <optional>
 
+#include "coordinates.h"
 #include "detached_ptr.h"
-#include "point.h"
 #include "units.h"
 
 class avatar;
@@ -105,7 +105,7 @@ void fire_turret_manual( avatar &you, map &m, turret_data &turret );
 
 // Throw an item  't'
 void plthrow( avatar &you, item *loc,
-              const std::optional<tripoint> &blind_throw_from_pos = std::nullopt );
+              const std::optional<tripoint_bub_ms> &blind_throw_from_pos = std::nullopt );
 
 // Use item; also tries E,R,W  'a'
 void use_item( avatar &you, item *loc = nullptr );

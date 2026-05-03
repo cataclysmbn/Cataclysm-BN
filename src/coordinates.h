@@ -733,6 +733,37 @@ std::vector<coords::coord_point<Point, Origin, Scale>>
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
+static std::tuple<double, double, double> slope_of( const std::vector<coords::coord_point<Point, Origin, Scale>> &line )
+{
+    assert( !line.empty() && line.front() != line.back() );
+    const double len = trig_dist( line.front(), line.back() );
+    double normDx = ( line.back().x() - line.front().x() ) / len;
+    double normDy = ( line.back().y() - line.front().y() ) / len;
+    double normDz = ( line.back().z() - line.front().z() ) / len;
+    // slope of <x, y, z>
+    return std::make_tuple( normDx, normDy, normDz );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+coords::coord_point<Point, Origin, Scale> move_along_line( const coords::coord_point<Point, Origin, Scale> &loc, const std::vector<coords::coord_point<Point, Origin, Scale>> &line,
+                          const int distance )
+{
+    coords::coord_point<Point, Origin, Scale> res( loc );
+    const auto slope = slope_of( line );
+    res.x() += distance * std::get<0>( slope );
+    res.y() += distance * std::get<1>( slope );
+    res.z() += distance * std::get<2>( slope );
+    return res;
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+std::vector<coords::coord_point<Point, Origin, Scale>>
+        continue_line( const std::vector<coords::coord_point<Point, Origin, Scale>> &line, const int distance )
+{
+    line_to( line.back(), move_along_line( line.back(), line, distance ) );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
 direction calc_ray_end( units::angle angle, const int range,
                         const coords::coord_point<Point, Origin, Scale> &loc1,
                         const coords::coord_point<Point, Origin, Scale> &loc2 )

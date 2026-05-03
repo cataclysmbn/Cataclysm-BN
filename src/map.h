@@ -623,7 +623,7 @@ class map : public submap_load_listener
 
         /** Draw a visible part of the map into `w`.
          *
-         * This method uses `g->u.bub_pos().x()/posy()` for visibility calculations, so it can
+         * This method uses `g->u.bub_pos().x()/bub_pos().y()` for visibility calculations, so it can
          * not be used for anything but the player's viewport. Likewise, only
          * `g->m` and maps with equivalent coordinates can be used, as other maps
          * would have coordinate systems incompatible with `g->u.bub_pos().x()`

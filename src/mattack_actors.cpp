@@ -62,7 +62,7 @@ static bool is_adjacent( const monster &z, const Creature &target )
         return false;
     }
 
-    return z.posz() == target.posz();
+    return z.bub_pos().z() == target.bub_pos().z();
 }
 
 void leap_actor::load_internal( const JsonObject &obj, const std::string & )

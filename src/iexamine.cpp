@@ -5537,9 +5537,9 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
     map &here = get_map();
     switch( cmenu.ret ) {
         case ledge_action::jump_over: {
-            tripoint_bub_ms dest( p.posx() + 2 * sgn( examp.x() - p.posx() ),
-                                  p.posy() + 2 * sgn( examp.y() - p.posy() ),
-                                  p.posz() );
+            tripoint_bub_ms dest( p.bub_pos().x() + 2 * sgn( examp.x() - p.bub_pos().x() ),
+                                  p.bub_pos().y() + 2 * sgn( examp.y() - p.bub_pos().y() ),
+                                  p.bub_pos().z() );
             if( p.get_str() < 4 ) {
                 add_msg( m_warning, _( "You are too weak to jump over an obstacle." ) );
             } else if( 100 * p.weight_carried() / p.weight_capacity() > 25 ) {
@@ -5662,8 +5662,8 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             bool success = false;
             for( int i = 2; i <= range; i++ ) {
                 //break at the first non empty space encountered
-                if( g->m.ter( tripoint( p.posx() + i * sgn( examp.x() - p.posx() ),
-                                        p.posy() + i * sgn( examp.y() - p.posy() ), p.posz() ) ) != t_open_air ) {
+                if( g->m.ter( tripoint( p.bub_pos().x() + i * sgn( examp.x() - p.bub_pos().x() ),
+                                        p.bub_pos().y() + i * sgn( examp.y() - p.bub_pos().y() ), p.bub_pos().z() ) ) != t_open_air ) {
                     success_range = i;
                     success = true;
                     break;
@@ -5673,9 +5673,9 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
                 p.add_msg_if_player( _( "There is nothing for your to attach your web to!" ) );
             } else {
                 for( int i = 1; i < success_range; i++ ) {
-                    tripoint_bub_ms dest( p.posx() + i * sgn( examp.x() - p.posx() ),
-                                          p.posy() + i * sgn( examp.y() - p.posy() ),
-                                          p.posz() );
+                    tripoint_bub_ms dest( p.bub_pos().x() + i * sgn( examp.x() - p.bub_pos().x() ),
+                                          p.bub_pos().y() + i * sgn( examp.y() - p.bub_pos().y() ),
+                                          p.bub_pos().z() );
 
                     g->m.ter_set( dest, t_web_bridge );
                 }
@@ -5690,7 +5690,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
 }
 
 static player &player_on_couch( player &p, const tripoint_bub_ms &autodoc_loc, player &null_patient,
-                                bool &adjacent_couch, tripoint &couch_pos )
+                                bool &adjacent_couch, const tripoint_bub_ms &couch_pos )
 {
     map &here = get_map();
     for( const auto &couch_loc : here.find_furnitures_or_vparts_with_flag_in_radius( autodoc_loc, 1,
@@ -5834,7 +5834,7 @@ void iexamine::autodoc( player &p, const tripoint_bub_ms &examp )
 
     bool adjacent_couch = false;
     static avatar null_player;
-    tripoint couch_pos;
+    tripoint_bub_ms couch_pos;
     player &patient = player_on_couch( p, examp, null_player, adjacent_couch, couch_pos );
     Character &Operator = operator_present( p, examp, null_player );
 

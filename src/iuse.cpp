@@ -717,7 +717,7 @@ int iuse::meth( player *p, item *it, bool, const tripoint & )
         }
         // breathe out some smoke
         for( int i = 0; i < 3; i++ ) {
-            g->m.add_field( {p->posx() + rng( -2, 2 ), p->posy() + rng( -2, 2 ), p->posz()},
+            g->m.add_field( {p->bub_pos().x() + rng( -2, 2 ), p->bub_pos().y() + rng( -2, 2 ), p->bub_pos().z()},
                             fd_methsmoke, 2 );
         }
     } else {
@@ -1921,8 +1921,8 @@ int iuse::extinguisher( player *p, item *it, bool, const tripoint & )
 
     // Slightly reduce the strength of fire immediately behind the target tile.
     if( g->m.passable( dest ) ) {
-        dest.x += ( dest.x - p->posx() );
-        dest.y += ( dest.y - p->posy() );
+        dest.x += ( dest.x - p->bub_pos().x() );
+        dest.y += ( dest.y - p->bub_pos().y() );
 
         g->m.mod_field_intensity( dest, fd_fire, std::min( 0 - rng( 0, 1 ) + rng( 0, 1 ), 0 ) );
     }
@@ -3158,10 +3158,10 @@ int iuse::can_goo( player *p, item *it, bool, const tripoint & )
 {
     int tries = 0;
     tripoint_bub_ms goop;
-    goop.z() = p->posz();
+    goop.z() = p->bub_pos().z();
     do {
-        goop.x() = p->posx() + rng( -2, 2 );
-        goop.y() = p->posy() + rng( -2, 2 );
+        goop.x() = p->bub_pos().x() + rng( -2, 2 );
+        goop.y() = p->bub_pos().y() + rng( -2, 2 );
         tries++;
     } while( g->m.impassable( goop ) && tries < 10 );
     if( tries == 10 ) {
@@ -3190,8 +3190,8 @@ int iuse::can_goo( player *p, item *it, bool, const tripoint & )
         tries = 0;
         bool found = false;
         do {
-            goop.x() = p->posx() + rng( -2, 2 );
-            goop.y() = p->posy() + rng( -2, 2 );
+            goop.x() = p->bub_pos().x() + rng( -2, 2 );
+            goop.y() = p->bub_pos().y() + rng( -2, 2 );
             tries++;
             found = g->m.passable( goop ) && g->m.tr_at( goop ).is_null();
         } while( !found && tries < 10 );
@@ -3684,7 +3684,7 @@ int iuse::portal( player *p, item *it, bool, const tripoint & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    tripoint_bub_ms t( p->posx() + rng( -2, 2 ), p->posy() + rng( -2, 2 ), p->posz() );
+    tripoint_bub_ms t( p->bub_pos().x() + rng( -2, 2 ), p->bub_pos().y() + rng( -2, 2 ), p->bub_pos().z() );
     g->m.trap_set( t, tr_portal );
     return it->type->charges_to_use();
 }
@@ -4223,7 +4223,7 @@ int iuse::blood_draw( player *p, item *it, bool, const tripoint & )
     const mtype *mt = nullptr;
     bool drew_blood = false;
     bool acid_blood = false;
-    for( auto &map_it : g->m.i_at( point( p->posx(), p->posy() ) ) ) {
+    for( auto &map_it : g->m.i_at( point( p->bub_pos().x(), p->bub_pos().y() ) ) ) {
         if( map_it->is_corpse() ) {
             bool has_blood = false;
             mt = map_it->get_mtype();
@@ -4321,7 +4321,7 @@ int iuse::mind_splicer( player *p, item *it, bool, const tripoint & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    for( auto &map_it : g->m.i_at( point( p->posx(), p->posy() ) ) ) {
+    for( auto &map_it : g->m.i_at( point( p->bub_pos().x(), p->bub_pos().y() ) ) ) {
         if( map_it->typeId() == itype_rmi2_corpse &&
             query_yn( _( "Use the mind splicer kit on the %s?" ), colorize( map_it->tname(),
                       map_it->color_in_inventory() ) ) ) {
@@ -4736,11 +4736,11 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                         dir.y = rng( -1, 1 );
                     }
                     int dist = rng( 4, 12 );
-                    point bolt( p->posx(), p->posy() );
+                    point bolt( p->bub_pos().x(), p->bub_pos().y() );
                     for( int n = 0; n < dist; n++ ) {
                         bolt.x += dir.x;
                         bolt.y += dir.y;
-                        g->m.add_field( {bolt, p->posz()}, fd_electricity, rng( 2, 3 ) );
+                        g->m.add_field( {bolt, p->bub_pos().z()}, fd_electricity, rng( 2, 3 ) );
                         if( one_in( 4 ) ) {
                             if( dir.x == 0 ) {
                                 dir.x = rng( 0, 1 ) * 2 - 1;
@@ -4799,8 +4799,8 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
 
             case AEA_FATIGUE: {
                 p->add_msg_if_player( m_warning, _( "The fabric of space seems to decay." ) );
-                point p2{ rng( p->posx() - 3, p->posx() + 3 ), rng( p->posy() - 3, p->posy() + 3 ) };
-                g->m.add_field( {p2, p->posz()}, fd_fatigue, rng( 1, 2 ) );
+                point p2{ rng( p->bub_pos().x() - 3, p->bub_pos().x() + 3 ), rng( p->bub_pos().y() - 3, p->bub_pos().y() + 3 ) };
+                g->m.add_field( {p2, p->bub_pos().z()}, fd_fatigue, rng( 1, 2 ) );
             }
             break;
 
@@ -4983,11 +4983,11 @@ int iuse::artifact( player *p, item *it, bool, const tripoint & )
                     for( int tries = 0; tries < 10; ++tries ) {
                         auto monp = p->bub_pos();
                         if( one_in( 2 ) ) {
-                            monp.x() = rng( p->posx() - 5, p->posx() + 5 );
-                            monp.y() = ( one_in( 2 ) ? p->posy() - 5 : p->posy() + 5 );
+                            monp.x() = rng( p->bub_pos().x() - 5, p->bub_pos().x() + 5 );
+                            monp.y() = ( one_in( 2 ) ? p->bub_pos().y() - 5 : p->bub_pos().y() + 5 );
                         } else {
-                            monp.x() = ( one_in( 2 ) ? p->posx() - 5 : p->posx() + 5 );
-                            monp.y() = rng( p->posy() - 5, p->posy() + 5 );
+                            monp.x() = ( one_in( 2 ) ? p->bub_pos().x() - 5 : p->bub_pos().x() + 5 );
+                            monp.y() = rng( p->bub_pos().y() - 5, p->bub_pos().y() + 5 );
                         }
                         if( !g->m.sees( monp, p->bub_pos(), 10 ) ) {
                             continue;
@@ -7680,7 +7680,7 @@ int iuse::radiocontrol( player *p, item *it, bool t, const tripoint & )
             p->remove_value( "remote_controlling" );
         } else {
             std::vector<std::pair<tripoint, item *>> rc_pairs;
-            for( tripoint pt : g->m.points_on_zlevel( p->posz() ) ) {
+            for( tripoint pt : g->m.points_on_zlevel( p->bub_pos().z() ) ) {
                 map_cursor mc( pt );
                 std::vector<item *> rc_items_here = mc.items_with( [&]( const item & it ) {
                     return it.has_flag( flag_RADIO_CONTROLLED );
@@ -8475,8 +8475,8 @@ int iuse::directional_hologram( player *p, item *it, bool, const tripoint &pos )
         return 0;
     }
     const tripoint_bub_ms &target = pos;
-    target.x() = p->posx() + 4 * SEEX * ( posp.x - p->posx() );
-    target.y() = p->posy() + 4 * SEEY * ( posp.y - p->posy() );
+    target.x() = p->bub_pos().x() + 4 * SEEX * ( posp.x - p->bub_pos().x() );
+    target.y() = p->bub_pos().y() + 4 * SEEY * ( posp.y - p->bub_pos().y() );
     hologram->friendly = -1;
     hologram->add_effect( effect_docile, 1_hours );
     hologram->wandf = -30;

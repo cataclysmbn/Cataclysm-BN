@@ -1768,7 +1768,7 @@ void activity_handlers::hotwire_finish( player_activity *act, player *p )
     //Grab this now, in case the vehicle gets shifted
     if( const optional_vpart_position vp = g->m.veh_at( g->m.abs_to_bub( tripoint( act->values[0],
                                            act->values[1],
-                                           p->posz() ) ) ) ) {
+                                           p->bub_pos().z() ) ) ) ) {
         vehicle *const veh = &vp->vehicle();
         const int mech_skill = act->values[2];
         if( mech_skill > rng( 1, 6 ) ) {

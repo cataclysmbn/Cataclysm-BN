@@ -1368,8 +1368,8 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
             // 30 degree cap, like for projectiles
             double angle_offset_arcmin = std::min( dispersion.roll(), 1800.0 ) * ( one_in( 2 ) ? 1 : -1 );
             double angle_offset = units::to_radians( units::from_arcmin( angle_offset_arcmin ) );
-            double dx = aim.x() - who.posx();
-            double dy = aim.y() - who.posy();
+            double dx = aim.x() - who.bub_pos().x();
+            double dy = aim.y() - who.bub_pos().y();
             double new_angle = atan2( dy, dx ) + angle_offset;
             // Always using trig here, rotations in maximum metric are weird
             double length = trig_dist( who.bub_pos(), aim );
@@ -2720,7 +2720,7 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
 
         // Special case: if range is 1, it's a melee attack.
         // Melee attacks can only target on same z-level or directly up/down, not "z-diagonally".
-        if( range <= 1 && c.posz() != critter.posz() && c.bub_pos().xy() != critter.bub_pos().xy() )
+        if( range <= 1 && c.bub_pos().z() != critter.bub_pos().z() && c.bub_pos().xy() != critter.bub_pos().xy() )
         {
             return false;
         }
@@ -3136,7 +3136,7 @@ bool target_ui::handle_cursor_movement( const std::string &action, bool &skip_re
 
     if( action == "MOUSE_MOVE" || action == "TIMEOUT" ) {
         // Shift pos and/or view via edge scrolling
-        tripoint edge_scroll = g->mouse_edge_scrolling_terrain( ctxt );
+        auto edge_scroll = g->mouse_edge_scrolling_terrain( ctxt );
         if( edge_scroll == tripoint_zero ) {
             skip_redraw = true;
         } else {

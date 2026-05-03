@@ -1934,7 +1934,7 @@ game_message_type scrollingcombattext::cSCT::getMsgType( const std::string &type
     return gmt;
 }
 
-int scrollingcombattext::cSCT::getPosX() const
+int scrollingcombattext::cSCT::getbub_pos().x() const
 {
     if( getStep() > 0 ) {
         int iDirOffset = ( oDir == oRight ) ? 1 : ( ( oDir == oLeft ) ? -1 : 0 );
@@ -1960,7 +1960,7 @@ int scrollingcombattext::cSCT::getPosX() const
     return 0;
 }
 
-int scrollingcombattext::cSCT::getPosY() const
+int scrollingcombattext::cSCT::getbub_pos().y() const
 {
     if( getStep() > 0 ) {
         int iDirOffset = ( oDir == oDown ) ? 1 : ( ( oDir == oUp ) ? -1 : 0 );

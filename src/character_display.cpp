@@ -960,7 +960,7 @@ static void draw_speed_tab( const catacurses::window &w_speed,
         ++line;
     }
     if( you.has_trait( trait_id( "SUNLIGHT_DEPENDENT" ) ) && !g->is_in_sunlight( you.bub_pos() ) ) {
-        pen = ( g->light_level( you.posz() ) >= 12 ? 5 : 10 );
+        pen = ( g->light_level( you.bub_pos().z() ) >= 12 ? 5 : 10 );
         //~ %s: Out of Sunlight (already left-justified), %2d%%: speed penalty
         mvwprintz( w_speed, point( 1, line ), c_red, pgettext( "speed penalty", "%s-%2d%%" ),
                    left_justify( _( "Out of Sunlight" ), 20 ), pen );

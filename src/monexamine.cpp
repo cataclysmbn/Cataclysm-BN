@@ -678,8 +678,8 @@ void monexamine::push( monster &z )
 
     add_msg( _( "You pushed the %s." ), pet_name );
 
-    point delta( z.posx() - you.posx(), z.posy() - you.posy() );
-    z.move_to( tripoint( z.posx() + delta.x, z.posy() + delta.y, z.posz() ) );
+    point delta( z.bub_pos().x() - you.bub_pos().x(), z.bub_pos().y() - you.bub_pos().y() );
+    z.move_to( tripoint( z.bub_pos().x() + delta.x, z.bub_pos().y() + delta.y, z.bub_pos().z() ) );
 }
 
 void monexamine::rename_pet( monster &z )

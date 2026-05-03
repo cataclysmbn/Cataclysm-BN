@@ -486,9 +486,9 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
                 arrowy = clamp( arrowy, 0, 6 );
             }
             char glyph = '*';
-            if( targ.z() > you.posz() ) {
+            if( targ.z() > you.bub_pos().z() ) {
                 glyph = '^';
-            } else if( targ.z() < you.posz() ) {
+            } else if( targ.z() < you.bub_pos().z() ) {
                 glyph = 'v';
             }
 
@@ -496,7 +496,7 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
         }
     }
     const int sight_points = player_character.overmap_sight_range( g->light_level(
-                                 player_character.posz() ) );
+                                 player_character.bub_pos().z() ) );
     for( int i = -3; i <= 3; i++ ) {
         for( int j = -3; j <= 3; j++ ) {
             if( i > -3 && i < 3 && j > -3 && j < 3 ) {

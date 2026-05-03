@@ -999,20 +999,20 @@ void vehicle::autopilot_patrol()
         return;
     }
     // get corners.
-    tripoint_rel_ms min;
-    tripoint_rel_ms max;
-    for( const tripoint &box : zone_src_set ) {
-        if( min == tripoint_rel_ms::zero() ) {
-            min = tripoint_rel_ms( box );
-            max = tripoint_rel_ms( box );
+    tripoint_abs_ms min;
+    tripoint_abs_ms max;
+    for( const auto &box : zone_src_set ) {
+        if( min == tripoint_abs_ms::zero() ) {
+            min =  box;
+            max =  box;
             continue;
         }
-        min.x() = std::min( box.x, min.x() );
-        min.y() = std::min( box.y, min.y() );
-        min.z() = std::min( box.z, min.z() );
-        max.x() = std::max( box.x, max.x() );
-        max.y() = std::max( box.y, max.y() );
-        max.z() = std::max( box.z, max.z() );
+        min.x() = std::min( box.x(), min.x() );
+        min.y() = std::min( box.y(), min.y() );
+        min.z() = std::min( box.z(), min.z() );
+        max.x() = std::max( box.x(), max.x() );
+        max.y() = std::max( box.y(), max.y() );
+        max.z() = std::max( box.z(), max.z() );
     }
     const bool x_side = ( max.x() - min.x() ) < ( max.y() - min.y() );
     const int point_along = x_side ? rng( min.x(), max.x() ) : rng( min.y(), max.y() );

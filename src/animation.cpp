@@ -1026,8 +1026,8 @@ void draw_sct_curses( const game &g )
     const auto off = relative_view_pos( g.u, tripoint_zero );
 
     for( const auto &text : SCT.vSCT ) {
-        const int dy = off.y + text.getPosY();
-        const int dx = off.x + text.getPosX();
+        const int dy = off.y + text.getbub_pos().y();
+        const int dx = off.x + text.getbub_pos().x();
 
         if( !is_valid_in_w_terrain( point( dx, dy ) ) ) {
             continue;
@@ -1137,85 +1137,85 @@ void game::draw_zones( const zone_draw_options &options )
 #endif
 
 #if defined(TILES)
-void game::draw_radiation_override( const tripoint &p, const int rad )
+void game::draw_radiation_override( const tripoint_bub_ms &p, const int rad )
 {
     if( use_tiles ) {
         tilecontext->init_draw_radiation_override( p, rad );
     }
 }
 #else
-void game::draw_radiation_override( const tripoint &, const int )
+void game::draw_radiation_override( const tripoint_bub_ms &, const int )
 {
 }
 #endif
 
 #if defined(TILES)
-void game::draw_terrain_override( const tripoint &p, const ter_id &id )
+void game::draw_terrain_override( const tripoint_bub_ms &p, const ter_id &id )
 {
     if( use_tiles ) {
         tilecontext->init_draw_terrain_override( p, id );
     }
 }
 #else
-void game::draw_terrain_override( const tripoint &, const ter_id & )
+void game::draw_terrain_override( const tripoint_bub_ms &, const ter_id & )
 {
 }
 #endif
 
 #if defined(TILES)
-void game::draw_furniture_override( const tripoint &p, const furn_id &id )
+void game::draw_furniture_override( const tripoint_bub_ms &p, const furn_id &id )
 {
     if( use_tiles ) {
         tilecontext->init_draw_furniture_override( p, id );
     }
 }
 #else
-void game::draw_furniture_override( const tripoint &, const furn_id & )
+void game::draw_furniture_override( const tripoint_bub_ms &, const furn_id & )
 {
 }
 #endif
 
 #if defined(TILES)
-void game::draw_graffiti_override( const tripoint &p, const bool has )
+void game::draw_graffiti_override( const tripoint_bub_ms &p, const bool has )
 {
     if( use_tiles ) {
         tilecontext->init_draw_graffiti_override( p, has );
     }
 }
 #else
-void game::draw_graffiti_override( const tripoint &, const bool )
+void game::draw_graffiti_override( const tripoint_bub_ms &, const bool )
 {
 }
 #endif
 
 #if defined(TILES)
-void game::draw_trap_override( const tripoint &p, const trap_id &id )
+void game::draw_trap_override( const tripoint_bub_ms &p, const trap_id &id )
 {
     if( use_tiles ) {
         tilecontext->init_draw_trap_override( p, id );
     }
 }
 #else
-void game::draw_trap_override( const tripoint &, const trap_id & )
+void game::draw_trap_override( const tripoint_bub_ms &, const trap_id & )
 {
 }
 #endif
 
 #if defined(TILES)
-void game::draw_field_override( const tripoint &p, const field_type_id &id )
+void game::draw_field_override( const tripoint_bub_ms &p, const field_type_id &id )
 {
     if( use_tiles ) {
         tilecontext->init_draw_field_override( p, id );
     }
 }
 #else
-void game::draw_field_override( const tripoint &, const field_type_id & )
+void game::draw_field_override( const tripoint_bub_ms &, const field_type_id & )
 {
 }
 #endif
 
 #if defined(TILES)
-void game::draw_item_override( const tripoint &p, const itype_id &id, const mtype_id &mid,
+void game::draw_item_override( const tripoint_bub_ms &p, const itype_id &id, const mtype_id &mid,
                                const bool hilite )
 {
     if( use_tiles ) {
@@ -1223,7 +1223,7 @@ void game::draw_item_override( const tripoint &p, const itype_id &id, const mtyp
     }
 }
 #else
-void game::draw_item_override( const tripoint &, const itype_id &, const mtype_id &,
+void game::draw_item_override( const tripoint_bub_ms &, const itype_id &, const mtype_id &,
                                const bool )
 {
 }
@@ -1231,7 +1231,7 @@ void game::draw_item_override( const tripoint &, const itype_id &, const mtype_i
 
 #if defined(TILES)
 void game::draw_vpart_override(
-    const tripoint &p, const vpart_id &id, const int part_mod, const units::angle veh_dir,
+    const tripoint_bub_ms &p, const vpart_id &id, const int part_mod, const units::angle veh_dir,
     const bool hilite, tripoint_mnt_veh mount )
 {
     if( use_tiles ) {
@@ -1240,27 +1240,27 @@ void game::draw_vpart_override(
     }
 }
 #else
-void game::draw_vpart_override( const tripoint &, const vpart_id &, const int,
+void game::draw_vpart_override( const tripoint_bub_ms &, const vpart_id &, const int,
                                 const units::angle, const bool, tripoint_mnt_veh )
 {
 }
 #endif
 
 #if defined(TILES)
-void game::draw_below_override( const tripoint &p, const bool draw )
+void game::draw_below_override( const tripoint_bub_ms &p, const bool draw )
 {
     if( use_tiles ) {
         tilecontext->init_draw_below_override( p, draw );
     }
 }
 #else
-void game::draw_below_override( const tripoint &, const bool )
+void game::draw_below_override( const tripoint_bub_ms &, const bool )
 {
 }
 #endif
 
 #if defined(TILES)
-void game::draw_monster_override( const tripoint &p, const mtype_id &id, const int count,
+void game::draw_monster_override( const tripoint_bub_ms &p, const mtype_id &id, const int count,
                                   const bool more, const Attitude att )
 {
     if( use_tiles ) {
@@ -1268,7 +1268,7 @@ void game::draw_monster_override( const tripoint &p, const mtype_id &id, const i
     }
 }
 #else
-void game::draw_monster_override( const tripoint &, const mtype_id &, const int,
+void game::draw_monster_override( const tripoint_bub_ms &, const mtype_id &, const int,
                                   const bool, const Attitude )
 {
 }
