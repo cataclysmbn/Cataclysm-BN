@@ -3276,7 +3276,7 @@ void veh_interact::complete_vehicle( Character &who )
 
             // Need map-relative coordinates to compare to output of look_around.
             // Need to call coord_translate() directly since it's a new part.
-            const point q = veh->coord_translate( d );
+            const auto q = veh->coord_translate( d );
 
             if( vpinfo.has_flag( VPFLAG_CONE_LIGHT ) ||
                 vpinfo.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ||

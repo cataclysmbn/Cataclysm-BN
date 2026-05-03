@@ -3657,7 +3657,7 @@ bool find_auto_consume( player &p, const consume_type type )
 
     std::optional<item *> stalest = mgr.get_near( consume_type_zone, here.bub_to_abs( pos ),
                                     ACTIVITY_SEARCH_DISTANCE )
-                                    | views::filter( [&]( const auto & loc ) -> bool { return loc.z == p.bub_pos().z(); } )
+                                    | views::filter( [&]( const auto & loc ) -> bool { return loc.z() == p.bub_pos().z(); } )
                                     | flat_map( get_items_at )
                                     | views::filter( ok_to_consume )
                                     | min_by( get_spoil );

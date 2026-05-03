@@ -3735,11 +3735,11 @@ void game::add_draw_callback( const shared_ptr_fast<draw_callback_t> &cb )
 static void draw_trail( const tripoint_bub_ms &start, const tripoint_bub_ms &end, bool bDrawX );
 
 struct zone_callback_options {
-    std::optional<tripoint_bub_ms> &zone_start;
-    std::optional<tripoint_bub_ms> &zone_end;
+    std::optional<tripoint_abs_ms> &zone_start;
+    std::optional<tripoint_abs_ms> &zone_end;
     bool &zone_blink;
     bool &zone_cursor;
-    std::function<std::vector<tripoint>( const tripoint &, const tripoint & )> point_generator;
+    std::function<std::vector<tripoint_bub_ms>( const tripoint_abs_ms &, const tripoint_abs_ms & )> point_generator;
     bool is_moving_zone = false;
 };
 
@@ -3757,12 +3757,12 @@ shared_ptr_fast<game::draw_callback_t>
         if( zone_cursor ) {
             if( is_moving_zone ) {
                 // Use midpoint function? At least this works, but it's ugly.
-                g->draw_cursor( tripoint_bub_ms( ( zone_start.value().raw() + zone_end.value().raw() ) / 2 ) );
+                g->draw_cursor( abs_to_bub( tripoint_abs_ms( ( zone_start.value().raw() + zone_end.value().raw() ) / 2 ) ) );
             } else {
                 if( zone_end ) {
-                    g->draw_cursor( zone_end.value() );
+                    g->draw_cursor( abs_to_bub( zone_end.value() ) );
                 } else if( zone_start ) {
-                    g->draw_cursor( zone_start.value() );
+                    g->draw_cursor( abs_to_bub( zone_start.value() ) );
                 }
             }
         }
@@ -3782,19 +3782,19 @@ shared_ptr_fast<game::draw_callback_t>
             }
 #endif
 
-            const tripoint_bub_ms start( std::min( zone_start->x(), zone_end->x() ),
+            const tripoint_abs_ms start( std::min( zone_start->x(), zone_end->x() ),
                                          std::min( zone_start->y(), zone_end->y() ),
                                          zone_end->z() );
-            const tripoint_bub_ms end( std::max( zone_start->x(), zone_end->x() ),
+            const tripoint_abs_ms end( std::max( zone_start->x(), zone_end->x() ),
                                        std::max( zone_start->y(), zone_end->y() ),
                                        zone_end->z() );
-            auto points = std::vector<tripoint>();
+            auto points = std::vector<tripoint_bub_ms>();
             if( point_generator ) {
                 points = point_generator( start, end );
             }
             auto zone_options = zone_draw_options{
-                .start = start,
-                .end = end,
+                .start = abs_to_bub( start ),
+                .end = abs_to_bub( end ),
                 .offset = offset,
                 .points = std::move( points )
             };
@@ -7954,8 +7954,8 @@ void game::zones_manager()
         } else {
             const auto &u_abs_pos = m.bub_to_abs( u.bub_pos() );
             for( zone_manager::ref_zone_data &ref : mgr.get_zones() ) {
-                const tripoint &zone_abs_pos = ref.get().get_center_point();
-                if( u_abs_pos.z() == zone_abs_pos.z && rl_dist( u_abs_pos, zone_abs_pos ) <= 50 ) {
+                const auto &zone_abs_pos = ref.get().get_center_point();
+                if( u_abs_pos.z() == zone_abs_pos.z() && rl_dist( u_abs_pos, zone_abs_pos ) <= 50 ) {
                     zones.emplace_back( ref );
                 }
             }
@@ -7990,19 +7990,24 @@ void game::zones_manager()
         wnoutrefresh( w_zones_options );
     };
 
-    std::optional<tripoint_bub_ms> zone_start;
-    std::optional<tripoint_bub_ms> zone_end;
+    std::optional<tripoint_abs_ms> zone_start;
+    std::optional<tripoint_abs_ms> zone_end;
     auto zone_blink = false;
     auto zone_cursor = false;
     auto current_zone_type = zone_type_id();
     shared_ptr_fast<const blueprint_options> current_bp_options;
     static const auto zone_construction_blueprint = zone_type_id( "CONSTRUCTION_BLUEPRINT" );
     auto zone_point_generator =
-    [&]( const tripoint_bub_ms & start, const tripoint_bub_ms & end ) -> std::vector<tripoint_bub_ms> {
+    [&]( const tripoint_abs_ms & start, const tripoint_abs_ms & end ) -> std::vector<tripoint_bub_ms> {
         if( current_zone_type == zone_construction_blueprint )
         {
             if( current_bp_options ) {
-                return current_bp_options->get_covered_points( start, end );
+                const std::vector<tripoint_abs_ms> covered_points = current_bp_options->get_covered_points( start, end );
+                std::vector<tripoint_bub_ms> points( covered_points.size() );
+                std::transform( covered_points.begin(), covered_points.end(), points.begin(), []( const tripoint_abs_ms &p ) {
+                    return abs_to_bub( p );
+                } );
+                return points;
             }
         }
         return std::vector<tripoint_bub_ms>();
@@ -8017,14 +8022,14 @@ void game::zones_manager()
     add_draw_callback( zone_cb );
 
     auto query_position =
-    [&]() -> std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> {
+    [&]() -> std::optional<std::pair<tripoint_abs_ms, tripoint_abs_ms>> {
         on_out_of_scope invalidate_current_ui( [&]()
         {
             ui.mark_resize();
         } );
         restore_on_out_of_scope<bool> show_prev( show );
-        restore_on_out_of_scope<std::optional<tripoint_bub_ms>> zone_start_prev( zone_start );
-        restore_on_out_of_scope<std::optional<tripoint_bub_ms>> zone_end_prev( zone_end );
+        restore_on_out_of_scope<std::optional<tripoint_abs_ms>> zone_start_prev( zone_start );
+        restore_on_out_of_scope<std::optional<tripoint_abs_ms>> zone_end_prev( zone_end );
         restore_on_out_of_scope<bool> zone_cursor_prev( zone_cursor );
         show = false;
         zone_start = std::nullopt;
@@ -8047,17 +8052,17 @@ void game::zones_manager()
             const look_around_result second = look_around( /*show_window=*/false, center, *first.position,
                     true, true, false );
             if( second.position ) {
-                auto first_abs = m.bub_to_abs( tripoint( std::min( first.position->x,
-                                               second.position->x ),
-                                               std::min( first.position->y, second.position->y ),
-                                               std::min( first.position->z,
-                                                       second.position->z ) ) );
-                auto second_abs = m.bub_to_abs( tripoint( std::max( first.position->x,
-                                                second.position->x ),
-                                                std::max( first.position->y, second.position->y ),
-                                                std::max( first.position->z,
-                                                        second.position->z ) ) );
-                return std::pair<tripoint, tripoint>( first_abs, second_abs );
+                auto first_abs = m.bub_to_abs( tripoint_bub_ms( std::min( first.position->x(),
+                                               second.position->x() ),
+                                               std::min( first.position->y(), second.position->y() ),
+                                               std::min( first.position->z(),
+                                                       second.position->z() ) ) );
+                auto second_abs = m.bub_to_abs( tripoint_bub_ms( std::max( first.position->x(),
+                                                second.position->x() ),
+                                                std::max( first.position->y(), second.position->y() ),
+                                                std::max( first.position->z(),
+                                                        second.position->z() ) ) );
+                return std::pair<tripoint_abs_ms, tripoint_abs_ms>( first_abs, second_abs );
             }
         }
 
@@ -8109,7 +8114,7 @@ void game::zones_manager()
                     mvwprintz( w_zones, point( 20, iNum - start_index ), colorLine,
                                mgr.get_name_from_type( zone.get_type() ) );
 
-                    tripoint center = zone.get_center_point();
+                    auto center = zone.get_center_point();
 
                     //Draw direction + distance
                     mvwprintz( w_zones, point( 32, iNum - start_index ), colorLine, "%*d %s",
@@ -8159,7 +8164,7 @@ void game::zones_manager()
 
                 current_zone_type = id;
                 current_bp_options = std::dynamic_pointer_cast<const blueprint_options>( options );
-                std::optional<std::pair<tripoint, tripoint>> position;
+                std::optional<std::pair<tripoint_abs_ms, tripoint_abs_ms>> position;
                 position = query_position();
                 if( !position ) {
                     break;
@@ -8246,8 +8251,8 @@ void game::zones_manager()
                             ui.mark_resize();
                         } );
                         restore_on_out_of_scope<bool> show_prev( show );
-                        restore_on_out_of_scope<std::optional<tripoint>> zone_start_prev( zone_start );
-                        restore_on_out_of_scope<std::optional<tripoint>> zone_end_prev( zone_end );
+                        restore_on_out_of_scope<std::optional<tripoint_abs_ms>> zone_start_prev( zone_start );
+                        restore_on_out_of_scope<std::optional<tripoint_abs_ms>> zone_end_prev( zone_end );
                         restore_on_out_of_scope<bool> zone_cursor_prev( zone_cursor );
                         show = false;
                         zone_start = std::nullopt;
@@ -8272,7 +8277,7 @@ void game::zones_manager()
                             }
 
                             const auto new_end_point = zone.get_end_point() - zone.get_start_point() + new_start_point;
-                            zone.set_position( std::pair<tripoint, tripoint>( new_start_point, new_end_point ) );
+                            zone.set_position( std::pair<tripoint_abs_ms, tripoint_abs_ms>( new_start_point, new_end_point ) );
                             stuff_changed = true;
                         }
                     }
@@ -8319,8 +8324,8 @@ void game::zones_manager()
 
         if( zone_cnt > 0 ) {
             const auto &zone = zones[active_index].get();
-            zone_start = m.abs_to_bub( zone.get_start_point() );
-            zone_end = m.abs_to_bub( zone.get_end_point() );
+            zone_start = zone.get_start_point();
+            zone_end = zone.get_end_point();
             current_zone_type = zone.get_type();
             current_bp_options = std::dynamic_pointer_cast<const blueprint_options>(
                                      zone.get_options_ptr() );
@@ -8359,31 +8364,30 @@ void game::zones_manager()
     u.view_offset = stored_view_offset;
 }
 
-void game::pre_print_all_tile_info( const tripoint &lp, const catacurses::window &w_info,
+void game::pre_print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::window &w_info,
                                     int &first_line, const int last_line,
                                     const visibility_variables &cache )
 {
     // get global area info according to look_around caret position
     // TODO: fix point types
     const oter_id &cur_ter_m = get_overmapbuffer( current_dimension_id_ ).ter( tripoint_abs_omt(
-                                   project_to<coords::omt>( m.bub_to_abs(
-                                           lp ) ) ) );
+                                   project_to<coords::omt>( m.bub_to_abs( lp ) ) ) );
     // we only need the area name and then pass it to print_all_tile_info() function below
     const std::string area_name = cur_ter_m->get_name();
     print_all_tile_info( lp, w_info, area_name, 1, first_line, last_line, cache );
 }
 
-std::optional<tripoint> game::look_around( bool force_3d )
+std::optional<tripoint_bub_ms> game::look_around( bool force_3d )
 {
     auto center = u.bub_pos() + u.view_offset;
     look_around_result result = look_around( /*show_window=*/true, center, center, false, false,
-                                false, false, tripoint_zero, force_3d );
+                                false, false, tripoint_bub_ms::zero(), force_3d );
     return result.position;
 }
 
-look_around_result game::look_around( bool show_window, tripoint &center,
-                                      const tripoint &start_point, bool has_first_point, bool select_zone, bool peeking,
-                                      bool is_moving_zone, const tripoint &end_point, bool force_3d )
+look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
+                                      const tripoint_bub_ms &start_point, bool has_first_point, bool select_zone, bool peeking,
+                                      bool is_moving_zone, const tripoint_bub_ms &end_point, bool force_3d )
 {
     bVMonsterLookFire = false;
     // TODO: Make this `true`
@@ -8391,10 +8395,10 @@ look_around_result game::look_around( bool show_window, tripoint &center,
 
     temp_exit_fullscreen();
 
-    auto lp = is_moving_zone ? ( start_point + end_point ) / 2 : start_point; // cursor
-    int &lx = lp.x;
-    int &ly = lp.y;
-    int &lz = lp.z;
+    auto lp = is_moving_zone ? tripoint_bub_ms( ( start_point.raw() + end_point.raw() ) / 2 ) : start_point; // cursor
+    int &lx = lp.x();
+    int &ly = lp.y();
+    int &lz = lp.z();
 
     int soffset = get_option<int>( "FAST_SCROLL_OFFSET" );
     bool fast_scroll = false;
@@ -8538,12 +8542,12 @@ look_around_result game::look_around( bool show_window, tripoint &center,
         add_draw_callback( ter_indicator_cb );
     }
 
-    std::optional<tripoint> zone_start;
-    std::optional<tripoint> zone_end;
+    std::optional<tripoint_abs_ms> zone_start;
+    std::optional<tripoint_abs_ms> zone_end;
     bool zone_blink = false;
     bool zone_cursor = true;
-    auto noop_zone_points = []( const tripoint &, const tripoint & ) {
-        return std::vector<tripoint>();
+    auto noop_zone_points = []( const tripoint_abs_ms &, const tripoint_abs_ms & ) {
+        return std::vector<tripoint_bub_ms>();
     };
     shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback( zone_callback_options{
         .zone_start = zone_start,
@@ -8569,18 +8573,18 @@ look_around_result game::look_around( bool show_window, tripoint &center,
         u.view_offset = center - u.bub_pos();
         if( select_zone ) {
             if( has_first_point ) {
-                zone_start = start_point;
-                zone_end = lp;
+                zone_start = bub_to_abs( start_point );
+                zone_end = bub_to_abs( lp );
             } else {
-                zone_start = lp;
+                zone_start = bub_to_abs( lp );
                 zone_end = std::nullopt;
             }
             zone_blink = zone_start.has_value();
         }
 
         if( is_moving_zone ) {
-            zone_start = lp - ( start_point + end_point ) / 2 + start_point;
-            zone_end = lp - ( start_point + end_point ) / 2 + end_point;
+            zone_start = bub_to_abs( lp ) - ( start_point.raw() + end_point.raw() ) / 2 + start_point.raw();
+            zone_end = bub_to_abs( lp ) - ( start_point.raw() + end_point.raw() ) / 2 + end_point.raw();
             zone_blink = true;
         }
         g->invalidate_main_ui_adaptor();
@@ -8621,11 +8625,11 @@ look_around_result game::look_around( bool show_window, tripoint &center,
 
             const int dz = ( action == "LEVEL_UP" ? 1 : -1 );
             lz = clamp( lz + dz, min_levz, max_levz );
-            center.z = clamp( center.z + dz, min_levz, max_levz );
+            center.z() = clamp( center.z() + dz, min_levz, max_levz );
 
-            add_msg( m_debug, "levx: %d, levy: %d, levz: %d", get_levx(), get_levy(), center.z );
-            u.view_offset.z() = center.z - u.bub_pos().z();
-            m.invalidate_map_cache( center.z );
+            add_msg( m_debug, "levx: %d, levy: %d, levz: %d", get_levx(), get_levy(), center.z() );
+            u.view_offset.z() = center.z() - u.bub_pos().z();
+            m.invalidate_map_cache( center.z() );
         } else if( action == "TRAVEL_TO" ) {
             if( !u.sees( lp ) ) {
                 add_msg( _( "You can't see that destination." ) );
@@ -8694,33 +8698,33 @@ look_around_result game::look_around( bool show_window, tripoint &center,
                     ly = mouse_pos->y;
                 }
             }
-        } else if( std::optional<tripoint> vec = ctxt.get_direction( action ) ) {
+        } else if( std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
             if( fast_scroll ) {
-                vec->x *= soffset;
-                vec->y *= soffset;
+                vec->x() *= soffset;
+                vec->y ()*= soffset;
             }
 
-            lx = lx + vec->x;
-            ly = ly + vec->y;
-            center.x = center.x + vec->x;
-            center.y = center.y + vec->y;
+            lx = lx + vec->x();
+            ly = ly + vec->y();
+            center.x() = center.x() + vec->x();
+            center.y() = center.y() + vec->y();
         } else if( action == "throw_blind" ) {
             result.peek_action = PA_BLIND_THROW;
         } else if( action == "zoom_in" ) {
-            center.x = lp.x;
-            center.y = lp.y;
+            center.x() = lp.x();
+            center.y() = lp.y();
             zoom_in();
             mark_main_ui_adaptor_resize();
         } else if( action == "zoom_out" ) {
-            center.x = lp.x;
-            center.y = lp.y;
+            center.x() = lp.x();
+            center.y() = lp.y();
             zoom_out();
             mark_main_ui_adaptor_resize();
         }
     } while( action != "QUIT" && action != "CONFIRM" && action != "SELECT" && action != "TRAVEL_TO" &&
              action != "throw_blind" );
 
-    if( m.has_zlevels() && center.z != old_levz ) {
+    if( m.has_zlevels() && center.z() != old_levz ) {
         m.invalidate_map_cache( old_levz );
         m.build_map_cache( old_levz );
         u.view_offset.z() = 0;
@@ -8764,14 +8768,14 @@ std::vector<map_item_stack> game::find_nearby_items( int iRadius )
 
     for( int i = 1; i <= range; i++ ) {
         int z = i % 2 ? center_z - i / 2 : center_z + i / 2;
-        for( auto &points_p_it : closest_points_first<tripoint>( {u.bub_pos().xy(), z}, iRadius ) ) {
-            if( points_p_it.y >= u.bub_pos().y() - iRadius && points_p_it.y <= u.bub_pos().y() + iRadius &&
+        for( auto &points_p_it : closest_points_first<tripoint_bub_ms>( {u.bub_pos().xy(), z}, iRadius ) ) {
+            if( points_p_it.y() >= u.bub_pos().y() - iRadius && points_p_it.y() <= u.bub_pos().y() + iRadius &&
                 u.sees( points_p_it ) &&
                 m.sees_some_items( points_p_it, u ) ) {
 
                 for( auto &elem : m.i_at( points_p_it ) ) {
                     const std::string name = elem->tname();
-                    const auto relative_pos = points_p_it - u.bub_pos();
+                    const auto relative_pos = points_p_it - u.bub_pos().raw();
 
                     if( std::find( item_order.begin(), item_order.end(), name ) == item_order.end() ) {
                         item_order.push_back( name );
@@ -8791,9 +8795,9 @@ std::vector<map_item_stack> game::find_nearby_items( int iRadius )
     return ret;
 }
 
-void draw_trail( const tripoint &start, const tripoint &end, const bool bDrawX )
+void draw_trail( const tripoint_bub_ms &start, const tripoint_bub_ms &end, const bool bDrawX )
 {
-    std::vector<tripoint> pts;
+    std::vector<tripoint_bub_ms> pts;
     auto center = g->u.bub_pos() + g->u.view_offset;
     if( start != end ) {
         //Draw trail
@@ -8806,36 +8810,36 @@ void draw_trail( const tripoint &start, const tripoint &end, const bool bDrawX )
     g->draw_line( end, center, pts );
     if( bDrawX ) {
         char sym = 'X';
-        if( end.z > center.z() ) {
+        if( end.z() > center.z() ) {
             sym = '^';
-        } else if( end.z < center.z() ) {
+        } else if( end.z() < center.z() ) {
             sym = 'v';
         }
         if( pts.empty() ) {
             mvwputch( g->w_terrain, point( POSX, POSY ), c_white, sym );
         } else {
-            mvwputch( g->w_terrain, pts.back().xy() - g->u.view_offset.xy() +
+            mvwputch( g->w_terrain, pts.back().xy().raw() - g->u.view_offset.xy().raw() +
                       point( POSX - g->u.bub_pos().x(), POSY - g->u.bub_pos().y() ),
                       c_white, sym );
         }
     }
 }
 
-void game::draw_trail_to_square( const tripoint &t, bool bDrawX )
+void game::draw_trail_to_square( const tripoint_bub_ms &t, bool bDrawX )
 {
     ::draw_trail( u.bub_pos(), u.bub_pos() + t, bDrawX );
 }
 
-static void centerlistview( const tripoint &active_item_position, int ui_width )
+static void centerlistview( const tripoint_bub_ms &active_item_position, int ui_width )
 {
     avatar &u = get_avatar();
     if( get_option<std::string>( "SHIFT_LIST_ITEM_VIEW" ) != "false" ) {
-        u.view_offset.z() = active_item_position.z;
+        u.view_offset.z() = active_item_position.z();
         if( get_option<std::string>( "SHIFT_LIST_ITEM_VIEW" ) == "centered" ) {
-            u.view_offset.x() = active_item_position.x;
-            u.view_offset.y() = active_item_position.y;
+            u.view_offset.x() = active_item_position.x();
+            u.view_offset.y() = active_item_position.y();
         } else {
-            point pos( active_item_position.xy() + point( POSX, POSY ) );
+            auto pos( active_item_position.xy() + point( POSX, POSY ) );
 
             // item/monster list UI is on the right, so get the difference between its width
             // and the width of the sidebar on the right (if any)
@@ -8849,18 +8853,18 @@ static void centerlistview( const tripoint &active_item_position, int ui_width )
             to_map_font_dim_width( right_offset );
             int terrain_width = TERRAIN_WINDOW_WIDTH - right_offset;
 
-            if( pos.x < 0 ) {
-                u.view_offset.x() = pos.x;
-            } else if( pos.x >= terrain_width ) {
-                u.view_offset.x() = pos.x - ( terrain_width - 1 );
+            if( pos.x() < 0 ) {
+                u.view_offset.x() = pos.x();
+            } else if( pos.x() >= terrain_width ) {
+                u.view_offset.x() = pos.x() - ( terrain_width - 1 );
             } else {
                 u.view_offset.x() = 0;
             }
 
-            if( pos.y < 0 ) {
-                u.view_offset.y() = pos.y;
-            } else if( pos.y >= TERRAIN_WINDOW_HEIGHT ) {
-                u.view_offset.y() = pos.y - ( TERRAIN_WINDOW_HEIGHT - 1 );
+            if( pos.y() < 0 ) {
+                u.view_offset.y() = pos.y();
+            } else if( pos.y() >= TERRAIN_WINDOW_HEIGHT ) {
+                u.view_offset.y() = pos.y() - ( TERRAIN_WINDOW_HEIGHT - 1 );
             } else {
                 u.view_offset.y() = 0;
             }
@@ -9095,7 +9099,7 @@ void game::reset_item_list_state( const catacurses::window &window, int height,
 
 struct nearby_vehicle_entry {
     vehicle *veh = nullptr;
-    const tripoint_bub_ms &pos = tripoint_zero;
+    const tripoint_bub_ms &pos = tripoint_bub_ms::zero();
     int dist = 0;
 };
 
@@ -9122,19 +9126,19 @@ static auto find_visible_vehicles( avatar &viewer, map &here, int radius ) -> ve
         }
 
         int best_dist = INT_MAX;
-        std::optional<tripoint> best_pos;
+        std::optional<tripoint_bub_ms> best_pos;
         for( const vpart_reference &vpr : veh->get_all_parts() ) {
             if( vpr.part().removed ) {
                 continue;
             }
             const tripoint_bub_ms part_pos = veh->bub_part_location( vpr.part() );
-            const int dist = rl_dist( viewer.bub_pos(), part_pos.raw() );
+            const int dist = rl_dist( viewer.bub_pos(), part_pos );
             if( dist > radius || !viewer.sees( part_pos ) ) {
                 continue;
             }
             if( dist < best_dist ) {
                 best_dist = dist;
-                best_pos = part_pos.raw();
+                best_pos = part_pos;
                 if( dist == 0 ) {
                     break;
                 }
@@ -13755,7 +13759,7 @@ point game::update_map( int &x, int &y )
     // this handles loading/unloading submaps that have scrolled on or off the viewport
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     inclusive_rectangle<point> size_1( point( -1, -1 ), point( 1, 1 ) );
-    point remaining_shift = shift;
+    auto remaining_shift = shift;
     while( remaining_shift != point_zero ) {
         auto this_shift = clamp( remaining_shift, size_1 );
         m.shift( this_shift );

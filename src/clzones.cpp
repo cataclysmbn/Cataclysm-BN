@@ -101,30 +101,30 @@ namespace
 generic_factory<zone_type> zone_type_factory( "zone_type" );
 
 struct zone_bounds {
-    tripoint min;
-    tripoint max;
+    tripoint_abs_ms min;
+    tripoint_abs_ms max;
 };
 
-auto make_zone_bounds( const tripoint &first, const tripoint &second ) -> zone_bounds
+auto make_zone_bounds( const tripoint_abs_ms &first, const tripoint_abs_ms &second ) -> zone_bounds
 {
     return zone_bounds{
-        tripoint( std::min( first.x, second.x ), std::min( first.y, second.y ),
-                  std::min( first.z, second.z ) ),
-        tripoint( std::max( first.x, second.x ), std::max( first.y, second.y ),
-                  std::max( first.z, second.z ) )
+        tripoint_abs_ms( std::min( first.x(), second.x() ), std::min( first.y(), second.y() ),
+                  std::min( first.z(), second.z() ) ),
+        tripoint_abs_ms( std::max( first.x(), second.x() ), std::max( first.y(), second.y() ),
+                  std::max( first.z(), second.z() ) )
     };
 }
 
-auto rectangle_points( const zone_bounds &bounds ) -> std::vector<tripoint>
+auto rectangle_points( const zone_bounds &bounds ) -> std::vector<tripoint_abs_ms>
 {
-    auto points = std::vector<tripoint>();
-    const auto x_span = bounds.max.x - bounds.min.x + 1;
-    const auto y_span = bounds.max.y - bounds.min.y + 1;
-    const auto z_span = bounds.max.z - bounds.min.z + 1;
+    auto points = std::vector<tripoint_abs_ms>();
+    const auto x_span = bounds.max.x() - bounds.min.x() + 1;
+    const auto y_span = bounds.max.y() - bounds.min.y() + 1;
+    const auto z_span = bounds.max.z() - bounds.min.z() + 1;
     points.reserve( static_cast<size_t>( x_span * y_span * z_span ) );
-    for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
-        for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
-            for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
+    for( auto z = bounds.min.z(); z <= bounds.max.z(); ++z ) {
+        for( auto y = bounds.min.y(); y <= bounds.max.y(); ++y ) {
+            for( auto x = bounds.min.x(); x <= bounds.max.x(); ++x ) {
                 points.emplace_back( x, y, z );
             }
         }
@@ -252,10 +252,10 @@ struct circle_shape {
 
 auto make_circle_shape( const zone_bounds &bounds, const bool border_only ) -> circle_shape
 {
-    const double center_x = static_cast<double>( bounds.min.x + bounds.max.x ) / 2.0;
-    const double center_y = static_cast<double>( bounds.min.y + bounds.max.y ) / 2.0;
-    const double radius = static_cast<double>( std::max( bounds.max.x - bounds.min.x,
-                          bounds.max.y - bounds.min.y ) ) / 2.0;
+    const double center_x = static_cast<double>( bounds.min.x() + bounds.max.x() ) / 2.0;
+    const double center_y = static_cast<double>( bounds.min.y() + bounds.max.y() ) / 2.0;
+    const double radius = static_cast<double>( std::max( bounds.max.x() - bounds.min.x(),
+                          bounds.max.y() - bounds.min.y() ) ) / 2.0;
     const double outer_radius = radius + 1.0;
     const double inner_radius = border_only ? std::max( radius - 1.0, 0.0 ) : 0.0;
 
@@ -264,10 +264,10 @@ auto make_circle_shape( const zone_bounds &bounds, const bool border_only ) -> c
     };
 }
 
-auto point_in_circle( const circle_shape &shape, const tripoint &candidate ) -> bool
+auto point_in_circle( const circle_shape &shape, const tripoint_abs_ms &candidate ) -> bool
 {
-    const double dx = static_cast<double>( candidate.x ) - shape.center_x;
-    const double dy = static_cast<double>( candidate.y ) - shape.center_y;
+    const double dx = static_cast<double>( candidate.x() ) - shape.center_x;
+    const double dy = static_cast<double>( candidate.y() ) - shape.center_y;
     const double dist_sq = dx * dx + dy * dy;
     return dist_sq <= shape.outer_sq && dist_sq >= shape.inner_sq;
 }
@@ -299,8 +299,8 @@ construction_id blueprint_options::get_final_construction(
     return id;
 }
 
-auto blueprint_options::get_covered_points( const tripoint_bub_ms &start,
-        const tripoint_bub_ms &end ) const -> std::vector<tripoint_bub_ms>
+auto blueprint_options::get_covered_points( const tripoint_abs_ms &start,
+        const tripoint_abs_ms &end ) const -> std::vector<tripoint_abs_ms>
 {
     const auto bounds = make_zone_bounds( start, end );
     const auto circle_layout = layout == blueprint_layout::circle_fill ||
@@ -313,16 +313,16 @@ auto blueprint_options::get_covered_points( const tripoint_bub_ms &start,
     }
 
     if( !circle_layout && border_only ) {
-        auto points = std::vector<tripoint_bub_ms>();
-        const auto x_span = bounds.max.x - bounds.min.x + 1;
-        const auto y_span = bounds.max.y - bounds.min.y + 1;
-        const auto z_span = bounds.max.z - bounds.min.z + 1;
+        auto points = std::vector<tripoint_abs_ms>();
+        const auto x_span = bounds.max.x() - bounds.min.x() + 1;
+        const auto y_span = bounds.max.y() - bounds.min.y() + 1;
+        const auto z_span = bounds.max.z() - bounds.min.z() + 1;
         points.reserve( static_cast<size_t>( x_span * y_span * z_span ) );
-        for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
-            for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
-                for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
-                    if( x == bounds.min.x || x == bounds.max.x ||
-                        y == bounds.min.y || y == bounds.max.y ) {
+        for( auto z = bounds.min.z(); z <= bounds.max.z(); ++z ) {
+            for( auto y = bounds.min.y(); y <= bounds.max.y(); ++y ) {
+                for( auto x = bounds.min.x(); x <= bounds.max.x(); ++x ) {
+                    if( x == bounds.min.x() || x == bounds.max.x() ||
+                        y == bounds.min.y() || y == bounds.max.y() ) {
                         points.emplace_back( x, y, z );
                     }
                 }
@@ -333,45 +333,45 @@ auto blueprint_options::get_covered_points( const tripoint_bub_ms &start,
 
     const auto shape = make_circle_shape( bounds, border_only );
     if( circle_layout && border_only ) {
-        auto fill_set = std::unordered_set<tripoint_bub_ms>();
+        auto fill_set = std::unordered_set<tripoint_abs_ms>();
         const auto circle_fill = make_circle_shape( bounds, false );
-        for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
-            for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
-                for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
-                    const tripoint pt( x, y, z );
+        for( auto z = bounds.min.z(); z <= bounds.max.z(); ++z ) {
+            for( auto y = bounds.min.y(); y <= bounds.max.y(); ++y ) {
+                for( auto x = bounds.min.x(); x <= bounds.max.x(); ++x ) {
+                    const tripoint_abs_ms pt( x, y, z );
                     if( point_in_circle( circle_fill, pt ) ) {
                         fill_set.insert( pt );
                     }
                 }
             }
         }
-        auto border_set = std::unordered_set<tripoint_bub_ms>();
+        auto border_set = std::unordered_set<tripoint_abs_ms>();
         const auto neighbors = std::array<point, 8> {
             point_east, point_west, point_north, point_south,
             point_east + point_north, point_east + point_south,
             point_west + point_north, point_west + point_south
         };
-        std::ranges::for_each( fill_set, [&]( const tripoint_bub_ms & pt ) {
+        std::ranges::for_each( fill_set, [&]( const tripoint_abs_ms & pt ) {
             const bool at_edge = std::ranges::any_of( neighbors, [&]( const point & dir ) {
-                const tripoint_bub_ms neigh( pt.xy() + dir, pt.z() );
+                const tripoint_abs_ms neigh( pt.xy() + dir, pt.z() );
                 return !fill_set.contains( neigh );
             } );
             if( at_edge ) {
                 border_set.insert( pt );
             }
         } );
-        return std::vector<tripoint_bub_ms>( border_set.begin(), border_set.end() );
+        return std::vector<tripoint_abs_ms>( border_set.begin(), border_set.end() );
     }
 
-    auto points = std::vector<tripoint_bub_ms>();
-    const auto x_span = bounds.max.x - bounds.min.x + 1;
-    const auto y_span = bounds.max.y - bounds.min.y + 1;
-    const auto z_span = bounds.max.z - bounds.min.z + 1;
+    auto points = std::vector<tripoint_abs_ms>();
+    const auto x_span = bounds.max.x() - bounds.min.x() + 1;
+    const auto y_span = bounds.max.y() - bounds.min.y() + 1;
+    const auto z_span = bounds.max.z() - bounds.min.z() + 1;
     points.reserve( static_cast<size_t>( x_span * y_span * z_span ) );
-    for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
-        for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
-            for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
-                const tripoint_bub_ms point( x, y, z );
+    for( auto z = bounds.min.z(); z <= bounds.max.z(); ++z ) {
+        for( auto y = bounds.min.y(); y <= bounds.max.y(); ++y ) {
+            for( auto x = bounds.min.x(); x <= bounds.max.x(); ++x ) {
+                const tripoint_abs_ms point( x, y, z );
                 if( point_in_circle( shape, point ) ) {
                     points.push_back( point );
                 }
@@ -381,11 +381,11 @@ auto blueprint_options::get_covered_points( const tripoint_bub_ms &start,
     return points;
 }
 
-auto blueprint_options::has_inside( const tripoint &start, const tripoint &end,
-                                    const tripoint &candidate ) const -> bool
+auto blueprint_options::has_inside( const tripoint_abs_ms &start, const tripoint_abs_ms &end,
+                                    const tripoint_abs_ms &candidate ) const -> bool
 {
     const auto bounds = make_zone_bounds( start, end );
-    if( candidate.z < bounds.min.z || candidate.z > bounds.max.z ) {
+    if( candidate.z() < bounds.min.z() || candidate.z() > bounds.max.z() ) {
         return false;
     }
     const auto circle_layout = layout == blueprint_layout::circle_fill ||
@@ -401,26 +401,26 @@ auto blueprint_options::has_inside( const tripoint &start, const tripoint &end,
             point_west + point_north, point_west + point_south
         };
         return std::ranges::any_of( neighbors, [&]( const point & dir ) {
-            const tripoint neigh( candidate.xy() + dir, candidate.z );
+            const tripoint_abs_ms neigh( candidate.xy() + dir, candidate.z() );
             return !point_in_circle( shape, neigh );
         } );
     }
     const auto border_only = layout == blueprint_layout::rectangle_border ||
                              layout == blueprint_layout::circle_border;
     if( !circle_layout ) {
-        const bool in_bounds = candidate.x >= bounds.min.x && candidate.x <= bounds.max.x &&
-                               candidate.y >= bounds.min.y && candidate.y <= bounds.max.y;
+        const bool in_bounds = candidate.x() >= bounds.min.x() && candidate.x() <= bounds.max.x() &&
+                               candidate.y() >= bounds.min.y() && candidate.y() <= bounds.max.y();
         if( !in_bounds ) {
             return false;
         }
         if( !border_only ) {
             return true;
         }
-        return candidate.x == bounds.min.x || candidate.x == bounds.max.x ||
-               candidate.y == bounds.min.y || candidate.y == bounds.max.y;
+        return candidate.x() == bounds.min.x() || candidate.x() == bounds.max.x() ||
+               candidate.y() == bounds.min.y() || candidate.y() == bounds.max.y();
     }
-    if( candidate.x < bounds.min.x || candidate.x > bounds.max.x ||
-        candidate.y < bounds.min.y || candidate.y > bounds.max.y ) {
+    if( candidate.x() < bounds.min.x() || candidate.x() > bounds.max.x() ||
+        candidate.y() < bounds.min.y() || candidate.y() > bounds.max.y() ) {
         return false;
     }
     const auto shape = make_circle_shape( bounds, border_only );
@@ -515,9 +515,9 @@ plot_options::query_seed_result plot_options::query_seed()
         return itm.is_seed();
     } );
     auto &mgr = zone_manager::get_manager();
-    const std::unordered_set<tripoint> &zone_src_set = mgr.get_near( zone_LOOT_SEEDS,
+    const std::unordered_set<tripoint_abs_ms> &zone_src_set = mgr.get_near( zone_LOOT_SEEDS,
             here.bub_to_abs( p.bub_pos() ), 60 );
-    for( const tripoint &elem : zone_src_set ) {
+    for( const tripoint_abs_ms &elem : zone_src_set ) {
         auto elem_loc = here.abs_to_bub( elem );
         for( item * const &it : here.i_at( elem_loc ) ) {
             if( it->is_seed() ) {
@@ -715,7 +715,7 @@ void plot_options::deserialize( const JsonObject &jo_zone )
     jo_zone.read( "seed", seed );
 }
 
-auto get_zone_covered_points( const zone_data &zone ) -> std::vector<tripoint>
+auto get_zone_covered_points( const zone_data &zone ) -> std::vector<tripoint_abs_ms>
 {
     const auto bounds = make_zone_bounds( zone.get_start_point(), zone.get_end_point() );
     if( zone.get_type() == zone_CONSTRUCTION_BLUEPRINT ) {
@@ -809,7 +809,7 @@ bool zone_data::set_type()
     return false;
 }
 
-void zone_data::set_position( const std::pair<tripoint, tripoint> &position,
+void zone_data::set_position( const std::pair<tripoint_abs_ms, tripoint_abs_ms> &position,
                               const bool manual )
 {
     if( is_vehicle && manual ) {
@@ -833,17 +833,17 @@ void zone_data::set_is_vehicle( const bool is_vehicle_arg )
     is_vehicle = is_vehicle_arg;
 }
 
-tripoint zone_data::get_center_point() const
+tripoint_abs_ms zone_data::get_center_point() const
 {
-    return tripoint( ( start.x + end.x ) / 2, ( start.y + end.y ) / 2, ( start.z + end.z ) / 2 );
+    return tripoint_abs_ms( ( start.x() + end.x() ) / 2, ( start.y() + end.y() ) / 2, ( start.z() + end.z() ) / 2 );
 }
 
-auto zone_data::has_inside( const tripoint &p ) const -> bool
+auto zone_data::has_inside( const tripoint_abs_ms &p ) const -> bool
 {
     const zone_bounds bounds = make_zone_bounds( start, end );
-    if( p.x < bounds.min.x || p.x > bounds.max.x ||
-        p.y < bounds.min.y || p.y > bounds.max.y ||
-        p.z < bounds.min.z || p.z > bounds.max.z ) {
+    if( p.x() < bounds.min.x() || p.x() > bounds.max.x() ||
+        p.y() < bounds.min.y() || p.y() > bounds.max.y() ||
+        p.z() < bounds.min.z() || p.z() > bounds.max.z() ) {
         return false;
     }
 
@@ -889,7 +889,7 @@ void zone_manager::cache_data()
 
         auto &cache = area_cache[elem.get_type_hash()];
         const auto points = get_zone_covered_points( elem );
-        std::ranges::for_each( points, [&]( const tripoint & point ) {
+        std::ranges::for_each( points, [&]( const tripoint_abs_ms & point ) {
             cache.insert( point );
         } );
     } );
@@ -906,61 +906,62 @@ void zone_manager::cache_vzones()
 
         auto &cache = vzone_cache[elem->get_type_hash()];
         const auto points = get_zone_covered_points( *elem );
-        std::ranges::for_each( points, [&]( const tripoint & point ) {
+        std::ranges::for_each( points, [&]( const tripoint_abs_ms & point ) {
             cache.insert( point );
         } );
     } );
 }
 
-std::unordered_set<tripoint> zone_manager::get_point_set( const zone_type_id &type,
+std::unordered_set<tripoint_abs_ms> zone_manager::get_point_set( const zone_type_id &type,
         const faction_id &fac ) const
 {
     const auto &type_iter = area_cache.find( zone_data::make_type_hash( type, fac ) );
     if( type_iter == area_cache.end() ) {
-        return std::unordered_set<tripoint>();
+        return std::unordered_set<tripoint_abs_ms>();
     }
 
     return type_iter->second;
 }
 
-std::unordered_set<tripoint> zone_manager::get_point_set_loot( const tripoint_bub_ms &where,
+std::unordered_set<tripoint_abs_ms> zone_manager::get_point_set_loot( const tripoint_abs_ms &where,
         int radius, const faction_id &fac ) const
 {
     return get_point_set_loot( where, radius, false, fac );
 }
 
-std::unordered_set<tripoint> zone_manager::get_point_set_loot( const tripoint_bub_ms &where,
+std::unordered_set<tripoint_abs_ms> zone_manager::get_point_set_loot( const tripoint_abs_ms &where,
         int radius, bool npc_search, const faction_id &/*fac*/ ) const
 {
-    std::unordered_set<tripoint> res;
+    std::unordered_set<tripoint_abs_ms> res;
     map &here = get_map();
-    for( const tripoint elem : here.points_in_radius( here.abs_to_bub( where ), radius ) ) {
-        const zone_data *zone = get_zone_at( here.bub_to_abs( elem ) );
+    for( const tripoint_bub_ms elem : here.points_in_radius( here.abs_to_bub( where ), radius ) ) {
+        const auto abs_pos = here.bub_to_abs( elem );
+        const zone_data *zone = get_zone_at( abs_pos );
         // if not a LOOT zone
         if( ( !zone ) || ( zone->get_type().str().substr( 0, 4 ) != "LOOT" ) ) {
             continue;
         }
-        if( npc_search && ( has( zone_NO_NPC_PICKUP, elem ) ) ) {
+        if( npc_search && ( has( zone_NO_NPC_PICKUP, abs_pos ) ) ) {
             continue;
         }
-        res.insert( elem );
+        res.insert( abs_pos );
     }
     return res;
 }
 
-std::unordered_set<tripoint> zone_manager::get_vzone_set( const zone_type_id &type,
+std::unordered_set<tripoint_abs_ms> zone_manager::get_vzone_set( const zone_type_id &type,
         const faction_id &fac ) const
 {
     //Only regenerate the vehicle zone cache if any vehicles have moved
     const auto &type_iter = vzone_cache.find( zone_data::make_type_hash( type, fac ) );
     if( type_iter == vzone_cache.end() ) {
-        return std::unordered_set<tripoint>();
+        return std::unordered_set<tripoint_abs_ms>();
     }
 
     return type_iter->second;
 }
 
-bool zone_manager::has( const zone_type_id &type, const tripoint &where,
+bool zone_manager::has( const zone_type_id &type, const tripoint_abs_ms &where,
                         const faction_id &fac ) const
 {
     const auto &point_set = get_point_set( type, fac );
@@ -968,12 +969,12 @@ bool zone_manager::has( const zone_type_id &type, const tripoint &where,
     return point_set.contains( where ) || vzone_set.contains( where );
 }
 
-bool zone_manager::has_near( const zone_type_id &type, const tripoint &where, int range,
+bool zone_manager::has_near( const zone_type_id &type, const tripoint_abs_ms &where, int range,
                              const faction_id &fac ) const
 {
     const auto &point_set = get_point_set( type, fac );
     for( auto &point : point_set ) {
-        if( point.z == where.z ) {
+        if( point.z() == where.z() ) {
             if( square_dist( point, where ) <= range ) {
                 return true;
             }
@@ -982,7 +983,7 @@ bool zone_manager::has_near( const zone_type_id &type, const tripoint &where, in
 
     const auto &vzone_set = get_vzone_set( type, fac );
     for( auto &point : vzone_set ) {
-        if( point.z == where.z ) {
+        if( point.z() == where.z() ) {
             if( square_dist( point, where ) <= range ) {
                 return true;
             }
@@ -992,7 +993,7 @@ bool zone_manager::has_near( const zone_type_id &type, const tripoint &where, in
     return false;
 }
 
-bool zone_manager::has_loot_dest_near( const tripoint &where ) const
+bool zone_manager::has_loot_dest_near( const tripoint_abs_ms &where ) const
 {
     for( const auto &ztype : get_manager().get_types() ) {
         const zone_type_id &type = ztype.first;
@@ -1009,7 +1010,7 @@ bool zone_manager::has_loot_dest_near( const tripoint &where ) const
     return false;
 }
 
-const zone_data *zone_manager::get_zone_at( const tripoint &where, const zone_type_id &type ) const
+const zone_data *zone_manager::get_zone_at( const tripoint_abs_ms &where, const zone_type_id &type ) const
 {
     for( const zone_data &zone : zones ) {
         if( zone.has_inside( where ) && zone.get_type() == type ) {
@@ -1025,7 +1026,7 @@ const zone_data *zone_manager::get_zone_at( const tripoint &where, const zone_ty
     return nullptr;
 }
 
-bool zone_manager::custom_loot_has( const tripoint &where, const item *it ) const
+bool zone_manager::custom_loot_has( const tripoint_abs_ms &where, const item *it ) const
 {
     auto zone = get_zone_at( where, zone_LOOT_CUSTOM );
     if( !zone || !it ) {
@@ -1038,14 +1039,14 @@ bool zone_manager::custom_loot_has( const tripoint &where, const item *it ) cons
     return z( *it );
 }
 
-std::unordered_set<tripoint> zone_manager::get_near( const zone_type_id &type,
-        const tripoint &where, int range, const item *it, const faction_id &fac ) const
+std::unordered_set<tripoint_abs_ms> zone_manager::get_near( const zone_type_id &type,
+        const tripoint_abs_ms &where, int range, const item *it, const faction_id &fac ) const
 {
     const auto &point_set = get_point_set( type, fac );
-    auto near_point_set = std::unordered_set<tripoint>();
+    auto near_point_set = std::unordered_set<tripoint_abs_ms>();
 
     for( auto &point : point_set ) {
-        if( point.z == where.z ) {
+        if( point.z() == where.z() ) {
             if( square_dist( point, where ) <= range ) {
                 if( it && has( zone_LOOT_CUSTOM, point ) ) {
                     if( custom_loot_has( point, it ) ) {
@@ -1060,7 +1061,7 @@ std::unordered_set<tripoint> zone_manager::get_near( const zone_type_id &type,
 
     const auto &vzone_set = get_vzone_set( type, fac );
     for( auto &point : vzone_set ) {
-        if( point.z == where.z ) {
+        if( point.z() == where.z() ) {
             if( square_dist( point, where ) <= range ) {
                 if( it && has( zone_LOOT_CUSTOM, point ) ) {
                     if( custom_loot_has( point, it ) ) {
@@ -1076,17 +1077,17 @@ std::unordered_set<tripoint> zone_manager::get_near( const zone_type_id &type,
     return near_point_set;
 }
 
-std::optional<tripoint> zone_manager::get_nearest( const zone_type_id &type, const tripoint &where,
+std::optional<tripoint_abs_ms> zone_manager::get_nearest( const zone_type_id &type, const tripoint_abs_ms &where,
         int range, const faction_id &fac ) const
 {
     if( range < 0 ) {
         return std::nullopt;
     }
 
-    tripoint nearest_pos = tripoint( INT_MIN, INT_MIN, INT_MIN );
+    tripoint_abs_ms nearest_pos = tripoint_abs_ms( INT_MIN, INT_MIN, INT_MIN );
     int nearest_dist = range + 1;
-    const std::unordered_set<tripoint> &point_set = get_point_set( type, fac );
-    for( const tripoint &p : point_set ) {
+    const std::unordered_set<tripoint_abs_ms> &point_set = get_point_set( type, fac );
+    for( const tripoint_abs_ms &p : point_set ) {
         int cur_dist = square_dist( p, where );
         if( cur_dist < nearest_dist ) {
             nearest_dist = cur_dist;
@@ -1097,8 +1098,8 @@ std::optional<tripoint> zone_manager::get_nearest( const zone_type_id &type, con
         }
     }
 
-    const std::unordered_set<tripoint> &vzone_set = get_vzone_set( type, fac );
-    for( const tripoint &p : vzone_set ) {
+    const std::unordered_set<tripoint_abs_ms> &vzone_set = get_vzone_set( type, fac );
+    for( const tripoint_abs_ms &p : vzone_set ) {
         int cur_dist = square_dist( p, where );
         if( cur_dist < nearest_dist ) {
             nearest_dist = cur_dist;
@@ -1115,7 +1116,7 @@ std::optional<tripoint> zone_manager::get_nearest( const zone_type_id &type, con
 }
 
 zone_type_id zone_manager::get_near_zone_type_for_item( const item &it,
-        const tripoint &where, int range ) const
+        const tripoint_abs_ms &where, int range ) const
 {
     const item_category &cat = it.get_category();
 
@@ -1175,7 +1176,7 @@ zone_type_id zone_manager::get_near_zone_type_for_item( const item &it,
 }
 
 std::vector<zone_data> zone_manager::get_zones( const zone_type_id &type,
-        const tripoint &where, const faction_id &fac ) const
+        const tripoint_abs_ms &where, const faction_id &fac ) const
 {
     auto zones = std::vector<zone_data>();
 
@@ -1190,7 +1191,7 @@ std::vector<zone_data> zone_manager::get_zones( const zone_type_id &type,
     return zones;
 }
 
-const zone_data *zone_manager::get_zone_at( const tripoint &where ) const
+const zone_data *zone_manager::get_zone_at( const tripoint_abs_ms &where ) const
 {
     for( auto it = zones.rbegin(); it != zones.rend(); ++it ) {
         const auto &zone = *it;
@@ -1202,7 +1203,7 @@ const zone_data *zone_manager::get_zone_at( const tripoint &where ) const
     return nullptr;
 }
 
-const zone_data *zone_manager::get_bottom_zone( const tripoint &where,
+const zone_data *zone_manager::get_bottom_zone( const tripoint_abs_ms &where,
         const faction_id &fac ) const
 {
     for( auto it = zones.rbegin(); it != zones.rend(); ++it ) {
@@ -1249,13 +1250,13 @@ void zone_manager::create_vehicle_loot_zone( vehicle &vehicle, tripoint_mnt_veh 
 namespace
 {
 struct deferred_zone {
-    std::string  name;
-    zone_type_id type;
-    faction_id   fac;
-    bool         invert;
-    bool         enabled;
-    tripoint     start;
-    tripoint     end;
+    std::string         name;
+    zone_type_id        type;
+    faction_id          fac;
+    bool                invert;
+    bool                enabled;
+    tripoint_abs_ms     start;
+    tripoint_abs_ms     end;
 };
 std::mutex                 g_deferred_zones_mutex;
 std::vector<deferred_zone> g_deferred_zones;
@@ -1263,7 +1264,7 @@ std::vector<deferred_zone> g_deferred_zones;
 
 void defer_zone_add( const std::string &name, const zone_type_id &type,
                      const faction_id &fac, bool invert, bool enabled,
-                     const tripoint &start, const tripoint &end )
+                     const tripoint_abs_ms &start, const tripoint_abs_ms &end )
 {
     auto lock = std::lock_guard( g_deferred_zones_mutex );
     g_deferred_zones.push_back( { name, type, fac, invert, enabled, start, end } );
@@ -1283,8 +1284,8 @@ void flush_deferred_zones()
 }
 
 void zone_manager::add( const std::string &name, const zone_type_id &type, const faction_id &fac,
-                        const bool invert, const bool enabled, const tripoint &start,
-                        const tripoint &end, shared_ptr_fast<zone_options> options )
+                        const bool invert, const bool enabled, const tripoint_abs_ms &start,
+                        const tripoint_abs_ms &end, shared_ptr_fast<zone_options> options )
 {
     zone_data new_zone = zone_data( name, type, fac, invert, enabled, start, end,
                                     std::move( options ) );
@@ -1366,32 +1367,32 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
     if( turns == 0 ) {
         return;
     }
-    const auto a_start = target_map.bub_to_abs( tripoint_zero );
-    const auto a_end = target_map.bub_to_abs( tripoint( 23, 23, 0 ) );
+    const auto a_start = target_map.bub_to_abs( tripoint_bub_ms::zero() );
+    const auto a_end = target_map.bub_to_abs( tripoint_bub_ms( 23, 23, 0 ) );
     const point dim( 24, 24 );
     for( zone_data &zone : zones ) {
         const auto z_start = zone.get_start_point();
         const auto z_end = zone.get_end_point();
-        if( ( a_start.x <= z_start.x && a_start.y <= z_start.y ) &&
-            ( a_end.x > z_start.x && a_end.y >= z_start.y ) &&
-            ( a_start.x <= z_end.x && a_start.y <= z_end.y ) &&
-            ( a_end.x >= z_end.x && a_end.y >= z_end.y ) &&
-            ( a_start.z == z_start.z )
+        if( ( a_start.x() <= z_start.x() && a_start.y() <= z_start.y() ) &&
+            ( a_end.x() > z_start.x() && a_end.y() >= z_start.y() ) &&
+            ( a_start.x() <= z_end.x() && a_start.y() <= z_end.y() ) &&
+            ( a_end.x() >= z_end.x() && a_end.y() >= z_end.y() ) &&
+            ( a_start.z() == z_start.z() )
           ) {
             auto z_l_start3 = target_map.abs_to_bub( z_start );
             auto z_l_end3 = target_map.abs_to_bub( z_end );
             // don't rotate centered squares
-            if( z_l_start3.x == z_l_start3.y && z_l_end3.x == z_l_end3.y && z_l_start3.x + z_l_end3.x == 23 ) {
+            if( z_l_start3.x() == z_l_start3.y() && z_l_end3.x() == z_l_end3.y() && z_l_start3.x() + z_l_end3.x() == 23 ) {
                 continue;
             }
             auto z_l_start = z_l_start3.xy().rotate( turns, dim );
             auto z_l_end = z_l_end3.xy().rotate( turns, dim );
-            point new_z_start = target_map.bub_to_abs( z_l_start );
-            point new_z_end = target_map.bub_to_abs( z_l_end );
-            tripoint first = tripoint( std::min( new_z_start.x, new_z_end.x ),
-                                       std::min( new_z_start.y, new_z_end.y ), a_start.z );
-            tripoint second = tripoint( std::max( new_z_start.x, new_z_end.x ),
-                                        std::max( new_z_start.y, new_z_end.y ), a_end.z );
+            auto new_z_start = target_map.bub_to_abs( z_l_start );
+            auto new_z_end = target_map.bub_to_abs( z_l_end );
+            auto first = tripoint_abs_ms( std::min( new_z_start.x(), new_z_end.x() ),
+                                       std::min( new_z_start.y(), new_z_end.y() ), a_start.z() );
+            auto second = tripoint_abs_ms( std::max( new_z_start.x(), new_z_end.x() ),
+                                        std::max( new_z_start.y(), new_z_end.y() ), a_end.z() );
             zone.set_position( std::make_pair( first, second ), false );
         }
     }
@@ -1496,14 +1497,14 @@ void zone_data::deserialize( JsonIn &jsin )
     }
     //Legacy support
     if( data.has_member( "start_x" ) ) {
-        tripoint s;
-        tripoint e;
-        data.read( "start_x", s.x );
-        data.read( "start_y", s.y );
-        data.read( "start_z", s.z );
-        data.read( "end_x", e.x );
-        data.read( "end_y", e.y );
-        data.read( "end_z", e.z );
+        tripoint_abs_ms s;
+        tripoint_abs_ms e;
+        data.read( "start_x", s.x() );
+        data.read( "start_y", s.y() );
+        data.read( "start_z", s.z() );
+        data.read( "end_x", e.x() );
+        data.read( "end_y", e.y() );
+        data.read( "end_z", e.z() );
         start = s;
         end = e;
     } else {

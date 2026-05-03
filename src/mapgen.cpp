@@ -2825,7 +2825,7 @@ class jmapgen_zone : public jmapgen_piece
                   ) const override {
             const auto start = dat.m.bub_to_abs( tripoint_bub_ms( x.val, y.val, 0 ) );
             const auto end = dat.m.bub_to_abs( tripoint_bub_ms( x.valmax, y.valmax, 0 ) );
-            defer_zone_add( name, zone_type.get( dat ), faction.get( dat ), false, true, start.raw(),
+            defer_zone_add( name, zone_type.get( dat ), faction.get( dat ), false, true, start,
                             end.raw() );
         }
 

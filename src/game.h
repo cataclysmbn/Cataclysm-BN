@@ -138,7 +138,7 @@ enum peek_act : int {
 };
 
 struct look_around_result {
-    std::optional<tripoint> position;
+    std::optional<tripoint_bub_ms> position;
     std::optional<peek_act> peek_action;
 };
 
@@ -781,18 +781,18 @@ class game : public submap_load_listener
         // force also determines damage along with dam_mult;
         // stun determines base number of turns target is stunned regardless of impact
         // stun == 0 means no stun, stun == -1 indicates only impact stun (wall or npc/monster)
-        void knockback( const tripoint &s, const tripoint_bub_ms &t, int force, int stun, int dam_mult,
+        void knockback( const tripoint_bub_ms &s, const tripoint_bub_ms &t, int force, int stun, int dam_mult,
                         Creature *source );
-        void knockback( std::vector<tripoint> &traj, int stun, int dam_mult, Creature *source );
+        void knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult, Creature *source );
 
         // Animation related functions
-        void draw_bullet( const tripoint &t, int i, const std::vector<tripoint> &trajectory,
+        void draw_bullet( const tripoint_bub_ms &t, int i, const std::vector<tripoint_bub_ms> &trajectory,
                           char bullet, const std::string &custom_sprite = {} );
         void draw_hit_mon( const tripoint_bub_ms &p, const monster &m, bool dead = false );
         void draw_hit_player( const Character &p, int dam );
         void draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center_point,
-                        const std::vector<tripoint> &points, bool noreveal = false );
-        void draw_line( const tripoint_bub_ms &p, const std::vector<tripoint> &points );
+                        const std::vector<tripoint_bub_ms> &points, bool noreveal = false );
+        void draw_line( const tripoint_bub_ms &p, const std::vector<tripoint_bub_ms> &points );
         void draw_weather( const weather_printable &wPrint );
         void draw_sct();
         void draw_zones( const zone_draw_options &options );
