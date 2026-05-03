@@ -83,6 +83,40 @@ TEST_CASE( "projectiles_through_obstacles", "[projectile]" )
     CHECK( projectile_end_point( range, *gun_penetrating, 3 ) == range[0] );
 }
 
+TEST_CASE( "projectiles_stop_at_reality_bubble_edge", "[projectile][ballistics]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    const auto shooter_pos = tripoint( 2, 2, 0 );
+    const auto target_pos = tripoint( -1, 2, 0 );
+    const auto clear_points = std::vector<tripoint> { shooter_pos, tripoint( 1, 2, 0 ), tripoint( 0, 2, 0 ) };
+
+    for( const auto &pt : clear_points ) {
+        REQUIRE( here.inbounds( pt ) );
+        here.ter_set( pt, ter_id( "t_dirt" ) );
+        here.furn_set( pt, furn_id( "f_null" ) );
+    }
+
+    auto &shooter = get_avatar();
+    shooter.setpos( shooter_pos );
+    shooter.set_body();
+
+    auto gun_ptr = item::spawn( itype_id( "m1a" ) );
+    gun_ptr->ammo_set( itype_id( "308" ), 1 );
+    auto &gun = *gun_ptr;
+
+    auto test_proj = projectile {};
+    test_proj.speed = gun.gun_speed();
+    test_proj.range = 20;
+    test_proj.impact = gun.gun_damage();
+
+    const auto attack = projectile_attack(
+                            test_proj, shooter_pos, target_pos, dispersion_sources {}, &shooter, &gun );
+
+    CHECK( here.inbounds( attack.end_point ) );
+}
+
 TEST_CASE( "adjacent_friendly_fire_prevention", "[projectile][ballistics]" )
 {
     clear_all_state();
