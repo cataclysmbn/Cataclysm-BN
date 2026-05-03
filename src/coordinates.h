@@ -816,27 +816,27 @@ struct real_coords {
     static const int subs_in_om = OMAPX * 2;
     static const int subs_in_om_n = subs_in_om - 1;
 
-    point abs_pos;     // 1 per tile, starting from tile 0,0 of submap 0,0 of overmap 0,0
-    point abs_sub;     // submap: 12 tiles.
-    point abs_om;      // overmap: 360 submaps.
+    point_abs_ms abs_pos;     // 1 per tile, starting from tile 0,0 of submap 0,0 of overmap 0,0
+    point_abs_sm abs_sub;     // submap: 12 tiles.
+    point_abs_om abs_om;      // overmap: 360 submaps.
 
-    point sub_pos;     // coordinate (0-11) in submap / abs_pos constrained to % 12.
+    point_sm_ms sub_pos;     // coordinate (0-11) in submap / abs_pos constrained to % 12.
 
-    point om_pos;      // overmap tile: 2x2 submaps.
-    point om_sub;      // submap (0-359) in overmap / abs_sub constrained to % 360. equivalent to g->levx
+    point_om_ms om_pos;      // overmap tile: 2x2 submaps.
+    point_om_sm om_sub;      // submap (0-359) in overmap / abs_sub constrained to % 360. equivalent to g->levx
 
     real_coords() = default;
 
-    real_coords( point ap ) {
+    real_coords( point_abs_ms ap ) {
         fromabs( ap );
     }
 
-    void fromabs( point abs );
+    void fromabs( point_abs_ms abs );
 
     // specifically for the subjective position returned by overmap::draw
-    void fromomap( point rel_om, point rel_om_pos ) {
-        const point a = point( rel_om.x * OMAPX, rel_om.y * OMAPY ) + rel_om_pos;
-        fromabs( point( a.x * SEEX * 2, a.y * SEEY * 2 ) );
+    void fromomap( point_rel_om rel_om, point_rel_om rel_om_pos ) {
+        const point_rel_om a = point_rel_om( rel_om.x() * OMAPX, rel_om.y() * OMAPY ) + rel_om_pos;
+        fromabs( point_abs_ms( a.x() * SEEX * 2, a.y() * SEEY * 2 ) );
     }
 
     point_abs_omt abs_omt() const {
@@ -845,15 +845,15 @@ struct real_coords {
 
     // helper functions to return abs_pos of submap/overmap tile/overmap's start
 
-    point begin_sub() {
-        return point( abs_sub.x * tiles_in_sub, abs_sub.y * tiles_in_sub );
+    point_abs_sm begin_sub() {
+        return point_abs_sm( abs_sub.x() * tiles_in_sub, abs_sub.y() * tiles_in_sub );
     }
-    point begin_om_pos() {
-        return point( ( abs_om.x * subs_in_om * tiles_in_sub ) + ( om_pos.x * 2 * tiles_in_sub ),
-                      ( abs_om.y * subs_in_om * tiles_in_sub ) + ( om_pos.y * 2 * tiles_in_sub ) );
+    point_abs_om begin_om_pos() {
+        return point_abs_om( ( abs_om.x() * subs_in_om * tiles_in_sub ) + ( om_pos.x() * 2 * tiles_in_sub ),
+                      ( abs_om.y() * subs_in_om * tiles_in_sub ) + ( om_pos.y() * 2 * tiles_in_sub ) );
     }
-    point begin_om() {
-        return point( abs_om.x * subs_in_om * tiles_in_sub, abs_om.y * subs_in_om * tiles_in_sub );
+    point_abs_om begin_om() {
+        return point_abs_om( abs_om.x() * subs_in_om * tiles_in_sub, abs_om.y() * subs_in_om * tiles_in_sub );
     }
 };
 
@@ -865,6 +865,16 @@ struct real_coords {
 //   std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) { ... } );
 inline auto submap_tiles() -> point_range<point_sm_ms>
 {
-    return { point_sm_ms::zero(), point_sm_ms( SEEX - 1, SEEY - 1 ) };
+    return { point_sm_ms::zero(), point_sm_ms( coords::map_squares_per( coords::scale::submap ) - 1, coords::map_squares_per( coords::scale::submap ) - 1 ) };
+}
+
+inline auto overmap_terrain_tiles() -> point_range<point_omt_ms>
+{
+    return { point_omt_ms::zero(), point_omt_ms( coords::map_squares_per( coords::scale::overmap_terrain ) - 1, coords::map_squares_per( coords::scale::overmap_terrain ) - 1 ) };
+}
+
+inline auto overmap_tiles() -> point_range<point_om_ms>
+{
+    return { point_om_ms::zero(), point_om_ms( coords::map_squares_per( coords::scale::overmap ) - 1, coords::map_squares_per( coords::scale::overmap ) - 1 ) };
 }
 

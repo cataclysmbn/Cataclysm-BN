@@ -160,7 +160,7 @@ inline void proc_weather_sum( const weather_type_id wtype, weather_sum &data,
     data.sunlight += tick_sunlight * to_turns<int>( tick_size );
 }
 
-const weather_type_id &current_weather( const tripoint_bub_ms &location, const time_point &t )
+const weather_type_id &current_weather( const tripoint_abs_ms &location, const time_point &t )
 {
     const weather_manager &weather = get_weather();
     const auto wgen = weather.get_cur_weather_gen();
@@ -171,7 +171,7 @@ const weather_type_id &current_weather( const tripoint_bub_ms &location, const t
 }
 
 weather_sum sum_conditions( const time_point &start, const time_point &end,
-                            const tripoint_bub_ms &location )
+                            const tripoint_abs_ms &location )
 {
     time_duration tick_size = 0_turns;
     weather_sum data;
@@ -203,7 +203,7 @@ weather_sum sum_conditions( const time_point &start, const time_point &end,
  * Determine what a funnel has filled out of game, using funnelcontainer.bday as a starting point.
  */
 void retroactively_fill_from_funnel( item &it, const trap &tr, const time_point &start,
-                                     const time_point &end, const tripoint_bub_ms &pos )
+                                     const time_point &end, const tripoint_abs_ms &pos )
 {
     if( start > end || !tr.is_funnel() ) {
         return;
@@ -1003,7 +1003,7 @@ int get_local_humidity( double humidity, const weather_type_id &weather, bool sh
     return tmphumidity;
 }
 
-double get_local_windpower( double windpower, const oter_id &omter, const tripoint_bub_ms &location,
+double get_local_windpower( double windpower, const oter_id &omter, const tripoint_abs_ms &location,
                             const int &winddirection, bool sheltered )
 {
     /**
@@ -1014,7 +1014,7 @@ double get_local_windpower( double windpower, const oter_id &omter, const tripoi
     }
     rl_vec2d windvec = convert_wind_to_coord( winddirection );
     int tmpwind = static_cast<int>( windpower );
-    tripoint_bub_ms triblocker( location + point( windvec.x, windvec.y ) );
+    tripoint_abs_ms triblocker( location + point( windvec.x, windvec.y ) );
     // Over map terrain may modify the effect of wind.
     if( is_ot_match( "forest", omter, ot_match_type::type ) ||
         is_ot_match( "forest_water", omter, ot_match_type::type ) ) {
@@ -1024,7 +1024,7 @@ double get_local_windpower( double windpower, const oter_id &omter, const tripoi
         tmpwind = tmpwind + ( location.z() * std::min( 5, tmpwind ) );
     }
     // An adjacent wall will block wind
-    if( is_wind_blocker( triblocker ) ) {
+    if( is_wind_blocker( abs_to_bub( triblocker ) ) ) {
         tmpwind = tmpwind / 10;
     }
     return static_cast<double>( tmpwind );
@@ -1092,11 +1092,11 @@ rl_vec2d convert_wind_to_coord( const int angle )
     return rl_vec2d( 0, 0 );
 }
 
-bool warm_enough_to_plant( const tripoint &pos )
+bool warm_enough_to_plant( const tripoint_abs_ms &pos )
 {
     // semi-appropriate temperature for most plants
     // exclude underground areas as we check that later
-    return ( get_weather().get_temperature( pos ) >= 10_c || pos.z < 0 );
+    return ( get_weather().get_temperature( pos ) >= 10_c || pos.z() < 0 );
 }
 
 bool warm_enough_to_plant( const tripoint_abs_omt &pos )
@@ -1206,7 +1206,7 @@ void weather_manager::set_nextweather( time_point t )
     update_weather();
 }
 
-auto weather_manager::get_temperature( const tripoint_bub_ms &location ) const -> units::temperature
+auto weather_manager::get_temperature( const tripoint_abs_ms &location ) const -> units::temperature
 {
     const auto &cached = temperature_cache.find( location );
     if( cached != temperature_cache.end() ) {
@@ -1288,7 +1288,7 @@ units::temperature
     return units::from_celsius( base_temp_c );
 }
 
-auto weather_manager::get_water_temperature( const tripoint & ) const -> units::temperature
+auto weather_manager::get_water_temperature( const tripoint_abs_ms & ) const -> units::temperature
 {
     return water_temperature;
 }

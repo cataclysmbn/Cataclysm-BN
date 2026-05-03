@@ -327,7 +327,7 @@ void talk_function::goto_location( npc &p )
     }
     p.set_mission( NPC_MISSION_TRAVELLING );
     p.chatbin.first_topic = "TALK_FRIEND_GUARD";
-    p.guard_pos = tripoint_min;
+    p.guard_pos = tripoint_bub_ms::min();
     p.set_attitude( NPCATT_NULL );
 }
 
@@ -363,7 +363,7 @@ void talk_function::stop_guard( npc &p )
     }
     p.chatbin.first_topic = "TALK_FRIEND";
     p.goal = npc::no_goal_point;
-    p.guard_pos = tripoint_min;
+    p.guard_pos = tripoint_bub_ms::min();
 }
 
 void talk_function::wake_up( npc &p )

@@ -155,8 +155,8 @@ npc::npc()
     position = tripoint_bub_ms( -1, -1, 500 );
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
-    wanted_item_pos = tripoint_min;
-    guard_pos = tripoint_min;
+    wanted_item_pos = tripoint_bub_ms::min();
+    guard_pos = tripoint_bub_ms::min();
     goal = tripoint_abs_omt( tripoint_min );
     fetching_item = false;
     has_new_items = true;
@@ -2660,8 +2660,8 @@ void npc::reboot()
     path.clear();
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
-    wanted_item_pos = tripoint_min;
-    guard_pos = tripoint_min;
+    wanted_item_pos = tripoint_bub_ms::min();
+    guard_pos = tripoint_bub_ms::min();
     goal = no_goal_point;
     fetching_item = false;
     has_new_items = true;

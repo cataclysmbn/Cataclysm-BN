@@ -1862,7 +1862,7 @@ void activity_handlers::make_zlave_finish( player_activity *act, player *p )
 
 void activity_handlers::pickaxe_do_turn( player_activity *act, player * )
 {
-    const tripoint &pos = get_map().abs_to_bub( act->placement );
+    const auto &pos = get_map().abs_to_bub( act->placement );
     sfx::play_activity_sound( "tool", "pickaxe", sfx::get_heard_volume( pos ) );
     // each turn is too much
     if( calendar::once_every( 1_minutes ) ) {
@@ -1912,7 +1912,7 @@ void activity_handlers::pickaxe_finish( player_activity *act, player *p )
 void activity_handlers::pulp_do_turn( player_activity *act, player *p )
 {
     map &here = get_map();
-    const tripoint &pos = here.abs_to_bub( act->placement );
+    const auto &pos = here.abs_to_bub( act->placement );
 
     // Stabbing weapons are a lot less effective at pulping
     const int cut_power = std::max( p->primary_weapon().damage_melee( DT_CUT ),
@@ -3960,7 +3960,7 @@ void activity_handlers::chop_tree_do_turn( player_activity *act, player * )
 void activity_handlers::chop_tree_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    const tripoint &pos = here.abs_to_bub( act->placement );
+    const auto &pos = here.abs_to_bub( act->placement );
 
     tripoint direction;
     if( !p->is_npc() ) {
@@ -4058,7 +4058,7 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
 void activity_handlers::chop_logs_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    const tripoint &pos = here.abs_to_bub( act->placement );
+    const auto &pos = here.abs_to_bub( act->placement );
     int log_quan;
     int stick_quan;
     int splint_quan;
@@ -4155,7 +4155,7 @@ void activity_handlers::jackhammer_do_turn( player_activity *act, player * )
 void activity_handlers::jackhammer_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    const tripoint &pos = here.abs_to_bub( act->placement );
+    const auto &pos = here.abs_to_bub( act->placement );
 
     if( here.has_flag_furn( TFLAG_MINEABLE, pos ) ) {
         here.destroy_furn( pos, true );

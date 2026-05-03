@@ -6835,7 +6835,7 @@ void map::rotate( int turns, const bool setpos_safe )
 
     real_coords rc;
     const auto &abs_sub = get_abs_sub();
-    rc.fromabs( project_to<coords::ms>( abs_sub ).xy().raw() );
+    rc.fromabs( project_to<coords::ms>( abs_sub ).xy() );
 
     // TODO: This radius can be smaller - how small?
     const int radius = g_half_mapsize + 3;
@@ -6850,7 +6850,7 @@ void map::rotate( int turns, const bool setpos_safe )
         const auto local_sq = abs_to_bub( sq ).xy();
 
         real_coords np_rc;
-        np_rc.fromabs( sq.xy().raw() );
+        np_rc.fromabs( sq.xy() );
         // Note: We are rotating the entire overmap square (2x2 of submaps)
         if( np_rc.om_pos != rc.om_pos || sq.z() != abs_sub.z() ) {
             continue;
@@ -6861,10 +6861,10 @@ void map::rotate( int turns, const bool setpos_safe )
         // It could be rewritten to utilize the fact that rotation shouldn't cross overmaps
 
         point_sm_ms old( np_rc.sub_pos );
-        if( np_rc.om_sub.x % 2 != 0 ) {
+        if( np_rc.om_sub.x() % 2 != 0 ) {
             old.x() += SEEX;
         }
-        if( np_rc.om_sub.y % 2 != 0 ) {
+        if( np_rc.om_sub.y() % 2 != 0 ) {
             old.y() += SEEY;
         }
 

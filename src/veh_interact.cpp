@@ -237,7 +237,7 @@ veh_interact::veh_interact( vehicle &veh, point p )
     : dd( p ), veh( &veh ), main_context( "VEH_INTERACT" )
 {
     stored_view_offset = get_avatar().view_offset;
-    get_avatar().view_offset = tripoint_zero;
+    get_avatar().view_offset = tripoint_rel_ms::zero();
 
     // Only build the shapes map and the wheel list once
     for( const auto &e : vpart_info::all() ) {

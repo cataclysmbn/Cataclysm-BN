@@ -609,7 +609,7 @@ void editmap::draw_main_ui_overlay()
         tinymap &tmpmap = *tmpmap_ptr;
 #ifdef TILES
         if( use_tiles ) {
-            const point origin_p = target.xy() + point( 1 - SEEX, 1 - SEEY );
+            const auto origin_p = target.xy() + point( 1 - SEEX, 1 - SEEY );
             for( int x = 0; x < SEEX * 2; x++ ) {
                 for( int y = 0; y < SEEY * 2; y++ ) {
                     const tripoint_bub_ms tmp_p( x, y, target.z() );

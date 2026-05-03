@@ -99,7 +99,7 @@ auto get_vehicle_str_requirement( vehicle *veh ) -> int
 } // namespace
 
 
-bool game::grabbed_veh_move( const tripoint_bub_ms &dp )
+bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
 {
     const optional_vpart_position grabbed_vehicle_vp = m.veh_at( u.bub_pos() + u.grab_point );
     if( !grabbed_vehicle_vp ) {
@@ -128,7 +128,7 @@ bool game::grabbed_veh_move( const tripoint_bub_ms &dp )
         return false;
     }
 
-    tripoint dp_veh = -u.grab_point;
+    auto dp_veh = -u.grab_point;
     const auto prev_grab = u.grab_point;
     auto next_grab = u.grab_point;
 
@@ -137,16 +137,16 @@ bool game::grabbed_veh_move( const tripoint_bub_ms &dp )
     if( dp == prev_grab ) {
         // We are pushing in the direction of vehicle
         dp_veh = dp;
-    } else if( std::abs( dp.x + dp_veh.x ) != 2 && std::abs( dp.y + dp_veh.y ) != 2 ) {
+    } else if( std::abs( dp.x() + dp_veh.x() ) != 2 && std::abs( dp.y() + dp_veh.y() ) != 2 ) {
         // Not actually moving the vehicle, don't do the checks
         u.grab_point = -( dp + dp_veh );
         return false;
-    } else if( ( dp.x == prev_grab.x() || dp.y == prev_grab.y() ) &&
+    } else if( ( dp.x() == prev_grab.x() || dp.y() == prev_grab.y() ) &&
                next_grab.x() != 0 && next_grab.y() != 0 ) {
         // Zig-zag (or semi-zig-zag) pull: player is diagonal to vehicle
         // and moves away from it, but not directly away
-        dp_veh.x = dp.x == -dp_veh.x ? 0 : dp_veh.x;
-        dp_veh.y = dp.y == -dp_veh.y ? 0 : dp_veh.y;
+        dp_veh.x() = dp.x() == -dp_veh.x() ? 0 : dp_veh.x();
+        dp_veh.y() = dp.y() == -dp_veh.y() ? 0 : dp_veh.y();
 
         next_grab = -dp_veh;
         zigzag = true;

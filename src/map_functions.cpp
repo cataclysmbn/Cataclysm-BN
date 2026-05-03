@@ -14,7 +14,7 @@ namespace map_funcs
 {
 
 auto climbing_cost( const map &m, const tripoint_bub_ms &from,
-                    const tripoint &to ) -> std::optional<int>
+                    const tripoint_bub_ms &to ) -> std::optional<int>
 {
     // TODO: All sorts of mutations, equipment weight etc. for characters
     if( !m.valid_move( from, to, false, true ) ) {
@@ -27,10 +27,10 @@ auto climbing_cost( const map &m, const tripoint_bub_ms &from,
     return 50 + diff * 100;
 }
 
-void migo_nerve_cage_removal( map &m, const tripoint &p, bool spawn_damaged )
+void migo_nerve_cage_removal( map &m, const tripoint_bub_ms &p, bool spawn_damaged )
 {
     bool open = false;
-    for( const tripoint &tmp : m.points_in_radius( p, 12 ) ) {
+    for( const tripoint_bub_ms &tmp : m.points_in_radius( p, 12 ) ) {
         if( m.ter( tmp ) == ter_id( "t_wall_resin_cage" ) ) {
             m.ter_set( tmp, ter_id( "t_floor_resin" ) );
             open = true;

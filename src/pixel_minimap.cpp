@@ -500,7 +500,7 @@ void pixel_minimap::render_cache( const tripoint &center )
             continue;
         }
 
-        const tripoint sm_pos = rel_pos + sm_offset;
+        const auto sm_pos = rel_pos + sm_offset;
         const auto ms_pos = project_to<coords::ms>( sm_pos ) + ms_offset;
 
         const SDL_Rect chunk_rect = projector->get_chunk_rect( ms_pos.xy(), { SEEX, SEEY } );

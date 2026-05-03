@@ -39,7 +39,7 @@ enum astar_state {
 // stride_y is the total tile height of the loaded map.
 static int flat_index( const tripoint_bub_ms &p, int stride_y )
 {
-    return ( p.x * stride_y ) + p.y;
+    return ( p.x() * stride_y ) + p.y();
 }
 
 // Flattened 2D array representing a single z-level worth of pathfinding data.

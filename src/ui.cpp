@@ -1078,7 +1078,7 @@ void pointmenu_cb::impl_t::select( uilist *const menu )
     }
     last = menu->selected;
     if( menu->selected < 0 || menu->selected >= static_cast<int>( points.size() ) ) {
-        g->u.view_offset = tripoint_zero;
+        g->u.view_offset = tripoint_rel_ms::zero();
     } else {
         const tripoint &center = points[menu->selected];
         g->u.view_offset = center - g->u.bub_pos();

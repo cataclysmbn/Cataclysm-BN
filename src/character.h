@@ -2610,7 +2610,7 @@ class Character : public Creature, public location_visitable<Character>
         //sound
         int volume = 0;
         // Relative direction of a grab, add to posx, posy to get the coordinates of the grabbed thing.
-        tripoint_bub_ms grab_point = tripoint_bub_ms::zero();
+        tripoint_rel_ms grab_point = tripoint_rel_ms::zero();
 
 };
 

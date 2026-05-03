@@ -634,7 +634,7 @@ const inventory &Character::crafting_inventory( const tripoint &src_pos, int rad
 void Character::invalidate_crafting_inventory()
 {
     cached_time = calendar::before_time_starts;
-    cached_position = tripoint_min;
+    cached_position = tripoint_bub_ms::min();
 }
 
 void Character::make_craft( const recipe_id &id_to_make, int batch_size,
@@ -813,7 +813,7 @@ item *Character::start_craft( craft_command &command, const tripoint & )
     activity->values.push_back( static_cast<int>( bench.type ) );
     activity->values.push_back( 100 );
     activity->values.push_back( 0 );
-    activity->placement = tripoint_zero;
+    activity->placement = tripoint_bub_ms::zero();
 
     add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),

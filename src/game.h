@@ -304,8 +304,8 @@ class game : public submap_load_listener
         std::string get_dimension_prefix() const;
 
         /** Returns the other end of the stairs (if any). May query, affect u etc.  */
-        std::optional<tripoint> find_stairs( map &mp, int z_after, bool peeking );
-        std::optional<tripoint> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
+        std::optional<tripoint_bub_ms> find_stairs( map &mp, int z_after, bool peeking );
+        std::optional<tripoint_bub_ms> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
                 bool peeking );
         /** Actual z-level movement part of vertical_move. Doesn't include stair finding, traps etc. */
         void vertical_shift( int z_after );
@@ -646,8 +646,8 @@ class game : public submap_load_listener
         Creature *is_hostile_very_close();
         // Handles shifting coordinates transparently when moving between submaps.
         // Helper to make calling with a player pointer less verbose.
-        point update_map( Character &who );
-        point update_map( int &x, int &y );
+        point_rel_sm update_map( Character &who );
+        point_rel_sm update_map( point_bub_ms &p );
         void update_overmap_seen(); // Update which overmap tiles we can see
 
         void process_artifact( item &it, Character &who );
@@ -911,9 +911,9 @@ class game : public submap_load_listener
         /** Check for dangerous stuff at dest_loc, return false if the player decides
         not to step there */
         // Handle pushing during move, returns true if it handled the move
-        bool grabbed_move( const tripoint_bub_ms &dp );
-        bool grabbed_veh_move( const tripoint_bub_ms &dp );
-        bool grabbed_furn_move( const tripoint_bub_ms &dp );
+        bool grabbed_move( const tripoint_rel_ms &dp );
+        bool grabbed_veh_move( const tripoint_rel_ms &dp );
+        bool grabbed_furn_move( const tripoint_rel_ms &dp );
 
         void control_vehicle(); // Use vehicle controls  '^'
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
@@ -929,7 +929,7 @@ class game : public submap_load_listener
         void butcher(); // Butcher a corpse  'B'
     public:
         // Places the player at the specified point; hurts feet, lists items etc.
-        point_rel_ms place_player( const tripoint_bub_ms &dest );
+        point_rel_sm place_player( const tripoint_bub_ms &dest );
         void place_player_overmap( const tripoint_abs_omt &om_dest );
 
         unsigned int get_seed() const;

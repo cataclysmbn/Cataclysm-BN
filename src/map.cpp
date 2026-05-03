@@ -2036,7 +2036,7 @@ void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
     const furn_t &new_t = new_furniture.obj();
 
     // If player has grabbed this furniture and it's no longer grabbable, release the grab.
-    if( g->u.get_grab_type() == OBJECT_FURNITURE && g->u.grab_point == p && !new_t.is_movable() ) {
+    if( g->u.get_grab_type() == OBJECT_FURNITURE && g->u.grab_point + g->u.bub_pos() == p && !new_t.is_movable() ) {
         add_msg( _( "The %s you were grabbing is destroyed!" ), old_t.name() );
         g->u.grab( OBJECT_NONE );
     }
@@ -4158,7 +4158,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
         fungal_effects( *g, *this ).create_spores( p );
     }
     if( has_flag_furn( "MIGO_NERVE", p ) ) {
-        map_funcs::migo_nerve_cage_removal( *this, p.raw(), true );
+        map_funcs::migo_nerve_cage_removal( *this, p, true );
     }
     std::string soundfxvariant = furnid.id.str();
     const bool tent = !bash.tent_centers.empty();
@@ -5699,7 +5699,7 @@ void map::update_lum( item &loc, bool add )
     }
 }
 
-static bool process_map_items( item *item_ref, const tripoint &location,
+static bool process_map_items( item *item_ref, const tripoint_bub_ms &location,
                                const temperature_flag flag )
 {
     return item_ref->attempt_detach( [&location, &flag]( detached_ptr<item> &&it ) {
@@ -5914,7 +5914,7 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
             return;
         }
         const auto it = std::ranges::find_if( cargo_parts, [&]( const vpart_reference & part ) {
-            return active_item_ref->position() == cur_veh.mount_to_bubble( part.mount() ).raw();
+            return active_item_ref->position() == cur_veh.mount_to_bubble( part.mount() );
         } );
 
         if( it == cargo_parts.end() ) {
@@ -5938,7 +5938,7 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
                 flag = temperature_flag::TEMP_FREEZER;
             }
         }
-        if( !process_map_items( active_item_ref, item_loc.raw(), flag ) ) {
+        if( !process_map_items( active_item_ref, item_loc, flag ) ) {
             // If the item was NOT destroyed, we can skip the remainder,
             // which handles fallout from the vehicle being damaged.
             continue;
@@ -8503,7 +8503,7 @@ void map::fill_funnels( const tripoint_bub_ms &p, const time_point &since )
     }
     if( biggest_container != items.end() ) {
         retroactively_fill_from_funnel( **biggest_container, tr, since, calendar::turn,
-                                        bub_to_abs( p ).raw() );
+                                        bub_to_abs( p ) );
     }
 }
 
@@ -10334,7 +10334,7 @@ std::vector<item *> map::get_active_items_in_radius( const tripoint_bub_ms &cent
         std::vector<item *> items = type == special_item_type::none ? sm->active_items.get() :
                                     sm->active_items.get_special( type );
         for( const auto &elem : items ) {
-            if( rl_dist( elem->position(), center.raw() ) > radius ) {
+            if( rl_dist( elem->position(), center ) > radius ) {
                 continue;
             }
 
