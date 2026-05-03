@@ -235,7 +235,7 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
     const int dropCount = static_cast<int>( iEnd.x * iEnd.y * anim.factor );
     for( int i = 0; i < dropCount; i++ ) {
         const point iRand{ rng( iStart.x, iEnd.x - 1 ), rng( iStart.y, iEnd.y - 1 ) };
-        const point map( iRand + offset );
+        const point_bub_ms map( iRand + offset );
 
         if( !map_cache.inbounds( map ) ) {
             continue;
@@ -1926,11 +1926,11 @@ bool game::handle_action()
                     // so no rotation needed
                     pldrive( get_delta_from_movement_action( act, iso_rotate::no ) );
                 } else {
-                    point dest_delta = get_delta_from_movement_action( act, iso_rotate::yes );
+                    auto dest_delta = get_delta_from_movement_action( act, iso_rotate::yes );
                     if( auto_travel_mode && !u.is_auto_moving() ) {
                         for( int i = 0; i < SEEX; i++ ) {
-                            tripoint_bub_ms auto_travel_destination( u.posx() + dest_delta.x * ( SEEX - i ),
-                                                              u.posy() + dest_delta.y * ( SEEX - i ),
+                            tripoint_bub_ms auto_travel_destination( u.posx() + dest_delta.x() * ( SEEX - i ),
+                                                              u.posy() + dest_delta.y() * ( SEEX - i ),
                                                               u.posz() );
                             destination_preview = m.route( u.bub_pos(),
                                                            auto_travel_destination,
@@ -1943,7 +1943,7 @@ bool game::handle_action()
                             }
                         }
                         act = u.get_next_auto_move_direction();
-                        const point dest_next = get_delta_from_movement_action( act, iso_rotate::yes );
+                        const auto dest_next = get_delta_from_movement_action( act, iso_rotate::yes );
                         if( dest_next == point_zero ) {
                             u.clear_destination();
                         }

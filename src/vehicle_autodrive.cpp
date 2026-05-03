@@ -582,7 +582,7 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( orientation faci
     tileray tdir( angle );
     ret.tdir = tdir;
     std::map<int, std::pair<int, int>> extent_map;
-    const point pivot = driven_veh.pivot_point();
+    const auto pivot = driven_veh.pivot_point();
     for( const vehicle_part &part : driven_veh.parts ) {
         if( part.removed ) {
             continue;

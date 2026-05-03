@@ -3877,11 +3877,11 @@ void mattack::flame( monster *z, Creature *target )
     auto prev_point = z->bub_pos();
     for( auto &i : traj ) {
         if( here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
-            tripoint intervening = i;
+            auto intervening = i;
             if( one_in( 2 ) ) {
-                intervening.x = prev_point.x();
+                intervening.x() = prev_point.x();
             } else {
-                intervening.y = prev_point.y();
+                intervening.y() = prev_point.y();
             }
             if( here.hit_with_fire( tripoint( intervening.xy(), z->posz() ) ) ) {
                 if( g->u.sees( i ) ) {

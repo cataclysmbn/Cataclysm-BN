@@ -254,7 +254,7 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, i
             continue;
         }
 
-        const point mount = part.mount;
+        const auto mount = part.mount;
 
         // Calculate position relative to cursor
         // rotate(3) matches the rotation used in ASCII display_veh()

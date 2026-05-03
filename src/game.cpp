@@ -5556,7 +5556,7 @@ void game::overmap_npc_move()
 void game::knockback( const tripoint &s, const tripoint &t, int force, int stun, int dam_mult,
                       Creature *source )
 {
-    std::vector<tripoint> traj;
+    std::vector<tripoint_bub_ms> traj;
     traj.clear();
     traj = line_to( s, t, 0, 0 );
     traj.insert( traj.begin(), s ); // how annoying, line_to() doesn't include the originating point!
@@ -7990,22 +7990,22 @@ void game::zones_manager()
         wnoutrefresh( w_zones_options );
     };
 
-    std::optional<tripoint> zone_start;
-    std::optional<tripoint> zone_end;
+    std::optional<tripoint_bub_ms> zone_start;
+    std::optional<tripoint_bub_ms> zone_end;
     auto zone_blink = false;
     auto zone_cursor = false;
     auto current_zone_type = zone_type_id();
     shared_ptr_fast<const blueprint_options> current_bp_options;
     static const auto zone_construction_blueprint = zone_type_id( "CONSTRUCTION_BLUEPRINT" );
     auto zone_point_generator =
-    [&]( const tripoint & start, const tripoint & end ) -> std::vector<tripoint> {
+    [&]( const tripoint_bub_ms & start, const tripoint_bub_ms & end ) -> std::vector<tripoint_bub_ms> {
         if( current_zone_type == zone_construction_blueprint )
         {
             if( current_bp_options ) {
                 return current_bp_options->get_covered_points( start, end );
             }
         }
-        return std::vector<tripoint>();
+        return std::vector<tripoint_bub_ms>();
     };
     shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback( zone_callback_options{
         .zone_start = zone_start,
@@ -8017,14 +8017,14 @@ void game::zones_manager()
     add_draw_callback( zone_cb );
 
     auto query_position =
-    [&]() -> std::optional<std::pair<tripoint, tripoint>> {
+    [&]() -> std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> {
         on_out_of_scope invalidate_current_ui( [&]()
         {
             ui.mark_resize();
         } );
         restore_on_out_of_scope<bool> show_prev( show );
-        restore_on_out_of_scope<std::optional<tripoint>> zone_start_prev( zone_start );
-        restore_on_out_of_scope<std::optional<tripoint>> zone_end_prev( zone_end );
+        restore_on_out_of_scope<std::optional<tripoint_bub_ms>> zone_start_prev( zone_start );
+        restore_on_out_of_scope<std::optional<tripoint_bub_ms>> zone_end_prev( zone_end );
         restore_on_out_of_scope<bool> zone_cursor_prev( zone_cursor );
         show = false;
         zone_start = std::nullopt;
@@ -11390,7 +11390,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     }
 
     auto oldpos = u.bub_pos();
-    point submap_shift = place_player( dest_loc );
+    auto submap_shift = place_player( dest_loc );
     point ms_shift = project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift;
 
@@ -13466,7 +13466,7 @@ std::optional<tripoint> game::find_stairs( map &mp, const int z_after, bool peek
     tripoint_bub_ms omtile_align_end( omtile_align_start + point( -1 + omtilesz, -1 + omtilesz ) );
 
     // Try to find the stairs.
-    std::optional<tripoint> stairs;
+    std::optional<tripoint_bub_ms> stairs;
     int best = INT_MAX;
     if( !stairs.has_value() ) {
         for( const tripoint &dest : m.points_in_rectangle( omtile_align_start, omtile_align_end ) ) {
@@ -13709,23 +13709,23 @@ point game::update_map( Character &who )
 
 point game::update_map( int &x, int &y )
 {
-    point shift;
+    point_rel_sm shift;
 
     while( x < g_half_mapsize_x ) {
         x += SEEX;
-        shift.x--;
+        shift.x()--;
     }
     while( x >= g_half_mapsize_x + SEEX ) {
         x -= SEEX;
-        shift.x++;
+        shift.x()++;
     }
     while( y < g_half_mapsize_y ) {
         y += SEEY;
-        shift.y--;
+        shift.y()--;
     }
     while( y >= g_half_mapsize_y + SEEY ) {
         y -= SEEY;
-        shift.y++;
+        shift.y()++;
     }
 
     if( shift == point_zero ) {
@@ -13757,7 +13757,7 @@ point game::update_map( int &x, int &y )
     inclusive_rectangle<point> size_1( point( -1, -1 ), point( 1, 1 ) );
     point remaining_shift = shift;
     while( remaining_shift != point_zero ) {
-        point this_shift = clamp( remaining_shift, size_1 );
+        auto this_shift = clamp( remaining_shift, size_1 );
         m.shift( this_shift );
         remaining_shift -= this_shift;
     }

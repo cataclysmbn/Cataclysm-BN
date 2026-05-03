@@ -204,10 +204,10 @@ class blueprint_options : public zone_options, public mark_option
         bool query_at_creation() override;
         bool query() override;
 
-        auto get_covered_points( const tripoint &start,
-                                 const tripoint &end ) const -> std::vector<tripoint>;
-        auto has_inside( const tripoint &start, const tripoint &end,
-                         const tripoint &candidate ) const -> bool;
+        auto get_covered_points( const tripoint_bub_ms &start,
+                                 const tripoint_bub_ms &end ) const -> std::vector<tripoint_bub_ms>;
+        auto has_inside( const tripoint_bub_ms &start, const tripoint_bub_ms &end,
+                         const tripoint_bub_ms &candidate ) const -> bool;
 
         std::string get_zone_name_suggestion() const override;
 

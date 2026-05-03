@@ -248,8 +248,8 @@ void timed_event::per_turn()
         case TIMED_EVENT_WANTED: {
             // About once every 5 minutes. Suppress in classic zombie mode.
             if( g->get_levz() >= 0 && one_in( 50 ) && !get_option<bool>( "DISABLE_ROBOT_RESPONSE" ) ) {
-                point place = g->m.random_outdoor_tile();
-                if( place.x == -1 && place.y == -1 ) {
+                auto place = g->m.random_outdoor_tile();
+                if( place.x() == -1 && place.y() == -1 ) {
                     // We're safely indoors!
                     return;
                 }

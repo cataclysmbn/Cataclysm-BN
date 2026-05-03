@@ -375,7 +375,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
     double extend_to_range = no_overshoot ? range : proj_arg.range;
 
     auto target = target_arg;
-    std::vector<tripoint> trajectory;
+    std::vector<tripoint_bub_ms> trajectory;
     std::vector<std::pair<monster, const dealt_projectile_attack>> hit_monsters;
 
     if( aim.missed_by_tiles >= 1.0 ) {

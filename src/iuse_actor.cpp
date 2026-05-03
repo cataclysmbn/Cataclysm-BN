@@ -1360,7 +1360,7 @@ void place_npc_iuse::load( const JsonObject &obj )
 int place_npc_iuse::use( player &p, item &, bool, const tripoint_bub_ms & ) const
 {
     map &here = get_map();
-    std::optional<tripoint> target_pos;
+    std::optional<tripoint_bub_ms> target_pos;
     if( place_randomly ) {
         const tripoint_range<tripoint> target_range = points_in_radius( p.bub_pos(), 1 );
         target_pos = random_point( target_range, []( const tripoint & t ) {
@@ -6769,7 +6769,7 @@ auto iuse_flowerpot_plant::query_adjacent_pot( const player &who,
         return std::nullopt;
     }
 
-    std::optional<tripoint> pot_pos;
+    std::optional<tripoint_bub_ms> pot_pos;
     if( has_map_pots ) {
         const auto fn = [&]( const tripoint_bub_ms & p ) {
             bool ok = false;

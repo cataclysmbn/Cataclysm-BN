@@ -280,7 +280,7 @@ static bool mx_house_wasp( map &m, const tripoint_abs_sm &loc )
     }
     const int num_pods = rng( 8, 12 );
     for( int i = 0; i < num_pods; i++ ) {
-        const point pod{ rng( 1, SEEX * 2 - 2 ), rng( 1, SEEY * 2 - 2 ) };
+        const tripoint_bub_ms pod{ rng( 1, SEEX * 2 - 2 ), rng( 1, SEEY * 2 - 2 ) };
         point non;
         while( non.x == 0 && non.y == 0 ) {
             non.x = rng( -1, 1 );
@@ -808,7 +808,7 @@ static bool mx_portal( map &m, const tripoint_abs_sm &abs_sub )
     for( int i = 0; i < num_monsters; i++ ) {
         // Get a random location from our points that is not the portal location, does not have the
         // NO_FLOOR flag, and isn't currently occupied by a creature.
-        const std::optional<tripoint> mon_pos = random_point( points, [&]( const tripoint & p ) {
+        const auto mon_pos = random_point( points, [&]( const tripoint & p ) {
             /// TODO: wrong: this checks for creatures on the main game map. Not within the map m.
             return !m.has_flag_ter( TFLAG_NO_FLOOR, p ) && *portal_pos != p && !g->critter_at( p );
         } );
@@ -1355,20 +1355,20 @@ static bool mx_crater( map &m, const tripoint_abs_sm &abs_sub )
     int size_squared = size * size;
     int size_center = rng( 1, 3 );
     int size_center_squared = size_center * size_center;
-    point p{ rng( size, SEEX * 2 - 1 - size ), rng( size, SEEY * 2 - 1 - size ) };
-    for( int i = p.x - size; i <= p.x + size; i++ ) {
-        for( int j = p.y - size; j <= p.y + size; j++ ) {
+    tripoint_bub_ms p{ rng( size, SEEX * 2 - 1 - size ), rng( size, SEEY * 2 - 1 - size ) };
+    for( int i = p.x() - size; i <= p.x() + size; i++ ) {
+        for( int j = p.y() - size; j <= p.y() + size; j++ ) {
             //If we're using circular distances, make circular craters
             //Pythagoras to the rescue, x^2 + y^2 = hypotenuse^2
-            if( !trigdist || ( i - p.x ) * ( i - p.x ) + ( j - p.y ) * ( j - p.y ) <= size_squared ) {
+            if( !trigdist || ( i - p.x() ) * ( i - p.x() ) + ( j - p.y() ) * ( j - p.y() ) <= size_squared ) {
                 m.bash( tripoint( i,  j, abs_sub.z() ), 999, true );
             }
         }
     }
     //Hit 'em again
-    for( int i = p.x - size_center; i <= p.x + size_center; i++ ) {
-        for( int j = p.y - size_center; j <= p.y + size_center; j++ ) {
-            if( !trigdist || ( i - p.x ) * ( i - p.x ) + ( j - p.y ) * ( j - p.y ) <= size_center_squared ) {
+    for( int i = p.x() - size_center; i <= p.x() + size_center; i++ ) {
+        for( int j = p.y() - size_center; j <= p.y() + size_center; j++ ) {
+            if( !trigdist || ( i - p.x() ) * ( i - p.x() ) + ( j - p.y() ) * ( j - p.y() ) <= size_center_squared ) {
                 m.bash( tripoint( i,  j, abs_sub.z() ), 999, true );
             }
         }
@@ -1407,7 +1407,7 @@ static void place_fumarole( map &m, point p1, point p2, std::set<point> &ignited
 static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
 {
     const auto portal_location = { rng( 5, SEEX * 2 - 6 ), rng( 5, SEEX * 2 - 6 ), abs_sub.z() };
-    const point p( portal_location.xy() );
+    const point_bub_ms p( portal_location.xy() );
 
     switch( rng( 1, 7 ) ) {
         //Mycus spreading through the portal
@@ -1448,12 +1448,12 @@ static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
         case 4: {
             m.add_field( portal_location, fd_fatigue, 3 );
             const int rad = 10;
-            for( int i = p.x - rad; i <= p.x + rad; i++ ) {
-                for( int j = p.y - rad; j <= p.y + rad; j++ ) {
+            for( int i = p.x() - rad; i <= p.x() + rad; i++ ) {
+                for( int j = p.y() - rad; j <= p.y() + rad; j++ ) {
                     if( trig_dist( p, point( i, j ) ) + rng( 0, 3 ) <= rad ) {
                         const tripoint_abs_sm loc( i, j, abs_sub.z() );
                         dead_vegetation_parser( m, loc );
-                        m.adjust_radiation( loc.xy().raw(), rng( 20, 40 ) );
+                        m.adjust_radiation( loc.xy(), rng( 20, 40 ) );
                     }
                 }
             }
@@ -1512,7 +1512,7 @@ static bool mx_portal_in( map &m, const tripoint_abs_sm &abs_sub )
                 m.place_spawns( GROUP_MI_GO_CAMP_OM, 30, loc.xy() + point( -5, -5 ), loc.xy() + point( 5, 5 ), 1,
                                 true );
             }
-            const point pos{ p + point( rng( -5, 5 ), rng( -5, 5 ) ) };
+            const point_bub_ms pos{ p + point( rng( -5, 5 ), rng( -5, 5 ) ) };
             circle( &m, ter_id( "t_wall_resin" ), pos, 6 );
             rough_circle( &m, ter_id( "t_floor_resin" ), pos, 5 );
             break;
@@ -2537,7 +2537,7 @@ static bool mx_looters( map &m, const tripoint_abs_sm &abs_sub )
     //Spawn up to 5 hostile bandits with equal chance to be ranged or melee type
     const int num_looters = rng( 1, 5 );
     for( int i = 0; i < num_looters; i++ ) {
-        if( const std::optional<tripoint> pos_ = random_point( m.points_in_radius( center, rng( 1,
+        if( const auto pos_ = random_point( m.points_in_radius( center, rng( 1,
         4 ) ), [&]( const tripoint & p ) {
         return m.passable( p );
         } ) ) {

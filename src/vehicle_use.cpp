@@ -528,12 +528,12 @@ bool vehicle::interact_vehicle_locked()
                 //assign long activity
                 g->u.assign_activity( ACT_HOTWIRE_CAR, moves, -1, INT_MIN, _( "Hotwire" ) );
                 // use part 0 as the reference point
-                point q = coord_translate( parts[0].mount );
+                auto q = coord_translate( parts[0].mount );
                 const tripoint abs_veh_pos = global_square_location().raw();
                 //[0]
-                g->u.activity->values.push_back( abs_veh_pos.x + q.x );
+                g->u.activity->values.push_back( abs_veh_pos.x + q.x() );
                 //[1]
-                g->u.activity->values.push_back( abs_veh_pos.y + q.y );
+                g->u.activity->values.push_back( abs_veh_pos.y + q.y() );
                 //[2]
                 g->u.activity->values.push_back( g->u.get_skill_level( skill_mechanics ) );
             } else {
@@ -1822,7 +1822,7 @@ void vehicle::use_bike_rack( int part )
                 continue;
             }
             for( point mount_dir : five_cardinal_directions ) {
-                point near_loc = parts[ rack_part ].mount + mount_dir;
+                auto near_loc = parts[ rack_part ].mount + mount_dir;
                 std::vector<int> near_parts = parts_at_relative( near_loc, true );
                 if( near_parts.empty() ) {
                     continue;

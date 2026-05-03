@@ -411,7 +411,7 @@ void start_location::burn( const tripoint_abs_omt &omtstart, const size_t count,
     m.load( player_location, false );
     m.build_outside_cache( m.get_abs_sub().z() );
     const point u( g->u.bub_pos().x() % g_half_mapsize_x, g->u.bub_pos().y() % g_half_mapsize_y );
-    std::vector<tripoint> valid;
+    std::vector<tripoint_bub_ms> valid;
     for( const tripoint &p : m.points_on_zlevel() ) {
         if( !( m.has_flag_ter( "DOOR", p ) ||
                m.has_flag_ter( "OPENCLOSE_INSIDE", p ) ||

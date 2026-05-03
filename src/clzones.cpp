@@ -299,8 +299,8 @@ construction_id blueprint_options::get_final_construction(
     return id;
 }
 
-auto blueprint_options::get_covered_points( const tripoint &start,
-        const tripoint &end ) const -> std::vector<tripoint>
+auto blueprint_options::get_covered_points( const tripoint_bub_ms &start,
+        const tripoint_bub_ms &end ) const -> std::vector<tripoint_bub_ms>
 {
     const auto bounds = make_zone_bounds( start, end );
     const auto circle_layout = layout == blueprint_layout::circle_fill ||
@@ -313,7 +313,7 @@ auto blueprint_options::get_covered_points( const tripoint &start,
     }
 
     if( !circle_layout && border_only ) {
-        auto points = std::vector<tripoint>();
+        auto points = std::vector<tripoint_bub_ms>();
         const auto x_span = bounds.max.x - bounds.min.x + 1;
         const auto y_span = bounds.max.y - bounds.min.y + 1;
         const auto z_span = bounds.max.z - bounds.min.z + 1;
@@ -333,7 +333,7 @@ auto blueprint_options::get_covered_points( const tripoint &start,
 
     const auto shape = make_circle_shape( bounds, border_only );
     if( circle_layout && border_only ) {
-        auto fill_set = std::unordered_set<tripoint>();
+        auto fill_set = std::unordered_set<tripoint_bub_ms>();
         const auto circle_fill = make_circle_shape( bounds, false );
         for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
             for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
@@ -345,25 +345,25 @@ auto blueprint_options::get_covered_points( const tripoint &start,
                 }
             }
         }
-        auto border_set = std::unordered_set<tripoint>();
+        auto border_set = std::unordered_set<tripoint_bub_ms>();
         const auto neighbors = std::array<point, 8> {
             point_east, point_west, point_north, point_south,
             point_east + point_north, point_east + point_south,
             point_west + point_north, point_west + point_south
         };
-        std::ranges::for_each( fill_set, [&]( const tripoint & pt ) {
+        std::ranges::for_each( fill_set, [&]( const tripoint_bub_ms & pt ) {
             const bool at_edge = std::ranges::any_of( neighbors, [&]( const point & dir ) {
-                const tripoint neigh( pt.xy() + dir, pt.z );
+                const tripoint_bub_ms neigh( pt.xy() + dir, pt.z() );
                 return !fill_set.contains( neigh );
             } );
             if( at_edge ) {
                 border_set.insert( pt );
             }
         } );
-        return std::vector<tripoint>( border_set.begin(), border_set.end() );
+        return std::vector<tripoint_bub_ms>( border_set.begin(), border_set.end() );
     }
 
-    auto points = std::vector<tripoint>();
+    auto points = std::vector<tripoint_bub_ms>();
     const auto x_span = bounds.max.x - bounds.min.x + 1;
     const auto y_span = bounds.max.y - bounds.min.y + 1;
     const auto z_span = bounds.max.z - bounds.min.z + 1;
@@ -371,7 +371,7 @@ auto blueprint_options::get_covered_points( const tripoint &start,
     for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
         for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
             for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
-                const tripoint point( x, y, z );
+                const tripoint_bub_ms point( x, y, z );
                 if( point_in_circle( shape, point ) ) {
                     points.push_back( point );
                 }
@@ -1384,8 +1384,8 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
             if( z_l_start3.x == z_l_start3.y && z_l_end3.x == z_l_end3.y && z_l_start3.x + z_l_end3.x == 23 ) {
                 continue;
             }
-            point z_l_start = z_l_start3.xy().rotate( turns, dim );
-            point z_l_end = z_l_end3.xy().rotate( turns, dim );
+            auto z_l_start = z_l_start3.xy().rotate( turns, dim );
+            auto z_l_end = z_l_end3.xy().rotate( turns, dim );
             point new_z_start = target_map.bub_to_abs( z_l_start );
             point new_z_end = target_map.bub_to_abs( z_l_end );
             tripoint first = tripoint( std::min( new_z_start.x, new_z_end.x ),

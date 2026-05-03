@@ -156,7 +156,7 @@ bool repair_part( vehicle &veh, vehicle_part &pt, Character &who_c )
     bool wasbroken = pt.is_broken();
     if( wasbroken ) {
         const units::angle dir = pt.direction;
-        point loc = pt.mount;
+        auto loc = pt.mount;
         auto replacement_id = pt.info().get_id();
         get_map().spawn_items( who.bub_pos(), pt.pieces_for_broken_part() );
         veh.remove_part( part_index );

@@ -1413,7 +1413,7 @@ vehicle *vehicle::act_on_map()
                 // Compute this vehicle's submap footprint to avoid invalidating
                 // the entire z-level when it sinks.
                 const auto gpos = bub_ms_location();
-                point sink_sm_min = { INT_MAX, INT_MAX };
+                auto sink_sm_min = { INT_MAX, INT_MAX };
                 point sink_sm_max = { INT_MIN, INT_MIN };
                 std::ranges::for_each(
                 parts | std::views::filter( []( const auto & prt ) { return !prt.removed; } ),

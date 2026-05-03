@@ -172,11 +172,11 @@ void defense_game::pre_action( action_id &act )
         case ACTION_MOVE_BACK_LEFT:
         case ACTION_MOVE_LEFT:
         case ACTION_MOVE_FORTH_LEFT: {
-            const point delta = get_delta_from_movement_action( act, iso_rotate::yes );
-            if( ( delta.y < 0 && g->u.bub_pos().y() == g_half_mapsize_y && g->get_levy() <= 93 )
-                || ( delta.y > 0 && g->u.bub_pos().y() == g_half_mapsize_y + SEEY - 1 && g->get_levy() >= 98 )
-                || ( delta.x < 0 && g->u.bub_pos().x() == g_half_mapsize_x && g->get_levx() <= 93 )
-                || ( delta.x > 0 && g->u.bub_pos().x() == g_half_mapsize_x + SEEX - 1 && g->get_levx() >= 98 ) ) {
+            const auto delta = get_delta_from_movement_action( act, iso_rotate::yes );
+            if( ( delta.y() < 0 && g->u.bub_pos().y() == g_half_mapsize_y && g->get_levy() <= 93 )
+                || ( delta.y() > 0 && g->u.bub_pos().y() == g_half_mapsize_y + SEEY - 1 && g->get_levy() >= 98 )
+                || ( delta.x() < 0 && g->u.bub_pos().x() == g_half_mapsize_x && g->get_levx() <= 93 )
+                || ( delta.x() > 0 && g->u.bub_pos().x() == g_half_mapsize_x + SEEX - 1 && g->get_levx() >= 98 ) ) {
                 action_error_message = string_format( _( "You cannot leave the %s behind!" ),
                                                       defense_location_name( location ) );
             }

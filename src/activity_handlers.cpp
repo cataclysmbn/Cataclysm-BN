@@ -3147,7 +3147,7 @@ void activity_handlers::travel_do_turn( player_activity *act, player *p )
                 }
             }
         }
-        const std::vector<tripoint> route_to = here.route( p->bub_pos(), centre_sub,
+        const auto route_to = here.route( p->bub_pos(), centre_sub,
                                                p->get_legacy_pathfinding_settings(),
                                                p->get_legacy_path_avoid() );
         if( !route_to.empty() ) {
@@ -3367,7 +3367,7 @@ void activity_handlers::find_mount_do_turn( player_activity *act, player *p )
             return;
         }
     } else {
-        const std::vector<tripoint> route = route_adjacent( *p, guy.chosen_mount.lock()->pos() );
+        const auto route = route_adjacent( *p, guy.chosen_mount.lock()->pos() );
         if( route.empty() ) {
             act->set_to_null();
             guy.revert_after_activity();
@@ -4310,7 +4310,7 @@ static void perform_zone_activity_turn( player *p,
     for( const tripoint &tile : tiles ) {
         const tripoint &tile_loc = here.abs_to_bub( tile );
 
-        std::vector<tripoint> route = here.route( p->bub_pos(), tile_loc,
+        auto route = here.route( p->bub_pos(), tile_loc,
                                       p->get_legacy_pathfinding_settings(),
                                       p->get_legacy_path_avoid() );
         if( route.size() > 1 ) {

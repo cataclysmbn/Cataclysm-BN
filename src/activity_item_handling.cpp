@@ -2395,7 +2395,7 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
                     g->reload_npcs();
                     return;
                 }
-                std::vector<tripoint> route;
+                std::vector<tripoint_bub_ms> route;
                 route = here.route( p.bub_pos(), src_loc, p.get_legacy_pathfinding_settings(),
                                     p.get_legacy_path_avoid() );
                 if( route.empty() ) {
@@ -2428,7 +2428,7 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
             // before we move any item, check if player is at or
             // adjacent to the loot source tile
             if( !is_adjacent_or_closer ) {
-                std::vector<tripoint> route;
+                std::vector<tripoint_bub_ms> route;
                 bool adjacent = false;
 
                 // get either direct route or route to nearest adjacent tile if
@@ -3184,7 +3184,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                     for( const tripoint &elem : src_set ) {
                         local_src_set.push_back( here.abs_to_bub( elem ) );
                     }
-                    std::vector<tripoint> candidates;
+                    std::vector<tripoint_bub_ms> candidates;
                     for( const tripoint &point_elem : here.points_in_radius( src_loc, PICKUP_RANGE - 1 ) ) {
                         // we don't want to place the components where they could interfere with our ( or someone else's ) construction spots
                         if( !p.sees( point_elem ) || ( std::ranges::find( local_src_set,
@@ -3360,7 +3360,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
                 g->reload_npcs();
                 return false;
             }
-            const std::vector<tripoint> route = route_adjacent( p, src_loc );
+            const auto route = route_adjacent( p, src_loc );
             if( route.empty() ) {
                 const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
                                         activity_to_restore ) );
@@ -3397,7 +3397,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
         }
 
         if( square_dist( p.bub_pos(), src_loc ) > 1 ) {
-            std::vector<tripoint> route = route_adjacent( p, src_loc );
+            auto route = route_adjacent( p, src_loc );
             const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
                                     activity_to_restore ) );
 

@@ -2221,7 +2221,7 @@ void veh_interact::do_relabel()
  */
 int veh_interact::part_at( point d )
 {
-    const point vd = -dd + d.rotate( 1 );
+    const auto vd = -dd + d.rotate( 1 );
     return veh->part_displayed_at( vd );
 }
 
@@ -2255,7 +2255,7 @@ void veh_interact::move_cursor( point_rel_ms d, int dstart_at )
 
     // Update the current active component index to the new position.
     cpart = part_at( point_zero );
-    const point vd = -dd;
+    const auto vd = -dd;
     const point q = veh->coord_translate( vd );
     const auto vehp = veh->bub_ms_location() + q;
     const bool has_critter = g->critter_at( vehp );
@@ -2444,7 +2444,7 @@ void veh_interact::display_veh()
 
     const int hw = getmaxx( w_disp ) / 2;
     const int hh = getmaxy( w_disp ) / 2;
-    const point vd = -dd;
+    const auto vd = -dd;
     const point q = veh->coord_translate( vd );
     const auto vehp = veh->bub_ms_location() + q;
 
@@ -3222,7 +3222,7 @@ void veh_interact::complete_vehicle( Character &who )
     }
     vehicle *const veh = &vp->vehicle();
 
-    point d( who.activity->values[4], who.activity->values[5] );
+    tripoint_mnt_veh d( who.activity->values[4], who.activity->values[5] );
     int vehicle_part = who.activity->values[6];
     const vpart_id part_id( who.activity->str_values[0] );
 
@@ -3270,7 +3270,7 @@ void veh_interact::complete_vehicle( Character &who )
             int partnum = !base->is_null() ? veh->install_part( d, part_id,
                           std::move( base ) ) : -1;
             if( partnum < 0 ) {
-                debugmsg( "complete_vehicle install part fails dx=%d dy=%d id=%s", d.x, d.y, part_id.c_str() );
+                debugmsg( "complete_vehicle install part fails dx=%d dy=%d id=%s", d.x(), d.y(), part_id.c_str() );
                 break;
             }
 
@@ -3459,7 +3459,7 @@ void veh_interact::complete_vehicle( Character &who )
                 here.destroy_vehicle( veh );
                 here.reset_vehicle_cache( );
             } else {
-                point mount = veh->part( vehicle_part ).mount;
+                auto mount = veh->part( vehicle_part ).mount;
                 const auto &part_pos = veh->bub_part_location( vehicle_part );
                 veh->remove_part( vehicle_part );
                 // part_removal_cleanup calls refresh, so parts_at_relative is valid
