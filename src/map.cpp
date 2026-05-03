@@ -2036,7 +2036,8 @@ void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
     const furn_t &new_t = new_furniture.obj();
 
     // If player has grabbed this furniture and it's no longer grabbable, release the grab.
-    if( g->u.get_grab_type() == OBJECT_FURNITURE && g->u.grab_point + g->u.bub_pos() == p && !new_t.is_movable() ) {
+    if( g->u.get_grab_type() == OBJECT_FURNITURE && g->u.grab_point + g->u.bub_pos() == p &&
+        !new_t.is_movable() ) {
         add_msg( _( "The %s you were grabbing is destroyed!" ), old_t.name() );
         g->u.grab( OBJECT_NONE );
     }

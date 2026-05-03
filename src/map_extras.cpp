@@ -332,7 +332,8 @@ static bool mx_house_spider( map &m, const tripoint_abs_sm &loc )
             }
         }
     }
-    m.place_items( item_group_id( "rare" ), 60, tripoint_bub_ms::zero(), point( SEEX * 2 - 1, SEEY * 2 - 1 ), false,
+    m.place_items( item_group_id( "rare" ), 60, tripoint_bub_ms::zero(), point( SEEX * 2 - 1,
+                   SEEY * 2 - 1 ), false,
                    calendar::start_of_cataclysm );
 
     return true;

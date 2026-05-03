@@ -3170,7 +3170,8 @@ void npc::pick_up_item()
     }
 
     add_msg( m_debug, "%s::pick_up_item(); [%d, %d, %d] => [%d, %d, %d]", name,
-             bub_pos().x(), bub_pos().y(), bub_pos().z(), wanted_item_pos.x(), wanted_item_pos.y(), wanted_item_pos.z() );
+             bub_pos().x(), bub_pos().y(), bub_pos().z(), wanted_item_pos.x(), wanted_item_pos.y(),
+             wanted_item_pos.z() );
     if( const std::optional<tripoint> dest = nearest_passable( wanted_item_pos, bub_pos() ) ) {
         update_path( *dest );
     }

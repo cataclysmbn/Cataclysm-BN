@@ -205,7 +205,8 @@ void sounds::ambient_sound( const tripoint_bub_ms &p, int vol, sound_t category,
     sound( p, vol, category, description, true );
 }
 
-void sounds::sound( const tripoint_bub_ms &p, int vol, sound_t category, const std::string &description,
+void sounds::sound( const tripoint_bub_ms &p, int vol, sound_t category,
+                    const std::string &description,
                     bool ambient, const std::string &id, const std::string &variant )
 {
     if( vol < 0 ) {
@@ -223,7 +224,8 @@ void sounds::sound( const tripoint_bub_ms &p, int vol, sound_t category, const s
                                                  false, id, variant} );
 }
 
-void sounds::sound( const tripoint_bub_ms &p, int vol, sound_t category, const translation &description,
+void sounds::sound( const tripoint_bub_ms &p, int vol, sound_t category,
+                    const translation &description,
                     bool ambient, const std::string &id, const std::string &variant )
 {
     sounds::sound( p, vol, category, description.translated(), ambient, id, variant );
@@ -247,7 +249,8 @@ static void vector_quick_remove( std::vector<C> &source, int index )
     source.pop_back();
 }
 
-static std::vector<centroid> cluster_sounds( std::vector<std::pair<tripoint_bub_ms, int>> input_sounds )
+static std::vector<centroid> cluster_sounds( std::vector<std::pair<tripoint_bub_ms, int>>
+        input_sounds )
 {
     // If there are too many monsters and too many noise sources (which can be monsters, go figure),
     // applying sound events to monsters can dominate processing time for the whole game,
@@ -261,7 +264,8 @@ static std::vector<centroid> cluster_sounds( std::vector<std::pair<tripoint_bub_
         std::max( std::min( input_sounds.size(), static_cast<size_t>( 10 ) ),
                   static_cast<size_t>( std::log( input_sounds.size() ) ) );
     const size_t stopping_point = input_sounds.size() - num_seed_clusters;
-    const size_t max_map_distance = sound_distance( tripoint_bub_ms( point_bub_ms::zero(), OVERMAP_DEPTH ),
+    const size_t max_map_distance = sound_distance( tripoint_bub_ms( point_bub_ms::zero(),
+                                    OVERMAP_DEPTH ),
                                     tripoint_bub_ms( g_mapsize_x, g_mapsize_y, OVERMAP_HEIGHT ) );
     // Randomly choose cluster seeds.
     for( size_t i = input_sounds.size(); i > stopping_point; i-- ) {
@@ -1124,7 +1128,8 @@ struct sound_thread {
 };
 } // namespace sfx
 
-void sfx::generate_melee_sound( const tripoint_bub_ms &source, const tripoint_bub_ms &target, bool hit,
+void sfx::generate_melee_sound( const tripoint_bub_ms &source, const tripoint_bub_ms &target,
+                                bool hit,
                                 bool targ_mon,
                                 const std::string &material )
 {
@@ -1149,7 +1154,8 @@ void sfx::generate_melee_sound( const tripoint_bub_ms &source, const tripoint_bu
     }
 }
 
-sfx::sound_thread::sound_thread( const tripoint_bub_ms &source, const tripoint_bub_ms &target, const bool hit,
+sfx::sound_thread::sound_thread( const tripoint_bub_ms &source, const tripoint_bub_ms &target,
+                                 const bool hit,
                                  const bool targ_mon, const std::string &material )
     : hit( hit )
     , targ_mon( targ_mon )

@@ -777,7 +777,8 @@ void spell_effect::area_push( const spell &sp, Creature &caster, const tripoint 
     sp.make_sound( caster.bub_pos() );
 }
 
-static void character_push_effects( Creature *caster, Character &guy, const tripoint_bub_ms &push_dest,
+static void character_push_effects( Creature *caster, Character &guy,
+                                    const tripoint_bub_ms &push_dest,
                                     const int push_distance, const std::vector<tripoint> &push_vec )
 {
     int dist_left = std::abs( push_distance );

@@ -634,8 +634,9 @@ void mdeath::focused_beam( monster &z )
 
         item &settings = *z.get_items()[0];
 
-        point p2( z.bub_pos().x() + settings.get_var( "SL_SPOT_X", 0 ), z.bub_pos().y() + settings.get_var( "SL_SPOT_Y",
-                  0 ) );
+        point p2( z.bub_pos().x() + settings.get_var( "SL_SPOT_X", 0 ),
+                  z.bub_pos().y() + settings.get_var( "SL_SPOT_Y",
+                          0 ) );
         tripoint p( p2, z.bub_pos().z() );
 
         std::vector <tripoint> traj = line_to( z.bub_pos(), p, 0, 0 );

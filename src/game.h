@@ -630,7 +630,8 @@ class game : public submap_load_listener
          * @param fish_pos The location being fished.
          * @return A set of locations representing the valid contiguous fishable locations.
          */
-        std::unordered_set<tripoint_bub_ms>get_fishable_locations( int radius, const tripoint_bub_ms &fish_pos );
+        std::unordered_set<tripoint_bub_ms>get_fishable_locations( int radius,
+                const tripoint_bub_ms &fish_pos );
 
         /** Flings the input creature in the given direction. */
         void fling_creature( Creature *c, const units::angle &dir, float flvel, bool controlled = false );
@@ -647,7 +648,7 @@ class game : public submap_load_listener
         // Handles shifting coordinates transparently when moving between submaps.
         // Helper to make calling with a player pointer less verbose.
         point_rel_sm update_map( Character &who );
-        point_rel_sm update_map( int &x, int &y  );
+        point_rel_sm update_map( int &x, int &y );
         void update_overmap_seen(); // Update which overmap tiles we can see
 
         void process_artifact( item &it, Character &who );
@@ -962,7 +963,8 @@ class game : public submap_load_listener
                                  int column, int &line, int last_line );
         void print_visibility_info( const catacurses::window &w_look, int column, int &line,
                                     visibility_type visibility );
-        void print_items_info( const tripoint_bub_ms &lp, const catacurses::window &w_look, int column, int &line,
+        void print_items_info( const tripoint_bub_ms &lp, const catacurses::window &w_look, int column,
+                               int &line,
                                int last_line );
         void print_graffiti_info( const tripoint_bub_ms &lp, const catacurses::window &w_look, int column,
                                   int &line, int last_line );

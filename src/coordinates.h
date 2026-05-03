@@ -747,7 +747,8 @@ std::vector<coords::coord_point<Point, Origin, Scale>>
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
-static std::tuple<double, double, double> slope_of( const std::vector<coords::coord_point<Point, Origin, Scale>> &line )
+static std::tuple<double, double, double> slope_of( const
+        std::vector<coords::coord_point<Point, Origin, Scale>> &line )
 {
     assert( !line.empty() && line.front() != line.back() );
     const double len = trig_dist( line.front(), line.back() );
@@ -759,8 +760,10 @@ static std::tuple<double, double, double> slope_of( const std::vector<coords::co
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
-coords::coord_point<Point, Origin, Scale> move_along_line( const coords::coord_point<Point, Origin, Scale> &loc, const std::vector<coords::coord_point<Point, Origin, Scale>> &line,
-                          const int distance )
+coords::coord_point<Point, Origin, Scale> move_along_line( const
+        coords::coord_point<Point, Origin, Scale> &loc,
+        const std::vector<coords::coord_point<Point, Origin, Scale>> &line,
+        const int distance )
 {
     coords::coord_point<Point, Origin, Scale> res( loc );
     const auto slope = slope_of( line );
@@ -772,7 +775,8 @@ coords::coord_point<Point, Origin, Scale> move_along_line( const coords::coord_p
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 std::vector<coords::coord_point<Point, Origin, Scale>>
-        continue_line( const std::vector<coords::coord_point<Point, Origin, Scale>> &line, const int distance )
+        continue_line( const std::vector<coords::coord_point<Point, Origin, Scale>> &line,
+                       const int distance )
 {
     line_to( line.back(), move_along_line( line.back(), line, distance ) );
 }
@@ -823,7 +827,8 @@ struct real_coords {
     point_sm_ms sub_pos;     // coordinate (0-11) in submap / abs_pos constrained to % 12.
 
     point_om_ms om_pos;      // overmap tile: 2x2 submaps.
-    point_om_sm om_sub;      // submap (0-359) in overmap / abs_sub constrained to % 360. equivalent to g->levx
+    point_om_sm
+    om_sub;      // submap (0-359) in overmap / abs_sub constrained to % 360. equivalent to g->levx
 
     real_coords() = default;
 
@@ -850,10 +855,11 @@ struct real_coords {
     }
     point_abs_om begin_om_pos() {
         return point_abs_om( ( abs_om.x() * subs_in_om * tiles_in_sub ) + ( om_pos.x() * 2 * tiles_in_sub ),
-                      ( abs_om.y() * subs_in_om * tiles_in_sub ) + ( om_pos.y() * 2 * tiles_in_sub ) );
+                             ( abs_om.y() * subs_in_om * tiles_in_sub ) + ( om_pos.y() * 2 * tiles_in_sub ) );
     }
     point_abs_om begin_om() {
-        return point_abs_om( abs_om.x() * subs_in_om * tiles_in_sub, abs_om.y() * subs_in_om * tiles_in_sub );
+        return point_abs_om( abs_om.x() * subs_in_om * tiles_in_sub,
+                             abs_om.y() * subs_in_om * tiles_in_sub );
     }
 };
 

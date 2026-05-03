@@ -2554,7 +2554,8 @@ bool game::handle_mouseview( input_context &ctxt, std::string &action )
     return true;
 }
 
-std::pair<tripoint_rel_ms, tripoint_rel_ms> game::mouse_edge_scrolling( input_context &ctxt, const int speed,
+std::pair<tripoint_rel_ms, tripoint_rel_ms> game::mouse_edge_scrolling( input_context &ctxt,
+        const int speed,
         const tripoint_rel_ms &last, bool iso )
 {
     const int rate = get_option<int>( "EDGE_SCROLL" );
@@ -2607,11 +2608,13 @@ std::pair<tripoint_rel_ms, tripoint_rel_ms> game::mouse_edge_scrolling( input_co
     return ret;
 }
 
-std::pair<tripoint_rel_omt, tripoint_rel_omt> game::mouse_edge_scrolling( input_context &ctxt, const int speed,
+std::pair<tripoint_rel_omt, tripoint_rel_omt> game::mouse_edge_scrolling( input_context &ctxt,
+        const int speed,
         const tripoint_rel_omt &last, bool iso )
 {
     const auto ret = mouse_edge_scrolling( ctxt, speed, last.reinterpret_as<tripoint_rel_ms>(), iso );
-    return std::make_pair( ret.first.reinterpret_as<tripoint_rel_omt>(), ret.second.reinterpret_as<tripoint_rel_omt>() );
+    return std::make_pair( ret.first.reinterpret_as<tripoint_rel_omt>(),
+                           ret.second.reinterpret_as<tripoint_rel_omt>() );
 }
 
 tripoint_rel_ms game::mouse_edge_scrolling_terrain( input_context &ctxt )
@@ -4002,7 +4005,8 @@ void game::draw_ter( const tripoint_bub_ms &center, const bool looking, const bo
     m.draw( w_terrain, center );
 
     if( draw_sounds ) {
-        draw_footsteps( w_terrain, tripoint_rel_ms( -center.x(), -center.y(), center.z() ) + point_rel_ms( POSX, POSY ) );
+        draw_footsteps( w_terrain, tripoint_rel_ms( -center.x(), -center.y(),
+                        center.z() ) + point_rel_ms( POSX, POSY ) );
     }
 
     for( Creature &critter : all_creatures() ) {
@@ -4039,14 +4043,17 @@ std::optional<tripoint_rel_ms> game::get_veh_dir_indicator_location( bool next )
     vehicle *const veh = &vp->vehicle();
     rl_vec2d face = next ? veh->dir_vec() : veh->face_vec();
     float r = 10.0;
-    return tripoint_rel_ms( static_cast<int>( r * face.x ), static_cast<int>( r * face.y ), u.bub_pos().z() );
+    return tripoint_rel_ms( static_cast<int>( r * face.x ), static_cast<int>( r * face.y ),
+                            u.bub_pos().z() );
 }
 
 void game::draw_veh_dir_indicator( bool next )
 {
-    if( const std::optional<tripoint_rel_ms> indicator_offset = get_veh_dir_indicator_location( next ) ) {
+    if( const std::optional<tripoint_rel_ms> indicator_offset = get_veh_dir_indicator_location(
+                next ) ) {
         auto col = next ? c_white : c_dark_gray;
-        mvwputch( w_terrain, indicator_offset->xy().raw() - u.view_offset.xy().raw() + point( POSX, POSY ), col, 'X' );
+        mvwputch( w_terrain, indicator_offset->xy().raw() - u.view_offset.xy().raw() + point( POSX, POSY ),
+                  col, 'X' );
     }
 }
 
@@ -4278,7 +4285,8 @@ Creature *game::is_hostile_within( int distance )
     return nullptr;
 }
 //Gets Contiguious Fishable Terrain in radius starting from the tripoint
-std::unordered_set<tripoint_bub_ms> game::get_fishable_locations( int radius, const tripoint_bub_ms &fish_pos )
+std::unordered_set<tripoint_bub_ms> game::get_fishable_locations( int radius,
+        const tripoint_bub_ms &fish_pos )
 {
     // We're going to get the contiguous fishable terrain starting at
     // the provided fishing location (e.g. where a line was cast or a fish
@@ -4530,7 +4538,8 @@ void game::mon_info_update( )
     for( Creature *c : u.get_visible_creatures( g_mapsize_x ) ) {
         monster *m = dynamic_cast<monster *>( c );
         npc *p = dynamic_cast<npc *>( c );
-        const direction dir_to_mon = direction_from( view.xy(), point_bub_ms( c->bub_pos().x(), c->bub_pos().y() ) );
+        const direction dir_to_mon = direction_from( view.xy(), point_bub_ms( c->bub_pos().x(),
+                                     c->bub_pos().y() ) );
         const int mx = POSX + ( c->bub_pos().x() - view.x() );
         const int my = POSY + ( c->bub_pos().y() - view.y() );
         int index = 8;
@@ -5559,7 +5568,8 @@ void game::overmap_npc_move()
    stun > 0 indicates base stun duration, and causes impact stun; stun == -1 indicates only impact stun
    dam_mult multiplies impact damage, bash effect on impact, and sound level on impact */
 
-void game::knockback( const tripoint_bub_ms &s, const tripoint_bub_ms &t, int force, int stun, int dam_mult,
+void game::knockback( const tripoint_bub_ms &s, const tripoint_bub_ms &t, int force, int stun,
+                      int dam_mult,
                       Creature *source )
 {
     std::vector<tripoint_bub_ms> traj;
@@ -6018,7 +6028,8 @@ monster *game::place_critter_around( const shared_ptr_fast<monster> &mon,
     return critter_tracker->add( mon ) ? mon.get() : nullptr;
 }
 
-monster *game::place_critter_within( const mtype_id &id, const tripoint_range<tripoint_bub_ms> &range )
+monster *game::place_critter_within( const mtype_id &id,
+                                     const tripoint_range<tripoint_bub_ms> &range )
 {
     // TODO: change this into an assert, it must never happen.
     if( id.is_null() ) {
@@ -6530,7 +6541,8 @@ void game::moving_vehicle_dismount( const tripoint_bub_ms &dest_loc )
         debugmsg( "Need somewhere to dismount towards." );
         return;
     }
-    tileray ray( dest_loc.xy().reinterpret_as<point_rel_ms>() + point_rel_ms( -u.bub_pos().x(), -u.bub_pos().y() ) );
+    tileray ray( dest_loc.xy().reinterpret_as<point_rel_ms>() + point_rel_ms( -u.bub_pos().x(),
+                 -u.bub_pos().y() ) );
     // TODO:: make dir() const correct!
     const units::angle d = ray.dir();
     add_msg( _( "You dive from the %s." ), veh->name );
@@ -7108,8 +7120,8 @@ void game::examine()
     }
 
     const std::optional<tripoint_bub_ms> examp_ = choose_adjacent_highlight( _( "Examine where?" ),
-                                           _( "There is nothing that can be examined nearby." ),
-                                           ACTION_EXAMINE, false );
+            _( "There is nothing that can be examined nearby." ),
+            ACTION_EXAMINE, false );
     if( !examp_ ) {
         return;
     }
@@ -7339,8 +7351,8 @@ void game::examine( const tripoint_bub_ms &examp )
 void game::pickup()
 {
     const std::optional<tripoint_bub_ms> examp_ = choose_adjacent_highlight( _( "Pickup where?" ),
-                                           _( "There is nothing to pick up nearby." ),
-                                           ACTION_PICKUP, false );
+            _( "There is nothing to pick up nearby." ),
+            ACTION_PICKUP, false );
     if( !examp_ ) {
         return;
     }
@@ -7662,7 +7674,8 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
     ++line;
 }
 
-void game::print_fields_info( const tripoint_bub_ms &lp, const catacurses::window &w_look, int column,
+void game::print_fields_info( const tripoint_bub_ms &lp, const catacurses::window &w_look,
+                              int column,
                               int &line )
 {
     const field &tmpfield = m.field_at( lp );
@@ -8750,7 +8763,8 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
     bVMonsterLookFire = true;
 
     if( action == "CONFIRM" || action == "SELECT" ) {
-        result.position = is_moving_zone ? abs_to_bub( zone_start.value_or( tripoint_abs_ms::zero() ) ) : lp;
+        result.position = is_moving_zone ? abs_to_bub( zone_start.value_or( tripoint_abs_ms::zero() ) ) :
+                          lp;
     }
 
 #if defined(TILES)
@@ -12206,8 +12220,8 @@ void game::resize_reality_bubble_to( int new_size )
     // Reposition the player in the new (possibly different-sized) coordinate space
     // and compute the new top-left abs_sub so load_map centers on the player.
     u.setpos( tripoint_bub_ms( g_half_mapsize_x + player_within_sm.x,
-                        g_half_mapsize_y + player_within_sm.y,
-                        get_levz() ) );
+                               g_half_mapsize_y + player_within_sm.y,
+                               get_levz() ) );
     const tripoint_abs_sm new_abs_sub(
         player_abs_sm.x - g_half_mapsize,
         player_abs_sm.y - g_half_mapsize,
@@ -12543,7 +12557,8 @@ void game::fling_creature( Creature *c, const units::angle &dir, float flvel, bo
     }
 }
 
-static std::optional<tripoint_bub_ms> point_selection_menu( const std::vector<tripoint_bub_ms> &pts )
+static std::optional<tripoint_bub_ms> point_selection_menu( const std::vector<tripoint_bub_ms>
+        &pts )
 {
     if( pts.empty() ) {
         debugmsg( "point_selection_menu called with empty point set" );
@@ -12925,7 +12940,8 @@ void game::vertical_move( int movez, bool force, bool peeking )
     const bool special_move = climbing || swimming || can_fly;
 
     if( !force && !special_move ) {
-        const std::optional<tripoint_bub_ms> pnt = find_or_make_stairs( maybetmp, z_after, rope_ladder, peeking );
+        const std::optional<tripoint_bub_ms> pnt = find_or_make_stairs( maybetmp, z_after, rope_ladder,
+                peeking );
         if( !pnt ) {
             return;
         }
@@ -13521,7 +13537,8 @@ std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bo
 
     return stairs;
 }
-std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_after, bool &rope_ladder,
+std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_after,
+        bool &rope_ladder,
         bool peeking )
 {
     const int movez = z_after - u.bub_pos().z();

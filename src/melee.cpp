@@ -2432,13 +2432,15 @@ void player_hit_message( Character *attacker, const std::string &message,
     if( dam > 0 && attacker->is_player() ) {
         //player hits monster melee
         SCT.add( point( t.bub_pos().x(), t.bub_pos().y() ),
-                 direction_from( point_zero, point( t.bub_pos().x() - attacker->bub_pos().x(), t.bub_pos().y() - attacker->bub_pos().y() ) ),
+                 direction_from( point_zero, point( t.bub_pos().x() - attacker->bub_pos().x(),
+                                 t.bub_pos().y() - attacker->bub_pos().y() ) ),
                  get_hp_bar( dam, t.get_hp_max(), true ).first, m_good,
                  sSCTmod, gmtSCTcolor );
 
         if( t.get_hp() > 0 ) {
             SCT.add( point( t.bub_pos().x(), t.bub_pos().y() ),
-                     direction_from( point_zero, point( t.bub_pos().x() - attacker->bub_pos().x(), t.bub_pos().y() - attacker->bub_pos().y() ) ),
+                     direction_from( point_zero, point( t.bub_pos().x() - attacker->bub_pos().x(),
+                                     t.bub_pos().y() - attacker->bub_pos().y() ) ),
                      get_hp_bar( t.get_hp(), t.get_hp_max(), true ).first, m_good,
                      //~ "hit points", used in scrolling combat text
                      _( "hp" ), m_neutral,

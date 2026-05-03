@@ -3684,7 +3684,8 @@ int iuse::portal( player *p, item *it, bool, const tripoint & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    tripoint_bub_ms t( p->bub_pos().x() + rng( -2, 2 ), p->bub_pos().y() + rng( -2, 2 ), p->bub_pos().z() );
+    tripoint_bub_ms t( p->bub_pos().x() + rng( -2, 2 ), p->bub_pos().y() + rng( -2, 2 ),
+                       p->bub_pos().z() );
     g->m.trap_set( t, tr_portal );
     return it->type->charges_to_use();
 }

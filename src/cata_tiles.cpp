@@ -5956,7 +5956,8 @@ void cata_tiles::init_draw_below_override( const tripoint_bub_ms &p, const bool 
 {
     draw_below_override.emplace( p, draw );
 }
-void cata_tiles::init_draw_monster_override( const tripoint_bub_ms &p, const mtype_id &id, const int count,
+void cata_tiles::init_draw_monster_override( const tripoint_bub_ms &p, const mtype_id &id,
+        const int count,
         const bool more, const Attitude att )
 {
     monster_override.emplace( p, std::make_tuple( id, count, more, att ) );
