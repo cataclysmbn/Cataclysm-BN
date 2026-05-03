@@ -96,7 +96,7 @@ static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
 
 #define dbg(x) DebugLog((x), DC::SDL)
 
-bool avatar_action::move( avatar &you, map &m, const tripoint &d )
+bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
 {
     if( ( !g->check_safe_mode_allowed() ) || you.has_active_mutation( trait_SHELL2 ) ) {
         if( you.has_active_mutation( trait_SHELL2 ) ) {
@@ -106,7 +106,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     }
     const bool is_riding = you.is_mounted();
     tripoint_bub_ms dest_loc;
-    if( d.z == 0 && you.has_effect( effect_stunned ) ) {
+    if( d.z() == 0 && you.has_effect( effect_stunned ) ) {
         dest_loc.x() = rng( you.bub_pos().x() - 1, you.bub_pos().x() + 1 );
         dest_loc.y() = rng( you.bub_pos().y() - 1, you.bub_pos().y() + 1 );
         dest_loc.z() = you.bub_pos().z();
@@ -166,15 +166,15 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     }
 
     // If the player is *attempting to* move on the X axis, update facing direction of their sprite to match.
-    point new_d( dest_loc.xy() + point( -you.bub_pos().x(), -you.bub_pos().y() ) );
+    point_bub_ms new_d( dest_loc.xy() + point_rel_ms( -you.bub_pos().x(), -you.bub_pos().y() ) );
 
     if( !tile_iso ) {
-        if( new_d.x > 0 ) {
+        if( new_d.x() > 0 ) {
             you.facing = FD_RIGHT;
             if( is_riding ) {
                 you.mounted_creature->facing = FD_RIGHT;
             }
-        } else if( new_d.x < 0 ) {
+        } else if( new_d.x() < 0 ) {
             you.facing = FD_LEFT;
             if( is_riding ) {
                 you.mounted_creature->facing = FD_LEFT;
@@ -211,14 +211,14 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
         // y: left-up key       =>  __ -y       FD_LEFT
         // down key             =>  -x +y       ______
         //
-        if( new_d.x >= 0 && new_d.y >= 0 ) {
+        if( new_d.x() >= 0 && new_d.y() >= 0 ) {
             you.facing = FD_RIGHT;
             if( is_riding ) {
                 auto mons = you.mounted_creature.get();
                 mons->facing = FD_RIGHT;
             }
         }
-        if( new_d.y <= 0 && new_d.x <= 0 ) {
+        if( new_d.y() <= 0 && new_d.x() <= 0 ) {
             you.facing = FD_LEFT;
             if( is_riding ) {
                 auto mons = you.mounted_creature.get();
@@ -230,9 +230,9 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     if( you.has_effect( effect_amigara ) ) {
         int curdist = INT_MAX;
         int newdist = INT_MAX;
-        const auto minp = tripoint( 0, 0, you.bub_pos().z() );
-        const tripoint maxp = tripoint( g_mapsize_x, g_mapsize_y, you.bub_pos().z() );
-        for( const tripoint &pt : m.points_in_rectangle( minp, maxp ) ) {
+        const auto minp = tripoint_bub_ms( 0, 0, you.bub_pos().z() );
+        const auto maxp = tripoint_bub_ms( g_mapsize_x, g_mapsize_y, you.bub_pos().z() );
+        for( const auto &pt : m.points_in_rectangle( minp, maxp ) ) {
             if( m.ter( pt ) == t_fault ) {
                 int dist = rl_dist( pt, you.bub_pos() );
                 if( dist < curdist ) {
@@ -497,20 +497,20 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     return false;
 }
 
-bool avatar_action::ramp_move( avatar &you, map &m, const tripoint &dest_loc )
+bool avatar_action::ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest_loc )
 {
-    if( dest_loc.z != you.bub_pos().z() ) {
+    if( dest_loc.z() != you.bub_pos().z() ) {
         // No recursive ramp_moves
         return false;
     }
 
     // We're moving onto a tile with no support, check if it has a ramp below
     if( !m.has_floor_or_support( dest_loc ) ) {
-        tripoint_bub_ms below( dest_loc.xy(), dest_loc.z - 1 );
+        tripoint_bub_ms below( dest_loc.xy(), dest_loc.z() - 1 );
         if( m.has_flag( TFLAG_RAMP, below ) ) {
             // But we're moving onto one from above
             const auto dp = dest_loc - you.bub_pos();
-            move( you, m, tripoint( dp.xy(), -1 ) );
+            move( you, m, tripoint_rel_ms( dp.xy(), -1 ) );
             // No penalty for misaligned stairs here
             // Also cheaper than climbing up
             return true;
@@ -527,7 +527,7 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint &dest_loc )
     // Try to find an aligned end of the ramp that will make our climb faster
     // Basically, finish walking on the stairs instead of pulling self up by hand
     bool aligned_ramps = false;
-    for( const tripoint &pt : m.points_in_radius( you.bub_pos(), 1 ) ) {
+    for( const auto &pt : m.points_in_radius( you.bub_pos(), 1 ) ) {
         if( rl_dist( pt, dest_loc ) < 2 && m.has_flag( flag_RAMP_END, pt ) ) {
             aligned_ramps = true;
             break;
@@ -542,7 +542,7 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint &dest_loc )
 
     const auto dp = dest_loc - you.bub_pos();
     const auto old_pos = you.bub_pos();
-    move( you, m, tripoint( dp.xy(), 1 ) );
+    move( you, m, tripoint_rel_ms( dp.xy(), 1 ) );
     // We can't just take the result of the above function here
     if( you.bub_pos() != old_pos ) {
         you.moves -= 50 + ( aligned_ramps ? 0 : 50 );
@@ -676,7 +676,7 @@ void avatar_action::autoattack( avatar &you, map &m )
 
     const auto diff = best.bub_pos() - you.bub_pos();
     if( std::abs( diff.x() ) <= 1 && std::abs( diff.y() ) <= 1 && diff.z() == 0 ) {
-        move( you, m, tripoint( diff.xy(), 0 ) );
+        move( you, m, tripoint_rel_ms( diff.xy(), 0 ) );
         return;
     }
 
@@ -843,7 +843,7 @@ void avatar_action::fire_turret_manual( avatar &you, map &m, turret_data &turret
     target_handler::trajectory trajectory = target_handler::mode_turret_manual( you, turret );
 
     if( !trajectory.empty() ) {
-        turret.fire( you, trajectory.back() );
+        turret.fire( you, bub_to_abs( trajectory.back() ) );
     }
     g->reenter_fullscreen();
 }

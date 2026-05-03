@@ -1878,7 +1878,7 @@ class vehicle
 
         // Returns debug data to overlay on the screen, a vector of {map tile position
         // relative to vehicle pos, color and text}.
-        std::vector<std::tuple<point, int, std::string>> get_debug_overlay_data() const;
+        std::vector<std::tuple<point_bub_ms, int, std::string>> get_debug_overlay_data() const;
 };
 
 namespace rot

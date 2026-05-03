@@ -6,6 +6,7 @@
 #include <utility>
 #include <optional>
 
+#include "coordinates.h"
 #include "item_handling_util.h"
 
 struct tripoint;

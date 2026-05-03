@@ -81,7 +81,7 @@ static bool is_player_outside()
     if( g->get_levz() < 0 ) {
         return false;
     }
-    const tripoint_bub_ms &pos = get_player_character().pos();
+    const tripoint_bub_ms &pos = get_player_character().bub_pos();
     if( !get_map().is_outside( pos ) ) {
         return false;
     }
@@ -349,7 +349,7 @@ static void fill_water_collectors( int mmPerHour, bool acid )
     ZoneScopedN( "fill_water_collectors" );
     const auto abs_sub = g->m.get_abs_sub();
     auto &mbuf = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
-    std::ranges::for_each( g->m.get_funnel_locations(), [&]( const std::pair<tripoint, point> &entry ) {
+    std::ranges::for_each( g->m.get_funnel_locations(), [&]( const std::pair<tripoint_abs_sm, point_sm_ms> &entry ) {
         const auto sm_abs = tripoint_abs_sm( entry.first );
         const auto &lp = point_sm_ms( entry.second );
         auto *sm = mbuf.lookup_submap_in_memory( sm_abs );
@@ -367,7 +367,7 @@ static void fill_water_collectors( int mmPerHour, bool acid )
         // Put the rain in the largest container here which is either empty or
         // contains some mixture of impure water and acid.
         units::volume maxcontains = 0_ml;
-        map_stack items = g->m.i_at( loc );
+        map_stack items = g->m.i_at( abs_to_bub( loc ) );
         auto container = items.end();
         for( auto candidate = items.begin(); candidate != items.end(); ++candidate ) {
             if( ( *candidate )->is_funnel_container( maxcontains ) ) {
@@ -702,7 +702,7 @@ std::string weather_forecast( const point_abs_sm &abs_sm_pos )
     //weather_report += "Across <region>, skies ranged from <cloudiest> to <clearest>.  ";
     // TODO: Add fake reports for nearby cities
     // TODO: fix point types
-    const auto abs_ms_pos = tripoint( project_to<coords::ms>( abs_sm_pos ).raw(), 0 );
+    const auto abs_ms_pos = tripoint_abs_ms( project_to<coords::ms>( abs_sm_pos ), 0 );
 
     const time_point now_hour = calendar::turn - time_duration::from_minutes( minute_of_hour<int>
                                 ( calendar::turn ) );
@@ -1216,13 +1216,15 @@ auto weather_manager::get_temperature( const tripoint_abs_ms &location ) const -
     // local modifier
     int temp_mod = 0;
 
+    const auto local_pos = abs_to_bub( location );
+
     if( !g->new_game && !g->swapping_dimensions ) {
-        temp_mod += get_heat_radiation( location, false );
-        temp_mod += get_convection_temperature( location );
+        temp_mod += get_heat_radiation( local_pos, false );
+        temp_mod += get_convection_temperature( local_pos );
     }
 
     const int added_f = ( g->new_game || g->swapping_dimensions ) ? 0 :
-                        g->m.get_temperature( location ) + temp_mod;
+                        g->m.get_temperature( local_pos ) + temp_mod;
 
     // Calculate base temperature with underground influence
     units::temperature base_temp;
@@ -1263,7 +1265,7 @@ units::temperature
         return temperatures::annual_average;
     }
 
-    auto abs_ms = project_to<coords::ms>( location ).raw();
+    auto abs_ms = project_to<coords::ms>( location );
     w_point w = get_cur_weather_gen().get_weather( abs_ms, calendar::turn, g->get_seed() );
 
     if( location.z() >= 0 ) {

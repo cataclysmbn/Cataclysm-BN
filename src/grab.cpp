@@ -28,7 +28,7 @@ static const efftype_id effect_harnessed( "harnessed" );
 
 namespace
 {
-auto make_scraping_noise( const tripoint &pos, const int volume ) -> void
+auto make_scraping_noise( const tripoint_bub_ms &pos, const int volume ) -> void
 {
     sounds::sound( pos, volume, sounds::sound_t::movement,
                    _( "a scraping noise." ), true, "misc", "scraping" );
@@ -170,7 +170,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
     ///\EFFECT_STR determines ability to drag vehicles
     if( str_req <= str ) {
         if( !grabbed_vehicle->valid_wheel_config() && !grabbed_vehicle->has_sufficient_lift( true ) ) {
-            make_scraping_noise( grabbed_vehicle->bub_ms_location().raw(), str_req * 2 );
+            make_scraping_noise( grabbed_vehicle->bub_ms_location(), str_req * 2 );
         }
 
         //calculate exertion factor and movement penalty
@@ -196,7 +196,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
     }
 
     std::string blocker_name = _( "errors in movement code" );
-    const auto get_move_dir = [&]( const tripoint & dir, const tripoint & from ) {
+    const auto get_move_dir = [&]( const tripoint_rel_ms & dir, const tripoint_rel_ms & from ) {
         tileray mdir;
 
         mdir.init( dir.xy() );
@@ -211,7 +211,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
         const auto expected_pos = tripoint_bub_ms( u.bub_pos() ) + dp + from;
         const tripoint_rel_ms actual_dir = expected_pos - new_part_pos;
 
-        grabbed_vehicle->adjust_zlevel( 1, tripoint_rel_ms( dp ) );
+        grabbed_vehicle->adjust_zlevel( 1, dp );
 
         // Set player location to illegal value so it can't collide with vehicle.
         const auto player_prev = u.bub_pos();

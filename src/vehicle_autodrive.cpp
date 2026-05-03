@@ -343,7 +343,7 @@ class vehicle::autodrive_controller
         auto_navigation_data data;
 
         void compute_coordinates();
-        bool check_drivable( tripoint pt ) const;
+        bool check_drivable( tripoint_bub_ms pt ) const;
         void compute_obstacles();
         vehicle_profile compute_profile( orientation facing ) const;
         void compute_valid_positions();
@@ -587,14 +587,14 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( orientation faci
         if( part.removed ) {
             continue;
         }
-        tripoint pos;
+        tripoint_rel_ms pos;
         driven_veh.coord_translate( angle, pivot, part.mount, pos );
-        if( !extent_map.contains( pos.y ) ) {
-            extent_map[pos.y] = { pos.x, pos.x };
+        if( !extent_map.contains( pos.y() ) ) {
+            extent_map[pos.y()] = { pos.x(), pos.x() };
         } else {
-            auto &extent = extent_map[pos.y];
-            extent.first = std::min( extent.first, pos.x );
-            extent.second = std::max( extent.second, pos.x );
+            auto &extent = extent_map[pos.y()];
+            extent.first = std::min( extent.first, pos.x() );
+            extent.second = std::max( extent.second, pos.x() );
         }
     }
     for( const auto &extent : extent_map ) {
@@ -628,7 +628,7 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( orientation faci
 // Return true if the map tile at the given position (in map coordinates)
 // can be driven on (not an obstacle).
 // The logic should match what is in vehicle::part_collision().
-bool vehicle::autodrive_controller::check_drivable( tripoint pt ) const
+bool vehicle::autodrive_controller::check_drivable( tripoint_bub_ms pt ) const
 {
     const map &here = get_map();
 
@@ -725,7 +725,7 @@ void vehicle::autodrive_controller::compute_obstacles()
         for( int dy = 0; dy < NAV_VIEW_SIZE_Y; dy++ ) {
             // TODO: store z-values in the nav map and retrieve here (needed for ramp navigation)
             const auto abs_map_pt = data.view_to_map.transform( point( dx, dy ), data.current_omt.z() );
-            data.is_obstacle[dx][dy] = !check_drivable( here.abs_to_bub( abs_map_pt ) );
+            data.is_obstacle[dx][dy] = !check_drivable( here.abs_to_bub( tripoint_abs_ms( abs_map_pt ) ) );
         }
     }
 }
@@ -790,7 +790,7 @@ void vehicle::autodrive_controller::precompute_data()
 {
 
     const int MAX_SPEED_TPS = get_option<int>( "MAX_AUTODRIVE_SPEED" );
-    const tripoint_abs_omt current_omt = driven_veh.global_omt_location();
+    const tripoint_abs_omt current_omt = project_to<coords::omt>( driven_veh.abs_ms_location() );
     const tripoint_abs_omt next_omt = driver.omt_path.back();
     const tripoint_abs_omt next_next_omt = driver.omt_path.size() >= 2 ?
                                            driver.omt_path[driver.omt_path.size() - 2] : next_omt;
@@ -948,7 +948,7 @@ std::optional<std::vector<navigation_step>> vehicle::autodrive_controller::compu
     std::unordered_map<node_address, navigation_node, node_address_hasher> known_nodes;
     std::priority_queue<scored_address, std::vector<scored_address>, std::greater<>>
             open_set;
-    const tripoint_abs_ms veh_pos = driven_veh.global_square_location();
+    const tripoint_abs_ms veh_pos = driven_veh.abs_ms_location();
     const node_address start = data.nav_to_map.inverse().transform(
                                    veh_pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
     known_nodes.emplace( start, make_start_node( start, driven_veh ) );
@@ -1086,7 +1086,7 @@ std::optional<navigation_step> vehicle::autodrive_controller::compute_next_step(
 {
     precompute_data();
     const int MIN_SPEED_TPS = get_option<int>( "MIN_AUTODRIVE_SPEED" );
-    const tripoint_abs_ms veh_pos = driven_veh.global_square_location();
+    const tripoint_abs_ms veh_pos = driven_veh.abs_ms_location();
     while( !data.path.empty() && data.path.back().pos != veh_pos ) {
         data.path.pop_back();
     }
@@ -1109,16 +1109,16 @@ std::optional<navigation_step> vehicle::autodrive_controller::compute_next_step(
 }
 
 
-std::vector<std::tuple<point, int, std::string>> vehicle::get_debug_overlay_data() const
+std::vector<std::tuple<point_bub_ms, int, std::string>> vehicle::get_debug_overlay_data() const
 {
     static const std::vector<std::string> debug_what = { "valid_position", "omt" };
-    std::vector<std::tuple<point, int, std::string>> ret;
+    std::vector<std::tuple<point_bub_ms, int, std::string>> ret;
 
-    const tripoint_abs_ms veh_pos = global_square_location();
+    const tripoint_abs_ms veh_pos = abs_ms_location();
     if( autodrive_local_target != tripoint_abs_ms::zero() ) {
         ret.emplace_back( ( autodrive_local_target - veh_pos.raw() ).xy(), catacurses::red, "T" );
     }
-    for( point pt_elem : collision_check_points ) {
+    for( auto pt_elem : collision_check_points ) {
         ret.emplace_back( pt_elem - veh_pos.raw().xy(), catacurses::yellow, "C" );
     }
 
@@ -1202,7 +1202,7 @@ autodrive_result vehicle::do_autodrive( Character &driver )
         stop_autodriving( false );
         return autodrive_result::abort;
     }
-    const tripoint_abs_ms veh_pos = global_square_location();
+    const tripoint_abs_ms veh_pos = abs_ms_location();
     const tripoint_abs_omt veh_omt = project_to<coords::omt>( veh_pos );
     std::vector<tripoint_abs_omt> &omt_path = driver.omt_path;
     if( !omt_path.empty() && veh_omt == omt_path.back() ) {

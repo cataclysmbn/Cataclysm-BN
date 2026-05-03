@@ -115,7 +115,7 @@ units::temperature weather_generator::get_weather_temperature( const tripoint_ab
             calendar_config, seed ), t );
 }
 
-w_point weather_generator::get_weather( const tripoint &location, const time_point &t,
+w_point weather_generator::get_weather( const tripoint_abs_ms &location, const time_point &t,
                                         unsigned seed ) const
 {
     return get_weather( tripoint_abs_ms( location ), t, calendar::config, seed );
@@ -203,7 +203,7 @@ int weather_generator::forecast_priority( const weather_type_id &w ) const
     return std::distance( weather_types.begin(), it );
 }
 
-const weather_type_id &weather_generator::get_weather_conditions( const tripoint &location,
+const weather_type_id &weather_generator::get_weather_conditions( const tripoint_abs_ms &location,
         const time_point &t, unsigned seed ) const
 {
     w_point w( get_weather( location, t, seed ) );

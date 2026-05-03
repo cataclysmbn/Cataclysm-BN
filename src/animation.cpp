@@ -102,17 +102,17 @@ class wave_animation : public basic_animation
         }
 };
 
-bool is_point_visible( const tripoint &p, int margin = 0 )
+bool is_point_visible( const tripoint_bub_ms &p, int margin = 0 )
 {
     return g->is_in_viewport( p, margin ) && g->u.sees( p );
 }
 
-bool is_radius_visible( const tripoint &center, int radius )
+bool is_radius_visible( const tripoint_bub_ms &center, int radius )
 {
     return is_point_visible( center, -radius );
 }
 
-bool is_layer_visible( const std::map<tripoint, explosion_tile> &layer )
+bool is_layer_visible( const std::map<tripoint_bub_ms, explosion_tile> &layer )
 {
     return std::ranges::any_of( layer,
     []( const std::pair<tripoint, explosion_tile> &element ) {
@@ -205,7 +205,7 @@ void draw_custom_explosion_curses( game &g,
             for( const auto &pr : *it ) {
                 // update tripoint in relation to top left corner of curses window
                 // mvwputch already filters out of bounds coordinates
-                const tripoint p = pr.first - topleft;
+                const auto p = pr.first - topleft;
                 const explosion_neighbors ngh = pr.second.neighborhood;
                 const nc_color col = pr.second.color;
 
@@ -584,7 +584,7 @@ auto get_longest_trajectory_size( const std::vector<std::vector<tripoint>> &traj
 
 #if defined( TILES )
 auto append_line_points( const draw_bullet_trajectories_options &options,
-                         std::vector<tripoint> &points,
+                         std::vector<tripoint_bub_ms> &points,
                          std::vector<std::string> &sprites,
                          std::vector<int> &rotations ) -> void
 {
@@ -594,7 +594,7 @@ auto append_line_points( const draw_bullet_trajectories_options &options,
             continue;
         }
 
-        auto line_points = std::vector<tripoint>( trajectory.begin() + 1, trajectory.end() );
+        auto line_points = std::vector<tripoint_bub_ms>( trajectory.begin() + 1, trajectory.end() );
         for( size_t point_index = 0; point_index < line_points.size(); point_index++ ) {
             if( !is_point_visible( line_points[point_index] ) ) {
                 continue;
@@ -675,7 +675,7 @@ void draw_bullet_trajectories( const draw_bullet_trajectories_options &options )
 
     const auto sprite = get_bullet_sprite( options.bullet, options.custom_sprite );
     if( options.draw_as_line ) {
-        auto points = std::vector<tripoint> {};
+        auto points = std::vector<tripoint_bub_ms> {};
         auto sprites = std::vector<std::string> {};
         auto rotations = std::vector<int> {};
         append_line_points( options, points, sprites, rotations );
@@ -724,7 +724,7 @@ namespace
 {
 // short visual animation (player, monster, ...) (hit, dodge, ...)
 // cTile is a UTF-8 strings, and must be a single cell wide!
-void hit_animation( const avatar &u, const tripoint &center, nc_color cColor,
+void hit_animation( const avatar &u, const tripoint_bub_ms &center, nc_color cColor,
                     const std::string &cTile )
 {
     const tripoint init_pos = relative_view_pos( u, center );
@@ -747,7 +747,7 @@ void hit_animation( const avatar &u, const tripoint &center, nc_color cColor,
     }
 }
 
-void draw_hit_mon_curses( const tripoint &center, const monster &m, const avatar &u,
+void draw_hit_mon_curses( const tripoint_bub_ms &center, const monster &m, const avatar &u,
                           const bool dead )
 {
     hit_animation( u, center, red_background( m.type->color ), dead ? "%" : m.symbol() );
@@ -756,7 +756,7 @@ void draw_hit_mon_curses( const tripoint &center, const monster &m, const avatar
 } // namespace
 
 #if defined(TILES)
-void game::draw_hit_mon( const tripoint &p, const monster &m, const bool dead )
+void game::draw_hit_mon( const tripoint_bub_ms &p, const monster &m, const bool dead )
 {
     if( test_mode ) {
         // avoid segfault from null tilecontext in tests
@@ -892,7 +892,7 @@ void draw_line_curses( game &g, const std::vector<tripoint> &points )
         here.drawsq( g.w_terrain, p, drawsq_params().highlight( true ) );
     }
 
-    const tripoint p = points.empty() ? tripoint {POSX, POSY, 0} :
+    const auto p = points.empty() ? tripoint {POSX, POSY, 0} :
                        relative_view_pos( g.u, points.back() );
     mvwputch( g.w_terrain, p.xy(), c_white, 'X' );
 }
