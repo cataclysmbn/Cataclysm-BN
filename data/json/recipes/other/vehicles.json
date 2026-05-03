@@ -49,6 +49,29 @@
   },
   {
     "type": "recipe",
+    "result": "minireactor",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "electronics",
+    "skills_required": [ [ "mechanics", 6 ], [ "fabrication", 5 ] ],
+    "difficulty": 8,
+    "time": "8 h",
+    "book_learn": [ [ "recipe_lab_elec", 8 ], [ "recipe_mil_augs", 8 ], [ "textbook_robots", 8 ] ],
+    "using": [ [ "advanced_electronics_high_voltage", 1 ], [ "welding_standard", 20 ], [ "soldering_standard", 60 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SAW_M", "level": 2 } ],
+    "components": [
+      [ [ "compact_reactor_assembly", 1 ] ],
+      [ [ "plut_cell", 8 ] ],
+      [ [ "alloy_plate", 2 ] ],
+      [ [ "power_supply", 4 ] ],
+      [ [ "circuit", 6 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "scrap", 16 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "embryo_empty",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
