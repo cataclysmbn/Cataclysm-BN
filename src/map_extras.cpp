@@ -1368,7 +1368,8 @@ static bool mx_crater( map &m, const tripoint_abs_sm &abs_sub )
     //Hit 'em again
     for( int i = p.x() - size_center; i <= p.x() + size_center; i++ ) {
         for( int j = p.y() - size_center; j <= p.y() + size_center; j++ ) {
-            if( !trigdist || ( i - p.x() ) * ( i - p.x() ) + ( j - p.y() ) * ( j - p.y() ) <= size_center_squared ) {
+            if( !trigdist ||
+                ( i - p.x() ) * ( i - p.x() ) + ( j - p.y() ) * ( j - p.y() ) <= size_center_squared ) {
                 m.bash( tripoint( i,  j, abs_sub.z() ), 999, true );
             }
         }

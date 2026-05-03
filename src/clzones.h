@@ -303,7 +303,8 @@ class zone_data
         bool set_name();
         // returns true if type is changed
         bool set_type();
-        void set_position( const std::pair<tripoint_abs_ms, tripoint_abs_ms> &position, bool manual = true );
+        void set_position( const std::pair<tripoint_abs_ms, tripoint_abs_ms> &position,
+                           bool manual = true );
         void set_enabled( bool enabled_arg );
         void set_is_vehicle( bool is_vehicle_arg );
 
@@ -428,10 +429,11 @@ class zone_manager
                        const faction_id &fac = your_fac ) const;
         bool has_loot_dest_near( const tripoint_abs_ms &where ) const;
         bool custom_loot_has( const tripoint_abs_ms &where, const item *it ) const;
-        std::unordered_set<tripoint_abs_ms> get_near( const zone_type_id &type, const tripoint_abs_ms &where,
-                                               int range = MAX_DISTANCE, const item *it = nullptr, const faction_id &fac = your_fac ) const;
+        std::unordered_set<tripoint_abs_ms> get_near( const zone_type_id &type,
+                const tripoint_abs_ms &where,
+                int range = MAX_DISTANCE, const item *it = nullptr, const faction_id &fac = your_fac ) const;
         std::optional<tripoint_abs_ms> get_nearest( const zone_type_id &type, const tripoint_abs_ms &where,
-                                             int range = MAX_DISTANCE, const faction_id &fac = your_fac ) const;
+                int range = MAX_DISTANCE, const faction_id &fac = your_fac ) const;
         zone_type_id get_near_zone_type_for_item( const item &it, const tripoint_abs_ms &where,
                 int range = MAX_DISTANCE ) const;
         std::vector<zone_data> get_zones( const zone_type_id &type, const tripoint_abs_ms &where,

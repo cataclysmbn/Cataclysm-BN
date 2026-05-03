@@ -781,7 +781,8 @@ class game : public submap_load_listener
         // force also determines damage along with dam_mult;
         // stun determines base number of turns target is stunned regardless of impact
         // stun == 0 means no stun, stun == -1 indicates only impact stun (wall or npc/monster)
-        void knockback( const tripoint_bub_ms &s, const tripoint_bub_ms &t, int force, int stun, int dam_mult,
+        void knockback( const tripoint_bub_ms &s, const tripoint_bub_ms &t, int force, int stun,
+                        int dam_mult,
                         Creature *source );
         void knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult, Creature *source );
 

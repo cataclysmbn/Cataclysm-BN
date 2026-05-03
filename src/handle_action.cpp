@@ -1930,8 +1930,8 @@ bool game::handle_action()
                     if( auto_travel_mode && !u.is_auto_moving() ) {
                         for( int i = 0; i < SEEX; i++ ) {
                             tripoint_bub_ms auto_travel_destination( u.posx() + dest_delta.x() * ( SEEX - i ),
-                                                              u.posy() + dest_delta.y() * ( SEEX - i ),
-                                                              u.posz() );
+                                    u.posy() + dest_delta.y() * ( SEEX - i ),
+                                    u.posz() );
                             destination_preview = m.route( u.bub_pos(),
                                                            auto_travel_destination,
                                                            u.get_legacy_pathfinding_settings(),

@@ -109,9 +109,9 @@ auto make_zone_bounds( const tripoint_abs_ms &first, const tripoint_abs_ms &seco
 {
     return zone_bounds{
         tripoint_abs_ms( std::min( first.x(), second.x() ), std::min( first.y(), second.y() ),
-                  std::min( first.z(), second.z() ) ),
+                         std::min( first.z(), second.z() ) ),
         tripoint_abs_ms( std::max( first.x(), second.x() ), std::max( first.y(), second.y() ),
-                  std::max( first.z(), second.z() ) )
+                         std::max( first.z(), second.z() ) )
     };
 }
 
@@ -835,7 +835,8 @@ void zone_data::set_is_vehicle( const bool is_vehicle_arg )
 
 tripoint_abs_ms zone_data::get_center_point() const
 {
-    return tripoint_abs_ms( ( start.x() + end.x() ) / 2, ( start.y() + end.y() ) / 2, ( start.z() + end.z() ) / 2 );
+    return tripoint_abs_ms( ( start.x() + end.x() ) / 2, ( start.y() + end.y() ) / 2,
+                            ( start.z() + end.z() ) / 2 );
 }
 
 auto zone_data::has_inside( const tripoint_abs_ms &p ) const -> bool
@@ -1010,7 +1011,8 @@ bool zone_manager::has_loot_dest_near( const tripoint_abs_ms &where ) const
     return false;
 }
 
-const zone_data *zone_manager::get_zone_at( const tripoint_abs_ms &where, const zone_type_id &type ) const
+const zone_data *zone_manager::get_zone_at( const tripoint_abs_ms &where,
+        const zone_type_id &type ) const
 {
     for( const zone_data &zone : zones ) {
         if( zone.has_inside( where ) && zone.get_type() == type ) {
@@ -1077,7 +1079,8 @@ std::unordered_set<tripoint_abs_ms> zone_manager::get_near( const zone_type_id &
     return near_point_set;
 }
 
-std::optional<tripoint_abs_ms> zone_manager::get_nearest( const zone_type_id &type, const tripoint_abs_ms &where,
+std::optional<tripoint_abs_ms> zone_manager::get_nearest( const zone_type_id &type,
+        const tripoint_abs_ms &where,
         int range, const faction_id &fac ) const
 {
     if( range < 0 ) {
@@ -1382,7 +1385,8 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
             auto z_l_start3 = target_map.abs_to_bub( z_start );
             auto z_l_end3 = target_map.abs_to_bub( z_end );
             // don't rotate centered squares
-            if( z_l_start3.x() == z_l_start3.y() && z_l_end3.x() == z_l_end3.y() && z_l_start3.x() + z_l_end3.x() == 23 ) {
+            if( z_l_start3.x() == z_l_start3.y() && z_l_end3.x() == z_l_end3.y() &&
+                z_l_start3.x() + z_l_end3.x() == 23 ) {
                 continue;
             }
             auto z_l_start = z_l_start3.xy().rotate( turns, dim );
@@ -1390,9 +1394,9 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
             auto new_z_start = target_map.bub_to_abs( z_l_start );
             auto new_z_end = target_map.bub_to_abs( z_l_end );
             auto first = tripoint_abs_ms( std::min( new_z_start.x(), new_z_end.x() ),
-                                       std::min( new_z_start.y(), new_z_end.y() ), a_start.z() );
+                                          std::min( new_z_start.y(), new_z_end.y() ), a_start.z() );
             auto second = tripoint_abs_ms( std::max( new_z_start.x(), new_z_end.x() ),
-                                        std::max( new_z_start.y(), new_z_end.y() ), a_end.z() );
+                                           std::max( new_z_start.y(), new_z_end.y() ), a_end.z() );
             zone.set_position( std::make_pair( first, second ), false );
         }
     }

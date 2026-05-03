@@ -3148,8 +3148,8 @@ void activity_handlers::travel_do_turn( player_activity *act, player *p )
             }
         }
         const auto route_to = here.route( p->bub_pos(), centre_sub,
-                                               p->get_legacy_pathfinding_settings(),
-                                               p->get_legacy_path_avoid() );
+                                          p->get_legacy_pathfinding_settings(),
+                                          p->get_legacy_path_avoid() );
         if( !route_to.empty() ) {
             const activity_id act_travel = ACT_TRAVELLING;
             p->set_destination( route_to, std::make_unique<player_activity>( act_travel ) );
@@ -4311,8 +4311,8 @@ static void perform_zone_activity_turn( player *p,
         const tripoint &tile_loc = here.abs_to_bub( tile );
 
         auto route = here.route( p->bub_pos(), tile_loc,
-                                      p->get_legacy_pathfinding_settings(),
-                                      p->get_legacy_path_avoid() );
+                                 p->get_legacy_pathfinding_settings(),
+                                 p->get_legacy_path_avoid() );
         if( route.size() > 1 ) {
             route.pop_back();
 

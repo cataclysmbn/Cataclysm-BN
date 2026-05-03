@@ -765,8 +765,8 @@ bool mattack::shockstorm( monster *z )
         sfx::play_variant_sound( "fire_gun", "bio_lightning", sfx::get_heard_volume( z->bub_pos() ) );
     }
     tripoint_bub_ms tarp( target->posx() + rng( -1, 1 ) + rng( -1, 1 ),
-                   target->posy() + rng( -1, 1 ) + rng( -1, 1 ),
-                   target->posz() );
+                          target->posy() + rng( -1, 1 ) + rng( -1, 1 ),
+                          target->posz() );
     std::vector<tripoint> bolt = line_to( z->bub_pos(), tarp, 0, 0 );
     // Fill the LOS with electricity
     for( auto &i : bolt ) {

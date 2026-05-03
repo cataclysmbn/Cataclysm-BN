@@ -3739,7 +3739,8 @@ struct zone_callback_options {
     std::optional<tripoint_abs_ms> &zone_end;
     bool &zone_blink;
     bool &zone_cursor;
-    std::function<std::vector<tripoint_bub_ms>( const tripoint_abs_ms &, const tripoint_abs_ms & )> point_generator;
+    std::function<std::vector<tripoint_bub_ms>( const tripoint_abs_ms &, const tripoint_abs_ms & )>
+    point_generator;
     bool is_moving_zone = false;
 };
 
@@ -3757,7 +3758,8 @@ shared_ptr_fast<game::draw_callback_t>
         if( zone_cursor ) {
             if( is_moving_zone ) {
                 // Use midpoint function? At least this works, but it's ugly.
-                g->draw_cursor( abs_to_bub( tripoint_abs_ms( ( zone_start.value().raw() + zone_end.value().raw() ) / 2 ) ) );
+                g->draw_cursor( abs_to_bub( tripoint_abs_ms( ( zone_start.value().raw() + zone_end.value().raw() ) /
+                                            2 ) ) );
             } else {
                 if( zone_end ) {
                     g->draw_cursor( abs_to_bub( zone_end.value() ) );
@@ -8002,9 +8004,11 @@ void game::zones_manager()
         if( current_zone_type == zone_construction_blueprint )
         {
             if( current_bp_options ) {
-                const std::vector<tripoint_abs_ms> covered_points = current_bp_options->get_covered_points( start, end );
+                const std::vector<tripoint_abs_ms> covered_points = current_bp_options->get_covered_points( start,
+                        end );
                 std::vector<tripoint_bub_ms> points( covered_points.size() );
-                std::transform( covered_points.begin(), covered_points.end(), points.begin(), []( const tripoint_abs_ms &p ) {
+                std::transform( covered_points.begin(), covered_points.end(),
+                points.begin(), []( const tripoint_abs_ms & p ) {
                     return abs_to_bub( p );
                 } );
                 return points;
@@ -8395,7 +8399,8 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
 
     temp_exit_fullscreen();
 
-    auto lp = is_moving_zone ? tripoint_bub_ms( ( start_point.raw() + end_point.raw() ) / 2 ) : start_point; // cursor
+    auto lp = is_moving_zone ? tripoint_bub_ms( ( start_point.raw() + end_point.raw() ) / 2 ) :
+              start_point; // cursor
     int &lx = lp.x();
     int &ly = lp.y();
     int &lz = lp.z();
@@ -8701,7 +8706,7 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
         } else if( std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
             if( fast_scroll ) {
                 vec->x() *= soffset;
-                vec->y ()*= soffset;
+                vec->y() *= soffset;
             }
 
             lx = lx + vec->x();
@@ -14591,8 +14596,8 @@ void game::process_artifact( item &it, Character &who )
             case AEP_SMOKE:
                 if( one_in( 10 ) ) {
                     tripoint_bub_ms pt( who.bub_pos().x() + rng( -1, 1 ),
-                                 who.bub_pos().y() + rng( -1, 1 ),
-                                 who.bub_pos().z() );
+                                        who.bub_pos().y() + rng( -1, 1 ),
+                                        who.bub_pos().z() );
                     m.add_field( pt, fd_smoke, rng( 1, 3 ) );
                 }
                 break;

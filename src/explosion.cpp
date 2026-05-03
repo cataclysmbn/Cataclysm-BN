@@ -941,8 +941,8 @@ void ExplosionProcess::move_entity( const tripoint position,
             rl_vec2d new_position_vec = datum.position +
                                         rl_vec2d( cur_distance_travelled, 0.0 ).rotated( datum.angle );
             auto maybe_new_position = tripoint( static_cast<int>( new_position_vec.x ),
-                                                    static_cast<int>( new_position_vec.y ),
-                                                    position.z );
+                                                static_cast<int>( new_position_vec.y ),
+                                                position.z );
             if( !here.inbounds( maybe_new_position ) ||
                 here.impassable( maybe_new_position ) ||
                 ( is_mob && maybe_new_position != position && g->critter_at( maybe_new_position ) ) ||

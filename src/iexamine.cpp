@@ -5538,8 +5538,8 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
     switch( cmenu.ret ) {
         case ledge_action::jump_over: {
             tripoint_bub_ms dest( p.posx() + 2 * sgn( examp.x() - p.posx() ),
-                           p.posy() + 2 * sgn( examp.y() - p.posy() ),
-                           p.posz() );
+                                  p.posy() + 2 * sgn( examp.y() - p.posy() ),
+                                  p.posz() );
             if( p.get_str() < 4 ) {
                 add_msg( m_warning, _( "You are too weak to jump over an obstacle." ) );
             } else if( 100 * p.weight_carried() / p.weight_capacity() > 25 ) {
@@ -5674,8 +5674,8 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             } else {
                 for( int i = 1; i < success_range; i++ ) {
                     tripoint_bub_ms dest( p.posx() + i * sgn( examp.x() - p.posx() ),
-                                   p.posy() + i * sgn( examp.y() - p.posy() ),
-                                   p.posz() );
+                                          p.posy() + i * sgn( examp.y() - p.posy() ),
+                                          p.posz() );
 
                     g->m.ter_set( dest, t_web_bridge );
                 }
