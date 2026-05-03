@@ -34,7 +34,7 @@ bool teleport::teleport( Creature &critter, int min_distance, int max_distance, 
     const bool c_is_u = p != nullptr && p->is_avatar();
     int tries = 0;
     auto origin = critter.bub_pos();
-    tripoint new_pos = origin;
+    auto new_pos = origin;
     map &here = get_map();
     //The teleportee is dimensionally anchored so nothing happens
     if( p && ( p->worn_with_flag( json_flag_DIMENSIONAL_ANCHOR ) ||
@@ -45,8 +45,8 @@ bool teleport::teleport( Creature &critter, int min_distance, int max_distance, 
     do {
         int rangle = rng( 0, 360 );
         int rdistance = rng( min_distance, max_distance );
-        new_pos.x = origin.x() + rdistance * std::cos( rangle );
-        new_pos.y = origin.y() + rdistance * std::sin( rangle );
+        new_pos.x() = origin.x() + rdistance * std::cos( rangle );
+        new_pos.y() = origin.y() + rdistance * std::sin( rangle );
         tries++;
     } while( here.impassable( new_pos ) && tries < 20 );
     //handles teleporting into solids.

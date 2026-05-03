@@ -652,7 +652,7 @@ bool vehicle::autodrive_controller::check_drivable( tripoint pt ) const
         if( !driver.sees( pt ) ) {
             if( !driver.is_avatar() ) {
                 return false;
-            } else if( !driver.as_avatar()->has_memorized_tile_for_autodrive( pt_abs.raw() ) ) {
+            } else if( !driver.as_avatar()->has_memorized_tile_for_autodrive( pt_abs ) ) {
                 // apparently open air doesn't get memorized, so pretend it is or else
                 // we can't fly helicopters due to the many unseen tiles behind the driver
                 if( !( data.air_ok && here.ter( pt ) == t_open_air ) ) {

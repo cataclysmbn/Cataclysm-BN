@@ -105,11 +105,11 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
         return false;
     }
     const bool is_riding = you.is_mounted();
-    tripoint dest_loc;
+    tripoint_bub_ms dest_loc;
     if( d.z == 0 && you.has_effect( effect_stunned ) ) {
-        dest_loc.x = rng( you.posx() - 1, you.posx() + 1 );
-        dest_loc.y = rng( you.posy() - 1, you.posy() + 1 );
-        dest_loc.z = you.posz();
+        dest_loc.x() = rng( you.posx() - 1, you.posx() + 1 );
+        dest_loc.y() = rng( you.posy() - 1, you.posy() + 1 );
+        dest_loc.z() = you.posz();
     } else {
         dest_loc = you.bub_pos() + d;
     }
@@ -132,10 +132,10 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
 
     bool via_ramp = false;
     if( m.has_flag( TFLAG_RAMP_UP, dest_loc ) ) {
-        dest_loc.z += 1;
+        dest_loc.z() += 1;
         via_ramp = true;
     } else if( m.has_flag( TFLAG_RAMP_DOWN, dest_loc ) || can_use_ladder() ) {
-        dest_loc.z -= 1;
+        dest_loc.z() -= 1;
         via_ramp = true;
     }
 
@@ -230,7 +230,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     if( you.has_effect( effect_amigara ) ) {
         int curdist = INT_MAX;
         int newdist = INT_MAX;
-        const tripoint minp = tripoint( 0, 0, you.posz() );
+        const auto minp = tripoint( 0, 0, you.posz() );
         const tripoint maxp = tripoint( g_mapsize_x, g_mapsize_y, you.posz() );
         for( const tripoint &pt : m.points_in_rectangle( minp, maxp ) ) {
             if( m.ter( pt ) == t_fault ) {
@@ -466,7 +466,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     // Invalid move
     const bool waste_moves = ( you.is_blind() && you.clairvoyance() < 1 ) ||
                              you.has_effect( effect_stunned );
-    if( waste_moves || dest_loc.z != you.posz() ) {
+    if( waste_moves || dest_loc.z() != you.posz() ) {
         add_msg( _( "You bump into the %s!" ), m.obstacle_name( dest_loc ) );
         // Only lose movement if we're blind
         if( waste_moves ) {
@@ -506,7 +506,7 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint &dest_loc )
 
     // We're moving onto a tile with no support, check if it has a ramp below
     if( !m.has_floor_or_support( dest_loc ) ) {
-        tripoint below( dest_loc.xy(), dest_loc.z - 1 );
+        tripoint_bub_ms below( dest_loc.xy(), dest_loc.z - 1 );
         if( m.has_flag( TFLAG_RAMP, below ) ) {
             // But we're moving onto one from above
             const auto dp = dest_loc - you.bub_pos();
@@ -534,7 +534,7 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint &dest_loc )
         }
     }
 
-    const tripoint above_u( you.posx(), you.posy(), you.posz() + 1 );
+    const tripoint_bub_ms above_u( you.posx(), you.posy(), you.posz() + 1 );
     if( m.has_floor_or_support( above_u ) ) {
         add_msg( m_warning, _( "You can't climb here - there's a ceiling above." ) );
         return false;
@@ -1108,7 +1108,7 @@ void avatar_action::wield( item &loc )
     // Can't use loc.obtain() here because that would cause things to spill.
     item *to_wield = &loc;
     item_location_type location_type = loc.where();
-    tripoint pos = loc.position();
+    auto pos = loc.position();
     int worn_index = INT_MIN;
     if( u.is_worn( loc ) ) {
         auto ret = u.can_takeoff( loc );

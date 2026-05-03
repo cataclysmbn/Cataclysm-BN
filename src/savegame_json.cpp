@@ -154,14 +154,14 @@ static void deserialize( weak_ptr_fast<monster> &obj, JsonIn &jsin )
 {
     JsonObject data = jsin.get_object();
     data.allow_omitted_members();
-    tripoint temp_pos;
+    tripoint_bub_ms temp_pos;
 
     obj.reset();
     if( data.read( "monster_at", temp_pos ) ) {
         const auto monp = g->critter_tracker->find( temp_pos );
 
         if( monp == nullptr ) {
-            debugmsg( "no monster found at %d,%d,%d", temp_pos.x, temp_pos.y, temp_pos.z );
+            debugmsg( "no monster found at %d,%d,%d", temp_pos.x(), temp_pos.y(), temp_pos.z() );
             return;
         }
 

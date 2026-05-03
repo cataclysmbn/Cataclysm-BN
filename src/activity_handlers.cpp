@@ -406,7 +406,7 @@ void activity_handlers::burrow_do_turn( player_activity *act, player * )
 
 void activity_handlers::burrow_finish( player_activity *act, player *p )
 {
-    tripoint pos = act->placement; // make a copy to avoid use-after-free
+    auto pos = act->placement; // make a copy to avoid use-after-free
     map &here = get_map();
     if( p->is_avatar() ) {
         int act_exertion = act->moves_total;
@@ -1538,7 +1538,7 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, player *p )
         liquid_source_type source_type = static_cast<liquid_source_type>( act_ref.values.at( 0 ) );
         auto transfer = [source_type, &here,
                      &act_ref]( const std::function < detached_ptr<item>( detached_ptr<item> &&it ) > & cb ) {
-            tripoint pos = act_ref.coords.at( 0 );
+            auto pos = act_ref.coords.at( 0 );
             static const units::volume volume_per_second = units::from_liter( 4.0F / 6.0F );
             int charges;
             detached_ptr<item> source;
@@ -1874,7 +1874,7 @@ void activity_handlers::pickaxe_do_turn( player_activity *act, player * )
 void activity_handlers::pickaxe_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    const tripoint pos( here.abs_to_bub( act->placement ) );
+    const tripoint_bub_ms pos( here.abs_to_bub( act->placement ) );
     if( p->is_avatar() ) {
         int act_exertion = act->moves_total;
         // Troglodyte mutants can dig longer before tiring
@@ -2750,7 +2750,7 @@ void activity_handlers::repair_item_finish( player_activity *act, player *p )
     } else {
         ploc = &*act->targets[0];
     }
-    const tripoint hack_position = hack_type ? hack::get_position( *act ) : tripoint{};
+    const auto hack_position = hack_type ? hack::get_position( *act ) : tripoint{};
     const int hack_original_charges = fake_tool ? fake_tool->charges : 0;
 
     item *main_tool = nullptr;
@@ -3060,7 +3060,7 @@ void activity_handlers::toolmod_add_finish( player_activity *act, player *p )
 
 void activity_handlers::clear_rubble_finish( player_activity *act, player *p )
 {
-    const tripoint &pos = act->placement;
+    const auto &pos = act->placement;
     map &here = get_map();
     const map_bash_info &bash = here.furn( pos ).obj().bash;
     p->add_msg_if_player( m_info, _( "You clear up the %s." ),
@@ -3137,7 +3137,7 @@ void activity_handlers::travel_do_turn( player_activity *act, player *p )
         }
         map &here = get_map();
         // TODO: fix point types
-        auto centre_sub = here.abs_to_bub( waypoint.raw() );
+        auto centre_sub = here.abs_to_bub( waypoint );
         if( !here.passable( centre_sub ) ) {
             tripoint_range<tripoint> candidates = here.points_in_radius( centre_sub, 2 );
             for( const tripoint &elem : candidates ) {
@@ -3933,7 +3933,7 @@ void activity_handlers::pry_nails_do_turn( player_activity *act, player * )
 
 void activity_handlers::pry_nails_finish( player_activity *act, player *p )
 {
-    const tripoint &pnt = act->placement;
+    const auto &pnt = act->placement;
     map &here = get_map();
     const ter_id type = here.ter( pnt );
 
@@ -4203,7 +4203,7 @@ void activity_handlers::fill_pit_do_turn( player_activity *act, player * )
 
 void activity_handlers::fill_pit_finish( player_activity *act, player *p )
 {
-    const tripoint &pos = act->placement;
+    const auto &pos = act->placement;
     map &here = get_map();
     const ter_id ter = here.ter( pos );
     const ter_id old_ter = ter;

@@ -722,9 +722,9 @@ void Character::hardcoded_effects( effect &it )
         if( intense > 4 ) {
             // Once every 4 hours baseline, once every 2 hours max
             if( one_turn_in( 14_hours - ( intense * 90_minutes ) ) ) {
-                tripoint dest( 0, 0, posz() );
-                int &x = dest.x;
-                int &y = dest.y;
+                tripoint_bub_ms dest( 0, 0, posz() );
+                int &x = dest.x();
+                int &y = dest.y();
                 int tries = 0;
                 do {
                     x = posx() + rng( -4, 4 );

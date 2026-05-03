@@ -6602,7 +6602,7 @@ bool overmap::is_omt_generated( const tripoint_om_omt &loc ) const
 
     // TODO: fix point types
     const bool is_generated =
-        MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( global_sm_loc.raw() ) != nullptr;
+        MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( global_sm_loc ) != nullptr;
 
     return is_generated;
 }

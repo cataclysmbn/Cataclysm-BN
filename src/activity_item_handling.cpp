@@ -178,7 +178,7 @@ static void put_into_vehicle( Character &c, item_drop_reason reason,
 
     const tripoint_bub_ms where = veh.bub_part_location( part );
     map &here = get_map();
-    const std::string ter_name = here.name( where.raw() );
+    const std::string ter_name = here.name( where );
     int fallen_count = 0;
     bool into_vehicle = false;
 
@@ -206,7 +206,7 @@ static void put_into_vehicle( Character &c, item_drop_reason reason,
             }
             if( it ) {
                 fallen_count += it->count();
-                here.add_item_or_charges( where.raw(), std::move( it ) );
+                here.add_item_or_charges( where, std::move( it ) );
             }
         }
         obj.handle_pickup_ownership( c );
@@ -1487,7 +1487,7 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
                 continue;
             }
             // If the NPC has an activity - make sure they're not duplicating work.
-            tripoint guy_work_spot;
+            tripoint_bub_ms guy_work_spot;
             if( guy.has_player_activity() && guy.activity->placement != tripoint_min ) {
                 guy_work_spot = here.abs_to_bub( guy.activity->placement );
             }
@@ -2179,7 +2179,7 @@ static bool tidy_activity( player &p, const tripoint_bub_ms &src_loc,
     auto &mgr = zone_manager::get_manager();
     map &here = get_map();
     auto loot_abspos = here.bub_to_abs( src_loc );
-    tripoint loot_src_lot;
+    tripoint_bub_ms loot_src_lot;
     const auto &zone_src_set = mgr.get_near( zone_type_LOOT_UNSORTED, loot_abspos, distance );
     if( !zone_src_set.empty() ) {
         const auto &zone_src_sorted = get_sorted_tiles_by_distance( loot_abspos, zone_src_set );
@@ -2468,7 +2468,7 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
         }
     }
     if( stage == DO ) {
-        const tripoint &src = act.placement;
+        const auto &src = act.placement;
         const tripoint_bub_ms &src_loc = here.abs_to_bub( src );
 
         bool is_adjacent_or_closer = square_dist( p.bub_pos(), src_loc ) <= 1;
@@ -2732,7 +2732,7 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
     const auto abspos = here.bub_to_abs( localpos );
     if( act_id == ACT_TIDY_UP ) {
         dark_capable = true;
-        tripoint unsorted_spot;
+        tripoint_bub_ms unsorted_spot;
         std::unordered_set<tripoint> unsorted_set = mgr.get_near( zone_type_LOOT_UNSORTED, abspos,
                 ACTIVITY_SEARCH_DISTANCE );
         if( !unsorted_set.empty() ) {

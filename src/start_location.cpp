@@ -182,8 +182,8 @@ static void board_up( map &m, const tripoint_range<tripoint> &range )
         }
     }
     while( ( !furnitures1.empty() || !furnitures2.empty() ) && !boardables.empty() ) {
-        const tripoint fp = random_entry_removed( furnitures1.empty() ? furnitures2 : furnitures1 );
-        const tripoint bp = random_entry_removed( boardables );
+        const auto fp = random_entry_removed( furnitures1.empty() ? furnitures2 : furnitures1 );
+        const auto bp = random_entry_removed( boardables );
         m.furn_set( bp, m.furn( fp ) );
         m.furn_set( fp, f_null );
         auto destination_items = m.i_at( bp );
@@ -274,7 +274,7 @@ void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
     const tripoint_abs_sm player_location = project_to<coords::sm>( omtstart );
     tinymap player_start;
     // TODO: fix point types
-    player_start.load( player_location.raw(), false );
+    player_start.load( player_location, false );
     prepare_map( player_start );
 }
 
@@ -318,7 +318,7 @@ static int rate_location( map &m, const tripoint &p, const bool must_be_inside,
     int area = 0;
     while( !st.empty() ) {
         area++;
-        const tripoint cur = st.back();
+        const auto cur = st.back();
         st.pop_back();
 
         checked[cur.x * checked_sy + cur.y] = attempt;
@@ -329,7 +329,7 @@ static int rate_location( map &m, const tripoint &p, const bool must_be_inside,
         }
 
         for( const tripoint &delta : eight_horizontal_neighbors ) {
-            tripoint pt = cur + delta;
+            auto pt = cur + delta;
             pt.z = p.z;
             maybe_add( pt, cur );
         }

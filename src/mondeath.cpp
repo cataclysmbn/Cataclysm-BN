@@ -140,7 +140,7 @@ static void scatter_chunks( const itype_id &chunk_name, int chunk_amt, monster &
     map &here = get_map();
     for( int i = 0; i < chunk_amt; i += pile_size ) {
         bool drop_chunks = true;
-        tripoint tarp( z.bub_pos() + point_rel_ms( rng( -distance, distance ), rng( -distance,
+        tripoint_bub_ms tarp( z.bub_pos() + point_rel_ms( rng( -distance, distance ), rng( -distance,
                        distance ) ) );
         const auto traj = line_to( z.bub_pos(), tarp );
         auto prev_point = z.bub_pos();
@@ -150,9 +150,9 @@ static void scatter_chunks( const itype_id &chunk_name, int chunk_amt, monster &
             bool obstructed = false;
             if( here.obstructed_by_vehicle_rotation( prev_point, tarp ) ) {
                 if( one_in( 2 ) ) {
-                    tarp.x = prev_point.x();
+                    tarp.x() = prev_point.x();
                 } else {
-                    tarp.y = prev_point.y();
+                    tarp.y() = prev_point.y();
                 }
                 obstructed = true;
             }

@@ -759,7 +759,7 @@ void vehicle::use_controls( const tripoint_bub_ms &pos )
                 } else if( engine_on && has_engine_type_not( fuel_type_muscle, true ) )
                 {
                     add_msg( _( "You turn the engine off and let go of the controls." ) );
-                    sounds::sound( pos.raw(), 2, sounds::sound_t::movement,
+                    sounds::sound( pos, 2, sounds::sound_t::movement,
                                    _( "the engine go silent" ) );
                 } else
                 {
@@ -801,7 +801,7 @@ void vehicle::use_controls( const tripoint_bub_ms &pos )
                 if( engine_on )
                 {
                     engine_on = false;
-                    sounds::sound( pos.raw(), 2, sounds::sound_t::movement,
+                    sounds::sound( pos, 2, sounds::sound_t::movement,
                                    _( "the engine go silent" ) );
                     stop_engines();
                 } else
@@ -1108,7 +1108,7 @@ bool vehicle::start_engine( const int e )
     const int start_moves = engine_start_time( e );
     const int noise = einfo.engine_noise_factor();
 
-    const tripoint pos = bub_part_location( engines[e] );
+    const auto pos = bub_part_location( engines[e] );
     if( einfo.engine_backfire_threshold() ) {
         if( ( 1 - dmg ) < einfo.engine_backfire_threshold() && one_in( einfo.engine_backfire_freq() ) ) {
             backfire( e );
@@ -1385,12 +1385,12 @@ void vehicle::crash_terrain_around()
         return;
     }
     for( const vpart_reference &vp : get_enabled_parts( "CRASH_TERRAIN_AROUND" ) ) {
-        tripoint crush_target( 0, 0, -OVERMAP_LAYERS );
+        tripoint_bub_ms crush_target( 0, 0, -OVERMAP_LAYERS );
         const tripoint_bub_ms start_pos = vp.pos();
         const transform_terrain_data &ttd = vp.info().transform_terrain;
         for( size_t i = 0; i < eight_horizontal_neighbors.size() &&
-             !g->m.inbounds_z( crush_target.z ); i++ ) {
-            tripoint cur_pos = start_pos + eight_horizontal_neighbors.at( i );
+             !g->m.inbounds_z( crush_target.z() ); i++ ) {
+            auto cur_pos = start_pos + eight_horizontal_neighbors.at( i );
             bool busy_pos = false;
             for( const vpart_reference &vp_tmp : get_all_parts() ) {
                 busy_pos |= vp_tmp.pos() == cur_pos;
@@ -1403,7 +1403,7 @@ void vehicle::crash_terrain_around()
             }
         }
         //target chosen
-        if( g->m.inbounds_z( crush_target.z ) ) {
+        if( g->m.inbounds_z( crush_target.z() ) ) {
             velocity = 0;
             cruise_velocity = 0;
             g->m.destroy( crush_target );

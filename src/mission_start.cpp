@@ -245,7 +245,7 @@ void mission_start::place_npc_software( mission *miss )
 
     tinymap compmap;
     compmap.load( project_to<coords::sm>( place ), false );
-    tripoint comppoint;
+    tripoint_bub_ms comppoint;
 
     oter_id oter = get_overmapbuffer( miss->get_dimension() ).ter( place );
     if( is_ot_match( "house", oter, ot_match_type::prefix ) ||
@@ -277,7 +277,7 @@ void mission_start::place_priest_diary( mission *miss )
         }
     }
     const tripoint fallback( rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ), place.z() );
-    const tripoint comppoint = random_entry( valid, fallback );
+    const auto comppoint = random_entry( valid, fallback );
     compmap.spawn_item( comppoint, "priest_diary" );
 }
 
@@ -322,7 +322,7 @@ void mission_start::place_deposit_box( mission *miss )
         }
     }
     const tripoint fallback( rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ), site.z() );
-    const tripoint comppoint = random_entry( valid, fallback );
+    const auto comppoint = random_entry( valid, fallback );
     compmap.spawn_item( comppoint, "safe_box" );
 }
 
@@ -668,7 +668,7 @@ void static create_lab_consoles(
         tinymap compmap;
         compmap.load( project_to<coords::sm>( om_place ), false );
 
-        tripoint comppoint = find_potential_computer_point( compmap );
+        auto comppoint = find_potential_computer_point( compmap );
 
         computer *tmpcomp = compmap.add_computer( comppoint, _( comp_name ), security );
         tmpcomp->set_mission( miss->get_id() );

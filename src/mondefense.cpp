@@ -144,7 +144,7 @@ void mdefense::acidsplash( monster &m, Creature *const source,
     prj.impact.add_damage( DT_ACID, rng( 1, 3 ) );
     for( size_t i = 0; i < num_drops; i++ ) {
         const auto &target = random_entry( pts );
-        projectile_attack( prj, m.bub_pos().raw(), target.raw(), dispersion_sources{ 1200 }, &m );
+        projectile_attack( prj, m.bub_pos(), target, dispersion_sources{ 1200 }, &m );
     }
 
     if( get_avatar().sees( m.bub_pos() ) ) {
@@ -190,10 +190,10 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
             if( gunactor->get_max_range() < distance_to_source ) {
                 continue;
             }
-            sounds::sound( m.bub_pos().raw(), 50, sounds::sound_t::alert,
+            sounds::sound( m.bub_pos(), 50, sounds::sound_t::alert,
                            _( "Detected shots from unseen attacker, return fire mode engaged." ) );
 
-            gunactor->shoot( m, fire_point.raw(), gun_mode_id( "DEFAULT" ), dispersion );
+            gunactor->shoot( m, fire_point, gun_mode_id( "DEFAULT" ), dispersion );
 
             // We only return fire once with one gun.
             return;

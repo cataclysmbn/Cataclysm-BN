@@ -79,7 +79,7 @@ void fire_spread_loader::prune_disconnected( submap_load_manager &loader )
     std::vector<dim_pos_key> no_fire;
     for( auto &[key, handle] : fire_handles_ ) {
         mapbuffer &mb = MAPBUFFER_REGISTRY.get( key.first );
-        submap *sm = mb.lookup_submap_in_memory( key.second.raw() );
+        submap *sm = mb.lookup_submap_in_memory( key.second );
         // sm == nullptr means the submap hasn't been loaded yet — keep the handle
         // so submap_loader.update() gets a chance to load it.  Only prune once
         // the submap is resident in memory but no longer has fire.

@@ -1201,7 +1201,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
         veh.stop_autodriving();
         const int volume = std::min<int>( 100, std::sqrt( impulse ) );
         // TODO: Center the sound at weighted (by impulse) average of collisions
-        sounds::sound( veh.bub_ms_location().raw(), volume, sounds::sound_t::combat, _( "crash!" ),
+        sounds::sound( veh.bub_ms_location(), volume, sounds::sound_t::combat, _( "crash!" ),
                        false, "smash_success", "hit_vehicle" );
     }
 
@@ -1282,7 +1282,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
         for( auto &w : wheel_indices ) {
             const auto wheel_p = veh.bub_part_location( w );
             if( one_in( 2 ) && displace_water( wheel_p ) ) {
-                sounds::sound( wheel_p.raw(), 4,  sounds::sound_t::movement, _( "splash!" ), false,
+                sounds::sound( wheel_p, 4,  sounds::sound_t::movement, _( "splash!" ), false,
                                "environment", "splash" );
             }
 
@@ -2370,9 +2370,9 @@ void map::examine( Character &who, const tripoint_bub_ms &pos )
 {
     const auto furn_here = furn( pos ).obj();
     if( furn_here.examine != iexamine::none ) {
-        furn_here.examine( dynamic_cast<player &>( who ), pos.raw() );
+        furn_here.examine( dynamic_cast<player &>( who ), pos );
     } else {
-        ter( pos ).obj().examine( dynamic_cast<player &>( who ), pos.raw() );
+        ter( pos ).obj().examine( dynamic_cast<player &>( who ), pos );
     }
 }
 
@@ -3832,7 +3832,7 @@ void map::smash_trap( const tripoint_bub_ms &p, const int power, const std::stri
     dummy.set_fake( true );
     dummy.name = cause_message;
     dummy.setpos( p );
-    tr.trigger( p.raw(), &dummy );
+    tr.trigger( p, &dummy );
 }
 
 void map::smash_items( const tripoint_bub_ms &p, const int power, const std::string &cause_message,
@@ -4025,7 +4025,7 @@ bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params 
     const ter_t &ter_before = ter( p ).obj();
     const map_bash_info &bash = ter_before.bash;
     if( has_flag_ter( "FUNGUS", p ) ) {
-        fungal_effects( *g, *this ).create_spores( p.raw() );
+        fungal_effects( *g, *this ).create_spores( p );
     }
     const std::string soundfxvariant = ter_before.id.str();
     const bool will_collapse = ter_before.has_flag( TFLAG_SUPPORTS_ROOF );
@@ -4059,7 +4059,7 @@ bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params 
     if( !bash.sound.empty() && !params.silent ) {
         static const std::string soundfxid = "smash_success";
         int sound_volume = get_sound_volume( bash );
-        sounds::sound( p.raw(), sound_volume, sounds::sound_t::combat, bash.sound, false,
+        sounds::sound( p, sound_volume, sounds::sound_t::combat, bash.sound, false,
                        soundfxid, soundfxvariant );
     }
 
@@ -4141,7 +4141,7 @@ bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params 
 
     if( bash.explosive > 0 ) {
         // TODO Implement if the player triggered the explosive terrain
-        explosion_handler::explosion( p.raw(), nullptr, bash.explosive, 0.8, false );
+        explosion_handler::explosion( p, nullptr, bash.explosive, 0.8, false );
     }
 
     return result;
@@ -4155,7 +4155,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
 
 
     if( has_flag_furn( "FUNGUS", p ) ) {
-        fungal_effects( *g, *this ).create_spores( p.raw() );
+        fungal_effects( *g, *this ).create_spores( p );
     }
     if( has_flag_furn( "MIGO_NERVE", p ) ) {
         map_funcs::migo_nerve_cage_removal( *this, p.raw(), true );
@@ -4243,13 +4243,13 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
     if( !bash.sound.empty() && !params.silent ) {
         static const std::string soundfxid = "smash_success";
         int sound_volume = get_sound_volume( bash );
-        sounds::sound( p.raw(), sound_volume, sounds::sound_t::combat, bash.sound, false,
+        sounds::sound( p, sound_volume, sounds::sound_t::combat, bash.sound, false,
                        soundfxid, soundfxvariant );
     }
 
     if( bash.explosive > 0 ) {
         // TODO implement if the player triggered the explosive furniture
-        explosion_handler::explosion( p.raw(), nullptr, bash.explosive, 0.8, false );
+        explosion_handler::explosion( p, nullptr, bash.explosive, 0.8, false );
     }
 
     return result;
@@ -4298,7 +4298,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
 
     // TODO: what if silent is true?
     if( has_flag( "ALARMED", p ) && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
-        sounds::sound( p.raw(), 40, sounds::sound_t::alarm, _( "an alarm go off!" ),
+        sounds::sound( p, 40, sounds::sound_t::alarm, _( "an alarm go off!" ),
                        false, "environment", "alarm" );
         // Blame nearby player
         if( rl_dist( g->u.bub_pos(), p ) <= 3 ) {
@@ -4313,7 +4313,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
         // Nothing bashable here
         if( impassable( p ) ) {
             if( !params.silent ) {
-                sounds::sound( p.raw(), 18, sounds::sound_t::combat, _( "thump!" ),
+                sounds::sound( p, 18, sounds::sound_t::combat, _( "thump!" ),
                                false, "smash_fail", "default" );
             }
 
@@ -4365,7 +4365,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
 
         result.did_bash = true;
         if( !params.silent ) {
-            sounds::sound( p.raw(), sound_volume, sounds::sound_t::combat, bash->sound_fail, false,
+            sounds::sound( p, sound_volume, sounds::sound_t::combat, bash->sound_fail, false,
                            "smash_fail", soundfxvariant );
         }
 
@@ -4481,7 +4481,7 @@ bash_results map::bash_items( const tripoint_bub_ms &p, const bash_params &param
 
     // Add a glass sound even when something else also breaks
     if( smashed_glass && !params.silent ) {
-        sounds::sound( p.raw(), 12, sounds::sound_t::combat, _( "glass shattering" ), false,
+        sounds::sound( p, 12, sounds::sound_t::combat, _( "glass shattering" ), false,
                        "smash_success", "smash_glass_contents" );
     }
     return result;
@@ -4494,7 +4494,7 @@ bash_results map::bash_vehicle( const tripoint_bub_ms &p, const bash_params &par
     if( const optional_vpart_position vp = veh_at( p ) ) {
         vp->vehicle().damage( vp->part_index(), params.strength, DT_BASH );
         if( !params.silent ) {
-            sounds::sound( p.raw(), 18, sounds::sound_t::combat, _( "crash!" ), false,
+            sounds::sound( p, 18, sounds::sound_t::combat, _( "crash!" ), false,
                            "smash_success", "hit_vehicle" );
         }
 
@@ -4637,10 +4637,10 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
     float pen = initial_arpen;
 
     if( has_flag( "ALARMED", p ) && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
-        sounds::sound( p.raw(), 30, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
+        sounds::sound( p, 30, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
                        "alarm" );
         const auto abs = project_to<coords::sm>( bub_to_abs( p ) );
-        g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0, abs.raw() );
+        g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0, abs );
     }
 
     const bool inc = proj.has_effect( ammo_effect_INCENDIARY ) ||
@@ -5154,14 +5154,14 @@ bool map::close_door( const tripoint_bub_ms &p, const bool inside, const bool ch
     const auto &furn = this->furn( p ).obj();
     if( ter.close && !furn.id ) {
         if( !check_only ) {
-            sounds::sound( p.raw(), 10, sounds::sound_t::movement, _( "swish" ), true,
+            sounds::sound( p, 10, sounds::sound_t::movement, _( "swish" ), true,
                            "close_door", ter.id.str() );
             ter_set( p, ter.close );
         }
         return true;
     } else if( furn.close ) {
         if( !check_only ) {
-            sounds::sound( p.raw(), 10, sounds::sound_t::movement, _( "swish" ), true,
+            sounds::sound( p, 10, sounds::sound_t::movement, _( "swish" ), true,
                            "close_door", furn.id.str() );
             furn_set( p, furn.close );
         }
@@ -5553,7 +5553,7 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
     // Process foods when they are added to the map, here instead of add_item_at()
     // to avoid double processing food and corpses during active item processing.
     if( new_item->is_food() ) {
-        new_item = item::process( std::move( new_item ), nullptr, p.raw(), false );
+        new_item = item::process( std::move( new_item ), nullptr, p, false );
         if( !new_item ) {
             return;
         }
@@ -5856,7 +5856,7 @@ void map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm
             continue;
         }
 
-        const tripoint map_location = active_item_ref->position();
+        const auto map_location = active_item_ref->position();
         temperature_flag flag = temperature_flag_at_point( *this, tripoint_bub_ms( map_location ) );
         process_map_items( active_item_ref, map_location, flag );
     }
@@ -6287,7 +6287,7 @@ std::vector<detached_ptr<item>> map::use_charges( const tripoint_bub_ms &origin,
 
 bool map::can_see_trap_at( const tripoint_bub_ms &p, const Character &c ) const
 {
-    return tr_at( p ).can_see( p.raw(), c );
+    return tr_at( p ).can_see( p, c );
 }
 
 const trap &map::tr_at( const tripoint_bub_ms &p ) const
@@ -6398,7 +6398,7 @@ void map::disarm_trap( const tripoint_bub_ms &p )
     // Some traps are not actual traps. Skip the rolls, different message and give the option to grab it right away.
     if( tr.get_avoidance() == 0 && tr.get_difficulty() == 0 ) {
         add_msg( _( "The %s is taken down." ), tr.name() );
-        tr.on_disarmed( *this, p.raw() );
+        tr.on_disarmed( *this, p );
         return;
     }
 
@@ -6415,7 +6415,7 @@ void map::disarm_trap( const tripoint_bub_ms &p )
         const int morale_buff = tr.get_avoidance() * 0.4 + tr.get_difficulty() + rng( 0, 4 );
         g->u.rem_morale( MORALE_FAILURE );
         g->u.add_morale( MORALE_ACCOMPLISHMENT, morale_buff, 40 );
-        tr.on_disarmed( *this, p.raw() );
+        tr.on_disarmed( *this, p );
         if( diff > 1.25 * tSkillLevel ) { // failure might have set off trap
             g->u.practice( skill_traps, tReward );
         }
@@ -6432,7 +6432,7 @@ void map::disarm_trap( const tripoint_bub_ms &p )
         const int morale_debuff = -rng( 12, 24 );
         g->u.rem_morale( MORALE_ACCOMPLISHMENT );
         g->u.add_morale( MORALE_FAILURE, morale_debuff, -40 );
-        tr.trigger( p.raw(), &g->u );
+        tr.trigger( p, &g->u );
         g->u.practice( skill_traps, tReward / 4 );
     }
     g->u.mod_moves( -100 );
@@ -6449,7 +6449,7 @@ void map::remove_trap( const tripoint_bub_ms &p )
     trap_id tid = current_submap->get_trap( l );
     if( tid != tr_null ) {
         if( g != nullptr && this == &get_map() ) {
-            g->u.add_known_trap( p.raw(), tr_null.obj() );
+            g->u.add_known_trap( p, tr_null.obj() );
         }
 
         if( tid.obj().is_funnel() ) {
@@ -7025,7 +7025,7 @@ void map::drawsq( const catacurses::window &w, const tripoint_bub_ms &p,
     // If we are in tiles mode, the only thing we want to potentially draw is a highlight
     if( is_draw_tiles_mode() ) {
         if( params.highlight() ) {
-            g->draw_highlight( p.raw() );
+            g->draw_highlight( p );
         }
         return;
     }
@@ -7089,7 +7089,7 @@ bool map::draw_maptile( const catacurses::window &w, const tripoint_bub_ms &p,
         param.show_items( false ); // Can only see underwater items if WE are underwater
     }
     // If there's a trap here, and we have sufficient perception, draw that instead
-    if( curr_trap.can_see( p.raw(), g->u ) ) {
+    if( curr_trap.can_see( p, g->u ) ) {
         tercol = curr_trap.color;
         if( curr_trap.sym == '%' ) {
             switch( rng( 1, 5 ) ) {
@@ -9015,7 +9015,7 @@ void map::spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &grou
                          tmp.wander_pos.x(), tmp.wander_pos.y(), tmp.wander_pos.z() );
             }
 
-            monster *const placed = g->place_critter_at( make_shared_fast<monster>( tmp ), p.raw() );
+            monster *const placed = g->place_critter_at( make_shared_fast<monster>( tmp ), p );
             if( placed ) {
                 placed->on_load();
             }
@@ -9073,7 +9073,7 @@ void map::spawn_monsters_submap( const tripoint_bub_sm &gp, bool ignore_sight )
             };
 
             const auto place_it = [&]( const tripoint_bub_ms & p ) {
-                monster *const placed = g->place_critter_at( make_shared_fast<monster>( tmp ), p.raw() );
+                monster *const placed = g->place_critter_at( make_shared_fast<monster>( tmp ), p );
                 if( placed ) {
                     placed->on_load();
                     cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
@@ -10143,7 +10143,7 @@ void map::creature_on_trap( Creature &c, const bool may_avoid )
     if( may_avoid && c.avoid_trap( c.bub_pos(), tr ) ) {
         return;
     }
-    tr.trigger( c.bub_pos().raw(), &c );
+    tr.trigger( c.bub_pos(), &c );
 }
 
 template<typename Functor>

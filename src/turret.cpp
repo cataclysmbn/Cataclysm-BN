@@ -400,7 +400,7 @@ int vehicle::turrets_aim_and_fire( std::vector<vehicle_part *> &turrets )
                 turret_data turret = turret_query( *t );
                 std::unique_ptr<npc> cpu = get_targeting_npc( *t );
                 shots += turret.fire( *cpu, t->target.second );
-                t->reset_target( bub_part_location( *t ).raw() );
+                t->reset_target( bub_part_location( *t ) );
             }
         }
     }
@@ -415,7 +415,7 @@ bool vehicle::turrets_aim( std::vector<vehicle_part *> &turrets )
             debugmsg( "Expected a valid vehicle turret" );
             return false;
         }
-        t->reset_target( bub_part_location( *t ).raw() );
+        t->reset_target( bub_part_location( *t ) );
     }
 
     // Get target
@@ -562,7 +562,7 @@ std::unique_ptr<npc> vehicle::get_targeting_npc( const vehicle_part &pt )
     cpu->str_cur = 20;
     cpu->dex_cur = 10;
     cpu->per_cur = 15;
-    cpu->setpos( bub_part_location( pt ).raw() );
+    cpu->setpos( bub_part_location( pt ) );
     if( has_part( bub_part_location( pt ), "LASER_DESIGNATOR" ) ) {
         if( fuel_left( fuel_type_battery, true ) >= 1 ) {
             cpu->set_mutation( trait_LASER_GUIDED );
@@ -596,7 +596,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
     }
 
     // The position of the vehicle part.
-    tripoint pos = bub_part_location( pt ).raw();
+    auto pos = bub_part_location( pt ).raw();
 
     // Create the targeting computer's npc
     std::unique_ptr<npc> cpu = get_targeting_npc( pt );
@@ -661,7 +661,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
     }
 
     // Get the turret's target and reset it
-    tripoint targ = target.second;
+    auto targ = target.second;
     pt.reset_target( pos );
 
     shots = gun.fire( *cpu, targ );

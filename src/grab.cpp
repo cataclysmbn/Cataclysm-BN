@@ -61,7 +61,7 @@ auto get_grabbed_vehicle_movecost( vehicle *veh ) -> int
     return std::accumulate( wheel_indices.begin(), wheel_indices.end(), 0,
     [&]( const int sum, const int p ) {
         const tripoint_bub_ms wheel_pos = get_wheel_pos( p );
-        const int mapcost = map.move_cost( wheel_pos.raw(), veh );
+        const int mapcost = map.move_cost( wheel_pos, veh );
         const int movecost = str_req / static_cast<int>( wheel_indices.size() ) * mapcost;
 
         return sum + movecost;
@@ -129,8 +129,8 @@ bool game::grabbed_veh_move( const tripoint &dp )
     }
 
     tripoint dp_veh = -u.grab_point;
-    const tripoint prev_grab = u.grab_point;
-    tripoint next_grab = u.grab_point;
+    const auto prev_grab = u.grab_point;
+    auto next_grab = u.grab_point;
 
     bool zigzag = false;
 
@@ -141,8 +141,8 @@ bool game::grabbed_veh_move( const tripoint &dp )
         // Not actually moving the vehicle, don't do the checks
         u.grab_point = -( dp + dp_veh );
         return false;
-    } else if( ( dp.x == prev_grab.x || dp.y == prev_grab.y ) &&
-               next_grab.x != 0 && next_grab.y != 0 ) {
+    } else if( ( dp.x == prev_grab.x() || dp.y == prev_grab.y() ) &&
+               next_grab.x() != 0 && next_grab.y() != 0 ) {
         // Zig-zag (or semi-zig-zag) pull: player is diagonal to vehicle
         // and moves away from it, but not directly away
         dp_veh.x = dp.x == -dp_veh.x ? 0 : dp_veh.x;

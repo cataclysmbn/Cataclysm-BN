@@ -352,7 +352,7 @@ static void fill_water_collectors( int mmPerHour, bool acid )
     std::ranges::for_each( g->m.get_funnel_locations(), [&]( const std::pair<tripoint, point> &entry ) {
         const auto sm_abs = tripoint_abs_sm( entry.first );
         const auto &lp = point_sm_ms( entry.second );
-        auto *sm = mbuf.lookup_submap_in_memory( sm_abs.raw() );
+        auto *sm = mbuf.lookup_submap_in_memory( sm_abs );
         if( !sm ) {
             return;
         }
@@ -367,7 +367,7 @@ static void fill_water_collectors( int mmPerHour, bool acid )
         // Put the rain in the largest container here which is either empty or
         // contains some mixture of impure water and acid.
         units::volume maxcontains = 0_ml;
-        map_stack items = g->m.i_at( loc.raw() );
+        map_stack items = g->m.i_at( loc );
         auto container = items.end();
         for( auto candidate = items.begin(); candidate != items.end(); ++candidate ) {
             if( ( *candidate )->is_funnel_container( maxcontains ) ) {
@@ -1014,7 +1014,7 @@ double get_local_windpower( double windpower, const oter_id &omter, const tripoi
     }
     rl_vec2d windvec = convert_wind_to_coord( winddirection );
     int tmpwind = static_cast<int>( windpower );
-    tripoint triblocker( location + point( windvec.x, windvec.y ) );
+    tripoint_bub_ms triblocker( location + point( windvec.x, windvec.y ) );
     // Over map terrain may modify the effect of wind.
     if( is_ot_match( "forest", omter, ot_match_type::type ) ||
         is_ot_match( "forest_water", omter, ot_match_type::type ) ) {

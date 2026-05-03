@@ -1999,7 +1999,7 @@ void monster::melee_attack( Creature &target, float accuracy )
         if( u_see_me ) {
             if( target.is_player() ) {
                 sfx::play_variant_sound( "melee_attack", "monster_melee_hit",
-                                         sfx::get_heard_volume( target.bub_pos().raw() ) );
+                                         sfx::get_heard_volume( target.bub_pos() ) );
                 sfx::do_player_death_hurt( dynamic_cast<player &>( target ), false );
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative.
                 add_msg( m_bad, _( "%1$s hits your %2$s." ), disp_name( false, true ),
@@ -2776,7 +2776,7 @@ void monster::process_turn()
     if( has_flag( MF_ELECTRIC_FIELD ) ) {
         if( has_effect( effect_emp ) ) {
             if( calendar::once_every( 10_turns ) ) {
-                sounds::sound( bub_pos().raw(), 5, sounds::sound_t::combat, _( "hummmmm." ), false, "humming",
+                sounds::sound( bub_pos(), 5, sounds::sound_t::combat, _( "hummmmm." ), false, "humming",
                                "electric" );
             }
         } else {
@@ -2786,7 +2786,7 @@ void monster::process_turn()
                 for( const auto &item : items ) {
                     if( item->made_of( LIQUID ) && item->flammable() ) { // start a fire!
                         g->m.add_field( zap, fd_fire, 2, 1_minutes );
-                        sounds::sound( bub_pos().raw(), 30, sounds::sound_t::combat,  _( "fwoosh!" ), false, "fire",
+                        sounds::sound( bub_pos(), 30, sounds::sound_t::combat,  _( "fwoosh!" ), false, "fire",
                                        "ignition" );
                         break;
                     }
@@ -2797,7 +2797,7 @@ void monster::process_turn()
                 const auto t = g->m.ter( zap );
                 if( t == ter_str_id( "t_gas_pump" ) || t == ter_str_id( "t_gas_pump_a" ) ) {
                     if( one_in( 4 ) ) {
-                        explosion_handler::explosion( bub_pos().raw(), nullptr, 40, 0.8, true );
+                        explosion_handler::explosion( bub_pos(), nullptr, 40, 0.8, true );
                         if( player_sees ) {
                             add_msg( m_warning, _( "The %s explodes in a fiery inferno!" ), g->m.tername( zap ) );
                         }
@@ -2813,10 +2813,10 @@ void monster::process_turn()
             if( get_weather().lightning_active && !has_effect( effect_supercharged ) &&
                 g->m.is_outside( bub_pos() ) ) {
                 get_weather().lightning_active = false; // only one supercharge per strike
-                sounds::sound( bub_pos().raw(), 300, sounds::sound_t::combat, _( "BOOOOOOOM!!!" ), false,
+                sounds::sound( bub_pos(), 300, sounds::sound_t::combat, _( "BOOOOOOOM!!!" ), false,
                                "environment",
                                "thunder_near" );
-                sounds::sound( bub_pos().raw(), 20, sounds::sound_t::combat, _( "vrrrRRRUUMMMMMMMM!" ), false,
+                sounds::sound( bub_pos(), 20, sounds::sound_t::combat, _( "vrrrRRRUUMMMMMMMM!" ), false,
                                "explosion",
                                "default" );
                 if( g->u.sees( bub_pos() ) ) {
@@ -2826,7 +2826,7 @@ void monster::process_turn()
                 }
                 add_effect( effect_supercharged, 12_hours );
             } else if( has_effect( effect_supercharged ) && calendar::once_every( 5_turns ) ) {
-                sounds::sound( bub_pos().raw(), 20, sounds::sound_t::combat, _( "VMMMMMMMMM!" ), false, "humming",
+                sounds::sound( bub_pos(), 20, sounds::sound_t::combat, _( "VMMMMMMMMM!" ), false, "humming",
                                "electric" );
             }
         }
@@ -3107,7 +3107,7 @@ bool monster::use_mech_power( int amt )
         return false;
     }
     amt = -amt;
-    battery_item->ammo_consume( amt, bub_pos().raw() );
+    battery_item->ammo_consume( amt, bub_pos() );
     return battery_item->ammo_remaining() > 0;
 }
 
@@ -3136,7 +3136,7 @@ static void process_item_valptr( item *ptr, monster &mon )
 {
     if( ptr && ptr->needs_processing() ) {
         ptr->attempt_detach( [&mon]( detached_ptr<item> &&it ) {
-            return item::process( std::move( it ), nullptr, mon.bub_pos().raw(), false );
+            return item::process( std::move( it ), nullptr, mon.bub_pos(), false );
         } );
     }
 }
@@ -3147,7 +3147,7 @@ void monster::process_items()
     if( !inv.empty() ) {
         inv.remove_with( [this]( detached_ptr<item> &&it ) {
             if( it->needs_processing() ) {
-                return item::process( std::move( it ), nullptr, bub_pos().raw(), false );
+                return item::process( std::move( it ), nullptr, bub_pos(), false );
             }
             return std::move( it );
         } );
@@ -3366,7 +3366,7 @@ void monster::process_effects_internal()
     }
 
     // If this critter dies in sunlight, check & assess damage.
-    if( has_flag( MF_SUNDEATH ) && g->is_in_sunlight( bub_pos().raw() ) ) {
+    if( has_flag( MF_SUNDEATH ) && g->is_in_sunlight( bub_pos() ) ) {
         if( g->u.sees( *this ) ) {
             add_msg( m_good, _( "The %s burns horribly in the sunlight!" ), name() );
         }

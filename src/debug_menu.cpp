@@ -530,7 +530,7 @@ void spawn_nested_mapgen()
         map target_map;
         target_map.load( abs_sub, true );
         // TODO: fix point types
-        const auto local_ms = target_map.abs_to_bub( abs_ms.raw() );
+        const auto local_ms = target_map.abs_to_bub( abs_ms );
         mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr,
                        get_overmapbuffer( target_map.get_bound_dimension() ) );
         const auto &ptr = nested_mapgen[nest_str[nest_choice]].pick();
@@ -602,7 +602,7 @@ void character_edit_menu( Character &c )
     npc *np = c.is_npc() ? static_cast<npc *>( &c ) : nullptr;
     player &p = static_cast<player &>( c );
 
-    const tripoint start_view_offset = get_avatar().view_offset;
+    const auto start_view_offset = get_avatar().view_offset;
 
     std::string nmenu_label;
     if( np != nullptr ) {
@@ -1606,9 +1606,9 @@ void debug()
                 _( "NPCs are NOT going to spawn." ),
                 g->num_creatures() );
             for( const npc &guy : g->all_npcs() ) {
-                tripoint t = guy.global_sm_location();
-                add_msg( m_info, _( "%s: map ( %d:%d ) pos ( %d:%d )" ), guy.name, t.x,
-                         t.y, guy.posx(), guy.posy() );
+                auto t = guy.global_sm_location();
+                add_msg( m_info, _( "%s: map ( %d:%d ) pos ( %d:%d )" ), guy.name, t.x(),
+                         t.y(), guy.posx(), guy.posy() );
             }
 
             add_msg( m_info, _( "(you: %d:%d)" ), u.posx(), u.posy() );
@@ -2142,7 +2142,7 @@ void debug()
                     tripoint_abs_sm where_sm = project_to<coords::sm>( where_omt );
                     tinymap mx_map;
                     // TODO: fix point types
-                    mx_map.load( where_sm.raw(), false );
+                    mx_map.load( where_sm, false );
                     MapExtras::apply_function( mx_str[mx_choice], mx_map, where_sm );
                     g->load_npcs();
                     m.invalidate_map_cache( g->get_levz() );

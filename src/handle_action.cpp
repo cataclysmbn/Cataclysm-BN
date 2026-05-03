@@ -241,9 +241,9 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
             continue;
         }
 
-        const tripoint mapp( map, u.posz() );
+        const tripoint_bub_ms mapp( map, u.posz() );
 
-        const lit_level lighting = visibility_cache[map_cache.idx( mapp.x, mapp.y )];
+        const lit_level lighting = visibility_cache[map_cache.idx( mapp.x(), mapp.y() )];
 
         if( m.is_outside( mapp ) && m.get_visibility( lighting, cache ) == VIS_CLEAR &&
             !g->critter_at( mapp, true ) ) {
@@ -343,7 +343,7 @@ input_context game::get_player_input( std::string &action )
                     const direction oCurDir = iter->getDirecton();
                     const int width = utf8_width( iter->getText() );
                     for( int i = 0; i < width; ++i ) {
-                        tripoint tmp( iter->getPosX() + i, iter->getPosY(), get_levz() );
+                        tripoint_bub_ms tmp( iter->getPosX() + i, iter->getPosY(), get_levz() );
                         const Creature *critter = critter_at( tmp, true );
 
                         if( critter != nullptr && u.sees( *critter ) ) {
@@ -434,14 +434,14 @@ inline static void rcdrive( point d )
     // TODO: keep track of which car is being controlled
     item *rc_car = rc_items[0];
 
-    tripoint dest( c + d );
+    tripoint_bub_ms dest( c + d );
     if( here.impassable( dest ) || !here.can_put_items_ter_furn( dest ) ||
         here.has_furn( dest ) ) {
         sounds::sound( dest, 7, sounds::sound_t::combat,
                        _( "sound of a collision with an obstacle." ), true, "misc", "rc_car_hits_obstacle" );
         return;
     } else {
-        tripoint src( c );
+        tripoint_bub_ms src( c );
         detached_ptr<item> det_car = here.i_rem( src, rc_car );
         here.add_item_or_charges( dest, std::move( det_car ) );
         //~ Sound of moving a remote controlled car
@@ -533,7 +533,7 @@ static void open()
     if( !openp_ ) {
         return;
     }
-    const tripoint openp = *openp_;
+    const auto openp = *openp_;
     map &here = get_map();
 
     if( const optional_vpart_position vp = here.veh_at( openp ) ) {
@@ -601,7 +601,7 @@ static void grab()
         add_msg( _( "Never mind." ) );
         return;
     }
-    const tripoint grabp = *grabp_;
+    const auto grabp = *grabp_;
 
     if( grabp == you.bub_pos() ) {
         add_msg( _( "You get a hold of yourself." ) );
@@ -691,7 +691,7 @@ static void smash()
     if( !smashp_ ) {
         return;
     }
-    tripoint smashp = *smashp_;
+    auto smashp = *smashp_;
 
     bool smash_floor = false;
     if( smashp.z != u.posz() ) {
@@ -1929,7 +1929,7 @@ bool game::handle_action()
                     point dest_delta = get_delta_from_movement_action( act, iso_rotate::yes );
                     if( auto_travel_mode && !u.is_auto_moving() ) {
                         for( int i = 0; i < SEEX; i++ ) {
-                            tripoint auto_travel_destination( u.posx() + dest_delta.x * ( SEEX - i ),
+                            tripoint_bub_ms auto_travel_destination( u.posx() + dest_delta.x * ( SEEX - i ),
                                                               u.posy() + dest_delta.y * ( SEEX - i ),
                                                               u.posz() );
                             destination_preview = m.route( u.bub_pos(),
@@ -1991,17 +1991,17 @@ bool game::handle_action()
                     if( idx != -1 ) {
                         const vpart_info info = vp->vehicle().part_info( idx );
                         auto where = u.bub_pos();
-                        tripoint below = where;
+                        auto below = where;
                         if( get_map().ter( where ).id().str() != "t_open_air" ) {
                             break;
                         }
-                        below.z--;
+                        below.z()--;
                         // Keep going down until we find a tile that is NOT open air
                         while( get_map().ter( below ).id().str() == "t_open_air" ) {
                             where.z()--;
-                            below.z--;
+                            below.z()--;
                         }
-                        const int dist = u.bub_pos().z() - below.z;
+                        const int dist = u.bub_pos().z() - below.z();
                         if( info.ladder_length() >= dist ) {
                             get_map().unboard_vehicle( u.bub_pos() );
                             vertical_move( -dist, true );
@@ -2051,19 +2051,19 @@ bool game::handle_action()
                         point xy = u.bub_pos().xy();
                         map &here = get_map();
                         auto where = u.bub_pos();
-                        tripoint above = where;
-                        above.z++;
+                        auto above = where;
+                        above.z()++;
                         if( get_map().ter( above ).id().str() != "t_open_air" ) {
                             vertical_move( 1, false );
                             break;
                         }
                         // Keep going down until we find a tile that is NOT open air
                         while( get_map().ter( above ).id().str() == "t_open_air" &&
-                               !here.veh_at( tripoint( xy, above.z ) ) )  {
-                            above.z++;
+                               !here.veh_at( tripoint( xy, above.z() ) ) )  {
+                            above.z()++;
                         }
-                        const optional_vpart_position vp = here.veh_at( tripoint( xy, above.z ) );
-                        const int dist = above.z - u.bub_pos().z();
+                        const optional_vpart_position vp = here.veh_at( tripoint( xy, above.z() ) );
+                        const int dist = above.z() - u.bub_pos().z();
                         if( vp ) {
                             const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
                             if( idx != -1 ) {

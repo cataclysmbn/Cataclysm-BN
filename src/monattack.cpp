@@ -302,8 +302,8 @@ static bool is_adjacent( const monster *z, const Creature *target, const bool al
     // The square above must have no floor (currently only open air).
     // The square below must have no ceiling (i.e. be outside).
     const bool target_above = target->posz() > z->posz();
-    const tripoint &up   = target_above ? target->bub_pos() : z->bub_pos();
-    const tripoint &down = target_above ? z->bub_pos() : target->bub_pos();
+    const auto &up   = target_above ? target->bub_pos() : z->bub_pos();
+    const auto &down = target_above ? z->bub_pos() : target->bub_pos();
     return g->m.ter( up ) == t_open_air && g->m.is_outside( down );
 }
 
@@ -631,7 +631,7 @@ bool mattack::acid( monster *z )
 
     for( int i = -3; i <= 3; i++ ) {
         for( int j = -3; j <= 3; j++ ) {
-            tripoint dest = hitp + tripoint( i, j, 0 );
+            auto dest = hitp + tripoint( i, j, 0 );
             if( g->m.passable( dest ) &&
                 g->m.clear_path( dest, hitp, 6, 1, 100 ) &&
                 ( ( one_in( std::abs( j ) ) && one_in( std::abs( i ) ) ) || ( i == 0 && j == 0 ) ) ) {
@@ -764,7 +764,7 @@ bool mattack::shockstorm( monster *z )
     if( !g->u.is_deaf() ) {
         sfx::play_variant_sound( "fire_gun", "bio_lightning", sfx::get_heard_volume( z->bub_pos() ) );
     }
-    tripoint tarp( target->posx() + rng( -1, 1 ) + rng( -1, 1 ),
+    tripoint_bub_ms tarp( target->posx() + rng( -1, 1 ) + rng( -1, 1 ),
                    target->posy() + rng( -1, 1 ) + rng( -1, 1 ),
                    target->posz() );
     std::vector<tripoint> bolt = line_to( z->bub_pos(), tarp, 0, 0 );
@@ -1380,7 +1380,7 @@ bool mattack::science( monster *const z ) // I said SCIENCE again!
                          z->name() );
             }
 
-            const tripoint where = empty_neighbors.first[get_random_index( empty_neighbor_count )];
+            const auto where = empty_neighbors.first[get_random_index( empty_neighbor_count )];
             if( monster *const manhack = g->place_critter_at( mon_manhack, where ) ) {
                 manhack->make_ally( *z );
             }
@@ -1676,7 +1676,7 @@ bool mattack::triffid_heartbeat( monster *z )
         while( g->m.route( g->u.bub_pos(), z->bub_pos(), root_pathfind ).empty() &&
                tries < 20 ) {
             point p( rng( g->u.bub_pos().x(), z->posx() - 3 ), rng( g->u.bub_pos().y(), z->posy() - 3 ) );
-            tripoint dest( p, z->posz() );
+            tripoint_bub_ms dest( p, z->posz() );
             tries++;
             g->m.ter_set( dest, t_dirt );
             if( rl_dist( dest, g->u.bub_pos() ) > 3 && g->num_creatures() < 30 &&
@@ -2512,7 +2512,7 @@ bool mattack::callblobs( monster *z )
     int guards = 0;
     for( std::list<monster *>::iterator ally = allies.begin();
          ally != allies.end(); ++ally, ++guards ) {
-        tripoint post = enemy;
+        auto post = enemy;
         if( guards < num_guards ) {
             // Each guard is assigned a spot in the nearby_points vector based on their order.
             int assigned_spot = ( nearby_points.size() * guards ) / num_guards;
@@ -3661,7 +3661,7 @@ bool mattack::searchlight( monster *z )
 
         for( int x = zposx - 24; x < zposx + 24; x++ ) {
             for( int y = zposy - 24; y < zposy + 24; y++ ) {
-                tripoint dest( x, y, z->posz() );
+                tripoint_bub_ms dest( x, y, z->posz() );
                 if( g->m.ter( dest ) == ter_str_id( "t_plut_generator" ) ) {
                     generator_ok = true;
                 }
@@ -5841,7 +5841,7 @@ static int grenade_helper( monster *const z, Creature *const target, const int d
         return -1;
     }
 
-    const tripoint where = empty_neighbors.first[get_random_index( empty_neighbor_count )];
+    const auto where = empty_neighbors.first[get_random_index( empty_neighbor_count )];
 
     if( monster *const hack = g->place_critter_at( actor->mtypeid, where ) ) {
         hack->make_ally( *z );

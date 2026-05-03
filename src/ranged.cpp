@@ -1244,7 +1244,7 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
                                     max_shots > 1 );
 
     bool aoe_attack = gun.gun_skill() == skill_launcher || shape;
-    tripoint aim = target;
+    auto aim = target;
     const auto recoil_origin = shot_origin.value_or( who.bub_pos() );
     int curshot = 0;
     int hits = 0; // total shots on target
@@ -1368,8 +1368,8 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
             // 30 degree cap, like for projectiles
             double angle_offset_arcmin = std::min( dispersion.roll(), 1800.0 ) * ( one_in( 2 ) ? 1 : -1 );
             double angle_offset = units::to_radians( units::from_arcmin( angle_offset_arcmin ) );
-            double dx = aim.x - who.posx();
-            double dy = aim.y - who.posy();
+            double dx = aim.x() - who.posx();
+            double dy = aim.y() - who.posy();
             double new_angle = atan2( dy, dx ) + angle_offset;
             // Always using trig here, rotations in maximum metric are weird
             double length = trig_dist( who.bub_pos(), aim );
@@ -2353,7 +2353,7 @@ static void cycle_action( item &weap, const tripoint_bub_ms &pos )
     tiles.erase( std::remove_if( tiles.begin(), tiles.end(), [&pos, &here]( const tripoint & e ) {
         return !here.passable( e ) || here.obstructed_by_vehicle_rotation( pos, e );
     } ), tiles.end() );
-    tripoint eject = tiles.empty() ? pos : random_entry( tiles );
+    auto eject = tiles.empty() ? pos : random_entry( tiles );
 
     // for turrets try and drop casings or linkages directly to any CARGO part on the same tile
     const optional_vpart_position vp = here.veh_at( pos );
@@ -3801,7 +3801,7 @@ bool target_ui::action_aim_and_shoot( const std::string &action )
 
 void target_ui::draw_terrain_overlay()
 {
-    tripoint center = you->pos() + you->view_offset;
+    auto center = you->pos() + you->view_offset;
 
     // Removes parts that don't belong to currently visible Z level
     const auto filter_this_z = [&center]( const std::vector<tripoint> &traj ) {

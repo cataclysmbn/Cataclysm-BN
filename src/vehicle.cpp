@@ -193,7 +193,7 @@ class DefaultRemovePartHandler : public RemovePartHandler
             here.dirty_vehicle_list.insert( &veh );
         }
         void spawn_animal_from_part( item &base, const tripoint_bub_ms &loc ) override {
-            base.release_monster( loc.raw(), 1 );
+            base.release_monster( loc, 1 );
         }
 };
 
@@ -993,7 +993,7 @@ void vehicle::autopilot_patrol()
     }
     zone_manager &mgr = zone_manager::get_manager();
     const auto &zone_src_set = mgr.get_near( zone_type_id( "VEHICLE_PATROL" ),
-                               abs_ms_location().raw(), g_max_view_distance );
+                               abs_ms_location(), g_max_view_distance );
     if( zone_src_set.empty() ) {
         is_patrolling = false;
         return;
@@ -1131,7 +1131,7 @@ void vehicle::drive_to_local_target( const tripoint_abs_ms &target, bool follow_
     }
     if( stop ) {
         if( autopilot_on ) {
-            sounds::sound( bub_ms_location().raw(), 30, sounds::sound_t::alert,
+            sounds::sound( bub_ms_location(), 30, sounds::sound_t::alert,
                            string_format( _( "the %s emitting a beep and saying \"Obstacle detected!\"" ),
                                           name ) );
         }
@@ -1463,7 +1463,7 @@ void vehicle::backfire( const int e ) const
 {
     const int power = part_vpower_w( engines[e], true );
     const auto pos = bub_part_location( engines[e] );
-    sounds::sound( pos.raw(), 40 + power / 10000, sounds::sound_t::movement,
+    sounds::sound( pos, 40 + power / 10000, sounds::sound_t::movement,
                    // single space after the exclaimation mark because it does not end the sentence
                    //~ backfire sound
                    string_format( _( "a loud BANG! from the %s" ), // NOLINT(cata-text-style)
@@ -4440,7 +4440,7 @@ void vehicle::noise_and_smoke( int load, time_duration time )
     add_msg( m_debug, "VEH NOISE final: %d", static_cast<int>( noise ) );
     vehicle_noise = static_cast<unsigned char>( noise );
     // TODO: other noises for non-rotor aircraft?
-    sounds::sound( bub_ms_location().raw(), noise, sounds::sound_t::movement,
+    sounds::sound( bub_ms_location(), noise, sounds::sound_t::movement,
                    _( has_part( VPFLAG_ROTOR ) ? heli_noise : sounds[lvl].first ), true );
 }
 
@@ -5446,7 +5446,7 @@ int vehicle::total_solar_epower_w() const
     }
     // Weather doesn't change much across the area of the vehicle, so just
     // sample it once.
-    const weather_type_id &wtype = current_weather( bub_ms_location().raw() );
+    const weather_type_id &wtype = current_weather( bub_ms_location() );
     const float tick_sunlight = incident_sunlight( wtype, calendar::turn );
     double intensity = tick_sunlight / default_daylight_level();
     return epower_w * intensity;
@@ -5998,7 +5998,7 @@ void vehicle::idle( bool on_map )
     }
 
     // Disallow running a planter underground for now
-    if( !warm_enough_to_plant( g->u.bub_pos().raw() ) || bub_ms_location().z() < 0 ) {
+    if( !warm_enough_to_plant( g->u.bub_pos() ) || bub_ms_location().z() < 0 ) {
         for( const vpart_reference &vp : get_enabled_parts( "PLANTER" ) ) {
             if( g->u.sees( bub_ms_location() ) ) {
                 add_msg( _( "The %s's planter turns off due to low temperature." ), name );
@@ -6197,7 +6197,7 @@ detached_ptr<item> vehicle::add_item( int part, detached_ptr<item> &&itm )
 
 
     if( itm->is_bucket_nonempty() ) {
-        itm->contents.spill_contents( bub_part_location( part ).raw() );
+        itm->contents.spill_contents( bub_part_location( part ) );
     }
     if( itm->needs_processing() ) {
         active_items.add( *itm );
@@ -7470,7 +7470,7 @@ bool vehicle::explode_fuel( int p, damage_type type )
                                               ( parts[p].ammo_remaining() * data.fuel_size_factor ) ) );
         //debugmsg( "damage check dmg=%d pow=%d amount=%d", dmg, pow, parts[p].amount );
 
-        explosion_handler::explosion( bub_part_location( p ).raw(), nullptr, pow, 0.7,
+        explosion_handler::explosion( bub_part_location( p ), nullptr, pow, 0.7,
                                       data.fiery_explosion );
         mod_hp( parts[p], 0 - parts[ p ].hp(), DT_HEAT );
         parts[p].ammo_unset();

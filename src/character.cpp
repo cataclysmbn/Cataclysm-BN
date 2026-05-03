@@ -2891,7 +2891,7 @@ detached_ptr<item> Character::i_rem( int pos )
 detached_ptr<item> Character::i_rem_keep_contents( const int idx )
 {
     detached_ptr<item> ret = i_rem( idx );
-    ret->spill_contents( bub_pos().raw() );
+    ret->spill_contents( bub_pos() );
     return ret ;
 }
 
@@ -3035,7 +3035,7 @@ units::volume Character::volume_carried() const
 
 int Character::best_nearby_lifting_assist() const
 {
-    return best_nearby_lifting_assist( bub_pos().raw() );
+    return best_nearby_lifting_assist( bub_pos() );
 }
 
 int Character::best_nearby_lifting_assist( const tripoint &world_pos ) const
@@ -5643,7 +5643,7 @@ void Character::update_needs( int rate_multiplier )
             }
 
             const character_funcs::comfort_level comfort =
-                character_funcs::base_comfort_value( *this, bub_pos().raw() ).level;
+                character_funcs::base_comfort_value( *this, bub_pos() ).level;
 
             // Best possible bed increases recovery by 30% of base
             if( comfort >= character_funcs::comfort_level::very_comfortable ) {
@@ -6008,7 +6008,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
         return;
     }
     /* Cache calls to g->get_temperature( player position ), used in several places in function */
-    const auto player_local_temp = weather.get_temperature( bub_pos().raw() );
+    const auto player_local_temp = weather.get_temperature( bub_pos() );
     // NOTE : visit weather.h for some details on the numbers used
     // In Celsius / 100
     int Ctemperature = units::to_millidegree_celsius( player_local_temp ) / 10;
@@ -6019,7 +6019,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
         vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
     }
     const oter_id &cur_om_ter = get_overmapbuffer( get_dimension() ).ter( global_omt_location() );
-    bool sheltered = weather::is_sheltered( m, bub_pos().raw() );
+    bool sheltered = weather::is_sheltered( m, bub_pos() );
     double total_windpower = get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
                              bub_pos().raw(),
                              weather.winddirection, sheltered );
@@ -6037,15 +6037,15 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     /**
      * Calculations that affect all body parts equally go here, not in the loop
      */
-    const int sunlight_warmth = weather::is_in_sunlight( m, bub_pos().raw(), weather.weather_id )
+    const int sunlight_warmth = weather::is_in_sunlight( m, bub_pos(), weather.weather_id )
                                 ? ( weather.weather_id->sun_intensity == sun_intensity_type::high ? 1000 : 500 )
                                 : 0;
-    const int best_fire = get_heat_radiation( bub_pos().raw(), true );
+    const int best_fire = get_heat_radiation( bub_pos(), true );
     const bool pyromania = has_trait( trait_PYROMANIA );
 
     const int lying_warmth = use_floor_warmth ? floor_warmth( bub_pos() ) : 0;
     const int water_temperature_raw =
-        units::to_millidegree_celsius( weather.get_water_temperature( bub_pos().raw() ) ) / 10;
+        units::to_millidegree_celsius( weather.get_water_temperature( bub_pos() ) ) / 10;
     // Rescale so that 0C is 0 (FREEZING) and 30C is 5k (NORM).
     const int water_temperature = water_temperature_raw * 5 / 3;
 
@@ -6057,7 +6057,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     const int mutation_heat_bonus = mutation_heat_high - mutation_heat_low;
 
     // Note: this is included in @ref weather::get_temperature(), so don't add to bodytemp!
-    const int h_radiation = get_heat_radiation( bub_pos().raw(), false );
+    const int h_radiation = get_heat_radiation( bub_pos(), false );
 
     // If you're standing in water, air temperature is replaced by water temperature. No wind.
     const ter_id ter_at_pos = m.ter( bub_pos() );
@@ -8128,7 +8128,7 @@ void Character::update_stamina( int turns )
 
 bool Character::invoke_item( item *used )
 {
-    return invoke_item( used, bub_pos().raw() );
+    return invoke_item( used, bub_pos() );
 }
 
 bool Character::invoke_item( item *, const tripoint & )
@@ -8138,7 +8138,7 @@ bool Character::invoke_item( item *, const tripoint & )
 
 bool Character::invoke_item( item *used, const std::string &method )
 {
-    return invoke_item( used, method, bub_pos().raw() );
+    return invoke_item( used, method, bub_pos() );
 }
 
 bool Character::invoke_item( item *used, const std::string &method, const tripoint_bub_ms &pt )
@@ -8368,7 +8368,7 @@ bool Character::consume_charges( item &used, int qty )
 
     if( used.is_power_armor() ) {
         if( used.charges >= qty ) {
-            used.ammo_consume( qty, bub_pos().raw() );
+            used.ammo_consume( qty, bub_pos() );
         } else if( character_funcs::can_interface_armor( *this ) && has_charges( itype_bio_armor, qty ) ) {
             use_charges( itype_bio_armor, qty );
         } else {
@@ -8382,12 +8382,12 @@ bool Character::consume_charges( item &used, int qty )
         // With the new UPS system, we'll want to use any charges built up in the tool before pulling from the UPS
         // The usage of the item was already approved, so drain item if possible, otherwise use UPS
         if( used.charges >= qty ) {
-            used.ammo_consume( qty, bub_pos().raw() );
+            used.ammo_consume( qty, bub_pos() );
         } else {
             use_charges( itype_UPS, qty );
         }
     } else {
-        used.ammo_consume( std::min( qty, used.ammo_remaining() ), bub_pos().raw() );
+        used.ammo_consume( std::min( qty, used.ammo_remaining() ), bub_pos() );
     }
     return false;
 }
@@ -8489,7 +8489,7 @@ void Character::cough( bool harmful, int loudness )
     if( !is_npc() ) {
         add_msg( m_bad, _( "You cough heavily." ) );
     }
-    sounds::sound( bub_pos().raw(), loudness, sounds::sound_t::speech, _( "a hacking cough." ), false,
+    sounds::sound( bub_pos(), loudness, sounds::sound_t::speech, _( "a hacking cough." ), false,
                    "misc",
                    "cough" );
 
@@ -8620,7 +8620,7 @@ void Character::shout( std::string msg, bool order )
         add_msg_if_player( m_warning, _( "The sound of your voice is significantly muffled!" ) );
     }
 
-    sounds::sound( bub_pos().raw(), noise, order ? sounds::sound_t::order : sounds::sound_t::alert, msg,
+    sounds::sound( bub_pos(), noise, order ? sounds::sound_t::order : sounds::sound_t::alert, msg,
                    false,
                    "shout", shout );
 }
@@ -8640,7 +8640,7 @@ void Character::vomit()
     if( get_effect_int( effect_fungus ) >= 3 ) {
         add_msg_player_or_npc( m_bad,  _( "You vomit thousands of live spores!" ),
                                _( "<npcname> vomits thousands of live spores!" ) );
-        fungal_effects( *g, here ).fungalize( bub_pos().raw(), this );
+        fungal_effects( *g, here ).fungalize( bub_pos(), this );
     } else if( stomach.get_calories() > 0 || get_thirst() < 0 ) {
         add_msg_player_or_npc( m_bad, _( "You throw up heavily!" ), _( "<npcname> throws up heavily!" ) );
         here.add_field( tripoint_bub_ms( character_funcs::pick_safe_adjacent_tile( *this ).value_or(
@@ -9526,7 +9526,7 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
         const int snakes = dam / 6;
         int spawned = 0;
         for( int i = 0; i < snakes; i++ ) {
-            if( monster *const snake = g->place_critter_around( mon_shadow_snake, bub_pos().raw(), 1 ) ) {
+            if( monster *const snake = g->place_critter_around( mon_shadow_snake, bub_pos(), 1 ) ) {
                 snake->friendly = -1;
                 spawned++;
             }
@@ -9540,7 +9540,7 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
 
     // And slimespawners too
     if( ( has_trait( trait_SLIMESPAWNER ) ) && ( dam >= 10 ) && one_in( 20 - dam ) ) {
-        if( monster *const slime = g->place_critter_around( mon_player_blob, bub_pos().raw(), 1 ) ) {
+        if( monster *const slime = g->place_critter_around( mon_player_blob, bub_pos(), 1 ) ) {
             slime->friendly = -1;
             add_msg_if_player( m_warning, _( "Slime is torn from you, and moves on its own!" ) );
         }
@@ -9801,19 +9801,19 @@ void Character::spores()
     map &here = get_map();
     fungal_effects fe( *g, here );
     //~spore-release sound
-    sounds::sound( bub_pos().raw(), 10, sounds::sound_t::combat, _( "Pouf!" ), false, "misc", "puff" );
+    sounds::sound( bub_pos(), 10, sounds::sound_t::combat, _( "Pouf!" ), false, "misc", "puff" );
     for( const auto &sporep : here.points_in_radius( bub_pos(), 1 ) ) {
         if( sporep == bub_pos() ) {
             continue;
         }
-        fe.fungalize( sporep.raw(), this, fungal_opt.spore_chance );
+        fe.fungalize( sporep, this, fungal_opt.spore_chance );
     }
 }
 
 void Character::blossoms()
 {
     // Player blossoms are shorter-ranged, but you can fire much more frequently if you like.
-    sounds::sound( bub_pos().raw(), 10, sounds::sound_t::combat, _( "Pouf!" ), false, "misc", "puff" );
+    sounds::sound( bub_pos(), 10, sounds::sound_t::combat, _( "Pouf!" ), false, "misc", "puff" );
     map &here = get_map();
     for( const auto &tmp : here.points_in_radius( bub_pos(), 2 ) ) {
         here.add_field( tmp, fd_fungal_haze, rng( 1, 2 ) );
@@ -10283,7 +10283,7 @@ bool Character::has_activity( const std::vector<activity_id> &types ) const
 void Character::cancel_activity()
 {
     activity->canceled( *this );
-    if( has_activity( ACT_MOVE_ITEMS ) && is_hauling() && !has_haulable_items( position.raw() ) ) {
+    if( has_activity( ACT_MOVE_ITEMS ) && is_hauling() && !has_haulable_items( position ) ) {
         stop_hauling();
     }
     if( has_activity( ACT_TRY_SLEEP ) ) {
@@ -10828,7 +10828,7 @@ std::vector<detached_ptr<item>> Character::use_charges( const itype_id &what, in
                 qty -= used;
                 int rand_increase = x_in_y( used % ups_eff_mult, ups_eff_mult );
                 int really_used = ( used / ups_eff_mult ) + rand_increase;
-                e->ammo_consume( really_used, bub_pos().raw() );
+                e->ammo_consume( really_used, bub_pos() );
                 res.push_back( std::move( split ) );
             }
             return qty != 0 ? VisitResponse::NEXT : VisitResponse::ABORT;
@@ -10859,11 +10859,11 @@ std::vector<detached_ptr<item>> Character::use_charges( const itype_id &what, in
 
                 if( n == e->ammo_remaining() ) {
                     res.push_back( item::spawn( *e ) );
-                    e->ammo_consume( n, p.raw() );
+                    e->ammo_consume( n, p );
                 } else {
                     detached_ptr<item> split = item::spawn( *e );
                     split->ammo_set( e->ammo_current(), n );
-                    e->ammo_consume( n, p.raw() );
+                    e->ammo_consume( n, p );
                     res.push_back( std::move( split ) );
                 }
             }
@@ -11447,7 +11447,7 @@ bool Character::avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const
     /** @EFFECT_DODGE increases chance to avoid traps */
     int myroll = dice( 3, dex_cur + get_skill_level( skill_dodge ) * 1.5 );
     int traproll;
-    if( tr.can_see( pos.raw(), *this ) ) {
+    if( tr.can_see( pos, *this ) ) {
         traproll = dice( 3, tr.get_avoidance() );
     } else {
         traproll = dice( 6, tr.get_avoidance() );
@@ -11749,7 +11749,7 @@ action_id Character::get_next_auto_move_direction()
         // Should never happen, but check just in case
         return ACTION_NULL;
     }
-    return get_movement_action_from_delta( dp.raw(), iso_rotate::yes );
+    return get_movement_action_from_delta( dp, iso_rotate::yes );
 }
 
 bool Character::defer_move( const tripoint_bub_ms &next )
@@ -12214,7 +12214,7 @@ void Character::knock_back_to( const tripoint_bub_ms &to )
     // If we're still in the function at this point, we're actually moving a tile!
     if( g->m.has_flag( "LIQUID", to ) && g->m.has_flag( TFLAG_DEEP_WATER, to ) ) {
         if( !is_npc() ) {
-            avatar_action::swim( g->m, g->u, to.raw() );
+            avatar_action::swim( g->m, g->u, to );
         }
         // TODO: NPCs can't swim!
     } else if( g->m.impassable( to ) ) { // Wait, it's a wall

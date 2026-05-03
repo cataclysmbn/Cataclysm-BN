@@ -22,7 +22,7 @@ struct tripoint_distance {
     {}
     tripoint_distance( const tripoint_distance & ) = default;
     tripoint_distance &operator = ( const tripoint_distance & ) = default;
-    tripoint p;
+    tripoint_bub_ms p;
     int distance_squared;
 
     // Inverted because it's descending by default
@@ -74,7 +74,7 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
 
     std::map<tripoint, double> final_coverage;
     while( !queue.empty() ) {
-        tripoint p = queue.top().p;
+        auto p = queue.top().p;
         queue.pop();
         if( closed.contains( p ) || !here.inbounds( p ) ) {
             continue;
@@ -173,7 +173,7 @@ std::map<tripoint, double> expected_coverage( const shape &sh, const map &here, 
 
     std::map<tripoint, double> final_coverage;
     while( !queue.empty() ) {
-        tripoint p = queue.top().p;
+        auto p = queue.top().p;
         queue.pop();
         if( closed.contains( p ) ) {
             continue;

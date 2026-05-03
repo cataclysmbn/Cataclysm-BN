@@ -174,7 +174,7 @@ void map::create_hot_air( const tripoint &p, int intensity )
     }
 
     for( int counter = 0; counter < 5; counter++ ) {
-        tripoint dst( p + point( rng( -1, 1 ), rng( -1, 1 ) ) );
+        tripoint_bub_ms dst( p + point( rng( -1, 1 ), rng( -1, 1 ) ) );
         add_field( dst, hot_air, 1 );
     }
 }
@@ -960,7 +960,7 @@ void map::propagate_field( const tripoint &center, const field_type_id &type, in
             static const std::array<int, 8> x_offset = {{ -1, 1,  0, 0,  1, -1, -1, 1  }};
             static const std::array<int, 8> y_offset = {{  0, 0, -1, 1, -1,  1, -1, 1  }};
             for( size_t i = 0; i < 8; i++ ) {
-                tripoint pt = gp.second + point( x_offset[ i ], y_offset[ i ] );
+                auto pt = gp.second + point( x_offset[ i ], y_offset[ i ] );
                 if( closed.contains( pt ) ) {
                     continue;
                 }
@@ -1011,7 +1011,7 @@ auto neighbor_tile( submap *base, const tripoint_abs_sm &base_pos,
         return { base, { nx, ny } };
     }
     const tripoint_abs_sm nbr_pos( base_pos.raw() + tripoint{ dsx, dsy, 0 } );
-    auto *nbr = mb.lookup_submap_in_memory( nbr_pos.raw() );
+    auto *nbr = mb.lookup_submap_in_memory( nbr_pos );
     if( !nbr ) {
         return {};
     }
@@ -1260,7 +1260,7 @@ auto process_fields_in_submap( submap &sm,
                 // --- Z-rise: level-3 fire spreads upward ---
                 if( pos.z() < OVERMAP_HEIGHT && cur.get_field_intensity() == 3 ) {
                     const tripoint_abs_sm above_pos( pos.raw() + tripoint{ 0, 0, 1 } );
-                    auto *above_sm = mb.lookup_submap_in_memory( above_pos.raw() );
+                    auto *above_sm = mb.lookup_submap_in_memory( above_pos );
                     if( above_sm ) {
                         const auto &above_ter = above_sm->get_ter( local ).obj();
                         if( above_ter.has_flag( TFLAG_NO_FLOOR ) ||
@@ -1390,7 +1390,7 @@ auto process_fields_in_submap( submap &sm,
                 // --- Z-fall: fire on open-air tile falls to z-level below ---
                 if( no_floor && pos.z() > -OVERMAP_DEPTH ) {
                     const tripoint_abs_sm below_pos( pos.raw() + tripoint{ 0, 0, -1 } );
-                    auto *below_sm = mb.lookup_submap_in_memory( below_pos.raw() );
+                    auto *below_sm = mb.lookup_submap_in_memory( below_pos );
                     if( below_sm ) {
                         auto *fire_below = below_sm->get_field( local ).find_field( fd_fire );
                         if( !fire_below ) {
@@ -1426,7 +1426,7 @@ auto process_fields_in_submap( submap &sm,
                     auto spread_done = false;
                     if( pos.z() > -OVERMAP_DEPTH ) {
                         const tripoint_abs_sm below_pos( pos.raw() + tripoint{ 0, 0, -1 } );
-                        auto *below_sm = mb.lookup_submap_in_memory( below_pos.raw() );
+                        auto *below_sm = mb.lookup_submap_in_memory( below_pos );
                         if( below_sm ) {
                             auto dst = SubTile{ below_sm, local };
                             if( gas_can_spread_sub( cur, dst ) ) {

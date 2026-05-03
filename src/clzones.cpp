@@ -1370,8 +1370,8 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
     const auto a_end = target_map.bub_to_abs( tripoint( 23, 23, 0 ) );
     const point dim( 24, 24 );
     for( zone_data &zone : zones ) {
-        const tripoint z_start = zone.get_start_point();
-        const tripoint z_end = zone.get_end_point();
+        const auto z_start = zone.get_start_point();
+        const auto z_end = zone.get_end_point();
         if( ( a_start.x <= z_start.x && a_start.y <= z_start.y ) &&
             ( a_end.x > z_start.x && a_end.y >= z_start.y ) &&
             ( a_start.x <= z_end.x && a_start.y <= z_end.y ) &&

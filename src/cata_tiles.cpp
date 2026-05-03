@@ -6361,7 +6361,7 @@ void cata_tiles::draw_zones_frame( std::multimap<point, formatted_text> &overlay
                             zone_offset.xy() + zone_end.xy();
     const tripoint center_local( ( min_local.x + max_local.x ) / 2,
                                  ( min_local.y + max_local.y ) / 2, get_avatar().bub_pos().z() );
-    const tripoint lookup_local = has_custom_points ?
+    const auto lookup_local = has_custom_points ?
                                   tripoint( zone_points.front().xy(), zone_points.front().z ) :
                                   center_local;
 

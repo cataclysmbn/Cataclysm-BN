@@ -89,7 +89,7 @@ bool leap_actor::call( monster &z ) const
     }
 
     std::vector<tripoint> options;
-    tripoint target = z.move_target();
+    auto target = z.move_target();
     float best_float = trigdist ? trig_dist( z.bub_pos(), target ) : square_dist( z.bub_pos(), target );
     if( best_float < min_consider_range || best_float > max_consider_range ) {
         return false;
@@ -158,7 +158,7 @@ bool leap_actor::call( monster &z ) const
     }
 
     z.moves -= move_cost;
-    const tripoint chosen = random_entry( options );
+    const auto chosen = random_entry( options );
     bool seen = g->u.sees( z ); // We can see them jump...
     z.setpos( chosen );
     seen |= g->u.sees( z ); // ... or we can see them land
@@ -312,7 +312,7 @@ bool deployer_actor::call( monster &mon ) const
         return false;
     }
 
-    const tripoint where = empty_points_in_rad[ rng( 0, empty_points_in_rad.size() - 1 ) ];
+    const auto where = empty_points_in_rad[ rng( 0, empty_points_in_rad.size() - 1 ) ];
 
     if( monster *const hack = g->place_critter_at( actor->mtypeid, where ) ) {
         mon.ammo[att]--;
@@ -607,7 +607,7 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
         bool found_controls = false;
 
         for( const vpart_reference &vp : v.v->get_avail_parts( "CONTROLS" ) ) {
-            if( !z.sees( vp.pos().raw() ) ) {
+            if( !z.sees( vp.pos() ) ) {
                 continue;
             }
 
@@ -622,7 +622,7 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
 
 
         if( !found_controls ) {
-            std::vector<tripoint> line = here.find_clear_path( z.bub_pos(), v.v->bub_ms_location().raw() );
+            std::vector<tripoint> line = here.find_clear_path( z.bub_pos(), v.v->bub_ms_location() );
             auto prev_point = z.bub_pos();
             for( tripoint &i : line ) {
                 if( !z.sees( i ) ||  here.floor_between( prev_point, i ) ) {

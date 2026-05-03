@@ -446,7 +446,7 @@ std::optional<tripoint> editmap::edit()
 
 void editmap::uber_draw_ter( const catacurses::window &w, map *m )
 {
-    tripoint center = target;
+    auto center = target;
     tripoint start = center.xy() + tripoint( -getmaxx( w ) / 2, -getmaxy( w ) / 2, target.z );
     tripoint end = center.xy() + tripoint( getmaxx( w ) / 2, getmaxy( w ) / 2, target.z );
     /*
@@ -612,8 +612,8 @@ void editmap::draw_main_ui_overlay()
             const point origin_p = target.xy() + point( 1 - SEEX, 1 - SEEY );
             for( int x = 0; x < SEEX * 2; x++ ) {
                 for( int y = 0; y < SEEY * 2; y++ ) {
-                    const tripoint tmp_p( x, y, target.z );
-                    const tripoint map_p = origin_p + tmp_p;
+                    const tripoint_bub_ms tmp_p( x, y, target.z );
+                    const auto map_p = origin_p + tmp_p;
                     g->draw_radiation_override( map_p, tmpmap.get_radiation( tmp_p ) );
                     // scent is managed in `game` instead of `map`, so there's no override for it
                     // temperature is managed in `game` instead of `map`, so there's no override for it

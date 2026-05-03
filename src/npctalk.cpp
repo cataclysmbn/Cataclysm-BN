@@ -940,10 +940,10 @@ void npc::handle_sound( const sounds::sound_t spriority, const std::string &desc
             bool should_check = rl_dist( bub_pos(), spos ) < investigate_dist;
             if( should_check ) {
                 const zone_manager &mgr = zone_manager::get_manager();
-                if( mgr.has( zone_type_npc_no_investigate, s_abs_pos.raw(), fac_id ) ) {
+                if( mgr.has( zone_type_npc_no_investigate, s_abs_pos, fac_id ) ) {
                     should_check = false;
-                } else if( mgr.has( zone_type_npc_investigate_only, my_abs_pos.raw(), fac_id ) &&
-                           !mgr.has( zone_type_npc_investigate_only, s_abs_pos.raw(), fac_id ) ) {
+                } else if( mgr.has( zone_type_npc_investigate_only, my_abs_pos, fac_id ) &&
+                           !mgr.has( zone_type_npc_investigate_only, s_abs_pos, fac_id ) ) {
                     should_check = false;
                 }
             }
@@ -2773,7 +2773,7 @@ void talk_effect_fun_t::set_u_buy_monster( const std::string &monster_type_id, i
         const mtype_id mtype( monster_type_id );
 
         for( int i = 0; i < count; i++ ) {
-            monster *const mon_ptr = g->place_critter_around( mtype, u.bub_pos().raw(), 3 );
+            monster *const mon_ptr = g->place_critter_around( mtype, u.bub_pos(), 3 );
             if( !mon_ptr ) {
                 add_msg( m_debug, "Cannot place u_buy_monster, no valid placement locations." );
                 break;
@@ -3678,7 +3678,7 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
             reason = _( "Thanks, I feel better already." );
         }
         if( to_eat.type->has_use() ) {
-            amount_used = to_eat.type->invoke( p, to_eat, p.bub_pos().raw() );
+            amount_used = to_eat.type->invoke( p, to_eat, p.bub_pos() );
             if( amount_used <= 0 ) {
                 reason = _( "It doesn't look like a good idea to consume this…" );
                 return REFUSED;

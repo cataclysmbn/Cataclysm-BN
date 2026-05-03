@@ -504,7 +504,7 @@ inline bool ExplosionProcess::is_occluded( const tripoint from, const tripoint t
     }
 
     map &here = get_map();
-    tripoint last_position = from;
+    auto last_position = from;
 
     std::vector<tripoint> line_of_movement = line_to( from, to );
     // Annoyingly, line_to does not include the origin point
@@ -925,7 +925,7 @@ void ExplosionProcess::move_entity( const tripoint position,
     const float adjusted_delta = time_delta / ExplosionConstants::FLING_SLOWDOWN;
     const float distance_to_travel = std::min( datum.velocity * adjusted_delta, datum.velocity );
 
-    tripoint new_position = position;
+    auto new_position = position;
     float new_velocity = datum.velocity;
     float new_angle = datum.angle;
 
@@ -940,7 +940,7 @@ void ExplosionProcess::move_entity( const tripoint position,
             const float cur_distance_travelled = distance_to_travel * progress;
             rl_vec2d new_position_vec = datum.position +
                                         rl_vec2d( cur_distance_travelled, 0.0 ).rotated( datum.angle );
-            tripoint maybe_new_position = tripoint( static_cast<int>( new_position_vec.x ),
+            auto maybe_new_position = tripoint( static_cast<int>( new_position_vec.x ),
                                                     static_cast<int>( new_position_vec.y ),
                                                     position.z );
             if( !here.inbounds( maybe_new_position ) ||
@@ -1267,7 +1267,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
         }
     }
 
-    const tripoint &blast_center = src;
+    const auto &blast_center = src;
     const float raw_blast_radius = fragment.range;
 
     using dist_point_pair = std::pair<float, tripoint>;
@@ -1295,7 +1295,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
                                    trig_dist( blast_center, target ) :
                                    square_dist( blast_center, target )
                                );
-        const float z_distance = abs( target.z - blast_center.z );
+        const float z_distance = abs( target.z - blast_center.z() );
         const float z_aware_distance = distance + ( Z_LEVEL_DIST - 1 ) * z_distance;
         if( z_aware_distance <= raw_blast_radius ) {
             blast_map.emplace_back( z_aware_distance, target );
@@ -1314,7 +1314,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
     for( const dist_point_pair &pair : blast_map ) {
         float distance;
         tripoint position;
-        tripoint last_position = blast_center;
+        auto last_position = blast_center;
         std::tie( distance, position ) = pair;
 
         const std::vector<tripoint> line_of_movement = line_to( blast_center, position );
@@ -1390,7 +1390,7 @@ static std::map<const Creature *, int> legacy_blast( const tripoint_bub_ms &p, c
     // Find all points to blast
     while( !open.empty() ) {
         const float distance = open.top().first;
-        const tripoint pt = open.top().second;
+        const auto pt = open.top().second;
         open.pop();
 
         if( closed.contains( pt ) ) {
@@ -1411,7 +1411,7 @@ static std::map<const Creature *, int> legacy_blast( const tripoint_bub_ms &p, c
 
         // Iterate over all neighbors. Bash all of them, propagate to some
         for( size_t i = 0; i < max_index; i++ ) {
-            tripoint dest( pt + tripoint( x_offset[i], y_offset[i], z_offset[i] ) );
+            tripoint_bub_ms dest( pt + tripoint( x_offset[i], y_offset[i], z_offset[i] ) );
             if( closed.contains( dest ) || !here.inbounds( dest ) ||
                 here.obstructed_by_vehicle_rotation( pt, dest ) ) {
                 continue;
@@ -1792,7 +1792,7 @@ void emp_blast( const tripoint &p )
             }
             for( int i = -3; i <= 3; i++ ) {
                 for( int j = -3; j <= 3; j++ ) {
-                    tripoint p2 = p + tripoint( i, j, 0 );
+                    auto p2 = p + tripoint( i, j, 0 );
                     if( here.ter( p2 ) == t_door_metal_locked ) {
                         here.ter_set( p2, t_floor );
                     }
@@ -1919,7 +1919,7 @@ void explosion_funcs::resonance_cascade( const queued_explosion &qe )
 
     std::vector<int> rolls;
 
-    tripoint dest = p;
+    auto dest = p;
     for( dest.y = start.y; dest.y < end.y; dest.y++ ) {
         for( dest.x = start.x; dest.x < end.x; dest.x++ ) {
             switch( rng( 0, 80 ) ) {

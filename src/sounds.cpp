@@ -879,7 +879,7 @@ void sfx::do_vehicle_exterior_engine_sfx()
     for( wrapped_vehicle vehicle : vehs ) {
         if( vehicle.v->vehicle_noise > 0 &&
             vehicle.v->vehicle_noise -
-            sound_distance( player_character.bub_pos(), vehicle.v->bub_ms_location().raw() ) > noise_factor ) {
+            sound_distance( player_character.bub_pos(), vehicle.v->bub_ms_location() ) > noise_factor ) {
 
             noise_factor = vehicle.v->vehicle_noise - sound_distance( player_character.bub_pos(),
                            vehicle.v->bub_ms_location().raw() );

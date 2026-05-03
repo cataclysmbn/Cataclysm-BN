@@ -151,7 +151,7 @@ bool monster::will_move_to( const tripoint_bub_ms &p ) const
         return false;
     }
 
-    if( has_flag( MF_SUNDEATH ) && g->is_in_sunlight( p.raw() ) ) {
+    if( has_flag( MF_SUNDEATH ) && g->is_in_sunlight( p ) ) {
         return false;
     }
 
@@ -1381,7 +1381,7 @@ void monster::execute_action( const monster_action_t &action )
             hp += elem->volume() / volume_per_hp;
             if( has_flag( MF_ABSORBS_SPLITS ) && !has_effect( effect_mon_mitosis ) ) {
                 while( hp / 2 > type->hp ) {
-                    monster *const spawn = g->place_critter_around( type->id, bub_pos().raw(), 1 );
+                    monster *const spawn = g->place_critter_around( type->id, bub_pos(), 1 );
                     if( !spawn ) {
                         break;
                     }
@@ -1690,7 +1690,7 @@ void monster::nursebot_operate( player *dragged_foe )
             add_effect( effect_countdown, 2_turns );
             add_msg( m_bad, _( "The %s produces a syringe full of some translucent liquid." ), name() );
         } else if( g->critter_at( goal ) != nullptr && has_effect( effect_dragging ) ) {
-            sounds::sound( bub_pos().raw(), 8, sounds::sound_t::electronic_speech,
+            sounds::sound( bub_pos(), 8, sounds::sound_t::electronic_speech,
                            string_format(
                                _( "a soft robotic voice say, \"Please step away from the autodoc, this patient needs immediate care.\"" ) ) );
             // TODO: Make it able to push NPC/player
@@ -1758,7 +1758,7 @@ void monster::footsteps( const tripoint_bub_ms &p )
         return;
     }
     int dist = rl_dist( p, g->u.bub_pos() );
-    sounds::add_footstep( p.raw(), volume, dist, this, type->get_footsteps() );
+    sounds::add_footstep( p, volume, dist, this, type->get_footsteps() );
     return;
 }
 

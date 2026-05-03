@@ -1451,7 +1451,7 @@ int iuse::petfood( player *p, item *it, bool, const tripoint & )
     if( !pnt_ ) {
         return 0;
     }
-    const tripoint pnt = *pnt_;
+    const auto pnt = *pnt_;
     p->moves -= to_moves<int>( 1_seconds );
 
     // First a check to see if we are trying to feed a NPC dog food.
@@ -1801,7 +1801,7 @@ int iuse::fish_trap( player *p, item *it, bool t, const tripoint &pos )
         if( !pnt_ ) {
             return 0;
         }
-        const tripoint pnt = *pnt_;
+        const auto pnt = *pnt_;
 
         if( !g->m.has_flag( "FISHABLE", pnt ) ) {
             p->add_msg_if_player( m_info, _( "You can't fish there!" ) );
@@ -1881,7 +1881,7 @@ int iuse::extinguisher( player *p, item *it, bool, const tripoint & )
     if( !dest_ ) {
         return 0;
     }
-    tripoint dest = *dest_;
+    auto dest = *dest_;
 
     p->moves -= to_moves<int>( 2_seconds );
 
@@ -2482,7 +2482,7 @@ int iuse::makemound( player *p, item *it, bool t, const tripoint & )
     if( !pnt_ ) {
         return 0;
     }
-    const tripoint pnt = *pnt_;
+    const auto pnt = *pnt_;
 
     if( pnt == p->bub_pos() ) {
         p->add_msg_if_player( m_info,
@@ -2862,7 +2862,7 @@ int iuse::jackhammer( player *p, item *it, bool, const tripoint &pos )
         return 0;
     }
 
-    tripoint pnt = pos;
+    auto pnt = pos;
     if( pos == p->bub_pos() ) {
         const std::optional<tripoint> pnt_ = choose_adjacent( _( "Drill where?" ) );
         if( !pnt_ ) {
@@ -2954,7 +2954,7 @@ int iuse::pickaxe( player *p, item *it, bool, const tripoint &pos )
         return 0;
     }
 
-    tripoint pnt = pos;
+    auto pnt = pos;
     if( pos == p->bub_pos() ) {
         const std::optional<tripoint> pnt_ = choose_adjacent( _( "Mine where?" ) );
         if( !pnt_ ) {
@@ -3009,7 +3009,7 @@ int iuse::burrow( player *p, item *it, bool, const tripoint &pos )
         return 0;
     }
 
-    tripoint pnt = pos;
+    auto pnt = pos;
     if( pos == p->bub_pos() ) {
         const std::optional<tripoint> pnt_ = choose_adjacent( _( "Burrow where?" ) );
         if( !pnt_ ) {
@@ -3157,11 +3157,11 @@ int iuse::teleport( player *p, item *it, bool, const tripoint & )
 int iuse::can_goo( player *p, item *it, bool, const tripoint & )
 {
     int tries = 0;
-    tripoint goop;
-    goop.z = p->posz();
+    tripoint_bub_ms goop;
+    goop.z() = p->posz();
     do {
-        goop.x = p->posx() + rng( -2, 2 );
-        goop.y = p->posy() + rng( -2, 2 );
+        goop.x() = p->posx() + rng( -2, 2 );
+        goop.y() = p->posy() + rng( -2, 2 );
         tries++;
     } while( g->m.impassable( goop ) && tries < 10 );
     if( tries == 10 ) {
@@ -3190,8 +3190,8 @@ int iuse::can_goo( player *p, item *it, bool, const tripoint & )
         tries = 0;
         bool found = false;
         do {
-            goop.x = p->posx() + rng( -2, 2 );
-            goop.y = p->posy() + rng( -2, 2 );
+            goop.x() = p->posx() + rng( -2, 2 );
+            goop.y() = p->posy() + rng( -2, 2 );
             tries++;
             found = g->m.passable( goop ) && g->m.tr_at( goop ).is_null();
         } while( !found && tries < 10 );
@@ -3463,7 +3463,7 @@ int iuse::grenade_inc_act( player *p, item *it, bool t, const tripoint &pos )
     if( it->charges == 0 ) { // blow up
         int num_flames = rng( 3, 5 );
         for( int current_flame = 0; current_flame < num_flames; current_flame++ ) {
-            tripoint dest( pos + point( rng( -5, 5 ), rng( -5, 5 ) ) );
+            tripoint_bub_ms dest( pos + point( rng( -5, 5 ), rng( -5, 5 ) ) );
             std::vector<tripoint> flames = line_to( pos, dest, 0, 0 );
             for( auto &flame : flames ) {
                 g->m.add_field( flame, fd_fire, rng( 0, 2 ) );
@@ -3684,7 +3684,7 @@ int iuse::portal( player *p, item *it, bool, const tripoint & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    tripoint t( p->posx() + rng( -2, 2 ), p->posy() + rng( -2, 2 ), p->posz() );
+    tripoint_bub_ms t( p->posx() + rng( -2, 2 ), p->posy() + rng( -2, 2 ), p->posz() );
     g->m.trap_set( t, tr_portal );
     return it->type->charges_to_use();
 }
@@ -3695,7 +3695,7 @@ int iuse::tazer( player *p, item *it, bool, const tripoint &pos )
         return 0;
     }
 
-    tripoint pnt = pos;
+    auto pnt = pos;
     if( pos == p->bub_pos() ) {
         const std::optional<tripoint> pnt_ = choose_adjacent( _( "Shock where?" ) );
         if( !pnt_ ) {
@@ -7111,7 +7111,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
             p->add_msg_if_player( _( "Never mind." ) );
             return 0;
         }
-        tripoint aim_point = *aim_point_;
+        auto aim_point = *aim_point_;
         bool incorrect_focus = false;
         tripoint_range<tripoint> aim_bounds = g->m.points_in_radius( aim_point, 2 );
 
@@ -7631,7 +7631,7 @@ static void emit_radio_signal( player &p, const flag_id &signal )
 
     // Items on creatures
     for( Creature &cr : g->all_creatures() ) {
-        const tripoint &cr_pos = cr.bub_pos();
+        const auto &cr_pos = cr.bub_pos();
         if( cr.is_monster() ) {
             monster &mon = *cr.as_monster();
             mon.visit_items( [&]( item * it ) {
@@ -8335,7 +8335,7 @@ int iuse::cable_attach( player *who, item *cable, bool, const tripoint & )
             if( who && who->has_item( *cable ) ) {
                 who->add_msg_if_player( m_good, _( "You connect the %s to the electric grid." ),
                                         v->name );
-                grid_connector->connected_vehicles.emplace_back( g->m.bub_to_abs( v->bub_ms_location().raw() ) );
+                grid_connector->connected_vehicles.emplace_back( g->m.bub_to_abs( v->bub_ms_location() ) );
                 v->install_part( vcoords, std::move( v_part ) );
             }
             return 1;    // Let the cable be destroyed.
@@ -8467,7 +8467,7 @@ int iuse::directional_hologram( player *p, item *it, bool, const tripoint &pos )
     if( !posp_ ) {
         return 0;
     }
-    const tripoint posp = *posp_;
+    const auto posp = *posp_;
 
     monster *const hologram = g->place_critter_at( mon_hologram, posp );
     if( !hologram ) {
@@ -8596,7 +8596,7 @@ int iuse::capture_monster_act( player *p, item *it, bool, const tripoint &pos )
             p->add_msg_if_player( m_info, _( "You cannot use a %s there." ), it->tname() );
             return 0;
         }
-        const tripoint target = *target_;
+        const auto target = *target_;
 
         // Capture the thing, if it's on the target square.
         if( const monster *const mon_ptr = g->critter_at<monster>( target ) ) {
@@ -8643,7 +8643,7 @@ int iuse::ladder( player *p, item *, bool, const tripoint & )
     if( !pnt_ ) {
         return 0;
     }
-    const tripoint pnt = *pnt_;
+    const auto pnt = *pnt_;
 
     if( !g->is_empty( pnt ) || g->m.has_furn( pnt ) ) {
         p->add_msg_if_player( m_bad, _( "Can't place it there." ) );

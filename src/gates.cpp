@@ -184,7 +184,7 @@ void gates::toggle_gate( const tripoint &pos )
 
     map &here = get_map();
     for( point wall_offset : four_adjacent_offsets ) {
-        const tripoint wall_pos = pos + wall_offset;
+        const auto wall_pos = pos + wall_offset;
 
         if( !gate.is_suitable_wall( wall_pos ) ) {
             continue;
@@ -198,7 +198,7 @@ void gates::toggle_gate( const tripoint &pos )
                 }
 
                 if( !open ) { // Closing the gate...
-                    tripoint cur_pos = gate_pos;
+                    auto cur_pos = gate_pos;
                     while( here.ter( cur_pos ) == gate.floor.id() ) {
                         fail = !g->forced_door_closing( cur_pos, gate.door.id(), gate.bash_dmg ) || fail;
                         close = !fail;
@@ -207,7 +207,7 @@ void gates::toggle_gate( const tripoint &pos )
                 }
 
                 if( !close ) { // Opening the gate...
-                    tripoint cur_pos = gate_pos;
+                    auto cur_pos = gate_pos;
                     while( true ) {
                         const ter_id ter = here.ter( cur_pos );
 

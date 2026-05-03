@@ -302,7 +302,7 @@ void iexamine::cvdmachine( player &p, const tripoint & )
 void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
 {
     bool table_exists = false;
-    tripoint spawn_point;
+    tripoint_bub_ms spawn_point;
     map &here = get_map();
     for( const auto &valid_location : here.points_in_radius( examp, 1 ) ) {
         if( here.ter( valid_location ) == ter_str_id( "t_nanofab_body" ) ) {
@@ -2019,10 +2019,10 @@ void iexamine::fswitch( player &p, const tripoint_bub_ms &examp )
     }
     ter_id terid = here.ter( examp );
     p.moves -= to_moves<int>( 1_seconds );
-    tripoint tmp;
-    tmp.z = examp.z();
-    for( tmp.y = examp.y(); tmp.y <= examp.y() + 5; tmp.y++ ) {
-        for( tmp.x = 0; tmp.x < g_mapsize_x; tmp.x++ ) {
+    tripoint_bub_ms tmp;
+    tmp.z() = examp.z();
+    for( tmp.y() = examp.y(); tmp.y() <= examp.y() + 5; tmp.y()++ ) {
+        for( tmp.x() = 0; tmp.x() < g_mapsize_x; tmp.x()++ ) {
             if( terid == t_switch_rg ) {
                 if( here.ter( tmp ) == t_rock_red ) {
                     here.ter_set( tmp, t_floor_red );
@@ -2054,7 +2054,7 @@ void iexamine::fswitch( player &p, const tripoint_bub_ms &examp )
                     here.ter_set( tmp, t_rock_red );
                 }
             } else if( terid == t_switch_even ) {
-                if( ( tmp.y - examp.y() ) % 2 == 1 ) {
+                if( ( tmp.y() - examp.y() ) % 2 == 1 ) {
                     if( here.ter( tmp ) == t_rock_red ) {
                         here.ter_set( tmp, t_floor_red );
                     } else if( here.ter( tmp ) == t_floor_red ) {
@@ -5342,7 +5342,7 @@ void iexamine::pay_gas( player &p, const tripoint_bub_ms &examp )
         popup( str_to_illiterate_str( _( "Failure!  No gas tank found!" ) ) );
         return;
     }
-    const tripoint pTank = *pTank_;
+    const auto pTank = *pTank_;
 
     if( tankGasUnits == 0 ) {
         popup( str_to_illiterate_str(
@@ -5499,17 +5499,17 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
     }
     if( get_map().ter( p.bub_pos() ).id().str() == "t_open_air" && !character_funcs::can_fly( p ) ) {
         auto where = p.bub_pos();
-        tripoint below = where;
-        below.z--;
+        auto below = where;
+        below.z()--;
 
         // Keep going down until we find a tile that is NOT open air
         while( get_map().ter( below ).id().str() == "t_open_air" &&
                get_map().valid_move( where, below, false, true ) ) {
             where.z()--;
-            below.z--;
+            below.z()--;
         }
         // where now represents the first NON-open-air tile or the last valid move before hitting one
-        const int height = p.bub_pos().z() - below.z;
+        const int height = p.bub_pos().z() - below.z();
 
         if( height > 0 ) {
             g->vertical_move( -height, true );  // fall onto the solid tile
@@ -5522,8 +5522,8 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
     cmenu.addentry( ledge_action::jump_over, true, 'j', _( "Jump over." ) );
     cmenu.addentry( ledge_action::climb_down, true, 'c', _( "Climb down." ) );
     //if the tile below has a grappling hook, you can pull it up
-    tripoint below_rope = examp;
-    below_rope.z--;
+    auto below_rope = examp;
+    below_rope.z()--;
     if( get_map().has_flag_furn( "REMOVE_FROM_ABOVE", below_rope ) ) {
         cmenu.addentry( ledge_action::pull_up_rope, true, 'r', _( "Pull up the %s." ),
                         get_map().furn( below_rope ).obj().name() );
@@ -5537,7 +5537,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
     map &here = get_map();
     switch( cmenu.ret ) {
         case ledge_action::jump_over: {
-            tripoint dest( p.posx() + 2 * sgn( examp.x() - p.posx() ),
+            tripoint_bub_ms dest( p.posx() + 2 * sgn( examp.x() - p.posx() ),
                            p.posy() + 2 * sgn( examp.y() - p.posy() ),
                            p.posz() );
             if( p.get_str() < 4 ) {
@@ -5558,15 +5558,15 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             break;
         }
         case ledge_action::climb_down: {
-            tripoint where = examp;
-            tripoint below = examp;
-            below.z--;
+            auto where = examp;
+            auto below = examp;
+            below.z()--;
             while( here.valid_move( where, below, false, true ) ) {
-                where.z--;
-                below.z--;
+                where.z()--;
+                below.z()--;
             }
 
-            const int height = examp.z() - where.z;
+            const int height = examp.z() - where.z();
             if( height == 0 ) {
                 p.add_msg_if_player( _( "You can't climb down there." ) );
                 return;
@@ -5673,7 +5673,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
                 p.add_msg_if_player( _( "There is nothing for your to attach your web to!" ) );
             } else {
                 for( int i = 1; i < success_range; i++ ) {
-                    tripoint dest( p.posx() + i * sgn( examp.x() - p.posx() ),
+                    tripoint_bub_ms dest( p.posx() + i * sgn( examp.x() - p.posx() ),
                                    p.posy() + i * sgn( examp.y() - p.posy() ),
                                    p.posz() );
 

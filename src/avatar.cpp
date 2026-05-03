@@ -1041,7 +1041,7 @@ void avatar::do_read( item *loc )
         add_msg( m_debug, _( "Chance to learn one in: %d" ), difficulty );
 
         if( one_in( difficulty ) ) {
-            m->second.call( *this, book, false, bub_pos().raw() );
+            m->second.call( *this, book, false, bub_pos() );
             continuous = false;
         } else {
             if( activity->index == getID().get_value() ) {

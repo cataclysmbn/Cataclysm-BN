@@ -1856,7 +1856,7 @@ int firestarter_actor::use( player &p, item &it, bool t, const tripoint &spos ) 
         return 0;
     }
 
-    tripoint pos = spos;
+    auto pos = spos;
     float light = light_mod( p.bub_pos() );
     if( !prep_firestarter_use( p, pos ) ) {
         return 0;
@@ -4234,8 +4234,8 @@ std::unique_ptr<iuse_actor> place_trap_actor::clone() const
 static bool is_solid_neighbor( const tripoint &pos, point offset )
 {
     map &here = get_map();
-    const tripoint a = pos + offset;
-    const tripoint b = pos - offset;
+    const auto a = pos + offset;
+    const auto b = pos - offset;
     return here.move_cost( a ) != 2 && here.move_cost( b ) != 2;
 }
 
@@ -4314,7 +4314,7 @@ int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
     if( !pos_ ) {
         return 0;
     }
-    tripoint pos = *pos_;
+    auto pos = *pos_;
 
     if( !is_allowed( p, pos, it.tname() ) ) {
         return 0;
@@ -7418,7 +7418,7 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     // The map is already loaded centered on the destination (via load_pos parameter),
     // so local coordinates are valid without needing a map shift first.
     auto entry_local = get_map().abs_to_bub( entry_abs_ms );
-    tripoint safe_pos = find_safe_spawn( entry_local );
+    auto safe_pos = find_safe_spawn( entry_local );
     p.setpos( safe_pos );
 
     // Single update_map call at the final position
@@ -7574,7 +7574,7 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     // The map is already loaded centered on the destination (via load_pos parameter),
     // so local coordinates are valid without needing a map shift first.
     auto return_local = get_map().abs_to_bub( return_abs_ms );
-    tripoint safe_pos = find_safe_spawn( return_local );
+    auto safe_pos = find_safe_spawn( return_local );
     p.setpos( safe_pos );
 
     // Single update_map call at the final position

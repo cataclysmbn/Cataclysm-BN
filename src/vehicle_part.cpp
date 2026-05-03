@@ -393,7 +393,7 @@ int vehicle_part::ammo_consume( int qty, const tripoint_bub_ms &pos )
         }
         return res;
     }
-    return base->ammo_consume( qty, pos.raw() );
+    return base->ammo_consume( qty, pos );
 }
 
 double vehicle_part::consume_energy( const itype_id &ftype, double energy_j )
@@ -481,7 +481,7 @@ void vehicle_part::process_contents( const tripoint_bub_ms &pos, const bool e_he
             flag = temperature_flag::TEMP_FREEZER;
         }
 
-        base = item::process( base.release(), nullptr, pos.raw(), false, flag );
+        base = item::process( base.release(), nullptr, pos, false, flag );
     }
 }
 
@@ -664,7 +664,7 @@ bool vehicle::can_enable( const vehicle_part &pt, bool alert ) const
     }
 
     // Disallow running a planter underground for now
-    if( pt.info().has_flag( "PLANTER" ) && ( !warm_enough_to_plant( g->u.bub_pos().raw() ) ||
+    if( pt.info().has_flag( "PLANTER" ) && ( !warm_enough_to_plant( g->u.bub_pos() ) ||
             bub_ms_location().z() < 0 ) ) {
         if( alert ) {
             add_msg( m_bad, _( "It is too cold to plant anything now." ) );

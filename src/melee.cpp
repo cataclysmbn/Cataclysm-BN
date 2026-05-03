@@ -752,7 +752,7 @@ void Character::reach_attack( const tripoint_bub_ms &p )
     int skill = std::min( 10, get_skill_level( skill_stabbing ) );
     int t = 0;
     std::vector<tripoint> path = line_to( pos(), p, t, 0 );
-    tripoint last_point = pos();
+    auto last_point = pos();
     path.pop_back(); // Last point is our critter
     for( const tripoint &path_point : path ) {
         // Possibly hit some unintended target instead
@@ -766,7 +766,7 @@ void Character::reach_attack( const tripoint_bub_ms &p )
             critter = inter;
             break;
         } else if( here.obstructed_by_vehicle_rotation( last_point, path_point ) ) {
-            tripoint rand = path_point;
+            auto rand = path_point;
             if( one_in( 2 ) ) {
                 rand.x = last_point.x;
             } else {
@@ -793,11 +793,11 @@ void Character::reach_attack( const tripoint_bub_ms &p )
     }
 
     if( here.obstructed_by_vehicle_rotation( last_point, p ) ) {
-        tripoint rand = p;
+        auto rand = p;
         if( one_in( 2 ) ) {
-            rand.x = last_point.x;
+            rand.x() = last_point.x;
         } else {
-            rand.y = last_point.y;
+            rand.y() = last_point.y;
         }
 
         here.bash( rand, str_cur + primary_weapon().damage_melee( DT_BASH ) );
@@ -1407,8 +1407,8 @@ bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique,
     if( technique.aoe == "wide" ) {
         //check if either (or both) of the squares next to our target contain a possible victim
         //offsets are a pre-computed matrix allowing us to quickly lookup adjacent squares
-        tripoint left = pos() + tripoint( offset_a[lookup], offset_b[lookup], 0 );
-        tripoint right = pos() + tripoint( offset_b[lookup], -offset_a[lookup], 0 );
+        auto left = pos() + tripoint( offset_a[lookup], offset_b[lookup], 0 );
+        auto right = pos() + tripoint( offset_b[lookup], -offset_a[lookup], 0 );
 
         monster *const mon_l = g->critter_at<monster>( left );
         if( mon_l && mon_l->friendly == 0 ) {
@@ -1596,7 +1596,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         const auto prev_pos = t.bub_pos(); // track target startpoint for knockback_follow
         const int kb_offset_x = rng( -technique.knockback_spread, technique.knockback_spread );
         const int kb_offset_y = rng( -technique.knockback_spread, technique.knockback_spread );
-        tripoint kb_point( posx() + kb_offset_x, posy() + kb_offset_y, posz() );
+        tripoint_bub_ms kb_point( posx() + kb_offset_x, posy() + kb_offset_y, posz() );
         for( int dist = rng( 1, technique.knockback_dist ); dist > 0; dist-- ) {
             t.knock_back_from( kb_point );
         }

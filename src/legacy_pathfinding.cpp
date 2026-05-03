@@ -169,7 +169,7 @@ bool vertical_move_destination( const map &m, tripoint &t )
     for( int x = start.x; x < end.x; x++ ) {
         for( int y = start.y; y < end.y; y++ ) {
             if( m.get_pf_special( tripoint( x, y, t.z ) ) & PF_UPDOWN ) {
-                const tripoint p( x, y, t.z );
+                const tripoint_bub_ms p( x, y, t.z );
                 if( m.has_flag( flag, p ) ) {
                     t = p;
                     return true;
@@ -328,11 +328,11 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
         constexpr std::array<int, 8> x_offset{{ -1,  1,  0,  0,  1, -1, -1, 1 }};
         constexpr std::array<int, 8> y_offset{{  0,  0, -1,  1, -1,  1, -1, 1 }};
         for( size_t i = 0; i < 8; i++ ) {
-            const tripoint p( cur.x + x_offset[i], cur.y + y_offset[i], cur.z );
+            const tripoint_bub_ms p( cur.x + x_offset[i], cur.y + y_offset[i], cur.z );
             const int index = flat_index( p, layer.stride_y );
 
             // TODO: Remove this and instead have sentinels at the edges
-            if( p.x < minx || p.x >= maxx || p.y < miny || p.y >= maxy ) {
+            if( p.x() < minx || p.x() >= maxx || p.y() < miny || p.y() >= maxy ) {
                 continue;
             }
 
@@ -358,7 +358,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
             }
 
             // Penalize for diagonals or the path will look "unnatural"
-            int newg = layer.gscore[parent_index] + ( ( cur.x != p.x && cur.y != p.y ) ? 1 : 0 );
+            int newg = layer.gscore[parent_index] + ( ( cur.x != p.x() && cur.y != p.y() ) ? 1 : 0 );
 
             const auto p_special = get_pf_special( p );
             // TODO: De-uglify, de-huge-n
@@ -454,11 +454,11 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
                         if( has_zlevels() && terrain.has_flag( TFLAG_NO_FLOOR ) ) {
                             // Special case - ledge in z-levels
                             // Warning: really expensive, needs a cache
-                            if( valid_move( p, tripoint( p.xy(), p.z - 1 ), false, true ) ) {
-                                tripoint below( p.xy(), p.z - 1 );
+                            if( valid_move( p, tripoint( p.xy(), p.z() - 1 ), false, true ) ) {
+                                tripoint_bub_ms below( p.xy(), p.z() - 1 );
                                 if( !has_flag( TFLAG_NO_FLOOR, below ) ) {
                                     // Otherwise this would have been a huge fall
-                                    auto &layer = pf.get_layer( p.z - 1 );
+                                    auto &layer = pf.get_layer( p.z() - 1 );
                                     // From cur, not p, because we won't be walking on air
                                     pf.add_point( layer.gscore[parent_index] + 10,
                                                   layer.score[parent_index] + 10 + 2 * rl_dist( below, t ),

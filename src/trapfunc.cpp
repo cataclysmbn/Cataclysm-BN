@@ -1019,7 +1019,7 @@ static bool query_for_item( const player *pl, const itype_id &itemname, const ch
     return pl->has_amount( itemname, 1 ) && ( !pl->is_player() || query_yn( que ) );
 }
 
-static tripoint random_neighbor( const tripoint_bub_ms &center )
+static tripoint_bub_ms random_neighbor( const tripoint_bub_ms &center )
 {
     center.x() += rng( -1, 1 );
     center.y() += rng( -1, 1 );
@@ -1159,17 +1159,17 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
     }
 
     int height = 0;
-    tripoint where = p;
-    tripoint below = where;
-    below.z--;
+    auto where = p;
+    auto below = where;
+    below.z()--;
     while( g->m.valid_move( where, below, false, true ) ) {
-        where.z--;
+        where.z()--;
         if( g->critter_at( where ) != nullptr ) {
-            where.z++;
+            where.z()++;
             break;
         }
 
-        below.z--;
+        below.z()--;
         height++;
     }
 
@@ -1195,7 +1195,7 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
         }
 
         height++;
-        where.z--;
+        where.z()--;
     } else if( height == 0 ) {
         return false;
     }
@@ -1248,9 +1248,9 @@ bool trapfunc::temple_flood( const tripoint_bub_ms &p, Creature *c, item * )
     // Monsters and npcs are completely ignored here, should they?
     if( c == &g->u ) {
         add_msg( m_warning, _( "You step on a loose tile, and water starts to flood the room!" ) );
-        tripoint tmp = p;
-        int &i = tmp.x;
-        int &j = tmp.y;
+        auto tmp = p;
+        int &i = tmp.x();
+        int &j = tmp.y();
         for( i = 0; i < g_mapsize_x; i++ ) {
             for( j = 0; j < g_mapsize_y; j++ ) {
                 if( g->m.tr_at( tmp ).loadid == tr_temple_flood ) {
@@ -1271,9 +1271,9 @@ bool trapfunc::temple_toggle( const tripoint_bub_ms &p, Creature *c, item * )
     if( c == &g->u ) {
         add_msg( _( "You hear the grinding of shifting rock." ) );
         const ter_id type = g->m.ter( p );
-        tripoint tmp = p;
-        int &i = tmp.x;
-        int &j = tmp.y;
+        auto tmp = p;
+        int &i = tmp.x();
+        int &j = tmp.y();
         for( i = 0; i < g_mapsize_x; i++ ) {
             for( j = 0; j < g_mapsize_y; j++ ) {
                 if( type == t_floor_red ) {

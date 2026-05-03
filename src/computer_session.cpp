@@ -950,8 +950,8 @@ void computer_session::action_srcf_elevator()
 {
     Character &player_character = g->u;
     map &here = g->m;
-    tripoint surface_elevator;
-    tripoint underground_elevator;
+    tripoint_bub_ms surface_elevator;
+    tripoint_bub_ms underground_elevator;
     bool is_surface_elevator_on = false;
     bool is_surface_elevator_exist = false;
     bool is_underground_elevator_on = false;
@@ -1097,7 +1097,7 @@ void computer_session::action_irradiator()
 void computer_session::action_geiger()
 {
     g->u.moves -= 30;
-    tripoint platform;
+    tripoint_bub_ms platform;
     bool source_exists = false;
     int sum_rads = 0;
     int peak_rad = 0;
@@ -1138,9 +1138,9 @@ void computer_session::action_geiger()
 void computer_session::action_conveyor()
 {
     g->u.moves -= 300;
-    tripoint loading; // red tile = loading bay
-    tripoint unloading; // green tile = unloading bay
-    tripoint platform; // radiation platform = middle point
+    tripoint_bub_ms loading; // red tile = loading bay
+    tripoint_bub_ms unloading; // green tile = unloading bay
+    tripoint_bub_ms platform; // radiation platform = middle point
     bool l_exists = false;
     bool u_exists = false;
     bool p_exists = false;
@@ -1200,7 +1200,7 @@ void computer_session::action_extract_rad_source()
 {
     if( query_yn( _( "Operation irreversible.  Extract radioactive material?" ) ) ) {
         g->u.moves -= 300;
-        tripoint platform;
+        tripoint_bub_ms platform;
         bool p_exists = false;
         map &here = get_map();
         for( const tripoint &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {

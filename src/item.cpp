@@ -4718,7 +4718,7 @@ void item::on_wear( Character &who )
             }
         }
         if( transform && actor->restricted ) {
-            actor->bypass( *who.as_player(), *this, false, who.bub_pos().raw() );
+            actor->bypass( *who.as_player(), *this, false, who.bub_pos() );
         }
     }
 
@@ -4753,7 +4753,7 @@ void item::on_takeoff( Character &who )
             debugmsg( "iuse_actor type descriptor and actual type mismatch" );
             return;
         }
-        actor->bypass( *who.as_player(), *this, false, who.bub_pos().raw() );
+        actor->bypass( *who.as_player(), *this, false, who.bub_pos() );
     }
 
     if( type->iwearable_callbacks ) {
@@ -4890,7 +4890,7 @@ void item::on_pickup( Character &who )
         handle_pickup_ownership( who );
     }
     if( is_bucket_nonempty() ) {
-        contents.spill_contents( who.bub_pos().raw() );
+        contents.spill_contents( who.bub_pos() );
     }
 
     who.flag_encumbrance();
@@ -7928,7 +7928,7 @@ bool item::spill_contents( Character &c )
     }
 
     if( c.is_npc() ) {
-        return spill_contents( c.bub_pos().raw() );
+        return spill_contents( c.bub_pos() );
     }
 
     contents.handle_liquid_or_spill( c );
@@ -9658,11 +9658,11 @@ detached_ptr<item> item::use_charges( detached_ptr<item> &&self, const itype_id 
 
                 if( n == e->ammo_remaining() ) {
                     used.push_back( item::spawn( *e ) );
-                    e->ammo_consume( really_used, pos.raw() );
+                    e->ammo_consume( really_used, pos );
                 } else {
                     detached_ptr<item> split = item::spawn( *e );
                     split->ammo_set( e->ammo_current(), really_used );
-                    e->ammo_consume( really_used, pos.raw() );
+                    e->ammo_consume( really_used, pos );
                     used.push_back( std::move( split ) );
                 }
             }
@@ -11219,7 +11219,7 @@ bool item::on_drop( const tripoint_bub_ms &pos, map &m )
     }
     you.flag_encumbrance();
 
-    return type->drop_action && type->drop_action.call( you, *this, false, pos.raw() );
+    return type->drop_action && type->drop_action.call( you, *this, false, pos );
 }
 
 time_duration item::age() const

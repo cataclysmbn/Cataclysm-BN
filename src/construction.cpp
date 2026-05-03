@@ -2054,7 +2054,7 @@ void construct::done_deconstruct( const tripoint_bub_ms &p )
         here.ter_set( p, t.deconstruct.ter_set );
         // Interpret a result of t_null as underlying terrain if any instead of placing nothinginess
         if( here.ter( p ) == t_null ) {
-            tripoint below( p.xy(), p.z() - 1 );
+            tripoint_bub_ms below( p.xy(), p.z() - 1 );
             here.ter_set( p, here.get_roof( below, true ) );
         }
         add_msg( _( "The %s is disassembled." ), t.name() );

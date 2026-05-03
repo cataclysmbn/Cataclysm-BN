@@ -275,7 +275,7 @@ class location_vector
 
         void remove_with( std::function < detached_ptr<T>( detached_ptr<T> && ) > cb );
 
-        void move_by( tripoint offset );
+        void move_by( const tripoint_rel_ms &offset );
 
         void init_location( location<T> *new_loc );
 

@@ -234,7 +234,7 @@ tripoint_bub_ms npc::good_escape_direction( bool include_pos )
     if( path.empty() ) {
         zone_type_id retreat_zone = zone_type_id( "NPC_RETREAT" );
         const zone_manager &mgr = zone_manager::get_manager();
-        std::optional<tripoint> retreat_target = mgr.get_nearest( retreat_zone, abs_pos().raw(), 60,
+        std::optional<tripoint> retreat_target = mgr.get_nearest( retreat_zone, abs_pos(), 60,
                 fac_id );
         if( retreat_target && *retreat_target != abs_pos().raw() ) {
             update_path( here.abs_to_bub( tripoint_abs_ms( *retreat_target ) ) );
@@ -846,7 +846,7 @@ void npc::move()
         if( sees_dangerous_field( bub_pos() ) ) {
             path.clear();
         }
-        const tripoint escape_dir = good_escape_direction( sees_dangerous_field( bub_pos() ) );
+        const auto escape_dir = good_escape_direction( sees_dangerous_field( bub_pos() ) );
         if( escape_dir != bub_pos() ) {
             move_to( escape_dir );
             return;
@@ -978,7 +978,7 @@ void npc::move()
         }
         std::vector<tripoint> activity_route = get_auto_move_route();
         if( !activity_route.empty() && !has_destination_activity() ) {
-            tripoint final_destination;
+            tripoint_bub_ms final_destination;
             if( destination_point ) {
                 final_destination = here.abs_to_bub( *destination_point );
             } else {
@@ -1093,7 +1093,7 @@ void npc::execute_action( npc_action action )
         break;
 
         case npc_investigate_sound: {
-            tripoint cur_pos = bub_pos();
+            auto cur_pos = bub_pos();
             update_path( here.abs_to_bub( ai_cache.s_abs_pos ) );
             move_to_next();
             if( bub_pos() == cur_pos ) {
@@ -1119,7 +1119,7 @@ void npc::execute_action( npc_action action )
             // TODO: Allow stims when not too tired
             // Find a nice spot to sleep
             int best_sleepy = character_funcs::rate_sleep_spot( *this, bub_pos() );
-            tripoint best_spot = bub_pos();
+            auto best_spot = bub_pos();
             for( const tripoint &p : closest_points_first( bub_pos(), 6 ) ) {
                 if( !could_move_onto( p ) || !g->is_empty( p ) ) {
                     continue;
@@ -1383,7 +1383,7 @@ void npc::execute_action( npc_action action )
                 const int cur_part = seats[i].second;
 
                 tripoint_bub_ms pp = veh->bub_part_location( cur_part );
-                update_path( pp.raw(), true );
+                update_path( pp, true );
                 if( !path.empty() ) {
                     // All is fine
                     move_to_next();
@@ -2444,7 +2444,7 @@ bool npc::can_move_to( const tripoint &p, bool no_bashing ) const
 
 void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomove )
 {
-    tripoint p = pt;
+    auto p = pt;
 
     const auto hook_results = cata::run_hooks(
                                   "on_npc_try_move",
@@ -2584,7 +2584,7 @@ void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomo
             if( np->attitude == NPCATT_ACTIVITY ) {
                 std::vector<tripoint> activity_route = np->get_auto_move_route();
                 if( !activity_route.empty() && !np->has_destination_activity() ) {
-                    tripoint final_destination;
+                    tripoint_bub_ms final_destination;
                     if( destination_point ) {
                         final_destination = here.abs_to_bub( *destination_point );
                     } else {
@@ -2673,10 +2673,10 @@ void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomo
     }
 
     if( moved ) {
-        const tripoint old_pos = bub_pos();
+        const auto old_pos = bub_pos();
         setpos( p );
         set_underwater( g->m.is_divable( p ) );
-        if( old_pos.x - p.x < 0 ) {
+        if( old_pos.x() - p.x < 0 ) {
             facing = FD_RIGHT;
         } else {
             facing = FD_LEFT;
@@ -2796,7 +2796,7 @@ void npc::escape_explosion()
 
 void npc::move_away_from( const tripoint &pt, bool no_bash_atk, std::set<tripoint> *nomove )
 {
-    tripoint best_pos = bub_pos();
+    auto best_pos = bub_pos();
     int best = -1;
     int chance = 2;
     map &here = get_map();
@@ -3470,7 +3470,7 @@ bool npc::find_corpse_to_pulp()
 
     if( corpse == nullptr ) {
         // If we're following the player, don't wander off to pulp corpses
-        const tripoint &around = is_walking_with() ? player_character.bub_pos() : bub_pos();
+        const auto &around = is_walking_with() ? player_character.bub_pos() : bub_pos();
         for( item *&location : here.get_active_items_in_radius( around, range,
                 special_item_type::corpse ) ) {
             corpse = check_tile( location->position() );
@@ -4446,9 +4446,9 @@ void npc::go_to_omt_destination()
         }
     }
     // TODO: fix point types
-    tripoint sm_tri =
-        here.abs_to_bub( project_to<coords::ms>( omt_path.back() ).raw() );
-    tripoint centre_sub = sm_tri + point( SEEX, SEEY );
+    auto sm_tri =
+        here.abs_to_bub( project_to<coords::ms>( omt_path.back() ) );
+    auto centre_sub = sm_tri + point( SEEX, SEEY );
     if( !here.passable( centre_sub ) ) {
         auto candidates = here.points_in_radius( centre_sub, 2 );
         for( const auto &elem : candidates ) {

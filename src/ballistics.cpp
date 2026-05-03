@@ -248,7 +248,7 @@ static void apply_net_tangle_aoe( const tripoint &center )
     };
 
     std::ranges::for_each( net_offsets, [&]( const tripoint & offset ) {
-        const tripoint pt = center + offset;
+        const auto pt = center + offset;
         if( !here.inbounds( pt ) ) {
             return;
         }
@@ -374,7 +374,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 
     double extend_to_range = no_overshoot ? range : proj_arg.range;
 
-    tripoint target = target_arg;
+    auto target = target_arg;
     std::vector<tripoint> trajectory;
     std::vector<std::pair<monster, const dealt_projectile_attack>> hit_monsters;
 
@@ -425,7 +425,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 
     // Trace the trajectory, doing damage in order
     tripoint &tp = attack.end_point;
-    tripoint prev_point = source;
+    auto prev_point = source;
 
     // Add the first point to the trajectory
     trajectory.insert( trajectory.begin(), source );
@@ -477,8 +477,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
         tp = trajectory[i];
 
         if( tp.z != prev_point.z ) {
-            tripoint floor1 = prev_point;
-            tripoint floor2 = tp;
+            auto floor1 = prev_point;
+            auto floor2 = tp;
 
             if( floor1.z < floor2.z ) {
                 floor1.z++;
@@ -560,7 +560,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 
         if( here.obstructed_by_vehicle_rotation( prev_point, tp ) ) {
             //We're firing through an impassible gap in a rotated vehicle, randomly hit one of the two walls
-            tripoint rand = tp;
+            auto rand = tp;
             if( one_in( 2 ) ) {
                 rand.x = prev_point.x;
             } else {

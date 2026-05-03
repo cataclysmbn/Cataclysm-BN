@@ -626,7 +626,7 @@ int area_expander::run( const tripoint &center )
         node &best = area[best_index];
 
         for( size_t i = 0; i < 8; i++ ) {
-            tripoint pt = best.position + point( x_offset[ i ], y_offset[ i ] );
+            auto pt = best.position + point( x_offset[ i ], y_offset[ i ] );
 
             if( ( here.impassable( pt ) && !here.has_flag( "THIN_OBSTACLE", pt ) ) ||
                 here.obstructed_by_vehicle_rotation( best.position, pt ) ) {
@@ -826,7 +826,7 @@ void spell_effect::directed_push( const spell &sp, Creature &caster, const tripo
             continue;
         }
 
-        tripoint push_dest;
+        tripoint_bub_ms push_dest;
         calc_ray_end( start_angle, push_distance, push_point, push_dest );
         const std::vector<tripoint> push_vec = line_to( push_point, push_dest );
 
@@ -1277,7 +1277,7 @@ void spell_effect::bash( const spell &sp, Creature &caster, const tripoint &targ
 
 void spell_effect::dash( const spell &sp, Creature &caster, const tripoint &target )
 {
-    const tripoint &source = caster.bub_pos();
+    const auto &source = caster.bub_pos();
     const std::vector<tripoint> trajectory_local = line_to( source, target );
     ::map &here = get_map();
     // uses abs() coordinates

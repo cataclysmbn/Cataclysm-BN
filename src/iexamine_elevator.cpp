@@ -223,7 +223,7 @@ auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> v
     elevator::find_elevators_nearby( p.bub_pos() )
     .transform( []( const tripoint & pos ) -> point { return g->place_player( pos ); } );
 
-    cata_event_dispatch::avatar_moves( *p.as_avatar(), here, old_abs_pos.raw() );
+    cata_event_dispatch::avatar_moves( *p.as_avatar(), here, old_abs_pos );
 }
 
 } //namespace elevator
