@@ -1894,7 +1894,7 @@ void npc::shop_restock()
     if( !ret.empty() ) {
         // Pick up nearby items as a free action since we'll be immediately deleting these items
         auto old_moves = moves;
-        for( map_cursor &cursor : map_selector( bub_pos().raw(), 0 ) ) {
+        for( map_cursor &cursor : map_selector( bub_pos(), 0 ) ) {
             cursor.remove_top_items_with( [this]( detached_ptr<item> &&it ) {
                 if( it->is_owned_by( *this ) ) {
                     inv.add_item( std::move( it ), false );
@@ -2618,29 +2618,29 @@ std::string npc::opinion_text() const
     return ret;
 }
 
-static void maybe_shift( std::optional<tripoint> &pos, point d )
+static void maybe_shift( std::optional<tripoint_bub_ms> &pos, point_rel_ms d )
 {
     if( pos ) {
-        *pos += d;
+        *pos = *pos + d;
     }
 }
 
-static void maybe_shift( tripoint &pos, point d )
+static void maybe_shift( tripoint_bub_ms &pos, point_rel_ms d )
 {
-    if( pos != tripoint_min ) {
-        pos += d;
+    if( pos != tripoint_bub_ms::min() ) {
+        pos = pos + d;
     }
 }
 
-void npc::shift( point s )
+void npc::shift( point_rel_sm s )
 {
-    const point shift = project_to<coords::ms>( s );
+    const auto shift = project_to<coords::ms>( s );
 
     setpos( bub_pos() - shift );
 
-    maybe_shift( wanted_item_pos, point( -shift.x, -shift.y ) );
-    maybe_shift( last_player_seen_pos, point( -shift.x, -shift.y ) );
-    maybe_shift( pulp_location, point( -shift.x, -shift.y ) );
+    maybe_shift( wanted_item_pos, point_rel_ms( -shift.x(), -shift.y() ) );
+    maybe_shift( last_player_seen_pos, point_rel_ms( -shift.x(), -shift.y() ) );
+    maybe_shift( pulp_location, point_rel_ms( -shift.x(), -shift.y() ) );
     path.clear();
 }
 

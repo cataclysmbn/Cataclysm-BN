@@ -1407,7 +1407,7 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
         rl_vec2d final1 = ( collision_axis_y * vel1_y_a + collision_axis_x * vel1_x_a ) * 100.0;
         rl_vec2d final2 = ( collision_axis_y * vel2_y_a + collision_axis_x * vel2_x_a ) * 100.0;
 
-        veh.move.init( final1.as_point() );
+        veh.move.init( point_rel_ms( final1.as_point() ) );
         if( final1.dot_product( veh.face_vec() ) < 0 ) {
             // Car is being pushed backwards. Make it move backwards
             veh.velocity = -final1.magnitude();
@@ -1415,7 +1415,7 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
             veh.velocity = final1.magnitude();
         }
 
-        veh2.move.init( final2.as_point() );
+        veh2.move.init( point_rel_ms( final2.as_point() ) );
         if( final2.dot_product( veh2.face_vec() ) < 0 ) {
             // Car is being pushed backwards. Make it move backwards
             veh2.velocity = -final2.magnitude();
@@ -4305,7 +4305,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
             g->events().send<event_type::triggers_alarm>( g->u.getID() );
             const auto abs = project_to<coords::sm>( bub_to_abs( p.xy() ) );
             g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                                 tripoint_abs_sm( abs, p.z() ).raw() );
+                                 tripoint_abs_sm( abs, p.z() ) );
         }
     }
 
@@ -4963,7 +4963,7 @@ bool map::open_door_ter(
     }
 
     sounds::sound(
-        p.raw(), 6, sounds::sound_t::movement, _( "swish" ),
+        p, 6, sounds::sound_t::movement, _( "swish" ),
         true, "open_door", ter.id.str() );
     ter_set( p, ter.open );
 
@@ -5018,7 +5018,7 @@ bool map::open_door_furn(
     }
 
     sounds::sound(
-        p.raw(), 6, sounds::sound_t::movement, _( "swish" ),
+        p, 6, sounds::sound_t::movement, _( "swish" ),
         true, "open_door", furn.id.str() );
     furn_set( p, furn.open );
     return true;
@@ -8007,7 +8007,7 @@ void map::shift( const point_rel_sm &sp )
         g->u.setpos( g->u.bub_pos() - project_to<coords::ms>( sp ) );
     }
 
-    g->shift_destination_preview( point( -sp.x() * SEEX, -sp.y() * SEEY ) );
+    g->shift_destination_preview( point_rel_ms( -sp.x() * SEEX, -sp.y() * SEEY ) );
 
     vehicle *remoteveh = g->remoteveh();
 
@@ -9373,11 +9373,11 @@ void map::build_outside_cache( const int zlev )
             }
             cur_submap->rebuild_outside_cache( above, tripoint_bub_sm( smx, smy, zlev ) );
 
-            const point sm_offset = project_to<coords::ms>( point( smx, smy ) );
+            const point_rel_ms sm_offset = project_to<coords::ms>( point_rel_sm( smx, smy ) );
             for( int sx = 0; sx < SEEX; ++sx ) {
                 for( int sy = 0; sy < SEEY; ++sy ) {
-                    ch.outside_cache[static_cast<size_t>( ch.idx( sm_offset.x + sx,
-                                                          sm_offset.y + sy ) )] =
+                    ch.outside_cache[static_cast<size_t>( ch.idx( sm_offset.x() + sx,
+                                                          sm_offset.y() + sy ) )] =
                                                                   cur_submap->outside_cache[sx][sy];
                 }
             }
@@ -9491,13 +9491,13 @@ bool map::build_floor_cache( const int zlev )
             }
             cur_submap->rebuild_floor_cache( *this, tripoint_bub_sm( smx, smy, zlev ) );
 
-            const point sm_offset = project_to<coords::ms>( point( smx, smy ) );
+            const auto sm_offset = project_to<coords::ms>( point_rel_sm( smx, smy ) );
 
             if( !rebuild_all ) {
                 // Reset this submap's region to "has floor" before stamping no-floor tiles,
                 // since a previously no-floor tile may have gained a floor since last build.
                 for( int sx = 0; sx < SEEX; ++sx ) {
-                    std::fill_n( floor_cache.data() + ch.idx( sm_offset.x + sx, sm_offset.y ),
+                    std::fill_n( floor_cache.data() + ch.idx( sm_offset.x() + sx, sm_offset.y() ),
                                  SEEY, '\x01' );
                 }
             }
@@ -9505,7 +9505,7 @@ bool map::build_floor_cache( const int zlev )
             for( int sx = 0; sx < SEEX; ++sx ) {
                 for( int sy = 0; sy < SEEY; ++sy ) {
                     if( !cur_submap->floor_cache[sx][sy] ) {
-                        floor_cache[ch.idx( sm_offset.x + sx, sm_offset.y + sy )] = false;
+                        floor_cache[ch.idx( sm_offset.x() + sx, sm_offset.y() + sy )] = false;
                     }
                 }
             }

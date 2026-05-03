@@ -1028,7 +1028,7 @@ class npc : public player
          * from one submap to an adjacent submap.  It updates our position (shifting by
          * 12 tiles), as well as our plans.
          */
-        void shift( point s );
+        void shift( point_rel_sm s );
 
         // Movement; the following are defined in npcmove.cpp
         void move(); // Picks an action & a target and calls execute_action
@@ -1289,7 +1289,7 @@ class npc : public player
          * This does not change the global position of the NPC.
          */
         tripoint_abs_ms global_square_location() const override;
-        std::optional<tripoint> last_player_seen_pos; // Where we last saw the player
+        std::optional<tripoint_bub_ms> last_player_seen_pos; // Where we last saw the player
         // Player orders a friendly NPC to move to this position
         std::optional<tripoint_abs_ms> goto_to_this_pos;
         int last_seen_player_turn = 0; // Timeout to forgetting

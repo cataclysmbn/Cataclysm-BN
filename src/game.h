@@ -647,7 +647,7 @@ class game : public submap_load_listener
         // Handles shifting coordinates transparently when moving between submaps.
         // Helper to make calling with a player pointer less verbose.
         point_rel_sm update_map( Character &who );
-        point_rel_sm update_map( point_bub_ms &p );
+        point_rel_sm update_map( int &x, int &y  );
         void update_overmap_seen(); // Update which overmap tiles we can see
 
         void process_artifact( item &it, Character &who );

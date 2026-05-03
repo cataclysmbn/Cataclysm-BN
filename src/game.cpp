@@ -159,7 +159,6 @@
 #include "profession.h"
 #include "profile.h"
 #include "ranged.h"
-#include "reality_bubble_helpers.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "ret_val.h"
@@ -10331,7 +10330,7 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
             trail_end_x = false;
         } else {
             cCurMon = nullptr;
-            iActivePos = tripoint_bub_ms::zero();
+            iActivePos = tripoint_rel_ms::zero();
             u.view_offset = stored_view_offset;
             trail_start = trail_end = std::nullopt;
         }
@@ -11407,7 +11406,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
 
     auto oldpos = u.bub_pos();
     auto submap_shift = place_player( dest_loc );
-    point ms_shift = project_to<coords::ms>( submap_shift );
+    auto ms_shift = project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift;
 
     if( pulling ) {
@@ -11529,7 +11528,7 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc )
                 }
                 if( !moved ) {
                     add_msg( _( "There is no room to push the %s out of the way." ), critter.name() );
-                    return u.bub_pos().xy();
+                    return point_rel_sm::zero();
                 }
             } else {
                 // Force the movement even though the player is there right now.
@@ -12038,8 +12037,8 @@ bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
 
     if( shifting_furniture ) {
         // We didn't move
-        tripoint d_sum = u.grab_point + dp;
-        if( std::abs( d_sum.x ) < 2 && std::abs( d_sum.y ) < 2 ) {
+        auto d_sum = u.grab_point + dp;
+        if( std::abs( d_sum.x() ) < 2 && std::abs( d_sum.y() ) < 2 ) {
             u.grab_point = d_sum; // furniture moved relative to us
         } else { // we pushed furniture out of reach
             add_msg( _( "You let go of the %s." ), furntype.name() );
@@ -12484,7 +12483,7 @@ void game::fling_creature( Creature *c, const units::angle &dir, float flvel, bo
                 }
                 // If we're flinging the player around, make sure the map stays centered on them.
                 if( is_u ) {
-                    update_map( pt.x(), pt.y() );
+                    update_map( pt.xy() );
                 } else {
                     p->setpos( pt );
                 }
@@ -13716,33 +13715,33 @@ void game::vertical_notes( int z_before, int z_after )
 
 point_rel_sm game::update_map( Character &who )
 {
-    return update_map( who.bub_pos().xy() );
+    return update_map( who.bub_pos().x(), who.bub_pos().y() );
 }
 
-point_rel_sm game::update_map( point_bub_ms &p )
+point_rel_sm game::update_map( int &x, int &y )
 {
     point_rel_sm shift;
 
     while( x < g_half_mapsize_x ) {
-        p.x() += SEEX;
+        x += SEEX;
         shift.x()--;
     }
-    while( p.x() >= g_half_mapsize_x + SEEX ) {
-        p.x() -= SEEX;
+    while( x >= g_half_mapsize_x + SEEX ) {
+        x -= SEEX;
         shift.x()++;
     }
-    while( p.y() < g_half_mapsize_y ) {
-        p.y() += SEEY;
+    while( y < g_half_mapsize_y ) {
+        y += SEEY;
         shift.y()--;
     }
-    while( p.y() >= g_half_mapsize_y + SEEY ) {
-        p.y() -= SEEY;
+    while( y >= g_half_mapsize_y + SEEY ) {
+        y -= SEEY;
         shift.y()++;
     }
 
     if( shift == point_rel_sm::zero() ) {
         // adjust player position
-        u.setpos( tripoint_bub_ms( p, get_levz() ) );
+        u.setpos( tripoint_bub_ms( x, y, get_levz() ) );
         // Update what parts of the world map we can see
         // We need this call because even if the map hasn't shifted we may have changed z-level and can now see farther
         // TODO: only make this call if we changed z-level
@@ -13766,7 +13765,7 @@ point_rel_sm game::update_map( point_bub_ms &p )
 
     // this handles loading/unloading submaps that have scrolled on or off the viewport
     // NOLINTNEXTLINE(cata-use-named-point-constants)
-    inclusive_rectangle<point> size_1( point( -1, -1 ), point( 1, 1 ) );
+    inclusive_rectangle<point_rel_sm> size_1( point_rel_sm( -1, -1 ), point_rel_sm( 1, 1 ) );
     auto remaining_shift = shift;
     while( remaining_shift != point_rel_sm::zero() ) {
         auto this_shift = clamp( remaining_shift, size_1 );
@@ -13813,9 +13812,9 @@ point_rel_sm game::update_map( point_bub_ms &p )
     }
 
     // Shift monsters
-    shift_monsters( tripoint( shift, 0 ) );
+    shift_monsters( tripoint_rel_sm( shift, 0 ) );
     shift_in_progress_ = false;
-    const point shift_ms = project_to<coords::ms>( shift );
+    const auto shift_ms = project_to<coords::ms>( shift );
     u.shift_destination( -shift_ms );
 
     // Shift NPCs
