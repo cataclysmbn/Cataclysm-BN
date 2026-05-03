@@ -1141,7 +1141,7 @@ void npc::do_npc_craft( const std::optional<tripoint> &loc )
     menu.query();
 
     if( menu.ret == 0 ) {
-        craft( tripoint_zero );
+        craft( tripoint_bub_ms::zero() );
     } else if( menu.ret == 1 ) {
         struct resume_entry {
             item *it;

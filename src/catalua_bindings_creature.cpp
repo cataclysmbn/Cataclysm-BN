@@ -1064,7 +1064,7 @@ void cata::detail::reg_character( sol::state &lua )
 
         DOC( "Returns the crafting inventory for this character (includes nearby items)" );
         luna::set_fx( ut, "crafting_inventory", []( UT_CLASS & ch ) -> const inventory & {
-            return ch.crafting_inventory( tripoint_zero, PICKUP_RANGE, true );
+            return ch.crafting_inventory( tripoint_bub_ms::zero(), PICKUP_RANGE, true );
         } );
 
         DOC( "Invalidates the cached crafting inventory" );

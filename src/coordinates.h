@@ -184,6 +184,20 @@ class coord_point
         static constexpr auto below() requires std::same_as<Point, tripoint> {
             return coord_point( tripoint_below );
         }
+        static constexpr auto min() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_min );
+            } else {
+                return coord_point( tripoint_min );
+            }
+        }
+        static constexpr auto max() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_max );
+            } else {
+                return coord_point( tripoint_max );
+            }
+        }
 
         constexpr coord_point() = default;
         explicit constexpr coord_point( const Point &p ) :

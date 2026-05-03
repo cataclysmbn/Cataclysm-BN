@@ -215,7 +215,7 @@ bool game::grabbed_veh_move( const tripoint_bub_ms &dp )
 
         // Set player location to illegal value so it can't collide with vehicle.
         const auto player_prev = u.bub_pos();
-        u.setpos( tripoint_zero );
+        u.setpos( tripoint_bub_ms::zero() );
         std::vector<veh_collision> colls;
         const bool failed = grabbed_vehicle->collision( colls, actual_dir, true );
         u.setpos( player_prev );

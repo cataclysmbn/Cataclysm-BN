@@ -4296,7 +4296,7 @@ void npc::reach_omt_destination()
     if( path.size() > 1 ) {
         // No point recalculating the path to get home
         move_to_next();
-    } else if( guard_pos != tripoint_min ) {
+    } else if( guard_pos != tripoint_bub_ms::min() ) {
         update_path( here.abs_to_bub( guard_pos ) );
         move_to_next();
     } else {

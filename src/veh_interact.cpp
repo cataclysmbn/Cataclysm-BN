@@ -2246,7 +2246,7 @@ void veh_interact::move_cursor( point_rel_ms d, int dstart_at )
     const auto &here = get_map();
 
     dd += d.rotate( 3 );
-    if( d != point_zero ) {
+    if( d != point_rel_ms::zero() ) {
         start_limit = 0;
         parts_list_offset = 0;
     } else {

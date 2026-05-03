@@ -549,7 +549,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
 
     if( done ) {
         ret.reserve( rl_dist( f, t ) * 2 );
-        tripoint cur = t;
+        auto cur = t;
         // Just to limit max distance, in case something weird happens
         for( int fdist = max_length; fdist != 0; fdist-- ) {
             const auto &layer = pf.get_layer( cur.z );

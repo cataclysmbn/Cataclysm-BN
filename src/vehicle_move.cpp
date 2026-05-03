@@ -409,7 +409,7 @@ bool vehicle::collision( std::vector<veh_collision> &colls,
     if( dp.z == -1 && !bash_floor ) {
         // First check current level, then the one below if current had no collisions
         // Bash floors on the current one, but not on the one below.
-        if( collision( colls, tripoint_zero, just_detect, true ) ) {
+        if( collision( colls, tripoint_rel_ms::zero(), just_detect, true ) ) {
             return true;
         }
     }
@@ -1578,12 +1578,12 @@ vehicle *vehicle::act_on_map()
 void vehicle::shift_zlevel()
 {
     map &here = get_map();
-    int center = part_at( point_zero );
+    int center = part_at( tripoint_rel_ms::zero() );
 
     int z_shift = 0;
     if( center == -1 ) {
         //no center part, fall back to slower terrain check
-        auto global_center = mount_to_bubble( point_zero );
+        auto global_center = mount_to_bubble( tripoint_mnt_veh::zero() );
         if( here.has_flag( TFLAG_RAMP_DOWN, global_center.raw() ) ) {
             z_shift = -1;
         } else if( here.has_flag( TFLAG_RAMP_UP, global_center.raw() ) ) {
@@ -1614,7 +1614,7 @@ void vehicle::adjust_zlevel( int idir, const tripoint &offset )
 {
     //We don't need to do anything if we're not on a ramp
     //unless position 0 is outside the vehicle then there may be a ramp in between
-    if( part_at( point_zero ) != -1 && !check_on_ramp( idir, offset ) ) {
+    if( part_at( tripoint_rel_ms::zero() ) != -1 && !check_on_ramp( idir, offset ) ) {
         return;
     }
 

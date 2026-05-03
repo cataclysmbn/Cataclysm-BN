@@ -1163,7 +1163,7 @@ void weather_manager::update_weather()
         for( int i = -OVERMAP_DEPTH; i <= OVERMAP_HEIGHT; i++ ) {
             get_map().set_transparency_cache_dirty( i );
         }
-        get_map().set_seen_cache_dirty( tripoint_zero );
+        get_map().set_seen_cache_dirty( tripoint_bub_ms::zero() );
     }
 
     water_temperature = weather_gen.get_water_temperature(

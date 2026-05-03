@@ -8611,7 +8611,7 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
         // otherwise use the previously set timeout
         const auto edge_scroll = mouse_edge_scrolling_terrain( ctxt );
         const int scroll_timeout = get_option<int>( "EDGE_SCROLL" );
-        const bool edge_scrolling = edge_scroll != tripoint_zero && scroll_timeout >= 0;
+        const bool edge_scrolling = edge_scroll != tripoint_rel_ms::zero() && scroll_timeout >= 0;
         if( edge_scrolling ) {
             action = ctxt.handle_input( scroll_timeout );
         } else {
@@ -9111,7 +9111,7 @@ void game::reset_item_list_state( const catacurses::window &window, int height,
 
 struct nearby_vehicle_entry {
     vehicle *veh = nullptr;
-    const tripoint_bub_ms &pos = tripoint_bub_ms::zero();
+    tripoint_bub_ms pos = tripoint_bub_ms::zero();
     int dist = 0;
 };
 
@@ -11116,7 +11116,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         // We were grabbing something WEIRD, let's pretend we weren't
         grabbed = false;
     }
-    if( u.grab_point != tripoint_zero && !grabbed ) {
+    if( u.grab_point != tripoint_bub_ms::zero() && !grabbed ) {
         add_msg( m_warning, _( "Can't find grabbed object." ) );
         u.grab( OBJECT_NONE );
     }
@@ -12756,7 +12756,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     if( force ) {
         // Let go of a grabbed cart.
         u.grab( OBJECT_NONE );
-    } else if( u.grab_point != tripoint_zero ) {
+    } else if( u.grab_point != tripoint_bub_ms::zero() ) {
         add_msg( m_info, _( "You can't drag things up and down stairs." ) );
         return;
     }
@@ -13744,7 +13744,7 @@ point game::update_map( int &x, int &y )
         shift.y()++;
     }
 
-    if( shift == point_zero ) {
+    if( shift == point_rel_sm::zero() ) {
         // adjust player position
         u.setpos( tripoint( x, y, get_levz() ) );
         // Update what parts of the world map we can see
@@ -13772,7 +13772,7 @@ point game::update_map( int &x, int &y )
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     inclusive_rectangle<point> size_1( point( -1, -1 ), point( 1, 1 ) );
     auto remaining_shift = shift;
-    while( remaining_shift != point_zero ) {
+    while( remaining_shift != point_rel_sm::zero() ) {
         auto this_shift = clamp( remaining_shift, size_1 );
         m.shift( this_shift );
         remaining_shift -= this_shift;

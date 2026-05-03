@@ -1488,7 +1488,7 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
             }
             // If the NPC has an activity - make sure they're not duplicating work.
             tripoint_bub_ms guy_work_spot;
-            if( guy.has_player_activity() && guy.activity->placement != tripoint_min ) {
+            if( guy.has_player_activity() && guy.activity->placement != tripoint_bub_ms::min() ) {
                 guy_work_spot = here.abs_to_bub( guy.activity->placement );
             }
             // If their position or intended position or player position/intended position
@@ -1501,7 +1501,7 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
                                               failure_notice_sent );
                 return activity_reason_info::fail( do_activity_reason::ALREADY_WORKING );
             }
-            if( guy_work_spot != tripoint_zero ) {
+            if( guy_work_spot != tripoint_bub_ms::zero() ) {
                 vehicle *other_veh = veh_pointer_or_null( here.veh_at( guy_work_spot ) );
                 // working on same vehicle - store the index to check later.
                 if( other_veh && other_veh == veh && guy.activity_vehicle_part_index != -1 ) {
@@ -2192,7 +2192,7 @@ static bool tidy_activity( player &p, const tripoint_bub_ms &src_loc,
             break;
         }
     }
-    if( loot_src_lot == tripoint_zero ) {
+    if( loot_src_lot == tripoint_bub_ms::zero() ) {
         return false;
     }
     auto items_there = here.i_at( src_loc );
@@ -2709,7 +2709,7 @@ static zone_type_id get_zone_for_act( const tripoint_bub_ms &src_loc, const zone
     if( act_id == ACT_MULTIPLE_MINE ) {
         ret = zone_type_MINING;
     }
-    if( src_loc != tripoint_zero && act_id == ACT_FETCH_REQUIRED ) {
+    if( src_loc != tripoint_bub_ms::zero() && act_id == ACT_FETCH_REQUIRED ) {
         const zone_data *zd = mgr.get_zone_at( get_map().bub_to_abs( src_loc ) );
         if( zd ) {
             ret = zd->get_type();
@@ -2773,7 +2773,7 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
                 }
             }
         }
-        if( src_set.empty() && unsorted_spot != tripoint_zero ) {
+        if( src_set.empty() && unsorted_spot != tripoint_bub_ms::zero() ) {
             for( const item *inv_elem : p.inv_dump() ) {
                 if( inv_elem->has_var( "activity_var" ) ) {
                     // we've gone to tidy up all the things lying around, now tidy up the things we picked up.
@@ -2783,7 +2783,7 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
             }
         }
     } else if( act_id != ACT_FETCH_REQUIRED ) {
-        zone_type_id zone_type = get_zone_for_act( tripoint_zero, mgr, act_id );
+        zone_type_id zone_type = get_zone_for_act( tripoint_bub_ms::zero(), mgr, act_id );
         src_set = mgr.get_near( zone_type_id( zone_type ), abspos, ACTIVITY_SEARCH_DISTANCE );
         // multiple construction will form a list of targets based on blueprint zones and unfinished constructions
         if( act_id == ACT_MULTIPLE_CONSTRUCTION ) {

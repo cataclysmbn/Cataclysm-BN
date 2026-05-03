@@ -99,7 +99,7 @@ void craft_command::execute( const tripoint_bub_ms &new_loc )
         return;
     }
 
-    if( new_loc != tripoint_zero ) {
+    if( new_loc != tripoint_bub_ms::zero() ) {
         loc = new_loc;
     }
 

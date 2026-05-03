@@ -56,6 +56,6 @@ void cata::detail::reg_mapgendata( sol::state &lua )
     } );
     DOC( "Generates Normal Mapgen" );
     luna::set_fx( ut, "generate", [&]( mapgendata & dat, std::string mapgen ) {
-        call_mapgen_function( mapgen, dat, false, point_zero );
+        call_mapgen_function( mapgen, dat, false, point_rel_ms::zero() );
     } );
 }

@@ -2214,7 +2214,7 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
             curs += vec->xy() * scroll_d;
         } else if( action == "MOUSE_MOVE" || action == "TIMEOUT" ) {
             auto edge_scroll = g->mouse_edge_scrolling_overmap( ictxt );
-            if( edge_scroll != tripoint_zero ) {
+            if( edge_scroll != tripoint_rel_omt::zero() ) {
                 if( action == "MOUSE_MOVE" ) {
                     edge_scroll *= 2;
                 }

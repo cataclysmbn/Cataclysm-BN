@@ -295,7 +295,7 @@ static bool mx_house_wasp( map &m, const tripoint_abs_sm &loc )
         }
         m.place_spawns( GROUP_WASP_GUARD, 1, pod, pod, 1, true );
     }
-    m.place_spawns( GROUP_WASP_QUEEN, 1, point_zero, point( SEEX, SEEY ), 1, true );
+    m.place_spawns( GROUP_WASP_QUEEN, 1, point_bub_ms::zero(), point( SEEX, SEEY ), 1, true );
     if( one_in( 5 ) ) {
         m.add_spawn( mon_dermatik, rng( 1, 3 ), tripoint( point( SEEX * 2 - 1, SEEY * 2 - 1 ), loc.z() ) );
     }
@@ -332,7 +332,7 @@ static bool mx_house_spider( map &m, const tripoint_abs_sm &loc )
             }
         }
     }
-    m.place_items( item_group_id( "rare" ), 60, point_zero, point( SEEX * 2 - 1, SEEY * 2 - 1 ), false,
+    m.place_items( item_group_id( "rare" ), 60, tripoint_bub_ms::zero(), point( SEEX * 2 - 1, SEEY * 2 - 1 ), false,
                    calendar::start_of_cataclysm );
 
     return true;
@@ -721,10 +721,10 @@ static bool mx_bandits_block( map &m, const tripoint_abs_sm &abs_sub )
         line( &m, t_trunk, point( 1, 18 ), point( 2, 22 ) );
         m.ter_set( point( 1, 2 ), t_stump );
         m.ter_set( point( 1, 20 ), t_stump );
-        m.ter_set( point_south_east, t_improvised_shelter );
+        m.ter_set( tripoint_bub_ms::south_east(), t_improvised_shelter );
         m.place_npc( point( 2, 19 ), string_id<npc_template>( "bandit" ) );
         if( one_in( 2 ) ) {
-            m.place_npc( point_south_east, string_id<npc_template>( "bandit" ) );
+            m.place_npc( point_bub_ms::south_east(), string_id<npc_template>( "bandit" ) );
         }
 
         return true;
@@ -737,10 +737,10 @@ static bool mx_bandits_block( map &m, const tripoint_abs_sm &abs_sub )
         line( &m, t_trunk, point( 11, 3 ), point( 16, 3 ) );
         line( &m, t_trunk, point( 17, 2 ), point( 21, 2 ) );
         m.ter_set( point( 22, 2 ), t_stump );
-        m.ter_set( point_south, t_improvised_shelter );
+        m.ter_set( tripoint_bub_ms::south(), t_improvised_shelter );
         m.place_npc( point( 20, 3 ), string_id<npc_template>( "bandit" ) );
         if( one_in( 2 ) ) {
-            m.place_npc( point_south, string_id<npc_template>( "bandit" ) );
+            m.place_npc( point_bub_ms::south(), string_id<npc_template>( "bandit" ) );
         }
 
         return true;
@@ -1721,7 +1721,7 @@ static bool mx_pond( map &m, const tripoint_abs_sm &abs_sub )
         }
     }
 
-    m.place_spawns( GROUP_FISH, 1, point_zero, point( width, height ), 0.15f );
+    m.place_spawns( GROUP_FISH, 1, point_bub_ms::zero(), point( width, height ), 0.15f );
 
     return true;
 }

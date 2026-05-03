@@ -3137,7 +3137,7 @@ bool target_ui::handle_cursor_movement( const std::string &action, bool &skip_re
     if( action == "MOUSE_MOVE" || action == "TIMEOUT" ) {
         // Shift pos and/or view via edge scrolling
         auto edge_scroll = g->mouse_edge_scrolling_terrain( ctxt );
-        if( edge_scroll == tripoint_zero ) {
+        if( edge_scroll == tripoint_rel_ms::zero() ) {
             skip_redraw = true;
         } else {
             if( action == "MOUSE_MOVE" ) {

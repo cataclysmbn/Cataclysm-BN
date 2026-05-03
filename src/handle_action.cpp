@@ -1944,7 +1944,7 @@ bool game::handle_action()
                         }
                         act = u.get_next_auto_move_direction();
                         const auto dest_next = get_delta_from_movement_action( act, iso_rotate::yes );
-                        if( dest_next == point_zero ) {
+                        if( dest_next == point_rel_ms::zero() ) {
                             u.clear_destination();
                         }
                         dest_delta = dest_next;

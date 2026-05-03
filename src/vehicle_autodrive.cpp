@@ -1115,7 +1115,7 @@ std::vector<std::tuple<point, int, std::string>> vehicle::get_debug_overlay_data
     std::vector<std::tuple<point, int, std::string>> ret;
 
     const tripoint_abs_ms veh_pos = global_square_location();
-    if( autodrive_local_target != tripoint_zero ) {
+    if( autodrive_local_target != tripoint_abs_ms::zero() ) {
         ret.emplace_back( ( autodrive_local_target - veh_pos.raw() ).xy(), catacurses::red, "T" );
     }
     for( point pt_elem : collision_check_points ) {

@@ -798,7 +798,7 @@ void spell_effect::directed_push( const spell &sp, Creature &caster, const tripo
     std::set<tripoint> area = spell_effect_area( sp, target, spell_effect_blast, caster );
     // this group of variables is for deferring movement of the avatar
     int pushed_distance;
-    tripoint push_to;
+    tripoint_bub_ms push_to;
     std::vector<tripoint> pushed_vec;
     bool player_pushed = false;
 

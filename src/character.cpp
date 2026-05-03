@@ -1226,7 +1226,7 @@ void Character::assign_stashed_activity()
 bool Character::check_outbounds_activity( player_activity &act )
 {
     map &here = get_map();
-    if( ( act.placement != tripoint_zero && act.placement != tripoint_min &&
+    if( ( act.placement != tripoint_bub_ms::zero() && act.placement != tripoint_bub_ms::min() &&
           !here.inbounds( here.abs_to_bub( tripoint_abs_ms( act.placement ) ) ) ) || ( !act.coords.empty() &&
                   !here.inbounds( here.abs_to_bub( tripoint_abs_ms( act.coords.back() ) ) ) ) ) {
 
@@ -10918,7 +10918,7 @@ bool Character::has_fire( const int quantity ) const
                     continue;
                 }
                 const firestarter_actor *actor = dynamic_cast<const firestarter_actor *>( usef->get_actor_ptr() );
-                if( actor->can_use( *this->as_character(), *i, false, tripoint_zero ).success() ) {
+                if( actor->can_use( *this->as_character(), *i, false, tripoint_bub_ms::zero() ).success() ) {
                     return true;
                 }
             } else if( has_charges( i->typeId(), quantity ) ) {

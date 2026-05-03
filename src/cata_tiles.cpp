@@ -3634,7 +3634,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
         if( do_draw_cone_aoe ) {
             draw_cone_aoe_frame();
         }
-    } else if( g->u.view_offset != tripoint_zero && !g->u.in_vehicle ) {
+    } else if( g->u.view_offset != tripoint_rel_ms::zero() && !g->u.in_vehicle ) {
         // check to see if player is located at ter
         const tile_search_params tile { "cursor", C_NONE, empty_string, 0, 0 };
         const auto pos = tripoint( g->ter_view_p.xy(), center.z );
