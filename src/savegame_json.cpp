@@ -1629,10 +1629,10 @@ void npc::load( const JsonObject &data )
 
     if( data.has_member( "plx" ) ) {
         last_player_seen_pos.emplace();
-        data.read( "plx", last_player_seen_pos->x );
-        data.read( "ply", last_player_seen_pos->y );
-        if( !data.read( "plz", last_player_seen_pos->z ) ) {
-            last_player_seen_pos->z = bub_pos().z();
+        data.read( "plx", last_player_seen_pos->x() );
+        data.read( "ply", last_player_seen_pos->y() );
+        if( !data.read( "plz", last_player_seen_pos->z() ) ) {
+            last_player_seen_pos->z() = bub_pos().z();
         }
         // old code used tripoint_min to indicate "not a valid point"
         if( *last_player_seen_pos == tripoint_min ) {

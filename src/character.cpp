@@ -1226,7 +1226,7 @@ void Character::assign_stashed_activity()
 bool Character::check_outbounds_activity( player_activity &act )
 {
     map &here = get_map();
-    if( ( act.placement != tripoint_bub_ms::zero() && act.placement != tripoint_bub_ms::min() &&
+    if( ( act.placement != tripoint_abs_ms::zero() && act.placement != tripoint_abs_ms::min() &&
           !here.inbounds( here.abs_to_bub( tripoint_abs_ms( act.placement ) ) ) ) || ( !act.coords.empty() &&
                   !here.inbounds( here.abs_to_bub( tripoint_abs_ms( act.coords.back() ) ) ) ) ) {
 
@@ -1513,8 +1513,8 @@ void Character::dismount()
         add_msg( m_debug, "dismount called when not riding" );
         return;
     }
-    if( const std::optional<tripoint> pnt = choose_adjacent( _( "Dismount where?" ) ) ) {
-        if( !g->is_empty( tripoint_bub_ms( *pnt ) ) ) {
+    if( const std::optional<tripoint_bub_ms> pnt = choose_adjacent( _( "Dismount where?" ) ) ) {
+        if( !g->is_empty( *pnt ) ) {
             add_msg( m_warning, _( "You cannot dismount there!" ) );
             return;
         }
@@ -1534,7 +1534,7 @@ void Character::dismount()
         critter->add_effect( effect_ai_waiting, 5_turns );
         mounted_creature = nullptr;
         critter->mounted_player = nullptr;
-        setpos( tripoint_bub_ms( *pnt ) );
+        setpos( *pnt );
         mod_moves( -100 );
         set_movement_mode( CMM_WALK );
     }
@@ -2596,7 +2596,7 @@ std::vector<item *> Character::nearby( const
         return VisitResponse::NEXT;
     } );
 
-    for( auto &cur : map_selector( bub_pos().raw(), radius ) ) {
+    for( auto &cur : map_selector( bub_pos(), radius ) ) {
         cur.visit_items( [&]( item * e, item * parent ) {
             if( func( e, parent ) ) {
                 res.emplace_back( e );
@@ -2605,7 +2605,7 @@ std::vector<item *> Character::nearby( const
         } );
     }
 
-    for( auto &cur : vehicle_selector( bub_pos().raw(), radius ) ) {
+    for( auto &cur : vehicle_selector( bub_pos(), radius ) ) {
         cur.visit_items( [&]( item * e, item * parent ) {
             if( func( e, parent ) ) {
                 res.emplace_back( e );
@@ -3038,7 +3038,7 @@ int Character::best_nearby_lifting_assist() const
     return best_nearby_lifting_assist( bub_pos() );
 }
 
-int Character::best_nearby_lifting_assist( const tripoint &world_pos ) const
+int Character::best_nearby_lifting_assist( const tripoint_bub_ms &world_pos ) const
 {
     const quality_id LIFT( "LIFT" );
     int mech_lift = 0;
@@ -3049,7 +3049,7 @@ int Character::best_nearby_lifting_assist( const tripoint &world_pos ) const
         }
     }
     return std::max( { this->max_quality( LIFT ), mech_lift,
-                       map_selector( bub_pos().raw(), PICKUP_RANGE, false ).max_quality( LIFT ),
+                       map_selector( bub_pos(), PICKUP_RANGE, false ).max_quality( LIFT ),
                        vehicle_selector( world_pos, PICKUP_RANGE, false ).max_quality( LIFT )
                      } );
 }
@@ -5762,7 +5762,7 @@ needs_rates Character::calc_needs_rates() const
     if( has_trait( trait_TRANSPIRATION ) ) {
         // Transpiration, the act of moving nutrients with evaporating water, can take a very heavy toll on your thirst when it's really hot.
         rates.thirst *= ( ( units::to_fahrenheit( get_weather().get_temperature(
-                                bub_pos().raw() ) ) - 32.5f ) / 40.0f );
+                                abs_pos() ) ) - 32.5f ) / 40.0f );
     }
 
     if( is_npc() ) {
@@ -6008,7 +6008,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
         return;
     }
     /* Cache calls to g->get_temperature( player position ), used in several places in function */
-    const auto player_local_temp = weather.get_temperature( bub_pos() );
+    const auto player_local_temp = weather.get_temperature( abs_pos() );
     // NOTE : visit weather.h for some details on the numbers used
     // In Celsius / 100
     int Ctemperature = units::to_millidegree_celsius( player_local_temp ) / 10;
@@ -6021,7 +6021,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     const oter_id &cur_om_ter = get_overmapbuffer( get_dimension() ).ter( global_omt_location() );
     bool sheltered = weather::is_sheltered( m, bub_pos() );
     double total_windpower = get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
-                             bub_pos().raw(),
+                             abs_pos(),
                              weather.winddirection, sheltered );
     int air_humidity = get_local_humidity( weather_point.humidity, weather.weather_id,
                                            sheltered );
@@ -6045,7 +6045,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
 
     const int lying_warmth = use_floor_warmth ? floor_warmth( bub_pos() ) : 0;
     const int water_temperature_raw =
-        units::to_millidegree_celsius( weather.get_water_temperature( bub_pos() ) ) / 10;
+        units::to_millidegree_celsius( weather.get_water_temperature( abs_pos() ) ) / 10;
     // Rescale so that 0C is 0 (FREEZING) and 30C is 5k (NORM).
     const int water_temperature = water_temperature_raw * 5 / 3;
 
@@ -8131,7 +8131,7 @@ bool Character::invoke_item( item *used )
     return invoke_item( used, bub_pos() );
 }
 
-bool Character::invoke_item( item *, const tripoint & )
+bool Character::invoke_item( item *, const tripoint_bub_ms & )
 {
     return false;
 }
@@ -11423,13 +11423,13 @@ std::vector<Creature *> Character::get_hostile_creatures( int range ) const
     } );
 }
 
-bool Character::knows_trap( const tripoint &pos ) const
+bool Character::knows_trap( const tripoint_bub_ms &pos ) const
 {
     const auto p = get_map().bub_to_abs( pos );
     return known_traps.contains( p );
 }
 
-void Character::add_known_trap( const tripoint &pos, const trap &t )
+void Character::add_known_trap( const tripoint_bub_ms &pos, const trap &t )
 {
     const auto p = get_map().bub_to_abs( pos );
     if( t.is_null() ) {
@@ -11561,14 +11561,14 @@ auto Character::print_info( const catacurses::window &w, int vStart, int vLines,
     return line;
 }
 
-void Character::shift_destination( point shift )
+void Character::shift_destination( point_rel_ms shift )
 {
     if( next_expected_position ) {
-        *next_expected_position += shift;
+        *next_expected_position = *next_expected_position + shift;
     }
 
     for( auto &elem : auto_move_route ) {
-        elem += shift;
+        elem = elem + shift;
     }
 }
 

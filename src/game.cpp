@@ -11129,7 +11129,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         // We were grabbing something WEIRD, let's pretend we weren't
         grabbed = false;
     }
-    if( u.grab_point != tripoint_bub_ms::zero() && !grabbed ) {
+    if( u.grab_point != tripoint_rel_ms::zero() && !grabbed ) {
         add_msg( m_warning, _( "Can't find grabbed object." ) );
         u.grab( OBJECT_NONE );
     }
@@ -12338,7 +12338,7 @@ void game::update_performance_bubble()
     // for underground bubble sizing; is_outside uses the 3×3 overhang rule which is broader.
     const bool underground_cond = underground_size > 0 && underground_size < normal_size
                                   && u.bub_pos().z() < 0
-                                  && m.has_floor( tripoint( u.bub_pos().xy(), u.bub_pos().z() + 1 ) );
+                                  && m.has_floor( u.bub_pos() + tripoint_above );
     underground_bubble_turns_ = underground_cond ? underground_bubble_turns_ + 1 : 0;
 
     const bool vehicle_cond = vehicle_size > 0 && vehicle_size < normal_size
@@ -12497,7 +12497,7 @@ void game::fling_creature( Creature *c, const units::angle &dir, float flvel, bo
                 }
                 // If we're flinging the player around, make sure the map stays centered on them.
                 if( is_u ) {
-                    update_map( pt.xy() );
+                    update_map( pt.x(), pt.y() );
                 } else {
                     p->setpos( pt );
                 }
@@ -12768,7 +12768,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     if( force ) {
         // Let go of a grabbed cart.
         u.grab( OBJECT_NONE );
-    } else if( u.grab_point != tripoint_bub_ms::zero() ) {
+    } else if( u.grab_point != tripoint_rel_ms::zero() ) {
         add_msg( m_info, _( "You can't drag things up and down stairs." ) );
         return;
     }
@@ -12833,7 +12833,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     if( m.has_zlevels() ) {
         // We no longer need to shift the map here! What joy
     } else {
-        maybetmp.load( tripoint( get_levx(), get_levy(), z_after ), false );
+        maybetmp.load( tripoint_abs_sm( get_levx(), get_levy(), z_after ), false );
     }
 
     bool swimming = false;
@@ -13046,7 +13046,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     }
 
     const auto old_pos = g->u.bub_pos();
-    point submap_shift;
+    point_rel_sm submap_shift;
     vertical_shift( z_after );
     if( !force ) {
         submap_shift = update_map( stairs.x(), stairs.y() );
@@ -13554,7 +13554,7 @@ std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_a
     // No stairs found! Try to make some
     rope_ladder = false;
     stairs.emplace( u.bub_pos() );
-    stairs->z = z_after;
+    stairs->z() = z_after;
 
     if( mp.ter( *stairs ) == t_lava ) {
         if( movez < 0 &&
@@ -13732,7 +13732,10 @@ void game::vertical_notes( int z_before, int z_after )
 
 point_rel_sm game::update_map( Character &who )
 {
-    return update_map( who.bub_pos().x(), who.bub_pos().y() );
+    int x = who.bub_pos().x();
+    int y = who.bub_pos().y();
+    return update_map( x, y );
+    who.setpos( tripoint_bub_ms( x, y, who.bub_pos().z() ) );
 }
 
 point_rel_sm game::update_map( int &x, int &y )
@@ -13984,7 +13987,7 @@ void game::update_stair_monsters()
 
     // Attempt to spawn zombies.
     for( size_t i = 0; i < coming_to_stairs.size(); i++ ) {
-        point mpos( stairx[si], stairy[si] );
+        point_bub_ms mpos( stairx[si], stairy[si] );
         monster &critter = *coming_to_stairs[i];
         const tripoint_bub_ms dest {
             mpos, g->get_levz()
@@ -14046,7 +14049,7 @@ void game::update_stair_monsters()
             continue;
         } else if( u.bub_pos() == dest ) {
             // Monster attempts to push player of stairs
-            point push( point_north_west );
+            point_rel_ms push( point_north_west );
             int tries = 0;
 
             // the critter is now right on top of you and will attack unless
@@ -14057,11 +14060,11 @@ void game::update_stair_monsters()
             critter.spawn( dest );
             while( tries < creature_push_attempts ) {
                 tries++;
-                push.x = rng( -1, 1 );
-                push.y = rng( -1, 1 );
-                point ipos( mpos + push );
+                push.x() = rng( -1, 1 );
+                push.y() = rng( -1, 1 );
+                point_bub_ms ipos( mpos + push );
                 tripoint_bub_ms pos( ipos, get_levz() );
-                if( ( push.x != 0 || push.y != 0 ) && !critter_at( pos ) &&
+                if( ( push.x() != 0 || push.y() != 0 ) && !critter_at( pos ) &&
                     critter.can_move_to( pos ) ) {
                     bool resiststhrow = ( u.is_throw_immune() ) ||
                                         ( u.has_trait( trait_LEG_TENT_BRACE ) );
@@ -14090,8 +14093,7 @@ void game::update_stair_monsters()
                         msg = _( "The %s pushed you back!" );
                     }
                     add_msg( m_warning, msg.c_str(), critter.name() );
-                    u.setx( u.bub_pos().x() + push.x );
-                    u.sety( u.bub_pos().y() + push.y );
+                    u.setpos( u.bub_pos() + push );
                     return;
                 }
             }
@@ -14120,7 +14122,7 @@ void game::update_stair_monsters()
                 point_bub_ms ipos2( mpos + push2 );
                 tripoint_bub_ms pos( ipos2, get_levz() );
                 if( ( push2.x == 0 && push2.y == 0 ) || ( ( ipos2.x() == u.bub_pos().x() ) &&
-                        ( ipos2.y == u.bub_pos().y() ) ) ) {
+                        ( ipos2.y() == u.bub_pos().y() ) ) ) {
                     continue;
                 }
                 if( !critter_at( pos ) && other.can_move_to( pos ) ) {
@@ -14258,9 +14260,8 @@ void game::perhaps_add_random_npc()
     tmp->set_fac( new_solo_fac ? new_solo_fac->id : faction_id( "no_faction" ) );
     // adds the npc to the correct overmap.
     // Only spawn random NPCs on z-level 0
-    // TODO: fix point types
-    auto submap_spawn = project_to<coords::sm>( spawn_point.raw() );
-    tmp->spawn_at_sm( tripoint( submap_spawn.xy(), 0 ) );
+    auto submap_spawn = project_to<coords::sm>( spawn_point );
+    tmp->spawn_at_sm( tripoint_abs_sm( submap_spawn.xy(), 0 ) );
     get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
     tmp->form_opinion( u );
     tmp->mission = NPC_MISSION_NULL;
@@ -14332,7 +14333,7 @@ void game::display_visibility()
     if( use_tiles ) {
         display_toggle_overlay( ACTION_DISPLAY_VISIBILITY );
         if( display_overlay_state( ACTION_DISPLAY_VISIBILITY ) ) {
-            std::vector< tripoint > locations;
+            std::vector<tripoint_bub_ms> locations;
             uilist creature_menu;
             int num_creatures = 0;
             creature_menu.addentry( num_creatures++, true, MENU_AUTOASSIGN, "%s", _( "You" ) );
@@ -14758,7 +14759,7 @@ bool check_art_charge_req( item &it )
                 return elem.second.get_wetness() != 0;
             } );
             if( !reqsmet &&
-                sum_conditions( calendar::turn - 1_turns, calendar::turn, p.bub_pos() ).rain_amount > 0
+                sum_conditions( calendar::turn - 1_turns, calendar::turn, p.abs_pos() ).rain_amount > 0
                 && !( p.in_vehicle && here.veh_at( p.bub_pos() )->is_inside() ) ) {
                 reqsmet = true;
             }

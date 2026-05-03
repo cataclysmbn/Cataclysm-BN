@@ -450,12 +450,12 @@ bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) c
 // Helper function to check if potential area of effect of a weapon overlaps vehicle
 // Maybe TODO: If this is too slow, precalculate a bounding box and clip the tested area to it
 // TODO: make tripoint_range (and other iterators) to be range-compatible
-static bool overlaps_vehicle( const std::set<tripoint_bub_ms> &veh_area, const tripoint_bub_ms &pos,
+static bool overlaps_vehicle( const std::set<tripoint_abs_ms> &veh_area, const tripoint_abs_ms &pos,
                               const int area )
 {
-    for( const tripoint_bub_ms &tmp : tripoint_range<tripoint_bub_ms>( tripoint_bub_ms(
+    for( const tripoint_abs_ms &tmp : tripoint_range<tripoint_abs_ms>( tripoint_abs_ms(
                 pos ) - tripoint_rel_ms( area, area, 0 ),
-            tripoint_bub_ms( pos ) + tripoint_rel_ms( area - 1, area - 1, 0 ) ) ) {
+            tripoint_abs_ms( pos ) + tripoint_rel_ms( area - 1, area - 1, 0 ) ) ) {
         if( veh_area.contains( tmp ) ) {
             return true;
         }
@@ -595,7 +595,7 @@ Creature *Creature::auto_find_hostile_target( int range, int &boo_hoo, int area 
             continue; // Handle this late so that boo_hoo++ can happen
         }
         // Expensive check for proximity to vehicle
-        if( self_area_iff && overlaps_vehicle( in_veh->get_points(), m->bub_pos().raw(), area ) ) {
+        if( self_area_iff && overlaps_vehicle( in_veh->get_points(), m->abs_pos(), area ) ) {
             continue;
         }
 
@@ -2333,7 +2333,7 @@ void Creature::draw( const catacurses::window &w, const tripoint_bub_ms &origin,
         return;
     }
 
-    point draw( -origin.xy() + point_rel_ms( getmaxx( w ) / 2 + bub_pos().x(),
+    point draw( -origin.xy().raw() + point( getmaxx( w ) / 2 + bub_pos().x(),
                 getmaxy( w ) / 2 + bub_pos().y() ) );
     if( inverted ) {
         mvwputch_inv( w, draw, basic_symbol_color(), symbol() );

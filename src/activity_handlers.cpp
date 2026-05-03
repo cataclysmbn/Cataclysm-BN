@@ -1954,7 +1954,7 @@ void activity_handlers::pulp_do_turn( player_activity *act, player *p )
                 // Splatter some blood around
                 // Splatter a bit more randomly, so that it looks cooler
                 const int radius = mess_radius + x_in_y( pulp_power, 500 ) + x_in_y( pulp_power, 1000 );
-                const tripoint dest( pos + point( rng( -radius, radius ), rng( -radius, radius ) ) );
+                const tripoint_bub_ms dest( pos + point( rng( -radius, radius ), rng( -radius, radius ) ) );
                 const field_type_id type_blood = ( mess_radius > 1 && x_in_y( pulp_power, 10000 ) ) ?
                                                  corpse->get_mtype()->gibType() :
                                                  corpse->get_mtype()->bloodType();
@@ -3981,7 +3981,7 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
         for( const tripoint &elem : here.points_in_radius( pos, 1 ) ) {
             bool cantuse = false;
             tripoint direc = elem - pos;
-            tripoint proposed_to = pos + point( 3 * direction.x, 3 * direction.y );
+            auto proposed_to = pos + point( 3 * direction.x, 3 * direction.y );
             std::vector<tripoint> rough_tree_line = line_to( pos, proposed_to );
             for( const tripoint &elem : rough_tree_line ) {
                 // Try not to drop onto a critter
@@ -4012,7 +4012,7 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
         direction = random_entry( valid_directions, direction );
     }
 
-    const tripoint to = pos + 3 * direction.xy() + point( rng( -1, 1 ), rng( -1, 1 ) );
+    const auto to = pos + 3 * direction.xy() + point( rng( -1, 1 ), rng( -1, 1 ) );
     std::vector<tripoint> tree = line_to( pos, to, rng( 1, 8 ) );
     for( const tripoint &elem : tree ) {
         here.batter( elem, 300, 5 );
