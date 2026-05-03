@@ -733,7 +733,7 @@ static std::optional<std::pair<tripoint_abs_omt, std::string>> get_mission_arrow
     }
 
     const std::vector<tripoint_abs_omt> traj = line_to( center,
-                                       tripoint_abs_omt( mission_target.xy(), center.z() ) );
+            tripoint_abs_omt( mission_target.xy(), center.z() ) );
 
     if( traj.empty() ) {
         debugmsg( "Failed to gen overmap mission trajectory %s %s",
@@ -1001,7 +1001,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             if( blink && uistate.overmap_highlighted_omts.contains( omp ) ) {
                 if( tile_iso ) {
                     const tile_search_params tile {"highlight", C_NONE, empty_string, 0, 0};
-                    draw_from_id_string( tile, omp.reinterpret_as<tripoint_bub_ms>(), std::nullopt, std::nullopt, lit_level::LIT, false, 0, false );
+                    draw_from_id_string( tile, omp.reinterpret_as<tripoint_bub_ms>(), std::nullopt, std::nullopt,
+                                         lit_level::LIT, false, 0, false );
                 } else {
                     SDL_Color c = curses_color_to_SDL( c_pink );
                     c.a = c.a >> 1;
@@ -1020,7 +1021,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                         const mongroup *chosen = horde_it != mgroups.end() ? *horde_it : mgroups.front();
                         if( chosen != nullptr ) {
                             const tile_search_params tile { chosen->type->defaultMonster.str(), C_NONE, empty_string, 0, 0 };
-                            draw_from_id_string( tile, omp.reinterpret_as<tripoint_bub_ms>(), std::nullopt, std::nullopt, lit_level::LIT, false, 0, false );
+                            draw_from_id_string( tile, omp.reinterpret_as<tripoint_bub_ms>(), std::nullopt, std::nullopt,
+                                                 lit_level::LIT, false, 0, false );
                         }
                     }
                 }
@@ -1065,7 +1067,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                     if( find_tile_with_season( horde_id ) ) {
                         const tile_search_params tile { horde_id, C_NONE, empty_string, 0, 0 };
                         draw_from_id_string(
-                            tile, omp.reinterpret_as<tripoint_bub_ms>(), std::nullopt, std::nullopt, lit_level::LIT, false, 0, false );
+                            tile, omp.reinterpret_as<tripoint_bub_ms>(), std::nullopt, std::nullopt, lit_level::LIT, false, 0,
+                            false );
                     } else {
                         auto fallback_id = fallback_horde_id( omp );
                         if( !find_tile_with_season( fallback_id ) ) {
@@ -1085,7 +1088,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                         }
                         const tile_search_params tile { fallback_id, C_NONE, empty_string, 0, 0 };
                         draw_from_id_string(
-                            tile, omp.reinterpret_as<tripoint_bub_ms>(), std::nullopt, std::nullopt, lit_level::LIT, false, 0, false );
+                            tile, omp.reinterpret_as<tripoint_bub_ms>(), std::nullopt, std::nullopt, lit_level::LIT, false, 0,
+                            false );
                     }
                 }
             }
@@ -4091,7 +4095,8 @@ window_dimensions get_window_dimensions( point pos, point size )
     return get_window_dimensions( {}, pos, size );
 }
 
-std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window &capture_win_ )
+std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window
+        &capture_win_ )
 {
     if( !coordinate_input_received ) {
         return std::nullopt;

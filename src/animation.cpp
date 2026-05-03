@@ -893,7 +893,7 @@ void draw_line_curses( game &g, const std::vector<tripoint> &points )
     }
 
     const auto p = points.empty() ? tripoint {POSX, POSY, 0} :
-                       relative_view_pos( g.u, points.back() );
+                   relative_view_pos( g.u, points.back() );
     mvwputch( g.w_terrain, p.xy(), c_white, 'X' );
 }
 } //namespace

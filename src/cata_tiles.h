@@ -830,7 +830,8 @@ class cata_tiles
         static auto get_ter_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
         static auto get_furn_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
         static auto get_trap_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
-        static auto get_vpart_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
+        static auto get_vpart_memory_at( const tripoint_bub_ms &p ) ->
+        std::optional<memorized_terrain_tile>;
 
         /** Drawing Layers */
         bool would_apply_vision_effects( visibility_type visibility ) const;
@@ -845,8 +846,10 @@ class cata_tiles
         static auto get_furniture_color( const furn_t &f, const map &m,
                                          const tripoint_bub_ms &p ) -> color_tint_pair;
         static auto get_graffiti_color( const map &m, const tripoint_bub_ms &p ) -> color_tint_pair;
-        static auto get_trap_color( const trap &tr, const map &map, tripoint_bub_ms tripoint ) -> color_tint_pair;
-        static auto get_field_color( const field &f, const map &m, const tripoint_bub_ms &p ) -> color_tint_pair;
+        static auto get_trap_color( const trap &tr, const map &map,
+                                    tripoint_bub_ms tripoint ) -> color_tint_pair;
+        static auto get_field_color( const field &f, const map &m,
+                                     const tripoint_bub_ms &p ) -> color_tint_pair;
         auto get_item_color( const item &i, const map &m, const tripoint_bub_ms &p ) -> color_tint_pair;
         auto get_item_color( const item &i ) -> color_tint_pair;
         static auto get_vpart_color(
@@ -919,7 +922,8 @@ class cata_tiles
         void void_cone_aoe();
 
         void init_draw_bullet( const tripoint_bub_ms &p, std::string name, int rotation );
-        void init_draw_bullets( const std::vector<tripoint_bub_ms> &ps, const std::vector<std::string> &names,
+        void init_draw_bullets( const std::vector<tripoint_bub_ms> &ps,
+                                const std::vector<std::string> &names,
                                 const std::vector<int> &rotations );
         void draw_bullet_frame();
         void void_bullet();

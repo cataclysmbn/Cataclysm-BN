@@ -371,7 +371,7 @@ pixel_minimap::submap_cache &pixel_minimap::get_cache_at( const tripoint_abs_sm 
 void pixel_minimap::process_cache( const tripoint_bub_ms &center )
 {
     // Refresh the tile count to match the current runtime map size.
-    total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) * SEEY };
+    total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) *SEEY };
 
     prepare_cache_for_updates( center );
 
@@ -474,7 +474,8 @@ void pixel_minimap::render_cache( const tripoint_bub_ms &center )
         view_tiles_count.y / 2 / SEEY
     };
 
-    auto ms_offset = point_sm_ms( ( total_tiles_count.x / 2 ) % SEEX, ( total_tiles_count.y / 2) % SEEY ) - proj.remainder;
+    auto ms_offset = point_sm_ms( ( total_tiles_count.x / 2 ) % SEEX,
+                                  ( total_tiles_count.y / 2 ) % SEEY ) - proj.remainder;
 
     for( const auto &elem : cache ) {
         if( !elem.second.touched ) {
