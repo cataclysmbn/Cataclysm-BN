@@ -1390,3 +1390,26 @@ void avatar_action::unload( avatar &you )
     }
     avatar_funcs::unload_item( you, *loc );
 }
+
+void avatar_action::unload_all( avatar &you )
+{
+    auto unloaded = 0;
+    while( true ) {
+        auto items = you.all_items();
+        const auto target = std::ranges::find_if( items, []( const auto * it ) {
+            return item_funcs::can_be_unloaded( *it );
+        } );
+
+        if( target == items.end() ) {
+            break;
+        }
+        if( !avatar_funcs::unload_item( you, **target ) ) {
+            break;
+        }
+        ++unloaded;
+    }
+
+    if( unloaded == 0 ) {
+        add_msg( _( "You have nothing to unload." ) );
+    }
+}

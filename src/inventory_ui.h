@@ -660,6 +660,11 @@ class inventory_pick_selector : public inventory_selector
             inventory_selector( p, preset ) {}
 
         item *execute();
+
+    protected:
+        virtual auto handle_action( const std::string &/*action*/ ) -> bool {
+            return false;
+        }
 };
 
 class inventory_multiselector : public inventory_selector

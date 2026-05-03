@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "avatar_action.h"
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "calendar.h"
@@ -106,6 +107,35 @@ class inventory_filter_preset : public inventory_selector_preset
 
 namespace
 {
+
+class common_inventory_selector : public inventory_pick_selector
+{
+    public:
+        explicit common_inventory_selector( player &p ) : inventory_pick_selector( p ) {
+            ctxt.register_action( "unload_all",
+                                  to_translation( "Unload every carried item that can be unloaded" ) );
+        }
+
+        auto clear_shortcuts() -> void {
+            unload_all_selected = false;
+        }
+
+        [[nodiscard]] auto selected_unload_all() const -> bool {
+            return unload_all_selected;
+        }
+
+    protected:
+        auto handle_action( const std::string &action ) -> bool override {
+            if( action != "unload_all" ) {
+                return false;
+            }
+            unload_all_selected = true;
+            return true;
+        }
+
+    private:
+        bool unload_all_selected = false;
+};
 
 std::string good_bad_none( int value )
 {
@@ -222,7 +252,7 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
 
 void game_menus::inv::common( avatar &you )
 {
-    inventory_pick_selector inv_s( you );
+    common_inventory_selector inv_s( you );
 
     inv_s.set_title( _( "Inventory" ) );
     inv_s.set_hint( string_format(
@@ -235,7 +265,14 @@ void game_menus::inv::common( avatar &you )
         inv_s.clear_items();
         inv_s.add_character_items( you );
 
-        item *location = inv_s.execute();
+        inv_s.clear_shortcuts();
+        auto *location = inv_s.execute();
+
+        if( inv_s.selected_unload_all() ) {
+            avatar_action::unload_all( you );
+            started_action = true;
+            continue;
+        }
 
         if( location == nullptr ) {
             if( inv_s.keep_open ) {

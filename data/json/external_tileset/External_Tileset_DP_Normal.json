@@ -284,8 +284,8 @@
           { "id": "overlay_worn_goggles_nv_enhanced_on", "fg": 198 },
           { "id": "mon_zomballoon", "fg": 199 },
           { "id": "mon_zomblimp", "fg": 200 },
-          { "id": "vp_survivors_workbench", "fg": 201, "rotates": true },
-          { "id": "vp_robobench", "fg": 202, "rotates": true },
+          { "id": "vp_survivors_workbench", "fg": 201, "bg": 225, "rotates": false },
+          { "id": "vp_robobench", "fg": 202, "bg": 225, "rotates": false },
           { "id": [ "jet_thruster", "overlay_wielded_jet_thruster" ], "fg": 203 },
           {
             "id": "vp_jet_thruster",
