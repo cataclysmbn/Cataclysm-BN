@@ -22,6 +22,23 @@ Use this page to compose/decompose a **small tileset** directly in your browser.
     <button id="tileset-download" type="button" disabled>Download ZIP</button>
   </p>
   <pre id="tileset-log" style="white-space: pre-wrap; max-height: 22rem; overflow: auto;"></pre>
+  <hr />
+  <p>
+    <label>
+      PNG:
+      <input id="sprite-editor-input" type="file" accept="image/png" />
+    </label>
+  </p>
+  <p>
+    <label>W <input id="sprite-editor-width" type="number" min="1" max="256" value="16" /></label>
+    <label>H <input id="sprite-editor-height" type="number" min="1" max="256" value="16" /></label>
+    <button id="sprite-editor-new" type="button">New</button>
+    <label><input id="sprite-editor-color" type="color" value="#ffffff" /></label>
+    <label><input type="radio" name="sprite-editor-tool" value="pen" checked /> Pen</label>
+    <label><input type="radio" name="sprite-editor-tool" value="erase" /> Erase</label>
+    <button id="sprite-editor-download" type="button">Download PNG</button>
+  </p>
+  <canvas id="sprite-editor-canvas" style="image-rendering: pixelated; touch-action: none;"></canvas>
 </div>
 
 <script type="module" src="/tools/tileset_web_tool.js"></script>
