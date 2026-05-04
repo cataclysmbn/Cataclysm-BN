@@ -513,7 +513,8 @@ auto get_bullet_sprite( const char bullet, const std::string &custom_sprite ) ->
 }
 #endif
 
-void draw_bullet_curses( map &m, const tripoint_bub_ms &t, const char bullet, const tripoint_bub_ms *const p )
+void draw_bullet_curses( map &m, const tripoint_bub_ms &t, const char bullet,
+                         const tripoint_bub_ms *const p )
 {
     if( !is_point_visible( t ) ) {
         return;
@@ -563,7 +564,8 @@ void game::draw_bullet( const tripoint_bub_ms &t, const int i,
     tilecontext->void_bullet();
 }
 #else
-void game::draw_bullet( const tripoint_bub_ms &t, const int i, const std::vector<tripoint_bub_ms> &trajectory,
+void game::draw_bullet( const tripoint_bub_ms &t, const int i,
+                        const std::vector<tripoint_bub_ms> &trajectory,
                         const char bullet, const std::string & )
 {
     draw_bullet_curses( m, t, bullet, &trajectory[i] );
@@ -573,7 +575,8 @@ void game::draw_bullet( const tripoint_bub_ms &t, const int i, const std::vector
 namespace
 {
 
-auto get_longest_trajectory_size( const std::vector<std::vector<tripoint_bub_ms>> &trajectories ) -> size_t
+auto get_longest_trajectory_size( const std::vector<std::vector<tripoint_bub_ms>> &trajectories ) ->
+size_t
 {
     auto longest_trajectory_size = size_t{ 0 };
     for( const auto &trajectory : trajectories ) {
@@ -830,7 +833,8 @@ void game::draw_hit_player( const Character &who, const int dam )
 /* Line drawing code, not really an animation but should be separated anyway */
 namespace
 {
-void draw_line_curses( game &g, const tripoint_bub_ms &center, const std::vector<tripoint_bub_ms> &ret,
+void draw_line_curses( game &g, const tripoint_bub_ms &center,
+                       const std::vector<tripoint_bub_ms> &ret,
                        bool noreveal )
 {
     drawsq_params params = drawsq_params().highlight( true ).center( center );
@@ -1088,10 +1092,12 @@ void draw_zones_curses( const catacurses::window &w, const zone_draw_options &op
     const auto bounds = [&]() -> std::optional<std::pair<point_bub_ms, point_bub_ms>> {
         if( has_points )
         {
-            const auto min_x = std::ranges::minmax_element( options.points, {}, []( const tripoint_bub_ms &p ) { return p.x(); } );
-            const auto min_y = std::ranges::minmax_element( options.points, {}, []( const tripoint_bub_ms &p ) { return p.y(); } );
+            const auto min_x = std::ranges::minmax_element( options.points, {}, [](
+                const tripoint_bub_ms & p ) { return p.x(); } );
+            const auto min_y = std::ranges::minmax_element( options.points, {}, [](
+            const tripoint_bub_ms & p ) { return p.y(); } );
             return std::pair<point_bub_ms, point_bub_ms>( point_bub_ms( min_x.min->x(), min_y.min->y() ),
-                                            point_bub_ms( min_x.max->x(), min_y.max->y() ) );
+                    point_bub_ms( min_x.max->x(), min_y.max->y() ) );
         }
         return std::pair<point_bub_ms, point_bub_ms>( options.start.xy(), options.end.xy() );
     }();
@@ -1112,10 +1118,10 @@ void draw_zones_curses( const catacurses::window &w, const zone_draw_options &op
     const point center_local( ( min_local.x() + max_local.x() ) / 2,
                               ( min_local.y() + max_local.y() ) / 2 );
     const auto label_pos = point(
-                                std::clamp( center_local.x - static_cast<int>( label.size() ) / 2,
-                                            0, getmaxx( w ) - static_cast<int>( label.size() ) ),
-                                std::clamp( center_local.y - options.offset.y(), 0,
-                                            getmaxy( w ) - 1 ) );
+                               std::clamp( center_local.x - static_cast<int>( label.size() ) / 2,
+                                           0, getmaxx( w ) - static_cast<int>( label.size() ) ),
+                               std::clamp( center_local.y - options.offset.y(), 0,
+                                           getmaxy( w ) - 1 ) );
     mvwprintz( w, label_pos, c_white, label );
 }
 } //namespace

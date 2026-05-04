@@ -526,7 +526,8 @@ inline bool ExplosionProcess::is_occluded( const tripoint_bub_ms from, const tri
     return false;
 }
 
-inline float ExplosionProcess::generate_fling_angle( const tripoint_bub_ms from, const tripoint_bub_ms to )
+inline float ExplosionProcess::generate_fling_angle( const tripoint_bub_ms from,
+        const tripoint_bub_ms to )
 {
     if( from != to ) {
         // -+ 0.95 added to add a half-arc
@@ -941,8 +942,8 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
             rl_vec2d new_position_vec = datum.position +
                                         rl_vec2d( cur_distance_travelled, 0.0 ).rotated( datum.angle );
             auto maybe_new_position = tripoint_bub_ms( static_cast<int>( new_position_vec.x ),
-                                                static_cast<int>( new_position_vec.y ),
-                                                position.z() );
+                                      static_cast<int>( new_position_vec.y ),
+                                      position.z() );
             if( !here.inbounds( maybe_new_position ) ||
                 here.impassable( maybe_new_position ) ||
                 ( is_mob && maybe_new_position != position && g->critter_at( maybe_new_position ) ) ||
@@ -1384,7 +1385,7 @@ static std::map<const Creature *, int> legacy_blast( const tripoint_bub_ms &p, c
     here.bash( p, fire ? power : ( 2 * power ), true, false, false );
 
     std::priority_queue< std::pair<float, tripoint_bub_ms>, std::vector<std::pair<float, tripoint_bub_ms>>, pair_greater_cmp_first >
-    open;
+            open;
     std::set<tripoint_bub_ms> closed;
     std::map<tripoint_bub_ms, float> dist_map;
     open.emplace( 0.0f, p );

@@ -527,8 +527,8 @@ static void open()
 {
     player &u = g->u;
     const std::optional<tripoint_bub_ms> openp_ = choose_adjacent_highlight( _( "Open where?" ),
-                                           pgettext( "no door, gate, curtain, etc.", "There is nothing that can be opened nearby." ),
-                                           ACTION_OPEN, false );
+            pgettext( "no door, gate, curtain, etc.", "There is nothing that can be opened nearby." ),
+            ACTION_OPEN, false );
 
     if( !openp_ ) {
         return;
@@ -573,8 +573,8 @@ static void open()
 static void close()
 {
     if( const std::optional<tripoint_bub_ms> pnt = choose_adjacent_highlight( _( "Close where?" ),
-                                            pgettext( "no door, gate, etc.", "There is nothing that can be closed nearby." ),
-                                            ACTION_CLOSE, false ) ) {
+            pgettext( "no door, gate, etc.", "There is nothing that can be closed nearby." ),
+            ACTION_CLOSE, false ) ) {
         doors::close_door( get_map(), g->u, *pnt );
     }
 }
@@ -687,7 +687,8 @@ static void smash()
     }
 
     const bool allow_floor_bash = here.has_zlevels();
-    const std::optional<tripoint_bub_ms> smashp_ = choose_adjacent( _( "Smash where?" ), allow_floor_bash );
+    const std::optional<tripoint_bub_ms> smashp_ = choose_adjacent( _( "Smash where?" ),
+            allow_floor_bash );
     if( !smashp_ ) {
         return;
     }
