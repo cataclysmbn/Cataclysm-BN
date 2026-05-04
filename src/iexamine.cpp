@@ -45,7 +45,6 @@
 #include "cursesdef.h"
 #include "damage.h"
 #include "debug.h"
-#include "deployed_furniture.h"
 #include "distribution_grid.h"
 #include "effect.h"
 #include "enums.h"
@@ -74,6 +73,7 @@
 #include "map_iterator.h"
 #include "map_selector.h"
 #include "map_functions.h"
+#include "map_utils.h"
 #include "mapdata.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
@@ -1349,7 +1349,7 @@ void iexamine::deployed_furniture( player &p, const tripoint &pos )
     }
     p.add_msg_if_player( m_info, _( "You take down the %s." ),
                          here.furn( pos ).obj().name() );
-    take_down_deployed_furniture( { .here = here, .furniture_pos = pos, .drop_pos = pos } );
+    take_down_deployed_furniture( pos, pos );
 }
 
 static std::pair<itype_id, const deploy_tent_actor *> find_tent_itype( const furn_str_id &id )
@@ -1883,7 +1883,7 @@ void iexamine::transform( player &p, const tripoint &pos )
             case 2: {
                 add_msg( m_info, _( "You take down the %s." ),
                          g->m.furnname( pos ) );
-                take_down_deployed_furniture( { .here = g->m, .furniture_pos = pos, .drop_pos = pos } );
+                take_down_deployed_furniture( pos, pos );
                 return;
             }
             case 3: {
@@ -3267,7 +3267,7 @@ void iexamine::fireplace( player &p, const tripoint &examp )
             }
             p.add_msg_if_player( m_info, _( "You take down the %s." ),
                                  here.furnname( examp ) );
-            take_down_deployed_furniture( { .here = here, .furniture_pos = examp, .drop_pos = examp } );
+            take_down_deployed_furniture( examp, examp );
             return;
         }
         case 4: {
@@ -5637,7 +5637,7 @@ void iexamine::ledge( player &p, const tripoint &examp )
             map &here = get_map();
             p.add_msg_if_player( m_info, _( "You pull up the %s." ),
                                  here.furn( below_rope ).obj().name() );
-            take_down_deployed_furniture( { .here = here, .furniture_pos = below_rope, .drop_pos = p.pos() } );
+            take_down_deployed_furniture( below_rope, p.pos() );
             break;
         }
         case ledge_action::spin_web_bridge: {

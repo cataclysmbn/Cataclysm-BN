@@ -1,10 +1,10 @@
 #include "catch/catch.hpp"
 
 #include "debug.h"
-#include "deployed_furniture.h"
 #include "game.h"
 #include "item_stack.h"
 #include "map.h"
+#include "map_utils.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -19,7 +19,7 @@ TEST_CASE( "take_down_deployed_furniture_keeps_furniture_vars", "[iexamine][depl
     here.furn_vars( pos )->set( "test_var", "kept" );
 
     const auto debug_msg = capture_debugmsg_during( [&]() {
-        take_down_deployed_furniture( { .here = here, .furniture_pos = pos, .drop_pos = pos } );
+        take_down_deployed_furniture( pos, pos );
     } );
 
     CHECK( debug_msg.empty() );
