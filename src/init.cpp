@@ -468,6 +468,7 @@ void DynamicDataLoader::initialize()
     add( "event_statistic", &event_statistic::load_statistic );
     add( "score", &score::load_score );
     add( "achievement", &achievement::load_achievement );
+    add( "named_color", &RGBColor::load_named_color );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
 #else
