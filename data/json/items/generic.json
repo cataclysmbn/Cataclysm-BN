@@ -3508,5 +3508,22 @@
     "volume": "250 ml",
     "price": "8 USD",
     "price_postapoc": "50 cent"
+  },
+  {
+    "id": "wooden_plane_kit",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str": "hobby aircraft parts kit" },
+    "description": "This tightly-packed pallet of cardboard boxes contains the raw lumber and hardware for making homebuilt aircraft, along with the necessary parts diagrams.  You'd still need to provide your own engine, electronics, and a LOT of canvas.",
+    "//": "Weight rounded up from total weight of contents, volume rounded up from contents minus the boxes.  Pre-apoc price is in the range for budget kits from what I could find, post-apoc price is roughly barter value of contents.",
+    "weight": "210 kg",
+    "volume": "375 L",
+    "price": "20 kUSD",
+    "price_postapoc": "50 USD",
+    "material": [ "wood", "cardboard" ],
+    "symbol": ")",
+    "color": "brown",
+    "looks_like": "f_cardboard_wall",
+    "flags": [ "NO_REPAIR", "NO_SALVAGE" ]
   }
 ]

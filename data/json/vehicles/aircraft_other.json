@@ -85,6 +85,77 @@
     ]
   },
   {
+    "id": "plane_small_wood",
+    "type": "vehicle",
+    "name": "Homebuilt Wooden Plane",
+    "blueprint": [
+      [ "     |   " ],
+      [ "     |   " ],
+      [ "|    |   " ],
+      [ "|----=#'X" ],
+      [ "|    |   " ],
+      [ "     |   " ],
+      [ "     |   " ]
+    ],
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "frame_wood_light_cross", "seat_wood_light", "controls", "dashboard", "roof_cloth" ] },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [
+          "frame_wood_light_vertical",
+          "windshield_horizontal_front",
+          "engine_1cyl_large",
+          "alternator_motorbike",
+          "battery_motorbike",
+          "motorcycle_headlight"
+        ]
+      },
+      { "x": 2, "y": 0, "parts": [ "propeller_wood" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_wood_light_cross", "cargo_bag", "roof_cloth", "wing_wood_horizontal" ] },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "frame_wood_light_cross", { "part": "tank", "fuel": "gasoline" }, "cloth_halfboard_vertical" ]
+      },
+      { "x": -3, "y": 0, "parts": [ "frame_wood_light_cross", "cloth_halfboard_vertical" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_wood_light_cross", "cloth_halfboard_vertical" ] },
+      {
+        "x": -5,
+        "y": 0,
+        "parts": [ "frame_wood_light_cross", "cloth_halfboard_vertical", "wheel_mount_light_steerable", "wheel_small" ]
+      },
+      { "x": -6, "y": 0, "parts": [ "lit_wing_wood_external_horizontal" ] },
+      {
+        "x": -1,
+        "y": -1,
+        "parts": [ "frame_wood_light_cross", "wheel_mount_light", "wheel_small", "wing_wood_horizontal" ]
+      },
+      { "x": -1, "y": -2, "parts": [ "wing_wood_external_horizontal" ] },
+      { "x": -1, "y": -3, "parts": [ "wing_wood_external_horizontal" ] },
+      { "x": -1, "y": -4, "parts": [ "lit_wing_wood_external_left" ] },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [ "frame_wood_light_cross", "wheel_mount_light", "wheel_small", "wing_wood_horizontal" ]
+      },
+      { "x": -1, "y": 2, "parts": [ "wing_wood_external_horizontal" ] },
+      { "x": -1, "y": 3, "parts": [ "wing_wood_external_horizontal" ] },
+      { "x": -1, "y": 4, "parts": [ "lit_wing_wood_external_right" ] },
+      { "x": -6, "y": -1, "parts": [ "wing_wood_external_left" ] },
+      { "x": -6, "y": 1, "parts": [ "wing_wood_external_right" ] }
+    ],
+    "items": [
+      { "x": -1, "y": 0, "chance": 50, "items": [ "knit_scarf" ] },
+      { "x": -1, "y": 0, "chance": 50, "items": [ "gloves_leather" ] },
+      { "x": -1, "y": 0, "chance": 50, "items": [ "goggles_ski" ] },
+      { "x": -1, "y": 0, "chance": 25, "items": [ "ref_lighter" ] },
+      { "x": -1, "y": 0, "chance": 25, "items": [ "gasoline_lantern" ] },
+      { "x": -1, "y": 0, "chance": 10, "items": [ "sewing_kit" ] },
+      { "x": -1, "y": 0, "chance": 5, "items": [ "roadmap" ] }
+    ]
+  },
+  {
     "id": "blimp",
     "type": "vehicle",
     "name": "Commercial Blimp",

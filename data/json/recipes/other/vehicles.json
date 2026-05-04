@@ -2088,7 +2088,7 @@
       [ "textbook_carpentry", 6 ],
       [ "book_icef", 4 ],
       [ "textbook_mechanics", 4 ],
-      [ "manual_mechanics", 4 ],
+      [ "reference_aircraft", 4 ],
       [ "reference_fabrication1", 6 ]
     ],
     "using": [ [ "welding_standard", 10 ], [ "adhesive", 4 ] ],
@@ -2171,7 +2171,12 @@
     "difficulty": 2,
     "skills_required": [ [ "fabrication", 2 ] ],
     "time": "10 m",
-    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
+    "book_learn": [
+      [ "textbook_computer", 1 ],
+      [ "advanced_electronics", 1 ],
+      [ "reference_aircraft", 1 ],
+      [ "reference_fabrication1", 1 ]
+    ],
     "using": [ [ "3d_printing_standard", 5 ] ],
     "components": [ [ [ "carbon_fiber_filament", 50 ] ] ]
   },
@@ -2197,7 +2202,12 @@
     "difficulty": 2,
     "skills_required": [ [ "fabrication", 2 ] ],
     "time": "10 m",
-    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
+    "book_learn": [
+      [ "textbook_computer", 1 ],
+      [ "advanced_electronics", 1 ],
+      [ "reference_aircraft", 1 ],
+      [ "reference_fabrication1", 1 ]
+    ],
     "using": [ [ "3d_printing_standard", 10 ] ],
     "components": [ [ [ "carbon_fiber_filament", 75 ] ] ]
   },
@@ -2209,7 +2219,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
-    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ] ],
+    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_carbon_item", 1 ] ],
@@ -2332,7 +2342,7 @@
       [ "textbook_fabrication", 5 ],
       [ "welding_book", 5 ],
       [ "textbook_mechanics", 4 ],
-      [ "manual_mechanics", 4 ],
+      [ "reference_aircraft", 4 ],
       [ "reference_fabrication1", 5 ]
     ],
     "using": [ [ "welding_standard", 12 ] ],
@@ -2350,7 +2360,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
-    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ] ],
+    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_metal_item", 1 ] ],
@@ -2375,7 +2385,7 @@
       [ "welding_book", 6 ],
       [ "book_icef", 4 ],
       [ "textbook_mechanics", 4 ],
-      [ "manual_mechanics", 4 ],
+      [ "reference_aircraft", 4 ],
       [ "reference_fabrication1", 6 ]
     ],
     "using": [ [ "welding_standard", 25 ], [ "steel_standard", 5 ] ],
@@ -2398,7 +2408,7 @@
       [ "welding_book", 6 ],
       [ "book_icef", 4 ],
       [ "textbook_mechanics", 4 ],
-      [ "manual_mechanics", 4 ],
+      [ "reference_aircraft", 4 ],
       [ "reference_fabrication1", 6 ]
     ],
     "qualities": [
@@ -2408,11 +2418,10 @@
       { "id": "CUT", "level": 1 }
     ],
     "components": [
-      [ [ "log", 1 ] ],
-      [ [ "wood_structural", 1, "LIST" ] ],
+      [ [ "wood_structural_small", 5, "LIST" ] ],
       [ [ "nail_glue", 20, "LIST" ] ],
       [ [ "chain", 1 ] ],
-      [ [ "scrap", 10 ] ]
+      [ [ "steel_tiny", 2, "LIST" ] ]
     ]
   },
   {
@@ -2428,7 +2437,7 @@
       [ "textbook_fabrication", 5 ],
       [ "welding_book", 5 ],
       [ "textbook_mechanics", 4 ],
-      [ "manual_mechanics", 4 ],
+      [ "reference_aircraft", 4 ],
       [ "reference_fabrication1", 5 ]
     ],
     "using": [ [ "sewing_standard", 12 ] ],
@@ -2447,7 +2456,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
-    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ] ],
+    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_wood_item", 1 ] ],
