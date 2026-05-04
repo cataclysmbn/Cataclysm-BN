@@ -8027,10 +8027,10 @@ void game::zones_manager()
                 const std::vector<tripoint_abs_ms> covered_points = current_bp_options->get_covered_points( start,
                         end );
                 auto points = covered_points
-                              | std::views::transform( []( const tripoint_abs_ms &p ) {
-                                  return abs_to_bub( p );
-                              } )
-                              | std::ranges::to<std::vector>();
+                | std::views::transform( []( const tripoint_abs_ms & p ) {
+                    return abs_to_bub( p );
+                } )
+                | std::ranges::to<std::vector>();
                 return points;
             }
         }

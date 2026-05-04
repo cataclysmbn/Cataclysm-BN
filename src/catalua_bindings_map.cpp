@@ -303,17 +303,23 @@ void cata::detail::reg_map( sol::state &lua )
         sol::usertype<map> ut = luna::new_usertype<map>( lua, luna::no_bases, luna::no_constructor );
 
         DOC( "[Depreciated] Convert local ms -> absolute ms" );
-        luna::set_fx( ut, "get_abs_ms", sol::resolve<tripoint_abs_ms( const tripoint_bub_ms & ) const>( &map::bub_to_abs ) );
+        luna::set_fx( ut, "get_abs_ms",
+                      sol::resolve<tripoint_abs_ms( const tripoint_bub_ms & ) const>( &map::bub_to_abs ) );
         DOC( "Convert local ms -> absolute ms" );
-        luna::set_fx( ut, "bub_to_abs", sol::resolve<tripoint_abs_ms( const tripoint_bub_ms & ) const>( &map::bub_to_abs ) );
+        luna::set_fx( ut, "bub_to_abs",
+                      sol::resolve<tripoint_abs_ms( const tripoint_bub_ms & ) const>( &map::bub_to_abs ) );
         DOC( "Convert absolute sm -> local sm" );
-        luna::set_fx( ut, "bub_to_abs", sol::resolve<tripoint_abs_sm( const tripoint_bub_sm & ) const>( &map::bub_to_abs ) );
+        luna::set_fx( ut, "bub_to_abs",
+                      sol::resolve<tripoint_abs_sm( const tripoint_bub_sm & ) const>( &map::bub_to_abs ) );
         DOC( "[Depreciated] Convert absolute ms -> local ms" );
-        luna::set_fx( ut, "get_local_ms", sol::resolve<tripoint_bub_ms( const tripoint_abs_ms & ) const>( &map::abs_to_bub ) );
+        luna::set_fx( ut, "get_local_ms",
+                      sol::resolve<tripoint_bub_ms( const tripoint_abs_ms & ) const>( &map::abs_to_bub ) );
         DOC( "Convert absolute ms -> local ms" );
-        luna::set_fx( ut, "abs_to_bub", sol::resolve<tripoint_bub_ms( const tripoint_abs_ms & ) const>( &map::abs_to_bub ) );
+        luna::set_fx( ut, "abs_to_bub",
+                      sol::resolve<tripoint_bub_ms( const tripoint_abs_ms & ) const>( &map::abs_to_bub ) );
         DOC( "Convert absolute sm -> local sm" );
-        luna::set_fx( ut, "abs_to_bub", sol::resolve<tripoint_bub_sm( const tripoint_abs_sm & ) const>( &map::abs_to_bub ) );
+        luna::set_fx( ut, "abs_to_bub",
+                      sol::resolve<tripoint_bub_sm( const tripoint_abs_sm & ) const>( &map::abs_to_bub ) );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
         DOC( "In map squares" );
@@ -449,7 +455,8 @@ void cata::detail::reg_map( sol::state &lua )
             return m.ter_set( tripoint_bub_ms( x, y, z ), id );
         } );
 
-        luna::set_fx( ut, "get_furn_at", sol::resolve<furn_id( const tripoint_bub_ms & )const>( &map::furn ) );
+        luna::set_fx( ut, "get_furn_at",
+                      sol::resolve<furn_id( const tripoint_bub_ms & )const>( &map::furn ) );
         luna::set_fx( ut, "set_furn_at", []( map & m, const tripoint_bub_ms & p, const furn_id & id ) { m.furn_set( p, id ); } );
 
         luna::set_fx( ut, "has_field_at",
@@ -478,7 +485,8 @@ void cata::detail::reg_map( sol::state &lua )
         DOC( "Simpler version of `set_trap_at` with `trap_null`." );
         luna::set_fx( ut, "remove_trap_at", &map::remove_trap );
 
-        luna::set_fx( ut, "is_outside", sol::resolve<bool( const tripoint_bub_ms & ) const>( &map::is_outside ) );
+        luna::set_fx( ut, "is_outside",
+                      sol::resolve<bool( const tripoint_bub_ms & ) const>( &map::is_outside ) );
         // Actually sheltered or in sunlight doesn't need map, but it's convenient to have it here
         luna::set_fx( ut, "is_sheltered", []( map &, tripoint_bub_ms & pos ) -> bool { return g->is_sheltered( pos ); } );
 

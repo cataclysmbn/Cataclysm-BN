@@ -252,15 +252,15 @@ float workbench_crafting_speed_multiplier( const item &craft, const bench_locati
         }
         break;
         case bench_type::furniture: {
-                const auto bub_loc = abs_to_bub( bench.position );
-                if( here.furn( bub_loc )->workbench ) {
-                    // Furniture workbench
-                    wb_info = workbench_info_wrapper( *here.furn( bub_loc )->workbench );
-                } else {
-                    return 0.0f;
-                }
+            const auto bub_loc = abs_to_bub( bench.position );
+            if( here.furn( bub_loc )->workbench ) {
+                // Furniture workbench
+                wb_info = workbench_info_wrapper( *here.furn( bub_loc )->workbench );
+            } else {
+                return 0.0f;
             }
-            break;
+        }
+        break;
         case bench_type::vehicle:
             if( const std::optional<vpart_reference> vp = here.veh_at(
                         bench.position ).part_with_feature( "WORKBENCH", true ) ) {

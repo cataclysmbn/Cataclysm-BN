@@ -3311,8 +3311,9 @@ static bool generic_multi_activity_do( player &p, const activity_id &act_id,
         p.activity->add_tool( best_rod );
         const auto fishable_locations = g->get_fishable_locations( ACTIVITY_SEARCH_DISTANCE, src_loc );
         p.activity->coord_set.reserve( fishable_locations.size() );
-        std::ranges::transform( fishable_locations, std::inserter( p.activity->coord_set, p.activity->coord_set.end() ),
-            []( const tripoint_bub_ms &pnt ) { return g->m.bub_to_abs( pnt ); } );
+        std::ranges::transform( fishable_locations, std::inserter( p.activity->coord_set,
+                                p.activity->coord_set.end() ),
+        []( const tripoint_bub_ms & pnt ) { return g->m.bub_to_abs( pnt ); } );
         return false;
     } else if( reason == do_activity_reason::NEEDS_MINING ) {
         // if have enough batteries to continue etc.

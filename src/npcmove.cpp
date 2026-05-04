@@ -2794,7 +2794,8 @@ void npc::escape_explosion()
     move_away_from( ai_cache.dangerous_explosives, true );
 }
 
-void npc::move_away_from( const tripoint_bub_ms &pt, bool no_bash_atk, std::set<tripoint_bub_ms> *nomove )
+void npc::move_away_from( const tripoint_bub_ms &pt, bool no_bash_atk,
+                          std::set<tripoint_bub_ms> *nomove )
 {
     auto best_pos = bub_pos();
     int best = -1;
@@ -2818,7 +2819,8 @@ void npc::move_away_from( const tripoint_bub_ms &pt, bool no_bash_atk, std::set<
             continue;
         }
 
-        const int dst = std::abs( p.x() - pt.x() ) + std::abs( p.y() - pt.y() ) + std::abs( p.z() - pt.z() );
+        const int dst = std::abs( p.x() - pt.x() ) + std::abs( p.y() - pt.y() ) + std::abs(
+                            p.z() - pt.z() );
         const int val = dst * 1000 / cost;
         if( val > best && can_move_to( p, no_bash_atk ) ) {
             best_pos = p;
@@ -2863,7 +2865,8 @@ void npc::move_pause()
     }
 }
 
-static std::optional<tripoint_bub_ms> nearest_passable( const tripoint_bub_ms &p, const tripoint_bub_ms &closest_to )
+static std::optional<tripoint_bub_ms> nearest_passable( const tripoint_bub_ms &p,
+        const tripoint_bub_ms &closest_to )
 {
     map &here = get_map();
     if( here.passable( p ) ) {
@@ -2877,7 +2880,8 @@ static std::optional<tripoint_bub_ms> nearest_passable( const tripoint_bub_ms &p
     const tripoint_bub_ms & r ) {
         return rl_dist( closest_to, l ) < rl_dist( closest_to, r );
     } );
-    auto iter = std::find_if( candidates.begin(), candidates.end(), [&here, &p]( const tripoint_bub_ms & pt ) {
+    auto iter = std::find_if( candidates.begin(), candidates.end(), [&here,
+    &p]( const tripoint_bub_ms & pt ) {
         return here.passable( pt ) && !here.obstructed_by_vehicle_rotation( p, pt );
     } );
     if( iter != candidates.end() ) {
@@ -2913,7 +2917,8 @@ void npc::move_away_from( const std::vector<sphere> &spheres, bool no_bashing )
         return here.passable( elem );
     } );
 
-    cata::sort_by_rating( escape_points.begin(), escape_points.end(), [&]( const tripoint_bub_ms & elem ) {
+    cata::sort_by_rating( escape_points.begin(),
+    escape_points.end(), [&]( const tripoint_bub_ms & elem ) {
         const int danger = std::accumulate( spheres.begin(), spheres.end(), 0,
         [&]( const int sum, const sphere & s ) {
             return sum + std::max( s.radius - rl_dist( elem.raw(), s.center ), 0 );

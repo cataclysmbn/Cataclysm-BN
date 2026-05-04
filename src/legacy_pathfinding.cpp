@@ -84,7 +84,7 @@ struct pathfinder {
     }
 
     std::priority_queue<std::pair<int, tripoint_bub_ms>, std::vector< std::pair<int, tripoint_bub_ms>>, pair_greater_cmp_first>
-    open;
+            open;
     std::array< std::unique_ptr<path_data_layer>, OVERMAP_LAYERS > path_data;
 
     path_data_layer &get_layer( const int z ) {
@@ -108,7 +108,8 @@ struct pathfinder {
         return pt.second;
     }
 
-    void add_point( const int gscore, const int score, const tripoint_bub_ms &from, const tripoint_bub_ms &to ) {
+    void add_point( const int gscore, const int score, const tripoint_bub_ms &from,
+                    const tripoint_bub_ms &to ) {
         auto &layer = get_layer( to.z() );
         const int index = flat_index( to, layer.stride_y );
         if( ( layer.state[index] == ASL_OPEN && gscore >= layer.gscore[index] ) ||
@@ -144,9 +145,10 @@ bool vertical_move_destination( const map &m, tripoint_bub_ms &t )
     if( !m.has_zlevels() ) {
         return false;
     }
-    
+
     // Align to OMT boundaries
-    auto start = m.abs_to_bub( project_to<coords::ms>( project_to<coords::omt>( m.bub_to_abs( t.xy() ) ) ) );
+    auto start = m.abs_to_bub( project_to<coords::ms>( project_to<coords::omt>( m.bub_to_abs(
+                                   t.xy() ) ) ) );
     auto end = start + point_rel_ms( SEEX * 2, SEEY * 2 );
 
     // Exclude submaps not loaded into bubble
@@ -211,8 +213,8 @@ bool is_disjoint( const Set1 &set1, const Set2 &set2 )
 }
 
 std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f, const tripoint_bub_ms &t,
-                                  const pathfinding_settings &settings,
-                                  const std::set<tripoint_bub_ms> &pre_closed ) const
+        const pathfinding_settings &settings,
+        const std::set<tripoint_bub_ms> &pre_closed ) const
 {
     /* TODO: If the origin or destination is out of bound, figure out the closest
      * in-bounds point and go to that, then to the real origin/destination.
@@ -266,8 +268,10 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f, const tripoin
     // Search-area inflation: at least 16 tiles, scaled with bubble radius so pathfinders
     // can route around obstacles near the bubble boundary at large bubble sizes.
     const int pad = std::max( 16, 4 * g_half_mapsize );
-    auto min = tripoint_bub_ms( std::min( f.x(), t.x() ) - pad, std::min( f.y(), t.y() ) - pad, std::min( f.z(), t.z() ) );
-    auto max = tripoint_bub_ms( std::max( f.x(), t.x() ) + pad, std::max( f.y(), t.y() ) + pad, std::max( f.z(), t.z() ) );
+    auto min = tripoint_bub_ms( std::min( f.x(), t.x() ) - pad, std::min( f.y(), t.y() ) - pad,
+                                std::min( f.z(), t.z() ) );
+    auto max = tripoint_bub_ms( std::max( f.x(), t.x() ) + pad, std::max( f.y(), t.y() ) + pad,
+                                std::max( f.z(), t.z() ) );
     clip_to_bounds( min );
     clip_to_bounds( max );
 
@@ -488,7 +492,8 @@ std::vector<tripoint_bub_ms> map::route( const tripoint_bub_ms &f, const tripoin
 
         const maptile &parent_tile = maptile_at_internal( tripoint_bub_ms( cur ) );
         const auto &parent_terrain = parent_tile.get_ter_t();
-        if( settings.allow_climb_stairs && cur.z() > min.z() && parent_terrain.has_flag( TFLAG_GOES_DOWN ) ) {
+        if( settings.allow_climb_stairs && cur.z() > min.z() &&
+            parent_terrain.has_flag( TFLAG_GOES_DOWN ) ) {
             tripoint_bub_ms dest( cur.xy(), cur.z() - 1 );
             if( vertical_move_destination<TFLAG_GOES_UP>( *this, dest ) ) {
                 auto &layer = pf.get_layer( dest.z() );

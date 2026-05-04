@@ -162,7 +162,8 @@ void cata::detail::reg_game_api( sol::state &lua )
                   []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> npc * { return g->critter_at<npc>( p, allow_hallucination.value_or( false ) ); } );
 
     luna::set_fx( lib, "choose_adjacent",
-    []( const std::string & message, sol::optional<bool> allow_vertical ) -> sol::optional<tripoint_bub_ms> {
+                  []( const std::string & message,
+    sol::optional<bool> allow_vertical ) -> sol::optional<tripoint_bub_ms> {
         std::optional<tripoint_bub_ms> stdOpt = choose_adjacent( message, allow_vertical.value_or( false ) );
 
         if( stdOpt.has_value() )

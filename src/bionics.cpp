@@ -1143,7 +1143,8 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         }
 
     } else if( bio.id == bio_probability_travel ) {
-        if( const std::optional<tripoint_bub_ms> pnt = choose_adjacent( _( "Tunnel in which direction?" ) ) ) {
+        if( const std::optional<tripoint_bub_ms> pnt = choose_adjacent(
+                    _( "Tunnel in which direction?" ) ) ) {
             if( g->m.impassable( *pnt ) ) {
                 add_msg_activate();
                 g->phasing_move( *pnt );

@@ -36,7 +36,8 @@ class char_preview_adapter : public cata_tiles
             return static_cast<char_preview_adapter *>( ct );
         }
 
-        void display_avatar_preview_with_overlays( const avatar &ch, const point_bub_ms &p, bool with_clothing ) {
+        void display_avatar_preview_with_overlays( const avatar &ch, const point_bub_ms &p,
+                bool with_clothing ) {
             std::string ent_name = ch.male ? "player_male" : "player_female";
 
             int height_3d = 0;

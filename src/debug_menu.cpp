@@ -462,7 +462,8 @@ void teleport_overmap( bool specific_coordinates )
         coord.z() = coord_strings.size() >= 3 ? std::atoi( coord_strings[2].c_str() ) : 0;
         where = tripoint_abs_omt( OMAPX * coord.x(), OMAPY * coord.y(), coord.z() );
     } else {
-        const std::optional<tripoint_rel_ms> dir_ = choose_direction( _( "Where is the desired overmap?" ) );
+        const std::optional<tripoint_rel_ms> dir_ = choose_direction(
+                    _( "Where is the desired overmap?" ) );
         if( !dir_ ) {
             return;
         }
@@ -556,7 +557,8 @@ static Character &pick_character( Character &preselected )
     }
     avatar &u = get_avatar();
     u.view_offset = u.bub_pos() - preselected.bub_pos();
-    auto iter = std::find_if( locations.begin(), locations.end(), [&preselected]( const tripoint_bub_ms &p ) {
+    auto iter = std::find_if( locations.begin(),
+    locations.end(), [&preselected]( const tripoint_bub_ms & p ) {
         return p == preselected.bub_pos();
     } );
     size_t preselect_index = iter != locations.end() ? std::distance( locations.begin(), iter ) : 0;
@@ -1649,7 +1651,7 @@ void debug()
             const tripoint_range<tripoint_bub_ms> points = points_opt.value();
 
             const int count = std::accumulate( points.begin(), points.end(), 0,
-            [&m]( int sum, const tripoint_bub_ms &p ) {
+            [&m]( int sum, const tripoint_bub_ms & p ) {
                 const int size = m.i_at( p ).size();
                 m.i_clear( p );
                 return sum + size;
