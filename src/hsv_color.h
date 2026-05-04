@@ -34,7 +34,7 @@ struct RGBColor {
 
     std::string friendly_name() const;
 
-    bool operator==(const RGBColor & other) const {
+    bool operator==( const RGBColor &other ) const {
         return r == other.r && g == other.g && b == other.b && a == other.a;
     }
 };
