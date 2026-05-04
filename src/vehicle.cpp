@@ -2049,6 +2049,10 @@ int vehicle::install_part( point dp, vehicle_part &&new_part )
 
     pt.mount = dp;
 
+    if( pt.base->has_var( TINT_COLOR_VAR_NAME ) ) {
+        pt.part_color = pt.base->get_var<RGBColor>( TINT_COLOR_VAR_NAME, {} );
+    }
+
     refresh();
     get_map().invalidate_lightmap_caches();
     coeff_air_changed = true;

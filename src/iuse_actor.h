@@ -1618,7 +1618,8 @@ class iuse_paint_stuff : public iuse_actor
 {
     public:
         static constexpr std::string PAINT_VAR = "PAINT_COLOR";
-        iuse_paint_stuff( const std::string &type = "paint_stuff" ) : iuse_actor( type ) {}
+        static constexpr std::string IUSE_ACTION = "paint_stuff";
+        iuse_paint_stuff( const std::string &type = IUSE_ACTION ) : iuse_actor( type ) {}
         ~iuse_paint_stuff() override = default;
         void load( const JsonObject &obj ) override;
         auto use( player &who, item &i, bool, const tripoint & ) const -> int override;

@@ -7664,6 +7664,7 @@ auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
         auto &disp_part = vpart.part_displayed()->part();
         if( disp_part.part_color != col ) {
             disp_part.part_color = col;
+            disp_part.get_base().set_var<RGBColor>( TINT_COLOR_VAR_NAME, col );
             ++painted;
         }
         if( painted == it.charges ) {
@@ -7696,8 +7697,12 @@ void iuse_paint_stuff::info( const item &it, std::vector<iteminfo> &inf ) const
         inf.emplace_back( "TOOL", string_format( _( "<bold>Paint Color</bold>: %s" ), "Unknown" ) );
     } else {
         const auto rgb = col.value();
-        auto name = rgb.friendly_name();
-        inf.emplace_back( "TOOL", string_format( _( "<bold>Paint Color</bold>: %s" ), name ) );
+        if( rgb == RGBColor{} ) {
+            inf.emplace_back( "TOOL",  _( "<bold>Paint Solvent</bold>" ) );
+        } else {
+            auto name = rgb.friendly_name();
+            inf.emplace_back( "TOOL", string_format( _( "<bold>Paint Color</bold>: %s" ), name ) );
+        }
     }
 }
 

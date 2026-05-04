@@ -1685,6 +1685,13 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                            "<header>" + weapon_categories + "</header>" );
     }
 
+    if( has_var( TINT_COLOR_VAR_NAME ) && !get_use( iuse_paint_stuff::IUSE_ACTION ) ) {
+        const auto color = get_var<RGBColor>( TINT_COLOR_VAR_NAME, {} );
+        if( color != RGBColor{} ) {
+            info.emplace_back( "TOOL", _( "Painted With: " ), "<bold>" + color.friendly_name() + "</bold>" );
+        }
+    }
+
     if( parts->test( iteminfo_parts::DESCRIPTION ) ) {
         insert_separation_line( info );
         const auto idescription = item_vars_.find( "description" );
