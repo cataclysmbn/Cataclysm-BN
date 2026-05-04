@@ -3119,7 +3119,7 @@ void iexamine::arcfurnace_full( player &, const tripoint_bub_ms &examp )
 }
 //arc furnace end
 
-void iexamine::autoclave_empty( player &p, const tripoint_bub_ms &)
+void iexamine::autoclave_empty( player &p, const tripoint_bub_ms & )
 {
     item *bionic = game_menus::inv::sterilize_cbm( p );
     if( bionic ) {
@@ -4091,7 +4091,8 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
  * will be removed from the liquid item.
  * @return Any remaining liquid.
  */
-detached_ptr<item> iexamine::pour_into_keg( const tripoint_bub_ms &pos, detached_ptr<item> &&liquid )
+detached_ptr<item> iexamine::pour_into_keg( const tripoint_bub_ms &pos,
+        detached_ptr<item> &&liquid )
 {
     const units::volume keg_cap = get_keg_capacity( pos );
     if( keg_cap <= 0_ml ) {
@@ -5654,7 +5655,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             for( int i = 2; i <= range; i++ ) {
                 //break at the first non empty space encountered
                 if( g->m.ter( tripoint_bub_ms( p.bub_pos().x() + i * sgn( examp.x() - p.bub_pos().x() ),
-                                        p.bub_pos().y() + i * sgn( examp.y() - p.bub_pos().y() ), p.bub_pos().z() ) ) != t_open_air ) {
+                                               p.bub_pos().y() + i * sgn( examp.y() - p.bub_pos().y() ), p.bub_pos().z() ) ) != t_open_air ) {
                     success_range = i;
                     success = true;
                     break;

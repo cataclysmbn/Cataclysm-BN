@@ -2537,7 +2537,8 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
                 continue;
             }
 
-            const std::unordered_set<tripoint_abs_ms> &dest_set = mgr.get_near( id, abspos, ACTIVITY_SEARCH_DISTANCE,
+            const std::unordered_set<tripoint_abs_ms> &dest_set = mgr.get_near( id, abspos,
+                    ACTIVITY_SEARCH_DISTANCE,
                     &thisitem );
             for( const auto &dest : dest_set ) {
                 const auto &dest_loc = here.abs_to_bub( dest );
@@ -2875,7 +2876,8 @@ static std::unordered_set<tripoint_abs_ms> generic_multi_activity_locations( pla
 /** Check if this activity can not be done immediately because it has some requirements */
 static requirement_check_result generic_multi_activity_check_requirement( player &p,
         const activity_id &act_id, activity_reason_info &act_info,
-        const tripoint_abs_ms &src, const tripoint_bub_ms &src_loc, const std::unordered_set<tripoint_abs_ms> &src_set,
+        const tripoint_abs_ms &src, const tripoint_bub_ms &src_loc,
+        const std::unordered_set<tripoint_abs_ms> &src_set,
         const bool check_only = false, bool *failure_notice_sent = nullptr )
 {
     const bool is_vehicle_activity = act_id == ACT_VEHICLE_DECONSTRUCTION ||
@@ -3309,7 +3311,8 @@ static bool generic_multi_activity_do( player &p, const activity_id &act_id,
         p.activity->add_tool( best_rod );
         const auto fishable_locations = g->get_fishable_locations( ACTIVITY_SEARCH_DISTANCE, src_loc );
         p.activity->coord_set = std::unordered_set<tripoint_abs_ms>( fishable_locations.size() );
-        std::transform( fishable_locations.begin(), fishable_locations.end(), p.activity->coord_set.begin(), []( const tripoint_bub_ms & pnt ) {
+        std::transform( fishable_locations.begin(), fishable_locations.end(),
+        p.activity->coord_set.begin(), []( const tripoint_bub_ms & pnt ) {
             return g->m.bub_to_abs( pnt );
         } );
         return false;
@@ -3351,7 +3354,8 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
     }
     // now we setup the target spots based on which activity is occurring
     // the set of target work spots - potentially after we have fetched required tools.
-    std::unordered_set<tripoint_abs_ms> src_set = generic_multi_activity_locations( p, activity_to_restore );
+    std::unordered_set<tripoint_abs_ms> src_set = generic_multi_activity_locations( p,
+            activity_to_restore );
     // now we have our final set of points
     std::vector<tripoint_abs_ms> src_sorted = get_sorted_tiles_by_distance( abspos, src_set );
     // now loop through the work-spot tiles and judge whether its worth traveling to it yet
@@ -3581,7 +3585,8 @@ static std::optional<tripoint_bub_ms> find_refuel_spot_zone( const tripoint_bub_
     return {};
 }
 
-static std::optional<tripoint_bub_ms> find_refuel_spot_trap( const std::vector<tripoint_bub_ms> &from,
+static std::optional<tripoint_bub_ms> find_refuel_spot_trap( const std::vector<tripoint_bub_ms>
+        &from,
         const tripoint_bub_ms &center )
 {
     const auto tile = std::ranges::find_if( from, [center]( const tripoint_bub_ms & pt ) {
@@ -3695,7 +3700,7 @@ void try_fuel_fire( player_activity &act, player &p, const bool starting_fire )
     map &here = get_map();
 
     auto best_fire = starting_fire ? here.abs_to_bub( act.placement ) : find_best_fire( adjacent,
-                                        pos );
+                     pos );
 
     if( !best_fire || !here.accessible_items( *best_fire ) ) {
         return;

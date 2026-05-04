@@ -47,7 +47,8 @@ namespace explosion_handler
 {
 void draw_explosion( const tripoint_bub_ms &p, int radius, const nc_color &col,
                      const std::string &exp_name );
-void draw_custom_explosion( const tripoint_bub_ms &p, const std::map<tripoint_bub_ms, nc_color> &area,
+void draw_custom_explosion( const tripoint_bub_ms &p,
+                            const std::map<tripoint_bub_ms, nc_color> &area,
                             const std::string &exp_name );
 } // namespace explosion_handler
 

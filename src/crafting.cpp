@@ -793,7 +793,8 @@ item *Character::start_craft( craft_command &command, const tripoint_bub_ms & )
     }
 
     bench_location bench = find_best_bench( *this, *craft );
-    std::pair<bench_type, float> best_found_bench = crafting::best_bench_here( *craft, abs_to_bub( bench.position ),
+    std::pair<bench_type, float> best_found_bench = crafting::best_bench_here( *craft,
+            abs_to_bub( bench.position ),
             bench.type == bench_type::hands );
     if( best_found_bench.second < 1.0f ) {
         add_msg_if_player( m_info, pgettext( "in progress craft",

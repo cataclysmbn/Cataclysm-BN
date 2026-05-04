@@ -30,7 +30,8 @@ auto get_items_at( const tripoint_abs_ms &loc ) -> location_subrange
     }
 }
 
-auto take_down_deployed_furniture( const tripoint_bub_ms &furniture_pos, const tripoint_bub_ms &drop_pos ) -> void
+auto take_down_deployed_furniture( const tripoint_bub_ms &furniture_pos,
+                                   const tripoint_bub_ms &drop_pos ) -> void
 {
     auto &here = get_map();
     const auto furn_item = here.furn( furniture_pos ).obj().deployed_item;

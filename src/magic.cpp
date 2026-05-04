@@ -1493,7 +1493,8 @@ std::optional<tripoint_bub_ms> spell::random_valid_target( const Creature &caste
         const tripoint_bub_ms &caster_pos ) const
 {
     std::set<tripoint_bub_ms> valid_area;
-    for( const tripoint_bub_ms &target : spell_effect::spell_effect_blast( *this, caster_pos, caster_pos,
+    for( const tripoint_bub_ms &target : spell_effect::spell_effect_blast( *this, caster_pos,
+            caster_pos,
             range(), false ) ) {
         if( is_valid_target( caster, target ) ) {
             valid_area.emplace( target );

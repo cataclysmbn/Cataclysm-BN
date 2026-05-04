@@ -2949,9 +2949,9 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         selected_z = has_custom_selected_zone ? zone_points.front().z() : sel_start.z();
         if( has_custom_selected_zone ) {
             const auto min_x = std::ranges::minmax_element( zone_points, {},
-                               []( const tripoint_bub_ms &p ) { return p.x(); } );
+            []( const tripoint_bub_ms & p ) { return p.x(); } );
             const auto min_y = std::ranges::minmax_element( zone_points, {},
-                               []( const tripoint_bub_ms &p ) { return p.y(); } );
+            []( const tripoint_bub_ms & p ) { return p.y(); } );
             selected_min = point_bub_ms( min_x.min->x(), min_y.min->y() );
             selected_max = point_bub_ms( min_x.max->x(), min_y.max->y() );
         } else {
@@ -3745,9 +3745,9 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             }
 
             const auto min_x = std::ranges::minmax_element( zone.tiles, {},
-                               []( const point_bub_ms &p ) { return p.x(); } );
+            []( const point_bub_ms & p ) { return p.x(); } );
             const auto min_y = std::ranges::minmax_element( zone.tiles, {},
-                               []( const point_bub_ms &p ) { return p.y(); } );
+            []( const point_bub_ms & p ) { return p.y(); } );
             const point_bub_ms min_local( min_x.min->x(), min_y.min->y() );
             const point_bub_ms max_local( min_x.max->x(), min_y.max->y() );
 
@@ -4541,7 +4541,8 @@ auto get_map_memory_of_at( const tripoint_bub_ms &p ) -> std::optional<memorized
 }
 
 template<>
-auto get_map_memory_of_at<vpart_info>( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>
+auto get_map_memory_of_at<vpart_info>( const tripoint_bub_ms &p ) ->
+std::optional<memorized_terrain_tile>
 {
     if( !g->u.should_show_map_memory() ) {
         return std::nullopt;
@@ -6374,16 +6375,16 @@ void cata_tiles::draw_zones_frame( std::multimap<point, formatted_text> &overlay
     const bool has_custom_points = !zone_points.empty();
     const auto min_local = has_custom_points ?
                            point_bub_ms( std::ranges::min( zone_points, {},
-                                         []( const tripoint_bub_ms &p ) { return p.x(); } ).x(),
-                                         std::ranges::min( zone_points, {},
-                                         []( const tripoint_bub_ms &p ) { return p.y(); } ).y() ) :
-                           zone_offset.xy() + zone_start.xy();
+    []( const tripoint_bub_ms & p ) { return p.x(); } ).x(),
+    std::ranges::min( zone_points, {},
+    []( const tripoint_bub_ms & p ) { return p.y(); } ).y() ) :
+        zone_offset.xy() + zone_start.xy();
     const auto max_local = has_custom_points ?
                            point_bub_ms( std::ranges::max( zone_points, {},
-                                         []( const tripoint_bub_ms &p ) { return p.x(); } ).x(),
-                                         std::ranges::max( zone_points, {},
-                                         []( const tripoint_bub_ms &p ) { return p.y(); } ).y() ) :
-                           zone_offset.xy() + zone_end.xy();
+    []( const tripoint_bub_ms & p ) { return p.x(); } ).x(),
+    std::ranges::max( zone_points, {},
+    []( const tripoint_bub_ms & p ) { return p.y(); } ).y() ) :
+        zone_offset.xy() + zone_end.xy();
     const tripoint_bub_ms center_local( ( min_local.x() + max_local.x() ) / 2,
                                         ( min_local.y() + max_local.y() ) / 2, get_avatar().bub_pos().z() );
     const auto lookup_local = has_custom_points ?

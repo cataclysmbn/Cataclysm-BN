@@ -90,7 +90,7 @@ void kiln_empty( player &p, const tripoint_bub_ms &examp );
 void kiln_full( player &p, const tripoint_bub_ms &examp );
 void arcfurnace_empty( player &p, const tripoint_bub_ms &examp );
 void arcfurnace_full( player &p, const tripoint_bub_ms &examp );
-void autoclave_empty( player &p, const tripoint_bub_ms &);
+void autoclave_empty( player &p, const tripoint_bub_ms & );
 void autoclave_full( player &, const tripoint_bub_ms &examp );
 void fireplace( player &p, const tripoint_bub_ms &examp );
 void fvat_empty( player &p, const tripoint_bub_ms &examp );

@@ -599,14 +599,14 @@ void area_push( const spell &sp, Creature &caster, const tripoint_bub_ms &center
 void directed_push( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
 
 std::set<tripoint_bub_ms> spell_effect_blast( const spell &, const tripoint_bub_ms &,
-                                       const tripoint_bub_ms &target,
-                                       int aoe_radius, bool ignore_walls );
+        const tripoint_bub_ms &target,
+        int aoe_radius, bool ignore_walls );
 std::set<tripoint_bub_ms> spell_effect_cone( const spell &sp, const tripoint_bub_ms &source,
-                                      const tripoint_bub_ms &target,
-                                      int aoe_radius, bool ignore_walls );
+        const tripoint_bub_ms &target,
+        int aoe_radius, bool ignore_walls );
 std::set<tripoint_bub_ms> spell_effect_line( const spell &, const tripoint_bub_ms &source,
-                                      const tripoint_bub_ms &target,
-                                      int aoe_radius, bool ignore_walls );
+        const tripoint_bub_ms &target,
+        int aoe_radius, bool ignore_walls );
 
 void spawn_ethereal_item( const spell &sp, Creature &, const tripoint_bub_ms & );
 void recover_energy( const spell &sp, Creature &, const tripoint_bub_ms &target );

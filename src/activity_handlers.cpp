@@ -396,7 +396,8 @@ bool activity_handlers::resume_for_multi_activities( player &p )
 
 void activity_handlers::burrow_do_turn( player_activity *act, player *p )
 {
-    sfx::play_activity_sound( "activity", "burrow", sfx::get_heard_volume( abs_to_bub( act->placement ) ) );
+    sfx::play_activity_sound( "activity", "burrow",
+                              sfx::get_heard_volume( abs_to_bub( act->placement ) ) );
     if( calendar::once_every( 1_minutes ) ) {
         sounds::sound( abs_to_bub( act->placement ), 10, sounds::sound_t::movement,
                        //~ Sound of a Rat mutant burrowing!
@@ -2093,7 +2094,7 @@ void activity_handlers::start_fire_finish( player_activity *act, player *p )
         p->consume_charges( it, it.type->charges_to_use() );
     }
     p->practice( skill_survival, act->index, 5 );
-    
+
     map &here = get_map();
     firestarter_actor::resolve_firestarter_use( *p, here.abs_to_bub( act->placement ) );
     act->set_to_null();
@@ -2106,7 +2107,7 @@ void activity_handlers::start_fire_do_turn( player_activity *act, player *p )
     item &firestarter = *act->get_tools().front();
     // Try fueling the fire if we don't already have fuel, OR if the tool needs to look for tinder to work
     if( !here.is_flammable( bub_loc ) || ( firestarter.has_flag( flag_REQUIRES_TINDER ) &&
-            !here.tinder_at( bub_loc ) ) ) {
+                                           !here.tinder_at( bub_loc ) ) ) {
         try_fuel_fire( *act, *p, true );
         if( !here.is_flammable( bub_loc ) ) {
             p->add_msg_if_player( m_info, _( "There's nothing to light there." ) );
@@ -3507,7 +3508,7 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
     if( autodoc && here.inbounds( p->bub_pos() ) ) {
         // this checks if there's an autodoc in a 3D radius around the player (during the operation), excluding just above/below him
         const auto autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
-                p->bub_pos(), 1, flag_AUTODOC );
+                                  p->bub_pos(), 1, flag_AUTODOC );
         if( !here.has_flag_furn_or_vpart( flag_AUTODOC_COUCH, p->bub_pos() ) || autodocs.empty() ) {
             p->remove_effect( effect_under_op );
             act->set_to_null();
@@ -3640,7 +3641,7 @@ void activity_handlers::operation_finish( player_activity *act, player *p )
             add_msg( m_good,
                      _( "The Autodoc returns to its resting position after successfully performing the operation." ) );
             const auto autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
-                    p->bub_pos(), 1, flag_AUTODOC );
+                                      p->bub_pos(), 1, flag_AUTODOC );
             sounds::sound( autodocs.front(), 10, sounds::sound_t::music,
                            _( "a short upbeat jingle: \"Operation successful\"" ), true,
                            "Autodoc",
@@ -3650,7 +3651,7 @@ void activity_handlers::operation_finish( player_activity *act, player *p )
                 add_msg( m_warning,
                          _( "The Autodoc completes installation and activates bionic but reports about complications during operation." ) );
                 const auto autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
-                        p->bub_pos(), 1, flag_AUTODOC );
+                                          p->bub_pos(), 1, flag_AUTODOC );
                 sounds::sound( autodocs.front(), 10, sounds::sound_t::music,
                                _( "a sad beeping noise: \"Complications detected!  Report to medical personnel immediately!\"" ),
                                true,
@@ -3660,7 +3661,7 @@ void activity_handlers::operation_finish( player_activity *act, player *p )
                 add_msg( m_bad,
                          _( "The Autodoc jerks back to its resting position after failing the operation." ) );
                 const auto autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
-                        p->bub_pos(), 1, flag_AUTODOC );
+                                          p->bub_pos(), 1, flag_AUTODOC );
                 sounds::sound( autodocs.front(), 10, sounds::sound_t::music,
                                _( "a sad beeping noise: \"Operation failed\"" ), true,
                                "Autodoc",
@@ -3963,7 +3964,7 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
         if( p->backlog.empty() || p->backlog.front()->id() != ACT_MULTIPLE_CHOP_TREES ) {
             while( true ) {
                 if( const auto dir = choose_direction(
-                        _( "Select a direction for the tree to fall in." ) ) ) {
+                                         _( "Select a direction for the tree to fall in." ) ) ) {
                     direction = *dir;
                     break;
                 }
@@ -4585,8 +4586,9 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
         !spell_being_cast.has_flag( RANDOM_TARGET ) ) {
         do {
             avatar &you = *p->as_avatar();
-            std::vector<tripoint_bub_ms> trajectory = target_handler::mode_spell( you, spell_being_cast, no_fail,
-                                               no_mana );
+            std::vector<tripoint_bub_ms> trajectory = target_handler::mode_spell( you, spell_being_cast,
+                    no_fail,
+                    no_mana );
 
             if( !trajectory.empty() ) {
                 target = trajectory.back();
@@ -4604,7 +4606,8 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
             }
         } while( !target_is_valid );
     } else if( spell_being_cast.has_flag( RANDOM_TARGET ) ) {
-        const std::optional<tripoint_bub_ms> target_ = spell_being_cast.random_valid_target( *p, p->bub_pos() );
+        const std::optional<tripoint_bub_ms> target_ = spell_being_cast.random_valid_target( *p,
+                p->bub_pos() );
         if( !target_ ) {
             p->add_msg_if_player( game_message_params{ m_bad, gmf_bypass_cooldown },
                                   _( "Your spell can't find a suitable target." ) );
