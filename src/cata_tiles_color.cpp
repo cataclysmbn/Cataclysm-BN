@@ -115,13 +115,11 @@ auto cata_tiles::get_vpart_color(
     const optional_vpart_position &vp, const map &here, const tripoint &pos )-> color_tint_pair
 {
     if( vp ) {
-        const vehicle &veh = vp->vehicle();
-        int veh_part = vp->part_index();
-        auto part_info = veh.part_info( veh_part );
-        auto &part_display = vp.part_displayed()->part();
-        auto part_color = part_display.get_color();
-        return { part_color, part_color };
-
+        auto part_ref = vp.part_displayed();
+        if( part_ref ) {
+            auto part_color = part_ref->part().get_color();
+            return { part_color, part_color };
+        }
     }
     return { std::nullopt, std::nullopt };
 }

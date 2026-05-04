@@ -27,7 +27,8 @@
     "//": "Todo: should explode if damaged or destroyed by bullets, fire, or electric damage.",
     "breaks_into": [ { "item": "plastic_chunk", "count": [ 10, 20 ] } ],
     "flags": [ "BALLOON", "SHOCK_IMMUNE" ],
-    "damage_reduction": { "bash": 10 }
+    "damage_reduction": { "bash": 10 },
+    "default_color": "#800080"
   },
   {
     "id": "airship_balloon_external",

@@ -96,6 +96,7 @@ void vehicle_part::copy_static_from( const vehicle_part &source )
     ammo_pref = source.ammo_pref;
     crew_id = source.crew_id;
     hack_id = source.hack_id;
+    part_color = source.part_color;
 }
 
 //TODO!: This is a bit scuffed and will be until vehicles are game objects.
@@ -717,8 +718,5 @@ std::string vehicle_part::carried_name() const
 
 RGBColor vehicle_part::get_color() const
 {
-    if( part_color ) {
-        return *part_color;
-    }
-    return info().default_color;
+    return part_color.value_or( info().default_color );
 }

@@ -98,6 +98,12 @@
       " OOO->OOOOOOOOO ",
       "  OOOOOOOOOOOO "
     ],
+    "color_palette": [
+      {
+        "fuzzy_ids": [ "balloon", "board", "windshield" ],
+        "colors": [ { "color": "#800080", "weight": 100 }, { "color": "#000088", "weight": 100 } ]
+      },
+    ],
     "blueprint_origin": { "x": 10, "y": 3 },
     "palette": { "O": [ "airship_balloon_external" ] },
     "parts": [

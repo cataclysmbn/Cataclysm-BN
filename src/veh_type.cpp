@@ -1123,10 +1123,10 @@ void vehicle_prototype::load( const JsonObject &jo )
         assign( part, "ammo_types", pt.ammo_types, true );
         assign( part, "ammo_qty", pt.ammo_qty, true, 0 );
         assign( part, "fuel", pt.fuel, true );
-        assign( part, "color", pt.color );
         for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
-            if( pt.part.str().contains( fuzzy ) ) {
+            if( pt.part.str().contains( fuzzy ) || pt.part.str() == fuzzy ) {
                 color_to_id[pt.part.str()] = index;
+                break;
             }
         }
 
@@ -1139,8 +1139,9 @@ void vehicle_prototype::load( const JsonObject &jo )
         pt.part = vpart_id( part );
         vproto.parts.push_back( pt );
         for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
-            if( pt.part.str().contains( fuzzy ) ) {
+            if( pt.part.str().contains( fuzzy ) || pt.part.str() == fuzzy ) {
                 color_to_id[pt.part.str()] = index;
+                break;
             }
         }
     };
@@ -1175,8 +1176,9 @@ void vehicle_prototype::load( const JsonObject &jo )
                     if( part.test_string() ) {
                         pt.part = vpart_id( part.get_string() );
                         for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
-                            if( part.get_string().contains( fuzzy ) ) {
+                            if( pt.part.str().contains( fuzzy ) || pt.part.str() == fuzzy ) {
                                 color_to_id[pt.part.str()] = index;
+                                break;
                             }
                         }
                     } else {
@@ -1187,8 +1189,9 @@ void vehicle_prototype::load( const JsonObject &jo )
                         assign( realpart, "ammo_qty", pt.ammo_qty, true, 0 );
                         assign( realpart, "fuel", pt.fuel, true );
                         for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
-                            if( realpart.get_string( "part" ).contains( fuzzy ) ) {
+                            if( realpart.get_string( "part" ).contains( fuzzy ) || pt.part.str() == fuzzy ) {
                                 color_to_id[pt.part.str()] = index;
+                                break;
                             }
                         }
                     }

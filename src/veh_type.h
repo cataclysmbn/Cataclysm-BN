@@ -422,7 +422,6 @@ struct vehicle_prototype {
     struct part_def {
         point pos;
         vpart_id part;
-        RGBColor color;
         int with_ammo = 0;
         std::set<itype_id> ammo_types;
         std::pair<int, int> ammo_qty = { -1, -1 };

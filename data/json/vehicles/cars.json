@@ -9,6 +9,25 @@
       [ "+==#'|H" ],
       [ "-o-+-oH" ]
     ],
+    "color_palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof" ],
+        "colors": [
+          { "//": "white", "color": "#BBBBBB", "weight": 24 },
+          { "//": "silver", "color": "#777777", "weight": 24 },
+          { "//": "gray", "color": "#333333", "weight": 24 },
+          { "//": "black", "color": "#111111", "weight": 24 },
+          { "//": "blue", "color": "#4169E1", "weight": 12 },
+          { "//": "light blue", "color": "#1F3A93", "weight": 12 },
+          { "//": "red", "color": "#622625", "weight": 12 },
+          { "//": "dark red", "color": "#311313", "weight": 12 },
+          { "//": "green bright", "color": "#228B22", "weight": 2 },
+          { "//": "green dark", "color": "#006400", "weight": 2 },
+          { "//": "pink", "color": "#80447f", "weight": 1 },
+          { "//": "purple", "color": "#402248", "weight": 1 },
+        ]
+      }
+    ],
     "parts": [
       {
         "x": 0,
