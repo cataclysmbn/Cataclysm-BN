@@ -679,6 +679,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
             submap_loader.release_load( lazy_border_handle_ );
             lazy_border_handle_ = 0;
         }
+        fire_loader.clear( submap_loader );
         submap_loader.flush_prev_desired();
     }
 
@@ -1676,6 +1677,7 @@ bool game::cleanup_at_end()
 
     // Clear dimension tracking state before clearing MAPBUFFER and item types.
     // Metadata must be cleared so stale pointers are not accessed after unload_data().
+    fire_loader.clear( submap_loader );
     kept_pocket_dimension_id_.clear();
     loaded_dimensions_.clear();
 
@@ -3151,6 +3153,7 @@ bool game::load( const save_t &name )
         submap_loader.release_load( lazy_border_handle_ );
         lazy_border_handle_ = 0;
     }
+    fire_loader.clear( submap_loader );
     if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION,
             std::bind( &game::unserialize, this, _1 ) ) ) {
         return false;
@@ -4860,9 +4863,12 @@ void game::world_tick()
     ZoneScoped;
     TracyPlot( "Active Dimensions", static_cast<int64_t>( loaded_dimensions_.size() ) );
 
-    const auto  fire_spread = reality_bubble_fire_spread;
-    const auto  do_emits   = calendar::once_every( 10_seconds );
-    const auto  abs_sub    = m.get_abs_sub();
+    const auto fire_spread = reality_bubble_fire_spread;
+    const auto do_emits = calendar::once_every( 10_seconds );
+
+    if( !fire_spread ) {
+        fire_loader.clear( submap_loader );
+    }
 
     auto total_field_count = int64_t{0};
     MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
