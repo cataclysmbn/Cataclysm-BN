@@ -1009,6 +1009,8 @@ class map : public submap_load_listener
             return tername( tripoint( p, abs_sub.z() ) );
         }
 
+        bool has_nearby( const tripoint &p, const std::function<bool( map &m, const tripoint &p )> &pred,
+                         int radius = 1 );
         // Check for terrain/furniture/field that provide a
         // "fire" item to be used for example when crafting or when
         // a iuse function needs fire.

@@ -3658,6 +3658,17 @@ bool map::has_adjacent_terrain_with( const tripoint &p,
     return false;
 }
 
+bool map::has_nearby( const tripoint &p,
+                      const std::function<bool( map &m, const tripoint &p )> &pred, int radius )
+{
+    for( const tripoint &adj : points_in_radius( p, radius ) ) {
+        if( pred( *this, adj ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool map::has_nearby_fire( const tripoint &p, int radius )
 {
     for( const tripoint &pt : points_in_radius( p, radius ) ) {
