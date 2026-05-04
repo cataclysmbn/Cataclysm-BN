@@ -467,7 +467,7 @@ struct npc_follower_rules {
 };
 
 struct dangerous_sound {
-    tripoint abs_pos;
+    tripoint_abs_ms abs_pos;
     sounds::sound_t type;
     int volume = 0;
 };
@@ -501,11 +501,11 @@ struct npc_short_term_cache {
     // map of positions / type / volume of suspicious sounds
     std::vector<dangerous_sound> sound_alerts;
     // current sound position being investigated
-    tripoint s_abs_pos;
+    tripoint_abs_ms s_abs_pos;
     // number of times we haven't moved when investigating a sound
     int stuck = 0;
     // Position to return to guarding
-    std::optional<tripoint> guard_pos;
+    std::optional<tripoint_abs_ms> guard_pos;
     double my_weapon_value = 0;
 
     // Use weak_ptr to avoid circular references between Creatures
@@ -516,7 +516,7 @@ struct npc_short_term_cache {
     std::vector<sphere> dangerous_explosives;
     std::array<float, 27> threat_map;
     // Cache of locations the NPC has searched recently in npc::find_item()
-    lru_cache<tripoint, int> searched_tiles;
+    lru_cache<tripoint_abs_ms, int> searched_tiles;
 };
 
 struct npc_need_goal_cache {
@@ -1148,7 +1148,7 @@ class npc : public player
         // Drop wgt and vol, including all items with less value than min_val
         void drop_items( units::mass drop_weight, units::volume drop_volume, int min_val = 0 );
         /** Picks up items and returns a list of them. */
-        std::vector<item *> pick_up_item_map( const tripoint &where );
+        std::vector<item *> pick_up_item_map( const tripoint_bub_ms &where );
         std::vector<item *> pick_up_item_vehicle( vehicle &veh, int part_index );
 
         bool has_item_whitelist() const;
@@ -1294,10 +1294,8 @@ class npc : public player
         std::optional<tripoint_abs_ms> goto_to_this_pos;
         int last_seen_player_turn = 0; // Timeout to forgetting
         tripoint_bub_ms wanted_item_pos; // The square containing an item we want
-        tripoint_bub_ms
-        guard_pos;  // These are the local coordinates that a guard will return to inside of their goal tripoint
-        tripoint_bub_ms chair_pos =
-            tripoint_bub_ms::zero(); // This is the spot the NPC wants to move to to sit and relax.
+        tripoint_abs_ms guard_pos;  // These are the local coordinates that a guard will return to inside of their goal tripoint
+        tripoint_abs_ms chair_pos = tripoint_abs_ms::zero(); // This is the spot the NPC wants to move to to sit and relax.
         std::optional<tripoint_abs_omt> base_location; // our faction base location in OMT coords.
         /**
          * Global overmap terrain coordinate, where we want to get to

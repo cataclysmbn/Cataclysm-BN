@@ -10519,14 +10519,14 @@ void map::set_pathfinding_cache_dirty( const tripoint_bub_ms &p )
 auto map::get_pf_special( const tripoint_bub_ms &p ) const -> pf_special
 {
     point_sm_ms l;
-    submap *sm = get_submap_at( tripoint_bub_ms( p ), l );
+    submap *sm = get_submap_at( p, l );
     if( !sm ) {
         return PF_WALL;
     }
     if( sm->pf_dirty ) {
         const int smx = divide_round_to_minus_infinity( p.x(), SEEX );
         const int smy = divide_round_to_minus_infinity( p.y(), SEEY );
-        sm->rebuild_pf_cache( *this, tripoint_bub_sm( smx, smy, p.z() ) );
+        sm->rebuild_pf_cache( *this, project_to<coords::sm>( p ) );
     }
     return sm->pf_special_cache[l.x()][l.y()];
 }

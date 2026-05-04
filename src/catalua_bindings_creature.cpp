@@ -83,7 +83,7 @@ void cata::detail::reg_creature( sol::state &lua )
 
         luna::set_fx( ut, "sees", sol::overload(
                           sol::resolve<bool( const Creature & ) const>( &Creature::sees ),
-        []( const Creature & cr, const tripoint & t ) -> bool { return cr.sees( t ); }
+        []( const Creature & cr, const tripoint_bub_ms & t ) -> bool { return cr.sees( t ); }
                       ) );
 
         SET_FX_T( sight_range, int( int ) const );
@@ -94,7 +94,7 @@ void cata::detail::reg_creature( sol::state &lua )
 
         SET_FX_T( ranged_target_size, double() const );
 
-        SET_FX_T( knock_back_to, void( const tripoint & ) );
+        SET_FX_T( knock_back_to, void( const tripoint_bub_ms & ) );
 
         SET_FX_T( deal_damage, dealt_damage_instance( Creature * source, bodypart_id bp,
                   const damage_instance & dam ) );
@@ -119,9 +119,9 @@ void cata::detail::reg_creature( sol::state &lua )
         SET_FX_T( is_immune_effect, bool( const efftype_id & ) const );
         SET_FX_T( is_immune_damage, bool( damage_type ) const );
 
-        SET_FX_N_T( pos, "get_pos_ms", const tripoint & () const );
+        SET_FX_N_T( bub_pos, "get_pos_ms", const tripoint_bub_ms & () const );
 
-        SET_FX_N_T( setpos, "set_pos_ms", void( const tripoint & ) );
+        SET_FX_N_T( setpos, "set_pos_ms", void( const tripoint_bub_ms & ) );
 
         luna::set_fx( ut, "has_effect", []( const Creature & cr, const efftype_id & eff,
         sol::optional<const bodypart_str_id &> bpid ) -> bool {
@@ -331,7 +331,7 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( try_upgrade, void( bool ) );
         SET_FX_T( try_reproduce, void() );
         SET_FX_T( refill_udders, void() );
-        SET_FX_T( spawn, void( const tripoint & ) );
+        SET_FX_T( spawn, void( const tripoint_bub_ms & ) );
 
         SET_FX_T( name, std::string( unsigned int ) const );
         SET_FX_T( name_with_armor, std::string() const );
@@ -347,11 +347,11 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( climbs, bool() const );
         SET_FX_T( swims, bool() const );
 
-        SET_FX_T( move_target, tripoint() );
+        SET_FX_T( move_target, tripoint_bub_ms() );
         SET_FX_N_T( is_wandering, "is_wandering", bool() const );
 
-        SET_FX_T( wander_to, void( const tripoint & p, int f ) );
-        SET_FX_T( move_to, bool( const tripoint & p, bool force, bool step_on_critter,
+        SET_FX_T( wander_to, void( const tripoint_abs_ms & p, int f ) );
+        SET_FX_T( move_to, bool( const tripoint_bub_ms & p, bool force, bool step_on_critter,
                                  float stagger_adjustment ) );
 
         SET_FX_T( attitude, monster_attitude( const Character * ) const );
@@ -374,7 +374,7 @@ void cata::detail::reg_monster( sol::state &lua )
         } );
         SET_FX_T( remove_item, detached_ptr<item>( item * ) );
         SET_FX_T( clear_items, std::vector<detached_ptr<item>>() );
-        SET_FX_T( drop_items, void( const tripoint & ) );
+        SET_FX_T( drop_items, void( const tripoint_bub_ms & ) );
         SET_FX_N_T( drop_items, "drop_items_here", void() );
 
         luna::set_fx( ut, "add_faction_anger", []( monster & m, const std::string & faction_str, int amount )
@@ -552,7 +552,7 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( can_mount, bool( const monster & critter ) const );
         SET_FX_T( mount_creature, void( monster & z ) );
         SET_FX_T( is_mounted, bool() const );
-        SET_FX_T( check_mount_will_move, bool( const tripoint & dest_loc ) );
+        SET_FX_T( check_mount_will_move, bool( const tripoint_bub_ms & dest_loc ) );
         SET_FX_T( check_mount_is_spooked, bool() );
         SET_FX_T( dismount, void() );
         SET_FX_T( forced_dismount, void() );
@@ -579,9 +579,9 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( healall, void( int dam ) );
 
-        SET_FX_T( global_square_location, tripoint() const );
+        SET_FX_T( global_square_location, tripoint_abs_ms() const );
 
-        SET_FX_T( global_sm_location, tripoint() const );
+        SET_FX_T( global_sm_location, tripoint_abs_sm() const );
 
         SET_FX_T( has_mabuff, bool( const mabuff_id & ) const );
 
@@ -1032,12 +1032,12 @@ void cata::detail::reg_character( sol::state &lua )
 
         DOC( "Character learns that the given trap is on the given tripoint. If the trap is null, the character learns that there is no trap there." );
         SET_FX( add_known_trap );
-        luna::set_fx( ut, "add_known_trap", []( UT_CLASS & c, const tripoint & p, const trap_id & tr )
+        luna::set_fx( ut, "add_known_trap", []( UT_CLASS & c, const tripoint_bub_ms & p, const trap_id & tr )
         {
             c.add_known_trap( p, tr.obj() );
         } );
 
-        SET_FX_T( can_hear, bool( const tripoint & source, int volume ) const );
+        SET_FX_T( can_hear, bool( const tripoint_bub_ms & source, int volume ) const );
 
         SET_FX_T( hearing_ability, float() const );
 
@@ -1246,7 +1246,7 @@ void cata::detail::reg_npc( sol::state &lua )
 
         SET_FX_T( warn_about,
                   void( const std::string & type, const time_duration &, const std::string &,
-                        int, const tripoint & ) );
+                        int, const tripoint_bub_ms & ) );
 
         DOC( "Finds something to complain about and complains. Returns if complained." );
 
@@ -1256,9 +1256,9 @@ void cata::detail::reg_npc( sol::state &lua )
 
         SET_FX_T( evaluate_enemy, float( const Creature & ) const );
 
-        SET_FX_T( can_open_door, bool( const tripoint &, bool ) const );
+        SET_FX_T( can_open_door, bool( const tripoint_bub_ms &, bool ) const );
 
-        SET_FX_T( can_move_to, bool( const tripoint &, bool ) const );
+        SET_FX_T( can_move_to, bool( const tripoint_bub_ms &, bool ) const );
 
         SET_FX_T( saw_player_recently, bool() const );
 

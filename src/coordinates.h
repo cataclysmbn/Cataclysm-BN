@@ -839,65 +839,6 @@ midpoint( const half_open_cuboid<coords::coord_point<tripoint, Origin, Scale>> &
     return midpoint( rect.p_min, rect.p_max );
 }
 
-
-/* find appropriate subdivided coordinates for absolute tile coordinate.
- * This is less obvious than one might think, for negative coordinates, so this
- * was created to give a definitive answer.
- *
- * 'absolute' is defined as the -actual- submap x,y * SEEX + position in submap, and
- * can be obtained from map.bub_to_abs(x, y);
- *   usage:
- *    real_coords rc( g->m.bub_to_abs(g->u.bub_pos().x(), g->u.bub_pos().y() ) );
- */
-struct real_coords {
-    static const int tiles_in_sub = SEEX;
-    static const int tiles_in_sub_n = tiles_in_sub - 1;
-    static const int subs_in_om = OMAPX * 2;
-    static const int subs_in_om_n = subs_in_om - 1;
-
-    point_abs_ms abs_pos;     // 1 per tile, starting from tile 0,0 of submap 0,0 of overmap 0,0
-    point_abs_sm abs_sub;     // submap: 12 tiles.
-    point_abs_om abs_om;      // overmap: 360 submaps.
-
-    point_sm_ms sub_pos;     // coordinate (0-11) in submap / abs_pos constrained to % 12.
-
-    point_om_ms om_pos;      // overmap tile: 2x2 submaps.
-    point_om_sm
-    om_sub;      // submap (0-359) in overmap / abs_sub constrained to % 360. equivalent to g->levx
-
-    real_coords() = default;
-
-    real_coords( point_abs_ms ap ) {
-        fromabs( ap );
-    }
-
-    void fromabs( point_abs_ms abs );
-
-    // specifically for the subjective position returned by overmap::draw
-    void fromomap( point_rel_om rel_om, point_rel_om rel_om_pos ) {
-        const point_rel_om a = point_rel_om( rel_om.x() * OMAPX, rel_om.y() * OMAPY ) + rel_om_pos;
-        fromabs( point_abs_ms( a.x() * SEEX * 2, a.y() * SEEY * 2 ) );
-    }
-
-    point_abs_omt abs_omt() const {
-        return project_to<coords::omt>( point_abs_sm( abs_sub ) );
-    }
-
-    // helper functions to return abs_pos of submap/overmap tile/overmap's start
-
-    point_abs_sm begin_sub() {
-        return point_abs_sm( abs_sub.x() * tiles_in_sub, abs_sub.y() * tiles_in_sub );
-    }
-    point_abs_om begin_om_pos() {
-        return point_abs_om( ( abs_om.x() * subs_in_om * tiles_in_sub ) + ( om_pos.x() * 2 * tiles_in_sub ),
-                             ( abs_om.y() * subs_in_om * tiles_in_sub ) + ( om_pos.y() * 2 * tiles_in_sub ) );
-    }
-    point_abs_om begin_om() {
-        return point_abs_om( abs_om.x() * subs_in_om * tiles_in_sub,
-                             abs_om.y() * subs_in_om * tiles_in_sub );
-    }
-};
-
 // Returns a view over every tile position within a single submap, in x-major order.
 // Equivalent to a nested loop over x in [0, SEEX) and y in [0, SEEY).
 //

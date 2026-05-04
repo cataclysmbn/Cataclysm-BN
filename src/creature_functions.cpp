@@ -21,12 +21,12 @@ namespace
 // Helper function to check if potential area of effect of a weapon overlaps vehicle
 // Maybe TODO: If this is too slow, precalculate a bounding box and clip the tested area to it
 // TODO: make tripoint_range (and other iterators) to be range-compatible
-auto overlaps_vehicle( const std::set<tripoint_bub_ms> &veh_area, const tripoint &pos,
+auto overlaps_vehicle( const std::set<tripoint_abs_ms> &veh_area, const tripoint_abs_ms &pos,
                        const int area ) -> bool
 {
-    for( const tripoint_bub_ms &tmp : tripoint_range<tripoint_bub_ms>( tripoint_bub_ms(
+    for( const tripoint_abs_ms &tmp : tripoint_range<tripoint_abs_ms>( tripoint_abs_ms(
                 pos ) - tripoint_rel_ms( area, area, 0 ),
-            tripoint_bub_ms( pos ) + tripoint_rel_ms( area - 1, area - 1, 0 ) ) ) {
+            tripoint_abs_ms( pos ) + tripoint_rel_ms( area - 1, area - 1, 0 ) ) ) {
         if( veh_area.contains( tmp ) ) {
             return true;
         }
@@ -125,7 +125,7 @@ auto auto_find_hostile_target(
                 // Hack: trying yo avoid turret LOS blocking by frames bug by trying to see target from vehicle boundary
                 // Or turret wallhack for turret's car
                 // TODO: to visibility checking another way, probably using 3D FOV
-                auto path_to_target = line_to( creature.bub_pos(), m->pos() );
+                auto path_to_target = line_to( creature.bub_pos(), m->bub_pos() );
                 path_to_target.insert( path_to_target.begin(), creature.bub_pos() );
 
                 // Getting point on vehicle boundaries and on line between target and turret
@@ -148,7 +148,7 @@ auto auto_find_hostile_target(
                 if( !seesFromVehBound ) { continue; }
             } else { continue; }
         }
-        int dist = rl_dist( creature.bub_pos(), m->pos() ) + 1; // rl_dist can be 0
+        int dist = rl_dist( creature.bub_pos(), m->bub_pos() ) + 1; // rl_dist can be 0
         if( dist > option.range + 1 || dist < option.area ) {
             // Too near or too far
             continue;
@@ -161,14 +161,14 @@ auto auto_find_hostile_target(
             continue;
         }
 
-        if( in_veh != nullptr && veh_pointer_or_null( here.veh_at( m->pos() ) ) == in_veh ) {
+        if( in_veh != nullptr && veh_pointer_or_null( here.veh_at( m->bub_pos() ) ) == in_veh ) {
             // No shooting stuff on vehicle we're a part of
             continue;
         }
-        const auto target_angle = coord_to_angle( creature.bub_pos(), m->pos() );
+        const auto target_angle = coord_to_angle( creature.bub_pos(), m->bub_pos() );
         const auto blocked_by_friendly = std::ranges::any_of( protected_creatures,
         [&]( const iff_guard_creature & guard ) {
-            if( guard.area_iff && rl_dist( guard.critter->bub_pos(), m->pos() ) <= option.area ) {
+            if( guard.area_iff && rl_dist( guard.critter->bub_pos(), m->bub_pos() ) <= option.area ) {
                 return true;
             }
             if( !guard.angle_iff ) {
@@ -197,7 +197,7 @@ auto auto_find_hostile_target(
             continue; // Handle this late so that boo_hoo++ can happen
         }
         // Expensive check for proximity to vehicle
-        if( self_area_iff && overlaps_vehicle( in_veh->get_points(), m->pos(), option.area ) ) {
+        if( self_area_iff && overlaps_vehicle( in_veh->get_points(), m->abs_pos(), option.area ) ) {
             continue;
         }
 

@@ -488,7 +488,7 @@ class inventory_selector
         input_context ctxt;
 
         const item_category *naturalize_category( const item_category &category,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
 
         void add_entry( inventory_column &target_column,
                         std::vector<item *> &&locations,

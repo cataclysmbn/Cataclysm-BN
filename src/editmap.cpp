@@ -225,7 +225,7 @@ void editmap_hilight::draw( editmap &em, bool update )
     if( blink_interval[ cur_blink ] || update ) {
         map &here = get_map();
         for( auto &elem : points ) {
-            const tripoint &p = elem.first;
+            const tripoint_bub_ms &p = elem.first;
             // but only if there's no vehicles/mobs/npcs on a point
             if( !here.veh_at( p ) && !g->critter_at( p ) ) {
                 const ter_t &terrain = here.ter( p ).obj();
@@ -485,7 +485,7 @@ void editmap::uber_draw_ter( const catacurses::window &w, map *m )
                 m->drawsq( w, p, params );
             }
         } else {
-            mvwputch( w, p.xy() - start.xy(), c_dark_gray, sym );
+            mvwputch( w, ( p.xy() - start.xy() ).raw(), c_dark_gray, sym );
         }
     }
     if( refresh_mplans ) {
@@ -520,7 +520,7 @@ void editmap::draw_main_ui_overlay()
 #ifdef TILES
     // give some visual indication of different cursor moving modes
     if( use_tiles && altblink ) {
-        point p[2] = { origin.xy(), target.xy() };
+        point_bub_ms p[2] = { origin.xy(), target.xy() };
         if( editshape == editmap_rect || editshape == editmap_rect_filled || p[0] == p[1] ) {
             if( p[0] == p[1] ) {
                 // ensure more than one cursor is drawn to differ from resizing mode
@@ -529,12 +529,12 @@ void editmap::draw_main_ui_overlay()
             }
             for( const auto &pi : p ) {
                 for( const auto &pj : p ) {
-                    g->draw_cursor( tripoint( pi.x, pj.y, target.z ) );
+                    g->draw_cursor( tripoint_bub_ms( pi.x(), pj.y(), target.z() ) );
                 }
             }
         } else if( editshape == editmap_circle ) {
             g->draw_cursor( target );
-            g->draw_cursor( origin * 2 - target );
+            g->draw_cursor( tripoint_bub_ms( origin.raw() * 2 - target.raw() ) );
         } else if( editshape == editmap_line ) {
             g->draw_cursor( origin );
             g->draw_cursor( target );
@@ -613,7 +613,7 @@ void editmap::draw_main_ui_overlay()
             for( int x = 0; x < SEEX * 2; x++ ) {
                 for( int y = 0; y < SEEY * 2; y++ ) {
                     const tripoint_bub_ms tmp_p( x, y, target.z() );
-                    const auto map_p = origin_p + tmp_p;
+                    const auto map_p = tmp_p + origin_p.raw();
                     g->draw_radiation_override( map_p, tmpmap.get_radiation( tmp_p ) );
                     // scent is managed in `game` instead of `map`, so there's no override for it
                     // temperature is managed in `game` instead of `map`, so there's no override for it
@@ -625,7 +625,7 @@ void editmap::draw_main_ui_overlay()
                     g->draw_trap_override( map_p, tmpmap.tr_at( tmp_p ).loadid );
                     g->draw_field_override( map_p, tmpmap.field_at( tmp_p ).displayed_field_type() );
                     const maptile &tile = tmpmap.maptile_at( tripoint_bub_ms( tmp_p ) );
-                    if( tmpmap.sees_some_items( tmp_p, g->u.bub_pos() - origin_p ) ) {
+                    if( tmpmap.sees_some_items( tmp_p, g->u.bub_pos() - origin_p.raw() ) ) {
                         const item &itm = tile.get_uppermost_item();
                         const mtype *const mon = itm.get_mtype();
                         g->draw_item_override( map_p, itm.typeId(), mon ? mon->id : mtype_id::NULL_ID(),
@@ -653,16 +653,16 @@ void editmap::draw_main_ui_overlay()
                 }
             }
             // int: count, bool: more than 1 spawn data
-            std::map<tripoint, std::tuple<mtype_id, int, bool, Attitude>> spawns;
+            std::map<tripoint_bub_ms, std::tuple<mtype_id, int, bool, Attitude>> spawns;
             for( int x = 0; x < 2; x++ ) {
                 for( int y = 0; y < 2; y++ ) {
                     const auto sm_pos = tripoint_bub_sm{ x, y, target.z() };
                     submap *sm = tmpmap.get_submap_at_grid( sm_pos );
                     if( sm ) {
-                        const auto sm_origin =  project_to<coords::ms>( sm_pos ) + origin_p;
+                        const auto sm_origin = project_to<coords::ms>( sm_pos ) + origin_p.raw();
                         for( const auto &sp : sm->spawns ) {
                             const auto spawn_p = sm_origin + sp.pos.raw();
-                            const auto spawn_it = spawns.find( spawn_p.raw() );
+                            const auto spawn_it = spawns.find( spawn_p );
                             if( spawn_it == spawns.end() ) {
                                 const Attitude att = sp.is_friendly() ? Attitude::A_FRIENDLY : Attitude::A_ANY;
                                 spawns.emplace( spawn_p.raw(), std::make_tuple( sp.type, sp.count, false, att ) );
@@ -681,8 +681,8 @@ void editmap::draw_main_ui_overlay()
 #endif
             hilights["mapgentgt"].draw( *this, true );
             tmpmap.reset_vehicle_cache( );
-            drawsq_params params = drawsq_params().center( tripoint( SEEX - 1, SEEY - 1, target.z() ) );
-            for( const tripoint &p : tmpmap.points_on_zlevel() ) {
+            drawsq_params params = drawsq_params().center( tripoint_bub_ms( SEEX - 1, SEEY - 1, target.z() ) );
+            for( const tripoint_bub_ms &p : tmpmap.points_on_zlevel() ) {
                 tmpmap.drawsq( g->w_terrain, p, params );
             }
 #ifdef TILES
@@ -887,22 +887,22 @@ std::string info_title<trap>()
 }
 
 template<typename T_id>
-static T_id feature( const tripoint &p );
+static T_id feature( const tripoint_bub_ms &p );
 
 template<>
-ter_id feature<ter_id>( const tripoint &p )
+ter_id feature<ter_id>( const tripoint_bub_ms &p )
 {
     return get_map().ter( p );
 }
 
 template<>
-furn_id feature<furn_id>( const tripoint &p )
+furn_id feature<furn_id>( const tripoint_bub_ms &p )
 {
     return get_map().furn( p );
 }
 
 template<>
-trap_id feature<trap_id>( const tripoint &p )
+trap_id feature<trap_id>( const tripoint_bub_ms &p )
 {
     return get_map().tr_at( p ).loadid;
 }
@@ -975,33 +975,33 @@ std::string describe( const trap &type )
 }
 
 template<typename T_id>
-static void draw_override( const tripoint &p, const T_id &id );
+static void draw_override( const tripoint_bub_ms &p, const T_id &id );
 
 template<>
-void draw_override<ter_id>( const tripoint &p, const ter_id &id )
+void draw_override<ter_id>( const tripoint_bub_ms &p, const ter_id &id )
 {
     g->draw_terrain_override( p, id );
 }
 
 template<>
-void draw_override<furn_id>( const tripoint &p, const furn_id &id )
+void draw_override<furn_id>( const tripoint_bub_ms &p, const furn_id &id )
 {
     g->draw_furniture_override( p, id );
 }
 
 template<>
-void draw_override<trap_id>( const tripoint &p, const trap_id &id )
+void draw_override<trap_id>( const tripoint_bub_ms &p, const trap_id &id )
 {
     g->draw_trap_override( p, id );
 }
 
 template<typename T_t>
-static void apply( const T_t &t, shapetype editshape, const tripoint &target,
-                   const tripoint &origin, const std::vector<tripoint> &target_list );
+static void apply( const T_t &t, shapetype editshape, const tripoint_bub_ms &target,
+                   const tripoint_bub_ms &origin, const std::vector<tripoint_bub_ms> &target_list );
 
 template<>
-void apply<ter_t>( const ter_t &t, const shapetype editshape, const tripoint &target,
-                   const tripoint &origin, const std::vector<tripoint> &target_list )
+void apply<ter_t>( const ter_t &t, const shapetype editshape, const tripoint_bub_ms &target,
+                   const tripoint_bub_ms &origin, const std::vector<tripoint_bub_ms> &target_list )
 {
     bool isvert = false;
     bool ishori = false;
@@ -1020,11 +1020,11 @@ void apply<ter_t>( const ter_t &t, const shapetype editshape, const tripoint &ta
         }
         if( teralt != undefined_ter_id ) {
             if( isvert ) {
-                alta = target.y;
-                altb = origin.y;
+                alta = target.y();
+                altb = origin.y();
             } else {
-                alta = target.x;
-                altb = origin.x;
+                alta = target.x();
+                altb = origin.x();
             }
             doalt = true;
         }
@@ -1034,9 +1034,9 @@ void apply<ter_t>( const ter_t &t, const shapetype editshape, const tripoint &ta
     for( auto &elem : target_list ) {
         ter_id wter = sel_ter;
         if( doalt ) {
-            if( isvert && ( elem.y == alta || elem.y == altb ) ) {
+            if( isvert && ( elem.y() == alta || elem.y() == altb ) ) {
                 wter = teralt;
-            } else if( ishori && ( elem.x == alta || elem.x == altb ) ) {
+            } else if( ishori && ( elem.x() == alta || elem.x() == altb ) ) {
                 wter = teralt;
             }
         }
@@ -1050,8 +1050,8 @@ void apply<ter_t>( const ter_t &t, const shapetype editshape, const tripoint &ta
 }
 
 template<>
-void apply<furn_t>( const furn_t &t, const shapetype, const tripoint &,
-                    const tripoint &, const std::vector<tripoint> &target_list )
+void apply<furn_t>( const furn_t &t, const shapetype, const tripoint_bub_ms &,
+                    const tripoint_bub_ms &, const std::vector<tripoint_bub_ms> &target_list )
 {
     const furn_id sel_frn = t.id.id();
     map &here = get_map();
@@ -1061,8 +1061,8 @@ void apply<furn_t>( const furn_t &t, const shapetype, const tripoint &,
 }
 
 template<>
-void apply<trap>( const trap &t, const shapetype, const tripoint &,
-                  const tripoint &, const std::vector<tripoint> &target_list )
+void apply<trap>( const trap &t, const shapetype, const tripoint_bub_ms &,
+                  const tripoint_bub_ms &, const std::vector<tripoint_bub_ms> &target_list )
 {
     map &here = get_map();
     for( auto &elem : target_list ) {
@@ -1251,7 +1251,7 @@ void editmap::edit_fld()
     do {
         const field_type_id override( fmenu.selected );
         if( override ) {
-            draw_target_override = [override]( const tripoint & p ) {
+            draw_target_override = [override]( const tripoint_bub_ms & p ) {
                 g->draw_field_override( p, override );
             };
         } else {
@@ -1781,7 +1781,7 @@ int editmap::select_shape( shapetype shape, int mode )
 /*
  * Display mapgen results over selected target position, and optionally regenerate / apply / abort
  */
-void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
+void editmap::mapgen_preview( const point_abs_ms &tc, uilist &gmenu )
 {
     hilights["mapgentgt"].points.clear();
     hilights["mapgentgt"].points[target + point( -SEEX, -SEEY )] = 1;
@@ -1790,7 +1790,7 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
     hilights["mapgentgt"].points[target + point( 1 + SEEX, -SEEY )] = 1;
 
     // Coordinates of the overmap terrain that should be generated.
-    const point_abs_omt omt_pos2 = tc.abs_omt();
+    const point_abs_omt omt_pos2 = project_to<coords::omt>( tc );
     const tripoint_abs_omt omt_pos( omt_pos2, target.z() );
     const oter_id &omt_ref = get_overmapbuffer( get_map().get_bound_dimension() ).ter( omt_pos );
     // Copy to store the original value, to restore it upon canceling

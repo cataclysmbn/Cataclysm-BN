@@ -754,12 +754,12 @@ bool try_uncanny_dodge( Character &who )
     }
 }
 
-std::optional<tripoint> pick_safe_adjacent_tile( const Character &who )
+std::optional<tripoint_bub_ms> pick_safe_adjacent_tile( const Character &who )
 {
-    std::vector<tripoint> ret;
+    std::vector<tripoint_bub_ms> ret;
     int dangerous_fields = 0;
     map &here = get_map();
-    for( const tripoint &p : here.points_in_radius( who.bub_pos(), 1 ) ) {
+    for( const tripoint_bub_ms &p : here.points_in_radius( who.bub_pos(), 1 ) ) {
         if( p == who.bub_pos() ) {
             // Don't consider player position
             continue;

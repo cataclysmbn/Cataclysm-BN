@@ -48,9 +48,9 @@ void cata::detail::reg_game_api( sol::state &lua )
     add_msg_lua, []( sol::variadic_args va ) { add_msg_lua( game_message_type::m_neutral, va ); }
                   ) );
     DOC( "Teleports player to absolute coordinate in overmap" );
-    luna::set_fx( lib, "place_player_overmap_at", []( const tripoint & p ) -> void { g->place_player_overmap( tripoint_abs_omt( p ) ); } );
+    luna::set_fx( lib, "place_player_overmap_at", []( const tripoint_abs_omt & p ) -> void { g->place_player_overmap( tripoint_abs_omt( p ) ); } );
     DOC( "Teleports player to local coordinates within active map" );
-    luna::set_fx( lib, "place_player_local_at", []( const tripoint & p ) -> void { g->place_player( p ); } );
+    luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );
@@ -149,44 +149,44 @@ void cata::detail::reg_game_api( sol::state &lua )
     } );
 
     luna::set_fx( lib, "get_creature_at",
-                  []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> Creature * { return g->critter_at<Creature>( p, allow_hallucination.value_or( false ) ); } );
+                  []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> Creature * { return g->critter_at<Creature>( p, allow_hallucination.value_or( false ) ); } );
     luna::set_fx( lib, "get_monster_at",
-                  []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> monster * { return g->critter_at<monster>( p, allow_hallucination.value_or( false ) ); } );
-    luna::set_fx( lib, "place_monster_at", []( const mtype_id & id, const tripoint & p ) { return g->place_critter_at( id, p ); } );
-    luna::set_fx( lib, "place_monster_around", []( const mtype_id & id, const tripoint & p,
+                  []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> monster * { return g->critter_at<monster>( p, allow_hallucination.value_or( false ) ); } );
+    luna::set_fx( lib, "place_monster_at", []( const mtype_id & id, const tripoint_bub_ms & p ) { return g->place_critter_at( id, p ); } );
+    luna::set_fx( lib, "place_monster_around", []( const mtype_id & id, const tripoint_bub_ms & p,
     const int radius ) { return g->place_critter_around( id, p, radius ); } );
-    luna::set_fx( lib, "spawn_hallucination", []( const tripoint & p ) -> bool { return g->spawn_hallucination( p ); } );
+    luna::set_fx( lib, "spawn_hallucination", []( const tripoint_bub_ms & p ) -> bool { return g->spawn_hallucination( p ); } );
     luna::set_fx( lib, "get_character_at",
-                  []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> Character * { return g->critter_at<Character>( p, allow_hallucination.value_or( false ) ); } );
+                  []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> Character * { return g->critter_at<Character>( p, allow_hallucination.value_or( false ) ); } );
     luna::set_fx( lib, "get_npc_at",
-                  []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> npc * { return g->critter_at<npc>( p, allow_hallucination.value_or( false ) ); } );
+                  []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> npc * { return g->critter_at<npc>( p, allow_hallucination.value_or( false ) ); } );
 
     luna::set_fx( lib, "choose_adjacent",
-    []( const std::string & message, sol::optional<bool> allow_vertical ) -> sol::optional<tripoint> {
-        std::optional<tripoint> stdOpt = choose_adjacent( message, allow_vertical.value_or( false ) );
+    []( const std::string & message, sol::optional<bool> allow_vertical ) -> sol::optional<tripoint_bub_ms> {
+        std::optional<tripoint_bub_ms> stdOpt = choose_adjacent( message, allow_vertical.value_or( false ) );
 
         if( stdOpt.has_value() )
         {
-            return sol::optional<tripoint>( *stdOpt );
+            return sol::optional<tripoint_bub_ms>( *stdOpt );
         }
-        return sol::optional<tripoint>();
+        return sol::optional<tripoint_bub_ms>();
     } );
     luna::set_fx( lib, "choose_direction", []( const std::string & message,
-    sol::optional<bool> allow_vertical ) -> sol::optional<tripoint> {
-        std::optional<tripoint> stdOpt = choose_direction( message, allow_vertical.value_or( false ) );
+    sol::optional<bool> allow_vertical ) -> sol::optional<tripoint_rel_ms> {
+        std::optional<tripoint_rel_ms> stdOpt = choose_direction( message, allow_vertical.value_or( false ) );
 
         if( stdOpt.has_value() )
         {
-            return sol::optional<tripoint>( *stdOpt );
+            return sol::optional<tripoint_rel_ms>( *stdOpt );
         }
-        return sol::optional<tripoint>();
+        return sol::optional<tripoint_rel_ms>();
     } );
     luna::set_fx( lib, "look_around", []() {
         auto result = g->look_around();
         if( result.has_value() ) {
-            return sol::optional<tripoint>( *result );
+            return sol::optional<tripoint_bub_ms>( *result );
         }
-        return sol::optional<tripoint>();
+        return sol::optional<tripoint_bub_ms>();
     } );
 
     luna::set_fx( lib, "play_variant_sound",

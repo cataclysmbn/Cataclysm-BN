@@ -43,7 +43,7 @@ struct replace_vehicle_options {
 };
 
 struct replace_vehicle_target {
-    tripoint pos;
+    tripoint_bub_ms pos;
     vehicle *veh = nullptr;
     units::angle default_orientation = 0_degrees;
 };
@@ -111,7 +111,7 @@ std::optional<replace_vehicle_target>
 }
 
 auto get_replace_vehicle_target( map &m,
-                                 const tripoint &pos ) -> std::optional<replace_vehicle_target>
+                                 const tripoint_bub_ms &pos ) -> std::optional<replace_vehicle_target>
 {
     const auto vehicles = m.get_vehicles();
     const auto vehicle_it = std::ranges::find_if( vehicles, [&pos]( const wrapped_vehicle & wrapped ) {
@@ -290,7 +290,7 @@ void cata::detail::reg_map( sol::state &lua )
         auto ut = luna::new_usertype<wrapped_vehicle>( lua, luna::no_bases, luna::no_constructor );
 
         DOC( "Returns the vehicle origin tile in local map-square coordinates." );
-        luna::set_fx( ut, "pos", []( const wrapped_vehicle & wrapped ) -> tripoint { return wrapped.pos; } );
+        luna::set_fx( ut, "pos", []( const wrapped_vehicle & wrapped ) -> tripoint_bub_ms { return wrapped.pos; } );
         DOC( "Returns the vehicle prototype id string." );
         luna::set_fx( ut, "type", []( const wrapped_vehicle & wrapped ) -> std::string {
             if( wrapped.v == nullptr ) { return ""; }
@@ -302,11 +302,18 @@ void cata::detail::reg_map( sol::state &lua )
     {
         sol::usertype<map> ut = luna::new_usertype<map>( lua, luna::no_bases, luna::no_constructor );
 
+        DOC( "[Depreciated] Convert local ms -> absolute ms" );
+        luna::set_fx( ut, "get_abs_ms", sol::resolve<tripoint_abs_ms( const tripoint_bub_ms & ) const>( &map::bub_to_abs ) );
         DOC( "Convert local ms -> absolute ms" );
-        luna::set_fx( ut, "get_abs_ms", sol::resolve<tripoint( const tripoint & ) const>( &map::getabs ) );
+        luna::set_fx( ut, "bub_to_abs", sol::resolve<tripoint_abs_ms( const tripoint_bub_ms & ) const>( &map::bub_to_abs ) );
+        DOC( "Convert absolute sm -> local sm" );
+        luna::set_fx( ut, "bub_to_abs", sol::resolve<tripoint_abs_sm( const tripoint_bub_sm & ) const>( &map::bub_to_abs ) );
+        DOC( "[Depreciated] Convert absolute ms -> local ms" );
+        luna::set_fx( ut, "get_local_ms", sol::resolve<tripoint_bub_ms( const tripoint_abs_ms & ) const>( &map::abs_to_bub ) );
         DOC( "Convert absolute ms -> local ms" );
-        luna::set_fx( ut, "get_local_ms",
-                      sol::resolve<tripoint( const tripoint & ) const>( &map::getlocal ) );
+        luna::set_fx( ut, "abs_to_bub", sol::resolve<tripoint_bub_ms( const tripoint_abs_ms & ) const>( &map::abs_to_bub ) );
+        DOC( "Convert absolute sm -> local sm" );
+        luna::set_fx( ut, "abs_to_bub", sol::resolve<tripoint_bub_sm( const tripoint_abs_sm & ) const>( &map::abs_to_bub ) );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
         DOC( "In map squares" );
@@ -314,25 +321,25 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "ambient_light_at", &map::ambient_light_at );
 
         DOC( "Forcibly places an npc using a template at a position on the map. Returns the npc." );
-        luna::set_fx( ut, "place_npc", []( map & m, point p, std::string id_str ) -> npc * {
+        luna::set_fx( ut, "place_npc", []( map & m, point_bub_ms p, std::string id_str ) -> npc * {
             character_id char_id = m.place_npc( p, string_id<npc_template>( id_str ), true );
             return g->find_npc( char_id );
         } );
 
         DOC( "Creates a new item(s) at a position on the map." );
-        luna::set_fx( ut, "create_item_at", []( map & m, const tripoint & p, const itype_id & itype,
+        luna::set_fx( ut, "create_item_at", []( map & m, const tripoint_bub_ms & p, const itype_id & itype,
         int count ) -> item* {
             detached_ptr<item> new_item = item::spawn( itype, calendar::turn, count );
             return m.add_item_or_charges( p, std::move( new_item ) ).get();
         } );
 
         DOC( "Spawns a random artifact at a position on the map." );
-        luna::set_fx( ut, "spawn_artifact_at", []( map & m, const tripoint & p ) -> void {
+        luna::set_fx( ut, "spawn_artifact_at", []( map & m, const tripoint_bub_ms & p ) -> void {
             m.spawn_artifact( p );
         } );
 
         DOC( "Spawns a natural artifact at a position on the map. Omit `property` to choose one at random." );
-        luna::set_fx( ut, "spawn_natural_artifact_at", []( map & m, const tripoint & p,
+        luna::set_fx( ut, "spawn_natural_artifact_at", []( map & m, const tripoint_bub_ms & p,
         sol::optional<std::string> property ) -> void {
             const auto prop = property && !property->empty()
             ? io::string_to_enum<artifact_natural_property>( *property )
@@ -341,7 +348,7 @@ void cata::detail::reg_map( sol::state &lua )
         } );
 
         DOC( "Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag." );
-        luna::set_fx( ut, "create_corpse_at", []( map & m, const tripoint & p,
+        luna::set_fx( ut, "create_corpse_at", []( map & m, const tripoint_bub_ms & p,
                       sol::optional<mtype_id> mtype,
                       sol::optional<time_point> turn, sol::optional<std::string> name,
         sol::optional<int> upgrade_time ) -> void {
@@ -355,25 +362,25 @@ void cata::detail::reg_map( sol::state &lua )
         } );
 
         luna::set_fx( ut, "has_items_at", &map::has_items );
-        luna::set_fx( ut, "remove_item_at", []( map & m, const tripoint & p, item * it ) -> void { m.i_rem( p, it ); } );
+        luna::set_fx( ut, "remove_item_at", []( map & m, const tripoint_bub_ms & p, item * it ) -> void { m.i_rem( p, it ); } );
 
         DOC( "Removes an item from the map and returns it as a detached_ptr. The item is now owned by Lua - store it in a table to keep it alive, or let it be GC'd to destroy it. Use add_item to place it back on a map." );
-        luna::set_fx( ut, "detach_item_at", []( map & m, const tripoint & p,
+        luna::set_fx( ut, "detach_item_at", []( map & m, const tripoint_bub_ms & p,
         item * it ) -> detached_ptr<item> {
             return m.i_rem( p, it );
         } );
 
         DOC( "Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed." );
-        luna::set_fx( ut, "add_item", []( map & m, const tripoint & p,
+        luna::set_fx( ut, "add_item", []( map & m, const tripoint_bub_ms & p,
         detached_ptr<item> &it ) -> detached_ptr<item> {
             return m.add_item_or_charges( p, std::move( it ) );
         } );
-        luna::set_fx( ut, "clear_items_at", []( map & m, const tripoint & p ) -> void { m.i_clear( p ); } );
+        luna::set_fx( ut, "clear_items_at", []( map & m, const tripoint_bub_ms & p ) -> void { m.i_clear( p ); } );
 
-        luna::set_fx( ut, "get_items_at", []( map & m, const tripoint & p ) {
+        luna::set_fx( ut, "get_items_at", []( map & m, const tripoint_bub_ms & p ) {
             return m.i_at( p );
         } );
-        luna::set_fx( ut, "get_items_in_radius", []( map & m, const tripoint & p,
+        luna::set_fx( ut, "get_items_in_radius", []( map & m, const tripoint_bub_ms & p,
         int radius ) -> std::vector<map_stack> {
             std::vector<map_stack> items;
             for( const auto pt : m.points_in_radius( p, radius ) )
@@ -384,9 +391,9 @@ void cata::detail::reg_map( sol::state &lua )
         } );
 
         DOC( "Returns all points within a radius from the center point. `radiusz` defaults to 0." );
-        luna::set_fx( ut, "points_in_radius", []( const map & m, const tripoint & center,
-        int radius, sol::optional<int> radiusz ) -> std::vector<tripoint> {
-            std::vector<tripoint> points;
+        luna::set_fx( ut, "points_in_radius", []( const map & m, const tripoint_bub_ms & center,
+        int radius, sol::optional<int> radiusz ) -> std::vector<tripoint_bub_ms> {
+            std::vector<tripoint_bub_ms> points;
             for( const auto pt : m.points_in_radius( center, radius, radiusz.value_or( 0 ) ) )
             {
                 points.push_back( pt );
@@ -409,7 +416,7 @@ void cata::detail::reg_map( sol::state &lua )
 
             return replace_vehicle_impl( m, *target, *request );
         },
-        []( map & m, const tripoint & pos, const std::string & vehicle_id,
+        []( map & m, const tripoint_bub_ms & pos, const std::string & vehicle_id,
             sol::optional<sol::table> opts ) -> bool {
             const auto target = get_replace_vehicle_target( m, pos );
             if( !target.has_value() ) { return false; }
@@ -421,8 +428,8 @@ void cata::detail::reg_map( sol::state &lua )
         } ) );
 
         DOC( "Moves an item from one position to another, preserving all item state including contents." );
-        luna::set_fx( ut, "move_item_to", []( map & m, const tripoint & from, item * it,
-        const tripoint & to ) -> void {
+        luna::set_fx( ut, "move_item_to", []( map & m, const tripoint_bub_ms & from, item * it,
+        const tripoint_bub_ms & to ) -> void {
             detached_ptr<item> detached = m.i_rem( from, it );
             if( detached )
             {
@@ -430,40 +437,40 @@ void cata::detail::reg_map( sol::state &lua )
             }
         } );
 
-        luna::set_fx( ut, "get_ter_at", sol::resolve<ter_id( const tripoint & )const>( &map::ter ) );
+        luna::set_fx( ut, "get_ter_at", sol::resolve<ter_id( const tripoint_bub_ms & )const>( &map::ter ) );
         luna::set_fx( ut, "set_ter_at",
-                      sol::resolve<bool( const tripoint &, const ter_id & )>( &map::ter_set ) );
+                      sol::resolve<bool( const tripoint_bub_ms &, const ter_id & )>( &map::ter_set ) );
         DOC( "Coordinate-based variants that avoid allocating a Tripoint object." );
         luna::set_fx( ut, "get_ter_at_xyz", []( const map & m, int x, int y, int z ) -> ter_id {
-            return m.ter( tripoint( x, y, z ) );
+            return m.ter( tripoint_bub_ms( x, y, z ) );
         } );
         luna::set_fx( ut, "set_ter_at_xyz", []( map & m, int x, int y, int z,
         const ter_id & id ) -> bool {
-            return m.ter_set( tripoint( x, y, z ), id );
+            return m.ter_set( tripoint_bub_ms( x, y, z ), id );
         } );
 
-        luna::set_fx( ut, "get_furn_at", sol::resolve<furn_id( const tripoint & )const>( &map::furn ) );
-        luna::set_fx( ut, "set_furn_at", []( map & m, const tripoint & p, const furn_id & id ) { m.furn_set( p, id ); } );
+        luna::set_fx( ut, "get_furn_at", sol::resolve<furn_id( const tripoint_bub_ms & )const>( &map::furn ) );
+        luna::set_fx( ut, "set_furn_at", []( map & m, const tripoint_bub_ms & p, const furn_id & id ) { m.furn_set( p, id ); } );
 
         luna::set_fx( ut, "has_field_at",
-                      []( const map & m, const tripoint & p, const field_type_id & fid ) -> bool { return !!m.field_at( p ).find_field( fid ); } );
+                      []( const map & m, const tripoint_bub_ms & p, const field_type_id & fid ) -> bool { return !!m.field_at( p ).find_field( fid ); } );
         luna::set_fx( ut, "get_field_int_at", &map::get_field_intensity );
         luna::set_fx( ut, "get_field_age_at", &map::get_field_age );
         luna::set_fx( ut, "mod_field_int_at", &map::mod_field_intensity );
         luna::set_fx( ut, "mod_field_age_at", &map::mod_field_age );
         luna::set_fx( ut, "set_field_int_at", &map::set_field_intensity );
         luna::set_fx( ut, "set_field_age_at", &map::set_field_age );
-        luna::set_fx( ut, "add_field_at", []( map & m, const tripoint & p, const field_type_id & fid,
+        luna::set_fx( ut, "add_field_at", []( map & m, const tripoint_bub_ms & p, const field_type_id & fid,
         int intensity, const time_duration & age ) -> bool {
             return m.add_field( p, fid, intensity, age );
         } );
         luna::set_fx( ut, "remove_field_at", &map::remove_field );
-        luna::set_fx( ut, "get_field_name_at", []( map & m, const tripoint & p,
+        luna::set_fx( ut, "get_field_name_at", []( map & m, const tripoint_bub_ms & p,
         const field_type_id & fid ) -> std::string {
             field_entry *fe = m.get_field( p, fid );
             return fe ? fe->name() : std::string();
         } );
-        luna::set_fx( ut, "get_trap_at", []( map & m, const tripoint & p ) -> trap_id { return m.tr_at( p ).loadid; } );
+        luna::set_fx( ut, "get_trap_at", []( map & m, const tripoint_bub_ms & p ) -> trap_id { return m.tr_at( p ).loadid; } );
         DOC( "Set a trap at a position on the map. It can also replace existing trap, even with `trap_null`." );
         luna::set_fx( ut, "set_trap_at", &map::trap_set );
         DOC( "Disarms a trap using your skills and stats, with consequences depending on success or failure." );
@@ -471,20 +478,20 @@ void cata::detail::reg_map( sol::state &lua )
         DOC( "Simpler version of `set_trap_at` with `trap_null`." );
         luna::set_fx( ut, "remove_trap_at", &map::remove_trap );
 
-        luna::set_fx( ut, "is_outside", sol::resolve<bool( const tripoint & ) const>( &map::is_outside ) );
+        luna::set_fx( ut, "is_outside", sol::resolve<bool( const tripoint_bub_ms & ) const>( &map::is_outside ) );
         // Actually sheltered or in sunlight doesn't need map, but it's convenient to have it here
-        luna::set_fx( ut, "is_sheltered", []( map &, tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
+        luna::set_fx( ut, "is_sheltered", []( map &, tripoint_bub_ms & pos ) -> bool { return g->is_sheltered( pos ); } );
 
-        luna::set_fx( ut, "is_in_sunlight", []( map &, tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
+        luna::set_fx( ut, "is_in_sunlight", []( map &, tripoint_bub_ms & pos ) -> bool { return g->is_in_sunlight( pos ); } );
 
         // Mapgen stuffs
 
         luna::set_fx( ut, "is_ot_match", []( std::string ref, oter_id & id, ot_match_type match ) -> bool { return is_ot_match( ref, id, match ); } );
         luna::set_fx( ut, "draw_fill_background", []( map & m, std::string ref ) { m.draw_fill_background( ter_id( ref ) ); } );
-        luna::set_fx( ut, "place_spawns", []( map & m, std::string id, int chance, point topleft,
-        point bottomright, float density, bool single ) { m.place_spawns( mongroup_id( id ), chance, topleft, bottomright, density, single ); } );
-        luna::set_fx( ut, "place_items", []( map & m, std::string id, int chance, point topleft,
-        point bottomright, bool onflat ) { m.place_items( item_group_id( id ), chance, topleft, bottomright, onflat, calendar::start_of_cataclysm ); } );
+        luna::set_fx( ut, "place_spawns", []( map & m, std::string id, int chance, point_bub_ms topleft,
+        point_bub_ms bottomright, float density, bool single ) { m.place_spawns( mongroup_id( id ), chance, topleft, bottomright, density, single ); } );
+        luna::set_fx( ut, "place_items", []( map & m, std::string id, int chance, point_bub_ms topleft,
+        point_bub_ms bottomright, bool onflat ) { m.place_items( item_group_id( id ), chance, topleft, bottomright, onflat, calendar::start_of_cataclysm ); } );
         luna::set_fx( ut, "rotate", []( map & m, int turns ) { m.rotate( turns ); } );
     }
 

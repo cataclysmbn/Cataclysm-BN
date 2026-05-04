@@ -1807,13 +1807,13 @@ bool construct::check_empty( const tripoint_bub_ms &p )
              here.i_at( p ).empty() && !here.veh_at( p ) );
 }
 
-inline std::array<tripoint, 4> get_orthogonal_neighbors( const tripoint_bub_ms &p )
+inline std::array<tripoint_bub_ms, 4> get_orthogonal_neighbors( const tripoint_bub_ms &p )
 {
     return {{
-            p + point_north,
-            p + point_south,
-            p + point_west,
-            p + point_east
+            p + point_rel_ms::north(),
+            p + point_rel_ms::south(),
+            p + point_rel_ms::west(),
+            p + point_rel_ms::east()
         }};
 }
 
@@ -2044,7 +2044,7 @@ void construct::done_deconstruct( const tripoint_bub_ms &p )
             return;
         }
         if( t.deconstruct.deconstruct_above ) {
-            const tripoint_bub_ms top = p + tripoint;
+            const tripoint_bub_ms top = p + tripoint_rel_ms::above();
             if( here.has_furn( top ) ) {
                 add_msg( _( "That %s can not be disassembled, since there is furniture above it." ), t.name() );
                 return;
@@ -2095,7 +2095,7 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
     const auto abs_pos = here.bub_to_abs( p );
     const auto pos_sm = project_to<coords::sm>( abs_pos );
     tinymap tmpmap;
-    tmpmap.load( tripoint( pos_sm.xy(), pos_sm.z() - 1 ), false );
+    tmpmap.load( pos_sm + tripoint_rel_sm::below(), false );
     const auto local_tmp = tmpmap.abs_to_bub( abs_pos );
 
     bool dig_muts = g->u.has_trait( trait_PAINRESIST_TROGLO ) || g->u.has_trait( trait_STOCKY_TROGLO );
@@ -2149,7 +2149,7 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p )
     const auto abs_pos = here.bub_to_abs( p );
     const auto pos_sm = project_to<coords::sm>( abs_pos );
     tinymap tmpmap;
-    tmpmap.load( tripoint( pos_sm.xy(), pos_sm.z() + 1 ), false );
+    tmpmap.load( pos_sm + tripoint_rel_sm::above(), false );
     const auto local_tmp = tmpmap.abs_to_bub( abs_pos );
 
     if( tmpmap.ter( local_tmp ) == t_lava ) {
@@ -2187,7 +2187,7 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p )
 
 void construct::done_wood_stairs( const tripoint_bub_ms &p )
 {
-    const tripoint_bub_ms top = p + tripoint;
+    const tripoint_bub_ms top = p + tripoint_rel_ms::above();
     // TODO: Add roof above
     get_map().ter_set( top, ter_id( "t_wood_stairs_down" ) );
 }
@@ -2233,13 +2233,13 @@ void construct::done_mark_practice_target( const tripoint_bub_ms &p )
 
 void construct::done_ramp_low( const tripoint_bub_ms &p )
 {
-    const tripoint_bub_ms top = p + tripoint;
+    const tripoint_bub_ms top = p + tripoint_rel_ms::above();
     get_map().ter_set( top, ter_id( "t_ramp_down_low" ) );
 }
 
 void construct::done_ramp_high( const tripoint_bub_ms &p )
 {
-    const tripoint_bub_ms top = p + tripoint;
+    const tripoint_bub_ms top = p + tripoint_rel_ms::above();
     get_map().ter_set( top, ter_id( "t_ramp_down_high" ) );
 }
 

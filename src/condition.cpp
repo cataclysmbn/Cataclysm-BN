@@ -459,7 +459,7 @@ void conditional_t<T>::set_npc_role_nearby( const JsonObject &jo )
     condition = [role]( const T & d ) {
         const std::vector<npc *> available = g->get_npcs_if( [&]( const npc & guy ) {
             return d.alpha->bub_pos().z() == guy.bub_pos().z() && guy.companion_mission_role_id == role &&
-                   ( rl_dist( d.alpha->pos(), guy.bub_pos() ) <= 48 );
+                   ( rl_dist( d.alpha->bub_pos(), guy.bub_pos() ) <= 48 );
         } );
         return !available.empty();
     };
@@ -814,7 +814,7 @@ void conditional_t<T>::set_is_outside()
 {
     condition = []( const T & d ) {
         map &here = get_map();
-        return here.is_outside( d.beta->pos() );
+        return here.is_outside( d.beta->bub_pos() );
     };
 }
 

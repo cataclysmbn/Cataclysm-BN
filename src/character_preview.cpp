@@ -36,7 +36,7 @@ class char_preview_adapter : public cata_tiles
             return static_cast<char_preview_adapter *>( ct );
         }
 
-        void display_avatar_preview_with_overlays( const avatar &ch, const point &p, bool with_clothing ) {
+        void display_avatar_preview_with_overlays( const avatar &ch, const point_bub_ms &p, bool with_clothing ) {
             std::string ent_name = ch.male ? "player_male" : "player_female";
 
             int height_3d = 0;
@@ -44,12 +44,12 @@ class char_preview_adapter : public cata_tiles
             if( ch.facing == FD_RIGHT ) {
                 const tile_search_params tile { ent_name, C_NONE, "", corner, 0 };
                 draw_from_id_string(
-                    tile, tripoint( p, 0 ), std::nullopt, std::nullopt,
+                    tile, tripoint_bub_ms( p, 0 ), std::nullopt, std::nullopt,
                     lit_level::BRIGHT, false, 0, true, height_3d );
             } else if( ch.facing == FD_LEFT ) {
                 const tile_search_params tile { ent_name, C_NONE, "", corner, 4 };
                 draw_from_id_string(
-                    tile, tripoint( p, 0 ), std::nullopt, std::nullopt,
+                    tile, tripoint_bub_ms( p, 0 ), std::nullopt, std::nullopt,
                     lit_level::BRIGHT, false, 0, true, height_3d );
             }
 
@@ -154,12 +154,12 @@ class char_preview_adapter : public cata_tiles
                     if( ch.facing == FD_RIGHT ) {
                         const tile_search_params tile { draw_id, C_NONE, "", corner, /*rota*/ 0 };
                         draw_from_id_string(
-                            tile, tripoint( p, 0 ), overlay_bg_color, overlay_fg_color,
+                            tile, tripoint_bub_ms( p, 0 ), overlay_bg_color, overlay_fg_color,
                             lit_level::BRIGHT, false, 0, true, overlay_height_3d );
                     } else if( ch.facing == FD_LEFT ) {
                         const tile_search_params tile { draw_id, C_NONE, "", corner, /*rota*/ 4 };
                         draw_from_id_string(
-                            tile, tripoint( p, 0 ), overlay_bg_color, overlay_fg_color,
+                            tile, tripoint_bub_ms( p, 0 ), overlay_bg_color, overlay_fg_color,
                             lit_level::BRIGHT, false, 0, true, overlay_height_3d );
                     }
                     height_3d = std::max( height_3d, overlay_height_3d );
@@ -303,11 +303,11 @@ void character_preview_window::prepare( const int nlines, const int ncols,
     pos = start;
 }
 
-auto character_preview_window::calc_character_pos() const -> point
+auto character_preview_window::calc_character_pos() const -> point_bub_ms
 {
     const int t_width = tilecontext->get_tile_width();
     const int t_height = tilecontext->get_tile_height();
-    return point(
+    return point_bub_ms(
                pos.x * termx_pixels + ncols_width * termx_pixels / 2 - t_width / 2,
                pos.y * termy_pixels + nlines_width * termy_pixels / 2 - t_height / 2
            );
@@ -349,7 +349,7 @@ void character_preview_window::display() const
     wnoutrefresh( w_preview );
 
     // Drawing character itself
-    const point pos = calc_character_pos();
+    const auto pos = calc_character_pos();
     // tilecontext->display_character( *character, pos );
     char_preview_adapter::convert( &*tilecontext )->display_avatar_preview_with_overlays( *
             ( character->as_avatar() ), pos, show_clothes );

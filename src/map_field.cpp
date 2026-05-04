@@ -152,7 +152,7 @@ static inline bool check_flammable( const map_data_common_t &t )
 /*
 Helper function that encapsulates the logic involved in creating hot air.
 */
-void map::create_hot_air( const tripoint &p, int intensity )
+void map::create_hot_air( const tripoint_bub_ms &p, int intensity )
 {
     field_type_id hot_air;
     switch( intensity ) {
@@ -864,7 +864,7 @@ void map::monster_in_field( monster &z )
 }
 
 std::tuple<maptile, maptile, maptile> map::get_wind_blockers( const int &winddirection,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     static const std::array<std::pair<int, std::tuple< point, point, point >>, 9> outputs = {{
             { 330, std::make_tuple( point_east, point_north_east, point_south_east ) },
@@ -897,7 +897,7 @@ std::tuple<maptile, maptile, maptile> map::get_wind_blockers( const int &winddir
     return std::make_tuple( remove_tile, remove_tile2, remove_tile3 );
 }
 
-void map::emit_field( const tripoint &pos, const emit_id &src, float mul )
+void map::emit_field( const tripoint_bub_ms &pos, const emit_id &src, float mul )
 {
     if( !src.is_valid() ) {
         return;
@@ -910,12 +910,12 @@ void map::emit_field( const tripoint &pos, const emit_id &src, float mul )
     }
 }
 
-void map::propagate_field( const tripoint &center, const field_type_id &type, int amount,
+void map::propagate_field( const tripoint_bub_ms &center, const field_type_id &type, int amount,
                            int max_intensity )
 {
-    using gas_blast = std::pair<float, tripoint>;
+    using gas_blast = std::pair<float, tripoint_bub_ms>;
     std::priority_queue<gas_blast, std::vector<gas_blast>, pair_greater_cmp_first> open;
-    std::set<tripoint> closed;
+    std::set<tripoint_bub_ms> closed;
     open.emplace( 0.0f, center );
 
     const bool not_gas = type.obj().phase != GAS;

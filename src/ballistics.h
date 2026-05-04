@@ -1,12 +1,13 @@
 #pragma once
 
+#include "coordinates.h"
+
 class Creature;
 class item;
 class dispersion_sources;
 class vehicle;
 struct dealt_projectile_attack;
 struct projectile;
-struct tripoint;
 
 class scoped_projectile_animation_suppression
 {

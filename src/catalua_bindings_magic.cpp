@@ -132,7 +132,7 @@ void cata::detail::reg_spell_fake( sol::state &lua )
         luna::set_fx( ut, "cast",
                       []( UT_CLASS & sp,
                           Creature & source,
-                          const tripoint & target,
+                          const tripoint_bub_ms & target,
                           sol::optional<int> min_lvl_override )
         {
             int mlo = min_lvl_override.has_value() ? *min_lvl_override : 0;
@@ -143,7 +143,7 @@ void cata::detail::reg_spell_fake( sol::state &lua )
         DOC( "Static function: Creates and immediately casts a SimpleSpell, then returns the new spell for potential reuse. If the given tripoint is the player's location, the spell will be locked to the player. (This does not necessarily cause friendly fire!) If an integer is specified, the spell will be cast at that level." );
         luna::set_fx( ut, "prompt_cast",
                       []( spell_id spid,
-                          tripoint & target,
+                          tripoint_bub_ms & target,
                           sol::optional<int> level ) -> fake_spell
         {
             // This will be our return value, as well as the spell we cast.
@@ -211,9 +211,9 @@ void cata::detail::reg_spell( sol::state &lua )
         // Present priority is basic functionality.
 
         DOC( "Cast this spell, as well as any sub-spells." );
-        SET_FX_N_T( cast_all_effects, "cast", void( Creature & source, const tripoint & target ) const );
+        SET_FX_N_T( cast_all_effects, "cast", void( Creature & source, const tripoint_bub_ms & target ) const );
         DOC( "Cast *only* this spell's main effects. Generally, cast() should be used instead." );
-        SET_FX_N_T( cast_spell_effect, "cast_single_effect", void( Creature & source, const tripoint & target ) const );
+        SET_FX_N_T( cast_spell_effect, "cast_single_effect", void( Creature & source, const tripoint_bub_ms & target ) const );
     }
 #undef UT_CLASS // #define UT_CLASS spell
 }

@@ -105,7 +105,7 @@ void craft_command::execute( const tripoint_bub_ms &new_loc )
 
     bool need_selections = true;
     inventory map_inv;
-    map_inv.form_from_map( crafter->pos(), PICKUP_RANGE, crafter );
+    map_inv.form_from_map( crafter->bub_pos(), PICKUP_RANGE, crafter );
 
     if( has_cached_selections() ) {
         std::vector<comp_selection<item_comp>> missing_items = check_item_components_missing( map_inv );
@@ -237,7 +237,7 @@ detached_ptr<item> craft_command::create_in_progress_craft()
     }
 
     inventory map_inv;
-    map_inv.form_from_map( crafter->pos(), PICKUP_RANGE, crafter );
+    map_inv.form_from_map( crafter->bub_pos(), PICKUP_RANGE, crafter );
 
     if( !check_item_components_missing( map_inv ).empty() ) {
         debugmsg( "Aborting crafting: couldn't find cached components" );

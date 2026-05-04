@@ -875,7 +875,7 @@ void npc::handle_sound( const sounds::sound_t spriority, const std::string &desc
 {
     map &here = get_map();
     const auto s_abs_pos = here.bub_to_abs( spos );
-    const auto my_abs_pos = here.bub_to_abs( bub_pos() );
+    const auto my_abs_pos = abs_pos();
 
     add_msg( m_debug, "%s heard '%s', priority %d at volume %d from %d:%d, my pos %d:%d",
              disp_name(), description, static_cast<int>( spriority ), heard_volume,

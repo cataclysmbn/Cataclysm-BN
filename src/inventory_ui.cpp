@@ -1114,7 +1114,7 @@ static std::vector<std::list<item *>> restack_items( const std::vector<item *>::
 }
 
 const item_category *inventory_selector::naturalize_category( const item_category &category,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     const auto find_cat_by_id = [ this ]( const item_category_id & id ) {
         const auto iter = std::find_if( categories.begin(),
@@ -1127,7 +1127,7 @@ const item_category *inventory_selector::naturalize_category( const item_categor
     const int dist = rl_dist( u.bub_pos(), pos );
 
     if( dist != 0 ) {
-        const std::string suffix = direction_suffix( u.bub_pos(), pos );
+        const std::string suffix = direction_suffix( u.bub_pos().raw(), pos.raw() );
         const item_category_id id = item_category_id( string_format( "%s_%s", category.get_id().c_str(),
                                     suffix.c_str() ) );
 
@@ -1260,7 +1260,7 @@ void inventory_selector::add_vehicle_items( const tripoint_bub_ms &target )
 void inventory_selector::add_nearby_items( int radius )
 {
     if( radius >= 0 ) {
-        for( const tripoint &pos : closest_points_first( u.bub_pos(), radius ) ) {
+        for( const tripoint_bub_ms &pos : closest_points_first( u.bub_pos(), radius ) ) {
             // can not reach this -> can not access its contents
             if( u.bub_pos() != pos &&
                 !g->m.clear_path( u.bub_pos(), pos, rl_dist( u.bub_pos(), pos ), 1, 100 ) ) {

@@ -1579,18 +1579,19 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, player *p )
                     throw std::runtime_error( "could not find target vehicle for liquid transfer" );
                 }
                 break;
-            case LTT_MAP:
-                const auto bub_loc = here.abs_to_bub( act_ref.coords.at( 1 ) );
-                if( iexamine::has_keg( bub_loc ) ) {
-                    finished = transfer( [&bub_loc]( detached_ptr<item> &&it ) {
-                        return iexamine::pour_into_keg( bub_loc, std::move( it ) );
-                    } );
-                } else {
-                    finished = transfer( [&p, &bub_loc, &here]( detached_ptr<item> &&it ) {
-                        p->add_msg_if_player( _( "You pour %1$s onto the ground." ), it->tname() );
-                        here.add_item_or_charges( bub_loc, std::move( it ) );
-                        return detached_ptr<item>();
-                    } );
+            case LTT_MAP:{
+                    const auto bub_loc = here.abs_to_bub( act_ref.coords.at( 1 ) );
+                    if( iexamine::has_keg( bub_loc ) ) {
+                        finished = transfer( [&bub_loc]( detached_ptr<item> &&it ) {
+                            return iexamine::pour_into_keg( bub_loc, std::move( it ) );
+                        } );
+                    } else {
+                        finished = transfer( [&p, &bub_loc, &here]( detached_ptr<item> &&it ) {
+                            p->add_msg_if_player( _( "You pour %1$s onto the ground." ), it->tname() );
+                            here.add_item_or_charges( bub_loc, std::move( it ) );
+                            return detached_ptr<item>();
+                        } );
+                    }
                 }
                 break;
             case LTT_MONSTER:
@@ -4297,9 +4298,7 @@ static void cleanup_tiles( std::unordered_set<tripoint_abs_ms> &tiles, fn &clean
     while( it != tiles.end() ) {
         auto current = it++;
 
-        const tripoint_abs_ms &tile_loc = here.abs_to_bub( *current );
-
-        if( cleanup( tile_loc ) ) {
+        if( cleanup( here.abs_to_bub( *current ) ) ) {
             tiles.erase( current );
         }
     }

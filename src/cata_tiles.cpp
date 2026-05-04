@@ -3349,7 +3349,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                     //draw_from_id_string( tile, pos, std::nullopt, std::nullopt, lit_level::MEMORIZED, false, center.z - z, false );
                                 } else {
                                     min_z = std::min( last_vis, min_z );
-                                    draw_points.emplace_back( tripoint( pos.xy().raw(), last_vis ), height_3d,
+                                    draw_points.emplace_back( tripoint_bub_ms( pos.xy(), last_vis ), height_3d,
                                                               last_vis_ll, invisible );
                                 }
                             } else if( had_visible_open_air && in_map_bounds ) {

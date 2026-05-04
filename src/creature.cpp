@@ -2552,7 +2552,7 @@ effects_map Creature::get_all_effects() const
 
 tripoint_abs_ms Creature::abs_pos() const
 {
-    return bub_to_abs( bub_pos() );
+    return abs_pos();
 }
 
 bool Creature::is_loaded() const

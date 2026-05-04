@@ -359,11 +359,11 @@ void computer_session::action_sample()
     g->u.moves -= 30;
     map &here = get_map();
     item *sewage = item::spawn_temporary( itype_sewage, calendar::turn );
-    for( const tripoint &p : here.points_on_zlevel() ) {
+    for( const auto &p : here.points_on_zlevel() ) {
         if( here.ter( p ) != t_sewage_pump ) {
             continue;
         }
-        for( const tripoint &n : here.points_in_radius( p, 1 ) ) {
+        for( const auto &n : here.points_in_radius( p, 1 ) ) {
             if( here.furn( n ) != f_counter ) {
                 continue;
             }
@@ -419,7 +419,7 @@ void computer_session::action_terminate()
 {
     g->events().send<event_type::terminates_subspace_specimens>();
     map &here = get_map();
-    for( const tripoint &p : here.points_on_zlevel() ) {
+    for( const auto &p : here.points_on_zlevel() ) {
         monster *const mon = g->critter_at<monster>( p );
         if( !mon ) {
             continue;
@@ -438,9 +438,9 @@ void computer_session::action_portal()
 {
     g->events().send<event_type::opens_portal>();
     map &here = get_map();
-    for( const tripoint &tmp : here.points_on_zlevel() ) {
+    for( const auto &tmp : here.points_on_zlevel() ) {
         int numtowers = 0;
-        for( const tripoint &tmp2 : here.points_in_radius( tmp, 2 ) ) {
+        for( const auto &tmp2 : here.points_in_radius( tmp, 2 ) ) {
             if( here.ter( tmp2 ) == t_radio_tower ) {
                 numtowers++;
             }
@@ -462,8 +462,8 @@ void computer_session::action_cascade()
     }
     g->events().send<event_type::causes_resonance_cascade>();
     map &here = get_map();
-    std::vector<tripoint> cascade_points;
-    for( const tripoint &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
+    std::vector<tripoint_bub_ms> cascade_points;
+    for( const auto &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
         if( here.ter( dest ) == t_radio_tower ) {
             cascade_points.push_back( dest );
         }
@@ -584,7 +584,7 @@ void computer_session::action_list_bionics()
     std::vector<std::string> names;
     int more = 0;
     map &here = get_map();
-    for( const tripoint &p : here.points_on_zlevel() ) {
+    for( const auto &p : here.points_on_zlevel() ) {
         for( item * const &elem : here.i_at( p ) ) {
             if( elem->is_bionic() ) {
                 if( static_cast<int>( names.size() ) < TERMY - 8 ) {
@@ -616,7 +616,7 @@ void computer_session::action_list_bionics()
 void computer_session::action_elevator_on()
 {
     map &here = get_map();
-    for( const tripoint &p : here.points_on_zlevel() ) {
+    for( const auto &p : here.points_on_zlevel() ) {
         if( here.ter( p ) == t_elevator_control_off ) {
             here.ter_set( p, t_elevator_control );
         }
@@ -751,7 +751,7 @@ void computer_session::action_blood_anal()
 {
     g->u.moves -= 70;
     map &here = get_map();
-    for( const tripoint &dest : here.points_in_radius( g->u.bub_pos(), 2 ) ) {
+    for( const auto &dest : here.points_in_radius( g->u.bub_pos(), 2 ) ) {
         if( here.furn( dest ) == furn_str_id( "f_centrifuge" ) ) {
             map_stack items = here.i_at( dest );
             if( items.empty() ) {
@@ -793,7 +793,7 @@ void computer_session::action_data_anal()
 {
     g->u.moves -= 30;
     map &here = get_map();
-    for( const tripoint &dest : here.points_in_radius( g->u.bub_pos(), 2 ) ) {
+    for( const auto &dest : here.points_in_radius( g->u.bub_pos(), 2 ) ) {
         if( here.ter( dest ) == t_floor_blue ) {
             print_error( _( "PROCESSING DATA" ) );
             map_stack items = here.i_at( dest );
@@ -926,7 +926,7 @@ void computer_session::action_srcf_seal()
     print_line( _( "Evacuate Immediately" ) );
     add_msg( m_warning, _( "Evacuate Immediately!" ) );
     map &here = get_map();
-    for( const tripoint &p : here.points_on_zlevel() ) {
+    for( const auto &p : here.points_on_zlevel() ) {
         if( here.ter( p ) == t_elevator || here.furn( p ) == furn_str_id( "f_cloning_vat" ) ) {
             here.make_rubble( p, f_rubble_rock );
             explosion_handler::explosion( p, &g->u, 40, 0.7, true );
@@ -957,14 +957,14 @@ void computer_session::action_srcf_elevator()
     bool is_underground_elevator_on = false;
     bool is_underground_elevator_exist = false;
 
-    for( const tripoint &p : here.points_on_zlevel( 0 ) ) {
+    for( const auto &p : here.points_on_zlevel( 0 ) ) {
         if( here.ter( p ) == t_elevator_control_off || here.ter( p ) == t_elevator_control ) {
             surface_elevator = p;
             is_surface_elevator_on = here.ter( p ) == t_elevator_control;
             is_surface_elevator_exist = true;
         }
     }
-    for( const tripoint &p : here.points_on_zlevel( -2 ) ) {
+    for( const auto &p : here.points_on_zlevel( -2 ) ) {
         if( here.ter( p ) == t_elevator_control_off || here.ter( p ) == t_elevator_control ) {
             underground_elevator = p;
             is_underground_elevator_on = here.ter( p ) == t_elevator_control;
@@ -1020,7 +1020,7 @@ void computer_session::action_irradiator()
     bool error = false;
     bool platform_exists = false;
     map &here = get_map();
-    for( const tripoint &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
+    for( const auto &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
         if( here.ter( dest ) == t_rad_platform ) {
             platform_exists = true;
             if( here.i_at( dest ).empty() ) {
@@ -1052,7 +1052,7 @@ void computer_session::action_irradiator()
                         here.propagate_field( dest, fd_nuke_gas, 100, 3 );
                         here.translate_radius( t_water_pool, t_sewage, 8.0, dest, true );
                         here.adjust_radiation( dest, rng( 50, 500 ) );
-                        for( const tripoint &radorigin : here.points_in_radius( dest, 5 ) ) {
+                        for( const auto &radorigin : here.points_in_radius( dest, 5 ) ) {
                             here.adjust_radiation( radorigin, rng( 50, 500 ) / ( rl_dist( radorigin,
                                                    dest ) > 0 ? rl_dist( radorigin, dest ) : 1 ) );
                         }
@@ -1068,7 +1068,7 @@ void computer_session::action_irradiator()
                         break;
                     }
                     here.adjust_radiation( dest, rng( 20, 50 ) );
-                    for( const tripoint &radorigin : here.points_in_radius( dest, 5 ) ) {
+                    for( const auto &radorigin : here.points_in_radius( dest, 5 ) ) {
                         here.adjust_radiation( radorigin, rng( 20, 50 ) / ( rl_dist( radorigin,
                                                dest ) > 0 ? rl_dist( radorigin, dest ) : 1 ) );
                     }
@@ -1104,14 +1104,14 @@ void computer_session::action_geiger()
     int tiles_counted = 0;
     map &here = get_map();
     print_error( _( "RADIATION MEASUREMENTS:" ) );
-    for( const tripoint &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
+    for( const auto &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
         if( here.ter( dest ) == t_rad_platform ) {
             source_exists = true;
             platform = dest;
         }
     }
     if( source_exists ) {
-        for( const tripoint &dest : here.points_in_radius( platform, 3 ) ) {
+        for( const auto &dest : here.points_in_radius( platform, 3 ) ) {
             sum_rads += here.get_radiation( dest );
             tiles_counted ++;
             if( here.get_radiation( dest ) > peak_rad ) {
@@ -1145,7 +1145,7 @@ void computer_session::action_conveyor()
     bool u_exists = false;
     bool p_exists = false;
     map &here = get_map();
-    for( const tripoint &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
+    for( const auto &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
         if( here.ter( dest ) == t_rad_platform ) {
             platform = dest;
             p_exists = true;
@@ -1203,7 +1203,7 @@ void computer_session::action_extract_rad_source()
         tripoint_bub_ms platform;
         bool p_exists = false;
         map &here = get_map();
-        for( const tripoint &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
+        for( const auto &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
             if( here.ter( dest ) == t_rad_platform ) {
                 platform = dest;
                 p_exists = true;
@@ -1228,7 +1228,7 @@ void computer_session::action_deactivate_shock_vent()
     bool has_vent = false;
     bool has_generator = false;
     map &here = get_map();
-    for( const tripoint &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
+    for( const auto &dest : here.points_in_radius( g->u.bub_pos(), 10 ) ) {
         if( here.get_field( dest, fd_shock_vent ) != nullptr ) {
             has_vent = true;
         }
@@ -1290,7 +1290,7 @@ void computer_session::failure_shutdown()
 {
     bool found_tile = false;
     map &here = get_map();
-    for( const tripoint &p : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
+    for( const auto &p : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
         if( here.has_flag( flag_CONSOLE, p ) ) {
             here.ter_set( p, t_console_broken );
             add_msg( m_bad, _( "The console shuts down." ) );
@@ -1300,7 +1300,7 @@ void computer_session::failure_shutdown()
     if( found_tile ) {
         return;
     }
-    for( const tripoint &p : here.points_on_zlevel() ) {
+    for( const auto &p : here.points_on_zlevel() ) {
         if( here.has_flag( flag_CONSOLE, p ) ) {
             here.ter_set( p, t_console_broken );
             add_msg( m_bad, _( "The console shuts down." ) );
@@ -1323,8 +1323,8 @@ void computer_session::failure_alarm()
 void computer_session::failure_manhacks()
 {
     int num_robots = rng( 4, 8 );
-    const tripoint_range<tripoint> range =
-        get_map().points_in_radius( get_player_character().pos(), 3 );
+    const tripoint_range<tripoint_bub_ms> range =
+        get_map().points_in_radius( get_player_character().bub_pos(), 3 );
     for( int i = 0; i < num_robots; i++ ) {
         if( g->place_critter_within( mon_manhack, range ) ) {
             add_msg( m_warning, _( "Manhacks drop from compartments in the ceiling." ) );
@@ -1335,8 +1335,8 @@ void computer_session::failure_manhacks()
 void computer_session::failure_secubots()
 {
     int num_robots = 1;
-    const tripoint_range<tripoint> range =
-        get_map().points_in_radius( get_player_character().pos(), 3 );
+    const tripoint_range<tripoint_bub_ms> range =
+        get_map().points_in_radius( get_player_character().bub_pos(), 3 );
     for( int i = 0; i < num_robots; i++ ) {
         if( g->place_critter_within( mon_secubot, range ) ) {
             add_msg( m_warning, _( "Secubots emerge from compartments in the floor." ) );
@@ -1359,7 +1359,7 @@ void computer_session::failure_pump_explode()
 {
     add_msg( m_warning, _( "The pump explodes!" ) );
     map &here = get_map();
-    for( const tripoint &p : here.points_on_zlevel() ) {
+    for( const auto &p : here.points_on_zlevel() ) {
         if( here.ter( p ) == t_sewage_pump ) {
             here.make_rubble( p );
             explosion_handler::explosion( p, nullptr, 10 );
@@ -1371,13 +1371,13 @@ void computer_session::failure_pump_leak()
 {
     add_msg( m_warning, _( "Sewage leaks!" ) );
     map &here = get_map();
-    for( const tripoint &p : here.points_on_zlevel() ) {
+    for( const auto &p : here.points_on_zlevel() ) {
         if( here.ter( p ) != t_sewage_pump ) {
             continue;
         }
         const int leak_size = rng( 4, 10 );
         for( int i = 0; i < leak_size; i++ ) {
-            std::vector<tripoint> next_move;
+            std::vector<tripoint_bub_ms> next_move;
             if( here.passable( p + point_north ) ) {
                 next_move.push_back( p + point_north );
             }
@@ -1402,12 +1402,12 @@ void computer_session::failure_amigara()
 {
     g->timed_events.add( TIMED_EVENT_AMIGARA, calendar::turn + 30_seconds );
     g->u.add_effect( effect_amigara, 2_minutes );
-    explosion_handler::explosion( tripoint( rng( 0, g_mapsize_x ), rng( 0, g_mapsize_y ),
+    explosion_handler::explosion( tripoint_bub_ms( rng( 0, g_mapsize_x ), rng( 0, g_mapsize_y ),
                                             g->get_levz() ),
                                   nullptr,
                                   10,
                                   0.7, false, 10 );
-    explosion_handler::explosion( tripoint( rng( 0, g_mapsize_x ), rng( 0, g_mapsize_y ),
+    explosion_handler::explosion( tripoint_bub_ms( rng( 0, g_mapsize_x ), rng( 0, g_mapsize_y ),
                                             g->get_levz() ),
                                   nullptr,
                                   10,
@@ -1419,7 +1419,7 @@ void computer_session::failure_destroy_blood()
 {
     print_error( _( "ERROR: Disruptive Spin" ) );
     map &here = get_map();
-    for( const tripoint &dest : here.points_in_radius( g->u.bub_pos(), 2 ) ) {
+    for( const auto &dest : here.points_in_radius( g->u.bub_pos(), 2 ) ) {
         if( here.furn( dest ) == furn_str_id( "f_centrifuge" ) ) {
             map_stack items = here.i_at( dest );
             if( items.empty() ) {
@@ -1445,7 +1445,7 @@ void computer_session::failure_destroy_data()
 {
     print_error( _( "ERROR: ACCESSING DATA MALFUNCTION" ) );
     map &here = get_map();
-    for( const tripoint &p : here.points_in_radius( g->u.bub_pos(), 2 ) ) {
+    for( const auto &p : here.points_in_radius( g->u.bub_pos(), 2 ) ) {
         if( here.ter( p ) == t_floor_blue ) {
             map_stack items = here.i_at( p );
             if( items.empty() ) {

@@ -13,7 +13,6 @@
 #include "point.h"
 #include "type_id.h"
 
-struct real_coords;
 class Creature;
 class field;
 class ui_adaptor;
@@ -61,7 +60,7 @@ class editmap
         void edit_veh();
         void edit_mapgen();
         void cleartmpmap( tinymap &tmpmap );
-        void mapgen_preview( const real_coords &tc, uilist &gmenu );
+        void mapgen_preview( const point_abs_ms &tc, uilist &gmenu );
         vehicle *mapgen_veh_query( const tripoint_abs_omt &omt_tgt );
         bool mapgen_veh_destroy( const tripoint_abs_omt &omt_tgt, vehicle *car_target );
         void mapgen_retarget();

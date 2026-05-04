@@ -251,13 +251,14 @@ float workbench_crafting_speed_multiplier( const item &craft, const bench_locati
                           *string_id<furn_t>( "f_ground_crafting_spot" )->workbench );
         }
         break;
-        case bench_type::furniture:
-            const auto bub_loc = abs_to_bub( bench.position );
-            if( here.furn( bub_loc )->workbench ) {
-                // Furniture workbench
-                wb_info = workbench_info_wrapper( *here.furn( bub_loc )->workbench );
-            } else {
-                return 0.0f;
+        case bench_type::furniture: {
+                const auto bub_loc = abs_to_bub( bench.position );
+                if( here.furn( bub_loc )->workbench ) {
+                    // Furniture workbench
+                    wb_info = workbench_info_wrapper( *here.furn( bub_loc )->workbench );
+                } else {
+                    return 0.0f;
+                }
             }
             break;
         case bench_type::vehicle:

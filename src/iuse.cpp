@@ -1768,11 +1768,9 @@ int iuse::fishing_rod( player *p, item *it, bool, const tripoint_bub_ms & )
     p->activity->add_tool( it );
     p->activity->placement = bub_to_abs( *found );
     const auto fishable_locations = g->get_fishable_locations( 60, *found );
-    p->activity->coord_set = std::unordered_set<tripoint_abs_ms>( fishable_locations.size() );
-    std::transform( fishable_locations.begin(), fishable_locations.end(),
-    p->activity->coord_set.begin(), []( const tripoint_bub_ms & pnt ) {
-        return g->m.bub_to_abs( pnt );
-    } );
+    p->activity->coord_set.reserve( fishable_locations.size() );
+    std::ranges::transform( fishable_locations, std::inserter( p->activity->coord_set, p->activity->coord_set.end() ),
+        []( const tripoint_bub_ms &pnt ) { return g->m.bub_to_abs( pnt ); } );
     return 0;
 }
 

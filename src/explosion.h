@@ -52,11 +52,11 @@ void flashbang( const tripoint_bub_ms &p, bool player_immune, const std::string 
 /** Triggers a resonance cascade at p. */
 void resonance_cascade( const tripoint_bub_ms &p );
 /** Triggers a scrambler blast at p. */
-void scrambler_blast( const tripoint &p );
+void scrambler_blast( const tripoint_bub_ms &p );
 /** Triggers an EMP blast at p. */
-void emp_blast( const tripoint &p );
+void emp_blast( const tripoint_bub_ms &p );
 /** Shockwave applies knockback with given parameters to all targets within radius of p. */
-void shockwave( const tripoint &p, const shockwave_data &sw, const std::string &exp_name,
+void shockwave( const tripoint_bub_ms &p, const shockwave_data &sw, const std::string &exp_name,
                 Creature *source );
 
 projectile shrapnel_from_legacy( int power, float blast_radius );

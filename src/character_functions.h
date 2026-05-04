@@ -5,6 +5,8 @@
 #include <optional>
 #include <string>
 
+#include "coordinates.h"
+
 enum body_part : int;
 class player;
 class Character;
@@ -16,7 +18,6 @@ class npc;
 class time_duration;
 class vehicle;
 struct damage_unit;
-struct tripoint;
 
 template<typename T>
 class detached_ptr;
@@ -160,7 +161,7 @@ bool try_wield_contents( Character &who, item &container, item *internal_item, b
 bool try_uncanny_dodge( Character &who );
 
 /** Returns an unoccupied, safe adjacent point. */
-std::optional<tripoint> pick_safe_adjacent_tile( const Character &who );
+std::optional<tripoint_bub_ms> pick_safe_adjacent_tile( const Character &who );
 
 /**
  * Check if character's body part is immune to given damage.

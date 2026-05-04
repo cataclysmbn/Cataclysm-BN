@@ -13,7 +13,7 @@
 #include <list>
 #endif
 
-#include "point.h"
+#include "coordinates.h"
 #include "translations.h"
 
 enum action_id : int;

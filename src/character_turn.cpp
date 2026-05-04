@@ -146,12 +146,12 @@ void Character::recalc_speed_bonus()
     // Ectothermic/COLDBLOOD4 is intended to buff folks in the Summer
     // Threshold-crossing has its charms ;-)
     if( g != nullptr ) {
-        if( has_trait( trait_SUNLIGHT_DEPENDENT ) && !g->is_in_sunlight( pos() ) ) {
+        if( has_trait( trait_SUNLIGHT_DEPENDENT ) && !g->is_in_sunlight( bub_pos() ) ) {
             mod_speed_bonus( -( g->light_level( bub_pos().z() ) >= 12 ? 5 : 10 ) );
         }
         const float temperature_speed_modifier = mutation_value( "temperature_speed_modifier" );
         if( temperature_speed_modifier != 0 ) {
-            const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( pos() ) );
+            const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( abs_pos() ) );
             if( has_trait( trait_COLDBLOOD4 ) || player_local_temp < 65 ) {
                 mod_speed_bonus( ( player_local_temp - 65 ) * temperature_speed_modifier );
             }
@@ -594,7 +594,7 @@ void Character::process_one_effect( effect &it, bool is_new )
 void Character::process_effects_internal()
 {
     //Special Removals
-    if( has_effect( effect_darkness ) && g->is_in_sunlight( pos() ) ) {
+    if( has_effect( effect_darkness ) && g->is_in_sunlight( bub_pos() ) ) {
         remove_effect( effect_darkness );
     }
     // Mycus can still accidentally get infected until they pick up immunity, but won't suffer from it.
@@ -892,7 +892,7 @@ void Character::process_items()
     ZoneScoped;
 
     auto process_item = [this]( detached_ptr<item> &&ptr ) {
-        return item::process( std::move( ptr ), as_player(), pos(), false );
+        return item::process( std::move( ptr ), as_player(), bub_pos(), false );
     };
     if( primary_weapon().needs_processing() ) {
         primary_weapon().attempt_detach( process_item );
@@ -1193,7 +1193,7 @@ void search_surroundings( Character &who )
     // Search for traps in a larger area than before because this is the only
     // way we can "find" traps that aren't marked as visible.
     // Detection formula takes care of likelihood of seeing within this range.
-    for( const tripoint &tp : here.points_in_radius( who.bub_pos(), 5 ) ) {
+    for( const auto &tp : here.points_in_radius( who.bub_pos(), 5 ) ) {
         const trap &tr = here.tr_at( tp );
         if( tr.is_null() || tp == who.bub_pos() ) {
             continue;
