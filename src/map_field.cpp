@@ -1259,7 +1259,7 @@ auto process_fields_in_submap( submap &sm,
                 }
 
                 // --- Z-rise: level-3 fire spreads upward ---
-                if( pos.z() < OVERMAP_HEIGHT && cur.get_field_intensity() == 3 ) {
+                if( can_spread && pos.z() < OVERMAP_HEIGHT && cur.get_field_intensity() == 3 ) {
                     const tripoint_abs_sm above_pos( pos.raw() + tripoint{ 0, 0, 1 } );
                     auto *above_sm = mb.lookup_submap_in_memory( above_pos.raw() );
                     if( above_sm ) {
