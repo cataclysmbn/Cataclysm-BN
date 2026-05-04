@@ -308,14 +308,15 @@ TEST_CASE( "monster_adjacent_ally_fire_prevention", "[projectile][ballistics]" )
     clear_all_state();
     map &here = get_map();
 
-    // Set up test area: monster shooter at (0,0), allied monster at (1,0), target at (5,0)
-    const auto shooter_pos = tripoint_zero;
-    const auto ally_pos = tripoint_east;
-    const auto target_pos = tripoint( 5, 0, 0 );
+    // Set up test area away from the map edge: monster shooter at (50,60),
+    // allied monster at (51,60), target at (55,60).
+    const auto shooter_pos = tripoint( 50, 60, 0 );
+    const auto ally_pos = tripoint( 51, 60, 0 );
+    const auto target_pos = tripoint( 55, 60, 0 );
 
     // Clear the area
-    for( int x = 0; x <= 5; ++x ) {
-        auto pt = tripoint( x, 0, 0 );
+    for( int x = 50; x <= 55; ++x ) {
+        auto pt = tripoint( x, 60, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
