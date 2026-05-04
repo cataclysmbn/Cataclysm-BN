@@ -28,9 +28,9 @@ struct RGBColor {
     void serialize( JsonOut &jsout ) const;
     void deserialize( JsonIn &jsin );
 
-    static std::optional<RGBColor> try_parse(const std::string& str);
+    static std::optional<RGBColor> try_parse( const std::string &str );
     static void load_named_color( const JsonObject &jo, const std::string &src );
-    static std::pair<RGBColor, std::string> random_named(std::string fuzzy_match = "");
+    static std::pair<RGBColor, std::string> random_named( std::string fuzzy_match = "" );
 
     std::string friendly_name() const;
 };

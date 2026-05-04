@@ -5681,7 +5681,7 @@ void map::add_item( const tripoint &p, detached_ptr<item> &&new_item )
         current_submap->active_items.add( *new_item );
     }
 
-    new_item->on_map_placement(*this, p);
+    new_item->on_map_placement( *this, p );
 
     current_submap->get_items( l ).push_back( std::move( new_item ) );
     return;

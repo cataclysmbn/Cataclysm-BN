@@ -1626,7 +1626,7 @@ class iuse_paint_stuff : public iuse_actor
                       const tripoint & ) const -> ret_val<bool> override;
         auto clone() const -> std::unique_ptr<iuse_actor> override;
         void info( const item &, std::vector<iteminfo> & ) const override;
-        void on_spawned(item &) const override;
+        void on_spawned( item & ) const override;
     private:
         static std::optional<RGBColor> try_get_paint_color( const item &it );
         static RGBColor get_paint_color( item &it );

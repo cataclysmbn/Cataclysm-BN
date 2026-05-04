@@ -50,8 +50,8 @@ auto cata_tiles::get_field_color(
 }
 
 struct blend_mode_cvt {
-    bool operator()(const std::string& str, tint_blend_mode& res) const {
-        res = string_to_tint_blend_mode(str);
+    bool operator()( const std::string &str, tint_blend_mode &res ) const {
+        res = string_to_tint_blend_mode( str );
         return true;
     }
 };
@@ -59,7 +59,8 @@ struct blend_mode_cvt {
 auto cata_tiles::get_item_color(
     const item &i, const map &, const tripoint & ) -> color_tint_pair
 {
-    if( i.has_var( TINT_COLOR_VAR_NAME ) || i.has_var( TINT_COLOR_FG_VAR_NAME ) || i.has_var( TINT_COLOR_BG_VAR_NAME ) ) {
+    if( i.has_var( TINT_COLOR_VAR_NAME ) || i.has_var( TINT_COLOR_FG_VAR_NAME ) ||
+        i.has_var( TINT_COLOR_BG_VAR_NAME ) ) {
         const auto col = i.get_var<RGBColor>( TINT_COLOR_VAR_NAME, TILESET_NO_COLOR );
         const auto col_bg = i.get_var<RGBColor>( TINT_COLOR_BG_VAR_NAME, col );
         const auto col_fg = i.get_var<RGBColor>( TINT_COLOR_FG_VAR_NAME, col );
@@ -67,10 +68,11 @@ auto cata_tiles::get_item_color(
         tint_config bg_tint{};
         tint_config fg_tint{};
 
-        const auto blend_mode = i.get_var<tint_blend_mode, blend_mode_cvt>( TINT_MODE_VAR_NAME,tint_blend_mode::tint );
+        const auto blend_mode = i.get_var<tint_blend_mode, blend_mode_cvt>( TINT_MODE_VAR_NAME,
+                                tint_blend_mode::tint );
         const auto saturation = i.get_var<float>( TINT_SATURATION_VAR_NAME, 1.0f );
-        const auto contrast = i.get_var<float>( TINT_CONTRAST_VAR_NAME, 1.0f);
-        const auto brightness = i.get_var<float>( TINT_BRIGHTNESS_VAR_NAME, 1.0f);
+        const auto contrast = i.get_var<float>( TINT_CONTRAST_VAR_NAME, 1.0f );
+        const auto brightness = i.get_var<float>( TINT_BRIGHTNESS_VAR_NAME, 1.0f );
 
         if( col_bg != TILESET_NO_COLOR ) {
             bg_tint.color = col_bg;

@@ -27,21 +27,25 @@ void RGBColor::load_named_color( const JsonObject &jo, const std::string & )
     }
 }
 
-static auto char_cmp_ignore_case(const char a, const char b) {
-    return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b));
+static auto char_cmp_ignore_case( const char a, const char b )
+{
+    return std::tolower( static_cast<unsigned char>( a ) )
+           == std::tolower( static_cast<unsigned char>( b ) );
 }
 
-std::pair<RGBColor, std::string> RGBColor::random_named(std::string fuzzy_match) {
-    if (fuzzy_match.empty()) {
-        return random_entry(named_colors);
+std::pair<RGBColor, std::string> RGBColor::random_named( std::string fuzzy_match )
+{
+    if( fuzzy_match.empty() ) {
+        return random_entry( named_colors );
     }
 
-    std::vector<decltype(named_colors)::value_type> candidates;
-    std::ranges::copy_if(named_colors, std::back_inserter(candidates), [&]( const auto & c ) {
-        auto it = std::search(c.second.begin(), c.second.end(), fuzzy_match.begin(), fuzzy_match.end(), char_cmp_ignore_case );
+    std::vector<decltype( named_colors )::value_type> candidates;
+    std::ranges::copy_if( named_colors, std::back_inserter( candidates ), [&]( const auto & c ) {
+        auto it = std::search( c.second.begin(), c.second.end(), fuzzy_match.begin(), fuzzy_match.end(),
+                               char_cmp_ignore_case );
         return it != c.second.end();
-    });
-    return random_entry(candidates);
+    } );
+    return random_entry( candidates );
 }
 
 std::string RGBColor::friendly_name() const
@@ -53,11 +57,13 @@ std::string RGBColor::friendly_name() const
 
     // https://www.compuphase.com/cmetric.htm
     const auto distFunc = []( const RGBColor & e1, const RGBColor & e2 ) {
-        const auto r_mean = ( static_cast<uint32_t>(e1.r) + static_cast<uint32_t>(e2.r) ) / 2;
-        const auto r = static_cast<uint32_t>(e1.r) - static_cast<uint32_t>(e2.r);
-        const auto g = static_cast<uint32_t>(e1.g) - static_cast<uint32_t>(e2.g);
-        const auto b = static_cast<uint32_t>(e1.b) - static_cast<uint32_t>(e2.b);
-        return sqrt((((512+r_mean)*r*r)>>8) + 4*g*g + (((767-r_mean)*b*b)>>8));
+        const auto r_mean = ( static_cast<uint32_t>( e1.r ) + static_cast<uint32_t>( e2.r ) ) / 2;
+        const auto r = static_cast<uint32_t>( e1.r ) - static_cast<uint32_t>( e2.r );
+        const auto g = static_cast<uint32_t>( e1.g ) - static_cast<uint32_t>( e2.g );
+        const auto b = static_cast<uint32_t>( e1.b ) - static_cast<uint32_t>( e2.b );
+        return sqrt( ( ( ( 512 + r_mean ) * r * r ) >> 8 )
+                     + 4 * g * g
+                     + ( ( ( 767 - r_mean ) * b * b ) >> 8 ) );
     };
 
     const auto nearest = similar_name_cache.find( *this );
@@ -65,12 +71,13 @@ std::string RGBColor::friendly_name() const
         return nearest->second;
     }
 
-    const auto min = std::ranges::min_element( named_colors, [&]( const RGBColor & c1, const RGBColor & c2 ) {
+    const auto min = std::ranges::min_element( named_colors,
+    [&]( const RGBColor & c1,    const RGBColor & c2 ) {
         const auto da = distFunc( c1, *this );
         const auto db = distFunc( c2, *this );
         return  da < db;
     }, []( const auto & i ) { return i.first; } );
-    auto similar_name = string_format(_("%s (Off-Brand)"), min->second);
+    auto similar_name = string_format( _( "%s (Off-Brand)" ), min->second );
     similar_name_cache.emplace( *this, similar_name );
     return similar_name;
 }
@@ -224,8 +231,8 @@ void RGBColor::deserialize( JsonIn &jsin )
         }
     } else if( jsin.test_string() ) {
         const auto str = jsin.get_string();
-        const auto col = try_parse(str);
-        if (col.has_value()) {
+        const auto col = try_parse( str );
+        if( col.has_value() ) {
             *this = col.value();
         } else {
             debugmsg( "Unknown color value: %s", str.c_str() );
@@ -235,8 +242,9 @@ void RGBColor::deserialize( JsonIn &jsin )
     }
 }
 
-std::optional<RGBColor> RGBColor::try_parse(const std::string &str) {
-    if (str.starts_with("#")) {
+std::optional<RGBColor> RGBColor::try_parse( const std::string &str )
+{
+    if( str.starts_with( "#" ) ) {
         return rgb_from_hex_string( str );
     }
 
@@ -246,8 +254,8 @@ std::optional<RGBColor> RGBColor::try_parse(const std::string &str) {
         return curses_color_to_RGB( cm.get( nc_id ) );
     }
 
-    for (const auto & [color, name] : named_colors) {
-        if (std::ranges::equal(str, name, char_cmp_ignore_case)) {
+    for( const auto & [color, name] : named_colors ) {
+        if( std::ranges::equal( str, name, char_cmp_ignore_case ) ) {
             return color;
         }
     }

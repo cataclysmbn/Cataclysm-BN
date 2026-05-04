@@ -1500,7 +1500,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param m The Map
          * @param p Where in the map
          */
-        void on_map_placement(const map & m, const tripoint& p);
+        void on_map_placement( const map &m, const tripoint &p );
 
         std::vector<trait_id> mutations_from_wearing( const Character &guy ) const;
 
@@ -1548,12 +1548,12 @@ class item : public location_visitable<item>, public game_object<item>
         /*@{*/
 
         template<typename T, typename Conv = data_vars::type_converter_t<T>>
-        T get_var( const std::string &name, const T &default_value, const Conv& conv = {} ) const {
+        T get_var( const std::string &name, const T &default_value, const Conv &conv = {} ) const {
             return item_vars_.get<T, Conv>( name, default_value, conv );
         }
 
         template<typename T, typename Conv = data_vars::type_converter_t<T>>
-        void set_var( const std::string &name, const T &value, const Conv& conv = {} ) {
+        void set_var( const std::string &name, const T &value, const Conv &conv = {} ) {
             item_vars_.set<T>( name, value, conv );
         }
 

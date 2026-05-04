@@ -263,8 +263,8 @@ class iuse_actor
          */
         virtual void finalize( const itype_id &/*my_item_type*/ ) { }
 
-        virtual void on_spawned( item& ) const {}
-        virtual void on_placed( item&, const map&, const tripoint& ) const {}
+        virtual void on_spawned( item & ) const {}
+        virtual void on_placed( item &, const map &, const tripoint & ) const {}
 };
 
 struct use_function {

@@ -7701,8 +7701,9 @@ void iuse_paint_stuff::info( const item &it, std::vector<iteminfo> &inf ) const
     }
 }
 
-void iuse_paint_stuff::on_spawned(item &item) const {
-    get_paint_color(item);
+void iuse_paint_stuff::on_spawned( item &item ) const
+{
+    get_paint_color( item );
 }
 
 std::optional<RGBColor> iuse_paint_stuff::try_get_paint_color( const item &it )
@@ -7717,8 +7718,8 @@ RGBColor iuse_paint_stuff::get_paint_color( item &it )
 {
     if( !it.has_var( PAINT_VAR ) ) {
         const auto rng_col = RGBColor::random_named().first;
-        it.set_var<RGBColor>( PAINT_VAR, rng_col);
-        it.set_var<RGBColor>( TINT_COLOR_VAR_NAME, rng_col);
+        it.set_var<RGBColor>( PAINT_VAR, rng_col );
+        it.set_var<RGBColor>( TINT_COLOR_VAR_NAME, rng_col );
     }
     return it.get_var<RGBColor>( PAINT_VAR, {} );
 }
