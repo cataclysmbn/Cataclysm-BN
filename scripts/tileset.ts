@@ -71,10 +71,25 @@ interface TileSheetConfig {
   filler?: boolean
 }
 
+type TileLayer =
+  | number
+  | number[]
+  | string
+  | string[]
+  | Record<string, unknown>[]
+  | Record<string, unknown>
+
+interface TileMaskEntry {
+  fg?: TileLayer
+  bg?: TileLayer
+  [key: string]: unknown
+}
+
 interface TileEntry {
   id: string | string[]
-  fg?: number | number[] | Record<string, unknown>[] | Record<string, unknown>
-  bg?: number | number[] | Record<string, unknown>[] | Record<string, unknown>
+  fg?: TileLayer
+  bg?: TileLayer
+  masks?: TileMaskEntry[]
   additional_tiles?: TileEntry[]
   [key: string]: unknown
 }
@@ -693,6 +708,11 @@ class TileEntryHandler {
       delete entry.bg
     }
 
+    const maskEntries = entry.masks ?? []
+    for (const maskEntry of maskEntries) {
+      this.convertMaskEntry(maskEntry)
+    }
+
     const additionalEntries = entry.additional_tiles ?? []
     for (const additionalEntry of additionalEntries) {
       this.convert(additionalEntry, `${idArray[0]}_`)
@@ -724,15 +744,21 @@ class TileEntryHandler {
     return null
   }
 
-  convertEntryLayer(
-    entryLayer:
-      | number
-      | number[]
-      | Record<string, unknown>[]
-      | Record<string, unknown>
-      | string
-      | string[],
-  ): (number | Record<string, unknown>)[] {
+  convertMaskEntry(maskEntry: TileMaskEntry): void {
+    if (maskEntry.fg) {
+      maskEntry.fg = listOrFirst(this.convertEntryLayer(maskEntry.fg))
+    } else {
+      delete maskEntry.fg
+    }
+
+    if (maskEntry.bg) {
+      maskEntry.bg = listOrFirst(this.convertEntryLayer(maskEntry.bg))
+    } else {
+      delete maskEntry.bg
+    }
+  }
+
+  convertEntryLayer(entryLayer: TileLayer): (number | Record<string, unknown>)[] {
     const output: (number | Record<string, unknown>)[] = []
 
     if (Array.isArray(entryLayer)) {
@@ -938,7 +964,7 @@ class TileSheetData {
   }
 
   parseIndex(
-    readPngnums: number | number[] | Record<string, unknown> | Record<string, unknown>[],
+    readPngnums: TileLayer,
     allPngnums: number[],
     refs: PngRefs,
   ): number[] {
@@ -983,6 +1009,16 @@ class TileSheetData {
     const bgId = tileEntry.bg
     if (bgId !== undefined) {
       allPngnums = this.parseIndex(bgId, allPngnums, refs)
+    }
+
+    const maskEntries = tileEntry.masks ?? []
+    for (const maskEntry of maskEntries) {
+      if (maskEntry.fg !== undefined) {
+        allPngnums = this.parseIndex(maskEntry.fg, allPngnums, refs)
+      }
+      if (maskEntry.bg !== undefined) {
+        allPngnums = this.parseIndex(maskEntry.bg, allPngnums, refs)
+      }
     }
 
     const addTileEntries = tileEntry.additional_tiles ?? []
@@ -1232,7 +1268,7 @@ class PngRefs {
   }
 
   convertIndex(
-    readPngnums: number | number[] | Record<string, unknown> | Record<string, unknown>[],
+    readPngnums: TileLayer,
     newIndex: (string | Record<string, unknown>)[],
   ): void {
     if (Array.isArray(readPngnums)) {
@@ -1286,6 +1322,38 @@ class PngRefs {
     const bgId = tileEntry.bg
     if (bgId !== undefined) {
       this.convertIndex(bgId, newBg)
+    }
+
+    const maskEntries = tileEntry.masks ?? []
+    const convertedMasks = []
+    for (const maskEntry of maskEntries) {
+      const newMaskFg: (string | Record<string, unknown>)[] = []
+      if (maskEntry.fg !== undefined) {
+        this.convertIndex(maskEntry.fg, newMaskFg)
+      }
+      const newMaskBg: (string | Record<string, unknown>)[] = []
+      if (maskEntry.bg !== undefined) {
+        this.convertIndex(maskEntry.bg, newMaskBg)
+      }
+
+      if (newMaskFg.length > 0) {
+        maskEntry.fg = listOrFirst(newMaskFg)
+      } else {
+        delete maskEntry.fg
+      }
+      if (newMaskBg.length > 0) {
+        maskEntry.bg = listOrFirst(newMaskBg)
+      } else {
+        delete maskEntry.bg
+      }
+      if (newMaskFg.length > 0 || newMaskBg.length > 0) {
+        convertedMasks.push(maskEntry)
+      }
+    }
+    if (convertedMasks.length > 0) {
+      tileEntry.masks = convertedMasks
+    } else {
+      delete tileEntry.masks
     }
 
     const addTileEntries = tileEntry.additional_tiles ?? []
