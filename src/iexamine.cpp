@@ -5641,7 +5641,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             map &here = get_map();
             p.add_msg_if_player( m_info, _( "You pull up the %s." ),
                                  here.furn( below_rope ).obj().name() );
-            take_down_deployed_furniture( below_rope, p.pos() );
+            take_down_deployed_furniture( below_rope, p.bub_pos() );
             break;
         }
         case ledge_action::spin_web_bridge: {

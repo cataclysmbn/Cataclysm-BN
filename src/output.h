@@ -928,15 +928,15 @@ class scrollingcombattext
                 int advanceStepOffset() {
                     return ++iStepOffset;
                 }
-                int getx() const;
-                int gety() const;
+                int getPosX() const;
+                int getPosY() const;
                 direction getDirecton() const {
                     return oDir;
                 }
-                int getx() const {
+                int getInitPosX() const {
                     return pos.x;
                 }
-                int gety() const {
+                int getInitPosY() const {
                     return pos.y;
                 }
                 std::string getType() const {

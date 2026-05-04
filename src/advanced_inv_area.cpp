@@ -47,7 +47,7 @@ int advanced_inv_area::get_item_count() const
     }
 }
 
-advanced_inv_area::advanced_inv_area( aim_location id, point h, tripoint off,
+advanced_inv_area::advanced_inv_area( aim_location id, point h, tripoint_rel_ms off,
                                       const std::string &name, const std::string &shortname,
                                       std::string minimapname, std::string actionname,
                                       aim_location relative_location ) :
@@ -376,31 +376,31 @@ bool advanced_inv_area::is_container_valid( const item *it ) const
     return false;
 }
 
-static tripoint aim_vector( aim_location id )
+static tripoint_rel_ms aim_vector( aim_location id )
 {
     switch( id ) {
         case AIM_SOUTHWEST:
-            return tripoint_south_west;
+            return tripoint_rel_ms::south_west();
         case AIM_SOUTH:
-            return tripoint_south;
+            return tripoint_rel_ms::south();
         case AIM_SOUTHEAST:
-            return tripoint_south_east;
+            return tripoint_rel_ms::south_east();
         case AIM_WEST:
-            return tripoint_west;
+            return tripoint_rel_ms::west();
         case AIM_EAST:
-            return tripoint_east;
+            return tripoint_rel_ms::east();
         case AIM_NORTHWEST:
-            return tripoint_north_west;
+            return tripoint_rel_ms::north_west();
         case AIM_NORTH:
-            return tripoint_north;
+            return tripoint_rel_ms::north();
         case AIM_NORTHEAST:
-            return tripoint_north_east;
+            return tripoint_rel_ms::north_east();
         case AIM_ABOVE:
-            return tripoint_above;
+            return tripoint_rel_ms::above();
         case AIM_BELOW:
-            return tripoint_below;
+            return tripoint_rel_ms::below();
         default:
-            return tripoint_zero;
+            return tripoint_rel_ms::zero();
     }
 }
 void advanced_inv_area::set_container_position()

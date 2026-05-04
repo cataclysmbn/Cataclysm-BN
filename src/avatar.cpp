@@ -792,7 +792,7 @@ bool avatar::read( item *loc, const bool continuous )
     return true;
 }
 
-void avatar::grab( object_type grab_type, const tripoint_bub_ms &grab_point )
+void avatar::grab( object_type grab_type, const tripoint_rel_ms &grab_point )
 {
     this->grab_type = grab_type;
     this->grab_point = grab_point;

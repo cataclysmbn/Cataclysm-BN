@@ -132,7 +132,7 @@ void gate_data::check() const
     }
 }
 
-bool gate_data::is_suitable_wall( const tripoint &pos ) const
+bool gate_data::is_suitable_wall( const tripoint_bub_ms &pos ) const
 {
     const auto wid = get_map().ter( pos );
     const auto iter = std::ranges::find_if( walls, [ wid ]( const ter_str_id & wall ) {
@@ -168,7 +168,7 @@ void gates::reset()
 //  !|   |!        !   |
 //
 
-void gates::toggle_gate( const tripoint &pos )
+void gates::toggle_gate( const tripoint_bub_ms &pos )
 {
     const gate_id gid = get_gate_id( pos );
 
@@ -191,7 +191,7 @@ void gates::toggle_gate( const tripoint &pos )
         }
         if( !gate.complex_shape ) {
             for( point gate_offset : four_adjacent_offsets ) {
-                const tripoint gate_pos = wall_pos + gate_offset;
+                const auto gate_pos = wall_pos + gate_offset;
 
                 if( gate_pos == pos ) {
                     continue; // Never comes back
@@ -222,14 +222,14 @@ void gates::toggle_gate( const tripoint &pos )
                 }
             }
         } else {
-            const auto is_door = [&]( const tripoint & pos ) -> bool {
+            const auto is_door = [&]( const tripoint_bub_ms & pos ) -> bool {
                 return here.ter( pos ) == gate.floor.id() ||
                 here.ter( pos ) == gate.door.id();
             };
-            std::unordered_set<tripoint> visited;
+            std::unordered_set<tripoint_bub_ms> visited;
             for( point gate_offset : four_adjacent_offsets ) {
-                const tripoint gate_pos = wall_pos + gate_offset;
-                for( const tripoint &tmp : ff::point_flood_fill_4_connected( gate_pos, visited, is_door ) ) {
+                const tripoint_bub_ms gate_pos = wall_pos + gate_offset;
+                for( const tripoint_bub_ms &tmp : ff::point_flood_fill_4_connected( gate_pos, visited, is_door ) ) {
                     if( !open && here.ter( tmp ) == gate.floor.id() ) {
                         close = true;
                         fail = !g->forced_door_closing( tmp, gate.door.id(), gate.bash_dmg ) || fail;
@@ -262,7 +262,7 @@ void gates::toggle_gate( const tripoint &pos )
     }
 }
 
-void gates::toggle_gate( const tripoint &pos, Character &who )
+void gates::toggle_gate( const tripoint_bub_ms &pos, Character &who )
 {
     const gate_id gid = get_gate_id( pos );
 
@@ -283,7 +283,7 @@ void gates::toggle_gate( const tripoint &pos, Character &who )
 
 // Doors namespace
 
-void doors::close_door( map &m, Character &who, const tripoint &closep )
+void doors::close_door( map &m, Character &who, const tripoint_bub_ms &closep )
 {
     bool didit = false;
     const bool inside = !m.is_outside( who.bub_pos() );

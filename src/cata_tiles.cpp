@@ -6328,7 +6328,7 @@ void cata_tiles::draw_sct_frame( std::multimap<point, formatted_text> &overlay_s
     const bool use_font = get_option<bool>( "ANIMATION_SCT_USE_FONT" );
 
     for( auto iter = SCT.vSCT.begin(); iter != SCT.vSCT.end(); ++iter ) {
-        const point_bub_ms iD( iter->getx(), iter->gety() );
+        const point_bub_ms iD( iter->getPosX(), iter->getPosY() );
         const int full_text_length = utf8_width( iter->getText() );
 
         int iOffsetX = 0;

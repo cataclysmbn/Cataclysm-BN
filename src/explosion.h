@@ -3,6 +3,7 @@
 #include <optional>
 #include <string>
 
+#include "coordinates.h"
 #include "projectile.h"
 
 struct tripoint;

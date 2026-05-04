@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "color.h"
-#include "point.h"
+#include "coordinates.h"
 
 enum explosion_neighbors {
     N_NO_NEIGHBORS = 0,
