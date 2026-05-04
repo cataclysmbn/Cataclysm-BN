@@ -45,6 +45,7 @@
 #include "cursesdef.h"
 #include "damage.h"
 #include "debug.h"
+#include "deployed_furniture.h"
 #include "distribution_grid.h"
 #include "effect.h"
 #include "enums.h"
@@ -1348,10 +1349,7 @@ void iexamine::deployed_furniture( player &p, const tripoint &pos )
     }
     p.add_msg_if_player( m_info, _( "You take down the %s." ),
                          here.furn( pos ).obj().name() );
-    const auto furn_item = here.furn( pos ).obj().deployed_item;
-    const auto item = here.add_item_or_charges( pos, item::spawn( furn_item, calendar::turn ) );
-    item->item_vars().merge( *here.furn_vars( pos ) );
-    here.furn_set( pos, f_null );
+    take_down_deployed_furniture( { .here = here, .furniture_pos = pos, .drop_pos = pos } );
 }
 
 static std::pair<itype_id, const deploy_tent_actor *> find_tent_itype( const furn_str_id &id )
@@ -1885,9 +1883,7 @@ void iexamine::transform( player &p, const tripoint &pos )
             case 2: {
                 add_msg( m_info, _( "You take down the %s." ),
                          g->m.furnname( pos ) );
-                const auto furn_item = g->m.furn( pos ).obj().deployed_item;
-                g->m.add_item_or_charges( pos, item::spawn( furn_item, calendar::turn ) );
-                g->m.furn_set( pos, f_null );
+                take_down_deployed_furniture( { .here = g->m, .furniture_pos = pos, .drop_pos = pos } );
                 return;
             }
             case 3: {
@@ -3271,9 +3267,7 @@ void iexamine::fireplace( player &p, const tripoint &examp )
             }
             p.add_msg_if_player( m_info, _( "You take down the %s." ),
                                  here.furnname( examp ) );
-            const auto furn_item = here.furn( examp ).obj().deployed_item;
-            here.add_item_or_charges( examp, item::spawn( furn_item, calendar::turn ) );
-            here.furn_set( examp, f_null );
+            take_down_deployed_furniture( { .here = here, .furniture_pos = examp, .drop_pos = examp } );
             return;
         }
         case 4: {
@@ -5643,9 +5637,7 @@ void iexamine::ledge( player &p, const tripoint &examp )
             map &here = get_map();
             p.add_msg_if_player( m_info, _( "You pull up the %s." ),
                                  here.furn( below_rope ).obj().name() );
-            const auto furn_item = here.furn( below_rope ).obj().deployed_item;
-            here.add_item_or_charges( p.pos(), item::spawn( furn_item, calendar::turn ) );
-            here.furn_set( below_rope, f_null );
+            take_down_deployed_furniture( { .here = here, .furniture_pos = below_rope, .drop_pos = p.pos() } );
             break;
         }
         case ledge_action::spin_web_bridge: {
