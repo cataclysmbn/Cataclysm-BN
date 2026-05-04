@@ -34,6 +34,7 @@ class VehiclePalette
         std::vector<RGBColor> pick_colors() const;
 
     private:
-        std::vector<weighted_int_list<RGBColor>> colors;
+        vpalette_id id;
+        std::vector<weighted_int_list<std::string>> colors;
         std::map<std::string, int> fuzzy_color_match;
 };

@@ -252,6 +252,8 @@ std::optional<RGBColor> RGBColor::try_parse( const std::string &str )
 {
     if( str.starts_with( "#" ) ) {
         return rgb_from_hex_string( str );
+    } else if( str.starts_with( "!" ) ) {
+        return RGBColor::random_named( str.substr( 1 ) ).first;
     }
 
     const auto &cm = get_all_colors();
