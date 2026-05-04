@@ -3404,46 +3404,6 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             if( p.pos.z == z ) {
                 draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z - z );
 
-                if( z == center.z ) {
-                    const point screen_tl = player_to_screen( p.pos.xy() );
-                    const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
-
-                    const bool in_selected_zone = has_selected_zone && p.pos.z == selected_z &&
-                                                  ( has_custom_selected_zone
-                                                    ? zone_point_lookup.contains( p.pos )
-                                                    : ( p.pos.x >= selected_min.x && p.pos.x <= selected_max.x &&
-                                                        p.pos.y >= selected_min.y && p.pos.y <= selected_max.y ) );
-
-                    bool selected_drawn = false;
-
-                    if( show_zones_overlay ) {
-                        for( const zone_render_data &zone : zones_to_draw ) {
-                            if( !zone.tiles.contains( p.pos.xy() ) ) {
-                                continue;
-                            }
-                            draw_zone_overlay( {
-                                .renderer = renderer,
-                                .rect = tile_rect,
-                                .color = zone.color,
-                                .overlay_strings = overlay_strings,
-                                .alpha = in_selected_zone ? 128 : 64,
-                                .draw_label = false
-                            } );
-                            selected_drawn = selected_drawn || in_selected_zone;
-                        }
-                    }
-                    if( in_selected_zone && !selected_drawn ) {
-                        draw_zone_overlay( {
-                            .renderer = renderer,
-                            .rect = tile_rect,
-                            .color = curses_color_to_SDL( c_light_green ),
-                            .overlay_strings = overlay_strings,
-                            .alpha = 128,
-                            .draw_label = false
-                        } );
-                    }
-                }
-
                 for( decltype( &cata_tiles::draw_furniture ) f : base_drawing_layers ) {
                     ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z - z );
                 }
@@ -3478,6 +3438,49 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     for( tile_render_info &p : draw_points ) {
         for( decltype( &cata_tiles::draw_furniture ) f : final_drawing_layers ) {
             ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
+        }
+    }
+
+    // Draw zone overlays over all other stuff
+    for( const tile_render_info &p : draw_points ) {
+        if( p.pos.z == center.z ) {
+            const point screen_tl = player_to_screen( p.pos.xy() );
+            const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
+
+            const bool in_selected_zone = has_selected_zone && p.pos.z == selected_z &&
+                                          ( has_custom_selected_zone
+                                            ? zone_point_lookup.contains( p.pos )
+                                            : ( p.pos.x >= selected_min.x && p.pos.x <= selected_max.x &&
+                                                p.pos.y >= selected_min.y && p.pos.y <= selected_max.y ) );
+
+            bool selected_drawn = false;
+
+            if( show_zones_overlay ) {
+                for( const zone_render_data &zone : zones_to_draw ) {
+                    if( !zone.tiles.contains( p.pos.xy() ) ) {
+                        continue;
+                    }
+                    draw_zone_overlay( {
+                        .renderer = renderer,
+                        .rect = tile_rect,
+                        .color = zone.color,
+                        .overlay_strings = overlay_strings,
+                        .alpha = in_selected_zone ? 128 : 64,
+                        .draw_label = false
+                    } );
+                    selected_drawn = selected_drawn || in_selected_zone;
+                }
+            }
+            if( in_selected_zone && !selected_drawn ) {
+                draw_zone_overlay( {
+                    .renderer = renderer,
+                    .rect = tile_rect,
+                    .color = curses_color_to_SDL( c_light_green ),
+                    .overlay_strings = overlay_strings,
+                    .alpha = 128,
+                    .draw_label = false
+                } );
+            }
         }
     }
 
