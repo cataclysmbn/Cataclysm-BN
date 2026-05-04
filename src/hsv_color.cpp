@@ -27,6 +27,12 @@ void RGBColor::load_named_color( const JsonObject &jo, const std::string & )
     }
 }
 
+void RGBColor::unload_names()
+{
+    named_colors.clear();
+    similar_name_cache.clear();
+}
+
 static auto char_cmp_ignore_case( const char a, const char b )
 {
     return std::tolower( static_cast<unsigned char>( a ) )

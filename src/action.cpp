@@ -1214,15 +1214,13 @@ std::optional<std::pair<tripoint, tripoint>> choose_area( const std::string &mes
                     std::min( p0->x, p1->x ),
                     std::min( p0->y, p1->y ),
                     std::min( p0->z, p1->z )
-                )
-                ;
+                );
             auto second =
                 tripoint(
                     std::max( p0->x, p1->x ),
                     std::max( p0->y, p1->y ),
                     std::max( p0->z, p1->z )
-                )
-                ;
+                );
             return std::pair( first, second );
         }
     }

@@ -649,6 +649,7 @@ void DynamicDataLoader::unload_data()
     world_types::reset();
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
+    RGBColor::unload_names();
 #if defined(TILES)
     reset_mod_tileset();
 #endif
