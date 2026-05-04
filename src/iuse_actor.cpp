@@ -7579,3 +7579,146 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     // Single update_map call at the final position
     g->update_map( p );
 }
+
+// ---- iuse_paint_stuff -------------------------------------------------------
+
+void iuse_paint_stuff::load( const JsonObject &obj )
+{
+
+}
+
+auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos ) const -> int
+{
+    const bool has_veh_near = get_map().has_nearby( pos, []( const map & m, const tripoint & p ) { return m.veh_at( p ).has_value(); } );
+
+    enum ePaintMode {
+        Abort = 0,
+        Vehicle = 1
+    };
+
+    std::vector<std::pair<std::string, ePaintMode>> choices{};
+    if( has_veh_near ) {
+        choices.push_back( {_( "Paint a Vehicle" ), Vehicle} );
+    }
+    // TODO: Add cases for terrain / furniture / items when painting for those is implemented
+
+    ePaintMode paintMode = Abort;
+    if( choices.size() == 1 ) {
+        paintMode = choices.back().second;
+    } else if( choices.size() > 1 ) {
+        uilist lst;
+        for( const auto& [opt, res] : choices ) {
+            lst.addentry( res, true, MENU_AUTOASSIGN, opt );
+        }
+        lst.query();
+
+        if( lst.ret >= 0 ) {
+            paintMode = choices[lst.ret].second;
+        }
+    }
+
+    switch( paintMode ) {
+        case Abort:
+        default:
+            return 0;
+        case Vehicle:
+            return iuse_paint_stuff_vehicle( who, it, b, pos );
+    };
+}
+
+auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
+        const tripoint & ) const -> int
+{
+    const auto veh_pos_opt = choose_adjacent_highlight(
+                                 _( "Paint which vehicle?" ),
+                                 _( "There is nothing to paint nearby." ),
+    []( const tripoint & p ) { return get_map().veh_at( p ).has_value(); },
+    false );
+
+    if( !veh_pos_opt.has_value() ) {
+        return 0;
+    }
+
+    const auto veh_pos = veh_pos_opt.value();
+    const auto &here = get_map();
+
+    const auto &target_veh = here.veh_at( veh_pos )->vehicle();
+
+    const auto area = choose_area( "Paint Vehicle", veh_pos );
+    if( !area.has_value() ) {
+        return 0;
+    }
+
+    const auto col = get_paint_color( it );
+    const auto [p0, p1] = area.value();
+
+    int painted = 0;
+    for( const auto &p : tripoint_range( p0, p1 ) ) {
+        const auto vpart = here.veh_at( p );
+        if( !vpart.has_value() ) {
+            continue;
+        }
+        if( &vpart->vehicle() != &target_veh ) {
+            continue;
+        }
+        auto &disp_part = vpart.part_displayed()->part();
+        if( disp_part.part_color != col ) {
+            disp_part.part_color = col;
+            ++painted;
+        }
+        if( painted == it.charges ) {
+            break;
+        }
+    }
+
+    return painted;
+}
+
+ret_val<bool> iuse_paint_stuff::can_use( const Character &, const item &it, bool,
+        const tripoint &pos ) const
+{
+    if( it.ammo_remaining() < 1 ) {
+        return ret_val<bool>::make_failure( _( "The %s doesn't have enough charges." ), it.tname() );
+    }
+
+    return ret_val<bool>::make_success();
+}
+
+auto iuse_paint_stuff::clone() const -> std::unique_ptr<iuse_actor>
+{
+    return std::make_unique<iuse_paint_stuff>( *this );
+}
+
+void iuse_paint_stuff::info( const item &it, std::vector<iteminfo> &inf ) const
+{
+    const auto col = try_get_paint_color( it );
+    if( !col.has_value() ) {
+        inf.emplace_back( "TOOL", string_format( _( "<bold>Paint Color</bold>: %s" ), "Unknown" ) );
+    } else {
+        const auto rgb = col.value();
+        auto name = rgb.friendly_name();
+        inf.emplace_back( "TOOL", string_format( _( "<bold>Paint Color</bold>: %s" ), name ) );
+    }
+}
+
+void iuse_paint_stuff::on_spawned(item &item) const {
+    get_paint_color(item);
+}
+
+std::optional<RGBColor> iuse_paint_stuff::try_get_paint_color( const item &it )
+{
+    if( !it.has_var( PAINT_VAR ) ) {
+        return std::nullopt;
+    }
+    return it.get_var<RGBColor>( PAINT_VAR, {} );
+}
+
+RGBColor iuse_paint_stuff::get_paint_color( item &it )
+{
+    if( !it.has_var( PAINT_VAR ) ) {
+        const auto rng_col = RGBColor::random_named().first;
+        it.set_var<RGBColor>( PAINT_VAR, rng_col);
+        it.set_var<RGBColor>( TINT_COLOR_VAR_NAME, rng_col);
+    }
+    return it.get_var<RGBColor>( PAINT_VAR, {} );
+}

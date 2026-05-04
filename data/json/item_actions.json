@@ -1073,5 +1073,10 @@
     "type": "item_action",
     "id": "pocket_dimension",
     "name": { "str": "Access a pocket dimension" }
+  },
+  {
+    "type": "item_action",
+    "id": "paint_stuff",
+    "name": { "str": "Paint something" }
   }
 ]

@@ -15,6 +15,7 @@
 #include "enums.h"
 #include "explosion.h"
 #include "game_constants.h"
+#include "hsv_color.h"
 #include "iuse.h"
 #include "ret_val.h"
 #include "string_id.h"
@@ -1611,4 +1612,23 @@ class iuse_portal_link : public iuse_actor
         auto can_use( const Character &, const item &it, bool,
                       const tripoint &pos ) const -> ret_val<bool> override;
         auto clone() const -> std::unique_ptr<iuse_actor> override;
+};
+
+class iuse_paint_stuff : public iuse_actor
+{
+    public:
+        static constexpr std::string PAINT_VAR = "PAINT_COLOR";
+        iuse_paint_stuff( const std::string &type = "paint_stuff" ) : iuse_actor( type ) {}
+        ~iuse_paint_stuff() override = default;
+        void load( const JsonObject &obj ) override;
+        auto use( player &who, item &i, bool, const tripoint & ) const -> int override;
+        auto can_use( const Character &, const item &, bool,
+                      const tripoint & ) const -> ret_val<bool> override;
+        auto clone() const -> std::unique_ptr<iuse_actor> override;
+        void info( const item &, std::vector<iteminfo> & ) const override;
+        void on_spawned(item &) const override;
+    private:
+        static std::optional<RGBColor> try_get_paint_color( const item &it );
+        static RGBColor get_paint_color( item &it );
+        auto iuse_paint_stuff_vehicle( player &who, item &i, bool, const tripoint & ) const -> int;
 };
