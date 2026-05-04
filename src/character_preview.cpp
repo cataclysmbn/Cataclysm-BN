@@ -57,13 +57,13 @@ class char_preview_adapter : public cata_tiles
                 using Decayed = std::remove_reference_t<T>;
                 using PtrBase = std::remove_const_t<std::remove_pointer_t<Decayed>>;
                 if constexpr( std::is_same_v<PtrBase, item> ) {
-                    return get_item_color( *arg );
+                    return get_item_color( *arg, g->m, tripoint_zero );
                 } else if constexpr( std::is_same_v<PtrBase, effect> ) {
-                    return get_effect_color( *arg, ch );
+                    return get_effect_color( *arg, ch, g->m, tripoint_zero );
                 } else if constexpr( std::is_same_v<PtrBase, bionic> ) {
-                    return get_bionic_color( *arg, ch );
+                    return get_bionic_color( *arg, ch, g->m, tripoint_zero );
                 } else if constexpr( std::is_same_v<PtrBase, mutation> ) {
-                    return get_mutation_color( *arg, ch );
+                    return get_mutation_color( *arg, ch, g->m, tripoint_zero );
                 } else {
                     return color_tint_pair{ std::nullopt, std::nullopt };
                 }

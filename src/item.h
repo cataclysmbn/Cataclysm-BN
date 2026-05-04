@@ -112,6 +112,14 @@ static const std::string source_p1_name = "source_" + p1_name;
 static const std::string source_p2_name = "source_" + p2_name;
 static const tripoint_abs_ms tripoint_abs_ms_min( tripoint_min );
 
+static const std::string TINT_COLOR_VAR_NAME( "tint_color" );
+static const std::string TINT_COLOR_FG_VAR_NAME( "tint_color_fg" );
+static const std::string TINT_COLOR_BG_VAR_NAME( "tint_color_bg" );
+static const std::string TINT_MODE_VAR_NAME( "tint_blend_mode" );
+static const std::string TINT_SATURATION_VAR_NAME( "tint_saturation" );
+static const std::string TINT_CONTRAST_VAR_NAME( "tint_contrast" );
+static const std::string TINT_BRIGHTNESS_VAR_NAME( "tint_brightness" );
+
 /**
  *  Value and metadata for one property of an item
  *
@@ -1532,14 +1540,14 @@ class item : public location_visitable<item>, public game_object<item>
          */
         /*@{*/
 
-        template<typename T>
-        T get_var( const std::string &name, const T &default_value ) const {
-            return item_vars_.get<T>( name, default_value );
+        template<typename T, typename Conv = data_vars::type_converter_t<T>>
+        T get_var( const std::string &name, const T &default_value, const Conv& conv = {} ) const {
+            return item_vars_.get<T, Conv>( name, default_value, conv );
         }
 
-        template<typename T>
-        void set_var( const std::string &name, const T &value ) {
-            item_vars_.set<T>( name, value );
+        template<typename T, typename Conv = data_vars::type_converter_t<T>>
+        void set_var( const std::string &name, const T &value, const Conv& conv = {} ) {
+            item_vars_.set<T>( name, value, conv );
         }
 
         std::string get_var( const std::string &name, const char *default_value ) const {
