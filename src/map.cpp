@@ -5658,10 +5658,6 @@ void map::add_item( const tripoint &p, detached_ptr<item> &&new_item )
         new_item->activate();
     }
 
-    if( new_item->is_map() && !new_item->has_var( "reveal_map_center_omt" ) ) {
-        new_item->set_var( "reveal_map_center_omt", ms_to_omt_copy( getabs( p ) ) );
-    }
-
     current_submap->is_uniform = false;
     invalidate_max_populated_zlev( p.z );
 
@@ -5673,6 +5669,8 @@ void map::add_item( const tripoint &p, detached_ptr<item> &&new_item )
         }
         current_submap->active_items.add( *new_item );
     }
+
+    new_item->on_map_placement(*this, p);
 
     current_submap->get_items( l ).push_back( std::move( new_item ) );
     return;

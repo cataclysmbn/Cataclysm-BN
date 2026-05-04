@@ -1495,6 +1495,13 @@ class item : public location_visitable<item>, public game_object<item>
          */
         void on_damage( int qty, damage_type dt );
 
+        /**
+         * Callback after an item is placed on the map, for any reason
+         * @param m The Map
+         * @param p Where in the map
+         */
+        void on_map_placement(const map & m, const tripoint& p);
+
         std::vector<trait_id> mutations_from_wearing( const Character &guy ) const;
 
         /**

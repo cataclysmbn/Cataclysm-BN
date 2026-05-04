@@ -373,6 +373,13 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
     if( type->relic_data ) {
         relic_data = type->relic_data;
     }
+
+    for (const auto &func : type->use_methods | std::views::values) {
+        const auto actor = func.get_actor_ptr();
+        if (actor != nullptr) {
+            actor->on_spawned(*this);
+        }
+    }
 }
 
 item::item( const itype_id &id, time_point turn, int qty )
@@ -489,6 +496,13 @@ item::item( const item &source ) : game_object<item>( source ), contents( this )
     for( item * const &it : source.components ) {
         components.push_back( item::spawn( *it ) );
     }
+
+    for (const auto &func : type->use_methods | std::views::values) {
+        const auto actor = func.get_actor_ptr();
+        if (actor != nullptr) {
+            actor->on_spawned(*this);
+        }
+    }
 }
 
 item &item::operator=( const item &source )
@@ -538,6 +552,14 @@ item &item::operator=( const item &source )
     for( item * const &it : source.components ) {
         components.push_back( item::spawn( *it ) );
     }
+
+    for (const auto &func : type->use_methods | std::views::values) {
+        const auto actor = func.get_actor_ptr();
+        if (actor != nullptr) {
+            actor->on_spawned(*this);
+        }
+    }
+
     return *this;
 }
 
@@ -4919,6 +4941,21 @@ void item::on_damage( int qty, damage_type )
     if( type->iequippable_callbacks ) {
         type->iequippable_callbacks->call_on_durability_change(
             get_avatar(), *this, damage_, damage_ + qty );
+    }
+}
+
+void item::on_map_placement(const map& m, const tripoint &p) {
+
+    // TODO: Move to reveal_map_actor
+    if( is_map() && !has_var( "reveal_map_center_omt" ) ) {
+        set_var( "reveal_map_center_omt", ms_to_omt_copy( m.getabs( p ) ) );
+    }
+
+    for (const auto &func : type->use_methods | std::views::values) {
+        const auto actor = func.get_actor_ptr();
+        if (actor != nullptr) {
+            actor->on_placed(*this, m, p);
+        }
     }
 }
 
