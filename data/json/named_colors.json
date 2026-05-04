@@ -1,5 +1,5 @@
 [
-{
+  {
     "//": "RAL Classic",
     "type": "named_color",
     "name": "Green beige",
@@ -1074,7 +1074,7 @@
     "type": "named_color",
     "name": "Pearl dark grey",
     "value": "#7E8182"
-  }
+  },
   {
     "//": "RAL Design+",
     "type": "named_color",
