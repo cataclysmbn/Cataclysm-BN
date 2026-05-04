@@ -54,7 +54,7 @@
       },
       "furniture": { "0": "f_stool" },
       "place_loot": [ { "item": "stereo", "x": 28, "y": 5, "chance": 65 }, { "item": "television", "x": 28, "y": 5, "chance": 100 } ],
-      "vehicles": { "Á": { "vehicle": "suburban_home", "chance": 30, "rotation": 90 } }
+      "vehicles": { "Á": { "vehicle": "suburban_home_compact", "chance": 30, "rotation": 90 } }
     }
   },
   {

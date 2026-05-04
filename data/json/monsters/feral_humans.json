@@ -844,7 +844,7 @@
     "vision_night": 20,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
-    "starting_ammo": { "5x50dart": 100 },
+    "starting_ammo": { "5x50dart": 200 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
       {
@@ -856,9 +856,9 @@
         "fake_skills": [ [ "gun", 8 ], [ "smg", 8 ] ],
         "fake_dex": 10,
         "fake_per": 10,
-        "ranges": [ [ 0, 30, "SINGLE" ] ],
+        "ranges": [ [ 0, 5, "AUTO" ], [ 5, 30, "SINGLE" ] ],
         "require_targeting_player": false,
-        "description": "The feral black-ops fires their smg!",
+        "description": "The feral black-ops fires their SPIW!",
         "no_crits": true
       }
     ],
@@ -911,7 +911,6 @@
     "dodge": 8,
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 20,
-    "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
     "special_attacks": [ [ "PARROT_AT_DANGER", 0 ], [ "BIO_OP_BIOJUTSU", 10 ] ],
     "special_when_hit": [ "ZAPBACK", 75 ],
@@ -1039,7 +1038,7 @@
     "vision_night": 30,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
-    "starting_ammo": { "8mm_caseless": 25 },
+    "starting_ammo": { "8mm_hvp": 50 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
       {
@@ -1047,7 +1046,7 @@
         "cooldown": 60,
         "move_cost": 200,
         "gun_type": "rm11b_sniper_rifle",
-        "ammo_type": "8mm_caseless",
+        "ammo_type": "8mm_hvp",
         "fake_skills": [ [ "gun", 10 ], [ "rifle", 10 ] ],
         "fake_dex": 10,
         "fake_per": 12,
