@@ -493,6 +493,11 @@
   },
   {
     "type": "vehicle_group",
+    "id": "hover_military_vehicles",
+    "vehicles": [ [ "tank_xm_hover", 30 ], [ "xapc_hover", 40 ] ]
+  },
+  {
+    "type": "vehicle_group",
     "id": "military_decoy_vehicles",
     "vehicles": [ [ "whillys_mb", 50 ], [ "4x4_car", 50 ] ]
   },

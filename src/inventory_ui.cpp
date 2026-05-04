@@ -1954,6 +1954,8 @@ item *inventory_pick_selector::execute()
             }
         } else if( input.action == "INVENTORY_FILTER" ) {
             set_filter();
+        } else if( handle_action( input.action ) ) {
+            return nullptr;
         } else {
             on_input( input );
         }

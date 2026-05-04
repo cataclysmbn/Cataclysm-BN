@@ -4652,6 +4652,7 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
         const std::string &tname = t.id().str();
         if( here.check_seen_cache( p ) ) {
             if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
+                g->u.memorize_tile( here.getabs( p ), tname, subtile, rotation );
                 g->u.memorize_terrain_tile( here.getabs( p ), tname, subtile, rotation );
             } else {
                 g->u.clear_memorized_tile( here.getabs( p ) );

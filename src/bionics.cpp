@@ -2286,13 +2286,6 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
 
     int chance_of_success = bionic_manip_cos( adjusted_skill, difficulty + 2 );
 
-    // Surgery is imminent, retract claws or blade if active
-    for( bionic &bio : *installer.my_bionics ) {
-        if( bio.powered && bio.info().has_flag( flag_BIONIC_WEAPON ) ) {
-            installer.deactivate_bionic( bio );
-        }
-    }
-
     int success = chance_of_success - rng( 1, 100 );
     if( installer.has_trait( trait_DEBUG_BIONICS ) ) {
         perform_uninstall( b_id, difficulty, success, b_id->capacity, pl_skill );
@@ -2912,17 +2905,15 @@ void Character::remove_bionic( const bionic_id &b )
     std::set<spell_id> cbm_spells;
     std::set<bionic_id> removed_bionics;
     for( bionic &i : *my_bionics ) {
-        if( b == i.id && !removed_bionics.contains( i.id ) ) {
-            const units::energy pow_up = i.id->capacity;
-            mod_max_power_level( -1 * pow_up );
-            removed_bionics.emplace( i.id );
-            continue;
-        }
 
-        // Linked bionics: if either is removed, the other is removed as well.
-        if( ( b->is_included( i.id ) || i.id->is_included( b ) ) && !removed_bionics.contains( i.id ) ) {
+        // Remove the specified bionic and any linked bionics
+        if( ( b == i.id || b->is_included( i.id ) || i.id->is_included( b ) ) &&
+            !removed_bionics.contains( i.id ) ) {
             const units::energy pow_up = i.id->capacity;
             mod_max_power_level( -1 * pow_up );
+            if( i.powered ) {
+                deactivate_bionic( i, true );
+            }
             removed_bionics.emplace( i.id );
             continue;
         }
@@ -2931,7 +2922,7 @@ void Character::remove_bionic( const bionic_id &b )
             cbm_spells.emplace( spell_pair.first );
         }
 
-        new_my_bionics.push_back( bionic( i.id, i.invlet ) );
+        new_my_bionics.push_back( i );
     }
 
     // any spells you learn from installing a bionic you forget.

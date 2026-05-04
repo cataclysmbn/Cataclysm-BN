@@ -1421,6 +1421,7 @@ auto process_fields_in_submap( submap &sm,
             if( !is_newborn && cur.gas_can_spread() ) {
                 const auto gas_pct = cur_fd_type.percent_spread;
                 if( gas_pct > 0 && cur.get_field_intensity() > 1 &&
+                    !sm.floor_cache[local.x()][local.y()] &&
                     rng( 1, 100 ) <= gas_pct ) {
                     // Try to fall first.
                     auto spread_done = false;

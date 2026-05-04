@@ -24,7 +24,7 @@
     "autolearn": true,
     "tools": [ [ [ "water_purifier", 1 ], [ "pur_tablets", 1 ], [ "char_purifier", 1 ] ] ],
     "components": [ [ [ "water", 8 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "type": "recipe",
@@ -34,7 +34,7 @@
     "skill_used": "cooking",
     "time": "4 m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "protein_powder", 1 ] ], [ [ "water_clean", 1 ] ] ]
   },
   {
@@ -45,6 +45,7 @@
     "skill_used": "cooking",
     "time": "4 m",
     "autolearn": true,
+    "flags": [ "BLIND_NO_EFFECT" ],
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [
       [ [ "protein_powder", 1 ] ],
@@ -299,6 +300,7 @@
     "skill_used": "cooking",
     "time": "6 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "batch_time_factors": [ 80, 5 ],
     "tools": [ [ [ "atomic_coffeepot", -1 ] ] ],
     "components": [ [ [ "coffee_raw", 1 ] ], [ [ "water", 1 ], [ "water_clean", 1 ] ] ]
@@ -327,6 +329,7 @@
     "skill_used": "cooking",
     "difficulty": 1,
     "time": "15 m",
+    "flags": [ "BLIND_NO_EFFECT" ],
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
     "tools": [ [ [ "rag", -1 ] ], [ [ "mortar_pestle", -1 ] ] ],
     "autolearn": true,
@@ -343,6 +346,7 @@
     "skill_used": "cooking",
     "difficulty": 1,
     "time": "9 m",
+    "flags": [ "BLIND_NO_EFFECT" ],
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
     "tools": [ [ [ "food_processor", 20 ] ], [ [ "rag", -1 ] ] ],
     "autolearn": true,
@@ -357,6 +361,7 @@
     "skill_used": "cooking",
     "difficulty": 1,
     "time": "13 m",
+    "flags": [ "BLIND_NO_EFFECT" ],
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
     "tools": [ [ [ "food_processor", 20 ] ], [ [ "rag", -1 ] ], [ [ "surface_heat", 10, "LIST" ] ] ],
     "autolearn": true,
@@ -385,6 +390,7 @@
     "skill_used": "cooking",
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "milk_powder", 1 ] ], [ [ "water_clean", 1 ] ] ]
   },
   {
@@ -397,6 +403,7 @@
     "skill_used": "cooking",
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "con_milk", 5 ] ], [ [ "water_clean", 3 ] ] ]
   },
   {
@@ -409,6 +416,7 @@
     "skill_used": "cooking",
     "difficulty": 1,
     "time": "15 m",
+    "flags": [ "BLIND_EASY" ],
     "book_learn": [ [ "manual_sealing", 1 ] ],
     "qualities": [ { "id": "CONTAIN", "level": 1 }, { "id": "CUT", "level": 1 } ],
     "tools": [ [ [ "rag", -1 ] ] ],
@@ -442,6 +450,7 @@
     "difficulty": 2,
     "time": "7 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CONTAIN", "level": 1 } ],
     "tools": [ [ [ "rag", -1 ] ] ],
     "components": [ [ [ "irradiated_apple", 2 ], [ "apple", 2 ] ] ]
@@ -456,6 +465,7 @@
     "difficulty": 1,
     "time": "5 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CONTAIN", "level": 1 } ],
     "components": [ [ [ "irradiated_lemon", 1 ], [ "lemon", 1 ] ], [ [ "sugar", 10 ] ], [ [ "water_clean", 1 ] ] ]
   },
@@ -468,6 +478,7 @@
     "skill_used": "cooking",
     "time": "30 s",
     "autolearn": true,
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "lemonade_powder", 1 ] ], [ [ "water_clean", 1 ] ] ]
   },
   {
@@ -480,7 +491,7 @@
     "difficulty": 1,
     "time": "30 s",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "orangesoda", 1 ] ], [ [ "cola", 1 ] ] ]
   },
   {
@@ -493,7 +504,7 @@
     "difficulty": 1,
     "time": "30 s",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "lemonlime", 1 ] ], [ [ "cranberry_juice", 1 ] ] ]
   },
   {
@@ -514,7 +525,7 @@
     "time": "1h15m",
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [
       [ [ "lemon", 1 ], [ "irradiated_lemon", 1 ], [ "lemonade_powder", 1 ] ],
       [ [ "sugar", 33 ] ],
@@ -532,7 +543,7 @@
     "difficulty": 1,
     "time": "1m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "lemonlime_syrup", 1 ], [ "water_clean", 5 ] ] ]
   },
   {
@@ -553,7 +564,7 @@
     "time": "1h15m",
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "orange", 2 ], [ "irradiated_orange", 2 ], [ "oj", 1 ] ], [ [ "sugar", 33 ] ], [ [ "water_clean", 10 ] ] ]
   },
   {
@@ -567,7 +578,7 @@
     "difficulty": 1,
     "time": "1m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "orangesoda_syrup", 1 ] ], [ [ "water_clean", 5 ] ] ]
   },
   {
@@ -588,7 +599,6 @@
     "time": "1h15m",
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [ [ [ "coca_leaf", 1 ] ], [ [ "caffeine", 1 ], [ "coca_leaf", 1 ] ], [ [ "sugar", 31 ] ], [ [ "water_clean", 10 ] ] ]
   },
   {
@@ -602,7 +612,7 @@
     "difficulty": 1,
     "time": "1m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "cola_syrup", 1 ] ], [ [ "water_clean", 5 ] ] ]
   },
   {
@@ -622,7 +632,7 @@
     "difficulty": 1,
     "time": "1m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "colamdew_syrup", 1 ] ], [ [ "water_clean", 5 ] ] ]
   },
   {
@@ -643,7 +653,6 @@
     "time": "1h15m",
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [
       [ [ "caffeine", 2 ] ],
       [ [ "lemon", 1 ], [ "irradiated_lemon", 1 ], [ "lemonade_powder", 1 ] ],
@@ -662,7 +671,7 @@
     "difficulty": 1,
     "time": "1m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "energy_drink_syrup", 1 ] ], [ [ "water_clean", 5 ] ] ]
   },
   {
@@ -678,7 +687,6 @@
     "time": "1h15m",
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [ [ [ "caffeine", 3 ] ], [ [ "sugar", 50 ] ], [ [ "water_clean", 10 ] ] ]
   },
   {
@@ -693,7 +701,7 @@
     "time": "1m",
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "energy_drink_atomic_syrup", 1 ] ], [ [ "water_clean", 5 ] ] ]
   },
   {
@@ -714,7 +722,6 @@
     "time": "1h15m",
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [ [ [ "caffeine", 3 ] ], [ [ "sugar", 50 ] ], [ [ "water_clean", 10 ] ] ]
   },
   {
@@ -744,7 +751,7 @@
     "difficulty": 1,
     "time": "1m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "purple_drink_syrup", 1 ] ], [ [ "water_clean", 5 ] ] ]
   },
   {
@@ -780,7 +787,7 @@
     "difficulty": 1,
     "time": "1m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "rootbeer_syrup", 1 ] ], [ [ "water_clean", 5 ] ] ]
   },
   {
@@ -805,7 +812,6 @@
     "time": "1m",
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [ [ [ "creamsoda_syrup", 1 ] ], [ [ "water_clean", 5 ] ] ]
   },
   {
@@ -825,7 +831,7 @@
     "difficulty": 1,
     "time": "1h15m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "ghee", 1 ] ], [ [ "hickory_root", 1 ] ], [ [ "sugar", 40 ] ], [ [ "water_clean", 10 ] ] ]
   },
   {
@@ -840,7 +846,7 @@
     "difficulty": 1,
     "time": "1m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "pine_tea", 1 ] ], [ [ "sugar", 4 ] ] ]
   },
   {
@@ -855,7 +861,7 @@
     "difficulty": 5,
     "time": "1m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "drink_sewerbrew", 1 ] ], [ [ "sugar", 8 ] ] ]
   },
   {
@@ -868,6 +874,7 @@
     "difficulty": 1,
     "time": "30 s",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "components": [
       [ [ "creamsoda", 1 ] ],
       [ [ "purple_drink", 1 ] ],
@@ -940,7 +947,6 @@
     "difficulty": 1,
     "time": "7 m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [
       [ [ "cola", 1 ] ],
       [ [ "vodka", 1 ] ],
@@ -959,7 +965,7 @@
     "difficulty": 1,
     "time": "30 s",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "oj", 1 ] ], [ [ "vodka", 1 ] ] ]
   },
   {
@@ -971,7 +977,7 @@
     "difficulty": 1,
     "time": "30 s",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "apple_cider", 1 ] ], [ [ "vodka", 1 ] ] ]
   },
   {
@@ -983,7 +989,7 @@
     "difficulty": 1,
     "time": "30 s",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [ [ [ "rum", 1 ] ], [ [ "cola", 1 ] ] ]
   },
   {
@@ -1059,7 +1065,6 @@
     "skill_used": "cooking",
     "time": "1 s",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [ [ [ "chem_ethanol", 125 ] ], [ [ "water", 1 ], [ "water_clean", 1 ] ] ]
   },
   {
@@ -1176,6 +1181,7 @@
     "difficulty": 1,
     "time": "3 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CONTAIN", "level": 1 } ],
     "tools": [ [ [ "rag", -1 ] ] ],
     "components": [ [ [ "sweet_fruit", 1, "LIST" ] ], [ [ "water_clean", 1 ] ] ]
@@ -1191,6 +1197,7 @@
     "difficulty": 1,
     "time": "5 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CONTAIN", "level": 1 } ],
     "tools": [ [ [ "rag", -1 ] ] ],
     "components": [ [ [ "sweet_fruit", 2, "LIST" ] ] ]
@@ -1203,7 +1210,7 @@
     "skill_used": "cooking",
     "time": "1 m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "components": [
       [ [ "water_clean", 1 ] ],
       [
@@ -1266,6 +1273,7 @@
     "skill_used": "cooking",
     "time": "6 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "batch_time_factors": [ 83, 5 ],
     "tools": [ [ [ "atomic_coffeepot", -1 ] ] ],
     "components": [ [ [ "coffee_raw", 1 ] ], [ [ "milk_substitute_standard", 1, "LIST" ] ], [ [ "water", 1 ], [ "water_clean", 1 ] ] ]
@@ -1326,6 +1334,7 @@
     "skill_used": "cooking",
     "time": "6 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "batch_time_factors": [ 80, 5 ],
     "tools": [ [ [ "atomic_coffeepot", -1 ] ] ],
     "components": [ [ [ "coffee_raw", 1 ] ], [ [ "water", 1 ], [ "water_clean", 1 ] ], [ [ "beverage_sweetener", 1, "LIST" ] ] ]
@@ -1340,6 +1349,7 @@
     "time": "6 m",
     "autolearn": true,
     "batch_time_factors": [ 80, 5 ],
+    "flags": [ "BLIND_EASY" ],
     "tools": [ [ [ "atomic_coffeepot", -1 ] ] ],
     "components": [ [ [ "coffee_syrup", 1 ] ], [ [ "water", 1 ], [ "water_clean", 1 ] ] ]
   },
@@ -1396,6 +1406,7 @@
     "skill_used": "cooking",
     "time": "6 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "batch_time_factors": [ 80, 5 ],
     "tools": [ [ [ "atomic_coffeepot", -1 ] ] ],
     "components": [
@@ -1414,6 +1425,7 @@
     "skill_used": "cooking",
     "time": "6 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "batch_time_factors": [ 80, 5 ],
     "tools": [ [ [ "atomic_coffeepot", -1 ] ] ],
     "components": [ [ [ "coffee_syrup", 1 ] ], [ [ "milk_substitute_standard", 1, "LIST" ] ], [ [ "water", 1 ], [ "water_clean", 1 ] ] ]
@@ -1469,7 +1481,6 @@
     "difficulty": 1,
     "time": "3 m",
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [ [ [ "lemon", 1 ], [ "irradiated_lemon", 1 ] ], [ [ "whiskey", 3 ], [ "single_malt_whiskey", 3 ] ] ]
   },
   {
@@ -1492,7 +1503,6 @@
     "time": "3 m",
     "charges": 5,
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [
       [ [ "bum_wine", 2 ], [ "wine_cabernet", 2 ], [ "wine_chardonnay", 2 ], [ "wine_noir", 2 ], [ "wine_vermouth", 2 ] ],
       [ [ "cola", 1 ] ]
@@ -1508,7 +1518,6 @@
     "time": "4 m",
     "charges": 15,
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
     "components": [
       [ [ "oj", 1 ], [ "lemonade", 1 ], [ "apple_cider", 1 ], [ "cranberry_juice", 1 ], [ "juice", 1 ] ],
       [ [ "weak_liquor", 1, "LIST" ] ],
@@ -1639,6 +1648,7 @@
     "book_learn": [ [ "textbook_firstaid", 1 ], [ "manual_survival", 1 ], [ "manual_first_aid", 1 ] ],
     "skill_used": "cooking",
     "time": "3 m",
+    "flags": [ "BLIND_EASY" ],
     "charges": 8,
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
     "components": [ [ [ "sugar", 10 ] ], [ [ "salt", 1 ] ], [ [ "water_clean", 8 ] ] ],
@@ -1745,6 +1755,7 @@
     "difficulty": 1,
     "time": "5 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CONTAIN", "level": 1 } ],
     "tools": [ [ [ "rag", -1 ] ] ],
     "components": [ [ [ "cranberries", 2 ] ] ]
@@ -1759,6 +1770,7 @@
     "difficulty": 1,
     "time": "5 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CONTAIN", "level": 1 } ],
     "tools": [ [ [ "rag", -1 ] ] ],
     "components": [ [ [ "orange", 2 ] ] ]
