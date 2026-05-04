@@ -11,6 +11,8 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
+static constexpr RGBColor RGB_NO_COLOR = TILESET_NO_COLOR;
+
 auto cata_tiles::get_overmap_color(
     const overmapbuffer &, const tripoint_abs_omt & ) -> color_tint_pair
 {
@@ -61,7 +63,7 @@ auto cata_tiles::get_item_color(
 {
     if( i.has_var( TINT_COLOR_VAR_NAME ) || i.has_var( TINT_COLOR_FG_VAR_NAME ) ||
         i.has_var( TINT_COLOR_BG_VAR_NAME ) ) {
-        const auto col = i.get_var<RGBColor>( TINT_COLOR_VAR_NAME, TILESET_NO_COLOR );
+        const auto col = i.get_var<RGBColor>( TINT_COLOR_VAR_NAME, RGB_NO_COLOR );
         const auto col_bg = i.get_var<RGBColor>( TINT_COLOR_BG_VAR_NAME, col );
         const auto col_fg = i.get_var<RGBColor>( TINT_COLOR_FG_VAR_NAME, col );
 
@@ -74,7 +76,7 @@ auto cata_tiles::get_item_color(
         const auto contrast = i.get_var<float>( TINT_CONTRAST_VAR_NAME, 1.0f );
         const auto brightness = i.get_var<float>( TINT_BRIGHTNESS_VAR_NAME, 1.0f );
 
-        if( col_bg != TILESET_NO_COLOR ) {
+        if( col_bg != RGB_NO_COLOR ) {
             bg_tint.color = col_bg;
             bg_tint.blend_mode = blend_mode;
             bg_tint.saturation = saturation;
@@ -82,7 +84,7 @@ auto cata_tiles::get_item_color(
             bg_tint.brightness = brightness;
         }
 
-        if( col_fg != TILESET_NO_COLOR ) {
+        if( col_fg != RGB_NO_COLOR ) {
             fg_tint.color = col_fg;
             fg_tint.blend_mode = blend_mode;
             fg_tint.saturation = saturation;

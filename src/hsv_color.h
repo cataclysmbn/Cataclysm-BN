@@ -17,11 +17,12 @@ struct RGBColor {
     uint8_t b;
     uint8_t a;
 
-    RGBColor() = default;
-    RGBColor( const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a ) : r{r}, g{g}, b{b}, a{a} {}
+    constexpr RGBColor() = default;
+    constexpr RGBColor( const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a ) : r{r}, g{g},
+        b{b}, a{a} {}
 #if defined(TILES)
-    RGBColor( const SDL_Color &c ) : r( c.r ), g( c.g ), b( c.b ), a( c.a ) {}
-    operator SDL_Color() const {
+    constexpr RGBColor( const SDL_Color &c ) : r( c.r ), g( c.g ), b( c.b ), a( c.a ) {}
+    constexpr operator SDL_Color() const {
         return SDL_Color{ r, g, b, a };
     }
 #endif
