@@ -1734,7 +1734,7 @@
             "fg": 438,
             "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 889 } ], "fg": 439 } ],
             "masks": [ { "type": "tint", "fg": 888 } ]
-          },
+          }
         ]
       }
     ]
