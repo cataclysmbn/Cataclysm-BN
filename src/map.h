@@ -2412,7 +2412,7 @@ class map : public submap_load_listener
         // forces a seen_cache rebuild regardless of whether the player moved.
         tripoint_bub_ms m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
 
-        // State for the directional sunlight system.  Rebuilt once per in-game hour by
+        // State for the directional sunlight system.  Rebuilt once per absolute in-game hour by
         // update_solar_params() and build_angled_sunlight_cache().
         struct solar_params {
             // Sun ray horizontal displacement per z-level.
@@ -2423,7 +2423,7 @@ class map : public submap_load_listener
             float dy_per_z     = 0.f;
             // False at night; true for all daylight hours (day/night boundary only).
             bool  direct_active  = false;
-            // Game-hour when the cache was last rebuilt; -1 forces a rebuild on first use.
+            // Absolute game-hour when the cache was last rebuilt; -1 forces a rebuild on first use.
             int   last_built_hour = -1;
         };
         solar_params m_solar;
