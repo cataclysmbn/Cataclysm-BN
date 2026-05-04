@@ -5,15 +5,18 @@
     "palette": [ {
       "fuzzy_ids": [ "board", "windshield", "door", "roof" ],
       "colors": [
-        { "color": "!white", "weight": 24 },
-        { "color": "!silver", "weight": 24 },
-        { "color": "!gray", "weight": 24 },
-        { "color": "!black", "weight": 24 },
-        { "color": "!blue", "weight": 24 },
-        { "color": "!red", "weight": 24 },
+        { "color": "!white", "weight": 8 },
+        { "color": "!silver", "weight": 8 },
+        { "color": "!gray", "weight": 8 },
+        { "color": "!black", "weight": 8 },
+        { "color": "!beige", "weight": 12 },
+        { "color": "!blue", "weight": 18 },
+        { "color": "!red", "weight": 18 },
+        { "color": "!orange", "weight": 4 },
+        { "color": "!yellow", "weight": 4 },
         { "color": "!green", "weight": 4 },
-        { "color": "!pink", "weight": 2 },
-        { "color": "!purple", "weight": 2 },
+        { "color": "!pink", "weight": 4 },
+        { "color": "!purple", "weight": 4 },
       ]
     } ]
   },
