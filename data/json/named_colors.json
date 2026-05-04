@@ -1,5 +1,11 @@
 [
   {
+    "//": "Custom",
+    "type": "named_color",
+    "name": "Cataclysm Red",
+    "value": "#622625"
+  },
+  {
     "//": "RAL Classic",
     "type": "named_color",
     "name": "Green beige",

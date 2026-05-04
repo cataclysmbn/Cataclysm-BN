@@ -46,13 +46,14 @@ void VehiclePalette::load( const JsonObject &jo )
 {
     VehiclePalette &palette = vehicle_color_palettes[vpalette_id( jo.get_string( "id" ) )];
 
+    palette.id = vpalette_id( jo.get_string( "id" ) );
     for( const JsonObject obj : jo.get_array( "palette" ) ) {
         for( const std::string &id : obj.get_string_array( "fuzzy_ids" ) ) {
             palette.fuzzy_color_match[id] = palette.colors.size();
         }
-        auto weights = weighted_int_list<RGBColor>();
+        auto weights = weighted_int_list<std::string>();
         for( const JsonObject col : obj.get_array( "colors" ) ) {
-            weights.add( rgb_from_hex_string( col.get_string( "color" ) ), col.get_int( "weight" ) );
+            weights.add( col.get_string( "color" ), col.get_int( "weight" ) );
         }
         palette.colors.push_back( weights );
     }
@@ -72,7 +73,13 @@ std::vector<RGBColor> VehiclePalette::pick_colors() const
 {
     std::vector<RGBColor> result;
     for( const auto &colorlist : colors ) {
-        result.push_back( *colorlist.pick() );
+        std::string colorstr = *colorlist.pick();
+        std::optional<RGBColor> color = RGBColor::try_parse( colorstr );
+        if( color ) {
+            result.push_back( *color );
+        } else {
+            debugmsg( "Invalid Color %s in Vehicle Palette %s", colorstr, id );
+        }
     }
     return result;
 }
