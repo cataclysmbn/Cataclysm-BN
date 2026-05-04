@@ -37,6 +37,7 @@
 #include "units_utility.h"
 #include "value_ptr.h"
 #include "vehicle.h"
+#include "vehicle_palette.h"
 #include "vehicle_part.h"
 #include "vehicle_group.h"
 #include "weighted_list.h"
@@ -1110,11 +1111,6 @@ void vehicle_prototype::load( const JsonObject &jo )
 
     vgroups[vgroup_id( jo.get_string( "id" ) )].add_vehicle( vproto_id( jo.get_string( "id" ) ), 100 );
 
-    VehiclePalette palette;
-    std::map<std::string, int> color_to_id;
-    std::map<std::string, int> fuzzy_color_match;
-    std::vector<weighted_int_list<RGBColor>> colors;
-
     const auto add_part_obj = [&]( const JsonObject & part, point pos ) {
         part_def pt;
         pt.pos = pos;
@@ -1124,13 +1120,6 @@ void vehicle_prototype::load( const JsonObject &jo )
         assign( part, "ammo_types", pt.ammo_types, true );
         assign( part, "ammo_qty", pt.ammo_qty, true, 0 );
         assign( part, "fuel", pt.fuel, true );
-        color_to_id[pt.part.str()] = palette.fuzzy_to_index( pt.part );
-        for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
-            if( pt.part.str().contains( fuzzy ) || pt.part.str() == fuzzy ) {
-                color_to_id[pt.part.str()] = index;
-                break;
-            }
-        }
 
         vproto.parts.push_back( pt );
     };
@@ -1140,12 +1129,6 @@ void vehicle_prototype::load( const JsonObject &jo )
         pt.pos = pos;
         pt.part = vpart_id( part );
         vproto.parts.push_back( pt );
-        for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
-            if( pt.part.str().contains( fuzzy ) || pt.part.str() == fuzzy ) {
-                color_to_id[pt.part.str()] = index;
-                break;
-            }
-        }
     };
 
     if( jo.has_member( "flags" ) ) {
@@ -1153,16 +1136,7 @@ void vehicle_prototype::load( const JsonObject &jo )
     }
 
     if( jo.has_member( "color_palette" ) ) {
-        for( const JsonObject obj : jo.get_array( "color_palette" ) ) {
-            for( const std::string &id : obj.get_string_array( "fuzzy_ids" ) ) {
-                fuzzy_color_match[id] = colors.size();
-            }
-            auto weights = weighted_int_list<RGBColor>();
-            for( const JsonObject col : obj.get_array( "colors" ) ) {
-                weights.add( rgb_from_hex_string( col.get_string( "color" ) ), col.get_int( "weight" ) );
-            }
-            colors.push_back( weights );
-        }
+        vproto.color_palette = vpalette_id( jo.get_string( "color_palette" ) );
     }
 
     if( jo.has_member( "blueprint" ) ) {
@@ -1177,12 +1151,6 @@ void vehicle_prototype::load( const JsonObject &jo )
                     part_def pt;
                     if( part.test_string() ) {
                         pt.part = vpart_id( part.get_string() );
-                        for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
-                            if( pt.part.str().contains( fuzzy ) || pt.part.str() == fuzzy ) {
-                                color_to_id[pt.part.str()] = index;
-                                break;
-                            }
-                        }
                     } else {
                         JsonObject realpart = part.get_object();
                         pt.part = vpart_id( realpart.get_string( "part" ) );
@@ -1190,12 +1158,6 @@ void vehicle_prototype::load( const JsonObject &jo )
                         assign( realpart, "ammo_types", pt.ammo_types, true );
                         assign( realpart, "ammo_qty", pt.ammo_qty, true, 0 );
                         assign( realpart, "fuel", pt.fuel, true );
-                        for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
-                            if( realpart.get_string( "part" ).contains( fuzzy ) || pt.part.str() == fuzzy ) {
-                                color_to_id[pt.part.str()] = index;
-                                break;
-                            }
-                        }
                     }
                     if( !veh_palette.contains( character.first ) ) {
                         veh_palette[character.first] = { pt };
@@ -1277,8 +1239,6 @@ void vehicle_prototype::load( const JsonObject &jo )
         }
         vproto.item_spawns.push_back( std::move( next_spawn ) );
     }
-    vproto.color_match = color_to_id;
-    vproto.colors = colors;
 }
 
 void vehicle_prototype::reset()
@@ -1306,6 +1266,12 @@ void vehicle_prototype::finalize()
 
         blueprint.suspend_refresh();
         for( auto &pt : proto.parts ) {
+            if( proto.color_palette.is_valid() && !proto.color_match.contains( pt.part.str() ) ) {
+                int index = proto.color_palette->fuzzy_to_index( pt.part );
+                if( index != -1 ) {
+                    proto.color_match[pt.part.str()] = index;
+                }
+            }
             const itype *base = &*pt.part->item;
 
             if( !pt.part.is_valid() ) {

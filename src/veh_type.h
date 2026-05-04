@@ -444,7 +444,7 @@ struct vehicle_prototype {
 
     std::map<std::string, int> color_match;
 
-    std::vector<weighted_int_list<RGBColor>> colors;
+    vpalette_id color_palette;
 
     std::unique_ptr<vehicle> blueprint;
 

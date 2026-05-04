@@ -98,12 +98,6 @@
       " OOO->OOOOOOOOO ",
       "  OOOOOOOOOOOO "
     ],
-    "color_palette": [
-      {
-        "fuzzy_ids": [ "balloon", "board", "windshield" ],
-        "colors": [ { "color": "#800080", "weight": 100 }, { "color": "#000088", "weight": 100 } ]
-      },
-    ],
     "blueprint_origin": { "x": 10, "y": 3 },
     "palette": { "O": [ "airship_balloon_external" ] },
     "parts": [
@@ -859,12 +853,7 @@
       "  |b#      ",
       "  |(       "
     ],
-    "color_palette": [
-      {
-        "fuzzy_ids": [ "carbon", "windshield", "door" ],
-        "colors": [ { "color": "#3f4535", "weight": 100 }, { "color": "#111111", "weight": 100 }, { "color": "#800080", "weight": 100 } ]
-      }
-    ],
+    "color_palette": "fighter_standard",
     "blueprint_origin": { "x": 8, "y": 3 },
     "palette": {
       "-": [ "xlframe_vertical", "carbon_halfboard_vertical" ],

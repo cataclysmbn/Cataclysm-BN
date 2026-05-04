@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "debug.h"
+#include "game_constants.h"
 #include "hsv_color.h"
 #include "json.h"
 #include "map.h"
@@ -21,19 +22,24 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
-std::unordered_map<vpalette_id, VehiclePalette> vehicle_color_palettes;
-
 /** @relates string_id */
 template<>
-const VehicleGroup &string_id<VehicleGroup>::obj() const
+const VehiclePalette &string_id<VehiclePalette>::obj() const
 {
     const auto iter = vehicle_color_palettes.find( *this );
-    if( iter == vgroups.end() ) {
+    if( iter == vehicle_color_palettes.end() ) {
         debugmsg( "invalid vehicle color palette id %s", c_str() );
         static const VehiclePalette dummy{};
         return dummy;
     }
     return iter->second;
+}
+
+/** @relates string_id */
+template<>
+bool string_id<VehiclePalette>::is_valid() const
+{
+    return vehicle_color_palettes.contains( *this );
 }
 
 void VehiclePalette::load( const JsonObject &jo )
@@ -42,13 +48,13 @@ void VehiclePalette::load( const JsonObject &jo )
 
     for( const JsonObject obj : jo.get_array( "palette" ) ) {
         for( const std::string &id : obj.get_string_array( "fuzzy_ids" ) ) {
-            fuzzy_color_match[id] = colors.size();
+            palette.fuzzy_color_match[id] = palette.colors.size();
         }
         auto weights = weighted_int_list<RGBColor>();
         for( const JsonObject col : obj.get_array( "colors" ) ) {
             weights.add( rgb_from_hex_string( col.get_string( "color" ) ), col.get_int( "weight" ) );
         }
-        colors.push_back( weights );
+        palette.colors.push_back( weights );
     }
 }
 
@@ -59,13 +65,19 @@ int VehiclePalette::fuzzy_to_index( const vpart_id &id ) const
             return index;
         }
     }
+    return -1;
 }
 
-std::vector<RGBColor> pick_colors( const int index ) const
+std::vector<RGBColor> VehiclePalette::pick_colors() const
 {
-    
+    std::vector<RGBColor> result;
+    for( const auto &colorlist : colors ) {
+        result.push_back( *colorlist.pick() );
+    }
+    return result;
 }
-void VehicleGroup::reset()
+
+void VehiclePalette::reset()
 {
     vgroups.clear();
 }

@@ -72,6 +72,7 @@
 #include "translations.h"
 #include "units_utility.h"
 #include "veh_type.h"
+#include "vehicle_palette.h"
 #include "vehicle_functions.h"
 #include "weather.h"
 #include "ui.h"
@@ -401,15 +402,14 @@ vehicle::vehicle(
         // Copy the already made vehicle. The blueprint is created when the json data is loaded
         // and is guaranteed to be valid (has valid parts etc.).
         copy_static_from( *proto.blueprint );
-        std::vector<RGBColor> colors;
-        for( auto &weighted_colors : proto.colors ) {
-            colors.push_back( *weighted_colors.pick() );
-        }
-        for( vehicle_part &part : proto.blueprint->parts ) {
-            parts.emplace_back( part, this );
-            auto &real_part = parts.back();
-            if( !real_part.part_color && proto.color_match.contains( real_part.id.str() ) ) {
-                real_part.part_color = colors.at( proto.color_match.at( real_part.id.str() ) );
+        if( proto.color_palette.is_valid() ) {
+            std::vector<RGBColor> colors = proto.color_palette->pick_colors();
+            for( vehicle_part &part : proto.blueprint->parts ) {
+                parts.emplace_back( part, this );
+                auto &real_part = parts.back();
+                if( !real_part.part_color && proto.color_match.contains( real_part.id.str() ) ) {
+                    real_part.part_color = colors.at( proto.color_match.at( real_part.id.str() ) );
+                }
             }
         }
         refresh_locations_hack();

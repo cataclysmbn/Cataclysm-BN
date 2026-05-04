@@ -107,6 +107,7 @@
 #include "type_id.h"
 #include "veh_type.h"
 #include "vehicle_group.h"
+#include "vehicle_palette.h"
 #include "vitamin.h"
 #include "weather.h"
 #include "weather_type.h"
@@ -310,6 +311,7 @@ void DynamicDataLoader::initialize()
     } );
 
     add( "vehicle_part",  &vpart_info::load );
+    add( "vehicle_color_palette",  &VehiclePalette::load );
     add( "vehicle",  &vehicle_prototype::load );
     add( "vehicle_group",  &VehicleGroup::load );
     add( "vehicle_placement",  &VehiclePlacement::load );
@@ -637,6 +639,7 @@ void DynamicDataLoader::unload_data()
     trap::reset();
     unload_talk_topics();
     VehicleGroup::reset();
+    VehiclePalette::reset();
     VehiclePlacement::reset();
     VehicleSpawn::reset();
     vitamin::reset();

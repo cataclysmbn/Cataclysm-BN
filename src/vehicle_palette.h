@@ -15,7 +15,7 @@
 #include "weighted_list.h"
 #include "units_angle.h"
 
-extern std::unordered_map<string_id<VehiclePalette>, VehiclePalette> vehicle_color_palettes;
+static std::unordered_map<vpalette_id, VehiclePalette> vehicle_color_palettes;
 
 /**
  *  This class is used for random vehicle color choices
@@ -25,11 +25,13 @@ class VehiclePalette
     public:
         VehiclePalette() = default;
 
-        void load( const JsonObject &jo );
+        static void load( const JsonObject &jo );
+
+        static void reset();
 
         int fuzzy_to_index( const vpart_id &id ) const;
 
-        std::vector<RGBColor> pick_colors( const int index ) const;
+        std::vector<RGBColor> pick_colors() const;
 
     private:
         std::vector<weighted_int_list<RGBColor>> colors;
