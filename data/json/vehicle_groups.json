@@ -329,6 +329,37 @@
   },
   {
     "type": "vehicle_group",
+    "id": "suburban_home_compact",
+    "//": "A more compact version of suburban_home. Do not add vehicles that are longer than 6 tiles.",
+    "vehicles": [
+      [ "car", 1000 ],
+      [ "sedan", 1000 ],
+      [ "car_anmlcmpt", 150 ],
+      [ "car_hatch", 500 ],
+      [ "car_mini", 250 ],
+      [ "electric_car", 400 ],
+      [ "electric_sedan", 400 ],
+      [ "beetle", 300 ],
+      [ "muscle_car", 300 ],
+      [ "car_sports", 100 ],
+      [ "car_sports_electric", 50 ],
+      [ "car_racing_electric", 5 ],
+      [ "superbike", 50 ],
+      [ "motorcycle", 200 ],
+      [ "motorcycle_cross", 25 ],
+      [ "motorcycle_enduro", 50 ],
+      [ "motorcycle_sidecart", 100 ],
+      [ "scooter", 100 ],
+      [ "scooter_electric", 100 ],
+      [ "portable_generator", 50 ],
+      [ "bicycle", 200 ],
+      [ "bicycle_dirt", 150 ],
+      [ "bicycle_electric", 100 ],
+      [ "tricycle", 5 ]
+    ]
+  },
+  {
+    "type": "vehicle_group",
     "id": "dirtlot",
     "vehicles": [
       [ "quad_bike", 100 ],
