@@ -1110,6 +1110,7 @@ void vehicle_prototype::load( const JsonObject &jo )
 
     vgroups[vgroup_id( jo.get_string( "id" ) )].add_vehicle( vproto_id( jo.get_string( "id" ) ), 100 );
 
+    VehiclePalette palette;
     std::map<std::string, int> color_to_id;
     std::map<std::string, int> fuzzy_color_match;
     std::vector<weighted_int_list<RGBColor>> colors;
@@ -1123,6 +1124,7 @@ void vehicle_prototype::load( const JsonObject &jo )
         assign( part, "ammo_types", pt.ammo_types, true );
         assign( part, "ammo_qty", pt.ammo_qty, true, 0 );
         assign( part, "fuel", pt.fuel, true );
+        color_to_id[pt.part.str()] = palette.fuzzy_to_index( pt.part );
         for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
             if( pt.part.str().contains( fuzzy ) || pt.part.str() == fuzzy ) {
                 color_to_id[pt.part.str()] = index;
