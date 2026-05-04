@@ -339,7 +339,11 @@
         "y": 1,
         "parts": [ "frame_horizontal_2", "roof", "reclining_seat_leather", "seatbelt", "aisle_lights" ]
       },
-      { "x": 0, "y": 1, "parts": [ "frame_horizontal_2", "roof", "folding_seat", "controls_electronic", "cargo_space" ] },
+      {
+        "x": 0,
+        "y": 1,
+        "parts": [ "frame_horizontal_2", "roof", "folding_seat", "controls_electronic", "cargo_space" ]
+      },
       { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "door_internal" ] },
       {
         "x": 3,
