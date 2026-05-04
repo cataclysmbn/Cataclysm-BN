@@ -33,6 +33,10 @@ struct RGBColor {
     static std::pair<RGBColor, std::string> random_named( std::string fuzzy_match = "" );
 
     std::string friendly_name() const;
+
+    bool operator==(const RGBColor & other) const {
+        return r == other.r && g == other.g && b == other.b && a == other.a;
+    }
 };
 
 struct HSVColor {
