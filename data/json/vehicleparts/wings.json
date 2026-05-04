@@ -27,7 +27,7 @@
       "repair": {
         "skills": [ [ "mechanics", 5 ] ],
         "time": "10 m",
-        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_aluminium", 1 ] ]
+        "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ]
       }
     },
     "flags": [ "WING", "SHOCK_RESISTANT" ],
