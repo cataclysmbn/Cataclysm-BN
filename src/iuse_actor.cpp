@@ -2016,7 +2016,7 @@ int inscribe_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) 
     }
 
     if( choice == 0 ) {
-        const std::optional<tripoint> dest_ = choose_adjacent( _( "Write where?" ) );
+        const auto dest_ = choose_adjacent( _( "Write where?" ) );
         if( !dest_ ) {
             return 0;
         }

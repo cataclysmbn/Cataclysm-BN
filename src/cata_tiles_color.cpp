@@ -24,39 +24,39 @@ auto cata_tiles::get_overmap_color(
 }
 
 auto cata_tiles::get_terrain_color(
-    const ter_t &/*ter*/, const map &, const tripoint & ) -> color_tint_pair
+    const ter_t &/*ter*/, const map &, const tripoint_bub_ms & ) -> color_tint_pair
 {
     // TODO: Add tint handling when terrain vars are implemented
     return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_furniture_color(
-    const furn_t &/*furn*/, const map &, const tripoint & ) -> color_tint_pair
+    const furn_t &/*furn*/, const map &, const tripoint_bub_ms & ) -> color_tint_pair
 {
     // TODO: Add tint handling when furniture vars are implemented
     return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_graffiti_color(
-    const map &, const tripoint & )-> color_tint_pair
+    const map &, const tripoint_bub_ms & )-> color_tint_pair
 {
     return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_trap_color(
-    const trap &, const map &, tripoint ) -> color_tint_pair
+    const trap &, const map &, tripoint_bub_ms ) -> color_tint_pair
 {
     return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_field_color(
-    const field &, const map &, const tripoint & ) -> color_tint_pair
+    const field &, const map &, const tripoint_bub_ms & ) -> color_tint_pair
 {
     return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_item_color(
-    const item &i, const map &, const tripoint & ) -> color_tint_pair
+    const item &i, const map &, const tripoint_bub_ms & ) -> color_tint_pair
 {
     return get_item_color( i );
 }
@@ -140,7 +140,7 @@ auto cata_tiles::get_item_color(
 }
 
 auto cata_tiles::get_vpart_color(
-    const optional_vpart_position &vp, const map &, const tripoint & )-> color_tint_pair
+    const optional_vpart_position &vp, const map &, const tripoint_bub_ms & )-> color_tint_pair
 {
     if( vp ) {
         const vehicle &veh = vp->vehicle();
@@ -152,19 +152,19 @@ auto cata_tiles::get_vpart_color(
 }
 
 auto cata_tiles::get_monster_color(
-    const monster &, const map &, const tripoint & ) -> color_tint_pair
+    const monster &, const map &, const tripoint_bub_ms & ) -> color_tint_pair
 {
     return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_character_color(
-    const Character &, const map &, const tripoint & ) -> color_tint_pair
+    const Character &, const map &, const tripoint_bub_ms & ) -> color_tint_pair
 {
     return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_effect_color(
-    const effect &eff, const Character &c, const map &, const tripoint & ) -> color_tint_pair
+    const effect &eff, const Character &c, const map &, const tripoint_bub_ms & ) -> color_tint_pair
 {
     return get_effect_color( eff, c );
 }
@@ -180,7 +180,7 @@ auto cata_tiles::get_effect_color(
 }
 
 auto cata_tiles::get_bionic_color(
-    const bionic &bio, const Character &c, const map &, const tripoint & )-> color_tint_pair
+    const bionic &bio, const Character &c, const map &, const tripoint_bub_ms & )-> color_tint_pair
 {
     return get_bionic_color( bio, c );
 }
@@ -203,7 +203,7 @@ auto cata_tiles::get_bionic_color(
 }
 
 auto cata_tiles::get_mutation_color(
-    const mutation &mut, const Character &c, const map &, const tripoint & )-> color_tint_pair
+    const mutation &mut, const Character &c, const map &, const tripoint_bub_ms & )-> color_tint_pair
 {
     return get_mutation_color( mut, c );
 }

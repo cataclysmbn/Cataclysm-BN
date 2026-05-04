@@ -2564,7 +2564,7 @@ class Character : public Creature, public location_visitable<Character>
                                      const std::function<bool( const item & )> &filter = return_true<item> );
         std::vector<detached_ptr<item>> consume_items( map &m, const comp_selection<item_comp> &is,
                                      int batch,
-                                     const tripoint &origin, int radius,
+                                     const tripoint_bub_ms &origin, int radius,
                                      const std::function<bool( const item & )> &filter = return_true<item> );
         std::vector<detached_ptr<item>> consume_items( const std::vector<item_comp> &components,
                                      int batch = 1,

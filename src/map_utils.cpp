@@ -6,10 +6,10 @@
 #include "vehicle.h"
 #include "vpart_position.h"
 
-auto get_items_at( const tripoint &loc ) -> location_subrange
+auto get_items_at( const tripoint_abs_ms &loc ) -> location_subrange
 {
     map &here = get_map();
-    const optional_vpart_position vp = here.veh_at( g->m.abs_to_bub( loc ) );
+    const optional_vpart_position vp = here.veh_at( loc );
     if( vp ) {
         vehicle &veh = vp->vehicle();
         const int index = veh.part_with_feature( vp->part_index(), VPFLAG_CARGO, false );

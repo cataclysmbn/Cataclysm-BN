@@ -259,7 +259,7 @@ void iexamine::none( player &/*p*/, const tripoint_bub_ms &examp )
 /**
  * Pick an appropriate item and apply diamond coating if possible.
  */
-void iexamine::cvdmachine( player &p, const tripoint & )
+void iexamine::cvdmachine( player &p, const tripoint_bub_ms & )
 {
     // Select an item to which it is possible to apply a diamond coating
     auto loc = g->inv_map_splice( []( const item & e ) {
@@ -816,7 +816,7 @@ class atm_menu
 /**
  * launches the atm menu class which then handles all the atm interactions.
  */
-void iexamine::atm( player &p, const tripoint & )
+void iexamine::atm( player &p, const tripoint_bub_ms & )
 {
     atm_menu {p} .start();
 }
@@ -1109,8 +1109,7 @@ static bool try_start_hacking( player &p, const tripoint_bub_ms &examp )
         p.assign_activity( std::make_unique<player_activity>
                            ( std::make_unique<hacking_activity_actor>() ) );
     }
-    p.activity->placement = examp;
-    return true;
+    p.activity->placement = bub_to_abs( examp );
 }
 
 /**
@@ -1125,12 +1124,12 @@ void iexamine::cardreader( player &p, const tripoint_bub_ms &examp )
                            itype_id_industrial );
     if( p.has_amount( card_type, 1 ) && query_yn( _( "Swipe your ID card?" ) ) ) {
         p.mod_moves( -to_turns<int>( 1_seconds ) );
-        for( const tripoint &tmp : here.points_in_radius( examp, 3 ) ) {
+        for( const tripoint_bub_ms &tmp : here.points_in_radius( examp, 3 ) ) {
             if( here.ter( tmp ) == t_door_metal_locked ) {
                 const auto is_door = [&here]( const tripoint_bub_ms & pos ) -> bool { return here.ter( pos ) == t_door_metal_locked; };
 
-                std::unordered_set<tripoint> visited;
-                for( const tripoint &tmp2 : ff::point_flood_fill_4_connected( tmp, visited, is_door ) ) {
+                std::unordered_set<tripoint_bub_ms> visited;
+                for( const tripoint_bub_ms &tmp2 : ff::point_flood_fill_4_connected( tmp, visited, is_door ) ) {
                     here.ter_set( tmp2, t_door_metal_c );
                     open = true;
                 }
@@ -1180,7 +1179,7 @@ void iexamine::cardreader_foodplace( player &p, const tripoint_bub_ms &examp )
         query_yn( _( "Press mask on the reader?" ) ) ) {
         p.mod_moves( -100 );
         map &here = get_map();
-        for( const tripoint &tmp : here.points_in_radius( examp, 3 ) ) {
+        for( const tripoint_bub_ms &tmp : here.points_in_radius( examp, 3 ) ) {
             if( here.ter( tmp ) == t_door_metal_locked ) {
                 here.ter_set( tmp, t_door_metal_c );
                 open = true;
@@ -1194,7 +1193,7 @@ void iexamine::cardreader_foodplace( player &p, const tripoint_bub_ms &examp )
         } else {
             add_msg( _( "The nearby doors are already unlocked." ) );
             if( query_yn( _( "Lock doors?" ) ) ) {
-                for( const tripoint &tmp : here.points_in_radius( examp, 3 ) ) {
+                for( const tripoint_bub_ms &tmp : here.points_in_radius( examp, 3 ) ) {
                     if( here.ter( tmp ) == t_door_metal_o || here.ter( tmp ) == t_door_metal_c ) {
                         if( p.bub_pos() == tmp ) {
                             p.add_msg_if_player( m_bad, _( "You are in the way of the door, move before trying again." ) );
@@ -1253,7 +1252,7 @@ void iexamine::rubble( player &p, const tripoint_bub_ms &examp )
         return;
     }
     p.assign_activity( ACT_CLEAR_RUBBLE, moves, -1, 0 );
-    p.activity->placement = examp;
+    p.activity->placement = bub_to_abs( examp );
     return;
 }
 
@@ -1414,7 +1413,7 @@ void iexamine::portable_structure( player &p, const tripoint_bub_ms &examp )
     }
 
     p.moves -= to_turns<int>( 2_seconds );
-    for( const tripoint &pt : here.points_in_radius( examp, radius ) ) {
+    for( const tripoint_bub_ms &pt : here.points_in_radius( examp, radius ) ) {
         here.furn_set( pt, f_null );
     }
 
@@ -1476,7 +1475,7 @@ void iexamine::pit_covered( player &p, const tripoint_bub_ms &examp )
 /**
  * Loop prompt to bet $10.
  */
-void iexamine::slot_machine( player &p, const tripoint & )
+void iexamine::slot_machine( player &p, const tripoint_bub_ms & )
 {
     const int price = 10;
     auto cents = []( int x ) {
@@ -1630,7 +1629,7 @@ void iexamine::safe( player &p, const tripoint_bub_ms &examp )
         const time_duration time = safecracking_time( p );
 
         p.assign_activity( ACT_CRACKING, to_moves<int>( time ) );
-        p.activity->placement = examp;
+        p.activity->placement = bub_to_abs( examp );
     }
 }
 
@@ -1809,7 +1808,7 @@ void iexamine::locked_object_pickable( player &p, const tripoint_bub_ms &examp )
 /**
  * Display popup with reference to "The Enigma of Amigara Fault."
  */
-void iexamine::fault( player &, const tripoint & )
+void iexamine::fault( player &, const tripoint_bub_ms & )
 {
     popup( _( "This wall is perfectly vertical.  Odd, twisted holes are set in it, leading\n"
               "as far back into the solid rock as you can see.  The holes are humanoid in\n"
@@ -2191,7 +2190,7 @@ void iexamine::flower_poppy( player &p, const tripoint_bub_ms &examp )
         add_msg( m_warning, _( "This flower has a heady aroma." ) );
     }
 
-    auto recentWeather = sum_conditions( calendar::turn - 10_minutes, calendar::turn, p.bub_pos() );
+    auto recentWeather = sum_conditions( calendar::turn - 10_minutes, calendar::turn, p.abs_pos() );
 
     // If it has been raining recently, then this event is twice less likely.
     if( ( ( recentWeather.rain_amount > 1 ) ? one_in( 6 ) : one_in( 3 ) ) && resist < 5 ) {
@@ -2433,7 +2432,7 @@ void iexamine::egg_sack_generic( player &p, const tripoint_bub_ms &examp,
     here.furn_set( examp, f_egg_sacke );
     int monster_count = 0;
     if( one_in( 2 ) ) {
-        for( const tripoint &nearby_pos : closest_points_first( examp, 1 ) ) {
+        for( const tripoint_bub_ms &nearby_pos : closest_points_first( examp, 1 ) ) {
             if( !one_in( 3 ) ) {
                 continue;
             } else if( g->place_critter_at( montype, nearby_pos ) ) {
@@ -2552,7 +2551,7 @@ void iexamine::plant_seed( player &p, const tripoint_bub_ms &examp, const itype_
 void iexamine::dirtmound( player &p, const tripoint_bub_ms &examp )
 {
 
-    if( !warm_enough_to_plant( g->u.bub_pos() ) ) {
+    if( !warm_enough_to_plant( g->u.abs_pos() ) ) {
         add_msg( m_info, _( "It is too cold to plant anything now." ) );
         return;
     }
@@ -2587,7 +2586,7 @@ void iexamine::dirtmound( player &p, const tripoint_bub_ms &examp )
 
     // Separate temp check because for now we permit growing regular plants underground with artificial heating
     if( !seed_id.obj().has_flag( flag_CAN_PLANT_UNDERGROUND ) && examp.z() < 0 &&
-        get_weather().get_temperature( examp ) < 10_c ) {
+        get_weather().get_temperature( bub_to_abs( examp ) ) < 10_c ) {
         add_msg( _( "It's too cold down here to plant this type of seed underground." ) );
         return;
     }
@@ -2746,7 +2745,7 @@ ret_val<bool> iexamine::can_fertilize( player &p, const tripoint_bub_ms &tile,
     return ret_val<bool>::make_success();
 }
 
-void iexamine::fertilize_plant( player &p, const tripoint &tile, const itype_id &fertilizer )
+void iexamine::fertilize_plant( player &p, const tripoint_bub_ms &tile, const itype_id &fertilizer )
 {
     ret_val<bool> can_fert = can_fertilize( p, tile, fertilizer );
     if( !can_fert.success() ) {
@@ -2771,7 +2770,7 @@ void iexamine::fertilize_plant( player &p, const tripoint &tile, const itype_id 
         return it->is_seed();
     } );
     if( seed_it == items.end() ) {
-        debugmsg( "Missing seed for plant at (%d, %d, %d)", tile.x, tile.y, tile.z );
+        debugmsg( "Missing seed for plant at (%d, %d, %d)", tile.x(), tile.y(), tile.z() );
         here.i_clear( tile );
         here.furn_set( tile, f_null );
         return;
@@ -3124,7 +3123,7 @@ void iexamine::arcfurnace_full( player &, const tripoint_bub_ms &examp )
 }
 //arc furnace end
 
-void iexamine::autoclave_empty( player &p, const tripoint & )
+void iexamine::autoclave_empty( player &p, const tripoint_bub_ms &)
 {
     item *bionic = game_menus::inv::sterilize_cbm( p );
     if( bionic ) {
@@ -3568,7 +3567,7 @@ static auto get_keg_capacity( const tripoint_bub_ms &pos ) -> units::volume
 /**
  * Check whether there is a keg on the map that can be filled via @ref pour_into_keg.
  */
-bool iexamine::has_keg( const tripoint &pos )
+bool iexamine::has_keg( const tripoint_bub_ms &pos )
 {
     return get_keg_capacity( pos ) > 0_ml;
 }
@@ -3614,12 +3613,12 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
     const auto disconnected_variant = fluid_grid_disconnected_variant( furn_id );
     const auto can_plumb_tank = connected_variant && p.has_amount( itype_plumber_toolkit, 1 );
     const auto can_disconnect_tank = disconnected_variant && p.has_amount( itype_plumber_toolkit, 1 );
-    const auto notify_contents_changed = [&]( const tripoint & where ) {
+    const auto notify_contents_changed = [&]( const tripoint_bub_ms & where ) {
         if( is_fluid_grid_tank( here.furn( where ).obj() ) ) {
             fluid_grid::on_contents_changed( here.bub_to_abs( where ) );
         }
     };
-    const auto tank_contains_only_water = [&]( const tripoint & where ) -> bool {
+    const auto tank_contains_only_water = [&]( const tripoint_bub_ms & where ) -> bool {
         auto items = here.i_at( where );
         const auto has_non_water = std::ranges::any_of( items, [&]( const item * it )
         {
@@ -3633,7 +3632,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
         }
         return true;
     };
-    const auto transfer_tank_liquid_to_grid = [&]( const tripoint & where ) {
+    const auto transfer_tank_liquid_to_grid = [&]( const tripoint_bub_ms & where ) {
         const auto pos_abs_omt = project_to<coords::omt>( here.bub_to_abs( where ) );
         auto items = here.i_at( where );
         std::ranges::for_each( items, [&]( item * it ) {
@@ -4098,7 +4097,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
  * will be removed from the liquid item.
  * @return Any remaining liquid.
  */
-detached_ptr<item> iexamine::pour_into_keg( const tripoint &pos, detached_ptr<item> &&liquid )
+detached_ptr<item> iexamine::pour_into_keg( const tripoint_bub_ms &pos, detached_ptr<item> &&liquid )
 {
     const units::volume keg_cap = get_keg_capacity( pos );
     if( keg_cap <= 0_ml ) {
@@ -4106,7 +4105,7 @@ detached_ptr<item> iexamine::pour_into_keg( const tripoint &pos, detached_ptr<it
     }
     map &here = get_map();
     const auto is_plumbed = is_fluid_grid_tank( here.furn( pos ).obj() );
-    const auto notify_contents_changed = [&]( const tripoint & where ) {
+    const auto notify_contents_changed = [&]( const tripoint_bub_ms & where ) {
         if( is_fluid_grid_tank( here.furn( where ).obj() ) ) {
             fluid_grid::on_contents_changed( here.bub_to_abs( where ) );
         }
@@ -4599,7 +4598,7 @@ void iexamine::water_source( player &, const tripoint_bub_ms &examp )
 }
 
 //Note that these three functions are checked by pointer in map::water_from. Yes it's awful.
-void iexamine::clean_water_source( player &, const tripoint & )
+void iexamine::clean_water_source( player &, const tripoint_bub_ms & )
 {
     liquid_handler::handle_liquid( item::spawn( "water_clean", calendar::start_of_cataclysm,
                                    item::INFINITE_CHARGES ) );
@@ -4801,7 +4800,7 @@ void iexamine::reload_furniture( player &p, const tripoint_bub_ms &examp )
     // Check for charcoal to load around the rack as if crafting
     int amount_nearby = 0;
     if( cur_ammo->get_id() == itype_charcoal ) {
-        for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
+        for( const tripoint_bub_ms &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
             if( pt == examp ) {
                 continue;
             }
@@ -4862,7 +4861,7 @@ void iexamine::reload_furniture( player &p, const tripoint_bub_ms &examp )
 
     // Then use from nearby ground
     if( remaining > 0 && amount_nearby > 0 ) {
-        for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
+        for( const tripoint_bub_ms &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
             if( pt == examp || remaining <= 0 ) {
                 continue;
             }
@@ -5119,7 +5118,7 @@ static int getNearPumpCount( const tripoint_bub_ms &p )
 {
     int result = 0;
     map &here = get_map();
-    for( const tripoint &tmp : here.points_in_radius( p, 12 ) ) {
+    for( const tripoint_bub_ms &tmp : here.points_in_radius( p, 12 ) ) {
         const auto t = here.ter( tmp );
         if( t == ter_str_id( "t_gas_pump" ) || t == ter_str_id( "t_gas_pump_a" ) ) {
             result++;
@@ -5128,15 +5127,15 @@ static int getNearPumpCount( const tripoint_bub_ms &p )
     return result;
 }
 
-std::optional<tripoint> iexamine::getNearFilledGasTank( const tripoint_bub_ms &center,
+std::optional<tripoint_bub_ms> iexamine::getNearFilledGasTank( const tripoint_bub_ms &center,
         int &gas_units )
 {
     map &here = get_map();
-    std::optional<tripoint> tank_loc;
+    std::optional<tripoint_bub_ms> tank_loc;
     int distance = INT_MAX;
     gas_units = 0;
 
-    for( const tripoint &tmp : here.points_in_radius( center, SEEX * 2 ) ) {
+    for( const tripoint_bub_ms &tmp : here.points_in_radius( center, SEEX * 2 ) ) {
         if( here.ter( tmp ) != ter_str_id( "t_gas_tank" ) ) {
             continue;
         }
@@ -5235,11 +5234,11 @@ static int getGasPricePerLiter( int discount )
     }
 }
 
-std::optional<tripoint> iexamine::getGasPumpByNumber( const tripoint &p, int number )
+std::optional<tripoint_bub_ms> iexamine::getGasPumpByNumber( const tripoint_bub_ms &p, int number )
 {
     map &here = get_map();
     int k = 0;
-    for( const tripoint &tmp : here.points_in_radius( p, 12 ) ) {
+    for( const auto &tmp : here.points_in_radius( p, 12 ) ) {
         const auto t = here.ter( tmp );
         if( ( t == ter_str_id( "t_gas_pump" ) || t == ter_str_id( "t_gas_pump_a" ) ) && number == k++ ) {
             return tmp;
@@ -5248,7 +5247,7 @@ std::optional<tripoint> iexamine::getGasPumpByNumber( const tripoint &p, int num
     return std::nullopt;
 }
 
-bool iexamine::toPumpFuel( const tripoint &src, const tripoint &dst, int units )
+bool iexamine::toPumpFuel( const tripoint_bub_ms &src, const tripoint_bub_ms &dst, int units )
 {
     map &here = get_map();
     auto items = here.i_at( src );
@@ -5277,7 +5276,7 @@ bool iexamine::toPumpFuel( const tripoint &src, const tripoint &dst, int units )
     return false;
 }
 
-static int fromPumpFuel( const tripoint &dst, const tripoint &src )
+static int fromPumpFuel( const tripoint_bub_ms &dst, const tripoint_bub_ms &src )
 {
     map &here = get_map();
     auto items = here.i_at( src );
@@ -5301,11 +5300,11 @@ static int fromPumpFuel( const tripoint &dst, const tripoint &src )
     return -1;
 }
 
-static void turnOnSelectedPump( const tripoint &p, int number )
+static void turnOnSelectedPump( const tripoint_bub_ms &p, int number )
 {
     map &here = get_map();
     int k = 0;
-    for( const tripoint &tmp : here.points_in_radius( p, 12 ) ) {
+    for( const tripoint_bub_ms &tmp : here.points_in_radius( p, 12 ) ) {
         const auto t = here.ter( tmp );
         if( t == ter_str_id( "t_gas_pump" ) || t == ter_str_id( "t_gas_pump_a" ) ) {
             if( number == k++ ) {
@@ -5337,7 +5336,7 @@ void iexamine::pay_gas( player &p, const tripoint_bub_ms &examp )
     }
 
     int tankGasUnits;
-    const std::optional<tripoint> pTank_ = getNearFilledGasTank( examp, tankGasUnits );
+    const std::optional<tripoint_bub_ms> pTank_ = getNearFilledGasTank( examp, tankGasUnits );
     if( !pTank_ ) {
         popup( str_to_illiterate_str( _( "Failure!  No gas tank found!" ) ) );
         return;
@@ -5437,7 +5436,7 @@ void iexamine::pay_gas( player &p, const tripoint_bub_ms &examp )
             liters = maximum_liters;
         }
 
-        const std::optional<tripoint> pGasPump = getGasPumpByNumber( examp,
+        const std::optional<tripoint_bub_ms> pGasPump = getGasPumpByNumber( examp,
                 uistate.ags_pay_gas_selected_pump );
         if( !pGasPump || !toPumpFuel( pTank, *pGasPump, liters * 1000 ) ) {
             return;
@@ -5469,7 +5468,7 @@ void iexamine::pay_gas( player &p, const tripoint_bub_ms &examp )
 
         item *cashcard = &( p.i_at( pos ) );
         // Okay, we have a cash card. Now we need to know what's left in the pump.
-        const std::optional<tripoint> pGasPump = getGasPumpByNumber( examp,
+        const std::optional<tripoint_bub_ms> pGasPump = getGasPumpByNumber( examp,
                 uistate.ags_pay_gas_selected_pump );
         int amount = pGasPump ? fromPumpFuel( pTank, *pGasPump ) : 0;
         if( amount >= 0 ) {
@@ -5662,7 +5661,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             bool success = false;
             for( int i = 2; i <= range; i++ ) {
                 //break at the first non empty space encountered
-                if( g->m.ter( tripoint( p.bub_pos().x() + i * sgn( examp.x() - p.bub_pos().x() ),
+                if( g->m.ter( tripoint_bub_ms( p.bub_pos().x() + i * sgn( examp.x() - p.bub_pos().x() ),
                                         p.bub_pos().y() + i * sgn( examp.y() - p.bub_pos().y() ), p.bub_pos().z() ) ) != t_open_air ) {
                     success_range = i;
                     success = true;
@@ -5690,7 +5689,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
 }
 
 static player &player_on_couch( player &p, const tripoint_bub_ms &autodoc_loc, player &null_patient,
-                                bool &adjacent_couch, const tripoint_bub_ms &couch_pos )
+                                bool &adjacent_couch, tripoint_bub_ms &couch_pos )
 {
     map &here = get_map();
     for( const auto &couch_loc : here.find_furnitures_or_vparts_with_flag_in_radius( autodoc_loc, 1,
@@ -5728,7 +5727,7 @@ static Character &operator_present( Character &p, const tripoint_bub_ms &autodoc
     return null_patient;
 }
 
-static item *cyborg_on_couch( const tripoint &couch_pos )
+static item *cyborg_on_couch( const tripoint_bub_ms &couch_pos )
 {
     for( item * const &it : get_map().i_at( couch_pos ) ) {
         if( it->typeId() == itype_bot_broken_cyborg || it->typeId() == itype_bot_prototype_cyborg ) {
@@ -7246,7 +7245,7 @@ void iexamine::smoker_options( player &p, const tripoint_bub_ms &examp )
 
     // Check for charcoal in inventory and nearby ground
     int charcoal_nearby = 0;
-    for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
+    for( const tripoint_bub_ms &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
         if( pt == examp ) {
             continue;
         }
@@ -7442,12 +7441,12 @@ void iexamine::open_safe( player &, const tripoint_bub_ms &examp )
     get_map().furn_set( examp, f_safe_o );
 }
 
-void iexamine::workbench( player &, const tripoint & )
+void iexamine::workbench( player &, const tripoint_bub_ms & )
 {
     // Dummied out and only used for function equality check
 }
 
-void iexamine::dimensional_portal( player &p, const tripoint &examp )
+void iexamine::dimensional_portal( player &p, const tripoint_bub_ms &examp )
 {
     uilist menu;
     menu.text = _( "What to do with the portal:" );
@@ -7487,7 +7486,7 @@ void iexamine::dimensional_portal( player &p, const tripoint &examp )
     }
 }
 
-void iexamine::check_power( player &, const tripoint &examp )
+void iexamine::check_power( player &, const tripoint_bub_ms &examp )
 {
     tripoint_abs_ms abspos( g->m.bub_to_abs( examp ) );
     battery_tile *battery = active_tiles::furn_at<battery_tile>( abspos );
@@ -7498,7 +7497,7 @@ void iexamine::check_power( player &, const tripoint &examp )
     add_msg( m_info, _( "This electric grid stores %d kJ of electric power." ), amt );
 }
 
-void iexamine::power_portal( player &p, const tripoint &examp )
+void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
 {
     const tripoint_abs_ms abs_pos( g->m.bub_to_abs( examp ) );
     const std::string local_dim = g->m.get_bound_dimension();
@@ -7687,7 +7686,7 @@ void iexamine::power_portal( player &p, const tripoint &examp )
     }
 }
 
-void iexamine::portal( player &p, const tripoint &examp )
+void iexamine::portal( player &p, const tripoint_bub_ms &examp )
 {
     const tripoint_abs_ms abs_pos( get_map().bub_to_abs( examp ) );
 
@@ -7739,7 +7738,7 @@ void iexamine::portal( player &p, const tripoint &examp )
         const optional_vpart_position vp = get_map().veh_at( examp );
         if( !vp ) {
             // Also check if player is inside a nearby vehicle.
-            for( const tripoint &adj : get_map().points_in_radius( p.bub_pos(), 1 ) ) {
+            for( const tripoint_bub_ms &adj : get_map().points_in_radius( p.bub_pos(), 1 ) ) {
                 const optional_vpart_position vp2 = get_map().veh_at( adj );
                 if( vp2 ) {
                     vehicle &veh = vp2->vehicle();
@@ -7787,7 +7786,7 @@ void iexamine::portal( player &p, const tripoint &examp )
     g->update_map( p );
 }
 
-void iexamine::migo_nerve_cluster( player &p, const tripoint &examp )
+void iexamine::migo_nerve_cluster( player &p, const tripoint_bub_ms &examp )
 {
     map &here = get_map();
     if( query_yn( _( "This looks important.  Tear open nerve cluster?" ) ) ) {
@@ -7798,7 +7797,7 @@ void iexamine::migo_nerve_cluster( player &p, const tripoint &examp )
     }
 }
 
-void iexamine::cardreader_plutgen( player &p, const tripoint &examp )
+void iexamine::cardreader_plutgen( player &p, const tripoint_bub_ms &examp )
 {
     map &here = get_map();
     itype_id card_type = itype_id_military;
@@ -7816,7 +7815,7 @@ void iexamine::cardreader_plutgen( player &p, const tripoint &examp )
     }
 }
 
-void iexamine::multicooker( player &p, const tripoint &pos )
+void iexamine::multicooker( player &p, const tripoint_bub_ms &pos )
 {
     map &here = get_map();
     const furn_id furniture = here.furn( pos );

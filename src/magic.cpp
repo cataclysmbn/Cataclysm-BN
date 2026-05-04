@@ -218,7 +218,7 @@ static std::string moves_to_string( const int moves )
 void spell_type::load( const JsonObject &jo, const std::string & )
 {
     static const
-    std::map<std::string, std::function<void( const spell &, Creature &, const tripoint & )>>
+    std::map<std::string, std::function<void( const spell &, Creature &, const tripoint_bub_ms & )>>
     effect_map{
         { "pain_split", spell_effect::pain_split },
         { "target_attack", spell_effect::target_attack },
@@ -627,7 +627,7 @@ int spell::aoe() const
     }
 }
 
-bool spell::in_aoe( const tripoint &source, const tripoint_bub_ms &target ) const
+bool spell::in_aoe( const tripoint_bub_ms &source, const tripoint_bub_ms &target ) const
 {
     if( has_flag( spell_flag::RANDOM_AOE ) ) {
         return rl_dist( source, target ) <= type->max_aoe;
@@ -1456,7 +1456,7 @@ void spell::cast_all_effects( Creature &source, const tripoint_bub_ms &target ) 
             source.add_msg_if_player( sp.message() );
 
             if( sp.has_flag( RANDOM_TARGET ) ) {
-                if( const std::optional<tripoint> new_target = sp.random_valid_target( source,
+                if( const std::optional<tripoint_bub_ms> new_target = sp.random_valid_target( source,
                         _self ? source.bub_pos() : target ) ) {
                     sp.cast_all_effects( source, *new_target );
                 }
@@ -1474,7 +1474,7 @@ void spell::cast_all_effects( Creature &source, const tripoint_bub_ms &target ) 
         for( const fake_spell &extra_spell : type->additional_spells ) {
             spell sp = extra_spell.get_spell( get_level() );
             if( sp.has_flag( RANDOM_TARGET ) ) {
-                if( const std::optional<tripoint> new_target = sp.random_valid_target( source,
+                if( const std::optional<tripoint_bub_ms> new_target = sp.random_valid_target( source,
                         extra_spell.self ? source.bub_pos() : target ) ) {
                     sp.cast_all_effects( source, *new_target );
                 }
@@ -1489,11 +1489,11 @@ void spell::cast_all_effects( Creature &source, const tripoint_bub_ms &target ) 
     }
 }
 
-std::optional<tripoint> spell::random_valid_target( const Creature &caster,
-        const tripoint &caster_pos ) const
+std::optional<tripoint_bub_ms> spell::random_valid_target( const Creature &caster,
+        const tripoint_bub_ms &caster_pos ) const
 {
-    std::set<tripoint> valid_area;
-    for( const tripoint &target : spell_effect::spell_effect_blast( *this, caster_pos, caster_pos,
+    std::set<tripoint_bub_ms> valid_area;
+    for( const tripoint_bub_ms &target : spell_effect::spell_effect_blast( *this, caster_pos, caster_pos,
             range(), false ) ) {
         if( is_valid_target( caster, target ) ) {
             valid_area.emplace( target );

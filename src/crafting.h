@@ -21,11 +21,11 @@ struct tool_comp;
 enum class cost_adjustment : int;
 
 struct bench_location {
-    explicit bench_location( bench_type type, tripoint position )
+    explicit bench_location( bench_type type, tripoint_abs_ms position )
         : type( type ), position( position )
     {}
     bench_type type;
-    tripoint position;
+    tripoint_abs_ms position;
 };
 template<typename Type>
 struct comp_selection;

@@ -22,9 +22,11 @@ class vehicle;
 template<typename T>
 class detached_ptr;
 
-std::vector<tripoint> get_sorted_tiles_by_distance( const tripoint_bub_ms &abspos,
-        const std::unordered_set<tripoint> &tiles );
-std::vector<tripoint> route_adjacent( const player &p, const tripoint_bub_ms &dest );
+std::vector<tripoint_bub_ms> get_sorted_tiles_by_distance( const tripoint_bub_ms &coord,
+        const std::unordered_set<tripoint_bub_ms> &tiles );
+std::vector<tripoint_abs_ms> get_sorted_tiles_by_distance( const tripoint_abs_ms &coord,
+        const std::unordered_set<tripoint_abs_ms> &tiles );
+std::vector<tripoint_bub_ms> route_adjacent( const player &p, const tripoint_bub_ms &dest );
 
 enum requirement_check_result : int {
     SKIP_LOCATION = 0,

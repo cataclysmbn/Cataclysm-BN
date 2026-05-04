@@ -684,7 +684,7 @@ static void move_items( map &here, const tripoint &from, const tripoint_bub_ms &
     src_items.clear();
 }
 
-static void move_field( map &here, const tripoint &from, const tripoint &to )
+static void move_field( map &here, const tripoint &from, const tripoint_bub_ms &to )
 {
     field &src_field = here.field_at( from );
     std::map<field_type_id, int> moving_fields;
@@ -702,7 +702,7 @@ static void move_field( map &here, const tripoint &from, const tripoint &to )
 
 // Moving all objects from one point to another by the power of magic.
 static void spell_move( const spell &sp, const Creature &caster,
-                        const tripoint &from, const tripoint &to )
+                        const tripoint &from, const tripoint_bub_ms &to )
 {
     if( from == to ) {
         return;

@@ -2922,7 +2922,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             const auto covered_points = get_zone_covered_points( zone );
             auto local_tiles = std::unordered_set<point_bub_ms>();
             std::ranges::for_each( covered_points, [&]( const tripoint_abs_ms & pos ) {
-                if( pos.z() != center.z ) {
+                if( pos.z() != center.z() ) {
                     return;
                 }
                 local_tiles.insert( here.abs_to_bub( pos ).xy() );
@@ -2948,10 +2948,12 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         const tripoint_bub_ms sel_end = zone_end + zone_offset;
         selected_z = has_custom_selected_zone ? zone_points.front().z() : sel_start.z();
         if( has_custom_selected_zone ) {
-            const auto min_x = std::ranges::minmax_element( zone_points, {}, &tripoint_bub_ms::x );
-            const auto min_y = std::ranges::minmax_element( zone_points, {}, &tripoint_bub_ms::y );
-            selected_min = point_bub_ms( min_x.min->x, min_y.min->y );
-            selected_max = point_bub_ms( min_x.max->x, min_y.max->y );
+            const auto min_x = std::ranges::minmax_element( zone_points, {},
+                               []( const tripoint_bub_ms &p ) { return p.x(); } );
+            const auto min_y = std::ranges::minmax_element( zone_points, {},
+                               []( const tripoint_bub_ms &p ) { return p.y(); } );
+            selected_min = point_bub_ms( min_x.min->x(), min_y.min->y() );
+            selected_max = point_bub_ms( min_x.max->x(), min_y.max->y() );
         } else {
             selected_min = point_bub_ms( std::min( sel_start.x(), sel_end.x() ), std::min( sel_start.y(),
                                          sel_end.y() ) );
@@ -3002,8 +3004,8 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                 std::max( s.y + o.y(), max_visible_y )
                             );
     g->u.prepare_map_memory_region(
-        here.bub_to_abs( tripoint_bub_ms( min_mm_reg, center.z ) ),
-        here.bub_to_abs( tripoint_bub_ms( max_mm_reg, center.z ) )
+        here.bub_to_abs( tripoint_bub_ms( min_mm_reg, center.z() ) ),
+        here.bub_to_abs( tripoint_bub_ms( max_mm_reg, center.z() ) )
     );
 
     idle_animations.set_enabled( get_option<bool>( "ANIMATIONS" ) );
@@ -3070,13 +3072,13 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
             bool invis = ( temp_y < min_visible_y || temp_y > max_visible_y || temp_x < min_visible_x ||
                            temp_x > max_visible_x ) &&
-                         ( has_memory_at( {temp_x, temp_y, center.z} ) || has_draw_override( {temp_x, temp_y, center.z} ) );
+                         ( has_memory_at( {temp_x, temp_y, center.z()} ) || has_draw_override( {temp_x, temp_y, center.z()} ) );
 
 
 
             // Add scent value to the overlay_strings list for every visible tile when displaying scent
             if( g->display_overlay_state( ACTION_DISPLAY_SCENT ) && !invis ) {
-                const int scent_value = g->scent.get( {temp_x, temp_y, center.z} );
+                const int scent_value = g->scent.get( {temp_x, temp_y, center.z()} );
                 if( scent_value > 0 ) {
                     overlay_strings.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 2,
                                              0 ),
@@ -3087,7 +3089,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
             // Add scent type to the overlay_strings list for every visible tile when displaying scent
             if( g->display_overlay_state( ACTION_DISPLAY_SCENT_TYPE ) && !invis ) {
-                const scenttype_id scent_type = g->scent.get_type( {temp_x, temp_y, center.z} );
+                const scenttype_id scent_type = g->scent.get_type( {temp_x, temp_y, center.z()} );
                 if( !scent_type.is_empty() ) {
                     overlay_strings.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 2,
                                              0 ),
@@ -3115,7 +3117,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
             // Add temperature value to the overlay_strings list for every visible tile when displaying temperature
             if( g->display_overlay_state( ACTION_DISPLAY_TEMPERATURE ) && !invis ) {
-                const auto temp = get_weather().get_temperature( tripoint_abs_omt{temp_x, temp_y, center.z} );
+                const auto temp = get_weather().get_temperature( tripoint_abs_omt{temp_x, temp_y, center.z()} );
                 short color;
                 const short bold = 8;
                 if( temp > 40_c ) {
@@ -3144,7 +3146,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
             if( g->display_overlay_state( ACTION_DISPLAY_VISIBILITY ) &&
                 g->displaying_visibility_creature && !invis ) {
-                const bool visibility = g->displaying_visibility_creature->sees( {temp_x, temp_y, center.z} );
+                const bool visibility = g->displaying_visibility_creature->sees( {temp_x, temp_y, center.z()} );
 
                 // color overlay.
                 auto block_color = visibility ? windowsPalette[catacurses::green] : SDL_Color{ 192, 192, 192, 255 };
@@ -3182,7 +3184,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
             if( g->display_overlay_state( ACTION_DISPLAY_LIGHTING ) ) {
                 if( g->displaying_lighting_condition == 0 ) {
-                    const float light = here.ambient_light_at( {temp_x, temp_y, center.z} );
+                    const float light = here.ambient_light_at( {temp_x, temp_y, center.z()} );
                     // note: lighting will be constrained in the [1.0, 11.0] range.
                     const int intensity = static_cast<int>( std::max( 1.0, LIGHT_AMBIENT_LIT - light + 1.0 ) ) - 1;
                     draw_debug_tile( intensity, string_format( "%.1f", light ) );
@@ -3190,7 +3192,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             }
 
             if( g->display_overlay_state( ACTION_DISPLAY_TRANSPARENCY ) ) {
-                const float tr = here.light_transparency( {temp_x, temp_y, center.z} );
+                const float tr = here.light_transparency( {temp_x, temp_y, center.z()} );
                 const int intensity =  tr <= LIGHT_TRANSPARENCY_SOLID ? 10 :  static_cast<int>
                                        ( ( tr - LIGHT_TRANSPARENCY_OPEN_AIR ) * 8 );
                 draw_debug_tile( intensity, string_format( "%.2f", tr ) );
@@ -3200,7 +3202,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 // Use the flat level_cache directly: it includes Phase3 vehicle overrides
                 // (outside=false / sheltered=true for covered vehicle tiles) that the
                 // lazy per-submap rebuild path does not reflect.
-                const auto &ov_ch = here.access_cache( center.z );
+                const auto &ov_ch = here.access_cache( center.z() );
                 if( ov_ch.inbounds( point_bub_ms( temp_x, temp_y ) ) ) {
                     const int ov_idx = ov_ch.idx( temp_x, temp_y );
                     const bool outside = ov_ch.outside_cache[ov_idx];
@@ -3227,7 +3229,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             }
 
             lit_level ll = lit_level::BLANK;
-            int last_vis = center.z + 1;
+            int last_vis = center.z() + 1;
             lit_level last_vis_ll = lit_level::BLANK;
             bool drew_occluded_overlay = false;
             bool had_visible_open_air = false;
@@ -3236,7 +3238,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
             const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
                                          x <= max_visible_x );
-            for( int z = center.z; z >= -OVERMAP_DEPTH; z-- ) {
+            for( int z = center.z(); z >= -OVERMAP_DEPTH; z-- ) {
                 const auto &ch = here.access_cache( z );
 
                 const tripoint_bub_ms pos( temp_x, temp_y, z );
@@ -3245,12 +3247,12 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
                 const bool has_memory = has_memory_at( pos );
 
-                const bool stop_on_memory = z != center.z && has_memory &&
+                const bool stop_on_memory = z != center.z() && has_memory &&
                                             ( !in_map_bounds || here.ter( pos ) != t_open_air );
 
                 ll = ch.inbounds( {x, y} ) ? ch.visibility_cache[ch.idx( x, y )] : lit_level::BLANK;
                 const auto visibility = here.get_visibility( ll, cache );
-                if( ( fov_3d || z == center.z ) && in_map_bounds ) {
+                if( ( fov_3d || z == center.z() ) && in_map_bounds ) {
                     if( !would_apply_vision_effects( visibility ) ) {
                         if( here.ter( pos ) != t_open_air ) {
                             last_vis = z;
@@ -3258,7 +3260,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                         } else {
                             had_visible_open_air = true;
                         }
-                    } else if( !has_memory && z < center.z &&
+                    } else if( !has_memory && z < center.z() &&
                                visibility == visibility_type::VIS_HIDDEN ) {
                         if( !drew_occluded_overlay ) {
                             drew_occluded_overlay = true;
@@ -3266,7 +3268,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                             const tile_search_params dark_tile{ "lighting_lowlight_dark", C_LIGHTING,
                                                                 empty_string, 0, 0 };
                             draw_from_id_string( dark_tile, pos, std::nullopt, std::nullopt,
-                                                 lit_level::LIT, false, center.z - z, false );
+                                                 lit_level::LIT, false, center.z() - z, false );
                         }
                     }
                 }
@@ -3288,7 +3290,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                             ll = lit_level::DARK;
                             invisible[0] = true;
                         } else {
-                            apply_vision_effects( pos.raw(), offscreen_type );
+                            apply_vision_effects( pos, offscreen_type );
                             break;
                         }
                     }
@@ -3303,7 +3305,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                                    cache ) );
                     }
 
-                    if( !invisible[0] && apply_vision_effects( pos.raw(), visibility ) ) {
+                    if( !invisible[0] && apply_vision_effects( pos, visibility ) ) {
                         // Vehicle tiles are blocked from the 3D FOV by their own floor cache,
                         // but are physically visible when the player descends through open air.
                         // Check this before the has_memory branch so that a memorized roof tile
@@ -3322,7 +3324,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                             if( has_draw_override( pos ) || has_memory ) {
                                 invisible[0] = true;
                             }
-                            for( int cz = pos.z(); !invisible[0] && cz <= -center.z; cz++ ) {
+                            for( int cz = pos.z(); !invisible[0] && cz <= -center.z(); cz++ ) {
                                 const Creature *critter = g->critter_at( { pos.xy(), cz }, true );
                                 if( critter && ( g->u.sees_with_infrared( *critter ) ||
                                                  g->u.sees_with_specials( *critter ) ) ) {
@@ -3332,8 +3334,8 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                             if( invisible[0] ) {
                                 min_z = std::min( pos.z(), min_z );
                                 draw_points.emplace_back( pos, height_3d, ll, invisible );
-                            } else if( last_vis != center.z + 1 ) {
-                                if( in_map_bounds && z < center.z - fov_3d_z_range ) {
+                            } else if( last_vis != center.z() + 1 ) {
+                                if( in_map_bounds && z < center.z() - fov_3d_z_range ) {
                                     // The floor is below the 3D FOV limit, but the loop only
                                     // reaches here through a fully transparent column above.
                                     // Treat it as seen-through-sky: render and memorize at the
@@ -3401,15 +3403,15 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
     std::ranges::stable_sort( draw_points, compare_z_y );
 
-    for( int z = min_z; z <= center.z; z++ ) {
+    for( int z = min_z; z <= center.z(); z++ ) {
         for( tile_render_info &p : draw_points ) {
             if( p.pos.z() > z ) {
                 break;
             }
             if( p.pos.z() == z ) {
-                draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z - z );
+                draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z() - z );
 
-                if( z == center.z ) {
+                if( z == center.z() ) {
                     const point screen_tl = player_to_screen( p.pos.xy() );
                     const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
 
@@ -3450,7 +3452,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 }
 
                 for( decltype( &cata_tiles::draw_furniture ) f : base_drawing_layers ) {
-                    ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z - z );
+                    ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z() - z );
                 }
             }
             const auto &ch = here.access_cache( z );
@@ -3467,14 +3469,14 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                         // still render as a visible floor/roof from above (z_drop > 0).
                         // Only hide the tile when the player is at the same z-level (z_drop == 0)
                         // and truly can't see it, which is the "enclosed interior" case.
-                        const int z_drop_here = center.z - z;
+                        const int z_drop_here = center.z() - z;
                         const bool ( invis )[5] = {z_ll == lit_level::BLANK &&z_drop_here == 0,
                                                    false, false, false, false
                                                   };
                         ( this->*( f.function ) )( {p.pos.xy(), z}, z_ll, p.height_3d, invis, z_drop_here );
                     }
                 } else {
-                    ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z - z );
+                    ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z() - z );
                 }
             }
         }
@@ -3549,7 +3551,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             const auto &_cz = here.access_cache( center.z() );
             lit_level lighting = _cz.visibility_cache[_cz.idx( mem_x, mem_y )];
 
-            int z = center.z;
+            int z = center.z();
             for( ;  z > -OVERMAP_DEPTH; z-- ) {
                 const auto low_override = draw_below_override.find( {mem_x, mem_y, z} );
                 const bool low_overridden = low_override != draw_below_override.end();
@@ -3569,7 +3571,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             const auto &ch = here.access_cache( z );
             const tripoint_bub_ms p( mem_x, mem_y, z );
 
-            if( apply_vision_effects( p.raw(), here.get_visibility( lighting, cache ) ) ) {
+            if( apply_vision_effects( p, here.get_visibility( lighting, cache ) ) ) {
                 continue;
             }
             int height_3d = 0;
@@ -3643,7 +3645,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     } else if( g->u.view_offset != tripoint_rel_ms::zero() && !g->u.in_vehicle ) {
         // check to see if player is located at ter
         const tile_search_params tile { "cursor", C_NONE, empty_string, 0, 0 };
-        const auto pos = tripoint_bub_ms( g->ter_view_p.xy(), center.z );
+        const auto pos = tripoint_bub_ms( g->ter_view_p.xy(), center.z() );
         draw_from_id_string(
             tile, pos, std::nullopt, std::nullopt,
             lit_level::LIT, false, 0, false );
@@ -3652,7 +3654,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         if( auto indicator_offset = g->get_veh_dir_indicator_location( true ) ) {
             const tile_search_params tile { "cursor", C_NONE, empty_string, 0, 0 };
             const auto pos = indicator_offset->xy() + tripoint_bub_ms( g->u.bub_pos().x(), g->u.bub_pos().y(),
-                             center.z );
+                             center.z() );
             draw_from_id_string(
                 tile, pos, std::nullopt, std::nullopt,
                 lit_level::LIT, false, 0, false );
@@ -3695,7 +3697,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         for( int sm_x = sm_start.x(); sm_x <= sm_end.x(); sm_x++ ) {
             for( int sm_y = sm_start.y(); sm_y <= sm_end.y(); sm_y++ ) {
                 auto sm_p = point_abs_sm( sm_x, sm_y );
-                auto sm_tp = tripoint_abs_sm( sm_x, sm_y, center.z );
+                auto sm_tp = tripoint_abs_sm( sm_x, sm_y, center.z() );
                 point p1 = player_to_screen( here.abs_to_bub( project_to<coords::ms>( sm_p ) ) );
                 point p3 = player_to_screen( here.abs_to_bub( project_to<coords::ms>( sm_p + point_south_east ) ) );
                 p3 -= point( THICC, THICC ); // Don't draw over other lines
@@ -3742,10 +3744,12 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 continue;
             }
 
-            const auto min_x = std::ranges::minmax_element( zone.tiles, {}, &point_bub_ms::x );
-            const auto min_y = std::ranges::minmax_element( zone.tiles, {}, &point_bub_ms::y );
-            const point_bub_ms min_local( min_x.min->x, min_y.min->y );
-            const point_bub_ms max_local( min_x.max->x, min_y.max->y );
+            const auto min_x = std::ranges::minmax_element( zone.tiles, {},
+                               []( const point_bub_ms &p ) { return p.x(); } );
+            const auto min_y = std::ranges::minmax_element( zone.tiles, {},
+                               []( const point_bub_ms &p ) { return p.y(); } );
+            const point_bub_ms min_local( min_x.min->x(), min_y.min->y() );
+            const point_bub_ms max_local( min_x.max->x(), min_y.max->y() );
 
             const point screen_tl = player_to_screen( ( min_local + zone_offset.xy() ) );
             const point screen_br = player_to_screen( ( max_local + zone_offset.xy() ) ) +
@@ -4009,7 +4013,7 @@ bool cata_tiles::draw_from_id_string(
 
     // translate from player-relative to screen relative tile position
     const auto screen_pos = as_independent_entity ? pos.xy() : point_bub_ms( player_to_screen(
-                                pos.xy() ); )
+                                pos.xy() ) );
 
     auto simple_point_hash = []( const auto & p ) {
         return p.x + p.y * 65536;
@@ -4323,9 +4327,9 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
     const int warp_offset_screen_y = warp_offset.y * tile_height / tileset_ptr->get_tile_height();
 
     SDL_Rect destination;
-    destination.x = p.x + tile.offset.x * tile_width / tileset_ptr->get_tile_width() +
+    destination.x = p.x() + tile.offset.x * tile_width / tileset_ptr->get_tile_width() +
                     warp_offset_screen_x;
-    destination.y = p.y + ( tile.offset.y - height_3d_val ) * tile_width /
+    destination.y = p.y() + ( tile.offset.y - height_3d_val ) * tile_width /
                     tileset_ptr->get_tile_width() + warp_offset_screen_y;
     destination.w = width * tile_width / tileset_ptr->get_tile_width();
     destination.h = height * tile_height / tileset_ptr->get_tile_height();
@@ -4456,11 +4460,11 @@ bool cata_tiles::draw_tile_at( const tile_type &tile, point_bub_ms p,
     return true;
 }
 
-bool cata_tiles::draw_color_at( const SDL_Color &color, point pos, SDL_BlendMode blend_mode )
+bool cata_tiles::draw_color_at( const SDL_Color &color, point_bub_ms pos, SDL_BlendMode blend_mode )
 {
     SDL_Rect rect{
-        pos.x,
-        pos.y,
+        pos.x(),
+        pos.y(),
         tile_width,
         tile_height
     };
@@ -4479,7 +4483,7 @@ bool cata_tiles::would_apply_vision_effects( const visibility_type visibility ) 
     return visibility != VIS_CLEAR;
 }
 
-bool cata_tiles::apply_vision_effects( const tripoint &pos,
+bool cata_tiles::apply_vision_effects( const tripoint_bub_ms &pos,
                                        const visibility_type visibility )
 {
     if( !would_apply_vision_effects( visibility ) ) {
@@ -4522,7 +4526,7 @@ bool cata_tiles::apply_vision_effects( const tripoint &pos,
 }
 
 template<typename T>
-auto get_map_memory_of_at( const tripoint &p ) -> std::optional<memorized_terrain_tile>
+auto get_map_memory_of_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>
 {
     if( !g->u.should_show_map_memory() ) {
         return std::nullopt;
@@ -4537,7 +4541,7 @@ auto get_map_memory_of_at( const tripoint &p ) -> std::optional<memorized_terrai
 }
 
 template<>
-auto get_map_memory_of_at<vpart_info>( const tripoint &p ) -> std::optional<memorized_terrain_tile>
+auto get_map_memory_of_at<vpart_info>( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>
 {
     if( !g->u.should_show_map_memory() ) {
         return std::nullopt;
@@ -5157,12 +5161,12 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
 
         int veh_z = veh->bub_ms_location().z();
         auto part = veh->part( veh_part ).info();
-        if( veh_z - p.z <= 0 ) {
+        if( veh_z - p.z() <= 0 ) {
             return false;
         }
-        if( part.ladder_length() >= veh_z - p.z ) {
-            for( int i = p.z + 1; i <= veh_z; i++ ) {
-                if( here.ter( tripoint_bub_ms( p.x, p.y, i ) ).id().str() != "t_open_air" ) {
+        if( part.ladder_length() >= veh_z - p.z() ) {
+            for( int i = p.z() + 1; i <= veh_z; i++ ) {
+                if( here.ter( tripoint_bub_ms( p.x(), p.y(), i ) ).id().str() != "t_open_air" ) {
                     return false;
                 }
             }
@@ -5797,7 +5801,7 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint_
 #endif
 }
 
-bool cata_tiles::draw_item_highlight( const tripoint &pos )
+bool cata_tiles::draw_item_highlight( const tripoint_bub_ms &pos )
 {
     const tile_search_params tile { ITEM_HIGHLIGHT, C_NONE, empty_string, 0, 0 };
     return draw_from_id_string(
@@ -6368,14 +6372,18 @@ void cata_tiles::draw_sct_frame( std::multimap<point, formatted_text> &overlay_s
 void cata_tiles::draw_zones_frame( std::multimap<point, formatted_text> &overlay_strings )
 {
     const bool has_custom_points = !zone_points.empty();
-    const point_bub_ms min_local = has_custom_points ?
-                                   point( std::ranges::min( zone_points, {}, &tripoint::x ).x,
-                                          std::ranges::min( zone_points, {}, &tripoint::y ).y ) :
-                                   zone_offset.xy() + zone_start.xy();
-    const point_bub_ms max_local = has_custom_points ?
-                                   point( std::ranges::max( zone_points, {}, &tripoint::x ).x,
-                                          std::ranges::max( zone_points, {}, &tripoint::y ).y ) :
-                                   zone_offset.xy() + zone_end.xy();
+    const auto min_local = has_custom_points ?
+                           point_bub_ms( std::ranges::min( zone_points, {},
+                                         []( const tripoint_bub_ms &p ) { return p.x(); } ).x(),
+                                         std::ranges::min( zone_points, {},
+                                         []( const tripoint_bub_ms &p ) { return p.y(); } ).y() ) :
+                           zone_offset.xy() + zone_start.xy();
+    const auto max_local = has_custom_points ?
+                           point_bub_ms( std::ranges::max( zone_points, {},
+                                         []( const tripoint_bub_ms &p ) { return p.x(); } ).x(),
+                                         std::ranges::max( zone_points, {},
+                                         []( const tripoint_bub_ms &p ) { return p.y(); } ).y() ) :
+                           zone_offset.xy() + zone_end.xy();
     const tripoint_bub_ms center_local( ( min_local.x() + max_local.x() ) / 2,
                                         ( min_local.y() + max_local.y() ) / 2, get_avatar().bub_pos().z() );
     const auto lookup_local = has_custom_points ?

@@ -394,11 +394,11 @@ bool activity_handlers::resume_for_multi_activities( player &p )
     return false;
 }
 
-void activity_handlers::burrow_do_turn( player_activity *act, player * )
+void activity_handlers::burrow_do_turn( player_activity *act, player *p )
 {
-    sfx::play_activity_sound( "activity", "burrow", sfx::get_heard_volume( act->placement ) );
+    sfx::play_activity_sound( "activity", "burrow", sfx::get_heard_volume( abs_to_bub( act->placement ) ) );
     if( calendar::once_every( 1_minutes ) ) {
-        sounds::sound( act->placement, 10, sounds::sound_t::movement,
+        sounds::sound( abs_to_bub( act->placement ), 10, sounds::sound_t::movement,
                        //~ Sound of a Rat mutant burrowing!
                        _( "ScratchCrunchScrabbleScurry." ) );
     }
@@ -422,7 +422,7 @@ void activity_handlers::burrow_finish( player_activity *act, player *p )
     }
     act->set_to_null();
     p->add_msg_if_player( m_good, _( "You finish burrowing." ) );
-    here.destroy( pos, true );
+    here.destroy( here.abs_to_bub( pos ), true );
 }
 
 static bool check_butcher_cbm( const int roll )
@@ -567,14 +567,14 @@ butchery_setup consider_butchery( const item &corpse_item, player &u, butcher_ty
     }
 
     bool has_tree_nearby = false;
-    for( const tripoint &pt : here.points_in_radius( u.bub_pos(), PICKUP_RANGE ) ) {
+    for( const auto &pt : here.points_in_radius( u.bub_pos(), PICKUP_RANGE ) ) {
         if( here.has_flag( flag_TREE, pt ) ) {
             has_tree_nearby = true;
             break;
         }
     }
     bool b_rack_present = false;
-    for( const tripoint &pt : here.points_in_radius( u.bub_pos(), PICKUP_RANGE ) ) {
+    for( const auto &pt : here.points_in_radius( u.bub_pos(), PICKUP_RANGE ) ) {
         if( here.has_flag_furn( flag_BUTCHER_EQ, pt ) ) {
             b_rack_present = true;
             break;
@@ -1497,7 +1497,7 @@ void activity_handlers::milk_finish( player_activity *act, player *p )
         return;
     }
     map &here = get_map();
-    monster *source_mon = g->critter_at<monster>( act->coords.at( 0 ) );
+    monster *source_mon = g->critter_at<monster>( here.abs_to_bub( act->coords.at( 0 ) ) );
     if( source_mon == nullptr ) {
         debugmsg( "could not find source creature for liquid transfer" );
         return;
@@ -1544,7 +1544,7 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, player *p )
             detached_ptr<item> source;
             switch( source_type ) {
                 case LST_INFINITE_MAP:
-                    source = here.water_from( pos );
+                    source = here.water_from( here.abs_to_bub( pos ) );
                     charges = std::max( 1, source->charges_per_volume( volume_per_second ) );
                     source->charges = charges;
                     source = cb( std::move( source ) );
@@ -1579,14 +1579,15 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, player *p )
                 }
                 break;
             case LTT_MAP:
-                if( iexamine::has_keg( act_ref.coords.at( 1 ) ) ) {
-                    finished = transfer( [&act_ref]( detached_ptr<item> &&it ) {
-                        return iexamine::pour_into_keg( act_ref.coords.at( 1 ), std::move( it ) );
+                const auto bub_loc = here.abs_to_bub( act_ref.coords.at( 1 ) );
+                if( iexamine::has_keg( bub_loc ) ) {
+                    finished = transfer( [&bub_loc]( detached_ptr<item> &&it ) {
+                        return iexamine::pour_into_keg( bub_loc, std::move( it ) );
                     } );
                 } else {
-                    finished = transfer( [&p, &act_ref, &here]( detached_ptr<item> &&it ) {
+                    finished = transfer( [&p, &bub_loc, &here]( detached_ptr<item> &&it ) {
                         p->add_msg_if_player( _( "You pour %1$s onto the ground." ), it->tname() );
-                        here.add_item_or_charges( act_ref.coords.at( 1 ), std::move( it ) );
+                        here.add_item_or_charges( bub_loc, std::move( it ) );
                         return detached_ptr<item>();
                     } );
                 }
@@ -1653,7 +1654,7 @@ void activity_handlers::forage_finish( player_activity *act, player *p )
     // Don't forage if we aren't next to the bush - otherwise we get weird bugs
     bool next_to_bush = false;
     map &here = get_map();
-    for( const tripoint &pnt : here.points_in_radius( p->bub_pos(), 1 ) ) {
+    for( const auto &pnt : here.points_in_radius( p->bub_pos(), 1 ) ) {
         if( here.bub_to_abs( pnt ) == act->placement ) {
             next_to_bush = true;
             break;
@@ -1766,9 +1767,9 @@ void activity_handlers::game_do_turn( player_activity *act, player *p )
 void activity_handlers::hotwire_finish( player_activity *act, player *p )
 {
     //Grab this now, in case the vehicle gets shifted
-    if( const optional_vpart_position vp = g->m.veh_at( g->m.abs_to_bub( tripoint( act->values[0],
+    if( const optional_vpart_position vp = g->m.veh_at( tripoint_abs_ms( act->values[0],
                                            act->values[1],
-                                           p->bub_pos().z() ) ) ) ) {
+                                           p->bub_pos().z() ) ) ) {
         vehicle *const veh = &vp->vehicle();
         const int mech_skill = act->values[2];
         if( mech_skill > rng( 1, 6 ) ) {
@@ -2092,20 +2093,22 @@ void activity_handlers::start_fire_finish( player_activity *act, player *p )
         p->consume_charges( it, it.type->charges_to_use() );
     }
     p->practice( skill_survival, act->index, 5 );
-
-    firestarter_actor::resolve_firestarter_use( *p, act->placement );
+    
+    map &here = get_map();
+    firestarter_actor::resolve_firestarter_use( *p, here.abs_to_bub( act->placement ) );
     act->set_to_null();
 }
 
 void activity_handlers::start_fire_do_turn( player_activity *act, player *p )
 {
     map &here = get_map();
+    const auto bub_loc = here.abs_to_bub( act->placement );
     item &firestarter = *act->get_tools().front();
     // Try fueling the fire if we don't already have fuel, OR if the tool needs to look for tinder to work
-    if( !here.is_flammable( act->placement ) || ( firestarter.has_flag( flag_REQUIRES_TINDER ) &&
-            !here.tinder_at( act->placement ) ) ) {
+    if( !here.is_flammable( bub_loc ) || ( firestarter.has_flag( flag_REQUIRES_TINDER ) &&
+            !here.tinder_at( bub_loc ) ) ) {
         try_fuel_fire( *act, *p, true );
-        if( !here.is_flammable( act->placement ) ) {
+        if( !here.is_flammable( bub_loc ) ) {
             p->add_msg_if_player( m_info, _( "There's nothing to light there." ) );
             p->cancel_activity();
             return;
@@ -2113,7 +2116,7 @@ void activity_handlers::start_fire_do_turn( player_activity *act, player *p )
     }
 
     if( firestarter.has_flag( flag_REQUIRES_TINDER ) ) {
-        if( !here.tinder_at( act->placement ) ) {
+        if( !here.tinder_at( bub_loc ) ) {
             p->add_msg_if_player( m_info, _( "This item requires tinder to light." ) );
             p->cancel_activity();
             return;
@@ -2204,9 +2207,9 @@ void activity_handlers::vehicle_finish( player_activity *act, player *p )
 {
     map &here = get_map();
     //Grab this now, in case the vehicle gets shifted
-    const optional_vpart_position vp = here.veh_at( here.abs_to_bub( tripoint( act->values[0],
+    const optional_vpart_position vp = here.veh_at( tripoint_abs_ms( act->values[0],
                                        act->values[1],
-                                       act->values[7] ) ) );
+                                       act->values[7] ) );
     veh_interact::complete_vehicle( *p );
     // complete_vehicle set activity type to NULL if the vehicle
     // was completely dismantled, otherwise the vehicle still exist and
@@ -2347,12 +2350,10 @@ void activity_handlers::vibe_do_turn( player_activity *act, player *p )
 void activity_handlers::start_engines_finish( player_activity *act, player *p )
 {
     act->set_to_null();
-    // Find the vehicle by looking for a remote vehicle first, then by player relative coordinates
     vehicle *veh = g->remoteveh();
     map &here = get_map();
     if( !veh ) {
-        const auto pos = act->placement + g->u.bub_pos();
-        veh = veh_pointer_or_null( here.veh_at( pos ) );
+        veh = veh_pointer_or_null( here.veh_at( act->placement ) );
         if( !veh ) {
             return;
         }
@@ -2419,8 +2420,9 @@ void activity_handlers::start_engines_finish( player_activity *act, player *p )
 
 void activity_handlers::cracking_finish( player_activity *act, player *p )
 {
+    auto &here = get_map();
     p->add_msg_if_player( m_good, _( "With a satisfying click, the lock on the safe opens!" ) );
-    get_map().furn_set( act->placement, f_safe_c );
+    here.furn_set( here.abs_to_bub( act->placement ), f_safe_c );
     act->set_to_null();
 }
 
@@ -2495,7 +2497,7 @@ std::optional<hack_type_t> get_hack_type( const player_activity &activity )
 
 tripoint_bub_ms get_position( const player_activity &activity )
 {
-    return activity.coords.at( 0 );
+    return abs_to_bub( activity.coords.at( 0 ) );
 }
 
 item *get_fake_tool( hack_type_t hack_type, const player_activity &activity )
@@ -2610,7 +2612,7 @@ void patch_activity_for_vehicle(
     // This tells activity, that real item doesn't exists in inventory.
     activity.index = INT_MIN;
     // Data for lookup vehicle part
-    activity.coords = { veh_part_position };
+    activity.coords = { bub_to_abs( veh_part_position ) };
     activity.values = {
         // Because we called only on start of repair
         static_cast<int>( repeat_type::REPEAT_INIT ),
@@ -2634,7 +2636,7 @@ void patch_activity_for_furniture( player_activity &activity,
     // This tells activity, that real item doesn't exists in inventory.
     activity.index = INT_MIN;
     // Data for lookup furniture
-    activity.coords = { furniture_position };
+    activity.coords = { bub_to_abs( furniture_position ) };
     activity.values = {
         // Because we called only on start of repair
         static_cast<int>( repeat_type::REPEAT_INIT ),
@@ -2750,7 +2752,7 @@ void activity_handlers::repair_item_finish( player_activity *act, player *p )
     } else {
         ploc = &*act->targets[0];
     }
-    const auto hack_position = hack_type ? hack::get_position( *act ) : tripoint{};
+    const auto hack_position = hack_type ? hack::get_position( *act ) : tripoint_bub_ms{};
     const int hack_original_charges = fake_tool ? fake_tool->charges : 0;
 
     item *main_tool = nullptr;
@@ -3062,11 +3064,12 @@ void activity_handlers::clear_rubble_finish( player_activity *act, player *p )
 {
     const auto &pos = act->placement;
     map &here = get_map();
-    const map_bash_info &bash = here.furn( pos ).obj().bash;
+    const auto bub_pos = here.abs_to_bub( pos );
+    const map_bash_info &bash = here.furn( bub_pos ).obj().bash;
     p->add_msg_if_player( m_info, _( "You clear up the %s." ),
-                          here.furnname( pos ) );
-    here.spawn_items( pos, item_group::items_from( bash.drop_group, calendar::turn ) );
-    here.furn_set( pos, f_null );
+                          here.furnname( bub_pos ) );
+    here.spawn_items( bub_pos, item_group::items_from( bash.drop_group, calendar::turn ) );
+    here.furn_set( bub_pos, f_null );
 
     act->set_to_null();
 }
@@ -3131,16 +3134,15 @@ void activity_handlers::travel_do_turn( player_activity *act, player *p )
             waypoint = midpoint( project_bounds<coords::ms>( next_omt ) );
         } else {
             // otherwise target the middle of the edge nearest to our current location
-            const tripoint_abs_ms cur_omt_mid = midpoint( project_bounds<coords::ms>
-                                                ( p->global_omt_location() ) );
+            const auto cur_omt_mid = midpoint( project_bounds<coords::ms>( p->global_omt_location() ) );
             waypoint = clamp( cur_omt_mid, project_bounds<coords::ms>( next_omt ) );
         }
         map &here = get_map();
         // TODO: fix point types
         auto centre_sub = here.abs_to_bub( waypoint );
         if( !here.passable( centre_sub ) ) {
-            tripoint_range<tripoint> candidates = here.points_in_radius( centre_sub, 2 );
-            for( const tripoint &elem : candidates ) {
+            tripoint_range<tripoint_bub_ms> candidates = here.points_in_radius( centre_sub, 2 );
+            for( const auto &elem : candidates ) {
                 if( here.passable( elem ) ) {
                     centre_sub = elem;
                     break;
@@ -3207,7 +3209,7 @@ static void rod_fish( player *p,
 
 void activity_handlers::fish_do_turn( player_activity *act, player *p )
 {
-    int fishing_mult = iuse::good_fishing_spot( act->placement );
+    int fishing_mult = iuse::good_fishing_spot( abs_to_bub( act->placement ) );
     if( fishing_mult == 0 || p->is_blind() ) {
         act->set_to_null();
         p->add_msg_if_player( m_info,
@@ -3367,7 +3369,7 @@ void activity_handlers::find_mount_do_turn( player_activity *act, player *p )
             return;
         }
     } else {
-        const auto route = route_adjacent( *p, guy.chosen_mount.lock()->pos() );
+        const auto route = route_adjacent( *p, guy.chosen_mount.lock()->bub_pos() );
         if( route.empty() ) {
             act->set_to_null();
             guy.revert_after_activity();
@@ -3504,10 +3506,8 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
     // check if player is on an autodoc couch
     if( autodoc && here.inbounds( p->bub_pos() ) ) {
         // this checks if there's an autodoc in a 3D radius around the player (during the operation), excluding just above/below him
-        const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
-                p->bub_pos(),
-                1,
-                flag_AUTODOC );
+        const auto autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
+                p->bub_pos(), 1, flag_AUTODOC );
         if( !here.has_flag_furn_or_vpart( flag_AUTODOC_COUCH, p->bub_pos() ) || autodocs.empty() ) {
             p->remove_effect( effect_under_op );
             act->set_to_null();
@@ -3639,10 +3639,8 @@ void activity_handlers::operation_finish( player_activity *act, player *p )
         if( act->values[1] > 0 ) {
             add_msg( m_good,
                      _( "The Autodoc returns to its resting position after successfully performing the operation." ) );
-            const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
-                    p->bub_pos(),
-                    1,
-                    flag_AUTODOC );
+            const auto autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
+                    p->bub_pos(), 1, flag_AUTODOC );
             sounds::sound( autodocs.front(), 10, sounds::sound_t::music,
                            _( "a short upbeat jingle: \"Operation successful\"" ), true,
                            "Autodoc",
@@ -3651,10 +3649,8 @@ void activity_handlers::operation_finish( player_activity *act, player *p )
             if( act->str_values[0] == "install" ) {
                 add_msg( m_warning,
                          _( "The Autodoc completes installation and activates bionic but reports about complications during operation." ) );
-                const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
-                        p->bub_pos(),
-                        1,
-                        flag_AUTODOC );
+                const auto autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
+                        p->bub_pos(), 1, flag_AUTODOC );
                 sounds::sound( autodocs.front(), 10, sounds::sound_t::music,
                                _( "a sad beeping noise: \"Complications detected!  Report to medical personnel immediately!\"" ),
                                true,
@@ -3663,10 +3659,8 @@ void activity_handlers::operation_finish( player_activity *act, player *p )
             } else {
                 add_msg( m_bad,
                          _( "The Autodoc jerks back to its resting position after failing the operation." ) );
-                const std::list<tripoint> autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
-                        p->bub_pos(),
-                        1,
-                        flag_AUTODOC );
+                const auto autodocs = here.find_furnitures_or_vparts_with_flag_in_radius(
+                        p->bub_pos(), 1, flag_AUTODOC );
                 sounds::sound( autodocs.front(), 10, sounds::sound_t::music,
                                _( "a sad beeping noise: \"Operation failed\"" ), true,
                                "Autodoc",
@@ -3816,7 +3810,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
     }
 
     const recipe &rec = craft->get_making();
-    const auto bench_pos = get_map().abs_to_bub( act->coords.front() );
+    const auto bench_pos = act->coords.front();
     // Ugly
     bench_type bench_t = bench_type( act->values[craft_bench_type_idx] );
 
@@ -3833,7 +3827,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
 
     const auto tools_mult_cached = static_cast<float>( act->values[craft_tools_mult_percent_idx] ) /
                                    100.0f;
-    const float crafting_speed = crafting_speed_multiplier( *p, *craft, bench_location{bench_t, bench_pos},
+    const float crafting_speed = crafting_speed_multiplier( *p, *craft, bench_location{ bench_t, act->coords.front() },
                                  tools_mult_cached );
     const int assistants = p->available_assistant_count( craft->get_making() );
     const bool is_long = act->values[craft_is_long_idx];
@@ -3884,7 +3878,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
         act->targets.front()->detach();
         if( is_long ) {
             if( p->making_would_work( p->lastrecipe, craft_copy->charges ) ) {
-                p->last_craft->execute( bench_pos );
+                p->last_craft->execute( get_map().abs_to_bub( bench_pos ) );
             }
         }
     } else if( craft->get_counter() >= craft->get_next_failure_point() ) {
@@ -3928,21 +3922,23 @@ void activity_handlers::eat_menu_finish( player_activity *, player * )
 
 void activity_handlers::pry_nails_do_turn( player_activity *act, player * )
 {
-    sfx::play_activity_sound( "tool", "hammer", sfx::get_heard_volume( act->placement ) );
+    map &here = get_map();
+    const auto bub_loc = here.abs_to_bub( act->placement );
+    sfx::play_activity_sound( "tool", "hammer", sfx::get_heard_volume( bub_loc ) );
 }
 
 void activity_handlers::pry_nails_finish( player_activity *act, player *p )
 {
-    const auto &pnt = act->placement;
     map &here = get_map();
-    const ter_id type = here.ter( pnt );
+    const auto bub_loc = here.abs_to_bub( act->placement );
+    const ter_id type = here.ter( bub_loc );
 
     p->add_msg_if_player( _( "You pry out the nails from the terrain." ) );
 
     p->practice( skill_fabrication, 1, 1 );
     here.spawn_item( p->bub_pos(), itype_nail, 1, type->nail_pull_items[0] );
     here.spawn_item( p->bub_pos(), itype_2x4, type->nail_pull_items[1] );
-    here.ter_set( pnt, type->nail_pull_result );
+    here.ter_set( bub_loc, type->nail_pull_result );
     act->set_to_null();
 }
 
@@ -3962,11 +3958,11 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
     map &here = get_map();
     const auto &pos = here.abs_to_bub( act->placement );
 
-    tripoint direction;
+    tripoint_rel_ms direction;
     if( !p->is_npc() ) {
         if( p->backlog.empty() || p->backlog.front()->id() != ACT_MULTIPLE_CHOP_TREES ) {
             while( true ) {
-                if( const std::optional<tripoint> dir = choose_direction(
+                if( const auto dir = choose_direction(
                         _( "Select a direction for the tree to fall in." ) ) ) {
                     direction = *dir;
                     break;
@@ -3976,14 +3972,14 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
         }
     } else {
         // Try to safely fell tree
-        std::vector<tripoint> valid_directions;
+        std::vector<tripoint_rel_ms> valid_directions;
 
-        for( const tripoint &elem : here.points_in_radius( pos, 1 ) ) {
+        for( const auto &elem : here.points_in_radius( pos, 1 ) ) {
             bool cantuse = false;
-            tripoint direc = elem - pos;
-            auto proposed_to = pos + point( 3 * direction.x, 3 * direction.y );
-            std::vector<tripoint> rough_tree_line = line_to( pos, proposed_to );
-            for( const tripoint &elem : rough_tree_line ) {
+            auto direc = elem - pos;
+            auto proposed_to = pos + point_rel_ms( 3 * direction.x(), 3 * direction.y() );
+            std::vector<tripoint_bub_ms> rough_tree_line = line_to( pos, proposed_to );
+            for( const auto &elem : rough_tree_line ) {
                 // Try not to drop onto a critter
                 if( g->critter_at( elem ) ) {
                     cantuse = true;
@@ -4013,8 +4009,8 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
     }
 
     const auto to = pos + 3 * direction.xy() + point( rng( -1, 1 ), rng( -1, 1 ) );
-    std::vector<tripoint> tree = line_to( pos, to, rng( 1, 8 ) );
-    for( const tripoint &elem : tree ) {
+    std::vector<tripoint_bub_ms> tree = line_to( pos, to, rng( 1, 8 ) );
+    for( const auto &elem : tree ) {
         here.batter( elem, 300, 5 );
         here.ter_set( elem, t_trunk );
     }
@@ -4197,7 +4193,7 @@ void activity_handlers::fill_pit_do_turn( player_activity *act, player * )
     sfx::play_activity_sound( "tool", "shovel", 100 );
     if( calendar::once_every( 1_minutes ) ) {
         //~ Sound of a shovel filling a pit or mound at work!
-        sounds::sound( act->placement, 10, sounds::sound_t::activity, _( "hsh!" ) );
+        sounds::sound( get_map().abs_to_bub( act->placement ), 10, sounds::sound_t::activity, _( "hsh!" ) );
     }
 }
 
@@ -4205,10 +4201,11 @@ void activity_handlers::fill_pit_finish( player_activity *act, player *p )
 {
     const auto &pos = act->placement;
     map &here = get_map();
-    const ter_id ter = here.ter( pos );
+    const auto bub_pos = here.abs_to_bub( pos );
+    const ter_id ter = here.ter( bub_pos );
     const ter_id old_ter = ter;
 
-    here.ter_set( pos, old_ter->fill_result );
+    here.ter_set( bub_pos, old_ter->fill_result );
     int act_exertion = to_moves<int>( time_duration::from_minutes( old_ter->fill_minutes ) );
     const int helpersize = character_funcs::get_crafting_helpers( *p, 3 ).size();
     act_exertion = act_exertion * ( 10 - helpersize ) / 10;
@@ -4259,31 +4256,47 @@ void activity_handlers::haircut_finish( player_activity *act, player *p )
     act->set_to_null();
 }
 
-std::vector<tripoint> get_sorted_tiles_by_distance( const tripoint &abspos,
-        const std::unordered_set<tripoint> &tiles )
+std::vector<tripoint_bub_ms> get_sorted_tiles_by_distance( const tripoint_bub_ms &coord,
+        const std::unordered_set<tripoint_bub_ms> &tiles )
 {
-    const auto cmp = [abspos]( tripoint a, tripoint b ) {
-        const int da = rl_dist( abspos, a );
-        const int db = rl_dist( abspos, b );
+    const auto cmp = [coord]( tripoint_bub_ms a, tripoint_bub_ms b ) {
+        const int da = rl_dist( coord, a );
+        const int db = rl_dist( coord, b );
 
         return da < db;
     };
 
-    std::vector<tripoint> sorted( tiles.begin(), tiles.end() );
+    std::vector<tripoint_bub_ms> sorted( tiles.begin(), tiles.end() );
+    std::ranges::sort( sorted, cmp );
+
+    return sorted;
+}
+
+std::vector<tripoint_abs_ms> get_sorted_tiles_by_distance( const tripoint_abs_ms &coord,
+        const std::unordered_set<tripoint_abs_ms> &tiles )
+{
+    const auto cmp = [coord]( tripoint_abs_ms a, tripoint_abs_ms b ) {
+        const int da = rl_dist( coord, a );
+        const int db = rl_dist( coord, b );
+
+        return da < db;
+    };
+
+    std::vector<tripoint_abs_ms> sorted( tiles.begin(), tiles.end() );
     std::ranges::sort( sorted, cmp );
 
     return sorted;
 }
 
 template<typename fn>
-static void cleanup_tiles( std::unordered_set<tripoint> &tiles, fn &cleanup )
+static void cleanup_tiles( std::unordered_set<tripoint_abs_ms> &tiles, fn &cleanup )
 {
     auto it = tiles.begin();
     map &here = get_map();
     while( it != tiles.end() ) {
         auto current = it++;
 
-        const tripoint &tile_loc = here.abs_to_bub( *current );
+        const tripoint_abs_ms &tile_loc = here.abs_to_bub( *current );
 
         if( cleanup( tile_loc ) ) {
             tiles.erase( current );
@@ -4293,22 +4306,22 @@ static void cleanup_tiles( std::unordered_set<tripoint> &tiles, fn &cleanup )
 
 static void perform_zone_activity_turn( player *p,
                                         const zone_type_id &ztype,
-                                        const std::function<bool( const tripoint & )> &tile_filter,
-                                        const std::function<void ( player &p, const tripoint & )> &tile_action,
+                                        const std::function<bool( const tripoint_bub_ms & )> &tile_filter,
+                                        const std::function<void ( player &p, const tripoint_bub_ms & )> &tile_action,
                                         const std::string &finished_msg )
 {
     const zone_manager &mgr = zone_manager::get_manager();
     map &here = get_map();
-    const auto abspos = here.bub_to_abs( p->bub_pos() );
-    std::unordered_set<tripoint> unsorted_tiles = mgr.get_near( ztype, abspos );
+    const auto abspos = p->abs_pos();
+    std::unordered_set<tripoint_abs_ms> unsorted_tiles = mgr.get_near( ztype, abspos );
 
     cleanup_tiles( unsorted_tiles, tile_filter );
 
     // sort remaining tiles by distance
-    const std::vector<tripoint> &tiles = get_sorted_tiles_by_distance( abspos, unsorted_tiles );
+    const std::vector<tripoint_abs_ms> &tiles = get_sorted_tiles_by_distance( abspos, unsorted_tiles );
 
-    for( const tripoint &tile : tiles ) {
-        const tripoint &tile_loc = here.abs_to_bub( tile );
+    for( const auto &tile : tiles ) {
+        const tripoint_bub_ms &tile_loc = here.abs_to_bub( tile );
 
         auto route = here.route( p->bub_pos(), tile_loc,
                                  p->get_legacy_pathfinding_settings(),
@@ -4355,13 +4368,13 @@ void activity_handlers::fertilize_plot_do_turn( player_activity *act, player *p 
         return !fertilizer.is_empty() && p->has_charges( fertilizer, 1 );
     };
 
-    const auto reject_tile = [&]( const tripoint & tile ) {
+    const auto reject_tile = [&]( const tripoint_bub_ms & tile ) {
         check_fertilizer();
         ret_val<bool> can_fert = iexamine::can_fertilize( *p, tile, fertilizer );
         return !can_fert.success();
     };
 
-    const auto fertilize = [&]( player & p, const tripoint & tile ) {
+    const auto fertilize = [&]( player & p, const tripoint_bub_ms & tile ) {
         check_fertilizer();
         if( have_fertilizer() ) {
             iexamine::fertilize_plant( p, tile, fertilizer );
@@ -4572,7 +4585,7 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
         !spell_being_cast.has_flag( RANDOM_TARGET ) ) {
         do {
             avatar &you = *p->as_avatar();
-            std::vector<tripoint> trajectory = target_handler::mode_spell( you, spell_being_cast, no_fail,
+            std::vector<tripoint_bub_ms> trajectory = target_handler::mode_spell( you, spell_being_cast, no_fail,
                                                no_mana );
 
             if( !trajectory.empty() ) {
@@ -4591,7 +4604,7 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
             }
         } while( !target_is_valid );
     } else if( spell_being_cast.has_flag( RANDOM_TARGET ) ) {
-        const std::optional<tripoint> target_ = spell_being_cast.random_valid_target( *p, p->bub_pos() );
+        const std::optional<tripoint_bub_ms> target_ = spell_being_cast.random_valid_target( *p, p->bub_pos() );
         if( !target_ ) {
             p->add_msg_if_player( game_message_params{ m_bad, gmf_bypass_cooldown },
                                   _( "Your spell can't find a suitable target." ) );

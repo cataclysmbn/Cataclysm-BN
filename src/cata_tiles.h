@@ -803,7 +803,7 @@ class cata_tiles
          * @return always true.
          */
         bool draw_color_at(
-            const SDL_Color &color, point p, SDL_BlendMode blend_mode = SDL_BLENDMODE_NONE );
+            const SDL_Color &color, point_bub_ms p, SDL_BlendMode blend_mode = SDL_BLENDMODE_NONE );
 
         /** Tile Picking */
         void get_tile_values( int t, const int *tn, int &subtile, int &rotation );
@@ -835,7 +835,7 @@ class cata_tiles
 
         /** Drawing Layers */
         bool would_apply_vision_effects( visibility_type visibility ) const;
-        bool apply_vision_effects( const tripoint &pos, visibility_type visibility );
+        bool apply_vision_effects( const tripoint_bub_ms &pos, visibility_type visibility );
 
         bool draw_block( const tripoint_bub_ms &p, SDL_Color color, int scale );
 

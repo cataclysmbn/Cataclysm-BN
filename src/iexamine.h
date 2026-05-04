@@ -7,13 +7,13 @@
 #include <vector>
 
 #include "calendar.h"
+#include "coordinates.h"
 #include "itype.h"
 #include "ret_val.h"
 #include "type_id.h"
 
 class item;
 class player;
-struct tripoint;
 
 using seed_tuple = std::tuple<itype_id, std::string, int>;
 
@@ -90,7 +90,7 @@ void kiln_empty( player &p, const tripoint_bub_ms &examp );
 void kiln_full( player &p, const tripoint_bub_ms &examp );
 void arcfurnace_empty( player &p, const tripoint_bub_ms &examp );
 void arcfurnace_full( player &p, const tripoint_bub_ms &examp );
-void autoclave_empty( player &p, const tripoint & );
+void autoclave_empty( player &p, const tripoint_bub_ms &);
 void autoclave_full( player &, const tripoint_bub_ms &examp );
 void fireplace( player &p, const tripoint_bub_ms &examp );
 void fvat_empty( player &p, const tripoint_bub_ms &examp );
@@ -117,15 +117,15 @@ void dimensional_portal( player &p, const tripoint_bub_ms &examp );
 void check_power( player &p, const tripoint_bub_ms &examp );
 void migo_nerve_cluster( player &p, const tripoint_bub_ms &examp );
 void cardreader_plutgen( player &p, const tripoint_bub_ms &examp );
-void multicooker( player &p, const tripoint &pos );
+void multicooker( player &p, const tripoint_bub_ms &pos );
 
-detached_ptr<item> pour_into_keg( const tripoint &pos, detached_ptr<item> &&liquid );
+detached_ptr<item> pour_into_keg( const tripoint_bub_ms &pos, detached_ptr<item> &&liquid );
 std::optional<tripoint_bub_ms> getGasPumpByNumber( const tripoint_bub_ms &p, int number );
 bool toPumpFuel( const tripoint_bub_ms &src, const tripoint_bub_ms &dst, int units );
 std::optional<tripoint_bub_ms> getNearFilledGasTank( const tripoint_bub_ms &center,
         int &gas_units );
 
-bool has_keg( const tripoint &pos );
+bool has_keg( const tripoint_bub_ms &pos );
 
 std::vector<detached_ptr<item>> get_harvest_items( const itype &type, int plant_count,
                              int seed_count, bool byproducts );
@@ -142,9 +142,9 @@ ret_val<bool> can_fertilize( player &p, const tripoint_bub_ms &tile, const itype
 // Skill training common functions
 void practice_survival_while_foraging( player *p );
 
-void power_portal( player &p, const tripoint &examp );
+void power_portal( player &p, const tripoint_bub_ms &examp );
 /** Generic dimensional portal (portal_tile active tile). */
-void portal( player &p, const tripoint &examp );
+void portal( player &p, const tripoint_bub_ms &examp );
 
 } //namespace iexamine
 

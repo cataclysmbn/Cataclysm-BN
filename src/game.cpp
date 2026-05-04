@@ -354,9 +354,9 @@ uint32_t g_npcmove_attitude_epoch{ 0 };
 //The one and only uistate instance
 uistatedata uistate;
 
-bool is_valid_in_w_terrain( point p )
+bool is_valid_in_w_terrain( tripoint_bub_ms p )
 {
-    return p.x >= 0 && p.x < TERRAIN_WINDOW_WIDTH && p.y >= 0 && p.y < TERRAIN_WINDOW_HEIGHT;
+    return p.x() >= 0 && p.x() < TERRAIN_WINDOW_WIDTH && p.y() >= 0 && p.y() < TERRAIN_WINDOW_HEIGHT;
 }
 
 static void achievement_attained( const achievement *a )
@@ -2527,12 +2527,12 @@ void game::handle_key_blocking_activity()
 // Returns true if input requires breaking out into a game action.
 bool game::handle_mouseview( input_context &ctxt, std::string &action )
 {
-    std::optional<tripoint> liveview_pos;
+    std::optional<tripoint_bub_ms> liveview_pos;
 
     do {
         action = ctxt.handle_input();
         if( action == "MOUSE_MOVE" ) {
-            const std::optional<tripoint> mouse_pos = ctxt.get_coordinates( w_terrain );
+            const std::optional<tripoint_bub_ms> mouse_pos = ctxt.get_coordinates( w_terrain );
             if( mouse_pos && ( !liveview_pos || *mouse_pos != *liveview_pos ) ) {
                 liveview_pos = mouse_pos;
                 liveview.show( *liveview_pos );
@@ -3777,17 +3777,17 @@ shared_ptr_fast<game::draw_callback_t>
             }
         }
         if( zone_start && zone_end ) {
-            const point_bub_ms offset2( g->u.view_offset.xy() + point_bub_ms( g->u.bub_pos().x() - getmaxx(
+            const point_rel_ms offset2( g->u.view_offset.xy() + point_rel_ms( g->u.bub_pos().x() - getmaxx(
                                             g->w_terrain ) / 2,
                                         g->u.bub_pos().y() - getmaxy( g->w_terrain ) / 2 ) );
 
-            tripoint_bub_ms offset;
+            tripoint_rel_ms offset;
 #if defined(TILES)
             if( use_tiles ) {
-                offset = tripoint_bub_ms::zero(); //TILES
+                offset = tripoint_rel_ms::zero(); //TILES
             } else {
 #endif
-                offset = tripoint_bub_ms( offset2, 0 ); //CURSES
+                offset = tripoint_rel_ms( offset2, 0 ); //CURSES
 #if defined(TILES)
             }
 #endif
@@ -8717,10 +8717,10 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
             if( edge_scrolling ) {
                 center += action == "MOUSE_MOVE" ? edge_scroll * 2 : edge_scroll;
             } else if( action == "MOUSE_MOVE" ) {
-                const std::optional<tripoint> mouse_pos = ctxt.get_coordinates( w_terrain );
+                const std::optional<tripoint_bub_ms> mouse_pos = ctxt.get_coordinates( w_terrain );
                 if( mouse_pos ) {
-                    lx = mouse_pos->x;
-                    ly = mouse_pos->y;
+                    lx = mouse_pos->x();
+                    ly = mouse_pos->y();
                 }
             }
         } else if( std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {

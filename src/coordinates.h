@@ -698,6 +698,13 @@ inline int trig_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
+inline int trig_dist_squared( const coords::coord_point<Point, Origin, Scale> &loc1,
+                      const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return trig_dist_squared( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
 inline int rl_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
                     const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
@@ -802,6 +809,34 @@ midpoint( const coords::coord_point<Point, Origin, Scale> &loc1,
           const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return coords::coord_point<Point, Origin, Scale>( ( loc1.raw() + loc2.raw() ) / 2 );
+}
+
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<point, Origin, Scale>
+midpoint( const inclusive_rectangle<coords::coord_point<point, Origin, Scale>> &rect )
+{
+    return midpoint( rect.p_min, rect.p_max + point( 1, 1 ) );
+}
+
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<point, Origin, Scale>
+midpoint( const half_open_rectangle<coords::coord_point<point, Origin, Scale>> &rect )
+{
+    return midpoint( rect.p_min, rect.p_max );
+}
+
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<tripoint, Origin, Scale>
+midpoint( const inclusive_cuboid<coords::coord_point<tripoint, Origin, Scale>> &rect )
+{
+    return midpoint( rect.p_min, rect.p_max + tripoint( 1, 1, 1 ) );
+}
+
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<tripoint, Origin, Scale>
+midpoint( const half_open_cuboid<coords::coord_point<tripoint, Origin, Scale>> &rect )
+{
+    return midpoint( rect.p_min, rect.p_max );
 }
 
 

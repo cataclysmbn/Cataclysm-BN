@@ -440,9 +440,9 @@ void activity_speed::find_best_bench( const tripoint_bub_ms &pos, const metric m
         bench = bench_tmp;
     }
 
-    std::vector<tripoint> reachable( PICKUP_RANGE * PICKUP_RANGE );
+    std::vector<tripoint_bub_ms> reachable( PICKUP_RANGE * PICKUP_RANGE );
     here.reachable_flood_steps( reachable, pos, PICKUP_RANGE, 1, 100 );
-    for( const tripoint &adj : reachable ) {
+    for( const tripoint_bub_ms &adj : reachable ) {
         if( const auto &wb = here.furn( adj )->workbench ) {
             bench_tmp = bench_loc( workbench_info_wrapper( *wb ), adj );
             bench_tmp.wb_info.adjust_multiplier( metrics );

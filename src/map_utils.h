@@ -11,4 +11,4 @@ using location_subrange =
 /// @brief Get all items at a given position. If the position is inside a vehicle, it will
 ///        return the items in the vehicle's cargo.
 /// @return An item range at the given position.
-auto get_items_at( const tripoint &loc ) -> location_subrange;
+auto get_items_at( const tripoint_abs_ms &loc ) -> location_subrange;

@@ -820,7 +820,7 @@ static hack_type get_hack_type( tripoint_bub_ms examp )
 
 void hacking_activity_actor::start( player_activity &act, Character & )
 {
-    hack_type type = get_hack_type( act.placement );
+    hack_type type = get_hack_type( abs_to_bub( act.placement ) );
     std::string name;
 
     switch( type ) {
@@ -898,7 +898,7 @@ hacking_activity_actor::hacking_activity_actor( use_bionic )
 
 void hacking_activity_actor::finish( player_activity &act, Character &who )
 {
-    tripoint_bub_ms examp = act.placement;
+    tripoint_bub_ms examp = abs_to_bub( act.placement );
     hack_type type = get_hack_type( examp );
     map &here = get_map();
     switch( hack_attempt( who, using_bionic ) ) {

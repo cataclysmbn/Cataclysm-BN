@@ -252,9 +252,10 @@ float workbench_crafting_speed_multiplier( const item &craft, const bench_locati
         }
         break;
         case bench_type::furniture:
-            if( here.furn( bench.position )->workbench ) {
+            const auto bub_loc = abs_to_bub( bench.position );
+            if( here.furn( bub_loc )->workbench ) {
                 // Furniture workbench
-                wb_info = workbench_info_wrapper( *here.furn( bench.position )->workbench );
+                wb_info = workbench_info_wrapper( *here.furn( bub_loc )->workbench );
             } else {
                 return 0.0f;
             }
@@ -483,7 +484,7 @@ bool Character::check_eligible_containers_for_crafting( const recipe &rec, int b
 
         // also check if we're currently in a vehicle that has the necessary storage
         if( charges_to_store > 0 ) {
-            if( optional_vpart_position vp = here.veh_at( pos() ) ) {
+            if( optional_vpart_position vp = here.veh_at( bub_pos() ) ) {
                 const itype_id &ftype = prod->typeId();
                 int fuel_cap = vp->vehicle().fuel_capacity( ftype );
                 int fuel_amnt = vp->vehicle().fuel_left( ftype );
@@ -540,9 +541,9 @@ std::vector<const item *> Character::get_eligible_containers_for_crafting() cons
 
     map &here = get_map();
     // get all potential containers within PICKUP_RANGE tiles including vehicles
-    for( const tripoint_bub_ms &loc : closest_points_first( pos(), PICKUP_RANGE ) ) {
+    for( const tripoint_bub_ms &loc : closest_points_first( bub_pos(), PICKUP_RANGE ) ) {
         // can not reach this -> can not access its contents
-        if( pos() != loc && !here.clear_path( pos(), loc, PICKUP_RANGE, 1, 100 ) ) {
+        if( bub_pos() != loc && !here.clear_path( bub_pos(), loc, PICKUP_RANGE, 1, 100 ) ) {
             continue;
         }
         if( here.accessible_items( loc ) ) {
@@ -594,12 +595,12 @@ const inventory &Character::crafting_inventory( bool clear_path )
     return crafting_inventory( tripoint_bub_ms::zero(), PICKUP_RANGE, clear_path );
 }
 
-const inventory &Character::crafting_inventory( const tripoint &src_pos, int radius,
+const inventory &Character::crafting_inventory( const tripoint_bub_ms &src_pos, int radius,
         bool clear_path )
 {
     auto inv_pos = src_pos;
-    if( src_pos == tripoint_zero ) {
-        inv_pos = pos();
+    if( src_pos == tripoint_bub_ms::zero() ) {
+        inv_pos = bub_pos();
     }
     const auto cache_hit = cached_time == calendar::turn
                            && cached_position == inv_pos;
@@ -698,7 +699,7 @@ static void set_components( item &of, const std::vector<item *> &used,
 static void set_item_map( const tripoint_bub_ms &loc, detached_ptr<item> &&newit )
 {
     // Includes loc
-    for( const tripoint &tile : closest_points_first( loc, 2 ) ) {
+    for( const auto &tile : closest_points_first( loc, 2 ) ) {
         // Pass false to disallow overflow, null_item_reference indicates failure.
         newit = get_map().add_item_or_charges( tile, std::move( newit ), false );
         if( !newit ) {
@@ -773,7 +774,7 @@ static void set_item_inventory( Character &who, detached_ptr<item> &&newit )
     return set_item_map_or_vehicle( who, who.bub_pos(), std::move( newit ) );
 }
 
-item *Character::start_craft( craft_command &command, const tripoint & )
+item *Character::start_craft( craft_command &command, const tripoint_bub_ms & )
 {
     if( command.empty() ) {
         debugmsg( "Attempted to start craft with empty command" );
@@ -792,7 +793,7 @@ item *Character::start_craft( craft_command &command, const tripoint & )
     }
 
     bench_location bench = find_best_bench( *this, *craft );
-    std::pair<bench_type, float> best_found_bench = crafting::best_bench_here( *craft, bench.position,
+    std::pair<bench_type, float> best_found_bench = crafting::best_bench_here( *craft, abs_to_bub( bench.position ),
             bench.type == bench_type::hands );
     if( best_found_bench.second < 1.0f ) {
         add_msg_if_player( m_info, pgettext( "in progress craft",
@@ -807,13 +808,13 @@ item *Character::start_craft( craft_command &command, const tripoint & )
 
     assign_activity( ACT_CRAFT );
     activity->targets.emplace_back( craft_in_world );
-    activity->coords.push_back( get_map().bub_to_abs( bench.position ) );
+    activity->coords.push_back( bench.position );
     activity->values.push_back( command.is_long() );
     // Ugly
     activity->values.push_back( static_cast<int>( bench.type ) );
     activity->values.push_back( 100 );
     activity->values.push_back( 0 );
-    activity->placement = tripoint_bub_ms::zero();
+    activity->placement = tripoint_abs_ms::zero();
 
     add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),
@@ -1295,7 +1296,7 @@ bool Character::can_continue_craft( item &craft )
         }
 
         inventory map_inv;
-        map_inv.form_from_map( pos(), PICKUP_RANGE, this );
+        map_inv.form_from_map( bub_pos(), PICKUP_RANGE, this );
 
         std::vector<comp_selection<item_comp>> item_selections;
         for( const auto &it : continue_reqs.get_components() ) {
@@ -1353,7 +1354,7 @@ bool Character::can_continue_craft( item &craft )
         }
 
         inventory map_inv;
-        map_inv.form_from_map( pos(), PICKUP_RANGE, this );
+        map_inv.form_from_map( bub_pos(), PICKUP_RANGE, this );
 
         std::vector<comp_selection<tool_comp>> new_tool_selections;
         for( const std::vector<tool_comp> &alternatives : tool_reqs ) {
@@ -1611,13 +1612,13 @@ std::vector<detached_ptr<item>> Character::consume_items( const comp_selection<i
                              int batch,
                              const std::function<bool( const item & )> &filter )
 {
-    return consume_items( get_map(), is, batch, pos(), PICKUP_RANGE, filter );
+    return consume_items( get_map(), is, batch, bub_pos(), PICKUP_RANGE, filter );
 }
 
 std::vector<detached_ptr<item>> Character::consume_items( map &m,
                              const comp_selection<item_comp> &is,
                              int batch,
-                             const tripoint &origin, int radius,
+                             const tripoint_bub_ms &origin, int radius,
                              const std::function<bool( const item & )> &filter )
 {
     std::vector<detached_ptr<item>> ret;
@@ -1692,7 +1693,7 @@ std::vector<detached_ptr<item>> Character::consume_items( const std::vector<item
                              const std::function<bool( const item & )> &filter )
 {
     inventory map_inv;
-    map_inv.form_from_map( pos(), PICKUP_RANGE, this );
+    map_inv.form_from_map( bub_pos(), PICKUP_RANGE, this );
     return consume_items( select_item_component( components, batch, map_inv, false, filter ), batch,
                           filter );
 }
@@ -1907,7 +1908,7 @@ bool Character::craft_consume_tools( item &craft, int mulitplier, bool start_cra
                 craft.get_cached_tool_selections();
 
     inventory map_inv;
-    map_inv.form_from_map( pos(), PICKUP_RANGE, this );
+    map_inv.form_from_map( bub_pos(), PICKUP_RANGE, this );
 
     for( const comp_selection<tool_comp> &tool_sel : cached_tool_selections ) {
         itype_id type = tool_sel.comp.type;
@@ -1961,12 +1962,12 @@ bool Character::craft_consume_tools( item &craft, int mulitplier, bool start_cra
 
 void Character::consume_tools( const comp_selection<tool_comp> &tool, int batch )
 {
-    consume_tools( get_map(), tool, batch, pos(), PICKUP_RANGE );
+    consume_tools( get_map(), tool, batch, bub_pos(), PICKUP_RANGE );
 }
 
 /* we use this if we selected the tool earlier */
 void Character::consume_tools( map &m, const comp_selection<tool_comp> &tool, int batch,
-                               const tripoint &origin, int radius )
+                               const tripoint_bub_ms &origin, int radius )
 {
     if( has_trait( trait_DEBUG_HS ) ) {
         return;
@@ -1990,7 +1991,7 @@ void Character::consume_tools( const std::vector<tool_comp> &tools, int batch,
                                const std::string &hotkeys )
 {
     inventory map_inv;
-    map_inv.form_from_map( pos(), PICKUP_RANGE, this );
+    map_inv.form_from_map( bub_pos(), PICKUP_RANGE, this );
     consume_tools( crafting::select_tool_component( tools, batch, map_inv, this, false, hotkeys,
                    cost_adjustment::none ), batch );
 }
@@ -2222,7 +2223,7 @@ bool crafting::disassemble_all( avatar &you, bool recursively )
 }
 
 void crafting::complete_disassemble( Character &who, const iuse_location &target,
-                                     const tripoint &/*pos*/ )
+                                     const tripoint_bub_ms &/*pos*/ )
 {
 
     item &org_item = *target.loc;
@@ -2418,9 +2419,9 @@ bench_location find_best_bench( const Character &who, const item &craft )
     bench_type best_type = bench_here.first;
     float best_bench_multi = bench_here.second;
     auto best_loc = who.bub_pos();
-    std::vector<tripoint> reachable( PICKUP_RANGE * PICKUP_RANGE );
+    std::vector<tripoint_bub_ms> reachable( PICKUP_RANGE * PICKUP_RANGE );
     g->m.reachable_flood_steps( reachable, who.bub_pos(), PICKUP_RANGE, 1, 100 );
-    for( const tripoint &adj : reachable ) {
+    for( const auto &adj : reachable ) {
         if( const cata::value_ptr<furn_workbench_info> &wb = g->m.furn( adj )->workbench ) {
             if( wb->multiplier > best_bench_multi ) {
                 best_type = bench_type::furniture;
@@ -2443,19 +2444,20 @@ bench_location find_best_bench( const Character &who, const item &craft )
         }
     }
 
-    return bench_location{best_type, best_loc};
+    return bench_location{best_type, bub_to_abs( best_loc )};
 }
 
 namespace crafting
 {
 
-std::pair<bench_type, float> best_bench_here( const item &craft, const tripoint &loc,
+std::pair<bench_type, float> best_bench_here( const item &craft, const tripoint_bub_ms &loc,
         bool can_lift )
 {
     bench_type best_type = bench_type::ground;
-    float best_mult = workbench_crafting_speed_multiplier( craft, bench_location{ bench_type::ground, loc } );
+    const auto abs_loc = bub_to_abs( loc );
+    float best_mult = workbench_crafting_speed_multiplier( craft, bench_location{ bench_type::ground, abs_loc } );
     if( can_lift ) {
-        float hands_mult = workbench_crafting_speed_multiplier( craft, bench_location{ bench_type::hands, loc } );
+        float hands_mult = workbench_crafting_speed_multiplier( craft, bench_location{ bench_type::hands, abs_loc } );
         if( hands_mult > best_mult ) {
             best_type = bench_type::hands;
             best_mult = hands_mult;
@@ -2463,7 +2465,7 @@ std::pair<bench_type, float> best_bench_here( const item &craft, const tripoint 
     }
 
     if( g->m.furn( loc )->workbench ) {
-        float furn_mult = workbench_crafting_speed_multiplier( craft, bench_location{ bench_type::furniture, loc } );
+        float furn_mult = workbench_crafting_speed_multiplier( craft, bench_location{ bench_type::furniture, abs_loc } );
         if( furn_mult > best_mult ) {
             best_type = bench_type::furniture;
             best_mult = furn_mult;
@@ -2471,8 +2473,8 @@ std::pair<bench_type, float> best_bench_here( const item &craft, const tripoint 
     }
 
     if( const std::optional<vpart_reference> vp = g->m.veh_at(
-                loc ).part_with_feature( "WORKBENCH", true ) ) {
-        float veh_mult = workbench_crafting_speed_multiplier( craft, bench_location{ bench_type::vehicle, loc } );
+                abs_loc ).part_with_feature( "WORKBENCH", true ) ) {
+        float veh_mult = workbench_crafting_speed_multiplier( craft, bench_location{ bench_type::vehicle, abs_loc } );
         if( veh_mult > best_mult ) {
             best_type = bench_type::vehicle;
             best_mult = veh_mult;

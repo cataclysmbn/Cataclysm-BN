@@ -1199,7 +1199,7 @@ void npc::do_npc_craft( const std::optional<tripoint> &loc )
                 }
             }
 
-            iuse::craft( this, target, false, target_pos.raw() );
+            iuse::craft( this, target, false, target_pos );
         }
     }
 }
