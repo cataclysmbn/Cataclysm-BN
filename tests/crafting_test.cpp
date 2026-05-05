@@ -485,14 +485,27 @@ TEST_CASE( "crafting consumes tool charges before loaded battery components", "[
     auto &you = get_avatar();
     const recipe &rec = recipe_to_make.obj();
     you.learn_recipe( &rec );
+    you.set_skill_level( rec.skill_used, 10 );
+    for( const auto &required_skill : rec.required_skills ) {
+        you.set_skill_level( required_skill.first, 10 );
+    }
     REQUIRE( !you.activity );
 
     you.make_craft( recipe_to_make, 1 );
 
     REQUIRE( you.activity );
-    CHECK( you.activity->id() == activity_id( "ACT_CRAFT" ) );
-    CHECK( you.items_with( []( const auto & it ) { return it.typeId() == itype_medium_plus_battery_cell; } ).empty() );
-    CHECK( you.charges_of( itype_battery ) == 140 );
+    while( you.activity && you.activity->id() == activity_id( "ACT_CRAFT" ) ) {
+        you.moves = 100;
+        you.activity->do_turn( you );
+    }
+
+    const auto results = you.items_with( []( const auto & it ) {
+        return it.typeId() == itype_medium_plus_battery_cell;
+    } );
+    REQUIRE( results.size() == 1 );
+    CHECK( results.front()->ammo_current() == itype_battery );
+    CHECK( results.front()->ammo_remaining() == 140 );
+    CHECK( you.charges_of( itype_battery ) == 0 );
     CHECK( get_remaining_charges( "soldering_iron" ) == 0 );
 }
 

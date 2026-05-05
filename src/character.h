@@ -2555,12 +2555,28 @@ class Character : public Creature, public location_visitable<Character>
         select_item_component( const std::vector<item_comp> &components,
                                int batch, inventory &map_inv, bool can_cancel = false,
                                const std::function<bool( const item & )> &filter = return_true<item>, bool player_inv = true );
+        enum class component_ammo_handling {
+            recover,
+            preserve
+        };
+
+        struct consume_items_options {
+            map *source_map = nullptr;
+            const comp_selection<item_comp> *selection = nullptr;
+            int batch = 1;
+            tripoint_bub_ms origin = tripoint_bub_ms::zero();
+            int radius = PICKUP_RANGE;
+            std::function<bool( const item & )> filter = return_true<item>;
+            component_ammo_handling ammo_handling = component_ammo_handling::recover;
+        };
+
         std::vector<detached_ptr<item>> consume_items( const comp_selection<item_comp> &is, int batch,
                                      const std::function<bool( const item & )> &filter = return_true<item> );
         std::vector<detached_ptr<item>> consume_items( map &m, const comp_selection<item_comp> &is,
                                      int batch,
                                      const tripoint_bub_ms &origin, int radius,
                                      const std::function<bool( const item & )> &filter = return_true<item> );
+        auto consume_items( const consume_items_options &opts ) -> std::vector<detached_ptr<item>>;
         std::vector<detached_ptr<item>> consume_items( const std::vector<item_comp> &components,
                                      int batch = 1,
                                      const std::function<bool( const item & )> &filter = return_true<item> );

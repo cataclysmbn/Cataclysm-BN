@@ -112,10 +112,15 @@ for( auto &ammo : recover_stored_ammo( source_item, stored_ammo_remainder_handli
 
 余りの扱いを明示的に選んでください。
 
-- `stored_ammo_remainder_handling::discard`: クラフト、分解、解体のように元アイテムが破壊される
-  ときに使います。完全な弾薬アイテムを回収し、アイテムとして存在できない余りを消します。
+- `stored_ammo_remainder_handling::discard`: 分解や解体のように元アイテムが破壊されるときに
+  使います。完全な弾薬アイテムを回収し、アイテムとして存在できない余りを消します。
 - `stored_ammo_remainder_handling::preserve`: 車両から完全な燃料アイテムだけを取り出し、部分燃料を
   部品に残す場合のように、元のものが世界に残るときに使います。
+
+クラフトは 2 段階で扱います。進行中クラフトが部品を所有している間は保持弾薬を保存し、完了時に
+互換性のある完成品へ先に装填してから、残りだけを物理アイテムとして回収します。これにより、
+充電済みバッテリーセル部品が別のバッテリーセル完成品ではなく、裸の `battery` アイテムとして
+出てくることを防ぎます。
 
 物理表現を調べる、または生成するだけのコードでは、`stored_ammo_item_charges`、
 `stored_ammo_charges_for_items`、`spawn_stored_ammo` を使ってください。これにより、charge から

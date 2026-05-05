@@ -112,9 +112,14 @@ for( auto &ammo : recover_stored_ammo( source_item, stored_ammo_remainder_handli
 Choose the remainder policy explicitly:
 
 - `stored_ammo_remainder_handling::discard`: use when the source item is being destroyed, such as
-  crafting, disassembly, or salvage. Recover complete ammo items and clear unitemizable remainders.
+  disassembly or salvage. Recover complete ammo items and clear unitemizable remainders.
 - `stored_ammo_remainder_handling::preserve`: use when the source remains in the world, such as
   unloading complete fuel items from a vehicle while leaving partial fuel in the part.
+
+Crafting is a two-stage case: preserve stored ammo while the in-progress craft owns the components,
+then on completion load that ammo into a compatible result before recovering any leftovers as
+physical items. This prevents charged battery-cell components from turning into loose `battery`
+items when the recipe result is another battery cell.
 
 For code that only needs to inspect or spawn the physical representation, use
 `stored_ammo_item_charges`, `stored_ammo_charges_for_items`, and `spawn_stored_ammo`. This keeps

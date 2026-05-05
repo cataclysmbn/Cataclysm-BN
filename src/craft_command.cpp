@@ -374,7 +374,13 @@ detached_ptr<item> craft_command::create_in_progress_craft()
                                    tool_charge_prepayment::start_only );
 
     for( const auto &it : item_selections ) {
-        std::vector<detached_ptr<item>> tmp = crafter->consume_items( it, batch_size, filter );
+        auto tmp = crafter->consume_items( {
+            .selection = &it,
+            .batch = batch_size,
+            .origin = crafter->bub_pos(),
+            .filter = filter,
+            .ammo_handling = Character::component_ammo_handling::preserve,
+        } );
         used.insert( used.end(), std::make_move_iterator( tmp.begin() ),
                      std::make_move_iterator( tmp.end() ) );
     }

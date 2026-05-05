@@ -1087,6 +1087,91 @@ void item::inherit_flags( const std::vector<item *> &parents, const recipe &maki
     }
 }
 
+namespace
+{
+
+auto drop_or_handle( detached_ptr<item> &&newit, Character &who ) -> void
+{
+    if( newit->made_of( LIQUID ) && who.is_avatar() ) {
+        // TODO: what about NPCs?
+        liquid_handler::handle_all_liquid( std::move( newit ), PICKUP_RANGE );
+    } else {
+        who.as_player()->i_add_or_drop( std::move( newit ) );
+    }
+}
+
+auto load_stored_ammo_into_result( item &result, const itype_id &ammo, int charges ) -> int
+{
+    if( charges <= 0 || ammo.is_null() ) {
+        return 0;
+    }
+
+    if( result.typeId() == ammo && result.count_by_charges() ) {
+        result.charges += charges;
+        return charges;
+    }
+
+    if( !( result.is_tool() || result.is_gun() || result.is_magazine() ) || !ammo->ammo ) {
+        return 0;
+    }
+    if( !result.ammo_types().contains( ammo->ammo->type ) ) {
+        return 0;
+    }
+    if( !result.ammo_current().is_null() && result.ammo_current() != ammo ) {
+        return 0;
+    }
+
+    const auto available_capacity = result.ammo_capacity() - result.ammo_remaining();
+    const auto charges_to_load = std::min( charges, available_capacity );
+    if( charges_to_load <= 0 ) {
+        return 0;
+    }
+
+    result.ammo_set( ammo, result.ammo_remaining() + charges_to_load );
+    return charges_to_load;
+}
+
+auto load_stored_ammo_into_results( std::vector<detached_ptr<item>> &results,
+                                    const itype_id &ammo, int charges ) -> int
+{
+    auto remaining_charges = charges;
+    for( detached_ptr<item> &result : results ) {
+        remaining_charges -= load_stored_ammo_into_result( *result, ammo, remaining_charges );
+        if( remaining_charges <= 0 ) {
+            break;
+        }
+    }
+    return charges - remaining_charges;
+}
+
+auto transfer_or_recover_component_ammo( std::vector<detached_ptr<item>> &components,
+        std::vector<detached_ptr<item>> &results, Character &who ) -> void
+{
+    for( detached_ptr<item> &component : components ) {
+        if( !( component->is_gun() || component->is_tool() || component->is_magazine() ) ) {
+            continue;
+        }
+
+        const auto ammo = component->ammo_current();
+        const auto stored_charges = component->ammo_remaining();
+        if( ammo.is_null() || stored_charges <= 0 ) {
+            continue;
+        }
+
+        const auto loaded_charges = load_stored_ammo_into_results( results, ammo, stored_charges );
+        if( loaded_charges > 0 ) {
+            component->ammo_consume( loaded_charges, who.bub_pos() );
+        }
+
+        for( auto &recovered : recover_stored_ammo( *component,
+                stored_ammo_remainder_handling::discard ) ) {
+            drop_or_handle( std::move( recovered ), who );
+        }
+    }
+}
+
+} // namespace
+
 void complete_craft( Character &who, item &craft )
 {
     if( !craft.is_craft() ) {
@@ -1097,16 +1182,18 @@ void complete_craft( Character &who, item &craft )
     const recipe &making = craft.get_making();
     const int batch_size = craft.charges;
     std::vector<detached_ptr<item>> used = craft.remove_components();
-    std::vector<item *> used_items;
-    used_items.reserve( used.size() );
-    for( detached_ptr<item> &it : used ) {
-        used_items.push_back( &*it );
-    }
     const double relative_rot = craft.get_relative_rot();
     const bool ignore_component = making.has_flag( "NUTRIENT_OVERRIDE" );
 
     // Set up the new item, and assign an inventory letter if available
     std::vector<detached_ptr<item>> newits = making.create_results( batch_size );
+    transfer_or_recover_component_ammo( used, newits, who );
+
+    std::vector<item *> used_items;
+    used_items.reserve( used.size() );
+    for( detached_ptr<item> &it : used ) {
+        used_items.push_back( &*it );
+    }
 
     const bool should_heat = making.hot_result();
     const bool is_dehydrated = making.dehydrate_result();
@@ -1328,7 +1415,13 @@ bool Character::can_continue_craft( item &craft )
             item_selections.push_back( is );
         }
         for( const auto &it : item_selections ) {
-            std::vector<detached_ptr<item>> items = consume_items( it, batch_size, filter );
+            auto items = consume_items( {
+                .selection = &it,
+                .batch = batch_size,
+                .origin = bub_pos(),
+                .filter = filter,
+                .ammo_handling = component_ammo_handling::preserve,
+            } );
             for( detached_ptr<item> &it : items ) {
                 craft.add_component( std::move( it ) );
             }
@@ -1596,16 +1689,6 @@ comp_selection<item_comp> Character::select_item_component( const std::vector<it
     return selected;
 }
 
-static void drop_or_handle( detached_ptr<item> &&newit, Character &who )
-{
-    if( newit->made_of( LIQUID ) && who.is_avatar() ) {
-        // TODO: what about NPCs?
-        liquid_handler::handle_all_liquid( std::move( newit ), PICKUP_RANGE );
-    } else {
-        who.as_player()->i_add_or_drop( std::move( newit ) );
-    }
-}
-
 // Prompts player to empty all newly-unsealed containers in inventory
 // Called after something that might have opened containers (making them buckets) but not emptied them
 static void empty_buckets( Character &p )
@@ -1631,7 +1714,12 @@ std::vector<detached_ptr<item>> Character::consume_items( const comp_selection<i
                              int batch,
                              const std::function<bool( const item & )> &filter )
 {
-    return consume_items( get_map(), is, batch, bub_pos(), PICKUP_RANGE, filter );
+    return consume_items( {
+        .selection = &is,
+        .batch = batch,
+        .origin = bub_pos(),
+        .filter = filter,
+    } );
 }
 
 std::vector<detached_ptr<item>> Character::consume_items( map &m,
@@ -1640,64 +1728,82 @@ std::vector<detached_ptr<item>> Character::consume_items( map &m,
                              const tripoint_bub_ms &origin, int radius,
                              const std::function<bool( const item & )> &filter )
 {
-    std::vector<detached_ptr<item>> ret;
+    return consume_items( {
+        .source_map = &m,
+        .selection = &is,
+        .batch = batch,
+        .origin = origin,
+        .radius = radius,
+        .filter = filter,
+    } );
+}
+
+auto Character::consume_items( const consume_items_options &opts ) ->
+std::vector<detached_ptr<item>>
+{
+    auto ret = std::vector<detached_ptr<item>> {};
 
     if( has_trait( trait_DEBUG_HS ) ) {
         return ret;
     }
 
-    item_comp selected_comp = is.comp;
+    auto &source_map = opts.source_map != nullptr ? *opts.source_map : get_map();
+    const auto &selection = *opts.selection;
+    auto selected_comp = selection.comp;
 
-    const tripoint_bub_ms &loc = origin;
-    const bool by_charges = item::count_by_charges( selected_comp.type ) && selected_comp.count > 0;
+    const auto by_charges = item::count_by_charges( selected_comp.type ) && selected_comp.count > 0;
     // Count given to use_amount/use_charges, changed by those functions!
-    int real_count = ( selected_comp.count > 0 ) ? selected_comp.count * batch : std::abs(
-                         selected_comp.count );
+    auto real_count = ( selected_comp.count > 0 ) ? selected_comp.count * opts.batch : std::abs(
+                          selected_comp.count );
     // First try to get everything from the map, than (remaining amount) from player
-    if( is.use_from & usage_from::map ) {
+    if( selection.use_from & usage_from::map ) {
         if( by_charges ) {
-            std::vector<detached_ptr<item>> tmp = m.use_charges( loc, radius, selected_comp.type, real_count,
-                                                  filter );
+            auto tmp = source_map.use_charges( opts.origin, opts.radius, selected_comp.type, real_count,
+                                               opts.filter );
             ret.insert( ret.end(), std::make_move_iterator( tmp.begin() ),
                         std::make_move_iterator( tmp.end() ) );
         } else {
-            std::vector<detached_ptr<item>> tmp = g->m.use_amount( loc, radius, selected_comp.type, real_count,
-                                                  filter );
-            std::vector<item *> as_p;
+            auto tmp = source_map.use_amount( opts.origin, opts.radius, selected_comp.type, real_count,
+                                              opts.filter );
+            auto as_p = std::vector<item *> {};
             as_p.reserve( tmp.size() );
             for( detached_ptr<item> &i : tmp ) {
                 as_p.push_back( &*i );
             }
-            remove_ammo( as_p, *this );
+            if( opts.ammo_handling == component_ammo_handling::recover ) {
+                remove_ammo( as_p, *this );
+            }
             ret.insert( ret.end(), std::make_move_iterator( tmp.begin() ),
                         std::make_move_iterator( tmp.end() ) );
         }
     }
-    if( is.use_from & usage_from::player ) {
+    if( selection.use_from & usage_from::player ) {
         if( by_charges ) {
-            std::vector<detached_ptr<item>> tmp = use_charges( selected_comp.type, real_count, filter );
+            auto tmp = use_charges( selected_comp.type, real_count, opts.filter );
             ret.insert( ret.end(), std::make_move_iterator( tmp.begin() ),
                         std::make_move_iterator( tmp.end() ) );
         } else {
-            std::vector<detached_ptr<item>> tmp = use_amount( selected_comp.type, real_count, filter );
-            std::vector<item *> as_p;
+            auto tmp = use_amount( selected_comp.type, real_count, opts.filter );
+            auto as_p = std::vector<item *> {};
             as_p.reserve( tmp.size() );
             for( detached_ptr<item> &i : tmp ) {
                 as_p.push_back( &*i );
             }
-            remove_ammo( as_p, *this );
+            if( opts.ammo_handling == component_ammo_handling::recover ) {
+                remove_ammo( as_p, *this );
+            }
             ret.insert( ret.end(), std::make_move_iterator( tmp.begin() ),
                         std::make_move_iterator( tmp.end() ) );
         }
     }
     // condense those items into one
     if( by_charges && ret.size() > 1 ) {
-        std::vector<detached_ptr<item>>::iterator b = ret.begin();
-        b++;
-        while( ret.size() > 1 ) {
-            ret.front()->charges += ( *b )->charges;
-            b = ret.erase( b );
+        auto total_charges = 0;
+        for( const detached_ptr<item> &it : ret ) {
+            total_charges += it->charges;
         }
+        ret.front()->charges = total_charges;
+        ret.erase( ret.begin() + 1, ret.end() );
     }
     lastconsumed = selected_comp.type;
     empty_buckets( *this );

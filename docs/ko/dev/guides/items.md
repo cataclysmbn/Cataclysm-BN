@@ -110,10 +110,15 @@ for( auto &ammo : recover_stored_ammo( source_item, stored_ammo_remainder_handli
 
 나머지 처리 정책을 명시적으로 선택하세요.
 
-- `stored_ammo_remainder_handling::discard`: 제작, 분해, 해체처럼 원본 아이템이 파괴될 때
-  사용합니다. 온전한 탄약 아이템은 회수하고, 아이템으로 존재할 수 없는 나머지는 지웁니다.
+- `stored_ammo_remainder_handling::discard`: 분해나 해체처럼 원본 아이템이 파괴될 때 사용합니다.
+  온전한 탄약 아이템은 회수하고, 아이템으로 존재할 수 없는 나머지는 지웁니다.
 - `stored_ammo_remainder_handling::preserve`: 차량에서 온전한 연료 아이템만 빼고 부분 연료는
   부품에 남기는 경우처럼 원본이 세계에 남을 때 사용합니다.
+
+제작은 두 단계로 처리합니다. 진행 중 제작 아이템이 재료를 소유하는 동안에는 저장 탄약을
+보존하고, 완료 시 호환되는 결과물에 먼저 장전한 뒤 남은 것만 물리 아이템으로 회수합니다. 이렇게
+해야 충전된 배터리 셀 재료가 다른 배터리 셀 제작 결과 대신 느슨한 `battery` 아이템으로 나오지
+않습니다.
 
 물리 표현을 검사하거나 스폰하기만 하는 코드에는 `stored_ammo_item_charges`,
 `stored_ammo_charges_for_items`, `spawn_stored_ammo`를 사용하세요. 이렇게 하면 charge에서
