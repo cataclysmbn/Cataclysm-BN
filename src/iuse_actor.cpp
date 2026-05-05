@@ -7889,12 +7889,12 @@ void iuse_paint_stuff::info( const item &it, std::vector<iteminfo> &inf ) const
     }
 }
 
-void iuse_paint_stuff::on_placed( item & it, const map &, const tripoint & ) const
+void iuse_paint_stuff::on_placed( item &it, const map &, const tripoint & ) const
 {
     get_paint_color( it );
 }
 
-void iuse_paint_stuff_config::on_placed( item & it, const map &, const tripoint & ) const
+void iuse_paint_stuff_config::on_placed( item &it, const map &, const tripoint & ) const
 {
     get_paint_layer( it, false );
 }
