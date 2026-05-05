@@ -7721,10 +7721,17 @@ auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos )
 auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
         const tripoint & ) const -> int
 {
+    std::set<vehicle*> tmp{};
     const auto veh_pos_opt = choose_adjacent_highlight(
                                  _( "Paint which vehicle?" ),
                                  _( "There is nothing to paint nearby." ),
-    []( const tripoint & p ) { return get_map().veh_at( p ).has_value(); },
+    [&]( const tripoint & p ) {
+        const auto veh = get_map().veh_at( p );
+        if (!veh.has_value())
+            return false;
+        const auto [_, ok] = tmp.emplace(&veh->vehicle());
+        return ok;
+    },
     false );
 
     if( !veh_pos_opt.has_value() ) {
