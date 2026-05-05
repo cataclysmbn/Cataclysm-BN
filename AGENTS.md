@@ -126,6 +126,12 @@ deno task docs:gen
 - Do not call PO/printf errors pre-existing to skip them when the task touches that locale or validation path.
 - If a mistake is found during the task, update AGENTS/skill immediately and fix the current branch before summarizing.
 
+## WHEN updating docs
+
+- If an English doc under `docs/en/` has matching localized files under `docs/ko/` or `docs/ja/`, update those localized files in the same change.
+- Before committing docs, check matching localized paths with `fd "$(basename <file>)" docs/ko docs/ja` or `git ls-files 'docs/*/<relative-path-after-docs/en>'`.
+- If a localized update is intentionally skipped, state the reason in the final response and PR body.
+
 ## WHEN translating docs
 
 When translating, MUST search for correct glossary, e.g
