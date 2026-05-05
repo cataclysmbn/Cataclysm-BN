@@ -27,8 +27,8 @@ struct RGBColor {
         return SDL_Color{ r, g, b, a };
     }
 #endif
-    void serialize( JsonOut &jsout ) const;
-    void deserialize( JsonIn &jsin );
+    void serialize( JsonOut & ) const;
+    void deserialize( JsonIn & );
 
     static std::optional<RGBColor> try_parse( const std::string &str );
     static std::pair<RGBColor, std::string> random_named( std::string fuzzy_match = "" );
@@ -46,8 +46,8 @@ struct RGBColor {
 struct RGBColorPair {
     RGBColor bg;
     RGBColor fg;
-    void serialize( JsonOut &jsout ) const;
-    void deserialize( JsonIn &jsin );
+    void serialize( JsonOut & ) const;
+    void deserialize( JsonIn & );
 };
 
 struct HSVColor {
@@ -88,7 +88,17 @@ template<> struct std::hash<HSVColor> {
     }
 };
 
+namespace detail
+{
+struct RGBColorConverter {
+    using value_type = RGBColor;
+    bool operator()( const std::string &str, RGBColor &col ) const;
+    bool operator()( const RGBColor &col, std::string &str ) const;
+    static bool should_cache( const std::string &s, const RGBColor &c );
+};
+} // namespace detail
+
 template<>
 struct data_vars::type_converter<RGBColor> {
-    using type = cached_json_converter<RGBColor, 512>;
+    using type = cached_converter<::detail::RGBColorConverter, 512>;
 };

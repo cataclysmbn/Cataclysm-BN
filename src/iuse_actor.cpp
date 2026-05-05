@@ -201,8 +201,6 @@ static const species_id species_ZOMBIE( "ZOMBIE" );
 static const species_id species_NETHER( "NETHER" );
 static const species_id species_SKELETON( "SKELETON" );
 
-#pragma clang optimize off
-
 class npc;
 
 std::unique_ptr<iuse_actor> iuse_transform::clone() const
@@ -7721,15 +7719,16 @@ auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos )
 auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
         const tripoint & ) const -> int
 {
-    std::set<vehicle*> tmp{};
+    std::set<vehicle *> tmp{};
     const auto veh_pos_opt = choose_adjacent_highlight(
                                  _( "Paint which vehicle?" ),
                                  _( "There is nothing to paint nearby." ),
     [&]( const tripoint & p ) {
         const auto veh = get_map().veh_at( p );
-        if (!veh.has_value())
+        if( !veh.has_value() ) {
             return false;
-        const auto [_, ok] = tmp.emplace(&veh->vehicle());
+        }
+        const auto [_, ok] = tmp.emplace( &veh->vehicle() );
         return ok;
     },
     false );
