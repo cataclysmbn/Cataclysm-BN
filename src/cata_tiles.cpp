@@ -1518,9 +1518,9 @@ texture_result tileset::get_or_default( const int sprite_index,
             case tileset_fx_type::overexposed: {
                 tint_config vfx_tint;
                 if( get_option<std::string>( "NIGHT_VISION_DEFAULT_COLOR" ) == "custom" ) {
-                    vfx_tint = tint_config{ rgb_from_hex_string( get_option<std::string>( "NIGHT_VISION_COLOR" ) ) };
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "NIGHT_VISION_COLOR" ) ) };
                 } else {
-                    vfx_tint = tint_config{ rgb_from_hex_string( get_option<std::string>( "NIGHT_VISION_DEFAULT_COLOR" ) ) };
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "NIGHT_VISION_DEFAULT_COLOR" ) ) };
                 }
                 vfx_tint.blend_mode = tint_blend_mode::tint;
                 vfx_tint.brightness = 1.25f;
@@ -1530,9 +1530,9 @@ texture_result tileset::get_or_default( const int sprite_index,
             case tileset_fx_type::night: {
                 tint_config vfx_tint;
                 if( get_option<std::string>( "NIGHT_VISION_DEFAULT_COLOR" ) == "custom" ) {
-                    vfx_tint = tint_config{ rgb_from_hex_string( get_option<std::string>( "NIGHT_VISION_COLOR" ) ) };
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "NIGHT_VISION_COLOR" ) ) };
                 } else {
-                    vfx_tint = tint_config{ rgb_from_hex_string( get_option<std::string>( "NIGHT_VISION_DEFAULT_COLOR" ) ) };
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "NIGHT_VISION_DEFAULT_COLOR" ) ) };
                 }
                 vfx_tint.blend_mode = tint_blend_mode::tint;
                 vfx_tint.brightness = 0.75f;
@@ -2304,17 +2304,21 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                         return { std::nullopt, std::nullopt };
                     }
                 }
-                if( hex_part.size() == 6 ) {
-                    // Standard #RRGGBB format
-                    return { static_cast<SDL_Color>( rgb_from_hex_string( color_str ) ), std::nullopt };
-                } else if( hex_part.size() == 8 ) {
-                    // Extended #RRGGBBMM format - 4th pair is brightness multiplier, NOT alpha
-                    // 0x00 = 0.0 brightness, 0x80 = 1.0 brightness, 0xFF ≈ 2.0 brightness
-                    const std::string rgb_str = "#" + hex_part.substr( 0, 6 );
-                    const uint8_t brightness_byte = std::stoul( hex_part.substr( 6, 2 ), nullptr, 16 );
-                    const float brightness = static_cast<float>( brightness_byte ) / 128.0f;
-                    return { static_cast<SDL_Color>( rgb_from_hex_string( rgb_str ) ), brightness };
+                const auto tmp_color = RGBColor::try_parse( color_str );
+                if( tmp_color.has_value() ) {
+                    if( hex_part.size() == 6 ) {
+                        // Standard #RRGGBB format
+                        return { .color = tmp_color, .brightness = std::nullopt };
+                    }
+                    if( hex_part.size() == 8 ) {
+                        // Extended #RRGGBBMM format - 4th pair is brightness multiplier, NOT alpha
+                        // 0x00 = 0.0 brightness, 0x80 = 1.0 brightness, 0xFF ≈ 2.0 brightness
+                        const float brightness = static_cast<float>( tmp_color->a ) / 128.0f;
+                        const auto color = RGBColor( tmp_color->r, tmp_color->g, tmp_color->b, 255 );
+                        return { .color = color, .brightness = brightness };
+                    }
                 }
+                return {std::nullopt, std::nullopt };
             }
             const nc_color curse_color = colors.name_to_color( color_str );
             if( curse_color == c_unset )

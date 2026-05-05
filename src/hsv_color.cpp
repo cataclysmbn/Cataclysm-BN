@@ -282,6 +282,61 @@ void RGBColorPair::deserialize( JsonIn &jsin )
     }
 }
 
+static RGBColor rgb_from_hex_string( std::string str )
+{
+    if( str.starts_with( "#" ) ) {
+        str = str.substr( 1 );
+    }
+
+    if( str.empty() || std::ranges::any_of(str, [](const char& c) { return !std::isxdigit(c); } ) ) {
+        debugmsg( "Invalid color value: %s", str );
+        return {};
+    }
+
+    uint32_t d;
+    std::istringstream is( str );
+    is >> std::hex >> d;
+    switch( str.size() ) {
+    case 3: {
+        const auto nr = static_cast<uint8_t>( ( d >> 8 ) & 0x0F );
+        const auto ng = static_cast<uint8_t>( ( d >> 4 ) & 0x0F );
+        const auto nb = static_cast<uint8_t>( ( d >> 0 ) & 0x0F );
+        return RGBColor{static_cast<uint8_t>( nr | nr << 4 ),
+                        static_cast<uint8_t>( ng | ng << 4 ),
+                        static_cast<uint8_t>( nb | nb << 4 ),
+                        static_cast<uint8_t>( 255 )};
+    }
+    case 4: {
+        const auto nr = static_cast<uint8_t>( ( d >> 12 ) & 0x0F );
+        const auto ng = static_cast<uint8_t>( ( d >> 8 ) & 0x0F );
+        const auto nb = static_cast<uint8_t>( ( d >> 4 ) & 0x0F );
+        const auto na = static_cast<uint8_t>( ( d >> 0 ) & 0x0F );
+        return RGBColor{
+            static_cast<uint8_t>( nr | nr << 4 ),
+            static_cast<uint8_t>( ng | ng << 4 ),
+            static_cast<uint8_t>( nb | nb << 4 ),
+            static_cast<uint8_t>( na | na << 4 ),
+        };
+    }
+    case 6: {
+        return RGBColor{
+            static_cast<uint8_t>( d >> 16 ), static_cast<uint8_t>( d >> 8 ),
+            static_cast<uint8_t>( d >> 0 ), static_cast<uint8_t>( 255 )};
+    }
+    case 8: {
+        return RGBColor{
+            static_cast<uint8_t>( d >> 24 ),
+            static_cast<uint8_t>( d >> 16 ),
+            static_cast<uint8_t>( d >> 8 ),
+            static_cast<uint8_t>( d >> 0 ),
+        };
+    }
+    default:
+        debugmsg( "Invalid color value: %", str);
+        return {};
+    }
+}
+
 std::optional<RGBColor> RGBColor::try_parse( const std::string &str )
 {
     if( str.starts_with( "#" ) ) {
@@ -303,30 +358,25 @@ std::optional<RGBColor> RGBColor::try_parse( const std::string &str )
     return std::nullopt;
 }
 
-RGBColor rgb_from_hex_string( std::string str )
+bool detail::RGBColorConverter::operator()( const std::string &str,
+        RGBColor &col ) const
 {
-    if( !str.empty() ) {
-        if( str.starts_with( "#" ) ) {
-            str = str.substr( 1 );
-        }
-        auto cont = true;
-        if( str.length() == 6 ) {
-            for( const auto &c : str ) {
-                if( !std::isxdigit( c ) ) {
-                    cont = false;
-                    break;
-                }
-            }
-            if( cont ) {
-                std::istringstream is( str );
-
-                uint32_t tmp;
-                is >> std::hex;
-                is >> tmp;
-                return RGBColor{ static_cast<uint8_t>( ( tmp >> 16 ) & 0xFF ), static_cast<uint8_t>( ( tmp >> 8 ) & 0xFF ), static_cast<uint8_t>( ( tmp >> 0 ) & 0xFF ), 255 };
-            }
-        }
+    const auto c = RGBColor::try_parse( str );
+    if( !c.has_value() ) {
+        return false;
     }
-    debugmsg( "Invalid color value" );
-    return RGBColor{ 255, 255, 255, 255 };
+    col = c.value();
+    return true;
+}
+
+bool detail::RGBColorConverter::operator()( const RGBColor &col,
+        std::string &str ) const
+{
+    str = string_format( "#%x%x%x%x", col.r, col.g, col.b, col.a );
+    return true;
+}
+
+bool detail::RGBColorConverter::should_cache( const std::string &s, const RGBColor & )
+{
+    return !s.starts_with( "!" );
 }
