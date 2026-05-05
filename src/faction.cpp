@@ -520,7 +520,8 @@ int npc::faction_display( const catacurses::window &fac_w, const int width ) con
             int max_range = 200;
             max_range *= ( 1 + ( g->u.bub_pos().z() * 0.1 ) );
             max_range *= ( 1 + ( bub_pos().z() * 0.1 ) );
-            if( ( ( g->u.bub_pos().z() >= 0 && bub_pos().z() >= 0 ) || ( g->u.bub_pos().z() == bub_pos().z() ) ) &&
+            if( ( ( g->u.bub_pos().z() >= 0 && bub_pos().z() >= 0 ) ||
+                  ( g->u.bub_pos().z() == bub_pos().z() ) ) &&
                 square_dist( g->u.global_sm_location(), global_sm_location() ) <= max_range ) {
                 retval = 2;
                 can_see = _( "Within radio range" );

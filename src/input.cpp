@@ -1002,10 +1002,12 @@ void rotate_direction_cw( int &dx, int &dy )
 
 std::optional<tripoint_rel_ms> input_context::get_direction( const std::string &action ) const
 {
-    static const auto noop = static_cast<tripoint_rel_ms( * )( tripoint_rel_ms )>( []( tripoint_rel_ms p ) {
+    static const auto noop = static_cast<tripoint_rel_ms( * )( tripoint_rel_ms )>( [](
+    tripoint_rel_ms p ) {
         return p;
     } );
-    static const auto rotate = static_cast<tripoint_rel_ms( * )( tripoint_rel_ms )>( []( tripoint_rel_ms p ) {
+    static const auto rotate = static_cast<tripoint_rel_ms( * )( tripoint_rel_ms )>( [](
+    tripoint_rel_ms p ) {
         rotate_direction_cw( p.x(), p.y() );
         return p;
     } );
