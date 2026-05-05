@@ -3143,9 +3143,10 @@ void act_vehicle_unload_fuel( vehicle *veh )
 {
     auto &you = get_avatar();
     std::vector<itype_id> fuels;
-    for( auto &e : veh->fuels_left() ) {
-        if( e.first == fuel_type_battery || e.first->phase != SOLID ) {
-            // This skips battery and plutonium cells
+    for( const auto &e : veh->fuels_left() ) {
+        if( e.first == fuel_type_battery || e.first->phase != SOLID ||
+            ( e.first == itype_plut_cell && e.second < PLUTONIUM_CHARGES ) ) {
+            // This skips batteries and partial plutonium cells
             continue;
         }
         fuels.push_back( e.first );
@@ -3158,13 +3159,9 @@ void act_vehicle_unload_fuel( vehicle *veh )
     if( fuels.size() > 1 ) {
         uilist smenu;
         smenu.text = _( "Remove what?" );
-        for( size_t i = 0; i < fuels.size(); i++ ) {
-            const itype_id &fuel = fuels[i];
-            if( fuel == itype_plut_cell && veh->fuel_left( fuel ) < PLUTONIUM_CHARGES ) {
-                continue;
-            }
+        for( const auto &fuel : fuels ) {
             smenu.entries.emplace_back( uilist_entry( item::nname( fuel ) )
-                                        .with_retval( static_cast<int>( i ) ) );
+                                        .with_retval( static_cast<int>( smenu.entries.size() ) ) );
         }
         smenu.query();
         if( smenu.ret < 0 || static_cast<size_t>( smenu.ret ) >= fuels.size() ) {

@@ -21,6 +21,7 @@
 #include "crafting.h"
 #include "distribution_grid.h"
 #include "game.h"
+#include "game_constants.h"
 #include "item.h"
 #include "itype.h"
 #include "map.h"
@@ -40,6 +41,8 @@
 
 class inventory;
 
+static const auto itype_battery = itype_id( "battery" );
+static const auto itype_plut_cell = itype_id( "plut_cell" );
 static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
 static const trait_id trait_DEBUG_STORAGE( "DEBUG_STORAGE" );
 
@@ -452,6 +455,39 @@ TEST_CASE( "tools use charge to craft", "[crafting][charge]" )
             }
         }
     }
+}
+
+TEST_CASE( "crafting with charged magazines recovers ammo", "[crafting][charge]" )
+{
+    clear_all_state();
+    clear_avatar();
+    auto &you = get_avatar();
+    you.wear_item( item::spawn( "backpack" ), false );
+
+    auto battery = item::spawn( "light_plus_battery_cell" );
+    battery->ammo_set( itype_battery, 42 );
+    REQUIRE( battery->ammo_remaining() == 42 );
+
+    remove_ammo( *battery, you );
+
+    CHECK( battery->ammo_remaining() == 0 );
+    CHECK( you.charges_of( itype_battery ) == 42 );
+}
+
+TEST_CASE( "partial plutonium charges do not leave empty fuel cells", "[crafting][charge]" )
+{
+    clear_all_state();
+    clear_avatar();
+    auto &you = get_avatar();
+    you.wear_item( item::spawn( "backpack" ), false );
+
+    auto tool = item::spawn( "adv_UPS_off", calendar::turn, PLUTONIUM_CHARGES - 1 );
+    REQUIRE( tool->ammo_current() == itype_plut_cell );
+
+    remove_ammo( *tool, you );
+
+    CHECK( tool->ammo_remaining() == 0 );
+    CHECK( you.items_with( []( const auto & it ) { return it.typeId() == itype_plut_cell; } ).empty() );
 }
 
 TEST_CASE( "tool_use", "[crafting][tool]" )
