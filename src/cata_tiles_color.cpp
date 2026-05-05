@@ -13,6 +13,13 @@
 
 static constexpr RGBColor RGB_NO_COLOR = TILESET_NO_COLOR;
 
+struct blend_mode_cvt {
+    bool operator()( const std::string &str, tint_blend_mode &res ) const {
+        res = string_to_tint_blend_mode( str );
+        return true;
+    }
+};
+
 auto cata_tiles::get_overmap_color(
     const overmapbuffer &, const tripoint_abs_omt & ) -> color_tint_pair
 {
@@ -50,13 +57,6 @@ auto cata_tiles::get_field_color(
 {
     return { std::nullopt, std::nullopt };
 }
-
-struct blend_mode_cvt {
-    bool operator()( const std::string &str, tint_blend_mode &res ) const {
-        res = string_to_tint_blend_mode( str );
-        return true;
-    }
-};
 
 auto cata_tiles::get_item_color(
     const item &i, const map &, const tripoint & ) -> color_tint_pair
@@ -112,19 +112,19 @@ auto cata_tiles::get_item_color(
 }
 
 auto cata_tiles::get_vpart_color(
-    const optional_vpart_position &vp, const map &here, const tripoint &pos,
+    const optional_vpart_position &vp, const map &, const tripoint &,
     const bool use_roof )-> color_tint_pair
 {
-    if( use_roof ) {
-        auto &veh = vp->vehicle();
-        auto part_idx = veh.roof_at_part( vp->part_index() );
-        if( part_idx != -1 ) {
-            auto part_color = veh.get_part_hack( part_idx ).get_color();
-            return { part_color, part_color };
+    if( vp.has_value() ) {
+        if( use_roof ) {
+            auto &veh = vp->vehicle();
+            const auto part_idx = veh.roof_at_part( vp->part_index() );
+            if( part_idx != -1 ) {
+                auto part_color = veh.get_part_hack( part_idx ).get_color();
+                return { part_color, part_color };
+            }
         }
-    }
-    if( vp ) {
-        auto part_ref = vp.part_displayed();
+        const auto part_ref = vp.part_displayed();
         if( part_ref ) {
             auto part_color = part_ref->part().get_color();
             return { part_color, part_color };
