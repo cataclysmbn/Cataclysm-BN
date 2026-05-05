@@ -386,24 +386,46 @@
     "id": [
       "outlet_mall_0_0",
       "outlet_mall_0_1",
-      "outlet_mall_0_2",
       "outlet_mall_0_3",
       "outlet_mall_0_4",
       "outlet_mall_1_0",
       "outlet_mall_1_1",
-      "outlet_mall_1_2",
       "outlet_mall_1_3",
       "outlet_mall_1_4",
       "outlet_mall_2_0",
       "outlet_mall_2_1",
-      "outlet_mall_2_2",
       "outlet_mall_2_3",
       "outlet_mall_2_4",
       "outlet_mall_3_0",
       "outlet_mall_3_1",
       "outlet_mall_3_2",
       "outlet_mall_3_3",
-      "outlet_mall_3_4",
+      "outlet_mall_3_4"
+    ],
+    "name": "outlet mall",
+    "sym": "M",
+    "color": "i_red",
+    "looks_like": "mall_a_50",
+    "see_cost": 5,
+    "mondensity": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "outlet_mall_0_2",
+      "outlet_mall_1_2",
+      "outlet_mall_2_2",
+    ],
+    "name": "park",
+    "sym": "O",
+    "color": "green",
+    "looks_like": "park",
+    "see_cost": 2,
+    "mondensity": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
       "outlet_mall_4_0",
       "outlet_mall_4_1",
       "outlet_mall_4_2",
@@ -415,10 +437,11 @@
       "outlet_mall_5_3",
       "outlet_mall_5_4"
     ],
-    "name": "outlet mall",
-    "sym": "M",
-    "color": "red",
-    "see_cost": 5,
+    "name": "parking lot",
+    "sym": "O",
+    "color": "dark_gray",
+    "looks_like": "s_lot",
+    "see_cost": 1,
     "mondensity": 2
   }
 ]
