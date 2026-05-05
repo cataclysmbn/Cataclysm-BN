@@ -7764,7 +7764,7 @@ auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
             default:
             case iuse_paint_stuff_config::both:
                 if( p_fg != col || p_bg != col ) {
-                    disp_part.part_color = { col, col };
+                    disp_part.part_color = { .bg = col, .fg = col };
                     vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col );
                     vars.erase( TINT_COLOR_FG_VAR_NAME );
                     vars.erase( TINT_COLOR_BG_VAR_NAME );
@@ -7773,14 +7773,14 @@ auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
                 break;
             case iuse_paint_stuff_config::fg:
                 if( p_fg != col ) {
-                    disp_part.part_color = { col, p_bg };
+                    disp_part.part_color = { .bg = p_bg, .fg = col };
                     vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col );
                     ++painted;
                 }
                 break;
             case iuse_paint_stuff_config::bg:
                 if( p_bg != col ) {
-                    disp_part.part_color = { p_fg, col };
+                    disp_part.part_color = { .bg = col, .fg = p_fg };
                     vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, col );
                     ++painted;
                 }

@@ -44,8 +44,8 @@ struct RGBColor {
 };
 
 struct RGBColorPair {
-    RGBColor fg;
     RGBColor bg;
+    RGBColor fg;
     void serialize( JsonOut &jsout ) const;
     void deserialize( JsonIn &jsin );
 };

@@ -142,14 +142,14 @@ auto cata_tiles::get_vpart_color(
             auto &veh = vp->vehicle();
             const auto part_idx = veh.roof_at_part( vp->part_index() );
             if( part_idx != -1 ) {
-                auto [fg, bg] = veh.get_part_hack( part_idx ).get_color();
-                return {fg, bg};
+                auto [bg, fg] = veh.get_part_hack( part_idx ).get_color();
+                return {bg, fg};
             }
         }
         const auto part_ref = vp.part_displayed();
         if( part_ref ) {
-            auto [fg, bg] = part_ref->part().get_color();
-            return {fg, bg};
+            auto [bg, fg] = part_ref->part().get_color();
+            return {bg, fg};
         }
     }
     return { std::nullopt, std::nullopt };
