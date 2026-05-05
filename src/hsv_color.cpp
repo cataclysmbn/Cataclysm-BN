@@ -288,7 +288,7 @@ static RGBColor rgb_from_hex_string( std::string str )
         str = str.substr( 1 );
     }
 
-    if( str.empty() || std::ranges::any_of(str, [](const char& c) { return !std::isxdigit(c); } ) ) {
+    if( str.empty() || std::ranges::any_of( str, []( const char &c ) { return !std::isxdigit( c ); } ) ) {
         debugmsg( "Invalid color value: %s", str );
         return {};
     }
@@ -297,43 +297,43 @@ static RGBColor rgb_from_hex_string( std::string str )
     std::istringstream is( str );
     is >> std::hex >> d;
     switch( str.size() ) {
-    case 3: {
-        const auto nr = static_cast<uint8_t>( ( d >> 8 ) & 0x0F );
-        const auto ng = static_cast<uint8_t>( ( d >> 4 ) & 0x0F );
-        const auto nb = static_cast<uint8_t>( ( d >> 0 ) & 0x0F );
-        return RGBColor{static_cast<uint8_t>( nr | nr << 4 ),
-                        static_cast<uint8_t>( ng | ng << 4 ),
-                        static_cast<uint8_t>( nb | nb << 4 ),
-                        static_cast<uint8_t>( 255 )};
-    }
-    case 4: {
-        const auto nr = static_cast<uint8_t>( ( d >> 12 ) & 0x0F );
-        const auto ng = static_cast<uint8_t>( ( d >> 8 ) & 0x0F );
-        const auto nb = static_cast<uint8_t>( ( d >> 4 ) & 0x0F );
-        const auto na = static_cast<uint8_t>( ( d >> 0 ) & 0x0F );
-        return RGBColor{
-            static_cast<uint8_t>( nr | nr << 4 ),
-            static_cast<uint8_t>( ng | ng << 4 ),
-            static_cast<uint8_t>( nb | nb << 4 ),
-            static_cast<uint8_t>( na | na << 4 ),
-        };
-    }
-    case 6: {
-        return RGBColor{
-            static_cast<uint8_t>( d >> 16 ), static_cast<uint8_t>( d >> 8 ),
-            static_cast<uint8_t>( d >> 0 ), static_cast<uint8_t>( 255 )};
-    }
-    case 8: {
-        return RGBColor{
-            static_cast<uint8_t>( d >> 24 ),
-            static_cast<uint8_t>( d >> 16 ),
-            static_cast<uint8_t>( d >> 8 ),
-            static_cast<uint8_t>( d >> 0 ),
-        };
-    }
-    default:
-        debugmsg( "Invalid color value: %", str);
-        return {};
+        case 3: {
+            const auto nr = static_cast<uint8_t>( ( d >> 8 ) & 0x0F );
+            const auto ng = static_cast<uint8_t>( ( d >> 4 ) & 0x0F );
+            const auto nb = static_cast<uint8_t>( ( d >> 0 ) & 0x0F );
+            return RGBColor{static_cast<uint8_t>( nr | nr << 4 ),
+                            static_cast<uint8_t>( ng | ng << 4 ),
+                            static_cast<uint8_t>( nb | nb << 4 ),
+                            static_cast<uint8_t>( 255 )};
+        }
+        case 4: {
+            const auto nr = static_cast<uint8_t>( ( d >> 12 ) & 0x0F );
+            const auto ng = static_cast<uint8_t>( ( d >> 8 ) & 0x0F );
+            const auto nb = static_cast<uint8_t>( ( d >> 4 ) & 0x0F );
+            const auto na = static_cast<uint8_t>( ( d >> 0 ) & 0x0F );
+            return RGBColor{
+                static_cast<uint8_t>( nr | nr << 4 ),
+                static_cast<uint8_t>( ng | ng << 4 ),
+                static_cast<uint8_t>( nb | nb << 4 ),
+                static_cast<uint8_t>( na | na << 4 ),
+            };
+        }
+        case 6: {
+            return RGBColor{
+                static_cast<uint8_t>( d >> 16 ), static_cast<uint8_t>( d >> 8 ),
+                static_cast<uint8_t>( d >> 0 ), static_cast<uint8_t>( 255 )};
+        }
+        case 8: {
+            return RGBColor{
+                static_cast<uint8_t>( d >> 24 ),
+                static_cast<uint8_t>( d >> 16 ),
+                static_cast<uint8_t>( d >> 8 ),
+                static_cast<uint8_t>( d >> 0 ),
+            };
+        }
+        default:
+            debugmsg( "Invalid color value: %", str );
+            return {};
     }
 }
 
