@@ -42,6 +42,8 @@
 class inventory;
 
 static const auto itype_battery = itype_id( "battery" );
+static const auto itype_light_plus_battery_cell = itype_id( "light_plus_battery_cell" );
+static const auto itype_medium_plus_battery_cell = itype_id( "medium_plus_battery_cell" );
 static const auto itype_plut_cell = itype_id( "plut_cell" );
 static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
 static const trait_id trait_DEBUG_STORAGE( "DEBUG_STORAGE" );
@@ -455,6 +457,43 @@ TEST_CASE( "tools use charge to craft", "[crafting][charge]" )
             }
         }
     }
+}
+
+TEST_CASE( "crafting consumes tool charges before loaded battery components", "[crafting][charge]" )
+{
+    clear_all_state();
+    std::vector<detached_ptr<item>> tools;
+
+    add_tool( tools, "screwdriver" );
+    add_tool( tools, "solder_wire", 10 );
+    add_tool( tools, "scrap", 4 );
+    add_tool( tools, "cable", 5 );
+    add_tool( tools, "light_plus_battery_cell", 4 );
+
+    auto soldering_iron = item::spawn( "soldering_iron" );
+    auto loaded_cell = item::spawn( "light_plus_battery_cell" );
+    loaded_cell->ammo_set( itype_battery, 150 );
+    soldering_iron->put_in( std::move( loaded_cell ) );
+    REQUIRE( soldering_iron->magazine_current() != nullptr );
+    REQUIRE( soldering_iron->magazine_current()->typeId() == itype_light_plus_battery_cell );
+    REQUIRE( soldering_iron->ammo_remaining() == 150 );
+    tools.push_back( std::move( soldering_iron ) );
+
+    const auto recipe_to_make = recipe_id( "medium_plus_battery_cell" );
+    prep_craft( recipe_to_make, tools, true );
+    set_time( midday );
+    auto &you = get_avatar();
+    const recipe &rec = recipe_to_make.obj();
+    you.learn_recipe( &rec );
+    REQUIRE( !you.activity );
+
+    you.make_craft( recipe_to_make, 1 );
+
+    REQUIRE( you.activity );
+    CHECK( you.activity->id() == activity_id( "ACT_CRAFT" ) );
+    CHECK( you.items_with( []( const auto & it ) { return it.typeId() == itype_medium_plus_battery_cell; } ).empty() );
+    CHECK( you.charges_of( itype_battery ) == 140 );
+    CHECK( get_remaining_charges( "soldering_iron" ) == 0 );
 }
 
 TEST_CASE( "crafting with charged magazines recovers ammo", "[crafting][charge]" )

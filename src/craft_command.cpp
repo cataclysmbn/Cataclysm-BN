@@ -64,6 +64,115 @@ std::string enum_to_string<usage_from>( usage_from data )
 
 } // namespace io
 
+namespace
+{
+
+struct selected_tool_context {
+    Character &crafter;
+    const inventory &map_inv;
+    int batch_size = 1;
+};
+
+struct selected_tool_prepayment {
+    bool available = true;
+    bool full = true;
+};
+
+enum class tool_charge_prepayment {
+    full,
+    start_only,
+};
+
+auto selected_tool_has_charges( const comp_selection<tool_comp> &tool_sel,
+                                const selected_tool_context &ctx, int charges ) -> bool
+{
+    switch( tool_sel.use_from ) {
+        case usage_from::player:
+            return ctx.crafter.has_charges( tool_sel.comp.type, charges );
+        case usage_from::map:
+            return ctx.map_inv.has_charges( tool_sel.comp.type, charges );
+        case usage_from::both:
+            return ctx.crafter.charges_of( tool_sel.comp.type ) +
+                   ctx.map_inv.charges_of( tool_sel.comp.type ) >= charges;
+        case usage_from::none:
+        case usage_from::cancel:
+        case usage_from::num_usages_from:
+            break;
+    }
+    return true;
+}
+
+auto selected_tool_exists( const comp_selection<tool_comp> &tool_sel,
+                           const selected_tool_context &ctx ) -> bool
+{
+    switch( tool_sel.use_from ) {
+        case usage_from::player:
+            return ctx.crafter.has_amount( tool_sel.comp.type, 1 );
+        case usage_from::map:
+            return ctx.map_inv.has_tools( tool_sel.comp.type, 1 );
+        case usage_from::both:
+            return ctx.crafter.amount_of( tool_sel.comp.type ) +
+                   ctx.map_inv.amount_of( tool_sel.comp.type ) >= 1;
+        case usage_from::none:
+        case usage_from::cancel:
+        case usage_from::num_usages_from:
+            break;
+    }
+    return true;
+}
+
+auto selected_tool_prepayment_state( const std::vector<comp_selection<tool_comp>> &tool_selections,
+                                     const selected_tool_context &ctx ) -> selected_tool_prepayment
+{
+    auto result = selected_tool_prepayment{};
+    for( const comp_selection<tool_comp> &tool_sel : tool_selections ) {
+        if( tool_sel.comp.count <= 0 ) {
+            if( !selected_tool_exists( tool_sel, ctx ) ) {
+                result.available = false;
+            }
+            continue;
+        }
+
+        const auto full_cost = tool_sel.comp.count * ctx.batch_size;
+        if( selected_tool_has_charges( tool_sel, ctx, full_cost ) ) {
+            continue;
+        }
+
+        result.full = false;
+        if( !selected_tool_has_charges( tool_sel, ctx, crafting::charges_for_starting( full_cost ) ) ) {
+            result.available = false;
+        }
+    }
+    return result;
+}
+
+auto selected_tool_charge_cost( int full_cost, tool_charge_prepayment prepayment ) -> int
+{
+    switch( prepayment ) {
+        case tool_charge_prepayment::full:
+            return full_cost;
+        case tool_charge_prepayment::start_only:
+            return crafting::charges_for_starting( full_cost );
+    }
+    return full_cost;
+}
+
+auto consume_selected_tool_charges( const std::vector<comp_selection<tool_comp>> &tool_selections,
+                                    const selected_tool_context &ctx,
+                                    tool_charge_prepayment prepayment ) -> void
+{
+    for( const comp_selection<tool_comp> &tool : tool_selections ) {
+        if( tool.comp.count <= 0 ) {
+            continue;
+        }
+        auto to_consume = tool;
+        to_consume.comp.count = selected_tool_charge_cost( tool.comp.count * ctx.batch_size, prepayment );
+        ctx.crafter.consume_tools( to_consume, 1 );
+    }
+}
+
+} // namespace
+
 template<typename CompType>
 void comp_selection<CompType>::serialize( JsonOut &jsout ) const
 {
@@ -172,7 +281,9 @@ void craft_command::execute( const tripoint_bub_ms &new_loc )
         }
     }
 
-    crafter->start_craft( *this, loc );
+    if( crafter->start_craft( *this, loc ) == nullptr ) {
+        return;
+    }
     crafter->last_batch = batch_size;
     crafter->lastrecipe = rec->ident();
 
@@ -245,6 +356,22 @@ detached_ptr<item> craft_command::create_in_progress_craft()
     }
 
     const auto filter = rec->get_component_filter( flags );
+    const auto tool_context = selected_tool_context{
+        .crafter = *crafter,
+        .map_inv = map_inv,
+        .batch_size = batch_size,
+    };
+    const auto tool_prepayment = selected_tool_prepayment_state( tool_selections, tool_context );
+    if( !tool_prepayment.available ) {
+        return detached_ptr<item>();
+    }
+
+    // Prepay tool charges before consuming components. A component can be a magazine installed
+    // in the selected tool; detaching it first would make the tool look empty and abort crafting
+    // after materials had already been consumed.
+    consume_selected_tool_charges( tool_selections, tool_context,
+                                   tool_prepayment.full ? tool_charge_prepayment::full :
+                                   tool_charge_prepayment::start_only );
 
     for( const auto &it : item_selections ) {
         std::vector<detached_ptr<item>> tmp = crafter->consume_items( it, batch_size, filter );
@@ -274,105 +401,8 @@ detached_ptr<item> craft_command::create_in_progress_craft()
 
     new_craft->set_cached_tool_selections( tool_selections );
     new_craft->set_tools_to_continue( true );
-
-    bool can_fully_prepay = true;
-    for( const comp_selection<tool_comp> &tool_sel : tool_selections ) {
-        const auto type = tool_sel.comp.type;
-        if( tool_sel.comp.count > 0 ) {
-            const auto full_cost = tool_sel.comp.count * batch_size;
-            switch( tool_sel.use_from ) {
-                case usage_from::player:
-                    if( !crafter->has_charges( type, full_cost ) ) {
-                        can_fully_prepay = false;
-                    }
-                    break;
-                case usage_from::map:
-                    if( !map_inv.has_charges( type, full_cost ) ) {
-                        can_fully_prepay = false;
-                    }
-                    break;
-                case usage_from::both:
-                    if( crafter->charges_of( type ) + map_inv.charges_of( type ) < full_cost ) {
-                        can_fully_prepay = false;
-                    }
-                    break;
-                case usage_from::none:
-                case usage_from::cancel:
-                case usage_from::num_usages_from:
-                    break;
-            }
-        } else {
-            switch( tool_sel.use_from ) {
-                case usage_from::player:
-                    if( !crafter->has_amount( type, 1 ) ) {
-                        return detached_ptr<item>();
-                    }
-                    break;
-                case usage_from::map:
-                    if( !map_inv.has_tools( type, 1 ) ) {
-                        return detached_ptr<item>();
-                    }
-                    break;
-                case usage_from::both:
-                    if( crafter->amount_of( type ) + map_inv.amount_of( type ) < 1 ) {
-                        return detached_ptr<item>();
-                    }
-                    break;
-                case usage_from::none:
-                case usage_from::cancel:
-                case usage_from::num_usages_from:
-                    break;
-            }
-        }
-    }
-
-    if( can_fully_prepay ) {
-        for( const comp_selection<tool_comp> &tool : tool_selections ) {
-            if( tool.comp.count <= 0 ) {
-                continue;
-            }
-            auto to_consume = tool;
-            to_consume.comp.count *= batch_size;
-            crafter->consume_tools( to_consume, 1 );
-        }
+    if( tool_prepayment.full ) {
         new_craft->set_var( "craft_tools_fully_prepaid", 1 );
-    } else {
-        // Consume only the starting fraction; the rest will be paid per 5% step during crafting.
-        for( const comp_selection<tool_comp> &tool_sel : tool_selections ) {
-            if( tool_sel.comp.count <= 0 ) {
-                continue;
-            }
-            const auto full_cost = tool_sel.comp.count * batch_size;
-            const auto start_cost = crafting::charges_for_starting( full_cost );
-            bool has_start = false;
-            switch( tool_sel.use_from ) {
-                case usage_from::player:
-                    has_start = crafter->has_charges( tool_sel.comp.type, start_cost );
-                    break;
-                case usage_from::map:
-                    has_start = map_inv.has_charges( tool_sel.comp.type, start_cost );
-                    break;
-                case usage_from::both:
-                    has_start = crafter->charges_of( tool_sel.comp.type ) +
-                                map_inv.charges_of( tool_sel.comp.type ) >= start_cost;
-                    break;
-                default:
-                    has_start = true;
-                    break;
-            }
-            if( !has_start ) {
-                return detached_ptr<item>();
-            }
-        }
-        for( const comp_selection<tool_comp> &tool_sel : tool_selections ) {
-            if( tool_sel.comp.count <= 0 ) {
-                continue;
-            }
-            auto to_consume = tool_sel;
-            to_consume.comp.count = crafting::charges_for_starting( tool_sel.comp.count * batch_size );
-            crafter->consume_tools( to_consume, 1 );
-        }
-        // craft_tools_fully_prepaid is intentionally NOT set; do_turn will consume per step.
     }
     new_craft->set_next_failure_point( *crafter );
 
