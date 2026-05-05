@@ -490,6 +490,25 @@ TEST_CASE( "partial plutonium charges do not leave empty fuel cells", "[crafting
     CHECK( you.items_with( []( const auto & it ) { return it.typeId() == itype_plut_cell; } ).empty() );
 }
 
+TEST_CASE( "crafting with mixed plutonium charges recovers only complete cells",
+           "[crafting][charge]" )
+{
+    clear_all_state();
+    clear_avatar();
+    auto &you = get_avatar();
+    you.wear_item( item::spawn( "backpack" ), false );
+
+    auto tool = item::spawn( "adv_UPS_off", calendar::turn, PLUTONIUM_CHARGES * 2 + 10 );
+    REQUIRE( tool->ammo_current() == itype_plut_cell );
+
+    remove_ammo( *tool, you );
+
+    const auto recovered = you.items_with( []( const auto & it ) { return it.typeId() == itype_plut_cell; } );
+    REQUIRE( recovered.size() == 1 );
+    CHECK( recovered.front()->charges == 2 );
+    CHECK( tool->ammo_remaining() == 0 );
+}
+
 TEST_CASE( "tool_use", "[crafting][tool]" )
 {
     clear_all_state();

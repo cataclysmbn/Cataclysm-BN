@@ -141,6 +141,32 @@ TEST_CASE( "partial vehicle plutonium cannot be unloaded", "[vehicle][veh_intera
     CHECK( you.items_with( []( const auto & it ) { return it.typeId() == itype_plut_cell; } ).empty() );
 }
 
+TEST_CASE( "vehicle plutonium unload preserves partial remainder", "[vehicle][veh_interact]" )
+{
+    clear_all_state();
+    build_test_map( ter_id( "t_pavement" ) );
+    auto &here = get_map();
+    auto &you = get_avatar();
+    clear_avatar();
+    you.wear_item( item::spawn( "backpack" ), false );
+
+    const auto vehicle_origin = tripoint( 60, 60, 0 );
+    you.setpos( vehicle_origin + point_south );
+    auto *veh_ptr = here.add_vehicle( vproto_id( "reactor_test" ), vehicle_origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+    REQUIRE_FALSE( veh_ptr->reactors.empty() );
+
+    auto &reactor = veh_ptr->part( veh_ptr->reactors.front() );
+    reactor.ammo_set( itype_plut_cell, PLUTONIUM_CHARGES * 2 + 10 );
+
+    act_vehicle_unload_fuel( veh_ptr );
+
+    const auto recovered = you.items_with( []( const auto & it ) { return it.typeId() == itype_plut_cell; } );
+    REQUIRE( recovered.size() == 1 );
+    CHECK( recovered.front()->charges == 2 );
+    CHECK( reactor.ammo_remaining() == 10 );
+}
+
 TEST_CASE( "debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_interact]" )
 {
     clear_all_state();
