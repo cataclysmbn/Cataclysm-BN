@@ -248,6 +248,40 @@ void RGBColor::deserialize( JsonIn &jsin )
     }
 }
 
+void RGBColorPair::serialize( JsonOut &jsout ) const
+{
+    if( fg == bg ) {
+        jsout.write( fg );
+    } else {
+        jsout.start_array();
+        jsout.write( fg );
+        jsout.write( bg );
+        jsout.end_object();
+    }
+}
+
+void RGBColorPair::deserialize( JsonIn &jsin )
+{
+    if( jsin.test_string() ) {
+        jsin.read( fg );
+        bg = fg;
+    } else if( jsin.test_array() ) {
+        const auto pos = jsin.tell();
+
+        const auto tmp = jsin.get_array();
+        if( tmp.size() == 2 ) {
+            tmp.read( 0, fg );
+            tmp.read( 1, bg );
+        } else {
+            jsin.seek( pos );
+            jsin.read( fg );
+            bg = fg;
+        }
+    } else {
+        debugmsg( "Invalid color pair value" );
+    }
+}
+
 std::optional<RGBColor> RGBColor::try_parse( const std::string &str )
 {
     if( str.starts_with( "#" ) ) {

@@ -280,7 +280,7 @@ struct vehicle_part {
          */
         std::pair<tripoint, tripoint> target = { tripoint_min, tripoint_min };
 
-        std::optional<RGBColor> part_color;
+        std::optional<RGBColorPair> part_color;
 
     private:
 
@@ -345,6 +345,6 @@ struct vehicle_part {
          */
         std::vector<detached_ptr<item>> pieces_for_broken_part() const;
 
-        RGBColor get_color() const;
+        RGBColorPair get_color() const;
 };
 

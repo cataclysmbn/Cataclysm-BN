@@ -193,7 +193,7 @@ class vpart_info
         nc_color color = c_light_gray;
         nc_color color_broken = c_light_gray;
 
-        RGBColor default_color = { 0, 0, 0, 0 };
+        RGBColorPair default_color = {};
         /**
          * Symbol of part which will be translated as follows:
          * y, u, n, b to NW, NE, SE, SW lines correspondingly

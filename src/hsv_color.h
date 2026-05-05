@@ -42,6 +42,13 @@ struct RGBColor {
     }
 };
 
+struct RGBColorPair {
+    RGBColor fg;
+    RGBColor bg;
+    void serialize( JsonOut &jsout ) const;
+    void deserialize( JsonIn &jsin );
+};
+
 struct HSVColor {
     /// Hue: 0~393210 ( ( 1 << 16 ) - 1) * 6)
     uint32_t H;
