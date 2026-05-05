@@ -1,8 +1,9 @@
 #pragma once
 
-#include "json.h"
 #include "color.h"
+#include "data_vars_cvt.h"
 #include "hash_utils.h"
+#include "json.h"
 #include "line.h"
 
 #if defined(TILES)
@@ -85,4 +86,9 @@ template<> struct std::hash<HSVColor> {
         cata::hash_combine( hash, color.A );
         return hash;
     }
+};
+
+template<>
+struct data_vars::type_converter<RGBColor> {
+    using type = cached_json_converter<RGBColor, 512>;
 };

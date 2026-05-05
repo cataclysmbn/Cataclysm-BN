@@ -7889,14 +7889,14 @@ void iuse_paint_stuff::info( const item &it, std::vector<iteminfo> &inf ) const
     }
 }
 
-void iuse_paint_stuff::on_spawned( item &item ) const
+void iuse_paint_stuff::on_placed( item & it, const map &, const tripoint & ) const
 {
-    get_paint_color( item );
+    get_paint_color( it );
 }
 
-void iuse_paint_stuff_config::on_spawned( item &item ) const
+void iuse_paint_stuff_config::on_placed( item & it, const map &, const tripoint & ) const
 {
-    get_paint_layer( item, false );
+    get_paint_layer( it, false );
 }
 
 bool iuse_paint_stuff::is_paintable_terrain( map &m, const tripoint &pos )
