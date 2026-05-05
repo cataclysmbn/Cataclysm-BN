@@ -7757,31 +7757,25 @@ auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
             continue;
         }
         auto &disp_part = vpart.part_displayed()->part();
-        const auto [p_fg, p_bg] = disp_part.part_color.value_or( {} );
-        auto &vars = disp_part.get_base().item_vars();
+        const auto [p_bg, p_fg] = disp_part.get_color();
 
         switch( layer ) {
             default:
             case iuse_paint_stuff_config::both:
                 if( p_fg != col || p_bg != col ) {
-                    disp_part.part_color = { .bg = col, .fg = col };
-                    vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col );
-                    vars.erase( TINT_COLOR_FG_VAR_NAME );
-                    vars.erase( TINT_COLOR_BG_VAR_NAME );
+                    disp_part.set_color( col, col );
                     ++painted;
                 }
                 break;
             case iuse_paint_stuff_config::fg:
                 if( p_fg != col ) {
-                    disp_part.part_color = { .bg = p_bg, .fg = col };
-                    vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col );
+                    disp_part.set_color( p_bg, col );
                     ++painted;
                 }
                 break;
             case iuse_paint_stuff_config::bg:
                 if( p_bg != col ) {
-                    disp_part.part_color = { .bg = col, .fg = p_fg };
-                    vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, col );
+                    disp_part.set_color( col, p_fg );
                     ++painted;
                 }
                 break;
