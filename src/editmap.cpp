@@ -703,11 +703,11 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
     const optional_vpart_position vp = here.veh_at( target );
     std::string veh_msg;
     if( !vp ) {
-        veh_msg = pgettext( "vehicle", "no" );
+        veh_msg = pgettext( "map editor vehicle status", "no" );
     } else if( vp->is_inside() ) {
-        veh_msg = pgettext( "vehicle", "in" );
+        veh_msg = pgettext( "map editor vehicle status", "in" );
     } else {
-        veh_msg = pgettext( "vehicle", "out" );
+        veh_msg = pgettext( "map editor vehicle status", "out" );
     }
 
     const ter_t &terrain_type = here.ter( target ).obj();
@@ -736,7 +736,9 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
     }
     const auto &map_cache = here.get_cache( target.z );
 
-    const std::string u_see_msg = player_character.sees( target ) ? _( "yes" ) : _( "no" );
+    const auto u_see_msg = player_character.sees( target ) ?
+                           pgettext( "map editor visibility value", "yes" ) :
+                           pgettext( "map editor visibility value", "no" );
     mvwprintw( w_info, point( 1, off++ ), _( "dist: %d u_see: %s veh: %s scent: %d" ),
                rl_dist( player_character.pos(), target ), u_see_msg, veh_msg, g->scent.get( target ) );
     mvwprintw( w_info, point( 1, off++ ), _( "sight_range: %d, daylight_sight_range: %d," ),
@@ -957,14 +959,18 @@ template<>
 std::string describe( const ter_t &type )
 {
     return string_format( _( "Move cost: %d\nRoof: %s" ), type.movecost,
-                          type.has_flag( TFLAG_SUPPORTS_ROOF ) ? _( "Yes" ) : _( "No" ) );
+                          type.has_flag( TFLAG_SUPPORTS_ROOF ) ?
+                          pgettext( "map editor property value", "Yes" ) :
+                          pgettext( "map editor property value", "No" ) );
 }
 
 template<>
 std::string describe( const furn_t &type )
 {
     return string_format( _( "Move cost: %d\nRoof: %s" ), type.movecost,
-                          type.has_flag( TFLAG_SUPPORTS_ROOF ) ? _( "Yes" ) : _( "No" ) );
+                          type.has_flag( TFLAG_SUPPORTS_ROOF ) ?
+                          pgettext( "map editor property value", "Yes" ) :
+                          pgettext( "map editor property value", "No" ) );
 }
 
 template<>
@@ -972,7 +978,9 @@ std::string describe( const trap &type )
 {
     return string_format( _( "Visible: %d\nAvoidance: %d\nDifficulty: %d\nBenign: %s" ),
                           type.get_visibility(), type.get_avoidance(), type.get_difficulty(),
-                          type.is_benign() ? _( "Yes" ) : _( "No" ) );
+                          type.is_benign() ?
+                          pgettext( "map editor property value", "Yes" ) :
+                          pgettext( "map editor property value", "No" ) );
 }
 
 template<typename T_id>

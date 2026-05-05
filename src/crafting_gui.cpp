@@ -46,8 +46,11 @@
 #include "ui_manager.h"
 #include "uistate.h"
 
+static const std::string flag_BLIND_NO_EFFECT( "BLIND_NO_EFFECT" );
 static const std::string flag_BLIND_EASY( "BLIND_EASY" );
 static const std::string flag_BLIND_HARD( "BLIND_HARD" );
+static const std::string flag_BLIND_NEARLY_IMPOSSIBLE( "BLIND_NEARLY_IMPOSSIBLE" );
+static const std::string flag_BLIND_IMPOSSIBLE( "BLIND_IMPOSSIBLE" );
 
 class npc;
 
@@ -500,9 +503,12 @@ static std::vector<std::string> recipe_info(
     }
 
     oss << string_format( _( "Craftable in the dark?  <color_cyan>%s</color>\n" ),
+                          recp.has_flag( flag_BLIND_NO_EFFECT ) ? _( "Effortless" ) :
                           recp.has_flag( flag_BLIND_EASY ) ? _( "Easy" ) :
-                          recp.has_flag( flag_BLIND_HARD ) ? _( "Hard" ) :
-                          _( "Impossible" ) );
+                          recp.has_flag( flag_BLIND_HARD ) ? _( "Awkward" ) :
+                          recp.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ? _( "Very Hard" ) :
+                          recp.has_flag( flag_BLIND_IMPOSSIBLE ) ? _( "Impossible" ) :
+                          _( "Reasonabe" ) );
 
     std::string nearby_string;
     const inventory &crafting_inv = crafter.crafting_inventory();
@@ -1423,7 +1429,10 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                 { 's', _( "cooking" ), _( "<color_cyan>any skill</color> used to craft" ) },
                 { 'Q', _( "fine bolt turning" ), _( "<color_cyan>quality</color> required to craft" ) },
                 { 't', _( "soldering iron" ), _( "<color_cyan>tool</color> required to craft" ) },
-                { 'm', _( "yes" ), _( "recipes which are <color_cyan>memorized</color> or not" ) },
+                {
+                    'm', pgettext( "memorized recipe search term", "yes" ),
+                    _( "recipes which are <color_cyan>memorized</color> or not" )
+                },
             };
             int max_example_length = 0;
             for( const auto &prefix : prefixes ) {
@@ -1745,7 +1754,7 @@ static bool query_is_yes( const std::string &query )
 
     return subquery == "yes" || subquery == "y" || subquery == "1" ||
            subquery == "true" || subquery == "t" || subquery == "on" ||
-           subquery == _( "yes" );
+           subquery == pgettext( "memorized recipe search term", "yes" );
 }
 
 static void draw_hidden_amount( const catacurses::window &w, int amount, int num_recipe )
