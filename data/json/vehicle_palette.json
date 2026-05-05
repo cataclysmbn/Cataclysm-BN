@@ -4,24 +4,82 @@
     "id": "car_standard",
     "palette": [
       {
-        "fuzzy_ids": [ "board", "windshield", "door", "roof" ],
+        "fuzzy_ids": [ "board", "windshield", "door", "roo" ],
         "colors": [
-          { "color": "!white", "weight": 8 },
-          { "color": "!silver", "weight": 8 },
-          { "color": "!gray", "weight": 8 },
-          { "color": "!black", "weight": 8 },
-          { "color": "!beige", "weight": 8 },
-          { "color": "!blue", "weight": 12 },
-          { "color": "!red", "weight": 8 },
+          { "color": "White aluminium", "weight": 8 },
+          { "color": "Silver Maple Green", "weight": 8 },
+          { "color": "North Grey", "weight": 8 },
+          { "color": "Ink Black", "weight": 8 },
+          { "color": "Silver Thistle Beige", "weight": 8 },
+          { "color": "Iris Blue", "weight": 12 },
           { "color": "Cataclysm Red", "weight": 20 },
-          { "color": "!orange", "weight": 4 },
-          { "color": "!yellow", "weight": 4 },
-          { "color": "!green", "weight": 4 },
-          { "color": "!pink", "weight": 4 },
-          { "color": "!purple", "weight": 4 }
+          { "color": "Coral Orange", "weight": 4 },
+          { "color": "Topaz Yellow", "weight": 2 },
+          { "color": "Hedgehog Cactus Yellow Green", "weight": 2 },
+          { "color": "Forest Green", "weight": 2 },
+          { "color": "Brilliant Green", "weight": 2 },
+          { "color": "Crystal Pink", "weight": 4 },
+          { "color": "Ruby Violet", "weight": 4 }
         ]
       }
     ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "cargo_standard",
+    "palette": [ {
+      "fuzzy_ids": [ "board", "windshield", "door", "roof", "inflate" ],
+      "colors": [
+        { "color": "White aluminium", "weight": 8 },
+        { "color": "Silver Maple Green", "weight": 8 },
+        { "color": "North Grey", "weight": 8 },
+        { "color": "Ink Black", "weight": 8 },
+        { "color": "Silver Thistle Beige", "weight": 8 }
+      ]
+    } ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "visibility_standard",
+    "palette": [ {
+      "fuzzy_ids": [ "board", "windshield", "door", "roof", "inflate" ],
+      "colors": [
+        { "color": "Iris Blue", "weight": 12 },
+        { "color": "Cataclysm Red", "weight": 20 },
+        { "color": "Coral Orange", "weight": 4 },
+        { "color": "Topaz Yellow", "weight": 2 },
+        { "color": "Hedgehog Cactus Yellow Green", "weight": 2 },
+        { "color": "Forest Green", "weight": 2 },
+        { "color": "Brilliant Green", "weight": 2 },
+        { "color": "Crystal Pink", "weight": 4 },
+        { "color": "Ruby Violet", "weight": 4 }
+      ]   
+    } ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_standard",
+    "palette": [ {
+      "fuzzy_ids": [ "board", "windshield", "door", "roof" ],
+      "colors": [
+        { "color": "Cataclysm Green", "weight": 20 },
+        { "color": "North Grey", "weight": 10 },
+        { "color": "Ink Black", "weight": 10 },
+        { "color": "Forest Green", "weight": 5 },
+        { "color": "Ruby Violet", "weight": 1, "//": "Sneaky military craft :)" }
+    ] } ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "sneaky_standard",
+    "palette": [ {
+      "fuzzy_ids": [ "board", "windshield", "door", "roof" ],
+      "colors": [
+        { "color": "North Grey", "weight": 10 },
+        { "color": "Ink Black", "weight": 10 },
+        { "color": "Ruby Violet", "weight": 5, "//": "Sneaky military craft :)" }
+      ]
+    } ]
   },
   {
     "type": "vehicle_color_palette",

@@ -849,7 +849,8 @@ class cata_tiles
         static auto get_field_color( const field &f, const map &m, const tripoint &p ) -> color_tint_pair;
         auto get_item_color( const item &i, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_vpart_color(
-            const optional_vpart_position &vp, const map &m, const tripoint &p ) -> color_tint_pair;
+            const optional_vpart_position &vp, const map &m, const tripoint &p,
+            const bool use_roof = false ) -> color_tint_pair;
         static auto get_monster_color(
             const monster &mon, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_character_color(

@@ -3,6 +3,7 @@
     "id": "train_car_passenger",
     "type": "vehicle",
     "name": "Passenger Car",
+    "color_palette": "car_standard",
     "parts": [
       { "x": -8, "y": -3, "parts": [ "frame_sw", "board_sw", "roof" ] },
       { "x": -8, "y": -2, "parts": [ "frame_horizontal", "board_horizontal", "roof" ] },
@@ -329,6 +330,7 @@
       [ "==='#'|" ],
       [ "O---+-O" ]
     ],
+    "color_palette": "industrial_standard",
     "parts": [
       { "x": 0, "y": 1, "parts": [ "frame_vertical", "box", "roof" ] },
       {
@@ -403,6 +405,7 @@
       [ "'_____'" ],
       [ "O'''-+O" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "xlframe_vertical_2", "seat", "controls", "dashboard", "horn_car", "roof" ] },
       { "x": 0, "y": 1, "parts": [ "xlframe_vertical_2", "aisle_vertical", "engine_electric_large", "roof" ] },

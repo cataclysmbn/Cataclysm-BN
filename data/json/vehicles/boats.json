@@ -177,6 +177,7 @@
     "id": "inflatable_boat",
     "type": "vehicle",
     "name": "inflatable boat",
+    "color_palette": "visibility_standard",
     "blueprint": [
       [ "OO" ],
       [ "OO" ]
@@ -630,6 +631,7 @@
       [ "|=t'#_#'_||" ],
       [ "|O||'+'||| " ]
     ],
+    "color_palette": "military_standard",
     "parts": [
       {
         "x": -6,
@@ -816,6 +818,7 @@
       [ "|=_______________||  " ],
       [ "||OO||||||||||||||   " ]
     ],
+    "color_palette": "military_standard",
     "parts": [
       { "x": -11, "y": 0, "parts": [ "frame_cross", "plating_steel", "metal_boat_hull" ] },
       { "x": -10, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
@@ -1203,6 +1206,7 @@
       [ "|=_______________||  " ],
       [ "||OO||||||||||||||   " ]
     ],
+    "color_palette": "military_standard",
     "parts": [
       { "x": -11, "y": 0, "parts": [ "frame_cross", "plating_steel", "metal_boat_hull" ] },
       { "x": -10, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
@@ -1579,6 +1583,7 @@
       [ "=#'||" ],
       [ "|||| " ]
     ],
+    "color_palette": "military_standard",
     "parts": [
       {
         "x": -1,
@@ -1649,6 +1654,7 @@
       [ "=t#'||" ],
       [ "=|||| " ]
     ],
+    "color_palette": "sneaky_standard",
     "parts": [
       {
         "x": -2,
@@ -1705,6 +1711,7 @@
     "type": "vehicle",
     "name": "Barge Trailer",
     "blueprint": [  ],
+    "color_palette": "cargo_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "hdframe_vertical_2", "cargo_space", "metal_boat_hull" ] },
       { "x": 0, "y": -1, "parts": [ "hdframe_vertical_2", "cargo_space", "metal_boat_hull" ] },
@@ -1747,6 +1754,7 @@
     "name": "Scuba Boat",
     "//": "has foldable seats,floor trunks for individual divers and a heater for warming up after diving. the main trunk generally has spare tanks or rebreathers.",
     "blueprint": [  ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": -2,
@@ -1824,6 +1832,7 @@
     "name": "Fishing Boat",
     "//": "has a fridge and floor trunks. the main fridge generally has alcohol and fish.",
     "blueprint": [  ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": -2,

@@ -411,6 +411,10 @@ vehicle::vehicle(
                     real_part.part_color = colors.at( proto.color_match.at( real_part.id.str() ) );
                 }
             }
+        } else {
+            for( vehicle_part &part : proto.blueprint->parts ) {
+                parts.emplace_back( part, this );
+            }
         }
         refresh_locations_hack();
         init_state( init_veh_fuel, init_veh_status, locked, has_keys );

@@ -5028,7 +5028,7 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
     // first memorize the actual vpart
     const optional_vpart_position vp = here.veh_at( p );
 
-    const auto [bgCol, fgCol] = get_vpart_color( vp, here, p );
+    auto [bgCol, fgCol] = get_vpart_color( vp, here, p );
 
     if( vp && !invisible[0] ) {
         const vehicle &veh = vp->vehicle();
@@ -5045,6 +5045,11 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
         // so search all parts at the position via part_with_feature.
         const bool has_obstacle_here = vp.part_with_feature( VPFLAG_OBSTACLE, false ).has_value();
         const bool use_roof_variant = z_drop > 0 && critter == nullptr && !has_obstacle_here;
+        if( use_roof_variant ) {
+            auto res = get_vpart_color( vp, here, p, true );
+            bgCol = res.first;
+            fgCol = res.second;
+        }
         const vpart_id &vp_id = veh.part_id_string( veh_part, use_roof_variant, part_mod );
         const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
         const int rotation = std::round( to_degrees( veh.face.dir() ) );
@@ -5109,6 +5114,11 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
             const Creature *critter = g->critter_at( p, true );
             const bool has_obstacle_here = vp.part_with_feature( VPFLAG_OBSTACLE, false ).has_value();
             const bool use_roof_variant = z_drop > 0 && critter == nullptr && !has_obstacle_here;
+            if( use_roof_variant ) {
+                auto res = get_vpart_color( vp, here, p, true );
+                bgCol = res.first;
+                fgCol = res.second;
+            }
             const vpart_id &vp_id = veh.part_id_string( veh_part, use_roof_variant, part_mod );
             const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
             const int rotation = std::round( to_degrees( veh.face.dir() ) );
