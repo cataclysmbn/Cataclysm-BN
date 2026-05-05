@@ -522,11 +522,11 @@ class stash_activity_actor : public activity_actor
 {
     private:
         std::list<pickup::act_item> items;
-        tripoint relpos;
+        tripoint_rel_ms relpos;
 
     public:
         stash_activity_actor() = default;
-        stash_activity_actor( Character &ch, const drop_locations &items, const tripoint &relpos );
+        stash_activity_actor( Character &ch, const drop_locations &items, const tripoint_rel_ms &relpos );
 
         activity_id get_type() const override {
             return activity_id( "ACT_STASH" );

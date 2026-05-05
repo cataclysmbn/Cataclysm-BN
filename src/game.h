@@ -1345,5 +1345,5 @@ namespace cata_event_dispatch
 // @param u The avatar moving
 // @param m The map the avatar is moving on
 // @param p The point the avatar is moving to on map m
-void avatar_moves( const avatar &u, const map &m, const tripoint_bub_ms &p );
+void avatar_moves( const avatar &u, const map &m, const tripoint_abs_ms &p );
 } // namespace cata_event_dispatch

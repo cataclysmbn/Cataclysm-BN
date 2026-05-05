@@ -296,8 +296,8 @@ void defense_game::init_map()
     tripoint_abs_omt abs_defloc_pos = project_combine( point_abs_om(), defloc_pos );
     g->load_map( project_to<coords::sm>( abs_defloc_pos ) );
     Character &player_character = get_player_character();
-    player_character.setx( SEEX );
-    player_character.sety( SEEY );
+    const int z = player_character.bub_pos().z();
+    player_character.setpos( tripoint_bub_ms( SEEX, SEEY, z ) );
 
     g->update_map( g-> u );
     monster *const generator = g->place_critter_around( mtype_id( "mon_generator" ), g->u.bub_pos(),
@@ -1357,22 +1357,22 @@ std::vector<mtype_id> defense_game::pick_monster_wave()
 void defense_game::spawn_wave_monster( const mtype_id &type )
 {
     for( int tries = 0; tries < 1000; tries++ ) {
-        point pnt;
+        point_bub_ms pnt;
         if( location == DEFLOC_HOSPITAL || location == DEFLOC_MALL ) {
             // Always spawn to the north!
-            pnt = point( rng( g_half_mapsize_x, g_half_mapsize_x + SEEX ), SEEY );
+            pnt = point_bub_ms( rng( g_half_mapsize_x, g_half_mapsize_x + SEEX ), SEEY );
         } else if( one_in( 2 ) ) {
-            pnt = point( rng( g_half_mapsize_x, g_half_mapsize_x + SEEX ), rng( 1, SEEY ) );
+            pnt = point_bub_ms( rng( g_half_mapsize_x, g_half_mapsize_x + SEEX ), rng( 1, SEEY ) );
             if( one_in( 2 ) ) {
-                pnt = point( pnt.x, -pnt.y ) + point( 0, g_mapsize_y - 1 );
+                pnt = point_bub_ms( pnt.x(), -pnt.y() ) + point_rel_ms( 0, g_mapsize_y - 1 );
             }
         } else {
-            pnt = point( rng( 1, SEEX ), rng( g_half_mapsize_y, g_half_mapsize_y + SEEY ) );
+            pnt = point_bub_ms( rng( 1, SEEX ), rng( g_half_mapsize_y, g_half_mapsize_y + SEEY ) );
             if( one_in( 2 ) ) {
-                pnt = point( -pnt.x, pnt.y ) + point( g_mapsize_x - 1, 0 );
+                pnt = point_bub_ms( -pnt.x(), pnt.y() ) + point_rel_ms( g_mapsize_x - 1, 0 );
             }
         }
-        monster *const mon = g->place_critter_at( type, tripoint( pnt, g->get_levz() ) );
+        monster *const mon = g->place_critter_at( type, tripoint_bub_ms( pnt, g->get_levz() ) );
         if( !mon ) {
             continue;
         }

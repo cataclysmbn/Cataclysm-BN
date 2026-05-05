@@ -785,7 +785,7 @@ std::vector<coords::coord_point<Point, Origin, Scale>>
         continue_line( const std::vector<coords::coord_point<Point, Origin, Scale>> &line,
                        const int distance )
 {
-    line_to( line.back(), move_along_line( line.back(), line, distance ) );
+    return line_to( line.back(), move_along_line( line.back(), line, distance ) );
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>

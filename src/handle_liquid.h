@@ -1,8 +1,8 @@
 #pragma once
 
+#include "coordinates.h"
 #include "item_stack.h"
 #include "map.h"
-#include "point.h"
 
 class item;
 class monster;
@@ -19,7 +19,7 @@ enum liquid_dest : int {
 
 struct liquid_dest_opt {
     liquid_dest dest_opt = LD_NULL;
-    const tripoint_bub_ms &pos;
+    tripoint_bub_ms pos;
     item *it;
     vehicle *veh = nullptr;
 };

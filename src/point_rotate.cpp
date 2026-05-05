@@ -23,12 +23,12 @@ auto rotate( const tripoint &p, point dim, int turns ) -> tripoint
     return { rotate( p.xy(), dim, turns ), p.z };
 }
 
-auto rotate_point_sm( const tripoint &p, const tripoint &orig, int turns ) -> tripoint
+tripoint_bub_ms rotate_point_sm( const tripoint_bub_ms &p, const tripoint_bub_ms &orig, int turns )
 {
-    const tripoint p_sm{ p - orig.xy() };
-    const tripoint rd{ rotate( p_sm, { SEEX * 2, SEEY * 2 }, turns ) };
+    const tripoint_rel_ms p_sm = p - orig.xy();
+    const auto rd = p_sm.xy().rotate( turns, point( SEEX * 2, SEEY * 2 ) );
 
-    return tripoint{ rd + orig.xy() };
+    return tripoint_bub_ms( point_bub_ms( rd + orig.xy() ), p.z() );
 }
 
 /** @return The difference in rotation between two overmap terrain points. */

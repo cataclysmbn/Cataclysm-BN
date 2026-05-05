@@ -56,10 +56,10 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
-static auto editmap_boundaries() -> half_open_cuboid<tripoint>
+static auto editmap_boundaries() -> half_open_cuboid<tripoint_bub_ms>
 {
-    return { tripoint( 0, 0, -OVERMAP_DEPTH ),
-             tripoint( g_mapsize_x, g_mapsize_y, OVERMAP_HEIGHT + 1 ) };
+    return { tripoint_bub_ms( 0, 0, -OVERMAP_DEPTH ),
+             tripoint_bub_ms( g_mapsize_x, g_mapsize_y, OVERMAP_HEIGHT + 1 ) };
 }
 
 static const ter_id undefined_ter_id( -1 );
@@ -1134,7 +1134,7 @@ void editmap::edit_feature()
     do {
         const T_id override( emenu.selected );
         if( override ) {
-            draw_target_override = [override]( const tripoint & p ) {
+            draw_target_override = [override]( const tripoint_bub_ms & p ) {
                 draw_override( p, override );
             };
         } else {
@@ -1541,7 +1541,7 @@ void editmap::recalc_target( shapetype shape )
         case editmap_circle: {
             int radius = rl_dist( origin, target );
             map &here = get_map();
-            for( const tripoint &p : here.points_in_radius( origin, radius ) ) {
+            for( const auto &p : here.points_in_radius( origin, radius ) ) {
                 if( rl_dist( p, origin ) <= radius ) {
                     if( editmap_boundaries().contains( p ) ) {
                         target_list.push_back( p );
@@ -1573,7 +1573,7 @@ void editmap::recalc_target( shapetype shape )
             for( int x = sx; x <= ex; x++ ) {
                 for( int y = sy; y <= ey; y++ ) {
                     if( shape == editmap_rect_filled || x == sx || x == ex || y == sy || y == ey ) {
-                        const tripoint p( x, y, z );
+                        const tripoint_bub_ms p( x, y, z );
                         if( editmap_boundaries().contains( p ) ) {
                             target_list.push_back( p );
                         }
@@ -1609,13 +1609,13 @@ static int limited_shift( int var, int &shift, int min, int max )
  */
 bool editmap::move_target( const std::string &action, int moveorigin )
 {
-    tripoint mp;
+    tripoint_rel_ms mp;
     bool move_origin = moveorigin == 1 ? true :
                        moveorigin == 0 ? false : moveall;
     if( eget_direction( mp, action ) ) {
-        target.x() = limited_shift( target.x(), mp.x, 0, g_mapsize_x );
-        target.y() = limited_shift( target.y(), mp.y, 0, g_mapsize_y );
-        target.z() = limited_shift( target.z(), mp.z, -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
+        target.x() = limited_shift( target.x(), mp.x(), 0, g_mapsize_x );
+        target.y() = limited_shift( target.y(), mp.y(), 0, g_mapsize_y );
+        target.z() = limited_shift( target.z(), mp.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
         if( move_origin ) {
             origin += mp;
         }
@@ -2036,8 +2036,8 @@ void editmap::mapgen_retarget()
 
         ui_manager::redraw();
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
-        if( const std::optional<tripoint> vec = ctxt.get_direction( action ) ) {
-            point vec_ms = project_to<coords::ms>( vec->xy() );
+        if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
+            auto vec_ms = vec->xy() * coords::map_squares_per( coords::scale::overmap_terrain );
             auto ptarget = target + vec_ms;
             if( editmap_boundaries().contains( ptarget ) &&
                 editmap_boundaries().contains( ptarget + point( SEEX, SEEY ) ) ) {
@@ -2089,7 +2089,6 @@ void editmap::edit_mapgen()
         gmenu.entries[i].extratxt.color = id->get_color();
         gmenu.entries[i].extratxt.txt = id->get_symbol();
     }
-    real_coords tc;
 
     shared_ptr_fast<game::draw_callback_t> editmap_cb = draw_cb_container().create_or_get();
     shared_ptr_fast<ui_adaptor> current_ui = create_or_get_ui_adaptor();
@@ -2101,13 +2100,13 @@ void editmap::edit_mapgen()
     map &here = get_map();
 
     do {
-        tc.fromabs( here.bub_to_abs( target.xy() ) );
-        point omt_lpos = here.abs_to_bub( tc.begin_om_pos() );
-        tripoint om_ltarget = omt_lpos + tripoint( -1 + SEEX, -1 + SEEY, target.z() );
+        auto abs_pos = here.bub_to_abs( target.xy() );
+        auto omt_lpos = here.abs_to_bub( project_to<coords::ms>( project_to<coords::omt>( abs_pos ) ) );
+        auto om_ltarget = omt_lpos + tripoint_rel_ms( -1 + SEEX, -1 + SEEY, target.z() );
 
-        if( target.x() != om_ltarget.x || target.y() != om_ltarget.y ) {
+        if( target.x() != om_ltarget.x() || target.y() != om_ltarget.y() ) {
             target = om_ltarget;
-            tc.fromabs( here.bub_to_abs( target.xy() ) );
+            abs_pos = here.bub_to_abs( target.xy() );
         }
         target_list.clear();
         for( int x = target.x() - SEEX + 1; x < target.x() + SEEX + 1; x++ ) {
@@ -2134,7 +2133,7 @@ void editmap::edit_mapgen()
         if( gmenu.ret >= 0 ) {
             blink = false;
             shared_ptr_fast<ui_adaptor> gmenu_ui = gmenu.create_or_get_ui_adaptor();
-            mapgen_preview( tc, gmenu );
+            mapgen_preview( abs_pos, gmenu );
             blink = true;
         } else if( gmenu.ret == UILIST_ADDITIONAL ) {
             if( gmenu.ret_act == "EDITMAP_MOVE" ) {

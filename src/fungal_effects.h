@@ -1,6 +1,7 @@
 #pragma once
 
-struct tripoint;
+#include "coordinates.h"
+
 class map;
 class game;
 class Creature;

@@ -13179,7 +13179,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     // Upon force movement, traps can not be avoided.
     m.creature_on_trap( u, !force );
 
-    cata_event_dispatch::avatar_moves( u, m, u.bub_pos() );
+    cata_event_dispatch::avatar_moves( u, m, u.abs_pos() );
 }
 
 const dimension_info *game::get_current_dimension_info() const
@@ -15234,13 +15234,13 @@ void game::remove_fake_item( item *it )
 }
 namespace cata_event_dispatch
 {
-void avatar_moves( const avatar &u, const map &m, const tripoint_bub_ms &p )
+void avatar_moves( const avatar &u, const map &m, const tripoint_abs_ms &p )
 {
     mtype_id mount_type;
     if( u.is_mounted() ) {
         mount_type = u.mounted_creature->type->id;
     }
-    g->events().send<event_type::avatar_moves>( mount_type, m.ter( p ).id(),
+    g->events().send<event_type::avatar_moves>( mount_type, m.ter( abs_to_bub( p ) ).id(),
             u.get_movement_mode(), u.is_underwater(), p.z() );
 }
 } // namespace cata_event_dispatch

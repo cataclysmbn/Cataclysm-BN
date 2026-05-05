@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "coordinates.h"
 #include "detached_ptr.h"
 #include "safe_reference.h"
 #include "point.h"

@@ -123,7 +123,7 @@ void fungal_effects::fungalize( const tripoint_bub_ms &p, Creature *origin, doub
 
 void fungal_effects::create_spores( const tripoint_bub_ms &p, Creature *origin )
 {
-    for( const tripoint &tmp : get_map().points_in_radius( p, 1 ) ) {
+    for( const auto &tmp : get_map().points_in_radius( p, 1 ) ) {
         fungalize( tmp, origin, fungal_opt.spore_chance );
     }
 }
@@ -254,7 +254,7 @@ void fungal_effects::spread_fungus( const tripoint_bub_ms &p )
 {
     int growth = 1;
     map &here = get_map();
-    for( const tripoint &tmp : here.points_in_radius( p, 1 ) ) {
+    for( const auto &tmp : here.points_in_radius( p, 1 ) ) {
         if( tmp == p ) {
             continue;
         }
@@ -270,7 +270,7 @@ void fungal_effects::spread_fungus( const tripoint_bub_ms &p )
         if( growth == 9 ) {
             return;
         }
-        for( const tripoint &dest : here.points_in_radius( p, 1 ) ) {
+        for( const auto &dest : here.points_in_radius( p, 1 ) ) {
             // One spread on average
             if( !m.has_flag( flag_FUNGUS, dest ) && one_in( 9 - growth ) ) {
                 //growth chance is 100 in X simplified

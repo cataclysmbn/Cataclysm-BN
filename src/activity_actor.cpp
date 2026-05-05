@@ -1940,7 +1940,7 @@ std::unique_ptr<activity_actor> toggle_gate_activity_actor::deserialize( JsonIn 
 
 
 stash_activity_actor::stash_activity_actor( Character &ch, const drop_locations &items,
-        const tripoint &relpos ) : relpos( relpos )
+        const tripoint_rel_ms &relpos ) : relpos( relpos )
 {
     this->items = pickup::reorder_for_dropping( ch, items );
 }

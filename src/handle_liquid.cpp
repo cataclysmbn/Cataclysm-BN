@@ -44,20 +44,20 @@ static void serialize_liquid_source( player_activity &act, vehicle &veh,
 {
     act.values.push_back( LST_VEHICLE );
     act.values.push_back( part_id );
-    act.coords.push_back( veh.bub_part_location( 0 ).raw() );
+    act.coords.push_back( bub_to_abs( veh.bub_part_location( 0 ) ) );
 }
 
 static void serialize_liquid_source( player_activity &act, const tripoint_bub_ms &pos )
 {
     act.values.push_back( LST_INFINITE_MAP );
     act.values.push_back( 0 ); //dummy
-    act.coords.push_back( pos );
+    act.coords.push_back( bub_to_abs( pos ) );
 }
 
 static void serialize_liquid_target( player_activity &act, const vehicle &veh )
 {
     act.values.push_back( LTT_VEHICLE );
-    act.coords.push_back( veh.bub_part_location( 0 ).raw() );
+    act.coords.push_back( bub_to_abs( veh.bub_part_location( 0 ) ) );
 }
 
 static void serialize_liquid_target( player_activity &act, item &container )
@@ -69,7 +69,7 @@ static void serialize_liquid_target( player_activity &act, item &container )
 static void serialize_liquid_target( player_activity &act, const tripoint_bub_ms &pos )
 {
     act.values.push_back( LTT_MAP );
-    act.coords.push_back( pos );
+    act.coords.push_back( bub_to_abs( pos ) );
 }
 
 namespace liquid_handler
@@ -223,7 +223,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
 
         const std::string liqstr = string_format( _( "Pour %s where?" ), liquid_name );
 
-        const std::optional<tripoint> target_pos_ = choose_adjacent( liqstr );
+        const std::optional<tripoint_bub_ms> target_pos_ = choose_adjacent( liqstr );
         if( !target_pos_ ) {
             return;
         }
@@ -430,7 +430,7 @@ bool handle_liquid( item &liquid, const int radius )
     return false;
 }
 
-bool handle_liquid( tripoint pos, int radius )
+bool handle_liquid( tripoint_bub_ms pos, int radius )
 {
     map &here = get_map();
     detached_ptr<item> liquid = here.water_from( pos );
