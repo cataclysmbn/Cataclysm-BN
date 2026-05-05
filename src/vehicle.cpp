@@ -408,7 +408,7 @@ vehicle::vehicle(
                 parts.emplace_back( part, this );
                 auto &real_part = parts.back();
                 if( proto.color_match.contains( real_part.id.str() ) ) {
-                    const auto [old_bg, old_fg] = real_part.get_color();
+                    const auto [old_bg, old_fg] = real_part.get_color( true );
                     const auto c = colors.at( proto.color_match.at( real_part.id.str() ) );
                     real_part.set_color(
                         old_bg == RGBColor{} ? c : old_bg,

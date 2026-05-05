@@ -716,8 +716,12 @@ std::string vehicle_part::carried_name() const
     return carry_names.top().substr( name_offset );
 }
 
-RGBColorPair vehicle_part::get_color() const
+RGBColorPair vehicle_part::get_color( bool ignore_default ) const
 {
+    if( ignore_default ) {
+        return part_color_;
+    }
+
     const auto [def_bg, def_fg] = info().default_color;
     const auto [set_bg, set_fg] = part_color_;
     return RGBColorPair{

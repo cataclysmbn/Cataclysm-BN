@@ -344,7 +344,7 @@ struct vehicle_part {
          */
         std::vector<detached_ptr<item>> pieces_for_broken_part() const;
 
-        RGBColorPair get_color() const;
+        RGBColorPair get_color( bool ignore_default = false ) const;
         void set_color( const RGBColorPair &color ) { set_color( color.bg, color.fg ); }
         void set_color( const RGBColor &bg, const RGBColor &fg );
 };
