@@ -411,11 +411,7 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [
-      "outlet_mall_0_2",
-      "outlet_mall_1_2",
-      "outlet_mall_2_2",
-    ],
+    "id": [ "outlet_mall_0_2", "outlet_mall_1_2", "outlet_mall_2_2" ],
     "name": "park",
     "sym": "O",
     "color": "green",
