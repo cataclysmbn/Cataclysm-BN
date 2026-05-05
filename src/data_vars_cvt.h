@@ -50,9 +50,12 @@ struct cached_converter {
     private:
         Inner _conv;
 
-        static constexpr std::hash<std::string> _hash;
         static inline std::list<std::pair<key_type, value_type>> _list;
         static inline std::unordered_map<key_type, typename decltype( _list )::iterator> _map;
+
+        static constexpr std::size_t _hash(const std::string& s) {
+            return std::hash<std::string>{}(s);
+        }
 
     public:
         cached_converter( Args &&... args ) : _conv( std::forward<Args>( args )... ) {};
