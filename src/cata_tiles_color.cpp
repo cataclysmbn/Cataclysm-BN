@@ -20,6 +20,45 @@ struct blend_mode_cvt {
     }
 };
 
+static std::optional<color_tint_pair> tint_from_data_vars( const data_vars::data_set &i )
+{
+    if( i.contains( TINT_COLOR_VAR_NAME ) || i.contains( TINT_COLOR_FG_VAR_NAME ) ||
+        i.contains( TINT_COLOR_BG_VAR_NAME ) ) {
+
+        const auto col = i.get<RGBColor>( TINT_COLOR_VAR_NAME, RGB_NO_COLOR );
+        const auto col_bg = i.get<RGBColor>( TINT_COLOR_BG_VAR_NAME, col );
+        const auto col_fg = i.get<RGBColor>( TINT_COLOR_FG_VAR_NAME, col );
+
+        tint_config bg_tint{};
+        tint_config fg_tint{};
+
+        const auto blend_mode = i.get<tint_blend_mode, blend_mode_cvt>( TINT_MODE_VAR_NAME,
+                                tint_blend_mode::tint );
+        const auto saturation = i.get<float>( TINT_SATURATION_VAR_NAME, 1.0f );
+        const auto contrast = i.get<float>( TINT_CONTRAST_VAR_NAME, 1.0f );
+        const auto brightness = i.get<float>( TINT_BRIGHTNESS_VAR_NAME, 1.0f );
+
+        if( col_bg != RGB_NO_COLOR ) {
+            bg_tint.color = col_bg;
+            bg_tint.blend_mode = blend_mode;
+            bg_tint.saturation = saturation;
+            bg_tint.contrast = contrast;
+            bg_tint.brightness = brightness;
+        }
+
+        if( col_fg != RGB_NO_COLOR ) {
+            fg_tint.color = col_fg;
+            fg_tint.blend_mode = blend_mode;
+            fg_tint.saturation = saturation;
+            fg_tint.contrast = contrast;
+            fg_tint.brightness = brightness;
+        }
+
+        return std::make_pair( bg_tint, fg_tint );
+    }
+    return std::nullopt;
+}
+
 auto cata_tiles::get_overmap_color(
     const overmapbuffer &, const tripoint_abs_omt & ) -> color_tint_pair
 {
@@ -27,16 +66,28 @@ auto cata_tiles::get_overmap_color(
 }
 
 auto cata_tiles::get_terrain_color(
-    const ter_t &/*ter*/, const map &, const tripoint & ) -> color_tint_pair
+    const ter_t &, const map &m, const tripoint &p ) -> color_tint_pair
 {
-    // TODO: Add tint handling when terrain vars are implemented
+    const auto vars = m.ter_vars( p );
+    if( vars != nullptr ) {
+        const auto ivar_color = tint_from_data_vars( *vars );
+        if( ivar_color.has_value() ) {
+            return ivar_color.value();
+        }
+    }
     return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_furniture_color(
-    const furn_t &/*furn*/, const map &, const tripoint & ) -> color_tint_pair
+    const furn_t &, const map &m, const tripoint &p ) -> color_tint_pair
 {
-    // TODO: Add tint handling when furniture vars are implemented
+    const auto vars = m.furn_vars( p );
+    if( vars != nullptr ) {
+        const auto ivar_color = tint_from_data_vars( *vars );
+        if( ivar_color.has_value() ) {
+            return ivar_color.value();
+        }
+    }
     return { std::nullopt, std::nullopt };
 }
 
@@ -61,38 +112,9 @@ auto cata_tiles::get_field_color(
 auto cata_tiles::get_item_color(
     const item &i, const map &, const tripoint & ) -> color_tint_pair
 {
-    if( i.has_var( TINT_COLOR_VAR_NAME ) || i.has_var( TINT_COLOR_FG_VAR_NAME ) ||
-        i.has_var( TINT_COLOR_BG_VAR_NAME ) ) {
-        const auto col = i.get_var<RGBColor>( TINT_COLOR_VAR_NAME, RGB_NO_COLOR );
-        const auto col_bg = i.get_var<RGBColor>( TINT_COLOR_BG_VAR_NAME, col );
-        const auto col_fg = i.get_var<RGBColor>( TINT_COLOR_FG_VAR_NAME, col );
-
-        tint_config bg_tint{};
-        tint_config fg_tint{};
-
-        const auto blend_mode = i.get_var<tint_blend_mode, blend_mode_cvt>( TINT_MODE_VAR_NAME,
-                                tint_blend_mode::tint );
-        const auto saturation = i.get_var<float>( TINT_SATURATION_VAR_NAME, 1.0f );
-        const auto contrast = i.get_var<float>( TINT_CONTRAST_VAR_NAME, 1.0f );
-        const auto brightness = i.get_var<float>( TINT_BRIGHTNESS_VAR_NAME, 1.0f );
-
-        if( col_bg != RGB_NO_COLOR ) {
-            bg_tint.color = col_bg;
-            bg_tint.blend_mode = blend_mode;
-            bg_tint.saturation = saturation;
-            bg_tint.contrast = contrast;
-            bg_tint.brightness = brightness;
-        }
-
-        if( col_fg != RGB_NO_COLOR ) {
-            fg_tint.color = col_fg;
-            fg_tint.blend_mode = blend_mode;
-            fg_tint.saturation = saturation;
-            fg_tint.contrast = contrast;
-            fg_tint.brightness = brightness;
-        }
-
-        return { bg_tint, fg_tint };
+    const auto ivar_color = tint_from_data_vars( i.item_vars() );
+    if( ivar_color.has_value() ) {
+        return ivar_color.value();
     }
 
     const auto &data = i.get_flags();
@@ -146,7 +168,7 @@ auto cata_tiles::get_character_color(
 }
 
 auto cata_tiles::get_effect_color(
-    const effect &eff, const Character &c, const map &, const tripoint & ) -> color_tint_pair
+    const effect &eff, const Character &, const map &, const tripoint & ) -> color_tint_pair
 {
     const color_tint_pair *tint = tileset_ptr->get_tint( eff.get_id().str() );
     if( tint != nullptr ) {
@@ -156,7 +178,7 @@ auto cata_tiles::get_effect_color(
 }
 
 auto cata_tiles::get_bionic_color(
-    const bionic &bio, const Character &c, const map &, const tripoint & )-> color_tint_pair
+    const bionic &bio, const Character &, const map &, const tripoint & )-> color_tint_pair
 {
     const auto &data = bio.id.obj();
     for( const flag_id &flag : data.flags ) {

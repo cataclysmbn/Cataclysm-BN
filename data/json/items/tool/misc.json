@@ -647,7 +647,7 @@
     "initial_charges": 10,
     "max_charges": 10,
     "charges_per_use": 1,
-    "use_action": [ "SPRAY_CAN", "paint_stuff" ],
+    "use_action": [ "SPRAY_CAN", "paint_stuff", "paint_stuff_cfg" ],
     "flags": [ "WRITE_MESSAGE" ]
   },
   {
