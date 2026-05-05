@@ -193,6 +193,8 @@ std::string action_ident( action_id act )
             return "reload_wielded";
         case ACTION_UNLOAD:
             return "unload";
+        case ACTION_UNLOAD_ALL:
+            return "unload_all";
         case ACTION_MEND:
             return "mend";
         case ACTION_THROW:
@@ -931,7 +933,7 @@ action_id handle_action_menu()
             register_actions( {
                 ACTION_DROP, ACTION_COMPARE, ACTION_ORGANIZE, ACTION_USE,
                 ACTION_WEAR, ACTION_TAKE_OFF, ACTION_EAT, ACTION_OPEN_CONSUME,
-                ACTION_READ, ACTION_WIELD, ACTION_UNLOAD
+                ACTION_READ, ACTION_WIELD, ACTION_UNLOAD, ACTION_UNLOAD_ALL
             } );
             register_lua_action_entries( category_id );
         } else if( category_id == "debug" ) {

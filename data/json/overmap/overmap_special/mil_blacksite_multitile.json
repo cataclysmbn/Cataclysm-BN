@@ -442,7 +442,7 @@
       ],
       "place_vehicles": [
         { "vehicle": "experimental_military_vehicles", "x": 20, "y": 15, "chance": 100, "rotation": 90, "status": 0 },
-        { "vehicle": "experimental_military_vehicles", "x": 51, "y": 15, "chance": 100, "rotation": 90, "status": 0 }
+        { "vehicle": "hover_military_vehicles", "x": 51, "y": 15, "chance": 100, "rotation": 90, "status": 0 }
       ],
       "mapping": {
         "r": { "items": [ { "item": "supplies_mechanics_milspec", "chance": 25 }, { "item": "mil_food_nodrugs", "chance": 25 } ] }
@@ -493,7 +493,6 @@
     "sym": "M",
     "color": "dark_gray",
     "see_cost": 5,
-    "extras": "build",
     "mondensity": 2
   }
 ]

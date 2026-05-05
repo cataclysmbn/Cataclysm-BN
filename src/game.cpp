@@ -2696,6 +2696,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "reload_weapon" );
     ctxt.register_action( "reload_wielded" );
     ctxt.register_action( "unload" );
+    ctxt.register_action( "unload_all" );
     ctxt.register_action( "throw" );
     ctxt.register_action( "fire" );
     ctxt.register_action( "cast_spell" );
@@ -9298,8 +9299,9 @@ static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_
                                                velocity_units( VU_VEHICLE ) );
                 const std::string engine_text = string_format( _( "Engine: %s" ),
                                                 cur_vehicle->engine_on ? _( "on" ) : _( "off" ) );
-                const std::string moving_text = string_format( _( "Moving: %s" ),
-                                                moving ? _( "yes" ) : _( "no" ) );
+                const auto moving_text = string_format( _( "Moving: %s" ),
+                                                        moving ? pgettext( "vehicle status value", "yes" ) :
+                                                        pgettext( "vehicle status value", "no" ) );
                 const std::string id_text = string_format( "[%s]", cur_vehicle->type.str() );
                 const bool wheels_ok = cur_vehicle->sufficient_wheel_config();
                 const std::string wheels_text = wheels_ok ?
@@ -9335,8 +9337,9 @@ static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_
                                                 volume_units_abbr() );
                 const std::string leak_text = _( "This vehicle is leaking fuel." );
                 const bool can_float = cur_vehicle->can_float();
-                const std::string float_text = string_format( _( "Floats: %s" ),
-                                               can_float ? _( "yes" ) : _( "no" ) );
+                const auto float_text = string_format( _( "Floats: %s" ),
+                                                       can_float ? pgettext( "vehicle status value", "yes" ) :
+                                                       pgettext( "vehicle status value", "no" ) );
 
                 int line = 0;
                 trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4, c_light_gray,

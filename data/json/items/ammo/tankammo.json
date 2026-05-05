@@ -25,8 +25,8 @@
     "copy-from": "ammolink",
     "type": "GENERIC",
     "name": { "str": "25x137mm autocannon belt linkage" },
-    "weight": "6 g",
-    "volume": "10ml",
+    "weight": "20 g",
+    "volume": "20 ml",
     "stackable": true,
     "use_action": { "type": "ammobelt", "belt": "belt25mm" }
   },

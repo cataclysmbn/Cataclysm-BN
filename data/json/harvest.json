@@ -1489,5 +1489,16 @@
       { "drop": "veggy", "type": "flesh", "mass_ratio": 0.2 },
       { "drop": "veggy", "type": "offal", "mass_ratio": 0.05 }
     ]
+  },
+  {
+    "id": "triffid_radiant_boss",
+    "type": "harvest",
+    "entries": [
+      { "drop": "log", "type": "bone", "mass_ratio": 0.35 },
+      { "drop": "stick_fiber", "type": "bone", "mass_ratio": 0.1 },
+      { "drop": "veggy", "type": "flesh", "mass_ratio": 0.2 },
+      { "drop": "veggy", "type": "offal", "mass_ratio": 0.05 },
+      { "drop": "radiant_core", "base_num": 1, "max": 1, "type": "offal" }
+    ]
   }
 ]
