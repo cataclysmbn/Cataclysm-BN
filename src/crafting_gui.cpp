@@ -1429,7 +1429,10 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                 { 's', _( "cooking" ), _( "<color_cyan>any skill</color> used to craft" ) },
                 { 'Q', _( "fine bolt turning" ), _( "<color_cyan>quality</color> required to craft" ) },
                 { 't', _( "soldering iron" ), _( "<color_cyan>tool</color> required to craft" ) },
-                { 'm', _( "yes" ), _( "recipes which are <color_cyan>memorized</color> or not" ) },
+                {
+                    'm', pgettext( "memorized recipe search term", "yes" ),
+                    _( "recipes which are <color_cyan>memorized</color> or not" )
+                },
             };
             int max_example_length = 0;
             for( const auto &prefix : prefixes ) {
@@ -1751,7 +1754,7 @@ static bool query_is_yes( const std::string &query )
 
     return subquery == "yes" || subquery == "y" || subquery == "1" ||
            subquery == "true" || subquery == "t" || subquery == "on" ||
-           subquery == _( "yes" );
+           subquery == pgettext( "memorized recipe search term", "yes" );
 }
 
 static void draw_hidden_amount( const catacurses::window &w, int amount, int num_recipe )
