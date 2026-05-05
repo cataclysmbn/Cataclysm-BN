@@ -256,7 +256,7 @@ void RGBColorPair::serialize( JsonOut &jsout ) const
         jsout.start_array();
         jsout.write( fg );
         jsout.write( bg );
-        jsout.end_object();
+        jsout.end_array();
     }
 }
 
