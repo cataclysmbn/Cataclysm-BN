@@ -1686,9 +1686,20 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
     }
 
     if( has_var( TINT_COLOR_VAR_NAME ) && !get_use( iuse_paint_stuff::IUSE_ACTION ) ) {
-        const auto color = get_var<RGBColor>( TINT_COLOR_VAR_NAME, {} );
-        if( color != RGBColor{} ) {
-            info.emplace_back( "TOOL", _( "Painted With: " ), "<bold>" + color.friendly_name() + "</bold>" );
+        const auto c = get_var<RGBColor>( TINT_COLOR_VAR_NAME, {} );
+        const auto fg = get_var<RGBColor>( TINT_COLOR_FG_VAR_NAME, c );
+        const auto bg = get_var<RGBColor>( TINT_COLOR_BG_VAR_NAME, c );
+        if( fg != RGBColor{} || bg != RGBColor{} ) {
+            if( bg != fg ) {
+                info.emplace_back( "TOOL", string_format( _( "Painted With: <bold>%s, %s</bold>" ),
+                                   bg.friendly_name(), fg.friendly_name() ) );
+            } else if( bg == RGBColor{} ) {
+                info.emplace_back( "TOOL", string_format( _( "Painted With: <bold>%s</bold>" ),
+                                   fg.friendly_name() ) );
+            } else {
+                info.emplace_back( "TOOL", string_format( _( "Painted With: <bold>%s</bold>" ),
+                                   bg.friendly_name() ) );
+            }
         }
     }
 
