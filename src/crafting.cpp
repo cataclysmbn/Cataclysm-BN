@@ -36,7 +36,6 @@
 #include "flag.h"
 #include "flat_set.h"
 #include "game.h"
-#include "game_constants.h"
 #include "game_inventory.h"
 #include "handle_liquid.h"
 #include "inventory.h"
@@ -67,6 +66,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
+#include "stored_ammo.h"
 #include "string_utils.h"
 #include "translations.h"
 #include "type_id.h"
@@ -82,8 +82,6 @@
 static const activity_id ACT_CRAFT( "ACT_CRAFT" );
 
 static const efftype_id effect_contacts( "contacts" );
-
-static const itype_id itype_plut_cell( "plut_cell" );
 
 static const skill_id skill_cooking( "cooking" );
 static const skill_id skill_electronics( "electronics" );
@@ -2398,49 +2396,6 @@ void remove_ammo( std::vector<item *> &dis_items, Character &who )
     }
 }
 
-namespace
-{
-
-auto stored_ammo_remaining( const item &dis_item ) -> int
-{
-    return dis_item.is_magazine() ? dis_item.ammo_remaining() : dis_item.charges;
-}
-
-auto recoverable_ammo_charges( const item &dis_item ) -> int
-{
-    const auto raw_charges = stored_ammo_remaining( dis_item );
-    if( raw_charges <= 0 || dis_item.ammo_current().is_null() ) {
-        return 0;
-    }
-    return dis_item.ammo_current() == itype_plut_cell ? raw_charges / PLUTONIUM_CHARGES : raw_charges;
-}
-
-auto clear_stored_ammo( item &dis_item ) -> void
-{
-    if( dis_item.is_magazine() ) {
-        dis_item.ammo_unset();
-    } else {
-        dis_item.charges = 0;
-    }
-}
-
-auto drop_stored_ammo( item &dis_item, Character &who ) -> void
-{
-    if( stored_ammo_remaining( dis_item ) <= 0 || dis_item.ammo_current().is_null() ) {
-        return;
-    }
-
-    const auto ammo_charges = recoverable_ammo_charges( dis_item );
-    if( ammo_charges > 0 ) {
-        auto ammodrop = item::spawn( dis_item.ammo_current(), calendar::turn );
-        ammodrop->charges = ammo_charges;
-        drop_or_handle( std::move( ammodrop ), who );
-    }
-    clear_stored_ammo( dis_item );
-}
-
-} // namespace
-
 void remove_ammo( item &dis_item, Character &who )
 {
     std::vector<detached_ptr<item>> removed;
@@ -2456,7 +2411,9 @@ void remove_ammo( item &dis_item, Character &who )
     }
 
     if( dis_item.is_gun() || dis_item.is_tool() || dis_item.is_magazine() ) {
-        drop_stored_ammo( dis_item, who );
+        for( auto &ammo : recover_stored_ammo( dis_item, stored_ammo_remainder_handling::discard ) ) {
+            drop_or_handle( std::move( ammo ), who );
+        }
     }
 }
 
