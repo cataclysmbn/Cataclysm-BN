@@ -4891,8 +4891,8 @@ void game::world_tick()
             return;
         }
 
-        mb.for_each_submap( [&]( auto & entry ) {
-            auto &[raw_pos, sm_ptr] = entry;
+        mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
+            auto &[pos_sm, sm_ptr] = entry;
             if( !sm_ptr ) {
                 return;
             }
@@ -4902,12 +4902,11 @@ void game::world_tick()
             // pre-loaded submaps that are merely resident in memory.
             // Use the precomputed O(1) set rather than is_simulated() which does
             // an O(log N) mapbuffer lookup + O(R) request scan per submap.
-            if( !submap_loader.is_in_simulated_set( dim, raw_pos ) ) {
+            if( !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
                 return;
             }
 
             ZoneScopedN( "wtd_submap_body" );
-            const tripoint_abs_sm pos_sm( raw_pos );
 
             total_field_count += sm_ptr->field_count;
 
@@ -13466,7 +13465,7 @@ void game::start_hauling( const tripoint_bub_ms &pos )
     // Whether the destination is inside a vehicle (not supported)
     const bool to_vehicle = false;
     // Destination relative to the player
-    const tripoint relative_destination{};
+    const tripoint_rel_ms relative_destination{};
 
     u.assign_activity( std::make_unique<player_activity>( std::make_unique<move_items_activity_actor>(
                            target_items,
@@ -13497,7 +13496,7 @@ std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bo
     std::optional<tripoint_bub_ms> stairs;
     int best = INT_MAX;
     if( !stairs.has_value() ) {
-        for( const auto &rel : overmap_tiles() ) {
+        for( const auto &rel : overmap_terrain_tiles() ) {
             const auto dest = abs_to_bub( project_combine( omt_start, rel ) );
             if( rl_dist( u.bub_pos(), dest ) <= best &&
                 ( ( going_down_1 && mp.has_flag( TFLAG_GOES_UP, dest ) ) ||

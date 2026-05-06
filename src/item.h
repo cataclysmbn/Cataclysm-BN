@@ -1020,7 +1020,7 @@ class item : public location_visitable<item>, public game_object<item>
          * potentially destroying other items and invalidating iterators.
          * Should NOT be called on an item on the map, but on a local copy.
          */
-        static detached_ptr<item> detonate( detached_ptr<item> &&self, const tripoint &p,
+        static detached_ptr<item> detonate( detached_ptr<item> &&self, const tripoint_bub_ms &p,
                                             std::vector<detached_ptr<item>> &drops );
 
         bool will_explode_in_fire() const;
@@ -1576,7 +1576,7 @@ class item : public location_visitable<item>, public game_object<item>
         void set_var( const std::string &name, const std::string &value ) { item_vars_.set( name, value ); };
 
         double get_var( const std::string &name, double default_value ) const { return item_vars_.get<double>( name, default_value ); }
-        tripoint get_var( const std::string &name, const tripoint &default_value ) const { return item_vars_.get<tripoint>( name, default_value ); }
+        tripoint get_var( const std::string &name, const tripoint_bub_ms &default_value ) const { return item_vars_.get<tripoint>( name, default_value ); }
         std::string get_var( const std::string &name, const std::string &default_value ) const { return item_vars_.get( name, default_value ); }
         std::string get_var( const std::string &name ) const { return item_vars_.get( name, "" ); }
         */
@@ -2430,7 +2430,7 @@ class item : public location_visitable<item>, public game_object<item>
     private:
         const use_function *get_use_internal( const std::string &use_name ) const;
         static detached_ptr<item> process_internal( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos, bool activate,
+                const tripoint_bub_ms &pos, bool activate,
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
 
         /** Helper for checking reloadability. **/
@@ -2472,28 +2472,28 @@ class item : public location_visitable<item>, public game_object<item>
         // processing types, just to make the process function cleaner.
         // The interface is the same as for @ref process.
         static detached_ptr<item> process_corpse( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_litcig( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_extinguish( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         // Place conditions that should remove fake smoke item in this sub-function
         static detached_ptr<item> process_fake_smoke( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_fake_cloning_vat( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_fake_mill( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_cable( detached_ptr<item> &&self, player *carrier,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
         static detached_ptr<item> process_UPS( detached_ptr<item> &&self, player *carrier,
-                                               const tripoint &pos );
+                                               const tripoint_bub_ms &pos );
         static detached_ptr<item> process_blackpowder_fouling( detached_ptr<item> &&self, player *carrier );
         static detached_ptr<item> process_tool( detached_ptr<item> &&self, player *carrier,
-                                                const tripoint &pos );
+                                                const tripoint_bub_ms &pos );
 
         //Process wet is built different because sigh
-        bool process_wet( player *carrier, const tripoint &pos );
+        bool process_wet( player *carrier, const tripoint_bub_ms &pos );
     public:
         static const int INFINITE_CHARGES;
 

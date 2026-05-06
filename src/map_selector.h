@@ -2,17 +2,19 @@
 
 #include <vector>
 
-#include "point.h"
+#include "coordinates.h"
 #include "visitable.h"
 
 class map_cursor : public location_visitable<map_cursor>
 {
     private:
-        tripoint_abs_ms pos_;
+        tripoint_bub_ms pos_;
 
     public:
+        map_cursor( const tripoint_abs_ms &pos );
         map_cursor( const tripoint_bub_ms &pos );
-        operator tripoint() const;
+        operator tripoint_abs_ms() const;
+        operator tripoint_bub_ms() const;
 };
 
 class map_selector : public location_visitable<map_selector>

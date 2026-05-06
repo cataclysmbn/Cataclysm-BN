@@ -1,7 +1,6 @@
 #include "locations.h"
 
 #include "character.h"
-#include "coordinates.h"
 #include "detached_ptr.h"
 #include "item.h"
 #include "itype.h"
@@ -50,10 +49,10 @@ bool fake_item_location::is_loaded( const item * ) const
     return false; //Loaded means in the reality bubble so no
 }
 
-tripoint fake_item_location::position( const item * ) const
+tripoint_bub_ms fake_item_location::position( const item * ) const
 {
     debugmsg( "Attempted to find the position of a fake item" );
-    return tripoint_zero;
+    return tripoint_bub_ms::zero();
 }
 
 item_location_type fake_item_location::where() const
@@ -93,9 +92,9 @@ bool temp_item_location::is_loaded( const item * ) const
     return false; //Loaded means in the reality bubble so no
 }
 
-tripoint temp_item_location::position( const item * ) const
+tripoint_bub_ms temp_item_location::position( const item * ) const
 {
-    return tripoint_zero;
+    return tripoint_bub_ms::zero();
 }
 
 item_location_type temp_item_location::where() const
@@ -123,9 +122,9 @@ bool character_item_location::is_loaded( const item * ) const
     return holder->is_loaded();
 }
 
-tripoint character_item_location::position( const item * ) const
+tripoint_bub_ms character_item_location::position( const item * ) const
 {
-    return holder->bub_pos().raw();
+    return holder->bub_pos();
 }
 
 item_location_type character_item_location::where() const
@@ -214,9 +213,9 @@ bool wield_item_location::is_loaded( const item * ) const
     return holder->is_loaded();
 }
 
-tripoint wield_item_location::position( const item * ) const
+tripoint_bub_ms wield_item_location::position( const item * ) const
 {
-    return holder->bub_pos().raw();
+    return holder->bub_pos();
 }
 
 item_location_type wield_item_location::where( ) const
@@ -289,7 +288,7 @@ bool tile_item_location::is_loaded( const item * ) const
     return here.inbounds( pos );
 }
 
-tripoint tile_item_location::position( const item * ) const
+tripoint_bub_ms tile_item_location::position( const item * ) const
 {
     return get_map().abs_to_bub( pos );
 }
@@ -319,7 +318,7 @@ std::string tile_item_location::describe( const Character *ch, const item * ) co
     return res;
 }
 
-void tile_item_location::move_by( tripoint offset )
+void tile_item_location::move_by( tripoint_rel_ms offset )
 {
     pos += offset;
 }
@@ -329,9 +328,9 @@ bool monster_item_location::is_loaded( const item * ) const
     return on->is_loaded();
 }
 
-tripoint monster_item_location::position( const item * ) const
+tripoint_bub_ms monster_item_location::position( const item * ) const
 {
-    return on->bub_pos().raw();
+    return on->bub_pos();
 }
 
 item_location_type monster_item_location::where() const
@@ -430,9 +429,9 @@ bool vehicle_item_location::is_loaded( const item * ) const
     return get_map().inbounds( veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ) );
 }
 
-tripoint vehicle_item_location::position( const item * ) const
+tripoint_bub_ms vehicle_item_location::position( const item * ) const
 {
-    return veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ).raw();
+    return veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount );
 }
 
 item_location_type vehicle_item_location::where() const
@@ -547,7 +546,7 @@ int contents_item_location::obtain_cost( const Character &ch, int qty, const ite
     return INVENTORY_HANDLING_PENALTY + container->obtain_cost( ch, qty );
 }
 
-tripoint contents_item_location::position( const item * ) const
+tripoint_bub_ms contents_item_location::position( const item * ) const
 {
     return container->position();
 }

@@ -789,11 +789,11 @@ std::vector<coords::coord_point<Point, Origin, Scale>>
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
-direction calc_ray_end( units::angle angle, const int range,
+void calc_ray_end( units::angle angle, int range,
                         const coords::coord_point<Point, Origin, Scale> &loc1,
-                        const coords::coord_point<Point, Origin, Scale> &loc2 )
+                        coords::coord_point<Point, Origin, Scale> &loc2 )
 {
-    return calc_ray_end( angle, range, loc1.raw(), loc2.raw() );
+    calc_ray_end( angle, range, loc1.raw(), loc2.raw() );
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
@@ -839,6 +839,26 @@ midpoint( const half_open_cuboid<coords::coord_point<tripoint, Origin, Scale>> &
     return midpoint( rect.p_min, rect.p_max );
 }
 
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_line( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 );
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_square( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                  coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 );
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_rough_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                        coords::coord_point<Point, Origin, Scale> p, int rad );
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                  const rl_vec2d &p, double rad );
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                  coords::coord_point<Point, Origin, Scale> p, int rad );
+
 // Returns a view over every tile position within a single submap, in x-major order.
 // Equivalent to a nested loop over x in [0, SEEX) and y in [0, SEEY).
 //
@@ -848,6 +868,12 @@ midpoint( const half_open_cuboid<coords::coord_point<tripoint, Origin, Scale>> &
 inline auto submap_tiles() -> point_range<point_sm_ms>
 {
     return { point_sm_ms::zero(), point_sm_ms( coords::map_squares_per( coords::scale::submap ) - 1, coords::map_squares_per( coords::scale::submap ) - 1 ) };
+}
+
+// Mapgen variant, for the tiny map which is always an omt in size, but is treated as bubble space locally
+inline auto tinymap_tiles() -> point_range<point_bub_ms>
+{
+    return { point_bub_ms::zero(), point_bub_ms( coords::map_squares_per( coords::scale::overmap_terrain ) - 1, coords::map_squares_per( coords::scale::overmap_terrain ) - 1 ) };
 }
 
 inline auto overmap_terrain_tiles() -> point_range<point_omt_ms>

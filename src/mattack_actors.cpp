@@ -88,7 +88,7 @@ bool leap_actor::call( monster &z ) const
         return false;
     }
 
-    std::vector<tripoint> options;
+    std::vector<tripoint_bub_ms> options;
     auto target = z.move_target();
     float best_float = trigdist ? trig_dist( z.bub_pos(), target ) : square_dist( z.bub_pos(), target );
     if( best_float < min_consider_range || best_float > max_consider_range ) {
@@ -102,8 +102,8 @@ bool leap_actor::call( monster &z ) const
         return false;
     }
     map &here = get_map();
-    std::multimap<int, tripoint> candidates;
-    for( const tripoint &candidate : here.points_in_radius( z.bub_pos(), max_range ) ) {
+    std::multimap<int, tripoint_bub_ms> candidates;
+    for( const auto &candidate : here.points_in_radius( z.bub_pos(), max_range ) ) {
         if( candidate == z.bub_pos() ) {
             continue;
         }
@@ -120,7 +120,7 @@ bool leap_actor::call( monster &z ) const
     }
     for( const auto &candidate : candidates ) {
         const int &cur_dist = candidate.first;
-        const tripoint &dest = candidate.second;
+        const tripoint_bub_ms &dest = candidate.second;
         if( cur_dist > best ) {
             break;
         }
@@ -132,7 +132,7 @@ bool leap_actor::call( monster &z ) const
         }
         bool blocked_path = false;
         // check if monster has a clear path to the proposed point
-        std::vector<tripoint> line = here.find_clear_path( z.bub_pos(), dest );
+        std::vector<tripoint_bub_ms> line = here.find_clear_path( z.bub_pos(), dest );
         auto prev_point = z.bub_pos();
         for( auto &i : line ) {
             if( here.impassable( i ) || here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
@@ -205,7 +205,7 @@ bool mon_spellcasting_actor::call( monster &mon ) const
         return false;
     }
 
-    const auto target = self ? mon.bub_pos() : mon.attack_target()->pos();
+    const auto target = self ? mon.bub_pos() : mon.attack_target()->bub_pos();
 
     std::string fx = spell_data.effect();
     // is the spell an attack that needs to hit the target?
@@ -289,10 +289,10 @@ bool deployer_actor::call( monster &mon ) const
 
     itype_id att = *possible_attacks.pick();
 
-    std::vector<tripoint> empty_points_in_rad;
+    std::vector<tripoint_bub_ms> empty_points_in_rad;
 
     auto points_in_rad = g->m.points_in_radius( mon.bub_pos(), grenades.at( att ).range );
-    for( tripoint p : points_in_rad ) {
+    for( tripoint_bub_ms p : points_in_rad ) {
         if( g->is_empty( p ) ) {
             empty_points_in_rad.push_back( p );
         }
@@ -590,7 +590,7 @@ int gun_actor::get_max_range()  const
 namespace
 {
 
-auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
+auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint_bub_ms>
 {
     const auto is_different_plane = []( const wrapped_vehicle & v, const monster & m ) -> bool {
         return !fov_3d && v.pos.z() != m.bub_pos().z();
@@ -598,7 +598,7 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
 
     map &here = get_map();
     bool found = false;
-    tripoint aim_at;
+    tripoint_bub_ms aim_at;
     for( wrapped_vehicle &v : here.get_vehicles() ) {
         if( is_different_plane( v, z ) || v.v->velocity == 0 ) {
             continue;
@@ -611,9 +611,9 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
                 continue;
             }
 
-            int new_dist = rl_dist( z.bub_pos(), vp.pos().raw() );
+            int new_dist = rl_dist( z.bub_pos(), vp.pos() );
             if( new_dist <= range ) {
-                aim_at = vp.pos().raw();
+                aim_at = vp.pos();
                 range = new_dist;
                 found = true;
                 found_controls = true;
@@ -622,9 +622,9 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
 
 
         if( !found_controls ) {
-            std::vector<tripoint> line = here.find_clear_path( z.bub_pos(), v.v->bub_ms_location() );
+            std::vector<tripoint_bub_ms> line = here.find_clear_path( z.bub_pos(), v.v->bub_ms_location() );
             auto prev_point = z.bub_pos();
-            for( tripoint &i : line ) {
+            for( tripoint_bub_ms &i : line ) {
                 if( !z.sees( i ) ||  here.floor_between( prev_point, i ) ) {
                     break;
                 }
@@ -648,7 +648,7 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
     if( found ) {
         return std::make_optional( aim_at );
     } else {
-        return std::optional<tripoint>();
+        return std::optional<tripoint_bub_ms>();
     }
 }
 
@@ -658,7 +658,7 @@ bool gun_actor::call( monster &z ) const
 {
     /// common firing logic.
     /// @param target_critter can be nullptr if shooting at a vehicle (untargeted).
-    auto attempt_shoot = [&]( const tripoint & aim_pos, Creature * target_critter ) {
+    auto attempt_shoot = [&]( const tripoint_bub_ms & aim_pos, Creature * target_critter ) {
         if( target_critter && z.attitude_to( *target_critter ) == Attitude::A_FRIENDLY ) { return false; }
 
         const int dist = rl_dist( z.bub_pos(), aim_pos );
@@ -683,7 +683,7 @@ bool gun_actor::call( monster &z ) const
 
         auto res = creature_functions::auto_find_hostile_target( z, { .range = max_range, .trail = has_trail, .area = 0 } );
         if( res ) {
-            return attempt_shoot( res.value().get().pos(), &res.value().get() );
+            return attempt_shoot( res.value().get().bub_pos(), &res.value().get() );
         }
         if( const int hostiles = res.error(); hostiles > 0 && g->u.sees( z ) ) {
             add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
@@ -752,7 +752,7 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
     return true;
 }
 
-void gun_actor::shoot( monster &z, const tripoint &target, const gun_mode_id &mode,
+void gun_actor::shoot( monster &z, const tripoint_bub_ms &target, const gun_mode_id &mode,
                        int inital_recoil ) const
 {
     z.moves -= move_cost;

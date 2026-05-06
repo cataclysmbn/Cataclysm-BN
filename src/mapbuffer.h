@@ -218,7 +218,7 @@ class mapbuffer
         template<typename Fn>
         void for_each_submap( Fn &&fn ) {
             std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
-            for( auto &entry : submaps ) {
+            for( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry : submaps ) {
                 fn( entry );
             }
         }

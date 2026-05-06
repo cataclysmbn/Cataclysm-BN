@@ -42,7 +42,7 @@ static bool popup_string( std::string &result, std::string &title )
     return true;
 }
 
-bool teleporter_list::activate_teleporter( const tripoint_abs_omt &omt_pt, const tripoint & )
+bool teleporter_list::activate_teleporter( const tripoint_abs_omt &omt_pt, const tripoint_bub_ms & )
 {
     std::string point_name;
     std::string title = _( "Name this gate." );
@@ -50,23 +50,22 @@ bool teleporter_list::activate_teleporter( const tripoint_abs_omt &omt_pt, const
     return known_teleporters.emplace( omt_pt, point_name ).second;
 }
 
-void teleporter_list::deactivate_teleporter( const tripoint_abs_omt &omt_pt, const tripoint & )
+void teleporter_list::deactivate_teleporter( const tripoint_abs_omt &omt_pt, const tripoint_bub_ms & )
 {
     known_teleporters.erase( omt_pt );
 }
 
 // returns the first valid teleport location near a teleporter
 // returns map square (global coordinates)
-static std::optional<tripoint> find_valid_teleporters_omt( const tripoint_abs_omt &omt_pt )
+static std::optional<tripoint_abs_ms> find_valid_teleporters_omt( const tripoint_abs_omt &omt_pt )
 {
     // this is the top left hand square of the global absolute coordinate
     // of the overmap terrain we want to try to teleport to.
     // an OMT is SEEX * SEEY in size
     const tripoint_abs_sm sm_pt = project_to<coords::sm>( omt_pt );
     tinymap checker;
-    // TODO: fix point types
     checker.load( sm_pt, true );
-    for( const tripoint &p : checker.points_on_zlevel() ) {
+    for( const auto &p : checker.points_on_zlevel() ) {
         if( checker.has_flag_furn( "TRANSLOCATOR", p ) ) {
             return checker.bub_to_abs( p );
         }
@@ -80,7 +79,7 @@ bool teleporter_list::place_avatar_overmap( Character &you, const tripoint_abs_o
     tripoint_abs_sm sm_dest = project_to<coords::sm>( omt_pt );
     // TODO: fix point types
     omt_dest.load( sm_dest, true );
-    std::optional<tripoint> global_dest = find_valid_teleporters_omt( omt_pt );
+    std::optional<tripoint_abs_ms> global_dest = find_valid_teleporters_omt( omt_pt );
     if( !global_dest ) {
         return false;
     }
@@ -92,7 +91,7 @@ bool teleporter_list::place_avatar_overmap( Character &you, const tripoint_abs_o
     return true;
 }
 
-void teleporter_list::translocate( const std::set<tripoint> &targets )
+void teleporter_list::translocate( const std::set<tripoint_bub_ms> &targets )
 {
     if( known_teleporters.empty() ) {
         // we can't go somewhere if we don't know how to get there!
@@ -106,7 +105,7 @@ void teleporter_list::translocate( const std::set<tripoint> &targets )
     }
 
     bool valid_targets = false;
-    for( const tripoint &pt : targets ) {
+    for( const tripoint_bub_ms &pt : targets ) {
         Character *you = g->critter_at<Character>( pt );
 
         if( you && you->is_avatar() ) {

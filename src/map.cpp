@@ -392,7 +392,7 @@ void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim
     // on the next load.  Only meaningful for submaps that were actually simulated;
     // border-preloaded submaps that were never in the simulation set should not be
     // touched (their last_touched reflects their real generate-or-load time).
-    if( submap_loader.is_in_simulated_set( dim_id, pos.raw() ) ) {
+    if( submap_loader.is_in_simulated_set( dim_id, pos ) ) {
         submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( pos );
         if( sm ) {
             sm->last_touched = calendar::turn;
@@ -3859,7 +3859,7 @@ void map::smash_items( const tripoint_bub_ms &p, const int power, const std::str
             return std::move( it );
         }
         if( will_explode_on_impact( power ) && it->will_explode_in_fire() ) {
-            return item::detonate( std::move( it ), p.raw(), contents );
+            return item::detonate( std::move( it ), p, contents );
         }
         if( it->is_corpse() ) {
             if( ( power < min_destroy_threshold || !do_destroy ) && !it->can_revive() &&
@@ -9177,11 +9177,6 @@ void map::clear_traps()
 
 }
 
-bool map::inbounds( const tripoint_abs_ms &p ) const
-{
-    return inbounds( abs_to_bub( p ) );
-}
-
 bool map::inbounds( const tripoint_bub_sm &p ) const
 {
     // Use runtime my_MAPSIZE so this agrees with get_nonant()'s grid indexing.
@@ -9552,7 +9547,7 @@ void map::update_suspension_cache( const int &z )
                         point_sm_ms sp( sx, sy );
                         const ter_t &terrain = cur_submap->get_ter( sp ).obj();
                         if( terrain.has_flag( TFLAG_SUSPENDED ) ) {
-                            auto loc( coords::project_combine( point_bub_sm( smx, smy ), sp ), z );
+                            auto loc = coords::project_combine( point_bub_sm( smx, smy ), sp );
                             suspension_cache.emplace_back( bub_to_abs( loc ) );
                         }
                     }

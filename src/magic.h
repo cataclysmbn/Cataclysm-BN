@@ -646,9 +646,9 @@ struct area_expander {
     // A single node for a tree.
     struct node {
         // Expanded position
-        tripoint position;
+        tripoint_bub_ms position;
         // Previous position
-        tripoint from;
+        tripoint_bub_ms from;
         // Accumulated cost.
         float cost = 0;
     };
@@ -660,7 +660,7 @@ struct area_expander {
     std::vector<node> area;
 
     // Maps coordinate to expanded node.
-    std::map<tripoint, int> area_search;
+    std::map<tripoint_bub_ms, int> area_search;
 
     struct area_node_comparator {
         area_node_comparator( std::vector<area_expander::node> &area ) : area( area ) {
@@ -677,7 +677,7 @@ struct area_expander {
 
     area_expander();
     // Check whether we have already visited this node.
-    int contains( const tripoint_abs_sm &pt ) const;
+    int contains( const tripoint_bub_ms &pt ) const;
 
     // Adds node to a search tree. Returns true if new node is allocated.
     bool enqueue( const tripoint_bub_ms &from, const tripoint_bub_ms &to, float cost );

@@ -196,7 +196,7 @@ class submap_load_manager
          * update(), which runs after world_tick() in the same game turn.
          */
         auto is_in_simulated_set( const std::string &dim_id,
-                                  const tripoint &raw_pos ) const noexcept -> bool {
+                                  const tripoint_abs_sm &raw_pos ) const noexcept -> bool {
             return prev_simulated_.contains( { dim_id, point_abs_sm{ raw_pos.xy() } } );
         }
 

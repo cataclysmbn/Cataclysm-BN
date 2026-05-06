@@ -12,11 +12,11 @@
 #include "map_iterator.h"
 #include "rng.h"
 
-map_selector::map_selector( const tripoint &pos, int radius, bool accessible )
+map_selector::map_selector( const tripoint_bub_ms &pos, int radius, bool accessible )
 {
-    for( const tripoint &e : closest_points_first( pos, radius ) ) {
+    for( const tripoint_bub_ms &e : closest_points_first( pos, radius ) ) {
         if( !accessible ||
-            get_map().clear_path( tripoint_bub_ms( pos ), tripoint_bub_ms( e ), radius, 1, 100 ) ) {
+            get_map().clear_path( pos, e, radius, 1, 100 ) ) {
             data.emplace_back( e );
         }
     }
@@ -64,9 +64,22 @@ std::optional<tripoint_bub_ms> random_point( const tripoint_range<tripoint_bub_m
     return random_entry( suitable );
 }
 
-map_cursor::map_cursor( const tripoint &pos ) : pos_( g ? get_map().bub_to_abs( pos ) : pos ) { }
-
-map_cursor::operator tripoint() const
+map_cursor::map_cursor( const tripoint_abs_ms &pos )
 {
-    return g ? get_map().abs_to_bub( pos_ ) : pos_;
+    pos_ = g ? get_map().abs_to_bub( pos ) : pos.reinterpret_as<tripoint_bub_ms>();
+}
+
+map_cursor::map_cursor( const tripoint_bub_ms &pos )
+{
+    pos_ = pos;
+}
+
+map_cursor::operator tripoint_abs_ms() const
+{
+    return g ? get_map().bub_to_abs( pos_ ) : pos_.reinterpret_as<tripoint_abs_ms>();
+}
+
+map_cursor::operator tripoint_bub_ms() const
+{
+    return pos_;
 }

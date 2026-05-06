@@ -564,7 +564,7 @@ static void set_mapgen_defer( const JsonObject &jsi, const std::string &member,
  * load a single mapgen json structure; this can be inside an overmap_terrain, or on it's own.
  */
 std::shared_ptr<mapgen_function>
-load_mapgen_function( const JsonObject &jio, const point_rel_ms &offset, const point_rel_ms &total )
+load_mapgen_function( const JsonObject &jio, const point_rel_omt &offset, const point_rel_omt &total )
 {
     int mgweight = jio.get_int( "weight", 1000 );
     if( mgweight <= 0 || jio.get_bool( "disabled", false ) ) {
@@ -599,7 +599,7 @@ load_mapgen_function( const JsonObject &jio, const point_rel_ms &offset, const p
 }
 
 void load_and_add_mapgen_function( const JsonObject &jio, const std::string &id_base,
-                                   const point_rel_ms &offset, const point_rel_ms &total )
+                                   const point_rel_omt &offset, const point_rel_omt &total )
 {
     std::shared_ptr<mapgen_function> f = load_mapgen_function( jio, offset, total );
     if( f ) {
@@ -652,13 +652,13 @@ static void load_update_mapgen( const JsonObject &jio, const std::string &id_bas
 void load_mapgen( const JsonObject &jo )
 {
     // NOLINTNEXTLINE(cata-use-named-point-constants)
-    static constexpr point_rel_ms point_one( 1, 1 );
+    static constexpr point_rel_omt point_one( 1, 1 );
 
     if( jo.has_array( "om_terrain" ) ) {
         JsonArray ja = jo.get_array( "om_terrain" );
         if( ja.test_array() ) {
-            point_rel_ms offset;
-            point_rel_ms total( ja.get_array( 0 ).size(), ja.size() );
+            point_rel_omt offset;
+            point_rel_omt total( ja.get_array( 0 ).size(), ja.size() );
             for( JsonArray row_items : ja ) {
                 for( const std::string mapgenid : row_items ) {
                     load_and_add_mapgen_function( jo, mapgenid, offset, total );
@@ -673,7 +673,7 @@ void load_mapgen( const JsonObject &jo )
                 mapgenid_list.push_back( line );
             }
             if( !mapgenid_list.empty() ) {
-                const auto mgfunc = load_mapgen_function( jo, point_rel_ms::zero(), point_one );
+                const auto mgfunc = load_mapgen_function( jo, point_rel_omt::zero(), point_one );
                 if( mgfunc ) {
                     for( auto &i : mapgenid_list ) {
                         oter_mapgen.add( i, mgfunc );
@@ -682,7 +682,7 @@ void load_mapgen( const JsonObject &jo )
             }
         }
     } else if( jo.has_string( "om_terrain" ) ) {
-        load_and_add_mapgen_function( jo, jo.get_string( "om_terrain" ), point_rel_ms::zero(), point_one );
+        load_and_add_mapgen_function( jo, jo.get_string( "om_terrain" ), point_rel_omt::zero(), point_one );
     } else if( jo.has_string( "nested_mapgen_id" ) ) {
         load_nested_mapgen( jo, jo.get_string( "nested_mapgen_id" ) );
     } else if( jo.has_string( "update_mapgen_id" ) ) {
@@ -2826,7 +2826,7 @@ class jmapgen_zone : public jmapgen_piece
             const auto start = dat.m.bub_to_abs( tripoint_bub_ms( x.val, y.val, 0 ) );
             const auto end = dat.m.bub_to_abs( tripoint_bub_ms( x.valmax, y.valmax, 0 ) );
             defer_zone_add( name, zone_type.get( dat ), faction.get( dat ), false, true, start,
-                            end.raw() );
+                            end );
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters
@@ -6826,61 +6826,35 @@ computer *map::add_computer( const tripoint_bub_ms &p, const std::string &name, 
  */
 void map::rotate( int turns, const bool setpos_safe )
 {
-
     //Handle anything outside the 1-3 range gracefully; rotate(0) is a no-op.
     turns = turns % 4;
     if( turns == 0 ) {
         return;
     }
-
-    real_coords rc;
     const auto &abs_sub = get_abs_sub();
-    rc.fromabs( project_to<coords::ms>( abs_sub ).xy() );
+    const auto abs_omt = project_to<coords::omt>( abs_sub );
 
-    // TODO: This radius can be smaller - how small?
     const int radius = g_half_mapsize + 3;
-    // uses submap coordinates
-    // TODO: fix point types
     overmapbuffer &omap = get_overmapbuffer( bound_dimension_ );
     const std::vector<shared_ptr_fast<npc>> npcs =
             omap.get_npcs_near( tripoint_abs_sm( abs_sub ), radius );
     for( const shared_ptr_fast<npc> &i : npcs ) {
         npc &np = *i;
-        const auto sq = np.global_square_location();
-        const auto local_sq = abs_to_bub( sq ).xy();
+        const auto proj = project_remain<coords::omt>( np.abs_pos() );
 
-        real_coords np_rc;
-        np_rc.fromabs( sq.xy() );
         // Note: We are rotating the entire overmap square (2x2 of submaps)
-        if( np_rc.om_pos != rc.om_pos || sq.z() != abs_sub.z() ) {
+        if( proj.quotient_tripoint != abs_omt ) {
             continue;
         }
 
-        // OK, this is ugly: we remove the NPC from the whole map
-        // Then we place it back from scratch
-        // It could be rewritten to utilize the fact that rotation shouldn't cross overmaps
+        const auto new_pos = project_combine( abs_omt, proj.remainder.rotate( turns, { SEEX * 2, SEEY * 2 } ) );
 
-        point_sm_ms old( np_rc.sub_pos );
-        if( np_rc.om_sub.x() % 2 != 0 ) {
-            old.x() += SEEX;
-        }
-        if( np_rc.om_sub.y() % 2 != 0 ) {
-            old.y() += SEEY;
-        }
-
-        const point_sm_ms new_pos = old.rotate( turns, { SEEX * 2, SEEY * 2 } );
         if( setpos_safe ) {
-            // setpos can't be used during mapgen, but spawn_at_precise clips position
-            // to be between 0-11,0-11 and teleports NPCs when used inside of update_mapgen
-            // calls
-            const auto new_global_sq = sq - local_sq.raw() + new_pos.raw();
-            np.setpos( get_map().abs_to_bub( new_global_sq ) );
+            np.setpos( get_map().abs_to_bub( new_pos ) );
         } else {
-            // OK, this is ugly: we remove the NPC from the whole map
-            // Then we place it back from scratch
-            // It could be rewritten to utilize the fact that rotation shouldn't cross overmaps
             shared_ptr_fast<npc> npc_ptr = omap.remove_npc( np.getID() );
-            np.spawn_at_precise( abs_sub.xy(), tripoint_sm_ms{ new_pos, abs_sub.z() } );
+            const auto split = project_remain<coords::sm>( new_pos );
+            np.spawn_at_precise( split.quotient, split.remainder_tripoint );
             omap.insert_npc( npc_ptr );
         }
     }

@@ -583,7 +583,7 @@ class firestarter_actor : public iuse_actor
          */
         bool need_sunlight = false;
 
-        static bool prep_firestarter_use( const player &p, const tripoint_bub_ms &pos );
+        static bool prep_firestarter_use( const player &p, tripoint_bub_ms &pos );
         /** Player here isn't const because pyromaniacs gain a mood boost from it */
         static void resolve_firestarter_use( player &p, const tripoint_bub_ms &pos );
         /** Modifier on speed - higher is better, 0 means it won't work. */
@@ -1541,7 +1541,7 @@ class iuse_flowerpot_collect final : public iuse_actor
                       const tripoint_bub_ms & ) const -> ret_val<bool> override;
         auto clone() const -> std::unique_ptr<iuse_actor> override;
     private:
-        static void transfer_map_to_flowerpot( const tripoint &map_pos,
+        static void transfer_map_to_flowerpot( const tripoint_bub_ms &map_pos,
                                                item &flowerpot,
                                                const iuse_flowerpot_plant *actor,
                                                const itype_id &seed_type );

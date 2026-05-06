@@ -119,14 +119,14 @@ bool map::build_transparency_cache( const int zlev )
     const auto process_smx = [&]( int smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             auto *cur_submap = get_submap_at_grid( tripoint_bub_sm{smx, smy, zlev} );
-            const point sm_offset = project_to<coords::ms>( point( smx, smy ) );
+            const auto sm_offset = project_to<coords::ms>( point_bub_sm( smx, smy ) );
 
             if( cur_submap == nullptr ) {
                 // Null slots occur at bounded-dimension edges.
                 // Treat as open air so they don't block light propagation.
                 if( !rebuild_all ) {
                     for( int sx = 0; sx < SEEX; ++sx ) {
-                        std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x + sx, sm_offset.y ),
+                        std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x() + sx, sm_offset.y() ),
                                      SEEY, LIGHT_TRANSPARENCY_OPEN_AIR );
                     }
                 }
@@ -146,15 +146,15 @@ bool map::build_transparency_cache( const int zlev )
                 // if rebuild_all==true all values were already set to LIGHT_TRANSPARENCY_OPEN_AIR
                 if( !rebuild_all || value != LIGHT_TRANSPARENCY_OPEN_AIR ) {
                     for( int sx = 0; sx < SEEX; ++sx ) {
-                        std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x + sx, sm_offset.y ),
+                        std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x() + sx, sm_offset.y() ),
                                      SEEY, value );
                     }
                 }
             } else {
                 for( int sx = 0; sx < SEEX; ++sx ) {
-                    const int x = sx + sm_offset.x;
+                    const int x = sx + sm_offset.x();
                     for( int sy = 0; sy < SEEY; ++sy ) {
-                        const int y = sy + sm_offset.y;
+                        const int y = sy + sm_offset.y();
                         auto value = cur_submap->transparency_cache[sx][sy];
                         // Nudge towards fast paths
                         if( std::fabs( value - LIGHT_TRANSPARENCY_OPEN_AIR ) <= 0.0001f ) {
@@ -842,7 +842,7 @@ void map::generate_lightmap_worker( const int zlev )
 
             for( const vpart_reference &vp : v->get_all_parts() ) {
                 const size_t p = vp.part_index();
-                const tripoint_bub_ms pp = vp.pos();
+                tripoint_bub_ms pp = vp.pos();
                 if( !inbounds( pp ) ) {
                     continue;
                 }
@@ -1250,7 +1250,7 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
             lc.seen_cache[lc.idx( origin.x(), origin.y() )] = VISIBILITY_FULL;
             castLightAll( lc.seen_cache.data(), lc.transparency_cache.data(),
                           lc.vehicle_obscured_cache.data(), lc.cache_x, lc.cache_y,
-                          origin.xy().raw(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
+                          origin.xy(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
         }
 
         // Floor-blocking pass for non-origin z-levels: accumulate floor_cache going
@@ -1318,14 +1318,14 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
             // regardless of which target_z is currently being built.
             origin_cache.seen_cache[origin_cache.idx( origin.x(), origin.y() )] = VISIBILITY_FULL;
             cast_zlight( seen_caches, transparency_caches, floor_caches, blocked_caches,
-                         origin.raw(), 0, 1.0f, k_sight_model );
+                         origin, 0, 1.0f, k_sight_model );
         } else {
             // Fast path: single 2D cast at origin.z, projected to other levels below.
             // No cast_zlight; off-level tiles filled from the projected result.
             origin_cache.seen_cache[origin_cache.idx( origin.x(), origin.y() )] = VISIBILITY_FULL;
             castLightAll( origin_cache.seen_cache.data(), origin_cache.transparency_cache.data(),
                           origin_cache.vehicle_obscured_cache.data(), origin_cache.cache_x, origin_cache.cache_y,
-                          origin.xy().raw(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
+                          origin.xy(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
         }
 
         // Fill off-level tiles from origin.z's seen_cache.
@@ -1497,7 +1497,7 @@ void map::build_seen_cache( const tripoint_bub_ms &origin, const int target_z )
                     temp_seen[zc.idx( origin.x(), origin.y() )] = VISIBILITY_FULL;
                     castLightAll( temp_seen.data(), zc.transparency_cache.data(),
                                   zc.vehicle_obscured_cache.data(), zc.cache_x, zc.cache_y,
-                                  origin.xy().raw(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
+                                  origin.xy(), 0, VISIBILITY_FULL, k_sight_model, &weather_lookup_ );
                 }
 
                 for( int x = 0; x < zc.cache_x; ++x ) {
@@ -1731,7 +1731,7 @@ void map::apply_vehicle_optics( const tripoint_bub_ms &origin, const int target_
         castLightAll( target_cache.camera_cache.data(), target_cache.transparency_cache.data(),
                       target_cache.vehicle_obscured_cache.data(),
                       target_cache.cache_x, target_cache.cache_y,
-                      mirror_pos.xy().raw(), offset_distance, VISIBILITY_FULL,
+                      mirror_pos.xy(), offset_distance, VISIBILITY_FULL,
                       k_sight_model, &weather_lookup_ );
     }
 }
@@ -1842,7 +1842,7 @@ void map::apply_light_source( const tripoint_bub_ms &p, float luminance )
         mask |= OCTANT_WEST;
     }
     if( mask != 0 ) {
-        castLightOctants_q( lm_data, trans_data, blocked_data, sx, sy, p2.raw(), 0, luminance,
+        castLightOctants_q( lm_data, trans_data, blocked_data, sx, sy, p2, 0, luminance,
                             k_light_model, mask, &weather_lookup_ );
     }
 }
@@ -1872,7 +1872,7 @@ void map::apply_directional_light( const tripoint_bub_ms &p, int direction, floa
         mask = OCTANT_WEST;
     }
     if( mask != 0 ) {
-        castLightOctants_q( lm_data, trans_data, blocked_data, sx, sy, p2.raw(), 0, luminance,
+        castLightOctants_q( lm_data, trans_data, blocked_data, sx, sy, p2, 0, luminance,
                             k_light_model, mask, &weather_lookup_ );
     }
 }

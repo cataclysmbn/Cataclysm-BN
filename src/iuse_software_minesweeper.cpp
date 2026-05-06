@@ -308,8 +308,8 @@ int minesweeper_game::start_game()
             action = ctxt.handle_input();
         }
 
-        if( const std::optional<tripoint> vec = ctxt.get_direction( action ) ) {
-            const point newp = pl + vec->xy();
+        if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
+            const point newp = pl + vec->xy().raw();
             if( half_open_rectangle<point>( point_zero, level ).contains( newp ) ) {
                 pl = newp;
             }

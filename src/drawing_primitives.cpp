@@ -4,7 +4,6 @@
 #include <vector>
 #include <utility>
 
-#include "coordinates.h"
 #include "line.h"
 #include "rng.h"
 #include "point.h"
