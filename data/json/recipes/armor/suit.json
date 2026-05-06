@@ -1117,12 +1117,7 @@
       [ [ "fabric_standard", 4, "LIST" ] ],
       [ [ "jacket_army", 1 ], [ "army_top", 3 ] ],
       [ [ "pants_army", 1 ], [ "army_top", 3 ] ],
-      [
-        [ "tacvest", 2 ],
-        [ "webbing_belt", 3 ],
-        [ "molle_pack", 1 ],
-        [ "modularvest", 2 ]
-      ],
+      [ [ "tacvest", 2 ], [ "webbing_belt", 3 ], [ "molle_pack", 1 ], [ "modularvest", 2 ] ],
       [ [ "duct_tape", 200 ] ],
       [ [ "stick", 12 ] ],
       [ [ "plant_fibre", 24 ] ]
@@ -1144,12 +1139,7 @@
       [ [ "fabric_standard", 4, "LIST" ] ],
       [ [ "winter_jacket_army", 1 ] ],
       [ [ "winter_pants_army", 1 ] ],
-      [
-        [ "tacvest", 2 ],
-        [ "webbing_belt", 3 ],
-        [ "molle_pack", 1 ],
-        [ "modularvest", 2 ]
-      ],
+      [ [ "tacvest", 2 ], [ "webbing_belt", 3 ], [ "molle_pack", 1 ], [ "modularvest", 2 ] ],
       [ [ "duct_tape", 200 ] ],
       [ [ "bag_plastic", 24 ], [ "bag_zipper", 24 ], [ "plastic_shopping_bag", 12 ] ]
     ]
