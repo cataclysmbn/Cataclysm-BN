@@ -343,6 +343,10 @@ std::optional<RGBColor> RGBColor::try_parse( const std::string &str )
         return rgb_from_hex_string( str );
     }
 
+    if( str.starts_with( "!" ) ) {
+        return random_named( str.substr( 1 ) ).first;
+    }
+
     const auto &cm = get_all_colors();
     const auto nc_id = cm.name_to_id( str, report_color_error::no );
     if( nc_id != def_c_unset ) {
