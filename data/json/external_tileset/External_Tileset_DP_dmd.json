@@ -6,7 +6,7 @@
       {
         "file": "external_tileset/External_Tileset_DP_dmd.png",
         "tiles": [
-          { "id": "vp_adv_butchery", "fg": 0, "rotates": false },
+          { "id": "vp_adv_butchery", "fg": 0, "bg": 12, "rotates": false },
           { "id": "broken_dissector", "fg": 1 },
           { "id": "overlay_wielded_broken_dissector", "fg": 2 },
           { "id": [ "sheet_carbon", "overlay_wielded_sheet_carbon" ], "fg": 3 },
