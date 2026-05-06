@@ -13,7 +13,11 @@
           { "id": [ "carbon_plate", "overlay_wielded_carbon_plate" ], "fg": 4 },
           { "id": [ "radiant_core", "overlay_wielded_radiant_core" ], "fg": 5 },
           { "id": "radiant_blade", "fg": 6 },
-          { "id": "overlay_wielded_radiant_blade", "fg": 7 }
+          { "id": "overlay_wielded_radiant_blade", "fg": 7 },
+          { "id": [ "nature_ghillie", "overlay_wielded_nature_ghillie" ], "fg": 8 },
+          { "id": "overlay_worn_nature_ghillie", "fg": 9 },
+          { "id": [ "urban_ghillie", "overlay_wielded_urban_ghillie" ], "fg": 10 },
+          { "id": "overlay_worn_urban_ghillie", "fg": 11 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
