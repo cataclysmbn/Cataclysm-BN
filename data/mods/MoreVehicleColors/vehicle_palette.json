@@ -35,7 +35,7 @@
           { "color": "!green", "weight": 8 },
           { "color": "!grey", "weight": 8 },
           { "color": "!black", "weight": 8 },
-          { "color": "!beige", "weight": 8 },
+          { "color": "!beige", "weight": 8 }
         ]
       }
     ]
