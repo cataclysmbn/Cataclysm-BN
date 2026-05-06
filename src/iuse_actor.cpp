@@ -7664,7 +7664,8 @@ auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos )
         Vehicle,
         Furniture,
         Item,
-        Terrain
+        Terrain,
+        Graffiti
     };
 
     std::vector<std::pair<std::string, eMode>> choices{};
@@ -7682,6 +7683,7 @@ auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos )
 
     if( is_paintable_terrain( m, pos ) ) {
         choices.push_back( {_( "Terrain" ), Terrain} );
+        choices.push_back( {_( "Graffiti" ), Graffiti} );
     }
 
     eMode mode = Abort;
@@ -7707,6 +7709,8 @@ auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos )
             return 0;
         case Terrain:
             return iuse_paint_stuff_terrain( who, it, b, pos );
+        case Graffiti:
+            return iuse_paint_stuff_graffiti( who, it, b, pos );
         case Item:
             return iuse_paint_stuff_item( who, it, b, pos );
         case Furniture:
@@ -7857,6 +7861,57 @@ auto iuse_paint_stuff::iuse_paint_stuff_terrain( player &, item &it, bool,
     }
 
     return painted;
+}
+
+auto iuse_paint_stuff::iuse_paint_stuff_graffiti( player &who, item &, bool,
+        const tripoint & ) const -> int
+{
+    auto &m = get_map();
+    const std::optional<tripoint> pos_ = choose_adjacent( _( "Spray where?" ) );
+    if( !pos_ ) {
+        add_msg( _( "Never mind." ) );
+        return 0;
+    }
+
+    const auto pos = pos_.value();
+    string_input_popup popup;
+    const std::string message = popup
+                                .description( string_format( "%s %s", _( "Spray What?" ),
+                                        _( "(To delete, clear the text and confirm)" ) ) )
+                                .text( m.has_graffiti_at( pos ) ? m.graffiti_at( pos ) : std::string() )
+                                .identifier( "graffiti" )
+                                .query_string();
+    if( popup.canceled() ) {
+        add_msg( _( "Never mind." ) );
+        return 0;
+    }
+
+    const bool grave = m.ter( pos ) == t_grave_new;
+    int move_cost;
+    if( message.empty() ) {
+        if( m.has_graffiti_at( pos ) ) {
+            move_cost = 3 * m.graffiti_at( pos ).length();
+            m.delete_graffiti( pos );
+            if( grave ) {
+                who.add_msg_if_player( m_info, _( "You blur the inscription on the grave." ) );
+            } else {
+                who.add_msg_if_player( m_info, _( "You manage to get rid of the message on the surface." ) );
+            }
+        } else {
+            add_msg( _( "Never mind." ) );
+            return 0;
+        }
+    } else {
+        m.set_graffiti( pos, message );
+        if( grave ) {
+            who.add_msg_if_player( m_info, _( "You carve an inscription on the grave." ) );
+        } else {
+            who.add_msg_if_player( m_info, _( "You write a message on the surface." ) );
+        }
+        move_cost = 2 * message.length();
+    }
+    who.moves -= move_cost;
+    return 1;
 }
 
 auto iuse_paint_stuff::iuse_paint_stuff_furniture( player &, item &, bool,
