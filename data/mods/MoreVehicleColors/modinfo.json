@@ -1,0 +1,11 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "vehicle_color_expansion",
+    "name": "Vehicle Color Expansion",
+    "authors": [ "Wishduck" ],
+    "description": "Greatly randomizes default vehicle colors. WARNING: May cause increased memory consumption",
+    "category": "graphical",
+    "dependencies": [ "bn" ]
+  }
+]

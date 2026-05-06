@@ -6,6 +6,11 @@
     "value": "#622625"
   },
   {
+    "type": "named_color",
+    "name": "Cataclysm Green",
+    "value": "#3f4535"
+  },
+  {
     "//": "RAL Classic",
     "type": "named_color",
     "name": "Green beige",
