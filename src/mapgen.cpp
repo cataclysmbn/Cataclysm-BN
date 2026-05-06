@@ -4993,7 +4993,7 @@ void map::draw_lab( mapgendata &dat )
                     maybe_insert_stairs( dat.above(), t_stairs_up );
                     maybe_insert_stairs( terrain_type, t_stairs_down );
                 } else { // then no json maps for lab_4side were found
-                    debugmsg( "Error: Tried to generate 4-sided lab but no lab_4side json exists." );
+                    debugmsg( "Error: Tried to generate 4-sided lab but no valid lab_4side room exists." );
                 } // endif use_hardcoded_4side_map
             }  // end 1 vs 4 sides
         } // end aboveground vs belowground
