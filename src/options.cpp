@@ -1618,7 +1618,7 @@ void options_manager::add_options_interface()
          //~ 12h time, e.g.  11:59pm
     {   { "12h", translate_marker( "12h" ) },
         //~ Military time, e.g.  2359
-        { "military", translate_marker( "Military" ) },
+        { "military", translate_marker_context( "time format", "Military" ) },
         //~ 24h time, e.g.  23:59
         { "24h", translate_marker( "24h" ) }
     },
