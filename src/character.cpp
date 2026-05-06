@@ -7212,10 +7212,9 @@ int Character::visibility( bool, int ) const
     };
     map &here = get_map();
     int const camo_modifier = 50;
-    if ( worn_with_flag( flag_NATURE_CAMO ) && here.has_flag( "PLOWABLE" ) ) {
+    if( worn_with_flag( flag_NATURE_CAMO ) && here.has_flag( "PLOWABLE" ) ) {
         stealth_modifier += camo_modifier;
-    }
-    else if ( worn_with_flag( flag_URBAN_CAMO ) && here.has_flag( "MINEABLE" ) ) {
+    } else if( worn_with_flag( flag_URBAN_CAMO ) && here.has_flag( "MINEABLE" ) ) {
         stealth_modifier += camo_modifier;
     }
     return clamp( 100 - stealth_modifier, 20, 160 );
