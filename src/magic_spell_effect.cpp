@@ -163,7 +163,8 @@ void spell_effect::pain_split( const spell &sp, Creature &caster, const tripoint
     p->set_all_parts_hp_cur( hp_each );
 }
 
-static bool in_spell_aoe( const tripoint_bub_ms &start, const tripoint_bub_ms &end, const int &radius,
+static bool in_spell_aoe( const tripoint_bub_ms &start, const tripoint_bub_ms &end,
+                          const int &radius,
                           const bool ignore_walls )
 {
     if( rl_dist( start, end ) > radius ) {
@@ -231,7 +232,8 @@ static std::set<tripoint_bub_ms> spell_effect_cone_range_override( const tripoin
     return targets;
 }
 
-std::set<tripoint_bub_ms> spell_effect::spell_effect_cone( const spell &sp, const tripoint_bub_ms &source,
+std::set<tripoint_bub_ms> spell_effect::spell_effect_cone( const spell &sp,
+        const tripoint_bub_ms &source,
         const tripoint_bub_ms &target, const int aoe_radius, const bool ignore_walls )
 {
     // cones go all the way to end (if they don't hit an obstacle)
@@ -250,7 +252,8 @@ static bool test_passable( const tripoint_bub_ms &p, const tripoint_bub_ms &prev
              here.has_flag( "THIN_OBSTACLE", p ) ) );
 }
 
-std::set<tripoint_bub_ms> spell_effect::spell_effect_line( const spell &, const tripoint_bub_ms &source,
+std::set<tripoint_bub_ms> spell_effect::spell_effect_line( const spell &,
+        const tripoint_bub_ms &source,
         const tripoint_bub_ms &target, const int aoe_radius, const bool ignore_walls )
 {
     const auto delta = ( target - source ).raw().xy();
@@ -393,7 +396,8 @@ std::set<tripoint_bub_ms> spell_effect::spell_effect_line( const spell &, const 
 
 // spells do not reduce in damage the further away from the epicenter the targets are
 // rather they do their full damage in the entire area of effect
-std::set<tripoint_bub_ms> calculate_spell_effect_area( const spell &sp, const tripoint_bub_ms &target,
+std::set<tripoint_bub_ms> calculate_spell_effect_area( const spell &sp,
+        const tripoint_bub_ms &target,
         const std::function<std::set<tripoint_bub_ms>( const spell &, const tripoint_bub_ms &, const tripoint_bub_ms &, int, bool )>
         &
         aoe_func, const Creature &caster, bool ignore_walls )
@@ -425,7 +429,7 @@ static std::set<tripoint_bub_ms> spell_effect_area(
 {
     // calculate spell's effect area
     std::set<tripoint_bub_ms> targets = calculate_spell_effect_area( sp, target, aoe_func, caster,
-                                 ignore_walls );
+                                        ignore_walls );
 
     // Return early if spell is flagged to not draw visual effects
     if( sp.has_flag( spell_flag::NO_EXPLOSION_VFX ) ) {
@@ -538,7 +542,8 @@ void spell_effect::projectile_attack( const spell &sp, Creature &caster,
     std::vector<tripoint_bub_ms> trajectory = line_to( caster.bub_pos(), target );
     auto prev_point = caster.bub_pos();
     map &here = get_map();
-    for( std::vector<tripoint_bub_ms>::iterator iter = trajectory.begin(); iter != trajectory.end(); iter++ ) {
+    for( std::vector<tripoint_bub_ms>::iterator iter = trajectory.begin(); iter != trajectory.end();
+         iter++ ) {
         if( ( here.impassable( *iter ) && !here.has_flag( "THIN_OBSTACLE", *iter ) ) ||
             here.obstructed_by_vehicle_rotation( prev_point, *iter ) ) {
             if( iter != trajectory.begin() ) {
@@ -922,7 +927,8 @@ void spell_effect::spawn_ethereal_item( const spell &sp, Creature &caster, const
     sp.make_sound( caster.bub_pos() );
 }
 
-void spell_effect::recover_energy( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
+void spell_effect::recover_energy( const spell &sp, Creature &caster,
+                                   const tripoint_bub_ms &target )
 {
     // this spell is not appropriate for healing
     const int healing = sp.damage();
@@ -999,7 +1005,8 @@ static bool is_summon_friendly( const spell &sp )
     return friendly;
 }
 
-static bool add_summoned_mon( const mtype_id &id, const tripoint_bub_ms &pos, const time_duration &time,
+static bool add_summoned_mon( const mtype_id &id, const tripoint_bub_ms &pos,
+                              const time_duration &time,
                               const spell &sp )
 {
     monster *const mon_ptr = g->place_critter_at( id, pos );
@@ -1089,7 +1096,8 @@ void spell_effect::transform_blast( const spell &sp, Creature &caster,
                                     const tripoint_bub_ms &target )
 {
     ter_furn_transform_id transform( sp.effect_data() );
-    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), true );
+    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(),
+                                           true );
     for( const tripoint_bub_ms &location : area ) {
         if( one_in( sp.damage() ) ) {
             transform->transform( location );
@@ -1105,7 +1113,8 @@ void spell_effect::noise( const spell &sp, Creature &, const tripoint_bub_ms &ta
 
 void spell_effect::vomit( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
 {
-    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), true );
+    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(),
+                                           true );
     bool sound_played = false;
     for( const tripoint_bub_ms &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
@@ -1141,7 +1150,8 @@ void spell_effect::flashbang( const spell &sp, Creature &caster, const tripoint_
 
 void spell_effect::mod_moves( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
 {
-    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), false );
+    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(),
+                                           false );
     bool sound_played = false;
     for( const tripoint_bub_ms &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
@@ -1172,7 +1182,8 @@ void spell_effect::map_area( const spell &sp, Creature &caster, const tripoint_b
 
 void spell_effect::morale( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
 {
-    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), false );
+    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(),
+                                           false );
     if( sp.effect_data().empty() ) {
         debugmsg( "ERROR: %s must have a valid morale_type as effect_str.  None specified.",
                   sp.id().c_str() );
@@ -1201,7 +1212,8 @@ void spell_effect::morale( const spell &sp, Creature &caster, const tripoint_bub
 
 void spell_effect::charm_monster( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
 {
-    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), false );
+    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(),
+                                           false );
     bool sound_played = false;
     for( const tripoint_bub_ms &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
@@ -1224,7 +1236,8 @@ void spell_effect::charm_monster( const spell &sp, Creature &caster, const tripo
 
 void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
 {
-    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), false );
+    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(),
+                                           false );
     bool sound_played = false;
     for( const tripoint_bub_ms &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
@@ -1266,7 +1279,8 @@ void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint_bub
 
 void spell_effect::bash( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
 {
-    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(), true );
+    const std::set<tripoint_bub_ms> area = spell_effect_blast( sp, caster.bub_pos(), target, sp.aoe(),
+                                           true );
     for( const tripoint_bub_ms &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
             continue;

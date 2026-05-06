@@ -450,7 +450,8 @@ void inventory::form_from_map( const tripoint_bub_ms &origin, int range, const C
     form_from_map( g->m, origin, range, pl, assign_invlet, clear_path );
 }
 
-void inventory::form_from_zone( map &m, std::unordered_set<tripoint_abs_ms> &zone_pts, const Character *pl,
+void inventory::form_from_zone( map &m, std::unordered_set<tripoint_abs_ms> &zone_pts,
+                                const Character *pl,
                                 bool assign_invlet )
 {
     std::vector<tripoint_bub_ms> pts;
@@ -461,7 +462,8 @@ void inventory::form_from_zone( map &m, std::unordered_set<tripoint_abs_ms> &zon
     form_from_map( m, pts, pl, assign_invlet );
 }
 
-void inventory::form_from_map( map &m, const tripoint_bub_ms &origin, int range, const Character *pl,
+void inventory::form_from_map( map &m, const tripoint_bub_ms &origin, int range,
+                               const Character *pl,
                                bool assign_invlet,
                                bool clear_path )
 {

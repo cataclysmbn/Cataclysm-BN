@@ -135,7 +135,8 @@ class inventory : public temp_visitable<inventory>
          * the player's worn items / weapon
          */
         void restack( player &p );
-        void form_from_zone( map &m, std::unordered_set<tripoint_abs_ms> &zone_pts, const Character *pl = nullptr,
+        void form_from_zone( map &m, std::unordered_set<tripoint_abs_ms> &zone_pts,
+                             const Character *pl = nullptr,
                              bool assign_invlet = true );
         void form_from_map( const tripoint_bub_ms &origin, int range, const Character *pl = nullptr,
                             bool assign_invlet = true,

@@ -50,7 +50,8 @@ bool teleporter_list::activate_teleporter( const tripoint_abs_omt &omt_pt, const
     return known_teleporters.emplace( omt_pt, point_name ).second;
 }
 
-void teleporter_list::deactivate_teleporter( const tripoint_abs_omt &omt_pt, const tripoint_bub_ms & )
+void teleporter_list::deactivate_teleporter( const tripoint_abs_omt &omt_pt,
+        const tripoint_bub_ms & )
 {
     known_teleporters.erase( omt_pt );
 }

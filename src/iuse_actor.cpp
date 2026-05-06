@@ -589,7 +589,8 @@ std::unique_ptr<iuse_actor> explosion_iuse::clone() const
 // Those points must have a clear line of sight and a clear path to
 // the center of the explosion.
 // They must also be passable.
-static std::vector<tripoint_bub_ms> points_for_gas_cloud( const tripoint_bub_ms &center, int radius )
+static std::vector<tripoint_bub_ms> points_for_gas_cloud( const tripoint_bub_ms &center,
+        int radius )
 {
     map &here = get_map();
     std::vector<tripoint_bub_ms> result;
@@ -4250,7 +4251,8 @@ static bool has_neighbor( const tripoint_bub_ms &pos, const ter_id &terrain_id )
     return false;
 }
 
-bool place_trap_actor::is_allowed( player &p, const tripoint_bub_ms &pos, const std::string &name ) const
+bool place_trap_actor::is_allowed( player &p, const tripoint_bub_ms &pos,
+                                   const std::string &name ) const
 {
     if( !allow_under_player && pos == p.bub_pos() ) {
         p.add_msg_if_player( m_info, _( "Yeah.  Place the %s at your feet.  Real damn smart move." ),
@@ -4310,7 +4312,7 @@ int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
         return 0;
     }
     const std::optional<tripoint_bub_ms> pos_ = choose_adjacent( string_format( _( "Place %s where?" ),
-                                         it.tname() ) );
+            it.tname() ) );
     if( !pos_ ) {
         return 0;
     }
@@ -4327,7 +4329,8 @@ int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
         // Math correction for multi-tile traps
         pos.x() = ( pos.x() - p.bub_pos().x() ) * distance_to_trap_center + p.bub_pos().x();
         pos.y() = ( pos.y() - p.bub_pos().y() ) * distance_to_trap_center + p.bub_pos().y();
-        for( const tripoint_bub_ms &t : here.points_in_radius( pos, outer_layer_trap.obj().get_trap_radius(),
+        for( const tripoint_bub_ms &t : here.points_in_radius( pos,
+                outer_layer_trap.obj().get_trap_radius(),
                 0 ) ) {
             if( !is_allowed( p, t, it.tname() ) ) {
                 p.add_msg_if_player( m_info,
@@ -4351,7 +4354,8 @@ int place_trap_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
     p.mod_moves( -data.moves );
 
     place_and_add_as_known( p, pos, data.trap );
-    for( const tripoint_bub_ms &t : here.points_in_radius( pos, data.trap.obj().get_trap_radius(), 0 ) ) {
+    for( const tripoint_bub_ms &t : here.points_in_radius( pos, data.trap.obj().get_trap_radius(),
+            0 ) ) {
         if( t != pos ) {
             place_and_add_as_known( p, t, outer_layer_trap );
         }
@@ -4818,7 +4822,7 @@ int deploy_tent_actor::use( player &p, item &it, bool, const tripoint_bub_ms & )
         return 0;
     }
     const std::optional<tripoint_rel_ms> dir = choose_direction( string_format(
-                                            _( "Put up the %s where (%dx%d clear area)?" ), it.tname(), diam, diam ) );
+                _( "Put up the %s where (%dx%d clear area)?" ), it.tname(), diam, diam ) );
     if( !dir ) {
         return 0;
     }
@@ -6505,7 +6509,8 @@ auto iuse_flowerpot_plant::growth_info::progress() const -> double
     return elapsed_time() / epoch;
 }
 
-auto iuse_flowerpot_plant::use( player &who, item &i, bool tick, const tripoint_bub_ms &pos ) const -> int
+auto iuse_flowerpot_plant::use( player &who, item &i, bool tick,
+                                const tripoint_bub_ms &pos ) const -> int
 {
     if( tick ) {
         return on_tick( who, i, pos );
@@ -6601,7 +6606,8 @@ void iuse_flowerpot_plant::info( const item &i, std::vector<iteminfo> &inf ) con
     }
 }
 
-auto iuse_flowerpot_plant::on_use_add_fertilizer( player &, item &i, const tripoint_bub_ms & ) const -> int
+auto iuse_flowerpot_plant::on_use_add_fertilizer( player &, item &i,
+        const tripoint_bub_ms & ) const -> int
 {
 
     const auto info = get_info( i );
@@ -6658,7 +6664,8 @@ auto iuse_flowerpot_plant::on_use_plant( player &p, item &i, const tripoint_bub_
     return used_fert;
 }
 
-auto iuse_flowerpot_plant::on_use_harvest( player &p, item &i, const tripoint_bub_ms & ) const -> int
+auto iuse_flowerpot_plant::on_use_harvest( player &p, item &i,
+        const tripoint_bub_ms & ) const -> int
 {
     const auto info = get_info( i );
     clear_growing_plant( i );

@@ -4160,7 +4160,8 @@ int iuse::vortex( player *p, item *it, bool, const tripoint_bub_ms & )
     }
 
     while( !spawn.empty() ) {
-        monster *const mon = g->place_critter_at( mon_vortex, random_entry_removed( spawn ) + p->bub_pos() );
+        monster *const mon = g->place_critter_at( mon_vortex,
+                             random_entry_removed( spawn ) + p->bub_pos() );
         if( !mon ) {
             continue;
         }

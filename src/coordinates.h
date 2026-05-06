@@ -790,8 +790,8 @@ std::vector<coords::coord_point<Point, Origin, Scale>>
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 void calc_ray_end( units::angle angle, int range,
-                        const coords::coord_point<Point, Origin, Scale> &loc1,
-                        coords::coord_point<Point, Origin, Scale> &loc2 )
+                   const coords::coord_point<Point, Origin, Scale> &loc1,
+                   coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     calc_ray_end( angle, range, loc1.raw(), loc2.raw() );
 }

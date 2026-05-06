@@ -564,7 +564,8 @@ static void set_mapgen_defer( const JsonObject &jsi, const std::string &member,
  * load a single mapgen json structure; this can be inside an overmap_terrain, or on it's own.
  */
 std::shared_ptr<mapgen_function>
-load_mapgen_function( const JsonObject &jio, const point_rel_omt &offset, const point_rel_omt &total )
+load_mapgen_function( const JsonObject &jio, const point_rel_omt &offset,
+                      const point_rel_omt &total )
 {
     int mgweight = jio.get_int( "weight", 1000 );
     if( mgweight <= 0 || jio.get_bool( "disabled", false ) ) {

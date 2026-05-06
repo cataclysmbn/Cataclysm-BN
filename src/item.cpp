@@ -10765,14 +10765,16 @@ detached_ptr<item> item::process_blackpowder_fouling( detached_ptr<item> &&self,
     return std::move( self );
 }
 
-detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier, const tripoint_bub_ms &pos,
+detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
+                                  const tripoint_bub_ms &pos,
                                   bool activate,
                                   temperature_flag flag )
 {
     return process( std::move( self ), carrier, pos, activate, flag, get_weather() );
 }
 
-detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier, const tripoint_bub_ms &pos,
+detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
+                                  const tripoint_bub_ms &pos,
                                   bool activate,
                                   temperature_flag flag, const weather_manager &weather_generator )
 {
