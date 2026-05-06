@@ -4942,9 +4942,8 @@ void map::draw_lab( mapgendata &dat )
                 maybe_insert_stairs( dat.above(), t_stairs_up );
                 maybe_insert_stairs( terrain_type, t_stairs_down );
             } else {
-                const int hardcoded_4side_map_weight = 1500; // weight of all hardcoded maps.
                 // If you remove the usage of "lab_4side" here, remove it from mapgen_factory::get_usages above as well.
-                if( oter_mapgen.generate( dat, "lab_4side", hardcoded_4side_map_weight ) ) {
+                if( oter_mapgen.generate( dat, "lab_4side" ) ) {
                     // If the map template hasn't handled borders, handle them in code.
                     // Rotated maps cannot handle borders and have to be caught in code.
                     // We determine if a border isn't handled by checking the east-facing
