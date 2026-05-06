@@ -870,7 +870,7 @@
     "flags": [
       "SEES",
       "HEARS",
-      "KEENHEARING",
+      "GOODHEARING",
       "SMELLS",
       "WARM",
       "BASHES",
@@ -924,7 +924,7 @@
     "flags": [
       "SEES",
       "HEARS",
-      "KEENHEARING",
+      "GOODHEARING",
       "SMELLS",
       "WARM",
       "BASHES",
