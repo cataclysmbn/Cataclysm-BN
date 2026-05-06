@@ -1,20 +1,18 @@
 # Cataclysm: Bright Nights - Agent Guidelines
 
-- **MUST** FOLLOW for all code changes.
-
 ## HARD CONSTRAINTS (NEVER VIOLATE)
 
 Before writing **ANY** code, verify:
 
-| ❌ VIOLATION                       | ✅ REQUIRED                                       |
-| ---------------------------------- | ------------------------------------------------- |
-| nested `for (auto x : collection)` | `std::ranges::*` or `collection \| std::views::*` |
-| `int foo()`                        | `auto foo() -> int`                               |
-| `Type x = value`                   | `auto x = value`                                  |
-| `void fn(a, b, c, d, e)`           | `void fn(options_struct)`                         |
+| ❌ VIOLATION                           | ✅ REQUIRED                                                                      |
+| -------------------------------------- | -------------------------------------------------------------------------------- |
+| manual iterator loops (`it++`, `++it`) | `std::ranges::*`, `collection \| std::views::*`, or range-based `for` if clearer |
+| `int foo()`                            | `auto foo() -> int`                                                              |
+| `Type x = value`                       | `auto x = value`                                                                 |
+| `void fn(a, b, c, d, e)`               | `void fn(options_struct)`                                                        |
+| `[](){\n return 1; \n }`               | `[](){ return 1; }`                                                              |
 
-- **If you write a nested for-loop over a collection, your code is WRONG. Rewrite with `std::ranges`.**
-- single, unnested `for (auto x : collection)` loop is OK.
+**Prefer `std::ranges`/`std::views`/`std::ranges::to`/cata_algo.h for collection work. Avoid manual iterator increment loops unless required by mutation semantics.**
 
 ## Coding Convention
 
@@ -24,7 +22,7 @@ const auto foo = 3; //< **MUST** use `auto` for type. `const` **MUST** come befo
 auto bar() -> int; //< **MUST** use trailing return types.
 using my_callback_t = std::function<auto( int ) -> bool>; //< **MUST** use trailing return types in type aliases.
 auto baz() -> int&; // *NOPAD*  //< **MUST** append `// *NOPAD*` for references/pointer returns to prevent astyle bugs.
-auto qux() -> int { return 42; } //< **MUST** use single-line functions when possible.
+auto qux() -> int { return 42; } //< **MUST** use single-line functions whenever possible.
 
 auto qux = my_struct{ .a = 1, .b = 2 }; //< **MUST** use designated initializers.
 auto two_value() -> my_data; //< **MUST NOT** use `std::pair`/`std::tuple` for multiple return values. Create a struct instead.
@@ -40,8 +38,8 @@ struct comparable {
 }
 
 auto values = xs
-  | std::views::filter( []( const auto & v ) { return v.is_valid(); } )
-  | std::views::transform( []( const auto & v ) { return v.get_value(); } )
+  | std::views::filter( []( const auto & v ) { return v.is_valid(); } ) //< **MUST** use single line expression if it's single line expression
+  | std::views::transform( []( const auto & v ) { return v.get_value(); } ) //< **SHOULD** use `auto` for lambda params
   | std::ranges::to<std::vector>(); //< **MUST** use `std::ranges` over for loops for collections.
 
 namespace { // **MUST** use anonymous namespace for internal linkage over `static`.

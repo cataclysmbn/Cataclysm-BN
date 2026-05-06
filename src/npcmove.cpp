@@ -78,6 +78,7 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 
+static const activity_id ACT_CRAFT( "ACT_CRAFT" );
 static const activity_id ACT_PULP( "ACT_PULP" );
 
 static const skill_id skill_firstaid( "firstaid" );
@@ -914,8 +915,10 @@ void npc::move()
             if( elem->has_flag( flag_COMBAT_NPC_USE ) && elem->has_flag( flag_COMBAT_NPC_ON ) ) {
                 if( elem->get_use( "transform" ) ) {
                     invoke_item( elem, "transform" );
+                    recalculate_enchantment_cache();
                 } else if( elem->get_use( "set_transform" ) ) {
                     invoke_item( elem, "set_transform" );
+                    recalculate_enchantment_cache();
                 }
             }
         }
@@ -924,8 +927,10 @@ void npc::move()
             weapon.has_flag( flag_COMBAT_NPC_ON ) ) {
             if( weapon.get_use( "transform" ) ) {
                 invoke_item( &weapon, "transform" );
+                recalculate_enchantment_cache();
             } else if( weapon.get_use( "fireweapon_on" ) ) {
                 invoke_item( &weapon, "fireweapon_on" );
+                recalculate_enchantment_cache();
             }
         }
 
@@ -3537,6 +3542,11 @@ bool npc::do_player_activity()
     }
     /* if the activity is finished, grab any backlog or change the mission */
     if( !has_destination() && ( !activity || !*activity ) ) {
+        // workaround: auto resuming craft activity may cause infinite loop
+        while( !backlog.empty() && backlog.front()->id() == ACT_CRAFT ) {
+            backlog.pop_front();
+        }
+
         if( !backlog.empty() ) {
             activity = std::move( backlog.front() );
             backlog.pop_front();

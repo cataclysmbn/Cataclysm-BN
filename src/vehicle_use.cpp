@@ -114,7 +114,7 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
 {
     // fetch matching parts and abort early if none found
     const auto found = get_avail_parts( flag );
-    if( empty( found ) ) {
+    if( found.empty() ) {
         return;
     }
 
@@ -190,7 +190,7 @@ void vehicle::control_doors()
     // Locations used to display the doors
     std::vector< tripoint > locations;
     // it is possible to have one door to open and one to close for single motor
-    if( empty( door_motors ) ) {
+    if( door_motors.empty() ) {
         debugmsg( "vehicle::control_doors called but no door motors found" );
         return;
     }
@@ -652,12 +652,25 @@ void vehicle::toggle_autopilot()
             autodrive_local_target = tripoint_zero;
             stop_engines();
             break;
-        case FOLLOW:
+        case FOLLOW: {
             autopilot_on = true;
             is_following = true;
             is_patrolling = false;
+            const auto default_follow_distance = 12 + mount_max.y * 3;
+            const auto initial_follow_distance = follow_distance > 0 ? follow_distance :
+                                                 default_follow_distance;
+            const auto requested_follow_distance = string_input_popup()
+                                                   .title( _( "What distance?" ) )
+                                                   .text( std::to_string( initial_follow_distance ) )
+                                                   .only_digits( true )
+                                                   .max_length( 3 )
+                                                   .query_int();
+            follow_distance = requested_follow_distance > 0 ? requested_follow_distance :
+                              default_follow_distance;
             start_engines();
             refresh();
+            break;
+        }
         default:
             return;
     }
@@ -1679,7 +1692,7 @@ void vehicle::open_or_close( const int part_index, const bool opening )
     insides_dirty = true;
     map &here = get_map();
     here.set_transparency_cache_dirty( sm_pos.z );
-    const tripoint part_location = mount_to_tripoint( parts[part_index].mount );
+    const tripoint part_location = mount_to_bubble( parts[part_index].mount ).raw();
     here.set_seen_cache_dirty( part_location );
     const int dist = rl_dist( get_player_character().pos(), part_location );
     if( dist < 20 ) {

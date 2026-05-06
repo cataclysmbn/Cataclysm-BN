@@ -31,6 +31,11 @@ extern bool json_report_strict;
 extern bool use_tiles;
 
 /**
+ * Enable pinyin-based fallback matching for Chinese search text.
+ */
+extern bool use_pinyin_search;
+
+/**
  * Use tiles for 'm'ap display. Always false for ncurses build,
  * but can be toggled in sdl build.
  */
@@ -187,5 +192,4 @@ extern error_log_format_t error_log_format;
 #else
 constexpr error_log_format_t error_log_format = error_log_format_t::human_readable;
 #endif
-
 

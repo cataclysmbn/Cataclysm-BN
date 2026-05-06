@@ -1,0 +1,100 @@
+[
+  {
+    "type": "GENERIC",
+    "id": "distortion_amp_motor_item",
+    "looks_like": "motor",
+    "name": { "str": "distortion amplifier motor" },
+    "description": "A powerful electric motor relying on a spatial distortion, amplifying electrical current.  It suffers no loss of power or skill penalty if multiple are installed.  While unnaturally efficient, its anomalous nature makes it impossible to attach an alternator to it.",
+    "weight": "10 kg",
+    "color": "light_cyan",
+    "symbol": ",",
+    "material": [ "steel" ],
+    "volume": "6 L",
+    "bashing": 4,
+    "category": "veh_parts",
+    "price": "8000 USD",
+    "price_postapoc": "70 USD",
+    "flags": [ "NO_SALVAGE" ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "distortion_flow_rotor_item",
+    "copy-from": "distortion_amp_motor_item",
+    "looks_like": "distortion_amp_motor_item",
+    "name": { "str": "distortion flow rotor" },
+    "description": "A powerful electric motor that combines a spatial distortion with a temporal anomaly, and directs it into a compact VTOL rotor system.  Installing it on a vehicle will provide both motive power and flight, with unnatural efficiency.",
+    "weight": "15 kg",
+    "bashing": 6,
+    "price": "9000 USD",
+    "price_postapoc": "75 USD"
+  },
+  {
+    "type": "TOOL",
+    "abstract": "essence_surge_generator_item_abstract",
+    "looks_like": "alternator_truck",
+    "name": { "str": "essence surge part abstract" },
+    "weight": "10 kg",
+    "color": "light_cyan",
+    "symbol": ":",
+    "material": [ "steel" ],
+    "volume": "6 L",
+    "bashing": 4,
+    "category": "veh_parts",
+    "price": "8000 USD",
+    "price_postapoc": "70 USD",
+    "flags": [ "NO_SALVAGE" ]
+  },
+  {
+    "type": "TOOL",
+    "id": "essence_surge_generator_item",
+    "copy-from": "essence_surge_generator_item_abstract",
+    "name": { "str": "essence surge generator" },
+    "description": "A compact device built using otherworldly mechanisms to convert different types essence into electricity, yielding double the energy each essence holds if integrated into a vehicle.  Safe to use, but using magic essence might be prohibitively expensive for most purposes.",
+    "ammo": [ "essence_type" ],
+    "max_charges": 1000
+  },
+  {
+    "type": "TOOL",
+    "id": "essence_blood_surge_generator_item",
+    "copy-from": "essence_surge_generator_item_abstract",
+    "name": { "str": "blood essence surge generator" },
+    "description": "A compact device built using otherworldly mechanisms to convert blood essence into electricity, providing a good source of power if integrated into a vehicle.  Safe to use despite its nature and unnaturally efficient, assuming one can afford the cost of obtaining essence fron life force in such quantities.",
+    "ammo": [ "essence_blood_type" ],
+    "max_charges": 3000
+  },
+  {
+    "type": "TOOL",
+    "id": "essence_dull_surge_generator_item",
+    "copy-from": "essence_surge_generator_item_abstract",
+    "name": { "str": "dull essence surge generator" },
+    "description": "A compact device built using otherworldly mechanisms to turn dull essence into a reliable source of power, if integrated into a vehicle.  Unnaturally efficient yet safe to use, assuming one can obtain large quantities of consecrated essence.",
+    "ammo": [ "essence_dull_type" ],
+    "max_charges": 30000
+  },
+  {
+    "type": "TOOL",
+    "id": "essence_pure_surge_generator_item",
+    "copy-from": "essence_surge_generator_item_abstract",
+    "name": { "str": "crystallized essence surge generator" },
+    "description": "A compact device built using otherworldly mechanisms to burn crystalized essence for power, if integrated into a vehicle.  Somehow not a bomb despite the immense energy density and unnatural efficiency, but surely highly-concentrated magic energy would be complete overkill for all but the hungriest of rolling bunkers?",
+    "ammo": [ "essence_pure_type" ],
+    "max_charges": 100
+  },
+  {
+    "type": "TOOL",
+    "id": "displacement_surge_generator_item",
+    "looks_like": "essence_surge_generator_item",
+    "name": { "str": "displacement surge motor" },
+    "description": "A compact device built using otherworldly mechanisms of arcane nature.  Originally an unnaturally efficient motor, it has been \"upgraded\" with mechanisms that draw power from the fabric of reality itself.  A true source of perpetual kinetic energy when installed on a vehicle, though it still cannot be used to power batteries.",
+    "weight": "12 kg",
+    "color": "light_cyan",
+    "symbol": ":",
+    "material": [ "steel" ],
+    "volume": "7 L",
+    "bashing": 4,
+    "category": "veh_parts",
+    "price": "9000 USD",
+    "price_postapoc": 7500,
+    "flags": [ "NO_SALVAGE" ]
+  }
+]

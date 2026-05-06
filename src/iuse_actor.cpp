@@ -2566,9 +2566,6 @@ int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint &
     if( morale_effect >= 0 && calendar::once_every( description_frequency ) ) {
         if( !player_descriptions.empty() && p.is_player() ) {
             desc = _( random_entry( player_descriptions ) );
-        } else if( !npc_descriptions.empty() && p.is_npc() ) {
-            desc = string_format( _( "%1$s %2$s" ), p.disp_name( false ),
-                                  random_entry( npc_descriptions ) );
         }
     } else if( morale_effect < 0 && calendar::once_every( 1_minutes ) ) {
         // No musical skills = possible morale penalty
@@ -2577,6 +2574,10 @@ int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint &
         } else {
             desc = string_format( _( "%s produces an annoying sound" ), p.disp_name( false ) );
         }
+        // Continuous sound messages only print every so often, so this ensures when it does print it'll be the right one.
+    } else if( !npc_descriptions.empty() && p.is_npc() ) {
+        desc = string_format( _( "%1$s %2$s" ), p.disp_name( false ),
+                              random_entry( npc_descriptions ) );
     }
 
     if( morale_effect >= 0 ) {
@@ -7449,7 +7450,7 @@ auto iuse_portal_link::can_use( const Character &, const item &it, bool,
 
 auto iuse_portal_link::use( player &p, item &it, bool, const tripoint & ) const -> int
 {
-    const auto player_abs = tripoint_abs_ms( get_map().getabs( p.pos() ) );
+    const auto player_abs = p.abs_pos();
     const auto &cur_dim = g->get_current_dimension_id();
 
     // --- Mode 1: Link to a nearby portal with a matching flag ---
@@ -7492,7 +7493,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint & ) const 
     // Return mode: if at the linked portal and origin is stored, offer return.
     if( can_return && it.get_var( "origin_stored", false ) &&
         cur_dim == linked_dim &&
-        rl_dist( player_abs.raw(), linked_pos.raw() ) <= 5 ) {
+        rl_dist( player_abs, linked_pos ) <= 5 ) {
         if( query_yn( _( "Return to your origin point?" ) ) ) {
             const auto origin_dim = it.get_var( "origin_dim_id" );
             const tripoint_abs_ms origin_pos(

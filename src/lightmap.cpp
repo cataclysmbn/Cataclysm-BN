@@ -58,15 +58,6 @@ static const efftype_id effect_onfire( "onfire" );
 // render as LOW (dim, visible) rather than BRIGHT (same as direct sunlight).
 static constexpr float SOLAR_SHADOW_SCATTER = 0.09f;
 
-// Build a runtime bounding rectangle for the loaded tile grid from a level_cache.
-// Replaces the former compile-time `lightmap_boundaries` constant (which used
-// MAPSIZE_X/Y and prevented runtime-sized level-cache allocations).
-static inline half_open_rectangle<point> make_lightmap_bounds( const level_cache &lc )
-{
-    return { point_zero, point( lc.cache_x, lc.cache_y ) };
-}
-
-
 void map::add_light_from_items( const tripoint &p, const item_stack::iterator &begin,
                                 const item_stack::iterator &end )
 {
@@ -126,7 +117,7 @@ bool map::build_transparency_cache( const int zlev )
     // own submap's terrain data, so the smx loop is embarrassingly parallel.
     const auto process_smx = [&]( int smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-            auto *cur_submap = get_submap_at_grid( {smx, smy, zlev} );
+            auto *cur_submap = get_submap_at_grid( tripoint_bub_sm{smx, smy, zlev} );
             const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
 
             if( cur_submap == nullptr ) {
@@ -147,7 +138,7 @@ bool map::build_transparency_cache( const int zlev )
             }
 
             cur_submap->transparency_dirty = true;
-            cur_submap->rebuild_transparency_cache( *this, tripoint( smx, smy, zlev ) );
+            cur_submap->rebuild_transparency_cache( *this, tripoint_bub_sm( smx, smy, zlev ) );
 
             if( cur_submap->is_uniform ) {
                 const float value = cur_submap->transparency_cache[0][0];
@@ -206,7 +197,7 @@ bool map::build_vision_transparency_cache( const Character &player )
 
         point player_mount;
         if( player_vp ) {
-            player_mount = player_vp->vehicle().tripoint_to_mount( p );
+            player_mount = player_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p ) );
         }
 
         int i = 0;
@@ -224,17 +215,18 @@ bool map::build_vision_transparency_cache( const Character &player )
 
                     point adjacent_mount;
                     if( adjacent_vp ) {
-                        adjacent_mount = adjacent_vp->vehicle().tripoint_to_mount( p );
+                        adjacent_mount = adjacent_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p ) );
                     }
 
                     if( ( player_vp &&
                           !player_vp->vehicle().check_rotated_intervening( player_mount,
-                                  player_vp->vehicle().tripoint_to_mount( p + adjacent ),
+                                  player_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p + adjacent ) ),
                                   check_vehicle_coverage ) )
                         || ( adjacent_vp && ( !player_vp ||  &( player_vp->vehicle() ) != &( adjacent_vp->vehicle() ) ) &&
-                             !adjacent_vp->vehicle().check_rotated_intervening( adjacent_vp->vehicle().tripoint_to_mount(
-                                         p ), adjacent_vp->vehicle().tripoint_to_mount( p + adjacent ),
-                                     check_vehicle_coverage ) ) ) {
+                             !adjacent_vp->vehicle().check_rotated_intervening(
+                                 adjacent_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p ) ),
+                                 adjacent_vp->vehicle().bubble_to_mount( tripoint_bub_ms( p + adjacent ) ),
+                                 check_vehicle_coverage ) ) ) {
                         dirty = true;
                         vision_transparency_cache[ i ] = VISION_ADJUST_HIDDEN;
                     }
@@ -286,8 +278,6 @@ void map::update_solar_params()
     const auto progress  = to_turns<double>( now - sr ) / to_turns<double>( day_dur );
     const auto theta_deg = static_cast<float>( progress * 180.0 );
     const auto theta_rad = theta_deg * static_cast<float>( M_PI ) / 180.f;
-    const auto sin_t     = std::sin( theta_rad );
-    const auto cos_t     = std::cos( theta_rad );
 
     // Active throughout all daylight hours; night is handled by the early return above.
     m_solar.direct_active = true;
@@ -603,7 +593,6 @@ void map::generate_lightmap_worker( const int zlev )
     ZoneScoped;
     auto &map_cache = get_cache( zlev );
     auto &lm = map_cache.lm;
-    auto &sm = map_cache.sm;
     auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).floor_cache;
     auto &prev_vehicle_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH,
                                      OVERMAP_DEPTH ) ).vehicle_floor_cache;
@@ -661,7 +650,7 @@ void map::generate_lightmap_worker( const int zlev )
         auto process_smx = [&]( int smx ) {
             auto &local = smx_accs[smx];
             for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-                const auto cur_submap = get_submap_at_grid( { smx, smy, zlev } );
+                const auto cur_submap = get_submap_at_grid( tripoint_bub_sm{ smx, smy, zlev } );
                 if( cur_submap == nullptr ) {
                     continue;
                 }

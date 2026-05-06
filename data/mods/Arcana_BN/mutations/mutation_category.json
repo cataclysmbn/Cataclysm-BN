@@ -1,0 +1,38 @@
+[
+  {
+    "id": "VEIL",
+    "type": "mutation_category",
+    "threshold_mut": "THRESH_VEIL",
+    "name": "Explorer of The Veil",
+    "iv_fatigue": 0,
+    "iv_hunger": 0,
+    "iv_message": "You feel an otherworldly presence reaching out to you.",
+    "iv_pain": 0,
+    "iv_thirst": 0,
+    "mutagen_message": "If you can read this, this is probably a bug.",
+    "iv_additional_mutations": 1,
+    "iv_additional_mutations_chance": 10,
+    "iv_min_mutations": 1,
+    "memorial_message": "Pierced the veil between worlds."
+  },
+  {
+    "id": "DRAGONBLOOD",
+    "type": "mutation_category",
+    "threshold_mut": "THRESH_DRAGONBLOOD",
+    "name": "Acolyte of the Sacrament",
+    "mutagen_fatigue": 5,
+    "mutagen_hunger": 5,
+    "mutagen_pain": 0,
+    "mutagen_thirst": 5,
+    "iv_fatigue": 2,
+    "iv_hunger": 2,
+    "iv_pain": 0,
+    "iv_thirst": 2,
+    "mutagen_message": "You feel unearthly life flow through your body.",
+    "iv_message": "You feel a powerful resonance throughout your body, another irreversible step down the Path to Power.",
+    "iv_additional_mutations": 1,
+    "iv_additional_mutations_chance": 15,
+    "iv_min_mutations": 2,
+    "memorial_message": "Gained power from the Dragonblood Sacrament."
+  }
+]

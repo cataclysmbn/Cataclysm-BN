@@ -1,0 +1,1174 @@
+[
+  {
+    "id": "MISSION_FIND_HERMIT_1",
+    "type": "mission_definition",
+    "name": { "str": "Reach Standing Stones" },
+    "description": "Lead your companion to an area in the forest, suspected of being host to supernatural activity.",
+    "goal": "MGOAL_GO_TO_TYPE",
+    "difficulty": 2,
+    "value": 20000,
+    "origins": [ "ORIGIN_OPENER_NPC", "ORIGIN_ANY_NPC" ],
+    "followup": "MISSION_FIND_HERMIT_2",
+    "destination": "standing_stones",
+    "start": {
+      "effect": "follow",
+      "assign_mission_target": { "om_terrain": "standing_stones", "om_special": "Standing stones", "reveal_radius": 3, "z": 0 }
+    },
+    "dialogue": {
+      "describe": "If you see this, it's a bug!",
+      "offer": "As unreal as things have gotten, I've been trying to find some sort of answer to it all.  Or if not that, at least closure.  Not long before things boiled over, I've been having strange dreams of otherworldly scenery, and now that everything's gone to hell I'm wondering if there's any meaning to it.  I know it sounds crazy, but there might be something in what I recall that we could investigate.",
+      "accepted": "Thank you.  Thing is, some of the scenery from these dreams looked familiar, and after zero day I started poring over some local maps to try and make sense of what little looked real.  One of the places I recall was hidden away in a part of the local woods I used to go camping in.  I doubt we'll find anything, but maybe it'll give me peace of mind knowing these weird dreams don't have anything to do with what happened.",
+      "rejected": "I understand.  We've got more important things to worry about than chasing half-remembered dreams that might not mean anything.  Maybe another time…",
+      "advice": "Never know what we might run into along the way, maybe the journey will be more useful than what we find there.  The dream had a vision of strange stones and dark rituals.  If any of it turns out to be real, it might be good to visit during the daytime to be safe.",
+      "inquire": "Any luck so far?",
+      "success": "I don't believe it.  The stones, that cairn in the center?  It looks just just like how it appeared in the dreams.  Maybe my mind's playing tricks on me, but I could've sworn I never ran into anything like this before.  I don't know what to make of this.  I'll continue to follow you for now, maybe we can look into this further.",
+      "success_lie": "What madness is this?",
+      "failure": "How …?"
+    }
+  },
+  {
+    "id": "MISSION_FIND_HERMIT_2",
+    "type": "mission_definition",
+    "name": { "str": "Reach Ruined Shrine" },
+    "description": "Lead your companion to the suspected location of a ruined shrine, that allegedly didn't exist before the cataclysm…",
+    "goal": "MGOAL_GO_TO_TYPE",
+    "difficulty": 4,
+    "value": 40000,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_FIND_HERMIT_3",
+    "destination": "shrine_anomaly",
+    "start": {
+      "assign_mission_target": { "om_terrain": "shrine_anomaly", "om_special": "Ruined Shrine", "reveal_radius": 3, "z": 0 }
+    },
+    "dialogue": {
+      "describe": "If you see this, it's a bug!",
+      "offer": "I've tried to think about what I can recall from the dreams.  Seeing that last place with my own eyes brought a bit of clarity to what I remember.  There's another place that stood out, another part of the countryside I've been to with strange features that shouldn't be there.  It might be more useful to investigate than the last place, too.",
+      "accepted": "I've been in that part of the countryside before, and what I saw in the dream definitely wasn't there back then.  Looked a bit more dangerous but there might be something valuable to make up for it.  And if there's nothing there, fine by me.  Would mean those dreams are just that, and nothing meaningful.",
+      "rejected": "Alright.  Talk to me if you change your mind.  Maybe that last place was a fluke, maybe it had been there all this time and I just didn't remember until now.",
+      "advice": "I saw some sort of artificial structure, otherworldly but definitely manmade.  Or made by something, at least.  Expect anomalous monsters, whatever other hazards if any of it's actually real.",
+      "inquire": "Any luck so far?",
+      "success": "This place is giving me the creeps.  It's real alright, too damn real.  We should be careful, clean the place out if you want but might be worth seeing if anything else I can recall stands out.",
+      "success_lie": "What madness is this?",
+      "failure": "How …?"
+    }
+  },
+  {
+    "id": "MISSION_FIND_HERMIT_3",
+    "type": "mission_definition",
+    "name": { "str": "Reach Odd House" },
+    "description": "Lead your companion to a rural house suspected to be inhabited by someone.  There might be something to those weird dreams after all…",
+    "goal": "MGOAL_GO_TO_TYPE",
+    "difficulty": 3,
+    "value": 30000,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "destination": "arcana_hermitage_1",
+    "start": {
+      "effect": { "u_add_effect": "sent_to_hermit" },
+      "assign_mission_target": { "om_terrain": "arcana_hermitage_1", "om_special": "Hermit Cabin", "reveal_radius": 3, "z": 0 }
+    },
+    "dialogue": {
+      "describe": "If you see this, it's a bug!",
+      "offer": "I'm convinced there's something to this.  I tried to go over any of what I remember, bring up anything that stood out.  This isn't giving me any answers or even any closure, just more questions.  One thing stood out though.  A house of some sort, and in that dream I didn't just see images of it.  I saw someone traveling there, and a shadow of something otherworldly hanging over the place.  Thinking on what I recalled was calming, for some reason.  Maybe we'll find something?",
+      "accepted": "Alright.  I'll show you what I recall of the area, and maybe we'll find something this time.  Can't be any worse than the last place we visited.",
+      "rejected": "I understand.  But this was the one dream, out of all the weird shit I can remember, that actually felt like more than just a warning, or omen, or whatever the hell the rest have been.",
+      "advice": "It was a rural house of sort sort.  Nothing dangerous or even weird stood out in that dream.  In fact it seemed like the most mundane out of the bunch, but there was this sense of foreboding, and what happened in it was so much more vivid.",
+      "inquire": "Any luck so far?",
+      "success": "Looks like the place.  I can see signs of the house being inhabited.  The place looks so familar even though this is the first time I've ever laid eyes on it in the waking world.  Maybe the dreams were visions of the future, if so I'm guessing that one was about traveling here, not just an omen or whatever.  I'll let you decide what to do if we meet anyone here, I don't know if the other dreams will do us much good.  At least trying to make sense of them, seeing these places in person made me feel, I don't know, better.  Less uneasy.  Thank you.",
+      "success_lie": "What madness is this?",
+      "failure": "How …?"
+    }
+  },
+  {
+    "id": "MISSION_HERMIT_RETRIEVE_SWORD",
+    "type": "mission_definition",
+    "name": { "str": "Retrieve The Cursed Blade" },
+    "description": "Obtain the cursed sword from the floating temple, and show it to the hermit.  The fallen relic may still be of use.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "or": [ { "u_has_item": "stormbringer" }, { "u_has_item": "veilblade" } ] },
+    "difficulty": 5,
+    "value": 250000,
+    "start": {
+      "assign_mission_target": { "om_terrain": "impact_site", "om_special": "Floating Temple", "reveal_radius": 3, "z": 0 }
+    },
+    "end": { "effect": [ { "npc_add_effect": "hermit_stage_1" } ] },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_HERMIT_RESTORE_SWORD",
+    "dialogue": {
+      "describe": "Perhaps we shall at last atone…",
+      "offer": "This is a task not to be taken lightly, and I can understand if you deem yourself unprepared.  We had a temple once, built on flying stone, over ground marked by a fallen star.  There, our last effort to serve Him failed.  There remains a dangerous threat that broke our order, and a fallen relic.  If I could see that relic once again, tainted though it may be, I can rest in peace when my time comes.",
+      "accepted": "Thank you.  May He From Beyond The Veil guide you, or failing that whatever other gods you serve.  I will tell you where to go, but I'm afraid I can't lead you there personally.  I ask that you retrieve the cursed blade and bring it here, and then I will explain further.  Beware the unholy monsters likely to still infest the temple, and …what remains of the high priest.",
+      "rejected": "I understand.  The threat that defiles the old temple is not to be underestimated.  If I felt I could make the journey, I would attempt it myself, even if I failed I could die knowing I did the right thing.  Seek my guidance if you change your mind.",
+      "advice": "You will likely have to kill the abomination inhabiting the body of the temple's former high priest.  I know not what weapons he may still carry, nor what unholy power the spirit possessing him commands, but be careful and expect anything.  Most likely he will have turned our own symbol of judgment on his congregation, meaning you'll have to expect lightning magic.",
+      "inquire": "Have you completed this task?",
+      "success": "Excellent.  I have no need of this item, in fact you might be better suited to use it, if you are cautious.  Speak with me further and I will tell you whatever you need know.",
+      "success_lie": "What folly is this?",
+      "failure": "As I feared…"
+    }
+  },
+  {
+    "id": "MISSION_HERMIT_RESTORE_SWORD",
+    "type": "mission_definition",
+    "name": { "str": "Restore The Ritual Blade" },
+    "description": "Learn the purification ritual from Oaths to The Chalice, restore the ritual sword to a usable condition, then show it to the hermit.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "u_has_item": "veilblade" },
+    "difficulty": 5,
+    "value": 250000,
+    "end": { "effect": [ { "npc_add_effect": "hermit_stage_2" }, { "u_add_effect": "hermit_stage_2" } ] },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_HERMIT_AWAKEN_POWER",
+    "dialogue": {
+      "describe": "Perhaps we shall at last atone…",
+      "offer": "I have told you some of what I know.  And that may be of use to you.  The blade may be marred by dark magic, but it can be salvaged.  You have the potential, and it may prove even more useful restored than as a sanguine-corrupted weapon.",
+      "accepted": "Wonderful.  The way forward lies within Oaths to The Chalice.  To undertake this task is to accept the responsibility that comes with it.  I will offer what advice I can, but I can't perform the purification ritual for you.  That shall be your duty.",
+      "rejected": "I understand, though I hope you have not come to favor the relic's current state for its use as a weapon.  Seek me out if you deem yourself ready.",
+      "advice": "You shall need the studies of those who have came before, certain ritual components.  You'll also need to seek out a copy of Sanguine Codex to properly counter the sanguine curse placed on it.",
+      "inquire": "Have you performed the ritual?  Let me see it…",
+      "success": "To see this, after so long… it's hard for me to put words to this.  It'll never be restored to the glory it once held, forged in fires from Beyond as one of the divine gifts, but even this gives me hope.  Come, we have much to discuss.",
+      "success_lie": "What folly is this?",
+      "failure": "As I feared…"
+    }
+  },
+  {
+    "id": "MISSION_HERMIT_AWAKEN_POWER",
+    "type": "mission_definition",
+    "name": { "str": "Earn The Favor From Beyond" },
+    "description": "Fuel the restored ritual blade by charging it from a portal, offer the power to He From Beyond The Veil, then return to the hermit after being awarded with any of His blessings.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "u_has_trait_flag": "explorer_of_the_veil" },
+    "difficulty": 5,
+    "value": 250000,
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "new_anomaly_1",
+        "om_terrain_replace": "field",
+        "random": true,
+        "reveal_radius": 3,
+        "search_range": 180,
+        "z": 0
+      }
+    },
+    "end": { "effect": [ { "npc_add_effect": "hermit_stage_3" } ] },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_HERMIT_BECOME_PARAGON",
+    "dialogue": {
+      "describe": "Perhaps we shall at last atone…",
+      "offer": "This is a task I will leave for you to pursue on your own initiative, though I will advise you if needed.  To use the awakened blade requires certain energies to be returned to The Beyond.  The method that best fulfills the relic's purpose requires you to seek out the lingering wounds in The Veil, and my fading senses have revealed one such place that may be useful.  However you choose to serve Him, your actions will serve a greater purpose.  Will you accept my guidance in this endeavor?",
+      "accepted": "May He From Beyond The Veil guide us both.  I will do what I can to direct you towards letting the relic serve its purpose.  Failing that, there are methods to sustain this power, to be found within the pages of Oaths To The Chalice.  Some of what you will see are common, trifling things.  Others are wonders only He can bestow, and they may yet serve you well.  When the time comes and you have seen the fruit of your labor, speak to me again.",
+      "rejected": "Unfortunate.  I am hopeful that you will heed the call on your own, and come to me when you are ready.  In pursuing the path laid before you, your destiny is intertwined with those who seek to ensure this world does not fall into further decay.  One way or another, your path lies before you.",
+      "advice": "Drawing upon a rift will require you to linger beside the portal, until the blade draws upon its power.  You will know in time, when you have received the sign.  If you require what little guidance I can offer, you need only ask.",
+      "inquire": "Show me that spark within your eyes, if you have earned His favor…",
+      "success": "So it has come to pass.  I hope the task was not too troublesome for you, nor did His favor prove too difficult to grasp.  This proves it.  You are suitable to be His Chosen.  There is still much to discuss.",
+      "success_lie": "What folly is this?",
+      "failure": "I do believe I can sense the cause of this.  His Chosen cannot be tied too strongly to the Beyond, lest pursuing His goals endanger them as well.  It seems you've done exactly that.  Unfortunate, but there may still be hope.  Come, we still have things to discuss."
+    }
+  },
+  {
+    "id": "MISSION_HERMIT_BECOME_PARAGON",
+    "type": "mission_definition",
+    "name": { "str": "Become A Paragon Of The Veil" },
+    "description": "Continue to seek out portals or otherwise channeling power through the restored ritual blade, until receiving a clear sign of He From Beyond The Veil's favor.  Excessive mutation, becoming too strongly tied to things from Beyond, might endanger this goal.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "u_has_trait": "THRESH_VEIL" },
+    "difficulty": 5,
+    "value": 250000,
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "new_anomaly_2",
+        "om_terrain_replace": "field",
+        "random": true,
+        "reveal_radius": 3,
+        "search_range": 180,
+        "z": 0
+      }
+    },
+    "end": { "effect": [ { "npc_add_effect": "hermit_stage_4" } ] },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "dialogue": {
+      "describe": "Perhaps we shall at last atone…",
+      "offer": "This is a task that will be a long-term matter, I suspect.  You have demonstrated the potential the He From Beyond The Veil seeks.  I have told you the nature of our mission, our enduring oath.  And you have filled this feeble old heart with renewed hope.  Others may foster the survival of humanity, but what good will it do if the wounds in The Veil continue to bleed, and we are cast into the abyss?  That is our purpose, the one common ground we held with the Cleansing Flame.  But every rift sealed, every intrusion halted, pulls us away from the brink.  I ask you to continue along the path you have chosen.  Continue your work, and use your rewards with care and precision.  Will you accept this request?",
+      "accepted": "Thank you.  There is another such place that may be useful to start with, and I'll show you where it is.  Other than that, your journey may be a long one, hunting for instabilities and presenting these offerings from Beyond.  Beware becoming corrupted by mutation, as becoming too strongly tethered to the Beyond will make you unsuitable for His plans.  When you have achieved this, seek to me again if you so desire.  I will offer you what little guidance I can.",
+      "rejected": "I see.  Perhaps you are confident that The Veil will hold, seeing that it hasn't collapsed despite all that has happened.  But you have come so far, and can we be certain when the consequences are so dire?  If you change your mind, I will await you.",
+      "advice": "Be cautious in what methods you use to obtain the offering.  Use summoning rites only when it is a necessary infliction to make on The Veil, and do not let the allure of blood magic cause yourself undue harm.  As for other rifts to seal, remember every place that you have seen touched by the influence of the arcane, and of mundane hazards as well.  I have little experience in the laboratories that inflicted so much destruction, but they may hold remnants that can be mended.",
+      "inquire": "Has He anointed you as his Chosen?",
+      "success": "You have proven yourself, in ways that few have.  For each relic, only one high priest each had been anointed as you have.  I will offer whatever council I can, but I have no tasks left to offer you.  Follow as fate leads.",
+      "success_lie": "What folly is this?",
+      "failure": "I can quite plainly sense the cause of this.  His Chosen cannot be tied too strongly to the Beyond, lest pursuing His goals endanger them as well.  It seems you've done exactly that.  Unfortunate, but there may still be hope.  Come, we have things to discuss it seems…"
+    }
+  },
+  {
+    "id": "MISSION_CF_DEACON_1",
+    "type": "mission_definition",
+    "name": { "str": "Check On Rural Church" },
+    "description": "Visit the rural church and speak with Sofia McKinnon.  Return to Dorian with the news.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "u_has_effect": "sofia_deacon_message" },
+    "difficulty": 2,
+    "value": 10000,
+    "has_generic_rewards": false,
+    "start": {
+      "effect": [ { "npc_add_effect": "rural_church_aware" }, { "u_add_effect": "already_asked_deacon" } ],
+      "assign_mission_target": {
+        "om_terrain": "cf_church_4",
+        "om_special": "cf_rural_church",
+        "om_terrain_replace": "field",
+        "reveal_radius": 3,
+        "random": true,
+        "search_range": 180,
+        "min_distance": 10
+      }
+    },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "dialogue": {
+      "describe": "Here's hoping it goes well…",
+      "offer": "As much as I'd like to return to check on the people sheltering at the church, I've been caught up in helping out here.  If you could pay them a visit, ask to speak with Sofia McKinnon.  Could you send her my regards, and my apologies for having been delayed in returning?",
+      "accepted": "Thank you.  No doubt she will have work for you as well, if you ask her about it.  If your travels take you back here, please keep me informed.  I don't have much I can offer as a reward, but I'll do what I can.  Godspeed.",
+      "rejected": "I understand.  There is much to be done even here.  Still, I suspect I'll be busy here for much longer than I expected, so if you get the chance please see me about it.  I don't have much to offer in return, but I'll scrounge up what I can.",
+      "advice": "It's a rural church along the side of the road.  The survivors there should be able to help you if needed.  I'm afraid I don't know much else about the group, as Father Alexander was the one that knew them personally.",
+      "inquire": "Have you any news?",
+      "success": "Thank you.  It's a relief to hear back from them.  I may be here a while longer, these people need all the help they can get, and Sofia's group can take care of themselves well enough.  I know this isn't much, but please have this.",
+      "success_lie": "What are you trying to pull?",
+      "failure": "How in God's name did you fail at this?"
+    },
+    "end": { "effect": [ { "u_buy_item": "FMCNote", "count": 5 } ] }
+  },
+  {
+    "id": "MISSION_CF_REP_1",
+    "type": "mission_definition",
+    "name": { "str": "Find or Make Bone Charm" },
+    "description": "Obtain or craft a bone charm, a makeshift holy symbol carved from the body parts of certain otherworldly monsters, then bring it to Sofia.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 1,
+    "//": "Quest values for the main rural church NPCs do not match up with rewards on purpose, these values are controlled to manipulate faction power to tie certain epilogues to whose missions you prioritize.",
+    "value": 7500,
+    "has_generic_rewards": false,
+    "item": "charm_bone",
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_REP_2",
+    "dialogue": {
+      "describe": "Odin, guide my hand…",
+      "offer": "We have been working on fortifying this location, and trying to regain contact with any others of our order.  But mundane methods alone may not be sufficient.  I ask that you obtain something known as a bone charm, carved from the bones of some of the more otherworldly creatures now infesting the world.  If you wish, I will explain what purpose this serves.",
+      "accepted": "Thank you.  I know it's a strange request, as is asking that you make it yourself.  But I feel that adding your own personal touch to it may prove a useful learning experience, as every talisman worked from the bones of otherworldly beasts reflects the nature of its maker.",
+      "rejected": "I understand that this may seem like a trivial thing, and an odd request.  But this ritual is more important to us than you realize.",
+      "advice": "There are many monsters whose bones, ivory, and such carry the mark of the otherworldly upon them.  The impish creatures known as \"krecks\" among survivors would be easy prey, and so-called \"grackens\" should be an even safer hunt.  Or you could seek out beasts such as flying polyps or hunting horrors.",
+      "inquire": "How goes the hunt, and the craft?  Have you found what we seek?",
+      "success": "Wonderful.  I'll have things set up shortly, and the others have been working on securing the place further.  There is much to be done, but this allows us to prepare some other conveniences we've begun setting up outside.",
+      "success_lie": "What do you think you're trying to pull?",
+      "failure": "But how…"
+    },
+    "end": {
+      "effect": [ { "u_add_effect": "cf_mission_1" }, { "u_buy_item": "CF_golden_scale", "count": 2 } ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "place_nested": [ { "chunks": [ "cf_church_upgrade_1_a" ], "x": 3, "y": 3 } ] },
+        {
+          "om_terrain": "cf_church_2",
+          "place_nested": [ { "chunks": [ "cf_church_upgrade_1_b" ], "x": 14, "y": 22 } ]
+        },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_1_c" },
+        { "om_terrain": "cf_church_4", "place_nested": [ { "chunks": [ "cf_church_upgrade_1_d" ], "x": 1, "y": 1 } ] }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_REP_2",
+    "type": "mission_definition",
+    "name": { "str": "Deliver Trade Arrangements" },
+    "description": "Deliver the trade arrangements to the merchant at the refugee center, along with the Golden Scales provided for the deal.  Return to Sofia with the receipt that will be provided.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 1,
+    "value": 7500,
+    "has_generic_rewards": false,
+    "item": "cf_rep_trade_receipt",
+    "start": {
+      "effect": [ { "u_buy_item": "cf_rep_trade_arrangement" }, { "u_buy_item": "CF_golden_scale", "count": 20 } ],
+      "assign_mission_target": { "om_terrain": "evac_center_18", "om_special": "evac_center", "must_see": true, "reveal_radius": 1 }
+    },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_REP_3",
+    "dialogue": {
+      "describe": "Odin, guide my hand…",
+      "offer": "This should be a simple matter, though I hope you'll find the journey tolerable.  I have occasionally visited the local refugee center to trade for essential tools and supplies, but I will be needed here for the time being, and the others have been busy gathering supplies and continuing construction.  We have arrangements made for delivery of supplies, but every so often we have to send inventory of what we need and what we have to offer.  Could you simply deliver this to their merchant, and return the receipt they usually write up?",
+      "accepted": "Thank you.  The merchant requires an advance payment, surplus scavenged supplies or precious metal.  This should be sufficient to complete the arrangement, we use these to set aside measured amounts of material for repairing our equipment.  With your help we'll be able to focus our efforts on making this place livable, and once the trade is settled that'll give us more breathing room.  Hopefully by the time supplies start running low again, we'll have a few more of us around to take care of ourselves.",
+      "rejected": "Please, whenever you're able to speak to me again, we can't rely exclusively on scavenging for very long, as few people we have to spare for the task.",
+      "advice": "If you can talk them into accepting a lower rate for the initial payment, you can keep what's left over.  Not many people see value in gold now, but it has some uses all the same.  The repair blanks we use are stamped with a known weight and purity, which is better than any random scrap.",
+      "inquire": "Has the center agreed to our offer?  They usually provide a receipt confirming the arrangements have been made.",
+      "success": "Thank you.  We're a bit closer to having the area built up into a usable sanctum.  I just hope that there are more of us out there, that heed our call.  I can spare a bit more for your trouble, as well.",
+      "success_lie": "What do you think you're trying to pull?",
+      "failure": "But how…"
+    },
+    "end": {
+      "effect": [ { "u_add_effect": "cf_mission_1" }, { "u_buy_item": "CF_golden_scale", "count": 4 } ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "place_nested": [ { "chunks": [ "cf_church_upgrade_2_a" ], "x": 3, "y": 3 } ] },
+        {
+          "om_terrain": "cf_church_1_roof",
+          "place_nested": [ { "chunks": [ "cf_church_upgrade_2_b" ], "x": 3, "y": 3 } ]
+        },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_2_c" }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_REP_3",
+    "type": "mission_definition",
+    "name": { "str": "Kill Unknown Monster" },
+    "description": "Hunt down a monster of unknown nature nearby.  Optionally recruit one of the church's guards to assist.",
+    "goal": "MGOAL_KILL_MONSTER",
+    "difficulty": 4,
+    "value": 7500,
+    "has_generic_rewards": false,
+    "start": {
+      "assign_mission_target": { "om_terrain": "forest_thick", "reveal_radius": 1, "random": true, "search_range": 20, "min_distance": 5 },
+      "update_mapgen": { "place_monster": [ { "monster": "mon_flesh_angel", "x": 11, "y": 11, "target": true } ] }
+    },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_REP_4",
+    "dialogue": {
+      "describe": "Odin, guide my hand…",
+      "offer": "I have good news and bad news.  The good news is that we've made contact with a group of our brethren, and they are expected to arrive soon.  The bad news is they've reported something else has been attracted to this area by our wards, stalking the surrounding woods due to the magic itself deterring it.  It may be a threat to travelers, in addition to potentially endangering our comrades while they're en route.  I would like to request you scout the area and, if need be, slay the creature.",
+      "accepted": "May Odin grant you victory in battle, should it come to that.  Any creature attracted by our defensive magic is likely to be not only otherworldly, but tied to other mystic forces.  Expect trouble.  I will permit you the assistance of one of our brethren if you deem it necessary, but we cannot spare the forces needed for a proper hunt.",
+      "rejected": "This thing may endanger the lives of others.  I do not yet know the full extent of the threat, but we can't afford to endanger our position here.  Please, as soon as you are able, speak with me again.",
+      "advice": "It's likely to have unnatural senses of some sort, and many such creatures are able to use such abilities to enthrall or otherwise overwhelm the weak-minded.  Avoid being in its line of sight if possible, as most such threats are most potent when the user can lay eyes upon its victim.",
+      "inquire": "Has the beast been slain?",
+      "success": "I'm thankful that you returned victorious.  Hearing of it now, and the scouting reports from the others, the creature was a rare sight indeed.  A human form woven into a mockery of the divine.  I'm sorry to have endangered you facing an unknown threat.  However, thanks to your assistance the others arrived safely, a fellow founder of our order among them.  He'll be in the building we recently finished, he might have work for you too.",
+      "success_lie": "What do you think you're trying to pull?",
+      "failure": "But how…"
+    },
+    "end": {
+      "effect": [
+        { "u_add_effect": "cf_mission_sofia_3" },
+        { "u_add_effect": "cf_mission_1" },
+        { "npc_add_effect": "cf_mission_3" },
+        { "u_buy_item": "CF_golden_scale", "count": 6 }
+      ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "place_nested": [ { "chunks": [ "cf_church_upgrade_3_a" ], "x": 1, "y": 1 } ] },
+        { "om_terrain": "cf_church_2", "mapgen_update_id": "cf_church_upgrade_3_b" },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_3_c" },
+        { "om_terrain": "cf_church_4", "mapgen_update_id": "cf_church_upgrade_3_d" }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_REP_4",
+    "type": "mission_definition",
+    "name": { "str": "Secure Allies For Sofia" },
+    "description": "Arrange for additional allies to join Sofia's group at the rural church.  Most merchants at the refugee center, and possibly other places, might be worth talking to for assistance.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" },
+    "difficulty": 3,
+    "value": 7500,
+    "has_generic_rewards": false,
+    "start": {
+      "effect": [ { "u_add_var": "sofia_mission_4", "type": "mission", "context": "rural_church", "value": "yes" } ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "place_nested": [ { "chunks": [ "cf_church_upgrade_4_a" ], "x": 3, "y": 16 } ] },
+        { "om_terrain": "cf_church_3", "place_nested": [ { "chunks": [ "cf_church_upgrade_4_b" ], "x": 3, "y": 0 } ] }
+      ]
+    },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_REP_5",
+    "dialogue": {
+      "describe": "Odin, guide my hand…",
+      "offer": "As much work as we've put into securing this place, in time we will need much more than mere shelter.  My hope is to not only preserve the knowledge we've accumulated over the years, but use it to help others.  But for that, we need to work closely with outsiders.  We need more than just intermittent trading with the center's merchant, if we are to attract others to our cause.  Would you be able to help us with this?",
+      "accepted": "Thank you.  Your best bet is to see if there is anyone at the center, or any other communities they are in contact with, who are in need of work.  If we can arrange for merchants or workers to set up here, this gives us another point of contact to attract recruits and foster alliances.",
+      "rejected": "I see.  This is hardly as dire a matter as hunting monsters, but if you change your mind, it would be a great boon to us in the long run.",
+      "advice": "The different merchants and other people in charge of the center might have some assistance they can offer.  It will likely depend on what they seek, but any merchants or soldiers of fortune will provide us a contact to further secure our future.",
+      "inquire": "Has your search gone well?",
+      "success": "Excellent!  We've already been working hard to further build up this sanctum to be a bit more livable, and your arrangement with the others have already provided much-needed labor to help put the finishing touches on the meeting hall.  I'm hopeful that they will be a great help to us, and that working together will make it easier to further ally ourselves with other survivors out there.",
+      "success_lie": "What do you think you're trying to pull?",
+      "failure": "But how…"
+    },
+    "end": {
+      "effect": [
+        { "u_add_var": "sofia_mission_4_end", "type": "mission", "context": "rural_church", "value": "yes" },
+        { "npc_add_var": "sofia_mission_4_end", "type": "mission", "context": "rural_church", "value": "yes" },
+        { "u_add_effect": "cf_mission_1" },
+        { "u_buy_item": "CF_golden_scale", "count": 8 }
+      ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "place_nested": [ { "chunks": [ "cf_church_upgrade_4_h" ], "x": 4, "y": 17 } ] },
+        { "om_terrain": "cf_church_3", "place_nested": [ { "chunks": [ "cf_church_upgrade_4_i" ], "x": 4, "y": 0 } ] },
+        { "om_terrain": "cf_church_3_roof", "mapgen_update_id": "cf_church_upgrade_4_j" }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_REP_5",
+    "type": "mission_definition",
+    "name": { "str": "Bring back research from the Keepers" },
+    "description": "Find a suspected remnant of the Keepers of The Oath, who may have research and intel to bring back to Sofia.  Sofia advised that the information being sought might be preserved on something more durable than a book.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 4,
+    "value": 7500,
+    "has_generic_rewards": false,
+    "item": "offering_mission_notes",
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_REP_6",
+    "start": {
+      "assign_mission_target": { "om_terrain": "arcana_hermitage_1", "om_special": "Hermit Cabin", "reveal_radius": 1 },
+      "update_mapgen": [ { "om_terrain": "cf_church_2", "place_nested": [ { "chunks": [ "cf_church_upgrade_5" ], "x": 2, "y": 3 } ] } ]
+    },
+    "dialogue": {
+      "describe": "Odin, guide my hand…",
+      "offer": "Now that we have a few more helping hands around here, we can dedicate more time to following up on some leads Johnathan's notes have provided us.  They point to evidence of a survivor among the Keepers of The Oath, who had close contact with members of their high priesthood.  I would like you to find out anything you can from them, any research or assistance they may be able to provide.",
+      "accepted": "Thank you, I'll show you where he is suspected to be.  My main interest is in any research notes that may have survived, anything beyond the regular content of their holy text.  Knowing the Keepers, any new research will likely first be preserved in a format more permanent than paper.  If they still have any other contacts, any other assistance they can offer, see what can be done.  Now is the time to make amends and fight together, I hope.",
+      "rejected": "I see.  Well, if you'd like, just ask me when you're ready.  I worry that we may lose this lead before long.",
+      "advice": "I don't know for certain how this person will react to being asked to provide information to the Cleansing Flame.  Johnathan might be able to provide more information, but I suspect he would rather see the Keepers extinguished.  As for what to look for, they used to preserve sacred tenets and writing in stone carvings, clay tablets, or such for posterity before they started hand-copying and printing their works.  Even more traditionalist than us in some ways, otherworldly god or not…",
+      "inquire": "Have you found what we seek?",
+      "success": "Thank you.  I hope that things went well in your pursuit of this knowledge, without undue violence.  This is a peculiar thing indeed, but it will enable some valuable research.  It seems to primarily concern some of the more dangerous interlopers threatening what's left of humanity, I'm hopeful this will bear fruit.",
+      "success_lie": "What do you think you're trying to pull?",
+      "failure": "But how…"
+    },
+    "end": {
+      "effect": [
+        { "npc_add_var": "sofia_mission_5_end", "type": "mission", "context": "rural_church", "value": "yes" },
+        { "u_add_effect": "cf_mission_1" },
+        { "u_buy_item": "CF_golden_scale", "count": 10 }
+      ],
+      "update_mapgen": [ { "om_terrain": "cf_church_2", "place_nested": [ { "chunks": [ "cf_church_upgrade_6" ], "x": 2, "y": 3 } ] } ]
+    }
+  },
+  {
+    "id": "MISSION_CF_REP_6",
+    "type": "mission_definition",
+    "name": { "str": "Secure Research From Renegade Shrikes" },
+    "description": "Find a suspected splinter faction of the Sanguine Order, who may have research and intel to bring back to Sofia.  Bring back any unique research they have.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 4,
+    "value": 7500,
+    "has_generic_rewards": false,
+    "item": "sanguine_mission_notes",
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_REP_7",
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "sanguine_holdout_2",
+        "om_special": "sanguine_holdout_shrikes",
+        "om_terrain_replace": "forest",
+        "reveal_radius": 3,
+        "random": true,
+        "search_range": 180,
+        "min_distance": 20
+      },
+      "update_mapgen": [
+        { "om_terrain": "cf_church_2", "place_nested": [ { "chunks": [ "cf_church_upgrade_7_a" ], "x": 2, "y": 4 } ] },
+        {
+          "om_terrain": "cf_church_2_roof",
+          "place_nested": [ { "chunks": [ "cf_church_upgrade_7_b" ], "x": 2, "y": 3 } ]
+        }
+      ]
+    },
+    "dialogue": {
+      "describe": "Odin, guide my hand…",
+      "offer": "This one might be a bit more risky.  Johnathan's intel confirmed suspicion of a schism within the Sanguine Order, specifically among their shrikes.  They were the hunters of hunters, the biggest threat to us whenever we engaged in a raid on their hideouts.  We've isolated the location of one renegade element acting inconsistent with other such splinter groups.  I'd like you to investigate, and secure any research they might have acquired.  Even if it proves unsafe for us to use, better to prevent it from falling into the wrong hands.",
+      "accepted": "Thank you.  Be careful, they seem to have actively engaged in hostilities against regular sanguinist sects, but we don't know how divergent they are.  They might still be hostile to us.  Attempt to talk them into cooperating peacefully if you can, but expect a fight.",
+      "rejected": "If you change your mind, see me about it.  I'm reluctant to deal with sanguinists given we don't know if they're still engaged in hostilities, but securing whatever they found will be useful to us.",
+      "advice": "Be careful.  They'll likely know you're coming before you even see them, be prepared for a confrontation, or worse an ambush.",
+      "inquire": "Do you have it?",
+      "success": "I'll be careful with this.  Some of it may benefit our own research, but the general rule of thumb is to avoid extensive work with any developments that require blood magic or dimensional alteration to function.  I hope that I didn't put you in too great a danger sending you after them.",
+      "success_lie": "What do you think you're trying to pull?",
+      "failure": "But how…"
+    },
+    "end": {
+      "effect": [ { "u_add_effect": "cf_mission_1" }, { "u_buy_item": "CF_golden_scale", "count": 12 } ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_2", "place_nested": [ { "chunks": [ "cf_church_upgrade_8_a" ], "x": 8, "y": 4 } ] },
+        { "om_terrain": "cf_church_2_roof", "mapgen_update_id": "cf_church_upgrade_8_b" }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_REP_7",
+    "type": "mission_definition",
+    "name": { "str": "Bring Back Relay Beacon" },
+    "description": "Retrieve a radio relay beacon from a radio station recently secured by a contact allied with the Cleansing Flame.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 5,
+    "//": "Values intentionally elevated for these climactic missions, to ensure completing specific milestones will hit certain thresholds of faction power for the desired epilogue.",
+    "value": 900000,
+    "has_generic_rewards": false,
+    "item": "arcana_radio_relay_beacon",
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "station_radio_1", "reveal_radius": 3 },
+      "update_mapgen": [
+        { "mapgen_update_id": "arcana_radio_station" },
+        { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_9_a" },
+        { "om_terrain": "cf_church_2", "mapgen_update_id": "cf_church_upgrade_9_b" }
+      ]
+    },
+    "dialogue": {
+      "describe": "Odin, guide my hand…",
+      "offer": "We've been working on finishing up some improvements to our outpost here.  One I've been looking into is improving our radio, to help get in touch with others.  Not long ago we received a brief burst of radio chatter that will lead us to a chance at killing two birds with one stone.  One of our contacts from before the apocalypse had evidently secured a radio transmitter and established contact, before something knocked out the signal.  I'd like you to investigate.",
+      "accepted": "Thank you.  They'd secured a radio station in one of the old towns, I'd advise caution.  They confirmed the use of what they called a relay beacon to make use of the station's transmitter.  It not only contains what they used to get their signal across to us, but a tracker that whoever else they're working with can use to get in touch with us.  Return with that and we should be able to re-establish contact.",
+      "rejected": "Please, speak with me if you change your mind.  We don't know who else they might be in contact with, nor whether they might move on before we can get in touch with them.",
+      "advice": "Be prepared for a fight.  They mentioned being followed by something, and that's going to be in addition to the usual abominations that infest the cities.",
+      "inquire": "Have you found it?",
+      "success": "Thank you.  This should provide the finishing touches.  I'll get to work immediately, I know the rest of them were already looking for us.  They should be here shortly, now that we have the means to extend our signal as well as a signal they can track.  That should be everything we need for now.",
+      "success_lie": "What do you think you're trying to pull?",
+      "failure": "But how…"
+    },
+    "end": {
+      "effect": [
+        { "u_add_effect": "cf_mission_1" },
+        { "u_add_effect": "cf_mission_sofia_7" },
+        { "u_buy_item": "CF_golden_scale", "count": 14 }
+      ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_10_a" },
+        { "om_terrain": "cf_church_2", "mapgen_update_id": "cf_church_upgrade_10_b" }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_GM_1",
+    "type": "mission_definition",
+    "name": { "str": "Retrieve Bane Staff" },
+    "description": "Retrieve the bane staff from the strange grove, and show it to Johnathan.  Should it be altered in some way, he will likely still recognize it's the right item.",
+    "goal": "MGOAL_CONDITION",
+    "//": "Johnathan doesn't actually know what the staff was supposed to look like, and even the version the player first finds stinks of evil magic, so he won't know that the lifesbane staff is actually player-crafted.",
+    "goal_condition": { "or": [ { "u_has_item": "scourge_staff" }, { "u_has_item": "sanguine_staff_lifesbane" } ] },
+    "difficulty": 5,
+    "value": 7500,
+    "has_generic_rewards": false,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_GM_2",
+    "start": {
+      "assign_mission_target": { "om_terrain": "strange_grove", "om_special": "Strange Grove", "reveal_radius": 3, "z": 0 }
+    },
+    "end": {
+      "effect": [ { "u_add_effect": "cf_mission_1" }, { "u_buy_item": "CF_golden_scale", "count": 6 } ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_GM_1_a" },
+        { "om_terrain": "cf_church_2", "mapgen_update_id": "cf_church_upgrade_GM_1_b" },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_GM_1_c" },
+        { "om_terrain": "cf_church_4", "mapgen_update_id": "cf_church_upgrade_GM_1_d" }
+      ]
+    },
+    "dialogue": {
+      "describe": "Grant us strength…",
+      "offer": "During our journey we've seen scattered evidence of some hazards still afflicting certain areas, former hotspots of anomalous activity now made even more dangerous, ever since holes in reality began opening up.  With the rest of us focused on rebuilding and securing the area, I would like to ask your assistance with investigating one such location, and retrieving an artifact of historical importance believed to be lost there.",
+      "accepted": "Thank you.  I will direct you to the location, if you've not seen it for yourself.  Decades ago the place was inhabited, but now the place seems to be overgrown and infested with monsters.  Do what you must to cleanse the place, and retrieve what the texts called a bane staff.  I'll trust you to take care of it, along with any other treasures you find there.  Dii vult.",
+      "rejected": "When you believe you are ready, talk to me again.  The longer these old places linger without being dealt with, the more of a threat they may become.",
+      "advice": "The extent to which the place has overgrown is unnatural.  I would expect monsters comfortable among greenery to be the most common threat, and we have reason to believe something large has taken root there.  Beyond that, I can tell you little of the history behind that place, Sofia might know more.",
+      "inquire": "How goes the hunt?",
+      "success": "Thank you.  That staff was associated with those who once inhabited that place.  It seems whatever anomalies caused all this corrupted it to some extent, but I'm willing to leave this in your care.  Anything else you found down there you may deal with as you see fit.  The rest of us will try to discern just what to make of these anomalies.",
+      "success_lie": "What idiocy is this?",
+      "failure": "But how?"
+    }
+  },
+  {
+    "id": "MISSION_CF_GM_2",
+    "type": "mission_definition",
+    "name": { "str": "Retrieve Demon Claw" },
+    "description": "Retrieve the demon claw from the curious structure, and give it to Johnathan.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 5,
+    "item": "hand_of_armok",
+    "value": 7500,
+    "has_generic_rewards": false,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_GM_3",
+    "start": {
+      "assign_mission_target": { "om_terrain": "curious_structure_2", "om_special": "Curious Structure", "reveal_radius": 3, "z": 0 }
+    },
+    "end": {
+      "effect": [ { "u_add_effect": "cf_mission_1" }, { "u_buy_item": "CF_golden_scale", "count": 8 } ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_GM_2_a" },
+        { "om_terrain": "cf_church_2", "mapgen_update_id": "cf_church_upgrade_GM_2_b" },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_GM_2_c" },
+        { "om_terrain": "cf_church_4", "mapgen_update_id": "cf_church_upgrade_GM_2_d" }
+      ]
+    },
+    "dialogue": {
+      "describe": "Grant us strength…",
+      "offer": "I believe I can now trust you with a more dangerous, yet also more vital, task.  In the past we had few dedicated safehouses, most of us were hosted in the rural homes and churches of our brethren and those they could trust.  Only one place was truly built by our hand, and it suffered the same strange occurrences so many other places suffered during zero hour.  The handful of survivors to flee brought with them tales of living fire and otherworldly horror, warping the very stones underneath the sanctum.  If you believe yourself ready, I would like you to lead a hunt to cleanse it, and take the demon's claws as proof of the hunt.",
+      "accepted": "By Thor and The God In Three Persons both, may you be victorious.  The evil lurking there was described as wielding a clawed weapon that warped The Veil itself with hellfire, until it was struck from its fiery grasp by a lucky strike.  They were able to seal it behind a barrier with one of our swords as the keystone, and you will need to undo the seal to confront it.  This artifact is dangerous enough I will require you to entrust it to our care, this time.  We should be able to destroy it safely.  I would commit a full hunting party if only we could spare anyone.  Dii vult!",
+      "rejected": "Understood.  This task is dangerous, and the seal they set up shouldn't be undone unless you're prepared to see it through to the end.  Speak with me when you see fit.",
+      "advice": "Bring any assistance you can, and expect all manner of abominations to have followed that thing through the wounds in The Veil.  Be prepared for infernal fire, any magic or equipment that would safeguard against flame would help.  Do as best as you can to assemble a proper hunting party, but sadly we are stretched thin as it is.",
+      "inquire": "How goes the hunt?",
+      "success": "Gods above and below, to think this thing caused one of our holiest places to fall to ruin.  I doubt it will be safe to reclaim that place anytime soon.  Anything else you found down there is yours to use as you see fit.  I hope that those who fell holding that thing back are at peace.  Speak with me when you see fit.",
+      "success_lie": "What idiocy is this?",
+      "failure": "But how?"
+    }
+  },
+  {
+    "id": "MISSION_CF_GM_3",
+    "type": "mission_definition",
+    "name": { "str": "Cleanse Sanguinist Sect" },
+    "description": "Kill the blood mage in charge of a local Sanguine Order sect.  Optionally recruit one of the church's guards to assist.",
+    "goal": "MGOAL_ASSASSINATE",
+    "difficulty": 10,
+    "value": 7500,
+    "has_generic_rewards": false,
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "sanguine_holdout_1",
+        "om_special": "sanguine_holdout",
+        "om_terrain_replace": "forest",
+        "reveal_radius": 3,
+        "random": true,
+        "search_range": 180,
+        "min_distance": 10
+      },
+      "update_mapgen": [
+        {
+          "om_terrain": "sanguine_holdout_b1",
+          "place_npcs": [ { "class": "sanguine_order_magus", "x": 14, "y": 12, "target": true, "add_trait": "MUTE" } ]
+        }
+      ]
+    },
+    "end": {
+      "effect": [
+        { "u_add_effect": "cf_mission_1" },
+        { "u_add_effect": "cf_mission_johnathan_3" },
+        { "npc_add_effect": "cf_mission_3" },
+        { "u_buy_item": "CF_golden_scale", "count": 10 }
+      ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_GM_3_a" },
+        { "om_terrain": "cf_church_2", "mapgen_update_id": "cf_church_upgrade_GM_3_b" },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_GM_3_c" },
+        { "om_terrain": "cf_church_4", "mapgen_update_id": "cf_church_upgrade_GM_3_d" }
+      ]
+    },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_GM_4",
+    "dialogue": {
+      "describe": "Grant us strength…",
+      "offer": "We have evidence not only of a still-practicing group of sanguinists, but confirmation of their most likely hideout.  You know what must be done.  Their sect will be centralized around a local magus, prioritizing them will reduce the threat even if their underlings escape justice.  Hunt them down, when you are prepared for the task.",
+      "accepted": "God and gods willing, may you return safe and victorious.  This will be a dangerous task, and while we may be stretched thin, I will allow you to request assistance at your discretion.  We can spare another hunter for a task this dangerous.  We suspect they had been a member of their transhumanist sects, meaning their mages will likely still be involved in experiments on otherworldy creatures.",
+      "rejected": "I understand.  Come back when you are prepared.",
+      "advice": "They will have pursued any advantage they could get their hands on.  Any weapon at their disposal, any foul magic, any corruption of body and soul.  Bring as many allies as you can muster to your cause, any weapon to suit you.",
+      "inquire": "Have they been dealt with?",
+      "success": "Thank the gods that you've returned safely!  May this serve as a warning to any who would further endanger humanity.  I hope that you will use proper discretion in dealing with any dangerous items you retrieved from that place.  While you were gone, one of our scouting missions made contact with a small holdout of our brethren, which should ease some of the workload here.",
+      "success_lie": "What idiocy is this?",
+      "failure": "But how?"
+    }
+  },
+  {
+    "id": "MISSION_CF_GM_4_PRELUDE",
+    "type": "mission_definition",
+    "name": { "str": "Investigate survivor camp" },
+    "description": "Search the last known encampment of a group of survivors, who have recently encountered anomalous activity.  Bring back any unusual items found there, that may prove useful to identifying and locating the origin of this threat.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "or": [ { "u_has_item": "arcana_dream_journal" }, { "u_has_item": "arcana_strange_crystal" } ] },
+    "difficulty": 3,
+    "value": 7500,
+    "has_generic_rewards": false,
+    "start": {
+      "effect": [ { "u_add_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" } ],
+      "assign_mission_target": { "om_terrain": "forest", "reveal_radius": 3, "random": true, "search_range": 50, "min_distance": 20 },
+      "update_mapgen": {
+        "set": [
+          { "square": "terrain", "id": "t_region_groundcover_forest", "x": 4, "x2": 19, "y": 4, "y2": 19 },
+          { "square": "terrain", "id": "t_region_groundcover_barren", "x": 8, "x2": 15, "y": 8, "y2": 15 },
+          { "square": "furniture", "id": "f_null", "x": 8, "x2": 15, "y": 8, "y2": 15 },
+          { "line": "terrain", "id": "t_grave_new", "x": 11, "x2": 12, "y": 7, "y2": 7 },
+          { "point": "furniture", "id": "f_brazier", "x": 12, "y": 11 },
+          { "point": "furniture", "id": "f_plastic_groundsheet", "x": 14, "y": 12 },
+          { "point": "furniture", "id": "f_tourist_table", "x": 14, "y": 10 },
+          { "point": "trap", "id": "tr_rollmat", "x": 12, "y": 9 },
+          { "point": "trap", "id": "tr_rollmat", "x": 10, "y": 10 },
+          { "point": "trap", "id": "tr_rollmat", "x": 10, "y": 12 },
+          { "point": "trap", "id": "tr_rollmat", "x": 12, "y": 13 }
+        ],
+        "place_loot": [
+          { "group": "trash_forest", "x": [ 1, 22 ], "y": [ 1, 2 ], "repeat": 2, "chance": 75 },
+          { "group": "cannedfood", "x": 14, "y": 10, "repeat": 5, "chance": 50 },
+          { "group": "drugs_heal_simple", "x": 14, "y": 10, "repeat": 5, "chance": 50 },
+          { "group": "weapons", "x": 14, "y": 12, "repeat": 2, "chance": 25 },
+          { "group": "guns_survival", "x": 14, "y": 12, "repeat": 2, "chance": 25 },
+          { "group": "ammo_reloaded", "x": 14, "y": 12, "repeat": 5, "chance": 50 },
+          { "item": "shovel", "x": 14, "y": 12, "chance": 80 },
+          { "group": "remains_soldier", "x": 10, "y": 16, "chance": 100 },
+          { "item": "223_casing", "x": [ 10, 15 ], "y": [ 13, 15 ], "repeat": 10, "chance": 50 },
+          { "group": "map_extra_drugdeal", "x": 11, "y": 7, "chance": 100 },
+          { "group": "map_extra_college_camping", "x": 12, "y": 7, "chance": 100 },
+          { "item": "arcana_strange_crystal", "x": 11, "y": 7, "chance": 100 },
+          { "group": "bed", "x": 10, "y": 10, "chance": 75 },
+          { "item": "arcana_dream_journal", "x": 10, "y": 10, "chance": 100 },
+          { "group": "bed", "x": 10, "y": 12, "chance": 75 },
+          { "group": "bed", "x": 12, "y": 9, "chance": 75 },
+          { "group": "bed", "x": 12, "y": 13, "chance": 75 }
+        ],
+        "place_monster": [
+          { "monster": "mon_shadow_summoned", "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 2, 4 ] },
+          { "monster": "mon_hunting_horror_summoned", "x": 12, "y": 12 }
+        ],
+        "place_vehicles": [ { "vehicle": "motorcycle", "x": 11, "y": 16, "rotation": 90, "fuel": 500, "status": 1, "chance": 100 } ],
+        "place_fields": [
+          { "x": [ 10, 11 ], "y": [ 15, 16 ], "field": "fd_blood", "intensity": 1 },
+          { "x": [ 10, 11 ], "y": [ 15, 16 ], "field": "fd_blood", "intensity": 1 },
+          { "x": [ 10, 11 ], "y": [ 15, 16 ], "field": "fd_blood", "intensity": 1 },
+          { "x": [ 9, 10 ], "y": [ 16, 17 ], "field": "fd_blood", "intensity": 1 }
+        ]
+      }
+    },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "dialogue": {
+      "describe": "Seeing this is probably a bug, as this mission is actually started via add_mission in dialogue.",
+      "offer": "Seeing this is probably a bug.",
+      "accepted": "Seeing this is probably a bug.",
+      "rejected": "Seeing this is probably a bug.",
+      "advice": "Seeing this is probably a bug.",
+      "inquire": "Have you found anything?",
+      "success": "Alright, let me see.  This might help, but I don't think I can do much with this just yet.  Keep that for now and bring it to Sofia, see if she can figure anything else out.  I'll do what I can to review the other intel I have regarding the attacks.  Narrowing down the area plus getting a better feel for what we're up against should let us pinpoint the cause.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    },
+    "end": {
+      "effect": [
+        { "u_add_var": "johnathan_prelude_penultimate", "type": "mission", "context": "rural_church", "value": "yes" },
+        { "u_add_effect": "cf_mission_1" }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_GM_4",
+    "type": "mission_definition",
+    "name": { "str": "Cleanse The Anomaly" },
+    "description": "Seek out an anomalous structure that has recently forced its way into our world.  Kill whatever abomination lies at its heart.",
+    "goal": "MGOAL_KILL_MONSTER",
+    "difficulty": 8,
+    "value": 200000,
+    "has_generic_rewards": false,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "arcana_structure_anomalous_entrance",
+        "om_special": "arcana_anomaly_resurgence",
+        "om_terrain_replace": "field",
+        "reveal_radius": 5,
+        "random": true,
+        "search_range": 180,
+        "min_distance": 20
+      },
+      "update_mapgen": [
+        {
+          "om_terrain": "arcana_structure_anomalous_finale",
+          "place_monster": [ { "monster": "mon_seraphic_shade", "x": 20, "y": 5, "target": true } ]
+        },
+        { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_GM_4_a" },
+        { "om_terrain": "cf_church_2", "mapgen_update_id": "cf_church_upgrade_GM_4_b" },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_GM_4_c" },
+        { "om_terrain": "cf_church_4", "mapgen_update_id": "cf_church_upgrade_GM_4_d" }
+      ]
+    },
+    "dialogue": {
+      "describe": "Grant us strength…",
+      "offer": "The time has come.  We have discussed the nature of this anomaly, confirmed the source.  There is something there, subtle but becoming more detectable by the day.  Whatever disruption lies within, it must be cleansed.  I trust you with this task, if you accept it.",
+      "accepted": "God and gods willing, return safe and sound.  I will once more authorize you to request the aid of one of our hunters if you require it.  Furthermore, if you did not already seek their aid last time, you may still do so.  We can afford that much at least, for a mission this important.",
+      "rejected": "We're stretched thin as it is, please return as soon as you're able to accept this task.  I worry that things will only worsen if this threat is left unchecked.",
+      "advice": "Reports suggest it is a warped, ruined remnant of some unholy alien structure, similar to what those chitinous abominations build.  I have no doubt that there are greater anomalies and hazards within.  Exercise extreme caution, bring any firepower as well as physical and magical protection that you can obtain.",
+      "inquire": "Have you destroyed the threat?",
+      "success": "Good.  Seeing you walk in here alive, I could almost sense that the deed was done.  I do not know the cause of this, nor what the future holds.  Only that we have bought ourselves much-needed time, to pursue any research that might prevent further catastrophes in the future.  There are no further tasks I can offer you, nor any greater reward I can spare.  We, perhaps all of humanity in the long term, are in your debt.",
+      "success_lie": "What idiocy is this?",
+      "failure": "But how?"
+    },
+    "end": {
+      "effect": [
+        { "npc_add_var": "johnathan_mission_finale", "type": "mission", "context": "rural_church", "value": "yes" },
+        { "u_add_effect": "cf_mission_1" },
+        { "u_buy_item": "CF_golden_scale", "count": 20 }
+      ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_GM_5_a" },
+        { "om_terrain": "cf_church_2", "mapgen_update_id": "cf_church_upgrade_GM_5_b" },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_GM_5_c" },
+        { "om_terrain": "cf_church_4", "mapgen_update_id": "cf_church_upgrade_GM_5_d" }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_AUX_A",
+    "type": "mission_definition",
+    "name": { "str": "Bring 5 Blank Scrolls" },
+    "description": "Find or make 5 blank scrolls for the scavengers operating out of the rural church.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 2,
+    "item": "scroll_blank",
+    "count": 5,
+    "value": 12500,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "has_generic_rewards": false,
+    "end": {
+      "effect": [ { "u_buy_item": "CF_golden_scale", "count": 5 } ],
+      "update_mapgen": [ { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_aux_a" } ]
+    },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug.",
+      "offer": "Some of the scavenger team has taken an interest in the sort of strange stuff the locals here deal with.  I talked it out with Ms. McKinnon and she said she can help with teaching, and we've decided to focus on scrolls.  They provide us with a relatively reusable way to deal with trouble while on a scouting run.  If you can get about five blanks for us, we'll be able to figure things out from there.",
+      "accepted": "Thanks.  They seem to know their stuff well enough to assist in teaching us the basics, so once we have some blank scrolls we'll be able to make a couple of the safer ones for our scouts to use.",
+      "rejected": "Alright.  Come see me if you change your mind.",
+      "advice": "They mentioned that the book that teaches you how to use these items is called The Six Pillars.  If you can't find any suitable scrolls out there, that book might be useful for getting the specifications needed to make one.",
+      "inquire": "Any luck so far?",
+      "success": "Thank you, and here's enough of these Scales to hopefully make up for the hassle.  Least I can do.  According to Sofia, they turn blank after you activate the effects put into them.  So we'll be able to make these last a while, as long as the scavengers aren't too rough on the paper.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    }
+  },
+  {
+    "id": "MISSION_CF_AUX_B",
+    "type": "mission_definition",
+    "name": { "str": "Bring Wraithslayer Crossbow" },
+    "description": "Find or make a wraithslayer crossbow for the scavengers operating out of the rural church.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 3,
+    "item": "ethereal_crossbow",
+    "value": 50000,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "has_generic_rewards": false,
+    "end": {
+      "effect": [ { "u_buy_item": "CF_golden_scale", "count": 20 } ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_aux_b_1" },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_aux_b_2" }
+      ]
+    },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug.",
+      "offer": "Welp, some of the boys here have been getting interested in the mystical stuff these fellas are preaching, but personally I'm most interested in one of them magic stringless crossbows they take a liking to.  Ammo for it's real portable, they seem to have plenty of it, and it goes through tough hide like nothing I've ever seen before.  I don't know if they have one to spare, but if you can get your hands on one, I'll pay up as well as I can for it.",
+      "accepted": "Alright then.  I don't think they'd look too kindly on us diving right into carrying these things around, but I'll talk it out with them later on.  Just don't want to bother them too much about it, you know?",
+      "rejected": "Hell, you change your mind just come see me, y'hear?",
+      "advice": "Figure they have some way to make those things, if you can't get your hands on one…",
+      "inquire": "Any luck?",
+      "success": "Damn this thing looks fancy, I hope this is enough for your trouble.  Actually hell, the boys and I just took in a decent haul not long ago, I can do one better than just paying you.  I'll have a cut of the last hunt laid out on the table in the main room laid out for you.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    }
+  },
+  {
+    "id": "MISSION_CF_AUX_C",
+    "type": "mission_definition",
+    "name": { "str": "Bring a copy of History of Alchemy" },
+    "description": "Find a copy of History of Alchemy for the Old Guard doctor stationed at the rural church.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 3,
+    "item": "book_potioncraft",
+    "value": 25000,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "end": {
+      "effect": [ { "u_buy_item": "CF_golden_scale", "count": 10 }, { "u_buy_item": "rx12_injector" } ],
+      "update_mapgen": [ { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_aux_c" } ]
+    },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug.",
+      "offer": "I need you to do something discreet for me, if you could.  The locals here are still a bit reluctant to work with us, and I can understand why.  Personally, I just want to go about my duties here as best as I'm able, and I think the best way to keep my superiors from causing trouble would be if I provided them with information that'd give them good reason to work with this place, instead of working against them.  I have something in mind that'd kill two birds with one stone, as it were.  If you can provide me with a copy of their medical text, History of Alchemy, I'll be able to better treat people here, and it'll give me a bargaining chip to keep things civil between the locals and my superiors.",
+      "accepted": "Excellent.  I know this is a bit of an odd task, but it will do a lot to ease my mind.  Not to mention, as anomalous as all this is, having the opportunity to better understand what I've gotten myself into would be appreciated.",
+      "rejected": "Please reconsider, I'll do what I can to repay you if you're able to handle this for me.",
+      "advice": "You can see if they have a book to spare, but do try not to be overly obvious about it…",
+      "inquire": "Do you have it yet?",
+      "success": "Thank you.  I've already been in contact with my CO and they're interested in getting more intel as well.  I'm still a little concerned, but I feel a bit more confident that they aren't going to do anything rash.  As promised, fair payment and a little something extra.  This is an RX-12 stimulant delivery module.  You might find it useful for emergencies.  Came in with the latest gear shipment.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    }
+  },
+  {
+    "id": "MISSION_CF_AUX_D",
+    "type": "mission_definition",
+    "name": { "str": "Find a scarlet flower" },
+    "description": "Obtain a red flower associated with otherworldly plant monsters, and return it to the farmhand.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 1,
+    "value": 15000,
+    "has_generic_rewards": false,
+    "item": "triffid_queen_flower",
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "new_anomaly_t",
+        "om_terrain_replace": "field",
+        "reveal_radius": 3,
+        "random": true,
+        "search_range": 90,
+        "min_distance": 10
+      }
+    },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug.",
+      "offer": "Not long after I got here I took an interest in the sorts of things the locals collected.  Truth is, early on when shit hit the fan I picked up a few books and some other experience with all this strangeness.  Not much, but enough to keep me another day away from dying.  I used to help tend to crops, these new experiences and some of the weird creatures I've seen gave me an idea for something that might improve crop yields.  Interested?",
+      "accepted": "Alright.  Truth is, it's a bit dangerous hunting those monsters out there.  The big walking plants, making nests burrowed underground.  When I went to Ms. McKinnon with the idea she said she'd keep an eye out for any leads.  I'll give you directions to a local hotspot she got wind of from her scouts.  If you visit it, keep an eye out for the ones with bright red flowers, that can raise hell growing plants like wildfire.  I need the flower itself.",
+      "rejected": "Well alright, come back anytime if you change your mind.  I doubt it'll be a massive improvement to the logistics of things here or at the commune, but it's worth looking into.",
+      "advice": "Most of those things are venomous and right nasty to get tangled up in.  Just be mindful about burning them out, I don't want to risk harming what you're there for.",
+      "inquire": "Any luck?",
+      "success": "Alright.  Sofia's skeptical that I can make a large-scale breakthrough with this.  I can use what I've learned, and a little help from her, to liven up the compound here and grow a few things, but it seems it'll take a lot of energy plus burn out whatever force is still present in these petals.  They have a way to weave its effects into someone's very being so they don't need to hunt monsters, but that just makes it drain energy out of whoever uses it instead.  Still, thank you for the help, should have the finishing touches ready right quick.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    },
+    "end": {
+      "effect": [ { "u_buy_item": "CF_golden_scale", "count": 8 } ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_aux_d_1" },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_aux_d_2" }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_AUX_E",
+    "type": "mission_definition",
+    "name": { "str": "Investigate anomalous ambush" },
+    "description": "Put down the cause of a recent attack on a caravan, then report back to the shopkeep.",
+    "goal": "MGOAL_KILL_MONSTER",
+    "difficulty": 1,
+    "value": 15000,
+    "has_generic_rewards": false,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "new_anomaly_w", "om_terrain_replace": "field", "random": true, "search_range": 60, "min_distance": 10 },
+      "update_mapgen": [
+        {
+          "om_terrain": "new_anomaly_w",
+          "place_monster": [ { "monster": "mon_alpha_razorclaw", "x": 12, "y": 20, "target": true } ]
+        }
+      ]
+    },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug.",
+      "offer": "I've been working on getting some equipment set up here, to expand the kinds of things we can make.  I have a guy bringing in supplies and we can get it set up ourselves.  Problem is, I had to get in touch with a new transport team because the last one up and vanished.  Word from the other scavengers gave me an estimate of what happened, and it doesn't sound good.  I'd like you to go scope it out, and put down whoever or whatever caused this.",
+      "accepted": "Thanks.  You can keep anything from the caravan you can salvage, I'm more interested in taking care of whatever ambushed them.",
+      "rejected": "Alright.  I want you to come see me if you change your mind, though.",
+      "advice": "I don't know what to expect out there, intel suggests some kinda rock formation that wasn't on the local route maps, might be a hideout, staging area, lair or who knows what.  Could be some kinda anomaly.",
+      "inquire": "Got 'em yet?",
+      "success": "Good.  Those people I worked with were friends of mine.  From what little I understand of what happened out there and what you saw out there, seems like a dogshit way to go out.  Lil payback at least keeps those things from threatening other scavs.  Anyway, things should be just about set up by now.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    },
+    "end": {
+      "effect": [ { "u_buy_item": "CF_golden_scale", "count": 8 } ],
+      "update_mapgen": [
+        { "om_terrain": "cf_church_1", "mapgen_update_id": "cf_church_upgrade_aux_e_1" },
+        { "om_terrain": "cf_church_3", "mapgen_update_id": "cf_church_upgrade_aux_e_2" }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_PURIFIER_1",
+    "type": "mission_definition",
+    "name": { "str": "Retrieve Reconnaissance Case" },
+    "description": "Find a laptop briefcase at the last known location of a Cleaning Flame scout, and bring it back for Nicholas to examine for useful information.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 4,
+    "value": 7500,
+    "has_generic_rewards": false,
+    "item": "arcane_purifier_intel",
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_PURIFIER_1_2",
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "s_gas_arcana_bandit",
+        "om_special": "arcana_purifer_ambushed",
+        "om_terrain_replace": "field",
+        "reveal_radius": 3,
+        "random": true,
+        "search_range": 180,
+        "min_distance": 15
+      }
+    },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug.",
+      "offer": "When we were on our way here, we had been trying to regain contact with another member of our order.  She had been on a scouting mission, gathering information we suspect will lead us to a breakthrough regarding the cause of this apocalypse, or failing that a way to prevent things from getting worse.  I'd like to ask you to help track her down, or recover the device they stored their intel on if it's too late for them.",
+      "accepted": "Last we heard, she was headed to an old rest stop to search for supplies, and said she'd contact us afterward.  I'll show you the location they reported here.  If you don't find any sign of her, look for what we called a reconnaissance case.  It's a briefcase with a laptop, plus some other observation and communication items in it.  I'm going to hope and pray the data is still salvageable.",
+      "rejected": "If this lead goes anywhere, it might be our last hope of reversing at least some of the damage the fabric of reality has suffered.  I'm not that optimistic of it working out either, but it's worth trying.  Please come back and talk to me if you change your mind.",
+      "advice": "If she had a communication failure she'll have likely hidden the laptop there as a dead drop, since we'd know that to be her last destination.  Unless something happened to her, that's what worries me.  It shouldn't be too close to the cities but there's always the risk that something dangerous might be in the area, so be on your guard.",
+      "inquire": "Did you find her?  What about the intel?",
+      "success": "Gods above and below, I'm glad you're back in one piece.  I'm guessing she didn't make it.  From the look of this, the laptop almost didn't either.  But it looks like I can get intel out of it, so her death won't be in vain.  Come see me when you've rested up a bit, whenever you feel you're ready.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    },
+    "end": {
+      "effect": [
+        { "npc_add_var": "nicholas_mission_1_end", "type": "mission", "context": "rural_church", "value": "yes" },
+        { "u_add_effect": "cf_mission_1" },
+        { "u_buy_item": "CF_golden_scale", "count": 10 }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_PURIFIER_1_2",
+    "type": "mission_definition",
+    "name": { "str": "Find Information About Project Kairos" },
+    "description": "Investigate for further information about Project Kairos, talking to others familiar with military or science facilities.  Bring any findings back to Nicholas.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 4,
+    "value": 7500,
+    "has_generic_rewards": false,
+    "item": "arcane_purifier_intel_2",
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_CF_PURIFIER_1_3",
+    "start": { "effect": [ { "u_buy_item": "cf_purifier_project_data" } ] },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug.",
+      "offer": "I'd like for you to find anyone else you think might be familiar with the military's experiments, the research labs, that sort of thing.  People who might be able to help us get a definite location out of what little information we have to go on.  If they give us any leads, I'd like you to bring whatever intel you find back here.",
+      "accepted": "Here's a printout of all the useful information I got out of the laptop concerning Project Kairos.  It contains a list of known Priority Sites and records of shipments between them.  Show this to someone who might know more about what these specific Priority Sites were up to, and ideally which of those shipments contained anomalous materials.  We might get a namedrop of the project, or just confirmation that one location in particular was getting the bulk of the anomalous items.",
+      "rejected": "Come back if you change your mind.  You need to understand how close we are to a breakthrough.  All that information Sofia gathered, if we had this project's findings to go with that, we might be able to fix some of this.",
+      "advice": "Some of the people at the refugee center might have contacts with the Old Guard.  I don't know if they'll be that willing to help us or not, but if they understand the direness of the situation they might be our best bet.  Otherwise, if you know of any surviving research personnel from other government labs, they might be worth talking to.",
+      "inquire": "Any luck?",
+      "success": "This should give us a better understanding of which places were actually receiving anomalous materials.  Let's go over this together, then we should be ready.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    },
+    "end": {
+      "effect": [
+        { "npc_add_var": "nicholas_mission_2_end", "type": "mission", "context": "rural_church", "value": "yes" },
+        { "u_add_effect": "cf_mission_1" },
+        { "u_buy_item": "CF_golden_scale", "count": 15 }
+      ]
+    }
+  },
+  {
+    "id": "MISSION_CF_PURIFIER_1_INTERLUDE_1",
+    "type": "mission_definition",
+    "name": { "str": "Investigate Laboratory Server Room" },
+    "description": "Investigate a science lab and retrieve the intel Nicholas is looking for from their server room.  Bring the shipping manifest back to Nicholas and arrange for information on medical shipments to be sent back to the Old Guard doctor, then check back with the refugee center.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "u_has_var": "nicholas_info_sent", "type": "mission", "context": "rural_church", "value": "yes" },
+    "difficulty": 5,
+    "has_generic_rewards": false,
+    "value": 10000,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "microlab_arcana_surface",
+        "om_special": "4x4_microlab_arcana",
+        "om_terrain_replace": "field",
+        "reveal_radius": 3,
+        "random": true,
+        "search_range": 180,
+        "min_distance": 15,
+        "z": 0
+      },
+      "effect": [ { "npc_add_var": "nicholas_mission_2_mid", "type": "mission", "context": "rural_church", "value": "yes" } ]
+    },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug, as this mission is actually started via add_mission in dialogue.",
+      "offer": "Seeing this is probably a bug.",
+      "accepted": "Seeing this is probably a bug.",
+      "rejected": "Seeing this is probably a bug.",
+      "advice": "Seeing this is probably a bug.",
+      "inquire": "Did you find what you're looking for?",
+      "success": "That's good.  I've been going over the information your contact sent us, some of these sites have items we desperately need.  I'll leave the matter of this \"Project Kairos\" for your contact to deal with, I trust they can handle whatever it is they're looking for.  Here's something for your trouble, the least I can do after you helped arrange this.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    },
+    "end": { "effect": [ { "u_buy_item": "FMCNote", "count": 20 } ] }
+  },
+  {
+    "id": "MISSION_CF_PURIFIER_1_INTERLUDE_2",
+    "type": "mission_definition",
+    "name": { "str": "Investigate Lost Scavenger Team" },
+    "description": "Investigate the last known location of a group of survivors, suspected to have found documents of the information Nicholas is looking for.  After bringing the information back to Nicholas, you may return to bring back news of what happened to the scavengers.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "u_has_var": "nicholas_info_sent", "type": "mission", "context": "rural_church", "value": "yes" },
+    "difficulty": 5,
+    "has_generic_rewards": false,
+    "value": 10000,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "arcana_cave_caravan",
+        "om_special": "Cave_arcana_caravan",
+        "om_terrain_replace": "field",
+        "reveal_radius": 3,
+        "random": true,
+        "search_range": 180,
+        "min_distance": 15,
+        "z": 0
+      },
+      "effect": [ { "npc_add_var": "nicholas_mission_2_mid", "type": "mission", "context": "rural_church", "value": "yes" } ]
+    },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug, as this mission is actually started via add_mission in dialogue.",
+      "offer": "Seeing this is probably a bug.",
+      "accepted": "Seeing this is probably a bug.",
+      "rejected": "Seeing this is probably a bug.",
+      "advice": "Seeing this is probably a bug.",
+      "inquire": "Did you find them?",
+      "success": "I'm guessing it was too late for them.  I did hear from Sofia's people however, we now have a much better understanding of what places might be valuable sources of supplies, and which are best avoided.  This will save lives in the long run.  I know it's not much given the risk you went through, but here.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    },
+    "end": { "effect": [ { "u_buy_item": "FMCNote", "count": 15 } ] }
+  },
+  {
+    "id": "MISSION_CF_PURIFIER_1_INTERLUDE_3",
+    "type": "mission_definition",
+    "name": { "str": "Investigate Material Transport Site" },
+    "description": "Investigate the location known to be used for organizing the transportation of items from local science labs, which may have the documents Nicholas is looking for.  Additionally, bring a t-substrate sample back to Hub 01.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 5,
+    "has_generic_rewards": false,
+    "item": "sample_t_substrate",
+    "value": 10000,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "arcana_warehouse_lab",
+        "om_special": "Lab_arcana_warehouse",
+        "om_terrain_replace": "field",
+        "reveal_radius": 3,
+        "random": true,
+        "search_range": 180,
+        "min_distance": 15,
+        "z": 0
+      },
+      "effect": [ { "npc_add_var": "nicholas_mission_2_mid", "type": "mission", "context": "rural_church", "value": "yes" } ]
+    },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug, as this mission is actually started via add_mission in dialogue.",
+      "offer": "Seeing this is probably a bug.",
+      "accepted": "Seeing this is probably a bug.",
+      "rejected": "Seeing this is probably a bug.",
+      "advice": "Seeing this is probably a bug.",
+      "inquire": "Did you find it?",
+      "success": "Good.  Here is your payment.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    },
+    "end": { "effect": [ { "u_buy_item": "RobofacCoin", "count": 1 } ] }
+  },
+  {
+    "id": "MISSION_CF_PURIFIER_1_3",
+    "type": "mission_definition",
+    "name": { "str": "Retrieve Dimensional Focus Lens" },
+    "description": "Investigate the research facility now suspected to be the location of Project Kairos, and retrieve a vital component known as a dimensional focus lens from it.",
+    "goal": "MGOAL_FIND_ITEM",
+    "difficulty": 8,
+    "value": 900000,
+    "has_generic_rewards": false,
+    "item": "dimensional_focus_lens",
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "start": {
+      "assign_mission_target": {
+        "om_terrain": "lab_arcane_1_6",
+        "om_special": "lab_arcane",
+        "om_terrain_replace": "field",
+        "reveal_radius": 3,
+        "random": true,
+        "search_range": 180,
+        "min_distance": 10
+      }
+    },
+    "dialogue": {
+      "describe": "Seeing this is probably a bug.",
+      "offer": "A large volume, the bulk of anomalous items on these shipping records, eventually found their way to a single site.  That's what we're after, and I've also figured out exactly what we need.  One of the earlier shipments on record mentions something called a dimensional focus lens.  Given what we know of the project and what they were trying to accomplish, that's the component we need to acquire to use their findings to further our own work.  Will you help us?",
+      "accepted": "Thank you.  I'll give you directions to your objective.  Whatever device the component was used for, it'll likely be well-secured, unless there's been a containment breach or some other disaster.  Take apart any anomalous machinery you find down there, we don't know if it will have been used for a portable device, or a machine that'll have to be scrapped to recover the component.",
+      "rejected": "Please return to me if you change your mind.  We are on the edge of a breakthrough, and this might give us the means to massively improve our changes of survival.",
+      "advice": "There's no way they haven't been overrun by now.  If you've ever explored those old facilities you'll know there's a high risk of the place crawling with undead.  Who knows what other anomalies may be there, too?  Be on your guard.",
+      "inquire": "Have you found it?",
+      "success": "It's just as I thought.  The culmination of several different research facilities, a project to bring these pieces together, and a very faint aura to it.  They did a lot of testing with the machinery they built, didn't they?  That helps us too.  This a lot for me to take in and analyze, give me about three days and I should have some results you might be interested in taking a look at.  In the meantime, if you have any questions I'll see what I can answer.",
+      "success_lie": "Seeing this is probably a bug.",
+      "failure": "Seeing this is probably a bug."
+    },
+    "end": {
+      "effect": [
+        { "npc_add_var": "nicholas_mission_3_end", "type": "mission", "context": "rural_church", "value": "yes" },
+        { "u_add_effect": "cf_mission_1" },
+        { "npc_add_effect": "cf_purifier_making_item", "duration": 259200 },
+        { "u_buy_item": "CF_golden_scale", "count": 20 }
+      ]
+    }
+  }
+]

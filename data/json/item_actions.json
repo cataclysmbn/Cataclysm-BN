@@ -427,7 +427,7 @@
   {
     "type": "item_action",
     "id": "FISH_ROD",
-    "name": { "str": "Fish" }
+    "name": { "ctxt": "fishing action", "str": "Fish" }
   },
   {
     "type": "item_action",
@@ -828,6 +828,11 @@
     "type": "item_action",
     "id": "ARTIFACT_ANALYZER",
     "name": { "str": "Analyze artifact" }
+  },
+  {
+    "type": "item_action",
+    "id": "OBJ_VAR_VIEWER",
+    "name": { "str": "Inspect object variables" }
   },
   {
     "type": "item_action",

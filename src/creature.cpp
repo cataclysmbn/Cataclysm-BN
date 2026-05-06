@@ -1795,6 +1795,10 @@ std::string Creature::get_value( const std::string &key ) const
     auto it = values.find( key );
     return ( it == values.end() ) ? "" : it->second;
 }
+auto Creature::get_values_map() const -> const std::unordered_map<std::string, std::string> &
+{
+    return values;
+}
 
 void Creature::mod_pain( int npain )
 {
@@ -2539,9 +2543,14 @@ effects_map Creature::get_all_effects() const
     return effects_without_removed;
 }
 
+tripoint_abs_ms Creature::abs_pos() const
+{
+    return bub_to_abs( bub_pos() );
+}
+
 bool Creature::is_loaded() const
 {
-    return get_map().get_submap_at( pos() ) != nullptr;
+    return get_map().get_submap_at( tripoint_bub_ms( pos() ) ) != nullptr;
 }
 
 bool Creature::is_simulated() const

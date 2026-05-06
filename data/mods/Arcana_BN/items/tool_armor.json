@@ -1,0 +1,865 @@
+[
+  {
+    "id": "triffid_garland_empowered",
+    "copy-from": "triffid_garland",
+    "sub": "triffid_garland",
+    "type": "TOOL_ARMOR",
+    "category": "tools",
+    "name": { "str": "verdant triffid garland" },
+    "description": "A wreath of brightly-colored flowers from another world, worn around the neck.  Elemental magic has been woven into its structure, converting it into a primitive magic item.  Using it will grant a burst of renewed stamina, recovering pain and speeding up the body's natural healing.  It will take a long time to recharge after each use, and activating it also fatigues the user.  It can hold up to 5 uses, each use takes 25 hours to charge.",
+    "price_postapoc": "12 USD",
+    "max_charges": 125,
+    "charges_per_use": 25,
+    "flags": [ "FANCY", "NO_RELOAD", "NO_UNLOAD", "TARDIS" ],
+    "relic_data": { "recharge_scheme": [ { "type": "time", "req": "none", "interval": "1 h", "rate": 1 } ] },
+    "//": "Water talisman and earth talisman.  Each use has power equivalent to 250 mana.",
+    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_triffid_garland_empowered", "no_fail": true, "level": 0 }
+  },
+  {
+    "id": "amulet_exotic_empowered",
+    "copy-from": "amulet_exotic",
+    "sub": "amulet_exotic",
+    "type": "TOOL_ARMOR",
+    "category": "tools",
+    "name": { "str": "shrouded exotic amulet" },
+    "description": "A makeshift necklace with a single gem, a charm worked from some manner of unnatural material.  Elemental magic has been woven into its structure, converting it into a primitive magic item.  Activating it will shroud your life force, rendering you invisible (but not inaudible) to the undead, in exchange for making mundane wildlife more aggressive towards you.  It will take a long time to recharge after each use, and activating it also fatigues the user.  It can hold up to 5 uses, each use takes 35 hours to charge.",
+    "price_postapoc": "15 USD",
+    "max_charges": 175,
+    "charges_per_use": 35,
+    "flags": [ "FANCY", "NO_RELOAD", "NO_UNLOAD", "TARDIS" ],
+    "relic_data": { "recharge_scheme": [ { "type": "time", "req": "none", "interval": "1 h", "rate": 1 } ] },
+    "//": "Flame talisman and air talisman.  Each use has power equivalent to 350 mana.",
+    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_amulet_exotic_empowered", "no_fail": true, "level": 0 }
+  },
+  {
+    "id": "brooch_iridescent_empowered",
+    "copy-from": "brooch_iridescent",
+    "sub": "brooch_iridescent",
+    "type": "TOOL_ARMOR",
+    "category": "tools",
+    "name": { "str": "bolstered iridescent brooch" },
+    "description": "A hand-crafted disc brooch made from a strange, unearthly material vaguely resembling mother-of-pearl  Elemental magic has been woven into its structure, converting it into a primitive magic item.  Using it will reduce all incoming damage by 25%.  It will take a long time to recharge after each use, and activating it also fatigues the user.  It can hold up to 5 uses, each use takes 45 hours to charge.",
+    "price_postapoc": "20 USD",
+    "max_charges": 225,
+    "charges_per_use": 45,
+    "flags": [ "FANCY", "NO_RELOAD", "NO_UNLOAD", "TARDIS" ],
+    "relic_data": { "recharge_scheme": [ { "type": "time", "req": "none", "interval": "1 h", "rate": 1 } ] },
+    "//": "Earth talisman and air talisman.  Each use has power equivalent to 450 mana.",
+    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_brooch_iridescent_empowered", "no_fail": true, "level": 0 }
+  },
+  {
+    "id": "gilded_aegis",
+    "type": "TOOL_ARMOR",
+    "copy-from": "cloak_leather",
+    "name": { "str": "gilded aegis", "str_pl": "gilded aegises" },
+    "description": "A simple leather cloak, richly decorated with scales of gilded iron.  It resembles the hide of a golden dragon or serpent.  Using it will heal minor injuries, in exchange for inflicting pain.",
+    "material": [ "leather", "iron", "gold" ],
+    "//": "A reusable healing item that's also armored?  Yeah, that's staying valuable for a while.",
+    "price": "700 USD",
+    "price_postapoc": "80 USD",
+    "color": "yellow",
+    "encumbrance": 12,
+    "coverage": 90,
+    "max_charges": 60,
+    "charges_per_use": 30,
+    "ammo": "essence_dull_type",
+    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_gilded_aegis_healing", "no_fail": true, "level": 0, "need_worn": true },
+    "relative": { "weight": 3020, "material_thickness": 3 },
+    "extend": { "flags": [ "NO_SALVAGE", "HELMET_COMPAT", "FANCY" ] }
+  },
+  {
+    "id": "somen_clairvoyance",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "mask of insight", "str_pl": "masks of insight" },
+    "description": "A mask faced with iron and decorated with other metal, depicting the face of some unknown divine figure.  Fueling it with consecrated essence will grant the wearer clairvoyance within a limited range and protection from bright flashes, but blind you to anything beyond its effect.",
+    "weight": "710 g",
+    "volume": "1 L",
+    "price": "210 USD",
+    "price_postapoc": "40 USD",
+    "material": [ "iron", "copper" ],
+    "symbol": "[",
+    "looks_like": "mask_bal",
+    "color": "light_red",
+    "max_charges": 24,
+    "charges_per_use": 1,
+    "ammo": "essence_dull_type",
+    "covers": [ "eyes", "mouth" ],
+    "coverage": 100,
+    "encumbrance": 12,
+    "warmth": 10,
+    "material_thickness": 4,
+    "environmental_protection": 1,
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [ { "value": "BONUS_DODGE", "add": 2 } ],
+          "ench_effects": [ { "effect": "mask_blind_immunity", "intensity": 1 }, { "effect": "arcana_clairvoyance_plus_hidden", "intensity": 1 } ]
+        }
+      ]
+    },
+    "use_action": {
+      "target": "somen_clairvoyance_on",
+      "msg": "The mask appears to contort into a fearsome visage, the eyeholes momentarily seeming to glow as a strange perception replaces your natural vision.",
+      "active": true,
+      "need_worn": true,
+      "need_charges": 1,
+      "need_charges_msg": "Fuel the mask with consecrated essence, to open your eyes.",
+      "type": "transform"
+    },
+    "flags": [ "NO_SALVAGE" ]
+  },
+  {
+    "id": "somen_clairvoyance_on",
+    "type": "TOOL_ARMOR",
+    "copy-from": "somen_clairvoyance",
+    "repairs_like": "somen_clairvoyance",
+    "name": { "str": "mask of insight (on)", "str_pl": "masks of insight (on)" },
+    "description": "A mask faced with iron and decorated with other metal, depicting the face of some unknown divine figure.  The face depicted on the mask seems more menacing than it did previously.",
+    "turns_per_charge": 100,
+    "revert_to": "somen_clairvoyance",
+    "qualities": [ [ "GLARE", 2 ] ],
+    "use_action": {
+      "target": "somen_clairvoyance",
+      "msg": "The mask's features return to its original impassive expression.",
+      "menu_text": "Turn off",
+      "type": "transform"
+    },
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT", "PARTIAL_DEAF" ] }
+  },
+  {
+    "id": "somen_clairvoyance_xl",
+    "repairs_like": "somen_clairvoyance",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "hunter's visor" },
+    "description": "A half-mask covering the top half of the face, made of iron decorated with other metal.  Loose-fitting and designed with mutant anatomy in mind, and to be worn over other items.  Fueling it with consecrated essence will grant the wearer clairvoyance within a limited range and protection from bright flashes, but blind you to anything beyond its effect.",
+    "weight": "500 g",
+    "volume": "750 ml",
+    "price": "210 USD",
+    "price_postapoc": "40 USD",
+    "material": [ "iron", "copper" ],
+    "symbol": "[",
+    "looks_like": "mask_bal",
+    "color": "light_red",
+    "max_charges": 24,
+    "charges_per_use": 1,
+    "ammo": "essence_dull_type",
+    "covers": [ "eyes" ],
+    "coverage": 100,
+    "encumbrance": 12,
+    "material_thickness": 4,
+    "environmental_protection": 1,
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [ { "value": "BONUS_DODGE", "add": 2 } ],
+          "ench_effects": [ { "effect": "mask_blind_immunity", "intensity": 1 }, { "effect": "arcana_clairvoyance_plus_hidden", "intensity": 1 } ]
+        }
+      ]
+    },
+    "use_action": {
+      "target": "somen_clairvoyance_xl_on",
+      "msg": "The visor's surface shifts subtly, the eyeholes momentarily seeming to glow as a strange perception replaces your natural vision.",
+      "active": true,
+      "need_worn": true,
+      "need_charges": 1,
+      "need_charges_msg": "Fuel the visor with consecrated essence, to open your eyes.",
+      "type": "transform"
+    },
+    "flags": [ "NO_SALVAGE", "OVERSIZE", "OUTER", "POWERARMOR_COMPATIBLE" ]
+  },
+  {
+    "id": "somen_clairvoyance_xl_on",
+    "type": "TOOL_ARMOR",
+    "copy-from": "somen_clairvoyance_xl",
+    "name": { "str": "hunter's visor (on)", "str_pl": "hunter's visors (on)" },
+    "description": "A half-mask covering the top half of the face, made of iron decorated with other metal.  It vaguely gives the appearance of a hateful glare.",
+    "turns_per_charge": 100,
+    "revert_to": "somen_clairvoyance_xl",
+    "qualities": [ [ "GLARE", 2 ] ],
+    "use_action": {
+      "target": "somen_clairvoyance_xl",
+      "msg": "The visor shifts back to its normal appearance.",
+      "menu_text": "Turn off",
+      "type": "transform"
+    },
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT", "PARTIAL_DEAF" ] }
+  },
+  {
+    "id": "armor_wyrm",
+    "type": "TOOL_ARMOR",
+    "copy-from": "armor_blarmor",
+    "name": { "str": "wyrmskin armor", "str_pl": "sets of wyrmskin armor" },
+    "description": "A set of well-decorated leather armor, with serpentine patterns sewn into it and various adjustable straps added.  It can be used to conjure a long-lasting spray of acid.",
+    "material": [ "leather" ],
+    "covers": [ "legs", "torso", "arms", "feet" ],
+    "price": "450 USD",
+    "price_postapoc": "30 USD",
+    "color": "green",
+    "max_charges": 16,
+    "charges_per_use": 2,
+    "ammo": "essence_blood_type",
+    "coverage": 95,
+    "encumbrance": 9,
+    "storage": 0,
+    "environmental_protection": 10,
+    "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_wyrmskin_acid", "no_fail": true, "level": 0, "need_worn": true } ],
+    "relative": { "weight": "722 g", "volume": "1500 ml" },
+    "resistance": { "acid": 50 },
+    "extend": { "flags": [ "OVERSIZE", "NO_SALVAGE", "ALLOWS_NATURAL_ATTACKS", "FANCY", "ALLOWS_HOOVES" ] },
+    "delete": { "flags": [ "VARSIZE" ] }
+  },
+  {
+    "id": "revenant_crown",
+    "type": "TOOL_ARMOR",
+    "category": "clothing",
+    "name": { "str": "revenant crown" },
+    "description": "A wicked-looking crown made of precious metal, decorated with scenes of skeletons in a \"danse macabre\" motif.  A single brilliant gem adorns it, in the center of the scene depicted.  Using it shall yield immunity to food poisoning and parasites, in exchange for increased hunger.  It will not cure existing ailments, only prevent them.",
+    "weight": "650 g",
+    "volume": "3500 ml",
+    "price": "150 USD",
+    "price_postapoc": "40 USD",
+    "to_hit": -1,
+    "material": [ "silver", "diamond" ],
+    "symbol": "[",
+    "looks_like": "crown_silver",
+    "color": "yellow",
+    "max_charges": 6,
+    "ammo": "essence_blood_type",
+    "covers": [ "head" ],
+    "coverage": 20,
+    "material_thickness": 1,
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "mutations": [ "EATDEAD", "ARCANA_TOXINIMMUNE" ],
+          "ench_effects": [ { "effect": "revenant_hunger", "intensity": 1 } ]
+        }
+      ]
+    },
+    "use_action": [
+      {
+        "target": "revenant_crown_on",
+        "msg": "The gem shimmers with malevolent red light as you feel a strange hunger, a craving for rotting meat and stagnant water…",
+        "active": true,
+        "need_worn": true,
+        "need_charges": 1,
+        "need_charges_msg": "Feed the crown with blood essence.",
+        "menu_text": "Activate crown",
+        "type": "transform"
+      }
+    ],
+    "flags": [ "BELTED", "OVERSIZE", "NO_SALVAGE", "ALLOWS_NATURAL_ATTACKS", "POWERARMOR_COMPATIBLE" ]
+  },
+  {
+    "id": "revenant_crown_on",
+    "copy-from": "revenant_crown",
+    "repairs_like": "revenant_crown",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "revenant crown (on)", "str_pl": "revenant crowns (on)" },
+    "description": "A wicked-looking crown made of precious metal, decorated with scenes of skeletons in a \"danse macabre\" motif.  A single brilliant gem adorns it, seemingly aglow with a blood-red tinge.  While active it protects against food poisoning and parasites, in exchange for increased hunger.  It will not cure existing ailments, only prevent them.  Use it to turn it back off.",
+    "turns_per_charge": 900,
+    "revert_to": "revenant_crown",
+    "revert_msg": "The peculiar shimmer of the crown fades, and the craving for rotten flesh subsides.",
+    "use_action": [
+      {
+        "target": "revenant_crown",
+        "msg": "The peculiar shimmer of the crown fades, and the craving for rotten flesh subsides.",
+        "menu_text": "Turn off",
+        "type": "transform"
+      }
+    ]
+  },
+  {
+    "id": "robe_shadow",
+    "type": "TOOL_ARMOR",
+    "copy-from": "robe",
+    "name": { "str": "mantle of shadows", "str_pl": "mantles of shadows" },
+    "//": "misc properties were mostly made by averaging the values of all possible types of robe usable to make it, but no storage.",
+    "description": "A loose-fitting robe of some sort, heavily altered with decorations resting on the shoulders, dyed in a simple dark gray.  Activating it will grant invisibility, constantly draining essence while in use.",
+    "price": "900 USD",
+    "price_postapoc": "70 USD",
+    "coverage": 100,
+    "encumbrance": 7,
+    "max_encumbrance": 7,
+    "color": "dark_gray",
+    "max_charges": 20,
+    "charges_per_use": 1,
+    "ammo": "essence_type",
+    "material_thickness": 6,
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "ench_effects": [ { "effect": "arcana_invis_lesser", "intensity": 1 } ] } ]
+    },
+    "use_action": [
+      {
+        "target": "robe_shadow_on",
+        "msg": "The robe's fabric darkens to a rich shade of black, cloaking your surroundings in a flickering illusion.",
+        "active": true,
+        "need_worn": true,
+        "need_charges": 1,
+        "need_charges_msg": "The mantle requires essence to bring forth the night.",
+        "menu_text": "Activate illusory shroud",
+        "type": "transform"
+      }
+    ],
+    "relative": { "weight": 616, "volume": -1 },
+    "extend": { "flags": [ "NO_SALVAGE", "COMBAT_NPC_USE" ] }
+  },
+  {
+    "id": "robe_shadow_on",
+    "copy-from": "robe_shadow",
+    "repairs_like": "robe_shadow",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "mantle of shadows (on)", "str_pl": "mantles of shadows (on)" },
+    "description": "A loose-fitting robe of some sort, heavily altered with decorations resting on the shoulders.  The air wavers around it, barely noticeable to you.",
+    "turns_per_charge": 300,
+    "revert_to": "robe_shadow",
+    "revert_msg": "The robe's fabric returns to its normal gray color, dispelling the illusion.",
+    "use_action": [
+      {
+        "target": "robe_shadow",
+        "msg": "The robe's fabric returns to its normal gray color, dispelling the illusion.",
+        "menu_text": "Turn off",
+        "type": "transform"
+      }
+    ],
+    "extend": { "flags": [ "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "robe_shadow_xl",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "illusory mantle" },
+    "description": "A loose-fitting, short cape with decorative trim over the shoulders, dyed a simple dark gray.  Loosely fits over the shoulders even for mutant survivors.  Activating it will grant invisibility, constantly draining essence while in use.",
+    "weight": "1100 g",
+    "volume": "1250 ml",
+    "price": "900 USD",
+    "price_postapoc": "70 USD",
+    "to_hit": -1,
+    "material": [ "cotton" ],
+    "symbol": "[",
+    "looks_like": "poncho",
+    "repairs_like": "robe_shadow",
+    "color": "dark_gray",
+    "covers": [ "torso" ],
+    "coverage": 100,
+    "encumbrance": 3,
+    "warmth": 20,
+    "material_thickness": 6,
+    "max_charges": 20,
+    "charges_per_use": 1,
+    "ammo": "essence_type",
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "ench_effects": [ { "effect": "arcana_invis_lesser", "intensity": 1 } ] } ]
+    },
+    "use_action": [
+      {
+        "target": "robe_shadow_xl_on",
+        "msg": "The cape's fabric darkens to a rich shade of black, cloaking your surroundings in a flickering illusion.",
+        "active": true,
+        "need_worn": true,
+        "need_charges": 1,
+        "need_charges_msg": "The mantle requires essence to bring forth the night.",
+        "menu_text": "Activate illusory shroud",
+        "type": "transform"
+      }
+    ],
+    "flags": [ "OVERSIZE", "OUTER", "NO_SALVAGE", "COMBAT_NPC_USE" ]
+  },
+  {
+    "id": "robe_shadow_xl_on",
+    "copy-from": "robe_shadow_xl",
+    "repairs_like": "robe_shadow",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "illusory mantle (on)", "str_pl": "illusory mantles (on)" },
+    "description": "A loose-fitting, short cape with decorative trim over the shoulders, dyed a simple dark gray.  Loosely fits over the shoulders even for mutant survivors.  The air wavers around it, barely noticeable to you.",
+    "turns_per_charge": 300,
+    "revert_to": "robe_shadow_xl",
+    "revert_msg": "The cape's fabric returns to its normal gray color, dispelling the illusion.",
+    "use_action": [
+      {
+        "target": "robe_shadow_xl",
+        "msg": "The cape's fabric returns to its normal gray color, dispelling the illusion.",
+        "menu_text": "Turn off",
+        "type": "transform"
+      }
+    ],
+    "extend": { "flags": [ "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "gauntlets_necro",
+    "copy-from": "gloves_plate",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "pair of thunder gauntlets", "str_pl": "pairs of thunder gauntlets" },
+    "description": "A set of modified plate gauntlets, decorated with silver around the edges of each individual plate.  Touching the bare metal sends a faint electric tingle through you.  Use them to give a nearby enemy a powerful stunning jolt, draining health from your target.",
+    "price": "600 USD",
+    "price_postapoc": "50 USD",
+    "material": [ "steel", "leather", "silver" ],
+    "max_charges": 4,
+    "charges_per_use": 1,
+    "ammo": "essence_type",
+    "encumbrance": 16,
+    "use_action": [
+      {
+        "type": "cast_spell",
+        "spell_id": "arcana_item_thunder_gauntlets_taze",
+        "no_fail": true,
+        "level": 0,
+        "need_worn": true
+      }
+    ],
+    "relative": { "weight": 210, "material_thickness": 1 },
+    "extend": { "flags": [ "NO_SALVAGE" ] }
+  },
+  {
+    "id": "gauntlets_necro_xl",
+    "copy-from": "gloves_plate",
+    "looks_like": "gauntlets_necro",
+    "repairs_like": "gauntlets_necro",
+    "type": "TOOL_ARMOR",
+    "name": { "str_sp": "thunder demi-gaunts" },
+    "description": "Fingerless plate gauntlets, decorated with silver and leaving the user free to wear them even if they have claws or other mutations, or over gloves.  Touching the bare metal sends a faint electric tingle through you.  Use them to give a nearby enemy a powerful stunning jolt, draining health from your target.",
+    "price": "600 USD",
+    "price_postapoc": "50 USD",
+    "material": [ "iron", "leather", "silver" ],
+    "coverage": 75,
+    "encumbrance": 12,
+    "warmth": 15,
+    "max_charges": 4,
+    "charges_per_use": 1,
+    "ammo": "essence_type",
+    "use_action": [
+      {
+        "type": "cast_spell",
+        "spell_id": "arcana_item_thunder_gauntlets_taze",
+        "no_fail": true,
+        "level": 0,
+        "need_worn": true
+      }
+    ],
+    "relative": { "weight": 120, "material_thickness": 1 },
+    "extend": { "flags": [ "NO_SALVAGE", "ALLOWS_NATURAL_ATTACKS", "OVERSIZE", "OUTER" ] }
+  },
+  {
+    "id": "cyclopean_mirror",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "cyclopean mirror" },
+    "description": "An ornate round mirror in an archaic style, unnaturally light for its size.  Natural scenery appears to be engraved into it, and light reflected from it projects a completely different, otherworldly pattern.  It is capable of moving on its own when equipped, blocking melee attacks like a small shield.  When fueled by essence, it projects a barrier that provides minor physical defense to the entire body, negates electricity and radiation, halves other forms of elemental damage, and grants partial resistance to psychic influence and extreme temperatures.",
+    "weight": "500 g",
+    "volume": "4 L",
+    "price": "900 USD",
+    "price_postapoc": "90 USD",
+    "bashing": 8,
+    "covers": [ "arm_either", "hand_either" ],
+    "coverage": 80,
+    "encumbrance": 5,
+    "material": [ "iron" ],
+    "symbol": "[",
+    "looks_like": "shield_round",
+    "color": "light_gray",
+    "max_charges": 25,
+    "charges_per_use": 1,
+    "ammo": "essence_type",
+    "material_thickness": 5,
+    "use_action": [
+      {
+        "target": "cyclopean_mirror_on",
+        "msg": "The mirror glows and reveals its otherworldly reflection, as a faint protective aura envelops you.",
+        "active": true,
+        "need_worn": true,
+        "need_charges": 1,
+        "need_charges_msg": "The mirror needs essence to function.",
+        "menu_text": "Activate protective aura",
+        "type": "transform"
+      }
+    ],
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [
+            { "value": "ARMOR_BASH", "add": -10 },
+            { "value": "ARMOR_CUT", "add": -10 },
+            { "value": "ARMOR_STAB", "add": -10 },
+            { "value": "ARMOR_BULLET", "add": -10 },
+            { "value": "ARMOR_HEAT", "multiply": -0.5 },
+            { "value": "ARMOR_COLD", "multiply": -0.5 },
+            { "value": "ARMOR_LIGHT", "multiply": -0.5 },
+            { "value": "ARMOR_DARK", "multiply": -0.5 },
+            { "value": "ARMOR_PSI", "multiply": -0.5 },
+            { "value": "ARMOR_ACID", "multiply": -0.5 }
+          ]
+        }
+      ]
+    },
+    "techniques": [ "WBLOCK_2" ],
+    "flags": [
+      "ALLOWS_NATURAL_ATTACKS",
+      "OVERSIZE",
+      "STURDY",
+      "BLOCK_WHILE_WORN",
+      "NO_SALVAGE",
+      "AURA",
+      "ONLY_ONE",
+      "POWERARMOR_COMPATIBLE",
+      "COMBAT_NPC_USE"
+    ]
+  },
+  {
+    "id": "cyclopean_mirror_on",
+    "copy-from": "cyclopean_mirror",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "cyclopean mirror (on)" },
+    "description": "An ornate round mirror in an archaic style.  It casts a brightly-glowing barrier that protects the user from electricity and radiation, along with partial protection from psychic influence, some resistance to extreme temperatures, increased physical resistance, and halved damage from other elemental damage.",
+    "turns_per_charge": 600,
+    "revert_to": "cyclopean_mirror",
+    "use_action": {
+      "target": "cyclopean_mirror",
+      "menu_text": "Activate protective aura",
+      "msg": "The protective glow vanishes as the mirror deactivates.",
+      "type": "transform"
+    },
+    "extend": {
+      "flags": [
+        "CLIMATE_CONTROL",
+        "LIGHT_60",
+        "NO_TAKEOFF",
+        "PSYSHIELD_PARTIAL",
+        "RAD_PROOF",
+        "RAINPROOF",
+        "SUN_GLASSES",
+        "SWIM_GOGGLES",
+        "TRADER_AVOID",
+        "WATERPROOF",
+        "ELECTRIC_IMMUNE",
+        "DIMENSIONAL_ANCHOR",
+        "UNBREAKABLE",
+        "COMBAT_NPC_ON"
+      ]
+    },
+    "qualities": [ [ "HV_INSULATION", 1 ] ]
+  },
+  {
+    "id": "hauberk_jade",
+    "type": "TOOL_ARMOR",
+    "copy-from": "chainmail_hauberk",
+    "name": { "str": "jade hauberk" },
+    "description": "A set of mail armor with a mantle made from a gilded aegis draped over it, splints of copper worked into the arms and sides.  Underneath the mantle is a gorget of copper, with otherworldly green stones set into it.  The copper conducts electric shocks around you, providing passive immunity to lightning.  Activating it will grant immunity to fire and blade, reduce ballistic damage to one-tenth what you would normally take, and give resistance to other environmental hazards.",
+    "//": "Requires an item that did not exist pre-cataclysm to make.",
+    "price_postapoc": "150 USD",
+    "material": [ "steel", "copper", "cotton" ],
+    "color": "light_red",
+    "coverage": 100,
+    "environmental_protection": 1,
+    "max_charges": 300,
+    "ammo": "essence_dull_type",
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [
+            { "value": "ARMOR_HEAT", "multiply": -1.0 },
+            { "value": "ARMOR_STAB", "multiply": -1.0 },
+            { "value": "ARMOR_BULLET", "multiply": -0.9 }
+          ]
+        }
+      ]
+    },
+    "use_action": [
+      {
+        "target": "hauberk_jade_on",
+        "msg": "A brilliant radiance pierces through the mantle from the gorget, until your body is shrouded in a strange glow.",
+        "active": true,
+        "need_worn": true,
+        "need_charges": 1,
+        "need_charges_msg": "This requires dull essence to invoke.",
+        "menu_text": "Project barrier",
+        "type": "transform"
+      },
+      {
+        "type": "cast_spell",
+        "spell_id": "arcana_item_jade_hauberk_healing",
+        "no_fail": true,
+        "level": 0,
+        "need_worn": true
+      }
+    ],
+    "relative": { "weight": 3020, "price": "550 USD", "material_thickness": 1 },
+    "extend": { "flags": [ "NO_SALVAGE", "USE_PLAYER_ENERGY", "ELECTRIC_IMMUNE", "RAINPROOF", "COMBAT_NPC_USE" ] },
+    "qualities": [ [ "HV_INSULATION", 1 ] ]
+  },
+  {
+    "id": "hauberk_jade_on",
+    "type": "TOOL_ARMOR",
+    "copy-from": "hauberk_jade",
+    "repairs_like": "hauberk_jade",
+    "name": { "str": "jade hauberk (on)", "str_pl": "jade hauberks (on)" },
+    "description": "A set of mail armor with a mantle made from a gilded aegis draped over it, splints of copper worked into the arms and sides.  Underneath the mantle is a gorget of copper, with otherworldly green stones set into it.  In addition to protecting against lightning, an aura of protective magic is radiating from it, granting immunity to fire and blade, reducing ballistic damage to one-tenth what you would normally take, and giving resistance to other environmental hazards.",
+    "environmental_protection": 10,
+    "turns_per_charge": 10,
+    "revert_to": "hauberk_jade",
+    "use_action": { "target": "hauberk_jade", "msg": "The glow emanating from your jade hauberk fades.", "type": "transform" },
+    "qualities": [ [ "GLARE", 1 ] ],
+    "extend": {
+      "flags": [
+        "GAS_PROOF",
+        "RAD_PROOF",
+        "SUN_GLASSES",
+        "CUT_IMMUNE",
+        "STAB_IMMUNE",
+        "HEAT_IMMUNE",
+        "CLIMATE_CONTROL",
+        "UNBREAKABLE",
+        "COMBAT_NPC_ON"
+      ]
+    }
+  },
+  {
+    "id": "armor_wyrm_berserker",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "abyssal armor" },
+    "description": "What was once a modified suit of leather armor, now radically altered with heavy steel and unnatural magic made from desecrating a holy relic.  Fully covering the body with plates that shift to accommodate the user's form, just wearing it makes the user look inhuman.  Fueling it with blood essence will suppress pain and rapidly stabilize broken limbs, along with increasing the user's attack speed and reflexes, and allowing them to fire heavy weapons unsupported.  However, its use will tax fatigue and healthiness over time, along with attracting attention both mundane and otherworldly.",
+    "weight": "5 kg",
+    "volume": "15 L",
+    "price": "900 USD",
+    "price_postapoc": "60 USD",
+    "to_hit": -5,
+    "bashing": 8,
+    "material": [ "hardsteel", "leather" ],
+    "symbol": "[",
+    "looks_like": "armor_wyrm",
+    "color": "light_gray",
+    "covers": [ "head", "eyes", "mouth", "torso", "arms", "hands", "legs", "feet" ],
+    "max_charges": 30,
+    "ammo": "essence_blood_type",
+    "coverage": 95,
+    "encumbrance": 20,
+    "warmth": 20,
+    "material_thickness": 8,
+    "environmental_protection": 8,
+    "resistance": { "acid": 25 },
+    "flags": [ "OUTER", "STURDY", "NO_SALVAGE", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE", "ALLOWS_HOOVES" ],
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "mutations": [ "ARCANA_BERSERK_ARMOR_EFFECT" ],
+          "values": [ { "value": "INTELLIGENCE", "add": -2 }, { "value": "PERCEPTION", "add": -2 }, { "value": "BONUS_DODGE", "add": 1 } ],
+          "hit_me_effect": [
+            {
+              "id": "arcana_react_satchel_attention",
+              "hit_self": true,
+              "once_in": 20,
+              "message": "You feel like something is watching you…",
+              "npc_message": "A strange aura of malice seems to briefly surround %1$s."
+            }
+          ],
+          "ench_effects": [ { "effect": "arcana_wyrm_berserker_decay", "intensity": 1 } ]
+        }
+      ]
+    },
+    "use_action": [
+      {
+        "target": "armor_wyrm_berserker_on",
+        "msg": "The plates of your armor shift and contort into an even more bestial form, a strange sense of power flowing through you!",
+        "active": true,
+        "need_worn": true,
+        "need_charges": 1,
+        "need_charges_msg": "Blood essence shall awaken the beast.",
+        "menu_text": "Activate abyssal armor",
+        "type": "transform"
+      }
+    ]
+  },
+  {
+    "id": "armor_wyrm_berserker_on",
+    "copy-from": "armor_wyrm_berserker",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "abyssal armor (on)", "str_pl": "abyssal armors (on)" },
+    "description": "What was once a modified suit of leather armor, now radically altered with heavy armor and unnatural magic made from desecrating a holy relic.  It feels like it has a will of its own with how easy it is to move in this, currently helping to stave off pain and set broken limbs, along with increasing attack speed and reflexes, and allowing them to fire heavy weapons unsupported.  A sickening aura wearing down on body and mind can also be felt, along with the feeling of being watched.",
+    "extend": { "flags": [ "NO_TAKEOFF", "TRADER_AVOID", "SPLINT", "HEAVY_WEAPON_SUPPORT", "COMBAT_NPC_ON" ] },
+    "encumbrance": 10,
+    "turns_per_charge": 100,
+    "revert_to": "armor_wyrm_berserker",
+    "use_action": { "target": "armor_wyrm_berserker", "msg": "The armor's unnatural aura fades.", "type": "transform" }
+  },
+  {
+    "id": "jade_wreath",
+    "type": "TOOL_ARMOR",
+    "category": "clothing",
+    "name": { "str": "jade wreath" },
+    "description": "A crown of dark green stone with strange geometric patterns carved into it.  Activating it will harden the body against fire, consuming blood essence while it's in effect.",
+    "//": "The shrine lesser artifacts are all post-cataclysm items.",
+    "price_postapoc": "100 USD",
+    "weight": "600 g",
+    "volume": "3 L",
+    "price": "900 USD",
+    "to_hit": -1,
+    "material": [ "stone" ],
+    "symbol": "[",
+    "looks_like": "crown_golden",
+    "repairs_like": "revenant_crown",
+    "color": "green",
+    "max_charges": 30,
+    "ammo": "essence_blood_type",
+    "covers": [ "head" ],
+    "coverage": 20,
+    "encumbrance": 10,
+    "material_thickness": 1,
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ACTIVE",
+          "values": [ { "value": "ARMOR_HEAT", "multiply": -0.5 } ],
+          "ench_effects": [ { "effect": "heat_ward", "intensity": 1 } ]
+        }
+      ]
+    },
+    "use_action": {
+      "target": "jade_wreath_on",
+      "msg": "The carvings in the stone glow red for a brief moment, and a chill passes through your spine.",
+      "active": true,
+      "need_worn": true,
+      "need_charges": 1,
+      "need_charges_msg": "Fuel the wreath with essence of blood.",
+      "menu_text": "Activate ward against fire",
+      "type": "transform"
+    },
+    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "POWERARMOR_COMPATIBLE", "COMBAT_NPC_USE", "MISSION_ITEM" ]
+  },
+  {
+    "id": "jade_wreath_on",
+    "type": "TOOL_ARMOR",
+    "copy-from": "jade_wreath",
+    "repairs_like": "jade_wreath",
+    "name": { "str": "jade wreath (on)", "str_pl": "jade wreaths (on)" },
+    "description": "A crown of dark green stone with strange geometric patterns carved into it.  It is currently active, completely protecting you against heat and smoke.",
+    "turns_per_charge": 150,
+    "revert_to": "jade_wreath",
+    "use_action": { "target": "jade_wreath", "msg": "The glowing carvings on the jade wreath fade.", "type": "transform" },
+    "extend": { "flags": [ "CLIMATE_CONTROL", "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "meteoric_talisman",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "meteoric talisman" },
+    "description": "An ornate necklace with a small charm resembling a round shield, made from a hard iridescent metal.  Activating it will ward against electricity, consuming dull essence while active.",
+    "weight": "60 g",
+    "volume": "250 ml",
+    "price_postapoc": "100 USD",
+    "material": [ "hardsteel" ],
+    "symbol": "[",
+    "looks_like": "jade_brooch",
+    "repairs_like": "mana_gem",
+    "color": "light_gray",
+    "max_charges": 300,
+    "ammo": "essence_dull_type",
+    "use_action": {
+      "target": "meteoric_talisman_on",
+      "msg": "As you activate the talisman, you feel insulated in a strange manner.",
+      "active": true,
+      "need_worn": true,
+      "need_charges": 1,
+      "need_charges_msg": "The talisman requires dull essence.",
+      "menu_text": "Activate lightning ward",
+      "type": "transform"
+    },
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "ench_effects": [ { "effect": "lightning_ward", "intensity": 1 } ] } ]
+    },
+    "flags": [ "FANCY", "NO_SALVAGE", "COMBAT_NPC_USE", "MISSION_ITEM" ]
+  },
+  {
+    "id": "meteoric_talisman_on",
+    "type": "TOOL_ARMOR",
+    "copy-from": "meteoric_talisman",
+    "repairs_like": "meteoric_talisman",
+    "name": { "str": "meteoric talisman (on)", "str_pl": "meteoric talismans (on)" },
+    "description": "An ornate necklace with a small charm resembling a round shield, made from a hard iridescent metal.  It is currently activate, insulating you against electrical attacks.",
+    "turns_per_charge": 15,
+    "revert_to": "meteoric_talisman",
+    "use_action": {
+      "target": "meteoric_talisman",
+      "msg": "The insulated feeling fades as the talisman deactivates.",
+      "type": "transform"
+    },
+    "extend": { "flags": [ "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "divine_sealing_charm",
+    "looks_like": "small_relic",
+    "type": "TOOL_ARMOR",
+    "category": "tools",
+    "name": { "str": "divine sealing charm" },
+    "description": "A silver and gold relic encircling and framing a pitch-black gem.  All across the metal are holy symbols and engraved text mixing archaic Latin, Old Norse runes, and symbols that don't seem to match any writing humans have devised.  Combining dimensional fatigue research with the knowledge of multiple arcane orders, it was made to serve the same purpose as the Keepers' relics and Project Kairos.\n\nLinger near a portal to seal it, drawing energy from its collapse, or fuel it with crystallized essence.  Channeling this energy will create a powerful healing effect affecting you and nearby allies, remove alien influence on your surroundings, as well as restore dead plant life nearby.",
+    "weight": "1200 g",
+    "volume": "750 ml",
+    "price_postapoc": "150 USD",
+    "material": [ "silver", "gold", "essencemat" ],
+    "symbol": "[",
+    "color": "yellow",
+    "max_charges": 10,
+    "charges_per_use": 1,
+    "ammo": "essence_pure_type",
+    "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_divine_seal", "no_fail": true, "need_worn": true, "level": 0 } ],
+    "relic_data": {
+      "recharge_scheme": [
+        { "type": "trap", "interval": "1 s", "rate": 1, "message": "The portal collapses!", "trap": "tr_portal" },
+        { "type": "field", "interval": "1 s", "rate": 0, "field": "fd_fatigue", "int_min": 1, "int_max": 3 },
+        { "type": "field", "interval": "1 s", "rate": 0, "field": "fd_tindalos_rift", "int_min": 1, "int_max": 3 },
+        { "type": "field", "interval": "1 s", "rate": 0, "field": "fd_archon_rift", "int_min": 1, "int_max": 3 }
+      ]
+    },
+    "flags": [ "UNBREAKABLE_MELEE", "NO_SALVAGE", "DIMENSIONAL_ANCHOR", "PSYSHIELD_PARTIAL" ]
+  },
+  {
+    "id": "cleric_ring",
+    "type": "TOOL_ARMOR",
+    "copy-from": "ruby_silver_ring",
+    "repairs_like": "orb_veil",
+    "category": "tools",
+    "name": { "str": "ring of the fallen angel", "str_pl": "rings of the fallen angel" },
+    "description": "A simple silver ring, adorned with a small red gem and a wing motif.  Activating it channels a powerful protective spell, guarding against many forms of supernatural harm.",
+    "//": "While unassuming, those who knew what rituals it was useful for would value it highly.  Those people are probably now dead.",
+    "price": "3600 USD",
+    "price_postapoc": "150 USD",
+    "material": [ "silver", "essencemat" ],
+    "color": "white",
+    "max_charges": 10,
+    "ammo": "essence_type",
+    "use_action": {
+      "target": "cleric_ring_on",
+      "msg": "A strange energy radiates from the ring's gem, spreading a calming sensation over you.",
+      "active": true,
+      "need_worn": true,
+      "need_charges": 1,
+      "need_charges_msg": "Provide essence, and the fallen angel shall spread its wings.",
+      "menu_text": "Activate ward against evil",
+      "type": "transform"
+    },
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "ench_effects": [ { "effect": "cleric_warding", "intensity": 1 } ] } ]
+    },
+    "extend": { "flags": [ "NO_SALVAGE", "PSYSHIELD_PARTIAL", "COMBAT_NPC_USE", "MISSION_ITEM" ] }
+  },
+  {
+    "id": "cleric_ring_on",
+    "type": "TOOL_ARMOR",
+    "copy-from": "cleric_ring",
+    "repairs_like": "cleric_ring",
+    "name": { "str": "ring of the fallen angel (on)", "str_pl": "rings of the fallen angel (on)" },
+    "description": "A simple silver ring, adorned with a small red gem and a wing motif.  The wings encircle the gem and shimmer with an eerie pale glow, its protective magic protecting against various anomalous influences.",
+    "turns_per_charge": 450,
+    "revert_to": "cleric_ring",
+    "use_action": { "target": "cleric_ring", "msg": "The ring's energy fades, returning to normal.", "type": "transform" },
+    "extend": { "flags": [ "TRADER_AVOID", "NO_TAKEOFF", "DIMENSIONAL_ANCHOR", "COMBAT_NPC_ON" ] }
+  }
+]

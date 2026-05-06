@@ -1,0 +1,38 @@
+[
+  {
+    "type": "nested_category",
+    "id": "nested_mutagens_strains",
+    "nested_name": "strain mutagens",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_NESTED",
+    "description": "Animal and specialty strains with their IV versions.",
+    "nested_category_data": [
+      "mutagen_neko",
+      "iv_mutagen_neko",
+      "mutagen_doggirl",
+      "iv_mutagen_doggirl",
+      "mutagen_cowgirl",
+      "iv_mutagen_cowgirl",
+      "mutagen_beargirl",
+      "iv_mutagen_beargirl",
+      "mutagen_mousegirl",
+      "iv_mutagen_mousegirl",
+      "mutagen_spidergirl",
+      "iv_mutagen_spidergirl",
+      "mutagen_harpy",
+      "iv_mutagen_harpy",
+      "mutagen_dryad",
+      "iv_mutagen_dryad",
+      "mutagen_slimegirl",
+      "iv_mutagen_slimegirl",
+      "mutagen_elf",
+      "iv_mutagen_elf",
+      "mutagen_kitsune",
+      "iv_mutagen_kitsune",
+      "mutagen_lamia",
+      "iv_mutagen_lamia",
+      "mutagen_bunnygirl",
+      "iv_mutagen_bunnygirl"
+    ]
+  }
+]

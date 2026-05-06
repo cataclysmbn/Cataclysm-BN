@@ -255,7 +255,7 @@ std::string worn_item_location::describe( const Character *ch, const item * ) co
     return holder->name;
 }
 
-tile_item_location::tile_item_location( tripoint position )
+tile_item_location::tile_item_location( const tripoint_abs_ms &position )
 {
     pos = position;
 }
@@ -428,12 +428,12 @@ bool vehicle_item_location::is_loaded( const item * ) const
     }
 
     //Have to check the bounds, the vehicle might be half outside the bubble
-    return get_map().inbounds( veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount ) );
+    return get_map().inbounds( veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ) );
 }
 
 tripoint vehicle_item_location::position( const item * ) const
 {
-    return veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount );
+    return veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ).raw();
 }
 
 item_location_type vehicle_item_location::where() const
@@ -459,7 +459,7 @@ int vehicle_item_location::obtain_cost( const Character &ch, int qty, const item
     const item *obj = cost_split_helper( it, qty );
     int mv = dynamic_cast<const player *>( &ch )->item_handling_cost( *obj, true,
              VEHICLE_HANDLING_PENALTY );
-    mv += 100 * rl_dist( ch.pos(), veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount ) );
+    mv += 100 * rl_dist( ch.bub_pos(), veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ) );
     return mv;
 }
 
@@ -573,7 +573,12 @@ void component_item_location::attach( detached_ptr<item> &&obj )
     return container->add_component( std::move( obj ) );
 }
 
-partial_con_item_location::partial_con_item_location( tripoint position ) : tile_item_location(
+partial_con_item_location::partial_con_item_location( const tripoint_bub_ms &position ) :
+    tile_item_location(
+        bub_to_abs( position ) ) {}
+
+partial_con_item_location::partial_con_item_location( const tripoint_abs_ms &position ) :
+    tile_item_location(
         position ) {}
 
 detached_ptr<item> partial_con_item_location::detach( item * )

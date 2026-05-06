@@ -897,5 +897,87 @@
       { "group": "pwr_armor_acc", "count": [ 1, 2 ], "damage": [ 1, 4 ], "prob": 90 },
       { "item": "heavy_power_armor_frame", "damage": [ 1, 3 ], "prob": 100 }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_feral_blackops_boss_commander_death_drops",
+    "entries": [
+      { "group": "nested_needlegun", "prob": 100, "damage": 0, "dirt": [ 0, 1500 ] },
+      { "group": "nested_needlegun_mag", "prob": 100, "count": 1 },
+      { "item": "5x50heavy", "prob": 100, "count": [ 2, 4 ] },
+      { "item": "rm13_armor", "count": 1, "damage": [ 0, 1 ], "prob": 100 },
+      { "item": "goggles_nv_enhanced", "count": 1, "damage": [ 0, 1 ], "prob": 100 },
+      { "item": "id_military", "count": 1, "prob": 100 },
+      { "item": "solarpack", "count": 1, "damage": [ 0, 2 ], "prob": 100 },
+      { "item": "plut_cell", "count": [ 10, 15 ], "prob": 100 },
+      { "item": "nanomaterial", "count": [ 1, 2 ], "prob": 100 },
+      { "item": "mininuke", "count": [ 1, 2 ], "prob": 100 },
+      { "group": "carried_guns_pistol_milspec", "count": 1, "prob": 100 },
+      { "group": "military_standard_grenades", "count": [ 3, 5 ], "prob": 100 },
+      { "group": "mil_food", "count": [ 3, 5 ], "prob": 100 },
+      { "group": "sopmod_2", "count": [ 1, 2 ], "prob": 100 },
+      { "group": "rare", "count": 2, "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_feral_blackops_boss_bioop_death_drops",
+    "entries": [
+      { "item": "rm13_armor", "count": 1, "damage": [ 0, 1 ], "prob": 100 },
+      { "item": "goggles_nv_enhanced", "count": 1, "damage": [ 0, 1 ], "prob": 100 },
+      { "item": "id_military", "count": 1, "prob": 100 },
+      { "item": "plut_cell", "count": [ 3, 8 ], "prob": 100 },
+      { "group": "carried_guns_pistol_milspec", "count": 1, "prob": 100 },
+      { "group": "military_standard_grenades", "count": [ 3, 5 ], "prob": 100 },
+      { "group": "mil_food", "count": [ 3, 5 ], "prob": 100 },
+      { "group": "bionic_salvage_junk_mil", "count": [ 3, 5 ], "prob": 100 },
+      { "group": "bionics_op", "count": [ 1, 3 ], "prob": 100 },
+      { "group": "rare", "count": 1, "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_feral_blackops_boss_technician_death_drops",
+    "entries": [
+      { "group": "nested_rm103a_pistol", "prob": 100, "damage": 0, "dirt": [ 0, 1500 ] },
+      { "group": "nested_rm103a_mag", "prob": 100, "count": 1 },
+      { "item": "8mm_caseless", "prob": 100, "count": [ 2, 4 ] },
+      { "item": "rm13_armor", "count": 1, "damage": [ 0, 1 ], "prob": 100 },
+      { "item": "goggles_nv_enhanced", "count": 1, "damage": [ 0, 1 ], "prob": 100 },
+      { "item": "backpack_tactical_large", "count": 1, "damage": [ 0, 1 ], "prob": 100 },
+      { "item": "id_military", "count": 1, "prob": 100 },
+      { "item": "plut_cell", "count": [ 3, 8 ], "prob": 100 },
+      { "group": "military_standard_antitank", "count": 1, "prob": 100 },
+      { "group": "inactive_bots_milspec", "count": 1, "prob": 100 },
+      { "group": "military_standard_grenades", "count": [ 3, 5 ], "prob": 100 },
+      { "group": "mil_food", "count": [ 3, 5 ], "prob": 100 },
+      { "group": "tools_entry", "count": [ 1, 2 ], "prob": 100 },
+      { "group": "tools_robotics", "count": [ 2, 4 ], "prob": 100 },
+      { "group": "rare", "count": 1, "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_feral_blackops_boss_sniper_death_drops",
+    "entries": [
+      { "group": "nested_rm11b_sniper_rifle", "prob": 100, "damage": 0, "dirt": [ 0, 1500 ] },
+      { "group": "nested_rm103a_mag", "prob": 100, "count": 1 },
+      { "item": "8mm_hvp", "prob": 100, "count": [ 1, 3 ] },
+      { "item": "rm13_armor", "count": 1, "damage": [ 0, 1 ], "prob": 100 },
+      { "item": "mil_scouter", "count": 1, "prob": 100 },
+      { "item": "goggles_nv_enhanced", "count": 1, "damage": [ 0, 1 ], "prob": 100 },
+      { "item": "id_military", "count": 1, "prob": 100 },
+      { "item": "plut_cell", "count": [ 3, 8 ], "prob": 100 },
+      { "group": "military_standard_grenades", "count": [ 3, 5 ], "prob": 100 },
+      { "group": "carried_guns_pistol_milspec", "count": 1, "prob": 100 },
+      { "group": "mil_food", "count": [ 3, 5 ], "prob": 100 },
+      { "group": "drugs_soldier", "count": [ 2, 4 ], "prob": 100 },
+      { "group": "sopmod_2", "count": [ 2, 4 ], "prob": 100 },
+      { "group": "rare", "count": 1, "prob": 100 }
+    ]
   }
 ]

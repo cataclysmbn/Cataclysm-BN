@@ -1,0 +1,197 @@
+[
+  {
+    "type": "item_group",
+    "id": "wild_bio_weapom_item",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [
+          { "item": "bone_twisted", "prob": 50 },
+          { "item": "vortex_shard", "prob": 25 },
+          { "item": "wyrmskin_piece", "prob": 25 }
+        ],
+        "prob": 30
+      },
+      { "item": "essence_blood", "count": [ 1, 3 ], "prob": 15 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_fungus_failed_weapon_death_drops",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [
+          { "item": "bone_twisted", "prob": 50 },
+          { "item": "vortex_shard", "prob": 25 },
+          { "item": "wyrmskin_piece", "prob": 25 }
+        ],
+        "prob": 10
+      },
+      {
+        "distribution": [ { "item": "dermatik_sting", "prob": 50 }, { "item": "inflorescent_root", "prob": 50 } ],
+        "prob": 20
+      },
+      {
+        "distribution": [ { "item": "essence", "prob": 50 }, { "item": "essence_blood", "prob": 50, "count": [ 1, 3 ] } ],
+        "prob": 20
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "apophis_bio_weapom_item",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [
+          { "item": "bone_twisted", "prob": 20 },
+          { "item": "vortex_shard", "prob": 20 },
+          { "item": "wyrmskin_piece", "prob": 20 },
+          { "item": "gracken_knuckles", "prob": 20 },
+          { "item": "iridescent_plate", "prob": 20 }
+        ]
+      },
+      {
+        "distribution": [ { "item": "essence", "count": [ 2, 5 ] }, { "item": "essence_blood", "count": [ 6, 15 ] } ]
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_zombie_bio_dormant_unarmed_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "count": [ 1, 3 ], "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_zombie_bio_knife_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "count": [ 1, 3 ], "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "wild_bio_infantry_rifle",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "count": [ 1, 3 ], "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "wild_bio_infantry_shotgun",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "count": [ 1, 3 ], "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "wild_bio_knight_lmg",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "count": [ 1, 3 ], "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "wild_bio_knight_launcher",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "count": [ 1, 3 ], "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "wild_bio_scout_sniper",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "count": [ 1, 3 ], "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "wild_bio_tool_pistol",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "count": [ 1, 3 ], "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "wild_bio_tool_smg",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "count": [ 1, 3 ], "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_tengu_death_drops",
+    "//": "All Youkai Disco monsterdrops are defined following the mod-friendly convention as seen here, allowing Arcana to inject drops automatically.  In this case, the main unifying factor is purification of creatures that, while otherworldly, are still of this world rather than of The Beyond.  Hence, dull essence at a rate below what consecrating nether-tier essence would yield.",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_dull", "count": [ 10, 25 ], "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_tengu_monk_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_dull", "count": [ 10, 25 ], "prob": 30 }, { "item": "engraved_stone", "prob": 10 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_nekomata_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_dull", "count": [ 10, 25 ], "prob": 10 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_kappa_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_dull", "count": [ 10, 25 ], "prob": 25 }, { "item": "monster_tear", "prob": 10 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_kappa_engineer_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_dull", "count": [ 10, 25 ], "prob": 30 }, { "item": "monster_tear", "prob": 15 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_oni_bandit_death_drops",
+    "//": "This implies a small chance that, aside from stolen valuables oni already might have, this one potentially ran into a group of mage hunters.",
+    "subtype": "collection",
+    "entries": [
+      { "item": "essence_dull", "count": [ 10, 25 ], "prob": 30 },
+      { "item": "monster_fang", "prob": 15 },
+      { "item": "CF_golden_scale", "count": [ 1, 3 ], "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_kamaitachi_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_dull", "count": [ 10, 25 ], "prob": 25 }, { "item": "vortex_shard", "prob": 10 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_okka_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_dull", "count": [ 10, 25 ], "prob": 10 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_kanazuchibo_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_dull", "count": [ 10, 25 ], "prob": 30 }, { "item": "engraved_stone", "prob": 10 } ]
+  },
+  {
+    "id": "skeltal_drops",
+    "//": "This is done because we can access the itemgroup despite it not existing in vanilla, but can't override the monster because it only exists in Crazy Cataclysm.",
+    "type": "item_group",
+    "items": [ { "group": "skeltal_drops_override", "prob": 1000 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "skeltal_drops_override",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "milk", "prob": 9 }, { "item": "trumpet", "prob": 1 } ] },
+      {
+        "distribution": [
+          { "item": "gracken_knuckles", "prob": 50 },
+          { "item": "bone_twisted", "prob": 25 },
+          { "item": "monster_fang", "prob": 15 },
+          { "item": "graboid_fang", "prob": 10 }
+        ]
+      },
+      { "item": "essence_blood", "count": [ 6, 15 ] }
+    ]
+  }
+]

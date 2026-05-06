@@ -1578,16 +1578,17 @@ class item : public location_visitable<item>, public game_object<item>
         std::string get_var( const std::string &name ) const { return item_vars_.get( name, "" ); }
         */
 
-        bool has_var( const std::string &name ) const { return item_vars_.contains( name ); }
-        void erase_var( const std::string &name ) { item_vars_.erase( name ); }
-        void clear_vars() { item_vars_.clear(); }
+        auto has_var( const std::string &name ) const -> bool { return item_vars_.contains( name ); }
+        auto erase_var( const std::string &name ) -> void { item_vars_.erase( name ); }
+        auto clear_vars() -> void { item_vars_.clear(); }
 
         // TODO in follow-up PR:
         // remove internal usage of get_var / set_var internally
         // mark as [[deprecated]]
         // completely remove in a future update
 
-        data_vars::data_set &item_vars() { return item_vars_; }
+        auto item_vars() -> data_vars::data_set & { return item_vars_; } // *NOPAD*
+        auto item_vars() const -> const data_vars::data_set & { return item_vars_; } // *NOPAD*
 
         /** Adds child items to the contents of this one. */
         void add_item_with_id( const itype_id &itype, int count = 1 );
@@ -2804,5 +2805,4 @@ struct cable_connection_data {
         con2.point = tripoint_abs_ms( tmp );
     }
 };
-
 

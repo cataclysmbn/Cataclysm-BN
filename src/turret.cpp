@@ -35,6 +35,8 @@ static const itype_id fuel_type_battery( "battery" );
 
 static const efftype_id effect_on_roof( "on_roof" );
 
+static const trait_id trait_LASER_GUIDED( "LASER_GUIDED" );
+
 std::vector<vehicle_part *> vehicle::turrets()
 {
     std::vector<vehicle_part *> res;
@@ -314,7 +316,7 @@ int turret_data::fire( Character &who, const tripoint &target )
 
     prepare_fire( who );
     shots = ranged::fire_gun( who, target, mode.qty, *mode, nullptr,
-                              veh->mount_to_tripoint( part->mount ) );
+                              veh->mount_to_bubble( part->mount ).raw() );
     post_fire( who, shots );
     return shots;
 }
@@ -552,13 +554,21 @@ std::unique_ptr<npc> vehicle::get_targeting_npc( const vehicle_part &pt )
     cpu->recoil = 0;
 
     // These might all be affected by vehicle part damage, weather effects, etc.
-    cpu->set_skill_level( pt.get_base().gun_skill(), 8 );
-    cpu->set_skill_level( skill_id( "gun" ), 4 );
+    cpu->set_skill_level( pt.get_base().gun_skill(), 10 );
+    cpu->set_skill_level( skill_id( "gun" ), 5 );
 
-    cpu->str_cur = 16;
-    cpu->dex_cur = 8;
-    cpu->per_cur = 12;
+    cpu->str_cur = 20;
+    cpu->dex_cur = 10;
+    cpu->per_cur = 15;
     cpu->setpos( global_part_pos3( pt ) );
+    if( has_part( global_part_pos3( pt ), "LASER_DESIGNATOR" ) ) {
+        if( fuel_left( fuel_type_battery, true ) >= 1 ) {
+            cpu->set_mutation( trait_LASER_GUIDED );
+            discharge_battery( 1 );
+        } else {
+            add_msg( m_warning, _( "Insufficient power, laser targeting not engaged." ) );
+        }
+    }
     // Assume vehicle turrets are friendly to the player.
     cpu->set_attitude( NPCATT_FOLLOW );
     cpu->set_fac( faction_id( "your_followers" ) );

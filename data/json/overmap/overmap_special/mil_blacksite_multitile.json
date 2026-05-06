@@ -435,17 +435,14 @@
       "palettes": [ "mil_blacksite" ],
       "terrain": { "Ỵ": "t_utility_light" },
       "place_monster": [
-        { "monster": "mon_zombie_darkfield", "x": 24, "y": 18, "chance": 100 },
-        { "monster": "mon_zombie_darkfield", "x": 47, "y": 18, "chance": 100 },
-        { "monster": "mon_zombie_bio_op2", "x": 24, "y": 16, "chance": 100 },
-        { "monster": "mon_zombie_bio_op2", "x": 47, "y": 16, "chance": 100 },
-        { "monster": "mon_feral_labsecurity_9mm", "x": 35, "y": 22, "chance": 100 },
-        { "monster": "mon_feral_labsecurity_9mm", "x": 35, "y": 22, "chance": 100 },
-        { "monster": "mon_feral_labsecurity_9mm", "x": 35, "y": 22, "chance": 100 }
+        { "monster": "mon_feral_blackops_boss_technician", "x": 24, "y": 18, "chance": 100 },
+        { "monster": "mon_feral_blackops_boss_sniper", "x": 47, "y": 18, "chance": 100 },
+        { "monster": "mon_feral_blackops_boss_commander", "x": 24, "y": 16, "chance": 100 },
+        { "monster": "mon_feral_blackops_boss_bioop", "x": 35, "y": 22, "chance": 100 }
       ],
       "place_vehicles": [
         { "vehicle": "experimental_military_vehicles", "x": 20, "y": 15, "chance": 100, "rotation": 90, "status": 0 },
-        { "vehicle": "experimental_military_vehicles", "x": 51, "y": 15, "chance": 100, "rotation": 90, "status": 0 }
+        { "vehicle": "hover_military_vehicles", "x": 51, "y": 15, "chance": 100, "rotation": 90, "status": 0 }
       ],
       "mapping": {
         "r": { "items": [ { "item": "supplies_mechanics_milspec", "chance": 25 }, { "item": "mil_food_nodrugs", "chance": 25 } ] }
@@ -496,7 +493,6 @@
     "sym": "M",
     "color": "dark_gray",
     "see_cost": 5,
-    "extras": "build",
     "mondensity": 2
   }
 ]

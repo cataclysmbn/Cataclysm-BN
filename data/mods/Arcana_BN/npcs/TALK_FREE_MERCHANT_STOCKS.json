@@ -1,0 +1,94 @@
+[
+  {
+    "id": "TALK_FREE_MERCHANT_STOCKS",
+    "type": "talk_topic",
+    "responses": [
+      {
+        "text": "[MISSION] I've been asked to help attract work for another community of survivors.  Know of anyone who could help with that?",
+        "topic": "TALK_FREE_MERCHANT_STOCKS_CF_REP_MISSION_4",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "TALK_FREE_MERCHANT_STOCKS_CF_REP_MISSION_4",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_var": "tacoma_started",
+      "type": "knowledge",
+      "context": "flag",
+      "value": "yes",
+      "yes": "I wouldn't mind sending a few spare mouths to feed somewhere else.  With the commune out there, at least supplies are a little less of a concern, and people are getting a bit braver about venturing out in search of work.  It's still risky sending potential labor somewhere else instead of our new lifeline though.  What can you tell me about this community?",
+      "no": "While I'd love to send you a few spare mouths to feed and make logistics a bit less worrisome here, I'm not sure if we can afford whatever kind of deal you're looking for.  We need both labor and supplies, it's just that we're shorter on the latter than the former.  Speak with someone else and maybe things will work out."
+    },
+    "responses": [
+      {
+        "text": "It's a small community building up a rural church, that's starting to become self-sufficient.",
+        "condition": { "u_has_var": "tacoma_started", "type": "knowledge", "context": "flag", "value": "yes" },
+        "topic": "TALK_FREE_MERCHANT_STOCKS_CF_REP_MISSION_4_EXPLAIN"
+      },
+      {
+        "text": "I'll figure something else out.  Thank you, though.",
+        "switch": true,
+        "condition": { "u_has_var": "tacoma_started", "type": "knowledge", "context": "flag", "value": "yes" },
+        "topic": "TALK_DONE"
+      },
+      { "text": "Oh, okay.", "switch": true, "default": true, "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_FREE_MERCHANT_STOCKS_CF_REP_MISSION_4_EXPLAIN",
+    "dynamic_line": "I see.  If they're looking for laborers, I think I can make an arrangement.  Main thing we need is another source of food.  If their group is growing or hunting, I could wrangle a few spare laborers along with contacting one of the local hunters that deals with the center.  That should help them stay in surplus without too much risk to our ventures.",
+    "responses": [
+      {
+        "text": "You have a deal, then.",
+        "effect": [
+          { "u_add_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" },
+          {
+            "mapgen_update": "arcana_cf_4_free_merchants_1",
+            "om_terrain": "cf_church_1",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_free_merchants_2",
+            "om_terrain": "cf_church_3",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_1",
+            "om_terrain": "cf_church_1_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_2",
+            "om_terrain": "cf_church_3_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          }
+        ],
+        "topic": "TALK_FREE_MERCHANT_STOCKS_CF_REP_MISSION_4_DEAL"
+      },
+      { "text": "I'm not sure yet, let's talk about something else.", "topic": "TALK_FREE_MERCHANT_STOCKS" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_FREE_MERCHANT_STOCKS_CF_REP_MISSION_4_DEAL",
+    "dynamic_line": "I'll have my contact set up a party to get things set up.  Pleasure doing business with you, hoping this pans out.",
+    "responses": [
+      { "text": "Thank you, let's talk about something else.", "topic": "TALK_FREE_MERCHANT_STOCKS" },
+      { "text": "Thank you.  That's all for now, goodbye.", "topic": "TALK_DONE" }
+    ]
+  }
+]

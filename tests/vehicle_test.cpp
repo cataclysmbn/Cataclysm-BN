@@ -128,7 +128,9 @@ TEST_CASE( "damage_vehicle_oob" )
     optional_vpart_position part_pos = get_map().veh_at( tripoint_zero );
     REQUIRE( part_pos );
 
-    auto parts = veh_ptr->parts_at_relative( veh_ptr->tripoint_to_mount( tripoint_west ), true );
+    // TODO: vehicle is at origin so tripoint_west == bubble pos; use parts_at_relative( point(-1,0), true ) directly
+    auto parts = veh_ptr->parts_at_relative( veh_ptr->bubble_to_mount( tripoint_bub_ms(
+                     tripoint_west ) ), true );
     REQUIRE( !parts.empty( ) );
     for( int part : parts ) {
         //We aren't actually smashing each chosen part in turn here

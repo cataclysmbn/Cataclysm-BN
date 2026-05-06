@@ -1,0 +1,58 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_CPT",
+    "responses": [
+      {
+        "text": "[MISSION] I've been asked to find information on shipments between laboratories that may have been handling anomalies.  Can you help me with that?",
+        "topic": "TALK_OLD_GUARD_NEC_CPT_NICHOLAS_1",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "nicholas_mission_2_mid", "type": "mission", "context": "rural_church", "value": "yes" } },
+            {
+              "not": { "u_has_var": "necro_comms_permission", "type": "flag", "context": "rural_church", "value": "yes" }
+            },
+            { "u_has_mission": "MISSION_CF_PURIFIER_1_2" },
+            { "u_has_var": "npc_necro_gave_clearance", "value": "yes", "type": "dialogue", "context": "necropolis" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_CPT_NICHOLAS_1",
+    "dynamic_line": "With the current shape this facility is in, I'm not sure if we have any data on local laboratories accessible to us.  I am aware that some research materials may have passed through this site in limited quantities while the lower levels were still under construction.  I would first like to ask why you need this information, Marshal.",
+    "responses": [
+      {
+        "text": "There's a local researcher who's looking into anomalous materials projects in the hope of potentially improving things.",
+        "topic": "TALK_OLD_GUARD_NEC_CPT_NICHOLAS_2"
+      },
+      {
+        "text": "I was sent to try and get enough information to locate a research facility tied to something called Project Kairos.",
+        "topic": "TALK_OLD_GUARD_NEC_CPT_NICHOLAS_3"
+      },
+      { "text": "I'd rather not say.", "topic": "TALK_OLD_GUARD_NEC_CPT_NICHOLAS_REFUSE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_CPT_NICHOLAS_2",
+    "dynamic_line": "I don't know how this could improve things, but I'll see what I can do.  If you can get in touch with our comms team, speak with them and they might be able to find something.",
+    "speaker_effect": [ { "effect": { "u_add_var": "necro_comms_permission", "type": "flag", "context": "rural_church", "value": "yes" } } ],
+    "responses": [ { "text": "Alright, I'll see what I can do.", "topic": "TALK_OLD_GUARD_NEC_CPT" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_CPT_NICHOLAS_3",
+    "dynamic_line": "I have no idea what that is, but alright.  There might be something related to that in the communications records, or at least something that will help you figure it out.  If you can reach our communications team, ask them about it.",
+    "speaker_effect": [ { "effect": { "u_add_var": "necro_comms_permission", "type": "flag", "context": "rural_church", "value": "yes" } } ],
+    "responses": [ { "text": "Thank you.", "topic": "TALK_OLD_GUARD_NEC_CPT" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_OLD_GUARD_NEC_CPT_NICHOLAS_REFUSE",
+    "dynamic_line": "Then I can't help you if you're not going to explain yourself, Marshal.  We have important work to be done here.",
+    "responses": [ { "text": "…", "topic": "TALK_OLD_GUARD_NEC_CPT" } ]
+  }
+]

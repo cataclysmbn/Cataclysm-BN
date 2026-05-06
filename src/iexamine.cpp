@@ -73,6 +73,7 @@
 #include "map_iterator.h"
 #include "map_selector.h"
 #include "map_functions.h"
+#include "map_utils.h"
 #include "mapdata.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
@@ -1348,10 +1349,7 @@ void iexamine::deployed_furniture( player &p, const tripoint &pos )
     }
     p.add_msg_if_player( m_info, _( "You take down the %s." ),
                          here.furn( pos ).obj().name() );
-    const auto furn_item = here.furn( pos ).obj().deployed_item;
-    const auto item = here.add_item_or_charges( pos, item::spawn( furn_item, calendar::turn ) );
-    item->item_vars().merge( *here.furn_vars( pos ) );
-    here.furn_set( pos, f_null );
+    take_down_deployed_furniture( pos, pos );
 }
 
 static std::pair<itype_id, const deploy_tent_actor *> find_tent_itype( const furn_str_id &id )
@@ -1885,9 +1883,7 @@ void iexamine::transform( player &p, const tripoint &pos )
             case 2: {
                 add_msg( m_info, _( "You take down the %s." ),
                          g->m.furnname( pos ) );
-                const auto furn_item = g->m.furn( pos ).obj().deployed_item;
-                g->m.add_item_or_charges( pos, item::spawn( furn_item, calendar::turn ) );
-                g->m.furn_set( pos, f_null );
+                take_down_deployed_furniture( pos, pos );
                 return;
             }
             case 3: {
@@ -2799,7 +2795,7 @@ itype_id iexamine::choose_fertilizer( player &p, const std::string &pname, bool 
     std::vector<itype_id> f_types;
     std::vector<std::string> f_names;
     for( auto &f : f_inv ) {
-        if( std::ranges::find( f_types, f->typeId() ) == f_types.end() ) {
+        if( !std::ranges::contains( f_types, f->typeId() ) ) {
             f_types.push_back( f->typeId() );
             f_names.push_back( f->tname() );
         }
@@ -3271,9 +3267,7 @@ void iexamine::fireplace( player &p, const tripoint &examp )
             }
             p.add_msg_if_player( m_info, _( "You take down the %s." ),
                                  here.furnname( examp ) );
-            const auto furn_item = here.furn( examp ).obj().deployed_item;
-            here.add_item_or_charges( examp, item::spawn( furn_item, calendar::turn ) );
-            here.furn_set( examp, f_null );
+            take_down_deployed_furniture( examp, examp );
             return;
         }
         case 4: {
@@ -3330,7 +3324,7 @@ void iexamine::fvat_empty( player &p, const tripoint &examp )
         std::vector<itype_id> b_types;
         std::vector<std::string> b_names;
         for( auto &b : b_inv ) {
-            if( std::ranges::find( b_types, b->typeId() ) == b_types.end() ) {
+            if( !std::ranges::contains( b_types, b->typeId() ) ) {
                 b_types.push_back( b->typeId() );
                 b_names.push_back( item::nname( b->typeId() ) );
             }
@@ -3687,7 +3681,7 @@ void iexamine::keg( player &p, const tripoint &examp )
                 return 0;
             }
 
-            auto &items = target_submap->get_items( target_pos.raw() );
+            auto &items = target_submap->get_items( target_pos );
             auto liquid_item = item::spawn( liquid_type, calendar::turn, available );
             auto iter = items.insert( items.end(), std::move( liquid_item ) );
             item *water_item = *iter;
@@ -3725,7 +3719,7 @@ void iexamine::keg( player &p, const tripoint &examp )
                     return;
                 }
 
-                auto &items = target_submap->get_items( target_pos.raw() );
+                auto &items = target_submap->get_items( target_pos );
                 auto liquid_item = item::spawn( liquid_type, calendar::turn, available );
                 auto iter = items.insert( items.end(), std::move( liquid_item ) );
                 item *water_item = *iter;
@@ -4544,8 +4538,8 @@ void iexamine::trap( player &p, const tripoint &examp )
     }
     const int possible = tr.get_difficulty();
     bool seen = tr.can_see( examp, p );
-    if( tr.loadid == tr_unfinished_construction || here.partial_con_at( examp ) ) {
-        partial_con *pc = here.partial_con_at( examp );
+    if( tr.loadid == tr_unfinished_construction || here.partial_con_at( tripoint_bub_ms( examp ) ) ) {
+        partial_con *pc = here.partial_con_at( tripoint_bub_ms( examp ) );
         if( pc ) {
             const construction &built = pc->id.obj();
             if( !character_funcs::can_see_fine_details( p ) && !built.dark_craftable &&
@@ -4665,7 +4659,7 @@ auto iexamine::fluid_grid_fixture( player &p, const tripoint &examp ) -> void
         return;
     }
 
-    auto &items = target_submap->get_items( target_pos.raw() );
+    auto &items = target_submap->get_items( target_pos );
     auto liquid_item = item::spawn( liquid_type, calendar::turn, available );
     auto iter = items.insert( items.end(), std::move( liquid_item ) );
     item *water_item = *iter;
@@ -5643,9 +5637,7 @@ void iexamine::ledge( player &p, const tripoint &examp )
             map &here = get_map();
             p.add_msg_if_player( m_info, _( "You pull up the %s." ),
                                  here.furn( below_rope ).obj().name() );
-            const auto furn_item = here.furn( below_rope ).obj().deployed_item;
-            here.add_item_or_charges( p.pos(), item::spawn( furn_item, calendar::turn ) );
-            here.furn_set( below_rope, f_null );
+            take_down_deployed_furniture( below_rope, p.pos() );
             break;
         }
         case ledge_action::spin_web_bridge: {

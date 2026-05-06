@@ -476,6 +476,12 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
         prev_point = tp;
         tp = trajectory[i];
 
+        if( !here.inbounds( tp ) ) {
+            traj_len = i;
+            tp = prev_point;
+            break;
+        }
+
         if( tp.z != prev_point.z ) {
             tripoint floor1 = prev_point;
             tripoint floor2 = tp;

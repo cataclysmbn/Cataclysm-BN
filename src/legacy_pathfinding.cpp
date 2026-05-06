@@ -342,14 +342,17 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
 
             int part = -1;
             const vehicle *veh = veh_at_internal( p, part );
+            // TODO: migrate pathfinding positions to abs so these conversions can use abs_to_mount
             if( cur_veh &&
-                !cur_veh->allowed_move( cur_veh->tripoint_to_mount( cur ), cur_veh->tripoint_to_mount( p ) ) ) {
+                !cur_veh->allowed_move( cur_veh->bubble_to_mount( tripoint_bub_ms( cur ) ),
+                                        cur_veh->bubble_to_mount( tripoint_bub_ms( p ) ) ) ) {
                 //Trying to squeeze through a vehicle hole, skip this movement but don't close the tile as other paths may lead to it
                 continue;
             }
 
             if( veh && veh != cur_veh &&
-                !veh->allowed_move( veh->tripoint_to_mount( cur ), veh->tripoint_to_mount( p ) ) ) {
+                !veh->allowed_move( veh->bubble_to_mount( tripoint_bub_ms( cur ) ),
+                                    veh->bubble_to_mount( tripoint_bub_ms( p ) ) ) ) {
                 //Same as above but moving into rather than out of a vehicle
                 continue;
             }
@@ -368,7 +371,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
                     continue;
                 }
 
-                const maptile &tile = maptile_at_internal( p );
+                const maptile &tile = maptile_at_internal( tripoint_bub_ms( p ) );
                 const auto &terrain = tile.get_ter_t();
                 const auto &furniture = tile.get_furn_t();
 
@@ -491,7 +494,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
             continue;
         }
 
-        const maptile &parent_tile = maptile_at_internal( cur );
+        const maptile &parent_tile = maptile_at_internal( tripoint_bub_ms( cur ) );
         const auto &parent_terrain = parent_tile.get_ter_t();
         if( settings.allow_climb_stairs && cur.z > minz && parent_terrain.has_flag( TFLAG_GOES_DOWN ) ) {
             tripoint dest( cur.xy(), cur.z - 1 );

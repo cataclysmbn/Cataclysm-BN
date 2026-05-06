@@ -6,6 +6,7 @@ bool test_mode = false;
 bool debug_mode = false;
 bool json_report_strict = true;
 bool use_tiles = false;
+bool use_pinyin_search = false;
 bool use_tiles_overmap = false;
 bool log_from_top;
 int message_ttl;
@@ -32,7 +33,7 @@ int  lod_coarse_scent_interval = 3;
 int  lod_group_morale_max_tier = 0;
 
 bool reality_bubble_fire_spread = false;
-bool lazy_border_enabled        = true;
+bool lazy_border_enabled        = false;
 int  fire_spread_submap_cap    = 25;
 pocket_sim_level pocket_simulation_level = pocket_sim_level::off;
 int  safe_mode_proximity = 0;

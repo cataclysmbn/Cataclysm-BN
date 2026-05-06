@@ -85,100 +85,6 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 
-namespace
-{
-
-auto get_active_or_custom_target( const avatar &you ) -> tripoint_abs_omt
-{
-    const auto custom_targ = you.get_custom_mission_target();
-    if( custom_targ != overmap::invalid_tripoint ) {
-        return custom_targ;
-    }
-    return you.get_active_mission_target();
-}
-
-auto get_mission_direction_tile_id( const tripoint_abs_omt &from,
-                                    const tripoint_abs_omt &to )
--> std::optional<std::string>
-{
-    if( to == overmap::invalid_tripoint ) {
-        return std::nullopt;
-    }
-    if( to.xy() == from.xy() ) {
-        return std::nullopt;
-    }
-
-    switch( direction_from( from.xy(), to.xy() ) ) {
-        case direction::NORTH:
-            return "mission_arrow_n";
-        case direction::NORTHEAST:
-            return "mission_arrow_ne";
-        case direction::EAST:
-            return "mission_arrow_e";
-        case direction::SOUTHEAST:
-            return "mission_arrow_se";
-        case direction::SOUTH:
-            return "mission_arrow_s";
-        case direction::SOUTHWEST:
-            return "mission_arrow_sw";
-        case direction::WEST:
-            return "mission_arrow_w";
-        case direction::NORTHWEST:
-            return "mission_arrow_nw";
-        default:
-            return std::nullopt;
-    }
-}
-
-auto get_mission_direction_edge_pos( const point &screen_size,
-                                     const point &screen_center,
-                                     const point &map_origin,
-                                     const point &delta,
-                                     const int z )
--> std::optional<tripoint>
-{
-    const auto max_x = screen_size.x - 1;
-    const auto max_y = screen_size.y - 1;
-    if( max_x < 0 || max_y < 0 ) {
-        return std::nullopt;
-    }
-
-    const auto clamped_center = point( clamp( screen_center.x, 0, max_x ),
-                                       clamp( screen_center.y, 0, max_y ) );
-    if( delta == point_zero ) {
-        return std::nullopt;
-    }
-
-    const auto scale = std::max( screen_size.x, screen_size.y ) * 2;
-    const auto target = clamped_center + point( delta.x * scale, delta.y * scale );
-    const auto edge_path = line_to( clamped_center, target );
-    if( edge_path.empty() ) {
-        return std::nullopt;
-    }
-
-    const auto in_bounds = [max_x, max_y]( const point & pos ) {
-        return pos.x >= 0 && pos.x <= max_x && pos.y >= 0 && pos.y <= max_y;
-    };
-
-    auto edge_view = edge_path | std::views::reverse;
-    const auto edge_it = std::ranges::find_if( edge_view, in_bounds );
-    if( edge_it == edge_view.end() ) {
-        return std::nullopt;
-    }
-
-    auto screen_pos = *edge_it;
-
-    if( screen_pos.x == max_x ) {
-        screen_pos.x = clamp( max_x - 1, 0, max_x );
-    }
-    if( screen_pos.y == max_y ) {
-        screen_pos.y = clamp( max_y - 1, 0, max_y );
-    }
-
-    return tripoint( screen_pos + map_origin, z );
-}
-
-} // namespace
 #include "vpart_position.h"
 #include "weather.h"
 #include "weighted_list.h"
@@ -3756,8 +3662,9 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
         bool zlevs = here.has_zlevels();
         int mapsize = here.getmapsize();
-        tripoint mappos = here.get_abs_sub();
-        half_open_rectangle<point> maprect( mappos.xy(), mappos.xy() + point( mapsize, mapsize ) );
+        auto mappos = here.get_abs_sub();
+        half_open_rectangle<point> maprect( mappos.xy().raw(), mappos.xy().raw() + point( mapsize,
+                                            mapsize ) );
 
         const auto is_map = [mappos, zlevs, maprect]( const tripoint & p ) {
             if( !maprect.contains( p.xy() ) ) {
@@ -3766,7 +3673,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             if( zlevs ) {
                 return true;
             } else {
-                return p.z == mappos.z;
+                return p.z == mappos.z();
             }
         };
 
@@ -4745,6 +4652,7 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
         const std::string &tname = t.id().str();
         if( here.check_seen_cache( p ) ) {
             if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
+                g->u.memorize_tile( here.getabs( p ), tname, subtile, rotation );
                 g->u.memorize_terrain_tile( here.getabs( p ), tname, subtile, rotation );
             } else {
                 g->u.clear_memorized_tile( here.getabs( p ) );
@@ -5074,7 +4982,7 @@ bool cata_tiles::draw_field_or_item( const tripoint &p, const lit_level ll, int 
             hilite = std::get<2>( it_override->second );
             it_type = &*it_id;
         } else if( !invisible[0] && here.sees_some_items( p, g->u ) ) {
-            const maptile &tile = here.maptile_at( p );
+            const maptile &tile = here.maptile_at( tripoint_bub_ms( p ) );
             const item &itm = tile.get_uppermost_item();
             const mtype *const mon = itm.get_mtype();
             it_id = itm.typeId();

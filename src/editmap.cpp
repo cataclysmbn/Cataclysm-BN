@@ -625,7 +625,7 @@ void editmap::draw_main_ui_overlay()
                     g->draw_graffiti_override( map_p, tmpmap.has_graffiti_at( tmp_p ) );
                     g->draw_trap_override( map_p, tmpmap.tr_at( tmp_p ).loadid );
                     g->draw_field_override( map_p, tmpmap.field_at( tmp_p ).displayed_field_type() );
-                    const maptile &tile = tmpmap.maptile_at( tmp_p );
+                    const maptile &tile = tmpmap.maptile_at( tripoint_bub_ms( tmp_p ) );
                     if( tmpmap.sees_some_items( tmp_p, g->u.pos() - origin_p ) ) {
                         const item &itm = tile.get_uppermost_item();
                         const mtype *const mon = itm.get_mtype();
@@ -657,15 +657,16 @@ void editmap::draw_main_ui_overlay()
             std::map<tripoint, std::tuple<mtype_id, int, bool, Attitude>> spawns;
             for( int x = 0; x < 2; x++ ) {
                 for( int y = 0; y < 2; y++ ) {
-                    submap *sm = tmpmap.get_submap_at_grid( { x, y, target.z } );
+                    const auto sm_pos = tripoint_bub_sm{ x, y, target.z };
+                    submap *sm = tmpmap.get_submap_at_grid( sm_pos );
                     if( sm ) {
-                        const tripoint sm_origin = origin_p + tripoint( x * SEEX, y * SEEY, target.z );
+                        const auto sm_origin =  project_to<coords::ms>( sm_pos ) + origin_p;
                         for( const auto &sp : sm->spawns ) {
-                            const tripoint spawn_p = sm_origin + sp.pos;
-                            const auto spawn_it = spawns.find( spawn_p );
+                            const auto spawn_p = sm_origin + sp.pos.raw();
+                            const auto spawn_it = spawns.find( spawn_p.raw() );
                             if( spawn_it == spawns.end() ) {
                                 const Attitude att = sp.is_friendly() ? Attitude::A_FRIENDLY : Attitude::A_ANY;
-                                spawns.emplace( spawn_p, std::make_tuple( sp.type, sp.count, false, att ) );
+                                spawns.emplace( spawn_p.raw(), std::make_tuple( sp.type, sp.count, false, att ) );
                             } else {
                                 std::get<2>( spawn_it->second ) = true;
                             }
@@ -702,11 +703,11 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
     const optional_vpart_position vp = here.veh_at( target );
     std::string veh_msg;
     if( !vp ) {
-        veh_msg = pgettext( "vehicle", "no" );
+        veh_msg = pgettext( "map editor vehicle status", "no" );
     } else if( vp->is_inside() ) {
-        veh_msg = pgettext( "vehicle", "in" );
+        veh_msg = pgettext( "map editor vehicle status", "in" );
     } else {
-        veh_msg = pgettext( "vehicle", "out" );
+        veh_msg = pgettext( "map editor vehicle status", "out" );
     }
 
     const ter_t &terrain_type = here.ter( target ).obj();
@@ -735,7 +736,9 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
     }
     const auto &map_cache = here.get_cache( target.z );
 
-    const std::string u_see_msg = player_character.sees( target ) ? _( "yes" ) : _( "no" );
+    const auto u_see_msg = player_character.sees( target ) ?
+                           pgettext( "map editor visibility value", "yes" ) :
+                           pgettext( "map editor visibility value", "no" );
     mvwprintw( w_info, point( 1, off++ ), _( "dist: %d u_see: %s veh: %s scent: %d" ),
                rl_dist( player_character.pos(), target ), u_see_msg, veh_msg, g->scent.get( target ) );
     mvwprintw( w_info, point( 1, off++ ), _( "sight_range: %d, daylight_sight_range: %d," ),
@@ -956,14 +959,18 @@ template<>
 std::string describe( const ter_t &type )
 {
     return string_format( _( "Move cost: %d\nRoof: %s" ), type.movecost,
-                          type.has_flag( TFLAG_SUPPORTS_ROOF ) ? _( "Yes" ) : _( "No" ) );
+                          type.has_flag( TFLAG_SUPPORTS_ROOF ) ?
+                          pgettext( "map editor property value", "Yes" ) :
+                          pgettext( "map editor property value", "No" ) );
 }
 
 template<>
 std::string describe( const furn_t &type )
 {
     return string_format( _( "Move cost: %d\nRoof: %s" ), type.movecost,
-                          type.has_flag( TFLAG_SUPPORTS_ROOF ) ? _( "Yes" ) : _( "No" ) );
+                          type.has_flag( TFLAG_SUPPORTS_ROOF ) ?
+                          pgettext( "map editor property value", "Yes" ) :
+                          pgettext( "map editor property value", "No" ) );
 }
 
 template<>
@@ -971,7 +978,9 @@ std::string describe( const trap &type )
 {
     return string_format( _( "Visible: %d\nAvoidance: %d\nDifficulty: %d\nBenign: %s" ),
                           type.get_visibility(), type.get_avoidance(), type.get_difficulty(),
-                          type.is_benign() ? _( "Yes" ) : _( "No" ) );
+                          type.is_benign() ?
+                          pgettext( "map editor property value", "Yes" ) :
+                          pgettext( "map editor property value", "No" ) );
 }
 
 template<typename T_id>
@@ -1799,8 +1808,7 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
     tinymap tmpmap;
     // TODO: add a do-not-save-generated-submaps parameter
     // TODO: keep track of generated submaps to delete them properly and to avoid memory leaks
-    // TODO: fix point types
-    tmpmap.generate( tripoint( project_to<coords::sm>( omt_pos.xy() ).raw(), target.z ),
+    tmpmap.generate( project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z ) ),
                      calendar::turn );
 
     gmenu.border_color = c_light_gray;
@@ -1844,9 +1852,8 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
             lastsel = gmenu.selected;
             get_overmapbuffer( get_map().get_bound_dimension() ).ter_set( omt_pos, oter_id( gmenu.selected ) );
             cleartmpmap( tmpmap );
-            // TODO: fix point types
             tmpmap.generate(
-                tripoint( project_to<coords::sm>( omt_pos.xy() ).raw(), target.z ),
+                project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z ) ),
                 calendar::turn );
         }
 
@@ -1871,9 +1878,8 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
 
         if( gpmenu.ret == 0 ) {
             cleartmpmap( tmpmap );
-            // TODO: fix point types
             tmpmap.generate(
-                tripoint( project_to<coords::sm>( omt_pos.xy() ).raw(), target.z ),
+                project_to<coords::sm>( tripoint_abs_omt( omt_pos.xy(), target.z ) ),
                 calendar::turn );
         } else if( gpmenu.ret == 1 ) {
             tmpmap.rotate( 1 );
@@ -1893,8 +1899,8 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
                 for( int y = 0; y < 2; y++ ) {
                     // Apply previewed mapgen to map. Since this is a function for testing, we try avoid triggering
                     // functions that would alter the results
-                    const auto dest_pos = target_sub + tripoint( x, y, target.z );
-                    const auto src_pos = tripoint{ x, y, target.z };
+                    const auto dest_pos = tripoint_bub_sm( x, y, target.z ) + target_sub;
+                    const auto src_pos = tripoint_bub_sm{ x, y, target.z };
 
                     submap *destsm = here.get_submap_at_grid( dest_pos );
                     submap *srcsm = tmpmap.get_submap_at_grid( src_pos );
@@ -1903,7 +1909,7 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
 
                     //TODO!: move this into the submap swap
                     for( auto &veh : destsm->vehicles ) {
-                        veh->sm_pos = dest_pos;
+                        veh->sm_pos = dest_pos.raw();
                     }
 
                     if( !destsm->spawns.empty() ) {                              // trigger spawnpoints
@@ -1915,7 +1921,7 @@ void editmap::mapgen_preview( const real_coords &tc, uilist &gmenu )
             // Since we cleared the vehicle cache of the whole z-level (not just the generate map), we add it back here
             for( int x = 0; x < here.getmapsize(); x++ ) {
                 for( int y = 0; y < here.getmapsize(); y++ ) {
-                    const tripoint dest_pos = tripoint( x, y, target.z );
+                    const auto dest_pos = tripoint_bub_sm( x, y, target.z );
                     const submap *destsm = here.get_submap_at_grid( dest_pos );
                     here.update_vehicle_list( destsm, target.z ); // update real map's vcaches
                 }
@@ -1957,7 +1963,7 @@ vehicle *editmap::mapgen_veh_query( const tripoint_abs_omt &omt_tgt )
     std::vector<vehicle *> possible_vehicles;
     for( int x = 0; x < 2; x++ ) {
         for( int y = 0; y < 2; y++ ) {
-            submap *destsm = target_bay.get_submap_at_grid( { x, y, target.z } );
+            submap *destsm = target_bay.get_submap_at_grid( tripoint_bub_sm{ x, y, target.z } );
             for( const auto &vehicle : destsm->vehicles ) {
                 possible_vehicles.push_back( vehicle.get() );
             }
@@ -1990,7 +1996,7 @@ bool editmap::mapgen_veh_destroy( const tripoint_abs_omt &omt_tgt, vehicle *car_
     target_bay.load( project_to<coords::sm>( omt_tgt ), false );
     for( int x = 0; x < 2; x++ ) {
         for( int y = 0; y < 2; y++ ) {
-            submap *destsm = target_bay.get_submap_at_grid( { x, y, target.z } );
+            submap *destsm = target_bay.get_submap_at_grid( tripoint_bub_sm{ x, y, target.z } );
             for( auto &z : destsm->vehicles ) {
                 if( z.get() == car_target ) {
                     std::unique_ptr<vehicle> old_veh = target_bay.detach_vehicle( z.get() );

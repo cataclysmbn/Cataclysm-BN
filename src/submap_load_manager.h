@@ -142,15 +142,11 @@ class submap_load_manager
         void update();
 
         /**
-         * Block until all background lazy-border preload_quad tasks complete.
+         * Block until all in-flight background presave_quad tasks complete.
          *
-         * Normal gameplay does NOT need this — update() reaps completed
-         * futures non-blockingly, and world_tick() uses for_each_submap()
-         * (locked iteration) for thread safety.
-         *
-         * Use this only when ALL background work must finish before
-         * proceeding: saving the game, switching dimensions, or shutting
-         * down the thread pool.
+         * Must be called before saving the game, switching dimensions, or
+         * shutting down the thread pool so that no worker holds raw submap
+         * pointers across those operations.
          */
         void drain_lazy_loads();
 
@@ -192,15 +188,16 @@ class submap_load_manager
          * inside world_tick()'s for_each_submap lambda to avoid an O(log N)
          * mapbuffer lookup + O(R) request scan for every loaded submap.
          *
-         * @p raw_pos is the raw tripoint key as stored in mapbuffer::submaps,
-         * matching the key_type used in the internal simulated set.
+         * @p raw_pos is the raw tripoint key as stored in mapbuffer::submaps.
+         * The z component is ignored — the simulated set is 2D (horizontal-only)
+         * because load requests are always z-level agnostic.
          *
          * Safe to call from world_tick(): prev_simulated_ is only modified by
          * update(), which runs after world_tick() in the same game turn.
          */
         auto is_in_simulated_set( const std::string &dim_id,
                                   const tripoint &raw_pos ) const noexcept -> bool {
-            return prev_simulated_.contains( { dim_id, raw_pos } );
+            return prev_simulated_.contains( { dim_id, point_abs_sm{ raw_pos.xy() } } );
         }
 
         /**
@@ -233,9 +230,9 @@ class submap_load_manager
         void flush_prev_desired();
 
         /**
-         * Returns true if all background work has been drained — i.e. both
-         * lazy_futures_ and presave_futures_ are empty.  Used by flush_prev_desired()
-         * to assert correct call ordering during dimension switches.
+         * Returns true if all background presave work has been drained
+         * (presave_futures_ is empty).  Used by flush_prev_desired() to assert
+         * correct call ordering during dimension switches.
          */
         auto is_fully_drained() const noexcept -> bool;
 
@@ -257,19 +254,22 @@ class submap_load_manager
         void remove_listener( submap_load_listener *listener );
 
     private:
-        using desired_key = std::pair<std::string, tripoint>;
-        using quad_key = std::pair<std::string, tripoint>;
+        using desired_key = std::pair<std::string, point_abs_sm>;
+        using quad_key    = std::pair<std::string, tripoint_abs_omt>;
 
-        /** Hash for pair<string, tripoint> used by unordered containers. */
-        struct pair_hash {
-            auto operator()( const desired_key &k ) const noexcept -> std::size_t {
+        /** Hash for pair<string, CoordType> used by unordered containers.
+         *  CoordType must be hashable via std::hash (all coord_point specializations are). */
+        template<typename CoordType>
+        struct coord_pair_hash {
+            auto operator()( const std::pair<std::string, CoordType> &k ) const noexcept
+            -> std::size_t {
                 auto h = std::hash<std::string> {}( k.first );
-                h ^= std::hash<tripoint> {}( k.second ) + 0x9e3779b9 + ( h << 6 ) + ( h >> 2 );
+                h ^= std::hash<CoordType> {}( k.second ) + 0x9e3779b9 + ( h << 6 ) + ( h >> 2 );
                 return h;
             }
         };
 
-        using key_set = std::unordered_set<desired_key, pair_hash>;
+        using key_set = std::unordered_set<desired_key, coord_pair_hash<point_abs_sm>>;
 
         load_request_handle next_handle_ = 1;
         std::map<load_request_handle, submap_load_request> requests_;
@@ -292,18 +292,10 @@ class submap_load_manager
         /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
         std::vector<point> bubble_offsets_;
 
-        /** In-flight load_or_generate_quad futures for lazy border positions.
-         *  Keyed by quad_key for O(log N) lookup and erase.
-         *  Returns true if mapgen ran (newly-generated quad), false if the quad was
-         *  already on disk.  Presence in the map also serves as the in-flight guard
-         *  (replaces the old lazy_in_flight_ unordered_set). */
-        std::map<quad_key, std::future<bool>> lazy_futures_;
-
         /** In-flight presave_quad futures for dirty quads that left simulation.
-         *  Keyed by quad_key for O(log N) lookup and erase.
+         *  Keyed by quad_key (dim + 3-D OMT address) for O(log N) lookup and erase.
          *  Eviction waits for these before freeing the in-memory submaps.
-         *  Presence in the map also serves as the in-flight guard
-         *  (replaces the old presave_in_flight_ unordered_set). */
+         *  Presence in the map also serves as the in-flight guard. */
         std::map<quad_key, std::future<void>> presave_futures_;
 
         /**
@@ -312,7 +304,7 @@ class submap_load_manager
          * border-only quads (never simulated) are discarded without saving because
          * their in-memory content is identical to what is already on disk.
          */
-        std::unordered_set<quad_key, pair_hash> dirty_quads_;
+        std::unordered_set<quad_key, coord_pair_hash<tripoint_abs_omt>> dirty_quads_;
 
         /** Snapshot of all request centers from the previous update().
          *  Used to detect steady-state and skip expensive recomputation. */

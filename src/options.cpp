@@ -1112,7 +1112,7 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
     std::vector<options_manager::id_and_option> user_tilesets = load_tilesets_from(
                 PATH_INFO::user_gfx() );
     for( const options_manager::id_and_option &id : user_tilesets ) {
-        if( std::ranges::find( result, id ) == result.end() ) {
+        if( !std::ranges::contains( result, id ) ) {
             result.emplace_back( id );
         }
     }
@@ -1626,6 +1626,12 @@ void options_manager::add_options_interface()
 
     add_empty_line();
 
+    add( "USE_PINYIN_SEARCH", interface, translate_marker( "Use pinyin in search" ),
+         translate_marker( "If true, pinyin can be used in searching and filtering Chinese text.  "
+                           "May slow down searches with many entries." ),
+         false
+       );
+
     add( "FORCE_CAPITAL_YN", interface, translate_marker( "Force Y/N in prompts" ),
          translate_marker( "If true, Y/N prompts are case-sensitive and y and n are not accepted." ),
          true
@@ -2092,6 +2098,13 @@ void options_manager::add_options_graphics()
 
     get_option( "USE_CHARACTER_PREVIEW" ).setPrerequisite( "USE_TILES" );
 
+    add( "LOADING_SCREEN_IMAGES", graphics, translate_marker( "Loading screen images" ),
+         translate_marker( "If true, shows loading splash images when available." ),
+         true, COPT_CURSES_HIDE
+       );
+
+    get_option( "LOADING_SCREEN_IMAGES" ).setPrerequisite( "USE_TILES" );
+
     add_empty_line();
 
     add( "MEMORY_MAP_MODE", graphics, translate_marker( "Memory map drawing mode" ),
@@ -2459,10 +2472,8 @@ void options_manager::add_options_performance()
              true );
         add( "LAZY_BORDER", page_id,
              translate_marker( "Pre-load Border" ),
-             translate_marker( "Keep a border of submaps loaded around the reality bubble.  "
-                               "These are pre-loaded from disk in the background so that map "
-                               "shifts are faster (the data is already in memory).  Uses more "
-                               "memory but reduces stalls when the map scrolls.  " ),
+             translate_marker( "No effect — lazy border loading is pending async mapgen rework "
+                               "and is currently disabled regardless of this setting." ),
              !is_android );
     } );
 
@@ -2537,25 +2548,27 @@ void options_manager::add_options_performance()
                                           to_translation( "Configure how submaps are loaded and "
                                                   "processed outside of the reality bubble." ) ),
     [&]( auto & page_id ) {
-        add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
-             translate_marker( "Out-of-Bubble Fire Spread" ),
-             translate_marker( "Controls whether fire can keep areas loaded outside of render "
-                               "distance. 'None': fire burns out in place. "
-                               "'Adjacent': fire can spread into unloaded areas, and keeps "
-        "close enough." ), {
-            { "none", translate_marker( "None (pause spread)" ) },
-            { "adjacent", translate_marker( "Adjacent (one layer)" ) }
-        },
-        is_android ? "none" : "adjacent"
-           );
-        add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
-             translate_marker( "Fire Spread Submap Cap" ),
-             translate_marker( "Maximum number of submaps that fire spread may keep loaded "
-                               "simultaneously across all dimensions. Higher values allow larger "
-                               "fires to be simulated correctly. "
-                               "0 disables out-of-bubble fire spread loading entirely. " ),
-             0, 250, 25 );
-        add( "POWER_PORTAL_LOAD_RADIUS", performance,
+        // Temporary fix for #8726: disable out-of-bubble fire spread until
+        // fire-loaded submaps can safely handle vehicle state.
+        // add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
+        //      translate_marker( "Out-of-Bubble Fire Spread" ),
+        //      translate_marker( "Controls whether fire can keep areas loaded outside of render "
+        //                        "distance. 'None': fire burns out in place. "
+        //                        "'Adjacent': fire can spread into unloaded areas, and keeps "
+        //                        "close enough." ), {
+        //     { "none", translate_marker( "None (pause spread)" ) },
+        //     { "adjacent", translate_marker( "Adjacent (one layer)" ) }
+        // },
+        // is_android ? "none" : "adjacent"
+        //    );
+        // add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
+        //      translate_marker( "Fire Spread Submap Cap" ),
+        //      translate_marker( "Maximum number of submaps that fire spread may keep loaded "
+        //                        "simultaneously across all dimensions. Higher values allow larger "
+        //                        "fires to be simulated correctly. "
+        //                        "0 disables out-of-bubble fire spread loading entirely. " ),
+        //      0, 250, 25 );
+        add( "POWER_PORTAL_LOAD_RADIUS", page_id,
              translate_marker( "Power portal load radius (submaps)" ),
              translate_marker( "Radius in submaps around each end of a power-portal link that is "
                                "force-loaded while the link is active." ),
@@ -2563,7 +2576,7 @@ void options_manager::add_options_performance()
            );
     } );
 
-    get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
+    // get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
 }
 
 void options_manager::add_options_debug()
@@ -4206,6 +4219,7 @@ void options_manager::cache_to_globals()
     use_tiles = false;
     use_tiles_overmap = false;
 #endif
+    use_pinyin_search = ::get_option<bool>( "USE_PINYIN_SEARCH" );
     log_from_top = ::get_option<std::string>( "LOG_FLOW" ) == "new_top";
     message_ttl = ::get_option<int>( "MESSAGE_TTL" );
     message_cooldown = ::get_option<int>( "MESSAGE_COOLDOWN" );
@@ -4225,9 +4239,10 @@ void options_manager::cache_to_globals()
     lod_coarse_scent_interval = ::get_option<int>( "LOD_COARSE_SCENT_INTERVAL" );
     lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
 
-    reality_bubble_fire_spread =
-        ::get_option<std::string>( "REALITY_BUBBLE_FIRE_SPREAD" ) == "adjacent";
-    fire_spread_submap_cap = ::get_option<int>( "FIRE_SPREAD_SUBMAP_CAP" );
+    // Temporary fix for #8726: force out-of-bubble fire spread off while the
+    // corresponding options are commented out above.
+    reality_bubble_fire_spread = false;
+    fire_spread_submap_cap = 0;
 
     {
         const auto psl_str = ::get_option<std::string>( "POCKET_SIMULATION_LEVEL" );
@@ -4251,7 +4266,7 @@ void options_manager::cache_to_globals()
     monster_plan_chunk_size   = ::get_option<int>( "MONSTER_PLAN_CHUNK_SIZE" );
     parallel_map_cache        = ::get_option<bool>( "PARALLEL_MAP_CACHE" );
     parallel_scent_update     = ::get_option<bool>( "PARALLEL_SCENT_UPDATE" );
-    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
+    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" ) && false;
 
     merge_comestible_mode = ( [] {
         const auto opt = ::get_option<std::string>( "MERGE_COMESTIBLES" );

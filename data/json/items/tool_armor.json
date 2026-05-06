@@ -3281,7 +3281,7 @@
       { "type": "gps_device", "radius": 40, "additional_charges_per_tile": 0.1 },
       {
         "type": "transform",
-        "msg": "You activate your %'s night vision mode.",
+        "msg": "You activate your %s's night vision mode.",
         "target": "scouter_nv_on",
         "active": true,
         "transform_charges": 1,
@@ -3317,7 +3317,7 @@
       { "type": "gps_device", "radius": 120, "additional_charges_per_tile": 0.1 },
       {
         "type": "transform",
-        "msg": "You activate your %'s night vision mode.",
+        "msg": "You activate your %s's night vision mode.",
         "target": "mil_scouter_nv_on",
         "active": true,
         "transform_charges": 1,
