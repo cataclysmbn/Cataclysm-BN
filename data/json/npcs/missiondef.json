@@ -589,10 +589,10 @@
     "goal": "MGOAL_GO_TO_TYPE",
     "difficulty": 2,
     "value": 60000,
-    "start": { "effect": "follow_only", "assign_mission_target": { "om_terrain": "fema_entrance", "reveal_radius": 3, "z": 0 } },
+    "start": { "effect": "follow_only", "assign_mission_target": { "om_terrain": "FEMA_entrance", "reveal_radius": 3, "z": 0 } },
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_REACH_FARM_HOUSE",
-    "destination": "fema_entrance",
+    "destination": "FEMA_entrance",
     "dialogue": {
       "describe": "Maybe they escaped to one of the camps…",
       "offer": "I can't thank you enough for bringing me the patient records but I do have another request.  You seem to know your way around… could you take me to one of the FEMA camps?  I know some were overrun but I don't want to believe all of them could have fallen.",

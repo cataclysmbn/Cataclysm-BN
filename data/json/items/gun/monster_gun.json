@@ -108,5 +108,28 @@
     "range": 12,
     "dispersion": 150,
     "durability": 8
+  },
+  {
+    "id": "radiant_triffid_boss_sunray",
+    "weapon_category": [ "ENERGY_WEAPONS" ],
+    "type": "GUN",
+    "symbol": "%",
+    "color": "red",
+    "name": { "str": "radiant triffid sun ray" },
+    "description": "Sunlight radiates from this mutated triffid petal.",
+    "material": [ "veggy" ],
+    "flags": [ "PRIMITIVE_RANGED_WEAPON", "NEVER_JAMS", "NONCONDUCTIVE", "NO_REPAIR", "WATERPROOF_GUN", "NO_SALVAGE", "NO_UNLOAD" ],
+    "skill": "pistol",
+    "ammo_effects": [ "NEVER_MISFIRES", "LASER" ],
+    "ranged_damage": { "damage_type": "light", "amount": 5 },
+    "weight": "1 g",
+    "volume": "1 ml",
+    "bashing": 1,
+    "to_hit": 1,
+    "reload_noise_volume": 0,
+    "loudness": 3,
+    "range": 12,
+    "dispersion": 10,
+    "durability": 8
   }
 ]
