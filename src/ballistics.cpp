@@ -480,6 +480,12 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
             auto floor1 = prev_point;
             auto floor2 = tp;
 
+        if( !here.inbounds( tp ) ) {
+            traj_len = i;
+            tp = prev_point;
+            break;
+        }
+
             if( floor1.z() < floor2.z() ) {
                 floor1.z()++;
             } else {

@@ -1545,7 +1545,9 @@ void veh_interact::calc_overview()
                         "%s     <color_light_gray>%s</color>",
                         !pt.fuel_current().is_null() ? item::nname( pt.fuel_current() ) : "",
                         //~ translation should not exceed 3 console cells
-                        right_justify( pt.enabled ? _( "Yes" ) : _( "No" ), 3 ) ) );
+                        right_justify( pt.enabled ?
+                                       pgettext( "vehicle part enabled value", "Yes" ) :
+                                       pgettext( "vehicle part enabled value", "No" ), 3 ) ) );
             };
 
             // display engine faults (if any)

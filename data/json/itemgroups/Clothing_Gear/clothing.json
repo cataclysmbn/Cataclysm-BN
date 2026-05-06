@@ -184,7 +184,6 @@
       {
         "distribution": [
           { "group": "clothing_glasses", "prob": 60 },
-          { "item": "army_powered_earmuffs", "prob": 20 },
           { "item": "glasses_bal", "prob": 30 },
           { "item": "goggles_nv", "prob": 5 },
           { "item": "goggles_nv_enhanced", "prob": 1 },
@@ -228,7 +227,6 @@
       {
         "distribution": [
           { "group": "clothing_glasses", "prob": 60 },
-          { "item": "army_powered_earmuffs", "prob": 20 },
           { "item": "glasses_bal", "prob": 30 },
           { "item": "goggles_nv", "prob": 5 },
           { "item": "goggles_nv_enhanced", "prob": 1 },
@@ -261,7 +259,7 @@
       },
       { "distribution": [ { "item": "fancy_sunglasses", "prob": 95 }, { "item": "glasses_bal", "prob": 5 } ] },
       { "group": "clothing_watch", "prob": 85 },
-      { "item": "army_powered_earmuffs", "prob": 20 },
+      { "item": "army_powered_earmuffs", "prob": 25 },
       { "item": "goggles_ir", "prob": 10 }
     ]
   },
@@ -552,7 +550,10 @@
       { "group": "clothing_work_gloves", "prob": 75 },
       { "group": "clothing_work_hat", "prob": 60 },
       { "group": "clothing_work_mask", "prob": 40 },
-      { "item": "ear_plugs", "prob": 15 },
+      {
+        "distribution": [ { "item": "ear_plugs", "prob": 50 }, { "item": "attached_ear_plugs_off", "prob": 50 } ],
+        "prob": 15
+      },
       { "item": "tool_belt", "prob": 25 },
       {
         "distribution": [

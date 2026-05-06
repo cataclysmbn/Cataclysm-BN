@@ -2548,25 +2548,27 @@ void options_manager::add_options_performance()
                                           to_translation( "Configure how submaps are loaded and "
                                                   "processed outside of the reality bubble." ) ),
     [&]( auto & page_id ) {
-        add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
-             translate_marker( "Out-of-Bubble Fire Spread" ),
-             translate_marker( "Controls whether fire can keep areas loaded outside of render "
-                               "distance. 'None': fire burns out in place. "
-                               "'Adjacent': fire can spread into unloaded areas, and keeps "
-        "close enough." ), {
-            { "none", translate_marker( "None (pause spread)" ) },
-            { "adjacent", translate_marker( "Adjacent (one layer)" ) }
-        },
-        is_android ? "none" : "adjacent"
-           );
-        add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
-             translate_marker( "Fire Spread Submap Cap" ),
-             translate_marker( "Maximum number of submaps that fire spread may keep loaded "
-                               "simultaneously across all dimensions. Higher values allow larger "
-                               "fires to be simulated correctly. "
-                               "0 disables out-of-bubble fire spread loading entirely. " ),
-             0, 250, 25 );
-        add( "POWER_PORTAL_LOAD_RADIUS", performance,
+        // Temporary fix for #8726: disable out-of-bubble fire spread until
+        // fire-loaded submaps can safely handle vehicle state.
+        // add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
+        //      translate_marker( "Out-of-Bubble Fire Spread" ),
+        //      translate_marker( "Controls whether fire can keep areas loaded outside of render "
+        //                        "distance. 'None': fire burns out in place. "
+        //                        "'Adjacent': fire can spread into unloaded areas, and keeps "
+        //                        "close enough." ), {
+        //     { "none", translate_marker( "None (pause spread)" ) },
+        //     { "adjacent", translate_marker( "Adjacent (one layer)" ) }
+        // },
+        // is_android ? "none" : "adjacent"
+        //    );
+        // add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
+        //      translate_marker( "Fire Spread Submap Cap" ),
+        //      translate_marker( "Maximum number of submaps that fire spread may keep loaded "
+        //                        "simultaneously across all dimensions. Higher values allow larger "
+        //                        "fires to be simulated correctly. "
+        //                        "0 disables out-of-bubble fire spread loading entirely. " ),
+        //      0, 250, 25 );
+        add( "POWER_PORTAL_LOAD_RADIUS", page_id,
              translate_marker( "Power portal load radius (submaps)" ),
              translate_marker( "Radius in submaps around each end of a power-portal link that is "
                                "force-loaded while the link is active." ),
@@ -2574,7 +2576,7 @@ void options_manager::add_options_performance()
            );
     } );
 
-    get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
+    // get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
 }
 
 void options_manager::add_options_debug()
@@ -4237,9 +4239,10 @@ void options_manager::cache_to_globals()
     lod_coarse_scent_interval = ::get_option<int>( "LOD_COARSE_SCENT_INTERVAL" );
     lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
 
-    reality_bubble_fire_spread =
-        ::get_option<std::string>( "REALITY_BUBBLE_FIRE_SPREAD" ) == "adjacent";
-    fire_spread_submap_cap = ::get_option<int>( "FIRE_SPREAD_SUBMAP_CAP" );
+    // Temporary fix for #8726: force out-of-bubble fire spread off while the
+    // corresponding options are commented out above.
+    reality_bubble_fire_spread = false;
+    fire_spread_submap_cap = 0;
 
     {
         const auto psl_str = ::get_option<std::string>( "POCKET_SIMULATION_LEVEL" );

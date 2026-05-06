@@ -192,7 +192,7 @@
       { "item": "e_tool", "prob": 50 },
       { "item": "mask_gas", "prob": 20 },
       { "item": "two_way_radio", "prob": 60 },
-      { "item": "army_powered_earmuffs", "prob": 20 },
+      { "item": "army_powered_earmuffs", "prob": 25 },
       { "item": "sheath", "contents-item": "knife_combat", "prob": 80 }
     ]
   },
