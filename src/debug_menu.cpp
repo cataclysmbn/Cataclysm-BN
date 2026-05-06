@@ -498,7 +498,7 @@ static void teleport_to_overmap_special()
     const overmap_special *target = vec_os[area_menu.ret];
     const overmap_special_id target_id = target->id;
     mission_target_params t;
-    t.overmap_terrain = target->get_terrain_at( tripoint() )->get_mapgen_id();
+    t.overmap_terrain = target->get_terrain_at( tripoint_rel_omt() )->get_mapgen_id();
     t.overmap_special = target_id;
     t.search_range = 0;
     t.reveal_radius = 3;

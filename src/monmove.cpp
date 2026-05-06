@@ -298,7 +298,7 @@ void monster::unset_dest()
 
 // Move towards p for f more turns--generally if we hear a sound there
 // "Stupid" movement; "if (wander_pos.x < posx) posx--;" etc.
-void monster::wander_to( const tripoint_abs_ms &p, int f )
+void monster::wander_to( const tripoint_bub_ms &p, int f )
 {
     wander_pos = p;
     wandf = f;
@@ -1945,25 +1945,25 @@ static std::vector<tripoint_bub_ms> get_bashing_zone( const tripoint_bub_ms &bas
         const tripoint_bub_ms &basher,
         int maxdepth )
 {
-    std::vector<tripoint> direction;
-    direction.push_back( bashee.raw() );
-    direction.push_back( basher.raw() );
+    std::vector<tripoint_bub_ms> direction;
+    direction.push_back( bashee );
+    direction.push_back( basher );
     // Draw a line from the target through the attacker.
-    std::vector<tripoint> path = continue_line( direction, maxdepth );
+    std::vector<tripoint_bub_ms> path = continue_line( direction, maxdepth );
     // Remove the target.
-    path.insert( path.begin(), basher.raw() );
+    path.insert( path.begin(), basher );
     std::vector<tripoint_bub_ms> zone;
     // Go ahead and reserve enough room for all the points since
     // we know how many it will be.
     zone.reserve( 3 * maxdepth );
     tripoint_bub_ms previous = bashee;
-    for( const tripoint &p : path ) {
-        std::vector<point> swath = squares_in_direction( previous.xy().raw(), p.xy() );
+    for( const auto &p : path ) {
+        std::vector<point> swath = squares_in_direction( previous.xy().raw(), p.xy().raw() );
         for( point q : swath ) {
-            zone.emplace_back( q, bashee.z() );
+            zone.emplace_back( point_bub_ms( q ), bashee.z() );
         }
 
-        previous.raw() = p;
+        previous = p;
     }
     return zone;
 }
@@ -2766,18 +2766,18 @@ void monster::shove_vehicle( const tripoint_bub_ms &remote_destination,
                 shove_moves = std::max( shove_moves, shove_moves_minimal );
                 this->mod_moves( -shove_moves );
                 const auto destination_delta( remote_destination - nearby_destination );
-                const tripoint_bub_ms shove_destination( clamp( destination_delta.x(), -1, 1 ),
+                const auto shove_delta = tripoint_rel_ms( clamp( destination_delta.x(), -1, 1 ),
                         clamp( destination_delta.y(), -1, 1 ),
                         clamp( destination_delta.z(), -1, 1 ) );
                 veh.skidding = true;
                 veh.velocity = shove_velocity;
-                if( shove_destination != tripoint_bub_ms::zero() ) {
-                    if( shove_destination.z() != 0 ) {
-                        veh.vertical_velocity = shove_destination.z() < 0 ? -shove_velocity : +shove_velocity;
+                if( shove_delta != tripoint_rel_ms::zero() ) {
+                    if( shove_delta.z() != 0 ) {
+                        veh.vertical_velocity = shove_delta.z() < 0 ? -shove_velocity : +shove_velocity;
                     }
-                    g->m.move_vehicle( veh, shove_destination, veh.face );
+                    g->m.move_vehicle( veh, shove_delta, veh.face );
                 }
-                veh.move = tileray( destination_delta.xy().raw() );
+                veh.move = tileray( shove_delta.xy() );
                 veh.smash( g->m, shove_damage_min, shove_damage_max, 0.10F );
             }
         }

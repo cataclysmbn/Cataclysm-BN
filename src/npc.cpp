@@ -156,7 +156,7 @@ npc::npc()
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
     wanted_item_pos = tripoint_bub_ms::min();
-    guard_pos = tripoint_bub_ms::min();
+    guard_pos = tripoint_abs_ms::min();
     goal = tripoint_abs_omt( tripoint_min );
     fetching_item = false;
     has_new_items = true;
@@ -2661,7 +2661,7 @@ void npc::reboot()
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
     wanted_item_pos = tripoint_bub_ms::min();
-    guard_pos = tripoint_bub_ms::min();
+    guard_pos = tripoint_abs_ms::min();
     goal = no_goal_point;
     fetching_item = false;
     has_new_items = true;
@@ -2675,7 +2675,7 @@ void npc::reboot()
     ai_cache.ally.reset();
     ai_cache.can_heal.clear_all();
     ai_cache.sound_alerts.clear();
-    ai_cache.s_abs_pos = tripoint_zero;
+    ai_cache.s_abs_pos = tripoint_abs_ms::zero();
     ai_cache.stuck = 0;
     ai_cache.guard_pos = std::nullopt;
     ai_cache.my_weapon_value = 0;

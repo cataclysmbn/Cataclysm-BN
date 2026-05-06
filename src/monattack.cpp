@@ -219,7 +219,7 @@ static bool within_visual_range( monster *z, int max_range )
 static bool within_target_range( const monster *const z, const Creature *const target, int range )
 {
     return target != nullptr &&
-           rl_dist( z->bub_pos(), target->pos() ) <= range &&
+           rl_dist( z->bub_pos(), target->bub_pos() ) <= range &&
            z->sees( *target );
 }
 
@@ -378,7 +378,7 @@ bool mattack::eat_food( monster *z )
 
 bool mattack::antqueen( monster *z )
 {
-    std::vector<tripoint> egg_points;
+    std::vector<tripoint_bub_ms> egg_points;
     std::vector<monster *> ants;
     // Count up all adjacent tiles the contain at least one egg.
     for( const auto &dest : g->m.points_in_radius( z->bub_pos(), 2 ) ) {
@@ -427,7 +427,7 @@ bool mattack::antqueen( monster *z )
         if( g->u.sees( *z ) ) {
             add_msg( m_warning, _( "The %s tends nearby eggs, and they hatch!" ), z->name() );
         }
-        for( const tripoint &egg_pos : egg_points ) {
+        for( const tripoint_bub_ms &egg_pos : egg_points ) {
             map_stack items = g->m.i_at( egg_pos );
             for( map_stack::iterator it = items.begin(); it != items.end(); ) {
                 if( ( *it )->typeId() != itype_ant_egg ) {
@@ -511,7 +511,7 @@ bool mattack::shriek_stun( monster *z )
     units::angle target_angle = coord_to_angle( z->bub_pos(), target->bub_pos() );
     units::angle cone_angle = 20_degrees;
     map &here = get_map();
-    for( const tripoint &cone : here.points_in_radius( z->bub_pos(), 4 ) ) {
+    for( const tripoint_bub_ms &cone : here.points_in_radius( z->bub_pos(), 4 ) ) {
         units::angle tile_angle = coord_to_angle( z->bub_pos(), cone );
         units::angle diff = units::fabs( target_angle - tile_angle );
         // Skip the target, because it's outside cone or it's the source
@@ -618,7 +618,7 @@ bool mattack::acid( monster *z )
     proj.add_effect( ammo_effect_NO_OVERSHOOT );
     auto dealt = projectile_attack( proj, z->bub_pos(), target->bub_pos(), dispersion_sources{ 5400 },
                                     z );
-    const tripoint &hitp = dealt.end_point;
+    const tripoint_bub_ms &hitp = dealt.end_point;
     const Creature *hit_critter = dealt.hit_critter;
     if( hit_critter == nullptr && g->m.hit_with_acid( hitp ) && g->u.sees( hitp ) ) {
         add_msg( _( "A glob of acid hits the %s!" ),
@@ -767,7 +767,7 @@ bool mattack::shockstorm( monster *z )
     tripoint_bub_ms tarp( target->bub_pos().x() + rng( -1, 1 ) + rng( -1, 1 ),
                           target->bub_pos().y() + rng( -1, 1 ) + rng( -1, 1 ),
                           target->bub_pos().z() );
-    std::vector<tripoint> bolt = line_to( z->bub_pos(), tarp, 0, 0 );
+    std::vector<tripoint_bub_ms> bolt = line_to( z->bub_pos(), tarp, 0, 0 );
     // Fill the LOS with electricity
     for( auto &i : bolt ) {
         if( !one_in( 4 ) ) {
@@ -999,7 +999,7 @@ bool mattack::resurrect( monster *z )
     }
 
     bool sees_necromancer = g->u.sees( *z );
-    std::vector<std::pair<tripoint, item *>> corpses;
+    std::vector<std::pair<tripoint_bub_ms, item *>> corpses;
     // Find all corpses that we can see within 10 tiles.
     int range = 10;
     bool found_eligible_corpse = false;
@@ -1078,7 +1078,7 @@ bool mattack::resurrect( monster *z )
         return false;
     }
 
-    std::pair<tripoint, item *> raised = random_entry( corpses );
+    std::pair<tripoint_bub_ms, item *> raised = random_entry( corpses );
     // To appease static analysis
     assert( raised.second );
     // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
@@ -1179,14 +1179,14 @@ bool mattack::smash( monster *z )
  *                      second = the number of empty spaces found.
  */
 template <size_t N = 1>
-std::pair < std::array < tripoint, ( 2 * N + 1 ) * ( 2 * N + 1 ) >, size_t >
-find_empty_neighbors( const tripoint &origin )
+std::pair < std::array <tripoint_bub_ms, ( 2 * N + 1 ) * ( 2 * N + 1 ) >, size_t>
+find_empty_neighbors( const tripoint_bub_ms &origin )
 {
     constexpr auto r = static_cast<int>( N );
 
-    std::pair < std::array < tripoint, ( 2 * N + 1 )*( 2 * N + 1 ) >, size_t > result;
+    std::pair < std::array <tripoint_bub_ms, ( 2 * N + 1 )*( 2 * N + 1 ) >, size_t> result;
 
-    for( const tripoint &tmp : g->m.points_in_radius( origin, r ) ) {
+    for( const tripoint_bub_ms &tmp : g->m.points_in_radius( origin, r ) ) {
         if( g->is_empty( tmp ) ) {
             result.first[result.second++] = tmp;
         }
@@ -1202,7 +1202,7 @@ find_empty_neighbors( const tripoint &origin )
  * @see find_empty_neighbors
  */
 template <size_t N = 1>
-std::pair < std::array < tripoint, ( 2 * N + 1 ) * ( 2 * N + 1 ) >, size_t >
+std::pair < std::array < tripoint_bub_ms, ( 2 * N + 1 ) * ( 2 * N + 1 ) >, size_t >
 find_empty_neighbors( const Creature &c )
 {
     return find_empty_neighbors<N>( c.bub_pos() );
@@ -1398,7 +1398,7 @@ bool mattack::science( monster *const z ) // I said SCIENCE again!
 
             // fill empty tiles with acid
             for( size_t i = 0; i < empty_neighbor_count; ++i ) {
-                const tripoint &p = empty_neighbors.first[i];
+                const tripoint_bub_ms &p = empty_neighbors.first[i];
                 g->m.add_field( p, fd_acid, att_acid_intensity );
             }
 
@@ -1508,7 +1508,7 @@ bool mattack::growplants( monster *z )
     if( !one_in( 5 ) ) {
         return true;
     }
-    for( const tripoint &p : g->m.points_in_radius( z->bub_pos(), 5 ) ) {
+    for( const tripoint_bub_ms &p : g->m.points_in_radius( z->bub_pos(), 5 ) ) {
         const auto ter = g->m.ter( p );
         if( ter != t_tree_young && ter != t_underbrush ) {
             // Skip as soon as possible to avoid all the checks
@@ -1576,7 +1576,7 @@ bool mattack::vine( monster *z )
         return true;
     }
     z->moves -= 100;
-    for( const tripoint &dest : g->m.points_in_radius( z->bub_pos(), 1 ) ) {
+    for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->bub_pos(), 1 ) ) {
         Creature *critter = g->critter_at( dest );
         if( critter != nullptr && z->attitude_to( *critter ) == Attitude::A_HOSTILE ) {
             if( critter->uncanny_dodge() ) {
@@ -1664,7 +1664,7 @@ bool mattack::triffid_heartbeat( monster *z )
     if( rl_dist( z->bub_pos(), g->u.bub_pos() ) > 5 &&
         !g->m.route( g->u.bub_pos(), z->bub_pos(), root_pathfind ).empty() ) {
         add_msg( m_warning, _( "The root walls creak around you." ) );
-        for( const tripoint &dest : g->m.points_in_radius( z->bub_pos(), 3 ) ) {
+        for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->bub_pos(), 3 ) ) {
             if( g->is_empty( dest ) && one_in( 4 ) ) {
                 g->m.ter_set( dest, t_root_wall );
             } else if( g->m.ter( dest ) == t_root_wall && one_in( 10 ) ) {
@@ -1675,8 +1675,8 @@ bool mattack::triffid_heartbeat( monster *z )
         int tries = 0;
         while( g->m.route( g->u.bub_pos(), z->bub_pos(), root_pathfind ).empty() &&
                tries < 20 ) {
-            point p( rng( g->u.bub_pos().x(), z->bub_pos().x() - 3 ), rng( g->u.bub_pos().y(),
-                     z->bub_pos().y() - 3 ) );
+            auto p = point_bub_ms{ rng( g->u.bub_pos().x(), z->bub_pos().x() - 3 ), rng( g->u.bub_pos().y(),
+                z->bub_pos().y() - 3 ) };
             tripoint_bub_ms dest( p, z->bub_pos().z() );
             tries++;
             g->m.ter_set( dest, t_dirt );
@@ -1723,7 +1723,7 @@ bool mattack::fungus( monster *z )
     int radius = one_in( 4 ) ? 2 : 1;
     double spore_chance = ( on_fungus ? 0.5f : 0.2f ) / ( ( radius + 1 ) * ( radius + 1 ) );
     fungal_effects fe( *g, g->m );
-    for( const tripoint &sporep : g->m.points_in_radius( z->bub_pos(), radius ) ) {
+    for( const tripoint_bub_ms &sporep : g->m.points_in_radius( z->bub_pos(), radius ) ) {
         if( sporep == z->bub_pos() ) {
             continue;
         }
@@ -1782,7 +1782,7 @@ bool mattack::fungus_advanced( monster *z )
 
     // Applying spore launch in certain radius
     fungal_effects fe( *g, g->m );
-    for( const tripoint &sporep : g->m.points_in_radius( z->bub_pos(), radius ) ) {
+    for( const tripoint_bub_ms &sporep : g->m.points_in_radius( z->bub_pos(), radius ) ) {
         if( sporep == z->bub_pos() ) {
             continue;
         }
@@ -1812,7 +1812,7 @@ bool mattack::fungus_haze( monster *z )
         add_msg( m_info, _( "The %s pulses, and fresh fungal material bursts forth." ), z->name() );
     }
     z->moves -= 150;
-    for( const tripoint &dest : g->m.points_in_radius( z->bub_pos(), 3 ) ) {
+    for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->bub_pos(), 3 ) ) {
         g->m.add_field( dest, fd_fungal_haze, rng( 1, 2 ) );
     }
 
@@ -1824,7 +1824,7 @@ bool mattack::fungus_big_blossom( monster *z )
     bool firealarm = false;
     const auto u_see = g->u.sees( *z );
     // Fungal fire-suppressor! >:D
-    for( const tripoint &dest : g->m.points_in_radius( z->bub_pos(), 6 ) ) {
+    for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->bub_pos(), 6 ) ) {
         if( g->m.get_field_intensity( dest, fd_fire ) != 0 ) {
             firealarm = true;
         }
@@ -1857,7 +1857,7 @@ bool mattack::fungus_big_blossom( monster *z )
             add_msg( m_info, _( "The %s pulses, and fresh fungal material bursts forth!" ), z->name() );
         }
         z->moves -= 150;
-        for( const tripoint &dest : g->m.points_in_radius( z->bub_pos(), 12 ) ) {
+        for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->bub_pos(), 12 ) ) {
             g->m.add_field( dest, fd_fungal_haze, rng( 1, 2 ) );
         }
     }
@@ -2011,7 +2011,7 @@ bool mattack::fungus_sprout( monster *z )
     Character &player_character = get_player_character();
     // To avoid map shift weirdness
     bool push_player = false;
-    for( const tripoint &dest : g->m.points_in_radius( z->bub_pos(), 1 ) ) {
+    for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->bub_pos(), 1 ) ) {
         if( player_character.bub_pos() == dest ) {
             push_player = true;
         }
@@ -2079,7 +2079,7 @@ bool mattack::fungus_fortify( monster *z )
 
     bool fortified = false;
     bool push_player = false; // To avoid map shift weirdness
-    for( const tripoint &dest : g->m.points_in_radius( z->bub_pos(), 1 ) ) {
+    for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->bub_pos(), 1 ) ) {
         if( g->u.bub_pos() == dest ) {
             push_player = true;
         }
@@ -2342,7 +2342,7 @@ bool mattack::plant( monster *z )
     }
     z->set_hp( 0 );
     fe.spread_fungus( z->bub_pos() );
-    for( const tripoint &p : closest_points_first( z->bub_pos(), 1 ) ) {
+    for( const tripoint_bub_ms &p : closest_points_first( z->bub_pos(), 1 ) ) {
         if( !one_in( 3 ) ) {
             fe.fungalize( p, z );
         }
@@ -2414,10 +2414,10 @@ bool mattack::formblob( monster *z )
     }
 
     bool didit = false;
-    std::vector<tripoint> pts = closest_points_first( z->bub_pos(), 1 );
+    std::vector<tripoint_bub_ms> pts = closest_points_first( z->bub_pos(), 1 );
     // Don't check own tile
     pts.erase( pts.begin() );
-    for( const tripoint &dest : pts ) {
+    for( const tripoint_bub_ms &dest : pts ) {
         Creature *critter = g->critter_at( dest );
         if( critter == nullptr ) {
             if( z->get_speed_base() > 85 && rng( 0, 250 ) < z->get_speed_base() ) {
@@ -2500,7 +2500,7 @@ bool mattack::callblobs( monster *z )
     // and keep the rest near the brain blob for protection.
     auto enemy = g->u.bub_pos();
     std::list<monster *> allies;
-    std::vector<tripoint> nearby_points = closest_points_first( z->bub_pos(), 3 );
+    std::vector<tripoint_bub_ms> nearby_points = closest_points_first( z->bub_pos(), 3 );
     for( monster &candidate : g->all_monsters() ) {
         if( candidate.type->in_species( species_BLOB ) && candidate.type->id != mon_blob_brain ) {
             // Just give the allies consistent assignments.
@@ -2533,7 +2533,7 @@ bool mattack::jackson( monster *z )
 {
     // Jackson draws nearby zombies into the dance.
     std::list<monster *> allies;
-    std::vector<tripoint> nearby_points = closest_points_first( z->bub_pos(), 3 );
+    std::vector<tripoint_bub_ms> nearby_points = closest_points_first( z->bub_pos(), 3 );
     for( monster &candidate : g->all_monsters() ) {
         if( candidate.type->in_species( ZOMBIE ) && candidate.type->id != mon_zombie_jackson ) {
             // Just give the allies consistent assignments.
@@ -2891,7 +2891,7 @@ bool mattack::grab_drag( monster *z )
         target->stability_roll() < dice( z->type->melee_sides, z->type->melee_dice ) ) {
         player *foe = dynamic_cast<player *>( target );
         monster *zz = dynamic_cast<monster *>( target );
-        tripoint_abs_ms zpt = z->bub_pos();
+        auto zpt = z->bub_pos();
         z->move_to( target_square );
         if( !g->is_empty( zpt ) ) { //Cancel the grab if the space is occupied by something
             return false;
@@ -3783,7 +3783,7 @@ bool mattack::searchlight( monster *z )
         settings.set_var( "SL_SPOT_X", x - zposx );
         settings.set_var( "SL_SPOT_Y", y - zposy );
 
-        g->m.add_field( tripoint( x, y, z->bub_pos().z() ), fd_spotlight, 1 );
+        g->m.add_field( tripoint_bub_ms( x, y, z->bub_pos().z() ), fd_spotlight, 1 );
 
     }
 
@@ -3853,7 +3853,7 @@ void mattack::flame( monster *z, Creature *target )
 
             // break out of attack if flame hits a wall
             // TODO: Z
-            if( here.hit_with_fire( tripoint( i.xy(), z->bub_pos().z() ) ) ) {
+            if( here.hit_with_fire( tripoint_bub_ms( i.xy(), z->bub_pos().z() ) ) ) {
                 if( g->u.sees( i ) ) {
                     add_msg( _( "The tongue of flame hits the %s!" ),
                              here.tername( i.xy() ) );
@@ -3884,7 +3884,7 @@ void mattack::flame( monster *z, Creature *target )
             } else {
                 intervening.y() = prev_point.y();
             }
-            if( here.hit_with_fire( tripoint( intervening.xy(), z->bub_pos().z() ) ) ) {
+            if( here.hit_with_fire( tripoint_bub_ms( intervening.xy(), z->bub_pos().z() ) ) ) {
                 if( g->u.sees( i ) ) {
                     add_msg( _( "The tongue of flame hits the %s!" ),
                              here.tername( intervening.xy() ) );
@@ -3893,7 +3893,7 @@ void mattack::flame( monster *z, Creature *target )
             }
         }
         // break out of attack if flame hits a wall
-        if( here.hit_with_fire( tripoint( i.xy(), z->bub_pos().z() ) ) ) {
+        if( here.hit_with_fire( tripoint_bub_ms( i.xy(), z->bub_pos().z() ) ) ) {
             if( g->u.sees( i ) ) {
                 add_msg( _( "The tongue of flame hits the %s!" ),
                          here.tername( i.xy() ) );
@@ -4266,7 +4266,7 @@ bool mattack::breathe( monster *z )
 
     bool able = ( z->type->id == mon_breather_hub );
     if( !able ) {
-        for( const tripoint &dest : g->m.points_in_radius( z->bub_pos(), 3 ) ) {
+        for( const tripoint_bub_ms &dest : g->m.points_in_radius( z->bub_pos(), 3 ) ) {
             monster *const mon = g->critter_at<monster>( dest );
             if( mon && mon->type->id == mon_breather_hub ) {
                 able = true;
@@ -4601,13 +4601,13 @@ bool mattack::longswipe( monster *z )
     //Is there something impassable blocking the claw?
     auto prev_point = z->bub_pos();
     bool obstructed = false;
-    for( tripoint &pnt : g->m.find_clear_path( z->bub_pos(), target->bub_pos() ) ) {
+    for( tripoint_bub_ms &pnt : g->m.find_clear_path( z->bub_pos(), target->bub_pos() ) ) {
 
         if( here.obstructed_by_vehicle_rotation( prev_point, pnt ) ) {
             if( one_in( 2 ) ) {
-                pnt.x = prev_point.x();
+                pnt.x() = prev_point.x();
             } else {
-                pnt.y = prev_point.y();
+                pnt.y() = prev_point.y();
             }
             obstructed = true;
         }
@@ -4906,7 +4906,7 @@ bool mattack::riotbot( monster *z )
     player *foe = dynamic_cast<player *>( target );
 
     if( calendar::once_every( 1_minutes ) ) {
-        for( const tripoint &dest : here.points_in_radius( z->bub_pos(), 4 ) ) {
+        for( const tripoint_bub_ms &dest : here.points_in_radius( z->bub_pos(), 4 ) ) {
             if( here.passable( dest ) &&
                 here.clear_path( z->bub_pos(), dest, 3, 1, 100 ) ) {
                 here.add_field( dest, fd_relax_gas, rng( 1, 3 ) );
@@ -5045,7 +5045,7 @@ bool mattack::riotbot( monster *z )
             add_msg( m_bad, _( "The robot sprays tear gas!" ) );
             z->moves -= 200;
 
-            for( const tripoint &dest : here.points_in_radius( z->bub_pos(), 2 ) ) {
+            for( const tripoint_bub_ms &dest : here.points_in_radius( z->bub_pos(), 2 ) ) {
                 if( here.passable( dest ) &&
                     here.clear_path( z->bub_pos(), dest, 3, 1, 100 ) ) {
                     here.add_field( dest, fd_tear_gas, rng( 1, 3 ) );
@@ -5074,14 +5074,14 @@ bool mattack::riotbot( monster *z )
             delta = 1;
         }
 
-        tripoint dest( target->bub_pos().x() + rng( 0, delta ) - rng( 0, delta ),
+        auto dest = tripoint_bub_ms{ target->bub_pos().x() + rng( 0, delta ) - rng( 0, delta ),
                        target->bub_pos().y() + rng( 0, delta ) - rng( 0, delta ),
-                       target->bub_pos().z() );
+                       target->bub_pos().z() };
 
         //~ Sound of a riotbot using its blinding flash
         sounds::sound( z->bub_pos(), 3, sounds::sound_t::combat, _( "fzzzzzt" ), false, "misc", "flash" );
 
-        std::vector<tripoint> traj = line_to( z->bub_pos(), dest, 0, 0 );
+        std::vector<tripoint_bub_ms> traj = line_to( z->bub_pos(), dest, 0, 0 );
         auto prev_point = z->bub_pos();
         for( auto &elem : traj ) {
             if( !here.is_transparent( elem ) || here.obscured_by_vehicle_rotation( prev_point, elem ) ) {
@@ -5124,7 +5124,7 @@ bool mattack::evolve_kill_strike( monster *z )
         }
         return true;
     }
-    tripoint const target_pos = target->bub_pos();
+    const auto target_pos = target->bub_pos();
     const std::string target_name = target->disp_name();
     damage_instance damage( z->type->melee_damage );
     damage.mult_damage( 1.33f );
@@ -6006,7 +6006,7 @@ bool mattack::zombie_fuse( monster *z )
         return false;
     }
     monster *critter = nullptr;
-    for( const tripoint &p : g->m.points_in_radius( z->bub_pos(), 1 ) ) {
+    for( const tripoint_bub_ms &p : g->m.points_in_radius( z->bub_pos(), 1 ) ) {
         critter = g->critter_at<monster>( p );
         if( critter != nullptr && critter->faction == z->faction
             && critter != z && critter->get_size() <= z->get_size() ) {
@@ -6040,7 +6040,7 @@ bool mattack::doot( monster *z )
         add_msg( _( "The %s doots its trumpet!" ), z->name() );
     }
     int spooks = 0;
-    for( const tripoint &spookyscary : g->m.points_in_radius( z->bub_pos(), 2 ) ) {
+    for( const tripoint_bub_ms &spookyscary : g->m.points_in_radius( z->bub_pos(), 2 ) ) {
         if( !g->is_empty( spookyscary ) ) {
             continue;
         }

@@ -434,7 +434,7 @@ static item *tack_loc()
 
 void monexamine::remove_battery( monster &z )
 {
-    get_map().add_item_or_charges( get_player_character().pos(), z.remove_battery_item() );
+    get_map().add_item_or_charges( get_player_character().bub_pos(), z.remove_battery_item() );
 
 }
 
@@ -640,7 +640,7 @@ bool Character::can_mount( const monster &critter ) const
 mountable_status Character::get_mountable_status( const monster &critter ) const
 {
     const auto &avoid = get_legacy_path_avoid();
-    auto route = get_map().route( pos(), critter.bub_pos(), get_legacy_pathfinding_settings(), avoid );
+    auto route = get_map().route( bub_pos(), critter.bub_pos(), get_legacy_pathfinding_settings(), avoid );
 
     if( route.empty() ) {
         return {};
@@ -678,8 +678,8 @@ void monexamine::push( monster &z )
 
     add_msg( _( "You pushed the %s." ), pet_name );
 
-    point delta( z.bub_pos().x() - you.bub_pos().x(), z.bub_pos().y() - you.bub_pos().y() );
-    z.move_to( tripoint( z.bub_pos().x() + delta.x, z.bub_pos().y() + delta.y, z.bub_pos().z() ) );
+    auto delta = z.bub_pos().xy() - you.bub_pos().xy();
+    z.move_to( z.bub_pos() + delta );
 }
 
 void monexamine::rename_pet( monster &z )

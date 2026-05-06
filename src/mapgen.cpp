@@ -5774,12 +5774,12 @@ void map::draw_temple( const mapgendata &dat )
                             SOUTH_EDGE ) );
                     square( this, t_rock, point_bub_ms( SEEX + 5, 2 ), point_bub_ms( EAST_EDGE, SEEY * 2 - 3 ) );
                     int x = rng( SEEX - 1, SEEX + 2 ), y = 2;
-                    std::vector<tripoint_bub_ms> path; // Path, from end to start
+                    std::vector<point_bub_ms> path; // Path, from end to start
                     while( x < SEEX - 1 || x > SEEX + 2 || y < SEEY * 2 - 2 ) {
                         static const std::vector<ter_id> terrains = {
                             t_floor_red, t_floor_green, t_floor_blue,
                         };
-                        path.emplace_back( x, y );
+                        path.emplace_back( point_bub_ms( x, y ) );
                         ter_set( point_bub_ms( x, y ), random_entry( terrains ) );
                         if( y == SEEY * 2 - 2 ) {
                             if( x < SEEX - 1 ) {

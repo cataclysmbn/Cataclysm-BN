@@ -81,13 +81,10 @@ struct MonsterGroup {
 
 struct mongroup {
     mongroup_id type;
-    // Note: position is not saved as such in the json
-    // Instead, a vector of positions is saved for
-    tripoint_om_sm pos;
     tripoint_abs_sm abs_pos; // position of the mongroup in absolute submap coordinates
     unsigned int radius = 1;
     unsigned int population = 1;
-    tripoint_om_sm target; // location the horde is interested in.
+    tripoint_abs_sm target; // location the horde is interested in.
     // TODO(cross-dim-alias): tripoint_abs_sm has no dimension field.  A nemesis
     // horde chasing a player who dimension-travels loses the dimension context of
     // the target.  Full fix requires attaching a dimension_id to the target or
@@ -110,17 +107,17 @@ struct mongroup {
      */
     std::string horde_behaviour;
     bool diffuse = false;   // group size ind. of dist. from center and radius invariant
-    mongroup( const mongroup_id &ptype, const tripoint_om_sm &ppos,
+    mongroup( const mongroup_id &ptype, const tripoint_abs_sm &ppos,
               unsigned int prad, unsigned int ppop )
         : type( ptype )
-        , pos( ppos )
+        , abs_pos( ppos )
         , radius( prad )
         , population( ppop ) {
     }
-    mongroup( const std::string &ptype, const tripoint_om_sm &ppos, unsigned int prad,
+    mongroup( const std::string &ptype, const tripoint_abs_sm &ppos, unsigned int prad,
               unsigned int ppop,
               tripoint ptarget, int pint, bool pdie, bool phorde, bool pdiff ) :
-        type( ptype ), pos( ppos ), radius( prad ), population( ppop ), target( ptarget ),
+        type( ptype ), abs_pos( ppos ), radius( prad ), population( ppop ), target( ptarget ),
         interest( pint ), dying( pdie ), horde( phorde ), diffuse( pdiff ) { }
     mongroup() = default;
     LUA_TYPE_OPS( mongroup, type );

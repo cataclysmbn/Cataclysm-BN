@@ -4174,7 +4174,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
             }
         }
 
-        std::optional<std::pair<tripoint, furn_id>> tentp;
+        std::optional<std::pair<tripoint_bub_ms, furn_id>> tentp;
 
         // Find the center of the tent
         // First check if we're not currently bashing the center
@@ -9008,9 +9008,9 @@ void map::spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &grou
             }
             if( group.horde ) {
                 // Give monster a random point near horde's expected destination
-                const auto rand_dest = horde_target +
+                const auto rand_dest = abs_to_bub( horde_target ) +
                                        point_rel_ms( rng( 0, SEEX ), rng( 0, SEEY ) );
-                const int turns = rl_dist( bub_to_abs( p ), rand_dest ) + group.interest;
+                const int turns = rl_dist( p, rand_dest ) + group.interest;
                 tmp.wander_to( rand_dest, turns );
                 add_msg( m_debug, "%s targeting %d,%d,%d", tmp.disp_name(),
                          tmp.wander_pos.x(), tmp.wander_pos.y(), tmp.wander_pos.z() );

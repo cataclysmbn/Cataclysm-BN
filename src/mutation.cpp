@@ -367,10 +367,10 @@ void Character::mutation_effect( const trait_id &mut )
 
                 it->on_takeoff( *this );
                 detached_ptr<item> det = worn.remove( it );
-                get_map().add_item_or_charges( pos(), std::move( det ) );
+                get_map().add_item_or_charges( bub_pos(), std::move( det ) );
             }
 
-            get_map().add_item_or_charges( pos(), std::move( armor ) );
+            get_map().add_item_or_charges( bub_pos(), std::move( armor ) );
         }
         return detached_ptr<item>();
     } );
@@ -571,7 +571,7 @@ void Character::activate_mutation( const trait_id &mut )
     }
 
     if( mut == trait_WEB_WEAVER ) {
-        g->m.add_field( pos(), fd_web, 1 );
+        g->m.add_field( bub_pos(), fd_web, 1 );
         add_msg_if_player( _( "You start spinning web with your spinnerets!" ) );
     } else if( mut == trait_BURROW ) {
         tdata.powered = false;
@@ -579,7 +579,7 @@ void Character::activate_mutation( const trait_id &mut )
         invoke_item( burrowing_item );
         return;  // handled when the activity finishes
     } else if( mut == trait_SLIMESPAWNER ) {
-        monster *const slime = g->place_critter_around( mtype_id( "mon_player_blob" ), pos(), 1 );
+        monster *const slime = g->place_critter_around( mtype_id( "mon_player_blob" ), bub_pos(), 1 );
         if( !slime ) {
             // Oops, no room to divide!
             add_msg_if_player( m_bad, _( "You focus, but are too hemmed in to birth a new slimespring!" ) );
@@ -627,7 +627,7 @@ void Character::activate_mutation( const trait_id &mut )
         }
         // Check for adjacent trees.
         bool adjacent_tree = false;
-        for( const tripoint &p2 : g->m.points_in_radius( pos(), 1 ) ) {
+        for( const auto &p2 : g->m.points_in_radius( bub_pos(), 1 ) ) {
             if( g->m.has_flag( "TREE", p2 ) ) {
                 adjacent_tree = true;
             }

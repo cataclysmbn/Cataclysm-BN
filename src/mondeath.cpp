@@ -279,7 +279,7 @@ void mdeath::boomer( monster &z )
 {
     std::string explode = string_format( _( "a %s explode!" ), z.name() );
     sounds::sound( z.bub_pos(), 24, sounds::sound_t::combat, explode, false, "explosion", "small" );
-    for( const tripoint &dest : g->m.points_in_radius( z.bub_pos(), 1 ) ) { // *NOPAD*
+    for( const tripoint_bub_ms &dest : g->m.points_in_radius( z.bub_pos(), 1 ) ) { // *NOPAD*
         g->m.bash( dest, 10 );
         if( monster *const target = g->critter_at<monster>( dest ) ) {
             target->stumble();
@@ -299,7 +299,7 @@ void mdeath::boomer_glow( monster &z )
     std::string explode = string_format( _( "a %s explode!" ), z.name() );
     sounds::sound( z.bub_pos(), 24, sounds::sound_t::combat, explode, false, "explosion", "small" );
 
-    for( const tripoint &dest : g->m.points_in_radius( z.bub_pos(), 1 ) ) { // *NOPAD*
+    for( const tripoint_bub_ms &dest : g->m.points_in_radius( z.bub_pos(), 1 ) ) { // *NOPAD*
         g->m.bash( dest, 10 );
         if( monster *const target = g->critter_at<monster>( dest ) ) {
             target->stumble();
@@ -332,10 +332,10 @@ void mdeath::kill_vines( monster &z )
     } );
 
     for( Creature *const vine : vines ) {
-        int dist = rl_dist( vine->pos(), z.bub_pos() );
+        int dist = rl_dist( vine->bub_pos(), z.bub_pos() );
         bool closer = false;
         for( auto &j : hubs ) {
-            if( rl_dist( vine->pos(), j->pos() ) < dist ) {
+            if( rl_dist( vine->bub_pos(), j->bub_pos() ) < dist ) {
                 break;
             }
         }
@@ -348,7 +348,7 @@ void mdeath::kill_vines( monster &z )
 void mdeath::vine_cut( monster &z )
 {
     std::vector<monster *> vines;
-    for( const tripoint &tmp : g->m.points_in_radius( z.bub_pos(), 1 ) ) {
+    for( const tripoint_bub_ms &tmp : g->m.points_in_radius( z.bub_pos(), 1 ) ) {
         if( tmp == z.bub_pos() ) {
             continue; // Skip ourselves
         }
@@ -361,7 +361,7 @@ void mdeath::vine_cut( monster &z )
 
     for( auto &vine : vines ) {
         bool found_neighbor = false;
-        for( const tripoint &dest : g->m.points_in_radius( vine->pos(), 1 ) ) {
+        for( const tripoint_bub_ms &dest : g->m.points_in_radius( vine->bub_pos(), 1 ) ) {
             if( dest != z.bub_pos() ) {
                 // Not the dying vine
                 if( monster *const v = g->critter_at<monster>( dest ) ) {
@@ -392,7 +392,7 @@ void mdeath::fungus( monster &z )
     sounds::sound( z.bub_pos(), 10, sounds::sound_t::combat, _( "Pouf!" ), false, "misc", "puff" );
 
     fungal_effects fe( *g, g->m );
-    for( const tripoint &sporep : g->m.points_in_radius( z.bub_pos(), 1 ) ) { // *NOPAD*
+    for( const tripoint_bub_ms &sporep : g->m.points_in_radius( z.bub_pos(), 1 ) ) { // *NOPAD*
         if( g->m.impassable( sporep ) &&
             !get_map().obstructed_by_vehicle_rotation( z.bub_pos(), sporep ) ) {
             continue;
@@ -634,12 +634,9 @@ void mdeath::focused_beam( monster &z )
 
         item &settings = *z.get_items()[0];
 
-        point p2( z.bub_pos().x() + settings.get_var( "SL_SPOT_X", 0 ),
-                  z.bub_pos().y() + settings.get_var( "SL_SPOT_Y",
-                          0 ) );
-        tripoint p( p2, z.bub_pos().z() );
+        const auto p = z.bub_pos() + point_rel_ms( settings.get_var( "SL_SPOT_X", 0 ), settings.get_var( "SL_SPOT_Y", 0 ) );
 
-        std::vector <tripoint> traj = line_to( z.bub_pos(), p, 0, 0 );
+        std::vector <tripoint_bub_ms> traj = line_to( z.bub_pos(), p, 0, 0 );
         auto last_point = z.bub_pos();
         for( auto &elem : traj ) {
             if( !g->m.is_transparent( elem ) || get_map().obscured_by_vehicle_rotation( last_point, elem ) ) {

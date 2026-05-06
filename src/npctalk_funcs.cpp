@@ -327,7 +327,7 @@ void talk_function::goto_location( npc &p )
     }
     p.set_mission( NPC_MISSION_TRAVELLING );
     p.chatbin.first_topic = "TALK_FRIEND_GUARD";
-    p.guard_pos = tripoint_bub_ms::min();
+    p.guard_pos = tripoint_abs_ms::min();
     p.set_attitude( NPCATT_NULL );
 }
 
@@ -363,7 +363,7 @@ void talk_function::stop_guard( npc &p )
     }
     p.chatbin.first_topic = "TALK_FRIEND";
     p.goal = npc::no_goal_point;
-    p.guard_pos = tripoint_bub_ms::min();
+    p.guard_pos = tripoint_abs_ms::min();
 }
 
 void talk_function::wake_up( npc &p )
@@ -635,7 +635,7 @@ void talk_function::buy_10_logs( npc &p )
     const tripoint_abs_omt site = random_entry( places_om );
     tinymap bay;
     bay.load( project_to<coords::sm>( site ), false );
-    bay.spawn_item( point( 7, 15 ), "log", 10 );
+    bay.spawn_item( point_bub_ms( 7, 15 ), "log", 10 );
 
     p.add_effect( effect_currently_busy, 1_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -667,7 +667,7 @@ void talk_function::buy_100_logs( npc &p )
     const tripoint_abs_omt site = random_entry( places_om );
     tinymap bay;
     bay.load( project_to<coords::sm>( site ), false );
-    bay.spawn_item( point( 7, 15 ), "log", 100 );
+    bay.spawn_item( point_bub_ms( 7, 15 ), "log", 100 );
 
     p.add_effect( effect_currently_busy, 7_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -918,7 +918,7 @@ void talk_function::start_training( npc &p )
 npc *pick_follower()
 {
     std::vector<npc *> followers;
-    std::vector<tripoint> locations;
+    std::vector<tripoint_bub_ms> locations;
 
     for( npc &guy : g->all_npcs() ) {
         if( guy.is_player_ally() && g->u.sees( guy ) ) {

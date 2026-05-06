@@ -234,7 +234,7 @@ class monster : public Creature, public location_visitable<monster>
          * @param f The priority of the destination, as well as how long we should
          *          wander towards there.
          */
-        void wander_to( const tripoint_abs_ms &p, int f ); // Try to get to (x, y), we don't know
+        void wander_to( const tripoint_bub_ms &p, int f ); // Try to get to (x, y), we don't know
         // the route.  Give up after f steps.
 
         // How good of a target is given creature (checks for visibility).

@@ -2792,7 +2792,7 @@ void monster::process_turn()
                     }
                 }
                 if( zap != bub_pos() ) {
-                    explosion_handler::emp_blast( zap.raw() ); // Fries electronics due to the intensity of the field
+                    explosion_handler::emp_blast( zap ); // Fries electronics due to the intensity of the field
                 }
                 const auto t = g->m.ter( zap );
                 if( t == ter_str_id( "t_gas_pump" ) || t == ter_str_id( "t_gas_pump_a" ) ) {
@@ -3732,7 +3732,7 @@ void monster::hear_sound( const tripoint_bub_ms &source, const int vol, const in
                               g->u.has_trait( trait_PROF_FERAL ) && !g->u.has_effect( effect_feral_infighting_punishment );
 
     // Hackery: If player is currently a feral and you're a zombie, ignore any sounds close to their position.
-    if( feral_friend && rl_dist( g->u.bub_pos().raw(), source ) <= 10 ) {
+    if( feral_friend && rl_dist( g->u.bub_pos(), source ) <= 10 ) {
         return;
     }
 
@@ -3768,8 +3768,7 @@ void monster::hear_sound( const tripoint_bub_ms &source, const int vol, const in
     } else if( morale < 0 ) {
         // Monsters afraid of sound should not go towards sound
         wander_to( tripoint_bub_ms( 2 * bub_pos().x() - target_x, 2 * bub_pos().y() - target_y,
-                                    2 * bub_pos().z() - source.z() ),
-                   wander_turns );
+                                    2 * bub_pos().z() - source.z() ), wander_turns );
     }
 }
 

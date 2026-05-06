@@ -697,7 +697,7 @@ static void load_overmap_terrain_mapgens( const JsonObject &jo, const std::strin
     if( jo.has_array( jsonkey ) ) {
         for( JsonObject jio : jo.get_array( jsonkey ) ) {
             // NOLINTNEXTLINE(cata-use-named-point-constants)
-            load_and_add_mapgen_function( jio, fmapkey, point_rel_ms::zero(), point( 1, 1 ) );
+            load_and_add_mapgen_function( jio, fmapkey, point_rel_ms::zero(), point_rel_ms( 1, 1 ) );
         }
     }
 }
@@ -1159,7 +1159,7 @@ struct overmap_special_data {
         const std::string &context,
         const cata::flat_set<overmap_location_id> &default_locations ) = 0;
     virtual void check( const std::string &context ) const = 0;
-    virtual const oter_str_id &get_terrain_at( const tripoint &p ) const = 0;
+    virtual const oter_str_id &get_terrain_at( const tripoint_rel_omt &p ) const = 0;
     virtual std::vector<oter_str_id> all_terrains() const = 0;
     virtual std::vector<overmap_special_terrain> preview_terrains() const = 0;
     virtual std::vector<overmap_special_locations> required_locations() const = 0;
@@ -1190,7 +1190,7 @@ struct fixed_overmap_special_data : overmap_special_data {
 
     void check( const std::string &context ) const override {
         std::set<oter_str_id> invalid_terrains;
-        std::set<point_om_omt> points;
+        std::set<tripoint_rel_omt> points;
 
         for( const overmap_special_terrain &elem : terrains ) {
             const oter_str_id &oter = elem.terrain;
@@ -1232,7 +1232,7 @@ struct fixed_overmap_special_data : overmap_special_data {
         }
     }
 
-    const oter_str_id &get_terrain_at( const tripoint &p ) const override {
+    const oter_str_id &get_terrain_at( const tripoint_rel_omt &p ) const override {
         const auto iter = std::find_if( terrains.begin(), terrains.end(),
         [ &p ]( const overmap_special_terrain & elem ) {
             return elem.p == p;
@@ -1255,7 +1255,7 @@ struct fixed_overmap_special_data : overmap_special_data {
         std::vector<overmap_special_terrain> result;
         std::copy_if( terrains.begin(), terrains.end(), std::back_inserter( result ),
         []( const overmap_special_terrain & terrain ) {
-            return terrain.p.z == 0;
+            return terrain.p.z() == 0;
         } );
         return result;
     }
@@ -2428,9 +2428,9 @@ struct mutable_overmap_special_data : overmap_special_data {
         }
     }
 
-    const oter_str_id &get_terrain_at( const tripoint &p ) const override {
+    const oter_str_id &get_terrain_at( const tripoint_rel_omt &p ) const override {
         auto it = overmaps.find( root );
-        if( p != tripoint_zero || it == overmaps.end() ) {
+        if( p != tripoint_rel_omt::zero() || it == overmaps.end() ) {
             return oter_str_id::NULL_ID();
         }
         return it->second.terrain;
@@ -2443,7 +2443,7 @@ struct mutable_overmap_special_data : overmap_special_data {
             return {};
         }
         const mutable_overmap_terrain &root_om = it->second;
-        return { tripoint_zero, root_om.terrain, root_om.locations };
+        return { tripoint_rel_omt::zero(), root_om.terrain, root_om.locations };
     }
 
     std::vector<oter_str_id> all_terrains() const override {
@@ -2613,20 +2613,20 @@ int overmap_special::longest_side() const
     std::vector<overmap_special_locations> req_locations = required_locations();
     auto min_max_x = std::minmax_element( req_locations.begin(), req_locations.end(),
     []( const overmap_special_locations & lhs, const overmap_special_locations & rhs ) {
-        return lhs.p.x < rhs.p.x;
+        return lhs.p.x() < rhs.p.x();
     } );
 
     auto min_max_y = std::minmax_element( req_locations.begin(), req_locations.end(),
     []( const overmap_special_locations & lhs, const overmap_special_locations & rhs ) {
-        return lhs.p.y < rhs.p.y;
+        return lhs.p.y() < rhs.p.y();
     } );
 
-    const int width = min_max_x.second->p.x - min_max_x.first->p.x;
-    const int height = min_max_y.second->p.y - min_max_y.first->p.y;
+    const int width = min_max_x.second->p.x() - min_max_x.first->p.x();
+    const int height = min_max_y.second->p.y() - min_max_y.first->p.y();
     return std::max( width, height ) + 1;
 }
 
-const oter_str_id &overmap_special::get_terrain_at( const tripoint &p ) const
+const oter_str_id &overmap_special::get_terrain_at( const tripoint_rel_omt &p ) const
 {
     return data_->get_terrain_at( p );
 }
@@ -2651,7 +2651,7 @@ std::vector<overmap_special_terrain> overmap_special::preview_terrains() const
         for( const auto &ter : nested.second->preview_terrains() ) {
             overmap_special_terrain rel_ter = ter;
             rel_ter.p += nested.first.raw();
-            if( rel_ter.p.z == 0 ) {
+            if( rel_ter.p.z() == 0 ) {
                 result.push_back( rel_ter );
             }
         }
@@ -2726,8 +2726,8 @@ void overmap_special::load( const JsonObject &jo, const std::string &src )
             optional( jo, was_loaded, "check_for_locations", mutable_data->check_for_locations );
             for( JsonObject joc : jo.get_array( "check_for_locations_area" ) ) {
                 cata::flat_set<overmap_location_id> type;
-                point_abs_om from;
-                point_abs_om to;
+                tripoint_rel_omt from;
+                tripoint_rel_omt to;
                 mandatory( joc, false, "type", type );
                 mandatory( joc, false, "from", from );
                 mandatory( joc, false, "to", to );
@@ -2744,7 +2744,7 @@ void overmap_special::load( const JsonObject &jo, const std::string &src )
                     for( int y = from.y(); y <= to.y(); y++ ) {
                         for( int z = from.z(); z <= to.z(); z++ ) {
                             overmap_special_locations loc;
-                            loc.p = tripoint( x, y, z );
+                            loc.p = tripoint_rel_omt( x, y, z );
                             loc.locations = type;
                             mutable_data->check_for_locations.push_back( loc );
                         }
@@ -3119,11 +3119,11 @@ bool overmap::is_path( const tripoint_om_omt &p ) const
 
 bool overmap::mongroup_check( const mongroup &candidate ) const
 {
-    const auto matching_range = zg.equal_range( candidate.pos );
+    const auto matching_range = zg.equal_range( project_remain<coords::om>( candidate.abs_pos ).remainder_tripoint );
     return std::find_if( matching_range.first, matching_range.second,
     [candidate]( const std::pair<tripoint_om_sm, mongroup> &match ) {
         // This is extra strict since we're using it to test serialization.
-        return candidate.type == match.second.type && candidate.pos == match.second.pos &&
+        return candidate.type == match.second.type && candidate.abs_pos == match.second.abs_pos &&
                candidate.radius == match.second.radius &&
                candidate.population == match.second.population &&
                candidate.target == match.second.target &&
@@ -3139,7 +3139,7 @@ bool overmap::monster_check( const std::pair<tripoint_om_sm, monster> &candidate
     const auto matching_range = monster_map->equal_range( candidate.first );
     return std::find_if( matching_range.first, matching_range.second,
     [candidate]( const std::pair<tripoint_om_sm, monster> &match ) {
-        return candidate.second.pos() == match.second.pos() &&
+        return candidate.second.bub_pos() == match.second.bub_pos() &&
                candidate.second.type == match.second.type;
     } ) != matching_range.second;
 }
@@ -3683,13 +3683,14 @@ void mongroup::wander( const overmap &om )
 {
     const city *target_city = nullptr;
     int target_distance = 0;
+    const auto local_pos = project_remain<coords::om>( abs_pos ).remainder_tripoint;
 
     if( horde_behaviour == "city" ) {
         // Find a nearby city to return to..
         for( const city &check_city : om.cities ) {
             // Check if this is the nearest city so far.
             int distance = rl_dist( project_to<coords::sm>( check_city.pos ),
-                                    pos.xy() );
+                                    local_pos.xy() );
             if( !target_city || distance < target_distance ) {
                 target_distance = distance;
                 target_city = &check_city;
@@ -3705,8 +3706,8 @@ void mongroup::wander( const overmap &om )
         target.y() = target_city->pos.y() * 2 + rng( -target_city->size * 2, target_city->size * 2 );
         interest = 100;
     } else {
-        target.x() = pos.x() + rng( -10, 10 );
-        target.y() = pos.y() + rng( -10, 10 );
+        target.x() = local_pos.x() + rng( -10, 10 );
+        target.y() = local_pos.y() + rng( -10, 10 );
         interest = 30;
     }
 }
@@ -3731,10 +3732,10 @@ void overmap::move_hordes()
         // Gradually decrease interest.
         mg.dec_interest( 1 );
 
-        if( ( mg.pos.xy() == mg.target.xy() ) || mg.interest <= 15 ) {
+        if( ( mg.abs_pos.xy() == mg.target.xy() ) || mg.interest <= 15 ) {
             const auto om_abs = pos();
-            const auto group_abs = project_combine( om_abs, mg.pos.xy() );
-            const auto target_abs = project_combine( om_abs, mg.target.xy() );
+            const auto group_abs = mg.abs_pos.xy();
+            const auto target_abs = mg.target.xy();
             auto used_hook_target = false;
 
             if( auto *state = DynamicDataLoader::get_instance().lua.get() ) {
@@ -3750,22 +3751,20 @@ void overmap::move_hordes()
                         auto results = lua.create_table();
                         params["results"] = results;
                         params["group"] = &mg;
-                        params["pos_abs_sm"] = tripoint_abs_sm( group_abs, mg.pos.z() ).raw();
-                        params["target_abs_sm"] = tripoint_abs_sm( target_abs, mg.target.z() ).raw();
+                        params["pos_abs_sm"] = mg.abs_pos;
+                        params["target_abs_sm"] = mg.target;
                         params["behaviour"] = mg.horde_behaviour;
 
                         auto res = func( params );
                         check_func_result( res );
 
-                        const auto hook_target = results.get<sol::optional<tripoint>>( "target" );
+                        const auto hook_target = results.get<sol::optional<tripoint_abs_sm>>( "target" );
                         const auto hook_interest = results.get<sol::optional<int>>( "interest" );
                         if( hook_target.has_value() ) {
-                            const auto hook_abs_sm = tripoint_abs_sm( *hook_target );
-                            auto target_om = point_abs_om{};
-                            auto target_within = point_om_sm{};
-                            std::tie( target_om, target_within ) = project_remain<coords::om>( hook_abs_sm.xy() );
+                            const auto hook_abs_sm = *hook_target;
+                            auto target_om = project_remain<coords::om>( hook_abs_sm ).quotient;
                             if( target_om == om_abs ) {
-                                mg.target = tripoint_om_sm( target_within, hook_abs_sm.z() );
+                                mg.target = hook_abs_sm;
                                 used_hook_target = true;
                             }
                         }
@@ -3782,7 +3781,8 @@ void overmap::move_hordes()
         }
 
         // Decrease movement chance according to the terrain we're currently on.
-        const oter_id &walked_into = ter( project_to<coords::omt>( mg.pos ) );
+        auto local_pos = project_remain<coords::om>( mg.abs_pos ).remainder_tripoint;
+        const oter_id &walked_into = ter( project_to<coords::omt>( local_pos ) );
         int movement_chance = 1;
         if( walked_into == ot_forest || walked_into == ot_forest_water ) {
             movement_chance = 3;
@@ -3802,21 +3802,21 @@ void overmap::move_hordes()
         // or one space per 5 minutes.
         if( one_in( movement_chance ) && rng( 0, 100 ) < mg.interest && rng( 0, 200 ) < mg.avg_speed() ) {
             // TODO: Handle moving to adjacent overmaps.
-            if( mg.pos.x() > mg.target.x() ) {
-                mg.pos.x()--;
+            if( local_pos.x() > mg.target.x() ) {
+                local_pos.x()--;
             }
-            if( mg.pos.x() < mg.target.x() ) {
-                mg.pos.x()++;
+            if( local_pos.x() < mg.target.x() ) {
+                local_pos.x()++;
             }
-            if( mg.pos.y() > mg.target.y() ) {
-                mg.pos.y()--;
+            if( local_pos.y() > mg.target.y() ) {
+                local_pos.y()--;
             }
-            if( mg.pos.y() < mg.target.y() ) {
-                mg.pos.y()++;
+            if( local_pos.y() < mg.target.y() ) {
+                local_pos.y()++;
             }
 
             // Erase the group at it's old location, add the group with the new location
-            tmpzg.insert( std::pair<tripoint_om_sm, mongroup>( mg.pos, mg ) );
+            tmpzg.insert( std::pair<tripoint_om_sm, mongroup>( local_pos, mg ) );
             zg.erase( it++ );
         } else {
             ++it;
@@ -3876,7 +3876,7 @@ void overmap::move_hordes()
             if( this_monster.will_join_horde( add_to_horde_size ) ) {
                 // If there is no horde to add the monster to, create one.
                 if( add_to_group == nullptr ) {
-                    mongroup m( GROUP_ZOMBIE, p, 1, 0 );
+                    mongroup m( GROUP_ZOMBIE, project_combine( pos(), p ), 1, 0 );
                     m.horde = true;
                     m.monsters.push_back( this_monster );
                     m.interest = 0; // Ensures that we will select a new target.
@@ -3908,7 +3908,8 @@ void overmap::move_nemesis()
         }
 
         // Decrease movement chance according to the terrain we're currently on.
-        const oter_id &walked_into = ter( project_to<coords::omt>( mg.pos ) );
+        auto local_pos = project_remain<coords::om>( mg.abs_pos ).remainder_tripoint;
+        const oter_id &walked_into = ter( project_to<coords::omt>( local_pos ) );
         int movement_chance = 1;
         if( walked_into == ot_forest || walked_into == ot_forest_water ) {
             movement_chance = 3;
@@ -3937,11 +3938,11 @@ void overmap::move_nemesis()
                 tripoint_om_sm local_sm;
                 std::tie( omp, local_sm ) = project_remain<coords::om>( mg.abs_pos );
 
-                mg.pos.y() = local_sm.y();
-                mg.pos.x() = local_sm.x();
+                local_pos.y() = local_sm.y();
+                local_pos.x() = local_sm.x();
 
                 // Erase the group at its old location, add the group with the new location
-                tmpzg.insert( std::pair<tripoint_om_sm, mongroup>( mg.pos, mg ) );
+                tmpzg.insert( std::pair<tripoint_om_sm, mongroup>( local_pos, mg ) );
                 zg.erase( it++ );
                 break;
             }
@@ -3971,9 +3972,8 @@ bool overmap::remove_nemesis()
 * @param p location of signal relative to this overmap origin
 * @param sig_power - power of signal or max distance for reaction of zombies
 */
-void overmap::signal_hordes( const tripoint_rel_sm &p_rel, const int sig_power )
+void overmap::signal_hordes( const tripoint_abs_sm &p, const int sig_power )
 {
-    tripoint_om_sm p( p_rel.raw() );
     for( auto &elem : zg ) {
         mongroup &mg = elem.second;
         if( !mg.horde ) {
@@ -3983,7 +3983,7 @@ void overmap::signal_hordes( const tripoint_rel_sm &p_rel, const int sig_power )
             // Nemesis hordes are signaled to the player by their own function.
             continue;
         }
-        const int dist = rl_dist( p, mg.pos );
+        const int dist = rl_dist( p, mg.abs_pos );
         if( sig_power < dist ) {
             continue;
         }
@@ -3999,13 +3999,14 @@ void overmap::signal_hordes( const tripoint_rel_sm &p_rel, const int sig_power )
             const int targ_dist = rl_dist( p, mg.target );
             // TODO: Base this on targ_dist:dist ratio.
             if( targ_dist < 5 ) {  // If signal source already pursued by horde
-                mg.set_target( midpoint( mg.target.xy(), p.xy() ) );
+                auto new_target = project_remain<coords::om>( midpoint( mg.target, p ) ).remainder;
+                mg.set_target( new_target );
                 const int min_inc_inter = 3; // Min interest increase to already targeted source
                 const int inc_roll = rng( min_inc_inter, calculated_inter );
                 mg.inc_interest( inc_roll );
                 add_msg( m_debug, "horde inc interest %d dist %d", inc_roll, dist );
             } else { // New signal source
-                mg.set_target( p.xy() );
+                mg.set_target( project_remain<coords::om>( p ).remainder );
                 mg.set_interest( min_capped_inter );
                 add_msg( m_debug, "horde set interest %d dist %d", min_capped_inter, dist );
             }
@@ -4013,7 +4014,7 @@ void overmap::signal_hordes( const tripoint_rel_sm &p_rel, const int sig_power )
     }
 }
 
-void overmap::signal_nemesis( const tripoint_abs_sm p_abs_sm )
+void overmap::signal_nemesis( const tripoint_abs_sm &p_abs_sm )
 {
     point_abs_om omp;
     tripoint_om_sm local_sm;
@@ -5915,7 +5916,7 @@ std::vector<tripoint_om_omt> overmap::place_special(
     if( spawns.group ) {
         const int pop = rng( spawns.population.min, spawns.population.max );
         const int rad = rng( spawns.radius.min, spawns.radius.max );
-        add_mon_group( mongroup( spawns.group, project_to<coords::sm>( p ), rad, pop ) );
+        add_mon_group( mongroup( spawns.group, project_combine( pos(), project_to<coords::sm>( p ) ), rad, pop ) );
     }
 
     // Place nested specials
@@ -6225,7 +6226,7 @@ void overmap::place_specials( overmap_special_batch &enabled_specials )
         cata::flat_set<overmap_location_id> this_locs;
         area this_area;
         for( const overmap_special_locations &loc : locs ) {
-            if( loc.p.z == 0 ) {
+            if( loc.p.z() == 0 ) {
                 this_area.surface++;
                 // Only z0 locations are actually matched, other ones are ignored
                 this_locs.insert( loc.locations.begin(), loc.locations.end() );
@@ -6356,7 +6357,7 @@ void overmap::place_mongroups()
         if( get_option<bool>( "WANDER_SPAWNS" ) ) {
             if( !one_in( 16 ) || elem.size > 5 ) {
                 mongroup m( GROUP_ZOMBIE,
-                            tripoint_om_sm( project_to<coords::sm>( elem.pos ), 0 ),
+                            project_combine( pos(), project_to<coords::sm>( tripoint_om_omt( elem.pos, 0 ) ) ),
                             static_cast<int>( elem.size * 2.5 ),
                             elem.size * 80 );
                 //                m.set_target( zg.back().posx, zg.back().posy );
@@ -6371,9 +6372,8 @@ void overmap::place_mongroups()
         // Figure out where the dimensional lab is, and flood area with nether critters
         for( int x = 0; x < OMAPX; x++ ) {
             for( int y = 0; y < OMAPY; y++ ) {
-                tripoint_om_omt p( x, y, 0 );
-                if( ter( p ) == "central_lab_entrance" ) {
-                    add_mon_group( mongroup( GROUP_DIMENSIONAL_SURFACE, project_to<coords::sm>( p ), 5, 30 ) );
+                if( ter( tripoint_om_omt( x, y, 0 ) ) == "central_lab_entrance" ) {
+                    add_mon_group( mongroup( GROUP_DIMENSIONAL_SURFACE, project_to<coords::sm>( tripoint_abs_omt( x, y, 0 ) ), 5, 30 ) );
                 }
             }
         }
@@ -6382,23 +6382,17 @@ void overmap::place_mongroups()
     // Place the "put me anywhere" groups
     int numgroups = rng( 0, 3 );
     for( int i = 0; i < numgroups; i++ ) {
-        add_mon_group( mongroup( GROUP_WORM, tripoint( rng( 0, OMAPX * 2 - 1 ), rng( 0,
-                                 OMAPY * 2 - 1 ), 0 ),
+        auto offset = tripoint_om_sm( rng( 0, OMAPX * 2 - 1 ), rng( 0, OMAPY * 2 - 1 ), 0 );
+        add_mon_group( mongroup( GROUP_WORM, project_combine( pos(), offset ),
                                  rng( 20, 40 ), rng( 30, 50 ) ) );
     }
 }
 
 void overmap::place_nemesis( const tripoint_abs_omt p )
 {
-    tripoint_abs_sm pos_sm = project_to<coords::sm>( p );
-    point_abs_om omp;
-    tripoint_om_sm local_sm;
-    std::tie( omp, local_sm ) = project_remain<coords::om>( pos_sm );
-
-    mongroup nemesis( GROUP_NEMESIS, local_sm, 1, 1 );
+    mongroup nemesis( GROUP_NEMESIS, project_to<coords::sm>( p ), 1, 1 );
     nemesis.horde = true;
     nemesis.horde_behaviour = "nemesis";
-    nemesis.abs_pos = pos_sm;
     add_mon_group( nemesis );
 }
 
@@ -6504,7 +6498,7 @@ void overmap::add_mon_group( const mongroup &group )
     // makes the diffuse setting obsolete (as it only controls how the radius
     // is interpreted) - it's only used when adding monster groups with function.
     if( group.radius == 1 ) {
-        zg.insert( std::pair<tripoint_om_sm, mongroup>( group.pos, group ) );
+        zg.insert( std::pair<tripoint_om_sm, mongroup>( project_remain<coords::om>( group.abs_pos ).remainder_tripoint, group ) );
         return;
     }
     // diffuse groups use a circular area, non-diffuse groups use a rectangular area
@@ -6551,7 +6545,7 @@ void overmap::add_mon_group( const mongroup &group )
             // for a single-submap group.
             mongroup tmp( group );
             tmp.radius = 1;
-            tmp.pos += point( x, y );
+            tmp.abs_pos += point( x, y );
             tmp.population = p;
             // This *can* create groups outside of the area of this overmap.
             // As this function is called during generating the overmap, the

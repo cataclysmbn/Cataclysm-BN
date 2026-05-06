@@ -498,13 +498,11 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
                 break;
         }
         if( !one_in( 4 ) ) {
-            wreckage->smash( m, 0.8f, 1.2f, 1.0f, tripoint_rel_ms( dice( 1, 8 ) - 5, dice( 1, 8 ) - 5 ),
-                             6 + dice( 1,
-                                       10 ) );
+            wreckage->smash( m, 0.8f, 1.2f, 1.0f, tripoint_rel_ms( dice( 1, 8 ) - 5, dice( 1, 8 ) - 5, 0 ),
+                             6 + dice( 1, 10 ) );
         } else {
-            wreckage->smash( m, 0.1f, 0.9f, 1.0f, tripoint_rel_ms( dice( 1, 8 ) - 5, dice( 1, 8 ) - 5 ),
-                             6 + dice( 1,
-                                       10 ) );
+            wreckage->smash( m, 0.1f, 0.9f, 1.0f, tripoint_rel_ms( dice( 1, 8 ) - 5, dice( 1, 8 ) - 5, 0 ),
+                             6 + dice( 1, 10 ) );
         }
     }
 
@@ -1371,7 +1369,7 @@ static bool mx_crater( map &m, const tripoint_abs_sm &abs_sub )
     int size_squared = size * size;
     int size_center = rng( 1, 3 );
     int size_center_squared = size_center * size_center;
-    tripoint_bub_ms p{ rng( size, SEEX * 2 - 1 - size ), rng( size, SEEY * 2 - 1 - size ) };
+    const auto p = point_bub_ms{ rng( size, SEEX * 2 - 1 - size ), rng( size, SEEY * 2 - 1 - size ) };
     for( int i = p.x() - size; i <= p.x() + size; i++ ) {
         for( int j = p.y() - size; j <= p.y() + size; j++ ) {
             //If we're using circular distances, make circular craters

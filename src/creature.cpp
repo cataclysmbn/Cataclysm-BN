@@ -2552,12 +2552,12 @@ effects_map Creature::get_all_effects() const
 
 tripoint_abs_ms Creature::abs_pos() const
 {
-    return abs_pos();
+    return g->m.bub_to_abs( bub_pos() );
 }
 
 bool Creature::is_loaded() const
 {
-    return get_map().get_submap_at( tripoint_bub_ms( bub_pos() ) ) != nullptr;
+    return get_map().get_submap_at( bub_pos() ) != nullptr;
 }
 
 bool Creature::is_simulated() const

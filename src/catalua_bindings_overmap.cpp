@@ -316,26 +316,20 @@ void cata::detail::reg_overmap( sol::state &lua )
         {
             type_id = type_obj.as<mongroup_id>();
         }
-        const sol::optional<tripoint> pos_val = opts.get<sol::optional<tripoint>>( "pos" );
+        const sol::optional<tripoint_abs_omt> pos_val = opts.get<sol::optional<tripoint_abs_omt>>( "pos" );
         if( type_id.is_null() || !pos_val.has_value() )
         {
             return nullptr;
         }
-        const tripoint pos_omt = *pos_val;
         const int radius = opts.get_or( "radius", 1 );
         const int population = opts.get_or( "population", 100 );
         const bool is_horde = opts.get_or( "horde", true );
         const std::string behaviour = opts.get_or( "behaviour", std::string( "roam" ) );
         const bool diffuse = opts.get_or( "diffuse", false );
-        const sol::optional<tripoint> target_omt = opts.get<sol::optional<tripoint>>( "target" );
+        const sol::optional<tripoint_abs_omt> target_omt = opts.get<sol::optional<tripoint_abs_omt>>( "target" );
 
-        const tripoint_abs_omt pos_abs_omt( pos_omt );
-        const tripoint_abs_sm pos_abs_sm = project_to<coords::sm>( pos_abs_omt );
-        point_abs_om omp;
-        point_om_sm sm_within;
-        std::tie( omp, sm_within ) = project_remain<coords::om>( pos_abs_sm.xy() );
-
-        mongroup mg( type_id, tripoint_om_sm( sm_within, pos_abs_sm.z() ), radius, population );
+        const tripoint_abs_sm pos_abs_sm = project_to<coords::sm>( *pos_val );
+        mongroup mg( type_id, pos_abs_sm, radius, population );
         mg.abs_pos = pos_abs_sm;
         mg.horde = is_horde;
         mg.horde_behaviour = behaviour;
@@ -343,11 +337,8 @@ void cata::detail::reg_overmap( sol::state &lua )
 
         if( target_omt.has_value() )
         {
-            const tripoint_abs_sm target_abs_sm = project_to<coords::sm>( tripoint_abs_omt( *target_omt ) );
-            point_abs_om target_om;
-            point_om_sm target_within;
-            std::tie( target_om, target_within ) = project_remain<coords::om>( target_abs_sm.xy() );
-            mg.target = tripoint_om_sm( target_within, target_abs_sm.z() );
+            const tripoint_abs_sm target_abs_sm = project_to<coords::sm>( *target_omt );
+            mg.target = target_abs_sm;
             mg.nemesis_target = target_abs_sm;
         }
 
