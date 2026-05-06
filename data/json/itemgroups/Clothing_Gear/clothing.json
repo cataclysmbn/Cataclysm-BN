@@ -72,7 +72,8 @@
       { "item": "boots_winter", "prob": 50 },
       { "item": "boots_hiking", "prob": 50 },
       { "item": "boots_steel", "prob": 25 },
-      { "item": "fishing_waders", "prob": 25 }
+      { "item": "fishing_waders", "prob": 25 },
+      { "item": "nature_ghillie", "prob": 15 }
     ]
   },
   {
