@@ -7808,7 +7808,7 @@ void vehicle::update_time( const time_point &update_to )
     if( !converters.empty() ) {
         for( int p : converters ) {
             const auto &part = parts[p];
-            if( !part.is_unavailable() || !part.enabled ) {
+            if( !part.is_unavailable() && part.enabled ) {
                 int repeat = part.info().get_max_conversions() * to_seconds<int>( elapsed ) / 60;
                 auto [ consume_type, consume_charges ] = part.info().get_conversion_input();
                 auto [ output_type, output_charges ] = part.info().get_conversion_output();
@@ -7842,11 +7842,12 @@ void vehicle::update_time( const time_point &update_to )
                     output_tank = &parts[*output_tank_idx];
                 }
                 int max_repeats = repeat;
-                if( consume_tank != nullptr ) {
+                if( consume_tank ) {
                     max_repeats = std::min( max_repeats, consume_tank->ammo_remaining() / consume_charges );
                 }
                 if( output_tank ) {
-                    max_repeats = std::min( max_repeats, output_tank->ammo_remaining() / output_charges );
+                    max_repeats = std::min( max_repeats,
+                                            ( output_tank->ammo_capacity() - output_tank->ammo_remaining() ) / output_charges );
                 }
                 if( part.info().get_conversion_charges() > 0 ) {
                     max_repeats = std::min( max_repeats,
