@@ -2767,8 +2767,8 @@ void monster::shove_vehicle( const tripoint_bub_ms &remote_destination,
                 this->mod_moves( -shove_moves );
                 const auto destination_delta( remote_destination - nearby_destination );
                 const auto shove_delta = tripoint_rel_ms( clamp( destination_delta.x(), -1, 1 ),
-                        clamp( destination_delta.y(), -1, 1 ),
-                        clamp( destination_delta.z(), -1, 1 ) );
+                                         clamp( destination_delta.y(), -1, 1 ),
+                                         clamp( destination_delta.z(), -1, 1 ) );
                 veh.skidding = true;
                 veh.velocity = shove_velocity;
                 if( shove_delta != tripoint_rel_ms::zero() ) {

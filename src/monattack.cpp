@@ -1179,12 +1179,12 @@ bool mattack::smash( monster *z )
  *                      second = the number of empty spaces found.
  */
 template <size_t N = 1>
-std::pair < std::array <tripoint_bub_ms, ( 2 * N + 1 ) * ( 2 * N + 1 ) >, size_t>
+std::pair < std::array < tripoint_bub_ms, ( 2 * N + 1 ) * ( 2 * N + 1 ) >, size_t >
 find_empty_neighbors( const tripoint_bub_ms &origin )
 {
     constexpr auto r = static_cast<int>( N );
 
-    std::pair < std::array <tripoint_bub_ms, ( 2 * N + 1 )*( 2 * N + 1 ) >, size_t> result;
+    std::pair < std::array < tripoint_bub_ms, ( 2 * N + 1 )*( 2 * N + 1 ) >, size_t > result;
 
     for( const tripoint_bub_ms &tmp : g->m.points_in_radius( origin, r ) ) {
         if( g->is_empty( tmp ) ) {
@@ -1676,7 +1676,7 @@ bool mattack::triffid_heartbeat( monster *z )
         while( g->m.route( g->u.bub_pos(), z->bub_pos(), root_pathfind ).empty() &&
                tries < 20 ) {
             auto p = point_bub_ms{ rng( g->u.bub_pos().x(), z->bub_pos().x() - 3 ), rng( g->u.bub_pos().y(),
-                z->bub_pos().y() - 3 ) };
+                                   z->bub_pos().y() - 3 ) };
             tripoint_bub_ms dest( p, z->bub_pos().z() );
             tries++;
             g->m.ter_set( dest, t_dirt );
@@ -5075,8 +5075,8 @@ bool mattack::riotbot( monster *z )
         }
 
         auto dest = tripoint_bub_ms{ target->bub_pos().x() + rng( 0, delta ) - rng( 0, delta ),
-                       target->bub_pos().y() + rng( 0, delta ) - rng( 0, delta ),
-                       target->bub_pos().z() };
+                                     target->bub_pos().y() + rng( 0, delta ) - rng( 0, delta ),
+                                     target->bub_pos().z() };
 
         //~ Sound of a riotbot using its blinding flash
         sounds::sound( z->bub_pos(), 3, sounds::sound_t::combat, _( "fzzzzzt" ), false, "misc", "flash" );

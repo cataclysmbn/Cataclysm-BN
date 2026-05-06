@@ -634,7 +634,8 @@ void mdeath::focused_beam( monster &z )
 
         item &settings = *z.get_items()[0];
 
-        const auto p = z.bub_pos() + point_rel_ms( settings.get_var( "SL_SPOT_X", 0 ), settings.get_var( "SL_SPOT_Y", 0 ) );
+        const auto p = z.bub_pos() + point_rel_ms( settings.get_var( "SL_SPOT_X", 0 ),
+                       settings.get_var( "SL_SPOT_Y", 0 ) );
 
         std::vector <tripoint_bub_ms> traj = line_to( z.bub_pos(), p, 0, 0 );
         auto last_point = z.bub_pos();

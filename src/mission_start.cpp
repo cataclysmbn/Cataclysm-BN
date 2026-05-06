@@ -200,7 +200,7 @@ static tripoint_bub_ms find_potential_computer_point( const tinymap &compmap )
     }
     // if there's no possible location, then we have to overwrite an existing console...
     const tripoint_bub_ms fallback( rng( rng_x_min, rng_x_max ), rng( rng_y_min, rng_y_max ),
-                             compmap.get_abs_sub().z() );
+                                    compmap.get_abs_sub().z() );
     return random_entry( *used, fallback );
 }
 
@@ -522,7 +522,8 @@ void mission_start::ranch_nurse_8( mission *miss )
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
     bay.translate( t_dirtfloor, t_floor );
-    bay.place_items( item_group_id( "cleaning" ), 75, point_bub_ms( 17, 0 ), point_bub_ms( 17, 2 ), true,
+    bay.place_items( item_group_id( "cleaning" ), 75, point_bub_ms( 17, 0 ), point_bub_ms( 17, 2 ),
+                     true,
                      calendar::start_of_cataclysm );
     bay.place_items( item_group_id( "surgery" ), 75, point_bub_ms( 15, 4 ), point_bub_ms( 18, 4 ), true,
                      calendar::start_of_cataclysm );
@@ -560,7 +561,8 @@ void mission_start::ranch_scavenger_1( mission *miss )
 
     site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
-    bay.place_items( item_group_id( "mechanics" ), 65, point_bub_ms( 9, 13 ), point_bub_ms( 10, 16 ), true,
+    bay.place_items( item_group_id( "mechanics" ), 65, point_bub_ms( 9, 13 ), point_bub_ms( 10, 16 ),
+                     true,
                      calendar::start_of_cataclysm );
     bay.draw_square_ter( t_chainfence, point_bub_ms( 0, 22 ), point_bub_ms( 7, 22 ) );
     bay.draw_square_ter( t_dirt, point_bub_ms( 2, 22 ), point_bub_ms( 3, 22 ) );
@@ -580,7 +582,8 @@ void mission_start::ranch_scavenger_2( mission *miss )
 
     site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
-    bay.place_items( item_group_id( "mischw" ), 65, point_bub_ms( 12, 13 ), point_bub_ms( 13, 16 ), true,
+    bay.place_items( item_group_id( "mischw" ), 65, point_bub_ms( 12, 13 ), point_bub_ms( 13, 16 ),
+                     true,
                      calendar::start_of_cataclysm );
     bay.draw_square_ter( t_chaingate_l, point_bub_ms( 2, 22 ), point_bub_ms( 3, 22 ) );
     bay.spawn_item( point_bub_ms( 7, 20 ), "30gal_drum" );

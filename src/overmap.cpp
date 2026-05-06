@@ -3119,7 +3119,8 @@ bool overmap::is_path( const tripoint_om_omt &p ) const
 
 bool overmap::mongroup_check( const mongroup &candidate ) const
 {
-    const auto matching_range = zg.equal_range( project_remain<coords::om>( candidate.abs_pos ).remainder_tripoint );
+    const auto matching_range = zg.equal_range( project_remain<coords::om>
+                                ( candidate.abs_pos ).remainder_tripoint );
     return std::find_if( matching_range.first, matching_range.second,
     [candidate]( const std::pair<tripoint_om_sm, mongroup> &match ) {
         // This is extra strict since we're using it to test serialization.
@@ -5916,7 +5917,8 @@ std::vector<tripoint_om_omt> overmap::place_special(
     if( spawns.group ) {
         const int pop = rng( spawns.population.min, spawns.population.max );
         const int rad = rng( spawns.radius.min, spawns.radius.max );
-        add_mon_group( mongroup( spawns.group, project_combine( pos(), project_to<coords::sm>( p ) ), rad, pop ) );
+        add_mon_group( mongroup( spawns.group, project_combine( pos(), project_to<coords::sm>( p ) ), rad,
+                                 pop ) );
     }
 
     // Place nested specials
@@ -6373,7 +6375,8 @@ void overmap::place_mongroups()
         for( int x = 0; x < OMAPX; x++ ) {
             for( int y = 0; y < OMAPY; y++ ) {
                 if( ter( tripoint_om_omt( x, y, 0 ) ) == "central_lab_entrance" ) {
-                    add_mon_group( mongroup( GROUP_DIMENSIONAL_SURFACE, project_to<coords::sm>( tripoint_abs_omt( x, y, 0 ) ), 5, 30 ) );
+                    add_mon_group( mongroup( GROUP_DIMENSIONAL_SURFACE, project_to<coords::sm>( tripoint_abs_omt( x, y,
+                                             0 ) ), 5, 30 ) );
                 }
             }
         }
@@ -6498,7 +6501,8 @@ void overmap::add_mon_group( const mongroup &group )
     // makes the diffuse setting obsolete (as it only controls how the radius
     // is interpreted) - it's only used when adding monster groups with function.
     if( group.radius == 1 ) {
-        zg.insert( std::pair<tripoint_om_sm, mongroup>( project_remain<coords::om>( group.abs_pos ).remainder_tripoint, group ) );
+        zg.insert( std::pair<tripoint_om_sm, mongroup>( project_remain<coords::om>
+                   ( group.abs_pos ).remainder_tripoint, group ) );
         return;
     }
     // diffuse groups use a circular area, non-diffuse groups use a rectangular area

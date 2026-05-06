@@ -640,7 +640,8 @@ bool Character::can_mount( const monster &critter ) const
 mountable_status Character::get_mountable_status( const monster &critter ) const
 {
     const auto &avoid = get_legacy_path_avoid();
-    auto route = get_map().route( bub_pos(), critter.bub_pos(), get_legacy_pathfinding_settings(), avoid );
+    auto route = get_map().route( bub_pos(), critter.bub_pos(), get_legacy_pathfinding_settings(),
+                                  avoid );
 
     if( route.empty() ) {
         return {};
