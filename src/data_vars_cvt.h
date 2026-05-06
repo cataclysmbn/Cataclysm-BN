@@ -25,10 +25,6 @@ concept has_converter_to_str = !std::convertible_to<U, std::string> &&
 template<typename T, typename U>
 concept has_cache_test =
 /**/requires( T t, const std::string &a, const U &b ) { { t.should_cache( a, b ) } -> std::same_as<bool>; };
-
-template<typename T, typename U>
-concept has_converter = detail::has_converter_to_str<T, U> &&
-                        detail::has_converter_from_str<T, U>;
 } // namespace detail
 
 template<typename T>
@@ -65,7 +61,6 @@ struct json_converter {
 };
 
 template<typename Inner, std::size_t MaxSize, typename ... Args>
-requires detail::has_converter<Inner, typename Inner::value_type>
 struct cached_converter {
         using key_type = std::size_t;
         using value_type = Inner::value_type;
@@ -82,7 +77,8 @@ struct cached_converter {
     public:
         cached_converter( Args &&... args ) : _conv( std::forward<Args>( args )... ) {};
 
-        bool operator()( const value_type &val, std::string &repr ) const {
+        bool operator()( const value_type &val, std::string &repr ) const
+        requires detail::has_converter_to_str<Inner, typename Inner::value_type> {
             const bool res = _conv( val, repr );
 
             if( res ) {
@@ -100,7 +96,8 @@ struct cached_converter {
             return res;
         }
 
-        bool operator()( const std::string &repr, value_type &val ) const {
+        bool operator()( const std::string &repr, value_type &val ) const
+        requires detail::has_converter_from_str<Inner, typename Inner::value_type> {
             const auto key = _hash( repr );
             if( cache_contains( key ) ) {
                 val = cache_get( key );
