@@ -180,6 +180,13 @@
         ],
         "prob": 90
       },
+      {
+        "distribution": [
+          { "item": "nature_ghillie", "prob": 50 },
+          { "item": "urban_ghillie", "prob": 50 }
+        ],
+        "prob": 5
+      },
       { "item": "molle_pack", "prob": 85 },
       { "group": "clothing_tactical_leg", "prob": 15 },
       {
@@ -211,6 +218,13 @@
           { "item": "winter_gloves_army" }
         ],
         "prob": 80
+      },
+      {
+        "distribution": [
+          { "item": "nature_ghillie", "prob": 50 },
+          { "item": "urban_ghillie", "prob": 50 }
+        ],
+        "prob": 5
       },
       {
         "distribution": [
