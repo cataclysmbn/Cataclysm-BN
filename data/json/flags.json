@@ -543,7 +543,7 @@
     "id": "URBAN_CAMO",
     "type": "json_flag",
     "context": [  ],
-    "info": "This gear <good>greatly reduces your detection range</good> when worn in <info>urban environments</info>."
+    "info": "This gear <good>greatly reduces your detection range</good> when worn in <info>urban and rocky environments</info>."
   },
   {
     "id": "NO_CVD",
