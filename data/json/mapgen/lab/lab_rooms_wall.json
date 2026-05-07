@@ -172,10 +172,10 @@
     }
   },
   {
-    "//": "7x7sw bionic vault",
+    "//": "7x7nw bionic vault",
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "lab_room_7x7_wall_sw",
+    "nested_mapgen_id": "lab_room_7x7_wall_nw",
     "object": {
       "mapgensize": [ 8, 8 ],
       "rows": [
