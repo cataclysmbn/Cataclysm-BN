@@ -296,7 +296,7 @@ static void prep_craft( const recipe_id &rid, std::vector<detached_ptr<item>> &t
                         bool expect_craftable )
 {
     clear_avatar();
-    const tripoint test_origin( 60, 60, 0 );
+    const tripoint_bub_ms test_origin( 60, 60, 0 );
     g->u.setpos( test_origin );
     g->u.wear_item( item::spawn( "backpack" ), false );
     for( detached_ptr<item> &gear : tools ) {

@@ -386,7 +386,7 @@ void explosion_handler::draw_custom_explosion( const tripoint_bub_ms &,
 #else
     for( const auto &pr : all_area ) {
         const tripoint_rel_ms relative_point = relative_view_pos( g->u, pr.first );
-        if( relative_point.z == 0 ) {
+        if( relative_point.z() == 0 ) {
             neighbors[pr.first] = explosion_tile{ N_NO_NEIGHBORS, pr.second };
         }
     }
@@ -974,8 +974,8 @@ void game::draw_cursor( const tripoint_bub_ms &p )
 #else
 void game::draw_cursor( const tripoint_bub_ms &p )
 {
-    const tripoint rp = relative_view_pos( *this, p );
-    mvwputch_inv( w_terrain, rp.xy(), c_light_green, 'X' );
+    const auto rp = relative_view_pos( *this, p );
+    mvwputch_inv( w_terrain, rp.xy().raw(), c_light_green, 'X' );
 }
 #endif
 

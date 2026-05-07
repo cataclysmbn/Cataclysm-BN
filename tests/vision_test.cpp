@@ -12,6 +12,7 @@
 
 #include "calendar.h"
 #include "character.h"
+#include "coordinates.h"
 #include "field.h"
 #include "game.h"
 #include "game_constants.h"
@@ -20,7 +21,6 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "shadowcasting.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -63,7 +63,7 @@ static void full_map_test( const std::vector<std::string> &setup,
     const ter_id t_open_air( "t_open_air" );
 
     Character &player_character = get_player_character();
-    g->place_player( tripoint( 60, 60, 0 ) );
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
     get_weather().weather_id = weather_type_id( "clear" );
     g->reset_light_level();
 
@@ -94,7 +94,7 @@ static void full_map_test( const std::vector<std::string> &setup,
         REQUIRE( line.size() == static_cast<size_t>( width ) );
     }
 
-    tripoint origin;
+    tripoint_bub_ms origin;
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             switch( setup[y][x] ) {
@@ -113,13 +113,13 @@ static void full_map_test( const std::vector<std::string> &setup,
 
     {
         // Sanity check on player placement
-        REQUIRE( origin.z < OVERMAP_HEIGHT );
+        REQUIRE( origin.z() < OVERMAP_HEIGHT );
         auto player_offset = player_character.bub_pos() - origin;
-        REQUIRE( player_offset.y >= 0 );
-        REQUIRE( player_offset.y < height );
-        REQUIRE( player_offset.x >= 0 );
-        REQUIRE( player_offset.x < width );
-        char player_char = setup[player_offset.y][player_offset.x];
+        REQUIRE( player_offset.y() >= 0 );
+        REQUIRE( player_offset.y() < height );
+        REQUIRE( player_offset.x() >= 0 );
+        REQUIRE( player_offset.x() < width );
+        char player_char = setup[player_offset.y()][player_offset.x()];
         REQUIRE( ( player_char == 'U' || player_char == 'u' || player_char == 'V' || player_char == 'H' ) );
     }
 
@@ -127,7 +127,7 @@ static void full_map_test( const std::vector<std::string> &setup,
     vehicle *veh = nullptr;
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
-            const tripoint p = origin + point( x, y );
+            const auto p = origin + point_rel_ms( x, y );
             const auto above = p + tripoint_above;
             switch( setup[y][x] ) {
                 case ' ':
@@ -170,15 +170,15 @@ static void full_map_test( const std::vector<std::string> &setup,
     // player's vision_threshold is based on the previous lighting level (so
     // they might, for example, have poor nightvision due to having just been
     // in daylight)
-    here.update_visibility_cache( origin.z );
-    here.invalidate_map_cache( origin.z );
-    here.build_map_cache( origin.z );
-    here.update_visibility_cache( origin.z );
-    here.invalidate_map_cache( origin.z );
-    here.build_map_cache( origin.z );
+    here.update_visibility_cache( origin.z() );
+    here.invalidate_map_cache( origin.z() );
+    here.build_map_cache( origin.z() );
+    here.update_visibility_cache( origin.z() );
+    here.invalidate_map_cache( origin.z() );
+    here.build_map_cache( origin.z() );
 
-    const level_cache &cache = here.access_cache( origin.z );
-    const level_cache &above_cache = here.access_cache( origin.z + 1 );
+    const level_cache &cache = here.access_cache( origin.z() );
+    const level_cache &above_cache = here.access_cache( origin.z() + 1 );
     const visibility_variables &vvcache =
         here.get_visibility_variables_cache();
 
@@ -195,20 +195,20 @@ static void full_map_test( const std::vector<std::string> &setup,
 
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
-            const tripoint p = origin + point( x, y );
+            const auto p = origin + point_rel_ms( x, y );
             const map::apparent_light_info al = map::apparent_light_helper( cache, p );
             for( auto &pr : here.field_at( p ) ) {
                 fields << pr.second.name() << ',';
             }
             fields << ' ';
             transparency << std::setw( 6 )
-                         << cache.transparency_cache[cache.idx( p.x, p.y )] << ' ';
-            seen << std::setw( 6 ) << cache.seen_cache[cache.idx( p.x, p.y )] << ' ';
-            four_quadrants this_lm = cache.lm[cache.idx( p.x, p.y )];
+                         << cache.transparency_cache[cache.idx( p.x(), p.y() )] << ' ';
+            seen << std::setw( 6 ) << cache.seen_cache[cache.idx( p.x(), p.y() )] << ' ';
+            four_quadrants this_lm = cache.lm[cache.idx( p.x(), p.y() )];
             lm << this_lm.to_string() << ' ';
             apparent_light << std::setw( 6 ) << al.apparent_light << ' ';
             obstructed << ( al.obstructed ? '#' : '.' ) << ' ';
-            floor_above << ( above_cache.floor_cache[above_cache.idx( p.x, p.y )] ? '#' : '.' ) << ' ';
+            floor_above << ( above_cache.floor_cache[above_cache.idx( p.x(), p.y() )] ? '#' : '.' ) << ' ';
         }
         fields << '\n';
         transparency << '\n';
@@ -239,7 +239,7 @@ static void full_map_test( const std::vector<std::string> &setup,
 
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
-            const tripoint p = origin + point( x, y );
+            const auto p = origin + point_rel_ms( x, y );
             const lit_level level = here.apparent_light_at( p, vvcache );
             const char exp_char = expected_results[y][x];
             if( exp_char < '0' || exp_char > '9' ) {

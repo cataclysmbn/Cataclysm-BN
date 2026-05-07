@@ -98,7 +98,7 @@ static npc &prep_test( dialogue &d )
     avatar &player_character = get_avatar();
     REQUIRE_FALSE( player_character.in_vehicle );
 
-    const tripoint test_origin( 15, 15, 0 );
+    const tripoint_bub_ms test_origin( 15, 15, 0 );
     player_character.setpos( test_origin );
 
     g->faction_manager_ptr->create_if_needed();

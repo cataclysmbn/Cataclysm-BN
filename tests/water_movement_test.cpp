@@ -21,7 +21,7 @@ TEST_CASE( "avatar diving", "[diving][!mayfail]" )
 
     clear_avatar();
     Character &dummy = get_player_character();
-    const tripoint test_origin( 60, 60, 0 );
+    const tripoint_bub_ms test_origin( 60, 60, 0 );
 
     REQUIRE( here.ter( test_origin ) == t_water_dp );
     REQUIRE( here.ter( test_origin + tripoint_below ) == t_water_cube );

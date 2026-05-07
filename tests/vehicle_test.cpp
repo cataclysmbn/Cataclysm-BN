@@ -6,13 +6,13 @@
 #include <vector>
 
 #include "avatar.h"
+#include "coordinates.h"
 #include "damage.h"
 #include "enums.h"
 #include "game.h"
 #include "item.h"
 #include "map.h"
 #include "map_helpers.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "vehicle.h"
@@ -23,8 +23,8 @@
 TEST_CASE( "detaching_vehicle_unboards_passengers" )
 {
     clear_all_state();
-    const tripoint test_origin( 60, 60, 0 );
-    const tripoint vehicle_origin = test_origin;
+    const tripoint_bub_ms test_origin( 60, 60, 0 );
+    const auto vehicle_origin = test_origin;
     avatar &player_character = get_avatar();
     map &here = get_map();
     vehicle *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), vehicle_origin, -90_degrees, 0, 0 );
@@ -39,22 +39,22 @@ TEST_CASE( "destroy_grabbed_vehicle_section" )
     clear_all_state();
     GIVEN( "A vehicle grabbed by the player" ) {
         map &here = get_map();
-        const tripoint test_origin( 60, 60, 0 );
+        const tripoint_bub_ms test_origin( 60, 60, 0 );
         avatar &player_character = get_avatar();
         player_character.setpos( test_origin );
         const auto vehicle_origin = test_origin + tripoint_south_east;
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), vehicle_origin, -90_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
         tripoint_bub_ms grab_point = test_origin + tripoint_rel_ms::east();
-        player_character.grab( OBJECT_VEHICLE, grab_point );
+        player_character.grab( OBJECT_VEHICLE, tripoint_rel_ms::east() );
         REQUIRE( player_character.get_grab_type() != OBJECT_NONE );
-        REQUIRE( player_character.grab_point == grab_point );
+        REQUIRE( player_character.grab_point == tripoint_rel_ms::east() );
         WHEN( "The vehicle section grabbed by the player is destroyed" ) {
             here.destroy( grab_point );
             REQUIRE( veh_ptr->get_parts_at( grab_point, "", part_status_flag::available ).empty() );
             THEN( "The player's grab is released" ) {
                 CHECK( player_character.get_grab_type() == OBJECT_NONE );
-                CHECK( player_character.grab_point == tripoint_zero );
+                CHECK( player_character.grab_point == tripoint_rel_ms::zero() );
             }
         }
     }
@@ -63,7 +63,7 @@ TEST_CASE( "destroy_grabbed_vehicle_section" )
 TEST_CASE( "taking_control_of_vehicle_without_engine", "[vehicle]" )
 {
     clear_all_state();
-    const auto origin = tripoint( 60, 60, 0 );
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
     auto &player_character = get_avatar();
     player_character.setpos( origin );
 
@@ -82,8 +82,8 @@ TEST_CASE( "taking_control_of_vehicle_without_engine", "[vehicle]" )
 TEST_CASE( "add_item_to_broken_vehicle_part" )
 {
     clear_all_state();
-    const tripoint test_origin( 60, 60, 0 );
-    const tripoint vehicle_origin = test_origin;
+    const tripoint_bub_ms test_origin( 60, 60, 0 );
+    const auto vehicle_origin = test_origin;
     vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
 
@@ -107,9 +107,9 @@ TEST_CASE( "add_item_to_broken_vehicle_part" )
 TEST_CASE( "damage_vehicle_oob" )
 {
     clear_all_state();
-    const tripoint test_origin( 60, 60, 0 );
+    const tripoint_bub_ms test_origin( 60, 60, 0 );
     g->place_player( test_origin );
-    const tripoint vehicle_origin( SEEX, 0, 0 );
+    const tripoint_bub_ms vehicle_origin( SEEX, 0, 0 );
     vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
 
@@ -125,7 +125,7 @@ TEST_CASE( "damage_vehicle_oob" )
     g->place_player( test_origin + tripoint_east * SEEX );
 
     //Check the vehicle is still there.
-    optional_vpart_position part_pos = get_map().veh_at( tripoint_zero );
+    optional_vpart_position part_pos = get_map().veh_at( tripoint_bub_ms::zero() );
     REQUIRE( part_pos );
 
     // TODO: vehicle is at origin so tripoint_west == bubble pos; use parts_at_relative( point(-1,0), true ) directly
@@ -141,8 +141,8 @@ TEST_CASE( "damage_vehicle_oob" )
 
 static void check_wreckage( int zlevel )
 {
-    const tripoint test_origin( 60, 60, zlevel );
-    const tripoint vehicle_origin = test_origin;
+    const tripoint_bub_ms test_origin( 60, 60, zlevel );
+    const auto vehicle_origin = test_origin;
 
     vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
@@ -163,35 +163,35 @@ TEST_CASE( "overlapping_vehicles_make_wreck" )
     check_wreckage( -OVERMAP_DEPTH );
 }
 
-static void test_coord_translate( units::angle dir, const point &pivot, const point &p,
-                                  tripoint &q )
+static void test_coord_translate( units::angle dir, const tripoint_mnt_veh &pivot, const tripoint_mnt_veh &p,
+                                  tripoint_rel_ms &q )
 {
     tileray tdir( dir );
-    tdir.advance( p.x - pivot.x );
-    q.x = tdir.dx() + tdir.ortho_dx( p.y - pivot.y );
-    q.y = tdir.dy() + tdir.ortho_dy( p.y - pivot.y );
+    tdir.advance( p.x() - pivot.x() );
+    q.x() = tdir.dx() + tdir.ortho_dx( p.y() - pivot.y() );
+    q.y() = tdir.dy() + tdir.ortho_dy( p.y() - pivot.y() );
 }
 
 TEST_CASE( "check_vehicle_rotation_against_old", "[.]" )
 {
     clear_all_state();
-    const tripoint test_origin( 60, 60, 0 );
-    const tripoint vehicle_origin = test_origin;
+    const tripoint_bub_ms test_origin( 60, 60, 0 );
+    const auto vehicle_origin = test_origin;
     vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
-    const point pivot;
+    const tripoint_mnt_veh pivot;
 
     for( int dir = 0; dir < 24; dir++ ) {
         for( int x = -5; x <= 5; x++ ) {
             for( int y = -5; y <= 5; y++ ) {
-                point p = {x, y};
-                tripoint oldRes;
+                tripoint_mnt_veh p = {x, y, 0};
+                tripoint_rel_ms oldRes;
                 veh_ptr->coord_translate( 15_degrees * dir, pivot, p, oldRes );
 
-                tripoint newRes;
+                tripoint_rel_ms newRes;
                 test_coord_translate( 15_degrees * dir, pivot, p, newRes );
 
-                CHECK( oldRes.x == newRes.x );
-                CHECK( oldRes.y == newRes.y );
+                CHECK( oldRes.x() == newRes.x() );
+                CHECK( oldRes.y() == newRes.y() );
 
             }
         }
@@ -201,23 +201,23 @@ TEST_CASE( "check_vehicle_rotation_against_old", "[.]" )
 TEST_CASE( "vehicle_rotation_reverse" )
 {
     clear_all_state();
-    const tripoint test_origin( 60, 60, 0 );
-    const tripoint vehicle_origin = test_origin;
+    const tripoint_bub_ms test_origin( 60, 60, 0 );
+    const auto vehicle_origin = test_origin;
     vehicle *veh_ptr = get_map().add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
-    const point pivot;
+    const tripoint_mnt_veh pivot;
 
     for( int dir = 0; dir < 24; dir++ ) {
         for( int x = -5; x <= 5; x++ ) {
             for( int y = -5; y <= 5; y++ ) {
-                point p = {x, y};
-                tripoint result;
+                tripoint_mnt_veh p = {x, y, 0};
+                tripoint_rel_ms result;
                 veh_ptr->coord_translate( 15_degrees * dir, pivot, p, result );
 
-                point reversed;
+                tripoint_mnt_veh reversed;
                 veh_ptr->coord_translate_reverse( 15_degrees * dir, pivot, result, reversed );
 
-                CHECK( reversed.x == p.x );
-                CHECK( reversed.y == p.y );
+                CHECK( reversed.x() == p.x() );
+                CHECK( reversed.y() == p.y() );
 
             }
         }
@@ -227,11 +227,11 @@ TEST_CASE( "vehicle_rotation_reverse" )
 TEST_CASE( "broken_door_and_lock_can_be_removed", "[vehicle]" )
 {
     clear_all_state();
-    const auto origin = tripoint( 60, 60, 0 );
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
     auto *veh_ptr = get_map().add_vehicle( vproto_id( "cross_split_test" ), origin, 0_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
 
-    const auto door_mount = point( 1, 0 );
+    const auto door_mount = tripoint_mnt_veh( 1, 0, 0 );
     const auto door_idx = veh_ptr->part_with_feature( door_mount, "OPENABLE", true );
     const auto lock_idx = veh_ptr->part_with_feature( door_mount, "DOOR_LOCKING", true );
     REQUIRE( door_idx >= 0 );

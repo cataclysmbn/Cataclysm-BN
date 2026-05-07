@@ -17,7 +17,7 @@ TEST_CASE( "destroy_grabbed_furniture" )
 {
     clear_all_state();
     GIVEN( "Furniture grabbed by the player" ) {
-        const tripoint test_origin( 60, 60, 0 );
+        const tripoint_bub_ms test_origin( 60, 60, 0 );
         map &here = get_map();
         g->u.setpos( test_origin );
         const tripoint_bub_ms grab_point = test_origin + tripoint_rel_ms::east();
