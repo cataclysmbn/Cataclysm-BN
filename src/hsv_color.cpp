@@ -54,6 +54,11 @@ std::pair<RGBColor, std::string> RGBColor::random_named( std::string fuzzy_match
     return random_entry( candidates );
 }
 
+std::unordered_map<RGBColor, std::string> RGBColor::get_all_named_colors()
+{
+    return named_colors;
+};
+
 std::string RGBColor::friendly_name() const
 {
     const auto it = named_colors.find( *this );

@@ -52,6 +52,7 @@
 #include "game.h"
 #include "game_inventory.h"
 #include "handle_liquid.h"
+#include "hsv_color.h"
 #include "iexamine.h"
 #include "int_id.h"
 #include "inventory.h"
@@ -7614,18 +7615,27 @@ std::string enum_to_string<iuse_paint_stuff_config::paint_layer>
 
 void iuse_paint_stuff::load( const JsonObject & ) { }
 
-void iuse_paint_stuff_config::load( const JsonObject & ) { }
+void iuse_paint_stuff_config::load( const JsonObject &jo )
+{
+    if( jo.has_member( "color_swap" ) ) {
+        color_swap = jo.get_bool( "color_swap" );
+    }
+}
 
 auto iuse_paint_stuff_config::use( player &, item &it, bool, const tripoint & ) const -> int
 {
 
     enum eMode {
         Abort = 0,
-        Layer
+        Layer = 1,
+        ColorSwap = 2
     };
 
     std::vector<std::pair<std::string, eMode>> choices{};
     choices.push_back( {_( "Change Layer" ), Layer} );
+    if( color_swap ) {
+        choices.push_back( {_( "Change Color" ), ColorSwap} );
+    }
 
     eMode mode = Abort;
     if( choices.size() == 1 ) {
@@ -7650,6 +7660,9 @@ auto iuse_paint_stuff_config::use( player &, item &it, bool, const tripoint & ) 
             return 0;
         case Layer:
             get_paint_layer( it, true );
+            return 0;
+        case ColorSwap:
+            set_color( it );
             return 0;
     }
 }
@@ -8019,6 +8032,23 @@ iuse_paint_stuff_config::paint_layer iuse_paint_stuff_config::get_paint_layer( i
         }
     }
     return prev;
+}
+
+void iuse_paint_stuff_config::set_color( item &it )
+{
+    uilist lst;
+    lst.title = _( "Choose Color" );
+    lst.w_height_setup = TERMY / 2;
+    std::vector<RGBColor> colors;
+    for( const auto& [col, name] : RGBColor::get_all_named_colors() ) {
+        lst.addentry( name );
+        colors.push_back( col );
+    }
+    lst.query();
+
+    if( lst.ret >= 0 ) {
+        it.set_var<RGBColor>( PAINT_VAR, colors[lst.ret] );
+    }
 }
 
 ret_val<bool> iuse_paint_stuff::can_use( const Character &, const item &it, bool,

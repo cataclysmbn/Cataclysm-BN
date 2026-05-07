@@ -1625,8 +1625,10 @@ class iuse_paint_stuff_config : public iuse_actor
             num_layers
         };
 
+        static constexpr std::string PAINT_VAR = "PAINT_COLOR";
         static constexpr std::string LAYER_VAR = "PAINT_LAYER";
         static constexpr std::string IUSE_ACTION = "paint_stuff_cfg";
+        bool color_swap = false;
 
         iuse_paint_stuff_config( const std::string &type = IUSE_ACTION ) : iuse_actor( type ) {}
         ~iuse_paint_stuff_config() override = default;
@@ -1638,6 +1640,7 @@ class iuse_paint_stuff_config : public iuse_actor
         auto clone() const -> std::unique_ptr<iuse_actor> override;
         void on_placed( item &, const map &, const tripoint & ) const override;
         static paint_layer get_paint_layer( item &, bool change = false );
+        static void set_color( item & );
 };
 
 class iuse_paint_stuff : public iuse_actor

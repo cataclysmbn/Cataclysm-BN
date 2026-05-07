@@ -5,6 +5,7 @@
 #include "hash_utils.h"
 #include "json.h"
 #include "line.h"
+#include <unordered_map>
 
 #if defined(TILES)
 #include "sdl_wrappers.h"
@@ -32,6 +33,7 @@ struct RGBColor {
 
     static std::optional<RGBColor> try_parse( const std::string &str );
     static std::pair<RGBColor, std::string> random_named( std::string fuzzy_match = "" );
+    static std::unordered_map<RGBColor, std::string> get_all_named_colors();
 
     static void load_named_color( const JsonObject &jo, const std::string &src );
     static void unload_names();
