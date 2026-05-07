@@ -5185,11 +5185,9 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
     if( mod.has_flag( flag_VARSIZE ) && !mod.has_flag( flag_OVERSIZE ) ) {
         valid_mods.push_back( "resized_large" );
         valid_mods.push_back( "resized_large_metal" );
-        valid_mods.push_back( "resized_large_metal" );
     }
     if( !mod.has_flag( flag_UNDERSIZE ) && mod.has_flag( flag_OVERSIZE ) ) {
         valid_mods.push_back( "resized_small" );
-        valid_mods.push_back( "resized_small_metal" );
         valid_mods.push_back( "resized_small_metal" );
     }
 
